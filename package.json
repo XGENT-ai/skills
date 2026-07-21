@@ -1,0 +1,29 @@
+{
+  "name": "@xgent-ai/skills",
+  "version": "0.1.1",
+  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks 并启用 settings",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "statusline"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XGENT-ai/skills.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "xgent-skills": "bin/xgent-skills.js"
+  },
+  "files": [
+    "bin",
+    ".claude/hooks",
+    "skills"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
