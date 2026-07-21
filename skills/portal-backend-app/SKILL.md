@@ -1,6 +1,6 @@
 ---
 name: portal-backend-app
-description: 在本 monorepo 内新增或修改「独立后端 App」（apps/<key>-server + apps/<key>-app 双包模式，如 spms/qbank/lms/llm-gateway/exam/library）。凡任务涉及新建一个后端服务、TDT 自省/四道闸/服务账号、App 的 scope 与 ACL 声明、LISTING_DEFS/seed 布线、给某 *-server 加 API 端点、DB 迁移或字典表、应用配置 tab、部署接线（Caddy/compose/DEPLOYABLE_APP_SERVICES）时，务必先用本 skill——即使用户只说"给 XX 应用加个接口"。Use when creating or extending a standalone-backend app inside this monorepo: gate/introspection, service accounts, listing/seed wiring, migrations, admin config tabs, deploy wiring.
+description: '在本 monorepo 内新增或修改「独立后端 App」（apps/<key>-server + apps/<key>-app 双包模式，如 spms/qbank/lms/llm-gateway/exam/library）。凡任务涉及新建一个后端服务、TDT 自省/四道闸/服务账号、App 的 scope 与 ACL 声明、LISTING_DEFS/seed 布线、给某 *-server 加 API 端点、DB 迁移或字典表、应用配置 tab、部署接线（Caddy/compose/DEPLOYABLE_APP_SERVICES）时，务必先用本 skill——即使用户只说"给 XX 应用加个接口"。Use when creating or extending a standalone-backend app inside this monorepo: gate/introspection, service accounts, listing/seed wiring, migrations, admin config tabs, deploy wiring.'
 ---
 
 # portal-backend-app · monorepo 独立后端 App 开发

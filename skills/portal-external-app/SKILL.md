@@ -1,6 +1,6 @@
 ---
 name: portal-external-app
-description: 接入「外部镜像服务类应用」——服务端代码不在本 repo、以 Docker 镜像交付的 App（知识库/多模态解析/异步任务网关这类）。凡任务涉及为外部服务写对接契约或 app.manifest.json、register-app/provisioning 注册布线、/svc 路由与健康检查、外部服务的服务账号与 scope、一盒(one-box)本地联调、或评审外部团队的交付物时，务必先用本 skill——即使用户只说"把 XX 服务接进来"。Use when integrating an externally-built docker-delivered service app into the portal: manifest, register-app, provisioning, /svc wiring, one-box debugging, or reviewing an external team's delivery.
+description: '接入「外部镜像服务类应用」——服务端代码不在本 repo、以 Docker 镜像交付的 App（知识库/多模态解析/异步任务网关这类）。凡任务涉及为外部服务写对接契约或 app.manifest.json、register-app/provisioning 注册布线、/svc 路由与健康检查、外部服务的服务账号与 scope、一盒(one-box)本地联调、或评审外部团队的交付物时，务必先用本 skill——即使用户只说"把 XX 服务接进来"。Use when integrating an externally-built docker-delivered service app into the portal: manifest, register-app, provisioning, /svc wiring, one-box debugging, or reviewing an external team''s delivery.'
 ---
 
 # portal-external-app · 外部镜像服务类应用接入
