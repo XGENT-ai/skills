@@ -1,6 +1,6 @@
 ---
 name: portal-app-exchange
-description: 跨应用调用（OAuth Token Exchange）的布线与排错。凡任务涉及让 App A 读 App B 的数据（如 组卷读题库、文件调多模态解析、任务中心读 LMS）、声明 exchangeTargets/交换白名单/consent 共授，或出现 EXCHANGE_NOT_ALLOWED / EXCHANGE_CONSENT_REQUIRED / CONSENT_REQUIRED / SECRET_INVALID / GRANT_NOT_ALLOWED / 跨应用下拉列表莫名为空 等症状时，务必先用本 skill 再动手改代码。Use for wiring or debugging cross-app token exchange: grants, whitelists, consent co-grant, scope intersection, and the classic failure modes (secret drift, missing user consent rows, consent narrowing).
+description: '跨应用调用（OAuth Token Exchange）的布线与排错。凡任务涉及让 App A 读 App B 的数据（如 组卷读题库、文件调多模态解析、任务中心读 LMS）、声明 exchangeTargets/交换白名单/consent 共授，或出现 EXCHANGE_NOT_ALLOWED / EXCHANGE_CONSENT_REQUIRED / CONSENT_REQUIRED / SECRET_INVALID / GRANT_NOT_ALLOWED / 跨应用下拉列表莫名为空 等症状时，务必先用本 skill 再动手改代码。Use for wiring or debugging cross-app token exchange: grants, whitelists, consent co-grant, scope intersection, and the classic failure modes (secret drift, missing user consent rows, consent narrowing).'
 ---
 
 # portal-app-exchange · 跨应用调用（令牌交换）布线与排错
