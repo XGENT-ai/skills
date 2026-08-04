@@ -17,17 +17,18 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 
 | | **skill 做** | **人做** |
 | --- | --- | --- |
-| 估点 | 按因子表给点数与**判定依据**;写回 `plannedPoints`;复核容量并**报出**超出量 | 认可或推翻点数;**调整超容量的排期** |
+| 估点 | 按因子表给点数与**判定依据**;**被要求时**才写回 `plannedPoints` 并复核容量、**报出**超出量 | 认可或推翻点数;**决定要不要写回**;**调整超容量的排期** |
 
 ## 流程总览
 
 ```
-0. 备齐输入包       → 缺件即停,不猜方案(§1)
-1. 读现状           → sprint_list → sprint_get 翻页到底,记下 C0 与每条现有点数
-2. 逐条判定         → references/factors.md 的因子命中规则 → 档位
-3. 写回             → sprint_plan_items,每批 ≤100,已有点数默认跳过
-4. 复核             → sprint_get,净增量公式 + readiness
-5. 汇报             → 固定输出结构 + 分歧/unknown/跳过项/未写入项
+0. 备齐输入包       → 缺件即停,不猜方案(§第 0 步)
+1. 定模式           → 只估算 or 估算并写回?(§第 0.5 步 —— 定不了就按只估算)
+2. 读现状           → sprint_list → sprint_get 翻页到底,记下 C0 与每条现有点数
+3. 逐条判定         → references/factors.md 的因子命中规则 → 档位
+4. 写回             → 仅「写回模式」执行;sprint_plan_items,每批 ≤100,已有点数默认跳过
+5. 复核             → 仅「写回模式」执行;Sprint 走 sprint_get,backlog 走 requirement_get/issue_get
+6. 汇报             → 固定输出结构 + 分歧/unknown/跳过项/未写入项
 ```
 
 ## 第 0 步:备齐输入包(复现性的前提,不是可选的严格模式)
@@ -36,16 +37,39 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 
 | 输入 | 必需 | 来源 |
 | --- | --- | --- |
-| 需求 key + 正文 + 验收标准 | ✅ | `requirement_get(key)`(Issue 用 `issue_get`) |
+| 实体 key + 正文 | ✅ | 需求 `requirement_get(key)` / 工单 `issue_get(key)` |
+| 验收标准 | ✅ 需求;⚠️ 工单见下 | `requirement_get(...).acceptanceCriteria` |
 | **已批准的开发计划,或一份明确的影响文件/工作区清单** | ✅ | `goal/*.md`(dev-plan 产出)或调用者显式给出 |
 | 仓库 commit(`git rev-parse HEAD`) | ✅ | 判定依据要能回溯到同一份代码 |
+
+**⚠️ 工单(Issue)的验收标准从哪来——`issue_get` 里没有这个字段。** 已核实 `serializeIssue` 的 DTO 只有 `description` / `requirementId` / `storyPoints` 等,**没有 `acceptanceCriteria`**(`apps/spms-server/src/lib/serialize.ts`)。所以给 Issue 估点时:
+
+1. `issue_get(key)` 拿到 `requirementId`(它存的是**需求的展示 key**,如 `FR-141`);
+2. **有关联需求** → `requirement_get(那个 key)` 取验收标准,文本侧证据齐备,九条因子照常判;
+3. **没有关联需求**(`requirementId === null`)→ **文本侧证据整体缺失**。此时**不要**因此拒估(工单本来就常常没有验收标准),而是:
+   - F7 **只按清单侧判定**;若清单侧命中 → F7 命中(结论确定);
+   - 若清单侧也不命中 → **把 F7 记入 `unknown[]`**(不是判为不命中)——少了一整个证据面,没资格下"不命中"的结论;
+   - 其余八条因子不受影响(它们本来就只看清单)。
+
+这条规则是确定性的:同一个无需求关联的 Issue,任何人都会得到同一个 `unknown` 集合。
 
 **缺第 2 项时,一律回答「输入不足,不估点」并说明缺什么**——不猜方案、不给点数、不给"暂定 X 分"。可以主动提示:先用 `dev-plan` skill 出计划,或让调用者给出影响文件清单。
 
 ⛔ **影响文件清单只有两个合法来源:本次调用者给的,或本次真去读的开发计划文件。**
 `references/factors.md` §9 的 golden fixtures **不是输入源**——它们是**校准样例**,里面存着几条历史需求的清单与答案。**从 fixture 里抄清单来补齐输入 = 用一份过期快照替代真输入**(代码早变了、commit 也不是同一个),更是绕过了"输入不足就停"这条闸。**同一条需求出现在 fixture 里,也照样要重新取输入包。**
 
-纯文档/skill 类交付物没有影响文件清单,走 `references/factors.md` §5 的三因子(D1–D3),**不需要**第 2 项。
+纯文档/skill 类交付物没有影响文件清单,走 `references/factors.md` §5 的三因子(D1–D3),**不需要**开发计划那一项。
+
+## 第 0.5 步:定模式——**写回是显式动作,不是估点的默认续集**
+
+写 SPMS 是对**生产数据**的改动;而"这条需求打几分"只是个问句。所以动手前先分清:
+
+| 调用者说的是 | 模式 | 做到哪一步 |
+| --- | --- | --- |
+| 「这条需求几分」「估一下 FR-x」「按因子表判一判」 | **只估算(默认)** | 出结论就停,**一次 `sprint_plan_items` 都不发**;末尾问一句「要写回吗」 |
+| 「估完写回」「给这个迭代估一轮」「把点数填上」「排期前估一轮」 | **估算并写回** | 走完第 3/4 步的闭环 |
+
+**判断不了就按「只估算」。** 宁可多问一句,不可擅自写库——点数更新是 last-write-wins(见红线),写错了没有回退按钮。只估算模式下读 `sprint_get` 拿现状没问题,**但不发任何写工具**。
 
 ## 第 1 步:读现状(漏页 = 漏估 + 复核失真)
 
@@ -65,7 +89,9 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 - **判定溢出**:因子给出的档位与直觉差 ≥2 档时,**报出分歧让人裁决**,不自行调档。
 - **已有非空点数的条目默认跳过**,并在汇报里列出「跳过:FR-x(已有 5 点)」。要重估必须调用者明说;即便重估,也先把现值报出来再写。
 
-## 第 3 步:写回
+## 第 3 步:写回(**只在「估算并写回」模式执行**)
+
+只估算模式到第 2 步就结束了,直接跳到汇报——**不发 `sprint_plan_items`**。
 
 `sprint_plan_items(sprintId, items[])`,每项 `{itemType, key, plannedPoints}`。
 
@@ -74,13 +100,16 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
   - 条目**本来就在产品待办**(`sprintId === null`)→ 传字面量 `"_backlog"`。
   - ⛔ **`_backlog` 会无条件把 `sprintId` 置 null**(`lib/entities/sprints.ts:671`/`:701` 的 `patch.sprintId = sid` 不带任何条件)。对已排期条目用它 = 一次估点顺手把需求踢出了迭代。**先确认 `sprintId` 再选参数。**
 - **每批 ≤100 项**(`mcp/tools/sprints.ts:148`),超出分批。**一批 = 一个事务**(任一项非法整批回滚),**多批之间没有整体事务**。
-- **分批失败时不要重发整体**:先 `sprint_get` 复读实际落库状态,只对「点数与目标值不一致」的条目重发(同 key 同点数重发是收敛的),并**如实报出哪批失败、失败前落了多少**。
+- **分批失败时不要重发整体**:先**复读实际落库状态**,只对「点数与目标值不一致」的条目重发(同 key 同点数重发是收敛的),并**如实报出哪批失败、失败前落了多少**。
+  复读用哪个工具**取决于这批写的是谁**:排进 Sprint 的批次用 `sprint_get(该 Sprint 的 UUID)`;**`_backlog` 批次不能用 `sprint_get`**(见第 4 步),要逐条 `requirement_get` / `issue_get` 读回点数。
 - `plannedPoints` **省略 = 保持不变**,传 `null` = 清除。别用省略来表达"不改",要跳过就整条不发。
 - `plannedPoints` 是**统一入参**:服务端分流 Requirement→`plannedPoints`、Issue→`storyPoints`(**不存在 `issues.plannedPoints` 字段**)。
 
-## 第 4 步:复核(公式别写错)
+## 第 4 步:复核(**先看写到哪儿了,再挑复核工具**)
 
-写回后**独立**再跑一次 `sprint_get(sprintId)`(分批时写回返回体只反映到当批为止,不能当复核):
+复核**一律独立发一次读**——写回返回体在分批时只反映到当批为止,不能当复核。
+
+### 4a. 写进 Sprint 的条目 → `sprint_get(该 Sprint 的 UUID)`
 
 ```
 committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次实际写入的条目求和
@@ -94,6 +123,23 @@ committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次�
 - `capacity == null` → 报「该 Sprint 未设容量,容量闸不成立」。
 - 顺带把 `missingPoints` 报出来(还有几条没估)。
 
+### 4b. 写到产品待办的条目(`_backlog` 批次)→ **逐条 `requirement_get` / `issue_get`**
+
+⛔ **不能用 `sprint_get('_backlog')` 复核。** `_backlog` 是 `sprint_plan_items` 专有的字面量入参,**不是一个 Sprint**;`sprint_get` 按 id 精确查表(`lib/entities/sprints.ts` 的 `loadSprint`),传 `_backlog` 必然 `SPRINT_NOT_FOUND`——而且这时**写入早已发生**,报错只会让人误以为没写成。
+
+⚠️ 而且 `_backlog` 批次的**返回体本身也没法当复核**:它只回 `{ sprintId: null, moved: N }`(实测),**不含 detail / stats / 每条的点数**。想确认写没写进去,只能另发读。
+
+正确复核:
+
+```
+需求 → requirement_get(key)  断言 plannedPoints === 目标值 且 sprintId === null
+工单 → issue_get(key)        断言 storyPoints   === 目标值 且 sprintId === null
+```
+
+`sprintId === null` 这一条要一起断言:它证明 `_backlog` **没有把条目从某个迭代里踢出来**(用对了地方就是无副作用,用错了就是把需求移出了迭代)。
+
+**backlog 条目不进任何 Sprint 的 `committedPoints`,所以第 4a 的净增量公式与容量复核对它们不适用**——汇报时直接说「这 N 条在产品待办,不参与本迭代容量」,不要去凑一个公式。
+
 ## 输出形态(固定结构,便于逐字段比对)
 
 每条估算固定产出:
@@ -105,16 +151,17 @@ committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次�
 - `points` — 档位表给出的点数;
 - `matchedFactors` — 命中的因子号(如 `["F1","F5","F7","F9"]`),**升序**;
 - `unknown` — 无法判定的因子号,**升序**;
-- `evidencePaths` — 支撑每个命中的**真实仓库路径**(`unknown` 里的因子不出现在 evidence);
-- `anchorCompared` — 用来校准的锚点需求 key 与其点数(如 `FR-142=5`)。
+- `evidencePaths` — 支撑每个命中的**真实仓库路径**(`unknown` 里的因子不出现在 evidence;写法见 `references/factors.md` §4);
+- `anchorCompared` — 用来校准的锚点需求 key 与其人工点数(如 `FR-142=5`)。**按 `references/factors.md` §4 的选择规则算,不许随手挑一条**——两个会话挑了不同锚点,就是两个不同的输出。
 
-复现性断言逐字段比对这个结构,**不是只比点数**——三次靠不同因子凑出同一档,是复现性假象。
+复现性断言**五个字段全部**逐字段比对(口径见 `references/factors.md` §4「逐字段比对口径」),**不是只比点数**——三次靠不同因子凑出同一档,是复现性假象。
 
 汇报时另外单列:① 触发溢出规则的分歧条目;② `unknown` 非空的条目(点数标「下限」);③ 因已有点数被跳过的条目;④ **未写入**的条目及原因。
 
 ## 红线(任何情况下不违反)
 
 - **输入不足就停。** 没有影响文件清单不估点,不猜技术方案。
+- **没让写就不写。** 调用者只问点数时,**一次写工具都不发**(第 0.5 步);模棱两可时按只估算处理并问一句。
 - **不擅自处理超容量。** 报出超出量并停止,不移条目、不改点数。
 - **不误伤排期。** `_backlog` 只对已确认 `sprintId === null` 的条目用。
 - **不声称未发生的写入。** 令牌无 `write` 能力时报出 `CAPABILITY_REQUIRED` 并明说**未写回**,不绕道换实体写(比如改去发评论)。能力是**签发时定死**的,只能重签,改白名单解决不了。
@@ -131,7 +178,7 @@ committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次�
 | `PROJECT_NOT_ALLOWED` | 目标实体的项目不在令牌白名单 | 停止;可就地改签白名单(本人/租户管理员),下一个请求即生效 |
 | `PROJECT_MISMATCH` | 条目所属项目 ≠ 目标 Sprint 的项目 | 需求不能跨项目排期,报出并停 |
 | `VALIDATION_FAILED` | 含排期互斥(需求本体与其工单二选一)、批量越界等 | 整批回滚,报出整批未写入 |
-| `SPRINT_NOT_FOUND` / `REQUIREMENT_NOT_FOUND` | key/UUID 错 | 回 `sprint_list` / `requirement_list` 重取 |
+| `SPRINT_NOT_FOUND` / `REQUIREMENT_NOT_FOUND` | key/UUID 错 | 回 `sprint_list` / `requirement_list` 重取。**特例**:`sprint_get('_backlog')` 也报这个——那不是 key 错,是用错了工具,改走第 4b 的 `requirement_get`/`issue_get` |
 
 ---
 
