@@ -84,6 +84,36 @@
 
 **`evidencePaths` 的写法**:路径一律**完整写全**(`apps/spms-app/src/components/X.tsx`,不是清单里的简写 `apps/spms-app/components/X.tsx`)。计划里标 ★新 的文件**估点时可能还不存在**——照写并标注 `(★新)`;其余路径必须在仓库中真实存在,写错就是虚构证据。
 
+### `anchorCompared` 的选择规则(必须唯一,否则复现性验收有洞)
+
+`anchorCompared` 也是固定输出的一部分,**不能"随便挑一条锚点"**——两个会话挑了不同锚点,就是两个不同的输出。按下面的顺序选,选出来的只会有一条:
+
+1. 候选集 = §7 锚点表的全部行,**排除本次正在估的这一条**(自己不能当自己的标尺);
+2. 取**人工点数等于本次点数**的那条(锚点的价值就在于"团队认过这条值这么多分");
+3. 没有相等的 → 取**人工点数与本次点数差值最小**的那条;
+4. 差值并列 → 取**人工点数较小**的那条;
+5. 仍并列 → 取 key 编号**最小**的那条。
+
+写法固定为 `<key>=<该锚点的人工点数>`,例如 `FR-161=1`。
+
+> 例 A:本次估出 **3** 分且被估的不是 FR-208 → 候选人工点数 1 / 3 / 5 / 5 / 8 → 有相等 → **`FR-208=3`**。
+> 例 B:本次估的**就是 FR-208**(3 分)→ 排除自身,候选 1 / 5 / 5 / 8 → 无相等;|3−1| = |3−5| = 2 并列 → 取人工点数较小 → **`FR-161=1`**。
+> 例 C:本次估出 **5** 分 → 候选里 FR-142 与 FR-143 同为 5,并列 → 取 key 编号最小 → **`FR-142=5`**。
+
+### 逐字段比对口径(三会话复现性用)
+
+五个字段**全部**参与比对,缺一不可:
+
+| 字段 | 比对方式 |
+| --- | --- |
+| `points` | 数值相等 |
+| `matchedFactors` | **集合**相等(已要求升序,直接逐项比) |
+| `unknown` | 集合相等 |
+| `evidencePaths` | **逐因子号比对路径集合**——先剥掉括号里的注解文字(`(★新)`、`(FOR UPDATE 固定锁序)` 这类),再比集合;顺序不计 |
+| `anchorCompared` | 字符串相等(由上面的选择规则保证唯一) |
+
+只比 `points` 不算过——**三次靠不同因子凑出同一档,是复现性假象**。
+
 ## 5. 纯文档 / skill 类交付物(没有影响文件清单)
 
 不走 §2,走三因子——**每条都在估点当时可判定**(不含"几轮实测才稳定"这类只有做完才知道的未来信息):
@@ -124,7 +154,7 @@
 | FR-161 需求池加 Sprint 筛选 | **1** | shipped | (无命中) | 1 ✅ |
 | FR-142 需求拆解 + 排期互斥 | **5** | shipped | F1 F5 F7 F9 = 4 | 5 ✅ |
 | FR-143 Issue 提出人 reporterId | **5** | shipped | F1 F2 F5 F8 F9 = 5 | 8 ⚠️ |
-| FR-141 SPMS 角色与职能(ACL 收口) | **8** | reviewing | F1 F5 F6 F7 F8 F9 = 6 | 8 ✅ |
+| FR-141 SPMS 角色与职能(ACL 收口) | **8** | reviewing | F1 F5 F6 F7 F9 = 5 | 8 ✅ |
 | FR-208 研发生命周期指引页 | **3** | draft(已排期) | F3 F4 = 2 | 3 ✅ |
 
 ⚠️ **已知偏置(如实记录,不掩饰)**:FR-143 因子给 8、人工给 5,**差 1 档**——低于溢出规则的 ≥2 档阈值,所以不触发分歧上报。成因是「新迁移 + 迁移内回填」会同时命中 F2 与 F8(双计)。**本期不改规则**:改成"F8 只在独立回填脚本时计"会让另一类需求失真,而 1 档偏差在斐波那契刻度里属于可接受噪声。**下次重新锚定时(§7 第 3 步)优先复查这一条。**
@@ -154,7 +184,8 @@
 
 ```
 matchedFactors: []        F1 ✗ 无 server;F3 ✗ 只改既有组件;F4 ✗ 2 键;F5 ✗ 只有 spms-app
-unknown: []               points: 1        anchorCompared: FR-161=1
+unknown: []               points: 1        anchorCompared: FR-208=3
+                                           (排除自身后无 1 分锚点;|1−3| 最小 → FR-208)
 ```
 
 ### FIXTURE-2 · FR-142(5 点)
@@ -163,7 +194,8 @@ unknown: []               points: 1        anchorCompared: FR-161=1
 
 ```
 matchedFactors: [F1, F5, F7, F9]        F2 ✗ 无迁移;F3 ✗ 无新组件文件;F6 ✗ 未出 spms;F8 ✗
-unknown: []                             points: 5        anchorCompared: FR-142=5
+unknown: []                             points: 5        anchorCompared: FR-143=5
+                                        (排除自身后,同为 5 分的锚点只剩 FR-143)
 ```
 
 ### FIXTURE-3 · FR-141(8 点)
@@ -171,11 +203,15 @@ unknown: []                             points: 5        anchorCompared: FR-142=
 输入包:`goal/PMS-6.md` §3 —— `apps/api/src/modules/acl/manifests.ts`(+5 action +4 角色模板)、`apps/api/src/db/provisioning.ts`(`refreshSpmsAclManifest` + 逐租户 `reconcileTenantRoles` 存量刷新)、`apps/spms-server/src/{routes/catalog,routes/projects,lib/gate,lib/assignments,lib/portal-baseline}.ts`(requirePerm 收口)、`apps/spms-app` 按钮门控 + `lib/perm.ts`★新、`verify-{acl,catalog,assignments,mcp}.ts` 四套件;零迁移。
 
 ```
-matchedFactors: [F1, F5, F6, F7, F8, F9]
-  F6 ← apps/api/** + ACL 清单;F7 ← 鉴权闸新增 + 验收标准出现 403/越权;F8 ← 存量角色快照回填
+matchedFactors: [F1, F5, F6, F7, F9]
+  F6 ← apps/api/** + ACL 清单;F7 ← 鉴权闸(requirePerm)新增 + 验收标准逐字出现 403
   F2 ✗ 零迁移;F3 ✗ perm.ts 是 lib 不是组件
-unknown: []                             points: 8        anchorCompared: FR-141=8
+  F8 ✗ ——「逐租户 reconcileTenantRoles 存量刷新」是**运行期 reconcile 逻辑**,F8 明确排除它;
+        清单里既无回填脚本,也没有带 UPDATE / INSERT…SELECT 的迁移(本条零迁移)
+unknown: []                             points: 8        anchorCompared: FR-142=5
 ```
+
+> 这条 fixture 的 F8 起初被误记为命中(把 `reconcileTenantRoles` 当成了"存量回填"),**按 F8 的字面规则复核后撤销**——命中数 6 → 5,**点数仍是 8**(`5–6 → 8` 同档)。留着这行是提醒:`reconcile` 与`回填脚本`不是一回事,§2.0-3「推断不算命中」在 F8 上同样适用。
 
 ### FIXTURE-4 · FR-214(8 点 · 见 §10 的实证)
 
@@ -212,9 +248,10 @@ matchedFactors: [F3, F4]
   F3 ← GuideView.tsx 是 src/components/** 下的★新文件      F4 ← 50 键 > 40(三语算一键)
   F1 ✗ 无 server 改动      F5 ✗ 只有 apps/spms-app 一个工作区      F9 ✗ 只动 1 支 verify 套件
 unknown: []                             points: 3        anchorCompared: FR-161=1
+                                        (被估的就是 FR-208,排除自身;|3−1|=|3−5|=2 并列 → 取较小)
 ```
 
-✅ **这条是被三个互相独立的会话各估一次、逐字段比对通过的**(`points` / `matchedFactors` / `unknown` 三项全同),且与人工历史点数 **3** 吻合。
+✅ **这条是被三个互相独立的会话各估一次、逐字段比对通过的**:`points` / `matchedFactors` / `unknown` 三项全同,`anchorCompared` 三次都是 `FR-161=1`,`evidencePaths` 按本文件 §4 的口径(剥掉括号注解后比集合)也三次相同——**五个字段全过**。且与人工历史点数 **3** 吻合。
 
 ### FIXTURE-7 · 文档型:本 skill 自身(5 点)
 
@@ -223,7 +260,8 @@ unknown: []                             points: 3        anchorCompared: FR-161=
 ```
 matchedFactors: [D1, D2, D3]
   D1 ← 新定义因子表;D2 ← 经 sprint_plan_items 写回并复核;D3 ← 验收含"三会话结果一致"
-unknown: []                             points: 5
+unknown: []                             points: 5        anchorCompared: FR-142=5
+                                        (同为 5 分的 FR-142 / FR-143 并列 → 取 key 编号最小)
 ```
 
 ## 10. 实证:客观因子的价值在于**误判可被事实推翻**

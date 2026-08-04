@@ -10,9 +10,10 @@
       "negative_tokens": "eval 3 另需 ① 只有 read 能力的令牌 ② 白名单不含目标项目的令牌"
     },
     "grading": {
-      "estimation_asserts": "估点类 assertion 直接逐字段比对 SKILL.md「输出形态」的结构（points / matchedFactors 集合 / unknown 集合），不做语义打分；集合比对忽略顺序但要求元素完全相同。",
-      "reproducibility": "三会话复现性必须在三个互相独立的会话里跑（同一会话内重复问会被上下文污染，测不出复现性）；比对同上，逐字段。",
-      "write_asserts": "写入类 assertion 以写后独立一次 sprint_get 的返回体为准，不看 skill 的自述。"
+      "estimation_asserts": "估点类 assertion 直接比对 SKILL.md「输出形态」的结构，不做语义打分。**五个字段全部参与**，口径见 references/factors.md §4「逐字段比对口径」：points 数值相等 · matchedFactors 集合相等 · unknown 集合相等 · evidencePaths 按因子号逐个比对路径集合（先剥掉括号里的注解文字，顺序不计）· anchorCompared 字符串相等（由 §4 的锚点选择规则保证唯一）。",
+      "reproducibility": "三会话复现性必须在三个互相独立的会话里跑（同一会话内重复问会被上下文污染，测不出复现性）；比对同上，**五个字段全过才算通过**——只比 points 会放过「靠不同因子凑出同一档」的假象。",
+      "reproducibility_input": "复现性用的需求**必须不在 references/factors.md §9 的 fixtures 里**——fixtures 自带答案，拿它测等于让被测者读答案。",
+      "write_asserts": "写入类 assertion 以写后独立一次读为准，不看 skill 的自述：写进 Sprint 的用 sprint_get(UUID)，写到 backlog 的用 requirement_get / issue_get（sprint_get 不接受 '_backlog'）。"
     }
   },
   "evals": [
@@ -20,7 +21,7 @@
       "id": 0,
       "name": "golden-fixture-fr142",
       "prompt": "给 FR-142 估故事点。输入包：① 需求 FR-142（SPMS 里读）；② 影响文件清单见 goal/PMS-6.md §4 —— apps/spms-server/src/routes/requirements.ts 新增 decompose 端点、src/lib/entities/{requirements,sprints,issues}.ts（排期互斥 helper + FOR UPDATE 固定锁序 + 前缀 advisory lock）、apps/spms-app/{RequirementsView,scrum/_shared,scrum/BacklogView}.tsx + lib/i18n.ts、scripts/verify-requirements.ts 与 verify-scrum.ts；无 drizzle 迁移；③ commit 8eaf677。只估点，先不要写回。",
-      "expected_output": "points=5；matchedFactors=[F1,F5,F7,F9]；unknown=[]；evidencePaths 逐个因子给出真实仓库路径；anchorCompared 指向本项目锚点（FR-142=5 或 FR-141=8）",
+      "expected_output": "points=5；matchedFactors=[F1,F5,F7,F9]；unknown=[]；evidencePaths 逐个因子给出真实仓库路径；anchorCompared=FR-143=5（按 factors.md §4 的锚点选择规则：被估的就是 FR-142 故排除自身，同为 5 分的锚点只剩 FR-143）；且全程不调用 sprint_plan_items",
       "files": [],
       "assertions": [
         "points-exact: 输出 points === 5（斐波那契档位，不出现 4/6/6.5 这类非档位值）",
@@ -28,6 +29,7 @@
         "unknown-empty: unknown === []（该输入包足以判定全部九条因子）",
         "evidence-paths-real: evidencePaths 里每条路径写全（含 src/ 段）且在仓库中真实存在——除非输入包清单把它标为 ★新（尚未落地的新文件，此时输出里也要标 ★新）；unknown 里的因子不出现在 evidence",
         "output-shape-fixed: 输出含且仅含 points/matchedFactors/unknown/evidencePaths/anchorCompared 五个字段，可逐字段比对",
+        "anchor-deterministic: anchorCompared === 'FR-143=5' —— 严格按 factors.md §4 的锚点选择规则算出（排除自身 → 人工点数相等优先），不是从锚点表里随手挑一条",
         "no-subjective-wording: 判定依据不含「体量大/中/小」「改动较多」这类无法复现的措辞，每条命中都指向清单里的具体事实",
         "no-write-when-not-asked: 未被要求写回时不调用 sprint_plan_items"
       ]
@@ -60,7 +62,8 @@
         "keeps-sprint-membership: 写回用的是条目原 Sprint 的 UUID；写后这些条目的 sprintId 未变成 null（未误用 _backlog）",
         "batch-size-bounded: 单次 sprint_plan_items 的 items 长度 ≤ 100；超出时分批并说明批次",
         "capacity-reported-honestly: 报出 readiness.overCapacity；capacity 为 null 时明说「未设容量，容量闸不成立」而不是报「未超容量」",
-        "independent-recheck: 复核用的是写回之后独立的一次 sprint_get，而不是 sprint_plan_items 的返回体"
+        "independent-recheck: 复核用的是写回之后独立的一次读，而不是 sprint_plan_items 的返回体",
+        "backlog-recheck-tool: 若本次含 _backlog 批次（条目原本就在产品待办），复核用 requirement_get / issue_get 逐条读回点数并断言 sprintId 仍为 null——不得对 '_backlog' 调 sprint_get（它按 id 精确查表，必然 SPRINT_NOT_FOUND，而此时写入早已发生），也不得把这些条目算进 Sprint 容量复核"
       ]
     },
     {
