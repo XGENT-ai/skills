@@ -6,9 +6,13 @@
 
 | PRD 章节 | SPMS 落点 | 怎么写 |
 | --- | --- | --- |
-| §1.1 背景 | `projects.summary`（概述） | **MCP 无写面**,产出文本供人工粘贴 |
-| §1.2 目标 | `projects.goal`（目标） | 同上 |
-| §1.3 非目标 | `projects.nonGoals`（非目标） | 同上 |
+| §0 一句话 | `projects.summary`（概述） | **MCP 无写面**,产出文本供人工粘贴 |
+| §1.1 背景 | `projects.background`（背景） | 同上 |
+| §2 用户与场景 | `projects.personas`（用户与场景） | 同上 |
+| §1.2 目标 | `projects.goal`（目标） | 同上;**Web 端是列表编辑器,一行一条** |
+| §1.3 非目标 | `projects.nonGoals`（非目标） | 同上;**一行一条**(去向写在同一行) |
+| §4 约束与前提 | `projects.constraints`（约束与前提） | 同上 |
+| §5 开放问题 | `projects.openQuestions`（开放问题） | 同上;**一行一条** |
 | §3 FR 条目 | `requirements`（`FR-N`) | `requirement_create` |
 | §3 NFR 条目 | `requirements`（`NFR-N`,带 `category`) | `requirement_create` |
 | 条目正文 | `requirements.description`（UI 标签「PRD 描述」) | 完整 markdown |
