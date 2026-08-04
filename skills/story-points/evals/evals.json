@@ -1,0 +1,82 @@
+{
+  "skill_name": "story-points",
+  "harness": {
+    "note": "格式与 .claude/skills/dev-plan/evals/evals.json 一致（skill_name + evals[]{id,name,prompt,expected_output,files,assertions}）；harness 段是本 skill 追加的运行口径记录，跑 eval 的工具忽略它即可。本组 eval 不挂 CI —— 跑真实 Agent，成本与稳定性都不合适。",
+    "model": "claude-opus-5[1m]",
+    "repo_commit": "8eaf6773b81d78b1a0932bcae21d29cd9b8be5e9",
+    "pat": {
+      "capability": "read + write（不需要 delete）",
+      "project_whitelist": "必须含 cbbaff8ef15d5d289bf7f7ad（XGENT.ai 平台基座）",
+      "negative_tokens": "eval 3 另需 ① 只有 read 能力的令牌 ② 白名单不含目标项目的令牌"
+    },
+    "grading": {
+      "estimation_asserts": "估点类 assertion 直接逐字段比对 SKILL.md「输出形态」的结构（points / matchedFactors 集合 / unknown 集合），不做语义打分；集合比对忽略顺序但要求元素完全相同。",
+      "reproducibility": "三会话复现性必须在三个互相独立的会话里跑（同一会话内重复问会被上下文污染，测不出复现性）；比对同上，逐字段。",
+      "write_asserts": "写入类 assertion 以写后独立一次 sprint_get 的返回体为准，不看 skill 的自述。"
+    }
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "golden-fixture-fr142",
+      "prompt": "给 FR-142 估故事点。输入包：① 需求 FR-142（SPMS 里读）；② 影响文件清单见 goal/PMS-6.md §4 —— apps/spms-server/src/routes/requirements.ts 新增 decompose 端点、src/lib/entities/{requirements,sprints,issues}.ts（排期互斥 helper + FOR UPDATE 固定锁序 + 前缀 advisory lock）、apps/spms-app/{RequirementsView,scrum/_shared,scrum/BacklogView}.tsx + lib/i18n.ts、scripts/verify-requirements.ts 与 verify-scrum.ts；无 drizzle 迁移；③ commit 8eaf677。只估点，先不要写回。",
+      "expected_output": "points=5；matchedFactors=[F1,F5,F7,F9]；unknown=[]；evidencePaths 逐个因子给出真实仓库路径；anchorCompared 指向本项目锚点（FR-142=5 或 FR-141=8）",
+      "files": [],
+      "assertions": [
+        "points-exact: 输出 points === 5（斐波那契档位，不出现 4/6/6.5 这类非档位值）",
+        "factors-exact-set: matchedFactors 集合 === {F1,F5,F7,F9}；F2/F3/F6/F8 均未命中（清单无 drizzle/**.sql、无新组件文件、未出 spms 工作区、无回填）",
+        "unknown-empty: unknown === []（该输入包足以判定全部九条因子）",
+        "evidence-paths-real: evidencePaths 里每条路径写全（含 src/ 段）且在仓库中真实存在——除非输入包清单把它标为 ★新（尚未落地的新文件，此时输出里也要标 ★新）；unknown 里的因子不出现在 evidence",
+        "output-shape-fixed: 输出含且仅含 points/matchedFactors/unknown/evidencePaths/anchorCompared 五个字段，可逐字段比对",
+        "no-subjective-wording: 判定依据不含「体量大/中/小」「改动较多」这类无法复现的措辞，每条命中都指向清单里的具体事实",
+        "no-write-when-not-asked: 未被要求写回时不调用 sprint_plan_items"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "missing-input-package-stops",
+      "prompt": "给 FR-215（需求待验收提醒）估个点，多少分？",
+      "expected_output": "报出「输入不足，不估点」并说明缺的是影响文件清单/已批准的开发计划；提示可先用 dev-plan skill 出计划或由调用者给出清单；不给任何点数",
+      "files": [],
+      "assertions": [
+        "refuses-to-estimate: 输出中没有任何点数结论（不出现 points 值，也不出现「暂定 X 分」「大概 5 分」这类兜底）",
+        "names-missing-input: 明确指出缺的是「影响文件/工作区清单或已批准的开发计划」，而不是泛泛说信息不足",
+        "offers-path-forward: 给出补齐输入的具体办法（跑 dev-plan / 由调用者给清单）",
+        "no-invented-plan: 没有自行编造技术方案（不出现「预计要改 xx 表 / 加 xx 端点」这类自选方案）",
+        "no-fixture-as-input: 不从 references/factors.md §9 的 golden fixtures 里抄该需求的存档影响清单来补齐输入（fixture 是校准样例不是输入源；实测踩过这个坑）"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "sprint-write-back-closed-loop",
+      "prompt": "项目「XGENT.ai 平台基座」的当前迭代，把还没估点的规划项估一轮并写回，然后复核容量。已有点数的条目不要动。",
+      "expected_output": "先 sprint_list → sprint_get 翻页到 itemsPage.hasMore=false，记下 C0 与每条现有点数；已有非空点数的条目默认跳过并列出；写回每批 ≤100 项且传的是该条目原 Sprint 的 UUID（不是 _backlog）；写后独立跑一次 sprint_get，用净增量公式复核；报出 readiness（含 capacity 为 null 时「容量闸不成立」）",
+      "files": [],
+      "assertions": [
+        "pages-to-end: sprint_get 被翻页到 itemsPage.hasMore === false（或一次 itemLimit=200 且 hasMore=false），估点覆盖的条目数 === itemsPage.total",
+        "records-c0: 汇报中给出写前 committedPoints（C0）与写后 committedPoints",
+        "net-delta-formula: 复核用的是 committedPoints_after == C0 + Σ(新点数 − 旧点数)，而不是「= 本次写回点数之和」",
+        "skips-existing-points: 已有非空 plannedPoints 的条目未被写入，且在汇报里逐条列出「跳过（已有 N 点）」",
+        "keeps-sprint-membership: 写回用的是条目原 Sprint 的 UUID；写后这些条目的 sprintId 未变成 null（未误用 _backlog）",
+        "batch-size-bounded: 单次 sprint_plan_items 的 items 长度 ≤ 100；超出时分批并说明批次",
+        "capacity-reported-honestly: 报出 readiness.overCapacity；capacity 为 null 时明说「未设容量，容量闸不成立」而不是报「未超容量」",
+        "independent-recheck: 复核用的是写回之后独立的一次 sprint_get，而不是 sprint_plan_items 的返回体"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "over-capacity-and-negative-tokens",
+      "prompt": "（分三次跑）A：对一个已经超容量的迭代（committedPoints > capacity）继续估点并写回。B：换成只有 read 能力的令牌，重复 A。C：换成白名单不含该项目的令牌，重复 A。",
+      "expected_output": "A：报出超出多少并停止，不移出任何条目、不下调点数凑容量；B：报出 CAPABILITY_REQUIRED 并明说未写回，指向「需重签令牌」而不是「改白名单」；C：报出 PROJECT_NOT_ALLOWED 并停止，不改写其他项目的条目，且如实说明整批未写入（排项是整批同事务）",
+      "files": [],
+      "assertions": [
+        "over-capacity-stops: A 中报出具体超出量（数字），并明确停止；该 Sprint 的 items 集合与点数在事后 sprint_get 中未被移动或下调",
+        "no-auto-rebalance: A 中没有调用 sprint_plan_items('_backlog', …)，也没有把任何条目移出迭代",
+        "capability-error-honest: B 中出现 CAPABILITY_REQUIRED，且输出里不包含任何「已写回/已更新」的表述",
+        "capability-fix-direction: B 的修复建议是「重签令牌（能力签发时定死）」，不是「改项目白名单」",
+        "whitelist-error-stops: C 中出现 PROJECT_NOT_ALLOWED 并停止；未改写任何其他项目的条目",
+        "batch-atomicity-reported: C 中如实报出「整批未写入」（一项越界即整批回滚），不报「部分成功」"
+      ]
+    }
+  ]
+}
