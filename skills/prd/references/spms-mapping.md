@@ -6,7 +6,7 @@
 
 | PRD 章节 | SPMS 落点 | 怎么写 |
 | --- | --- | --- |
-| §0 一句话 | `projects.summary`（概述） | **MCP 无写面**,产出文本供人工粘贴 |
+| §0 一句话 | `projects.summary`（概述） | `project_update`(FR-236);**整段覆盖,先 `project_get` 读现状** |
 | §1.1 背景 | `projects.background`（背景） | 同上 |
 | §2 用户与场景 | `projects.personas`（用户与场景） | 同上 |
 | §1.2 目标 | `projects.goal`（目标） | 同上;**Web 端是列表编辑器,一行一条** |
@@ -49,7 +49,7 @@
 | `releaseId` 版本 | 需求抽屉 | 应与项目的 release 一致,否则 UI 出告警 |
 | 附件 | 需求抽屉 | MCP 只能读(`attachment_read`),不能传 |
 | 排期/点数 | Sprint 规划页 | 属规划期(`sprint_plan_items`),**不在 PRD 阶段做** |
-| 项目三件套 | 项目 → 基本信息 tab | **无 `project_create`/`project_update` 工具** |
+| 项目治理字段(名称/状态/负责人/团队/版本) | 项目抽屉 | `project_update` 只写基本信息七段;**无 `project_create`** |
 
 ## 4. key 分配规则(建之前必须知道)
 
@@ -81,7 +81,9 @@
 
 ```
 project_list()                              → 拿 projectId（令牌白名单内）
-project_get(projectId)                      → 成员/迭代/计数/三件套 summary,goal,nonGoals
+project_get(projectId)                      → 成员/迭代/计数/基本信息七段(summary,background,personas,
+                                              goal,nonGoals,constraints,openQuestions)
+project_update({projectId, summary, …})     → 回写基本信息七段(整段覆盖，先读后写；null 清空)
 requirement_list(projectId)                 → 看已有需求，校准粒度 + 查重
 pms_search(keyword)                         → 跨需求/Issue/TC 查重（上限 50 条，用具体词）
 requirement_get('FR-18')                    → 读某条全量（含验收标准/关联 Issue/附件）
