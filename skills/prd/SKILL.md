@@ -34,22 +34,23 @@ description: 以资深产品经理视角把一个想法/诉求梳理成可被 SP
 
 SPMS 的生命周期是 `产品线 → 产品 → 版本(Release) → 项目 → 迭代 → Issue`。**需求挂在项目上**,所以先把项目钉死:
 
-1. `project_list` → 令牌白名单内的项目;`project_get(projectId)` → 成员名册(memberId 供后续指派)、迭代列表、需求/Issue/用例计数,以及基本信息里的 `summary`(概述)/`goal`(目标)/`nonGoals`(非目标)——注意 `project_get` **只读得到这三段**,另外四段(背景/用户与场景/约束与前提/开放问题)要去 Web 的「项目 → 基本信息」tab 看。
+1. `project_list` → 令牌白名单内的项目;`project_get(projectId)` → 成员名册(memberId 供后续指派)、迭代列表、需求/Issue/用例计数,以及**基本信息七段全量**(`summary` 概述 / `background` 背景 / `personas` 用户与场景 / `goal` 目标 / `nonGoals` 非目标 / `constraints` 约束与前提 / `openQuestions` 开放问题)。
 2. **找范例校准**:① 读该项目已有的 2-3 条需求(`requirement_list` + `requirement_get`),看清这个项目里的需求写到什么颗粒度、验收标准怎么写;② `docs/PRD-*.md` 里若已有同类 PRD,粗读一份。这一步和 dev-plan 找范例是同一个动作。
 3. **找不到对应项目就停下来问**,不许把需求塞进一个「看起来相近」的项目——`projectId` 一旦定错,后续排期/统计/权限全错位,且 key 已经烧掉。
-4. **MCP 没有 `project_create` / `project_update`**(已核实 `apps/spms-server/src/mcp/tools/meta.ts` 只导出 `project_list`/`project_get`)。项目基本信息只能人工在 Web「项目 → 基本信息」tab 里填 —— 你的产出是**可直接粘贴的七段文本**,连同提示一起交给用户,不要声称已写入。七段与 tab 里的字段**同名同序**:
+4. **项目基本信息可以直接写**(FR-236):`project_update({projectId, …})` 部分更新下面七段,传 `null` 清空。**MCP 仍没有 `project_create`**,项目要人工在 Web 建。写之前先 `project_get` 读现状**整段回写**——工具是整段覆盖,不是追加,别把别人已写的内容冲掉;拿不准就把七段摊给用户确认再写。七段与 Web tab 的字段**同名同序**:
 
-   | 基本信息字段 | PRD 出处 | 格式 |
-   | --- | --- | --- |
-   | 概述 | §0 一句话 | 多行文本 |
-   | 背景 | §1.1 背景 | 多行文本 |
-   | 用户与场景 | §2 用户与场景 | 多行文本 |
-   | **目标** | §1.2 目标 | **一行一条**(Web 是列表编辑器) |
-   | **非目标** | §1.3 非目标 | **一行一条**(去向写在同一行) |
-   | 约束与前提 | §4 约束与前提 | 多行文本 |
-   | **开放问题** | §5 开放问题 | **一行一条** |
+   | 基本信息字段 | 入参名 | PRD 出处 | 格式 |
+   | --- | --- | --- | --- |
+   | 概述 | `summary` | §0 一句话 | 多行文本 |
+   | 背景 | `background` | §1.1 背景 | 多行文本 |
+   | 用户与场景 | `personas` | §2 用户与场景 | 多行文本 |
+   | **目标** | `goal` | §1.2 目标 | **一行一条**(Web 是列表编辑器) |
+   | **非目标** | `nonGoals` | §1.3 非目标 | **一行一条**(去向写在同一行) |
+   | 约束与前提 | `constraints` | §4 约束与前提 | 多行文本 |
+   | **开放问题** | `openQuestions` | §5 开放问题 | **一行一条** |
 
    ⚠️ 三个列表字段的每行**不要带 `-` / `*` / `1.` 前缀**——Web 端会当正文清洗掉,自己加等于白写。
+   ⚠️ 名称/状态/负责人/团队/版本等治理字段**不在** `project_update` 范围内(混进去只会被忽略),要改仍走 Web。
 
 ## 第 1 步:需求发现与澄清(产品经理的活)
 
@@ -116,7 +117,7 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
    - 全篇没有实现方案(表结构/端点/库选型/里程碑);
    - 文档里的 FR/NFR/TC key **全部是回填后的真实 key**,没有残留 R# 临时编号;
    - 引用的代码路径/既有能力都是本次真读过的(同 dev-plan 的「不虚构核实」)。
-3. **汇报**给用户时,除了文档路径,单独列出:① 留给用户拍板的**开放问题**;② 调查中发现的、与用户假设**冲突的事实**;③ 你砍掉/推迟的范围(让用户有机会否决);④ **已写入 SPMS 的 key 清单**(FR/NFR/TC);⑤ **待人工补**的字段与项目基本信息的**七段文本**(概述/背景/用户与场景/目标/非目标/约束与前提/开放问题,照第 0 步第 4 条的表逐段给出)。
+3. **汇报**给用户时,除了文档路径,单独列出:① 留给用户拍板的**开放问题**;② 调查中发现的、与用户假设**冲突的事实**;③ 你砍掉/推迟的范围(让用户有机会否决);④ **已写入 SPMS 的 key 清单**(FR/NFR/TC)与本次回写的**项目基本信息段**(照第 0 步第 4 条的表);⑤ **待人工补**的字段(重要度/负责人/截止日期/版本,以及评审后的状态流转)。
 4. **交给 dev-plan(PRD 与计划是多对多,没有固定映射)**:交接的单位是 **`FR-N`/`NFR-N` key 的集合**,不是整份文档——一份 PRD 可拆给多份计划,一份计划也可以捞起好几份 PRD 里的需求合并做。计划取它覆盖的那组 key 当 dev-plan 第 1 步的 `R1..Rn`,计划结尾的「需求 → 设计映射」表逐条指回 SPMS 实体。SPMS 侧的落点是 `plan_create(projectId, title, requirementKeys=[...])` → `PLAN-N`,正文写回走 `plan_update({content})`——`requirementKeys` 就是这层多对多关系的实体。
    ⚠️ **一个 `PLAN-N` 只能挂同一项目的需求**:`requirementKeys` 里出现别的项目的 key 会被拒(`LIFECYCLE_MISMATCH`,已核实 `apps/spms-server/src/lib/entities/plans.ts:41`)。跨项目的需求要合并做,只能一个项目一份计划,或先把需求迁到同一项目。
    **怎么分组是 dev-plan 的判断**(技术依赖、里程碑、可交付性);PRD 只提供**产品侧的分组信号**:优先级分档、依赖前置、哪几条必须同时上线才有意义。可以在 §7 写一条「建议分批」,但注明**供参考、非约束**。
@@ -134,7 +135,7 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 
 ## 本仓库(xgent-ai-portal)默认值
 
-- **SPMS 接入**:MCP 工具 `mcp__xgent-pms__*`(`project_list`/`project_get`/`pms_search`/`requirement_*`/`testcase_*`/`plan_*`)。契约与错误码见 `docs/pms-mcp.md`;字段/枚举/写面缺口速查见 `references/spms-mapping.md`。
+- **SPMS 接入**:MCP 工具 `mcp__xgent-pms__*`(`project_list`/`project_get`/`project_update`/`pms_search`/`requirement_*`/`testcase_*`/`plan_*`)。契约与错误码见 `docs/pms-mcp.md`;字段/枚举/写面缺口速查见 `references/spms-mapping.md`。
 - **文档落盘**:PRD → `docs/PRD-<大写代号>.md`(代号按能力域取);下游开发计划 → `goal/<大写代号>.md`(dev-plan skill,模板 `goal/PLAN-TEMPLATE.md`)。**两侧代号互不绑定**——PRD : 计划是**多对多**(既拆也合),靠 `FR-N`/`NFR-N` key 串联(SPMS 侧即 `plan_create(requirementKeys)`,同项目内)。
 - **平台硬约束**(需求侧口径,该进 NFR 就进):多租户隔离(全表 `tenantId`);业务状态一律 200 + `{ok,data}`;列表服务端分页 `Page<T>`;三语 i18n(zh-CN/en/zh-TW);字典表 `sort` 规范;前端两步法(`impeccable` 设计 + 真浏览器验证)。
 - **已知坑来源**:`~/.claude/projects/-Users-rockie-Documents-GitHub-xgent-xgent-ai-portal/memory/`(先看 `MEMORY.md` 索引)、根 `CLAUDE.md`、`goal/*-PROGRESS.md`。
