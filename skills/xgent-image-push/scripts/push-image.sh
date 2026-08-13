@@ -1,50 +1,60 @@
 #!/usr/bin/env bash
-# 把 App 镜像推到 xgent 私有仓库（Harbor）。
+# 把 App 镜像推到私有镜像仓库（Harbor）。
 #
-#   ROBOT_USER='robot$xgent+knowledge' ROBOT_SECRET=… ./push-image.sh knowledge v1.2.3
+#   ROBOT_USER='robot$<project>+<app>' ROBOT_SECRET=… ./push-image.sh <app> <tag>
 #
 # 顺序：链路预检 → 凭证与 tag 冲突检查 → 保留策略预警 → login → build（锁 amd64）
 #       → 架构核对 → push → 验证 → logout
 # 任何一项不过就停下，不把时间浪费在注定失败的 push 上。
 #
-# 自包含：只依赖 docker + curl（不需要 jq），不读取任何外部配置文件，可单独复制走。
+# 仓库地址不写在脚本里 —— 从本地配置文件或环境变量读（见 --help / registry.env.example）。
+# 自包含：只依赖 docker + curl（不需要 jq），可单独复制走。
 set -euo pipefail
 export LC_ALL=C
 
-REGISTRY="${REGISTRY:-hub.supagent.cn}"
-PROJECT="${PROJECT:-xgent}"
-PLATFORM="${PLATFORM:-linux/amd64}"
-RETAIN_K="${RETAIN_K:-10}"
-# TLS 握手耗时阈值（毫秒）。大陆内 20–80ms；新加坡 → 广州实测 RTT 440ms，握手会到 900ms+
-CONNECT_WARN_MS="${CONNECT_WARN_MS:-300}"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+PLATFORM_DEFAULT="linux/amd64"
+RETAIN_K_DEFAULT=10
+# TLS 握手耗时阈值（毫秒）。同地域 20–80ms；跨境实测 RTT 440ms，握手会到 900ms+
+CONNECT_MS_DEFAULT=300
 
 APP=""; TAG=""
-CONTEXT="."; DOCKERFILE=""
+CONTEXT="."; DOCKERFILE=""; CONFIG=""
 DO_BUILD=1; DRY_RUN=0; FORCE_TAG=0; SKIP_LINK=0; KEEP_LOGIN=0
 
 usage() {
   cat <<'USAGE'
 用法：push-image.sh <app> <tag> [选项]
 
-  <app>   App 名 = repository 名（knowledge / task-gateway / omni-parser / pagebuilder）
+  <app>   App 名 = repository 名（问运维要，别自创）
   <tag>   本次发版的 tag。不可变——每次发版换一个新的
 
 选项：
+  --config <path>      指定配置文件（默认按下面的顺序找）
   --context <dir>      构建上下文，默认 .
   --dockerfile <path>  Dockerfile 路径，默认由 docker 自己找
   --no-build           镜像已经在本地，只推不建
   --dry-run            只做只读检查，不 login/build/push
   --force-tag          允许覆盖已存在的 tag（⚠️ 覆盖不会触发部署侧重建）
-  --skip-link-check    跳过链路预检（⚠️ 境外推送实测 49KB/s，跳过前先读 SKILL.md ①）
+  --skip-link-check    跳过链路预检（⚠️ 跨境推送实测 49KB/s，跳过前先读 SKILL.md ①）
   --keep-login         结束后不 docker logout
   --retain-k <n>       保留策略的 K，仅用于预警文案，默认 10
-  --platform <p>       构建平台，默认 linux/amd64（生产机都是 x86_64）
+  --platform <p>       构建平台，默认 linux/amd64（生产机是 x86_64）
 
-环境变量：
-  ROBOT_USER    形如 robot$xgent+<app>（注意在 shell 里要用单引号）
-  ROBOT_SECRET  robot 密钥，从 CI secret 取，不要写进文件
-  REGISTRY      默认 hub.supagent.cn
-  PROJECT       默认 xgent
+配置：仓库地址不写在脚本里。按以下顺序找第一个存在的文件（KEY=value，# 开头是注释）：
+  1) --config <path> 或 $XGENT_REGISTRY_CONFIG
+  2) ./.xgent-registry.env                       ← 项目内，记得加进 .gitignore
+  3) ${XDG_CONFIG_HOME:-~/.config}/xgent/registry.env
+  4) ~/.xgent-registry.env
+  5) <skill 目录>/registry.env                   ← 同目录的 registry.env.example 是模板
+
+可识别的键（同名环境变量优先，方便 CI 直接注入，不必落盘）：
+  REGISTRY      仓库域名，不带协议、无尾斜杠 —— 必填
+  PROJECT       Harbor 项目名 —— 必填
+  ROBOT_USER    形如 robot$<project>+<app>（在 shell 里要用单引号，$ 会被展开）
+  ROBOT_SECRET  robot 密钥。CI 里请用 secret 注入，不要落盘
+  PLATFORM / RETAIN_K / CONNECT_WARN_MS   可选，有默认值
 USAGE
 }
 
@@ -61,6 +71,7 @@ die()  { printf '%s✘%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help)         usage; exit 0 ;;
+    --config)          CONFIG="${2:?--config 缺少值}"; shift 2 ;;
     --context)         CONTEXT="${2:?--context 缺少值}"; shift 2 ;;
     --dockerfile)      DOCKERFILE="${2:?--dockerfile 缺少值}"; shift 2 ;;
     --retain-k)        RETAIN_K="${2:?--retain-k 缺少值}"; shift 2 ;;
@@ -81,7 +92,65 @@ done
 [[ "$TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] || die "tag 不合法：$TAG"
 command -v docker >/dev/null || die "没找到 docker"
 command -v curl   >/dev/null || die "没找到 curl"
-: "${ROBOT_USER:?未设置 ROBOT_USER（形如 'robot\$xgent+$APP'，注意单引号）}"
+
+# ── 配置：仓库地址不硬编码在脚本里 ──────────────────────────────────
+# 这个文件按 KEY=value 解析，**不会被 source 执行** —— 白名单之外的键一律忽略，
+# 免得一个配置文件变成任意代码执行的入口。
+load_config_file() {
+  local f="$1" line key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"                                   # 兼容 CRLF
+    [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
+    [[ "$line" == *=* ]] || continue
+    key="${line%%=*}"; val="${line#*=}"
+    key="${key//[[:space:]]/}"; key="${key#export}"
+    val="${val#"${val%%[![:space:]]*}"}"                   # 去左空白
+    val="${val%"${val##*[![:space:]]}"}"                   # 去右空白
+    if [[ ${#val} -ge 2 ]]; then                           # 去成对引号
+      [[ "$val" == \"*\" ]] && val="${val:1:${#val}-2}"
+      [[ "$val" == \'*\' ]] && val="${val:1:${#val}-2}"
+    fi
+    case "$key" in
+      REGISTRY|PROJECT|ROBOT_USER|ROBOT_SECRET|PLATFORM|RETAIN_K|CONNECT_WARN_MS)
+        [[ -n "${!key:-}" ]] || printf -v "$key" '%s' "$val" ;;   # 环境变量优先（CI 注入）
+      *) : ;;
+    esac
+  done < "$f"
+}
+
+if [[ -z "$CONFIG" ]]; then
+  for c in "${XGENT_REGISTRY_CONFIG:-}" \
+           "$PWD/.xgent-registry.env" \
+           "${XDG_CONFIG_HOME:-$HOME/.config}/xgent/registry.env" \
+           "$HOME/.xgent-registry.env" \
+           "$SKILL_DIR/registry.env"; do
+    [[ -n "$c" && -f "$c" ]] && { CONFIG="$c"; break; }
+  done
+fi
+if [[ -n "$CONFIG" ]]; then
+  [[ -f "$CONFIG" ]] || die "配置文件不存在：$CONFIG"
+  load_config_file "$CONFIG"
+  mode="$(ls -l "$CONFIG" | cut -c1-10)"
+  [[ "$mode" == ??????---* || -z "${ROBOT_SECRET:-}" ]] \
+    || warn "$CONFIG 里有 ROBOT_SECRET 且同组/其他人可读（$mode）—— chmod 600"
+fi
+
+REGISTRY="${REGISTRY:-}"; PROJECT="${PROJECT:-}"
+PLATFORM="${PLATFORM:-$PLATFORM_DEFAULT}"
+RETAIN_K="${RETAIN_K:-$RETAIN_K_DEFAULT}"
+CONNECT_WARN_MS="${CONNECT_WARN_MS:-$CONNECT_MS_DEFAULT}"
+
+if [[ -z "$REGISTRY" || -z "$PROJECT" ]]; then
+  die "没拿到仓库地址。仓库域名不写在这个 skill 里，需要本地配置或环境变量。
+   最快：cp \"$SKILL_DIR/registry.env.example\" ./.xgent-registry.env 然后填 REGISTRY / PROJECT
+        （记得把 .xgent-registry.env 加进 .gitignore）
+   CI 里：直接注入环境变量 REGISTRY / PROJECT，不必落盘
+   完整查找顺序见 --help。地址问运维要"
+fi
+[[ "$REGISTRY" != *://* ]] || die "REGISTRY 不要带协议（去掉 http:// 或 https://）：$REGISTRY"
+[[ "$REGISTRY" != */* ]]   || die "REGISTRY 只写域名，项目名放 PROJECT：$REGISTRY"
+
+: "${ROBOT_USER:?未设置 ROBOT_USER（形如 'robot\$<project>+$APP'，注意单引号）}"
 : "${ROBOT_SECRET:?未设置 ROBOT_SECRET —— 从 CI secret 取，不要写进文件}"
 
 IMAGE="${REGISTRY}/${PROJECT}/${APP}:${TAG}"
@@ -115,10 +184,10 @@ log "${B}镜像：${N}${IMAGE}"
 log "${B}账号：${N}${ROBOT_USER}"
 [[ $DRY_RUN -eq 1 ]] && warn "--dry-run：只做只读检查，不会 login/build/push"
 
-# ── 1. 链路预检（①：境外推送 49KB/s，先挡住）─────────────────────────
+# ── 1. 链路预检（①：跨境推送 49KB/s，先挡住）─────────────────────────
 step "1/7 链路预检"
 if [[ $SKIP_LINK -eq 1 ]]; then
-  warn "已跳过。境外 → 广州的推送实测 49KB/s（2.93GB ≈ 17 小时），确认你在大陆再继续"
+  warn "已跳过。跨境推送实测 49KB/s（2.93GB ≈ 17 小时），确认这台机器与仓库同地域再继续"
 else
   # 量的是 TLS 握手耗时（appconnect - connect），不是 TCP 握手：
   # 挂了代理时 TCP 只连到本地代理（几十微秒），量不出真实距离；
@@ -126,7 +195,7 @@ else
   proxy="${HTTPS_PROXY:-${https_proxy:-}}"
   if [[ -n "$proxy" ]] && [[ ",${NO_PROXY:-${no_proxy:-}}," != *",${REGISTRY},"* ]]; then
     warn "检测到 HTTPS 代理（${proxy}）—— push 也会走它。下面的数字反映的是**代理链路**，
-   不是直连广州；代理本身也可能成为上传瓶颈"
+   不是到仓库的直连链路；代理本身也可能成为上传瓶颈"
   fi
   best=""
   for _ in 1 2 3; do
@@ -144,12 +213,12 @@ else
   ms="$(awk -v s="$best" 'BEGIN{printf "%.0f", s*1000}')"
   if [[ "$ms" -gt "$CONNECT_WARN_MS" ]]; then
     log "TLS 握手 ${ms}ms（阈值 ${CONNECT_WARN_MS}ms）"
-    die "这台机器大概率在境外。境外 → 广州推送实测 49KB/s、丢包 35%，一个 2.93GB 的镜像要 17 小时，
-   表现是 push 卡在 Retrying 直到超时，重试无效。请换大陆 runner。
+    die "这台机器到仓库大概率是跨境链路。跨境推送实测 49KB/s、丢包 35%，一个 2.93GB 的镜像要 17 小时，
+   表现是 push 卡在 Retrying 直到超时，重试无效。请换用与仓库同地域的 runner。
    （拉取方向是好的，所以「我能 pull」不能说明推得动 —— 推拉不对称）
    确实要试：加 --skip-link-check"
   fi
-  ok "TLS 握手 ${ms}ms —— 在大陆网段的正常范围"
+  ok "TLS 握手 ${ms}ms —— 同地域链路的正常范围"
 fi
 
 # ── 2. 凭证 + tag 冲突（③：tag 不可变）──────────────────────────────
@@ -239,7 +308,7 @@ ok "$actual"
 # ── 7. push + 验证 ──────────────────────────────────────────────────
 step "7/7 docker push"
 docker push "$IMAGE" || die "推送失败。中断的话直接重推即可（已传上去的层会跳过）；
-   若表现是一直 Retrying / 速度只有几十 KB/s，是 runner 在境外，换机器，重试没用；
+   若表现是一直 Retrying / 速度只有几十 KB/s，是 runner 与仓库跨境，换机器，重试没用；
    ⚠️ 别反复中断大镜像 —— 每次中断会在对象存储留下未完成分片"
 
 code="$(harbor_get "/v2/${PROJECT}/${APP}/tags/list?n=1000")"

@@ -1,0 +1,3 @@
+# 填好的本地配置含仓库地址（和可能的 robot 密钥），不进 git。
+registry.env
+.xgent-registry.env
