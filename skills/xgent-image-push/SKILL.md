@@ -1,19 +1,33 @@
 ---
 name: xgent-image-push
-description: 把 App 镜像构建并推送到 <PROJECT> 私有仓库 <REGISTRY>/<PROJECT>/<app>:<tag>（自建 Harbor）。只要用户提到发版、上线新版本、发布镜像、推镜像、docker push、打 tag 推仓库、配 CI 的镜像构建推送步骤、<REGISTRY>、Harbor、私有仓库、robot 账号推不上去、push 卡住、ImagePullBackOff 前的推送环节，就用这个 skill —— 哪怕他们只说"发个版"或"把这个服务的镜像推上去"没提仓库名字。它包含四条会让流水线静默失败的硬约束（境外 runner 推送只有 49KB/s、必须 linux/amd64、tag 不可变、每个 repo 只保留最近 10 个 tag）的自动预检，绕过它直接 docker push 很容易踩中其中一条。
+description: 把 App 镜像构建并推送到自建的私有 Harbor 镜像仓库（地址由本地配置提供，不写在这个 skill 里）。只要用户提到发版、上线新版本、发布镜像、推镜像、docker push、打 tag 推仓库、配 CI 的镜像构建推送步骤、私有镜像仓库、Harbor、robot 账号推不上去、push 卡住推不动、ImagePullBackOff 之前的推送环节，就用这个 skill —— 哪怕他们只说"发个版"或"把这个服务的镜像推上去"没提仓库名字。它包含四条会让流水线静默失败的硬约束（跨境 runner 推送只有 49KB/s、必须 linux/amd64、tag 不可变、每个 repo 只保留最近 10 个 tag）的自动预检，绕过它直接 docker push 很容易踩中其中一条。
 ---
 
-# 推镜像到 <PROJECT> 私有仓库
+# 推镜像到私有仓库
 
-## 这个仓库的事实
+## 仓库地址从哪来（**不在这个 skill 里**）
+
+仓库域名属内部信息，没有硬编码在这里。脚本按顺序找第一个存在的配置文件：
+
+```
+1) --config <path> 或 $XGENT_REGISTRY_CONFIG
+2) ./.xgent-registry.env                        ← 项目内，要加进 .gitignore
+3) ${XDG_CONFIG_HOME:-~/.config}/xgent/registry.env
+4) ~/.xgent-registry.env
+5) <skill 目录>/registry.env                    ← 同目录 registry.env.example 是模板
+```
+
+文件是 `KEY=value`，必填 `REGISTRY`（域名，不带协议）和 `PROJECT`（Harbor 项目名）。
+**同名环境变量优先**，所以 CI 里直接注入 `REGISTRY` / `PROJECT` 即可，不必落盘。
+
+找不到配置时脚本会停下来并告诉用户怎么建 —— 这时**不要猜域名，也不要从别处翻**，
+让用户去问运维要，或指给他们 `registry.env.example`。
 
 | | |
 | --- | --- |
-| 仓库地址 | `<REGISTRY>`（Harbor，云厂商（地域已移除），正式 Let's Encrypt 证书） |
-| 项目名 | `<PROJECT>` —— 固定，**不是** App 名 |
 | 完整引用 | `<REGISTRY>/<PROJECT>/<app>:<tag>` |
-| repository 名 | 就是 App 名（`<app>` / `<app>` / `<app>` / `<app>`） |
-| 推送账号 | `robot$<PROJECT>+<app>`，密钥在对方 CI secret 里 |
+| repository 名 | 就是 App 名，问运维要，别自创 |
+| 推送账号 | `robot$<PROJECT>+<app>`，密钥在 CI secret 里 |
 
 镜像引用全局只有这一个字面值。descriptor 里、编排层 Deployment 里、部署侧 上 `docker inspect` 看到的，完全一致。
 
@@ -30,28 +44,34 @@ description: 把 App 镜像构建并推送到 <PROJECT> 私有仓库 <REGISTRY>/
 脚本就在这个 skill 目录下的 `scripts/push-image.sh`（用绝对路径调用，别假设当前工作目录）：
 
 ```bash
-ROBOT_USER='robot$<PROJECT>+<app>' ROBOT_SECRET="$SECRET" \
-  <skill 目录>/scripts/push-image.sh <app> v1.2.3
+ROBOT_USER='robot$<project>+<app>' ROBOT_SECRET="$SECRET" \
+  <skill 目录>/scripts/push-image.sh <app> <tag>
 ```
+
+地址与项目名由上面的配置提供，命令行里不用写。
 
 脚本按顺序做：链路预检 → tag 冲突检查 → 保留策略预警 → login → build（锁 amd64）→ 架构核对 → push → 验证 → logout。
 任何一项不过就停在那里，不会把时间浪费在注定失败的 push 上。
 
-常用参数：`--context <dir>` · `--dockerfile <path>` · `--no-build`（镜像已在本地）· `--dry-run` · `--skip-link-check`
+常用参数：`--config <path>` · `--context <dir>` · `--dockerfile <path>` · `--no-build`（镜像已在本地）· `--dry-run` · `--skip-link-check`
 （先跑 `--dry-run`：只做只读检查，不 login/build/push。）
 
-这个 skill 是自包含的 —— 只有 `SKILL.md` 和 `scripts/push-image.sh` 两个文件，
-除了 `docker` 和 `curl` 不依赖任何外部脚本、配置或仓库。整目录复制到别处即可使用。
+这个 skill 是自包含的：`SKILL.md` + `scripts/push-image.sh` + `registry.env.example`，
+除了 `docker` 和 `curl` 不依赖任何外部脚本或仓库。整目录复制到别处，再补一份本地配置即可使用。
+⚠️ 填好的 `registry.env` / `.xgent-registry.env` **不要提交**（skill 目录自带 `.gitignore` 挡了这两个名字）。
 
 ### 3. 没有脚本时的等价手工步骤
 
+先从配置里取到 `REGISTRY` / `PROJECT`（别把域名写死进 CI 脚本）：
+
 ```bash
+IMAGE="${REGISTRY}/${PROJECT}/${APP}:${TAG}"
 # 注意单引号 —— robot 名里的 $ 会被 shell 展开成空
-echo "$ROBOT_SECRET" | docker login <REGISTRY> -u 'robot$<PROJECT>+<app>' --password-stdin
-docker build --platform linux/amd64 -t <REGISTRY>/<PROJECT>/<app>:v1.2.3 .
-docker image inspect <REGISTRY>/<PROJECT>/<app>:v1.2.3 --format '{{.Os}}/{{.Architecture}}'   # 必须 linux/amd64
-docker push <REGISTRY>/<PROJECT>/<app>:v1.2.3
-docker logout <REGISTRY>
+echo "$ROBOT_SECRET" | docker login "$REGISTRY" -u 'robot$<project>+<app>' --password-stdin
+docker build --platform linux/amd64 -t "$IMAGE" .
+docker image inspect "$IMAGE" --format '{{.Os}}/{{.Architecture}}'   # 必须 linux/amd64
+docker push "$IMAGE"
+docker logout "$REGISTRY"
 ```
 
 用 `--password-stdin`，不要用 `-p` —— 后者会把密钥留在 shell history 和 CI 日志里。
@@ -65,16 +85,18 @@ docker logout <REGISTRY>
 
 这四条是实测踩出来的，前两条的失败表现都不像"推失败"，所以值得在动手前就挡住。
 
-### ① CI 必须在中国大陆跑
+### ① CI 必须与仓库同地域，不能跨境推
 
-仓库在（地域已移除）。境外（（地域已移除））→ 仓库的**推送**实测 **49 KB/s**、RTT 440ms、丢包 35% ——
-一个 2.93GB 的镜像要 17 小时。表现是 `docker push` 卡在 `Retrying in N seconds` 直到超时，
-日志里看不出原因，重试也没用。**这条没有绕过办法**，只能换 runner 位置。
+跨境链路上的**推送**实测 **49 KB/s**、RTT 440ms、丢包 35% —— 一个 2.93GB 的镜像要 17 小时。
+表现是 `docker push` 卡在 `Retrying in N seconds` 直到超时，日志里看不出原因，重试也没用。
+**这条没有绕过办法**，只能换 runner 位置。
 
-脚本用 TCP 握手耗时做代理判断（>150ms 视为境外）。它是代理指标不是真吞吐，但把 440ms 和大陆的
-几十毫秒分开绰绰有余。用户坚持要试可以 `--skip-link-check`，但要先把上面的数字讲清楚。
+脚本量 **TLS 握手耗时**做判断（默认 >300ms 视为跨境）。用 TLS 而不是 TCP 握手是因为
+挂代理时 TCP 只连到本地代理、量不出真实距离，而 TLS 握手是与仓库本体完成的，穿过隧道也照样反映距离。
+它是代理指标不是真吞吐，但把 440ms 和同地域的几十毫秒分开绰绰有余。
+用户坚持要试可以 `--skip-link-check`，但要先把上面的数字讲清楚。
 
-拉取方向是好的（7.2–12.7 MB/s），所以"我能 pull 说明网络没问题"不成立 —— 推拉不对称。
+拉取方向是好的（同一条跨境链路上 7.2 MB/s），所以"我能 pull 说明网络没问题"不成立 —— 推拉不对称。
 
 ### ② 镜像必须是 `linux/amd64`
 
@@ -101,9 +123,9 @@ docker logout <REGISTRY>
 
 | 症状 | 是什么 | 怎么办 |
 | --- | --- | --- |
-| push 卡住 / 一直 `Retrying in N seconds` / 几十 KB/s | runner 在境外（①） | 换大陆 runner。不是仓库故障，重试无效 |
+| push 卡住 / 一直 `Retrying in N seconds` / 几十 KB/s | runner 与仓库跨境（①） | 换同地域 runner。不是仓库故障，重试无效 |
 | `unauthorized: unauthorized to access repository` | 没 login / 密钥错 / robot 被吊销或轮换过 | 重新 login；仍失败找运维查 robot 状态 |
-| `denied: requested access to the resource is denied` | 路径写错 —— 项目必须是 `<PROJECT>`，repository 必须是 App 名 | 核对 `<REGISTRY>/<PROJECT>/<app>:<tag>` |
+| `denied: requested access to the resource is denied` | 路径写错 —— 项目名必须是配置里的 `PROJECT`，repository 必须是 App 名 | 核对 `<REGISTRY>/<PROJECT>/<app>:<tag>` |
 | `x509: certificate signed by unknown authority` | 本机 CA 库或系统时间 | 服务端是正式证书（含中间证书），**正常机器不需要 `--insecure-registry`**；配了是掩盖问题 |
 | 拉得到但 `exec format error` | 架构不对（②） | `--platform linux/amd64` 重建重推 |
 | 之前推过的老 tag 不见了 | 被保留策略挤掉（④） | 重推。长期留存另想办法 |
