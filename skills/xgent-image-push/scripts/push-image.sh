@@ -15,20 +15,26 @@ export LC_ALL=C
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 PLATFORM_DEFAULT="linux/amd64"
+# tag 规范：v<MAJOR>.<MINOR>.<PATCH>-<7-40位 git sha>，sha 部分可省略（正式发版）
+TAG_PATTERN_DEFAULT='^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9a-f]{7,40})?$'
+TAG_PATTERN_HINT='v<MAJOR>.<MINOR>.<PATCH>-<7位 git sha>'
+
 RETAIN_K_DEFAULT=10
 # TLS 握手耗时阈值（毫秒）。同地域 20–80ms；跨境实测 RTT 440ms，握手会到 900ms+
 CONNECT_MS_DEFAULT=300
 
 APP=""; TAG=""
 CONTEXT="."; DOCKERFILE=""; CONFIG=""
-DO_BUILD=1; DRY_RUN=0; FORCE_TAG=0; SKIP_LINK=0; KEEP_LOGIN=0
+DO_BUILD=1; DRY_RUN=0; FORCE_TAG=0; SKIP_LINK=0; KEEP_LOGIN=0; ALLOW_DIRTY=0
 
 usage() {
   cat <<'USAGE'
 用法：push-image.sh <app> <tag> [选项]
 
   <app>   App 名 = repository 名（问运维要，别自创）
-  <tag>   本次发版的 tag。不可变——每次发版换一个新的
+  <tag>   本次发版的 tag。规范：v<MAJOR>.<MINOR>.<PATCH>-<7位 git sha>，例 v1.4.0-1a2b3c4
+          不可变——每次发版换一个新的。**版本号由你决定**，脚本只帮你取 HEAD 的 sha
+          （不带 tag 参数运行会把 sha 打出来）
 
 选项：
   --config <path>      指定配置文件（默认按下面的顺序找）
@@ -39,6 +45,7 @@ usage() {
   --force-tag          允许覆盖已存在的 tag（⚠️ 覆盖不会触发部署侧重建）
   --skip-link-check    跳过链路预检（⚠️ 跨境推送实测 49KB/s，跳过前先读 SKILL.md ①）
   --keep-login         结束后不 docker logout
+  --allow-dirty        工作区不干净也允许推（⚠️ 镜像将无法由 tag 里的 commit 复现）
   --retain-k <n>       保留策略的 K，仅用于预警文案，默认 10
   --platform <p>       构建平台，默认 linux/amd64（生产机是 x86_64）
 
@@ -54,6 +61,7 @@ usage() {
   PROJECT       Harbor 项目名 —— 必填
   ROBOT_USER    形如 robot$<project>+<app>（在 shell 里要用单引号，$ 会被展开）
   ROBOT_SECRET  robot 密钥。CI 里请用 secret 注入，不要落盘
+  TAG_PATTERN   tag 格式的正则。不配只提醒，配了就强制（团队统一后建议配上）
   PLATFORM / RETAIN_K / CONNECT_WARN_MS   可选，有默认值
 USAGE
 }
@@ -81,15 +89,36 @@ while [[ $# -gt 0 ]]; do
     --force-tag)       FORCE_TAG=1; shift ;;
     --skip-link-check) SKIP_LINK=1; shift ;;
     --keep-login)      KEEP_LOGIN=1; shift ;;
+    --allow-dirty)     ALLOW_DIRTY=1; shift ;;
     -*)                die "未知选项：$1（--help 看用法）" ;;
     *)                 if [[ -z "$APP" ]]; then APP="$1"; elif [[ -z "$TAG" ]]; then TAG="$1"
                        else die "多余的参数：$1"; fi; shift ;;
   esac
 done
 
-[[ -n "$APP" && -n "$TAG" ]] || { usage; exit 2; }
+head_sha() {  # tag 里 sha 那一半是机械的，脚本可以代劳；版本号不是，见下
+  command -v git >/dev/null 2>&1 || return 1
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+  git rev-parse --short=7 HEAD 2>/dev/null || return 1
+}
+
+# tag 里的**版本号由推送方自己决定** —— 脚本不从 git tag / package.json / VERSION 猜，
+# 也不自动 +1。猜出来的版本号会进对方的发布历史，那是他们的事，不是这个脚本的事。
+sha_hint() {  # 只提示 sha 那半截——版本号是推送方的决定，脚本连举例都不越俎代庖
+  local h; h="$(head_sha 2>/dev/null || true)"
+  [[ -n "$h" ]] && printf '当前 HEAD 是 %s，版本号你自己定' "$h" || printf '版本号你自己定'
+}
+
+if [[ -z "$APP" || -z "$TAG" ]]; then
+  usage
+  sha="$(head_sha || true)"
+  if [[ -n "$sha" ]]; then
+    printf '\n当前 HEAD 的 sha：%s\n拼成 tag：v<MAJOR>.<MINOR>.<PATCH>-%s —— **版本号由你决定**，脚本不替你猜。\n' "$sha" "$sha"
+  fi
+  exit 2
+fi
 [[ "$APP" =~ ^[a-z0-9][a-z0-9._-]*$ ]] || die "App 名只能是小写字母/数字/.-_：$APP"
-[[ "$TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] || die "tag 不合法：$TAG"
+[[ "$TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] || die "tag 不符合 OCI 字符集：$TAG"
 command -v docker >/dev/null || die "没找到 docker"
 command -v curl   >/dev/null || die "没找到 curl"
 
@@ -111,7 +140,7 @@ load_config_file() {
       [[ "$val" == \'*\' ]] && val="${val:1:${#val}-2}"
     fi
     case "$key" in
-      REGISTRY|PROJECT|ROBOT_USER|ROBOT_SECRET|PLATFORM|RETAIN_K|CONNECT_WARN_MS)
+      REGISTRY|PROJECT|ROBOT_USER|ROBOT_SECRET|PLATFORM|RETAIN_K|CONNECT_WARN_MS|TAG_PATTERN)
         [[ -n "${!key:-}" ]] || printf -v "$key" '%s' "$val" ;;   # 环境变量优先（CI 注入）
       *) : ;;
     esac
@@ -149,6 +178,45 @@ if [[ -z "$REGISTRY" || -z "$PROJECT" ]]; then
 fi
 [[ "$REGISTRY" != *://* ]] || die "REGISTRY 不要带协议（去掉 http:// 或 https://）：$REGISTRY"
 [[ "$REGISTRY" != */* ]]   || die "REGISTRY 只写域名，项目名放 PROJECT：$REGISTRY"
+
+# ── tag 规范 ────────────────────────────────────────────────────────
+# 硬拒：语义上"可变指针"的名字。它们和 tag 不可变（每次发版一个新 tag）直接冲突——
+# 一旦有人推了 latest，"镜像引用没变但内容变了"就成立，部署侧不会重建，回滚也没有目标。
+case "$TAG" in
+  latest|prod|production|stable|current|head|HEAD|dev|develop|test|staging|uat|main|master|release|rc|beta|alpha)
+    die "tag 不能叫 '$TAG'。这类名字是**可变指针**语义，与「tag 不可变」冲突：
+   引用不变而内容变了 → 部署侧不触发重建（线上还跑着旧的），出问题也没有可回退的目标。
+   用 ${TAG_PATTERN_HINT}（$(sha_hint)）" ;;
+esac
+
+# 格式检查：TAG_PATTERN 没配 → 只提醒（各团队可能还没统一）；配了 → 强制
+if [[ -n "${TAG_PATTERN:-}" ]]; then
+  [[ "$TAG" =~ $TAG_PATTERN ]] || die "tag '$TAG' 不符合本仓库约定的 TAG_PATTERN：${TAG_PATTERN}"
+elif [[ ! "$TAG" =~ $TAG_PATTERN_DEFAULT ]]; then
+  warn "tag '$TAG' 不是推荐格式 ${TAG_PATTERN_HINT}（$(sha_hint)）。
+   推荐格式同时满足三件事：唯一（sha）、可追溯到 commit、按版本号可读可排序。
+   团队统一之后把 TAG_PATTERN 写进配置即可强制。"
+fi
+
+# git 状态核对：只在 git 仓库里做
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
+    if [[ $ALLOW_DIRTY -eq 1 ]]; then
+      warn "工作区不干净，--allow-dirty 放行 —— 这个镜像里有未提交的代码，tag 指向的 commit 复现不出它"
+    else
+      die "工作区不干净（有未提交/未跟踪的改动）。
+   这时构建出的镜像**无法由 tag 里的 commit 复现** —— 出事时你会对着一个查不到的版本。
+   先提交（或 stash），真要推加 --allow-dirty"
+    fi
+  fi
+  # tag 里带了 sha 就核对它是不是 HEAD：推错 commit 比推错 tag 更难发现
+  if [[ "$TAG" =~ -([0-9a-f]{7,40})$ ]]; then
+    tag_sha="${BASH_REMATCH[1]}"
+    head_sha="$(git rev-parse HEAD 2>/dev/null || true)"
+    [[ -n "$head_sha" && "$head_sha" == "$tag_sha"* ]] \
+      || warn "tag 里的 sha ($tag_sha) 不是当前 HEAD (${head_sha:0:7}) —— 确认你是有意在构建另一个 commit"
+  fi
+fi
 
 : "${ROBOT_USER:?未设置 ROBOT_USER（形如 'robot\$<project>+$APP'，注意单引号）}"
 : "${ROBOT_SECRET:?未设置 ROBOT_SECRET —— 从 CI secret 取，不要写进文件}"
