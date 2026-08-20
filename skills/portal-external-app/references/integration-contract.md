@@ -21,7 +21,7 @@
 3. **env 契约表**：逐个列镜像**实际读取**的变量名。⚠️ 镜像内部若用自有前缀（知识库读 `XGENT_PG_DSN`，门户契约别名 `KNOWLEDGE_DATABASE_URL`；且**不读裸 `PORT`**），必须写清映射，编排按镜像认的名字注入。
 4. **运维口径**（没有默认答案，必须显式声明）：
    - **迁移 argv**：迁移文件**必须在镜像里**，二进制上给一个迁移入口（如 `--role migrate`），
-     由 `deployDescriptor.migrateArgs` 在**换容器前**以一次性容器执行（指引 §7.5）。
+     由 `deployDescriptor.migrateArgs` 在**换容器前**以一次性容器执行。
      要求：幂等 · `pg_advisory_lock` 包住 · 失败非零退出 · expand-contract 前向兼容。
      ~~外部命令（`scripts/migrate.sh up` 式）~~ 已作废 —— 脚本留在对方 repo 里门户拿不到，
      对方 CI 也连不到门户的库；「启动自迁」同样不再推荐（失败变崩溃循环 + 挤健康窗口）；

@@ -16,6 +16,8 @@ description: 以资深产品经理视角把一个想法/诉求梳理成可被 SP
 
 **一切失败模式的根源:写下了无法验收、无人拍板、或与现状冲突的需求。** 每条需求都要能回答「谁在什么条件下做什么 → 系统必须怎样(带数字)」;答不上来就标为开放问题,不许用漂亮话糊过去。
 
+> **路径约定**:本 skill 可整目录拷到任何 repo 使用——面向所有用 SPMS(研发项目管理)App 管理需求的团队。skill 自带的 `references/` 永远可读;正文里凡属 SPMS 平台行为的陈述(字段、枚举、渲染规则、错误码)是**平台契约**,在平台侧核实过,不需要你读到平台源码来复核。文末「本仓库(xgent-ai-portal)默认值」一节**只在门户仓内工作时适用**——装到其他 repo 时忽略它,那些路径在你的 repo 里不存在,不要去找、不要去建。`evals/` 目录(若存在)是门户仓内部的回归夹具,skill 运行期从不读它,分发时不携带。
+
 ## 流程总览
 
 ```
@@ -37,7 +39,7 @@ SPMS 的生命周期是 `产品线 → 产品 → 版本(Release) → 项目 →
 1. `project_list` → 令牌白名单内的项目;`project_get(projectId)` → 成员名册(memberId 供后续指派)、迭代列表、需求/Issue/用例计数,以及**基本信息七段全量**(`summary` 概述 / `background` 背景 / `personas` 用户与场景 / `goal` 目标 / `nonGoals` 非目标 / `constraints` 约束与前提 / `openQuestions` 开放问题)。
 2. **找范例校准**:① 读该项目已有的 2-3 条需求(`requirement_list` + `requirement_get`),看清这个项目里的需求写到什么颗粒度、验收标准怎么写;② `docs/PRD-*.md` 里若已有同类 PRD,粗读一份。这一步和 dev-plan 找范例是同一个动作。
 3. **找不到对应项目就停下来问**,不许把需求塞进一个「看起来相近」的项目——`projectId` 一旦定错,后续排期/统计/权限全错位,且 key 已经烧掉。
-4. **项目基本信息可以直接写**(FR-236):`project_update({projectId, …})` 部分更新下面七段,传 `null` 清空。**MCP 仍没有 `project_create`**,项目要人工在 Web 建。写之前先 `project_get` 读现状**整段回写**——工具是整段覆盖,不是追加,别把别人已写的内容冲掉;拿不准就把七段摊给用户确认再写。七段与 Web tab 的字段**同名同序**:
+4. **项目基本信息可以直接写**:`project_update({projectId, …})` 部分更新下面七段,传 `null` 清空。**MCP 仍没有 `project_create`**,项目要人工在 Web 建。写之前先 `project_get` 读现状**整段回写**——工具是整段覆盖,不是追加,别把别人已写的内容冲掉;拿不准就把七段摊给用户确认再写。七段与 Web tab 的字段**同名同序**:
 
    | 基本信息字段 | 入参名 | PRD 出处 | 格式 |
    | --- | --- | --- | --- |
@@ -67,7 +69,7 @@ SPMS 的生命周期是 `产品线 → 产品 → 版本(Release) → 项目 →
 ## 第 2 步:查重与现状核对
 
 1. **SPMS 查重**(红线):逐条 R# 跑 `pms_search(keyword)`(跨需求/Issue/用例,**上限 50 条**,用具体词别用泛词)+ `requirement_list(projectId)` 翻页看全量。命中已有需求 → 改成 `requirement_update` 补充,而不是新建一条并行的。
-2. **平台现状核对**:这个能力平台是不是已经有了?读代码/`CLAUDE.md`/`docs/*.md`(接入指引与既有 PRD)/`goal/*.md`(历史计划)/memory 索引。**发现需求与现实冲突(用户以为存在的能力其实没有,或以为没有的其实已经有)——如实呈现,给替代方案,不要顺着错误假设写下去。**
+2. **现状核对**:这个能力是不是已经有了?读宿主 repo 的代码、`CLAUDE.md`、文档目录(接入指引与既有 PRD)、历史开发计划、memory 索引。**发现需求与现实冲突(用户以为存在的能力其实没有,或以为没有的其实已经有)——如实呈现,给替代方案,不要顺着错误假设写下去。**
 3. 结论落一张表,每条 R# 只有四种下场:
 
 ```
@@ -89,7 +91,7 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 正文骨架见 `references/prd-skeleton.md`(FR 与 NFR 两套)。写作硬规则:
 
 1. **验收标准是判据不是愿望**。每条 = 谁在什么条件下做什么 → 系统必须怎样,**带数字**。写不出可断言形式的,说明需求还没想清楚,回第 1 步。
-2. **验收标准的物理格式(读过前端得出的事实,别用 markdown)**:SPMS 把 `acceptanceCriteria` 按 `\n` 切行渲染成圆点列表,行首 `1. ` 会被剥掉(`apps/spms-app/src/components/RequirementsView.tsx`)。所以——**一行一条;不要写 `-`/`*` 前缀(会原样显示成「• - xxx」);不要空行分段;不要表格/加粗/嵌套。**
+2. **验收标准的物理格式(平台前端契约,别用 markdown)**:SPMS 把 `acceptanceCriteria` 按 `\n` 切行渲染成圆点列表,行首 `1. ` 会被剥掉。所以——**一行一条;不要写 `-`/`*` 前缀(会原样显示成「• - xxx」);不要空行分段;不要表格/加粗/嵌套。**
 3. **PRD 正文(`description`)是完整 markdown**(markdown-it 渲染,标题/列表/表格/代码块都可以)。图片只支持 `![](xgent-attachment:<id>)` 引用且 MCP 无上传面 → **正文里不要放外链图**。
 4. **NFR 必须带 `category` + 数值**。「系统要快」不是 NFR;「列表 p95 < 300ms @ 1 万行」才是。六档质量属性见 `references/spms-mapping.md`。
 5. **平台硬约束是 NFR 的常客**,该写就写进去:多租户隔离、三语 i18n、列表服务端分页、业务错误一律 200、席位/计量口径、ACL 可见性。别默认「大家都知道」。
@@ -99,17 +101,17 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 
 **写库前先把清单摊给用户确认**——`*_create` 不幂等,重复执行会造出重复需求,且 key 烧掉不可回收。
 
-1. **`type` 必须先定死**。key 前缀在**创建时**按 `type` 分配(`functional`→`FR-N`,`non_functional`→`NFR-N`),序列是**租户级**的(不是项目级,所以编号跨项目连续)。**之后再改 `type`,key 不会跟着改**(`apps/spms-server/src/lib/entities/requirements.ts` 明确如此)——建完再改就是永久错配。
+1. **`type` 必须先定死**。key 前缀在**创建时**按 `type` 分配(`functional`→`FR-N`,`non_functional`→`NFR-N`),序列是**租户级**的(不是项目级,所以编号跨项目连续)。**之后再改 `type`,key 不会跟着改**(平台契约)——建完再改就是永久错配。
 2. **`status` 一律 `draft`**。评审转 `reviewing`、批准转 `approved` 是**人**的动作,不是 Agent 该按的按钮(同 MCP「终态留给人」的既有姿势)。
 3. **建完立刻回填真实 key**:把 `R1 → FR-37` 写回 PRD 文档的编号表。之后全篇一律用真实 key 指代。
 4. **每条 FR 至少种 1 条 TC**:`testcase_create(projectId, title, requirementKey='FR-37', steps, expected)`,`status=draft`、`result` 默认 `untested`。验收标准里那条最难的,就是 TC 的 `expected`——**种不出 TC 的验收标准,基本可以断定是假的**,回第 4 步改。
-5. **MCP 写不到、必须人工在 Web 补的字段**(已核实 `mcp/tools/requirements.ts` 的 inputSchema):`importance`(重要度)、`owner`(负责人)、`dueDate`(截止日期)、`release`(版本)、附件。排期与点数属于规划期(`sprint_plan_items`),**不在 PRD 阶段做**。这些要单列一张「待人工补」清单交付。
+5. **MCP 写不到、必须人工在 Web 补的字段**(平台契约,核对过 MCP 面的 inputSchema):`importance`(重要度)、`owner`(负责人)、`dueDate`(截止日期)、`release`(版本)、附件。排期与点数属于规划期(`sprint_plan_items`),**不在 PRD 阶段做**。这些要单列一张「待人工补」清单交付。
 6. **失败就如实说**:`CAPABILITY_REQUIRED`(令牌无 write)、`PROJECT_NOT_ALLOWED`(项目不在白名单)、需求写闸要求 `requirement.manage` 或本项目 Lead——报出缺什么、怎么补,**不要绕道**(比如改去建 Issue)。
 7. **没有 MCP 令牌 / 工具不可用时不要假装写入**:产出文档 + 一份「照此在 Web 逐条建单」的清单(字段逐个给值),并明说未写入。
 
 ## 第 6 步:落盘与交接
 
-1. **落盘** `docs/PRD-<代号>.md`。代号按**能力域**取(讲清这份 PRD 覆盖什么),**不必与 dev-plan 的代号对齐**——PRD 与开发计划是**多对多**:一份 PRD 可拆成多份计划,多份 PRD 的需求也常被合并进同一份计划。**唯一的关联键是 `FR-N`/`NFR-N` key,不是文件名。** 目标文件已存在时先确认再覆盖。
+1. **落盘** `docs/PRD-<代号>.md`(循宿主 repo 的文档目录惯例)。代号按**能力域**取(讲清这份 PRD 覆盖什么),**不必与 dev-plan 的代号对齐**——PRD 与开发计划是**多对多**:一份 PRD 可拆成多份计划,多份 PRD 的需求也常被合并进同一份计划。**唯一的关联键是 `FR-N`/`NFR-N` key,不是文件名。** 目标文件已存在时先确认再覆盖。
 2. **自检**(逐项过,不过的回去改):
    - R1…Rn 逐条有下场(新建 key / 更新 key / 已可用 / 显式排除并给去向),**一条都没吞**;
    - 每条 FR 的验收标准 ≥1 条且**每条都能断言**;每条 NFR 有 `category` + 数值;
@@ -119,7 +121,7 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
    - 引用的代码路径/既有能力都是本次真读过的(同 dev-plan 的「不虚构核实」)。
 3. **汇报**给用户时,除了文档路径,单独列出:① 留给用户拍板的**开放问题**;② 调查中发现的、与用户假设**冲突的事实**;③ 你砍掉/推迟的范围(让用户有机会否决);④ **已写入 SPMS 的 key 清单**(FR/NFR/TC)与本次回写的**项目基本信息段**(照第 0 步第 4 条的表);⑤ **待人工补**的字段(重要度/负责人/截止日期/版本,以及评审后的状态流转)。
 4. **交给 dev-plan(PRD 与计划是多对多,没有固定映射)**:交接的单位是 **`FR-N`/`NFR-N` key 的集合**,不是整份文档——一份 PRD 可拆给多份计划,一份计划也可以捞起好几份 PRD 里的需求合并做。计划取它覆盖的那组 key 当 dev-plan 第 1 步的 `R1..Rn`,计划结尾的「需求 → 设计映射」表逐条指回 SPMS 实体。SPMS 侧的落点是 `plan_create(projectId, title, requirementKeys=[...])` → `PLAN-N`,正文写回走 `plan_update({content})`——`requirementKeys` 就是这层多对多关系的实体。
-   ⚠️ **一个 `PLAN-N` 只能挂同一项目的需求**:`requirementKeys` 里出现别的项目的 key 会被拒(`LIFECYCLE_MISMATCH`,已核实 `apps/spms-server/src/lib/entities/plans.ts:41`)。跨项目的需求要合并做,只能一个项目一份计划,或先把需求迁到同一项目。
+   ⚠️ **一个 `PLAN-N` 只能挂同一项目的需求**:`requirementKeys` 里出现别的项目的 key 会被拒(报 `LIFECYCLE_MISMATCH`,平台契约)。跨项目的需求要合并做,只能一个项目一份计划,或先把需求迁到同一项目。
    **怎么分组是 dev-plan 的判断**(技术依赖、里程碑、可交付性);PRD 只提供**产品侧的分组信号**:优先级分档、依赖前置、哪几条必须同时上线才有意义。可以在 §7 写一条「建议分批」,但注明**供参考、非约束**。
 
 ## 红线(任何情况下不违反)
@@ -134,6 +136,8 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 ---
 
 ## 本仓库(xgent-ai-portal)默认值
+
+**仅当你就在 xgent-ai-portal 门户仓内工作时适用;装在其他 repo 的忽略本节(下述路径在你的 repo 里不存在)。**
 
 - **SPMS 接入**:MCP 工具 `mcp__xgent-pms__*`(`project_list`/`project_get`/`project_update`/`pms_search`/`requirement_*`/`testcase_*`/`plan_*`)。契约与错误码见 `docs/pms-mcp.md`;字段/枚举/写面缺口速查见 `references/spms-mapping.md`。
 - **文档落盘**:PRD → `docs/PRD-<大写代号>.md`(代号按能力域取);下游开发计划 → `goal/<大写代号>.md`(dev-plan skill,模板 `goal/PLAN-TEMPLATE.md`)。**两侧代号互不绑定**——PRD : 计划是**多对多**(既拆也合),靠 `FR-N`/`NFR-N` key 串联(SPMS 侧即 `plan_create(requirementKeys)`,同项目内)。

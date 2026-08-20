@@ -1,14 +1,14 @@
 ---
 name: xgent-app-release
-description: '把一个 App 的前端产物发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令完成「构建 → 打包 → 上传 dist → bump 版本 →（可选）换镜像」，不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端/上传产物/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「发布 401 / 404」「发布 200 但 ok:false」「/apps/<key>/ 白屏或资源 404」「发上去了但线上没变」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app frontend release from the app''s own repo: release tokens, dist packaging, version bumps, CI wiring, or a blank/404 /apps/<key>/ page after a publish.'
+description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动生效，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/<key>/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/<key>/ page after a publish.'
 ---
 
-# xgent-app-release · 前端产物自助发布
+# xgent-app-release · App 版本自助发布
 
 **这个 skill 用在 App 自己的 repo 里**（门户代码不在你手上，也不需要在）。目标是：把构建好的前端
 一次推上门户的某个 listing，并让「线上跑的是哪一版」在控制台上可辨认。
 
-每次提交在门户侧落成一条**发布提案**（APP-DELIVERY-3），按内容自动定级：
+每次提交在门户侧落成一条**发布提案**，按内容自动定级：
 
 - **自动通过档**：`dist`（前端产物）· `version` · `deployDescriptor.image` · 展示字段
   （name / tagline / desc / icon / color / cat / navItems / dashboardWidgets）——
@@ -24,7 +24,7 @@ description: '把一个 App 的前端产物发布到 XGENT.ai Portal —— 在 
 
 ### 那你 repo 里那份 `app.manifest.json` 呢？
 
-**它就是你 App 清单的唯一事实源**，而且从 APP-DELIVERY-3 起**直接参与发版**：
+**它就是你 App 清单的唯一事实源**，而且**直接参与发版**：
 `publish --manifest deploy/portal/app.manifest.json` 把它随提案交上去 ——
 无治理变更的自动生效，有治理变更的等平台批准。门户代码里不再保留你清单的副本，
 「改了 manifest 却被门户下次部署改回去」的静默漂移已经从机制上消灭。

@@ -57,7 +57,7 @@
 }
 ```
 
-两条操作面的事实（APP-DELIVERY-3 后）：
+两条操作面的事实：
 
 - 写进 manifest 后随 `publish --manifest` 提交 —— `seatRoles` 是治理档，提案进「发布审核」
   等平台批准后生效（`register-app --prod` / 控制台「导入 manifest」是运维兜底路径，同一段
@@ -65,7 +65,7 @@
 - 出仓四件（knowledge / task-gateway / omni-parser / pagebuilder）已**不在** `LISTING_DEFS`
   里 —— 清单唯一事实源就是对方仓的 manifest，不存在双事实源问题；**别把定义加回门户**
   （verify-split「清单零残留」棘轮看守）。
-- 仓内 App 在 `LISTING_DEFS` 加 `seatRoles` **不用 bump version**：它走 BLG-25 的「代码权威
+- 仓内 App 在 `LISTING_DEFS` 加 `seatRoles` **不用 bump version**：它走「代码权威
   字段」通道，每次部署都对齐，跟版本治理无关。
 
 ## 4. 对接面与三态

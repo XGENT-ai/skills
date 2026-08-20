@@ -1,6 +1,6 @@
 # SPMS 需求落库速查
 
-本文所有字段/枚举/写面缺口均核自代码:`apps/spms-server/src/db/schema.ts`、`apps/spms-server/src/mcp/tools/{meta,requirements,testcases,plans}.ts`、`apps/spms-server/src/lib/entities/requirements.ts`、`apps/spms-app/src/components/RequirementsView.tsx`。完整 MCP 契约见 `docs/pms-mcp.md`。
+本文所有字段/枚举/写面缺口均核自 SPMS 平台实现,当**平台契约**用。文中偶尔出现的 `apps/spms-server/...` 这类源码路径是**门户仓内的核实出处记录**——装到外部 repo 后本 repo 里没有这些文件,不要去读、不要去找;拿不准的以运行中的 SPMS MCP 面实际行为为准。
 
 ## 1. PRD 各部分落到哪
 
@@ -18,7 +18,7 @@
 | 条目正文 | `requirements.description`（UI 标签「PRD 描述」) | 完整 markdown |
 | 验收标准 | `requirements.acceptanceCriteria`（UI 标签「验收标准」) | **纯文本,一行一条** |
 | TC 种子 | `test_cases`（`TC-N`) | `testcase_create(requirementKey=...)` |
-| 开发计划(下游) | `plans`（`PLAN-N`)+ `plan_requirements` | dev-plan 阶段 `plan_create(requirementKeys)` / `plan_update({content})`。**PRD : 计划多对多**——可拆可合,关联键是 FR/NFR key;⚠️ **只能挂同项目的需求**,跨项目 key 报 `LIFECYCLE_MISMATCH`(`lib/entities/plans.ts:41`) |
+| 开发计划(下游) | `plans`（`PLAN-N`)+ `plan_requirements` | dev-plan 阶段 `plan_create(requirementKeys)` / `plan_update({content})`。**PRD : 计划多对多**——可拆可合,关联键是 FR/NFR key;⚠️ **只能挂同项目的需求**,跨项目 key 报 `LIFECYCLE_MISMATCH`(平台契约) |
 
 ## 2. 枚举真值
 
@@ -60,7 +60,7 @@
 
 ## 5. 正文与验收标准的物理格式
 
-**`description`(PRD 描述)** —— markdown-it 全量渲染(`packages/file-preview`),标题/列表/**表格**/代码块都可用。
+**`description`(PRD 描述)** —— markdown 全量渲染(平台统一的 markdown 渲染组件),标题/列表/**表格**/代码块都可用。
 图片只认 `![name](xgent-attachment:<id>)` 稳定引用,而 MCP 没有上传面 → **正文里不要放外链图**。
 
 **`acceptanceCriteria`(验收标准)** —— **不是 markdown**。前端按 `\n` 切行、trim、丢空行,渲染成圆点列表,并剥掉行首的 `\d+\. `:
