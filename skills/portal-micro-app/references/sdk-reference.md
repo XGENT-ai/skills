@@ -1,6 +1,6 @@
 # SDK 与令牌参考（微应用视角）
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §5/§7.4/§8.1/§10（2026-07）。冲突时以门户仓库原文为准。
+> 提炼自门户仓库 `docs/SSO与App开发指引.md` §5/§7.4/§8.1/§10（2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库原文为准。
 
 ## 1. 握手与令牌注入
 
@@ -76,6 +76,10 @@ await sdk.scheduler.update(task.id, { status: "paused" }); await sdk.scheduler.c
 const data = await sdk.callService("myapp", "/api/things", { method: "GET" });
 // sdk.files.* 即 callService("files", …) 的薄封装
 
+// 下载文件（跨源预签名 URL 唯一安全姿势，见 §5.1）
+import { openDownload } from "@xgent/portal-sdk";
+openDownload(presignedUrl);
+
 // 与宿主 UI 协作
 sdk.resize(document.body.scrollHeight + 8);
 sdk.navigate("/app/another-app");            // 让宿主跳 Portal 内路由
@@ -102,6 +106,23 @@ sdk.onFullscreen(on => ...);
 - 浏览器里 iframe 直接 `fetch` Open API / 独立后端受 CORS 限制；后端 CORS 白名单是环境变量维护的有限源列表。
 - 首选 `sdk.callService`：宿主为该应用铸/复用 host-proxy TDT、代为 `fetch`、回传响应；你的后端只需信任 Portal web 源一个跨域来源。401/403 时宿主自动重铸令牌重试一次。
 - `callService` 不替后端做授权——后端仍要自省校验 aud/scope（这不是前端的事，但别以为走了代理就"安全了"）。
+
+### 5.1 下载文件：只用 `openDownload`，别自己写 `<a href>.click()`（BUG-48）
+
+预签名下载 URL 指向**对象存储源**，跟 App 前端不同源。`<a href=url>.click()` 于是不是"下载"，而是让 App 的 iframe **自己导航**过去——门户 CSP 的 `frame-src` 只放行 App 前端源，Chrome 会把**整个 App** 换成拦截页：「该内容被屏蔽了。请联系网站所有者以解决此问题。」控制台是 `Framing '…' violates … "frame-src …"`。
+
+```ts
+import { openDownload } from "@xgent/portal-sdk";
+const { url } = await sdk.callService("myapp", `/attachments/${id}/download`);
+openDownload(url);            // ✅ 顶层弹窗不受 frame-src 管，一闪即落盘
+```
+
+三个反直觉点：
+
+- 加 `a.download = name` **救不回来**——该属性对跨源 URL 会被浏览器忽略，照样导航、照样被拦。
+- 宿主 sandbox 的 `allow-downloads` 是**另一半**（已有）：缺它，弹窗会开但文件被静默丢弃。它治不了上面那个导航拦截，两件事别混。
+- 服务端要保证 URL 带 `Content-Disposition: attachment`（files-server 的 `/:id/download` 默认如此），否则新标签页变成预览而不是落盘。
+- 例外：**blob:/同源** URL（前端自己生成的 CSV 等）用 `<a download>.click()` 没问题，属性生效、不产生导航。
 
 ## 6. 最小可用例子
 

@@ -28,6 +28,7 @@ acl/manifests.ts + LISTING_DEFS ─seed─► marketplace_listings ─install─
 | 接线 | 位置 | 漏掉的症状 |
 | --- | --- | --- |
 | `/svc/<key>` 白名单 | `deploy/caddy/Caddyfile` | 生产 404（网关白名单 map 收口，未注册=路由不可达） |
+| **Caddy 全局配置两条不可逆** | 两份 Caddyfile 的 `admin localhost:2019` 不许改回 `admin off`；`ProcessDriver.reloadRouting` 必须是 `systemctl reload`（不是 `restart`），且与 `deploy.sh` 的 sudoers 授权**逐字一致** | 关 admin ⇒ 三个 flavor 的热重载全部**静默**失效（只剩一行 warn）；改回 restart ⇒ 请求处理器拆掉自己正在应答的那条连接，调用方在数据已落库之后拿到 GOAWAY + 无响应体（2026-08-19 事故）。门是 `verify-caddy-dynamic` |
 | compose profile | `deploy/docker-compose.yml` 加 `app-<key>`（同 runtime 镜像 + `command: bun --filter @xgent/<key>-server`） | 容器起不来 |
 | 按需部署注册表 | `apps/api/src/modules/deploy/registry.ts` 的 `DEPLOYABLE_APP_SERVICES` | 生产卡「服务正在部署」门 |
 | **Dockerfile COPY 新 workspace** | 根 `Dockerfile` | 本地全绿、镜像构建才炸（真实事故） |

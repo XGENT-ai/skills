@@ -33,15 +33,18 @@ npx @xgent/release-cli status --portal https://portal.example.com
 - **一枚令牌只对一个 listing 有效**。拿它去动别的 key 一律 `404`——门户**故意不区分**
   「不属于你」和「那个 App 不存在」，免得令牌变成探测别人 App 是否存在的工具。
 - 可随时吊销、可设过期时间。**每次调用实时查库**，所以吊销后下一次调用就 `401`，没有缓存窗口。
-- 它能做的封顶三件：`dist` · `version` · `deployDescriptor.image`。
+- 它能**单方面生效**的仍只有自动通过档：`dist` · `version` · `deployDescriptor.image` ·
+  展示字段。治理变更只能**提议**（随 `manifest` 提交，进平台审核队列，批准前库里一字不动）。
   它也**读不回** `descriptor.env`——响应体里永远没有它，因为那里面是生产密钥。
 
 ## 2. 端点
 
 ```
-POST /api/market/release/:key          发布
-GET  /api/market/release/:key          whoami（校验令牌，只返回持有者本就知道的东西）
-GET  /api/market/release/:key/status   只读：当前版本 / 产物 digest / 后端部署状态
+POST   /api/market/release/:key                发布（落成一条发布提案）
+GET    /api/market/release/:key                whoami（校验令牌，只返回持有者本就知道的东西）
+GET    /api/market/release/:key/status         只读：版本 / 产物 digest / 部署状态 / 最近一条提案
+GET    /api/market/release/:key/proposals/:id  只读：单条提案状态（--wait 轮询用）
+DELETE /api/market/release/:key/proposals/:id  撤回自己【待审】的提案（提交方的权利）
 ```
 
 认证只有一件事：`Authorization: Bearer xrel_…`。没有 cookie、没有 session、没有 CSRF 面。
@@ -54,25 +57,41 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
   -H "authorization: Bearer $XGENT_RELEASE_TOKEN" \
   -F version=1.4.2 \
   -F image=<key>:1.4.2 \          # 可选；没有后端的纯前端 App 省掉
-  -F dist=@dist.tgz               # 只 bump 版本/换镜像时可省掉
+  -F dist=@dist.tgz \             # 只 bump 版本/换镜像时可省掉
+  -F manifest=@deploy/portal/app.manifest.json   # 可选；清单变更/首次接入时带上
 ```
+
+> `deploy/portal/app.manifest.json` 是【你自己 App 仓】的惯例路径，不是门户仓文件 ——
+> 你的 manifest 只存在于你自己的 repo，按你实际存放的位置传即可。
 
 `whoami` 就是同一路径的 `GET`，带同一个 header。
 
-## 3. 字段白名单：只认三个
+**前两条是发布面的底线，第三条不是**：只读面比发布面晚一版上线，老门户上打它得到
+`404 NOT_FOUND / 路由不存在`——与「令牌不是这个 key 的」**响应体完全相同**（门户故意不区分，
+免得令牌能用来探测别人的 App 是否存在）。分诊只有一条路：同一枚令牌先打 whoami，
+`200` 就说明是门户没有这个面。见 `troubleshooting.md`。
+
+## 3. 字段：四个 multipart 字段 + 定级
 
 | 字段 | 必填 | 说明 |
 | --- | --- | --- |
-| `version` | ✅ | 字母/数字/`. _ + -`，≤64 字符。**每次都要，且每次都要 bump** |
+| `version` | （或 manifest.version） | 字母/数字/`. _ + -`，≤64 字符。**每次都要 bump** |
 | `dist` | | multipart 文件，`.tar.gz`，根下 `index.html`，≤64MB。省掉 = 这次不换产物 |
 | `image` | | 镜像引用。省掉 = 不换镜像 |
+| `manifest` | | `app.manifest.json` 全文（文件或 JSON 字符串）。省掉 = 只发三件（全自动档） |
 
-**任何其它字段都会被拒**，且拒在写库之前——`scopes` / `aclManifest` / `dependencies` /
-`exchangeTargets` / `serviceBaseUrl` / `seat*` / `navItems` / `embedCsp` / `deployDescriptor` /
-`status` / `name` … 一律 `200 + VALIDATION_FAILED`，库里一字不改。
+**这四个之外的散字段仍然直接拒**（`200 + VALIDATION_FAILED`，拒在写库之前）——
+治理变更只能经 manifest 整份提交，没有「往表单里塞一个 scopes」这条路。
 
-这不是防你，是**边界**：这些字段会改变权限面或影响其他租户的治理，改它们要走门户发版与审计。
-遇到需要改这些的需求，正确动作是找平台管理员，不是找绕过方式。
+**定级唯一判据：这次提交有没有改变权限面。** manifest 里与当前 listing 相比有治理差异
+（scopes / aclManifest / dependencies / exchangeTargets / serviceScopes / serviceBaseUrl /
+seat* / scopeLabels / embedUrl / embedCsp / type / 部署形态…，以及**任何门户不认识的字段**）
+⇒ 提案 `pending` 等平台审批；只有版本/产物/镜像/展示字段的差异 ⇒ `auto_approved` 当场生效。
+**提交即拒**（连提案都不落）的只有四类：manifest 携带密钥值（SA secret / descriptor.env）、
+SERVICE_ONLY scope、形状非法，以及**该 App 已有一条待审提案**（`PROPOSAL_PENDING`——
+待审期间连纯 dist/version 的自动档也拒，否则「后交先生效」，批准旧提案时会把后发的版本滚回去）。
+另注意 `serviceAccount.clientId` 归属也算权限面：声明一个已归属别的 App 的 clientId ⇒
+`pending`，且批准也会在生效时被拒 —— clientId 用自己的。
 
 ## 4. 响应怎么读
 
@@ -81,10 +100,13 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
 
 只有三种情况不是 200：`401`（令牌无效/吊销/过期）、`404`（令牌不是为这个 key 签发的），以及真故障。
 
-成功时 `data` 里：
+成功时 `data` 里（先看 `status`：`"applied"` = 已生效；`"pending"` = 等审批，此时只有
+`proposalId` / `kind` / `governance`（待审字段清单）有意义）：
 
 | 字段 | 含义 |
 | --- | --- |
+| `proposalId` / `status` / `kind` | 本次提案：id · applied/pending · register(首次)/update |
+| `governance` | pending 时的待审字段清单 |
 | `version` | 落库后的版本号 |
 | `distDigest` | 本次产物的 sha256（`null` = 这次没换产物）。**控制台上「线上跑的是哪一版」靠它** |
 | `distFiles` | 产物顶层条目数 |
@@ -134,7 +156,7 @@ K8s 侧滚动更新（旧 Pod 在新 Pod ready 前不下线）。**服务不会�
 不确认这一步，CI 会绿着退出而线上还跑着旧容器。
 
 ```bash
-# 发布并等到换版结束（默认 300s，可写 --wait 600）
+# 发布并等到换版结束（默认 1800s —— 含等人工审批的情况，可写 --wait 600）
 npx @xgent/release-cli publish --key $KEY --version $VER --dist dist/ --image $KEY:$VER --wait
 
 # 或任何时候单查
@@ -142,8 +164,14 @@ npx @xgent/release-cli status --key $KEY
 ```
 
 `--wait` 成功 → 打印实际在跑的镜像引用、零退出；失败或超时 → 打印原因、**非零退出**。
-没换镜像时它直接跳过，不空等。判据看的是最近一条 `deploy|redeploy` 任务，
-不掺 `provision-tenant`（那是某个租户的 bootstrap，与镜像滚动无关）。
+没换镜像时它直接跳过，不空等。镜像来源不限 `--image`：**manifest 的
+`deployDescriptor.image` 换了镜像同样会等**（提案批准后接着等容器换版）。判据看的是
+最近一条 `deploy|redeploy` 任务，不掺 `provision-tenant`（那是某个租户的 bootstrap，
+与镜像滚动无关）。
+
+门户上没有这个面时，`status` 与 `--wait` 都用不了：产物那半边照旧由 `publish` 的返回体
+（`version` / `distDigest` / `redeployQueued`）交代清楚，容器那半边只能找平台管理员看
+「服务部署」面板。**别用「命令退出码 0」替代这半边的结论。**
 
 `status` 返回：
 

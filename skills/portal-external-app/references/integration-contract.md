@@ -1,6 +1,6 @@
 # 外部镜像服务类应用 · 集成契约
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§15 与已接入案例（知识库 / omni-parser，2026-07）。冲突时以门户仓库为准。
+> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§15 与已接入案例（知识库 / omni-parser，2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
 
 ## 1. 形态与分界
 
@@ -20,7 +20,11 @@
 2. **`app.manifest.json`**（见 registration-and-onebox.md）。
 3. **env 契约表**：逐个列镜像**实际读取**的变量名。⚠️ 镜像内部若用自有前缀（知识库读 `XGENT_PG_DSN`，门户契约别名 `KNOWLEDGE_DATABASE_URL`；且**不读裸 `PORT`**），必须写清映射，编排按镜像认的名字注入。
 4. **运维口径**（没有默认答案，必须显式声明）：
-   - DB 迁移由谁跑：镜像启动自迁（omni-parser 式）或外部命令（知识库 `scripts/migrate.sh up` 式）；
+   - **迁移 argv**：迁移文件**必须在镜像里**，二进制上给一个迁移入口（如 `--role migrate`），
+     由 `deployDescriptor.migrateArgs` 在**换容器前**以一次性容器执行（指引 §7.5）。
+     要求：幂等 · `pg_advisory_lock` 包住 · 失败非零退出 · expand-contract 前向兼容。
+     ~~外部命令（`scripts/migrate.sh up` 式）~~ 已作废 —— 脚本留在对方 repo 里门户拿不到，
+     对方 CI 也连不到门户的库；「启动自迁」同样不再推荐（失败变崩溃循环 + 挤健康窗口）；
    - 是否需**每租户 bootstrap**：业务表 FK 自己的 `tenants` 表就需要——首次写入前 `INSERT INTO tenants (id, slug) VALUES ('<门户租户UUID>','<slug>') ON CONFLICT DO NOTHING`，`id` **必须等于门户租户 UUID**（自铸 uuid 会在首写触发外键冲突）；`tenant_id` 只是普通列则无需；
    - `/health` 判活口径（§4）。
 5. **对接契约文档**：按 contract-doc-template.md 的结构写（路由→scope→PID 表、env、运维命令、信任边界）。
