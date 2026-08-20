@@ -5,13 +5,15 @@
 > 因此规则一律写成「命中当且仅当清单里出现 X」的形式。凡是需要"感觉一下体量"的措辞,都是缺陷,发现即修。
 >
 > **这套刻度是绝对的,不靠任何项目的历史点数支撑。** 因子命中的是可核对的事实(清单里有没有这个路径、验收标准里有没有这个词),命中数到档位的映射写死在 §2。**一个刚立项、一条历史需求都没有的项目,照样能用这张表估出与老项目可比的点数**——这正是它相对「锚定团队历史」的价值所在。历史点数怎么用见 §7,一句话:**只用于事后观测因子表本身准不准,永远不参与单条判定。**
+>
+> ⚠️ **路径说明**:本文所有 `apps/…`、`packages/…` 形态的具体路径都是**门户仓(xgent-ai-portal)内的实例**——§2 的 glob 是该仓的路径映射,§9 的样例是在该仓核实过的历史快照。装到外部 repo 后**本 repo 里没有这些文件**:不要去读、不要去找;先按 §2.1 写下你的代码库的路径映射,再开始估点。
 
 ## 1. 输入包(判定的全部依据)
 
 | 输入 | 必需 | 来源 |
 | --- | --- | --- |
 | 需求 key + 正文 + 验收标准 | ✅ | `requirement_get` / `issue_get` |
-| **影响文件/工作区清单**(已批准的开发计划里的「增量清单」,或调用者显式给出) | ✅ | `goal/<代号>.md` §1 |
+| **影响文件/工作区清单**(已批准的开发计划里的「增量清单」,或调用者显式给出) | ✅ | 开发计划文档的增量清单节(dev-plan 产出) |
 | 仓库 commit | ✅ | `git rev-parse HEAD` |
 
 **判定只看这三样,而且只看字面(§2.0)。** 需求正文(`description`)**整段都不是判定依据**——"这个改动挺大的""要重构一遍"这类形容词固然不算,连正文里写着"幂等""并发"也不算。文本侧唯一被用到的是**验收标准里逐字出现的关键词**(F7 的关键词表)。
@@ -138,7 +140,7 @@
 
 ## 6. 判定溢出规则
 
-因子表用精度换复现性(见 `goal/SDLC-SKILLS.md` 取舍 a):一条"改动很绕但只碰一个文件"的需求会被低估,这是**已承认的代价**。
+因子表用精度换复现性(设计时显式承认的取舍):一条"改动很绕但只碰一个文件"的需求会被低估,这是**已承认的代价**。
 
 **缓解**:把本次改动按 §7 的**档位含义**独立归一次档(那是一次表查询,不是"感觉"),若与因子档位差 **≥2 档**,**必须报出分歧**,写清「因子命中 N 条 → X 分;按 §7 的档位含义归档为 Y 分,理由是……」,让人裁决。
 
@@ -174,9 +176,9 @@
 
 ⛔ **三条禁止**:① 不得因为"以前同类需求打了 5 分"就把本次判定改成 5 分;② 不得因为项目没有历史点数就拒估或标「暂无标尺」;③ 不得跨项目搬历史点数来"找感觉"——档位含义已经是跨项目通用的,不需要它。
 
-### 本仓库的历史观测(**不参与判定**,仅作因子表的回归记录)
+### 门户仓的历史观测(**不参与判定**,仅作因子表的回归记录)
 
-项目「XGENT.ai 平台基座」(`cbbaff8ef15d5d289bf7f7ad`)按上面第 1–2 步做过一次观测:
+门户仓的主项目按上面第 1–2 步做过一次观测(需求 key 为该项目的历史条目,仅作记录):
 
 | 需求 | 人工点数 | 状态 | 因子向量(按 §2 复算) | 因子档位 |
 | --- | --- | --- | --- | --- |
@@ -192,7 +194,7 @@
 
 ## 8. 历史吞吐与估点无关
 
-一周迭代 committed **70 / 39 / 55**(该项目 Sprint 1/2/3,当前 Sprint 4 已漂到 149;同租户另一个项目同期是 100/174/125)——这些数字**既不参与点数判定,也不用于推断容量**,记在这里只是说明它们漂得有多厉害、为什么不能当刻度。
+实测观察:同一项目相邻迭代的 committed 能漂出 2–4 倍,不同项目之间更没有可比性——迭代吞吐**既不参与点数判定,也不用于推断容量**,记在这里只是说明它漂得有多厉害、为什么不能当刻度。
 
 **容量口径永远以该 Sprint 自己的 `capacity` 为准**(`capacity` 为 `null` 时容量闸不成立,见 SKILL.md 第 4 步)。
 
@@ -218,7 +220,7 @@ unknown: []               points: 1        (0 命中 → 1;§7「零面改动」
 
 ### FIXTURE-2 · FR-142(5 点)
 
-输入包:`goal/PMS-6.md` §4 —— `apps/spms-server/src/routes/requirements.ts`(decompose 新端点)、`src/lib/entities/{requirements,sprints,issues}.ts`(排期互斥 helper + FOR UPDATE 固定锁序 + 前缀 advisory lock)、`apps/spms-app/{RequirementsView,scrum/_shared,scrum/BacklogView}.tsx` + i18n、`scripts/verify-requirements.ts` + `verify-scrum.ts`;无迁移。
+输入包:该需求的开发计划增量清单(门户仓内的历史快照)—— `apps/spms-server/src/routes/requirements.ts`(decompose 新端点)、`src/lib/entities/{requirements,sprints,issues}.ts`(排期互斥 helper + FOR UPDATE 固定锁序 + 前缀 advisory lock)、`apps/spms-app/{RequirementsView,scrum/_shared,scrum/BacklogView}.tsx` + i18n、`scripts/verify-requirements.ts` + `verify-scrum.ts`;无迁移。
 
 ```
 matchedFactors: [F1, F5, F7, F9]        F2 ✗ 无迁移;F3 ✗ 无新组件文件;F6 ✗ 未出 spms;F8 ✗
@@ -227,7 +229,7 @@ unknown: []                             points: 5        (4 命中 → 5;§7「�
 
 ### FIXTURE-3 · FR-141(8 点)
 
-输入包:`goal/PMS-6.md` §3 —— `apps/api/src/modules/acl/manifests.ts`(+5 action +4 角色模板)、`apps/api/src/db/provisioning.ts`(`refreshSpmsAclManifest` + 逐租户 `reconcileTenantRoles` 存量刷新)、`apps/spms-server/src/{routes/catalog,routes/projects,lib/gate,lib/assignments,lib/portal-baseline}.ts`(requirePerm 收口)、`apps/spms-app` 按钮门控 + `lib/perm.ts`★新、`verify-{acl,catalog,assignments,mcp}.ts` 四套件;零迁移。
+输入包:该需求的开发计划增量清单(门户仓内的历史快照)—— `apps/api/src/modules/acl/manifests.ts`(+5 action +4 角色模板)、`apps/api/src/db/provisioning.ts`(`refreshSpmsAclManifest` + 逐租户 `reconcileTenantRoles` 存量刷新)、`apps/spms-server/src/{routes/catalog,routes/projects,lib/gate,lib/assignments,lib/portal-baseline}.ts`(requirePerm 收口)、`apps/spms-app` 按钮门控 + `lib/perm.ts`★新、`verify-{acl,catalog,assignments,mcp}.ts` 四套件;零迁移。
 
 ```
 matchedFactors: [F1, F5, F6, F7, F9]
@@ -242,18 +244,18 @@ unknown: []                             points: 8        (5 命中 → 8;§7「�
 
 ### FIXTURE-4 · FR-214(8 点 · 见 §10 的实证)
 
-输入包:`goal/ACL-2.md` §1 —— `packages/shared/src/acl.ts` + `packages/portal-sdk/src/index.ts`、`apps/api/src/modules/acl/service.ts` + `apps/api/src/modules/token/index.ts` + `market/*`、`apps/web/src/pages/admin/RoleMatrix.tsx`、`apps/spms-server/src/lib/gate.ts` + `lib/relations.ts`(★新) + 10 个写闸、`verify-acl` + `verify-mcp`;**零 DB 迁移**。
+输入包:该需求的开发计划增量清单(门户仓内的历史快照)—— `packages/shared/src/acl.ts` + `packages/portal-sdk/src/index.ts`、`apps/api/src/modules/acl/service.ts` + `apps/api/src/modules/token/index.ts` + `market/*`、`apps/web/src/pages/admin/RoleMatrix.tsx`、`apps/spms-server/src/lib/gate.ts` + `lib/relations.ts`(★新) + 10 个写闸、`verify-acl` + `verify-mcp`;**零 DB 迁移**。
 
 ```
 matchedFactors: [F1, F5, F6, F7, F9]
-  F2 ✗ 零迁移 —— role_grants.condition 是既有 jsonb 列(apps/api/src/db/schema.ts:801)
+  F2 ✗ 零迁移 —— role_grants.condition 是既有 jsonb 列(schema 无新迁移文件)
   F3 ✗ relations.ts 是 lib;RoleMatrix.tsx 是改既有组件      F8 ✗ reconcile 是运行期逻辑,非一次性回填
 unknown: []                             points: 8        (5 命中 → 8;§7「契约级改动」:底座 + SDK 契约,多模块跟改)
 ```
 
 ### FIXTURE-5 · FR-215(8 点 · **F7 边界的判例**)
 
-输入包:`goal/ACCEPT-1.md` §1 —— `apps/spms-server/drizzle/0019_verify_env.sql`(★新)、`db/schema.ts`(5 列 + 1 索引)、`lib/entities/requirement-all-done.ts`(★新)+ `entities/{issues,requirements,sprints}.ts` + `lib/change-notify.ts` + `lib/serialize.ts` + `routes/{issues,requirements}.ts`、`apps/spms-app/src/components/VerifyEnvHint.tsx`(★新,4 入口共用)+ 既有组件改动 + i18n 7 键 ×3、`verify-{notify,issues,requirements}.ts` 三支;`apps/api` / `apps/web` 零改动。
+输入包:该需求的开发计划增量清单(门户仓内的历史快照)—— `apps/spms-server/drizzle/0019_verify_env.sql`(★新)、`db/schema.ts`(5 列 + 1 索引)、`lib/entities/requirement-all-done.ts`(★新)+ `entities/{issues,requirements,sprints}.ts` + `lib/change-notify.ts` + `lib/serialize.ts` + `routes/{issues,requirements}.ts`、`apps/spms-app/src/components/VerifyEnvHint.tsx`(★新,4 入口共用)+ 既有组件改动 + i18n 7 键 ×3、`verify-{notify,issues,requirements}.ts` 三支;`apps/api` / `apps/web` 零改动。
 
 ```
 matchedFactors: [F1, F2, F3, F5, F9]
@@ -268,7 +270,7 @@ unknown: []                             points: 8        (5 命中 → 8;§7「�
 
 ### FIXTURE-6 · FR-208(3 点 · **三会话实测一致的那一条**)
 
-输入包:`goal/SDLC-UI.md` §1 中属于 FR-208 的部分 —— `apps/spms-app/src/components/GuideView.tsx`(★新指引页)、`components/Sidebar.tsx`(导航项)、`lib/types.ts` / `lib/route.ts` / `App.tsx`(视图分发各一支)、`lib/i18n.ts`(指引页 **50 键 ×3**)、`scripts/verify-routes.ts`(扩表);`apps/spms-server` / `apps/api` / `apps/web` 零改动。
+输入包:该需求的开发计划增量清单中属于 FR-208 的部分(门户仓内的历史快照)—— `apps/spms-app/src/components/GuideView.tsx`(★新指引页)、`components/Sidebar.tsx`(导航项)、`lib/types.ts` / `lib/route.ts` / `App.tsx`(视图分发各一支)、`lib/i18n.ts`(指引页 **50 键 ×3**)、`scripts/verify-routes.ts`(扩表);`apps/spms-server` / `apps/api` / `apps/web` 零改动。
 
 ```
 matchedFactors: [F3, F4]
@@ -281,7 +283,7 @@ unknown: []                             points: 3        (2 命中 → 3;§7「�
 
 ### FIXTURE-7 · 文档型:本 skill 自身(5 点)
 
-输入包:`goal/SDLC-SKILLS.md` —— 交付 `.claude/skills/story-points/` 与 `test-plan/`,`apps/**` 零改动。走 §5 三因子。
+输入包:本 skill 自身的交付计划 —— 交付 `.claude/skills/story-points/` 与 `test-plan/` 两个 skill 目录,业务代码零改动。走 §5 三因子。
 
 ```
 matchedFactors: [D1, D2, D3]
@@ -291,10 +293,10 @@ unknown: []                             points: 5        (§5 三因子全中 �
 
 ## 10. 实证:客观因子的价值在于**误判可被事实推翻**
 
-用这张表估 `docs/PRD-SDLC.md` 的 9 条需求时,**FR-214 当场出过一次误判**:
+用这张表给一份 PRD 的 9 条需求成批估点时,**FR-214 当场出过一次误判**:
 
 1. 初判凭「ACL 改动总得改表」的直觉,把 **F2(DB 迁移)记为命中**,档位偏高;
-2. 核实:`goal/ACL-2.md` §1 明写「**零 DB 迁移**」,`apps/api/src/db/schema.ts:801` 显示 `role_grants.condition` 本来就是 `jsonb` 列——**往既有 jsonb 列里加一个键不是迁移**;
+2. 核实:该需求的开发计划 §1 明写「**零 DB 迁移**」,schema 里 `role_grants.condition` 本来就是 `jsonb` 列——**往既有 jsonb 列里加一个键不是迁移**;
 3. 撤销 F2 命中,落回 **8 点**。
 
 **这就是因子表相对主观刻度的全部价值**:"体量中等"没法被推翻,"清单里有没有 `drizzle/**.sql`"可以——而且是任何人都能在 10 秒内复核的那种可以。

@@ -30,7 +30,7 @@ bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production �
 
 ## 3. 注册（生产）
 
-**（APP-DELIVERY-3 起）** 生产的清单事实源就是对方仓的 `app.manifest.json`：平台在控制台
+生产的清单事实源就是对方仓的 `app.manifest.json`：平台在控制台
 「应用市场 › 接入新应用」按 key 签发 `xrel_` 令牌（无行先建 draft 占位），对方
 `publish --manifest` 提交，平台在「发布审核」批准 = `registerFromManifest` 建全
 （listing 上架 + SA + /svc + 已装租户对齐）。**不要**把外部 App 登记进 `LISTING_DEFS` ——

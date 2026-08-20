@@ -55,7 +55,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 ## 注册布线（细节见 registration-and-onebox.md）
 
 - **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 写 `/svc` 白名单 map。⚠️ `exchangeInitiatorSecret` 写的是**已安装**实例——先安装 App，**再重跑一次** register-app，否则发起交换 401。
-- **生产（APP-DELIVERY-3 —— 标准路径）**：清单事实源在**对方仓的 `app.manifest.json`**，经
+- **生产（标准路径）**：清单事实源在**对方仓的 `app.manifest.json`**，经
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
   （无行先建 draft 占位），对方 `publish --manifest … --dist … --image …` ⇒ 首次必进
   「发布审核」队列 ⇒ 批准 = `registerFromManifest` 一次建全（listing 上架 + SA + /svc +
@@ -68,7 +68,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 - **scope 三规则**：平台基础 scope ∪ 自己命名空间（含连字符→下划线变体）∪ 已声明 `exchangeTargets` 的目标命名空间；越界 `VALIDATION_FAILED`。
 - **secret 一致红线**：平台落库的服务账号 secret 与镜像 env 里的必须一致；漂移症状是自省 401 或「跨应用授权缺失」（实为 `SECRET_INVALID`），排查先 sha256 比对两侧。
 
-## 数据库迁移：平台在部署时替你跑（APP-DELIVERY / 指引 §7.5）
+## 数据库迁移：平台在部署时替你跑
 
 划分决定一切细则：**schema 是平台级的**（随一次部署发生一次），**数据行是租户级的**（随安装发生）。
 所以 DDL 属于部署步骤 —— 不属于容器启动，也不属于逐租户安装。

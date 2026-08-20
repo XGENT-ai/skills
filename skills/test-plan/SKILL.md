@@ -14,6 +14,8 @@ description: 由需求（PRD 正文 + 验收标准）成套产出测试用例草
 
 第二条是本 skill 最有价值的副作用:**它反向暴露写得不合格的验收标准。** 「体验流畅」「性能良好」推不出可执行步骤——这时正确的产出是一句「该条无法成例,建议改写为可断言形式」,不是三步假步骤。
 
+> **路径约定**:本 skill 可整目录拷到任何 repo 使用——面向所有用 SPMS(研发项目管理)App 管理测试用例的团队。skill 自带的 `references/` 永远可读;正文里凡属 SPMS 平台行为的陈述(入参、枚举、幂等语义、默认值)是**平台契约**,不需要你读到平台源码来复核。文末「本仓库(xgent-ai-portal)默认值」一节**只在门户仓内工作时适用**——装到其他 repo 时忽略它,那些路径在你的 repo 里不存在,不要去找、不要去建。`evals/` 目录(若存在)是门户仓内部的回归夹具,skill 运行期从不读它,分发时不携带。
+
 | | **skill 做** | **人做** |
 | --- | --- | --- |
 | 用例 | 由验收标准产出成套草稿(`status='draft'`,`result` 取服务端默认 `untested`);给出映射表;报出无法成例的条目 | 评审用例、转 `active`、执行并回填 `result` |
@@ -56,7 +58,7 @@ description: 由需求（PRD 正文 + 验收标准）成套产出测试用例草
 2. 标题**语义等同**的既有用例 → **不建**,在汇报里写「已存在:TC-7《…》,跳过」。
 3. 需要跨需求确认时用 `pms_search(具体词)`——**上限 50 条**,用具体词,泛词会被截断成"查重通过"的假象。
 
-**保证边界(如实声明,别吹)**:服务端(BLG-21)已对 **MCP 面**的 `testcase_create` 做了 `(需求, 标题)` 幂等——租户级 advisory lock 内查重,命中则**返回既有行**并置 `deduped: true`,不重复建单、不烧 `TC-N` 号。所以:
+**保证边界(如实声明,别吹)**:服务端已对 **MCP 面**的 `testcase_create` 做了 `(需求, 标题)` 幂等(平台契约)——租户级锁内查重,命中则**返回既有行**并置 `deduped: true`,不重复建单、不烧 `TC-N` 号。所以:
 
 - ✅ **保证**(含并发):**带 `requirementKey`** 的创建,同一 `(需求, 标题)` 无论顺序还是并发,恰好落一行;`deduped: true` 表示这次返的是既有行(**不是错误,不要重试**)。
 - ❌ **不保证**:① **不带 `requirementKey`** 的创建(不查重,可显式建同名);② Web 页面手工建同名用例;③ 标题**语义等同但字面不同**(「登录失败提示」vs「登录错误提示」)——幂等按字面标题比对,语义查重仍要靠上面的预查。
@@ -65,7 +67,7 @@ description: 由需求（PRD 正文 + 验收标准）成套产出测试用例草
 ## 第 2 步:设计用例(规则见 `references/case-taxonomy.md`)
 
 - **四类各 ≥1 条**:正常路径 / 边界 / 权限 / 并发。
-- **逐条映射**:每条 AC 至少被一条用例覆盖,产出「AC → 用例」映射表(这是人工核对覆盖率的唯一依据——覆盖率没有自动断言,见 `goal/SDLC-SKILLS.md` 取舍 d)。
+- **逐条映射**:每条 AC 至少被一条用例覆盖,产出「AC → 用例」映射表(这是人工核对覆盖率的唯一依据——覆盖率没有自动断言,是设计时显式承认的取舍)。
 - **软上限 12 条/需求**:超过就**停下来报出**(「按 AC 数应产出 N 条,超过软上限 12,请确认是否全建 / 只建哪几条」),**不静默截断**——静默截断会让"已覆盖"变成假象。
 
 ## 第 3 步:判可断言性(拒绝编造)
@@ -85,7 +87,7 @@ AC3「操作体验流畅」→ ⛔ 无法成例
 
 - ✅ **必带 `requirementKey`**(如 `'FR-141'`)——不带就成了孤立用例,映射关系丢失;
 - ✅ **显式传 `status: 'draft'`**;
-- ⛔ **不传 `result`**——`testcase_create` **根本没有 `result` 入参**(`apps/spms-server/src/mcp/tools/testcases.ts:72-81`);`untested` 是 DB 默认值(`db/schema.ts:573`)。写文档/汇报时别说"传了 untested",要说"服务端默认 untested";
+- ⛔ **不传 `result`**——`testcase_create` **根本没有 `result` 入参**(平台契约);`untested` 是服务端默认值。写文档/汇报时别说"传了 untested",要说"服务端默认 untested";
 - ✅ 写完**断言返回体**:`id` 是新的 `TC-N`、`requirementId === 'FR-x'`、`status === 'draft'`、`result === 'untested'`。
 
 **`steps` / `expected` 的写法**:`steps` 一行一步(编号),`expected` 写**可观测的判据**(看到什么/返回什么/状态变成什么),不写"应该正常工作"。
@@ -120,9 +122,15 @@ AC3「操作体验流畅」→ ⛔ 无法成例
 
 ---
 
+## 通用默认值(任何 repo 都适用)
+
+- **MCP 工具**:SPMS MCP 的 `requirement_get` / `testcase_list` / `testcase_create` / `testcase_get` / `pms_search`(挂载名以你本地 MCP 配置为准,惯例是 `xgent-pms`,即 `mcp__xgent-pms__*`)。
+- **上游**:需求由 `prd` skill 定稿并种下 1 条 TC 种子;本 skill 补全成套。**查重口径与 `prd` 共用**(§1)。
+- **不做**:执行测试、回填 `result`、改 TC 数据模型。
+
 ## 本仓库(xgent-ai-portal)默认值
 
-- **MCP 工具**:`mcp__xgent-pms__requirement_get` / `testcase_list` / `testcase_create` / `testcase_get` / `pms_search`。契约见 `docs/pms-mcp.md`(§5 工具清单、§8 skill 分工)。
-- **上游**:需求由 `prd` skill 定稿并种下 1 条 TC 种子;本 skill 补全成套。**查重口径与 `prd` 共用**(§1)。
+**仅当你就在 xgent-ai-portal 门户仓内工作时适用;装在其他 repo 的忽略本节。**
+
+- MCP 契约与 skill 分工见 `docs/pms-mcp.md`(§5 工具清单、§8 skill 分工)。
 - **平台硬约束**(常成为并发/权限类用例的来源):多租户隔离(全表 `tenantId`)、业务失败一律 200 + 错误体(**不用 4xx 表业务状态**,断言错误时看响应体不看 status)、列表服务端分页 `Page<T>`、三语 i18n。
-- **不做**:执行测试、回填 `result`、改 TC 数据模型。

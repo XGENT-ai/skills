@@ -15,6 +15,8 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 
 因此本 skill 的一切规则都服务于复现性:**判定只看输入包里的客观事实,不看"感觉这个改动挺大的"**。
 
+> **路径约定**:本 skill 可整目录拷到任何 repo 使用——面向所有用 SPMS(研发项目管理)App 排期估点的团队。skill 自带的 `references/` 永远可读;正文里凡属 SPMS 平台行为的陈述(工具入参、错误码、`_backlog` 语义、批量上限)是**平台契约**,不需要你读到平台源码来复核。`references/factors.md` §2 的路径 glob 与 §9 的样例是**门户仓(xgent-ai-portal)的实例**——换到你的代码库,先按 §2.1 写下你自己的路径映射再估点。文末「本仓库(xgent-ai-portal)默认值」一节只在门户仓内工作时适用,其他 repo 忽略。`evals/` 目录(若存在)是门户仓内部的回归夹具,skill 运行期从不读它,分发时不携带。
+
 | | **skill 做** | **人做** |
 | --- | --- | --- |
 | 估点 | 按因子表给点数与**判定依据**;**被要求时**才写回 `plannedPoints` 并复核容量、**报出**超出量 | 认可或推翻点数;**决定要不要写回**;**调整超容量的排期** |
@@ -40,10 +42,10 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 | --- | --- | --- |
 | 实体 key + 正文 | ✅ | 需求 `requirement_get(key)` / 工单 `issue_get(key)` |
 | 验收标准 | ✅ 需求;⚠️ 工单见下 | `requirement_get(...).acceptanceCriteria` |
-| **已批准的开发计划,或一份明确的影响文件/工作区清单** | ✅ | `goal/*.md`(dev-plan 产出)或调用者显式给出 |
+| **已批准的开发计划,或一份明确的影响文件/工作区清单** | ✅ | 开发计划文档(dev-plan 产出)或调用者显式给出 |
 | 仓库 commit(`git rev-parse HEAD`) | ✅ | 判定依据要能回溯到同一份代码 |
 
-**⚠️ 工单(Issue)的验收标准从哪来——`issue_get` 里没有这个字段。** 已核实 `serializeIssue` 的 DTO 只有 `description` / `requirementId` / `storyPoints` 等,**没有 `acceptanceCriteria`**(`apps/spms-server/src/lib/serialize.ts`)。所以给 Issue 估点时:
+**⚠️ 工单(Issue)的验收标准从哪来——`issue_get` 里没有这个字段。** Issue 的 DTO 只有 `description` / `requirementId` / `storyPoints` 等,**没有 `acceptanceCriteria`**(平台契约)。所以给 Issue 估点时:
 
 1. `issue_get(key)` 拿到 `requirementId`(它存的是**需求的展示 key**,如 `FR-141`);
 2. **有关联需求** → `requirement_get(那个 key)` 取验收标准,文本侧证据齐备,九条因子照常判;
@@ -85,7 +87,7 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 3. 记下两样东西,后面复核要用:
    - **`C0` = 写前的 `stats.committedPoints`**;
    - **每个条目的现有点数**(`items[].points`,`null` = 未估)。
-4. 看 `capacity`:**`capacity` 为 `null` 时 `readiness.overCapacity` 恒为 `false`**(`apps/spms-server/src/lib/entities/sprints.ts:396`)——这不叫"没超容量",这叫**容量闸不成立**,要在汇报里明说,别把 `false` 当成通过。
+4. 看 `capacity`:**`capacity` 为 `null` 时 `readiness.overCapacity` 恒为 `false`**(平台契约)——这不叫"没超容量",这叫**容量闸不成立**,要在汇报里明说,别把 `false` 当成通过。
 
 ## 第 2 步:逐条判定
 
@@ -107,8 +109,8 @@ description: 按客观因子表给需求/工单估故事点（斐波那契档位
 - **`sprintId` 传什么,直接决定条目去哪**:
   - 条目**已在某 Sprint** → 传**它原来那个 Sprint 的 UUID**;
   - 条目**本来就在产品待办**(`sprintId === null`)→ 传字面量 `"_backlog"`。
-  - ⛔ **`_backlog` 会无条件把 `sprintId` 置 null**(`lib/entities/sprints.ts:671`/`:701` 的 `patch.sprintId = sid` 不带任何条件)。对已排期条目用它 = 一次估点顺手把需求踢出了迭代。**先确认 `sprintId` 再选参数。**
-- **每批 ≤100 项**(`mcp/tools/sprints.ts:148`),超出分批。**一批 = 一个事务**(任一项非法整批回滚),**多批之间没有整体事务**。
+  - ⛔ **`_backlog` 会无条件把 `sprintId` 置 null**(平台契约,不带任何条件判断)。对已排期条目用它 = 一次估点顺手把需求踢出了迭代。**先确认 `sprintId` 再选参数。**
+- **每批 ≤100 项**(平台契约),超出分批。**一批 = 一个事务**(任一项非法整批回滚),**多批之间没有整体事务**。
 - **分批失败时不要重发整体**:先**复读实际落库状态**,只对「点数与目标值不一致」的条目重发(同 key 同点数重发是收敛的,重发时 `expectedPoints` 用**复读到的**新值),并**如实报出哪批失败、失败前落了多少**。`POINTS_CONFLICT` 走同一姿势,只是额外**剔除**冲突项而不是重发它们。
   复读用哪个工具**取决于这批写的是谁**:排进 Sprint 的批次用 `sprint_get(该 Sprint 的 UUID)`;**`_backlog` 批次不能用 `sprint_get`**(见第 4 步),要逐条 `requirement_get` / `issue_get` 读回点数。
 - `plannedPoints` **省略 = 保持不变**,传 `null` = 清除。别用省略来表达"不改",要跳过就整条不发。
@@ -134,7 +136,7 @@ committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次�
 
 ### 4b. 写到产品待办的条目(`_backlog` 批次)→ **逐条 `requirement_get` / `issue_get`**
 
-⛔ **不能用 `sprint_get('_backlog')` 复核。** `_backlog` 是 `sprint_plan_items` 专有的字面量入参,**不是一个 Sprint**;`sprint_get` 按 id 精确查表(`lib/entities/sprints.ts` 的 `loadSprint`),传 `_backlog` 必然 `SPRINT_NOT_FOUND`——而且这时**写入早已发生**,报错只会让人误以为没写成。
+⛔ **不能用 `sprint_get('_backlog')` 复核。** `_backlog` 是 `sprint_plan_items` 专有的字面量入参,**不是一个 Sprint**;`sprint_get` 按 id 精确查表,传 `_backlog` 必然 `SPRINT_NOT_FOUND`——而且这时**写入早已发生**,报错只会让人误以为没写成。
 
 ⚠️ 而且 `_backlog` 批次的**返回体本身也没法当复核**:它只回 `{ sprintId: null, moved: N }`(实测),**不含 detail / stats / 每条的点数**。想确认写没写进去,只能另发读。
 
@@ -194,10 +196,17 @@ committedPoints_after == C0 + Σ(新点数 − 旧点数)      ← 只对本次�
 
 ---
 
+## 通用默认值(任何 repo 都适用)
+
+- **MCP 工具**:SPMS MCP 的 `sprint_list` / `sprint_get` / `sprint_plan_items` / `requirement_get` / `issue_get`(挂载名以你本地 MCP 配置为准,惯例是 `xgent-pms`,即 `mcp__xgent-pms__*`)。
+- **刻度是全局的,不按项目重新锚定**:因子表(`references/factors.md` §2)+ 档位含义(§7)就是完整定义,**新项目、零历史记录的项目直接用**,不需要先攒够历史点数。**历史点数与迭代吞吐只是事后观测材料,永不参与判定**(§7/§8);**容量口径永远以该 Sprint 自己的 `capacity` 为准。**
+- **路径映射按代码库生效**:F1–F9 量的是与代码库无关的角色(§2.1),表里的 glob 是门户仓的实例。换代码库,按 §2.1 一次性写下该库的路径映射并记进 factors.md;**映射没写死之前对应因子进 `unknown`,不许临场猜 glob**。
+- **上游**:需求由 `prd` skill 定稿,影响文件清单由 `dev-plan` skill 的计划提供(计划的「增量清单」节就是标准输入)。
+
 ## 本仓库(xgent-ai-portal)默认值
 
-- **MCP 工具**:`mcp__xgent-pms__sprint_list` / `sprint_get` / `sprint_plan_items` / `requirement_get` / `issue_get`。契约见 `docs/pms-mcp.md`(§5 工具清单、§8 skill 分工)。
-- **刻度是全局的,不按项目重新锚定**:因子表(`references/factors.md` §2)+ 档位含义(§7)就是完整定义,**新项目、零历史记录的项目直接用**,不需要先攒够历史点数。
-- **路径 glob 属于本仓库**:F1–F9 里的 `apps/*-server/**` 那类路径是**本仓库的实例**,因子本身量的是与代码库无关的角色(见 §2.1)。换到另一个代码库,按 §2.1 一次性写下该库的路径映射并记进 factors.md;**映射没写死之前对应因子进 `unknown`,不许临场猜 glob**。
-- **历史点数与吞吐**(项目「XGENT.ai 平台基座」`cbbaff8ef15d5d289bf7f7ad` 的 FR-161=1 / FR-208=3 / FR-142=5 / FR-143=5 / FR-141=8;一周迭代 committed 70/39/55 → Sprint 4 已到 149)**只是回归观测记录,不参与判定**——估算时不查它、不在输出里引用它(`references/factors.md` §7/§8)。**容量口径永远以该 Sprint 自己的 `capacity` 为准。**
-- **上游**:需求由 `prd` skill 定稿,影响文件清单由 `dev-plan` skill 的计划提供(`goal/<代号>.md` §1 增量清单就是标准输入)。
+**仅当你就在 xgent-ai-portal 门户仓内工作时适用;装在其他 repo 的忽略本节(下述路径在你的 repo 里不存在)。**
+
+- MCP 契约与 skill 分工见 `docs/pms-mcp.md`(§5 工具清单、§8 skill 分工)。
+- 路径映射已写死在 `references/factors.md` §2(`apps/*-server/**` 那批 glob 即本仓库实例),直接用。
+- 影响文件清单的标准来源是 `goal/<代号>.md` §1 增量清单(dev-plan 产出)。
