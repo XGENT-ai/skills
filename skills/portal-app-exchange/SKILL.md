@@ -7,6 +7,16 @@ description: '跨应用调用（OAuth Token Exchange）的布线与排错。凡�
 
 App A 代表用户调 App B = 拿一个 `aud=B` 的 TDT，走 OAuth Token Exchange，**严格不可提权**。完整机制、请求格式、consent 端点与排错决策树在 [references/exchange-reference.md](references/exchange-reference.md)（为本 skill 提炼的自包含参考，可整目录拷到任何 repo；权威源是门户仓库 `docs/SSO与App开发指引.md` §11，冲突以门户仓库为准）。
 
+
+> **路径约定（先读这条，能省一次白找）**：本 skill 里出现的 `apps/…` `packages/…` `docs/…`
+> `deploy/…` 这类路径**都在门户仓**。在 App 自己的 repo 里它们**不存在** —— 它们标注的是
+> 「门户侧要做什么」或某段内容的出处，**不是让你去打开的文件**。找不到不是配置错误：
+> 别去创建、别去全局搜、别把它当缺失依赖报出来。你需要的一切都在本 skill 的
+> `references/`（自包含）。若你正在门户仓里工作，那这些路径就是可以直接打开的真实文件。
+>
+> ⚠️ 一个例外：`/apps/<key>/`（带前导斜杠）是**线上 URL 路径**——微应用产物的挂载点，
+> 与仓内的 `apps/<key>-app/` 目录无关，别混。
+
 ## 模型一页纸（改代码前先对齐）
 
 放行 = 同时满足五件事：

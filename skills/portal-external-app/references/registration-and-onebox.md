@@ -1,6 +1,6 @@
 # 注册布线与一盒（one-box）本地联调
 
-> 提炼自门户仓库 `docs/外部App本地联调指南-one-box.md`、`docs/SSO与App开发指引.md` §15.3（2026-07）。冲突时以门户仓库为准。
+> 提炼自门户仓库 `docs/外部App本地联调指南-one-box.md`、`docs/SSO与App开发指引.md` §15.3（2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
 
 ## 1. `app.manifest.json`（单一事实源，放你自己的 repo）
 
@@ -10,7 +10,8 @@
 - 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`
 - 权限：`scopes` + `scopeLabels`（三语同意页文案）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
-- dev 专用明文：`serviceAccount{clientId,secret}`（`clientId` 约定 `<key>-server`）、`exchangeInitiatorSecret`（本应用作为交换发起方时的 App Secret）
+- 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；键集合一变提案转入「发布审核」）、`deployDescriptor`（`image` 之外的一切属治理档）
+- dev 专用明文：`serviceAccount{clientId,secret}`（`clientId` 约定 `<key>-server`，且**必须是自己的** —— 服务账号身份归平台，声明已归属另一 App 的 clientId 会进人工审、批准也会在生效时被写入闸拒绝）、`exchangeInitiatorSecret`（本应用作为交换发起方时的 App Secret）
 
 **scope 三规则**（写时强校验）：一条清单只能声明——
 1. 平台基础 scope（`userinfo.*`/`audit.write`/`notification.*`/`settings.*`/`scheduler.*`/`content.*` 等）；
@@ -29,7 +30,13 @@ bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production �
 
 ## 3. 注册（生产）
 
-平台侧把 manifest 内容登记进门户仓库 `apps/api/src/db/provisioning.ts`（`LISTING_DEFS` / `SA_DEFS` / `EXCHANGE_WIRING`），随 `bootstrap:prod` 幂等落库；服务账号 secret 取 env、缺省随机生成一次性打印。**生产没有 manifest 明文密钥这条路。**
+**（APP-DELIVERY-3 起）** 生产的清单事实源就是对方仓的 `app.manifest.json`：平台在控制台
+「应用市场 › 接入新应用」按 key 签发 `xrel_` 令牌（无行先建 draft 占位），对方
+`publish --manifest` 提交，平台在「发布审核」批准 = `registerFromManifest` 建全
+（listing 上架 + SA + /svc + 已装租户对齐）。**不要**把外部 App 登记进 `LISTING_DEFS` ——
+门户只保留平台侧事实（`SA_DEFS` / `EXCHANGE_WIRING` / scope 常量 / Caddy 内联行），
+`bootstrap:prod` 对外部 key 只自愈 SA 与部署行。**生产没有 manifest 明文密钥这条路**
+（secret 取 env、缺省随机生成、明文只回显一次给审批人）。
 
 ⚠️ **secret 一致红线**：平台落库的服务账号 secret 与你镜像 env 里的必须一致。漂移症状 = 自省 401，或「跨应用授权缺失/未开启」（实为 `SECRET_INVALID`）。排查：对你侧 secret 求 sha256 与门户 DB 存的哈希比对。
 
@@ -47,7 +54,9 @@ bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production �
 # 5) 起门户三件套 + 你的后端（网络别名 <key>-server:8080）:
 #      -f docker-compose.yml -f app-devkit/docker-compose.app-dev.yml [micro 加 app-frontend.yml]
 #      --profile local-infra --profile app-external up -d
-# 6) 你自己的库迁移 / 每租户 bootstrap（命令以你镜像为准）
+# 6) 你自己的库迁移：跑你镜像的迁移 argv（生产由门户经 migrateArgs 自动跑，这里手动跑同一条）
+#      run --rm --env-file <同一份> <你的镜像> --role migrate
+#    每租户 bootstrap（若你的表 FK 自己的 tenants）：门户目前没有钩子，本地手动建行
 ```
 
 细节（含 App 自带基础设施如向量库 sidecar）见交付包内 `deploy/app-devkit/README.md`。
