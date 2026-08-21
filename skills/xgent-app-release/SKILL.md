@@ -30,7 +30,12 @@ description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App
 「改了 manifest 却被门户下次部署改回去」的静默漂移已经从机制上消灭。
 
 manifest **绝不携带密钥值**：`serviceAccount.secret`、`deployDescriptor.env` 有值、
-SERVICE_ONLY scope（如 `seats.read`）都会**提交即拒**。要声明「部署我需要哪些环境变量」
+SERVICE_ONLY scope（如 `seats.read`）写进 `serviceScopes` 都会**提交即拒**。
+要用平台特权 scope，走 `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "为什么需要" }]`
+—— 它是**申请**不是授予：必进「发布审核」，审批人逐条确认后你的服务账号才拿到；
+reason 会原文展示给审批人，写清楚用途能少一轮往返。上报自己的用量指标，先在
+`usageMetrics` 里声明（key 必须以你的 listingKey. 开头；同样治理档）——没声明的
+metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
 用 `requiredEnv`（只交键名），值永远由平台管理员在控制台填。
 
 

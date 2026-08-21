@@ -66,7 +66,8 @@
   以及 `available=null`（unlimited）时放行的处理；
 - 角色 key 由**你在 `app.manifest.json` 里声明**（`"seatRoles": ["service"]`，需 backed listing）；
   各套餐的数值不进 manifest、由平台管理员在控制台配 —— 在这里**提议**一组（free/pro/ultra），并列出你会上报的 gauge 指标名；
-- **不要**在自己库里存租户上限；**不要**在 manifest 里申请 `seats.read`（SERVICE_ONLY，会被拒收，由平台在 SA_DEFS 给）。
+- **不要**在自己库里存租户上限；`seats.read` **不要**写进 `serviceScopes`（SERVICE_ONLY，会被拒收）——
+  要用 `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]` **申请**，经「发布审核」逐条确认批准后授予。
 - 机制全貌（三态处理、兜底值、存量租户、已用上报）见 [quota-and-seats.md](quota-and-seats.md)。
 
 ## 8. 自测（无 UI 时的 curl 验收）
@@ -82,6 +83,6 @@ MCP/stdio 之类免鉴权面的使用限制；破玻璃通道的启用条件。�
 - §3 路由表是否覆盖**全部** `/v1` 业务路由，公开路由是否只有健康/指标；
 - §5 是否写清镜像实读变量名（对照 compose/K8s 注入排一遍）；
 - §6b 是否有「自建」项而没有理由 —— 自己存文件 / 自己发通知 / 自己记审计是最常见的三处；
-- §7b 若有配额诉求：模型是否二选一说清、role key 是否已在 manifest 的 `seatRoles` 里声明、是否误在 manifest 里申请 seats.read、`available=null` 是否按放行处理；
+- §7b 若有配额诉求：模型是否二选一说清、role key 是否已在 manifest 的 `seatRoles` 里声明、`seats.read` 是否走了 `privilegedServiceScopes` 申请（写进 `serviceScopes` 是打回信号）、gauge 指标是否已在 manifest `usageMetrics` 里声明、`available=null` 是否按放行处理；
 - §7 两问是否有显式答案：迁移 argv（**必须在镜像里**，不接受「脚本在我们 repo」）、每租户 bootstrap（目前门户无钩子，要显式定方案）；
 - §9 自有认证面是否与 `/svc` 隔离。

@@ -10,7 +10,8 @@
 「本租户上限」，第一次调档就会与门户对不上，而且**没有任何东西会告诉你它们分叉了**。
 
 **配额 ≠ 用量**：配额答「还能不能再建一个」，用量答「这段时间用了多少」。后者走 `usageReporter`
-+ `usage.report`（`USAGE_METRICS`）。计费方向另有平台级 Credit 服务，同样不自建。
++ `usage.report`（指标注册表 = 内置 `USAGE_METRICS` ∪ manifest `usageMetrics` 声明，见 §5）。
+计费方向另有平台级 Credit 服务，同样不自建。
 
 ## 1. 先选模型：二选一
 
@@ -33,16 +34,19 @@
 | 各套餐给几个（生效值） | 平台管理员 → `PUT /api/console/seat-plans` upsert `app_seat_quotas(listing_key, plan, role)` | 不用 |
 | 单租户加购 | 平台管理员 → `PUT /api/console/tenants/:id/seat-addons`（仅 pro/ultra 可加购） | 不用 |
 | role 的三语标签 `SEAT_ROLE_LABELS` | 门户 `packages/shared/src/constants.ts` | **要**（不加则控制台显示裸 role key，`?? role` 兜底不报错） |
-| SA 的 `seats.read` | 平台 `SA_DEFS.serviceScopes` | **要** |
+| SA 的 `seats.read` | **对方 manifest `privilegedServiceScopes: [{scope, reason}]` 申请** → 「发布审核」逐条确认批准即授予（`SA_DEFS.serviceScopes` 降为种子/运维兜底，union top-up 不回滚审批授予） | 不用 |
 
 ⚠️ **各套餐的数值进不了 manifest，也进不了 `LISTING_DEFS`** —— `AppManifest` 与 `ListingDef`
 都只有 `seatBased` / `seatRoles` 两个字段，没有任何 per-plan 数值字段。应用侧**没有任何写路径**
-（manifest 没这字段 · 自助发布白名单只有 dist/version/image · `seats.read` 只读）。这是有意的：
+（manifest 没这字段 · 发布提案携带的未知字段一律进人工审而非生效 · `seats.read` 只读）。这是有意的：
 数值是商务面，改它等于改可售卖档位、影响所有租户。应用侧能做的是在契约里**提议**一组数。
 
 ⚠️ **`seats.read` 是 `SERVICE_ONLY_SCOPES`**（与 `directory.provision` / `lms.taxonomy.manage` 同列）。
-外部团队在 manifest 里自己写 `serviceScopes: ["seats.read"]` **会被 register-app 拒收** —— 评审交付物
-时看到它是**当场打回的信号**，不是配置失误。
+外部团队在 manifest 里自己写 `serviceScopes: ["seats.read"]` **会被拒收** —— 评审交付物
+时看到它是**当场打回的信号**，不是配置失误。要拿它走
+`privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]`：这是**申请**不是授予，
+必进「发布审核」（最高治理档，审批人逐条勾选确认），批准后经 `registerFromManifest`
+落到 SA 的服务态 scope。
 
 ## 3. 声明写在 manifest 里（不需要门户改代码）
 
@@ -98,10 +102,15 @@ body { roles: ["service","node"] }
 metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` 读最近一天）。
 sms 先例每个 role 报两条（`allocated` + `available`），两个 role 共 4 条。
 
-⚠️ **硬门**：`ingestUsage` 对**未在 `USAGE_METRICS` 注册**的 metricKey **拒收该条记录**，且指标的
-`appKey` 必须等于上报者的 azp。漏注册的症状是上报接口返 200 但 `rejected` 全是「未知指标」，
-控制台「已用」恒 0、`overQuota` 恒 false、加购决策没有依据 —— **不报错，静默失真**。
-所以新 role 要门户在 `packages/shared/src/usage.ts` 的 `USAGE_METRICS` 里补 gauge 条目（发版）。
+⚠️ **硬门**：`ingestUsage` 对**未注册**的 metricKey **拒收该条记录**，且指标的
+`appKey` 必须等于上报者的 azp。漏注册的症状是上报接口返 200 但记录进 `rejected`，
+控制台「已用」恒 0、`overQuota` 恒 false、加购决策没有依据（拒收理由现在会显式指出
+「未注册 —— 请在 usageMetrics 里声明」，不再是无提示的静默失真）。
+指标注册表 = 内置 `USAGE_METRICS` ∪ 各 listing 的 manifest `usageMetrics` 声明：
+**外部 App 在自己 manifest 的 `usageMetrics` 里声明 gauge 条目**
+（`[{ key, kind: "gauge", unit: "count", label: {zh,…} }]`，key 前缀必须=listingKey、
+金额单位 microAmount 不开放；治理档，批准后生效）——不再需要门户发版；
+仓内 App 仍在 `packages/shared/src/usage.ts` 登记。
 
 ## 6. 两层快照：谁读哪一层
 
@@ -168,8 +177,9 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 对方提议拿它们当「entitlements 的 key」问门户怎么映射到套餐表。逐条判定：
 
 - **`max_services`**（每租户最多几个 service）→ **能落**，就是一个 role。按 §2 的事实源表分工：
-  role 由对方 manifest 声明（清单仍在 `LISTING_DEFS` 的阶段则门户加）· 数值平台在控制台配 ·
-  门户发一次版补 `SEAT_ROLE_LABELS` + `USAGE_METRICS` gauge + `SA_DEFS` 的 `seats.read`。
+  role 由对方 manifest 声明 · 数值平台在控制台配 · gauge 由对方 manifest `usageMetrics` 声明 ·
+  `seats.read` 由对方 manifest `privilegedServiceScopes` 申请（审批授予）· 门户侧只剩
+  `SEAT_ROLE_LABELS` 三语标签一件（可选，不加显示裸 role key）。
 - **`max_nodes_per_service`**（每个 service 最多几个 node，对所有 service 一律生效）→
   **能落，但配套三件空转**（§8）。按「随不随套餐变」三分：
   **(a)** 不随套餐变（纯防滥用）→ App 侧产品常量，别进表；
@@ -180,14 +190,21 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 
 ## 10. 落地清单
 
-**门户侧（一次发版 + 一次控制台配置）**
+**外部 App（manifest 路，除标签外无需门户发版）**
 
-1. `LISTING_DEFS[<key>]`（或对方 manifest）加 `seatRoles: [...]`
-2. `SEAT_ROLE_LABELS` 加三语标签
-3. `SEAT_ROLE_DEFAULTS` 加各档默认值（可选；不加则一律兜底 1）
-4. `USAGE_METRICS` 加 gauge 条目（每 role 两条：`.allocated` / `.available`）
-5. `SA_DEFS[<key>].serviceScopes` 加 `seats.read`
-6. 部署后平台管理员在控制台按 `App × role × 套餐` 配一轮真实数值
+1. manifest 加 `seatRoles: [...]`（治理档）
+2. manifest 加 `usageMetrics` gauge 条目（每 role 两条：`.allocated` / `.available`；治理档）
+3. manifest 加 `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]`（申请，审批逐条确认后授予）
+4. （可选）门户 `SEAT_ROLE_LABELS` 加三语标签 —— 唯一仍要门户发版的一件；不加则控制台显示裸 role key
+5. 批准部署后，平台管理员在控制台按 `App × role × 套餐` 配一轮真实数值
+
+**仓内 App（LISTING_DEFS 路，随门户发版）**
+
+1. `LISTING_DEFS[<key>]` 加 `seatRoles: [...]`
+2. `SEAT_ROLE_LABELS` 加三语标签；`SEAT_ROLE_DEFAULTS` 加各档默认值（可选；不加则一律兜底 1）
+3. `USAGE_METRICS` 加 gauge 条目（每 role 两条）
+4. `SA_DEFS[<key>].serviceScopes` 加 `seats.read`
+5. 部署后控制台配数值
 
 **App 侧**
 

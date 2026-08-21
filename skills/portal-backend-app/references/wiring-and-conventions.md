@@ -50,7 +50,7 @@ acl/manifests.ts + LISTING_DEFS ─seed─► marketplace_listings ─install─
 
 心智模型：**日桶（UTC 日切）+ 桶内绝对值幂等覆写**。上报的是整桶重算的绝对值不是增量（重试/补报天然幂等）；唯一键 `(tenantId, metricKey, day, dimsKey)`。
 
-1. **登记指标**：`packages/shared/src/usage.ts` 的 `USAGE_METRICS`（key 前缀必须=你的 listingKey；kind 选对：counter=流量求和 / gauge=水位取峰值，选错聚合口径灾难；dims 白名单防高基数——别放 userId/requestId）。
+1. **登记指标**：`packages/shared/src/usage.ts` 的 `USAGE_METRICS`（key 前缀必须=你的 listingKey；kind 选对：counter=流量求和 / gauge=水位取峰值，选错聚合口径灾难；dims 白名单防高基数——别放 userId/requestId）。这是**仓内 App** 的路径；manifest 注册的外部 App 改在自己 manifest 的 `usageMetrics` 里声明（治理档，见 portal-external-app skill），运行时注册表 = 内置 ∪ listing 声明。
 2. **服务账号三件套**：capabilities += `client_credentials`、scopes += `usage.report`、`ownerAppKey` = listingKey（`SA_DEFS` 加 `usageReporter: { ownerAppKey }`，`ensureServiceAccount` 幂等补齐）。`metricKey` 前缀必须等于令牌 `azp`——别的 SA 报你的指标整批拒收。
 3. **上报**：按租户铸服务态令牌（**检查返回 scope 含 `usage.report`**——SA 未授权时不报错只返空 scope，应视为可重试失败；`APP_NOT_INSTALLED`/`APP_DISABLED`/`TENANT_NOT_ALLOWED` 才是该租户永久跳过）→ `POST /api/v1/usage/report { records:[{tenantId, metricKey, day, dims?, value}] }`，单批 ≤500、all-or-nothing、`rejected` 非空响亮 log。
 4. 参考实现：counter+水位线 `apps/llm-gateway-server/src/lib/usage-report.ts`；gauge+快照 files。
