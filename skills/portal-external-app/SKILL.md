@@ -41,7 +41,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）+ `/health` 口径；
 6. **有没有重复造平台已有的能力**：自己存文件 / 自己发通知 / 自己记审计 / 自己排定时任务 / 自己算配额 —— 逐项对照下面两张表，命中就要求改走平台面；
 7. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
-   角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`，而 manifest 里出现 `seats.read` 是当场打回的信号；
+   角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
 8. 对接契约文档：按 [references/contract-doc-template.md](references/contract-doc-template.md) 的结构与精度。**没有这份文档的接入不算完成**——新服务（如任务网关）要先补。
 
 ## 资源服务器硬契约（外部实现最常炸的三处）
@@ -61,8 +61,11 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
   「发布审核」队列 ⇒ 批准 = `registerFromManifest` 一次建全（listing 上架 + SA + /svc +
   已装租户对齐），SA secret 明文一次性回显给审批人。**不要**再把外部 App 登记进
   `LISTING_DEFS` —— 那会成为把对方清单静默改回去的第二事实源（verify-split「清单零残留」
-  棘轮看守）。门户保留的平台侧事实只有：`SA_DEFS`（serviceScopes / SERVICE_ONLY）、
-  scope 常量与 `USAGE_METRICS`、部署行、Caddyfile 内联行、`EXCHANGE_WIRING`。
+  棘轮看守）。门户保留的平台侧事实只有：部署行、Caddyfile 内联行、`EXCHANGE_WIRING`，
+  以及作为**种子**的 `SA_DEFS` 与内置 scope 常量 / `USAGE_METRICS` ——「审批而非发版」后，
+  特权服务态 scope 经对方 manifest 的 `privilegedServiceScopes` 申请、审批即授予（SA_DEFS
+  不再是唯一授予点，union top-up 也不会回滚审批授予）；用量指标经 manifest `usageMetrics`
+  声明（治理档）；控制台应用配置的 scope 校验运行时按 listing 声明放行（不卡编译期枚举）。
 - **后续版本**：对方 CI 自助（`xgent-app-release` skill）——无治理变更自动通过，
   治理变更进「发布审核」等平台批准。
 - **scope 三规则**：平台基础 scope ∪ 自己命名空间（含连字符→下划线变体）∪ 已声明 `exchangeTargets` 的目标命名空间；越界 `VALIDATION_FAILED`。
@@ -142,7 +145,7 @@ manifest 的 `requiredEnv`**，并把「本版新增/改名的必需 env」列�
 | **定时任务** | `scheduler.read` / `scheduler.write` | `/api/v1/scheduler/tasks` |
 | 结构化内容 / CMS | `content.read` / `content.write` | `/api/v1/content/{type}` |
 | **用量计量** | `usage.report`（只收 namespace 前缀 == 你 azp 的 metricKey） | `POST /api/v1/usage/report` |
-| 席位配额 | `seats.read`（SERVICE_ONLY，平台给，见下节） | `POST /api/v1/seats/quota` |
+| 席位配额 | `seats.read`（SERVICE_ONLY，经 manifest `privilegedServiceScopes` 申请、审批授予，见下节） | `POST /api/v1/seats/quota` |
 | 币种与汇率 | `currency.read` | `GET /api/v1/currency` |
 | 判权限（PID） | — | `POST /api/v1/acl/check` |
 | 用户级设置 | `settings.read` / `settings.write` | `/api/v1/settings/me` |
@@ -188,7 +191,9 @@ ACL + `viaApp` 溯源），而不是自己挂卷或自己接 S3 —— 否则租
 - 对接面只有一个：`POST /api/v1/seats/quota`（服务态令牌 + `seats.read`）。**`available === null`
   ⇒ 该租户 unlimited，放行、不要收口** —— 把 null 当 0 是这个契约最容易踩的一处。
 - ⚠️ `seats.read` 是 `SERVICE_ONLY_SCOPES`：对方 manifest 里出现 `serviceScopes: ["seats.read"]`
-  **会被 register-app 拒收**，评审时这是**当场打回的信号**，不是配置失误。
+  **会被拒收**，评审时这是**当场打回的信号**，不是配置失误。正确路径是
+  `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]` —— 这是**申请**不是授予：
+  必进「发布审核」，审批人逐条勾选确认后 SA 才拿到（reason 原文展示给审批人）。
 - **配额 ≠ 用量**，别混：配额答「还能不能再建一个」，用量答「这段时间用了多少」，后者走
   `usageReporter` + `usage.report`。计费方向另有平台级 Credit 服务，同样不自建。
 

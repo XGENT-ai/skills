@@ -10,6 +10,7 @@
 - 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`
 - 权限：`scopes` + `scopeLabels`（三语同意页文案）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
+- 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
 - 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；键集合一变提案转入「发布审核」）、`deployDescriptor`（`image` 之外的一切属治理档）
 - dev 专用明文：`serviceAccount{clientId,secret}`（`clientId` 约定 `<key>-server`，且**必须是自己的** —— 服务账号身份归平台，声明已归属另一 App 的 clientId 会进人工审、批准也会在生效时被写入闸拒绝）、`exchangeInitiatorSecret`（本应用作为交换发起方时的 App Secret）
 
@@ -34,7 +35,8 @@ bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production �
 「应用市场 › 接入新应用」按 key 签发 `xrel_` 令牌（无行先建 draft 占位），对方
 `publish --manifest` 提交，平台在「发布审核」批准 = `registerFromManifest` 建全
 （listing 上架 + SA + /svc + 已装租户对齐）。**不要**把外部 App 登记进 `LISTING_DEFS` ——
-门户只保留平台侧事实（`SA_DEFS` / `EXCHANGE_WIRING` / scope 常量 / Caddy 内联行），
+门户只保留平台侧事实（`EXCHANGE_WIRING` / Caddy 内联行 / 部署行，及作为**种子**的
+`SA_DEFS` 与 scope 常量 —— 特权 scope 已可经 `privilegedServiceScopes` 申请、审批授予），
 `bootstrap:prod` 对外部 key 只自愈 SA 与部署行。**生产没有 manifest 明文密钥这条路**
 （secret 取 env、缺省随机生成、明文只回显一次给审批人）。
 

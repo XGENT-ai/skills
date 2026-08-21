@@ -84,11 +84,17 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
 治理变更只能经 manifest 整份提交，没有「往表单里塞一个 scopes」这条路。
 
 **定级唯一判据：这次提交有没有改变权限面。** manifest 里与当前 listing 相比有治理差异
-（scopes / aclManifest / dependencies / exchangeTargets / serviceScopes / serviceBaseUrl /
+（scopes / aclManifest / dependencies / exchangeTargets / serviceScopes /
+privilegedServiceScopes / usageMetrics / serviceBaseUrl /
 seat* / scopeLabels / embedUrl / embedCsp / type / 部署形态…，以及**任何门户不认识的字段**）
 ⇒ 提案 `pending` 等平台审批；只有版本/产物/镜像/展示字段的差异 ⇒ `auto_approved` 当场生效。
+其中 `privilegedServiceScopes`（平台特权 scope 的申请，如 `seats.read`）是最高一档：
+审批人要**逐条勾选确认**才能批准 —— 每条都带上说清用途的 `reason`，等待会短很多；
+已持有的特权 scope 幂等重放不再进审。
 **提交即拒**（连提案都不落）的只有四类：manifest 携带密钥值（SA secret / descriptor.env）、
-SERVICE_ONLY scope、形状非法，以及**该 App 已有一条待审提案**（`PROPOSAL_PENDING`——
+SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScopes`）、形状非法
+（含 `usageMetrics` 的 key 不在你的 listingKey 命名空间、或声明金额单位），
+以及**该 App 已有一条待审提案**（`PROPOSAL_PENDING`——
 待审期间连纯 dist/version 的自动档也拒，否则「后交先生效」，批准旧提案时会把后发的版本滚回去）。
 另注意 `serviceAccount.clientId` 归属也算权限面：声明一个已归属别的 App 的 clientId ⇒
 `pending`，且批准也会在生效时被拒 —— clientId 用自己的。
