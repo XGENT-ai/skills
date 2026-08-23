@@ -22,7 +22,9 @@
 
 ## 2. 运行时契约（已实现）
 - 自省端点、Basic 凭证、信封解包（claims = body.data ?? body）、缓存策略；
+- 自省的 `isPlatformAdmin` 是 Portal 按用户实时计算的全局身份，不在 JWT 里；服务态恒为 false；
 - 四道闸各自的失败码（401 INVALID_TOKEN / 403 INSUFFICIENT_SCOPE / FORBIDDEN / INSUFFICIENT_PERMISSION）；
+- 如有跨租户路由：逐条标明 `isPlatformAdmin === true` 服务端闸，说明不用当前 `role` / `bypass` 或前端自报代替；
 - 服务态 TDT 的处理（scope-only；哪些用户拥有的写操作拒绝服务态）；
 - 租户隔离与限流参数。
 
@@ -81,6 +83,7 @@ MCP/stdio 之类免鉴权面的使用限制；破玻璃通道的启用条件。�
 审阅要点（平台方收到契约时逐项验）：
 
 - §3 路由表是否覆盖**全部** `/v1` 业务路由，公开路由是否只有健康/指标；
+- 如有跨租户路由，是否只认自省 `isPlatformAdmin`，并有普通租户 admin 的负控制测试；
 - §5 是否写清镜像实读变量名（对照 compose/K8s 注入排一遍）；
 - §6b 是否有「自建」项而没有理由 —— 自己存文件 / 自己发通知 / 自己记审计是最常见的三处；
 - §7b 若有配额诉求：模型是否二选一说清、role key 是否已在 manifest 的 `seatRoles` 里声明、`seats.read` 是否走了 `privilegedServiceScopes` 申请（写进 `serviceScopes` 是打回信号）、gauge 指标是否已在 manifest `usageMetrics` 里声明、`available=null` 是否按放行处理；

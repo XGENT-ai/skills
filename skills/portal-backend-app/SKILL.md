@@ -1,6 +1,6 @@
 ---
 name: portal-backend-app
-description: '在本 monorepo 内新增或修改「独立后端 App」（apps/<key>-server + apps/<key>-app 双包模式，如 spms/qbank/lms/llm-gateway/exam/library）。凡任务涉及新建一个后端服务、TDT 自省/四道闸/服务账号、App 的 scope 与 ACL 声明、LISTING_DEFS/seed 布线、给某 *-server 加 API 端点、DB 迁移或字典表、应用配置 tab、部署接线（Caddy/compose/DEPLOYABLE_APP_SERVICES）时，务必先用本 skill——即使用户只说"给 XX 应用加个接口"。Use when creating or extending a standalone-backend app inside this monorepo: gate/introspection, service accounts, listing/seed wiring, migrations, admin config tabs, deploy wiring.'
+description: '在本 monorepo 内新增或修改「独立后端 App」（apps/*-server + apps/*-app 双包模式，如 spms/qbank/lms/llm-gateway/exam/library）。凡任务涉及新建一个后端服务、TDT 自省/四道闸/服务账号、App 的 scope 与 ACL 声明、LISTING_DEFS/seed 布线、给某 *-server 加 API 端点、DB 迁移或字典表、应用配置 tab、部署接线（Caddy/compose/DEPLOYABLE_APP_SERVICES）时，务必先用本 skill——即使用户只说"给 XX 应用加个接口"。Use when creating or extending a standalone-backend app inside this monorepo: gate/introspection, service accounts, listing/seed wiring, migrations, admin config tabs, deploy wiring.'
 ---
 
 # portal-backend-app · monorepo 独立后端 App 开发
@@ -32,11 +32,14 @@ description: '在本 monorepo 内新增或修改「独立后端 App」（apps/<k
 
 自省 `POST /api/tokens/introspect`（服务账号 Basic）后：① `(claims.listingKey ?? claims.aud) === 本服务 listingKey`；② 所需 scope ∈ `claims.scopes`；③ 结构性管理操作看 `claims.role === "admin"`；④ 细粒度 `bypass || permissions 命中 PID`（数据范围取最宽）。
 
+如端点是**平台级跨租户**操作，在四道闸之外另加 `claims.isPlatformAdmin === true`：该值是 Portal 按 `user_id` 在每次自省时实时计算的全局身份，不在 JWT 里。`role` / `bypass` 只代表 TDT 当前租户，不能代替这道闸；也不接受前端 header/字段自报。
+
 写错就是全量 401 的硬形状：
 
 - 自省响应走统一信封，**声明在 `data` 里**：`claims = body.data ?? body`；
 - `active:false` 是**成功**的自省（令牌无效），不是传输错误；结果缓存 ≤60s；
 - 服务态 TDT（`kind:"service"`，无 `user_id`）**只按 scope 授权**，勿走 PID 门；
+- `active:true` 的自省结果始终带布尔 `isPlatformAdmin`；服务态恒为 `false`，身份变更传导受下游 ≤60s 缓存上限约束；
 - 租户隔离一律 `claims.tenant_id`，永不信任请求体；限流自建 `(aud, tenant)` 每分钟窗口。
 
 完整字段与服务账号细节见 [references/gate-and-tokens.md](references/gate-and-tokens.md)。

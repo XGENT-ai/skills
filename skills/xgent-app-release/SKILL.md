@@ -36,7 +36,13 @@ SERVICE_ONLY scope（如 `seats.read`）写进 `serviceScopes` 都会**提交即
 reason 会原文展示给审批人，写清楚用途能少一轮往返。上报自己的用量指标，先在
 `usageMetrics` 里声明（key 必须以你的 listingKey. 开头；同样治理档）——没声明的
 metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
-用 `requiredEnv`（只交键名），值永远由平台管理员在控制台填。
+用 `requiredEnv`（只交键名），值永远由平台管理员在控制台填 —— 见下面「镜像要环境变量」。
+
+`deployDescriptor.hostPort`（宿主机发布口）**也不归你定**：它是部署环境相关的事实——
+同一份 manifest 会发到好几套门户，各自的端口地貌不同，而你看不见那台机器上谁占了什么。
+规则：**首次注册**当建议值（撞了自动退让到平台端口池，不会因此拒掉你的注册）；**之后一律
+忽略**，发布响应的 `warnings` 里会告诉你当前实际是哪个口。它**不算治理变更**，所以带着它
+提交不会平白让你的发版进人工审批队列。你要管的只有 `port`（容器内监听口，约定 8080）。
 
 
 > **路径约定**：本 skill **不要求你有门户仓**，也不会让你去打开门户仓里的文件——需要的
@@ -115,6 +121,47 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 和「新版本在跑」画上等号。细节见 [references/publish-api.md](references/publish-api.md)。
 `--wait` 轮询的就是上面那个只读面：**门户上没有它时这一步失效**，「容器换没换」只能人工确认，
 如实说明，不要因为流水线绿了就报「新版本已在跑」。
+
+## 镜像要环境变量：**键名归你，值归平台**
+
+manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。唯一的表达
+方式是 **`requiredEnv`（只交键名）**，平台管理员按这张清单去填值：非密钥填进控制台 descriptor 的
+`env`，密钥进宿主机上一个 600 的 `envFile`（`/etc/xgent/<key>.container.env`），**永不进门户库**。
+
+以一个需要六个变量的可观测服务为例，你 repo 里那份 manifest 长这样：
+
+```jsonc
+"requiredEnv": [
+  "PORTAL_INTROSPECT_URL", "API_BASE_URL",
+  "OBSERVABILITY_SA_CLIENT_ID", "OBSERVABILITY_SA_CLIENT_SECRET",
+  "ZO_META_STORE", "ZO_LOCAL_MODE"
+],
+"deployDescriptor": {
+  "image": "observability:v1.0.0",
+  "port": 8080,                 // 容器内监听口，就这一个归你
+  "healthPath": "/health",
+  "alwaysOn": true              // 常驻型才写：别让它被缩容
+}
+```
+
+**四条别踩：**
+
+- **`env` / `hostPort` / `envFile` 一个都别写进 manifest。** `env` 带值即拒；`hostPort` 归平台
+  （见前面 `deployDescriptor.hostPort` 那段）；`envFile` 是那台机器上的路径，写了就得和平台实际持有的那份**逐字一致**，
+  不一致就变成一条「部署描述变更」，让你本来能自动通过的发版平白进人工审批队列。
+- **`PORTAL_INTROSPECT_URL` / `API_BASE_URL` 这类地址不是你能定的常量。** 同一份 manifest 会发到
+  一盒、pm2 生产、K8s 生产，自省地址分别是 `http://host.docker.internal:3000/...`、
+  `http://portal-api:3000/...`、`http://portal-api.<ns>.svc.cluster.local:3000/...`。你只交键名。
+- **`requiredEnv` 的键集合属治理档** ⇒ 新增或改名会让这次发版进「发布审核」。这是**有意的**：
+  运维要先看见新键名才能在换版前把值配好。反过来说，**改了 env 键名却不同步改 `requiredEnv`，
+  没有任何机制拦得住**（容器起来就缺变量）—— 改一个键就改一次清单，别嫌一次审批。
+- **值配好了不会自动换容器。** 只有 `deployDescriptor.image` 变了才排重部署任务；平台改 `env`
+  或改 envFile 内容都不排，要平台管理员去 控制台 › 服务部署 点「重新部署」。所以「首次接入」
+  和「本版新增了必需 env」这两种情况，发布成功 ≠ 新版本在跑，得跟平台确认一句。
+
+服务账号密钥（`<PREFIX>_SA_CLIENT_SECRET`）你自己拿不到也不用管：批准注册时门户随机签发、
+**只回显一次**给审批人，由平台经外部渠道交给你（本地联调用）并写进那份 envFile。它**永不静默轮换** ——
+要轮换找平台走控制台的「轮换密钥」，你那侧同步换，否则自省 401 而现场看不出原因。
 
 ## 首次发布（你的 App 还不在市场里）
 

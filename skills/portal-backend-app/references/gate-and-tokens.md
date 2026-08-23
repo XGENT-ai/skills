@@ -1,6 +1,6 @@
 # 自省、四道闸与服务账号（资源服务器契约）
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§9/§12（2026-07），响应形状对照 `apps/api/src/modules/token/index.ts` 实现核实。冲突时以门户仓库为准。
+> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§9/§12（2026-08），响应形状对照 `apps/api/src/modules/token/index.ts` 实现核实。冲突时以门户仓库为准。
 
 ## 1. 令牌自省（introspection）
 
@@ -14,6 +14,7 @@ POST {PORTAL}/api/tokens/introspect
     "active": true, "kind": "user"|"service",
     "aud": "<安装态 appKey>", "listingKey": "<稳定身份>", "azp": "<代表行事的来源App>"|null,
     "tenant_id": "...", "user_id": "..."|null, "scopes": [...], "role": "admin"|"user"|null,
+    "isPlatformAdmin": true,
     "bypass": false, "groups": [...]|null, "permissions": [{ "pid", "scope" }]|null,
     "aclStamp": "..."|null, "exp": 1730003600
   } }
@@ -22,7 +23,8 @@ POST {PORTAL}/api/tokens/introspect
 硬规则：
 - **信封解包**：声明在 `data` 里，必须 `claims = body.data ?? body`。裸读顶层 `active` 会把一切有效 TDT 误判 401（真实事故）。
 - 无效/已撤销 TDT 也是**成功**的自省，只是 `active:false`——不要当传输错误。
-- 结果缓存到 `exp` 前（上限 60s）；因此吊销可能有秒级延迟。
+- `active:true` 始终返回布尔 `isPlatformAdmin`：Portal 每次自省都按 `user_id` 实时检查其是否为**平台租户的 active admin**，与当前 `tenant_id` / `role` / `bypass` 独立；服务态恒为 `false`。该字段是**自省派生信息，不在 TDT JWT claims 里**。
+- 结果缓存到 `exp` 前（上限 60s）；因此吊销和平台管理员身份变更可能有秒级延迟。
 - dev 通道 `x-resource-key` 仅 `DEV_MOCK_OAUTH=true` 时生效且只认门户侧 `FILES_RESOURCE_KEY` 一把；生产一律拒绝，必须走 Basic。
 
 ## 2. 四道闸（每个受保护端点）
@@ -34,11 +36,13 @@ POST {PORTAL}/api/tokens/introspect
 
 外加两条恒规则：**租户隔离**一律按 `claims.tenant_id` 收口（永不信任请求体）；**限流**自建 `(aud, tenant)` 每分钟固定窗口。
 
+**平台级跨租户端点另加一道全局闸**：只认服务端自省的 `claims.isPlatformAdmin === true`。不能用 `role === "admin"` / `bypass` 代替（它们只表示 TDT 当前租户），也不能靠 `tenant_id === PLATFORM_TENANT_ID` 推导（平台管理员切到普通租户后仍有全局身份）。拒绝浏览器转发的 Cookie、`X-Is-Platform-Admin` 或 body 字段。
+
 `can(claims, pid)` 实现：`bypass || permissions.some(p => pidMatches(p.pid, pid))`；PID 通配 `app:*` ⊃ `app:page:*` ⊃ `app:page:x.*` ⊃ 精确。批量检查可用 `POST /api/v1/acl/check { token, pids[] }`（同服务账号鉴权）。
 
 ## 3. 服务态令牌的授权姿势
 
-`kind:"service"`（client_credentials 签发）**无 `user_id`、整体绕过用户 ACL**：自省返回 `permissions` 空、`bypass=false`。对服务态调用**只按 scope 授权**，勿走 PID 门；涉及"用户拥有"的写操作应拒绝服务态。
+`kind:"service"`（client_credentials 签发）**无 `user_id`、整体绕过用户 ACL**：自省返回 `permissions` 空、`bypass=false`、`isPlatformAdmin=false`。对服务态调用**只按 scope 授权**，勿走 PID 门；涉及"用户拥有"的写操作应拒绝服务态。
 
 三种令牌来路对照：
 

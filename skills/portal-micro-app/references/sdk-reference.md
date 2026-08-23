@@ -1,6 +1,6 @@
 # SDK 与令牌参考（微应用视角）
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §5/§7.4/§8.1/§10（2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库原文为准。
+> 提炼自门户仓库 `docs/SSO与App开发指引.md` §5/§7.4/§8.1/§10（2026-08）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库原文为准。
 
 ## 1. 握手与令牌注入
 
@@ -23,7 +23,7 @@ Portal 宿主 (MicroAppHost)                你的 iframe (portal-sdk)
 要点：
 - 宿主只接受来源在 `embedUrl` + `allowedOrigins` 白名单内的 postMessage。
 - 应用**全程拿不到 App Secret**；TDT 由 SDK 自动缓存、到期前 30s 才重新申请——不要自己持久化令牌。
-- TDT 是 HS256 JWT，`aud` = 你的 appKey，`tenant_id`/`user_id`/`scopes` 都在 claims 里；短期有效（默认 3600s）、可即时吊销。
+- TDT 是 HS256 JWT，`aud` = 你的 appKey，`tenant_id`/`user_id`/`scopes` 都在 claims 里；短期有效（默认 3600s）、可即时吊销。**`isPlatformAdmin` 不在 JWT 里**，它是 Portal 资源服务器自省时实时派生的字段。
 
 ## 2. InitPayload
 
@@ -40,6 +40,12 @@ interface InitPayload {
   acl?: AclInit;        // { bypass, permissions:[{pid,scope}], groups }
 }
 ```
+
+### 2.1 平台管理员的前后端边界
+
+- `InitPayload` 不含 `isPlatformAdmin`；`acl.bypass` 代表**当前租户 admin**，`sdk.userinfo().role` 也只是 TDT 当前租户的角色，都不是全局平台管理员判据。
+- 当 micro App 以 `/apps/<key>/` **同源部署**时，前端可调 session-only `GET /auth/me` 取 `data.isPlatformAdmin` 做菜单/文案展示；该端点是 Portal shell 会话面，不是 TDT Open API/SDK 稳定契约，独立后端无 Cookie 也不应调它。非同源/dev 环境不要假设它可用。
+- 前端值**绝不参与授权**：不发 `X-Is-Platform-Admin`，不把 body 里的布尔传给后端当判据，不转发 Cookie 让后端代调 `/auth/me`。如资源服务器有平台级跨租户路由，它必须以 SA Basic 自省 TDT，并校验自省返回的 `claims.isPlatformAdmin === true`（服务态恒为 `false`）。
 
 ## 3. SDK API 速查
 

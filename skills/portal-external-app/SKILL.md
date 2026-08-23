@@ -44,11 +44,12 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
    角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
 8. 对接契约文档：按 [references/contract-doc-template.md](references/contract-doc-template.md) 的结构与精度。**没有这份文档的接入不算完成**——新服务（如任务网关）要先补。
 
-## 资源服务器硬契约（外部实现最常炸的三处）
+## 资源服务器硬契约（外部实现最常炸的四处）
 
 1. **自省信封解包**：声明在 `data` 里，必须 `claims = body.data ?? body`——裸读顶层 `active` 会把一切有效 TDT 判 401（真实事故）；
 2. **`/health` 形状**：`{"service":"<key>","db":"ok",...}`，`"db"` 是字符串 `"ok"` 不是 `true`（healthcheck 按此判活）；
 3. **门户三变量 all-or-nothing**：自省地址 + SA clientId + secret 全缺→鉴权停用 503；缺一→启动 fail-fast 打印缺失项。
+4. **平台级跨租户闸**：如有跨租户路由，只认服务端自省返回的 `claims.isPlatformAdmin === true`。它由 Portal 按用户实时计算、不在 JWT 里；`role` / `bypass` 只属于当前租户，服务态恒为 `false`，不接受前端自报或 Cookie 转发。
 
 完整契约（四道闸、三种令牌来路、审计、划界）见 [references/integration-contract.md](references/integration-contract.md)。
 

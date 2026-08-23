@@ -39,6 +39,7 @@ description: '开发/修改 XGENT Portal 的嵌入式微应用前端（micro 型
 
 - 一切从 `const sdk = createPortalClient(); const init = await sdk.ready();` 开始。不在 Portal iframe 内（`window.parent === window`）时给提示页，不要白屏。
 - `sdk.getToken()` 自动缓存、到期前 30s 续签——**不要**自己存 TDT、不要写 localStorage。
+- 全局平台管理员不在 TDT JWT / `InitPayload` 里；`sdk.acl.bypass` 和 `sdk.userinfo().role` 只表示当前租户。前端即使拿到 session-only `/auth/me.isPlatformAdmin` 也只能做展示，不能转发给后端授权；跨租户后端只认 TDT 自省返回的 `isPlatformAdmin`。
 - 调自己的独立后端一律 `sdk.callService("<listingKey>", path, opts)`（宿主代转发、零跨域、401/403 自动重铸重试一次）。iframe 直接跨域 `fetch` 独立后端是错误姿势。
 - 权限：`sdk.acl.can(pid)` / `sdk.acl.scope(pid)` 只做**隐藏按钮/入口**的 UX 门；真正拦截靠后端。前端判过 ≠ 安全。
 - 路由：内部路由变化调 `sdk.routeSync(path)` 同步到 `?r=`；同时**必须**订阅 `sdk.onRoute` 处理宿主推回的路由（浏览器后退、同 App 多导航项切换）。只写单向 routeSync 会出现"同一 App 两个菜单点了不切换"的 bug。二级详情页把完整路径（如 `/items/<id>`）routeSync 出去，刷新/分享才能还原。

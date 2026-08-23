@@ -1,6 +1,6 @@
 # 外部镜像服务类应用 · 集成契约
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§15 与已接入案例（知识库 / omni-parser，2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
+> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§15 与已接入案例（知识库 / omni-parser，2026-08）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
 
 ## 1. 形态与分界
 
@@ -16,7 +16,7 @@
 
 ## 2. 交付物（外部团队 → 平台）
 
-1. **后端镜像**：容器内监听 **8080**（可由 env 覆盖，编排统一注 8080）；服务名/网络别名 **`<listingKey>-server`**（通用反代规则按此 DNS 命中）；多架构 **amd64 + arm64**（生产集群 amd64）；**不烘焙 `.env`/密钥**。
+1. **后端镜像**：容器内监听 **8080**（可由 env 覆盖，编排统一注 8080）；服务名/网络别名 **`<listingKey>-server`**（通用反代规则按此 DNS 命中）；多架构 **amd64 + arm64**（生产集群 amd64）；**不烘焙 `.env`/密钥**。⚠️ 只需要认这一个**容器口**；发布到宿主机的哪个口（`deployDescriptor.hostPort`）归平台按环境分配，别在镜像或 manifest 里把它当常量依赖（详见 registration-and-onebox.md）。
 2. **`app.manifest.json`**（见 registration-and-onebox.md）。
 3. **env 契约表**：逐个列镜像**实际读取**的变量名。⚠️ 镜像内部若用自有前缀（知识库读 `XGENT_PG_DSN`，门户契约别名 `KNOWLEDGE_DATABASE_URL`；且**不读裸 `PORT`**），必须写清映射，编排按镜像认的名字注入。
 4. **运维口径**（没有默认答案，必须显式声明）：
@@ -39,7 +39,7 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
   body: { "token": "<TDT>" }
 → 200 { "ok": true, "data": {
     "active", "kind": "user"|"service", "aud", "listingKey", "azp",
-    "tenant_id", "user_id", "scopes": [], "role", "bypass", "groups",
+    "tenant_id", "user_id", "scopes": [], "role", "isPlatformAdmin", "bypass", "groups",
     "permissions": [{ "pid", "scope" }], "aclStamp", "exp" } }
 ```
 
@@ -48,9 +48,12 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 3. 结构性管理操作看 `claims.role === "admin"`；
 4. 细粒度看 `bypass || permissions 命中 PID`（纯 scope 鉴权的服务可 `aclManifest:null`，跳过此闸）。
 
-硬形状（外部实现最常炸的三处）：
+如端点是**平台级跨租户**读/写，在上述四道闸外另加 `claims.isPlatformAdmin === true`。该值由 Portal 在每次自省时按 `user_id` 检查其是否为平台租户 active admin，与当前 `tenant_id` / `role` / `bypass` 独立；它是自省派生信息，**不在 TDT JWT claims 里**。不能用当前租户 admin、平台租户 ID 比较或前端头推导全局身份。
+
+硬形状（外部实现最常炸的四处）：
 
 - **信封解包**：声明在 `data` 里，`claims = body.data ?? body`。裸读顶层 `active` → 一切有效 TDT 被判 401（知识库 1.0.0 真实事故）。`active:false` 是成功的自省不是传输错误。自省结果缓存 `min(exp, now+60s)`，key 建议 `sha256(token)`。
+- **全局身份字段**：`active:true` 始终带布尔 `isPlatformAdmin`，服务态恒为 `false`。虽然 Portal 在自省时实时计算，下游缓存会让身份变更最多延后 60s 生效；更敏感的操作应缩短缓存或直查。
 - **门户三变量 all-or-nothing**：自省地址 + SA clientId + SA secret **全缺** → 门户鉴权停用、受门路由 503；**缺一不全** → 启动 fail-fast 打印缺失变量。避免半配置静默放行。
 - **租户隔离**按 `claims.tenant_id`（永不信任请求体）；限流自建 `(aud, tenant)` 每分钟窗口（参考默认 600/min）。
 
@@ -60,7 +63,7 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 | --- | --- | --- | --- |
 | 自己前端（宿主注入 / callService） | user | 有 | scope + PID/ACL |
 | 其他 App 令牌交换（如 files→omni-parser） | user | 有 | 同上；scope=发起方 TDT ∩ 你声明的 scopes；`azp`=发起方（出处归因） |
-| 服务账号 client_credentials（服务直调） | service | **无** | **只按 scope**（permissions 空、bypass=false，勿走 PID 门；用户拥有的写操作应拒绝） |
+| 服务账号 client_credentials（服务直调） | service | **无** | **只按 scope**（permissions 空、bypass=false、isPlatformAdmin=false，勿走 PID 门；用户拥有的写操作应拒绝） |
 
 ## 4. 健康检查
 
