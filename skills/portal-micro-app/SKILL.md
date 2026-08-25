@@ -35,6 +35,14 @@ description: '开发/修改 XGENT Portal 的嵌入式微应用前端（micro 型
 4. dev 直连 Open API 需 CORS：把 app 源加进 api 的 CORS 白名单 env；生产优先 `sdk.callService`/同源托管，前端完全不碰跨域。
 5. UI 开发遵守 CLAUDE.md 强制两步：设计用 `impeccable` skill，验证用 Chrome extension 真浏览器走通主路径。
 
+**你的 App 不在门户 monorepo 里（代码在自己的 repo）** ⇒ 上面 1–3 步一条都不适用：没有
+`apps/<key>-app` 目录、没有 `dev:all`、清单也不在 `LISTING_DEFS` 里。你的闭环是另一条：
+vite `base` 设成 `/apps/<key>/` → build 出 `dist/` → 用 `xgent-app-release` skill 的
+`publish --dist` 交上去（清单同理走 `publish --manifest`，你 repo 里那份 `app.manifest.json`
+就是唯一事实源）；想在真门户里先看一眼，把 `dist` 绝对路径挂进一盒（`portal-external-app`
+skill 的 `references/registration-and-onebox.md` §4）。**本文件其余部分（SDK 硬规则、consent、
+iframe 坑、设计红线、三份 references）与你在哪个 repo 无关，照用。**
+
 ## SDK 硬规则
 
 - 一切从 `const sdk = createPortalClient(); const init = await sdk.ready();` 开始。不在 Portal iframe 内（`window.parent === window`）时给提示页，不要白屏。
