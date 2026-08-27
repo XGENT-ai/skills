@@ -55,7 +55,8 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 ## 注册布线（细节见 registration-and-onebox.md）
 
-- **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 写 `/svc` 白名单 map。⚠️ `exchangeInitiatorSecret` 写的是**已安装**实例——先安装 App，**再重跑一次** register-app，否则发起交换 401。
+- **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 写 `/svc` 白名单 map。⚠️ `exchangeInitiatorSecret` 写的是**已安装**实例——先安装 App，**再重跑一次** register-app，否则发起交换 401。日志里 `wired into N …` 的 N 是「**改了**几个实例」，0 也可能是「本来就对」——判据是比哈希，见 registration-and-onebox.md §2.2。
+- ⚠️ **发布 ≠ 租户能看见**：租户市场对 `tenant_listing_grants` 是 fail-closed。**dev 的 `register-app` 会自动授予当时已存在的租户**（非 service 型，输出里有 `租户可用应用:` 一行）；**生产不自动**（提案批准 / 控制台导入都不授予——语义是平台管理员显式勾选）。症状是「控制台显示已上架、租户市场里却根本看不到」——去 平台 › 租户管理 › 租户 › 「可用应用」勾上保存（registration-and-onebox.md §2.1）。
 - **生产（标准路径）**：清单事实源在**对方仓的 `app.manifest.json`**，经
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
   （无行先建 draft 占位），对方 `publish --manifest … --dist … --image …` ⇒ 首次必进

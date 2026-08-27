@@ -34,7 +34,8 @@ npx @xgent/release-cli status --portal https://portal.example.com
   「不属于你」和「那个 App 不存在」，免得令牌变成探测别人 App 是否存在的工具。
 - 可随时吊销、可设过期时间。**每次调用实时查库**，所以吊销后下一次调用就 `401`，没有缓存窗口。
 - 它能**单方面生效**的仍只有自动通过档：`dist` · `version` · `deployDescriptor.image` ·
-  展示字段。治理变更只能**提议**（随 `manifest` 提交，进平台审核队列，批准前库里一字不动）。
+  展示字段 ·「值是 App 内路由 `/…`」的 `helpEntry`（外站 `https://…` 那一形态进审核档）。
+  治理变更只能**提议**（随 `manifest` 提交，进平台审核队列，批准前库里一字不动）。
   它也**读不回** `descriptor.env`——响应体里永远没有它，因为那里面是生产密钥。
 
 ## 2. 端点

@@ -7,7 +7,7 @@
 既是交付契约也是注册脚本的输入。字段：
 
 - 身份/展示：`listingKey`（= TDT aud = 服务账号/容器命名基名）、`name`、`version`、`cat`、`tagline`、`desc`、`icon`、`color`
-- 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`
+- 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`、`helpEntry`（micro：版头帮助按钮入口，`"/help"` App 内路由 = 自动档 ／ `"https://…"` 外站文档 = 治理档；不声明就不出按钮）
 - 权限：`scopes` + `scopeLabels`（三语同意页文案）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
@@ -30,7 +30,54 @@
 bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production 拒跑
 ```
 
-四件事：① 按 listingKey upsert + 发布 listing（复用门户写时校验：scope 命名空间 / ACL 形状 / 依赖无环）；② DB 直写 `token.introspect` 服务账号（secret = manifest 明文；同 secret 不动、不同则轮换）；③ 把 `exchangeInitiatorSecret` 写进**已安装**实例的 App Secret——⚠️ 所以**先在门户安装 App、再重跑一次 register-app**，否则发起交换 401；④ 往 `caddy-svc-allow` 卷写 `<key>.map` 放行 `/svc/<key>`（免改 Caddyfile、免重启反代）。
+四件事：① 按 listingKey upsert + 发布 listing（复用门户写时校验：scope 命名空间 / ACL 形状 / 依赖无环）；② DB 直写 `token.introspect` 服务账号（secret = manifest 明文；同 secret 不动、不同则轮换）；③ 把 `exchangeInitiatorSecret` 写进**已安装**实例的 App Secret——⚠️ 所以**先在门户安装 App、再重跑一次 register-app**，否则发起交换 401（判定方法见 §2.2，别看日志里那个数字）；④ 往 `caddy-svc-allow` 卷写 `<key>.map` 放行 `/svc/<key>`（免改 Caddyfile、免重启反代）。
+
+### 2.1 第五件事：授予租户（dev 自动 / 生产不自动）
+
+**发布一条 listing 并不会让它出现在任何租户的市场里。** 那道闸 fail-closed 在
+`tenant_listing_grants` 上：列表按授予集过滤、安装前 `assertTenantMayUseListing` 无授予行直接
+`LISTING_NOT_GRANTED`。授予行本来由 `installListing` 在**安装那一刻**写（「安装即授予」，依赖一并
+授予）——这对被依赖方成立，但对**目标 App 自己**是先有鸡还是先有蛋：路由闸先于安装拒绝。
+
+| 路径 | 行为 |
+| --- | --- |
+| **dev / 一盒**：`register-app <manifest>` | **自动授予当时已存在的所有租户**（非 service 型），输出里有一行 `租户可用应用: 新授予 N 个租户` |
+| **生产**：发布提案批准 / 控制台导入 manifest（`mode:"prod"`） | **不自动授予** —— 语义是平台管理员显式勾选，自动授予会绕过治理面 |
+
+⚠️ **判断你手上的一盒镜像有没有这个自动授予**：跑完 `register-app` 看输出里**有没有
+`租户可用应用:` 这一行**。没有 ⇒ 镜像早于这次改动，按下面手动补。
+
+⚠️ **自动授予只覆盖「注册那一刻已存在」的租户**：之后新建的租户不会被补授，要么再跑一次
+`register-app`，要么手动勾。
+
+**手动补授权（生产必走 / 老镜像上必走）**：**平台 › 租户管理 › 选中租户 › 「可用应用」tab**，
+勾上你的 App 再保存（计数会从 `4/5` 变 `5/5`），之后租户市场才出现「安装」。
+
+⚠️ 没授予时的症状极具迷惑性：**平台控制台「清单管理」显示已上架**（还能点「转为草稿 / 下架」，
+看着一切正常），但**租户市场里根本不出现这个 App**——没有报错、没有灰掉的卡片，就是不在列表里。
+别去查发布状态，那不是病根。
+
+⚠️ `service` 型**永不写授予行**（自动与手动都不写）：它在那张表里的勾选语义是**安装 / 卸载**
+（勾上即 `installListing`、取消即卸载），事实源是 `apps.status` 而不是授予表——一个勾选只许一个
+事实源。
+
+### 2.2 `wired into N installed instance(s)` 的 N 是「改了几个」，不是「对了几个」
+
+`wireInitiatorSecret` 对 `secretHash === hash` 的实例直接 `continue` —— **不计数**。所以 **N=0 有两义**：
+① 还没有任何安装实例；② 所有实例本来就已经是对的。register-app 在 N=0 时打印的
+`(none installed yet — install then re-run…)` **只覆盖第 ① 种**，看到它别当成「没写成」。
+
+**判据是比哈希，不是看数字**（三处必须相等）：
+
+```
+sha256(<manifest 的 exchangeInitiatorSecret>)
+  == 门户 app_secrets 里 prefix='sk_<listingKey>' 且 status='active' 那行的 secret_hash
+  == sha256(<你后端 env 的 <PREFIX>_APP_SECRET>)
+```
+
+「先装再重跑」那一步**仍然要跑一次**：`installListing` / `wireExchangeTargets` 只写交换 grant + 白名单，
+**不写 App Secret**；只有 `register-app`（与 seed 的 provisioning 路径）写它。所以装完之后的那次重跑是
+必要的，**之后每次重跑都显示 0，那是正常的**。
 
 ## 3. 注册（生产）
 
@@ -141,6 +188,9 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 
 打开 `http://localhost/` → dev 登录选 `rockie`（租户 admin + 平台管理员）。
 
+**第 0 步：确认租户已被授予**（否则下面第 1 步无从点起）。新版 `register-app` 在 dev 下会自动授予并
+打印 `租户可用应用: …`；没看到那一行（老镜像）就去 平台 › 租户管理 › 选中租户 › 「可用应用」勾上保存（§2.1）。
+
 ⚠️ `db:seed:onebox` 只种两个 dev 账号：`rockie@xgent.ai`（admin）与 `liming@xgent.ai`（普通成员）——
 **用普通成员再走一遍**。ACL member 基线没到位的问题（`defaultForMember` 没种进 member 角色）
 只在非管理员身上才现形，管理员的 `bypass` 会把它整个盖住。
@@ -158,6 +208,9 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 
 | 症状 | 病根 |
 | --- | --- |
+| **租户市场里看不到你的 App**（控制台却显示已上架） | **该租户没被授予**（§2.1）。三种成因：① 一盒镜像早于自动授予那次改动（输出里没有 `租户可用应用:` 行）；② 该租户是注册之后才建的；③ 走的是生产路径（本就不自动）。补法：平台 › 租户管理 › 租户 › 「可用应用」勾上保存。**不是发布状态问题** |
+| 安装报 `LISTING_NOT_GRANTED` | 同上（这是同一道闸的显式报错形态） |
+| `wired into 0 installed instance(s)` | **未必是没写成**：0 = 本次没有改动，含「本来就是对的」。按 §2.2 比哈希判定 |
 | `/svc/<key>` 404 | 白名单 `.map` 没写成，或反代先于 register-app 起（重启反代/重跑注册） |
 | `/svc/<key>` 502 | 后端没起 / 没听 8080 / 网络别名 `<key>-server` 没命中 |
 | 有效 TDT 被判 `INVALID_TOKEN` | 没解包自省信封（`claims = body.data ?? body`） |

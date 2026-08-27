@@ -20,6 +20,7 @@ Manifest 的权威载体是一条**市场清单（marketplace listing）**。安
 | `scopes` | 申请的权限范围（最小够用——授权屏逐条展示，越多越劝退） |
 | `scopeLabels` | App 命名空间 scope 的同意页三语文案 |
 | `navItems` | `{ id, label, icon, path }[]` 贡献到左侧导航 |
+| `helpEntry` | 版头帮助按钮的入口，可空字符串。`"/help"` = App 内路由（宿主置 `?r=`，自动通过档）／`"https://…"` = 外站文档（新标签 + `noopener`，治理档）。不声明就不出这枚按钮 |
 | `dashboard.widgets` | 可展示的 Dashboard Widget 声明 |
 | `extPoints` | 仅 `settings.section` |
 | `dependencies` | 依赖的其他清单（安装按拓扑序补装；卸载被依赖会拦截） |

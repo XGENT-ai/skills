@@ -90,14 +90,71 @@ openDownload(presignedUrl);
 sdk.resize(document.body.scrollHeight + 8);
 sdk.navigate("/app/another-app");            // 让宿主跳 Portal 内路由
 sdk.routeSync("/detail");                    // 内部路由 → 地址栏 ?r=（可分享/刷新还原）
+sdk.setBreadcrumbs([                         // 页面层级 → 宿主版头面包屑
+  { label: "需求池", route: "/requirements" },
+  { label: "FR-12 登录页改造" },             // 末级不带 route（它就是当前页）
+]);                                          // 首页推 []；整条 trail 全量覆盖
 sdk.setDirty(true);                          // 未保存更改 → 宿主拦截离开
 sdk.requestFullscreen(true);
 
 // 订阅宿主事件
 sdk.onTheme(t => ...); sdk.onLocale(l => ...);
 sdk.onRoute(p => ...);                       // ?r= 变化（后退 / 同 App 多导航切换）
+                                             // p === "" ⇒ 宿主点了「回应用首页」
 sdk.onFullscreen(on => ...);
 ```
+
+### `setBreadcrumbs` 的四条规矩
+
+⚠️ 它需要 `@xgent/portal-sdk` **≥ 0.2.1**。`0.x` 上 `^` 只放行 patch —— 依赖范围写
+`^0.1.0` 的仓**不会**自动吃到它（症状：`sdk.setBreadcrumbs is not a function`）。
+把 `package.json` 里的范围显式提上去再装。
+
+宿主版头最左恒为「应用图标 + 应用名」（= 应用首页），你上报的是**其后**那几级。
+
+1. **不含应用本身那一级**；首页推 `[]`。每次调用是**整条 trail 的全量覆盖**，不是追加。
+2. **挂在视图驱动的 effect 上**（与决定路由的是同一份 state），**别**散在各个
+   `routeSync()` / `navigate()` 调用点 —— 宿主发起的路由变化只走 `onRoute`（且不许在
+   `onRoute` 里 echo `routeSync`），挂错的症状是「侧栏切页后面包屑空着」。
+3. **`onRoute("")` 必须落到首页视图** —— 用户点最左那一级时宿主就是把 `?r=` 清空再推给你。
+4. **标签要异步查询才知道时宁可少一级**，不推 id 占位、不推「加载中…」；数据回来再整条
+   覆盖一次（两段式，谁后到谁生效）。`FR-12` 这种**展示 key** 是已知事实可以推，
+   `a3f9…` 这种内部 UUID 不可以。
+
+`label` 由你用**自己当前的语言**解析好（宿主不翻译），切语言要在 `onLocale` 里重推。
+上限 6 级 / label 120 字符 / `route` 512 字符且必须 `/` 开头（不得以 `//` 开头），
+超限被宿主静默截断。fire-and-forget：旧宿主收不到也不会报错，版头退化成「图标 + 名字」。
+
+### App 内部不要自绘图标与名称
+
+**App 内部不得渲染自己的图标与名称。** 版头最左那一级恒为「应用图标 + 应用名」，且它是
+可点的应用首页；App 再画一份 = 同屏两处说同一句话，而且租户改过 App 名之后两处会说得
+不一样（`apps.icon` / `apps.name` 租户可改，App 内的 i18n 词条改不了）。**tagline / 副标题**
+同理（应用中心已展示过）。**可以留**：角色、工作区、当前对象这类运行期事实；以及
+`main.tsx` 里 App 脱离门户打开时的 standalone 提示页（那一屏没有版头）。
+
+### `helpEntry`：在清单里声明帮助页入口
+
+清单里加一个可空字符串 `helpEntry`，版头工具条最右侧（全屏与刷新的**左边**）就多一枚
+帮助按钮；不声明就不出按钮（不渲染，不是禁用）。
+
+```jsonc
+"helpEntry": "/help"                      // App 内路由：宿主置 ?r=，用户不离开门户
+"helpEntry": "https://docs.example.com"   // 外站文档：新标签打开（noopener）
+```
+
+- `/…` 与 crumb 的 `route` **同一条规则**（`/` 开头、不得 `//` 开头、无控制字符、≤512）；
+  `https://…` 必须可解析、必须 https（`http://` 连回环也拒）、无 fragment、无通配符。
+- **内页路由自动档，外链走治理审核**（门户版头替一个域名背书）。
+- 它是**安装期快照**：改了内容要 bump 自己的 `version`。**租户不可覆盖** —— 想指向自家
+  知识库的诉求去知识库 App 实现。
+- 门户**不托管、不渲染、不翻译**帮助正文，这个字段只是一个入口。
+
+### 低频入口放版头，不占侧栏
+
+帮助中心、接入指引这类低频页面不该长期占着 App 侧栏一个位置：声明 `helpEntry` 让它挂在
+版头那枚帮助按钮上，并把这一级显式推进面包屑，进去之后位置依然清楚。范例是研发项目管理
+的帮助中心（指引 + FAQ）。
 
 ## 4. Consent（授权与同意）
 

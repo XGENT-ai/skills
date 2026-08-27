@@ -24,8 +24,9 @@ RETAIN_K_DEFAULT=10
 CONNECT_MS_DEFAULT=300
 
 APP=""; TAG=""
-CONTEXT="."; DOCKERFILE=""; CONFIG=""
+CONTEXT="."; DOCKERFILE=""; CONFIG=""; POINT_AT=""
 DO_BUILD=1; DRY_RUN=0; FORCE_TAG=0; SKIP_LINK=0; KEEP_LOGIN=0; ALLOW_DIRTY=0
+POINTER_MODE=0
 
 usage() {
   cat <<'USAGE'
@@ -43,6 +44,8 @@ usage() {
   --no-build           镜像已经在本地，只推不建
   --dry-run            只做只读检查，不 login/build/push
   --force-tag          允许覆盖已存在的 tag（⚠️ 覆盖不会触发部署侧重建）
+  --point-at <tag>     指针模式：把 <app>:<tag> 指向已存在的 <tag>，不构建、不传字节。
+                       只用于配置里 MUTABLE_TAGS 声明过的可变 tag（如 latest）
   --skip-link-check    跳过链路预检（⚠️ 跨境推送实测 49KB/s，跳过前先读 SKILL.md ①）
   --keep-login         结束后不 docker logout
   --allow-dirty        工作区不干净也允许推（⚠️ 镜像将无法由 tag 里的 commit 复现）
@@ -62,6 +65,8 @@ usage() {
   ROBOT_USER    形如 robot$<project>+<app>（在 shell 里要用单引号，$ 会被展开）
   ROBOT_SECRET  robot 密钥。CI 里请用 secret 注入，不要落盘
   TAG_PATTERN   tag 格式的正则。不配只提醒，配了就强制（团队统一后建议配上）
+  MUTABLE_TAGS  允许当**可变指针**用的 tag 名（空格/逗号分隔，如 latest）。默认空 = 一个都不许。
+                只适用于**不经部署侧**的项目（调试镜像）；这些 tag 必须用 --point-at 移动
   PLATFORM / RETAIN_K / CONNECT_WARN_MS   可选，有默认值
 USAGE
 }
@@ -87,6 +92,7 @@ while [[ $# -gt 0 ]]; do
     --no-build)        DO_BUILD=0; shift ;;
     --dry-run)         DRY_RUN=1; shift ;;
     --force-tag)       FORCE_TAG=1; shift ;;
+    --point-at)        POINT_AT="${2:?--point-at 缺少值}"; shift 2 ;;
     --skip-link-check) SKIP_LINK=1; shift ;;
     --keep-login)      KEEP_LOGIN=1; shift ;;
     --allow-dirty)     ALLOW_DIRTY=1; shift ;;
@@ -140,7 +146,7 @@ load_config_file() {
       [[ "$val" == \'*\' ]] && val="${val:1:${#val}-2}"
     fi
     case "$key" in
-      REGISTRY|PROJECT|ROBOT_USER|ROBOT_SECRET|PLATFORM|RETAIN_K|CONNECT_WARN_MS|TAG_PATTERN)
+      REGISTRY|PROJECT|ROBOT_USER|ROBOT_SECRET|PLATFORM|RETAIN_K|CONNECT_WARN_MS|TAG_PATTERN|MUTABLE_TAGS)
         [[ -n "${!key:-}" ]] || printf -v "$key" '%s' "$val" ;;   # 环境变量优先（CI 注入）
       *) : ;;
     esac
@@ -167,6 +173,7 @@ fi
 REGISTRY="${REGISTRY:-}"; PROJECT="${PROJECT:-}"
 PLATFORM="${PLATFORM:-$PLATFORM_DEFAULT}"
 RETAIN_K="${RETAIN_K:-$RETAIN_K_DEFAULT}"
+MUTABLE_TAGS="${MUTABLE_TAGS:-}"
 CONNECT_WARN_MS="${CONNECT_WARN_MS:-$CONNECT_MS_DEFAULT}"
 
 if [[ -z "$REGISTRY" || -z "$PROJECT" ]]; then
@@ -180,26 +187,78 @@ fi
 [[ "$REGISTRY" != */* ]]   || die "REGISTRY 只写域名，项目名放 PROJECT：$REGISTRY"
 
 # ── tag 规范 ────────────────────────────────────────────────────────
-# 硬拒：语义上"可变指针"的名字。它们和 tag 不可变（每次发版一个新 tag）直接冲突——
+# 默认硬拒语义上"可变指针"的名字。它们和 tag 不可变（每次发版一个新 tag）直接冲突——
 # 一旦有人推了 latest，"镜像引用没变但内容变了"就成立，部署侧不会重建，回滚也没有目标。
-case "$TAG" in
-  latest|prod|production|stable|current|head|HEAD|dev|develop|test|staging|uat|main|master|release|rc|beta|alpha)
-    die "tag 不能叫 '$TAG'。这类名字是**可变指针**语义，与「tag 不可变」冲突：
-   引用不变而内容变了 → 部署侧不触发重建（线上还跑着旧的），出问题也没有可回退的目标。
-   用 ${TAG_PATTERN_HINT}（$(sha_hint)）" ;;
-esac
+#
+# 唯一的例外是**不经部署侧**的项目（给人手工 docker pull 的调试镜像）：那里没有
+# 「引用变化 → 重建」这条链，也没有回滚目标，上面那段推理一条都不成立。反而 latest
+# 是有用的——新人第一次拉的时候，他还没有渠道知道有哪些 tag。
+# 打开方式：配置里 MUTABLE_TAGS=latest（**逐个列名**，不是一个总开关——否则 prod/main
+# 这类打错的名字会跟着一起放行）。
+#
+# ⚠️ 放行了也**不许 build 完直接推成 latest**，必须 --point-at 指向一个已存在的不可变 tag。
+#    理由是 GC：仓库的 GC 开着 delete_untagged，latest 一移走，上一个 digest 若没有
+#    别的 tag 就成了 untagged，下一次 GC 直接回收 ⇒ 这个 repo 永远只剩一份镜像，
+#    出问题连「昨天那个能用的」都找不回来。
+is_mutable_tag() {  # $1=tag —— 配置有没有把这个名字声明成「可变指针」
+  local t
+  for t in ${MUTABLE_TAGS//,/ }; do [[ "$t" == "$1" ]] && return 0; done
+  return 1
+}
 
-# 格式检查：TAG_PATTERN 没配 → 只提醒（各团队可能还没统一）；配了 → 强制
-if [[ -n "${TAG_PATTERN:-}" ]]; then
-  [[ "$TAG" =~ $TAG_PATTERN ]] || die "tag '$TAG' 不符合本仓库约定的 TAG_PATTERN：${TAG_PATTERN}"
-elif [[ ! "$TAG" =~ $TAG_PATTERN_DEFAULT ]]; then
-  warn "tag '$TAG' 不是推荐格式 ${TAG_PATTERN_HINT}（$(sha_hint)）。
-   推荐格式同时满足三件事：唯一（sha）、可追溯到 commit、按版本号可读可排序。
-   团队统一之后把 TAG_PATTERN 写进配置即可强制。"
+if is_mutable_tag "$TAG"; then
+  POINTER_MODE=1
+elif [[ -n "$POINT_AT" ]]; then
+  die "--point-at 只用于**可变指针**，而 '$TAG' 不是。
+   要把 ${TAG} 当指针用，先在配置里写 MUTABLE_TAGS=${TAG}（并读一遍那里的注意事项）。
+   只是想换个名字重推的话，用 docker tag 之后正常推。"
 fi
 
-# git 状态核对：只在 git 仓库里做
-if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+if [[ $POINTER_MODE -eq 0 ]]; then
+  case "$TAG" in
+    latest|prod|production|stable|current|head|HEAD|dev|develop|test|staging|uat|main|master|release|rc|beta|alpha)
+      die "tag 不能叫 '$TAG'。这类名字是**可变指针**语义，与「tag 不可变」冲突：
+   引用不变而内容变了 → 部署侧不触发重建（线上还跑着旧的），出问题也没有可回退的目标。
+   用 ${TAG_PATTERN_HINT}（$(sha_hint)）
+
+   ⚠️ 例外只有一种：**不经部署侧**的项目（如调试镜像项目里给开发者手工 pull 的镜像）。
+   那里没有「按引用触发重建」这条链，latest 是有用的。开法是配置里写 MUTABLE_TAGS=${TAG}，
+   然后用 --point-at <不可变 tag> 把它指过去——**不能 build 完直接推成 ${TAG}**。" ;;
+  esac
+
+  # 格式检查：TAG_PATTERN 没配 → 只提醒（各团队可能还没统一）；配了 → 强制
+  if [[ -n "${TAG_PATTERN:-}" ]]; then
+    [[ "$TAG" =~ $TAG_PATTERN ]] || die "tag '$TAG' 不符合本仓库约定的 TAG_PATTERN：${TAG_PATTERN}"
+  elif [[ ! "$TAG" =~ $TAG_PATTERN_DEFAULT ]]; then
+    warn "tag '$TAG' 不是推荐格式 ${TAG_PATTERN_HINT}（$(sha_hint)）。
+   推荐格式同时满足三件事：唯一（sha）、可追溯到 commit、按版本号可读可排序。
+   团队统一之后把 TAG_PATTERN 写进配置即可强制。"
+  fi
+else
+  # ── 指针模式：可变 tag 只能"移"，不能"推" ─────────────────────────
+  # 这里的 die 不给 --force 之类的绕过口子：绕过去的后果（GC 把上一份连底层 blob
+  # 一起回收）是**不可逆**的，而且当场没有任何征兆。
+  if [[ -z "$POINT_AT" ]]; then
+    _eg="v1.2.3-$(head_sha 2>/dev/null || echo 1a2b3c4)"
+    die "'${TAG}' 在配置里声明成了可变指针（MUTABLE_TAGS），必须用 --point-at 指向一个已存在的不可变 tag：
+
+     ./push-image.sh ${APP} ${_eg}                      # ① 先推不可变的那一份（真正的镜像）
+     ./push-image.sh ${APP} ${TAG} --point-at ${_eg}    # ② 再把指针移过去（不传字节）
+
+   为什么不许 build 完直接推成 ${TAG}：仓库的 GC 开着 delete_untagged。${TAG} 一移走，
+   上一个 digest 如果没有别的 tag 就变成 untagged，下一次 GC 连底层 blob 一起回收 ——
+   于是这个 repo 永远只有一份镜像，既没有历史也没有可回退的目标。"
+  fi
+  [[ "$POINT_AT" != "$TAG" ]] || die "--point-at 不能就是 ${TAG} 自己"
+  ! is_mutable_tag "$POINT_AT" \
+    || die "--point-at 要指向**不可变**的那个 tag，而 ${POINT_AT} 也在 MUTABLE_TAGS 里 ——
+   指针指指针，追到底还是没有一份钉得住的引用。"
+  [[ "$POINT_AT" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]] \
+    || die "--point-at 的 tag 不符合 OCI 字符集：$POINT_AT"
+fi
+
+# git 状态核对：只在 git 仓库里做。指针模式不构建任何东西，工作区状态与它无关
+if [[ $POINTER_MODE -eq 0 ]] && command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   if [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
     if [[ $ALLOW_DIRTY -eq 1 ]]; then
       warn "工作区不干净，--allow-dirty 放行 —— 这个镜像里有未提交的代码，tag 指向的 commit 复现不出它"
@@ -222,6 +281,8 @@ fi
 : "${ROBOT_SECRET:?未设置 ROBOT_SECRET —— 从 CI secret 取，不要写进文件}"
 
 IMAGE="${REGISTRY}/${PROJECT}/${APP}:${TAG}"
+SRC_IMAGE=""
+[[ $POINTER_MODE -eq 1 ]] && SRC_IMAGE="${REGISTRY}/${PROJECT}/${APP}:${POINT_AT}"
 
 case "$ROBOT_USER" in
   "robot\$${PROJECT}+${APP}") : ;;
@@ -243,6 +304,21 @@ harbor_get() {  # $1=path → 打印 http_code，body 落在 $BODY
   printf '%s' "${c:-000}"
 }
 
+# 取服务端某个 tag 的 digest。Accept 必须把 manifest list / OCI index 都列上——
+# 少列的话服务端会做媒体类型转换，返回的是**另一份 manifest 的 digest**，
+# 拿它去比对就成了"两边不一致"的假报警。
+# ⚠️ 必须**先赋值、再解析**，不能写成 `curl ... | sed ...`：curl 失败时 pipefail 会把
+#    整条管道判失败，而它又是命令替换的唯一内容 ⇒ `D="$(harbor_digest ...)"` 直接被
+#    set -e 掐死，写在调用点上的「取不到就提示」当场变成死代码。表现是脚本在 PUT 之后
+#    无声无息地退出（退出码 35），人只能看到第 7 步开了个头。
+harbor_digest() {  # $1=tag → 打印 sha256:...；**取不到就打印空，绝不返回失败**
+  local hdr=""
+  hdr="$(curl -sS -I --max-time 60 --config "$CURLRC" \
+    -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
+    "https://${REGISTRY}/v2/${PROJECT}/${APP}/manifests/$1" 2>/dev/null)" || return 0
+  printf '%s' "$hdr" | tr -d '\r' | sed -n 's/^[Dd]ocker-[Cc]ontent-[Dd]igest:[[:space:]]*//p' | tail -n1
+}
+
 extract_tags() {  # stdin: tags/list 的 JSON → 每行一个 tag
   sed -n 's/.*"tags"[[:space:]]*:[[:space:]]*\[\([^]]*\)\].*/\1/p' \
     | tr ',' '\n' | sed -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//' -e '/^$/d' -e '/^null$/d'
@@ -250,11 +326,14 @@ extract_tags() {  # stdin: tags/list 的 JSON → 每行一个 tag
 
 log "${B}镜像：${N}${IMAGE}"
 log "${B}账号：${N}${ROBOT_USER}"
+[[ $POINTER_MODE -eq 1 ]] && log "${B}模式：${N}指针 —— 把 ${TAG} 移到 ${POINT_AT} 所指的那一份（不构建、不传镜像字节）"
 [[ $DRY_RUN -eq 1 ]] && warn "--dry-run：只做只读检查，不会 login/build/push"
 
 # ── 1. 链路预检（①：跨境推送 49KB/s，先挡住）─────────────────────────
 step "1/7 链路预检"
-if [[ $SKIP_LINK -eq 1 ]]; then
+if [[ $POINTER_MODE -eq 1 ]]; then
+  ok "指针模式只传一份 manifest（几 KB），不传镜像字节 —— 跨境链路这条不适用，跳过"
+elif [[ $SKIP_LINK -eq 1 ]]; then
   warn "已跳过。跨境推送实测 49KB/s（2.93GB ≈ 17 小时），确认这台机器与仓库同地域再继续"
 else
   # 量的是 TLS 握手耗时（appconnect - connect），不是 TCP 握手：
@@ -305,7 +384,20 @@ TAGS=""
 [[ "$code" == 200 ]] && TAGS="$(extract_tags < "$BODY")"
 TAG_COUNT=0; [[ -n "$TAGS" ]] && TAG_COUNT="$(printf '%s\n' "$TAGS" | wc -l | tr -d ' ')"
 
-if [[ -n "$TAGS" ]] && printf '%s\n' "$TAGS" | grep -qx -- "$TAG"; then
+if [[ $POINTER_MODE -eq 1 ]]; then
+  # 指针只能指向**已经推上去**的那一份。这里拦住，就不会出现"指针指向空气"
+  # ——那种情况下 imagetools 会报一句 not found，但人容易读成网络问题。
+  if [[ -z "$TAGS" ]] || ! printf '%s\n' "$TAGS" | grep -qx -- "$POINT_AT"; then
+    die "仓库里没有 ${PROJECT}/${APP}:${POINT_AT}。指针只能指向已经推上去的 tag：
+   先把那一份推上去，再移指针。
+   现有 tag：$(printf '%s\n' "$TAGS" | tr '\n' ' ')"
+  fi
+  if printf '%s\n' "$TAGS" | grep -qx -- "$TAG"; then
+    log "${TAG} 已存在 —— 指针模式下这正是常态，它会被移到 ${POINT_AT} 那一份上"
+  else
+    log "${TAG} 还不存在 —— 这是第一次立这个指针"
+  fi
+elif [[ -n "$TAGS" ]] && printf '%s\n' "$TAGS" | grep -qx -- "$TAG"; then
   if [[ $FORCE_TAG -eq 1 ]]; then
     warn "tag ${TAG} 已存在，--force-tag 覆盖。⚠️ 部署侧按镜像引用的变化触发重建，
    覆盖同一个 tag 不会触发重建 —— 线上还跑着旧的那份，且没有可回退的目标"
@@ -318,7 +410,14 @@ ok "凭证可用；repository 现有 ${TAG_COUNT} 个 tag"
 
 # ── 3. 保留策略预警（④：只留最近推送的 K 个）─────────────────────────
 step "3/7 保留策略预警"
-if [[ "$TAG_COUNT" -ge "$RETAIN_K" ]]; then
+if [[ $POINTER_MODE -eq 1 ]]; then
+  ok "指针模式不新增 artifact（只是给已有的那一份多挂一个 tag）—— 不占保留策略的 K 个名额"
+  # ⚠️ 这里**故意用 log 不用 warn**：它每次移指针都会出现，是背景知识不是本次检出的问题。
+  #    常态路径上挂一个常驻 ⚠ ，只会把人训练成无视 ⚠ （和假告警一个病）。
+  log "   别让指针停在老镜像上：保留策略按「最近推送的 ${RETAIN_K} 个 artifact」保留，
+   ${TAG} 指着的那一份要是被后来的 ${RETAIN_K} 个挤出窗口，它会连 ${TAG} 这个 tag
+   一起被删掉 —— 表现是「${TAG} 突然 manifest unknown」。每次发版都把指针跟着移就不会遇到。"
+elif [[ "$TAG_COUNT" -ge "$RETAIN_K" ]]; then
   warn "已有 ${TAG_COUNT} 个 tag，保留策略只留**最近推送的 ${RETAIN_K} 个**（每天 02:00 执行，
    周日 03:00 GC）。判据是「最近 push 的」不是「最近在用的」——
    再推下去会把更老的挤掉，包括**生产可能正在跑的那个**。
@@ -331,8 +430,81 @@ fi
 
 if [[ $DRY_RUN -eq 1 ]]; then
   step "dry-run 结束"
-  log "接下来会做：docker login → docker build --platform ${PLATFORM} → 架构核对 → docker push"
+  if [[ $POINTER_MODE -eq 1 ]]; then
+    log "接下来会做：取 ${POINT_AT} 的 manifest → 原样 PUT 到 ${TAG} → digest 核对（不 login、不构建、不传镜像字节）"
+  else
+    log "接下来会做：docker login → docker build --platform ${PLATFORM} → 架构核对 → docker push"
+  fi
   log "完整引用：${IMAGE}"
+  exit 0
+fi
+
+# ── 4-7. 指针模式：原样重打一个 tag ─────────────────────────────────
+# 做法是 OCI 分发规范里的"重打 tag"：把源 tag 的 manifest **原始字节**取下来，
+# 一个字节不改地 PUT 到目标 tag 上。digest 由字节算出来 ⇒ 必然与源相同 ⇒
+# 落在**同一个 artifact** 上（不新增 artifact、不占保留策略名额、不动任何 blob）。
+#
+# ⚠️ 三条不要走的岔路：
+#   · docker pull + docker tag + docker push —— 要把镜像字节拉下来再传上去
+#     （跨境实测 49KB/s），而且 pull 只取**本机架构那一份**，多架构 manifest list
+#     会被压扁成单架构，别的架构的人下次拉就 no matching manifest。
+#   · docker buildx imagetools create —— 源是**单架构 manifest** 时它会包一层 index，
+#     digest 变了、Harbor 里多出一个 artifact（本脚本推的正是单架构镜像）。
+#   · 这一段**不需要 docker，也不 login** —— 纯 registry API，用的还是上面那份 curl 凭证。
+if [[ $POINTER_MODE -eq 1 ]]; then
+  step "4/7 跳过 docker login（指针模式只用 registry API，不碰本机 docker 凭证）"
+  step "5/7 跳过构建（不产生新镜像）"
+  step "6/7 跳过架构核对（${TAG} 落在 ${POINT_AT} 同一份 manifest 上，架构必然相同）"
+  step "7/7 把 ${TAG} 重打到 ${POINT_AT} 这一份上"
+
+  MF="$TMP_DIR/manifest"; HDR="$TMP_DIR/manifest.hdr"
+  # Accept 必须把 index / manifest list 都列上：少列的话服务端会做媒体类型转换，
+  # 取回来的是**另一份** manifest，重打上去就成了另一个 digest。
+  ACCEPT='application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json'
+
+  code="$(curl -sS -o "$MF" -D "$HDR" -w '%{http_code}' --max-time 60 --config "$CURLRC" \
+          -H "Accept: $ACCEPT" \
+          "https://${REGISTRY}/v2/${PROJECT}/${APP}/manifests/${POINT_AT}")" || code=000
+  [[ "$code" == 200 ]] || die "取 ${POINT_AT} 的 manifest 失败（HTTP ${code}）"
+  HDRS="$(tr -d '\r' < "$HDR")" || HDRS=""
+  CT="$(printf '%s' "$HDRS"    | sed -n 's/^[Cc]ontent-[Tt]ype:[[:space:]]*//p'            | tail -n1)"
+  D_SRC="$(printf '%s' "$HDRS" | sed -n 's/^[Dd]ocker-[Cc]ontent-[Dd]igest:[[:space:]]*//p' | tail -n1)"
+  [[ -n "$CT" ]] || die "服务端没给 Content-Type，不敢原样重打（媒体类型写错会让 manifest 不可读）"
+  [[ -s "$MF" ]] || die "取回来的 manifest 是空的"
+  log "源 manifest：${CT}  ${D_SRC:-（服务端没给 digest 头）}"
+
+  code="$(curl -sS -o "$TMP_DIR/put.out" -w '%{http_code}' --max-time 120 --config "$CURLRC" \
+          -X PUT -H "Content-Type: $CT" --data-binary "@$MF" \
+          "https://${REGISTRY}/v2/${PROJECT}/${APP}/manifests/${TAG}")" || code=000
+  case "$code" in
+    20?) : ;;
+    401|403) die "重打 tag 被拒（HTTP ${code}）。这一步要 **push** 权限，只读账号做不了" ;;
+    *)   die "重打 tag 失败（HTTP ${code}）：$(head -c 300 "$TMP_DIR/put.out" 2>/dev/null)" ;;
+  esac
+
+  # 核对：两个 tag 必须解析到同一个 digest。
+  # ⚠️ 两边同时读失败会得到两个空串，空串相等 ⇒ 假 PASS。所以先判非空再比。
+  D_DST="$(harbor_digest "$TAG")" || D_DST=""
+  [[ -n "$D_SRC" ]] || { D_SRC="$(harbor_digest "$POINT_AT")" || D_SRC=""; }
+  if [[ -z "$D_SRC" || -z "$D_DST" ]]; then
+    warn "取不到 digest 做核对（${POINT_AT}=${D_SRC:-读失败} ${TAG}=${D_DST:-读失败}）——
+   服务端已经收下了这次重打，但这次没验上。去 Harbor UI 看一眼两个 tag 是不是同一份。"
+  elif [[ "$D_SRC" != "$D_DST" ]]; then
+    die "重打完两边 digest 不一致，别用这个 ${TAG}：
+   ${POINT_AT} = ${D_SRC}
+   ${TAG}      = ${D_DST}
+   原样 PUT 本不该出现这种结果 —— 多半是中途有别的推送覆盖了同一个 tag。"
+  else
+    ok "服务端确认两个 tag 指向同一份：${D_DST}"
+  fi
+
+  printf '\n%s══ 完成 ══%s\n' "$B" "$N"
+  log "指针      ${IMAGE}"
+  log "指向      ${SRC_IMAGE}"
+  [[ -n "${D_DST:-}" ]] && log "digest    ${D_DST}"
+  log ""
+  log "拉取方要拿到新的这一份，得**重新 docker pull** —— 本地已经有同名 ${TAG} 时，"
+  log "docker run / compose 默认不会回仓库看一眼。可变指针的代价就在这里。"
   exit 0
 fi
 
@@ -394,11 +566,11 @@ log "镜像引用  ${IMAGE}"
 log "架构      ${actual}"
 log "tag 数    $((TAG_COUNT + 1))/${RETAIN_K}"
 log ""
-log "部署由部署侧侧触发。"
+log "部署由部署侧触发。"
 if [[ "$TAG_COUNT" -eq 0 ]]; then
   log ""
   log "这是 ${APP} 在本仓库的第一个 tag。分两种情况："
   log "  · ${APP} 已经在生产跑着（现在从别处拉镜像）—— 还要把**当前在跑的那个 tag**"
-  log "    也原样推一份进来，否则部署侧把地址切过来的那一刻拉不到同名 tag。"
+  log "    也原样推一份进来，否则部署侧把镜像源切过来的那一刻拉不到同名 tag。"
   log "  · ${APP} 还没上过生产 —— 没有这一步，推完这个 tag 就行。"
 fi
