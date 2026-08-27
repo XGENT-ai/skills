@@ -42,7 +42,8 @@
 | 拉 proxy 镜像时 `not found`，runtime 却拉下来了 | 代理镜像名是从 runtime **推出来**的（同仓同版本、仓库名 `proxy`），有的部署不叫这个。用 `--proxy-image <完整tag>` 显式指定 |
 | 「镜像域名与配置里的 REGISTRY 对不上」 | `--image` 的域名段和 `REGISTRY` 不是同一个 —— 登录 A 却去 B 拉，必然 401。对齐这两个再来 |
 | 想确认账号到底能不能用 | **判据只有 `docker pull` 本身。** 别拿 `curl` 去探仓库的管理 API（`/v2/_catalog` 之类）——只读账号在那里的 401/403 跟能不能拉是两回事 |
-| `manifest unknown` / `not found` | tag 写错了。这个仓库 **tag 不可变、不接受 `latest`**，以开发团队给的那行为准，别猜、别补 `:latest` |
+| `manifest unknown` / `not found` | tag 写错了。一盒只有两种 tag：`:latest`（可变指针，跟着最新一版走）和 `:v<版本>-<7位sha>`（不可变，钉住某一版）。别自己编版本号 |
+| 拉过了却还是旧的一版（修好的 bug 又出现） | 用的是 `:latest` 而本地已经有一份同名的 —— `docker run` / compose **默认不回仓库查**。`onebox.sh pull` 一次再 `dc up -d`；要钉住某一版就把 `compose.env` 里那两行改成 `:v<版本>-<sha>` |
 | `no matching manifest for linux/amd64` | 一盒只发 arm64（它是给开发机用的调试底座）。`--platform linux/arm64` 硬拉下来容器也起不来（`exec format error`）。要 amd64 找开发团队 |
 | 卡在 `Retrying in N seconds` 直到超时 | 链路或代理。把 `HTTP_PROXY`/`HTTPS_PROXY` 与 Docker Desktop 的代理设置对齐，或临时关掉代理重试 |
 | `x509: certificate signed by unknown authority` | 多半是仓库地址写错（不带端口、不带 `https://`）。**不要**去 `daemon.json` 加 `insecure-registries` 绕过 |

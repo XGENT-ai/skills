@@ -100,14 +100,16 @@ sha256(<manifest 的 exchangeInitiatorSecret>)
 **不 clone 门户、不改门户代码、不重建门户镜像。**
 
 ```
-<registry>/xgent-dev/one-box:v1.1.0-5c1660e   # portal runtime → XGENT_IMAGE       (~850MB)
-<registry>/xgent-dev/proxy:v1.1.0-5c1660e     # caddy proxy    → XGENT_PROXY_IMAGE (~68MB)
+<registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE       (~850MB)
+<registry>/<项目>/proxy:latest     # caddy proxy    → XGENT_PROXY_IMAGE (~68MB)
 ```
 
-⚠️ 三条硬前提，缺一条第 0 步就过不去：① **仓库不开放匿名拉取** —— 先找开发团队要一个
-**puller 账号**（只读凭证，按团队发放），`docker login <registry>` 用的就是它；凭证别转发给
-团队外的人、别写进会提交的文件。② **tag 不可变，仓库不接受 `latest` 这类可变指针** —— 换镜像
-要显式改 `compose.env` 的两行。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
+⚠️ 三条硬前提，缺一条第 0 步就过不去：① **仓库地址与拉取账号都要问平台团队** —— 仓库不开放
+匿名拉取，得有一个 **puller 账号**（只读凭证，按团队发放），`docker login <registry>` 用的就是它；
+凭证别转发给团队外的人、别写进会提交的文件（`portal-dev-setup` skill 把这两样收在一份
+`.xgent-registry.env` 里，照它配即可）。② **这两个调试镜像有 `latest`**（跟着最新一版走，开新项目
+不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，换版本前先 `docker pull`。
+要钉住某一版就写 `:v<版本>-<7位sha>`（当前 `v1.1.0-5c1660e`），那种 tag 不可变。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
 Apple Silicon），生产门户走另一条链。无 registry 访问时则要离线 `docker save` tar，`docker load` 即可
 （那条路上镜像的本地 tag 可能叫 `ai-portal-one-box:local` / `xgent-ai-portal-proxy:local`）。
 

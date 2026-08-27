@@ -15,7 +15,7 @@ iframe 托管、跨应用令牌交换。
 
 | 你需要 | 从哪来 |
 | --- | --- |
-| **puller key** + 门户镜像 tag | 找**你们自己的开发团队**要。镜像仓库不开放匿名拉取，没有它一盒起不来——见下面「先配 puller key」。tag **不可变、不接受 latest**，拿到的永远是一个具体版本 |
+| **puller key** | 找**你们自己的开发团队**要。镜像仓库不开放匿名拉取，没有它一盒起不来——见下面「先配 puller key」。**镜像 tag 不用问**：一盒和它的反代都挂了 `latest`，`init` 不给 `--image` 就用它 |
 | `listingKey` | 平台给的 App 标识（小写字母/数字/连字符）。它同时是 `/svc/<key>`、iframe 路径 `/apps/<key>/`、scope 命名空间、令牌的 `aud`——四位一体，永不改 |
 | `app.manifest.json` | 你自己写、放你自己 repo 的门户契约。样例在 init 之后会出现在 `portal-onebox/app-devkit/manifests/`（一个 micro、一个 service） |
 
@@ -31,6 +31,7 @@ cp .claude/skills/portal-dev-setup/puller.env.example ./.xgent-registry.env
 chmod 600 ./.xgent-registry.env
 # REGISTRY=<仓库域名>     不带 https://、不带端口、无尾斜杠
 # PULLER_AUTH=<base64>    base64 的「用户名:口令」：printf '%s' '<用户名>:<口令>' | base64
+# PROJECT=<项目名>        省掉 --image 时用它拼 <REGISTRY>/<PROJECT>/one-box:latest
 ```
 
 `PULLER_AUTH` 和 `~/.docker/config.json` 里 `auths.<REGISTRY>.auth` 是同一个值，两边可以互抄。
@@ -45,9 +46,13 @@ chmod 600 ./.xgent-registry.env
 ## 1. 首次用：一条命令铺好
 
 ```bash
-.claude/skills/portal-dev-setup/scripts/onebox.sh \
-  init --image <registry>/<项目>/one-box:<版本> --key <你的listingKey>
+.claude/skills/portal-dev-setup/scripts/onebox.sh init --key <你的listingKey>
 ```
+
+不给 `--image` 就取 `<REGISTRY>/<PROJECT>/one-box:latest`（反代同仓同 tag）——**开新项目不用先去问 tag**。
+`latest` 是**可变指针**：它跟着最新一版走，本地已经有同名镜像时 compose 不会回仓库看一眼，
+所以开工前先 `onebox.sh pull` 一次。要钉住某一版（复现一个 bug、或团队统一版本）就显式
+`--image <registry>/<项目>/one-box:v<版本>-<sha>`，那种 tag 是不可变的。
 
 它做五件事，都在**你的 repo 根**落到 `portal-onebox/`：
 

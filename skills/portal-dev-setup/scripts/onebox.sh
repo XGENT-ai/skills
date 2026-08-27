@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # portal-dev-setup — 在【你自己 App 的 repo 里】起一个真实门户（一盒 / one-box）用于本地联调。
 #
-#   onebox.sh init --image <门户镜像tag> --key <你的listingKey>
+#   onebox.sh init --key <你的listingKey> [--image <门户镜像tag>]
 #                              首次用：登录仓库并拉门户镜像 → 从镜像里取出 compose 资产 →
 #                              生成 compose.env（挑空闲端口、随机密钥），落在 ./portal-onebox/。
 #                              已存在的 compose.env 不覆盖（要整份重来加 --force）。
-#   onebox.sh pull             只（重）拉门户镜像 —— 换版本时用
+#                              不给 --image 就用 <REGISTRY>/<PROJECT>/one-box:latest —— 一盒
+#                              和它的反代都挂了 latest，开新项目不用先去问 tag。
+#   onebox.sh pull             只（重）拉门户镜像 —— 换版本、或 latest 移动过之后用
 #   onebox.sh env              生效的关键 env + 配置告警（同键多值、端口、NODE_ENV…）
 #   onebox.sh status           env 摘要 + 容器状态 + 宿主侧健康探测
 #   onebox.sh smoke            只跑宿主侧健康探测
@@ -15,7 +17,8 @@
 # 【拉取凭证】镜像仓库不开放匿名拉取，需要一份只读 puller 凭证。按顺序找第一个存在的：
 #   $XGENT_REGISTRY_CONFIG → ./.xgent-registry.env → ${XDG_CONFIG_HOME:-~/.config}/xgent/registry.env
 #   → ~/.xgent-registry.env → <skill 目录>/registry.env
-# KEY=value 两项：REGISTRY（域名，不带协议）· PULLER_AUTH（base64 的「用户名:口令」）。
+# KEY=value 三项：REGISTRY（域名，不带协议）· PULLER_AUTH（base64 的「用户名:口令」）·
+# PROJECT（仓库里的项目名 —— 省掉 --image 时用它拼 <REGISTRY>/<PROJECT>/one-box:latest）。
 # 同名环境变量优先，CI 里注入即可不必落盘。模板：<skill 目录>/puller.env.example
 # 两个镜像本地都已有（比如 docker load 的离线 tar）时会跳过登录与拉取。
 #
@@ -136,8 +139,17 @@ pull_images() {
     die "镜像域名（${host}）与配置里的 REGISTRY（${REGISTRY}）对不上 —— 登录 A 却去 B 拉，必然 401。对齐这两个再来。"
   fi
   registry_login
-  do_pull "$rt" "tag 写错了？这个仓库 tag 不可变、不接受 latest，以开发团队给的那行为准。"
+  do_pull "$rt" "tag 写错了？一盒只有两种：:latest（可变指针，跟着最新一版走）和 :v<版本>-<7位sha>（钉住某一版）。"
   do_pull "$px" "代理镜像名是从 runtime 镜像推出来的（同仓同版本、仓库名 proxy），有的部署不叫这个 —— 用 --proxy-image 显式指定。"
+}
+
+# 不给 --image 时用的默认镜像。一盒与它的反代都挂了 latest 指针 —— 这类镜像是【给人手工
+# docker pull】的调试件，没有"部署侧按镜像引用触发重建"那条链，可变 tag 的代价不成立，
+# 而"新人不知道该用哪个 tag"这个洞是真的。要钉住某一版就显式 --image <...>:v<版本>-<sha>。
+default_image() {
+  load_registry_config
+  [ -n "${REGISTRY:-}" ] && [ -n "${PROJECT:-}" ] || return 1
+  printf '%s/%s/one-box:latest' "$REGISTRY" "$PROJECT"
 }
 
 # --- 定位一盒目录 -------------------------------------------------------------
@@ -175,7 +187,7 @@ _eff() { # _eff KEY [default]
 load_env() {
   APP_KEY="$(_eff APP_KEY)"; APP_IMAGE="$(_eff APP_IMAGE)"; APP_FRONTEND_DIST="$(_eff APP_FRONTEND_DIST)"
   CATALOG="$(_eff XGENT_APP_CATALOG files,ingest,llm-gateway,git)"
-  HTTP_PORT="$(_eff HTTP_PORT 80)"; PROJECT="$(_eff COMPOSE_PROJECT_NAME xgent)"
+  HTTP_PORT="$(_eff HTTP_PORT 80)"; COMPOSE_PROJECT="$(_eff COMPOSE_PROJECT_NAME xgent)"
   BASE_URL="http://localhost"; [ "$HTTP_PORT" = "80" ] || BASE_URL="http://localhost:$HTTP_PORT"
 }
 
@@ -213,7 +225,9 @@ cmd_init() {
       *) die "init: 不认识的参数 '$1'" ;;
     esac
   done
-  [ -n "$image" ] || die "init 需要门户镜像 tag：--image <registry>/<项目>/one-box:<版本>。找平台团队要它和只读拉取账号；这个仓库 tag 不可变、不接受 latest。"
+  [ -n "$image" ] || image="$(default_image || true)"
+  [ -n "$image" ] || die "init 不知道该拉哪个镜像：给 --image <registry>/<项目>/one-box:<版本>，或在 puller 配置里补上 REGISTRY 与 PROJECT（补了就默认用 <REGISTRY>/<PROJECT>/one-box:latest，不必再去问 tag）。"
+  case "$image" in *:latest) info "用 ${image}（可变指针）—— 它跟着最新一版走，开工前 $0 pull 一次就是最新；要钉住某一版改用 --image <...>:v<版本>-<sha>。";; esac
   [ -n "$proxy" ] || proxy="${image%/*}/proxy:${image##*:}"   # 代理镜像同仓同版本
   [ -n "$key" ] || warn "没给 --key，先用占位 your-app —— 起 app-backend 之前必须把 compose.env 里的 APP_KEY 改成你的 listingKey（它同时是 /svc/<key>、iframe 路径、scope 命名空间和令牌 aud）。"
   key="${key:-your-app}"
@@ -333,10 +347,11 @@ cmd_pull() {
     ENV_FILE="$(find_home)/compose.env"
     [ -f "$ENV_FILE" ] && { image="$(_eff XGENT_IMAGE)"; [ -n "$proxy" ] || proxy="$(_eff XGENT_PROXY_IMAGE)"; }
   fi
-  [ -n "$image" ] || die "pull 需要 --image <门户镜像tag>（或先 init，之后它会从 compose.env 里读）。"
+  [ -n "$image" ] || image="$(default_image || true)"
+  [ -n "$image" ] || die "pull 不知道该拉哪个镜像：给 --image <门户镜像tag>，或先 init（之后它会从 compose.env 里读），或在 puller 配置里补上 REGISTRY 与 PROJECT（默认 one-box:latest）。"
   [ -n "$proxy" ] || proxy="${image%/*}/proxy:${image##*:}"
   require_puller; registry_login
-  do_pull "$image" "tag 写错了？这个仓库 tag 不可变、不接受 latest，以开发团队给的那行为准。"
+  do_pull "$image" "tag 写错了？一盒只有两种：:latest（可变指针，跟着最新一版走）和 :v<版本>-<7位sha>（钉住某一版）。"
   do_pull "$proxy" "代理镜像名是从 runtime 镜像推出来的，有的部署不叫 proxy —— 用 --proxy-image 指定。"
   printf '%s两个镜像就位%s\n' "$c_grn" "$c_off"
   echo "换版本的话，记得同步 compose.env 末尾的 XGENT_IMAGE / XGENT_PROXY_IMAGE，再 dc up -d"
@@ -358,11 +373,11 @@ cmd_env() {
     printf '\n'
   done
   echo
-  [ "$PROJECT" = "xgent" ] && warn "COMPOSE_PROJECT_NAME 还是模板默认的 xgent —— 同机另一套 compose 会被当成同一项目（容器被接管、命名卷共享）。改成 onebox-<你的 listingKey>。"
+  [ "$COMPOSE_PROJECT" = "xgent" ] && warn "COMPOSE_PROJECT_NAME 还是模板默认的 xgent —— 同机另一套 compose 会被当成同一项目（容器被接管、命名卷共享）。改成 onebox-<你的 listingKey>。"
   [ "$(_eff NODE_ENV)" = "development" ] || warn "NODE_ENV 不是 development —— 镜像烘的是 production，不覆盖则 portal-api 拒绝在 DEV_MOCK_OAUTH=true 下启动，register-app 也拒跑。"
   [ "$(_eff DEV_MOCK_OAUTH)" = "true" ] || warn "DEV_MOCK_OAUTH 不是 true —— 没有 dev 登录门，浏览器进不去。"
   [ -n "$(_eff PREVIEW_MEDIA_CONVERTER_URL)" ] && warn "PREVIEW_MEDIA_CONVERTER_URL 非空 —— 一盒不装 ffmpeg，非空会让每次转换 exec 一个不存在的二进制。留空。"
-  case "$(_eff XGENT_IMAGE)" in *:latest) warn "XGENT_IMAGE 用了 latest —— 这个仓库 tag 不可变、不接受可变指针，写具体版本。";; esac
+  case "$(_eff XGENT_IMAGE)" in *:latest) info "XGENT_IMAGE 是 latest（可变指针）—— 本地已经有同名镜像时 compose 不会回仓库看一眼，开工前先 $0 pull；要钉住某一版就写成 :v<版本>-<sha>。";; esac
   [ -z "$APP_IMAGE" ] && warn "APP_IMAGE 还没填 —— 你的 app-backend 不会被拉起。（门户本身照常可用；先把门户跑通本来也是对的第一步。）"
   case "$(_eff PORTAL_BASE_URL)" in
     ""|"http://localhost:$HTTP_PORT") ;;
@@ -400,7 +415,7 @@ cmd_smoke() {
 
 cmd_status() {
   cmd_env
-  echo "容器（project: ${PROJECT}）"
+  echo "容器（project: ${COMPOSE_PROJECT}）"
   dc ps || true
   echo
   warn "portal-api / *-server 的 unhealthy 是假红：一盒镜像没装 curl，而 healthcheck 写的就是 curl —— 它永远失败。判活只看下面的探测。"
