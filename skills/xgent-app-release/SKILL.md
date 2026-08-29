@@ -41,6 +41,27 @@ reason 会原文展示给审批人，写清楚用途能少一轮往返。上报�
 metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
 用 `requiredEnv`（只交键名），值永远由平台管理员在控制台填 —— 见下面「镜像要环境变量」。
 
+### 文案字段：哪些支持多语，哪些不支持
+
+门户把 manifest 的文案分两处存，形状要求不同，而**写错的那一组不会报错**：
+
+| 字段 | 形状 | 写错的后果 |
+| --- | --- | --- |
+| `tagline` / `desc` / `icon` / `color` / `cat` / `navItems[].label` / `dashboardWidgets[].title` | **纯字符串** | 给多语对象 ⇒ 存成字面量 `"[object Object]"`，直接显示在每个租户的应用卡片与详情上 |
+| `name` | 纯字符串 | 给对象不报错，但会被**拍平成 zh-CN**，另外两种语言就此丢掉 |
+| `scopeLabels[<scope>]` | 字符串 **或** `{ "zh-CN": …, "zh-TW": …, "en": … }` | 同意屏按门户当前语言解析，回退链 当前语言 → `zh-CN` → `en` → 键名。**`zh-CN` 是回退终点，必写** |
+| `aclManifest` 里的 `label` / `name` / `desc` | 同上（字符串或多语对象） | 角色矩阵按请求语言解析 |
+| `usageMetrics[].label` | **`{ "zh": …, "en"?: …, "tw"?: … }`** —— 键名和上面那套**不一样** | 缺 `zh` ⇒ 提交即拒 |
+
+`scopeLabels` 另有两条静默失效，一条报错都没有：
+
+- **键不在 `scopes` 里的会在写入时被直接丢掉** —— 同意屏上那条权限回落成键名。改 scope 名忘了改文案键就中。
+- **平台基础 scope（`userinfo.read` / `audit.write` / `notification.*` / `settings.*` …）的文案别自己写。**
+  那是平台统一维护的措辞；各 App 各写一份，同一条权限在不同应用的同意屏上就会说得不一样，比缺文案更糟。
+  发现平台漏了哪条，找平台补，不要在自己清单里补。
+
+这一整节 `scripts/preflight.mjs` 都会替你查（`--manifest <path>`，不传就按常见路径自己找）。
+
 `deployDescriptor.hostPort`（宿主机发布口）**也不归你定**：它是部署环境相关的事实——
 同一份 manifest 会发到好几套门户，各自的端口地貌不同，而你看不见那台机器上谁占了什么。
 规则：**首次注册**当建议值（撞了自动退让到平台端口池，不会因此拒掉你的注册）；**之后一律
@@ -79,9 +100,10 @@ VER=1.4.2                                   # listingKey 在配置文件里，�
 2. **构建，`base` 必须是 `/apps/<key>/`。** 产物在生产被挂到那个子路径下，
    `base` 少了 → 资源请求打到站点根 → 页面 200 但白屏。这是本流程翻车率第一名。
    → 验收：`grep -o 'src="[^"]*"' dist/index.html`，路径都以 `/apps/<key>/` 开头。
-3. **预检。** `node <skill>/scripts/preflight.mjs --dist dist --version $VER`
+3. **预检。** `node <skill>/scripts/preflight.mjs --dist dist --version $VER --manifest deploy/portal/app.manifest.json`
    → 验收：脚本零 ✗ 退出。它把「构建看着成功、线上却坏」的几种成因一次性挡下（base 前缀、
-   根 `index.html`、包大小、dev 地址残留、版本号形状、令牌有效性）。
+   根 `index.html`、包大小、dev 地址残留、版本号形状、令牌有效性，以及 manifest 的文案字段形状
+   —— 见上面「文案字段」，那一类**发布成功、审批通过、线上显示 `[object Object]`**）。
 4. **发布。**
    ```bash
    npx @xgent/release-cli publish --version $VER --dist dist/

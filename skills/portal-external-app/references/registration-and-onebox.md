@@ -8,7 +8,7 @@
 
 - 身份/展示：`listingKey`（= TDT aud = 服务账号/容器命名基名）、`name`、`version`、`cat`、`tagline`、`desc`、`icon`、`color`
 - 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`、`helpEntry`（micro：版头帮助按钮入口，`"/help"` App 内路由 = 自动档 ／ `"https://…"` 外站文档 = 治理档；不声明就不出按钮）
-- 权限：`scopes` + `scopeLabels`（三语同意页文案）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
+- 权限：`scopes` + `scopeLabels`（同意屏逐 scope 的说明文案，支持多语——形状见下）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
 - 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；键集合一变提案转入「发布审核」）、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）
@@ -16,6 +16,20 @@
 ⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口已经写进 Caddy 的 `/svc` map、也是在跑的容器发布出来的口）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
 **例外**：`extraPorts[].host` **不参与退让**，撞了硬拒——那些是对外契约口（worker 节点连的就是那个数字），静默挪走等于把它们全断掉，且门户侧一条都测不到。
 - dev 专用明文：`serviceAccount{clientId,secret}`（`clientId` 约定 `<key>-server`，且**必须是自己的** —— 服务账号身份归平台，声明已归属另一 App 的 clientId 会进人工审、批准也会在生效时被写入闸拒绝）、`exchangeInitiatorSecret`（本应用作为交换发起方时的 App Secret）
+
+**文案字段的形状**（写错的那一组**不会报错**，所以单列一张表）：
+
+| 字段 | 形状 | 写错的后果 |
+| --- | --- | --- |
+| `tagline` / `desc` / `icon` / `color` / `cat` / `navItems[].label` / `dashboardWidgets[].title` | **纯字符串**（单语） | 给多语对象 ⇒ 门户把它拼成字面量 `"[object Object]"` 存进 text 列，显示在每个租户的应用卡片与详情上 |
+| `name` | 纯字符串 | 给对象不报错，但会被**拍平成 zh-CN**，另外两种语言就此丢掉 |
+| `scopeLabels[<scope>]` | 字符串 **或** `{ "zh-CN": …, "zh-TW": …, "en": … }` | 存 jsonb，同意屏按门户当前语言解析；回退链 当前语言 → `zh-CN` → `en` → 键名，所以 **`zh-CN` 是回退终点，必写** |
+| `aclManifest` 内的 `label` / `name` / `desc` | 同上（字符串或多语对象） | 角色矩阵按请求 locale 解析 |
+| `usageMetrics[].label` | **`{ "zh": …, "en"?: …, "tw"?: … }`** —— 键名与上一行**不是同一套** | 缺 `zh` ⇒ 提交即拒 |
+
+`scopeLabels` 还有两条静默失效：**键不在 `scopes` 里的在写入时被直接丢弃**（同意屏上那条回落成键名，改 scope 名忘了改文案键就中）；
+**平台基础 scope（`userinfo.read` / `audit.write` / `notification.*` …）的文案不归 App 写** —— 那是平台统一维护的措辞，
+各 App 各写一份，同一条权限在不同应用的同意屏上就会说得不一样，比缺文案更糟；发现平台漏了哪条，反馈给平台补。
 
 **scope 三规则**（写时强校验）：一条清单只能声明——
 1. 平台基础 scope（`userinfo.*`/`audit.write`/`notification.*`/`settings.*`/`scheduler.*`/`content.*` 等）；

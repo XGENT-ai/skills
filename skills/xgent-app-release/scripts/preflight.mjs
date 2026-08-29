@@ -3,7 +3,10 @@
  * xgent-app-release · 发布预检
  *
  *   node preflight.mjs --dist dist [--version 1.4.2] [--key <listingKey>]
+ *                      [--manifest deploy/portal/app.manifest.json]
  *                      [--portal https://portal.example.com] [--config path] [--offline]
+ *
+ * `--manifest` 缺省时按常见路径自己找；找到就一并检查文案字段形状。
  *
  * `--key` 缺省时从本地配置文件的 LISTING_KEY 读（与 release-cli 同一份）。
  *
@@ -67,7 +70,7 @@ const portal = (args.portal ?? process.env.XGENT_PORTAL_URL ?? "").replace(/\/+$
 const token = (process.env.XGENT_RELEASE_TOKEN ?? "").trim();
 
 if (!key) {
-  console.error("用法: node preflight.mjs [--key <listingKey>] --dist dist [--version v] [--portal url] [--config path] [--offline]");
+  console.error("用法: node preflight.mjs [--key <listingKey>] --dist dist [--version v] [--manifest path] [--portal url] [--config path] [--offline]");
   console.error("      缺 --key 时从本地配置文件的 LISTING_KEY 读（./.xgent-registry.env 等）");
   process.exit(1);
 }
@@ -225,6 +228,111 @@ if (!token) {
     }
   } catch (e) {
     warn(`令牌联网校验失败（${e?.message ?? e}）—— 网络不通就用 --offline 跳过，但发布时还是会验`);
+  }
+}
+
+/* ── 7. manifest 文案字段形状 ─────────────────────────────────────────
+   门户把 manifest 的文案分两处存：展示字段进 text 列（只存一种语言），
+   `scopeLabels` 与 `aclManifest` 里的 label 进 jsonb（支持按门户语言解析的多语对象）。
+   两组的形状要求【不一样】，而写错的那一组【不会报错】：给 `tagline` 一个
+   `{"zh-CN":…,"en":…}` 对象，会被拼成字面量 `[object Object]` 存进去，然后出现在
+   每个租户的应用卡片和详情上。构建、发布、审批，整条链路没有任何一处会提示你。 */
+const MANIFEST_GUESSES = [
+  "deploy/portal/app.manifest.json", "portal-app/app.manifest.json",
+  "deploy/app.manifest.json", "app.manifest.json",
+];
+const manifestPath = args.manifest ?? MANIFEST_GUESSES.find((p) => { try { return statSync(p).isFile(); } catch { return false; } });
+if (!manifestPath) {
+  warn(`没找到 app.manifest.json（试过 ${MANIFEST_GUESSES.join(" ")}）—— 用 --manifest <path> 指给我，文案字段形状就没人查了`);
+} else {
+  let mf = null;
+  try {
+    mf = JSON.parse(readFileSync(manifestPath, "utf8"));
+  } catch (e) {
+    err(`${manifestPath} 不是合法 JSON：${e?.message ?? e}`);
+  }
+  if (mf && typeof mf === "object") {
+    const isObj = (v) => v !== null && typeof v === "object";
+    const shown = (v) => JSON.stringify(v)?.slice(0, 60) ?? String(v);
+
+    /* ① text 列 = 单语纯字符串。`name` 是唯一被容忍的：门户会把对象拍平成 zh-CN 存下去
+       （不报错，但另外两种语言就此丢了）。其余给对象一律变成 "[object Object]"。 */
+    if (isObj(mf.name)) {
+      warn(
+        `manifest.name 是对象（${shown(mf.name)}）—— 门户会把它拍平成 zh-CN 一种语言存下去。` +
+          `应用名不支持多语，写纯字符串，别指望三语生效。`,
+      );
+    } else if (mf.name !== undefined && typeof mf.name !== "string") {
+      err(`manifest.name 必须是字符串`);
+    }
+    for (const f of ["tagline", "desc", "icon", "color", "cat", "version", "embedUrl", "serviceBaseUrl", "helpEntry"]) {
+      const v = mf[f];
+      if (v === undefined || v === null || typeof v === "string") continue;
+      err(
+        `manifest.${f} 必须是字符串，现在是${Array.isArray(v) ? "数组" : typeof v}（${shown(v)}）。` +
+          (isObj(v) ? `\n      → 这个字段不支持多语：给对象会被存成字面量 "[object Object]"，直接显示给每个租户。多语只有 scopeLabels 和 aclManifest 里的 label 支持。` : ""),
+      );
+    }
+    for (const [i, n] of (Array.isArray(mf.navItems) ? mf.navItems : []).entries())
+      if (n && typeof n.label !== "string")
+        err(`manifest.navItems[${i}].label 必须是字符串（导航项标题不支持多语；现在是${shown(n.label)}）`);
+    for (const [i, w] of (Array.isArray(mf.dashboardWidgets) ? mf.dashboardWidgets : []).entries())
+      for (const f of ["title", "subtitle", "description"])
+        if (w && w[f] !== undefined && typeof w[f] !== "string")
+          err(`manifest.dashboardWidgets[${i}].${f} 必须是字符串（Widget 文案不支持多语）`);
+
+    /* ② scopeLabels = 同意屏正文，jsonb，**支持**多语对象。这里查的是三种「配了不生效」：
+       键不在 scopes 里（写入时被静默丢弃）、多语对象缺 zh-CN（回退终点）、
+       替平台基础 scope 写文案（那是平台的措辞，各 App 各写一份只会互相打架）。 */
+    const declared = new Set(Array.isArray(mf.scopes) ? mf.scopes : []);
+    const ns = [key, key.replace(/-/g, "_")];
+    const labels = isObj(mf.scopeLabels) ? mf.scopeLabels : {};
+    const LOCALES = ["zh-CN", "zh-TW", "en"];
+    let labelOk = 0;
+    for (const [s, v] of Object.entries(labels)) {
+      if (Array.isArray(mf.scopes) && !declared.has(s)) {
+        err(
+          `manifest.scopeLabels 有一条 "${s}"，但它不在 manifest.scopes 里 —— 门户写入时会把它【静默丢弃】，` +
+            `同意屏上那条 scope 回落成键名。要么补进 scopes，要么删掉这条文案。`,
+        );
+        continue;
+      }
+      if (!ns.some((p) => s === p || s.startsWith(`${p}.`))) {
+        warn(
+          `manifest.scopeLabels 替 "${s}" 写了文案，但它不在你的命名空间（${key}.）里 —— ` +
+            `平台基础 scope 的说明归平台统一维护：各 App 各写一份，同一条权限在不同应用的同意屏上措辞就不一致了。` +
+            `缺文案找平台补，别在自己清单里补。`,
+        );
+      }
+      if (typeof v === "string") { labelOk++; continue; }
+      if (!isObj(v) || Array.isArray(v)) { err(`manifest.scopeLabels["${s}"] 只能是字符串或 { "zh-CN": …, "zh-TW": …, "en": … } 对象`); continue; }
+      if (typeof v["zh-CN"] !== "string" || !v["zh-CN"].trim())
+        err(`manifest.scopeLabels["${s}"] 缺 "zh-CN" —— 它是回退终点，缺了在没有对应语言时会退到别的语言甚至键名`);
+      const extra = Object.keys(v).filter((k) => !LOCALES.includes(k));
+      if (extra.length) warn(`manifest.scopeLabels["${s}"] 里的 ${extra.join("/")} 门户界面用不到（只认 ${LOCALES.join(" / ")}）`);
+      if (typeof v["zh-CN"] === "string") labelOk++;
+    }
+    const appScopes = [...declared].filter((s) => ns.some((p) => s === p || s.startsWith(`${p}.`)));
+    const noLabel = appScopes.filter((s) => !(s in labels));
+    if (noLabel.length)
+      warn(
+        `你自己命名空间的 scope 有 ${noLabel.length} 条没写 scopeLabels：${noLabel.slice(0, 4).join(" ")}${noLabel.length > 4 ? " …" : ""}` +
+          `\n      → 门户对 App 命名空间的 scope 没有内建文案，同意屏上会直接显示键名。用户看到 "${noLabel[0]}" 是不会点同意的。`,
+      );
+    if (labelOk) ok(`scopeLabels ${labelOk} 条形状合法`);
+
+    /* ③ usageMetrics[].label 是【第三种】形状：键名是 zh/en/tw，不是 zh-CN/zh-TW。
+       写成 zh-CN 会被门户判成缺 label.zh，提交即拒（连提案都不落）。 */
+    for (const [i, u] of (Array.isArray(mf.usageMetrics) ? mf.usageMetrics : []).entries()) {
+      const l = u?.label;
+      if (!isObj(l) || typeof l.zh !== "string" || !l.zh.trim())
+        err(
+          `manifest.usageMetrics[${i}].label 必须是 { "zh": "…" }（en / tw 可选，缺省回退 zh）——` +
+            `注意这里的键是 zh / en / tw，不是 scopeLabels 那套 zh-CN / zh-TW / en。写错门户提交即拒。`,
+        );
+    }
+    if (!errs.some((m) => m.startsWith(`manifest.`) || m.startsWith(`${manifestPath} `)))
+      ok(`${manifestPath} 文案字段形状合法`);
   }
 }
 
