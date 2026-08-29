@@ -7,12 +7,12 @@
 | PRD 章节 | SPMS 落点 | 怎么写 |
 | --- | --- | --- |
 | §0 一句话 | `projects.summary`（概述） | `project_update`(FR-236);**整段覆盖,先 `project_get` 读现状** |
-| §1.1 背景 | `projects.background`（背景） | 同上 |
-| §2 用户与场景 | `projects.personas`（用户与场景） | 同上 |
+| §1.1 问题陈述与现状 | `projects.background`（背景） | 同上 |
+| §2.2–2.3 用户与场景 | `projects.personas`（用户与场景） | 同上;§2.1 领域语言只留在 PRD 文档,不混入 `personas` |
 | §1.2 目标 | `projects.goal`（目标） | 同上;**Web 端是列表编辑器,一行一条** |
 | §1.3 非目标 | `projects.nonGoals`（非目标） | 同上;**一行一条**(去向写在同一行) |
 | §4 约束与前提 | `projects.constraints`（约束与前提） | 同上 |
-| §5 开放问题 | `projects.openQuestions`（开放问题） | 同上;**一行一条** |
+| §5.2 非阻塞开放问题 | `projects.openQuestions`（开放问题） | 同上;**一行一条**,格式 `Q1 [非阻塞] 问题;默认及理由;负责人;截止时间`;无则传 `null`;阻塞问题未解时不定稿/不回写项目 |
 | §3 FR 条目 | `requirements`（`FR-N`) | `requirement_create` |
 | §3 NFR 条目 | `requirements`（`NFR-N`,带 `category`) | `requirement_create` |
 | 条目正文 | `requirements.description`（UI 标签「PRD 描述」) | 完整 markdown |
@@ -55,7 +55,7 @@
 
 - `FR-N` / `NFR-N` / `TC-N` 都是**租户级**序列(不是项目级)——编号跨项目连续,别指望 `FR-1` 是本项目第一条。
 - 前缀在**创建时**按 `type` 决定;**之后改 `type`,key 不会重写**(与 issue key 契约一致)。→ **建之前把 FR/NFR 判定定死**,建完再改类型就是永久错配。
-- key 创建后才知道 → PRD 草稿用 `R1..Rn` 临时编号,**建完立刻回填**并全篇替换。
+- key 创建后才知道 → PRD 草稿的 `R1..Rn` 是原始诉求追踪号,创建前也暂作工作号。**建完立刻回填真实 key**;之后凡是指代需求实体/标题都用 FR/NFR key,`R#` 只留在「承接」与原始诉求追踪表。
 - `*_create` **不幂等**:重复调用 = 重复需求 + 烧掉 key。建之前 `pms_search` + `requirement_list` 查重,写库前把清单摊给用户确认。
 
 ## 5. 正文与验收标准的物理格式
