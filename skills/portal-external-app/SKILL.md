@@ -114,12 +114,16 @@ job(deploy|redeploy)
 `descriptor.env` / `envFile` 是**平台管理员治理字段**，manifest 永远带不进值（提交即拒），
 `requiredEnv` 只交键名。**键名集合的变化属治理档**：写进 manifest 的 `requiredEnv` 一变
 （新增/改名/删除），提案就转入「发布审核」，管理员批准前先看到新键名 —— 这是把
-「知会门户」变成流程内动作的那道门。但两件事它管不到：① 值仍由平台配，批准 ≠ 配好了，
-换版前环境里得真有；② 对方**不写进 `requiredEnv`** 的静默改名依旧无门可拦 —— 症状是服务
+「知会门户」变成流程内动作的那道门。**CR-3 之后它还是一道真闸**：批准前门户拿这张清单比对
+`descriptor.env ∪ envFile` 的键集合（只看键在不在，不读值），缺了就拒绝生效
+（`REQUIRED_ENV_MISSING`，提案留 pending）；审批屏逐键标状态，非密钥可当场填。改名要写成
+`{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去（**envFile 里的搬不了**，
+门户不写那个文件，那一条会判「缺」并提示运维改名）。仍有一件它管不到：对方
+**不写进 `requiredEnv`** 的静默改名依旧无门可拦 —— 症状是服务
 换版后 `refusing to start`，而发布方那侧只看到成功。2026-08-19 知识库把 `XGENT_OPENAI_*`
 整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
 但 base URL/model/**dims** 静默回落默认值。所以收交付物时仍要求：改必需 env 必须**同步改
-manifest 的 `requiredEnv`**，并把「本版新增/改名的必需 env」列进 checklist。发布面本身
+manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新增/改名的必需 env」列进 checklist。发布面本身
 （令牌、tag 不可变、`--wait`/`status`）见 `xgent-app-release` skill。
 
 ## 无前端服务的租户管理员配置

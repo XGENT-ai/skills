@@ -11,7 +11,7 @@
 - 权限：`scopes` + `scopeLabels`（同意屏逐 scope 的说明文案，支持多语——形状见下）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
-- 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；键集合一变提案转入「发布审核」）、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）
+- 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）
 
 ⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口已经写进 Caddy 的 `/svc` map、也是在跑的容器发布出来的口）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
 **例外**：`extraPorts[].host` **不参与退让**，撞了硬拒——那些是对外契约口（worker 节点连的就是那个数字），静默挪走等于把它们全断掉，且门户侧一条都测不到。
