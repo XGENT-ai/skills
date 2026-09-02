@@ -203,24 +203,39 @@ SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScope
 引用一变，门户排一条重部署任务：pm2 侧**先拉后换**（拉不到则旧容器原封不动、任务转 failed），
 K8s 侧滚动更新（旧 Pod 在新 Pod ready 前不下线）。**服务不会因为一次发布断掉。**
 
-## 6.1 `--wait` / `status`：确认换版真的落地了
+## 6.1 `--wait` / `--wait-review` / `status`：确认换版真的落地了
 
 `publish` 返回 `redeployQueued: true` 只说明**任务排上了**。前端产物是同步的（那一刻已在线上），
 换容器不是——它可能几十秒后才完成，也可能失败（镜像没 push、robot 没权限、tag 打错）。
 不确认这一步，CI 会绿着退出而线上还跑着旧容器。
 
 ```bash
-# 发布并等到换版结束（默认 1800s —— 含等人工审批的情况，可写 --wait 600）
+# 发布并等到换版结束（默认 1800s，可写 --wait 600）
 npx @xgent/release-cli publish --key $KEY --version $VER --dist dist/ --image $KEY:$VER --wait
+
+# 必须卡在人工审批上的流水线，再加一个开关（默认 1800s）
+npx @xgent/release-cli publish --key $KEY --manifest app.manifest.json --wait-review
 
 # 或任何时候单查
 npx @xgent/release-cli status --key $KEY
 ```
 
+**两个开关等的是两件事（CLI 0.5.0 起）：**
+
+| 开关 | 等什么 | 提案落成待审时 |
+| --- | --- | --- |
+| `--wait [秒]` | 只等**容器换版** | 打印提案号，**退出 0 立即返回** |
+| `--wait-review [秒]` | 先等**人工审批**，批准且换了镜像再等换版 | 轮询到终态；被拒 / 撤回 / 超时 ⇒ 非零退出 |
+
+`--wait` 之所以不再等审批：审批是分钟到小时级的人的动作，而**提案落成的那一刻平台管理员就
+收到了站内 + 邮件通知**，把 runner 挂在上面既烧机器又什么都没保证。
+⚠️ 从 0.4.x 升上来：以前写 `--wait` 指望它等审批的流水线，现在会在提案待审时**直接绿**——
+要保持旧行为，把那一处改成 `--wait-review`。
+
 `--wait` 成功 → 打印实际在跑的镜像引用、零退出；失败或超时 → 打印原因、**非零退出**。
 没换镜像时它直接跳过，不空等。镜像来源不限 `--image`：**manifest 的
-`deployDescriptor.image` 换了镜像同样会等**（提案批准后接着等容器换版）。判据看的是
-最近一条 `deploy|redeploy` 任务，不掺 `provision-tenant`（那是某个租户的 bootstrap，
+`deployDescriptor.image` 换了镜像同样会等**（`--wait-review` 下则是提案批准后接着等）。
+判据看的是最近一条 `deploy|redeploy` 任务，不掺 `provision-tenant`（那是某个租户的 bootstrap，
 与镜像滚动无关）。
 
 门户上没有这个面时，`status` 与 `--wait` 都用不了：产物那半边照旧由 `publish` 的返回体
@@ -263,6 +278,8 @@ steps:
 ```
 
 `--wait` 是让这条流水线**诚实**的那一步：没有它，换版失败时任务照样绿。
+它**不会**把流水线卡在人工审批上——改了权限面的那次发版会打印提案号后退出 0，平台管理员
+已被通知；真要门禁到审批，把 `--wait` 换成 `--wait-review`。
 
 版本号从哪来：用 git tag 或 `package.json` 的 version 都行，关键是**每次发布都不同**。
 把它固定成 `latest` 之类的常量，等于放弃「线上跑的是哪一版」这个能力。

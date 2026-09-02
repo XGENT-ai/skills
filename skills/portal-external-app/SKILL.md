@@ -130,7 +130,52 @@ job(deploy|redeploy)
 整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
 但 base URL/model/**dims** 静默回落默认值。所以收交付物时仍要求：改必需 env 必须**同步改
 manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新增/改名的必需 env」列进 checklist。发布面本身
-（令牌、tag 不可变、`--wait`/`status`）见 `xgent-app-release` skill。
+（令牌、tag 不可变、`--wait` / `--wait-review` / `status`）见 `xgent-app-release` skill。
+
+### 值从哪来：三档键名约定（照这张表命名，绝大多数键零手填）
+
+| 档 | 键 | 值从哪来 |
+| --- | --- | --- |
+| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` | 平台换版时自己算并注入，没有人手填 |
+| **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务代建库 / 取地址并注入 |
+| **自定** | 其余一切 | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+
+`<PREFIX>` = `listingKey` 全大写、连字符换下划线。`PORTAL_BASE_URL` 是门户**公开源**（也是调
+别的 App `/svc/<key>` 的基址），`API_BASE_URL` 是内部 portal-api，**不代理 `/svc`**。
+
+**服务怎么绑到键**：键名按约定命名（`<PREFIX>_DATABASE_URL` / `REDIS_CONN_STRING`），再声明要哪条服务 ——
+
+```jsonc
+"requiredServices": [{ "kind": "postgres", "name": "main" }]
+```
+
+⚠️ `requiredServices` 的每一条**只收 `name` / `kind` / `note`**，多一个字段整份清单直接拒收。
+只写 `requiredEnv` 的约定名也认（用该类型的缺省服务）。**键名不按约定来（`ZO_META_POSTGRES_DSN`
+这种上游定死的名字）也能发**，只是平台管理员要在审批屏上逐个点一下「从平台服务取值」，
+每次发版多等一轮。收交付物时把这一条当作可读性问题看：不是错，是白等。
+
+⚠️ 服务账号密钥**不再要求进 envFile**：门户保管并在换版时注入容器，明文只在批准那次一次性
+回显（留给对方本地联调）。收交付物时别再问对方「密钥写进 envFile 了吗」。
+另外，平台级能力（如日志写入）会直接出现在对方的服务令牌里，**不需要在 manifest 里申请**。
+
+## 收交付物时一并核对「跑在哪、要什么服务」两节
+
+manifest 还有两节**同形的审批前置闸**（与 `requiredEnv` 同一挂载点、同一失败语义）：
+
+- `deployRequirements`（`{ region?, size?, gpu?, network? }`）—— 这个 App 的后端需要什么样的
+  机器。批准那一刻按本环境的资源池逐维匹配，不满足就拒绝生效；通过时把落点固定到命中的
+  那台。**需要 `deployDescriptor`**，且只收**名字与档位** —— 网段 / IP / URL 提交即拒。
+- `requiredServices`（`[{ name, kind, note?, envKey? }]`）—— 运行需要哪些外部服务。批准时比对
+  本环境**已登记**的「已具备服务」（控制台 › 平台设置 › App 清单目录），未登记或缺条目就
+  拒绝生效。门户**不据此开通**任何服务，只核对登记表。
+
+收交付物时按这两节问三个问题：**它要跑在哪个网络里**（对方写的名字与本环境登记的名字对不
+对得上）、**它连的那些基础服务本环境有没有并且登记了没有**、以及**远端主机上没有门户的
+compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着 `postgres:5432` 时搬到远端
+落点上是连不通的，那正是 `requiredServices` 要把「本环境有什么」摆到审批人眼前的原因。
+
+被拒时对方只会收到一句泛化的「当前环境不满足…，提案已转入待审核队列」（池、网段、机器名
+一个字都不出门户控制台）—— 所以**差在哪要由门户侧的人告诉他们**，别让对方对着一句话猜。
 
 ## 无前端服务的租户管理员配置
 

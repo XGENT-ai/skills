@@ -150,6 +150,8 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    「不落 listing」的声明只有随清单提交才能刷新基线。
    → 验收：打印 `✓ <key> 已发布 <version>` + 产物 digest。**失败时线上那份原封不动**
    （门户先落 staging、验根 `index.html`、再 swap；被拒时 `version` 与 `digest` 都不动）。
+   有治理变更时打印的是「提案已提交」+ 提案号，**同样退出 0 并立即返回** —— 平台管理员
+   在那一刻就收到了通知，流水线没有理由挂在那里等人（见下面「等审批」）。
 5. **线上看一眼。** `npx @xgent/release-cli status` 确认版本与 digest 就是本次这一份；
    然后浏览器打开门户 → 应用中心 → 你的 App，走通主路径。**`status` 报 404 不等于发布失败**
    （见下），第 4 步的返回体已经给了版本与 digest，浏览器那一眼照走不误。
@@ -189,38 +191,68 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 ## 镜像要环境变量：**键名归你，值归平台**
 
 manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。唯一的表达
-方式是 **`requiredEnv`（只交键名）**，平台管理员按这张清单去填值：非密钥填进控制台 descriptor 的
-`env`，密钥进宿主机上一个 600 的 `envFile`（`/etc/xgent/<key>.container.env`），**永不进门户库**。
+方式是 **`requiredEnv`（只交键名）**。值从哪来分三档 —— 照这张表命名，绝大多数键**零手填**：
 
-**这张清单是一道闸，不只是一份提醒**：批准之前门户会拿它比对 `descriptor.env ∪ envFile` 的
-**键集合**，缺哪个就拒绝生效（`REQUIRED_ENV_MISSING`，提案留在 pending 可重批）。所以
-「批准了、然后线上是坏的」这条路径已经关掉 —— 代价是**你的提案可能因为平台那边没配值而多等一轮**
-（见下面「pending 久了先问哪一句」）。它全程只看**键在不在**，不读值。
+| 档 | 键 | 值从哪来 |
+| --- | --- | --- |
+| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
+| **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务替你建库 / 取地址并注入（见下面「服务怎么绑到键」） |
+| **自定** | 其余一切（第三方 API key、业务开关…） | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
 
-以一个需要六个变量的可观测服务为例，你 repo 里那份 manifest 长这样：
+`<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
+`PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
+`API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+**这张清单是一道闸，不只是一份提醒**：批准之前门户会拿它比对「已有值」的**键集合**，缺哪个就
+拒绝生效（`REQUIRED_ENV_MISSING`，提案留在 pending 可重批）。所以「批准了、然后线上是坏的」
+这条路径已经关掉 —— 代价是**你的提案可能因为平台那边没配值而多等一轮**（见下面「pending 久了
+先问哪一句」）。它全程只看**键在不在**，不读值。
+
+### 服务怎么绑到键
+
+**按约定名命名，平台就能自动供给**：库连接串写 `<PREFIX>_DATABASE_URL`、Redis 写 `REDIS_CONN_STRING`。
+再在 `requiredServices` 里声明你要哪条服务（`name` 是平台侧登记的服务名，问平台管理员）：
 
 ```jsonc
 "requiredEnv": [
-  "PORTAL_INTROSPECT_URL", "API_BASE_URL",
-  "OBSERVABILITY_SA_CLIENT_ID", "OBSERVABILITY_SA_CLIENT_SECRET",
-  "ZO_META_STORE", "ZO_LOCAL_MODE"
+  "PORTAL_INTROSPECT_URL", "API_BASE_URL", "PORTAL_BASE_URL",
+  "WISH_LIST_SA_CLIENT_ID", "WISH_LIST_SA_CLIENT_SECRET",
+  "WISH_LIST_DATABASE_URL", "REDIS_CONN_STRING"
+],
+"requiredServices": [
+  { "kind": "postgres", "name": "main" },
+  { "kind": "redis",    "name": "main" }
 ],
 "deployDescriptor": {
-  "image": "observability:v1.0.0",
+  "image": "wish-list:1.4.2",
   "port": 8080,                 // 容器内监听口，就这一个归你
   "healthPath": "/health",
   "alwaysOn": true              // 常驻型才写：别让它被缩容
 }
 ```
 
-**五条别踩：**
+批准时平台按登记的那条服务替你建库、生成专用角色与连接串，注进约定名那个键；值加密保管在平台侧，
+**永远不回显给任何人**，换版时注入。
+
+- **`requiredServices` 的每一条只能带 `name` / `kind` / `note`**，多一个字段整份清单会被拒收
+  （`VALIDATION_FAILED`）—— 别往里加自定义键。
+- 连 `requiredServices` 都不写、只在 `requiredEnv` 里写了约定名 ⇒ 用该类型的**缺省服务**，一样能供给。
+- **键名不按约定来（例如 `ZO_META_POSTGRES_DSN` 这种上游定死的名字）也能发**，只是平台管理员
+  要在审批屏上点一下「从平台服务取值」，每次发版多等一轮。预检会对这类键给你一条 warn。
+
+另外：**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
+拿到令牌就能用，你那侧只管调。
+
+**六条别踩：**
 
 - **`env` / `hostPort` / `envFile` 一个都别写进 manifest。** `env` 带值即拒；`hostPort` 归平台
   （见前面 `deployDescriptor.hostPort` 那段）；`envFile` 是那台机器上的路径，写了就得和平台实际持有的那份**逐字一致**，
   不一致就变成一条「部署描述变更」，让你本来能自动通过的发版平白进人工审批队列。
-- **`PORTAL_INTROSPECT_URL` / `API_BASE_URL` 这类地址不是你能定的常量。** 同一份 manifest 会发到
-  一盒、pm2 生产、K8s 生产，自省地址分别是 `http://host.docker.internal:3000/...`、
-  `http://portal-api:3000/...`、`http://portal-api.<ns>.svc.cluster.local:3000/...`。你只交键名。
+- **`PORTAL_INTROSPECT_URL` / `API_BASE_URL` / `PORTAL_BASE_URL` 这类地址不是你能定的常量。**
+  同一份 manifest 会发到一盒、pm2 生产、K8s 生产，自省地址分别是
+  `http://host.docker.internal:3000/...`、`http://portal-api:3000/...`、
+  `http://portal-api.<ns>.svc.cluster.local:3000/...`。你只交键名，平台换版时自己填 ——
+  审批屏上这几行会显示「平台注入」，没人要动手。
 - **`requiredEnv` 的键集合属治理档** ⇒ 新增或改名会让这次发版进「发布审核」。这是**有意的**：
   运维要先看见新键名才能在换版前把值配好。反过来说，**改了 env 键名却不同步改 `requiredEnv`，
   没有任何机制拦得住**（容器起来就缺变量）—— 改一个键就改一次清单，别嫌一次审批。
@@ -244,10 +276,30 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   （镜像 / 端口 / env），平台管理员在控制台填进 `env` 就会自动排一条重部署任务。唯一的例外是
   **改 envFile 的内容**（文件在主机上，门户看不见那次改动）—— 那种情况面板那一行会显示「待重建」，
   由平台管理员点「重新部署」。
+- **`deployRequirements` / `requiredServices` 也是治理档，而且是【闸】。** 前者说「我的后端要跑在
+  什么样的机器上」（地域 / 规格档位下限 / 要不要 GPU / 必须同时属于哪些**命名**网络），后者说
+  「我运行需要哪些外部服务」（`(kind, name)` 二元组）。批准那一刻门户按目标环境**当时**的资源池与
+  已登记服务清单逐条比对，不满足就**拒绝生效**、提案留在待审队列 —— 平台侧登记或调整之后重新批准
+  即可，你不用重新提交。
 
-服务账号密钥（`<PREFIX>_SA_CLIENT_SECRET`）你自己拿不到也不用管：批准注册时门户随机签发、
-**只回显一次**给审批人，由平台经外部渠道交给你（本地联调用）并写进那份 envFile。它**永不静默轮换** ——
-要轮换找平台走控制台的「轮换密钥」，你那侧同步换，否则自省 401 而现场看不出原因。
+  ```jsonc
+  "deployRequirements": { "region": ["ap-shanghai"], "size": "m", "network": ["cube-prod"] },
+  "requiredServices": [{ "name": "chroma", "kind": "vectorStore", "envKey": "XC_VECTOR_URL" }]
+  ```
+
+  三条约束：① **只写名字与档位** —— 网段 / IP / URL / 端口一律提交即拒（那是部署环境的事实，同一份
+  清单要发到 N 套门户）；② `deployRequirements` 需要 `deployDescriptor`（门户不部署你就无从匹配，
+  提交即拒）；③ **被拒时你只收到一句泛化的「当前环境不满足…，提案已转入待审核队列」** —— 逐维
+  原因、池里有哪些地域、最大档位、机器名都只在平台控制台，要知道差在哪找目标环境的运维。
+  首次通过时门户会把**落点固定**在命中的那台机器上，此后不再自动迁移。
+  `requiredServices[].envKey` 是「将来注入到哪个环境变量」的声明位，**当前只被携带，不注入**——
+  现在就要值仍然走 `requiredEnv`。
+
+服务账号的标识与密钥（`<PREFIX>_SA_CLIENT_ID` / `<PREFIX>_SA_CLIENT_SECRET`）你不用管也不用要：
+批准注册时门户随机签发、**由平台保管并在换版时注入你的容器**，没有任何人需要把它抄进 envFile。
+明文仍会**一次性回显**给审批人一次（留给你本地联调），之后再也取不回来。它**永不静默轮换** ——
+要轮换找平台走控制台的「轮换密钥」，那次轮换会顺带排一次换版，线上容器自动拿到新密钥；
+你本地那份副本要自己同步换，否则自省 401 而现场看不出原因。
 
 ## 首次发布（你的 App 还不在市场里）
 
@@ -261,20 +313,26 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 
 ## 等审批（pending 之后会发生什么）
 
-- `publish` 返回 pending 时**退出码 0**（提交成功不是失败），打印提案 id 与待审字段清单。
-- `--wait`（默认 1800s）会轮询到 `applied` / `rejected`：批准且换了镜像 ⇒ 继续等容器换版；
+- `publish` 返回 pending 时**退出码 0 并立即返回**（提交成功不是失败），打印提案 id 与待审字段清单。
+  **提案落成的那一刻，平台管理员就收到了站内 + 邮件通知**，不必另行催办。
+- **`--wait` 只等容器换版，不等人工审批。** 审批是分钟到小时级的人的动作，把 runner 挂在上面
+  既烧机器又什么都没保证。真要把「审批通过且生效」纳入 CI 门禁，用 **`--wait-review [秒]`**
+  （默认 1800s）：它轮询到 `applied` / `rejected` / `withdrawn`，批准且换了镜像 ⇒ 继续等容器换版；
   **被拒绝 ⇒ 打印平台填的原因并非零退出**（CI 该红就红）；超时 ⇒「仍在等审批」+ 非零退出。
+  ⚠️ 从旧版升上来：以前写 `--wait` 指望它等审批的流水线，现在会在提案待审时**直接绿**。
 - 同一 App 同时只允许一条待审提案，且待审期间**任何新提交都被拒**（纯 dist/version 的
   自动档也一样 —— 放行会「后交先生效」，批准旧提案时把你后发的版本滚回去）：返回
   `PROPOSAL_PENDING` + 在审提案 id，等审批或先撤回。
   撤回是你的权利（不是审批动作）：
   `curl -X DELETE -H "Authorization: Bearer $XGENT_RELEASE_TOKEN" $XGENT_PORTAL_URL/api/market/release/<key>/proposals/<id>`
-- 拒绝原因不推送 —— 靠 `status` / `--wait` 轮询看（门户刻意不做通知面）。
+- 拒绝原因不推送给你 —— 靠 `status` / `--wait-review` 轮询看（通知面是给平台管理员的，不是给提交方的）。
 
 **pending 久了先问哪一句：** 如果这次改了 `requiredEnv`（新增或改名），**最可能的原因不是没人看，
 是平台那边还没配值** —— 审批人点批准会收到 `REQUIRED_ENV_MISSING` 并被拦下，提案原地留 pending。
-审批屏上逐键标了「已有值 / 缺 / 沿用旧键值」，所以他知道缺哪几个；你要做的是直接问
-「`<KEY>` 配好了吗」，而不是重发一版或催审。**你不需要、也不应该拿到那些值。**
+审批屏上逐键标了「已有值 / 平台注入 / 已取值 / 沿用旧键值 / 缺」，所以他知道缺哪几个；你要做的是
+直接问「`<KEY>` 配好了吗」，而不是重发一版或催审。**你不需要、也不应该拿到那些值。**
+—— 但先自查一遍：平台注入档的那七个键、以及按约定名命名的库 / Redis 是不会缺的，真卡住的
+只会是「自定」那一档。
 
 **一条纯自动档的发版也可能变成 pending。** 只发 `dist`/bump 版本、一个治理字段都没碰，如果这个
 App 声明过的某个 `requiredEnv` 键在部署环境里还没有值，这次发版同样会落成待审提案（返回

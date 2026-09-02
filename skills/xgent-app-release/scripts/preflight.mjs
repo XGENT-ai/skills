@@ -337,6 +337,22 @@ if (!manifestPath) {
             `注意这里的键是 zh / en / tw，不是 scopeLabels 那套 zh-CN / zh-TW / en。写错门户提交即拒。`,
         );
     }
+    /* ④ 像库 / Redis 连接串、却不按约定命名的键：平台自动供给不到它，落到审批屏就是
+       「平台管理员多点一下」。**只 warn 不阻断** —— 键名归 App，这里只是告诉你便宜的写法。 */
+    const PREFIX = key ? key.toUpperCase().replace(/-/g, "_") : null;
+    const CONVENTIONAL = new Set([PREFIX ? `${PREFIX}_DATABASE_URL` : "", "REDIS_CONN_STRING"].filter(Boolean));
+    const envKeys = (Array.isArray(mf.requiredEnv) ? mf.requiredEnv : [])
+      .map((e) => (typeof e === "string" ? e : typeof e?.key === "string" ? e.key : null))
+      .filter(Boolean);
+    const unbound = envKeys.filter((k) => /(DATABASE_URL|_DSN|POSTGRES|REDIS)/.test(k) && !CONVENTIONAL.has(k));
+    if (unbound.length)
+      warn(
+        `这几个键看着是库 / Redis 连接串，但平台自动供给不到它们：${unbound.slice(0, 4).join(" ")}${unbound.length > 4 ? " …" : ""}` +
+          `\n      → 改用约定名就零手填：${PREFIX ? `${PREFIX}_DATABASE_URL` : "<PREFIX>_DATABASE_URL"} / REDIS_CONN_STRING，` +
+          `并在 requiredServices 里声明要哪条服务（只写 name / kind / note，多一个字段整份清单会被拒收）。` +
+          `\n      不改也能发 —— 只是平台管理员要在审批屏上逐个点「从平台服务取值」，多等一轮。`,
+      );
+
     if (!errs.some((m) => m.startsWith(`manifest.`) || m.startsWith(`${manifestPath} `)))
       ok(`${manifestPath} 文案字段形状合法`);
   }
