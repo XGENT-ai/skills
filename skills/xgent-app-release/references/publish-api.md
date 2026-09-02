@@ -1,31 +1,78 @@
 # 发布面：令牌、端点、字段、CI
 
-## 0. 三样输入分别从哪来
+## 0. 五项输入全部放同一份本地配置文件
 
-它们的性质不同，所以来路也不同——混着放会出事。
-
-| 输入 | 来路 | 为什么 |
+| 输入 | 键名 | 说明 |
 | --- | --- | --- |
-| `listingKey` | **本地配置文件**（`LISTING_KEY=…`），`--key` 可覆盖 | 一个 repo 一个 App，这个值从头到尾不变。每条命令手打一次纯噪音，还容易打成另一个 App —— 那会直接 404 |
-| 门户地址 | `--portal` 或 `XGENT_PORTAL_URL` | 随环境变（staging / prod）。写死进仓里迟早会让两个环境共用一个值 |
-| 发布令牌 | `--token` 或 `XGENT_RELEASE_TOKEN` | 它是密钥。**不进配置文件**——CLI 发现文件里有令牌会告警并忽略。CI 里优先用环境变量，命令行参数会进 `ps` 和构建日志 |
+| `listingKey` | `LISTING_KEY` | 一个 repo 一个 App，从头到尾不变。每条命令手打一次纯噪音，还容易打成另一个 App —— 那会直接 404 |
+| 目标门户地址 | `TARGET_XGENT_PLATFORM` | 本次发版打哪一台（旧名 `XGENT_PORTAL_URL` 仍认）。`--portal` 可覆盖 |
+| 目标门户的发布令牌 | `XGENT_RELEASE_TOKEN` | `xrel_…`，按 App 绑定。`--token` 可覆盖 |
+| 清单目录地址 | `MANIFEST_STORE` | 可选。不配 ⇒ 不投目录（整步跳过，不报错也不提示） |
+| 目录的发布令牌 | `MANIFEST_STORE_TOKEN` | 可选。不配 ⇒ 回落 `XGENT_RELEASE_TOKEN`（两个地址是同一台时那就是对的那把） |
 
 配置文件按顺序取第一个存在的：`--config <path>` / `$XGENT_REGISTRY_CONFIG` /
 `./.xgent-registry.env` / `${XDG_CONFIG_HOME:-~/.config}/xgent/registry.env` / `~/.xgent-registry.env`。
-格式是 `KEY=value`；本 CLI 只读 `LISTING_KEY`，同一份文件也可以放你镜像推送那侧要的键。
-**记得加进 `.gitignore`。**
+格式是 `KEY=value`；同一份文件也放你镜像推送那侧要的键（`REGISTRY` / `PULLER_AUTH`）。
+同名环境变量优先，命令行参数又优先于环境变量 —— **CI 里注入环境变量即可覆盖**。
 
 前两个位置是**显式指定**的：指到一个不存在的文件会直接报错，不会悄悄回退到别的候选——
 回退意味着你可能在读另一个 App 的身份，而命令照样成功，只是发错了地方。
 
+### 令牌为什么放这里（这条推翻了旧规则）
+
+旧规则「密钥别落盘、走 `--token` 或 env」是按**人手敲命令**的模型写的：env 短暂、文件长存。
+今天发版几乎都是**经 skill 让 agent 驱动 CLI**：强制走 `--token`，agent 必须先把令牌**取出来**
+才能传进去 —— 于是它进 agent 上下文、进对话记录、进工具调用日志，还出现在命令行里（同机
+其它进程 `ps` 可见）。**那比落盘更不安全，而且泄露面不可撤销**（记录已经写出去了）。
+让 CLI 自己读文件，令牌就**从不经过 agent**。这个文件本来就是凭证文件（`PULLER_AUTH` 一直在里面）。
+
+护栏没有删，换成了真正管用的两条 —— CLI 每次运行都替你查，**只 warn 不阻断**：
+
+| 检查 | 触发 | 修法 |
+| --- | --- | --- |
+| 文件权限 | mode 允许同组 / 其他人读 | `chmod 600 .xgent-registry.env` |
+| 有没有被忽略 | `git check-ignore` 判定它**未被忽略**（这才是真会泄露的场景） | `echo '.xgent-registry.env' >> .gitignore` |
+
+（做成硬失败只会逼人把令牌搬回命令行 —— 那正是要消灭的那件事。）
+
 ```bash
-# .xgent-registry.env（不提交）
+# .xgent-registry.env（chmod 600，且必须 .gitignore）
 LISTING_KEY=my-app
+TARGET_XGENT_PLATFORM=https://portal.example.com
+XGENT_RELEASE_TOKEN=xrel_…
+MANIFEST_STORE=https://catalog.example.com
+MANIFEST_STORE_TOKEN=xrel_…
 ```
 ```bash
-export XGENT_RELEASE_TOKEN=xrel_…   # CI secret
-npx @xgent/release-cli status --portal https://portal.example.com
+npx @xgent/release-cli status      # 地址与令牌都不用写在命令里
 ```
+
+## 0a. 一次 publish 打两个端点
+
+| 站 | 端点 | 失败语义 |
+| --- | --- | --- |
+| 第一站（真发版） | `POST <TARGET_XGENT_PLATFORM>/api/market/release/<key>` | **必成**：失败 ⇒ 整体非零退出，且**不投目录** |
+| 第二站（投目录） | `PUT <MANIFEST_STORE>/api/market/catalog/<key>` | **best-effort**：连不上 / 非 2xx / `ok:false` 都只 warn，退出码不变 |
+
+两个地址相同时**照常两次调用** —— 它们是不同端点，不会互撞。
+没带 `--manifest` 就不投（没有清单可投），CLI 会提示一句 —— 所以**标准发布命令要带上它**。
+
+第二站送的是这次发版**生效后**的那一份清单，即原始字节**再套上 `--version` / `--image`
+的覆盖**。这不是「改了内容」，恰恰是为了两站说同一句话：第一站的服务端本来就取
+`body.version ?? manifest.version` 与 `body.image ?? manifest.deployDescriptor.image`，
+批准时还会把这两个值嫁接回 manifest 才落 listing。原样投原始字节的结果是：目标门户
+已经是 `$VER` / 新镜像，目录还停在清单里写的旧值，而 `onebox.sh add` 正是照
+`deployDescriptor.image` 拉镜像 —— 别人起出来的是旧容器，且没有任何信号。
+
+一个刻意的例外：目标门户回 `PROPOSAL_PENDING`（你上一版还在待审队列里）时，
+**目录照投**。那是目标门户的**队列状态**，不是「这份清单是什么」的结论；不投的话，
+目标门户与目录是同一台时，一条待审提案会把目录永久冻在提交它的那一版。
+那次 `publish` 的退出码仍是非 0 —— 发版确实没成。
+
+目录里那份是**净化过的公开副本**：`serviceAccount` 只留 `clientId`，`exchangeInitiatorSecret`
+与 `deployDescriptor` 的 `env` / `envFile` / `hostPort` 一律剔除（密钥与单部署事实不跨部署共享）。
+它是**只读投影**：不参与任何门户的治理判定、不回写任何 listing、不触发任何部署。
+唯一的消费者是开发环境 —— 别人 `onebox.sh add <key> --from <目录地址>` 时从这里拉清单。
 
 ## 1. 发布令牌 `xrel_…` 的语义
 
@@ -201,14 +248,18 @@ npx @xgent/release-cli status --key $KEY
 
 ```yaml
 env:
-  XGENT_PORTAL_URL: https://portal.example.com
+  # 仓里那份 .xgent-registry.env 通常不进 CI —— 在这里注入即可（环境变量优先于文件）。
+  TARGET_XGENT_PLATFORM: https://portal.example.com
   XGENT_RELEASE_TOKEN: ${{ secrets.XGENT_RELEASE_TOKEN }}
+  MANIFEST_STORE: https://catalog.example.com          # 可选：顺带投一份到清单目录
+  MANIFEST_STORE_TOKEN: ${{ secrets.MANIFEST_STORE_TOKEN }}
 
 steps:
   - run: npx @xgent/release-cli whoami                  # ① 先验令牌，别等构建完才发现过期
   - run: <你自己的依赖安装与构建>                        # ② base=/apps/<key>/
   - run: node .claude/skills/xgent-app-release/scripts/preflight.mjs --dist dist --version $VER
   - run: npx @xgent/release-cli publish --version $VER --dist dist/ --image <key>:$VER --wait
+          --manifest deploy/portal/app.manifest.json   # ← 不带它目录永远是空的
 ```
 
 `--wait` 是让这条流水线**诚实**的那一步：没有它，换版失败时任务照样绿。

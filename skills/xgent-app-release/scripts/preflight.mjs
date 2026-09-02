@@ -43,8 +43,10 @@ function parseArgs(argv) {
   return out;
 }
 
-/** 与 release-cli 同一份本地配置：身份（LISTING_KEY）在文件里，密钥与门户地址不在。 */
-function configKey(explicit) {
+/** 与 release-cli 同一份本地配置。APP-CATALOG-1 ADR-3 起，**地址与令牌也在文件里**
+    （理由见 references/publish-api.md §0：强制走 --token 会把密钥送进 agent 上下文与
+    命令行，比落盘更不安全）。这里读出整份，取用方按 参数 > 环境变量 > 文件 的优先级。 */
+function loadConfig(explicit) {
   const isFile = (p) => { try { return existsSync(p) && statSync(p).isFile(); } catch { return false; } };
   const named = explicit ?? process.env.XGENT_REGISTRY_CONFIG;
   if (named && !isFile(named)) { console.error(`✗ 配置文件不存在：${named}`); process.exit(1); }
@@ -53,21 +55,25 @@ function configKey(explicit) {
     join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "xgent", "registry.env"),
     join(homedir(), ".xgent-registry.env"),
   ].find(isFile);
-  if (!path) return "";
+  if (!path) return {};
+  const cfg = {};
   for (const line of readFileSync(path, "utf8").split("\n")) {
     if (line.trim().startsWith("#")) continue;
-    const m = line.match(/^\s*(?:export\s+)?LISTING_KEY\s*=\s*(.*)$/);
-    if (m) return m[1].trim().replace(/^(['"])(.*)\1$/, "$2");
+    const m = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (m) cfg[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, "$2");
   }
-  return "";
+  return cfg;
 }
 
 const args = parseArgs(process.argv.slice(2));
-const key = args.key ?? process.env.LISTING_KEY ?? configKey(args.config);
+const cfg = loadConfig(args.config);
+const pick = (...v) => v.find((x) => x != null && String(x).trim() !== "") ?? "";
+const key = String(pick(args.key, process.env.LISTING_KEY, cfg.LISTING_KEY));
 const dist = args.dist ?? "dist";
 const version = args.version ?? "";
-const portal = (args.portal ?? process.env.XGENT_PORTAL_URL ?? "").replace(/\/+$/, "");
-const token = (process.env.XGENT_RELEASE_TOKEN ?? "").trim();
+// TARGET_XGENT_PLATFORM 是新名字，XGENT_PORTAL_URL 保留兼容（同一件事）。
+const portal = String(pick(args.portal, process.env.TARGET_XGENT_PLATFORM, process.env.XGENT_PORTAL_URL, cfg.TARGET_XGENT_PLATFORM, cfg.XGENT_PORTAL_URL)).replace(/\/+$/, "");
+const token = String(pick(process.env.XGENT_RELEASE_TOKEN, cfg.XGENT_RELEASE_TOKEN)).trim();
 
 if (!key) {
   console.error("用法: node preflight.mjs [--key <listingKey>] --dist dist [--version v] [--manifest path] [--portal url] [--config path] [--offline]");
@@ -201,13 +207,13 @@ if (version) {
 /* ── 6. 令牌 ─────────────────────────────────────────────────────────
    放最后但最值得做：令牌过期/吊销/发给了别的 key，只有真调一次才现形。 */
 if (!token) {
-  warn(`环境里没有 XGENT_RELEASE_TOKEN —— 发布时必需（平台管理员在控制台签发，明文只显示一次）`);
+  warn(`找不到发布令牌 —— 在 .xgent-registry.env 里写 XGENT_RELEASE_TOKEN=xrel_…（平台管理员在控制台签发，明文只显示一次）`);
 } else if (!token.startsWith("xrel_")) {
   err(`XGENT_RELEASE_TOKEN 形状不对：应以 xrel_ 开头（拿成别的令牌了？）`);
 } else if (args.offline) {
   ok(`令牌形状正确（--offline，未联网校验）`);
 } else if (!portal) {
-  warn(`没有门户地址（--portal 或 XGENT_PORTAL_URL），跳过令牌联网校验`);
+  warn(`没有门户地址（--portal / TARGET_XGENT_PLATFORM），跳过令牌联网校验`);
 } else {
   const url = `${portal}/api/market/release/${encodeURIComponent(key)}`;
   try {

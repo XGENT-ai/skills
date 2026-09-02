@@ -79,19 +79,54 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 
 | 你需要 | 从哪来 | 放在哪 |
 | --- | --- | --- |
-| `listingKey` | 平台给的 App 标识，小写字母/数字/连字符。它同时是 `/svc/<key>`、`/apps/<key>/`、scope 命名空间、令牌的 aud —— **四位一体，永不改** | 仓里的本地配置文件 `LISTING_KEY=…`（`.gitignore` 掉），`--key` 可覆盖 |
-| 发布令牌 `xrel_…` | 平台管理员在 控制台 › 应用市场 › 接入新应用（或 应用清单 › 发布令牌）签发，**明文只显示一次** | `XGENT_RELEASE_TOKEN` 或 `--token`。**是密钥，不进配置文件** |
-| 门户地址 | 问平台要 | `XGENT_PORTAL_URL` 或 `--portal`。随环境变，别写死进仓里 |
+| `listingKey` | 平台给的 App 标识，小写字母/数字/连字符。它同时是 `/svc/<key>`、`/apps/<key>/`、scope 命名空间、令牌的 aud —— **四位一体，永不改** | `LISTING_KEY=…` |
+| 发布令牌 `xrel_…` | 平台管理员在 控制台 › 应用市场 › 接入新应用（或 应用清单 › 发布令牌）签发，**明文只显示一次** | `XGENT_RELEASE_TOKEN=xrel_…` |
+| 目标门户地址 | 问平台要 | `TARGET_XGENT_PLATFORM=…`（旧名 `XGENT_PORTAL_URL` 仍认） |
 
-三者来路不同是有意的：身份不变所以落盘，环境会变、密钥不能落盘所以走参数。
+**五项全部写进同一份本地配置文件 `.xgent-registry.env`**（另两项见下面「顺带投一份到清单目录」），
+`chmod 600` + `.gitignore`。CLI 自己去读它；`--token` / 环境变量保留为覆盖手段，给 CI 用。
+
+> **为什么令牌可以落盘。** 旧规则「密钥别落盘、走 `--token` 或 env」是按**人手敲命令**的模型
+> 写的。今天发版几乎都是**经这个 skill 让 agent 驱动 CLI** —— 强制走 `--token` 意味着 agent
+> 必须先把令牌**取出来**才能传进去，于是它进 agent 上下文、进对话记录、进工具调用日志，
+> 还出现在命令行里（同机其它进程 `ps` 就能看见）。那比落盘更不安全，而且泄露面**不可撤销**。
+> 让 CLI 自己读文件，令牌就**从不经过 agent**。这个文件本来就是凭证文件（`PULLER_AUTH` 一直在里面）。
+>
+> 护栏没删，换成了对的两条 —— CLI 每次运行都替你查：① 文件 mode 允许同组/其他人读 ⇒ 提示
+> `chmod 600`；② `git check-ignore` 判定它**没被忽略** ⇒ 提示（那才是真会泄露的场景）。
+> 两条都**只 warn 不阻断**：把它变成硬失败只会逼人把令牌搬回命令行。
+
 详见 [references/publish-api.md](references/publish-api.md) §0。
+
+### 顺带投一份到清单目录（可选）
+
+配了 `MANIFEST_STORE` 之后，一次 `publish` 会打**两个不同的端点**：
+
+| 站 | 端点 | 语义 |
+| --- | --- | --- |
+| 第一站（真发版，必成） | `POST <TARGET_XGENT_PLATFORM>/api/market/release/<key>` | 落发布提案；失败 ⇒ 整体失败 |
+| 第二站（投目录，best-effort） | `PUT <MANIFEST_STORE>/api/market/catalog/<key>` | 存一份**净化后的公开清单**副本；失败只 warn，退出码不变 |
+
+```
+MANIFEST_STORE=<目录门户地址>        # 不配 ⇒ 整步跳过，不报错也不提示
+MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；不配 ⇒ 回落 XGENT_RELEASE_TOKEN
+```
+
+- **两个地址相同也照发两次**：它们是不同端点，不会互撞。
+- 目录**只是一份只读投影**：它不下发、不部署、不编排任何东西，也不参与任何门户的治理判定。
+  它唯一的消费者是**开发环境** —— 别人起一盒时 `onebox.sh add <key>` 从这里拉你的清单，
+  不再依赖「那版一盒镜像里预置了哪几份样例」。
+- 目录里那份是**净化过的**：`serviceAccount` 只留 `clientId`，`exchangeInitiatorSecret` 与
+  `deployDescriptor` 的 `env` / `envFile` / `hostPort` 一律剔除（密钥与单部署事实不跨部署共享）。
+- **目标门户那边卡在待审不影响投目录**：`PROPOSAL_PENDING` 是目标门户的队列状态，
+  不是「这份清单是什么」的结论 —— 那次 `publish` 的退出码仍是非 0（发版确实没成），
+  但目录会收到这一版。
 
 ## 发布五步，每步都有验收
 
 ```bash
-export XGENT_RELEASE_TOKEN=xrel_…          # CI secret，绝不写进仓库
-export XGENT_PORTAL_URL=https://portal.example.com
-VER=1.4.2                                   # listingKey 在配置文件里，命令里不用重复
+VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，命令里一个都不用重复
+               # （CI 里想覆盖：注入 XGENT_RELEASE_TOKEN / TARGET_XGENT_PLATFORM 环境变量即可）
 ```
 
 1. **先验令牌，再构建。** `npx @xgent/release-cli whoami`
@@ -106,9 +141,13 @@ VER=1.4.2                                   # listingKey 在配置文件里，�
    —— 见上面「文案字段」，那一类**发布成功、审批通过、线上显示 `[object Object]`**）。
 4. **发布。**
    ```bash
-   npx @xgent/release-cli publish --version $VER --dist dist/
+   npx @xgent/release-cli publish --version $VER --dist dist/ \
+     --manifest deploy/portal/app.manifest.json
    # 有后端、这次还换了镜像时，加 --image <key>:$VER --wait
    ```
+   **每次都带 `--manifest`**：内容没变的重复提交是自动档（不会多一次人工审），而
+   ①它是清单目录唯一的输入 —— 不带就等于目录永远是空的；②`requiredEnv` 这类
+   「不落 listing」的声明只有随清单提交才能刷新基线。
    → 验收：打印 `✓ <key> 已发布 <version>` + 产物 digest。**失败时线上那份原封不动**
    （门户先落 staging、验根 `index.html`、再 swap；被拒时 `version` 与 `digest` 都不动）。
 5. **线上看一眼。** `npx @xgent/release-cli status` 确认版本与 digest 就是本次这一份；
@@ -243,6 +282,10 @@ App 声明过的某个 `requiredEnv` 键在部署环境里还没有值，这次�
 缺口，而让它悄悄生效就意味着容器换版即崩。同样：问平台缺哪个键。
 
 ## 发之前想在真门户里看一眼
+
+**想连发布链本身一起在本地验**（定级、审批屏、`requiredEnv` 闸）：一盒里 `/api/market/release/*`
+是通的，用平台管理员账号在控制台签一个 `xrel_` 令牌就能对着它发。做法与两条差异（prod 模式
+拒收明文密钥、首次接入必落 pending）见 `portal-dev-setup` skill §2.0。
 
 两条本地通路，各有硬约束，别混用：
 

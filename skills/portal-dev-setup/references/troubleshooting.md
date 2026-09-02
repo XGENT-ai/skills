@@ -1,6 +1,7 @@
 # 一盒排查表
 
-按「你看到什么」编排。先跑 `onebox.sh status`（一次给出生效 env + 容器状态 + 宿主侧探测），再来这里对号入座。
+**先跑 `onebox.sh doctor`。** 下面这些能自动判的它都判了，并直接给你可粘的修法；这张表是给它判不了的那些。
+按「你看到什么」编排。
 下文 `$S` = `.claude/skills/portal-dev-setup/scripts/onebox.sh`，`portal-onebox/` = `init` 铺出来的那个目录。
 
 ## 目录
@@ -11,6 +12,7 @@
 - [§4 打不开 / 路由不通](#4-打不开--路由不通)
 - [§5 认证、自省与跨应用交换](#5-认证自省与跨应用交换)
 - [§6 注册与种子](#6-注册与种子)
+- [§7 命名卷属主不对（EACCES 一族）](#7-命名卷属主不对eacces-一族)
 
 ---
 
@@ -42,9 +44,10 @@
 | 拉 proxy 镜像时 `not found`，runtime 却拉下来了 | 代理镜像名是从 runtime **推出来**的（同仓同版本、仓库名 `proxy`），有的部署不叫这个。用 `--proxy-image <完整tag>` 显式指定 |
 | 「镜像域名与配置里的 REGISTRY 对不上」 | `--image` 的域名段和 `REGISTRY` 不是同一个 —— 登录 A 却去 B 拉，必然 401。对齐这两个再来 |
 | 想确认账号到底能不能用 | **判据只有 `docker pull` 本身。** 别拿 `curl` 去探仓库的管理 API（`/v2/_catalog` 之类）——只读账号在那里的 401/403 跟能不能拉是两回事 |
-| `manifest unknown` / `not found` | tag 写错了。一盒只有两种 tag：`:latest`（可变指针，跟着最新一版走）和 `:v<版本>-<7位sha>`（不可变，钉住某一版）。别自己编版本号 |
+| `manifest unknown` / `not found` | 按顺序查两条。① **项目名不对**——一盒镜像与**你自己 App 的镜像不在同一个项目**下，而 `.xgent-registry.env` 里的 `PROJECT` 是后者（`xgent-image-push` 用的那个）。填 `ONEBOX_PROJECT=<一盒的项目名>`（找开发团队要），或 `--image` 给全。脚本回退用 `PROJECT` 时会打一行黄色告警，**那行就是答案**。② **tag 写错**——一盒只有 `:latest`（可变指针）和 `:v<版本>-<7位sha>`（不可变）两种，别自己编版本号 |
 | 拉过了却还是旧的一版（修好的 bug 又出现） | 用的是 `:latest` 而本地已经有一份同名的 —— `docker run` / compose **默认不回仓库查**。`onebox.sh pull` 一次再 `dc up -d`；要钉住某一版就把 `compose.env` 里那两行改成 `:v<版本>-<sha>` |
 | `no matching manifest for linux/amd64` | 一盒只发 arm64（它是给开发机用的调试底座）。`--platform linux/arm64` 硬拉下来容器也起不来（`exec format error`）。要 amd64 找开发团队 |
+| **你自己的** `app-backend` 起来就 `exec format error`（或 `no matching manifest`） | 架构反了：生产镜像按规矩是 **amd64**，而开发机多半是 arm64，devkit 跟随本机架构、不会替你转译。叠一层 override 指定平台（SKILL.md §1 有现成的 `app-platform.yml`），Apple Silicon 上走 Rosetta，慢但能跑。⚠️ 别为了本地方便去发一个 arm64 的生产 tag |
 | 卡在 `Retrying in N seconds` 直到超时 | 链路或代理。把 `HTTP_PROXY`/`HTTPS_PROXY` 与 Docker Desktop 的代理设置对齐，或临时关掉代理重试 |
 | `x509: certificate signed by unknown authority` | 多半是仓库地址写错（不带端口、不带 `https://`）。**不要**去 `daemon.json` 加 `insecure-registries` 绕过 |
 | `init` 说「镜像里没有 /app/deploy」 | 你给的不是门户一盒镜像（比如给成了自己 App 的镜像，或代理镜像）。`--image` 要的是 **runtime** 那个 |
@@ -64,7 +67,8 @@
 | 有服务起来就 crash-loop 刷屏，日志淹没真问题 | 少叠了一盒那层 override（`onebox/docker-compose.onebox.yml`）。它的作用就是关掉两个在精简镜像里跑不起来、却在基础 compose 里默认启动的服务。用 `$S dc` 不会漏 |
 | portal-api 启动即退，日志提到 `DEV_MOCK_OAUTH` | `NODE_ENV` 没被覆盖成 `development`。镜像烘的是 `production`，而 `DEV_MOCK_OAUTH=true` 在 production 下被拒绝 |
 | 一盒把你本机某个数据库写花了 | 你关掉了 `local-infra` 让一盒连本机的 PG。库名会撞（`xgent-portal` / `xgent-files` …），而 `db:seed:onebox` 是**会往里写**的。别这么做——一盒内部走的是 compose 网络里的 `postgres:5432`，与宿主端口无关，错开发布端口就够了 |
-| 你的 App 自己的库不存在 | 一盒的 postgres 首次初始化只建了它认识的那批 `xgent-*` 库。你的库自己建：`$S dc exec postgres psql -U postgres -c 'CREATE DATABASE "你的库名"'` |
+| 你的 App 自己的库不存在 | 一盒的 postgres 首次初始化只建了它认识的那批 `xgent-*` 库（新镜像另按 `APP_KEY` 建**你自己**那一个）。别的 App 的库要自己建：`$S dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<key>"'` |
+| **反代整个起不来、全站 502**，`$S dc logs reverse-proxy` 里有 `duplicate input` / `adapting config` | 你给一个**已内联**的 key 写了 `/svc` 放行 map。`knowledge` / `omni-parser` / `task-gateway` / `pagebuilder` 直接写在容器版 Caddyfile 的 map 块里，本来就放行；同名键再来一遍 Caddy 直接拒绝加载**整份配置**——挂的不是那一条路由，是反代。删掉再起：<br>`$S dc exec -u root reverse-proxy sh -c 'rm -f /etc/caddy/svc-allow/{knowledge,omni-parser,task-gateway,pagebuilder}.map'` 然后 `$S dc restart reverse-proxy`。<br>注册链本身不会这么写（`registerFromManifest` 对内联 key 跳过并回 warning）——**是照着老文档手工补那一行**造成的 |
 
 ---
 
@@ -73,6 +77,7 @@
 | 症状 | 成因与修法 |
 | --- | --- |
 | `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `$S dc exec reverse-proxy caddy reload` |
+| `register-app` 输出里有 `/svc 放行未写成 … EACCES: permission denied`，随后 `/svc/<key>` 404 | 命名卷属主不对，见 **[§7](#7-命名卷属主不对eacces-一族)**（那一节的修法一次修好全部三个卷）。注册本身是成功的，缺的只是那一行放行 |
 | `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`$S dc logs app-backend`；② 没监听容器内 **8080**（反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
 | 探测全是 **000** | 反代根本没起，或你探的端口不是 `HTTP_PORT`。`$S dc ps` / `$S dc logs reverse-proxy` |
 | 后端跑在**宿主**上，`/svc/<key>` 502 | 反代在容器网里解析不到宿主进程。用 SKILL.md §5 的 socat 转发容器顶住那个别名 |
@@ -97,9 +102,64 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
+| `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以先 `$S pull` 换新镜像重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
 | `register-app` 报 `VALIDATION_FAILED`（scope） | manifest 声明了**别的 App 的 scope**，却没把那个 App 列进 `exchangeTargets`。规则：一个 listing 能声明的 scope = 平台基础 scope ∪ 本 namespace（`<listingKey>` 及其下划线变体，如 `omni-parser` → `omni_parser`）∪ 已声明 `exchangeTargets` 的 namespace |
 | `register-app` 拒跑，提到 production | dev 模式的 `register-app` 拒绝 `NODE_ENV=production`。`compose.env` 末尾必须有 `NODE_ENV=development` |
 | 跑完 `db:seed:onebox` 后市场里找不到你的 App | **顺序反了。** 种子第一步是 `truncate … marketplace_listings … cascade`，先注册后种子 = 注册被清掉。必须 seed 在前、register-app 在后 |
 | `seed:onebox` 报 `unknown listing key` | 那个 key 既不是内置基础服务，`app-devkit/manifests/<key>.manifest.json` 也不存在。要么放一份 manifest 进去，要么把它从 `XGENT_APP_CATALOG` 里去掉 |
 | seed 之后浏览器要求重登 | 种子重新生成 UUID，会话随之失效。重走一次 dev 登录，不是坏了 |
+| 发布/上传前端产物报 `前端产物目录不可写：/srv/www/apps（EACCES）` | 同一条根因，见 **[§7](#7-命名卷属主不对eacces-一族)**。⚠️ **别照错误提示去改 `XGENT_APPS_DIR`**：那条建议只对 pm2/单机部署成立。容器栈里 `/srv/www/apps` 是**与反代共享**的卷、反代就从它服务 `/apps/<key>/`，指向别处会让发布「成功」而页面白屏/404——一个更难查的症状 |
 | dev 登录后看不到某个 App | 用 `liming@xgent.ai`（普通成员）复验 —— **ACL 成员基线没到位的问题只在非管理员身上现形**，管理员那边永远是绿的 |
+
+---
+
+## 7. 命名卷属主不对（EACCES 一族）
+
+一个根因，两个常见落点：`register-app` 写 `/svc` 放行 map（`/etc/caddy/svc-allow`）、发布前端产物
+（`/srv/www/apps`）。第三个 `/etc/caddy/apps-csp` 同理，只是更少被走到。
+
+**成因**：空的命名卷，属主由**第一个挂它的容器**决定。反代是 root，portal-api 是 `bun`(uid 1000)——
+旧镜像里这三个目录压根不存在，于是谁先起谁定调，卷落到 root 手里，portal-api 就写不进去了。
+`one-box` / `proxy` 的 **v1.2.0 起**已在 runtime 层预建这三个目录并 chown 给 `bun`（`latest` 已指向它）。
+
+> ⚠️ **光 `docker pull` 不解决**。镜像里的内容与属主只在卷**为空**时用来初始化它；已经建坏的卷
+> 不会因为换镜像而改属主。反过来也一样：**只 `down -v` 不换镜像**，用老镜像重建出来的还是 root 的卷。
+> 两件事要一起做，顺序是 **先换镜像、再删卷**。
+
+### 修法：换镜像 + 重铺（首选）
+
+一盒是**本地联调环境，数据不值钱**，别为了保住一个演示库去绕。
+
+```bash
+S=.claude/skills/portal-dev-setup/scripts/onebox.sh
+# 1) 换到 v1.2.0+（compose.env 末尾若把 XGENT_IMAGE / XGENT_PROXY_IMAGE 钉了 tag，先改成 latest 或 v1.2.0-*）
+$S pull
+# 2) 连卷一起删 —— pg / minio / apps / caddy 全没，这一步就是目的
+$S dc down -v
+# 3) 按 SKILL.md §2 的固定顺序重铺：migrate → seed:onebox → 各库 migrate → register-app → up
+```
+
+重铺完记得**重跑 `register-app`**（listing 被种子清掉了），浏览器要重登一次 dev 登录（种子换了 UUID）。
+
+**自查在哪一版**：`docker images --digests | grep -E 'one-box|/proxy'`。旧版 `one-box` 是
+`sha256:76b99254…`、`proxy` 是 `sha256:1e44e014…`；新版分别是 `sha256:7011de3b…` / `sha256:a0c9f304…`。
+
+### 备选：就地 chown（只在你确实不想重跑种子时）
+
+反代是 root 且挂着同样这三个卷，所以补属主不必进 portal-api：
+
+```bash
+$S dc exec -u root reverse-proxy \
+  chown -R 1000:1000 /srv/www/apps /etc/caddy/svc-allow /etc/caddy/apps-csp
+```
+
+三个一起补——只补当前报错的那个，剩下两个会在下一步再拦你一次。chown 完直接重试原操作，
+**不用重启 portal-api**。`/svc` 放行那条还要补一行 map 并 reload：
+
+```bash
+$S dc exec reverse-proxy sh -c \
+  'printf "<key> \"1\"\n" > /etc/caddy/svc-allow/<key>.map && caddy reload --config /etc/caddy/Caddyfile'
+```
+
+换到 v1.2.0+ 且是全新的卷之后还这样，把它反馈给门户团队。
+

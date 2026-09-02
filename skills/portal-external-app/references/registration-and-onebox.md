@@ -9,6 +9,10 @@
 - 身份/展示：`listingKey`（= TDT aud = 服务账号/容器命名基名）、`name`、`version`、`cat`、`tagline`、`desc`、`icon`、`color`
 - 形态：`type`（`micro` 有前端 / `service` 无前端）、`embedUrl`（micro：`/apps/<key>/`）、`embedCsp.connectSrc`、`helpEntry`（micro：版头帮助按钮入口，`"/help"` App 内路由 = 自动档 ／ `"https://…"` 外站文档 = 治理档；不声明就不出按钮）
 - 权限：`scopes` + `scopeLabels`（同意屏逐 scope 的说明文案，支持多语——形状见下）、`aclManifest`（纯 scope 鉴权可 `null`）、`navItems`（micro）
+  - ⚠️ `scopes` 还有第二个用途：它（按租户的安装期快照）就是**租户自助开服务账号**时的可选项池。
+    租户要拿自己的采集器/脚本/CI 直调你，那条 scope 必须在这里；只写在 `serviceScopes` /
+    `privilegedServiceScopes` 里的，租户面**一条也勾不到**（见 integration-contract.md §3.1）。
+    `scopeLabels` 同时是那个勾选列表的正文——不写就只显示裸 scope 串。
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
 - 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）
@@ -202,7 +206,7 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 
 ## 5. 冒烟
 
-打开 `http://localhost/` → dev 登录选 `rockie`（租户 admin + 平台管理员）。
+打开 `http://localhost/` → 登录页的「本地开发账号」按钮（没有就直接开 `/auth/dev/start`）→ 选 `rockie`（租户 admin + 平台管理员）。
 
 **第 0 步：确认租户已被授予**（否则下面第 1 步无从点起）。新版 `register-app` 在 dev 下会自动授予并
 打印 `租户可用应用: …`；没看到那一行（老镜像）就去 平台 › 租户管理 › 选中租户 › 「可用应用」勾上保存（§2.1）。

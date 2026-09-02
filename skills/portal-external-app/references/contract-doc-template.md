@@ -48,7 +48,9 @@
 `{ key, renamedFrom }`。不声明的静默改名无门可拦，症状是换版后 refusing to start 而发布侧只看到成功。）
 
 ## 6. 平台侧 checklist（对方的工作量）
-（listing/ACL 登记、服务账号创建并回传凭证、/svc 白名单、交换 grant、
+（listing/ACL 登记、服务账号创建并回传凭证 —— ⚠️ 只指**你的服务端**那把；租户拿自己的程序
+调你用的那把由租户管理员在 `/admin/service-accounts` 自助开，不是平台工作量，前提是那条 scope
+在 manifest 的 `scopes` 里（integration-contract.md §3.1）、/svc 白名单、交换 grant、
 （micro）dist 托管与 CORS/CSP、（有配置面）<key>-token + config Section。标出阻塞项。）
 
 ## 7. 运维命令

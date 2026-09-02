@@ -65,6 +65,43 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 | 其他 App 令牌交换（如 files→omni-parser） | user | 有 | 同上；scope=发起方 TDT ∩ 你声明的 scopes；`azp`=发起方（出处归因） |
 | 服务账号 client_credentials（服务直调） | service | **无** | **只按 scope**（permissions 空、bypass=false、isPlatformAdmin=false，勿走 PID 门；用户拥有的写操作应拒绝） |
 
+### 3.1 服务账号从哪来：平台代建 vs 租户自助
+
+有**两条**路会产出打给你的 `client_credentials` 凭证，两条铸出来的令牌形状一样（`kind:"service"`、
+`user_id:null`、`azp` = 某个 listingKey、`tenant_id` 钉死），你的闸**一个字都不用改**。区别只在谁建、
+建给谁：
+
+| | 平台代建（`SA_DEFS` / manifest `serviceScopes`） | 租户自助（租户管理员，控制台路径 `/admin/service-accounts`） |
+| --- | --- | --- |
+| 建的人 | 平台管理员 / 你的 manifest 声明 | **租户自己的管理员**，不经平台 |
+| 典型用途 | 你的服务端调门户（files/notification/audit/seats…） | 该租户的采集器、脚本、CI **调你** |
+| 租户范围 | 由平台决定（可 `all`） | **恒 allowlist=[他自己那一个租户]**，请求体里出现别的租户 id 直接 `VALIDATION_FAILED` |
+| `azp` | manifest 里的 `serviceScopes.ownerAppKey` | = 租户选的那个已装 App 的 listingKey（**用户填不了、也不用填**） |
+| 可选 scope | `serviceScopes` / `privilegedServiceScopes`（可含 SERVICE_ONLY，走审批） | **只有 `scopes`（用户态那份清单）里、属于你自己命名空间的那些**；平台基础 scope 与 SERVICE_ONLY 一律不可选 |
+
+**⚠️ 对你的唯一要求，就在最后一行**：租户自助的 scope 池取的是**该租户安装你时那份 `apps.scopes`
+快照**（= manifest 的 `scopes`），不是 `serviceScopes`。所以——
+
+> 一条只写在 `serviceScopes` / `privilegedServiceScopes` 里的 scope，**租户自助永远勾不到**。
+> 想让租户自己开凭证来调你的某条路（典型：日志/指标摄取），那条 scope 必须出现在 manifest 的
+> **`scopes`** 里。
+
+这不矛盾：`scopes` 是「这个 App 在这个租户能做的事」的清单，用户态与租户自助的服务态都从它派生；
+`serviceScopes` 是「**你的服务端**代表自己去调**别人**」的那一份，不属于租户可自助的范围。
+
+其余几条租户自助的行为，都是你已经在依赖的机制，列出来是为了让你知道不必另做：
+
+- **卸载即失效**：`ownerAppKey` 的装机门跑在**签发时刻**，租户把你卸了之后新令牌立刻
+  `APP_NOT_INSTALLED`；同时门户会连坐停用该租户自助建的、绑在你身上的那些服务账号，把**已签出**
+  的令牌一并断掉（服务态令牌只认 SA 版本号，不停用会一直活到 TTL 到期）。**停用**是可逆动作，
+  不连坐 —— 签发门以 `APP_DISABLED` 挡住新令牌，敞口只有已签出那批的剩余 TTL。
+- **scope 收窄即时生效**：租户在应用配置里把你的某条 scope 去掉之后，那些自助钥匙**下一次
+  签发**就不再带它（不需要租户去改凭证、也不需要你做任何事）。所以你侧永远以令牌里实际带的
+  scope 为准，别缓存「这把 clientId 有哪些 scope」。
+- **密钥只显示一次**，可轮换/吊销；轮换即刻作废在途令牌。
+- **审计**落在该租户自己的审计日志里（创建/轮换/吊销/删除/每一次签发）。
+- 每租户有个数上限（默认 10）。
+
 ## 4. 健康检查
 
 - `GET /health`（就绪）：`{"service":"<listingKey>","db":"ok","redis":"ok"|"disabled","time":<unix>}` —— `"db"` 是字符串 `"ok"` **不是** `true`；200=就绪、503=依赖挂。平台/devkit healthcheck 按此判活。

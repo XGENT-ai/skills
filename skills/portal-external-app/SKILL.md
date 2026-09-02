@@ -30,6 +30,11 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 - 有用户前端？→ `type:"micro"`（前端 dist 同源托管 `/apps/<key>/`，前端开发见 portal-micro-app skill）；无前端 → **`type:"service"`**（无头：不露卡、不可打开，仅作被调用方，控制台可治理）。
 - 谁调它？→ 自己前端（用户态 TDT）/ 其他 App 后端（令牌交换，见 portal-app-exchange skill）/ 其他服务无用户直调（服务账号 `client_credentials`）。三种来路授权姿势不同（integration-contract.md §3 的表）。
+  - ⚠️ 第三种里，如果调你的是**租户自己的**程序（采集器、脚本、CI），租户管理员可以在门户
+    `/admin/service-accounts` **自助**开凭证，不用找平台管理员代建。**但它只能勾到你 manifest
+    `scopes` 里的 scope** —— 只写在 `serviceScopes` / `privilegedServiceScopes` 里的那条，
+    租户永远勾不到（症状：功能上线了、租户面却没有任何可选项）。判断口径与两条路的差别见
+    [integration-contract.md §3.1](references/integration-contract.md)。
 - 它自带认证体系（API-Key/节点 Token/gRPC）？→ 按 integration-contract.md §6 划界：门户面必走 TDT 四道闸；自有节点面保持原认证但**不得**进 `/svc`（`/svc` 只转发 HTTP :8080）。
 
 ## 交付物评审 checklist（收外部团队东西时逐项验）
@@ -40,9 +45,10 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 4. **迁移入口**：迁移文件在镜像里、二进制上有一个迁移 argv（见下节）。「迁移脚本留在自己 repo 里」= 不合格；
 5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）+ `/health` 口径；
 6. **有没有重复造平台已有的能力**：自己存文件 / 自己发通知 / 自己记审计 / 自己排定时任务 / 自己算配额 —— 逐项对照下面两张表，命中就要求改走平台面；
-7. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
+7. **租户自助凭证**：这个服务有没有「租户拿自己的程序直接调你」的场景（日志/指标摄取、批量导入、CI 回写）？有就检查那条 scope 在不在 manifest 的 **`scopes`** 里 —— 不在的话租户面开不出凭证，只能退回「找平台管理员代建」（见 [integration-contract.md §3.1](references/integration-contract.md)）；
+8. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
    角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
-8. 对接契约文档：按 [references/contract-doc-template.md](references/contract-doc-template.md) 的结构与精度。**没有这份文档的接入不算完成**——新服务（如任务网关）要先补。
+9. 对接契约文档：按 [references/contract-doc-template.md](references/contract-doc-template.md) 的结构与精度。**没有这份文档的接入不算完成**——新服务（如任务网关）要先补。
 
 ## 资源服务器硬契约（外部实现最常炸的四处）
 
