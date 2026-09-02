@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "dev-plan": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dev-plan/SKILL.md",
+      "computedHash": "a069662779bed8f75af9be0e478a7ca0abb09c782ef0f1ce46818815c36add7d"
+    }
+  }
+}
