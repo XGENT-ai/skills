@@ -1,17 +1,3 @@
-# PRODUCT.md 模板 · 外部 App 仓库
-
-> **用途**：出仓 App（代码不在门户 monorepo，以「镜像 + dist + `app.manifest.json`」交付）自己仓库根目录的 `PRODUCT.md`。
-> **用法**：整份复制到你仓库根目录另存为 `PRODUCT.md` → 填掉所有 `[方括号]` → 删掉 `<!-- 填写指引 -->` 注释 → 删掉本说明块（`✂️` 那一行连同以上全删）。
-> **为什么要有它**：`impeccable` skill 每一条子命令开工前都读 `PRODUCT.md`；没有它，产出的 UI 会是通用模板味，且**每次都不一样**。
-> **结构是硬的**：七个二级标题的**名字与顺序**由 impeccable 的 `reference/init.md` 规定，别改名、别加段、别调序；`## Register` 的值只能是裸词 `product` 或 `brand`。
-> **姊妹模板**：`PRODUCT.md 模板` · `DESIGN.md 模板` · `CLAUDE.md 模板`（同一批下发，三份配套用）。
-> **平台口径事实源**（下面每一条的出处，与本模板冲突时以它们为准）：你仓库里已装的 skill ——
-> `portal-external-app`（接入契约 · `app.manifest.json` · `/svc` 与健康检查）· `portal-micro-app`（SDK 握手 / 版头 / consent / iframe 坑）·
-> `xgent-app-release`（发布提案 · 产物打包 · 排错）· `xgent-image-push`（镜像构建与推送）· `portal-dev-setup`（一盒本地联调）·
-> `portal-app-exchange`（跨应用调用）。**门户仓的文档你访问不到，别在本文件里引它的路径。**
-
-<!-- ✂️ ————————— 以上是模板说明，复制后整块删掉 ————————— -->
-
 # Product
 
 ## Register

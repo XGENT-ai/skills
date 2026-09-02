@@ -1,18 +1,3 @@
-# DESIGN.md 模板 · 外部 App 仓库
-
-> **用途**：出仓 App（代码不在门户 monorepo）自己仓库根目录的 `DESIGN.md`。`service` 型（无前端）App 不需要这份。
-> **用法**：整份复制到你仓库根目录另存为 `DESIGN.md` → 填掉 `[方括号]` 与 `app-identity` 三个色值 → 删掉 `<!-- 填写指引 -->` 注释 → 删掉本说明块（`✂️` 那一行连同以上全删）。
-> **本模板已经预填了门户的全部 token**：一个字不改也是对的（= 与底座完全同族）。你**唯一必须做的选择**是身份色，以及 §2 的「主按钮归谁」。
-> **结构是硬的**：YAML frontmatter + 正文**恰好六段**、名字与顺序照抄（Overview / Colors / Typography / Elevation / Components / Do's and Don'ts）。这是 Google Stitch DESIGN.md 格式，`impeccable` 与其它工具按标题逐字解析；不要加 Layout / Motion / Responsive 这类第七段，把内容折进六段里。
-> **姊妹模板**：`PRODUCT.md 模板` · `DESIGN.md 模板` · `CLAUDE.md 模板`（同一批下发，三份配套用）。
-> **平台口径事实源**（下面每一条的出处，与本模板冲突时以它们为准）：你仓库里已装的 skill ——
-> `portal-external-app`（接入契约 · `app.manifest.json` · `/svc` 与健康检查）· `portal-micro-app`（SDK 握手 / 版头 / consent / iframe 坑）·
-> `xgent-app-release`（发布提案 · 产物打包 · 排错）· `xgent-image-push`（镜像构建与推送）· `portal-dev-setup`（一盒本地联调）·
-> `portal-app-exchange`（跨应用调用）。**门户仓的文档你访问不到，别在本文件里引它的路径。**
-
-<!-- ✂️ ————————— 以上是模板说明，复制后整块删掉 ————————— -->
-<!-- 删干净之后，下面这行 `---` 必须是文件的第 1 行：YAML frontmatter 不在开头就整块解析不出来。 -->
-
 ---
 name: "[你的 App 中文名]"
 description: "[一句话：这块工作区是什么，给谁用。]"

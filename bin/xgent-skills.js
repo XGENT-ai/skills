@@ -71,6 +71,7 @@ function install(dirArg) {
     console.log('  写入  .claude/settings.json (statusLine)');
   }
 
+  console.log('  提示  项目文档由 xgent-init skill 生成(npx skills add XGENT-ai/skills --skill xgent-init)');
   console.log(`完成: ${targetDir}`);
 }
 

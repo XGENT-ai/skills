@@ -27,11 +27,14 @@ npx @xgent-ai/skills install
 
 安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并,已有的其他配置保持不动。
 
+`install` 只装 hooks 与 settings,不生成项目文档。出仓 App 仓库的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md` 由 [xgent-init](skills/xgent-init/SKILL.md) skill 生成:`npx skills add XGENT-ai/skills --skill xgent-init`。
+
 ## Skills 列表
 
 | Skill | 说明 |
 | --- | --- |
 | [dev-plan](skills/dev-plan/SKILL.md) | 以资深产品经理 + 资深架构师的双重视角,基于当前代码库的真实现状撰写高质量开发计划 |
+| [xgent-init](skills/xgent-init/SKILL.md) | 在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
 
 ## 目录结构
 

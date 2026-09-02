@@ -1,16 +1,3 @@
-# CLAUDE.md 模板 · 外部 App 仓库
-
-> **用途**：出仓 App（代码不在门户 monorepo，以「镜像 + dist + `app.manifest.json`」交付）自己仓库根目录的 `CLAUDE.md`。
-> **用法**：整份复制到你仓库根目录另存为 `CLAUDE.md` → 把 `<APP_KEY>` / `<APP_NAME>` / `<PREFIX>` / `[方括号]` 换成你的事实 → 删掉不适用的小节（`service` 型删掉前端那几节；没有字典表就删字典表那节）→ 删掉本说明块（`✂️` 那一行连同以上全删）。
-> **不要把它当参考文档留在原地**：这份文件的价值在于被 agent 每次读到。抄进去、删干净、只留你真的遵守的条款——留着做不到的条款比没有更糟。
-> **姊妹模板**：`PRODUCT.md 模板` · `DESIGN.md 模板` · `CLAUDE.md 模板`（同一批下发，三份配套用）。
-> **平台口径事实源**（下面每一条的出处，与本模板冲突时以它们为准）：你仓库里已装的 skill ——
-> `portal-external-app`（接入契约 · `app.manifest.json` · `/svc` 与健康检查）· `portal-micro-app`（SDK 握手 / 版头 / consent / iframe 坑）·
-> `xgent-app-release`（发布提案 · 产物打包 · 排错）· `xgent-image-push`（镜像构建与推送）· `portal-dev-setup`（一盒本地联调）·
-> `portal-app-exchange`（跨应用调用）。**门户仓的文档你访问不到，别在本文件里引它的路径。**
-
-<!-- ✂️ ————————— 以上是模板说明，复制后整块删掉 ————————— -->
-
 # CLAUDE.md
 
 行为准则，用来减少常见的 LLM 编码错误。与项目自身的规范合并使用。
