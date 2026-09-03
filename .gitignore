@@ -17,3 +17,11 @@
 /.codex/.sandbox_migration
 /.codex/thread-writer-locks
 .codex/session_index.jsonl
+
+# 各 Agent 在本仓的本地 skill 安装目录 —— 不能进版本库:
+# skills.sh 的 PRIORITY_PREFIXES 会把 .claude/skills/、.agents/skills/、.codex/skills/
+# 下的 SKILL.md 一并算作本仓提供的 skill(.codex/skills/.system/ 是 Codex 自带的系统
+# skill,更不是我们的)。本仓对外提供的 skill 只有 skills/ 一处。
+.claude/skills/
+.agents/skills/
+.codex/skills/
