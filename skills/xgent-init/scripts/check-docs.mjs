@@ -86,7 +86,7 @@ const RESIDUE = [
   ["✂️", "模板说明块没删干净"],
   ["[Signature Component]", "Signature Component 小节既没填也没删"],
   ["是占位值", "讲占位身份色的那句模板说明没删"],
-  ["型删掉本节及以下三节", "小节标题里的模板条件没去掉"],
+  ["型删掉本节", "小节标题里的模板条件没去掉"],
   ["本 App 有租户级可维护的枚举/分类表时", "小节标题里的模板条件没去掉"],
 ];
 
@@ -152,7 +152,14 @@ if (product) {
 
 /* ── 3. CLAUDE.md：key / type / PREFIX / 按形态裁剪 ─────────────── */
 
-const MICRO_SECTIONS = ["### 前端：版头归门户", "### 下拉框：", "### App 图标："];
+const MICRO_SECTIONS = ["### 前端 UI 开发：", "### 前端：版头归门户", "### 下拉框：", "### App 图标："];
+const UI_WORKFLOW_MARKERS = [
+  "npx impeccable install",
+  "mcp__claude-in-chrome__*",
+  "kimi-webbridge",
+  "playwright",
+  "未在浏览器中验证",
+];
 const DICT_SECTION = "### 字典表统一带"; // micro 型也可按需删，只在 service 型断言不存在
 
 let type = null;
@@ -193,6 +200,9 @@ if (claude) {
   } else if (type === "micro") {
     for (const s of MICRO_SECTIONS) {
       if (!claude.includes(s)) err(`CLAUDE.md 是 micro 型，缺 \`${s}…\` 这一节`);
+    }
+    for (const marker of UI_WORKFLOW_MARKERS) {
+      if (!claude.includes(marker)) err(`CLAUDE.md 是 micro 型，前端 UI 两步法缺少 \`${marker}\``);
     }
   }
 

@@ -163,6 +163,14 @@ listingKey == TDT 的 aud == 安装态 appKey == /svc/<APP_KEY> == scope 命名�
 - **三个包各自独立编号，不是一套齐版**；registry 上**缺号是常态**（仓里 bump 过但没推）。以 `npm view @xgent/<pkg> versions` 为准，**写范围不要精确 pin**。
 - **`^0.x` 只放行 patch**：`^0.1.0` 不会解析到 `0.2.x`。要用新 API 就显式把范围提上去，症状是 `sdk.<新方法> is not a function`。
 
+### 前端 UI 开发：设计用 impeccable，验证用 Chrome extension / kimi-webbridge / Playwright（`micro` 型才有；`service` 型删掉本节）
+
+涉及页面、组件、布局、交互或视觉的前端 UI 开发，强制走完两步：
+
+- **设计阶段**用 `impeccable` skill 提升设计质量，至少覆盖视觉层级、信息架构、间距与对齐、配色、动效、可访问性、空状态和错误状态；不要靠「凭感觉写 Tailwind」出 UI。如果当前环境没有安装 `impeccable` skill，提示用户运行 `npx impeccable install`。
+- **验证阶段**选择当前 coding agent 可用的真实浏览器通道：Claude Code 用 Chrome extension（`mcp__claude-in-chrome__*`）；Codex、Kimi Coder 及其他 coding agent 优先用 `kimi-webbridge` skill；不可用时回退到 `playwright`。必须看到改动生效，并走通主路径和关键边界后，才能报告完成。类型检查和单测只验证代码正确，不验证功能正确；UI 改动只看 diff 不算验证完成。
+- 如果本地环境跑不起来，先尝试解决；仍无法验证时，必须显式说明「未在浏览器中验证」、交代阻塞原因并请用户协助，不得默认声称已经完成。
+
 ### 前端：版头归门户（`micro` 型才有；`service` 型删掉本节及以下三节）
 
 > SDK 全量速查（握手 / getToken / callService / routeSync / dashboard widget / iframe 已知坑）：`portal-micro-app` skill。
@@ -215,7 +223,6 @@ pr-8                               ← 给自绘箭头留位
 
 ### 完成标准
 
-- 类型检查 / 单测只证明代码对，不证明功能对。**UI 改动必须从宿主进入、在真浏览器里走通主路径与关键边界**才算完成；环境起不来就**显式说明「未在浏览器中验证」**。
 - 后端改动至少自测到：无 token → 401；缺 scope → 403；换一个租户看隔离；`curl /svc/<APP_KEY>/health` 200。
 - 发布前：`release-cli whoami` 验令牌（别等构建完才发现过期），换镜像带 `--wait`。
 - 症状 → 原因先查 skill 里的排查表，别猜：`/svc` 404·502 / 自省 401 / `INSUFFICIENT_SCOPE` 看 `portal-external-app`；发布 401·404·`PROPOSAL_PENDING` / 发了没换版看 `xgent-app-release`；一盒起不来看 `portal-dev-setup`；`EXCHANGE_*` 看 `portal-app-exchange`。
@@ -228,6 +235,3 @@ pr-8                               ← 给自绘箭头留位
 - **[DESIGN.md](./DESIGN.md)** —— 视觉系统：色彩、字体、投影、组件，以及从门户底座继承来的那部分 token。
 
 <!-- 填写指引：两份文档与 CLAUDE.md 同在仓根时链接就是上面这样；放到别处记得改路径。 -->
-
-- **设计阶段**用 `impeccable` skill（视觉层级、信息架构、间距对齐、配色、动效、可访问性、空/错状态），不要「凭感觉写 Tailwind」。
-- **验证阶段**在真实浏览器里从宿主进入走通主路径再报告完成。

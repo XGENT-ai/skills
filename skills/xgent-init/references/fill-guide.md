@@ -58,9 +58,9 @@ DESIGN `## 2. Colors` 的 A / B 表格是**给用户的选择题**，不是背�
 
 | 位置 | 留的条件 | 删法 |
 | --- | --- | --- |
-| CLAUDE `### 前端：版头归门户` 及其后三节（`下拉框` / `字典表` / `App 图标`） | `type: micro` | `service` 型：四节整删。保留时把标题里的括号条件「（`micro` 型才有；`service` 型删掉本节及以下三节）」去掉 |
+| CLAUDE `### 前端 UI 开发` 与 `### 前端：版头归门户` 及其后三节（`下拉框` / `字典表` / `App 图标`） | `type: micro` | `service` 型：五节整删。保留时去掉两个标题里的 `micro` / `service` 条件说明 |
 | CLAUDE `### 字典表统一带 sort + name_i18n` | 本 App 有租户级可维护的枚举 / 分类表 | 没有就整节删；保留时去掉标题里的括号条件 |
-| CLAUDE `## Design Context` 整节 | `type: micro` | `service` 型：删掉 DESIGN.md 那行、「设计阶段用 impeccable」那行、「验证阶段在真实浏览器里」那行，并把开头那句改写成不提 impeccable、不提前端 UI 的说法（例：「本仓有一份产品上下文文档：」），只留 PRODUCT.md 那行 |
+| CLAUDE `## Design Context` 整节 | `type: micro` | `service` 型：删掉 DESIGN.md 那行，并把开头那句改写成不提 impeccable、不提前端 UI 的说法（例：「本仓有一份产品上下文文档：」），只留 PRODUCT.md 那行 |
 | PRODUCT `## Users` 第 4 条业务角色 | 本 App 有自己的业务角色（老师/学生、审核人/提交人…） | 有就补一条，并写明它是「门户角色 + ACL PID 的组合」还是「你自己表里的一列」——后者要说明如何与租户隔离共存 |
 | PRODUCT `## Anti-references` 末段 · `## Design Principles` 3–4 条 · `## Accessibility` 末条 · DESIGN `### [Signature Component]` | 见 §2 的 S10 / S11 / S12 / S17 | 无内容就整段删，**不要留空槽位** |
 

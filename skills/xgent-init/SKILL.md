@@ -9,7 +9,7 @@ description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套
 
 | 文件 | 谁读它 | `service` 型（无前端） |
 | --- | --- | --- |
-| `CLAUDE.md` | 每次开工的 agent | 生成，删掉前端四节 |
+| `CLAUDE.md` | 每次开工的 agent | 生成，删掉前端五节 |
 | `PRODUCT.md` | `impeccable` skill 每条子命令开工前 | 生成 |
 | `DESIGN.md` | `impeccable` skill、任何 UI 工作 | **不生成** |
 
@@ -63,7 +63,7 @@ description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套
 - 替换 `<APP_KEY>` / `<APP_NAME>` / `<PREFIX>`（PREFIX = key 大写、`-` 换 `_`，不用问）与 `type: [micro|service]`。
 - 删掉全部 `<!-- 填写指引 -->` 注释，以及 `## Design Context` 里那条讲链接路径的注释。
 - 按 fill-guide.md §5 裁剪可选小节；保留的小节要把标题里的括号条件去掉。
-- `service` 型：删 CLAUDE.md 的前端四节，并把 `## Design Context` 收敛成只指向 PRODUCT.md（不再提 DESIGN.md、impeccable、浏览器验证）。
+- `service` 型：删 CLAUDE.md 的「前端 UI 开发」及其后四个前端小节，并把 `## Design Context` 收敛成只指向 PRODUCT.md（不再提 DESIGN.md、impeccable、浏览器验证）。
 - DESIGN.md frontmatter 的 `name` / `description` 用双引号，值里的 `"` 与 `\` 要转义；`app-identity` 用 manifest 的 `color`，hover / dark 按 fill-guide.md §3 推导并在 frontmatter 上方留一行 YAML 注释说明是推导值。
 - **不要动** `Page<T>`、`{colors.x}` 引用、PRODUCT 的七个标题、DESIGN 的六个标题。
 
