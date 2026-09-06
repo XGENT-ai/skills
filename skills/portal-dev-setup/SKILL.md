@@ -59,6 +59,19 @@ chmod 600 ./.xgent-registry.env
 - ⚠️ **`ONEBOX_PROJECT` 与 `PROJECT` 是两个项目，别只填一个。** 一盒是门户团队发的调试镜像，你的 App 镜像在你自己的项目下；拿 `PROJECT` 去拼一盒引用会 `not found`，而报错看上去像 tag 写错（脚本在回退时会明确告警，别忽略那一行）。
 - 拿到的是**离线 tar**（没有 registry 访问）就先 `docker load` 两个镜像——两个都在本地时 `init` 会跳过登录与拉取，不需要 puller key。
 
+### 装 `@xgent/*` 私有包？不需要云账号
+
+前端要 `@xgent/portal-sdk` / `@xgent/portal-ui` 时，**别去申请云账号、也别装云厂商 CLI**：
+拿你已有的**发布令牌**向门户换一枚 ≤12 h 的只读令牌就行（门户持云凭据）：
+
+```bash
+eval "$(node .claude/skills/xgent-app-release/scripts/npm-token.mjs)"
+npm install
+```
+
+报 `NPM_REGISTRY_NOT_CONFIGURED` 是**平台侧**还没配，贴给管理员，你这边不用改任何配置。
+细节见 `xgent-app-release` skill 的「第 0 步」。
+
 ## 1. 首次用：一条命令铺好
 
 ```bash

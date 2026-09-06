@@ -271,6 +271,7 @@ env:
 
 steps:
   - run: npx @xgent/release-cli whoami                  # ① 先验令牌，别等构建完才发现过期
+  - run: eval "$(node .claude/skills/xgent-app-release/scripts/npm-token.mjs)"   # ⓪ 换私有包只读令牌
   - run: <你自己的依赖安装与构建>                        # ② base=/apps/<key>/
   - run: node .claude/skills/xgent-app-release/scripts/preflight.mjs --dist dist --version $VER
   - run: npx @xgent/release-cli publish --version $VER --dist dist/ --image <key>:$VER --wait
@@ -285,3 +286,27 @@ steps:
 把它固定成 `latest` 之类的常量，等于放弃「线上跑的是哪一版」这个能力。
 
 `--dry-run` 只打印将要发送的内容、不发请求，改 CI 脚本时先跑它。
+
+## 8. 私有包只读令牌（`GET /api/market/release/:key/npm-token`）
+
+`@xgent/{shared,portal-sdk,portal-ui}` 在私有包仓上。**你不需要云账号**：拿同一枚 `xrel_`
+向门户换一枚 ≤12 h 的只读令牌，门户持那把云凭据。
+
+```
+GET <TARGET_XGENT_PLATFORM>/api/market/release/<key>/npm-token
+Authorization: Bearer xrel_…
+→ 200 { ok: true, data: { registry, scopes: ["@xgent"], token, expiresAt } }
+```
+
+| 情况 | 响应 | 你该做什么 |
+| --- | --- | --- |
+| 没令牌 / 令牌失效 | `401` | 重新拿一枚发布令牌 |
+| 令牌绑的是别的 App | `404` | 核对 `LISTING_KEY` |
+| 打太频繁 | `429` | CI 里只换一次，把结果传下去 |
+| 平台没配私有包仓库 | `200` + `NPM_REGISTRY_NOT_CONFIGURED` | **平台侧**的事，贴给管理员 |
+| 平台的仓库凭据被拒 | `200` + `NPM_REGISTRY_UNAUTHORIZED` | 同上，你这边不用改 |
+| 仓库暂时不可达 | `200` + `NPM_REGISTRY_UNAVAILABLE` | 重试一次 |
+
+- 令牌是**域级只读**的：能装 `@xgent/*`，不能发布、不能删。
+- 不缓存到文件：它 12 h 就过期，CI 每次跑现换即可（门户侧自带缓存，不会每次都打云上）。
+- 客户端脚本 `scripts/npm-token.mjs`（`--raw` / `--npmrc` / `--check`）把这些都封好了。

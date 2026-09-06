@@ -122,6 +122,30 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
   不是「这份清单是什么」的结论 —— 那次 `publish` 的退出码仍是非 0（发版确实没成），
   但目录会收到这一版。
 
+## 第 0 步：装 `@xgent/*` 私有包（**不需要任何云账号**）
+
+`@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-ui` 发在私有包仓上。你**不必**有云账号、
+不必装云厂商 CLI、不必持任何长期凭据 —— 用已有的**发布令牌**向门户换一枚 ≤12 h 的**只读**令牌：
+
+```bash
+eval "$(node scripts/npm-token.mjs)"     # 导出 XGENT_NPM_AUTH_TOKEN / XGENT_NPM_REGISTRY
+npm install                               # .npmrc 里用 ${XGENT_NPM_AUTH_TOKEN} 引它
+node scripts/npm-token.mjs --npmrc >> .npmrc   # 或者直接生成三行（别提交这份 .npmrc）
+node scripts/npm-token.mjs --check        # 只体检：能不能换到、还剩多久，不打印令牌
+```
+
+`.npmrc` 里这样引（**变量为空 = 空令牌 = 401**，所以 CI 里务必先 `eval` 再 `npm ci`）：
+
+```
+@xgent:registry=${XGENT_NPM_REGISTRY}
+//<仓库 host>/<路径>/:_authToken=${XGENT_NPM_AUTH_TOKEN}
+```
+
+- 令牌**只走 stdout**，诊断走 stderr —— `eval "$(…)"` 不会把日志也吃进去。
+- 平台轮换云凭据时你这边**零改动**：换的是门户持有的那把，你每次拿到的都是新令牌。
+- 报 `NPM_REGISTRY_NOT_CONFIGURED` / `NPM_REGISTRY_UNAUTHORIZED` 是**平台侧**没配好或凭据过期，
+  不是你的配置问题 —— 贴给平台管理员即可，你这边不用改任何东西。
+
 ## 发布五步，每步都有验收
 
 ```bash

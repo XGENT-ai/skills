@@ -20,6 +20,9 @@ import { readFileSync, statSync, readdirSync, rmSync, mkdtempSync, existsSync } 
 import { join, extname } from "node:path";
 import { tmpdir, homedir } from "node:os";
 import { spawnSync } from "node:child_process";
+// 本地配置文件的读取只有一份实现（同目录 registry-config.mjs，npm-token.mjs 也用它）：
+// 抄成两份的下场是换个字段名只改了一处，另一个脚本悄悄退回默认值。
+import { loadConfig, parseArgs, pick } from "./registry-config.mjs";
 
 const MAX_BYTES = 64 * 1024 * 1024; // 门户侧上限，超了直接 VALIDATION_FAILED
 const VERSION_RE = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/; // 与门户逐字一致
@@ -32,42 +35,8 @@ const err = (m) => errs.push(m);
 const warn = (m) => warns.push(m);
 const ok = (m) => oks.push(m);
 
-function parseArgs(argv) {
-  const out = { _: [] };
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === "--offline") out.offline = true;
-    else if (a.startsWith("--")) out[a.slice(2)] = argv[++i];
-    else out._.push(a);
-  }
-  return out;
-}
-
-/** 与 release-cli 同一份本地配置。APP-CATALOG-1 ADR-3 起，**地址与令牌也在文件里**
-    （理由见 references/publish-api.md §0：强制走 --token 会把密钥送进 agent 上下文与
-    命令行，比落盘更不安全）。这里读出整份，取用方按 参数 > 环境变量 > 文件 的优先级。 */
-function loadConfig(explicit) {
-  const isFile = (p) => { try { return existsSync(p) && statSync(p).isFile(); } catch { return false; } };
-  const named = explicit ?? process.env.XGENT_REGISTRY_CONFIG;
-  if (named && !isFile(named)) { console.error(`✗ 配置文件不存在：${named}`); process.exit(1); }
-  const path = named ?? [
-    "./.xgent-registry.env",
-    join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "xgent", "registry.env"),
-    join(homedir(), ".xgent-registry.env"),
-  ].find(isFile);
-  if (!path) return {};
-  const cfg = {};
-  for (const line of readFileSync(path, "utf8").split("\n")) {
-    if (line.trim().startsWith("#")) continue;
-    const m = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-    if (m) cfg[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, "$2");
-  }
-  return cfg;
-}
-
-const args = parseArgs(process.argv.slice(2));
+const args = parseArgs(process.argv.slice(2), ["offline"]);
 const cfg = loadConfig(args.config);
-const pick = (...v) => v.find((x) => x != null && String(x).trim() !== "") ?? "";
 const key = String(pick(args.key, process.env.LISTING_KEY, cfg.LISTING_KEY));
 const dist = args.dist ?? "dist";
 const version = args.version ?? "";
