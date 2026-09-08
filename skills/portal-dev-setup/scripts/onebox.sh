@@ -205,7 +205,7 @@ _eff() { # _eff KEY [default]
 
 load_env() {
   APP_KEY="$(_eff APP_KEY)"; APP_IMAGE="$(_eff APP_IMAGE)"; APP_FRONTEND_DIST="$(_eff APP_FRONTEND_DIST)"
-  CATALOG="$(_eff XGENT_APP_CATALOG files,ingest,llm-gateway,git)"
+  CATALOG="$(_eff XGENT_APP_CATALOG files,ingest,llm-gateway,git,observability)"
   HTTP_PORT="$(_eff HTTP_PORT 80)"; COMPOSE_PROJECT="$(_eff COMPOSE_PROJECT_NAME xgent)"
   BASE_URL="http://localhost"; [ "$HTTP_PORT" = "80" ] || BASE_URL="http://localhost:$HTTP_PORT"
 }
@@ -223,8 +223,21 @@ compose_args() {
     printf '%s\0' --profile app-external
   fi
   printf '%s\0' --profile local-infra
-  local k; for k in ${CATALOG//,/ }; do printf '%s\0' --profile "app-$k"; done
+  local k; for k in ${CATALOG//,/ }; do
+    printf '%s\0' --profile "app-$k"
+    # 清单型 App（onebox.sh add 生成过片段的）也归 dc 管：这样 up/ps/logs/down 都看得见它们，
+    # 而不是只有 add 那一次 -f 才带上。
+    [ -f "$HOME_DIR/generated/$k.yml" ] && printf '%s\0' -f "$HOME_DIR/generated/$k.yml"
+    [ -f "$SKILL_DIR/services/$k.extra.yml" ] && printf '%s\0' -f "$SKILL_DIR/services/$k.extra.yml"
+  done
+  # 目录含 observability 才叠门户日志采集层（fluentd 日志驱动 + portal-logs 容器）
+  _has_catalog observability && [ -f "$HOME_DIR/onebox/docker-compose.portal-logs.yml" ] \
+    && printf '%s\0' -f "$HOME_DIR/onebox/docker-compose.portal-logs.yml"
+  return 0
 }
+_has_catalog() { case ",$CATALOG," in *",$1,"*) return 0;; *) return 1;; esac; }
+# 目录里「清单型」的 key = 一盒镜像/目录里有 app-devkit/manifests/<key>.manifest.json 且不是门户内置 workspace
+_is_manifest_app() { [ -f "$HOME_DIR/app-devkit/manifests/$1.manifest.json" ]; }
 dc() { local a=(); while IFS= read -r -d '' x; do a+=("$x"); done < <(compose_args); docker compose "${a[@]}" "$@"; }
 
 # --- init ---------------------------------------------------------------------
@@ -483,8 +496,11 @@ cmd_up() {
   info "① 基础设施（postgres / redis / minio）"
   dc up -d postgres redis minio
   info "   等 postgres 就绪…"
-  local i=0; until dc exec -T postgres pg_isready -U postgres >/dev/null 2>&1; do
-    i=$((i+1)); [ "$i" -gt 60 ] && die "postgres 60s 还没就绪，看 $0 dc logs postgres"
+  # 首次初始化时 initdb 会先起一个临时实例再重启，单次 pg_isready 会在那个窗口里误判就绪，
+  # 紧接着的 db:migrate 就撞 ECONNREFUSED（实测）。要求连续 3 秒都就绪才算。
+  local i=0 okc=0; until [ "$okc" -ge 3 ]; do
+    if dc exec -T postgres pg_isready -U postgres >/dev/null 2>&1; then okc=$((okc+1)); else okc=0; fi
+    i=$((i+1)); [ "$i" -gt 90 ] && die "postgres 90s 还没就绪，看 $0 dc logs postgres"
     sleep 1
   done
   info "② 门户库迁移 + 一盒种子（★ 破坏性：truncate cascade）"
@@ -505,10 +521,48 @@ cmd_up() {
   else
     warn "④ 跳过 register-app：当前目录没有 app.manifest.json。有的话设 ONEBOX_MANIFEST=<路径> 再跑一次 $0 up。"
   fi
+  # ④b 目录里的清单型 App（如 observability 日志与监控）：按 add 的流程拉镜像 → 注册 → 建库 →
+  #     migrate → 生成片段。非破坏性、幂等；失败只告警，不挡门户三件套。
+  local mk
+  for mk in ${CATALOG//,/ }; do
+    _is_manifest_app "$mk" || continue
+    info "④b 目录里的清单型 App：${mk}"
+    ADD_QUIET=1 cmd_add "$mk" || warn "add ${mk} 失败 —— 看上面的报错；修完重跑 $0 up（幂等）"
+  done
   info "⑤ 起门户三件套 + 基础服务" ; dc up -d
+  _has_catalog observability && _portal_logs_up
   echo; info "跑一次体检："; cmd_doctor
 }
 
+# 门户自身控制台日志 → 日志与监控（onebox/docker-compose.portal-logs.yml）：
+# 用 portal-self 签一把只带 observability.ingest 的 xsak_ 写进 compose.env，再起 portal-logs。
+# 前提（observability 已注册 + 已登记为平台基础服务应用 + portal-self 在）由 portal-logs-key.ts 判，
+# 不成立 ⇒ 退出码 3 ⇒ 这里只告警。密钥只签一次：已有 OBS_ACCESS_KEY 就不动。
+_portal_logs_up() {
+  info "⑥ 门户控制台日志采集（portal-api → portal-logs → observability）"
+  if [ -z "$(_eff OBS_ACCESS_KEY)" ]; then
+    local sec rc=0 err; err="$(mktemp)"
+    # 容器的 workdir 是 /app（monorepo 根），脚本在 apps/api 下；不走 package script 是因为它带 --env-file=../../.env，镜像里没有那份文件。
+    sec="$(dc run --rm --no-deps -T -w /app/apps/api portal-api bun run scripts/portal-logs-key.ts 2>"$err")" || rc=$?
+    if [ "$rc" -eq 0 ] && [ -n "$sec" ]; then
+      _env_set OBS_ACCESS_KEY "$sec"
+    else
+      warn "采集密钥没签成（rc=${rc}）：$(grep -v xsak_ "$err" | tail -3 | tr '\n' ' ')"; rm -f "$err"; return 0
+    fi
+    rm -f "$err"
+  fi
+  dc up -d portal-logs portal-api
+  _ok "portal-logs 已起；portal-api 的 stdout/stderr 经 fluentd 驱动进 app_portal_console（观测：$0 dc logs portal-logs）"
+}
+
+# 在一盒 minio 上建桶（幂等）。minio 镜像自带 mc；凭证就是 compose.env 里的 MINIO_ROOT_USER/PASSWORD。
+_ensure_bucket() { # _ensure_bucket <bucket>
+  local u p; u="$(_eff MINIO_ROOT_USER minioadmin)"; p="$(_eff MINIO_ROOT_PASSWORD minioadmin)"
+  dc up -d minio >/dev/null 2>&1 || true
+  local i=0; until dc exec -T minio mc ready local >/dev/null 2>&1; do i=$((i+1)); [ "$i" -gt 30 ] && { warn "minio 30s 没就绪，桶 $1 没建"; return 0; }; sleep 1; done
+  dc exec -T minio sh -c "mc alias set local http://127.0.0.1:9000 '$u' '$p' >/dev/null 2>&1 && mc mb --ignore-existing local/$1" >/dev/null 2>&1 \
+    && info "桶 $1 就绪" || warn "桶 $1 没建成（$0 dc exec minio mc mb local/$1 手工补）"
+}
 _ensure_db() { # _ensure_db <dbname>
   if dc exec -T postgres psql -U postgres -lqt 2>/dev/null | cut -d'|' -f1 | grep -qw "$1"; then
     info "   库 $1 已存在"
@@ -609,8 +663,9 @@ cmd_add() {
     console.log(`M_ENV=${(m.requiredEnv ?? []).map((e) => (typeof e === "string" ? e : e.key)).join(" ")}`);
     // 非空 ⇒ 它是跨应用交换的【发起方】，需要一把 App Secret（下面与 SA 密钥同源生成注入）。
     console.log(`M_XTARGETS=${(m.exchangeTargets ?? []).join(" ")}`);
+    console.log(`M_MIGRATE=${(d.migrateArgs ?? []).join(" ")}`);
   ' 2>/dev/null)" || die "解析清单失败 —— 它可能不是一份合法的 app.manifest.json。"
-  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_XTARGETS=""
+  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_XTARGETS="" M_MIGRATE=""
   eval "$(printf '%s' "$fields" | sed 's/^\([A-Z_]*\)=\(.*\)$/\1="\2"/')"
   [ "$M_KEY" = "$key" ] || die "清单里的 listingKey 是「${M_KEY}」，与你要加的「${key}」对不上。"
   info "   ${M_KEY}  type=${M_TYPE}  port=${M_PORT}  sa=${M_SA}"
@@ -687,7 +742,9 @@ cmd_add() {
     #    这是生成文件、随机器走、已被 .gitignore 挡住，绝对路径没有副作用。
     echo "    env_file: [\"${ENV_FILE}\"]"
     echo "    environment:"
-    echo "      PORT: \"${M_PORT}\""
+    # 一盒反代的通用规则只反代 <key>-server:8080；镜像不听 8080 的（如 observability 8081）
+    # 在 compose.env 里用 <PREFIX>_PORT 改成 8080（值归平台，与生产注入 PORT 同语义）。
+    echo "      PORT: \"\${${PREFIX}_PORT:-${M_PORT}}\""
     echo "      PORTAL_INTROSPECT_URL: http://portal-api:3000/api/tokens/introspect"
     echo "      ${PREFIX}_SA_CLIENT_ID: ${M_SA}"
     echo "      ${PREFIX}_SA_CLIENT_SECRET: \${${svar}}"
@@ -696,7 +753,7 @@ cmd_add() {
     [ -n "$M_XTARGETS" ] && echo "      ${PREFIX}_APP_SECRET: \${${avar}}"
     echo "      ${PREFIX}_PG_DSN: postgres://postgres:postgres@postgres:5432/xgent-${key}"
     echo "      DATABASE_URL: postgres://postgres:postgres@postgres:5432/xgent-${key}"
-    echo "    expose: [\"${M_PORT}\"]"
+    echo "    expose: [\"\${${PREFIX}_PORT:-${M_PORT}}\"]"
     echo "    networks: { default: { aliases: [${key}-server] } }"
   } > "$out"
   info "⑥ 生成 ${out#$HOME_DIR/}"
@@ -706,18 +763,35 @@ cmd_add() {
   local extra_args=() extra="$SKILL_DIR/services/${key}.extra.yml"
   [ -f "$extra" ] && { extra_args=(-f "$extra"); info "   叠加自带依赖 services/${key}.extra.yml"; }
 
+  # 对象存储桶：清单 requiredEnv 里带 *_S3_BUCKET_NAME / ZO_S3_BUCKET_NAME 的，按 compose.env 里的值在一盒 minio 上建桶
+  local bvar bname
+  for bvar in $(printf '%s\n' $M_ENV | grep -E '_S3_BUCKET(_NAME)?$' || true); do
+    bname="$(_eff "$bvar")"; [ -n "$bname" ] && _ensure_bucket "$bname"
+  done
+
+  # 清单声明了 deployDescriptor.migrateArgs（生产由 deploy-controller 在换容器前跑）：起容器前先跑一次
+  if [ -n "$M_MIGRATE" ]; then
+    info "⑥b 迁移：${key}-server ${M_MIGRATE}"
+    dc up -d postgres minio >/dev/null 2>&1 || true
+    # shellcheck disable=SC2086
+    XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" "${extra_args[@]}" run --rm --no-deps "${key}-server" $M_MIGRATE \
+      || warn "${key}-server ${M_MIGRATE} 失败 —— 看上面的报错（多半是 env 值没到位）"
+  fi
+
   info "⑦ 起容器"
   XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" "${extra_args[@]}" up -d "${key}-server"
 
   echo; info "⑧ 冒烟"
+  # amd64 镜像在 Apple Silicon 上走仿真，冷启动能到两分钟（observability 实测 ~100s）：等 120s。
   local i=0 code=""
-  while [ "$i" -lt 20 ]; do
+  while [ "$i" -lt 60 ]; do
     code="$(curl -s -m 5 -o /dev/null -w '%{http_code}' "${BASE_URL}/svc/${key}${M_HEALTH}" || true)"
     [ "$code" = "200" ] && break; i=$((i+1)); sleep 2
   done
   if [ "$code" = "200" ]; then _ok "/svc/${key}${M_HEALTH} 200"
-  else _bad "/svc/${key}${M_HEALTH} HTTP ${code:-000}（等了 40s）" "${0} dc logs ${key}-server —— 多半是镜像认的 env 变量名与上面生成的那几个不同名，补进 compose.env 末尾即可"; fi
+  else _bad "/svc/${key}${M_HEALTH} HTTP ${code:-000}（等了 120s）" "${0} dc logs ${key}-server —— 多半是镜像认的 env 变量名与上面生成的那几个不同名，补进 compose.env 末尾即可"; fi
 
+  [ -n "${ADD_QUIET:-}" ] && return 0
   echo
   info "还差最后一步（浏览器里点一下）：rockie@xgent.ai 登控制台 → 租户 → 可用应用 → 勾上「${key}」保存。"
   _note "service 型 App 的勾选【就是】安装；不装的话跨应用交换拿不到它的 scope。"

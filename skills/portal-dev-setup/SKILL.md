@@ -122,7 +122,7 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 | --- | --- |
 | `onebox.sh up` | **按顺序把整套铺起来**（迁移→种子→各库→注册→起栈），幂等可重跑，跑完自动体检 |
 | `onebox.sh doctor` | **体检**：排查表里能自动判的都判一遍，每条给一行可直接粘的修法。**跑不通先跑它** |
-| `onebox.sh add <key>` | 把一个平台侧 App 拉进来陪调：按它的 manifest 拉镜像+注册+建库+**生成 compose**+起容器+冒烟，非破坏性 |
+| `onebox.sh add <key>` | 把一个平台侧 App 拉进来陪调：按它的 manifest 拉镜像+注册+建库（+建桶 / `migrateArgs`）+**生成 compose**+起容器+冒烟，非破坏性；目录里的清单型 App（如 observability）`up` 会自动走这一步 |
 | `onebox.sh status` | 生效 env + 容器状态 + 宿主侧健康探测 |
 | `onebox.sh env` | 只看生效 env 与配置告警 |
 | `onebox.sh smoke` | 只跑健康探测 |
@@ -178,8 +178,28 @@ $S dc up -d
 - **要做跨应用交换的，`register-app` 得跑两次。** 发起方 App Secret 绑在**已安装实例**上，所以是
   `register-app` → 在应用市场里装上你的 App → **再跑一次 `register-app`**（幂等）。漏了的症状是交换在发起方 401。
 
-一盒里带四个基础服务：`files`（文件管理）· `ingest`（信息获取）· `llm-gateway`（大模型网关）· `git`（Git 服务）。
-你的 App 要用它们的数据，就在 manifest 里声明 `exchangeTargets` 走令牌交换。
+一盒里带四个基础服务：`files`（文件管理）· `ingest`（信息获取）· `llm-gateway`（大模型网关）· `git`（Git 服务），
+外加一个**平台基础服务应用** `observability`（日志与监控）。你的 App 要用前四个的数据，就在 manifest 里声明
+`exchangeTargets` 走令牌交换；日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
+**默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
+
+### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
+
+- **④b** `observability` 不是门户内置 workspace，是清单型 App（`app-devkit/manifests/observability.manifest.json`）。
+  `up` 对目录里每个清单型 App 自动走一遍 `add`：拉镜像（`<REGISTRY>/<ONEBOX_PROJECT>/observability:v0.5.4-…`；
+  多架构清单会自动挑本机架构，只有单 amd64 的版本才要在 compose.env 钉 `OBSERVABILITY_PLATFORM=linux/amd64`
+  走仿真）→ 注册 → 建库 `xgent-observability` + 在一盒 minio
+  建桶 `xgent-observability` → `init-db`（清单 `deployDescriptor.migrateArgs`）→ 生成 `generated/observability.yml` 起容器。
+  它要的那批 `ZO_*` 值（元数据库/对象存储）已经在 `onebox/compose.env.onebox.example` 里指向一盒的 postgres/minio；
+  `OBSERVABILITY_PORT=8080` 让它在 8080 上听（一盒反代只反代 `<key>-server:8080`）。
+- **⑥** 门户自身的控制台日志：`up` 用 `portal-self` 签一把只带 `observability.ingest` 的 `xsak_` 写进 compose.env
+  的 `OBS_ACCESS_KEY`，再起 `portal-logs`（fluent-bit）；portal-api 的 stdout/stderr 走 docker 的 fluentd 日志驱动
+  进去，落 `app_portal_console`（`docker logs portal-api` 照常可用）。这一层只在目录含 observability 时叠加
+  （`onebox/docker-compose.portal-logs.yml`）。
+- 不想要：把 `XGENT_APP_CATALOG` 里的 `observability` 去掉再 `up`（种子会重跑，破坏性）。
+- 它的界面（`/apps/observability/`）**不在一盒镜像里**——那是 App 团队经发布提案上传的产物；一盒里只有服务面。
+  看落了什么用它的查询面：`POST /svc/observability/api/t<租户UUID去横线>/_search?type=logs`，**只认用户票**（`xsak_` 会 401），
+  票从 `/auth/dev/start` 登进去后在浏览器里拿，或 `$S dc run --rm portal-api bun -e '…mintForApp…'`。
 
 ### 2.0 `register-app` 还是 `xgent-app-release`？
 
