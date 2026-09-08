@@ -52,7 +52,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 ## 资源服务器硬契约（外部实现最常炸的四处）
 
-1. **自省信封解包**：声明在 `data` 里，必须 `claims = body.data ?? body`——裸读顶层 `active` 会把一切有效 TDT 判 401（真实事故）；
+1. **自省信封解包**：门户响应必须先检查 `ok === true` 且 `data` 为对象，再校验 `data`；失败信封或缺 data 返回 503，不能回退到顶层。只有合法 `active:false` 才表示凭证失效。TDT 的 exp 必填；无过期长期 key 才可省略 exp。主体/凭证类型矩阵、ACL 范围与缓存预算见 integration-contract.md §3；
 2. **`/health` 形状**：`{"service":"<key>","db":"ok",...}`，`"db"` 是字符串 `"ok"` 不是 `true`（healthcheck 按此判活）；
 3. **门户三变量 all-or-nothing**：自省地址 + SA clientId + secret 全缺→鉴权停用 503；缺一→启动 fail-fast 打印缺失项。
 4. **平台级跨租户闸**：如有跨租户路由，只认服务端自省返回的 `claims.isPlatformAdmin === true`。它由 Portal 按用户实时计算、不在 JWT 里；`role` / `bypass` 只属于当前租户，服务态恒为 `false`，不接受前端自报或 Cookie 转发。

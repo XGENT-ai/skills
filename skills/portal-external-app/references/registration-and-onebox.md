@@ -233,7 +233,7 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 | `wired into 0 installed instance(s)` | **未必是没写成**：0 = 本次没有改动，含「本来就是对的」。按 §2.2 比哈希判定 |
 | `/svc/<key>` 404 | 白名单 `.map` 没写成，或反代先于 register-app 起（重启反代/重跑注册） |
 | `/svc/<key>` 502 | 后端没起 / 没听 8080 / 网络别名 `<key>-server` 没命中 |
-| 有效 TDT 被判 `INVALID_TOKEN` | 没解包自省信封（`claims = body.data ?? body`） |
+| 有效 TDT 被判 `INVALID_TOKEN` | 先检查自省 ok:true 和 data 对象，再校验 data；失败信封/缺 data 为 503，不能回退到顶层 |
 | register-app 报 scope `VALIDATION_FAILED` | 声明了别人的 scope 但没列进 `exchangeTargets` |
 | 发起交换 401 | `exchangeInitiatorSecret` 未写进已安装实例（先安装再重跑 register-app）或 secret 漂移 |
 | 受门路由 503 | 门户三变量（自省地址/SA id/secret）配置不全 |

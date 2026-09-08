@@ -45,8 +45,9 @@ iframe 坑、设计红线、三份 references）与你在哪个 repo 无关，�
 
 ## SDK 硬规则
 
-- 一切从 `const sdk = createPortalClient(); const init = await sdk.ready();` 开始。不在 Portal iframe 内（`window.parent === window`）时给提示页，不要白屏。
+- 私有页面从 `const sdk = createPortalClient(); const init = await sdk.ready();` 开始。SDK 0.4.0 支持 iframe 与同源 standalone 共用自举；声明 `openModes` 后从 `/open/<key>` 进入。顶层必须处理 `ready()` typed error 和 `onContextChanged()`，失效时卸载私有视图与应用缓存，并提供显式 `openGate()`；不要自动跳登录。匿名页可不调用 `ready()`。生产从 `/apps/<key>/` 推导 key，开发的 appKey/host/apiBase 来自构建配置，不能读 URL 配认证主机。详见门户 SDK README 与 SSO §5.9。
 - `sdk.getToken()` 自动缓存、到期前 30s 续签——**不要**自己存 TDT、不要写 localStorage。
+- 用户长期凭证由本 App 后端委托门户签发。前端只将新建/迁移响应保存在当前一次性展示组件；不要用 Query/Mutation 缓存保存含 secret/token 的响应。关闭后清除，复制失败提供选中文本和重试。门户集中管理入口是 `/me?tab=keys`；App 保留项目/能力/路由配置、旧密钥停用与远端撤销重试。
 - 全局平台管理员不在 TDT JWT / `InitPayload` 里；`sdk.acl.bypass` 和 `sdk.userinfo().role` 只表示当前租户。前端即使拿到 session-only `/auth/me.isPlatformAdmin` 也只能做展示，不能转发给后端授权；跨租户后端只认 TDT 自省返回的 `isPlatformAdmin`。
 - 调自己的独立后端一律 `sdk.callService("<listingKey>", path, opts)`（宿主代转发、零跨域、401/403 自动重铸重试一次）。iframe 直接跨域 `fetch` 独立后端是错误姿势。
 - 权限：`sdk.acl.can(pid)` / `sdk.acl.scope(pid)` 只做**隐藏按钮/入口**的 UX 门；真正拦截靠后端。前端判过 ≠ 安全。

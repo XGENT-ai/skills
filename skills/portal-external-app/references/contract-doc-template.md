@@ -21,7 +21,8 @@
 （micro 附 navItems JSON。）
 
 ## 2. 运行时契约（已实现）
-- 自省端点、Basic 凭证、信封解包（claims = body.data ?? body）、缓存策略；
+- 自省端点、Basic 凭证；校验 ok:true 和 data 对象后解析，失败信封不回退；正缓存默认 30 秒/最高 55 秒、调用者隔离、singleflight 与故障 503；
+- kind 与 credential_type 的矩阵、未知类型拒绝；TDT 必填真实 exp，无过期长期 key 可缺省，缓存命中仍判到期；
 - 自省的 `isPlatformAdmin` 是 Portal 按用户实时计算的全局身份，不在 JWT 里；服务态恒为 false；
 - 四道闸各自的失败码（401 INVALID_TOKEN / 403 INSUFFICIENT_SCOPE / FORBIDDEN / INSUFFICIENT_PERMISSION）；
 - 如有跨租户路由：逐条标明 `isPlatformAdmin === true` 服务端闸，说明不用当前 `role` / `bypass` 或前端自报代替；
@@ -37,7 +38,7 @@
 （新增路由的缺省门策略要写明——fail-safe 默认落最严的写门，绝不无门。）
 
 ## 4. ACL Manifest JSON（如声明 ACL；纯 scope 鉴权则写明 aclManifest: null）
-（完整 JSON：pages/actions/roleTemplates；DataScope 支持哪些档、不支持的档如何退化。）
+（完整 JSON：pages/actions/roleTemplates；DataScope 与 relations 的校验和执行方式，不支持的受限授予必须拒绝，不能扩大为 all。）
 
 ## 5. Env 契约（镜像不含 .env）
 | var | required | default/example | 说明 |

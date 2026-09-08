@@ -31,28 +31,30 @@
 
 ## 3. 运行时鉴权（四道闸）
 
-每个受保护请求：取 `Authorization: Bearer <TDT>` → 调门户自省 → 四道闸：
+每个受保护请求：取 `Authorization: Bearer <TDT 或端点已接纳的长期凭证>` → 调门户自省并校验声明 → 四道闸。Bun/TypeScript 使用公共服务端 SDK；其他语言实现下述相同契约。
 
 ```
 POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/introspect
   Authorization: Basic base64(<saClientId>:<saSecret>)
-  body: { "token": "<TDT>" }
+  body: { "token": "<Bearer 凭证>" }
 → 200 { "ok": true, "data": {
-    "active", "kind": "user"|"service", "aud", "listingKey", "azp",
+    "active", "kind": "user"|"service", "principal_id", "credential_type", "credential_id", "aud", "listingKey", "azp",
     "tenant_id", "user_id", "scopes": [], "role", "isPlatformAdmin", "bypass", "groups",
-    "permissions": [{ "pid", "scope" }], "aclStamp", "exp" } }
+    "permissions": [{ "pid", "scope", "relations"? }]|null, "aclStamp", "exp"? } }
 ```
 
-1. **身份**：`(claims.listingKey ?? claims.aud) === 你的 listingKey`，否则 401 `INVALID_TOKEN`；
+1. **身份**：端点显式允许 user/service；用户态检查 `(claims.listingKey ?? claims.aud) === 你的 listingKey`，否则 401 `INVALID_TOKEN`。服务态 aud 是来源 SA clientId、azp 是来源 App，按端点用途校验，不能把来源当目标；
 2. **scope** ∈ `claims.scopes`，否则 403 `INSUFFICIENT_SCOPE`；
-3. 结构性管理操作看 `claims.role === "admin"`；
-4. 细粒度看 `bypass || permissions 命中 PID`（纯 scope 鉴权的服务可 `aclManifest:null`，跳过此闸）。
+3. 用户结构性管理操作看 `claims.role === "admin"`；服务身份不能携带用户角色进入此闸；
+4. 用户细粒度操作校验 PID，并执行命中授予的 `scope`（own/team/all）与 `relations`。字段必须保留、校验并在业务查询中收口；不支持受限范围时拒绝该授予，不能升级成 all。纯服务端点按 scope、来源及业务绑定授权。
 
 如端点是**平台级跨租户**读/写，在上述四道闸外另加 `claims.isPlatformAdmin === true`。该值由 Portal 在每次自省时按 `user_id` 检查其是否为平台租户 active admin，与当前 `tenant_id` / `role` / `bypass` 独立；它是自省派生信息，**不在 TDT JWT claims 里**。不能用当前租户 admin、平台租户 ID 比较或前端头推导全局身份。
 
 硬形状（外部实现最常炸的四处）：
 
-- **信封解包**：声明在 `data` 里，`claims = body.data ?? body`。裸读顶层 `active` → 一切有效 TDT 被判 401（知识库 1.0.0 真实事故）。`active:false` 是成功的自省不是传输错误。自省结果缓存 `min(exp, now+60s)`，key 建议 `sha256(token)`。
+- **信封与故障**：门户响应先检查 `ok === true` 且 `data` 为对象，再校验声明；`ok:false`、缺/null data、坏 JSON、非法声明、自省 HTTP 401/403/5xx 或超时均返回资源端 503。不能从失败信封回退到顶层；合法 `active:false` 或真实到期才是 401。若实现兼容裸声明，只能在根本不存在 ok 字段时走独立完整校验分支。
+- **主体与凭证类型**：service 允许 tdt/service_access_key，user 允许 tdt/user_access_key；未知类型、互串类型返回 503。缺省 kind 仅兼容完整合法用户声明，不能推断服务身份。principal_id 是主体 UUID，user 时须与 user_id 一致；service 无 user_id/role/groups/permissions，bypass/isPlatformAdmin 为 false。用户长期 key 只在明确迁移的机器入口启用，并逐请求核验 credentialId 对应的本地业务绑定；普通 REST 默认只接纳 tdt/service_access_key。
+- **到期与缓存**：TDT 的 exp 必须存在且非 null；无过期长期 key 可省略（兼容旧 null）。exp 是非负安全整数 Unix 秒；0 为已到期，负数/非数值为 503。正缓存默认 30 秒、最高 55 秒，从自省请求开始计时，加门户配置最多 5 秒总撤权预算 60 秒；受真实 exp 截断，命中仍检查 exp，不滑动续期或伪造到期。键隔离完整自省地址、调用者配置及 bearer 哈希；同上下文并发合并，不缓存 inactive/故障，缓存依赖故障时直查门户，门户也故障则 503。
 - **全局身份字段**：`active:true` 始终带布尔 `isPlatformAdmin`，服务态恒为 `false`。虽然 Portal 在自省时实时计算，下游缓存会让身份变更最多延后 60s 生效；更敏感的操作应缩短缓存或直查。
 - **门户三变量 all-or-nothing**：自省地址 + SA clientId + SA secret **全缺** → 门户鉴权停用、受门路由 503；**缺一不全** → 启动 fail-fast 打印缺失变量。避免半配置静默放行。
 - **租户隔离**按 `claims.tenant_id`（永不信任请求体）；限流自建 `(aud, tenant)` 每分钟窗口（参考默认 600/min）。
