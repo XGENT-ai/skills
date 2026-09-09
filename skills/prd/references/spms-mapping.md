@@ -18,6 +18,8 @@
 | 条目正文 | `requirements.description`（UI 标签「PRD 描述」) | 完整 markdown |
 | 验收标准 | `requirements.acceptanceCriteria`（UI 标签「验收标准」) | **纯文本,一行一条** |
 | TC 种子 | `test_cases`（`TC-N`) | `testcase_create(requirementKey=...)` |
+| §7 分期交付建议 | **无独立字段** | 分期本身只留在 PRD 文档;**跨期需求的终验声明**要落进该需求的 `description` 开头 + `acceptanceCriteria` 逐行 `[P#]` 前缀(见 §5),版本(release)人工挂**终验期**那一版 |
+| §8 SPMS 落库结果 | — | 记录本次真实写入的 key 与待人工补字段;有阻塞问题时改写「未写入」 |
 | 开发计划(下游) | `plans`（`PLAN-N`)+ `plan_requirements` | dev-plan 阶段 `plan_create(requirementKeys)` / `plan_update({content})`。**PRD : 计划多对多**——可拆可合,关联键是 FR/NFR key;⚠️ **只能挂同项目的需求**,跨项目 key 报 `LIFECYCLE_MISMATCH`(平台契约) |
 
 ## 2. 枚举真值
@@ -26,13 +28,15 @@
 | --- | --- | --- |
 | `type` | `functional` / `non_functional` | 功能性 / 非功能性 |
 | `category`（**仅 NFR**,FR 留 null） | `performance` / `security` / `usability` / `reliability` / `compatibility` / `maintainability` | 性能 / 安全 / 易用性 / 可靠性 / 兼容性 / 可维护性 |
-| `status` | `draft` → `reviewing` → `approved` → `in_dev` → `shipped`,或 `rejected` | 草稿 / 评审中 / 已批准 / 开发中 / 已交付 / 已拒绝 |
+| `status`（8 值） | `draft` → `reviewing` → `approved` → `in_dev` → `submitted` → `testable` → `shipped`,或 `rejected` | 草稿 / 评审中 / 已批准 / 开发中 / **已提交** / **可测试** / **已上线** / 已拒绝 |
 | `priority`（紧急度） | `urgent` / `high` / `medium` / `low` / `none` | 紧急 / 高 / 中 / 低 / 无 |
 | `importance`（重要度,**与 priority 正交**） | `critical` / `high` / `medium` / `low` / `none` | 关键 / 高 / 中 / 低 / 未评估 |
 | TC `status` | `draft` / `active` / `deprecated` | 草稿 / 可用 / 废弃 |
 | TC `result` | `untested` / `passed` / `failed` / `blocked` | 未测 / 通过 / 失败 / 阻塞 |
 
 **PRD 阶段一律建 `status=draft`**;`reviewing`/`approved` 是人的动作。
+
+⚠️ **`shipped`(已上线)就是需求侧的终点** —— 需求**没有**「已上线」之后的第二个人工终态(与 Issue 的不对称是平台刻意的),把需求转到它**本身就是那次需求级验收**,而且会通知需求作者。`submitted`(已提交) / `testable`(可测试) 是「交付中」段,跨期需求的首期完工应停在这里。Agent 写不到两个终态(`shipped` / `rejected` → `FINAL_STATE_FORBIDDEN`),所以**防误记只能靠把终验期写进需求正文**,让点按钮的人先看见。
 
 ## 3. MCP 写面缺口(必须人工在 Web 补)
 
@@ -46,7 +50,7 @@
 | `importance` 重要度 | 需求抽屉 | 表里有列、Web 能写,MCP 没开 |
 | `ownerId` 负责人 | 需求抽屉 | 与「执行人」(由关联 Issue 派生)不是一回事 |
 | `dueDate` 截止日期 | 需求抽屉 | 需求池按日期范围筛选用 |
-| `releaseId` 版本 | 需求抽屉 | 应与项目的 release 一致,否则 UI 出告警 |
+| `releaseId` 版本 | 需求抽屉 | 单值字段,应与项目的 release 一致否则 UI 出告警;**跨期需求挂「终验期」那一版**——挂首期会让版本报表提前把整条需求算成已交付 |
 | 附件 | 需求抽屉 | MCP 只能读(`attachment_read`),不能传 |
 | 排期/点数 | Sprint 规划页 | 属规划期(`sprint_plan_items`),**不在 PRD 阶段做** |
 | 项目治理字段(名称/状态/负责人/团队/版本) | 项目抽屉 | `project_update` 只写基本信息七段;**无 `project_create`** |
@@ -63,7 +67,8 @@
 **`description`(PRD 描述)** —— markdown 全量渲染(平台统一的 markdown 渲染组件),标题/列表/**表格**/代码块都可用。
 图片只认 `![name](xgent-attachment:<id>)` 稳定引用,而 MCP 没有上传面 → **正文里不要放外链图**。
 
-**`acceptanceCriteria`(验收标准)** —— **不是 markdown**。前端按 `\n` 切行、trim、丢空行,渲染成圆点列表,并剥掉行首的 `\d+\. `:
+**`acceptanceCriteria`(验收标准)** —— **不是 markdown**。展示端按 `\n` 切行、trim、丢空行,渲染成圆点列表,**一个字符都不剥**。
+⚠️ 剥列表前缀(`- * • 1. 1)` + 后随空白)只发生在 **Web 列表编辑器保存**那条路径上,**MCP 写进去的不经过它** —— 所以你写的任何前缀都会原样显示在界面上:
 
 ```
 ✅ 管理员在「应用市场」点击安装后，应用 3 秒内出现在左侧导航
@@ -71,11 +76,39 @@
 ✅ 已安装应用重复安装时提示「已安装」，不产生第二条记录
 
 ❌ - 管理员可以安装应用        → 行首 "-" 会原样显示成「• - 管理员…」
+❌ 1. 管理员可以安装应用        → 同样原样显示（展示端不剥数字前缀）
 ❌ **重要**：安装要快          → 加粗语法原样显示，且「快」不可断言
 ❌ （空行分段）                → 空行被丢弃，分段无效
 ```
 
 一行一条、无前缀符号、无空行、无 markdown 语法、每条可断言。
+
+### 唯一允许的前缀:跨期需求的 `[P#]` 期次标
+
+跨期需求(验收标准分散在两期以上)**逐行**加期次前缀,让 QA 一眼看出这期该验哪几行:
+
+```
+✅ [P1] 管理员在「应用市场」点击安装后，应用 3 秒内出现在左侧导航
+✅ [P2] 非管理员访问该入口返回 403，且导航不显示该项
+```
+
+方括号**不在**剥离表(`- * • 1. 1)`)里,展示端本来也不剥 —— 所以这是**唯一不破坏「纯文本一行一条」契约**的标法。
+**单期需求不要加**,加了就是噪声。配套的两处见 §5.1。
+
+### 5.1 跨期需求的终验声明(防「阶段交付被误记为整条完成」)
+
+一条需求跨两期交付时,**整条需求算完成的那一期叫「终验期」= 最后一期**。三处一起写,缺一处就会有界面在说谎:
+
+1. **`description` 开头**一段引用块(正文是 markdown,正常渲染):
+
+   ```
+   > **分期与终验**:本需求跨 P1 / P2 交付,**终验期 = P2**。P1 完成后请停在交付段(已提交 / 可测试),**不要转「已上线」**——「已上线」是整条需求的验收,不是某一期的完工。
+   ```
+
+2. **`acceptanceCriteria` 逐行 `[P#]` 前缀**(上一节)。
+3. **版本(release)挂终验期那一版**(人工在 Web 补,见 §3)。
+
+⚠️ **平台行为**:需求抽屉里,只要**该需求已关联的 Issue 全部完成**、且状态落在交付段(开发中 / 已提交 / 可测试),就会浮出一条一键「转已上线」的绿色提示条。跨期需求首期只挂了首期的 Issue,**首期一完工按钮就亮了** —— 这就是误记发生的方式,而需求侧没有「已上线」之后的第二个终态(见 §2)。Agent 写不到终态,**能做的就是把终验声明写在他会看到的地方**。
 
 ## 6. 常用调用序列
 
@@ -103,6 +136,7 @@ testcase_create({projectId, title, requirementKey:'FR-37', preconditions?, steps
 | `PROJECT_NOT_ALLOWED` | 目标项目不在令牌白名单 | 白名单**可就地改签**(令牌列表页「项目」单元格),不必吊销重签 |
 | `PROJECT_NOT_FOUND` / `REQUIREMENT_NOT_FOUND` | 不存在,或跨租户(不泄露存在性) | 核对 projectId / key |
 | 403（需求写闸） | 需要 `spms:action:requirement.manage` **或**本项目 Lead | 报出缺什么,请用户授权;不要改去建 Issue 绕行 |
+| `FINAL_STATE_FORBIDDEN` | 想把需求写到 `shipped` / `rejected` —— 终态留给人 | 别绕道。要报的是「首期已交付,需求停在交付段,终验在 P2」,由人做需求级验收 |
 | `VALIDATION_FAILED` | 标题为空等 | 修入参 |
 | `429` / `503` | 令牌 rpm 超限 / 门户不可达(fail-closed) | 退避重试;503 时门户侧先恢复 |
 
