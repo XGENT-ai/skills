@@ -118,7 +118,7 @@ sha256(<manifest 的 exchangeInitiatorSecret>)
 **不 clone 门户、不改门户代码、不重建门户镜像。**
 
 ```
-<registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE       (~850MB)
+<registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE       (~310MB)
 <registry>/<项目>/proxy:latest     # caddy proxy    → XGENT_PROXY_IMAGE (~68MB)
 ```
 

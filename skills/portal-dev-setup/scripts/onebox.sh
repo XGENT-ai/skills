@@ -205,7 +205,7 @@ _eff() { # _eff KEY [default]
 
 load_env() {
   APP_KEY="$(_eff APP_KEY)"; APP_IMAGE="$(_eff APP_IMAGE)"; APP_FRONTEND_DIST="$(_eff APP_FRONTEND_DIST)"
-  CATALOG="$(_eff XGENT_APP_CATALOG files,ingest,llm-gateway,git,observability)"
+  CATALOG="$(_eff XGENT_APP_CATALOG files,llm-gateway,git,observability)"
   HTTP_PORT="$(_eff HTTP_PORT 80)"; COMPOSE_PROJECT="$(_eff COMPOSE_PROJECT_NAME xgent)"
   BASE_URL="http://localhost"; [ "$HTTP_PORT" = "80" ] || BASE_URL="http://localhost:$HTTP_PORT"
 }
@@ -509,7 +509,7 @@ cmd_up() {
   info "③ 目录里各服务自己的库"
   local k
   for k in ${CATALOG//,/ }; do
-    case "$k" in files|ingest|llm-gateway|git) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
+    case "$k" in files|llm-gateway|git) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
   done
   info "③b 你自己的库 xgent-${APP_KEY}"
   _ensure_db "xgent-${APP_KEY}"
@@ -850,7 +850,7 @@ cmd_doctor() {
     local dbs; dbs="$(dc exec -T postgres psql -U postgres -lqt 2>/dev/null | cut -d'|' -f1 | tr -d ' \r' || true)"
     local miss=""
     for k in ${want//,/ }; do
-      case "$k" in llm-gateway|ingest) ;; esac
+      case "$k" in llm-gateway) ;; esac
       printf '%s\n' "$dbs" | grep -qx "xgent-$k" || miss="$miss xgent-$k"
     done
     if [ -z "$miss" ]; then _ok "目录里每个 App 的库都在"
@@ -867,7 +867,7 @@ cmd_doctor() {
 
   echo "⑤ 目录 vs 容器"
   for k in ${CATALOG//,/ }; do
-    case "$k" in files|ingest|llm-gateway|git) continue;; esac
+    case "$k" in files|llm-gateway|git) continue;; esac
     if _svc_running "${k}-server"; then _ok "$k 的容器在跑"
     else _bad "$k 在 XGENT_APP_CATALOG 里但容器没起" "$0 add ${k}（清单已注册的话它只会补建库+起容器）"; fi
   done

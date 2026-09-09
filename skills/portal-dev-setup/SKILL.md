@@ -148,8 +148,8 @@ $S dc up -d postgres redis minio
 $S dc run --rm portal-api bun run db:migrate
 $S dc run --rm portal-api bun run db:seed:onebox
 
-# 3) 四个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
-for k in files ingest llm-gateway git; do $S dc run --rm portal-api bun run db:$k:migrate; done
+# 3) 三个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
+for k in files llm-gateway git; do $S dc run --rm portal-api bun run db:$k:migrate; done
 
 # 3b) 你自己的库：新镜像在 postgres【首次初始化】时按 APP_KEY 建好 `xgent-<key>`；
 #     老镜像不建，换过 APP_KEY 的也不会补建（初始化脚本只在数据卷为空时跑一次）。
@@ -178,8 +178,8 @@ $S dc up -d
 - **要做跨应用交换的，`register-app` 得跑两次。** 发起方 App Secret 绑在**已安装实例**上，所以是
   `register-app` → 在应用市场里装上你的 App → **再跑一次 `register-app`**（幂等）。漏了的症状是交换在发起方 401。
 
-一盒里带四个基础服务：`files`（文件管理）· `ingest`（信息获取）· `llm-gateway`（大模型网关）· `git`（Git 服务），
-外加一个**平台基础服务应用** `observability`（日志与监控）。你的 App 要用前四个的数据，就在 manifest 里声明
+一盒里带三个基础服务：`files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务），
+外加一个**平台基础服务应用** `observability`（日志与监控）。你的 App 要用前三个的数据，就在 manifest 里声明
 `exchangeTargets` 走令牌交换；日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
 **默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
 
@@ -456,5 +456,6 @@ $S dc down -v       # ★ 连命名卷一起删：pg/minio/apps/caddy 的数据�
 - `bootstrap:prod` 与部署控制器**启动即拒**并打印原因；完整的 `db:seed`（十几个 App 的种子链）也必失败，
   一盒只能用 `db:seed:onebox`。
 - 它是 dev 联调套件：mock OAuth 常开、服务账号密钥是已知明文。**不要用于生产，也不要暴露到公网。**
-- 不装 ffmpeg：`PREVIEW_MEDIA_CONVERTER_URL` 必须留空，视频海报/网格缩略图退化成图标，
-  图片/PDF/文本预览不受影响。
+- 不装 ffmpeg：`PREVIEW_MEDIA_CONVERTER_URL` 必须留空，视频海报/网格缩略图退化成图标。
+- 文件管理界面**不渲染预览**（镜像构建时关掉了前端的格式渲染器），打开任何文件都是下载卡；
+  服务端的预览描述符 API 不变，你的 App 自带 `@xgent/file-preview` 时照常渲染。
