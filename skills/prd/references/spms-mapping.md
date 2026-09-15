@@ -38,18 +38,23 @@
 
 ⚠️ **`shipped`(已上线)就是需求侧的终点** —— 需求**没有**「已上线」之后的第二个人工终态(与 Issue 的不对称是平台刻意的),把需求转到它**本身就是那次需求级验收**,而且会通知需求作者。`submitted`(已提交) / `testable`(可测试) 是「交付中」段,跨期需求的首期完工应停在这里。Agent 写不到两个终态(`shipped` / `rejected` → `FINAL_STATE_FORBIDDEN`),所以**防误记只能靠把终验期写进需求正文**,让点按钮的人先看见。
 
-## 3. MCP 写面缺口(必须人工在 Web 补)
+## 3. MCP 写面
 
-`requirement_create` / `requirement_update` 的 inputSchema 只有:
-`projectId` · `title` · `type` · `category` · `priority` · `status` · `description` · `acceptanceCriteria`(update 用 `key` 寻址)。
+`requirement_create` / `requirement_update` 的 inputSchema:
+`projectId` · `title` · `type` · `category` · `priority` · `importance` · `status` · `description` · `acceptanceCriteria` · `ownerId` · `dueDate`(update 用 `key` 寻址)。
 
-**写不到的字段**——交付时单列一张「待人工补」清单:
+**这三个曾经写不到、现在可以写**——不要再把它们列进「待人工补」:
+
+| 字段 | 写法 | 备注 |
+| --- | --- | --- |
+| `importance` 重要度 | `critical\|high\|medium\|low\|none` | 与 `priority`(紧急度)**正交**,两个都该给 |
+| `ownerId` 负责人 | `project_get` 成员名册的 `memberId`;`null` 清除 | 只收本租户未撤销成员,否则 `VALIDATION_FAILED`。与「执行人」(由关联 Issue 派生)不是一回事 |
+| `dueDate` 截止日期 | ISO 8601(如 `2026-07-15`);`null` 或空串清除 | 格式不对是 `VALIDATION_FAILED`。需求池按日期范围筛选用 |
+
+**仍然写不到的字段**——交付时单列一张「待人工补」清单:
 
 | 字段 | UI 位置 | 备注 |
 | --- | --- | --- |
-| `importance` 重要度 | 需求抽屉 | 表里有列、Web 能写,MCP 没开 |
-| `ownerId` 负责人 | 需求抽屉 | 与「执行人」(由关联 Issue 派生)不是一回事 |
-| `dueDate` 截止日期 | 需求抽屉 | 需求池按日期范围筛选用 |
 | `releaseId` 版本 | 需求抽屉 | 单值字段,应与项目的 release 一致否则 UI 出告警;**跨期需求挂「终验期」那一版**——挂首期会让版本报表提前把整条需求算成已交付 |
 | 附件 | 需求抽屉 | MCP 只能读(`attachment_read`),不能传 |
 | 排期/点数 | Sprint 规划页 | 属规划期(`sprint_plan_items`),**不在 PRD 阶段做** |

@@ -76,7 +76,7 @@
 
 ### FR-<N> <标题（动宾短语，一眼看出用户能做什么）>
 
-- **优先级**：`urgent|high|medium|low|none`（紧急度）　**重要度**：`critical|high|medium|low|none`（需人工在 Web 补）
+- **优先级**：`urgent|high|medium|low|none`（紧急度）　**重要度**：`critical|high|medium|low|none`（与紧急度正交，两个都给）
 - **承接**：原始诉求 R<#> · 目标 G<#> · 场景 S<#…>
 - **分期**：<P#｜跨期写「P1 / P2，**终验期 P2**」>（§7 定稿后回填，与 §7.2 逐字一致）
 - **背景**：<为什么需要这条，一两句>
@@ -206,9 +206,11 @@
 - **已写入**：FR-37 / FR-38 / NFR-9（均 `status=draft`）；TC-51 / TC-52 / TC-53；项目「基本信息」<列出本次经 `project_update` 回写的段>
 - **跨期终验声明已写入**：FR-38（`description` 终验块 + `acceptanceCriteria` 逐行 `[P#]` 前缀）<无跨期需求则写「本期无跨期需求」>
 - **待人工补**（MCP 无写面）：
-  - 各需求的 重要度(importance) / 负责人(owner) / 截止日期(dueDate) / 版本(release)；
+  - 各需求的 版本(release)；
   - **跨期需求的版本挂终验期那一版**：FR-38 → <终验期对应的版本名>；
   - 评审通过后由人把 `draft → reviewing → approved`。
+
+> 重要度(importance) / 负责人(ownerId) / 截止日期(dueDate) **MCP 可写**，建单时就一并给，不进这张清单。
 
 > 若 §5.2 仍有阻塞问题,本节改写「未写入 SPMS」与阻塞原因,不得出现虚构 key。
 ```
