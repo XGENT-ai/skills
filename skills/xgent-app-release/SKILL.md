@@ -70,7 +70,9 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 
 
 > **路径约定**：本 skill **不要求你有门户仓**，也不会让你去打开门户仓里的文件——需要的
-> 一切都在这里的 `references/` 与 `scripts/`。
+> 一切都在这里的 `references/` 与 `scripts/`，路径以本 `SKILL.md` 所在目录为基准。
+> 命令在 App repo 根目录执行；先按实际加载位置设置 `SKILL_DIR="<本 SKILL.md 所在目录>"`，不假定安装目录名。
+> `dist`、`.npmrc` 和 manifest 路径仍相对于 App repo。
 >
 > ⚠️ 唯一容易误读的是 `/apps/<key>/`：它是**线上 URL 路径**（你的产物在生产被挂载到的
 > 子路径，也就是 vite 的 `base`），**不是**任何仓库里的目录。看到它不要去找、不要去建。
@@ -128,10 +130,10 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
 不必装云厂商 CLI、不必持任何长期凭据 —— 用已有的**发布令牌**向门户换一枚 ≤12 h 的**只读**令牌：
 
 ```bash
-eval "$(node scripts/npm-token.mjs)"     # 导出 XGENT_NPM_AUTH_TOKEN / XGENT_NPM_REGISTRY
+eval "$(node "$SKILL_DIR/scripts/npm-token.mjs")"     # 导出 XGENT_NPM_AUTH_TOKEN / XGENT_NPM_REGISTRY
 npm install                               # .npmrc 里用 ${XGENT_NPM_AUTH_TOKEN} 引它
-node scripts/npm-token.mjs --npmrc >> .npmrc   # 或者直接生成三行（别提交这份 .npmrc）
-node scripts/npm-token.mjs --check        # 只体检：能不能换到、还剩多久，不打印令牌
+node "$SKILL_DIR/scripts/npm-token.mjs" --npmrc >> .npmrc   # 或者直接生成三行（别提交这份 .npmrc）
+node "$SKILL_DIR/scripts/npm-token.mjs" --check        # 只体检：能不能换到、还剩多久，不打印令牌
 ```
 
 `.npmrc` 里这样引（**变量为空 = 空令牌 = 401**，所以 CI 里务必先 `eval` 再 `npm ci`）：
@@ -159,10 +161,14 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
 2. **构建，`base` 必须是 `/apps/<key>/`。** 产物在生产被挂到那个子路径下，
    `base` 少了 → 资源请求打到站点根 → 页面 200 但白屏。这是本流程翻车率第一名。
    → 验收：`grep -o 'src="[^"]*"' dist/index.html`，路径都以 `/apps/<key>/` 开头。
-3. **预检。** `node <skill>/scripts/preflight.mjs --dist dist --version $VER --manifest deploy/portal/app.manifest.json`
+3. **预检。** `node "$SKILL_DIR/scripts/preflight.mjs" --dist dist --version $VER --manifest deploy/portal/app.manifest.json`
    → 验收：脚本零 ✗ 退出。它把「构建看着成功、线上却坏」的几种成因一次性挡下（base 前缀、
    根 `index.html`、包大小、dev 地址残留、版本号形状、令牌有效性，以及 manifest 的文案字段形状
    —— 见上面「文案字段」，那一类**发布成功、审批通过、线上显示 `[object Object]`**）。
+   **本次含外部后端镜像时，还必须检查待发布镜像的 `/health`**：按 `portal-external-app` skill 的
+   `references/health-contract.md` 运行其 `scripts/verify-health.ts`，非零退出不得发布。
+   平铺与 Envelope 都支持：非 2xx 不通过；2xx 顶层有 `ok` 时必须 `ok === true && data.db === true`；
+   没有顶层 `ok` 时按 2xx 判健康。检查脚本与平台同源，不另加包装或字段命名限制。
 4. **发布。**
    ```bash
    npx @xgent/release-cli publish --version $VER --dist dist/ \

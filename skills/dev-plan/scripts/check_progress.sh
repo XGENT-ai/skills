@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 用法: check_progress.sh <计划.md> [仓库根,默认 .]
 # 检查计划顶部「实施进度」的内部一致性 —— 实施期每回写一次跑一次,写计划时也跑一次(应报 0/N)。
-# 它查得出「回写了但对不上」(n/N 与里程碑数不符、最近完成与完成记录不符、证据或基线留空、
-# 模板占位残留);查不出「压根没回写」—— 那个看末尾的陈旧提示,以及最终由人判断。
+# 只检查摘要、状态、ID 与引用文件存在性,不读取独立记录正文,也不证明验收已通过。
+# 兼容旧版内联证据表并提示迁移;「压根没回写」仍需结合陈旧提示与实际工作判断。
 set -euo pipefail
 plan="${1:?用法: check_progress.sh <计划.md> [仓库根]}"; root="${2:-.}"
 [ -f "$plan" ] || { echo "ERROR: 计划文件不存在: $plan" >&2; exit 1; }
@@ -11,6 +11,18 @@ errs=0; warns=0
 err()  { echo "ERROR: $*"; errs=$((errs + 1)); }
 warn() { echo "WARN:  $*"; warns=$((warns + 1)); }
 trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+plain() { trim "$(printf '%s' "$1" | tr -d '*`')"; }
+field() { trim "$(grep -m1 "^- $1[：:]" <<<"$snap" | sed "s/^- $1[：:]//" || true)"; }
+required() {
+  local value
+  value="$(plain "$2")"
+  case "$value" in ""|—|-|待补|TBD|N/A) err "$1 为空或待补" ;; esac
+  # 摘要可合法提到 <select> 等标签;只对基线检查被反引号包裹的占位。
+  if [[ "$1" = *代码基线 ]] && [[ "$value" =~ \<[^\<\>]+\> ]]; then
+    err "$1 残留模板占位"
+  fi
+  return 0
+}
 
 # 取出一节:从标题行的下一行起,到下一个同级或更高级标题为止。
 section() {
@@ -24,7 +36,8 @@ section() {
   ' "$2"
 }
 # 表中以 M<数字> 开头的行(「评审整改」这类非里程碑行不计入)
-mrows() { grep -E '^\|[[:space:]]*\**M[0-9]+' <<<"$1" || true; }
+mrows() { grep -E '^\|[[:space:]]*\**M[0-9]+\**[[:space:]]*\|' <<<"$1" || true; }
+ids() { mrows "$1" | cut -d '|' -f2 | tr -d '*`[:space:]' | sed 's/M/\nM/g' | sed '/^$/d'; }
 
 prog="$(section '^#+[ \t].*实施进度' "$plan")"
 snap="$(section '^#+[ \t].*恢复快照' "$plan")"
@@ -38,7 +51,7 @@ mile="$(section '^#+[ \t].*里程碑' "$plan")"
 
 # ① 快照七个字段齐全
 for f in 最近更新 当前进度 当前状态 最近完成 下一步 当前阻塞 代码基线; do
-  grep -q "$f" <<<"$snap" || err "恢复快照缺字段:$f"
+  required "恢复快照:$f" "$(field "$f")"
 done
 
 # ② 快照里的模板占位没填(骨架的 <...> 应当被真实内容替换)。
@@ -47,10 +60,63 @@ while IFS= read -r l; do
   [ -n "$l" ] && err "恢复快照残留模板占位:$(trim "$l")"
 done < <(sed 's/`[^`]*`//g' <<<"$snap" | grep -E '<[^<>]+>' || true)
 
-# ③ n/N 与两张表对齐
+# ③ 识别新摘要索引与旧内联证据表,核对 ID 和记录字段。
 mcount="$(mrows "$mile" | grep -c . || true)"
 rcount="$(mrows "$recs" | grep -c . || true)"
-cur="$(grep -m1 '当前进度' <<<"$snap" || true)"
+legacy=0
+if grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*状态[[:space:]]*\|' <<<"$recs"; then :
+elif grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*完成时间[[:space:]]*\|' <<<"$recs"; then
+  legacy=1
+  warn "旧版内联证据表:本次续做时将详情迁入独立记录,计划保留状态、摘要与链接"
+else
+  err "完成记录表头不受支持,请使用 Milestone / 状态 / 更新时间 / 简要记录 / 实现与验收记录"
+fi
+mids="$(ids "$mile")"
+for id in $(printf '%s\n' "$mids" | sort | uniq -d); do err "里程碑表 ID 重复:$id"; done
+seen=""; completed=0; latest_completed=""
+plan_dir="$(cd "$(dirname "$plan")" && pwd)"
+link_re='^\[[^]]+\]\(([^)]+)\)$'
+while IFS= read -r row; do
+  [ -n "$row" ] || continue
+  IFS='|' read -r _ c_m c_2 c_3 c_4 c_5 _rest <<<"$row"
+  m="$(plain "$c_m")"
+  grep -qxF "$m" <<<"$mids" || err "完成记录出现未知里程碑:$m"
+  if grep -qxF "$m" <<<"$seen"; then err "完成记录里程碑重复:$m"; fi
+  seen="${seen}"$'\n'"$m"
+  if [ "$legacy" -eq 1 ]; then
+    state="已完成"
+    required "$m 完成时间" "$c_2"
+    required "$m 完成摘要" "$c_3"
+    required "$m 验证证据" "$c_4"
+    required "$m 代码基线" "$c_5"
+  else
+    state="$(plain "$c_2")"
+    case "$state" in 进行中|阻塞|已完成) ;; *) err "$m 状态无效:$state" ;; esac
+    required "$m 更新时间" "$c_3"
+    required "$m 简要记录" "$c_4"
+    link="$(trim "$c_5")"
+    if [[ "$link" =~ $link_re ]]; then
+      target="${BASH_REMATCH[1]}"
+      target="${target#<}"; target="${target%>}"; target="${target%%#*}"
+      case "$target" in
+        ""|/*|*://*) err "$m 记录须为相对计划文件的本地链接:$target" ;;
+        *) [ -f "$plan_dir/$target" ] || err "$m 记录文件不存在:$target"
+           [ ! "$plan_dir/$target" -ef "$plan" ] || err "$m 记录必须独立于计划文件" ;;
+      esac
+    else
+      err "$m 缺少实现与验收记录的 Markdown 链接"
+    fi
+  fi
+  if [ "$state" = "已完成" ]; then
+    completed=$((completed + 1)); latest_completed="$m"
+  fi
+done < <(mrows "$recs")
+if [ "$rcount" -gt 0 ] && grep -qE '尚未(完成|开始)任何里程碑' <<<"$recs"; then
+  err "完成记录已有实施事实,却仍保留初始占位行"
+fi
+
+# ④ n/N 只统计已完成状态,进行中/阻塞不计入。
+cur="$(field 当前进度)"
 done_n=""; total_n=""
 if [[ "$cur" =~ ([0-9]+)[[:space:]]*/[[:space:]]*([0-9]+) ]]; then
   done_n="${BASH_REMATCH[1]}"; total_n="${BASH_REMATCH[2]}"
@@ -61,30 +127,18 @@ if [ -n "$total_n" ]; then
   [ "$mcount" -gt 0 ] || err "里程碑表里没有 M<数字> 行,无法核对 N"
   [ "$mcount" -eq 0 ] || [ "$total_n" -eq "$mcount" ] \
     || err "「当前进度」的 N=$total_n,里程碑表却有 $mcount 行 —— 计划改过里程碑但没同步快照"
-  [ "$done_n" -eq "$rcount" ] \
-    || err "「当前进度」说完成 $done_n 个,完成记录却有 $rcount 行里程碑 —— 少记或多记了一行"
+  [ "$done_n" -eq "$completed" ] \
+    || err "「当前进度」说完成 $done_n 个,完成记录实际完成 $completed 个(共 $rcount 行)"
 fi
 
-# ④ 最近完成 与 完成记录 对齐
-lastdone="$(trim "$(grep -m1 '最近完成' <<<"$snap" | sed 's/.*最近完成[：:]//')")"
-if [ "${done_n:-0}" = "0" ]; then
-  case "$lastdone" in 无|—|-|"") ;; *) warn "0 个里程碑完成,但「最近完成」写着:$lastdone" ;; esac
+# ⑤ 最近完成取记录中最后一条已完成行,允许 M3 先于 M2 完成。
+lastdone="$(plain "$(field 最近完成)")"
+if [ "$completed" -eq 0 ]; then
+  [ "$lastdone" = "无" ] || err "0 个里程碑完成,但「最近完成」写着:$lastdone"
 else
-  grep -q '尚未完成任何里程碑' <<<"$recs" \
-    && err "已完成 $done_n 个里程碑,完成记录却还留着「尚未完成任何里程碑」占位行"
-  case "$lastdone" in 无|—|-|"") err "已完成 $done_n 个里程碑,「最近完成」却写「$lastdone」" ;; esac
+  latest_re="^${latest_completed}([^0-9]|$)"
+  [[ "$lastdone" =~ $latest_re ]] || err "最近完成应为 $latest_completed,实际为:$lastdone"
 fi
-
-# ⑤ 每行完成记录都要有可复核的证据与基线
-while IFS= read -r row; do
-  [ -n "$row" ] || continue
-  IFS='|' read -r _ c_m c_t c_s c_v c_b _rest <<<"$row"
-  m="$(trim "${c_m:-}")"
-  for pair in "完成时间:${c_t:-}" "完成摘要:${c_s:-}" "验证证据:${c_v:-}" "代码基线:${c_b:-}"; do
-    name="${pair%%:*}"; val="$(trim "${pair#*:}")"
-    case "$val" in ""|—|-|待补|TBD|N/A) err "完成记录 $m 的「$name」是空的($val) —— 未通过退出条件就不该记完成" ;; esac
-  done
-done < <(mrows "$recs")
 
 # ⑥ 陈旧提示:代码改了、计划没动
 if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
@@ -100,5 +154,5 @@ if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/nu
 fi
 
 echo "---"
-echo "进度:${done_n:-?}/${total_n:-?} · 里程碑表 $mcount 行 · 完成记录 $rcount 行 · ERROR $errs · WARN $warns"
+echo "进度:${done_n:-?}/${total_n:-?} · 里程碑表 $mcount 行 · 记录 $rcount 行(已完成 $completed) · ERROR $errs · WARN $warns"
 [ "$errs" -eq 0 ] || exit 1

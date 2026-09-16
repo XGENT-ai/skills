@@ -57,7 +57,7 @@
 ## 7. 运维命令
 - DB 迁移：**镜像内的迁移 argv**（填进 `deployDescriptor.migrateArgs`）+ 幂等/建议锁/退出码保证；
 - 每租户 bootstrap：需要则给出精确 SQL/命令（tenants.id 必须 = 门户租户 UUID），不需要则明说；
-- 判活/就绪：GET /health 与 /healthz 的返回形状与 200/503 语义；
+- 判活/就绪：匿名 GET /health，平铺 JSON 或 Envelope 均可；给出正常与故障响应，并按 health-contract.md 的平台判据说明结果（信封需要 ok:true + data.db:true，非信封依赖故障用 503）；另有 /healthz 时说明它只检查存活；
 - 镜像交付方式（docker save + sha256 / 私有 registry）与架构（amd64+arm64）。
 
 ## 6b. 你用了平台的哪些公共能力（逐项声明「用」还是「自建」）
@@ -77,6 +77,7 @@
 
 ## 8. 自测（无 UI 时的 curl 验收）
 （缺/错 token → 401/403；正确 aud+scope → 200 信封。）
+（/health 单独验收：附 scripts/verify-health.ts 对待发布镜像直连及 /svc/<key>/health 的 ready 结果；新增/修改时在隔离环境验证依赖故障的 not-ready，恢复后再验 ready。不得只贴 HTTP 200。）
 
 ## 9. 信任边界（如有）
 （自有认证面清单：API-Key/节点 Token/admin 会话/gRPC 端口——哪些绝不从 /svc 暴露；
@@ -91,4 +92,5 @@ MCP/stdio 之类免鉴权面的使用限制；破玻璃通道的启用条件。�
 - §6b 是否有「自建」项而没有理由 —— 自己存文件 / 自己发通知 / 自己记审计是最常见的三处；
 - §7b 若有配额诉求：模型是否二选一说清、role key 是否已在 manifest 的 `seatRoles` 里声明、`seats.read` 是否走了 `privilegedServiceScopes` 申请（写进 `serviceScopes` 是打回信号）、gauge 指标是否已在 manifest `usageMetrics` 里声明、`available=null` 是否按放行处理；
 - §7 两问是否有显式答案：迁移 argv（**必须在镜像里**，不接受「脚本在我们 repo」）、每租户 bootstrap（目前门户无钩子，要显式定方案）；
+- §7/§8 的健康接口是否符合 [health-contract.md](health-contract.md) 的平台判据，并有检查结果；平铺与 Envelope 均可，禁止把合法 ok:true + data.db:true 误判为错误包装；
 - §9 自有认证面是否与 `/svc` 隔离。

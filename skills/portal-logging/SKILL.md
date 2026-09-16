@@ -14,7 +14,7 @@ description: '把一个 App 的日志/遥测接进门户的「日志与监控」
 
 两种身份不能互换，这是整条链路最常见的困惑来源：**采集器只能写、不能查；人只能查、不能写**。拿服务密钥去查会得到 401，那不是配置错。
 
-> **路径约定**：本 skill 里的 `apps/…` `deploy/…` `docs/…` 都在**门户仓**。在你自己的 App repo 里它们不存在——它们标注的是「门户侧的事实在哪」，不是让你去打开的文件。你需要的一切在本 skill 的 `references/`（自包含）。
+> **路径约定**：本 skill 里的 `apps/…` `deploy/…` `docs/…` 都在**门户仓**。在你自己的 App repo 里它们不存在——它们标注的是「门户侧的事实在哪」，不是让你去打开的文件。你需要的一切在本 skill 的 `references/` 与 `scripts/`（自包含，路径相对于本 `SKILL.md` 所在目录）。运行脚本前，在 App repo 根目录按实际加载位置设置 `SKILL_DIR="<本 SKILL.md 所在目录>"`。
 
 ## 按任务读
 
@@ -22,7 +22,7 @@ description: '把一个 App 的日志/遥测接进门户的「日志与监控」
 | --- | --- |
 | 配采集器（容器 stdout / 文件 tail / 应用内直打），含多行合并与级别判定 | [references/collectors.md](references/collectors.md) |
 | 端点、凭据、请求/响应形状、查询 API、错误码矩阵、计量 | [references/contract.md](references/contract.md) |
-| 只想先打通一条，验证链路是活的 | `scripts/smoke-ingest.sh`（改环境变量直接跑） |
+| 只想先打通一条，验证链路是活的 | `"$SKILL_DIR/scripts/smoke-ingest.sh"`（改环境变量直接跑） |
 
 ## 0. 先判断：你要接的真的是「日志」吗
 

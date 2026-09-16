@@ -4,7 +4,7 @@
 
 ## 1. 形态与分界
 
-外部镜像 App = 服务端在自己的 repo（任意语言/栈）、独立 Docker 镜像交付。与门户内建 App 的**运行时契约完全一致**（四道闸、统一 :8080、`/svc/<key>` 路由、健康信封），差异只在注册与部署：
+外部镜像 App = 服务端在自己的 repo（任意语言/栈）、独立 Docker 镜像交付。鉴权、统一 :8080 与 `/svc/<key>` 路由遵循门户契约；**`/health` 支持平铺 JSON 与 Envelope，使用平台同一判据**。注册与部署方式如下：
 
 | | 内建 App | 外部镜像 App |
 | --- | --- | --- |
@@ -106,12 +106,13 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 
 ## 4. 健康检查
 
-- `GET /health`（就绪）：`{"service":"<listingKey>","db":"ok","redis":"ok"|"disabled","time":<unix>}` —— `"db"` 是字符串 `"ok"` **不是** `true`；200=就绪、503=依赖挂。平台/devkit healthcheck 按此判活。
-- 可另设 `GET /healthz`（存活，`{"status":"ok"}`）。
+- **实现、出仓或发布镜像前必读 [health-contract.md](health-contract.md)**：有完整正确实现、错误示例与可执行验收命令。
+- `GET /health`（匿名就绪接口）支持平铺 `{"service":"my-app","db":"ok","redis":"disabled"}` 与信封 `{"ok":true,"data":{"db":true}}`。HTTP 非 2xx 不通过；2xx 顶层含 `ok` 时必须 `ok === true && data.db === true`；否则按 HTTP 状态判健康，不校验平铺字段。必要依赖故障建议返回 503，尤其平铺响应不能仅把 db 改为 `"down"` 仍返回 200。
+- 可另设 `GET /healthz`（存活，`{"status":"ok"}`），不能用它代替就绪检查。发布前用 skill 的同源脚本验证；Envelope 的 `data.db` 必须是布尔 true，不能混用平铺示例的字符串。
 
 ## 5. 响应信封与审计
 
-- 业务响应统一 `{ ok, data | error }`，业务失败 HTTP 仍 200；4xx/5xx 只留传输/认证/路由层（401 缺/坏令牌、403 scope/权限、429 限流）。
+- **业务接口**响应统一 `{ ok, data | error }`，业务失败 HTTP 仍 200；4xx/5xx 只留传输/认证/路由层（401 缺/坏令牌、403 scope/权限、429 限流）。**`/health` 的形状与故障状态按 §4 实现；允许信封，也允许保留平铺响应，不应被中间件意外改成 `data.db:"ok"`。**
 - 审计：不自建审计页，关键操作用当次用户 TDT `POST {API_BASE_URL}/api/v1/audit`（需声明 `audit.write` scope），best-effort。
 
 ## 6. 自有认证面与 Portal 认证面的划界

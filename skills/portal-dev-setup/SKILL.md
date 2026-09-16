@@ -11,6 +11,13 @@ iframe 托管、跨应用令牌交换。
 
 需要的一切都在这里的 `scripts/` 与 `references/`，加上一件事：**门户镜像**。
 
+以下命令在你的 App repo 根目录执行。先按实际加载位置设置 `SKILL_DIR`，表示本 `SKILL.md` 所在目录；`scripts/`、`references/` 和 `puller.env.example` 都相对于它，不假定安装目录名：
+
+```bash
+SKILL_DIR="<本 SKILL.md 所在目录>"
+S="$SKILL_DIR/scripts/onebox.sh"
+```
+
 > **路径约定（先读这条，能省一次白找）**：本 skill 里出现的 `apps/…` `packages/…` `docs/…`
 > `deploy/…` 这类路径**都在门户仓**。在 App 自己的 repo 里它们**不存在** —— 它们标注的是
 > 「门户侧的实现在哪」或某段内容的出处，**不是让你去打开的文件**。找不到不是配置错误：
@@ -41,7 +48,7 @@ iframe 托管、跨应用令牌交换。
 这时**不要去猜仓库地址、也不要从别处翻凭证**，让用户去找他们自己的开发团队要。
 
 ```bash
-cp .claude/skills/portal-dev-setup/puller.env.example ./.xgent-registry.env
+cp "$SKILL_DIR/puller.env.example" ./.xgent-registry.env
 chmod 600 ./.xgent-registry.env
 # REGISTRY=<仓库域名>     不带 https://、不带端口、无尾斜杠
 # PULLER_AUTH=<base64>    base64 的「用户名:口令」：printf '%s' '<用户名>:<口令>' | base64
@@ -65,7 +72,8 @@ chmod 600 ./.xgent-registry.env
 拿你已有的**发布令牌**向门户换一枚 ≤12 h 的只读令牌就行（门户持云凭据）：
 
 ```bash
-eval "$(node .claude/skills/xgent-app-release/scripts/npm-token.mjs)"
+RELEASE_SKILL_DIR="<xgent-app-release 的 SKILL.md 所在目录>"
+eval "$(node "$RELEASE_SKILL_DIR/scripts/npm-token.mjs")"
 npm install
 ```
 
@@ -75,7 +83,7 @@ npm install
 ## 1. 首次用：一条命令铺好
 
 ```bash
-.claude/skills/portal-dev-setup/scripts/onebox.sh init --key <你的listingKey>
+"$SKILL_DIR/scripts/onebox.sh" init --key <你的listingKey>
 ```
 
 不给 `--image` 就取 `<REGISTRY>/<ONEBOX_PROJECT>/one-box:latest`（反代同仓同 tag）——**开新项目不用先去问 tag**。
@@ -112,9 +120,9 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 - **生产镜像是 amd64，开发机多半是 arm64。** devkit 跟随本机架构、不会替你转译；amd64 镜像在 arm64 机上
   起不来（`exec format error`）。在 `compose.env` 末尾加一行 **`APP_PLATFORM=linux/amd64`**（Apple Silicon 走
   Rosetta，慢但能跑）。留空 = 跟随本机，行为不变。
-  > 这个钩子随一盒镜像走。老镜像的 `app-dev.yml` 里没有它（`$S env` 看不到 `APP_PLATFORM` 就是），
+  > 这个钩子随一盒镜像走。老镜像的 `app-dev.yml` 里没有它（`"$S" env` 看不到 `APP_PLATFORM` 就是），
   > 那就自己叠一层：`portal-onebox/app-platform.yml` 里写 `services: {app-backend: {platform: linux/amd64}}`，
-  > 再 `$S dc -f portal-onebox/app-platform.yml up -d app-backend`。
+  > 再 `"$S" dc -f portal-onebox/app-platform.yml up -d app-backend`。
 
 之后一切都走同一个脚本，它会按生效的 env 拼好那串 `--env-file` / 四层 `-f` / 一组 `--profile`：
 
@@ -133,8 +141,8 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 ## 2. 起栈：顺序本身是契约
 
 ```bash
-S=.claude/skills/portal-dev-setup/scripts/onebox.sh
-$S up          # ← 就这一条。按顺序铺完，跑完自动体检
+S="$SKILL_DIR/scripts/onebox.sh"
+"$S" up          # ← 就这一条。按顺序铺完，跑完自动体检
 ```
 
 顺序是契约（种子会 truncate、反代启动时才读 /svc map），`up` 存在的意义就是**不让人自己记它**。
@@ -142,28 +150,28 @@ $S up          # ← 就这一条。按顺序铺完，跑完自动体检
 
 ```bash
 # 1) 基础设施
-$S dc up -d postgres redis minio
+"$S" dc up -d postgres redis minio
 
 # 2) 门户库迁移 + 一盒种子   ★ 破坏性：truncate cascade，清掉租户/用户/清单/安装
-$S dc run --rm portal-api bun run db:migrate
-$S dc run --rm portal-api bun run db:seed:onebox
+"$S" dc run --rm portal-api bun run db:migrate
+"$S" dc run --rm portal-api bun run db:seed:onebox
 
 # 3) 三个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
-for k in files llm-gateway git; do $S dc run --rm portal-api bun run db:$k:migrate; done
+for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:migrate; done
 
 # 3b) 你自己的库：新镜像在 postgres【首次初始化】时按 APP_KEY 建好 `xgent-<key>`；
 #     老镜像不建，换过 APP_KEY 的也不会补建（初始化脚本只在数据卷为空时跑一次）。
 #     连不上库的症状是你的容器起不来，而不是一条像样的报错 —— 先确认它在：
-$S dc exec postgres psql -U postgres -lqt | grep -q 'xgent-<你的key>' \
-  || $S dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<你的key>"'
+"$S" dc exec postgres psql -U postgres -lqt | grep -q 'xgent-<你的key>' \
+  || "$S" dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<你的key>"'
 #     迁移怎么跑以你的镜像为准（多数是启动自迁，或一条 --role migrate 之类的 argv）。
 
 # 4) 注册你的 App：读 manifest → 建 listing + 服务账号 + 写 /svc 放行 map
-$S dc run --rm -v "$PWD/<放 manifest 的目录>:/devkit:ro" \
+"$S" dc run --rm -v "$PWD/<放 manifest 的目录>:/devkit:ro" \
    portal-api bun run register-app /devkit/app.manifest.json
 
 # 5) 起门户三件套 + 基础服务 + 你的 app-backend
-$S dc up -d
+"$S" dc up -d
 ```
 
 三条顺序约束，颠倒了症状都很难反查：
@@ -171,10 +179,10 @@ $S dc up -d
 - **`db:seed:onebox` 必须在 `register-app` 之前。** 种子第一步是 `truncate … marketplace_listings … cascade`——
   先注册后种子 = 你的 App 注册被静默清掉，市场里找不到它。
 - **`register-app` 最好在 `reverse-proxy` 之前。** 它落的是一个 `/svc` 放行 map 文件，而反代**启动时**才读那个目录。
-  反代已经在跑就补一句 `$S dc exec reverse-proxy caddy reload`，否则 `/svc/<key>` 一直 404。
+  反代已经在跑就补一句 `"$S" dc exec reverse-proxy caddy reload`，否则 `/svc/<key>` 一直 404。
 - **`register-app` 跑完先去市场里确认卡片在。** dev 模式下它会顺手把这条 listing 授予现有租户（生产是平台管理员显式勾选），
   但**旧一点的一盒镜像里没有这段代码**——症状是控制台显示已上架、租户市场里连卡片都不出现，且**没有任何报错**。
-  看不到就先 `$S pull` 换新镜像重来，或按 troubleshooting §6 手工授予，别接着往下排查前端。
+  看不到就先 `"$S" pull` 换新镜像重来，或按 troubleshooting §6 手工授予，别接着往下排查前端。
 - **要做跨应用交换的，`register-app` 得跑两次。** 发起方 App Secret 绑在**已安装实例**上，所以是
   `register-app` → 在应用市场里装上你的 App → **再跑一次 `register-app`**（幂等）。漏了的症状是交换在发起方 401。
 
@@ -199,7 +207,7 @@ $S dc up -d
 - 不想要：把 `XGENT_APP_CATALOG` 里的 `observability` 去掉再 `up`（种子会重跑，破坏性）。
 - 它的界面（`/apps/observability/`）**不在一盒镜像里**——那是 App 团队经发布提案上传的产物；一盒里只有服务面。
   看落了什么用它的查询面：`POST /svc/observability/api/t<租户UUID去横线>/_search?type=logs`，**只认用户票**（`xsak_` 会 401），
-  票从 `/auth/dev/start` 登进去后在浏览器里拿，或 `$S dc run --rm portal-api bun -e '…mintForApp…'`。
+  票从 `/auth/dev/start` 登进去后在浏览器里拿，或 `"$S" dc run --rm portal-api bun -e '…mintForApp…'`。
 
 ### 2.0 `register-app` 还是 `xgent-app-release`？
 
@@ -238,7 +246,7 @@ release-cli 在一盒里是**通的**（`/api/market/release/*` 就在 portal-ap
 一条命令：
 
 ```bash
-$S add omni-parser        # 或 knowledge / task-gateway / …
+"$S" add omni-parser        # 或 knowledge / task-gateway / …
 ```
 
 它按 manifest 把这个 App 装起来：拉镜像 → 注册清单+服务账号（**非破坏性、幂等**，不是那个会
@@ -273,9 +281,9 @@ App 都要改一次 skill，等于把问题换了个地方。manifest 里已经�
 **清单从哪来**（优先级从高到低）：
 
 ```bash
-$S add <key> --manifest <文件>       # ① 你手上有一份，最高优先
-$S add <key> --from <目录门户地址>    # ② 从 App 清单目录拉
-$S add <key>                        # ③ 配了 MANIFEST_STORE 走②，否则用一盒镜像自带的样例清单
+"$S" add <key> --manifest <文件>       # ① 你手上有一份，最高优先
+"$S" add <key> --from <目录门户地址>    # ② 从 App 清单目录拉
+"$S" add <key>                        # ③ 配了 MANIFEST_STORE 走②，否则用一盒镜像自带的样例清单
 ```
 
 **推荐把目录地址配进 `.xgent-registry.env`**，之后 `add` 任意 App 都不用带 `--from`：
@@ -297,7 +305,7 @@ MANIFEST_STORE_READ_TOKEN=xcat_…      # 只读令牌：只能读公开清单�
 **镜像不用你操心**：配合调试用的平台侧 App 一律以**稳定版**发到与一盒**同一个项目**下，同一把
 puller key 就能拉。要换版才加 `--image <ref>`。
 
-> **你要花时间排查的只有你自己那个 App。** 别人的 App 在这里是稳定件——起不来先 `$S doctor`，
+> **你要花时间排查的只有你自己那个 App。** 别人的 App 在这里是稳定件——起不来先 `"$S" doctor`，
 > 还不行报给门户团队，别自己去调它。
 
 生成的片段落在 `portal-onebox/generated/<key>.yml`，**别手改**（重跑 `add` 会覆盖）；要加东西就
@@ -308,7 +316,7 @@ puller key 就能拉。要换版才加 `--image <ref>`。
 
 1. 浏览器里勾一下：`rockie@xgent.ai` 登控制台 → 租户 → 可用应用 → 勾上它保存。
    （service 型 App 的勾选**就是**安装；不装的话跨应用交换拿不到它的 scope。）
-2. 在**你自己**的 manifest 里两处一起加，再 `$S up`：
+2. 在**你自己**的 manifest 里两处一起加，再 `"$S" up`：
 
 ```jsonc
 "scopes":          ["…", "omni_parser.read", "omni_parser.parse"],
@@ -326,16 +334,16 @@ puller key 就能拉。要换版才加 `--image <ref>`。
 
 ### 2.2 改 compose 的规矩（叠一层，别动 init 铺出来的）
 
-`$S dc` 已经替你拼好了：`--env-file compose.env` + `-f docker-compose.yml` +
+`"$S" dc` 已经替你拼好了：`--env-file compose.env` + `-f docker-compose.yml` +
 `-f onebox/docker-compose.onebox.yml`（填了 App 那两行再加 app-dev / app-frontend）+ 一串
-`--profile`。`$S chain` 把这串打出来，想自己敲 compose 时抄它。
+`--profile`。`"$S" chain` 把这串打出来，想自己敲 compose 时抄它。
 
 **三条规矩：**
 
 1. **改配置值 → `compose.env` 末尾追加**，不要回上面改。端口、项目名、镜像 tag、你自己那些
    env 全在这里；env-file 是**后定义者胜**，追加就是覆盖。
 2. **改拓扑（加服务、换 image、改别名） → 写一个新文件叠在最后**：
-   `XGENT_ONEBOX_HOME=portal-onebox $S dc -f portal-onebox/<你的>.yml up -d <服务名>`。
+   `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/<你的>.yml up -d <服务名>`。
    `-f` 出现在子命令前就仍是全局选项，位置没问题。
 3. **别改 `portal-onebox/` 里 init 铺出来的那几个 yml** —— 它们是从镜像里取出来的，
    `init --force` 会原样覆盖，而且换一版镜像就该跟着换。你的东西永远是**新文件**。
@@ -352,7 +360,7 @@ puller key 就能拉。要换版才加 `--image <ref>`。
 改完先看合并结果再起（不 up 也能看）：
 
 ```bash
-XGENT_ONEBOX_HOME=portal-onebox $S dc -f portal-onebox/<你的>.yml config | less
+XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/<你的>.yml config | less
 ```
 
 **加一个新服务，必备四件**（少哪件的症状都在排查表里）：`image` · `platform`（arm64 机器上跑
@@ -362,16 +370,18 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 ## 3. 冒烟
 
 ```bash
-.claude/skills/portal-dev-setup/scripts/onebox.sh smoke
+"$SKILL_DIR/scripts/onebox.sh" smoke
 ```
 
 探 `GET /health`（门户；注意**不是** `/api/health`，那个 404）和每个 `GET /svc/<key>/health`。
 全绿再开浏览器（地址以 `init` 回显的为准，改过端口就不是 `http://localhost`）。
 
+**smoke 的 HTTP 检查不能覆盖信封内的 db 判据。** 外部 App 支持平铺与 Envelope：HTTP 非 2xx 不通过；2xx 顶层含 `ok` 时，必须 `ok === true && data.db === true`；否则按 2xx 判健康。发布前按 `portal-external-app` skill 的 `references/health-contract.md` 运行其 `scripts/verify-health.ts`（直连与 `/svc` 两条路径），不要自行增加“禁止信封”或字段命名限制。
+
 **dev 登录的入口**：登录页密码表单下方的「本地开发账号」按钮（`DEV_MOCK_OAUTH=true` 才出现），
 或直接打开 `/auth/dev/start` 进 mock IdP 选账号 → 选 `rockie@xgent.ai`（演示租户 admin + 平台管理员）。
 **按钮没出现**：先 `curl <地址>/auth/providers` 看 `dev` 字段在不在——在就走 `/auth/dev/start`，
-那说明这版镜像的前端与 API 对不齐，`$S pull` 换新的。
+那说明这版镜像的前端与 API 对不齐，`"$S" pull` 换新的。
 
 种子只种两个账号，另一个是 `liming@xgent.ai`（普通成员）——**ACL 成员基线没到位的问题只在非管理员身上现形**，
 验收要用它再走一遍，管理员那边永远是绿的。
@@ -388,7 +398,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 ## 4. 出问题了
 
 ```bash
-$S doctor
+"$S" doctor
 ```
 
 **先跑它，别翻文档。** 它把排查表里能自动判的都判一遍（镜像版本、命名卷属主、内联 key 撞 map、
@@ -399,7 +409,7 @@ $S doctor
 > **「照文档做，行为却不符」先看版本。** `status` / `smoke` 里 `/health` 那行会回一个 `version`：
 > `init` 把镜像的 tag + ID + 构建日期写进了 `compose.env` 的 `APP_VERSION`。报 `dev` 说明这份 compose.env
 > 是老 `init` 铺的（或你自己改过）。一盒镜像比文档旧一天，就足以让「注册后自动授予租户」这类行为整个不存在，
-> 而现场没有任何报错 —— 真实案例（CR-4）。`$S pull` 换新的再判。
+> 而现场没有任何报错 —— 真实案例（CR-4）。`"$S" pull` 换新的再判。
 那张表按「你看到什么」编排。最容易白白浪费半天的两条先放这儿：
 
 > **`portal-api` / `*-server` 显示 `unhealthy` 是假红，不用查。** 一盒镜像没装 `curl`（省体积），
@@ -423,22 +433,22 @@ services:
     extra_hosts: ["host.docker.internal:host-gateway"]
 ```
 
-然后 `XGENT_ONEBOX_HOME=portal-onebox $S dc -f portal-onebox/host-backend.yml up -d app-backend`。
+然后 `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/host-backend.yml up -d app-backend`。
 此时 `APP_IMAGE` 不再被用到（compose 仍要求它有值，随便填一个）；`APP_KEY` 照旧——别名还是靠它。
 
 ## 6. 重置与拆栈
 
 ```bash
-S=.claude/skills/portal-dev-setup/scripts/onebox.sh
-$S dc down          # 停容器，留命名卷（数据还在，下次 up 接着用）
-$S dc down -v       # ★ 连命名卷一起删：pg/minio/apps/caddy 的数据全没
+S="$SKILL_DIR/scripts/onebox.sh"
+"$S" dc down          # 停容器，留命名卷（数据还在，下次 up 接着用）
+"$S" dc down -v       # ★ 连命名卷一起删：pg/minio/apps/caddy 的数据全没
 ```
 
 只想重置门户数据：重跑 `db:seed:onebox`（同样破坏性），然后**重跑 `register-app`**（你的 listing 被种子清掉了），
 最后 `caddy reload`。种子会重新生成 UUID，浏览器会话随之失效——重登一次 dev 登录，不是坏了。
 
 换门户镜像版本：改 `compose.env` 末尾的 `XGENT_IMAGE` / `XGENT_PROXY_IMAGE` 两行，
-`$S pull` 把新版本拉下来，再 `$S dc up -d`。compose 资产要不要跟着更新，
+`"$S" pull` 把新版本拉下来，再 `"$S" dc up -d`。compose 资产要不要跟着更新，
 重跑 `init --force --home <另一个空目录>` 对比着看。
 
 ⚠️ **换镜像要修的毛病，多半还得配一次 `down -v`，而且顺序是「先换镜像、再删卷」。**
@@ -446,7 +456,7 @@ $S dc down -v       # ★ 连命名卷一起删：pg/minio/apps/caddy 的数据�
 `up -d` 纠正。所以：只 `pull` 不删卷 = 老卷带着老属主继续用；只 `down -v` 不 `pull` = 用老镜像
 又建出一个一样坏的卷。EACCES 那一族（`/svc` 放行写不成 → `/svc/<key>` 404、发布前端产物报
 `/srv/www/apps` 不可写）就是这个形状，修法见排查表 [§7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)。
-一盒是本地联调环境、数据不值钱，**首选就是 `$S pull` → `$S dc down -v` → 按 §2 重铺**，
+一盒是本地联调环境、数据不值钱，**首选就是 `"$S" pull` → `"$S" dc down -v` → 按 §2 重铺**，
 别为了保住一个演示库去绕。
 
 ## 7. 一盒不是门户，别拿它当门户

@@ -219,10 +219,12 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 - **service**（无 UI 走 curl）：
 
 ```bash
-curl http://localhost/svc/<key>/health           # {"service":"<key>","db":"ok",...}
+curl http://localhost/svc/<key>/health           # 平铺 {"service":"<key>","db":"ok"} 或信封 {"ok":true,"data":{"db":true}}
 curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（四道闸生效）
 # 拿一个 aud=<key> 的 TDT（经交换，或 dev 自助 /api/tokens/authorize → /oauth/token）→ 200 信封
 ```
+
+**micro / service 的健康接口都按 [平台健康判据](health-contract.md) 验证**：运行 skill 自带 `scripts/verify-health.ts`，同时检查 HTTP 与信封的 db 判据；首次接入/修改健康接口还要在隔离环境验证必要依赖故障的 `not-ready`。
 
 ## 6. 排查速查
 
@@ -233,6 +235,7 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 | `wired into 0 installed instance(s)` | **未必是没写成**：0 = 本次没有改动，含「本来就是对的」。按 §2.2 比哈希判定 |
 | `/svc/<key>` 404 | 白名单 `.map` 没写成，或反代先于 register-app 起（重启反代/重跑注册） |
 | `/svc/<key>` 502 | 后端没起 / 没听 8080 / 网络别名 `<key>-server` 没命中 |
+| `/health` 能访问，但健康检查失败 | HTTP 非 2xx 或信封未满足 `ok:true + data.db:true`；平铺与合法信封都支持，详见 [health-contract.md](health-contract.md)。部署超时还需看启动日志与迁移，不能仅凭包装格式定因 |
 | 有效 TDT 被判 `INVALID_TOKEN` | 先检查自省 ok:true 和 data 对象，再校验 data；失败信封/缺 data 为 503，不能回退到顶层 |
 | register-app 报 scope `VALIDATION_FAILED` | 声明了别人的 scope 但没列进 `exchangeTargets` |
 | 发起交换 401 | `exchangeInitiatorSecret` 未写进已安装实例（先安装再重跑 register-app）或 secret 漂移 |

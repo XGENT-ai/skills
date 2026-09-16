@@ -2,7 +2,7 @@
 
 **先跑 `onebox.sh doctor`。** 下面这些能自动判的它都判了，并直接给你可粘的修法；这张表是给它判不了的那些。
 按「你看到什么」编排。
-下文 `$S` = `.claude/skills/portal-dev-setup/scripts/onebox.sh`，`portal-onebox/` = `init` 铺出来的那个目录。
+下文在 App repo 根目录执行命令；`SKILL_DIR` 表示本 skill 的 `SKILL.md` 所在目录（本文件的上一级），`S="$SKILL_DIR/scripts/onebox.sh"`；`portal-onebox/` = `init` 铺出来的那个目录。
 
 ## 目录
 
@@ -22,9 +22,9 @@
 
 | 你看到 | 真相 |
 | --- | --- |
-| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **假红。** 一盒镜像**没装 `curl`**（连 `wget` 也没有），而 compose 的 healthcheck 写的正是 `curl -fsS …/health` —— 它永远失败。`docker inspect <容器> --format '{{json .State.Health}}'` 会看到清一色 `curl: not found`。判活只认 `$S smoke`。`reverse-proxy` 与 pg/redis/minio 的 healthy 是真的 |
+| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **假红。** 一盒镜像**没装 `curl`**（连 `wget` 也没有），而 compose 的 healthcheck 写的正是 `curl -fsS …/health` —— 它永远失败。`docker inspect <容器> --format '{{json .State.Health}}'` 会看到清一色 `curl: not found`。判活只认 `"$S" smoke`。`reverse-proxy` 与 pg/redis/minio 的 healthy 是真的 |
 | `curl http://localhost/api/health` → 404 `路由不存在` | **探错路径了。** 门户健康端点是 `/health`，不带 `/api`；各服务是 `/svc/<key>/health` |
-| 改了 `compose.env` 却「没生效」 | 这份文件是**拼装**出来的（基础模板 + 一盒增量 + devkit 增量 + 本机覆盖块），同一个键出现三四次很常见。**docker compose 后定义者胜**，你多半改在了中间那处。`$S env` 会把「同键多个不同值」标出来，并显示实际生效的那个。改配置一律往**文件最末尾**加 |
+| 改了 `compose.env` 却「没生效」 | 这份文件是**拼装**出来的（基础模板 + 一盒增量 + devkit 增量 + 本机覆盖块），同一个键出现三四次很常见。**docker compose 后定义者胜**，你多半改在了中间那处。`"$S" env` 会把「同键多个不同值」标出来，并显示实际生效的那个。改配置一律往**文件最末尾**加 |
 | 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` 三个基础服务的代码，其余在构建时就删掉了（`ingest` 已移出基础集） |
 | `bootstrap:prod` / 部署控制器一启动就退出并打印拒绝原因 | **刻意的。** 一盒是调试底座，不是门户，这两样启动即拒 |
 | 完整的 `db:seed` 失败 | 它会拉起十几个 App 的种子链，而那些代码不在镜像里。一盒只能用 `db:seed:onebox` |
@@ -61,15 +61,15 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `port is already allocated` | 一盒只发布 6 个宿主端口：80/443（`HTTP_PORT`/`HTTPS_PORT`）· 5432（`POSTGRES_PORT`）· 6379（`REDIS_PORT`）· 9000/9001（`MINIO_PORT`/`MINIO_CONSOLE_PORT`）。`init` 会自动避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`$S env` 会告警） |
+| `port is already allocated` | 一盒只发布 6 个宿主端口：80/443（`HTTP_PORT`/`HTTPS_PORT`）· 5432（`POSTGRES_PORT`）· 6379（`REDIS_PORT`）· 9000/9001（`MINIO_PORT`/`MINIO_CONSOLE_PORT`）。`init` 会自动避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
 | 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。每套栈一个唯一名（`init` 已设成 `onebox-<key>`） |
 | 报缺 `APP_IMAGE` / `APP_KEY` | `docker-compose.app-dev.yml` 里的 `${APP_IMAGE:?}` 是**解析期**求值的，跟 profile 无关。`$S` 会按 `compose.env` 里这两行有没有值自动决定带不带那层——手敲 compose 时才会撞上 |
 | 报缺 `APP_FRONTEND_DIST` | 你给 `service` 型 App 叠了前端 override。service 无前端，不要那层 |
-| 有服务起来就 crash-loop 刷屏，日志淹没真问题 | 少叠了一盒那层 override（`onebox/docker-compose.onebox.yml`）。它的作用就是关掉两个在精简镜像里跑不起来、却在基础 compose 里默认启动的服务。用 `$S dc` 不会漏 |
+| 有服务起来就 crash-loop 刷屏，日志淹没真问题 | 少叠了一盒那层 override（`onebox/docker-compose.onebox.yml`）。它的作用就是关掉两个在精简镜像里跑不起来、却在基础 compose 里默认启动的服务。用 `"$S" dc` 不会漏 |
 | portal-api 启动即退，日志提到 `DEV_MOCK_OAUTH` | `NODE_ENV` 没被覆盖成 `development`。镜像烘的是 `production`，而 `DEV_MOCK_OAUTH=true` 在 production 下被拒绝 |
 | 一盒把你本机某个数据库写花了 | 你关掉了 `local-infra` 让一盒连本机的 PG。库名会撞（`xgent-portal` / `xgent-files` …），而 `db:seed:onebox` 是**会往里写**的。别这么做——一盒内部走的是 compose 网络里的 `postgres:5432`，与宿主端口无关，错开发布端口就够了 |
-| 你的 App 自己的库不存在 | 一盒的 postgres 首次初始化只建了它认识的那批 `xgent-*` 库（新镜像另按 `APP_KEY` 建**你自己**那一个）。别的 App 的库要自己建：`$S dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<key>"'` |
-| **反代整个起不来、全站 502**，`$S dc logs reverse-proxy` 里有 `duplicate input` / `adapting config` | 你给一个**已内联**的 key 写了 `/svc` 放行 map。`knowledge` / `omni-parser` / `task-gateway` / `pagebuilder` 直接写在容器版 Caddyfile 的 map 块里，本来就放行；同名键再来一遍 Caddy 直接拒绝加载**整份配置**——挂的不是那一条路由，是反代。删掉再起：<br>`$S dc exec -u root reverse-proxy sh -c 'rm -f /etc/caddy/svc-allow/{knowledge,omni-parser,task-gateway,pagebuilder}.map'` 然后 `$S dc restart reverse-proxy`。<br>注册链本身不会这么写（`registerFromManifest` 对内联 key 跳过并回 warning）——**是照着老文档手工补那一行**造成的 |
+| 你的 App 自己的库不存在 | 一盒的 postgres 首次初始化只建了它认识的那批 `xgent-*` 库（新镜像另按 `APP_KEY` 建**你自己**那一个）。别的 App 的库要自己建：`"$S" dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<key>"'` |
+| **反代整个起不来、全站 502**，`"$S" dc logs reverse-proxy` 里有 `duplicate input` / `adapting config` | 你给一个**已内联**的 key 写了 `/svc` 放行 map。`knowledge` / `omni-parser` / `task-gateway` / `pagebuilder` 直接写在容器版 Caddyfile 的 map 块里，本来就放行；同名键再来一遍 Caddy 直接拒绝加载**整份配置**——挂的不是那一条路由，是反代。删掉再起：<br>`"$S" dc exec -u root reverse-proxy sh -c 'rm -f /etc/caddy/svc-allow/{knowledge,omni-parser,task-gateway,pagebuilder}.map'` 然后 `"$S" dc restart reverse-proxy`。<br>注册链本身不会这么写（`registerFromManifest` 对内联 key 跳过并回 warning）——**是照着老文档手工补那一行**造成的 |
 
 ---
 
@@ -77,13 +77,13 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `$S dc exec reverse-proxy caddy reload` |
+| `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `"$S" dc exec reverse-proxy caddy reload` |
 | `register-app` 输出里有 `/svc 放行未写成 … EACCES: permission denied`，随后 `/svc/<key>` 404 | 命名卷属主不对，见 **[§7](#7-命名卷属主不对eacces-一族)**（那一节的修法一次修好全部三个卷）。注册本身是成功的，缺的只是那一行放行 |
-| `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`$S dc logs app-backend`；② 没监听容器内 **8080**（反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
-| 探测全是 **000** | 反代根本没起，或你探的端口不是 `HTTP_PORT`。`$S dc ps` / `$S dc logs reverse-proxy` |
+| `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`"$S" dc logs app-backend`；② 没监听容器内 **8080**（反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
+| 探测全是 **000** | 反代根本没起，或你探的端口不是 `HTTP_PORT`。`"$S" dc ps` / `"$S" dc logs reverse-proxy` |
 | 后端跑在**宿主**上，`/svc/<key>` 502 | 反代在容器网里解析不到宿主进程。用 SKILL.md §5 的 socat 转发容器顶住那个别名 |
 | iframe 404 / 空白 | `APP_FRONTEND_DIST` 必须是**绝对路径**且目录里有 `index.html`（相对路径会按 compose 文件所在目录解析，很迷惑）。另一半原因是前端构建时的 base 不是 `/apps/<key>/`——资源路径会全部指错 |
-| 浏览器整站打不开 | 先 `$S smoke` 看 `/health`。通了就是地址问题（改过端口就不是 `http://localhost`）；不通看 `$S dc logs reverse-proxy portal-api` |
+| 浏览器整站打不开 | 先 `"$S" smoke` 看 `/health`。通了就是地址问题（改过端口就不是 `http://localhost`）；不通看 `"$S" dc logs reverse-proxy portal-api` |
 | `service` 型 App 在应用市场/应用中心**看不到** | **设计如此**：service 型对用户隐藏（无前端、不可打开），平台控制台的清单管理里仍可见可治理 |
 
 ---
@@ -103,7 +103,7 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以先 `$S pull` 换新镜像重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
+| `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以先 `"$S" pull` 换新镜像重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
 | `register-app` 报 `VALIDATION_FAILED`（scope） | manifest 声明了**别的 App 的 scope**，却没把那个 App 列进 `exchangeTargets`。规则：一个 listing 能声明的 scope = 平台基础 scope ∪ 本 namespace（`<listingKey>` 及其下划线变体，如 `omni-parser` → `omni_parser`）∪ 已声明 `exchangeTargets` 的 namespace |
 | `register-app` 拒跑，提到 production | dev 模式的 `register-app` 拒绝 `NODE_ENV=production`。`compose.env` 末尾必须有 `NODE_ENV=development` |
 | 跑完 `db:seed:onebox` 后市场里找不到你的 App | **顺序反了。** 种子第一步是 `truncate … marketplace_listings … cascade`，先注册后种子 = 注册被清掉。必须 seed 在前、register-app 在后 |
@@ -132,11 +132,11 @@
 一盒是**本地联调环境，数据不值钱**，别为了保住一个演示库去绕。
 
 ```bash
-S=.claude/skills/portal-dev-setup/scripts/onebox.sh
+S="$SKILL_DIR/scripts/onebox.sh"
 # 1) 换到 v1.2.0+（compose.env 末尾若把 XGENT_IMAGE / XGENT_PROXY_IMAGE 钉了 tag，先改成 latest 或 v1.2.0-*）
-$S pull
+"$S" pull
 # 2) 连卷一起删 —— pg / minio / apps / caddy 全没，这一步就是目的
-$S dc down -v
+"$S" dc down -v
 # 3) 按 SKILL.md §2 的固定顺序重铺：migrate → seed:onebox → 各库 migrate → register-app → up
 ```
 
@@ -150,7 +150,7 @@ $S dc down -v
 反代是 root 且挂着同样这三个卷，所以补属主不必进 portal-api：
 
 ```bash
-$S dc exec -u root reverse-proxy \
+"$S" dc exec -u root reverse-proxy \
   chown -R 1000:1000 /srv/www/apps /etc/caddy/svc-allow /etc/caddy/apps-csp
 ```
 
@@ -158,7 +158,7 @@ $S dc exec -u root reverse-proxy \
 **不用重启 portal-api**。`/svc` 放行那条还要补一行 map 并 reload：
 
 ```bash
-$S dc exec reverse-proxy sh -c \
+"$S" dc exec reverse-proxy sh -c \
   'printf "<key> \"1\"\n" > /etc/caddy/svc-allow/<key>.map && caddy reload --config /etc/caddy/Caddyfile'
 ```
 

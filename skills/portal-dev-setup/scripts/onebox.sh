@@ -83,7 +83,7 @@ require_puller() {
 先找【你们自己的开发团队】要一份 puller key：这是一对只读拉取凭证，按团队发放，
 不是谁的个人密码（一个团队共用一份，有人离职要找他们轮换）。拿到后：
 
-  cp $SKILL_DIR/puller.env.example ./.xgent-registry.env
+  cp "$SKILL_DIR/puller.env.example" ./.xgent-registry.env
   chmod 600 ./.xgent-registry.env
 
 填两项：

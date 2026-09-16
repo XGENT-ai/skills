@@ -80,8 +80,10 @@ curl -s -o /dev/null -w 'status %{http_code}\n' -H "$H" "$XGENT_PORTAL_URL/api/m
 
 ## 一条通用的分诊起手式
 
+在 App repo 根目录执行；`SKILL_DIR` 表示本 skill 的 `SKILL.md` 所在目录（本文件的上一级）。
+
 ```bash
-node <skill>/scripts/preflight.mjs --key <key> --dist dist --version <v>   # 发之前
+node "$SKILL_DIR/scripts/preflight.mjs" --key <key> --dist dist --version <v>   # 发之前
 npx @xgent/release-cli status --key <key>                                  # 发之后
 ```
 

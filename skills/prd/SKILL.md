@@ -208,5 +208,5 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 - **SPMS 接入**:MCP 工具 `mcp__xgent-pms__*`(`project_list`/`project_get`/`project_update`/`pms_search`/`requirement_*`/`testcase_*`/`plan_*`)。契约与错误码见 `docs/pms-mcp.md`;字段/枚举/写面缺口速查见 `references/spms-mapping.md`。
 - **文档落盘**:PRD → `docs/PRD-<大写代号>.md`(代号按能力域取);下游开发计划 → `goal/<大写代号>.md`(dev-plan skill,模板 `goal/PLAN-TEMPLATE.md`)。**两侧代号互不绑定**——PRD : 计划是**多对多**(既拆也合),靠 `FR-N`/`NFR-N` key 串联(SPMS 侧即 `plan_create(requirementKeys)`,同项目内)。
 - **平台硬约束**(需求侧口径,该进 NFR 就进):多租户隔离(全表 `tenantId`);业务状态一律 200 + `{ok,data}`;列表服务端分页 `Page<T>`;三语 i18n(zh-CN/en/zh-TW);字典表 `sort` 规范;前端两步法(`impeccable` 设计 + 真浏览器验证)。
-- **已知坑来源**:`~/.claude/projects/-Users-rockie-Documents-GitHub-xgent-xgent-ai-portal/memory/`(先看 `MEMORY.md` 索引)、根 `CLAUDE.md`、`goal/*-PROGRESS.md`。
+- **已知坑来源**:当前 agent 提供的本项目记忆(若有,先看 `MEMORY.md` 索引)、根 `CLAUDE.md`、`goal/*-PROGRESS.md`。
 - **下游**:PRD 定稿后接 `dev-plan` skill 出开发计划,再由计划拆 Issue 进迭代。

@@ -5,7 +5,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 # portal-external-app · 外部镜像服务类应用接入
 
-外部镜像 App = 服务端在别的 repo（任意语言/栈）、独立镜像交付、**常驻**（不走按需缩零）。运行时契约与内建 App 完全一致，差异只在注册与部署。本文件是判断与流程；具体契约按需读 `references/`（为本 skill 提炼的自包含参考，可整目录拷到外部团队 repo；权威源是门户仓库 `docs/`，冲突以门户仓库为准）。
+外部镜像 App = 服务端在别的 repo（任意语言/栈）、独立镜像交付、**常驻**（不走按需缩零）。鉴权与业务 API 遵循门户运行时契约；**`/health` 支持平铺 JSON 与 Envelope，检测规则与平台运行时一致**。本文件是判断与流程；具体契约按需读 `references/`（为本 skill 提炼的自包含参考，可整目录拷到外部团队 repo；权威源是门户仓库 `docs/`，冲突以门户仓库为准）。
 
 
 > **路径约定（先读这条，能省一次白找）**：本 skill 里出现的 `apps/…` `packages/…` `docs/…`
@@ -22,6 +22,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 | 任务 | 读 |
 | --- | --- |
 | 实现/评审资源服务器（四道闸、health、env、认证面划界、配置面） | [references/integration-contract.md](references/integration-contract.md) |
+| 实现 `/health`、出仓迁移、发布镜像或健康检查失败（必读） | [references/health-contract.md](references/health-contract.md)：两种正确实现、实际判据、发布前检查命令 |
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
@@ -43,7 +44,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 2. `app.manifest.json`（外部团队 repo 里的单一事实源）；
 3. env 契约表：**镜像实际读取的变量名**（镜像自有前缀与门户契约别名的映射必须写清；有的镜像不读裸 `PORT`）；
 4. **迁移入口**：迁移文件在镜像里、二进制上有一个迁移 argv（见下节）。「迁移脚本留在自己 repo 里」= 不合格；
-5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）+ `/health` 口径；
+5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）；**`/health` 必须通过 [健康契约验收](references/health-contract.md)**，按平台同一判据验证正常与依赖故障；信封响应不能只检查 HTTP 200；
 6. **有没有重复造平台已有的能力**：自己存文件 / 自己发通知 / 自己记审计 / 自己排定时任务 / 自己算配额 —— 逐项对照下面两张表，命中就要求改走平台面；
 7. **租户自助凭证**：这个服务有没有「租户拿自己的程序直接调你」的场景（日志/指标摄取、批量导入、CI 回写）？有就检查那条 scope 在不在 manifest 的 **`scopes`** 里 —— 不在的话租户面开不出凭证，只能退回「找平台管理员代建」（见 [integration-contract.md §3.1](references/integration-contract.md)）；
 8. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
@@ -53,7 +54,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 ## 资源服务器硬契约（外部实现最常炸的四处）
 
 1. **自省信封解包**：门户响应必须先检查 `ok === true` 且 `data` 为对象，再校验 `data`；失败信封或缺 data 返回 503，不能回退到顶层。只有合法 `active:false` 才表示凭证失效。TDT 的 exp 必填；无过期长期 key 才可省略 exp。主体/凭证类型矩阵、ACL 范围与缓存预算见 integration-contract.md §3；
-2. **`/health` 形状**：`{"service":"<key>","db":"ok",...}`，`"db"` 是字符串 `"ok"` 不是 `true`（healthcheck 按此判活）；
+2. **`/health` 按响应形状判定**：HTTP 非 2xx 不通过；2xx 响应顶层有 `ok` 时，必须 `ok === true && data.db === true`；没有顶层 `ok` 时按 2xx 判健康。平铺 `{"service":"my-app","db":"ok"}` 与信封 `{"ok":true,"data":{"db":true}}` 都支持，不按内建/外部 App 区分。平铺依赖故障须用 HTTP 503 表达；不要给字符串状态直接套 `ok(...)`。完整示例与同源检查脚本见 [health-contract.md](references/health-contract.md)。
 3. **门户三变量 all-or-nothing**：自省地址 + SA clientId + secret 全缺→鉴权停用 503；缺一→启动 fail-fast 打印缺失项。
 4. **平台级跨租户闸**：如有跨租户路由，只认服务端自省返回的 `claims.isPlatformAdmin === true`。它由 Portal 按用户实时计算、不在 JWT 里；`role` / `bypass` 只属于当前租户，服务态恒为 `false`，不接受前端自报或 Cookie 转发。
 

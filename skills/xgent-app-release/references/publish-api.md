@@ -259,10 +259,11 @@ npx @xgent/release-cli status --key $KEY
 
 ## 7. CI 范式
 
-`listingKey` 从仓里的配置文件来，所以 CI 里不用重复它。
+`listingKey` 从仓里的配置文件来，所以 CI 里不用重复它。先在 CI 中准备好本 skill，将 `SKILL_DIR` 设为它的 `SKILL.md` 所在目录；以下步骤在 App repo 根目录执行。
 
 ```yaml
 env:
+  SKILL_DIR: "<本 skill 的 SKILL.md 所在目录>"
   # 仓里那份 .xgent-registry.env 通常不进 CI —— 在这里注入即可（环境变量优先于文件）。
   TARGET_XGENT_PLATFORM: https://portal.example.com
   XGENT_RELEASE_TOKEN: ${{ secrets.XGENT_RELEASE_TOKEN }}
@@ -271,9 +272,9 @@ env:
 
 steps:
   - run: npx @xgent/release-cli whoami                  # ① 先验令牌，别等构建完才发现过期
-  - run: eval "$(node .claude/skills/xgent-app-release/scripts/npm-token.mjs)"   # ⓪ 换私有包只读令牌
+  - run: eval "$(node "$SKILL_DIR/scripts/npm-token.mjs")"   # ⓪ 换私有包只读令牌
   - run: <你自己的依赖安装与构建>                        # ② base=/apps/<key>/
-  - run: node .claude/skills/xgent-app-release/scripts/preflight.mjs --dist dist --version $VER
+  - run: node "$SKILL_DIR/scripts/preflight.mjs" --dist dist --version $VER
   - run: npx @xgent/release-cli publish --version $VER --dist dist/ --image <key>:$VER --wait
           --manifest deploy/portal/app.manifest.json   # ← 不带它目录永远是空的
 ```
