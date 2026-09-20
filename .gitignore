@@ -25,3 +25,5 @@
 .claude/skills/
 .agents/skills/
 .codex/skills/
+/skills/swarm-workspace
+skills/swarm/evals/evals.json
