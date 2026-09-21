@@ -168,6 +168,7 @@ sdk.onFullscreen(on => ...);
 
 - 浏览器里 iframe 直接 `fetch` Open API / 独立后端受 CORS 限制；后端 CORS 白名单是环境变量维护的有限源列表。
 - 首选 `sdk.callService`：宿主为该应用铸/复用 host-proxy TDT、代为 `fetch`、回传响应；你的后端只需信任 Portal web 源一个跨域来源。401/403 时宿主自动重铸令牌重试一次。
+- ⚠️ **目标不是你自己时走的是令牌交换，不是 mint**：`callService("<别的 App>", …)`（`sdk.files.*` 就是它的薄封装）由宿主换一张 `aud=<目标>` 的票，所以**清单里必须有 `exchangeTargets` + 目标命名空间 scope**，用户也要同意过。漏声明的症状是 iframe 里这类调用全挂——不是 CORS，查 portal-app-exchange skill。
 - `callService` 不替后端做授权——后端仍要自省校验 aud/scope（这不是前端的事，但别以为走了代理就"安全了"）。
 
 ### 5.1 下载文件：只用 `openDownload`，别自己写 `<a href>.click()`（BUG-48）

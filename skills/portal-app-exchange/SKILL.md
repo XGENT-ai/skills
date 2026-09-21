@@ -25,7 +25,7 @@ App A 代表用户调 App B = 拿一个 `aud=B` 的 TDT，走 OAuth Token Exchan
 2. B `allowExchange = true`；
 3. A ∈ B 的 `exchangeWhitelist`；
 4. 用户已同意"A 代表我访问 B"（`exchange_consents`，服务端交换不带会话，consent 必须**事先**记录）；
-5. 结果 scope = A 当前 TDT scopes ∩ B 声明 scopes——**发起方 A 的清单必须把 B 命名空间 scope 声明进自己的 `scopes`**（且 B ∈ A 的 `exchangeTargets`）。交集为空 = 换到的令牌调 B 全 403。
+5. 结果 scope = A 当前 TDT scopes ∩ B 声明 scopes——**发起方 A 的清单必须把 B 命名空间 scope 声明进自己的 `scopes`**（且 B ∈ A 的 `exchangeTargets`）。交集为空 = 换到的令牌调 B 全 403。**读写不分**：`B.write` 与 `B.read` 同一条待遇，用户态持有目标 App 的写 scope 是合法姿势。
 
 被调方 B 看到的令牌：`kind:"user"`、有 `user_id`、`azp` = A（出处归因）；B 照常四道闸鉴权、无需改代码。
 
@@ -52,4 +52,5 @@ App A 代表用户调 App B = 拿一个 `aud=B` 的 TDT，走 OAuth Token Exchan
 
 - 撤销交换 consent 不回滚已签发的短期 TDT（自然过期），但拦后续交换——"撤销后还能用几分钟"不是 bug。
 - 交换永不扩权：要更多 scope，改**声明**（A 的 scopes/exchangeTargets + 用户再同意），不是在交换请求里多要。
-- 服务态令牌（`client_credentials`）不走本链路——判别标准：请求是否代表某个用户？是 → 交换；否 → 服务态直调（见 portal-external-app / portal-backend-app skill）。
+- 服务态令牌（`client_credentials`）不走本链路——判别标准：请求是否代表某个用户？是 → 交换；否 → 服务态直调（见 portal-external-app / portal-backend-app skill）。**写入时的实用形式是「这份数据归谁」**：归用户（他在目标 App 里看得见删得掉）→ 用户态交换；归 A（系统产物）→ 服务态。把「用户点一下另存到我的空间」做成服务态，东西会落进 A 的应用容器，用户根本看不见。
+- **别拿另一个 App 的清单当平台规则**：它只声明了读，往往是它自己的写面不代表用户，而不是平台禁止。规则只有 §1 那五条。
