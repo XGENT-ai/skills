@@ -3,6 +3,8 @@
 三份模板在 `references/` 下：`external-app-CLAUDE.template.md` · `external-app-PRODUCT.template.md` · `external-app-DESIGN.template.md`。
 它们 95% 的文字是平台口径，**逐字照抄**；只有下面列出的槽位需要你填。行号是模板当前行号，改模板后以内容定位为准。
 
+`AGENTS.md` 没有模板：它是渲染完的 `CLAUDE.md` 的镜像，只把第 1 行标题换成 `# AGENTS.md`，正文逐字相同。
+
 ## 0. 三条硬约束（改坏了 impeccable 就解析不出来）
 
 - **PRODUCT.md**：七个二级标题，名字与顺序固定 —— `Register` / `Users` / `Product Purpose` / `Brand Personality` / `Anti-references` / `Design Principles` / `Accessibility & Inclusion`。别改名、别加段、别调序。`## Register` 的正文只能是裸词 `product` 或 `brand`，不加句号、不加解释。

@@ -46,11 +46,12 @@ const h2 = (src) =>
     .filter((l) => l.startsWith("## "))
     .map((l) => l.slice(3).trim());
 
-/* ── 0. 三份文件 ────────────────────────────────────────────────── */
+/* ── 0. 三份文件（AGENTS.md 是 CLAUDE.md 的镜像，见 §5） ──────────── */
 
 const claude = read("CLAUDE.md");
 const product = read("PRODUCT.md");
 const design = read("DESIGN.md");
+const agents = read("AGENTS.md");
 
 if (!claude) err("CLAUDE.md 不存在");
 if (!product) err("PRODUCT.md 不存在");
@@ -276,6 +277,22 @@ if (design) {
   ]) {
     if (!design.includes(token)) err(`DESIGN.md 里 \`${token}\`（${why}）被改掉了 —— 它不是槽位，请改回来`);
   }
+}
+
+/* ── 5. AGENTS.md：CLAUDE.md 的镜像 ───────────────────────────────
+   读 AGENTS.md 的工具（Codex / Cursor / pi）也要看到同一套约定；两份不同步
+   就是同一个仓里摆着两处互相矛盾的规范。 */
+
+if (!agents) {
+  err("AGENTS.md 不存在 —— 它必须是 CLAUDE.md 的镜像（除第 1 行标题外逐字相同）");
+} else if (claude) {
+  const head = agents.split("\n")[0];
+  if (head !== "# AGENTS.md") {
+    err(`AGENTS.md 第 1 行应是 \`# AGENTS.md\`，实际：${JSON.stringify(head.slice(0, 40))}`);
+  }
+  const body = (src) => src.split("\n").slice(1).join("\n");
+  if (body(agents) === body(claude)) ok("AGENTS.md 与 CLAUDE.md 除首行外逐字一致");
+  else err("AGENTS.md 与 CLAUDE.md 正文不一致 —— 两份是同一套约定的镜像，只有第 1 行标题该不同；改一份就同步另一份");
 }
 
 /* ── 输出 ───────────────────────────────────────────────────────── */

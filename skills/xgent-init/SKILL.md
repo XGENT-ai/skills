@@ -1,17 +1,20 @@
 ---
 name: xgent-init
-description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套的 CLAUDE.md / PRODUCT.md / DESIGN.md —— 读 app.manifest.json 与代码事实、一次性把缺的问清楚、按模板填出可直接用的三份文档，不留任何待填占位，已存在的文件不覆盖。凡任务是「初始化/接入一个新的出仓 App 仓库」「给这个 App 仓补上 CLAUDE.md / PRODUCT.md / DESIGN.md」「补一份 impeccable 能读的设计文档」，或用户刚拿到一个空的/只有代码没有规范的 App 仓时使用；门户 monorepo 内的 App、非 XGENT 项目不用本 skill。Use in an external XGENT portal app's own repo to scaffold its CLAUDE.md / PRODUCT.md / DESIGN.md from the app manifest and repo facts — one round of questions, no leftover placeholders, never overwrites existing files.
+description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套的 CLAUDE.md / PRODUCT.md / DESIGN.md（并镜像出 AGENTS.md）—— 读 app.manifest.json 与代码事实、一次性把缺的问清楚、按模板填出可直接用的三份文档，不留任何待填占位，已存在的文件不覆盖。凡任务是「初始化/接入一个新的出仓 App 仓库」「给这个 App 仓补上 CLAUDE.md / AGENTS.md / PRODUCT.md / DESIGN.md」「补一份 impeccable 能读的设计文档」，或用户刚拿到一个空的/只有代码没有规范的 App 仓时使用；门户 monorepo 内的 App、非 XGENT 项目不用本 skill。Use in an external XGENT portal app's own repo to scaffold its CLAUDE.md / PRODUCT.md / DESIGN.md (AGENTS.md is written as a mirror of CLAUDE.md) from the app manifest and repo facts — one round of questions, no leftover placeholders, never overwrites existing files.
 ---
 
-# xgent-init · 出仓 App 仓库的三份文档
+# xgent-init · 出仓 App 仓库的三份文档 + AGENTS.md 镜像
 
 **用在 App 自己的 repo 里**（门户代码不在你手上，也不需要在）。产出：
 
 | 文件 | 谁读它 | `service` 型（无前端） |
 | --- | --- | --- |
-| `CLAUDE.md` | 每次开工的 agent | 生成，删掉前端五节 |
+| `CLAUDE.md` | 每次开工的 agent（Claude Code） | 生成，删掉前端五节 |
+| `AGENTS.md` | 读 `AGENTS.md` 的 agent（Codex / Cursor / pi） | 生成，`CLAUDE.md` 的镜像 |
 | `PRODUCT.md` | `impeccable` skill 每条子命令开工前 | 生成 |
 | `DESIGN.md` | `impeccable` skill、任何 UI 工作 | **不生成** |
+
+`AGENTS.md` 不是独立文档：正文与 `CLAUDE.md` 逐字相同，只有第 1 行标题不同。改任一份都要同步另一份，`check-docs.mjs` 会核对。
 
 模板在 `references/`，槽位规则在 [references/fill-guide.md](references/fill-guide.md)，结构检查在 `scripts/check-docs.mjs`。
 **平台契约不在本 skill 里**：口径以目标仓已装的 `portal-external-app` / `portal-micro-app` / `xgent-app-release` / `xgent-image-push` / `portal-dev-setup` / `portal-app-exchange` 为准，模板正文已经引用它们，不要在这里或生成的文件里复述一遍。
@@ -34,11 +37,12 @@ description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套
 
 ### 2. 存在性检查
 
-逐份看 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。
+逐份看 `CLAUDE.md` / `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`。
 
-- 该有的都有（`micro` 三份 / `service` 两份）→ **报告「已齐，未写任何文件」并停止**。
+- 该有的都有（`micro` 四份 / `service` 三份）→ **报告「已齐，未写任何文件」并停止**。
 - 部分存在 → 只补缺的那几份，已存在的原样不动。
-- 用户明确要求更新某份已存在的文件 → 只改他指名的小节：先把改动后的小节全文贴出来，确认了再写，不整份重写。
+- `CLAUDE.md` 与 `AGENTS.md` 只有一份、或两份正文不一致 → 以用户认可的那份为准补齐／对齐另一份；动手前先把要写的内容贴出来确认（红线 2：不覆盖已存在的文件）。
+- 用户明确要求更新某份已存在的文件 → 只改他指名的小节：先把改动后的小节全文贴出来，确认了再写，不整份重写。**改的是 `CLAUDE.md` 或 `AGENTS.md` 时，同一处改动要同步到另一份。**
 
 ### 3. 事实采集
 
@@ -69,7 +73,7 @@ description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套
 
 ### 6. 写入
 
-只写本次缺的文件。
+只写本次缺的文件。`CLAUDE.md` 与 `AGENTS.md` 成对写：同一份正文，只把第 1 行的 `# CLAUDE.md` 换成 `# AGENTS.md`。
 
 ### 7. 校验
 

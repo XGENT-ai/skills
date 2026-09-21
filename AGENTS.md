@@ -60,6 +60,15 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Evidence & Quotation
+
+**Quote only what you have read. Never write what you haven't.**
+
+- Before quoting a file's exact wording, numbers, identifiers, statuses, commands, or dates, read that passage yourself. Don't reconstruct it from context, and don't present "probably so" as fact.
+- When a tool result is truncated (long files echo only head and tail), the middle is **unknown**. Re-read it first (offset / grep / obs_recall), then quote.
+- Every "X says Y" in a durable artifact (code review, plan, runbook, commit message, factual claim to the user) must have both X (file and passage) and Y (content) pointable on the spot.
+- When a quote contradicts the source: search the whole repo for other copies of the same mistake, fix them all, and tell the owner. Never leave two conflicting versions.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
