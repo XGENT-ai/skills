@@ -32,6 +32,10 @@
 # 同名环境变量优先，CI 里注入即可不必落盘。模板：<skill 目录>/puller.env.example
 # 两个镜像本地都已有（比如 docker load 的离线 tar）时会跳过登录与拉取。
 #
+# 【一套就够】一台机器只跑一套一盒，compose 项目名固定 xgent-onebox —— 它不属于某个 App，
+# 本机要联调的 App 都接进这同一套（add 拉平台侧 App / XGENT_ONEBOX_HOME 复用栈 /
+# 宿主进程直连它的 pg/redis/minio，见 SKILL.md §5）。init 发现本机已有别的一盒会停下。
+#
 # 【一盒目录】放 docker-compose.yml 与 compose.env 的那个，按序查找：
 #   $XGENT_ONEBOX_HOME → ./portal-onebox → ./deploy → <git 根>/portal-onebox → <git 根>/deploy
 # 判据是同时有 docker-compose.yml 与 onebox/docker-compose.onebox.yml —— 你自己 repo 里
@@ -205,7 +209,7 @@ _eff() { # _eff KEY [default]
 
 load_env() {
   APP_KEY="$(_eff APP_KEY)"; APP_IMAGE="$(_eff APP_IMAGE)"; APP_FRONTEND_DIST="$(_eff APP_FRONTEND_DIST)"
-  CATALOG="$(_eff XGENT_APP_CATALOG files,llm-gateway,git,observability)"
+  CATALOG="$(_eff XGENT_APP_CATALOG files,llm-gateway,git,org,observability,user-center)"
   HTTP_PORT="$(_eff HTTP_PORT 80)"; COMPOSE_PROJECT="$(_eff COMPOSE_PROJECT_NAME xgent)"
   BASE_URL="http://localhost"; [ "$HTTP_PORT" = "80" ] || BASE_URL="http://localhost:$HTTP_PORT"
 }
@@ -224,18 +228,23 @@ compose_args() {
   fi
   printf '%s\0' --profile local-infra
   local k; for k in ${CATALOG//,/ }; do
+    _is_portal_hosted "$k" && continue
     printf '%s\0' --profile "app-$k"
     # 清单型 App（onebox.sh add 生成过片段的）也归 dc 管：这样 up/ps/logs/down 都看得见它们，
     # 而不是只有 add 那一次 -f 才带上。
     [ -f "$HOME_DIR/generated/$k.yml" ] && printf '%s\0' -f "$HOME_DIR/generated/$k.yml"
     [ -f "$SKILL_DIR/services/$k.extra.yml" ] && printf '%s\0' -f "$SKILL_DIR/services/$k.extra.yml"
   done
-  # 目录含 observability 才叠门户日志采集层（fluentd 日志驱动 + portal-logs 容器）
+  # 门户日志采集段已并入 docker-compose.onebox.yml。这行只为【老抽取资产】的家目录兜底：
+  # 那些 portal-onebox/ 里还有独立的 portal-logs.yml（旧镜像取出的），照老规矩叠加；
+  # 新资产里文件不存在，[ -f ] 自动跳过。
   _has_catalog observability && [ -f "$HOME_DIR/onebox/docker-compose.portal-logs.yml" ] \
     && printf '%s\0' -f "$HOME_DIR/onebox/docker-compose.portal-logs.yml"
   return 0
 }
 _has_catalog() { case ",$CATALOG," in *",$1,"*) return 0;; *) return 1;; esac; }
+# 用户中心只有身份 owner 清单，运行时由 portal-api 承载，无独立库、容器与 /svc。
+_is_portal_hosted() { [ "$1" = "user-center" ]; }
 # 目录里「清单型」的 key = 一盒镜像/目录里有 app-devkit/manifests/<key>.manifest.json 且不是门户内置 workspace
 _is_manifest_app() { [ -f "$HOME_DIR/app-devkit/manifests/$1.manifest.json" ]; }
 dc() { local a=(); while IFS= read -r -d '' x; do a+=("$x"); done < <(compose_args); docker compose "${a[@]}" "$@"; }
@@ -269,6 +278,21 @@ cmd_init() {
   local envf="$home/compose.env"
   if [ -f "$envf" ] && [ "$force" = 0 ]; then
     die "$envf 已存在（里面是这台机器的密钥）。要整份重来加 --force；只想补配置就直接往它末尾加。"
+  fi
+
+  # 一台机器一套一盒（SKILL.md 文首「一套就够」）：本机已有【别的】一盒在跑/跑过时停下，
+  # 而不是再铺第二套 —— 两套之间只有端口退让、没有数据互通，要调的 App 应该接进现有那套。
+  # 自己这套（容器 config_files 落在本 home 下）不算；--force 时降级为提醒。
+  local other
+  other="$(docker ps -a --filter 'label=com.docker.compose.project' \
+    --format '{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.project.config_files"}}' 2>/dev/null \
+    | awk -F'\t' -v h="$home/" '($1=="xgent-onebox" || $1 ~ /^onebox-/) && index($2, h)!=1 { print $1; exit }' || true)"
+  if [ -n "$other" ]; then
+    [ "$force" = 1 ] || die "本机已有一套一盒（compose 项目 $other）—— 一台机器只共用一套，别再铺第二套。
+要调你的 App：XGENT_ONEBOX_HOME=<那套 portal-onebox/ 的路径> 复用它的栈跑 register-app / dc；
+宿主上的 dev 后端直连它的 pg/redis/minio（SKILL.md §5）。那套的路径查看：docker compose ls。
+确需整份重来（--force 会连 compose.env 一起重建）：$0 init --force …"
+    warn "本机已有另一套一盒（$other）—— --force 放行，但请确认那套已 down 掉，别长期并存。"
   fi
 
   # 1) 备齐镜像 —— 没有 puller 凭证就在这里停下，而不是让人跑到一半才发现
@@ -314,7 +338,8 @@ cmd_init() {
 # 本机覆盖 —— 由 onebox.sh init 生成。docker compose 是【后定义者胜】，所以这一段
 # 必须留在文件最末尾；以后要改配置，也往这下面加，别回上面改。
 # ============================================================================
-COMPOSE_PROJECT_NAME=onebox-$key
+# 全机一套共用这个名字（不带 App 名；init 的撞栈检测也认它），别改名来「并存」两套。
+COMPOSE_PROJECT_NAME=xgent-onebox
 NODE_ENV=development
 DEV_MOCK_OAUTH=true
 
@@ -366,7 +391,7 @@ EOF
   printf '%s一盒资产就位：%s%s\n' "$c_grn" "$home" "$c_off"
   printf '  门户地址   %s\n' "$base"
   printf '  端口       http=%s pg=%s redis=%s minio=%s/%s\n' "$hp" "$pgp" "$rdp" "$mnp" "$mncp"
-  printf '  项目名     onebox-%s\n' "$key"
+  printf '  项目名     xgent-onebox（全机一套共用，别改名）\n'
   echo
   echo "下一步（顺序本身是契约，见 SKILL.md §3）。先记一个短名："
   echo "  S=$0"
@@ -418,7 +443,7 @@ cmd_env() {
     printf '\n'
   done
   echo
-  [ "$COMPOSE_PROJECT" = "xgent" ] && warn "COMPOSE_PROJECT_NAME 还是模板默认的 xgent —— 同机另一套 compose 会被当成同一项目（容器被接管、命名卷共享）。改成 onebox-<你的 listingKey>。"
+  [ "$COMPOSE_PROJECT" = "xgent" ] && warn "COMPOSE_PROJECT_NAME 还是模板默认的 xgent —— 同机另一套 compose 会被当成同一项目（容器被接管、命名卷共享）。改成 xgent-onebox（全机一套共用这个名字，init 现在就是这么设的）。"
   [ "$(_eff NODE_ENV)" = "development" ] || warn "NODE_ENV 不是 development —— 镜像烘的是 production，不覆盖则 portal-api 拒绝在 DEV_MOCK_OAUTH=true 下启动，register-app 也拒跑。"
   [ "$(_eff DEV_MOCK_OAUTH)" = "true" ] || warn "DEV_MOCK_OAUTH 不是 true —— 没有 dev 登录门，浏览器进不去。"
   [ -n "$(_eff PREVIEW_MEDIA_CONVERTER_URL)" ] && warn "PREVIEW_MEDIA_CONVERTER_URL 非空 —— 一盒不装 ffmpeg，非空会让每次转换 exec 一个不存在的二进制。留空。"
@@ -449,7 +474,10 @@ cmd_smoke() {
     else printf '  %s✗%s %-22s HTTP %s  %s\n' "$c_red" "$c_off" "$1" "$code" "$body"; fi
   }
   _probe "/health" /health
-  for k in ${keys//,/ }; do _probe "/svc/$k/health" "/svc/$k/health"; done
+  for k in ${keys//,/ }; do
+    _is_portal_hosted "$k" && continue
+    _probe "/svc/$k/health" "/svc/$k/health"
+  done
 
   # dev 登录入口。登录页那枚「本地开发账号」按钮由 /auth/providers 的 dev 字段驱动 ——
   # 字段在而按钮不在，就是这版镜像的前端与 API 对不齐（换镜像，或直接走 /auth/dev/start）；
@@ -473,7 +501,27 @@ cmd_status() {
   echo "容器（project: ${COMPOSE_PROJECT}）"
   dc ps || true
   echo
-  warn "portal-api / *-server 的 unhealthy 是假红：一盒镜像没装 curl，而 healthcheck 写的就是 curl —— 它永远失败。判活只看下面的探测。"
+  # 「unhealthy 是假红」这句必须按【容器里实际生效的那条探针】给，不能无条件打印：旧镜像的
+  # 基础层 compose 有两条永远失败的探针 —— `curl -fsS …/health`（精简镜像没装 curl）与反代的
+  # `wget … http://127.0.0.1:80/`（站点地址是主机名时被 308 到 https://IP/，IP 不能作 SNI，
+  # 回 SSL alert 80）。新镜像两条都换掉了，那之后 unhealthy 就是真的；照旧提示「假红不用查」
+  # 会让人放过真的配置漂移（典型：只用 -f docker-compose.yml 重建了一个服务，overlay 的
+  # logging.driver 一起丢了，日志静默不再进 observability）。
+  local cid nm tst stale=""
+  for cid in $(dc ps -q 2>/dev/null || true); do
+    tst="$(docker inspect "$cid" --format '{{json .Config.Healthcheck.Test}}' 2>/dev/null || true)"
+    case "$tst" in
+      *"curl -fsS http"*|*"wget -q -O /dev/null http://127.0.0.1:80/"*)
+        nm="$(docker inspect "$cid" --format '{{.Name}}' 2>/dev/null | sed 's#^/##')"
+        stale="$stale ${nm:-$cid}" ;;
+    esac
+  done
+  if [ -n "$stale" ]; then
+    warn "这些容器的 healthcheck 还是旧镜像里那条永远失败的探针，它们的 unhealthy 是假红（判活只看下面的探测）：$stale"
+    _note "新镜像已换成 bun / 不跟随重定向的 curl。$0 pull 换新镜像 + $0 init --force 重铺 compose 之后，unhealthy 就是真红。"
+  else
+    _note "healthcheck 都是新探针 —— 这里的 unhealthy 就是真红，别当假红放过去（先看 $0 dc logs <服务>）。"
+  fi
   echo
   cmd_smoke
 }
@@ -503,16 +551,19 @@ cmd_up() {
     i=$((i+1)); [ "$i" -gt 90 ] && die "postgres 90s 还没就绪，看 $0 dc logs postgres"
     sleep 1
   done
-  info "② 门户库迁移 + 一盒种子（★ 破坏性：truncate cascade）"
+  info "② 门户库 + 目录里各服务自己的库（迁移）"
   dc run --rm portal-api bun run db:migrate
-  dc run --rm portal-api bun run db:seed:onebox
-  info "③ 目录里各服务自己的库"
+  # ⚠️ 必须在种子之前：种子要替 deploy-controller（一盒里它启动即拒）跑各 App 的
+  #    逐租户基线（org 的预置档案字段就是这么来的），表还没建就只能眼看着它失败。
   local k
   for k in ${CATALOG//,/ }; do
-    case "$k" in files|llm-gateway|git) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
+    # qbank/lms 是 QBANK-WORKFLOW-ACTIONS §5.9 的变体成员；基础集不含它们时这段零执行。
+    case "$k" in files|llm-gateway|git|org|qbank|lms) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
   done
-  info "③b 你自己的库 xgent-${APP_KEY}"
+  info "②b 你自己的库 xgent-${APP_KEY}"
   _ensure_db "xgent-${APP_KEY}"
+  info "③ 一盒种子（★ 破坏性：truncate cascade）"
+  dc run --rm portal-api bun run db:seed:onebox
   if [ -n "${ONEBOX_MANIFEST:-}" ] || [ -f "app.manifest.json" ]; then
     local mf="${ONEBOX_MANIFEST:-app.manifest.json}"
     info "④ 注册你的 App（${mf}）"
@@ -534,7 +585,8 @@ cmd_up() {
   echo; info "跑一次体检："; cmd_doctor
 }
 
-# 门户自身控制台日志 → 日志与监控（onebox/docker-compose.portal-logs.yml）：
+# 门户自身控制台日志 → 日志与监控（采集段在 onebox/docker-compose.onebox.yml 内，
+# portal-logs 服务挂 onebox-logs profile，这里签密钥后【显式】起）：
 # 用 portal-self 签一把只带 observability.ingest 的 xsak_ 写进 compose.env，再起 portal-logs。
 # 前提（observability 已注册 + 已登记为平台基础服务应用 + portal-self 在）由 portal-logs-key.ts 判，
 # 不成立 ⇒ 退出码 3 ⇒ 这里只告警。密钥只签一次：已有 OBS_ACCESS_KEY 就不动。
@@ -774,12 +826,12 @@ cmd_add() {
     info "⑥b 迁移：${key}-server ${M_MIGRATE}"
     dc up -d postgres minio >/dev/null 2>&1 || true
     # shellcheck disable=SC2086
-    XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" "${extra_args[@]}" run --rm --no-deps "${key}-server" $M_MIGRATE \
+    XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" ${extra_args[@]+"${extra_args[@]}"} run --rm --no-deps "${key}-server" $M_MIGRATE \
       || warn "${key}-server ${M_MIGRATE} 失败 —— 看上面的报错（多半是 env 值没到位）"
   fi
 
   info "⑦ 起容器"
-  XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" "${extra_args[@]}" up -d "${key}-server"
+  XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" ${extra_args[@]+"${extra_args[@]}"} up -d "${key}-server"
 
   echo; info "⑧ 冒烟"
   # amd64 镜像在 Apple Silicon 上走仿真，冷启动能到两分钟（observability 实测 ~100s）：等 120s。
@@ -850,7 +902,7 @@ cmd_doctor() {
     local dbs; dbs="$(dc exec -T postgres psql -U postgres -lqt 2>/dev/null | cut -d'|' -f1 | tr -d ' \r' || true)"
     local miss=""
     for k in ${want//,/ }; do
-      case "$k" in llm-gateway) ;; esac
+      _is_portal_hosted "$k" && continue
       printf '%s\n' "$dbs" | grep -qx "xgent-$k" || miss="$miss xgent-$k"
     done
     if [ -z "$miss" ]; then _ok "目录里每个 App 的库都在"
@@ -867,7 +919,8 @@ cmd_doctor() {
 
   echo "⑤ 目录 vs 容器"
   for k in ${CATALOG//,/ }; do
-    case "$k" in files|llm-gateway|git) continue;; esac
+    _is_portal_hosted "$k" && continue
+    case "$k" in files|llm-gateway|git|org) continue;; esac
     if _svc_running "${k}-server"; then _ok "$k 的容器在跑"
     else _bad "$k 在 XGENT_APP_CATALOG 里但容器没起" "$0 add ${k}（清单已注册的话它只会补建库+起容器）"; fi
   done
@@ -879,6 +932,7 @@ cmd_doctor() {
   code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/health" || true)"
   [ "$code" = "200" ] && _ok "门户 /health 200" || _bad "门户 /health HTTP ${code:-000}" "000=反代没起或端口不对（$0 dc ps）；其它看 $0 dc logs portal-api"
   for k in ${keys//,/ }; do
+    _is_portal_hosted "$k" && continue
     code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/svc/$k/health" || true)"
     case "$code" in
       200) _ok "/svc/$k 200";;

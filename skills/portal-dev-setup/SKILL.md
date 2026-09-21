@@ -32,6 +32,18 @@ S="$SKILL_DIR/scripts/onebox.sh"
 > `<你的门户地址>`。真实地址只作为**值**写进你自己那份 `.xgent-registry.env`
 > （`MANIFEST_STORE` / `TARGET_XGENT_PLATFORM`）。
 
+## 一套就够：一台机器只起一盒
+
+一盒是**全机共用**的联调底座，compose 项目名固定 `xgent-onebox`——它不属于某个 App，
+你在本机调的所有 App 都接进这**同一套**。`docker compose ls` 已经能看到一套在跑时，
+**别再 `init` 第二套**（init 检测到本机已有别的一盒会直接停下）：
+
+- 要拉平台侧的别的 App 进来陪调：`onebox.sh add <key>`（§2.1），它进的就是这套。
+- 要调你自己的**另一个** App（在另一个 repo）：`XGENT_ONEBOX_HOME=<已有 portal-onebox/ 的路径>`
+  复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/minio（§5）。
+- 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/minio 落位永远避开
+  你本地 dev 栈的 5432/6379/9000-9001（见 §5 的直连表）。
+
 ## 0. 先备齐三样
 
 | 你需要 | 从哪来 |
@@ -101,6 +113,7 @@ npm install
    不需要门户仓，也不会有「文档里的 compose 和镜像对不上」这种漂移。
 2. **挑空闲端口**。一盒只发布 6 个宿主端口（80/443 · 5432 · 6379 · 9000/9001），
    开发机上这些十有八九被占——它逐个探测并退让，把结果写进 `compose.env` 并回显。
+   挑出来的 pg/redis/minio 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
 3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag）。
    覆盖块**放在文件最末尾**，因为 docker compose 读 env-file 是**后定义者胜**——以后要改配置也往那下面加，别回上面改。
 4. 把 `portal-onebox/` 加进 `.gitignore`（里面是密钥，且随时能重新生成）。
@@ -152,12 +165,12 @@ S="$SKILL_DIR/scripts/onebox.sh"
 # 1) 基础设施
 "$S" dc up -d postgres redis minio
 
-# 2) 门户库迁移 + 一盒种子   ★ 破坏性：truncate cascade，清掉租户/用户/清单/安装
+# 2) 门户库 + 四个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
 "$S" dc run --rm portal-api bun run db:migrate
-"$S" dc run --rm portal-api bun run db:seed:onebox
+for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k:migrate; done
 
-# 3) 三个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
-for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:migrate; done
+# 3) 一盒种子   ★ 破坏性：truncate cascade，清掉租户/用户/清单/安装
+"$S" dc run --rm portal-api bun run db:seed:onebox
 
 # 3b) 你自己的库：新镜像在 postgres【首次初始化】时按 APP_KEY 建好 `xgent-<key>`；
 #     老镜像不建，换过 APP_KEY 的也不会补建（初始化脚本只在数据卷为空时跑一次）。
@@ -174,8 +187,13 @@ for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:mig
 "$S" dc up -d
 ```
 
-三条顺序约束，颠倒了症状都很难反查：
+顺序约束，颠倒了症状都很难反查：
 
+- **各服务自己的库要在 `db:seed:onebox` 之前迁移完。** 一盒里 deploy-controller 启动即拒，
+  所以「逐租户基线」由种子代跑（`org` 的预置档案字段就是这么来的）。表还没建就只是一条
+  `⚠ org per-tenant baseline FAILED`，栈照样起得来 —— 症状要到你在组织架构里**建第一个员工**
+  时才出现：`UNKNOWN_FIELD 未知字段：name`（零字段定义时连预置的「姓名」都是未知 key）。
+  补救：`"$S" dc run --rm portal-api bun run db:org:migrate` 之后重跑一次 `db:seed:onebox`。
 - **`db:seed:onebox` 必须在 `register-app` 之前。** 种子第一步是 `truncate … marketplace_listings … cascade`——
   先注册后种子 = 你的 App 注册被静默清掉，市场里找不到它。
 - **`register-app` 最好在 `reverse-proxy` 之前。** 它落的是一个 `/svc` 放行 map 文件，而反代**启动时**才读那个目录。
@@ -186,9 +204,15 @@ for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:mig
 - **要做跨应用交换的，`register-app` 得跑两次。** 发起方 App Secret 绑在**已安装实例**上，所以是
   `register-app` → 在应用市场里装上你的 App → **再跑一次 `register-app`**（幂等）。漏了的症状是交换在发起方 401。
 
-一盒里带三个基础服务：`files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务），
-外加一个**平台基础服务应用** `observability`（日志与监控）。你的 App 要用前三个的数据，就在 manifest 里声明
-`exchangeTargets` 走令牌交换；日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
+一盒里带四个基础服务：`files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务）·
+`org`（组织架构：部门/岗位/任职/汇报线），外加一个**平台基础服务应用** `observability`（日志与监控）。
+你的 App 要用前四个的数据，就在 manifest 里声明 `exchangeTargets` 走令牌交换；
+组织架构另有一条**服务态**只读面（`org.read`，不走用户态交换、也不需要 consent）：
+`/svc/org/api/v1/query/superiors`（批量查直属上级，上限 200）与 `/svc/org/api/v1/query/capabilities`
+（`{ superior: boolean }` —— 本租户有没有汇报数据）。⚠️ 一盒装上的是**空组织**，要数据先在
+App 里走「员工 → 导入」（CSV），否则上级一律回 `null` / `reason: "no-employee"`。
+
+日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
 **默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
 
 ### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
@@ -202,9 +226,9 @@ for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:mig
   `OBSERVABILITY_PORT=8080` 让它在 8080 上听（一盒反代只反代 `<key>-server:8080`）。
 - **⑥** 门户自身的控制台日志：`up` 用 `portal-self` 签一把只带 `observability.ingest` 的 `xsak_` 写进 compose.env
   的 `OBS_ACCESS_KEY`，再起 `portal-logs`（fluent-bit）；portal-api 的 stdout/stderr 走 docker 的 fluentd 日志驱动
-  进去，落 `app_portal_console`（`docker logs portal-api` 照常可用）。这一层只在目录含 observability 时叠加
-  （`onebox/docker-compose.portal-logs.yml`）。
-- 不想要：把 `XGENT_APP_CATALOG` 里的 `observability` 去掉再 `up`（种子会重跑，破坏性）。
+  进去，落 `app_portal_console`（`docker logs portal-api` 照常可用）。采集段已并入
+  `onebox/docker-compose.onebox.yml`（原 portal-logs.yml 并入）；collector 只在目录含 observability 时由 `up` 签密钥并显式起。
+- 不建议去掉：它就是联调时看日志的面。坚持要去掉就把 `XGENT_APP_CATALOG` 里的 `observability` 删掉再 `up`（种子会重跑，破坏性），并把 `onebox/docker-compose.onebox.yml` 里五段 logging 注掉——否则 daemon 会有 fluentd 重连噪音。
 - 它的界面（`/apps/observability/`）**不在一盒镜像里**——那是 App 团队经发布提案上传的产物；一盒里只有服务面。
   看落了什么用它的查询面：`POST /svc/observability/api/t<租户UUID去横线>/_search?type=logs`，**只认用户票**（`xsak_` 会 401），
   票从 `/auth/dev/start` 登进去后在浏览器里拿，或 `"$S" dc run --rm portal-api bun -e '…mintForApp…'`。
@@ -218,7 +242,7 @@ for k in files llm-gateway git; do "$S" dc run --rm portal-api bun run db:$k:mig
 | 到达方式 | 一条命令直写库，幂等 | `xrel_` 令牌 → `POST /api/market/release/:key` → **发布提案** |
 | 首次接入 | 立即生效 | **治理档 ⇒ 落 pending**，要自己在 `/console/releases` 批 |
 | SA 密钥 | manifest 里那个已知明文，改都不用改 | manifest **拒收**明文（`mode:"prod"`），随机签发且 `issuedSecret` **只回显给审批人** |
-| `exchangeInitiatorSecret` | 写进已安装实例（跑两次那条） | manifest 拒收，改由平台侧 env 提供 |
+| `exchangeInitiatorSecret` | 写进已安装实例（首个租户装完要重跑一次） | manifest 拒收；批准时平台生成并保管、换版注入 `<PREFIX>_APP_SECRET`（要钉值就写进 compose.env，apply 时接管） |
 | **后端镜像 tag** | 不参与（一盒的容器归 compose） | 提交 `deployDescriptor.image`、也落库，**但一盒里没人消费**（见下） |
 | 适合 | 天天改 manifest 调试 —— **默认走这条** | 排练生产发版链：定级会不会被打回治理档、审批屏长什么样、`requiredEnv` 缺值会不会被拒 |
 
@@ -237,9 +261,9 @@ release-cli 在一盒里是**通的**（`/api/market/release/*` 就在 portal-ap
 
 > 密钥那条有干净解法，不必去审批屏抄：portal-api 也读 `compose.env`，把
 > `<PREFIX>_SA_CLIENT_SECRET`（和声明了 `exchangeTargets` 时的 `<PREFIX>_APP_SECRET`）
-> 写在里面，apply 就用你钉的这个值而不是随机签发。`<PREFIX>` = listingKey 大写、连字符换下划线
-> （`omni-parser` → `OMNI_PARSER`）。漏了 `_APP_SECRET` 的症状是跨应用交换在 `/oauth/token` 401，
-> 注册时会有一条 warning 提醒。
+> 写在里面，apply 就用你钉的这个值接管并保管，而不是随机签发（EXCHANGE-SECRET-HOLD：
+> 接管后值落在平台侧、换版时注入容器，compose.env 里那行之后可删）。`<PREFIX>` = listingKey 大写、连字符换下划线
+> （`omni-parser` → `OMNI_PARSER`）。`_APP_SECRET` 两侧不一致的症状是跨应用交换在 `/oauth/token` 401。
 
 ### 2.1 再拉一个别的 App 进来（依赖多模态解析、知识库这类）
 
@@ -275,8 +299,9 @@ App 都要改一次 skill，等于把问题换了个地方。manifest 里已经�
 | App Secret | 清单声明了 `exchangeTargets` 时 | 注入清单的 `exchangeInitiatorSecret` | `<PREFIX>_APP_SECRET` |
 
 ⚠️ 第二把只有**跨应用交换的发起方**需要。漏了它的症状很难查：交换在**发起方**上 401，
-看起来像被调方的问题。另外 `wireInitiatorSecret` 只写**已安装**的行 —— 所以顺序是
-「`add` → 浏览器里勾选安装 → 再跑一次 `add`」（幂等）。
+看起来像被调方的问题。另外发起方密钥的哈希只随 register 布进**当时已装**的行 —— 所以第一个
+租户的顺序是「`add` → 浏览器里勾选安装 → 再跑一次 `add`」（幂等）；之后装的租户会随安装
+自动补布（EXCHANGE-SECRET-HOLD 的安装路径布线）。
 
 **清单从哪来**（优先级从高到低）：
 
@@ -412,12 +437,20 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > 而现场没有任何报错 —— 真实案例（CR-4）。`"$S" pull` 换新的再判。
 那张表按「你看到什么」编排。最容易白白浪费半天的两条先放这儿：
 
-> **`portal-api` / `*-server` 显示 `unhealthy` 是假红，不用查。** 一盒镜像没装 `curl`（省体积），
-> 而 compose 的 healthcheck 写的正是 `curl -fsS …/health`，于是**永远**失败——`docker inspect` 里
-> 看到的是 `curl: not found`。判活只认宿主侧探测。`reverse-proxy` 和 pg/redis/minio 的 healthy 是真的。
+> **看到 `unhealthy` 先读那条探针，再决定要不要查。**
+> `docker inspect <容器> --format '{{json .Config.Healthcheck.Test}}'`，三种情形：
+> · `curl -fsS …/health`（`portal-api` / `*-server`）⇒ **假红**，且说明这盒的 compose 是**旧镜像**
+> 里那份：精简镜像没装 `curl`，`docker inspect .State.Health` 里是清一色 `curl: not found`。
+> · `wget … http://127.0.0.1:80/`（`reverse-proxy`）⇒ 只要 `XGENT_SITE_ADDRESS` 是主机名就**必然**
+> 假红：Caddy 把它 308 到 `https://127.0.0.1/`，对一个 IP 建 TLS 没有 SNI，回 `SSL alert number 80`。
+> · 探针已是 `bun -e fetch(...)` / `curl -fsS -o /dev/null http://127.0.0.1:80/`（新镜像的两条）
+> 却仍 `unhealthy` ⇒ **真红**，去看 `"$S" dc logs <服务>`。
+> 判活一律以 `"$S" smoke` 的宿主侧探测为准；pg/redis/minio 的 healthy 一直是真的。
 
-> **`COMPOSE_PROJECT_NAME` 必须唯一。** 同机跑两套 compose 而项目名相同，compose 会认为它们是同一项目——
-> 容器互相接管、命名卷共享，症状是「我起了一盒，结果把另一套的容器停了」。`init` 已经给你设成 `onebox-<key>`。
+> **`COMPOSE_PROJECT_NAME` 固定是 `xgent-onebox`，别靠改名来「并存」两套。** 同机两套 compose
+> 项目名相同，compose 会认为它们是同一项目——容器互相接管、命名卷共享，症状是「我起了一盒，
+> 结果把另一套的容器停了」。一台机器本来就只该有一套一盒（见文首「一套就够」）：init 检测到
+> 本机已有别的一盒会停下，第二个 App 要联调就接进现有那套。
 
 ## 5. 后端想跑在宿主上（保留热重载）
 
@@ -435,6 +468,21 @@ services:
 
 然后 `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/host-backend.yml up -d app-backend`。
 此时 `APP_IMAGE` 不再被用到（compose 仍要求它有值，随便填一个）；`APP_KEY` 照旧——别名还是靠它。
+
+**宿主进程的 DB / 缓存 / 对象存储也用一盒的，别再单起。** postgres / redis / minio 都发布了
+宿主端口，而 init 挑端口时避开了本机已占用的口——所以它们和你本地 dev 栈的
+5432 / 6379 / 9000-9001 不冲突（典型落位 15432 / 16379 / 19000-19001；以 `compose.env` 末尾的
+`POSTGRES_PORT` / `REDIS_PORT` / `MINIO_PORT` / `MINIO_CONSOLE_PORT` 为准，`"$S" env` 也回显）。
+调试你自己的 App 时——宿主上的 dev server、另一个 repo 的服务、临时排查脚本——直接指过来：
+
+| 服务 | 宿主侧地址 | 凭据 / 说明 |
+| --- | --- | --- |
+| Postgres | `postgres://postgres:postgres@localhost:<POSTGRES_PORT>/xgent-<你的key>` | 库不存在先建（§2 3b 那条 CREATE DATABASE） |
+| Redis | `localhost:<REDIS_PORT>` | 无密码 |
+| MinIO (S3) | `http://localhost:<MINIO_PORT>` | `minioadmin` / `minioadmin`；控制台在 `<MINIO_CONSOLE_PORT>`，桶自己建（建议 `xgent-<你的key>`） |
+
+这样宿主进程和容器里的 App 看到的是同一份库、同一个桶。注意上面是**宿主侧**地址——
+容器网里那套服务名与端口不变（`postgres:5432` / `redis:6379` / `minio:9000`）。
 
 ## 6. 重置与拆栈
 

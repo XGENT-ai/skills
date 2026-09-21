@@ -93,9 +93,11 @@ sha256(<manifest 的 exchangeInitiatorSecret>)
   == sha256(<你后端 env 的 <PREFIX>_APP_SECRET>)
 ```
 
-「先装再重跑」那一步**仍然要跑一次**：`installListing` / `wireExchangeTargets` 只写交换 grant + 白名单，
-**不写 App Secret**；只有 `register-app`（与 seed 的 provisioning 路径）写它。所以装完之后的那次重跑是
-必要的，**之后每次重跑都显示 0，那是正常的**。
+「先装再重跑」那一步只对**第一个租户**是必要的：`installListing` 现在会把发起方密钥的哈希
+随安装布进新实例（EXCHANGE-SECRET-HOLD：有平台保管值用保管值，dev 没有保管值就从既有实例的
+active 行拷哈希）——但「谁都还没布过」的第一个实例仍然只有 `register-app`（与 seed 的
+provisioning 路径）能写。所以装完第一个租户后的那次重跑仍要跑，**之后每次重跑都显示 0、
+之后装的租户自动布上，那都是正常的**。
 
 ## 3. 注册（生产）
 
@@ -105,8 +107,12 @@ sha256(<manifest 的 exchangeInitiatorSecret>)
 （listing 上架 + SA + /svc + 已装租户对齐）。**不要**把外部 App 登记进 `LISTING_DEFS` ——
 门户只保留平台侧事实（`EXCHANGE_WIRING` / Caddy 内联行 / 部署行，及作为**种子**的
 `SA_DEFS` 与 scope 常量 —— 特权 scope 已可经 `privilegedServiceScopes` 申请、审批授予），
-`bootstrap:prod` 对外部 key 只自愈 SA 与部署行。**生产没有 manifest 明文密钥这条路**
-（secret 取 env、缺省随机生成、明文只回显一次给审批人）。
+`bootstrap:prod` 对外部 key 只自愈 SA 与部署行。**生产没有 manifest 明文密钥这条路**：
+SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批准时生成、enc:v1 保管、
+换版时注入容器（EXCHANGE-SECRET-HOLD）；明文只回显给审批人一次（供本地联调），轮换走
+控制台（应用清单 ›「轮换交换密钥」/ 服务账号 ›「轮换密钥」），都顺带排换版。要交接一枚
+**既有**的交换密钥（比如和一盒联调对齐），把值写进门户进程的 `<PREFIX>_APP_SECRET` env
+再批准一次即可 —— apply 会把它接管为保管值，两侧从此同源，那行 env 之后可删。
 
 ⚠️ **secret 一致红线**：平台落库的服务账号 secret 与你镜像 env 里的必须一致。漂移症状 = 自省 401，或「跨应用授权缺失/未开启」（实为 `SECRET_INVALID`）。排查：对你侧 secret 求 sha256 与门户 DB 存的哈希比对。
 
@@ -134,7 +140,7 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 ### 4.1 一盒里有什么，以及刻意没有什么
 
 一盒是**调试底座，不是门户**：它按 `deploy/onebox/Dockerfile` 单独构建，只带四个**基础服务 App**——
-`files`（文件管理）· `ingest`（信息获取）· `llm-gateway`（大模型网关）· `git`（Git 服务）。
+`files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务）· `org`（组织架构）。
 `git` **依赖 `files`**，两者要么一起在 `XGENT_BASE_APPS` 里、要么一起不在。
 
 下面三件「缺失」都是刻意的，**不是环境坏了**，收到这些报错别当配置问题查：
@@ -157,9 +163,10 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 
 ⚠️ 两个必改/必不做：
 
-- **`COMPOSE_PROJECT_NAME=onebox-<你的 App key>`** —— 模板里写死的是 `xgent`，同机起两套栈时
+- **`COMPOSE_PROJECT_NAME=xgent-onebox`** —— 模板里写死的是 `xgent`，同机起两套栈时
   compose 会认为它们是同一个项目：容器名冲突、命名卷被共享，症状是「我起了一盒，结果把另一套的
-  容器停了」。
+  容器停了」。项目名固定 `xgent-onebox`、全机只跑一套一盒：已有在跑的一盒时别再起第二套，
+  把你的 App 接进现有那套（见 portal-dev-setup 文首「一套就够」）。
 - **不要**关掉 `local-infra` 让一盒去连你本地那套 PG —— 库名会撞（`xgent-portal` / `xgent-files` …），
   而 `db:seed:onebox` 是会往里写的，等于拿一盒的种子污染你的本地开发库。
 
@@ -185,8 +192,9 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 #      -f app-devkit/docker-compose.app-dev.yml [micro 加 app-frontend.yml]
 #      --profile local-infra --profile app-external up -d reverse-proxy portal-api app-backend
 # 5b) 按需起基础 App 后端（同一个镜像，compose command 选跑哪个）+ 各自库迁移:
-#      --profile app-files --profile app-ingest --profile app-llm-gateway --profile app-git up -d
-#      run --rm portal-api bun run db:files:migrate   # 同理 db:ingest / db:llm-gateway / db:git
+#      --profile app-files --profile app-llm-gateway --profile app-git --profile app-org up -d
+#      run --rm portal-api bun run db:files:migrate   # 同理 db:llm-gateway / db:git / db:org
+#      ⚠️ 这批迁移要跑在 db:seed:onebox 之前 —— 种子会替 deploy-controller 跑各 App 的逐租户基线
 # 6) 你自己的库迁移：跑你镜像的迁移 argv（生产由门户经 migrateArgs 自动跑，这里手动跑同一条）
 #      run --rm --env-file <同一份> <你的镜像> --role migrate
 #    每租户 bootstrap（若你的表 FK 自己的 tenants）：门户目前没有钩子，本地手动建行

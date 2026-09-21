@@ -22,10 +22,11 @@
 
 | 你看到 | 真相 |
 | --- | --- |
-| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **假红。** 一盒镜像**没装 `curl`**（连 `wget` 也没有），而 compose 的 healthcheck 写的正是 `curl -fsS …/health` —— 它永远失败。`docker inspect <容器> --format '{{json .State.Health}}'` 会看到清一色 `curl: not found`。判活只认 `"$S" smoke`。`reverse-proxy` 与 pg/redis/minio 的 healthy 是真的 |
+| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **先读探针再判**：`docker inspect <容器> --format '{{json .Config.Healthcheck.Test}}'`。是 `curl -fsS …/health` ⇒ **假红**，且说明这盒的 compose 是旧镜像那份（精简镜像没装 `curl`，`.State.Health` 里清一色 `curl: not found`）；已经是 `bun -e fetch(...)` ⇒ **真红**，去看 `"$S" dc logs <服务>`。判活一律以 `"$S" smoke` 为准；pg/redis/minio 的 healthy 一直是真的 |
+| `reverse-proxy` 长期 `(unhealthy)`，而 `https://localhost/` 一切正常 | **旧镜像上必然的假红**（与站点地址有关，不是 Caddy 坏了）：那条探针是 `wget -q -O /dev/null http://127.0.0.1:80/`，`XGENT_SITE_ADDRESS` 一旦是主机名，Caddy 就把它 308 到 `https://127.0.0.1/` —— 对一个 **IP** 建 TLS 没有 SNI，`on_demand_tls` 选不出证书，回 `SSL alert number 80`（`docker inspect <容器> --format '{{range .State.Health.Log}}{{.Output}}{{end}}'` 能看到）。新镜像换成了不跟随重定向的 `curl -fsS -o /dev/null http://127.0.0.1:80/`，308 本身即判活 |
 | `curl http://localhost/api/health` → 404 `路由不存在` | **探错路径了。** 门户健康端点是 `/health`，不带 `/api`；各服务是 `/svc/<key>/health` |
 | 改了 `compose.env` 却「没生效」 | 这份文件是**拼装**出来的（基础模板 + 一盒增量 + devkit 增量 + 本机覆盖块），同一个键出现三四次很常见。**docker compose 后定义者胜**，你多半改在了中间那处。`"$S" env` 会把「同键多个不同值」标出来，并显示实际生效的那个。改配置一律往**文件最末尾**加 |
-| 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` 三个基础服务的代码，其余在构建时就删掉了（`ingest` 已移出基础集） |
+| 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` / `org` 四个基础服务的代码，其余在构建时就删掉了（`ingest` 已移出基础集） |
 | `bootstrap:prod` / 部署控制器一启动就退出并打印拒绝原因 | **刻意的。** 一盒是调试底座，不是门户，这两样启动即拒 |
 | 完整的 `db:seed` 失败 | 它会拉起十几个 App 的种子链，而那些代码不在镜像里。一盒只能用 `db:seed:onebox` |
 | 视频没有海报、网格缩略图变成图标 | 一盒不装 ffmpeg。`PREVIEW_MEDIA_CONVERTER_URL` 必须**留空**；填 `auto` 会让每次转换去 exec 一个不存在的二进制 |
@@ -62,7 +63,7 @@
 | 症状 | 成因与修法 |
 | --- | --- |
 | `port is already allocated` | 一盒只发布 6 个宿主端口：80/443（`HTTP_PORT`/`HTTPS_PORT`）· 5432（`POSTGRES_PORT`）· 6379（`REDIS_PORT`）· 9000/9001（`MINIO_PORT`/`MINIO_CONSOLE_PORT`）。`init` 会自动避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
-| 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。每套栈一个唯一名（`init` 已设成 `onebox-<key>`） |
+| 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。一盒项目名固定 `xgent-onebox`，同机只该有一套——已有在跑的一盒时别再 init 第二套，把你的 App 接进现有那套（SKILL.md 文首「一套就够」） |
 | 报缺 `APP_IMAGE` / `APP_KEY` | `docker-compose.app-dev.yml` 里的 `${APP_IMAGE:?}` 是**解析期**求值的，跟 profile 无关。`$S` 会按 `compose.env` 里这两行有没有值自动决定带不带那层——手敲 compose 时才会撞上 |
 | 报缺 `APP_FRONTEND_DIST` | 你给 `service` 型 App 叠了前端 override。service 无前端，不要那层 |
 | 有服务起来就 crash-loop 刷屏，日志淹没真问题 | 少叠了一盒那层 override（`onebox/docker-compose.onebox.yml`）。它的作用就是关掉两个在精简镜像里跑不起来、却在基础 compose 里默认启动的服务。用 `"$S" dc` 不会漏 |
