@@ -67,6 +67,8 @@
 
 [填：起本仓的命令、端口、依赖的基础设施容器、测试与 verify 的入口。写清「一把起齐」的那条命令，以及最容易踩的启动坑。]
 
+- **缺服务、缺容器就停下来问，不要擅自装。** 如果遇到本地开发环境缺少依赖的服务或容器，停下来要求用户协助或确认是否安装环境依赖，不要擅自下载镜像启动新的容器。
+
 ### `key` 是四位一体的，永不改
 
 ```
@@ -162,6 +164,7 @@ listingKey == TDT 的 aud == 安装态 appKey == /svc/<APP_KEY> == scope 命名�
 
 - **三个包各自独立编号，不是一套齐版**；registry 上**缺号是常态**（仓里 bump 过但没推）。以 `npm view @xgent/<pkg> versions` 为准，**写范围不要精确 pin**。
 - **`^0.x` 只放行 patch**：`^0.1.0` 不会解析到 `0.2.x`。要用新 API 就显式把范围提上去，症状是 `sdk.<新方法> is not a function`。
+- **未经用户明确声明要升级该大版本，禁止升级 Major**（`x.y.z` 的 `x`，包括 `0.x` → `1.x`）。
 
 ### 前端 UI 开发：设计用 impeccable，验证用 Chrome extension / kimi-webbridge / Playwright（`micro` 型才有；`service` 型删掉本节）
 
