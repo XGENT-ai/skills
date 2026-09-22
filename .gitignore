@@ -27,3 +27,8 @@
 .codex/skills/
 /skills/swarm-workspace
 skills/swarm/evals/evals.json
+.env.cf
+
+# engine 二进制不进库也不进 npm 包(见 scripts/publish-vendor-r2.mjs):
+# 由 vendor 脚本抓到本地,发版时传 R2,装机端按 VERSION.json 的 url 取。
+/vendor/impeccable/engine/

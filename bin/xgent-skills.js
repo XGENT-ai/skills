@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks、启用相关 settings,
-// 并把随包 vendor 的 impeccable(skills + hooks + engine 二进制)一并装上。
+// 并把 vendor 的 impeccable 一并装上:skills 与 hooks 随包,engine 二进制按需从 R2 取。
 // 零依赖,Node >= 18。
 
 'use strict';
 
+const { spawnSync } = require('node:child_process');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -181,6 +183,21 @@ function mergeHookManifests(existing, fresh) {
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function sha256(buf) {
+  return crypto.createHash('sha256').update(buf).digest('hex');
+}
+
+// 用户设了代理就必须走代理,不能绕过去直连。curl 按 scheme 分:http_proxy 只管
+// http://,而我们的地址都是 https://,所以只设了 HTTP_PROXY 的机器上它会直连 ——
+// 那不是用户的本意。这里把它补成 https_proxy 交给 curl。已经设了 https/all 的
+// 就原样不动,no_proxy 照旧由 curl 自己判。
+function proxyEnv() {
+  const env = process.env;
+  if (env.https_proxy || env.HTTPS_PROXY || env.all_proxy || env.ALL_PROXY) return env;
+  const http = env.http_proxy || env.HTTP_PROXY;
+  return http ? { ...env, https_proxy: http } : env;
 }
 
 function tryReadJson(file) {
@@ -371,25 +388,57 @@ function installProviderHooks(targetDir, provider, force) {
   console.log(`  写入  ${destRel} (impeccable hooks)`);
 }
 
+// 二进制不随 npm 包分发(一个平台十几 MB,见 package.json 的 files),从 R2 取:
+// 地址与 sha256 都在 VERSION.json 里,由维护者跑 scripts/publish-vendor-r2.mjs 写入。
+// 从源码仓库跑时 vendor/impeccable/engine 就在手边,优先用它,不必联网。
+function readEngineBinary(meta, target, engine) {
+  const src = path.join(VENDOR_DIR, 'engine', target, 'impeccable');
+  if (fs.existsSync(src)) return fs.readFileSync(src);
+  if (!engine.url) {
+    console.log(`  跳过  engine 二进制:VERSION.json 里没有 ${target} 的下载地址(维护者需跑 node scripts/publish-vendor-r2.mjs)`);
+    return null;
+  }
+  console.log(`  下载  engine v${meta.engineVersion} (${(engine.size / 1024 / 1024).toFixed(1)} MB) ← ${engine.url}`);
+  // 走系统 curl 而不是 fetch:它认 http_proxy/https_proxy,自带重试,也让这段
+  // 保持同步,不必把整条安装流程改成异步。
+  const tmp = path.join(os.tmpdir(), `xgent-impeccable-engine-${process.pid}`);
+  try {
+    const result = spawnSync('curl', ['-fsSL', '--retry', '3', '--retry-delay', '2', '--max-time', '600', '-o', tmp, engine.url], { stdio: ['ignore', 'ignore', 'inherit'], env: proxyEnv() });
+    if (result.status !== 0) {
+      console.log(`  跳过  engine 二进制:下载失败(curl 退出码 ${result.status}),首次运行 hook 时会自己联网下载`);
+      return null;
+    }
+    return fs.readFileSync(tmp);
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+}
+
 // engine 二进制放进 ~/.impeccable/bin/<版本>/:launcher 和 npx impeccable 都认
-// 这个版本化缓存,一台机器装一份,所有项目共用,首次运行也就不必联网下载了。
-// vendor 里只收了 macOS 的二进制,别的平台落到"跳过",由 launcher 首次运行时
-// 自己去 GitHub 下载(上游原本的行为)。
+// 这个版本化缓存,一台机器装一份,所有项目共用,之后运行也就不必联网了。
+// 只收了 macOS 的二进制,别的平台落到"跳过",由 launcher 首次运行时自己去
+// GitHub 下载(上游原本的行为)。
 function installEngineBinary(meta, force) {
   const arch = { arm64: 'arm64', x64: 'x64' }[process.arch] || process.arch;
   const target = `${process.platform === 'darwin' ? 'darwin' : process.platform}-${arch}`;
-  const src = path.join(VENDOR_DIR, 'engine', target, 'impeccable');
-  if (!fs.existsSync(src)) {
-    console.log(`  跳过  engine 二进制:vendor 里只收了 macOS 的版本,${target} 会在首次运行时联网下载`);
+  const engine = meta.engines && meta.engines[target];
+  if (!engine) {
+    console.log(`  跳过  engine 二进制:只收了 macOS 的版本,${target} 会在首次运行时联网下载`);
     return;
   }
   const cacheRoot = process.env.IMPECCABLE_HOME || path.join(os.homedir(), '.impeccable');
   const dest = path.join(cacheRoot, 'bin', meta.engineVersion, 'impeccable');
   const home = os.homedir();
   const destLabel = dest.startsWith(`${home}${path.sep}`) ? path.join('~', path.relative(home, dest)) : dest;
-  const content = fs.readFileSync(src);
-  if (!force && fs.existsSync(dest) && content.equals(fs.readFileSync(dest))) {
+  // 缓存里已经是对的那一份就别再下一遍十几 MB。
+  if (!force && fs.existsSync(dest) && sha256(fs.readFileSync(dest)) === engine.sha256) {
     console.log(`  未变  ${destLabel}`);
+    return;
+  }
+  const content = readEngineBinary(meta, target, engine);
+  if (!content) return;
+  if (sha256(content) !== engine.sha256) {
+    console.log(`  跳过  engine 二进制:sha256 与 VERSION.json 不符,没有落盘`);
     return;
   }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -423,7 +472,8 @@ function usage() {
 命令:
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并装上
-                  随包 vendor 的 impeccable(skills + hooks + engine 二进制)
+                  vendor 的 impeccable(skills + hooks,以及按需下载的
+                  engine 二进制)
   help            显示本帮助
 
 install 选项:

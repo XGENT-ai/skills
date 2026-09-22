@@ -1,7 +1,7 @@
 {
   "name": "@xgent-ai/skills",
   "version": "0.3.0",
-  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并离线安装 vendor 的 impeccable",
+  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 vendor 的 impeccable",
   "keywords": [
     "claude-code",
     "skills",
@@ -19,7 +19,10 @@
     "bin",
     ".claude/hooks",
     "skills",
-    "vendor"
+    "vendor/impeccable/bundle",
+    "vendor/impeccable/VERSION.json",
+    "vendor/impeccable/LICENSE",
+    "vendor/impeccable/NOTICE.md"
   ],
   "engines": {
     "node": ">=18"

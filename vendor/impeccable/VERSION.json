@@ -13,13 +13,16 @@
     "darwin-arm64": {
       "asset": "impeccable-darwin-arm64",
       "sha256": "0d48b6e16aa97664fdbe607d5da9ae320e389a1843e0ff1328f8c2530530320d",
-      "size": 12762240
+      "size": 12762240,
+      "url": "https://download.xgent.ai/vendor/impeccable/engine/v0.1.5/darwin-arm64/impeccable"
     },
     "darwin-x64": {
       "asset": "impeccable-darwin-x64",
       "sha256": "153971b0c00719dff9ebac13370cb7dbbbe12838b696fbaf3f7ab0b1b3726b52",
-      "size": 14400568
+      "size": 14400568,
+      "url": "https://download.xgent.ai/vendor/impeccable/engine/v0.1.5/darwin-x64/impeccable"
     }
   },
-  "fetchedAt": "2026-09-22T06:34:55.507Z"
+  "fetchedAt": "2026-09-22T06:34:55.507Z",
+  "publishedAt": "2026-09-22T08:54:24.856Z"
 }

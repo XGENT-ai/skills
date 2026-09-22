@@ -39,21 +39,26 @@ npx @xgent-ai/skills install
 
 ## vendor 的 impeccable
 
-[impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)的 skill bundle 与 engine 二进制整个 vendor 在 `vendor/impeccable/` 里,随 npm 包一起发布,所以 `npx @xgent-ai/skills install` 全程不联网 —— 官方的 `npx impeccable install` 要先下 15 MB 的 bundle、首次跑 hook 时再下十几 MB 的 engine,墙内经常卡在 `Download failed`。
+[impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)整个 vendor 在 `vendor/impeccable/` 里:15 MB 的 skill bundle 随 npm 包发布,十几 MB 的 engine 二进制不进包、改放自家 R2,由 `install` 按 `VERSION.json` 里的地址与 sha256 取。官方的 `npx impeccable install` 要先从 GitHub 下 bundle、首次跑 hook 时再下 engine,墙内经常卡在 `Download failed`;这里 bundle 一步不联网,engine 只走一次 R2(装过一次就落在 `~/.impeccable/` 里,之后都不用了)。
 
 装出来的东西和上游 `impeccable install` 的工程内安装一致(`impeccable doctor` 报 no drift):
 
 - `<harness>/skills/impeccable/`、`<harness>/agents/`、`<harness>/commands/`:按项目里已有的 harness 目录装,可用 `--providers` 指定;
 - hook manifest:Claude Code 写 `.claude/settings.local.json`(共享的 `settings.json` 里已有 impeccable hook 时以它为准),Cursor 写 `.cursor/hooks.json`,Codex 写 `.codex/hooks.json`,Copilot / Grok 写各自的 `hooks/impeccable.json`;
-- engine 二进制:只收 macOS(arm64 与 x64),按当前平台放进 `~/.impeccable/bin/<版本>/`,一台机器一份,所有项目和 `npx impeccable` 共用;非 mac 平台跳过这一步,由 launcher 首次运行时自己下载。
+- engine 二进制:只收 macOS(arm64 与 x64),按当前平台放进 `~/.impeccable/bin/<版本>/`,一台机器一份,所有项目和 `npx impeccable` 共用。缓存里已是对的那份就不再下;从本仓源码跑时直接用 `vendor/impeccable/engine/` 里的,不联网。非 mac 平台、以及 R2 拉不动时都只是跳过这一步,安装照常完成,由 launcher 首次运行时自己下载。
 
-升级 vendor 的版本(维护者执行,需要 curl 与 unzip):
+升级 vendor 的版本(维护者执行,需要 curl、unzip 与 aws CLI):
 
 ```bash
-node scripts/vendor-impeccable.mjs
+node scripts/vendor-impeccable.mjs    # 抓上游 bundle + engine 到 vendor/
+node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION.json
 ```
 
-脚本会取上游最新 release,按 ed25519 签名验 bundle、按 `.sha256` 验 engine 二进制,全部通过才落盘,并把版本与校验和写进 `vendor/impeccable/VERSION.json`。要加别的平台,改脚本里的 `ENGINE_TARGETS`。当前收录:skill 4.3.1 / engine 0.1.5(darwin-arm64、darwin-x64)。上游许可与三方声明见 `vendor/impeccable/LICENSE` 与 `vendor/impeccable/NOTICE.md`。
+第一步取上游最新 release,按 ed25519 签名验 bundle、按 `.sha256` 验 engine 二进制,全部通过才落盘,并把版本与校验和写进 `vendor/impeccable/VERSION.json`。要加别的平台,改脚本里的 `ENGINE_TARGETS`。
+
+第二步把 engine 传到 R2 的 `vendor/impeccable/engine/v<版本>/<平台>/impeccable`,传完回读公共地址核一遍 sha256,再把 url 写进 `VERSION.json` 的 `engines`。凭据读仓库根的 `.env.cf`(`AGENT_RELEASE_R2_*`,已 gitignore,不在库里)。两步的顺序不能反 —— 第一步会重写 `VERSION.json`,先传就把 url 冲掉了;漏了第二步,发出去的包里 engine 没有下载地址,用户那边只会看到"跳过"。
+
+当前收录:skill 4.3.1 / engine 0.1.5(darwin-arm64、darwin-x64)。上游许可与三方声明见 `vendor/impeccable/LICENSE` 与 `vendor/impeccable/NOTICE.md`。
 
 ## Skills 列表
 

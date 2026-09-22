@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // vendor-impeccable — 把上游 impeccable 的 skill bundle 与 engine 二进制抓进
-// vendor/impeccable/,供 `xgent-skills install` 离线安装。维护者手动执行:
+// vendor/impeccable/,供 `xgent-skills install` 安装。维护者手动执行:
 //
 //   node scripts/vendor-impeccable.mjs
+//
+// 本脚本会重写 VERSION.json,所以跑完接着跑 scripts/publish-vendor-r2.mjs:
+// engine 二进制不随 npm 包分发,得传上 R2 并把下载地址写回 VERSION.json。
 //
 // bundle 按上游的 ed25519 签名(scripts/bundle-signing-keys.json 的公钥)验签,
 // engine 二进制按 .sha256 旁文件校验;任何一步不过就中止,不写 vendor/。
@@ -37,10 +40,21 @@ function die(message) {
   process.exit(1);
 }
 
+// 用户设了代理就必须走代理,不能绕过去直连。curl 按 scheme 分:http_proxy 只管
+// http://,而我们的地址都是 https://,所以只设了 HTTP_PROXY 的机器上它会直连 ——
+// 那不是用户的本意。这里把它补成 https_proxy 交给 curl。已经设了 https/all 的
+// 就原样不动,no_proxy 照旧由 curl 自己判。
+function proxyEnv() {
+  const env = process.env;
+  if (env.https_proxy || env.HTTPS_PROXY || env.all_proxy || env.ALL_PROXY) return env;
+  const http = env.http_proxy || env.HTTP_PROXY;
+  return http ? { ...env, https_proxy: http } : env;
+}
+
 let downloadSeq = 0;
 
 function curlTo(url, dest, what) {
-  const result = spawnSync('curl', ['-fsSL', '--retry', '3', '--retry-delay', '2', '--max-time', '600', '-o', dest, url], { stdio: ['ignore', 'ignore', 'inherit'] });
+  const result = spawnSync('curl', ['-fsSL', '--retry', '3', '--retry-delay', '2', '--max-time', '600', '-o', dest, url], { stdio: ['ignore', 'ignore', 'inherit'], env: proxyEnv() });
   if (result.status !== 0) die(`下载 ${what} 失败(curl 退出码 ${result.status}): ${url}`);
 }
 
@@ -55,7 +69,7 @@ function download(url, what) {
 
 // api 接口只给 302,版本号得从 Location 里读,所以这一跳不能跟随重定向。
 function resolveRedirect(url) {
-  const result = spawnSync('curl', ['-fsS', '--retry', '3', '--retry-delay', '2', '--max-time', '120', '-o', '/dev/null', '-w', '%{redirect_url}', url], { encoding: 'utf8' });
+  const result = spawnSync('curl', ['-fsS', '--retry', '3', '--retry-delay', '2', '--max-time', '120', '-o', '/dev/null', '-w', '%{redirect_url}', url], { encoding: 'utf8', env: proxyEnv() });
   if (result.status !== 0) die(`解析 ${url} 的重定向失败(curl 退出码 ${result.status})`);
   return result.stdout.trim();
 }
