@@ -1,0 +1,136 @@
+Troubleshooting
+
+Troubleshooting [​](#troubleshooting)
+
+Start with the symptom, then inspect a specific build before clearing any cached work.
+
+| Symptom | First check |
+| --- | --- |
+| Plain Cargo does not use mbx | [Check Cargo's path](https://mr-boxington.jdx.dev/setup#verify-plain-cargo); for standalone setup, also run `mbx setup --status` |
+| A build restores little or nothing | `mbx explain --last`, then [read the results](https://mr-boxington.jdx.dev/cache-results#troubleshooting-a-low-hit-rate) |
+| Cargo waits for a target lock | Give simultaneous builds [separate targets](https://mr-boxington.jdx.dev/scheduling) |
+| Cargo metadata fails before a build | [Check workspace discovery](#workspace-discovery-fails) |
+| Build storage is on NFS | Move outputs to [local storage](https://mr-boxington.jdx.dev/configuration#local-build-storage) |
+| Remote requests fail | `mbx doctor`, then [check authentication](https://mr-boxington.jdx.dev/remote-cache#authenticate) |
+| Build storage is larger than expected | `mbx cache stats` and `mbx gc --dry-run`; review [budgets](https://mr-boxington.jdx.dev/managed-targets#budgets-scale-with-the-disk) |
+| Breakpoints point at an old checkout | Use the [debugger recipe](https://mr-boxington.jdx.dev/cookbook/local-development#debug-a-binary-restored-from-another-checkout) |
+
+## Diagnose the installation [​](#diagnose-the-installation)
+
+sh
+
+```
+mbx doctor
+```
+
+Example output (versions, paths, and budgets depend on your machine):
+
+text
+
+```
+  ok  cargo        cargo 1.98.0 (797e8a9bc 2026-08-05)
+  ok  rustc        rustc 1.98.0 (88d9e12ae 2026-08-18)
+  ok  cache        /home/you/.cache/mbx is writable
+  ok  session      Unix-domain listeners are available
+  ok  config       50.0 GiB budget, automatic gc enabled, managed targets enabled at /home/you/.cache/mbx/targets
+  ok  reflink      supported by the cache filesystem
+  ok  setup        mise Cargo wrapper is active and the fallback shim is current at /home/you/.local/share/mbx/bin/cargo
+  ok  remote       not configured; using the local cache
+
+0 failures, 0 warnings
+```
+
+Doctor's setup check currently recognizes explicit mise wrappers and the standalone shim installed by `mbx setup`, but not the native Rust tool option. Its setup warning alone does not mean native wrapping is inactive; [check Cargo's path](https://mr-boxington.jdx.dev/setup#verify-plain-cargo).
+
+For standalone setup, doctor checks that mise's Cargo wrapper is active, or that the installed fallback shim matches the running mbx and is the first `cargo` on `PATH`. It also checks the Cargo and rustc executables, cache write access, the local build-session listener, filesystem reflink support, effective remote policy, and remote protocol connectivity. Warnings describe setup problems, optional features, or fallbacks; failures make the command exit unsuccessfully.
+
+Build sessions normally communicate over a Unix-domain socket. When a sandbox blocks Unix socket listeners but permits filesystem FIFOs, mbx automatically uses FIFO transport and keeps caching enabled. If neither transport is available, mbx warns and runs Cargo without caching instead of preventing the build from starting.
+
+## Workspace discovery fails [​](#workspace-discovery-fails)
+
+Managed Cargo builds need a successful metadata probe to locate the workspace and verify output storage. If the probe fails, mbx stops before compilation. Run the probe directly with the same manifest and configuration options:
+
+sh
+
+```
+cargo metadata --no-deps --format-version 1
+```
+
+Resolve the reported Cargo error, then retry the build. Help, cleanup, and explicitly disabled shim invocations still pass through without this probe.
+
+Outside a project, commands such as `cargo binstall` pass through to Cargo. `cargo build` in a directory with no manifest reports Cargo's own missing-manifest error. An alias that names a local package still requires verified build storage:
+
+toml
+
+```
+[alias]
+i = ["install", "--path", "/path/to/project with spaces"]
+```
+
+mbx reads alias arguments from Cargo configuration, preserving array elements, and retries workspace discovery for the package they name. It supports aliases from the configuration hierarchy, `CARGO_HOME`, and `CARGO_ALIAS_*` variables, including recursive aliases and Cargo's built-in shorthand commands.
+
+When metadata fails, alias recovery does not support configuration `include` files, aliases with `--config` overrides, directory-changing options, or unstable Cargo options. An alias mbx cannot read in full is refused rather than guessed when its storage cannot be verified; spell out the build command with its manifest or path instead of the alias to diagnose it. Commands that are not aliases keep passing through, so an `include` in your configuration does not stop `cargo binstall` working outside a project. mbx never reconstructs alias arguments from `cargo --list`, which loses the boundaries of arguments containing whitespace.
+
+## Inspect a build [​](#inspect-a-build)
+
+sh
+
+```
+mbx explain --last                 # read the last recorded session
+mbx explain build --workspace      # run a build with diagnostics
+```
+
+The first command does not run Cargo. The second preserves Cargo's exit status. If Cargo considers every output fresh, there may be no compiler invocations to explain. See [Measure cache reuse](https://mr-boxington.jdx.dev/cache-results#measure-cache-reuse) for a controlled comparison with fresh targets.
+
+## Bypass mbx for one command [​](#bypass-mbx-for-one-command)
+
+In a POSIX shell:
+
+sh
+
+```
+MBX_DISABLE=1 cargo build
+```
+
+In PowerShell:
+
+powershell
+
+```
+$env:MBX_DISABLE = "1"
+try { cargo build } finally { Remove-Item Env:MBX_DISABLE }
+```
+
+This keeps Cargo's existing outputs. To investigate an artifact that may have been restored earlier, use a separate target directory as shown in the [debugger recipe](https://mr-boxington.jdx.dev/cookbook/local-development#debug-a-binary-restored-from-another-checkout).
+
+## Reporting a problem [​](#reporting-a-problem)
+
+Three things describe almost any mbx problem:
+
+sh
+
+```
+mbx doctor --json
+MBX_LOG=debug mbx build
+MBX_BYPASS_LOG=bypass.log mbx build
+```
+
+The doctor report describes the environment; `MBX_LOG` records build diagnostics and `MBX_BYPASS_LOG` records per-compilation bypass reasons.
+
+All three describe your machine: `mbx doctor --json` reports absolute cache paths and the URL and namespace of any configured remote, and the logs name the crates you build. Credentials are never printed. Remove anything else you would rather not publish before posting.
+
+`MBX_LOG` takes an [env\_logger](https://docs.rs/env_logger) filter, so `debug`, `trace`, or a per-module filter such as `mbx=trace` all work; it defaults to `info,portable_pty=off`. It filters logs in the `mbx` process that drives the build, including routine shim diagnostics forwarded to the session. Use `MBX_BYPASS_LOG` for per-compilation bypass records, or `mbx explain` for a grouped summary. See [Cache results](https://mr-boxington.jdx.dev/cache-results).
+
+Report a problem in [Q&A discussions](https://github.com/jdx/mr-boxington/discussions/categories/q-a), and propose a change in [Ideas](https://github.com/jdx/mr-boxington/discussions/categories/ideas). A suspected vulnerability goes through [private advisory reporting](https://github.com/jdx/mr-boxington/security/advisories/new); see [SECURITY.md](https://github.com/jdx/mr-boxington/blob/main/SECURITY.md).
+
+[Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/troubleshooting.md)
+
+Last updated:
+
+Pager
+
+[Previous pageCache server](https://mr-boxington.jdx.dev/cache-server)
+
+[Next pageCache results](https://mr-boxington.jdx.dev/cache-results)
+
+MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)

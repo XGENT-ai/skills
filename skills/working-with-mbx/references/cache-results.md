@@ -1,0 +1,153 @@
+Cache results
+
+Cache results [​](#cache-results)
+
+Use the build summary to see what mbx restored, compiled, or left uncached. Counts describe compiler actions observed by mbx; they do not include work Cargo skipped because its outputs were already fresh.
+
+sh
+
+```
+mbx explain --last          # inspect the most recent recorded build
+MBX_SUMMARY=full mbx build  # print a detailed report for a new build
+```
+
+| Outcome | Cache lookup? | Result stored? |
+| --- | --- | --- |
+| [Hit](#hit) | Found a result | Already stored |
+| [Miss](#miss) | No matching result | After successful compilation |
+| [Not looked up](#could-not-look-up) | No usable input prediction yet | After successful compilation |
+| [Bypass](#bypass) | Skipped | No shared result |
+
+## Measure cache reuse [​](#measure-cache-reuse)
+
+Running the same command twice in the same target directory often measures Cargo's freshness check: no compiler work is needed. To observe mbx reuse, build equivalent source with the same toolchain, profile, and features into two fresh target directories:
+
+sh
+
+```
+mbx build --target-dir target/cache-demo-first
+mbx build --target-dir target/cache-demo-second
+```
+
+Use directory names that do not already contain build outputs. This keeps your normal target intact and avoids deleting the shared cache. The second build can restore work recorded by the first; unsupported actions still run. These explicit targets are not managed, so remove the two example directories when you finish. For repeatable timings, use the [benchmark harness](https://mr-boxington.jdx.dev/benchmarks).
+
+Compiler time avoided is summed across actions. It is not elapsed time saved; always compare wall-clock build time as well as the counters.
+
+## Hit [​](#hit)
+
+mbx derived an action key, found its result, and restored the outputs. A hit can come from the local store or a configured remote.
+
+## Miss [​](#miss)
+
+mbx derived a key and looked it up, but no result existed. The compilation ran and its successful result was stored.
+
+## Could not look up [​](#could-not-look-up)
+
+mbx did not yet have usable dep-info or a prediction from which to derive the key. This is common on a cold build. The action is still stored after compilation, so calling it a miss would overstate the number of failed lookups. The short summary counts these as `not looked up`; the full summary prints a `could not look up` line with the reason.
+
+## Bypass [​](#bypass)
+
+mbx recognized that it could not model the action exactly and ran the real compiler without caching it. The short summary's `bypassed` count leaves out routine compiler probes (`compiler-query`, `standard-input`, and their `cc-` counterparts). Reasons are grouped in the full summary (`MBX_SUMMARY=full`); set `MBX_BYPASS_LOG` to a file path for the per-action record.
+
+Run a Cargo command through `mbx explain` to collect those records temporarily, group identical causes, and print guidance for every bypass category:
+
+sh
+
+```
+mbx explain build --workspace
+```
+
+text
+
+```
+cache explanation: 8 compilations bypassed the cache
+
+compiler-query (2)
+Expected: Cargo asks rustc for toolchain information; there is no compilation to cache.
+  - rustc invocation is a compiler query, not a compilation (2 times)
+
+incremental (5)
+Cargo compiled this incrementally, which mbx cannot cache. `MBX_INCREMENTAL=0` makes it cacheable again; mbx already gives a crate you are editing its own incremental state without giving up the rest of the cache.
+  - incremental compilation cannot be combined with action caching (5 times)
+
+standard-input (1)
+Expected for Cargo probes: source supplied on standard input cannot be rediscovered later.
+  - rustc invocation reads source from standard input
+```
+
+Categories marked expected are routine compiler probes, with no output to cache; here the `incremental` group is the one the build could act on. The command preserves Cargo's exit status after printing the explanation.
+
+Actionable bypasses carry their remediation with the reason that produced them. For example, links rejected because of `split-debuginfo=packed` point to the active Cargo profile or `RUSTFLAGS`, while C compilations affected by `CPATH` name the environment variable to unset.
+
+`mbx explain` also reports cacheability problems that prevent a compilation from reaching mbx at all. If `CC`, `CXX`, `HOST_CC`, or `HOST_CXX` was already set when the build began, the report names the variable and value and explains that host C and C++ compiles are invisible to the cache. These are warnings, not bypass counts, because mbx never observed the compiler invocations.
+
+## Remote failure [​](#remote-failure)
+
+A remote cache request failed and the build continued without that result: an unreachable host, refused credentials, or an invalid response can all reduce reuse. Build-time transport failures fall back to local compilation. Invalid configuration can still stop startup, and explicit `mbx prefetch` and `mbx doctor` commands report connection failures as errors. The summary counts them because a remote that is failing every request reports the same hits, misses, and bytes as one that was empty. The short summary includes the count inline; the full summary explains it:
+
+text
+
+```
+mbx[cache]: the remote cache failed 4 of its requests; this build ran without what it could not reach, and the warnings above say why
+```
+
+The individual warnings, printed as the build runs, say what failed. The count also appears as `remote_failures` in the JSON statistics report, so CI can alert on a cache that has quietly stopped serving.
+
+## Watching a build instead [​](#watching-a-build-instead)
+
+Everything above describes results reported after a build. To see the same outcomes as they are decided, one row per compilation with the crate it belongs to, run [`mbx tui`](https://mr-boxington.jdx.dev/tui) in another terminal. It reads builds using the same local cache, including ones already running.
+
+## Reading the hit rate [​](#reading-the-hit-rate)
+
+A build can report a high hit rate among attempted lookups while spending most of its time on actions that were not looked up or were bypassed. Read all the summary counts together, and compare wall-clock time when evaluating the cache. Set `MBX_SUMMARY=full` when the one-line counts need a breakdown.
+
+A link mbx cannot describe always runs, so its downstream crates may have work to do on an otherwise warm build. Native executables, tests, and proc macros on Linux, macOS, and Windows, plus binaries, tests, and `cdylib`s for supported self-contained WebAssembly targets, may be restored as hits; see [limits](https://mr-boxington.jdx.dev/limits#native-linking-is-cached-only-where-the-linker-can-be-described).
+
+## Troubleshooting a low hit rate [​](#troubleshooting-a-low-hit-rate)
+
+Run the build through `mbx explain` first. It collects the per-action records, groups identical causes, and prints guidance for each category:
+
+sh
+
+```
+mbx explain build --workspace
+```
+
+The usual causes, roughly in the order they show up:
+
+- The store is cold. A first build has no dep-info to derive keys from, so "could not look up" can dominate. Compare equivalent builds with fresh targets as described [above](#measure-cache-reuse).
+- Incremental builds are enabled. With `MBX_INCREMENTAL=1`, workspace members compile incrementally, those compilations bypass the cache, and the changed artifacts make crates above them miss too. See [limits](https://mr-boxington.jdx.dev/limits#incremental-compilations-are-not-cached).
+- A link could not be described. Native executables, tests, and proc macros are cached on Linux, macOS, and Windows, and self-contained WebAssembly targets everywhere, but native links with custom or unmodeled inputs still run. A rebuilt dylib can also change the keys of its downstream crates. `mbx explain` reports why the link bypassed; see [limits](https://mr-boxington.jdx.dev/limits#native-linking-is-cached-only-where-the-linker-can-be-described).
+- The inputs differ. A different toolchain, feature set, profile, or `RUSTFLAGS` between two checkouts is a different key, and the summary reports it as an ordinary miss. Run `mbx explain --last` to replay the most recent recorded build and list, per missed crate, the key inputs that changed since its last recorded hit. Session history stores hashes, not source contents or environment values.
+- Build-script output that differs. mbx can share Rust compilations that read `OUT_DIR` when the generated output matches across checkouts. A build script that embeds the checkout path in its output prevents that reuse. Sharing also depends on whether mbx can detect the reference and copy the output; `MBX_SHARE_OUT_DIR=0` disables it. See [`OUT_DIR` sharing](https://mr-boxington.jdx.dev/limits#out-dir-sharing).
+- A build chose its own C compiler, or is cross-compiling. Setting `CC`, `HOST_CC`, `CXX`, or `HOST_CXX` leaves host compilations outside mbx. Cross-compilations are cached when the build explicitly names a supported compiler through `CC_<target>`, `CXX_<target>`, `TARGET_CC`, or `TARGET_CXX`. Bypass kinds beginning `cc-` report anything the C adapter declined to model. See [limits](https://mr-boxington.jdx.dev/limits#c-and-c-caching-covers-the-host-compiles-mbx-drives).
+- CI restored nothing. On GitHub Actions, check that the cache step restored an entry; a changed `cache-generation` or a fresh repository starts empty. With a remote cache configured, check the [remote failure](#remote-failure) count too: a remote that is failing every request reports the same zeros as one that is empty.
+
+## Compiler time [​](#compiler-time)
+
+The full summary reports real compiler time by outcome and an estimate of the compiler time avoided by cache hits:
+
+text
+
+```
+mbx[cache]: compiler time: 4m 12s estimated avoided; 38.20s spent (161 miss in 31.00s, 7 unconsulted in 7.20s)
+mbx[cache]: slowest uncached crates: syn 8.90s, regex-syntax 4.90s, serde_derive 3.90s
+```
+
+Times of a minute or more are reported in whole units, as above; shorter ones keep their fraction.
+
+The estimate comes from the duration recorded with the successful compilation that populated the action prediction; older predictions without a timing hint contribute zero. The five crates with the largest cumulative uncached compiler time are listed so you can identify expensive uncached work. Parallel compilations overlap, so this ranking does not directly identify the critical path.
+
+The JSON statistics report exposes the same data in `estimated_compiler_duration_avoided_ns`, `compiler`, and `slow_compilations`.
+
+[Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/cache-results.md)
+
+Last updated:
+
+Pager
+
+[Previous pageTroubleshooting](https://mr-boxington.jdx.dev/troubleshooting)
+
+[Next pageSavings and statistics](https://mr-boxington.jdx.dev/stats)
+
+MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)

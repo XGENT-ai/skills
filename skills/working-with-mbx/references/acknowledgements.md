@@ -1,0 +1,37 @@
+Acknowledgements
+
+Acknowledgements [​](#acknowledgements)
+
+mbx depends on Cargo and builds on ideas established by earlier compiler caches. In particular, kache directly inspired the project's design.
+
+## Cargo [​](#cargo)
+
+[Cargo](https://github.com/rust-lang/cargo) resolves dependencies, plans builds, and orchestrates rustc. Its `RUSTC_WRAPPER` integration lets mbx and other Rust compiler caches wrap compiler invocations.
+
+## sccache [​](#sccache)
+
+[sccache](https://github.com/mozilla/sccache) predates mbx and established compiler caching in the Rust ecosystem. It reuses compiler work locally and through remote storage, and supports a broader set of compilers and use cases than mbx.
+
+See the [comparison with sccache](https://mr-boxington.jdx.dev/compared#sccache) for where mbx makes different tradeoffs.
+
+## kache [​](#kache)
+
+[kache](https://github.com/kunobi-ninja/kache) predates mbx and directly inspired its design. It combines a content-addressed `RUSTC_WRAPPER` cache with C and C++ compiler shims, remote storage, and executable caching.
+
+The projects do not share code. Both aim to make compiled work reusable across checkouts; they differ in process lifecycle, storage management, and remote policy. The [comparison with kache](https://mr-boxington.jdx.dev/compared#kache) explains where mbx took a different direction and where kache may be the better fit.
+
+## cargo-pretty [​](#cargo-pretty)
+
+[cargo-pretty](https://github.com/romancitodev/cargo-pretty) by [romancitodev](https://github.com/romancitodev) provides the base for mbx's Cargo display: live and completed crate rows, per-crate timers, fading, and browsable warnings. mbx adds cache statistics and a progress bar colored by hits, misses, and bypasses while retaining Cargo's native run and test execution.
+
+The adapted source retains romancitodev's MIT license and records the upstream revision in the repository's `NOTICE` file.
+
+[Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/acknowledgements.md)
+
+Last updated:
+
+Pager
+
+[Previous pageProtocol compatibility](https://mr-boxington.jdx.dev/protocol-compatibility)
+
+MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)

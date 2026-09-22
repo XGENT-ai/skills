@@ -1,0 +1,78 @@
+Incremental builds
+
+Incremental builds [​](#incremental-builds)
+
+mbx automatically keeps private incremental state for crates you edit. Unchanged work remains eligible for the shared cache. Leave the defaults in place for a normal edit/build loop.
+
+| Mode | What is reused | Scope |
+| --- | --- | --- |
+| Shared action cache | Complete matching compiler outputs | Across equivalent builds and checkouts |
+| Learned incremental reuse | Intermediate work from earlier source edits | Private to one checkout |
+| Cargo incremental mode | Cargo-managed incremental state | Private to Cargo's target directory |
+
+## Learned incremental reuse [​](#learned-incremental-reuse)
+
+An edited crate has new source content, so its old shared result cannot match. On the first source edit to a workspace crate, mbx compiles it with private incremental state. A crate outside the workspace switches after three consecutive misses with changed sources. The build reports this work as `incremental`; the result never enters the shared cache.
+
+The trigger is a source change. An unchanged crate in a fresh target or a new checkout still compiles and publishes normally when it misses the cache. Dependents of a crate using private incremental state also keep private state: their inputs contain an artifact other checkouts cannot share. That part of the build can publish again once the edited crate settles. Later edits to a known active crate go directly to its private state.
+
+### Where state lives [​](#where-state-lives)
+
+State and its records live under `incremental/` in the mbx cache directory, separately for each checkout. `cargo clean` does not remove this state. `mbx clean` and `mbx cache remove` remove it for the selected workspace. Garbage collection removes it for deleted, expired, or least-recently-used checkouts; state used by a running build is never removed.
+
+### Bound the storage [​](#bound-the-storage)
+
+`learned_incremental_max_size` limits each crate to `8GiB` by default. Once a crate exceeds that limit, mbx warns and discards its state before the next compilation. Set it in your global configuration:
+
+toml
+
+```
+learned_incremental_max_size = "12GiB"
+```
+
+The environment equivalent is `MBX_LEARNED_INCREMENTAL_MAX_SIZE`; `"none"` disables the limit. rustc normally removes superseded sessions, so the budget is a backstop. A large debug build can need several GiB. If the warning appears on every edit, the limit may be too small to retain useful state: raising it can prevent repeated full recompilations.
+
+Garbage collection also bounds private state across all checkouts with `gc.incremental_max_size`, which defaults to 5% of the cache disk between 10 GiB and 100 GiB. `gc.incremental_max_age` defaults to 30 days. The least-recently-used checkouts are collected first, while mbx keeps the most recent one even when it alone exceeds the aggregate budget:
+
+toml
+
+```
+[gc]
+incremental_max_size = "30GiB" # or "none"
+incremental_max_age = "14d"    # or "none"
+```
+
+`gc.max_total_size`, when set, covers the action store, managed targets, and learned incremental state together.
+
+## Cargo incremental mode [​](#cargo-incremental-mode)
+
+By default, mbx sets `CARGO_INCREMENTAL=0` and uses learned incremental reuse for changing crates. `MBX_INCREMENTAL=1` stops it from forcing Cargo's setting off locally:
+
+sh
+
+```
+MBX_INCREMENTAL=1 mbx build
+```
+
+This lets Cargo manage incremental workspace compilation. Those artifacts remain checkout-specific and bypass the shared cache; their dependents may also miss. Use it only when you want that tradeoff.
+
+## Overrides and CI [​](#overrides-and-ci)
+
+- `MBX_LEARNED_INCREMENTAL=0` disables learned incremental reuse.
+- `MBX_INCREMENTAL=1` supersedes it by handing incremental control to Cargo.
+- `MBX_VERIFY=1` disables it for the build being verified.
+- CI disables both incremental policies because a fresh runner has no earlier edit state to reuse.
+
+Use [Cache results](https://mr-boxington.jdx.dev/cache-results) to distinguish private incremental work from ordinary misses. The [local-edit benchmark](https://mr-boxington.jdx.dev/benchmarks#local-edit) reports both the initial state-building cost and a later edit.
+
+[Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/incremental.md)
+
+Last updated:
+
+Pager
+
+[Previous pageParallel builds](https://mr-boxington.jdx.dev/scheduling)
+
+[Next pageManaged linkers](https://mr-boxington.jdx.dev/linkers)
+
+MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)

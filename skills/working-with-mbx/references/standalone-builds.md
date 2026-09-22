@@ -1,0 +1,102 @@
+Cache C and C++ builds outside Cargo
+
+Cache C and C++ builds outside Cargo [​](#cache-c-and-c-builds-outside-cargo)
+
+Use `mbx exec` to cache compiler calls made by make, CMake, and other build tools:
+
+sh
+
+```
+mbx exec make -j8
+```
+
+For CMake, run the configure step through `mbx exec` too. CMake chooses a compiler while configuring and reuses that choice when it builds.
+
+sh
+
+```
+mbx exec cmake -S . -B build
+mbx exec cmake --build build
+```
+
+Only the command after `mbx exec` uses these compiler wrappers. There is no daemon or global compiler setup. For C and C++ compiled by Cargo build scripts, use `mbx build`; that integration is [enabled by default](https://mr-boxington.jdx.dev/configuration#build-script-c-and-c).
+
+## What `mbx exec` does [​](#what-mbx-exec-does)
+
+While the command runs, mbx puts wrappers for the common compiler names at the front of `PATH`:
+
+text
+
+```
+cc  c++  gcc  g++  clang  clang++
+```
+
+On Windows it wraps `cl.exe` instead.
+
+When the build tool calls one of those names, mbx checks the cache first. On a hit, it restores the object file. On a miss, it runs the compiler that would normally have been found on `PATH` and saves the result.
+
+The wrappers use the same local and remote cache as Cargo builds. The command's exit status and compiler output are passed through unchanged, and the wrappers go away from `PATH` when the command finishes.
+
+## CMake and other configured builds [​](#cmake-and-other-configured-builds)
+
+Some build systems save the compiler's absolute path during configuration. CMake writes it to `CMakeCache.txt`; autoconf may write it into generated makefiles. If configuration happens outside `mbx exec`, the saved path points straight to the compiler and later `mbx exec` builds cannot intercept it.
+
+For an existing CMake build configured with a direct compiler path, configure a fresh build directory through `mbx exec`. Changing `PATH` during a later build does not replace the compiler saved in `CMakeCache.txt`.
+
+Configure through `mbx exec` so the build system records mbx's wrapper. That path remains valid across later commands. You should still use `mbx exec` for each build you want cached:
+
+sh
+
+```
+# Configure once.
+mbx exec cmake -S . -B build
+
+# Build as often as needed.
+mbx exec cmake --build build
+```
+
+Running `cmake --build build` without `mbx exec` still works, but it calls the real compiler without using the cache.
+
+## What gets cached [​](#what-gets-cached)
+
+mbx caches ordinary gcc-, clang-, and MSVC-style compile commands that compile one C or C++ source file into an object. It also caches GCC/Clang preprocessing to a file (`-E ... -o file`), using checkout-specific keys to preserve literal paths in the output. It does not cache links, multi-source compiler calls, or commands whose behavior it cannot model safely. Those commands still run normally; the session summary counts their bypasses, and `MBX_SUMMARY=full` reports the grouped reasons.
+
+`mbx exec` only intercepts the unversioned compiler names listed above. It leaves commands such as `gcc-13`, absolute compiler paths, and explicitly selected cross-compilers alone.
+
+See [limits](https://mr-boxington.jdx.dev/limits#c-and-c-caching-covers-the-host-compiles-mbx-drives) for the complete list of supported and bypassed invocations.
+
+## Sharing results across checkouts [​](#sharing-results-across-checkouts)
+
+mbx removes the checkout's absolute path from compilation keys, so equivalent checkouts can share cached objects. It normally treats the enclosing Git or Jujutsu checkout as the project root. Outside a checkout, it uses the working directory. Override that choice with `--project-root`:
+
+sh
+
+```
+mbx exec --project-root /path/to/project make -j8
+```
+
+To find the same project in another checkout, mbx uses the `Cargo.lock` digest when one exists, then the Git or Jujutsu `origin` URL, and finally the directory name. If only the directory name is available, matching directory names are required for cross-checkout hits.
+
+## Disabling the cache [​](#disabling-the-cache)
+
+Set `MBX_CC=0` to run the command without C or C++ caching:
+
+sh
+
+```
+MBX_CC=0 mbx exec make
+```
+
+C and C++ compilation is the only work `mbx exec` caches, so this runs the command without compiler caching. For published artifacts, follow the [production release policy](https://mr-boxington.jdx.dev/github-action#production-releases).
+
+[Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/standalone-builds.md)
+
+Last updated:
+
+Pager
+
+[Previous pageWatching builds](https://mr-boxington.jdx.dev/tui)
+
+[Next pageGitHub Action](https://mr-boxington.jdx.dev/github-action)
+
+MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)
