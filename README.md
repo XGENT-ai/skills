@@ -39,7 +39,9 @@ npx @xgent-ai/skills install
 
 ## vendor 的 impeccable
 
-[impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)整个 vendor 在 `vendor/impeccable/` 里:15 MB 的 skill bundle 随 npm 包发布,十几 MB 的 engine 二进制不进包、改放自家 R2,由 `install` 按 `VERSION.json` 里的地址与 sha256 取。官方的 `npx impeccable install` 要先从 GitHub 下 bundle、首次跑 hook 时再下 engine,墙内经常卡在 `Download failed`;这里 bundle 一步不联网,engine 只走一次 R2(装过一次就落在 `~/.impeccable/` 里,之后都不用了)。
+[impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)整个 vendor 在 `vendor/impeccable/` 里:skill bundle 以去重形态随 npm 包发布,十几 MB 的 engine 二进制不进包、改放自家 R2,由 `install` 按 `VERSION.json` 里的地址与 sha256 取。官方的 `npx impeccable install` 要先从 GitHub 下 bundle、首次跑 hook 时再下 engine,墙内经常卡在 `Download failed`;这里 bundle 一步不联网,engine 只走一次 R2(装过一次就落在 `~/.impeccable/` 里,之后都不用了)。
+
+`vendor/impeccable/bundle/` 不是 `universal.zip` 解开的样子,而是它的去重形态:文件内容存在 `blobs/<sha256>`,`manifest.json` 里每个 harness 一张 `路径 → sha` 的清单。上游给 19 个 harness 目录各放了一整套 skill,其中 83% 的字节是同一批文件(光 `scripts/data/font-index.json` 就是 1.1 MB × 19 份、内容完全相同),各 harness 真正不同的只有 39 个路径 —— 有的差在路径 token(`.claude/skills/...` vs `.cursor/skills/...`),有的差在按 harness 改写过的措辞(有 `AskUserQuestion` 工具的 harness 写"调用该工具",没有的写"直接问用户")。`install` 按清单把文件写回去,装出来的结果与直接展开 zip 逐字节一致(上游 `impeccable doctor` 报 no drift)。展开后 38 MB → 6 MB,npm 包 13.5 MB → 3.1 MB。
 
 装出来的东西和上游 `impeccable install` 的工程内安装一致(`impeccable doctor` 报 no drift):
 
@@ -54,7 +56,7 @@ node scripts/vendor-impeccable.mjs    # 抓上游 bundle + engine 到 vendor/
 node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION.json
 ```
 
-第一步取上游最新 release,按 ed25519 签名验 bundle、按 `.sha256` 验 engine 二进制,全部通过才落盘,并把版本与校验和写进 `vendor/impeccable/VERSION.json`。要加别的平台,改脚本里的 `ENGINE_TARGETS`。
+第一步取上游最新 release,按 ed25519 签名验 bundle、按 `.sha256` 验 engine 二进制,全部通过才落盘,并把版本与校验和写进 `vendor/impeccable/VERSION.json`;bundle 在落盘前按内容去重成 `blobs/` + `manifest.json`。要加别的平台,改脚本里的 `ENGINE_TARGETS`。
 
 第二步把 engine 传到 R2 的 `vendor/impeccable/engine/v<版本>/<平台>/impeccable`,传完回读公共地址核一遍 sha256,再把 url 写进 `VERSION.json` 的 `engines`。凭据读仓库根的 `.env.cf`(`AGENT_RELEASE_R2_*`,已 gitignore,不在库里)。两步的顺序不能反 —— 第一步会重写 `VERSION.json`,先传就把 url 冲掉了;漏了第二步,发出去的包里 engine 没有下载地址,用户那边只会看到"跳过"。
 

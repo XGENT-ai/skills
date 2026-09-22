@@ -15,6 +15,8 @@ const PKG_ROOT = path.join(__dirname, '..');
 const HOOKS_SRC_DIR = path.join(PKG_ROOT, '.claude', 'hooks');
 const VENDOR_DIR = path.join(PKG_ROOT, 'vendor', 'impeccable');
 const BUNDLE_DIR = path.join(VENDOR_DIR, 'bundle');
+const BLOBS_DIR = path.join(BUNDLE_DIR, 'blobs');
+const MANIFEST_FILE = path.join(BUNDLE_DIR, 'manifest.json');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -27,9 +29,11 @@ const MANAGED_SETTINGS = {
 };
 
 // ─── impeccable(vendor) ──────────────────────────────────────────────────────
-// vendor/impeccable/bundle 就是上游 universal.zip 解开后的样子:每个 harness
-// 一个点目录。装法照抄上游 `impeccable install` 的工程内(project scope)行为:
-// 复制 skills/agents/commands,hook manifest 按标记剔旧再合并。
+// vendor/impeccable/bundle 是上游 universal.zip 去重后的样子:文件内容存进
+// blobs/<sha256>,manifest.json 里每个 harness 一张 path → sha 的清单(上游给
+// 19 个 harness 各放一整套,83% 的字节是同一批文件)。装的时候按清单把文件写
+// 回去,结果与直接展开 zip 一致。装法照抄上游 `impeccable install` 的工程内
+// (project scope)行为:写 skills/agents/commands,hook manifest 按标记剔旧再合并。
 
 // .codex 只承载 Codex 的 hook manifest,skills 走 .agents(上游同此约定)。
 const HOOK_ONLY_PROVIDERS = new Set(['.codex']);
@@ -200,6 +204,33 @@ function proxyEnv() {
   return http ? { ...env, https_proxy: http } : env;
 }
 
+let manifestCache;
+function bundleManifest() {
+  if (!manifestCache) manifestCache = asObject(readJson(MANIFEST_FILE).providers);
+  return manifestCache;
+}
+
+function providerFiles(provider) {
+  return asObject(asObject(bundleManifest()[provider]).files);
+}
+
+function providerExec(provider) {
+  const exec = asObject(bundleManifest()[provider]).exec;
+  return new Set(Array.isArray(exec) ? exec : []);
+}
+
+function readBundleFile(provider, rel) {
+  const sha = providerFiles(provider)[rel];
+  return sha ? fs.readFileSync(path.join(BLOBS_DIR, sha)) : undefined;
+}
+
+// 清单里某个前缀下的条目,键换成相对该前缀的路径。
+function entriesUnder(provider, prefix) {
+  return Object.entries(providerFiles(provider))
+    .filter(([rel]) => rel.startsWith(prefix))
+    .map(([rel, sha]) => [rel.slice(prefix.length), sha]);
+}
+
 function tryReadJson(file) {
   try {
     return readJson(file);
@@ -253,12 +284,19 @@ function listFilesRecursive(dir, prefix = '') {
   return files;
 }
 
-function treesEqual(src, dest) {
+// 已装的那棵树和清单是不是同一套:文件名单一致,且每个文件的 sha256 对得上。
+function treeMatchesStore(dest, entries) {
   if (!fs.existsSync(dest)) return false;
-  const srcFiles = listFilesRecursive(src).sort();
-  const destFiles = listFilesRecursive(dest).sort();
-  if (srcFiles.length !== destFiles.length || srcFiles.some((f, i) => f !== destFiles[i])) return false;
-  return srcFiles.every((rel) => fs.readFileSync(path.join(src, rel)).equals(fs.readFileSync(path.join(dest, rel))));
+  const installed = listFilesRecursive(dest).sort();
+  const wanted = entries.map(([rel]) => rel).sort();
+  if (installed.length !== wanted.length || installed.some((f, i) => f !== wanted[i])) return false;
+  return entries.every(([rel, sha]) => sha256(fs.readFileSync(path.join(dest, rel))) === sha);
+}
+
+function writeBundleFile(dest, sha, executable) {
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(path.join(BLOBS_DIR, sha), dest);
+  fs.chmodSync(dest, executable ? 0o755 : 0o644);
 }
 
 // 复制后补上执行位:zip 经某些解压器或文件同步后会丢 +x,launcher 一丢 +x
@@ -274,10 +312,8 @@ function restoreExecutableBits(skillDir) {
 }
 
 function bundleProviders() {
-  return fs
-    .readdirSync(BUNDLE_DIR, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name.startsWith('.') && !HOOK_ONLY_PROVIDERS.has(e.name))
-    .map((e) => e.name)
+  return Object.keys(bundleManifest())
+    .filter((name) => !HOOK_ONLY_PROVIDERS.has(name))
     .sort();
 }
 
@@ -306,51 +342,50 @@ function resolveProviders(detected, requested) {
   return detected.length > 0 ? detected : DEFAULT_TARGETS;
 }
 
-function copyFileIfChanged(src, dest) {
-  const content = fs.readFileSync(src);
+function writeFileIfChanged(dest, content) {
   if (fs.existsSync(dest) && content.equals(fs.readFileSync(dest))) return false;
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, content, { mode: fs.statSync(src).mode & 0o777 });
+  fs.writeFileSync(dest, content, { mode: 0o644 });
   return true;
 }
 
 function installProviderSkills(targetDir, provider, force) {
-  const srcDir = path.join(BUNDLE_DIR, provider, 'skills');
-  if (!fs.existsSync(srcDir)) return;
-  for (const name of fs.readdirSync(srcDir)) {
-    const src = path.join(srcDir, name);
+  const exec = providerExec(provider);
+  const names = [...new Set(entriesUnder(provider, 'skills/').map(([rel]) => rel.split('/')[0]))].sort();
+  for (const name of names) {
+    const prefix = `skills/${name}/`;
+    const entries = entriesUnder(provider, prefix);
     const dest = path.join(targetDir, provider, 'skills', name);
-    if (!force && treesEqual(src, dest)) {
+    if (!force && treeMatchesStore(dest, entries)) {
       console.log(`  未变  ${provider}/skills/${name}`);
       restoreExecutableBits(dest);
       continue;
     }
     const status = fs.existsSync(dest) ? '更新' : '安装';
     fs.rmSync(dest, { recursive: true, force: true });
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.cpSync(src, dest, { recursive: true });
+    for (const [rel, sha] of entries) writeBundleFile(path.join(dest, rel), sha, exec.has(`${prefix}${rel}`));
     restoreExecutableBits(dest);
     console.log(`  ${status}  ${provider}/skills/${name}`);
   }
 }
 
 function installProviderFiles(targetDir, provider, kind) {
-  const srcDir = path.join(BUNDLE_DIR, provider, kind);
-  if (!fs.existsSync(srcDir)) return;
+  // 只要该目录下的直属文件,和上游 install 一样不递归。
+  const entries = entriesUnder(provider, `${kind}/`).filter(([rel]) => !rel.includes('/'));
+  if (entries.length === 0) return;
   let changed = 0;
-  const names = fs.readdirSync(srcDir).filter((n) => fs.statSync(path.join(srcDir, n)).isFile());
-  for (const name of names) {
-    if (copyFileIfChanged(path.join(srcDir, name), path.join(targetDir, provider, kind, name))) changed += 1;
+  for (const [rel, sha] of entries) {
+    const dest = path.join(targetDir, provider, kind, rel);
+    if (writeFileIfChanged(dest, fs.readFileSync(path.join(BLOBS_DIR, sha)))) changed += 1;
   }
-  if (names.length === 0) return;
-  console.log(`  ${changed > 0 ? '写入' : '未变'}  ${provider}/${kind}/ (${names.length} 个文件)`);
+  console.log(`  ${changed > 0 ? '写入' : '未变'}  ${provider}/${kind}/ (${entries.length} 个文件)`);
 }
 
 function installProviderHooks(targetDir, provider, force) {
   const artifact = HOOK_ARTIFACTS[provider];
   if (!artifact) return;
-  const src = path.join(BUNDLE_DIR, ...artifact.src);
-  if (!fs.existsSync(src)) return;
+  const srcContent = readBundleFile(artifact.src[0], artifact.src.slice(1).join('/'));
+  if (!srcContent) return;
   const dest = path.join(targetDir, ...artifact.dest);
   const destRel = path.relative(targetDir, dest);
 
@@ -363,7 +398,7 @@ function installProviderHooks(targetDir, provider, force) {
     }
   }
 
-  const fresh = rewriteHookValue(readJson(src), provider);
+  const fresh = rewriteHookValue(JSON.parse(srcContent.toString('utf8')), provider);
   let next = fresh;
   if (fs.existsSync(dest)) {
     const existing = tryReadJson(dest);
@@ -448,7 +483,7 @@ function installEngineBinary(meta, force) {
 }
 
 function installImpeccable(targetDir, options) {
-  if (!fs.existsSync(BUNDLE_DIR)) {
+  if (!fs.existsSync(MANIFEST_FILE)) {
     console.log('  跳过  impeccable:本包里没有 vendor/impeccable(先跑 node scripts/vendor-impeccable.mjs)');
     return;
   }

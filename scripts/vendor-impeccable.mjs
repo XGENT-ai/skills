@@ -7,6 +7,10 @@
 // 本脚本会重写 VERSION.json,所以跑完接着跑 scripts/publish-vendor-r2.mjs:
 // engine 二进制不随 npm 包分发,得传上 R2 并把下载地址写回 VERSION.json。
 //
+// bundle 不按原样收:上游给 19 个 harness 目录各放了一整套 skill,实测 83% 的
+// 字节是同一批文件(光 font-index.json 就 1.1 MB × 19)。这里按内容去重存成
+// blobs/<sha256> + manifest.json,安装时再按清单还原,展开后 38 MB → 6 MB。
+//
 // bundle 按上游的 ed25519 签名(scripts/bundle-signing-keys.json 的公钥)验签,
 // engine 二进制按 .sha256 旁文件校验;任何一步不过就中止,不写 vendor/。
 // 零依赖,需要 Node >= 18 与系统 curl、unzip。下载一律走 curl:它认
@@ -115,6 +119,48 @@ function unzipTo(zipPath, destDir) {
   if (result.status !== 0) die('解压 bundle 失败');
 }
 
+function listFiles(dir, prefix = '') {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) files.push(...listFiles(path.join(dir, entry.name), rel));
+    else files.push(rel);
+  }
+  return files;
+}
+
+// 把解开的 bundle 转成「blobs/<sha256> 存内容 + manifest.json 记每个 harness 的
+// path → sha」。各 harness 之间差的只是少数文件(路径 token 与按 harness 改写过的
+// 措辞),其余都是同一份,去重后只剩一份。执行位单独记 exec,zip 里目前只有
+// skills/impeccable/scripts/impeccable 带 +x。
+function buildStore(bundleStage, storeDir) {
+  const blobsDir = path.join(storeDir, 'blobs');
+  fs.mkdirSync(blobsDir, { recursive: true });
+  const providers = {};
+  let total = 0;
+  for (const entry of fs.readdirSync(bundleStage, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !entry.name.startsWith('.')) continue;
+    const dir = path.join(bundleStage, entry.name);
+    const files = {};
+    const exec = [];
+    for (const rel of listFiles(dir)) {
+      const full = path.join(dir, rel);
+      const buf = fs.readFileSync(full);
+      const sha = sha256(buf);
+      const blob = path.join(blobsDir, sha);
+      if (!fs.existsSync(blob)) fs.writeFileSync(blob, buf);
+      files[rel] = sha;
+      if (fs.statSync(full).mode & 0o111) exec.push(rel);
+      total += buf.length;
+    }
+    providers[entry.name] = exec.length > 0 ? { files, exec } : { files };
+  }
+  fs.writeFileSync(path.join(storeDir, 'manifest.json'), JSON.stringify({ schema: 1, providers }, null, 2) + '\n');
+  const unique = fs.readdirSync(blobsDir).reduce((n, f) => n + fs.statSync(path.join(blobsDir, f)).size, 0);
+  console.log(`  去重  ${Object.keys(providers).length} 个 harness,${(total / 1024 / 1024).toFixed(1)} MB → ${(unique / 1024 / 1024).toFixed(1)} MB`);
+  return providers;
+}
+
 function ensureExecutable(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -152,6 +198,8 @@ try {
   const engineVersion = fs.readFileSync(versionFile, 'utf8').trim();
   console.log(`engine  v${engineVersion}`);
   ensureExecutable(bundleStage);
+  const storeStage = path.join(staging, 'store');
+  buildStore(bundleStage, storeStage);
 
   // 4) engine 二进制:逐个平台下载 + 按 .sha256 旁文件校验。
   const engineStage = path.join(staging, 'engine');
@@ -178,7 +226,7 @@ try {
   // 6) 全部就绪后才落盘,失败不会留下半个 vendor/。
   fs.rmSync(VENDOR_DIR, { recursive: true, force: true });
   fs.mkdirSync(VENDOR_DIR, { recursive: true });
-  fs.renameSync(bundleStage, path.join(VENDOR_DIR, 'bundle'));
+  fs.renameSync(storeStage, path.join(VENDOR_DIR, 'bundle'));
   fs.renameSync(engineStage, path.join(VENDOR_DIR, 'engine'));
   fs.writeFileSync(path.join(VENDOR_DIR, 'LICENSE'), licenseText);
   fs.writeFileSync(path.join(VENDOR_DIR, 'NOTICE.md'), noticeText);
