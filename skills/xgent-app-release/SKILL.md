@@ -194,7 +194,7 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 两种 404 的响应体一字不差（门户故意不区分「不属于你」和「不存在」），只能靠 whoami 分诊；
 分诊表与替代验收方式见 [references/troubleshooting.md](references/troubleshooting.md)。
 
-## 四条硬约定（都是「不知道就会中」的那种）
+## 五条硬约定（都是「不知道就会中」的那种）
 
 - **`version` 每次都要 bump**——哪怕这次只换产物没改功能。产物 digest 变了而 version
   没变，控制台上就再也分不清「线上跑的是哪一版」，而这正是发布链路存在的意义。
@@ -204,6 +204,12 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 - **tar 根必须直接是 `index.html`。** `release-cli` 传目录时已经用 `tar czf … -C dist .` 打好；
   只有自己 `curl` 时才需要自己打，`tar czf x.tgz dist` 那种套一层 `dist/` 的包会被拒收。
 - **上限 64MB**，且门户只按顶层条目数报数。真超了先查有没有把 source map / 未压缩素材打进去。
+- **本机配了代理就用 `@xgent/release-cli` ≥0.6.0。** Node 内置的 `fetch` **不读** `HTTPS_PROXY`
+  —— curl / git / npm / docker 全都读，唯独发版这一步不读，于是它绕开本机代理直连门户：跨境
+  直连上行实测约 10 KB/s，2MB 产物必然超时，而报出来的是一句没有线索的 `fetch failed`。
+  0.6.0 起 CLI 检测到代理变量就带 `NODE_USE_ENV_PROXY=1` **重启自身**走代理（需 Node ≥22.21
+  或 ≥24；23.x 没收到这个开关，CLI 会告警并照常直连）。Node 版本不够就用
+  [references/publish-api.md](references/publish-api.md) §2 的 curl 兜底 —— curl 自己读代理。
 
 ## 顺带换镜像（有后端的 App）
 
@@ -225,13 +231,28 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
-| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
+| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
 | **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务替你建库 / 取地址并注入（见下面「服务怎么绑到键」） |
-| **自定** | 其余一切（第三方 API key、业务开关…） | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
+| **自定** | 其余一切（第三方 API key、业务开关…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
 
 `<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
 `PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
 `API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+### `<PREFIX>_APP_SECRET`：跨应用交换的发起方密钥（归平台，线上永不手填）
+
+只要你的清单声明了 `exchangeTargets`（你要去调别的 App），平台就在**批准那一刻**生成这枚密钥、
+加密保管、每次换版注进容器，同时把它的哈希布到每个已安装租户。你这边只在 `requiredEnv` 里写下
+**键名**，不需要也不可能提供值（`deployDescriptor.env` 带值提交即拒）。
+
+- **本地联调要那一份怎么办**：明文只在批准那一刻**一次性**显示给审批人。找审批你这条提案的平台
+  管理员要；要不到就请他在控制台按「轮换交换密钥」重新生成一枚（会重布全部实例并排一次换版）。
+  **别自己编一个填进去**——你填的那一份会压掉平台保管的那一份（手填优先是有意的），于是容器里跑的
+  和门户布出去的哈希对不上。
+- **两份不一致的症状**：`/oauth/token` 回 `SECRET_INVALID`，而界面上写的是「跨应用授权缺失或未开启」
+  ——报错指向授权，根因是密钥漂了。
+- **没声明 `exchangeTargets` 就别在 `requiredEnv` 里写这个键**：平台不会生成也不会保管它，闸会如实
+  判「缺值」，提案就卡在那儿等一个永远不会来的值。要么补声明 `exchangeTargets`，要么把键去掉。
 
 **这张清单是一道闸，不只是一份提醒**：批准之前门户会拿它比对「已有值」的**键集合**，缺哪个就
 拒绝生效（`REQUIRED_ENV_MISSING`，提案留在 pending 可重批）。所以「批准了、然后线上是坏的」

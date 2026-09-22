@@ -22,7 +22,7 @@ import { tmpdir, homedir } from "node:os";
 import { spawnSync } from "node:child_process";
 // 本地配置文件的读取只有一份实现（同目录 registry-config.mjs，npm-token.mjs 也用它）：
 // 抄成两份的下场是换个字段名只改了一处，另一个脚本悄悄退回默认值。
-import { loadConfig, parseArgs, pick } from "./registry-config.mjs";
+import { loadConfig, parseArgs, pick, warnIfProxyIgnored } from "./registry-config.mjs";
 
 const MAX_BYTES = 64 * 1024 * 1024; // 门户侧上限，超了直接 VALIDATION_FAILED
 const VERSION_RE = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/; // 与门户逐字一致
@@ -184,6 +184,7 @@ if (!token) {
 } else if (!portal) {
   warn(`没有门户地址（--portal / TARGET_XGENT_PLATFORM），跳过令牌联网校验`);
 } else {
+  warnIfProxyIgnored();
   const url = `${portal}/api/market/release/${encodeURIComponent(key)}`;
   try {
     const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });

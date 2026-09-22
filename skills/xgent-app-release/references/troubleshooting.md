@@ -19,6 +19,8 @@
 | `npx @xgent/release-cli` 取不到 | 它不在公共 npm 上，你的环境没配好取包渠道 | 别卡在这里：`curl` 那条端点能力完全等价（见 `publish-api.md` §2） |
 | 缺少应用标识 | 没传 `--key`，配置文件里也没有 `LISTING_KEY` | 二选一，见 `publish-api.md` §0 |
 | 缺少发布令牌 / 令牌形状不对 | 没设 `XGENT_RELEASE_TOKEN`、也没传 `--token`；或把别的令牌拿来了 | 令牌以 `xrel_` 开头。**别写进配置文件**——CLI 会告警并忽略 |
+| 卡几分钟后 `fetch failed` / 上传超时，产物只有一两 MB | **本机配了代理，而 Node 内置 `fetch` 不读它**——直连跨境上行实测约 10 KB/s | 环境里有 `HTTPS_PROXY` / `HTTP_PROXY` 就是它。升到 `@xgent/release-cli` ≥0.6.0（检测到代理会带 `NODE_USE_ENV_PROXY=1` 重启自身）；Node 既不是 ≥22.21 也不是 ≥24 时按 `publish-api.md` §2 用 curl 兜底 |
+| `门户网关返回 502`（或任何 ≥500） | **传输层故障，不是内容被拒**——反代/网关把连接切了，门户那边没留下任何痕迹（无提案行、无审计、产物未动） | 看 CLI 打出的已传字节与实测速率：速率低得离谱就是上面那条代理问题；速率正常则是门户侧的事，带上时间点找平台管理员 |
 | `tar 不可用` | 构建镜像太精简 | 装 tar，或自己打好包用 `--dist dist.tgz` 传现成的 |
 
 ### `/status` 报 404 怎么分诊
@@ -77,6 +79,20 @@ curl -s -o /dev/null -w 'status %{http_code}\n' -H "$H" "$XGENT_PORTAL_URL/api/m
 | 发布成功、版本也对，但应用市场/租户侧看不到这个 App | listing 被平台**下架**（delisted）。发布刻意不改上下架状态——上下架归平台，找平台管理员重新上架 |
 | 带 `--manifest` 提交，返回 `ok:true`，但线上一字没变 | 这次提交里有**治理变更** ⇒ 落成待审提案，批准前库里一字不动（`status` 的最近一条提案是 `pending`）。最容易被忽略的一个触发源是 `helpEntry` 写成了外站文档 `https://…`——外链是审核档，改成 App 内路由 `"/help"` 才是自动档 |
 | 控制台上 `version` 与产物对不上 | 正常情况下不可能——两者同一次落库。若真发生，说明有人从别的路径改过 version，带 `distDigest` 去对账 |
+
+## D. 发上去也跑起来了，但跨应用调用 401
+
+症状：你的 App 去 `POST /oauth/token` 换票，门户回 `SECRET_INVALID`；或者界面上只写着
+**「跨应用授权缺失或未开启」**——那句话说的是授权，而最常见的真因不是授权。
+
+| 症状 | 多半原因 | 怎么确认 |
+| --- | --- | --- |
+| `SECRET_INVALID` | `<PREFIX>_APP_SECRET` 两边漂了：容器里跑的是**手填**的那一份，门户布出去的是**平台保管**的那一份的哈希 | 问平台管理员：该 App 的 `deployDescriptor.env` 或 `envFile` 里是不是手填了这个键。有就删掉它——删掉之后指纹变化会自动排一次换版，平台保管的那份就注进去了 |
+| `EXCHANGE_NOT_ALLOWED` | 清单里没声明要调的那个目标 App | 在 `app.manifest.json` 的 `exchangeTargets` 里补上目标 key，随 `--manifest` 提交（这是治理档，要等人工审批） |
+| 闸说缺 `<PREFIX>_APP_SECRET`，提案一直批不了 | 你在 `requiredEnv` 里写了这个键，却没声明 `exchangeTargets` | 平台不会为一个不做跨应用调用的 App 生成这枚密钥。补 `exchangeTargets`，或把这个键从 `requiredEnv` 去掉。**别让平台管理员手填一个值来让闸放行**——那正好制造上面第一行那个故障 |
+
+这枚密钥的完整口径见 SKILL.md「`<PREFIX>_APP_SECRET`：跨应用交换的发起方密钥」。一句话：
+**键名归你，值归平台，明文只在批准那一刻给审批人看一次。**
 
 ## 一条通用的分诊起手式
 

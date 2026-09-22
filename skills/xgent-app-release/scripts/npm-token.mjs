@@ -18,7 +18,7 @@
  * 零依赖，纯 Node ≥18（fetch 内置）。可以整个文件拷进任何 App 仓。
  * 退出码：换到 → 0；配置缺失/被拒/不可达 → 1。
  */
-import { loadConfig, parseArgs, resolveRelease } from "./registry-config.mjs";
+import { loadConfig, parseArgs, resolveRelease, warnIfProxyIgnored } from "./registry-config.mjs";
 
 const args = parseArgs(process.argv.slice(2), ["raw", "npmrc", "check", "help"]);
 if (args.help) {
@@ -38,6 +38,8 @@ const die = (msg, ...hints) => {
 if (!key) die("缺少 LISTING_KEY", "在 .xgent-registry.env 里写 LISTING_KEY=<你的应用标识>，或用 --key 传");
 if (!portal) die("缺少门户地址", "在 .xgent-registry.env 里写 TARGET_XGENT_PLATFORM=<门户地址>，或用 --portal 传");
 if (!token) die("缺少发布令牌", "在 .xgent-registry.env 里写 XGENT_RELEASE_TOKEN=xrel_…（就是发版用的那枚）");
+
+warnIfProxyIgnored();
 
 const url = `${portal}/api/market/release/${encodeURIComponent(key)}/npm-token`;
 let res;

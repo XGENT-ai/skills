@@ -60,6 +60,21 @@ export function parseArgs(argv, bools = []) {
   return out;
 }
 
+/**
+ * 本机配了代理，而 Node 内置的 `fetch` **不读**那几个变量（curl / git / npm / docker 全都读）。
+ * 这两个脚本只发小请求，下行正常时看不出来，所以这里**只告警、不做任何事**——真正会被它
+ * 拖死的是 `publish` 的上行，那一步由 `@xgent/release-cli` ≥0.6.0 自己带开关重启进程解决。
+ * 只打变量名：值里可能带 `user:password@`，而这行字要进 CI 日志。
+ */
+export function warnIfProxyIgnored() {
+  const name = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"].find(
+    (k) => String(process.env[k] ?? "").trim() !== "",
+  );
+  if (!name) return;
+  console.error(`! 检测到 ${name}，但 Node 内置 fetch 不读它 —— 本脚本这几个小请求直连。`);
+  console.error("  发版上行慢/超时是同一个原因：用 @xgent/release-cli ≥0.6.0，它会自己带 NODE_USE_ENV_PROXY 重启走代理。");
+}
+
 /** 三样发布必需项，按 参数 > 环境变量 > 文件 取。 */
 export function resolveRelease(args, cfg) {
   return {
