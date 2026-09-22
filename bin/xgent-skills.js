@@ -1,14 +1,18 @@
 #!/usr/bin/env node
-// xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks 并启用相关 settings。
+// xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks、启用相关 settings,
+// 并把随包 vendor 的 impeccable(skills + hooks + engine 二进制)一并装上。
 // 零依赖,Node >= 18。
 
 'use strict';
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const PKG_ROOT = path.join(__dirname, '..');
 const HOOKS_SRC_DIR = path.join(PKG_ROOT, '.claude', 'hooks');
+const VENDOR_DIR = path.join(PKG_ROOT, 'vendor', 'impeccable');
+const BUNDLE_DIR = path.join(VENDOR_DIR, 'bundle');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -20,22 +24,438 @@ const MANAGED_SETTINGS = {
   },
 };
 
+// ─── impeccable(vendor) ──────────────────────────────────────────────────────
+// vendor/impeccable/bundle 就是上游 universal.zip 解开后的样子:每个 harness
+// 一个点目录。装法照抄上游 `impeccable install` 的工程内(project scope)行为:
+// 复制 skills/agents/commands,hook manifest 按标记剔旧再合并。
+
+// .codex 只承载 Codex 的 hook manifest,skills 走 .agents(上游同此约定)。
+const HOOK_ONLY_PROVIDERS = new Set(['.codex']);
+
+// 项目里一个 harness 目录都没有时的兜底。上游默认 .claude + .agents;这里只留
+// .claude —— 本命令本来就是给 Claude Code 装 hooks 与 statusline 的,其它 harness
+// 只在项目自己有对应目录时才装,想手动指定用 --providers。
+const DEFAULT_TARGETS = ['.claude'];
+
+// 每个 harness 的 hook manifest:bundle 里的来源 → 项目里的落点。
+// .claude 的落点是 settings.local.json,但如果共享的 settings.json 已经带了
+// impeccable 的 hook,就以它为准(shared)。
+const HOOK_ARTIFACTS = {
+  '.claude': { src: ['.claude', 'settings.json'], dest: ['.claude', 'settings.local.json'], shared: ['.claude', 'settings.json'] },
+  '.cursor': { src: ['.cursor', 'hooks.json'], dest: ['.cursor', 'hooks.json'] },
+  '.agents': { src: ['.codex', 'hooks.json'], dest: ['.codex', 'hooks.json'] },
+  '.github': { src: ['.github', 'hooks', 'impeccable.json'], dest: ['.github', 'hooks', 'impeccable.json'] },
+  '.grok': { src: ['.grok', 'hooks', 'impeccable.json'], dest: ['.grok', 'hooks', 'impeccable.json'] },
+};
+
+// hook 命令里的 launcher 路径。.github 不在表里:它的 manifest 是团队共享、
+// 用 $(git rev-parse --show-toplevel) 定位的可移植形式,不能改写成别的路径。
+const HOOK_LAUNCHER_REL = {
+  '.claude': '${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable',
+  '.cursor': '.cursor/skills/impeccable/scripts/impeccable',
+  '.agents': '.agents/skills/impeccable/scripts/impeccable',
+  '.grok': '.grok/skills/impeccable/scripts/impeccable',
+};
+
+// 认领 impeccable 自己写的 hook 条目(剔旧用)。两代写法都要认:JS 时代的
+// hook*.mjs,和现在的 launcher。与上游 crates/context/src/hook_markers.rs 对齐。
+const LEGACY_HOOK_SCRIPT_MARKERS = [
+  'skills/impeccable/scripts/hook-probe.mjs',
+  'skills/impeccable/scripts/hook.mjs',
+  'skills/impeccable/scripts/hook-before-edit.mjs',
+  'skills/impeccable/scripts/hook-after-edit.mjs',
+  'skills/impeccable/scripts/hook-stop.mjs',
+];
+const LAUNCHER_HOOK_MARKER = /skills\/impeccable\/scripts\/impeccable(?:\.cmd|\.exe)?["']?\s+hook(?:-before-edit|-probe|-after-edit|-stop)?(?:\s|$|["'&|;)])/;
+
+// 反斜杠统一成正斜杠,行首或引号后的连续两个保留成 UNC 前缀。
+function normalizeHookSeparators(command) {
+  let out = '';
+  let prev = null;
+  let i = 0;
+  while (i < command.length) {
+    const ch = command[i];
+    if (ch !== '\\' && ch !== '/') {
+      out += ch;
+      prev = ch;
+      i += 1;
+      continue;
+    }
+    let run = 0;
+    while (i < command.length && (command[i] === '\\' || command[i] === '/')) {
+      run += 1;
+      i += 1;
+    }
+    out += '/';
+    if (run >= 2 && (prev === null || prev === '"' || prev === "'")) out += '/';
+    prev = '/';
+  }
+  return out;
+}
+
+function isImpeccableHookCommand(command) {
+  const normalized = normalizeHookSeparators(command);
+  return LEGACY_HOOK_SCRIPT_MARKERS.some((m) => normalized.includes(m)) || LAUNCHER_HOOK_MARKER.test(normalized);
+}
+
+function valueHasHookMarker(value) {
+  if (typeof value === 'string') return isImpeccableHookCommand(value);
+  if (Array.isArray(value)) return value.some(valueHasHookMarker);
+  if (value && typeof value === 'object') return Object.values(value).some(valueHasHookMarker);
+  return false;
+}
+
+function hookVerb(provider) {
+  return provider === '.cursor' ? 'hook-before-edit' : 'hook';
+}
+
+function guardedHookCommand(provider) {
+  const quoted = JSON.stringify(HOOK_LAUNCHER_REL[provider]);
+  return `[ ! -f ${quoted} ] || ${quoted} ${hookVerb(provider)}`;
+}
+
+function windowsHookCommand(provider) {
+  const quoted = JSON.stringify(`${HOOK_LAUNCHER_REL[provider]}.cmd`);
+  return `if exist ${quoted} (${quoted} ${hookVerb(provider)} & exit /b)`;
+}
+
+// bundle 里的命令按 harness 目录写死(Codex 的写成了 .codex/...),装到项目里
+// 要改写成该 harness 实际的 skill 路径。
+function rewriteHookValue(value, provider) {
+  if (!HOOK_LAUNCHER_REL[provider]) return value;
+  if (typeof value === 'string') return isImpeccableHookCommand(value) ? guardedHookCommand(provider) : value;
+  if (Array.isArray(value)) return value.map((v) => rewriteHookValue(v, provider));
+  if (value && typeof value === 'object') {
+    const next = {};
+    for (const [key, item] of Object.entries(value)) next[key] = rewriteHookValue(item, provider);
+    if (provider === '.agents' && typeof value.command === 'string' && isImpeccableHookCommand(value.command)) {
+      next.commandWindows = windowsHookCommand(provider);
+    }
+    return next;
+  }
+  return value;
+}
+
+function stripHookEntry(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry;
+  for (const key of ['command', 'commandWindows', 'args', 'bash', 'powershell']) {
+    if (valueHasHookMarker(entry[key])) return null;
+  }
+  if (!Array.isArray(entry.hooks)) return entry;
+  const kept = entry.hooks.map(stripHookEntry).filter((e) => e !== null);
+  if (kept.length === 0 && entry.hooks.some(valueHasHookMarker)) return null;
+  return { ...entry, hooks: kept };
+}
+
+function stripHookEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.map(stripHookEntry).filter((e) => e !== null);
+}
+
+function asObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+// 上游 mergeHookManifests:先把已有的 impeccable 条目摘干净,再追加新的,
+// 项目自己的 hook 原样保留。
+function mergeHookManifests(existing, fresh) {
+  const existingHooks = asObject(asObject(existing).hooks);
+  const freshHooks = asObject(asObject(fresh).hooks);
+  const merged = { ...asObject(existing) };
+  if (fresh.version !== undefined) merged.version = fresh.version;
+  if (fresh.description !== undefined) merged.description = fresh.description;
+
+  const events = Object.keys(existingHooks);
+  for (const event of Object.keys(freshHooks)) {
+    if (!events.includes(event)) events.push(event);
+  }
+  const hooks = {};
+  for (const event of events) {
+    const entries = stripHookEntries(existingHooks[event]);
+    if (Array.isArray(freshHooks[event])) entries.push(...freshHooks[event]);
+    if (entries.length > 0) hooks[event] = entries;
+  }
+  merged.hooks = hooks;
+  return merged;
+}
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function tryReadJson(file) {
+  try {
+    return readJson(file);
+  } catch {
+    return undefined;
+  }
+}
+
+function fileHasHookMarker(file) {
+  if (!fs.existsSync(file)) return false;
+  const parsed = tryReadJson(file);
+  return !!parsed && valueHasHookMarker(asObject(parsed).hooks);
+}
+
+// 共享 manifest 已经带 hook 时,把本地那份里的 impeccable 条目摘掉,避免装两遍。
+function pruneHookManifest(file) {
+  if (!fileHasHookMarker(file)) return false;
+  const parsed = tryReadJson(file);
+  if (!parsed) return false;
+  const hooks = {};
+  for (const [event, entries] of Object.entries(asObject(parsed.hooks))) {
+    const kept = stripHookEntries(entries);
+    if (kept.length > 0) hooks[event] = kept;
+  }
+  const next = { ...parsed };
+  if (Object.keys(hooks).length > 0) {
+    next.hooks = hooks;
+  } else {
+    delete next.hooks;
+    delete next.description;
+    delete next.version;
+  }
+  if (Object.keys(next).length === 0) {
+    fs.rmSync(file, { force: true });
+  } else {
+    fs.writeFileSync(file, JSON.stringify(next, null, 2) + '\n');
+  }
+  return true;
+}
+
+function listFilesRecursive(dir, prefix = '') {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...listFilesRecursive(path.join(dir, entry.name), rel));
+    } else {
+      files.push(rel);
+    }
+  }
+  return files;
+}
+
+function treesEqual(src, dest) {
+  if (!fs.existsSync(dest)) return false;
+  const srcFiles = listFilesRecursive(src).sort();
+  const destFiles = listFilesRecursive(dest).sort();
+  if (srcFiles.length !== destFiles.length || srcFiles.some((f, i) => f !== destFiles[i])) return false;
+  return srcFiles.every((rel) => fs.readFileSync(path.join(src, rel)).equals(fs.readFileSync(path.join(dest, rel))));
+}
+
+// 复制后补上执行位:zip 经某些解压器或文件同步后会丢 +x,launcher 一丢 +x
+// 就每次编辑都 Permission denied。
+function restoreExecutableBits(skillDir) {
+  for (const name of ['impeccable', 'impeccable.cmd']) {
+    const file = path.join(skillDir, 'scripts', name);
+    if (fs.existsSync(file)) fs.chmodSync(file, 0o755);
+  }
+  const binDir = path.join(skillDir, 'scripts', 'bin');
+  if (!fs.existsSync(binDir)) return;
+  for (const rel of listFilesRecursive(binDir)) fs.chmodSync(path.join(binDir, rel), 0o755);
+}
+
+function bundleProviders() {
+  return fs
+    .readdirSync(BUNDLE_DIR, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && e.name.startsWith('.') && !HOOK_ONLY_PROVIDERS.has(e.name))
+    .map((e) => e.name)
+    .sort();
+}
+
+// 探测要在本命令自己创建 .claude 之前做,否则任何项目看上去都"已经在用
+// Claude Code"。
+function detectProviders(targetDir) {
+  return bundleProviders().filter((p) => fs.existsSync(path.join(targetDir, p)));
+}
+
+function resolveProviders(detected, requested) {
+  const available = bundleProviders();
+  if (requested) {
+    const wanted = requested
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean)
+      .map((v) => (v.startsWith('.') ? v : `.${v}`));
+    const unknown = wanted.filter((v) => !available.includes(v));
+    if (unknown.length > 0) {
+      console.error(`错误: 未知的 harness 目录: ${unknown.join(', ')}`);
+      console.error(`可选: ${available.join(', ')}`);
+      process.exit(1);
+    }
+    return wanted;
+  }
+  return detected.length > 0 ? detected : DEFAULT_TARGETS;
+}
+
+function copyFileIfChanged(src, dest) {
+  const content = fs.readFileSync(src);
+  if (fs.existsSync(dest) && content.equals(fs.readFileSync(dest))) return false;
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, content, { mode: fs.statSync(src).mode & 0o777 });
+  return true;
+}
+
+function installProviderSkills(targetDir, provider, force) {
+  const srcDir = path.join(BUNDLE_DIR, provider, 'skills');
+  if (!fs.existsSync(srcDir)) return;
+  for (const name of fs.readdirSync(srcDir)) {
+    const src = path.join(srcDir, name);
+    const dest = path.join(targetDir, provider, 'skills', name);
+    if (!force && treesEqual(src, dest)) {
+      console.log(`  未变  ${provider}/skills/${name}`);
+      restoreExecutableBits(dest);
+      continue;
+    }
+    const status = fs.existsSync(dest) ? '更新' : '安装';
+    fs.rmSync(dest, { recursive: true, force: true });
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.cpSync(src, dest, { recursive: true });
+    restoreExecutableBits(dest);
+    console.log(`  ${status}  ${provider}/skills/${name}`);
+  }
+}
+
+function installProviderFiles(targetDir, provider, kind) {
+  const srcDir = path.join(BUNDLE_DIR, provider, kind);
+  if (!fs.existsSync(srcDir)) return;
+  let changed = 0;
+  const names = fs.readdirSync(srcDir).filter((n) => fs.statSync(path.join(srcDir, n)).isFile());
+  for (const name of names) {
+    if (copyFileIfChanged(path.join(srcDir, name), path.join(targetDir, provider, kind, name))) changed += 1;
+  }
+  if (names.length === 0) return;
+  console.log(`  ${changed > 0 ? '写入' : '未变'}  ${provider}/${kind}/ (${names.length} 个文件)`);
+}
+
+function installProviderHooks(targetDir, provider, force) {
+  const artifact = HOOK_ARTIFACTS[provider];
+  if (!artifact) return;
+  const src = path.join(BUNDLE_DIR, ...artifact.src);
+  if (!fs.existsSync(src)) return;
+  const dest = path.join(targetDir, ...artifact.dest);
+  const destRel = path.relative(targetDir, dest);
+
+  if (artifact.shared) {
+    const shared = path.join(targetDir, ...artifact.shared);
+    if (shared !== dest && fileHasHookMarker(shared)) {
+      pruneHookManifest(dest);
+      console.log(`  跳过  ${destRel}(${path.relative(targetDir, shared)} 里已有 impeccable hook)`);
+      return;
+    }
+  }
+
+  const fresh = rewriteHookValue(readJson(src), provider);
+  let next = fresh;
+  if (fs.existsSync(dest)) {
+    const existing = tryReadJson(dest);
+    if (existing === undefined) {
+      if (!force) {
+        console.error(`错误: 已有的 hook 配置不是合法 JSON: ${dest}`);
+        console.error('请先手动修复,或加 --force 让本命令备份为 .bak 后覆盖。');
+        process.exit(1);
+      }
+      fs.copyFileSync(dest, `${dest}.bak`);
+    } else {
+      next = mergeHookManifests(existing, fresh);
+    }
+  }
+  const content = JSON.stringify(next, null, 2) + '\n';
+  if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8') === content) {
+    console.log(`  未变  ${destRel}`);
+    return;
+  }
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, content);
+  console.log(`  写入  ${destRel} (impeccable hooks)`);
+}
+
+// engine 二进制放进 ~/.impeccable/bin/<版本>/:launcher 和 npx impeccable 都认
+// 这个版本化缓存,一台机器装一份,所有项目共用,首次运行也就不必联网下载了。
+// vendor 里只收了 macOS 的二进制,别的平台落到"跳过",由 launcher 首次运行时
+// 自己去 GitHub 下载(上游原本的行为)。
+function installEngineBinary(meta, force) {
+  const arch = { arm64: 'arm64', x64: 'x64' }[process.arch] || process.arch;
+  const target = `${process.platform === 'darwin' ? 'darwin' : process.platform}-${arch}`;
+  const src = path.join(VENDOR_DIR, 'engine', target, 'impeccable');
+  if (!fs.existsSync(src)) {
+    console.log(`  跳过  engine 二进制:vendor 里只收了 macOS 的版本,${target} 会在首次运行时联网下载`);
+    return;
+  }
+  const cacheRoot = process.env.IMPECCABLE_HOME || path.join(os.homedir(), '.impeccable');
+  const dest = path.join(cacheRoot, 'bin', meta.engineVersion, 'impeccable');
+  const home = os.homedir();
+  const destLabel = dest.startsWith(`${home}${path.sep}`) ? path.join('~', path.relative(home, dest)) : dest;
+  const content = fs.readFileSync(src);
+  if (!force && fs.existsSync(dest) && content.equals(fs.readFileSync(dest))) {
+    console.log(`  未变  ${destLabel}`);
+    return;
+  }
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, content, { mode: 0o755 });
+  fs.chmodSync(dest, 0o755);
+  console.log(`  写入  ${destLabel} (engine v${meta.engineVersion})`);
+}
+
+function installImpeccable(targetDir, options) {
+  if (!fs.existsSync(BUNDLE_DIR)) {
+    console.log('  跳过  impeccable:本包里没有 vendor/impeccable(先跑 node scripts/vendor-impeccable.mjs)');
+    return;
+  }
+  const meta = readJson(path.join(VENDOR_DIR, 'VERSION.json'));
+  const providers = resolveProviders(options.detected, options.providers);
+  console.log(`impeccable skill v${meta.skillVersion} / engine v${meta.engineVersion} → ${providers.join(', ')}`);
+  for (const provider of providers) {
+    installProviderSkills(targetDir, provider, options.force);
+    installProviderFiles(targetDir, provider, 'agents');
+    installProviderFiles(targetDir, provider, 'commands');
+    installProviderHooks(targetDir, provider, options.force);
+  }
+  installEngineBinary(meta, options.force);
+}
+
+// ─── install ────────────────────────────────────────────────────────────────
+
 function usage() {
   console.log(`用法: npx @xgent-ai/skills <command>
 
 命令:
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
-                  hook,并在 .claude/settings.json 中启用对应配置
+                  hook,在 .claude/settings.json 中启用对应配置,并装上
+                  随包 vendor 的 impeccable(skills + hooks + engine 二进制)
   help            显示本帮助
+
+install 选项:
+  --no-impeccable       只装 XGENT 的 hooks 与 settings,跳过 impeccable
+  --providers=a,b       指定 impeccable 装进哪些 harness 目录(默认按项目里
+                        已有的目录判断,都没有时装 ${DEFAULT_TARGETS.join(' 和 ')})
+  --force               强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 .bak)
 `);
 }
 
-function install(dirArg) {
+function install(args) {
+  const flags = args.filter((a) => a.startsWith('--'));
+  const dirArg = args.find((a) => !a.startsWith('--'));
+  const unknown = flags.filter((f) => f !== '--no-impeccable' && f !== '--force' && !f.startsWith('--providers='));
+  if (unknown.length > 0) {
+    console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
+    usage();
+    process.exit(1);
+  }
+  const options = {
+    impeccable: !flags.includes('--no-impeccable'),
+    force: flags.includes('--force'),
+    providers: flags.find((f) => f.startsWith('--providers='))?.slice('--providers='.length),
+  };
+
   const targetDir = path.resolve(dirArg || process.cwd());
   if (!fs.existsSync(targetDir) || !fs.statSync(targetDir).isDirectory()) {
     console.error(`错误: 目标目录不存在: ${targetDir}`);
     process.exit(1);
   }
+
+  options.detected = detectProviders(targetDir);
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -71,6 +491,11 @@ function install(dirArg) {
     console.log('  写入  .claude/settings.json (statusLine)');
   }
 
+  if (options.impeccable) {
+    installImpeccable(targetDir, options);
+    console.log('  提示  在 agent 对话里(不是终端)输入 /impeccable init 完成 impeccable 的设计上下文');
+  }
+
   console.log('  提示  项目文档由 xgent-init skill 生成(npx skills add XGENT-ai/skills --skill xgent-init)');
   console.log(`完成: ${targetDir}`);
 }
@@ -78,7 +503,7 @@ function install(dirArg) {
 const [cmd, ...args] = process.argv.slice(2);
 switch (cmd) {
   case 'install':
-    install(args[0]);
+    install(args);
     break;
   case undefined:
   case 'help':

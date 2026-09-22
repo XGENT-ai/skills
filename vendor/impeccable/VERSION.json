@@ -1,0 +1,25 @@
+{
+  "source": "https://github.com/pbakaus/impeccable",
+  "license": "Apache-2.0",
+  "skillVersion": "4.3.1",
+  "engineVersion": "0.1.5",
+  "bundle": {
+    "url": "https://github.com/pbakaus/impeccable/releases/download/skill-v4.3.1/universal.zip",
+    "keyId": "release-2026-09",
+    "sha256": "1deea4cdfb1608df6d9e08ef359629e7cc866a22ab7c2195a835627b887f190b",
+    "size": 15625571
+  },
+  "engines": {
+    "darwin-arm64": {
+      "asset": "impeccable-darwin-arm64",
+      "sha256": "0d48b6e16aa97664fdbe607d5da9ae320e389a1843e0ff1328f8c2530530320d",
+      "size": 12762240
+    },
+    "darwin-x64": {
+      "asset": "impeccable-darwin-x64",
+      "sha256": "153971b0c00719dff9ebac13370cb7dbbbe12838b696fbaf3f7ab0b1b3726b52",
+      "size": 14400568
+    }
+  },
+  "fetchedAt": "2026-09-22T06:34:55.507Z"
+}

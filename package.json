@@ -1,7 +1,7 @@
 {
   "name": "@xgent-ai/skills",
-  "version": "0.1.1",
-  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks 并启用 settings",
+  "version": "0.2.0",
+  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并离线安装 vendor 的 impeccable",
   "keywords": [
     "claude-code",
     "skills",
@@ -18,7 +18,8 @@
   "files": [
     "bin",
     ".claude/hooks",
-    "skills"
+    "skills",
+    "vendor"
   ],
   "engines": {
     "node": ">=18"
