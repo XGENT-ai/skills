@@ -1,6 +1,6 @@
 ---
 name: xgent-app-release
-description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动生效，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/<key>/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/<key>/ page after a publish.'
+description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动生效，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「`npx @xgent/release-cli` 取不到 / E404（它在私有包仓上）」「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/<key>/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/<key>/ page after a publish.'
 ---
 
 # xgent-app-release · App 版本自助发布
@@ -124,15 +124,33 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
   不是「这份清单是什么」的结论 —— 那次 `publish` 的退出码仍是非 0（发版确实没成），
   但目录会收到这一版。
 
-## 第 0 步：装 `@xgent/*` 私有包（**不需要任何云账号**）
+## 第 0 步：配私有包仓（**`@xgent/release-cli` 自己也在上面**，不需要任何云账号）
 
-`@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-ui` 发在私有包仓上。你**不必**有云账号、
-不必装云厂商 CLI、不必持任何长期凭据 —— 用已有的**发布令牌**向门户换一枚 ≤12 h 的**只读**令牌：
+`@xgent/release-cli` 与 `@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-ui` 发在**同一个
+私有包仓**上，公共 npm 上一个都没有。所以这一步**不只是装依赖**：`.npmrc` 没配 `@xgent:registry`，
+下面第 1 步的 `npx @xgent/release-cli whoami` 就是第一条撞墙的命令
+（`E404 Not Found - GET https://registry.npmjs.org/@xgent%2frelease-cli`）。
+
+**动手发版之前先查一眼配没配**（`npm config get` 会把 `./.npmrc`、`~/.npmrc` 整条链解析完）：
+
+```bash
+npm config get @xgent:registry      # 打印 undefined ⇒ 没配，下面这步必须先做
+```
+
+没配就用手上已有的**发布令牌**（`XGENT_RELEASE_TOKEN`，就是发版那枚）向门户换一枚 ≤12 h 的
+**只读**令牌 —— 你**不必**有云账号、不必装云厂商 CLI、不必持任何长期凭据：
+
+```bash
+node "$SKILL_DIR/scripts/npm-token.mjs" --npmrc >> .npmrc   # 写进三行（含明文令牌，这份别提交）
+npm config get @xgent:registry                              # 验收：打印出私有仓地址，不再是 undefined
+npx @xgent/release-cli whoami                               # 验收：CLI 取得到了，顺带验了发布令牌
+```
+
+CI 里用变量形式（`.npmrc` 可以进仓，令牌不进仓）：
 
 ```bash
 eval "$(node "$SKILL_DIR/scripts/npm-token.mjs")"     # 导出 XGENT_NPM_AUTH_TOKEN / XGENT_NPM_REGISTRY
 npm install                               # .npmrc 里用 ${XGENT_NPM_AUTH_TOKEN} 引它
-node "$SKILL_DIR/scripts/npm-token.mjs" --npmrc >> .npmrc   # 或者直接生成三行（别提交这份 .npmrc）
 node "$SKILL_DIR/scripts/npm-token.mjs" --check        # 只体检：能不能换到、还剩多久，不打印令牌
 ```
 
@@ -157,7 +175,8 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
 
 1. **先验令牌，再构建。** `npx @xgent/release-cli whoami`
    → 验收：打印 key + 令牌前缀 + 过期时间。放在构建之前是因为构建可能十分钟，
-   而令牌过期/被吊销的现象只有调用时才现形。
+   而令牌过期/被吊销的现象只有调用时才现形。**这条同时验了第 0 步**：CLI 自己就在私有包仓上，
+   报 `E404 … @xgent%2frelease-cli` 是 `.npmrc` 没配，不是令牌的问题——回第 0 步一条命令就好。
 2. **构建，`base` 必须是 `/apps/<key>/`。** 产物在生产被挂到那个子路径下，
    `base` 少了 → 资源请求打到站点根 → 页面 200 但白屏。这是本流程翻车率第一名。
    → 验收：`grep -o 'src="[^"]*"' dist/index.html`，路径都以 `/apps/<key>/` 开头。
@@ -186,8 +205,10 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    然后浏览器打开门户 → 应用中心 → 你的 App，走通主路径。**`status` 报 404 不等于发布失败**
    （见下），第 4 步的返回体已经给了版本与 digest，浏览器那一眼照走不误。
 
-`@xgent/release-cli` 不在公共 npm 上；你的环境取不到它时**不要卡在这里**——端点就一条
-`POST /api/market/release/:key`，`curl` 兜底见 [references/publish-api.md](references/publish-api.md) §2。
+`@xgent/release-cli` 不在公共 npm 上，**它就在第 0 步那个私有包仓里**。取不到包时先分诊，
+别急着换工具：`npm config get @xgent:registry` 是 `undefined` ⇒ 回第 0 步配 `.npmrc`，一条命令就好。
+只有换令牌这步本身失败（`NPM_REGISTRY_NOT_CONFIGURED` 等**平台侧**原因）才需要兜底——端点就一条
+`POST /api/market/release/:key`，`curl` 版见 [references/publish-api.md](references/publish-api.md) §2。
 
 **只读面（`status` / `--wait`）不保证每个门户都有**——它比发布面晚一版上线。同一枚令牌
 whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别停下来改令牌或改 key**。

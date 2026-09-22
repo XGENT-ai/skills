@@ -7,7 +7,8 @@
  *   node npm-token.mjs --npmrc    # 打印可直接追加进 .npmrc 的三行
  *   node npm-token.mjs --check    # 只体检：能不能换到、还剩多久，不打印令牌
  *
- * `@xgent/{shared,portal-sdk,portal-ui}` 装在私有仓上。你**不需要**任何云账号或 CLI：
+ * `@xgent/{release-cli,shared,portal-sdk,portal-ui}` 都装在私有仓上 —— **发版用的 CLI 本身也在**，
+ * 所以 `.npmrc` 没配好时 `npx @xgent/release-cli` 第一条就 E404。你**不需要**任何云账号或 CLI：
  * 用已有的发布令牌（`XGENT_RELEASE_TOKEN`，就是发版那枚）向门户换一枚 ≤12 h 的
  * **只读**令牌即可。门户持那把云凭据，轮换时你这边零改动。
  *

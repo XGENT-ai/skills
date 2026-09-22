@@ -271,8 +271,9 @@ env:
   MANIFEST_STORE_TOKEN: ${{ secrets.MANIFEST_STORE_TOKEN }}
 
 steps:
+  # ⓪ 必须在最前：@xgent/release-cli 自己就在私有包仓上，.npmrc 没配的话 ① 取不到包。
+  - run: eval "$(node "$SKILL_DIR/scripts/npm-token.mjs")"   # 换私有包只读令牌
   - run: npx @xgent/release-cli whoami                  # ① 先验令牌，别等构建完才发现过期
-  - run: eval "$(node "$SKILL_DIR/scripts/npm-token.mjs")"   # ⓪ 换私有包只读令牌
   - run: <你自己的依赖安装与构建>                        # ② base=/apps/<key>/
   - run: node "$SKILL_DIR/scripts/preflight.mjs" --dist dist --version $VER
   - run: npx @xgent/release-cli publish --version $VER --dist dist/ --image <key>:$VER --wait
@@ -290,7 +291,8 @@ steps:
 
 ## 8. 私有包只读令牌（`GET /api/market/release/:key/npm-token`）
 
-`@xgent/{shared,portal-sdk,portal-ui}` 在私有包仓上。**你不需要云账号**：拿同一枚 `xrel_`
+`@xgent/{release-cli,shared,portal-sdk,portal-ui}` 都在私有包仓上 —— **包括发版用的 CLI 本身**，
+所以这一步是整条发布链的前置，不只是装依赖。**你不需要云账号**：拿同一枚 `xrel_`
 向门户换一枚 ≤12 h 的只读令牌，门户持那把云凭据。
 
 ```
@@ -308,6 +310,6 @@ Authorization: Bearer xrel_…
 | 平台的仓库凭据被拒 | `200` + `NPM_REGISTRY_UNAUTHORIZED` | 同上，你这边不用改 |
 | 仓库暂时不可达 | `200` + `NPM_REGISTRY_UNAVAILABLE` | 重试一次 |
 
-- 令牌是**域级只读**的：能装 `@xgent/*`，不能发布、不能删。
+- 令牌是**域级只读**的：能装 `@xgent/*`（`release-cli` 也在内），不能发布、不能删。
 - 不缓存到文件：它 12 h 就过期，CI 每次跑现换即可（门户侧自带缓存，不会每次都打云上）。
 - 客户端脚本 `scripts/npm-token.mjs`（`--raw` / `--npmrc` / `--check`）把这些都封好了。
