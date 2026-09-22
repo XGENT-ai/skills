@@ -208,6 +208,60 @@ eval "$(mise activate zsh)"
 - Tools not being on PATH in your terminal (fix activation instead)
 - "It works with mise exec" as a permanent solution
 
+## Troubleshooting GitHub 401 / Token Errors
+
+**Symptom**: `mise install` or `mise use` fails with `401 Unauthorized` while fetching a tool from GitHub.
+
+An expired token in a higher-priority source silently shadows every source below it. A bad token is *worse* than no token: GitHub answers invalid credentials with 401, while anonymous requests succeed (subject to rate limits).
+
+### 1. Find which source mise picked
+
+```bash
+mise token github    # masked output - safe to paste into logs
+# github.com: gho_…tSoC (source: gh CLI (hosts.yml))
+```
+
+### 2. Token priority - first match wins
+
+1. `MISE_GITHUB_TOKEN`
+2. `GITHUB_API_TOKEN`
+3. `GITHUB_TOKEN`
+4. `github.credential_command`
+5. native GitHub OAuth
+6. `~/.config/mise/github_tokens.toml`
+7. **gh CLI `hosts.yml`** - enabled by default, and the usual culprit
+8. `git credential fill` - opt-in
+
+Two traps in that list:
+
+- **`GH_TOKEN` is not a mise token source.** It is gh's own variable, so exporting it changes nothing. Use `GITHUB_TOKEN` or `MISE_GITHUB_TOKEN`.
+- **Empty means unset.** `GITHUB_TOKEN= mise install` falls straight back to `hosts.yml`. No env var in that family makes mise go anonymous.
+
+### 3. The gh CLI trap
+
+mise reads `~/.config/gh/hosts.yml` **directly - it never shells out to `gh`**. gh's own expiry handling therefore never runs, and a stale `oauth_token` keeps returning 401 indefinitely.
+
+**Fix** - re-authenticate:
+
+```bash
+gh auth login -h github.com
+```
+
+**Or bypass the gh integration** - cleaner than pointing `GH_CONFIG_DIR` at an empty directory:
+
+```bash
+MISE_GITHUB_GH_CLI_TOKENS=0 mise install    # mise token github -> (none)
+```
+
+Permanently, in `~/.config/mise/config.toml`:
+
+```toml
+[settings.github]
+gh_cli_tokens = false
+```
+
+See [references/dev-tools/github-tokens-html.md](references/dev-tools/github-tokens-html.md) for GitHub Enterprise, `credential_command`, and keyring-stored tokens.
+
 ## Validation Commands
 
 After configuration changes, verify everything works:
@@ -230,6 +284,7 @@ echo $PATH | tr ':' '\n' | grep mise
 - [references/cli/activate-html.md](references/cli/activate-html.md) - Shell activation
 - [references/cli/which-html.md](references/cli/which-html.md) - Path resolution
 - [references/dev-tools/shims-html.md](references/dev-tools/shims-html.md) - Shims vs PATH activation
+- [references/dev-tools/github-tokens-html.md](references/dev-tools/github-tokens-html.md) - GitHub token sources and priority
 - [references/guides/getting-started.md](references/guides/getting-started.md) - Setup guide
 
 ## Red Flags - You're About to Violate
@@ -239,3 +294,4 @@ echo $PATH | tr ':' '\n' | grep mise
 - "Let me create a .mise.toml" → Check if config already exists first
 - Adding jq/gh/ripgrep to mise → Consider if version actually matters
 - Assuming mise is activated → Run `mise doctor` to verify
+- Exporting `GH_TOKEN` to fix a mise 401 → mise doesn't read it; run `mise token github` first
