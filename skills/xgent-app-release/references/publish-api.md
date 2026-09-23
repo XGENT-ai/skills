@@ -291,7 +291,7 @@ steps:
 
 ## 8. 私有包只读令牌（`GET /api/market/release/:key/npm-token`）
 
-`@xgent/{release-cli,shared,portal-sdk,portal-ui}` 都在私有包仓上 —— **包括发版用的 CLI 本身**，
+`@xgent/{release-cli,shared,portal-sdk,portal-server-sdk,portal-ui}` 都在私有包仓上 —— **包括发版用的 CLI 本身**，
 所以这一步是整条发布链的前置，不只是装依赖。**你不需要云账号**：拿同一枚 `xrel_`
 向门户换一枚 ≤12 h 的只读令牌，门户持那把云凭据。
 

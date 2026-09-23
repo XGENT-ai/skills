@@ -53,6 +53,13 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 ## 资源服务器硬契约（外部实现最常炸的四处）
 
+**Bun / TypeScript 后端不自己实现第 1 条**：直接用 `@xgent/portal-server-sdk` 的 `createPortalAuthenticator`，
+信封解包、主体与凭证类型校验、缓存与故障映射都在里面；其他语言才按下面的契约自己实现。
+`@xgent/*` 从平台私有包仓安装，配法见 `xgent-app-release` skill「第 0 步」；仓里还没有
+`.xgent-registry.env` ⇒ 停下，请开发者先去门户「开发者应用」生成配置文件。**不许 vendor**：
+不把 SDK 的产物或源码拷进仓，不用 `file:` / `link:` / tar 依赖顶替。收外部团队交付时，看到
+`vendor/` 下有 `@xgent/*` 就打回。
+
 1. **自省信封解包**：门户响应必须先检查 `ok === true` 且 `data` 为对象，再校验 `data`；失败信封或缺 data 返回 503，不能回退到顶层。只有合法 `active:false` 才表示凭证失效。TDT 的 exp 必填；无过期长期 key 才可省略 exp。主体/凭证类型矩阵、ACL 范围与缓存预算见 integration-contract.md §3；
 2. **`/health` 按响应形状判定**：HTTP 非 2xx 不通过；2xx 响应顶层有 `ok` 时，必须 `ok === true && data.db === true`；没有顶层 `ok` 时按 2xx 判健康。平铺 `{"service":"my-app","db":"ok"}` 与信封 `{"ok":true,"data":{"db":true}}` 都支持，不按内建/外部 App 区分。平铺依赖故障须用 HTTP 503 表达；不要给字符串状态直接套 `ok(...)`。完整示例与同源检查脚本见 [health-contract.md](references/health-contract.md)。
 3. **门户三变量 all-or-nothing**：自省地址 + SA clientId + secret 全缺→鉴权停用 503；缺一→启动 fail-fast 打印缺失项。

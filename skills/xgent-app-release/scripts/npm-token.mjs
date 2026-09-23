@@ -7,7 +7,7 @@
  *   node npm-token.mjs --npmrc    # 打印可直接追加进 .npmrc 的三行
  *   node npm-token.mjs --check    # 只体检：能不能换到、还剩多久，不打印令牌
  *
- * `@xgent/{release-cli,shared,portal-sdk,portal-ui}` 都装在私有仓上 —— **发版用的 CLI 本身也在**，
+ * `@xgent/{release-cli,shared,portal-sdk,portal-server-sdk,portal-ui}` 都装在私有仓上 —— **发版用的 CLI 本身也在**，
  * 所以 `.npmrc` 没配好时 `npx @xgent/release-cli` 第一条就 E404。你**不需要**任何云账号或 CLI：
  * 用已有的发布令牌（`XGENT_RELEASE_TOKEN`，就是发版那枚）向门户换一枚 ≤12 h 的
  * **只读**令牌即可。门户持那把云凭据，轮换时你这边零改动。
@@ -36,9 +36,14 @@ const die = (msg, ...hints) => {
   process.exit(1);
 };
 
+// 三样都缺 = 压根没有配置文件：指向唯一的来源，别让人（或 agent）去找别的办法装包。
+const GET_CONFIG = "去门户「开发者应用」› 你的应用 › 凭证 › 生成配置文件，把 .xgent-registry.env 放到仓根后重跑";
+const NO_APP_YET = "开发者应用里还没有这个应用 ⇒ 先「申请建立应用」，平台管理员批准后才能生成";
+const NO_VENDOR = "拿到之前停下：不要把 @xgent/* 拷进 vendor/ 或改用 file:/tar 依赖";
+if (!key && !portal && !token) die("没找到 .xgent-registry.env（也没有对应的环境变量）", GET_CONFIG, NO_APP_YET, NO_VENDOR);
 if (!key) die("缺少 LISTING_KEY", "在 .xgent-registry.env 里写 LISTING_KEY=<你的应用标识>，或用 --key 传");
 if (!portal) die("缺少门户地址", "在 .xgent-registry.env 里写 TARGET_XGENT_PLATFORM=<门户地址>，或用 --portal 传");
-if (!token) die("缺少发布令牌", "在 .xgent-registry.env 里写 XGENT_RELEASE_TOKEN=xrel_…（就是发版用的那枚）");
+if (!token) die("缺少发布令牌", GET_CONFIG, NO_APP_YET, NO_VENDOR);
 
 warnIfProxyIgnored();
 
@@ -53,7 +58,7 @@ try {
   die(`连不上门户：${e?.message ?? e}`, `确认 ${portal} 可达（公司网络 / VPN）`, "稍后重试；这条链路超时不代表令牌有问题");
 }
 
-if (res.status === 401) die("发布令牌无效或已失效（401）", "去门户「应用详情 › 凭证」重新生成一枚，或让平台管理员补发");
+if (res.status === 401) die("发布令牌无效或已失效（401）", "去门户「开发者应用」› 你的应用 › 凭证 重新生成配置文件");
 if (res.status === 404) die(`门户上没有 ${key} 这个应用，或令牌绑的是别的应用（404）`, "核对 LISTING_KEY 与令牌是否同一个应用");
 if (res.status === 429) die("触发限流（429）", "稍等一分钟再试；CI 里别在每个 job 都换一次，换一次传下去");
 

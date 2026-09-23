@@ -80,8 +80,8 @@ chmod 600 ./.xgent-registry.env
 
 ### 装 `@xgent/*` 私有包？不需要云账号
 
-前端要 `@xgent/portal-sdk` / `@xgent/portal-ui` 时，**别去申请云账号、也别装云厂商 CLI**：
-拿你已有的**发布令牌**向门户换一枚 ≤12 h 的只读令牌就行（门户持云凭据）：
+要装 `@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-server-sdk` / `@xgent/portal-ui` 时，
+**别去申请云账号、也别装云厂商 CLI**：拿你的**发布令牌**向门户换一枚 ≤12 h 的只读令牌就行（门户持云凭据）：
 
 ```bash
 RELEASE_SKILL_DIR="<xgent-app-release 的 SKILL.md 所在目录>"
@@ -89,7 +89,12 @@ eval "$(node "$RELEASE_SKILL_DIR/scripts/npm-token.mjs")"
 npm install
 ```
 
-报 `NPM_REGISTRY_NOT_CONFIGURED` 是**平台侧**还没配，贴给管理员，你这边不用改任何配置。
+- **还没有发布令牌就停下。** 仓里没有 `.xgent-registry.env`（或里面没有 `XGENT_RELEASE_TOKEN`）⇒ 请开发者
+  先去门户「开发者应用」› 你的应用 › 凭证 › **生成配置文件**；应用还没建 ⇒ 先在开发者应用里
+  「申请建立应用」，平台管理员批准后才能生成。拿到之前**不许 vendor**：不把 `@xgent/*` 拷进仓、
+  不用 `file:` / `link:` / tar 依赖。
+- 报 `NPM_REGISTRY_NOT_CONFIGURED` 是**平台侧**还没配，贴给管理员，你这边不用改任何配置。
+
 细节见 `xgent-app-release` skill 的「第 0 步」。
 
 ## 1. 首次用：一条命令铺好

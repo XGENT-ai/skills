@@ -43,6 +43,11 @@ vite `base` 设成 `/apps/<key>/` → build 出 `dist/` → 用 `xgent-app-relea
 skill 的 `references/registration-and-onebox.md` §4）。**本文件其余部分（SDK 硬规则、consent、
 iframe 坑、设计红线、三份 references）与你在哪个 repo 无关，照用。**
 
+`@xgent/portal-sdk` / `@xgent/portal-ui` / `@xgent/shared` 在你的 repo 里**照常作为 npm 依赖安装**，
+来源是平台的私有包仓（公共 npm 上没有，直接 `bun add` 会 E404）。配法见 `xgent-app-release`
+skill 的「第 0 步」。仓里还没有 `.xgent-registry.env` ⇒ 停下，请开发者先去门户「开发者应用」生成
+配置文件。**不许 vendor**：不把 SDK 的产物或源码拷进仓，也不用 `file:` / `link:` / tar 依赖顶替。
+
 ## SDK 硬规则
 
 - 私有页面从 `const sdk = createPortalClient(); const init = await sdk.ready();` 开始。SDK 0.4.0 支持 iframe 与同源 standalone 共用自举；声明 `openModes` 后从 `/open/<key>` 进入。顶层必须处理 `ready()` typed error 和 `onContextChanged()`，失效时卸载私有视图与应用缓存，并提供显式 `openGate()`；不要自动跳登录。匿名页可不调用 `ready()`。生产从 `/apps/<key>/` 推导 key，开发的 appKey/host/apiBase 来自构建配置，不能读 URL 配认证主机。详见门户 SDK README 与 SSO §5.9。

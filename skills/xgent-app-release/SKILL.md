@@ -82,7 +82,7 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 | 你需要 | 从哪来 | 放在哪 |
 | --- | --- | --- |
 | `listingKey` | 平台给的 App 标识，小写字母/数字/连字符。它同时是 `/svc/<key>`、`/apps/<key>/`、scope 命名空间、令牌的 aud —— **四位一体，永不改** | `LISTING_KEY=…` |
-| 发布令牌 `xrel_…` | 平台管理员在 控制台 › 应用市场 › 接入新应用（或 应用清单 › 发布令牌）签发，**明文只显示一次** | `XGENT_RELEASE_TOKEN=xrel_…` |
+| 发布令牌 `xrel_…` | 门户「开发者应用」› 你的应用 › 凭证 › **生成配置文件**（连同 listingKey、门户地址一次写好），**明文只显示一次**。开发者应用里还没有这个应用 ⇒ 先「申请建立应用」，平台管理员批准后才能生成 | `XGENT_RELEASE_TOKEN=xrel_…` |
 | 目标门户地址 | 问平台要 | `TARGET_XGENT_PLATFORM=…`（旧名 `XGENT_PORTAL_URL` 仍认） |
 
 **五项全部写进同一份本地配置文件 `.xgent-registry.env`**（另两项见下面「顺带投一份到清单目录」），
@@ -126,10 +126,21 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
 
 ## 第 0 步：配私有包仓（**`@xgent/release-cli` 自己也在上面**，不需要任何云账号）
 
-`@xgent/release-cli` 与 `@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-ui` 发在**同一个
-私有包仓**上，公共 npm 上一个都没有。所以这一步**不只是装依赖**：`.npmrc` 没配 `@xgent:registry`，
-下面第 1 步的 `npx @xgent/release-cli whoami` 就是第一条撞墙的命令
+`@xgent/release-cli` 与 `@xgent/shared` / `@xgent/portal-sdk` / `@xgent/portal-server-sdk` /
+`@xgent/portal-ui` 发在**同一个私有包仓**上，公共 npm 上一个都没有。所以这一步**不只是装依赖**：
+`.npmrc` 没配 `@xgent:registry`，下面第 1 步的 `npx @xgent/release-cli whoami` 就是第一条撞墙的命令
 （`E404 Not Found - GET https://registry.npmjs.org/@xgent%2frelease-cli`）。
+**App 代码第一次要装 `@xgent/*`（还没到发版）也走这一步**，不必等到发版。
+
+**没有发布令牌就停下，别绕。** 仓里没有 `.xgent-registry.env`、或里面没有 `XGENT_RELEASE_TOKEN`
+⇒ 停止安装，请开发者先去门户「开发者应用」› 你的应用 › 凭证 › **生成配置文件**，把下载的
+`.xgent-registry.env` 放到仓根（`chmod 600`，加进 `.gitignore`）再继续。开发者应用里还没有这个
+应用 ⇒ 先「申请建立应用」，平台管理员批准后才能生成；打开开发者应用提示没有开发者权限 ⇒ 请租户
+管理员在「用户管理」里发「开发者」角色。
+
+**不许 vendor。** 装不上时不要把 `@xgent/*` 的产物或源码拷进仓（`vendor/` 目录、`file:` / `link:`
+依赖、向人要 tar 包、手抄一份 SDK），也不要自己重写 SDK 已有的能力。私有仓上没有你要的版本
+⇒ 停下，请平台团队发布那一版。本地快照不会随平台的修复更新，会和门户协议悄悄漂开。
 
 **动手发版之前先查一眼配没配**（`npm config get` 会把 `./.npmrc`、`~/.npmrc` 整条链解析完）：
 

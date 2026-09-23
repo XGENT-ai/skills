@@ -17,6 +17,7 @@
 | `200` 但 `ok:false`，`PROPOSAL_PENDING` | 该 App 已有一条待审提案挡路——待审期间**任何**新提交都拒，纯 dist/version 也一样（放行会「后交先生效」） | 等平台审批，或先撤回：`DELETE …/proposals/<id>`（错误 details 里带在审提案 id） |
 | `200` 但 `ok:false`，说没有部署描述 | 带了 `--image`，但该 App 还没被平台管理员配 `deployDescriptor` | 纯前端 App 本来就不该带 `--image`，去掉即可；真是新后端就在 manifest 里声明 `deployDescriptor` 随提案提交审核 |
 | `npx @xgent/release-cli` 取不到（`E404 … registry.npmjs.org/@xgent%2frelease-cli`） | **CLI 自己就在私有包仓上**，而这个 repo 的 `.npmrc` 没配 `@xgent:registry` —— 公共 npm 上当然没有 | `npm config get @xgent:registry`，是 `undefined` 就 `node "$SKILL_DIR/scripts/npm-token.mjs" --npmrc >> .npmrc` 再重试（SKILL.md 第 0 步）。**只有**换令牌这步本身报 `NPM_REGISTRY_NOT_CONFIGURED`（平台侧没配）才用 `curl` 兜底，能力完全等价（见 `publish-api.md` §2） |
+| App 代码 `bun install` / `npm install` 装 `@xgent/*` 报 E404 / 401，或私有仓上没有要的那一版 | E404 指向 `registry.npmjs.org` ⇒ `.npmrc` 没配；401 ⇒ 只读令牌过期（≤12 h）；版本不存在 ⇒ 那一版还没发布 | 前两种回 SKILL.md 第 0 步（没有 `.xgent-registry.env` 就停下，请开发者去「开发者应用」生成配置文件）；版本不存在就停下找平台团队发布。**任何一种都不许 vendor**：不拷产物或源码进仓、不用 `file:` / `link:` / tar 依赖 |
 | 缺少应用标识 | 没传 `--key`，配置文件里也没有 `LISTING_KEY` | 二选一，见 `publish-api.md` §0 |
 | 缺少发布令牌 / 令牌形状不对 | 没设 `XGENT_RELEASE_TOKEN`、也没传 `--token`；或把别的令牌拿来了 | 令牌以 `xrel_` 开头。**别写进配置文件**——CLI 会告警并忽略 |
 | 卡几分钟后 `fetch failed` / 上传超时，产物只有一两 MB | **本机配了代理，而 Node 内置 `fetch` 不读它**——直连跨境上行实测约 10 KB/s | 环境里有 `HTTPS_PROXY` / `HTTP_PROXY` 就是它。升到 `@xgent/release-cli` ≥0.6.0（检测到代理会带 `NODE_USE_ENV_PROXY=1` 重启自身）；Node 既不是 ≥22.21 也不是 ≥24 时按 `publish-api.md` §2 用 curl 兜底 |

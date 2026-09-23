@@ -31,7 +31,7 @@
 
 ## 3. 运行时鉴权（四道闸）
 
-每个受保护请求：取 `Authorization: Bearer <TDT 或端点已接纳的长期凭证>` → 调门户自省并校验声明 → 四道闸。Bun/TypeScript 使用公共服务端 SDK；其他语言实现下述相同契约。
+每个受保护请求：取 `Authorization: Bearer <TDT 或端点已接纳的长期凭证>` → 调门户自省并校验声明 → 四道闸。Bun/TypeScript 使用服务端 SDK `@xgent/portal-server-sdk`（`createPortalAuthenticator`，从平台私有包仓安装，不 vendor）；其他语言实现下述相同契约。
 
 ```
 POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/introspect
