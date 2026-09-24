@@ -59,6 +59,10 @@ done
 while IFS= read -r l; do
   [ -n "$l" ] && err "恢复快照残留模板占位:$(trim "$l")"
 done < <(sed 's/`[^`]*`//g' <<<"$snap" | grep -E '<[^<>]+>' || true)
+# 协议里唯一的填空:实施者不加载写计划的 skill,留着占位就等于没有校验命令。
+if grep -qF '<进度校验命令>' <<<"$prog"; then
+  err "「回写后自查」的 <进度校验命令> 未替换为可运行命令或人工核对说明"
+fi
 
 # ③ 识别新摘要索引与旧内联证据表,核对 ID 和记录字段。
 mcount="$(mrows "$mile" | grep -c . || true)"
