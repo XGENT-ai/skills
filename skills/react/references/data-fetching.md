@@ -2,7 +2,7 @@
 name: react-data-fetching
 description: Eliminate async waterfalls and optimize client-side data fetching in React.
 license: MIT
-last_reviewed: 2026-05-02
+last_reviewed: 2026-09-26
 ---
 
 # React data fetching — waterfall elimination and client-side patterns
@@ -145,6 +145,29 @@ function DataDisplay({ dataPromise }: { dataPromise: Promise<Data> }) {
 
 **Never create the promise during render of the suspending component.** A new promise each render means the component suspends forever. The promise must come from a stable source: module scope, a router loader, a cache, or a Suspense-enabled data library.
 
+Two ways the render-time promise sneaks back in:
+
+- **`.then()` returns a new promise.** `use(getUser(id).then(u => u.profile))` is recreated every render even when `getUser` is cached. Unwrap first, then transform: `const profile = use(getUser(id)).profile`.
+- **`useMemo` doesn't make it stable on first mount.** React keeps no state for a component that suspends before it first mounts, so the memoized promise is rebuilt on every retry.
+
+With a Suspense-enabled library there is no promise to manage — `useSuspenseQuery({ queryKey: ['user', id], queryFn })` from TanStack Query suspends the nearest boundary directly.
+
+**Start promises above the boundaries.** Sibling boundaries that receive already-started promises load in parallel. A component that `use()`s one promise before rendering the child that starts the next request is a waterfall — Pattern 1 in component form.
+
+**Rejections go to an error boundary.** `use` can't be wrapped in `try`/`catch`; put an error boundary around the Suspense boundary:
+
+```tsx
+<ErrorBoundary fallback={<LoadError />}>
+  <Suspense fallback={<Skeleton />}>
+    <DataDisplay dataPromise={dataPromise} />
+  </Suspense>
+</ErrorBoundary>
+```
+
+`use` is not a Hook: it can be called inside conditions and loops, and after an early return. That includes `use(ThemeContext)` as a conditional replacement for `useContext`.
+
+Moving an effect-based fetch (`useEffect` + `useState`) to `use()` only pays off once a stable promise source exists. Until then, keep the effect and its [`ignore` flag](effect-patterns.md#cleanup-rule-2--data-fetching-needs-an-ignore-flag).
+
 **Do NOT use Suspense when:**
 
 - The data is needed for layout decisions (causes layout shift)
@@ -253,3 +276,4 @@ function loadConfig() {
 | Forgetting to start promises before `await` | Still sequential even with `Promise.all()` |
 | `&&` conditional rendering with `count` value | Renders `0` instead of nothing (use `> 0 ? ... : null`) |
 | Non-passive listeners on scroll/touch | Janky scrolling, missed frames |
+| Promise created in render (incl. `.then()` or `useMemo`) passed to `use()` | Fallback shows repeatedly; content never appears |

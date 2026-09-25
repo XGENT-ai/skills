@@ -6,11 +6,13 @@ description: >
   (2) writing or debugging `useEffect` — deciding whether an Effect is needed at all,
   (3) using `useState` for derived values, or syncing state between components,
   (4) diagnosing unnecessary re-renders, stale closures, or memoization problems,
-  (5) fixing data-fetching waterfalls, race conditions, or duplicate requests,
+  (5) fixing data-fetching waterfalls, race conditions, or duplicate requests, or using `use()` with Suspense,
   (6) optimizing paint, hydration, resource loading, or hot-path JavaScript,
-  (7) working with refs, composition, prop drilling, or controlled vs. uncontrolled components.
+  (7) working with refs, composition, prop drilling, or controlled vs. uncontrolled components,
+  (8) upgrading React 18 to 19 — removed APIs (`ReactDOM.render`, `findDOMNode`, string refs, legacy context), `forwardRef`, `defaultProps`, and tests (`test-utils`, `act`, StrictMode counts),
+  (9) forms and mutations with Actions — `useActionState`, `useFormStatus`, `useOptimistic`.
 license: MIT
-compatibility: React 18+ (React 19 for `use`, `Activity`, ref-as-prop)
+compatibility: React 18+ (React 19 for `use`, Actions, `Activity`, ref-as-prop)
 allowed-tools: Read Write Edit Glob Grep
 ---
 
@@ -25,9 +27,11 @@ Read ALL relevant references in the same turn, in parallel. Cite them when givin
 - [Effect patterns](references/effect-patterns.md): When you don't need an Effect, dependency rules, cleanup, subscriptions, `useSyncExternalStore`, one-time initialization
 - [Re-render optimization](references/rerender-optimization.md): `memo`/`useMemo`/`useCallback`, derived state, functional updates, lazy init, `useDeferredValue`, `startTransition`, `useEffectEvent`
 - [Component patterns](references/component-patterns.md): Refs, `useImperativeHandle`, custom hook rules, controlled vs. uncontrolled, composition over prop drilling, `flushSync`
-- [Data fetching](references/data-fetching.md): Parallelizing requests, Suspense boundaries, request deduplication, passive listeners, `localStorage` versioning
+- [Data fetching](references/data-fetching.md): Parallelizing requests, Suspense boundaries, `use()` and stable promise sources, request deduplication, passive listeners, `localStorage` versioning
 - [Rendering performance](references/rendering-performance.md): `content-visibility`, hydration mismatches, resource hints, script loading, SVG animation, `Activity`, `useTransition`
 - [JS performance](references/js-performance.md): Layout thrashing, `Set`/`Map` lookups, index maps, single-pass iteration, `toSorted`, `requestIdleCallback`
+- [Actions](references/actions.md): `<form action>`, `useActionState`, `useFormStatus`, `useOptimistic` — pending, error, and optimistic state for mutations
+- [React 19 migration](references/react19-migration.md): Upgrading from 18 — root API, `findDOMNode`, `forwardRef`, `defaultProps`, legacy context, string refs, propTypes, JSX transform, TypeScript types, `act`/`test-utils`, StrictMode test counts
 
 ## You Might Not Need an Effect
 
@@ -83,6 +87,22 @@ Need to respond to something?
 - Move `await` past early returns and behind cheap synchronous guards
 - One shared request per endpoint (SWR / React Query), not one per component instance
 - Every fetch effect needs an `ignore` flag or `AbortController`
+- Promises passed to `use()` come from a loader, cache, library, or Server Component — never created in render
+
+### Forms and mutations (React 19)
+
+- `<form action={fn}>` over `onSubmit` + `preventDefault`; `useActionState` over a loading/error reducer
+- Return expected errors from the action as state; thrown errors go to the error boundary
+- `useFormStatus` is imported from `react-dom` and only reads a parent `<form>`
+- Seed `useOptimistic` with confirmed state and call its setter inside an Action
+- After `await` inside an Action, wrap state updates in another `startTransition`
+
+### Upgrading to React 19
+
+- Run `npx codemod@latest react/19/migration-recipe` first; the upgrade PR changes API surface only
+- `forwardRef` still works — `ref` is a plain prop; convert opportunistically
+- `defaultProps` are ignored on function components but still work on class components
+- StrictMode still double-runs effects; what changed is `useMemo`/`useCallback` result reuse and double-invoked ref callbacks
 
 ### Performance
 
@@ -101,3 +121,5 @@ Need to respond to something?
 5. Are components defined at module scope?
 6. Are independent async calls parallelized?
 7. Are mutating array methods used on props or state?
+8. Is every promise passed to `use()` stable across renders?
+9. On React 19: are forms using Actions with errors returned as state, and are removed APIs (`findDOMNode`, string refs, legacy context, `test-utils`) gone?
