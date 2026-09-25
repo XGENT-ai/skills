@@ -281,6 +281,11 @@ release-cli 在一盒里是**通的**（`/api/market/release/*` 就在 portal-ap
 它按 manifest 把这个 App 装起来：拉镜像 → 注册清单+服务账号（**非破坏性、幂等**，不是那个会
 truncate 的 `db:seed:onebox`）→ 建 `xgent-<key>` 库 → **生成** compose 片段 → 起容器 → 冒烟。
 
+**清单声明了 `dependencies` 的**（比如 workflow 依赖 files 和 task-gateway）：注册时门户要求每个依赖在**这台一盒里**
+已经有清单，否则拒绝（`DEPENDENCY_UNAVAILABLE`），跟依赖装没装无关。`add` 会在拉镜像之前先查一遍，把缺的依赖一次列全，然后停下。
+这时先逐个 `"$S" add <依赖>`，再重跑原来那条 `add`。之后在「应用管理 → 应用市场」里安装这个 App，依赖会一起装上、自动授予，不用一个个去装。
+依赖的清单要是没写 `deployDescriptor.image`，`add` 它时带上 `--image <REGISTRY>/<ONEBOX_PROJECT>/<key>:<tag>`。
+
 **compose 片段是从 manifest 生成的，不是每个 App 在 skill 里预置一份 YAML。** 那样每接一个新
 App 都要改一次 skill，等于把问题换了个地方。manifest 里已经有全部所需：
 
@@ -289,8 +294,9 @@ App 都要改一次 skill，等于把问题换了个地方。manifest 里已经�
 | 镜像（**版本由清单钉住，可复现**；相对名按 `<REGISTRY>/<ONEBOX_PROJECT>/` 补全） | `deployDescriptor.image` |
 | 容器内端口 / 健康路径 | `deployDescriptor.port` / `.healthPath` |
 | 网络别名 `<key>-server`、库名 `xgent-<key>` | `listingKey`（约定） |
+| 库连接串 `<PREFIX>_DATABASE_URL`（与生产同一个约定名），另带旧名 `<PREFIX>_PG_DSN` / `DATABASE_URL`，都指向 `xgent-<key>` | `listingKey`（约定） |
 | 自省身份 | `serviceAccount.clientId` |
-| 还要补哪些 env（值归平台） | `requiredEnv` |
+| 还要补哪些 env（值归平台；`add` 会点名片段与 `compose.env` 里都没有的那几个） | `requiredEnv` |
 
 **密钥不从清单来**：一盒现生成，**同时**写进本地门户 DB 与容器 env —— `add` 会在注册前把
 密钥注进临时清单（用完即删）。所以清单里有没有明文密钥都无所谓，这也正是 release-cli
@@ -333,7 +339,9 @@ MANIFEST_STORE_READ_TOKEN=xcat_…      # 只读令牌：只能读公开清单�
   `data:null` = 目录里还没有这个 key（那个 App 还没发过版？）· 连不上 = 检查地址与网络。
 
 **镜像不用你操心**：配合调试用的平台侧 App 一律以**稳定版**发到与一盒**同一个项目**下，同一把
-puller key 就能拉。要换版才加 `--image <ref>`。
+puller key 就能拉。要换版才加 `--image <ref>`。有些镜像只发了 amd64，在 Apple Silicon 上直接 pull 会报
+`no matching manifest`。这种情况 `add` 会自动改拉 amd64 那一份（仿真运行，冷启动慢），并把
+`<PREFIX>_PLATFORM=linux/amd64` 写进 `compose.env`。
 
 > **你要花时间排查的只有你自己那个 App。** 别人的 App 在这里是稳定件——起不来先 `"$S" doctor`，
 > 还不行报给门户团队，别自己去调它。
@@ -355,8 +363,8 @@ puller key 就能拉。要换版才加 `--image <ref>`。
 
 首次跨应用调用浏览器会多弹一次交换授权页，是正常的。
 
-> **为什么建库/迁移在一盒要 `add` 代劳，生产不用。** 生产上这两件各有其主：**建库**归运维
-> （不在部署链里），**迁移**归部署链——`deployDescriptor.migrateArgs` 让 deploy-controller 在换
+> **为什么建库/迁移在一盒要 `add` 代劳，生产不用。** 生产上这两件各有其主：**建库**归批准时的
+> 平台供给（按约定名 `<PREFIX>_DATABASE_URL` 建库并注入，不在部署链里），**迁移**归部署链——`deployDescriptor.migrateArgs` 让 deploy-controller 在换
 > 容器**之前**跑一个一次性容器（同镜像、同 env、只换 argv），失败就让这次部署失败而**旧容器
 > 继续服务**，不会变成换完之后的崩溃循环。一盒**两样都没有**（没有 controller，`migrateArgs`
 > 一次也不会跑），所以 `add` 替你建库，迁移靠镜像自己启动时迁——**这也意味着一盒里验不出

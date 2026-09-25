@@ -123,12 +123,13 @@ registry_login() {
     || die "docker login $REGISTRY 失败。口令可能已被轮换 —— 先 docker logout $REGISTRY 再让开发团队补一份新的 PULLER_AUTH。（陈旧凭证不会提示你去登录，只会一直 401。）"
 }
 
-# do_pull REF HINT —— docker pull 的 "What's Next" 提示走 stderr，>/dev/null 挡不住；
+# do_pull REF HINT [PLATFORM] —— docker pull 的 "What's Next" 提示走 stderr，>/dev/null 挡不住；
 # 但 2>&1 会把真错误一起吞掉，所以收进临时文件、只在失败时回显。
 do_pull() {
   local ref="$1" hint="$2" errf; errf="$(mktemp)"
-  info "拉 ${ref} …"
-  if ! docker pull "$ref" >/dev/null 2>"$errf"; then
+  local -a pf=(); [ -n "${3:-}" ] && pf=(--platform "$3")
+  info "拉 ${ref}${3:+（${3}）} …"
+  if ! docker pull ${pf[@]+"${pf[@]}"} "$ref" >/dev/null 2>"$errf"; then
     local msg; msg="$(tail -3 "$errf")"; rm -f "$errf"
     die "docker pull $ref 失败。${hint:+$hint
 }$msg"
@@ -288,11 +289,11 @@ cmd_init() {
     --format '{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.project.config_files"}}' 2>/dev/null \
     | awk -F'\t' -v h="$home/" '($1=="xgent-onebox" || $1 ~ /^onebox-/) && index($2, h)!=1 { print $1; exit }' || true)"
   if [ -n "$other" ]; then
-    [ "$force" = 1 ] || die "本机已有一套一盒（compose 项目 $other）—— 一台机器只共用一套，别再铺第二套。
+    [ "$force" = 1 ] || die "本机已有一套一盒（compose 项目 ${other}）—— 一台机器只共用一套，别再铺第二套。
 要调你的 App：XGENT_ONEBOX_HOME=<那套 portal-onebox/ 的路径> 复用它的栈跑 register-app / dc；
 宿主上的 dev 后端直连它的 pg/redis/minio（SKILL.md §5）。那套的路径查看：docker compose ls。
 确需整份重来（--force 会连 compose.env 一起重建）：$0 init --force …"
-    warn "本机已有另一套一盒（$other）—— --force 放行，但请确认那套已 down 掉，别长期并存。"
+    warn "本机已有另一套一盒（${other}）—— --force 放行，但请确认那套已 down 掉，别长期并存。"
   fi
 
   # 1) 备齐镜像 —— 没有 puller 凭证就在这里停下，而不是让人跑到一半才发现
@@ -534,6 +535,19 @@ _env_set() { # _env_set KEY VALUE —— 追加到 compose.env 末尾（后定�
   info "compose.env += ${k}=${v}"
 }
 _svc_running() { [ -n "$(dc ps -q "$1" 2>/dev/null || true)" ]; }
+# register-app 写完 /etc/caddy/svc-allow/<key>.map 后，反代要重读一次才认新 key（Caddy 只在 load 时
+# 读那个目录）。门户自己的 reload 走部署驱动，而一盒的 portal-api 没有 DEPLOY_BACKEND（deploy-controller
+# 不起）⇒ 那一步静默跳过，首次 add 的 /svc/<key> 就一直 404 —— 由这里补上。reload 是原子的：新配置
+# 不合法（如 duplicate input）时 Caddy 保留旧配置，所以失败只告警。反代没起就不用管，启动时自己会读。
+_reload_proxy() {
+  _svc_running reverse-proxy || return 0
+  local out
+  if out="$(dc exec -T reverse-proxy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1)"; then
+    info "   反代已重读 /svc 放行表"
+  else
+    warn "反代重读失败，/svc 仍是改动前那份：$(printf '%s' "$out" | tail -2 | tr '\n' ' ')"
+  fi
+}
 _ok()   { printf '  %s✓%s %s\n' "$c_grn" "$c_off" "$*"; }
 _bad()  { printf '  %s✗%s %s\n' "$c_red" "$c_off" "$1"; shift; [ $# -gt 0 ] && printf '      %s↳ %s%s\n' "$c_dim" "$*" "$c_off"; DOCTOR_BAD=$((DOCTOR_BAD+1)); return 0; }
 _note() { printf '      %s↳ %s%s\n' "$c_dim" "$*" "$c_off"; }
@@ -581,6 +595,7 @@ cmd_up() {
     ADD_QUIET=1 cmd_add "$mk" || warn "add ${mk} 失败 —— 看上面的报错；修完重跑 $0 up（幂等）"
   done
   info "⑤ 起门户三件套 + 基础服务" ; dc up -d
+  _reload_proxy
   _has_catalog observability && _portal_logs_up
   echo; info "跑一次体检："; cmd_doctor
 }
@@ -716,17 +731,39 @@ cmd_add() {
     // 非空 ⇒ 它是跨应用交换的【发起方】，需要一把 App Secret（下面与 SA 密钥同源生成注入）。
     console.log(`M_XTARGETS=${(m.exchangeTargets ?? []).join(" ")}`);
     console.log(`M_MIGRATE=${(d.migrateArgs ?? []).join(" ")}`);
+    console.log(`M_DEPS=${(m.dependencies ?? []).join(" ")}`);
   ' 2>/dev/null)" || die "解析清单失败 —— 它可能不是一份合法的 app.manifest.json。"
-  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_XTARGETS="" M_MIGRATE=""
+  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_XTARGETS="" M_MIGRATE="" M_DEPS=""
   eval "$(printf '%s' "$fields" | sed 's/^\([A-Z_]*\)=\(.*\)$/\1="\2"/')"
   [ "$M_KEY" = "$key" ] || die "清单里的 listingKey 是「${M_KEY}」，与你要加的「${key}」对不上。"
   info "   ${M_KEY}  type=${M_TYPE}  port=${M_PORT}  sa=${M_SA}"
+
+  # 依赖预检：register-app 要求 dependencies 里每个 key 在【这台门户】已有清单，否则
+  # DEPENDENCY_UNAVAILABLE —— 而且只报第一个、带一屏堆栈。拉镜像之前一次点名全部缺的。
+  # 只卡「有没有清单」：装不装由「应用管理 → 应用市场」安装时按依赖一并装上，不归这里。
+  if [ -n "$M_DEPS" ]; then
+    dc up -d postgres >/dev/null 2>&1 || true
+    local rows dep dmiss=""
+    if rows="$(dc exec -T postgres psql -U postgres -d "$(_eff POSTGRES_DB xgent-portal)" -tAc 'select listing_key from marketplace_listings' 2>/dev/null)"; then
+      rows=" $(printf '%s' "$rows" | tr -d '\r' | tr '\n' ' ') "
+      for dep in $M_DEPS; do
+        _is_portal_hosted "$dep" && continue
+        case "$rows" in *" $dep "*) ;; *) dmiss="${dmiss:+$dmiss }$dep" ;; esac
+      done
+    else
+      warn "读不到本地门户的清单表（postgres 还没就绪或还没 migrate），跳过依赖预检，交给 register-app 判。"
+    fi
+    [ -z "$dmiss" ] || die "「${key}」依赖 ${dmiss}，这台一盒里还没有它们的清单 —— 直接注册会被拒（DEPENDENCY_UNAVAILABLE）。
+先逐个 ${0} add <依赖>（配了 MANIFEST_STORE 就从目录取清单；镜像在 <REGISTRY>/<ONEBOX_PROJECT>/ 下，清单没写 deployDescriptor.image 时加 --image <全引用>），再重跑 ${0} add ${key}。
+之后在「应用管理 → 应用市场」里安装 ${key}，依赖会被一并装上、自动授予。"
+  fi
 
   # ② 镜像：清单里的相对名按 <REGISTRY>/<ONEBOX_PROJECT>/ 补全（版本由清单钉住，可复现）
   local ivar ref; ivar="$(printf '%s' "$key" | tr 'a-z-' 'A-Z_')_IMAGE"
   ref="${want_image:-$(_eff "$ivar")}"
   if [ -z "$ref" ]; then
-    [ -n "$M_IMAGE" ] || die "清单里没有 deployDescriptor.image，也没给 --image。"
+    [ -n "$M_IMAGE" ] || die "清单里没有 deployDescriptor.image，也没给 --image。
+陪调用的平台侧 App 镜像在 ${REGISTRY:-<REGISTRY>}/${ONEBOX_PROJECT:-${PROJECT:-<ONEBOX_PROJECT>}}/${key}:<tag> 下 —— 用 --image 给全引用（tag 找门户团队确认），并请该 App 在清单里补上 deployDescriptor.image。"
     case "$M_IMAGE" in
       */*) ref="$M_IMAGE" ;;                       # 已经带项目/域名，原样用
       *) load_registry_config || true
@@ -738,7 +775,19 @@ cmd_add() {
   if docker image inspect "$ref" >/dev/null 2>&1; then info "   本地已有，跳过拉取"
   else
     require_puller; registry_login
-    do_pull "$ref" "配合调试用的 App 都发在一盒同一个项目（ONEBOX_PROJECT=${ONEBOX_PROJECT:-未配}）下；确实不在就用 --image 给全引用。"
+    # 只发了 amd64 的镜像（buildx 默认带 attestation，推上去是个 index）在 Apple Silicon 上裸 pull
+    # 报 no matching manifest。本机没指定平台、裸 pull 又失败时，看它有没有 amd64 那一份：有就按
+    # amd64 拉（走仿真），并把 <PREFIX>_PLATFORM 记进 compose.env —— 生成片段的 platform: 读它。
+    # 其它失败原因（项目 / tag 不对、没权限）由 do_pull 原样报。
+    local pvar plat; pvar="${ivar%_IMAGE}_PLATFORM"; plat="$(_eff "$pvar" "$(_eff APP_PLATFORM)")"
+    [ -n "$plat" ] || info "拉 ${ref} …"
+    if [ -n "$plat" ] || ! docker pull "$ref" >/dev/null 2>&1; then
+      if [ -z "$plat" ] && docker manifest inspect "$ref" 2>/dev/null | grep -Eq '"architecture": *"amd64"'; then
+        plat="linux/amd64"; warn "${ref} 没有本机架构的版本，改按 ${plat} 拉（仿真运行，冷启动慢）"
+        _env_set "$pvar" "$plat"
+      fi
+      do_pull "$ref" "配合调试用的 App 都发在一盒同一个项目（ONEBOX_PROJECT=${ONEBOX_PROJECT:-未配}）下；确实不在就用 --image 给全引用。" "$plat"
+    fi
   fi
   _env_set "$ivar" "$ref"
 
@@ -774,6 +823,7 @@ cmd_add() {
   dc run --rm --no-deps -v "$HOME_DIR:/devkit:ro" portal-api bun run register-app "/devkit/.add-$key.manifest.json" \
     || { rm -f "$HOME_DIR/.add-$key.manifest.json"; die "注册失败 —— 看上面的报错。"; }
   rm -f "$HOME_DIR/.add-$key.manifest.json"
+  _reload_proxy
 
   info "⑤ 建库 xgent-${key}"
   dc up -d postgres >/dev/null 2>&1 || true
@@ -803,13 +853,33 @@ cmd_add() {
     # 发起方才有：门户库里那把（register-app 从清单读）与容器里这把必须同源，否则
     # 跨应用交换在【发起方】上 401，而错看起来像是被调方的问题。
     [ -n "$M_XTARGETS" ] && echo "      ${PREFIX}_APP_SECRET: \${${avar}}"
+    # 库连接串：<PREFIX>_DATABASE_URL 是生产的约定名（批准时按它建库并注入，发版 preflight 也要求它）；
+    # 后两个是旧名，留给还没改名的镜像。三个都指向同一个库。
+    echo "      ${PREFIX}_DATABASE_URL: postgres://postgres:postgres@postgres:5432/xgent-${key}"
     echo "      ${PREFIX}_PG_DSN: postgres://postgres:postgres@postgres:5432/xgent-${key}"
     echo "      DATABASE_URL: postgres://postgres:postgres@postgres:5432/xgent-${key}"
     echo "    expose: [\"\${${PREFIX}_PORT:-${M_PORT}}\"]"
     echo "    networks: { default: { aliases: [${key}-server] } }"
   } > "$out"
   info "⑥ 生成 ${out#$HOME_DIR/}"
-  [ -n "$M_ENV" ] && _note "清单声明了 requiredEnv：${M_ENV} —— 值归平台，按需补进 compose.env 末尾。"
+  # requiredEnv 里【既不在上面生成的片段、也不在 compose.env】的键 —— 一盒版的 REQUIRED_ENV_MISSING
+  # （生产还会把平台代为供给的键算作已提供，一盒只有这两处来源）。在这里点名，而不是等容器缺变量退出。
+  if [ -n "$M_ENV" ]; then
+    local gen_keys="PORT PORTAL_INTROSPECT_URL ${PREFIX}_SA_CLIENT_ID ${PREFIX}_SA_CLIENT_SECRET ${PREFIX}_DATABASE_URL ${PREFIX}_PG_DSN DATABASE_URL"
+    [ -n "$M_XTARGETS" ] && gen_keys="$gen_keys ${PREFIX}_APP_SECRET"
+    local ek missing=""
+    for ek in $M_ENV; do
+      case " $gen_keys " in *" $ek "*) continue ;; esac
+      [ -n "$(_eff "$ek")" ] && continue
+      missing="${missing:+$missing }$ek"
+    done
+    if [ -n "$missing" ]; then
+      warn "requiredEnv 里这些键既不在生成的片段里、也不在 compose.env 里：${missing}"
+      _note "值归平台（生产由审批屏填），这里补进 compose.env 末尾，再重跑 ${0} add ${key}。"
+    else
+      _note "requiredEnv 的键都已到位（生成的片段 + compose.env）。"
+    fi
+  fi
 
   # 例外：manifest 描述不了的自带 infra（如 knowledge 的 Chroma）
   local extra_args=() extra="$SKILL_DIR/services/${key}.extra.yml"

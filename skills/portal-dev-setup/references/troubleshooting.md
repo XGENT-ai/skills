@@ -78,7 +78,7 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `"$S" dc exec reverse-proxy caddy reload` |
+| `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `"$S" dc exec reverse-proxy caddy reload`（`add` / `up` 注册完会自动重读；只有自己手工跑 `register-app` 时才要这一步） |
 | `register-app` 输出里有 `/svc 放行未写成 … EACCES: permission denied`，随后 `/svc/<key>` 404 | 命名卷属主不对，见 **[§7](#7-命名卷属主不对eacces-一族)**（那一节的修法一次修好全部三个卷）。注册本身是成功的，缺的只是那一行放行 |
 | `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`"$S" dc logs app-backend`；② 没监听容器内 **8080**（反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
 | 探测全是 **000** | 反代根本没起，或你探的端口不是 `HTTP_PORT`。`"$S" dc ps` / `"$S" dc logs reverse-proxy` |
@@ -106,6 +106,7 @@
 | --- | --- |
 | `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以先 `"$S" pull` 换新镜像重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
 | `register-app` 报 `VALIDATION_FAILED`（scope） | manifest 声明了**别的 App 的 scope**，却没把那个 App 列进 `exchangeTargets`。规则：一个 listing 能声明的 scope = 平台基础 scope ∪ 本 namespace（`<listingKey>` 及其下划线变体，如 `omni-parser` → `omni_parser`）∪ 已声明 `exchangeTargets` 的 namespace |
+| `register-app` 报 `DEPENDENCY_UNAVAILABLE`（依赖的应用清单不存在：`<dep>`） | 清单 `dependencies` 里的 App 在这台一盒里还没有**注册**（跟装没装无关）。先 `"$S" add <dep>`（`add` 会在拉镜像之前预检，把缺的一次列全）。如果你自己的 App 是靠 `up` 注册的，补完依赖后**单独**重跑注册那一条：`"$S" dc run --rm -v "$PWD:/devkit:ro" portal-api bun run register-app /devkit/app.manifest.json`。**别重跑 `up`**：它的种子会 truncate 清单表，刚加的依赖又没了。之后在「应用管理 → 应用市场」里安装你的 App，依赖会一起装上 |
 | `register-app` 拒跑，提到 production | dev 模式的 `register-app` 拒绝 `NODE_ENV=production`。`compose.env` 末尾必须有 `NODE_ENV=development` |
 | 跑完 `db:seed:onebox` 后市场里找不到你的 App | **顺序反了。** 种子第一步是 `truncate … marketplace_listings … cascade`，先注册后种子 = 注册被清掉。必须 seed 在前、register-app 在后 |
 | `seed:onebox` 报 `unknown listing key` | 那个 key 既不是内置基础服务，`app-devkit/manifests/<key>.manifest.json` 也不存在。要么放一份 manifest 进去，要么把它从 `XGENT_APP_CATALOG` 里去掉 |
