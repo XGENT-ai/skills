@@ -22,8 +22,13 @@
 
 | 你看到 | 真相 |
 | --- | --- |
-| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **先读探针再判**：`docker inspect <容器> --format '{{json .Config.Healthcheck.Test}}'`。是 `curl -fsS …/health` ⇒ **假红**，且说明这盒的 compose 是旧镜像那份（精简镜像没装 `curl`，`.State.Health` 里清一色 `curl: not found`）；已经是 `bun -e fetch(...)` ⇒ **真红**，去看 `"$S" dc logs <服务>`。判活一律以 `"$S" smoke` 为准；pg/redis/minio 的 healthy 一直是真的 |
+| `portal-api` / `files-server` / `git-server` … 长期 `(unhealthy)`，但功能一切正常 | **先读探针再判**：`docker inspect <容器> --format '{{json .Config.Healthcheck.Test}}'`。是 `curl -fsS …/health` ⇒ **假红**，且说明这盒的 compose 是旧镜像那份（精简镜像没装 `curl`，`.State.Health` 里清一色 `curl: not found`）；已经是 `bun -e fetch(...)` ⇒ **真红**，去看 `"$S" dc logs <服务>`。判活一律以 `"$S" smoke` 为准；pg/redis/RustFS 的 healthy 一直是真的 |
 | `reverse-proxy` 长期 `(unhealthy)`，而 `https://localhost/` 一切正常 | **旧镜像上必然的假红**（与站点地址有关，不是 Caddy 坏了）：那条探针是 `wget -q -O /dev/null http://127.0.0.1:80/`，`XGENT_SITE_ADDRESS` 一旦是主机名，Caddy 就把它 308 到 `https://127.0.0.1/` —— 对一个 **IP** 建 TLS 没有 SNI，`on_demand_tls` 选不出证书，回 `SSL alert number 80`（`docker inspect <容器> --format '{{range .State.Health.Log}}{{.Output}}{{end}}'` 能看到）。新镜像换成了不跟随重定向的 `curl -fsS -o /dev/null http://127.0.0.1:80/`，308 本身即判活 |
+| `up` 提示「资产是旧版」/ 没有 rustfs 服务或切换脚本 | 指定新版 tag 跑 `"$S" upgrade --image <ref>` 后 `up`；沿用 latest 先 pull，再 upgrade → up。init --force 是重置，不用于升级 |
+| RustFS 控制台端口根路径返回 403 | 打开 `http://localhost:<MINIO_CONSOLE_PORT>/rustfs/console/`；存活探测走 API 口 `/health` |
+| PostgreSQL 报版本不兼容，或升级前检查提示未知/冲突数据布局 | 保留现有卷和原镜像，勿 down -v。脚本按卷内 PG_VERSION 保留已有大版本与挂载点；不能识别时先核对布局，不初始化空库。真正的大版本迁移另行备份并用 pg_upgrade/导出恢复 |
+| 对象存储切换未提交、退出 10/20 | 按脚本提示处理并保留备份；原服务会在安全条件满足时恢复。已检测到正式 RustFS 时不要删除新卷 |
+| 已提交但 RustFS 不健康 / 回退提示数据有变化 | `rustfs-data` 是权威，勿删。回退先隔离正式服务，变化时拒绝回旧卷，需复制新卷做人工核验；细节见 SKILL.md §6 |
 | `curl http://localhost/api/health` → 404 `路由不存在` | **探错路径了。** 门户健康端点是 `/health`，不带 `/api`；各服务是 `/svc/<key>/health` |
 | 改了 `compose.env` 却「没生效」 | 这份文件是**拼装**出来的（基础模板 + 一盒增量 + devkit 增量 + 本机覆盖块），同一个键出现三四次很常见。**docker compose 后定义者胜**，你多半改在了中间那处。`"$S" env` 会把「同键多个不同值」标出来，并显示实际生效的那个。改配置一律往**文件最末尾**加 |
 | 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` / `org` 四个基础服务的代码，其余在构建时就删掉了（`ingest` 已移出基础集） |
@@ -47,7 +52,7 @@
 | 「镜像域名与配置里的 REGISTRY 对不上」 | `--image` 的域名段和 `REGISTRY` 不是同一个 —— 登录 A 却去 B 拉，必然 401。对齐这两个再来 |
 | 想确认账号到底能不能用 | **判据只有 `docker pull` 本身。** 别拿 `curl` 去探仓库的管理 API（`/v2/_catalog` 之类）——只读账号在那里的 401/403 跟能不能拉是两回事 |
 | `manifest unknown` / `not found` | 按顺序查两条。① **项目名不对**——一盒镜像与**你自己 App 的镜像不在同一个项目**下，而 `.xgent-registry.env` 里的 `PROJECT` 是后者（`xgent-image-push` 用的那个）。填 `ONEBOX_PROJECT=<一盒的项目名>`（找开发团队要），或 `--image` 给全。脚本回退用 `PROJECT` 时会打一行黄色告警，**那行就是答案**。② **tag 写错**——一盒只有 `:latest`（可变指针）和 `:v<版本>-<7位sha>`（不可变）两种，别自己编版本号 |
-| 拉过了却还是旧的一版（修好的 bug 又出现） | 用的是 `:latest` 而本地已经有一份同名的 —— `docker run` / compose **默认不回仓库查**。`onebox.sh pull` 一次再 `dc up -d`；要钉住某一版就把 `compose.env` 里那两行改成 `:v<版本>-<sha>` |
+| 拉过了却还是旧的一版（修好的 bug 又出现） | 用的是 `:latest` 而本地已经有一份同名的 —— `docker run` / compose **默认不回仓库查**。先 `onebox.sh pull` 更新 latest 缓存，再 `upgrade` → `up` 同步资产；要钉住某一版用 `upgrade --image <ref>` |
 | `no matching manifest for linux/amd64` | 一盒只发 arm64（它是给开发机用的调试底座）。`--platform linux/arm64` 硬拉下来容器也起不来（`exec format error`）。要 amd64 找开发团队 |
 | **你自己的** `app-backend` 起来就 `exec format error`（或 `no matching manifest`） | 架构反了：生产镜像按规矩是 **amd64**，而开发机多半是 arm64，devkit 跟随本机架构、不会替你转译。叠一层 override 指定平台（SKILL.md §1 有现成的 `app-platform.yml`），Apple Silicon 上走 Rosetta，慢但能跑。⚠️ 别为了本地方便去发一个 arm64 的生产 tag |
 | 卡在 `Retrying in N seconds` 直到超时 | 链路或代理。把 `HTTP_PROXY`/`HTTPS_PROXY` 与 Docker Desktop 的代理设置对齐，或临时关掉代理重试 |
@@ -62,7 +67,13 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `port is already allocated` | 一盒只发布 6 个宿主端口：80/443（`HTTP_PORT`/`HTTPS_PORT`）· 5432（`POSTGRES_PORT`）· 6379（`REDIS_PORT`）· 9000/9001（`MINIO_PORT`/`MINIO_CONSOLE_PORT`）。`init` 会自动避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
+| `port is already allocated` | HTTP/HTTPS、PG、Redis、RustFS 加上 Kafka HOST/EXTERNAL 共 8 个宿主口。`init` 为原有 6 口与 Kafka HOST（`KAFKA_PORT`，9092/19092/29092）自动避让；Kafka EXTERNAL 默认回环 9095，占用时另设 `KAFKA_EXTERNAL_PORT`。自动挑选只避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
+| Kafka 未健康，但 `up` 继续运行 | Kafka 最多软等 60 秒，失败不阻塞门户。先 `"$S" doctor`、`"$S" dc logs --tail 50 kafka`；TCP healthy 也不代表某个 App 的账号/ACL 可用。基础设施起停不会自动供给 App 身份，勿拿管理员密码替代 |
+| Kafka 日志报 `InconsistentClusterIdException` / cluster ID 不匹配 | 配置与已有卷不配对。保留卷，恢复与该卷对应的原 `KAFKA_CLUSTER_ID`；从备份核对，不运行 `init --force` 重生成，不删卷、不换空目录 |
+| Kafka `Permission denied`，使用了 `KAFKA_DATA_DIR` | 确认使用原来的绝对路径、目录属主为 `1000:1000`，再重试。默认命名卷不需要另找宿主目录；不要用换目录绕过权限问题 |
+| Kafka 外部 bootstrap 能连，但读取 metadata 后超时 | broker 返回的 EXTERNAL 广告地址对客户端不可达；生产运维需同时核对 `KAFKA_EXTERNAL_BIND`、非回环的 `KAFKA_EXTERNAL_HOST`、端口与安全组。一盒保持回环；宿主用 HOST，同 compose 网络用 `kafka:9092` |
+| 升级后缺 Kafka 三键 / 仍是开发默认 | `"$S" upgrade` 使用新版资产，只补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`，已有值保留；不要手动填空赋值阻止生成。需修复已有空值时先核对卷和原配置，不要给已有卷随机新 ID |
+| Kafka 主题不存在且没有自动创建 | `auto.create.topics.enable=false` 是配置约定，不能靠发送消息隐式创建；App 身份与主题授权由后续供给流程处理，不使用管理账号接业务 |
 | 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。一盒项目名固定 `xgent-onebox`，同机只该有一套——已有在跑的一盒时别再 init 第二套，把你的 App 接进现有那套（SKILL.md 文首「一套就够」） |
 | 报缺 `APP_IMAGE` / `APP_KEY` | `docker-compose.app-dev.yml` 里的 `${APP_IMAGE:?}` 是**解析期**求值的，跟 profile 无关。`$S` 会按 `compose.env` 里这两行有没有值自动决定带不带那层——手敲 compose 时才会撞上 |
 | 报缺 `APP_FRONTEND_DIST` | 你给 `service` 型 App 叠了前端 override。service 无前端，不要那层 |
@@ -104,7 +115,7 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以先 `"$S" pull` 换新镜像重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
+| `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以按 SKILL.md §6 更新缓存后 `upgrade` → `up` 换新镜像与资产重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
 | `register-app` 报 `VALIDATION_FAILED`（scope） | manifest 声明了**别的 App 的 scope**，却没把那个 App 列进 `exchangeTargets`。规则：一个 listing 能声明的 scope = 平台基础 scope ∪ 本 namespace（`<listingKey>` 及其下划线变体，如 `omni-parser` → `omni_parser`）∪ 已声明 `exchangeTargets` 的 namespace |
 | `register-app` 报 `DEPENDENCY_UNAVAILABLE`（依赖的应用清单不存在：`<dep>`） | 清单 `dependencies` 里的 App 在这台一盒里还没有**注册**（跟装没装无关）。先 `"$S" add <dep>`（`add` 会在拉镜像之前预检，把缺的一次列全）。如果你自己的 App 是靠 `up` 注册的，补完依赖后**单独**重跑注册那一条：`"$S" dc run --rm -v "$PWD:/devkit:ro" portal-api bun run register-app /devkit/app.manifest.json`。**别重跑 `up`**：它的种子会 truncate 清单表，刚加的依赖又没了。之后在「应用管理 → 应用市场」里安装你的 App，依赖会一起装上 |
 | `register-app` 拒跑，提到 production | dev 模式的 `register-app` 拒绝 `NODE_ENV=production`。`compose.env` 末尾必须有 `NODE_ENV=development` |
@@ -125,29 +136,13 @@
 旧镜像里这三个目录压根不存在，于是谁先起谁定调，卷落到 root 手里，portal-api 就写不进去了。
 `one-box` / `proxy` 的 **v1.2.0 起**已在 runtime 层预建这三个目录并 chown 给 `bun`（`latest` 已指向它）。
 
-> ⚠️ **光 `docker pull` 不解决**。镜像里的内容与属主只在卷**为空**时用来初始化它；已经建坏的卷
-> 不会因为换镜像而改属主。反过来也一样：**只 `down -v` 不换镜像**，用老镜像重建出来的还是 root 的卷。
-> 两件事要一起做，顺序是 **先换镜像、再删卷**。
+镜像升级不会自动改变已有卷的属主。先按 SKILL.md §6 更新镜像缓存，再用 `"$S" upgrade` 同步部署资产，再按下面的定点修法纠正
+这三个目录的属主；不需要删除 PostgreSQL 或对象存储卷。随后 `"$S" up` 会按一盒既有规则重种门户库。
 
-### 修法：换镜像 + 重铺（首选）
+若主动选择丢弃所有当前联调数据，可按 SKILL.md §6 的重置路径执行 `dc down -v` → `init --force` → `up`。
+重置会丢失 App 数据与对象；它不是升级的必经步骤。
 
-一盒是**本地联调环境，数据不值钱**，别为了保住一个演示库去绕。
-
-```bash
-S="$SKILL_DIR/scripts/onebox.sh"
-# 1) 换到 v1.2.0+（compose.env 末尾若把 XGENT_IMAGE / XGENT_PROXY_IMAGE 钉了 tag，先改成 latest 或 v1.2.0-*）
-"$S" pull
-# 2) 连卷一起删 —— pg / minio / apps / caddy 全没，这一步就是目的
-"$S" dc down -v
-# 3) 按 SKILL.md §2 的固定顺序重铺：migrate → seed:onebox → 各库 migrate → register-app → up
-```
-
-重铺完记得**重跑 `register-app`**（listing 被种子清掉了），浏览器要重登一次 dev 登录（种子换了 UUID）。
-
-**自查在哪一版**：`docker images --digests | grep -E 'one-box|/proxy'`。旧版 `one-box` 是
-`sha256:76b99254…`、`proxy` 是 `sha256:1e44e014…`；新版分别是 `sha256:7011de3b…` / `sha256:a0c9f304…`。
-
-### 备选：就地 chown（只在你确实不想重跑种子时）
+### 定点修复属主
 
 反代是 root 且挂着同样这三个卷，所以补属主不必进 portal-api：
 

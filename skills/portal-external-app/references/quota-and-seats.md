@@ -22,7 +22,7 @@
 | | 用在哪 | 谁收口 |
 | --- | --- | --- |
 | `seatBased: true` | 计「门户成员」用不用得了这个 App | **门户**。TDT 签发时就拦：无席位 ⇒ `SEAT_REQUIRED`，App 侧零代码 |
-| `seatRoles: ["teacher","student"]` | App **自管账号/资源**（sms 的师生号那类） | **App 自己**。门户只发数，不拦对方的建号请求 |
+| `seatRoles: ["teacher","student"]` | App **自管账号/资源**（学校管理 `lms-school` 的师生号那类） | **App 自己**。门户只发数，不拦对方的建号请求 |
 
 ## 2. 四要素分属四个事实源
 
@@ -100,7 +100,7 @@ body { roles: ["service","node"] }
 
 平台不掌握 `seatRoles` 的占用数（收口在 App 侧），所以「已用」来自 App 自己上报的日快照：
 metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` 读最近一天）。
-sms 先例每个 role 报两条（`allocated` + `available`），两个 role 共 4 条。
+学校管理（`lms-school`）先例每个 role 报两条（`allocated` + `available`），两个 role 共 4 条。
 
 ⚠️ **硬门**：`ingestUsage` 对**未注册**的 metricKey **拒收该条记录**，且指标的
 `appKey` 必须等于上报者的 azp。漏注册的症状是上报接口返 200 但记录进 `rejected`，

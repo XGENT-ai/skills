@@ -40,8 +40,8 @@ S="$SKILL_DIR/scripts/onebox.sh"
 
 - 要拉平台侧的别的 App 进来陪调：`onebox.sh add <key>`（§2.1），它进的就是这套。
 - 要调你自己的**另一个** App（在另一个 repo）：`XGENT_ONEBOX_HOME=<已有 portal-onebox/ 的路径>`
-  复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/minio（§5）。
-- 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/minio 落位永远避开
+  复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/RustFS（§5）。
+- 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/RustFS 落位永远避开
   你本地 dev 栈的 5432/6379/9000-9001（见 §5 的直连表）。
 
 ## 0. 先备齐三样
@@ -105,7 +105,7 @@ npm install
 
 不给 `--image` 就取 `<REGISTRY>/<ONEBOX_PROJECT>/one-box:latest`（反代同仓同 tag）——**开新项目不用先去问 tag**。
 `latest` 是**可变指针**：它跟着最新一版走，本地已经有同名镜像时 compose 不会回仓库看一眼，
-所以开工前先 `onebox.sh pull` 一次。要钉住某一版（复现一个 bug、或团队统一版本）就显式
+所以沿用 `latest` 升级先 `onebox.sh pull`，再 `upgrade` → `up`（§6），同时更新镜像与部署资产。要钉住某一版（复现一个 bug、或团队统一版本）就显式
 `--image <registry>/<项目>/one-box:v<版本>-<sha>`，那种 tag 是不可变的。
 
 它做五件事，都在**你的 repo 根**落到 `portal-onebox/`：
@@ -116,14 +116,16 @@ npm install
    不会让人跑到一半才发现，也不会留下半个空目录。
 1. **从镜像里取出 compose 资产**（`docker create` + `docker cp /app/deploy`）——所以版本天然与镜像对齐，
    不需要门户仓，也不会有「文档里的 compose 和镜像对不上」这种漂移。
-2. **挑空闲端口**。一盒只发布 6 个宿主端口（80/443 · 5432 · 6379 · 9000/9001），
-   开发机上这些十有八九被占——它逐个探测并退让，把结果写进 `compose.env` 并回显。
-   挑出来的 pg/redis/minio 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
+2. **挑空闲端口**。HTTP/HTTPS、pg、redis、RustFS 的 6 个宿主端口逐个探测并退让；
+   Kafka HOST 另按 9092/19092/29092 挑选，结果写进 `KAFKA_PORT`。Kafka EXTERNAL 独立默认
+   发布回环 9095，若已占用，在 `compose.env` 末尾另设 `KAFKA_EXTERNAL_PORT`；它不参与自动挑选。
+   挑出来的 pg/redis/RustFS 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
 3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag）。
+   Kafka 的 `KAFKA_CLUSTER_ID` 与 `KAFKA_ADMIN_PASSWORD` 每个新盒随机生成，密码不回显；文件权限为 600。
    覆盖块**放在文件最末尾**，因为 docker compose 读 env-file 是**后定义者胜**——以后要改配置也往那下面加，别回上面改。
 4. 把 `portal-onebox/` 加进 `.gitignore`（里面是密钥，且随时能重新生成）。
 
-它**不会**覆盖已存在的 `compose.env`（那是这台机器唯一的一份密钥）。要整份重来加 `--force`。
+它**不会**覆盖已存在的 `compose.env`（那是这台机器唯一的一份密钥）。已有一盒走 §6 的 `upgrade`；只有重置才用 `init --force`。
 
 跑完编辑 `portal-onebox/compose.env` 末尾，填你的 App：`APP_IMAGE`（后端镜像 tag），
 micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录里要有 `index.html`）。
@@ -154,7 +156,8 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 | `onebox.sh smoke` | 只跑健康探测 |
 | `onebox.sh dc <args>` | `docker compose <拼好的参数> <args>` |
 | `onebox.sh chain` | 打印那串参数（想自己敲 compose 时抄它） |
-| `onebox.sh pull` | 只（重）拉门户镜像。不带参数时从 `compose.env` 读当前版本 |
+| `onebox.sh pull` | 只（重）拉门户镜像，不更新部署资产。不带参数时从 `compose.env` 读当前版本 |
+| `onebox.sh upgrade [--image <ref>]` | 更新镜像与部署资产，保留配置和数据；完成后运行 `up`（§6） |
 
 ## 2. 起栈：顺序本身是契约
 
@@ -167,8 +170,9 @@ S="$SKILL_DIR/scripts/onebox.sh"
 它幂等，改完 manifest 或 compose.env 重跑即可。下面这几步是它替你做的事——想手动控某一步时照着敲：
 
 ```bash
-# 1) 基础设施
-"$S" dc up -d postgres redis minio
+# 1) 基础设施由 "$S" up 先做资产检查、存量对象存储切换，再起 postgres/redis/rustfs/kafka。
+#    不手工 dc up rustfs；旧资产会在启动前拒绝并提示先 upgrade。
+#    以下是 up 成功后单独重跑某一步的示例。
 
 # 2) 门户库 + 四个基础服务各自的库（它们的 xgent-* 库由 postgres 首次初始化时建好）
 "$S" dc run --rm portal-api bun run db:migrate
@@ -205,7 +209,7 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
   反代已经在跑就补一句 `"$S" dc exec reverse-proxy caddy reload`，否则 `/svc/<key>` 一直 404。
 - **`register-app` 跑完先去市场里确认卡片在。** dev 模式下它会顺手把这条 listing 授予现有租户（生产是平台管理员显式勾选），
   但**旧一点的一盒镜像里没有这段代码**——症状是控制台显示已上架、租户市场里连卡片都不出现，且**没有任何报错**。
-  看不到就先 `"$S" pull` 换新镜像重来，或按 troubleshooting §6 手工授予，别接着往下排查前端。
+  看不到就按 §6 更新镜像缓存后 `"$S" upgrade` → `"$S" up` 同步资产，或按 troubleshooting §6 手工授予，别接着往下排查前端。
 - **要做跨应用交换的，`register-app` 得跑两次。** 发起方 App Secret 绑在**已安装实例**上，所以是
   `register-app` → 在应用市场里装上你的 App → **再跑一次 `register-app`**（幂等）。漏了的症状是交换在发起方 401。
 
@@ -220,14 +224,35 @@ App 里走「员工 → 导入」（CSV），否则上级一律回 `null` / `rea
 日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
 **默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
 
+### Kafka 的启动边界
+
+Kafka 随基础设施常驻，`up` 单独启动并最多等健康 60 秒；失败只告警并显示日志，继续门户与现有 App 初始化。
+`doctor` 检查 Kafka 的 TCP 监听；探针只证明监听已打开，不能替代客户端的认证、授权与收发验证。
+`add` 识别 `requiredServices: [{"kind":"kafka","name":"main"}]`，也兼容 `requiredEnv` 中的
+`<PREFIX>_KAFKA_USERNAME`。它为 App 创建 SCRAM-SHA-512 用户与前缀 ACL，并写入五键：
+`<PREFIX>_KAFKA_BROKERS`、`_KAFKA_USERNAME`、`_KAFKA_PASSWORD`、`_KAFKA_SASL_MECHANISM`、
+`_KAFKA_TOPIC_PREFIX`（后四项同样带 `<PREFIX>`）。`<PREFIX>` 是 listingKey 大写、连字符改成下划线。
+密码第一次生成后写入 `compose.env` 并显示 `***`，重复 `add` 及失败重试沿用原值。
+不要为联调把 `KAFKA_ADMIN_PASSWORD` 加进 App 的 `requiredEnv`。
+
+例如 `order-worker` 的用户名是 `app_order_worker`，主题、消费组、事务 ID 都必须以
+`app.order-worker.` 开头。机制固定 `SCRAM-SHA-512`。App 必须显式建主题（副本数 1），不能修改
+保留期或增加分区；前缀外访问被 broker 拒绝。Kafka 供给失败只告警，保留已保存的密码，按提示
+修复后重跑原 `add`。一盒仍向容器注入整份 `compose.env`，不承诺 App 容器之间的密钥隔离。
+声明范例、客户端配置、最小 ACL 与可粘的手工修复命令见 [Kafka 接入指引](references/kafka.md)。
+
+宿主地址为 `127.0.0.1:<KAFKA_PORT>`，容器网络为 `kafka:9092`，均使用 SASL_PLAINTEXT。
+一盒 EXTERNAL 默认 `127.0.0.1:9095`，保持回环，不开放公网。生产跨 VM 的外部口配置由运维处理：
+监听地址、非回环广告地址和安全组需同时匹配，且 SASL_PLAINTEXT 不加密消息。
+
 ### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
 
 - **④b** `observability` 不是门户内置 workspace，是清单型 App（`app-devkit/manifests/observability.manifest.json`）。
   `up` 对目录里每个清单型 App 自动走一遍 `add`：拉镜像（`<REGISTRY>/<ONEBOX_PROJECT>/observability:v0.5.4-…`；
   多架构清单会自动挑本机架构，只有单 amd64 的版本才要在 compose.env 钉 `OBSERVABILITY_PLATFORM=linux/amd64`
-  走仿真）→ 注册 → 建库 `xgent-observability` + 在一盒 minio
+  走仿真）→ 注册 → 建库 `xgent-observability` + 在一盒 RustFS
   建桶 `xgent-observability` → `init-db`（清单 `deployDescriptor.migrateArgs`）→ 生成 `generated/observability.yml` 起容器。
-  它要的那批 `ZO_*` 值（元数据库/对象存储）已经在 `onebox/compose.env.onebox.example` 里指向一盒的 postgres/minio；
+  它要的那批 `ZO_*` 值（元数据库/对象存储）已经在 `onebox/compose.env.onebox.example` 里指向一盒的 postgres/RustFS；
   `OBSERVABILITY_PORT=8080` 让它在 8080 上听（一盒反代只反代 `<key>-server:8080`）。
 - **⑥** 门户自身的控制台日志：`up` 用 `portal-self` 签一把只带 `observability.ingest` 的 `xsak_` 写进 compose.env
   的 `OBS_ACCESS_KEY`，再起 `portal-logs`（fluent-bit）；portal-api 的 stdout/stderr 走 docker 的 fluentd 日志驱动
@@ -384,7 +409,7 @@ puller key 就能拉。要换版才加 `--image <ref>`。有些镜像只发了 a
    `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/<你的>.yml up -d <服务名>`。
    `-f` 出现在子命令前就仍是全局选项，位置没问题。
 3. **别改 `portal-onebox/` 里 init 铺出来的那几个 yml** —— 它们是从镜像里取出来的，
-   `init --force` 会原样覆盖，而且换一版镜像就该跟着换。你的东西永远是**新文件**。
+   `upgrade` 会同步这些平台资产，`init --force` 也会覆盖；不要在平台原文件里维护自己的改动。你的东西永远是**新文件**。
 
 **合并规则（实测 `docker compose config`，三条都不直觉）：**
 
@@ -419,7 +444,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 **dev 登录的入口**：登录页密码表单下方的「本地开发账号」按钮（`DEV_MOCK_OAUTH=true` 才出现），
 或直接打开 `/auth/dev/start` 进 mock IdP 选账号 → 选 `rockie@xgent.ai`（演示租户 admin + 平台管理员）。
 **按钮没出现**：先 `curl <地址>/auth/providers` 看 `dev` 字段在不在——在就走 `/auth/dev/start`，
-那说明这版镜像的前端与 API 对不齐，`"$S" pull` 换新的。
+那说明这版镜像的前端与 API 对不齐，按 §6 更新缓存后运行 `upgrade` → `up`。
 
 种子只种两个账号，另一个是 `liming@xgent.ai`（普通成员）——**ACL 成员基线没到位的问题只在非管理员身上现形**，
 验收要用它再走一遍，管理员那边永远是绿的。
@@ -447,7 +472,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > **「照文档做，行为却不符」先看版本。** `status` / `smoke` 里 `/health` 那行会回一个 `version`：
 > `init` 把镜像的 tag + ID + 构建日期写进了 `compose.env` 的 `APP_VERSION`。报 `dev` 说明这份 compose.env
 > 是老 `init` 铺的（或你自己改过）。一盒镜像比文档旧一天，就足以让「注册后自动授予租户」这类行为整个不存在，
-> 而现场没有任何报错 —— 真实案例（CR-4）。`"$S" pull` 换新的再判。
+> 而现场没有任何报错 —— 真实案例（CR-4）。按 §6 更新缓存并运行 `upgrade` → `up`，同步新镜像与资产再判。
 那张表按「你看到什么」编排。最容易白白浪费半天的两条先放这儿：
 
 > **看到 `unhealthy` 先读那条探针，再决定要不要查。**
@@ -458,7 +483,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > 假红：Caddy 把它 308 到 `https://127.0.0.1/`，对一个 IP 建 TLS 没有 SNI，回 `SSL alert number 80`。
 > · 探针已是 `bun -e fetch(...)` / `curl -fsS -o /dev/null http://127.0.0.1:80/`（新镜像的两条）
 > 却仍 `unhealthy` ⇒ **真红**，去看 `"$S" dc logs <服务>`。
-> 判活一律以 `"$S" smoke` 的宿主侧探测为准；pg/redis/minio 的 healthy 一直是真的。
+> 判活以 `"$S" smoke` 的宿主侧探测为准；pg/redis/RustFS 的 healthy 检查对应服务。Kafka 看 `doctor`，其 TCP healthy 不代表 App 凭据与 ACL 已可用。
 
 > **`COMPOSE_PROJECT_NAME` 固定是 `xgent-onebox`，别靠改名来「并存」两套。** 同机两套 compose
 > 项目名相同，compose 会认为它们是同一项目——容器互相接管、命名卷共享，症状是「我起了一盒，
@@ -482,7 +507,7 @@ services:
 然后 `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/host-backend.yml up -d app-backend`。
 此时 `APP_IMAGE` 不再被用到（compose 仍要求它有值，随便填一个）；`APP_KEY` 照旧——别名还是靠它。
 
-**宿主进程的 DB / 缓存 / 对象存储也用一盒的，别再单起。** postgres / redis / minio 都发布了
+**宿主进程的 DB / 缓存 / 对象存储也用一盒的，别再单起。** postgres / redis / RustFS 都发布了
 宿主端口，而 init 挑端口时避开了本机已占用的口——所以它们和你本地 dev 栈的
 5432 / 6379 / 9000-9001 不冲突（典型落位 15432 / 16379 / 19000-19001；以 `compose.env` 末尾的
 `POSTGRES_PORT` / `REDIS_PORT` / `MINIO_PORT` / `MINIO_CONSOLE_PORT` 为准，`"$S" env` 也回显）。
@@ -492,33 +517,69 @@ services:
 | --- | --- | --- |
 | Postgres | `postgres://postgres:postgres@localhost:<POSTGRES_PORT>/xgent-<你的key>` | 库不存在先建（§2 3b 那条 CREATE DATABASE） |
 | Redis | `localhost:<REDIS_PORT>` | 无密码 |
-| MinIO (S3) | `http://localhost:<MINIO_PORT>` | `minioadmin` / `minioadmin`；控制台在 `<MINIO_CONSOLE_PORT>`，桶自己建（建议 `xgent-<你的key>`） |
+| RustFS (S3) | `http://localhost:<MINIO_PORT>` | `minioadmin` / `minioadmin`；控制台在 `http://localhost:<MINIO_CONSOLE_PORT>/rustfs/console/`，桶自己建（建议 `xgent-<你的key>`） |
 
 这样宿主进程和容器里的 App 看到的是同一份库、同一个桶。注意上面是**宿主侧**地址——
-容器网里那套服务名与端口不变（`postgres:5432` / `redis:6379` / `minio:9000`）。
+容器网里地址不变（`postgres:5432` / `redis:6379` / `minio:9000`）；`minio` 是 RustFS 的兼容别名，`MINIO_*` 配置继续使用。
 
-## 6. 重置与拆栈
+## 6. 初始化、升级与重置
+
+三条路径各有用途：
+
+| 目的 | 命令 | 配置与数据 |
+| --- | --- | --- |
+| 首次初始化 | `"$S" init --key <listingKey>` → 编辑 App 配置 → `"$S" up` | 新建资产、密钥与端口配置 |
+| 已有一盒升级 | `"$S" upgrade [--image <ref>]` → `"$S" up` | 保留 compose.env、generated/、backup/、端口与数据卷 |
+| 主动清空联调数据重置 | `"$S" dc down -v` → `"$S" init --force --key <listingKey>` → `"$S" up` | 删除当前 compose 的命名卷并重新生成配置；不可当升级使用 |
+
+### 升级：换资产，保留本机配置与对象
 
 ```bash
 S="$SKILL_DIR/scripts/onebox.sh"
-"$S" dc down          # 停容器，留命名卷（数据还在，下次 up 接着用）
-"$S" dc down -v       # ★ 连命名卷一起删：pg/minio/apps/caddy 的数据全没
+"$S" upgrade --image <registry>/<项目>/one-box:v<版本>-<sha>
+"$S" up
 ```
 
-只想重置门户数据：重跑 `db:seed:onebox`（同样破坏性），然后**重跑 `register-app`**（你的 listing 被种子清掉了），
-最后 `caddy reload`。种子会重新生成 UUID，浏览器会话随之失效——重登一次 dev 登录，不是坏了。
+不指定 `--image` 时使用当前 `XGENT_IMAGE`；显式换 runtime 后会按同仓同 tag 推导 proxy，
+需要不同反代镜像可加 `--proxy-image <ref>`。`upgrade` 要求已有 `compose.env`，
+重新从镜像取出部署资产，**不重建配置、不重挑端口、不删卷**。只有镜像或版本变化时，
+才在文件末尾追加 `XGENT_IMAGE` / `XGENT_PROXY_IMAGE` / `APP_VERSION`；原有密钥、自定义行和 `add` 写入的键保留。
+Kafka 另按需补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`：新 ID 与密码随机生成，
+新端口按 9092/19092/29092 挑选，已有的三键一个不改。密码写入不回显，`compose.env` 保持 600。
+`generated/` 和 `backup/` 原样保留。两个目标镜像本地都在时跳过拉取，支持本地构建或离线 `docker load`。
+沿用可变 `latest` 要先更新缓存：`"$S" pull` → `"$S" upgrade` → `"$S" up`；显式指定新的不可变 tag
+或已载入的本地新 tag，可直接 `upgrade --image <ref>`。单独 `pull` 不更新资产，不能代替 `upgrade`。
 
-换门户镜像版本：改 `compose.env` 末尾的 `XGENT_IMAGE` / `XGENT_PROXY_IMAGE` 两行，
-`"$S" pull` 把新版本拉下来，再 `"$S" dc up -d`。compose 资产要不要跟着更新，
-重跑 `init --force --home <另一个空目录>` 对比着看。
+升级也保留 PostgreSQL 的**现有数据大版本与挂载布局**。脚本在启动数据库前只读检查卷内
+`PG_VERSION`，已有 18 的一盒不会因新模板默认 16 而被降级；旧布局挂 `/var/lib/postgresql/data`，
+18 起的版本目录布局挂其父目录 `/var/lib/postgresql`。未知、冲突或非空但无法识别的布局会中止，
+不冒险初始化另一份空库。此时保留卷与原镜像，按提示核对；**不要删卷解决版本错误**。
+真正升级 PostgreSQL 大版本需要另行备份并安排 pg_upgrade 或导出/恢复，不随门户换版自动执行。
 
-⚠️ **换镜像要修的毛病，多半还得配一次 `down -v`，而且顺序是「先换镜像、再删卷」。**
-命名卷的属主与初始内容由**第一次挂它的那个容器**定，之后既不会因为换镜像而变，也不会被
-`up -d` 纠正。所以：只 `pull` 不删卷 = 老卷带着老属主继续用；只 `down -v` 不 `pull` = 用老镜像
-又建出一个一样坏的卷。EACCES 那一族（`/svc` 放行写不成 → `/svc/<key>` 404、发布前端产物报
-`/srv/www/apps` 不可写）就是这个形状，修法见排查表 [§7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)。
-一盒是本地联调环境、数据不值钱，**首选就是 `"$S" pull` → `"$S" dc down -v` → 按 §2 重铺**，
-别为了保住一个演示库去绕。
+`up` 先检查资产，再通过共用切换脚本把存量 MinIO 复制到全新的 RustFS 卷；旧卷保留，
+桶列表、对象清单和正文摘要一致才提交。正式 RustFS 只在脚本成功后启动，并等待 `/health`。
+`add` 与建桶入口同样经过这道切换门。**`up` 仍会重种门户库**（租户、用户、清单、安装与 UUID），
+这是一盒原有契约；App 自己的数据库不被重种，对象存储数据由切换校验保留。
+
+备份在一盒目录的 `backup/`，包含旧镜像归档、每次切换清单及 `rollback-minio.sh`。
+失败时先读退出提示：提交前失败恢复旧服务；已提交但新服务不健康时保留 `rustfs-data`，
+按日志排错后重跑 `up`。**不要删除权威新卷。** 回退入口会先停掉正式 RustFS，重新核对当前数据：
+有切换后写入则拒绝回退并保留新卷；此时需在副本上验证 MinIO 兼容与全部对象，再由人工安排恢复，
+不能直接把服务指回旧卷。运行回退入口时通过 `--env-file <一盒目录>/compose.env` 提供原凭据，勿写入命令行。
+
+Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，备份需同时保留配置与卷；
+已有数据时不能重生成 ID、换空卷或改 `KAFKA_DATA_DIR` 来消除拒启。改变目录不会迁移消息。
+单节点没有高可用，重启期间不可用；需要回退平台代码时保留 Kafka 卷与原配置。
+
+### 停栈与重置
+
+`"$S" dc down` 只停容器、保留卷；下次 `up` 仍会重种门户库。只想重置门户数据也可重跑
+`db:seed:onebox`，随后重跑 `register-app`、重载 Caddy；浏览器需要重新登录。
+
+`down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。
+先备份要保留的 App 数据与对象，再按上表重置；退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，
+保留供核对，不因升级自动删除。命名卷属主故障按 [排查表 §7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)
+处理，升级本身不要求清空所有数据。
 
 ## 7. 一盒不是门户，别拿它当门户
 
@@ -527,6 +588,8 @@ S="$SKILL_DIR/scripts/onebox.sh"
 - `bootstrap:prod` 与部署控制器**启动即拒**并打印原因；完整的 `db:seed`（十几个 App 的种子链）也必失败，
   一盒只能用 `db:seed:onebox`。
 - 它是 dev 联调套件：mock OAuth 常开、服务账号密钥是已知明文。**不要用于生产，也不要暴露到公网。**
+- `compose.env` 权限 600 只保护宿主文件；一盒仍把整份配置注入容器，是可信 App 之间的本地联调模型，
+  不构成对恶意 App 的凭据隔离。不要把 Kafka 管理密码当作 App 的连接凭据。
 - 不装 ffmpeg：`PREVIEW_MEDIA_CONVERTER_URL` 必须留空，视频海报/网格缩略图退化成图标。
 - 文件管理界面**不渲染预览**（镜像构建时关掉了前端的格式渲染器），打开任何文件都是下载卡；
   服务端的预览描述符 API 不变，你的 App 自带 `@xgent/file-preview` 时照常渲染。

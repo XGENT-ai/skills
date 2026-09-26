@@ -15,7 +15,7 @@
     `scopeLabels` 同时是那个勾选列表的正文——不写就只显示裸 scope 串。
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
-- 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?, envKey?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 门户**不据此开通**，只核对登记表；`envKey` 只被携带、当前不注入）
+- 部署/运维：`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 登记表核对已有服务；支持自动供给的类型按选定档案建资源并注入约定键，不收 `envKey`）
 
 ⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口已经写进 Caddy 的 `/svc` map、也是在跑的容器发布出来的口）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
 **例外**：`extraPorts[].host` **不参与退让**，撞了硬拒——那些是对外契约口（worker 节点连的就是那个数字），静默挪走等于把它们全断掉，且门户侧一条都测不到。
@@ -136,10 +136,30 @@ SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批�
 匿名拉取，得有一个 **puller 账号**（只读凭证，按团队发放），`docker login <registry>` 用的就是它；
 凭证别转发给团队外的人、别写进会提交的文件（`portal-dev-setup` skill 把这两样收在一份
 `.xgent-registry.env` 里，照它配即可）。② **这两个调试镜像有 `latest`**（跟着最新一版走，开新项目
-不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，换版本前先 `docker pull`。
+不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，沿用 latest 先 `onebox.sh pull` 更新缓存，再 `upgrade` → `up` 同步资产。
 要钉住某一版就写 `:v<版本>-<7位sha>`（当前 `v1.1.0-5c1660e`），那种 tag 不可变。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
 Apple Silicon），生产门户走另一条链。无 registry 访问时则要离线 `docker save` tar，`docker load` 即可
 （那条路上镜像的本地 tag 可能叫 `ai-portal-one-box:local` / `xgent-ai-portal-proxy:local`）。
+
+已有一盒不要重跑 `init --force` 来升级。使用已安装 `portal-dev-setup` skill 的脚本：
+
+```bash
+S="<portal-dev-setup 的 SKILL.md 所在目录>/scripts/onebox.sh"
+"$S" upgrade --image <registry>/<项目>/one-box:v<版本>-<sha>
+"$S" up
+```
+
+初始化是 `init` → `up`；升级是 `upgrade` → `up`；主动删数据重置才是 `dc down -v` → `init --force` → `up`。
+升级保留 `compose.env`、`generated/`、`backup/`、端口、密钥和卷，只追加变更的镜像/版本行，
+不重生成配置。两个目标镜像都已缓存时支持离线升级；沿用 latest 先 `pull`，再 `upgrade` → `up`。
+`up` 仍重种门户库（租户/用户/清单/安装），不会重种 App 自己的数据库。
+数据库启动前按现有 PG_VERSION 保留大版本和挂载布局；未知/冲突布局拒绝启动，不能用删卷来解决。
+门户升级不执行 PostgreSQL 大版本迁移，后者需要单独备份与维护窗口。
+
+对象存储是 RustFS，原 `MINIO_*` 与 `minio:9000` 地址继续使用。`up`/`add`/建桶都先通过迁移门，
+旧 MinIO 卷复制到新卷并核对后才提交；原卷及 `backup/` 的镜像归档、清单、回退入口保留。
+提交后新卷是权威；有新写入时回退入口会隔离 RustFS 并拒绝切回旧卷，需在副本上人工验证后恢复，
+不能通过删新卷或 `down -v` 处理升级失败。完整恢复步骤见 `portal-dev-setup` §6。
 
 ### 4.1 一盒里有什么，以及刻意没有什么
 
@@ -158,11 +178,12 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 
 ### 4.2 起栈之前：躲开本机已占的端口与项目名
 
-一盒**只发布 6 个宿主端口**（reverse-proxy 80/443 → `HTTP_PORT`/`HTTPS_PORT`、postgres 5432 →
-`POSTGRES_PORT`、redis 6379 → `REDIS_PORT`、minio 9000/9001 → `MINIO_PORT`/`MINIO_CONSOLE_PORT`）；
+一盒发布 reverse-proxy 80/443 → `HTTP_PORT`/`HTTPS_PORT`、postgres 5432 →
+`POSTGRES_PORT`、redis 6379 → `REDIS_PORT`、RustFS 9000/9001 → `MINIO_PORT`/`MINIO_CONSOLE_PORT`，
+以及 Kafka HOST → `KAFKA_PORT`（自动避让 9092/19092/29092）、EXTERNAL → `KAFKA_EXTERNAL_PORT`（默认回环 9095，不自动避让）；
 其余（portal-api 的 3000、各 `<key>-server` 的 8080、你的 app-backend 的 8080）只 `expose`，不占宿主。
 撞了就在 `compose.env` 里改这几个；改的只是发布口，一盒内部一律走 compose 网络的
-`postgres:5432` / `redis:6379` / `minio:9000`。改了 `HTTP_PORT` 之后门户地址随之变化，下文冒烟里的
+`postgres:5432` / `redis:6379` / `minio:9000`（RustFS 的兼容别名）。控制台路径为 `/rustfs/console/`。改了 `HTTP_PORT` 之后门户地址随之变化，下文冒烟里的
 `http://localhost/…` 都要跟着改。
 
 ⚠️ 两个必改/必不做：
@@ -184,7 +205,8 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 #      cat deploy/app-devkit/compose.env.app.example >> deploy/compose.env
 #      填 XGENT_IMAGE / XGENT_PROXY_IMAGE / APP_KEY / APP_IMAGE /(micro)APP_FRONTEND_DIST
 #      + 你后端读的 SA 密钥与 DSN（与 manifest 的 serviceAccount.secret 等值）+ 强随机门户密钥
-# 2) 起基础设施:  --profile local-infra up -d postgres redis minio
+# 2) 仅全新环境起基础设施: --profile local-infra up -d postgres redis rustfs
+#    存量一盒先按下面的升级路径处理；不要直接起 rustfs。
 # 3) 门户迁移 + 基线 seed:
 #      run --rm portal-api bun run db:migrate
 #      run --rm portal-api bun run db:seed:onebox     # ★ 不是 db:seed
@@ -215,6 +237,39 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 
 细节（含 App 自带基础设施如向量库 sidecar、把后端跑在宿主上保留热重载的 socat 绕法）见交付包内
 `deploy/app-devkit/README.md`。
+
+### 4.4 Kafka 接入
+
+以 `listingKey: "order-worker"` 为例，清单包含：
+
+```json
+{
+  "requiredServices": [{ "kind": "kafka", "name": "main" }],
+  "requiredEnv": [
+    "ORDER_WORKER_KAFKA_BROKERS", "ORDER_WORKER_KAFKA_USERNAME",
+    "ORDER_WORKER_KAFKA_PASSWORD", "ORDER_WORKER_KAFKA_SASL_MECHANISM",
+    "ORDER_WORKER_KAFKA_TOPIC_PREFIX"
+  ]
+}
+```
+
+用新版 `portal-dev-setup/scripts/onebox.sh add order-worker --manifest ./app.manifest.json --image <镜像>`。
+`add` 会创建 `app_order_worker`，SCRAM-SHA-512 / 8192 次迭代，写入五键；重复执行沿用本地密码。
+容器连接 `kafka:9092`，宿主客户端改用 `127.0.0.1:<KAFKA_PORT>`，机制为 SCRAM-SHA-512、协议为
+SASL_PLAINTEXT。密码写入只显示 `***`；供给失败只告警，检查 Kafka 日志后重跑原命令。
+
+主题、消费组、事务 ID 都以 `app.order-worker.` 开头，保留 listingKey 的连字符。平台关闭自动建主题，
+App 必须显式创建、副本数 1；主题授权 CREATE / DELETE / DESCRIBE / DESCRIBE_CONFIGS / READ / WRITE，
+消费组 READ / DESCRIBE / DELETE，事务 ID WRITE / DESCRIBE，全部 PREFIXED。没有 ALTER / ALTER_CONFIGS：
+不能改保留期或增加分区，保留策略由平台决定。前缀外主题、消费组与事务 ID 不可访问。
+
+Kafka 是单节点、at-least-once，重启会短暂不可用；App 做重连、去重及处理成功后提交 offset，不能把
+Kafka 当权威业务记录系统。权限按 App 隔离，App 自行实现租户数据隔离。SASL_PLAINTEXT 不加密消息，
+外部口保持回环，跨 VM 开放交给运维配置广告地址与限来源安全组。
+
+不要把 `KAFKA_ADMIN_PASSWORD` 写入 App 的 `requiredEnv`。一盒仍将整份 `compose.env` 注入容器，
+只适合可信团队本地联调，不承诺容器间秘密隔离。客户端配置与手工修复命令随 `portal-dev-setup` 的
+`references/kafka.md` 交付，也见门户《平台 Kafka 接入指引》。
 
 ## 5. 冒烟
 
