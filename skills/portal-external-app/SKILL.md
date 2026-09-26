@@ -67,6 +67,15 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 完整契约（四道闸、三种令牌来路、审计、划界）见 [references/integration-contract.md](references/integration-contract.md)。
 
+## 一盒初始化与升级
+
+首次联调用 `portal-dev-setup` 的 `onebox.sh init` → `up`；已有一盒换版本用
+`upgrade [--image <ref>]` → `up`；沿用 latest 先 `pull` 更新缓存，已加载的本地新镜像可离线升级。
+不使用 `init --force` 代替升级。升级保留配置、generated/、backup/、
+端口与卷；`up` 仍重种门户库，不重种 App 自己的库。自带对象存储为 RustFS，保留 `MINIO_*`
+配置与 `minio:9000` 网络别名；控制台路径为 `/rustfs/console/`。存量对象由切换脚本复制、核对后才切换，
+切换后有新写入时不能直接回旧卷，细节见 [registration-and-onebox.md](references/registration-and-onebox.md)。
+
 ## 注册布线（细节见 registration-and-onebox.md）
 
 - **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 写 `/svc` 白名单 map。⚠️ `exchangeInitiatorSecret` 的哈希在**首个租户**安装时还没有任何实例可布——先安装 App，**再重跑一次** register-app，否则发起交换 401（之后装的租户会随安装自动补布，见 registration-and-onebox.md §2.2）。日志里 `wired into N …` 的 N 是「**改了**几个实例」，0 也可能是「本来就对」——判据是比哈希，见 registration-and-onebox.md §2.2。

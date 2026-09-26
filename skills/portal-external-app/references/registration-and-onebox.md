@@ -136,10 +136,30 @@ SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批�
 匿名拉取，得有一个 **puller 账号**（只读凭证，按团队发放），`docker login <registry>` 用的就是它；
 凭证别转发给团队外的人、别写进会提交的文件（`portal-dev-setup` skill 把这两样收在一份
 `.xgent-registry.env` 里，照它配即可）。② **这两个调试镜像有 `latest`**（跟着最新一版走，开新项目
-不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，换版本前先 `docker pull`。
+不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，沿用 latest 先 `onebox.sh pull` 更新缓存，再 `upgrade` → `up` 同步资产。
 要钉住某一版就写 `:v<版本>-<7位sha>`（当前 `v1.1.0-5c1660e`），那种 tag 不可变。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
 Apple Silicon），生产门户走另一条链。无 registry 访问时则要离线 `docker save` tar，`docker load` 即可
 （那条路上镜像的本地 tag 可能叫 `ai-portal-one-box:local` / `xgent-ai-portal-proxy:local`）。
+
+已有一盒不要重跑 `init --force` 来升级。使用已安装 `portal-dev-setup` skill 的脚本：
+
+```bash
+S="<portal-dev-setup 的 SKILL.md 所在目录>/scripts/onebox.sh"
+"$S" upgrade --image <registry>/<项目>/one-box:v<版本>-<sha>
+"$S" up
+```
+
+初始化是 `init` → `up`；升级是 `upgrade` → `up`；主动删数据重置才是 `dc down -v` → `init --force` → `up`。
+升级保留 `compose.env`、`generated/`、`backup/`、端口、密钥和卷，只追加变更的镜像/版本行，
+不重生成配置。两个目标镜像都已缓存时支持离线升级；沿用 latest 先 `pull`，再 `upgrade` → `up`。
+`up` 仍重种门户库（租户/用户/清单/安装），不会重种 App 自己的数据库。
+数据库启动前按现有 PG_VERSION 保留大版本和挂载布局；未知/冲突布局拒绝启动，不能用删卷来解决。
+门户升级不执行 PostgreSQL 大版本迁移，后者需要单独备份与维护窗口。
+
+对象存储是 RustFS，原 `MINIO_*` 与 `minio:9000` 地址继续使用。`up`/`add`/建桶都先通过迁移门，
+旧 MinIO 卷复制到新卷并核对后才提交；原卷及 `backup/` 的镜像归档、清单、回退入口保留。
+提交后新卷是权威；有新写入时回退入口会隔离 RustFS 并拒绝切回旧卷，需在副本上人工验证后恢复，
+不能通过删新卷或 `down -v` 处理升级失败。完整恢复步骤见 `portal-dev-setup` §6。
 
 ### 4.1 一盒里有什么，以及刻意没有什么
 
@@ -159,10 +179,10 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 ### 4.2 起栈之前：躲开本机已占的端口与项目名
 
 一盒**只发布 6 个宿主端口**（reverse-proxy 80/443 → `HTTP_PORT`/`HTTPS_PORT`、postgres 5432 →
-`POSTGRES_PORT`、redis 6379 → `REDIS_PORT`、minio 9000/9001 → `MINIO_PORT`/`MINIO_CONSOLE_PORT`）；
+`POSTGRES_PORT`、redis 6379 → `REDIS_PORT`、RustFS 9000/9001 → `MINIO_PORT`/`MINIO_CONSOLE_PORT`）；
 其余（portal-api 的 3000、各 `<key>-server` 的 8080、你的 app-backend 的 8080）只 `expose`，不占宿主。
 撞了就在 `compose.env` 里改这几个；改的只是发布口，一盒内部一律走 compose 网络的
-`postgres:5432` / `redis:6379` / `minio:9000`。改了 `HTTP_PORT` 之后门户地址随之变化，下文冒烟里的
+`postgres:5432` / `redis:6379` / `minio:9000`（RustFS 的兼容别名）。控制台路径为 `/rustfs/console/`。改了 `HTTP_PORT` 之后门户地址随之变化，下文冒烟里的
 `http://localhost/…` 都要跟着改。
 
 ⚠️ 两个必改/必不做：
@@ -184,7 +204,8 @@ Apple Silicon），生产门户走另一条链。无 registry 访问时则要离
 #      cat deploy/app-devkit/compose.env.app.example >> deploy/compose.env
 #      填 XGENT_IMAGE / XGENT_PROXY_IMAGE / APP_KEY / APP_IMAGE /(micro)APP_FRONTEND_DIST
 #      + 你后端读的 SA 密钥与 DSN（与 manifest 的 serviceAccount.secret 等值）+ 强随机门户密钥
-# 2) 起基础设施:  --profile local-infra up -d postgres redis minio
+# 2) 仅全新环境起基础设施: --profile local-infra up -d postgres redis rustfs
+#    存量一盒先按下面的升级路径处理；不要直接起 rustfs。
 # 3) 门户迁移 + 基线 seed:
 #      run --rm portal-api bun run db:migrate
 #      run --rm portal-api bun run db:seed:onebox     # ★ 不是 db:seed

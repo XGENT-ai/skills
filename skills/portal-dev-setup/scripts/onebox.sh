@@ -10,6 +10,8 @@
 #   onebox.sh up               ★ 按顺序把整套铺起来（迁移→种子→各库→注册→起栈），幂等可重跑。
 #                              顺序本身是契约（种子会 truncate、反代启动时才读 /svc map），
 #                              这条命令就是为了不让人自己记它。
+#   onebox.sh upgrade [--image <ref>] [--proxy-image <ref>]
+#                              换部署资产并追加版本信息；保留现有配置、端口、密钥与数据，再跑 up。
 #   onebox.sh doctor           ★ 体检：把排查表里能自动判的都判一遍，每条给一行可直接粘的修法。
 #                              跑不通先跑它，别翻文档。
 #   onebox.sh add <key>        ★ 把一个平台侧 App 拉进来陪调（如 omni-parser 多模态解析）：
@@ -74,6 +76,8 @@ load_registry_config() {
   done < "$f"
   # base64 不是加密，同组可读就等于把口令摊在那儿
   if [ -n "${PULLER_AUTH:-}" ]; then
+    # Only the permission field is read; the filename is never parsed.
+    # shellcheck disable=SC2012
     case "$(ls -l "$f" | cut -c1-10)" in ??????---*) ;; *) warn "$f 含 PULLER_AUTH 且同组/其他人可读 —— chmod 600 $f";; esac
   fi
 }
@@ -255,6 +259,84 @@ port_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1; }
 pick_port() { local p; for p in "$@"; do port_free "$p" && { printf '%s' "$p"; return; }; done; printf '%s' "$1"; }
 rand_hex() { openssl rand -hex 32 2>/dev/null || head -c32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
 
+_image_version() {
+  local image="$1" id created
+  id="$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null | cut -c8-14 || true)"
+  created="$(docker image inspect "$image" --format '{{.Created}}' 2>/dev/null | cut -c1-10 || true)"
+  [ -z "$id" ] || printf 'onebox %s %s%s' "${image##*:}" "$id" "${created:+ built ${created}}"
+}
+
+# Shared by init and upgrade. Machine-owned state must never come from an image.
+_extract_assets() {
+  local image="$1" home="$2" postgres_volume="${3:-}" tmp cid
+  info "从 ${image} 取出 compose 资产…"
+  tmp="$(mktemp -d)"
+  cid="$(docker create "$image")" || { rm -rf "$tmp"; die "docker create 失败，请确认镜像已就位。"; }
+  if ! docker cp "$cid:/app/deploy" "$tmp/deploy" >/dev/null; then
+    docker rm -f "$cid" >/dev/null; rm -rf "$tmp"
+    die "镜像里没有 /app/deploy，请使用门户一盒镜像。"
+  fi
+  docker rm -f "$cid" >/dev/null
+  if ! grep -qE '^  rustfs:' "$tmp/deploy/docker-compose.yml" \
+    || [ ! -f "$tmp/deploy/scripts/objectstore-cutover.sh" ] \
+    || [ ! -f "$tmp/deploy/scripts/objectstore-manifest.ts" ]; then
+    rm -rf "$tmp"; die "镜像里的对象存储资产还是旧版，请 upgrade --image <新版一盒镜像>。"
+  fi
+  ( cd "$tmp/deploy" && rm -rf .DS_Store k8s oauth pm2 caddy knowledge-devkit onebox/Dockerfile \
+      compose.env generated backup scripts/tests \
+      app-devkit/manifests/pagebuilder.manifest.json app-devkit/manifests/task-gateway.manifest.json )
+  # Persist volume identity in staging before replacing assets. If a later version
+  # check refuses an unknown layout, the next run must still find the same data.
+  if [ -n "$postgres_volume" ]; then
+    if ! awk -v volume="$postgres_volume" '
+      /^volumes:/{volumes=1}
+      volumes && /^  pg-data:/{print "  pg-data:"; print "    name: " volume; pg=1; count++; next}
+      volumes && /^  [A-Za-z0-9_-]+:/{pg=0}
+      pg && /^    name:/{next}
+      {print}
+      END{if(count!=1)exit 1}
+    ' "$tmp/deploy/docker-compose.yml" > "$tmp/compose-pinned.yml"; then
+      rm -rf "$tmp"; die "新版资产缺少唯一 pg-data 卷定义，未替换现有资产。"
+    fi
+    mv "$tmp/compose-pinned.yml" "$tmp/deploy/docker-compose.yml" \
+      || { rm -rf "$tmp"; die "无法保留 PostgreSQL 卷名，未替换现有资产。"; }
+  fi
+  # This retired overlay otherwise survives extraction and duplicates logging mounts.
+  [ -f "$tmp/deploy/onebox/docker-compose.portal-logs.yml" ] \
+    || rm -f "$home/onebox/docker-compose.portal-logs.yml"
+  ( cd "$tmp/deploy" && tar -cf - . ) | ( cd "$home" && tar -xf - )
+  rm -rf "$tmp"
+}
+
+cmd_upgrade() {
+  local image="" proxy=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --image) image="${2:?}"; shift 2 ;;
+      --proxy-image) proxy="${2:?}"; shift 2 ;;
+      *) die "upgrade: 不认识的参数 '$1'" ;;
+    esac
+  done
+  if [ -z "$image" ]; then
+    image="$(_eff XGENT_IMAGE)"
+    [ -n "$proxy" ] || proxy="$(_eff XGENT_PROXY_IMAGE)"
+  fi
+  [ -n "$image" ] || die "compose.env 缺 XGENT_IMAGE，请 upgrade --image <新版一盒镜像>。"
+  [ -n "$proxy" ] || proxy="${image%/*}/proxy:${image##*:}"
+  pull_images "$image" "$proxy"
+  # Retain the old volume identity even after down and with a custom volume name.
+  local postgres_volume; postgres_volume="$(_postgres_volume)" || die "无法确认升级前的 PostgreSQL 数据卷。"
+  _extract_assets "$image" "$HOME_DIR" "$postgres_volume"
+  _env_set XGENT_IMAGE "$image"
+  _env_set XGENT_PROXY_IMAGE "$proxy"
+  local version; version="$(_image_version "$image")"
+  [ -z "$version" ] || _env_set APP_VERSION "$version"
+  _objectstore_image
+  _pin_postgres "$postgres_volume"
+  info "部署资产已升级；现有配置、generated/、backup/、端口与数据卷保留。"
+  info "下一步：$0 up（仍会重种门户库；App 自己的库不重置）。"
+}
+
 cmd_init() {
   local image="${XGENT_IMAGE:-}" proxy="" key="" home="./portal-onebox" force=0
   while [ $# -gt 0 ]; do
@@ -305,23 +387,10 @@ cmd_init() {
   # （CR-4：自动授予租户那段代码比某一版镜像新一天，症状是市场里没有卡片且零报错）。
   # 这里把 tag + 镜像 ID + 构建日期钉进 compose.env，`/health` 与 `status` 立刻能回答
   # 「我跑的是哪一版」。取不到就留空，不编。
-  local img_id img_created ver=""
-  img_id="$(docker image inspect "$image" --format '{{.Id}}' 2>/dev/null | cut -c8-14 || true)"
-  img_created="$(docker image inspect "$image" --format '{{.Created}}' 2>/dev/null | cut -c1-10 || true)"
-  # 取不到镜像元信息（离线 load 的、docker 不认的）就留空 —— 宁可不自报，也不编一个版本号。
-  if [ -n "$img_id" ]; then ver="onebox ${image##*:} ${img_id}${img_created:+ built ${img_created}}"; fi
+  local ver; ver="$(_image_version "$image")"
 
   # 2) 从镜像里取 compose 资产 —— 版本天然与镜像对齐，不需要门户仓
-  info "从 $image 取出 compose 资产…"
-  local tmp cid; tmp="$(mktemp -d)"
-  cid="$(docker create "$image")" || die "docker create 失败。先 docker login 到镜像仓库，并确认 tag 写对了。"
-  docker cp "$cid:/app/deploy" "$tmp/deploy" >/dev/null || { docker rm -f "$cid" >/dev/null; die "镜像里没有 /app/deploy —— 这多半不是门户一盒镜像。"; }
-  docker rm -f "$cid" >/dev/null
-  # 只留联调用得上的：compose + 一盒增量 + devkit + postgres 建库脚本 + 两个 manifest 样例
-  ( cd "$tmp/deploy" && rm -rf .DS_Store k8s oauth pm2 caddy knowledge-devkit onebox/Dockerfile \
-      app-devkit/manifests/pagebuilder.manifest.json app-devkit/manifests/task-gateway.manifest.json 2>/dev/null || true )
-  ( cd "$tmp/deploy" && tar -cf - . ) | ( cd "$home" && tar -xf - )
-  rm -rf "$tmp"
+  _extract_assets "$image" "$home"
 
   # 3) 挑空闲端口 —— 首次用最常见的翻车就是 80/5432/6379/9000 已被别的东西占着
   local hp hsp pgp rdp mnp mncp base
@@ -398,11 +467,8 @@ EOF
   echo "  S=$0"
   echo
   echo "  1. 编辑 $envf 末尾：填 APP_IMAGE（micro 再加 APP_FRONTEND_DIST）"
-  echo "  2. \$S dc up -d postgres redis minio"
-  echo "  3. \$S dc run --rm portal-api bun run db:migrate"
-  echo "  4. \$S dc run --rm portal-api bun run db:seed:onebox"
-  echo "  5. \$S dc run --rm -v \"\$PWD/<放 manifest 的目录>:/devkit:ro\" portal-api bun run register-app /devkit/app.manifest.json"
-  echo "  6. \$S dc up -d   然后  \$S smoke"
+  echo "  2. \$S up"
+  echo "  3. \$S doctor"
 }
 
 cmd_pull() {
@@ -425,7 +491,7 @@ cmd_pull() {
   do_pull "$image" "tag 写错了？一盒只有两种：:latest（可变指针，跟着最新一版走）和 :v<版本>-<7位sha>（钉住某一版）。"
   do_pull "$proxy" "代理镜像名是从 runtime 镜像推出来的，有的部署不叫 proxy —— 用 --proxy-image 指定。"
   printf '%s两个镜像就位%s\n' "$c_grn" "$c_off"
-  echo "换版本的话，记得同步 compose.env 末尾的 XGENT_IMAGE / XGENT_PROXY_IMAGE，再 dc up -d"
+  echo "镜像就位后跑 $0 upgrade --image ${image} --proxy-image ${proxy}，再跑 $0 up。"
 }
 
 # --- 其余子命令 ---------------------------------------------------------------
@@ -512,14 +578,14 @@ cmd_status() {
   for cid in $(dc ps -q 2>/dev/null || true); do
     tst="$(docker inspect "$cid" --format '{{json .Config.Healthcheck.Test}}' 2>/dev/null || true)"
     case "$tst" in
-      *"curl -fsS http"*|*"wget -q -O /dev/null http://127.0.0.1:80/"*)
+      *"curl -fsS http://127.0.0.1:8080/health"*|*"wget -q -O /dev/null http://127.0.0.1:80/"*)
         nm="$(docker inspect "$cid" --format '{{.Name}}' 2>/dev/null | sed 's#^/##')"
         stale="$stale ${nm:-$cid}" ;;
     esac
   done
   if [ -n "$stale" ]; then
     warn "这些容器的 healthcheck 还是旧镜像里那条永远失败的探针，它们的 unhealthy 是假红（判活只看下面的探测）：$stale"
-    _note "新镜像已换成 bun / 不跟随重定向的 curl。$0 pull 换新镜像 + $0 init --force 重铺 compose 之后，unhealthy 就是真红。"
+    _note "新镜像已换成 bun / 不跟随重定向的 curl。$0 pull 后跑 $0 upgrade，再跑 $0 up；upgrade 保留配置与数据。"
   else
     _note "healthcheck 都是新探针 —— 这里的 unhealthy 就是真红，别当假红放过去（先看 $0 dc logs <服务>）。"
   fi
@@ -553,10 +619,132 @@ _bad()  { printf '  %s✗%s %s\n' "$c_red" "$c_off" "$1"; shift; [ $# -gt 0 ] &&
 _note() { printf '      %s↳ %s%s\n' "$c_dim" "$*" "$c_off"; }
 
 # --- up：按顺序铺一遍（幂等）---------------------------------------------------
+_objectstore_assets_current() {
+  grep -qE '^  rustfs:' "$HOME_DIR/docker-compose.yml" \
+    && [ -f "$HOME_DIR/scripts/objectstore-cutover.sh" ] \
+    && [ -f "$HOME_DIR/scripts/objectstore-manifest.ts" ]
+}
+_require_objectstore_assets() {
+  _objectstore_assets_current || die "一盒资产是旧版，先跑 $0 upgrade --image <新版一盒镜像>，再跑 $0 up。"
+}
+_objectstore_image() {
+  dc pull --policy missing rustfs </dev/null || die "RustFS 镜像尚未就位；拉取失败，旧对象存储未切换。修复镜像拉取后重跑。"
+}
+
+# An asset upgrade must not upgrade/downgrade an existing PostgreSQL data directory.
+# Inspect only this project's real mount, then read it through a read-only container.
+_postgres_volume() {
+  local project ids cid volume volumes configured
+  project="$(_eff COMPOSE_PROJECT_NAME xgent-onebox)"
+  ids="$(docker ps -aq --filter "label=com.docker.compose.project=$project" --filter label=com.docker.compose.service=postgres)" \
+    || die "无法检查本项目 PostgreSQL 容器；未启动服务。"
+  if [ -n "$ids" ]; then
+    [ "$(printf '%s\n' "$ids" | wc -l | tr -d ' ')" = 1 ] || die "本项目有多个 PostgreSQL 容器，无法确定权威数据卷；请人工确认，勿删卷。"
+    cid="$ids"
+    volume="$(docker inspect "$cid" --format '{{range .Mounts}}{{if eq .Type "volume"}}{{if or (eq .Destination "/var/lib/postgresql") (eq .Destination "/var/lib/postgresql/data")}}{{println .Name}}{{end}}{{end}}{{end}}')" \
+      || die "无法读取 PostgreSQL 挂载，勿删卷。"
+    [ -n "$volume" ] && [ "$(printf '%s\n' "$volume" | wc -l | tr -d ' ')" = 1 ] \
+      || die "PostgreSQL 挂载不是唯一命名卷；请人工确认，勿删卷。"
+  else
+    volume="$(docker volume ls --filter "label=com.docker.compose.project=$project" --filter label=com.docker.compose.volume=pg-data --format '{{.Name}}')" \
+      || die "无法查询 PostgreSQL 数据卷；未启动服务。"
+    if [ -n "$volume" ]; then
+      [ "$(printf '%s\n' "$volume" | wc -l | tr -d ' ')" = 1 ] || die "本项目有多个 pg-data 卷，拒绝自动选择。"
+    else
+      configured="$(awk '
+        /^volumes:/{volumes=1; next}
+        volumes && /^  pg-data:/{pg=1; next}
+        volumes && /^  [A-Za-z0-9_-]+:/{pg=0}
+        pg && /^    name:/{sub(/^    name:[[:space:]]*/, ""); print}
+      ' "$HOME_DIR/docker-compose.yml" | sed "s/^[\"']//; s/[\"']$//")"
+      volume="${configured:-${project}_pg-data}"
+      [[ "$volume" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "pg-data 自定义卷名无法确定；请人工确认，勿删卷。"
+      volumes="$(docker volume ls --format '{{.Name}}')" || die "无法查询 Docker 数据卷；未启动服务。"
+      printf '%s\n' "$volumes" | grep -qxF "$volume" || return 0
+    fi
+  fi
+  printf '%s' "$volume"
+}
+_pin_postgres() {
+  local volume state major layout file next
+  if [ $# -gt 0 ]; then volume="$1"
+  else volume="$(_postgres_volume)" || die "无法确认 PostgreSQL 数据卷；未启动服务。"; fi
+  [ -n "$volume" ] || return 0
+  state="$(docker run --rm --network none -u 0 --entrypoint sh -v "$volume:/probe:ro" rustfs/rustfs:1.0.0 -c '
+    set -eu
+    count=0
+    for f in /probe/PG_VERSION /probe/[0-9]*/docker/PG_VERSION; do
+      [ -f "$f" ] || continue
+      count=$((count+1)); major=$(cat "$f")
+      if [ "$f" = /probe/PG_VERSION ]; then layout=legacy
+      elif [ "$f" = "/probe/$major/docker/PG_VERSION" ]; then layout=parent
+      else echo unknown; exit 1; fi
+      printf "%s %s\n" "$major" "$layout"
+    done
+    if [ "$count" = 0 ]; then
+      if [ -z "$(ls -A /probe)" ]; then echo empty; else echo unknown; fi
+    fi
+  ' </dev/null)" || die "PostgreSQL 只读卷检查失败；未启动服务，勿删卷。"
+  [ "$state" = empty ] && return 0
+  [ "$(printf '%s\n' "$state" | wc -l | tr -d ' ')" = 1 ] \
+    || die "PostgreSQL 卷内有多个版本目录，拒绝自动选择；勿删卷。"
+  major="${state%% *}"; layout="${state#* }"
+  [[ "$major" =~ ^[1-9][0-9]$ ]] || die "PostgreSQL 卷布局或版本未知；拒绝启动，勿删卷。"
+  if [ "$layout" = legacy ] && [ "$major" -lt 18 ]; then
+    layout=/var/lib/postgresql/data
+  elif [ "$layout" = parent ] && [ "$major" -ge 18 ]; then
+    layout=/var/lib/postgresql
+  else
+    die "PostgreSQL 版本与目录布局不一致；拒绝启动，勿删卷。"
+  fi
+  file="$HOME_DIR/docker-compose.yml"; next="$(mktemp "$HOME_DIR/.postgres-compose.XXXXXX")"
+  if ! awk -v major="$major" -v mount="$layout" -v volume="$volume" '
+    /^  postgres:/{svc=1; print; next}
+    svc && /^  [A-Za-z0-9_-]+:/{svc=0}
+    /^volumes:/{svc=0; volumes=1}
+    svc && /^    image:/{print "    image: postgres:" major "-alpine"; images++; next}
+    svc && /^[[:space:]]*- pg-data:\/var\/lib\/postgresql(\/data)?[[:space:]]*$/{print "      - pg-data:" mount; mounts++; next}
+    volumes && /^  pg-data:/{print "  pg-data:"; print "    name: " volume; named=1; names++; next}
+    volumes && /^  [A-Za-z0-9_-]+:/{named=0}
+    named && /^    name:/{next}
+    {print}
+    END{if(images!=1 || mounts!=1 || names!=1)exit 1}
+  ' "$file" > "$next"; then
+    rm -f "$next"; die "PostgreSQL compose 布局不符合预期，未覆盖文件；请人工确认，勿删卷。"
+  fi
+  mv "$next" "$file" || { rm -f "$next"; die "无法保存 PostgreSQL 版本保护；未启动服务。"; }
+  info "PostgreSQL 存量卷保持 PG${major} 与 ${layout} 挂载；大版本迁移需另行安排。"
+}
+
+_objectstore_up() {
+  _require_objectstore_assets
+  _objectstore_image
+  local code deadline
+  if "$HOME_DIR/scripts/objectstore-cutover.sh" \
+    --project "$(_eff COMPOSE_PROJECT_NAME xgent-onebox)" --env-file "$ENV_FILE" \
+    --backup-dir "$HOME_DIR/backup" </dev/null; then
+    :
+  else
+    code=$?
+    die "对象存储切换中止（退出 ${code}）；按上方提示处理，未启动正式 RustFS。"
+  fi
+  dc up -d rustfs </dev/null || die "RustFS 启动失败；已过提交点，rustfs-data 是权威，勿删。看 $0 dc logs rustfs；回退只执行 $HOME_DIR/backup/rollback-minio.sh。"
+  deadline=$((SECONDS+60))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if dc exec -T rustfs curl -fsS --max-time 1 http://127.0.0.1:9000/health </dev/null >/dev/null 2>&1; then return 0; fi
+    [ "$SECONDS" -ge "$deadline" ] || sleep 1
+  done
+  die "RustFS 60s 未就绪；已过提交点，rustfs-data 是权威，勿删。看 $0 dc logs rustfs；回退只执行 $HOME_DIR/backup/rollback-minio.sh。"
+}
+
 cmd_up() {
+  _require_objectstore_assets
   [ -n "$APP_KEY" ] || die "compose.env 里还没有 APP_KEY —— 先跑 $0 init --key <你的listingKey>。"
-  info "① 基础设施（postgres / redis / minio）"
-  dc up -d postgres redis minio
+  info "① 基础设施（postgres / redis / RustFS）"
+  _objectstore_image
+  _pin_postgres
+  _objectstore_up
+  dc up -d postgres redis
   info "   等 postgres 就绪…"
   # 首次初始化时 initdb 会先起一个临时实例再重启，单次 pg_isready 会在那个窗口里误判就绪，
   # 紧接着的 db:migrate 就撞 ECONNREFUSED（实测）。要求连续 3 秒都就绪才算。
@@ -571,8 +759,7 @@ cmd_up() {
   #    逐租户基线（org 的预置档案字段就是这么来的），表还没建就只能眼看着它失败。
   local k
   for k in ${CATALOG//,/ }; do
-    # qbank/lms 是 QBANK-WORKFLOW-ACTIONS §5.9 的变体成员；基础集不含它们时这段零执行。
-    case "$k" in files|llm-gateway|git|org|qbank|lms) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
+    case "$k" in files|llm-gateway|git|org) dc run --rm portal-api bun run "db:$k:migrate" || warn "db:$k:migrate 失败，继续";; esac
   done
   info "②b 你自己的库 xgent-${APP_KEY}"
   _ensure_db "xgent-${APP_KEY}"
@@ -622,13 +809,18 @@ _portal_logs_up() {
   _ok "portal-logs 已起；portal-api 的 stdout/stderr 经 fluentd 驱动进 app_portal_console（观测：$0 dc logs portal-logs）"
 }
 
-# 在一盒 minio 上建桶（幂等）。minio 镜像自带 mc；凭证就是 compose.env 里的 MINIO_ROOT_USER/PASSWORD。
+# 使用 RustFS 自带 curl 与容器内凭据建桶；不依赖已停止分发的 mc。
 _ensure_bucket() { # _ensure_bucket <bucket>
-  local u p; u="$(_eff MINIO_ROOT_USER minioadmin)"; p="$(_eff MINIO_ROOT_PASSWORD minioadmin)"
-  dc up -d minio >/dev/null 2>&1 || true
-  local i=0; until dc exec -T minio mc ready local >/dev/null 2>&1; do i=$((i+1)); [ "$i" -gt 30 ] && { warn "minio 30s 没就绪，桶 $1 没建"; return 0; }; sleep 1; done
-  dc exec -T minio sh -c "mc alias set local http://127.0.0.1:9000 '$u' '$p' >/dev/null 2>&1 && mc mb --ignore-existing local/$1" >/dev/null 2>&1 \
-    && info "桶 $1 就绪" || warn "桶 $1 没建成（$0 dc exec minio mc mb local/$1 手工补）"
+  local bucket="$1"
+  [[ "$bucket" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || die "对象存储桶名不合法。"
+  _objectstore_up
+  # Credentials and bucket positional argument expand in the container shell.
+  # shellcheck disable=SC2016
+  if dc exec -T rustfs sh -c 'exec curl -fsS --max-time 10 --retry 10 --retry-delay 1 --retry-all-errors \
+    --aws-sigv4 "aws:amz:us-east-1:s3" --user "$RUSTFS_ACCESS_KEY:$RUSTFS_SECRET_KEY" \
+    -X PUT "http://127.0.0.1:9000/$1"' sh "$bucket" </dev/null >/dev/null; then
+    info "桶 ${bucket} 就绪"
+  else die "桶 ${bucket} 没建成；检查 $0 dc logs rustfs，修复后重跑原命令。"; fi
 }
 _ensure_db() { # _ensure_db <dbname>
   if dc exec -T postgres psql -U postgres -lqt 2>/dev/null | cut -d'|' -f1 | grep -qw "$1"; then
@@ -694,6 +886,9 @@ _manifest_json() { # _manifest_json KEY  → 把 manifest JSON 打到 stdout
 }
 
 cmd_add() {
+  _require_objectstore_assets
+  _objectstore_image
+  _pin_postgres
   local key="" want_image=""
   ADD_MANIFEST=""; ADD_FROM=""
   while [ $# -gt 0 ]; do
@@ -717,6 +912,8 @@ cmd_add() {
 
   # 用 portal-api 里的 bun 解析（不对宿主机的 python/jq 做任何假设）
   local fields
+  # JavaScript template expressions must reach Bun without shell expansion.
+  # shellcheck disable=SC2016
   fields="$(printf '%s' "$mj" | dc run --rm --no-deps -T portal-api bun -e '
     let raw=""; for await (const c of Bun.stdin.stream()) raw += new TextDecoder().decode(c);
     const m = JSON.parse(raw); const d = m.deployDescriptor ?? {};
@@ -861,7 +1058,7 @@ cmd_add() {
     echo "    expose: [\"\${${PREFIX}_PORT:-${M_PORT}}\"]"
     echo "    networks: { default: { aliases: [${key}-server] } }"
   } > "$out"
-  info "⑥ 生成 ${out#$HOME_DIR/}"
+  info "⑥ 生成 ${out#"$HOME_DIR"/}"
   # requiredEnv 里【既不在上面生成的片段、也不在 compose.env】的键 —— 一盒版的 REQUIRED_ENV_MISSING
   # （生产还会把平台代为供给的键算作已提供，一盒只有这两处来源）。在这里点名，而不是等容器缺变量退出。
   if [ -n "$M_ENV" ]; then
@@ -885,8 +1082,10 @@ cmd_add() {
   local extra_args=() extra="$SKILL_DIR/services/${key}.extra.yml"
   [ -f "$extra" ] && { extra_args=(-f "$extra"); info "   叠加自带依赖 services/${key}.extra.yml"; }
 
-  # 对象存储桶：清单 requiredEnv 里带 *_S3_BUCKET_NAME / ZO_S3_BUCKET_NAME 的，按 compose.env 里的值在一盒 minio 上建桶
+  # 对象存储桶：清单 requiredEnv 里带 *_S3_BUCKET_NAME / ZO_S3_BUCKET_NAME 的，按 compose.env 在 RustFS 建桶
   local bvar bname
+  # M_ENV is a validated whitespace-delimited list of environment key names.
+  # shellcheck disable=SC2086
   for bvar in $(printf '%s\n' $M_ENV | grep -E '_S3_BUCKET(_NAME)?$' || true); do
     bname="$(_eff "$bvar")"; [ -n "$bname" ] && _ensure_bucket "$bname"
   done
@@ -894,7 +1093,8 @@ cmd_add() {
   # 清单声明了 deployDescriptor.migrateArgs（生产由 deploy-controller 在换容器前跑）：起容器前先跑一次
   if [ -n "$M_MIGRATE" ]; then
     info "⑥b 迁移：${key}-server ${M_MIGRATE}"
-    dc up -d postgres minio >/dev/null 2>&1 || true
+    _objectstore_up
+    dc up -d postgres >/dev/null
     # shellcheck disable=SC2086
     XGENT_ONEBOX_HOME="$HOME_DIR" dc -f "$out" ${extra_args[@]+"${extra_args[@]}"} run --rm --no-deps "${key}-server" $M_MIGRATE \
       || warn "${key}-server ${M_MIGRATE} 失败 —— 看上面的报错（多半是 env 值没到位）"
@@ -931,6 +1131,15 @@ cmd_doctor() {
   DOCTOR_BAD=0
   echo "一盒体检（${BASE_URL}）"
   echo
+
+  echo "对象存储"
+  if ! _objectstore_assets_current; then
+    _bad "对象存储部署资产是旧版" "$0 upgrade --image <新版一盒镜像> && $0 up"
+  elif dc exec -T rustfs curl -fsS --max-time 5 http://127.0.0.1:9000/health </dev/null >/dev/null 2>&1; then
+    _ok "RustFS /health 正常"
+  else
+    _bad "RustFS 未就绪" "$0 up；失败时保留 rustfs-data，查看 $0 dc logs rustfs。"
+  fi
 
   echo "① 镜像版本"
   local iv; iv="$(_eff XGENT_IMAGE)"
@@ -1000,7 +1209,8 @@ cmd_doctor() {
   local keys="$CATALOG"; [ -n "$APP_KEY" ] && keys="$CATALOG,$APP_KEY"
   local code
   code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/health" || true)"
-  [ "$code" = "200" ] && _ok "门户 /health 200" || _bad "门户 /health HTTP ${code:-000}" "000=反代没起或端口不对（$0 dc ps）；其它看 $0 dc logs portal-api"
+  if [ "$code" = "200" ]; then _ok "门户 /health 200"
+  else _bad "门户 /health HTTP ${code:-000}" "000=反代没起或端口不对（$0 dc ps）；其它看 $0 dc logs portal-api"; fi
   for k in ${keys//,/ }; do
     _is_portal_hosted "$k" && continue
     code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/svc/$k/health" || true)"
@@ -1021,6 +1231,7 @@ cmd_doctor() {
 
 case "${1-status}" in
   init)   shift; cmd_init "$@" ;;
+  upgrade) require_home; load_env; shift; cmd_upgrade "$@" ;;
   pull)   shift; cmd_pull "$@" ;;
   env)    require_home; load_env; cmd_env ;;
   smoke)  require_home; load_env; cmd_smoke ;;
@@ -1032,5 +1243,5 @@ case "${1-status}" in
   dc)     require_home; load_env; shift; dc "$@" ;;
   # 打印开头那段注释直到第一条非注释行 —— 别写死行号，加一条子命令就会截断（踩过）。
   -h|--help|help) awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "${BASH_SOURCE[0]}" ;;
-  *)      die "未知子命令 '$1'。用 init | up | doctor | add <key> | pull | env | status | smoke | chain | dc <args...>" ;;
+  *)      die "未知子命令 '$1'。用 init | upgrade | up | doctor | add <key> | pull | env | status | smoke | chain | dc <args...>" ;;
 esac
