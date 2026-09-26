@@ -116,10 +116,12 @@ npm install
    不会让人跑到一半才发现，也不会留下半个空目录。
 1. **从镜像里取出 compose 资产**（`docker create` + `docker cp /app/deploy`）——所以版本天然与镜像对齐，
    不需要门户仓，也不会有「文档里的 compose 和镜像对不上」这种漂移。
-2. **挑空闲端口**。一盒只发布 6 个宿主端口（80/443 · 5432 · 6379 · 9000/9001），
-   开发机上这些十有八九被占——它逐个探测并退让，把结果写进 `compose.env` 并回显。
+2. **挑空闲端口**。HTTP/HTTPS、pg、redis、RustFS 的 6 个宿主端口逐个探测并退让；
+   Kafka HOST 另按 9092/19092/29092 挑选，结果写进 `KAFKA_PORT`。Kafka EXTERNAL 独立默认
+   发布回环 9095，若已占用，在 `compose.env` 末尾另设 `KAFKA_EXTERNAL_PORT`；它不参与自动挑选。
    挑出来的 pg/redis/RustFS 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
 3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag）。
+   Kafka 的 `KAFKA_CLUSTER_ID` 与 `KAFKA_ADMIN_PASSWORD` 每个新盒随机生成，密码不回显；文件权限为 600。
    覆盖块**放在文件最末尾**，因为 docker compose 读 env-file 是**后定义者胜**——以后要改配置也往那下面加，别回上面改。
 4. 把 `portal-onebox/` 加进 `.gitignore`（里面是密钥，且随时能重新生成）。
 
@@ -168,7 +170,7 @@ S="$SKILL_DIR/scripts/onebox.sh"
 它幂等，改完 manifest 或 compose.env 重跑即可。下面这几步是它替你做的事——想手动控某一步时照着敲：
 
 ```bash
-# 1) 基础设施由 "$S" up 先做资产检查、存量对象存储切换，再起 postgres/redis/rustfs。
+# 1) 基础设施由 "$S" up 先做资产检查、存量对象存储切换，再起 postgres/redis/rustfs/kafka。
 #    不手工 dc up rustfs；旧资产会在启动前拒绝并提示先 upgrade。
 #    以下是 up 成功后单独重跑某一步的示例。
 
@@ -221,6 +223,27 @@ App 里走「员工 → 导入」（CSV），否则上级一律回 `null` / `rea
 
 日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
 **默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
+
+### Kafka 的启动边界
+
+Kafka 随基础设施常驻，`up` 单独启动并最多等健康 60 秒；失败只告警并显示日志，继续门户与现有 App 初始化。
+`doctor` 检查 Kafka 的 TCP 监听；探针只证明监听已打开，不能替代客户端的认证、授权与收发验证。
+`add` 识别 `requiredServices: [{"kind":"kafka","name":"main"}]`，也兼容 `requiredEnv` 中的
+`<PREFIX>_KAFKA_USERNAME`。它为 App 创建 SCRAM-SHA-512 用户与前缀 ACL，并写入五键：
+`<PREFIX>_KAFKA_BROKERS`、`_KAFKA_USERNAME`、`_KAFKA_PASSWORD`、`_KAFKA_SASL_MECHANISM`、
+`_KAFKA_TOPIC_PREFIX`（后四项同样带 `<PREFIX>`）。`<PREFIX>` 是 listingKey 大写、连字符改成下划线。
+密码第一次生成后写入 `compose.env` 并显示 `***`，重复 `add` 及失败重试沿用原值。
+不要为联调把 `KAFKA_ADMIN_PASSWORD` 加进 App 的 `requiredEnv`。
+
+例如 `order-worker` 的用户名是 `app_order_worker`，主题、消费组、事务 ID 都必须以
+`app.order-worker.` 开头。机制固定 `SCRAM-SHA-512`。App 必须显式建主题（副本数 1），不能修改
+保留期或增加分区；前缀外访问被 broker 拒绝。Kafka 供给失败只告警，保留已保存的密码，按提示
+修复后重跑原 `add`。一盒仍向容器注入整份 `compose.env`，不承诺 App 容器之间的密钥隔离。
+声明范例、客户端配置、最小 ACL 与可粘的手工修复命令见 [Kafka 接入指引](references/kafka.md)。
+
+宿主地址为 `127.0.0.1:<KAFKA_PORT>`，容器网络为 `kafka:9092`，均使用 SASL_PLAINTEXT。
+一盒 EXTERNAL 默认 `127.0.0.1:9095`，保持回环，不开放公网。生产跨 VM 的外部口配置由运维处理：
+监听地址、非回环广告地址和安全组需同时匹配，且 SASL_PLAINTEXT 不加密消息。
 
 ### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
 
@@ -460,7 +483,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > 假红：Caddy 把它 308 到 `https://127.0.0.1/`，对一个 IP 建 TLS 没有 SNI，回 `SSL alert number 80`。
 > · 探针已是 `bun -e fetch(...)` / `curl -fsS -o /dev/null http://127.0.0.1:80/`（新镜像的两条）
 > 却仍 `unhealthy` ⇒ **真红**，去看 `"$S" dc logs <服务>`。
-> 判活一律以 `"$S" smoke` 的宿主侧探测为准；pg/redis/RustFS 的 healthy 一直是真的。
+> 判活以 `"$S" smoke` 的宿主侧探测为准；pg/redis/RustFS 的 healthy 检查对应服务。Kafka 看 `doctor`，其 TCP healthy 不代表 App 凭据与 ACL 已可用。
 
 > **`COMPOSE_PROJECT_NAME` 固定是 `xgent-onebox`，别靠改名来「并存」两套。** 同机两套 compose
 > 项目名相同，compose 会认为它们是同一项目——容器互相接管、命名卷共享，症状是「我起了一盒，
@@ -521,6 +544,8 @@ S="$SKILL_DIR/scripts/onebox.sh"
 需要不同反代镜像可加 `--proxy-image <ref>`。`upgrade` 要求已有 `compose.env`，
 重新从镜像取出部署资产，**不重建配置、不重挑端口、不删卷**。只有镜像或版本变化时，
 才在文件末尾追加 `XGENT_IMAGE` / `XGENT_PROXY_IMAGE` / `APP_VERSION`；原有密钥、自定义行和 `add` 写入的键保留。
+Kafka 另按需补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`：新 ID 与密码随机生成，
+新端口按 9092/19092/29092 挑选，已有的三键一个不改。密码写入不回显，`compose.env` 保持 600。
 `generated/` 和 `backup/` 原样保留。两个目标镜像本地都在时跳过拉取，支持本地构建或离线 `docker load`。
 沿用可变 `latest` 要先更新缓存：`"$S" pull` → `"$S" upgrade` → `"$S" up`；显式指定新的不可变 tag
 或已载入的本地新 tag，可直接 `upgrade --image <ref>`。单独 `pull` 不更新资产，不能代替 `upgrade`。
@@ -542,12 +567,16 @@ S="$SKILL_DIR/scripts/onebox.sh"
 有切换后写入则拒绝回退并保留新卷；此时需在副本上验证 MinIO 兼容与全部对象，再由人工安排恢复，
 不能直接把服务指回旧卷。运行回退入口时通过 `--env-file <一盒目录>/compose.env` 提供原凭据，勿写入命令行。
 
+Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，备份需同时保留配置与卷；
+已有数据时不能重生成 ID、换空卷或改 `KAFKA_DATA_DIR` 来消除拒启。改变目录不会迁移消息。
+单节点没有高可用，重启期间不可用；需要回退平台代码时保留 Kafka 卷与原配置。
+
 ### 停栈与重置
 
 `"$S" dc down` 只停容器、保留卷；下次 `up` 仍会重种门户库。只想重置门户数据也可重跑
 `db:seed:onebox`，随后重跑 `register-app`、重载 Caddy；浏览器需要重新登录。
 
-`down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、apps、caddy 数据会丢失。
+`down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。
 先备份要保留的 App 数据与对象，再按上表重置；退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，
 保留供核对，不因升级自动删除。命名卷属主故障按 [排查表 §7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)
 处理，升级本身不要求清空所有数据。
@@ -559,6 +588,8 @@ S="$SKILL_DIR/scripts/onebox.sh"
 - `bootstrap:prod` 与部署控制器**启动即拒**并打印原因；完整的 `db:seed`（十几个 App 的种子链）也必失败，
   一盒只能用 `db:seed:onebox`。
 - 它是 dev 联调套件：mock OAuth 常开、服务账号密钥是已知明文。**不要用于生产，也不要暴露到公网。**
+- `compose.env` 权限 600 只保护宿主文件；一盒仍把整份配置注入容器，是可信 App 之间的本地联调模型，
+  不构成对恶意 App 的凭据隔离。不要把 Kafka 管理密码当作 App 的连接凭据。
 - 不装 ffmpeg：`PREVIEW_MEDIA_CONVERTER_URL` 必须留空，视频海报/网格缩略图退化成图标。
 - 文件管理界面**不渲染预览**（镜像构建时关掉了前端的格式渲染器），打开任何文件都是下载卡；
   服务端的预览描述符 API 不变，你的 App 自带 `@xgent/file-preview` 时照常渲染。

@@ -154,7 +154,7 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` | 平台换版时自己算并注入，没有人手填 |
-| **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务代建库 / 取地址并注入 |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储桶 · Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
 | **自定** | 其余一切 | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
 
 `<PREFIX>` = `listingKey` 全大写、连字符换下划线。`PORTAL_BASE_URL` 是门户**公开源**（也是调
@@ -171,6 +171,15 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 这种上游定死的名字）也能发**，只是平台管理员要在审批屏上逐个点一下「从平台服务取值」，
 每次发版多等一轮。收交付物时把这一条当作可读性问题看：不是错，是白等。
 
+**Kafka**：声明 `requiredServices: [{"kind":"kafka","name":"main"}]`，并在 `requiredEnv` 列出
+`<PREFIX>_KAFKA_BROKERS` / `_KAFKA_USERNAME` / `_KAFKA_PASSWORD` / `_KAFKA_SASL_MECHANISM` /
+`_KAFKA_TOPIC_PREFIX`（每项均带 `<PREFIX>`）。机制固定 `SCRAM-SHA-512`，用户名 `app_<key>`
+把连字符改为下划线；主题、消费组、事务 ID 的前缀 `app.<listingKey>.` **保留连字符**。
+App 显式建主题、副本数 1，不能更改保留期或增加分区；不申请管理员密码。平台是单节点
+at-least-once 消息服务，不是业务记录系统，App 负责重复消费、重连与租户隔离。
+一盒新版 `add` 自动供给相同权限并沿用已有密码，但整份 `compose.env` 仍注入所有容器，
+不提供容器间密钥隔离。完整联调步骤见 [注册布线与一盒](references/registration-and-onebox.md#44-kafka-接入)。
+
 ⚠️ 服务账号密钥**不再要求进 envFile**：门户保管并在换版时注入容器，明文只在批准那次一次性
 回显（留给对方本地联调）。收交付物时别再问对方「密钥写进 envFile 了吗」。
 另外，平台级能力（如日志写入）会直接出现在对方的服务令牌里，**不需要在 manifest 里申请**。
@@ -182,9 +191,9 @@ manifest 还有两节**同形的审批前置闸**（与 `requiredEnv` 同一挂�
 - `deployRequirements`（`{ region?, size?, gpu?, network? }`）—— 这个 App 的后端需要什么样的
   机器。批准那一刻按本环境的资源池逐维匹配，不满足就拒绝生效；通过时把落点固定到命中的
   那台。**需要 `deployDescriptor`**，且只收**名字与档位** —— 网段 / IP / URL 提交即拒。
-- `requiredServices`（`[{ name, kind, note?, envKey? }]`）—— 运行需要哪些外部服务。批准时比对
+- `requiredServices`（`[{ name, kind, note? }]`）—— 运行需要哪些外部服务。批准时比对
   本环境**已登记**的「已具备服务」（控制台 › 平台设置 › App 清单目录），未登记或缺条目就
-  拒绝生效。门户**不据此开通**任何服务，只核对登记表。
+  拒绝生效。登记表描述已有服务；支持自动供给的类型还会按所选档案为 App 建资源与注入约定键。
 
 收交付物时按这两节问三个问题：**它要跑在哪个网络里**（对方写的名字与本环境登记的名字对不
 对得上）、**它连的那些基础服务本环境有没有并且登记了没有**、以及**远端主机上没有门户的

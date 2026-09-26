@@ -67,7 +67,13 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `port is already allocated` | 一盒只发布 6 个宿主端口：80/443（`HTTP_PORT`/`HTTPS_PORT`）· 5432（`POSTGRES_PORT`）· 6379（`REDIS_PORT`）· 9000/9001（`MINIO_PORT`/`MINIO_CONSOLE_PORT`）。`init` 会自动避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
+| `port is already allocated` | HTTP/HTTPS、PG、Redis、RustFS 加上 Kafka HOST/EXTERNAL 共 8 个宿主口。`init` 为原有 6 口与 Kafka HOST（`KAFKA_PORT`，9092/19092/29092）自动避让；Kafka EXTERNAL 默认回环 9095，占用时另设 `KAFKA_EXTERNAL_PORT`。自动挑选只避开当时被占的，但你**之后**又起了别的东西就会撞——改 `compose.env` 末尾那几行。⚠️ 改了 `HTTP_PORT` 要同步 `PORTAL_BASE_URL` 与 `FILES_APP_URL`，否则浏览器侧的绝对链接指错端口（`"$S" env` 会告警） |
+| Kafka 未健康，但 `up` 继续运行 | Kafka 最多软等 60 秒，失败不阻塞门户。先 `"$S" doctor`、`"$S" dc logs --tail 50 kafka`；TCP healthy 也不代表某个 App 的账号/ACL 可用。基础设施起停不会自动供给 App 身份，勿拿管理员密码替代 |
+| Kafka 日志报 `InconsistentClusterIdException` / cluster ID 不匹配 | 配置与已有卷不配对。保留卷，恢复与该卷对应的原 `KAFKA_CLUSTER_ID`；从备份核对，不运行 `init --force` 重生成，不删卷、不换空目录 |
+| Kafka `Permission denied`，使用了 `KAFKA_DATA_DIR` | 确认使用原来的绝对路径、目录属主为 `1000:1000`，再重试。默认命名卷不需要另找宿主目录；不要用换目录绕过权限问题 |
+| Kafka 外部 bootstrap 能连，但读取 metadata 后超时 | broker 返回的 EXTERNAL 广告地址对客户端不可达；生产运维需同时核对 `KAFKA_EXTERNAL_BIND`、非回环的 `KAFKA_EXTERNAL_HOST`、端口与安全组。一盒保持回环；宿主用 HOST，同 compose 网络用 `kafka:9092` |
+| 升级后缺 Kafka 三键 / 仍是开发默认 | `"$S" upgrade` 使用新版资产，只补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`，已有值保留；不要手动填空赋值阻止生成。需修复已有空值时先核对卷和原配置，不要给已有卷随机新 ID |
+| Kafka 主题不存在且没有自动创建 | `auto.create.topics.enable=false` 是配置约定，不能靠发送消息隐式创建；App 身份与主题授权由后续供给流程处理，不使用管理账号接业务 |
 | 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。一盒项目名固定 `xgent-onebox`，同机只该有一套——已有在跑的一盒时别再 init 第二套，把你的 App 接进现有那套（SKILL.md 文首「一套就够」） |
 | 报缺 `APP_IMAGE` / `APP_KEY` | `docker-compose.app-dev.yml` 里的 `${APP_IMAGE:?}` 是**解析期**求值的，跟 profile 无关。`$S` 会按 `compose.env` 里这两行有没有值自动决定带不带那层——手敲 compose 时才会撞上 |
 | 报缺 `APP_FRONTEND_DIST` | 你给 `service` 型 App 叠了前端 override。service 无前端，不要那层 |
