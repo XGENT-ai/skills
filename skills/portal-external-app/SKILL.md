@@ -160,6 +160,26 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 `<PREFIX>` = `listingKey` 全大写、连字符换下划线。`PORTAL_BASE_URL` 是门户**公开源**（也是调
 别的 App `/svc/<key>` 的基址），`API_BASE_URL` 是内部 portal-api，**不代理 `/svc`**。
 
+**门户内 App 的服务地址由代码派生，不逐个要求平台手填。** 以 Page Builder 为例：
+
+| 原来的地址变量 | 应用代码使用的默认基址 |
+| --- | --- |
+| `LLM_GATEWAY_SERVER_URL` | `${PORTAL_BASE_URL}/svc/llm-gateway` |
+| `FILES_SERVER_URL` | `${PORTAL_BASE_URL}/svc/files` |
+
+接入或审核时核对这几项：
+
+- **清单**：`requiredEnv` 声明 `PORTAL_BASE_URL`，保留其他确实必需的键；上面两个可推导的
+  地址不再列为必填。平台注入的是门户基址，**不会自动注入这两个旧变量**，也不要把派生地址值写进 manifest。
+- **实现与迁移**：代码去掉门户基址末尾的 `/` 后拼接 `/svc/<key>`，再追加具体 API 路径。
+  旧变量可保留为本地调试或特殊部署的可选覆盖项。代码默认值、启动校验、清单与新镜像同步交付，
+  不能只删 `requiredEnv`；平台侧核对已有覆盖值是否保留，并在未设置旧变量时验证实际调用。
+- **权限**：统一入口不替代鉴权。代表用户调用仍需 `exchangeTargets`、目标 scopes 与令牌交换；
+  后台调用仍用获准的服务账号权限，具体姿态见下文「App 型公共服务」。
+
+这条约定针对门户内的 App 服务；第三方 API 等无法从门户基址推导的地址仍按需声明。
+发布操作见 `xgent-app-release` skill「调用门户内的其他 App：从 `PORTAL_BASE_URL` 派生地址」。
+
 **服务怎么绑到键**：键名按约定命名（`<PREFIX>_DATABASE_URL` / `REDIS_CONN_STRING`），再声明要哪条服务 ——
 
 ```jsonc
