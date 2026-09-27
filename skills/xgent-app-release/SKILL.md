@@ -39,7 +39,7 @@ SERVICE_ONLY scope（如 `seats.read`）写进 `serviceScopes` 都会**提交即
 reason 会原文展示给审批人，写清楚用途能少一轮往返。上报自己的用量指标，先在
 `usageMetrics` 里声明（key 必须以你的 listingKey. 开头；同样治理档）——没声明的
 metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
-用 `requiredEnv`（只交键名），值永远由平台管理员在控制台填 —— 见下面「镜像要环境变量」。
+用 `requiredEnv`（只交键名），值由平台注入、自动供给或管理员配置 —— 见下面「镜像要环境变量」。
 
 ### 文案字段：哪些支持多语，哪些不支持
 
@@ -270,6 +270,30 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 `<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
 `PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
 `API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+### 调用门户内的其他 App：从 `PORTAL_BASE_URL` 派生地址
+
+门户已通过 `/svc/<key>` 统一代理 App 服务。调用这些服务时，在应用代码里用平台注入的
+`PORTAL_BASE_URL` 拼接服务路径；不要求管理员逐个提供目标服务的主机名、容器名或端口。
+以 Page Builder 调用 LLM 网关和文件服务为例：
+
+| 原来的地址变量 | 应用代码使用的默认基址 |
+| --- | --- |
+| `LLM_GATEWAY_SERVER_URL` | `${PORTAL_BASE_URL}/svc/llm-gateway` |
+| `FILES_SERVER_URL` | `${PORTAL_BASE_URL}/svc/files` |
+
+- **manifest**：这两个地址能推导，就不再列入 `requiredEnv`；改为声明 `PORTAL_BASE_URL`，
+  并保留其他确实必需的键。平台会注入门户地址，**不会自动注入这两个旧变量**。
+- **代码**：去掉门户基址末尾的 `/` 后拼接路径，再追加具体 API 路径（例如 LLM 的
+  `/v1/chat/completions`）。如保留旧变量用于本地调试或特殊部署，把它们作为可选覆盖项，
+  未设置时使用上表默认值。不要将 `${PORTAL_BASE_URL}/…` 当成值写进发布 manifest。
+- **迁移**：代码的默认值与启动校验、manifest、包含新代码的新镜像要同步交付；只删
+  `requiredEnv` 不会让仍强制读取旧变量的镜像自动兼容。已有覆盖值仍会优先使用，需由平台侧
+  核对是否保留。发布前在未设置这两个旧变量时，验证经 `/svc` 的实际调用。
+- **鉴权**：统一入口只解决路由。代表用户调用仍需声明 `exchangeTargets` 与目标 scopes，
+  换取目标 App 的令牌；后台服务调用仍用获准的服务账号权限。不要直接转发本 App 的用户令牌。
+
+这是**门户内 App 服务地址**的约定；第三方 API 等无法从门户基址推导的地址，仍按实际需要声明。
 
 ### `<PREFIX>_APP_SECRET`：跨应用交换的发起方密钥（归平台，线上永不手填）
 
