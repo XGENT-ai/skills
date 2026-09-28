@@ -23,6 +23,7 @@ import { spawnSync } from "node:child_process";
 // 本地配置文件的读取只有一份实现（同目录 registry-config.mjs，npm-token.mjs 也用它）：
 // 抄成两份的下场是换个字段名只改了一处，另一个脚本悄悄退回默认值。
 import { loadConfig, parseArgs, pick, warnIfProxyIgnored } from "./registry-config.mjs";
+import { normalizeEmbedCsp } from "../references/embed-csp.mjs";
 
 const MAX_BYTES = 64 * 1024 * 1024; // 门户侧上限，超了直接 VALIDATION_FAILED
 const VERSION_RE = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/; // 与门户逐字一致
@@ -113,8 +114,8 @@ if (html) {
   if (external.length) {
     warn(
       `index.html 直连了外部地址：${external.slice(0, 3).join(" ")}${external.length > 3 ? " …" : ""}\n` +
-        `      → 生产受 per-App CSP 管，自助面改不了它。XHR/fetch 那类可由 manifest 的 embedCsp.connectSrc 放行；` +
-        `字体/样式/图片走的是 font-src / style-src / img-src，能不能放行要问平台管理员。最稳的做法是把资源打进产物、不外链。`,
+        `      → 生产受 per-App CSP 管。XHR/fetch 可通过 publish --manifest 申报 embedCsp.connectSrc，治理审核批准后再验实际响应头；` +
+        `script/style/font/img/media 需各自来源声明；扩展指令要求目标门户已启用严格 CSP 与 v2 网关，预检无法确认启用状态。`,
     );
   }
 }
@@ -228,6 +229,16 @@ if (!manifestPath) {
     err(`${manifestPath} 不是合法 JSON：${e?.message ?? e}`);
   }
   if (mf && typeof mf === "object") {
+    if (Object.hasOwn(mf, "embedCsp")) {
+      try {
+        normalizeEmbedCsp(mf.embedCsp);
+        ok("manifest.embedCsp 通过生产严格语法检查（不代表已获批或已加载）");
+      } catch (e) {
+        err(`manifest.embedCsp 不符合严格声明语法：${e.message}`);
+      }
+      warn("能力门未核验：strict 默认关闭；扩展 CSP 需平台确认已发布兼容版本并受控启用 strict 与 v2 网关。whoami 成功不证明此能力已启用。");
+      warn("embedCsp 省略沿用；null 清空；完整对象替换原声明，未写指令会撤回。来源增删均需治理审核。");
+    }
     const isObj = (v) => v !== null && typeof v === "object";
     const shown = (v) => JSON.stringify(v)?.slice(0, 60) ?? String(v);
 

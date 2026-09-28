@@ -1,6 +1,6 @@
 # 注册布线与一盒（one-box）本地联调
 
-> 提炼自门户仓库 `docs/外部App本地联调指南-one-box.md`、`deploy/app-devkit/README.md`、`docs/SSO与App开发指引.md` §15.3（§4 一盒部分对齐 2026-08 的精简镜像与自建 Harbor）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
+> 本文是可在 App 仓库独立使用的契约参考；能力以目标平台已发布版本和管理员配置为准。
 
 ## 1. `app.manifest.json`（单一事实源，放你自己的 repo）
 
@@ -47,6 +47,10 @@
 代表用户），不是平台对你的限制 —— 照抄别人的清单当规矩用，会把一个本来合法的功能砍掉。
 
 ## 2. 注册（dev / 一盒）：`register-app`
+
+**公开面另有接入契约**：普通匿名页面走 `/apps/<key>/…` 或 `/svc/<key>/…`；
+独立域名用 `publicEntrypoints` + Sites。入口声明不会自动接管门户根路径。
+完整步骤、服务特权申请与 key 迁移见 [public-entrypoints.md](public-entrypoints.md)。
 
 ```bash
 bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production 拒跑
@@ -108,10 +112,7 @@ provisioning 路径）能写。所以装完第一个租户后的那次重跑仍�
 生产的清单事实源就是对方仓的 `app.manifest.json`：平台在控制台
 「应用市场 › 接入新应用」按 key 签发 `xrel_` 令牌（无行先建 draft 占位），对方
 `publish --manifest` 提交，平台在「发布审核」批准 = `registerFromManifest` 建全
-（listing 上架 + SA + /svc + 已装租户对齐）。**不要**把外部 App 登记进 `LISTING_DEFS` ——
-门户只保留平台侧事实（`EXCHANGE_WIRING` / Caddy 内联行 / 部署行，及作为**种子**的
-`SA_DEFS` 与 scope 常量 —— 特权 scope 已可经 `privilegedServiceScopes` 申请、审批授予），
-`bootstrap:prod` 对外部 key 只自愈 SA 与部署行。**生产没有 manifest 明文密钥这条路**：
+（清单、服务账号与已装租户对齐，后端部署和网关交付随后独立核验）。App 团队无需修改门户源码；平台配置由管理员管理。**生产没有 manifest 明文密钥这条路**：
 SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批准时生成、enc:v1 保管、
 换版时注入容器（EXCHANGE-SECRET-HOLD）；明文只回显给审批人一次（供本地联调），轮换走
 控制台（应用清单 ›「轮换交换密钥」/ 服务账号 ›「轮换密钥」），都顺带排换版。要交接一枚

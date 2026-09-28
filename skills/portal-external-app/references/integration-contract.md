@@ -1,6 +1,6 @@
 # 外部镜像服务类应用 · 集成契约
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §7/§15 与已接入案例（知识库 / omni-parser，2026-08）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库为准。
+> 本文是可在 App 仓库独立使用的契约参考；能力以目标平台已发布版本和管理员配置为准。
 
 ## 1. 形态与分界
 
@@ -9,8 +9,8 @@
 | | 内建 App | 外部镜像 App |
 | --- | --- | --- |
 | 镜像 | 全部长在同一 runtime 镜像 | 独立镜像（`docker save` tar / 私有 registry，不发公共 dockerhub） |
-| 部署 | deploy-controller 按需拉起/缩零 | **常驻**（controller 不编排外部镜像）：独立 Deployment / compose profile，无状态可多副本 |
-| 注册 | seed / bootstrap 内建 | `app.manifest.json` + register-app（dev）/ provisioning 登记（生产） |
+| 部署 | deploy-controller 按需拉起/缩零 | 由平台按部署描述交付；支持的部署驱动和副本能力须与管理员确认 |
+| 注册 | seed / bootstrap 内建 | `app.manifest.json` + register-app（本地一盒）/ 发布提案审批（生产） |
 
 **App 类型**：有用户前端 → `micro`（前端 dist 由平台同源托管到 `/apps/<key>/`）；无前端 → **`service`**（headless：应用市场/应用中心不露卡、不可打开，仅作被调用方；平台控制台清单管理仍可治理，可作依赖被补装）。
 

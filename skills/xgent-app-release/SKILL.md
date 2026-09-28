@@ -1,6 +1,6 @@
 ---
 name: xgent-app-release
-description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动生效，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「`npx @xgent/release-cli` 取不到 / E404（它在私有包仓上）」「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/<key>/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/<key>/ page after a publish.'
+description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动通过并应用，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「`npx @xgent/release-cli` 取不到 / E404（它在私有包仓上）」「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/listingKey/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/listingKey/ page after a publish.'
 ---
 
 # xgent-app-release · App 版本自助发布
@@ -12,7 +12,7 @@ description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App
 
 - **自动通过档**：`dist`（前端产物）· `version` · `deployDescriptor.image` · 展示字段
   （name / tagline / desc / icon / color / cat / navItems / dashboardWidgets）——
-  提交即生效，与从前一字不差，且每次留档（时间 + diff + 令牌前缀）。
+  自动通过并应用清单/产物；后端与网关需分别确认，且每次留档（时间 + diff + 令牌前缀）。
 - **审核档**：其余一切（scopes / ACL 清单 / 依赖 / 跨应用授权 / 服务地址 / 席位 /
   授权文案 scopeLabels / iframe 指向 embedUrl / 部署形态 / 部署前置 env 键清单
   requiredEnv / 服务账号身份 serviceAccount.clientId / 首次接入）都会改变权限面，
@@ -29,7 +29,7 @@ description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App
 
 **它就是你 App 清单的唯一事实源**，而且**直接参与发版**：
 `publish --manifest deploy/portal/app.manifest.json` 把它随提案交上去 ——
-无治理变更的自动生效，有治理变更的等平台批准。门户代码里不再保留你清单的副本，
+无治理变更的自动通过并应用，有治理变更的等平台批准。门户代码里不再保留你清单的副本，
 「改了 manifest 却被门户下次部署改回去」的静默漂移已经从机制上消灭。
 
 manifest **绝不携带密钥值**：`serviceAccount.secret`、`deployDescriptor.env` 有值、
@@ -78,6 +78,10 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 > 子路径，也就是 vite 的 `base`），**不是**任何仓库里的目录。看到它不要去找、不要去建。
 
 ## 先备齐三样，缺一样就发不出去
+
+涉及匿名公开页、CDN 画布、CSP 阻断、改 App key 或“批准且 ready 但不可用”时，
+先读 [references/public-delivery.md](references/public-delivery.md)。现有标准入口是
+`/apps/<key>/…`、`/svc/<key>/…` 或 Sites；审核、部署、网关与业务验收分别核对。
 
 | 你需要 | 从哪来 | 放在哪 |
 | --- | --- | --- |
@@ -203,13 +207,12 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    ```bash
    npx @xgent/release-cli publish --version $VER --dist dist/ \
      --manifest deploy/portal/app.manifest.json
-   # 有后端、这次还换了镜像时，加 --image <key>:$VER --wait
+   # 获批后等待本次后端与网关：加 --wait；换镜像另加 --image <key>:$VER
    ```
    **每次都带 `--manifest`**：内容没变的重复提交是自动档（不会多一次人工审），而
    ①它是清单目录唯一的输入 —— 不带就等于目录永远是空的；②`requiredEnv` 这类
    「不落 listing」的声明只有随清单提交才能刷新基线。
-   → 验收：打印 `✓ <key> 已发布 <version>` + 产物 digest。**失败时线上那份原封不动**
-   （门户先落 staging、验根 `index.html`、再 swap；被拒时 `version` 与 `digest` 都不动）。
+   → 验收：打印 `✓ <key> 已发布 <version>` + 产物 digest。坏包在 staging 校验失败时不会替换线上产物；应用后的部署或网关失败须按阶段检查，不能概括为“什么都没发生”。
    有治理变更时打印的是「提案已提交」+ 提案号，**同样退出 0 并立即返回** —— 平台管理员
    在那一刻就收到了通知，流水线没有理由挂在那里等人（见下面「等审批」）。
 5. **线上看一眼。** `npx @xgent/release-cli status` 确认版本与 digest 就是本次这一份；
@@ -246,15 +249,15 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 ## 顺带换镜像（有后端的 App）
 
 同一次 `publish` 可以带 `--image <name>:<tag>`：镜像引用一变，门户自动排一条重部署任务，
-生产两条链路（pm2 / K8s）都会滚到新版本。三个易错点：**① `<name>` 就是你的 App key，不是
+当前支持的部署驱动异步执行，实际完成状态需回读。三个易错点：**① `<name>` 就是你的 App key，不是
 `<key>-server`；② 只写相对名，仓库前缀由门户拼；③ tag 不可变——同 tag 覆盖推送门户看不出变化，
 不会触发换版。** 该 App 必须已由平台管理员配了 `deployDescriptor`，否则这一项直接 `VALIDATION_FAILED`。
 
-**换镜像时加 `--wait`。** 产物是同步的（打印成功时已在线上），换容器不是——门户只排了任务，
-容器过一会儿才换、而且可能失败。不加 `--wait`，CI 会在这之前就退出码 0，把「发布成功」
-和「新版本在跑」画上等号。细节见 [references/publish-api.md](references/publish-api.md)。
-`--wait` 轮询的就是上面那个只读面：**门户上没有它时这一步失效**，「容器换没换」只能人工确认，
-如实说明，不要因为流水线绿了就报「新版本已在跑」。
+**需要确认交付时加 `--wait`，纯前端也一样。** 支持新 delivery 的门户按本次 proposalId 固定目标，
+等待后端与网关回执；待审不会自动等待，需加 `--wait-review`。unknown 不能当成功，superseded 表示
+已被后续目标取代。旧门户无 delivery 时会明确提示无法核验网关，不能把兼容退出 0 当完整确认。
+版本与 strict/v2 启用前提见 [公开面与交付确认](references/public-delivery.md)，API 见
+[发布 API](references/publish-api.md)。上述新增能力尚待正式发布与受控启用。
 
 ## 镜像要环境变量：**键名归你，值归平台**
 
@@ -379,10 +382,9 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   两条写法约束：`renamedFrom` 不能等于 `key`；旧键**不能**同时还留在清单里（那等于说「它既被改掉
   又仍然必需」，提交即拒）。改名生效之后 **`renamedFrom` 留着就行** —— 它是幂等的（新键已有值就不再搬），
   而摘掉它本身是一次清单变更，会平白再进一次人工审。
-- **平台填完值会自动换容器；envFile 改内容不会。** 换版触发器的判据是 descriptor 的**配置指纹**
-  （镜像 / 端口 / env），平台管理员在控制台填进 `env` 就会自动排一条重部署任务。唯一的例外是
-  **改 envFile 的内容**（文件在主机上，门户看不见那次改动）—— 那种情况面板那一行会显示「待重建」，
-  由平台管理员点「重新部署」。
+- **重部署看配置指纹，不只看 image。** 新执行链把实际消费的 envFile 字节、平台注入与落点纳入指纹，
+  控制器协调最新目标；Compose 使用其实际消费的全局 env 文件。旧部署可能仍需管理员显式重部署。
+  显式 redeploy 用于强制重建；同 tag 覆盖镜像仍不是可追踪的发版方式。实际运行事实与网关回执要分别核对。
 - **`deployRequirements` / `requiredServices` 也是治理档，而且是【闸】。** 前者说「我的后端要跑在
   什么样的机器上」（地域 / 规格档位下限 / 要不要 GPU / 必须同时属于哪些**命名**网络），后者说
   「我运行需要哪些外部服务」（`(kind, name)` 二元组）。批准那一刻门户按目标环境**当时**的资源池与
@@ -415,16 +417,16 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 2. 你第一次 `publish --manifest deploy/portal/app.manifest.json --dist dist/ --image <ref>` ⇒
    **必然进审核队列**（首次提交携带全部治理字段，无论内容）。
 3. 平台批准 ⇒ listing 建成上架 + 服务账号建出（client secret 明文一次性回显给审批人，
-   平台经外部渠道交给你）+ 产物与镜像同一次生效。
+   平台经外部渠道交给你）；清单/产物应用、后端和网关分阶段完成，不承诺同一时刻切换。
 4. 之后的日常发版与老 App 完全相同 —— 首次与后续是同一条代码路径，没有第二套流程。
 
 ## 等审批（pending 之后会发生什么）
 
 - `publish` 返回 pending 时**退出码 0 并立即返回**（提交成功不是失败），打印提案 id 与待审字段清单。
   **提案落成的那一刻，平台管理员就收到了站内 + 邮件通知**，不必另行催办。
-- **`--wait` 只等容器换版，不等人工审批。** 审批是分钟到小时级的人的动作，把 runner 挂在上面
+- **`--wait` 等获批后的本次后端与网关，不等人工审批。** 审批是分钟到小时级的人的动作，把 runner 挂在上面
   既烧机器又什么都没保证。真要把「审批通过且生效」纳入 CI 门禁，用 **`--wait-review [秒]`**
-  （默认 1800s）：它轮询到 `applied` / `rejected` / `withdrawn`，批准且换了镜像 ⇒ 继续等容器换版；
+  （默认 1800s）：它轮询到 `applied` / `rejected` / `withdrawn`，批准 ⇒ 继续等本次后端与网关，纯前端同样等网关；
   **被拒绝 ⇒ 打印平台填的原因并非零退出**（CI 该红就红）；超时 ⇒「仍在等审批」+ 非零退出。
   ⚠️ 从旧版升上来：以前写 `--wait` 指望它等审批的流水线，现在会在提案待审时**直接绿**。
 - 同一 App 同时只允许一条待审提案，且待审期间**任何新提交都被拒**（纯 dist/version 的

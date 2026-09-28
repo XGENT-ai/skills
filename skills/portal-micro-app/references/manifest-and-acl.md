@@ -1,12 +1,12 @@
 # Manifest 与 ACL 声明（微应用视角）
 
-> 提炼自门户仓库 `docs/SSO与App开发指引.md` §4/§13.2（2026-07）（门户仓文件，App 自己的 repo 里没有；本文件已自包含，不必去找）。冲突时以门户仓库原文为准。
+> 本文是可在 App 仓库独立使用的契约参考；能力以目标平台已发布版本和管理员配置为准。
 
 ## 1. 模型：开发者字段快照
 
 Manifest 的权威载体是一条**市场清单（marketplace listing）**。安装 = 把开发者字段快照复制进该租户的 `apps` 行；清单升级后租户「同步更新」重拷开发者字段（运营字段不动）。`listingKey` 就是 TDT 的 `aud`，不可改。
 
-⚠️ **ACL Manifest 和 navItems 只能由应用自身声明**（代码注册表 / 市场清单），租户管理员不能在注册表单手填。门户 monorepo 内的声明位置：ACL → `apps/api/src/modules/acl/manifests.ts`；listing → `apps/api/src/db/provisioning.ts` 的 `LISTING_DEFS`；改完重新 seed / 发布清单 / 租户同步更新。
+⚠️ **ACL Manifest 和 navItems 只能由应用自身声明**（自己的 `app.manifest.json`），租户管理员不能在注册表单手填。修改后提交完整清单发布提案，按治理要求审批，并核对已安装租户的同步结果。
 
 ## 2. 微应用相关的开发者字段
 
@@ -25,12 +25,18 @@ Manifest 的权威载体是一条**市场清单（marketplace listing）**。安
 | `extPoints` | 仅 `settings.section` |
 | `dependencies` | 依赖的其他清单（安装按拓扑序补装；卸载被依赖会拦截） |
 | `exchangeTargets` | 经令牌交换读取哪些 App（安装时自动建交换白名单 + consent 共授） |
-| `embedCsp.connectSrc` | 同源托管下的额外 connect-src（如直传对象存储） |
+| `embedCsp` | 托管前端的精确来源声明；开发版本支持 connectSrc/scriptSrc/styleSrc/fontSrc/imgSrc/mediaSrc，须正式发布并启用 strict/v2 后使用，旧门户只支持 connectSrc |
 | `tdtTtl` | TDT 有效期秒数，60–86400，默认 3600 |
 
 运营字段（租户管理员设，非 Manifest）：`visibility` / `showInCenter` / `pinned` / `enabledNavItemIds` / `webhookUrl` / `allowExchange` / `exchangeWhitelist`。
 
 ## 3. ACL Manifest schema
+
+匿名页面可以位于 `/apps/<key>/…`，不应在该路由先强制 SDK 登录；数据授权仍归 App。
+后端直出 HTML 可以正式使用 `/svc/<key>/…`，但其 cookie Path、表单、资源、fetch、
+Location 和受保护预览必须适配外部 base。独立域名复用 `publicEntrypoints` + Sites，
+声明本身不创建门户根级路径。详见 portal-external-app 的公开入口参考；发布与 CSP
+实际验收见 xgent-app-release。改 listingKey 是身份/资源迁移，不是显示名修改。
 
 ```ts
 interface AclManifest {
@@ -77,3 +83,15 @@ interface AclAction {
 - Shell 经 `GET /api/apps/nav` 聚合可见应用的已启用项；点击打开 `/app/:appKey?r=<path>`，SDK 握手时 `init.route` 就是这个 path。
 - `navItems[].id` 绑定 `AclPage.navItemId` 后，侧栏按用户 ACL 隐藏无权入口——但应用前端仍要 `sdk.acl` 做 UX 门、后端仍做安全门。
 - 约定：`id` 应用内稳定（改 id = 删旧菜单加新菜单，租户启用状态受影响）；`path` 用应用内部路由（`/` 开头）；`icon` 用 Portal 支持的图标名。
+
+## CSP 与发布确认的版本边界
+
+新增扩展能力尚未因本文更新而上线；strict 默认关闭，需平台盘点来源并受控启用 v2。六类来源
+使用 HTTPS origin（connectSrc 另允许 WSS），禁止通配、路径、凭据和 unsafe-inline/unsafe-eval；
+platformSources 仅 scriptSrc/styleSrc/fontSrc/connectSrc 可声明 ["jsCdn"]，跟随平台 CDN。
+省略整个 embedCsp 沿用，null 清空，对象是完整替换；来源增删均治理，排序去重不算变更。
+
+新版 delivery 追踪本次 proposalId 的审批、清单/产物、后端和网关四阶段。纯前端 backend 为
+not_applicable 仍须等网关；unknown 不当成功，superseded 表示目标被后续取代。旧门户无 delivery
+不能确认网关。CSP 只扩展本 App 的 /apps 前端，不更改门户壳、沙箱或 /svc 后端公开页策略；
+公开数据授权与真实浏览器主路径仍需单独验证。

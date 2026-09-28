@@ -1,8 +1,6 @@
 # 配额与席位（seatBased / seatRoles）
 
-> 有「每租户最多能建几个 X」这类诉求时读本文。提炼自门户仓 `apps/api/src/modules/seats/`、
-> `packages/shared/src/constants.ts`、`apps/api/src/db/provisioning.ts`（门户仓文件，App 自己的
-> repo 里没有；本文件已自包含）。冲突时以门户仓库为准。
+> 有「每租户最多能建几个 X」这类诉求时读本文。App 声明角色和用量指标，平台管理员维护套餐数值；不需要访问门户源码。
 
 ## 0. 红线
 
@@ -17,7 +15,7 @@
 
 两者都是 listing 上的标记，且**仅 backed listing** 可声明 —— end-state 得有 `serviceBaseUrl` 或
 `deployDescriptor`，否则 `createListing`/`updateListing` 直接 `VALIDATION_FAILED`：「只有带独立后端
-(serviceBaseUrl / 部署描述)的应用可声明席位制」（`market/service.ts` 的 `assertSeatBasedEligible`）。
+(serviceBaseUrl / 部署描述)的应用可声明席位制」。
 
 | | 用在哪 | 谁收口 |
 | --- | --- | --- |
@@ -30,14 +28,13 @@
 
 | 要素 | 谁写 / 写在哪 | 要门户发版吗 |
 | --- | --- | --- |
-| role 存不存在（`seatRoles: ["service"]`） | **对方自己的 `app.manifest.json`**（清单仍在门户仓的 App 才是 `LISTING_DEFS`） | 不用 |
+| role 存不存在（`seatRoles: ["service"]`） | **对方自己的 `app.manifest.json`** | 不用 |
 | 各套餐给几个（生效值） | 平台管理员 → `PUT /api/console/seat-plans` upsert `app_seat_quotas(listing_key, plan, role)` | 不用 |
 | 单租户加购 | 平台管理员 → `PUT /api/console/tenants/:id/seat-addons`（仅 pro/ultra 可加购） | 不用 |
-| role 的三语标签 `SEAT_ROLE_LABELS` | 门户 `packages/shared/src/constants.ts` | **要**（不加则控制台显示裸 role key，`?? role` 兜底不报错） |
-| SA 的 `seats.read` | **对方 manifest `privilegedServiceScopes: [{scope, reason}]` 申请** → 「发布审核」逐条确认批准即授予（`SA_DEFS.serviceScopes` 降为种子/运维兜底，union top-up 不回滚审批授予） | 不用 |
+| role 的三语标签 `SEAT_ROLE_LABELS` | 平台维护的本地化标签（联系管理员） | **要**（不加则控制台显示裸 role key，`?? role` 兜底不报错） |
+| SA 的 `seats.read` | **对方 manifest `privilegedServiceScopes: [{scope, reason}]` 申请** → 「发布审核」逐条确认批准即授予 | 不用 |
 
-⚠️ **各套餐的数值进不了 manifest，也进不了 `LISTING_DEFS`** —— `AppManifest` 与 `ListingDef`
-都只有 `seatBased` / `seatRoles` 两个字段，没有任何 per-plan 数值字段。应用侧**没有任何写路径**
+⚠️ **各套餐的数值进不了 manifest** —— App 清单只有 `seatBased` / `seatRoles` 两个字段，没有任何 per-plan 数值字段。应用侧**没有任何写路径**
 （manifest 没这字段 · 发布提案携带的未知字段一律进人工审而非生效 · `seats.read` 只读）。这是有意的：
 数值是商务面，改它等于改可售卖档位、影响所有租户。应用侧能做的是在契约里**提议**一组数。
 
@@ -66,11 +63,7 @@
 - 写进 manifest 后随 `publish --manifest` 提交 —— `seatRoles` 是治理档，提案进「发布审核」
   等平台批准后生效（`register-app --prod` / 控制台「导入 manifest」是运维兜底路径，同一段
   `registerFromManifest`）。
-- 出仓四件（knowledge / task-gateway / omni-parser / pagebuilder）已**不在** `LISTING_DEFS`
-  里 —— 清单唯一事实源就是对方仓的 manifest，不存在双事实源问题；**别把定义加回门户**
-  （verify-split「清单零残留」棘轮看守）。
-- 仓内 App 在 `LISTING_DEFS` 加 `seatRoles` **不用 bump version**：它走「代码权威
-  字段」通道，每次部署都对齐，跟版本治理无关。
+- App 自己仓库的 manifest 是开发者声明的事实源；修改后提交新提案，并核对已安装租户的同步结果。
 
 ## 4. 对接面与三态
 
@@ -110,7 +103,7 @@ metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` �
 **外部 App 在自己 manifest 的 `usageMetrics` 里声明 gauge 条目**
 （`[{ key, kind: "gauge", unit: "count", label: {zh,…} }]`，key 前缀必须=listingKey、
 金额单位 microAmount 不开放；治理档，批准后生效）——不再需要门户发版；
-仓内 App 仍在 `packages/shared/src/usage.ts` 登记。
+平台内建指标由平台维护，外部 App 无需修改平台代码。
 
 ## 6. 两层快照：谁读哪一层
 
@@ -122,12 +115,7 @@ metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` �
 | 租户加购 `getTenantAddons` | **`apps.seat_roles`（已装租户快照）** |
 | `POST /api/v1/seats/quota` | **两者都不读** —— roles 来自请求体，只查 plan + 配额表 + 加购表 |
 
-**存量租户不需要人工回刷**，两条路都自带传播：
-
-- `LISTING_DEFS` 路：`syncFromSource` 对 listing 层与已装 `apps` 行**各打一次**
-  `codeAuthoritativePatch`（union 语义），随 `bootstrap:prod` 自动到达。
-- manifest 路：`updateListing` 直接批量 update 所有已装 `apps` 行，`registerFromManifest` 之后
-  还会再跑一次 `syncInstalledAppsFromListing`。
+**已批准的 manifest 变更会同步到已安装租户。** 发布后核对控制台配额矩阵与租户加购面；异常交平台管理员处理，不直接修改平台数据库。
 
 推论：**漏声明不会 fail-closed**。`/api/v1/seats/quota` 不读任何 seatRoles 声明，照样按请求体里的
 role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出这一行** ⇒ 平台配不了、租户加购不了
@@ -138,7 +126,6 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 - **manifest 的 `seatRoles` 是整份覆盖，不是 union**（`updateListing`，改动还会批量传播到所有已装
   租户的 `apps` 行）。下一版 manifest 少写一个 role ⇒ 那个 role 从所有租户消失。清单字段
   「只增不减」那条规矩管的是 scopes/dependencies/exchangeTargets，**不覆盖 `seatRoles`**。
-  （走 `LISTING_DEFS` 那条是 union，不会静默删。）
 - **role 名没有格式校验，改名 = 换一个新 role**：旧 `(listing_key, plan, role)` 配额行成孤儿 ——
   全仓没有任何地方删它们，`getSeatPlans` 只按当前 `seatRoles` 出行，于是孤儿行在控制台不可见
   却还躺在库里（改回同名会「复活」旧数值），而新 role 悄悄回落兜底。**role 名定下来就别动。**
@@ -198,13 +185,7 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 4. （可选）门户 `SEAT_ROLE_LABELS` 加三语标签 —— 唯一仍要门户发版的一件；不加则控制台显示裸 role key
 5. 批准部署后，平台管理员在控制台按 `App × role × 套餐` 配一轮真实数值
 
-**仓内 App（LISTING_DEFS 路，随门户发版）**
-
-1. `LISTING_DEFS[<key>]` 加 `seatRoles: [...]`
-2. `SEAT_ROLE_LABELS` 加三语标签；`SEAT_ROLE_DEFAULTS` 加各档默认值（可选；不加则一律兜底 1）
-3. `USAGE_METRICS` 加 gauge 条目（每 role 两条）
-4. `SA_DEFS[<key>].serviceScopes` 加 `seats.read`
-5. 部署后控制台配数值
+**平台管理员**：维护套餐/加购数值与可选本地化标签；App 团队不能用发布令牌修改这些配置。
 
 **App 侧**
 

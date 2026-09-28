@@ -48,8 +48,11 @@ tar czf dist.tgz dist          # ❌ 全套在 dist/ 一层下面，拒收
 
 反过来，如果前端要直连**自己的域名 / 对象存储 / 第三方**，那是浏览器直发的请求，受 per-App CSP 管。
 XHR/fetch 那一类可以由 App manifest 的 `embedCsp.connectSrc` 放行；字体、样式表、图片走的是
-`font-src` / `style-src` / `img-src`，不在这个字段的能力范围内。**manifest 不在自助面里**——
-要放行得找平台管理员，改完下次反代 reload 生效。
+`font-src` / `style-src` / `img-src`，不在这个字段的能力范围内。
+**manifest 支持自助提交**：用 `publish --manifest` 申报 connectSrc，变化进入治理审核，
+批准后由平台同步反代；申报不等于已经生效，仍须验证实际响应头。
+需要 script/style/font 等扩展时向平台提出具体能力需求，不把它们塞进 connectSrc。
+公开入口与交付验收见 [public-delivery.md](public-delivery.md)。
 
 所以最省事的做法是**把资源打进产物、不外链**（字体尤其：CDN 字体是这里最常见的外链，
 而它恰好是 `connectSrc` 放行不了的那一类）。预检脚本会把产物里的外链列出来提醒。

@@ -80,7 +80,7 @@ npx @xgent/release-cli status      # 地址与令牌都不用写在命令里
 - **一枚令牌只对一个 listing 有效**。拿它去动别的 key 一律 `404`——门户**故意不区分**
   「不属于你」和「那个 App 不存在」，免得令牌变成探测别人 App 是否存在的工具。
 - 可随时吊销、可设过期时间。**每次调用实时查库**，所以吊销后下一次调用就 `401`，没有缓存窗口。
-- 它能**单方面生效**的仍只有自动通过档：`dist` · `version` · `deployDescriptor.image` ·
+- 它能**无需人工批准而应用**的仍只有自动通过档：`dist` · `version` · `deployDescriptor.image` ·
   展示字段 ·「值是 App 内路由 `/…`」的 `helpEntry`（外站 `https://…` 那一形态进审核档）。
   治理变更只能**提议**（随 `manifest` 提交，进平台审核队列，批准前库里一字不动）。
   它也**读不回** `descriptor.env`——响应体里永远没有它，因为那里面是生产密钥。
@@ -90,8 +90,8 @@ npx @xgent/release-cli status      # 地址与令牌都不用写在命令里
 ```
 POST   /api/market/release/:key                发布（落成一条发布提案）
 GET    /api/market/release/:key                whoami（校验令牌，只返回持有者本就知道的东西）
-GET    /api/market/release/:key/status         只读：版本 / 产物 digest / 部署状态 / 最近一条提案
-GET    /api/market/release/:key/proposals/:id  只读：单条提案状态（--wait 轮询用）
+GET    /api/market/release/:key/status?proposalId=<id>  只读：兼容状态 + 指定提案 delivery；省略 id 默认最新
+GET    /api/market/release/:key/proposals/:id  只读：单条提案状态 + delivery（--wait-review 审批轮询用）
 DELETE /api/market/release/:key/proposals/:id  撤回自己【待审】的提案（提交方的权利）
 ```
 
@@ -135,7 +135,7 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
 （scopes / aclManifest / dependencies / exchangeTargets / serviceScopes /
 privilegedServiceScopes / usageMetrics / serviceBaseUrl /
 seat* / scopeLabels / embedUrl / embedCsp / type / 部署形态…，以及**任何门户不认识的字段**）
-⇒ 提案 `pending` 等平台审批；只有版本/产物/镜像/展示字段的差异 ⇒ `auto_approved` 当场生效。
+⇒ 提案 `pending` 等平台审批；只有版本/产物/镜像/展示字段的差异 ⇒ `auto_approved` 自动通过并应用清单/产物。
 其中 `privilegedServiceScopes`（平台特权 scope 的申请，如 `seats.read`）是最高一档：
 审批人要**逐条勾选确认**才能批准 —— 每条都带上说清用途的 `reason`，等待会短很多；
 已持有的特权 scope 幂等重放不再进审。
@@ -154,7 +154,7 @@ SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScope
 
 只有三种情况不是 200：`401`（令牌无效/吊销/过期）、`404`（令牌不是为这个 key 签发的），以及真故障。
 
-成功时 `data` 里（先看 `status`：`"applied"` = 已生效；`"pending"` = 等审批，此时只有
+成功时 `data` 里（先看 `status`：`"applied"` = 清单/产物阶段已应用，不代表整条交付已确认；`"pending"` = 等审批，此时只有
 `proposalId` / `kind` / `governance`（待审字段清单）有意义）：
 
 | 字段 | 含义 |
@@ -166,14 +166,13 @@ SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScope
 | `distFiles` | 产物顶层条目数 |
 | `distStores` | 落了哪些存储 |
 | `image` / `imageChanged` / `redeployQueued` | 镜像引用、是否变了、是否排了重部署任务 |
+| `delivery` | 新门户的本提案交付投影；旧门户可能没有该字段，不能据此确认网关 |
 
-## 5. 原子性：坏包碰不到线上那份
+## 5. 应用与执行不是一个事务
 
-一次调用内：解压 → 验根 `index.html` → 落 staging → rename 换上 → **同一次落库** `version` + `distDigest`。
-被拒时 `version` 与 `digest` 都不动，线上产物原封不动。
-
-所以「发布失败了，线上是不是已经半坏了」这个担心不成立——失败就是没发生。
-反过来也意味着：**版本号与产物永远同进同退**，不会出现「产物换了版本号没换」的漂移。
+坏包在解压/staging 校验阶段被拒时不会替换线上产物。之后的清单/产物应用、后端部署与网关加载
+是分阶段执行：后续失败可能发生在清单已经应用之后，须查看 applyError 与 delivery.failureStage。
+不能把任意“发布失败”解释为所有副作用都没发生，也不能把提案 applied 当成完整交付。
 
 ## 6. `--image` / `image`
 
@@ -201,61 +200,59 @@ SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScope
   要多 arch 用 `docker buildx --platform`。
 
 引用一变，门户排一条重部署任务：pm2 侧**先拉后换**（拉不到则旧容器原封不动、任务转 failed），
-K8s 侧滚动更新（旧 Pod 在新 Pod ready 前不下线）。**服务不会因为一次发布断掉。**
+执行失败须回读对应阶段；旧容器一旦已被替换，不能承诺继续提供旧服务。
 
-## 6.1 `--wait` / `--wait-review` / `status`：确认换版真的落地了
+## 6.1 按本次提案查询交付
 
-`publish` 返回 `redeployQueued: true` 只说明**任务排上了**。前端产物是同步的（那一刻已在线上），
-换容器不是——它可能几十秒后才完成，也可能失败（镜像没 push、robot 没权限、tag 打错）。
-不确认这一步，CI 会绿着退出而线上还跑着旧容器。
+新增契约的版本与启用前提见 [公开面与交付确认](public-delivery.md)：这些能力尚待正式发包/上线；
+目标门户须提供 delivery，扩展 CSP 还须 strict 与受控 v2 网关。不得仅按包版本标签猜能力已开。
 
 ```bash
-# 发布并等到换版结束（默认 1800s，可写 --wait 600）
-npx @xgent/release-cli publish --key $KEY --version $VER --dist dist/ --image $KEY:$VER --wait
-
-# 必须卡在人工审批上的流水线，再加一个开关（默认 1800s）
-npx @xgent/release-cli publish --key $KEY --manifest app.manifest.json --wait-review
-
-# 或任何时候单查
-npx @xgent/release-cli status --key $KEY
+npx @xgent/release-cli publish --version "$VER" --dist dist/ --manifest app.manifest.json --wait
+npx @xgent/release-cli publish --manifest app.manifest.json --wait-review
+npx @xgent/release-cli status --proposal-id <id> --wait
 ```
 
-**两个开关等的是两件事（CLI 0.5.0 起）：**
-
-| 开关 | 等什么 | 提案落成待审时 |
+| 开关 | 等什么 | 新提交为 pending 时 |
 | --- | --- | --- |
-| `--wait [秒]` | 只等**容器换版** | 打印提案号，**退出 0 立即返回** |
-| `--wait-review [秒]` | 先等**人工审批**，批准且换了镜像再等换版 | 轮询到终态；被拒 / 撤回 / 超时 ⇒ 非零退出 |
+| `--wait [秒]` | 获批后，本次固定目标的后端 + 网关；默认 1800 秒 | 打印提案号，退出 0；不等待人工 |
+| `--wait-review [秒]` | 人工审批，再等待本次交付；默认 1800 秒 | 等待；拒绝、撤回或超时非零退出 |
+| `status --proposal-id <id> --wait` | 继续查询这一提案，不能偷换成最新任务 | 等本次提案交付或超时 |
 
-`--wait` 之所以不再等审批：审批是分钟到小时级的人的动作，而**提案落成的那一刻平台管理员就
-收到了站内 + 邮件通知**，把 runner 挂在上面既烧机器又什么都没保证。
-⚠️ 从 0.4.x 升上来：以前写 `--wait` 指望它等审批的流水线，现在会在提案待审时**直接绿**——
-要保持旧行为，把那一处改成 `--wait-review`。
+纯前端 backend=not_applicable，仍要等 gateway。failed/superseded 使等待非零退出；unknown 保持
+未确认，超时非零退出。普通 status 只展示；配 --wait 才按交付结果设置退出码。
+旧门户完全没有 delivery 字段时，CLI 明示“无法核验网关”，只兼容原后端规则；即使退出 0，
+也不能声称端到端确认。有字段但为 null/unknown 则缺乏证据，不能冒用旧任务成功。
 
-`--wait` 成功 → 打印实际在跑的镜像引用、零退出；失败或超时 → 打印原因、**非零退出**。
-没换镜像时它直接跳过，不空等。镜像来源不限 `--image`：**manifest 的
-`deployDescriptor.image` 换了镜像同样会等**（`--wait-review` 下则是提案批准后接着等）。
-判据看的是最近一条 `deploy|redeploy` 任务，不掺 `provision-tenant`（那是某个租户的 bootstrap，
-与镜像滚动无关）。
-
-门户上没有这个面时，`status` 与 `--wait` 都用不了：产物那半边照旧由 `publish` 的返回体
-（`version` / `distDigest` / `redeployQueued`）交代清楚，容器那半边只能找平台管理员看
-「服务部署」面板。**别用「命令退出码 0」替代这半边的结论。**
-
-`status` 返回：
+旧版 status 字段保留 version/distDigest/distUpdatedAt/image/deployment/proposal；指定 proposalId
+只限定新增 delivery，旧 proposal 字段仍可能是最近提案。不要混用两者。新 delivery 的形状：
 
 | 字段 | 含义 |
 | --- | --- |
-| `version` / `distDigest` / `distUpdatedAt` | 线上现在是哪一版、哪一份产物 |
-| `image` | 你**声明**的相对引用（不是解析后的完整引用） |
-| `deployment` | `null` = 纯前端 App，没有后端可等 |
-| `deployment.status` | `not_deployed` / `deploying` / `ready` / `failed` |
-| `deployment.deployedImageRef` | **实际**在跑的完整引用（含仓库前缀）——「为什么还是旧版」靠它自查。CLI 默认只打印末段（域名是内部信息，没必要每次构建都刷进 CI 日志），**只在与声明值对不上时**才展开完整引用——那正是需要看清来源的场合，同名 tag 也可能来自另一个仓库 |
-| `deployment.lastJob` | 最近一条部署任务的 `action` / `status` / `error` / `finishedAt` |
+| proposalId / approval | 被查询提案及其审批状态 |
+| state | pending / applied / failed / unknown / superseded |
+| target | null 或固定目标摘要：manifestDigest、distDigest、deploymentConfigDigest、gatewayDigest、gatewayRevision |
+| backend | state= pending / ready / failed / unknown / not_applicable；jobId 与脱敏 error |
+| gateway | state= pending / applied / failed / unknown / not_applicable；desiredRevision、appliedRevision 与脱敏 error |
+| failureStage / error | approval / application / backend / gateway，或 null；仅公开脱敏状态 |
 
-这个面是**只读**的，且仍在同一条边界内：同一枚令牌、同样绑死一个 listing、跨 key 一样 404。
-`descriptor.env` 读不回来——**连藏在部署错误文本里的那份也不行**，出口会对它做值级抹除，
-所以错误消息仍然可读（`manifest unknown` 之类留着），只有密钥被换成 `«redacted»`。
+旧目标缺失及无法证明的运行事实为 unknown；后续目标取代本次为 superseded，哪怕摘要后来回到
+相同值也不能借旧修订冒认。只有本次实际后端目标和匹配网关回执齐备才 applied。
+最近一条 succeeded job 或 deployment.ready 不能替代上述判据。
+
+维护者查询仍用绑定此 App 的 release token：跨 key 不可读，指定别的 App 的 proposalId 也无数据。
+新交付状态不返回环境值、内部 upstream 或原始执行日志。可交接提案号、摘要和脱敏失败阶段。
+
+平台管理员另有控制台 session 接口：
+
+```
+GET  /api/console/releases/:id/delivery
+POST /api/console/releases/:id/retry-gateway
+Body: { "expectedTargetDigest": "<当前提案的 gatewayDigest>" }
+```
+
+Envelope.data 为同一 delivery DTO；重试必须目标仍有效，旧目标冲突拒绝。重试仅协调网关，
+不重放清单，不触发后端重部署。发布令牌不能调用该管理接口；非平台租户无权使用。
 
 ## 7. CI 范式
 

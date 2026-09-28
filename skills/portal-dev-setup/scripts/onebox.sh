@@ -733,13 +733,32 @@ _portal_services_up() {
   dc up -d "${services[@]}"
 }
 _svc_running() { [ -n "$(dc ps -q "$1" 2>/dev/null || true)" ]; }
-# register-app 写完 /etc/caddy/svc-allow/<key>.map 后，反代要重读一次才认新 key（Caddy 只在 load 时
-# 读那个目录）。门户自己的 reload 走部署驱动，而一盒的 portal-api 没有 DEPLOY_BACKEND（deploy-controller
-# 不起）⇒ 那一步静默跳过，首次 add 的 /svc/<key> 就一直 404 —— 由这里补上。reload 是原子的：新配置
-# 不合法（如 duplicate input）时 Caddy 保留旧配置，所以失败只告警。反代没起就不用管，启动时自己会读。
+# v1 的放行表只在 Caddy load 时读取；v2 由唯一发布器生成、验证并应用整代配置。
+# 必须先询问镜像的受管 selector；模式损坏时不能按旧镜像降级，更不能重读兼容模板。
 _reload_proxy() {
   _svc_running reverse-proxy || return 0
-  local out
+  local selected out
+  if ! selected="$(dc exec -T reverse-proxy sh -c '
+    selector=/usr/local/libexec/xgent-gateway-config
+    if [ -e "$selector" ] || [ -L "$selector" ]; then
+      [ -f "$selector" ] && [ -x "$selector" ] || exit 1
+      exec "$selector"
+    fi
+    # 旧镜像只有完全没有受管状态时才允许兼容 reload。
+    for path in /etc/caddy/sites/gateway-v2.enabled /etc/caddy/sites/current /etc/caddy/gateway-operation.conf; do
+      if [ -e "$path" ] || [ -L "$path" ]; then exit 1; fi
+    done
+    printf "/etc/caddy/Caddyfile\n"
+  ' 2>/dev/null)"; then
+    die "无法确认反代模式；已停止 reload。请检查受管模式与 current 快照，再按网关维护文档恢复。"
+  fi
+  case "$selected" in
+    /etc/caddy/Caddyfile) ;;
+    /*/current/Caddyfile)
+      info "   反代为 v2，路由变更由唯一发布器应用；请查看发布状态确认结果"
+      return 0 ;;
+    *) die "反代模式返回无效；已停止 reload，不会回退到兼容模板。" ;;
+  esac
   if out="$(dc exec -T reverse-proxy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1)"; then
     info "   反代已重读 /svc 放行表"
   else
@@ -760,7 +779,11 @@ _require_objectstore_assets() {
   _objectstore_assets_current || die "一盒资产是旧版，先跑 $0 upgrade --image <新版一盒镜像>，再跑 $0 up。"
 }
 _objectstore_image() {
-  dc pull --policy missing rustfs </dev/null || die "RustFS 镜像尚未就位；拉取失败，旧对象存储未切换。修复镜像拉取后重跑。"
+  local image
+  image="$(dc config --images rustfs)" || die "无法读取 RustFS 镜像配置；旧对象存储未切换。"
+  [ -n "$image" ] || die "Compose 配置里没有 RustFS 镜像；旧对象存储未切换。"
+  docker image inspect "$image" >/dev/null 2>&1 && return 0
+  dc pull rustfs </dev/null || die "RustFS 镜像尚未就位；拉取失败，旧对象存储未切换。修复镜像拉取后重跑。"
 }
 
 # An asset upgrade must not upgrade/downgrade an existing PostgreSQL data directory.
@@ -844,7 +867,9 @@ _pin_postgres() {
   ' "$file" > "$next"; then
     rm -f "$next"; die "PostgreSQL compose 布局不符合预期，未覆盖文件；请人工确认，勿删卷。"
   fi
-  mv "$next" "$file" || { rm -f "$next"; die "无法保存 PostgreSQL 版本保护；未启动服务。"; }
+  # 运行中的 portal-api / controller 按 inode 单文件挂载它；内容没变就不换文件，免得它们读到已删除的旧文件。
+  if cmp -s "$next" "$file"; then rm -f "$next"
+  else mv "$next" "$file" || { rm -f "$next"; die "无法保存 PostgreSQL 版本保护；未启动服务。"; }; fi
   info "PostgreSQL 存量卷保持 PG${major} 与 ${layout} 挂载；大版本迁移需另行安排。"
 }
 
@@ -1364,7 +1389,7 @@ cmd_doctor() {
     code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/svc/$k/health" || true)"
     case "$code" in
       200) _ok "/svc/$k 200";;
-      404) _bad "/svc/$k 404" "放行没写成或反代在写之前就起了：$0 dc exec reverse-proxy caddy reload";;
+      404) _bad "/svc/$k 404" "放行尚未应用：检查发布状态及 $0 dc logs portal-api，勿手工 reload 兼容模板";;
       502) _bad "/svc/$k 502" "后端不在/没听 8080/别名没命中：$0 dc logs ${k}-server";;
       *)   _bad "/svc/$k HTTP ${code:-000}" "$0 dc ps";;
     esac

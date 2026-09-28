@@ -5,17 +5,10 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 
 # portal-external-app · 外部镜像服务类应用接入
 
-外部镜像 App = 服务端在别的 repo（任意语言/栈）、独立镜像交付、**常驻**（不走按需缩零）。鉴权与业务 API 遵循门户运行时契约；**`/health` 支持平铺 JSON 与 Envelope，检测规则与平台运行时一致**。本文件是判断与流程；具体契约按需读 `references/`（为本 skill 提炼的自包含参考，可整目录拷到外部团队 repo；权威源是门户仓库 `docs/`，冲突以门户仓库为准）。
+外部镜像 App = 服务端在别的 repo（任意语言/栈）、独立镜像交付、**常驻**（不走按需缩零）。鉴权与业务 API 遵循门户运行时契约；**`/health` 支持平铺 JSON 与 Envelope，检测规则与平台运行时一致**。本文件是判断与流程；具体契约按需读 `references/`（可整目录拷到 App repo 独立使用）。
 
 
-> **路径约定（先读这条，能省一次白找）**：本 skill 里出现的 `apps/…` `packages/…` `docs/…`
-> `deploy/…` 这类路径**都在门户仓**。在 App 自己的 repo 里它们**不存在** —— 它们标注的是
-> 「门户侧要做什么」或某段内容的出处，**不是让你去打开的文件**。找不到不是配置错误：
-> 别去创建、别去全局搜、别把它当缺失依赖报出来。你需要的一切都在本 skill 的
-> `references/`（自包含）。若你正在门户仓里工作，那这些路径就是可以直接打开的真实文件。
->
-> ⚠️ 一个例外：`/apps/<key>/`（带前导斜杠）是**线上 URL 路径**——微应用产物的挂载点，
-> 与仓内的 `apps/<key>-app/` 目录无关，别混。
+`/apps/<key>/` 与 `/svc/<key>/` 是线上 URL；本文的 `references/` 和 `scripts/` 相对于本 skill 目录。
 
 ## 按任务读参考
 
@@ -24,6 +17,7 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 | 实现/评审资源服务器（四道闸、health、env、认证面划界、配置面） | [references/integration-contract.md](references/integration-contract.md) |
 | 实现 `/health`、出仓迁移、发布镜像或健康检查失败（必读） | [references/health-contract.md](references/health-contract.md)：两种正确实现、实际判据、发布前检查命令 |
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
+| 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
 
@@ -83,14 +77,11 @@ description: '接入「外部镜像服务类应用」——服务端代码不在
 - **生产（标准路径）**：清单事实源在**对方仓的 `app.manifest.json`**，经
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
   （无行先建 draft 占位），对方 `publish --manifest … --dist … --image …` ⇒ 首次必进
-  「发布审核」队列 ⇒ 批准 = `registerFromManifest` 一次建全（listing 上架 + SA + /svc +
-  已装租户对齐），SA secret 明文一次性回显给审批人。**不要**再把外部 App 登记进
-  `LISTING_DEFS` —— 那会成为把对方清单静默改回去的第二事实源（verify-split「清单零残留」
-  棘轮看守）。门户保留的平台侧事实只有：部署行、Caddyfile 内联行、`EXCHANGE_WIRING`，
-  以及作为**种子**的 `SA_DEFS` 与内置 scope 常量 / `USAGE_METRICS` ——「审批而非发版」后，
-  特权服务态 scope 经对方 manifest 的 `privilegedServiceScopes` 申请、审批即授予（SA_DEFS
-  不再是唯一授予点，union top-up 也不会回滚审批授予）；用量指标经 manifest `usageMetrics`
-  声明（治理档）；控制台应用配置的 scope 校验运行时按 listing 声明放行（不卡编译期枚举）。
+  「发布审核」队列 ⇒ 批准后更新清单、服务账号与已装租户，后端和网关分别交付。
+  密钥一次性回显给审批人；平台运行配置由管理员维护，App 团队无需修改门户代码。
+  特权服务态 scope 经 manifest 的 `privilegedServiceScopes` 申请、逐项审批后授予；
+  用量指标经 manifest `usageMetrics` 声明（治理档）。批准不等于部署与网关已经生效，
+  交付判据见 [公开入口](references/public-entrypoints.md)。
 - **后续版本**：对方 CI 自助（`xgent-app-release` skill）——无治理变更自动通过，
   治理变更进「发布审核」等平台批准。
 - **scope 三规则**：平台基础 scope ∪ 自己命名空间（含连字符→下划线变体）∪ 已声明 `exchangeTargets` 的目标命名空间；越界 `VALIDATION_FAILED`。
@@ -299,7 +290,7 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
   App，门户在 TDT 签发时收口，App 侧零代码）/ `seatRoles`（App 自管账号或资源，门户只发数、
   App 自己在建号路径上收口）。
 - **role 由对方在 `app.manifest.json` 里声明**（不需要门户改代码）；**各套餐的数值进不了
-  manifest，也进不了 `LISTING_DEFS`**，只有平台管理员在控制台能写 —— 应用侧一条写路径都没有。
+  manifest**，只有平台管理员在控制台能写 —— 应用侧一条写路径都没有。
   这是有意的：数值是商务面，改它等于改可售卖档位。
 - 对接面只有一个：`POST /api/v1/seats/quota`（服务态令牌 + `seats.read`）。**`available === null`
   ⇒ 该租户 unlimited，放行、不要收口** —— 把 null 当 0 是这个契约最容易踩的一处。
