@@ -33,3 +33,7 @@ skills/swarm/evals/evals.json
 # 由 vendor 脚本抓到本地,发版时传 R2,装机端按 VERSION.json 的 url 取。
 /vendor/impeccable/engine/
 /local
+/.codex/app-server-control
+/.codex/app-server-daemon
+/.codex/packages/app-server-daemon
+/.codex/tui-thread-reference-capabilities
