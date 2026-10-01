@@ -87,7 +87,7 @@ interface AclAction {
 ## CSP 与发布确认的版本边界
 
 新增扩展能力尚未因本文更新而上线；strict 默认关闭，需平台盘点来源并受控启用 v2。六类来源
-使用 HTTPS origin（connectSrc 另允许 WSS），禁止通配、路径、凭据和 unsafe-inline/unsafe-eval；
+使用 HTTPS origin（connectSrc 另允许 WSS 及原样 `blob:`/`data:`），禁止通配、路径、凭据和 unsafe-inline/unsafe-eval；
 platformSources 仅 scriptSrc/styleSrc/fontSrc/connectSrc 可声明 ["jsCdn"]，跟随平台 CDN。
 省略整个 embedCsp 沿用，null 清空，对象是完整替换；来源增删均治理，排序去重不算变更。
 

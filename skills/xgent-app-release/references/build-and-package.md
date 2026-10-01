@@ -36,7 +36,9 @@ tar czf dist.tgz -C dist .     # ✅ 根下就是 index.html、assets/…
 tar czf dist.tgz dist          # ❌ 全套在 dist/ 一层下面，拒收
 ```
 
-`release-cli` 传目录时已经用第一种形状打好了，只有自己 `curl` 时才需要手打。
+`release-cli` 传目录时会用第一种形状生成临时包，并在命令结束后删除。
+发布流程应按 [前端归档与同步验收](frontend-archive.md) 留存原始 tgz，再用 `--dist <包路径>`
+上传这份文件；重新打包目录不保证 SHA-256 相同，不能替代实际上传包的留存。
 
 其它约束：**≤64MB**（超了先查 source map 与未压缩素材）；空文件会被当成「构建没产出」拒掉，
 而不是当成「只发版本号」——这是有意的，否则一条坏流水线会报成功。

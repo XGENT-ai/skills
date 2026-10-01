@@ -14,6 +14,7 @@ export const EMBED_CSP_PLATFORM_FIELDS = Object.freeze([
   "connectSrc"
 ]);
 const unsafe = /[\s\u0000-\u001f\u007f-\u009f\\'"`{};*]/u;
+const CONNECT_SCHEME_SOURCES = ["blob:", "data:"];
 function fail(field, reason) {
   throw new Error(`${field}: ${reason}`);
 }
@@ -74,8 +75,12 @@ export function normalizeEmbedCsp(value, options = {}) {
     if (!Array.isArray(sources))
       fail(`embedCsp.${field}`, "expected an array");
     const normalized = [];
-    for (const source of sources)
-      normalized.push(origin(source, `embedCsp.${field}`, options, field === "connectSrc"));
+    for (const source of sources) {
+      if (field === "connectSrc" && typeof source === "string" && CONNECT_SCHEME_SOURCES.includes(source.replace(/^ +| +$/g, "")))
+        normalized.push(source.replace(/^ +| +$/g, ""));
+      else
+        normalized.push(origin(source, `embedCsp.${field}`, options, field === "connectSrc"));
+    }
     if (normalized.length)
       result[field] = [...new Set(normalized)].sort();
   }

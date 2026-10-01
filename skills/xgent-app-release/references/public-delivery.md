@@ -44,7 +44,9 @@ publicEntrypoints 只声明站点可绑定的后端前缀，不增加门户根�
 
 来源是精确 origin（协议、主机、可选端口），生产只接受 HTTPS；仅 connectSrc 另接受 WSS。
 允许末尾 `/`，不允许路径、query、fragment、凭据、通配符、控制字符、嵌入空白或未知字段。
-不能申报 unsafe-inline、unsafe-eval、self、nonce、hash、data:、blob: 等 CSP 关键字/特殊源。
+唯一例外：connectSrc 可原样申报 `blob:`、`data:`（前端 `fetch()` 本地 blob/data URL 时需要），
+其余字段不接受，`blob:https://…`、`data:,x` 等带内容的写法也不接受。
+不能申报 unsafe-inline、unsafe-eval、self、nonce、hash 等 CSP 关键字，也不能申报其他 scheme 源。
 App 不能修改 frame-ancestors、base-uri、object-src；平台既有兼容基线不是可自行申请的权限。
 开发环回 HTTP/WS 仅在服务端显式开发模式允许，本发布预检按生产规则拒绝。
 

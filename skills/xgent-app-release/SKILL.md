@@ -122,6 +122,9 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
 - 目录**只是一份只读投影**：它不下发、不部署、不编排任何东西，也不参与任何门户的治理判定。
   它唯一的消费者是**开发环境** —— 别人起一盒时 `onebox.sh add <key>` 从这里拉你的清单，
   不再依赖「那版一盒镜像里预置了哪几份样例」。
+- **投递 manifest 不会上传前端包。** 跨平台同步读取主平台已生效的 listing 与原始归档
+  （`/api/federation/apps/:key` 与 `/dist`）。投目录成功、发布 applied、页面能打开，
+  都不能单独证明可同步。带前端的应用按 [前端归档与同步验收](references/frontend-archive.md) 留存、上传并核验。
 - 目录里那份是**净化过的**：`serviceAccount` 只留 `clientId`，`exchangeInitiatorSecret` 与
   `deployDescriptor` 的 `env` / `envFile` / `hostPort` 一律剔除（密钥与单部署事实不跨部署共享）。
 - **目标门户那边卡在待审不影响投目录**：`PROPOSAL_PENDING` 是目标门户的队列状态，
@@ -141,6 +144,29 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
 `.xgent-registry.env` 放到仓根（`chmod 600`，加进 `.gitignore`）再继续。开发者应用里还没有这个
 应用 ⇒ 先「申请建立应用」，平台管理员批准后才能生成；打开开发者应用提示没有开发者权限 ⇒ 请租户
 管理员在「用户管理」里发「开发者」角色。
+
+### 套件（bundle）：一枚令牌发一组应用
+
+一组 App 由同一支团队交付、**后端跑在同一个镜像里**时，门户里把它编成「套件」：
+开发者应用 › 我的套件 › 新建，把成员应用加进去（成员必须是 descriptor 型出仓 App、
+没有独立部署在跑、镜像与其它成员一致）。
+
+- **令牌**：套件详情 › 凭证 签的 `xrel_` 对**任一成员**都有效 —— 单发照旧走
+  `POST /api/market/release/<成员key>`（CLI 零改动）；凭证页会列明这枚令牌能发哪几个应用，
+  别把套件令牌当单应用令牌随手分发。成员被移出套件 ⇒ 令牌对它即刻 404；维护者离场 ⇒
+  套件令牌连同吊销。
+- **批次**：`POST /api/market/release/bundle/<bundleKey>`（bundle 令牌），一次给全体成员
+  各建一条提案，共享同一批号与同一镜像/版本。JSON 体：`version` / `image` 共享，
+  每成员可选 `dist__<key>`（文件）与 `manifest__<key>`。任一成员的确定性校验不过 ⇒
+  整批不落库；成员镜像已漂移而批次没带镜像 ⇒ `BUNDLE_IMAGE_DIVERGED`（带上镜像即可收敛）。
+  状态轮询：`GET /api/market/release/bundle/<bundleKey>/status`（每成员一条）。
+- **共享后端的 manifest**：成员各自的 `deployDescriptor.image` 的**仓库段可以等于 bundleKey**
+  （治理闸对套件镜像放行）；端口/环境变量以最早加入的成员为准。成员的对外地址不变：
+  各自 `/svc/<成员key>`，容器只是同一个（`<bundleKey>-server`）。共享 ⇒ 故障域合一：
+  容器挂了，全部成员一起不可用，各自的告警各自到。
+- **加不进去的两种真原因**：报 `BUNDLE_BUILTIN_MEMBER` ⇒ 那是仓内内置 App，先出仓再进套件；
+  报 `BUNDLE_MEMBER_ALREADY_DEPLOYED` ⇒ 它已有独立容器在跑，先让平台管理员在
+  「服务部署」里停止，再加入。
 
 **不许 vendor。** 装不上时不要把 `@xgent/*` 的产物或源码拷进仓（`vendor/` 目录、`file:` / `link:`
 依赖、向人要 tar 包、手抄一份 SDK），也不要自己重写 SDK 已有的能力。私有仓上没有你要的版本
@@ -204,20 +230,25 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    平铺与 Envelope 都支持：非 2xx 不通过；2xx 顶层有 `ok` 时必须 `ok === true && data.db === true`；
    没有顶层 `ok` 时按 2xx 判健康。检查脚本与平台同源，不另加包装或字段命名限制。
 4. **发布。**
+   带前端的应用先按 [前端归档与同步验收](references/frontend-archive.md) 生成并持久留存
+   `DIST_ARCHIVE`（根下直接是 index.html 的 `.tgz`）与 SHA-256；下面上传的必须就是这份文件。
+   只发后端/治理变更可省略 dist，但不能据此声称前端归档已补齐；服务型应用不要求前端包。
    ```bash
-   npx @xgent/release-cli publish --version $VER --dist dist/ \
+   bunx @xgent/release-cli publish --version "$VER" --dist "$DIST_ARCHIVE" \
      --manifest deploy/portal/app.manifest.json
    # 获批后等待本次后端与网关：加 --wait；换镜像另加 --image <key>:$VER
    ```
    **每次都带 `--manifest`**：内容没变的重复提交是自动档（不会多一次人工审），而
    ①它是清单目录唯一的输入 —— 不带就等于目录永远是空的；②`requiredEnv` 这类
    「不落 listing」的声明只有随清单提交才能刷新基线。
-   → 验收：打印 `✓ <key> 已发布 <version>` + 产物 digest。坏包在 staging 校验失败时不会替换线上产物；应用后的部署或网关失败须按阶段检查，不能概括为“什么都没发生”。
+   → 验收：本次产物 digest 与留存包的 SHA-256 一致，并记录 proposalId。坏包在 staging 校验失败时不会替换线上产物；应用后的部署或网关失败须按阶段检查，不能概括为“什么都没发生”。
    有治理变更时打印的是「提案已提交」+ 提案号，**同样退出 0 并立即返回** —— 平台管理员
    在那一刻就收到了通知，流水线没有理由挂在那里等人（见下面「等审批」）。
 5. **线上看一眼。** `npx @xgent/release-cli status` 确认版本与 digest 就是本次这一份；
    然后浏览器打开门户 → 应用中心 → 你的 App，走通主路径。**`status` 报 404 不等于发布失败**
    （见下），第 4 步的返回体已经给了版本与 digest，浏览器那一眼照走不误。
+   交付包含跨平台同步时，还须核验主平台条目和 `/dist` 的真实字节；没有读取权限时明示
+   「前端已发布，主平台归档/可同步性未验证」，不能把发布或投目录成功当作同步验收通过。
 
 `@xgent/release-cli` 不在公共 npm 上，**它就在第 0 步那个私有包仓里**。取不到包时先分诊，
 别急着换工具：`npm config get @xgent:registry` 是 `undefined` ⇒ 回第 0 步配 `.npmrc`，一条命令就好。
@@ -236,8 +267,8 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
   version 归你所有（清单事实源在你仓里）；`--version` 可省略，省略时取 manifest.version。
 - **发布是替换，不是合并。** 上一版的文件不会留着。所以「只补传一个改了的文件」这种操作不存在，
   每次都传完整 dist。
-- **tar 根必须直接是 `index.html`。** `release-cli` 传目录时已经用 `tar czf … -C dist .` 打好；
-  只有自己 `curl` 时才需要自己打，`tar czf x.tgz dist` 那种套一层 `dist/` 的包会被拒收。
+- **tar 根必须直接是 `index.html`。** CLI 传目录会生成临时包并在命令收尾删除；本流程先留存
+  完整 `.tgz` 再用 `--dist` 上传该文件，保证留存的是实际上传的字节。套一层 `dist/` 的包会被拒收。
 - **上限 64MB**，且门户只按顶层条目数报数。真超了先查有没有把 source map / 未压缩素材打进去。
 - **本机配了代理就用 `@xgent/release-cli` ≥0.6.0。** Node 内置的 `fetch` **不读** `HTTPS_PROXY`
   —— curl / git / npm / docker 全都读，唯独发版这一步不读，于是它绕开本机代理直连门户：跨境
@@ -471,5 +502,6 @@ App 声明过的某个 `requiredEnv` 键在部署环境里还没有值，这次�
 | 令牌语义、端点原始形状、字段白名单、返回体、`curl` 兜底、CI 范式 | [references/publish-api.md](references/publish-api.md) |
 | 症状 → 原因速查（发布报错 / 线上白屏 / 发了没换版） | [references/troubleshooting.md](references/troubleshooting.md) |
 
-报告结果时如实说清：发了哪个 key、哪个版本、digest 是多少、有没有在浏览器里实际打开过。
+报告结果时如实说清：发了哪个 key、哪个版本、proposalId、digest、原始包持久留存位置、
+有没有在浏览器里实际打开过；涉及同步时另报主平台归档是否已验证。
 「命令返回 ✓」只证明产物落库了，不证明页面能用——第 5 步没做就说没做。

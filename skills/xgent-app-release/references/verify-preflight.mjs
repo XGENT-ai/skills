@@ -10,6 +10,8 @@ export const cases = [
   ["omitted", undefined, true], ["clear", null, true], ["empty", {}, true],
   ["all directives", Object.fromEntries(["connectSrc","scriptSrc","styleSrc","fontSrc","imgSrc","mediaSrc"].map(k=>[k,["https://cdn.example.com"]])), true],
   ["websocket connect", {connectSrc:["wss://events.example.com"]}, true],
+  ["local schemes connect", {connectSrc:["blob:","data:"]}, true],
+  ["local scheme with payload", {connectSrc:["data:,x"]}, false],
   ["alias", {platformSources:{scriptSrc:["jsCdn"],styleSrc:["jsCdn"],fontSrc:["jsCdn"],connectSrc:["jsCdn"]}}, true],
   ["origin normalization", {imgSrc:[" https://EXAMPLE.com:443/ ","https://example.com"]}, true],
   ["empty arrays", {scriptSrc:[],platformSources:{scriptSrc:[]}}, true],
@@ -41,7 +43,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       assert.ok(!result.stdout.includes("private@localhost"),"不回显非法来源中的凭据");
       passed++;
     }
-    assert.deepEqual(normalizeEmbedCsp(cases[6][1]),{imgSrc:["https://example.com"]});passed++;
+    assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="origin normalization")[1]),{imgSrc:["https://example.com"]});passed++;
     assert.throws(()=>normalizeEmbedCsp(Object.defineProperty({},"scriptSrc",{get(){throw new Error("must-not-run");}})),/accessors/);passed++;
     console.log(`exported preflight: ${passed}/0`);
   } finally { rmSync(root,{recursive:true,force:true}); }

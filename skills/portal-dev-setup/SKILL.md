@@ -218,8 +218,20 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
 你的 App 要用前四个的数据，就在 manifest 里声明 `exchangeTargets` 走令牌交换；
 组织架构另有一条**服务态**只读面（`org.read`，不走用户态交换、也不需要 consent）：
 `/svc/org/api/v1/query/superiors`（批量查直属上级，上限 200）与 `/svc/org/api/v1/query/capabilities`
-（`{ superior: boolean }` —— 本租户有没有汇报数据）。⚠️ 一盒装上的是**空组织**，要数据先在
-App 里走「员工 → 导入」（CSV），否则上级一律回 `null` / `reason: "no-employee"`。
+（`{ superior: boolean }` —— 本租户有没有汇报数据）；`/svc/org/api/v1/query/users/{userId}/assignments`
+按**门户 userId** 查当前生效任职的平面集合（`{userId, employeeId, reason, items, total, page, pageSize}`，
+`items[] = {assignmentId, departmentId, departmentName, departmentArchived, isPrimary, startDate}`，
+缺省一次拿全；`reason` ∈ `ok`/`no-employee`/`employee-left`/`no-open-assignment`，空集合是 200 不是 404）。
+它**不给树语义**：要「本部门及下级」就用 `/svc/org/api/v1/query/departments?includeArchived=true` 分页取完、
+按 `parentId` 自己建树（**必须传 `includeArchived=true`**，否则归档的那一代会在链上留洞）。
+注意既有 `/query/employees/{employeeId}/assignments` 入参是 org 员工 id、容器键是 `assignments`、返回全部历史，
+两个任职端点的键名与排序都不同，别混拼。
+⚠️ **只有 HTTP 200 ∧ `ok:true` 是成功**：401/403/429/5xx/超时，以及门户回滚后的 **404 必须当查询失败**，
+不能缓存成「无任职」。**持续 403 `INSUFFICIENT_SCOPE` 先查 manifest**：铸服务令牌看响应 `scope` 有没有 `org.read`，
+没有就在 `serviceScopes` 加它（且 `org` 在 `dependencies` 或 `exchangeTargets` 里）走发布提案。
+限频 600 次/分钟，按 (令牌 `aud`, 租户) 计数、org 全部端点共享：服务态令牌 `aud` 是你的 SA clientId（独占一个桶），用户态令牌 `aud` 恒为 `org`（同租户所有 App 共用一个桶）；结果建议 ≤60s 进程内缓存、不得落表。
+⚠️ 一盒装上的是**空组织**，要数据先在 App 里走「员工 → 导入」（CSV），否则上级一律回 `null` /
+`reason: "no-employee"`，任职一律回空集合。
 
 日志与监控不用声明——种子把它登记成平台基础服务应用，你的 App 的服务账号
 **默认就持有 `observability.ingest`**，拿服务态令牌直接写 `/svc/observability/v1/ingest/<stream>`（落 `app_<你的key>_<stream>`）。
@@ -593,3 +605,6 @@ Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，�
 - 不装 ffmpeg：`PREVIEW_MEDIA_CONVERTER_URL` 必须留空，视频海报/网格缩略图退化成图标。
 - 文件管理界面**不渲染预览**（镜像构建时关掉了前端的格式渲染器），打开任何文件都是下载卡；
   服务端的预览描述符 API 不变，你的 App 自带 `@xgent/file-preview` 时照常渲染。
+- **套件（bundle）的共享后端去重在一盒里不发生**：一盒不跑部署控制器（上面那条），
+  套件成员各自仍是「视作 ready」；两个成员共用一个容器这件事要验，去预发或一台 VM 栈，
+  别拿一盒当证据。套件的建/删/成员管理与发版（单发与批次）在一盒里照常可用。

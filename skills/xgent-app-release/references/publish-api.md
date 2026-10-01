@@ -54,6 +54,10 @@ npx @xgent/release-cli status      # 地址与令牌都不用写在命令里
 | 第一站（真发版） | `POST <TARGET_XGENT_PLATFORM>/api/market/release/<key>` | **必成**：失败 ⇒ 整体非零退出，且**不投目录** |
 | 第二站（投目录） | `PUT <MANIFEST_STORE>/api/market/catalog/<key>` | **best-effort**：连不上 / 非 2xx / `ok:false` 都只 warn，退出码不变 |
 
+第二站仅发送 manifest，**没有 dist 文件**。跨平台同步使用主平台已生效 listing 与原始包，
+不是 catalog。主平台归档留存、目标门户与主平台不同时的交付边界，以及同步验收见
+[前端归档与同步验收](frontend-archive.md)。不要把投目录成功报告成「前端包已归档/可同步」。
+
 两个地址相同时**照常两次调用** —— 它们是不同端点，不会互撞。
 没带 `--manifest` 就不投（没有清单可投），CLI 会提示一句 —— 所以**标准发布命令要带上它**。
 
@@ -105,7 +109,7 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
   -H "authorization: Bearer $XGENT_RELEASE_TOKEN" \
   -F version=1.4.2 \
   -F image=<key>:1.4.2 \          # 可选；没有后端的纯前端 App 省掉
-  -F dist=@dist.tgz \             # 只 bump 版本/换镜像时可省掉
+  -F dist=@dist.tgz \             # 使用持久留存的原始包；只换后端可省，但不代表前端归档已补齐
   -F manifest=@deploy/portal/app.manifest.json   # 可选；清单变更/首次接入时带上
 ```
 
@@ -273,9 +277,14 @@ steps:
   - run: npx @xgent/release-cli whoami                  # ① 先验令牌，别等构建完才发现过期
   - run: <你自己的依赖安装与构建>                        # ② base=/apps/<key>/
   - run: node "$SKILL_DIR/scripts/preflight.mjs" --dist dist --version $VER
-  - run: npx @xgent/release-cli publish --version $VER --dist dist/ --image <key>:$VER --wait
+  # 按 frontend-archive.md 生成 DIST_ARCHIVE、校验文件；使用 CI 的跨步骤变量机制传递包路径。
+  - run: bunx @xgent/release-cli publish --version "$VER" --dist "$DIST_ARCHIVE" --image <key>:$VER --wait
           --manifest deploy/portal/app.manifest.json   # ← 不带它目录永远是空的
+  # 无论发布成功、待审或失败，都将原始包、校验文件及发布记录存到项目的持久制品存储。
 ```
+
+涉及跨平台同步的交付还需按 [前端归档与同步验收](frontend-archive.md) 检查主平台条目与下载摘要；
+`--wait` 等部署/网关，不核验当前归档可下载。
 
 `--wait` 是让这条流水线**诚实**的那一步：没有它，换版失败时任务照样绿。
 它**不会**把流水线卡在人工审批上——改了权限面的那次发版会打印提案号后退出 0，平台管理员
