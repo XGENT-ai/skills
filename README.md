@@ -67,6 +67,7 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | Skill | 说明 |
 | --- | --- |
 | [dev-plan](skills/dev-plan/SKILL.md) | 以资深产品经理 + 资深架构师的双重视角,基于当前代码库的真实现状撰写高质量开发计划 |
+| [review-prd](skills/review-prd/SKILL.md) | 核实代码现状，评审产品价值、体验、AI、SMAR、UAT 与分期终验，默认将完整报告落盘并回读核验 |
 | [xgent-init](skills/xgent-init/SKILL.md) | 在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
 
 ## 目录结构

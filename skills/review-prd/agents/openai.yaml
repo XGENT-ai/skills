@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD 评审"
+  short_description: "核实代码现状，审查产品价值、AI、UI、UAT、SMAR 与分期，产出有证据的评审报告"
+  default_prompt: "使用 $review-prd 评审指定 PRD，核实代码现状及关键依赖，将有证据的问题、产品改进建议和结论写入完整评审报告，默认落盘并回读核验，回复报告链接与摘要。"
