@@ -29,7 +29,7 @@
 | 角色 | 载体 | 模型/effort | 权限 | 可写范围 | 职责 |
 |------|------|-----------|------|---------|------|
 | **lead（产品负责人）** | 当前会话 | — | — | 定稿合入 | 唯一与用户对话的人；汇聚澄清问题并批量提问；裁决分歧；合成评审结论 |
-| **product-designer（产品设计师）** | `general-purpose`，或自定义 `.claude/agents/product-designer.md` | `opus`/`sonnet` + `high` | `acceptEdits` | `docs/prd/<feature>.md`（**PRD 唯一写手**） | 按 PRD 骨架产出：概述/目标/非目标 + 逐条 FR/NFR + 可断言验收标准 + TC 种子；分期建议放末尾 |
+| **product-designer（产品设计师）** | `general-purpose`，或自定义 `.claude/agents/product-designer.md` | `opus`/`sonnet` + `high` | `acceptEdits` | `docs/prd/<feature>.md`（**PRD 唯一写手**） | 按 PRD 骨架产出：概述/目标/非目标 + 逐条 FR/NFR + 可断言验收标准 + UAT 场景预期状态；六维推演与 SMAR 检查，分期建议放末尾，不创建 TC |
 | **clarifier（需求澄清官）** | `Explore`（只读） | `sonnet` | 只读 | 不写文件，交问题清单 | 找歧义、缺口、隐含假设；构造 2–4 个高信息量业务场景压测语义与边界；问题分级并给建议默认值 |
 | **stakeholder-proxy（干系人代理）** | `Explore` | `sonnet` | 只读 | 交立场报告 | 分别代入最终用户 / 运营 / 客服 / 合规 / 数据等视角，指出这份需求会让哪个角色受伤、哪句话会被误解 |
 | **feasibility-reviewer（技术可行性评审）** | `Explore` | `sonnet`/`opus` | 只读 | 交可行性报告 | 对着**代码库事实**核对：现有数据模型/接口/权限能否承接、影响面、隐藏成本；结论分「可直接做 / 需先改 X / 做不到」 |
@@ -86,7 +86,7 @@
 |-------|------|------------------|
 | `prd` | product-designer | PRD 骨架、FR/NFR 编号与验收标准写法、SPMS 写入口径 |
 | `story-points` | estimator | 四轴因子表、复现性要求（同输入同输出）、写回 `plannedPoints` 前需 lead 同意 |
-| `test-plan` | acceptance-reviewer | 「标准 → 用例」映射；不得覆盖或改写 PRD 种下的 TC 种子 |
+| `test-plan` | acceptance-reviewer | 将验收条件与 UAT 状态展开为测试方法及「标准 → 用例」映射；不得覆盖或改写既有用例（含历史 PRD 种子） |
 | `dev-plan` | 定稿后由 lead 触发 | 需求定稿是 dev-plan 的前置输入 |
 
 ---

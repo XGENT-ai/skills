@@ -12,12 +12,12 @@
 | §1.2 目标 | `projects.goal`（目标） | 同上;**Web 端是列表编辑器,一行一条** |
 | §1.3 非目标 | `projects.nonGoals`（非目标） | 同上;**一行一条**(去向写在同一行) |
 | §4 约束与前提 | `projects.constraints`（约束与前提） | 同上 |
-| §5.2 非阻塞开放问题 | `projects.openQuestions`（开放问题） | 同上;**一行一条**,格式 `Q1 [非阻塞] 问题;默认及理由;负责人;截止时间`;无则传 `null`;阻塞问题未解时不定稿/不回写项目 |
+| §5.2 非阻塞开放问题 | `projects.openQuestions`（开放问题） | 同上;**一行一条**,格式 `Q1 [非阻塞] 问题;默认及理由;负责人;解决节点`;已有外部日期则保留;无则传 `null`;阻塞问题未解时不定稿/不回写项目 |
 | §3 FR 条目 | `requirements`（`FR-N`) | `requirement_create` |
 | §3 NFR 条目 | `requirements`（`NFR-N`,带 `category`) | `requirement_create` |
 | 条目正文 | `requirements.description`（UI 标签「PRD 描述」) | 完整 markdown |
 | 验收标准 | `requirements.acceptanceCriteria`（UI 标签「验收标准」) | **纯文本,一行一条** |
-| TC 种子 | `test_cases`（`TC-N`) | `testcase_create(requirementKey=...)` |
+| §6.3 UAT 场景预期状态 | **无独立字段** | 文档保留全局状态表,相关场景与判据写入对应需求 `description`;PRD 不创建 TC,由 test-plan 后续展开 |
 | §7 分期交付建议 | **无独立字段** | 分期本身只留在 PRD 文档;**跨期需求的终验声明**要落进该需求的 `description` 开头 + `acceptanceCriteria` 逐行 `[P#]` 前缀(见 §5),版本(release)人工挂**终验期**那一版 |
 | §8 SPMS 落库结果 | — | 记录本次真实写入的 key 与待人工补字段;有阻塞问题时改写「未写入」 |
 | 开发计划(下游) | `plans`（`PLAN-N`)+ `plan_requirements` | dev-plan 阶段 `plan_create(requirementKeys)` / `plan_update({content})`。**PRD : 计划多对多**——可拆可合,关联键是 FR/NFR key;⚠️ **只能挂同项目的需求**,跨项目 key 报 `LIFECYCLE_MISMATCH`(平台契约) |
@@ -49,7 +49,7 @@
 | --- | --- | --- |
 | `importance` 重要度 | `critical\|high\|medium\|low\|none` | 与 `priority`(紧急度)**正交**,两个都该给 |
 | `ownerId` 负责人 | `project_get` 成员名册的 `memberId`;`null` 清除 | 只收本租户未撤销成员,否则 `VALIDATION_FAILED`。与「执行人」(由关联 Issue 派生)不是一回事 |
-| `dueDate` 截止日期 | ISO 8601(如 `2026-07-15`);`null` 或空串清除 | 格式不对是 `VALIDATION_FAILED`。需求池按日期范围筛选用 |
+| `dueDate` 截止日期 | ISO 8601(如 `2026-07-15`);`null` 或空串清除 | 格式不对是 `VALIDATION_FAILED`。仅按用户/外部日期约束填写,不为 SMART 的 T 自动造日期;更新时保留未要求改变的原值 |
 
 **仍然写不到的字段**——交付时单列一张「待人工补」清单:
 
@@ -77,7 +77,7 @@
 
 ```
 ✅ 管理员在「应用市场」点击安装后，应用 3 秒内出现在左侧导航
-✅ 非管理员访问该入口返回 403，且导航不显示该项
+✅ 无安装权限的成员不能安装应用，且导航不显示安装入口
 ✅ 已安装应用重复安装时提示「已安装」，不产生第二条记录
 
 ❌ - 管理员可以安装应用        → 行首 "-" 会原样显示成「• - 管理员…」
@@ -94,11 +94,13 @@
 
 ```
 ✅ [P1] 管理员在「应用市场」点击安装后，应用 3 秒内出现在左侧导航
-✅ [P2] 非管理员访问该入口返回 403，且导航不显示该项
+✅ [P2] 管理员安装应用后可配置成员入口，未授权成员不能进入该应用
 ```
 
 方括号**不在**剥离表(`- * • 1. 1)`)里,展示端本来也不剥 —— 所以这是**唯一不破坏「纯文本一行一条」契约**的标法。
 **单期需求不要加**,加了就是噪声。配套的两处见 §5.1。
+
+验收行描述场景预期状态与清晰判据,不写测试方法。上面示例只示范格式;权限边界等上线必要条件应随所在期用户价值一起满足,不能为了跨期示例而推迟必要权限保护。
 
 ### 5.1 跨期需求的终验声明(防「阶段交付被误记为整条完成」)
 
@@ -129,9 +131,9 @@ requirement_get('FR-18')                    → 读某条全量（含验收标�
 --- 用户确认后 ---
 requirement_create({projectId, title, type, category?, priority, status:'draft',
                     description, acceptanceCriteria})   → 返回体里拿真实 key
-testcase_create({projectId, title, requirementKey:'FR-37', preconditions?, steps, expected,
-                 priority?, status:'draft'})            → TC-N，result 默认 untested
 ```
+
+PRD 到需求写入为止;UAT 场景与验收标准交给 test-plan,由它查重并创建 TC,本阶段不调用 `testcase_create`。
 
 ## 7. 错误码与闸(照实报,别绕道)
 
