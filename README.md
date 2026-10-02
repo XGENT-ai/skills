@@ -64,14 +64,76 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 ## Skills 列表
 
+以下列出 `skills/` 目录中的全部 39 个 skill，按用途分组。点击名称查看使用条件与完整流程。
+
+### 需求、计划与评审
+
 | Skill | 说明 |
 | --- | --- |
-| [dev-plan](skills/dev-plan/SKILL.md) | 以资深产品经理 + 资深架构师的双重视角,基于当前代码库的真实现状撰写高质量开发计划 |
+| [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
+| [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行、可跨对话续做的开发计划 |
+| [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
+| [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
 | [review-prd](skills/review-prd/SKILL.md) | 核实代码现状，评审产品价值、体验、AI、SMAR、UAT 与分期终验，默认将完整报告落盘并回读核验 |
+| [review-dev-plan](skills/review-dev-plan/SKILL.md) | 评审开发计划的代码事实、技术方案、需求映射、依赖编排与交付可用性，输出评审报告 |
+| [review-code](skills/review-code/SKILL.md) | 评审未提交变更、commit 或分支差异，可对照开发计划，输出有证据的代码评审报告 |
 | [review-prd-dev-gaps](skills/review-prd-dev-gaps/SKILL.md) | 核对 PRD 与开发交付，将遗漏、合理变更和待拍板差异分流，交互 Triage 后按需调用 dev-plan 生成 gaps plan |
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 根据 PRD 或开发计划评审报告修订原文，复核关联内容并记录逐条处置结果 |
+
+### 开发、调试与质量
+
+| Skill | 说明 |
+| --- | --- |
+| [architect](skills/architect/SKILL.md) | 实现前先设计类型、签名与模块结构，并在开发过程中持续校准 |
+| [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
+| [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |
+| [rust](skills/rust/SKILL.md) | 编写和评审 Rust 代码，处理所有权、错误、性能、测试及 Tokio 异步模式 |
+| [sql-optimization](skills/sql-optimization/SKILL.md) | 分析 SQL 执行计划，优化查询、索引、分页与批量操作 |
+| [security-audit](skills/security-audit/SKILL.md) | 沿数据流与组件交互审查注入、认证授权、密钥泄露、依赖及业务逻辑漏洞 |
+| [gdpr-compliant](skills/gdpr-compliant/SKILL.md) | 将 GDPR 隐私工程要求应用到个人数据处理、权限、日志、保留与删除流程 |
+| [working-with-mbx](skills/working-with-mbx/SKILL.md) | 安装和排查 Cargo 共享编译缓存 mbx，核对命中、绕过与磁盘使用情况 |
+| [working-with-mise](skills/working-with-mise/SKILL.md) | 配置和排查 mise 管理的工具、配置文件、PATH 与激活问题 |
+
+### Agent 协作与实验
+
+| Skill | 说明 |
+| --- | --- |
+| [arena](skills/arena/SKILL.md) | 并行生成多个候选方案，选择基础版本并吸收其他候选的优点 |
+| [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
+| [autoresearch](skills/autoresearch/SKILL.md) | 围绕明确指标与范围约束，循环修改、测试和测量，保留有效改进 |
+
+### 文档、表达与图示
+
+| Skill | 说明 |
+| --- | --- |
+| [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
+| [archify](skills/archify/SKILL.md) | 将架构、流程、时序、数据流与状态关系制作成交互式 HTML 图，支持 Mermaid 输入和多格式导出 |
+| [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
+| [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |
+| [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |
+| [meeting-minutes](skills/meeting-minutes/SKILL.md) | 整理会议议题、决定、负责人、截止日期与后续行动，生成会议纪要 |
+| [pardon](skills/pardon/SKILL.md) | 补充必要上下文，用当前会话语言把上一条回答重新讲清楚 |
+
+### 设计与转化
+
+| Skill | 说明 |
+| --- | --- |
+| [kpi-dashboard-design](skills/kpi-dashboard-design/SKILL.md) | 设计 KPI 仪表盘的指标选择、信息层级与数据可视化 |
+| [landing-page-conversion-audit](skills/landing-page-conversion-audit/SKILL.md) | 审查落地页、销售页或结账流程的转化障碍，按预期收入影响排序修复建议 |
+
+### XGENT Portal 接入与发布
+
+| Skill | 说明 |
+| --- | --- |
 | [xgent-init](skills/xgent-init/SKILL.md) | 在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
+| [portal-dev-setup](skills/portal-dev-setup/SKILL.md) | 在 App 仓库中启动、体检和排查 Docker 一盒门户，完成本地联调 |
+| [portal-external-app](skills/portal-external-app/SKILL.md) | 接入以 Docker 镜像交付的外部服务，核对 manifest、注册、路由、权限与交付契约 |
+| [portal-micro-app](skills/portal-micro-app/SKILL.md) | 开发嵌入门户的微应用前端，处理 SDK 握手、导航、授权与 iframe 交互 |
+| [portal-app-exchange](skills/portal-app-exchange/SKILL.md) | 配置和排查跨应用 OAuth Token Exchange、交换白名单、授权与 scope |
+| [portal-logging](skills/portal-logging/SKILL.md) | 将应用日志与遥测接入门户，配置采集器、写入身份、日志流和字段口径 |
+| [xgent-image-push](skills/xgent-image-push/SKILL.md) | 构建并推送 App 镜像到私有 Harbor，预检链路、镜像架构、tag 与保留策略 |
+| [xgent-app-release](skills/xgent-app-release/SKILL.md) | 使用发布令牌提交前端产物、镜像和 manifest 变更，处理发布提案与发布故障 |
 
 ## 目录结构
 

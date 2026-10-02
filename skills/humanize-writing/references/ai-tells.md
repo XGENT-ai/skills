@@ -1,14 +1,14 @@
 # AI Writing Tells
 
-Patterns, words, and structures that signal AI-generated content. Organized by category.
+Editing clues for formulaic prose, organized by category. These are not an authorship detector or a blacklist. Apply them only when they hurt clarity or conflict with the intended voice. Preserve facts, register, uncertainty, quotations, code, and technical terms; use only supplied or verified specifics. English vocabulary examples are not universal language rules.
 
 ---
 
 ## Vocabulary: Words AI Overuses
 
-### Tier 1: Immediate Red Flags
+### Common Candidates for Review
 
-These words almost never appear in natural human writing at the frequency AI uses them.
+Inspect repeated generic or inflated usage. These words can be natural or technically precise; suggested alternatives are contextual, not automatic replacements.
 
 | AI Word/Phrase | Human Alternative |
 |-|-|
@@ -26,7 +26,7 @@ These words almost never appear in natural human writing at the frequency AI use
 | Myriad | Many, a lot of |
 | Plethora | Many, plenty of |
 | Multifaceted | Complex, varied |
-| Groundbreaking | New, first-of-its-kind |
+| Groundbreaking | State the supplied advance; do not invent novelty or priority |
 | Revolutionize | Change, reshape, overhaul |
 | Synergy | (be specific about what's combining) |
 | Ecosystem (non-technical) | World, space, community |
@@ -35,9 +35,9 @@ These words almost never appear in natural human writing at the frequency AI use
 | Testament | (delete -- just state the evidence) |
 | Enduring | Lasting, long-running |
 
-### Tier 2: Suspicious in Clusters
+### Context-Dependent Candidates
 
-Fine alone, but AI uses these in combination. Three or more in one piece is a tell.
+Repetitive clusters can make prose sound generic. Evaluate their function and density in context, without a fixed count threshold.
 
 | AI Word/Phrase | Human Alternative |
 |-|-|
@@ -93,11 +93,11 @@ Fine alone, but AI uses these in combination. Three or more in one piece is a te
 
 ### Hedging Starters
 
-- "While there are certainly..." -> Pick a side.
+- "While there are certainly..." -> State the actual qualification or contrast directly.
 - "To be sure..." -> (delete)
-- "That said..." -> "But" (once per piece max)
+- "That said..." -> "But" where simpler; retain a useful transition.
 - "This is not without its challenges..." -> Name the challenge directly.
-- "It remains to be seen..." -> "We don't know yet" or (delete)
+- "It remains to be seen..." -> "We don't know yet" when the register fits; preserve the uncertainty.
 
 ### AI Closers
 
@@ -127,8 +127,8 @@ Fine alone, but AI uses these in combination. Three or more in one piece is a te
 ### Knowledge-Cutoff Disclaimers
 
 - "As of [date]..." -> Only a tell when it corresponds to a model training cutoff or hedges instead of citing. Normal in journalism for time-sensitive data.
-- "While specific details are limited..." -> (delete or find source)
-- "Based on available information..." -> (delete)
+- "While specific details are limited..." -> Remove only empty framing; preserve real evidence limitations.
+- "Based on available information..." -> Keep if it limits the claim; cut only when redundant.
 
 ---
 
@@ -149,6 +149,26 @@ Words and phrases that puff up importance beyond what the content warrants.
 ---
 
 ## Grammar-Level Patterns
+
+### Nominalizations and Hidden Actors
+
+Replace a support verb plus action noun with a direct verb when meaning is unchanged:
+- "performs a validation of the data" -> "validates the data"
+- "conducts an assessment of progress" -> "assesses progress"
+
+Use active voice when the actor is known and relevant. Keep passive voice when the actor is unknown or the result deserves focus. Do not turn "the files were reviewed" into "we reviewed the files" without a supplied actor.
+
+### Modifier Chains and Nested Clauses
+
+Unpack noun, possessive, and relative-clause chains when they hide relationships. Preserve who owns what, which clause modifies which noun, and what happened first. Splitting a sentence must not invent causality or omit a condition.
+
+### Translation-Like Phrasing
+
+Use the text's language conventions instead of importing English word order, pronouns, or politeness. In a language that permits omitted pronouns, remove them only when the referent remains clear. Keep idiomatic repetition rather than cycling through synonyms.
+
+For example: "我们将对数据进行验证，然后再进行保存" -> "我们会先验证数据，再保存。"
+
+Language-specific devices, such as Finnish particles and pronoun omission, are options within that language and register, not requirements for all prose. Do not insert colloquialisms into formal text. In mixed-language documents, preserve each language and the requested editing scope.
 
 ### Copula Avoidance
 
@@ -178,13 +198,13 @@ AI tacks participle phrases onto sentences for fake depth:
 - "fostering a sense of..."
 - "encompassing..."
 
-**Fix:** Delete the phrase, or expand into its own sentence with an actual source.
+**Fix:** Delete empty commentary. Preserve substantive claims in clear sentences, keeping attribution and uncertainty. Do not add a source that was not supplied or verified.
 
 ### Negative Parallelisms
 
 "Not only... but also..." and "It's not just about X, it's about Y."
 
-Fine in moderation. AI uses it 5-10 times per piece. The tell is density relative to length, not an absolute count.
+Keep a useful contrast. Rewrite repeated formulas when they distract; do not impose a numerical quota.
 
 ### Rule of Three
 
@@ -200,79 +220,72 @@ AI uses different words for the same thing to avoid repetition: "protagonist... 
 
 ---
 
-## Structure: Patterns That Reveal AI
+## Structure: Formulaic Patterns
 
 ### The Formulaic Section
 
 Every section follows: Setup -> Explanation -> "What this means for you" / "The takeaway"
 
-**Fix:** Vary endings. Some sections end with a question. Some end mid-thought. Some just stop.
+**Fix:** End when the point is complete. Remove redundant summaries; do not force incomplete thoughts or cosmetic variation.
 
 ### The Parallel List
 
-AI makes every bullet point the same grammatical structure and similar length.
+Parallel bullets are often useful for scanning, procedures, and comparisons. The problem is padding content to force symmetry.
 
-**Fix:** Let some bullets be short. Let some be a full sentence. Break one into a sub-list if it needs it.
+**Fix:** Cut padding and let item length follow the information. Preserve parallel construction when it helps the reader.
 
 ### The Tricolon Close
 
 "Start building, start learning, start growing."
 
-**Fix:** Use a single direct statement instead. Or just two items.
+**Fix:** State the actual action. Keep all items that carry distinct meaning.
 
 ### The Balanced Conclusion
 
 "The gap between X and Y is widening. The good news: [positive]. The challenge: [negative]. [Inspiring closer.]"
 
-**Fix:** End with one strong statement, not a perfectly balanced assessment.
+**Fix:** Cut formulaic framing and empty optimism. Keep both sides when the evidence or genre calls for a balanced assessment.
 
 ### Em Dash Usage
 
 The tell is both frequency and function. Count before flagging -- don't assume density from a general impression.
 
-- **Frequency:** More than one em dash per 3-4 paragraphs is above human baseline
-- **Function:** Even a single em dash is a tell if it's doing the classic AI move: injecting a dramatic explanatory aside mid-sentence (e.g., "the system -- designed to handle millions of requests -- struggled under load")
+- **Frequency:** Inspect repeated interruptions in the context of the genre; there is no universal quota.
+- **Function:** Revise asides that interrupt comprehension or add empty drama. Useful parentheses are normal writing.
 
 **Fix:** Use periods. Use commas. Actually count em dashes before claiming overuse.
 
 ---
 
-## Tone: The AI "Voice"
+## Tone and Register
 
-### Too Balanced
+### Forced Balance or Positivity
 
-AI always presents both sides. Real writers with expertise pick a position and defend it.
+Remove empty good-news/bad-news framing and unsupported optimism. Preserve balanced reporting, limitations, and the author's actual position. Do not replace neutral analysis with an invented opinion.
 
-### Too Positive
+### Manufactured Personality
 
-AI defaults to optimism. "Exciting developments," "tremendous opportunity," "bright future." Real writing is more measured and occasionally pessimistic.
+Clarify personality already present: a dry observation, a specific experience, or an unresolved question. Do not invent anecdotes, interviews, feelings, or first-person claims. Formal prose can be natural without jokes, slang, or deliberate roughness.
 
-### Too Smooth
+### Excessive Softening
 
-AI never stumbles, pauses, or doubles back. Real writing has slight roughness -- a parenthetical aside, a sentence that starts one way and pivots, a blunt statement after a complex one.
-
-### No Personality
-
-AI doesn't have opinions, pet peeves, or a sense of humor. Adding these (sparingly) makes writing feel authored by someone real.
+Cut redundant hedges without increasing certainty: "could potentially improve results" -> "could improve results." Required courtesy, evidence limitations, and professional caution are not filler.
 
 ---
 
-## Detection Heuristic
+## Review Checklist
 
-Score the piece on these dimensions. 5+ hits = likely AI-generated:
+Use these questions to locate editing opportunities, not to score AI authorship. Consolidate overlapping observations on one passage into a single finding. Count occurrences only when reporting a frequency claim.
 
-- [ ] Uses 3+ Tier 1 vocabulary words
-- [ ] Uses 5+ Tier 2 vocabulary words
-- [ ] Has "It's worth noting" or similar filler phrases
-- [ ] Every section follows the same structure
-- [ ] "Not X, but Y" appears more than twice
-- [ ] Em dashes appear more than once per 3-4 paragraphs, or a single em dash injects a dramatic aside
-- [ ] No sentences under 8 words
-- [ ] No informal or colloquial language anywhere
-- [ ] Conclusion is perfectly balanced (good news/bad news/inspiring close)
-- [ ] Every list has the same number of items
-- [ ] No opinions, asides, or personality
-- [ ] Every claim is hedged with "certainly" or "to be sure"
-- [ ] Uses copula avoidance ("serves as" instead of "is") multiple times
-- [ ] Significance inflation in opening or closing paragraphs
-- [ ] Chatbot artifacts present ("I hope this helps!")
+- Does generic vocabulary obscure a specific meaning already present?
+- Do structure, transitions, or summaries repeat without helping the reader?
+- Do nominalizations, passive constructions, or modifier chains hide the action?
+- Does phrasing follow another language's syntax or politeness conventions?
+- Are list items or contrasts padded to force symmetry?
+- Do punctuation and formatting interrupt comprehension or conflict with the style guide?
+- Are hedges redundant, or do they express real uncertainty?
+- Does the tone fit the author's voice, audience, and genre?
+- Are vague attributions unresolved? Preserve them and flag the source gap; do not invent a source or silently strengthen the claim.
+- Would the proposed edit change a fact, condition, attribution, certainty, or technical meaning? If so, revise the edit.
+
+If no meaningful issue remains, leave the text alone.
