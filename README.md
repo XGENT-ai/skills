@@ -41,13 +41,13 @@ npx @xgent-ai/skills install
 
 [impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)整个 vendor 在 `vendor/impeccable/` 里:skill bundle 以去重形态随 npm 包发布,十几 MB 的 engine 二进制不进包、改放自家 R2,由 `install` 按 `VERSION.json` 里的地址与 sha256 取。官方的 `npx impeccable install` 要先从 GitHub 下 bundle、首次跑 hook 时再下 engine,墙内经常卡在 `Download failed`;这里 bundle 一步不联网,engine 只走一次 R2(装过一次就落在 `~/.impeccable/` 里,之后都不用了)。
 
-`vendor/impeccable/bundle/` 不是 `universal.zip` 解开的样子,而是它的去重形态:文件内容存在 `blobs/<sha256>`,`manifest.json` 里每个 harness 一张 `路径 → sha` 的清单。上游给 19 个 harness 目录各放了一整套 skill,其中 83% 的字节是同一批文件(光 `scripts/data/font-index.json` 就是 1.1 MB × 19 份、内容完全相同),各 harness 真正不同的只有 39 个路径 —— 有的差在路径 token(`.claude/skills/...` vs `.cursor/skills/...`),有的差在按 harness 改写过的措辞(有 `AskUserQuestion` 工具的 harness 写"调用该工具",没有的写"直接问用户")。`install` 按清单把文件写回去,装出来的结果与直接展开 zip 逐字节一致(上游 `impeccable doctor` 报 no drift)。展开后 38 MB → 6 MB,npm 包 13.5 MB → 3.1 MB。
+`vendor/impeccable/bundle/` 不是 `universal.zip` 解开的样子,而是它的去重形态:文件内容存在 `blobs/<sha256>`,`manifest.json` 里每个 harness 一张 `路径 → sha` 的清单。上游给 19 个 harness 目录各放了一整套 skill,其中 83% 的字节是同一批文件(光 `scripts/data/font-index.json` 就是 1.1 MB × 19 份、内容完全相同),各 harness 真正不同的只有 43 个路径 —— 有的差在路径 token(`.claude/skills/...` vs `.cursor/skills/...`),有的差在按 harness 改写过的措辞(有 `AskUserQuestion` 工具的 harness 写"调用该工具",没有的写"直接问用户")。`install` 按清单把文件写回去,装出来的结果与直接展开 zip 逐字节一致(上游 `impeccable doctor` 报 no drift)。当前 bundle 展开约 39.4 MiB,去重后约 6.7 MiB。
 
 装出来的东西和上游 `impeccable install` 的工程内安装一致(`impeccable doctor` 报 no drift):
 
 - `<harness>/skills/impeccable/`、`<harness>/agents/`、`<harness>/commands/`:按项目里已有的 harness 目录装,可用 `--providers` 指定;
 - hook manifest:Claude Code 写 `.claude/settings.local.json`(共享的 `settings.json` 里已有 impeccable hook 时以它为准),Cursor 写 `.cursor/hooks.json`,Codex 写 `.codex/hooks.json`,Copilot / Grok 写各自的 `hooks/impeccable.json`;
-- engine 二进制:只收 macOS(arm64 与 x64),按当前平台放进 `~/.impeccable/bin/<版本>/`,一台机器一份,所有项目和 `npx impeccable` 共用。缓存里已是对的那份就不再下;从本仓源码跑时直接用 `vendor/impeccable/engine/` 里的,不联网。非 mac 平台、以及 R2 拉不动时都只是跳过这一步,安装照常完成,由 launcher 首次运行时自己下载。
+- engine 二进制:只收 Apple Silicon macOS(darwin-arm64),放进 `~/.impeccable/bin/<版本>/`,一台机器一份,所有项目和 `npx impeccable` 共用。缓存里已是对的那份就不再下;从本仓源码跑时直接用 `vendor/impeccable/engine/` 里的,不联网。Intel Mac、其它平台以及 R2 拉不动时都只是跳过这一步,安装照常完成,由 launcher 首次运行时自己下载。
 
 升级 vendor 的版本(维护者执行,需要 curl、unzip 与 aws CLI):
 
@@ -60,11 +60,11 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 第二步把 engine 传到 R2 的 `vendor/impeccable/engine/v<版本>/<平台>/impeccable`,传完回读公共地址核一遍 sha256,再把 url 写进 `VERSION.json` 的 `engines`。凭据读仓库根的 `.env.cf`(`AGENT_RELEASE_R2_*`,已 gitignore,不在库里)。两步的顺序不能反 —— 第一步会重写 `VERSION.json`,先传就把 url 冲掉了;漏了第二步,发出去的包里 engine 没有下载地址,用户那边只会看到"跳过"。
 
-当前收录:skill 4.3.1 / engine 0.1.5(darwin-arm64、darwin-x64)。上游许可与三方声明见 `vendor/impeccable/LICENSE` 与 `vendor/impeccable/NOTICE.md`。
+当前收录:skill 4.5.0 / engine 0.1.11(darwin-arm64)。上游许可与三方声明见 `vendor/impeccable/LICENSE` 与 `vendor/impeccable/NOTICE.md`。
 
 ## Skills 列表
 
-以下列出 `skills/` 目录中的全部 39 个 skill，按用途分组。点击名称查看使用条件与完整流程。
+以下按用途分组列出 `skills/` 中的 skill。点击名称查看使用条件与完整流程。
 
 ### 需求、计划与评审
 
@@ -99,9 +99,17 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 | Skill | 说明 |
 | --- | --- |
-| [arena](skills/arena/SKILL.md) | 并行生成多个候选方案，选择基础版本并吸收其他候选的优点 |
+| [agi-mode](skills/agi-mode/SKILL.md) | 以结果契约、主动实验、反证验证和可恢复执行，自主推进复杂任务到可验证交付 |
+| [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
-| [autoresearch](skills/autoresearch/SKILL.md) | 围绕明确指标与范围约束，循环修改、测试和测量，保留有效改进 |
+| [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
+| [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
+
+自进化流程集中在 `agi-mode` 内：[Eval](skills/agi-mode/playbooks/eval.md) 建立可信判定，[Hillclimb](skills/agi-mode/playbooks/hillclimb.md) 管理搜索，[Arena](skills/agi-mode/playbooks/arena.md) 提供不同候选，[Reflection](skills/agi-mode/playbooks/reflection.md) 提炼教训。协作与记录约定见 [技能演化](skills/agi-mode/references/skill-evolution.md)。
+
+只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
+
+整体方法见 [agi-mode 自进化方法论](docs/agi-mode-evolution-methodology.md)，说明样本沉淀、重放、进化实践和能力评估，以及通用方法与业务实践案例的边界。
 
 ### 文档、表达与图示
 

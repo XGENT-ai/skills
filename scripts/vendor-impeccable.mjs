@@ -28,10 +28,10 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const VENDOR_DIR = path.join(REPO_ROOT, 'vendor', 'impeccable');
 const BUNDLE_URL = 'https://impeccable.style/api/download/bundle/universal';
 const RELEASE_PREFIX = 'https://github.com/pbakaus/impeccable/releases/download';
-// 只收 macOS:团队清一色 mac 开发。其它平台上 launcher 会照旧自己联网下载。
+// 只收 Apple Silicon macOS。其它平台上 launcher 会照旧自己联网下载。
 // 要加平台就往这里添上游 release 的资产名后缀(如 linux-x64),Windows 的资产
 // 还带 .exe 后缀,得连带改下面的命名。
-const ENGINE_TARGETS = ['darwin-arm64', 'darwin-x64'];
+const ENGINE_TARGETS = ['darwin-arm64'];
 
 // 上游 crates/skills/src/bundle_signature.rs 编译进二进制的信任根,
 // 内容同 impeccable 仓库的 scripts/bundle-signing-keys.json。

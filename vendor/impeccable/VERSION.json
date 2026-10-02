@@ -1,28 +1,22 @@
 {
   "source": "https://github.com/pbakaus/impeccable",
   "license": "Apache-2.0",
-  "skillVersion": "4.3.1",
-  "engineVersion": "0.1.5",
+  "skillVersion": "4.5.0",
+  "engineVersion": "0.1.11",
   "bundle": {
-    "url": "https://github.com/pbakaus/impeccable/releases/download/skill-v4.3.1/universal.zip",
+    "url": "https://github.com/pbakaus/impeccable/releases/download/skill-v4.5.0/universal.zip",
     "keyId": "release-2026-09",
-    "sha256": "1deea4cdfb1608df6d9e08ef359629e7cc866a22ab7c2195a835627b887f190b",
-    "size": 15625571
+    "sha256": "a6877c158ec90c63560728553d2e737081afa8a79b86c507fa8d15a81fffd475",
+    "size": 16157124
   },
   "engines": {
     "darwin-arm64": {
       "asset": "impeccable-darwin-arm64",
-      "sha256": "0d48b6e16aa97664fdbe607d5da9ae320e389a1843e0ff1328f8c2530530320d",
-      "size": 12762240,
-      "url": "https://download.xgent.ai/vendor/impeccable/engine/v0.1.5/darwin-arm64/impeccable"
-    },
-    "darwin-x64": {
-      "asset": "impeccable-darwin-x64",
-      "sha256": "153971b0c00719dff9ebac13370cb7dbbbe12838b696fbaf3f7ab0b1b3726b52",
-      "size": 14400568,
-      "url": "https://download.xgent.ai/vendor/impeccable/engine/v0.1.5/darwin-x64/impeccable"
+      "sha256": "7427918d6e75507401a1b7b691eefe58a7c01a2fc63b712016ffc5a0ac1c05e6",
+      "size": 14845040,
+      "url": "https://download.xgent.ai/vendor/impeccable/engine/v0.1.11/darwin-arm64/impeccable"
     }
   },
-  "fetchedAt": "2026-09-22T15:38:00.906Z",
-  "publishedAt": "2026-09-22T15:40:54.468Z"
+  "fetchedAt": "2026-10-02T09:20:08.048Z",
+  "publishedAt": "2026-10-02T09:23:34.098Z"
 }

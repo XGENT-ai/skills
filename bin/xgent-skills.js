@@ -451,14 +451,14 @@ function readEngineBinary(meta, target, engine) {
 
 // engine 二进制放进 ~/.impeccable/bin/<版本>/:launcher 和 npx impeccable 都认
 // 这个版本化缓存,一台机器装一份,所有项目共用,之后运行也就不必联网了。
-// 只收了 macOS 的二进制,别的平台落到"跳过",由 launcher 首次运行时自己去
+// 只收了 Apple Silicon macOS 的二进制,别的平台落到"跳过",由 launcher 首次运行时自己去
 // GitHub 下载(上游原本的行为)。
 function installEngineBinary(meta, force) {
   const arch = { arm64: 'arm64', x64: 'x64' }[process.arch] || process.arch;
   const target = `${process.platform === 'darwin' ? 'darwin' : process.platform}-${arch}`;
   const engine = meta.engines && meta.engines[target];
   if (!engine) {
-    console.log(`  跳过  engine 二进制:只收了 macOS 的版本,${target} 会在首次运行时联网下载`);
+    console.log(`  跳过  engine 二进制:只收了 Apple Silicon macOS 的版本,${target} 会在首次运行时联网下载`);
     return;
   }
   const cacheRoot = process.env.IMPECCABLE_HOME || path.join(os.homedir(), '.impeccable');
