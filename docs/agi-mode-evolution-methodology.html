@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agi-mode 自进化方法论 · 解读</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#111721;--ink2:#39424f;--muted:#6b7482;--line:#e2e6ea;--line2:#eef1f4;--teal:#0f6d5a;--amber:#9a5b06;--rose:#a32318;--blue:#1f4e9c;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--card:#161c24;--ink:#e9edf2;--ink2:#c2cad4;--muted:#8b95a3;--line:#252d38;--line2:#1d242e;--teal:#5fd0b4;--amber:#e0a95a;--rose:#f0908a;--blue:#8fb4ef}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;font-size:16px}
+.wrap{max-width:1040px;margin:0 auto;padding:48px 22px 72px}
+header{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:30px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;margin:0 0 12px}
+h1{font-size:clamp(28px,4.4vw,40px);line-height:1.2;margin:0 0 16px;letter-spacing:-.01em}
+.lede{font-size:clamp(17px,2.1vw,20px);color:var(--ink2);margin:0;max-width:64ch}
+h2{font-size:clamp(20px,2.6vw,24px);line-height:1.3;margin:0 0 6px}
+h2 .num{color:var(--teal);font-family:var(--mono);font-size:.72em;margin-right:.5em;font-weight:600}
+h3{font-size:16px;margin:24px 0 8px}
+p{margin:0 0 14px}
+section{margin:0 0 36px;padding-top:6px;border-top:1px solid var(--line2)}
+.secHead{margin:24px 0 14px}
+.secLead{color:var(--ink2);margin:0 0 16px;max-width:72ch}
+ul,ol{margin:0 0 16px;padding-left:1.25em}
+li{margin:0 0 6px}
+code{font-family:var(--mono);font-size:.9em;background:var(--line2);padding:.1em .36em;border-radius:4px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:0 0 30px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px 13px}
+.metric .big{font:700 34px/1 var(--mono);letter-spacing:-.02em;color:var(--teal)}
+.metric .big small{font-size:.5em;font-weight:600;color:var(--muted);margin-left:.25em}
+.metric .cap{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.45}
+.callout{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;padding:14px 18px;margin:0 0 16px}
+.callout.warn{border-left-color:var(--amber)}
+.callout.stop{border-left-color:var(--rose)}
+.callout h4{margin:0 0 8px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.callout ul,.callout p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;margin:0 0 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line2)}
+thead th{background:var(--line2);font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2);font-weight:650}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+th[title]{cursor:help;border-bottom:1px dotted var(--muted)}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap;background:var(--line2);color:var(--ink2)}
+.tag.done{background:rgba(15,109,90,.14);color:var(--teal)}
+.tag.miss{background:rgba(154,91,6,.14);color:var(--amber)}
+.tag.un{background:rgba(163,35,24,.13);color:var(--rose)}
+.fig{margin:16px 0 8px}
+.fig .frame{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fig figcaption{color:var(--muted);font-size:13px;margin-top:9px}
+.dg-svg{display:block;width:100%;min-width:900px;height:auto;font-family:var(--sans)}
+.dg{--grid:#e2e8f0;--mask:var(--card);--lane-fill:rgba(248,250,252,.6);--lane-stroke:#cbd5e1;--arrow:#94a3b8;--arrow-emphasis:#059669;--text:#0f172a;--text-muted:#64748b;--text-dim:#94a3b8;
+--frontend-fill:rgba(34,211,238,.15);--frontend-stroke:#0891b2;--backend-fill:rgba(52,211,153,.18);--backend-stroke:#059669;--database-fill:rgba(167,139,250,.2);--database-stroke:#7c3aed;--cloud-fill:rgba(251,191,36,.18);--cloud-stroke:#d97706;--security-fill:rgba(251,113,133,.15);--security-stroke:#e11d48;--messagebus-fill:rgba(251,146,60,.15);--messagebus-stroke:#ea580c}
+@media (prefers-color-scheme:dark){.dg{--grid:#1e293b;--lane-fill:rgba(15,23,42,.22);--lane-stroke:#334155;--arrow:#64748b;--arrow-emphasis:#34d399;--text:#fff;--text-muted:#94a3b8;--text-dim:#475569;
+--frontend-fill:rgba(8,51,68,.4);--frontend-stroke:#22d3ee;--backend-fill:rgba(6,78,59,.4);--backend-stroke:#34d399;--database-fill:rgba(76,29,149,.4);--database-stroke:#a78bfa;--cloud-fill:rgba(120,53,15,.3);--cloud-stroke:#fbbf24;--security-fill:rgba(136,19,55,.4);--security-stroke:#fb7185;--messagebus-fill:rgba(251,146,60,.3);--messagebus-stroke:#fb923c}}
+.c-grid{stroke:var(--grid);fill:none}
+.c-mask{fill:var(--mask);stroke:none}
+.c-frontend{fill:var(--frontend-fill);stroke:var(--frontend-stroke)}
+.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}
+.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}
+.c-cloud{fill:var(--cloud-fill);stroke:var(--cloud-stroke)}
+.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}
+.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}
+.c-lane{fill:var(--lane-fill);stroke:var(--lane-stroke);stroke-dasharray:6,6}
+.t-primary{fill:var(--text)}
+.t-muted{fill:var(--text-muted)}
+.t-dim{fill:var(--text-dim)}
+.a-default{stroke:var(--arrow);fill:none}
+.a-emphasis{stroke:var(--arrow-emphasis);fill:none}
+.a-dashed{stroke:var(--database-stroke);fill:none;stroke-dasharray:4,4}
+.m-default{fill:var(--arrow)}
+.m-emphasis{fill:var(--arrow-emphasis)}
+.m-dashed{fill:var(--database-stroke)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:0 0 16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.box h4{margin:0 0 8px;font-size:15px}
+.box ul{margin:0;padding-left:1.1em;font-size:14.5px}
+.box p{margin:0;font-size:14.5px}
+.rule{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:14.5px}
+.rule:last-child{border-bottom:0}
+.rule .n{flex:0 0 26px;font:600 13px/1.7 var(--mono);color:var(--rose);text-align:right}
+.source{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.source code{word-break:break-all}
+@media (max-width:640px){.wrap{padding:32px 16px 56px}table{font-size:13.5px}th,td{padding:9px 10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">agi-mode · 方法论解读</p>
+  <h1>agi-mode 自进化方法论</h1>
+  <p class="lede">agi-mode 要从真实任务里积累经验，提出可检验的改进，再用实际结果决定保留、撤回还是继续调查。最终要回答的问题只有一个：在既定目标与资源约束下，它能否持续找到并验证有效改进。</p>
+</header>
+
+<div class="metrics">
+  <div class="metric"><div class="big">3<small>个层次</small></div><div class="cap">进化方法、被优化对象、效果环境，混在一起就无法归因</div></div>
+  <div class="metric"><div class="big">2<small>类记录</small></div><div class="cap">工作样本提供经验，进化尝试提供学习与选择的证据</div></div>
+  <div class="metric"><div class="big">3<small>级重放</small></div><div class="cap">历史效果复核、代理验证、实际效果验证，能支持的结论各不相同</div></div>
+  <div class="metric"><div class="big">5<small>个维度</small></div><div class="cap">收益、回归、成本、证据、迁移，门槛由实践目标预先定</div></div>
+</div>
+
+<div class="callout">
+  <h4>三句话概括</h4>
+  <ul>
+    <li><b>评价的是方法，不是被改好的那个东西。</b>对象最终表现好，可能来自原有能力、人工补救或环境变化；要评价进化方法，还得核对改动、执行条件与效果之间的关系。</li>
+    <li><b>现在只到「约定成文」。</b>样本、尝试与效果的记录约定已经写好，参与技能没有自动生成统一归档，已有项目材料也没完成采集与审计，自进化能力更没有实证。</li>
+    <li><b>业务只是实践环境。</b>一条任务链的改善只支持该条件下的结论；对通用能力的判断需要来自不同任务族的证据。规则数量、修改次数、自我评价都不能当能力证明。</li>
+  </ul>
+</div>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">01</span>要评价什么：先分清三个层次</h2>
+    <p class="secLead">每轮先限定允许修改的对象，再研究它对真实效果的影响。三个层次混着看，就无法判断改善从哪来。</p>
+  </div>
+  <table>
+    <thead><tr>
+      <th title="划分依据的评价层，决定这一轮在回答哪一类问题">层次</th>
+      <th title="该层次要回答的具体问题">回答的问题</th>
+      <th title="支持结论所必需的最小证据集合">需要的证据</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>进化方法</b></td><td>agi-mode 怎样从经验中找到、筛选和确认改进？</td><td>可见样本、机制假设、实验选择、验证、成本及去留依据</td></tr>
+      <tr><td><b>被优化对象</b></td><td>本次允许改变什么？</td><td>初始版本、候选差异、父版本、采用版本与恢复点</td></tr>
+      <tr><td><b>效果环境</b></td><td>使用这个对象完成任务，实际发生了什么？</td><td>当时的输入、执行条件、产物、验收结果、失败与补救成本</td></tr>
+    </tbody>
+  </table>
+  <p>能改的不止技能：技能指令、prompt、工具、执行流程都可以动，任务里的代码与配置也可以动。</p>
+  <div class="callout warn">
+    <h4>两条不能省的前提</h4>
+    <ul>
+      <li>agi-mode 内维护任务无关的规则——怎样建立结果契约、取得信息、比较候选、验证、恢复、收敛，以及怎样保存进化证据。业务字段、阶段结构、采集入口和效果解释放在实践案例或目标项目里，不由通用方法规定。</li>
+      <li>一次失败不能直接归因于某个 skill。归因不足时保留未知，不要补一个听上去合理的解释。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">02</span>现在到哪一步</h2>
+    <p class="secLead">已经成型的是说明和约定，不是能力。这三类状态必须分开看。</p>
+  </div>
+  <table>
+    <thead><tr><th title="这条约定当前的实际落地程度">状态</th><th title="属于这一档的具体内容">具体内容</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag done">已成文</span></td><td>agi-mode 内的 <code>Eval</code>、<code>Hillclimb</code>、<code>Arena</code>、<code>Reflection</code> 与 skill 修订流程；区分工作样本、进化尝试和实际效果的通用证据约定；独立于通用 skill 的文档交付链实践案例。</td></tr>
+      <tr><td><span class="tag miss">未接入</span></td><td>参与技能还没有自动生成统一归档；已有项目材料还没有完成采集与审计。当前阶段要先选实际项目、核对已有材料、接入必要的版本保全。</td></tr>
+      <tr><td><span class="tag un">未实证</span></td><td>自进化能力没有得到实证。文档约定已经形成，不代表自动采集已经接入，也不代表能力已被证明。</td></tr>
+    </tbody>
+  </table>
+  <p>五个流程各管一段：<code>Eval</code> 建立并持有判定协议、校准评测、管理可见性与不确定性；<code>Hillclimb</code> 持有搜索状态、提出假设、执行实验、管理最佳版本和退出；<code>Arena</code> 在有价值的设计分叉上产生并比较候选；<code>Reflection</code> 从授权材料里提炼有出处的教训与机制假设；skill 编写把有依据的变化落到合适的指令位置。<b>它们共享目标、协议和记录，按当前缺口调用，不必每次都跑全套流程。</b>通用流程的权威位置在 agi-mode 内部，<code>autoresearch</code>、<code>arena</code>、<code>reflect</code> 只是对应流程的兼容入口。</p>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">03</span>一轮进化怎么跑</h2>
+    <p class="secLead">实践开始前就要固定目标、主指标、质量底线、最小值得采用的收益、可修改范围、比较条件和预算；并分别保存初始基线、探索最佳和已确认版本——三者不能混成「最后一次尝试」。</p>
+  </div>
+
+  <figure class="fig">
+    <div class="frame dg">
+      <svg class="dg-svg" viewBox="0 0 960 268" role="img" aria-labelledby="dgTitle dgDesc">
+        <title id="dgTitle">agi-mode 有边界的进化循环</title>
+        <desc id="dgDesc">固定目标与边界 → 提出机制假设 → 从父版本产生候选 → 固定协议下比较 → 记录去留与理由 → 达到预设条件则冻结候选 → 在未见任务上确认；记录去留也可进入依赖它的下一轮。</desc>
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" class="m-default"/></marker>
+          <marker id="aha" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" class="m-emphasis"/></marker>
+          <marker id="ahd" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" class="m-dashed"/></marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/></pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+        <line x1="16" y1="20" x2="284" y2="20" class="a-default" stroke-width="1.1"/>
+        <text x="150" y="14" class="t-muted" font-size="9" font-weight="600" text-anchor="middle">固定边界</text>
+        <line x1="300" y1="20" x2="660" y2="20" class="a-emphasis" stroke-width="1.1"/>
+        <text x="480" y="14" class="t-muted" font-size="9" font-weight="600" text-anchor="middle">单轮机制实验</text>
+        <line x1="676" y1="20" x2="800" y2="20" class="a-dashed" stroke-width="1.1"/>
+        <text x="738" y="14" class="t-muted" font-size="9" font-weight="600" text-anchor="middle">冻结与确认</text>
+        <g><rect x="16" y="36" width="124" height="52" rx="7" class="c-security" stroke-width="1.5"/><text x="78" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">固定目标与边界</text></g>
+        <g><rect x="148" y="36" width="124" height="52" rx="7" class="c-frontend" stroke-width="1.5"/><text x="210" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">提出机制假设</text></g>
+        <g><rect x="280" y="36" width="124" height="52" rx="7" class="c-backend" stroke-width="1.5"/><text x="342" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">从父版本产生候选</text></g>
+        <g><rect x="412" y="36" width="124" height="52" rx="7" class="c-cloud" stroke-width="1.5"/><text x="474" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">固定协议下比较</text></g>
+        <g><rect x="544" y="36" width="124" height="52" rx="7" class="c-database" stroke-width="1.5"/><text x="606" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">记录去留与理由</text></g>
+        <g><rect x="676" y="36" width="124" height="52" rx="7" class="c-messagebus" stroke-width="1.5"/><text x="738" y="67" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">冻结候选</text></g>
+        <g><rect x="676" y="132" width="124" height="52" rx="7" class="c-security" stroke-width="1.5"/><text x="738" y="163" class="t-primary" font-size="11.5" font-weight="600" text-anchor="middle">在未见任务上确认</text></g>
+        <path d="M 140 62 L 148 62" class="a-default" stroke-width="1.4" marker-end="url(#ah)"/>
+        <path d="M 272 62 L 280 62" class="a-default" stroke-width="1.4" marker-end="url(#ah)"/>
+        <path d="M 404 62 L 412 62" class="a-default" stroke-width="1.4" marker-end="url(#ah)"/>
+        <path d="M 536 62 L 544 62" class="a-default" stroke-width="1.4" marker-end="url(#ah)"/>
+        <path d="M 668 62 L 676 62" class="a-emphasis" stroke-width="1.8" marker-end="url(#aha)"/>
+        <text x="672" y="100" class="t-muted" font-size="9" font-weight="600" text-anchor="end">达到预设条件</text>
+        <path d="M 738 88 L 738 132" class="a-default" stroke-width="1.4" marker-end="url(#ah)"/>
+        <path d="M 606 88 L 606 214 L 210 214 L 210 88" class="a-dashed" stroke-width="1.4" marker-end="url(#ahd)"/>
+        <text x="408" y="208" class="t-primary" font-size="9.5" font-weight="600" text-anchor="middle">记录之后，进入依赖它的下一轮</text>
+        <g><rect x="16" y="240" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/><text x="36" y="248" class="t-muted" font-size="10">方法步骤</text></g>
+        <g><rect x="132" y="240" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/><text x="152" y="248" class="t-muted" font-size="10">版本与候选</text></g>
+        <g><rect x="252" y="240" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/><text x="272" y="248" class="t-muted" font-size="10">实验执行</text></g>
+        <g><rect x="368" y="240" width="14" height="9" rx="2" class="c-database" stroke-width="1"/><text x="388" y="248" class="t-muted" font-size="10">证据台账</text></g>
+        <g><rect x="484" y="240" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/><text x="504" y="248" class="t-muted" font-size="10">冻结与恢复</text></g>
+        <g><rect x="604" y="240" width="14" height="9" rx="2" class="c-security" stroke-width="1"/><text x="624" y="248" class="t-muted" font-size="10">边界与确认</text></g>
+      </svg>
+    </div>
+    <figcaption>方块颜色对应图的职责分工，图例在下方；虚线是回退与流转，绿色实线是达到预设条件后的出口。窄屏时图可横向滚动。同题的交互版（可缩放、聚焦、导出）见仓库 <code>docs/diagrams/agi-mode-evolution-loop.html</code>。</figcaption>
+  </figure>
+
+  <h3>每轮只推进一个机制假设</h3>
+  <ol>
+    <li>从允许读取的样本里找出问题，解释预期影响和可能回归，<b>注明什么观察会推翻这个假设</b>。</li>
+    <li>从明确的父版本产生候选。实现一个机制可以改多处内容，但不堆叠无法归因的猜想。</li>
+    <li>在固定协议下执行比较：先判断运行是否有效，再检查质量底线、收益、不确定性与维护成本。</li>
+    <li>记录保留、撤回、未定或无效及理由，再进入依赖它的下一轮。组合候选和移植片段都要作为新版本重新验证。</li>
+  </ol>
+
+  <div class="cols">
+    <div class="box"><h4>连续尝试停滞时先诊断</h4><p>依次看任务、指导、执行、环境、评测和随机波动，不强求每轮都改代码或增加规则。评测有缺陷就修评测；已有指导没被执行，就调查它的位置、冲突和可见性；需要结构分叉时才动用 <code>Arena</code>。</p></div>
+    <div class="box"><h4>达到预设条件后冻结，再确认</h4><p>在未参与选择的代表性任务上确认候选。<b>最终反馈一旦用于下一轮改动，这批材料就不再是未见数据。</b>确认失败时恢复仍然有效的已确认版本，不能反复试同一个确认集直到出现赢家。</p></div>
+    <div class="box"><h4>保住用户工作，并且有明确的收尾</h4><p>恢复方案只撤回本轮拥有的改动。结束条件是目标达到、用户停止、既有资源边界到达，或后续探索缺乏合理的信息价值；结束时要区分「目标达成」和「此次搜索结束」。</p></div>
+    <div class="box"><h4>保质降成本要事前定义</h4><p>先定下可接受的质量损失边界。事后说「没有显著下降」，不能自动证明质量保住了。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">04</span>什么样的证据才算数</h2>
+    <p class="secLead">历史材料不能直接给新候选打分。材料的格式不决定它的价值——能否恢复当时情境并核对结果，才决定它支持什么判断。重放分三级，每一级能支持的结论不同。</p>
+  </div>
+  <table>
+    <thead><tr>
+      <th title="证据强度由低到高的三个层级">层级</th>
+      <th title="在这一层级实际执行的动作">做什么</th>
+      <th title="该层级证据最多能支撑的结论，越级使用即为过度推断">可以支持的结论</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>历史效果复核</b></td><td>按明确口径重读原始产物与记录</td><td>原任务发生了什么、材料缺什么、哪些机制值得调查</td></tr>
+      <tr><td><b>代理验证</b></td><td>给候选当时的输入，检查决策、输出或错误识别是否变化</td><td>局部机制假设获得支持；<b>仍需核对实际效果</b></td></tr>
+      <tr><td><b>实际效果验证</b></td><td>让候选参与新的可比执行，检查新产物和结果</td><td>候选在这些条件下产生的真实效果变化</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>先明确需要改变的实际结果，再选样本和判定方式。</li>
+    <li>候选得到完成任务所需的公开要求和当时可见材料；后来的答案、修复与结果留给评判侧。</li>
+    <li>候选改变了工作步骤时，不能拿旧工具响应或旧截图冒充新执行。</li>
+    <li>环境无法恢复时，可以改用范围明确的替代实验，或在后续真实任务中收集证据，<b>但结论必须对应实际执行层级</b>。</li>
+    <li>分析者可以读取开发案例的完整历史来提出假设；候选执行者仍受阶段信息截止点约束。后来出现的要求或纠正，不能倒推成当时已知的输入。</li>
+  </ul>
+
+  <h3>两类记录缺一不可</h3>
+  <div class="cols">
+    <div class="box"><h4>工作样本：真实任务的经验</h4><p>记录真实任务的输入、处理条件、产物和效果，每条至少保留：身份与来源（稳定身份、项目／任务来源、同源关系、关联阶段）、当时的任务（请求、已知约束、确认的决定、信息截止点）、输入与输出（实际版本、可恢复位置、内容指纹，两者分别记录）、执行条件（实际使用的方法与可获取的模型／工具／环境，未知项如实标明）、效果证据（原始产物与观测、适用版本、覆盖范围、首次及补救后结果）、后续反馈（发生时间、针对的原版本、依据及替代关系）。</p></div>
+    <div class="box"><h4>进化尝试：方法怎么用掉经验</h4><p>每轮关联：进化方法的版本与运行条件 → 目标、范围、预算及可见样本 → 假设和来源证据 → 父版本与候选差异 → 实际验证及成本 → 去留理由 → 最终确认状态。沿用评测记录模板，不另建一套冲突台账。<b>它从开始实践时产生，不能根据最后版本反向编造。</b></p></div>
+  </div>
+  <p><b>反馈与事实分开保存。</b>采纳意见不自动证明意见正确，拒绝意见也不自动证明它是误报。没有发现缺陷，只支持已检查范围内的结论，不能把未观察到的行为记为通过。</p>
+
+  <h3>保存与恢复：三个时点，三项能力</h3>
+  <p>在任务或阶段开始时保全输入，在交付或中断时保全输出，在后续效果到达时追加关联反馈。当前工作文档可以更新，归档版本与原始结果应当保持可核对；优先复用已有的版本和证据位置，避免重复复制。</p>
+  <ul>
+    <li><b>内容 hash 只能检查是否变化，不能恢复文件。</b>Git SHA 只有在对应内容仍可取回时才足够；未提交的修改、必要的新文件和临时材料，需要额外保留可恢复的内容。</li>
+    <li>不能等原稿已经修订，再把现状补记为原始输入。</li>
+    <li>截图、日志和报告必须关联它们实际观察的版本。截图能支持界面可见状态，交互、数据语义或性能仍需对应证据。后续报告更新不会使旧截图自动成为新版本的验证；<b>成功重跑也不能抹去前面的失败和补救成本</b>。</li>
+    <li>只保存任务需要且已授权的材料，不要求完整聊天、每条命令或内部推理。缺失材料如实记录，采集失败与业务交付结果分别报告。</li>
+  </ul>
+  <table>
+    <thead><tr><th title="需要具备的恢复能力">恢复能力</th><th title="判断这一项是否成立的具体问题">逐项判断</th></tr></thead>
+    <tbody>
+      <tr><td>历史效果</td><td>能否核对历史效果及其证据范围</td></tr>
+      <tr><td>阶段输入</td><td>能否还原某个阶段开始时的输入</td></tr>
+      <tr><td>重新执行</td><td>能否重新执行并产生可比较的新结果</td></tr>
+    </tbody>
+  </table>
+  <p>这三项可能不同时成立。只有效果记录的案例仍有复盘价值，但不能据此宣称它已经具备完整的执行重放条件。</p>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">05</span>最容易自欺的地方</h2>
+    <p class="secLead">下面每一条都会把一个无效结果伪装成有效改善。它们不是提醒，是判定门槛。</p>
+  </div>
+  <div class="rule"><div class="n">01</div><div><b>用过程量冒充能力。</b>规则数量、修改次数、自我评价，都不能作为能力证明。</div></div>
+  <div class="rule"><div class="n">02</div><div><b>同时改对象和评分口径。</b>评测规则的修订与候选改进分别进行：候选在固定规则下接受检查；发现评测错误时，先保留旧结果，修订协议并重测可比基线。</div></div>
+  <div class="rule"><div class="n">03</div><div><b>判定器没校准就开跑。</b>先用已知好坏及边界产物检查判定器能否区分目标行为，核对真实评分依据。能运行客观检查时优先使用，需要判断时使用有证据锚点的标准。</div></div>
+  <div class="rule"><div class="n">04</div><div><b>把三类失败混成一类。</b>基础设施无效、候选行为失败、判定器波动要分别记录。不能通过筛掉不利的运行来制造改善。</div></div>
+  <div class="rule"><div class="n">05</div><div><b>样本只挑顺手的。</b>样本要覆盖有价值的常见任务、重要失败、边界与不应触发的场景；不能只收成功项目，也不能只收某个模型恰好做错的题。</div></div>
+  <div class="rule"><div class="n">06</div><div><b>把同源任务当独立样本。</b>同一来源的任务链、修订和近重复保持同组。一条任务链产生十份报告，不等于十个独立任务。</div></div>
+  <div class="rule"><div class="n">07</div><div><b>看了结果再抽样本。</b>可见的搜索样本与未见的最终确认样本必须分开；分组与可见性在搜索前确定。<b>验证反馈一旦用于选择候选，它就属于开发证据。</b></div></div>
+  <div class="rule"><div class="n">08</div><div><b>以为分开目录就是隔离。</b>目录、分支或 worktree 分开不保证信息隔离；实际权限、可读历史、缓存和上下文都要核对。做不到时就明确写出评测限制。</div></div>
+  <div class="rule"><div class="n">09</div><div><b>越级使用证据。</b>历史材料不能直接给新候选赋予效果分；代理验证只支持局部机制假设。</div></div>
+  <div class="rule"><div class="n">10</div><div><b>拿旧产物冒充新执行。</b>候选改变了工作步骤时，旧工具响应或旧截图不能当新结果。</div></div>
+  <div class="rule"><div class="n">11</div><div><b>确认集反复试到出赢家。</b>最终反馈一旦用于下一轮改动，这批材料就不再未见。确认失败时恢复仍有效的已确认版本。</div></div>
+  <div class="rule"><div class="n">12</div><div><b>把模型升级或人工加码算成功劳。</b>比较不同进化方法时，对象起点、任务分布、模型／工具、执行条件与总预算都要可比，方法版本和对象版本分别记录。<b>评价材料与确认反馈的可见范围也必须一致。</b></div></div>
+  <div class="rule"><div class="n">13</div><div><b>改 agi-mode 本身时放松标准。</b>新规则同样作为候选接受固定协议检查，候选不能通过改写评价标准或自评结论获得晋级。</div></div>
+  <div class="rule"><div class="n">14</div><div><b>无限复用旧结论。</b>已有结果只在相关输入、模型、工具与任务分布仍适用时才支持复用；条件改变后要重新检查受影响的部分。</div></div>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">06</span>怎么评价 agi-mode 的进化能力</h2>
+    <p class="secLead">先看独立确认的实际改善，再看获得改善付出的代价，以及方法如何处理失败与未知。具体指标和门槛由实践目标预先确定。</p>
+  </div>
+  <table>
+    <thead><tr><th title="评价能力的五个正交维度">维度</th><th title="该维度要核对的具体问题">核对的问题</th></tr></thead>
+    <tbody>
+      <tr><td><b>有效收益</b></td><td>相对初始对象，是否改善了真实效果？是否超过测量噪声且具有实际价值？</td></tr>
+      <tr><td><b>回归控制</b></td><td>是否保住质量底线和重要相邻场景？是否拒绝或撤回有害候选？</td></tr>
+      <tr><td><b>资源效率</b></td><td>在可比预算内，用多少实验、验证、运行和维护成本取得收益？</td></tr>
+      <tr><td><b>证据与判断</b></td><td>假设和结论是否有来源？能否区分未知、执行失败、环境无效与评测失真？</td></tr>
+      <tr><td><b>学习与迁移</b></td><td>能否避免重复已被反驳的方向？改进是否适用于未参与调优的任务？</td></tr>
+    </tbody>
+  </table>
+  <div class="callout stop">
+    <h4>两条关于结论边界的硬规定</h4>
+    <ul>
+      <li>过程记录用来核对方法是否可靠，<b>不能抵消缺少实际效果证据</b>。</li>
+      <li>诚实地没有找到有效改进，可以证明某些判断与停止行为正确，<b>但尚不足以证明具备改进能力</b>。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">07</span>当前选中的实践环境：文档交付链</h2>
+    <p class="secLead">PRD、开发计划、评审和实施记录被选作可以持续积累样本的环境。已有文件能把前期决策和后续效果连起来：需求和计划描述承诺，评审指出问题，修订说明处置，阶段记录及验收材料呈现实际执行。</p>
+  </div>
+  <ul>
+    <li>被改进的对象是 <code>prd</code>、<code>dev-plan</code>、<code>review-*</code> 等生成与评审方法。</li>
+    <li>评分依据来自它们引导的实际交付：用户目标是否兑现、体验与行为、回归、返工和必要的人工补救。<b>文档长度、章节齐全程度或评审意见数量只能提供诊断信号，不能当成绩。</b></li>
+    <li>实践以完整任务关系组织材料，保留多对多关系和各阶段实际消费的版本。历史报告中的意见并非完整正确答案，后续的采纳与拒绝同样需要理由和证据。</li>
+  </ul>
+  <div class="callout">
+    <h4>一条用来说明归因边界的例子</h4>
+    <p>假设某次交付因遗漏一个边界条件而返工。先核对该条件在当时是否可知、计划是否覆盖、评审是否有足够材料发现、执行是否遵循计划。若证据支持上游方法存在缺口，可以据此提出修订；<b>新版评审能识别这个已知问题，只达到代理验证</b>。是否真的减少返工，还要观察候选引导的新执行。</p>
+  </div>
+  <p>该案例保存在仓库级评测目录，<b>不是 agi-mode 的运行依赖</b>。业务字段、阶段记录格式与截图采集流程留在参与技能或目标项目里，不能由这个案例反向限定通用进化方法。</p>
+</section>
+
+<section>
+  <div class="secHead">
+    <h2><span class="num">08</span>推进条件：下一步靠什么事实解锁</h2>
+    <p class="secLead">不预设积累多少天或多少份文件就算够。决定下一步的是材料能否回答评测问题。</p>
+  </div>
+  <table>
+    <thead><tr><th title="实践推进的阶段，必须按顺序通过">阶段</th><th title="进入下一阶段之前必须成立的事实，缺一项就不能推进">进入下一阶段前需要成立的事实</th></tr></thead>
+    <tbody>
+      <tr><td><b>样本积累</b></td><td>能定位真实输入、输出和效果；可恢复程度、同源关系及缺口明确</td></tr>
+      <tr><td><b>评测准备</b></td><td>样本具有目标代表性，判定器经过校准，基线可测，隔离和资源条件成立</td></tr>
+      <tr><td><b>进化实践</b></td><td>按固定目标运行有边界的尝试，所有候选及去留均有记录</td></tr>
+      <tr><td><b>能力评价</b></td><td>候选效果经过独立确认，方法贡献与限制可解释，结论不超出任务覆盖</td></tr>
+    </tbody>
+  </table>
+  <p>现阶段可以先抽查真实案例的恢复与关联能力，发现缺口后补采集；<b>无需为了填写结果提前启动版本对比</b>。</p>
+</section>
+
+<p class="source">
+  原文出处：<code>docs/agi-mode-evolution-methodology.md</code>（本仓 <code>xgent/skills</code>，本次解读时读取的工作区版本，17,355 字节）。<br>
+  图：同题交互版由 archify 生成（workflow，showcase 校验 9/9 通过，0 错误 0 警告），产物 <code>docs/diagrams/agi-mode-evolution-loop.html</code>（811,643 字节）。本报告的图为同一条主路径的静态内联 SVG，未使用该交互产物，原因是它作为自包含查看器体积过大，不适合放进报告正文。<br>
+  原文的维护入口：<code>skills/agi-mode/references/evolution-evidence.md</code>、<code>skills/agi-mode/references/skill-evolution.md</code>、<code>skills/agi-mode/playbooks/eval.md</code>、<code>skills/agi-mode/references/eval-protocol.md</code>、<code>skills/agi-mode/playbooks/hillclimb.md</code>、<code>evals/agi-mode/practices/delivery-chain.md</code>。<br>
+  参考来源：Automating eval design and hillclimbing with Claude（原文第 11 节列出）。
+</p>
+
+</div>
+</body>
+</html>

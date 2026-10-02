@@ -1,0 +1,254 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "agi-mode 有边界的进化循环",
+    "locale": "zh-CN",
+    "output": "docs/diagrams/agi-mode-evolution-loop.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "frontend": {
+          "label": "方法步骤"
+        },
+        "backend": {
+          "label": "版本与候选"
+        },
+        "database": {
+          "label": "证据台账"
+        },
+        "cloud": {
+          "label": "实验执行"
+        },
+        "security": {
+          "label": "边界与确认"
+        },
+        "messagebus": {
+          "label": "冻结与恢复"
+        },
+        "external": {
+          "label": "停滞诊断"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "round",
+      "label": "单轮进化（有边界）"
+    },
+    {
+      "id": "gate",
+      "label": "停滞诊断"
+    },
+    {
+      "id": "check",
+      "label": "独立确认"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p_scope",
+      "label": "固定边界",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p_round",
+      "label": "单轮机制实验",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p_confirm",
+      "label": "冻结与确认",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "scope",
+    "hypo",
+    "cand",
+    "cmp",
+    "record",
+    "freeze",
+    "confirm"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "scope"
+    ],
+    "allowedTerminals": [
+      "confirm"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "scope",
+      "lane": "round",
+      "col": 0,
+      "type": "security",
+      "label": "固定目标与边界",
+      "sublabel": "目标 · 指标 · 底线 · 预算",
+      "width": 150
+    },
+    {
+      "id": "hypo",
+      "lane": "round",
+      "col": 1,
+      "type": "frontend",
+      "label": "提出机制假设",
+      "sublabel": "会推翻它的观察",
+      "width": 140
+    },
+    {
+      "id": "cand",
+      "lane": "round",
+      "col": 2,
+      "type": "backend",
+      "label": "出自明确父版本的候选",
+      "sublabel": "不堆叠无法归因的猜想",
+      "width": 150
+    },
+    {
+      "id": "cmp",
+      "lane": "round",
+      "col": 3,
+      "type": "cloud",
+      "label": "固定协议下比较",
+      "sublabel": "先判有效性，再比收益",
+      "width": 150
+    },
+    {
+      "id": "record",
+      "lane": "round",
+      "col": 4,
+      "type": "database",
+      "label": "记录去留与理由",
+      "sublabel": "保留 · 撤回 · 未定 · 无效",
+      "width": 140
+    },
+    {
+      "id": "freeze",
+      "lane": "round",
+      "col": 5,
+      "type": "messagebus",
+      "label": "冻结候选",
+      "sublabel": "基线 / 最佳 / 已确认",
+      "width": 145
+    },
+    {
+      "id": "diagnose",
+      "lane": "gate",
+      "col": 4,
+      "type": "external",
+      "label": "连续停滞先诊断",
+      "sublabel": "任务 · 指导 · 执行 · 评测",
+      "width": 150
+    },
+    {
+      "id": "confirm",
+      "lane": "check",
+      "col": 5,
+      "type": "security",
+      "label": "在未见任务上独立确认",
+      "sublabel": "用于下一轮即不再未见",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "scope",
+      "to": "hypo"
+    },
+    {
+      "from": "hypo",
+      "to": "cand"
+    },
+    {
+      "from": "cand",
+      "to": "cmp"
+    },
+    {
+      "from": "cmp",
+      "to": "record"
+    },
+    {
+      "from": "record",
+      "to": "hypo",
+      "label": "进入依赖它的下一轮",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "record",
+      "to": "freeze",
+      "label": "达到预设条件",
+      "variant": "emphasis"
+    },
+    {
+      "from": "record",
+      "to": "diagnose",
+      "label": "连续尝试停滞",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "diagnose",
+      "to": "scope",
+      "label": "修评测 / 查指导 / 换结构分叉",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "freeze",
+      "to": "confirm"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "达到什么才算一轮有效",
+      "items": [
+        "先用初始对象测出基线，再比较候选",
+        "收益要超过测量噪声，并有实际价值",
+        "同时检查质量底线与相邻场景有没有回归",
+        "记录这轮花了多少实验、验证与运行成本"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "重放的三个证据层级",
+      "items": [
+        "历史效果复核：重读原始产物，只说明当时发生了什么",
+        "代理验证：给候选当时的输入，只支持局部机制假设",
+        "实际效果验证：让候选参与新的可比执行，才谈真实效果",
+        "历史材料不能直接给新候选打效果分"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "两类记录缺一不可",
+      "items": [
+        "工作样本：真实任务的输入、条件、产物与效果",
+        "进化尝试：假设、父版本、候选差异、验证与去留理由",
+        "只有工作样本，得到的是案例库",
+        "两类关联起来，才能评价经验有没有被用好"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "容易走偏的地方",
+      "items": [
+        "规则数量、修改次数、自我评价都不能当能力证明",
+        "不能同时改对象和评分口径，再把分数变化算成改进",
+        "确认集一旦用于选择，就不再是未见数据",
+        "确认失败就恢复仍有效的已确认版本，不要反复试到出赢家"
+      ]
+    }
+  ]
+}
