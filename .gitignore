@@ -27,6 +27,7 @@
 .codex/skills/
 /skills/swarm-workspace
 skills/swarm/evals/evals.json
+skills-lock.json
 .env.cf
 
 # engine 二进制不进库也不进 npm 包(见 scripts/publish-vendor-r2.mjs):
