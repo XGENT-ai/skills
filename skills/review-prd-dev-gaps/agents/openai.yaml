@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD 开发差异核查"
+  short_description: "核对 PRD、完成计划与实际交付，分流遗漏、合理变更和用户决策，按需生成 gaps plan"
+  default_prompt: "使用 $review-prd-dev-gaps 核对指定 PRD 与已完成开发计划，追读里程碑记录并核实实际实现，保存三类差异报告；交互确认需 Triage 的差异，有 follow-up 时调用 dev-plan 创建 gaps plan。"

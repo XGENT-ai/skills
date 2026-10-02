@@ -1,0 +1,4 @@
+interface:
+  display_name: "落实代码评审"
+  short_description: "结合开发计划逐条核实代码评审，修复合理问题、验证结果并回写实现记录"
+  default_prompt: "使用 $apply-code-review，根据指定开发计划和代码评审报告逐条核实并修复合理问题，验证结果，更新对应实现记录及必要进度，汇报处置、证据和剩余缺口。"

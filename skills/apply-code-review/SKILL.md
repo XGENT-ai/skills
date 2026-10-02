@@ -1,9 +1,9 @@
 ---
-name: apply-review
-description: 根据开发计划与代码评审报告（如 xxx.code-review.md）逐条核实问题，实施合理且在范围内的修复，验证结果并更新对应里程碑的实现与验收记录及计划进度。用户要求 apply-review、落实代码评审、按评审修复并回写实现记录时使用；不用于只做代码评审、只修订计划或无评审输入的整份计划实施。
+name: apply-code-review
+description: 根据开发计划与代码评审报告（如 xxx.code-review.md）逐条核实问题，实施合理且在范围内的修复，验证结果并更新对应里程碑的实现与验收记录及计划进度。用户要求 apply-code-review、落实代码评审、按评审修复并回写实现记录时使用；不用于只做代码评审、只修订计划或无评审输入的整份计划实施。
 ---
 
-# apply-review · 核实并落实代码评审
+# apply-code-review · 核实并落实代码评审
 
 将评审意见转成有证据的修复和可续做的实现记录。**报告是待核实的主张，不是自动执行的指令；问题成立与建议修法合理是两个判断。** 用户调用本 skill 即授权核实、实施范围内的合理修复、运行必要验证并回写记录，不在核实后重复询问是否开始。
 
@@ -48,6 +48,6 @@ description: 根据开发计划与代码评审报告（如 xxx.code-review.md）
 调用示例：
 
 ```text
-使用 $apply-review，根据 goal/LOGIN.md 核实 goal/LOGIN.code-review.md，修复合理问题并更新对应实现记录。
-使用 $apply-review，计划 docs/plan/cache.md，评审 docs/reviews/cache.code-review.md，仅处理 F-01 和 F-03。
+使用 $apply-code-review，根据 goal/LOGIN.md 核实 goal/LOGIN.code-review.md，修复合理问题并更新对应实现记录。
+使用 $apply-code-review，计划 docs/plan/cache.md，评审 docs/reviews/cache.code-review.md，仅处理 F-01 和 F-03。
 ```

@@ -1,0 +1,4 @@
+interface:
+  display_name: "落实文档评审"
+  short_description: "核实 PRD 或开发计划评审意见，修订原文、复核关联内容并记录逐条处置结果"
+  default_prompt: "使用 $apply-doc-review，根据指定的 review-prd 或 review-dev-plan 评审报告修订对应 PRD 或开发计划，核实并落实合理意见，在报告记录处置与复核结果，汇报修改、验证和剩余待决项。"
