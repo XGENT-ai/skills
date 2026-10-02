@@ -4,7 +4,7 @@ XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cu
 
 ## 安装
 
-列出并选择安装公开的 skills (`xgent-init` 由下方的 `install` 按需安装,不在此列表中):
+列出并选择安装公开的 skills (`xgent-init` 是内部初始化 skill,不在默认列表中):
 
 ```bash
 npx skills add XGENT-ai/skills
@@ -18,7 +18,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## Claude Code 辅助工具
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,并装上随包 vendor 的 [impeccable](#vendor-的-impeccable):
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包 vendor 的 [impeccable](#vendor-的-impeccable),并可选创建通用的 `AGENTS.md`:
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -30,16 +30,22 @@ npx @xgent-ai/skills install
 | 选项 | 说明 |
 | --- | --- |
 | `--no-impeccable` | 跳过 impeccable,仍安装 XGENT 的 hooks 与 settings |
-| `--xgent-init` | 安装 portal 的 init skill (`xgent-init`),不再询问 |
-| `--no-xgent-init` | 跳过 portal 的 init skill,不再询问 |
-| `--providers=a,b` | 指定 impeccable 与 `xgent-init` 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
-| `--force` | 强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 `.bak`) |
+| `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
+| `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
+| `--providers=a,b` | 指定 impeccable 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
+| `--force` | 强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 `.bak`);不覆盖已有 `AGENTS.md` |
 
 安装是幂等的:hook 文件与 skill 目录按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并,impeccable 的 hook 按标记剔旧再合并,项目自己的 hook 与其他配置都保持不动。
 
-`install` 会询问是否同时安装 portal 的 init skill [xgent-init](skills/xgent-init/SKILL.md),输入 `y` 或 `yes` 确认,回车默认跳过。确认后从 npm 包安装完整的 skill、模板与检查脚本,目标目录与 impeccable 共用 `--providers` 和目录探测规则。非交互环境默认跳过,可用 `--xgent-init` 显式安装,或用 `--no-xgent-init` 跳过询问。
+`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文,包括使用 `--force` 时。
 
-安装完成后,在 Agent 对话中使用 `xgent-init` 生成出仓 App 仓库的 `CLAUDE.md` / `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`;`install` 本身不生成这些文档。`xgent-init` 不会出现在 `npx skills add XGENT-ai/skills` 的默认技能列表中。
+非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
+
+Portal 的产品和设计规范仍保留在 [PRODUCT 模板](skills/xgent-init/references/external-app-PRODUCT.template.md) 与 [DESIGN 模板](skills/xgent-init/references/external-app-DESIGN.template.md) 中。需要生成项目上下文时,显式安装并在 Agent 对话中使用 [xgent-init](skills/xgent-init/SKILL.md),它读取清单与代码事实,补齐 PRODUCT.md / DESIGN.md (无前端的 service 型不新生成 DESIGN.md),已有文件保留:
+
+```bash
+npx skills add XGENT-ai/skills --skill xgent-init
+```
 
 ## vendor 的 impeccable
 
@@ -138,7 +144,7 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 | Skill | 说明 |
 | --- | --- |
-| [xgent-init](skills/xgent-init/SKILL.md) | 由 `npx @xgent-ai/skills install` 确认后安装,不在 `skills add` 默认列表中;在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
+| [xgent-init](skills/xgent-init/SKILL.md) | 内部初始化 skill,补齐 `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`,保留 Portal 产品边界与设计规范;`install` 仅直接创建 AGENTS.md |
 | [portal-dev-setup](skills/portal-dev-setup/SKILL.md) | 在 App 仓库中启动、体检和排查 Docker 一盒门户，完成本地联调 |
 | [portal-external-app](skills/portal-external-app/SKILL.md) | 接入以 Docker 镜像交付的外部服务，核对 manifest、注册、路由、权限与交付契约 |
 | [portal-micro-app](skills/portal-micro-app/SKILL.md) | 开发嵌入门户的微应用前端，处理 SDK 握手、导航、授权与 iframe 交互 |

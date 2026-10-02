@@ -18,7 +18,7 @@ const VENDOR_DIR = path.join(PKG_ROOT, 'vendor', 'impeccable');
 const BUNDLE_DIR = path.join(VENDOR_DIR, 'bundle');
 const BLOBS_DIR = path.join(BUNDLE_DIR, 'blobs');
 const MANIFEST_FILE = path.join(BUNDLE_DIR, 'manifest.json');
-const XGENT_INIT_DIR = path.join(PKG_ROOT, 'skills', 'xgent-init');
+const AGENTS_TEMPLATE = path.join(PKG_ROOT, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -503,9 +503,9 @@ function installImpeccable(targetDir, options) {
 
 // ─── install ────────────────────────────────────────────────────────────────
 
-async function confirmXgentInit() {
+async function confirmAgents() {
   if (!process.stdin.isTTY) {
-    console.log('  跳过  portal 的 init skill (xgent-init):非交互环境,可加 --xgent-init 安装');
+    console.log('  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建');
     return false;
   }
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -515,29 +515,22 @@ async function confirmXgentInit() {
       rl.close();
       process.exit(130);
     });
-    rl.question('是否同时安装 portal 的 init skill (xgent-init)? [y/N] ', (answer) => {
+    rl.question('是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ', (answer) => {
       resolve(/^(y|yes)$/i.test(answer.trim()));
       rl.close();
     });
   });
 }
 
-function installXgentInit(targetDir, providers, force) {
-  const entries = listFilesRecursive(XGENT_INIT_DIR)
-    .map((rel) => [rel, sha256(fs.readFileSync(path.join(XGENT_INIT_DIR, rel)))]);
-  for (const provider of providers) {
-    const dest = path.join(targetDir, provider, 'skills', 'xgent-init');
-    if (!force && treeMatchesStore(dest, entries)) {
-      console.log(`  未变  ${provider}/skills/xgent-init`);
-      continue;
-    }
-    const status = fs.existsSync(dest) ? '更新' : '安装';
-    fs.rmSync(dest, { recursive: true, force: true });
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.cpSync(XGENT_INIT_DIR, dest, { recursive: true });
-    console.log(`  ${status}  ${provider}/skills/xgent-init`);
+function createAgents(targetDir) {
+  const dest = path.join(targetDir, 'AGENTS.md');
+  try {
+    fs.copyFileSync(AGENTS_TEMPLATE, dest, fs.constants.COPYFILE_EXCL);
+    console.log('  创建  AGENTS.md');
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    console.log('  跳过  AGENTS.md (已存在,保留原文)');
   }
-  console.log('  提示  在 agent 对话里使用 xgent-init 初始化 portal App 的项目文档');
 }
 
 function usage() {
@@ -547,16 +540,17 @@ function usage() {
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并装上
                   vendor 的 impeccable(skills + hooks,以及按需下载的
-                  engine 二进制),并询问是否安装 portal 的 init skill
+                  engine 二进制),并询问是否创建通用的 AGENTS.md
   help            显示本帮助
 
 install 选项:
   --no-impeccable       跳过 impeccable,仍安装 XGENT 的 hooks 与 settings
-  --xgent-init          安装 portal 的 init skill (xgent-init),不再询问
-  --no-xgent-init       跳过 portal 的 init skill,不再询问
-  --providers=a,b       指定 impeccable 与 xgent-init 装进哪些 harness 目录(默认按项目里
+  --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
+  --no-xgent-init       跳过 AGENTS.md,不再询问
+  --providers=a,b       指定 impeccable 装进哪些 harness 目录(默认按项目里
                         已有的目录判断,都没有时装 ${DEFAULT_TARGETS.join(' 和 ')})
-  --force               强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 .bak)
+  --force               强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 .bak),
+                        不覆盖已有 AGENTS.md
 `);
 }
 
@@ -586,8 +580,9 @@ async function install(args) {
   }
 
   options.detected = detectProviders(targetDir);
-  const xgentInit = flags.includes('--xgent-init') || (!flags.includes('--no-xgent-init') && await confirmXgentInit());
-  const initProviders = xgentInit ? resolveProviders(options.detected, options.providers) : [];
+  if (options.providers) resolveProviders(options.detected, options.providers);
+  const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
+  const agents = flags.includes('--xgent-init') || (!flags.includes('--no-xgent-init') && !agentsExists && await confirmAgents());
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -628,7 +623,8 @@ async function install(args) {
     console.log('  提示  在 agent 对话里(不是终端)输入 /impeccable init 完成 impeccable 的设计上下文');
   }
 
-  if (xgentInit) installXgentInit(targetDir, initProviders, options.force);
+  if (agents) createAgents(targetDir);
+  else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
   console.log(`完成: ${targetDir}`);
 }
 

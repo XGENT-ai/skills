@@ -13,7 +13,6 @@
 import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const KEY_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/; // 与门户逐字一致
 const CJK_RE = /[\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]/; // 中日韩标点与汉字
 
 const errs = [];
@@ -46,14 +45,13 @@ const h2 = (src) =>
     .filter((l) => l.startsWith("## "))
     .map((l) => l.slice(3).trim());
 
-/* ── 0. 三份文件（AGENTS.md 是 CLAUDE.md 的镜像，见 §5） ──────────── */
+/* ── 0. AGENTS.md / PRODUCT.md / DESIGN.md ──────────── */
 
-const claude = read("CLAUDE.md");
 const product = read("PRODUCT.md");
 const design = read("DESIGN.md");
 const agents = read("AGENTS.md");
 
-if (!claude) err("CLAUDE.md 不存在");
+if (!agents) err("AGENTS.md 不存在");
 if (!product) err("PRODUCT.md 不存在");
 
 let manifest = null;
@@ -74,7 +72,7 @@ for (const p of MANIFEST_GUESSES) {
   }
   break;
 }
-if (!manifest) warn(`没找到 app.manifest.json（试过 ${MANIFEST_GUESSES.join(" ")}）—— key / type / 身份色无法交叉核对`);
+if (!manifest) warn(`没找到 app.manifest.json（试过 ${MANIFEST_GUESSES.join(" ")}）—— type / 身份色无法交叉核对`);
 
 /* ── 1. 残留占位（三份文件通查） ─────────────────────────────────
    R-5：生成完就能直接用，不留任何「还要手工编辑」的痕迹。 */
@@ -91,10 +89,10 @@ const RESIDUE = [
   ["本 App 有租户级可维护的枚举/分类表时", "小节标题里的模板条件没去掉"],
 ];
 
-/** CLAUDE.md 正文本来就有的两个方括号（Goal-Driven Execution 的示例）。 */
+/** AGENTS.md 正文本来就有的两个方括号（Goal-Driven Execution 的示例）。 */
 const BRACKET_OK = new Set(["步骤", "检查点"]);
 
-for (const [name, src] of [["CLAUDE.md", claude], ["PRODUCT.md", product], ["DESIGN.md", design]]) {
+for (const [name, src] of [["AGENTS.md", agents], ["PRODUCT.md", product], ["DESIGN.md", design]]) {
   if (!src) continue;
   for (const [token, why] of RESIDUE) {
     if (src.includes(token)) err(`${name} 残留 ${JSON.stringify(token)}：${why}`);
@@ -105,7 +103,7 @@ for (const [name, src] of [["CLAUDE.md", claude], ["PRODUCT.md", product], ["DES
     if (next === "(" || next === "[") continue;
     const inner = m[1].trim();
     if (!CJK_RE.test(inner)) continue;
-    if (name === "CLAUDE.md" && BRACKET_OK.has(inner)) continue;
+    if (name === "AGENTS.md" && BRACKET_OK.has(inner)) continue;
     err(`${name} 残留占位 ${JSON.stringify(m[0].slice(0, 40))}：方括号槽位没填`);
   }
   // C-6：门户仓的文档目标仓访问不到，别在生成的文件里引它的路径。
@@ -151,73 +149,19 @@ if (product) {
   }
 }
 
-/* ── 3. CLAUDE.md：key / type / PREFIX / 按形态裁剪 ─────────────── */
+/* ── 3. AGENTS.md：独立通用规范，形态从 manifest 读取 ─────────── */
 
-const MICRO_SECTIONS = ["### 前端 UI 开发：", "### 前端：版头归门户", "### 下拉框：", "### App 图标："];
-const UI_WORKFLOW_MARKERS = [
-  "npx impeccable install",
-  "mcp__claude-in-chrome__*",
-  "kimi-webbridge",
-  "playwright",
-  "未在浏览器中验证",
-];
-const DICT_SECTION = "### 字典表统一带"; // micro 型也可按需删，只在 service 型断言不存在
-
-let type = null;
-let key = null;
-
-if (claude) {
-  const t = claude.match(/type:\s*(micro|service)\b/);
-  if (!t) err("CLAUDE.md 找不到 `type: micro` 或 `type: service`（Project Conventions 首句里的形态声明）");
-  else {
-    type = t[1];
-    ok(`CLAUDE.md type = ${type}`);
-  }
-
-  const line = claude.split("\n").find((l) => l.includes("本仓交付的是"));
-  const k = line?.match(/`([^`]+)`/);
-  if (!k) err("CLAUDE.md 找不到 Project Conventions 首句（`本仓交付的是 … App：\\`<key>\\`…`），无法核对 key");
-  else if (!KEY_RE.test(k[1])) err(`CLAUDE.md 里的 key \`${k[1]}\` 不合法，必须匹配 ${KEY_RE}`);
-  else {
-    key = k[1];
-    ok(`CLAUDE.md key = ${key}`);
-  }
-
-  if (key) {
-    const expect = key.toUpperCase().replace(/-/g, "_");
-    const sa = claude.match(/([A-Z0-9_]+)_SA_CLIENT_SECRET/);
-    if (!sa) err("CLAUDE.md 找不到 `<PREFIX>_SA_CLIENT_SECRET`（服务账号密钥那条）");
-    else if (sa[1] !== expect) err(`CLAUDE.md 的 ${sa[1]}_SA_CLIENT_SECRET 与 key \`${key}\` 不一致，应为 ${expect}_SA_CLIENT_SECRET（key 大写、连字符换下划线）`);
-    else ok(`CLAUDE.md PREFIX = ${expect}`);
-  }
-
-  if (type === "service") {
-    for (const s of [...MICRO_SECTIONS, DICT_SECTION]) {
-      if (claude.includes(s)) err(`CLAUDE.md 是 service 型（无前端），应删掉 \`${s}…\` 这一节`);
-    }
-    for (const s of ["DESIGN.md", "impeccable"]) {
-      if (claude.includes(s)) err(`CLAUDE.md 是 service 型，## Design Context 里不该再提 ${s}`);
-    }
-  } else if (type === "micro") {
-    for (const s of MICRO_SECTIONS) {
-      if (!claude.includes(s)) err(`CLAUDE.md 是 micro 型，缺 \`${s}…\` 这一节`);
-    }
-    for (const marker of UI_WORKFLOW_MARKERS) {
-      if (!claude.includes(marker)) err(`CLAUDE.md 是 micro 型，前端 UI 两步法缺少 \`${marker}\``);
-    }
-  }
-
-  if (key && manifest?.listingKey && manifest.listingKey !== key) {
-    err(`CLAUDE.md 的 key \`${key}\` 与 manifest.listingKey \`${manifest.listingKey}\` 不一致`);
-  }
-  if (type && manifest?.type && manifest.type !== type) {
-    err(`CLAUDE.md 的 type \`${type}\` 与 manifest.type \`${manifest.type}\` 不一致`);
-  }
+if (agents) {
+  const head = agents.split("\n")[0];
+  if (head !== "# AGENTS.md") err(`AGENTS.md 第 1 行应是 \`# AGENTS.md\`，实际：${JSON.stringify(head.slice(0, 40))}`);
+  else ok("AGENTS.md 标题正确");
 }
+
+const type = manifest?.type;
 
 /* ── 4. DESIGN.md：存在性随形态；frontmatter + 六段 ─────────────── */
 
-if (type === "service" && design) err("service 型（无前端）不需要 DESIGN.md，请删掉");
+if (type === "service" && design) warn("service 型（无前端）不新生成 DESIGN.md；已有文档保留");
 if (type === "micro" && !design) err("micro 型缺 DESIGN.md");
 
 const DESIGN_H2 = ["1. Overview", "2. Colors", "3. Typography", "4. Elevation", "5. Components", "6. Do's and Don'ts"];
@@ -277,22 +221,6 @@ if (design) {
   ]) {
     if (!design.includes(token)) err(`DESIGN.md 里 \`${token}\`（${why}）被改掉了 —— 它不是槽位，请改回来`);
   }
-}
-
-/* ── 5. AGENTS.md：CLAUDE.md 的镜像 ───────────────────────────────
-   读 AGENTS.md 的工具（Codex / Cursor / pi）也要看到同一套约定；两份不同步
-   就是同一个仓里摆着两处互相矛盾的规范。 */
-
-if (!agents) {
-  err("AGENTS.md 不存在 —— 它必须是 CLAUDE.md 的镜像（除第 1 行标题外逐字相同）");
-} else if (claude) {
-  const head = agents.split("\n")[0];
-  if (head !== "# AGENTS.md") {
-    err(`AGENTS.md 第 1 行应是 \`# AGENTS.md\`，实际：${JSON.stringify(head.slice(0, 40))}`);
-  }
-  const body = (src) => src.split("\n").slice(1).join("\n");
-  if (body(agents) === body(claude)) ok("AGENTS.md 与 CLAUDE.md 除首行外逐字一致");
-  else err("AGENTS.md 与 CLAUDE.md 正文不一致 —— 两份是同一套约定的镜像，只有第 1 行标题该不同；改一份就同步另一份");
 }
 
 /* ── 输出 ───────────────────────────────────────────────────────── */

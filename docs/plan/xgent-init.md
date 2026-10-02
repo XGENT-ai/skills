@@ -2,7 +2,7 @@
 
 > **计划状态：历史方案，安装入口已调整**
 >
-> 2026-10-02 更新：本轮需求已取代下文关于 `install` 零提问、只提示手动安装 skill 的约定。现在 `install` 询问是否安装 portal 的 `xgent-init`，确认后一起安装；`xgent-init` 通过 `metadata.internal: true` 从 `npx skills add XGENT-ai/skills` 默认列表隐藏。下文保留原设计记录，当前安装行为以仓根 README 和 `bin/xgent-skills.js` 为准。
+> 2026-10-02 更新：当前需求已调整下文的安装入口与 Agent 规范。`install` 保留 hooks/settings/impeccable 安装，原可选 init 步骤改为确认后直接创建通用 `AGENTS.md`；不安装 `xgent-init` skill，不生成其他文档，已有 `AGENTS.md` 不覆盖。模板不含待填占位，包含 Portal onebox 联调与前端浏览器验收约定，适用于不同 coding agent。`xgent-init` 继续生成 PRODUCT.md / DESIGN.md，保留其中的 Portal 产品边界与设计规范、填写指南和结构检查；AGENTS.md 使用独立通用模板，不再生成 CLAUDE.md 或要求镜像一致。下文仅保留历史设计记录；当前行为以仓根 README、`bin/xgent-skills.js` 和 `skills/xgent-init/SKILL.md` 为准。
 >
 > 调查基线：2026-09-02 · commit `a1fc6d9` · clean。
 > 已读取规则：`CLAUDE.md`（仓根：Think Before Coding / Simplicity First / Surgical Changes / Goal-Driven Execution）。

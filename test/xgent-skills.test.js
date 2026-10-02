@@ -9,7 +9,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const cli = path.join(root, 'bin', 'xgent-skills.js');
-const source = path.join(root, 'skills', 'xgent-init');
+const template = path.join(root, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
 
 function project(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'xgent-install-'));
@@ -25,49 +25,46 @@ function run(dir, flags = [], input) {
   });
 }
 
-function snapshot(dir) {
-  return Object.fromEntries(fs.readdirSync(dir, { withFileTypes: true }).map((entry) => {
-    const file = path.join(dir, entry.name);
-    return [entry.name, entry.isDirectory() ? snapshot(file) : fs.readFileSync(file, 'utf8')];
-  }));
-}
-
-function installed(dir, provider = '.claude') {
-  return path.join(dir, provider, 'skills', 'xgent-init');
+function assertAgents(dir) {
+  assert.equal(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'), fs.readFileSync(template, 'utf8'));
+  for (const name of ['CLAUDE.md', 'PRODUCT.md', 'DESIGN.md']) {
+    assert.equal(fs.existsSync(path.join(dir, name)), false);
+  }
+  for (const provider of ['.claude', '.cursor', '.agents']) {
+    assert.equal(fs.existsSync(path.join(dir, provider, 'skills', 'xgent-init')), false);
+  }
 }
 
 for (const answer of ['y\n', ' YES \n']) {
-  test(`confirmation ${JSON.stringify(answer)} installs the complete skill`, (t) => {
+  test(`confirmation ${JSON.stringify(answer)} creates only AGENTS.md alongside hooks`, (t) => {
     const dir = project(t);
     const result = run(dir, [], answer);
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /\[y\/N\]/);
-    assert.deepEqual(snapshot(installed(dir)), snapshot(source));
-    for (const name of ['CLAUDE.md', 'AGENTS.md', 'PRODUCT.md', 'DESIGN.md']) {
-      assert.equal(fs.existsSync(path.join(dir, name)), false);
-    }
-  });
-}
-
-for (const answer of ['n\n', '\n', 'maybe\n', '']) {
-  test(`answer ${JSON.stringify(answer)} skips the skill and still installs hooks`, (t) => {
-    const dir = project(t);
-    const result = run(dir, [], answer);
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(fs.existsSync(installed(dir)), false);
+    assertAgents(dir);
     assert.ok(fs.existsSync(path.join(dir, '.claude', 'hooks', 'xgent-statusline.js')));
   });
 }
 
-test('non-interactive install skips the skill without waiting for input', (t) => {
+for (const answer of ['n\n', '\n', 'maybe\n', '']) {
+  test(`answer ${JSON.stringify(answer)} skips AGENTS.md and still installs hooks`, (t) => {
+    const dir = project(t);
+    const result = run(dir, [], answer);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.existsSync(path.join(dir, 'AGENTS.md')), false);
+    assert.ok(fs.existsSync(path.join(dir, '.claude', 'hooks', 'xgent-statusline.js')));
+  });
+}
+
+test('non-interactive install skips AGENTS.md without waiting for input', (t) => {
   const dir = project(t);
   const result = run(dir);
   assert.equal(result.status, 0, result.stderr);
   assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-  assert.equal(fs.existsSync(installed(dir)), false);
+  assert.equal(fs.existsSync(path.join(dir, 'AGENTS.md')), false);
 });
 
-test('explicit installation respects providers, preserves settings and is idempotent', (t) => {
+test('explicit creation is independent of providers, preserves settings and is idempotent', (t) => {
   const dir = project(t);
   fs.mkdirSync(path.join(dir, '.claude'));
   const settings = path.join(dir, '.claude', 'settings.json');
@@ -76,40 +73,42 @@ test('explicit installation respects providers, preserves settings and is idempo
   const first = run(dir, flags);
   assert.equal(first.status, 0, first.stderr);
   assert.doesNotMatch(first.stdout, /\[y\/N\]/);
-  for (const provider of ['.claude', '.cursor', '.agents']) {
-    assert.deepEqual(snapshot(installed(dir, provider)), snapshot(source));
-  }
+  assertAgents(dir);
   assert.deepEqual(JSON.parse(fs.readFileSync(settings)).env, { PROJECT_SETTING: 'preserve' });
-  const skillFile = path.join(installed(dir), 'SKILL.md');
-  fs.utimesSync(skillFile, 1000, 1000);
+  const agents = path.join(dir, 'AGENTS.md');
+  fs.utimesSync(agents, 1000, 1000);
   const second = run(dir, flags);
   assert.equal(second.status, 0, second.stderr);
-  assert.equal(fs.statSync(skillFile).mtimeMs, 1000000);
-
-  fs.writeFileSync(skillFile, 'old version');
-  fs.writeFileSync(path.join(installed(dir), 'obsolete.txt'), 'old resource');
-  const update = run(dir, flags);
-  assert.equal(update.status, 0, update.stderr);
-  assert.deepEqual(snapshot(installed(dir)), snapshot(source));
+  assert.equal(fs.statSync(agents).mtimeMs, 1000000);
+  assertAgents(dir);
 });
 
-test('provider detection uses directories present before creating Claude hooks', (t) => {
+test('existing AGENTS.md is preserved without prompting, even with --force', (t) => {
   const dir = project(t);
-  fs.mkdirSync(path.join(dir, '.cursor'));
-  const result = run(dir, ['--xgent-init']);
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(snapshot(installed(dir, '.cursor')), snapshot(source));
-  assert.equal(fs.existsSync(installed(dir)), false);
+  const agents = path.join(dir, 'AGENTS.md');
+  fs.writeFileSync(agents, 'project conventions');
+  for (const flags of [[], ['--xgent-init'], ['--xgent-init', '--force']]) {
+    const result = run(dir, flags, 'y\n');
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /\[y\/N\]/);
+    assert.equal(fs.readFileSync(agents, 'utf8'), 'project conventions');
+  }
 });
 
-test('explicit skip bypasses the prompt and preserves an existing skill', (t) => {
+test('explicit skip bypasses the prompt and preserves existing documents and skill', (t) => {
   const dir = project(t);
-  fs.mkdirSync(installed(dir), { recursive: true });
-  fs.writeFileSync(path.join(installed(dir), 'SKILL.md'), 'existing skill');
+  const skillDir = path.join(dir, '.cursor', 'skills', 'xgent-init');
+  fs.mkdirSync(skillDir, { recursive: true });
+  const skill = path.join(skillDir, 'SKILL.md');
+  fs.writeFileSync(skill, 'existing skill');
+  const claude = path.join(dir, 'CLAUDE.md');
+  fs.writeFileSync(claude, 'existing Claude instructions');
   const result = run(dir, ['--no-xgent-init'], 'y\n');
   assert.equal(result.status, 0, result.stderr);
   assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-  assert.equal(fs.readFileSync(path.join(installed(dir), 'SKILL.md'), 'utf8'), 'existing skill');
+  assert.equal(fs.existsSync(path.join(dir, 'AGENTS.md')), false);
+  assert.equal(fs.readFileSync(skill, 'utf8'), 'existing skill');
+  assert.equal(fs.readFileSync(claude, 'utf8'), 'existing Claude instructions');
 });
 
 for (const flags of [['--xgent-init', '--no-xgent-init'], ['--xgent-init', '--providers=unknown']]) {

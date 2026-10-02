@@ -2,97 +2,36 @@
 name: xgent-init
 metadata:
   internal: true
-description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套的 CLAUDE.md / PRODUCT.md / DESIGN.md（并镜像出 AGENTS.md）—— 读 app.manifest.json 与代码事实、一次性把缺的问清楚、按模板填出可直接用的三份文档，不留任何待填占位，已存在的文件不覆盖。凡任务是「初始化/接入一个新的出仓 App 仓库」「给这个 App 仓补上 CLAUDE.md / AGENTS.md / PRODUCT.md / DESIGN.md」「补一份 impeccable 能读的设计文档」，或用户刚拿到一个空的/只有代码没有规范的 App 仓时使用；门户 monorepo 内的 App、非 XGENT 项目不用本 skill。Use in an external XGENT portal app's own repo to scaffold its CLAUDE.md / PRODUCT.md / DESIGN.md (AGENTS.md is written as a mirror of CLAUDE.md) from the app manifest and repo facts — one round of questions, no leftover placeholders, never overwrites existing files.
+description: 在 XGENT.ai Portal 出仓 App 自己的仓库里补齐 AGENTS.md / PRODUCT.md / DESIGN.md，保留 Portal 产品边界和设计规范，支持不同 coding agent。用户要求初始化出仓 App 规范、补齐产品或设计上下文时使用；读清单与代码事实，一轮问清缺的信息，已有文件不覆盖。install 本身只直接创建 AGENTS.md。
 ---
 
-# xgent-init · 出仓 App 仓库的三份文档 + AGENTS.md 镜像
+# xgent-init · 出仓 App 的 Agent、产品与设计上下文
 
-**用在 App 自己的 repo 里**（门户代码不在你手上，也不需要在）。产出：
+用在 App 自己的 repo 里。产出：
 
-| 文件 | 谁读它 | `service` 型（无前端） |
+| 文件 | 内容 | `service` 型（无前端） |
 | --- | --- | --- |
-| `CLAUDE.md` | 每次开工的 agent（Claude Code） | 生成，删掉前端五节 |
-| `AGENTS.md` | 读 `AGENTS.md` 的 agent（Codex / Cursor / pi） | 生成，`CLAUDE.md` 的镜像 |
-| `PRODUCT.md` | `impeccable` skill 每条子命令开工前 | 生成 |
-| `DESIGN.md` | `impeccable` skill、任何 UI 工作 | **不生成** |
+| `AGENTS.md` | 通用编码准则、onebox 联调、前端浏览器验收 | 生成，前端约定按适用条件执行 |
+| `PRODUCT.md` | 产品上下文与 Portal 已提供的能力边界 | 生成 |
+| `DESIGN.md` | Portal 色彩、字体、组件、主题与 iframe 设计规范 | 不新生成，已有文件保留 |
 
-`AGENTS.md` 不是独立文档：正文与 `CLAUDE.md` 逐字相同，只有第 1 行标题不同。改任一份都要同步另一份，`check-docs.mjs` 会核对。
+`AGENTS.md` 是独立的通用规范，直接使用 [references/external-app-AGENTS.template.md](references/external-app-AGENTS.template.md)，没有需要填写的 App 身份或启动命令占位，不生成或镜像 `CLAUDE.md`。
 
-模板在 `references/`，槽位规则在 [references/fill-guide.md](references/fill-guide.md)，结构检查在 `scripts/check-docs.mjs`。
-**平台契约不在本 skill 里**：口径以目标仓已装的 `portal-external-app` / `portal-micro-app` / `xgent-app-release` / `xgent-image-push` / `portal-dev-setup` / `portal-app-exchange` 为准，模板正文已经引用它们，不要在这里或生成的文件里复述一遍。
+`PRODUCT.md` 与 `DESIGN.md` 分别使用 [references/external-app-PRODUCT.template.md](references/external-app-PRODUCT.template.md) 和 [references/external-app-DESIGN.template.md](references/external-app-DESIGN.template.md)。填槽位前读 [references/fill-guide.md](references/fill-guide.md)，保留模板里的 Portal 产品边界与设计规范，不替换成通用设计建议。
 
-## 红线
+`install` 保留 hooks / impeccable 安装，可选步骤直接创建仓根 `AGENTS.md`，不安装本 skill，也不生成产品和设计文档。需要补齐这些文档时显式安装并使用本 skill；非交互 install 用 `--xgent-init` 创建 AGENTS.md，`--force` 也不覆盖已有文件。
 
-1. **不编造。** 用户、指标、竞品、启动命令、端口 —— 从 manifest 或仓库里读不出来的，只能问，不能猜。
-2. **不覆盖。** 已存在的文件一律跳过。只有用户明确要求更新时才动，且只改指定小节。
-3. **不留占位。** 生成完的文件里不能有 `[方括号]` 槽位、`<!-- 填写指引 -->`、`<APP_KEY>` 这类令牌，也不能有「请根据实际情况补充」这种话。
-4. **不引门户仓路径。** 目标仓访问不到 `apps/…` `packages/…` `docs/…`，要指路就指 skill 名。
-5. **只问一轮。** 把所有缺的合成一次问完，别来回打断。
-6. **脚本不绿不算完成。**
+## 约束
+
+- 不编造用户、指标、竞品、身份色或项目事实。仓库读不到的必要信息合成一轮追问；可选信息缺失就删对应段落，不留占位。
+- 已有文件一律跳过。用户明确要求更新时，只修改指定内容。
+- 平台步骤以 `portal-external-app` / `portal-micro-app` / `portal-dev-setup` / `portal-app-exchange` / `xgent-app-release` / `xgent-image-push` 为准，不引用目标仓访问不到的门户源码路径。
 
 ## 流程
 
-### 1. 前置判定
-
-目标仓有 `app.manifest.json`（根目录，或 `deploy/portal/` `portal-app/` `deploy/` 下），或用户明确说这是一个出仓 App → 继续。
-在门户 monorepo 里 → 停下，指向 `portal-micro-app`；这份 skill 只服务代码不在门户仓的 App。
-
-### 2. 存在性检查
-
-逐份看 `CLAUDE.md` / `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`。
-
-- 该有的都有（`micro` 四份 / `service` 三份）→ **报告「已齐，未写任何文件」并停止**。
-- 部分存在 → 只补缺的那几份，已存在的原样不动。
-- `CLAUDE.md` 与 `AGENTS.md` 只有一份、或两份正文不一致 → 以用户认可的那份为准补齐／对齐另一份；动手前先把要写的内容贴出来确认（红线 2：不覆盖已存在的文件）。
-- 用户明确要求更新某份已存在的文件 → 只改他指名的小节：先把改动后的小节全文贴出来，确认了再写，不整份重写。**改的是 `CLAUDE.md` 或 `AGENTS.md` 时，同一处改动要同步到另一份。**
-
-### 3. 事实采集
-
-按这个顺序，**不许跳级**：
-
-1. **`app.manifest.json`** —— `listingKey`、`name`、`type`、`color`、`tagline`、`desc`、`navItems`、`helpEntry`、`scopes`、`aclManifest`。
-   `name` 两种形状都接受：对象取 `zh-CN`，字符串直接用。
-2. **仓库信号** —— `package.json` 的 scripts 与依赖、`compose*.y*ml`、`Dockerfile`、README、目录结构与路由 / 页面 / 组件命名。
-3. **仍然缺的** —— 进第 4 步问。
-
-边读边填一张「槽位 → 候选值 → 来源」表（槽位清单见 fill-guide.md §1–§2）。`type` 决定 DESIGN.md 生不生成、CLAUDE.md 怎么裁剪。
-
-### 4. 一次批量追问
-
-把仍为空且推不出来的槽位合成**一轮**问题，通常 3–6 个：分条编号、每条给一个默认建议，让用户可以整体回「都按建议」。
-用户跳过的槽位按 fill-guide.md §5 的「删法」处理 —— **删掉那段，不要留空位，也不要编一个**。
-
-### 5. 渲染
-
-以 `references/` 里的模板为骨架，逐槽位填：
-
-- 替换 `<APP_KEY>` / `<APP_NAME>` / `<PREFIX>`（PREFIX = key 大写、`-` 换 `_`，不用问）与 `type: [micro|service]`。
-- 删掉全部 `<!-- 填写指引 -->` 注释，以及 `## Design Context` 里那条讲链接路径的注释。
-- 按 fill-guide.md §5 裁剪可选小节；保留的小节要把标题里的括号条件去掉。
-- `service` 型：删 CLAUDE.md 的「前端 UI 开发」及其后四个前端小节，并把 `## Design Context` 收敛成只指向 PRODUCT.md（不再提 DESIGN.md、impeccable、浏览器验证）。
-- DESIGN.md frontmatter 的 `name` / `description` 用双引号，值里的 `"` 与 `\` 要转义；`app-identity` 用 manifest 的 `color`，hover / dark 按 fill-guide.md §3 推导并在 frontmatter 上方留一行 YAML 注释说明是推导值。
-- **不要动** `Page<T>`、`{colors.x}` 引用、PRODUCT 的七个标题、DESIGN 的六个标题。
-
-### 6. 写入
-
-只写本次缺的文件。`CLAUDE.md` 与 `AGENTS.md` 成对写：同一份正文，只把第 1 行的 `# CLAUDE.md` 换成 `# AGENTS.md`。
-
-### 7. 校验
-
-```bash
-node <本 skill 目录>/scripts/check-docs.mjs <目标仓根>
-```
-
-有 `✗` 就改了重跑，直到退出 0。`!` 是提醒，自己判断要不要处理。
-环境里没有 Node → 照着 fill-guide.md §0 与 §7 逐条人工过一遍，并在报告里写明「未用脚本校验」。
-
-### 8. 报告
-
-一张表列出每个槽位的值与来源（manifest / 仓库信号 / 用户回答 / 模型建议），外加：
-
-- 生成了哪几份文件、跳过了哪几份；
-- 删掉了哪些可选段落（让用户知道少了什么，而不是以为漏了）；
-- `app-identity-hover` / `-dark` 的推导值，一句「可按需调整」；
-- 一句提示：这三份文件的结构是给 `impeccable` 读的，装了 impeccable 的话建议让它读一次确认。
-
-标为「模型建议」的行是给用户纠正用的 —— 用户改口后走第 2 步的小节级更新，不要重跑整个流程。
+1. **判定目标与检查文件。** 确定出仓 App 仓根，读取 `app.manifest.json`（根目录或 `deploy/portal/`、`portal-app/`、`deploy/` 下）；用户明确说明是出仓 App 而缺清单时，追问必要事实。门户 monorepo 内的 App 使用 `portal-micro-app`。检查 AGENTS.md / PRODUCT.md / DESIGN.md，只补缺的；都齐了就报告并停止。
+2. **采集产品与设计事实。** 从 manifest 的 name、type、color、tagline、desc、navItems、scopes、aclManifest，以及 README、页面、路由与组件中收集槽位候选和来源。name 为对象时取 zh-CN，为字符串时直接使用。type 决定是否生成 DESIGN.md。
+3. **一轮追问。** 把仍缺的必要槽位一次问完。用户跳过的可选项按 fill-guide 删除；未确定的必需身份色或产品事实不得猜填。
+4. **渲染。** AGENTS.md 原样复制通用模板。PRODUCT / DESIGN 按指南填槽位并删除填写指引；保留 PRODUCT 的七个二级标题、DESIGN 的六个二级标题与 YAML frontmatter。身份色使用 manifest 的 color，hover / dark 推导值注明来源。保留 `Page<T>` 与 `{colors.app-identity}` 等类型和 token 引用。service 型不新生成 DESIGN.md，PRODUCT 中的设计文档指引改为仅在有前端时适用。
+5. **写入并校验。** 只创建缺的文件，不触碰已有文档；运行 `node <本 skill 目录>/scripts/check-docs.mjs <目标仓根>`。修复本次生成文件的错误后重跑；已有文件的问题仅报告，不自行覆盖。没有 Node 时按指南人工检查并说明未用脚本校验。
+6. **报告。** 列出创建与跳过的文件、槽位值和来源、删除的可选段落，以及身份色推导值。说明尚未完成的校验或缺失信息。
