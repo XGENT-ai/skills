@@ -1,11 +1,113 @@
 {
   "version": 1,
   "skills": {
+    "agi-mode": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/agi-mode/SKILL.md",
+      "computedHash": "0a43a89d85c1fd0876aa45a820d9dafbcf0a15019321e0173904e6d60a299b93"
+    },
+    "archify": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/archify/SKILL.md",
+      "computedHash": "2dafa540bb19ed1d2ea032b071b4f617036d5166b3575a24545bd626e3d8e499"
+    },
+    "architect": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/architect/SKILL.md",
+      "computedHash": "c7619bafeba97908514dc9176d481e25e5daa9feab5806a1138c17eb1a37cc7f"
+    },
+    "arena": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/arena/SKILL.md",
+      "computedHash": "fd31ca75cff41b52120e69a4d1e3c0b79853cec71812d09995cd9e4d47ebfe5b"
+    },
+    "automate-me": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/automate-me/SKILL.md",
+      "computedHash": "08b9c387f2a3da3faa0ba0a3519292a6025ef1f1b3a48273e451f84688142ede"
+    },
+    "autoresearch": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/autoresearch/SKILL.md",
+      "computedHash": "53fa6677667897bc82b615c4757dde5831ec92077d0bef0250336f49f2a34832"
+    },
     "dev-plan": {
       "source": "XGENT-ai/skills",
       "sourceType": "github",
       "skillPath": "skills/dev-plan/SKILL.md",
       "computedHash": "a069662779bed8f75af9be0e478a7ca0abb09c782ef0f1ce46818815c36add7d"
+    },
+    "documentation-writer": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/documentation-writer/SKILL.md",
+      "computedHash": "b45862e359e04c62a62093fd42f4f2fd80b3c9fca103a60f3f095c2889f7e98c"
+    },
+    "elintp": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/elintp/SKILL.md",
+      "computedHash": "168fd6ef8b17d70cb1562c4edc300782724d7485dd727e26700aa5e5a0a77a38"
+    },
+    "figure-it-out": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/figure-it-out/SKILL.md",
+      "computedHash": "51198a82ceca004899526f906781783c6b76314dd50b063e68b771b0d042e5a6"
+    },
+    "gdpr-compliant": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/gdpr-compliant/SKILL.md",
+      "computedHash": "bbb381d78fe3c0dedbf6e524770344aafbedd9d73e06cb1ab322d0efd9360315"
+    },
+    "how": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/how/SKILL.md",
+      "computedHash": "a81bf6a7aec190f01acf26df059899fc7bf655fa3e6873ee7449e7e802c47144"
+    },
+    "humanize-writing": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/humanize-writing/SKILL.md",
+      "computedHash": "335a8c87eea589c296826478b4c42770a55d5088db9a3817a28d0469545df3af"
+    },
+    "pardon": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pardon/SKILL.md",
+      "computedHash": "c22f56d27f6c7fdef8f1e1a77d22ba93c5c40f7f03628b1ece64a01e0a9dd6e3"
+    },
+    "reflect": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/reflect/SKILL.md",
+      "computedHash": "23d6b1511c80d7b9dc720aba30876ad92d810b7f423e5ef359fdc34d829f545b"
+    },
+    "summarize": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/summarize/SKILL.md",
+      "computedHash": "d7f62fd20655f852550f86215d3d3894e49116505ee7d140bfbced363ffe214e"
+    },
+    "teach": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/teach/SKILL.md",
+      "computedHash": "371a2a40807cc1c0611d50b8170b2395f9c0297f7eb475e071018e12aa766bc5"
+    },
+    "why": {
+      "source": "XGENT-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/why/SKILL.md",
+      "computedHash": "0e1f6acfce6fc2c54f059b16d1e2273639f59f828b59c57a6644f895c22d68b2"
     }
   }
 }
