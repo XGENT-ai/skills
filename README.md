@@ -91,6 +91,8 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 根据 PRD 或开发计划评审报告修订原文，复核关联内容并记录逐条处置结果 |
 
+把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
+
 ### 开发、调试与质量
 
 | Skill | 说明 |

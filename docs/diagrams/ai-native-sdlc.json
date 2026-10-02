@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AI Native SDLC 全流程",
+    "locale": "zh-CN",
+    "output": "docs/diagrams/ai-native-sdlc.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "req", "label": "需求线" },
+    { "id": "dev", "label": "开发线（每期）" },
+    { "id": "test", "label": "测试线（并行）" }
+  ],
+  "phases": [
+    { "id": "p_req", "label": "需求", "fromCol": 0, "toCol": 1 },
+    { "id": "p_plan", "label": "计划", "fromCol": 2, "toCol": 2 },
+    { "id": "p_exec", "label": "实施与验收", "fromCol": 3, "toCol": 5, "variant": "emphasis" }
+  ],
+  "mainPath": ["idea", "prd_final", "phasing", "plan_final", "exec", "code_review", "gaps", "delivered"],
+  "semanticChecks": {
+    "allowedRoots": ["idea"],
+    "allowedTerminals": ["delivered", "test_result"],
+    "requiredPaths": [
+      { "from": "plan_final", "to": "test_result" }
+    ]
+  },
+  "nodes": [
+    { "id": "idea", "lane": "req", "col": 0, "type": "external", "label": "想法" },
+    { "id": "prd_final", "lane": "req", "col": 1, "type": "frontend", "label": "PRD 定稿", "sublabel": "prd · 评审修订 · summarize", "width": 190 },
+    { "id": "phasing", "lane": "req", "col": 2, "type": "backend", "label": "按 PRD 分期", "sublabel": "逐期进入开发", "width": 130 },
+    { "id": "plan_final", "lane": "dev", "col": 2, "type": "frontend", "label": "开发计划定稿", "sublabel": "dev-plan · 评审修订", "width": 160 },
+    { "id": "exec", "lane": "dev", "col": 3, "type": "cloud", "label": "按计划执行", "sublabel": "goal mode（agent 内建）", "width": 170 },
+    { "id": "code_review", "lane": "dev", "col": 4, "type": "security", "label": "代码评审与修复", "sublabel": "review-code · apply-code-review", "width": 200 },
+    { "id": "gaps", "lane": "dev", "col": 5, "type": "security", "label": "PRD 覆盖核对", "sublabel": "review-prd-dev-gaps · Triage", "width": 200 },
+    { "id": "delivered", "lane": "req", "col": 5, "type": "external", "label": "本期交付", "sublabel": "进入下一期" },
+    { "id": "test_plan", "lane": "test", "col": 3, "type": "frontend", "label": "测试计划", "sublabel": "test-plan · 评审环节待增加", "tag": "待补", "width": 190 },
+    { "id": "test_run", "lane": "test", "col": 4, "type": "backend", "label": "test run", "sublabel": "开发补全后跑对应 test suite", "width": 190 },
+    { "id": "test_result", "lane": "test", "col": 5, "type": "external", "label": "全绿通过", "sublabel": "否则登记 issues", "width": 130 }
+  ],
+  "edges": [
+    { "from": "idea", "to": "prd_final" },
+    { "from": "prd_final", "to": "phasing" },
+    { "from": "phasing", "to": "plan_final", "label": "每期" },
+    { "from": "plan_final", "to": "exec" },
+    { "from": "exec", "to": "code_review" },
+    { "from": "code_review", "to": "gaps" },
+    { "from": "gaps", "to": "delivered", "label": "无 gaps", "variant": "emphasis" },
+    { "from": "gaps", "to": "exec", "label": "有 gaps：dev-plan 补全", "variant": "dashed", "role": "return" },
+    { "from": "plan_final", "to": "test_plan", "label": "计划定稿后启动", "role": "branch" },
+    { "from": "test_plan", "to": "test_run" },
+    { "from": "test_run", "to": "test_result" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "主路径约定", "items": ["每个环节的产物落盘或写入 SPMS，作为下一环节的输入", "评审与修订成对出现：review 出报告，apply 落实修订", "PRD 定稿后按其推荐分期，逐期交付"] },
+    { "dot": "cyan", "title": "并行测试线", "items": ["开发计划定稿后即可启动，与开发线并行", "test run 以开发完成且 gaps 补全为前提", "未全绿的用例登记为 issues 跟踪"] },
+    { "dot": "amber", "title": "待补环节", "items": ["review-test-plan skill 尚未实现", "test-plan 当前只消费 PRD 侧需求，不读开发计划", "test run 与 issues 登记尚无对应 skill"] }
+  ]
+}
