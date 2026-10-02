@@ -1,6 +1,8 @@
 # xgent-init · @xgent-ai/skills · 新增 skill：为出仓 App 仓库生成 CLAUDE.md / PRODUCT.md / DESIGN.md（新模块 · SKILL.md + 模板 references + 结构检查脚本 · `install` 零提问）
 
-> **计划状态：Ready**
+> **计划状态：历史方案，安装入口已调整**
+>
+> 2026-10-02 更新：本轮需求已取代下文关于 `install` 零提问、只提示手动安装 skill 的约定。现在 `install` 询问是否安装 portal 的 `xgent-init`，确认后一起安装；`xgent-init` 通过 `metadata.internal: true` 从 `npx skills add XGENT-ai/skills` 默认列表隐藏。下文保留原设计记录，当前安装行为以仓根 README 和 `bin/xgent-skills.js` 为准。
 >
 > 调查基线：2026-09-02 · commit `a1fc6d9` · clean。
 > 已读取规则：`CLAUDE.md`（仓根：Think Before Coding / Simplicity First / Surgical Changes / Goal-Driven Execution）。

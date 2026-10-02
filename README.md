@@ -4,7 +4,7 @@ XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cu
 
 ## 安装
 
-安装全部 skills:
+列出并选择安装公开的 skills (`xgent-init` 由下方的 `install` 按需安装,不在此列表中):
 
 ```bash
 npx skills add XGENT-ai/skills
@@ -29,13 +29,17 @@ npx @xgent-ai/skills install
 
 | 选项 | 说明 |
 | --- | --- |
-| `--no-impeccable` | 只装 XGENT 的 hooks 与 settings,跳过 impeccable |
-| `--providers=a,b` | 指定 impeccable 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
+| `--no-impeccable` | 跳过 impeccable,仍安装 XGENT 的 hooks 与 settings |
+| `--xgent-init` | 安装 portal 的 init skill (`xgent-init`),不再询问 |
+| `--no-xgent-init` | 跳过 portal 的 init skill,不再询问 |
+| `--providers=a,b` | 指定 impeccable 与 `xgent-init` 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
 | `--force` | 强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 `.bak`) |
 
 安装是幂等的:hook 文件与 skill 目录按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并,impeccable 的 hook 按标记剔旧再合并,项目自己的 hook 与其他配置都保持不动。
 
-`install` 只装 hooks、settings 与 impeccable,不生成项目文档。出仓 App 仓库的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md` 由 [xgent-init](skills/xgent-init/SKILL.md) skill 生成:`npx skills add XGENT-ai/skills --skill xgent-init`。
+`install` 会询问是否同时安装 portal 的 init skill [xgent-init](skills/xgent-init/SKILL.md),输入 `y` 或 `yes` 确认,回车默认跳过。确认后从 npm 包安装完整的 skill、模板与检查脚本,目标目录与 impeccable 共用 `--providers` 和目录探测规则。非交互环境默认跳过,可用 `--xgent-init` 显式安装,或用 `--no-xgent-init` 跳过询问。
+
+安装完成后,在 Agent 对话中使用 `xgent-init` 生成出仓 App 仓库的 `CLAUDE.md` / `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`;`install` 本身不生成这些文档。`xgent-init` 不会出现在 `npx skills add XGENT-ai/skills` 的默认技能列表中。
 
 ## vendor 的 impeccable
 
@@ -134,7 +138,7 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 | Skill | 说明 |
 | --- | --- |
-| [xgent-init](skills/xgent-init/SKILL.md) | 在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
+| [xgent-init](skills/xgent-init/SKILL.md) | 由 `npx @xgent-ai/skills install` 确认后安装,不在 `skills add` 默认列表中;在出仓 App 自己的仓库里生成配套的 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`,读清单与代码事实、一轮问清缺的,不留待填占位 |
 | [portal-dev-setup](skills/portal-dev-setup/SKILL.md) | 在 App 仓库中启动、体检和排查 Docker 一盒门户，完成本地联调 |
 | [portal-external-app](skills/portal-external-app/SKILL.md) | 接入以 Docker 镜像交付的外部服务，核对 manifest、注册、路由、权限与交付契约 |
 | [portal-micro-app](skills/portal-micro-app/SKILL.md) | 开发嵌入门户的微应用前端，处理 SDK 握手、导航、授权与 iframe 交互 |

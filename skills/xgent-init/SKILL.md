@@ -1,5 +1,7 @@
 ---
 name: xgent-init
+metadata:
+  internal: true
 description: 在一个 XGENT.ai Portal 出仓 App 自己的仓库里生成配套的 CLAUDE.md / PRODUCT.md / DESIGN.md（并镜像出 AGENTS.md）—— 读 app.manifest.json 与代码事实、一次性把缺的问清楚、按模板填出可直接用的三份文档，不留任何待填占位，已存在的文件不覆盖。凡任务是「初始化/接入一个新的出仓 App 仓库」「给这个 App 仓补上 CLAUDE.md / AGENTS.md / PRODUCT.md / DESIGN.md」「补一份 impeccable 能读的设计文档」，或用户刚拿到一个空的/只有代码没有规范的 App 仓时使用；门户 monorepo 内的 App、非 XGENT 项目不用本 skill。Use in an external XGENT portal app's own repo to scaffold its CLAUDE.md / PRODUCT.md / DESIGN.md (AGENTS.md is written as a mirror of CLAUDE.md) from the app manifest and repo facts — one round of questions, no leftover placeholders, never overwrites existing files.
 ---
 
