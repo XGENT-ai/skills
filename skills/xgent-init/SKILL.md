@@ -2,7 +2,7 @@
 name: xgent-init
 metadata:
   internal: true
-description: 在 XGENT.ai Portal 出仓 App 自己的仓库里补齐 AGENTS.md / PRODUCT.md / DESIGN.md，保留 Portal 产品边界和设计规范，支持不同 coding agent。用户要求初始化出仓 App 规范、补齐产品或设计上下文时使用；读清单与代码事实，一轮问清缺的信息，已有文件不覆盖。install 本身只直接创建 AGENTS.md。
+description: 用于在 XGENT 出仓 App 仓库初始化或补齐 AGENTS.md、PRODUCT.md、DESIGN.md；已有文件不覆盖。保留 Portal 产品边界与设计规范。
 ---
 
 # xgent-init · 出仓 App 的 Agent、产品与设计上下文

@@ -1,6 +1,6 @@
 ---
 name: portal-micro-app
-description: '开发/修改 XGENT Portal 的嵌入式微应用前端（micro 型 App，iframe + @xgent/portal-sdk，独立前端项目）。凡任务涉及新建一个 App 前端、给某 App 加页面/导航项/Dashboard Widget、SDK 握手/getToken/callService、consent 授权屏、或 iframe 内的 UI 异常（弹窗无效/菜单点不动/主题/路由同步/全屏/剪贴板）时，务必先用本 skill——即使用户没提"微应用"三个字。Use when building or changing any micro-app frontend embedded in the portal, the portal SDK handshake, navItems, dashboard widgets, or iframe-specific UI issues.'
+description: '用于开发、修改或排查 XGENT Portal 的 iframe 微应用前端。覆盖页面、导航、Widget、portal-sdk 握手、令牌、consent、主题与路由等 UI 问题。'
 ---
 
 # portal-micro-app · 嵌入式微应用（iframe + SDK）开发

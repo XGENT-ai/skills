@@ -1,6 +1,6 @@
 ---
 name: pardon
-description: "停。上一条没说明白，换个说法重讲一遍——补一点上下文，写得简明直白，语言跟着当前会话走，不切成英语。Stop. That last message did not land: re-pitch it, with a little context, in plain simplified writing, in whatever language this conversation is already using."
+description: "用于用户没听懂上一条回复、要求换个说法重讲时。补足上下文，用当前会话语言简明解释，保留必要术语和代码原文。"
 disable-model-invocation: true
 ---
 

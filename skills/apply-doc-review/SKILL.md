@@ -1,6 +1,6 @@
 ---
 name: apply-doc-review
-description: 根据 review-prd 的评审报告修订 PRD，或根据 review-dev-plan 的评审报告修订开发计划；逐条核实意见、落实合理修订、复核关联内容并回写处置结果。用户要求按文档评审改稿、落实 PRD/开发计划评审时使用；不用于代码修复、直接实施计划或从零撰写文档。
+description: 用于按评审报告修订 PRD 或开发计划；不用于代码修复、计划实施或从零写文档。核实 review-prd、review-dev-plan 意见，修订原文并回写处置结果。
 ---
 
 # apply-doc-review · 核实并落实文档评审

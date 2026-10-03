@@ -1,6 +1,6 @@
 ---
 name: xgent-image-push
-description: 把 App 镜像构建并推送到自建的私有 Harbor 镜像仓库（地址由本地配置提供，不写在这个 skill 里）。用户提到发版、上线新版本、发布镜像、推镜像、docker push、打 tag 推仓库、配 CI 的镜像构建推送步骤、私有镜像仓库、Harbor、robot 账号推不上去、push 卡住推不动、ImagePullBackOff 之前的推送环节，都用这个 skill —— 哪怕他们只说"发个版"或"把这个服务的镜像推上去"没提仓库名字。它在推之前自动预检四条会让流水线静默失败的硬约束（链路、镜像架构、tag 不可变、保留策略），绕过它直接 docker push 很容易踩中其中一条。
+description: 用于 App 发版时构建、推送镜像到私有 Harbor，配置 CI 推送或排查 docker push 失败。仓库地址从本地配置读取；推送前检查链路、架构、tag 与保留策略。
 ---
 
 # 推镜像到私有仓库

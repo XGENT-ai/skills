@@ -1,6 +1,6 @@
 ---
 name: prd
-description: 撰写或优化 PRD，将业务想法转为清晰的产品目标、FR/NFR、用户场景预期状态与 UAT 验收条件，可录入 SPMS。在用户约束内推演创新性、先进性、可用性、便捷体验、美观 UI 与 AI 赋能，以 SMAR 检查需求，末尾给出分期及终验期。用户要求写需求文档、梳理或拆分需求、产品需求设计、修改 PRD 或录入需求时使用。仅评审既有 PRD 优先使用 review-prd；具体技术实现属于 dev-plan，测试方法与 TC 用例属于 test-plan。
+description: 用于撰写、修订、拆分或录入产品需求；仅评审用 review-prd，技术方案用 dev-plan，测试用例用 test-plan。产出目标、FR/NFR、场景与 UAT 条件，可录入 SPMS。
 ---
 
 # prd · 面向 SPMS 生命周期的需求撰写

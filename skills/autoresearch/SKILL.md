@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: 'Compatibility entry for agi-mode hillclimbing: autonomous, measured improvement of code, skills, prompts or agent workflows. Use for autoresearch, continuous optimization and iterative experiments; not one-shot edits or review-only tasks.'
+description: 'Use for measured, iterative optimization; skip one-shot edits and review-only tasks. Routes to agi-mode Hillclimb for experiments on code, skills, prompts or agent workflows.'
 license: MIT
 compatibility: Requires agi-mode to be installed alongside this entry and a runnable measurement path.
 ---

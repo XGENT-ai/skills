@@ -1,6 +1,6 @@
 ---
 name: portal-dev-setup
-description: '在你自己 App 的 repo 里，用 Docker 起一个真实的 XGENT.ai 门户（一盒 / one-box）做本地联调——不 clone 门户、不改门户代码、不重建门户镜像。一条 onebox.sh init 检查本地 puller 凭证（.xgent-registry.env 里的 REGISTRY + PULLER_AUTH，缺了就停下来让用户先去开发团队要）→ 自动 docker login 并拉门户镜像 → 从镜像里取出 compose 资产、挑空闲端口、生成 compose.env；再一条 onebox.sh up 按固定顺序 migrate → seed → register-app → 起栈并自动体检；跑不通先 onebox.sh doctor（把排查表能自动判的都判一遍并给出可粘的修法），要拉别的 App 陪调用 onebox.sh add <key>。凡任务涉及「首次把我的 App 接到门户上调试 / 起一盒 / 起本地门户 / 拉门户镜像 / 本地跑不通门户联调 / 一盒重置」，或出现 前端产物目录 /srv/www/apps 不可写、EACCES、duplicate input 导致反代全站 502、拉不到门户镜像、unauthorized、denied、/svc/<key> 404 或 502、localhost 打不开、port is already allocated、COMPOSE_PROJECT_NAME 撞栈把别的容器接管了、portal-api 一直 unhealthy、register-app 报 VALIDATION_FAILED、自省 401、有效 TDT 被判 INVALID_TOKEN、iframe 白屏、跨应用交换在发起方 401 这类症状时，务必先用本 skill 再敲 docker compose——即使用户只说「把门户跑起来」。Use when an external App team brings up, smoke-tests, resets, or debugs a real XGENT portal locally (the one-box Docker stack) from their own repo, without the portal monorepo.'
+description: '用于在 App 自己的仓库启动、重置或排查 XGENT 门户 Docker 一盒（one-box）本地联调；不需克隆或修改门户源码。处理拉镜像、注册、端口、健康检查和联调故障。'
 ---
 
 # 门户一盒 · 在自己 repo 里起一个真实门户

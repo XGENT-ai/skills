@@ -1,6 +1,6 @@
 ---
 name: review-prd-dev-gaps
-description: 接受 PRD 与已完成的开发计划，追读里程碑完成记录并核对实际实现，将差异分为明确遗漏、合理变更和需用户 Triage 的实现差异；通过交互式问答确定处置，有 follow-up 时调用 dev-plan 创建 gaps plan。用于开发完成后的需求覆盖核查，不用于评审 PRD 质量、计划设计或单次代码 diff。
+description: 用于开发完成后的 PRD 覆盖核查；不用于 PRD 质量、计划设计或单次 diff 评审。对照已完成计划、记录和实现，区分遗漏与变更，交互裁定差异，必要时生成 gaps plan。
 ---
 
 # review-prd-dev-gaps · PRD 与开发交付差异核查

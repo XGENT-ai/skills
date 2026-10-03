@@ -1,6 +1,6 @@
 ---
 name: arena
-description: "Compatibility entry for agi-mode Arena: generate independent candidates, compare them, select a base and verify a synthesis. Use for /arena, 'arena this', or an explicit request for competing designs."
+description: "Use for /arena or explicit requests for competing designs. Routes to agi-mode Arena to compare independent candidates and verify the synthesis."
 disable-model-invocation: true
 ---
 

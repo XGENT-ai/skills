@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: 评审未提交变更（含 staged、unstaged、untracked）、指定 commit、commit 范围或相对基准分支的差异，可附开发计划核对本次实现，默认将有证据、按 P0–P3 排序的完整评审报告落盘。用户要求 review-code、代码审查、审查 diff 或提交前评审时使用；不用于单独评审开发计划、全仓质量普查或直接实现修复。
+description: 用于评审代码 diff、未提交变更、commit 或分支差异；不用于单独评审计划、全仓普查或直接修复。可对照开发计划，默认落盘含证据与 P0–P3 问题的报告。
 ---
 
 # review-code · 代码变更评审

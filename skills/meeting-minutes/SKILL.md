@@ -1,6 +1,6 @@
 ---
 name: meeting-minutes
-description: 'Generate concise, actionable meeting minutes for internal meetings. Includes metadata, attendees, agenda, decisions, action items (owner + due date), and follow-up steps.'
+description: 'Use when turning internal meetings, transcripts or notes into concise minutes with decisions, action owners, due dates and follow-ups.'
 ---
 
 # Meeting Minutes Skill — Short Internal Meetings

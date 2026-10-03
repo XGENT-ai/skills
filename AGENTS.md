@@ -69,6 +69,16 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Every "X says Y" in a durable artifact (code review, plan, runbook, commit message, factual claim to the user) must have both X (file and passage) and Y (content) pointable on the spot.
 - When a quote contradicts the source: search the whole repo for other copies of the same mistake, fix them all, and tell the owner. Never leave two conflicting versions.
 
+## 6. Skill Descriptions
+
+**This is a skills repository. Make skill selection accurate even when descriptions are truncated.**
+
+- Write each `SKILL.md` description in this order: trigger conditions and essential exclusions, then the core outcome.
+- Target at most 200 characters overall, with Chinese descriptions around 100 characters. The first 100 characters should independently convey the applicability boundary. These are repository writing targets, not universal coding-agent truncation limits.
+- Put exclusions that prevent likely misrouting next to the trigger, for example, "write/review plans; not for executing an existing plan." Never bury them at the end of a long description or only in the body.
+- Keep procedures, exhaustive error-code lists, tool details and duplicate bilingual explanations in the body or references. Descriptions should help select the skill, not enumerate its workflow.
+- After editing, read both the full description and its first 100 characters. Preserve intent and meaningful boundaries; do not shorten by mechanically cutting text. Validate YAML and confirm unrelated frontmatter and instructions remain intact.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

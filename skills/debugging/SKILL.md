@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Four-phase debugging framework that ensures root cause investigation before attempting fixes. Never jump to solutions. Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes.
+description: Use for bugs, test failures or unexpected behavior. Investigate and verify the root cause before proposing or implementing fixes.
 license: MIT
 ---
 

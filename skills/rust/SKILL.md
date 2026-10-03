@@ -1,15 +1,6 @@
 ---
 name: rust
-description: >
-  Guide for writing idiomatic Rust code, based on Apollo GraphQL's best practices handbook plus async patterns for Tokio. Use this skill when:
-  (1) writing new Rust code or functions,
-  (2) reviewing or refactoring existing Rust code,
-  (3) deciding between borrowing vs cloning or ownership patterns,
-  (4) implementing error handling with Result types,
-  (5) optimizing Rust code for performance,
-  (6) writing tests or documentation for Rust projects,
-  (7) writing async Rust with Tokio - tasks, channels, streams, async traits, graceful shutdown,
-  (8) debugging async code: deadlocks, blocked runtimes, cancellation, Send bounds.
+description: Use when writing, reviewing, refactoring, testing or debugging Rust code. Covers ownership, errors, performance and Tokio async patterns.
 license: MIT
 compatibility: Rust 1.70+ (1.75+ for async fn in traits), Cargo
 allowed-tools: Bash(cargo:*) Bash(rustc:*) Bash(rustfmt:*) Bash(clippy:*) Read Write Edit Glob Grep

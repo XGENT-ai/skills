@@ -1,6 +1,6 @@
 ---
 name: portal-logging
-description: '把一个 App 的日志/遥测接进门户的「日志与监控」服务：采集器布线（容器 stdout / 文件 tail / 应用内直打）、写入身份（服务账号换令牌 或 长期访问密钥）、`observability.ingest` scope、`/svc/observability/v1/ingest/…` 写入面、`app_你的key_流名` 的流命名与跨 App 统一的日志字段口径。凡任务涉及「让我的服务的日志能在日志与监控里看到」「接采集器 / fluent-bit / docker 日志驱动」「日志写入 401 / 403 / scope 为空」「写进去了但界面查不到 / stream not found」「一次报错被拆成几十条 / 分不出哪条是错误」时，务必先用本 skill 再动手——即使用户只说「把日志接上」。Use when wiring an app''s logs or telemetry into the portal observability service: collector setup, ingest credentials and scope, stream naming, log field conventions, and the classic failures (empty scope, 403 on write, 401 on query, records that never show up).'
+description: '用于将 App 日志或遥测接入 XGENT 门户「日志与监控」，或排查写入、查询异常。覆盖采集器、写入凭据与 scope、流命名、日志字段及多行合并。'
 ---
 
 # portal-logging · 把 App 的日志接进「日志与监控」

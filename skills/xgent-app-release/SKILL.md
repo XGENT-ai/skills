@@ -1,6 +1,6 @@
 ---
 name: xgent-app-release
-description: '把一个 App 的新版本发布到 XGENT.ai Portal —— 在 App 自己的 repo 里用 xrel_ 发布令牌一条命令提交「前端产物 dist / bump 版本 / 换镜像 / 整份 app.manifest 清单」，落成发布提案：无治理变更自动通过并应用，改权限面的进平台「发布审核」等批准；不登录门户控制台、不找门户运维代传。凡任务涉及发版/发布前端或后端镜像/上传产物/提交或修改 app.manifest.json/首次把 App 接入门户/release-cli/xrel_ 令牌/POST /api/market/release/、配 vite base、在 CI 里写发布步骤、或出现「`npx @xgent/release-cli` 取不到 / E404（它在私有包仓上）」「发布 401 / 404」「发布 200 但 ok:false」「PROPOSAL_PENDING / 一直 pending 等审」「/apps/listingKey/ 白屏或资源 404」「发上去了但线上没变 / 容器没换版」这类症状时，务必先用本 skill 再动手——即使用户只说「发个版」。Use whenever publishing or debugging an XGENT portal app release from the app''s own repo — frontend dist, backend image, or manifest/governance changes via release proposals: release tokens, packaging, version bumps, CI wiring, pending approvals, or a blank/404 /apps/listingKey/ page after a publish.'
+description: '用于从 App 仓库发布或排查 XGENT 门户版本：前端 dist、后端镜像、manifest 或首次接入。通过 release-cli 与发布令牌提交提案，处理 CI、待审及发布后故障。'
 ---
 
 # xgent-app-release · App 版本自助发布

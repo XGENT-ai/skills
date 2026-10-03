@@ -1,6 +1,6 @@
 ---
 name: working-with-mise
-description: Use when adding, configuring, or troubleshooting mise-managed tools - ensures proper CLI usage, detects existing config files, and diagnoses PATH/activation issues when commands aren't found
+description: Use when adding, configuring or troubleshooting mise-managed tools. Detect existing configuration and diagnose PATH or shell activation problems.
 ---
 
 # Working with mise

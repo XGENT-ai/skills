@@ -1,6 +1,6 @@
 ---
 name: working-with-mbx
-description: Use when installing, activating, or troubleshooting mbx (Mr. Boxington), the shared compiler cache for Cargo - verifies that plain cargo actually goes through mbx, reads hit/miss/bypass summaries, diagnoses low cache reuse, and manages target/cache disk usage
+description: Use when installing, activating or troubleshooting mbx, the shared Cargo compiler cache. Verify Cargo integration, diagnose cache misses and manage disk usage.
 ---
 
 # Working with mbx

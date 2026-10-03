@@ -1,6 +1,6 @@
 ---
 name: humanize-writing
-description: Rewrites AI-sounding text so it reads like a human wrote it. Use when the user says 'sounds like AI/ChatGPT,' 'too robotic,' or 'humanize this.' Removes formulaic wording, translation-like phrasing, and robotic rhythm while preserving meaning, language, and register.
+description: Use when asked to humanize text or remove AI-like, robotic wording. Rewrite naturally while preserving meaning, language and register.
 disable-model-invocation: true
 license: MIT
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: architect
-description: "Sketch types, signatures, and module structure before code, then stay in the loop while implementation fills in. Use for /architect, 'architect this', 'design this', or non-trivial work where jumping to code would lock in the wrong shape."
+description: "Use for /architect or complex design work needing structure before code. Sketch types, signatures and module boundaries, then guide implementation."
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: "Compatibility entry for agi-mode Reflection: review the active conversation for evidenced, durable lessons and route them to bounded improvements. Use when the user asks to reflect or run /reflect."
+description: "Use when asked to reflect or run /reflect. Routes to agi-mode Reflection to turn evidenced lessons from the conversation into bounded improvements."
 disable-model-invocation: true
 ---
 

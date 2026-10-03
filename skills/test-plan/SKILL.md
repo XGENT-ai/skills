@@ -1,6 +1,6 @@
 ---
 name: test-plan
-description: 由需求（PRD 正文 + 验收标准）成套产出测试用例草稿并写入 SPMS（TC-N，关联需求），覆盖正常路径/边界/权限/并发四类，逐条验收标准给出「标准 → 用例」映射,写入前先查重。凡用户要求「补测试用例 / 写测试用例 / 出测试计划 / 这条需求要怎么测 / 覆盖一下验收标准 / 测试用例够不够」时，务必使用本 skill——即使用户没说「用例」两个字。Use whenever the user wants test cases written, test coverage expanded, or a test plan derived from SPMS requirements and filed as TC-N via the PMS MCP tools.
+description: 用于从需求验收标准编写、补齐或检查测试用例及测试计划；产品目标与 UAT 状态定义归 prd。覆盖正常、边界、权限和并发场景，生成标准映射与 SPMS TC 草稿，写入前查重。
 ---
 
 # test-plan · 由验收标准产出成套用例

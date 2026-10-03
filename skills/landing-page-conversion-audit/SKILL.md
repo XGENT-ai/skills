@@ -1,6 +1,6 @@
 ---
 name: landing-page-conversion-audit
-description: Audit a landing page, sales page or checkout page for conversion leaks and return a fix list ordered by expected revenue impact. Use when asked to review, critique or improve a landing page, sales page, opt-in page, product page or checkout flow, when conversion rate is low, when paid traffic is not converting, or when someone asks "why isn't this page converting" or wants a CRO / landing page review.
+description: Use for page conversion audits; skip pages with no traffic or upstream audience/offer problems. Review landing, sales, opt-in, product and checkout pages; rank fixes by revenue impact.
 ---
 
 # Landing Page Conversion Audit

@@ -1,6 +1,6 @@
 ---
 name: story-points
-description: 按客观因子表给需求/工单估故事点（斐波那契档位）——因子分四轴：功能点的业务领域、触及的技术栈层、改动的复杂程度、验收的复杂度，与代码库和技术栈无关；并经 SPMS 的 MCP 面完成「读现状 → 判定 → 写回 plannedPoints → 复核 Sprint 容量」的闭环。凡用户要求「估点 / 估算故事点 / 给这条需求打几分 / 给 Sprint 的规划项估点 / 排期前先估一轮 / 复核迭代容量」，或给出一条需求并期望得到一个可复现、有判定依据的点数时，务必使用本 skill——即使用户没说「故事点」三个字。Use whenever the user wants story-point estimation for SPMS requirements/issues, sprint capacity review, or writing planned points back through the PMS MCP tools.
+description: 用于给 SPMS 需求或工单估故事点、复核 Sprint 容量。按客观因子输出可复现的斐波那契点数与依据；仅在要求时写回 plannedPoints。
 ---
 
 # story-points · 可复现的故事点估算

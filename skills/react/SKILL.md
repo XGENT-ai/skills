@@ -1,16 +1,6 @@
 ---
 name: react
-description: >
-  Guide for writing and reviewing React code — hooks, effects, re-renders, and browser performance. Use this skill when:
-  (1) writing or reviewing React components and custom hooks,
-  (2) writing or debugging `useEffect` — deciding whether an Effect is needed at all,
-  (3) using `useState` for derived values, or syncing state between components,
-  (4) diagnosing unnecessary re-renders, stale closures, or memoization problems,
-  (5) fixing data-fetching waterfalls, race conditions, or duplicate requests, or using `use()` with Suspense,
-  (6) optimizing paint, hydration, resource loading, or hot-path JavaScript,
-  (7) working with refs, composition, prop drilling, or controlled vs. uncontrolled components,
-  (8) upgrading React 18 to 19 — removed APIs (`ReactDOM.render`, `findDOMNode`, string refs, legacy context), `forwardRef`, `defaultProps`, and tests (`test-utils`, `act`, StrictMode counts),
-  (9) forms and mutations with Actions — `useActionState`, `useFormStatus`, `useOptimistic`.
+description: Use when writing, reviewing, debugging or optimizing React code, or migrating to React 19. Covers hooks, effects, state, rendering, data fetching, Suspense and Actions.
 license: MIT
 compatibility: React 18+ (React 19 for `use`, Actions, `Activity`, ref-as-prop)
 allowed-tools: Read Write Edit Glob Grep

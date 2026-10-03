@@ -1,6 +1,6 @@
 ---
 name: teach
-description: "Explain a body of work plainly so a person actually understands it. Runs the `how` and `why` skills and weaves what they find into one clear explanation. Use for 'teach me this', 'help me really understand X', 'explain this change or subsystem to me'."
+description: "Use when asked to teach or explain a change or subsystem in depth. Combine how and why to explain what it does, how it works and why it was designed that way."
 disable-model-invocation: true
 ---
 

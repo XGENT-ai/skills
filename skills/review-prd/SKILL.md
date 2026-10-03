@@ -1,6 +1,6 @@
 ---
 name: review-prd
-description: 评审既有 PRD 或产品需求文档，核实代码现状与依赖，审查创新性、先进性、可用性、便捷体验、美观 UI、AI 赋能、SMAR、UAT 预期状态及分期终验，默认将完整评审报告落盘。用户要求 review-prd、review PRD、需求评审或检查需求是否合理且可验收时使用；不用于从零写 PRD、评审技术开发计划或仅审查代码 diff。
+description: 用于评审既有 PRD 的合理性、产品质量与可验收性；不用于从零写 PRD、评审技术计划或代码 diff。核实代码现状、需求、体验、UAT 与分期，默认落盘报告。
 ---
 
 # review-prd · 基于代码事实的产品需求评审
