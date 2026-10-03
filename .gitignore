@@ -38,3 +38,7 @@ skills-lock.json
 /.codex/app-server-daemon
 /.codex/packages/app-server-daemon
 /.codex/tui-thread-reference-capabilities
+
+# Python 运行测试时生成的字节码缓存
+__pycache__/
+*.pyc
