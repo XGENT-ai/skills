@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "从想法到一期收口",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-path",
+        "label": "主路径",
+        "focus": ["idea", "prd", "approve", "plan", "implement", "gaps", "decide"],
+        "note": "想法经需求批准、可开工计划和实施，到差异核查后由人决定是否进入下一期。"
+      },
+      {
+        "id": "test-line",
+        "label": "测试线汇合",
+        "focus": ["plan", "cases", "runtest", "gaps"],
+        "note": "用例草稿在计划可开工后编写，数据上仍只依赖需求；执行和回填由人完成，再汇入差异核查。"
+      },
+      {
+        "id": "block",
+        "label": "阻塞停写",
+        "focus": ["prd", "blocked"],
+        "note": "会改变范围或验收的问题未答完时，不定稿、不写 SPMS。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "human", "label": "人" },
+    { "id": "dev", "label": "开发线" },
+    { "id": "test", "label": "测试线" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "需求", "fromCol": 0, "toCol": 1 },
+    { "id": "approve", "label": "批准", "fromCol": 2, "toCol": 2, "variant": "emphasis" },
+    { "id": "plan", "label": "计划与用例", "fromCol": 3, "toCol": 3 },
+    { "id": "build", "label": "实施", "fromCol": 4, "toCol": 4 },
+    { "id": "close", "label": "收口", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["idea", "prd", "approve", "plan", "implement", "gaps", "decide"],
+  "nodes": [
+    { "id": "idea", "lane": "human", "col": 0, "type": "external", "label": "想法", "sublabel": "原始诉求", "width": 132 },
+    { "id": "blocked", "lane": "human", "col": 1, "type": "security", "label": "阻塞未答", "sublabel": "不定稿不写库", "width": 132 },
+    { "id": "approve", "lane": "human", "col": 2, "type": "security", "label": "人批准需求", "sublabel": "approved 只由人改", "width": 148 },
+    { "id": "decide", "lane": "human", "col": 5, "type": "security", "label": "人决定收口", "sublabel": "上线或接受差异", "width": 148 },
+    { "id": "prd", "lane": "dev", "col": 1, "type": "backend", "label": "需求评审回路", "sublabel": "prd → 评审 → 改稿", "tag": "只写 draft", "width": 156 },
+    { "id": "plan", "lane": "dev", "col": 3, "type": "backend", "label": "计划评审回路", "sublabel": "直到可开工", "tag": "Ready", "width": 148 },
+    { "id": "implement", "lane": "dev", "col": 4, "type": "backend", "label": "按计划实施", "sublabel": "含代码评审修复", "width": 148 },
+    { "id": "gaps", "lane": "dev", "col": 5, "type": "messagebus", "label": "差异核查", "sublabel": "A / B / C", "width": 132 },
+    { "id": "cases", "lane": "test", "col": 3, "type": "database", "label": "用例草稿", "sublabel": "TC-N · draft", "width": 132 },
+    { "id": "runtest", "lane": "test", "col": 4, "type": "external", "label": "人执行用例", "sublabel": "转 active 并回填", "width": 148 }
+  ],
+  "edges": [
+    { "id": "idea-prd", "from": "idea", "to": "prd", "variant": "emphasis", "role": "main" },
+    { "id": "prd-block", "from": "prd", "to": "blocked", "label": "阻塞未解", "variant": "security", "role": "error" },
+    { "id": "block-prd", "from": "blocked", "to": "prd", "label": "答完再写", "variant": "dashed", "role": "return" },
+    { "id": "prd-approve", "from": "prd", "to": "approve", "label": "无阻塞", "variant": "emphasis", "role": "main" },
+    { "id": "approve-plan", "from": "approve", "to": "plan", "variant": "emphasis", "role": "main" },
+    { "id": "plan-impl", "from": "plan", "to": "implement", "variant": "emphasis", "role": "main" },
+    { "id": "impl-gaps", "from": "implement", "to": "gaps", "variant": "emphasis", "role": "main" },
+    { "id": "gaps-decide", "from": "gaps", "to": "decide", "variant": "emphasis", "role": "main" },
+    { "id": "plan-cases", "from": "plan", "to": "cases", "label": "计划可开工后", "variant": "dashed", "role": "branch" },
+    { "id": "cases-run", "from": "cases", "to": "runtest", "variant": "default", "role": "branch" },
+    { "id": "run-gaps", "from": "runtest", "to": "gaps", "label": "结果作证据", "variant": "dashed", "role": "branch" },
+    { "id": "gaps-plan", "from": "gaps", "to": "plan", "label": "有 follow-up", "variant": "dashed", "role": "return", "fromSide": "bottom", "toSide": "bottom", "route": "bottom-channel" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "交接物",
+      "items": [
+        "下一环节只读落盘文件或 SPMS key",
+        "对话记录不是合同"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "人的门禁",
+      "items": [
+        "approved、已上线、用例 active 和测试结果不由 agent 改",
+        "C 类差异未答完不能写进 gaps plan"
+      ]
+    }
+  ]
+}

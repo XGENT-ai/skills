@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>AI Native SDLC：从想法到交付的流程解读</title><style>
+:root{color-scheme:light;--ink:#18342f;--muted:#546760;--line:#d7e0d9;--paper:#fafbf7;--green:#17664e;--amber:#935317}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.8 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:64px 40px}header{border-top:5px solid var(--green);padding-top:28px}.eyebrow{font-size:13px;letter-spacing:2px;color:var(--green)}h1{font-size:clamp(32px,5vw,60px);line-height:1.18;letter-spacing:-1px;margin:20px 0}h2{font-size:28px;line-height:1.4;margin:0 0 16px}h3{font-size:19px;margin:24px 0 8px}p{margin:10px 0}.lead{font-size:21px;max-width:850px}section{padding:38px 0;border-bottom:1px solid var(--line)}nav{display:flex;flex-wrap:wrap;gap:10px 24px;margin:30px 0}a{color:var(--green);text-underline-offset:4px}code{font:0.87em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#eef1e9;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:18px;background:#eef1e9;border-left:3px solid var(--green);font-size:14px}pre code{background:none;padding:0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line);margin:28px 0}.metric{padding:20px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric b{display:block;font-size:40px;line-height:1.3}.metric small{color:var(--muted)}.notice{background:#fff4e7;border-left:4px solid var(--amber);padding:16px 20px;margin:18px 0}.muted,figcaption,footer{color:var(--muted);font-size:14px}.table-scroll,.diagram-scroll{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px;font-size:15px}th,td{text-align:left;vertical-align:top;padding:14px;border-bottom:1px solid var(--line)}th{background:#edf2eb;font-weight:650}th[title]{text-decoration:underline dotted;text-underline-offset:4px}td:first-child{font-weight:600;width:19%}ul,ol{padding-left:24px}li{margin:8px 0}.steps{counter-reset:step;display:grid;grid-template-columns:1fr 1fr;gap:0 32px}.steps article{border-top:1px solid var(--line);padding:18px 0}.steps h3{margin-top:0}.steps h3:before{counter-increment:step;content:counter(step,decimal-leading-zero) " / ";color:var(--green)}details{margin:20px 0}summary{cursor:pointer;font-weight:650}figure{margin:24px 0}.diagram-scroll{background:white;border:1px solid var(--line);border-radius:6px}.diagram-scroll svg{display:block;width:100%;min-width:1080px;height:auto}figcaption{margin-top:12px}.legend{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;font-size:14px}.legend span:before{content:"";display:inline-block;width:24px;margin-right:8px;vertical-align:middle;border-top:3px solid #17664e}.legend .halt:before{border-color:#bd4747;border-top-style:dashed}.legend .branch:before{border-color:#8955ba;border-top-style:dashed}footer{padding-top:28px;overflow-wrap:anywhere}svg{--arrow:#7b8993;--arrow-emphasis:#148273;--grid:#e4e9ed;--lane-fill:#f8fafb;--lane-stroke:#cbd5de;--mask:#fff;--backend-fill:#edf8f6;--backend-stroke:#16776d;--database-fill:#f4effb;--database-stroke:#8955ba;--external-fill:#f1f4f8;--external-stroke:#647488;--messagebus-fill:#fff7e8;--messagebus-stroke:#a56813;--security-fill:#fff0f0;--security-stroke:#bd4747;--text:#243443;--text-muted:#566879;--text-dim:#627282}svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}.a-dashed{stroke:var(--database-stroke);fill:none;stroke-dasharray:4,4}.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}.m-security{fill:var(--security-stroke)}.m-dashed{fill:var(--database-stroke)}.c-grid{stroke:var(--grid);fill:none}.c-lane{fill:var(--lane-fill);stroke:var(--lane-stroke);stroke-dasharray:6,6}.c-mask{fill:var(--mask);stroke:none}.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}.t-backend{fill:var(--backend-stroke)}.t-database{fill:var(--database-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}.t-security{fill:var(--security-stroke)}.semantic-sigil{fill:none;stroke:currentColor;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}.s-backend{color:var(--backend-stroke)}.s-database{color:var(--database-stroke)}.s-external{color:var(--external-stroke)}.s-messagebus{color:var(--messagebus-stroke)}.s-security{color:var(--security-stroke)}.sigil-fill{fill:currentColor;stroke:none}@media(max-width:700px){main{padding:30px 20px}body{font-size:16px}.lead{font-size:18px}.metrics{grid-template-columns:1fr}.metric{border-right:0;border-bottom:1px solid var(--line);padding:14px 0}.metric b{font-size:32px}.steps{grid-template-columns:1fr}section{padding:28px 0}h2{font-size:24px}}@media print{main{padding:20px}nav{display:none}.diagram-scroll svg{min-width:0}details{display:block}a{color:inherit}}
+</style></head><body><main>
+<header><div class="eyebrow">AI NATIVE SDLC · XGENT SKILLS</div><h1>让每一步交付<br>都有可接手的产物</h1><p class="lead">XGENT Skills 用文件和项目实体串起需求、开发、评审与测试；人负责批准需求、确认测试结果和决定上线。</p><p>SDLC 是软件开发生命周期。这里的 AI Native，指 agent 依照明确的输入、产物和退出条件参与整条交付流程。</p>
+<div class="metrics"><div class="metric"><b>11 个</b><small>原文统计：10 个直接调用的 skill，加上 elintp</small></div><div class="metric"><b>2 条线</b><small>开发与测试在计划可开工后并行，汇入差异核查</small></div><div class="metric"><b>5 处</b><small>原文列出的衔接缺口，仍需人工或后续承接</small></div></div>
+<nav aria-label="报告目录"><a href="#flow">一期怎么走</a><a href="#handoff">凭什么交接</a><a href="#gates">何时停下</a><a href="#operate">怎么操作</a><a href="#gaps">尚未闭合</a></nav></header>
+<section id="flow"><h2>一期经过需求批准，以人的收口决定结束</h2><p>需求和计划各走一遍“写作 → 评审 → 核实改稿 → 人放行”。改稿后不会自动重评；仍涉及范围、安全、数据、外部契约或关键非功能需求时，人决定是否再评。</p><figure><div class="diagram-scroll" tabindex="0" role="region" aria-label="一期流程图，可横向滚动"><svg viewBox="0 0 964 534" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+        <title id="archify-diagram-title">从想法到一期收口</title>
+        <desc id="archify-diagram-description">由 Archify 生成的工作流图。</desc>
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Swimlanes -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="908" height="106" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 人</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="178" width="908" height="106" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="200" class="t-dim" font-size="10" font-weight="600">02 / 开发线</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="304" width="908" height="106" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="326" class="t-dim" font-size="10" font-weight="600">03 / 测试线</text>
+
+        <!-- Phase headers -->
+        <line x1="68" y1="35" x2="300" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="68" y="27" width="232" height="16" rx="4" class="c-mask"/>
+        <text x="184" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">需求</text>
+        <line x1="356" y1="35" x2="448" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="356" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="402" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">批准</text>
+        <line x1="476" y1="35" x2="568" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="476" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="522" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">计划与用例</text>
+        <line x1="652" y1="35" x2="744" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="652" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="698" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">实施</text>
+        <line x1="820" y1="35" x2="912" y2="35" class="a-dashed" stroke-width="1.1"/>
+        <rect x="820" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="866" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">收口</text>
+
+        <!-- Workflow groups -->
+
+
+        <!-- Edge paths -->
+        <path data-edge-from="approve" data-edge-to="plan" data-edge-key="0" data-edge-id="approve-plan" data-composition-points="409,146;409,246;448,246" d="M 409 146 L 409 246 L 448 246" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="blocked" data-edge-to="prd" data-edge-label="答完再写" data-edge-key="1" data-edge-id="block-prd" data-composition-points="254,146;254,168;348,168;348,246;332,246" d="M 254 146 L 254 168 L 348 168 L 348 246 L 332 246" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="cases" data-edge-to="runtest" data-edge-key="2" data-edge-id="cases-run" data-composition-points="588,372;624,372" d="M 588 372 L 624 372" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="gaps" data-edge-to="decide" data-edge-key="3" data-edge-id="gaps-decide" data-composition-points="866,220;866,146" d="M 866 220 L 866 146" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gaps" data-edge-to="plan" data-edge-label="有 follow-up" data-edge-key="4" data-edge-id="gaps-plan" data-composition-points="866,272;866,312;522,312;522,280" d="M 866 272 L 866 312 L 522 312 L 522 280" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="idea" data-edge-to="prd" data-edge-key="5" data-edge-id="idea-prd" data-composition-points="114,146;114,168;254,168;254,212" d="M 114 146 L 114 168 L 254 168 L 254 212" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="implement" data-edge-to="gaps" data-edge-key="6" data-edge-id="impl-gaps" data-composition-points="772,246;800,246" d="M 772 246 L 800 246" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="plan" data-edge-to="cases" data-edge-label="计划可开工后" data-edge-key="7" data-edge-id="plan-cases" data-composition-points="596,246;612,246;612,426;522,426;522,398" d="M 596 246 L 612 246 L 612 426 L 522 426 L 522 398" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="plan" data-edge-to="implement" data-edge-key="8" data-edge-id="plan-impl" data-composition-points="596,246;624,246" d="M 596 246 L 624 246" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="prd" data-edge-to="approve" data-edge-label="无阻塞" data-edge-key="9" data-edge-id="prd-approve" data-composition-points="254,280;254,300;402,300;402,146" d="M 254 280 L 254 300 L 402 300 L 402 146" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="prd" data-edge-to="blocked" data-edge-label="阻塞未解" data-edge-key="10" data-edge-id="prd-block" data-composition-points="254,280;254,296;20,296;20,162;254,162;254,146" d="M 254 280 L 254 296 L 20 296 L 20 162 L 254 162 L 254 146" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="runtest" data-edge-to="gaps" data-edge-label="结果作证据" data-edge-key="11" data-edge-id="run-gaps" data-composition-points="772,372;866,372;866,272" d="M 772 372 L 866 372 L 866 272" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+
+        <!-- Nodes -->
+        <g id="node-idea" data-node-id="idea" data-node-label="想法" tabindex="0" role="button" aria-label="聚焦想法，原始诉求, 人 › 需求" aria-pressed="false" data-node-kind="external" data-node-sublabel="原始诉求" data-node-context="人 › 需求">
+          <title>想法 · 原始诉求 · 人 › 需求</title>
+          <rect x="48" y="94" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="94" width="132" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 100) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="114" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">想法</text>
+          <text data-detail="context" x="114" y="132" class="t-muted" font-size="8" text-anchor="middle">原始诉求</text>
+        </g>
+
+        <g id="node-blocked" data-node-id="blocked" data-node-label="阻塞未答" tabindex="0" role="button" aria-label="聚焦阻塞未答，不定稿不写库, 人 › 需求" aria-pressed="false" data-node-kind="security" data-node-sublabel="不定稿不写库" data-node-context="人 › 需求">
+          <title>阻塞未答 · 不定稿不写库 · 人 › 需求</title>
+          <rect x="188" y="94" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="188" y="94" width="132" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(194 100) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="254" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">阻塞未答</text>
+          <text data-detail="context" x="254" y="132" class="t-muted" font-size="8" text-anchor="middle">不定稿不写库</text>
+        </g>
+
+        <g id="node-approve" data-node-id="approve" data-node-label="人批准需求" tabindex="0" role="button" aria-label="聚焦人批准需求，approved 只由人改, 人 › 批准" aria-pressed="false" data-node-kind="security" data-node-sublabel="approved 只由人改" data-node-context="人 › 批准">
+          <title>人批准需求 · approved 只由人改 · 人 › 批准</title>
+          <rect x="328" y="94" width="148" height="52" rx="6" class="c-mask"/>
+          <rect x="328" y="94" width="148" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(334 100) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="402" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">人批准需求</text>
+          <text data-detail="context" x="402" y="132" class="t-muted" font-size="8" text-anchor="middle">approved 只由人改</text>
+        </g>
+
+        <g id="node-decide" data-node-id="decide" data-node-label="人决定收口" tabindex="0" role="button" aria-label="聚焦人决定收口，上线或接受差异, 人 › 收口" aria-pressed="false" data-node-kind="security" data-node-sublabel="上线或接受差异" data-node-context="人 › 收口">
+          <title>人决定收口 · 上线或接受差异 · 人 › 收口</title>
+          <rect x="792" y="94" width="148" height="52" rx="6" class="c-mask"/>
+          <rect x="792" y="94" width="148" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(798 100) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="866" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">人决定收口</text>
+          <text data-detail="context" x="866" y="132" class="t-muted" font-size="8" text-anchor="middle">上线或接受差异</text>
+        </g>
+
+        <g id="node-prd" data-node-id="prd" data-node-label="需求评审回路" tabindex="0" role="button" aria-label="聚焦需求评审回路，prd → 评审 → 改稿, 开发线 › 需求" aria-pressed="false" data-node-kind="backend" data-node-sublabel="prd → 评审 → 改稿" data-node-tag="只写 draft" data-node-context="开发线 › 需求">
+          <title>需求评审回路 · prd → 评审 → 改稿 · 开发线 › 需求 · 只写 draft</title>
+          <rect x="176" y="212" width="156" height="68" rx="6" class="c-mask"/>
+          <rect x="176" y="212" width="156" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(182 218) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="254" y="233" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">需求评审回路</text>
+          <text data-detail="context" x="254" y="250" class="t-muted" font-size="8" text-anchor="middle">prd → 评审 → 改稿</text>
+        <text data-detail="fine" x="254" y="268" class="t-backend" font-size="7" text-anchor="middle">只写 draft</text>
+        </g>
+
+        <g id="node-plan" data-node-id="plan" data-node-label="计划评审回路" tabindex="0" role="button" aria-label="聚焦计划评审回路，直到可开工, 开发线 › 计划与用例" aria-pressed="false" data-node-kind="backend" data-node-sublabel="直到可开工" data-node-tag="Ready" data-node-context="开发线 › 计划与用例">
+          <title>计划评审回路 · 直到可开工 · 开发线 › 计划与用例 · Ready</title>
+          <rect x="448" y="212" width="148" height="68" rx="6" class="c-mask"/>
+          <rect x="448" y="212" width="148" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(454 218) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="522" y="233" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">计划评审回路</text>
+          <text data-detail="context" x="522" y="250" class="t-muted" font-size="8" text-anchor="middle">直到可开工</text>
+        <text data-detail="fine" x="522" y="268" class="t-backend" font-size="7" text-anchor="middle">Ready</text>
+        </g>
+
+        <g id="node-implement" data-node-id="implement" data-node-label="按计划实施" tabindex="0" role="button" aria-label="聚焦按计划实施，含代码评审修复, 开发线 › 实施" aria-pressed="false" data-node-kind="backend" data-node-sublabel="含代码评审修复" data-node-context="开发线 › 实施">
+          <title>按计划实施 · 含代码评审修复 · 开发线 › 实施</title>
+          <rect x="624" y="220" width="148" height="52" rx="6" class="c-mask"/>
+          <rect x="624" y="220" width="148" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(630 226) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="698" y="241" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">按计划实施</text>
+          <text data-detail="context" x="698" y="258" class="t-muted" font-size="8" text-anchor="middle">含代码评审修复</text>
+        </g>
+
+        <g id="node-gaps" data-node-id="gaps" data-node-label="差异核查" tabindex="0" role="button" aria-label="聚焦差异核查，A / B / C, 开发线 › 收口" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="A / B / C" data-node-context="开发线 › 收口">
+          <title>差异核查 · A / B / C · 开发线 › 收口</title>
+          <rect x="800" y="220" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="800" y="220" width="132" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(806 226) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="866" y="241" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">差异核查</text>
+          <text data-detail="context" x="866" y="258" class="t-muted" font-size="8" text-anchor="middle">A / B / C</text>
+        </g>
+
+        <g id="node-cases" data-node-id="cases" data-node-label="用例草稿" tabindex="0" role="button" aria-label="聚焦用例草稿，TC-N · draft, 测试线 › 计划与用例" aria-pressed="false" data-node-kind="database" data-node-sublabel="TC-N · draft" data-node-context="测试线 › 计划与用例">
+          <title>用例草稿 · TC-N · draft · 测试线 › 计划与用例</title>
+          <rect x="456" y="346" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="456" y="346" width="132" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(462 352) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="522" y="367" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">用例草稿</text>
+          <text data-detail="context" x="522" y="384" class="t-muted" font-size="8" text-anchor="middle">TC-N · draft</text>
+        </g>
+
+        <g id="node-runtest" data-node-id="runtest" data-node-label="人执行用例" tabindex="0" role="button" aria-label="聚焦人执行用例，转 active 并回填, 测试线 › 实施" aria-pressed="false" data-node-kind="external" data-node-sublabel="转 active 并回填" data-node-context="测试线 › 实施">
+          <title>人执行用例 · 转 active 并回填 · 测试线 › 实施</title>
+          <rect x="624" y="346" width="148" height="52" rx="6" class="c-mask"/>
+          <rect x="624" y="346" width="148" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(630 352) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="698" y="367" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">人执行用例</text>
+          <text data-detail="context" x="698" y="384" class="t-muted" font-size="8" text-anchor="middle">转 active 并回填</text>
+        </g>
+
+        <!-- Edge labels -->
+
+        <g data-detail="context" data-edge-from="blocked" data-edge-to="prd" data-edge-label="答完再写" data-edge-key="1" data-edge-id="block-prd">
+          <rect x="276.8" y="148" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="301" y="158" class="t-database" font-size="8" text-anchor="middle">答完再写</text>
+        </g>
+
+
+        <g data-detail="context" data-edge-from="gaps" data-edge-to="plan" data-edge-label="有 follow-up" data-edge-key="4" data-edge-id="gaps-plan">
+          <rect x="660.2" y="292" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="694" y="302" class="t-database" font-size="8" text-anchor="middle">有 follow-up</text>
+        </g>
+
+
+        <g data-detail="context" data-edge-from="plan" data-edge-to="cases" data-edge-label="计划可开工后" data-edge-key="7" data-edge-id="plan-cases">
+          <rect x="533.2" y="406" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="567" y="416" class="t-database" font-size="8" text-anchor="middle">计划可开工后</text>
+        </g>
+
+        <g data-detail="context" data-edge-from="prd" data-edge-to="approve" data-edge-label="无阻塞" data-edge-key="9" data-edge-id="prd-approve">
+          <rect x="308.6" y="280" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="328" y="290" class="t-backend" font-size="8" text-anchor="middle">无阻塞</text>
+        </g>
+        <g data-detail="context" data-edge-from="prd" data-edge-to="blocked" data-edge-label="阻塞未解" data-edge-key="10" data-edge-id="prd-block">
+          <rect x="112.8" y="276" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="137" y="286" class="t-security" font-size="8" text-anchor="middle">阻塞未解</text>
+        </g>
+        <g data-detail="context" data-edge-from="runtest" data-edge-to="gaps" data-edge-label="结果作证据" data-edge-key="11" data-edge-id="run-gaps">
+          <rect x="790" y="352" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="819" y="362" class="t-database" font-size="8" text-anchor="middle">结果作证据</text>
+        </g>
+
+        <!-- Legend -->
+        <g data-legend="" data-legend-bridge="">
+          <text x="20" y="434" class="t-primary" font-size="12" font-weight="650">图例</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent 逻辑" data-legend-x="20" data-legend-baseline="454" data-legend-width="87">
+            <rect x="20" y="446" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="42" y="454" class="t-muted" font-size="7.5" font-weight="500">Agent 逻辑</text>
+          </g>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="策略" data-legend-x="114" data-legend-baseline="454" data-legend-width="61">
+            <rect x="114" y="446" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="136" y="454" class="t-muted" font-size="7.5" font-weight="500">策略</text>
+          </g>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="工具操作" data-legend-x="182" data-legend-baseline="454" data-legend-width="78">
+            <rect x="182" y="446" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="204" y="454" class="t-muted" font-size="7.5" font-weight="500">工具操作</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="上下文 / 追踪" data-legend-x="267" data-legend-baseline="454" data-legend-width="100">
+            <rect x="267" y="446" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="289" y="454" class="t-muted" font-size="7.5" font-weight="500">上下文 / 追踪</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="外部系统" data-legend-x="374" data-legend-baseline="454" data-legend-width="78">
+            <rect x="374" y="446" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="396" y="454" class="t-muted" font-size="7.5" font-weight="500">外部系统</text>
+          </g>
+        </g>
+      </svg></div><div class="legend"><span>主路径</span><span class="halt">阻塞与人工门禁</span><span class="branch">测试支线与返回回路</span></div><figcaption>横向表示需求到收口的先后；三条泳道区分人、开发线和测试线。窄屏可横向查看。用例草稿依据需求验收标准与 UAT（用户验收时应达到的状态），等计划 Ready 且人接受开工后才编写。有 follow-up 时另建 gaps plan，再回计划评审。</figcaption></figure><p>这套回路表示操作次序，不是 SPMS 的状态机。SPMS 是研发项目管理系统。评审“通过”和计划 <code>Ready</code> 都不代表允许合并或部署。</p></section>
+<section id="handoff"><h2>下一环节接收文件、需求 key 和验证证据</h2><p>SPMS 保存需求、用例和项目报告；开发计划目前以目标仓的 Markdown 为准。新会话从产物恢复，聊天记录不能替代交接合同。</p><div class="table-scroll"><table><thead><tr><th title="需要交给下一步的稳定产物">交接物</th><th title="文件或 SPMS 实体的保存位置">保存在哪里</th><th title="下一环节必须读取或核实的内容">交接时读什么</th></tr></thead><tbody>
+<tr><td>需求</td><td><code>docs/PRD-&lt;代号&gt;.md</code> 与 <code>FR-N / NFR-N</code></td><td>已批准的 key、验收标准、终验期和排除项。FR 是功能需求，NFR 是非功能需求；<code>R#</code> 仅标识 PRD 原始诉求，不进 SPMS。</td></tr>
+<tr><td>文档评审与改稿</td><td><code>&lt;PRD名&gt;.review.md</code>、<code>&lt;计划名&gt;.review.md</code>；修订原文与报告处置节</td><td>问题、待核实项、建议结论；下游使用修订后的结论。</td></tr>
+<tr><td>开发计划</td><td><code>goal/&lt;代号&gt;.md</code>，或 <code>docs/plan/&lt;代号&gt;.md</code></td><td>实施须知、实施者定位、实施进度、Milestone（有退出检查的实施里程碑）。</td></tr>
+<tr><td>实施与代码评审</td><td>代码、<code>&lt;计划名&gt;.records/M&lt;n&gt;.md</code>、<code>&lt;计划名&gt;.code-review.md</code></td><td>完成记录、验证基线、问题 ID 和所审基线。修复处置表回写对应里程碑记录。</td></tr>
+<tr><td>差异核查</td><td><code>&lt;计划名&gt;.prd-dev-gaps.md</code>；需要补齐时另建 <code>&lt;原计划名&gt;-gaps</code></td><td>G-ID、D-ID 与已确认的增量范围。</td></tr>
+<tr><td>测试与阅读报告</td><td><code>TC-N</code> 草稿与验收映射表；<code>RPT-N</code> 与本地 HTML</td><td>用例由人转 active、执行并回填后，结果才能作证据。项目报告供阅读，不是下游合同。</td></tr>
+</tbody></table></div><p>关联单位是需求 key 集合：一份 PRD 可拆给多份计划，一份计划也可合并多份 PRD 的需求。<code>PLAN-N</code> 只能关联同一项目；跨项目须分开建计划，或先迁移需求。</p><p class="notice">同名评审报告默认另存带日期的文件，指定路径冲突也保留旧文件。报告不得塞进计划正文或 <code>plans.content</code>。</p></section>
+<section id="gates"><h2>阻塞问题未决，就停在对应门禁前</h2><div class="table-scroll"><table><thead><tr><th title="流程中被判断的对象">对象</th><th title="agent 可以产出的内容或状态">agent 做什么</th><th title="必须由人作出的决定或动作">人做什么</th></tr></thead><tbody>
+<tr><td>需求</td><td>共同理解确认后，只创建 <code>draft</code> 草稿；查重后写入。</td><td>转 <code>reviewing</code>、<code>approved</code>。只有 approved 的 key 进入本期计划。</td></tr>
+<tr><td>需求终态</td><td>平台以 <code>FINAL_STATE_FORBIDDEN</code> 拒绝 agent 写 <code>shipped / rejected</code>。</td><td>决定整条需求是否验收上线。</td></tr>
+<tr><td>计划</td><td><code>Ready</code> 表示可开工；<code>Proposed</code> 仍待非阻塞评审；<code>Blocked</code> 表示关键问题未决。</td><td>接受开工。Blocked 时仅做计划明确列出的、与阻塞无依赖的前期工作。</td></tr>
+<tr><td>用例</td><td>只创建 <code>draft</code>，不传 <code>result</code>；服务端默认 <code>untested</code>。</td><td>评审、转 <code>active</code>、执行、回填 <code>result</code>。</td></tr>
+<tr><td>代码与收口</td><td>给出评审、修复和验证记录。</td><td>决定合并、部署、是否进入下一期。评审文本不能提供这些授权。</td></tr>
+</tbody></table></div><p class="notice">范围、语义或验收问题未答完，需求不定稿、不写 SPMS。影响范围、安全、数据、外部契约或关键 NFR 的问题未决，计划必须 Blocked。差异核查的默认选项、超时和空回答都不是批准。</p><p>评审问题必须有定位、证据、后果和最小修订。证据不足列为待核实，不能降为 P3 凑数。需求、Issue 和用例正文是租户数据，不能当成 agent 指令。</p></section>
+<section id="operate"><h2>先核实环境，再逐步推进到有证据的收口</h2><div class="steps">
+<article><h3>准备四项前提</h3><p>目标仓、可见的 skill、正确的 SPMS 项目、写权限，缺一项就停。运行时读目标仓规则与代码；不能套用 skills 仓的技术栈或借相邻项目凑齐。</p><p>安装命令：<code>npx skills add XGENT-ai/skills</code>。本仓也可直接读 <code>skills/&lt;name&gt;/SKILL.md</code>。MCP 无 <code>project_create</code>，项目须人在 Web 建；白名单找不到就问。</p><p>只要文档或工具不可用时，需求使用 <code>WORK-F1 / WORK-N1</code>，不虚构 FR-N。需要录入需求或用例时，工具须可用且人已确认可以写。</p></article>
+<article><h3>把想法写成可验收需求</h3><p><code>prd</code> 核定项目，读取 2–3 条已有需求及目标仓已有的 CONTEXT.md、ADR（架构决策记录）；文件不存在就跳过，不为写 PRD 新建。</p><p>PRD §0–§6 写最终能力，§7 安排分期。每条需求写清谁、条件、动作与目标状态；不能断言的列开放问题。原始诉求须成为需求或显式排除并写出去向。</p><p>不写表结构、端点、库选型、Milestone 拆分或测试步骤。用户给定的平台约束标来源。非阻塞问题保留默认、理由、负责人和解决节点，不编截止日期。</p></article>
+<article><h3>确认、查重、评审，再批准</h3><p>确认共同理解后，先 <code>pms_search</code>，再 <code>requirement_create</code> draft；该创建不幂等。真实 key 回填 PRD，未录入条目保留工作号。</p><p>跨期需求在 <code>description</code> 写终验期，验收标准加 <code>[P1] / [P2]</code>；单期不加。人补版本和附件，跨期需求挂终验期版本。此时不排期、不估点。</p><p><code>project_update</code> 整段覆盖项目基本信息七段：确认后才能写，写前先 <code>project_get</code>，拿不准先给人核对。建错 key 会影响排期与权限。</p><p><code>review-prd</code> 查现状、产品、体验、验收；结论为通过／需修订／需补证。<code>apply-doc-review</code> 核实后改稿。改变已确认目标、权限、验收前问人；SPMS 同步、评论和代码修改另记处理。仍有 P1 或人要求时再评，旧结论不能当新证据。</p></article>
+<article><h3>按本期价值写计划</h3><p>人按 PRD §7 选需求 key，交接验收标准、排除项及终验声明。分期须说明哪个角色增加了什么能力。终验声明示例：“本计划完成后 FR-38 仍停在交付段，终验在 P2”。</p><p>原文建议 5–8 个 Milestone；连续性例外可到 9–10 个，且写有“不超过 10 个”。其切期节另写：超过 10 个须拆期或说明连续性例外；两处边界表述并不完全一致。一期价值闭合时可少于 5–8 个。</p><p><code>dev-plan</code> 把 key 作为 <code>R1..Rn</code>，读目标仓代码，未证实项标假设。优先用户路径；否则已有 goal 目录就写 goal，再否则 docs/plan。已有文件先问再覆盖。计划保留当前结论，不写 skill 名、骨架路径或写作经过。</p><p><code>review-dev-plan</code> 查代码事实、路线、需求与里程碑映射、实际可用性；再用 apply-doc-review 改稿。Ready 且人接受开工后实施。</p></article>
+<article><h3>并行实施与编写用例</h3><p>实施前读计划顶部三节和仓库规则，核对 <code>git status</code>、diff。原文实施节只点名顶部两节；恢复节要求三节，执行时一并读齐。记录与代码不符先查原因，不覆盖用户改动，也不推断验收通过。</p><p>实施、goal 执行、续做与进度回写不加载 dev-plan。需要行为测试时先红、再绿、再重构。退出检查通过即回写进度及 M&lt;n&gt;.md，之后再报完成；未运行、失败、环境缺失分开记，局部通过不等于整期通过。</p><p>独立任务可交 subagent，默认继承模型；共享文件一人改。边界变化先回报。architect、tdd、debugging 等专项 skill 按需用，不改退出条件。</p><p><code>test-plan</code> 用 <code>requirement_get</code> 读正文及验收，编号 <code>AC1…ACn</code>；<code>testcase_list(requirementKey)</code> 翻至 <code>hasMore=false</code>，不覆盖、删除或改写已有用例。覆盖正常、边界、权限、并发；推不出步骤的验收标准列为“无法成例”，返回需求阶段修订。用 <code>testcase_create</code> 带 requirementKey 建 draft，并给出 AC 到新／旧 TC-N 的映射。</p></article>
+<article><h3>核实修复，再对照需求收口</h3><p>里程碑交给下游或做差异核查前，用 <code>review-code</code> 评审，再用 <code>apply-code-review</code> 同时读取计划与报告。评审不改代码、进度或提交；对象不明且工作树干净就问，不擅取最近 commit。</p><p>代码结论为 <code>patch is correct / patch is incorrect / inconclusive</code>。修复逐条核实，只改合理问题；无验证写“已修改待验证”，不能写“已修复并验证”。</p><p>本期里程碑都有完成记录，或人要求检查已完成部分时，<code>review-prd-dev-gaps</code> 从 PRD 向下追实际交付。测试结果须能找到命令、环境和结论；草稿不是测过的证据，未运行如实记录。</p><p>没有未决 C 和未核实的主路径缺口后，人决定是否进入下一期。跨期需求的“已上线”表示整条验收；首期 Issue 完成会出现一键上线提示，因此终验期须同时写入 PRD、description 和交接说明。缺证据时不能宣称整份 PRD 已交付。</p></article>
+</div>
+<h3>差异核查把遗漏、替代方案和未决取舍分开</h3><div class="table-scroll"><table><thead><tr><th title="需求与实际实现之间的差异类型">差异</th><th title="归类所需的判断与证据">成立条件</th><th title="对应的下一步处理">接下来做什么</th></tr></thead><tbody><tr><td>A · 明确遗漏</td><td>本期要求明确，证据表明未做，补齐无需新产品取舍。</td><td>进入 follow-up，不再问是否修。</td></tr><tr><td>B · 合理变更</td><td>有约束、替代与证据，目标或已批准承诺仍成立。</td><td>保留；另列文档和验收同步。方便实现或工期不足不能单独成立。</td></tr><tr><td>C · 需人决定</td><td>范围、体验、权限、数据、外部契约或验收口径变化，已有决定不足。</td><td>先出问题卡，再问人；未答保持待决，不能写成已选方案。</td></tr></tbody></table></div><p>follow-up 非空时，差异 skill 调用 dev-plan 写 gaps plan；不改原 PRD、原计划或完成记录，也不开始执行。新计划重新评审再实施。没有 follow-up 就注明“无需 gaps plan”，不建空计划。</p>
+<details><summary>调用示例（占位符需换成实际路径或项目）</summary><pre><code>使用 prd，把这个想法写成 PRD。项目是 &lt;项目名&gt;。先澄清会改变范围或验收的问题，确认后再写入 SPMS draft。
+使用 review-prd 评审 docs/PRD-&lt;代号&gt;.md。
+使用 apply-doc-review，根据 docs/PRD-&lt;代号&gt;.review.md 修订 docs/PRD-&lt;代号&gt;.md，并记录各条意见的处置。
+使用 dev-plan，为 &lt;项目&gt; 的这些需求写开发计划：FR-18, FR-19, NFR-3。排除 &lt;范围&gt;。
+使用 review-dev-plan 评审 docs/plan/&lt;代号&gt;.md。
+使用 apply-doc-review，根据 docs/plan/&lt;代号&gt;.review.md 修订该计划。
+使用 review-code 审查当前未提交变更，参考 docs/plan/&lt;代号&gt;.md 的 M2。
+使用 apply-code-review，根据 docs/plan/&lt;代号&gt;.md 核实 docs/plan/&lt;代号&gt;.code-review.md，修复合理问题并更新对应实现记录。
+使用 review-prd-dev-gaps，对照 docs/PRD-&lt;代号&gt;.md 和 docs/plan/&lt;代号&gt;.md，核对实际交付。
+使用 test-plan，为 FR-18 和 NFR-3 写出测试用例草稿并写入 SPMS。
+使用 summarize FR-231 --project &lt;项目&gt;</code></pre></details>
+<p class="muted">summarize 是可选阅读报告，可与评审并行，不改素材或充当批准门禁。它定位项目、取素材、调用 elintp、查重再提交；项目不明或不在白名单就问，同题报告先确认新增还是先删旧的。提交无幂等键，失败不能把 HTML 粘进对话当作交付。需求类别是 prd_interpretation，计划是 dev_plan_summary。</p></section>
+<section id="gaps"><h2>流程仍有五处未闭合，三个选择尚待确认</h2><p>以下是原文记录的现状，本报告没有重新审计全部 skill，也没有把这些缺口认定为已补齐。</p><ol><li><strong>SPMS 计划关联缺口：</strong>prd 的下游约定是 <code>plan_create → PLAN-N</code>、再 <code>plan_update({content})</code>；dev-plan 只写本地 Markdown，不调用 plan_create，也不改需求状态。本地计划与 SPMS 计划目前对不上号。</li><li><strong>测试人工段：</strong>原文记录 skills/ 无 <code>review-test-plan</code>，无执行或回填 result 的 skill。评审、转 active、执行与结果回填由人承接。</li><li><strong>上线由人完成：</strong>本流程没有 skill 修改需求“已上线”，agent 写终态被拒。</li><li><strong>估点未设为门禁：</strong><code>story-points</code> 可把点数写回 SPMS，但不是本文必经步骤，PRD 阶段不估点、不排期。</li><li><strong>本地镜像不全：</strong>原文快照为 skills/ 47 个目录、.agents/skills/ 24 个；后者不含 prd、test-plan。npm 发布 skills/，不能把 .agents/skills/ 当全量副本。旧稿的“发布时同步到 .agents/skills/”与 README、package.json 不符，原文已弃用。</li></ol><div class="notice"><strong>原文待确认，仍未作决定：</strong><ul><li>测试执行与回填继续由人在 SPMS 做，还是补一个 skill？</li><li>是否补 review-test-plan，在 draft → active 前评审？</li><li>是否把 story-points 设为进入迭代排期前的必经步骤？原文记录当前没有 skill 作此要求。</li></ul></div></section>
+<footer><p><strong>出处与版本：</strong><code>docs/ai-native-sdlc.md</code>，本次读取工作树内容，读取日期 2026-10-03；文件有未提交修改。原文快照：仓库 https://github.com/XGENT-ai/skills.git，main / eab9a03（2026-10-03，feat: Codex goal 上下文收尾提醒），版本 0.4.0，MIT。数量、状态与缺口均按原文转述，不代表本次执行验证。</p><p>源文件 SHA-256：<code>2ad45e63ee141312d85e078805cadd6ef6f8daad9236b67af276866755fb9bb7</code>。原文依据 README.md、package.json、LICENSE 及其“依据文件”所列 skill 合同；这些引用用于追溯，本报告未逐一复核。</p><p>流程图来自原文引用的 <code>docs/diagrams/ai-native-sdlc-phase.json</code>。archify 对副本完成 workflow 的 9/9 showcase 校验，0 错误、0 警告；本报告保留其 SVG 标签与几何，使用系统字体及内联样式。原图的校验与最终报告浏览器检查分别记录。</p></footer>
+</main></body></html>

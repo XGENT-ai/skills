@@ -1,0 +1,302 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Native SDLC：用 Skills 串起自主交付</title><style>
+:root{color-scheme:light;--ink:#18342f;--muted:#546760;--line:#d7e0d9;--paper:#fafbf7;--green:#17664e;--amber:#935317}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.8 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:64px 40px}header{border-top:5px solid var(--green);padding-top:28px}.eyebrow{font-size:13px;letter-spacing:2px;color:var(--green)}h1{font-size:clamp(32px,5vw,60px);line-height:1.18;letter-spacing:-1px;margin:20px 0}h2{font-size:28px;line-height:1.4;margin:0 0 16px}h3{font-size:19px;margin:24px 0 8px}p{margin:10px 0}.lead{font-size:21px;max-width:850px}section{padding:38px 0;border-bottom:1px solid var(--line)}nav{display:flex;flex-wrap:wrap;gap:10px 24px;margin:30px 0}a{color:var(--green);text-underline-offset:4px}code{font:0.87em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#eef1e9;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:18px;background:#eef1e9;border-left:3px solid var(--green);font-size:14px}pre code{background:none;padding:0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line);margin:28px 0}.metric{padding:20px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric b{display:block;font-size:40px;line-height:1.3}.metric small{color:var(--muted)}.notice{background:#fff4e7;border-left:4px solid var(--amber);padding:16px 20px;margin:18px 0}.muted,figcaption,footer{color:var(--muted);font-size:14px}.table-scroll,.diagram-scroll{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px;font-size:15px}th,td{text-align:left;vertical-align:top;padding:14px;border-bottom:1px solid var(--line)}th{background:#edf2eb;font-weight:650}th[title]{text-decoration:underline dotted;text-underline-offset:4px}td:first-child{font-weight:600;width:19%}ul,ol{padding-left:24px}li{margin:8px 0}.steps{counter-reset:step;display:grid;grid-template-columns:1fr 1fr;gap:0 32px}.steps article{border-top:1px solid var(--line);padding:18px 0}.steps h3{margin-top:0}.steps h3:before{counter-increment:step;content:counter(step,decimal-leading-zero) " / ";color:var(--green)}details{margin:20px 0}summary{cursor:pointer;font-weight:650}figure{margin:24px 0}.diagram-scroll{background:white;border:1px solid var(--line);border-radius:6px}.diagram-scroll svg{display:block;width:100%;min-width:1080px;height:auto}figcaption{margin-top:12px}.legend{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;font-size:14px}.legend span:before{content:"";display:inline-block;width:24px;margin-right:8px;vertical-align:middle;border-top:3px solid #17664e}.legend .halt:before{border-color:#bd4747;border-top-style:dashed}.legend .branch:before{border-color:#8955ba;border-top-style:dashed}footer{padding-top:28px;overflow-wrap:anywhere}svg{--arrow:#7b8993;--arrow-emphasis:#148273;--grid:#e4e9ed;--lane-fill:#f8fafb;--lane-stroke:#cbd5de;--mask:#fff;--backend-fill:#edf8f6;--backend-stroke:#16776d;--database-fill:#f4effb;--database-stroke:#8955ba;--external-fill:#f1f4f8;--external-stroke:#647488;--messagebus-fill:#fff7e8;--messagebus-stroke:#a56813;--security-fill:#fff0f0;--security-stroke:#bd4747;--text:#243443;--text-muted:#566879;--text-dim:#627282}svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}.a-dashed{stroke:var(--database-stroke);fill:none;stroke-dasharray:4,4}.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}.m-security{fill:var(--security-stroke)}.m-dashed{fill:var(--database-stroke)}.c-grid{stroke:var(--grid);fill:none}.c-lane{fill:var(--lane-fill);stroke:var(--lane-stroke);stroke-dasharray:6,6}.c-mask{fill:var(--mask);stroke:none}.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}.t-backend{fill:var(--backend-stroke)}.t-database{fill:var(--database-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}.t-security{fill:var(--security-stroke)}.semantic-sigil{fill:none;stroke:currentColor;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}.s-backend{color:var(--backend-stroke)}.s-database{color:var(--database-stroke)}.s-external{color:var(--external-stroke)}.s-messagebus{color:var(--messagebus-stroke)}.s-security{color:var(--security-stroke)}.sigil-fill{fill:currentColor;stroke:none}@media(max-width:700px){main{padding:30px 20px}body{font-size:16px}.lead{font-size:18px}.metrics{grid-template-columns:1fr}.metric{border-right:0;border-bottom:1px solid var(--line);padding:14px 0}.metric b{font-size:32px}.steps{grid-template-columns:1fr}section{padding:28px 0}h2{font-size:24px}}@media print{main{padding:20px}nav{display:none}.diagram-scroll svg{min-width:0}details{display:block}a{color:inherit}}
+ .c-cloud{fill:#edf3ff;stroke:#4a6db0}.t-cloud{fill:#4a6db0}.s-cloud{color:#4a6db0}.c-frontend{fill:#eef9f3;stroke:#287757}.s-frontend{color:#287757}</style></head><body><main>
+<header><div class="eyebrow">AI NATIVE SDLC · SKILL-DRIVEN DELIVERY</div><h1>用 Skills 串起 SDLC<br>让 AI 按合同交付</h1><p class="lead">AI 依次调用需求、计划、评审、修订、代码修复与差异核查 skill，按每个环节规定的输入、产物和退出检查推进；测试线依据需求验收标准独立运行。</p><p>近期由人提出 idea；远期由 AI 提出多个方向及验证证据，人只做 Go / No-go。每个 Go 之后，AI 仍须完整遵循需求、计划、实施、评审、测试、差异核查与发布运行的 SDLC。以下是下一代流程的目标设计。</p><div class="metrics"><div class="metric"><b>完整 SDLC</b><small>需求、计划、实施、评审、测试与差异核查</small></div><div class="metric"><b>两条执行线</b><small>开发与独立测试，按证据汇合</small></div><div class="metric"><b>Go / No-go</b><small>上层授权规则；阶段合同与退出检查继续执行</small></div></div><nav aria-label="报告目录"><a href="#model">Skill 流水线</a><a href="#execution">逐环节合同</a><a href="#rules">执行规则</a><a href="#contract">Go 的含义</a><a href="#assurance">证据与停止</a><a href="#evolution">演进路线</a></nav></header>
+<section id="model"><h2>Skill 合同决定 AI 每一步能读什么、做什么、交出什么</h2><p>主线从 prd 开始，经过需求与计划的写、审、改回路，再按计划实施，进入代码评审修复和 PRD 差异核查。每个环节以明确产物交接；缺输入、检查失败或证据不足时，返回对应 skill 补齐，不能跳到下一步。</p><h3>开发主线：写、审、改有明确能力和顺序</h3><pre aria-label="完整开发 skill 调用链"><code>prd
+  → review-prd → apply-doc-review → 必要时由调度器复评
+  → dev-plan
+  → review-dev-plan → apply-doc-review → Ready 检查
+  → 按 Milestone 实施并回写记录
+  → review-code → apply-code-review → 验证修复与当前基线
+  → review-prd-dev-gaps
+      有 follow-up：dev-plan 写 gaps plan → 计划评审 → 实施 → 再核查
+      无 follow-up：保留“无需 gaps plan”结论 → 发布与运行</code></pre><h3>测试支线：从需求验收标准出发，与开发汇合</h3><pre aria-label="独立测试 skill 调用链"><code>需求验收标准与 UAT 状态
+  → 计划 Ready 后调用 test-plan
+  → TC-N 草稿与 AC 映射
+  → 用例评审、执行、结果回填（未来需补齐的能力）
+  → 原始测试证据汇入 review-prd-dev-gaps</code></pre><p>当前 skill 列表就是调度入口。每次调用前读取该 skill 的合同与真实输入；每次交接检查输出是否落盘、是否对应当前基线。某个环节没有证据、产物缺失或检查失败，就补证、返工或停止，不能用一句“规划并实施”跳过流水线。</p><figure><div class="diagram-scroll" tabindex="0" role="region" aria-label="未来自主交付流程，可横向滚动"><svg viewBox="0 0 1186 652" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Go 之后，AI 遵循完整 SDLC</title>
+        <desc id="archify-diagram-description">由 Archify 生成的工作流图。</desc>
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Swimlanes -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1130" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 人：方向与授权</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1130" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / AI：需求与开发</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="1130" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / AI：独立测试</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="1130" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / AI：运行与反馈</text>
+
+        <!-- Phase headers -->
+        <line x1="80" y1="35" x2="172" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="80" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="126" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">需求</text>
+        <line x1="264" y1="35" x2="356" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="264" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="310" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">计划</text>
+        <line x1="448" y1="35" x2="724" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="448" y="27" width="276" height="16" rx="4" class="c-mask"/>
+        <text x="586" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">实施与评审</text>
+        <line x1="816" y1="35" x2="1130" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="816" y="27" width="314" height="16" rx="4" class="c-mask"/>
+        <text x="973" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">核查与交付</text>
+
+        <!-- Workflow groups -->
+
+
+        <!-- Edge paths -->
+        <path data-edge-from="go-contract" data-edge-to="requirements-loop" data-edge-key="0" data-edge-id="authorize-requirements" data-composition-points="48,119;32,119;32,243;48,243" d="M 48 119 L 32 119 L 32 243 L 48 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="test-drafts" data-edge-to="test-execution" data-edge-key="1" data-edge-id="drafts-execution" data-composition-points="388,367;416,367" d="M 388 367 L 416 367" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="gap-check" data-edge-to="plan-loop" data-edge-label="补齐 → gaps plan" data-edge-key="2" data-edge-id="gaps-plan-return" data-composition-points="862,217;862,201;310,201;310,217" d="M 862 217 L 862 201 L 310 201 L 310 217" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="gap-check" data-edge-to="production-release" data-edge-label="无未闭合项" data-edge-key="3" data-edge-id="gaps-release" data-composition-points="940,243;1006,243" d="M 940 243 L 1006 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="milestone-build" data-edge-to="code-loop" data-edge-key="4" data-edge-id="implementation-review" data-composition-points="572,243;600,243" d="M 572 243 L 600 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="plan-loop" data-edge-to="milestone-build" data-edge-key="5" data-edge-id="plan-implementation" data-composition-points="388,243;416,243" d="M 388 243 L 416 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="plan-loop" data-edge-to="test-drafts" data-edge-label="Ready 后并行" data-edge-key="6" data-edge-id="plan-test-drafts" data-composition-points="310,269;310,290;404,290;404,367;388,367" d="M 310 269 L 310 290 L 404 290 L 404 367 L 388 367" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="production-release" data-edge-to="runtime-outcomes" data-edge-key="7" data-edge-id="release-runtime" data-composition-points="1084,269;1084,465" d="M 1084 269 L 1084 465" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="requirements-loop" data-edge-to="plan-loop" data-edge-key="8" data-edge-id="requirements-plan" data-composition-points="126,269;126,285;310,285;310,269" d="M 126 269 L 126 285 L 310 285 L 310 269" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="code-loop" data-edge-to="gap-check" data-edge-key="9" data-edge-id="review-gaps" data-composition-points="678,269;678,285;862,285;862,269" d="M 678 269 L 678 285 L 862 285 L 862 269" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="test-execution" data-edge-to="gap-check" data-edge-label="测试证据汇合" data-edge-key="10" data-edge-id="test-results-gaps" data-composition-points="572,367;862,367;862,269" d="M 572 367 L 862 367 L 862 269" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+
+        <!-- Nodes -->
+        <g id="node-go-contract" data-node-id="go-contract" data-node-label="Go 授权承诺" tabindex="0" role="button" aria-label="聚焦Go 授权承诺，目标、预算与边界, 人：方向与授权 › 需求" aria-pressed="false" data-node-kind="security" data-node-sublabel="目标、预算与边界" data-node-context="人：方向与授权 › 需求">
+          <title>Go 授权承诺 · 目标、预算与边界 · 人：方向与授权 › 需求</title>
+          <rect x="48" y="93" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="93" width="156" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(54 99) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="126" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Go 授权承诺</text>
+          <text data-detail="context" x="126" y="131" class="t-muted" font-size="8" text-anchor="middle">目标、预算与边界</text>
+        </g>
+
+        <g id="node-requirements-loop" data-node-id="requirements-loop" data-node-label="需求评审回路" tabindex="0" role="button" aria-label="聚焦需求评审回路，prd → 评审 → 改稿, AI：需求与开发 › 需求" aria-pressed="false" data-node-kind="backend" data-node-sublabel="prd → 评审 → 改稿" data-node-context="AI：需求与开发 › 需求">
+          <title>需求评审回路 · prd → 评审 → 改稿 · AI：需求与开发 › 需求</title>
+          <rect x="48" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="217" width="156" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="126" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">需求评审回路</text>
+          <text data-detail="context" x="126" y="255" class="t-muted" font-size="8" text-anchor="middle">prd → 评审 → 改稿</text>
+        </g>
+
+        <g id="node-plan-loop" data-node-id="plan-loop" data-node-label="计划评审回路" tabindex="0" role="button" aria-label="聚焦计划评审回路，写计划 → 评审 → 改稿, AI：需求与开发 › 计划" aria-pressed="false" data-node-kind="backend" data-node-sublabel="写计划 → 评审 → 改稿" data-node-context="AI：需求与开发 › 计划">
+          <title>计划评审回路 · 写计划 → 评审 → 改稿 · AI：需求与开发 › 计划</title>
+          <rect x="232" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="232" y="217" width="156" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(238 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="310" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">计划评审回路</text>
+          <text data-detail="context" x="310" y="255" class="t-muted" font-size="8" text-anchor="middle">写计划 → 评审 → 改稿</text>
+        </g>
+
+        <g id="node-milestone-build" data-node-id="milestone-build" data-node-label="按里程碑实施" tabindex="0" role="button" aria-label="聚焦按里程碑实施，代码、验证与进度记录, AI：需求与开发 › 实施与评审" aria-pressed="false" data-node-kind="backend" data-node-sublabel="代码、验证与进度记录" data-node-context="AI：需求与开发 › 实施与评审">
+          <title>按里程碑实施 · 代码、验证与进度记录 · AI：需求与开发 › 实施与评审</title>
+          <rect x="416" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="416" y="217" width="156" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(422 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="494" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">按里程碑实施</text>
+          <text data-detail="context" x="494" y="255" class="t-muted" font-size="8" text-anchor="middle">代码、验证与进度记录</text>
+        </g>
+
+        <g id="node-code-loop" data-node-id="code-loop" data-node-label="代码评审修复" tabindex="0" role="button" aria-label="聚焦代码评审修复，review-code → apply, AI：需求与开发 › 实施与评审" aria-pressed="false" data-node-kind="backend" data-node-sublabel="review-code → apply" data-node-context="AI：需求与开发 › 实施与评审">
+          <title>代码评审修复 · review-code → apply · AI：需求与开发 › 实施与评审</title>
+          <rect x="600" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="600" y="217" width="156" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(606 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="678" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">代码评审修复</text>
+          <text data-detail="context" x="678" y="255" class="t-muted" font-size="8" text-anchor="middle">review-code → apply</text>
+        </g>
+
+        <g id="node-gap-check" data-node-id="gap-check" data-node-label="对照 PRD 核查" tabindex="0" role="button" aria-label="聚焦对照 PRD 核查，gaps：遗漏、变更、越界, AI：需求与开发 › 核查与交付" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="gaps：遗漏、变更、越界" data-node-context="AI：需求与开发 › 核查与交付">
+          <title>对照 PRD 核查 · gaps：遗漏、变更、越界 · AI：需求与开发 › 核查与交付</title>
+          <rect x="784" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="784" y="217" width="156" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(790 223) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="862" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">对照 PRD 核查</text>
+          <text data-detail="context" x="862" y="255" class="t-muted" font-size="8" text-anchor="middle">gaps：遗漏、变更、越界</text>
+        </g>
+
+        <g id="node-production-release" data-node-id="production-release" data-node-label="证据达标后发布" tabindex="0" role="button" aria-label="聚焦证据达标后发布，授权内逐步放量, AI：需求与开发 › 核查与交付" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="授权内逐步放量" data-node-context="AI：需求与开发 › 核查与交付">
+          <title>证据达标后发布 · 授权内逐步放量 · AI：需求与开发 › 核查与交付</title>
+          <rect x="1006" y="217" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="1006" y="217" width="156" height="52" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1012 223) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1084" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">证据达标后发布</text>
+          <text data-detail="context" x="1084" y="255" class="t-muted" font-size="8" text-anchor="middle">授权内逐步放量</text>
+        </g>
+
+        <g id="node-test-drafts" data-node-id="test-drafts" data-node-label="测试用例与评审" tabindex="0" role="button" aria-label="聚焦测试用例与评审，test-plan · 验收标准, AI：独立测试 › 计划" aria-pressed="false" data-node-kind="database" data-node-sublabel="test-plan · 验收标准" data-node-context="AI：独立测试 › 计划">
+          <title>测试用例与评审 · test-plan · 验收标准 · AI：独立测试 › 计划</title>
+          <rect x="232" y="341" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="232" y="341" width="156" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(238 347) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="310" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">测试用例与评审</text>
+          <text data-detail="context" x="310" y="379" class="t-muted" font-size="8" text-anchor="middle">test-plan · 验收标准</text>
+        </g>
+
+        <g id="node-test-execution" data-node-id="test-execution" data-node-label="执行并记录结果" tabindex="0" role="button" aria-label="聚焦执行并记录结果，环境、命令、原始输出, AI：独立测试 › 实施与评审" aria-pressed="false" data-node-kind="external" data-node-sublabel="环境、命令、原始输出" data-node-context="AI：独立测试 › 实施与评审">
+          <title>执行并记录结果 · 环境、命令、原始输出 · AI：独立测试 › 实施与评审</title>
+          <rect x="416" y="341" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="416" y="341" width="156" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(422 347) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="494" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">执行并记录结果</text>
+          <text data-detail="context" x="494" y="379" class="t-muted" font-size="8" text-anchor="middle">环境、命令、原始输出</text>
+        </g>
+
+        <g id="node-runtime-outcomes" data-node-id="runtime-outcomes" data-node-label="运行、回滚与学习" tabindex="0" role="button" aria-label="聚焦运行、回滚与学习，结果反馈到机会发现, AI：运行与反馈 › 核查与交付" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="结果反馈到机会发现" data-node-context="AI：运行与反馈 › 核查与交付">
+          <title>运行、回滚与学习 · 结果反馈到机会发现 · AI：运行与反馈 › 核查与交付</title>
+          <rect x="1006" y="465" width="156" height="52" rx="6" class="c-mask"/>
+          <rect x="1006" y="465" width="156" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(1012 471) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1084" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">运行、回滚与学习</text>
+          <text data-detail="context" x="1084" y="503" class="t-muted" font-size="8" text-anchor="middle">结果反馈到机会发现</text>
+        </g>
+
+        <!-- Edge labels -->
+
+
+        <g data-detail="context" data-edge-from="gap-check" data-edge-to="plan-loop" data-edge-label="补齐 → gaps plan" data-edge-key="2" data-edge-id="gaps-plan-return">
+          <rect x="542.6" y="181" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="586" y="191" class="t-database" font-size="8" text-anchor="middle">补齐 → gaps plan</text>
+        </g>
+        <g data-detail="context" data-edge-from="gap-check" data-edge-to="production-release" data-edge-label="无未闭合项" data-edge-key="3" data-edge-id="gaps-release">
+          <rect x="944" y="223" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="973" y="233" class="t-backend" font-size="8" text-anchor="middle">无未闭合项</text>
+        </g>
+
+
+        <g data-detail="context" data-edge-from="plan-loop" data-edge-to="test-drafts" data-edge-label="Ready 后并行" data-edge-key="6" data-edge-id="plan-test-drafts">
+          <rect x="323.2" y="270" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="357" y="280" class="t-database" font-size="8" text-anchor="middle">Ready 后并行</text>
+        </g>
+
+
+
+        <g data-detail="context" data-edge-from="test-execution" data-edge-to="gap-check" data-edge-label="测试证据汇合" data-edge-key="10" data-edge-id="test-results-gaps">
+          <rect x="683.2" y="347" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="717" y="357" class="t-database" font-size="8" text-anchor="middle">测试证据汇合</text>
+        </g>
+
+        <!-- Legend -->
+        <g data-legend="" data-legend-bridge="">
+          <text x="20" y="552" class="t-primary" font-size="12" font-weight="650">图例</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent 逻辑" data-legend-x="20" data-legend-baseline="572" data-legend-width="87">
+            <rect x="20" y="564" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="42" y="572" class="t-muted" font-size="7.5" font-weight="500">Agent 逻辑</text>
+          </g>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="策略" data-legend-x="114" data-legend-baseline="572" data-legend-width="61">
+            <rect x="114" y="564" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="136" y="572" class="t-muted" font-size="7.5" font-weight="500">策略</text>
+          </g>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="工具操作" data-legend-x="182" data-legend-baseline="572" data-legend-width="78">
+            <rect x="182" y="564" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="204" y="572" class="t-muted" font-size="7.5" font-weight="500">工具操作</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="上下文 / 追踪" data-legend-x="267" data-legend-baseline="572" data-legend-width="100">
+            <rect x="267" y="564" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="289" y="572" class="t-muted" font-size="7.5" font-weight="500">上下文 / 追踪</text>
+          </g>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="云服务" data-legend-x="374" data-legend-baseline="572" data-legend-width="70">
+            <rect x="374" y="564" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="396" y="572" class="t-muted" font-size="7.5" font-weight="500">云服务</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="外部系统" data-legend-x="451" data-legend-baseline="572" data-legend-width="78">
+            <rect x="451" y="564" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="473" y="572" class="t-muted" font-size="7.5" font-weight="500">外部系统</text>
+          </g>
+        </g>
+      </svg></div><div class="legend"><span>自动推进</span><span class="halt">Go / No-go 与机器门禁</span><span class="branch">测试支线与 gaps plan 回路</span></div><figcaption>本图从 Go 后展开：需求与计划各有写、审、改回路；开发与独立测试在计划 Ready 后并行，到差异核查汇合。遗漏回到 gaps plan 的计划评审，证据达标后发布并观测。图内的评审节点包含失败返工，越界或预算耗尽则停止。运行结果再进入机会发现与候选验证。</figcaption></figure><p>需求、计划、代码、用例和报告成为自主执行过程中持续维护的记录。AI 直接读取真实实现、测试与运行数据，更新下一步动作；新会话从持久状态、证据和未完成工作恢复。</p></section>
+
+<section id="execution"><h2>每个 skill 的输入、产物和退出条件都要兑现</h2><p>SDLC 是软件开发生命周期。prd 管需求，dev-plan 管计划，review-* 产评审主张，apply-* 核实后修订，test-plan 管用例草稿，review-prd-dev-gaps 从需求追实际交付。调度器必须按这些合同调用，实施者必须按计划执行。</p><div class="notice">以下表格描述<strong>目标流程</strong>。现有 skill 的人工状态限制仍然生效；机器放行、自动执行与发布需要平台和执行器承接，不能靠这份报告获得权限。</div>
+<div class="table-scroll"><table style="min-width:1080px"><thead><tr><th title="必须执行的生命周期阶段">环节与能力</th><th title="该环节开始前必须读到的事实、合同与授权">输入</th><th title="AI 在该环节必须完成的动作">执行与产物</th><th title="何时能推进，失败后返回哪里">退出检查与返工</th></tr></thead><tbody>
+<tr><td>执行前核验</td><td>Go 方向包、目标仓、项目白名单、能力清单和写权限。</td><td>读取仓库规则、代码与工作树；核定 projectId。授权平台校验预算、权限、环境和当前目标。技能从实际安装位置加载，不假设镜像完整。</td><td>仓、项目、工具与授权对应一致才能启动。缺能力则保存阻塞现场，或按合同进入仅文档模式；不能写到相邻项目、虚构实体 key 或越权执行。</td></tr>
+<tr><td>需求写、审、改<br><code>prd</code><br><code>review-prd</code><br><code>apply-doc-review</code></td><td>方向承诺、事实与约束；项目已有需求、目标仓已有 CONTEXT.md / ADR。</td><td>把诉求转成角色、条件、行为、目标状态和验收标准。写完整 PRD；查重后录入需求草稿，真实 FR-N / NFR-N 回填。评审查现状、产品、体验和验收；修订方亲自核实，逐条记录采纳与不采纳。</td><td>原始诉求有需求或明确排除，验收可检验，未决项不影响下游且仍在 Go 边界内。可逆不确定性先实验；改稿后按变更影响由调度器单独调用对应 review skill 复评；apply-doc-review 本身不重跑评审。未达标继续修订，不把开放问题伪装成批准。</td></tr>
+<tr><td>分期与计划写、审、改<br><code>dev-plan</code><br><code>review-dev-plan</code><br><code>apply-doc-review</code></td><td>本期需求 key、验收标准、终验期、排除项与当前代码事实。</td><td>按用户可获得的完整价值选本期范围，拆 Milestone。写实施须知、实施者定位、实施进度、依赖和退出检查。评审核对代码事实、技术路线、需求映射及最终可用性；核实后改计划。</td><td><code>Ready</code> 且证据检查通过才实施。<code>Proposed</code> 不当 Ready；关键问题未决保持 <code>Blocked</code>，仅推进计划列出的独立前期工作。失败返回计划回路，涉及承诺变更才重新 Go / No-go。</td></tr>
+<tr><td>里程碑实施</td><td>Ready 计划、顶部三节、仓库规则、相关 diff 和当前基线。</td><td>先核对计划记录与工作树，再按前置检查实施。需要行为测试时先红、再绿、再重构。退出检查通过即更新实施进度与 <code>&lt;计划名&gt;.records/M&lt;n&gt;.md</code>，之后才报告完成。</td><td>所需检查有实际结果；未运行、失败和环境缺失分别记录。局部通过不代表整期验收。失败自主排查和修复；续做从记录恢复，不覆盖用户改动，不凭代码存在判完成。</td></tr>
+<tr><td>代码评审与修复<br><code>review-code</code><br><code>apply-code-review</code></td><td>明确的变更基线、对应计划与里程碑。</td><td>review-code 只出评审，不改代码、进度或提交；报告 <code>&lt;计划名&gt;.code-review.md</code>。修复方同时读计划和报告，核实证据，实施合理最小修复，回写里程碑处置与验证记录。</td><td>结论沿用 <code>patch is correct / patch is incorrect / inconclusive</code>。合理问题修复且验证后才闭合；无验证只能写“已修改待验证”。修复改变所审基线时重新校验，必要时由调度器复评。评审结论不能替代 Go 授权。</td></tr>
+<tr><td>独立测试线<br><code>test-plan</code><br>＋待补的用例评审与执行器</td><td>需求正文、验收标准与 UAT 状态；已有 TC-N。数据依据需求，调度上等计划 Ready。</td><td>验收编号 AC1…ACn；分页读完已有用例，再覆盖正常、边界、权限、并发。test-plan 创建 draft 用例及 AC 映射。未来独立验证能力评审用例，授权执行器激活、执行并记录环境、命令和原始结果。</td><td>每条验收标准指向用例或“无法成例”；无法成例返回需求回路，不能编步骤。测试失败先判断需求、实现或用例的问题，再回对应环节。未执行记未运行，草稿不能当测试通过。新增用例评审与执行能力尚待实现。</td></tr>
+<tr><td>PRD 与实际交付核查<br><code>review-prd-dev-gaps</code></td><td>PRD、本期计划、完成记录、实际实现、独立测试证据。</td><td>从 PRD 向下追，不只看计划写了什么。A 明确遗漏自动进 follow-up；B 合理变更保留并同步文档和验收；C 检查是否超出 Go 承诺。输出差异报告及证据关联。</td><td>授权内的遗漏与取舍由 AI 处理。需要补齐则调用 dev-plan 另建 <code>&lt;原计划名&gt;-gaps</code>，再评审、实施、验证、核查。不能改旧完成记录伪装补齐；无 follow-up 不建空计划。无法证明满足目标则保持未闭合，越界提出新的 Go / No-go。</td></tr>
+<tr><td>发布、运行与反馈<br>待补的平台执行能力</td><td>需求到证据的完整映射、无未闭合主路径缺口、发布授权、观测与回滚条件。</td><td>执行器检查状态和权限后合并、发布、逐步放量，持续观察真实结果。异常按合同回滚或停止；把问题和实际效果反馈到需求与机会发现。</td><td>发布成功与目标达成分别记录；跨期需求到整条终验才算完成。证据失败回修复或 gaps plan，运行失败回滚。下一方向仍须 Go；当前目标内的修复无需常规人工再批。</td></tr>
+</tbody></table></div><h3>把“人工批准”替换成明确的机器放行条件</h3><p>需求能进入计划，取决于需求评审、可检验验收和 Go 承诺一致；计划能进入实施，取决于 Ready、依赖已满足和前置检查；实现能发布，取决于代码评审、独立测试、差异闭合及发布授权。任何一个条件不成立，就返回对应回路或停止。</p><p>阶段状态由平台根据退出检查的证据推进。仅宣称“AI 已完成”不能满足退出条件。调度器不能擅自改 skill 合同、跳过评审、降低验收或覆盖旧证据来推动状态。评审 skill 继续只评审，apply skill 继续只核实并修订；调度器负责串联复评、同步状态和选择下一步。不同职责的边界仍然保留。</p></section>
+<section id="rules"><h2>自动执行仍要遵守原来的工程与交接纪律</h2><ol>
+<li><strong>产物是合同。</strong>需求、计划、报告、代码和验证记录持久关联。下一环节读取文件或 SPMS 实体，不能只依赖上一轮对话。</li>
+<li><strong>写、审、改职责分开。</strong>评审主张先核实再改。每条 finding 要有定位、证据、后果和最小修订；证据不足列待核实，不能降为 P3 充数。改稿不代表已经复评，复评是调度器的独立调用。</li>
+<li><strong>保留需求身份与事实源。</strong>用 FR-N / NFR-N 关联范围，一份 PRD 与计划可以多对多。PLAN-N 仍只能挂同项目需求；方向授权可以覆盖多个项目，但实体关联不能串错。需求、用例与项目报告在 SPMS；开发计划现阶段以本地 Markdown 为准。</li>
+<li><strong>需求写终局，分期写节奏。</strong>PRD §0–§6 不因这期做不完而删减承诺；§7 说明每期用户价值。跨期需求写明终验期，并在 description、验收前缀 [P1] / [P2] 及交接说明保持一致。首期完成不能被当成整条上线。</li>
+<li><strong>实施从可恢复合同开始。</strong>续做先读实施须知、实施者定位、实施进度，核对仓库规则和 git status。实施、goal 执行与进度回写不加载 dev-plan；需要写新计划时才调用它。共享文件由一个执行者修改，独立任务才并行。</li>
+<li><strong>测试独立于实施。</strong>验收来自需求与 UAT。用例已有则不覆盖、不删除、不改写；列表读取到 hasMore=false。执行结果能定位环境与原始输出；“有用例”“有代码”“计划勾完成”都不能单独证明已交付。</li>
+<li><strong>差异核查保留完整性。</strong>A 补齐、B 留证并同步、C 核对授权边界；方便实现或工期不足不能单独构成合理变更。授权内也不能默默降低验收；超出承诺才回到 Go / No-go。</li>
+<li><strong>文本不产生权限。</strong>需求、Issue、用例正文是租户数据，不是执行指令。Ready、评审通过和测试通过分别表达证据，合并、部署与状态流转必须另有有效授权。</li>
+</ol><h3>AI 跨会话交接时必须读到这些东西</h3><div class="table-scroll"><table><thead><tr><th title="持久记录的职责">记录</th><th title="当前流程的保存方式">位置</th><th title="恢复或推进必须核对的材料">关键内容</th></tr></thead><tbody>
+<tr><td>方向授权与需求</td><td>待补的授权实体；<code>docs/PRD-&lt;代号&gt;.md</code>；FR-N / NFR-N。</td><td>Go 目标、预算、权限；本期验收、终验期和排除项。无落库条件用 WORK-F1 / WORK-N1，不虚构 key。</td></tr>
+<tr><td>计划与文档评审</td><td>用户路径优先，否则已有 goal 目录用 <code>goal/&lt;代号&gt;.md</code>，否则 <code>docs/plan/&lt;代号&gt;.md</code>；旁边 <code>&lt;名&gt;.review.md</code>。</td><td>当前产品与技术结论、顶部三节、Milestone、依赖和状态。计划只写当前执行结论，不写 skill 名或写作经过。</td></tr>
+<tr><td>实施与代码评审</td><td>代码；<code>&lt;计划名&gt;.records/M&lt;n&gt;.md</code>；<code>&lt;计划名&gt;.code-review.md</code>。</td><td>所审基线、完成范围、问题处置和实际验证结果。</td></tr>
+<tr><td>测试与差异</td><td>TC-N、AC 映射、执行证据；<code>&lt;计划名&gt;.prd-dev-gaps.md</code> 与独立 gaps plan。</td><td>覆盖、失败、未运行、环境缺失；未闭合差异及授权边界。</td></tr>
+<tr><td>项目报告与运行</td><td>RPT-N / 本地 HTML；待补的发布、观测、回滚记录。</td><td>报告供阅读，不替代计划或验收合同。运行记录区分发布状态和目标效果。</td></tr>
+</tbody></table></div><p>任何事实源与工作树不一致都先查明原因。已有文件按约定保护和版本化；默认评审报告不覆盖旧文件，另存带日期版本。报告不写进计划正文或 plans.content。创建需求、用例或报告前查重，不能通过重复提交“恢复”工作。</p>
+<details><summary>原文规模约定与现状边界</summary><p>原文记录：承接计划建议 5–8 个 Milestone，连续性例外 9–10 个；方法论写“不超过 10 个”，切期节另写“超过 10 个就要拆期或说明连续性例外”，两处边界不完全一致。未来调度应先统一合同中的规则再执行；一期价值闭合时可少于 5–8 个。</p><p>原文要求需求阶段读 2–3 条已有需求；不存在的 CONTEXT.md、ADR 跳过，不为成文创建。project_update 整段覆盖项目七段，写前先读当前值，不能覆盖不相关修改。已有文件是否可改、项目元信息是否可写，未来必须由授权范围和版本保护共同约束。</p><p>原文快照：skills/ 47 个目录、.agents/skills/ 24 个目录，后者不含 prd 与 test-plan；本流程直接调用 10 个，summarize 再调用 elintp，合计 11 个。npm 分发 skills/，不能把镜像视为全量。安装命令为 <code>npx skills add XGENT-ai/skills</code>。</p></details></section>
+<section id="contract"><h2>Go 批准一份结果承诺，覆盖后续自动行动</h2><p>人的决策界面只保留 Go / No-go。候选方向已包含建议的目标、资源与权限边界；人接受一个方向包后，AI 获得完成该目标所需的持续授权。</p><div class="table-scroll"><table><thead><tr><th title="Go 时需要明确的承诺组成">承诺</th><th title="方向包里必须提供的可判断内容">具体含义</th></tr></thead><tbody>
+<tr><td>结果目标</td><td>谁获得什么能力，什么结果算成功，哪些行为明确不能发生。需求可以调整表达和拆分，承诺的结果不能被悄悄降低。</td></tr>
+<tr><td>资源预算</td><td>时间、计算、费用与实验预算；达到预算边界时暂停或停止。具体数值由方向包给出，本方案不预设阈值。</td></tr>
+<tr><td>权限与风险</td><td>允许访问的数据、可修改的系统、可发布的环境、允许的影响范围，以及不可自动执行的行为。由平台实施这些约束。</td></tr>
+<tr><td>验收与退出</td><td>可观察的成功指标、反例检查、失败判据、回滚条件和停止条件；同时规定每项结论需要什么证据。</td></tr>
+</tbody></table></div><p>AI 通过对应 skill 和计划合同，在这份承诺内选择技术路线、分期方式、测试策略与发布时间。出现新信息时，先在边界内实验、缩小影响或换路径；只有原目标或授权边界需要改变，才提交新的方向包供 Go / No-go。</p><p>一个方向可以包含多个项目或多个版本。Go / No-go 发生在承诺层，不能被拆成每条需求、每个里程碑和每次发布的常规审批。</p></section><section id="assurance"><h2>独立证据、受限权限和可恢复执行支撑自主权</h2><p>AI 的自述不能直接推进状态。每次推进都需要检查实际行为，并核对当前授权；执行记录必须让另一轮验证能够重放或复查。</p><ul>
+<li><strong>验证独立于实现。</strong>验证方从目标与真实环境取材，自行设计反例，并读取原始结果。同一个模型换个角色名，不能单独证明验证独立。需要不同检查路径、可执行判据和权限隔离。</li>
+<li><strong>事实源保存原始证据。</strong>测试结果由执行器记录，状态由可核对的证据推进。计划写“完成”不能替代运行结果，用例已生成不能替代用例已执行。</li>
+<li><strong>权限由平台落实。</strong>执行器只能调用本次 Go 授权的操作。修改权限、验收判据或风险上限不能靠 AI 自行改文档获得。授权未覆盖的不可逆操作暂停；可逆探索仍须在实验预算内。</li>
+<li><strong>异常处理自动化。</strong>可恢复失败返回修复或切换候选方案；发布异常按预设条件回滚。达到预算、无法验证目标或触发停止条件时保存现场并停止，不能不断降低标准来“完成”。</li>
+<li><strong>策略改进也要验证。</strong>AI 可以提出和试验流程、提示词、skill 的改进，经过隔离环境验证后在权限内应用；不能自行放宽目标、删除失败记录或取消门禁。</li>
+</ul><p class="notice">Go / No-go 始终来自人的明确决定。AI 可以形成候选、做预算内的预验证并排序；默认选项、空回答和等待超时都不能被记录为 Go。人无需为每个步骤重新批准，AI 也不能替人扩张最初的承诺。</p><h3>机器门禁看结果，进度看运行</h3><p>授权边界内，需求一致性、测试覆盖、质量检查、发布条件和线上观测都由机器判断。发布允许自动化，但发布通过与产品目标达成分别记录；目标是否成立，要继续看真实使用结果。</p><p>可衡量的进展包括：一个 Go 后自动闭环的比例、常规人工介入次数、交付周期、失败逃逸情况、自动恢复情况、结果目标达成情况。费用与时间须同时记录，避免用更多资源换取表面提升。起始基线与阈值要实测，本方案不宣称已达到这些指标。</p></section>
+<section id="evolution"><h2>先把 idea 之后闭环，再把机会发现前移给 AI</h2><div class="steps"><article><h3>近期：人给 idea，AI 提交承诺</h3><p>AI 自动澄清事实、比较方案、设计验收和投入边界。人做 Go / No-go 后，AI 按完整 skill 流水线完成需求、计划、实施、评审、独立测试与差异核查，再接发布与运行。原来的多个人工审批点转成有证据的机器检查。</p></article><article><h3>远期：AI 提方向，人选 Go / No-go</h3><p>AI 在授权的数据和实验预算内持续发现机会，形成多个方向及验证证据。人决定是否投入；AI 将已授权的方向推进到可观察结果，并据此形成下一轮候选。</p></article></div><h3>现有 XGENT Skills 需要补齐什么</h3><p>原文将测试执行与回填、是否新增 review-test-plan、story-points 是否必经列为待确认。本目标方案选择由 AI 承接测试评审、执行和回填；story-points 仍按需要用于估计投入与排期，不把它新增为普遍门禁。这些是未来方案选择，不代表现有 skill 已修改。</p><p>当前流程说明记录：需求 draft 之后的 reviewing / approved 由人操作，agent 写 shipped / rejected 会遭 FINAL_STATE_FORBIDDEN 拒绝；test-plan 只写 draft，不传 result，默认 untested，用例 active、执行和结果回填由人承接；开发计划仍以本地 Markdown 为准。要达到未来模型，平台状态权限、测试执行器、发布与观测能力都需共同调整，仅改 skill 文案无法实现。</p><ul><li><strong>承诺与授权实体：</strong>让项目、需求、计划、执行和发布共享同一份 Go 授权，并能检查授权范围。</li><li><strong>持续调度与恢复：</strong>把完整 SDLC 的入口、产物、退出条件与返工路径变成可持续执行的状态，跟踪目标、依赖、失败、预算和证据。</li><li><strong>计划关联：</strong>原文记录 prd 约定 plan_create → PLAN-N，再 plan_update({content})；dev-plan 只写本地计划。未来需要同步适配和版本对应，避免事实源分裂。</li><li><strong>独立验证与执行设施：</strong>连接测试、预发布环境、真实结果和反例检查，自动记录可复核证据。</li><li><strong>发布、观测与回滚：</strong>把交付延伸到运行结果，在约定范围内自动控制影响。</li><li><strong>机会发现与候选验证：</strong>把真实结果反馈成下一轮方向，形成可供 Go / No-go 比较的方案包。</li></ul><p>现有 prd、dev-plan、review-*、apply-* 与 test-plan 组成 AI 必须遵循的 SDLC 主链。调度、授权、独立测试、发布与观测补齐这条链路的自主执行能力；报告提出目标流程，尚未完成相应平台实现或权限修改。</p></section>
+<footer><p><strong>设计依据：</strong>本次会话提出的目标：“理论上人只负责 idea；未来甚至 idea 都是 AI 出很多可选方向，人只做 Go or No-go。”本文将该目标展开为未来方案，未将其表述为当前已实现能力。</p><p><strong>现状来源：</strong><code>docs/ai-native-sdlc.md</code>，读取于 2026-10-03 的工作树版本；原文记录 main / eab9a03、版本 0.4.0。本报告不修改原文。原始 SDLC 方法、产物和证据纪律作为基础保留；人工状态限制属于当前约束，未来机器流转需要新增平台能力与授权合同。源文 SHA-256：<code>2ad45e63ee141312d85e078805cadd6ef6f8daad9236b67af276866755fb9bb7</code>。</p><p><strong>图示检查：</strong>本次修订以 skill 串联的 SDLC 为主干，Go / No-go 作为上层授权；补齐逐环节合同、交接和返工规则。workflow 图由 archify 生成；9/9 showcase 校验，0 错误、0 警告。最终报告使用内联 SVG、样式与系统字体，不依赖网络。</p></footer>
+</main></body></html>
