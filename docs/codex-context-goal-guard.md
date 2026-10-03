@@ -1,6 +1,6 @@
 # Codex goal 上下文收尾提醒
 
-当本地估算上下文使用率**严格超过 65%**且当前根线程的 goal 为 `active` 时，本 hook 提醒 agent 收尾：更新已有任务记录、交接未完成项、按用户明确的暂停策略调用原生 goal 工具，再提醒用户自行新开对话。恰好 65% 不触发。hook 只读取本地数据，不写进度、修改 goal 或创建对话。
+当本地估算上下文使用率**严格超过阈值**（默认 65%，可配置）且当前根线程的 goal 为 `active` 时，本 hook 提醒 agent 收尾：更新已有任务记录、交接未完成项、按用户明确的暂停策略调用原生 goal 工具，再提醒用户自行新开对话。恰好等于阈值不触发。hook 只读取本地数据，不写进度、修改 goal 或创建对话。
 
 ## 兼容范围与限制
 
@@ -30,6 +30,16 @@ Python 缺失或版本不足时，按安装器提示先安装 Python 并运行 `
 
 安装结束会打印下方「信任与生效确认」的操作步骤及可复制的当前 goal 暂停策略。**脚本已部署不等于已生效**：用户仍需在 Codex 内信任项目、审阅并信任启用两个 handler、明确当前 goal 的暂停策略，并用测试 goal 验证真实暂停。安装器不代替用户完成这些步骤。
 
+### 阈值配置
+
+阈值写在 handler 命令末尾：`--threshold N`，N 为 1–99 的整数百分比；不带参数时为 65。与 Claude Code 版（默认 70）各自独立。
+
+```sh
+node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard-threshold=60
+```
+
+`--context-goal-guard-threshold=N` 同时表示安装，不再询问；与 `--no-context-goal-guard` 不能同时使用。安装器总是把阈值写进两个 handler 的 command，重装时不给这个 flag 就沿用已装的值；安装输出里可复制的暂停策略也使用实际阈值。改动 command 后需要在 `/hooks` 中重新审阅、信任。参数无效时 guard 报告检测不可用，不猜测数值。
+
 ### 手动部署
 
 也可单独复制仓库文件。首期手动部署的精确本地验证 revision 记在 [M3 记录](plan/codex-context-goal-guard.records/M3.md)：在可访问该本地仓库的机器 clone 并 checkout 该 revision（该 revision 不含后续 install 集成）。远程发布后，才可从 `https://github.com/XGENT-ai/skills.git` checkout 对应已发布 revision；不要将尚未发布的 SHA 当作远程可获取版本。
@@ -51,7 +61,7 @@ cp "/tmp/skills-guard-source/hooks/codex/context-goal-guard.py" "/absolute/path/
 将两个 command 中的 `/path/to/My Project` 替换为项目规范绝对路径，保留 JSON 内转义的双引号：
 
 ```json
-{"type": "command", "command": "python3 \"/absolute/path/to/My Project/.codex/hooks/context-goal-guard.py\"", "timeout": 3}
+{"type": "command", "command": "python3 \"/absolute/path/to/My Project/.codex/hooks/context-goal-guard.py\" --threshold 65", "timeout": 3}
 ```
 
 若 Codex 环境无法解析 `python3`，将其换为已核对的 Python 3 可执行文件绝对路径，也保留必要引号。普通含空格路径已列入验收；包含 shell 元字符的路径应另行正确引用并验证，不直接粘贴到 command。同步超时为 3 秒。
@@ -66,7 +76,7 @@ cp "/tmp/skills-guard-source/hooks/codex/context-goal-guard.py" "/absolute/path/
 
 安装、信任和阅读说明都不构成暂停授权。在**当前 goal** 的用户指令里明确，例如：
 
-> 对当前 goal，如果本地估算上下文使用率严格超过 65%，请先安全收尾，按已有任务约定保存进度和交接说明，再使用原生 goal 工具将其设为 paused 并核对，无需二次确认。未完成工作不要标为 complete。请提醒我自己新开对话继续。
+> 对当前 goal，如果本地估算上下文使用率严格超过 65%（按实际阈值替换），请先安全收尾，按已有任务约定保存进度和交接说明，再使用原生 goal 工具将其设为 paused 并核对，无需二次确认。未完成工作不要标为 complete。请提醒我自己新开对话继续。
 
 后续 `/goal resume` 撤销先前暂停请求，需重新明确策略。普通命令测试可使用 `features.code_mode.enabled=true` 和 `features.code_mode.direct_only_tool_namespaces=["functions"]`；code mode 使用默认路径。M1 验证了两者；仅关闭 code mode 不保证普通命令回退。配置字段见 [官方配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)。
 
@@ -74,7 +84,7 @@ cp "/tmp/skills-guard-source/hooks/codex/context-goal-guard.py" "/absolute/path/
 
 成功回复应说明真实 `paused` 状态、已有记录位置、剩余任务和下一步。无既有记录时，agent 在回复中给出交接摘要（完成/未完成、验证/未验证、下一步、仍运行的进程），不强制创建新文件。进度写入失败时，也先在回复保留最小摘要并明确失败。
 
-在同一项目目录自行新开对话，提供已有计划路径，或粘贴交接摘要并说明继续。新对话没有继承的 goal；需要用户手动设置 goal、重新明确 65% 暂停策略后，guard 才对它生效。旧 goal 保持 paused；可保留，或回旧对话主动 `/goal clear`。恢复旧 goal 不清空上下文，不作为腾出上下文的办法。线程生命周期命令见 [官方 Goals 文档](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex)。
+在同一项目目录自行新开对话，提供已有计划路径，或粘贴交接摘要并说明继续。新对话没有继承的 goal；需要用户手动设置 goal、重新明确按阈值暂停的策略后，guard 才对它生效。旧 goal 保持 paused；可保留，或回旧对话主动 `/goal clear`。恢复旧 goal 不清空上下文，不作为腾出上下文的办法。线程生命周期命令见 [官方 Goals 文档](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex)。
 
 如果 agent 请求确认、拒绝暂停或暂停失败，仍算尚未暂停；在原对话执行 `/goal pause` 后再接续。不要依据“已提醒”判断暂停成功。
 
@@ -85,7 +95,7 @@ cp "/tmp/skills-guard-source/hooks/codex/context-goal-guard.py" "/absolute/path/
 | `/hooks` 没有 guard 或显示待审/禁用 | 核对项目层信任、来源、manifest JSON、绝对 command 路径；重新审阅信任并启用 |
 | “检测不可用” | 核对 Codex 版本、进程实际 `CODEX_HOME`、会话和 `goals_1.sqlite` 的存在与读权限；不手工补库或改状态。格式/schema/锁异常持续时在 `/hooks` 停用 guard |
 | hook 超时/失败提示 | 本次检测失效，工具可能继续。检查 Python、文件读取与存储延迟，在隔离环境重验后再调整 3 秒上限 |
-| 超过 65% 但没有提示 | 核对当前根线程是否有 active goal、新统计是否已记录及工具事件覆盖；不能用 UI 百分比直接代替本地统计 |
+| 超过阈值但没有提示 | 核对当前根线程是否有 active goal、新统计是否已记录及工具事件覆盖；不能用 UI 百分比直接代替本地统计 |
 | Stop 后仍 active 或持续续跑 | 在原对话 `/goal pause`；检查暂停授权和其他 Stop hooks。其他 hooks 的继续/停止要求须组合实测，不能宣称所有组合兼容 |
 
 临时停用：在 `/hooks` 中仅禁用本 guard 的两个 handler。永久移除：从两个事件数组中只删除 command 指向 `context-goal-guard.py` 的 handler，保留其他 hooks；确认不再引用后可删除该脚本副本。任务记录保留，paused goal 不自动恢复，不需要数据库迁移或回填。

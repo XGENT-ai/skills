@@ -1,0 +1,101 @@
+{"ts": "2026-10-03T03:15:00.939Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": null, "window": 999999999, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:15:37.960Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 36294, "window": 85000, "pct": 43, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:15:40.097Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 36294, "window": 85000, "pct": 43, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:15:45.235Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 42721, "window": 85000, "pct": 50, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:15:52.128Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 43471, "window": 85000, "pct": 51, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:15:56.053Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 50017, "window": 85000, "pct": 59, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:16:00.433Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 56153, "window": 85000, "pct": 66, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:16:06.263Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 62421, "window": 85000, "pct": 73, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:16:10.765Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 62421, "window": 85000, "pct": 73, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:16:15.649Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 63281, "window": 85000, "pct": 74, "goal": {"met": false}}
+{"ts": "2026-10-03T03:20:10.190Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 27644, "window": 85000, "pct": 33, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:13.230Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 27644, "window": 85000, "pct": 33, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:18.334Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 43763, "window": 85000, "pct": 51, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:24.595Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 50007, "window": 85000, "pct": 59, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:28.496Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 56423, "window": 85000, "pct": 66, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:35.196Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 62699, "window": 85000, "pct": 74, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:40.501Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 62699, "window": 85000, "pct": 74, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:20:45.771Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 63736, "window": 85000, "pct": 75, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:10.788Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 27713, "window": 72000, "pct": 38, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:21:14.012Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37200, "window": 72000, "pct": 52, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:21:16.985Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 38153, "window": 72000, "pct": 53, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:21:20.911Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 38346, "window": 72000, "pct": 53, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:21:23.519Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-below", "usage": 38346, "window": 72000, "pct": 53, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:21:27.621Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 39400, "window": 72000, "pct": 55, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:31.770Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 39648, "window": 72000, "pct": 55, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:33.692Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-below", "usage": 39648, "window": 72000, "pct": 55, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:38.295Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 40443, "window": 72000, "pct": 56, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:42.371Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 40693, "window": 72000, "pct": 57, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:44.295Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-below", "usage": 40693, "window": 72000, "pct": 57, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:49.166Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 41529, "window": 72000, "pct": 58, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:53.018Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 41774, "window": 72000, "pct": 58, "goal": {"met": false}}
+{"ts": "2026-10-03T03:21:56.334Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-below", "usage": 41774, "window": 72000, "pct": 58, "goal": {"met": false}}
+{"ts": "2026-10-03T03:22:42.040Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-no-usage", "usage": null, "window": 60000, "pct": null, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:22:44.959Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37263, "window": 60000, "pct": 62, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:22:48.093Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37769, "window": 60000, "pct": 63, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:22:52.150Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37971, "window": 60000, "pct": 63, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:22:54.462Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-below", "usage": 37971, "window": 60000, "pct": 63, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:22:59.057Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 39053, "window": 60000, "pct": 65, "goal": {"met": false}}
+{"ts": "2026-10-03T03:23:04.096Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 39541, "window": 60000, "pct": 66, "goal": {"met": false}}
+{"ts": "2026-10-03T03:23:07.837Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 39541, "window": 60000, "pct": 66, "goal": {"met": false}}
+{"ts": "2026-10-03T03:23:38.794Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 40290, "window": 60000, "pct": 67, "goal": {"met": false}}
+{"ts": "2026-10-03T03:23:42.827Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 40957, "window": 60000, "pct": 68, "goal": {"met": false}}
+{"ts": "2026-10-03T03:24:06.074Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": 582386, "window": 1000000, "pct": null, "goal": {"met": true, "sentinel": true}}
+{"ts": "2026-10-03T03:24:06.259Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": 582386, "window": 1000000, "pct": null, "goal": {"met": true, "sentinel": true}}
+{"ts": "2026-10-03T03:24:06.439Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": 582386, "window": 1000000, "pct": null, "goal": {"met": true, "sentinel": true}}
+{"ts": "2026-10-03T03:32:06.425Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 27581, "window": 70000, "pct": 39, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:10.413Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37259, "window": 70000, "pct": 53, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:15.032Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 37680, "window": 70000, "pct": 54, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:21.930Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 38000, "window": 70000, "pct": 54, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:27.737Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 39035, "window": 70000, "pct": 56, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:32.677Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 40202, "window": 70000, "pct": 57, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:37.771Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 40677, "window": 70000, "pct": 58, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:42.524Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 41156, "window": 70000, "pct": 59, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:47.221Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 41602, "window": 70000, "pct": 59, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:32:52.410Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-below", "usage": 42563, "window": 70000, "pct": 61, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:34:40.014Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 42563, "window": 70000, "pct": 61, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:34:42.515Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-below", "usage": 43321, "window": 70000, "pct": 62, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:37:29.272Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-no-usage", "usage": null, "window": 56000, "pct": null, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:37:31.951Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 37386, "window": 56000, "pct": 67, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:37:39.956Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 37952, "window": 56000, "pct": 68, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:37:44.055Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 37952, "window": 56000, "pct": 68, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:37:46.200Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 39276, "window": 56000, "pct": 70, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:39:48.224Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 40140, "window": 56000, "pct": 72, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:39:50.447Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 40829, "window": 56000, "pct": 73, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:40:02.294Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 41691, "window": 56000, "pct": 74, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:40:08.723Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 42352, "window": 56000, "pct": 76, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:04.035Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 44125, "window": 56000, "pct": 79, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:10.308Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 45220, "window": 56000, "pct": 81, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:17.736Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 46218, "window": 56000, "pct": 83, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:21.838Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 47401, "window": 56000, "pct": 85, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:25.925Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 48147, "window": 56000, "pct": 86, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:29.807Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 48887, "window": 56000, "pct": 87, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:34.285Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 48887, "window": 56000, "pct": 87, "goal": {"met": false}}
+{"ts": "2026-10-03T03:42:39.886Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 49980, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:41.471Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 50988, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:43.875Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 51285, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:45.731Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 51399, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:49.481Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-no-active-goal", "usage": 51622, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:52.419Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 51766, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:53.810Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 52377, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:55.304Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 52670, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:57.333Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 52775, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:42:58.663Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 52894, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:43:00.023Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 53031, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:43:01.432Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 53136, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:43:02.986Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 53241, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:43:05.398Z", "event": "Stop", "stop_hook_active": true, "decision": "noop-no-active-goal", "usage": 53346, "window": 56000, "pct": null, "goal": {"met": true}}
+{"ts": "2026-10-03T03:43:56.256Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-no-usage", "usage": null, "window": 56000, "pct": null, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:43:59.684Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-below", "usage": 27569, "window": 56000, "pct": 49, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:44:08.234Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "remind", "usage": 43120, "window": 56000, "pct": 77, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:44:15.503Z", "event": "Stop", "stop_hook_active": false, "decision": "stop-block", "usage": 43120, "window": 56000, "pct": 77, "goal": {"met": false, "sentinel": true}}
+{"ts": "2026-10-03T03:44:20.525Z", "event": "Stop", "stop_hook_active": true, "decision": "stop-end-turn", "usage": 44425, "window": 56000, "pct": 79, "goal": {"met": false}}
+{"ts": "2026-10-03T03:46:24.238Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": null, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:46:49.586Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": null, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:47:16.459Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": null, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:47:40.793Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": null, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:48:29.135Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "noop-no-active-goal", "usage": null, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:48:31.233Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "skip-subagent", "usage": null, "window": null, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:48:32.567Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": 35962, "window": 56000, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:48:35.484Z", "event": "PostToolBatch", "stop_hook_active": null, "decision": "skip-subagent", "usage": null, "window": null, "pct": null, "goal": null}
+{"ts": "2026-10-03T03:48:37.988Z", "event": "Stop", "stop_hook_active": false, "decision": "noop-no-active-goal", "usage": 36731, "window": 56000, "pct": null, "goal": null}

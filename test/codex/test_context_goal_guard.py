@@ -55,11 +55,11 @@ class GuardTest(unittest.TestCase):
         with closing(sqlite3.connect(self.db)) as con, con:
             con.execute("UPDATE thread_goals SET status=?", (value,))
 
-    def run_guard(self, data=None, env=None, raw=None):
+    def run_guard(self, data=None, env=None, raw=None, args=()):
         environment = dict(os.environ, CODEX_HOME=str(self.home))
         if env:
             environment.update(env)
-        process = subprocess.run(["python3", str(SCRIPT)],
+        process = subprocess.run(["python3", str(SCRIPT), *args],
                                  input=raw if raw is not None else json.dumps(data or self.input),
                                  text=True, capture_output=True, env=environment,
                                  cwd=self.home, timeout=3)
@@ -84,6 +84,29 @@ class GuardTest(unittest.TestCase):
                     self.assertNotIn("permissionDecision", output)
                 else:
                     self.assertEqual(result, {})
+
+    def test_threshold_argument_overrides_default(self):
+        args = ("--threshold", "60")
+        for used, trigger in [(5999, False), (6000, False), (6001, True)]:
+            with self.subTest(used=used):
+                self.write([self.context, usage(used)])
+                self.assertEqual("hookSpecificOutput" in self.run_guard(args=args), trigger)
+        message = self.run_guard(args=args)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("已严格超过 60%", message)
+        self.assertIn("60% 暂停请求", message)
+        data = dict(self.input, hook_event_name="Stop", stop_hook_active=False)
+        self.assertIn("60%", self.run_guard(data, args=args)["reason"])
+        self.assertIn("上下文超过 60%", self.run_guard(dict(data, stop_hook_active=True), args=args)["systemMessage"])
+        self.write([self.context, usage(9950)])
+        self.assertIn("hookSpecificOutput", self.run_guard(args=("--threshold", "99")))
+
+    def test_invalid_threshold_argument_is_unavailable(self):
+        for args in [("--threshold", "0"), ("--threshold", "100"), ("--threshold", "6.5"), ("--threshold", "065"),
+                     ("--threshold", "abc"), ("--threshold", "６５"), ("--threshold",), ("--other", "65"), ("65",)]:
+            with self.subTest(args=args):
+                self.warning(self.run_guard(args=args))
+        self.status("paused")
+        self.assertEqual(self.run_guard(args=("--threshold", "0")), {})
 
     def test_goal_checked_before_usage(self):
         self.write([])

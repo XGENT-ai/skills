@@ -4,10 +4,14 @@
 import json
 import os
 from pathlib import Path
+import re
 import sqlite3
 import sys
 import uuid
 
+
+# Percent of the window; the handler command may override it with `--threshold N`.
+DEFAULT_THRESHOLD = 65
 
 UNAVAILABLE = {
     "systemMessage": "上下文 goal guard 检测不可用；请核对 CODEX_HOME、会话格式及随附的启用说明。"
@@ -129,12 +133,20 @@ def context_usage(path, model):
     raise ValueError("no current token statistics")
 
 
-def reminder(used, window):
+def threshold(args):
+    if not args:
+        return DEFAULT_THRESHOLD
+    if len(args) == 2 and args[0] == "--threshold" and re.fullmatch(r"[1-9][0-9]?", args[1]):
+        return int(args[1])
+    raise ValueError("invalid threshold argument")
+
+
+def reminder(used, window, limit):
     return (
-        f"本地上下文估算使用率 {used / window * 100:.2f}% 已严格超过 65%，当前 goal 仍 active。"
+        f"本地上下文估算使用率 {used / window * 100:.2f}% 已严格超过 {limit}%，当前 goal 仍 active。"
         "停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，"
         "写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，"
-        "记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，"
+        f"记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 {limit}% 暂停请求时，"
         "按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。"
         "hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。"
         "然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，"
@@ -142,7 +154,7 @@ def reminder(used, window):
     )
 
 
-def run(data):
+def run(data, args=()):
     if not isinstance(data, dict):
         raise ValueError("invalid hook input")
     event = data["hook_event_name"]
@@ -157,20 +169,21 @@ def run(data):
     path = root_transcript(data, home)
     if path is None or not goal_active(home, data["session_id"]):
         return {}
+    limit = threshold(args)
     used, window = context_usage(path, data["model"])
-    if used * 100 <= window * 65:
+    if used * 100 <= window * limit:
         return {}
     if event == "PreToolUse":
-        return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": reminder(used, window)}}
+        return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": reminder(used, window, limit)}}
     if not data["stop_hook_active"]:
-        return {"decision": "block", "reason": reminder(used, window)}
-    return {"systemMessage": "上下文超过 65%，goal 仍 active，收尾暂停尚未成功。"
+        return {"decision": "block", "reason": reminder(used, window, limit)}
+    return {"systemMessage": f"上下文超过 {limit}%，goal 仍 active，收尾暂停尚未成功。"
                              "请在原对话执行 /goal pause，再按交接说明自行新开对话；此告警不停止 goal 自动续跑。"}
 
 
 if __name__ == "__main__":
     try:
-        result = run(json.load(sys.stdin))
+        result = run(json.load(sys.stdin), sys.argv[1:])
     except (ValueError, TypeError, KeyError, OSError, sqlite3.Error):
         result = UNAVAILABLE
     print(json.dumps(result, ensure_ascii=False))

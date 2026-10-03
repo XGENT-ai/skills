@@ -20,6 +20,11 @@ const BLOBS_DIR = path.join(BUNDLE_DIR, 'blobs');
 const MANIFEST_FILE = path.join(BUNDLE_DIR, 'manifest.json');
 const AGENTS_TEMPLATE = path.join(PKG_ROOT, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
 const CONTEXT_GOAL_GUARD_SRC = path.join(PKG_ROOT, 'hooks', 'codex', 'context-goal-guard.py');
+// 不放进 .claude/hooks:那里的文件会被无条件复制到目标项目,绕过用户选择。
+const CLAUDE_CONTEXT_GOAL_GUARD_SRC = path.join(PKG_ROOT, 'hooks', 'claude', 'context-goal-guard.js');
+// 与两份脚本内置的默认阈值一致;安装器总是把阈值写进 handler 命令,在 /hooks 里可见。
+const CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD = 65;
+const CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD = 70;
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -514,7 +519,12 @@ async function confirm(question, skipMessage, answers) {
   return /^(y|yes)$/i.test(value.trim());
 }
 
-function installContextGoalGuard(targetDir, force) {
+// 重装没给阈值 flag 时沿用旧 handler 里的值。
+function guardThreshold(command) {
+  return Number(/ --threshold ([1-9][0-9]?)$/.exec(command)?.[1]) || undefined;
+}
+
+function installContextGoalGuard(targetDir, force, threshold) {
   const python = spawnSync('python3', ['-c', 'import sys, sqlite3; sys.exit(0 if sys.version_info >= (3, 9) else 1)'],
     { encoding: 'utf8', timeout: 5000 });
   if (python.status !== 0) {
@@ -539,8 +549,7 @@ function installContextGoalGuard(targetDir, force) {
     throw new Error(`${manifestPath} 的 hooks 结构不受支持,未修改;请先手动修复为事件数组。`);
   }
   const scriptPath = path.join(fs.realpathSync(targetDir), '.codex', 'hooks', 'context-goal-guard.py');
-  // POSIX 单引号同时保护空格、美元符号、反引号及项目路径中的单引号。
-  const command = `python3 '${scriptPath.replace(/'/g, "'\\''")}'`;
+  let previous;
   const hooks = { ...existing.hooks };
   for (const event of ['PreToolUse', 'Stop']) {
     const kept = [];
@@ -549,22 +558,30 @@ function installContextGoalGuard(targetDir, force) {
         kept.push(entry);
         continue;
       }
-      const handlers = entry.hooks.filter((handler) => !(handler?.type === 'command'
-        && typeof handler.command === 'string'
-        && /\.codex\/hooks\/context-goal-guard\.py(?:['"\s]|$)/.test(handler.command)));
+      const handlers = entry.hooks.filter((handler) => {
+        const guard = handler?.type === 'command' && typeof handler.command === 'string'
+          && /\.codex\/hooks\/context-goal-guard\.py(?:['"\s]|$)/.test(handler.command);
+        if (guard) previous ??= guardThreshold(handler.command);
+        return !guard;
+      });
       if (handlers.length === entry.hooks.length) kept.push(entry);
       else if (handlers.length > 0) kept.push({ ...entry, hooks: handlers });
     }
-    hooks[event] = [...kept, { hooks: [{ type: 'command', command, timeout: 3 }] }];
+    hooks[event] = kept;
   }
+  const limit = threshold ?? previous ?? CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD;
+  // POSIX 单引号同时保护空格、美元符号、反引号及项目路径中的单引号。
+  const command = `python3 '${scriptPath.replace(/'/g, "'\\''")}' --threshold ${limit}`;
+  for (const event of ['PreToolUse', 'Stop']) hooks[event].push({ hooks: [{ type: 'command', command, timeout: 3 }] });
   const script = fs.readFileSync(CONTEXT_GOAL_GUARD_SRC);
   const manifest = Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
   if (backup) fs.copyFileSync(manifestPath, `${manifestPath}.bak`);
   console.log(`  ${writeFileIfChanged(scriptPath, script) ? '写入' : '未变'}  .codex/hooks/context-goal-guard.py`);
   console.log(`  ${writeFileIfChanged(manifestPath, manifest) ? '写入' : '未变'}  .codex/hooks.json (context goal guard)`);
+  return limit;
 }
 
-function printContextGoalGuardSteps() {
+function printContextGoalGuardSteps(threshold) {
   console.log(`
 Codex goal guard 已部署,请完成以下操作后使用:
   1. 在目标项目运行 codex --version;目前仅验证 Codex 0.160.0、macOS arm64。
@@ -574,13 +591,83 @@ Codex goal guard 已部署,请完成以下操作后使用:
      PreToolUse 和 Stop 两个 context-goal-guard.py handler,分别审阅、信任并启用。
      核对两者来源和状态,确认其他 hooks 仍保留;配置或脚本更新后重新审阅信任。
   3. 安装与信任不构成暂停授权。请在当前 goal 的用户指令中明确(可复制):
-     对当前 goal,如果本地估算上下文使用率严格超过 65%,请先安全收尾,
+     对当前 goal,如果本地估算上下文使用率严格超过 ${threshold}%,请先安全收尾,
      按已有任务约定保存进度和交接说明,再使用原生 goal 工具将其设为 paused
      并核对,无需二次确认。未完成工作不要标为 complete。请提醒我自己新开对话继续。
   4. 先用测试 goal 验证提醒与真实 paused 状态。/goal resume 撤销先前暂停请求,
      需重新明确策略;新开对话也需手动设置新 goal 并重新明确策略。
      暂停失败时在原对话输入 /goal pause;临时停用可在 /hooks 中禁用这两个 handler。
   提示: Python 3.9+ 必须在 Codex 运行环境可用;没有 active goal 时不会触发。
+`);
+}
+
+// 与 installContextGoalGuard 形状相似,但文件、事件和匹配式都不同,暂不抽公共函数。
+function installClaudeContextGoalGuard(targetDir, force, threshold) {
+  const settingsPath = path.join(targetDir, '.claude', 'settings.local.json');
+  let existing = {};
+  let backup = false;
+  if (fs.existsSync(settingsPath)) {
+    try {
+      existing = readJson(settingsPath);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      if (!force) throw new Error(`${settingsPath} 不是合法 JSON,未修改;请先手动修复,或加 --force 备份为 .bak 后覆盖。`);
+      backup = true;
+    }
+  }
+  // 合法 JSON 的未知结构不能当成空配置,否则会丢失用户的设置。
+  if (!existing || typeof existing !== 'object' || Array.isArray(existing)
+      || (existing.hooks !== undefined && (!existing.hooks || typeof existing.hooks !== 'object' || Array.isArray(existing.hooks)))
+      || Object.values(existing.hooks || {}).some((entries) => !Array.isArray(entries))) {
+    throw new Error(`${settingsPath} 的 hooks 结构不受支持,未修改;请先手动修复为事件数组。`);
+  }
+  let previous;
+  const hooks = { ...existing.hooks };
+  for (const event of ['PostToolBatch', 'Stop']) {
+    const kept = [];
+    for (const entry of hooks[event] || []) {
+      if (!Array.isArray(entry?.hooks)) {
+        kept.push(entry);
+        continue;
+      }
+      const handlers = entry.hooks.filter((handler) => {
+        const guard = handler?.type === 'command' && typeof handler.command === 'string'
+          && /\.claude\/hooks\/context-goal-guard\.js(?:['"\s]|$)/.test(handler.command);
+        if (guard) previous ??= guardThreshold(handler.command);
+        return !guard;
+      });
+      if (handlers.length === entry.hooks.length) kept.push(entry);
+      else if (handlers.length > 0) kept.push({ ...entry, hooks: handlers });
+    }
+    hooks[event] = kept;
+  }
+  const limit = threshold ?? previous ?? CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD;
+  const command = `node "$CLAUDE_PROJECT_DIR/.claude/hooks/context-goal-guard.js" --threshold ${limit}`;
+  for (const event of ['PostToolBatch', 'Stop']) hooks[event].push({ hooks: [{ type: 'command', command, timeout: 5 }] });
+  const script = fs.readFileSync(CLAUDE_CONTEXT_GOAL_GUARD_SRC);
+  const settings = Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
+  if (backup) fs.copyFileSync(settingsPath, `${settingsPath}.bak`);
+  console.log(`  ${writeFileIfChanged(path.join(targetDir, '.claude', 'hooks', 'context-goal-guard.js'), script) ? '写入' : '未变'}  .claude/hooks/context-goal-guard.js`);
+  console.log(`  ${writeFileIfChanged(settingsPath, settings) ? '写入' : '未变'}  .claude/settings.local.json (context goal guard)`);
+  return limit;
+}
+
+function printClaudeContextGoalGuardSteps(threshold) {
+  console.log(`
+Claude Code goal guard 已部署,请完成以下操作后使用:
+  1. 运行 claude --version;目前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64,
+     以及 claude-opus-5-5、claude-sonnet-5-5(1M)与 claude-haiku-4-5-20251001(200k)。
+     可在 statusLine 输入的 context_window.context_window_size 核对窗口,不一致时不要启用。
+  2. 重启 Claude Code 会话并信任本工作区;输入 /hooks,确认 PostToolBatch 与 Stop
+     各有一个 context-goal-guard.js handler,来源为 .claude/settings.local.json,其他 hooks 仍在。
+  3. 先用测试 goal 验证:估算上下文严格超过 ${threshold}% 时 agent 收到收尾提醒;回合结束时
+     界面可能先出现「Stop hook error: …」(收尾请求,属正常),随后出现 Goal paused。
+  4. 接续:在同一项目目录新开对话或 /clear,提供计划路径或交接摘要,并重新设置 /goal;
+     新对话不继承 goal。原会话发消息或 --resume 会恢复 goal 并再次触发暂停,
+     不再需要时在原会话 /goal clear。
+  5. 停用:从 .claude/settings.local.json 删除这两个 handler 并重启会话;
+     不要用 disableAllHooks,它会连 /goal 一起禁用。
+  说明见 @xgent-ai/skills 包内 docs/claude-context-goal-guard.md;没有 active goal 时不会触发。
 `);
 }
 
@@ -603,7 +690,7 @@ function usage() {
                   hook,在 .claude/settings.json 中启用对应配置,并装上
                   vendor 的 impeccable(skills + hooks,以及按需下载的
                   engine 二进制),并询问是否创建通用的 AGENTS.md
-                  与安装 Codex goal 上下文收尾提醒
+                  与安装 Codex / Claude Code goal 上下文收尾提醒
   help            显示本帮助
 
 install 选项:
@@ -612,6 +699,12 @@ install 选项:
   --no-xgent-init       跳过 AGENTS.md,不再询问
   --context-goal-guard  安装 Codex goal guard,不再询问(需要 Python 3.9+)
   --no-context-goal-guard 跳过 Codex goal guard,不再询问
+  --context-goal-guard-threshold=N  Codex guard 的阈值百分比(1–99 整数,默认 ${CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};
+                        重装时不给则沿用已装的值),同时表示安装
+  --claude-context-goal-guard 安装 Claude Code goal guard,不再询问
+  --no-claude-context-goal-guard 跳过 Claude Code goal guard,不再询问
+  --claude-context-goal-guard-threshold=N  Claude Code guard 的阈值百分比(1–99 整数,
+                        默认 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};重装时不给则沿用已装的值),同时表示安装
   --providers=a,b       指定 impeccable 装进哪些 harness 目录(默认按项目里
                         已有的目录判断,都没有时装 ${DEFAULT_TARGETS.join(' 和 ')})
   --force               强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 .bak),
@@ -622,7 +715,8 @@ install 选项:
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--force'].includes(f) && !f.startsWith('--providers='));
+  const unknown = flags.filter((f) => !['--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
+    && !['--providers=', '--context-goal-guard-threshold=', '--claude-context-goal-guard-threshold='].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
@@ -636,6 +730,28 @@ async function install(args) {
     console.error('错误: --context-goal-guard 与 --no-context-goal-guard 不能同时使用');
     process.exit(1);
   }
+  if (flags.includes('--claude-context-goal-guard') && flags.includes('--no-claude-context-goal-guard')) {
+    console.error('错误: --claude-context-goal-guard 与 --no-claude-context-goal-guard 不能同时使用');
+    process.exit(1);
+  }
+  const thresholds = {};
+  for (const [name, skip] of [['--context-goal-guard-threshold', '--no-context-goal-guard'],
+    ['--claude-context-goal-guard-threshold', '--no-claude-context-goal-guard']]) {
+    const flag = flags.find((f) => f.startsWith(`${name}=`));
+    if (flag === undefined) continue;
+    const value = flag.slice(name.length + 1);
+    if (!/^[1-9][0-9]?$/.test(value)) {
+      console.error(`错误: ${name} 需要 1–99 的整数百分比,收到 "${value}"`);
+      process.exit(1);
+    }
+    if (flags.includes(skip)) {
+      console.error(`错误: ${name} 与 ${skip} 不能同时使用`);
+      process.exit(1);
+    }
+    thresholds[name] = Number(value);
+  }
+  const codexThreshold = thresholds['--context-goal-guard-threshold'];
+  const claudeThreshold = thresholds['--claude-context-goal-guard-threshold'];
   const options = {
     impeccable: !flags.includes('--no-impeccable'),
     force: flags.includes('--force'),
@@ -652,25 +768,33 @@ async function install(args) {
   if (options.providers) resolveProviders(options.detected, options.providers);
   const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
   const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
-  const askGuard = !flags.includes('--context-goal-guard') && !flags.includes('--no-context-goal-guard');
-  // 两个询问共享输入迭代器,避免第一问提前读掉第二问的回答。
-  const rl = process.stdin.isTTY && (askAgents || askGuard)
+  const askGuard = !flags.includes('--context-goal-guard') && !flags.includes('--no-context-goal-guard')
+    && codexThreshold === undefined;
+  const askClaudeGuard = !flags.includes('--claude-context-goal-guard') && !flags.includes('--no-claude-context-goal-guard')
+    && claudeThreshold === undefined;
+  // 各询问共享输入迭代器,避免前一问提前读掉后一问的回答。
+  const rl = process.stdin.isTTY && (askAgents || askGuard || askClaudeGuard)
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
   rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
   let agents;
   let guard;
+  let claudeGuard;
   try {
     agents = flags.includes('--xgent-init') || (askAgents && await confirm(
       '是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ',
       '  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建', answers));
-    guard = flags.includes('--context-goal-guard') || (askGuard && await confirm(
-      '是否安装 Codex goal 上下文收尾提醒 (>65% 时提醒收尾,需 Python 3.9+ 与 Codex 内手动信任)? [y/N] ',
+    guard = flags.includes('--context-goal-guard') || codexThreshold !== undefined || (askGuard && await confirm(
+      `是否安装 Codex goal 上下文收尾提醒 (默认超过 ${CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD}% 时提醒收尾,需 Python 3.9+ 与 Codex 内手动信任)? [y/N] `,
       '  跳过  Codex goal guard:非交互环境,可加 --context-goal-guard 安装', answers));
+    claudeGuard = flags.includes('--claude-context-goal-guard') || claudeThreshold !== undefined || (askClaudeGuard && await confirm(
+      `是否安装 Claude Code goal 上下文收尾提醒 (默认超过 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD}% 时提醒收尾并在回合结束时暂停 goal,需重启会话并信任工作区)? [y/N] `,
+      '  跳过  Claude Code goal guard:非交互环境,可加 --claude-context-goal-guard 安装', answers));
   } finally {
     rl?.close();
   }
-  if (guard) installContextGoalGuard(targetDir, options.force);
+  const codexLimit = guard && installContextGoalGuard(targetDir, options.force, codexThreshold);
+  const claudeLimit = claudeGuard && installClaudeContextGoalGuard(targetDir, options.force, claudeThreshold);
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -713,7 +837,8 @@ async function install(args) {
 
   if (agents) createAgents(targetDir);
   else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
-  if (guard) printContextGoalGuardSteps();
+  if (codexLimit) printContextGoalGuardSteps(codexLimit);
+  if (claudeLimit) printClaudeContextGoalGuardSteps(claudeLimit);
   console.log(`完成: ${targetDir}`);
 }
 
