@@ -46,7 +46,8 @@ test('guard opt-in copies the script, creates both hooks and prints manual steps
     assert.equal(manifest.hooks[event].length, 1);
     assert.equal(manifest.hooks[event][0].hooks[0].timeout, 3);
     assert.equal(manifest.hooks[event][0].hooks[0].type, 'command');
-    assert.match(manifest.hooks[event][0].hooks[0].command, /context-goal-guard\.py' --threshold 65$/);
+    assert.equal(manifest.hooks[event][0].hooks[0].command,
+      'python3 "$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py" --threshold 65');
   }
   assert.match(result.stdout, /严格超过 65%/);
   for (const text of ['/hooks', '信任', '0.160.0', '65%', 'paused', '/goal resume', '/goal pause', '新开对话']) {
@@ -121,7 +122,7 @@ test('guard and bundled impeccable hooks survive repeated full installations tog
   }
 });
 
-test('guard command quotes shell characters and uses the canonical project path', (t) => {
+test('guard command resolves the Git root after moving the repo and from subdirectories with shell characters', (t) => {
   const base = project(t);
   const dir = path.join(base, "My 'Project $HOME `id` $(touch injected)");
   fs.mkdirSync(dir);
@@ -130,10 +131,25 @@ test('guard command quotes shell characters and uses the canonical project path'
   const result = runGuard(alias);
   assert.equal(result.status, 0, result.stderr);
   const command = guardManifest(dir).hooks.PreToolUse[0].hooks[0].command;
-  const hook = spawnSync('/bin/sh', ['-c', command], { cwd: base, input: JSON.stringify({ hook_event_name: 'Stop' }), encoding: 'utf8' });
-  assert.equal(hook.status, 0, hook.stderr);
-  assert.doesNotThrow(() => JSON.parse(hook.stdout));
-  assert.ok(command.includes(fs.realpathSync(base)));
+  const init = spawnSync('git', ['init', dir], { encoding: 'utf8' });
+  assert.equal(init.status, 0, init.stderr);
+  assert.equal(command.includes(base), false);
+  const moved = path.join(base, "Moved 'Project $HOME `id` $(touch injected)");
+  fs.renameSync(dir, moved);
+  const subdir = path.join(moved, 'sub directory');
+  fs.mkdirSync(subdir);
+  const example = JSON.parse(fs.readFileSync(path.join(root, 'hooks', 'codex', 'hooks.example.json'), 'utf8'));
+  for (const event of ['PreToolUse', 'Stop']) {
+    assert.equal(example.hooks[event][0].hooks[0].command, command);
+    for (const cwd of [moved, subdir]) {
+      const hook = spawnSync('/bin/sh', ['-c', command], {
+        cwd, input: JSON.stringify({ hook_event_name: event, stop_hook_active: false, agent_id: 'test-child' }), encoding: 'utf8',
+      });
+      assert.equal(hook.status, 0, hook.stderr);
+      assert.deepEqual(JSON.parse(hook.stdout), {});
+      assert.equal(fs.existsSync(path.join(cwd, 'injected')), false);
+    }
+  }
   assert.equal(fs.existsSync(path.join(base, 'injected')), false);
 });
 

@@ -47,7 +47,7 @@ npx @xgent-ai/skills install
 
 非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
 
-`install` 还会询问是否安装 Codex goal 上下文收尾提醒,输入 `y` 或 `yes` 安装,回车和非交互环境默认跳过。此选项不受 `--providers` 或 `--no-impeccable` 影响。确认后先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
+`install` 还会询问是否安装 Codex goal 上下文收尾提醒,输入 `y` 或 `yes` 安装,回车和非交互环境默认跳过。此选项不受 `--providers` 或 `--no-impeccable` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。确认后先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
 
 安装后会显示用户必须完成的步骤:从目标项目启动 Codex、信任项目 `.codex/` 层,在 `/hooks` 中审阅、信任并启用两个 handler,对**当前 goal** 明确超过阈值(默认 65%)时先保存进度和交接、再暂停的策略。安装输出提供可复制的指令;安装和信任本身不构成暂停授权。恢复 goal 或新开对话后需重新明确策略。当前仅验证 Codex 0.160.0、macOS arm64,完整限制与停用方法见 [启用说明](docs/codex-context-goal-guard.md)。
 

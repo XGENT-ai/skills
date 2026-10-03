@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\" --threshold 65",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py\" --threshold 65",
             "timeout": 3
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\" --threshold 65",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py\" --threshold 65",
             "timeout": 3
           }
         ]

@@ -33,13 +33,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-03 11:57 +10:00（Australia/Sydney）
+- 最近更新：2026-10-03 18:34 +10:00（Australia/Sydney）
 - 当前进度：3/3 个里程碑完成
-- 当前状态：M1–M3 均已完成；四项交付物与启用说明已验证，日常配置未修改
+- 当前状态：M1–M3 均已完成；后续安装器及配置示例已改为运行时从 Git 根目录定位，安装与命令执行回归通过，日常配置未修改
 - 最近完成：M3 · 实测启用与人工接续
 - 下一步：交付；按启用说明在实测支持环境部署，新构建或其他 Stop 组合需重新验证
 - 当前阻塞：无；A-1 已解除，V-1–V-5 已按里程碑通过，版本及行为边界见 M3 记录
-- 代码基线：dirty@c9be5a81f739a9c7588810e36c0efd220731e4fc；计划及记录目录、hooks/codex、test/codex、启用说明
+- 代码基线：dirty@3bce8b2701612bfe7d8b2bcb4099067538d6904b；安装器、配置示例、安装测试、启用说明、README、计划及 M3 记录
 
 ### 完成记录
 
@@ -47,7 +47,7 @@
 | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-03 11:22 +10:00 | code mode 73.54% 与普通 Bash 73.42% 的真实提醒、已有记录、原生暂停、结束判定均通过；定位与 Stop `{}` 契约已固定 | [M1 记录](codex-context-goal-guard.records/M1.md) |
 | M2 | 已完成 | 2026-10-03 11:49 +10:00 | 单脚本、同步配置与 19 项入口测试通过；真实 hook 3003 ms 超时及可见故障降级通过 | [M2 记录](codex-context-goal-guard.records/M2.md) |
-| M3 | 已完成 | 2026-10-03 11:57 +10:00 | 干净 checkout、生产阈值、信任/重信、混合 Stop、人工接续、无记录、写失败及停用均通过；资源已收口 | [M3 记录](codex-context-goal-guard.records/M3.md) |
+| M3 | 已完成 | 2026-10-03 18:34 +10:00 | 原部署与接续验收已完成；后续 Git 根目录路径改动通过 61 项安装测试及 21 项 guard 测试，覆盖仓库迁移、空格/特殊字符路径及子目录执行 | [M3 记录](codex-context-goal-guard.records/M3.md) |
 
 ## 0. 需求、范围与决策
 
@@ -116,19 +116,19 @@
 | 文件 | 改动 | 用途 |
 | --- | --- | --- |
 | `hooks/codex/context-goal-guard.py` ★ | 新增 | 单一只读 hook 程序，stdin 输入、stdout JSON 输出 |
-| `hooks/codex/hooks.example.json` ★ | 新增 | `PreToolUse` / `Stop` 配置片段；command 使用手动部署脚本的绝对路径，见下方约定 |
+| `hooks/codex/hooks.example.json` ★ | 新增 | `PreToolUse` / `Stop` 配置片段；command 在运行时从 Git 根目录定位脚本，见下方约定 |
 | `test/codex/test_context_goal_guard.py` ★ | 新增 | 沿用既有 `test/` 根目录；真实临时 JSONL、SQLite 和脚本进程的行为测试 |
 | `docs/codex-context-goal-guard.md` ★ | 新增 | 兼容范围、获取与手动部署、项目层信任、`/hooks` 审阅与改后重信、生效确认、人工接续时重建 goal 与旧 goal 处置、停用与故障说明 |
 
-不修改 `bin/xgent-skills.js`、`package.json`、既有 skills；启用阶段在目标项目复制脚本并合并 hook 配置，保留其余内容。首期从仓库文件部署，不宣称已随 npm 包分发。配置示例不是要覆盖目标项目整个 manifest。
+M1–M3 首期范围不修改 `bin/xgent-skills.js`、`package.json`、既有 skills；启用阶段在目标项目复制脚本并合并 hook 配置，保留其余内容。后续已接入 install 源码与 npm 打包清单，当前按用户要求同步修改安装器的 guard command，仍未发布到 npm。配置示例不是要覆盖目标项目整个 manifest。
 
-手动部署约定：当前交付尚未发布，M3 先从本地仓库 clone 并 checkout 独立验证 revision；远程发布后用户才可 clone `https://github.com/XGENT-ai/skills.git` 并 checkout 对应已发布版本。按启用说明取得上表脚本、配置示例和说明；创建目标项目的 `.codex/hooks/` 并将单文件脚本复制为 `.codex/hooks/context-goal-guard.py`。两个事件的 command 均使用该副本的绝对路径，以免从项目子目录启动时失效。示例中用户只需将 `/path/to/My Project` 替换为目标项目的绝对目录，保留双引号；JSON 中的字段示例为：
+手动部署约定：当前交付尚未发布，M3 先从本地仓库 clone 并 checkout 独立验证 revision；远程发布后用户才可 clone `https://github.com/XGENT-ai/skills.git` 并 checkout 对应已发布版本。按启用说明取得上表脚本、配置示例和说明；在目标 Git 仓库根目录创建 `.codex/hooks/` 并将单文件脚本复制为 `.codex/hooks/context-goal-guard.py`。按用户 2026-10-03 的路径可共享要求，两个事件的 command 均在运行时用 `$(git rev-parse --show-toplevel)` 定位该副本，避免配置包含本机项目目录，并支持子目录启动及仓库迁移。保留双引号；JSON 中的字段示例为：
 
 ```json
-{"command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\""}
+{"command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py\" --threshold 65"}
 ```
 
-目标环境须能解析 `python3`，否则按该环境实测的 Python 3 可执行文件绝对路径替换。启用说明提供复制与配置合并步骤，M3 从干净目录验证路径含空格及从子目录启动；修改 command 后按 §7 重新审阅信任。
+目标环境须能解析 `git` 和 `python3`；后者无法解析时按该环境实测的 Python 3 可执行文件绝对路径替换。非 Git 目录需手动配置脚本绝对路径。启用说明提供复制与配置合并步骤；路径变更的安装和命令执行回归见 [M3 补充记录](codex-context-goal-guard.records/M3.md)，原 M3 真实调度证据使用当时的绝对路径命令。修改 command 后按 §7 重新审阅信任。
 
 ## 2. 模块、接口与依赖
 
@@ -240,7 +240,7 @@ hook 无自有去重状态；暂停前的多个工具调用可重复收到同一
 | 同步 hook 超时 | 本次检测失效；不终止既有工具 | Codex hook 失败提示 | 缩减读范围、实测后调整运行上限；V-4 |
 | 其他 Stop hook 要求继续或停止 | 收尾请求可能受合并语义影响 | 合并配置下实测，不能只验单个脚本 | V-4 / V-5；冲突未解决前不启用 |
 
-启用顺序：先满足 M1 → 完成实现与本地测试 → 在干净隔离项目按 §1.2 获取并复制脚本、替换绝对路径并合并配置 → 确认项目 `.codex/` 层受信任 → `/hooks` 审阅信任两个 handler → 在 `/hooks` 确认来源、启用与信任状态 → M3 真实触发及接续验收 → 在说明中的已验证环境按相同步骤启用。配置保留其他 handler，不复制开发机绝对路径，不改用户全局 hooks；修改定义后重走审阅与生效确认。hook 状态正常不等于存在 active goal，也不等于 A-1 已验证。
+启用顺序：先满足 M1 → 完成实现与本地测试 → 在干净隔离 Git 项目按 §1.2 获取并复制脚本、使用 Git 根目录命令并合并配置 → 确认项目 `.codex/` 层受信任 → `/hooks` 审阅信任两个 handler → 在 `/hooks` 确认来源、启用与信任状态 → M3 真实触发及接续验收 → 在说明中的已验证环境按相同步骤启用。配置保留其他 handler，不复制开发机绝对路径，不改用户全局 hooks；修改定义后重走审阅与生效确认。hook 状态正常不等于存在 active goal，也不等于 A-1 已验证。
 
 停用只移除本 guard 的 handler；保留所有其他 hooks。已由 agent 保存的任务记录保留，已经暂停的 goal 保持 paused，恢复须由用户主动决定。脚本、配置没有数据库写入和迁移，停用无需回填。
 

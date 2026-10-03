@@ -570,8 +570,8 @@ function installContextGoalGuard(targetDir, force, threshold) {
     hooks[event] = kept;
   }
   const limit = threshold ?? previous ?? CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD;
-  // POSIX 单引号同时保护空格、美元符号、反引号及项目路径中的单引号。
-  const command = `python3 '${scriptPath.replace(/'/g, "'\\''")}' --threshold ${limit}`;
+  // 运行时从 Git 根目录定位,避免配置绑定安装机器或会话子目录。
+  const command = `python3 "$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py" --threshold ${limit}`;
   for (const event of ['PreToolUse', 'Stop']) hooks[event].push({ hooks: [{ type: 'command', command, timeout: 3 }] });
   const script = fs.readFileSync(CONTEXT_GOAL_GUARD_SRC);
   const manifest = Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
@@ -597,7 +597,8 @@ Codex goal guard 已部署,请完成以下操作后使用:
   4. 先用测试 goal 验证提醒与真实 paused 状态。/goal resume 撤销先前暂停请求,
      需重新明确策略;新开对话也需手动设置新 goal 并重新明确策略。
      暂停失败时在原对话输入 /goal pause;临时停用可在 /hooks 中禁用这两个 handler。
-  提示: Python 3.9+ 必须在 Codex 运行环境可用;没有 active goal 时不会触发。
+  提示: 请安装到 Git 仓库根目录;Codex 运行环境必须能找到 git 和 Python 3.9+。
+        hook 运行时从 Git 根目录定位脚本;没有 active goal 时不会触发。
 `);
 }
 
