@@ -19,6 +19,7 @@ const BUNDLE_DIR = path.join(VENDOR_DIR, 'bundle');
 const BLOBS_DIR = path.join(BUNDLE_DIR, 'blobs');
 const MANIFEST_FILE = path.join(BUNDLE_DIR, 'manifest.json');
 const AGENTS_TEMPLATE = path.join(PKG_ROOT, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
+const CONTEXT_GOAL_GUARD_SRC = path.join(PKG_ROOT, 'hooks', 'codex', 'context-goal-guard.py');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -503,23 +504,84 @@ function installImpeccable(targetDir, options) {
 
 // ─── install ────────────────────────────────────────────────────────────────
 
-async function confirmAgents() {
+async function confirm(question, skipMessage, answers) {
   if (!process.stdin.isTTY) {
-    console.log('  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建');
+    console.log(skipMessage);
     return false;
   }
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.once('close', () => resolve(false));
-    rl.once('SIGINT', () => {
-      rl.close();
-      process.exit(130);
-    });
-    rl.question('是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ', (answer) => {
-      resolve(/^(y|yes)$/i.test(answer.trim()));
-      rl.close();
-    });
-  });
+  process.stdout.write(question);
+  const { value = '' } = await answers.next();
+  return /^(y|yes)$/i.test(value.trim());
+}
+
+function installContextGoalGuard(targetDir, force) {
+  const python = spawnSync('python3', ['-c', 'import sys, sqlite3; sys.exit(0 if sys.version_info >= (3, 9) else 1)'],
+    { encoding: 'utf8', timeout: 5000 });
+  if (python.status !== 0) {
+    throw new Error('Codex goal guard 需要含 sqlite3 的 Python 3.9 或更高版本。请先安装并用 python3 --version 核对,确保 Codex 运行环境也能找到 python3,再重试;或加 --no-context-goal-guard 跳过。');
+  }
+  const manifestPath = path.join(targetDir, '.codex', 'hooks.json');
+  let existing = {};
+  let backup = false;
+  if (fs.existsSync(manifestPath)) {
+    try {
+      existing = readJson(manifestPath);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      if (!force) throw new Error(`${manifestPath} 不是合法 JSON,未修改;请先手动修复,或加 --force 备份为 .bak 后覆盖。`);
+      backup = true;
+    }
+  }
+  // 合法 JSON 的未知结构不能当成空配置,否则会丢失用户的 hooks。
+  if (!existing || typeof existing !== 'object' || Array.isArray(existing)
+      || (existing.hooks !== undefined && (!existing.hooks || typeof existing.hooks !== 'object' || Array.isArray(existing.hooks)))
+      || Object.values(existing.hooks || {}).some((entries) => !Array.isArray(entries))) {
+    throw new Error(`${manifestPath} 的 hooks 结构不受支持,未修改;请先手动修复为事件数组。`);
+  }
+  const scriptPath = path.join(fs.realpathSync(targetDir), '.codex', 'hooks', 'context-goal-guard.py');
+  // POSIX 单引号同时保护空格、美元符号、反引号及项目路径中的单引号。
+  const command = `python3 '${scriptPath.replace(/'/g, "'\\''")}'`;
+  const hooks = { ...existing.hooks };
+  for (const event of ['PreToolUse', 'Stop']) {
+    const kept = [];
+    for (const entry of hooks[event] || []) {
+      if (!Array.isArray(entry?.hooks)) {
+        kept.push(entry);
+        continue;
+      }
+      const handlers = entry.hooks.filter((handler) => !(handler?.type === 'command'
+        && typeof handler.command === 'string'
+        && /\.codex\/hooks\/context-goal-guard\.py(?:['"\s]|$)/.test(handler.command)));
+      if (handlers.length === entry.hooks.length) kept.push(entry);
+      else if (handlers.length > 0) kept.push({ ...entry, hooks: handlers });
+    }
+    hooks[event] = [...kept, { hooks: [{ type: 'command', command, timeout: 3 }] }];
+  }
+  const script = fs.readFileSync(CONTEXT_GOAL_GUARD_SRC);
+  const manifest = Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
+  if (backup) fs.copyFileSync(manifestPath, `${manifestPath}.bak`);
+  console.log(`  ${writeFileIfChanged(scriptPath, script) ? '写入' : '未变'}  .codex/hooks/context-goal-guard.py`);
+  console.log(`  ${writeFileIfChanged(manifestPath, manifest) ? '写入' : '未变'}  .codex/hooks.json (context goal guard)`);
+}
+
+function printContextGoalGuardSteps() {
+  console.log(`
+Codex goal guard 已部署,请完成以下操作后使用:
+  1. 在目标项目运行 codex --version;目前仅验证 Codex 0.160.0、macOS arm64。
+     其他版本的会话格式不自动兼容;请先在隔离项目验证。
+  2. 从目标项目启动 Codex,审阅并信任项目 .codex/ 层。
+     在 Codex 对话中输入 /hooks,找到本项目 .codex/hooks.json 的
+     PreToolUse 和 Stop 两个 context-goal-guard.py handler,分别审阅、信任并启用。
+     核对两者来源和状态,确认其他 hooks 仍保留;配置或脚本更新后重新审阅信任。
+  3. 安装与信任不构成暂停授权。请在当前 goal 的用户指令中明确(可复制):
+     对当前 goal,如果本地估算上下文使用率严格超过 65%,请先安全收尾,
+     按已有任务约定保存进度和交接说明,再使用原生 goal 工具将其设为 paused
+     并核对,无需二次确认。未完成工作不要标为 complete。请提醒我自己新开对话继续。
+  4. 先用测试 goal 验证提醒与真实 paused 状态。/goal resume 撤销先前暂停请求,
+     需重新明确策略;新开对话也需手动设置新 goal 并重新明确策略。
+     暂停失败时在原对话输入 /goal pause;临时停用可在 /hooks 中禁用这两个 handler。
+  提示: Python 3.9+ 必须在 Codex 运行环境可用;没有 active goal 时不会触发。
+`);
 }
 
 function createAgents(targetDir) {
@@ -541,12 +603,15 @@ function usage() {
                   hook,在 .claude/settings.json 中启用对应配置,并装上
                   vendor 的 impeccable(skills + hooks,以及按需下载的
                   engine 二进制),并询问是否创建通用的 AGENTS.md
+                  与安装 Codex goal 上下文收尾提醒
   help            显示本帮助
 
 install 选项:
   --no-impeccable       跳过 impeccable,仍安装 XGENT 的 hooks 与 settings
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
+  --context-goal-guard  安装 Codex goal guard,不再询问(需要 Python 3.9+)
+  --no-context-goal-guard 跳过 Codex goal guard,不再询问
   --providers=a,b       指定 impeccable 装进哪些 harness 目录(默认按项目里
                         已有的目录判断,都没有时装 ${DEFAULT_TARGETS.join(' 和 ')})
   --force               强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 .bak),
@@ -557,7 +622,7 @@ install 选项:
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-impeccable', '--xgent-init', '--no-xgent-init', '--force'].includes(f) && !f.startsWith('--providers='));
+  const unknown = flags.filter((f) => !['--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--force'].includes(f) && !f.startsWith('--providers='));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
@@ -565,6 +630,10 @@ async function install(args) {
   }
   if (flags.includes('--xgent-init') && flags.includes('--no-xgent-init')) {
     console.error('错误: --xgent-init 与 --no-xgent-init 不能同时使用');
+    process.exit(1);
+  }
+  if (flags.includes('--context-goal-guard') && flags.includes('--no-context-goal-guard')) {
+    console.error('错误: --context-goal-guard 与 --no-context-goal-guard 不能同时使用');
     process.exit(1);
   }
   const options = {
@@ -582,7 +651,26 @@ async function install(args) {
   options.detected = detectProviders(targetDir);
   if (options.providers) resolveProviders(options.detected, options.providers);
   const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
-  const agents = flags.includes('--xgent-init') || (!flags.includes('--no-xgent-init') && !agentsExists && await confirmAgents());
+  const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
+  const askGuard = !flags.includes('--context-goal-guard') && !flags.includes('--no-context-goal-guard');
+  // 两个询问共享输入迭代器,避免第一问提前读掉第二问的回答。
+  const rl = process.stdin.isTTY && (askAgents || askGuard)
+    ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
+  const answers = rl?.[Symbol.asyncIterator]();
+  rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
+  let agents;
+  let guard;
+  try {
+    agents = flags.includes('--xgent-init') || (askAgents && await confirm(
+      '是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ',
+      '  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建', answers));
+    guard = flags.includes('--context-goal-guard') || (askGuard && await confirm(
+      '是否安装 Codex goal 上下文收尾提醒 (>65% 时提醒收尾,需 Python 3.9+ 与 Codex 内手动信任)? [y/N] ',
+      '  跳过  Codex goal guard:非交互环境,可加 --context-goal-guard 安装', answers));
+  } finally {
+    rl?.close();
+  }
+  if (guard) installContextGoalGuard(targetDir, options.force);
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -625,6 +713,7 @@ async function install(args) {
 
   if (agents) createAgents(targetDir);
   else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
+  if (guard) printContextGoalGuardSteps();
   console.log(`完成: ${targetDir}`);
 }
 

@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "一次收尾：从工具边界到 goal 暂停",
+    "output": "docs/diagrams/codex-guard-sequence.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1000,
+      580
+    ],
+    "column_fit": "spread",
+    "views": [
+      {
+        "id": "read-only-check",
+        "label": "只读检测",
+        "focus": [
+          "runtime",
+          "guard",
+          "transcript",
+          "goaldb"
+        ],
+        "note": "hook 在两个工具边界读两份本地数据，不写任何东西。"
+      },
+      {
+        "id": "remind-and-pause",
+        "label": "提醒与暂停",
+        "focus": [
+          "guard",
+          "runtime",
+          "agent",
+          "goaltool"
+        ],
+        "note": "提醒先进上下文，agent 依据用户事先明确的授权调用原生 goal 工具。"
+      },
+      {
+        "id": "stop-boundary",
+        "label": "结束边界",
+        "focus": [
+          "runtime",
+          "guard"
+        ],
+        "note": "已暂停时 Stop 静默返回 {}；仍 active 时只告警，不阻断续跑。"
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Codex 运行器",
+      "sublabel": "PreToolUse / Stop 边界"
+    },
+    {
+      "id": "guard",
+      "type": "backend",
+      "label": "守卫脚本",
+      "sublabel": "context-goal-guard.py"
+    },
+    {
+      "id": "transcript",
+      "type": "database",
+      "label": "会话记录 JSONL",
+      "sublabel": "最新 token_count"
+    },
+    {
+      "id": "goaldb",
+      "type": "database",
+      "label": "goals_1.sqlite",
+      "sublabel": "只读查询"
+    },
+    {
+      "id": "agent",
+      "type": "cloud",
+      "label": "Agent",
+      "sublabel": "执行收尾动作"
+    },
+    {
+      "id": "goaltool",
+      "type": "external",
+      "label": "原生 goal 工具",
+      "sublabel": "update_goal / get_goal"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 300,
+      "label": "只读检测"
+    },
+    {
+      "from": 306,
+      "to": 460,
+      "label": "提醒与收尾"
+    },
+    {
+      "from": 466,
+      "to": 512,
+      "label": "结束边界"
+    }
+  ],
+  "messages": [
+    {
+      "from": "runtime",
+      "to": "guard",
+      "y": 180,
+      "label": "PreToolUse 或 Stop 事件",
+      "variant": "emphasis"
+    },
+    {
+      "from": "guard",
+      "to": "transcript",
+      "y": 206,
+      "label": "读取 hook 输入里的 transcript_path"
+    },
+    {
+      "from": "transcript",
+      "to": "guard",
+      "y": 232,
+      "label": "189900 / 258400 = 73.49%",
+      "variant": "return"
+    },
+    {
+      "from": "guard",
+      "to": "goaldb",
+      "y": 262,
+      "label": "只读取当前根线程 goal"
+    },
+    {
+      "from": "goaldb",
+      "to": "guard",
+      "y": 288,
+      "label": "active",
+      "variant": "return"
+    },
+    {
+      "from": "guard",
+      "to": "runtime",
+      "y": 314,
+      "label": "严格 > 65% 且 goal active → 追加收尾提醒",
+      "variant": "emphasis"
+    },
+    {
+      "from": "runtime",
+      "to": "agent",
+      "y": 340,
+      "label": "提醒进入上下文"
+    },
+    {
+      "from": "agent",
+      "to": "goaltool",
+      "y": 370,
+      "label": "先更新已有任务记录，再 update_goal(status=paused)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "goaltool",
+      "to": "agent",
+      "y": 396,
+      "label": "paused",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "goaltool",
+      "y": 422,
+      "label": "get_goal 复核"
+    },
+    {
+      "from": "goaltool",
+      "to": "agent",
+      "y": 448,
+      "label": "paused / idle · 用量未重置",
+      "variant": "return"
+    },
+    {
+      "from": "runtime",
+      "to": "guard",
+      "y": 472,
+      "label": "Stop 再次检测：已 paused → 返回 {}",
+      "variant": "dashed"
+    },
+    {
+      "from": "guard",
+      "to": "runtime",
+      "y": 497,
+      "label": "若仍 active：透明失败告警，不阻止自动续跑",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "guard",
+      "from": 174,
+      "to": 320,
+      "type": "backend"
+    },
+    {
+      "participant": "transcript",
+      "from": 200,
+      "to": 240,
+      "type": "database"
+    },
+    {
+      "participant": "goaldb",
+      "from": 256,
+      "to": 296,
+      "type": "database"
+    },
+    {
+      "participant": "agent",
+      "from": 334,
+      "to": 456,
+      "type": "cloud"
+    },
+    {
+      "participant": "goaltool",
+      "from": 364,
+      "to": 456,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "只读，不代劳",
+      "items": [
+        "hook 只读取会话记录和 goal 库，不写进度、不改 goal、不开新对话",
+        "占比来自最新一条完整 token_count，可能滞后于界面上的百分比",
+        "累计、缓存、reasoning tokens 不重复计入；压缩或换模型后没有新统计就不沿用旧值"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "暂停必须由人先授权",
+      "items": [
+        "安装、信任、读完说明都不构成暂停授权",
+        "用户要在当前 goal 的指令里明确 65% 暂停策略，agent 才调用原生工具",
+        "/goal resume 撤销先前授权，恢复后需重新明确"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "提醒不等于暂停",
+      "items": [
+        "提醒依赖 agent 执行，hook 不能强制暂停",
+        "只有 get_goal 复核为 paused 才算暂停成功",
+        "写记录失败时，回复里保留最小交接摘要并说明失败"
+      ]
+    }
+  ]
+}

@@ -18,6 +18,9 @@
   "files": [
     "bin",
     ".claude/hooks",
+    "hooks/codex/context-goal-guard.py",
+    "hooks/codex/hooks.example.json",
+    "docs/codex-context-goal-guard.md",
     "skills",
     "vendor/impeccable/bundle",
     "vendor/impeccable/VERSION.json",

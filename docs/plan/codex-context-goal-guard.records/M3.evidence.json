@@ -1,0 +1,4725 @@
+{
+  "scope": "Real Codex runtime with deployed production script; fault wrapper is test-only input injection",
+  "runtime": {
+    "userAgent": "guard-m3/0.160.0 (Mac OS 27.0.1; arm64) herdr/0.9.3 (guard-m3; 1)",
+    "codexHome": "<M3_ROOT>/home",
+    "platformFamily": "unix",
+    "platformOs": "macos"
+  },
+  "revision": "63fc5faf56f5ac186211501f065b4d2a96479491",
+  "production_sha256": "5643e59543bbdf8e25d09098042a57828ddab8f8d97028d97d1391d18e1f1bcf",
+  "hook_lists": {
+    "2": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:bebee97f6767b7366f902a861bcae62d245ece2cfd57040d8ec73be5a958562f",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "untrusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "5": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:bebee97f6767b7366f902a861bcae62d245ece2cfd57040d8ec73be5a958562f",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "untrusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "6": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:bebee97f6767b7366f902a861bcae62d245ece2cfd57040d8ec73be5a958562f",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "11": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\" ",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:f736ae45527bb9eeadc78f6b8782a02d69cccea23300d99c5ccf0d6e4a06af58",
+              "trustStatus": "modified"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "13": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\" ",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:f736ae45527bb9eeadc78f6b8782a02d69cccea23300d99c5ccf0d6e4a06af58",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "25": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/fault.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:581436bda3c362bf72795fc42e9d3e4b8de49b8e4d53e96cf58de6cb9823e73d",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "28": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/fault.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:581436bda3c362bf72795fc42e9d3e4b8de49b8e4d53e96cf58de6cb9823e73d",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "29": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/Untrusted Project",
+          "hooks": [],
+          "warnings": [],
+          "errors": []
+        },
+        {
+          "cwd": "<M3_ROOT>/My Project/sub directory",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/fault.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:581436bda3c362bf72795fc42e9d3e4b8de49b8e4d53e96cf58de6cb9823e73d",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "33": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project/sub directory",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": false,
+              "isManaged": false,
+              "currentHash": "sha256:bebee97f6767b7366f902a861bcae62d245ece2cfd57040d8ec73be5a958562f",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:1:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/My Project/.codex/hooks/context-goal-guard.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 2,
+              "enabled": false,
+              "isManaged": false,
+              "currentHash": "sha256:7e900c40808fa2bd6d03d00369005d72d5419d24fa94d1bcc260c703bd0c94c0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    },
+    "36": {
+      "data": [
+        {
+          "cwd": "<M3_ROOT>/My Project/sub directory",
+          "hooks": [
+            {
+              "key": "<M3_ROOT>/My Project/.codex/hooks.json:stop:0:0",
+              "eventName": "stop",
+              "handlerType": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "async": false,
+              "matcher": null,
+              "timeoutSec": 3,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:0d2f7aa2d677e0803c3be053fd7df65752f9883936b4f088619092bc025c2bc5",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "threads": {
+    "existing": {
+      "thread_id": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+      "calls": [
+        {
+          "timestamp": "2026-10-03T01:40:49.564Z",
+          "ordinal": 12,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call",
+            "id": "ctc_05ed6c3f7aa1c11a016ac05d205d5487d09ae655290626955e",
+            "status": "completed",
+            "call_id": "call_h9p9A5Txhuh4lGwX1u50FF9Y",
+            "name": "exec",
+            "input": "text(await tools.exec_command({cmd:\"pwd\",max_output_tokens:1000}));\ntext(await tools.exec_command({cmd:\"cat ../progress.md\",max_output_tokens:4000}));\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991643.509594
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:40:49.910Z",
+          "ordinal": 16,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call_output",
+            "id": "ctco_01a0ff6b-cc76-7370-b687-3f6f40927058",
+            "call_id": "call_h9p9A5Txhuh4lGwX1u50FF9Y",
+            "output": [
+              {
+                "type": "input_text",
+                "text": "Script completed\nWall time 0.3 seconds\nOutput:\n"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"chunk_id\":\"ab9744\",\"wall_time_seconds\":0.000007458,\"exit_code\":0,\"original_token_count\":27,\"output\":\"<M3_ROOT>/My Project/sub directory\\n\"}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"chunk_id\":\"745e5a\",\"wall_time_seconds\":0.000009875,\"exit_code\":0,\"original_token_count\":16,\"output\":\"# M3 existing progress\\n\\nStatus: pending isolated verification.\\n\"}"
+              }
+            ],
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991649.910764
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:40:56.843Z",
+          "ordinal": 18,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call",
+            "id": "ctc_05ed6c3f7aa1c11a016ac05d256e0c87d0849b1237f4f91711",
+            "status": "completed",
+            "call_id": "call_PHAOfSmIYDBoSk31jgZx0z1a",
+            "name": "exec",
+            "input": "text(await tools.create_goal({objective:\"验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。\"}));\ntext(await tools.exec_command({cmd:\"rg --files -g AGENTS.md -g '*guard*' -g '*context*' ..\",max_output_tokens:2000}));\ntext(await tools.get_goal({}));\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991650.266543
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:40:57.103Z",
+          "ordinal": 23,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call_output",
+            "id": "ctco_01a0ff6b-e88f-7cd1-aa27-e4656797a0ad",
+            "call_id": "call_PHAOfSmIYDBoSk31jgZx0z1a",
+            "output": [
+              {
+                "type": "input_text",
+                "text": "Script completed\nWall time 0.3 seconds\nOutput:\n"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"goal\":{\"threadId\":\"01a0ff6b-7068-7400-a3bd-badf42fb4b78\",\"objective\":\"验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。\",\"status\":\"active\",\"tokensUsed\":0,\"timeUsedSeconds\":0,\"createdAt\":1790991656,\"updatedAt\":1790991656},\"remainingTokens\":null,\"completionBudgetReport\":null}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"chunk_id\":\"24d939\",\"wall_time_seconds\":0.000007,\"exit_code\":1,\"original_token_count\":0,\"output\":\"\"}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"goal\":{\"threadId\":\"01a0ff6b-7068-7400-a3bd-badf42fb4b78\",\"objective\":\"验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。\",\"status\":\"active\",\"tokensUsed\":607,\"timeUsedSeconds\":0,\"createdAt\":1790991656,\"updatedAt\":1790991657},\"remainingTokens\":null,\"completionBudgetReport\":null}"
+              }
+            ],
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991657.103917
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:41:15.927Z",
+          "ordinal": 29,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call",
+            "id": "ctc_05ed6c3f7aa1c11a016ac05d2e17c887d09d0f9c75ce789376",
+            "status": "completed",
+            "call_id": "call_1XxygNHvf9crUUQGy4EmAQE5",
+            "name": "exec",
+            "input": "text(await tools.exec_command({cmd:\"cat >> ../progress.md <<'EOF'\\n\\n## M3 guard 交接（2026-10-03）\\n\\n- 目标：验证guard后暂停并交接（不要完成）。原目标及历史保留。\\n- 已完成：实际执行 pwd；读取本文件原记录；创建原生 goal；收到本地 guard 阈值通知，开始交接。\\n- 未完成：新对话中的后续测试与继续工作；本 goal 不标记 complete。\\n- 已验证：工作目录为 <M3_ROOT>/My Project/sub directory；原记录为 pending isolated verification；guard 报告本地估算上下文使用率 73.49%，严格超过 65%；暂停前 get_goal 状态为 active。rg 在父目录未找到匹配的 AGENTS.md、guard 或 context 文件（退出码 1）。\\n- 未验证：73.49% 为本地 guard 估算，未独立测量真实上下文占用；本次写入时原生暂停及核对尚待随后执行，实际结果以本对话工具返回和最终回复为准。\\n- 下一步：先调用原生 update_goal(status=paused)，随后 get_goal 核对并停止目标工作。用户在同项目、同工作目录自行新开对话，提供本文件及已有对话记录，手动重建 goal 并重新明确暂停策略；新对话不继承本 goal，后续 resume 撤销本次暂停请求。\\n- 进程：本次所有 shell 命令均已退出；没有创建后台进程、子代理、新对话或其他记录，无本次仍在运行的进程。\\nEOF\",\"max_output_tokens\":1000}));\ntext(await tools.exec_command({cmd:\"cat ../progress.md\",max_output_tokens:2500}));\ntext(await tools.update_goal({status:\"paused\"}));\ntext(await tools.get_goal({}));\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991657.566922
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:41:16.286Z",
+          "ordinal": 36,
+          "type": "response_item",
+          "payload": {
+            "type": "custom_tool_call_output",
+            "id": "ctco_01a0ff6c-337e-7cf2-be94-6113a1086eac",
+            "call_id": "call_1XxygNHvf9crUUQGy4EmAQE5",
+            "output": [
+              {
+                "type": "input_text",
+                "text": "Script completed\nWall time 0.4 seconds\nOutput:\n"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"chunk_id\":\"e69b5f\",\"wall_time_seconds\":0.000007417,\"exit_code\":0,\"original_token_count\":0,\"output\":\"\"}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"chunk_id\":\"a7ffb3\",\"wall_time_seconds\":0.000008,\"exit_code\":0,\"original_token_count\":367,\"output\":\"# M3 existing progress\\n\\nStatus: pending isolated verification.\\n\\n## M3 guard 交接（2026-10-03）\\n\\n- 目标：验证guard后暂停并交接（不要完成）。原目标及历史保留。\\n- 已完成：实际执行 pwd；读取本文件原记录；创建原生 goal；收到本地 guard 阈值通知，开始交接。\\n- 未完成：新对话中的后续测试与继续工作；本 goal 不标记 complete。\\n- 已验证：工作目录为 <M3_ROOT>/My Project/sub directory；原记录为 pending isolated verification；guard 报告本地估算上下文使用率 73.49%，严格超过 65%；暂停前 get_goal 状态为 active。rg 在父目录未找到匹配的 AGENTS.md、guard 或 context 文件（退出码 1）。\\n- 未验证：73.49% 为本地 guard 估算，未独立测量真实上下文占用；本次写入时原生暂停及核对尚待随后执行，实际结果以本对话工具返回和最终回复为准。\\n- 下一步：先调用原生 update_goal(status=paused)，随后 get_goal 核对并停止目标工作。用户在同项目、同工作目录自行新开对话，提供本文件及已有对话记录，手动重建 goal 并重新明确暂停策略；新对话不继承本 goal，后续 resume 撤销本次暂停请求。\\n- 进程：本次所有 shell 命令均已退出；没有创建后台进程、子代理、新对话或其他记录，无本次仍在运行的进程。\\n\"}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"goal\":{\"threadId\":\"01a0ff6b-7068-7400-a3bd-badf42fb4b78\",\"objective\":\"验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。\",\"status\":\"paused\",\"tokensUsed\":2330,\"timeUsedSeconds\":19,\"createdAt\":1790991656,\"updatedAt\":1790991676},\"remainingTokens\":null,\"completionBudgetReport\":null}"
+              },
+              {
+                "type": "input_text",
+                "text": "{\"goal\":{\"threadId\":\"01a0ff6b-7068-7400-a3bd-badf42fb4b78\",\"objective\":\"验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。\",\"status\":\"paused\",\"tokensUsed\":2330,\"timeUsedSeconds\":19,\"createdAt\":1790991656,\"updatedAt\":1790991676},\"remainingTokens\":null,\"completionBudgetReport\":null}"
+              }
+            ],
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "create_time": 1790991676.286758
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        }
+      ],
+      "token_stats": [
+        {
+          "timestamp": "2026-10-03T01:40:49.911Z",
+          "ordinal": 17,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 189801,
+                "cached_input_tokens": 12288,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 99,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189900
+              },
+              "last_token_usage": {
+                "input_tokens": 189801,
+                "cached_input_tokens": 12288,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 99,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189900
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:40:57.104Z",
+          "ordinal": 24,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 379848,
+                "cached_input_tokens": 201856,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 227,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 380075
+              },
+              "last_token_usage": {
+                "input_tokens": 190047,
+                "cached_input_tokens": 189568,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 128,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 190175
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:41:16.287Z",
+          "ordinal": 37,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 570854,
+                "cached_input_tokens": 391680,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 768,
+                "reasoning_output_tokens": 10,
+                "total_tokens": 571622
+              },
+              "last_token_usage": {
+                "input_tokens": 191006,
+                "cached_input_tokens": 189824,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 541,
+                "reasoning_output_tokens": 10,
+                "total_tokens": 191547
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:41:23.568Z",
+          "ordinal": 41,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 763926,
+                "cached_input_tokens": 582528,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 939,
+                "reasoning_output_tokens": 10,
+                "total_tokens": 764865
+              },
+              "last_token_usage": {
+                "input_tokens": 193072,
+                "cached_input_tokens": 190848,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 171,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 193243
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:41:29.543Z",
+          "ordinal": 47,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 957249,
+                "cached_input_tokens": 775424,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 1018,
+                "reasoning_output_tokens": 10,
+                "total_tokens": 958267
+              },
+              "last_token_usage": {
+                "input_tokens": 193323,
+                "cached_input_tokens": 192896,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 79,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 193402
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "status": {
+              "type": "active",
+              "activeFlags": []
+            }
+          },
+          "emittedAtMs": 1790991642453
+        },
+        {
+          "method": "turn/started",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turn": {
+              "id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "items": [],
+              "itemsView": "notLoaded",
+              "status": "inProgress",
+              "error": null,
+              "startedAt": 1790991642,
+              "completedAt": null,
+              "durationMs": null
+            }
+          },
+          "emittedAtMs": 1790991642454
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-19516105-0b56-46b9-842f-673b0961d3ab",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991649,
+              "completedAt": 1790991649,
+              "durationMs": 123,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991649747
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-8da5f34b-1749-4131-b6cc-a110c56e6bbf",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991649,
+              "completedAt": 1790991649,
+              "durationMs": 40,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991649848
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-d1924c71-90be-44b3-81ae-b7f1b5c508ae",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991656,
+              "completedAt": 1790991656,
+              "durationMs": 41,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991656893
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "goal": {
+              "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+              "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 0,
+              "timeUsedSeconds": 0,
+              "createdAt": 1790991656,
+              "updatedAt": 1790991656
+            }
+          },
+          "emittedAtMs": 1790991656894
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-4d4589bf-57ff-460d-986c-a0ae7f687d14",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991656,
+              "completedAt": 1790991656,
+              "durationMs": 47,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.49% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991656943
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "goal": {
+              "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+              "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 607,
+              "timeUsedSeconds": 0,
+              "createdAt": 1790991656,
+              "updatedAt": 1790991657
+            }
+          },
+          "emittedAtMs": 1790991657052
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-736e369d-d03a-4da2-99a3-b76ccf2ae0fe",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991657,
+              "completedAt": 1790991657,
+              "durationMs": 46,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.49% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991657100
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-284346fc-e5c4-4c0c-9b38-2e823f19488d",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991675,
+              "completedAt": 1790991675,
+              "durationMs": 54,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.60% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991675989
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "goal": {
+              "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+              "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 2330,
+              "timeUsedSeconds": 19,
+              "createdAt": 1790991656,
+              "updatedAt": 1790991676
+            }
+          },
+          "emittedAtMs": 1790991676055
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-d402c491-7dd5-4a77-b768-5c851acf196e",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991676,
+              "completedAt": 1790991676,
+              "durationMs": 55,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.60% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991676113
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-64d45e96-2ed2-4423-9928-2138f50ea3f4",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991676,
+              "completedAt": 1790991676,
+              "durationMs": 51,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.60% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991676237
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "goal": {
+              "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+              "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+              "status": "paused",
+              "tokenBudget": null,
+              "tokensUsed": 2330,
+              "timeUsedSeconds": 19,
+              "createdAt": 1790991656,
+              "updatedAt": 1790991676
+            }
+          },
+          "emittedAtMs": 1790991676238
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:exec-5b10fe71-8ab3-4a92-9eff-be41a389fb2e",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991676,
+              "completedAt": 1790991676,
+              "durationMs": 40,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991676284
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "blocked",
+              "statusMessage": null,
+              "startedAt": 1790991683,
+              "completedAt": 1790991683,
+              "durationMs": 33,
+              "entries": [
+                {
+                  "kind": "feedback",
+                  "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991683616
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991683,
+              "completedAt": 1790991683,
+              "durationMs": 42,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991683616
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991689,
+              "completedAt": 1790991689,
+              "durationMs": 35,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991689597
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turnId": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991689,
+              "completedAt": 1790991689,
+              "durationMs": 45,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991689597
+        },
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "status": {
+              "type": "idle"
+            }
+          },
+          "emittedAtMs": 1790991689599
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+            "turn": {
+              "id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_05ed6c3f7aa1c11a016ac05d47297487d08e1aa7a796859d27",
+                  "text": "正常交接已完成：goal 实际状态为 **paused**，未完成；进度已保存在已有 `../progress.md`，目标和历史已保留，无本次后台进程。\n\n请在同项目、同工作目录新开对话，提供进度文件及已有记录，手动重建 goal，并重新明确暂停策略。",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1790991642,
+              "completedAt": 1790991689,
+              "durationMs": 47197
+            }
+          },
+          "emittedAtMs": 1790991689599
+        }
+      ],
+      "final_messages": [
+        {
+          "type": "agentMessage",
+          "id": "msg_05ed6c3f7aa1c11a016ac05d3e6f4887d09f05c93627c83250",
+          "text": "已先执行 `pwd`、读取原记录，并创建 goal。guard 本地估算为 73.49%，严格超过 65%；已更新 [progress.md](<<M3_ROOT>/My Project/progress.md>)，保留历史并写明交接事项。\n\n原生暂停成功，`get_goal` 核对实际状态为 **paused**，未设为 complete。无本次仍在运行的进程。\n\n请在同项目、同工作目录自行新开对话，提供上述记录及已有历史；新对话不会继承 goal，需要手动重建 goal，并重新明确暂停策略。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        {
+          "type": "agentMessage",
+          "id": "msg_05ed6c3f7aa1c11a016ac05d47297487d08e1aa7a796859d27",
+          "text": "正常交接已完成：goal 实际状态为 **paused**，未完成；进度已保存在已有 `../progress.md`，目标和历史已保留，无本次后台进程。\n\n请在同项目、同工作目录新开对话，提供进度文件及已有记录，手动重建 goal，并重新明确暂停策略。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        }
+      ]
+    },
+    "new": {
+      "thread_id": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+      "calls": [
+        {
+          "timestamp": "2026-10-03T01:43:07.743Z",
+          "ordinal": 12,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05dab547c87d09b11b3629443c7c1",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"pwd\",\"max_output_tokens\":200}",
+            "call_id": "call_zRa6Lo1H6CumX3FLj6DHNI9e",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "create_time": 1790991783.486396
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 2
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:08.111Z",
+          "ordinal": 15,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6d-e84f-7de3-a6bd-336cb82c3efe",
+            "call_id": "call_zRa6Lo1H6CumX3FLj6DHNI9e",
+            "output": "Chunk ID: ff087f\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 27\nOutput:\n<M3_ROOT>/My Project/sub directory\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "create_time": 1790991788.111408
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:12.710Z",
+          "ordinal": 17,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05db08d4c87d09017d50e281e4594",
+            "name": "get_goal",
+            "arguments": "{}",
+            "call_id": "call_Km4Ek186ty53jdVZZ54IG5Ss",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "create_time": 1790991788.642684
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 3
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:12.828Z",
+          "ordinal": 19,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6d-fabc-7f12-a832-21a7f941c805",
+            "call_id": "call_Km4Ek186ty53jdVZZ54IG5Ss",
+            "output": "{\"goal\":null,\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "create_time": 1790991792.828737
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:00.534Z",
+          "ordinal": 40,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05dde10ec87d0b2bec3c0657e32f0",
+            "name": "create_goal",
+            "arguments": "{\"objective\":\"继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。\"}",
+            "call_id": "call_fT9s61MH8s88lPI7zdtNJGAj",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991828.105708
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 9
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:00.618Z",
+          "ordinal": 42,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6e-b56a-73c2-8959-40f2695c597c",
+            "call_id": "call_fT9s61MH8s88lPI7zdtNJGAj",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6d-86ae-7c83-8ae8-e61b1a041eed\",\"objective\":\"继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。\",\"status\":\"active\",\"tokensUsed\":0,\"timeUsedSeconds\":0,\"createdAt\":1790991840,\"updatedAt\":1790991840},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991840.618708
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:04.202Z",
+          "ordinal": 44,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05de3ca5087d0a8362bcfc2e88fb1",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"pwd\",\"max_output_tokens\":200}",
+            "call_id": "call_btCehphyETET4xFjT1S0j8e7",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991841.296977
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 10
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:04.322Z",
+          "ordinal": 48,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6e-c3e2-78b1-a5cd-a86af2cc3a69",
+            "call_id": "call_btCehphyETET4xFjT1S0j8e7",
+            "output": "Chunk ID: 1006b8\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 27\nOutput:\n<M3_ROOT>/My Project/sub directory\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991844.32219
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:08.983Z",
+          "ordinal": 52,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05de8bacc87d0ba3b01db5f5c6015",
+            "name": "update_goal",
+            "arguments": "{\"status\":\"paused\"}",
+            "call_id": "call_K6TmabcybvP7JaDaTVcowfza",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991845.042285
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 12
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:09.050Z",
+          "ordinal": 55,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6e-d65a-7da1-a348-60e863d91e32",
+            "call_id": "call_K6TmabcybvP7JaDaTVcowfza",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6d-86ae-7c83-8ae8-e61b1a041eed\",\"objective\":\"继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。\",\"status\":\"paused\",\"tokensUsed\":619,\"timeUsedSeconds\":8,\"createdAt\":1790991840,\"updatedAt\":1790991849},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991849.050642
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:12.336Z",
+          "ordinal": 57,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_07b981780dc2e857016ac05dec2f7c87d0b9983c9948fdf8c4",
+            "name": "get_goal",
+            "arguments": "{}",
+            "call_id": "call_1vJkLauJoKDBerEneG2RGHwc",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991849.732426
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 13
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:12.463Z",
+          "ordinal": 59,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff6e-e3af-7132-bb74-adfea604da48",
+            "call_id": "call_1vJkLauJoKDBerEneG2RGHwc",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6d-86ae-7c83-8ae8-e61b1a041eed\",\"objective\":\"继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。\",\"status\":\"paused\",\"tokensUsed\":619,\"timeUsedSeconds\":8,\"createdAt\":1790991840,\"updatedAt\":1790991849},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "create_time": 1790991852.463826
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        }
+      ],
+      "token_stats": [
+        {
+          "timestamp": "2026-10-03T01:43:08.112Z",
+          "ordinal": 16,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 189459,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 56,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189515
+              },
+              "last_token_usage": {
+                "input_tokens": 189459,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 56,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189515
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:12.829Z",
+          "ordinal": 20,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 379062,
+                "cached_input_tokens": 189312,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 70,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 379132
+              },
+              "last_token_usage": {
+                "input_tokens": 189603,
+                "cached_input_tokens": 189312,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 14,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189617
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:17.553Z",
+          "ordinal": 24,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 568706,
+                "cached_input_tokens": 378752,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 165,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 568871
+              },
+              "last_token_usage": {
+                "input_tokens": 189644,
+                "cached_input_tokens": 189440,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 95,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189739
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:43:21.286Z",
+          "ordinal": 30,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 758525,
+                "cached_input_tokens": 568192,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 209,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 758734
+              },
+              "last_token_usage": {
+                "input_tokens": 189819,
+                "cached_input_tokens": 189440,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 44,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189863
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:00.619Z",
+          "ordinal": 43,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 948522,
+                "cached_input_tokens": 757888,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 449,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 948971
+              },
+              "last_token_usage": {
+                "input_tokens": 189997,
+                "cached_input_tokens": 189696,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 240,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 190237
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:04.323Z",
+          "ordinal": 49,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1138941,
+                "cached_input_tokens": 947712,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 473,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 1139414
+              },
+              "last_token_usage": {
+                "input_tokens": 190419,
+                "cached_input_tokens": 189824,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 24,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 190443
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:09.051Z",
+          "ordinal": 56,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1329723,
+                "cached_input_tokens": 1137920,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 541,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 1330264
+              },
+              "last_token_usage": {
+                "input_tokens": 190782,
+                "cached_input_tokens": 190208,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 68,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 190850
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593483
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:12.466Z",
+          "ordinal": 60,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1521004,
+                "cached_input_tokens": 1328512,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 555,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 1521559
+              },
+              "last_token_usage": {
+                "input_tokens": 191281,
+                "cached_input_tokens": 190592,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 14,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191295
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:19.939Z",
+          "ordinal": 64,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1712481,
+                "cached_input_tokens": 1519616,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 739,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 1713220
+              },
+              "last_token_usage": {
+                "input_tokens": 191477,
+                "cached_input_tokens": 191104,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 184,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191661
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:44:27.070Z",
+          "ordinal": 70,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1904222,
+                "cached_input_tokens": 1710976,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 904,
+                "reasoning_output_tokens": 73,
+                "total_tokens": 1905126
+              },
+              "last_token_usage": {
+                "input_tokens": 191741,
+                "cached_input_tokens": 191360,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 165,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191906
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "status": {
+              "type": "active",
+              "activeFlags": []
+            }
+          },
+          "emittedAtMs": 1790991782223
+        },
+        {
+          "method": "turn/started",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turn": {
+              "id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "items": [],
+              "itemsView": "notLoaded",
+              "status": "inProgress",
+              "error": null,
+              "startedAt": 1790991782,
+              "completedAt": null,
+              "durationMs": null
+            }
+          },
+          "emittedAtMs": 1790991782223
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_zRa6Lo1H6CumX3FLj6DHNI9e",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991787,
+              "completedAt": 1790991788,
+              "durationMs": 244,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991788014
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_Km4Ek186ty53jdVZZ54IG5Ss",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991792,
+              "completedAt": 1790991792,
+              "durationMs": 46,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991792762
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "blocked",
+              "statusMessage": null,
+              "startedAt": 1790991797,
+              "completedAt": 1790991797,
+              "durationMs": 38,
+              "entries": [
+                {
+                  "kind": "feedback",
+                  "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991797608
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991797,
+              "completedAt": 1790991797,
+              "durationMs": 49,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991797608
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991801,
+              "completedAt": 1790991801,
+              "durationMs": 37,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991801338
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991801,
+              "completedAt": 1790991801,
+              "durationMs": 45,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991801338
+        },
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "status": {
+              "type": "idle"
+            }
+          },
+          "emittedAtMs": 1790991801340
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turn": {
+              "id": "01a0ff6d-d10b-70c0-a69c-268e7f45f25d",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_07b981780dc2e857016ac05db7f4ac87d0877446d5f8e0df43",
+                  "text": "交接完成：当前目录已核对，新线程 `goal: null`。本轮仅执行了 `pwd` 和 `get_goal`，未创建任何内容，未执行暂停。",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1790991782,
+              "completedAt": 1790991801,
+              "durationMs": 19175
+            }
+          },
+          "emittedAtMs": 1790991801340
+        },
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "status": {
+              "type": "active",
+              "activeFlags": []
+            }
+          },
+          "emittedAtMs": 1790991827209
+        },
+        {
+          "method": "turn/started",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turn": {
+              "id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "items": [],
+              "itemsView": "notLoaded",
+              "status": "inProgress",
+              "error": null,
+              "startedAt": 1790991827,
+              "completedAt": null,
+              "durationMs": null
+            }
+          },
+          "emittedAtMs": 1790991827209
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_fT9s61MH8s88lPI7zdtNJGAj",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991840,
+              "completedAt": 1790991840,
+              "durationMs": 75,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991840614
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "goal": {
+              "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+              "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 0,
+              "timeUsedSeconds": 0,
+              "createdAt": 1790991840,
+              "updatedAt": 1790991840
+            }
+          },
+          "emittedAtMs": 1790991840614
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_btCehphyETET4xFjT1S0j8e7",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991844,
+              "completedAt": 1790991844,
+              "durationMs": 51,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.62% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991844259
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "goal": {
+              "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+              "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 619,
+              "timeUsedSeconds": 3,
+              "createdAt": 1790991840,
+              "updatedAt": 1790991844
+            }
+          },
+          "emittedAtMs": 1790991844322
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_K6TmabcybvP7JaDaTVcowfza",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991848,
+              "completedAt": 1790991849,
+              "durationMs": 56,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.70% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991849045
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "goal": {
+              "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+              "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 619,
+              "timeUsedSeconds": 8,
+              "createdAt": 1790991840,
+              "updatedAt": 1790991849
+            }
+          },
+          "emittedAtMs": 1790991849046
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "goal": {
+              "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+              "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+              "status": "paused",
+              "tokenBudget": null,
+              "tokensUsed": 619,
+              "timeUsedSeconds": 8,
+              "createdAt": 1790991840,
+              "updatedAt": 1790991849
+            }
+          },
+          "emittedAtMs": 1790991849046
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_1vJkLauJoKDBerEneG2RGHwc",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991852,
+              "completedAt": 1790991852,
+              "durationMs": 53,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991852455
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "blocked",
+              "statusMessage": null,
+              "startedAt": 1790991859,
+              "completedAt": 1790991859,
+              "durationMs": 39,
+              "entries": [
+                {
+                  "kind": "feedback",
+                  "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991859995
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991859,
+              "completedAt": 1790991859,
+              "durationMs": 50,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991859995
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991867,
+              "completedAt": 1790991867,
+              "durationMs": 52,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991867151
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turnId": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991867,
+              "completedAt": 1790991867,
+              "durationMs": 69,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991867151
+        },
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "status": {
+              "type": "idle"
+            }
+          },
+          "emittedAtMs": 1790991867153
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+            "turn": {
+              "id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_07b981780dc2e857016ac05df6147087d0b6248f814a60ccd3",
+                  "text": "交接：新 goal 已原生设为 `paused`，并由 `get_goal` 核对。\n\n- 完成：创建 goal、执行 `pwd`、暂停及核对。\n- 未完成：后续人工接续测试。\n- 已验证：目录一致；估算使用率 73.62% 严格超过 65%；状态为 `paused`。\n- 未验证：下一线程接续结果、旧 goal 当前状态。\n- 下一步：同目录手动新开对话，粘贴摘要，手动设置 goal 并重新明确暂停策略；新线程不继承 goal。\n- 进程状态：本轮命令已退出，无本轮运行进程；未创建文件，摘要仅在回复中。",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1790991827,
+              "completedAt": 1790991867,
+              "durationMs": 39953
+            }
+          },
+          "emittedAtMs": 1790991867153
+        }
+      ],
+      "final_messages": [
+        {
+          "type": "agentMessage",
+          "id": "msg_07b981780dc2e857016ac05db2ac9487d09650337561607109",
+          "text": "最小交接：已实际执行 `pwd`，目录为 `<M3_ROOT>/My Project/sub directory`；`get_goal` 返回 `goal: null`，确认新线程没有 goal。未创建 goal、文件或新对话，未执行暂停。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        {
+          "type": "agentMessage",
+          "id": "msg_07b981780dc2e857016ac05db7f4ac87d0877446d5f8e0df43",
+          "text": "交接完成：当前目录已核对，新线程 `goal: null`。本轮仅执行了 `pwd` 和 `get_goal`，未创建任何内容，未执行暂停。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        {
+          "type": "agentMessage",
+          "id": "msg_07b981780dc2e857016ac05dee66dc87d0bba56bcb761a3e2f",
+          "text": "最小交接摘要：\n\n- 完成：创建新 goal，实际执行 `pwd`，按授权原生暂停并核对。\n- 未完成：后续人工接续测试；goal 未标记完成。\n- 已验证：目录与环境一致；本地估算使用率 73.62% > 65%；`get_goal` 确认 `paused`。\n- 未验证：下一次新对话的接续结果；旧 goal 状态未重新查询。\n- 下一步：在同一工作目录手动新开对话，粘贴本摘要，手动设置 goal，并重新明确暂停策略；新对话不会继承 goal。\n- 进程状态：本轮命令已退出，无本轮运行进程。无既有记录，未创建文件，交接仅保存在本回复。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        {
+          "type": "agentMessage",
+          "id": "msg_07b981780dc2e857016ac05df6147087d0b6248f814a60ccd3",
+          "text": "交接：新 goal 已原生设为 `paused`，并由 `get_goal` 核对。\n\n- 完成：创建 goal、执行 `pwd`、暂停及核对。\n- 未完成：后续人工接续测试。\n- 已验证：目录一致；估算使用率 73.62% 严格超过 65%；状态为 `paused`。\n- 未验证：下一线程接续结果、旧 goal 当前状态。\n- 下一步：同目录手动新开对话，粘贴摘要，手动设置 goal 并重新明确暂停策略；新线程不继承 goal。\n- 进程状态：本轮命令已退出，无本轮运行进程；未创建文件，摘要仅在回复中。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        }
+      ],
+      "manual_recreate_user_request": [
+        {
+          "type": "message",
+          "id": "msg_01a0ff6e-8153-7693-a68a-0da2f018f4a2",
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "现在用户手动设置新goal：继续验证人工接续与无记录交接，暂不要完成。我对这个新goal重新明确暂停策略：本地估算使用率严格超过65%时，安全收尾，在最终回复写完成、未完成、已验证、未验证、下一步、进程状态；无已有记录，不创建文件。随后原生paused并get_goal核对，无需再次确认，提醒我同目录新开对话粘贴摘要，手动设置goal及重新明确策略。请创建goal后实际执行pwd触发检查。旧goal保持paused。"
+            }
+          ],
+          "internal_chat_message_metadata_passthrough": {
+            "turn_id": "01a0ff6e-80fa-7613-a454-f0c11899edb4",
+            "create_time": 1790991827.283533,
+            "content_item_kinds": [
+              "user.text"
+            ]
+          }
+        }
+      ]
+    },
+    "write_failure": {
+      "thread_id": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+      "calls": [
+        {
+          "timestamp": "2026-10-03T01:45:27.775Z",
+          "ordinal": 12,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e351b2c87d08f8e119a3281b583",
+            "name": "create_goal",
+            "arguments": "{\"objective\":\"隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。\"}",
+            "call_id": "call_b0sImsekbp2olgcGMEI6Zyh3",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991919.345109
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 2
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:27.904Z",
+          "ordinal": 14,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-0a60-7b90-a1d4-babdc9df8d16",
+            "call_id": "call_b0sImsekbp2olgcGMEI6Zyh3",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca\",\"objective\":\"隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。\",\"status\":\"active\",\"tokensUsed\":0,\"timeUsedSeconds\":0,\"createdAt\":1790991927,\"updatedAt\":1790991927},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991927.904662
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:31.488Z",
+          "ordinal": 16,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e3b0e2887d0ada7a673deda0d2a",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"pwd\",\"max_output_tokens\":1000}",
+            "call_id": "call_5lYfi6QksQwYPX11D6vMe4h3",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991928.337079
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 3
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:31.621Z",
+          "ordinal": 20,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-18e5-7dd0-bce5-d2569138c983",
+            "call_id": "call_5lYfi6QksQwYPX11D6vMe4h3",
+            "output": "Chunk ID: b21e1c\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 27\nOutput:\n<M3_ROOT>/My Project/sub directory\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991931.621596
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:34.953Z",
+          "ordinal": 22,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e3e62f487d0b4d337b25aee93b6",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"cat ../progress.md\",\"max_output_tokens\":2000}",
+            "call_id": "call_fPtLMO2eK0Ssg58TsviINucx",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991932.497559
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 4
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:35.096Z",
+          "ordinal": 26,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-2678-7e71-bc0b-7b97010028d9",
+            "call_id": "call_fPtLMO2eK0Ssg58TsviINucx",
+            "output": "Chunk ID: 778ef8\nWall time: 0.0000 seconds\nProcess exited with code 0\nOriginal token count: 12\nOutput:\n# M3 write failure fixture\n\nStatus: pending.\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991935.096468
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:40.707Z",
+          "ordinal": 28,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e41b4e487d0bd77e00d91ff2ab3",
+            "name": "exec_command",
+            "arguments": "{\"cmd\":\"printf '%s\\\\n' 'M3 handoff: Completed: goal created, pwd and existing record read. Incomplete: overall goal remains unfinished. Verified: existing record says pending; local estimate exceeds 65%. Unverified: append outcome at time of this write. Next: pause goal and verify status; preserve handoff in final reply if write fails. Processes: no background processes started.' >> ../progress.md\",\"max_output_tokens\":1000}",
+            "call_id": "call_QOjY8UA4WcXP1PD3oRKe4TJg",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991935.613193
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 5
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:40.822Z",
+          "ordinal": 32,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-3cd6-7611-9d35-7033ff927bec",
+            "call_id": "call_QOjY8UA4WcXP1PD3oRKe4TJg",
+            "output": "Chunk ID: e2daea\nWall time: 0.0000 seconds\nProcess exited with code 1\nOriginal token count: 11\nOutput:\nzsh:1: permission denied: ../progress.md\n",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991940.822446
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:44.344Z",
+          "ordinal": 34,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e480dd887d0af22d9547197c8b7",
+            "name": "update_goal",
+            "arguments": "{\"status\":\"paused\"}",
+            "call_id": "call_lYLZWMFud2BqlZhE4OJIwX7d",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991942.054468
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 6
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:44.410Z",
+          "ordinal": 37,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-4ada-7e02-9066-f43b93571724",
+            "call_id": "call_lYLZWMFud2BqlZhE4OJIwX7d",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca\",\"objective\":\"隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。\",\"status\":\"paused\",\"tokensUsed\":2327,\"timeUsedSeconds\":16,\"createdAt\":1790991927,\"updatedAt\":1790991944},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991944.41042
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:47.364Z",
+          "ordinal": 39,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call",
+            "id": "fc_0e23135b44ec391c016ac05e4b392087d091af030694b351dd",
+            "name": "get_goal",
+            "arguments": "{}",
+            "call_id": "call_6YPoSLiY06FAknQ6apjgtI0C",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991945.027127
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "user_input_order": 7
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:47.486Z",
+          "ordinal": 41,
+          "type": "response_item",
+          "payload": {
+            "type": "function_call_output",
+            "id": "fco_01a0ff70-56de-7ce3-b88f-da884db339dc",
+            "call_id": "call_6YPoSLiY06FAknQ6apjgtI0C",
+            "output": "{\"goal\":{\"threadId\":\"01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca\",\"objective\":\"隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。\",\"status\":\"paused\",\"tokensUsed\":2327,\"timeUsedSeconds\":16,\"createdAt\":1790991927,\"updatedAt\":1790991944},\"remainingTokens\":null,\"completionBudgetReport\":null}",
+            "internal_chat_message_metadata_passthrough": {
+              "turn_id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "create_time": 1790991947.486945
+            }
+          },
+          "metadata": {
+            "client_authored": false,
+            "fallback_token_limit_override": 12000
+          }
+        }
+      ],
+      "token_stats": [
+        {
+          "timestamp": "2026-10-03T01:45:27.905Z",
+          "ordinal": 15,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 189548,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 154,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189702
+              },
+              "last_token_usage": {
+                "input_tokens": 189548,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 154,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189702
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:31.622Z",
+          "ordinal": 21,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 379430,
+                "cached_input_tokens": 189312,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 179,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 379609
+              },
+              "last_token_usage": {
+                "input_tokens": 189882,
+                "cached_input_tokens": 189312,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 25,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 189907
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:35.097Z",
+          "ordinal": 27,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 569676,
+                "cached_input_tokens": 379008,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 207,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 569883
+              },
+              "last_token_usage": {
+                "input_tokens": 190246,
+                "cached_input_tokens": 189696,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 28,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 190274
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:40.823Z",
+          "ordinal": 33,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 760255,
+                "cached_input_tokens": 569088,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 315,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 760570
+              },
+              "last_token_usage": {
+                "input_tokens": 190579,
+                "cached_input_tokens": 190080,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 108,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 190687
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:44.411Z",
+          "ordinal": 38,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 951248,
+                "cached_input_tokens": 759552,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 333,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 951581
+              },
+              "last_token_usage": {
+                "input_tokens": 190993,
+                "cached_input_tokens": 190464,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 18,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191011
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:47.487Z",
+          "ordinal": 42,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1142689,
+                "cached_input_tokens": 950400,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 347,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 1143036
+              },
+              "last_token_usage": {
+                "input_tokens": 191441,
+                "cached_input_tokens": 190848,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 14,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191455
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:45:55.966Z",
+          "ordinal": 46,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1334325,
+                "cached_input_tokens": 1141632,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 568,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 1334893
+              },
+              "last_token_usage": {
+                "input_tokens": 191636,
+                "cached_input_tokens": 191232,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 221,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 191857
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        },
+        {
+          "timestamp": "2026-10-03T01:46:03.468Z",
+          "ordinal": 52,
+          "type": "event_msg",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1526262,
+                "cached_input_tokens": 1333120,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 710,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 1526972
+              },
+              "last_token_usage": {
+                "input_tokens": 191937,
+                "cached_input_tokens": 191488,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 142,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 192079
+              },
+              "model_context_window": 258400
+            },
+            "rate_limits": {
+              "limit_id": "codex",
+              "limit_name": null,
+              "primary": {
+                "used_percent": 1.0,
+                "window_minutes": 10080,
+                "resets_at": 1791593482
+              },
+              "secondary": null,
+              "credits": {
+                "has_credits": true,
+                "unlimited": false,
+                "balance": "48779.4751720000"
+              },
+              "individual_limit": null,
+              "spend_control_reached": null,
+              "plan_type": "pro",
+              "rate_limit_reached_type": null
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "status": {
+              "type": "active",
+              "activeFlags": []
+            }
+          },
+          "emittedAtMs": 1790991918127
+        },
+        {
+          "method": "turn/started",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turn": {
+              "id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "items": [],
+              "itemsView": "notLoaded",
+              "status": "inProgress",
+              "error": null,
+              "startedAt": 1790991918,
+              "completedAt": null,
+              "durationMs": null
+            }
+          },
+          "emittedAtMs": 1790991918127
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_b0sImsekbp2olgcGMEI6Zyh3",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991927,
+              "completedAt": 1790991927,
+              "durationMs": 114,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991927898
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 0,
+              "timeUsedSeconds": 0,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991927
+            }
+          },
+          "emittedAtMs": 1790991927899
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_5lYfi6QksQwYPX11D6vMe4h3",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991931,
+              "completedAt": 1790991931,
+              "durationMs": 58,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.41% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991931553
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 595,
+              "timeUsedSeconds": 3,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991931
+            }
+          },
+          "emittedAtMs": 1790991931621
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_fPtLMO2eK0Ssg58TsviINucx",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991934,
+              "completedAt": 1790991935,
+              "durationMs": 71,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.49% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991935030
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 1173,
+              "timeUsedSeconds": 7,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991935
+            }
+          },
+          "emittedAtMs": 1790991935096
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_QOjY8UA4WcXP1PD3oRKe4TJg",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991940,
+              "completedAt": 1790991940,
+              "durationMs": 48,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.64% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991940760
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 1780,
+              "timeUsedSeconds": 12,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991940
+            }
+          },
+          "emittedAtMs": 1790991940822
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_lYLZWMFud2BqlZhE4OJIwX7d",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991944,
+              "completedAt": 1790991944,
+              "durationMs": 54,
+              "entries": [
+                {
+                  "kind": "context",
+                  "text": "本地上下文估算使用率 73.80% 已严格超过 65%，当前 goal 仍 active。停止开始新的实质任务，先将已启动工作处理到可交接状态；沿用已有任务计划和记录更新进度，写清已完成、未完成、已验证、未验证、下一步及仍在运行的进程。没有既有记录时在最终回复交接即可，记录写入失败也先在回复保存最小交接摘要。仅当用户对当前 goal 有显式的 65% 暂停请求时，按该请求使用原生 goal 工具设为 paused 并核对；不清楚则向用户确认并如实说明尚未暂停，提示 /goal pause。hook 不构成暂停授权；后续 resume 撤销原请求。不要以 complete 代替暂停或直接写数据库。然后报告真实状态、记录位置或交接摘要，提醒用户在同一工作目录自行新开对话继续，新对话不会继承 goal，需用户手动设置 goal 并重新明确暂停策略。重复提醒视为同一次收尾。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991944405
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "active",
+              "tokenBudget": null,
+              "tokensUsed": 2327,
+              "timeUsedSeconds": 16,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991944
+            }
+          },
+          "emittedAtMs": 1790991944406
+        },
+        {
+          "method": "thread/goal/updated",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "goal": {
+              "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+              "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+              "status": "paused",
+              "tokenBudget": null,
+              "tokensUsed": 2327,
+              "timeUsedSeconds": 16,
+              "createdAt": 1790991927,
+              "updatedAt": 1790991944
+            }
+          },
+          "emittedAtMs": 1790991944407
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_6YPoSLiY06FAknQ6apjgtI0C",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991947,
+              "completedAt": 1790991947,
+              "durationMs": 46,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991947415
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "blocked",
+              "statusMessage": null,
+              "startedAt": 1790991955,
+              "completedAt": 1790991956,
+              "durationMs": 37,
+              "entries": [
+                {
+                  "kind": "feedback",
+                  "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+                }
+              ]
+            }
+          },
+          "emittedAtMs": 1790991956019
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991955,
+              "completedAt": 1790991956,
+              "durationMs": 47,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991956019
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 1,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991963,
+              "completedAt": 1790991963,
+              "durationMs": 37,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991963527
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turnId": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+            "run": {
+              "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+              "eventName": "stop",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+              "source": "project",
+              "displayOrder": 2,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1790991963,
+              "completedAt": 1790991963,
+              "durationMs": 46,
+              "entries": []
+            }
+          },
+          "emittedAtMs": 1790991963527
+        },
+        {
+          "method": "thread/status/changed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "status": {
+              "type": "idle"
+            }
+          },
+          "emittedAtMs": 1790991963528
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+            "turn": {
+              "id": "01a0ff6f-e3c4-78d2-b39b-288256eb1b52",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0e23135b44ec391c016ac05e57379c87d085770464a9a100ea",
+                  "text": "交接：goal 已暂停并核对，未完成。\n\n- 完成：读取已有记录、执行一次追加测试。\n- 已验证：写入失败，退出码 1，`permission denied`；goal 为 `paused`。\n- 未完成：交接未保存到 `../progress.md`。\n- 未验证：失败后文件内容未复读。\n- 进程：命令均已退出，无本次启动的后台进程。\n- 下一步：同目录新开对话并粘贴此摘要，手动重建 goal，重新明确“本地估算使用率严格超过 65% 时暂停”策略。",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1790991918,
+              "completedAt": 1790991963,
+              "durationMs": 45497
+            }
+          },
+          "emittedAtMs": 1790991963528
+        }
+      ],
+      "final_messages": [
+        {
+          "type": "agentMessage",
+          "id": "msg_0e23135b44ec391c016ac05e4d56d487d09052acb4acb45cc7",
+          "text": "Goal 已原生设为 `paused`，并通过 `get_goal` 核对；未标记完成。本地估算使用率已严格超过 65%。\n\n最小交接摘要：\n\n- **完成**：创建 goal、执行 `pwd`、读取 `../progress.md`（内容为 `Status: pending.`）、尝试一次 shell 追加。\n- **未完成**：交接未写入记录；整体 goal 保持未完成。\n- **已验证**：追加退出码为 1，报错 `permission denied: ../progress.md`；暂停状态已核对。\n- **未验证**：失败后未重新读取文件。\n- **进程**：执行命令均已退出；未创建后台进程、新线程，未修改权限或重试绕过。\n- **下一步**：在同一工作目录自行新开对话，粘贴此摘要。新对话不会继承 goal，请手动重建 goal，并重新明确 65% 暂停策略。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        {
+          "type": "agentMessage",
+          "id": "msg_0e23135b44ec391c016ac05e57379c87d085770464a9a100ea",
+          "text": "交接：goal 已暂停并核对，未完成。\n\n- 完成：读取已有记录、执行一次追加测试。\n- 已验证：写入失败，退出码 1，`permission denied`；goal 为 `paused`。\n- 未完成：交接未保存到 `../progress.md`。\n- 未验证：失败后文件内容未复读。\n- 进程：命令均已退出，无本次启动的后台进程。\n- 下一步：同目录新开对话并粘贴此摘要，手动重建 goal，重新明确“本地估算使用率严格超过 65% 时暂停”策略。",
+          "phase": "final_answer",
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        }
+      ]
+    }
+  },
+  "fault_events": [
+    {
+      "method": "thread/status/changed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        }
+      },
+      "emittedAtMs": 1790992052953
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff71-f293-7011-a0e8-c460134e154e",
+        "run": {
+          "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_UJmyVdVqORFG4o2JjhrlfrKT",
+          "eventName": "preToolUse",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 0,
+          "status": "failed",
+          "statusMessage": null,
+          "startedAt": 1790992057,
+          "completedAt": 1790992060,
+          "durationMs": 3003,
+          "entries": [
+            {
+              "kind": "error",
+              "text": "hook timed out after 3s"
+            }
+          ]
+        }
+      },
+      "emittedAtMs": 1790992060130
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff71-f293-7011-a0e8-c460134e154e",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "blocked",
+          "statusMessage": null,
+          "startedAt": 1790992063,
+          "completedAt": 1790992063,
+          "durationMs": 34,
+          "entries": [
+            {
+              "kind": "feedback",
+              "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+            }
+          ]
+        }
+      },
+      "emittedAtMs": 1790992063923
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff71-f293-7011-a0e8-c460134e154e",
+        "run": {
+          "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 2,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992063,
+          "completedAt": 1790992063,
+          "durationMs": 45,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992063923
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff71-f293-7011-a0e8-c460134e154e",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992069,
+          "completedAt": 1790992069,
+          "durationMs": 40,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992069195
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff71-f293-7011-a0e8-c460134e154e",
+        "run": {
+          "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 2,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992069,
+          "completedAt": 1790992069,
+          "durationMs": 49,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992069195
+    },
+    {
+      "method": "thread/status/changed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "emittedAtMs": 1790992069196
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turn": {
+          "id": "01a0ff71-f293-7011-a0e8-c460134e154e",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_0391efaf1e413465016ac05ec2044087d096a3efecee3ddb4f",
+              "text": "`pwd` 已成功执行，退出码为 0，实际输出：\n\n```text\n<M3_ROOT>/My Project/sub directory\n```\n\n随后可见 stop hook 信息：`M3_OTHER_STOP_ONCE 请完成正常交接回复。` 未显示明确的 hook 失败详情。未创建 goal 或文件。",
+              "phase": "final_answer",
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1790992052,
+          "completedAt": 1790992069,
+          "durationMs": 16308
+        }
+      },
+      "emittedAtMs": 1790992069196
+    },
+    {
+      "method": "thread/status/changed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        }
+      },
+      "emittedAtMs": 1790992086733
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+        "run": {
+          "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_bEm2BTX9BECin081XmlVk9Ir",
+          "eventName": "preToolUse",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 0,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992090,
+          "completedAt": 1790992090,
+          "durationMs": 105,
+          "entries": [
+            {
+              "kind": "warning",
+              "text": "上下文 goal guard 检测不可用；请核对 CODEX_HOME、会话格式及随附的启用说明。持续异常时请在 /hooks 中停用本 guard 并按说明排查。"
+            }
+          ]
+        }
+      },
+      "emittedAtMs": 1790992090511
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "blocked",
+          "statusMessage": null,
+          "startedAt": 1790992094,
+          "completedAt": 1790992094,
+          "durationMs": 35,
+          "entries": [
+            {
+              "kind": "feedback",
+              "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+            }
+          ]
+        }
+      },
+      "emittedAtMs": 1790992094446
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+        "run": {
+          "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 2,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992094,
+          "completedAt": 1790992094,
+          "durationMs": 45,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992094446
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992099,
+          "completedAt": 1790992099,
+          "durationMs": 35,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992099827
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turnId": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+        "run": {
+          "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 2,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992099,
+          "completedAt": 1790992099,
+          "durationMs": 44,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992099827
+    },
+    {
+      "method": "thread/status/changed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "emittedAtMs": 1790992099829
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a0ff71-beeb-7b61-b756-41cab640fc8e",
+        "turn": {
+          "id": "01a0ff72-76c1-7201-a98f-f3decfe53cc1",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_0391efaf1e413465016ac05ee0cf6087d0a189615eaaceff65",
+              "text": "`pwd` 执行成功（退出码 0），输出：\n\n```text\n<M3_ROOT>/My Project/sub directory\n```\n\n可见 hook 信息：`M3_OTHER_STOP_ONCE 请完成正常交接回复。` 未显示明确失败详情。未创建 goal 或文件。",
+              "phase": "final_answer",
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1790992086,
+          "completedAt": 1790992099,
+          "durationMs": 13101
+        }
+      },
+      "emittedAtMs": 1790992099829
+    }
+  ],
+  "fault_wrapper": "import json,os,pathlib,sys\np=pathlib.Path(__file__).parent\ndata=json.load(sys.stdin)\nfifo=p/'home/sessions/fault-fifo'\ndata['transcript_path']=str(fifo if (p/'fault-mode').read_text().strip()=='timeout' else fifo.with_suffix('.missing'))\nr,w=os.pipe();os.write(w,json.dumps(data).encode());os.close(w);os.dup2(r,0);os.close(r)\nos.execvp('python3',['python3',str(p/'My Project/.codex/hooks/context-goal-guard.py')])\n",
+  "other_stop_hook": "import json,sys\nd=json.load(sys.stdin)\nprint(json.dumps({\"decision\":\"block\",\"reason\":\"M3_OTHER_STOP_ONCE 请完成正常交接回复。\"} if d[\"hook_event_name\"]==\"Stop\" and not d[\"stop_hook_active\"] else {}))\n",
+  "existing_progress": "# M3 existing progress\n\nStatus: pending isolated verification.\n\n## M3 guard 交接（2026-10-03）\n\n- 目标：验证guard后暂停并交接（不要完成）。原目标及历史保留。\n- 已完成：实际执行 pwd；读取本文件原记录；创建原生 goal；收到本地 guard 阈值通知，开始交接。\n- 未完成：新对话中的后续测试与继续工作；本 goal 不标记 complete。\n- 已验证：工作目录为 <M3_ROOT>/My Project/sub directory；原记录为 pending isolated verification；guard 报告本地估算上下文使用率 73.49%，严格超过 65%；暂停前 get_goal 状态为 active。rg 在父目录未找到匹配的 AGENTS.md、guard 或 context 文件（退出码 1）。\n- 未验证：73.49% 为本地 guard 估算，未独立测量真实上下文占用；本次写入时原生暂停及核对尚待随后执行，实际结果以本对话工具返回和最终回复为准。\n- 下一步：先调用原生 update_goal(status=paused)，随后 get_goal 核对并停止目标工作。用户在同项目、同工作目录自行新开对话，提供本文件及已有对话记录，手动重建 goal 并重新明确暂停策略；新对话不继承本 goal，后续 resume 撤销本次暂停请求。\n- 进程：本次所有 shell 命令均已退出；没有创建后台进程、子代理、新对话或其他记录，无本次仍在运行的进程。\n",
+  "write_failure_file": "# M3 write failure fixture\n\nStatus: pending.\n",
+  "readonly_goals": [
+    {
+      "thread_id": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+      "goal_id": "ece7a1cc-d84a-4fb4-bcea-a4e6f8eb88cb",
+      "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+      "status": "paused",
+      "token_budget": null,
+      "tokens_used": 2330,
+      "time_used_seconds": 19,
+      "created_at_ms": 1790991656893,
+      "updated_at_ms": 1790991676238
+    },
+    {
+      "thread_id": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+      "goal_id": "b95bf72a-07f6-4701-a049-97f2dfe0b5c2",
+      "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+      "status": "paused",
+      "token_budget": null,
+      "tokens_used": 619,
+      "time_used_seconds": 8,
+      "created_at_ms": 1790991840614,
+      "updated_at_ms": 1790991849046
+    },
+    {
+      "thread_id": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+      "goal_id": "c6197319-4185-46bf-8377-5ed538f80a88",
+      "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+      "status": "paused",
+      "token_budget": null,
+      "tokens_used": 2327,
+      "time_used_seconds": 16,
+      "created_at_ms": 1790991927898,
+      "updated_at_ms": 1790991944406
+    }
+  ],
+  "requests": {
+    "existing-request.json": {
+      "instruction": "隔离M3测试。请创建goal：验证guard后暂停并交接（不要完成）。对当前goal，我明确请求本地估算上下文使用率严格超过65%时，先按已有 ../progress.md 更新进度，写清完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。保持目标与历史；最后报告实际状态并提醒我同项目新开对话，提供已有记录，手动重建goal及重新明确策略。请先实际执行pwd和读取 ../progress.md；未触发则继续查看。不要创建新对话、后台进程或其他记录。以下是用于扩大上下文的无敏感测试数据：\n",
+      "padding": "17000 lines: calibration sample {i:05d} alpha beta gamma.\\n",
+      "characters": 731259,
+      "sha256": "dc7b9ba15c74997aead8e8b88d2f50db72e4be82597ac503e20668731a06599d"
+    },
+    "new-no-goal-request.json": {
+      "instruction": "这是用户手动新开的接续对话。粘贴交接摘要：旧goal已paused；已验证pwd和guard阈值；未完成后续接续测试；无运行进程。现在没有既有任务记录。仅实际执行pwd并get_goal核对新线程没有goal，最终在回复给出最小交接；不要创建goal、文件或新对话。这轮没有暂停授权。以下无敏感填充只用于真实用量测试：\n",
+      "padding": "17000 lines: calibration sample {i:05d} alpha beta gamma.\\n",
+      "characters": 731160,
+      "sha256": "bd7c893a31029971aeca4607e9b52451d730674618178d8645c56fbfe8dff56b"
+    },
+    "write-failure-request.json": {
+      "instruction": "隔离M3写入失败测试。已有任务记录 ../progress.md 只读。请创建goal：验证写失败后诚实交接并暂停，暂不完成。对当前goal，我明确请求本地估算使用率严格超过65%时安全收尾；先读取已有记录并通过普通exec_command执行一次shell追加写入，实际观察失败，不修改权限、不删除替换记录、不另建记录或重试绕过。写失败则在最终回复保存最小交接，明确完成、未完成、已验证、未验证、下一步及进程。按我的策略原生设为paused并核对，无需再次确认，最后提醒同目录新对话粘贴摘要，手动重建goal并重新明确策略。不要创建新线程或后台进程。请创建goal后调用pwd触发。以下仅为无敏感用量填充：\n",
+      "padding": "17000 lines: calibration sample {i:05d} alpha beta gamma.\\n",
+      "characters": 731305,
+      "sha256": "52481d8b2608b561d732a2aed264512d0c3a2447d790d8a88f761bd04a7302bd"
+    }
+  },
+  "after_end_api": {
+    "9": {
+      "thread": {
+        "id": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "turns": [
+        {
+          "id": "01a0ff6b-af1a-7fa3-be2f-8be393555d09",
+          "status": "completed"
+        }
+      ]
+    },
+    "10": {
+      "goal": {
+        "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+        "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 2330,
+        "timeUsedSeconds": 19,
+        "createdAt": 1790991656,
+        "updatedAt": 1790991676
+      }
+    },
+    "16": {
+      "goal": null
+    },
+    "18": {
+      "goal": {
+        "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+        "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 619,
+        "timeUsedSeconds": 8,
+        "createdAt": 1790991840,
+        "updatedAt": 1790991849
+      }
+    },
+    "20": {
+      "goal": {
+        "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+        "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 2330,
+        "timeUsedSeconds": 19,
+        "createdAt": 1790991656,
+        "updatedAt": 1790991676
+      }
+    },
+    "19": {
+      "thread": {
+        "id": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "turns": []
+    },
+    "23": {
+      "goal": {
+        "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+        "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 2327,
+        "timeUsedSeconds": 16,
+        "createdAt": 1790991927,
+        "updatedAt": 1790991944
+      }
+    },
+    "24": {
+      "thread": {
+        "id": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "turns": []
+    },
+    "37": {
+      "goal": {
+        "threadId": "01a0ff6b-7068-7400-a3bd-badf42fb4b78",
+        "objective": "验证guard后暂停并交接（不要完成）。保持目标与历史；本地估算上下文使用率严格超过65%时，先更新已有 ../progress.md，记录完成/未完成/验证/下一步/进程，再原生设为paused并核对，无需再次确认。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 2330,
+        "timeUsedSeconds": 19,
+        "createdAt": 1790991656,
+        "updatedAt": 1790991676
+      }
+    },
+    "39": {
+      "goal": {
+        "threadId": "01a0ff6f-9d78-7c51-9d19-9f0a9d7af2ca",
+        "objective": "隔离M3写入失败测试：读取 ../progress.md，使用普通 exec_command 仅尝试一次 shell 追加并观察结果；失败后诚实交接并暂停，暂不完成。遵循用户策略：本地估算使用率严格超过65%时安全收尾；不修改权限、不删除替换或另建记录、不重试绕过、不创建新线程或后台进程。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 2327,
+        "timeUsedSeconds": 16,
+        "createdAt": 1790991927,
+        "updatedAt": 1790991944
+      }
+    },
+    "38": {
+      "goal": {
+        "threadId": "01a0ff6d-86ae-7c83-8ae8-e61b1a041eed",
+        "objective": "继续验证人工接续与无记录交接，暂不完成。暂停策略：本地估算使用率严格超过65%时安全收尾，在最终回复列出完成、未完成、已验证、未验证、下一步、进程状态；不创建文件。随后原生paused并get_goal核对，无需再次确认；提醒用户同目录新开对话粘贴摘要，手动设置goal并重新明确策略。",
+        "status": "paused",
+        "tokenBudget": null,
+        "tokensUsed": 619,
+        "timeUsedSeconds": 8,
+        "createdAt": 1790991840,
+        "updatedAt": 1790991849
+      }
+    }
+  },
+  "untrusted_turn": [],
+  "disabled_turn": [
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff75-b02c-7451-be5c-f10421df3d56",
+        "turnId": "01a0ff76-4987-7e02-8c81-263d1799224f",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "blocked",
+          "statusMessage": null,
+          "startedAt": 1790992345,
+          "completedAt": 1790992345,
+          "durationMs": 34,
+          "entries": [
+            {
+              "kind": "feedback",
+              "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+            }
+          ]
+        }
+      },
+      "emittedAtMs": 1790992345114
+    },
+    {
+      "method": "hook/completed",
+      "params": {
+        "threadId": "01a0ff75-b02c-7451-be5c-f10421df3d56",
+        "turnId": "01a0ff76-4987-7e02-8c81-263d1799224f",
+        "run": {
+          "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+          "eventName": "stop",
+          "handlerType": "command",
+          "executionMode": "sync",
+          "scope": "turn",
+          "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+          "source": "project",
+          "displayOrder": 1,
+          "status": "completed",
+          "statusMessage": null,
+          "startedAt": 1790992347,
+          "completedAt": 1790992347,
+          "durationMs": 33,
+          "entries": []
+        }
+      },
+      "emittedAtMs": 1790992347678
+    }
+  ],
+  "clean_checkout": {
+    "revision": "63fc5faf56f5ac186211501f065b4d2a96479491",
+    "initial_git_status": "",
+    "unittest_exit": 0,
+    "tests": 19,
+    "duration_seconds": 2.79,
+    "copied_script_equals_real_threshold_script": true,
+    "restored_command_confirmation": [
+      {
+        "method": "hook/completed",
+        "params": {
+          "threadId": "01a0ff74-e5b6-7950-ab32-e90e3592e0c3",
+          "turnId": "01a0ff75-12d0-7c22-a24f-15748ec88015",
+          "run": {
+            "id": "pre-tool-use:0:<M3_ROOT>/My Project/.codex/hooks.json:call_KG9ZAOyLiDcxLpEK3tEftCFu",
+            "eventName": "preToolUse",
+            "handlerType": "command",
+            "executionMode": "sync",
+            "scope": "turn",
+            "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+            "source": "project",
+            "displayOrder": 0,
+            "status": "completed",
+            "statusMessage": null,
+            "startedAt": 1790992262,
+            "completedAt": 1790992262,
+            "durationMs": 54,
+            "entries": []
+          }
+        },
+        "emittedAtMs": 1790992262284
+      },
+      {
+        "method": "hook/completed",
+        "params": {
+          "threadId": "01a0ff74-e5b6-7950-ab32-e90e3592e0c3",
+          "turnId": "01a0ff75-12d0-7c22-a24f-15748ec88015",
+          "run": {
+            "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+            "eventName": "stop",
+            "handlerType": "command",
+            "executionMode": "sync",
+            "scope": "turn",
+            "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+            "source": "project",
+            "displayOrder": 1,
+            "status": "blocked",
+            "statusMessage": null,
+            "startedAt": 1790992265,
+            "completedAt": 1790992265,
+            "durationMs": 38,
+            "entries": [
+              {
+                "kind": "feedback",
+                "text": "M3_OTHER_STOP_ONCE 请完成正常交接回复。"
+              }
+            ]
+          }
+        },
+        "emittedAtMs": 1790992265558
+      },
+      {
+        "method": "hook/completed",
+        "params": {
+          "threadId": "01a0ff74-e5b6-7950-ab32-e90e3592e0c3",
+          "turnId": "01a0ff75-12d0-7c22-a24f-15748ec88015",
+          "run": {
+            "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+            "eventName": "stop",
+            "handlerType": "command",
+            "executionMode": "sync",
+            "scope": "turn",
+            "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+            "source": "project",
+            "displayOrder": 2,
+            "status": "completed",
+            "statusMessage": null,
+            "startedAt": 1790992265,
+            "completedAt": 1790992265,
+            "durationMs": 49,
+            "entries": []
+          }
+        },
+        "emittedAtMs": 1790992265558
+      },
+      {
+        "method": "hook/completed",
+        "params": {
+          "threadId": "01a0ff74-e5b6-7950-ab32-e90e3592e0c3",
+          "turnId": "01a0ff75-12d0-7c22-a24f-15748ec88015",
+          "run": {
+            "id": "stop:1:<M3_ROOT>/My Project/.codex/hooks.json",
+            "eventName": "stop",
+            "handlerType": "command",
+            "executionMode": "sync",
+            "scope": "turn",
+            "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+            "source": "project",
+            "displayOrder": 1,
+            "status": "completed",
+            "statusMessage": null,
+            "startedAt": 1790992269,
+            "completedAt": 1790992269,
+            "durationMs": 59,
+            "entries": []
+          }
+        },
+        "emittedAtMs": 1790992269357
+      },
+      {
+        "method": "hook/completed",
+        "params": {
+          "threadId": "01a0ff74-e5b6-7950-ab32-e90e3592e0c3",
+          "turnId": "01a0ff75-12d0-7c22-a24f-15748ec88015",
+          "run": {
+            "id": "stop:2:<M3_ROOT>/My Project/.codex/hooks.json",
+            "eventName": "stop",
+            "handlerType": "command",
+            "executionMode": "sync",
+            "scope": "turn",
+            "sourcePath": "<M3_ROOT>/My Project/.codex/hooks.json",
+            "source": "project",
+            "displayOrder": 2,
+            "status": "completed",
+            "statusMessage": null,
+            "startedAt": 1790992269,
+            "completedAt": 1790992269,
+            "durationMs": 75,
+            "entries": []
+          }
+        },
+        "emittedAtMs": 1790992269357
+      }
+    ],
+    "delivery_sha256": {
+      "hooks/codex/context-goal-guard.py": "5643e59543bbdf8e25d09098042a57828ddab8f8d97028d97d1391d18e1f1bcf",
+      "hooks/codex/hooks.example.json": "812be6d4267661c978e549f521d4e472208bc424a0ec78469cf35d375b71e0a3",
+      "test/codex/test_context_goal_guard.py": "c0f62efb914bb5aacdadefc5ac46d9b26b2e37702f0ad67fd0c65e740f6644ca",
+      "docs/codex-context-goal-guard.md": "6853885f2ea939d41d915e45d50a9c2cab1721d6e8a9557b7e09f978c1076f92"
+    }
+  },
+  "removed_manifest": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "timeout": 3
+            }
+          ]
+        }
+      ],
+      "PreToolUse": []
+    }
+  },
+  "original_manifest": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python3 \"<M3_ROOT>/other.py\"",
+              "timeout": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "cleanup": {
+    "daemon_stop_returncode": 0,
+    "daemon_stop_output": "{\"status\":\"stopped\",\"backend\":\"pid\",\"managedCodexPath\":\"<M3_ROOT>/home/packages/app-server-daemon/current/bin/codex\",\"managedCodexVersion\":\"0.160.0\",\"socketPath\":\"<M3_ROOT>/home/app-server-control/app-server-control.sock\",\"cliVersion\":\"0.160.0\"}",
+    "daemon_stop_stderr": "",
+    "auth_removed": true,
+    "stdio_exit": 0,
+    "control_socket_exists": false,
+    "auth_copy_exists": false,
+    "leftover_test_processes": []
+  },
+  "hook_list_request_note": "Early requests supplied cwd, which the runtime ignored; they report bridge default project. Request 29 used verified cwds schema and confirms untrusted project empty and trusted subdirectory loaded. Requests 33/36 also use cwds."
+}

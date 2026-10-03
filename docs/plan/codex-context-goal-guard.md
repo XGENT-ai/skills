@@ -2,7 +2,7 @@
 
 > **实施须知：直接依据本计划、仓库规则和当前代码实施或续做。** 先读下方「实施者定位」「实施进度」，核对工作树，再按相关正文与里程碑推进、验证并回写进度；使用 goal 执行时也遵循这些约定。
 >
-> **计划状态：Blocked**
+> **计划状态：Ready**
 >
 > 调查基线：2026-10-03 · commit `09f7f923f87b13890f11b700d4a043969cbfc5ad` · 调查开始时 clean；Codex CLI 0.160.0。
 >
@@ -33,19 +33,21 @@
 
 ### 恢复快照
 
-- 最近更新：尚未开始
-- 当前进度：0/3 个里程碑完成
-- 当前状态：尚未开始
-- 最近完成：无
-- 下一步：M1 · 由实现者搭建隔离测试线程、测试 goal 与进度文件，核实真实 hook 的线程定位、提醒送达和 agent 暂停链路，满足 V-1 后解除技术阻塞
-- 当前阻塞：A-1 · 提醒到 agent 更新记录、暂停 goal、停止自动续跑的完整行为尚未验证；可以先执行 M1 的契约验证，不能提前启用到日常任务
-- 代码基线：09f7f923f87b13890f11b700d4a043969cbfc5ad
+- 最近更新：2026-10-03 11:57 +10:00（Australia/Sydney）
+- 当前进度：3/3 个里程碑完成
+- 当前状态：M1–M3 均已完成；四项交付物与启用说明已验证，日常配置未修改
+- 最近完成：M3 · 实测启用与人工接续
+- 下一步：交付；按启用说明在实测支持环境部署，新构建或其他 Stop 组合需重新验证
+- 当前阻塞：无；A-1 已解除，V-1–V-5 已按里程碑通过，版本及行为边界见 M3 记录
+- 代码基线：dirty@c9be5a81f739a9c7588810e36c0efd220731e4fc；计划及记录目录、hooks/codex、test/codex、启用说明
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 |
 | --- | --- | --- | --- | --- |
-| — | — | — | 尚未开始任何里程碑 | — |
+| M1 | 已完成 | 2026-10-03 11:22 +10:00 | code mode 73.54% 与普通 Bash 73.42% 的真实提醒、已有记录、原生暂停、结束判定均通过；定位与 Stop `{}` 契约已固定 | [M1 记录](codex-context-goal-guard.records/M1.md) |
+| M2 | 已完成 | 2026-10-03 11:49 +10:00 | 单脚本、同步配置与 19 项入口测试通过；真实 hook 3003 ms 超时及可见故障降级通过 | [M2 记录](codex-context-goal-guard.records/M2.md) |
+| M3 | 已完成 | 2026-10-03 11:57 +10:00 | 干净 checkout、生产阈值、信任/重信、混合 Stop、人工接续、无记录、写失败及停用均通过；资源已收口 | [M3 记录](codex-context-goal-guard.records/M3.md) |
 
 ## 0. 需求、范围与决策
 
@@ -61,7 +63,7 @@
 | NFR-2 | 不破坏 | 用户补充；仓库外科手术式改动规则 | hook 只读 Codex 会话和 goal 数据；启用时保留其他 hooks | §3、§8；V-3、V-4 | 已知 |
 | C-1 | 范围 | `AGENTS.md` §2、§3 | 单一脚本与配置示例；不顺带改 npm 安装器、第三方 hooks 或无关 skills | §1.2；V-3 | 已确认 |
 | C-2 | 依赖 | 本地 `goals_1.sqlite` 的 `thread_goals` 表 | 使用 Python 3 标准库的 JSON、SQLite、文件读取；不新增第三方依赖 | §2、§4；V-2、V-3 | 设计约束 |
-| A-1 | 运行契约 | 原生接口存在但完整行为未验证 | 真实 hook 能定位当前根线程，提醒能送达 agent，agent 可在保存进度后暂停 goal，且不会被自动续跑 | M1 / V-1，由实现者验证；不满足时修订方案并保持 Blocked | 阻塞 |
+| A-1 | 运行契约 | 普通 Bash 与 code mode 的真实链路已有 M1 证据 | 真实 hook 能定位当前根线程，提醒能送达 agent，agent 可在保存进度后暂停 goal，且不会被自动续跑 | M1 / V-1，由实现者验证；不满足时修订方案并保持 Blocked | 已解除；M1 / V-1 通过 |
 
 阈值采用严格比较：**估算使用率 > 65%**，恰好 65% 不触发。本期指标是本地会话记录计算的估算值，不承诺与 Codex UI 的百分比完全一致。
 
@@ -101,8 +103,9 @@
 - **已核实·足够**：当前命令进程继承的 `CODEX_HOME` 是项目下的 `.codex`，与默认用户目录不同。必须使用进程继承的 `CODEX_HOME`，不能硬编码开发机路径；真实 hook 进程的继承仍须 M1 验证。
 - **已核实·足够**：本地会话 JSONL 的 `event_msg` / `token_count` 中有 `info.last_token_usage.total_tokens` 与 `info.model_context_window`；累计用量 `info.total_token_usage` 是另一组字段，不能用于上下文占用判定。来源：本地 `.codex/sessions` 下当前线程记录的上述字段。
 - **已核实·足够**：本地 `.codex/goals_1.sqlite` 的 `thread_goals` 表有 `thread_id` 主键以及 `goal_id`、`objective`、`status` 等字段。SQLite 中使用 `active`、`paused` 等状态值。本期只按主键读取状态，不触碰 continuation deferral 表。
-- **已核实·缺口**：仓库尚无专用 context/goal guard → 新增 §1.2 交付物 → 漏做后无法检测和提示。
-- **未核实·阻塞**：当前 root / fork / 子 agent 的实际 hook 输入、提示交付和暂停后的调度行为尚无完整链路证据 → A-1 / M1。
+- **已核实·足够**：§1.2 四项交付物已实现并经 M2/M3 验收；实现与证据见各里程碑记录。
+- **已核实·足够**：隔离 0.160.0 的 root / fork / 子 agent 输入及两种工具路径提醒、真实 65% 策略、已有记录、原生暂停与结束判定已保存 [M1 证据](codex-context-goal-guard.records/M1.md)。子 agent 的 `session_id` 是父线程，身份须看当前 transcript 的 `session_meta.id`；hook 继承的 `CODEX_THREAD_ID` / `CODEX_SESSION_ID` 可能是外层线程，不能作为当前线程权威来源。
+- **已核实·足够**：M1 通过 `features.code_mode.direct_only_tool_namespaces=["functions"]` 配合 enabled=true 暴露直接 `exec_command`，普通 Bash 完整链路通过；仅关闭 code-mode host 不能产生普通命令回退。该配置仅用于测试，未改用户日常设置。
 
 外部契约依据：[Hooks 文档](https://learn.chatgpt.com/docs/hooks)提供事件、输入和输出语义，说明会话格式不稳定、部分工具路径不受 tool hooks 覆盖；[App Server 文档](https://learn.chatgpt.com/docs/app-server#manage-a-thread-goal)说明原生 goal 控制接口；[Goals 文档](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex)说明 goal 归属于线程和自动续跑边界。文档存在不等于 A-1 已验证。
 
@@ -119,7 +122,7 @@
 
 不修改 `bin/xgent-skills.js`、`package.json`、既有 skills；启用阶段在目标项目复制脚本并合并 hook 配置，保留其余内容。首期从仓库文件部署，不宣称已随 npm 包分发。配置示例不是要覆盖目标项目整个 manifest。
 
-手动部署约定：交付后用户 clone `https://github.com/XGENT-ai/skills.git`，按启用说明 checkout M3 记录的已验证版本，取得上表脚本、配置示例和说明；创建目标项目的 `.codex/hooks/` 并将单文件脚本复制为 `.codex/hooks/context-goal-guard.py`。两个事件的 command 均使用该副本的绝对路径，以免从项目子目录启动时失效。示例中用户只需将 `/path/to/My Project` 替换为目标项目的绝对目录，保留双引号；JSON 中的字段示例为：
+手动部署约定：当前交付尚未发布，M3 先从本地仓库 clone 并 checkout 独立验证 revision；远程发布后用户才可 clone `https://github.com/XGENT-ai/skills.git` 并 checkout 对应已发布版本。按启用说明取得上表脚本、配置示例和说明；创建目标项目的 `.codex/hooks/` 并将单文件脚本复制为 `.codex/hooks/context-goal-guard.py`。两个事件的 command 均使用该副本的绝对路径，以免从项目子目录启动时失效。示例中用户只需将 `/path/to/My Project` 替换为目标项目的绝对目录，保留双引号；JSON 中的字段示例为：
 
 ```json
 {"command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\""}
@@ -134,7 +137,7 @@
 | 入口/数据 | 契约与不变量 | 依赖与验证 |
 | --- | --- | --- |
 | stdin | 读取一份 hook JSON；仅处理 `PreToolUse`、`Stop`；stdout 只能是合法 hook JSON 或允许的空输出 | 进程入口测试 |
-| 当前线程 | 以本次 `transcript_path` 中 session 元信息定位实际 thread；与已验证的当前线程 env / hook 输入关系交叉核验 | M1 固定规则；异常时跳过，不跨线程搜索 |
+| 当前线程 | 以本次 `transcript_path` 中 session 元信息定位实际 thread，与 hook 输入交叉核验；不以继承的 `CODEX_THREAD_ID` / `CODEX_SESSION_ID` 覆盖 transcript 身份 | M1 已有 root / fork / 子 agent 证据；普通 Bash 与 code mode 均已验证；异常时跳过，不跨线程搜索 |
 | 会话用量 | 倒序块读取最新已完成记录；只读取 token 信息和定位元信息 | 真实 JSONL fixture；不读取对话内容来决定任务进度 |
 | goal 状态 | `mode=ro` 连接当前 `CODEX_HOME` 下 SQLite，参数化查询 `thread_id`；无记录视为无 goal | 临时 SQLite；不能创建不存在的数据库 |
 | stdout 提醒 | `PreToolUse` 返回 `hookSpecificOutput.additionalContext`；`Stop` 采用 §5.4 的输出 | 真实 Codex 验证送达与调度 |
@@ -151,13 +154,13 @@
 
 | 契约 | 核实状态 | 首期处理与失败语义 |
 | --- | --- | --- |
-| 官方 hook 输入含 `transcript_path`、`session_id`；子 agent 可能使用父 session id | 已核实·文档；真实线程映射未核实 | M1 检查原始输入与 session 元信息；不单凭 `session_id` 查询或暂停父 goal |
-| tool hook 能追加模型可见上下文 | 已核实·文档；目标运行送达未核实 | M1 覆盖普通 Bash 与 code mode；不假定嵌套工具内立即改变已运行的 JS |
-| agent 的原生 goal 工具 | 已核实·0.160.0 二进制限制条款及当前会话工具描述；目标运行完整定义/schema 与真实收尾暂停仍待 M1 | `update_goal(status="paused")` 仅按用户对当前 goal 的显式请求执行，不得主动暂停；不清楚就询问，后续 resume 撤销原请求。hook 提示或启用告知不自动等同该请求；M1 按 V-1 分类，以只读状态复核 |
+| 官方 hook 输入含 `transcript_path`、`session_id`；子 agent 可能使用父 session id | 已核实·文档及 M1 的 root / fork / 子 agent 真实输入；普通 Bash 与 code mode 均通过 | 根 / fork 的 meta.id 与 hook.session_id 对齐；子 agent 有 agent_id、parent_thread_id 和 source.subagent，必须跳过；不使用继承的线程环境变量，不单凭 session_id 查询父 goal |
+| tool hook 能追加模型可见上下文 | 已核实·M1 code mode 和普通 spawn_agent；普通 Bash 也通过 | M1 以直接 function_call / exec_command 验证普通 Bash，并以 custom_tool_call / exec 验证 code mode；不假定嵌套工具内立即改变已运行的 JS |
+| agent 的原生 goal 工具 | 已核实·M1 运行时完整描述与参数类型、真实 65% 策略下的 code mode 收尾暂停；普通 Bash 链路也通过 | `update_goal(status="paused")` 仅按用户对当前 goal 的显式请求执行，不得主动暂停；不清楚就询问，后续 resume 撤销原请求。hook 提示或启用告知不自动等同该请求；M1 按 V-1 分类，以只读状态复核 |
 | local JSONL / SQLite | 已核实·本地当前格式；非稳定公共契约 | 初期只承诺实测 Codex 构建与格式，不能把 0.160.0 当作所有后续版本兼容下限 |
-| Stop 输出 | 已核实·文档；空输出接受度与 goal 调度联动未核实 | `decision: block` 会请求继续，`continue: false` 与 goal 状态不是同一件事；通用空输出成功与 Stop 要求 JSON 的文档口径有张力，M1 固定空操作格式并按 V-1 验证调度 |
+| Stop 输出 | 已核实·M1 在 goal paused 后返回 `{}`、回合 completed、线程 idle；M3 已验证具体混合 Stop 组合和生产脚本的结束边界 | 空操作固定为合法 JSON `{}`，不用空 stdout；`decision: block` 会请求继续，`continue: false` 与 goal 状态不是同一件事；完整交付物已通过 M3，其他组合需另验 |
 
-本地原会话记录 `.codex/sessions/2026/10/03/rollout-2026-10-03T00-00-00-01a0fcea-2b9a-7f80-83e9-4d93dd1818f9.jsonl:17` 的工具描述在撤销请求句末截断；限制条款由本机 0.160.0 二进制 strings 补全，当前会话的工具定义也包含该限制。M1 仍须抓取目标测试环境的完整 `update_goal` 定义和参数 schema；[Goals 文档](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex)亦将暂停控制归于用户或系统。用户预设 65% 策略是否足以构成显式请求，须记录真实用户指令并实测，不能从安装或信任动作预设结论。
+[M1 记录](codex-context-goal-guard.records/M1.md)已保存目标隔离运行的完整 `update_goal` 描述与参数类型、实际用户预设 65% 指令，以及先写记录再暂停的工具输出；code mode 路径无需二次确认，API 与只读数据库均为 paused。普通 Bash 也经直接函数调用实测通过；结论仅覆盖本次明确指令与实测环境。[Goals 文档](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex)亦将暂停控制归于用户或系统；不能从安装或信任动作推导用户授权。
 
 未知格式、缺失文件、无法确认根线程或 SQLite 异常时不猜测、不修改状态；以简短 `systemMessage` 告知检测不可用并给出用户下一步，例如“检测不可用；请在 /hooks 中停用本 guard，并参阅获取脚本时随附的启用说明排查”。说明对应 `docs/codex-context-goal-guard.md` 的故障章节。正常的“无 goal / 非 active / 阈值未到”直接返回空操作结果。不得读取其他线程作为备用数据。
 
@@ -271,13 +274,13 @@ hook 无自有去重状态；暂停前的多个工具调用可重复收到同一
 
 | 项目 | 影响 | 责任人/解除办法 | 最晚确认点 | 是否阻塞 |
 | --- | --- | --- | --- | --- |
-| A-1：提醒、身份定位、显式暂停请求和续跑完整契约未实测 | 决定本期方案能否满足 R-3；启用告知不证明符合显式请求条款，询问或拒绝不算成功 | 实现者抓取目标环境完整定义/schema 并执行 V-1；失败则修订控制路径 | M2 前 | 是 |
+| A-1：普通 Bash / code mode 完整链路已实测 | M1 / V-1 已通过；启用告知仍不能代替用户显式暂停请求 | M3 复验完整交付物；用户指令与环境变化时重验 | M1 已解除；M3 复验 | 否 |
 | 本地记录可能滞后、格式可能变化 | 漏检测或使用率与 UI 不同 | 实现者维护已验证格式和降级说明；V-2、V-4 | M3 前 | 否，已有明确边界 |
 | 提示依赖 agent 执行，不能强制控制所有工具 | 已调度的调用可能完成，失败时原 goal 可能续跑 | 实现者按 §5.4 实测；失败不可算验收通过 | M1 / M3 | 纳入 A-1 |
 | 实际耗时与更多平台兼容未知 | 超时或环境缺 Python 3 | 先只支持实测环境，记录实际耗时与依赖；不预承诺更多平台 | M3 前 | 否，首期范围已限定 |
 
-- 最终状态：**Blocked**。
-- 定级理由：需求与职责已收敛，无需用户再决定自动继承或记录格式；A-1 是尚未证明的关键运行契约。可以先推进 M1，A-1 解除且 M1 退出条件全部满足后状态改为 Ready；不把脚本能输出 JSON 当作完整链路成功。
+- 最终状态：**Ready**（M1–M3 已完成，实测环境可按说明启用）。
+- 定级理由：M1 已取得普通 Bash 与 code mode 的真实 65% 策略、记录、暂停与结束状态证据，V-1 通过，A-1 解除；M2 脚本检查与 M3 完整交付物真实集成均通过，V-1–V-5 的证据已落盘。
 
 ## 12. 已知坑
 

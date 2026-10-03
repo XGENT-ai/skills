@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "安装到生效：六步让 Guard 真的跑起来",
+    "output": "docs/diagrams/codex-guard-setup-workflow.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1110,
+      800
+    ],
+    "views": [
+      {
+        "id": "get-and-install",
+        "label": "取到版本并装进项目",
+        "focus": [
+          "getcopy",
+          "copyscript",
+          "mergemanifest"
+        ],
+        "note": "先取本地仓库的验证 revision，再把脚本和两组 handler 装进目标项目。"
+      },
+      {
+        "id": "trust-and-confirm",
+        "label": "审阅信任并确认生效",
+        "focus": [
+          "startdir",
+          "trusthooks",
+          "runcheck"
+        ],
+        "note": "信任绑定定义 hash，改一行 command 就要重新审阅。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "source",
+      "label": "拿到副本"
+    },
+    {
+      "id": "project",
+      "label": "写进目标项目"
+    },
+    {
+      "id": "codex",
+      "label": "Codex 会话"
+    },
+    {
+      "id": "verify",
+      "label": "确认真的在跑"
+    },
+    {
+      "id": "exceptions",
+      "label": "没生效时",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "取到本地验证版本",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "install",
+      "label": "安装到项目",
+      "fromCol": 1,
+      "toCol": 2
+    },
+    {
+      "id": "trust",
+      "label": "审阅与信任",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "humangate",
+      "label": "人工审阅",
+      "lane": "codex",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "getcopy",
+    "copyscript",
+    "mergemanifest",
+    "startdir",
+    "trusthooks",
+    "runcheck"
+  ],
+  "nodes": [
+    {
+      "id": "getcopy",
+      "lane": "source",
+      "col": 0,
+      "type": "frontend",
+      "label": "取出已验证版本",
+      "sublabel": "clone + checkout 63fc5faf",
+      "width": 116
+    },
+    {
+      "id": "copyscript",
+      "lane": "project",
+      "col": 1,
+      "type": "backend",
+      "label": "复制 hook 脚本",
+      "sublabel": ".codex/hooks/ 下",
+      "width": 112
+    },
+    {
+      "id": "mergemanifest",
+      "lane": "project",
+      "col": 2,
+      "type": "backend",
+      "label": "追加两组 handler",
+      "sublabel": "PreToolUse + Stop · 3s",
+      "tag": "不覆盖 manifest",
+      "width": 124
+    },
+    {
+      "id": "startdir",
+      "lane": "codex",
+      "col": 3,
+      "type": "cloud",
+      "label": "从项目目录启动",
+      "sublabel": "pwd -P 规范化路径",
+      "width": 116
+    },
+    {
+      "id": "trusthooks",
+      "lane": "codex",
+      "col": 4,
+      "type": "security",
+      "label": "信任项目层 + 两个 guard",
+      "sublabel": "看来源 / 命令 / 超时",
+      "tag": "不可跳过",
+      "width": 176
+    },
+    {
+      "id": "runcheck",
+      "lane": "verify",
+      "col": 5,
+      "type": "backend",
+      "label": "回看 /hooks 与实际 hook 事件",
+      "sublabel": "trusted + enabled",
+      "width": 206
+    },
+    {
+      "id": "silent",
+      "lane": "exceptions",
+      "col": 5,
+      "type": "security",
+      "label": "未信任 → 静默跳过",
+      "sublabel": "安静不等于生效",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "from": "getcopy",
+      "to": "copyscript"
+    },
+    {
+      "from": "copyscript",
+      "to": "mergemanifest",
+      "variant": "emphasis"
+    },
+    {
+      "from": "mergemanifest",
+      "to": "startdir"
+    },
+    {
+      "from": "startdir",
+      "to": "trusthooks",
+      "variant": "security"
+    },
+    {
+      "from": "trusthooks",
+      "to": "runcheck",
+      "variant": "emphasis"
+    },
+    {
+      "from": "trusthooks",
+      "to": "silent",
+      "label": "未完成审阅",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "silent",
+      "to": "trusthooks",
+      "label": "重新审阅后再次确认",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "一次装好",
+      "items": [
+        "两份配置都用绝对路径，父级目录也一并审阅",
+        "只往 hooks.json 的两个事件数组追加，保留原有 handler",
+        "子系统目录启动也有效，command 用绝对路径"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "信任是硬门槛",
+      "items": [
+        "未信任时 hook 被跳过，且没有告警",
+        "信任绑定定义 hash，改动 command 或脚本内容都要重新审阅",
+        "/hooks 里列出的来源必须是本项目的 .codex/hooks.json"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "先在隔离项目验",
+      "items": [
+        "先在测试项目和测试 goal 里跑一遍再用于日常",
+        "确认其他 hooks 仍在列表里且状态未变",
+        "macOS 上 /var 与 /private/var 别名会让信任 key 不一致"
+      ]
+    }
+  ]
+}

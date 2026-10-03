@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/path/to/My Project/.codex/hooks/context-goal-guard.py\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
