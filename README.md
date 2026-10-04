@@ -109,9 +109,66 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | [review-code](skills/review-code/SKILL.md) | 评审未提交变更、commit 或分支差异，可对照开发计划，输出有证据的代码评审报告 |
 | [review-prd-dev-gaps](skills/review-prd-dev-gaps/SKILL.md) | 核对 PRD 与开发交付，将遗漏、合理变更和待拍板差异分流，交互 Triage 后按需调用 dev-plan 生成 gaps plan |
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
-| [apply-doc-review](skills/apply-doc-review/SKILL.md) | 根据 PRD 或开发计划评审报告修订原文，复核关联内容并记录逐条处置结果 |
+| [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
+
+这 10 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
+
+```text
+$review-prd <PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]
+$review-code [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [开发计划] [报告路径] [仅聊天]
+$apply-doc-review <文档评审报告> [原文路径] [上轮报告/处置记录] [修复/仅复核] [问题ID/范围]
+$agi-mode <任务描述> 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]
+```
+
+提示的展示取决于客户端：[Claude Code](https://code.claude.com/docs/en/skills#frontmatter-reference) 在 `/skill` 补全中支持 `argument-hint`；Codex 的 `$skill` 参数预览仍有[未关闭的功能请求](https://github.com/openai/codex/issues/31014)，不能仅凭新增字段保证弹出提示。未展示时可直接参考上述用法或各技能的 frontmatter。
+
+4 个 `review-*` 支持“对照上轮报告复审修复效果”：逐项保留来源 ID，区分已解决、仍存在、部分解决、回归、待核实、不再适用和本轮未复核；新增问题单列，默认另存报告。代码旧问题的复核不受本次修复 diff 限制。`review-prd-dev-gaps` 会先核对已有 gaps plan，支持“仅报告”，避免重复规划。
+
+2 个 `apply-*` 支持“继续修复”与“仅复核”：前者处理剩余问题，后者保留目标产物并保存必要处置记录；完全只读则仅聊天交付。重复执行先核对已有证据，无实质变化不改文件或时间；apply 的复核不自动成为新一轮独立 review。
+
+项目状态与下一步能力已合并到 `agi-mode` 的 [what-next 流程](skills/agi-mode/playbooks/what-next.md)，不再单独发布 `what-next` skill。查询默认只读；初始化/更新才保存，既有执行授权继续有效。
+
+```text
+使用 $agi-mode init-sdlc 初始化项目状态跟进。
+使用 $agi-mode what-next 看当前项目状态和下一步。
+使用 $agi-mode what-next 更新状态，核对并行计划和最近几轮评审。
+```
+
+`init-sdlc` 按需创建状态目录和索引，核实并登记现有材料；可重复运行，沿用已有台账并补齐缺项，不重置历史。兼容原有 `what-next 初始化` 写法。其他 SDLC skill 在台账启用后维护相关状态，首次启用可直接运行上述初始化入口。
+
+[状态目录约定](skills/agi-mode/references/workspace-layout.md)使用仓根 `.xgent-ai/sdlc/` **只保存开发状态**。PRD、开发计划、评审报告、实施/验收记录和证据继续按用户习惯存放，台账通过链接引用，不改变其路径或复制正文。
+
+```text
+.xgent-ai/
+  index.md                          工作状态总入口
+  sdlc/
+    index.md                        本层导航与当前重点
+    protocol.md                     状态回写和索引维护协议
+    state-model.md                  固定状态、证据门槛和自愈规则
+    event-template.md               状态变化模板
+    status/
+      index.md                      类型入口
+      <prd|plan|review>/
+        index.md                    对象目录
+        <对象UUID>.md               各 PRD、计划、评审的状态
+    events/
+      index.md                      事件类型入口
+      <类型>/
+        index.md                    对象入口
+        <对象UUID>/
+          index.md                  事件清单
+          <事件UUID>.md             单次变化
+```
+
+每个实际创建的状态目录都有 `index.md`，非开发任务的 `tasks/` 及任务子目录也一样；不预建空目录。索引只列本层内容，数量增多后可按领域/年份分片。写入者按[索引维护规范](skills/agi-mode/assets/sdlc/protocol.md#目录索引维护)同步受影响入口，无变化不重写；多机合并保留双方条目并核对实际文件，查询只报告缺项。索引文件不算事件。
+
+状态按对象拆分、历史按需读取。PRD 与计划保持多对多关系，每轮评审有独立状态 ID，原报告文件名不必改变。UUID 事件保留并发记录，冲突待核对，不用机器时间覆盖。
+
+[固定状态模型](skills/agi-mode/assets/sdlc/state-model.md)将文档就绪、计划实施、每轮评审及处置分开：例如 `dev-plan-ready` 表示可开工，`dev-plan-completed` 表示实施范围和规定验证已完成。what-next 会从 `.review.md`、`.codereview.md`、`.code-review.md` 等候选补查漏记评审，并从报告处置节、`.applied.md` 或实施记录核实整改。原计划状态可能滞后，足够的实现/验证证据可纠正 SDLC 状态；原文自述、差异及证据质量仍保留。查询只读重算，更新才保存修复；证据不足用 `unknown`，独立验收线枚举暂为 TBD。
+
+相关撰写、评审、修复技能和计划实施模板仅增加状态回写规则，原产物落盘方式保持原有约定。已有台账可继续使用，不自动迁移或双写。状态协议随仓同步，另一台机器无需安装所有技能也能回写；状态已同步不代表原文和证据已同步。安装 `agi-mode`：`npx skills add XGENT-ai/skills --skill agi-mode`。
 
 ### 开发、调试与质量
 
@@ -131,7 +188,7 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 | Skill | 说明 |
 | --- | --- |
-| [agi-mode](skills/agi-mode/SKILL.md) | 以结果契约、主动实验、反证验证和可恢复执行，自主推进复杂任务到可验证交付 |
+| [agi-mode](skills/agi-mode/SKILL.md) | 自主推进复杂任务到可验证交付；含项目状态/what-next 与 `.xgent-ai/` 分类状态记录 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |

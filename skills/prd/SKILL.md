@@ -1,5 +1,6 @@
 ---
 name: prd
+argument-hint: "<需求描述或PRD> [范围] [输出路径] [仅文档/录入SPMS]"
 description: 用于撰写、修订、拆分或录入产品需求；仅评审用 review-prd，技术方案用 dev-plan，测试用例用 test-plan。产出目标、FR/NFR、场景与 UAT 条件，可录入 SPMS。
 ---
 
@@ -228,3 +229,9 @@ R4  待拍板    → 依赖「是否面向全员」的决策,已问
 - **平台硬约束**(需求侧口径,该进 NFR 就进):多租户隔离(全表 `tenantId`);业务状态一律 200 + `{ok,data}`;列表服务端分页 `Page<T>`;三语 i18n(zh-CN/en/zh-TW);字典表 `sort` 规范;前端两步法(`impeccable` 设计 + 真浏览器验证)。
 - **已知坑来源**:当前 agent 提供的本项目记忆(若有,先看 `MEMORY.md` 索引)、根 `CLAUDE.md`、`goal/*-PROGRESS.md`。
 - **下游**:PRD 定稿后接 `dev-plan` skill 出开发计划,再由计划拆 Issue 进迭代;接 `test-plan` skill 将场景状态与验收条件展开为测试用例。
+
+## 项目状态回写
+
+若仓库已登记状态台账，或存在仓根 `.xgent-ai/sdlc/protocol.md`（兼容已有 `docs/project-status/protocol.md`；两套并存且未登记切换时先核对，不能双写），交付原产物后读取台账的回写规则（默认目录读上述协议），按其格式新增本次事实记录并刷新受影响的状态页与必要索引；未启用时不自动建表，不依赖另装技能。只读/仅聊天/不保存要求优先，登记失败须说明，不影响如实交付已完成的原产物。
+
+登记 PRD 的实际路径、版本、文档状态及已明确的需求/计划关联；不把已成文或 SPMS 已录入登记为已实施。
