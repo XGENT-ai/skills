@@ -1,7 +1,7 @@
 ---
 name: agi-mode
-argument-hint: "<任务描述> 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]"
-description: "用于 AGI 模式、自主攻克复杂任务，或 init-sdlc 初始化、what-next 状态查询与跨机续做；查询只读，不自动实施。按需路由，分类跟进状态，以实验和证据推进交付。"
+argument-hint: "<任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]"
+description: "用于 AGI 模式、自主复杂任务、SDLC 流程指引、init-sdlc 初始化或 what-next 状态与续做；咨询查询只读，不自动实施。按阶段指导交接，以实验和证据推进交付。"
 disable-model-invocation: true
 ---
 
@@ -10,6 +10,12 @@ disable-model-invocation: true
 承担从问题到证据的完整责任。每一步应当推进交付、排除关键不确定性，或降低后续执行成本；三者都没有发生，就改变下一步。
 
 AGI 是这个工作模式的名字，不是能力声明。流程强度随不确定性、失败代价和任务跨度增加；简单任务直接完成并验证，不为运行本模式制造流程。
+
+## SDLC 咨询与阶段指引
+
+用户在任意阶段询问开发流程、产物分工、技能选择、交接条件或如何推进时，读取 [SDLC 指引](playbooks/sdlc.md)。支持 `$agi-mode sdlc [问题]`，也支持直接用自然语言提问，不要求记住子命令。概念咨询直接解释；涉及当前项目判断时由 what-next 核实相关事实，再给有依据的建议。只咨询不启动写作、评审、实施或状态初始化。
+
+明确要求执行的任务仍进入对应流程，已有执行授权继续有效；中途询问 SDLC 时简答后接续原任务。单独安装 agi-mode 即可获得全生命周期指引，专用技能按需读取，缺少时说明等价动作与限制。
 
 ## 工作目录与状态入口
 
@@ -74,6 +80,7 @@ what-next 用固定状态码和证据质量表达判断，主动发现关联评�
 
 | 当前任务 | Playbook | 完成标志 |
 | --- | --- | --- |
+| SDLC 知识、PRD/CRD/计划/测试分工、阶段交接、技能选择或流程建议 | [SDLC 指引](playbooks/sdlc.md) | 有依据的阶段解释、下一步输入/动作/判据；咨询保持只读 |
 | init-sdlc 初始化、项目状态、what-next、多计划进度、跨机盘点或维护跟进表 | [项目状态与下一步](playbooks/what-next.md) | 有来源的分类状态、冲突/同步边界与具体下一步；仅写入模式维护台账 |
 | 解释机制、只读调查、比较方案 | [调查与诊断](playbooks/investigation.md) | 有出处的答案、因果证据或明确的未知 |
 | 活进程异常、CPU / heap / trace / spindump 取证 | [运行时与离线取证](playbooks/forensics.md) | 从原始信号到代码位置的可追溯诊断 |
