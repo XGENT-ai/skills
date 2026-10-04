@@ -101,6 +101,7 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | Skill | 说明 |
 | --- | --- |
 | [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
+| [crd](skills/crd/SKILL.md) | 以整份 CRD 往返协作：起草需求、文末追加答复、整合对方返回版本并维护 Q&A |
 | [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行、可跨对话续做的开发计划 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
 | [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
