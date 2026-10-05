@@ -1,0 +1,5 @@
+interface:
+  display_name: "经验收集"
+  short_description: "开发过程中轻量记录踩坑、纠正与重复操作，留待任务结束后复盘沉淀"
+policy:
+  allow_implicit_invocation: true

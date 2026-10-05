@@ -83,3 +83,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
+## Experience Capture
+
+During development, when a non-obvious failure, user correction, or repeated automatable workflow provides a useful lesson, use [experience-capture](skills/experience-capture/SKILL.md) at a natural pause. Save only a few lines from the current context and resume immediately; do not investigate, fetch evidence, reload full records, or interrupt the main task to collect. Skip capture if no suitable pause exists, the task is read-only, or collection is disabled. Deeper investigation belongs to the user's later `$agi-mode 复盘` or `$agi-mode reflect`.

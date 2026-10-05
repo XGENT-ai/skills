@@ -1,6 +1,6 @@
 ---
 name: agi-mode
-argument-hint: "<任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]"
+argument-hint: "<任务描述> 或 复盘 / reflect [材料/范围/沉淀目标] 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]"
 description: "用于 AGI 模式、自主复杂任务、SDLC 流程指引、init-sdlc 初始化或 what-next 状态与续做；咨询查询只读，不自动实施。按阶段指导交接，以实验和证据推进交付。"
 disable-model-invocation: true
 ---
@@ -10,6 +10,10 @@ disable-model-invocation: true
 承担从问题到证据的完整责任。每一步应当推进交付、排除关键不确定性，或降低后续执行成本；三者都没有发生，就改变下一步。
 
 AGI 是这个工作模式的名字，不是能力声明。流程强度随不确定性、失败代价和任务跨度增加；简单任务直接完成并验证，不为运行本模式制造流程。
+
+## 快捷指令
+
+`$agi-mode 复盘` 与 `$agi-mode reflect` 等价，直接读取并执行 [Reflection：证据复盘](playbooks/reflection.md)。默认回顾当前会话及已授权的经验记录，提炼踩坑教训和重复操作的自动化机会，给出沉淀建议；已有修改授权时直接落实。可在指令后补充材料路径、复盘范围或沉淀目标。
 
 ## SDLC 咨询与阶段指引
 
@@ -91,7 +95,7 @@ what-next 用固定状态码和证据质量表达判断，主动发现关联评�
 | 比较 skill、prompt、模型、工具配置或执行流程 | [Eval：可信评测](playbooks/eval.md) | 隔离、可比的真实结果支持采用、拒绝或证据不足 |
 | 持续改进代码、指标或 agent 行为，autoresearch | [Hillclimb：持续进化](playbooks/hillclimb.md) | 实验记录完整，最佳候选经最终确认，目标状态明确 |
 | 比较多种结构并合成产物，arena | [Arena：多候选比较](playbooks/arena.md) | 匿名比较有依据，合成版本重新验证 |
-| 从会话提炼教训，reflect | [Reflection：证据复盘](playbooks/reflection.md) | 有出处的改进假设，按授权落实并标明验证等级 |
+| 从会话或经验记录提炼教训，复盘 / reflect | [Reflection：证据复盘](playbooks/reflection.md) | 有出处的改进假设，按授权落实并标明验证等级 |
 | 行为不变的重构、接口或数据迁移 | [重构与迁移](playbooks/migration-refactoring.md) | 行为约束成立，调用方和数据状态完成核对 |
 | 页面、交互、视觉还原或跨端适配 | [界面交付](playbooks/ui-delivery.md) | 实际界面与交互证据符合目标 |
 | 审查代码、方案或外部审查意见 | [评审与处置](playbooks/review.md) | 有证据的发现及处置，不把意见数量当成果 |

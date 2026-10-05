@@ -9,6 +9,9 @@
 ```text
 .xgent-ai/
   index.md                     工作状态总入口
+  experience/                  开发经验收件箱，首次有效记录时创建
+    index.md                   任务记录导航
+    <task-id>.md              简短观察、证据链接及复盘处置
   tasks/                       非开发任务按需创建
     index.md                   任务目录
     <task-id>/
@@ -37,6 +40,8 @@
 ```
 
 按需创建，不预建空对象。无计划的开发任务需要恢复状态时，可增加 `status/task/` 等状态类型，不为跟进强建计划；实验也只登记状态和产物链接，实验材料仍沿用户指定位置保存。
+
+`experience/` 保存待复盘线索，不是 SDLC 状态或原始日志；收集由 `experience-capture` 负责，复盘由 `$agi-mode 复盘` / `$agi-mode reflect` 读取。只安装 agi-mode 也可读取已有记录，无需先安装收集 skill；用户指定或项目登记的已有经验目录优先，不双写。
 
 ## 每层目录索引
 
