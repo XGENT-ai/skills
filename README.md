@@ -111,12 +111,13 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | [review-prd-dev-gaps](skills/review-prd-dev-gaps/SKILL.md) | 核对 PRD 与开发交付，将遗漏、合理变更和待拍板差异分流，交互 Triage 后按需调用 dev-plan 生成 gaps plan |
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
+| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 逐项讲清开发计划中的阻塞事项，先查证、需拍板的交互确认并给推荐，存 decisions 文档并回改计划 |
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
 
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
 
-这 10 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
+这 11 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
 
 ```text
 $review-prd <PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]

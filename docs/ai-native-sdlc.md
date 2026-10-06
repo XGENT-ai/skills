@@ -12,7 +12,7 @@
 | 分支 / 提交 | `main` / `eab9a03`（2026-10-03，feat: Codex goal 上下文收尾提醒） |
 | 版本 | `0.4.0`（`package.json:3`） |
 | 许可证 | MIT（`LICENSE:1`，`package.json:14`） |
-| 调查范围 | 本仓 `skills/` 下 47 个 skill 目录。本流程直接调用其中 10 个；`summarize` 再调用 `elintp`，合计 11 个目录 |
+| 调查范围 | 本仓 `skills/` 下 47 个 skill 目录。本流程直接调用其中 11 个；`summarize` 再调用 `elintp`，合计 12 个目录 |
 
 本 checkout 的 `.agents/skills/` 只有 24 个目录，不含 `prd` 和 `test-plan`。npm 包发布的是 `skills/`（`package.json` 的 `files`），不是 `.agents/skills/`。旧稿写「发布时同步到 `.agents/skills/`」，和 `README.md`、`package.json` 对不上，本文不沿用这句。
 
@@ -37,6 +37,7 @@
 | 审 | `review-prd`、`review-dev-plan`、`review-code` | 不改原文，不实施，不写 SPMS |
 | 改文档 | `apply-doc-review` | 不重跑评审，不修代码，不写 SPMS（`skills/apply-doc-review/SKILL.md:22`） |
 | 改代码 | `apply-code-review` | 报告是待核实主张，不是补丁指令 |
+| 解计划阻塞 | `resolve-blocked` | 不实施，不重跑评审；外部依赖类阻塞只记录解除条件（`skills/resolve-blocked/SKILL.md:18`） |
 
 同一条回路用两次：需求走 `review-prd`，计划走 `review-dev-plan`，两次都由 `apply-doc-review` 按报告来源改对应原文（`skills/apply-doc-review/SKILL.md:18`）。
 
@@ -49,10 +50,13 @@ stateDiagram-v2
   无阻塞 --> 可交接: 人放行
   核实改稿 --> 阻塞未解: 范围或验收仍未决
   阻塞未解 --> 写作落盘: 人答完
+  阻塞未解 --> 解除阻塞: 计划仍 Blocked
+  解除阻塞 --> 无阻塞: 已查证或人已拍板
+  解除阻塞 --> 阻塞未解: 外部依赖未到位
   核实改稿 --> 不改原文: 意见不成立
 ```
 
-这张图说的是文档回路，不是 SPMS 状态机。需求用它一次，计划再用它一次。`apply-doc-review` 改完不自动再评（`skills/apply-doc-review/SKILL.md:22`）。仍有会改变范围、安全、数据、外部契约或关键 NFR 的问题时，人决定要不要再跑对应的 review skill。
+这张图说的是文档回路，不是 SPMS 状态机。需求用它一次，计划再用它一次。`apply-doc-review` 改完不自动再评（`skills/apply-doc-review/SKILL.md:22`）。仍有会改变范围、安全、数据、外部契约或关键 NFR 的问题时，人决定要不要再跑对应的 review skill。计划 apply 后仍是 `Blocked`，用 `resolve-blocked` 逐项解除，见 7.2。
 
 ### 2.3 人守终态，agent 守草稿和证据
 
@@ -107,7 +111,7 @@ agent 创建需求时 `status` 只能是 `draft`。转到 `reviewing`、`approve
 
 交互版：[diagrams/ai-native-sdlc-phase.html](diagrams/ai-native-sdlc-phase.html)，用浏览器打开，可缩放、搜索、按视图看主路径、测试线或阻塞停写。
 
-看这张图时注意三件事：开发线从左到右是主路径；「阻塞未答」会停住写库；「有 follow-up」回到计划评审回路，而不是直接改旧计划的完成记录。
+看这张图时注意四件事：开发线从左到右是主路径；「阻塞未答」会停住写库；计划评审改稿后仍 Blocked 时进「计划阻塞」，由 `resolve-blocked` 逐项解除后回写计划；「有 follow-up」回到计划评审回路，而不是直接改旧计划的完成记录。
 
 ## 5. 需求阶段
 
@@ -222,6 +226,14 @@ agent 把这组 key 当作 `R1..Rn`，对照目标仓代码核实现状，再写
 
 报告默认在计划同目录：`docs/plan/<代号>.review.md`（`skills/review-dev-plan/references/report-contract.md:6`）。
 
+apply 之后计划仍是 `Blocked`，不要再跑一遍评审或 apply，改用：
+
+```text
+使用 resolve-blocked 解除 docs/plan/<代号>.md 的阻塞。
+```
+
+`resolve-blocked` 以计划为准列出全部阻塞项，逐项讲清阻塞了什么、缺什么证据或决定。能从代码和文档查到的自己查；要人拍板的用交互问答确认，每题附推荐方案和理由。问答和理由存进 `docs/plan/<代号>.decisions.md`（`skills/resolve-blocked/references/decisions-contract.md:5`），计划里只写最终结论并重判状态（`skills/resolve-blocked/SKILL.md:89`，`:91`）。等第三方、账号或实测的阻塞只记录解除条件和负责人，计划保持 `Blocked`。
+
 退出：计划状态是 `Ready`，且人接受开工。`Proposed` 只表示还在等非阻塞评审，不要把它当成已经可以实施。`Blocked` 时只做计划里单独列出的、不依赖该阻塞的前期工作。
 
 ### 7.3 按计划实施
@@ -322,6 +334,7 @@ agent 做的事：
 | `summarize` | 项目报告 `RPT-N`，本地 HTML 在 `docs/` | 不作为下游合同 |
 | `dev-plan` | `goal/<代号>.md` 或 `docs/plan/<代号>.md` | 实施须知、实施者定位、实施进度、Milestone |
 | `review-dev-plan` | `<计划名>.review.md` | 建议状态和阻塞范围 |
+| `resolve-blocked` | `<计划名>.decisions.md`，加修订后的计划 | 修订后的计划结论；剩余阻塞的解除条件 |
 | 实施 | 代码，以及 `<计划名>.records/M<n>.md` | 完成记录和验证基线 |
 | `review-code` | `<计划名>.code-review.md` | 问题 ID、所审基线 |
 | `apply-code-review` | 修复和记录里的处置表 | 当前行为是否仍满足计划 |
@@ -361,6 +374,7 @@ agent 做的事：
 | `skills/dev-plan/SKILL.md:12` | 实施时不加载写作 skill |
 | `skills/dev-plan/references/plan-skeleton.md:9` | 实施合同在计划顶部 |
 | `skills/review-dev-plan/references/report-contract.md:55` | Ready / Proposed / Blocked |
+| `skills/resolve-blocked/SKILL.md:18` | 解除计划阻塞的边界、决策记录与回改计划 |
 | `skills/review-code/references/report-contract.md:48` | 评审结论不是 merge 授权 |
 | `skills/apply-code-review/references/record-contract.md` | 修复处置写入 Milestone 记录 |
 | `skills/review-prd-dev-gaps/SKILL.md:41` | A/B/C 与 gaps plan |

@@ -1,0 +1,4 @@
+interface:
+  display_name: "解除计划阻塞"
+  short_description: "逐项讲清开发计划阻塞项，查证或交互确认并给推荐，存决策记录并回改计划"
+  default_prompt: "使用 $resolve-blocked 处理指定开发计划中的阻塞事项：列出全部阻塞，逐项说明上下文，能查证的先查证，需要拍板的用交互问答附推荐方案与理由确认，将结论写入计划同目录的 decisions 文档并修订计划，汇报剩余阻塞与就绪状态。"

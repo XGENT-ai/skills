@@ -21,8 +21,8 @@
       {
         "id": "block",
         "label": "阻塞停写",
-        "focus": ["prd", "blocked"],
-        "note": "会改变范围或验收的问题未答完时，不定稿、不写 SPMS。"
+        "focus": ["prd", "blocked", "plan", "planblocked"],
+        "note": "会改变范围或验收的问题未答完时，需求不定稿、不写 SPMS；计划评审改稿后仍 Blocked 时，用 resolve-blocked 逐项查证或请人拍板，解除后回写计划。"
       }
     ]
   },
@@ -43,6 +43,7 @@
     { "id": "idea", "lane": "human", "col": 0, "type": "external", "label": "想法", "sublabel": "原始诉求", "width": 132 },
     { "id": "blocked", "lane": "human", "col": 1, "type": "security", "label": "阻塞未答", "sublabel": "不定稿不写库", "width": 132 },
     { "id": "approve", "lane": "human", "col": 2, "type": "security", "label": "人批准需求", "sublabel": "approved 只由人改", "width": 148 },
+    { "id": "planblocked", "lane": "human", "col": 3, "type": "security", "label": "计划阻塞", "sublabel": "逐项查证或拍板", "width": 148 },
     { "id": "decide", "lane": "human", "col": 5, "type": "security", "label": "人决定收口", "sublabel": "上线或接受差异", "width": 148 },
     { "id": "prd", "lane": "dev", "col": 1, "type": "backend", "label": "需求评审回路", "sublabel": "prd → 评审 → 改稿", "tag": "只写 draft", "width": 156 },
     { "id": "plan", "lane": "dev", "col": 3, "type": "backend", "label": "计划评审回路", "sublabel": "直到可开工", "tag": "Ready", "width": 148 },
@@ -57,6 +58,8 @@
     { "id": "block-prd", "from": "blocked", "to": "prd", "label": "答完再写", "variant": "dashed", "role": "return" },
     { "id": "prd-approve", "from": "prd", "to": "approve", "label": "无阻塞", "variant": "emphasis", "role": "main" },
     { "id": "approve-plan", "from": "approve", "to": "plan", "variant": "emphasis", "role": "main" },
+    { "id": "plan-block", "from": "plan", "to": "planblocked", "label": "仍 Blocked", "variant": "security", "role": "error" },
+    { "id": "block-plan", "from": "planblocked", "to": "plan", "label": "解除后回写", "variant": "dashed", "role": "return", "toSide": "top" },
     { "id": "plan-impl", "from": "plan", "to": "implement", "variant": "emphasis", "role": "main" },
     { "id": "impl-gaps", "from": "implement", "to": "gaps", "variant": "emphasis", "role": "main" },
     { "id": "gaps-decide", "from": "gaps", "to": "decide", "variant": "emphasis", "role": "main" },
