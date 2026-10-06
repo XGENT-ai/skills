@@ -8,6 +8,8 @@
 | --- | --- | --- |
 | 24899857-cf9a-4e1d-a6e0-f8b6061cbc5c.md | 24899857-cf9a-4e1d-a6e0-f8b6061cbc5c / implementation / plan | [入口](24899857-cf9a-4e1d-a6e0-f8b6061cbc5c.md) |
 | 44f0e565-8e9b-44d7-87c8-8362160b7705.md | 44f0e565-8e9b-44d7-87c8-8362160b7705 / readiness / plan | [入口](44f0e565-8e9b-44d7-87c8-8362160b7705.md) |
+| 61d5935d-5c09-47be-98ce-559dc9b31c57.md | 61d5935d-5c09-47be-98ce-559dc9b31c57 / readiness / plan | [入口](61d5935d-5c09-47be-98ce-559dc9b31c57.md) |
+| 8d95631d-9dbf-4dca-a327-9cf9cfa575d5.md | 8d95631d-9dbf-4dca-a327-9cf9cfa575d5 / implementation / plan | [入口](8d95631d-9dbf-4dca-a327-9cf9cfa575d5.md) |
 
 ## 维护约定
 

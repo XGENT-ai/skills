@@ -18,10 +18,12 @@
 
 ## 当前重点与发现范围
 
-- 初始化观察时间：2026-10-04T20:19:01+11:00；main / `f7c4ea2d4084c25e62acabcb39fd8cc3ed529d1f` / dirty。
-- 登记 3 份计划（2 份待核对，1 份历史归档）、2 份独立评审、10 条首次观测事件。未发现独立 PRD，不预建空类别。
-- 首选：[Codex guard](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) 的后续阈值/路径改动证据映射；原报告后相关版本已变。可独立核对 [Claude guard](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md) 的默认 70% 与历史 65% 验证记录。两份计划均自报完成，当前规范实施状态 unknown，候选 completed；缺证不等同实现失败。
-- [xgent-init 历史方案](status/plan/091b457b-53b0-4d16-bb58-406a02ccf1f6.md) 按原文历史标记归档，不恢复旧待办。验收线统一枚举 TBD，不推导发布状态。
-- 发现范围：本地非忽略项目文件、docs/plan 及其记录、README 与相关 hooks/测试的版本指纹；技能模板/范例、安装副本、依赖和机器缓存不作为项目工作项。没有发现已登记旧台账。历史方案只核查历史标记，未展开逐项历史验收；其他机器及忽略目录未盘点。
-- 当前工作树另有 SDLC/agi-mode/review/apply 技能与文档改动；本次只登记实际计划及报告，不为这些变更伪造计划或评审轮次。[README](../../README.md) 提供现行技能说明。
-- 未重跑业务测试或独立评审，未修改原文。台账未提交/推送，其他机器需同步台账及相应原文后再核对。
+- 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
+- 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
+- 首选：[Codex guard](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md)：dev-plan-ready / dev-plan-completed（3/3），证据 stale。计划评审 F-01–F-09 已 review-applied；初轮代码评审 review-not-required 仅覆盖原快照。执行 `$review-code docs/plan/codex-context-goal-guard.md`，复审后续阈值、Git 根目录路径和显式安装变更，明确受影响验收的证据覆盖。
+- 可独立跟进：[Claude guard](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md)：dev-plan-ready（provisional，未发现文档评审）/ dev-plan-completed（4/4，stale）。执行 `$review-code docs/plan/claude-context-goal-guard.md`，核对默认 70% 与历史 65% 记录、当前安装入口和 V-6 口径；Opus/Sonnet 真实触发与生产 --resume 为原计划声明的后续范围。两项共用安装器，若后续修复触及共享文件需统一处理。
+- 两份计划的完成记录均无提交列；里程碑记录存在，所引用起始基线及主分支成果提交可达。独立 Codex 验证 ref `63fc5faf56f5ac186211501f065b4d2a96479491` 可取回但非 main 祖先，只是历史验收快照。按 v2 保留已完成状态，以证据质量表达后续改动覆盖限制，未发现应重开原里程碑的实际失败证据。
+- 后续提交范围：`54c565c`（可配置阈值）、`f7c4ea2`（Codex Git 根目录路径）、`4d70f33`（两种 guard 取消安装询问，默认跳过、显式 flag 安装）。Claude 原计划 §5.5 / V-6 与 M3 记录仍描述询问；源文同步及新行为验证交由后续评审核对，本轮不改原文。
+- [xgent-init 历史方案](status/plan/091b457b-53b0-4d16-bb58-406a02ccf1f6.md) 按原文历史标记保留归档入口，不重新判定就绪/实施或推荐旧待办。验收/集成/发布统一枚举仍 TBD；计划 completed 与历史评审通过不等于当前产品终验或发布。
+- 发现范围：本地项目文档、docs/plan 及其记录、原文关联报告、相关 hooks/测试/安装器与可用 Git 历史；技能模板/安装副本、依赖、机器缓存不列为项目工作项。evals/agi-mode/practices 是技能设计/验证记录，不是项目开发计划。未展开归档历史逐项验收，忽略目录及其他机器未盘点。[README](../../README.md) 提供当前技能说明。
+- 本轮仅升级状态口径、校准跟进与建议并检查结构；未执行业务测试、apply 或新评审，未提交/推送，本次更新尚未随 Git 共享。

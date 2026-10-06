@@ -7,6 +7,7 @@
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
 | 2e25e02c-ad1e-481c-8727-b2cc6fdd449f.md | 2e25e02c-ad1e-481c-8727-b2cc6fdd449f / disposition / reviewed-snapshot | [入口](2e25e02c-ad1e-481c-8727-b2cc6fdd449f.md) |
+| 787ed353-cb91-4d31-9c08-4b5a8bfe39f8.md | 787ed353-cb91-4d31-9c08-4b5a8bfe39f8 / review / report | [入口](787ed353-cb91-4d31-9c08-4b5a8bfe39f8.md) |
 | 89f537e6-b813-48c4-adc5-a89dab72f317.md | 89f537e6-b813-48c4-adc5-a89dab72f317 / review / report | [入口](89f537e6-b813-48c4-adc5-a89dab72f317.md) |
 
 ## 维护约定

@@ -6,8 +6,10 @@
 
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
+| 05185fee-abb0-4943-b2dc-82bb943ee06a.md | 05185fee-abb0-4943-b2dc-82bb943ee06a / implementation / plan | [入口](05185fee-abb0-4943-b2dc-82bb943ee06a.md) |
 | 391edc01-4ad9-41dc-914f-ab3115729db5.md | 391edc01-4ad9-41dc-914f-ab3115729db5 / readiness / plan | [入口](391edc01-4ad9-41dc-914f-ab3115729db5.md) |
 | 7df148ab-4789-4828-b6cf-d7142d0db3f8.md | 7df148ab-4789-4828-b6cf-d7142d0db3f8 / implementation / plan | [入口](7df148ab-4789-4828-b6cf-d7142d0db3f8.md) |
+| 839fdf10-8671-4eb6-b3ea-5a0b31a52ce9.md | 839fdf10-8671-4eb6-b3ea-5a0b31a52ce9 / readiness / plan | [入口](839fdf10-8671-4eb6-b3ea-5a0b31a52ce9.md) |
 
 ## 维护约定
 
