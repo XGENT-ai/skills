@@ -6,6 +6,7 @@
 
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
+| experience | 开发经验收件箱 | [入口](experience/index.md) |
 | sdlc | 下级导航 | [入口](sdlc/index.md) |
 
 ## 维护约定

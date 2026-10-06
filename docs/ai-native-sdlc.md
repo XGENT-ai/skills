@@ -90,7 +90,7 @@ agent 创建需求时 `status` 只能是 `draft`。转到 `reviewing`、`approve
 
 ### 2.8 两条线何时并行
 
-测试用例的数据来源是需求的验收标准和 UAT 状态，不是计划正文（`skills/prd/SKILL.md:203`，`skills/test-plan/SKILL.md:41`）。调度上仍等计划评审结束、人接受开工之后再写用例：计划评审经常会改验收口径，写早了要返工。执行和回填没有 skill，到差异核查时，已有的测试结果只是证据的一种，不是免检证明。
+测试用例的数据来源是需求的验收标准和 UAT 状态，不是计划正文（`skills/prd/SKILL.md:203`，`skills/test-plan/SKILL.md:41`）。调度上仍等计划评审结束、人接受开工之后再写用例：计划评审经常会改验收口径，写早了要返工。项目真实入口可由项目专用验证 skill 执行（见第 8 节）；SPMS 用例执行编排与结果回填仍缺专用 skill。到差异核查时，已有的测试结果只是证据的一种，不是免检证明。
 
 ## 3. 开工前
 
@@ -317,7 +317,9 @@ agent 做的事：
 
 退出时给人一张映射表：每条验收标准指向新建的 `TC-N`、已有 key，或「无法成例」。无法成例的条目回到需求阶段改验收标准，不在用例里替产品做决定。
 
-人接着做：评审用例，转到 `active`，执行，回填 `result`。这三步没有 skill。
+人接着组织：评审用例，转到 `active`，执行，回填 `result`。SPMS 用例评审、状态流转与结果回填仍没有专用 skill。
+
+需要可复用的项目验证能力时，使用 [create-verification-skill](../skills/create-verification-skill/SKILL.md) 按应用或指定场景创建、维护 `verify-<app>`，由它驱动真实入口、保存场景配方与运行证据。已有验证能力直接复用。agi-mode 将验收项映射到场景和入口，只执行所选范围及必要依赖，再核对完整覆盖；生成器的单场景冒烟不代表整期通过，也不自动回填 SPMS。
 
 测试结果若要作为差异核查的证据，把命令、环境和结论写进 Milestone 记录，或在调用 `review-prd-dev-gaps` 时指出结果所在的位置。没有结果就如实标未运行，不把用例草稿当成已经测过。
 
@@ -348,7 +350,7 @@ agent 做的事：
 对照 `skills/` 里实际存在的 skill，下面五处没有承接者。
 
 1. **SPMS 计划实体。** `prd` 把下游落点写成 `plan_create` → `PLAN-N`，再用 `plan_update({content})` 写正文（`skills/prd/SKILL.md:199`）。`dev-plan` 只写本地 Markdown，全文没有 `plan_create`。本地计划和 SPMS 计划目前对不上号。
-2. **测试评审、执行、结果回填。** `skills/` 里没有 `review-test-plan`，也没有执行用例或回填 `result` 的 skill。`rg` 在本仓 skill 文档中搜不到 `review-test-plan`。
+2. **SPMS 测试评审、执行编排、结果回填。** [create-verification-skill](../skills/create-verification-skill/SKILL.md) 可建立项目真实入口验证能力，但不承接 SPMS 用例评审、状态流转或 `result` 回填，这部分仍是交接缺口。
 3. **需求转已上线。** 本流程没有 skill 改这个状态。人在 SPMS 操作；agent 写终态会被拒（`skills/prd/SKILL.md:173`）。
 4. **估点。** `story-points` 能把点数写回 SPMS，`README.md:98` 把它和本流程的 skill 列在同一张表。`prd` 写明排期和点数不在 PRD 阶段做（`skills/prd/SKILL.md:175`）。它不是本文的必经步骤。
 5. **本地 skill 镜像不全。** `.agents/skills/` 24 个目录，`skills/` 47 个。在本 checkout 里，agent 若只扫描 `.agents/skills/`，会看不到 `prd` 和 `test-plan`。
