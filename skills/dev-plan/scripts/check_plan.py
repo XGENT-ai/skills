@@ -5,6 +5,7 @@
 自定义模板/编号须人工核对同等规则；结构通过不证明设计、来源或验收真实有效。
 识别 R/NFR/C/A/V/T-数字、M数字及账本登记的同形上游前缀；代码块、路径与链接
 目标不参与 ID 校验。正文和行内代码中的已知骨架占位报错，自定义疑似占位告警。
+缺少顶部「需求来源」只告警，兼容未记录来源的旧计划。
 """
 
 import re
@@ -153,7 +154,7 @@ def check(text):
                 report("WARN", number, f"疑似自定义占位，请人工核实：{token}")
         if re.search(r"\b(?:TBD|TODO)\b", references):
             report("WARN", number, "疑似未填内容 TBD/TODO，请人工核实")
-        field = re.match(r"^(?:>\s*)?(?:-\s*)?(计划状态|调查基线)[：:]\s*(.*)$", plain(line))
+        field = re.match(r"^(?:>\s*)?(?:-\s*)?(计划状态|调查基线|需求来源)[：:]\s*(.*)$", plain(line))
         if field:
             fields[field[1]] = (number, field[2].rstrip("。"))
     for field in ("计划状态", "调查基线"):
@@ -162,6 +163,9 @@ def check(text):
             report("ERROR", number, f"缺少或未填：{field}")
         elif field == "计划状态" and value not in {"Ready", "Proposed", "Blocked"}:
             report("ERROR", number, f"计划状态无效：{value}")
+    number, value = fields.get("需求来源", (0, ""))
+    if value in EMPTY:
+        report("WARN", number, "缺少或未填：需求来源（PRD 派生写 PRD 与期次，否则写无 PRD）")
     return findings
 
 

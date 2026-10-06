@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # 用法: check_progress.sh <计划.md> [仓库根,默认 .]
 # 撰写/评审时检查计划顶部「实施进度」的内部一致性,初稿应报 0/N;实施者按计划内条目自查。
-# 只检查摘要、状态、ID 与引用文件存在性,不读取独立记录正文,也不证明验收已通过。
-# 兼容旧版内联证据表并提示迁移;「压根没回写」仍需结合陈旧提示与实际工作判断。
+# 只检查摘要、状态、ID、提交 SHA 与引用文件存在性,不读取独立记录正文,也不证明验收已通过。
+# 兼容旧版内联证据表与无「提交」列的完成记录并提示迁移;「压根没回写」仍需结合陈旧提示与实际工作判断。
 set -euo pipefail
 plan="${1:?用法: check_progress.sh <计划.md> [仓库根]}"; root="${2:-.}"
 [ -f "$plan" ] || { echo "ERROR: 计划文件不存在: $plan" >&2; exit 1; }
 
 errs=0; warns=0
+in_git=0
+if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then in_git=1; fi
 err()  { echo "ERROR: $*"; errs=$((errs + 1)); }
 warn() { echo "WARN:  $*"; warns=$((warns + 1)); }
 trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
@@ -67,22 +69,29 @@ fi
 # ③ 识别新摘要索引与旧内联证据表,核对 ID 和记录字段。
 mcount="$(mrows "$mile" | grep -c . || true)"
 rcount="$(mrows "$recs" | grep -c . || true)"
-legacy=0
-if grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*状态[[:space:]]*\|' <<<"$recs"; then :
-elif grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*完成时间[[:space:]]*\|' <<<"$recs"; then
+legacy=0; commit_col=0
+header="$(grep -m1 -E '^\|[[:space:]]*Milestone[[:space:]]*\|' <<<"$recs" || true)"
+if grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*状态[[:space:]]*\|' <<<"$header"; then
+  IFS='|' read -r _ _ _ _ _ _ h_6 _ <<<"$header"
+  if [ "$(plain "$h_6")" = "提交" ]; then
+    commit_col=1
+  else
+    warn "完成记录没有「提交」列:旧格式可续用;新计划在末尾加「提交」列,按提交点回填 SHA"
+  fi
+elif grep -qE '^\|[[:space:]]*Milestone[[:space:]]*\|[[:space:]]*完成时间[[:space:]]*\|' <<<"$header"; then
   legacy=1
   warn "旧版内联证据表:本次续做时将详情迁入独立记录,计划保留状态、摘要与链接"
 else
-  err "完成记录表头不受支持,请使用 Milestone / 状态 / 更新时间 / 简要记录 / 实现与验收记录"
+  err "完成记录表头不受支持,请使用 Milestone / 状态 / 更新时间 / 简要记录 / 实现与验收记录 / 提交"
 fi
 mids="$(ids "$mile")"
 for id in $(printf '%s\n' "$mids" | sort | uniq -d); do err "里程碑表 ID 重复:$id"; done
-seen=""; completed=0; latest_completed=""
+seen=""; completed=0; latest_completed=""; pending=""
 plan_dir="$(cd "$(dirname "$plan")" && pwd)"
 link_re='^\[[^]]+\]\(([^)]+)\)$'
 while IFS= read -r row; do
   [ -n "$row" ] || continue
-  IFS='|' read -r _ c_m c_2 c_3 c_4 c_5 _rest <<<"$row"
+  IFS='|' read -r _ c_m c_2 c_3 c_4 c_5 c_6 _rest <<<"$row"
   m="$(plain "$c_m")"
   grep -qxF "$m" <<<"$mids" || err "完成记录出现未知里程碑:$m"
   if grep -qxF "$m" <<<"$seen"; then err "完成记录里程碑重复:$m"; fi
@@ -109,6 +118,23 @@ while IFS= read -r row; do
       esac
     else
       err "$m 缺少实现与验收记录的 Markdown 链接"
+    fi
+    if [ "$commit_col" -eq 1 ]; then
+      commit="$(plain "$c_6")"
+      shas="$(LC_ALL=C tr -c '0-9A-Za-z' '\n' <<<"$commit" | grep -xE '[0-9a-f]{7,40}' || true)"
+      if [ "$state" = "已完成" ]; then
+        if [[ "$commit" == *待提交* ]]; then
+          pending="$pending $m"
+        elif [ -z "$shas" ]; then
+          err "$m 已完成,「提交」须为短 SHA 或「待提交」:${commit:-空}"
+        fi
+      fi
+      if [ "$in_git" -eq 1 ]; then
+        for sha in $shas; do
+          git -C "$root" cat-file -e "${sha}^{commit}" 2>/dev/null \
+            || warn "$m 的提交 $sha 在本地仓库找不到:未同步或写错"
+        done
+      fi
     fi
   fi
   if [ "$state" = "已完成" ]; then
@@ -144,8 +170,13 @@ else
   [[ "$lastdone" =~ $latest_re ]] || err "最近完成应为 $latest_completed,实际为:$lastdone"
 fi
 
-# ⑥ 陈旧提示:代码改了、计划没动
-if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+# ⑥ 全部完成后必须已最终提交:每个完成行都有 SHA,不再有「待提交」
+if [ "$commit_col" -eq 1 ] && [ "$mcount" -gt 0 ] && [ "$completed" -eq "$mcount" ] && [ -n "$pending" ]; then
+  err "全部里程碑已完成,以下行仍写「待提交」,须完成最终提交并回填 SHA:$pending"
+fi
+
+# ⑦ 陈旧提示:代码改了、计划没动
+if [ "$in_git" -eq 1 ]; then
   planrel="$(git -C "$root" ls-files --full-name --error-unmatch "$plan" 2>/dev/null || true)"
   dirty="$(git -C "$root" status --porcelain 2>/dev/null | cut -c4- | sed 's/.* -> //' || true)"
   if [ -n "$dirty" ]; then

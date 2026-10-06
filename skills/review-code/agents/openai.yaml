@@ -1,4 +1,4 @@
 interface:
   display_name: "代码变更评审"
-  short_description: "审查未提交、commit、范围或分支差异，可附开发计划，默认落盘完整报告"
-  default_prompt: "使用 $review-code 审查指定代码变更，核查可选开发计划，按 P0–P3 输出有证据的问题，将完整报告落盘并回读核验，回复结论摘要与报告链接。"
+  short_description: "审查开发计划登记的提交、未提交、commit、范围或分支差异，给出验收判定"
+  default_prompt: "使用 $review-code 审查指定开发计划登记的提交与未提交改动，或指定的代码变更，按 P0–P3 输出有证据的问题，将完整报告落盘并回读核验；回复验收判定、报告链接，以及 apply-code-review 或差异核查的下一步命令。"

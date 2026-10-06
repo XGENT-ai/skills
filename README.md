@@ -115,13 +115,21 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
 
+**手动闭环**：各 SDLC skill 结束时先给明确判定，再给可直接复制的下一条命令（Codex 写作 `$<skill>`，Claude Code 写作 `/<skill>`），由你决定是否执行。`P1`、`P2` 表示期次（Phase）。
+
+1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
+2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`（可多次，直至 Ready），`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次。
+3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
+4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
+5. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
+
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
 
 这 11 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
 
 ```text
 $review-prd <PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]
-$review-code [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [开发计划] [报告路径] [仅聊天]
+$review-code [开发计划] [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [报告路径] [仅聊天]
 $apply-doc-review <文档评审报告> [原文路径] [上轮报告/处置记录] [修复/仅复核] [问题ID/范围]
 $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]
 ```
@@ -171,7 +179,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 状态按对象拆分、历史按需读取。PRD 与计划保持多对多关系，每轮评审有独立状态 ID，原报告文件名不必改变。UUID 事件保留并发记录，冲突待核对，不用机器时间覆盖。
 
-[固定状态模型](skills/agi-mode/assets/sdlc/state-model.md)将文档就绪、计划实施、每轮评审及处置分开：例如 `dev-plan-ready` 表示可开工，`dev-plan-completed` 表示实施范围和规定验证已完成。what-next 会从 `.review.md`、`.codereview.md`、`.code-review.md` 等候选补查漏记评审，并从报告处置节、`.applied.md` 或实施记录核实整改。原计划状态可能滞后，足够的实现/验证证据可纠正 SDLC 状态；原文自述、差异及证据质量仍保留。查询只读重算，更新才保存修复；证据不足用 `unknown`，独立验收线枚举暂为 TBD。
+[固定状态模型](skills/agi-mode/assets/sdlc/state-model.md)将文档就绪、计划实施、每轮评审及处置分开：例如 `dev-plan-ready` 表示可开工，`dev-plan-completed` 表示实施范围和规定验证已完成。what-next 会从 `.review.md`、`.codereview.md`、`.code-review.md` 等候选补查漏记评审，并从报告处置节、`.applied.md` 或实施记录核实整改。状态取原文记录（完成记录、登记的提交、报告判定行、处置与决策记录）支持的最强状态，证据质量单独标注：只有自述为 `provisional`，之后相关文件又有改动为 `stale`，依据矛盾为 `conflict`；只有没有可读依据才用 `unknown`。原计划状态滞后时按记录纠正并保留原文自述。查询只读重算，更新才保存修复；旧台账的 v1 状态模型在更新时自动升级到 v2，独立验收线枚举暂为 TBD。
 
 相关撰写、评审、修复技能和计划实施模板仅增加状态回写规则，原产物落盘方式保持原有约定。已有台账可继续使用，不自动迁移或双写。状态协议随仓同步，另一台机器无需安装所有技能也能回写；状态已同步不代表原文和证据已同步。安装 `agi-mode`：`npx skills add XGENT-ai/skills --skill agi-mode`。
 

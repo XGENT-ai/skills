@@ -11,6 +11,7 @@ PLAN = """# 编辑标题
 
 > **计划状态：Ready**
 > 调查基线：2026-10-06 · abc123 · clean。
+> 需求来源：用户需求，无 PRD。
 
 ## 实施者定位
 
@@ -30,9 +31,9 @@ PLAN = """# 编辑标题
 
 ### 完成记录
 
-| Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 |
-| --- | --- | --- | --- | --- |
-| — | — | — | 尚未开始任何里程碑 | — |
+| Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
+| --- | --- | --- | --- | --- | --- |
+| — | — | — | 尚未开始任何里程碑 | — | — |
 
 ## 0. 需求、范围与决策
 
@@ -193,6 +194,10 @@ UI 使用 <select> 和 `Array<T>`，文案支持 `a \| b`。
         self.run_check(PLAN.replace("调查基线", "其他字段"), 1, "缺少或未填：调查基线")
         self.run_check(PLAN.replace("2026-10-06 · abc123 · clean", "TBD"), 1, "缺少或未填：调查基线")
         self.run_check(PLAN.replace("Ready", "Completed"), 1, "计划状态无效")
+
+    def test_missing_requirement_source_only_warns(self):
+        self.run_check(PLAN.replace("> 需求来源：用户需求，无 PRD。\n", ""), 0, "WARN: ")
+        self.run_check(PLAN.replace("用户需求，无 PRD", "—"), 0, "缺少或未填：需求来源")
 
     def test_escaped_pipes_pass_but_broken_table_width_fails(self):
         self.run_check(PLAN.replace("保存新标题", r"保存 a \| b"))
