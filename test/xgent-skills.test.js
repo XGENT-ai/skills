@@ -20,9 +20,7 @@ function project(t) {
 function run(dir, flags = [], input, env = process.env) {
   // 仅模拟终端检测,输入仍经过 CLI 的 readline 询问和回答处理。
   const prefix = input === undefined ? [] : ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);'];
-  const guardFlags = flags.some((flag) => /^--(no-)?context-goal-guard(?:$|-threshold=)/.test(flag)) ? [] : ['--no-context-goal-guard'];
-  const claudeGuardFlags = flags.some((flag) => flag.includes('claude-context-goal-guard')) ? [] : ['--no-claude-context-goal-guard'];
-  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-impeccable', ...guardFlags, ...claudeGuardFlags, ...flags], {
+  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-impeccable', ...flags], {
     input: input ?? '', encoding: 'utf8', timeout: 10000, env,
   });
 }
@@ -187,25 +185,28 @@ test('force backs up invalid guard JSON before replacing it', (t) => {
   assert.equal(guardManifest(dir).hooks.Stop.length, 1);
 });
 
-for (const input of ['y\n', ' YES \n', 'n\n', '\n', '']) {
-  test(`guard interactive answer ${JSON.stringify(input)} respects opt-in`, (t) => {
+for (const input of [undefined, 'y\n', ' YES \n', 'n\n', '\n', '']) {
+  test(`default install skips both guards without prompting with input ${JSON.stringify(input)}`, (t) => {
     const dir = project(t);
-    // 直接调用 CLI,不传 guard 参数,覆盖默认询问。
-    const actual = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
-      cli, 'install', dir, '--no-impeccable', '--no-xgent-init'], { input, encoding: 'utf8', timeout: 10000 });
+    const actual = run(dir, ['--no-xgent-init'], input);
     assert.equal(actual.status, 0, actual.stderr);
-    assert.match(actual.stdout, /是否.*Codex.*\[y\/N\]/);
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), /^(y|yes)$/i.test(input.trim()));
+    assert.doesNotMatch(actual.stdout, /\[y\/N\]/);
+    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), false);
+    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks', 'context-goal-guard.py')), false);
+    assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), false);
+    assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), false);
   });
 }
 
-test('both interactive questions consume their own answers', (t) => {
+test('accepting AGENTS.md does not prompt for or install either guard', (t) => {
   const dir = project(t);
   const result = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
     cli, 'install', dir, '--no-impeccable'], { input: 'y\ny\n', encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   assertAgents(dir);
-  assert.equal(guardManifest(dir).hooks.Stop.length, 1);
+  assert.doesNotMatch(result.stdout, /是否安装.*goal/);
+  assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), false);
+  assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), false);
 });
 
 test('non-interactive default and explicit guard skip leave existing Codex files untouched', (t) => {
@@ -459,14 +460,16 @@ test('force backs up invalid Claude settings before replacing them', (t) => {
   assert.equal(claudeGuardHandlers(claudeSettings(dir), 'Stop').length, 1);
 });
 
-for (const [input, codex, claude] of [['n\ny\n', false, true], ['y\nn\n', true, false], ['y\nyes\n', true, true], ['\n', false, false]]) {
-  test(`Codex and Claude guard questions answer ${JSON.stringify(input)} independently`, (t) => {
+for (const [flags, codex, claude] of [
+  [['--context-goal-guard'], true, false],
+  [['--claude-context-goal-guard'], false, true],
+  [['--context-goal-guard', '--claude-context-goal-guard'], true, true],
+]) {
+  test(`explicit guard flags ${flags.join(' ')} install independently without prompting`, (t) => {
     const dir = project(t);
-    const result = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
-      cli, 'install', dir, '--no-impeccable', '--no-xgent-init'], { input, encoding: 'utf8', timeout: 10000 });
+    const result = run(dir, ['--no-xgent-init', ...flags], 'n\n');
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /是否.*Codex.*\[y\/N\]/);
-    assert.match(result.stdout, /是否.*Claude Code.*\[y\/N\]/);
+    assert.doesNotMatch(result.stdout, /\[y\/N\]/);
     assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), codex);
     assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), claude);
     assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), claude);
@@ -483,7 +486,6 @@ test('non-interactive default and explicit Claude guard skip leave local setting
       { input: '', encoding: 'utf8', timeout: 10000 });
     assert.equal(result.status, 0, result.stderr);
     assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-    assert.equal(/--claude-context-goal-guard 安装/.test(result.stdout), flags.length === 0);
     assert.equal(fs.readFileSync(file, 'utf8'), 'existing config');
     assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), false);
   }

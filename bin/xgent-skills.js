@@ -690,20 +690,20 @@ function usage() {
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并装上
                   vendor 的 impeccable(skills + hooks,以及按需下载的
-                  engine 二进制),并询问是否创建通用的 AGENTS.md
-                  与安装 Codex / Claude Code goal 上下文收尾提醒
+                  engine 二进制),并询问是否创建通用的 AGENTS.md;
+                  Codex / Claude Code goal 上下文收尾提醒默认不安装
   help            显示本帮助
 
 install 选项:
   --no-impeccable       跳过 impeccable,仍安装 XGENT 的 hooks 与 settings
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
-  --context-goal-guard  安装 Codex goal guard,不再询问(需要 Python 3.9+)
-  --no-context-goal-guard 跳过 Codex goal guard,不再询问
+  --context-goal-guard  显式安装 Codex goal guard(默认不安装,需要 Python 3.9+)
+  --no-context-goal-guard 跳过 Codex goal guard(默认行为,保留已有 guard)
   --context-goal-guard-threshold=N  Codex guard 的阈值百分比(1–99 整数,默认 ${CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};
                         重装时不给则沿用已装的值),同时表示安装
-  --claude-context-goal-guard 安装 Claude Code goal guard,不再询问
-  --no-claude-context-goal-guard 跳过 Claude Code goal guard,不再询问
+  --claude-context-goal-guard 显式安装 Claude Code goal guard(默认不安装)
+  --no-claude-context-goal-guard 跳过 Claude Code goal guard(默认行为,保留已有 guard)
   --claude-context-goal-guard-threshold=N  Claude Code guard 的阈值百分比(1–99 整数,
                         默认 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};重装时不给则沿用已装的值),同时表示安装
   --providers=a,b       指定 impeccable 装进哪些 harness 目录(默认按项目里
@@ -769,28 +769,17 @@ async function install(args) {
   if (options.providers) resolveProviders(options.detected, options.providers);
   const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
   const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
-  const askGuard = !flags.includes('--context-goal-guard') && !flags.includes('--no-context-goal-guard')
-    && codexThreshold === undefined;
-  const askClaudeGuard = !flags.includes('--claude-context-goal-guard') && !flags.includes('--no-claude-context-goal-guard')
-    && claudeThreshold === undefined;
-  // 各询问共享输入迭代器,避免前一问提前读掉后一问的回答。
-  const rl = process.stdin.isTTY && (askAgents || askGuard || askClaudeGuard)
+  const guard = flags.includes('--context-goal-guard') || codexThreshold !== undefined;
+  const claudeGuard = flags.includes('--claude-context-goal-guard') || claudeThreshold !== undefined;
+  const rl = process.stdin.isTTY && askAgents
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
   rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
   let agents;
-  let guard;
-  let claudeGuard;
   try {
     agents = flags.includes('--xgent-init') || (askAgents && await confirm(
       '是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ',
       '  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建', answers));
-    guard = flags.includes('--context-goal-guard') || codexThreshold !== undefined || (askGuard && await confirm(
-      `是否安装 Codex goal 上下文收尾提醒 (默认超过 ${CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD}% 时提醒收尾,需 Python 3.9+ 与 Codex 内手动信任)? [y/N] `,
-      '  跳过  Codex goal guard:非交互环境,可加 --context-goal-guard 安装', answers));
-    claudeGuard = flags.includes('--claude-context-goal-guard') || claudeThreshold !== undefined || (askClaudeGuard && await confirm(
-      `是否安装 Claude Code goal 上下文收尾提醒 (默认超过 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD}% 时提醒收尾并在回合结束时暂停 goal,需重启会话并信任工作区)? [y/N] `,
-      '  跳过  Claude Code goal guard:非交互环境,可加 --claude-context-goal-guard 安装', answers));
   } finally {
     rl?.close();
   }

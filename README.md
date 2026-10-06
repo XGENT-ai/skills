@@ -32,11 +32,11 @@ npx @xgent-ai/skills install
 | `--no-impeccable` | 跳过 impeccable,仍安装 XGENT 的 hooks 与 settings |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
-| `--context-goal-guard` | 直接安装 Codex goal 上下文收尾提醒,不再询问;需要 Python 3.9+ |
-| `--no-context-goal-guard` | 跳过 Codex goal guard,不再询问;已有 guard 保留 |
+| `--context-goal-guard` | 显式安装 Codex goal 上下文收尾提醒(默认不安装);需要 Python 3.9+ |
+| `--no-context-goal-guard` | 跳过 Codex goal guard(默认行为);已有 guard 保留 |
 | `--context-goal-guard-threshold=N` | Codex guard 的触发阈值百分比(1–99 整数,默认 65),同时表示安装;重装不给则沿用已装的值 |
-| `--claude-context-goal-guard` | 直接安装 Claude Code goal 上下文收尾提醒,不再询问 |
-| `--no-claude-context-goal-guard` | 跳过 Claude Code goal guard,不再询问;已有 guard 保留 |
+| `--claude-context-goal-guard` | 显式安装 Claude Code goal 上下文收尾提醒(默认不安装) |
+| `--no-claude-context-goal-guard` | 跳过 Claude Code goal guard(默认行为);已有 guard 保留 |
 | `--claude-context-goal-guard-threshold=N` | Claude Code guard 的触发阈值百分比(1–99 整数,默认 70),同时表示安装;重装不给则沿用已装的值 |
 | `--providers=a,b` | 指定 impeccable 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
 | `--force` | 强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 `.bak`);不覆盖已有 `AGENTS.md` |
@@ -47,7 +47,7 @@ npx @xgent-ai/skills install
 
 非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
 
-`install` 还会询问是否安装 Codex goal 上下文收尾提醒,输入 `y` 或 `yes` 安装,回车和非交互环境默认跳过。此选项不受 `--providers` 或 `--no-impeccable` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。确认后先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
+`install` 默认不安装 Codex goal 上下文收尾提醒,也不询问;仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装。此选项不受 `--providers` 或 `--no-impeccable` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。显式安装时先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
 
 安装后会显示用户必须完成的步骤:从目标项目启动 Codex、信任项目 `.codex/` 层,在 `/hooks` 中审阅、信任并启用两个 handler,对**当前 goal** 明确超过阈值(默认 65%)时先保存进度和交接、再暂停的策略。安装输出提供可复制的指令;安装和信任本身不构成暂停授权。恢复 goal 或新开对话后需重新明确策略。当前仅验证 Codex 0.160.0、macOS arm64,完整限制与停用方法见 [启用说明](docs/codex-context-goal-guard.md)。
 
@@ -57,7 +57,7 @@ Codex guard 已接入源码与 npm 打包清单,尚未发布到 npm;发布后可
 node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard
 ```
 
-`install` 随后询问是否安装 Claude Code goal 上下文收尾提醒,同样输入 `y` 或 `yes` 安装,回车和非交互环境默认跳过,不受 `--providers` 或 `--no-impeccable` 影响。确认后复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
+`install` 默认不安装 Claude Code goal 上下文收尾提醒,也不询问;仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装,不受 `--providers` 或 `--no-impeccable` 影响。显式安装时复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
 
 安装后需重启会话、信任工作区,并在 `/hooks` 中确认两个 handler 来源为 local settings。当前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64 与 Opus 5.5 / Sonnet 5.5 / Haiku 4.5,完整限制、接续与停用方法见 [启用说明](docs/claude-context-goal-guard.md)。从源码安装:`node bin/xgent-skills.js install /absolute/path/to/project --claude-context-goal-guard`。
 
@@ -180,6 +180,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | --- | --- |
 | [architect](skills/architect/SKILL.md) | 实现前先设计类型、签名与模块结构，并在开发过程中持续校准 |
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
+| [create-verification-skill](skills/create-verification-skill/SKILL.md) | 按应用或场景创建、维护 verify-*，复用现有测试并验证真实入口与交接；不依赖编辑器，可供 agi-mode 复用 |
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |
 | [rust](skills/rust/SKILL.md) | 编写和评审 Rust 代码，处理所有权、错误、性能、测试及 Tokio 异步模式 |
 | [sql-optimization](skills/sql-optimization/SKILL.md) | 分析 SQL 执行计划，优化查询、索引、分页与批量操作 |

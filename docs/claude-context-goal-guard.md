@@ -33,13 +33,12 @@ Claude Code 界面右下角的「NN% context used」按扣除输出预留后的�
 ### 使用 install
 
 ```sh
-# 从本仓库源码安装（发布到 npm 后可用 npx @xgent-ai/skills install）
-node bin/xgent-skills.js install /absolute/path/to/project
-# 显式安装，不再询问
+# 默认不安装 guard；从本仓库源码显式安装
+# 发布到 npm 后可用 npx @xgent-ai/skills install --claude-context-goal-guard
 node bin/xgent-skills.js install /absolute/path/to/project --claude-context-goal-guard
 ```
 
-交互安装会在 Codex guard 之后询问是否安装 Claude Code goal 上下文收尾提醒，输入 `y` 或 `yes` 确认；回车和非交互环境默认跳过。`--claude-context-goal-guard` 显式安装，`--no-claude-context-goal-guard` 跳过询问并保留已有 guard，两者不能同时使用。这个选项与 `--providers`、`--no-impeccable`、`--xgent-init` 及 Codex guard 的选项互不影响。
+交互和非交互安装均默认跳过 guard，不再询问。仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装；`--no-claude-context-goal-guard` 显式跳过并保留已有 guard，不能与安装参数同时使用。这个选项与 `--providers`、`--no-impeccable`、`--xgent-init` 及 Codex guard 的选项互不影响。
 
 安装器会：
 
