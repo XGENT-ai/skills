@@ -88,7 +88,7 @@ what-next 用固定状态码和证据质量表达判断，主动发现关联评�
 | init-sdlc 初始化、项目状态、what-next、多计划进度、跨机盘点或维护跟进表 | [项目状态与下一步](playbooks/what-next.md) | 有来源的分类状态、冲突/同步边界与具体下一步；仅写入模式维护台账 |
 | 解释机制、只读调查、比较方案 | [调查与诊断](playbooks/investigation.md) | 有出处的答案、因果证据或明确的未知 |
 | 活进程异常、CPU / heap / trace / spindump 取证 | [运行时与离线取证](playbooks/forensics.md) | 从原始信号到代码位置的可追溯诊断 |
-| 设计方案、实施计划、用原型决定方向 | [设计与原型](playbooks/design-prototype.md) | 可实施的决策或已验证的原型结论 |
+| 设计方案、实施计划、用原型决定方向；界面视觉参考、交互选型、DESIGN.md | [设计与原型](playbooks/design-prototype.md) | 可实施的决策或已验证的原型结论 |
 | 新增能力、改变产品行为 | [功能交付](playbooks/feature.md) | 用户路径和相关边界通过验收 |
 | 复现并修复错误 | [缺陷修复](playbooks/bug-fix.md) | 原触发条件下失败变为通过，回归受控 |
 | 解决一次明确的性能问题 | [性能优化](playbooks/optimization.md) | 前后可比测量成立、目标问题改善、质量底线保持 |

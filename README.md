@@ -225,6 +225,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 | Skill | 说明 |
 | --- | --- |
+| [design-reference](skills/design-reference/SKILL.md) | 寻找、比较页面或组件的视觉参考，提炼适合当前产品、有来源的设计方向与 brief |
+| [design-md](skills/design-md/SKILL.md) | 从仓库、网站或明确设计决策提炼和维护 DESIGN.md，保留既定规范并报告实现偏差 |
+| [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较筛选、权限、表格、批量操作和编辑流程，交付适合现有产品的交互方案与验收条件 |
 | [kpi-dashboard-design](skills/kpi-dashboard-design/SKILL.md) | 设计 KPI 仪表盘的指标选择、信息层级与数据可视化 |
 | [landing-page-conversion-audit](skills/landing-page-conversion-audit/SKILL.md) | 审查落地页、销售页或结账流程的转化障碍，按预期收入影响排序修复建议 |
 

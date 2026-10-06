@@ -7,3 +7,5 @@
 | 5dd62493-7017-4e84-82e7-fbd5cab75cd9 | context-goal-guard 默认不安装 | [记录](5dd62493-7017-4e84-82e7-fbd5cab75cd9.md) |
 | dbef8d1b-fa3c-4014-85cc-2e39025bcf3f | 验证 skill 生成器增强 | [记录](dbef8d1b-fa3c-4014-85cc-2e39025bcf3f.md) |
 | b5f442b4-5534-487e-bc60-be03aad3022f | dev-plan 融合计划结构校验 | [记录](b5f442b4-5534-487e-bc60-be03aad3022f.md) |
+| eea2d94b-94f5-4204-9720-913dadcf7693 | 补齐此前推荐的交互选型技能 | [记录](eea2d94b-94f5-4204-9720-913dadcf7693.md) |
+| 05726970-75d3-4a0a-bb3c-78302e6094d1 | 设计类 skill 效果评估与进化 | [记录](05726970-75d3-4a0a-bb3c-78302e6094d1.md) |
