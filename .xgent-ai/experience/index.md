@@ -10,3 +10,4 @@
 | eea2d94b-94f5-4204-9720-913dadcf7693 | 补齐此前推荐的交互选型技能 | [记录](eea2d94b-94f5-4204-9720-913dadcf7693.md) |
 | 05726970-75d3-4a0a-bb3c-78302e6094d1 | 设计类 skill 效果评估与进化 | [记录](05726970-75d3-4a0a-bb3c-78302e6094d1.md) |
 | 76041099-ce1d-45e2-9b95-766a0c81ad0b | SDLC skill 手动闭环交接优化 | [记录](76041099-ce1d-45e2-9b95-766a0c81ad0b.md) |
+| e385a2ce-a3a2-4153-b6bb-e7b685c92b67 | SDLC 新增 review-ui / apply-ui-review | [记录](e385a2ce-a3a2-4153-b6bb-e7b685c92b67.md) |

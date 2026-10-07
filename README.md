@@ -110,6 +110,8 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | [review-code](skills/review-code/SKILL.md) | 评审未提交变更、commit 或分支差异，可对照开发计划，输出有证据的代码评审报告 |
 | [review-prd-dev-gaps](skills/review-prd-dev-gaps/SKILL.md) | 核对 PRD 与开发交付，将遗漏、合理变更和待拍板差异分流，交互 Triage 后按需调用 dev-plan 生成 gaps plan |
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
+| [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过 |
+| [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告对照截图与目标核实并修复界面差距、自检；停滞预警时重构思路，提交登记后交回复审 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
 | [resolve-blocked](skills/resolve-blocked/SKILL.md) | 逐项讲清开发计划中的阻塞事项，先查证、需拍板的交互确认并给推荐，存 decisions 文档并回改计划 |
 
@@ -121,24 +123,26 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`（可多次，直至 Ready），`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次。
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
-5. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
+5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
+6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
 
-这 11 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
+这 13 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
 
 ```text
 $review-prd <PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]
 $review-code [开发计划] [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [报告路径] [仅聊天]
 $apply-doc-review <文档评审报告> [原文路径] [上轮报告/处置记录] [修复/仅复核] [问题ID/范围]
+$review-ui [开发计划] [页面URL/路由] [设计稿/目标图] [上轮报告] [复审/重建基线] [单元/范围] [门槛分] [报告路径]
 $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]
 ```
 
 提示的展示取决于客户端：[Claude Code](https://code.claude.com/docs/en/skills#frontmatter-reference) 在 `/skill` 补全中支持 `argument-hint`；Codex 的 `$skill` 参数预览仍有[未关闭的功能请求](https://github.com/openai/codex/issues/31014)，不能仅凭新增字段保证弹出提示。未展示时可直接参考上述用法或各技能的 frontmatter。
 
-4 个 `review-*` 支持“对照上轮报告复审修复效果”：逐项保留来源 ID，区分已解决、仍存在、部分解决、回归、待核实、不再适用和本轮未复核；新增问题单列，默认另存报告。代码旧问题的复核不受本次修复 diff 限制。`review-prd-dev-gaps` 会先核对已有 gaps plan，支持“仅报告”，避免重复规划。
+5 个 `review-*` 支持“对照上轮报告复审修复效果”：逐项保留来源 ID，区分已解决、仍存在、部分解决、回归、待核实、不再适用和本轮未复核；新增问题单列，默认另存报告。代码旧问题的复核不受本次修复 diff 限制。`review-prd-dev-gaps` 会先核对已有 gaps plan，支持“仅报告”，避免重复规划。
 
-2 个 `apply-*` 支持“继续修复”与“仅复核”：前者处理剩余问题，后者保留目标产物并保存必要处置记录；完全只读则仅聊天交付。重复执行先核对已有证据，无实质变化不改文件或时间；apply 的复核不自动成为新一轮独立 review。
+`apply-doc-review` 与 `apply-code-review` 支持“继续修复”与“仅复核”：前者处理剩余问题，后者保留目标产物并保存必要处置记录；完全只读则仅聊天交付。重复执行先核对已有证据，无实质变化不改文件或时间；apply 的复核不自动成为新一轮独立 review。
 
 项目状态与下一步能力已合并到 `agi-mode` 的 [what-next 流程](skills/agi-mode/playbooks/what-next.md)，不再单独发布 `what-next` skill。查询默认只读；初始化/更新才保存，既有执行授权继续有效。
 

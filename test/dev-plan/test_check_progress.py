@@ -91,6 +91,10 @@ class ProgressCommitTest(unittest.TestCase):
         output = self.run_check([row("M1", "`a1b2c3d`"), row("M2", "`b2c3d4e`；修复 `c3d4e5f`")])
         self.assertIn("WARN 0", output)
 
+    def test_ui_fix_sha_after_code_fix_passes(self):
+        output = self.run_check([row("M1", "`a1b2c3d`"), row("M2", "`b2c3d4e`；修复 `c3d4e5f`；UI修复 `d4e5f6a`")])
+        self.assertIn("WARN 0", output)
+
     def test_legacy_table_without_commit_column_only_warns(self):
         self.run_check([row("M1"), row("M2")], header=LEGACY_HEADER, diagnostic="没有「提交」列")
 
