@@ -77,7 +77,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Target at most 200 characters overall, with Chinese descriptions around 100 characters. The first 100 characters should independently convey the applicability boundary. These are repository writing targets, not universal coding-agent truncation limits.
 - Put exclusions that prevent likely misrouting next to the trigger, for example, "write/review plans; not for executing an existing plan." Never bury them at the end of a long description or only in the body.
 - Keep procedures, exhaustive error-code lists, tool details and duplicate bilingual explanations in the body or references. Descriptions should help select the skill, not enumerate its workflow.
-- After editing, read both the full description and its first 100 characters. Preserve intent and meaningful boundaries; do not shorten by mechanically cutting text. Validate YAML and confirm unrelated frontmatter and instructions remain intact.
+- After editing, read both the full description and its first 100 characters. Preserve intent and meaningful boundaries; do not shorten by mechanically cutting text. Validate YAML with `npm test` and confirm unrelated frontmatter and instructions remain intact. Generic validators such as Codex's `quick_validate.py` reject `argument-hint` and `disable-model-invocation`, which this repository uses on purpose.
 
 ---
 
@@ -86,3 +86,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Experience Capture
 
 During development, when a non-obvious failure, user correction, or repeated automatable workflow provides a useful lesson, use [experience-capture](skills/experience-capture/SKILL.md) at a natural pause. Save only a few lines from the current context and resume immediately; do not investigate, fetch evidence, reload full records, or interrupt the main task to collect. Skip capture if no suitable pause exists, the task is read-only, or collection is disabled. Deeper investigation belongs to the user's later `$agi-mode 复盘` or `$agi-mode reflect`.
+
+## Working in This Repository
+
+- Run all tests with `npm test`.
+- `skills/<name>/` is the source of truth. `.claude/skills/`, `.agents/skills/` and `.codex/skills/` are gitignored local installs: a skills.sh copy picks up local changes only after push and reinstall, while a symlink to `skills/<name>` always does. When a loaded skill's base directory is an installed copy and the task depends on recent changes, run `diff -rq .claude/skills/<name> skills/<name>` first and follow `skills/<name>` if they differ. Point behavior checks at `skills/<name>/...` paths.
+- Changing a skill's name, arguments, next-step commands, verdicts or status words changes an interface. In the same change, update every place that restates it: README tables and loop description; `skills/agi-mode/playbooks/sdlc.md`, `what-next.md` and `evals/scenarios.md`, plus `assets/sdlc/state-model.md` and `protocol.md` when verdicts or report types change; the skill's `agents/openai.yaml`; and rules copied into agi-mode such as `references/interface-design.md`. Find them with `grep -rn '<skill-name>' skills README.md docs`. The test is whether each place still fully describes the new behavior, not whether it conflicts. Leave historical records and snapshot docs as they are, and don't add `agents/openai.yaml` where none exists.
+- When creating or revising a skill, follow [Skill 编写与修订](skills/agi-mode/playbooks/authoring-a-skill.md). agi-mode is not auto-invoked (`disable-model-invocation`), so this playbook is not loaded otherwise.

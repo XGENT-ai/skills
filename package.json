@@ -15,6 +15,9 @@
   "bin": {
     "xgent-skills": "bin/xgent-skills.js"
   },
+  "scripts": {
+    "test": "node --test test/*.test.js test/*/*.test.js && for d in test/codex test/dev-plan test/skills skills/agi-mode/evals; do python3 -m unittest discover -s \"$d\" -p 'test_*.py' || exit 1; done"
+  },
   "files": [
     "bin",
     ".claude/hooks",
