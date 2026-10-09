@@ -42,20 +42,20 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-10T01:06:38+08:00
+- 最近更新：2026-10-10T01:10:42+08:00
 - 当前进度：1/6 个里程碑完成
 - 当前状态：进行中；第六次Mac ARM与Linux x64全组通过、Linux ARM资产采集沙箱及Windows Bash选择失败，Intel Mac仍运行；两项必要CI环境修复已局部验证，M4隔离17项通过
 - 最近完成：M1 · 固定来源与可运行基线
 - 下一步：M2 · 收集第六次Intel Mac终态，提交并正常推送Git Bash与ARM AppArmor修复，运行第七次矩阵；成功后推进M3，M4保持隔离
 - 当前阻塞：无
-- 代码基线：dirty@28e3ae5105f1f62df9814dc99f00c2000300523a（已正常推送的第六次CI候选；本轮仅仓库测试调度变化，506份运行时构建输入仍一致；M4共享brief修复只在隔离worktree）
+- 代码基线：5090fb5a104097592236474e17f10c7b753cb867（Git Bash与Linux ARM AppArmor候选已提交；506份提交blob与原已测制品输入一致，第六次Intel Mac仍运行，尚未推送第七次）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T01:06:38+08:00 | 第六次Mac ARM/Linux x64全组通过，Linux ARM协议26项通过后资产采集沙箱失败，Windows guard22项通过后误选WSL；Intel Mac仍运行。Git Bash与ARM精确路径AppArmor配置已有局部检查，当前506运行时输入不变；第七次待运行。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-10T01:10:42+08:00 | 第六次Mac ARM/Linux x64全组通过，Linux ARM协议26项通过后资产采集沙箱失败，Windows guard22项通过后误选WSL；Intel Mac仍运行。Git Bash与ARM精确路径AppArmor配置已有局部检查，当前506运行时输入不变；第七次待运行。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；未到M3完成提交点 |
 | M4 | 进行中 | 2026-10-10T00:50:34+08:00 | 隔离worktree的context JSON、profile及接受brief映射17项通过；新增仓根共享原brief恢复、漂移/冲突和仓库边界回归先红后绿。metadata2项通过，七项真实路由及安装后验收待执行。未纳入A树。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 ## 0. 需求、范围与决策
