@@ -28,4 +28,6 @@
 
 | c253202c-9c0a-4471-b4ff-0006d72b505c | implementation / plan | [事实记录](c253202c-9c0a-4471-b4ff-0006d72b505c.md) |
 
+| 30e911a8-d345-4b07-9b33-2d7d7e667514 | implementation / plan | [事实记录](30e911a8-d345-4b07-9b33-2d7d7e667514.md) |
+
 按[目录索引维护规则](../../../protocol.md)维护；新增事件后同步本索引，事件保存后不覆盖。

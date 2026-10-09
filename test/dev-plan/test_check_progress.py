@@ -1,7 +1,9 @@
 from pathlib import Path
+import os
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 from bash_check import run_progress
 
 
@@ -88,6 +90,14 @@ class ProgressCommitTest(unittest.TestCase):
     def test_final_state_with_implementation_and_fix_shas_passes(self):
         output = self.run_check([row("M1", "`a1b2c3d`"), row("M2", "`b2c3d4e`；修复 `c3d4e5f`")])
         self.assertIn("WARN 0", output)
+
+    def test_snapshot_colons_are_complete_characters_in_byte_locale(self):
+        with mock.patch.dict(os.environ, {"LC_ALL": "C"}):
+            self.assertIn("ERROR 0", self.run_check([row("M1", "待提交")]))
+            self.plan.write_text(self.plan.read_text(encoding="utf-8").replace("：", ":"), encoding="utf-8")
+            result = run_progress(SCRIPT, self.plan, self.dir, 10)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("ERROR 0", result.stdout)
 
     def test_ui_fix_sha_after_code_fix_passes(self):
         output = self.run_check([row("M1", "`a1b2c3d`"), row("M2", "`b2c3d4e`；修复 `c3d4e5f`；UI修复 `d4e5f6a`")])

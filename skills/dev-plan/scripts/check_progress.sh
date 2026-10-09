@@ -14,7 +14,7 @@ err()  { echo "ERROR: $*"; errs=$((errs + 1)); }
 warn() { echo "WARN:  $*"; warns=$((warns + 1)); }
 trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 plain() { trim "$(printf '%s' "$1" | tr -d '*`')"; }
-field() { trim "$(grep -m1 "^- $1[：:]" <<<"$snap" | sed "s/^- $1[：:]//" || true)"; }
+field() { trim "$(grep -m1 -E "^- $1(：|:)" <<<"$snap" | sed -E "s/^- $1(：|:)//" || true)"; }
 required() {
   local value
   value="$(plain "$2")"
