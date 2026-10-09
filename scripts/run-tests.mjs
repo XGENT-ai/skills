@@ -24,6 +24,14 @@ function run(command, args, env = process.env) {
 run(process.execPath, ['--test', ...files.sort()]);
 // Python tests and their subprocesses exchange UTF-8 text on every host.
 const pythonEnv = { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
+if (process.platform === 'win32') {
+  // The system bash.exe may launch WSL; use the Bash shipped with native Git.
+  const git = spawnSync('git', ['--exec-path'], { encoding: 'utf8' });
+  if (git.error || git.status !== 0) throw git.error || new Error('Cannot locate Git Bash for Python tests.');
+  const bashDir = path.resolve(git.stdout.trim(), '../../../bin');
+  if (!fs.existsSync(path.join(bashDir, 'bash.exe'))) throw new Error(`Git Bash is missing from ${bashDir}.`);
+  pythonEnv.PATH = [bashDir, pythonEnv.PATH].join(path.delimiter);
+}
 for (const dir of ['test/codex', 'test/dev-plan', 'test/skills', 'skills/agi-mode/evals']) {
   run('python3', ['-m', 'unittest', 'discover', '-s', dir, '-p', 'test_*.py'], pythonEnv);
 }

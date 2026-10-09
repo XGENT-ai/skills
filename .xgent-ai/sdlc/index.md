@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。第五次矩阵Linux x64全过、三个native失败，Intel Mac仍运行；测试环境、browser继承和重连租约夹具修复已局部验证。当前26项协议、lint、release oracle860、Node18/25消费、审计188及Node186/Python60通过，来源506/328/7均匹配；下一矩阵待执行。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保留分阶段证据与限制，M4目标路径回归16项通过但仍隔离。其他guard事项与首轮评审处置保留。
+- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。第六次Mac ARM/Linux x64全组通过，Linux ARM采集沙箱与Windows Bash选择失败，Intel Mac仍运行。两项必要CI环境修复局部检查通过，506运行时输入不变。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保留实际范围；M4共享原brief恢复17项及metadata2项通过，仍隔离。收集Intel终态后正常推送第七次候选。其他guard事项及首轮评审处置保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
