@@ -101,7 +101,8 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 | Skill | 说明 |
 | --- | --- |
 | [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
-| [crd](skills/crd/SKILL.md) | 以整份 CRD 往返协作：起草需求、文末追加答复、整合对方返回版本并维护 Q&A |
+| [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复、答复反问并维护需求与 Q&A 当前视图 |
+| [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方使用：基于最新工作树评估需求与长期方案，在原文末答复或续接澄清；需改本方代码时调用 dev-plan，不实施。仅原样追加/收录不重评或生成计划 |
 | [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行、可跨对话续做的开发计划 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
 | [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
@@ -126,11 +127,14 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
+**跨项目入口按角色固定**：提出方始终用 `crd` 起草/修订需求、整合接收方返回稿、答复反问；接收方始终用 `crd-respond <CRD>` 评估/答复需求或续接提出方澄清。双方收到文件或追加消息都不切换角色，归属不明先核实。接收方默认在原文末追加有证据的评估答复，需改本方代码时实际调用 `dev-plan`（未决契约按就绪门标 `Blocked`），生成计划从第 2 步继续；仅原样追加/收录不重新评估或生成计划，仅评估不落盘，仅答复不生成计划，不自动发送或实施。
+
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
 
-这 13 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
+这 14 个 SDLC skill 及 `agi-mode` 均在 `SKILL.md` 的 `argument-hint` 中提供参数提示。`<…>` 表示任务所需输入，可沿已有上下文或文档引用定位；`[…]` 是可选补充，`/` 分隔同一位置的备选，不是要求照抄的参数或新增命令解析器。例如：
 
 ```text
+$crd-respond <接收方收到的 CRD 路径/链接/内容> [本方项目/仓库] [需求ID/范围] [仅评估/仅答复] [计划输出路径]
 $review-prd <PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]
 $review-code [开发计划] [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [报告路径] [仅聊天]
 $apply-doc-review <文档评审报告> [原文路径] [上轮报告/处置记录] [修复/仅复核] [问题ID/范围]
