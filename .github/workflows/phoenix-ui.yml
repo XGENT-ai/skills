@@ -84,6 +84,8 @@ jobs:
           persist_github_token: false
       - name: Explicit online preparation
         id: prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node ../../scripts/prepare-phoenix-ui.mjs --prepare
       - name: Audit prepared dependencies offline
         id: audit

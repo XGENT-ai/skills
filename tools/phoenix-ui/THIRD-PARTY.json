@@ -6528,7 +6528,7 @@
     {
       "path": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
       "importedPath": "crates/live/assets/detect-antipatterns-browser.js",
-      "sha256": "a384639489a654ab3b658d7841248c75c7b6ee201ca2aaf92d02725043ca1a3a",
+      "sha256": "04fa58774c242e7c4516963a4cb5b431d42d7fe64bc41812368dddcbfc203969",
       "license": "Apache-2.0",
       "licenses": [
         {

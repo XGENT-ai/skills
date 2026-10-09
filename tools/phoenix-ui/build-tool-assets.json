@@ -18,6 +18,16 @@
       "reason": "The official v1.21.1 release has no x86_64-apple-darwin asset; build the same version natively during explicit preparation."
     }
   },
+  "linuxArmBrowser": {
+    "package": "playwright",
+    "packageVersion": "1.59.1",
+    "revision": "1217",
+    "expectedVersion": "147.0.7727.15",
+    "actualVersion": "Chromium 147.0.7727.0",
+    "sha256": "6b25a228f91c7a08c5404568816edc9365dd09cfd35b8620dca12e77a82fbb4b",
+    "source": "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/1217/chromium-linux-arm64.zip",
+    "pinEvidence": "independent-archive-matches-actual-ci-executable"
+  },
   "platforms": {
     "darwin-arm64": {
       "runner": "macos-15",

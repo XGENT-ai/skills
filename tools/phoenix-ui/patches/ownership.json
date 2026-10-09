@@ -158,7 +158,7 @@
       "upstreamPath": "crates/cli/tests/agent_target.rs",
       "upstreamSha256": "55b2e7a0cf711cf2e865fd3bd617a35fe57846d920bdb281a844d7a919ae0274",
       "currentPath": "tools/phoenix-ui/crates/cli/tests/agent_target.rs",
-      "currentSha256": "3bf67be489a67098ac0b6ecff9730e3e2190ff20ce0787baf0aecdbfa057fcba",
+      "currentSha256": "4a9d9a1724d5ec476fd4ba03f18ed57956a68a4f5709118f65019780edcaa645",
       "change": "modified"
     },
     {
@@ -620,7 +620,7 @@
       "upstreamPath": "crates/live/assets/detect-antipatterns-browser.js",
       "upstreamSha256": "aed2977c33016bfa2582afea1915f32c5d6494b1d1f378f78af383c69f0c4635",
       "currentPath": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
-      "currentSha256": "a384639489a654ab3b658d7841248c75c7b6ee201ca2aaf92d02725043ca1a3a",
+      "currentSha256": "04fa58774c242e7c4516963a4cb5b431d42d7fe64bc41812368dddcbfc203969",
       "change": "modified"
     },
     {
@@ -1428,7 +1428,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/build-tool-assets.json",
-      "currentSha256": "e7a2ebe5f1c537276ff8533b4826fb5998a017b85ac6d4cff13f1a480bb1aec4"
+      "currentSha256": "f97db25dc48ee3a574f37ca282414b17cb896e247c7892e87ded894c6e456acb"
     },
     {
       "currentPath": "tools/phoenix-ui/build-tools.lock.json",
@@ -1456,7 +1456,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/assets/bundle-inputs.json",
-      "currentSha256": "27b5fc97210d0c51456c6be71921bee6e43fd574801d7524053a6985aa4a4507"
+      "currentSha256": "424ae6673f8e713c147592b5c1ee682c472049c33b96beccc259b707ed0548a1"
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",
@@ -1545,7 +1545,7 @@
   ],
   "verification": {
     "sourceHashes": "verified-current-worktree",
-    "runtimeTests": "Current darwin-arm64 dirty@b7e5aca Node 25.2.1 runtime entry passed: 866 Rust tests, zero added lint diagnostics, 8474 WASM vectors / 72 interfaces, strict original oracle 860/860; 9 default ignored tests and provider/IME/Safari acceptance remain separate. See local/phoenix-ui/ci-node-pin-test-phoenix.log and docs/plan/phoenix-ui.records/M2.md.",
+    "runtimeTests": "Current test:phoenix invocation passed 75 Rust groups / 866 tests with 0 failures and 9 default ignores, then failed on two new rustfmt blocks. Formatting only those assertions removed the additions; ci-timing-runtime-remainder.log exits 0 with no added lint, WASM8474/72 and current debug oracle860. Current release 08718c4e independently replays 860/860. Under plan section 9, unchanged Rust behavior evidence is reused after formatting; no complete-current-command exit 0 is claimed. Five-platform CI is pending.",
     "browserAndNativePlatforms": "darwin-arm64 Chrome asset/component/network scopes passed; IME/Safari, other native platforms and provider sessions not verified"
   }
 }

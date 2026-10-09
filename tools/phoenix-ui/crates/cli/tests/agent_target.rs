@@ -141,11 +141,11 @@ impl Server {
             .args(["live-server", &format!("--port={}", port)])
             .current_dir(&dir)
             .env("PHOENIX_UI_LIVE_COPY_AGENT", "off")
-            // A short timeout keeps the browser_timeout case fast; the env
-            // override exists exactly for this. The lease shrinks with it.
-            .env("PHOENIX_UI_AGENT_TARGET_TIMEOUT_MS", "400")
+            // Allow scheduling/HTTP overhead around the lease and grace;
+            // a 400ms total deadline raced valid multi-step claims on CI.
+            .env("PHOENIX_UI_AGENT_TARGET_TIMEOUT_MS", "3000")
             .env("PHOENIX_UI_AGENT_TARGET_CLAIM_LEASE_MS", "250")
-            .env("PHOENIX_UI_AGENT_TARGET_RESOLVE_GRACE_MS", "150")
+            .env("PHOENIX_UI_AGENT_TARGET_RESOLVE_GRACE_MS", "500")
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn()
@@ -269,7 +269,7 @@ fn agent_target_times_out_when_the_overlay_never_answers() {
     let (st, verdict) = held.join().unwrap();
     assert_eq!(st, 200);
     assert_eq!(verdict["error"], serde_json::json!("browser_timeout"));
-    assert_eq!(verdict["timeoutMs"], serde_json::json!(400));
+    assert_eq!(verdict["timeoutMs"], serde_json::json!(3000));
     assert!(started.elapsed() < Duration::from_secs(5));
 }
 
@@ -429,22 +429,29 @@ fn agent_target_answers_the_resolution_verdict_when_no_page_can_serve() {
     let mut b = Overlay::connect(s.port, &s.token, "tab-b");
     a.next(|m| m["type"] == "connected");
     b.next(|m| m["type"] == "connected");
-    let started = Instant::now();
     let held = s.hold(serde_json::json!({}));
     let target_id = a.next(|m| m["type"] == "agent_target")["targetId"].as_str().unwrap().to_string();
     // Both idle pages lack the element: each declines with its resolution
     // verdict instead of claiming.
     let decline = |cid: &str, raw: u64| serde_json::json!({ "token": s.token, "targetId": target_id, "clientId": cid, "eligible": false, "state": "IDLE", "reason": "no_match", "result": { "ok": false, "error": "no_match", "selector": "h1", "matchCount": 0, "rawMatchCount": raw } });
-    assert_eq!(post_json(s.port, "/agent-target-claim", decline("tab-a", 0)).1, serde_json::json!({ "ok": true, "granted": false, "pending": true }));
+    assert_eq!(
+        post_json(s.port, "/agent-target-claim", decline("tab-a", 0)).1,
+        serde_json::json!({ "ok": true, "granted": false, "pending": true })
+    );
     // Every page said no_match: the roll call stays open for the resolution
-    // grace (150ms here), so the last decline is still answered pending.
-    assert_eq!(post_json(s.port, "/agent-target-claim", decline("tab-b", 2)).1, serde_json::json!({ "ok": true, "granted": false, "pending": true }), "an all-no_match roll call stays open for the grace");
+    // grace (500ms here), so the last decline is still answered pending.
+    let reported_at = Instant::now();
+    assert_eq!(
+        post_json(s.port, "/agent-target-claim", decline("tab-b", 2)).1,
+        serde_json::json!({ "ok": true, "granted": false, "pending": true }),
+        "an all-no_match roll call stays open for the grace"
+    );
     let (_, verdict) = held.join().unwrap();
     assert_eq!(verdict["error"], serde_json::json!("no_match"), "{verdict}");
     assert_eq!(verdict["ok"], serde_json::json!(false));
     assert_eq!(verdict["targetId"], serde_json::json!(target_id));
-    let elapsed = started.elapsed();
-    assert!(elapsed >= Duration::from_millis(140) && elapsed < Duration::from_millis(380), "answered when the grace lapsed, not before and not by the timeout: {elapsed:?}");
+    let elapsed = reported_at.elapsed();
+    assert!(elapsed >= Duration::from_millis(490) && elapsed < Duration::from_millis(1500), "answered when the last report's grace lapsed, not before and not by the timeout: {elapsed:?}");
     let _ = &mut b;
 }
 
@@ -498,8 +505,8 @@ fn agent_target_late_overlay_first_no_match_extends_the_grace() {
     let target_id = a.next(|m| m["type"] == "agent_target")["targetId"].as_str().unwrap().to_string();
     let decline = |cid: &str| serde_json::json!({ "token": s.token, "targetId": target_id, "clientId": cid, "eligible": false, "state": "IDLE", "reason": "no_match", "result": { "ok": false, "error": "no_match", "matchCount": 0, "rawMatchCount": 0 } });
     assert_eq!(post_json(s.port, "/agent-target-claim", decline("tab-a")).1["pending"], serde_json::json!(true));
-    // Tab A's grace (150ms) lapses before tab B says its first word.
-    std::thread::sleep(Duration::from_millis(200));
+    // Tab A's grace (500ms) lapses before tab B says its first word.
+    std::thread::sleep(Duration::from_millis(550));
     let reported_at = Instant::now();
     let answer = post_json(s.port, "/agent-target-claim", decline("tab-b")).1;
     assert_eq!(answer["pending"], serde_json::json!(true), "a late overlay's first no_match word extends the grace: {answer}");
@@ -509,7 +516,7 @@ fn agent_target_late_overlay_first_no_match_extends_the_grace() {
     post_json(s.port, "/agent-target-result", serde_json::json!({ "token": s.token, "targetId": target_id, "clientId": "tab-b", "ok": true, "sessionId": "aabbccdd" }));
     let (_, verdict) = held.join().unwrap();
     assert_eq!(verdict["sessionId"], serde_json::json!("aabbccdd"), "{verdict}");
-    assert!(reported_at.elapsed() < Duration::from_millis(400));
+    assert!(reported_at.elapsed() < Duration::from_millis(1500));
     let _ = &mut b;
 }
 
@@ -725,7 +732,7 @@ fn agent_target_fences_a_generate_event_that_lands_after_the_timeout() {
     let held = s.hold(serde_json::json!({}));
     let target_id = a.next(|m| m["type"] == "agent_target")["targetId"].as_str().unwrap().to_string();
     assert_eq!(s.claim(&target_id, "tab-a", true)["granted"], serde_json::json!(true));
-    // The holder never answers: the request times out (400ms) and the CLI
+    // The holder never answers: the request times out (3000ms) and the CLI
     // reports it. Its Go lands after that: refused, nothing journaled, so
     // no session exists that the agent was never told about.
     let (_, verdict) = held.join().unwrap();

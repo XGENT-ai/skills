@@ -17,6 +17,16 @@ export const assets = JSON.parse(fs.readFileSync(path.join(workspace, 'build-too
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = value => JSON.stringify(value, null, 2) + '\n';
 
+export function verifyPreparedBrowser(browser) {
+  // Linux ARM reports a different patch version from the desktop manifest.
+  // Bind its actual executable version and digest to the frozen platform pin.
+  const pin = assets.linuxArmBrowser;
+  if (['package', 'packageVersion', 'revision', 'expectedVersion', 'actualVersion', 'sha256'].some(key => browser[key] !== pin[key])) {
+    throw new Error('Prepared Chromium identity differs from the locked platform pin');
+  }
+  return browser;
+}
+
 export function nativePlatform(platform = process.platform, arch = process.arch) {
   const name = `${platform === 'win32' ? 'windows' : platform}-${arch}`;
   if (!assets.platforms[name]) throw new Error(`No native Phoenix build for ${platform}/${arch}. Windows ARM runs the separately verified x64 fallback smoke.`);
@@ -236,7 +246,7 @@ async function prepare() {
       record.browser = { package: 'playwright', packageVersion: JSON.parse(fs.readFileSync(path.join(workspace, 'node_modules/playwright/package.json'))).version,
         revision: browser.revision, expectedVersion: browser.browserVersion, executable: env.PHOENIX_UI_BROWSER,
         sha256: sha256(fs.readFileSync(env.PHOENIX_UI_BROWSER)), actualVersion: run(env.PHOENIX_UI_BROWSER, ['--version'], true).trim() };
-      if (!record.browser.actualVersion.endsWith(` ${browser.browserVersion}`)) throw new Error('Prepared Chromium version differs from the locked browser manifest');
+      verifyPreparedBrowser(record.browser);
     }
     for (const [tool, variable] of [['wasmBindgen', 'WASM_BINDGEN'], ['binaryen', 'WASM_OPT']]) {
       const asset = assets.tools[tool].assets[platform];

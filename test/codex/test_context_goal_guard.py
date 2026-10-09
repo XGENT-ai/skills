@@ -85,6 +85,10 @@ class GuardTest(unittest.TestCase):
                 else:
                     self.assertEqual(result, {})
 
+    def test_unicode_warning_survives_windows_pipe_encoding(self):
+        result = self.run_guard(raw="not json", env={"PYTHONIOENCODING": "cp1252"})
+        self.warning(result)
+
     def test_threshold_argument_overrides_default(self):
         args = ("--threshold", "60")
         for used, trigger in [(5999, False), (6000, False), (6001, True)]:

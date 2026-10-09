@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-09：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)设计仍为dev-plan-ready，实施为dev-plan-in-progress、1/6。第三次CI的Linux x64全组通过，其余四native失败、两后置job跳过；本轮平台修复、仓根Node pin及完整本地Rust866/lint/WASM8474/oracle860、Node185/Python59、Node18/25消费与审计通过，待第四次矩阵。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保留各基线失败与未验范围；[M4记录](../../docs/plan/phoenix-ui.records/M4.md)保存隔离上下文/skill融合草稿的15项局部及2项metadata检查、七项真实路由用例待执行。首轮评审review-applied及其他guard事项保留。
+- 2026-10-09：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)设计仍为dev-plan-ready，实施为dev-plan-in-progress、1/6。第四次CI的Linux x64全组通过，其余四native失败、两后置job跳过；Intel Mac旧清理回归通过，协议时序另失败。本轮浏览器pin、token、Windows编码和协议夹具修复已局部验证，Rust866及格式修正后lint/WASM8474/oracle860续跑、最终Node186/Python60、Node18/25消费与审计通过，待第五次矩阵。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保存实际各阶段基线及限制；M4隔离草稿未变。其他guard事项与首轮评审处置保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

@@ -62,6 +62,19 @@ test('five native tool pins match the unchanged tool lock and verified official 
   }
 });
 
+test('Linux ARM Chromium is verified against its frozen executable identity', async () => {
+  const { verifyPreparedBrowser } = await prepare;
+  // Actual frozen Playwright install from the Linux ARM CI preparation record.
+  const browser = { package: 'playwright', packageVersion: '1.59.1', revision: '1217',
+    expectedVersion: '147.0.7727.15', actualVersion: 'Chromium 147.0.7727.0',
+    sha256: '6b25a228f91c7a08c5404568816edc9365dd09cfd35b8620dca12e77a82fbb4b' };
+  assert.doesNotThrow(() => verifyPreparedBrowser(browser));
+  for (const [field, value] of Object.entries({ package: 'other', packageVersion: '1.59.2', revision: '1218',
+    expectedVersion: '148.0.7727.15', actualVersion: 'Chromium 147.0.7727.15', sha256: '0'.repeat(64) })) {
+    assert.throws(() => verifyPreparedBrowser({ ...browser, [field]: value }), /Prepared Chromium/);
+  }
+});
+
 test('Intel macOS bootstraps the exact mbx source before attempting its unavailable release asset', async () => {
   const { assets, preparationCommands } = await prepare;
   const commands = preparationCommands('darwin-x64');
@@ -356,6 +369,8 @@ test('CI has exactly five native runners, explicit prepare, locked offline gates
   }
   for (const [, repository, commit] of workflow.matchAll(/uses: ([\w/-]+)@([^\s#]+)/g)) assert.equal(commit, assets.actions[repository]?.commit);
   assert.match(workflow, /permissions:\n  contents: read/);
+  const preparation = workflow.slice(workflow.indexOf('      - name: Explicit online preparation'), workflow.indexOf('      - name: Audit prepared dependencies offline'));
+  assert.match(preparation, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
   assert.match(workflow, /workflow_dispatch:/); assert.match(workflow, /pull_request:/);
   assert(workflow.indexOf('prepare-phoenix-ui.mjs --prepare') < workflow.indexOf('build-phoenix-ui.mjs --development'));
   const light = workflow.indexOf('npm --prefix ../.. test');
