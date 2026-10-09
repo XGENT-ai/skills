@@ -7,6 +7,7 @@
 | 对象 ID | 标题 / 来源 | 状态页 | 活动 / 归档 |
 | --- | --- | --- | --- |
 | 3918db31-0c92-4464-94d0-4480c071981b | [Codex guard 开发计划评审及文档处置](../../../../docs/plan/codex-context-goal-guard.review.md) | [状态](3918db31-0c92-4464-94d0-4480c071981b.md) | 活动 |
+| 44cd681d-69af-4d4a-af3c-df12562db52c | [Phoenix UI 开发计划评审（首轮）](../../../../docs/plan/phoenix-ui.review.md) | [状态](44cd681d-69af-4d4a-af3c-df12562db52c.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
 
 ## 维护约定

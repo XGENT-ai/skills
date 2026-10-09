@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "evidence": {
+    "path": "local/phoenix-ui/ci-preparation-evidence.json",
+    "sha256": "acc83e8ddf6d8f732853c6dad7b0b263ac897abc88da918ad2826d45311aefaf",
+    "observedAt": "2026-10-08T12:31:17.292863+00:00",
+    "note": "Binaryen archive bytes were independently verified; wasm-bindgen pins come from the immutable official release digest. Explicit prepare verifies every downloaded byte before extracting."
+  },
+  "miseVersion": "2026.9.12",
+  "platforms": {
+    "darwin-arm64": {
+      "runner": "macos-15",
+      "rustTarget": "aarch64-apple-darwin"
+    },
+    "darwin-x64": {
+      "runner": "macos-15-intel",
+      "rustTarget": "x86_64-apple-darwin"
+    },
+    "linux-x64": {
+      "runner": "ubuntu-24.04",
+      "rustTarget": "x86_64-unknown-linux-gnu"
+    },
+    "linux-arm64": {
+      "runner": "ubuntu-24.04-arm",
+      "rustTarget": "aarch64-unknown-linux-gnu"
+    },
+    "windows-x64": {
+      "runner": "windows-2022",
+      "rustTarget": "x86_64-pc-windows-msvc"
+    }
+  },
+  "tools": {
+    "wasmBindgen": {
+      "version": "0.2.127",
+      "release": "https://github.com/wasm-bindgen/wasm-bindgen/releases/tag/0.2.127",
+      "assets": {
+        "darwin-arm64": {
+          "name": "wasm-bindgen-0.2.127-aarch64-apple-darwin.tar.gz",
+          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-aarch64-apple-darwin.tar.gz",
+          "size": 7720327,
+          "sha256": "cd93e691eb5953ace5d8ffce52a20b024077a3dac3e2215b8224136b0efb7585",
+          "assetId": 505858463,
+          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-aarch64-apple-darwin.tar.gz.sha256sum",
+          "pinEvidence": "official-immutable-release-digest",
+          "archiveRoot": "wasm-bindgen-0.2.127-aarch64-apple-darwin",
+          "executable": "wasm-bindgen"
+        },
+        "darwin-x64": {
+          "name": "wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz",
+          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz",
+          "size": 8155407,
+          "sha256": "81049c79f4e283e1725e6582a0528af1301a70ad23add1df1c4d042ec825263d",
+          "assetId": 505858457,
+          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz.sha256sum",
+          "pinEvidence": "official-immutable-release-digest",
+          "archiveRoot": "wasm-bindgen-0.2.127-x86_64-apple-darwin",
+          "executable": "wasm-bindgen"
+        },
+        "linux-x64": {
+          "name": "wasm-bindgen-0.2.127-x86_64-unknown-linux-musl.tar.gz",
+          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-unknown-linux-musl.tar.gz",
+          "size": 11451273,
+          "sha256": "61d4a7dc85acfa0d2354ccc0b8361928c7e52a746d17f28ebaa795ed3dc1614a",
+          "assetId": 505858453,
+          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-unknown-linux-musl.tar.gz.sha256sum",
+          "pinEvidence": "official-immutable-release-digest",
+          "archiveRoot": "wasm-bindgen-0.2.127-x86_64-unknown-linux-musl",
+          "executable": "wasm-bindgen"
+        },
+        "linux-arm64": {
+          "name": "wasm-bindgen-0.2.127-aarch64-unknown-linux-gnu.tar.gz",
+          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-aarch64-unknown-linux-gnu.tar.gz",
+          "size": 11271730,
+          "sha256": "1ce0ebd74e378d989651091f93c917bd7700996945d4c5ce37ec9507f149225c",
+          "assetId": 505858464,
+          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-aarch64-unknown-linux-gnu.tar.gz.sha256sum",
+          "pinEvidence": "official-immutable-release-digest",
+          "archiveRoot": "wasm-bindgen-0.2.127-aarch64-unknown-linux-gnu",
+          "executable": "wasm-bindgen"
+        },
+        "windows-x64": {
+          "name": "wasm-bindgen-0.2.127-x86_64-pc-windows-msvc.tar.gz",
+          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-pc-windows-msvc.tar.gz",
+          "size": 7617530,
+          "sha256": "fd52ef9896cbb0f4f59ef115bdf2f4664a76d716b6201c35e5936018ad680cfc",
+          "assetId": 505858456,
+          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-pc-windows-msvc.tar.gz.sha256sum",
+          "pinEvidence": "official-immutable-release-digest",
+          "archiveRoot": "wasm-bindgen-0.2.127-x86_64-pc-windows-msvc",
+          "executable": "wasm-bindgen.exe"
+        }
+      }
+    },
+    "binaryen": {
+      "version": "117",
+      "release": "https://github.com/WebAssembly/binaryen/releases/tag/version_117",
+      "assets": {
+        "darwin-arm64": {
+          "name": "binaryen-version_117-arm64-macos.tar.gz",
+          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-arm64-macos.tar.gz",
+          "size": 6805073,
+          "sha256": "f2d962ff294b38ea3cfbbae8f6c728089d9375a57bac9a1880eb86779d6d3a84",
+          "assetId": 153907622,
+          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-arm64-macos.tar.gz.sha256",
+          "pinEvidence": "official-checksum-and-complete-archive-bytes",
+          "archiveRoot": "binaryen-version_117",
+          "executable": "bin/wasm-opt"
+        },
+        "darwin-x64": {
+          "name": "binaryen-version_117-x86_64-macos.tar.gz",
+          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-macos.tar.gz",
+          "size": 8061008,
+          "sha256": "c0be7b448888f2c851a853ca19299b09d42cac8c3090c716d14cc8ec3c0ac849",
+          "assetId": 153907621,
+          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-macos.tar.gz.sha256",
+          "pinEvidence": "official-checksum-and-complete-archive-bytes",
+          "archiveRoot": "binaryen-version_117",
+          "executable": "bin/wasm-opt"
+        },
+        "linux-x64": {
+          "name": "binaryen-version_117-x86_64-linux.tar.gz",
+          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-linux.tar.gz",
+          "size": 91090107,
+          "sha256": "3dc677006555b355ea2da5e82602065a161d5e83eaefd3f759afa00b96e83212",
+          "assetId": 153906727,
+          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-linux.tar.gz.sha256",
+          "pinEvidence": "official-checksum-and-complete-archive-bytes",
+          "archiveRoot": "binaryen-version_117",
+          "executable": "bin/wasm-opt"
+        },
+        "linux-arm64": {
+          "name": "binaryen-version_117-aarch64-linux.tar.gz",
+          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-aarch64-linux.tar.gz",
+          "size": 87951650,
+          "sha256": "ad560204426015a815faa45693c83bef7d58677d38a39422c272a30ba4b6da2a",
+          "assetId": 153927815,
+          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-aarch64-linux.tar.gz.sha256",
+          "pinEvidence": "official-checksum-and-complete-archive-bytes",
+          "archiveRoot": "binaryen-version_117",
+          "executable": "bin/wasm-opt"
+        },
+        "windows-x64": {
+          "name": "binaryen-version_117-x86_64-windows.tar.gz",
+          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-windows.tar.gz",
+          "size": 64536653,
+          "sha256": "b09f260176483bd30194303ccb15ac81c2247e4e566894f9d931e4313cb36d58",
+          "assetId": 153906484,
+          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-windows.tar.gz.sha256",
+          "pinEvidence": "official-checksum-and-complete-archive-bytes",
+          "archiveRoot": "binaryen-version_117",
+          "executable": "bin/wasm-opt.exe"
+        }
+      }
+    }
+  },
+  "actions": {
+    "actions/checkout": {
+      "tag": "v7.0.1",
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "release": "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "source": "https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "definition": "https://raw.githubusercontent.com/actions/checkout/3d3c42e5aac5ba805825da76410c181273ba90b1/action.yml",
+      "verifiedAt": "2026-10-09T01:27:00.068405+00:00"
+    },
+    "actions/setup-node": {
+      "tag": "v7.1.0",
+      "commit": "949feb2413d6458794dcd2491c4babbbce0c15c1",
+      "release": "https://github.com/actions/setup-node/releases/tag/v7.1.0",
+      "source": "https://github.com/actions/setup-node/commit/949feb2413d6458794dcd2491c4babbbce0c15c1",
+      "definition": "https://raw.githubusercontent.com/actions/setup-node/949feb2413d6458794dcd2491c4babbbce0c15c1/action.yml",
+      "verifiedAt": "2026-10-09T01:27:00.068518+00:00"
+    },
+    "jdx/mise-action": {
+      "tag": "v5.1.1",
+      "commit": "2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca",
+      "release": "https://github.com/jdx/mise-action/releases/tag/v5.1.1",
+      "source": "https://github.com/jdx/mise-action/commit/2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca",
+      "definition": "https://raw.githubusercontent.com/jdx/mise-action/2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca/action.yml",
+      "verifiedAt": "2026-10-09T01:27:00.068521+00:00"
+    },
+    "actions/upload-artifact": {
+      "tag": "v7.0.2",
+      "commit": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "release": "https://github.com/actions/upload-artifact/releases/tag/v7.0.2",
+      "source": "https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "definition": "https://raw.githubusercontent.com/actions/upload-artifact/cf430e030ddbb5b0abf93d22962f4752f3646cd9/action.yml",
+      "verifiedAt": "2026-10-09T01:27:00.068522+00:00"
+    },
+    "actions/download-artifact": {
+      "tag": "v8.0.1",
+      "commit": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+      "release": "https://github.com/actions/download-artifact/releases/tag/v8.0.1",
+      "source": "https://github.com/actions/download-artifact/commit/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+      "definition": "https://raw.githubusercontent.com/actions/download-artifact/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml",
+      "verifiedAt": "2026-10-09T01:27:00.068524+00:00"
+    }
+  }
+}

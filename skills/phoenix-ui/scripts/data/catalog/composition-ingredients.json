@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 2,
+  "catalogVersion": "phoenix-2026-01",
+  "authoringStatus": "draft",
+  "qualityBar": {
+    "principle": "A composition specifies relationships among information, attention, controls, and adaptation while leaving visual identity to project direction. Its structure must fit a concrete task with actual state, accessible actions, and honest implementation boundaries."
+  },
+  "families": [
+    {
+      "id": "phoenix-composition-persuade",
+      "label": "Informed decisions",
+      "description": "Original arrangements connecting an offer, its evidence or fit, complete conditions, and the next decision."
+    },
+    {
+      "id": "phoenix-composition-operate",
+      "label": "Scoped work",
+      "description": "Original arrangements preserving object scope, review context, explicit commitment, and concrete results."
+    },
+    {
+      "id": "phoenix-composition-read",
+      "label": "Located understanding",
+      "description": "Original arrangements connecting question maps or corresponding sections to readable explanation and evidence."
+    },
+    {
+      "id": "phoenix-composition-experience",
+      "label": "Revisable participation",
+      "description": "Original arrangements supporting optional exploration or accessible co-authoring with visible context and return."
+    }
+  ],
+  "compositions": [
+    {
+      "id": "phoenix-persuade-claim-proof-decision",
+      "familyId": "phoenix-composition-persuade",
+      "surface": "persuade",
+      "form": "A claim-to-decision view, the primary promise leads into comparable evidence and then one complete decision region.",
+      "lineage": "Original composition connecting a purchase claim to its support and a fully informed next step.",
+      "tags": [
+        "claim-support",
+        "comparable-evidence",
+        "decision-region"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Give one primary claim highest rank; use readable headings for supporting evidence and decision detail.",
+        "Sequence/attention: Move from claim to support to conditions and decision; keep qualifications beside the claims they limit.",
+        "Controls/state: Put the primary next step after the complete offer; show unavailable or uncertain states explicitly.",
+        "Adaptation: Stack evidence by criterion on small screens; retain order without sticky controls hiding required content."
+      ],
+      "spark": "Let readers connect the offer, the reason to trust it, and the consequence of choosing it in one clear pass through the page, with qualifications still readable.",
+      "webLeverage": "Use semantic sections, comparable tables or lists, and an explicit decision form without imposing palette or typeface.",
+      "applicability": "适用于具备真实证据和明确条件的产品介绍、订阅选择或服务报价单页。",
+      "thesis": "让主张、依据与决定形成连续空间关系，并保持条件可读。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Claim, proof, decision",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-persuade-fit-cost-next-step",
+      "familyId": "phoenix-composition-persuade",
+      "surface": "persuade",
+      "form": "A fit-to-next-step flow, requirements remain visible beside the resulting option, complete cost, and an editable final summary.",
+      "lineage": "Original composition retaining needs, price assumptions, and the final decision across guided offer selection.",
+      "tags": [
+        "visible-requirements",
+        "cost-assumptions",
+        "editable-summary"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Give the current question primary position; maintain a compact requirements summary beside the result.",
+        "Sequence/attention: Move from needs to option and cost to the next step; expose the assumptions explaining recommendations.",
+        "Controls/state: Provide back and edit actions; distinguish an estimate from a committed order and disclose incomplete fit.",
+        "Adaptation: Use one narrow-screen column; retain answers and restore focus after editing earlier requirements."
+      ],
+      "spark": "Hold the reason for a recommendation together with its cost, so returning to a requirement changes a visible decision rather than restarting a hidden sales funnel.",
+      "webLeverage": "Use grouped forms, named step regions, and an accessible editable summary whose updates do not steal focus.",
+      "applicability": "适用于明确需求推荐套餐的选择流程，系统能解释推荐并完整计算成本。",
+      "thesis": "让需求、依据和成本连续可见，支持修改与检查结果。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Fit, cost, next step",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-operate-record-detail-action",
+      "familyId": "phoenix-composition-operate",
+      "surface": "operate",
+      "form": "A record-to-action workspace, a stable collection opens contextual detail and a scoped action while the active record remains identifiable.",
+      "lineage": "Original composition giving operational selection, inspection, and action one explicit object scope.",
+      "tags": [
+        "stable-collection",
+        "contextual-detail",
+        "scoped-action"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Rank collection location, record identity, and action scope clearly; subordinate detail to the current task.",
+        "Sequence/attention: Select a record, inspect detail, then act; preserve collection filters and return location throughout.",
+        "Controls/state: Separate loading, stale, edited, committed, and failed states; name actions and keep cancellation explicit.",
+        "Adaptation: Replace adjacent regions with labeled detail on small screens; return focus to the originating record."
+      ],
+      "spark": "Keep one object unmistakable through inspection and action, then return the operator to the same filtered collection with the result of their work clearly stated.",
+      "webLeverage": "Use semantic collection and detail regions, stable identifiers, scoped forms, and an explicit focus return target.",
+      "applicability": "适用于记录管理 Portal、库存或工单后台，可保持列表筛选并提供清晰对象详情。",
+      "thesis": "持续联系列表位置、活动对象和操作范围，降低错误对象操作。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Record, detail, action",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-operate-before-after-commit",
+      "familyId": "phoenix-composition-operate",
+      "surface": "operate",
+      "form": "A before-and-after commitment flow, proposed differences and affected scope are reviewed before a separate explicit commit and result.",
+      "lineage": "Original composition separating review of consequential configuration or bulk change from commitment.",
+      "tags": [
+        "proposal-difference",
+        "affected-scope",
+        "separate-commit"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Prioritize proposed differences and scope; put commitment after review rather than above its evidence.",
+        "Sequence/attention: Inspect old and proposed values, examine consequences, then commit; keep unchanged context available.",
+        "Controls/state: Invalidate stale previews and distinguish partial failure; name consequences and promise only supported undo.",
+        "Adaptation: Stack labeled before/after values on small screens; place consequence summary beside the commit control."
+      ],
+      "spark": "Make commitment deliberate through a specific reviewed difference and scope; the subsequent result identifies what succeeded and what still needs attention rather than implying universal success.",
+      "webLeverage": "Use labeled comparisons, scoped confirmation forms, and accessible result lists with specific failure or retry detail.",
+      "applicability": "适用于配置审批、权限调整或批量修改，可生成真实预览并返回具体提交结果。",
+      "thesis": "真实差异与影响审查之后单独提交，并诚实展示失败和恢复边界。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Before, after, commit",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-read-overview-body-evidence",
+      "familyId": "phoenix-composition-read",
+      "surface": "read",
+      "form": "An overview-to-evidence reading view, a descriptive section map leads into a stable text column with support connected to each argument.",
+      "lineage": "Original composition joining a reader question map to detailed explanation and inspectable support.",
+      "tags": [
+        "section-map",
+        "stable-text",
+        "connected-evidence"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Give title, section promises, body, and references distinct readable roles; keep the reading column stable.",
+        "Sequence/attention: Read overview before detail; connect support to its passage and return to the same reading location.",
+        "Controls/state: Provide contents and note-return links; keep required content readable without optional disclosures.",
+        "Adaptation: Move side material into small-screen flow; preserve heading order and usability at enlarged text sizes."
+      ],
+      "spark": "Serve both quick question lookup and sustained reading: locate a useful section, inspect its detail, and verify supporting evidence without being displaced from the argument.",
+      "webLeverage": "Use semantic headings, contents navigation, stable fragments, and accessible reference backlinks without imposing visual identity.",
+      "applicability": "适用于技术指南、政策说明和有真实引用的长篇知识文章。",
+      "thesis": "连接问题地图、正文与局部证据，使定位与持续阅读共存。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Overview, body, evidence",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-read-parallel-explanation",
+      "familyId": "phoenix-composition-read",
+      "surface": "read",
+      "form": "A parallel explanation region, corresponding source and interpretation remain aligned with explicit labels and an optional combined reading view.",
+      "lineage": "Original composition retaining corresponding statements and consequences in migration or specialist explanations.",
+      "tags": [
+        "corresponding-sections",
+        "explicit-labels",
+        "combined-view"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Give paired sections equal readable roles; distinguish commentary from source through explicit labels.",
+        "Sequence/attention: Inspect one corresponding pair at a time; connect its difference to practical meaning before advancing.",
+        "Controls/state: Switch paired and combined views explicitly; preserve active section, focus, and selection context.",
+        "Adaptation: Stack corresponding labeled sections on small screens; retain anchors without forced synchronized scrolling."
+      ],
+      "spark": "Explain a relationship rather than merely placing text side by side: each corresponding pair identifies the interpreted content and why its difference matters to the reader.",
+      "webLeverage": "Use named sections, stable anchors, and accessible view controls preserving focus and source/interpretation labels.",
+      "applicability": "适用于 API 迁移解释、规范解读或版本对照，原文与解释能按章节准确对应。",
+      "thesis": "用明确对应关系帮助理解，避免并排布局制造位置或来源混淆。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Parallel explanation",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-experience-choose-explore-return",
+      "familyId": "phoenix-composition-experience",
+      "surface": "experience",
+      "form": "A choose-and-return exploration flow, a compact overview opens bounded branches and restores the visitor to the same identifiable choice.",
+      "lineage": "Original composition arranging an optional choice point, bounded detail branch, and reliable return.",
+      "tags": [
+        "choice-overview",
+        "bounded-branch",
+        "reliable-return"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Give current choice or branch a clear primary heading; preserve its relationship to the compact overview.",
+        "Sequence/attention: Choose a topic, inspect bounded detail, then return or choose another; never advance automatically.",
+        "Controls/state: Provide named back and restart; distinguish visited from completed and retain the originating choice.",
+        "Adaptation: Use an ordered small-screen overview; restore focus and context after branches without requiring motion."
+      ],
+      "spark": "Support curiosity without lost orientation: every branch has a clear extent, an identifiable starting choice, and a return path restoring the overview the visitor left.",
+      "webLeverage": "Use semantic navigation, stable routes or fragments, named detail headings, and accessible focus restoration on return.",
+      "applicability": "适用于互动展览、产品细节探索或可选分支教学，内容有明确起点和有限分支。",
+      "thesis": "让探索由用户选择推动，以可见起点和可靠返回支持自由路线。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Choose, explore, return",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "phoenix-experience-arrange-preview-revise",
+      "familyId": "phoenix-composition-experience",
+      "surface": "experience",
+      "form": "An arrange-and-preview workspace, ordered contributions stay connected to the current result while participants inspect and revise their sequence.",
+      "lineage": "Original composition linking each editable contribution to its place in a visible ordered result.",
+      "tags": [
+        "ordered-editor",
+        "current-preview",
+        "inspectable-revision"
+      ],
+      "grammar": [
+        "Staging/hierarchy: Separate editable order and current preview clearly; label position and the affected contribution.",
+        "Sequence/attention: Inspect, revise, then inspect the changed preview; preserve the selected contribution through the sequence.",
+        "Controls/state: Provide move and remove controls and only supported undo; expose rather than hide concurrent conflicts.",
+        "Adaptation: Stack editor and preview on small screens; retain focus after moves and support revision without dragging."
+      ],
+      "spark": "Make a developing result understandable through its pieces: participants see where a contribution sits, change it with accessible controls, and inspect the consequence in the preview.",
+      "webLeverage": "Use ordered lists, named revision controls, position announcements, and a preview that does not replace editor focus.",
+      "applicability": "适用于共创提纲、故事排序或步骤编排，结果能由当前有序内容真实生成。",
+      "thesis": "同时展示贡献、顺序和结果，支持可理解且可访问的修改。",
+      "provenance": "Original Phoenix catalog authoring text proposal for this local catalog; no external model, fixture copying, project acceptance, or implemented interface is asserted.",
+      "source": {
+        "kind": "original",
+        "title": "Phoenix original composition: Arrange, preview, revise",
+        "license": "Apache-2.0"
+      }
+    }
+  ]
+}

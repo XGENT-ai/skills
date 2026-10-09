@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-09T09:00:22.978Z",
+  "status": "passed",
+  "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
+  "tools": {
+    "cargoDeny": "0.20.2",
+    "rust": "1.99.0",
+    "node": "25.2.1",
+    "bun": "1.3.14"
+  },
+  "database": {
+    "url": "https://github.com/RustSec/advisory-db",
+    "revision": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+    "tree": "7310ad041f7925accfc258bec7fb4f76fb7ff4a9",
+    "commitAt": "2026-10-07T16:40:27+02:00",
+    "treeListingSha256": "9eb1e1d1ede75a4b63bfa044736876f695d1c0b643ed6e5748dc05a4a252bcc2",
+    "preparedAt": "2026-10-09T07:11:06.901Z"
+  },
+  "inputs": {
+    "cargoLockSha256": "c14ac8fdd0d548e01c6112503455044fb28793558a78430ebd2eb48bba0e5c92",
+    "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
+    "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
+    "checkerSha256": "e1cf905a5820460678007502f570dc30182f92c95390c92722fcd969e0e6b4dd",
+    "buildToolsSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
+  },
+  "npm": {
+    "packages": 54,
+    "additionalBundledPackages": 1,
+    "findings": 0,
+    "queriedAt": "2026-10-09T07:11:13.917Z",
+    "endpoint": "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
+    "requestSha256": "d95f0419d7f681e981d17611bf7d584677c2505b8769baaee842fe731ed1e7f6",
+    "responseSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "bunResponseSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "rust": {
+    "exitCode": 0,
+    "summary": {
+      "advisories": {
+        "errors": 0,
+        "helps": 0,
+        "notes": 0,
+        "warnings": 0
+      },
+      "licenses": {
+        "errors": 0,
+        "helps": 209,
+        "notes": 2,
+        "warnings": 0
+      }
+    },
+    "findings": []
+  },
+  "inventory": {
+    "rustPackages": 210,
+    "nodePackages": 54,
+    "bundledPackages": 1,
+    "resources": 42,
+    "preservedTexts": 186
+  },
+  "commands": {
+    "prepare": "node scripts/check-phoenix-deps.mjs --prepare",
+    "check": "node scripts/check-phoenix-deps.mjs",
+    "rust": "mise exec --no-deps -- cargo-deny --manifest-path Cargo.toml --config deny.toml --all-features --frozen --format json check advisories licenses",
+    "nodePreparation": "mise exec --no-deps -- bun audit --json + explicit npm bulk request for every locked/bundled package"
+  },
+  "distribution": {
+    "status": "passed",
+    "requiredFiles": 188,
+    "directory": "local/phoenix-ui/development-package-final/consumer-node18/node_modules/@xgent-ai/skills/vendor/phoenix-ui"
+  },
+  "blockers": []
+}

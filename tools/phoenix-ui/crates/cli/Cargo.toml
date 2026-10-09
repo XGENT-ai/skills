@@ -1,0 +1,32 @@
+[package]
+name = "phoenix-ui"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "impeccable"
+
+[[bin]]
+name = "phoenix-ui"
+path = "src/main.rs"
+
+[dependencies]
+impeccable-common = { path = "../common" }
+impeccable-context = { path = "../context" }
+impeccable-browser = { path = "../browser" }
+impeccable-detect = { path = "../detect" }
+impeccable-html = { path = "../html" }
+impeccable-hook = { path = "../hook" }
+impeccable-live = { path = "../live" }
+impeccable-skills = { path = "../skills" }
+impeccable-core = { workspace = true }
+impeccable-comp = { workspace = true }
+impeccable-comp-verbs = { workspace = true }
+serde_json = { workspace = true }
+base64 = "0.22"
+sha2 = "0.10"
+
+[dev-dependencies]
+serde_json = { workspace = true }

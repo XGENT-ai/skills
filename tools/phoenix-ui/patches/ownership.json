@@ -1,0 +1,1551 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/pbakaus/impeccable",
+  "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+  "engineCommit": "86be0f02dcdaaeb3f9b6780711dbdc03a14ce222",
+  "importManifestSha256": "3a0343c5b9ee14270fbc9cf33cf2d0d83661b9da9b8c033538e139fdfafe95d0",
+  "scope": "Current modified or relocated imported files and new runtime/build/skill sources; generated provider outputs and test oracles are recorded separately.",
+  "baselineFiles": 2091,
+  "modifiedOrRelocated": [
+    {
+      "upstreamPath": "Cargo.lock",
+      "upstreamSha256": "9840c9c17339018bd7de707ccdc370d571f5bdf39cfb3dd90e515e3a5dc79d63",
+      "currentPath": "tools/phoenix-ui/Cargo.lock",
+      "currentSha256": "c14ac8fdd0d548e01c6112503455044fb28793558a78430ebd2eb48bba0e5c92",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "Cargo.toml",
+      "upstreamSha256": "2d9beeea236023113ac9814b7815c6f8618e5ac3955ec42d62df6ec85741742f",
+      "currentPath": "tools/phoenix-ui/Cargo.toml",
+      "currentSha256": "9dcf6508707d3d4a74bcab970df3c55b8efd021f6af9dac98baa6df67a809a14",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "ENGINE_VERSION",
+      "upstreamSha256": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+      "currentPath": "tools/phoenix-ui/ENGINE_VERSION",
+      "currentSha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "NOTICE.md",
+      "upstreamSha256": "c60a093c2845fd9fb82f9c6f742ece31f379f8190b535309d32d66c45ccffdcb",
+      "currentPath": "tools/phoenix-ui/NOTICE.md",
+      "currentSha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "browser-bundle/30-scan-common.js",
+      "upstreamSha256": "9746202b12cf8dd9c5a62be254cc0ef7a5331498e18a9a0cd017d998b67b7722",
+      "currentPath": "tools/phoenix-ui/browser-bundle/30-scan-common.js",
+      "currentSha256": "f314efe050c3a20e980044e0c5703ad2f2c6293a821c9e83e3d63034e308ae85",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "browser-bundle/40-overlay.js",
+      "upstreamSha256": "cc73916359a7acbcb05e7d22f101d60893da6d3ec16ed45b1246cd4697a2a6ce",
+      "currentPath": "tools/phoenix-ui/browser-bundle/40-overlay.js",
+      "currentSha256": "86ede2dc885b68daf404ba5aea1f2da6332b1a3e091c1a8cdf0b3f8656038140",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "browser-bundle/50-scan.js",
+      "upstreamSha256": "7d39ce05c0c94a2ee5a54a866360dc1c480e2af06390a11347d76079bd15c11f",
+      "currentPath": "tools/phoenix-ui/browser-bundle/50-scan.js",
+      "currentSha256": "722a149258c41a8f48b95798a67c103f042b2228790bd0bc1451ce7fdfcb9791",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/src/discovery.rs",
+      "upstreamSha256": "f0df7e2c96579bdf5e0ff304f9aa507ed8d5f4ffe7c1f48536c8678f18051dad",
+      "currentPath": "tools/phoenix-ui/crates/browser/src/discovery.rs",
+      "currentSha256": "580e11253650a38a7ace694415ed9478db43c1f4c68c49abf263f433c92987bf",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/src/lib.rs",
+      "upstreamSha256": "58ac43e99f8e6a1d57a5e28ad5356037d36a2affa532d4b404792483a7424124",
+      "currentPath": "tools/phoenix-ui/crates/browser/src/lib.rs",
+      "currentSha256": "1c90f34edada1545f9687719d172d9dc89234bf6a90cf69f886dc54a3c609406",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/src/snapshot_engine.rs",
+      "upstreamSha256": "8e30023c7dfb1c38e46fc6d367cdfb583a877884aa5a61e0f99aa2ef3c634874",
+      "currentPath": "tools/phoenix-ui/crates/browser/src/snapshot_engine.rs",
+      "currentSha256": "5ae7dea63cb2d012f7c16c882a06891e7b283d5be9c85fbe57320a826b7bcd6a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/tests/design_system_palette.rs",
+      "upstreamSha256": "93b69a0671c39c30c0810fb3c77487333e9f7c3a5df5ffdcda1a5c7c24466384",
+      "currentPath": "tools/phoenix-ui/crates/browser/tests/design_system_palette.rs",
+      "currentSha256": "a168fab7fb6b80fc2785c50526a92d74334d6ee6a97584b6df5e83860d895f84",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/tests/differential.rs",
+      "upstreamSha256": "2a11bdd953d592f247c45af444ba6b6e3b96d36edd10fb22735e769d3aadbc2c",
+      "currentPath": "tools/phoenix-ui/crates/browser/tests/differential.rs",
+      "currentSha256": "2daa1eb4d625b9163f6672d4f8d109dc95f17e892aa75cf33596dfba4d8f731a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/browser/tests/html_snapshot.rs",
+      "upstreamSha256": "0089ddbcb6733a99f462ccd06814be170866d96e6a17fe5f6808d75cf54eb6e1",
+      "currentPath": "tools/phoenix-ui/crates/browser/tests/html_snapshot.rs",
+      "currentSha256": "9e509fcb18998ff037153cf54e6d726f9430a87127faa78035f76f0273ace10a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/bundle/src/lib.rs",
+      "upstreamSha256": "184a41ab35af6fc78c427b7832bf4516cde7e4027bf3c0d077180650c54bae27",
+      "currentPath": "tools/phoenix-ui/crates/bundle/src/lib.rs",
+      "currentSha256": "e197b98bef61003daed71ef2946e8ccee681dd79187a5fbe10a8a9f39bacd654",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/Cargo.toml",
+      "upstreamSha256": "7c8c4ec5b0bb53db3d28f8947362341e151f6e3a57bdc9bde01fe33f6713f474",
+      "currentPath": "tools/phoenix-ui/crates/cli/Cargo.toml",
+      "currentSha256": "e3ea858748f74df46f3a0bce643f9142b83f151bee9df6eb3463b26186ffee11",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/examples/capture_service_roundtrip.rs",
+      "upstreamSha256": "ed486e74996e71ef6d99dc296e47b6cd56a7abe7e2dc937d9b0b0d1b2d032db2",
+      "currentPath": "tools/phoenix-ui/crates/cli/examples/capture_service_roundtrip.rs",
+      "currentSha256": "100965c0a68ac6c70f3efa9606b1c4d2c3a0d830ed6d00129fd754a7e1bf0701",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/examples/entry_capture_service.rs",
+      "upstreamSha256": "995c38db9b9827bbdc7c7e24735883a84a5e89896f0c9db2d88f0928cfb1c432",
+      "currentPath": "tools/phoenix-ui/crates/cli/examples/entry_capture_service.rs",
+      "currentSha256": "b03a90090aad4b4ca056f398c9295d9f5a6984cc80c1a55457f4e6eac8f958aa",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/src/capture_service.rs",
+      "upstreamSha256": "9da75151073a3258f5a3fe3223e5a7b47df43b800753198f5fad33e135a4702f",
+      "currentPath": "tools/phoenix-ui/crates/cli/src/capture_service.rs",
+      "currentSha256": "caf871401c8887d148420b0a035285d95e5725b10e32f58799bbd3a5b676dccf",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/src/entry_capture.rs",
+      "upstreamSha256": "c450fcd4ae694c150ed30d2dce7c2b9751912349159be728f0c1a8491bf271cd",
+      "currentPath": "tools/phoenix-ui/crates/cli/src/entry_capture.rs",
+      "currentSha256": "f7ae78b5fa0f97801febe69fdee209aa6d059b1b404f44b2244b710a3d566c08",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/src/main.rs",
+      "upstreamSha256": "00b20a738560363eb3ab4daa78fb56f35654d3bfcb9d1144548cc6cba954e497",
+      "currentPath": "tools/phoenix-ui/crates/cli/src/main.rs",
+      "currentSha256": "bf37f72085f8b52b775dbf5cb9c05e94a3d7ea49d5babeb2f5fd1df38fe14ede",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/src/reviewed_entry.rs",
+      "upstreamSha256": "dac9b1ace0576a091961bcedaed8b178bfcd5283e56b95011bc4ac0d9c28a85d",
+      "currentPath": "tools/phoenix-ui/crates/cli/src/reviewed_entry.rs",
+      "currentSha256": "322815edbdd0558637c870ac10f3dcabcac2deb062f5b11fc090317228b4dc58",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/agent_target.rs",
+      "upstreamSha256": "55b2e7a0cf711cf2e865fd3bd617a35fe57846d920bdb281a844d7a919ae0274",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/agent_target.rs",
+      "currentSha256": "3bf67be489a67098ac0b6ecff9730e3e2190ff20ce0787baf0aecdbfa057fcba",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/asset_capture.rs",
+      "upstreamSha256": "dbc16854cafc642eb1f245eeae4d4525751a539016d65934bb4d5ce051dd6bd0",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/asset_capture.rs",
+      "currentSha256": "601d9f0c7211b31de26a73579854ea72cbcda695b7c12eadd272b2cbcafe4ef7",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/capture_snapshot.rs",
+      "upstreamSha256": "bfbcbf2e3eaf976c3a087c04775eb5a5a458150c2619122201bf94b21473166f",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/capture_snapshot.rs",
+      "currentSha256": "c5f21adc78f9c9c8b15678886e596249aa7b98f9629260f947432a85716ee4c2",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/component_capture.rs",
+      "upstreamSha256": "da545d3c1083050516c43da646443b9fe3ddf38026b4d2a55a1d8243c89c2480",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/component_capture.rs",
+      "currentSha256": "727d89f796c11d5707106de2934cd0a1b2530044a24c918277e764101062a727",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/entry_capture.rs",
+      "upstreamSha256": "6f12ad71c005c5b3f16aeca69d468af15add9a53be0c44319722e4e1230b168a",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/entry_capture.rs",
+      "currentSha256": "89df0060958f7fb0fe2a2112070c8f477e1f63c6c05e1314d3cb0d4961725b43",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/live_server_security.rs",
+      "upstreamSha256": "858e45bf5fbbda71248e37e2cc52aad4edb7ea93354e8bb30f94ed5ce8738552",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/live_server_security.rs",
+      "currentSha256": "e3b925d4346f728d4aec2369e5d1b80696490f3cfd39c8b1e71084ce9c14dd46",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/non_utf8_env.rs",
+      "upstreamSha256": "03c0499eddeff0134c95994d4494bf5915870921e5eb00f6f22a074fde2b6abc",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/non_utf8_env.rs",
+      "currentSha256": "5aab54ec8e75110fb0a18847e68bbc4315df99468f0073a5f2b5e7c1f31e3f38",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/serve_question_security.rs",
+      "upstreamSha256": "522389c8de35a9f8850b2f60d6393aac85c7f5027b9782cb45eefde75a14e70d",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/serve_question_security.rs",
+      "currentSha256": "0b5476ad5d47d9cb7778b9857a7862593e62b56cdf3d13f5786a66dac07c77f6",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/support/capture_service.rs",
+      "upstreamSha256": "42e04d9bf0caf9a7c32a11bfc618476b724f285cb7ecf4a640e12fb789f3e529",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/support/capture_service.rs",
+      "currentSha256": "2db8e81fdb83d2277727a22474ae078a12c62c68e45307ffe71b57752b442e6b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/cli/tests/text_only_entry.rs",
+      "upstreamSha256": "606c490e371587a5f106c9878155a94434399e7a3ef326d177ffeae21323e906",
+      "currentPath": "tools/phoenix-ui/crates/cli/tests/text_only_entry.rs",
+      "currentSha256": "cdfbe7d456791ccf5afe75e8efd74bd14c4abd8461f62f3f059d6f47c7a75c1f",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/build_phase.rs",
+      "upstreamSha256": "612e1fa5ea30dc0f411a20e9b6629cbba11bc67004d5e4714356e11e73f91e20",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase.rs",
+      "currentSha256": "cf0db1124699c4d083f832c4664b630bd8c9269505e49e2fada9f5d691b19151",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/build_phase/integrity_tests.rs",
+      "upstreamSha256": "7d4d59ef8d1de4975737aa70325b1f7f13d1e58748dfbde7c9f59f4000472ac1",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase/integrity_tests.rs",
+      "currentSha256": "48120de652c4a32d731f2ac91adc7395487ed09dcd743d82a96a038d70f6d31e",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/comp_spec.rs",
+      "upstreamSha256": "f409bd3546f8d6d707ef7d244423f977e23027162c4c5d937933c8081cd823b4",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/comp_spec.rs",
+      "currentSha256": "ee75838d9135beae9193cc783925dc8d5c84240a3649761eff32f8d3cd22490c",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/font_match.rs",
+      "upstreamSha256": "6ceaa9dd2883f742a180b94e818babd3b4b5acac640db886809789631f10cab9",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/font_match.rs",
+      "currentSha256": "74ed9e8d879ba5beb08a49fc2511bedea65a38f3ca6f57775e0176e099129dcb",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/lib.rs",
+      "upstreamSha256": "de062b6ba8c6cec506945da20c3ba20bad9aa58d1cfded68b962a22eb45eceda",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/lib.rs",
+      "currentSha256": "7b07db81c79f198b8b0f965831e42dffb6548acdc3f1d3977157442e21e9c030",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp-verbs/src/map_inspection.rs",
+      "upstreamSha256": "e6a754eb785857b72b17bf46b9fe3fd82e25ed56e489acb53f662378cedd73a1",
+      "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/map_inspection.rs",
+      "currentSha256": "5993d0a2ec29c07088e8c120d0d47561648ac3628df196dcb83fd9f7e5041825",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/comp/tests/parity.rs",
+      "upstreamSha256": "aeaa8c27196d3cf97fed43358f624584b4d03974a4046b5301a87b9fdafa9653",
+      "currentPath": "tools/phoenix-ui/crates/comp/tests/parity.rs",
+      "currentSha256": "c3a01767a1d8d2d28bc56ceebef5a30c64d1267fb9240d40ca80522ffd6db074",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/catalog.rs",
+      "upstreamSha256": "6fedc9191b58b13b4a91d2123bcc9c3693495140acea8bc5a17ce41d02d913c5",
+      "currentPath": "tools/phoenix-ui/crates/context/src/catalog.rs",
+      "currentSha256": "5160d7ae847ad53358626383c414862b464e3dc052182e816dc9d3da84427023",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/command-metadata.json",
+      "upstreamSha256": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+      "currentPath": "tools/phoenix-ui/crates/context/src/command-metadata.json",
+      "currentSha256": "fcab887ef557cc74babd484ddd764f36ab04fa2d8251d440d93f6018239b05fe",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/lifecycle.rs",
+      "upstreamSha256": "ef750d08be389d64c7d1b0965e8166293f37366837a79d93cc70be793e75e7e4",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/lifecycle.rs",
+      "currentSha256": "c74c7d9bbdff653d181b3a4bfd5b94ce0222ededb2a6f1cce06de45063903d52",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/manifest.rs",
+      "upstreamSha256": "a607b337d6e41baef02093ca85a7c5fdd841cce7deee37a71d0b849f35eec020",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/manifest.rs",
+      "currentSha256": "f6736898b4d64c6ad7f26cef5abf4127195970b8026421023c3abf2849f2a97e",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/mod.rs",
+      "upstreamSha256": "5bfd6ac88b0d940ae87e9b4a30d270225c43af13a723c513c0cbdf376f8e8e43",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/mod.rs",
+      "currentSha256": "8a858af36e883c1c2fbfade63434c3c487c0f04750447f7145ff5e2c80cbad66",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/plan.rs",
+      "upstreamSha256": "5af43566e8f894190623bb01f5fa5abb2eb6f94467d56b1ec5ee8256be58e530",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/plan.rs",
+      "currentSha256": "f77acbae6206081699fc5942dd67d049c58548ca3f14e68bc9edee4795343998",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/server.rs",
+      "upstreamSha256": "3fa2b8c42b561d1d1bb0ee6a42cca20937f2af2b20334b58558a7bb0fe40f40e",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/server.rs",
+      "currentSha256": "0323e189c1a0bb55d050d81449abbb65af693f8dd2b1fd62294fe1c87abeb5fe",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/component_review/tests.rs",
+      "upstreamSha256": "7ed1786e82fff6a2f80b85654183003e5b8986bcfd8b5bcca82637286538f4c9",
+      "currentPath": "tools/phoenix-ui/crates/context/src/component_review/tests.rs",
+      "currentSha256": "07663533f382ebf323d0508f8fca6b24f2fb2dec22012b25448ed7dc9cd75038",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/concept_seed.rs",
+      "upstreamSha256": "1afd1c969b125d23a81fe9ecf93b64f9af3ccdb2fde0c795865357d43cc0bc29",
+      "currentPath": "tools/phoenix-ui/crates/context/src/concept_seed.rs",
+      "currentSha256": "d90ef32b1b865230456e04288bc6405ad74b4c491b3dd2964db04e889706ebe6",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/context.rs",
+      "upstreamSha256": "941b3ef46aabd0fbf0367b3c34605a928ffebedc593e48e5840f4214b86a5297",
+      "currentPath": "tools/phoenix-ui/crates/context/src/context.rs",
+      "currentSha256": "5fd3b04aab9da74869cbb9dfa6f25f5d14a8ff345649d48346e5d587fd8977a2",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/context_cli.rs",
+      "upstreamSha256": "9c5a996e6128105b1f132e0aa47ea517117694363f7be6017148ecf3e95e01f8",
+      "currentPath": "tools/phoenix-ui/crates/context/src/context_cli.rs",
+      "currentSha256": "b020bf07842969b039b396c95f56e0ce0d44e8d3b40a52988b7ed3922c2ef2c9",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/critique_storage.rs",
+      "upstreamSha256": "4f9eadd274ba31d1b8e093592f96cc7f0d91ac208c34149dabab6b1cf379f235",
+      "currentPath": "tools/phoenix-ui/crates/context/src/critique_storage.rs",
+      "currentSha256": "0e34c0498b0e412f5a799d9a22265aa89bf16047b41558e1422bf51e87339507",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/doctor.rs",
+      "upstreamSha256": "be54f836d1e1a3f4877c8565ffdde2ed04e5c4c8f71ed27aefe945a19af38e18",
+      "currentPath": "tools/phoenix-ui/crates/context/src/doctor.rs",
+      "currentSha256": "411435a83e10dadbdc6368f4f8a19f0f6ecf1de2eadbc091318ab96d961341a2",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/generate_image.rs",
+      "upstreamSha256": "270e3e718f3ce280ba9062adea4807bd957f1b9136dde22dd6ed81f3eebd320e",
+      "currentPath": "tools/phoenix-ui/crates/context/src/generate_image.rs",
+      "currentSha256": "0e712e9b2abec9df5f0d7297ac4deb8c745ece780c1d295d7a24a793d2323853",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/hook_markers.rs",
+      "upstreamSha256": "b39606350e59b595ba3692c8c75178b6ddb66214391f72f784b6a270910499b7",
+      "currentPath": "tools/phoenix-ui/crates/context/src/hook_markers.rs",
+      "currentSha256": "0fb01268dfbd7c8d66f7a10c8db143f8ccef78b58230a505df74fa8696ce4dbb",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/palette.rs",
+      "upstreamSha256": "d09681e165892e6d310570c5c2c84febf785ca0c55c25ba5fa7abd78fefaf143",
+      "currentPath": "tools/phoenix-ui/crates/context/src/palette.rs",
+      "currentSha256": "c6882c3e51290bc2f09e465fa81ce056fa719c07a786fca0ea8682af9b59563c",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/pin.rs",
+      "upstreamSha256": "7d08bbaf991646a0f124158108dcadc3d9d1ad2218fe359a844a82ba4b6e62bf",
+      "currentPath": "tools/phoenix-ui/crates/context/src/pin.rs",
+      "currentSha256": "a0632e47545f00a2d948e48e5b8c4d667858aa7285f5cb58151a393d7a2a326a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/provider.rs",
+      "upstreamSha256": "bf846e10060d30ce6b7100d2f65dbd0a552e324559f9f9c80480ae8d673e8517",
+      "currentPath": "tools/phoenix-ui/crates/context/src/provider.rs",
+      "currentSha256": "90925c6397dd78d60dbf044de0c8026d0ccb2c60ba3557b49e01985a6a864edd",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/question_page.rs",
+      "upstreamSha256": "3914473c4bb336053f524a1a58e3f476b6320379b03e6379c2ec359e93004fe0",
+      "currentPath": "tools/phoenix-ui/crates/context/src/question_page.rs",
+      "currentSha256": "5faa7bcfb6b522641ef72d57349b22b40b7b56d91919b15c419a7fed3dd005d1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/roll_selection.rs",
+      "upstreamSha256": "66143518f91314a39273dc05c70244bb31f8cb40fb87749a14675adbe7828e47",
+      "currentPath": "tools/phoenix-ui/crates/context/src/roll_selection.rs",
+      "currentSha256": "144817b1d89af8b5ff7e2cc538eddc47d52c2f0183cb60c95ec53405b27d9ec7",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/seed_text.rs",
+      "upstreamSha256": "f29c87e2e5be95d50c95c33489710124ed86bb39bd435146249686d394ffe361",
+      "currentPath": "tools/phoenix-ui/crates/context/src/seed_text.rs",
+      "currentSha256": "f68825dd7c1f6e1a96be1b68470435f9ac2317d019f91940cde9a363d42dd9f9",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/serve_question.rs",
+      "upstreamSha256": "e9bd3b1dc25a59b527001ede6b11f2faa38e1d396b4ed6767eea1eb0b3f18860",
+      "currentPath": "tools/phoenix-ui/crates/context/src/serve_question.rs",
+      "currentSha256": "421be24be22de4463655874119c7d046c3e73d844fef778bfeffec852950e81d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/staleness.rs",
+      "upstreamSha256": "b41a4d2d8d6a63e72f3ae11b891706e0d3f7813f33d991893877fe2c1ce17dd8",
+      "currentPath": "tools/phoenix-ui/crates/context/src/staleness.rs",
+      "currentSha256": "9d0779abbfa04e58b73c8f65d926f5b1210bb2e5ea1a59ad2b1d2bf0ef5e6901",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/staleness_deep.rs",
+      "upstreamSha256": "993feaa22c406970320712bafc8bf214a4e7973f1665eb393f040b3863fe0b1a",
+      "currentPath": "tools/phoenix-ui/crates/context/src/staleness_deep.rs",
+      "currentSha256": "c94b1f0d38baa556dbfd54b9d22bb9c19baa1101c4f1ea0ff66b772da29f84c4",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/staleness_notice.rs",
+      "upstreamSha256": "01427e2e1551f8dd111926532a29b5fba54714978d1fc2c85d1d9ff25c1cd09f",
+      "currentPath": "tools/phoenix-ui/crates/context/src/staleness_notice.rs",
+      "currentSha256": "32b50e7032b65ba49a258f4000c6c44fd3c2d76976e17f3a88081a1535dd24ef",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/surface_brief_cli.rs",
+      "upstreamSha256": "00c0b968303284f4ced38b35c680e07fa183b8e78ae17b0ff59425fcbe7f650b",
+      "currentPath": "tools/phoenix-ui/crates/context/src/surface_brief_cli.rs",
+      "currentSha256": "1422433c0503af88734d5f2541ebcd63954c49f11c43cca3bf8e68cd3d884685",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/context/src/surface_briefs.rs",
+      "upstreamSha256": "a7dc07a71a5948854cb5965a18610f8411ab114667e569c7273110a8edd418f9",
+      "currentPath": "tools/phoenix-ui/crates/context/src/surface_briefs.rs",
+      "currentSha256": "a40d2633be5e78be5024b1cafd25ce371e8978279ddff0e686612e8110655659",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/core/tests/vectors.rs",
+      "upstreamSha256": "bfb32171e509848daf963ad6f5f9fe7a6841694ff4c102cc6d0e76167d6cb796",
+      "currentPath": "tools/phoenix-ui/crates/core/tests/vectors.rs",
+      "currentSha256": "aaa7fcb2ae7b1df5571a2ec12bc7003b034b1077967fb7a24ed796fe5e274cbf",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/cli.rs",
+      "upstreamSha256": "2ab160e2e83996c8134171d785352a4172301b2ad2d62dfc85d5832bbc394973",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/cli.rs",
+      "currentSha256": "b9a0cb4da9b39bc551d2dceb90fcb3b4c4755a803514b71e4a8a9b9d53627831",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/config.rs",
+      "upstreamSha256": "1322d1fb43956e3a09e2463104172d3de74c91f50bad4dd461b168a235dae8b5",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/config.rs",
+      "currentSha256": "5b268f32b02f4cf3ff6aca02032370febee09344acebb734895d1cbc77af44a3",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/design_system.rs",
+      "upstreamSha256": "71bec200df9c9de0b9c10e8539ee09540b8588572601d6d679708289a624711d",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/design_system.rs",
+      "currentSha256": "6527b9c8696a2cf513943cfc7825fc71668f33f8f6a8c9453d420b5b17bbcea4",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/engines.rs",
+      "upstreamSha256": "5b8015e2f45c05b0e0cddcf980658eda4b4d2e43b77a183d5c544daed025b49d",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/engines.rs",
+      "currentSha256": "d1d59b90a66c4c4a9b392308e329c39dcfa61f3e88f25ad7152891251fec0d7f",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/ignores.rs",
+      "upstreamSha256": "ba998717b5a15082c55b20882514504a4c52d9fad88d3071999ab819d02bab50",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/ignores.rs",
+      "currentSha256": "b2febb2a3b42bb9b5c0835744dfc082b900ec5e3bcc61e02d597776b338bf94d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/lib.rs",
+      "upstreamSha256": "bc9c7a89f9c4ffd05565ed648508faf6afa9758afc05596412684102cc4a3a40",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/lib.rs",
+      "currentSha256": "d912bfe7819879f0cac66bddf10082fb820ffc3682b8c0c4927ff64bd807ccb5",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/detect/src/skills.rs",
+      "upstreamSha256": "3ad3381c6089841a35da0d57476c0973acca5f78994584511780e8f610c69843",
+      "currentPath": "tools/phoenix-ui/crates/detect/src/skills.rs",
+      "currentSha256": "485af8e36c67e7f2714e1781e56ec14b0ac1fa168b13f490ece13612ab17f68e",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/foundation/Cargo.toml",
+      "upstreamSha256": "c78021e7d352978edec668fa5a1e23e862698f7063c2e783e537f1b6f0924521",
+      "currentPath": "tools/phoenix-ui/crates/foundation/Cargo.toml",
+      "currentSha256": "6dd3d613b817cea53fbc999bf70d2353d94f6f086e3a41177bd7e2f9101f303f",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/foundation/src/js.rs",
+      "upstreamSha256": "f686e0ff3d6d4448ceae5d5f9d6f47e084e80b847bd6133b999522eb2dd1a6a2",
+      "currentPath": "tools/phoenix-ui/crates/foundation/src/js.rs",
+      "currentSha256": "73be58b25457470055db9896cf28efc1481fb7bee1c63243fa7505208d3fd9b8",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/admin.rs",
+      "upstreamSha256": "d07f1b5c6ec0b221b7845bf898d93e112de0c2e7adfff7dd331b83f05f187cdd",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/admin.rs",
+      "currentSha256": "2407d37ceab54468a177294bc7d7ec4420854fc94efbdc24c18a0effb09c0006",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/before_edit.rs",
+      "upstreamSha256": "ee8a8bfb0438c900900b87215575b573487d96204360899140c8f964326817a1",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/before_edit.rs",
+      "currentSha256": "e8504b7aa41d4c8c8c8645d753102dc84d2d2992f49fb5b82a3fb0f4a30bbda3",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/build_completion.rs",
+      "upstreamSha256": "17bb80fa7f7f6da78b96bcdbba609be1db6502beb7baa6d7ac8b634a6b43e789",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/build_completion.rs",
+      "currentSha256": "e4d8aa398195ae2db7b5ff1193a17b6dca8a98e8e422c1a7bb2fc3f261555b23",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/hook.rs",
+      "upstreamSha256": "47365a2ce416734e79d9e715fe108bb52d080355974aa57fd02dae0c03448531",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/hook.rs",
+      "currentSha256": "cb2be336e167ac0e50759fe07142ff78664c33bf16a3a4d06bb887d036b23e35",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/hook_lib.rs",
+      "upstreamSha256": "25f014206474a183bf9bea201a28d633ac73754cfe7eb2a2e6babb53a8c2d6fe",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/hook_lib.rs",
+      "currentSha256": "4788fbd7b325033274f751af6ce4d9ba38de02e24ff8c3663550db9c7285cd80",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/src/lib.rs",
+      "upstreamSha256": "d793a46891500b3b4fa6d70f0a8858395d1a7c0deb10b9b7213756139861f22e",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/lib.rs",
+      "currentSha256": "0e3dbb18b816665a5466c66bb8793fed586e081b9447562c6d6bb782ca79b89d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/tests/cache_root_tests.rs",
+      "upstreamSha256": "b39877916699032627b24c1010652208ff69d4dedaac687beac1b7ad1416d06e",
+      "currentPath": "tools/phoenix-ui/crates/hook/tests/cache_root_tests.rs",
+      "currentSha256": "07738b805caa046ba7f13992dba3634461e34723dd1b9cd3c7dd7408fd967250",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/hook/tests/hook_tests.rs",
+      "upstreamSha256": "7140fd9cbd3cdf6474d371448467d3fef4c28bf21ba741e86fd60055d567ae24",
+      "currentPath": "tools/phoenix-ui/crates/hook/tests/hook_tests.rs",
+      "currentSha256": "aa78e5aba14762e22f25d8fcfe04ab14dc1d40b6cec985a27befc01d8259996d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/html/tests/oracle_html.rs",
+      "upstreamSha256": "e1be309def552c8cf1f96b111d2a97d7711fa3cf8c9788b98708a86dcaa0de6f",
+      "currentPath": "tools/phoenix-ui/crates/html/tests/oracle_html.rs",
+      "currentSha256": "bd46263fd66e76ab4b477e9bca1e57396543772b8d6ad5191158918e82b42a91",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/html/tests/placeholder_contrast.rs",
+      "upstreamSha256": "d223332b903928b8c0b6619b32f881fb58e0056738fcdafc247d5323e27f939e",
+      "currentPath": "tools/phoenix-ui/crates/html/tests/placeholder_contrast.rs",
+      "currentSha256": "5aeafefa85ebb6e74da873ef874559c59f95f4a734c93303936a0ad84bbd2ca6",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/html/tests/robustness.rs",
+      "upstreamSha256": "079babeaef82b2609f567cdf75440c536040be4e4ee952fb5dc60f71bec30c11",
+      "currentPath": "tools/phoenix-ui/crates/html/tests/robustness.rs",
+      "currentSha256": "dc8be1e41f3fed508baf592aa01be61b811f17d0806efe9f1e65647d20634a89",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/html/tests/vectors.rs",
+      "upstreamSha256": "48f581b390b2d72cdb717f1a07d9aabbc705dd060adfd3e56500dc5570c40d20",
+      "currentPath": "tools/phoenix-ui/crates/html/tests/vectors.rs",
+      "currentSha256": "8a0499b0b269dfaa867b4de6e76e8dea0781a8978205d28a68939326882e305b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/assets/detect-antipatterns-browser.js",
+      "upstreamSha256": "aed2977c33016bfa2582afea1915f32c5d6494b1d1f378f78af383c69f0c4635",
+      "currentPath": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
+      "currentSha256": "a384639489a654ab3b658d7841248c75c7b6ee201ca2aaf92d02725043ca1a3a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/browser_assets.rs",
+      "upstreamSha256": "bd513687420b3d006afd7a11cb611f4eb7561cd9705f1965e9d7e830741c3fc7",
+      "currentPath": "tools/phoenix-ui/crates/live/src/browser_assets.rs",
+      "currentSha256": "88dc5780e95f2154aa7420d85713779258d2d09478f1ec05dd7bb6aab23fceb1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/browser_open.rs",
+      "upstreamSha256": "2535d5f5b71bdaa3241fdbfcf1647d5016b277e1dd23312beb1cd9e884798375",
+      "currentPath": "tools/phoenix-ui/crates/live/src/browser_open.rs",
+      "currentSha256": "3f498b49d7599341c075adfb29753ac92152930850412ead5e97b3d645abd70d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/config.rs",
+      "upstreamSha256": "6aeefa9fb5acdb84b8a0e9f224be15424cfca1b891d0139a67e7fdaede34f0bb",
+      "currentPath": "tools/phoenix-ui/crates/live/src/config.rs",
+      "currentSha256": "4585447a87030c15115daef1e58cbbcf8c7764d62ed5970b6340a8e7cc0d6755",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/copy_edit_agent.rs",
+      "upstreamSha256": "ec64f73f3e70a30e2e52c3bac68b0b73ac38c223909e56cfa11a44451925f2a8",
+      "currentPath": "tools/phoenix-ui/crates/live/src/copy_edit_agent.rs",
+      "currentSha256": "75e61519c5ce18011430e1b395085297f28cacab68962ff0954918253de7a163",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/dev_url.rs",
+      "upstreamSha256": "d5e8ae0ede0fc2f310fe85c4d11cef6c09f464ea21268101f320be58990fe042",
+      "currentPath": "tools/phoenix-ui/crates/live/src/dev_url.rs",
+      "currentSha256": "083e3a372ecc9d1a33fa16d04f67b1a3c3c0ec4f7c9c17bcb968f48558766882",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/gitignore.rs",
+      "upstreamSha256": "a5cdd7fa241bf334743477e74cedc46fa1d8b633530175bbf0f44e166c1747d8",
+      "currentPath": "tools/phoenix-ui/crates/live/src/gitignore.rs",
+      "currentSha256": "d7eadb40d733fac038877d9ec72e516b9481f98272af340e3b3c507a4e8e310d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/inject/nuxt.rs",
+      "upstreamSha256": "14c6bdf800c07a342deb0bfca223b14b88547426f3d1d7fd3a58b753afb0768b",
+      "currentPath": "tools/phoenix-ui/crates/live/src/inject/nuxt.rs",
+      "currentSha256": "006493c0dc08bc8040406c107815827d04b6216b9855189dfa2d6a158cd08792",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/inject/sveltekit.rs",
+      "upstreamSha256": "b48a08f708f8dd22bc48e06692edef9ba699447dada85e8f9e9fb66fc07a7628",
+      "currentPath": "tools/phoenix-ui/crates/live/src/inject/sveltekit.rs",
+      "currentSha256": "a3bc9b85a2d279de4fbbbd41cee653d3d1ab668b186be255439527ded38884a8",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/inject/tanstack.rs",
+      "upstreamSha256": "0343418b3fe4895d77942d4cb8258aebf5aa1f7d3398f89440bbd7e16dcc2f71",
+      "currentPath": "tools/phoenix-ui/crates/live/src/inject/tanstack.rs",
+      "currentSha256": "9a7343e92ecf277a2efc5a1264ce6fbcb804ff1a256d088b46292be097c74b72",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/instructions.rs",
+      "upstreamSha256": "c0c3a04a34b7ffe77a45074886b3bed9f67614674ea71827c2e0e3033245f0f0",
+      "currentPath": "tools/phoenix-ui/crates/live/src/instructions.rs",
+      "currentSha256": "dfb4d0f0b4cf0087ac5ea7bd853c64d5228ab0d3a91d4b18261cd61c89a25f70",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/journal.rs",
+      "upstreamSha256": "2c0b806676dff112e5758ccb207054a58a91ed472a1cbe9066237da94908272e",
+      "currentPath": "tools/phoenix-ui/crates/live/src/journal.rs",
+      "currentSha256": "76dbad3afc4729758a84df10b9f52401e6e757ee9abc0a4839e90ce4f9fae560",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/lib.rs",
+      "upstreamSha256": "1389b8b756d64bf966f27f7946605d0caa54ff00e348cefa46fb61a0ae409a97",
+      "currentPath": "tools/phoenix-ui/crates/live/src/lib.rs",
+      "currentSha256": "d3b5b25349a667239ff8a1e3fdc696db8481b409ee41a293a189bf67e7c5837d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_accept.rs",
+      "upstreamSha256": "70c6155eefe13e88853dfa8aaa1572161bd72d7092e3f58822d6ca8ea47cccd6",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_accept.rs",
+      "currentSha256": "d12d606ee4b8317af69ed8ae1c767a580badefb403c122de6b6901fc42e4181a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_boot.rs",
+      "upstreamSha256": "12903ff57a24bd11dd97533607c5a4d4a33854c72870dd112668f17d7e4b4c70",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_boot.rs",
+      "currentSha256": "2b253a325d151e2137559853761df4cf0f7a4dfa8c359a550246e89b95277975",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_commit_manual_edits.rs",
+      "upstreamSha256": "5fc8e7afe326f27c650d9e289cb61c0c52d64b55eb7e82601cb1780e4c3a3624",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_commit_manual_edits.rs",
+      "currentSha256": "e68d44900227bcb8c5784520f3242bbbdf36e8ba980b9e2771afea5b6518f4be",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_complete.rs",
+      "upstreamSha256": "95b33c88ad09bd9b2524842d825bdb9f434009462dc520074d44ef0ca8f346a1",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_complete.rs",
+      "currentSha256": "9f3ba51adc0140138614f68bda2c3508bcc029c9e10f3dd4315156b8e7010d3d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_discard_manual_edits.rs",
+      "upstreamSha256": "f8a858baf6adcad4938a127eceab72ff3960524f699f42bb8e0172753eed75bc",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_discard_manual_edits.rs",
+      "currentSha256": "3e4b485e501ca5e3b1e2c459f27c18cff0da480ec455cbead88f6a03bacee5a4",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_generate.rs",
+      "upstreamSha256": "72b2096ca58b4fd4f24c22386c093c93c9e7c4a38c8998e70504cdd3239a72cf",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_generate.rs",
+      "currentSha256": "099bed8a4946078e95fe2c5f848a4c98cf0cc079b02eb07c47d213be84b98d66",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_http.rs",
+      "upstreamSha256": "ce89c9c5e43ffb8ca5641d6d1222d18c98036faeac7cf4b0dc17d38ca0f778e3",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_http.rs",
+      "currentSha256": "53dd2f10b35fb67b9be579aba0d10bc1d6ae0918ddb0be6148c6d13124883564",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_inject.rs",
+      "upstreamSha256": "680a0dd9a3fbf3d465f27de0df69935882be8bd6f514dbbf9f72143181b49266",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_inject.rs",
+      "currentSha256": "b292a9fcf2ddc7d0a968f5d095eaf03e5fef8d4c9dbe31544382df28c870dd30",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_insert.rs",
+      "upstreamSha256": "a2f27f69c1358aa0ecb23999f12fcd7416c1a5c289e455baf2c255f9f98ff804",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_insert.rs",
+      "currentSha256": "bc1cd8c6253ab75ab9be0c22123be07bec428779f119bc868d6f33bbbb5d1252",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_poll.rs",
+      "upstreamSha256": "1275247c8b335e6c4d6fd9f3e946765177cc55a8ae2e1e1881b3ccc6c219859f",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_poll.rs",
+      "currentSha256": "b2054970a11f3ab6baed7fa4a6475ff8942438ba83584b97d027dba4556d8620",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_resume.rs",
+      "upstreamSha256": "1935ba1173ac3286cd72ff3c1d02bc1d4cd1cb4f872324fd2c16e44a69ee751f",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_resume.rs",
+      "currentSha256": "25598424933ed904bb38d72b2667dbcd4b77278558838a8b5790bf4a919185b1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_server.rs",
+      "upstreamSha256": "9e865e8bf2097f7c14ad300c76214486781e80164866d08808bb167ad0aa84b2",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_server.rs",
+      "currentSha256": "7b8ed175aa5248a787cd75c373405a9e72df57b0c5bb60c9d5e11510c491998e",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/live_wrap.rs",
+      "upstreamSha256": "a558527cc39b4cd08442e2e8dd303ae8287b6c2e5ad5df261a9b7b12b7f32bc3",
+      "currentPath": "tools/phoenix-ui/crates/live/src/live_wrap.rs",
+      "currentSha256": "f9b44da341f8f7ea47582d6e1102fe085031d6a743640705cc172b60490eb8f4",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/manifests.rs",
+      "upstreamSha256": "71dc022aa608b3ed05b19a6c820ad921f1ed68a44239d2fddeacf9df09b770c4",
+      "currentPath": "tools/phoenix-ui/crates/live/src/manifests.rs",
+      "currentSha256": "e1d90722532b60a0c44cd9643998f6609caf3dafc3fdbb8b82e6554ccfc8cf8d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/manual_edits/apply.rs",
+      "upstreamSha256": "9d26813f76fa27d63f13bf5dd50c01970dc7730b362917323761fc5ef2608130",
+      "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/apply.rs",
+      "currentSha256": "490740c03f6204d541114704bfdf0c1a78f2bb7bb97c66097212d5a43187d877",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/manual_edits/buffer.rs",
+      "upstreamSha256": "e9eb559fc753f20b8b8cbf3b23f431c00458f8c3378c876a871988bf39bb39ce",
+      "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/buffer.rs",
+      "currentSha256": "11604cf8746aeae43869976b2e203349a5509229262c8fe81f30401b4efbc892",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/manual_edits/commit.rs",
+      "upstreamSha256": "a8205b36d1838c85ba8508d52a602cce331d3ad6eaa9ced08c1b460a8907dadc",
+      "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/commit.rs",
+      "currentSha256": "2a749c99ec634e11a32feac00967dd14914375f49a73c129e1e3580f4b8105e1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/manual_edits/evidence.rs",
+      "upstreamSha256": "ef61bfb2207575e64b8f40892ad7ed23d1433f048c16a23f857b4d975d67e7da",
+      "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/evidence.rs",
+      "currentSha256": "9a0263dfaa0fd090705bcc6416ade4288ec5215fcd25daac6786f2a0321eb2be",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/paths.rs",
+      "upstreamSha256": "c532701663fcc4833e44b42f5c870ba4b48c9c46f5fe4b576f0424f8e6fbe52d",
+      "currentPath": "tools/phoenix-ui/crates/live/src/paths.rs",
+      "currentSha256": "a55eefe5fa4f9e37ce7330584e86a7ae3256f0822153d0098fe80b6a0f085afc",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/project_ignores.rs",
+      "upstreamSha256": "ff2db03f32f9a6b7ba02eae0b07d98ef4f3fd77382a42b5b8d39618c532fd03b",
+      "currentPath": "tools/phoenix-ui/crates/live/src/project_ignores.rs",
+      "currentSha256": "8c5b51c444836fe54eb9bf6487101f2026104de14a593fc7cf683a7ab7554e2b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/roots.rs",
+      "upstreamSha256": "c3e7a52f662ba299acabbfab930798ba77f199154f175c8673d7aa8f4c5711dd",
+      "currentPath": "tools/phoenix-ui/crates/live/src/roots.rs",
+      "currentSha256": "233f55f8399d29db07de14041f6e8c7f6d02ec94d36e5b7ffa151acc0dc06221",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/server_state.rs",
+      "upstreamSha256": "603e69e0052b8098d93ae620f1ae26798387e91aac3ea6de705db6681d533be1",
+      "currentPath": "tools/phoenix-ui/crates/live/src/server_state.rs",
+      "currentSha256": "5330972d6cfbe64f0078ebaf615ce8c05bee5660cdc4c5f659aaaa2404e259a1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/source_search.rs",
+      "upstreamSha256": "7e91609807390e2abee10e8e539e6ae885180fba7818fb815abcfbef25110172",
+      "currentPath": "tools/phoenix-ui/crates/live/src/source_search.rs",
+      "currentSha256": "52616475596470bf3ef87cef3b609b6d89862df77aa6ecf84fe5ea221c2c00b8",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/live/src/svelte_component.rs",
+      "upstreamSha256": "a3dcf45216f829a8c1f1b3e6a2715a28b18725e181d96537e4ae0481fafa47f6",
+      "currentPath": "tools/phoenix-ui/crates/live/src/svelte_component.rs",
+      "currentSha256": "4c4cde4d533930e585d0986e15f9a6e124dd8fe09edad33fea2556f57739d58a",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/bundle.rs",
+      "upstreamSha256": "5284ec976aadc636f060a94a48710efb0328efde117a51ae7173dcbb75df07ee",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/bundle.rs",
+      "currentSha256": "513760121067674bd37c5d28c75bade7874ac4a823a2beba0f80e11e4a4440e8",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/bundle_signature.rs",
+      "upstreamSha256": "0c8afa463365cf7f9377ed61cab0f253806f491f2d798ed88549df70c342e4bf",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/bundle_signature.rs",
+      "currentSha256": "b051a45d1874367a0c1eddf2c9e40e2826da49f9ad8af625b15839e3fd7a85a7",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/commands.rs",
+      "upstreamSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
+      "currentSha256": "bfe3f2342a741b8256988af47cceb5404d76145392f263f6ac8ae0f89a426b8b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/engine_binary.rs",
+      "upstreamSha256": "447f86ceb683e8f9e50c83cd8168d1677da7e9419b3dacd03da59b1fd6f0a3cb",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/engine_binary.rs",
+      "currentSha256": "1680ea6e1cfdae98a5cc67c4e50796b3488706ff368178324406b3bc220c9ae3",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/hook_manifest.rs",
+      "upstreamSha256": "36fa6471e16b1c9216fe9e994a1c57e652664816255687d8d89e124935877b98",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/hook_manifest.rs",
+      "currentSha256": "8cde3b7ada4bf7223ae9f0b0a54a152cdc81c3aca27f1fb9446f88f4b52921f7",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/lib.rs",
+      "upstreamSha256": "fb9e2479869293a7e689b1ff3e5fa50a2d83743aa2784194b385989c5b38c7f2",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/lib.rs",
+      "currentSha256": "ec3bf4d3643c8c54d90ac601cc78737b33a201a4b09dbba94912d9597c924754",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/src/providers.rs",
+      "upstreamSha256": "2442da8fb5c1dd3c44856195af56ff3d778ade228eacb6e32b809afc17b6494b",
+      "currentPath": "tools/phoenix-ui/crates/skills/src/providers.rs",
+      "currentSha256": "4dd712b77d4995e4ae5fe522e281d2a9c4c265013e8fac8b16e1f9f36c7a56f7",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/tests/drift_ports_tests.rs",
+      "upstreamSha256": "08be5813afd3ea24e7686beb49f6c4501dfb0d72e3dd52c133ca23815f851db9",
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/drift_ports_tests.rs",
+      "currentSha256": "c30903d10b6b3b004a505668b31b39b77a114a8e82e707696bb0b69b3433915f",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/tests/hook_manifest_tests.rs",
+      "upstreamSha256": "d8aa7641baa29d5a438a7a891d45510e6cd04fcdd0c2fe18494908d22408b4af",
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/hook_manifest_tests.rs",
+      "currentSha256": "7ebdf34fe279ddb16286d03cc06cf2399c0cc0d4349b7ec0c4be8d3685c1ad21",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/tests/install_exec_bits_tests.rs",
+      "upstreamSha256": "9f52f8df732c78933636b9cf7ba764b843cc239fa3da8844f93debaf0c71ace5",
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/install_exec_bits_tests.rs",
+      "currentSha256": "492b76a4cb0d58592c4afd0a9bbe26130ef5441153ca360a66f412a2efe3c142",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/skills/tests/launcher_contract_tests.rs",
+      "upstreamSha256": "06e2220c3b17398f3577627857a4aba279ac27564546bec738aa71fc6f466a01",
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/launcher_contract_tests.rs",
+      "currentSha256": "ae03d19b04f74ba2ae682c774c6047f47c45f1153ccbe781230d070ba46a3cb6",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/xtask/Cargo.toml",
+      "upstreamSha256": "cc9178fe7de2cfb52b76ae0f4f369de9f0a50f25ccdf4267718ced5fa5badefe",
+      "currentPath": "tools/phoenix-ui/crates/xtask/Cargo.toml",
+      "currentSha256": "afc1ceff255cdd9aaab58d4e6f377f3c81c1bd9dc39484997b1e0fb5118e8914",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "crates/xtask/src/main.rs",
+      "upstreamSha256": "e6890dd28b1b9cb1109e0bc96d6d0bde04e0794525bf663eb8a12b6f26103891",
+      "currentPath": "tools/phoenix-ui/crates/xtask/src/main.rs",
+      "currentSha256": "9fc4d8d02c1e3c43974d6fac70bea254b1d9a386c141ebef572502553e3a784b",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "scripts/lib/skill-categories.js",
+      "upstreamSha256": "a8408aaffe99a6dfb084a18096b55da158b2a0c457f67e7a24598ed706e0e841",
+      "currentPath": "tools/phoenix-ui/scripts/lib/skill-categories.js",
+      "currentSha256": "ca960ab5f3c895fa01240bfa3b723c630d679ec9981214a81a3065852926fd49",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "scripts/lib/transformers/factory.js",
+      "upstreamSha256": "5108bc861b43169955f01f0bf54ec0a7419e6f6d13b9b6529f179acd71e19604",
+      "currentPath": "tools/phoenix-ui/scripts/lib/transformers/factory.js",
+      "currentSha256": "93c039f284d5bd90de4e8c8b363275a11861230a85b07da31551c1f2061adc46",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "scripts/lib/transformers/hooks.js",
+      "upstreamSha256": "88ed7eecf1ab48e42ce1bd68e5ad66d58b0a8debf2bf4878253edbba41edcaf3",
+      "currentPath": "tools/phoenix-ui/scripts/lib/transformers/hooks.js",
+      "currentSha256": "61c8bca60997245b8e1ba86a2921958e661ad7258f91172716c2529101bfdc45",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "scripts/lib/transformers/providers.js",
+      "upstreamSha256": "ba1b2aa774853c2095d404c60605d97c94c19c4812dd480872ebb6599d1a59dd",
+      "currentPath": "tools/phoenix-ui/scripts/lib/transformers/providers.js",
+      "currentSha256": "97ef7c8486c8520b839ea1d8bd17e7172e57f74f2fb72878a35912b0f9856b4d",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "scripts/lib/utils.js",
+      "upstreamSha256": "84bf5eb50235564dc0a15526ba7b83fa9c778ef8e05633481bf4ca96daff6c94",
+      "currentPath": "tools/phoenix-ui/scripts/lib/utils.js",
+      "currentSha256": "9240b7aae042bf1eefe9d11222b03bdb78ee8db658940041466582b861a391d1",
+      "change": "modified"
+    },
+    {
+      "upstreamPath": "skill/SKILL.src.md",
+      "upstreamSha256": "0333d85ba408d29c7748838762b6d1e0a211dec22cd7e78ed6db987d983e91d4",
+      "currentPath": "skills/phoenix-ui/src/SKILL.src.md",
+      "currentSha256": "cca9eeb11c60e8325d3ec591d37846e8254bdaa6865a9e0e987a8f7ef05a61b7",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/agents/impeccable-asset-producer.md",
+      "upstreamSha256": "7d42e5a14774927b214c2b664b961e56523f2851caa97fea3c16d48e280f6d5c",
+      "currentPath": "skills/phoenix-ui/src/subagents/phoenix-ui-asset-producer.md",
+      "currentSha256": "708e78afb4b6a6ce610079242ea6bb4333b2a459d517b0245c44491589a8a7f8",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/agents/impeccable-documenter.md",
+      "upstreamSha256": "7fbd353307a409ff72949d250ca735299004d83419b6190c6a3dd01203549ace",
+      "currentPath": "skills/phoenix-ui/src/subagents/phoenix-ui-documenter.md",
+      "currentSha256": "8dc340e528851d005e9fc5c5c3a67805af677644ae9eedcf6f9b5711efafb731",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/agents/impeccable-finish-reviewer.md",
+      "upstreamSha256": "df5848ee6513dd597fa0ebe38813dc834e89fbdbdd78c4e2470cfcaeaa46c382",
+      "currentPath": "skills/phoenix-ui/src/subagents/phoenix-ui-finish-reviewer.md",
+      "currentSha256": "599a84d9760a04cf5b7bd9bea4d3df8eec13f04c69d2ddad6b2a3c90f0f4d1f4",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/agents/impeccable-manual-edit-applier.md",
+      "upstreamSha256": "ffa2a8332db5fe0c6f3afe26b19530f4a1c493319ce06894a3e74524d7eb5713",
+      "currentPath": "skills/phoenix-ui/src/subagents/phoenix-ui-manual-edit-applier.md",
+      "currentSha256": "b70dd29cb9c3f05faa5304082f903be2e72ad2fadf462a9ccd6605cc70f64613",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/adapt.md",
+      "upstreamSha256": "fe0f1e0a642575737711ad93f22482b8469c021ffd587f94910893683cb8f316",
+      "currentPath": "skills/phoenix-ui/src/reference/adapt.md",
+      "currentSha256": "e23e011e791fd88645cdac99fae3f856a72b8772d3ad9ebb9aa17c315d67c8af",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/adapt.native.md",
+      "upstreamSha256": "96145c3a8904f251171bd1ffd64a0fa2311d052ee456f16eb5a9482fcc8768a0",
+      "currentPath": "skills/phoenix-ui/src/reference/adapt.native.md",
+      "currentSha256": "ffbcc3933911f556eed943c291fab078f63cd1621013aa921d891c087a7500ea",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/android.md",
+      "upstreamSha256": "9805ef30da85f08bfac5a2e07aad60f238d53e196e3a7d8858df7277a2181283",
+      "currentPath": "skills/phoenix-ui/src/reference/android.md",
+      "currentSha256": "9805ef30da85f08bfac5a2e07aad60f238d53e196e3a7d8858df7277a2181283",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/animate.md",
+      "upstreamSha256": "59f38d50c799aa47ecd7288c69dce0245d8c3e3e2368b29499d583996b5030b3",
+      "currentPath": "skills/phoenix-ui/src/reference/animate.md",
+      "currentSha256": "5fced1d23b0fba22b8128f9e470bf58dd37b133ee6625c48b22fd7a3fe840304",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/audit.md",
+      "upstreamSha256": "51acdbb8b7093f4cd394b2d7a17f0410f45387bf96926b37ca21402485bc5785",
+      "currentPath": "skills/phoenix-ui/src/reference/audit.md",
+      "currentSha256": "980e06394b1e87ffb9330f3fd5a2e16fe8bf841f5be7e3dfe83e791ec2502f0f",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/audit.native.md",
+      "upstreamSha256": "c2f18f1ed206de24fe97ec513655e5bfc867691c1f766ab62f21b06b2fcdd4bc",
+      "currentPath": "skills/phoenix-ui/src/reference/audit.native.md",
+      "currentSha256": "290b31d44ce4feb0d77b7489a78283486f5e19e02b0985c61ef637e991a5b48a",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/bolder.md",
+      "upstreamSha256": "a4e4d986f74ef5f3c8218dfcfd5b04fe103b47182cf1e16aeb979e5703d5cd87",
+      "currentPath": "skills/phoenix-ui/src/reference/bolder.md",
+      "currentSha256": "3bd15cc44345dc28d73bd2749cc0f152a21e54523f6298c8a6583da32a425076",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/clarify.md",
+      "upstreamSha256": "4738e125835bd6c166aec2622977c9bc59bada52aaeb186585ed38b3900860b5",
+      "currentPath": "skills/phoenix-ui/src/reference/clarify.md",
+      "currentSha256": "9fb3dd787f17f6867b0a2aa62a5786fa32bd0712d6c5b24d7991aa6699aad0c6",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/colorize.md",
+      "upstreamSha256": "dcc0c3ebb76bd22c543f45d73c283e3890e5b8a44eb5053ca2f7fdd425635c32",
+      "currentPath": "skills/phoenix-ui/src/reference/colorize.md",
+      "currentSha256": "c42a0741e55d2cdf514e78c2e1d54926b9aa2edda050dd038cdcd649c7220c6a",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/component-review.md",
+      "upstreamSha256": "71df1f47462bc5a924899b742ab3c0ba55cc00d7ec436d4504c7bef88b58a0a7",
+      "currentPath": "skills/phoenix-ui/src/reference/component-review.md",
+      "currentSha256": "e38faea1699872d4052c5af0f20ca35cde2d5cac4da3b8f9cc25593a8018e154",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/craft-floor.md",
+      "upstreamSha256": "d31766f5d4d1e9e2f510fa7b9214f57b678ece687ede90f3deb0973640d672a9",
+      "currentPath": "skills/phoenix-ui/src/reference/craft-floor.md",
+      "currentSha256": "d31766f5d4d1e9e2f510fa7b9214f57b678ece687ede90f3deb0973640d672a9",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/craft.md",
+      "upstreamSha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+      "currentPath": "skills/phoenix-ui/src/reference/craft.md",
+      "currentSha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/critique.md",
+      "upstreamSha256": "8d2cdf4f583a0caf7685620069069354b4fb81582fb63c349783298454140a0e",
+      "currentPath": "skills/phoenix-ui/src/reference/critique.md",
+      "currentSha256": "92187ae069bc14b5f3f5bc215465d02a7854474e2eebb7e049f6f13d09eb5da0",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/delight.md",
+      "upstreamSha256": "8f157ae861c578d54b2710ea200a6ba2253bd36ab68b6b4c4b880875bd0a415b",
+      "currentPath": "skills/phoenix-ui/src/reference/delight.md",
+      "currentSha256": "a8faac8146769eb30e60d1dd52f0a627b0627747418d0196785476027b133fc5",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/distill.md",
+      "upstreamSha256": "048e5a7671024592cba6cd4ede70b6c535db0c1be84d6837638e40f51fb3fad7",
+      "currentPath": "skills/phoenix-ui/src/reference/distill.md",
+      "currentSha256": "ea186b1e88fba2bd97a541b7e2606e6c8cb459b30809bc514ded55cb00138c36",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/doctor.md",
+      "upstreamSha256": "ead19cdbb7015d825494ae772bc3d053c5a639a5b014016f65209af28ec29831",
+      "currentPath": "skills/phoenix-ui/src/reference/doctor.md",
+      "currentSha256": "25eccaa5d6fa3e09296b03bb199d2d96e3fef368ae6ce7866c336a141870a07d",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/document.md",
+      "upstreamSha256": "aca6d5ea0770131b8f97a3feb68e1bd3cc536b1ef2e7d05bb0c2c1c9c96c68d3",
+      "currentPath": "skills/phoenix-ui/src/reference/document.md",
+      "currentSha256": "9e4fbe137148447e525faf8f6c7f8176a52315a610bf3957960cad1f326e8e56",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/extract.md",
+      "upstreamSha256": "da8a999c4b16fee5ddd2f532a74ffab50ef26085311eeb6461689acb8e22c5ea",
+      "currentPath": "skills/phoenix-ui/src/reference/extract.md",
+      "currentSha256": "da8a999c4b16fee5ddd2f532a74ffab50ef26085311eeb6461689acb8e22c5ea",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/generate.md",
+      "upstreamSha256": "4cc61a1b1a55ce3fec79ca03017c437a0c8cd4e4875706e31b5ebbecd3b75ad0",
+      "currentPath": "skills/phoenix-ui/src/reference/generate.md",
+      "currentSha256": "4a9ad5038c3fc16568295f4660270d534fdf1f44d9282817936f20688cdd600b",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/harden.md",
+      "upstreamSha256": "6674a6fc1eb681f2ad266dc0a3a71cec29dc4dcd3a1ff91195d2302582fa7c58",
+      "currentPath": "skills/phoenix-ui/src/reference/harden.md",
+      "currentSha256": "fc8b81a14477553e3277f8a34fb2ee1fefdb915470b407753e70ccd57a96e69f",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/hooks.md",
+      "upstreamSha256": "08dd42497638e4d099202e946f721fcc62a7b7e5b51c71bd104bb5880653c575",
+      "currentPath": "skills/phoenix-ui/src/reference/hooks.md",
+      "currentSha256": "2deec04f928e7aa37a425bb22f5da8b5c4793255c338f58523938bf2258956fc",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/init.md",
+      "upstreamSha256": "085d1ab47655961c7494f6503added189b821b38cfec8e0fd31f44d9f9a8a8e5",
+      "currentPath": "skills/phoenix-ui/src/reference/init.md",
+      "currentSha256": "b82ae7ab2245a3a8bd71e9843d5a2c956616758469eaaf2cc652d99473f1730f",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/ios.md",
+      "upstreamSha256": "43e958203ba86ab1527afcfa63df50a47c8b9448dadf4f6e338a9b8be8538648",
+      "currentPath": "skills/phoenix-ui/src/reference/ios.md",
+      "currentSha256": "43e958203ba86ab1527afcfa63df50a47c8b9448dadf4f6e338a9b8be8538648",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/layout.md",
+      "upstreamSha256": "14ba132b6168bf0a7498f8c3fbbb41b73ff704da5dc3688fd842807446e54a05",
+      "currentPath": "skills/phoenix-ui/src/reference/layout.md",
+      "currentSha256": "15a44500ba6cd0c634b7f34cfbe454a6c9106dc664f81ef5c41f53a104894b47",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/live-setup.md",
+      "upstreamSha256": "bd50117a3a0c25a59445ffa561ecdfc7ffc01c5aa16a059270b4164181ea53fa",
+      "currentPath": "skills/phoenix-ui/src/reference/live-setup.md",
+      "currentSha256": "f032d85939ecf650978843d80c32d74c958e7d7ae1c5b0d3f30255ea212e674c",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/live.md",
+      "upstreamSha256": "a294fee3d7ad24ace99017e616cf37c6a87f0e5ba2fd7c5dcbd8930188ced0dd",
+      "currentPath": "skills/phoenix-ui/src/reference/live.md",
+      "currentSha256": "6052b7189e19b124092885c970db2a0be4699e57003229e38c11a0f8921e5f70",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/mode-operate.md",
+      "upstreamSha256": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+      "currentPath": "skills/phoenix-ui/src/reference/mode-operate.md",
+      "currentSha256": "6d891370db30e6adf6bc77f6c72a45e4d35517783672bdfe2b2cc6e112fd65a0",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/mode-persuade.md",
+      "upstreamSha256": "b3f8b39cbf89392b62c07298361fb2a7e8e0b4ef13bbb38bac974ccd8fd835fd",
+      "currentPath": "skills/phoenix-ui/src/reference/mode-persuade.md",
+      "currentSha256": "380c2640be0218aaf584511ef465f08816a394ab0e718ed30688a2881da410a9",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/mode-read.md",
+      "upstreamSha256": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+      "currentPath": "skills/phoenix-ui/src/reference/mode-read.md",
+      "currentSha256": "88f76c1f63986918f6fba432b420fd4c44e7464fe2208858bc3042b290dd285b",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/new-work.md",
+      "upstreamSha256": "851924869eab4dc3bbe6d44ab73bc94f4516d0733dc7119f28b7aedd7a43f70b",
+      "currentPath": "skills/phoenix-ui/src/reference/new-work.md",
+      "currentSha256": "f4039f08f929914c2f736e35820dee72c5da64911d5a80ee15af8be32212548f",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/onboard.md",
+      "upstreamSha256": "0d871444769f48a86db68b8b480bb6bfa61bef42d3784e65c248d7e5a555a085",
+      "currentPath": "skills/phoenix-ui/src/reference/onboard.md",
+      "currentSha256": "9e84ab8d41799fecabfa1177ebbc82ab6f40e803434ba91843c6b1634d072298",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/operate.md",
+      "upstreamSha256": "e5bf4980c547e60b091f82f38d0eec4cc3ab85610b4b15ec8f1d86584f9eb404",
+      "currentPath": "skills/phoenix-ui/src/reference/operate.md",
+      "currentSha256": "e5bf4980c547e60b091f82f38d0eec4cc3ab85610b4b15ec8f1d86584f9eb404",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/optimize.md",
+      "upstreamSha256": "197aa00aba42c85edf4cea25c4b79f4e12f2425454f6cd307f3d1fddfbd11ffd",
+      "currentPath": "skills/phoenix-ui/src/reference/optimize.md",
+      "currentSha256": "1ca5519058f00655656bc50f4c87d68389a3a3190e257cc414820fe3fc1b94c6",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/overdrive.md",
+      "upstreamSha256": "0b6612c02d6fb7f737b9110f019c3e5548656f0ea7526353d062d3b107d61300",
+      "currentPath": "skills/phoenix-ui/src/reference/overdrive.md",
+      "currentSha256": "0b6612c02d6fb7f737b9110f019c3e5548656f0ea7526353d062d3b107d61300",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/polish.md",
+      "upstreamSha256": "c504e12ea076fd1a57b8c9ece79fbb532c54226b2b6298c5c62fa889ae1dd34d",
+      "currentPath": "skills/phoenix-ui/src/reference/polish.md",
+      "currentSha256": "ba927442b6e817bc1c3a88e83c28674a66f6b1fab1bb254bca3c7e9bf77175ab",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/quieter.md",
+      "upstreamSha256": "daf4438c4cdfba62d8e663567f6a23cc3f6471ba5dea67994aa6b312e8f7d721",
+      "currentPath": "skills/phoenix-ui/src/reference/quieter.md",
+      "currentSha256": "a58a99065374a72eb1cf9fae4410f590bad0371f25d2cbdeec6265a448b69e90",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/region-map.md",
+      "upstreamSha256": "d92168addd0bf7ff839304e55cd496fe89a60b4e75f08885260d021176017616",
+      "currentPath": "skills/phoenix-ui/src/reference/region-map.md",
+      "currentSha256": "5706fca9c6e999ac08b72bcdb9ad8b76acc1eae82fea8e101eaf392f8c5cb493",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/routing.md",
+      "upstreamSha256": "051540914d74dd64608a0f455c7135e5e6d47948c756290883501f01b6f3cd7d",
+      "currentPath": "skills/phoenix-ui/src/reference/routing.md",
+      "currentSha256": "c9c07dae62459c9cb68a3d6a0025870d14a2fa6d2158d46bb45da177c0346531",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/shape.md",
+      "upstreamSha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+      "currentPath": "skills/phoenix-ui/src/reference/shape.md",
+      "currentSha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/reference/typeset.md",
+      "upstreamSha256": "bf0259f5b8363d09591885ca6b27ac97bbdf754c130fb2799b949d783a97186b",
+      "currentPath": "skills/phoenix-ui/src/reference/typeset.md",
+      "currentSha256": "ee5e2daff090dfbcfafca4e0fa17a9fe8551a14a389503871c42bf122a634356",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/reference/visualize.md",
+      "upstreamSha256": "50fe04d94b9e86c7eb44c7fe186192a092b2cd6c189d21847a4ae7342376bf0f",
+      "currentPath": "skills/phoenix-ui/src/reference/visualize.md",
+      "currentSha256": "972c7a0552feaf1175928ecb077a881ef538cf76dfed091b6374277e842d2c0d",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/VERSION",
+      "upstreamSha256": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+      "currentPath": "skills/phoenix-ui/src/scripts/VERSION",
+      "currentSha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/command-metadata.json",
+      "upstreamSha256": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+      "currentPath": "skills/phoenix-ui/src/scripts/command-metadata.json",
+      "currentSha256": "fcab887ef557cc74babd484ddd764f36ab04fa2d8251d440d93f6018239b05fe",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/data/font-index-failures.json",
+      "upstreamSha256": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+      "currentPath": "skills/phoenix-ui/src/scripts/data/font-index-failures.json",
+      "currentSha256": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/scripts/data/font-index.json",
+      "upstreamSha256": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+      "currentPath": "skills/phoenix-ui/src/scripts/data/font-index.json",
+      "currentSha256": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+      "change": "relocated"
+    },
+    {
+      "upstreamPath": "skill/scripts/impeccable",
+      "upstreamSha256": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+      "currentPath": "skills/phoenix-ui/src/scripts/phoenix-ui",
+      "currentSha256": "ce73e93d7836ca153511f15f2cf174f0849c6d6f728fe43fb864392b1dd610a2",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/impeccable.cmd",
+      "upstreamSha256": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+      "currentPath": "skills/phoenix-ui/src/scripts/phoenix-ui.cmd",
+      "currentSha256": "6ac8e122e1d1a3962edf70f9b5c8078fe398bdcecb2737746f3875a9401bcfe3",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/live-browser-dom.js",
+      "upstreamSha256": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+      "currentPath": "skills/phoenix-ui/src/scripts/live-browser-dom.js",
+      "currentSha256": "f56e012ae26099e3d87f3bb974fe0772b1b22b5f1b3786e24718a15e28161ded",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/live-browser-ignores.js",
+      "upstreamSha256": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+      "currentPath": "skills/phoenix-ui/src/scripts/live-browser-ignores.js",
+      "currentSha256": "4239b6c7f839cdbcfbc518093096446b3df8dac1dd76b960472d0b991d009e80",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/live-browser-session.js",
+      "upstreamSha256": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+      "currentPath": "skills/phoenix-ui/src/scripts/live-browser-session.js",
+      "currentSha256": "25d382795cdbb9b5fe91ddfde254140830d0227655d5e73eb286bda61a383e11",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/live-browser.js",
+      "upstreamSha256": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+      "currentPath": "skills/phoenix-ui/src/scripts/live-browser.js",
+      "currentSha256": "ebc4b17746d31f078ded39664ab9850118a38c10af53f1c2ab13bfeca97746ea",
+      "change": "relocated-and-modified"
+    },
+    {
+      "upstreamPath": "skill/scripts/modern-screenshot.umd.js",
+      "upstreamSha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
+      "currentPath": "skills/phoenix-ui/src/scripts/modern-screenshot.umd.js",
+      "currentSha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
+      "change": "relocated"
+    }
+  ],
+  "addedSources": [
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/data/catalog/composition-ingredients.json",
+      "currentSha256": "ce19855b842a453973bff4eab9614bcfe502092dc9b2f4238dce27038e2d15d1"
+    },
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/data/catalog/composition-reviews.json",
+      "currentSha256": "ba44943c1d2ec8b8bdc4c1cfbb3733d5fb81f6caa2187432bba3dd50c4b95bf8"
+    },
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/data/catalog/concept-ingredients.json",
+      "currentSha256": "716cf6508e37f3ce4476551db7b20b7c590f1b739f50114c4f5216f886ed1366"
+    },
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/data/catalog/concept-reviews.json",
+      "currentSha256": "983ffcb01d0b7ecc6df4879ab227a124bfffab4bc0d020f267f1943026603a9b"
+    },
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs",
+      "currentSha256": "59363f6ef3ef9da1804119ac3c9e7310dce0e39f1cff6e1ade4f1a284a751d1d"
+    },
+    {
+      "currentPath": "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs",
+      "currentSha256": "24499ce1150388cb425beee4d8a97f3fdf22c98206506fe1e1ef0906c55fa748"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/build-tool-assets.json",
+      "currentSha256": "43a72c8ef9edd7b5e3dc0fa25a577829903b51a24062ba2efa69c3061acf79f6"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/build-tools.lock.json",
+      "currentSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/bun.lock",
+      "currentSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/context/src/concept_seed/local_catalog_tests.rs",
+      "currentSha256": "2fdedad74a9b035ad1d81df2614b639f62405210036e68830eb5ddef81bc915c"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/context/tests/pin_phoenix.rs",
+      "currentSha256": "9d734dfb1b580f4568c61a09be45811d966f5d062cefd6c79ab8c7ad2ea94962"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/hook/src/missing_launcher.cjs",
+      "currentSha256": "12c0b0b3ca3fa4fd7c601d9a6ff71a80d1bf71cc30b72be637803604146ae95a"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/hook/tests/launcher_contract.rs",
+      "currentSha256": "5a439c52aa51cd5a52e62e3add2b595fe8e5c84478423502c1d8b43169a4c0cb"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/live/assets/bundle-inputs.json",
+      "currentSha256": "675d572747331427e3e048c14b016b6ef820e0ff1f11ce6e5269816a5b920774"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",
+      "currentSha256": "d850f6748f42109d1882ee82091ba48a9b1381aeb1e839a06a625993aa1604fa"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/live/tests/server_info.rs",
+      "currentSha256": "3b456f40851882a24ce0da1879aad44c392de9899bbd793515d69612fb41adc9"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/skills/src/local_bundle.rs",
+      "currentSha256": "dfba809a150bba75a6b6fef59589d674b3a2c48cbced2f2514a07d40114a7c9c"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/local_bundle_tests.rs",
+      "currentSha256": "f2126604bb553db11d3e7bb0d3c2631ec2826d50b01e8044010da4aa3294b23a"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/skills/tests/support/mod.rs",
+      "currentSha256": "c3bd1cfc33bea63d956a8e5283323071d2e45c45eec4db672f16928bcf39dc49"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/wasm/examples/replay_vectors.rs",
+      "currentSha256": "ba99f302d1d7e1da9e5c2757dd5a2667a101dbd38378ae189a2a7aecb1b20fd7"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/xtask/src/freshness.rs",
+      "currentSha256": "fbc5125aa2cab5a0cafa64f2d1c4a5936bce6611d550b09291436144bc37d489"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/deny.toml",
+      "currentSha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/mise.toml",
+      "currentSha256": "c42169ddfac0679b411e32b934cc41f7ad86c0e5423bb2b77889819e78ca1093"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/package.json",
+      "currentSha256": "506b1ca8a314097b80bae1a12b5cfa64f7876c1b05e7dfac2e63155962f03a34"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/scripts/render.mjs",
+      "currentSha256": "9bdf7db0fd2d89573de663892f5ca30d70dc7cdfff818133cc5f1608ff6546ea"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/fixtures/source-root/.phoenix-ui/config.json",
+      "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+      "upstreamPath": ".impeccable/config.json",
+      "license": "Apache-2.0",
+      "currentSha256": "71ea4290dd08c6d69e2224365322259f091b187debdce17a0e84f9b6d2773585"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/fixtures/source-root/.phoenix-ui/design.json",
+      "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+      "upstreamPath": ".impeccable/design.json",
+      "license": "Apache-2.0",
+      "currentSha256": "e196edb23b13568cbbb9c1deee829eba076b87909b9855bf93c7f5091ca2dd30"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/fixtures/source-root/DESIGN.md",
+      "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+      "upstreamPath": "DESIGN.md",
+      "license": "Apache-2.0",
+      "currentSha256": "372855ea24718145e180f017c98444e015dd83f846a9fdd763f38ef49d9eb605"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/fixtures/source-root/package.json",
+      "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+      "upstreamPath": "package.json",
+      "license": "Apache-2.0",
+      "currentSha256": "2c1e243a9850bf6e392dc7a5c34802372231a18f8b1eb9dd8cb33bb7fb60bd9c"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/network.mjs",
+      "currentSha256": "eb612f55cd38bd8d3ae616419e52d448215dde58b95431d9aebc68b092af0acc"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
+      "currentSha256": "523000de9daec966e42e1d7b8c5e87ee21c26f92332b5d43a793ccadc6f9b768"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
+      "currentSha256": "a7975467169f281ba75176dfacf1f6a0ea1d7ffdfd4d0e83f2abcabc9b5a1946"
+    }
+  ],
+  "verification": {
+    "sourceHashes": "verified-current-worktree",
+    "runtimeTests": "passed-darwin-arm64: npm run test:phoenix, 865 Rust tests, lint baseline, 8474 vectors and strict 860 oracle; inherited legacy JS differential and production reviewed ZIP not verified; see docs/plan/phoenix-ui.records/M2.md",
+    "browserAndNativePlatforms": "darwin-arm64 Chrome asset/component/network scopes passed; IME/Safari, other native platforms and provider sessions not verified"
+  }
+}

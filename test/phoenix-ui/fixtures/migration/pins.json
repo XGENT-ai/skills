@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+  "skillVersion": "4.5.0",
+  "engineVersion": "0.1.11",
+  "sourcePath": "crates/context/src/pin.rs",
+  "command": "polish",
+  "templates": {
+    "skill": "---\nname: polish\ndescription: \"Performs a final quality pass fixing alignment, spacing, consistency, and micro-detail issues before shipping. Use when the user mentions polish, finishing touches, pre-launch review, something looks off, or wants to go from good to great.\"\nargument-hint: \"[target]\"\nuser-invocable: true\n---\n\n<!-- impeccable-pinned-skill -->\n\nThis is a pinned shortcut for `/impeccable polish`.\n\nInvoke /impeccable polish, passing along any arguments provided here, and follow its instructions.\n",
+    "codexSkill": "---\nname: polish\ndescription: \"Performs a final quality pass fixing alignment, spacing, consistency, and micro-detail issues before shipping. Use when the user mentions polish, finishing touches, pre-launch review, something looks off, or wants to go from good to great.\"\nmetadata:\n  argument-hint: \"[target]\"\n---\n\n<!-- impeccable-pinned-skill -->\n\nThis is a pinned shortcut for `$impeccable polish`.\n\nInvoke $impeccable polish, passing along any arguments provided here, and follow its instructions.\n",
+    "opencodeCommand": "---\ndescription: \"Performs a final quality pass fixing alignment, spacing, consistency, and micro-detail issues before shipping. Use when the user mentions polish, finishing touches, pre-launch review, something looks off, or wants to go from good to great.\"\nagent: build\nsubtask: true\n---\n\n<!-- impeccable-pinned-command -->\n\nLoad the `impeccable` skill via the skill tool (name: \"impeccable\"), then run `<skill-base-dir>/scripts/impeccable context`, then load `<skill-base-dir>/reference/polish.md` and follow it. `<skill-base-dir>` is the skill's base directory as reported by the skill tool response; substitute the actual absolute path before running or reading anything.\n\n$ARGUMENTS\n"
+  }
+}

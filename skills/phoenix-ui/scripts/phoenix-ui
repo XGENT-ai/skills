@@ -1,0 +1,5 @@
+#!/bin/sh
+# Generated provider copies use the local Node launcher; ordinary runs do not install.
+set -eu
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec node "$dir/phoenix-launcher.cjs" "$@"

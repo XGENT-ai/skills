@@ -1,0 +1,123 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+
+describe('skill reference authoring contracts', () => {
+  it('keeps direction contracts in development-only surface briefs', () => {
+    const newWork = readFileSync(join(ROOT, 'skill/reference/new-work.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const recordDecision = newWork.match(/## 5\. Record the decision\n([\s\S]*?)\n## 6\./)?.[1] ?? '';
+
+    assert.match(recordDecision, /development-only contract/);
+    assert.match(recordDecision, /under `## Direction contract` in the relevant surface brief/);
+    assert.match(recordDecision, /read the brief once more/i);
+    assert.match(recordDecision, /all six contract blocks and the seed key/);
+
+    for (const block of ['THESIS', 'OWN-WORLD', 'STORY', 'FIRST VIEWPORT', 'FORM', 'FINISH']) {
+      assert.match(recordDecision, new RegExp(`${block}:`));
+    }
+
+    for (const browserArtifact of [
+      /HTML or framework comments/,
+      /hidden DOM/,
+      /<template>/,
+      /`data-\*` attributes/,
+      /serialized props or state/,
+      /React Server Component payloads/,
+      /client bundles/,
+      /metadata or JSON-LD/,
+      /accessibility-only text/,
+    ]) {
+      assert.match(recordDecision, browserArtifact);
+    }
+
+    assert.match(recordDecision, /Never copy the direction contract into implementation source or any browser-delivered artifact/);
+    assert.doesNotMatch(newWork, /contract in the artifact's opening comment/);
+    assert.doesNotMatch(newWork, /survives the production build/);
+    assert.doesNotMatch(newWork, /grep the built output/);
+    assert.doesNotMatch(newWork, /emitted markup/);
+    assert.doesNotMatch(newWork, /first child of the document's body/);
+  });
+
+  it('keeps reduced-motion guidance on the animation build path', () => {
+    const animate = readFileSync(join(ROOT, 'skill/reference/animate.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const accessibility = animate.match(/## Accessibility and control\n([\s\S]*?)\n## Verify/)?.[1] ?? '';
+    const verify = animate.match(/## Verify\n([\s\S]*?)(?:\n## |$)/)?.[1] ?? '';
+
+    assert.match(accessibility, /prefers-reduced-motion/);
+    assert.match(accessibility, /intentional alternative/);
+    assert.match(accessibility, /not disabling all motion/);
+    assert.match(verify, /reduced[- ]motion/i);
+  });
+
+  it('uses an exact content fingerprint before inheriting a critique snapshot', () => {
+    const critique = readFileSync(join(ROOT, 'skill/reference/critique.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const polish = readFileSync(join(ROOT, 'skill/reference/polish.md'), 'utf-8').replace(/\r\n?/g, '\n');
+
+    assert.match(critique, /records an exact content fingerprint/);
+    assert.match(polish, /compares the file's exact current content fingerprint/);
+    assert.match(polish, /Unchanged staged, unstaged, or untracked content remains current/);
+    assert.match(polish, /any byte change, deletion, or replacement with a non-file closes the backlog/);
+    assert.match(polish, /latest "<resolved target>" --json/);
+    assert.match(polish, /exact `snapshot_file` identity/);
+    assert.match(polish, /close "<resolved target>" "<snapshot_file returned by latest>"/);
+    assert.match(polish, /if a newer critique landed meanwhile, its backlog stays live/);
+    assert.doesNotMatch(polish, /git status|git log/);
+  });
+
+  it('routes visual decision fallback through wait capability and start failure', () => {
+    const newWork = readFileSync(join(ROOT, 'skill/reference/new-work.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const visualDecisionPage = newWork.match(
+      /A harness that can leave a shell blocked[\s\S]*?<!-- rule:skill-visual-decision-page -->/,
+    )?.[0] ?? '';
+
+    assert.match(visualDecisionPage, /cannot hold a blocking `--wait`/);
+    assert.match(visualDecisionPage, /without starting the page/);
+    assert.match(visualDecisionPage, /structured tool/);
+    assert.match(visualDecisionPage, /first reply/);
+    assert.match(visualDecisionPage, /exit code 2 from starting it/);
+    assert.match(visualDecisionPage, /wait check before starting/);
+    assert.doesNotMatch(
+      visualDecisionPage,
+      /only exit code 2 from starting it routes the decision to the structured tool; that exit is the fallback/,
+    );
+  });
+
+  it('keeps touch-gesture verification in the adapt, audit, and harden references', () => {
+    const adapt = readFileSync(join(ROOT, 'skill/reference/adapt.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const audit = readFileSync(join(ROOT, 'skill/reference/audit.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const harden = readFileSync(join(ROOT, 'skill/reference/harden.md'), 'utf-8').replace(/\r\n?/g, '\n');
+    const verifyAdaptations = adapt.match(/## Verify Adaptations\n([\s\S]*?)\n## /)?.[1] ?? '';
+    const responsive = audit.match(/### 4\. Responsive Design\n([\s\S]*?)\n### 5\./)?.[1] ?? '';
+    const edgeCases = harden.match(/### Edge Cases & Boundary Conditions\n([\s\S]*?)\n### /)?.[1] ?? '';
+    const verifyHardening = harden.match(/## Verify Hardening\n([\s\S]*?)(?:\n## |$)/)?.[1] ?? '';
+
+    assert.match(verifyAdaptations, /\*\*Primary gesture\*\*/);
+    assert.match(verifyAdaptations, /produced the evidence/);
+    assert.match(verifyAdaptations, /verify layout, never a gesture/);
+    assert.match(verifyAdaptations, /reported gap, not a blocker/);
+    assert.match(verifyAdaptations, /\*\*Scroll across it\*\*[\s\S]*without activating it/);
+    assert.match(responsive, /\*\*Broken touch interaction\*\*/);
+    assert.match(responsive, /what stayed untested/);
+    assert.match(responsive, /Exercise the gesture when a browser tool can synthesize touch/);
+    assert.match(edgeCases, /\*\*Interrupted gestures\*\*[\s\S]*works without a reload/);
+    assert.match(edgeCases, /clear the dragging state and release capture/);
+    assert.match(verifyHardening, /\*\*Interrupted gestures\*\*/);
+  });
+});
+
+describe('mode rule files', () => {
+  it('each shipped mode file has exactly the Directions and Comps sections the engine prints', () => {
+    for (const mode of ['persuade', 'operate', 'read']) {
+      const text = readFileSync(join(ROOT, `skill/reference/mode-${mode}.md`), 'utf-8').replace(/\r\n?/g, '\n');
+      const headings = text.split('\n').filter((line) => line.startsWith('## '));
+      assert.deepEqual(headings, ['## Directions', '## Comps'], `mode-${mode}.md`);
+      for (const section of text.split(/^## (?:Directions|Comps)\n/m).slice(1)) {
+        assert.ok(section.trim().length > 200, `mode-${mode}.md has an empty or stub section`);
+      }
+    }
+  });
+});

@@ -1,0 +1,208 @@
+name: Phoenix UI
+
+on:
+  workflow_dispatch:
+  push:
+    paths: &phoenix_paths
+      - '.github/workflows/phoenix-ui.yml'
+      - 'mise.toml'
+      - 'rust-toolchain.toml'
+      - 'package.json'
+      - 'scripts/*phoenix*.mjs'
+      - 'scripts/run-tests.mjs'
+      - 'bin/phoenix-ui.js'
+      - 'tools/phoenix-ui/**'
+      - 'skills/phoenix-ui/**'
+      - 'vendor/phoenix-ui/**'
+      - 'test/**'
+  pull_request:
+    paths: *phoenix_paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phoenix-ui-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: darwin-arm64
+            runner: macos-15
+            rust-target: aarch64-apple-darwin
+          - platform: darwin-x64
+            runner: macos-15-intel
+            rust-target: x86_64-apple-darwin
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            rust-target: x86_64-unknown-linux-gnu
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            rust-target: aarch64-unknown-linux-gnu
+          - platform: windows-x64
+            runner: windows-2022
+            rust-target: x86_64-pc-windows-msvc
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/phoenix-ui
+    env:
+      MISE_AUTO_INSTALL: 'false'
+      MISE_EXEC_AUTO_INSTALL: 'false'
+      PHOENIX_UI_BUILD_TARGET: ${{ matrix.rust-target }}
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      # Preserve exact lock and source bytes on Windows without modifying git's
+      # global configuration. Applies to checkout and the RustSec clone.
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '25.2.1'
+          package-manager-cache: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: '2026.9.12'
+          working_directory: tools/phoenix-ui
+          install: false
+          cache: false
+          add_shims_to_path: false
+          env: false
+          export_path: false
+          persist_github_token: false
+      - name: Explicit online preparation
+        id: prepare
+        run: node ../../scripts/prepare-phoenix-ui.mjs --prepare
+      - name: Audit prepared dependencies offline
+        id: audit
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write
+      # Check committed evidence before platform builds replace VERSION/ENGINE.
+      - name: Lightweight repository tests
+        id: light
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: mise exec --no-deps -- npm --prefix ../.. test
+      - name: Build native and WASM from the prepared cache
+        id: build
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: mise exec --no-deps -- node ../../scripts/build-phoenix-ui.mjs --development --output-dir ../../local/phoenix-ui/ci-release/${{ matrix.platform }}
+      - name: Native and portable Node runtime smoke
+        id: smoke
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: mise exec --no-deps -- node ../../scripts/smoke-phoenix-ui.mjs --release-dir ../../local/phoenix-ui/ci-release/${{ matrix.platform }} --target ${{ matrix.platform }} --stage-runtime
+      - name: Full Phoenix runtime tests offline
+        id: runtime
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: mise exec --no-deps -- npm --prefix ../.. run test:phoenix
+      - name: Record actual phase outcomes
+        if: always()
+        env:
+          PHOENIX_PREPARE_RESULT: ${{ steps.prepare.outcome }}
+          PHOENIX_AUDIT_RESULT: ${{ steps.audit.outcome }}
+          PHOENIX_BUILD_RESULT: ${{ steps.build.outcome }}
+          PHOENIX_SMOKE_RESULT: ${{ steps.smoke.outcome }}
+          PHOENIX_LIGHT_RESULT: ${{ steps.light.outcome }}
+          PHOENIX_RUNTIME_RESULT: ${{ steps.runtime.outcome }}
+          PHOENIX_TARGET: ${{ matrix.platform }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const phases = Object.fromEntries(['prepare', 'audit', 'build', 'smoke', 'light', 'runtime'].map(name => [name, process.env[`PHOENIX_${name.toUpperCase()}_RESULT`]]));
+          const record = {schemaVersion: 1, workflowRun: process.env.GITHUB_RUN_ID, sourceCommit: process.env.GITHUB_SHA, target: process.env.PHOENIX_TARGET, phases, browserAcceptance: 'not-run', providerSessionAcceptance: 'not-run', distribution: 'development', publication: 'not-requested'};
+          fs.mkdirSync('../../local/phoenix-ui/ci-prepare', {recursive: true});
+          fs.writeFileSync(`../../local/phoenix-ui/ci-prepare/${record.target}-ci-results.json`, JSON.stringify(record, null, 2) + '\n');
+          NODE
+      - name: Upload development artifact and failure evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: phoenix-ui-${{ matrix.platform }}
+          path: local/phoenix-ui/ci-release/${{ matrix.platform }}/
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true
+      - name: Upload preparation and phase evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: phoenix-ui-${{ matrix.platform }}-evidence
+          path: local/phoenix-ui/ci-prepare/
+          if-no-files-found: error
+          retention-days: 14
+
+  windows-arm-fallback:
+    name: Windows ARM x64 fallback smoke
+    needs: native
+    runs-on: windows-11-arm
+    timeout-minutes: 15
+    env:
+      CARGO_NET_OFFLINE: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '25.2.1'
+          architecture: arm64
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: phoenix-ui-windows-x64
+          path: local/phoenix-ui/windows-arm-fallback
+      - name: Verify x64 digest and execute the fallback on ARM64
+        run: node scripts/smoke-phoenix-ui.mjs --release-dir local/phoenix-ui/windows-arm-fallback --target windows-x64 --windows-arm-fallback
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: phoenix-ui-windows-arm-fallback-evidence
+          path: local/phoenix-ui/windows-arm-fallback/windows-arm-fallback-smoke.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  node18-consumer:
+    name: Node 18 portable consumer smoke
+    needs: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CARGO_NET_OFFLINE: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Consumption floor only; maintenance still uses locked Node 25.2.1.
+          node-version: '18.20.8'
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: phoenix-ui-linux-x64
+          path: local/phoenix-ui/node18-consumer
+      - name: Run portable local installation and runtime on Node 18
+        run: node scripts/smoke-phoenix-ui.mjs --release-dir local/phoenix-ui/node18-consumer --target linux-x64
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: phoenix-ui-node18-consumer-evidence
+          path: local/phoenix-ui/node18-consumer/runtime-smoke-node18.json
+          if-no-files-found: warn
+          retention-days: 14

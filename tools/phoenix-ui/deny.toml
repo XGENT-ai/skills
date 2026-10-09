@@ -1,0 +1,35 @@
+# Network preparation is explicit; check-phoenix-deps.mjs always uses --frozen.
+[advisories]
+db-urls = ["https://github.com/RustSec/advisory-db"]
+db-path = "$PHOENIX_ADVISORY_DB_ROOT"
+yanked = "deny"
+unmaintained = "all"
+unsound = "all"
+maximum-db-staleness = "P90D"
+ignore = []
+unused-ignored-advisory = "deny"
+
+[licenses]
+confidence-threshold = 0.95
+include-dev = true
+allow = [
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "CC0-1.0",
+  "BSL-1.0",
+  # Source URLs/checksums and the complete terms are carried in THIRD-PARTY.json.
+  # Distribution must pass check-phoenix-deps.mjs --distribution-dir.
+  "MPL-2.0",
+  "CDLA-Permissive-2.0",
+]
+unused-allowed-license = "allow"
+exceptions = []
+
+[licenses.private]
+ignore = false

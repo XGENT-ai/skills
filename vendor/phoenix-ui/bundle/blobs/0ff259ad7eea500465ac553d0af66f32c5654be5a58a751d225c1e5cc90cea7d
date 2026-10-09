@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+'use strict';
+
+const path = require('node:path');
+const { main, shellQuote } = require('./phoenix-bootstrap.cjs');
+const provider = "antigravity";
+process.env.PHOENIX_UI_PROVIDER_ID ||= provider;
+main(process.argv.slice(2), {
+  skillDir: path.resolve(__dirname, '..'),
+  self: `node ${shellQuote(__filename)}`,
+}).then(code => { process.exitCode = code; }).catch(error => {
+  process.stderr.write(`Phoenix UI: ${error.message}\n`);
+  process.exitCode = 4;
+});

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/pbakaus/impeccable",
+  "baselineCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+  "candidateCommit": "83dc4b60ca4c3a13ea3cde748804858d37ef47c9",
+  "candidateVersion": "0.1.12",
+  "patches": [
+    {
+      "id": "E12-IME",
+      "file": "patches/0001-live-ime-enter.patch",
+      "sha256": "7b5333acf2e210dc0aed997333a52e3113f2180cb25ece5545fb5198cb9b52c7",
+      "status": "candidate-not-applied",
+      "files": [
+        {
+          "path": "skill/scripts/live-browser.js",
+          "beforeSha256": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+          "candidateSha256": "169b8141ffdae1eefa2536f373251c1b12f55c72992913ff608da17f0d12bec7",
+          "e12SourceSha256": "d7f1ee3fdfc423e90268e9c666dce61b2180b62431dbb6ecfc48bca65398a1f8",
+          "e12HelperLine": 872,
+          "edits": [
+            {
+              "before": "",
+              "after": "  // The Enter that commits an IME candidate (Zhuyin, Pinyin, kana, Hangul) is\n  // not a submit. Safari fires that keydown after compositionend, so\n  // isComposing is already false there and keyCode 229 is the only signal.\n  function isImeKeydown(e) {\n    return e.isComposing || e.keyCode === 229;\n  }\n\n",
+              "beforeSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "afterSha256": "d12ace6219ace605961b3b4a39dde01da5338ca8df3548ea48eb312ddd43f18c"
+            },
+            {
+              "before": "    if (e.key === 'Enter') {\n      e.preventDefault(); e.stopPropagation();\n      finalizeEditingPin();",
+              "after": "    if (e.key === 'Enter' && !isImeKeydown(e)) {\n      e.preventDefault(); e.stopPropagation();\n      finalizeEditingPin();",
+              "beforeSha256": "ad6cb250f3579f7c39b41d1d84604819dd1055372193b82cc87996e0b14e5837",
+              "afterSha256": "cdf556afd15eec005fd8ca5e1de92ee1ecbb37360b4dcd4f4d8f36eb52659218"
+            },
+            {
+              "before": "      if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); handleGo(); return; }",
+              "after": "      if (e.key === 'Enter' && !isImeKeydown(e)) { e.stopPropagation(); e.preventDefault(); handleGo(); return; }",
+              "beforeSha256": "cf710774c7eff431ba033c78efe7c284ab07bb2a3fcc96e201691d02d84a1cda",
+              "afterSha256": "643867e2776ee149fa9932d90653b598f57486bc3e1b9ec20dccd806fc965f08"
+            },
+            {
+              "before": "      if (e.key === 'Enter') {\n        e.stopPropagation(); e.preventDefault();\n        if (isInsertCreateEnabled()) handleInsertCreate();",
+              "after": "      if (e.key === 'Enter' && !isImeKeydown(e)) {\n        e.stopPropagation(); e.preventDefault();\n        if (isInsertCreateEnabled()) handleInsertCreate();",
+              "beforeSha256": "f6533ce29cf1f227ff96de1c4b53f1fc9974a983f059ccc0ad6322a9e6dd2e81",
+              "afterSha256": "4f9d5b12590319df8f5579a0d01fadf9b1fb857238f2ef7d29abbfd05ea92e6d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E12-CODEX-WINDOWS",
+      "file": "patches/0002-codex-windows-command.patch",
+      "sha256": "cd8308f512f40b106876eb255680e1043dc7d76a0c92704827bbfca6a6097d2d",
+      "status": "candidate-not-applied",
+      "files": [
+        {
+          "path": "scripts/lib/transformers/hooks.js",
+          "beforeSha256": "88ed7eecf1ab48e42ce1bd68e5ad66d58b0a8debf2bf4878253edbba41edcaf3",
+          "candidateSha256": "489025c3978866419ac5615ee1d5ea2d2ff2faa1601a69f455c9c26f61e0359f",
+          "e12SourceSha256": "43ebea7f6c9f5fdf2c6ba017fc87e958220f0db614a676c4b79aa485864d8da5",
+          "e12HelperLine": 61,
+          "edits": [
+            {
+              "before": "export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') =>\n  `if exist \"${launcherCmdPath}\" (\"${launcherCmdPath}\" ${verb} & exit /b)`;\n",
+              "after": "export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') => {\n  const quoted = `\"${launcherCmdPath.replaceAll('/', '\\\\')}\"`;\n  return `cmd /c if exist ${quoted} ${quoted} ${verb}`;\n};\n",
+              "beforeSha256": "b9a39b0482f2fa272df7f2c5a2d7684a9cb3bfdc0c82d70a099d528afca15903",
+              "afterSha256": "d4f3d9f25dd52ddefd5a6b7becdb9d9d3c8eace2c0328f4c5fcacd0db93df3b3"
+            }
+          ]
+        },
+        {
+          "path": ".codex/hooks.json",
+          "beforeSha256": "599afc25c1d6d083e4d4e60e1617ab05f6c5ecd52be75473f3788063219aa174",
+          "candidateSha256": "1953c6b4bfd5261bbc77e636b11ee2cc53f280a7c812e9300bd93a7946b64a55",
+          "e12SourceSha256": "1953c6b4bfd5261bbc77e636b11ee2cc53f280a7c812e9300bd93a7946b64a55",
+          "e12HelperLine": 10,
+          "edits": [
+            {
+              "before": "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Edit|Write|apply_patch\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"[ ! -f \\\".codex/skills/impeccable/scripts/impeccable\\\" ] || \\\".codex/skills/impeccable/scripts/impeccable\\\" hook\",\n            \"commandWindows\": \"if exist \\\".codex/skills/impeccable/scripts/impeccable.cmd\\\" (\\\".codex/skills/impeccable/scripts/impeccable.cmd\\\" hook & exit /b)\",\n            \"timeout\": 5,\n            \"statusMessage\": \"Checking UI changes\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"[ ! -f \\\".codex/skills/impeccable/scripts/impeccable\\\" ] || \\\".codex/skills/impeccable/scripts/impeccable\\\" hook\",\n            \"commandWindows\": \"if exist \\\".codex/skills/impeccable/scripts/impeccable.cmd\\\" (\\\".codex/skills/impeccable/scripts/impeccable.cmd\\\" hook & exit /b)\",\n            \"timeout\": 30,\n            \"statusMessage\": \"Design deep pass\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+              "after": "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Edit|Write|apply_patch\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"[ ! -f \\\".codex/skills/impeccable/scripts/impeccable\\\" ] || \\\".codex/skills/impeccable/scripts/impeccable\\\" hook\",\n            \"commandWindows\": \"cmd /c if exist \\\".codex\\\\skills\\\\impeccable\\\\scripts\\\\impeccable.cmd\\\" \\\".codex\\\\skills\\\\impeccable\\\\scripts\\\\impeccable.cmd\\\" hook\",\n            \"timeout\": 5,\n            \"statusMessage\": \"Checking UI changes\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"[ ! -f \\\".codex/skills/impeccable/scripts/impeccable\\\" ] || \\\".codex/skills/impeccable/scripts/impeccable\\\" hook\",\n            \"commandWindows\": \"cmd /c if exist \\\".codex\\\\skills\\\\impeccable\\\\scripts\\\\impeccable.cmd\\\" \\\".codex\\\\skills\\\\impeccable\\\\scripts\\\\impeccable.cmd\\\" hook\",\n            \"timeout\": 30,\n            \"statusMessage\": \"Design deep pass\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+              "beforeSha256": "599afc25c1d6d083e4d4e60e1617ab05f6c5ecd52be75473f3788063219aa174",
+              "afterSha256": "1953c6b4bfd5261bbc77e636b11ee2cc53f280a7c812e9300bd93a7946b64a55"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -42,3 +42,10 @@ skills-lock.json
 # Python 运行测试时生成的字节码缓存
 __pycache__/
 *.pyc
+
+# Phoenix build output is managed by mbx; only release staging lives here.
+/tools/phoenix-ui/target/
+/tools/phoenix-ui/dist/
+/tools/phoenix-ui/extension/detector/
+/tools/phoenix-ui/node_modules/
+/vendor/phoenix-ui/engine/
