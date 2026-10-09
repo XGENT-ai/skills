@@ -48,14 +48,14 @@
 - 最近完成：M1 · 固定来源与可运行基线
 - 下一步：M2 · 正常推送同一已授权验证分支并运行第四次矩阵，核实Mac权限重试、Windows测试协议/路径及Linux ARM浏览器准备；成功矩阵后推进M3，M4保持隔离
 - 当前阻塞：
-- 代码基线：dirty@b7e5acaaae7a6774ff36f0a65f67d193545c7ce9（M2权限、协议与浏览器准备修复候选；完整本地入口及当前制品检查通过，待第四次CI）
+- 代码基线：da0f780478a762a9435f22e173f5dcf7ef8636c5（M2权限、协议与浏览器准备修复候选；完整本地入口及当前制品检查通过，待第四次CI）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-09T21:45:20+08:00 | 第三次矩阵Linux x64全组通过、其余四native失败；本轮Mac权限重试、Windows测试协议/路径、Linux ARM浏览器准备与仓根Node pin已修复。当前Node185/Python59、完整Rust866/lint/WASM8474/oracle860及Node18/25消费、审计通过，待第四次CI。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-09T21:45:20+08:00 | 第三次矩阵Linux x64全组通过、其余四native失败；本轮Mac权限重试、Windows测试协议/路径、Linux ARM浏览器准备与仓根Node pin已修复。当前Node185/Python59、完整Rust866/lint/WASM8474/oracle860及Node18/25消费、审计通过，待第四次CI。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；未到M3完成提交点 |
 | M4 | 进行中 | 2026-10-09T21:45:20+08:00 | 隔离worktree的context JSON、generic/Portal profile及接受brief映射15项局部测试通过；三个design skills与Phoenix源指令融合草稿已保存，metadata2项通过、七项真实路由用例待执行。未纳入A树或完成安装后验收。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 ## 0. 需求、范围与决策
