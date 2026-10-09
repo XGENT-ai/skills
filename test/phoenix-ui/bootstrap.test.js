@@ -19,12 +19,16 @@ function fixture(t, changes = {}) {
   for (const dir of [scripts, release, path.join(project, '.git')]) fs.mkdirSync(dir, { recursive: true });
   const program = `
 const fs = require('node:fs'), path = require('node:path');
-if (path.basename(process.execPath).startsWith('phoenix-ui') || require.main === module) {
-  if (process.argv[1] === 'engine-probe' || process.argv[2] === 'engine-probe') {
+const copiedNode = path.basename(process.execPath).startsWith('phoenix-ui');
+if (copiedNode || require.main === module) {
+  const argv = process.argv.slice(copiedNode ? 1 : 2);
+  // Node resolves its script argument before executing NODE_OPTIONS preloads.
+  if (copiedNode && argv[0]) argv[0] = path.basename(argv[0]);
+  if (argv[0] === 'engine-probe') {
     console.log('phoenix-ui-engine 0.1.0'); process.exit(0);
   }
   if (process.env.PHOENIX_UI_FIXTURE_TRACE) fs.appendFileSync(process.env.PHOENIX_UI_FIXTURE_TRACE, 'executed\\n');
-  console.log(JSON.stringify({argv: process.argv.slice(path.basename(process.execPath).startsWith('phoenix-ui') ? 1 : 2), provider:process.env.PHOENIX_UI_PROVIDER_ID}));
+  console.log(JSON.stringify({argv, provider:process.env.PHOENIX_UI_PROVIDER_ID}));
   process.exit(0);
 }
 `;
@@ -48,7 +52,8 @@ if (path.basename(process.execPath).startsWith('phoenix-ui') || require.main ===
   fs.writeFileSync(path.join(release, 'THIRD-PARTY-NOTICES.md'), 'Fixture sidecar contract only.\n');
   fs.mkdirSync(path.join(release, 'THIRD-PARTY-LICENSES'));
   const env = { ...process.env, PHOENIX_UI_HOME: cache, PHOENIX_UI_PROVIDER_ID: 'codex',
-    PHOENIX_UI_FIXTURE_TRACE: path.join(root, 'executed.log'), HTTPS_PROXY: '', https_proxy: '', HTTP_PROXY: '', http_proxy: '', ALL_PROXY: '', all_proxy: '' };
+    PHOENIX_UI_FIXTURE_TRACE: path.join(root, 'executed.log'), PATH: [path.dirname(process.execPath), process.env.PATH].join(path.delimiter),
+    HTTPS_PROXY: '', https_proxy: '', HTTP_PROXY: '', http_proxy: '', ALL_PROXY: '', all_proxy: '' };
   if (process.platform === 'win32') env.NODE_OPTIONS = `--require="${preload.split(path.sep).join('/')}"`;
   return { root, scripts, cache, release, project, bytes, target, asset, manifest, manifestBytes, env };
 }
@@ -96,6 +101,15 @@ test('corrupt and mismatched binary fails before executing ordinary verbs', asyn
   assert.equal(result.code, 4);
   assert.equal(fs.existsSync(f.env.PHOENIX_UI_FIXTURE_TRACE), false);
   assert.match(result.stderr, /digest or size/);
+});
+
+test('failed engine probes report subprocess diagnostics without installing the binary', async t => {
+  const f = fixture(t, { toolVersion: '0.2.0' });
+  const result = await run(f, ['engine', 'install', '--release-dir', f.release]);
+  assert.equal(result.code, 4);
+  assert.match(result.stderr, /Phoenix engine identity or version differs/);
+  for (const field of ['error', 'status', 'signal', 'stdout', 'stderr']) assert.ok(result.stderr.includes(`"${field}":`), result.stderr);
+  assert.equal(fs.existsSync(path.join(f.cache, 'bin/0.2.0', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui')), false);
 });
 
 test('missing-engine hooks fail open once per provider session and install resets the reminder', async t => {

@@ -1099,7 +1099,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3132"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3160"
         },
         {
           "name": "completion",
@@ -1112,7 +1112,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3162"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3190"
         },
         {
           "name": "start",
@@ -1125,7 +1125,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3171"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3199"
         },
         {
           "name": "status",
@@ -1138,7 +1138,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3239"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3267"
         },
         {
           "name": "scaffold",
@@ -1151,7 +1151,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3247"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3275"
         },
         {
           "name": "note",
@@ -1164,7 +1164,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3264"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3292"
         },
         {
           "name": "record",
@@ -1177,7 +1177,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3274"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3302"
         },
         {
           "name": "advance",
@@ -1190,7 +1190,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3345"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3373"
         },
         {
           "name": "finish",
@@ -1203,7 +1203,7 @@
             "status": "未验证",
             "method": "tests/oracle/cases/comp.mjs + crates/cli/tests/entry_capture.rs；实际capture/gate另列"
           },
-          "currentSource": "crates/comp-verbs/src/build_phase.rs:3390"
+          "currentSource": "crates/comp-verbs/src/build_phase.rs:3418"
         }
       ],
       "phases": [
@@ -4619,8 +4619,8 @@
       {
         "name": "CODEX_THREAD_ID",
         "sources": [
-          "crates/comp-verbs/src/build_phase.rs:3166",
-          "crates/comp-verbs/src/build_phase.rs:3222"
+          "crates/comp-verbs/src/build_phase.rs:3194",
+          "crates/comp-verbs/src/build_phase.rs:3250"
         ],
         "discovery": "rust-literal",
         "classification": "host-platform",
@@ -4907,8 +4907,8 @@
       {
         "name": "PHOENIX_UI_COMPONENT_REVIEW_SESSIONS",
         "sources": [
-          "crates/comp-verbs/src/build_phase.rs:2505",
-          "crates/comp-verbs/src/build_phase.rs:2540"
+          "crates/comp-verbs/src/build_phase.rs:2533",
+          "crates/comp-verbs/src/build_phase.rs:2568"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -4921,7 +4921,7 @@
         "name": "PHOENIX_UI_COMPONENT_REVIEW_TOOL",
         "sources": [
           "crates/cli/src/capture_service.rs:122",
-          "crates/comp-verbs/src/build_phase.rs:2504",
+          "crates/comp-verbs/src/build_phase.rs:2532",
           "crates/context/src/component_review/mod.rs:87"
         ],
         "discovery": "rust-literal",
@@ -5236,9 +5236,9 @@
         "name": "PHOENIX_UI_NATIVE_CAPTURE",
         "sources": [
           "crates/comp-verbs/src/build_phase.rs:1237",
-          "crates/comp-verbs/src/build_phase.rs:3215",
-          "crates/comp-verbs/src/build_phase.rs:3409",
-          "crates/comp-verbs/src/build_phase.rs:3428"
+          "crates/comp-verbs/src/build_phase.rs:3243",
+          "crates/comp-verbs/src/build_phase.rs:3437",
+          "crates/comp-verbs/src/build_phase.rs:3456"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -5327,8 +5327,8 @@
       {
         "name": "PHOENIX_UI_SESSION_ID",
         "sources": [
-          "crates/comp-verbs/src/build_phase.rs:3165",
-          "crates/comp-verbs/src/build_phase.rs:3221"
+          "crates/comp-verbs/src/build_phase.rs:3193",
+          "crates/comp-verbs/src/build_phase.rs:3249"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -5615,7 +5615,7 @@
         "importedPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase.rs",
         "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase.rs",
         "baselineSha256": "612e1fa5ea30dc0f411a20e9b6629cbba11bc67004d5e4714356e11e73f91e20",
-        "currentSha256": "cf0db1124699c4d083f832c4664b630bd8c9269505e49e2fada9f5d691b19151"
+        "currentSha256": "236f30f22bee9e0b3e1dd2b8f50555fb122ea375a698bd1bc7399117602281bd"
       },
       "crates/comp-verbs/src/font_match.rs": {
         "importedPath": "tools/phoenix-ui/crates/comp-verbs/src/font_match.rs",
@@ -7120,7 +7120,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "59363f6ef3ef9da1804119ac3c9e7310dce0e39f1cff6e1ade4f1a284a751d1d",
+        "sha256": "d5ab3f3cbc93cb26fb52642bcc4f264a0370471e45dde8ab1d6530406880e273",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7153,11 +7153,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "59ac0870f793256ac5c4874984aca4b8682e721bcd896c8ecbce7cf8e111f011",
+      "manifestSha256": "8160e726ae2dc4098e4c45c77a23a7b98163e3edf31d08587db98f08f51fbee7",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "fa1408b13927a0d42d0c73bac329e73242a0e84928d48a052fc789994201ab8b",
+      "generationManifestSha256": "136df2ca32d13527351560c6ff9cbef5c735adfeda7b07d7a2851b10052c97aa",
       "generator": "Bun 1.3.14",
-      "inputSha256": "d2c66b4ad94d99ce4db2543d33e134c484a522a989858ee09adff6d308d29238",
+      "inputSha256": "8145866e03d390c95e649716b757ccf15fab3f0d9f99c716f42a2ecddd80433f",
       "engineManifest": "verified",
       "outputsCount": 1739,
       "providers": 19,
@@ -7200,18 +7200,41 @@
             "limitation": "development envelope carries only the listed darwin-arm64 engine; its bytes/metadata are checked, not final-source native equivalence or five-platform distribution acceptance."
           },
           "limitation": "Historical development metadata and static payload proof; the final engine uses a different executable digest. It does not prove other platforms or provider sessions."
+        },
+        {
+          "inputSha256": "d2c66b4ad94d99ce4db2543d33e134c484a522a989858ee09adff6d308d29238",
+          "manifestSha256": "59ac0870f793256ac5c4874984aca4b8682e721bcd896c8ecbce7cf8e111f011",
+          "generationManifestSha256": "fa1408b13927a0d42d0c73bac329e73242a0e84928d48a052fc789994201ab8b",
+          "engineManifest": "verified",
+          "outputsCount": 1739,
+          "engineManifestEvidence": {
+            "path": "vendor/phoenix-ui/VERSION.json",
+            "sha256": "a45dc6ce8a6226eb2a8e60da2b03252134293966b3d27bf65a71957ff5840890",
+            "distribution": "development",
+            "sourceInputSha256": "7adb731a2e0da1ff17ef352180ca107d153288d0cca8d55d361931af7ec129d7",
+            "engines": {
+              "darwin-arm64": {
+                "asset": "phoenix-ui-darwin-arm64",
+                "sha256": "ed159d3ce57ed4d083e7116100ae164e1c939ff88645da1a4af59a62ee81838b",
+                "size": 16894472
+              }
+            },
+            "limitation": "development envelope carries only the listed darwin-arm64 engine; its bytes/metadata are checked, not final-source native equivalence or five-platform distribution acceptance."
+          },
+          "scope": "M2 third CI candidate, before permission/diagnostic repairs",
+          "limitation": "Historical darwin-arm64 development metadata; CI 37927752568 did not pass the whole matrix."
         }
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "9d09bcf9851f5cf9aae462c70e8e0a767ff7716e2e600ab44f43e9fd30d3edef",
+        "sha256": "7297f35b0d720598d4d88edcd62843652cd9f3cdfdb9a9ae78c51982efcd7856",
         "distribution": "development",
-        "sourceInputSha256": "617aeee13583115076fd9ab74ed98d4ba1a02fe5b6af5d533070be82d943bfd3",
+        "sourceInputSha256": "5a82b0ea0fe7c0521b8f8f49b49f076430f72c6875563c4d2ceb8690e0047947",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "a24370e1c1810c65cb2ec61f54113f2c43d70535ad4d2ffeaa57ed3cf18ede70",
-            "size": 16894280
+            "sha256": "052203d2869def78d24d74484faa12f6f29b1556b17265ddcbfdf6572de6f1da",
+            "size": 16894472
           }
         },
         "limitation": "development envelope carries only the listed darwin-arm64 engine; its bytes/metadata are checked, not final-source native equivalence or five-platform distribution acceptance."
@@ -7463,7 +7486,7 @@
       "sourceStatus": "source-verified",
       "runtimeStatus": "未验证"
     },
-    "capturedAt": "2026-10-09T09:03:33.539Z",
+    "capturedAt": "2026-10-09T13:00:08.891Z",
     "partialVerification": {
       "browserCapture": {
         "evidence": "local/phoenix-ui/browser-network-acceptance-pre-final/result.json",
@@ -7482,8 +7505,8 @@
         "status": "passed-scoped-final-native",
         "caseCount": 860,
         "expectedCaseAdaptations": 479,
-        "limitation": "最终darwin-arm64 development binary完整重放原860 case，476项精确适配，0fail/error/missing/skip；不证明其他平台、真实provider/宿主copy/IME会话，原corpus也不触发server三条维护stdout或poll stream诊断。",
-        "metadataSha256": "523000de9daec966e42e1d7b8c5e87ee21c26f92332b5d43a793ccadc6f9b768",
+        "limitation": "Current darwin-arm64 development binary replays all original 860 cases with 476 exact adaptations and zero failures/errors/missing/skips; other platforms, provider sessions, IME and full UI acceptance remain unverified.",
+        "metadataSha256": "540ee59c3a9b77dcb978698cb36b8b1762ef1130402fab5f85ea74c6b2f16718",
         "unitContract": {
           "command": "/Users/rockie/.nvm/versions/node/v25.2.1/bin/node --test test/phoenix-ui/oracle.test.js",
           "nodeVersion": "25.2.1",
@@ -7495,25 +7518,25 @@
           "scope": "helper/source/golden/fixture/adapter contracts; not the full native replay",
           "checkedAt": "2026-10-09T09:04:45.401Z"
         },
-        "adapterSha256": "2f0c7beb64010ccbb285677dd3f736bc360e12ade40dec147ff916328d66421e",
+        "adapterSha256": "80500fcf77fbc15f2dd55eed9a76cba05fe51055f693cd4e59e93faca0d995ca",
         "currentEvidenceFileCount": 37,
         "finalNativeReplay": {
-          "evidence": "local/phoenix-ui/ci-platform-candidate-oracle-final.json",
-          "evidenceSha256": "57ac5b63f3e3efe79d4f4b195d7b26e131718e65a6d6cf008b749abf4e2082d6",
-          "recordedAt": "2026-10-09T11:59:07.416Z",
+          "evidence": "local/phoenix-ui/ci-node-pin-candidate-oracle.json",
+          "evidenceSha256": "96e3b8f299867d94fb7c7101fb0a8e4e76aaa38fe520bec0728334148a2b7c63",
+          "recordedAt": "2026-10-09T13:25:49.337Z",
           "platform": "darwin",
           "arch": "arm64",
           "runtime": {
-            "path": "local/phoenix-ui/ci-platform-candidate-release/phoenix-ui-darwin-arm64",
-            "sha256": "a24370e1c1810c65cb2ec61f54113f2c43d70535ad4d2ffeaa57ed3cf18ede70",
+            "path": "local/phoenix-ui/ci-node-pin-candidate-release/phoenix-ui-darwin-arm64",
+            "sha256": "052203d2869def78d24d74484faa12f6f29b1556b17265ddcbfdf6572de6f1da",
             "probe": "phoenix-ui-engine 0.1.0"
           },
           "corpus": {
             "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
             "files": 1257
           },
-          "adapterSha256": "2f0c7beb64010ccbb285677dd3f736bc360e12ade40dec147ff916328d66421e",
-          "adapterSourceSha256": "73c7f0a1fcac088b3f312176ea25f68d2839dd0fc4867f1bb2f0a78a5b775e6c",
+          "adapterSha256": "80500fcf77fbc15f2dd55eed9a76cba05fe51055f693cd4e59e93faca0d995ca",
+          "adapterSourceSha256": "03795ee8aabdaab2931ebae60480386c9d6d68266c628ccce48ac55e806c13ab",
           "totalCases": 860,
           "selectedCases": 860,
           "counts": {

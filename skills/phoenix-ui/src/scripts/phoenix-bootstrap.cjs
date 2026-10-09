@@ -90,7 +90,9 @@ function verifyEngine(file, manifest, target, env = process.env) {
   const stat = fs.lstatSync(file);
   if (!stat.isFile() || stat.size !== meta.size || sha256(fs.readFileSync(file)) !== meta.sha256) throw failure('Phoenix binary digest or size differs from the package manifest.');
   const probe = spawnSync(file, ['engine-probe'], { env, encoding: 'utf8', timeout: 3000, maxBuffer: 4096, windowsHide: true });
-  if (probe.error || probe.status !== 0 || probe.stdout.trim() !== `phoenix-ui-engine ${manifest.data.toolVersion}`) throw failure('Phoenix engine identity or version differs from the package manifest.');
+  if (probe.error || probe.status !== 0 || probe.stdout.trim() !== `phoenix-ui-engine ${manifest.data.toolVersion}`) {
+    throw failure(`Phoenix engine identity or version differs from the package manifest. Probe: ${JSON.stringify({ error: probe.error?.code || null, status: probe.status, signal: probe.signal, stdout: probe.stdout, stderr: probe.stderr })}`);
+  }
   return file;
 }
 

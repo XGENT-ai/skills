@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "0f4d7ccef363860a1f4b260d4b5c40d3bba8becaadde1829ddcf2eebf1761237",
+  "inputSha256": "aff74f701cbb54b1603e9ac9903cc7bc544c96a63d043bba6f2b9ebf881141bc",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
@@ -315,8 +315,8 @@
       "size": 39
     },
     "repository/mise.toml": {
-      "sha256": "35cff8106b87e7600e7fe086ecc5201308a36193997802744d49bc8b8c4278a4",
-      "size": 178
+      "sha256": "7e05237b3575e57bb64044782d95e8f089fa1287cbe7773b94b97adbe507ddd2",
+      "size": 194
     },
     "repository/rust-toolchain.toml": {
       "sha256": "f85f74c3f9bf13cfb68855f5e125bbd206d6e07440f7d3145a5872ad14e2bdb2",

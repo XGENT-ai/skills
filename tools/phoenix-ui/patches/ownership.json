@@ -228,14 +228,14 @@
       "upstreamPath": "crates/comp-verbs/src/build_phase.rs",
       "upstreamSha256": "612e1fa5ea30dc0f411a20e9b6629cbba11bc67004d5e4714356e11e73f91e20",
       "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase.rs",
-      "currentSha256": "cf0db1124699c4d083f832c4664b630bd8c9269505e49e2fada9f5d691b19151",
+      "currentSha256": "236f30f22bee9e0b3e1dd2b8f50555fb122ea375a698bd1bc7399117602281bd",
       "change": "modified"
     },
     {
       "upstreamPath": "crates/comp-verbs/src/build_phase/integrity_tests.rs",
       "upstreamSha256": "7d4d59ef8d1de4975737aa70325b1f7f13d1e58748dfbde7c9f59f4000472ac1",
       "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase/integrity_tests.rs",
-      "currentSha256": "bf0b9add94c85c6c1d267507a0b2e6df79705d6a83fbe2cf3a9a6a419021db03",
+      "currentSha256": "1bc89af62b9688806a1d1994f6fb76f973c59defff27000533154dd62a9e5b73",
       "change": "modified"
     },
     {
@@ -1420,7 +1420,7 @@
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs",
-      "currentSha256": "59363f6ef3ef9da1804119ac3c9e7310dce0e39f1cff6e1ade4f1a284a751d1d"
+      "currentSha256": "d5ab3f3cbc93cb26fb52642bcc4f264a0370471e45dde8ab1d6530406880e273"
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs",
@@ -1456,7 +1456,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/assets/bundle-inputs.json",
-      "currentSha256": "d5d6e1736d2561d185d2461fc8f7c98a6c99121dca0f3e139f7297b015ecc4bd"
+      "currentSha256": "27b5fc97210d0c51456c6be71921bee6e43fd574801d7524053a6985aa4a4507"
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",
@@ -1536,7 +1536,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
-      "currentSha256": "523000de9daec966e42e1d7b8c5e87ee21c26f92332b5d43a793ccadc6f9b768"
+      "currentSha256": "540ee59c3a9b77dcb978698cb36b8b1762ef1130402fab5f85ea74c6b2f16718"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
@@ -1545,7 +1545,7 @@
   ],
   "verification": {
     "sourceHashes": "verified-current-worktree",
-    "runtimeTests": "passed-darwin-arm64: npm run test:phoenix, 865 Rust tests, lint baseline, 8474 vectors and strict 860 oracle; inherited legacy JS differential and production reviewed ZIP not verified; see docs/plan/phoenix-ui.records/M2.md",
+    "runtimeTests": "Current darwin-arm64 dirty@b7e5aca Node 25.2.1 runtime entry passed: 866 Rust tests, zero added lint diagnostics, 8474 WASM vectors / 72 interfaces, strict original oracle 860/860; 9 default ignored tests and provider/IME/Safari acceptance remain separate. See local/phoenix-ui/ci-node-pin-test-phoenix.log and docs/plan/phoenix-ui.records/M2.md.",
     "browserAndNativePlatforms": "darwin-arm64 Chrome asset/component/network scopes passed; IME/Safari, other native platforms and provider sessions not verified"
   }
 }

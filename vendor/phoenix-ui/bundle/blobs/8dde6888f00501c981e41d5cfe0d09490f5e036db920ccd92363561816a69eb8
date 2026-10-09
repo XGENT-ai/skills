@@ -3,12 +3,13 @@ name: phoenix-ui
 description: 用于前端设计、重设计、局部优化与 live 交互；不用于后端任务、仅维护设计规范或独立 UI 验收。结合项目上下文提供设计命令和本地检测，npm 安装后使用。
 version: 0.1.0
 user-invocable: true
-argument-hint: "[shape · audit|critique · animate|bolder|colorize|delight|layout|overdrive|quieter|typeset · adapt|clarify|distill · harden|onboard|optimize|polish · init|document|extract|live|generate] [target]"
 license: Apache 2.0
 metadata:
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: d2c66b4ad94d99ce4db2543d33e134c484a522a989858ee09adff6d308d29238
+  source_sha256: 8145866e03d390c95e649716b757ccf15fab3f0d9f99c716f42a2ecddd80433f
+allowed-tools:
+  - Bash(.vibe/skills/phoenix-ui/scripts/phoenix-ui *)
 ---
 
 Phoenix UI provides local design tools for frontend work. Follow the project's product truth, accepted direction, and design rules; use the command references to create complete, accessible interfaces with a clear visual direction.
@@ -22,7 +23,7 @@ Core principles:
 
 ## Setup
 
-1. Run `<skill-base-dir>/scripts/phoenix-ui context` once per session, where `<skill-base-dir>` contains this SKILL.md; keep cwd at the user's project. It resolves every `.trae/skills/phoenix-ui/scripts/phoenix-ui <verb>` command in this skill and its references. On Windows without `sh`, use `.trae/skills/phoenix-ui/scripts/phoenix-ui.cmd`. The thin launcher requires Node >=18 and validates the fixed manifest, binary digest and Phoenix engine version before running. Users do not need Rust. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance; follow its directives.
+1. Run `<skill-base-dir>/scripts/phoenix-ui context` once per session, where `<skill-base-dir>` contains this SKILL.md; keep cwd at the user's project. It resolves every `.vibe/skills/phoenix-ui/scripts/phoenix-ui <verb>` command in this skill and its references. On Windows without `sh`, use `.vibe/skills/phoenix-ui/scripts/phoenix-ui.cmd`. The thin launcher requires Node >=18 and validates the fixed manifest, binary digest and Phoenix engine version before running. Users do not need Rust. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance; follow its directives.
 2. Load the request's playbook: its Commands-table reference for an explicit/implied sub-command, or [reference/new-work.md](reference/new-work.md) for a new surface or replacement visual world. Inspect target and incumbent visual truth before editing. When the app cannot run, start with committed visual-regression goldens or screenshot fixtures; verify target and freshness against current tokens, CSS, components, or assets, resolve conflicts, and compare theme/variant captures.
 3. After resolving analysis and direction, read [reference/craft-floor.md](reference/craft-floor.md) immediately before any UI edit, including small refinements. It carries the quality floor, the absolute bans, and the reflexes no detector catches. Do not load it for planning-only work.
 
@@ -84,7 +85,7 @@ Routing:
 
 After init writes PRODUCT.md, resume without rerunning `phoenix-ui context`; init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
 
-**Pin / Unpin:** `.trae/skills/phoenix-ui/scripts/phoenix-ui pin <pin|unpin> <command>` creates or removes a standalone `/<command>` shortcut. Report the script's result concisely; relay stderr verbatim on error.
+**Pin / Unpin:** `.vibe/skills/phoenix-ui/scripts/phoenix-ui pin <pin|unpin> <command>` creates or removes a standalone `/<command>` shortcut. Report the script's result concisely; relay stderr verbatim on error.
 
 **Hooks:** `/phoenix-ui hooks <on|off|status|ignore-rule|ignore-file|ignore-value|reset>` manages the design detector hook for this project (auto-runs the detector after UI file edits and surfaces findings). Load [reference/hooks.md](reference/hooks.md) when the user invokes it with any argument.
 

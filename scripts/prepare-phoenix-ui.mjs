@@ -204,6 +204,11 @@ export function preparationCommands(platform, boxingtonAvailable = false) {
     // The audit checks the entire lock, including dependencies of other hosts.
     ['mise', ['exec', '--no-deps', '--', 'mbx', 'fetch', '--locked']],
     ['mise', ['exec', '--no-deps', '--', 'bun', 'install', '--frozen-lockfile']],
+    ...(platform === 'linux-arm64' ? [
+      // This runner has no system Chromium. Use the frozen Playwright package's
+      // browser revision; its explicit installer also prepares Linux libraries.
+      ['mise', ['exec', '--no-deps', '--', 'node', 'node_modules/playwright/cli.js', 'install', '--with-deps', '--no-shell', 'chromium']],
+    ] : []),
   ];
 }
 
@@ -225,6 +230,14 @@ async function prepare() {
     const selected = JSON.parse(run('mise', ['ls', '--current', '--json'], true));
     const boxingtonAvailable = selected['mr-boxington']?.some(tool => tool.version === versions.mrBoxington && tool.installed);
     for (const [program, args] of preparationCommands(platform, boxingtonAvailable)) run(program, args);
+    if (platform === 'linux-arm64') {
+      env.PHOENIX_UI_BROWSER = run('mise', ['exec', '--no-deps', '--', 'node', '-e', "process.stdout.write(require('playwright').chromium.executablePath())"], true).trim();
+      const browser = JSON.parse(fs.readFileSync(path.join(workspace, 'node_modules/playwright-core/browsers.json'))).browsers.find(entry => entry.name === 'chromium');
+      record.browser = { package: 'playwright', packageVersion: JSON.parse(fs.readFileSync(path.join(workspace, 'node_modules/playwright/package.json'))).version,
+        revision: browser.revision, expectedVersion: browser.browserVersion, executable: env.PHOENIX_UI_BROWSER,
+        sha256: sha256(fs.readFileSync(env.PHOENIX_UI_BROWSER)), actualVersion: run(env.PHOENIX_UI_BROWSER, ['--version'], true).trim() };
+      if (!record.browser.actualVersion.endsWith(` ${browser.browserVersion}`)) throw new Error('Prepared Chromium version differs from the locked browser manifest');
+    }
     for (const [tool, variable] of [['wasmBindgen', 'WASM_BINDGEN'], ['binaryen', 'WASM_OPT']]) {
       const asset = assets.tools[tool].assets[platform];
       const archiveRecord = { name: asset.name, url: asset.url, size: asset.size, sha256: asset.sha256, status: 'downloading' };
@@ -250,7 +263,7 @@ async function prepare() {
     // advisory snapshots. Preparation does not silently waive its failures.
     run('mise', ['exec', '--no-deps', '--', 'node', path.join(root, 'scripts/check-phoenix-deps.mjs'), '--prepare']);
     Object.assign(process.env, env); preflight();
-    const preparedEnv = Object.fromEntries(['WASM_BINDGEN', 'WASM_OPT', 'PHOENIX_CARGO_DENY'].map(name => [name, env[name]]));
+    const preparedEnv = Object.fromEntries(['WASM_BINDGEN', 'WASM_OPT', 'PHOENIX_CARGO_DENY', ...(platform === 'linux-arm64' ? ['PHOENIX_UI_BROWSER'] : [])].map(name => [name, env[name]]));
     fs.writeFileSync(path.join(evidenceRoot, `${platform}.env.json`), json(preparedEnv));
     if (process.env.GITHUB_ENV) fs.appendFileSync(process.env.GITHUB_ENV, Object.entries(preparedEnv).map(([name, value]) => `${name}=${value}\n`).join(''));
     record.status = 'prepared'; record.finishedAt = new Date().toISOString();
@@ -262,6 +275,6 @@ async function prepare() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.length === 1 && args[0] === '--prepare') prepare().catch(error => { console.error(error.message); process.exitCode = 1; });
-  else if (args.length === 0 || (args.length === 1 && args[0] === '--help')) console.log('Usage: node scripts/prepare-phoenix-ui.mjs --prepare\nExplicit online preparation: mise install, Rust targets/components, locked Cargo fetch, frozen Bun install (no browser downloads), verified WASM tools and dependency-audit preparation.\nBuild/test remain offline. Local shell: export the entries printed in local/phoenix-ui/ci-prepare/<platform>.env.json.');
+  else if (args.length === 0 || (args.length === 1 && args[0] === '--help')) console.log('Usage: node scripts/prepare-phoenix-ui.mjs --prepare\nExplicit online preparation: mise install, Rust targets/components, locked Cargo fetch, frozen Bun install (automatic browser downloads disabled), locked Chromium and Linux libraries on Linux ARM64, verified WASM tools and dependency-audit preparation.\nBuild/test remain offline. Local shell: export the entries printed in local/phoenix-ui/ci-prepare/<platform>.env.json.');
   else { console.error('Usage: node scripts/prepare-phoenix-ui.mjs --prepare'); process.exitCode = 1; }
 }

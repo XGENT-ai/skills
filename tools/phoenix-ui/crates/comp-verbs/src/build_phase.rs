@@ -1583,6 +1583,34 @@ fn unavailable_report(io: &Io, out_dir: &str, gate: &Gate, phase: &str) -> Resul
     report_write.and(cleanup)
 }
 
+fn move_comparison_artifact(path: &Path, target: &Path) -> std::io::Result<()> {
+    let result = std::fs::rename(path, target);
+    #[cfg(target_os = "macos")]
+    if result
+        .as_ref()
+        .is_err_and(|error| error.kind() == std::io::ErrorKind::PermissionDenied)
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        let meta = std::fs::symlink_metadata(path)?;
+        // Older macOS filesystems can require write permission on the moved
+        // directory even when its parent is unchanged. Restore its original mode.
+        if meta.is_dir() && meta.permissions().mode() & 0o200 == 0 {
+            let directory = std::fs::File::open(path)?;
+            let opened = directory.metadata()?;
+            if (opened.dev(), opened.ino()) != (meta.dev(), meta.ino()) {
+                return result;
+            }
+            let permissions = opened.permissions();
+            directory
+                .set_permissions(std::fs::Permissions::from_mode(permissions.mode() | 0o200))?;
+            let renamed = std::fs::rename(path, target);
+            let restored = directory.set_permissions(permissions);
+            return renamed.and(restored);
+        }
+    }
+    result
+}
+
 fn quarantine_comparison_artifacts(out_dir: &Path) -> Result<Value, String> {
     static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let quarantine = loop {
@@ -1607,7 +1635,7 @@ fn quarantine_comparison_artifacts(out_dir: &Path) -> Result<Value, String> {
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
                 Err(e) => return Err(e),
             }
-            std::fs::rename(&path, &target)
+            move_comparison_artifact(&path, &target)
         })();
         match move_artifact {
             Ok(()) => { artifacts.insert(name.into(), json!(target.to_string_lossy().replace('\\', "/"))); },

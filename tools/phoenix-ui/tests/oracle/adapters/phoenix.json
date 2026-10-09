@@ -251,7 +251,7 @@
           "source": [
             {
               "file": "crates/comp-verbs/src/build_phase.rs",
-              "line": 3165
+              "line": 3193
             }
           ]
         },
@@ -49175,7 +49175,7 @@
     },
     {
       "file": "crates/comp-verbs/src/build_phase.rs",
-      "sha256": "cf0db1124699c4d083f832c4664b630bd8c9269505e49e2fada9f5d691b19151"
+      "sha256": "236f30f22bee9e0b3e1dd2b8f50555fb122ea375a698bd1bc7399117602281bd"
     },
     {
       "file": "crates/context/src/component_review/manifest.rs",

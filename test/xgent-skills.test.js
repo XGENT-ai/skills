@@ -140,7 +140,7 @@ test('guard command resolves the Git root after moving the repo and from subdire
   for (const event of ['PreToolUse', 'Stop']) {
     assert.equal(example.hooks[event][0].hooks[0].command, command);
     for (const cwd of [moved, subdir]) {
-      const hook = spawnSync('/bin/sh', ['-c', command], {
+      const hook = spawnSync('sh', ['-c', command], {
         cwd, input: JSON.stringify({ hook_event_name: event, stop_hook_active: false, agent_id: 'test-child' }), encoding: 'utf8',
       });
       assert.equal(hook.status, 0, hook.stderr);
@@ -365,7 +365,7 @@ test('installed Claude guard command runs from a project path with shell charact
   fs.mkdirSync(dir);
   const result = runClaudeGuard(dir);
   assert.equal(result.status, 0, result.stderr);
-  const hook = spawnSync('/bin/sh', ['-c', claudeSettings(dir).hooks.Stop[0].hooks[0].command], {
+  const hook = spawnSync('sh', ['-c', claudeSettings(dir).hooks.Stop[0].hooks[0].command], {
     cwd: base, input: JSON.stringify({ hook_event_name: 'Stop', stop_hook_active: false, transcript_path: path.join(dir, 'none') }),
     encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
   });

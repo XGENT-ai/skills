@@ -703,8 +703,41 @@ fn artifact_cleanup_failure_blocks_the_gate() {
     assert_no_current_measurements(&ws);
     let quarantine = ws.path.join(report["artifactCleanup"]["quarantine"]["artifacts"]["regions"].as_str().expect("cleanup failure must identify quarantined evidence"));
     assert!(quarantine.join("retired.png").is_file());
+    assert_eq!(
+        std::fs::metadata(&quarantine).unwrap().permissions().mode() & 0o777,
+        0o555
+    );
     assert_eq!(report["artifactCleanup"]["quarantine"]["errors"], json!([]));
     std::fs::set_permissions(quarantine, std::fs::Permissions::from_mode(0o755)).unwrap();
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn read_only_comparison_directory_can_be_quarantined_without_changing_its_mode() {
+    use std::os::unix::fs::PermissionsExt;
+    let ws = Workspace::new();
+    ws.write("regions/retired.png", b"stale crop");
+    ws.write("notes.txt", b"keep unrelated files");
+    let source = ws.path.join("regions");
+    let parent = ws.path.join("quarantine");
+    std::fs::create_dir(&parent).unwrap();
+    let target = parent.join("regions");
+    std::fs::set_permissions(&source, std::fs::Permissions::from_mode(0o555)).unwrap();
+    move_comparison_artifact(&source, &target).unwrap();
+    assert!(!source.exists());
+    assert_eq!(
+        std::fs::read(target.join("retired.png")).unwrap(),
+        b"stale crop"
+    );
+    assert_eq!(
+        std::fs::metadata(&target).unwrap().permissions().mode() & 0o777,
+        0o555
+    );
+    assert_eq!(
+        std::fs::read(ws.path.join("notes.txt")).unwrap(),
+        b"keep unrelated files"
+    );
+    std::fs::set_permissions(target, std::fs::Permissions::from_mode(0o755)).unwrap();
 }
 
 

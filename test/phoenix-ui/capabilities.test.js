@@ -120,7 +120,7 @@ test('design command table, metadata, pin support and mode constants agree', () 
   for (const command of cap.designCommands) {
     assert.ok(fs.existsSync(sourcePath(command.reference)), command.reference);
     assert.equal(command.importedPath, `tools/phoenix-ui/${command.reference}`);
-    assert.equal(command.currentPath, path.relative(repository, sourcePath(command.reference)));
+    assert.equal(command.currentPath, path.relative(repository, sourcePath(command.reference)).split(path.sep).join('/'));
     assert.equal(command.verification.status, '未验证');
   }
 });
@@ -173,7 +173,7 @@ test('the built-in original catalog matches both loader sources, review hashes a
   const seed = production(read('crates/context/src/concept_seed.rs'));
   const builtin = seed.split('fn builtin_catalog(')[1].split('struct RollData')[0];
   const included = [...builtin.matchAll(/include_str!\("([^"]+)"\)/g)]
-    .map((match) => path.relative(repository, path.resolve(path.dirname(sourcePath('crates/context/src/concept_seed.rs')), match[1])));
+    .map((match) => path.relative(repository, path.resolve(path.dirname(sourcePath('crates/context/src/concept_seed.rs')), match[1])).split(path.sep).join('/'));
   assert.deepEqual(included, current.loader.builtinInputs);
   assert.deepEqual(current.loader.explicitInputs, cap.directionLibrary.loaderInputs);
   assert.match(seed, /let local = match env\.get\("PHOENIX_UI_CATALOG_DIR"\)\.filter\(\|v\| !v\.is_empty\(\)\) \{\s*Some\(dir\) => load_local\(dir\),\s*None => builtin_catalog\(\),\s*\}\s*\.map_err\(\|message\| \(2, message\)\)\?;/);
@@ -363,7 +363,7 @@ test('current environment lookups are enumerated separately from the fixed sourc
     const text = production(fs.readFileSync(file, 'utf8'));
     for (const match of text.matchAll(/(?:\.get\(\s*"|(?:std::)?env::var(?:_os)?\(\s*"|\bio\.env\(\s*")([A-Z][A-Z0-9_]+)"/g)) found.add(match[1]);
     for (const match of text.matchAll(/"((?:IMPECCABLE|PHOENIX_UI)_[A-Z0-9_]+)"/g)) found.add(match[1]);
-    if (file.endsWith('component_review/mod.rs')) {
+    if (file.endsWith(path.join('component_review', 'mod.rs'))) {
       for (const match of text.matchAll(/\bset\("([A-Z][A-Z0-9_]+)"/g)) found.add(match[1]);
     }
   }

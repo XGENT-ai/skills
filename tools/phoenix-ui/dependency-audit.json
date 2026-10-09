@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-09T11:59:12.621Z",
+  "checkedAt": "2026-10-09T13:25:54.707Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -68,7 +68,7 @@
   "distribution": {
     "status": "passed",
     "requiredFiles": 188,
-    "directory": "local/phoenix-ui/ci-platform-candidate-release"
+    "directory": "local/phoenix-ui/ci-node-pin-candidate-release"
   },
   "blockers": []
 }
