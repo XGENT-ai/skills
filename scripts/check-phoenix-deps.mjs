@@ -254,6 +254,15 @@ export function validateDatabase(state, dirty, now = new Date()) {
   const age = (now - new Date(state.commitAt)) / 86400000;
   if (!Number.isFinite(age) || age < 0 || age > maxAgeDays) throw new Error('Pinned RustSec database content is older than 30 days; review/update the pin explicitly');
 }
+
+export function pinDatabase(directory, pin = databasePin) {
+  // cargo-deny fetches a shallow current database. The fixed audit commit may
+  // already be outside that clone, so fetch its exact object before checkout.
+  successful(run('git', ['-C', directory, 'fetch', '--no-tags', '--depth', '1', pin.url, pin.revision]), 'fetch pinned RustSec database');
+  successful(run('git', ['-C', directory, 'checkout', '--detach', pin.revision]), 'pin RustSec database');
+  requireEqual(successful(run('git', ['-C', directory, 'rev-parse', 'HEAD']), 'RustSec revision'), pin.revision, 'Wrong RustSec database revision');
+  requireEqual(successful(run('git', ['-C', directory, 'rev-parse', 'HEAD^{tree}']), 'RustSec tree'), pin.tree, 'Wrong RustSec database tree');
+}
 async function download(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw new Error(`Explicit preparation request failed: ${url} (${response.status})`);
@@ -264,7 +273,7 @@ async function prepare() {
   preflight();
   fs.mkdirSync(prepared, { recursive: true });
   successful(deny(['fetch', 'db'], false), 'explicit RustSec fetch');
-  successful(run('git', ['-C', dbPath, 'checkout', '--detach', databasePin.revision]), 'pin RustSec database');
+  pinDatabase(dbPath);
   const database = databaseState();
   const databasePreparedAt = new Date().toISOString();
   const archive = await download(modernScreenshot.tarballUrl);

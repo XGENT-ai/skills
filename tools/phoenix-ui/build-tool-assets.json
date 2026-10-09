@@ -7,6 +7,17 @@
     "note": "Binaryen archive bytes were independently verified; wasm-bindgen pins come from the immutable official release digest. Explicit prepare verifies every downloaded byte before extracting."
   },
   "miseVersion": "2026.9.12",
+  "nativeBootstrap": {
+    "darwin-x64": {
+      "tool": "mr-boxington",
+      "package": "mbx",
+      "version": "1.21.1",
+      "url": "https://github.com/jdx/mr-boxington",
+      "revision": "a0a44c61ca6aaa8da41d59deeebdfc46fc9d3313",
+      "source": "https://github.com/jdx/mr-boxington/tree/a0a44c61ca6aaa8da41d59deeebdfc46fc9d3313",
+      "reason": "The official v1.21.1 release has no x86_64-apple-darwin asset; build the same version natively during explicit preparation."
+    }
+  },
   "platforms": {
     "darwin-arm64": {
       "runner": "macos-15",

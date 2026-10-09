@@ -165,7 +165,7 @@
       "upstreamPath": "crates/cli/tests/asset_capture.rs",
       "upstreamSha256": "dbc16854cafc642eb1f245eeae4d4525751a539016d65934bb4d5ce051dd6bd0",
       "currentPath": "tools/phoenix-ui/crates/cli/tests/asset_capture.rs",
-      "currentSha256": "601d9f0c7211b31de26a73579854ea72cbcda695b7c12eadd272b2cbcafe4ef7",
+      "currentSha256": "9368a4e3e29689055299dfa3a02bc47c84f2a8d790f4e8e235acf4f175f411a2",
       "change": "modified"
     },
     {
@@ -1428,7 +1428,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/build-tool-assets.json",
-      "currentSha256": "43a72c8ef9edd7b5e3dc0fa25a577829903b51a24062ba2efa69c3061acf79f6"
+      "currentSha256": "e7a2ebe5f1c537276ff8533b4826fb5998a017b85ac6d4cff13f1a480bb1aec4"
     },
     {
       "currentPath": "tools/phoenix-ui/build-tools.lock.json",

@@ -188,7 +188,7 @@ fn native_capture_distinguishes_paint_from_file_presence() {
                     h: 80.,
                 },
             })
-            .unwrap();
+            .unwrap_or_else(|error| panic!("{mode}: {error}"));
         if let Ok(root) = std::env::var("PHOENIX_UI_CAPTURE_TEST_OUTPUT") {
             let out = std::path::Path::new(&root).join(mode);
             std::fs::create_dir_all(&out).unwrap();

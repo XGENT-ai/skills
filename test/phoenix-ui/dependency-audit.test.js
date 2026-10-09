@@ -5,6 +5,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { gzipSync } = require('node:zlib');
 const { test } = require('node:test');
+const { spawnSync } = require('node:child_process');
 
 const checker = import(pathToFileURL(path.resolve(__dirname, '../../scripts/check-phoenix-deps.mjs')));
 const now = new Date('2026-10-08T12:00:00Z');
@@ -105,6 +106,36 @@ test('RustSec pin rejects another commit/tree, dirty files and stale content des
   assert.throws(() => validateDatabase(state, ' M crates/example/advisory.md', now), /modified/);
   assert.throws(() => validateDatabase(state, '?? injected-advisory.md', now), /untracked/);
   assert.throws(() => validateDatabase({ ...state, commitAt: '2026-08-01T00:00:00Z', fetchedAt: now.toISOString() }, '', now), /older than 30 days/);
+});
+
+test('explicit database preparation retrieves a pinned historical commit from a fresh shallow clone', async t => {
+  const { pinDatabase } = await checker;
+  const directory = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'phoenix shallow db '));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const source = path.join(directory, 'source'), clone = path.join(directory, 'clone');
+  fs.mkdirSync(source);
+  const git = (cwd, args) => {
+    const result = spawnSync('git', ['-C', cwd, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  git(source, ['init']);
+  git(source, ['config', 'user.email', 'fixture@example.invalid']);
+  git(source, ['config', 'user.name', 'Fixture']);
+  fs.writeFileSync(path.join(source, 'advisory.md'), 'pinned advisory\n');
+  git(source, ['add', 'advisory.md']); git(source, ['commit', '-m', 'pinned']);
+  const revision = git(source, ['rev-parse', 'HEAD']), tree = git(source, ['rev-parse', 'HEAD^{tree}']);
+  fs.writeFileSync(path.join(source, 'advisory.md'), 'later advisory\n');
+  git(source, ['commit', '-am', 'later']);
+  git(directory, ['clone', '--depth', '1', pathToFileURL(source).href, clone]);
+  assert.equal(spawnSync('git', ['-C', clone, 'cat-file', '-e', revision]).status, 1);
+  pinDatabase(clone, { url: pathToFileURL(source).href, revision, tree });
+  assert.equal(git(clone, ['rev-parse', 'HEAD']), revision);
+  assert.equal(git(clone, ['rev-parse', 'HEAD^{tree}']), tree);
+  assert.equal(fs.readFileSync(path.join(clone, 'advisory.md'), 'utf8'), 'pinned advisory\n');
+  assert.equal(git(clone, ['status', '--porcelain']), '');
+  assert.throws(() => pinDatabase(clone, { url: pathToFileURL(source).href, revision: 'f'.repeat(40), tree }), /fetch pinned RustSec/);
+  assert.equal(git(clone, ['rev-parse', 'HEAD']), revision);
 });
 
 test('cargo-deny evidence requires both completed checks and retains actionable findings', async () => {

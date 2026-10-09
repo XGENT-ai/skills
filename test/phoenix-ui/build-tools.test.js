@@ -62,6 +62,30 @@ test('five native tool pins match the unchanged tool lock and verified official 
   }
 });
 
+test('Intel macOS bootstraps the exact mbx source before attempting its unavailable release asset', async () => {
+  const { assets, preparationCommands } = await prepare;
+  const commands = preparationCommands('darwin-x64');
+  const bootstrap = commands.findIndex(([, args]) => args.includes('--git'));
+  assert(bootstrap >= 0, 'mbx 1.21.1 has no Intel macOS release asset');
+  assert(commands[0][1].includes('rust@1.99.0'));
+  assert(!commands[0][1].includes('mr-boxington@1.21.1'));
+  const args = commands[bootstrap][1];
+  assert.deepEqual(args.slice(0, 9), ['exec', '--no-deps', '--', 'rustup', 'run', '1.99.0', 'cargo', 'install', '--locked']);
+  assert.equal(args[args.indexOf('--git') + 1], 'https://github.com/jdx/mr-boxington');
+  assert.equal(args[args.indexOf('--rev') + 1], 'a0a44c61ca6aaa8da41d59deeebdfc46fc9d3313');
+  assert.equal(args.at(-1), 'mbx');
+  assert.equal(assets.nativeBootstrap['darwin-x64'].version, '1.21.1');
+  const link = commands.findIndex(([, args]) => args[0] === 'link');
+  assert(link > bootstrap);
+  assert.equal(commands[link][1][1], 'mr-boxington@1.21.1');
+  assert(!commands[link][1].includes('--force'));
+  assert(commands.findIndex(([, args]) => args.length === 1 && args[0] === 'install') > link);
+  for (const platform of ['darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64']) {
+    assert(!preparationCommands(platform).some(([, args]) => args.includes('--git')));
+  }
+  assert(!preparationCommands('darwin-x64', true).some(([, args]) => args.includes('--git')));
+});
+
 test('mise environment retains its nested PATH record while removing Cargo proxies and transient shim state', async () => {
   const { miseEnvironment } = await buildTools;
   const env = miseEnvironment({

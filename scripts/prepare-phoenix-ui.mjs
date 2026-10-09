@@ -25,6 +25,11 @@ export function nativePlatform(platform = process.platform, arch = process.arch)
 
 export function validatePins() {
   if (assets.schemaVersion !== 1) throw new Error('Unsupported build-tool asset schema');
+  const bootstrap = assets.nativeBootstrap['darwin-x64'];
+  if (bootstrap.tool !== 'mr-boxington' || bootstrap.package !== 'mbx' || bootstrap.version !== versions.mrBoxington
+      || bootstrap.url !== 'https://github.com/jdx/mr-boxington' || !/^[a-f0-9]{40}$/.test(bootstrap.revision)) {
+    throw new Error('Invalid pinned Intel macOS mbx source');
+  }
   for (const tool of ['wasmBindgen', 'binaryen']) {
     if (String(assets.tools[tool].version) !== String(versions[tool])) throw new Error(`${tool} asset catalog differs from build-tools.lock.json`);
     if (Object.keys(assets.tools[tool].assets).sort().join() !== Object.keys(assets.platforms).sort().join()) throw new Error(`${tool} must pin all five native platforms`);
@@ -178,10 +183,20 @@ export function extractArchive(bytes, asset, destination) {
   return path.join(destination, ...safeRelative(asset.executable).split('/'));
 }
 
-export function preparationCommands(platform) {
+export function preparationCommands(platform, boxingtonAvailable = false) {
   const nativeTarget = assets.platforms[platform]?.rustTarget;
   if (!nativeTarget) throw new Error('Unsupported native preparation platform');
+  const bootstrap = assets.nativeBootstrap[platform];
+  const sourceRoot = path.join(toolRoot, platform, `mr-boxington-${versions.mrBoxington}`);
   return [
+    ...(bootstrap && !boxingtonAvailable ? [
+      ['mise', ['install', `rust@${versions.rust}`, `node@${versions.node}`, `bun@${versions.bun}`]],
+      // mbx cannot wrap its own initial build. Use the explicitly installed
+      // toolchain just for this dependency, then register it with mise.
+      ['mise', ['exec', '--no-deps', '--', 'rustup', 'run', versions.rust, 'cargo', 'install', '--locked',
+        '--git', bootstrap.url, '--rev', bootstrap.revision, '--root', sourceRoot, bootstrap.package]],
+      ['mise', ['link', `mr-boxington@${versions.mrBoxington}`, sourceRoot]],
+    ] : []),
     ['mise', ['install']],
     ['mise', ['exec', '--no-deps', '--', 'rustup', 'target', 'add', '--toolchain', versions.rust, nativeTarget, versions.wasmTarget]],
     ['mise', ['exec', '--no-deps', '--', 'rustup', 'component', 'add', '--toolchain', versions.rust, 'rustfmt', 'clippy']],
@@ -207,7 +222,9 @@ async function prepare() {
     return result.stdout;
   };
   try {
-    for (const [program, args] of preparationCommands(platform)) run(program, args);
+    const selected = JSON.parse(run('mise', ['ls', '--current', '--json'], true));
+    const boxingtonAvailable = selected['mr-boxington']?.some(tool => tool.version === versions.mrBoxington && tool.installed);
+    for (const [program, args] of preparationCommands(platform, boxingtonAvailable)) run(program, args);
     for (const [tool, variable] of [['wasmBindgen', 'WASM_BINDGEN'], ['binaryen', 'WASM_OPT']]) {
       const asset = assets.tools[tool].assets[platform];
       const archiveRecord = { name: asset.name, url: asset.url, size: asset.size, sha256: asset.sha256, status: 'downloading' };
