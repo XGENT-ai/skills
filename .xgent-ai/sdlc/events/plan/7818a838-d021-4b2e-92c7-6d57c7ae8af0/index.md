@@ -26,4 +26,6 @@
 | dd539c8c-5a09-42a4-b33e-55ce27682ffc | implementation / plan | [事实记录](dd539c8c-5a09-42a4-b33e-55ce27682ffc.md) |
 | fa7f46e8-87e8-4a2d-847f-2832f399d0c0 | implementation / plan | [事实记录](fa7f46e8-87e8-4a2d-847f-2832f399d0c0.md) |
 
+| c253202c-9c0a-4471-b4ff-0006d72b505c | implementation / plan | [事实记录](c253202c-9c0a-4471-b4ff-0006d72b505c.md) |
+
 按[目录索引维护规则](../../../protocol.md)维护；新增事件后同步本索引，事件保存后不覆盖。

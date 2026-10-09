@@ -1,8 +1,8 @@
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import unittest
+from bash_check import run_progress
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -68,10 +68,7 @@ class ProgressCommitTest(unittest.TestCase):
             PLAN.format(done=done, state=state, latest=latest, next=nxt, records=records),
             encoding="utf-8",
         )
-        result = subprocess.run(
-            [shutil.which("bash"), SCRIPT.as_posix(), self.plan.as_posix(), self.dir.as_posix()],
-            text=True, capture_output=True, timeout=10,
-        )
+        result = run_progress(SCRIPT, self.plan, self.dir, 10)
         self.assertEqual(result.returncode, code, result.stdout + result.stderr)
         if diagnostic:
             self.assertIn(diagnostic, result.stdout)
