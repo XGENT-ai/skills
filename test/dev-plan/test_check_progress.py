@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -68,7 +69,7 @@ class ProgressCommitTest(unittest.TestCase):
             encoding="utf-8",
         )
         result = subprocess.run(
-            ["bash", str(SCRIPT), str(self.plan), str(self.dir)],
+            [shutil.which("bash"), SCRIPT.as_posix(), self.plan.as_posix(), self.dir.as_posix()],
             text=True, capture_output=True, timeout=10,
         )
         self.assertEqual(result.returncode, code, result.stdout + result.stderr)

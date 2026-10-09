@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -103,7 +104,8 @@ class PlanCheckTest(unittest.TestCase):
     def test_trimmed_initial_plan_and_references_pass_all_structural_checks(self):
         self.assertIn("WARN 0", self.run_check(PLAN))
         result = subprocess.run(
-            ["bash", str(SKILL / "scripts/check_progress.sh"), str(self.plan), self.temp.name],
+            [shutil.which("bash"), (SKILL / "scripts/check_progress.sh").as_posix(),
+             self.plan.as_posix(), Path(self.temp.name).as_posix()],
             text=True, capture_output=True, timeout=5,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

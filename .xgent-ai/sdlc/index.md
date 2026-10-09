@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。第六次Intel Mac/Mac ARM/Linux x64全组通过，另两native环境失败、两后置smoke跳过；必要修复5090fb5已提交并局部验证，下一步正常推送第七次候选。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保留范围；M4共享原brief17项、M5精确十进制10项及严格clippy通过，B源码/锁仍隔离。其他guard事项及首轮评审处置保留。
+- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。第七次四个非Windows全组通过，Windows light仍启动WSL、两后置smoke跳过；Bash完整路径修复本地Node186/Python60通过，待正常推送第八次。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)保留范围；M5纯库20项/42共享反例与合同hash门通过，M4/M5源码及锁仍隔离。其他guard事项及首轮评审处置保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

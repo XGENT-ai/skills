@@ -15,6 +15,7 @@
 | 4b163cc6-8eb8-4969-8f12-2470d083a5d6 | implementation / plan | [事实记录](4b163cc6-8eb8-4969-8f12-2470d083a5d6.md) |
 | 50e15f9a-f619-42fe-8683-8ea4d6d31a0f | readiness / plan | [事实记录](50e15f9a-f619-42fe-8683-8ea4d6d31a0f.md) |
 | 53ddb5a9-1d41-43ae-bcf4-6358206082ae | implementation / plan | [事实记录](53ddb5a9-1d41-43ae-bcf4-6358206082ae.md) |
+| 6b722ea6-4771-451e-a925-4a6e8505b800 | implementation / plan | [事实记录](6b722ea6-4771-451e-a925-4a6e8505b800.md) |
 | 70ce752f-5413-4ccb-80f3-10387dffb77e | implementation / plan | [事实记录](70ce752f-5413-4ccb-80f3-10387dffb77e.md) |
 | 77ec197e-383e-46f1-bff0-e2245866d10c | readiness / plan | [事实记录](77ec197e-383e-46f1-bff0-e2245866d10c.md) |
 | 7a74e5ac-3d63-4601-9a89-2ca1db931790 | implementation / plan | [事实记录](7a74e5ac-3d63-4601-9a89-2ca1db931790.md) |
@@ -22,6 +23,7 @@
 | aa67d1ba-661f-40df-a4a9-f79a301abc8c | readiness / plan | [事实记录](aa67d1ba-661f-40df-a4a9-f79a301abc8c.md) |
 | abbb4f4b-e072-4d3d-9457-a19b6cdbc1d7 | implementation / plan | [事实记录](abbb4f4b-e072-4d3d-9457-a19b6cdbc1d7.md) |
 | afbcbf8b-b4c8-4ace-8bff-52269b5fb4d9 | implementation / plan | [事实记录](afbcbf8b-b4c8-4ace-8bff-52269b5fb4d9.md) |
+| dd539c8c-5a09-42a4-b33e-55ce27682ffc | implementation / plan | [事实记录](dd539c8c-5a09-42a4-b33e-55ce27682ffc.md) |
 | fa7f46e8-87e8-4a2d-847f-2832f399d0c0 | implementation / plan | [事实记录](fa7f46e8-87e8-4a2d-847f-2832f399d0c0.md) |
 
 按[目录索引维护规则](../../../protocol.md)维护；新增事件后同步本索引，事件保存后不覆盖。
