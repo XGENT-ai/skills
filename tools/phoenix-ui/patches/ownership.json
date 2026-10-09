@@ -235,7 +235,7 @@
       "upstreamPath": "crates/comp-verbs/src/build_phase/integrity_tests.rs",
       "upstreamSha256": "7d4d59ef8d1de4975737aa70325b1f7f13d1e58748dfbde7c9f59f4000472ac1",
       "currentPath": "tools/phoenix-ui/crates/comp-verbs/src/build_phase/integrity_tests.rs",
-      "currentSha256": "48120de652c4a32d731f2ac91adc7395487ed09dcd743d82a96a038d70f6d31e",
+      "currentSha256": "bf0b9add94c85c6c1d267507a0b2e6df79705d6a83fbe2cf3a9a6a419021db03",
       "change": "modified"
     },
     {
@@ -1456,7 +1456,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/assets/bundle-inputs.json",
-      "currentSha256": "675d572747331427e3e048c14b016b6ef820e0ff1f11ce6e5269816a5b920774"
+      "currentSha256": "d5d6e1736d2561d185d2461fc8f7c98a6c99121dca0f3e139f7297b015ecc4bd"
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",

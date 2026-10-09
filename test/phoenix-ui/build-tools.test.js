@@ -98,6 +98,25 @@ test('mise environment retains its nested PATH record while removing Cargo proxi
   assert.equal(env.MISE_AUTO_INSTALL, 'false'); assert.equal(env.MISE_EXEC_AUTO_INSTALL, 'false');
 });
 
+test('Cargo wrapper accepts the exact Windows native shim copy and refuses unrelated executables', async t => {
+  const { validateCargoWrapper } = await buildTools;
+  const directory = sandbox(t), bin = path.join(directory, 'mise-bin');
+  const wrappers = path.join(directory, 'command-wrappers/bin');
+  fs.mkdirSync(bin); fs.mkdirSync(wrappers, { recursive: true });
+  const mise = path.join(bin, 'mise.exe'), shim = path.join(bin, 'mise-shim.exe');
+  const cargo = path.join(wrappers, 'cargo.exe');
+  fs.writeFileSync(mise, 'mise executable'); fs.writeFileSync(shim, 'original native dispatcher');
+  fs.copyFileSync(shim, cargo);
+  const tools = { cargo, realCargo: fs.realpathSync(cargo), mise };
+  validateCargoWrapper(tools, 'win32');
+  fs.writeFileSync(cargo, 'unrelated cargo executable');
+  assert.throws(() => validateCargoWrapper(tools, 'win32'), /native shim/);
+  fs.copyFileSync(shim, cargo);
+  assert.throws(() => validateCargoWrapper({ ...tools, cargo: mise }, 'win32'), /wrapper/);
+  fs.unlinkSync(shim);
+  assert.throws(() => validateCargoWrapper(tools, 'win32'), /native shim/);
+});
+
 if (process.platform === 'darwin') {
   test('macOS build and test profiles preserve Unix IPC and enforce their IP boundaries', async t => {
     const { offlineNetworkProfile, testNetworkProfile } = await buildTools;
@@ -120,11 +139,11 @@ if (process.platform === 'darwin') {
 
 if (process.env.PHOENIX_BUILD_TOOL_NESTED_NODE === '1') {
   test('explicit installed-tool check keeps pinned Node and the mise Cargo wrapper in nested and build environments', async () => {
-    const { workspace, versions } = await buildTools;
+    const { workspace, versions, validateCargoWrapper } = await buildTools;
     const source = `
       import path from 'node:path';
       import { mise, buildEnvironment } from '../../scripts/phoenix-build-tools.mjs';
-      const inspect = "const fs=require('node:fs'),path=require('node:path'); const cargo=process.env.PATH.split(path.delimiter).map(p=>path.join(p,'cargo'+(process.platform==='win32'?'.exe':''))).find(p=>fs.existsSync(p));console.log(JSON.stringify({version:process.versions.node,cargo,realCargo:cargo&&fs.realpathSync(cargo)}));";
+      const inspect = "const fs=require('node:fs'),path=require('node:path'); const find=name=>process.env.PATH.split(path.delimiter).map(p=>path.join(p,name+(process.platform==='win32'?'.exe':''))).find(p=>fs.existsSync(p));const cargo=find('cargo');console.log(JSON.stringify({version:process.versions.node,cargo,realCargo:cargo&&fs.realpathSync(cargo),mise:find('mise')}));";
       const nested = JSON.parse(mise(['node','-e',inspect]));
       const env = buildEnvironment({ bindgen:path.resolve('fixture-tools/wasm-bindgen'), opt:path.resolve('fixture-tools/wasm-opt'), path:process.env.PATH, cargo:nested.cargo });
       const build = JSON.parse(mise(['node','-e',inspect], {env}));
@@ -138,8 +157,7 @@ if (process.env.PHOENIX_BUILD_TOOL_NESTED_NODE === '1') {
     assert.equal(actual.outer, versions.node, 'outer command must use the pinned Node');
     for (const selected of [actual.nested, actual.build]) {
       assert.equal(selected.version, versions.node);
-      assert(selected.cargo.includes(`${path.sep}command-wrappers${path.sep}`), selected.cargo);
-      assert.match(path.basename(selected.realCargo), /^mise(?:\.exe)?$/);
+      validateCargoWrapper(selected);
     }
   });
 }

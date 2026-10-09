@@ -69,7 +69,11 @@ export function parseBunLock(text) {
     }
     const match = /^(.+)@(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/.exec(value[0]);
     if (!match) throw new Error(`Unpinned bun.lock dependency: ${key}`);
-    return { key, name: match[1], version: match[2], integrity: value[3] };
+    const os = value[2]?.os;
+    if (os !== undefined && !(typeof os === 'string' && os || Array.isArray(os) && os.length && os.every(p => typeof p === 'string' && p))) {
+      throw new Error(`Unsupported bun.lock platform restriction: ${key}`);
+    }
+    return { key, name: match[1], version: match[2], integrity: value[3], ...(os === undefined ? {} : { os }) };
   }).sort((a, b) => a.key.localeCompare(b.key, 'en'));
 }
 
@@ -299,6 +303,16 @@ async function prepare() {
   writeJson(path.join(prepared, 'extra-node-licenses.json'), extraProvenance);
   const bunLock = fs.readFileSync(path.join(workspace, 'bun.lock'), 'utf8');
   const packages = parseBunLock(bunLock);
+  // Bun omits packages restricted to other hosts. Preserve their original
+  // archives for the complete offline license inventory, without installing them.
+  for (const locked of packages.filter(p => p.os !== undefined)) {
+    const metadata = JSON.parse(await download(`https://registry.npmjs.org/${encodeURIComponent(locked.name)}/${locked.version}`));
+    requireEqual(metadata.dist.integrity, locked.integrity, `${locked.name}: npm archive integrity differs from bun.lock`);
+    const archive = await download(metadata.dist.tarball);
+    nodePackageFromArchive(locked, archive);
+    const filename = nodeArchivePath(locked);
+    fs.mkdirSync(path.dirname(filename), { recursive: true }); fs.writeFileSync(filename, archive);
+  }
   const request = auditRequest(packages);
   const queriedAt = new Date().toISOString();
   // A separate, explicit complete request also covers the library outside bun.lock
@@ -318,9 +332,37 @@ async function prepare() {
   console.log(`Explicit preparation complete: RustSec ${database.revision}; npm ${Object.keys(request).length} package names queried at ${queriedAt}.`);
 }
 
+const licenseFilename = name => /^(?:licen[cs]e|copying|notice|copyright|authors)(?:$|[._-])/i.test(name) || /^ThirdPartyNotices\.txt$/i.test(name);
 function licenseFiles(directory) {
-  return fs.readdirSync(directory).filter(name => /^(?:licen[cs]e|copying|notice|copyright|authors)(?:$|[._-])/i.test(name)
-    || /^ThirdPartyNotices\.txt$/i.test(name)).filter(name => fs.statSync(path.join(directory, name)).isFile()).sort();
+  return fs.readdirSync(directory).filter(licenseFilename).filter(name => fs.statSync(path.join(directory, name)).isFile()).sort();
+}
+
+export const nodeArchivePath = (locked, auditRoot = prepared) => path.join(auditRoot, 'node-archives', `${sha256(locked.integrity)}.tgz`);
+
+function nodePackageFromArchive(locked, archive) {
+  requireEqual(`sha512-${createHash('sha512').update(archive).digest('base64')}`, locked.integrity, `${locked.name}: npm archive integrity differs from bun.lock`);
+  const files = new Map([...tarFiles(archive)].map(([name, bytes]) => {
+    if (!name.startsWith('package/')) throw new Error(`${locked.name}: unexpected npm archive root`);
+    return [name.slice('package/'.length), bytes];
+  }));
+  return nodePackageMaterials(locked, files);
+}
+
+function nodePackageMaterials(locked, files) {
+  if (!files.has('package.json')) throw new Error(`${locked.name}: missing npm package.json`);
+  const manifest = JSON.parse(files.get('package.json').toString('utf8'));
+  requireEqual(`${manifest.name}@${manifest.version}`, `${locked.name}@${locked.version}`, `Node package differs from bun.lock: ${locked.key}`);
+  return { manifest, files };
+}
+
+export function readNodePackage(locked, nodeRoot = path.join(workspace, 'node_modules'), auditRoot = prepared) {
+  if (locked.os !== undefined) {
+    const filename = nodeArchivePath(locked, auditRoot);
+    if (!fs.existsSync(filename)) throw new Error(`Missing cached npm archive for ${locked.name}; explicitly prepare it before checking`);
+    return nodePackageFromArchive(locked, fs.readFileSync(filename));
+  }
+  const directory = path.join(nodeRoot, locked.key);
+  return nodePackageMaterials(locked, new Map(['package.json', ...licenseFiles(directory)].map(name => [name, fs.readFileSync(path.join(directory, name))])));
 }
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en')).flatMap(entry => {
@@ -336,11 +378,12 @@ export function materialScripts(repoRoot = root, runtimeRoot = workspace) {
 
 export function collectInventory(metadata, cargoLock, nodePackages) {
   const texts = new Map();
-  const preserve = (filename, location) => {
-    const content = fs.readFileSync(filename); const hash = sha256(content);
+  const preserveBytes = (content, location) => {
+    const hash = sha256(content);
     texts.set(hash, content);
     return { path: `THIRD-PARTY-LICENSES/${hash}.txt`, sha256: hash, originalLocation: location };
   };
+  const preserve = (filename, location) => preserveBytes(fs.readFileSync(filename), location);
   const runtimeLicense = preserve(path.join(workspace, 'LICENSE'), 'tools/phoenix-ui/LICENSE');
   const runtimeNotice = preserve(path.join(workspace, 'NOTICE.md'), 'tools/phoenix-ui/NOTICE.md');
   const upstream = readJson(path.join(workspace, 'UPSTREAM.json'));
@@ -379,19 +422,18 @@ export function collectInventory(metadata, cargoLock, nodePackages) {
   });
   const extra = new Map(readJson(path.join(prepared, 'extra-node-licenses.json')).map(p => [p.spec, p]));
   const node = nodePackages.map(locked => {
-    const directory = path.join(workspace, 'node_modules', locked.key);
-    const p = readJson(path.join(directory, 'package.json'));
-    requireEqual(`${p.name}@${p.version}`, `${locked.name}@${locked.version}`, `Installed Node package differs from bun.lock: ${locked.key}`);
+    const { manifest: p, files } = readNodePackage(locked);
     if (!licenseAllowed(p.license)) throw new Error(`Rejected/unknown Node license: ${locked.name}@${locked.version}: ${JSON.stringify(p.license)}`);
     const metadataUrl = `https://registry.npmjs.org/${encodeURIComponent(p.name)}/${p.version}`;
-    const licenses = licenseFiles(directory).map(filename => preserve(path.join(directory, filename), `npm:${p.name}@${p.version}/${filename}`));
+    const licenses = [...files.keys()].filter(name => !name.includes('/') && licenseFilename(name)).sort()
+      .map(filename => preserveBytes(files.get(filename), `npm:${p.name}@${p.version}/${filename}`));
     const source = extra.get(`${p.name}@${p.version}`);
     const licenseLocations = [metadataUrl];
     if (!licenses.length) {
       if (!source) throw new Error(`No preserved license or pinned source location for ${p.name}@${p.version}`);
       requireEqual(source.integrity, locked.integrity, `${p.name}: source provenance differs from bun.lock`);
       if (source.declarationOnly) {
-        licenses.push(preserve(path.join(directory, 'package.json'), `npm:${p.name}@${p.version}/package.json`));
+        licenses.push(preserveBytes(files.get('package.json'), `npm:${p.name}@${p.version}/package.json`));
         licenseLocations.push(source.url);
       } else licenses.push(preserve(path.join(prepared, `${source.sha256}.txt`), source.url));
     }

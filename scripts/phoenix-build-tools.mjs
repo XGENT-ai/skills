@@ -42,6 +42,22 @@ function exact(command, args, expected) {
   return command;
 }
 
+export function validateCargoWrapper(tools, platform = process.platform) {
+  if (!tools.cargo || !/[\\/]command-wrappers[\\/]/.test(tools.cargo)) {
+    throw new Error(`Cargo must resolve to the mise mr_boxington wrapper: ${tools.cargo}`);
+  }
+  if (platform === 'win32') {
+    // mise v2026.9.12 copies its native dispatcher as cargo.exe on Windows.
+    const shim = tools.mise && path.join(path.dirname(fs.realpathSync(tools.mise)), 'mise-shim.exe');
+    if (!shim || !fs.existsSync(shim) || path.basename(tools.cargo).toLowerCase() !== 'cargo.exe'
+        || !fs.readFileSync(tools.cargo).equals(fs.readFileSync(shim))) {
+      throw new Error(`Cargo wrapper must match the mise native shim: ${tools.cargo}; source: ${shim}`);
+    }
+  } else if (!/^mise(?:\.exe)?$/.test(path.basename(tools.realCargo))) {
+    throw new Error(`Cargo must resolve to the mise mr_boxington wrapper: ${tools.cargo}; target: ${tools.realCargo}`);
+  }
+}
+
 export function preflight() {
   const selected = JSON.parse(mise(['mise', 'ls', '--current', '--json']));
   for (const [tool, version] of [['rust', versions.rust], ['mr-boxington', versions.mrBoxington],
@@ -76,13 +92,10 @@ export function preflight() {
     const find = name => process.env.PATH.split(path.delimiter)
       .map(p => path.join(p, name + (process.platform === 'win32' ? '.exe' : ''))).find(p => fs.existsSync(p));
     const cargo = find('cargo');
-    console.log(JSON.stringify({path: process.env.PATH, cargo, realCargo: fs.realpathSync(cargo)}));
+    console.log(JSON.stringify({path: process.env.PATH, cargo, realCargo: fs.realpathSync(cargo), mise: find('mise')}));
   `]));
   // mbx 1.21.1's doctor does not recognize mise's universal command wrapper.
-  if (!toolsEnv.cargo.includes(`${path.sep}command-wrappers${path.sep}`)
-      || !/^mise(?:\.exe)?$/.test(path.basename(toolsEnv.realCargo))) {
-    throw new Error('Cargo must resolve to the mise mr_boxington wrapper.');
-  }
+  validateCargoWrapper(toolsEnv);
   const lock = fs.readFileSync(path.join(workspace, 'Cargo.lock'), 'utf8');
   if (!lock.includes(`name = "wasm-bindgen"\nversion = "${versions.wasmBindgen}"`)) {
     throw new Error('wasm-bindgen build tool differs from Cargo.lock.');

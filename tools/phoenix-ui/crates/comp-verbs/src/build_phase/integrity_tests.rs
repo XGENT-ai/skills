@@ -622,8 +622,19 @@ fn responsive_failures_replace_previous_success_evidence() {
 }
 
 fn assert_no_current_measurements(ws: &Workspace) {
-    for file in ["raw-report.json", "side-by-side.png", "heatmap.png", "regions/button.png", "regions/retired.png", "regions/nested/retired.png"] {
-        assert!(!ws.path.join("diff").join(file).is_file(), "stale evidence: {file}");
+    for file in [
+        "raw-report.json",
+        "side-by-side.png",
+        "heatmap.png",
+        "regions/button.png",
+        "regions/retired.png",
+        "regions/nested/retired.png",
+    ] {
+        assert!(
+            !ws.path.join("diff").join(file).is_file(),
+            "stale evidence: {file}; report: {}",
+            std::fs::read_to_string(ws.path.join("diff/report.json")).unwrap_or_default()
+        );
     }
 }
 

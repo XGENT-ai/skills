@@ -4,6 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { gzipSync } = require('node:zlib');
+const { createHash } = require('node:crypto');
 const { test } = require('node:test');
 const { spawnSync } = require('node:child_process');
 
@@ -38,6 +39,7 @@ test('Bun parser reads actual locked dependencies and preserves commas inside st
   assert.ok(actual.length > 40);
   assert.ok(actual.some(p => p.name === '@babel/parser'));
   assert.ok(actual.some(p => p.name === 'fsevents'), 'optional platform dependency remains in the inventory');
+  assert.equal(actual.find(p => p.name === 'fsevents').os, 'darwin');
   const input = '{"lockfileVersion":1,"packages":{"@scope/a":["@scope/a@1.2.3","",{"note":",}"},"sha512-AA==",],},}';
   assert.deepEqual(parseBunLock(input), [{ key: '@scope/a', name: '@scope/a', version: '1.2.3', integrity: 'sha512-AA==' }]);
   for (const value of ['file:../local', 'git+https://example.com/repo', '^1.2.3']) {
@@ -163,6 +165,33 @@ test('archive integrity reads actual bytes without executing code or extracting 
   assert.throws(() => tarFiles(tar([['package/LICENSE', 'a'], ['package/LICENSE', 'b']])), /Duplicate/);
   const longName = `package/${'nested/'.repeat(20)}LICENSE`;
   assert.equal(tarMember(tar([['././@LongLink', `${longName}\0`, 'L'], ['truncated', 'actual']]), longName).toString(), 'actual');
+});
+
+test('offline Node inventory preserves a locked platform package without installing or executing it', async t => {
+  const { readNodePackage, nodeArchivePath } = await checker;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-platform-license-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const nodeRoot = path.join(directory, 'node_modules'), auditRoot = path.join(directory, 'prepared');
+  const manifest = { name: 'platform-fixture', version: '1.2.3', license: 'MIT', os: ['darwin'] };
+  const license = Buffer.from('Original license\r\nCopyright upstream\r\n');
+  const archive = tar([['package/package.json', JSON.stringify(manifest)], ['package/LICENSE', license],
+    ['package/install.js', 'throw new Error("must not execute")']]);
+  const locked = { key: manifest.name, name: manifest.name, version: manifest.version, os: 'darwin',
+    integrity: `sha512-${createHash('sha512').update(archive).digest('base64')}` };
+  const cached = nodeArchivePath(locked, auditRoot);
+  fs.mkdirSync(path.dirname(cached), { recursive: true }); fs.writeFileSync(cached, archive);
+  const actual = readNodePackage(locked, nodeRoot, auditRoot);
+  assert.deepEqual(actual.manifest, manifest);
+  assert.deepEqual(actual.files.get('LICENSE'), license);
+  assert(!fs.existsSync(nodeRoot), 'reading audit materials must not install another host package');
+  fs.writeFileSync(cached, Buffer.from('substituted archive'));
+  assert.throws(() => readNodePackage(locked, nodeRoot, auditRoot), /integrity/);
+  fs.writeFileSync(cached, archive);
+  assert.throws(() => readNodePackage({ ...locked, version: '9.9.9' }, nodeRoot, auditRoot), /differs from bun.lock/);
+  fs.unlinkSync(cached);
+  assert.throws(() => readNodePackage(locked, nodeRoot, auditRoot), /explicitly prepare/);
+  assert.throws(() => readNodePackage({ ...locked, os: undefined }, nodeRoot, auditRoot), /ENOENT/,
+    'an absent ordinary dependency must still fail');
 });
 
 test('crate validation uses the original locked archive and detects modified/extra source', async t => {
