@@ -131,6 +131,10 @@ static START_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 impl Server {
     fn start(tag: &str) -> Server {
+        Self::start_with_lease(tag, 250)
+    }
+
+    fn start_with_lease(tag: &str, lease_ms: u64) -> Server {
         let _serialized = START_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = std::env::temp_dir().join(format!("impeccable-agent-target-{}-{}", tag, std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -144,7 +148,10 @@ impl Server {
             // Allow scheduling/HTTP overhead around the lease and grace;
             // a 400ms total deadline raced valid multi-step claims on CI.
             .env("PHOENIX_UI_AGENT_TARGET_TIMEOUT_MS", "3000")
-            .env("PHOENIX_UI_AGENT_TARGET_CLAIM_LEASE_MS", "250")
+            .env(
+                "PHOENIX_UI_AGENT_TARGET_CLAIM_LEASE_MS",
+                lease_ms.to_string(),
+            )
             .env("PHOENIX_UI_AGENT_TARGET_RESOLVE_GRACE_MS", "500")
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -344,7 +351,7 @@ fn agent_target_replays_pending_targets_to_a_late_overlay() {
 
 #[test]
 fn agent_target_reconnect_keeps_the_overlays_lease_and_word() {
-    let s = Server::start("reconnect");
+    let s = Server::start_with_lease("reconnect", 3000);
     let mut a = Overlay::connect(s.port, &s.token, "tab-a");
     let mut b = Overlay::connect(s.port, &s.token, "tab-b");
     a.next(|m| m["type"] == "connected");
@@ -1003,6 +1010,7 @@ fn live_generate_boot_and_open_run_the_lane_from_a_cold_project() {
             "1500",
         ])
         .current_dir(&dir)
+        .env_remove("PHOENIX_UI_BROWSER")
         .env("PHOENIX_UI_LIVE_COPY_AGENT", "off")
         .env(
             "PHOENIX_UI_DEV_URL_CANDIDATES",
@@ -1176,6 +1184,7 @@ fn live_generate_asks_the_harness_to_open_the_page_instead_of_a_second_browser()
         let out = std::process::Command::new(env!("CARGO_BIN_EXE_phoenix-ui"))
             .args(&args)
             .current_dir(&s.dir)
+            .env_remove("PHOENIX_UI_BROWSER")
             .env("PHOENIX_UI_LIVE_COPY_AGENT", "off")
             .env("PHOENIX_UI_PROVIDER_ID", provider)
             .env("PHOENIX_UI_DEV_URL_CANDIDATES", "http://127.0.0.1:1/")
@@ -1231,6 +1240,7 @@ fn live_generate_asks_the_harness_to_open_the_page_instead_of_a_second_browser()
                 "--open",
             ])
             .current_dir(&s.dir)
+            .env_remove("PHOENIX_UI_BROWSER")
             .env("PHOENIX_UI_LIVE_COPY_AGENT", "off")
             .env("PHOENIX_UI_PROVIDER_ID", "cursor")
             .env("PHOENIX_UI_DEV_URL_CANDIDATES", "http://127.0.0.1:1/")

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-09T15:18:34.344Z",
+  "checkedAt": "2026-10-09T15:58:03.149Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -66,9 +66,8 @@
     "nodePreparation": "mise exec --no-deps -- bun audit --json + explicit npm bulk request for every locked/bundled package"
   },
   "distribution": {
-    "status": "passed",
-    "requiredFiles": 188,
-    "directory": "local/phoenix-ui/ci-timing-final-release"
+    "status": "not-run",
+    "reason": "No binary/npm distribution directory was supplied"
   },
   "blockers": []
 }

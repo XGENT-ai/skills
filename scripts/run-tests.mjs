@@ -15,13 +15,15 @@ for (const entry of fs.readdirSync(path.join(root, 'test'), { withFileTypes: tru
   }
 }
 
-function run(command, args) {
-  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' });
+function run(command, args, env = process.env) {
+  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', env });
   if (result.error) console.error(result.error.message);
   if (result.status !== 0) process.exit(result.status || 1);
 }
 
 run(process.execPath, ['--test', ...files.sort()]);
+// Python tests and their subprocesses exchange UTF-8 text on every host.
+const pythonEnv = { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
 for (const dir of ['test/codex', 'test/dev-plan', 'test/skills', 'skills/agi-mode/evals']) {
-  run('python3', ['-m', 'unittest', 'discover', '-s', dir, '-p', 'test_*.py']);
+  run('python3', ['-m', 'unittest', 'discover', '-s', dir, '-p', 'test_*.py'], pythonEnv);
 }

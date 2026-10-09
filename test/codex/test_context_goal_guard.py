@@ -214,8 +214,13 @@ class GuardTest(unittest.TestCase):
         self.assertEqual(self.run_guard(), {})
 
     def test_unreadable_database(self):
-        self.db.chmod(0)
-        self.addCleanup(self.db.chmod, 0o600)
+        if os.name == "nt":
+            # Windows chmod cannot deny reads; a directory cannot open as a database.
+            self.db.unlink()
+            self.db.mkdir()
+        else:
+            self.db.chmod(0)
+            self.addCleanup(self.db.chmod, 0o600)
         self.warning(self.run_guard())
 
     def test_bad_statistics_do_not_fall_back(self):
@@ -271,13 +276,13 @@ class GuardTest(unittest.TestCase):
 
     def test_default_home_and_stop_validation(self):
         self.warning(self.run_guard(dict(self.input, hook_event_name="Stop", stop_hook_active="false")))
-        # Override HOME only in this isolated child to exercise Codex's default location.
+        # Override both platform home variables only in this isolated child.
         default = self.home / ".codex"
         default.mkdir()
         self.sessions.rename(default / "sessions")
         self.db.rename(default / "goals_1.sqlite")
         data = dict(self.input, transcript_path=str(default / "sessions/session.jsonl"))
-        env = dict(os.environ, HOME=str(self.home))
+        env = dict(os.environ, HOME=str(self.home), USERPROFILE=str(self.home))
         env.pop("CODEX_HOME", None)
         result = subprocess.run(["python3", str(SCRIPT)], input=json.dumps(data),
                                 env=env, capture_output=True, text=True, timeout=3)

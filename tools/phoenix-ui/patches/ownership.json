@@ -158,7 +158,7 @@
       "upstreamPath": "crates/cli/tests/agent_target.rs",
       "upstreamSha256": "55b2e7a0cf711cf2e865fd3bd617a35fe57846d920bdb281a844d7a919ae0274",
       "currentPath": "tools/phoenix-ui/crates/cli/tests/agent_target.rs",
-      "currentSha256": "4a9d9a1724d5ec476fd4ba03f18ed57956a68a4f5709118f65019780edcaa645",
+      "currentSha256": "42850094f5378e131eef519312f2424a5ebb02ee22f6085f9548c714cf64d937",
       "change": "modified"
     },
     {
@@ -1545,7 +1545,7 @@
   ],
   "verification": {
     "sourceHashes": "verified-current-worktree",
-    "runtimeTests": "Current test:phoenix invocation passed 75 Rust groups / 866 tests with 0 failures and 9 default ignores, then failed on two new rustfmt blocks. Formatting only those assertions removed the additions; ci-timing-runtime-remainder.log exits 0 with no added lint, WASM8474/72 and current debug oracle860. Current release 08718c4e independently replays 860/860. Under plan section 9, unchanged Rust behavior evidence is reused after formatting; no complete-current-command exit 0 is claimed. Five-platform CI is pending.",
+    "runtimeTests": "Current agent_target fixture group passes 26/26 with an inherited external browser, after a matching reconnect delay reproduced the CI failure and the per-case lease fix passed. ci-fixture-final-lints.log has zero additions and 540 inherited diagnostics. Other Rust behavior, WASM8474/72 and debug oracle860 evidence remains on the previous scoped A candidate; current release ddb77e95 independently replays 860/860. Only the CLI test fixture changed among 506 build inputs. Plan section 9 reuses unaffected groups; no full-current-command exit 0 or successful five-platform matrix is claimed.",
     "browserAndNativePlatforms": "darwin-arm64 Chrome asset/component/network scopes passed; IME/Safari, other native platforms and provider sessions not verified"
   }
 }

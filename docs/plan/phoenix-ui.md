@@ -42,21 +42,21 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-09T23:25:09+08:00
+- 最近更新：2026-10-10T00:32:39+08:00
 - 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；第四次矩阵Linux x64全组通过，其余四native失败，Intel Mac旧清理回归已通过；本轮必要修复及本地分阶段验证通过，待第五次CI；M4草稿保持隔离
+- 当前状态：进行中；第五次矩阵Intel Mac与Linux x64全组通过，两个ARM在runtime失败、Windows在light失败；对应测试环境及夹具修复和当前release检查已通过；第六次矩阵待运行，M4保持隔离
 - 最近完成：M1 · 固定来源与可运行基线
-- 下一步：M2 · 正常推送同一已授权验证分支运行第五次矩阵；成功后推进M3，M4保持隔离
-- 当前阻塞：
-- 代码基线：3eec43f153c1e49b28deab0ed18f457e4f760d19（本轮浏览器身份、准备token、Windows JSON编码及协议夹具修复实现候选；最终制品和分阶段检查通过，待第五次CI）
+- 下一步：M2 · 提交本轮必要修复并正常推送同一已授权分支运行第六次矩阵；成功后推进M3，M4保持隔离
+- 当前阻塞：无
+- 代码基线：dirty@04ebed1386597bbfce2082bf5e433a899fae9ae7（第五次CI候选已正常推送；本轮仅测试调度/夹具及来源证明改变，当前506-input检查通过，待下一矩阵）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-09T23:25:09+08:00 | 第四次矩阵Linux x64通过，其余四native失败；本轮浏览器pin、token、Windows编码及协议夹具修复已局部验证。Rust866通过后格式门失败，仅格式修正后的lint/WASM8474/debug oracle860续跑及最终release oracle860、Node18/25消费和审计通过；最终Node186/Python60通过，待第五次CI。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；未到M3完成提交点 |
-| M4 | 进行中 | 2026-10-09T21:45:20+08:00 | 隔离worktree的context JSON、generic/Portal profile及接受brief映射15项局部测试通过；三个design skills与Phoenix源指令融合草稿已保存，metadata2项通过、七项真实路由用例待执行。未纳入A树或完成安装后验收。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M2 | 进行中 | 2026-10-10T00:32:39+08:00 | 第五次矩阵Intel Mac/Linux x64全组通过，两个ARM runtime及Windows light失败，对应必要修复已通过本地检查。当前26项协议、lint、release oracle860、Node18/25消费、审计、Node186/Python60及来源证明通过，第六次矩阵待运行。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；未到M3完成提交点 |
+| M4 | 进行中 | 2026-10-10T00:19:03+08:00 | 隔离worktree的context JSON、generic/Portal profile及接受brief映射16项局部测试通过，新增monorepo目标路径回归先红后绿；设计指令草稿与metadata2项证据保留，七项真实路由用例待执行。未纳入A树或完成安装后验收。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 ## 0. 需求、范围与决策
 
