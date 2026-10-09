@@ -48,14 +48,14 @@
 - 最近完成：M1 · 固定来源与可运行基线
 - 下一步：M2 · 正常推送同一已授权验证分支并运行第三次矩阵、读取Mac清理报告；成功矩阵后推进M3，M4保持隔离
 - 当前阻塞：
-- 代码基线：dirty@255a985940f2eef85d3a135766c512bc57d906ff（第二次CI已失败；本轮Linux审计/Windows包装器修复与Mac断言诊断待提交推送）
+- 代码基线：de3a85739ddc04c346c123e9b36ff86b177ec0b7（M2跨平台前置修复与Mac断言诊断候选；本地受影响检查通过，待第三次CI）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-09T20:00:48+08:00 | 第二次矩阵五native失败、后置job跳过；Linux/Windows前置修复回归27项通过，Mac失败保持原断言并增加报告。当前Node184/Python59、Rust865行为、格式修正后lint/WASM8474/oracle860及Node18/25消费、审计通过，待第三次CI。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-09T20:00:48+08:00 | 第二次矩阵五native失败、后置job跳过；Linux/Windows前置修复回归27项通过，Mac失败保持原断言并增加报告。当前Node184/Python59、Rust865行为、格式修正后lint/WASM8474/oracle860及Node18/25消费、审计通过，待第三次CI。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc；未到M3完成提交点 |
 | M4 | 进行中 | 2026-10-09T20:00:48+08:00 | 独立worktree的context JSON、generic/Portal profile与接受brief路径映射15项测试先红后绿；原文/hash、漂移冲突和安全索引写入已局部验证。skill融合及安装后验收待实施，未纳入A树。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 ## 0. 需求、范围与决策
