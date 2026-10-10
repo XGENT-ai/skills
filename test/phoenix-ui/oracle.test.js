@@ -340,7 +340,8 @@ test('the external-project cases retain their independent fixed DESIGN/config in
   for (const id of fixture.ids) {
     const item = cases.find((c) => c.id === id);
     assert.ok(item.args.includes(`<WS>/${fixture.directory}/${fixture.target}`));
-    assert.deepEqual(item.normalize.at(-1), [`<WS>/${fixture.directory}`, 'g', '<REPO>']);
+    assert.deepEqual(item.normalize.slice(-2), [[`<WS>/${fixture.directory}`, 'g', '<REPO>'],
+      [String.raw`<WS>\\{1,2}\.oracle-external-project`, 'g', '<REPO>']]);
   }
   assert.ok(fixture.files.some((f) => f.originalPath === 'DESIGN.md'));
   assert.ok(fixture.files.some((f) => f.originalPath === '.impeccable/config.json' && f.currentPath === '.phoenix-ui/config.json'));
@@ -455,4 +456,110 @@ test('Windows critique expectations only adapt the four observed platform path f
     (actual) => { actual.steps[4].stdout = actual.steps[4].stdout.replace('src/App.tsx', 'different target'); },
     (actual) => { actual.steps[1].exit = 0; },
   ]) { const actual = structuredClone(win); mutate(actual); assert.ok(diffResults(win, actual).length); }
+});
+
+const windowsAdapter = import('../../tools/phoenix-ui/tests/oracle/adapters/windows.mjs');
+const deepSub = (value, sub) => typeof value === 'string' ? sub(value)
+  : Array.isArray(value) ? value.map((item) => deepSub(item, sub))
+  : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, deepSub(item, sub)])) : value;
+
+test('object stdin keeps Windows workspace paths valid JSON and stays byte-identical for POSIX workspaces', async () => {
+  const { stdinJson } = await windowsAdapter;
+  const { allCases } = await harness;
+  const substitute = (ws) => (value) => String(value).replaceAll('<WS>', ws).replaceAll('<REPO>', root);
+  const posix = substitute('/private/var/folders/x/T/impeccable-oracle-AbC123');
+  const windows = substitute(String.raw`C:\Users\RUNNER~1\AppData\Local\Temp\impeccable-oracle-AbC123`);
+  let objects = 0;
+  for (const c of await allCases()) for (const step of [c, ...(c.steps || [])]) {
+    if (step.stdin == null || typeof step.stdin === 'string') continue;
+    objects++;
+    assert.equal(stdinJson(step.stdin, posix), posix(JSON.stringify(step.stdin)), c.id);
+    assert.deepEqual(JSON.parse(stdinJson(step.stdin, windows)), JSON.parse(JSON.stringify(deepSub(step.stdin, windows))), c.id);
+  }
+  assert.ok(objects > 50, `${objects}`);
+  assert.throws(() => JSON.parse(windows(JSON.stringify({ cwd: '<WS>' }))));
+});
+
+test('Windows executable, workspace and climb masks reproduce the POSIX placeholders and leave POSIX text unchanged', async () => {
+  const { pathForms, windowsBinaryMasks, windowsClimbMask } = await windowsAdapter;
+  const bin = String.raw`C:\Users\runneradmin\AppData\Local\mbx\targets\v1\abc\debug\phoenix-ui.exe`;
+  const hook = `"${bin.replaceAll('\\', '\\\\')}" hooks`;
+  assert.equal(windowsBinaryMasks(`Run ${hook} ignore-value`, bin), 'Run <HOOK_ADMIN_CMD> ignore-value');
+  assert.equal(windowsBinaryMasks(JSON.stringify({ text: `Run ${hook} x` }), bin), JSON.stringify({ text: 'Run <HOOK_ADMIN_CMD> x' }));
+  assert.equal(windowsBinaryMasks(JSON.stringify({ hint: `Run ${bin} live-poll` }), bin), JSON.stringify({ hint: 'Run <IMPECCABLE> live-poll' }));
+  assert.equal(windowsBinaryMasks(`'${JSON.stringify(bin).slice(1, -1)}' live`, bin), '<IMPECCABLE> live');
+  const posixBin = '/Users/me/.cache/mbx/phoenix-ui', posixText = `'${posixBin}' hooks and "${posixBin}" live`;
+  assert.equal(windowsBinaryMasks(posixText, posixBin), posixText);
+  assert.deepEqual(pathForms('/tmp/ws'), ['/tmp/ws']);
+  assert.deepEqual(pathForms(String.raw`C:\a\ws`), [String.raw`C:\a\ws`, String.raw`C:\\a\\ws`, 'C:/a/ws']);
+  assert.equal(windowsClimbMask(String.raw`..\..\..\.phoenix-ui\surfaces\route.md`), String.raw`<UP_TO_ROOT>\.phoenix-ui\surfaces\route.md`);
+  assert.equal(windowsClimbMask(String.raw`"..\\..\\.phoenix-ui\\x"`), String.raw`"<UP_TO_ROOT>\\.phoenix-ui\\x"`);
+  for (const kept of [String.raw`..\.phoenix-ui\x`, '../../.phoenix-ui/surfaces/route.md', String.raw`..\..\other\x`]) assert.equal(windowsClimbMask(kept), kept);
+  const { loadPhoenixCases } = await adapter;
+  const { normalize, cases } = await loadPhoenixCases(bin);
+  const ws = String.raw`C:\Users\RUNNER~1\AppData\Local\Temp\impeccable-oracle-AbC123`;
+  assert.equal(normalize(JSON.stringify({ componentDirAbs: 'C:/Users/RUNNER~1/AppData/Local/Temp/impeccable-oracle-AbC123/node_modules/x' }), { ws, home: '/unused' }),
+    JSON.stringify({ componentDirAbs: '<WS>/node_modules/x' }));
+  assert.equal(normalize(JSON.stringify({ hint: `Start ${bin} live-server` }), { ws, home: String.raw`C:\Users\runneradmin` }), JSON.stringify({ hint: 'Start <IMPECCABLE> live-server' }));
+  const external = cases.find((c) => c.id === 'detect-config-cross-project');
+  const apply = (text) => external.normalize.reduce((out, [source, flags, replacement]) => out.replace(new RegExp(source, flags), replacement), text);
+  assert.equal(apply(String.raw`<WS>\.oracle-external-project\tests\a.html`), String.raw`<REPO>\tests\a.html`);
+  assert.equal(apply(String.raw`"<WS>\\.oracle-external-project\\tests\\a.html"`), String.raw`"<REPO>\\tests\\a.html"`);
+  assert.equal(apply('<WS>/.oracle-external-project/tests/a.html'), '<REPO>/tests/a.html');
+  assert.equal(apply(String.raw`<WS>\other-project\a.html`), String.raw`<WS>\other-project\a.html`);
+});
+
+test('listed Windows fixture preconditions are exact, fail closed and are inert on POSIX', async (t) => {
+  const os = require('node:os');
+  const { applyPlatformPrecondition, platformSkipReason, metadata } = await adapter;
+  const { allCases } = await harness;
+  const ids = new Set((await allCases()).map((c) => c.id));
+  const { livePid, readDenied, skips } = metadata.platformPreconditions;
+  for (const id of [...livePid.ids, ...Object.keys(readDenied.files), ...skips.map((skip) => skip.id)]) assert.ok(ids.has(id), id);
+  assert.ok([livePid, readDenied, ...skips].every((item) => item.platform === 'win32' && item.reason && item.source.length));
+  const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-precondition-'));
+  t.after(() => fs.rmSync(ws, { recursive: true, force: true }));
+  const file = path.join(ws, livePid.file), original = JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 });
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, original);
+  for (const platform of ['darwin', 'linux']) {
+    applyPlatformPrecondition(livePid.ids[0], ws, platform);
+    applyPlatformPrecondition('detect-unreadable-file-json', ws, platform);
+  }
+  assert.equal(fs.readFileSync(file, 'utf8'), original);
+  applyPlatformPrecondition(livePid.ids[0], ws, 'win32');
+  assert.equal(fs.readFileSync(file, 'utf8'), JSON.stringify({ pid: process.pid, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 }));
+  assert.throws(() => applyPlatformPrecondition(livePid.ids[0], ws, 'win32'), /live pid fixture changed/);
+  applyPlatformPrecondition('question-wait-answer-ready', ws, 'win32');
+  assert.equal(platformSkipReason('surface-brief-write-route', 'win32'), skips[0].reason);
+  for (const [id, platform] of [['surface-brief-write-route', 'linux'], ['surface-brief-write-route', 'darwin'], ['surface-brief-path-slash', 'win32']]) assert.equal(platformSkipReason(id, platform), undefined);
+});
+
+test('Windows separator expectations only flip whole path tokens and never change POSIX expectations', async () => {
+  const { metadata, readGolden, phoenixExpected } = await adapter;
+  let patches = 0, edits = 0;
+  for (const entry of metadata.expectations) {
+    const golden = readGolden(entry.id);
+    const unix = phoenixExpected(entry.id, golden, 'darwin');
+    assert.deepEqual(phoenixExpected(entry.id, golden, 'linux'), unix, entry.id);
+    phoenixExpected(entry.id, golden, 'win32');
+    for (const patch of entry.platformFields || []) {
+      assert.equal(patch.platform, 'win32', entry.id);
+      assert.deepEqual(patch.path.reduce((value, key) => value?.[key], { ...structuredClone(golden), stdout: unix.stdout }) === undefined, false, `${entry.id}/${patch.path.join('/')}`);
+      if (patch.reason !== 'windows-native-path-separator') continue;
+      patches++;
+      for (const edit of patch.edits) {
+        edits++;
+        const where = `${entry.id}/${patch.path.join('/')}:${edit.offset}`;
+        assert.ok(edit.before.includes('/') && !edit.before.includes('\\') && !edit.before.includes('://'), where);
+        assert.ok([edit.before.replaceAll('/', '\\'), edit.before.replaceAll('/', '\\\\')].includes(edit.after), where);
+      }
+    }
+  }
+  assert.ok(patches > 300 && edits > 2000, `${patches}/${edits}`);
+  const quoted = metadata.expectations.find((entry) => entry.id === 'critique-write-monorepo-child').platformFields
+    .find((patch) => patch.reason === 'windows-drive-path-yaml-quote');
+  assert.equal(phoenixExpected('critique-write-monorepo-child', readGolden('critique-write-monorepo-child'), 'win32').steps[1].stdout.split('\n')[3],
+    'target_path: ' + JSON.stringify(String.raw`<WS>\apps\a\src\App.tsx`));
+  assert.equal(quoted.edits.length, 2);
 });

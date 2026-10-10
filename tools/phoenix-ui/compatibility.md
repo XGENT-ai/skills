@@ -425,11 +425,22 @@ Browser检测使用本机Chromium系浏览器；Chrome/Safari live交互与Windo
 
 当前 IME 实现可定位于 [live-browser.js:867](../../skills/phoenix-ui/src/scripts/live-browser.js#L867)，实际三个 Enter 条件由轻量测试读取。当前 Windows 生成器 [hooks.js:58](scripts/lib/transformers/hooks.js#L58)、Rust formatter [hook_manifest.rs:278](crates/skills/src/hook_manifest.rs#L278) 与 native admin [admin.rs:127](crates/hook/src/admin.rs#L127) 均发共享 [Node guard](crates/hook/src/missing_launcher.cjs)，由 guard 在 Windows 内经 cmd.exe 调用 Phoenix .cmd，并保留退出码；这是当前适配，历史0002审阅patch保持原字节。当前 [hook_markers.rs:25](crates/context/src/hook_markers.rs#L25) 用 Phoenix launcher 识别 active hook，legacy 名称仅用于迁移/诊断。旧 [xgent-skills.js:131](../../bin/xgent-skills.js#L131) Impeccable writer 保留历史实现；当前 Codex 生成 JSON 与 bundle 已静态核对。真实 cmd/PowerShell/Windows Codex 会话、IME 及 goal guard 仍未验证。
 
+## Windows原机oracle重放
+
+固定上游CI只在Linux重放oracle（[ci.yml:222](https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/.github/workflows/ci.yml#L222)），Windows仅build/cargo test。Phoenix在五个原生平台重放全部860项。CI15/run38033314527 attempt2的Windows debug binary SHA `876417cbc7fc44e7b7dfd284292acdeaf9a71dde1f5aa8e91cffa3dd921e0577` 首次取得完整报告：478通过、271适配、382失败、0 error/missing/skip，逐项处置如下。
+
+| 类别 | 证据与处置 | 状态 |
+| --- | --- | --- |
+| 原生路径分隔符 | 320项/374字段只差 `/` 与原生 `\`（JSON内为`\\`），来自Node `path`语义的 [jsp.rs:17](crates/common/src/jsp.rs#L17)。win32 `platformFields` 逐路径token字面登记，仅替换分隔符；均为本机状态/输出，无共享配置。另一处YAML值因盘符冒号按 [critique_storage.rs:51](crates/context/src/critique_storage.rs#L51) 加引号。 | 期望已登记，待Windows重放 |
+| harness输入/掩码 | 原harness把Windows路径直接拼进stdin JSON文本，hook读到`stdin-malformed`（约30项）；exe JSON转义、Windows hook命令引号、正斜杠workspace、反斜杠climb与外部项目路径缺掩码。适配器改为值内替换并补对应形态；POSIX原stdin逐字节不变。 | hook实际Windows输出待下一轮观察 |
+| 夹具前置条件 | pid 1在Windows不存在，Node兼容探测正确返回ESRCH，4项改用harness存活pid；`chmod 000`不能阻止Windows读取，2项改用Everyone读数据deny ACE并在读取仍成功时失败；根目录可写的1项列为win32 skip。 | 前置已实现，待Windows重放 |
+| 继承缺陷：live-poll连接拒绝 | [live_poll.rs:186](crates/live/src/live_poll.rs#L186)只匹配英文“Connection refused”，Windows WSAECONNREFUSED显示`fetch failed`而非“Live server not running”。与固定上游逐字相同；现补充按`io::ErrorKind::ConnectionRefused`识别，两项Rust回归先红后绿。 | 已修复，待Windows重放 |
+
 ## 已读取的 M2 局部验收证据
 
 严格 [Phoenix oracle 入口](../../scripts/check-phoenix-oracle.mjs) 保留原 860 个 case 和全部历史 golden，逐位置登记公开名称/路径适配，单一 Italic finding 用固定单文件 golden 逐项证明；不读取旧 accepted parser。helper/metadata 的 Node 合同 18/18 通过、0失败/skip；479 个 case 的逐字段期望登记与 37 份当前源码 SHA 已核对。主实施者的 [最终完整重放](../../local/phoenix-ui/oracle-final-release.json) 记录 2026-10-09T08:58:46.229Z，darwin-arm64 binary SHA `dd11af8288b9f5c5c830793a33828efd11cb629399fc67191c1016afa05c8ec8`，860/860通过（476项精确适配），0失败/error/missing/skip，`acceptanceComplete=true`。仅 Darwin 的四个静态 framework case 使用逐次原生 spawn 的 IP 隔离前置，原 binary SHA、argv 和 expected 字节保留，daemon/其他 case 不受影响；该证明不含真实 provider、宿主 copy、IME 或其他平台。
 
-最后的公开诊断前缀可定位于 [lib.rs:85](crates/live/src/lib.rs#L85)、[live_server.rs:216](crates/live/src/live_server.rs#L216)、[live_server.rs:236](crates/live/src/live_server.rs#L236)、[live_server.rs:262](crates/live/src/live_server.rs#L262) 与 [live_poll.rs:777](crates/live/src/live_poll.rs#L777)。原 860 case 不调用未知 live verb 或 poll stream，也不触发上述三条 server 维护 stdout；这些覆盖边界由 Node 负向合同明确保留，不能从完整原 oracle 通过推断诊断分支均已实际触发。
+最后的公开诊断前缀可定位于 [lib.rs:85](crates/live/src/lib.rs#L85)、[live_server.rs:216](crates/live/src/live_server.rs#L216)、[live_server.rs:236](crates/live/src/live_server.rs#L236)、[live_server.rs:262](crates/live/src/live_server.rs#L262) 与 [live_poll.rs:795](crates/live/src/live_poll.rs#L795)。原 860 case 不调用未知 live verb 或 poll stream，也不触发上述三条 server 维护 stdout；这些覆盖边界由 Node 负向合同明确保留，不能从完整原 oracle 通过推断诊断分支均已实际触发。
 
 已读取主实施者的 [Chrome capture 证据](../../local/phoenix-ui/browser-network-acceptance-pre-final/result.json)：2026-10-09T07:59:51.726Z，binary SHA `f529ab7d6337ebe64ba263fa142d2bb3a4d15c8c94eeedd23cd3863034d802a4`。它用原生 live script 与 vendored screenshot 在 M1 Web fixture 加本地跨源控制上执行真实 Chrome capture，记录外部字体/媒体舍弃提示及无 console error；证据 scope 明确不含 provider、IME 或其他平台。本账本全范围 runtime/browser/provider 状态仍为未验证，不能由该单场景关闭 A 门。
 

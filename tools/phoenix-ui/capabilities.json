@@ -7144,7 +7144,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/live/src/live_poll.rs": {
-        "sha256": "b2054970a11f3ab6baed7fa4a6475ff8942438ba83584b97d027dba4556d8620",
+        "sha256": "83157c07fcc7c19eadf7fae8b5c75424ce4859dff137aefa281bc0b5cae033c9",
         "sourceScope": "current-fork",
         "importedPath": "tools/phoenix-ui/crates/live/src/live_poll.rs",
         "baselineSha256": "1275247c8b335e6c4d6fd9f3e946765177cc55a8ae2e1e1881b3ccc6c219859f"

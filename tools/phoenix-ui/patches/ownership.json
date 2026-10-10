@@ -774,7 +774,7 @@
       "upstreamPath": "crates/live/src/live_poll.rs",
       "upstreamSha256": "1275247c8b335e6c4d6fd9f3e946765177cc55a8ae2e1e1881b3ccc6c219859f",
       "currentPath": "tools/phoenix-ui/crates/live/src/live_poll.rs",
-      "currentSha256": "b2054970a11f3ab6baed7fa4a6475ff8942438ba83584b97d027dba4556d8620",
+      "currentSha256": "83157c07fcc7c19eadf7fae8b5c75424ce4859dff137aefa281bc0b5cae033c9",
       "change": "modified"
     },
     {
@@ -1420,7 +1420,7 @@
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs",
-      "currentSha256": "d5ab3f3cbc93cb26fb52642bcc4f264a0370471e45dde8ab1d6530406880e273"
+      "currentSha256": "dc7444aba0d1bcb85a0296e921fa7092292bdd440301214272dec4e98c06cd83"
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs",
@@ -1540,11 +1540,15 @@
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
-      "currentSha256": "7370398f80c5cbd0deb7002d9dccff9e9fe0327a2f40fb564548839fe858d69f"
+      "currentSha256": "a4147f4ec1ed26e31a23549b9627bf6dfe22c8a73cb834fe19ddd8cc57d9d5d4"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
-      "currentSha256": "d53ac5baee6c8c9077d61bf7d5e8296cae39c9171055a3d8aff5022f9d5fe9b1"
+      "currentSha256": "ea535bff4fc92253e0607eaa5f80a066f9e1b5a130f7a736906c1342fdf6e993"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/oracle/adapters/windows.mjs",
+      "currentSha256": "5d61b8197f7fef555b73c51629444808ef5f249a35f76ca18b2a0f1afc70be7c"
     }
   ],
   "verification": {

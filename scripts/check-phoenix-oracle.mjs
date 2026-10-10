@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { verifyCorpus, loadPhoenixCases, readGolden, phoenixExpected, diffResults,
-  caseRunsHere, metadata, sha256, ROOT } from '../tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs';
+  caseRunsHere, platformSkipReason, metadata, sha256, ROOT } from '../tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs';
 
 export async function checkOracle({ bin, prefix = '', reportActual = false, progress = () => {} }) {
   if (!bin) throw new Error('explicit --bin or PHOENIX_UI_BIN is required; no download or old-runtime fallback');
@@ -16,6 +16,7 @@ export async function checkOracle({ bin, prefix = '', reportActual = false, prog
     'tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/network.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/critique-clock.mjs',
+    'tools/phoenix-ui/tests/oracle/adapters/windows.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/phoenix.json',
     'scripts/phoenix-build-tools.mjs'].map((file) => ({ path:file, sha256:sha256(fs.readFileSync(path.join(ROOT,file))) }));
   const probe = spawnSync(bin, ['engine-probe'], { encoding: 'utf8', timeout: 10000 });
@@ -33,8 +34,11 @@ export async function checkOracle({ bin, prefix = '', reportActual = false, prog
   };
   for (const c of cases) {
     const item = { id: c.id, sourceFile: c.sourceFile };
+    const skipReason = platformSkipReason(c.id);
     if (!caseRunsHere(c)) {
       item.status = 'skipped'; item.platforms = c.platforms; report.counts.skipped++;
+    } else if (skipReason) {
+      item.status = 'skipped'; item.reason = skipReason; report.counts.skipped++;
     } else {
       const golden = readGolden(c.id);
       if (!golden) { item.status = 'missing'; report.counts.missing++; }
@@ -83,7 +87,7 @@ async function main() {
     } else throw new Error(`unknown argument: ${arg}`);
   }
   const report = await checkOracle({ bin, prefix, reportActual,
-    progress: json ? undefined : (c) => { if (['fail', 'error', 'missing', 'skipped'].includes(c.status)) process.stdout.write(`${c.status}: ${c.id}\n${(c.differences || [c.error || '']).join('\n')}\n`); } });
+    progress: json ? undefined : (c) => { if (['fail', 'error', 'missing', 'skipped'].includes(c.status)) process.stdout.write(`${c.status}: ${c.id}\n${(c.differences || [c.error || c.reason || '']).join('\n')}\n`); } });
   if (output) {
     fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
     fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');

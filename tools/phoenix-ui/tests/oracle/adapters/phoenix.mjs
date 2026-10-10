@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { nativeInvocation, isolatedCases, offlineNetworkProfile } from './network.mjs';
 import { reserveCritiqueCollisions, removeCritiqueCollisions } from './critique-clock.mjs';
+import { spawnSync } from 'node:child_process';
 import { allCases as fixedCases, diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT } from '../lib.mjs';
 
 export { diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT };
@@ -84,10 +85,14 @@ export async function loadPhoenixCases(bin) {
   harness = replaceOne(harness, "const preview = path.join(full, '.impeccable-live');", "const preview = path.join(full, '.phoenix-ui-live');");
   harness = replaceOne(harness, "{ IMPECCABLE_SKILL_DIR: path.join(REPO_ROOT, 'skill'), IMPECCABLE_SELF: bin }", `{ PHOENIX_UI_SKILL_DIR: ${JSON.stringify(SKILL_SOURCE)}, PHOENIX_UI_SELF: bin, OPENAI_API_KEY: null }`);
   harness = replaceOne(harness, "[wsReal, '<WS>'], [ws, '<WS>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],", `[wsReal, '<WS>'], [ws, '<WS>'], [${JSON.stringify(SKILL_SOURCE)}, '<PHOENIX_SKILL>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],`);
-  harness = replaceOne(harness, 'if (needle) out = maskPath(out, needle, tag);', 'if (needle) for (const form of [needle, JSON.stringify(needle).slice(1, -1)]) out = maskPath(out, form, tag);');
-  harness = replaceOne(harness, 'const bin = process.env.IMPECCABLE_BIN;', 'const bin = process.env.IMPECCABLE_BIN;\n    for (const form of ["\\\'" + bin + "\\\' hooks", "\\\"" + bin + "\\\" hooks", bin + " hooks"]) out = out.split(form).join("<HOOK_ADMIN_CMD>");');
+  harness = `import { pathForms, stdinJson, windowsBinaryMasks, windowsClimbMask } from ${JSON.stringify(moduleUrl('adapters/windows.mjs'))};\n` + harness;
+  harness = replaceOne(harness, 'if (needle) out = maskPath(out, needle, tag);', 'if (needle) for (const form of pathForms(needle)) out = maskPath(out, form, tag);');
+  harness = replaceOne(harness, 'const bin = process.env.IMPECCABLE_BIN;', 'const bin = process.env.IMPECCABLE_BIN;\n    for (const form of ["\\\'" + bin + "\\\' hooks", "\\\"" + bin + "\\\" hooks", bin + " hooks"]) out = out.split(form).join("<HOOK_ADMIN_CMD>");\n    out = windowsBinaryMasks(out, bin);');
   // Carry the original machine-dependent relative-climb mask to the renamed state directory.
   harness = replaceOne(harness, '(?=\\.impeccable\\/)', '(?=\\.phoenix-ui\\/)');
+  harness = replaceOne(harness, "'<UP_TO_ROOT>/');", "'<UP_TO_ROOT>/');\n  out = windowsClimbMask(out);");
+  // Substitute inside stdin values; a Windows workspace path is not valid raw JSON text.
+  harness = replaceOne(harness, 'sub(JSON.stringify(c.stdin))', 'stdinJson(c.stdin, sub)');
   harness = replaceOne(harness, '  return spawnSync(argv[0], argv.slice(1), {', '  const native = opts.impl === "bin" ? nativeInvocation(c.id, argv) : argv;\n  return spawnSync(native[0], native.slice(1), {');
   const harnessUrl = dataUrl(harness);
   const activeHarness = await import(harnessUrl);
@@ -121,12 +126,14 @@ export async function loadPhoenixCases(bin) {
         const before = `<REPO>/${fixture.target}`, after = `<WS>/${fixture.directory}/${fixture.target}`;
         if (entry.args.filter((arg) => arg === before).length !== 1) throw new Error(`external fixture target changed: ${entry.id}`);
         entry.args = entry.args.map((arg) => arg === before ? after : arg);
-        entry.normalize = [...(entry.normalize || []), [`<WS>/${fixture.directory}`, 'g', '<REPO>']];
+        entry.normalize = [...(entry.normalize || []), [`<WS>/${fixture.directory}`, 'g', '<REPO>'],
+          [String.raw`<WS>\\{1,2}` + fixture.directory.replaceAll('.', '\\.'), 'g', '<REPO>']];
       }
       entry.setup = (ws) => {
         adaptWorkspace(ws, entry.sourceFile === 'context.mjs', metadata.installedFixtureCases.includes(entry.id));
         if (setup) setup(ws);
         if (external) stageExternalProject(ws);
+        applyPlatformPrecondition(entry.id, ws);
       };
       adapted.push(entry);
     }
@@ -155,6 +162,29 @@ function stageExternalProject(ws) {
   fs.copyFileSync(path.join(REPO_ROOT, fixture.target), target);
 }
 
+/** Establish the POSIX fixture facts listed in phoenix.json on another platform, or fail the case. */
+export function applyPlatformPrecondition(id, ws, platform = process.platform) {
+  const { livePid, readDenied } = metadata.platformPreconditions;
+  if (livePid.platform === platform && livePid.ids.includes(id)) {
+    const file = path.join(ws, livePid.file);
+    const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (state.pid !== livePid.before) throw new Error(`live pid fixture changed: ${id}`);
+    fs.writeFileSync(file, JSON.stringify({ ...state, pid: process.pid }));
+  }
+  const denied = readDenied.platform === platform && readDenied.files[id];
+  if (denied) {
+    const file = path.join(ws, denied);
+    const result = spawnSync('icacls', [file, '/deny', readDenied.grant], { encoding: 'utf8' });
+    if (result.error || result.status !== 0) throw new Error(`cannot deny reads for ${id}: ${result.error?.message || result.stderr || result.stdout}`);
+    let readable = true;
+    try { fs.readFileSync(file); } catch (error) { readable = !['EPERM', 'EACCES'].includes(error.code); }
+    if (readable) throw new Error(`read denial did not apply: ${id}`);
+  }
+}
+
+export const platformSkipReason = (id, platform = process.platform) =>
+  metadata.platformPreconditions.skips.find((skip) => skip.id === id && skip.platform === platform)?.reason;
+
 function adaptWorkspace(ws, preserveLegacyLive, installedFixture) {
   const walk = (directory) => {
     for (const ent of fs.readdirSync(directory, { withFileTypes: true })) {
@@ -178,6 +208,7 @@ function adaptWorkspace(ws, preserveLegacyLive, installedFixture) {
 /** Exact case/field patches only; unrelated output bytes remain historical. */
 export function phoenixExpected(id, golden, platform = process.platform) {
   const result = structuredClone(golden);
+  if (id === metadata.italic.id) result.stdout = italicExpected(golden.stdout);
   const entry = metadata.expectations.find((item) => item.id === id);
   if (entry) {
     if (sha256(fs.readFileSync(path.join(ORACLE_DIR, 'golden', `${id}.json`))) !== entry.goldenSha256) throw new Error(`expectation source changed: ${id}`);
@@ -203,7 +234,6 @@ export function phoenixExpected(id, golden, platform = process.platform) {
       delete result.files[patch.path];
     }
   }
-  if (id === metadata.italic.id) result.stdout = italicExpected(golden.stdout);
   return result;
 }
 

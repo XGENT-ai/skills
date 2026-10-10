@@ -184,13 +184,31 @@ fn agent(timeout_ms: u64) -> ureq::Agent {
 }
 
 fn map_transport(e: &ureq::Transport) -> PollError {
-    let text = e.to_string();
-    if text.contains("Connection refused") || text.contains("ECONNREFUSED") {
+    if connection_refused(e) {
         PollError::ConnRefused
     } else {
         // JS: fetch rejects with `TypeError: fetch failed`
         PollError::Other("fetch failed".to_string())
     }
+}
+
+/// Windows reports WSAECONNREFUSED with different text, so also match the I/O kind.
+fn connection_refused(error: &(dyn std::error::Error + 'static)) -> bool {
+    let text = error.to_string();
+    if text.contains("Connection refused") || text.contains("ECONNREFUSED") {
+        return true;
+    }
+    let mut source = error.source();
+    while let Some(cause) = source {
+        if cause
+            .downcast_ref::<std::io::Error>()
+            .is_some_and(|io| io.kind() == std::io::ErrorKind::ConnectionRefused)
+        {
+            return true;
+        }
+        source = cause.source();
+    }
+    false
 }
 
 /// JS: postReply(base, token, reply)
@@ -866,6 +884,51 @@ mod tests {
         drop(io);
         let out = String::from_utf8_lossy(&captured.stdout.borrow()).into_owned();
         serde_json::from_str(out.trim()).unwrap()
+    }
+
+    #[derive(Debug)]
+    struct ConnectError(std::io::Error);
+
+    impl std::fmt::Display for ConnectError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str("Connection Failed: Connect error")
+        }
+    }
+
+    impl std::error::Error for ConnectError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
+    }
+
+    #[test]
+    fn classifies_refused_connections_by_io_kind() {
+        let windows = std::io::Error::new(
+            std::io::ErrorKind::ConnectionRefused,
+            "No connection could be made because the target machine actively refused it. (os error 10061)",
+        );
+        assert!(connection_refused(&ConnectError(windows)));
+        let timeout = std::io::Error::new(std::io::ErrorKind::TimedOut, "connection timed out");
+        assert!(!connection_refused(&ConnectError(timeout)));
+    }
+
+    #[test]
+    fn closed_loopback_port_is_reported_as_refused() {
+        let port = std::net::TcpListener::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port();
+        let Err(ureq::Error::Transport(error)) = agent(5_000)
+            .get(&format!("http://127.0.0.1:{port}/poll"))
+            .call()
+        else {
+            panic!("closed loopback port accepted a request");
+        };
+        assert!(
+            matches!(map_transport(&error), PollError::ConnRefused),
+            "{error}"
+        );
     }
 
     // JS: tests/live-poll.test.mjs (upstream bda7411a, #488).
