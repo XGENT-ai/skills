@@ -48,14 +48,14 @@
 - 最近完成：M1 · 固定来源与可运行基线
 - 下一步：M2 · 推送CI15诊断候选并保存完整Windows actual/expected；等待期间推进隔离A安装与B后续轮次/终结协议
 - 当前阻塞：无执行环境阻塞；首次五native及两后置smoke成功矩阵未取得，M2不退出。真实安装/provider/UI与完整评审协议继续实施。
-- 代码基线：a301c7d8090e131c6ce22a09b696c9722190fbeb（CI14被测HEAD/tree0413b4ad；CI15两测试入口候选已本地完整验证，506编译输入未变；M3/M4/M5源码与锁未进入A树）
+- 代码基线：16543bfbf9c02b4d08fd57e6dec424e987fb3da8（CI15实现候选；treee59daf2f99050074c5ca38a2382d557a40d9eebc；506编译及两诊断入口已逐提交blob核对；M3/M4/M5源码与锁未进入A树）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T15:05:59+08:00 | CI14四native成功，Windows oracle382fail、两后置smoke跳过；本机完整runtime及860actual/expected保存通过，CI15诊断候选待推送。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-10T15:05:59+08:00 | CI14四native成功，Windows oracle382fail、两后置smoke跳过；本机完整runtime及860actual/expected保存通过，CI15诊断候选待推送。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；未到M3完成提交点 |
 | M3 | 进行中 | 2026-10-10T15:05:59+08:00 | classifier28+kernel32通过；Root receipt6项及共享assertion5项通过，Plan最终93项待终态；Node/CLI/provider及A收口继续。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T15:05:59+08:00 | 材料包37源139项与判词接收38源148项/strict lint通过；previous/finalize/apply/import、CLI及真实V-7/V-8继续。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
