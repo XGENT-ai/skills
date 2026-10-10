@@ -15,6 +15,7 @@ export async function checkOracle({ bin, prefix = '', reportActual = false, prog
   const adapterSources = ['scripts/check-phoenix-oracle.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/network.mjs',
+    'tools/phoenix-ui/tests/oracle/adapters/critique-clock.mjs',
     'tools/phoenix-ui/tests/oracle/adapters/phoenix.json',
     'scripts/phoenix-build-tools.mjs'].map((file) => ({ path:file, sha256:sha256(fs.readFileSync(path.join(ROOT,file))) }));
   const probe = spawnSync(bin, ['engine-probe'], { encoding: 'utf8', timeout: 10000 });

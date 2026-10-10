@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { nativeInvocation, isolatedCases, offlineNetworkProfile } from './network.mjs';
+import { reserveCritiqueCollisions, removeCritiqueCollisions } from './critique-clock.mjs';
 import { allCases as fixedCases, diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT } from '../lib.mjs';
 
 export { diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT };
@@ -101,6 +102,17 @@ export async function loadPhoenixCases(bin) {
     const cases = typeof mod.default === 'function' ? await mod.default() : mod.default;
     for (const item of Array.isArray(cases) ? cases : [cases]) {
       const entry = { ...item, sourceFile: file };
+      if (entry.id === 'critique-write-then-read') {
+        let reservations;
+        const beforeWrite = entry.steps[2].setup, beforeRead = entry.steps[3].setup;
+        entry.steps = entry.steps.map((step, index) => index === 2 ? { ...step, setup(ws) {
+          if (beforeWrite) beforeWrite(ws);
+          reservations = reserveCritiqueCollisions(ws, step.timeoutMs || entry.timeoutMs || 60_000);
+        } } : index === 3 ? { ...step, setup(ws) {
+          removeCritiqueCollisions(reservations);
+          if (beforeRead) beforeRead(ws);
+        } } : step);
+      }
       const setup = entry.setup;
       const external = metadata.externalProjectFixture.ids.includes(entry.id);
       if (external) {

@@ -56,11 +56,11 @@ fn page(swatch_color: &str, gradient: &str) -> String {
 }
 
 fn rules(bin: &Path, dir: &Path, file: &str) -> Vec<String> {
-    let url = format!("file://{}", dir.join(file).display());
+    let url = url::Url::from_file_path(dir.join(file)).expect("absolute fixture file URL");
     let out = Command::new(bin)
         .arg("detect")
         .arg("--json")
-        .arg(&url)
+        .arg(url.as_str())
         .current_dir(dir)
         .output()
         .expect("run detect");
@@ -110,7 +110,7 @@ fn ai_palette_respects_a_documented_oklch_palette() {
         bin.display()
     );
 
-    let dir = std::env::temp_dir().join(format!("impeccable-ds-palette-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("impeccable ds palette #{}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("temp dir");
     // A project marker, so the DESIGN.md walk-up stops here rather than
     // climbing out of the temp directory.

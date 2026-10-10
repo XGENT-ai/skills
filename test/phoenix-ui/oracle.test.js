@@ -371,3 +371,50 @@ test('the new checker refuses missing binaries instead of claiming a pass', asyn
   const { checkOracle } = await import('../../scripts/check-phoenix-oracle.mjs');
   await assert.rejects(checkOracle({}), /explicit --bin/);
 });
+
+test('critique collision inputs stay deterministic across a second boundary without relaxing the golden', async (t) => {
+  const { loadPhoenixCases, readGolden, phoenixExpected, diffResults } = await adapter;
+  const binary = process.env.PHOENIX_UI_BIN || path.join(root, 'local/phoenix-ui/ci-cmd-candidate-release/phoenix-ui-darwin-arm64');
+  if (!fs.existsSync(binary)) return t.skip('explicit local Phoenix engine needed for native oracle regression');
+  const { cases, runCase } = await loadPhoenixCases(binary);
+  const item = cases.find((c) => c.id === 'critique-write-then-read');
+  const beforeWrite = item.steps[2].setup;
+  item.steps[2] = { ...item.steps[2], setup(ws) {
+    if (beforeWrite) beforeWrite(ws);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
+  } };
+  assert.deepEqual(diffResults(phoenixExpected(item.id, readGolden(item.id)), runCase(item, { impl: 'bin', bin: binary })), []);
+});
+
+test('critique clock reservations cover the full timeout and preserve existing history', async (t) => {
+  const os = require('node:os');
+  const { reserveCritiqueCollisions, removeCritiqueCollisions } = await import('../../tools/phoenix-ui/tests/oracle/adapters/critique-clock.mjs');
+  const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-critique-clock-'));
+  t.after(() => fs.rmSync(ws, { recursive: true, force: true }));
+  const directory = path.join(ws, '.phoenix-ui/critique');
+  fs.mkdirSync(directory, { recursive: true });
+  const existing = path.join(directory, '2026-10-10T01-00-00Z__src-app-tsx.md');
+  fs.writeFileSync(existing, 'existing history');
+  const created = reserveCritiqueCollisions(ws, 60_000, Date.parse('2026-10-10T01:00:00.999Z'));
+  assert.equal(created.length, 121);
+  assert.equal(fs.readFileSync(existing, 'utf8'), 'existing history');
+  assert.ok(created.includes(path.join(directory, '2026-10-10T01-02-01Z__src-app-tsx.md')));
+  assert.ok(!fs.existsSync(path.join(directory, '2026-10-10T01-02-02Z__src-app-tsx.md')));
+  const actual = path.join(directory, '2026-10-10T01-00-02Z~0001__src-app-tsx.md');
+  fs.writeFileSync(actual, 'actual second snapshot');
+  removeCritiqueCollisions(created);
+  assert.deepEqual(fs.readdirSync(directory).sort(), [path.basename(existing), path.basename(actual)].sort());
+  assert.equal(fs.readFileSync(actual, 'utf8'), 'actual second snapshot');
+});
+
+test('critique reservation cleanup refuses an overwrite without deleting any remaining input', async (t) => {
+  const os = require('node:os');
+  const { reserveCritiqueCollisions, removeCritiqueCollisions } = await import('../../tools/phoenix-ui/tests/oracle/adapters/critique-clock.mjs');
+  const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-critique-overwrite-'));
+  t.after(() => fs.rmSync(ws, { recursive: true, force: true }));
+  const created = reserveCritiqueCollisions(ws, 1000, Date.parse('2026-10-10T01:00:00Z'));
+  fs.writeFileSync(created[1], 'incorrect overwrite');
+  assert.throws(() => removeCritiqueCollisions(created), /overwrote/);
+  assert.ok(created.every(file => fs.existsSync(file)));
+  assert.equal(fs.readFileSync(created[1], 'utf8'), 'incorrect overwrite');
+});

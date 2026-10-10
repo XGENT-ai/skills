@@ -43,6 +43,20 @@
     {
       "anchor": "raw skill source path",
       "reason": "Mask only the explicit current raw skill directory to <PHOENIX_SKILL>; expected paths are case-specific edits from the original raw <REPO>/skill path."
+    },
+    {
+      "anchor": "critique-write-then-read second write collision window",
+      "source": [
+        {
+          "file": "crates/context/src/critique_storage.rs",
+          "line": 509
+        },
+        {
+          "file": "crates/context/src/critique_storage.rs",
+          "line": 520
+        }
+      ],
+      "reason": "Seed exclusive-create collisions for every possible UTC second during the original verb timeout, then verify and remove only the temporary reservations before latest/trend. Preserve the exact collision suffix, raw output and all immutable goldens."
     }
   ],
   "preservedIdentifiers": [
@@ -49242,6 +49256,10 @@
       "sha256": "1422433c0503af88734d5f2541ebcd63954c49f11c43cca3bf8e68cd3d884685"
     },
     {
+      "file": "crates/context/src/util.rs",
+      "sha256": "ea12a95780ec0bdac764d10a222cb26a66a5020aea8d81f94d49937cb2f4974e"
+    },
+    {
       "file": "crates/detect/src/cli.rs",
       "sha256": "b9a0cb4da9b39bc551d2dceb90fcb3b4c4755a803514b71e4a8a9b9d53627831"
     },
@@ -49278,12 +49296,20 @@
       "sha256": "006493c0dc08bc8040406c107815827d04b6216b9855189dfa2d6a158cd08792"
     },
     {
+      "file": "crates/live/src/lib.rs",
+      "sha256": "d3b5b25349a667239ff8a1e3fdc696db8481b409ee41a293a189bf67e7c5837d"
+    },
+    {
       "file": "crates/live/src/live_boot.rs",
       "sha256": "2b253a325d151e2137559853761df4cf0f7a4dfa8c359a550246e89b95277975"
     },
     {
       "file": "crates/live/src/live_generate.rs",
       "sha256": "099bed8a4946078e95fe2c5f848a4c98cf0cc079b02eb07c47d213be84b98d66"
+    },
+    {
+      "file": "crates/live/src/live_poll.rs",
+      "sha256": "b2054970a11f3ab6baed7fa4a6475ff8942438ba83584b97d027dba4556d8620"
     },
     {
       "file": "crates/live/src/live_server.rs",
@@ -49294,6 +49320,10 @@
       "sha256": "a55eefe5fa4f9e37ce7330584e86a7ae3256f0822153d0098fe80b6a0f085afc"
     },
     {
+      "file": "crates/live/src/roots.rs",
+      "sha256": "233f55f8399d29db07de14041f6e8c7f6d02ec94d36e5b7ffa151acc0dc06221"
+    },
+    {
       "file": "crates/live/src/svelte_component.rs",
       "sha256": "4c4cde4d533930e585d0986e15f9a6e124dd8fe09edad33fea2556f57739d58a"
     },
@@ -49302,16 +49332,8 @@
       "sha256": "bfe3f2342a741b8256988af47cceb5404d76145392f263f6ac8ae0f89a426b8b"
     },
     {
-      "file": "crates/live/src/roots.rs",
-      "sha256": "233f55f8399d29db07de14041f6e8c7f6d02ec94d36e5b7ffa151acc0dc06221"
-    },
-    {
-      "file": "crates/live/src/lib.rs",
-      "sha256": "d3b5b25349a667239ff8a1e3fdc696db8481b409ee41a293a189bf67e7c5837d"
-    },
-    {
-      "file": "crates/live/src/live_poll.rs",
-      "sha256": "b2054970a11f3ab6baed7fa4a6475ff8942438ba83584b97d027dba4556d8620"
+      "file": "tests/oracle/adapters/critique-clock.mjs",
+      "sha256": "60d86f549d2e2a8385c61c34bb23b5d3a4ca268918941b24e21c4109411fc8c4"
     }
   ]
 }
