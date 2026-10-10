@@ -55,7 +55,7 @@
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T12:16:20+08:00 | 第十二次四个非Windows native成功，Windows路径回归失败，两后置smoke跳过；当前路径adapter23项/oracle860及Node191/Python61通过，准备第十三次。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-10T12:16:20+08:00 | 第十二次四个非Windows native成功，Windows路径回归失败，两后置smoke跳过；当前路径adapter23项/oracle860及Node191/Python61通过，准备第十三次。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；未到M3完成提交点 |
 | M4 | 进行中 | 2026-10-10T00:50:34+08:00 | 隔离worktree的context JSON、profile及接受brief映射17项通过；新增仓根共享原brief恢复、漂移/冲突和仓库边界回归先红后绿。metadata2项通过，七项真实路由及安装后验收待执行。未纳入A树。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T12:16:20+08:00 | 隔离库102项/42共享反例通过，矩阵16项/图片证据16项及严格clippy通过，31份输入冻结；完整B入口正补存退出码。完整协议/CLI与真实验收待实施。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
