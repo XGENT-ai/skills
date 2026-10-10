@@ -283,6 +283,8 @@ fn posix_guard_allows_missing_launchers_and_preserves_handler_failure() {
 #[cfg(windows)]
 #[test]
 fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() {
+    use std::os::windows::process::CommandExt;
+
     let fixture = Fixture::new();
     fixture.skill(".agents", "phoenix-ui");
     fixture.on();
@@ -294,7 +296,9 @@ fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() 
         let run = || {
             let mut process = std::process::Command::new(shell);
             if shell == "cmd" {
-                process.args(["/d", "/c", command]);
+                process
+                    .args(["/d", "/s", "/c"])
+                    .raw_arg(format!("\"{command}\""));
             } else {
                 process.args([
                     "-NoProfile",
@@ -313,7 +317,13 @@ fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() 
                 .unwrap()
         };
         let missing = run();
-        assert_eq!(missing.status.code(), Some(0), "missing launcher: {shell}");
+        assert_eq!(
+            missing.status.code(),
+            Some(0),
+            "missing launcher: {shell}; stdout={}; stderr={}",
+            String::from_utf8_lossy(&missing.stdout),
+            String::from_utf8_lossy(&missing.stderr),
+        );
         assert!(String::from_utf8(missing.stdout)
             .unwrap()
             .contains("Phoenix UI unavailable:"));
@@ -322,7 +332,14 @@ fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() 
             ".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd",
             "@echo off\necho %1>handler-called\nexit /b 7\n",
         );
-        assert_eq!(run().status.code(), Some(7), "handler failure: {shell}");
+        let restored = run();
+        assert_eq!(
+            restored.status.code(),
+            Some(7),
+            "handler failure: {shell}; stdout={}; stderr={}",
+            String::from_utf8_lossy(&restored.stdout),
+            String::from_utf8_lossy(&restored.stderr),
+        );
         assert_eq!(
             std::fs::read_to_string(fixture.0.join("handler-called"))
                 .unwrap()

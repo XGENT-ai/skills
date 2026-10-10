@@ -7155,7 +7155,7 @@
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
       "manifestSha256": "8160e726ae2dc4098e4c45c77a23a7b98163e3edf31d08587db98f08f51fbee7",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "bcbb8c3f7b6bc0fe233dd56cefcbe5241acd66b794c7bcb4e87aeede39639f14",
+      "generationManifestSha256": "9a6addfe5e265713366d9a4565677e5a8a42c2ed40917068daf1fa44b79aa31f",
       "generator": "Bun 1.3.14",
       "inputSha256": "8145866e03d390c95e649716b757ccf15fab3f0d9f99c716f42a2ecddd80433f",
       "engineManifest": "verified",
@@ -7227,13 +7227,13 @@
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "128dd50676ff7d9385a9f7681c811be842c9fdd93cfb4b5e56a6ef07f1a1f75e",
+        "sha256": "0d865768adcb867a909391db36876b3bef7084cbe1e180239b97a739684e2966",
         "distribution": "development",
-        "sourceInputSha256": "f2d86adda86e265f5856fbe7a4e307d05fb93d4c9ced97a155b29e7481a029cd",
+        "sourceInputSha256": "0a40e1dee6631ae40ba922729e6274d14af6382799a94dadb013b60abec8d997",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "ddb77e95f1bfdd4f2365c45672d1862bd712ea90ce16b18ef98e6a1395c01b5f",
+            "sha256": "f3ed3b852602c3982110f394d014ea393d195b8d495e1dae3304a1b2cf67a052",
             "size": 16894472
           }
         },
@@ -7521,14 +7521,14 @@
         "adapterSha256": "80500fcf77fbc15f2dd55eed9a76cba05fe51055f693cd4e59e93faca0d995ca",
         "currentEvidenceFileCount": 37,
         "finalNativeReplay": {
-          "evidence": "local/phoenix-ui/ci-fixture-candidate-oracle.json",
-          "evidenceSha256": "450dc4f5e29cd302fd7963215adb21842fe20d6d92b3e7f1152e2825ebd5ee73",
-          "recordedAt": "2026-10-09T16:02:00.736Z",
+          "evidence": "local/phoenix-ui/ci-cmd-candidate-oracle.json",
+          "evidenceSha256": "5f224b3e8056c3a8254575f2422aa719a3e28625a7e20589390fa175aca1aaad",
+          "recordedAt": "2026-10-09T19:57:43.424Z",
           "platform": "darwin",
           "arch": "arm64",
           "runtime": {
-            "path": "local/phoenix-ui/ci-fixture-candidate-release/phoenix-ui-darwin-arm64",
-            "sha256": "ddb77e95f1bfdd4f2365c45672d1862bd712ea90ce16b18ef98e6a1395c01b5f",
+            "path": "local/phoenix-ui/ci-cmd-candidate-release/phoenix-ui-darwin-arm64",
+            "sha256": "f3ed3b852602c3982110f394d014ea393d195b8d495e1dae3304a1b2cf67a052",
             "probe": "phoenix-ui-engine 0.1.0"
           },
           "corpus": {
