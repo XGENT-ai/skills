@@ -18,6 +18,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 实现 `/health`、出仓迁移、发布镜像或健康检查失败（必读） | [references/health-contract.md](references/health-contract.md)：两种正确实现、实际判据、发布前检查命令 |
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
+| 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
 
@@ -266,6 +267,12 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 | --- | --- | --- | --- |
 | **归 App**：系统产物、用户删不得、随 App 生命周期消失 | 服务账号 `client_credentials`（无用户上下文） | 你自己的**应用空间**（不传 spaceId，懒创建） | 默认只有租户管理员看得到 |
 | **归用户**：用户主动另存、他看得见删得掉、算他的空间 | 令牌交换换出的 `aud=files` **用户态**令牌 | 用户选的**个人/团队空间**（带 spaceId） | 就在他自己的空间里 |
+
+**公开固定内容 URL 是 Files 的特权服务态能力**：申请 `privilegedServiceScopes` 中的
+`files.links.manage`，审批后由本 App 服务账号发布自有应用文件；用户态令牌、目录授权和
+`files.read` 都不能替代。签发通常先返回 creating，只有 ready 才有 URL；持链接即可匿名读，
+不会自动过期但可吊销，也会随删源/应用卸载失效。需要此能力时读
+[长期链接接入](references/files-stable-links.md)，不要放进门户基座能力或普通用户交换流程。
 
 ⚠️ **别因为「要写」就默认必须服务态**：用户态持有 `files.write` 完全合法 —— `exchangeTargets`
 背书的是整个命名空间，平台不再按读写另行裁量。凡是「用户在你的界面里点一下、另存到我的
