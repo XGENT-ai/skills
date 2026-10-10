@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6；CI15终态保存，Windows完整oracle分型修复后CI17候选d107adf24b56本机npm test与完整runtime通过、已推送待矩阵。M3/M4/M5仍在隔离树；完整安装/协议及真实provider/UI未完成。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)、[M3记录](../../docs/plan/phoenix-ui.records/M3.md)、[M4记录](../../docs/plan/phoenix-ui.records/M4.md)、[M5记录](../../docs/plan/phoenix-ui.records/M5.md)保留适用范围。
+- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6；按用户要求第二次暂停。CI18已推送、外部运行中；M3安装编排接入A树（未提交）；M5协议与CLI入口在隔离树完成至211通过。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)、[M3记录](../../docs/plan/phoenix-ui.records/M3.md)、[M4记录](../../docs/plan/phoenix-ui.records/M4.md)、[M5记录](../../docs/plan/phoenix-ui.records/M5.md)保留适用范围。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

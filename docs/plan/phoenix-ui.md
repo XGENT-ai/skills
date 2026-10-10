@@ -42,23 +42,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-10T17:37:18+08:00
+- 最近更新：2026-10-10T18:30:00+08:00
 - 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；CI15终态已保存（四native成功、Windows完整oracle 478/271/382失败），据此完成Windows oracle分型与修复，第十七次候选d107adf24b56本机npm test与完整runtime（Darwin oracle 860/860）通过，正常推送并等待五平台矩阵。
+- 当前状态：进行中；按用户要求暂停等待新对话。M2：CI17候选因测试平台假设在Windows轻量阶段失败，测试修正后CI18（36885072）暂停时两ARM/Mac成功、linux-x64因继承response_capture抖动失败、darwin-x64与Windows在跑；两继承浏览器测试夹具修稳本机通过、未提交。M3：install内核接入A树并完成事务安装编排/CLI，迁移端到端5项测试通过，未提交。M5子任务已停止并交接（211通过、clippy 1处待修）。
 - 最近完成：M1 · 固定来源与可运行基线
-- 下一步：取得CI17五native及两后置smoke结果；Windows hook类若仍有原生路径差异，按实际输出登记后复跑。并行推进M3：把隔离install内核接入A树CLI/Node，补辅助skill与过渡入口、文档与V-4/V-5验收；M5在隔离树由子任务续做协议与CLI入口。
-- 当前阻塞：无执行环境阻塞。首次成功矩阵尚未取得，M2不退出；真实Windows宿主会话、Safari IME等环境需求在M3验收时逐项核实。
-- 代码基线：Root验证分支phoenix-ui/m2-verification-20261009，CI17候选d107adf24b567c308647cab660d69a8fb9b6dada / tree5b2f64588db27b89b60e1ba6f7c3fe30ef9f2087（含CI16 67e2817）；M3/M4/M5源码与锁仍在各自隔离树，未进入A树。
+- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261010b-source-hashes.txt；取CI18终态（Windows完整oracle/hook实际输出），连同夹具修复形成CI19（不含install crate，直到CI准备四个固定旧包）。M3按M3记录“暂停交接”六步继续；M5先读m5-agent-v3-handoff.json再串行集成。
+- 当前阻塞：无执行环境阻塞；用户要求暂停。首次五native及两后置smoke成功矩阵未取得，M2不退出；install测试依赖gitignored旧包，CI准备未补前不能推入install crate。
+- 代码基线：Root验证分支phoenix-ui/m2-verification-20261009，HEAD36885072fc6be76d1d0880aea66635d2dd9ba318已推送；未提交改动为install crate、CLI路由、Cargo.lock及两个浏览器测试（清单local/phoenix-ui/pause-20261010b-changed-paths.txt，快照与hash同目录）。M4/M5仍在隔离树。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T17:37:18+08:00 | CI15终态取回完整Windows报告；Windows oracle分型修复的CI17候选本机全绿，已推送等待矩阵。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-10T16:40:38+08:00 | 数据迁移冻结14源完整124项/strict/fmt，固定148输入及148 pin另计；当前步骤完成后暂停，CLI/Node/provider与A收口未完成。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
+| M2 | 进行中 | 2026-10-10T18:30:00+08:00 | CI17/CI18：Windows oracle分型修复推送，CI18部分成功；两继承浏览器测试抖动已在夹具层修稳待提交。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；未到M3完成提交点 |
+| M3 | 进行中 | 2026-10-10T18:30:00+08:00 | install内核接入A树，事务安装编排/CLI/过渡入口/辅助skill分级完成并有5项迁移集成测试；未提交，Node/文档/CI旧包/真实验收未完成。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M5 | 进行中 | 2026-10-10T16:40:38+08:00 | applied/skills52源164项与history41源180项分别冻结、strict/fmt通过；暂停待新对话串行集成，完整协议/CLI仍未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M5 | 进行中 | 2026-10-10T18:30:00+08:00 | history并入review隔离树并补全协议与CLI入口，子任务实跑211通过；clippy 1处待修，A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 
 ## 0. 需求、范围与决策
