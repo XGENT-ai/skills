@@ -48,14 +48,14 @@
 - 最近完成：M1 · 固定来源与可运行基线
 - 下一步：M2 · 保存同HEAD重跑Windows完整结果，提交并正常推送CI16已验证候选；期间继续A迁移接线与B最近单元历史/finalize/import/CLI
 - 当前阻塞：无执行环境阻塞；首次五native及两后置smoke成功矩阵未取得，M2不退出。真实安装/provider/UI与完整评审协议继续实施。
-- 代码基线：dirty@9dc33d4f4239555b457d9a869720d97f07f0514e（已推送CI15登记树f208af43a16c1e0db88fdc84e98c3f01e858c17c；CI16当前候选完整本机验证待提交，M3/M4/M5源码与锁未进入A树）
+- 代码基线：dirty@67e2817acf760de19015149a21fd291e4648cff5（CI16实现候选已提交treea1af11662653d091a4994c9e38fa4bdb7e4eca06，已验证输入与committed blobs一致；CI15仍运行于已推送9dc33d4f/treef208af43，M3/M4/M5源码与锁未进入A树）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T16:20:16+08:00 | CI15四native成功/Windows轻量失败，同HEAD重跑完整runtime在跑；CI16完整本机runtime与tarball两Node消费通过。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；未到M3完成提交点 |
+| M2 | 进行中 | 2026-10-10T16:20:16+08:00 | CI15四native成功/Windows轻量失败，同HEAD重跑完整runtime在跑；CI16完整本机runtime与tarball两Node消费通过。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；未到M3完成提交点 |
 | M3 | 进行中 | 2026-10-10T15:41:07+08:00 | Plan冻结12源完整93项/strict通过；legacy data初始1pass/3fail已保存，CLI/Node/provider及A收口继续。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T16:20:16+08:00 | applied与13份skills/contracts整合冻结52源164项/strict及B轻量通过；nearest-unit历史/finalize接线/import/CLI继续。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
