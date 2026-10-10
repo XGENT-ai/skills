@@ -60,7 +60,7 @@ test('exact input patches reject changed anchors, overlaps and changed patch has
 test('case-specific state identity patches keep all unrelated golden fields and fail new differences', async () => {
   const { metadata, readGolden, phoenixExpected, diffResults } = await adapter;
   for (const entry of metadata.expectations) {
-    const golden = readGolden(entry.id), expected = phoenixExpected(entry.id, golden);
+    const golden = readGolden(entry.id), expected = phoenixExpected(entry.id, golden, 'linux');
     if (metadata.invalidCatalogDirectoryCases.includes(entry.id)) {
       assert.equal(golden.exit, 0, entry.id);
       assert.equal(expected.exit, 2, entry.id);
@@ -79,7 +79,7 @@ test('case-specific state identity patches keep all unrelated golden fields and 
   const id = 'detect-fixture-json-should-pass-html';
   const golden = readGolden(id), bad = structuredClone(golden);
   bad.stdout += 'unexplained';
-  assert.ok(diffResults(phoenixExpected(id, golden), bad).length);
+  assert.ok(diffResults(phoenixExpected(id, golden, 'linux'), bad).length);
 });
 
 test('missing live target values only adapt the public prefix and still reject changed errors', async () => {
@@ -308,7 +308,7 @@ test('the hook administration executable mask handles quoted and bare current bi
 test('the only stale Italic delta is proven by the unchanged single-file golden', async () => {
   const { metadata, readGolden, phoenixExpected, diffResults } = await adapter;
   const delta = metadata.italic, historical = readGolden(delta.id);
-  const expected = phoenixExpected(delta.id, historical);
+  const expected = phoenixExpected(delta.id, historical, 'linux');
   const oldFindings = JSON.parse(historical.stdout), findings = JSON.parse(expected.stdout);
   assert.equal(oldFindings.length, 436);
   assert.equal(findings.length, oldFindings.length + 1);
@@ -466,9 +466,9 @@ const deepSub = (value, sub) => typeof value === 'string' ? sub(value)
 test('object stdin keeps Windows workspace paths valid JSON and stays byte-identical for POSIX workspaces', async () => {
   const { stdinJson } = await windowsAdapter;
   const { allCases } = await harness;
-  const substitute = (ws) => (value) => String(value).replaceAll('<WS>', ws).replaceAll('<REPO>', root);
-  const posix = substitute('/private/var/folders/x/T/impeccable-oracle-AbC123');
-  const windows = substitute(String.raw`C:\Users\RUNNER~1\AppData\Local\Temp\impeccable-oracle-AbC123`);
+  const substitute = (ws, repo) => (value) => String(value).replaceAll('<WS>', ws).replaceAll('<REPO>', repo);
+  const posix = substitute('/private/var/folders/x/T/impeccable-oracle-AbC123', '/home/runner/skills/tools/phoenix-ui');
+  const windows = substitute(String.raw`C:\Users\RUNNER~1\AppData\Local\Temp\impeccable-oracle-AbC123`, String.raw`D:\a\skills\skills\tools\phoenix-ui`);
   let objects = 0;
   for (const c of await allCases()) for (const step of [c, ...(c.steps || [])]) {
     if (step.stdin == null || typeof step.stdin === 'string') continue;
