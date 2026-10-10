@@ -42,22 +42,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-10T12:16:20+08:00
+- 最近更新：2026-10-10T13:41:40+08:00
 - 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；第十二次CI四个非Windows native成功，Windows路径回归失败；当前精确路径候选本机通过，M3/M4/M5保持隔离
+- 当前状态：进行中；CI13四平台成功、Windows lint失败；CI14路径比较修复本机通过，M3/M4/M5保持隔离
 - 最近完成：M1 · 固定来源与可运行基线
-- 下一步：M2 · 正常推送第十三次Windows路径候选并取得成功矩阵；等待期间推进隔离M3/M4/M5
+- 下一步：M2 · 正常推送CI14并保存首次五native及两后置smoke成功矩阵；等待期间推进隔离安装/上下文/评审协议
 - 当前阻塞：无执行环境阻塞；首次五native及两后置smoke成功矩阵未取得，M2不退出。完整B协议/CLI和真实验收继续实施。
-- 代码基线：dirty@6bba6ef39ee1885d23e19e0b43f8729018e72ed4；第十二次CI HEADcd92fda32ac9 / treeea1dadf6已completed/failure，506运行时输入与已测制品一致。M3/M4/M5均在独立worktree，未纳入A树
+- 代码基线：b392e082775eedb5a9959cec42a7ca889d77eac7（第十三次CI；tree44256ffd603ba0960834fc88b17eba2e69beda5f；506份运行时及5份候选输入已逐提交blob核对。M3/M4/M5未进入A树）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T12:16:20+08:00 | 第十二次四个非Windows native成功，Windows路径回归失败，两后置smoke跳过；当前路径adapter23项/oracle860及Node191/Python61通过，准备第十三次。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；未到M3完成提交点 |
-| M4 | 进行中 | 2026-10-10T00:50:34+08:00 | 隔离worktree的context JSON、profile及接受brief映射17项通过；新增仓根共享原brief恢复、漂移/冲突和仓库边界回归先红后绿。metadata2项通过，七项真实路由及安装后验收待执行。未纳入A树。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M5 | 进行中 | 2026-10-10T12:16:20+08:00 | 隔离库102项/42共享反例通过，矩阵16项/图片证据16项及严格clippy通过，31份输入冻结；完整B入口正补存退出码。完整协议/CLI与真实验收待实施。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M2 | 进行中 | 2026-10-10T13:41:40+08:00 | CI13四个非Windows成功，Windows Rust847/0/9后lint失败；CI14两路径回归先红后绿、lint零新增/Node193/Python61，506编译输入不变。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；未到M3完成提交点 |
+| M3 | 进行中 | 2026-10-10T13:41:40+08:00 | 隔离A事务kernel32项/严格lint通过，44份manifest及七个apply SIGKILL边界已验；分类器继续，Node/CLI/安装/provider和A收口待验。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
+| M4 | 进行中 | 2026-10-10T13:41:40+08:00 | 隔离context27项/包171项通过；三skill对齐及21个全新源码描述路由会话通过。正文执行、安装后路由和真实V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M5 | 进行中 | 2026-10-10T12:40:41+08:00 | 隔离库当前34份输入118项/严格lint通过；目标矩阵和项目范围存储先红后绿。旧31份完整入口Rust968/oracle860保留原范围，完整协议/CLI与真实验收继续。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 
 ## 0. 需求、范围与决策

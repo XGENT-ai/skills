@@ -7515,7 +7515,7 @@
           "failed": 0,
           "skipped": 0,
           "durationMs": 2318.972958,
-          "scope": "helper/source/golden/fixture/adapter contracts, exact Windows raw/JSON path masks and four bounded expected fields, plus actual darwin native collision after a forced 1.2-second boundary; current Windows native replay is still pending",
+          "scope": "helper/source/golden/fixture/adapter contracts, exact Windows raw/JSON path masks and four bounded expected fields, plus native collision after a forced 1.2-second boundary. CI13 Windows passed that native collision regression and all75 Rust groups (847 passed, zero failed, 9 inherited ignored), then failed lint baseline path comparison before WASM and full oracle; those later phases and both post-native consumers remain unverified.",
           "checkedAt": "2026-10-10T03:27:49.755595+00:00"
         },
         "adapterSha256": "1f1f30d216fd9c24ae4f7d63e8c21160ad59e55c56ec43eba38d75cab2843e8d",

@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。第十二次CI四个非Windows native成功，Windows路径回归失败，两后置smoke跳过；精确路径候选本机23项/oracle860及Node191/Python61通过，准备第十三次正常推送。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)与[M5记录](../../docs/plan/phoenix-ui.records/M5.md)保存各自范围；M5隔离库102项、矩阵/图片证据核心通过，完整入口正补存退出码，完整协议/CLI继续。其他guard事项及首轮评审处置保留。
+- 2026-10-10：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6。CI13四平台成功，Windows Rust后lint路径比较失败，两后置smoke跳过；CI14本机回归/lint/npm通过，等待正常推送及首次成功矩阵。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)、[M3记录](../../docs/plan/phoenix-ui.records/M3.md)、[M4记录](../../docs/plan/phoenix-ui.records/M4.md)、[M5记录](../../docs/plan/phoenix-ui.records/M5.md)保留各自证据边界：M3kernel32项、M4核心171项/源码路由21会话及M5新34源118项局部通过，旧31源完整B入口另记。完整安装/协议及真实provider/UI验收继续，其他guard事项及首轮评审处置保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
