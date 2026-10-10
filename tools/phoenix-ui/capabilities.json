@@ -7120,7 +7120,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "d5ab3f3cbc93cb26fb52642bcc4f264a0370471e45dde8ab1d6530406880e273",
+        "sha256": "dc7444aba0d1bcb85a0296e921fa7092292bdd440301214272dec4e98c06cd83",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7153,11 +7153,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "8160e726ae2dc4098e4c45c77a23a7b98163e3edf31d08587db98f08f51fbee7",
+      "manifestSha256": "a990ad49a1725c41dbbe413570681fc7be6d4786d5ec4518fe186aaa10ce9147",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "051822410f83d8a8f06479a35bad06f22fe6cabbc1ad249f15fe173d1a0b3097",
+      "generationManifestSha256": "ecc8f336a6000ead477bed19aab16b9e78239d1fc2f0609857c11749aaf53341",
       "generator": "Bun 1.3.14",
-      "inputSha256": "8145866e03d390c95e649716b757ccf15fab3f0d9f99c716f42a2ecddd80433f",
+      "inputSha256": "d5fd5eff5b08d13835fae19881c524ee566d03f5a7774a39efc04a279c0d4edf",
       "engineManifest": "verified",
       "outputsCount": 1739,
       "providers": 19,
@@ -7165,7 +7165,7 @@
       "bundledCatalogCopies": 72,
       "status": "source-payload-hashes-verified",
       "runtimeStatus": "未验证",
-      "limitation": "当前普通生成登记 engineManifest=verified，但实际 VERSION 为 development、仅darwin-arm64；此静态合同本身不证明完整runtime、五平台distribution、发布或provider会话。最终darwin-arm64原oracle证明另见partialVerification.strictOracle。",
+      "limitation": "CI16 staged-executable retry candidate development render. Static metadata and generation hashes do not prove runtime, five-platform distribution, provider sessions or release.",
       "historicalRenders": [
         {
           "scope": "M2 earlier ordinary render before the development ENGINE manifest",
@@ -7223,21 +7223,45 @@
           },
           "scope": "M2 third CI candidate, before permission/diagnostic repairs",
           "limitation": "Historical darwin-arm64 development metadata; CI 37927752568 did not pass the whole matrix."
+        },
+        {
+          "inputSha256": "8145866e03d390c95e649716b757ccf15fab3f0d9f99c716f42a2ecddd80433f",
+          "manifestSha256": "8160e726ae2dc4098e4c45c77a23a7b98163e3edf31d08587db98f08f51fbee7",
+          "generationManifestSha256": "051822410f83d8a8f06479a35bad06f22fe6cabbc1ad249f15fe173d1a0b3097",
+          "engineManifest": "verified",
+          "outputsCount": 1739,
+          "engineManifestEvidence": {
+            "path": "vendor/phoenix-ui/VERSION.json",
+            "sha256": "a1aa783ba154316a7f2b418f182a7d04b171207a7288a751f021cb9777a92b45",
+            "distribution": "development",
+            "sourceInputSha256": "dbf0e8a3e5c9674a1578436fafe2c08005096278c92eacf3f54e73b2a505cf79",
+            "engines": {
+              "darwin-arm64": {
+                "asset": "phoenix-ui-darwin-arm64",
+                "sha256": "6fec2f9d05428722d1a382763d71f1b75d58d1c7d721f1a112e405cad2d9fb81",
+                "size": 16894472
+              }
+            },
+            "limitation": "development envelope carries only the listed darwin-arm64 engine; its bytes/metadata are checked, not final-source native equivalence or five-platform distribution acceptance."
+          },
+          "scope": "M2 CI15 development render before staged-executable lock retries",
+          "checkedAt": "2026-10-10T07:37:55.933575+00:00",
+          "limitation": "Historical exact metadata; CI15 Windows failed in lightweight tests before native build. Other job results are separate evidence."
         }
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "a1aa783ba154316a7f2b418f182a7d04b171207a7288a751f021cb9777a92b45",
+        "sha256": "764e3643dfc13e3c96a6b68bb69edcc055963936ecb12a9497d896757f807bba",
         "distribution": "development",
-        "sourceInputSha256": "dbf0e8a3e5c9674a1578436fafe2c08005096278c92eacf3f54e73b2a505cf79",
+        "sourceInputSha256": "fabc638ed40a4ebc31653f0fcc5399ebf6e89a00739390fc28bc50b627f4de50",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "6fec2f9d05428722d1a382763d71f1b75d58d1c7d721f1a112e405cad2d9fb81",
+            "sha256": "6f77e1c1dcd4246e5796bc8a3c13a448e9dbc0041d69c85e71628112823f22c1",
             "size": 16894472
           }
         },
-        "limitation": "development envelope carries only the listed darwin-arm64 engine; its bytes/metadata are checked, not final-source native equivalence or five-platform distribution acceptance."
+        "limitation": "Development envelope carries only the listed darwin-arm64 engine; build identity and payload freshness are checked. Full runtime, consumer package and native matrix checks are recorded separately."
       }
     },
     "directionLibrary": {
@@ -7497,7 +7521,8 @@
         "servedLiveSourceSha256": "05c10fc05c460dc1cf5c67ede4cf1e3fa1ee958f32d66d95bff31f98f1c2de27",
         "scope": "Actual native live script and vendored screenshot in Chrome over M1 fixture plus local cross-origin controls; provider/IME/other platforms not covered",
         "instrumentation": "Expose unchanged captureElementToBlob in browser only",
-        "limitation": "根节点实跑的单一Chrome本地跨源capture场景；不证明IME、provider、宿主copy会话或其他平台。"
+        "limitation": "根节点实跑的单一Chrome本地跨源capture场景；不证明IME、provider、宿主copy会话或其他平台。",
+        "historicalScope": "Historical binary explicitly identified by binarySha256; not evidence for the current CI16 binary."
       },
       "strictOracle": {
         "entry": "scripts/check-phoenix-oracle.mjs",
@@ -7563,7 +7588,35 @@
             "skipped": 0
           },
           "scope": "Five live target error prefixes and the two browser environment-key literals in one HELP field; the original diagnostic result remains unchanged."
-        }
+        },
+        "historicalScope": "unitContract and finalNativeReplay retain their original CI12/CI13 sources and binaries. Current CI16 runtime evidence is separately identified in bootstrapInstallation."
+      },
+      "bootstrapInstallation": {
+        "status": "passed-scoped-current-development",
+        "evidence": "local/phoenix-ui/ci16-bootstrap-complete-root-check.json",
+        "evidenceSha256": "245a2184b2e138af4e8dc34423f884fb043a77fbe69efa213011c010f2fff3e9",
+        "sourceInputSha256": "fabc638ed40a4ebc31653f0fcc5399ebf6e89a00739390fc28bc50b627f4de50",
+        "releaseBinarySha256": "6f77e1c1dcd4246e5796bc8a3c13a448e9dbc0041d69c85e71628112823f22c1",
+        "fullRuntimeDebugBinarySha256": "c7479e3d232f322fe192f1019d59cef4207be6f4fd00a8e0d7c752434765d058",
+        "runtimeExitCode": 0,
+        "rustPassed": 866,
+        "inheritedIgnored": 9,
+        "oracleCounts": {
+          "pass": 860,
+          "adaptedPass": 476,
+          "fail": 0,
+          "error": 0,
+          "missing": 0,
+          "skipped": 0
+        },
+        "nativeSmokeChecksPerNode": 12,
+        "nodeVersions": [
+          "18.20.1",
+          "25.2.1"
+        ],
+        "tarballConsumerEvidence": "local/phoenix-ui/ci16-package-consumers/root-source-check-v4.json",
+        "tarballConsumerEvidenceSha256": "fb35a4130b8b05b30633609bf575770d19688d5622605433763011fd6362e2eb",
+        "scope": "Local owned staging retry regression, complete runtime, separate debug oracle and release smokes, actual tarball offline installation/version/context consumers. Five-platform CI for these new source bytes, M3 migration, provider sessions, browser/IME acceptance and A closure remain pending."
       }
     }
   }

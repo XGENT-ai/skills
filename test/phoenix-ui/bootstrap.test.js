@@ -7,7 +7,7 @@ const path = require('node:path');
 const http = require('node:http');
 const { spawn } = require('node:child_process');
 const source = path.resolve(__dirname, '../../skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs');
-const { sha256, platformTarget, proxyFor } = require(source);
+const { sha256, platformTarget, proxyFor, manifestAt, enginePath, installEngine } = require(source);
 
 function fixture(t, changes = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix bootstrap space '));
@@ -90,6 +90,76 @@ test('offline explicit install verifies and runs the pinned executable with spac
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout).argv, ['context', '--target', 'a b.tsx']);
   assert.equal(fs.existsSync(path.join(f.project, '.phoenix-ui')), false, 'engine-only install must not write a project receipt');
+});
+
+test('explicit install retries transient locks on its staged executable before publishing', async t => {
+  const f = fixture(t);
+  const manifest = manifestAt(path.join(f.scripts, 'ENGINE.json'));
+  const rename = fs.renameSync;
+  const attempts = [];
+  t.mock.method(fs, 'renameSync', (from, to) => {
+    attempts.push({ from, to });
+    if (attempts.length <= 2) throw Object.assign(new Error('staged executable locked'), { code: attempts.length === 1 ? 'EBUSY' : 'EPERM' });
+    return rename(from, to);
+  });
+  const dest = await installEngine(manifest, f.target, f.project, f.release, f.env);
+  assert.equal(dest, enginePath(manifest, f.target, f.env));
+  assert.equal(attempts.length, 3);
+  assert(attempts.every(attempt => attempt.from === attempts[0].from && attempt.to === dest));
+  assert.equal(sha256(fs.readFileSync(dest)), f.manifest.engines[f.target].sha256);
+  assert.equal(fs.existsSync(attempts[0].from), false);
+});
+
+test('persistent staged executable locks fail after bounded retries and remove the staging file', async t => {
+  const f = fixture(t);
+  const manifest = manifestAt(path.join(f.scripts, 'ENGINE.json'));
+  let attempts = 0;
+  let staged;
+  t.mock.method(fs, 'renameSync', from => {
+    attempts++;
+    staged = from;
+    throw Object.assign(new Error('persistent staging rename lock'), { code: 'EBUSY' });
+  });
+  await assert.rejects(installEngine(manifest, f.target, f.project, f.release, f.env), error => error.code === 'EBUSY' && error.message === 'persistent staging rename lock');
+  assert.equal(attempts, 6);
+  assert.equal(fs.existsSync(staged), false);
+  assert.equal(fs.existsSync(enginePath(manifest, f.target, f.env)), false);
+});
+
+test('staging cleanup preserves the original probe failure when cleanup remains locked', async t => {
+  const f = fixture(t, { toolVersion: '0.2.0' });
+  const manifest = manifestAt(path.join(f.scripts, 'ENGINE.json'));
+  const unlink = fs.unlinkSync;
+  let attempts = 0;
+  let staged;
+  t.mock.method(fs, 'unlinkSync', file => {
+    if (!file.includes('.part')) return unlink(file);
+    attempts++;
+    staged = file;
+    throw Object.assign(new Error('persistent staging cleanup lock'), { code: 'EBUSY' });
+  });
+  await assert.rejects(installEngine(manifest, f.target, f.project, f.release, f.env), error => {
+    assert.equal(error.code, 4);
+    assert.match(error.message, /Phoenix engine identity or version differs/);
+    assert.match(error.message, /persistent staging cleanup lock/);
+    return true;
+  });
+  assert.equal(attempts, 6);
+  assert.equal(fs.existsSync(staged), true);
+  assert.equal(fs.existsSync(enginePath(manifest, f.target, f.env)), false);
+});
+
+test('explicit install does not retry other staging rename failures', async t => {
+  const f = fixture(t);
+  const manifest = manifestAt(path.join(f.scripts, 'ENGINE.json'));
+  let attempts = 0;
+  t.mock.method(fs, 'renameSync', () => {
+    attempts++;
+    throw Object.assign(new Error('staging rename denied'), { code: 'EACCES' });
+  });
+  await assert.rejects(installEngine(manifest, f.target, f.project, f.release, f.env), error => error.code === 'EACCES');
+  assert.equal(attempts, 1);
+  assert.equal(fs.existsSync(enginePath(manifest, f.target, f.env)), false);
 });
 
 test('corrupt and mismatched binary fails before executing ordinary verbs', async t => {

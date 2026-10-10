@@ -226,6 +226,15 @@ function clearReminders(project, manifest, env) {
   }
 }
 
+async function retryStagedFile(operation) {
+  for (let attempt = 0;; attempt++) {
+    try { return operation(); } catch (error) {
+      if (!['EBUSY', 'EPERM'].includes(error.code) || attempt === 5) throw error;
+      await new Promise(resolve => setTimeout(resolve, 25 * 2 ** attempt));
+    }
+  }
+}
+
 async function installEngine(manifest, target, project, releaseDir, env) {
   verifyReceipt(project, manifest, target);
   const meta = manifest.data.engines[target];
@@ -247,11 +256,24 @@ async function installEngine(manifest, target, project, releaseDir, env) {
   if (bytes.length !== meta.size || sha256(bytes) !== meta.sha256) throw failure('Engine digest/size differs from the fixed package manifest.');
   fs.mkdirSync(path.dirname(dest), { recursive: true, mode: 0o700 });
   const temp = `${dest}.${process.pid}.${crypto.randomBytes(6).toString('hex')}.part${process.platform === 'win32' ? '.exe' : ''}`;
+  let created = false;
+  let installError;
   try {
     fs.writeFileSync(temp, bytes, { flag: 'wx', mode: 0o700 });
+    created = true;
     verifyEngine(temp, manifest, target, env);
-    fs.renameSync(temp, dest);
-  } finally { if (fs.existsSync(temp)) fs.unlinkSync(temp); }
+    await retryStagedFile(() => fs.renameSync(temp, dest));
+  } catch (error) {
+    installError = error;
+    throw error;
+  } finally {
+    if (created && fs.existsSync(temp)) {
+      try { await retryStagedFile(() => fs.unlinkSync(temp)); } catch (error) {
+        if (!installError) throw error;
+        installError.message += ` Cleanup of the staged engine failed: ${error.message}`;
+      }
+    }
+  }
   clearReminders(project, manifest, env);
   return dest;
 }
