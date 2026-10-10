@@ -42,23 +42,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-10T18:30:00+08:00
+- 最近更新：2026-10-10T20:10:00+08:00
 - 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；按用户要求暂停等待新对话。M2：CI17候选因测试平台假设在Windows轻量阶段失败，测试修正后CI18（36885072）暂停时两ARM/Mac成功、linux-x64因继承response_capture抖动失败、darwin-x64与Windows在跑；两继承浏览器测试夹具修稳本机通过、未提交。M3：install内核接入A树并完成事务安装编排/CLI，迁移端到端5项测试通过，未提交。M5子任务已停止并交接（211通过、clippy 1处待修）。
+- 当前状态：进行中；按用户要求暂停等待新对话。M2：CI18 Windows剩余项已处置并修继承stop baseline缺陷，CI19候选142aba6本机完整runtime通过、已推送，暂停时两Linux success、Mac/Windows在跑。M3：Node两阶段接线、共享hook分组内核缺陷修复、继承install参数兼容、CI旧包准备与文档入口同步完成（未提交），开发包已重建待复测。M5：7项合同口径已裁定并在隔离树实现（217通过）。
 - 最近完成：M1 · 固定来源与可运行基线
-- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261010b-source-hashes.txt；取CI18终态（Windows完整oracle/hook实际输出），连同夹具修复形成CI19（不含install crate，直到CI准备四个固定旧包）。M3按M3记录“暂停交接”六步继续；M5先读m5-agent-v3-handoff.json再串行集成。
-- 当前阻塞：无执行环境阻塞；用户要求暂停。首次五native及两后置smoke成功矩阵未取得，M2不退出；install测试依赖gitignored旧包，CI准备未补前不能推入install crate。
-- 代码基线：Root验证分支phoenix-ui/m2-verification-20261009，HEAD36885072fc6be76d1d0880aea66635d2dd9ba318已推送；未提交改动为install crate、CLI路由、Cargo.lock及两个浏览器测试（清单local/phoenix-ui/pause-20261010b-changed-paths.txt，快照与hash同目录）。M4/M5仍在隔离树。
+- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261010c-source-hashes.txt；取CI19终态，成功矩阵则M2退出。M3按M3记录第三次一节“待续”：用新开发包跑npm test、test:phoenix、m3-tarball-consumer.mjs（Node18/25）与端到端复测，CI19终态后提交M3候选并推送取全矩阵；核对local/phoenix-ui/m3-live-walkthrough的Chrome走查结果；再做Claude/Codex真实会话。Safari真实输入法与Windows宿主会话需向用户确认环境。M4/M5在M3收口后rebase接入A树。
+- 当前阻塞：无执行环境阻塞；用户要求暂停。Safari真实IME与Windows宿主实会话需用户提供或安排环境，缺失时M3 V-5不能通过。
+- 代码基线：验证分支phoenix-ui/m2-verification-20261009，HEAD142aba6a56b8c88776b7b2de6093c3af72f03f09已推送（之后的本地进度提交未推送，避免取消CI19）；未提交改动为M3 A树（清单local/phoenix-ui/pause-20261010c-changed-paths.txt，快照与hash同目录）。M4/M5仍在隔离树。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T18:30:00+08:00 | CI17/CI18：Windows oracle分型修复推送，CI18部分成功；两继承浏览器测试抖动已在夹具层修稳待提交。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-10T18:30:00+08:00 | install内核接入A树，事务安装编排/CLI/过渡入口/辅助skill分级完成并有5项迁移集成测试；未提交，Node/文档/CI旧包/真实验收未完成。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；隔离改动尚未提交 |
+| M2 | 进行中 | 2026-10-10T20:10:00+08:00 | CI18剩余Windows项处置并修继承stop baseline缺陷；CI19候选本机完整runtime通过已推送，矩阵进行中。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
+| M3 | 进行中 | 2026-10-10T20:10:00+08:00 | Node两阶段接线、共享hook分组内核修复、install参数兼容、CI旧包准备与文档同步完成，install crate 133通过；未提交，复测/全矩阵/真实会话未完成。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；A树改动尚未提交 |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M5 | 进行中 | 2026-10-10T18:30:00+08:00 | history并入review隔离树并补全协议与CLI入口，子任务实跑211通过；clippy 1处待修，A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M5 | 进行中 | 2026-10-10T20:10:00+08:00 | clippy修复，7项合同口径裁定并实现（报告命名、处置、豁免等），隔离树217通过；A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 
 ## 0. 需求、范围与决策
@@ -293,7 +293,7 @@ WASM 生成器仍用 mise/mbx 下的 xtask。M1 实测固定 wasm-pack 0.13.1 �
 
 **安装的 bootstrap 边界**：现有 Node 安装入口在写项目文件前，将包内 manifest 指定的 binary 下载/校验到新用户 cache，再以参数数组启动 Rust 安装执行器，并显式传入同一 npm 包内的 `--bundle-root`。Node 只负责 bootstrap 和原有 XGENT 功能，不实现第二套 Phoenix 配置合并；全部预检先完成，Node 的 guard/statusline/AGENTS 写入在 Rust apply 前，Rust 加锁重读共享文件（§3.1）。npm bin 同样能定位包内 bundle；直接调用裸 binary 的 install/update/link 必须带匹配的 bundle-root 或源码路径，缺少时返回可操作错误，不回退远端 latest。Rust 在任何项目写入前再次核对 bundle/runtime 契约；单独复制一个 binary 不声称自带全部 skills。
 
-**engine 可用性合同**：项目 receipt 保存 runtime 版本、target、包版本及匹配 manifest 的本地副本；无 receipt 的源安装由 skill 内固定版本清单定位。不查询 latest，不信任任意 PATH binary。
+**engine 可用性合同**：项目 receipt 即安装执行器最后写入的 `.phoenix-ui/install/active.json`，保存包版本与 bundle 摘要，不绑定安装者平台，跨平台团队共用；各 provider skill 内的 `ENGINE.json` 是匹配 manifest 的本地副本，固定 runtime 版本及各平台 engine 摘要；无 receipt 的源安装由 skill 内固定版本清单定位。`install`/`migrate` 动词本身负责替换或回滚已装包，不受旧 receipt 阻挡；其余动词与 engine-only 安装须与 receipt 一致。不查询 latest，不信任任意 PATH binary。
 
 | 场景 | 可观察结果与恢复 |
 | --- | --- |
@@ -360,7 +360,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 | capture.md / judge.md / 各轮 ui-review.md | 继续满足现有 Markdown 合同 | 新轮次由 round.json 投影；原始自由文本附证据。记录所生成节的 hash，检测手改冲突 | judge.md 只含允许传给下一轮评审的内容 |
 | ★ .ui-review.applied.json；既有 applied/Mn.md | roundId、issueId、核实/处置、代码版本、证据、restructureScopes、用户决定引用、revision | 修复 agent 提交结构化记录；独立于已封存 round；同轮 CAS 更新，生成原记录位置的 UI 修复节 | 同一循环固定 recordPath；不同轮次记录不覆盖 |
 
-原有纯 Markdown 循环是 manual 模式，仍按 skills 人工运行；没有机器索引就不能假称已接管。managed 循环的 engine 缺失/版本不符时只读，允许阅读旧报告与收集尚未登记的素材，不推进评分/处置/计数或手改生成节；提示 §2.3 的 engine install，恢复后按原 revision 续接。机器 → 无 CLI → 机器不得清零历史或重建基线。显式 `phoenix-ui review import --prefix ... --input ...` 才接管：主 agent 核对旧轮次/目标 hash/差距/修复/重构记录并提供结构化映射，工具校验文件和旧引用、保留输入 hash及 legacy 标记。无法确认的历史计数为 unknown，不能默认从零开始导致再次重构或伪造已解决；这种循环可以继续人工模式，或由用户确认重建基线。导入不覆盖旧报告，也不能把旧截图登记为当前轮次截图。managed 循环本期不提供降为 manual 的操作；手改生成节时先保存人工文本，再通过 import 提交以当前 revision/源 hash 为前提的显式映射，仅允许接管未封存草稿/处置，历史封存与原始评分仍不可改。
+原有纯 Markdown 循环是 manual 模式，仍按 skills 人工运行；没有机器索引就不能假称已接管。managed 循环的 engine 缺失/版本不符时只读，允许阅读旧报告与收集尚未登记的素材，不推进评分/处置/计数或手改生成节；提示 §2.3 的 engine install，恢复后按原 revision 续接。机器 → 无 CLI → 机器不得清零历史或重建基线。显式 `phoenix-ui review import --prefix ... --input ...` 才接管：主 agent 核对旧轮次/目标 hash/差距/修复/重构记录并提供结构化映射，工具校验文件和旧引用、保留输入 hash及 legacy 标记。无法确认的历史计数为 unknown，不能默认从零开始导致再次重构或伪造已解决；这种循环可以继续人工模式，或由用户确认重建基线。导入不覆盖旧报告，也不能把旧截图登记为当前轮次截图。managed 循环本期不提供降为 manual 的操作；手改生成节时先保存人工文本并按规范事实恢复生成节，人工改动只能经 `apply record` / `capture add` 以当前 revision 为前提显式提交，历史封存与原始评分仍不可改。
 
 无数据库：同循环使用 OS 文件锁，进程退出释放；CAS 比较 revision 与源文件 hash；同目录临时文件写完再 rename。报告发布用 journal + finalized 标志最后落盘；读者忽略未完成发布的轮次。不同循环可并行，同循环采集可按格子分工、最终写入串行。需要多机同时写同一循环时明确冲突，不能用本地锁冒充跨机事务。
 
@@ -390,6 +390,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 - 顽固差距只针对 P0–P2，依“实际已修改待评审”与下轮仍存在/回归、或连续部分解决条件计算。没有真实修改不算尝试；不采纳仍被判存在进入待裁定。
 - 每个基线内，全局或某条差距所对应重构范围最多一次；发出预警但没有重构记录时仍为预警，不能直接升级停滞。目标基线变更重置最佳/停滞/重构计数，适用旧差距继续沿用 ID，ID 永不复用。
 - 每单元上一轮为最近一次覆盖它的轮次；不同单元可能来自不同 rN。修复记录只能到“已修改待评审”，是否解决归下一轮独立评审。
+- 同一 packet 的多位评审对同一旧差距结论不一时取较严状态：回归 > 仍存在 > 部分解决 > 待核实 > 已解决 > 不再适用。同一轮的处置以该轮最后一次记录为准；自上次独立评审以来，任一轮最终处置为“已修改待评审”即计一次尝试，最近一轮最终处置为“不采纳”时保持待裁定，二者分别判断。处置只针对该轮报告差距清单中的未关闭差距。
 
 上述口径的完整文本保留在原合同；工具文档不另造同义判定词。M5 在 review-ui references 增加 rules.v1.json，记录参数、顺序、适用条件、反例及四份合同的 SHA-256；它是合同的机读投影，不是另一份政策。Rust 与人工模式的黄金用例共用此表；合同 hash 或规则版本变化时测试失败，必须同时核对规则表、review crate、技能及用例，并更新 AGENTS.md 的接口同步清单。若实现发现歧义，先用最小反例修订合同并补测试，不能默默选一种算法。
 
@@ -456,14 +457,14 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 
 | 子命令 | 输入与动作 | 成功产物/返回 | 拒绝条件 |
 | --- | --- | --- | --- |
-| begin | --prefix、--target；可选 --plan、--scope、--threshold | 独占分配下一轮；冻结目标和图片；建立完整格子矩阵，返回 roundId/revision/缺项 | prefix 不一致、目标结构冲突、已有未完成轮未指定续接、资源不可读 |
+| begin | --prefix、--target；可选 --plan、--scope、--threshold、--tested-version（HEAD + dirty 指纹或可核对构建 ID，缺省为未知，未知版本不能通过） | 独占分配下一轮；冻结目标和图片；建立完整格子矩阵，返回 roundId/revision/缺项 | prefix 不一致、目标结构冲突、已有未完成轮未指定续接、资源不可读 |
 | capture add | --round、--input capture.json、--expect-revision | 登记本轮新图及格子、工具、地址、视口/DPR/主题、时间、交互、版本；生成 capture.md | 越界路径、同 cellKey+attempt 不同内容、引用旧轮图片、尺寸不符、missing 被冒写为 captured |
-| judge-pack | --round、可选 --units | 生成明确白名单目录及 packetHash，含本轮/目标/该单元最近上轮材料 | 必要取证未完成；目标/已登记文件发生漂移 |
-| judge add | --round、--input judge.json、--raw 原文、--packet、--expect-revision | 原文与结构化评分/差距保存；验证完整性；分配新差距 ID 的映射 | 维度越界、缺单元/旧差距状态、缺证据、packet不匹配；不自动修分 |
-| finalize | --round、--input adjudication.json、--expect-revision | 计算覆盖/最低分/确认要求/门槛/停滞/判定，原子生成 Markdown 与封存事实 | 需要确认评审时返回 confirmation_required，保持草稿；输入冲突不封存 |
-| apply record | --round、--input dispositions.json、--expect-revision | 五种处置、实测自检、重构范围、代码版本写入循环既定记录位置 | 已解决类自评分、修改历史报告/目标、原记录中生成的 UI 修复节 hash 冲突 |
-| status | --prefix | 当前有效基线、逐单元最近轮、缺证、待裁定、下一步 | 只读；损坏/未来 schema 明示 unknown，不默认为通过 |
-| import | --prefix、--input legacy-map.json | 原 Markdown 映射和来源 hash，通过核对后接入 | 历史最佳/尝试/重构记录歧义；保留人工模式而不猜测 |
+| judge-pack | --round、可选 --units | 生成明确白名单目录及 packetHash，含本轮/目标/该单元最近上轮材料，以及目标包「变更记录」整节 | 必要取证未完成；目标/已登记文件发生漂移 |
+| judge add | --round、--input judge.json、--raw 原文、--packet、--expect-revision；可选 --mappings（`{key,id,basis}`：新差距临时键对应已有 ID 的显式映射） | 原文与结构化评分/差距保存；验证完整性；未映射的临时键分配从未使用过的新 ID | 维度越界、缺单元/旧差距状态、缺证据、packet不匹配；不自动修分 |
+| finalize | --round、--input adjudication.json、--expect-revision；向已封存最新轮追加用户豁免时改用 --expect-cycle-revision | 计算覆盖/最低分/确认要求/门槛/停滞/判定，原子生成 Markdown 与封存事实；豁免以 append-only 生成块追加在该轮报告的验收判定之后 | 需要确认评审时返回 confirmation_required，保持草稿；输入冲突不封存 |
+| apply record | --round、--input dispositions.json、--expect-revision | 五种处置、实测自检、重构范围、代码版本写入循环既定记录位置 | 已解决类自评分、修改历史报告/目标、原记录中生成的 UI 修复节 hash 冲突、处置目标不是该轮未关闭差距 |
+| status | --prefix | 当前有效基线、逐单元最近轮、缺证、待裁定、下一步 | 只读；损坏/未来 schema 输出 unknown 对象并退出 4，不默认为通过 |
+| import | --prefix、--input legacy-map.json | 原 Markdown 映射和来源 hash，通过核对后接入 | 历史最佳歧义（当前基线有未知的旧全量轮分数）退出 3；尝试/重构计数未知时记 unknown，仅在规则需要时阻断；保留人工模式而不猜测 |
 
 **目标指纹 v1**：按 Markdown AST 取唯一“单元”“规范要点”二级章节，规范化 CRLF 为 LF但保留内容、顺序和空白；附件集合仅为这两节直接链接/引用的本地目标文件（图片、导出的设计稿、DESIGN.md/token 文件均计入；引用定义解析到同一逻辑路径），不递归追踪附件内链接；纯网页来源 URL 只留文本。文件加 #section 时 hash 整个文件，以免片段解析差异。取其逻辑相对路径与 SHA-256 去重后按路径排序。用长度前缀编码的 section/附件序列计算 SHA-256，避免文本拼接歧义。采集节/变更记录不计入。重复同名章节、失效 token/图链接、仅远端图片且未本地导出时标缺证；明确根以外目标经显式来源登记后拷入本轮快照，再以逻辑引用追踪。目标图同路径替换必改变指纹，采集步骤修改不改变指纹。算法名写入 capture/round，未知算法不与 v1 比较。
 
@@ -477,9 +478,9 @@ viewportId绑定宽、高和DPR，不只存宽；原截图命名在没有冲突�
 
 **证据校验与人的责任**：文件摘要、尺寸、时间、packetHash 只能识别漂移和结构错误。主 agent 必须逐张打开判断实际页面、状态、当前构建与出处，记录核对结果；对相同页面重拍可能产生相同 hash，不据此断言造假，也不能只靠新文件名/mtime证明新拍。buildVersion 至少含 HEAD + dirty 内容指纹或可核对构建 ID；未知版本不宣布当前代码验收通过。原版 comp/live 的合成图只能作目标/实验，不能登记为实拍。
 
-**独立评审材料**：仅导出目标快照中期望部分/必要图片、本轮 capture 与交互、各单元最近一次上轮截图及该单元 judge 内容、该单元自上轮以来的目标变更记录、可选差分图；不导出源代码、修复记录、机器结果、完整报告、门槛、主 agent 意见。导出目录不含指回上述材料的可跟随链接；图片复制并固定相对路径。主 agent 使用无历史上下文的独立评审；清单是最小输入协议，不声称能沙箱化一个拥有全仓工具权限的 agent。无法派发时严格走现有单上下文/新对话规则。
+**独立评审材料**：仅导出目标快照中期望部分/必要图片、本轮 capture 与交互、各单元最近一次上轮截图及该单元 judge 内容、目标包「变更记录」整节（条目没有单元/轮次标签，作为目标事实整体提供）、可选差分图；不导出源代码、修复记录、机器结果、完整报告、门槛、主 agent 意见。导出目录不含指回上述材料的可跟随链接；图片复制并固定相对路径。主 agent 使用无历史上下文的独立评审；清单是最小输入协议，不声称能沙箱化一个拥有全仓工具权限的 agent。无法派发时严格走现有单上下文/新对话规则。
 
-**双重写入的处理**：round JSON 持有新轮事实，Markdown 是投影。生成前按带稳定边界的生成节比较上次投影 hash；尤其里程碑记录只检查/更新“UI 验收修复”中本循环本轮的生成块，保留其他实施记录的原字节。生成节被手改则停下，通过 §3.2 的 import 核对可变部分后重生成，不据整份记录 hash 拒绝无关编辑。原始评审原文永不重写。用户豁免以 append-only decision 记录写入本轮报告附记，内容包括原话、日期、所测版本、差距、影响，原 verdict/评分保持可追溯；CLI 要求引用实际会话决定，不能从勾选框推断用户同意。
+**双重写入的处理**：round JSON 持有新轮事实，Markdown 是投影。生成前按带稳定边界的生成节比较上次投影 hash；尤其里程碑记录只检查/更新“UI 验收修复”中本循环本轮的生成块，保留其他实施记录的原字节。生成节被手改则停下，保存人工文本后按 §3.2 恢复生成节，可变事实经 apply record / capture add 重新提交，不据整份记录 hash 拒绝无关编辑。原始评审原文永不重写。用户豁免以 append-only decision 记录写入本轮报告验收判定之后的附记，内容包括原话、日期、所测版本、差距、影响，原 verdict/评分保持可追溯；CLI 要求引用实际会话决定，不能从勾选框推断用户同意。
 
 ## 6. 交互与使用体验
 
