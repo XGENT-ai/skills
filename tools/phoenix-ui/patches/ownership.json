@@ -1540,16 +1540,16 @@
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
-      "currentSha256": "a424dfa97dbbf8e90ebe5809705461652d5c970fe0276774801f0fb2ac0a0f9d"
+      "currentSha256": "7370398f80c5cbd0deb7002d9dccff9e9fe0327a2f40fb564548839fe858d69f"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
-      "currentSha256": "4780c93d20354ad3451e30d71f630a370ecc2b6990faf127ba6680caf87c93d5"
+      "currentSha256": "d53ac5baee6c8c9077d61bf7d5e8296cae39c9171055a3d8aff5022f9d5fe9b1"
     }
   ],
   "verification": {
     "sourceHashes": "verified-current-worktree",
-    "runtimeTests": "ci12-full-runtime.log: current dirty@3bad454 full command exited 0; 75 Rust groups, 866 passed, 0 failed, 9 inherited ignored; the required native critique collision regression passed after a forced second boundary. Lint has no additions and 540 inherited diagnostics. WASM8474/72 has zero golden/native/parity differences and no unverified functions; strict oracle860/860 with476 exact adaptations has no failures/errors/missing/platform skips. ci12-candidate-release is independently consumed by Node18/25 (12 checks each) and replayed by the same strict860-case checker. Of506 compiler inputs, only the palette file-URL test changed from the prior cmd candidate. CI11 verifies cmd/PowerShell but fails elsewhere; CI12 and provider/IME acceptance remain pending.",
-    "browserAndNativePlatforms": "Current darwin-arm64 native/browser runtime groups passed; CI11 three non-Windows jobs passed on the previous scoped candidate, Windows cmd/PowerShell contract passed before its palette fixture failed. Current five-platform matrix, IME/Safari and provider sessions are not yet complete."
+    "runtimeTests": "ci12-full-runtime.log: the dirty@3bad454 full command exited 0; 75 Rust groups, 866 passed, 0 failed, 9 inherited ignored, zero new lint and 540 inherited diagnostics, WASM8474/72 without golden/native/parity differences or unverified functions. The current test/adapter-only Windows path candidate preserves all506 compiler inputs and reuses that engine, WASM and Node18/25 consumer evidence under plan section9. Current exact adapter contracts23/23 and independent native oracle860/860 with476 adaptations passed, with no failures/errors/missing/skips. CI12 completed with four non-Windows native jobs successful; Windows failed the new critique path regression before Rust runtime groups, and both post-native consumer jobs were skipped. CI13 Windows and full matrix verification remain pending.",
+    "browserAndNativePlatforms": "Current darwin-arm64 native/browser runtime groups passed on unchanged compiler inputs. CI12 four non-Windows jobs succeeded on its registered head/tree; Windows failed earlier at the critique path harness, so its palette repair and later native groups remain unverified on that candidate. Current five-platform matrix, IME/Safari and provider sessions are not yet complete."
   }
 }

@@ -1,4 +1,4 @@
-/** Input-only adaptation of the pinned oracle. Never rewrite actual output. */
+/** Pinned oracle adaptation; native output retains only documented machine-identity masks. */
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -84,6 +84,7 @@ export async function loadPhoenixCases(bin) {
   harness = replaceOne(harness, "const preview = path.join(full, '.impeccable-live');", "const preview = path.join(full, '.phoenix-ui-live');");
   harness = replaceOne(harness, "{ IMPECCABLE_SKILL_DIR: path.join(REPO_ROOT, 'skill'), IMPECCABLE_SELF: bin }", `{ PHOENIX_UI_SKILL_DIR: ${JSON.stringify(SKILL_SOURCE)}, PHOENIX_UI_SELF: bin, OPENAI_API_KEY: null }`);
   harness = replaceOne(harness, "[wsReal, '<WS>'], [ws, '<WS>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],", `[wsReal, '<WS>'], [ws, '<WS>'], [${JSON.stringify(SKILL_SOURCE)}, '<PHOENIX_SKILL>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],`);
+  harness = replaceOne(harness, 'if (needle) out = maskPath(out, needle, tag);', 'if (needle) for (const form of [needle, JSON.stringify(needle).slice(1, -1)]) out = maskPath(out, form, tag);');
   harness = replaceOne(harness, 'const bin = process.env.IMPECCABLE_BIN;', 'const bin = process.env.IMPECCABLE_BIN;\n    for (const form of ["\\\'" + bin + "\\\' hooks", "\\\"" + bin + "\\\" hooks", bin + " hooks"]) out = out.split(form).join("<HOOK_ADMIN_CMD>");');
   // Carry the original machine-dependent relative-climb mask to the renamed state directory.
   harness = replaceOne(harness, '(?=\\.impeccable\\/)', '(?=\\.phoenix-ui\\/)');
@@ -137,7 +138,7 @@ export async function loadPhoenixCases(bin) {
   if (adapted.length !== metadata.caseCount) throw new Error('fixed case count changed');
   // IMPECCABLE_BIN is a test-harness path mask, never a production fallback.
   process.env.IMPECCABLE_BIN = bin;
-  return { cases: adapted, runCase: activeHarness.runCase };
+  return { cases: adapted, runCase: activeHarness.runCase, normalize: activeHarness.normalize };
 }
 
 function stageExternalProject(ws) {
@@ -175,12 +176,12 @@ function adaptWorkspace(ws, preserveLegacyLive, installedFixture) {
 }
 
 /** Exact case/field patches only; unrelated output bytes remain historical. */
-export function phoenixExpected(id, golden) {
+export function phoenixExpected(id, golden, platform = process.platform) {
   const result = structuredClone(golden);
   const entry = metadata.expectations.find((item) => item.id === id);
   if (entry) {
     if (sha256(fs.readFileSync(path.join(ORACLE_DIR, 'golden', `${id}.json`))) !== entry.goldenSha256) throw new Error(`expectation source changed: ${id}`);
-    for (const patch of entry.fields) {
+    for (const patch of [...entry.fields, ...(entry.platformFields || []).filter((patch) => patch.platform === platform)]) {
       const keys = patch.path;
       let parent = result;
       for (const key of keys.slice(0, -1)) parent = parent[key];

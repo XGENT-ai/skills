@@ -57,6 +57,16 @@
         }
       ],
       "reason": "Seed exclusive-create collisions for every possible UTC second during the original verb timeout, then verify and remove only the temporary reservations before latest/trend. Preserve the exact collision suffix, raw output and all immutable goldens."
+    },
+    {
+      "anchor": "known machine path prefixes in raw and JSON-escaped strings",
+      "source": [
+        {
+          "file": "tests/oracle/lib.mjs",
+          "line": 147
+        }
+      ],
+      "reason": "Carry the original exact workspace/repo/home prefix mask to JSON-escaped Windows path forms; keep segment-boundary checks, separators, unrelated prose and all native behavior bytes. The four observed critique fields have separate Windows expected-path edits."
     }
   ],
   "preservedIdentifiers": [
@@ -8647,6 +8657,131 @@
                 {
                   "file": "crates/context/src/context_cli.rs",
                   "line": 51
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "platformFields": [
+        {
+          "path": [
+            "steps",
+            0,
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "04192274440278828ed7246148dd2a63370d6b2ad358725d5a7d942fd5ec677a",
+          "afterSha256": "f87a25cb93a38f5827937654101d01dc0c539bbfd8015bcee099d84416c0f265",
+          "edits": [
+            {
+              "offset": 0,
+              "before": "<WS>/.phoenix-ui/critique/",
+              "after": "<WS>\\.phoenix-ui\\critique\\",
+              "source": [
+                {
+                  "file": "crates/context/src/critique_storage.rs",
+                  "line": 520
+                },
+                {
+                  "file": "crates/common/src/jsp.rs",
+                  "line": 54
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "steps",
+            2,
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "8a1ad37e81df9d30eece0a30dc312a254ba198a819de390b8fd7a2427760ea57",
+          "afterSha256": "5e9d8ad3f5c4294fdf288dc9cd8660c97ad6dab8d69a24bf189403da2df5f046",
+          "edits": [
+            {
+              "offset": 0,
+              "before": "<WS>/.phoenix-ui/critique/",
+              "after": "<WS>\\.phoenix-ui\\critique\\",
+              "source": [
+                {
+                  "file": "crates/context/src/critique_storage.rs",
+                  "line": 520
+                },
+                {
+                  "file": "crates/common/src/jsp.rs",
+                  "line": 54
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "steps",
+            4,
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "b367069cfe5ac51f29828ffc452157598eb4373fee224b85ea242fa130cc51ee",
+          "afterSha256": "bb41780e73e63b5a1f924468644b73dbd678f05ade27c2547cb04f1cfe6eb532",
+          "edits": [
+            {
+              "offset": 206,
+              "before": "file:<WS>/src/App.tsx",
+              "after": "file:<WS>\\\\src\\\\App.tsx",
+              "source": [
+                {
+                  "file": "crates/context/src/critique_storage.rs",
+                  "line": 230
+                },
+                {
+                  "file": "crates/common/src/jsp.rs",
+                  "line": 63
+                }
+              ]
+            },
+            {
+              "offset": 282,
+              "before": "file:<WS>/src-app-tsx",
+              "after": "file:<WS>\\\\src-app-tsx",
+              "source": [
+                {
+                  "file": "crates/context/src/critique_storage.rs",
+                  "line": 230
+                },
+                {
+                  "file": "crates/common/src/jsp.rs",
+                  "line": 63
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": [
+            "steps",
+            5,
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "43d347ab13de01d83c2a7e849f042ef197b12c28b33b28a33c7130a59820b07b",
+          "afterSha256": "ddc7d8dbed55482d302baaaac565608cfe2c10d3e75fc491bf36fc928750f811",
+          "edits": [
+            {
+              "offset": 30,
+              "before": "file:<WS>/src-app-tsx",
+              "after": "file:<WS>\\\\src-app-tsx",
+              "source": [
+                {
+                  "file": "crates/context/src/critique_storage.rs",
+                  "line": 230
+                },
+                {
+                  "file": "crates/common/src/jsp.rs",
+                  "line": 63
                 }
               ]
             }
@@ -49186,6 +49321,10 @@
     {
       "file": "crates/cli/src/main.rs",
       "sha256": "bf37f72085f8b52b775dbf5cb9c05e94a3d7ea49d5babeb2f5fd1df38fe14ede"
+    },
+    {
+      "file": "crates/common/src/jsp.rs",
+      "sha256": "5b2e77ced38b6c3eefa8ed71404416a3212af36be45546cb5c3622d89ab05129"
     },
     {
       "file": "crates/comp-verbs/src/build_phase.rs",

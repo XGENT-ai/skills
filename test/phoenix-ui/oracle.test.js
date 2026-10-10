@@ -374,7 +374,7 @@ test('the new checker refuses missing binaries instead of claiming a pass', asyn
 
 test('critique collision inputs stay deterministic across a second boundary without relaxing the golden', async (t) => {
   const { loadPhoenixCases, readGolden, phoenixExpected, diffResults } = await adapter;
-  const binary = process.env.PHOENIX_UI_BIN || path.join(root, 'local/phoenix-ui/ci-cmd-candidate-release/phoenix-ui-darwin-arm64');
+  const binary = path.resolve(process.env.PHOENIX_UI_BIN || path.join(root, 'local/phoenix-ui/ci-cmd-candidate-release/phoenix-ui-darwin-arm64'));
   if (!fs.existsSync(binary)) return t.skip('explicit local Phoenix engine needed for native oracle regression');
   const { cases, runCase } = await loadPhoenixCases(binary);
   const item = cases.find((c) => c.id === 'critique-write-then-read');
@@ -417,4 +417,42 @@ test('critique reservation cleanup refuses an overwrite without deleting any rem
   assert.throws(() => removeCritiqueCollisions(created), /overwrote/);
   assert.ok(created.every(file => fs.existsSync(file)));
   assert.equal(fs.readFileSync(created[1], 'utf8'), 'incorrect overwrite');
+});
+
+test('Windows workspace masking covers raw and JSON-escaped prefixes without changing path bytes or prose', async () => {
+  const { loadPhoenixCases } = await adapter;
+  const { normalize } = await loadPhoenixCases('/tmp/oracle-test-not-an-executable');
+  const ws = String.raw`C:\Users\runner\Temp\oracle-project`;
+  const suffix = String.raw`\src\App.tsx`;
+  assert.equal(normalize(ws + suffix, { ws, home: '/unused-home' }), '<WS>' + suffix);
+  assert.equal(normalize(JSON.stringify({ target_identity: 'file:' + ws + suffix }), { ws, home: '/unused-home' }),
+    JSON.stringify({ target_identity: 'file:<WS>' + suffix }));
+  const prose = JSON.stringify({ note: ws + 'suffix', unrelated: String.raw`D:\other\src\App.tsx`, target: 'src/App.tsx' });
+  assert.equal(normalize(prose, { ws, home: '/unused-home' }), prose);
+});
+
+test('Windows critique expectations only adapt the four observed platform path fields and retain the collision assertion', async () => {
+  const { readGolden, phoenixExpected, diffResults, metadata } = await adapter;
+  const id = 'critique-write-then-read', golden = readGolden(id);
+  const fields = metadata.expectations.find((entry) => entry.id === id).platformFields;
+  assert.deepEqual(fields.map((field) => field.path), [0, 2, 4, 5].map((step) => ['steps', step, 'stdout']));
+  assert.ok(fields.every((field) => field.platform === 'win32'));
+  const unix = phoenixExpected(id, golden, 'darwin'), win = phoenixExpected(id, golden, 'win32');
+  assert.equal(win.steps[0].stdout, String.raw`<WS>\.phoenix-ui\critique\<STAMP>__src-app-tsx.md` + '\n');
+  assert.equal(win.steps[2].stdout, String.raw`<WS>\.phoenix-ui\critique\<STAMP>~0001__src-app-tsx.md` + '\n');
+  const trend = JSON.parse(win.steps[4].stdout), recent = JSON.parse(win.steps[5].stdout);
+  assert.equal(trend[0].target_identity, String.raw`file:<WS>\src\App.tsx`);
+  assert.equal(trend[1].target_identity, String.raw`file:<WS>\src-app-tsx`);
+  assert.equal(recent[0].target_identity, String.raw`file:<WS>\src-app-tsx`);
+  assert.equal(trend[0].target, 'src/App.tsx');
+  assert.equal(trend[0].note, 'ratio 3:1 #hero');
+  assert.deepEqual(win.steps.map(({ stdout, ...rest }) => rest), unix.steps.map(({ stdout, ...rest }) => rest));
+  assert.deepEqual(win.files, unix.files);
+  assert.deepEqual(phoenixExpected(id, golden, 'linux'), unix);
+  assert.deepEqual(readGolden(id), golden);
+  for (const mutate of [
+    (actual) => { actual.steps[2].stdout = actual.steps[2].stdout.replace('~0001', ''); },
+    (actual) => { actual.steps[4].stdout = actual.steps[4].stdout.replace('src/App.tsx', 'different target'); },
+    (actual) => { actual.steps[1].exit = 0; },
+  ]) { const actual = structuredClone(win); mutate(actual); assert.ok(diffResults(win, actual).length); }
 });

@@ -7506,24 +7506,22 @@
         "caseCount": 860,
         "expectedCaseAdaptations": 479,
         "limitation": "Current darwin-arm64 development binary replays all original 860 cases with 476 exact adaptations and zero failures/errors/missing/skips; other platforms, provider sessions, IME and full UI acceptance remain unverified.",
-        "metadataSha256": "a424dfa97dbbf8e90ebe5809705461652d5c970fe0276774801f0fb2ac0a0f9d",
+        "metadataSha256": "7370398f80c5cbd0deb7002d9dccff9e9fe0327a2f40fb564548839fe858d69f",
         "unitContract": {
           "command": "PHOENIX_UI_BIN=local/phoenix-ui/ci12-candidate-release/phoenix-ui-darwin-arm64 mise exec --no-deps -- node --test test/phoenix-ui/oracle.test.js",
           "nodeVersion": "25.2.1",
-          "tests": 21,
-          "passed": 21,
+          "tests": 23,
+          "passed": 23,
           "failed": 0,
           "skipped": 0,
-          "durationMs": 2240.519459,
-          "scope": "helper/source/golden/fixture/adapter contracts plus actual native critique collision after a forced 1.2-second boundary; not the full native replay",
-          "checkedAt": "2026-10-10T02:25:11.979506+00:00"
+          "durationMs": 2318.972958,
+          "scope": "helper/source/golden/fixture/adapter contracts, exact Windows raw/JSON path masks and four bounded expected fields, plus actual darwin native collision after a forced 1.2-second boundary; current Windows native replay is still pending",
+          "checkedAt": "2026-10-10T03:27:49.755595+00:00"
         },
-        "adapterSha256": "63b7212e8852c729a97c7bf37c0acc72232a799e05bf29cac8064e5726192182",
-        "currentEvidenceFileCount": 39,
+        "adapterSha256": "1f1f30d216fd9c24ae4f7d63e8c21160ad59e55c56ec43eba38d75cab2843e8d",
+        "currentEvidenceFileCount": 40,
         "finalNativeReplay": {
-          "evidence": "local/phoenix-ui/ci12-candidate-oracle.json",
-          "evidenceSha256": "60978b2361355bfa0ab8691ae57757d0f0ea73d7650dcaa5f679f9688daa215b",
-          "recordedAt": "2026-10-10T02:19:13.097Z",
+          "recordedAt": "2026-10-10T03:24:28.284Z",
           "platform": "darwin",
           "arch": "arm64",
           "runtime": {
@@ -7535,8 +7533,8 @@
             "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
             "files": 1257
           },
-          "adapterSha256": "63b7212e8852c729a97c7bf37c0acc72232a799e05bf29cac8064e5726192182",
-          "adapterSourceSha256": "4a8b7ed1eb8a8b77af3393d14dd606abe3ba37e0fdf954ed0ba2622de37cf193",
+          "adapterSha256": "1f1f30d216fd9c24ae4f7d63e8c21160ad59e55c56ec43eba38d75cab2843e8d",
+          "adapterSourceSha256": "9bd1269daa53c06f1c5127ea3116d781f7f95fdc91c6b53da31745f388a5fe87",
           "totalCases": 860,
           "selectedCases": 860,
           "counts": {
@@ -7548,7 +7546,9 @@
             "skipped": 0
           },
           "fullCorpus": true,
-          "acceptanceComplete": true
+          "acceptanceComplete": true,
+          "evidence": "local/phoenix-ui/ci-windows-path-native-oracle-final.json",
+          "evidenceSha256": "cd197883744f3492188fe9c8b9a8fef8f39fc9d9e73ade2196c8a0321d3cda92"
         },
         "priorReplay": {
           "evidence": "local/phoenix-ui/phoenix-tests-complete-retry.log",
