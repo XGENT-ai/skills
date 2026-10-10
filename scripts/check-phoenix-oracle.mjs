@@ -44,9 +44,9 @@ export async function checkOracle({ bin, prefix = '', reportActual = false, prog
           const outputs = actual.steps || [actual];
           if (outputs.some((r) => !r.daemon && (r.exit === null || r.signal))) throw new Error(`process failed: ${JSON.stringify(outputs.map(({ exit, signal }) => ({ exit, signal })))}`);
           const differences = diffResults(expected, actual);
+          if (reportActual) { item.actual = actual; item.expected = expected; }
           if (differences.length) {
             item.status = 'fail'; item.differences = differences; report.counts.fail++;
-            if (reportActual) { item.actual = actual; item.expected = expected; }
           } else {
             const adapted = JSON.stringify(golden) !== JSON.stringify(expected);
             item.status = adapted ? 'adapted-pass' : 'pass';
@@ -66,20 +66,28 @@ export async function checkOracle({ bin, prefix = '', reportActual = false, prog
 
 async function main() {
   const args = process.argv.slice(2);
-  let bin = process.env.PHOENIX_UI_BIN, prefix = '', json = false, reportActual = false;
+  let bin = process.env.PHOENIX_UI_BIN, prefix = '', json = false, reportActual = false, output;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--bin') bin = args[++i];
     else if (arg === '--prefix') prefix = args[++i];
     else if (arg === '--json') json = true;
     else if (arg === '--include-actual') reportActual = true;
+    else if (arg === '--output') {
+      output = args[++i];
+      if (!output) throw new Error('--output requires a report path');
+    }
     else if (arg === '--help') {
-      process.stdout.write('Usage: node scripts/check-phoenix-oracle.mjs --bin <current-engine> [--prefix <case-prefix>] [--json] [--include-actual]\nNo accepted-case suppression. Missing, execution errors and differences fail; platform skips are reported and prevent complete acceptance.\n');
+      process.stdout.write('Usage: node scripts/check-phoenix-oracle.mjs --bin <current-engine> [--prefix <case-prefix>] [--json] [--include-actual] [--output <report.json>]\nNo accepted-case suppression. Missing, execution errors and differences fail; platform skips are reported and prevent complete acceptance.\n');
       return;
     } else throw new Error(`unknown argument: ${arg}`);
   }
   const report = await checkOracle({ bin, prefix, reportActual,
     progress: json ? undefined : (c) => { if (['fail', 'error', 'missing', 'skipped'].includes(c.status)) process.stdout.write(`${c.status}: ${c.id}\n${(c.differences || [c.error || '']).join('\n')}\n`); } });
+  if (output) {
+    fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
+    fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
+  }
   process.stdout.write(json ? JSON.stringify(report, null, 2) + '\n' : `${report.counts.pass} pass (${report.counts.adaptedPass} exact adaptations), ${report.counts.fail} fail, ${report.counts.error} errors, ${report.counts.missing} missing, ${report.counts.skipped} platform skips; ${report.selectedCases}/${report.totalCases} cases\n`);
   process.exitCode = report.ok ? 0 : 1;
 }

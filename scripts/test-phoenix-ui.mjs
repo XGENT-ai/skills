@@ -45,7 +45,9 @@ try {
   if (!executable || !fs.existsSync(executable)) throw new Error('Cargo did not report the native vector replay artifact.');
   command(process.execPath, [path.join(root, 'scripts/check-phoenix-wasm.mjs')],
     { env: { ...env, PHOENIX_UI_VECTORS_BIN: executable } });
-  command(process.execPath, [path.join(root, 'scripts/check-phoenix-oracle.mjs'), '--bin', engine]);
+  command(process.execPath, [path.join(root, 'scripts/check-phoenix-oracle.mjs'), '--bin', engine,
+    '--include-actual', '--output', path.join(root, 'local/phoenix-ui/ci-prepare',
+      `${prepared.target || `${process.platform}-${process.arch}`}-oracle.json`)]);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

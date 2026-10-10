@@ -16,6 +16,7 @@
 | 43681180-a33b-4ef1-bf2c-c57b07c58994 | "implementation" / "plan" | [事实记录](43681180-a33b-4ef1-bf2c-c57b07c58994.md) |
 | 48296c63-6436-4b56-8a02-92fa14303fcd | "implementation" / "plan" | [事实记录](48296c63-6436-4b56-8a02-92fa14303fcd.md) |
 | 4b163cc6-8eb8-4969-8f12-2470d083a5d6 | "implementation" / "plan" | [事实记录](4b163cc6-8eb8-4969-8f12-2470d083a5d6.md) |
+| 4e655bff-8213-4911-be3e-72356c4668c7 | implementation / plan | [事实记录](4e655bff-8213-4911-be3e-72356c4668c7.md) |
 | 50e15f9a-f619-42fe-8683-8ea4d6d31a0f | "readiness" / "plan" | [事实记录](50e15f9a-f619-42fe-8683-8ea4d6d31a0f.md) |
 | 53ddb5a9-1d41-43ae-bcf4-6358206082ae | "implementation" / "plan" | [事实记录](53ddb5a9-1d41-43ae-bcf4-6358206082ae.md) |
 | 62a4f218-c945-4661-9124-b1a8f14c3d8a | implementation / plan | [事实记录](62a4f218-c945-4661-9124-b1a8f14c3d8a.md) |
@@ -25,6 +26,7 @@
 | 77ec197e-383e-46f1-bff0-e2245866d10c | "readiness" / "plan" | [事实记录](77ec197e-383e-46f1-bff0-e2245866d10c.md) |
 | 7a74e5ac-3d63-4601-9a89-2ca1db931790 | "implementation" / "plan" | [事实记录](7a74e5ac-3d63-4601-9a89-2ca1db931790.md) |
 | 7b82c799-38fa-4534-818c-48ca6bea9f2f | "implementation" / "plan" | [事实记录](7b82c799-38fa-4534-818c-48ca6bea9f2f.md) |
+| 85fb9410-1991-460d-b5cd-f657490fe40d | implementation / plan | [事实记录](85fb9410-1991-460d-b5cd-f657490fe40d.md) |
 | a4d8bb4b-b956-46b6-b9d9-7f35e9ad7b39 | implementation / plan | [事实记录](a4d8bb4b-b956-46b6-b9d9-7f35e9ad7b39.md) |
 | aa67d1ba-661f-40df-a4a9-f79a301abc8c | "readiness" / "plan" | [事实记录](aa67d1ba-661f-40df-a4a9-f79a301abc8c.md) |
 | aa8e0f78-7988-4eb5-b9d7-ad005899da88 | implementation / plan | [事实记录](aa8e0f78-7988-4eb5-b9d7-ad005899da88.md) |
@@ -38,5 +40,3 @@
 | ea48dec0-7717-49a0-bb81-e465f749077d | implementation / plan | [事实记录](ea48dec0-7717-49a0-bb81-e465f749077d.md) |
 | f6f0aa1a-fc6b-4b3f-be0c-021efcba2889 | implementation / plan | [事实记录](f6f0aa1a-fc6b-4b3f-be0c-021efcba2889.md) |
 | fa7f46e8-87e8-4a2d-847f-2832f399d0c0 | "implementation" / "plan" | [事实记录](fa7f46e8-87e8-4a2d-847f-2832f399d0c0.md) |
-
-按[目录索引维护规则](../../../protocol.md)维护；新增事件后同步本索引，事件保存后不覆盖。
