@@ -123,12 +123,18 @@ fn large_utf8_document_retains_exact_bytes_without_refetch() {
     let hits = Arc::new(AtomicUsize::new(0));
     let count = hits.clone();
     let server = std::thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
-        let mut request = [0; 4096];
-        stream.read(&mut request).unwrap();
-        count.fetch_add(1, Ordering::SeqCst);
-        write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", served.len()).unwrap();
-        stream.write_all(&served).unwrap();
+        // Chrome may open a speculative connection that closes without a request.
+        loop {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0; 4096];
+            if stream.read(&mut request).unwrap_or(0) == 0 {
+                continue;
+            }
+            count.fetch_add(1, Ordering::SeqCst);
+            write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", served.len()).unwrap();
+            stream.write_all(&served).unwrap();
+            break;
+        }
     });
     let Some(mut browser) = launch(&exe) else { return; };
     let mut page = browser.new_page().unwrap();

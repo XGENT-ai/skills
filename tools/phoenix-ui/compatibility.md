@@ -436,6 +436,15 @@ Browser检测使用本机Chromium系浏览器；Chrome/Safari live交互与Windo
 | 夹具前置条件 | pid 1在Windows不存在，Node兼容探测正确返回ESRCH，4项改用harness存活pid；`chmod 000`不能阻止Windows读取，2项改用Everyone读数据deny ACE并在读取仍成功时失败；根目录可写的1项列为win32 skip。 | 前置已实现，待Windows重放 |
 | 继承缺陷：live-poll连接拒绝 | [live_poll.rs:186](crates/live/src/live_poll.rs#L186)只匹配英文“Connection refused”，Windows WSAECONNREFUSED显示`fetch failed`而非“Live server not running”。与固定上游逐字相同；现补充按`io::ErrorKind::ConnectionRefused`识别，两项Rust回归先红后绿。 | 已修复，待Windows重放 |
 
+CI18/run38042768765（HEAD `36885072`）的Windows完整重放为839通过（630适配）、18失败、2 error、1 skip；上表适配与live-poll修复在原机生效。剩余项逐项处置如下（Windows原机复验待下一轮）：
+
+| 类别 | 证据与处置 | 状态 |
+| --- | --- | --- |
+| 原生路径分隔符（续） | 15项hook cache中co-scan文件的键、1项question下一步提示中的skill路径只差原生分隔符；按CI18实际输出以同一授权工具登记win32 `platformFields`。 | 期望已登记 |
+| Windows命令参数引号 | hook忽略提示按 [hook_lib.rs:1103](crates/hook/src/hook_lib.rs#L1103) 的 `quote_command_arg(value, true)` 在win32用双引号；1项登记为 `windows-command-arg-quote`，测试断言除引号外与POSIX期望一致。 | 期望已登记 |
+| 继承缺陷：stop baseline路径拼写 | [stop_baseline.rs](crates/hook/src/stop_baseline.rs) 用规范化路径与宿主原样拼写的绝对路径比较；正斜杠或冗余分隔符拼写会丢失归因，2项Stop结果变为attribution unknown。改为两侧都规范化后比较，新增POSIX可复现回归先红后绿。 | 已修复，待Windows重放 |
+| 不可读文件前置 | elevated runner在icacls成功添加Everyone读数据deny ACE后仍能读取文件，2项`chmod 000`前置无法建立；与根目录可写项一样列为win32 skip，删除未生效的deny ACE机制及其未验证的预测期望。 | win32 skip |
+
 ## 已读取的 M2 局部验收证据
 
 严格 [Phoenix oracle 入口](../../scripts/check-phoenix-oracle.mjs) 保留原 860 个 case 和全部历史 golden，逐位置登记公开名称/路径适配，单一 Italic finding 用固定单文件 golden 逐项证明；不读取旧 accepted parser。helper/metadata 的 Node 合同 18/18 通过、0失败/skip；479 个 case 的逐字段期望登记与 37 份当前源码 SHA 已核对。主实施者的 [最终完整重放](../../local/phoenix-ui/oracle-final-release.json) 记录 2026-10-09T08:58:46.229Z，darwin-arm64 binary SHA `dd11af8288b9f5c5c830793a33828efd11cb629399fc67191c1016afa05c8ec8`，860/860通过（476项精确适配），0失败/error/missing/skip，`acceptanceComplete=true`。仅 Darwin 的四个静态 framework case 使用逐次原生 spawn 的 IP 隔离前置，原 binary SHA、argv 和 expected 字节保留，daemon/其他 case 不受影响；该证明不含真实 provider、宿主 copy、IME 或其他平台。

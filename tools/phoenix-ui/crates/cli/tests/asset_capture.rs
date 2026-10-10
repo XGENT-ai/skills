@@ -120,7 +120,9 @@ fn native_capture_distinguishes_paint_from_file_presence() {
                     _ => "",
                 };
                 let html = format!(
-                    "<!doctype html><style>body{{margin:0;background:white}}#wrap{{position:absolute;left:20px;top:20px;width:80px;height:80px}}</style><div id='wrap' style='{parent};{position}'>{img}{cover}</div>{extra}"
+                    // An explicit data: icon keeps Chrome's late automatic favicon
+                    // request out of the capture's network-stability window.
+                    "<!doctype html><link rel=icon href='data:,'><style>body{{margin:0;background:white}}#wrap{{position:absolute;left:20px;top:20px;width:80px;height:80px}}</style><div id='wrap' style='{parent};{position}'>{img}{cover}</div>{extra}"
                 );
                 ("text/html", html.into_bytes())
             };

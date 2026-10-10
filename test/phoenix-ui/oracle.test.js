@@ -514,25 +514,23 @@ test('listed Windows fixture preconditions are exact, fail closed and are inert 
   const { applyPlatformPrecondition, platformSkipReason, metadata } = await adapter;
   const { allCases } = await harness;
   const ids = new Set((await allCases()).map((c) => c.id));
-  const { livePid, readDenied, skips } = metadata.platformPreconditions;
-  for (const id of [...livePid.ids, ...Object.keys(readDenied.files), ...skips.map((skip) => skip.id)]) assert.ok(ids.has(id), id);
-  assert.ok([livePid, readDenied, ...skips].every((item) => item.platform === 'win32' && item.reason && item.source.length));
+  const { livePid, skips } = metadata.platformPreconditions;
+  for (const id of [...livePid.ids, ...skips.map((skip) => skip.id)]) assert.ok(ids.has(id), id);
+  assert.ok([livePid, ...skips].every((item) => item.platform === 'win32' && item.reason && item.source.length));
   const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-precondition-'));
   t.after(() => fs.rmSync(ws, { recursive: true, force: true }));
   const file = path.join(ws, livePid.file), original = JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 });
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, original);
-  for (const platform of ['darwin', 'linux']) {
-    applyPlatformPrecondition(livePid.ids[0], ws, platform);
-    applyPlatformPrecondition('detect-unreadable-file-json', ws, platform);
-  }
+  for (const platform of ['darwin', 'linux']) applyPlatformPrecondition(livePid.ids[0], ws, platform);
   assert.equal(fs.readFileSync(file, 'utf8'), original);
   applyPlatformPrecondition(livePid.ids[0], ws, 'win32');
   assert.equal(fs.readFileSync(file, 'utf8'), JSON.stringify({ pid: process.pid, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 }));
   assert.throws(() => applyPlatformPrecondition(livePid.ids[0], ws, 'win32'), /live pid fixture changed/);
   applyPlatformPrecondition('question-wait-answer-ready', ws, 'win32');
   assert.equal(platformSkipReason('surface-brief-write-route', 'win32'), skips[0].reason);
-  for (const [id, platform] of [['surface-brief-write-route', 'linux'], ['surface-brief-write-route', 'darwin'], ['surface-brief-path-slash', 'win32']]) assert.equal(platformSkipReason(id, platform), undefined);
+  for (const id of ['detect-unreadable-file-json', 'detect-unreadable-file-in-dir']) assert.match(platformSkipReason(id, 'win32'), /icacls/);
+  for (const [id, platform] of [['surface-brief-write-route', 'linux'], ['surface-brief-write-route', 'darwin'], ['detect-unreadable-file-json', 'linux'], ['detect-unreadable-file-in-dir', 'darwin'], ['surface-brief-path-slash', 'win32']]) assert.equal(platformSkipReason(id, platform), undefined);
 });
 
 test('Windows separator expectations only flip whole path tokens and never change POSIX expectations', async () => {
@@ -562,4 +560,11 @@ test('Windows separator expectations only flip whole path tokens and never chang
   assert.equal(phoenixExpected('critique-write-monorepo-child', readGolden('critique-write-monorepo-child'), 'win32').steps[1].stdout.split('\n')[3],
     'target_path: ' + JSON.stringify(String.raw`<WS>\apps\a\src\App.tsx`));
   assert.equal(quoted.edits.length, 2);
+  const commandQuote = metadata.expectations.find((entry) => entry.id === 'hook-config-per-edit-all').platformFields
+    .filter((patch) => patch.reason === 'windows-command-arg-quote');
+  assert.deepEqual(commandQuote.map((patch) => [patch.path, patch.edits.length]), [[['stdout'], 1]]);
+  const hint = (platform) => JSON.parse(phoenixExpected('hook-config-per-edit-all', readGolden('hook-config-per-edit-all'), platform).stdout).hookSpecificOutput.additionalContext;
+  const value = 'cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+  assert.ok(hint('win32').includes(`ignore-value bounce-easing "${value}"`) && !hint('win32').includes(`'${value}'`));
+  assert.equal(hint('win32').replace(`"${value}"`, `'${value}'`), hint('linux'));
 });

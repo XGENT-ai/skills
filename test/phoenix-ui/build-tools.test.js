@@ -233,6 +233,32 @@ test('safe extraction materializes real directories/files, preserves bytes and r
   assert.equal(fs.readFileSync(path.join(destination, 'unrelated-user-file'), 'utf8'), 'retain me');
 });
 
+test('fixed migration packages come from their recorded npm sources and are extracted only after SHA-256 and SRI match', async t => {
+  const { migrationPackageAssets, preparePublishedPackages, sha256 } = await prepare;
+  const fixed = migrationPackageAssets();
+  assert.deepEqual(fixed.map(asset => asset.version), ['0.3.0', '0.4.0', '0.5.0', '0.6.0']);
+  for (const asset of fixed) assert.equal(asset.url, `https://registry.npmjs.org/@xgent-ai/skills/-/skills-${asset.version}.tgz`);
+  const directory = sandbox(t), sources = path.join(directory, 'sources');
+  fs.mkdirSync(sources);
+  const bytes = tar([{ name: 'package/package.json', bytes: '{"version":"9.9.9"}\n' }]);
+  const integrity = `sha512-${require('node:crypto').createHash('sha512').update(bytes).digest('base64')}`;
+  const writeSource = npm => fs.writeFileSync(path.join(sources, '9.9.9.json'), JSON.stringify({ packageVersion: '9.9.9',
+    tarball: 'https://registry.npmjs.org/fixture.tgz', provenance: { npm: { filename: 'fixture.tgz', url: 'https://registry.npmjs.org/fixture.tgz',
+      size: bytes.length, sha256: sha256(bytes), integrity, ...npm } } }));
+  writeSource({});
+  const published = path.join(directory, 'published');
+  const prepared = await preparePublishedPackages(published, async () => bytes, sources);
+  assert.deepEqual(prepared.map(item => [item.version, item.integrity]), [['9.9.9', integrity]]);
+  assert.equal(fs.readFileSync(path.join(published, '9.9.9/package/package.json'), 'utf8'), '{"version":"9.9.9"}\n');
+  writeSource({ integrity: `sha512-${Buffer.alloc(64).toString('base64')}` });
+  await assert.rejects(preparePublishedPackages(path.join(directory, 'other'), async () => bytes, sources), /integrity/);
+  writeSource({ sha256: '0'.repeat(64) });
+  await assert.rejects(preparePublishedPackages(path.join(directory, 'other'), async () => bytes, sources), /SHA-256/);
+  writeSource({ url: 'https://example.invalid/fixture.tgz' });
+  assert.throws(() => migrationPackageAssets(sources), /migration package source/);
+  assert.equal(fs.existsSync(path.join(directory, 'other')), false);
+});
+
 test('traversal, Windows aliases, duplicate names, parent-file collisions and link/device/extended-header members write nothing', async t => {
   const { extractArchive } = await prepare;
   const directory = sandbox(t), marker = path.join(directory, 'user-file');

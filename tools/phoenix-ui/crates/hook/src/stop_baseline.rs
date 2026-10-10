@@ -91,7 +91,9 @@ pub fn capture(
         .get("cwd")
         .and_then(Value::as_str)
         .unwrap_or(&rt.proc_cwd);
-    if rt.resolve(&[cwd, path]) != file || response.get("userModified") == Some(&Value::Bool(true))
+    // Scan targets keep the host's absolute spelling; compare normalized forms.
+    if rt.resolve(&[cwd, path]) != rt.resolve(&[file])
+        || response.get("userModified") == Some(&Value::Bool(true))
     {
         return;
     }

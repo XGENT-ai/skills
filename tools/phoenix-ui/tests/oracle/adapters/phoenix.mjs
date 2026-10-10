@@ -5,7 +5,6 @@ import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { nativeInvocation, isolatedCases, offlineNetworkProfile } from './network.mjs';
 import { reserveCritiqueCollisions, removeCritiqueCollisions } from './critique-clock.mjs';
-import { spawnSync } from 'node:child_process';
 import { allCases as fixedCases, diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT } from '../lib.mjs';
 
 export { diffResults, readGolden, caseRunsHere, ORACLE_DIR, REPO_ROOT };
@@ -164,21 +163,12 @@ function stageExternalProject(ws) {
 
 /** Establish the POSIX fixture facts listed in phoenix.json on another platform, or fail the case. */
 export function applyPlatformPrecondition(id, ws, platform = process.platform) {
-  const { livePid, readDenied } = metadata.platformPreconditions;
+  const { livePid } = metadata.platformPreconditions;
   if (livePid.platform === platform && livePid.ids.includes(id)) {
     const file = path.join(ws, livePid.file);
     const state = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (state.pid !== livePid.before) throw new Error(`live pid fixture changed: ${id}`);
     fs.writeFileSync(file, JSON.stringify({ ...state, pid: process.pid }));
-  }
-  const denied = readDenied.platform === platform && readDenied.files[id];
-  if (denied) {
-    const file = path.join(ws, denied);
-    const result = spawnSync('icacls', [file, '/deny', readDenied.grant], { encoding: 'utf8' });
-    if (result.error || result.status !== 0) throw new Error(`cannot deny reads for ${id}: ${result.error?.message || result.stderr || result.stdout}`);
-    let readable = true;
-    try { fs.readFileSync(file); } catch (error) { readable = !['EPERM', 'EACCES'].includes(error.code); }
-    if (readable) throw new Error(`read denial did not apply: ${id}`);
   }
 }
 

@@ -561,6 +561,37 @@ fn stop_baseline_reports_new_findings_and_keeps_first_preimage() {
 }
 
 #[test]
+fn stop_baseline_accepts_a_differently_spelled_absolute_path() {
+    // Hosts may send forward slashes on Windows or a redundant separator; the
+    // spelling of the same absolute path must not lose attribution.
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    let file = t.write("card.css", SIDE_TAB_CSS);
+    let spelled = if cfg!(windows) {
+        file.replace('\\', "/")
+    } else {
+        file.replacen("/card.css", "//card.css", 1)
+    };
+    assert_ne!(spelled, file);
+    let r = rt(&cwd);
+    hook::run_hook(
+        &r,
+        &edit_with_original(
+            &cwd,
+            &spelled,
+            "s1",
+            ".card {}\n",
+            ".card {}\n",
+            SIDE_TAB_CSS,
+        ),
+    );
+    let stop = hook::run_stop_hook(&r, &stop_event(&cwd, "s1"));
+    assert!(stop.stdout.contains("[new]"), "{}", stop.stdout);
+    assert_eq!(stop.audit["newFindings"], json!(1));
+}
+
+#[test]
 fn stop_baseline_missing_or_mismatched_preimage_stays_unknown() {
     for original in [None, Some("not the actual preimage")] {
         let t = Tmp::new();

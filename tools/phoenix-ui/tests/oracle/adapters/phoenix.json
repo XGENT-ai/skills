@@ -18513,7 +18513,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "3fcf6d2aeb82c0643d0586c469d0566d7a5996aeb12263614466da7d223d7a54",
+          "afterSha256": "bbbedc2d113ae35ccbfc9946bf04794db06fcfc782245d0b4a4a2f6594b22cc6",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/",
+              "after": "\\\\src\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hbe-edit-projection",
@@ -18603,7 +18636,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "7ad5bb4a260e9bef1f4d0bce7f582c3eb27b20b20172a4c1659317db5431e1d6",
+          "afterSha256": "e0566dc24a5d95c7b1c72fa360dbfdb69174a6713d573823d725841875839583",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hbe-html-engine",
@@ -18693,7 +18759,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "dd6a78c7ea6ec43795736f4be0a7ba8af2410e91f6fb9c086bab0af9df371848",
+          "afterSha256": "e641bff15f605cfad73057db77572339fdedd05f4ff96056b942fea79b9d119a",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/",
+              "after": "\\\\src\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hbe-shell-cp",
@@ -18783,7 +18882,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "d1e501303c071a98c14b471699a0db4d293f1e22abe06f7766259ee5ba2ea31f",
+          "afterSha256": "e57b9581f10ba72c35f3e6f96be95e188ca22cafd5f3ce592b1dacb8eec8aeab",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/",
+              "after": "\\\\src\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hbe-shell-heredoc",
@@ -18873,7 +19005,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "79365b2b5eec997a406e31d79a40b3d81053c0db2987c759cacb97f40d4f891b",
+          "afterSha256": "a6bc382155f8bb04d0e593553fb8cef790ad709fc8ccb5fa16db2378a2b7f129",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/",
+              "after": "\\\\src\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hbe-write-with-findings",
@@ -18963,7 +19128,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "cbb6a6551bcef4bdfbc46f52610837c4c0d150d696e423421563e84a3c1820c9",
+          "afterSha256": "d9b05d714ce48c980e29bcd9da2501713cc4a3f957c2000d83b907c6f8840852",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/",
+              "after": "\\\\src\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-audit-log",
@@ -19163,7 +19361,70 @@
       "fileKeys": {
         ".impeccable/config.json": ".phoenix-ui/config.json",
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "dff0c462344bd9758d9ab569ac9890fd74c365ac3c1513f881743a2822cb4c5b",
+          "afterSha256": "abec2aac002d7fc3d1c2f59dbbc9ba8646b5c6c3f1b319d721e18022009fc866",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 183,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        },
+        {
+          "path": [
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "999efc5da74eb7108506702006ad1d527051030fab75c6d76e011c8363423cda",
+          "afterSha256": "9753a243b2067b7c050307ce8b46a9c06c3adb894ee6986f18d45d7642684cc1",
+          "reason": "windows-command-arg-quote",
+          "source": [
+            {
+              "file": "crates/hook/src/hook_lib.rs",
+              "line": 1103
+            },
+            {
+              "file": "crates/hook/src/hook_lib.rs",
+              "line": 1112
+            },
+            {
+              "file": "crates/hook/src/hook_lib.rs",
+              "line": 1252
+            }
+          ],
+          "edits": [
+            {
+              "offset": 430,
+              "before": "'cubic-bezier(0.68, -0.55, 0.265, 1.55)'",
+              "after": "\\\"cubic-bezier(0.68, -0.55, 0.265, 1.55)\\\""
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-edit-clean-tsx",
@@ -19328,7 +19589,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "6f0456aab766fa14ad3f4b7ee5cc276d388de01e8e046fdf4e45a63d35368799",
+          "afterSha256": "78c5770ad6fcc1fa8335943c349477ab4e3f3fba68fbcf56889438e13395a65a",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 145,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-edit-tsx-fresh",
@@ -19370,7 +19664,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "6f0456aab766fa14ad3f4b7ee5cc276d388de01e8e046fdf4e45a63d35368799",
+          "afterSha256": "78c5770ad6fcc1fa8335943c349477ab4e3f3fba68fbcf56889438e13395a65a",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 145,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-edit-write-tool",
@@ -19412,7 +19739,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "6f0456aab766fa14ad3f4b7ee5cc276d388de01e8e046fdf4e45a63d35368799",
+          "afterSha256": "78c5770ad6fcc1fa8335943c349477ab4e3f3fba68fbcf56889438e13395a65a",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 145,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-env-quiet",
@@ -19454,7 +19814,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "fa3e257cc7008ea118a0a4190baff508f515d9708c3956482cce5ada54208d7d",
+          "afterSha256": "e827f49c6579dac35ee4635c6250d020a439c66fae13e345c03356db62839bb0",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 127,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-harness-codex-apply-patch",
@@ -19496,7 +19889,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "277bb121ddf7e80a1b56f43538395cf416498129d4f0641328ddd145b1df047e",
+          "afterSha256": "c363fc97b110c8e3825121c4be55044bf73ad423645efccf8ae026a75dc3dbe4",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 66,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-harness-cursor-shaped",
@@ -19538,7 +19964,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "4250050f9d8240231a46ffb9f8b81990c7e96d35d01c41c0944ed5b5d4a5d58d",
+          "afterSha256": "0853c4583a71f37b64ad3a3015af25ca75e4fcd8267e5d6b6a10e2835bfca346",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 67,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-harness-forced-github",
@@ -19622,7 +20081,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "12036f1f75a50f98f51584563cb0b7abec2b0d2147a05606026a78319411681e",
+          "afterSha256": "1d4a994fda47a3bcbac388bb3166ff1b1dcd7a29c246b5e63e2cbf374ea318f0",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 66,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-harness-github-edit",
@@ -19664,7 +20156,40 @@
       ],
       "fileKeys": {
         ".impeccable/hook.cache.json": ".phoenix-ui/hook.cache.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "files",
+            ".impeccable/hook.cache.json"
+          ],
+          "platform": "win32",
+          "beforeSha256": "12036f1f75a50f98f51584563cb0b7abec2b0d2147a05606026a78319411681e",
+          "afterSha256": "1d4a994fda47a3bcbac388bb3166ff1b1dcd7a29c246b5e63e2cbf374ea318f0",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 66,
+              "before": "/src/components/",
+              "after": "\\\\src\\\\components\\\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "hook-session-codex-stop-decision",
@@ -52041,7 +52566,39 @@
       ],
       "fileKeys": {
         ".impeccable/questions/k1.hand.json": ".phoenix-ui/questions/k1.hand.json"
-      }
+      },
+      "platformFields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "platform": "win32",
+          "beforeSha256": "8eee47652c13eed71ffc105406817571f56d83c517aec3d6729d835ac6c412da",
+          "afterSha256": "9c8d7d3566791847b6ff96021bd1872a188b34b20a7f90d5b0049221873a0ea3",
+          "reason": "windows-native-path-separator",
+          "source": [
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 17
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 52
+            },
+            {
+              "file": "crates/common/src/jsp.rs",
+              "line": 70
+            }
+          ],
+          "edits": [
+            {
+              "offset": 71,
+              "before": "/reference/",
+              "after": "\\reference\\"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "question-wait-answer-canon-followup",
@@ -72700,115 +73257,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "detect-unreadable-file-json",
-      "goldenSha256": "f2d55ee060f1a8effafb60b914e1e8f4a2f1a2f0428b776674aab4ef392d1b6b",
-      "fields": [],
-      "platformFields": [
-        {
-          "path": [
-            "stderr"
-          ],
-          "platform": "win32",
-          "beforeSha256": "d5110776595fe90044d9dbf19ec9a3f5f258dc29c7d82fe09e16135c9a029a5b",
-          "afterSha256": "d54da60796092ad3e1ab41cd12293fafbfe6290e1c058a436f703c3199176d93",
-          "reason": "windows-native-path-separator",
-          "source": [
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 17
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 52
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 70
-            }
-          ],
-          "edits": [
-            {
-              "offset": 64,
-              "before": "'<WS>/locked.html'",
-              "after": "'<WS>\\locked.html'"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "detect-unreadable-file-in-dir",
-      "goldenSha256": "435f24e69ad6f30e22a6864b4ac8567da50cbd47c1ef5553cffb95e9a1c071ba",
-      "fields": [],
-      "platformFields": [
-        {
-          "path": [
-            "stdout"
-          ],
-          "platform": "win32",
-          "beforeSha256": "2e07920b783ae060c8106d44ff509c3a29931b2802df007d62ca4ec2d84a5cf5",
-          "afterSha256": "03837c4873613b5676d8ce49321947cf8f945b4f9892561ae4fec317d38ccee4",
-          "reason": "windows-native-path-separator",
-          "source": [
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 17
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 52
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 70
-            }
-          ],
-          "edits": [
-            {
-              "offset": 297,
-              "before": "\"<WS>/a.html\"",
-              "after": "\"<WS>\\\\a.html\""
-            }
-          ]
-        },
-        {
-          "path": [
-            "stderr"
-          ],
-          "platform": "win32",
-          "beforeSha256": "664173ad8d614fb5dff41c43d3b552c2a2170ea9a470a787757717c87bdd534c",
-          "afterSha256": "dbdb9192b0db3c03ca6a7dd12011bacc86ab7505c6b6c6457adcad3c4adf7f33",
-          "reason": "windows-native-path-separator",
-          "source": [
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 17
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 52
-            },
-            {
-              "file": "crates/common/src/jsp.rs",
-              "line": 70
-            }
-          ],
-          "edits": [
-            {
-              "offset": 19,
-              "before": "<WS>/b.html:",
-              "after": "<WS>\\b.html:"
-            },
-            {
-              "offset": 64,
-              "before": "'<WS>/b.html'",
-              "after": "'<WS>\\b.html'"
-            }
-          ]
-        }
-      ]
     }
   ],
   "italic": {
@@ -72981,21 +73429,6 @@
         }
       ]
     },
-    "readDenied": {
-      "platform": "win32",
-      "files": {
-        "detect-unreadable-file-json": "locked.html",
-        "detect-unreadable-file-in-dir": "b.html"
-      },
-      "grant": "*S-1-1-0:(RD)",
-      "reason": "chmod 000 cannot deny reads on Windows. A read-data deny ACE for Everyone establishes the same unreadable file; the case fails if reads still succeed.",
-      "source": [
-        {
-          "file": "crates/detect/src/cli.rs",
-          "line": 288
-        }
-      ]
-    },
     "skips": [
       {
         "id": "surface-brief-write-route",
@@ -73005,6 +73438,28 @@
           {
             "file": "crates/context/src/surface_briefs.rs",
             "line": 315
+          }
+        ]
+      },
+      {
+        "id": "detect-unreadable-file-json",
+        "platform": "win32",
+        "reason": "chmod 000 cannot deny reads on Windows, and the elevated runner still read the file after icacls applied an Everyone read-data deny ACE with exit 0 (CI18 run 38042768765, job 114186244714). The unreadable-file precondition cannot be established there.",
+        "source": [
+          {
+            "file": "crates/detect/src/cli.rs",
+            "line": 288
+          }
+        ]
+      },
+      {
+        "id": "detect-unreadable-file-in-dir",
+        "platform": "win32",
+        "reason": "chmod 000 cannot deny reads on Windows, and the elevated runner still read the file after icacls applied an Everyone read-data deny ACE with exit 0 (CI18 run 38042768765, job 114186244714). The unreadable-file precondition cannot be established there.",
+        "source": [
+          {
+            "file": "crates/detect/src/cli.rs",
+            "line": 288
           }
         ]
       }

@@ -193,6 +193,31 @@ export function extractArchive(bytes, asset, destination) {
   return path.join(destination, ...safeRelative(asset.executable).split('/'));
 }
 
+/** The fixed old npm packages that the migration fixtures reconstruct projects from. */
+export function migrationPackageAssets(sourceDir = path.join(workspace, 'migration-sources')) {
+  return fs.readdirSync(sourceDir).filter(name => name.endsWith('.json')).sort().map(name => {
+    const source = JSON.parse(fs.readFileSync(path.join(sourceDir, name)));
+    const npm = source.provenance?.npm;
+    if (!npm || npm.url !== source.tarball || !npm.url.startsWith('https://registry.npmjs.org/')
+        || !/^sha512-[A-Za-z0-9+/]{86}==$/.test(npm.integrity || '')) throw new Error(`Invalid migration package source: ${name}`);
+    return { name: npm.filename, version: source.packageVersion, url: npm.url, size: npm.size, sha256: npm.sha256,
+      integrity: npm.integrity, archiveRoot: 'package', executable: 'package.json' };
+  });
+}
+
+export async function preparePublishedPackages(destinationRoot = path.join(root, 'local/phoenix-ui/published'),
+  download = downloadAsset, sourceDir) {
+  const prepared = [];
+  for (const asset of migrationPackageAssets(sourceDir)) {
+    const bytes = await download(asset);
+    verifyArchive(bytes, asset);
+    if (`sha512-${createHash('sha512').update(bytes).digest('base64')}` !== asset.integrity) throw new Error(`Package integrity differs: ${asset.name}`);
+    extractArchive(bytes, asset, path.join(destinationRoot, asset.version, 'package'));
+    prepared.push({ version: asset.version, name: asset.name, url: asset.url, sha256: asset.sha256, integrity: asset.integrity });
+  }
+  return prepared;
+}
+
 export function preparationCommands(platform, boxingtonAvailable = false) {
   const nativeTarget = assets.platforms[platform]?.rustTarget;
   if (!nativeTarget) throw new Error('Unsupported native preparation platform');
@@ -256,6 +281,8 @@ async function prepare() {
       env[variable] = extractArchive(bytes, asset, path.join(toolRoot, platform, asset.archiveRoot));
       archiveRecord.status = 'verified-and-extracted'; archiveRecord.executable = env[variable];
     }
+    // Migration tests reconstruct old projects from these exact published bytes.
+    record.migrationPackages = await preparePublishedPackages();
     const suffix = process.platform === 'win32' ? '.exe' : '';
     const candidates = [process.env.PHOENIX_CARGO_DENY, path.join(toolRoot, 'cargo-deny/bin', `cargo-deny${suffix}`),
       ...(process.env.PATH || '').split(path.delimiter).map(directory => path.join(directory, `cargo-deny${suffix}`))].filter(Boolean);
@@ -285,6 +312,6 @@ async function prepare() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.length === 1 && args[0] === '--prepare') prepare().catch(error => { console.error(error.message); process.exitCode = 1; });
-  else if (args.length === 0 || (args.length === 1 && args[0] === '--help')) console.log('Usage: node scripts/prepare-phoenix-ui.mjs --prepare\nExplicit online preparation: mise install, Rust targets/components, locked Cargo fetch, frozen Bun install (automatic browser downloads disabled), locked Chromium and Linux libraries on Linux ARM64, verified WASM tools and dependency-audit preparation.\nBuild/test remain offline. Local shell: export the entries printed in local/phoenix-ui/ci-prepare/<platform>.env.json.');
+  else if (args.length === 0 || (args.length === 1 && args[0] === '--help')) console.log('Usage: node scripts/prepare-phoenix-ui.mjs --prepare\nExplicit online preparation: mise install, Rust targets/components, locked Cargo fetch, frozen Bun install (automatic browser downloads disabled), locked Chromium and Linux libraries on Linux ARM64, verified WASM tools, the four fixed old npm packages for migration tests and dependency-audit preparation.\nBuild/test remain offline. Local shell: export the entries printed in local/phoenix-ui/ci-prepare/<platform>.env.json.');
   else { console.error('Usage: node scripts/prepare-phoenix-ui.mjs --prepare'); process.exitCode = 1; }
 }

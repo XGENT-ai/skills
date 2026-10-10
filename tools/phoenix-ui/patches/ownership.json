@@ -99,6 +99,13 @@
       "change": "modified"
     },
     {
+      "upstreamPath": "crates/browser/tests/response_capture.rs",
+      "upstreamSha256": "bb9f2e691c773d9099a498a93dd90ac32db41a9baa3116df23c1764727e57d74",
+      "currentPath": "tools/phoenix-ui/crates/browser/tests/response_capture.rs",
+      "currentSha256": "6fbda19153a586c35e13d6ad96713d0dfddc446a9125fe1c11045ce8ddfeacec",
+      "change": "modified"
+    },
+    {
       "upstreamPath": "crates/bundle/src/lib.rs",
       "upstreamSha256": "184a41ab35af6fc78c427b7832bf4516cde7e4027bf3c0d077180650c54bae27",
       "currentPath": "tools/phoenix-ui/crates/bundle/src/lib.rs",
@@ -165,7 +172,7 @@
       "upstreamPath": "crates/cli/tests/asset_capture.rs",
       "upstreamSha256": "dbc16854cafc642eb1f245eeae4d4525751a539016d65934bb4d5ce051dd6bd0",
       "currentPath": "tools/phoenix-ui/crates/cli/tests/asset_capture.rs",
-      "currentSha256": "9368a4e3e29689055299dfa3a02bc47c84f2a8d790f4e8e235acf4f175f411a2",
+      "currentSha256": "160845548a9f29e097f41b9f08b97482a90a997820d4b7ccdff34031e7f1f05a",
       "change": "modified"
     },
     {
@@ -575,6 +582,13 @@
       "change": "modified"
     },
     {
+      "upstreamPath": "crates/hook/src/stop_baseline.rs",
+      "upstreamSha256": "336fbf21506e2c22af5a8b927c526c77f1aba881bf94d89fb3b09aa79dae1643",
+      "currentPath": "tools/phoenix-ui/crates/hook/src/stop_baseline.rs",
+      "currentSha256": "8bac1c9cedc4dc4e8a81f490814a3df0c60c29b41da589cd63019daa3314495a",
+      "change": "modified"
+    },
+    {
       "upstreamPath": "crates/hook/tests/cache_root_tests.rs",
       "upstreamSha256": "b39877916699032627b24c1010652208ff69d4dedaac687beac1b7ad1416d06e",
       "currentPath": "tools/phoenix-ui/crates/hook/tests/cache_root_tests.rs",
@@ -585,7 +599,7 @@
       "upstreamPath": "crates/hook/tests/hook_tests.rs",
       "upstreamSha256": "7140fd9cbd3cdf6474d371448467d3fef4c28bf21ba741e86fd60055d567ae24",
       "currentPath": "tools/phoenix-ui/crates/hook/tests/hook_tests.rs",
-      "currentSha256": "aa78e5aba14762e22f25d8fcfe04ab14dc1d40b6cec985a27befc01d8259996d",
+      "currentSha256": "9951a6f358e1846714b4821a3dfd32162fbd5bcf7c02731e2af54541a9ed8d63",
       "change": "modified"
     },
     {
@@ -1540,11 +1554,11 @@
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
-      "currentSha256": "a4147f4ec1ed26e31a23549b9627bf6dfe22c8a73cb834fe19ddd8cc57d9d5d4"
+      "currentSha256": "e3650904fbefa0aaeecc1e2f8b20dd99d0f7e97b261ad259f9c32d90f388d584"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
-      "currentSha256": "ea535bff4fc92253e0607eaa5f80a066f9e1b5a130f7a736906c1342fdf6e993"
+      "currentSha256": "b858cbeb348b3f2f406fb690f3b5c366d5dc8745437db3808c63eb0d0f5714e8"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/windows.mjs",
