@@ -42,21 +42,21 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-10T20:10:00+08:00
+- 最近更新：2026-10-11T16:35:00+08:00
 - 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；按用户要求暂停等待新对话。M2：CI18 Windows剩余项已处置并修继承stop baseline缺陷，CI19候选142aba6本机完整runtime通过、已推送，暂停时两Linux success、Mac/Windows在跑。M3：Node两阶段接线、共享hook分组内核缺陷修复、继承install参数兼容、CI旧包准备与文档入口同步完成（未提交），开发包已重建待复测。M5：7项合同口径已裁定并在隔离树实现（217通过）。
+- 当前状态：进行中；按用户要求暂停。M2：CI19五native与Node18 consumer全success，仅Windows ARM回退smoke清理EPERM（检查本身全过），已加清理重试待CI20。M3：A树修复了重装不幂等、E12漏补的Steer IME guard、断开无提示、部分生成/出错残留、问答卡焦点、个人级旧分命令未报、缺launcher守卫receipt名、中断恢复留空目录等缺陷；npm test、Chrome §6行1–5、tarball、Claude/Codex真实与交互信任会话、真实ENOSPC均通过，完整runtime仅严格oracle 1例待补适配；未提交。
 - 最近完成：M1 · 固定来源与可运行基线
-- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261010c-source-hashes.txt；取CI19终态，成功矩阵则M2退出。M3按M3记录第三次一节“待续”：用新开发包跑npm test、test:phoenix、m3-tarball-consumer.mjs（Node18/25）与端到端复测，CI19终态后提交M3候选并推送取全矩阵；核对local/phoenix-ui/m3-live-walkthrough的Chrome走查结果；再做Claude/Codex真实会话。Safari真实输入法与Windows宿主会话需向用户确认环境。M4/M5在M3收口后rebase接入A树。
-- 当前阻塞：无执行环境阻塞；用户要求暂停。Safari真实IME与Windows宿主实会话需用户提供或安排环境，缺失时M3 V-5不能通过。
-- 代码基线：验证分支phoenix-ui/m2-verification-20261009，HEAD142aba6a56b8c88776b7b2de6093c3af72f03f09已推送（之后的本地进度提交未推送，避免取消CI19）；未提交改动为M3 A树（清单local/phoenix-ui/pause-20261010c-changed-paths.txt，快照与hash同目录）。M4/M5仍在隔离树。
+- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261011-source-hashes.txt；按M3记录“第四次暂停”续做顺序：补skills-namespace-install-help的oracle适配并复跑→M3候选提交并推送取CI20全矩阵→用户跑Windows脚本与Safari（需sudo safaridriver --enable及手动IME）→V-2/3/4/5/10齐证后M3完成提交→M4/M5隔离worktree rebase到M3。
+- 当前阻塞：无执行阻塞；用户要求暂停。Safari自动化需用户启用远程自动化、真实IME需用户手动；Windows宿主会话需用户在Windows运行m3-windows脚本（依赖CI20制品）。缺任一项M3 V-5不能通过。
+- 代码基线：验证分支phoenix-ui/m2-verification-20261009，远端HEAD142aba6；本地进度提交490bd15及本次进度提交未推送。M3 A树未提交（清单local/phoenix-ui/pause-20261011-changed-paths.txt，快照与hash同目录）；M4/M5仍在隔离worktree。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-10T20:10:00+08:00 | CI18剩余Windows项处置并修继承stop baseline缺陷；CI19候选本机完整runtime通过已推送，矩阵进行中。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-10T20:10:00+08:00 | Node两阶段接线、共享hook分组内核修复、install参数兼容、CI旧包准备与文档同步完成，install crate 133通过；未提交，复测/全矩阵/真实会话未完成。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；A树改动尚未提交 |
+| M2 | 进行中 | 2026-10-11T16:35:00+08:00 | CI19五native与Node18 consumer success，ARM回退smoke仅清理EPERM，已加重试；首次全success矩阵待CI20。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
+| M3 | 进行中 | 2026-10-11T16:35:00+08:00 | 多项真实缺陷修复并复测：npm test、Chrome §6行1–5、tarball、Claude/Codex真实与交互信任会话、ENOSPC通过；oracle 1例待补，CI20、Safari、Windows待做。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；A树改动尚未提交 |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T20:10:00+08:00 | clippy修复，7项合同口径裁定并实现（报告命名、处置、豁免等），隔离树217通过；A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
