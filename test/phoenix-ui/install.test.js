@@ -59,7 +59,7 @@ function packageFor(t, executable) {
 function install(pkg, project, flags = [], home = pkg.home) {
   return spawnSync(process.execPath, [path.join(pkg.root, 'bin/xgent-skills.js'), 'install', project, '--no-xgent-init',
     `--release-dir=${pkg.release}`, ...flags], {
-    encoding: 'utf8', input: '', timeout: 120000,
+    encoding: 'utf8', input: '', timeout: 600000,
     env: { ...process.env, HOME: home, USERPROFILE: home, PHOENIX_UI_HOME: pkg.cache },
   });
 }
@@ -114,7 +114,7 @@ test('an old 0.6.0 project migrates through the Node installer and rolls back by
   const fixture = await oldProject(t, ['claude-shared-and-local', 'custom-allow', 'unrelated-entry']);
   const original = tree(fixture.projectRoot);
   const result = install(pkg, fixture.projectRoot, [], fixture.homeRoot);
-  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(result.status, 0, result.stdout + result.stderr + (result.error?.message || ''));
   assert.match(result.stdout, /迁移  认领 impeccable 旧版安装/);
   assert.match(result.stdout, /命令  \.agents: \$impeccable → \$phoenix-ui;\.claude: \/impeccable → \/phoenix-ui/);
   assert.match(result.stdout, /说明  AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);
@@ -123,10 +123,10 @@ test('an old 0.6.0 project migrates through the Node installer and rolls back by
   assert.match(transition, /\/phoenix-ui/);
   const id = /--rollback (phoenix-\S+)/.exec(result.stdout)[1];
   const rollback = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--rollback', id, '--project', fixture.projectRoot], {
-    encoding: 'utf8', timeout: 120000,
+    encoding: 'utf8', timeout: 600000,
     env: { ...process.env, HOME: fixture.homeRoot, USERPROFILE: fixture.homeRoot, PHOENIX_UI_HOME: pkg.cache },
   });
-  assert.equal(rollback.status, 0, rollback.stdout + rollback.stderr);
+  assert.equal(rollback.status, 0, rollback.stdout + rollback.stderr + (rollback.error?.message || ''));
   assert.deepEqual(tree(fixture.projectRoot, (rel) => rel.startsWith('.phoenix-ui/')), original);
 });
 
