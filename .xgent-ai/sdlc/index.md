@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-11：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)仍dev-plan-ready / dev-plan-in-progress、1/6；按用户要求第四次暂停。CI19五native与Node18 consumer success；M3 A树多项缺陷修复并复测（npm test、Chrome §6、tarball、真实会话、ENOSPC），未提交；待oracle 1例、CI20、Safari与Windows宿主会话。[M2记录](../../docs/plan/phoenix-ui.records/M2.md)、[M3记录](../../docs/plan/phoenix-ui.records/M3.md)。
+- 2026-10-11：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)设计Ready，M2本期四平台退出、整体2/6；A验证候选3e236198e72a已本地提交，完整runtime及当前四平台manifest/consumer/oracle局部验收通过；Safari等待解锁，规范实施状态implementation-blocked，正常推送与四平台CI继续，M4/M5仍隔离；详见[M3记录](../../docs/plan/phoenix-ui.records/M3.md)。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

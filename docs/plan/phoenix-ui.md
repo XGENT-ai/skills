@@ -42,21 +42,21 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-11T16:35:00+08:00
-- 当前进度：1/6 个里程碑完成
-- 当前状态：进行中；按用户要求暂停。M2：CI19五native与Node18 consumer全success，仅Windows ARM回退smoke清理EPERM（检查本身全过），已加清理重试待CI20。M3：A树修复了重装不幂等、E12漏补的Steer IME guard、断开无提示、部分生成/出错残留、问答卡焦点、个人级旧分命令未报、缺launcher守卫receipt名、中断恢复留空目录等缺陷；npm test、Chrome §6行1–5、tarball、Claude/Codex真实与交互信任会话、真实ENOSPC均通过，完整runtime仅严格oracle 1例待补适配；未提交。
-- 最近完成：M1 · 固定来源与可运行基线
-- 下一步：新对话先核对本快照、git status与local/phoenix-ui/pause-20261011-source-hashes.txt；按M3记录“第四次暂停”续做顺序：补skills-namespace-install-help的oracle适配并复跑→M3候选提交并推送取CI20全矩阵→用户跑Windows脚本与Safari（需sudo safaridriver --enable及手动IME）→V-2/3/4/5/10齐证后M3完成提交→M4/M5隔离worktree rebase到M3。
-- 当前阻塞：无执行阻塞；用户要求暂停。Safari自动化需用户启用远程自动化、真实IME需用户手动；Windows宿主会话需用户在Windows运行m3-windows脚本（依赖CI20制品）。缺任一项M3 V-5不能通过。
-- 代码基线：验证分支phoenix-ui/m2-verification-20261009，远端HEAD142aba6；本地进度提交490bd15及本次进度提交未推送。M3 A树未提交（清单local/phoenix-ui/pause-20261011-changed-paths.txt，快照与hash同目录）；M4/M5仍在隔离worktree。
+- 最近更新：2026-10-11T18:40:03+08:00
+- 当前进度：2/6 个里程碑完成
+- 当前状态：进行中；A验证候选3e236198e72a已本地提交，准备已授权分支推送与四平台CI。当前本地runtime/manifest/consumer检查通过；Safari等待解锁，M3未收口。
+- 最近完成：M2 · 自主 Rust 运行时与构建制品
+- 下一步：正常推送A验证候选至已授权ref，获取四平台native与Node18 consumer CI；用户解锁后完成Safari行3/5及真实IME。V-2/3/4/5/10齐证后M3收口，再集成M4/M5。
+- 当前阻塞：Safari桌面会话再次locked=true，自动与系统IME检查待用户解锁；候选提交/CI继续。
+- 代码基线：A验证候选3e236198e72a038514cdaf3c8321a186fbad221e，验证分支phoenix-ui/m2-verification-20261009；本地制品在dirty@b7bedab构建，524份编译输入与候选逐hash等同。进度登记尚未提交/本次候选尚未推送，远端HEAD142aba6；M4/M5仍在隔离worktree。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 进行中 | 2026-10-11T16:35:00+08:00 | CI19五native与Node18 consumer success，ARM回退smoke仅清理EPERM，已加重试；首次全success矩阵待CI20。 | [M2 记录](phoenix-ui.records/M2.md) | 候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-11T16:35:00+08:00 | 多项真实缺陷修复并复测：npm test、Chrome §6行1–5、tarball、Claude/Codex真实与交互信任会话、ENOSPC通过；oracle 1例待补，CI20、Safari、Windows待做。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；A树改动尚未提交 |
+| M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 待提交（M3收口）；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
+| M3 | 进行中 | 2026-10-11T18:40:03+08:00 | 完整runtime通过；正式四平台manifest修复，当前npm/安装/oracle/tarball均通过；候选已提交待推送/CI，Safari与IME等待解锁。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；验证候选 3e236198e72a |
 | M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T20:10:00+08:00 | clippy修复，7项合同口径裁定并实现（报告命名、处置、豁免等），隔离树217通过；A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
@@ -96,13 +96,15 @@
 | D1 | 接管基线 | 从 skill-v4.5.0 的固定 commit 导入；其 runtime 与 engine-v0.1.11 一致 | 对现装能力建立可比较基线；0.1.12 另记变更，不夹带升级 | R-2；§1.1 |
 | D2 | 技术形态 | 本仓 tools/phoenix-ui 内维护 Cargo workspace；设计源在 skills/phoenix-ui | Rust 承担运行时和新机器协议；JS 保留现有安装入口、薄 launcher、构建/测试脚本及上游 provider transformer | C-1、C-2、C-3 |
 | D3 | 版本控制 | Phoenix 版本独立；锁定源码、Cargo.lock、生成资源和分发摘要 | 不用 upstream latest、git submodule 分支或构建时补拉引擎 | R-1、NFR-2 |
-| D4 | 独立分发 | 随 npm 包分发 skills/manifest；自建五平台 engine 用现有 R2 通道 | 原版 fallback、自动版本查询和遥测均移除；离线包可预置引擎 | R-1、R-6 |
+| D4 | 独立分发 | 随 npm 包分发 skills/manifest；自建四平台 engine 用现有 R2 通道 | 原版 fallback、自动版本查询和遥测均移除；离线包可预置引擎 | R-1、R-6 |
 | D5 | 迁移边界 | 独立 .phoenix-ui 项目状态与用户缓存；保留原 .impeccable 作恢复来源 | 不共享可变配置/会话；旧环境变量仅兼容无歧义设置，禁止引回上游下载或旧 binary | NFR-1、§3.1 |
 | D6 | 能力与策略 | A 阶段承接，B 阶段接入自有偏好和 UI loop | 不用新规则改变承接测试的基准；阶段之间有独立验收与提交点 | R-2、R-5 |
 | D7 | UI 裁定 | Rust 计算确定性状态；宿主 agent 取证、派独立评审并负责事实核验 | CLI 不调用评分模型，不给修复者发“通过”；保留现有报告与 skill 入口 | R-4、C-4 |
 | D8 | 方向库 | 本地、自有、随版本发布的候选库，允许项目追加 | 保留 mode/方向选择/重选流程，不复制缺少来源的远端图片 | R-8 |
 
 用户 2026-10-08 确认的交付边界：A 阶段只内部验收，M6 融合完成后统一发布；Phoenix 仅随 npm 安装器分发，辅助 skill 保持公开；保留一个迁移主版本的 impeccable 提示入口；CI 不持有发布凭据，维护者本地交接发布并启用 npm 2FA。实际推送与公开发布仍须对可审阅候选取得授权，以上是流程选择，不是提前执行许可。NFR-4 继续禁止 Phoenix 额外上传项目数据，因此不承接自动启动第二个 agent CLI 的路径。
+
+用户 2026-10-11 确认本期不考虑 Windows：正式支持、发布资产、原生 CI、ARM64 回退和 Windows Codex/IME 实机验收均延期。本期 V-3 只要求 macOS/Linux 四平台 native 与 Node18 consumer，V-5 只要求本期平台的 Chrome/Safari 与 Claude/Codex 会话。已有 Windows 兼容源码、固定上游输入和历史证据保留，不把它们计作已交付或已验收。
 
 ### 0.3 ADR-lite
 
@@ -187,7 +189,7 @@
 | 方向候选与选择页 | U:crates/context/src/concept_seed.rs、catalog.rs、serve_question.rs | 保留四种 mode、种子、重选、候选比较和用户确认流程 | 用户已同意用自有本地目录；改掉非法目录回落远端、tier 不全报错与无图拼远端 URL 的行为；放宽与 Portal 冲突的审美禁词；替换可见品牌。无素材等量或质量等价承诺（§5.2） |
 | Install / update / check / link | U:crates/skills；本仓安装器 | 显式 install/link 可操作自有 bundle；check 默认检查本地契约；update 只消费显式指定的 XGENT 版本/已安装包 | 不再查询/下载原版 latest；不自动升级。保留入口并清楚说明新语义 |
 
-M1 建立★ `tools/phoenix-ui/compatibility.md`，按可执行 verb、skill 命令、provider、平台、状态/环境键、远端接触点逐项列：旧行为/证据、新行为、差异理由、测试、是否阻止 A 阶段收口。自动从实际 router、命令表、manifest、测试入口核对漏项，不能只写上表八个大类。没有测到的条目标“未验证”，不得以文件已复制替代功能承接。M1 必须登记 IME 回车误提交及 Codex Windows hook 命令两项已知缺陷，M2 吸收最小补丁，V-3/V-5 验证后才关闭。用户可见的页面标题、标志、aria-label、卡片、帮助、安装输出统一 Phoenix；历史/许可归属保留在 NOTICE。
+M1 建立★ `tools/phoenix-ui/compatibility.md`，按可执行 verb、skill 命令、provider、平台、状态/环境键、远端接触点逐项列：旧行为/证据、新行为、差异理由、测试、是否阻止 A 阶段收口。自动从实际 router、命令表、manifest、测试入口核对漏项，不能只写上表八个大类。没有测到的条目标“未验证”，不得以文件已复制替代功能承接。M1 保留 IME 回车误提交及 Codex Windows hook 命令两项来源记录；IME 补丁由 M2 吸收并经 V-5 实测后关闭，Windows 修复与实测随平台支持延期。用户可见的页面标题、标志、aria-label、卡片、帮助、安装输出统一 Phoenix；历史/许可归属保留在 NOTICE。
 
 ### 1.3 目录与影响路径
 
@@ -205,7 +207,7 @@ M1 建立★ `tools/phoenix-ui/compatibility.md`，按可执行 verb、skill 命
 | ★ bin/phoenix-ui.js；bin/xgent-skills.js | M2 薄 launcher/engine 补装；M3 接入 Rust 事务、兼容 flag、安装提示；默认切换受 §8 发布门约束 |
 | ★ scripts/build-phoenix-ui.mjs、publish-phoenix-ui-r2.mjs | M2 构建入口；M6 发布脚本、制品交接和替身演练，保留代理语义 |
 | ★ mise.toml、rust-toolchain.toml | M1 固定 1.99.0、mr_boxington、组件和 wasm target；同步检查两份配置 |
-| package.json、.gitignore、AGENTS.md；★ test/phoenix-ui/；★ .github/workflows/phoenix-ui.yml | M1 跨平台轻量总测试入口、test:phoenix 与测试说明；M2 五平台 CI；M3 bin/files/description 与迁移回归；M5 将 review crate/rules 纳入接口同步规则 |
+| package.json、.gitignore、AGENTS.md；★ test/phoenix-ui/；★ .github/workflows/phoenix-ui.yml | M1 跨平台轻量总测试入口、test:phoenix 与测试说明；M2 四平台 CI；M3 bin/files/description 与迁移回归；M5 将 review crate/rules 纳入接口同步规则 |
 | ★ tools/phoenix-ui/migration-sources/；★ test/phoenix-ui/fixtures/migration/、web/ | M1 从本包已发布来源提取认领元数据/变体 fixture，并建固定 Web 应用（启动、seed、目标、视口/状态清单）；M3/M6 共用 |
 | skills/design-md、skills/design-reference、skills/ui-pattern-research | M4 接入 context、已接受 brief 和路由；保留无 CLI 的人工流程 |
 | README.md；skills/xgent-init/SKILL.md、references/external-app-AGENTS.template.md；skills/prd/SKILL.md；skills/review-dev-plan/SKILL.md | M3 同步安装描述与新入口示例；已有用户文档只报告。M6 补 README 融合用法 |
@@ -301,7 +303,7 @@ WASM 生成器仍用 mise/mbx 下的 xtask。M1 实测固定 wasm-pack 0.13.1 �
 | CLI/context 缺 engine | 退出 4；JSON 标 unavailable；显示固定包版本的 `npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --project DIR`，不自动下载 |
 | 显式 engine install | 由 Node bootstrap 处理（此时可能没有 Rust binary），只写用户 cache，不改共享 hooks/settings/receipt；receipt 与所运行包 manifest 不匹配则退出 4，要求运行正确包版本 |
 | 离线安装 | 参数 `--release-dir DIR`；来源为发布者从已验 CI run 整理的完整 release 目录，含 VERSION.json、各平台 engine、许可及摘要清单。必须与当前包/receipt 摘要相符，零网络；缺项退出 4 |
-| 不支持的平台 | Phoenix 预检退出 4、项目不写入；明确给 `xgent-skills install DIR --no-phoenix-ui` 继续安装其他功能。Windows ARM64 选 manifest 的 windows-x64，作为兼容运行环境由 V-3 验证，不当作第六个原生资产 |
+| 不支持的平台 | Phoenix 预检退出 4、项目不写入；明确给 `xgent-skills install DIR --no-phoenix-ui` 继续安装其他功能。本期 Windows 支持延期，不生成 Windows 发布资产或安装其 hook；保留已有兼容源码与历史证据，未纳入本期验收 |
 
 新命令中的 DIR、事务 ID、包版本在实际输出时必须替换为已解析并安全引用的真实值。用户不需要 Rust 编译器。
 
@@ -408,7 +410,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 
 导入时逐项追踪include_str!/include_bytes!、构建脚本和oracle fixture的实际依赖；技能从上游单数 skill 目录迁到 skills/phoenix-ui 的模板源后，改消费者的源路径；Bun transformer 只在 tools 中维护，通用 SKILL.md 与 provider bundle 均由同源生成，成品不得残留模板占位符。生成器确需原目录形状时只在忽略的构建staging中物化，不提交第二份可编辑skill。包中缺素材/路径的问题通过tarball安装后运行检测，不能只靠源码目录内测试。
 
-现有 platform fallback 覆盖由新发布接管，目标为 darwin-arm64、darwin-x64、linux-x64、linux-arm64、windows-x64。CPU/OS tuple 与 Rust target 沿固定上游 release workflow 核对；Windows ARM64 映射 windows-x64；其余不支持的平台按 §2.3 预检失败并提示 --no-phoenix-ui，不安装无法运行的 hook。交叉编译成功不等于原生运行通过，平台与 shell 验证见 V-3。上游 Azure 签名账户/发布身份不复用；本期不承诺 Windows 商业签名，有需求再配置 XGENT 身份。
+本期发布目标为 darwin-arm64、darwin-x64、linux-x64、linux-arm64。CPU/OS tuple 与 Rust target 沿固定上游 release workflow 核对；Windows 支持按用户 2026-10-11 的决定延期，已有兼容源码和工具 pins 保留，不生成本期发布资产、不承诺 Windows hook 或 ARM64 回退。其余不支持的平台按 §2.3 预检失败并提示 --no-phoenix-ui，不安装无法运行的 hook。交叉编译成功不等于原生运行通过，平台与 shell 验证见 V-3。
 
 用户 2026-10-08 确认：Phoenix 仅经 npm 安装器分发；其通用 SKILL.md 标 `metadata.internal: true`，skills.sh 不公开列出。模板与通用渲染仍在 skills/phoenix-ui 维护，M2 验证 internal 可见性；通用/各 provider 成品零占位符，检查排除 src/ 模板。npm 安装器仅展开成品，模板不作为使用入口。npm 候选包除上述限期提示入口外，安装集合固定为 Phoenix 加 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review；M3 安装五个辅助 skill 的 A 阶段原有版本，M6 更新为融合版本。五个辅助 skill 继续在 skills.sh 公开；CLI 缺失时人工模式边界见 §3.2。
 
@@ -488,16 +490,15 @@ viewportId绑定宽、高和DPR，不只存宽；原截图命名在没有冲突�
 
 安装输出必须一眼看清“已安装/未变/冲突/待恢复”，列受影响 provider 和具体动作；已有旧版时先显示迁移摘要。必须给各 provider 的旧/新命令对照（Codex 用 $、其他适用 provider 用 /）、实际事务 ID、备份位置、完整 rollback 命令、旧文档指引/外部副本的待处理项，以及重载/信任步骤；Codex 提示在 /hooks 重审本项目 handler，Claude 提示重启会话并核对 /hooks，其他 provider 的步骤由支持矩阵记录并测试。不能在 engine 缺失时只打印“完成”。review status 优先显示所测版本、覆盖、最低单元与下一步，缺证与未检查不能用绿色成功标识。中文报告沿用户语言；rule ID、文件名、协议枚举保持稳定。
 
-沿用 live/serve-question 已有 UI。必须吸收 E12（§1.1 固定 0.1.12 commit）的 IME Enter 防护（isComposing 与 Safari keyCode 229）及 Codex commandWindows 修复，分别来自 live-browser.js 与 .codex/hooks.json；本仓安装器输出同步使用 Windows 路径/执行语义。M1 登记来源，M2 修改，M3 通过下表；不以“旧版也坏”豁免。
+沿用 live/serve-question 已有 UI。必须吸收 E12（§1.1 固定 0.1.12 commit）的 IME Enter 防护（isComposing 与 Safari keyCode 229），来源为 live-browser.js；M1 登记来源，M2 修改，M3 通过下表。已保留的 Codex commandWindows 补丁随 Windows 平台延期，不作为本期交付或退出门；不以“旧版也坏”豁免本期 IME 验收。
 
 | 场景/步骤 | 可观察期望 | 环境与证据 |
 | --- | --- | --- |
-| 批注、configure、文案输入中用中文 IME 回车选词，再确认提交 | 选词不提交；确认后恰一次，无半截请求 | Chrome + Safari；Windows 默认浏览器适用路径；录屏/事件记录 |
+| 批注、configure、文案输入中用中文 IME 回车选词，再确认提交 | 选词不提交；确认后恰一次，无半截请求 | Chrome + Safari；录屏/事件记录 |
 | 停服务、重开；模拟异常退出后按恢复命令清理 | 页面明确断开及重启办法；正常退出移除注入，异常退出下次检测并恢复，不假称已清理 | Chrome + Safari；源码前后 diff、进程/端口记录 |
 | 接受/取消变体；移动 workspace 后恢复 | 接受只留选中代码，取消还原原内容；无 variants/script/CSP 残留；移动后不写旧路径 | 同上；diff、receipt/恢复输出 |
 | 生成服务失败/部分结果 | 标失败与可用部分，不自动接受、不丢原代码，不重复外发 | 本地服务替身；界面与请求记录 |
 | 缺卡图、键盘与窄屏选择 | 文字卡仍可比较/选择，焦点可达且可见，不以破图阻断 | Chrome + Safari；桌面/窄屏实拍 |
-| Windows Codex hook 一次编辑/Stop | 正确执行 cmd 命令且只触发一次设计 handler；goal guard 保留 | Windows 对应宿主实会话与调用日志；无环境标未运行 |
 
 ## 7. NFR、安全与运行保障
 
@@ -530,8 +531,8 @@ viewportId绑定宽、高和DPR，不只存宽；原截图命名在没有冲突�
 
 **发布 workflow 与制品交接**：用户 2026-10-08 选择 CI 只构建/验证、维护者本地发布。CI 不持有 R2/npm 发布凭据；沿用发布者本机 .env.cf 的 R2 通道，npm 使用启用 2FA 的发布身份，实际身份/授权在操作前核验，不把密钥写进记录。
 
-1. 主负责人按 §10 生成验证候选提交。发布 job 使用 mise/mbx 冷构建（不恢复编译缓存），五个平台在对应架构环境 smoke；输出 run ID、commit/tree SHA、target、工具链、binary/资源/bundle 的 size+SHA-256、测试结果及许可清单。M2 先跑只构建矩阵，M3/M6 再跑完整矩阵。
-2. 发布者按固定 run ID 下载全套 artifacts，核对所属仓库、候选 SHA、五平台成功记录和摘要；只搬运已测试字节，不在发布机重新编译。缺平台/记录、摘要不符均拒绝生成发布 manifest。manifest 预先确定不可变 URL，和离线 release-dir 使用同一清单。
+1. 主负责人按 §10 生成验证候选提交。发布 job 使用 mise/mbx 冷构建（不恢复编译缓存），四个平台在对应架构环境 smoke；输出 run ID、commit/tree SHA、target、工具链、binary/资源/bundle 的 size+SHA-256、测试结果及许可清单。M2 先跑只构建矩阵，M3/M6 再跑完整矩阵。
+2. 发布者按固定 run ID 下载全套 artifacts，核对所属仓库、候选 SHA、四平台成功记录和摘要；只搬运已测试字节，不在发布机重新编译。缺平台/记录、摘要不符均拒绝生成发布 manifest。manifest 预先确定不可变 URL，和离线 release-dir 使用同一清单。
 3. 本地用 R2/HTTP 替身运行完整上传/回读/pack/安装链，覆盖已有 key、缺平台、回读摘要不符、并发写同 key；输出拒绝且不发布 npm。M6 实现 publish-phoenix-ui-r2.mjs 并负责演练，M3 只作候选包安装演练，不上传。
 4. 实际上传需单独授权。使用服务端条件写 `If-None-Match: *`，已存在即拒绝，不能以 HEAD 后普通 cp 代替原子拒绝覆盖；[R2 S3 PutObject](https://developers.cloudflare.com/r2/api/s3/api/) 支持此条件。部分成功保留已上传不可变对象并报清单；显式重试先回读已存在项，仅摘要相同才复用，任何不同都换新版本。
 5. 全平台公共 URL 回读通过后，冻结最终 VERSION.json，再 npm pack；以该**同一 tarball**做真实 URL 隔离安装/迁移/回滚，并记录 tarball SHA-256。npm publish 必须发布这份 tarball，禁止再生成 manifest 或重新 pack 后直接发布；随后按版本下载核对。未获发布授权时 M6 以替身演练交付，真实 URL/公开发布记“待发布”，不影响如实记录本地交付。
@@ -554,9 +555,9 @@ viewportId绑定宽、高和DPR，不只存宽；原截图命名在没有冲突�
 | --- | --- | --- | --- |
 | V-1 | R-1、R-2、C-1、NFR-2、NFR-3：来源/能力账本完整；1.99.0、组件/wasm/native target、mbx 实际生效；无隐式补装；fmt/clippy 基线明确；迁移/Web fixture 有生产者 | §2.2 在干净环境准备后执行；固定 router/命令/manifest 比对；记录 artifact 路径、mbx stats、子进程与网络；校验 migration-sources、两套旧安装变体与 ★ test/phoenix-ui/fixtures/web/ 的启动/seed；原版只跑隔离项目 | M1；构建/oracle 的真实结果与既有失败分型落盘，解除 M2 前置 |
 | V-2 | R-1、R-2、R-8、NFR-2、NFR-4、C-5：全部能力可达、差异可解释；native/WASM 一致；零默认 upstream 依赖；本地候选/品牌/许可完整 | 原 oracle、单测；§2.2 输入摘要/文件 hash/同向量及两 checkout 路径测试；成品占位符/URL/命令扫描、进程观测+页面 HAR+copy-edit 子进程拒绝测试；非法/单 tier/无图/operate/Portal catalog；已知补丁；依赖公告与许可检查 | M2 局部；M3 A 收口；M6 与规则/依赖变化后复验受影响组 |
-| V-3 | R-1、R-6、C-1、C-3、NFR-2：五平台 build 与对应架构 smoke；包内资源齐全；无编译器可安装；§2.3 每种 engine 状态及离线补装有明确结果 | §10 验证分支 CI；Node18 消费者；tarball + 固定 HTTP/离线 release-dir；空/命中/损坏 cache、clone 后未装；Windows cmd/PowerShell 与 Windows ARM64→x64 兼容执行；§8 摘要清单和发布替身拒绝组 | M2 生成器+只构建 CI 矩阵；M3 全矩阵；M6 最终包/发布替身，真实 R2 回读在获授权发布时 |
+| V-3 | R-1、R-6、C-1、C-3、NFR-2：四平台 build 与对应架构 smoke；包内资源齐全；无编译器可安装；§2.3 每种 engine 状态及离线补装有明确结果 | §10 验证分支 CI；Node18 消费者；tarball + 固定 HTTP/离线 release-dir；空/命中/损坏 cache、clone 后未装；macOS/Linux 原生执行；§8 摘要清单和发布替身拒绝组 | M2 生成器+只构建 CI 矩阵；M3 全矩阵；M6 最终包/发布替身，真实 R2 回读在获授权发布时 |
 | V-4 | R-6、C-3、NFR-1、NFR-4：迁移/重装/回滚可恢复；用户原字节与共享无关条目保留；冲突分级明确 | test/xgent-skills.test.js 与 ★ test/phoenix-ui/install.test.js；M1 迁移 fixture；损坏 JSON/逃逸 symlink/空间不足/崩溃/并发；新增 allow 后回滚、改 guard 阈值后回滚、Node/Rust 之间中断；pin/live 残留、文档旧指引、外部复制/symlink/个人级副本 | M3；M6 用最终 tarball 强制重验 impeccable→最终包和 A 候选→B 升级/回滚，不以 A 证据替代 |
-| V-5 | R-2、R-6、NFR-3：实际设计/live 走通；迁移后设计 hook 单次、goal guard 保留、回滚旧工具可用；engine 缺失能继续编辑 | M1 固定 web fixture；新装与分别用 0.3.0/0.6.0 旧包装出的真实项目→候选迁移→provider 重载/信任→设计→回滚；Claude/Codex 全新会话列实际 skill 路径/hash、统计每事件设计 handler；§6 Chrome/Safari/Windows 走查；其余 provider 输入输出 fixture；A 阶段安装集合自然语言路由 | M3 A 终验；M6 受 B 影响的真实路径重跑，未有环境不得标已验 |
+| V-5 | R-2、R-6、NFR-3：实际设计/live 走通；迁移后设计 hook 单次、goal guard 保留、回滚旧工具可用；engine 缺失能继续编辑 | M1 固定 web fixture；新装与分别用 0.3.0/0.6.0 旧包装出的真实项目→候选迁移→provider 重载/信任→设计→回滚；Claude/Codex 全新会话列实际 skill 路径/hash、统计每事件设计 handler；§6 Chrome/Safari 走查；其余 provider 输入输出 fixture；A 阶段安装集合自然语言路由 | M3 A 终验；M6 受 B 影响的真实路径重跑，未有环境不得标已验 |
 | V-6 | R-3、R-5、R-8：规范优先；解析覆盖诚实；已接受 brief 跨对话读取不重抽；目录错误/不足不同；项目参考不外传 | context/design/catalog 公开接口；Markdown/YAML/Portal/monorepo；profile 切换、坏 token、非法/单 tier/无图/operate/Portal；固定 seed；前后原文 hash | M4；供 M5 context 集成，M6 变更后复验 |
 | V-7 | R-4、NFR-1、NFR-4、C-4：指纹附件/attempt 身份完整；材料齐全且无污染；模式恢复不丢历史；生成节外编辑不冲突 | review 公开 CLI：目标文件/hash/坏 schema、路径、并发/崩溃、同格补采/missing 后补采/幂等、变更记录/差分/suggestions；manual import、managed→无 CLI→恢复；里程碑记录的无关编辑保留 | M5 局部；M6 用最终包与真实取证复核 |
 | V-8 | R-4、NFR-1、C-4：精确十进制、判定顺序/停滞/豁免/处置与合同一致；规则/合同变更不能静默漂移 | CLI 表驱动序列和相邻反例见 §9.2；rules.v1.json 与合同 hash 同步门；不只测内部函数 | M5；M6 受影响部分重跑 |
@@ -606,7 +607,7 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 | # | 里程碑 | 前置依赖 | 内容与并行边界 | 验证/退出条件 |
 | --- | --- | --- | --- | --- |
 | M1 | 固定来源与可运行基线 | 已定范围、§2.2、固定源码可获取 | 导入源码/测试；固定工具链；能力与 lint 基线、两项已知补丁登记、migration-sources/迁移 fixture、固定 web fixture；适配轻量测试入口和 AGENTS 测试说明 | V-1 通过；原版失败分型/允许差异有证据；迁移 fixture 与 web 启动可用；回写「实施进度」 |
-| M2 | 自主 Rust 运行时与构建制品 | M1/V-1；固定源码、工具链与能力基线 | 自主运行时/launcher、单源生成器与bundle、本地方向库/网络边界、已知补丁、native/WASM一致性、开发包和五平台构建CI | 受影响V-2局部检查及V-3生成器/第一次五平台矩阵通过；保留未验provider/浏览器终验边界；回写「实施进度」 |
+| M2 | 自主 Rust 运行时与构建制品 | M1/V-1；固定源码、工具链与能力基线 | 自主运行时/launcher、单源生成器与bundle、本地方向库/网络边界、已知补丁、native/WASM一致性、开发包和四平台构建CI | 受影响V-2局部检查及V-3生成器/第一次四平台矩阵通过；保留未验provider/浏览器终验边界；回写「实施进度」 |
 | M3 | 安装迁移与 A 内部收口 | M2 binary/manifest/schema、V-2；M1 迁移/web fixture；验证分支推送授权已到位 | Node/Rust 顺序与条目事务、提示过渡入口；§1.3 M3 同步落点、安装/回滚说明；A 树独立生成 bundle；跨平台/实会话/迁移后回滚 | V-2、V-3、V-4、V-5、V-10 通过；A 路由和能力账本完整，CI SHA/树与收口成果匹配；仅分支内部验收，不带入 main 发布；回写「实施进度」 |
 | M4 | 设计上下文与可选偏好 | M2 稳定 context/状态契约与相关 V-2；V-9 子集依赖 M2 transformer/开发包安装；共享主树改动等 M3 收口 | 三个 design skills、brief 持久化与 Portal 缺 skill 路径；profile/来源/解析/catalog；§1.3 M4 落点。在独立 worktree 可先开发 | V-6、V-9 设计子集通过；规范不被偏好覆盖；回写「实施进度」 |
 | M5 | review-ui 可恢复机器协议 | 纯状态库依 M1 workspace；CLI 接线/V-7 依 M2 身份/状态根/JSON-stderr 契约；context 集成依 M4/V-6；§4.2/§5.3 已冻结 | 协议/精确数值/模式/生成节/import/规则表；两 UI skills/合同与 §1.3 M5 落点；与 M4 在隔离 worktree 开发，共享文件串行集成 | V-7、V-8 通过；人工/机器降级边界明确，历史与原判定词保留；回写「实施进度」 |
@@ -614,13 +615,13 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 
 **验证分支与 CI**：为解除“验收后提交”与 Actions 需要提交的依赖环，允许先在专用 phoenix-ui 验证分支作候选提交，它不是里程碑完成提交。先完成本地检查、列明 diff/候选 SHA、目标远端/ref 和所触发 CI，再取得该推送授权；管理员也可自行推送。M2 退出前须完成第一次矩阵。V-3 记录 run ID/head SHA/tree SHA，收口采用同一候选 SHA；若 rebase/cherry-pick 改 SHA，至少核对完整被测树完全一致并登记两者，树/构建输入有变则重跑，不拿相近 SHA 代替。
 
-五平台初选 native runner：darwin-arm64=macos-15、darwin-x64=macos-15-intel、linux-x64=ubuntu-24.04、linux-arm64=ubuntu-24.04-arm、windows-x64=windows-2022；Windows ARM64 fallback 增加 windows-11-arm smoke。标签来源为 [GitHub runner 官方矩阵](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)，本仓权限与实跑在 M2 核验；native runner 不可用则由管理员安排同架构执行环境，不能把交叉编译当 smoke 成功。
+四平台 native runner：darwin-arm64=macos-15、darwin-x64=macos-15-intel、linux-x64=ubuntu-24.04、linux-arm64=ubuntu-24.04-arm；另保留 Node18 consumer smoke。Windows 原生与 ARM64 回退 CI 随本期支持范围延期。标签来源为 [GitHub runner 官方矩阵](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)，本仓权限与实跑在 M2 核验；native runner 不可用则由管理员安排同架构执行环境，不能把交叉编译当 smoke 成功。
 
 **提交点**：M3 A 验收后提交承接成果，留在内部候选分支；M6 全部完成后提交融合及默认切换成果。依顶部协议回写进度、通过所需检查、提交并单独登记 SHA。M1–M2/M4–M5 完成未到收口时写“待提交”；候选提交不预填为完成。推送/合并/发布授权分别按实际动作确认。
 
 **阶段隔离与调度**：M3 收口前 B 阶段只在独立 worktree/分支，不能让 crates/* glob、Cargo.lock 或整树生成 bundle 纳入 B 内容；M3 的 binary、bundle、CI 均来自 A 候选树，主工作树只由主负责人回写计划/记录。M3 后 rebase B 工作并重跑受影响组。主负责人独占 Cargo.toml/lock、CLI 路由、skills/phoenix-ui、context/catalog 的共享改动、bin/*、package.json、生成器、vendor bundle/VERSION、README 和 xgent-init 的集成；委派者仅提交限定路径供其合并。浏览器/端口/项目与缓存 fixture 隔离，同项目迁移/同循环写入串行。
 
-**工作量判断**：这是现有多crate运行时的接管和跨流程集成，不是改名脚本。主要不确定成本是Rust 1.99下的原测试适配、五平台运行验证、live/comp依赖和历史记录导入。M1记录构建时长、必需用例数量与未闭合能力后再给日历排期；没有人员投入和平台runner可用性证据，不编造人日。
+**工作量判断**：这是现有多crate运行时的接管和跨流程集成，不是改名脚本。主要不确定成本是Rust 1.99下的原测试适配、四平台运行验证、live/comp依赖和历史记录导入。M1记录构建时长、必需用例数量与未闭合能力后再给日历排期；没有人员投入和平台runner可用性证据，不编造人日。
 
 ## 11. 风险、开放问题与就绪状态
 
@@ -633,8 +634,8 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 | 原站完整方向库不在源码 | 不承诺素材量/效果等价 | 用户已选自有库；按 §5.2 改校验/选择/无图行为并交付四 mode | M2/V-2、M4/V-6 | 无范围阻塞 |
 | Rust1.99完整 build/test/oracle、clippy 尚未实跑 | 工具版本与承接基线可能不兼容 | M1 按 §2.2 显式准备、离线运行，锁定生成工具，记录失败与 lint 基线；不自动跳测试 | M1退出 | 实施验证门；失败阻止 M2 依赖项 |
 | mise覆盖及 wasm-pack隐式安装 | 工具文件可能未补组件，构建可能偷偷联网 | mise 明列 targets/components + 执行前断言；M1 记录进程/网络、核对 mbx target，缺项先失败 | M1/V-1 | 契约已定，实测未执行 |
-| 0.1.11 已知 IME/Windows hook 缺陷 | 中文选词误提交、Windows hook 不触发 | M1 登记 E12 最小补丁；M2 修改；Chrome/Safari/Windows 按 §6 验证 | M3切换门 | 必修已定；未验不能交付 |
-| provider shell/同名 skill优先级与 runner 可用性 | 文件层通过未必会话正常 | M2 验证 runner；M3 逐 provider 冻结支持矩阵；Claude/Codex 真会话，Windows hook/缺engine放行/加载路径均留证，缺环境明确阻塞相应门 | M2矩阵；M3设计冻结与V-5 | 不凭文档当实跑，不静默缩小支持范围 |
+| 0.1.11 已知 IME/Windows hook 缺陷 | 中文选词误提交、Windows hook 不触发 | M1 保留 E12 两项来源；M2 修复 IME 并按 §6 在 Chrome/Safari 验证；Windows 支持与实测延期 | M3切换门 | IME 必修已定；未验不能交付；Windows 不计本期退出门 |
+| provider shell/同名 skill优先级与 runner 可用性 | 文件层通过未必会话正常 | M2 验证 runner；M3 逐 provider 冻结支持矩阵；Claude/Codex 真会话，macOS/Linux 的缺engine放行/加载路径均留证，缺环境明确阻塞相应门；Windows 延期 | M2矩阵；M3设计冻结与V-5 | 不凭文档当实跑，不静默缩小支持范围 |
 | 旧安装用户比例、skills.sh获取源码体积 | 影响迁移优先级与同仓下载成本 | M1 无论用户比例都覆盖已发布旧版；导入前维护者测 skills.sh 隔离下载体积，记录范围；未知不改分发承诺 | M1导入前；M3前补用户反馈 | 非产品/安全决策阻塞 |
 | 持久化等级与双格式 | 掉电/手改可能损坏，模式不明会丢历史 | §3 明确进程崩溃一致性；managed缺CLI只读；生成节冲突与legacy import保留历史，掉电损坏人工恢复 | M3/V-4、M5/V-7/V-8 | 设计已定；不声称掉电零丢失 |
 | 漏洞/许可和补丁送达 | 不再自动获得上游修复 | §8 依赖公告/许可门、发布说明和显式升级；维护者定期复核，旧包不自动更新 | M2基础检查、M6发布准备及持续维护 | 已知维护责任 |
