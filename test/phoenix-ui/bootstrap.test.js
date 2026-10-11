@@ -235,16 +235,51 @@ test('offline wrong manifest or missing license refuses cache and project writes
   assert.equal(fs.existsSync(f.cache), false);
 });
 
-test('receipt mismatch rejects engine-only installation before touching the cache', async t => {
-  const f = fixture(t);
+// The transactional installer writes this receipt last; only its package identity matters here.
+function writeActiveReceipt(f, version, bundleSha256 = f.manifest.bundleSha256) {
   const install = path.join(f.project, '.phoenix-ui/install');
   fs.mkdirSync(install, { recursive: true });
-  fs.writeFileSync(path.join(install, 'receipt.json'), JSON.stringify({ schemaVersion: 1, toolVersion: '0.1.0', npmPackageVersion: '0.6.0', manifestSha256: '0'.repeat(64), engine: { target: f.target, sha256: sha256(f.bytes) } }));
-  const before = fs.readFileSync(path.join(install, 'receipt.json'));
-  const result = await run(f, ['engine', 'install', '--project', f.project, '--release-dir', f.release]);
-  assert.equal(result.code, 4);
-  assert.equal(fs.existsSync(f.cache), false);
-  assert.deepEqual(fs.readFileSync(path.join(install, 'receipt.json')), before);
+  fs.writeFileSync(path.join(install, 'active.json'), JSON.stringify({ schema_version: 1, transaction_id: 'phoenix-1-000000001-1',
+    manifest: { version, sha256: bundleSha256, providers: ['.claude'], migration_sources: [] }, ownership: [] }));
+  return path.join(install, 'active.json');
+}
+
+test('receipt mismatch rejects engine-only installation before touching the cache', async t => {
+  for (const [version, bundle] of [['0.6.0', undefined], ['0.7.0-rc.0', 'c'.repeat(64)]]) {
+    const f = fixture(t);
+    const receipt = writeActiveReceipt(f, version, bundle);
+    const before = fs.readFileSync(receipt);
+    const result = await run(f, ['engine', 'install', '--project', f.project, '--release-dir', f.release]);
+    assert.equal(result.code, 4);
+    assert.match(result.stderr, /different Phoenix package/);
+    assert.equal(fs.existsSync(f.cache), false);
+    assert.deepEqual(fs.readFileSync(receipt), before);
+  }
+});
+
+test('a matching receipt from the transactional installer allows engine installation and ordinary runs', async t => {
+  const f = fixture(t);
+  writeActiveReceipt(f, f.manifest.npmPackageVersion);
+  const nested = path.join(f.project, 'apps/web');
+  fs.mkdirSync(nested, { recursive: true });
+  const install = await run(f, ['engine', 'install', '--project', nested, '--release-dir', f.release, '--json']);
+  assert.equal(install.code, 0, install.stderr);
+  const result = await run(f, ['context', '--json']);
+  assert.equal(result.code, 0, result.stderr);
+});
+
+test('installer verbs run with an older project receipt; the library install leaves receipt checks to the caller', async t => {
+  const f = fixture(t);
+  writeActiveReceipt(f, '0.6.0');
+  await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
+  for (const verb of [['install', '--project', '.'], ['migrate', '--rollback', 'phoenix-1-000000001-1', '--project', '.']]) {
+    const result = await run(f, verb);
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).argv[0], verb[0]);
+  }
+  const context = await run(f, ['context']);
+  assert.equal(context.code, 4);
+  assert.match(context.stderr, /different Phoenix package/);
 });
 
 test('explicit HTTP substitute verifies the package digest; normal runs make zero requests', async t => {
@@ -272,6 +307,25 @@ test('explicit HTTP substitute verifies the package digest; normal runs make zer
   assert.equal(requests, 2);
 });
 
+test('release manifests accept the four macOS/Linux assets and still require every one', t => {
+  const f = fixture(t);
+  const targets = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+  const engines = Object.fromEntries(targets.map(target => [target, {
+    asset: `phoenix-ui-${target}`, sha256: sha256(f.bytes), size: f.bytes.length,
+    url: `https://download.example.test/${target}`,
+  }]));
+  const file = path.join(f.release, 'VERSION.json');
+  const manifest = { ...f.manifest, distribution: 'release', engines };
+  fs.writeFileSync(file, JSON.stringify(manifest));
+  assert.deepEqual(manifestAt(file).data.engines, engines);
+  for (const target of targets) {
+    const incomplete = { ...engines };
+    delete incomplete[target];
+    fs.writeFileSync(file, JSON.stringify({ ...manifest, engines: incomplete }));
+    assert.throws(() => manifestAt(file), error => error.code === 4 && /missing a supported platform/.test(error.message));
+  }
+});
+
 test('platform fallback, proxy precedence and no_proxy keep the declared consumer contract', () => {
   assert.equal(platformTarget('win32', 'arm64'), 'windows-x64');
   assert.equal(platformTarget('linux', 'arm64'), 'linux-arm64');
@@ -280,4 +334,30 @@ test('platform fallback, proxy precedence and no_proxy keep the declared consume
   assert.equal(proxyFor(target, { HTTP_PROXY: 'http://127.0.0.1:3128' }).href, 'http://127.0.0.1:3128/');
   assert.equal(proxyFor(target, { HTTP_PROXY: 'http://127.0.0.1:3128', HTTPS_PROXY: 'http://127.0.0.1:3129' }).port, '3129');
   assert.equal(proxyFor(target, { HTTPS_PROXY: 'http://127.0.0.1:3129', NO_PROXY: '.example.test' }), null);
+});
+
+test('the npm bin adds the package bundle to installer verbs and the auxiliary skills to project installs only', async t => {
+  const f = fixture(t);
+  await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
+  const bundleRoot = path.join(f.root, 'package/vendor/phoenix-ui/bundle');
+  const skillDir = path.join(f.root, 'package/skills/phoenix-ui');
+  const argv = async args => {
+    const script = `require(${JSON.stringify(path.join(f.scripts, 'phoenix-bootstrap.cjs'))}).main(${JSON.stringify(args)}, ${JSON.stringify({
+      manifestPath: path.join(f.scripts, 'ENGINE.json'), bundleRoot, skillDir })}).then(code => { process.exitCode = code; });`;
+    const child = spawn(process.execPath, ['-e', script], { cwd: f.project, env: f.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', data => { stdout += data; });
+    child.stderr.on('data', data => { stderr += data; });
+    const code = await new Promise(resolve => child.once('close', resolve));
+    assert.equal(code, 0, stderr);
+    return JSON.parse(stdout).argv;
+  };
+  const auxiliary = path.dirname(skillDir);
+  assert.deepEqual(await argv(['install', '--project']), ['install', '--project', '--bundle-root', bundleRoot, '--auxiliary-root', auxiliary]);
+  assert.deepEqual(await argv(['update', '-y']), ['update', '-y', '--bundle-root', bundleRoot, '--auxiliary-root', auxiliary]);
+  assert.deepEqual(await argv(['install', '--auxiliary-root=/x']), ['install', '--auxiliary-root=/x', '--bundle-root', bundleRoot]);
+  for (const level of [['--user'], ['--global'], ['--scope=global'], ['--scope', 'global'], ['--help']]) {
+    assert.deepEqual(await argv(['install', ...level]), ['install', ...level, '--bundle-root', bundleRoot]);
+  }
+  assert.deepEqual(await argv(['check']), ['check', '--bundle-root', bundleRoot]);
 });

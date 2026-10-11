@@ -242,7 +242,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:61"
       },
       {
         "names": [
@@ -251,14 +251,14 @@
         "source": "crates/cli/src/main.rs:55",
         "oldBehavior": "安装provider bundle，可下载上游bundle/engine。",
         "disposition": "replace",
-        "newBehavior": "保留显式入口，消费本包/显式指定XGENT bundle；Rust事务与固定engine manifest。",
+        "newBehavior": "项目范围（默认）走Rust事务安装：消费本包或显式--bundle-root的XGENT bundle与固定engine manifest，ownership+备份+journal，旧impeccable迁移；--user/--global与--help仍走继承实现。",
         "reason": "移除默认上游依赖并采用本仓明确契约。",
         "blocksA": true,
         "verification": {
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:57"
       },
       {
         "names": [
@@ -274,7 +274,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:61"
       },
       {
         "names": [
@@ -283,14 +283,14 @@
         "source": "crates/cli/src/main.rs:55",
         "oldBehavior": "通过bundle来源解析刷新现装skill；默认联络上游。",
         "disposition": "replace",
-        "newBehavior": "保留入口，仅消费显式指定XGENT版本/已安装包，不查latest。",
+        "newBehavior": "项目范围（默认）以当前bundle重跑事务安装；--user/--global仍走继承实现；只消费显式指定XGENT版本/已安装包，不查latest。",
         "reason": "移除默认上游依赖并采用本仓明确契约。",
         "blocksA": true,
         "verification": {
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:57"
       },
       {
         "names": [
@@ -306,7 +306,23 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:61"
+      },
+      {
+        "names": [
+          "migrate"
+        ],
+        "source": null,
+        "oldBehavior": "无对应原版verb；旧工具没有迁移或回滚入口。",
+        "disposition": "add",
+        "newBehavior": "Phoenix新增：--from impeccable 只读预检并经事务迁移；--rollback ID 条目级逆补丁；--recover 读取journal续接；--json单对象，退出0/2/3/4。",
+        "reason": "计划§3.1迁移、恢复与回滚需要可重复入口。",
+        "blocksA": true,
+        "verification": {
+          "status": "未验证",
+          "method": "install crate迁移/回滚用例 + Node两阶段tarball安装 + 真实旧包项目迁移/回滚"
+        },
+        "currentSource": "crates/cli/src/main.rs:60"
       },
       {
         "names": [
@@ -322,7 +338,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:57"
+        "currentSource": "crates/cli/src/main.rs:63"
       },
       {
         "names": [
@@ -338,7 +354,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:58"
+        "currentSource": "crates/cli/src/main.rs:64"
       },
       {
         "names": [
@@ -354,7 +370,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:59"
+        "currentSource": "crates/cli/src/main.rs:65"
       },
       {
         "names": [
@@ -370,7 +386,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:60"
+        "currentSource": "crates/cli/src/main.rs:66"
       },
       {
         "names": [
@@ -386,7 +402,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:61"
+        "currentSource": "crates/cli/src/main.rs:67"
       },
       {
         "names": [
@@ -402,7 +418,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:62"
+        "currentSource": "crates/cli/src/main.rs:68"
       },
       {
         "names": [
@@ -418,7 +434,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:63"
+        "currentSource": "crates/cli/src/main.rs:69"
       },
       {
         "names": [
@@ -435,7 +451,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:64"
+        "currentSource": "crates/cli/src/main.rs:70"
       },
       {
         "names": [
@@ -451,7 +467,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:65"
+        "currentSource": "crates/cli/src/main.rs:71"
       },
       {
         "names": [
@@ -467,7 +483,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:66"
+        "currentSource": "crates/cli/src/main.rs:72"
       },
       {
         "names": [
@@ -483,7 +499,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:67"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -499,7 +515,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:68"
+        "currentSource": "crates/cli/src/main.rs:74"
       },
       {
         "names": [
@@ -515,7 +531,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:69"
+        "currentSource": "crates/cli/src/main.rs:75"
       },
       {
         "names": [
@@ -531,7 +547,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:71"
+        "currentSource": "crates/cli/src/main.rs:77"
       },
       {
         "names": [
@@ -547,7 +563,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:72"
+        "currentSource": "crates/cli/src/main.rs:78"
       },
       {
         "names": [
@@ -563,7 +579,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:73"
+        "currentSource": "crates/cli/src/main.rs:79"
       },
       {
         "names": [
@@ -579,7 +595,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:77"
+        "currentSource": "crates/cli/src/main.rs:83"
       },
       {
         "names": [
@@ -595,7 +611,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:80"
+        "currentSource": "crates/cli/src/main.rs:86"
       },
       {
         "names": [
@@ -611,7 +627,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:95"
+        "currentSource": "crates/cli/src/main.rs:101"
       },
       {
         "names": [
@@ -627,7 +643,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:96"
+        "currentSource": "crates/cli/src/main.rs:102"
       },
       {
         "names": [
@@ -644,7 +660,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:97"
+        "currentSource": "crates/cli/src/main.rs:103"
       },
       {
         "names": [
@@ -660,7 +676,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:104"
+        "currentSource": "crates/cli/src/main.rs:110"
       }
     ],
     "dynamicRoutes": [
@@ -2217,7 +2233,7 @@
       "source": "crates/skills/src/engine_binary.rs:21",
       "oldBehavior": "native OS/arch发现与launcher同族；本仓旧R2只登记darwin-arm64，未据此推断其他已发布。",
       "disposition": "retain",
-      "newBehavior": "本仓固定engine版本五平台制品，消费者无需Rust；Node>=18。",
+      "newBehavior": "本期固定engine版本macOS/Linux四平台制品，消费者无需Rust；Node>=18。",
       "blocksA": true,
       "verification": {
         "status": "未验证",
@@ -2230,7 +2246,7 @@
       "source": "crates/skills/src/engine_binary.rs:21",
       "oldBehavior": "native OS/arch发现与launcher同族；本仓旧R2只登记darwin-arm64，未据此推断其他已发布。",
       "disposition": "retain",
-      "newBehavior": "本仓固定engine版本五平台制品，消费者无需Rust；Node>=18。",
+      "newBehavior": "本期固定engine版本macOS/Linux四平台制品，消费者无需Rust；Node>=18。",
       "blocksA": true,
       "verification": {
         "status": "未验证",
@@ -2243,7 +2259,7 @@
       "source": "crates/skills/src/engine_binary.rs:21",
       "oldBehavior": "native OS/arch发现与launcher同族；本仓旧R2只登记darwin-arm64，未据此推断其他已发布。",
       "disposition": "retain",
-      "newBehavior": "本仓固定engine版本五平台制品，消费者无需Rust；Node>=18。",
+      "newBehavior": "本期固定engine版本macOS/Linux四平台制品，消费者无需Rust；Node>=18。",
       "blocksA": true,
       "verification": {
         "status": "未验证",
@@ -2256,7 +2272,7 @@
       "source": "crates/skills/src/engine_binary.rs:21",
       "oldBehavior": "native OS/arch发现与launcher同族；本仓旧R2只登记darwin-arm64，未据此推断其他已发布。",
       "disposition": "retain",
-      "newBehavior": "本仓固定engine版本五平台制品，消费者无需Rust；Node>=18。",
+      "newBehavior": "本期固定engine版本macOS/Linux四平台制品，消费者无需Rust；Node>=18。",
       "blocksA": true,
       "verification": {
         "status": "未验证",
@@ -2269,11 +2285,12 @@
       "source": "crates/skills/src/engine_binary.rs:21",
       "oldBehavior": "native OS/arch发现与launcher同族；本仓旧R2只登记darwin-arm64，未据此推断其他已发布。",
       "disposition": "retain",
-      "newBehavior": "本仓固定engine版本五平台制品，消费者无需Rust；Node>=18。",
-      "blocksA": true,
+      "newBehavior": "本期支持与发布延期；已有兼容源码及历史证据保留，不计已交付或已验收。",
+      "blocksA": false,
       "verification": {
         "status": "未验证",
-        "method": "对应原生runner build+artifact probe+Node18消费者；未运行不算通过"
+        "method": "对应原生runner build+artifact probe+Node18消费者；未运行不算通过",
+        "scope": "deferred-by-user-2026-10-11"
       }
     },
     {
@@ -2282,11 +2299,12 @@
       "source": "skill/scripts/impeccable.cmd:18",
       "oldBehavior": "旧.cmd尝试arm64资产，失败再x64；Rust平台tag本身会请求arm64。",
       "disposition": "replace",
-      "newBehavior": "固定映射windows-x64，cmd/PowerShell/ARM64真实执行验证；不承诺Windows ARM64 engine。",
-      "blocksA": true,
+      "newBehavior": "本期支持与发布延期；已有兼容源码及历史证据保留，不计已交付或已验收。",
+      "blocksA": false,
       "verification": {
         "status": "未验证",
-        "method": "Windows ARM64实际consumer smoke + Codex编辑/Stop"
+        "method": "Windows ARM64实际consumer smoke + Codex编辑/Stop",
+        "scope": "deferred-by-user-2026-10-11"
       }
     }
   ],
@@ -5603,7 +5621,7 @@
         "importedPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "currentPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "baselineSha256": "00b20a738560363eb3ab4daa78fb56f35654d3bfcb9d1144548cc6cba954e497",
-        "currentSha256": "bf37f72085f8b52b775dbf5cb9c05e94a3d7ea49d5babeb2f5fd1df38fe14ede"
+        "currentSha256": "27d3817907cb2c7dc06d6219d4ed9d6b95027d3f7998ad6dca63a9c03f293c42"
       },
       "crates/common/src/proc.rs": {
         "importedPath": "tools/phoenix-ui/crates/common/src/proc.rs",
@@ -5843,7 +5861,7 @@
         "importedPath": "tools/phoenix-ui/crates/live/src/manual_edits/apply.rs",
         "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/apply.rs",
         "baselineSha256": "9d26813f76fa27d63f13bf5dd50c01970dc7730b362917323761fc5ef2608130",
-        "currentSha256": "490740c03f6204d541114704bfdf0c1a78f2bb7bb97c66097212d5a43187d877"
+        "currentSha256": "7852a349448dcfbe2f584eed30b16487bffecc8f02d4d1edf94505e3c8503063"
       },
       "crates/live/src/manual_edits/commit.rs": {
         "importedPath": "tools/phoenix-ui/crates/live/src/manual_edits/commit.rs",
@@ -5897,7 +5915,7 @@
         "importedPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "baselineSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
-        "currentSha256": "bfe3f2342a741b8256988af47cceb5404d76145392f263f6ac8ae0f89a426b8b"
+        "currentSha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948"
       },
       "crates/skills/src/engine_binary.rs": {
         "importedPath": "tools/phoenix-ui/crates/skills/src/engine_binary.rs",
@@ -5945,7 +5963,7 @@
         "importedPath": "tools/phoenix-ui/skill/SKILL.src.md",
         "currentPath": "skills/phoenix-ui/src/SKILL.src.md",
         "baselineSha256": "0333d85ba408d29c7748838762b6d1e0a211dec22cd7e78ed6db987d983e91d4",
-        "currentSha256": "cca9eeb11c60e8325d3ec591d37846e8254bdaa6865a9e0e987a8f7ef05a61b7"
+        "currentSha256": "42b37e7b664ffce457a2cf046f8e80e00291d2a79482cc88b32de03e31e6de87"
       },
       "skill/reference/adapt.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/adapt.md",
@@ -6113,7 +6131,7 @@
         "importedPath": "tools/phoenix-ui/skill/scripts/live-browser.js",
         "currentPath": "skills/phoenix-ui/src/scripts/live-browser.js",
         "baselineSha256": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
-        "currentSha256": "ebc4b17746d31f078ded39664ab9850118a38c10af53f1c2ab13bfeca97746ea"
+        "currentSha256": "14cfebc0c97e6284308678d4970714feb06528b872a5ffa39423523a669afced"
       },
       "tests/fixtures/concept-catalog/composition-ingredients.json": {
         "importedPath": "tools/phoenix-ui/tests/fixtures/concept-catalog/composition-ingredients.json",
@@ -7057,22 +7075,23 @@
       {
         "id": "E12-IME",
         "status": "source-applied-runtime-pending",
-        "source": "skills/phoenix-ui/src/scripts/live-browser.js:867",
+        "source": "skills/phoenix-ui/src/scripts/live-browser.js:873",
         "enterGuardLines": [
-          872,
-          2464,
-          2550
+          878,
+          2473,
+          2559,
+          11612
         ],
         "patchEvidence": "patches/0001-live-ime-enter.patch",
         "verification": {
-          "source": "三处实际Enter条件均含 !isImeKeydown(e)，helper保留isComposing/keyCode229。",
+          "source": "四处实际Enter条件均含 !isImeKeydown(e)：patch 0001审阅的annotation/configure/insert三处，加M3补上的E12同一commit（83dc4b6）页面级Steer输入；helper保留isComposing/keyCode229。",
           "browser": "未验证",
           "nativePlatforms": "未验证"
         }
       },
       {
         "id": "E12-CODEX-WINDOWS",
-        "status": "current-emitters-source-adapted-runtime-pending",
+        "status": "source-retained-platform-deferred",
         "patchEvidence": "patches/0002-codex-windows-command.patch",
         "writers": [
           {
@@ -7103,7 +7122,8 @@
         ],
         "verification": {
           "windowsShells": "未验证",
-          "codexSession": "未验证"
+          "codexSession": "未验证",
+          "scope": "Windows支持与真实会话验收按用户2026-10-11决定延期，不计A退出门"
         },
         "guardSource": "crates/hook/src/missing_launcher.cjs:1"
       }
@@ -7120,7 +7140,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "dc7444aba0d1bcb85a0296e921fa7092292bdd440301214272dec4e98c06cd83",
+        "sha256": "20ee888302d4e6a57a91387fb9686b07ac73bd4da7f453320fe2456453d5ec4e",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7132,7 +7152,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/hook/src/missing_launcher.cjs": {
-        "sha256": "12c0b0b3ca3fa4fd7c601d9a6ff71a80d1bf71cc30b72be637803604146ae95a",
+        "sha256": "16d770af4a0c9d7ac801ff7e37e901397e9b12f8da1c73e63c187cc0d5d5c722",
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/context/src/concept_seed/local_catalog_tests.rs": {
@@ -7153,11 +7173,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "a990ad49a1725c41dbbe413570681fc7be6d4786d5ec4518fe186aaa10ce9147",
+      "manifestSha256": "5dc387b8a7fcf321811bb3d841a0349f0f19b79314b7147d9042b752415c0ab6",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "ecc8f336a6000ead477bed19aab16b9e78239d1fc2f0609857c11749aaf53341",
+      "generationManifestSha256": "d86cbea7335554274912ef9ebfcddd263ad3b7d6ff615ce5228e095518249a11",
       "generator": "Bun 1.3.14",
-      "inputSha256": "d5fd5eff5b08d13835fae19881c524ee566d03f5a7774a39efc04a279c0d4edf",
+      "inputSha256": "ba509bb9edf8e71ccde410018cc83bdac93567f71604056cca62239ffcd8d3b8",
       "engineManifest": "verified",
       "outputsCount": 1739,
       "providers": 19,
@@ -7165,7 +7185,7 @@
       "bundledCatalogCopies": 72,
       "status": "source-payload-hashes-verified",
       "runtimeStatus": "未验证",
-      "limitation": "CI16 staged-executable retry candidate development render. Static metadata and generation hashes do not prove runtime, five-platform distribution, provider sessions or release.",
+      "limitation": "M3 A-tree development render (transactional installer, transition entry and Safari focus timing fix). Static metadata and generation hashes do not prove runtime, macOS/Linux four-platform distribution, provider sessions or release.",
       "historicalRenders": [
         {
           "scope": "M2 earlier ordinary render before the development ENGINE manifest",
@@ -7247,18 +7267,41 @@
           "scope": "M2 CI15 development render before staged-executable lock retries",
           "checkedAt": "2026-10-10T07:37:55.933575+00:00",
           "limitation": "Historical exact metadata; CI15 Windows failed in lightweight tests before native build. Other job results are separate evidence."
+        },
+        {
+          "inputSha256": "d5fd5eff5b08d13835fae19881c524ee566d03f5a7774a39efc04a279c0d4edf",
+          "manifestSha256": "a990ad49a1725c41dbbe413570681fc7be6d4786d5ec4518fe186aaa10ce9147",
+          "generationManifestSha256": "ecc8f336a6000ead477bed19aab16b9e78239d1fc2f0609857c11749aaf53341",
+          "engineManifest": "verified",
+          "outputsCount": 1739,
+          "engineManifestEvidence": {
+            "path": "vendor/phoenix-ui/VERSION.json",
+            "sha256": "764e3643dfc13e3c96a6b68bb69edcc055963936ecb12a9497d896757f807bba",
+            "distribution": "development",
+            "sourceInputSha256": "fabc638ed40a4ebc31653f0fcc5399ebf6e89a00739390fc28bc50b627f4de50",
+            "engines": {
+              "darwin-arm64": {
+                "asset": "phoenix-ui-darwin-arm64",
+                "sha256": "6f77e1c1dcd4246e5796bc8a3c13a448e9dbc0041d69c85e71628112823f22c1",
+                "size": 16894472
+              }
+            },
+            "limitation": "Development envelope carries only the listed darwin-arm64 engine; build identity and payload freshness are checked. Full runtime, consumer package and native matrix checks are recorded separately."
+          },
+          "scope": "M2 CI16 staged-executable retry candidate development render",
+          "limitation": "Historical exact metadata; superseded by the M3 A-tree render."
         }
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "764e3643dfc13e3c96a6b68bb69edcc055963936ecb12a9497d896757f807bba",
+        "sha256": "ae841a4c47d32762e03c74f5c14bbdbd9ccaa7072394e48d2aefa12ab226c10f",
         "distribution": "development",
-        "sourceInputSha256": "fabc638ed40a4ebc31653f0fcc5399ebf6e89a00739390fc28bc50b627f4de50",
+        "sourceInputSha256": "b13d9ed4e607d6d41a93d7e2401f68a3bab41a94dfe47ae8ab618abfcb34af27",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "6f77e1c1dcd4246e5796bc8a3c13a448e9dbc0041d69c85e71628112823f22c1",
-            "size": 16894472
+            "sha256": "c86fbb47a9357c2812caffdb875a4946d04101a829a7b90466ac23f73685de4b",
+            "size": 18391592
           }
         },
         "limitation": "Development envelope carries only the listed darwin-arm64 engine; build identity and payload freshness are checked. Full runtime, consumer package and native matrix checks are recorded separately."
@@ -7617,6 +7660,19 @@
         "tarballConsumerEvidence": "local/phoenix-ui/ci16-package-consumers/root-source-check-v4.json",
         "tarballConsumerEvidenceSha256": "fb35a4130b8b05b30633609bf575770d19688d5622605433763011fd6362e2eb",
         "scope": "Local owned staging retry regression, complete runtime, separate debug oracle and release smokes, actual tarball offline installation/version/context consumers. Five-platform CI for these new source bytes, M3 migration, provider sessions, browser/IME acceptance and A closure remain pending."
+      }
+    },
+    "deliveryPlatforms": [
+      "darwin-arm64",
+      "darwin-x64",
+      "linux-x64",
+      "linux-arm64"
+    ],
+    "deferredPlatforms": {
+      "windows": {
+        "reason": "用户2026-10-11确认本期不考虑 Windows",
+        "scope": "发布资产、native CI、ARM64回退与Windows宿主/IME实测",
+        "source": "docs/plan/phoenix-ui.md#02-命名与关键决策"
       }
     }
   }

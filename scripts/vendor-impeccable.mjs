@@ -24,6 +24,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Phoenix UI 已取代 vendor 的 impeccable 安装链(见 docs/phoenix-ui.md),本脚本只作来源
+// 历史保留。默认拒绝运行,以免重新拉回上游 latest;确需复现旧流程时显式加 --historical。
+if (!process.argv.includes('--historical')) {
+  console.error('已停用: Phoenix UI 取代了 vendor 的 impeccable,本脚本只作来源历史保留;确需复现旧流程时加 --historical。');
+  process.exit(1);
+}
+
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VENDOR_DIR = path.join(REPO_ROOT, 'vendor', 'impeccable');
 const BUNDLE_URL = 'https://impeccable.style/api/download/bundle/universal';

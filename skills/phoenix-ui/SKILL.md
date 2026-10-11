@@ -6,7 +6,7 @@ license: Apache 2.0
 metadata:
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: d5fd5eff5b08d13835fae19881c524ee566d03f5a7774a39efc04a279c0d4edf
+  source_sha256: ba509bb9edf8e71ccde410018cc83bdac93567f71604056cca62239ffcd8d3b8
 ---
 
 Phoenix UI provides local design tools for frontend work. Follow the project's product truth, accepted direction, and design rules; use the command references to create complete, accessible interfaces with a clear visual direction.
@@ -20,7 +20,7 @@ Core principles:
 
 ## Setup
 
-1. Run `<skill-base-dir>/scripts/phoenix-ui context` once per session, where `<skill-base-dir>` contains this SKILL.md; keep cwd at the user's project. It resolves every `<skill-base-dir>/scripts/phoenix-ui <verb>` command in this skill and its references. On Windows without `sh`, use `<skill-base-dir>/scripts/phoenix-ui.cmd`. The thin launcher requires Node >=18 and validates the fixed manifest, binary digest and Phoenix engine version before running. Users do not need Rust. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance; follow its directives.
+1. Run `<skill-base-dir>/scripts/phoenix-ui context` once per session, where `<skill-base-dir>` contains this SKILL.md; keep cwd at the user's project. It resolves every `<skill-base-dir>/scripts/phoenix-ui <verb>` command in this skill and its references. This release supports macOS and Linux. The thin launcher requires Node >=18 and validates the fixed manifest, binary digest and Phoenix engine version before running. Users do not need Rust. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance; follow its directives.
 2. Load the request's playbook: its Commands-table reference for an explicit/implied sub-command, or [reference/new-work.md](reference/new-work.md) for a new surface or replacement visual world. Inspect target and incumbent visual truth before editing. When the app cannot run, start with committed visual-regression goldens or screenshot fixtures; verify target and freshness against current tokens, CSS, components, or assets, resolve conflicts, and compare theme/variant captures.
 3. After resolving analysis and direction, read [reference/craft-floor.md](reference/craft-floor.md) immediately before any UI edit, including small refinements. It carries the quality floor, the absolute bans, and the reflexes no detector catches. Do not load it for planning-only work.
 

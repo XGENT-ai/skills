@@ -20,7 +20,7 @@ function project(t) {
 function run(dir, flags = [], input, env = process.env) {
   // 仅模拟终端检测,输入仍经过 CLI 的 readline 询问和回答处理。
   const prefix = input === undefined ? [] : ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);'];
-  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-impeccable', ...flags], {
+  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-phoenix-ui', ...flags], {
     input: input ?? '', encoding: 'utf8', timeout: 10000, env,
   });
 }
@@ -87,37 +87,19 @@ test('guard merge preserves mixed handlers and fields and is idempotent', (t) =>
   assert.equal(fs.statSync(script).mtimeMs, 1000000);
 });
 
-test('guard and bundled impeccable hooks survive repeated full installations together', (t) => {
+test('an installed guard keeps its place and the file bytes when another tool appended entries after it', (t) => {
   const dir = project(t);
-  const cache = project(t);
-  const meta = JSON.parse(fs.readFileSync(path.join(root, 'vendor', 'impeccable', 'VERSION.json')));
-  const engine = path.join(root, 'vendor', 'impeccable', 'engine', `${process.platform}-${process.arch}`, 'impeccable');
-  if (meta.engines[`${process.platform}-${process.arch}`]) {
-    if (!fs.existsSync(engine)) return t.skip('local vendor engine needed for offline test');
-    const dest = path.join(cache, '.impeccable', 'bin', meta.engineVersion);
-    fs.mkdirSync(dest, { recursive: true });
-    fs.copyFileSync(engine, path.join(dest, 'impeccable'));
-  }
-  const command = ['-e', 'require("node:os").homedir = () => process.env.XGENT_INSTALL_TEST_CACHE; require(process.argv[1]);',
-    cli, 'install', dir, '--providers=.agents', '--no-xgent-init', '--context-goal-guard'];
-  let first;
-  for (let i = 0; i < 2; i += 1) {
-    const result = spawnSync(process.execPath, command, {
-      encoding: 'utf8', input: '', timeout: 10000, env: { ...process.env, XGENT_INSTALL_TEST_CACHE: cache },
-    });
-    assert.equal(result.status, 0, result.stderr);
-    const manifest = guardManifest(dir);
-    for (const event of ['PreToolUse', 'Stop']) {
-      const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
-      assert.equal(handlers.filter((handler) => handler.command.includes('context-goal-guard.py')).length, 1);
-    }
-    for (const event of ['PostToolUse', 'Stop']) {
-      const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
-      assert.ok(handlers.some((handler) => handler.command.includes('skills/impeccable/scripts/impeccable')));
-    }
-    if (first) assert.deepEqual(manifest, first);
-    first = manifest;
-  }
+  assert.equal(runGuard(dir).status, 0);
+  const file = path.join(dir, '.codex', 'hooks.json');
+  const manifest = guardManifest(dir);
+  // The Phoenix installer appends its own group compactly after the guard.
+  manifest.hooks.Stop.push({ hooks: [{ type: 'command', command: 'later-tool', timeout: 30 }] });
+  const bytes = Buffer.from(JSON.stringify(manifest));
+  fs.writeFileSync(file, bytes);
+  const again = runGuard(dir);
+  assert.equal(again.status, 0, again.stderr);
+  assert.match(again.stdout, /未变  \.codex\/hooks\.json \(context goal guard\)/);
+  assert.ok(fs.readFileSync(file).equals(bytes));
 });
 
 test('guard command resolves the Git root after moving the repo and from subdirectories with shell characters', (t) => {
@@ -407,34 +389,6 @@ test('Claude guard merge preserves other settings and handlers and is idempotent
   assert.equal(fs.statSync(script).mtimeMs, 1000000);
 });
 
-test('Claude guard and bundled impeccable Claude hooks survive repeated full installations together', (t) => {
-  const dir = project(t);
-  const cache = project(t);
-  const meta = JSON.parse(fs.readFileSync(path.join(root, 'vendor', 'impeccable', 'VERSION.json')));
-  const engine = path.join(root, 'vendor', 'impeccable', 'engine', `${process.platform}-${process.arch}`, 'impeccable');
-  if (meta.engines[`${process.platform}-${process.arch}`]) {
-    if (!fs.existsSync(engine)) return t.skip('local vendor engine needed for offline test');
-    const dest = path.join(cache, '.impeccable', 'bin', meta.engineVersion);
-    fs.mkdirSync(dest, { recursive: true });
-    fs.copyFileSync(engine, path.join(dest, 'impeccable'));
-  }
-  const command = ['-e', 'require("node:os").homedir = () => process.env.XGENT_INSTALL_TEST_CACHE; require(process.argv[1]);',
-    cli, 'install', dir, '--providers=.claude', '--no-xgent-init', '--no-context-goal-guard', '--claude-context-goal-guard'];
-  let first;
-  for (let i = 0; i < 2; i += 1) {
-    const result = spawnSync(process.execPath, command, {
-      encoding: 'utf8', input: '', timeout: 10000, env: { ...process.env, XGENT_INSTALL_TEST_CACHE: cache },
-    });
-    assert.equal(result.status, 0, result.stderr);
-    const settings = claudeSettings(dir);
-    for (const event of ['PostToolBatch', 'Stop']) assert.equal(claudeGuardHandlers(settings, event).length, 1);
-    assert.ok(Object.values(settings.hooks).flat().flatMap((entry) => entry.hooks)
-      .some((handler) => handler.command.includes('skills/impeccable/scripts/impeccable')));
-    if (first) assert.deepEqual(settings, first);
-    first = settings;
-  }
-});
-
 for (const raw of ['invalid json', '[]', '{"hooks":{"Stop":{}}}', '{"hooks":null}']) {
   test(`Claude guard refuses malformed settings ${raw} without overwriting it`, (t) => {
     const dir = project(t);
@@ -557,3 +511,46 @@ for (const flag of ['--context-goal-guard-threshold', '--claude-context-goal-gua
     assert.deepEqual(fs.readdirSync(dir), []);
   });
 }
+
+test('deprecated --no-impeccable skips Phoenix UI like --no-phoenix-ui and says so', (t) => {
+  const dir = project(t);
+  const home = project(t);
+  const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-impeccable', '--no-xgent-init'], {
+    input: '', encoding: 'utf8', timeout: 10000, env: { ...process.env, PHOENIX_UI_HOME: home },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /--no-impeccable 已弃用,等同 --no-phoenix-ui/);
+  assert.doesNotMatch(result.stdout, /Phoenix UI \d/);
+  assert.ok(fs.existsSync(path.join(dir, '.claude', 'hooks')));
+  assert.equal(fs.existsSync(path.join(dir, '.phoenix-ui')), false);
+  assert.deepEqual(fs.readdirSync(home), []);
+});
+
+test('an unavailable Phoenix engine stops the whole install before any project write', (t) => {
+  const dir = project(t);
+  const home = project(t);
+  fs.mkdirSync(path.join(dir, '.claude'));
+  fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), '{"keep":true}\n');
+  const result = spawnSync(process.execPath, [cli, 'install', dir, '--xgent-init'], {
+    input: '', encoding: 'utf8', timeout: 10000,
+    env: { ...process.env, PHOENIX_UI_HOME: home, HTTPS_PROXY: '', https_proxy: '', HTTP_PROXY: '', http_proxy: '' },
+  });
+  assert.equal(result.status, 4, result.stdout + result.stderr);
+  assert.match(result.stderr, /Phoenix UI engine 未就绪,未修改项目/);
+  assert.match(result.stderr, /--release-dir=DIR/);
+  assert.match(result.stderr, /--no-phoenix-ui/);
+  assert.deepEqual(fs.readdirSync(dir).sort(), ['.claude']);
+  assert.deepEqual(fs.readdirSync(path.join(dir, '.claude')), ['settings.json']);
+  assert.equal(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'), '{"keep":true}\n');
+});
+
+test('invalid settings.json stops the install before XGENT hooks or guards are written', (t) => {
+  const dir = project(t);
+  fs.mkdirSync(path.join(dir, '.claude'));
+  fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), 'not json');
+  const result = run(dir, ['--xgent-init', '--claude-context-goal-guard']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /不是合法 JSON/);
+  assert.deepEqual(fs.readdirSync(dir), ['.claude']);
+  assert.deepEqual(fs.readdirSync(path.join(dir, '.claude')), ['settings.json']);
+});

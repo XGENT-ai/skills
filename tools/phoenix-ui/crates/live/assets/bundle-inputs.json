@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "aff74f701cbb54b1603e9ac9903cc7bc544c96a63d043bba6f2b9ebf881141bc",
+  "inputSha256": "da33c86fb46fb75fa3779b2e5bb58a130569223b1eef919858d6182c969d2bc9",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
       "size": 49
     },
     "Cargo.lock": {
-      "sha256": "c14ac8fdd0d548e01c6112503455044fb28793558a78430ebd2eb48bba0e5c92",
-      "size": 48718
+      "sha256": "f4bd5f42307343de22bf7a2aa08ec8c9a2a63c02a8ffce0ac50ce0019e11a744",
+      "size": 48884
     },
     "Cargo.toml": {
       "sha256": "9dcf6508707d3d4a74bcab970df3c55b8efd021f6af9dac98baa6df67a809a14",

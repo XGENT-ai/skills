@@ -200,6 +200,19 @@ test('realpath and repository traversal dedup symlink aliases and nested cwd on 
   assert.deepEqual(records(f).map(record => record.project), [fs.realpathSync(f.project)]);
 });
 
+test('without Git the install receipt marks the project root for nested cwd', posix, async t => {
+  const f = fixture(t);
+  fs.rmSync(path.join(f.project, '.git'), { recursive: true });
+  fs.mkdirSync(path.join(f.project, '.phoenix-ui', 'install'), { recursive: true });
+  fs.writeFileSync(path.join(f.project, '.phoenix-ui', 'install', 'active.json'), '{}\n');
+  const nested = path.join(f.project, 'src', 'nested');
+  fs.mkdirSync(nested, { recursive: true });
+  const command = await commandFor(f, 'codex');
+  const result = shell(f, command, JSON.stringify({ cwd: nested, session_id: 'receipt' }));
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(records(f).map(record => record.project), [fs.realpathSync(f.project)]);
+});
+
 test('missing cwd uses the original cwd and pinned version, matching bootstrap failure', posix, async t => {
   const f = fixture(t);
   const command = await commandFor(f, 'codex');

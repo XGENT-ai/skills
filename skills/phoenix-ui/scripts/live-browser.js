@@ -128,6 +128,12 @@
   let expectedVariants = 0;
   let arrivedVariants = 0;
   let visibleVariant = 0;
+  // The agent's last word on a generation: `done`, or `error` (possibly after
+  // it already wrote some variants). { sessionId, error, settled }; `settled`
+  // means the missing variants were declared failed. See settleGenerationEnd.
+  let generationEnd = null;
+  let generationEndTimer = null;
+  const GENERATION_END_SETTLE_MS = 1500;
   let generationPhase = null;
   // Ascending order of the agent-generation lifecycle. The visible progress bar
   // must never regress: a `browser_resumed`/behind checkpoint re-broadcasts an
@@ -2061,6 +2067,9 @@
   function setLiveState(next) {
     state = next;
     window.__PHOENIX_UI_LIVE_STATE__ = next;
+    // Every arrival and restore path lands here, so an ended generation is
+    // re-judged whenever its variants (or its restored session) show up.
+    if (next === 'GENERATING' || next === 'CYCLING') scheduleGenerationEndSettle();
     retryDeclinedAgentTargets();
     syncPageInteractionCursor();
     // Whether a queued steer is still behind a generation is a function of this
@@ -2635,6 +2644,7 @@
 
   function generationStatusText() {
     if (arrivedVariants >= expectedVariants && expectedVariants > 0) return 'Done';
+    if (generationEnd?.error && generationEnd.sessionId === currentSessionId) return 'Generation failed. Checking for variants that arrived...';
     if (generationPhase === 'picked_up') return 'Agent picked up the request...';
     if (generationPhase === 'scaffolding') return 'Finding the source...';
     if (generationPhase === 'source_ready') return 'Source ready. Generating...';
@@ -2777,10 +2787,14 @@
 
     if (arrivedVariants < expectedVariants) {
       const remaining = expectedVariants - arrivedVariants;
+      const fellShort = generationFellShort();
       const progress = el('span', {
-        fontSize: '11px', color: BP.textDim, whiteSpace: 'nowrap',
+        fontSize: '11px', color: fellShort ? 'oklch(74% 0.14 35)' : BP.textDim, whiteSpace: 'nowrap',
       });
-      progress.textContent = remaining + ' more arriving...';
+      progress.textContent = fellShort
+        ? arrivedVariants + ' of ' + expectedVariants + ' arrived · ' + remaining + ' failed'
+        : remaining + ' more arriving...';
+      if (fellShort) progress.title = 'Generation ended early. The missing variants will not arrive; nothing was accepted.';
       row.appendChild(progress);
     }
 
@@ -4950,7 +4964,7 @@
   }
 
   function completeParameterGenerationIfReady() {
-    if (expectedVariants <= 0 || arrivedVariants < expectedVariants) return;
+    if (expectedVariants <= 0 || (arrivedVariants < expectedVariants && !generationFellShort())) return;
     if (parameterGenerationState === 'pending' || parameterGenerationState === 'loading') {
       completeParameterPublication();
     }
@@ -6241,6 +6255,99 @@
     markSessionHandled();
     cleanup({ instantChrome: true });
     showToast('The previous live session no longer matches the source file, so it was discarded. Pick an element to start fresh.', 6000);
+  }
+
+  /**
+   * The current generation ended with fewer variants than requested. An error
+   * says so at once; a `done` only after HMR settles (it may still be landing
+   * the rest).
+   */
+  function generationFellShort() {
+    return !!generationEnd && (generationEnd.settled || !!generationEnd.error)
+      && generationEnd.sessionId === currentSessionId
+      && arrivedVariants > 0 && arrivedVariants < expectedVariants;
+  }
+
+  /**
+   * Record the agent's last word on the current generation (`done`, or an
+   * `error` message). What it left is judged a moment later: the reply's SSE
+   * routinely arrives before HMR mounts the variants written just before it.
+   */
+  function noteGenerationEnd(sessionId, errorMessage) {
+    if (!sessionId || sessionId !== currentSessionId) return;
+    const prior = generationEnd?.sessionId === sessionId ? generationEnd : null;
+    generationEnd = { sessionId, error: errorMessage || prior?.error || null, settled: !!prior?.settled };
+    saveSession();
+    scheduleGenerationEndSettle();
+  }
+
+  function scheduleGenerationEndSettle() {
+    const end = generationEnd;
+    if (!end || end.sessionId !== currentSessionId) return;
+    clearTimeout(generationEndTimer);
+    generationEndTimer = setTimeout(() => settleGenerationEnd(end), GENERATION_END_SETTLE_MS);
+  }
+
+  /**
+   * Plan §6 row 4: variants that arrived stay usable (cycle, accept, discard),
+   * the missing ones are declared failed instead of awaited forever, and
+   * nothing is accepted on the user's behalf.
+   */
+  function settleGenerationEnd(end) {
+    if (generationEnd !== end || end.sessionId !== currentSessionId) return;
+    if (state === 'GENERATING' && arrivedVariants === 0) {
+      // After `done` the source fallbacks keep looking, and a target that
+      // mounts later comes back here through CYCLING. An error that left
+      // nothing on this page ends the session.
+      if (end.error) abandonFailedGeneration(end.sessionId);
+      return;
+    }
+    if (state !== 'CYCLING' || arrivedVariants <= 0) return;
+    const declare = arrivedVariants < expectedVariants && !end.settled;
+    if (declare) end.settled = true;
+    // Before the notice: a pending Tune pass announces itself with a toast.
+    completeParameterGenerationIfReady();
+    if (declare) {
+      const failed = expectedVariants - arrivedVariants;
+      refreshParamsPanel();
+      showOrUpdateCyclingBar();
+      showToast((end.error
+        ? 'Generation failed after ' + arrivedVariants + ' of ' + expectedVariants + ' variants: '
+          + String(end.error).trim().replace(/[.!?]?$/, '.')
+        : 'Only ' + arrivedVariants + ' of ' + expectedVariants + ' variants arrived; the other ' + failed + ' failed.')
+        + ' Nothing was accepted: accept the one you want, or discard to keep the original.', 9000);
+    }
+    saveSession();
+  }
+
+  // How long a torn-down failed generation keeps watching for its wrapper.
+  const FAILED_GENERATION_WRAPPER_WATCH_MS = 60000;
+
+  /**
+   * An error reply after which no variant reached this page. The session is
+   * torn down as before (issue #362), but variants written just before the
+   * error can still mount later (slow HMR, a target that is not rendered right
+   * now). Nothing else would take that wrapper out of the source, so it goes
+   * through the normal discard, which restores the original byte-for-byte.
+   */
+  function abandonFailedGeneration(sessionId) {
+    markSessionHandled();
+    // cleanup() leaves the generating shader to the CYCLING transition, which
+    // never comes here; it would stay frozen over the original element.
+    hideShaderOverlay();
+    cleanup();
+    const selector = '[data-impeccable-variants="' + sessionId + '"]';
+    let watcher = null;
+    const discardIfMounted = () => {
+      if (!document.querySelector(selector)) return false;
+      if (watcher) watcher.disconnect();
+      sendEvent({ type: 'discard', id: sessionId }).catch(() => {});
+      return true;
+    };
+    if (discardIfMounted() || !document.body) return;
+    watcher = new MutationObserver(discardIfMounted);
+    watcher.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => watcher.disconnect(), FAILED_GENERATION_WRAPPER_WATCH_MS);
   }
 
   function isJsxSourceFile(filePath) {
@@ -7646,6 +7753,11 @@
             completeParameterGenerationIfReady();
             break;
           }
+          // Fewer variants than requested so far, and this reply says no more
+          // are coming: once HMR settles, the rest are failed, not arriving.
+          if (msg.id === currentSessionId && (state === 'GENERATING' || state === 'CYCLING')) {
+            noteGenerationEnd(msg.id, null);
+          }
           // Source fallback when HMR did not land variants in this tab.
           if (msg.file && msg.id && state === 'GENERATING' && msg.id === currentSessionId) {
             setTimeout(() => {
@@ -7728,6 +7840,15 @@
           // or the durable localStorage checkpoint survives and every reload
           // resurrects a GENERATING bar for a session the server no longer
           // knows about (issue #362).
+          // Except for variants the agent wrote before failing: HMR can land
+          // them just after this reply, and they stay the user's to compare,
+          // accept or discard. settleGenerationEnd tears down only a
+          // generation that left nothing on this page.
+          if (msg.id && msg.id === currentSessionId && (state === 'GENERATING' || state === 'CYCLING')) {
+            noteGenerationEnd(msg.id, String(msg.message || 'unknown error'));
+            updateBarContent(state === 'CYCLING' ? 'cycling' : 'generating');
+            break;
+          }
           if (msg.id && msg.id === currentSessionId) {
             markSessionHandled();
             cleanup();
@@ -7760,9 +7881,9 @@
   /** Server died or became unreachable. Reset UI to a clean state. */
   function handleServerLost() {
     const recoveryState = currentSessionId ? state : 'IDLE';
-    if (state === 'GENERATING' || state === 'CYCLING' || state === 'SAVING') {
-      showToast('Live server connection lost. Your session is saved; reopen this page or restart live-poll.mjs to continue.', 6000);
-    }
+    // Every state gets the notice: hiding the bar alone looks like a crash.
+    showToast('Phoenix UI live server stopped. ' + (currentSessionId ? 'Your session is saved. ' : '')
+      + 'To continue, start live mode again from your agent (/phoenix-ui live; Codex: $phoenix-ui live), then reload this page.', 12000);
     hideBar();
     hideHighlight();
     hideShaderOverlay();
@@ -9538,6 +9659,10 @@ void main() {
       paramsCurrentValues = { ...saved.paramValues };
     }
     if (saved.parameterState) parameterGenerationState = saved.parameterState;
+    // A reload must not turn an ended generation back into "more arriving".
+    if (saved.id && saved.generationEnd && typeof saved.generationEnd === 'object') {
+      generationEnd = { sessionId: saved.id, error: saved.generationEnd.error || null, settled: saved.generationEnd.settled === true };
+    }
     sessionOrigin = saved.origin === 'agent' ? 'agent' : null;
     if (saved.generationPhase) generationPhase = saved.generationPhase;
   }
@@ -9744,6 +9869,9 @@ void main() {
       pageUrl: location.pathname,
       paramValues: { ...paramsCurrentValues },
       parameterState: parameterGenerationState,
+      generationEnd: generationEnd?.sessionId === currentSessionId
+        ? { error: generationEnd.error, settled: generationEnd.settled }
+        : undefined,
       origin: sessionOrigin || undefined,
       insertPlaceholder: insertPlaceholderSnapshot || undefined,
       pickedAnchor: pickedAnchorSnapshot || undefined,
@@ -10335,7 +10463,7 @@ void main() {
   const STEER_AWAIT_TIMEOUT_MS = 120000;
   const AGENT_STATUS_POLL_MS = 5000;
   const AGENT_DISCONNECTED_MARK = 'oklch(62% 0 0 / 0.78)';
-  const AGENT_DISCONNECTED_TIP = 'Agent disconnected - run live-poll.mjs to connect';
+  const AGENT_DISCONNECTED_TIP = 'Agent disconnected - run phoenix-ui live-poll to connect';
   // The indicator tracks whether a poll is parked, which is what decides if
   // steering can reach the agent right now. That goes quiet two ways, and they
   // need different copy: nobody is polling at all, or the agent took the work
@@ -10920,7 +11048,7 @@ void main() {
       return head + 'The agent is still busy with the current generation - your message was not lost, but it never got picked up. Send it again once the variants land.';
     }
     if (!agentPollingConnected) {
-      return head + 'No agent is polling right now. Run live-poll.mjs, then send it again.';
+      return head + 'No agent is polling right now. Run phoenix-ui live-poll, then send it again.';
     }
     return head + 'The agent picked it up but never replied with steer_done. Check the agent session for a stalled or failed steer.';
   }
@@ -11481,7 +11609,7 @@ void main() {
         }
         return;
       }
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !isImeKeydown(e)) {
         e.preventDefault();
         submitSteerMessage();
       }

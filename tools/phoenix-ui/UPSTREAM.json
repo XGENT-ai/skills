@@ -2109,7 +2109,7 @@
       "currentFiles": [
         {
           "path": "skills/phoenix-ui/src/scripts/live-browser.js",
-          "sha256": "ebc4b17746d31f078ded39664ab9850118a38c10af53f1c2ab13bfeca97746ea"
+          "sha256": "14cfebc0c97e6284308678d4970714feb06528b872a5ffa39423523a669afced"
         }
       ],
       "runtimeVerification": "current native and generated bundle built; real IME/Safari acceptance not run"
@@ -2151,7 +2151,7 @@
     {
       "id": "phoenix-ownership",
       "file": "patches/ownership.json",
-      "sha256": "509eb1993414eeb95eaba702f3b0b54198edd356c854c87b5970bc883db5b040",
+      "sha256": "6bcc715d55e028552f0c973b83333cef3051f3882d4e75969e2c1656f623ca0d",
       "status": "current-worktree-snapshot"
     }
   ]

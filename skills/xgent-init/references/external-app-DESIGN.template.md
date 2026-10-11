@@ -134,7 +134,7 @@ components:
 主题不是你的选择：宿主经 `sdk.onTheme` 推 `light` / `dark`，你把它落到自己根节点的 `data-theme` 上，两套都必须过 AA。**iframe 是独立文档**——宿主的 CSS 变量、字体、Tailwind 配置一律不会继承过来，token 与字体都要在你自己的 `index.css` / `index.html` 里再声明一份（本模板的 frontmatter 就是那份的权威值）。
 
 > 本文件只管**长什么样**。SDK 行为（主题 / 语言 / 面包屑 / 弹层 / 路由）以 `portal-micro-app` skill 为准；
-> 设计推进用 `impeccable` skill（它开工前会读本文件与 `PRODUCT.md`）。
+> 设计推进用 `phoenix-ui` skill（它开工前会读本文件与 `PRODUCT.md`）。
 
 **关键特征：**
 - 冷调 slate 中性色，浅色底是 `paper` (#FAFAFC)，深色底是 `ink` (#0B1220)；两套都是一等公民。

@@ -30,6 +30,8 @@ try {
   if (!engine) throw new Error('Cargo did not report the current native engine artifact.');
   env.PHOENIX_UI_BIN = engine;
   command(process.execPath, ['--test', '--test-name-pattern=critique collision inputs', path.join(root, 'test/phoenix-ui/oracle.test.js')]);
+  // Node installer → Rust installer with this engine; old packages come from preparation.
+  command(process.execPath, ['--test', path.join(root, 'test/phoenix-ui/install.test.js')]);
   // Serial execution avoids the upstream ephemeral-port test racing a new listener.
   cargo(['test', '--workspace', '--exclude', 'impeccable-browser', '--exclude', 'phoenix-ui', '--locked', '--offline', '--', '--test-threads=1']);
   // Chrome cannot initialize its own macOS sandbox beneath sandbox-exec.

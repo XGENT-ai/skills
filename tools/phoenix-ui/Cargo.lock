@@ -952,6 +952,18 @@ dependencies = [
  "impeccable-html",
  "impeccable-live",
  "impeccable-skills",
+ "phoenix-ui-install",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "phoenix-ui-install"
+version = "0.1.0"
+dependencies = [
+ "impeccable-common",
+ "libc",
+ "serde",
  "serde_json",
  "sha2",
 ]

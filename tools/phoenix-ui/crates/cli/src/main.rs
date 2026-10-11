@@ -52,6 +52,12 @@ fn run(args: &[String], io: &mut Io) -> i32 {
         "detect" => impeccable_detect::run_detect(rest, io, &engines()),
         "ignores" | "ignore" => impeccable_detect::run_ignores(rest, io),
         "skills" => impeccable_skills::run(rest, io),
+        // Project installs are transactional; the inherited installer keeps
+        // the user level and the help text that documents both.
+        "install" | "update" if !user_level_or_help(rest) => {
+            phoenix_ui_install::cli::run_install(rest, io)
+        }
+        "migrate" => phoenix_ui_install::cli::run_migrate(rest, io),
         "help" | "install" | "link" | "update" | "check" => impeccable_skills::run(args, io),
         // skill scripts
         "context" => impeccable_context::run_context(rest, io),
@@ -115,6 +121,16 @@ fn run(args: &[String], io: &mut Io) -> i32 {
 }
 
 pub const CLI_VERSION: &str = VERSION;
+
+/// `install`/`update` with `--user`, `--global` or `--scope=global`, or a help request.
+fn user_level_or_help(args: &[String]) -> bool {
+    args.iter().enumerate().any(|(i, a)| {
+        matches!(
+            a.as_str(),
+            "--user" | "--global" | "--scope=global" | "--help" | "-h"
+        ) || (a == "--scope" && args.get(i + 1).is_some_and(|v| v == "global"))
+    })
+}
 
 /// The engines wired into `impeccable detect`: the static HTML engine
 /// (crates/html). The browser engine (crates/browser) plugs in here once it

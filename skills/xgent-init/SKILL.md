@@ -19,7 +19,7 @@ description: 用于在 XGENT 出仓 App 仓库初始化或补齐 AGENTS.md、PRO
 
 `PRODUCT.md` 与 `DESIGN.md` 分别使用 [references/external-app-PRODUCT.template.md](references/external-app-PRODUCT.template.md) 和 [references/external-app-DESIGN.template.md](references/external-app-DESIGN.template.md)。填槽位前读 [references/fill-guide.md](references/fill-guide.md)，保留模板里的 Portal 产品边界与设计规范，不替换成通用设计建议。
 
-`install` 保留 hooks / impeccable 安装，可选步骤直接创建仓根 `AGENTS.md`，不安装本 skill，也不生成产品和设计文档。需要补齐这些文档时显式安装并使用本 skill；非交互 install 用 `--xgent-init` 创建 AGENTS.md，`--force` 也不覆盖已有文件。
+`install` 保留 hooks / Phoenix UI 安装，可选步骤直接创建仓根 `AGENTS.md`，不安装本 skill，也不生成产品和设计文档。需要补齐这些文档时显式安装并使用本 skill；非交互 install 用 `--xgent-init` 创建 AGENTS.md，`--force` 也不覆盖已有文件。
 
 ## 约束
 

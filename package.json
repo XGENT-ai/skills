@@ -1,7 +1,7 @@
 {
   "name": "@xgent-ai/skills",
   "version": "0.7.0-rc.0",
-  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 vendor 的 impeccable",
+  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 Phoenix UI 设计工具与 UI 验收 skills",
   "keywords": [
     "claude-code",
     "skills",
@@ -29,11 +29,8 @@
     "hooks/claude/context-goal-guard.js",
     "hooks/claude/settings.example.json",
     "docs/claude-context-goal-guard.md",
+    "docs/phoenix-ui.md",
     "skills",
-    "vendor/impeccable/bundle",
-    "vendor/impeccable/VERSION.json",
-    "vendor/impeccable/LICENSE",
-    "vendor/impeccable/NOTICE.md",
     "vendor/phoenix-ui/bundle",
     "vendor/phoenix-ui/VERSION.json",
     "vendor/phoenix-ui/LICENSE",

@@ -2,7 +2,7 @@
 
 AGENTS.md 使用通用模板原样创建，不填项目槽位，也不与 CLAUDE.md 镜像。以下指南用于 `external-app-PRODUCT.template.md` 和 `external-app-DESIGN.template.md`；只填产品与设计槽位，保留 Portal 规范。
 
-## 0. 三条硬约束（改坏了 impeccable 就解析不出来）
+## 0. 三条硬约束（改坏了 phoenix-ui 就解析不出来）
 
 - **PRODUCT.md**：七个二级标题，名字与顺序固定 —— `Register` / `Users` / `Product Purpose` / `Brand Personality` / `Anti-references` / `Design Principles` / `Accessibility & Inclusion`。别改名、别加段、别调序。`## Register` 的正文只能是裸词 `product` 或 `brand`，不加句号、不加解释。
 - **DESIGN.md**：YAML frontmatter 必须从**文件第 1 行**开始（前面多一个空行就整块解析不出来），正文**恰好六段**，名字与顺序照抄 —— `1. Overview` / `2. Colors` / `3. Typography` / `4. Elevation` / `5. Components` / `6. Do's and Don'ts`。不要加 Layout / Motion / Responsive 这类第七段，把内容折进六段里。

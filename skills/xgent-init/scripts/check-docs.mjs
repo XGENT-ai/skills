@@ -4,7 +4,7 @@
  *
  *   node check-docs.mjs [目标仓根，默认 .]
  *
- * 挡的是模型输出的三类漂移：残留占位（用户还得手工编辑）、结构走样（impeccable
+ * 挡的是模型输出的三类漂移：残留占位（用户还得手工编辑）、结构走样（phoenix-ui
  * 按标题逐字解析，多一段少一段就读不出来）、过度替换（把 `Page<T>` 这种类型名
  * 当槽位换掉了）。内容质量不归它管。
  *
@@ -128,7 +128,7 @@ if (product) {
   const got = h2(product);
   if (got.join(" | ") !== PRODUCT_H2.join(" | ")) {
     err(
-      `PRODUCT.md 的二级标题必须是这七个、按这个顺序（impeccable 逐字解析）：\n` +
+      `PRODUCT.md 的二级标题必须是这七个、按这个顺序（phoenix-ui 逐字解析）：\n` +
         `      期望  ${PRODUCT_H2.join(" / ")}\n` +
         `      实际  ${got.length ? got.join(" / ") : "（一个都没有）"}`
     );
@@ -206,7 +206,7 @@ if (design) {
   const got = h2(design);
   if (got.join(" | ") !== DESIGN_H2.join(" | ")) {
     err(
-      `DESIGN.md 正文必须恰好六段、名字与顺序照抄（Google Stitch 格式，impeccable 逐字解析）：\n` +
+      `DESIGN.md 正文必须恰好六段、名字与顺序照抄（Google Stitch 格式，phoenix-ui 逐字解析）：\n` +
         `      期望  ${DESIGN_H2.join(" / ")}\n` +
         `      实际  ${got.length ? got.join(" / ") : "（一个都没有）"}`
     );

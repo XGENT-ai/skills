@@ -82,6 +82,27 @@ test('case-specific state identity patches keep all unrelated golden fields and 
   assert.ok(diffResults(phoenixExpected(id, golden, 'linux'), bad).length);
 });
 
+test('all install help entry points require the same transactional help and preserve non-output fields', async () => {
+  const { readGolden, phoenixExpected, diffResults } = await adapter;
+  const sourceLine = fs.readFileSync(path.join(root, 'tools/phoenix-ui/crates/skills/src/commands.rs'), 'utf8')
+    .split('\n')[25].trim();
+  const help = JSON.parse(sourceLine.slice(0, -1)) + '\n';
+  assert.match(help, /Project installs are transactional/);
+  for (const id of ['skills-install-help', 'skills-install-help-short', 'skills-namespace-install-help']) {
+    const golden = readGolden(id), expected = phoenixExpected(id, golden);
+    assert.equal(expected.stdout, help, id);
+    assert.deepEqual({ ...expected, stdout: golden.stdout }, golden, id);
+    for (const change of [
+      { stdout: golden.stdout },
+      { stdout: help.replace('project (default)', 'project') },
+      { stderr: 'unexpected diagnostic\n' },
+      { exit: 1 },
+      { files: { 'unexpected.json': '{}' } },
+    ]) assert.ok(diffResults(expected, { ...expected, ...change }).length, id);
+    assert.deepEqual(readGolden(id), golden, `${id}: immutable golden`);
+  }
+});
+
 test('missing live target values only adapt the public prefix and still reject changed errors', async () => {
   const { metadata, readGolden, phoenixExpected, diffResults, sha256 } = await adapter;
   const ids = ['live-accept-target-missing-value', 'live-inject-target-missing-value',

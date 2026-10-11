@@ -27,7 +27,7 @@
     const initial = fs.realpathSync(path.resolve(env.CLAUDE_PROJECT_DIR || event.cwd || project));
     let dir = initial;
     for (;;) {
-      if (fs.existsSync(path.join(dir, '.phoenix-ui', 'install', 'receipt.json')) || fs.existsSync(path.join(dir, '.git'))) {
+      if (fs.existsSync(path.join(dir, '.phoenix-ui', 'install', 'active.json')) || fs.existsSync(path.join(dir, '.git'))) {
         project = dir;
         break;
       }

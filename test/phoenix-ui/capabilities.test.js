@@ -520,6 +520,16 @@ test('the isolated IME helper handles composition and Safari 229 without submitt
   assert.equal(current.verification.browser, '未验证');
 });
 
+test('live text tells users and agents the Phoenix poll verb, not the retired live-poll.mjs script', () => {
+  const browser = read('skill/scripts/live-browser.js');
+  const apply = read('crates/live/src/manual_edits/apply.rs');
+  for (const [name, text] of [['live-browser.js', browser], ['manual_edits/apply.rs', apply]]) {
+    assert.equal((text.match(/live-poll\.mjs/g) || []).length, 0, name);
+  }
+  assert.match(browser, /run phoenix-ui live-poll to connect/);
+  assert.match(apply, /phoenix-ui live-poll --reply \{\} done --data/);
+});
+
 test('the Windows emitter candidate preserves both hook events and shell quoting', () => {
   const sources = JSON.parse(read('patches/sources.json'));
   const patch = sources.patches.find((entry) => entry.id === 'E12-CODEX-WINDOWS');

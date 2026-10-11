@@ -386,11 +386,13 @@ test('detector smoke validates the actual CLI Finding field and rejects unrelate
   }
 });
 
-test('CI has exactly five native runners, explicit prepare, locked offline gates, separate consumer/fallback and read-only pinned actions', async () => {
+test('CI has exactly four macOS/Linux native runners, explicit prepare, locked offline gates, a Node consumer and read-only pinned actions', async () => {
   const { assets } = await prepare, workflow = fs.readFileSync(path.join(root, '.github/workflows/phoenix-ui.yml'), 'utf8');
-  const native = workflow.slice(workflow.indexOf('  native:'), workflow.indexOf('  windows-arm-fallback:'));
-  assert.equal((native.match(/- platform:/g) || []).length, 5);
-  for (const [platform, entry] of Object.entries(assets.platforms)) {
+  const native = workflow.slice(workflow.indexOf('  native:'), workflow.indexOf('  node18-consumer:'));
+  const platforms = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+  assert.deepEqual([...native.matchAll(/- platform: (\S+)/g)].map(match => match[1]), platforms);
+  for (const platform of platforms) {
+    const entry = assets.platforms[platform];
     assert(native.includes(`platform: ${platform}\n            runner: ${entry.runner}\n            rust-target: ${entry.rustTarget}`));
   }
   for (const [, repository, commit] of workflow.matchAll(/uses: ([\w/-]+)@([^\s#]+)/g)) assert.equal(commit, assets.actions[repository]?.commit);
@@ -406,7 +408,7 @@ test('CI has exactly five native runners, explicit prepare, locked offline gates
   assert.match(workflow, /check-phoenix-deps\.mjs --write/);
   assert.match(workflow, /run test:phoenix/); assert.match(workflow, /--prefix \.\.\/\.\. test/);
   assert.equal((native.match(/CARGO_NET_OFFLINE: 'true'/g) || []).length, 5);
-  assert.match(workflow, /runs-on: windows-11-arm[\s\S]*name: phoenix-ui-windows-x64[\s\S]*--windows-arm-fallback/);
+  assert.doesNotMatch(workflow, /windows-x64|windows-11-arm|--windows-arm-fallback/);
   assert.match(workflow, /node-version: '18\.20\.8'/);
   assert(!/secrets\.|publish|CARGO_TARGET_DIR|wasm-pack/.test(workflow));
   assert(!/continue-on-error/.test(workflow));

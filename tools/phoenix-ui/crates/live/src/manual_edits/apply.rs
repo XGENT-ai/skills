@@ -473,7 +473,7 @@ pub fn build_manual_apply_agent_action(id: Option<&str>) -> Value {
     json!({
         "kind": "manual_edit_apply",
         "required": "apply_source_edits_then_reply",
-        "replyCommand": format!("live-poll.mjs --reply {} done --data '<json>'", id),
+        "replyCommand": format!("phoenix-ui live-poll --reply {} done --data '<json>'", id),
         "warning": "Polling only leases this work item; it does not commit source edits.",
     })
 }
@@ -724,7 +724,7 @@ pub fn summarize_manual_apply_failures(failed: Option<&Value>, cwd: &str) -> Val
 
 fn manual_apply_result_shape_hint(event_id: &str) -> String {
     format!(
-        "Use live-poll.mjs --reply {} done --data '{{\"status\":\"done\",\"appliedEntryIds\":[\"ENTRY_ID\"],\"failed\":[],\"files\":[\"src/page.html\"],\"notes\":[]}}'",
+        "Use phoenix-ui live-poll --reply {} done --data '{{\"status\":\"done\",\"appliedEntryIds\":[\"ENTRY_ID\"],\"failed\":[],\"files\":[\"src/page.html\"],\"notes\":[]}}'",
         event_id
     )
 }

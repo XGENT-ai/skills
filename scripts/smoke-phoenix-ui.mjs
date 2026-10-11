@@ -108,7 +108,8 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
   } catch (error) { record.status = 'failed'; record.error = error.message; throw error; }
   finally {
     fs.writeFileSync(path.join(releaseDir, fallback ? 'windows-arm-fallback-smoke.json' : `runtime-smoke-node${process.versions.node.split('.')[0]}.json`), json(record));
-    if (temporary) fs.rmSync(temporary, { recursive: true, force: true });
+    // Windows can hold a just-exited engine image briefly (seen under ARM64 x64 emulation).
+    if (temporary) fs.rmSync(temporary, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   }
 }
 

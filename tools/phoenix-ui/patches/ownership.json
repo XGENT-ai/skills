@@ -11,7 +11,7 @@
       "upstreamPath": "Cargo.lock",
       "upstreamSha256": "9840c9c17339018bd7de707ccdc370d571f5bdf39cfb3dd90e515e3a5dc79d63",
       "currentPath": "tools/phoenix-ui/Cargo.lock",
-      "currentSha256": "c14ac8fdd0d548e01c6112503455044fb28793558a78430ebd2eb48bba0e5c92",
+      "currentSha256": "f4bd5f42307343de22bf7a2aa08ec8c9a2a63c02a8ffce0ac50ce0019e11a744",
       "change": "modified"
     },
     {
@@ -116,7 +116,7 @@
       "upstreamPath": "crates/cli/Cargo.toml",
       "upstreamSha256": "7c8c4ec5b0bb53db3d28f8947362341e151f6e3a57bdc9bde01fe33f6713f474",
       "currentPath": "tools/phoenix-ui/crates/cli/Cargo.toml",
-      "currentSha256": "e3ea858748f74df46f3a0bce643f9142b83f151bee9df6eb3463b26186ffee11",
+      "currentSha256": "52062367945b5af92c8cbc41b4b63515bb3fc59af925e9af4d8cc7b2e0e89891",
       "change": "modified"
     },
     {
@@ -151,7 +151,7 @@
       "upstreamPath": "crates/cli/src/main.rs",
       "upstreamSha256": "00b20a738560363eb3ab4daa78fb56f35654d3bfcb9d1144548cc6cba954e497",
       "currentPath": "tools/phoenix-ui/crates/cli/src/main.rs",
-      "currentSha256": "bf37f72085f8b52b775dbf5cb9c05e94a3d7ea49d5babeb2f5fd1df38fe14ede",
+      "currentSha256": "27d3817907cb2c7dc06d6219d4ed9d6b95027d3f7998ad6dca63a9c03f293c42",
       "change": "modified"
     },
     {
@@ -410,7 +410,7 @@
       "upstreamPath": "crates/context/src/question_page.rs",
       "upstreamSha256": "3914473c4bb336053f524a1a58e3f476b6320379b03e6379c2ec359e93004fe0",
       "currentPath": "tools/phoenix-ui/crates/context/src/question_page.rs",
-      "currentSha256": "5faa7bcfb6b522641ef72d57349b22b40b7b56d91919b15c419a7fed3dd005d1",
+      "currentSha256": "021e10213137da8529bf3d50a48b7923cf9d860ca541ea311d65d670b294aa1c",
       "change": "modified"
     },
     {
@@ -823,7 +823,7 @@
       "upstreamPath": "crates/live/src/manual_edits/apply.rs",
       "upstreamSha256": "9d26813f76fa27d63f13bf5dd50c01970dc7730b362917323761fc5ef2608130",
       "currentPath": "tools/phoenix-ui/crates/live/src/manual_edits/apply.rs",
-      "currentSha256": "490740c03f6204d541114704bfdf0c1a78f2bb7bb97c66097212d5a43187d877",
+      "currentSha256": "7852a349448dcfbe2f584eed30b16487bffecc8f02d4d1edf94505e3c8503063",
       "change": "modified"
     },
     {
@@ -907,7 +907,7 @@
       "upstreamPath": "crates/skills/src/commands.rs",
       "upstreamSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
       "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
-      "currentSha256": "bfe3f2342a741b8256988af47cceb5404d76145392f263f6ac8ae0f89a426b8b",
+      "currentSha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948",
       "change": "modified"
     },
     {
@@ -1019,7 +1019,7 @@
       "upstreamPath": "skill/SKILL.src.md",
       "upstreamSha256": "0333d85ba408d29c7748838762b6d1e0a211dec22cd7e78ed6db987d983e91d4",
       "currentPath": "skills/phoenix-ui/src/SKILL.src.md",
-      "currentSha256": "cca9eeb11c60e8325d3ec591d37846e8254bdaa6865a9e0e987a8f7ef05a61b7",
+      "currentSha256": "42b37e7b664ffce457a2cf046f8e80e00291d2a79482cc88b32de03e31e6de87",
       "change": "relocated-and-modified"
     },
     {
@@ -1404,7 +1404,7 @@
       "upstreamPath": "skill/scripts/live-browser.js",
       "upstreamSha256": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
       "currentPath": "skills/phoenix-ui/src/scripts/live-browser.js",
-      "currentSha256": "ebc4b17746d31f078ded39664ab9850118a38c10af53f1c2ab13bfeca97746ea",
+      "currentSha256": "14cfebc0c97e6284308678d4970714feb06528b872a5ffa39423523a669afced",
       "change": "relocated-and-modified"
     },
     {
@@ -1434,7 +1434,7 @@
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs",
-      "currentSha256": "dc7444aba0d1bcb85a0296e921fa7092292bdd440301214272dec4e98c06cd83"
+      "currentSha256": "20ee888302d4e6a57a91387fb9686b07ac73bd4da7f453320fe2456453d5ec4e"
     },
     {
       "currentPath": "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs",
@@ -1462,15 +1462,87 @@
     },
     {
       "currentPath": "tools/phoenix-ui/crates/hook/src/missing_launcher.cjs",
-      "currentSha256": "12c0b0b3ca3fa4fd7c601d9a6ff71a80d1bf71cc30b72be637803604146ae95a"
+      "currentSha256": "16d770af4a0c9d7ac801ff7e37e901397e9b12f8da1c73e63c187cc0d5d5c722"
     },
     {
       "currentPath": "tools/phoenix-ui/crates/hook/tests/launcher_contract.rs",
       "currentSha256": "164d7b904ba5e57d8f14200589f99b41bfa0adadae662b3bd32ba751102b788d"
     },
     {
+      "currentPath": "tools/phoenix-ui/crates/install/Cargo.toml",
+      "currentSha256": "a6fbecc9cc00c96dbf6d419306f6db13fa492f946e20ae07da09b80ebab7da83"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/classify.rs",
+      "currentSha256": "e9229002fecc5d72df2fc52868bc7c5c2dae814520159afdb77d49fe94a441b2"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/cli.rs",
+      "currentSha256": "7481faa8adeb7264fc59478249ff2e0709441d5825c3e6fa5937a9fbfe9582cf"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/data.rs",
+      "currentSha256": "503ff8fcfe4c1b631f826cb02229063f437a155247df547de270329caaa9f74c"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/disk.rs",
+      "currentSha256": "7724185a49bb9eeaa4b353f878693c24d200baa07a735c66ea9ffd3bb5c2758e"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/installer.rs",
+      "currentSha256": "c53cc48dad083452a61e2b3e6243a262349954221f08c7dee13466902999439d"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/json.rs",
+      "currentSha256": "2aa553a0d6e736b245f413022898cbcdcf8a2b086c4220b9edd93db15046a8c4"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/lib.rs",
+      "currentSha256": "4241240640bde917f41093795212fe0207ae350906dc83765bc8a9d598f6f7d5"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/plan.rs",
+      "currentSha256": "7a147916cd4515966f7da61c4ad7e18b7d93cb70b1f9c361dd739c58b026e3f2"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/src/transaction.rs",
+      "currentSha256": "80ede360198e959ec842f422b1cdd9d6e5bc2c3c433018489bc38f216065b148"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/templates/impeccable-transition.md",
+      "currentSha256": "625c44e2986e86d7cc2c11f8272d064b3b2927fce415fd884ed9748efda416ff"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/active_receipt.rs",
+      "currentSha256": "7d688337551b3c8a53ee74a595d483671b4675d70923567ff4871c451ab0d2d6"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/classify.rs",
+      "currentSha256": "0e91bf0ffc769185ef2768689186ca2a2ed09536b76a25cbeca5a8670ba7dbcd"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/data.rs",
+      "currentSha256": "0a728ebb3e500900bf1158711097f1df5da98f498a91e004ef1f1e188e807db1"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/installer.rs",
+      "currentSha256": "4374198ae077bfa34b93ff950413028cbfc0f743d0f59ac043ebc0de4bb37bc7"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/plan.rs",
+      "currentSha256": "1be1f17d670bb23dd2b58a7436f19d3648408cffb8316c087206d55542ddc7a1"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/shared_assertions.rs",
+      "currentSha256": "92d781ae57696aa89d8ce1b981628fd104b3dfb38e6c6830423d30fc4ec6ea22"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/crates/install/tests/transactions.rs",
+      "currentSha256": "17a929c4bd1926bb43cb1e24aa07f4de9c60e135c9fe68384cf98abc6e5894f4"
+    },
+    {
       "currentPath": "tools/phoenix-ui/crates/live/assets/bundle-inputs.json",
-      "currentSha256": "424ae6673f8e713c147592b5c1ee682c472049c33b96beccc259b707ed0548a1"
+      "currentSha256": "6a34795815e2353862e2c0552fbc04b0c33356468c925ca64066091b9a91e430"
     },
     {
       "currentPath": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",
@@ -1517,6 +1589,34 @@
       "currentSha256": "9bdf7db0fd2d89573de663892f5ca30d70dc7cdfff818133cc5f1608ff6546ea"
     },
     {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-disconnect.test.mjs",
+      "currentSha256": "7854e67c1e39ef06c838de659c39e84c5a9ef1a31a87428edef66567b383b3e2"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-harness.mjs",
+      "currentSha256": "ea65527490351a2139e9fa5c37976fcedf89e636b18af330c2ed77fd445b598a"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-ime.test.mjs",
+      "currentSha256": "53553cfeda1f8e9a56da277418771faaa1dbc66ac45aca55e763d8c7a0a9ef09"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-question.test.mjs",
+      "currentSha256": "f0e556b9759e5ce28724d36bd9f90334f403b9f9a2488415b4be4b9d7a934c1d"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-safari-walkthrough.mjs",
+      "currentSha256": "07dfcb58a0f9976471938a036915689b2ed3d048c776f9128b110aff34b8e96b"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-safari-webdriver.mjs",
+      "currentSha256": "ac1a69daeb619857566a8d6c01a601d25158270db7cc2504caecbe99904398af"
+    },
+    {
+      "currentPath": "tools/phoenix-ui/tests/live-e2e/phoenix-variants.test.mjs",
+      "currentSha256": "1c81b91d48c09cdad1896efa40284d87362664c9985fd97b6d62c59e62ebd985"
+    },
+    {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/critique-clock.mjs",
       "currentSha256": "60d86f549d2e2a8385c61c34bb23b5d3a4ca268918941b24e21c4109411fc8c4"
     },
@@ -1554,7 +1654,7 @@
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.json",
-      "currentSha256": "e3650904fbefa0aaeecc1e2f8b20dd99d0f7e97b261ad259f9c32d90f388d584"
+      "currentSha256": "a1b5c373157cef09af913501b6e5142fb060dacbad96c55db350c6ef318ab874"
     },
     {
       "currentPath": "tools/phoenix-ui/tests/oracle/adapters/phoenix.mjs",
@@ -1567,7 +1667,7 @@
   ],
   "verification": {
     "sourceHashes": "verified-current-worktree",
-    "runtimeTests": "ci12-full-runtime.log: the dirty@3bad454 full command exited0; 75 Rust groups, 866 passed, zero failed, 9 inherited ignored, zero added lint and540 inherited diagnostics, WASM8474/72 without golden/native/parity differences or unverified functions. Current Windows lint harness normalization preserves all506 compiler inputs and reuses that engine, WASM and Node18/25 consumer evidence under plan section9. Current exact adapter contracts23/23 and independent darwin native oracle860/860 with476 adaptations passed. CI13 completed: four non-Windows native jobs succeeded, Windows passed native collision and75 Rust groups (847/0/9) then failed lint path comparison before WASM/oracle; both post-native consumer jobs were skipped. CI14 local regression4/4, baseline lint zero added/540 inherited and npm193 Node/61 Python passed; actual Windows and full matrix results remain pending.",
-    "browserAndNativePlatforms": "Current darwin-arm64 native/browser runtime groups passed on unchanged compiler inputs. CI13 four non-Windows jobs succeeded on its registered head/tree; Windows native collision, cmd/PowerShell contract and all Rust groups passed, then lint path comparison failed before WASM/oracle. Both consumer jobs were skipped. CI14 actual matrix, IME/Safari and provider sessions remain unverified."
+    "runtimeTests": "M3 pinned Node25 full runtime passed on the Safari-focus-fix source set: Rust1004, WASM8474 and strict oracle860. The only subsequent compiler input change is the four-platform bootstrap release-manifest rule; Rust sources are unchanged. The rebuilt bundle has fresh Node18/25 bootstrap and tarball consumers, Node-to-Rust installer tests and strict oracle evidence in docs/plan/phoenix-ui.records/M3.md; current-candidate CI is still required.",
+    "browserAndNativePlatforms": "CI19 on 142aba6 passed the four macOS/Linux native jobs and Node18 consumer. Windows delivery and acceptance are deferred by the user on 2026-10-11. Current M3 source changes still require candidate CI and Safari acceptance; earlier Chrome and provider evidence is separately scoped in M3.md."
   }
 }
