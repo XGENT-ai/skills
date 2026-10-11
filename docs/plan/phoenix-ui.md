@@ -42,13 +42,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-11T18:40:03+08:00
+- 最近更新：2026-10-11T18:56:03+08:00
 - 当前进度：2/6 个里程碑完成
-- 当前状态：进行中；A验证候选3e236198e72a已本地提交，准备已授权分支推送与四平台CI。当前本地runtime/manifest/consumer检查通过；Safari等待解锁，M3未收口。
+- 当前状态：进行中；A候选已正常推送，CI20正在四native完整测试，Node18后置消费待运行。当前本地检查通过；Safari等待解锁；M4隔离源码超时项补测中，M3未收口。
 - 最近完成：M2 · 自主 Rust 运行时与构建制品
-- 下一步：正常推送A验证候选至已授权ref，获取四平台native与Node18 consumer CI；用户解锁后完成Safari行3/5及真实IME。V-2/3/4/5/10齐证后M3收口，再集成M4/M5。
+- 下一步：取得CI20四native与Node18 consumer终态/artifact；用户解锁后完成Safari行3/5及真实IME，同时继续M4隔离补测。V-2/3/4/5/10齐证后M3收口，再集成M4/M5。
 - 当前阻塞：Safari桌面会话再次locked=true，自动与系统IME检查待用户解锁；候选提交/CI继续。
-- 代码基线：A验证候选3e236198e72a038514cdaf3c8321a186fbad221e，验证分支phoenix-ui/m2-verification-20261009；本地制品在dirty@b7bedab构建，524份编译输入与候选逐hash等同。进度登记尚未提交/本次候选尚未推送，远端HEAD142aba6；M4/M5仍在隔离worktree。
+- 代码基线：验证分支与origin HEAD/CI20均为e723c87264548c3d788dd584c9f3ae9a628093bf，tree1697e928f8f7f20cd4a16fdc27d8ac06e934799b；A代码候选3e236198e72a，524份编译输入与本地已验制品等同。当前仅进度登记dirty；M4/M5源仍在隔离worktree。
 
 ### 完成记录
 
@@ -56,8 +56,8 @@
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
 | M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 待提交（M3收口）；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-11T18:40:03+08:00 | 完整runtime通过；正式四平台manifest修复，当前npm/安装/oracle/tarball均通过；候选已提交待推送/CI，Safari与IME等待解锁。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；验证候选 3e236198e72a |
-| M4 | 进行中 | 2026-10-10T15:05:59+08:00 | 核心171项和21源码路由通过；35题源码正文31通过/4超时，真实native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M3 | 进行中 | 2026-10-11T18:56:03+08:00 | 当前本地runtime/四平台manifest/npm/安装/oracle/tarball通过；候选已推送、CI20运行中，Safari与IME等待解锁。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；验证候选 3e236198e72a；CI20 HEAD e723c8726454 |
+| M4 | 进行中 | 2026-10-11T18:56:03+08:00 | 核心171项和21源码路由通过；35题首跑31通过/4超时，新隔离补测启动，native关联回读子集已验；安装/provider和V-6/V-9继续。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
 | M5 | 进行中 | 2026-10-10T20:10:00+08:00 | clippy修复，7项合同口径裁定并实现（报告命名、处置、豁免等），隔离树217通过；A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
 
 
