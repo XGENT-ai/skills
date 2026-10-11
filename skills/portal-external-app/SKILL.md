@@ -1,6 +1,6 @@
 ---
 name: portal-external-app
-description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖对接契约、manifest、注册、鉴权、/svc 路由、健康检查与一盒联调。'
+description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖对接契约、manifest、注册、鉴权、原生客户端登录、/svc 路由、健康检查与一盒联调。'
 ---
 
 # portal-external-app · 外部镜像服务类应用接入
@@ -19,13 +19,14 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
 | 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
+| 原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
 
 ## 先判形态（决定后面走哪条线）
 
 - 有用户前端？→ `type:"micro"`（前端 dist 同源托管 `/apps/<key>/`，前端开发见 portal-micro-app skill）；无前端 → **`type:"service"`**（无头：不露卡、不可打开，仅作被调用方，控制台可治理）。
-- 谁调它？→ 自己前端（用户态 TDT）/ 其他 App 后端（令牌交换，见 portal-app-exchange skill）/ 其他服务无用户直调（服务账号 `client_credentials`）。三种来路授权姿势不同（integration-contract.md §3 的表）。
+- 谁调它？→ 自己前端（用户态 TDT；原生客户端用授权码 + PKCE 自取同一种 TDT，见 [native-clients.md](references/native-clients.md)）/ 其他 App 后端（令牌交换，见 portal-app-exchange skill）/ 其他服务无用户直调（服务账号 `client_credentials`）。三种来路授权姿势不同（integration-contract.md §3 的表）。
   - ⚠️ 第三种里，如果调你的是**租户自己的**程序（采集器、脚本、CI），租户管理员可以在门户
     `/admin/service-accounts` **自助**开凭证，不用找平台管理员代建。**但它只能勾到你 manifest
     `scopes` 里的 scope** —— 只写在 `serviceScopes` / `privilegedServiceScopes` 里的那条，

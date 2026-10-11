@@ -26,9 +26,10 @@ Manifest 的权威载体是一条**市场清单（marketplace listing）**。安
 | `dependencies` | 依赖的其他清单（安装按拓扑序补装；卸载被依赖会拦截） |
 | `exchangeTargets` | 经令牌交换读取哪些 App（安装时自动建交换白名单 + consent 共授） |
 | `embedCsp` | 托管前端的精确来源声明；开发版本支持 connectSrc/scriptSrc/styleSrc/fontSrc/imgSrc/mediaSrc，须正式发布并启用 strict/v2 后使用，旧门户只支持 connectSrc |
-| `tdtTtl` | TDT 有效期秒数，60–86400，默认 3600 |
 
 运营字段（租户管理员设，非 Manifest）：`visibility` / `showInCenter` / `pinned` / `enabledNavItemIds` / `webhookUrl` / `allowExchange` / `exchangeWhitelist`。
+
+令牌策略同样归租户管理员（应用配置里设，Manifest 不接受，写了只会让发布进人工审核且不生效）：`tdtTtl`（TDT 有效期秒数，60–86400，缺省 3600）/ `allowRefresh` / `refreshTtl`。App 不要依赖某个固定的 TDT 寿命。
 
 ## 3. ACL Manifest schema
 
