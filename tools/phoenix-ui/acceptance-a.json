@@ -1,0 +1,3231 @@
+{
+  "schemaVersion": 1,
+  "phase": "A",
+  "status": "in-progress",
+  "recordedAt": "2026-10-12T02:21:42.777866+00:00",
+  "plan": "docs/plan/phoenix-ui.md",
+  "progress": "docs/plan/phoenix-ui.records/M3.md",
+  "snapshot": {
+    "path": "tools/phoenix-ui/capabilities.json",
+    "sha256": "a3de5e40768fdf9b5679c5cef0fe41356e227c6bcde5a46d66cb85e2925f0df6",
+    "role": "Fixed source/interface capture and historical method limits; its未验证fields are not the current A execution index."
+  },
+  "baseline": {
+    "head": "17d188aed2dc2188c1ad823b70b5b5dbbe4d3a97",
+    "compilerInputCount": 524,
+    "binarySha256": "c86fbb47a9357c2812caffdb875a4946d04101a829a7b90466ac23f73685de4b",
+    "correctedTarballSha256": "2f20d47443597f694c90a69dbf3ef1bb9dce4285b1477db461b9496c8c165720",
+    "currentClosingTreeCI": "pending new candidate; CI22 applies only to its observed tree"
+  },
+  "ownerDisposition": {
+    "accepted": true,
+    "scope": "Accept each named assertion and its documented scope; no blanket runtimePASS for24 design commands,97 environment keys,19 host applications or inheritedignored methods.",
+    "observedGroups": [
+      "cli",
+      "install-state",
+      "design-routing",
+      "provider",
+      "network-host",
+      "catalog-context",
+      "browser-live-ime",
+      "platform-artifact",
+      "numeric",
+      "license-metadata",
+      "performance",
+      "frozen-env"
+    ],
+    "reuseRule": "Read this index and the latest M3 record before running checks. Reuse passed groups with unchanged relevant code/input/tool configuration; run only missing or affected checks.",
+    "draft": "local/phoenix-ui/m3-a-gate-audit/a-acceptance-disposition-map-20261012.json",
+    "draftSha256": "bb1abc8d3255f95dfebf9e040069293cd25afe8ba005043ff362b1442935f15f"
+  },
+  "groups": {
+    "cli": {
+      "claim": "Current CLI input/output/exit and exact adaptations are source-bound; each row uses concrete case IDs or explicit producer/runtime entry, not aggregate860.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-oracle-four-platform-final.json",
+          "sha256": "43ba4b68c857cf15ca1cb79b51248a43ae282c93b3d9a3700daab265d6578e6c",
+          "anchor": "cases[].id/status/sourceFile/actual + runtime c86",
+          "proves": "Concrete oracle command contracts including aliases, scope errors, target/path and stored output"
+        },
+        {
+          "path": "local/phoenix-ui/ci22-artifacts/artifact-byte-check.json",
+          "sha256": "762eacdcdb5c8ef171f932aa383a43132f0a8876be6491c02ae10ab4912b53e3",
+          "anchor": "four target oracle/phases/source bytes",
+          "proves": "Supported platform contract replay; Linux one explicit Darwin/Windows-only skip retained"
+        }
+      ],
+      "limits": [
+        "Oracle skills.mjs seven cases are help only. Installation behavior comes from installation group, not help.",
+        "Paid image outputs, scoped real browser capture and provider-natural semantics have separate evidence. The ignored legacy skill-release signature test is historical test-only and is not a Phoenix production acceptance requirement."
+      ]
+    },
+    "install-state": {
+      "claim": "A install/migrate/update/recover/rollback original-byte, CAS, shared-neighbor and hostile-path behavior has actual scoped evidence.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-root-install-full-6.log",
+          "sha256": "e962e4b120189a8dd675550f4127f8a35ee2e73faad2adb7cd57eca3b62bd404",
+          "anchor": "named tests: all_six_shared_hook_shapes_apply_exact_bundle_handlers_and_rollback; rollback_preserves_later_allow_guard_unknown_fields_and_original_text; killed_apply_is_recoverable_at_each_durable_boundary_and_receipt_is_last; symlink/refusal tests",
+          "proves": "Rust transaction behavior,148 original provider/channel fixtures, shared JSON preservation and interruption recovery"
+        },
+        {
+          "path": "local/phoenix-ui/m3-node-install-four-platform-final.log",
+          "sha256": "eb59332ce33b519e496edb565204b48d79afc5ab0a9755868e59930d40c60166",
+          "anchor": "all five actual named tests, especially 0.6.0 byte-for-byte rollback and two guards+Phoenix exactly one",
+          "proves": "Current Node→Rust ordering and root package-bin integration"
+        },
+        {
+          "path": "local/phoenix-ui/m3-tarball-consumer-four-platform/result.json",
+          "sha256": "b9ab7f5d48cb4aa20271ff98494d41c7812c4ab0b88a65bf99dd74469b4c14ab",
+          "anchor": "Node18/25 actual offline install→repeat→context→rollback",
+          "proves": "Actual A tarball consumer behavior"
+        },
+        {
+          "path": "local/phoenix-ui/m3-sessions/runs/candidate-20261011/results.json",
+          "sha256": "b29d36823b2cabd2fd124c75cf57507f2fd585942a43f07d324bf36bf003bced",
+          "anchor": "s2-from-0.3.0/s2-from-0.6.0 rollback process, explained/unexplained and rollback.oldTool.live requirements",
+          "proves": "Real old-package migration/provider/rollback groups under historical source equivalence"
+        }
+      ],
+      "limits": [
+        "Node-owned guard updates precede Phoenix transaction; compare against Phoenix pre-apply backup, not erase later user changes.",
+        "Retained new state/product edits are deliberate; no sudden-power-loss guarantee.",
+        "Final B tarball/A→B upgrade remains M6."
+      ]
+    },
+    "design-routing": {
+      "claim": "All24 command source/reference/provider contracts are mapped; real representative/natural design selection is recorded separately.",
+      "evidence": [
+        {
+          "path": "test/phoenix-ui/capabilities.test.js",
+          "sha256": "23671d3b9ca0073e7e88e789fd4e2477150a7e5d76a4df2bb8589b1662d89adc",
+          "anchor": "tests at108/283: command table/metadata/pin + provider output/source bytes",
+          "proves": "Source/generation identity and24 command reference availability; the frozen未验证 fields remain intentional"
+        },
+        {
+          "path": "local/phoenix-ui/m3-a-routing-current/root-byte-check.json",
+          "sha256": "d50bd546fceafbcdca59fe225c3fcff8d956b1ba94ab2086b018921f96916b3d",
+          "anchor": "codex-advice/implement scoped actual SKILL357f… complete-byte reads + context0",
+          "proves": "Current A natural Codex choice/loading and bounded implementation"
+        },
+        {
+          "path": "local/phoenix-ui/m3-a-routing-current/cases/claude-advice/session-http-proxy/events.jsonl",
+          "sha256": "aaf51b9bed037d214f875be8d7d47297864783db7638c2b3bc3e5b6f14bcd7c2",
+          "anchor": "Skill20, actual instruction body27, denied context35, separate fallback38, original PRODUCT39/DESIGN45",
+          "proves": "Current natural Claude advice discovery/full instructions/honest manual fallback"
+        },
+        {
+          "path": "local/phoenix-ui/m3-a-routing-current/cases/claude-implement/session-http-proxy/events.jsonl",
+          "sha256": "22df7a9b71a96cf93f7a9440e495baff290de8f08b09f214d55db1110f383da7",
+          "anchor": "Skill39, actual instruction body45, denied context52, fallback55, craft-floor56, Edit72",
+          "proves": "Current natural Claude implementation and bounded edit; native context explicitly not executed"
+        },
+        {
+          "path": "local/phoenix-ui/m3-interactive/results.json",
+          "sha256": "8721a71530caa3a12d1285e3058b0283831b08f8d2fe8f6a806244ebfa42459a",
+          "anchor": "actual polish sessions and handler counts",
+          "proves": "Historical representative explicit design operation; cannot stand in for natural routing"
+        }
+      ],
+      "limits": [
+        "No claim of24 separate fresh provider executions or whole visual quality acceptance.",
+        "Native context refusal/failure may use source SKILL27 fallback; do not record native exit0 for denied tools.",
+        "Only A source/package considered; M4 installed design quartet/old35 source cases excluded."
+      ]
+    },
+    "provider": {
+      "claim": "Generated/native-install/context/pin coverage and hook protocol fixtures distinguished from actual host sessions.",
+      "evidence": [
+        {
+          "path": "test/phoenix-ui/capabilities.test.js",
+          "sha256": "23671d3b9ca0073e7e88e789fd4e2477150a7e5d76a4df2bb8589b1662d89adc",
+          "anchor": "249/283 matrices and provider runtimeStatus frozen at279/352",
+          "proves": "Nineteen generated outputs and different native scan/pin categories; no invented support from file existence"
+        },
+        {
+          "path": "local/phoenix-ui/m3-root-install-full-6.log",
+          "sha256": "e962e4b120189a8dd675550f4127f8a35ee2e73faad2adb7cd57eca3b62bd404",
+          "anchor": "fixed_release_148_provider_channel_inputs_prepare_strict_migration_plans_readonly; all_six_shared_hook_shapes_apply_exact_bundle_handlers_and_rollback",
+          "proves": "Concrete provider/channel input-output/merge protocol fixtures"
+        },
+        {
+          "path": "local/phoenix-ui/m3-interactive/results.json",
+          "sha256": "8721a71530caa3a12d1285e3058b0283831b08f8d2fe8f6a806244ebfa42459a",
+          "anchor": "Codex0.162.0 trusted4 handlers/restart; Claude2.1.296 trusted workspace/restart/project hooks",
+          "proves": "Actual trust/reload/one-handler contract for required Claude/Codex"
+        },
+        {
+          "path": "local/phoenix-ui/m3-a-gate-audit/historical-provider-reuse-boundary.json",
+          "sha256": "6ec014b56d512bb54fd8051c5e0edffcc0a8072628f026ff9d35ff6be3e47dc6",
+          "anchor": "93 snapshot files plus23 bin/guard/aux source equality; four exact affected input differences",
+          "proves": "Reuse scope only for unchanged groups, original provider/environment provenance retained"
+        }
+      ],
+      "limits": [
+        "Other host applications are fixture/protocol checked, not claimed real sessions.",
+        "Windows actual shell/IME/provider deferred by current plan0.2.",
+        "Early bypass-hook-trust sessions are not trust proof; separate actual interactive sessions close that gap.",
+        "Existing Codex goal guard only validates0.160.0; later-version warning is preserved, not misreported as a newly validated guard version."
+      ]
+    },
+    "network-host": {
+      "claim": "Default upstream contacts removed/replaced, explicit external actions distinguished; local host copy callback cannot silently start another provider CLI.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-full-runtime-node25-focus-path-fixed.log",
+          "sha256": "f14c02ba20c4074634d4b5016f2e067d93286d65c176178b53c114fa68342e3f",
+          "anchor": "898 copy_edit_never_spawns_secondary_cli;899 host_poll_reply_commits_copy_without_a_second_runner",
+          "proves": "Actual PATH traps and host-poll/apply contracts"
+        },
+        {
+          "path": "tools/phoenix-ui/crates/live/tests/host_copy_edit.rs",
+          "sha256": "d850f6748f42109d1882ee82091ba48a9b1381aeb1e839a06a625993aa1604fa",
+          "anchor": "46–84 traps;114 onward default/chat and explicit codex/claude/veto rejection",
+          "proves": "Required causal assertions, not mere process count"
+        },
+        {
+          "path": "local/phoenix-ui/browser-network-acceptance/result.json",
+          "sha256": "c8473fc97347288fe11b8c2ec9e363845e33c2dc3a418f5443723d3defbc54ab",
+          "anchor": "actual HAR/capture output and external resource omission",
+          "proves": "Scoped real Chrome native capture/network path; source-equivalent unaffected capture behavior only"
+        },
+        {
+          "path": "local/phoenix-ui/m3-safari-focus-foreground-20261012/row5-question-cards/results.json",
+          "sha256": "83eed9cadfce2404b07127d7a1190de36baf12f0f083acfcd1a7ec2c25f35caa",
+          "anchor": "broken-image onlyLoopbackRequests and real4-minute fallback",
+          "proves": "Current local question/candidate behavior; Safari has Resource Timing rather than HAR"
+        }
+      ],
+      "limits": [
+        "Explicit image API/explicit URL behavior is authorized-on-request, not zero total possible network.",
+        "Real paid image/asset account success is not observed; retain unrun account boundary under plan9.3.",
+        "HAR proves its capture path, not all unrelated API or provider traffic."
+      ]
+    },
+    "catalog-context": {
+      "claim": "Current local catalog, deterministic seeds/modes, errors/insufficient/no-image fallback and incumbent context contract have concrete evidence.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-full-runtime-node25-focus-path-fixed.log",
+          "sha256": "f14c02ba20c4074634d4b5016f2e067d93286d65c176178b53c114fa68342e3f",
+          "anchor": "concept_seed::local_catalog_tests a_small_catalog_returns_actual_count_and_never_borrows_another_mode; builtin_catalog_supports_both_scopes_and_all_four_modes_deterministically",
+          "proves": "Local invalid/small/mode-separated/deterministic contracts"
+        },
+        {
+          "path": "local/phoenix-ui/m3-oracle-four-platform-final.json",
+          "sha256": "43ba4b68c857cf15ca1cb79b51248a43ae282c93b3d9a3700daab265d6578e6c",
+          "anchor": "specific context/doctor/pin/question cases[].actual",
+          "proves": "Original context/state/command prefix interfaces"
+        },
+        {
+          "path": "local/phoenix-ui/m3-safari-focus-foreground-20261012/row5-question-cards/results.json",
+          "sha256": "83eed9cadfce2404b07127d7a1190de36baf12f0f083acfcd1a7ec2c25f35caa",
+          "anchor": "desktop/narrow/broken-image checks and actual answer/fallback",
+          "proves": "Real current local text-card selection without remote image invention"
+        }
+      ],
+      "limits": [
+        "Original local24concept/8composition source is not a user-accepted design or quantity/quality equivalence claim.",
+        "M4 profiles, parseCoverage/provenance/accepted brief API enhancements remain B-owned.",
+        "The frozen full-E12 gap records selective backport policy, not a requirement to import all0.1.12."
+      ]
+    },
+    "browser-live-ime": {
+      "claim": "Scoped original real Chrome/Safari paths, actual IME and accept/discard/move/recover operations are individually recorded.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-live-walkthrough/candidate-ime/run.log",
+          "sha256": "0ca22e76d5e20c0e77e015ddd8a7d935592c836c8220d82d847c04c74c0b69f3",
+          "anchor": "IME chrome/safari/composing ordering actual tests12",
+          "proves": "Headed Chrome simulated event ordering; does not replace real Safari keyboard"
+        },
+        {
+          "path": "local/phoenix-ui/m3-live-walkthrough/candidate-disconnect/run.log",
+          "sha256": "c849fbdd2f3274b4e6cb4c0d77b181cbbc8aab71153e160b6b7f982efdcfbcf8",
+          "anchor": "stopped/killed/normal helper three concrete cases",
+          "proves": "Disconnect/restart/recovery paths"
+        },
+        {
+          "path": "local/phoenix-ui/m3-live-walkthrough/candidate-variants/run.log",
+          "sha256": "ee195489cac33ef7012741a40441894647e0f2d7fdecdc833739c4b37a8256cf",
+          "anchor": "row3 accept/discard/move + row4 failed/partial outcomes",
+          "proves": "Actual browser variant and failure-state paths"
+        },
+        {
+          "path": "local/phoenix-ui/m3-native-safari-current/final-ime-proof.json",
+          "sha256": "036a16621d6daea52a0ed56a41745ec764bf70fc1185bccbb140c0b852af25b2",
+          "anchor": "configure/annotation/slot/Steer real229 + unchanged request count + full Chinese submission",
+          "proves": "Real Safari IME case-specific evidence"
+        },
+        {
+          "path": "local/phoenix-ui/m3-safari-current-20261012-v2/row3-accept-discard-move/results.json",
+          "sha256": "8b4f35259ba4df7fe7dcf3c89b0638e376bb9d1d1a876be7b67844599c5ba6bf",
+          "anchor": "five original cases and14 real pointer clicks",
+          "proves": "Current A byte restoration, chosen variant, stop cleanup and move recovery"
+        },
+        {
+          "path": "local/phoenix-ui/m3-safari-focus-foreground-20261012/root-final-focus-proof.json",
+          "sha256": "820434fdb702937f1fceacbf8e1c7b192ec09d05cf95d45dce0018b1cfb9b068",
+          "anchor": "three original cases49 checks;45 choose stops/90 keyboard phases focused; four nonkeyboard unfocused frames preserved",
+          "proves": "Current original Safari row5 criteria pass without product changes"
+        }
+      ],
+      "limits": [
+        "Safari narrow pointer click is not real touch proof; no Safari CDP/HAR.",
+        "Historic failures remain, with no unsupported exact causal attribution.",
+        "The ignored legacy Impeccable skill-release signature integration remains a historical test-only method, not a browser or Phoenix production acceptance gap. Keep the missing historical JS differential limitation separate."
+      ]
+    },
+    "platform-artifact": {
+      "claim": "Four supported corresponding-architecture native CI and Node18 consumer, not Windows support or publication.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/ci22-artifacts/run.json",
+          "sha256": "2fa180ed9033ed448606c746df9d935c29e74256e14aeee775a92ec8a952362d",
+          "anchor": "run38149920559 HEAD17d/tree871… actual success",
+          "proves": "A candidate CI identity"
+        },
+        {
+          "path": "local/phoenix-ui/ci22-artifacts/artifact-byte-check.json",
+          "sha256": "762eacdcdb5c8ef171f932aa383a43132f0a8876be6491c02ae10ab4912b53e3",
+          "anchor": "per-platform524 input/real binary/VERSION/ENGINE/bundle/license bytes and explicit Linux skipped case",
+          "proves": "Actual architecture and resource binding; not browser/provider acceptance"
+        },
+        {
+          "path": "local/phoenix-ui/m3-tarball-consumer-four-platform/proof.json",
+          "sha256": "5c1f2958179bcc1aaf1776fc74f2c1aeca274b9f8090c1381076f6f597fda4d6",
+          "anchor": "Node18/25 package/engine/guide identity and six checks each",
+          "proves": "Current A consumer/install collection"
+        }
+      ],
+      "limits": [
+        "If tracked closing tree changes, full matrix per plan10 still needed unless entire actual tested-tree equivalence is independently proved.",
+        "CI22 lacks final B publisher bin anchor; M6 issue, not retroactive current A-platform failure.",
+        "Windows x64/ARM64 and Windows provider/IME deferred, not PASS."
+      ]
+    },
+    "numeric": {
+      "claim": "Native/WASM vectors and exact independent expectations cover named numeric contracts without tolerance broadening.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-full-runtime-node25-focus-result.json",
+          "sha256": "97651069b01b40d05f726aa739a22c238cac3ed52ccaec66f1bcb33e3eeee9dd",
+          "anchor": "8474 vectors/72 interfaces, golden/native/parity zero, functionsWithoutVerification empty",
+          "proves": "Current affected-group numeric results"
+        },
+        {
+          "path": "tools/phoenix-ui/patches/numeric-parity.json",
+          "sha256": "888a77e87768bc8e875781ad52daf8674462219ca305c8588f3197a78f4ccab9",
+          "anchor": "historical27 deltas, boundary/specification vectors and preserved raw provenance",
+          "proves": "Specific numeric fixes and missing historical vector substitutes"
+        }
+      ],
+      "limits": [
+        "Old missing historical vectors remain declared; independent specification vectors are a different evidence type.",
+        "No bulk golden replacement; exact case/finding adaptations retain their own source/actual proof."
+      ]
+    },
+    "license-metadata": {
+      "claim": "Original library license/NOTICE text never missing; stale catalog binding diagnosed and current Root correction independently recorded.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-license-current/release-green.json",
+          "sha256": "1559903442e8e5c001db664495eb7df657dd2938583735f31da59ad75e4ca609",
+          "anchor": "actual0/5.332s --write --distribution-dir current release",
+          "proves": "Current211Rust/54Node/42resources inventory and188 required-file verification; no blockers"
+        },
+        {
+          "path": "tools/phoenix-ui/dependency-audit.json",
+          "sha256": "d4ca270ce8accfedd6d03f0dee0c05fc573af1f79e245279f147b19fa576e330",
+          "anchor": "current inputs/database/checkedAt/rust summary/distribution",
+          "proves": "Current-lock advisory/license report, declared fixed database provenance"
+        },
+        {
+          "path": "local/phoenix-ui/ci22-artifacts/artifact-byte-check.json",
+          "sha256": "762eacdcdb5c8ef171f932aa383a43132f0a8876be6491c02ae10ab4912b53e3",
+          "anchor": "original CI current catalog d4ef… and preserved license bytes",
+          "proves": "CI-generated/current-source bound catalog; existing license texts identical"
+        },
+        {
+          "path": "local/phoenix-ui/m3-license-current/consumers/result.json",
+          "sha256": "696d31062514af17601f5861e4b6416fa5de53041a7aa8cf5acc00ea0d92e278",
+          "anchor": "catalog-only tarball2f20/1362 paths, Node18 and25 ordinary offline lifecycle,188 license files, c86 cache",
+          "proves": "Corrected actual A npm distribution consumption without replaying unchanged installer/provider/browser groups"
+        }
+      ],
+      "limits": [
+        "Catalog metadata is outside524 compiler inputs and bundle manifest but tracked tree changes still obey CI identity gate.",
+        "M6 final binary/npm/publication handoff has its own distribution evidence.",
+        "Old tarball96a remains historical with a stale catalog; corrected2f20 only changes that archive member and does not transfer final B acceptance."
+      ]
+    },
+    "performance": {
+      "claim": "Only three same-fixture release-native primitives measured on current host, no new SLA.",
+      "evidence": [
+        {
+          "path": "local/phoenix-ui/m3-performance-current/comparison.json",
+          "sha256": "13b9c7457396ccb9021e71ebf28877bac58f2e2bcca738e7c75cc7f93276f6cd",
+          "anchor": "old/current three×seven samples; median/RSS arrays",
+          "proves": "Contemporaneous current A versus original staged binary comparison"
+        },
+        {
+          "path": "local/phoenix-ui/m3-performance-current/protocol.json",
+          "sha256": "8e2f86a759c6df8843a9904a6e223edd629e1c9ebfe486daabd00bc790fd9282",
+          "anchor": "old e994/current c86;fixture b45a;Node25/Rust1.99 release;original runner ad1f…",
+          "proves": "Command/environment/statistic method binding"
+        },
+        {
+          "path": "local/phoenix-ui/m3-performance-current/verification.json",
+          "sha256": "656b4f45fb9493a55b48f1ece1e7c74ee46d888ec4b839f243982e36be4606cc",
+          "anchor": "guards/source/fixture/binaries unchanged; own fixtures/processes gone",
+          "proves": "Isolation and cleanup"
+        }
+      ],
+      "limits": [
+        "Sequential small sample, OS loadavg9.14 retained; no significance/cold-start claim.",
+        "Installed Node bootstrap/Stop hook or whole build throughput not measured by this native microbenchmark."
+      ]
+    },
+    "frozen-env": {
+      "claim": "Historical environment ledger/source classification retained; concrete semantic groups linked where observed, no97-variable blanket runtime claim.",
+      "evidence": [
+        {
+          "path": "test/phoenix-ui/capabilities.test.js",
+          "sha256": "23671d3b9ca0073e7e88e789fd4e2477150a7e5d76a4df2bb8589b1662d89adc",
+          "anchor": "355–389 source enumeration and hard-coded未验证 status",
+          "proves": "Frozen source capture contract, not runtime assertion"
+        },
+        {
+          "path": "local/phoenix-ui/m3-a-gate-audit/historical-provider-reuse-boundary.json",
+          "sha256": "6ec014b56d512bb54fd8051c5e0edffcc0a8072628f026ff9d35ff6be3e47dc6",
+          "anchor": "source-bound unchanged installation groups",
+          "proves": "Related runtime evidence keeps original environment versions"
+        }
+      ],
+      "limits": [
+        "OPENAI_API_KEY real paid API success remains unrun; explicit image fixtures only.",
+        "Prepared-build and host-platform environment keys are source/fixture provenance where exercised; no standalone runtime assertion invented for every key.",
+        "CARGO_TARGET_DIR/mbx build policy is bound by M1/M2 build receipts, not a performance timing claim."
+      ]
+    }
+  },
+  "blocksAEntriesMapped": 256,
+  "entries": [
+    {
+      "snapshotPointer": "/cli/root/0",
+      "label": [
+        "--help",
+        "-h"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:35",
+      "currentSource": "crates/cli/src/main.rs:35",
+      "concreteOracleCaseIds": [
+        "cli-help"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/1",
+      "label": [
+        "--version",
+        "-v"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:39",
+      "currentSource": "crates/cli/src/main.rs:39",
+      "concreteOracleCaseIds": [
+        "cli-version"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/2",
+      "label": [
+        "engine-probe"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:48",
+      "currentSource": "crates/cli/src/main.rs:48",
+      "supplementaryRuntimeAssertion": "m3-performance-current/current/startup-{1..7}.json all actual status0 with raw stdout and c86 binary identity"
+    },
+    {
+      "snapshotPointer": "/cli/root/3",
+      "label": [
+        "detect"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:52",
+      "currentSource": "crates/cli/src/main.rs:52",
+      "concreteOracleCaseIds": [
+        "detect-fixture-json-astro-inset-shadow-stripe-astro",
+        "detect-fixture-text-astro-inset-shadow-stripe-astro",
+        "detect-fixture-json-blinking-cursor-html",
+        "detect-fixture-text-blinking-cursor-html",
+        "detect-fixture-json-body-text-viewport-edge-html",
+        "detect-fixture-text-body-text-viewport-edge-html",
+        "detect-fixture-json-border-baseline-html",
+        "detect-fixture-text-border-baseline-html",
+        "detect-fixture-json-buried-raster-html",
+        "detect-fixture-text-buried-raster-html",
+        "detect-fixture-json-clipped-overflow-container-html",
+        "detect-fixture-text-clipped-overflow-container-html",
+        "detect-fixture-json-codex-grid-1d-pass-html",
+        "detect-fixture-text-codex-grid-1d-pass-html",
+        "detect-fixture-json-color-html",
+        "detect-fixture-text-color-html",
+        "detect-fixture-json-cramped-padding-html",
+        "detect-fixture-text-cramped-padding-html",
+        "detect-fixture-json-cream-palette-tailwind-html",
+        "detect-fixture-text-cream-palette-tailwind-html",
+        "detect-fixture-json-cream-palette-html",
+        "detect-fixture-text-cream-palette-html",
+        "detect-fixture-json-css-in-prose-should-flag-html",
+        "detect-fixture-text-css-in-prose-should-flag-html",
+        "detect-fixture-json-css-in-prose-should-pass-html",
+        "detect-fixture-text-css-in-prose-should-pass-html",
+        "detect-fixture-json-cssinjs-should-flag-tsx",
+        "detect-fixture-text-cssinjs-should-flag-tsx",
+        "detect-fixture-json-cssinjs-should-pass-tsx",
+        "detect-fixture-text-cssinjs-should-pass-tsx",
+        "detect-fixture-json-dark-gradient-ground-html",
+        "detect-fixture-text-dark-gradient-ground-html",
+        "detect-fixture-json-dark-theme-modern-color-html",
+        "detect-fixture-text-dark-theme-modern-color-html",
+        "detect-fixture-json-design-system-html",
+        "detect-fixture-text-design-system-html",
+        "detect-fixture-json-edge-flush-cards-html",
+        "detect-fixture-text-edge-flush-cards-html",
+        "detect-fixture-json-em-dash-entities-html",
+        "detect-fixture-text-em-dash-entities-html",
+        "detect-fixture-json-external-styles-css",
+        "detect-fixture-text-external-styles-css",
+        "detect-fixture-json-extreme-negative-tracking-html",
+        "detect-fixture-text-extreme-negative-tracking-html",
+        "detect-fixture-json-first-viewport-column-overflow-html",
+        "detect-fixture-text-first-viewport-column-overflow-html",
+        "detect-fixture-json-flat-type-hierarchy-html",
+        "detect-fixture-text-flat-type-hierarchy-html",
+        "detect-fixture-json-flush-against-border-html",
+        "detect-fixture-text-flush-against-border-html",
+        "detect-fixture-json-framework-next-cssinjs",
+        "detect-fixture-text-framework-next-cssinjs",
+        "detect-fixture-json-framework-next-modules",
+        "detect-fixture-text-framework-next-modules",
+        "detect-fixture-json-framework-next-tailwind",
+        "detect-fixture-text-framework-next-tailwind",
+        "detect-fixture-json-framework-vite",
+        "detect-fixture-text-framework-vite",
+        "detect-fixture-json-gemini-tells-html",
+        "detect-fixture-text-gemini-tells-html",
+        "detect-fixture-json-glow-html",
+        "detect-fixture-text-glow-html",
+        "detect-fixture-json-gpt-tells-html",
+        "detect-fixture-text-gpt-tells-html",
+        "detect-fixture-json-heading-rhythm-html",
+        "detect-fixture-text-heading-rhythm-html",
+        "detect-fixture-json-hero-eyebrow-chip-html",
+        "detect-fixture-text-hero-eyebrow-chip-html",
+        "detect-fixture-json-hook-inline-ignore-html",
+        "detect-fixture-text-hook-inline-ignore-html",
+        "detect-fixture-json-icon-tile-stack-html",
+        "detect-fixture-text-icon-tile-stack-html",
+        "detect-fixture-json-image-backed-contrast-html",
+        "detect-fixture-text-image-backed-contrast-html",
+        "detect-fixture-json-italic-serif-display-html",
+        "detect-fixture-text-italic-serif-display-html",
+        "detect-fixture-json-jsx-should-flag-jsx",
+        "detect-fixture-text-jsx-should-flag-jsx",
+        "detect-fixture-json-jsx-should-pass-jsx",
+        "detect-fixture-text-jsx-should-pass-jsx",
+        "detect-fixture-json-kicker-above-heading-html",
+        "detect-fixture-text-kicker-above-heading-html",
+        "detect-fixture-json-layout-html",
+        "detect-fixture-text-layout-html",
+        "detect-fixture-json-legitimate-borders-html",
+        "detect-fixture-text-legitimate-borders-html",
+        "detect-fixture-json-linked-stylesheet-html",
+        "detect-fixture-text-linked-stylesheet-html",
+        "detect-fixture-json-linked-url-patterns-css",
+        "detect-fixture-text-linked-url-patterns-css",
+        "detect-fixture-json-linked-url-patterns-html",
+        "detect-fixture-text-linked-url-patterns-html",
+        "detect-fixture-json-modern-color-borders-html",
+        "detect-fixture-text-modern-color-borders-html",
+        "detect-fixture-json-motion-html",
+        "detect-fixture-text-motion-html",
+        "detect-fixture-json-multifile",
+        "detect-fixture-text-multifile",
+        "detect-fixture-json-named-color-borders-html",
+        "detect-fixture-text-named-color-borders-html",
+        "detect-fixture-json-nav-cta-constructions-html",
+        "detect-fixture-text-nav-cta-constructions-html",
+        "detect-fixture-json-nonrendered-text-html",
+        "detect-fixture-text-nonrendered-text-html",
+        "detect-fixture-json-numbered-section-labels-html",
+        "detect-fixture-text-numbered-section-labels-html",
+        "detect-fixture-json-numbered-section-markers-html",
+        "detect-fixture-text-numbered-section-markers-html",
+        "detect-fixture-json-oklch-neon-text-html",
+        "detect-fixture-text-oklch-neon-text-html",
+        "detect-fixture-json-organic-clip-path-html",
+        "detect-fixture-text-organic-clip-path-html",
+        "detect-fixture-json-overlay-positioning-html",
+        "detect-fixture-text-overlay-positioning-html",
+        "detect-fixture-json-oversized-h1-browser-html",
+        "detect-fixture-text-oversized-h1-browser-html",
+        "detect-fixture-json-oversized-h1-html",
+        "detect-fixture-text-oversized-h1-html",
+        "detect-fixture-json-overused-font-html",
+        "detect-fixture-text-overused-font-html",
+        "detect-fixture-json-partial-component-html",
+        "detect-fixture-text-partial-component-html",
+        "detect-fixture-json-placeholder-contrast-html",
+        "detect-fixture-text-placeholder-contrast-html",
+        "detect-fixture-json-pseudo-stripe-css",
+        "detect-fixture-text-pseudo-stripe-css",
+        "detect-fixture-json-pseudo-stripe-html",
+        "detect-fixture-text-pseudo-stripe-html",
+        "detect-fixture-json-pseudo-stripe-vue",
+        "detect-fixture-text-pseudo-stripe-vue",
+        "detect-fixture-json-pulsing-dot-html",
+        "detect-fixture-text-pulsing-dot-html",
+        "detect-fixture-json-quality-html",
+        "detect-fixture-text-quality-html",
+        "detect-fixture-json-radial-spotlight-glow-html",
+        "detect-fixture-text-radial-spotlight-glow-html",
+        "detect-fixture-json-repeated-container-text-html",
+        "detect-fixture-text-repeated-container-text-html",
+        "detect-fixture-json-reveal-working-html",
+        "detect-fixture-text-reveal-working-html",
+        "detect-fixture-json-scoped-ignore-html",
+        "detect-fixture-text-scoped-ignore-html",
+        "detect-fixture-json-script-error-html",
+        "detect-fixture-text-script-error-html",
+        "detect-fixture-json-shadowed-form-id-html",
+        "detect-fixture-text-shadowed-form-id-html",
+        "detect-fixture-json-shape-assembled-illustration-html",
+        "detect-fixture-text-shape-assembled-illustration-html",
+        "detect-fixture-json-should-flag-html",
+        "detect-fixture-text-should-flag-html",
+        "detect-fixture-json-should-pass-html",
+        "detect-fixture-text-should-pass-html",
+        "detect-fixture-json-svelte-should-flag-svelte",
+        "detect-fixture-text-svelte-should-flag-svelte",
+        "detect-fixture-json-svelte-should-pass-svelte",
+        "detect-fixture-text-svelte-should-pass-svelte",
+        "detect-fixture-json-text-occlusion-html",
+        "detect-fixture-text-text-occlusion-html",
+        "detect-fixture-json-text-overflow-html",
+        "detect-fixture-text-text-overflow-html",
+        "detect-fixture-json-typography-should-flag-html",
+        "detect-fixture-text-typography-should-flag-html",
+        "detect-fixture-json-typography-should-pass-html",
+        "detect-fixture-text-typography-should-pass-html",
+        "detect-fixture-json-typography-html",
+        "detect-fixture-text-typography-html",
+        "detect-fixture-json-undersized-ui-text-html",
+        "detect-fixture-text-undersized-ui-text-html",
+        "detect-fixture-json-visual-contrast-html",
+        "detect-fixture-text-visual-contrast-html",
+        "detect-fixture-json-vue-should-flag-vue",
+        "detect-fixture-text-vue-should-flag-vue",
+        "detect-fixture-json-vue-should-pass-vue",
+        "detect-fixture-text-vue-should-pass-vue",
+        "detect-dir-json-all-fixtures",
+        "detect-dir-text-all-fixtures",
+        "detect-dir-quiet-all-fixtures",
+        "detect-scope-type",
+        "detect-scope-layout-text",
+        "detect-scope-both",
+        "detect-scope-unknown",
+        "detect-no-advisory-json",
+        "detect-no-advisory-text",
+        "detect-multifile-json",
+        "detect-multifile-text",
+        "detect-framework-vite-json",
+        "detect-framework-next-tailwind-json",
+        "detect-framework-next-modules-text",
+        "detect-framework-next-cssinjs-json",
+        "detect-jsx-commented-img",
+        "detect-unresolved-custom-property-padding",
+        "detect-help",
+        "detect-no-args",
+        "detect-missing-file",
+        "detect-missing-file-json",
+        "detect-missing-file-with-findings",
+        "detect-unreadable-file-json",
+        "detect-unreadable-file-in-dir",
+        "detect-unknown-flag",
+        "detect-bad-viewport",
+        "detect-config-page-json",
+        "detect-config-page-text",
+        "detect-config-page-no-config",
+        "detect-config-page-no-design-system",
+        "detect-config-dir-json",
+        "detect-config-dir-text",
+        "detect-config-dir-dot",
+        "detect-config-inline-json",
+        "detect-config-inline-disabled",
+        "detect-config-css-json",
+        "detect-config-css-text",
+        "detect-config-vendor-ignored",
+        "detect-config-from-subdir",
+        "detect-config-extensions-dir-json",
+        "detect-config-extensions-dir-no-config",
+        "detect-config-cross-project"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/4",
+      "label": [
+        "ignores",
+        "ignore"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:53",
+      "currentSource": "crates/cli/src/main.rs:53"
+    },
+    {
+      "snapshotPointer": "/cli/root/5",
+      "label": [
+        "skills"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:54",
+      "currentSource": "crates/cli/src/main.rs:54",
+      "concreteOracleCaseIds": [
+        "skills-install-help",
+        "skills-install-help-short",
+        "skills-link-help",
+        "skills-update-help",
+        "skills-check-help",
+        "skills-namespace-install-help",
+        "skills-namespace-check-help-short"
+      ],
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/6",
+      "label": [
+        "help"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:55",
+      "currentSource": "crates/cli/src/main.rs:61",
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/7",
+      "label": [
+        "install"
+      ],
+      "group": "install-state",
+      "historicalSource": "crates/cli/src/main.rs:55",
+      "currentSource": "crates/cli/src/main.rs:57",
+      "concreteOracleCaseIds": [
+        "skills-install-help",
+        "skills-install-help-short",
+        "skills-namespace-install-help"
+      ],
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/8",
+      "label": [
+        "link"
+      ],
+      "group": "install-state",
+      "historicalSource": "crates/cli/src/main.rs:55",
+      "currentSource": "crates/cli/src/main.rs:61",
+      "concreteOracleCaseIds": [
+        "skills-link-help"
+      ],
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/9",
+      "label": [
+        "update"
+      ],
+      "group": "install-state",
+      "historicalSource": "crates/cli/src/main.rs:55",
+      "currentSource": "crates/cli/src/main.rs:57",
+      "concreteOracleCaseIds": [
+        "skills-update-help"
+      ],
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/10",
+      "label": [
+        "check"
+      ],
+      "group": "install-state",
+      "historicalSource": "crates/cli/src/main.rs:55",
+      "currentSource": "crates/cli/src/main.rs:61",
+      "concreteOracleCaseIds": [
+        "skills-check-help"
+      ],
+      "scopeWarning": "Original skills.mjs only tests help; operational producer/transaction evidence is in install-state group, not inferred from help cases"
+    },
+    {
+      "snapshotPointer": "/cli/root/11",
+      "label": [
+        "migrate"
+      ],
+      "group": "install-state",
+      "historicalSource": null,
+      "currentSource": "crates/cli/src/main.rs:60",
+      "supplementaryRuntimeAssertion": "install-state group exact native Rust tests + real Node bin migration/recover/rollback receipts; no original oracle equivalent"
+    },
+    {
+      "snapshotPointer": "/cli/root/12",
+      "label": [
+        "context"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:57",
+      "currentSource": "crates/cli/src/main.rs:63",
+      "concreteOracleCaseIds": [
+        "context-empty",
+        "context-visual-only",
+        "context-product-only",
+        "context-full",
+        "context-full-target-brief",
+        "context-full-target-related",
+        "context-full-target-route",
+        "context-full-target-missing-file",
+        "context-full-target-last-wins",
+        "context-full-from-subdir",
+        "context-target-missing-value",
+        "context-target-eq-empty",
+        "context-target-followed-by-flag",
+        "context-native-ios",
+        "context-adaptive",
+        "context-bad-platform",
+        "context-monorepo-root",
+        "context-monorepo-target-a",
+        "context-monorepo-target-b-inherits",
+        "context-monorepo-target-dot",
+        "context-monorepo-target-missing",
+        "context-monorepo-from-child-cwd",
+        "context-monorepo-target-bare-name",
+        "context-monorepo-target-bare-name-abs",
+        "context-monorepo-target-bare-unknown",
+        "context-monorepo-target-bare-from-child-cwd",
+        "context-hook-at-enclosing-git-root",
+        "context-hook-at-enclosing-git-root-disabled",
+        "context-hook-not-borrowed-from-caller",
+        "context-hook-not-borrowed-across-nested-git",
+        "context-markerless-nested-git-target",
+        "context-legacy",
+        "context-hook-disabled-env",
+        "context-hook-disabled-config",
+        "context-openai-key",
+        "context-no-staleness-check-env",
+        "context-no-staleness-check-config",
+        "context-staleness-throttle",
+        "context-staleness-cache-env",
+        "context-dir-override",
+        "context-dir-override-relative",
+        "context-dir-override-ignored-when-project-has-product",
+        "context-dir-override-missing",
+        "context-build-path-local-over-shared",
+        "context-build-path-invalid-ignored",
+        "context-fallback-dir-docs",
+        "context-lowercase-product-name",
+        "context-design-only",
+        "context-empty-platform-section",
+        "context-android",
+        "context-adaptive-word",
+        "context-native-evidence-web",
+        "context-build-path-unset-with-surfaces",
+        "context-project-roots-match-nothing",
+        "context-hook-manifest-source-provider",
+        "context-stale-hook-manifest",
+        "context-launcher-hook-active"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/13",
+      "label": [
+        "pin"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:58",
+      "currentSource": "crates/cli/src/main.rs:64",
+      "concreteOracleCaseIds": [
+        "pin-usage-no-args",
+        "pin-usage-one-arg",
+        "pin-bad-action",
+        "pin-bad-command",
+        "pin-bad-command-teach",
+        "pin-no-harness",
+        "pin-unpin-no-harness",
+        "pin-polish",
+        "pin-audit-skips-existing",
+        "pin-live-from-subdir",
+        "pin-unpin-nothing-pinned",
+        "pin-unpin-skips-non-pinned",
+        "pin-then-unpin",
+        "pin-i-impeccable-alias",
+        "pin-opencode-project",
+        "pin-opencode-user-scope",
+        "pin-opencode-skips-foreign-command",
+        "pin-opencode-then-unpin",
+        "pin-opencode-unpin-skips-foreign"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/14",
+      "label": [
+        "detect-csp"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:59",
+      "currentSource": "crates/cli/src/main.rs:65",
+      "concreteOracleCaseIds": [
+        "csp-append-arrays",
+        "csp-append-string",
+        "csp-middleware",
+        "csp-meta",
+        "csp-none",
+        "csp-nuxt-security",
+        "csp-empty",
+        "csp-proxy-root",
+        "csp-proxy-src",
+        "csp-proxy-nested-app",
+        "csp-proxy-nested-pkg",
+        "csp-proxy-helper-ignored"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/15",
+      "label": [
+        "palette"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:60",
+      "currentSource": "crates/cli/src/main.rs:66",
+      "concreteOracleCaseIds": [
+        "palette-id-known",
+        "palette-id-unknown",
+        "palette-from-key",
+        "palette-from-key-2",
+        "palette-env-seed",
+        "palette-from-overrides-env",
+        "palette-id-overrides-from"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/16",
+      "label": [
+        "surface-brief"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:61",
+      "currentSource": "crates/cli/src/main.rs:67",
+      "concreteOracleCaseIds": [
+        "surface-brief-usage",
+        "surface-brief-unknown",
+        "surface-brief-path-file",
+        "surface-brief-path-route",
+        "surface-brief-path-slash",
+        "surface-brief-path-url",
+        "surface-brief-path-outside",
+        "surface-brief-path-missing-target",
+        "surface-brief-path-from-subdir",
+        "surface-brief-list",
+        "surface-brief-list-empty",
+        "surface-brief-read-primary",
+        "surface-brief-read-related",
+        "surface-brief-read-route",
+        "surface-brief-read-route-prefixed",
+        "surface-brief-read-not-found",
+        "surface-brief-read-no-target-ambiguous",
+        "surface-brief-read-no-target-only-brief",
+        "surface-brief-read-none",
+        "surface-brief-read-invalid-target",
+        "surface-brief-read-monorepo-child",
+        "surface-brief-write-usage",
+        "surface-brief-write-read-list",
+        "surface-brief-write-route",
+        "surface-brief-write-url",
+        "surface-brief-write-invalid-target",
+        "surface-brief-write-missing-body",
+        "surface-brief-write-monorepo-child"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/17",
+      "label": [
+        "critique-storage"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:62",
+      "currentSource": "crates/cli/src/main.rs:68",
+      "concreteOracleCaseIds": [
+        "critique-usage",
+        "critique-unknown",
+        "critique-slug-path",
+        "critique-slug-url",
+        "critique-slug-passthrough",
+        "critique-slug-dot",
+        "critique-slug-empty",
+        "critique-slug-missing",
+        "critique-slug-long",
+        "critique-slug-outside",
+        "critique-latest-none",
+        "critique-latest-existing",
+        "critique-latest-other-slug",
+        "critique-trend-existing",
+        "critique-trend-none",
+        "critique-write-usage",
+        "critique-write-then-read",
+        "critique-write-monorepo-child"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/18",
+      "label": [
+        "embed-prompt"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:63",
+      "currentSource": "crates/cli/src/main.rs:69"
+    },
+    {
+      "snapshotPointer": "/cli/root/19",
+      "label": [
+        "signals",
+        "context-signals"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:64",
+      "currentSource": "crates/cli/src/main.rs:70",
+      "concreteOracleCaseIds": [
+        "signals-empty",
+        "signals-visual-only",
+        "signals-full-with-critique",
+        "signals-native-ios",
+        "signals-critique-legacy-keys",
+        "signals-critique-blank-keys",
+        "signals-git-clean-main",
+        "signals-git-dirty-main",
+        "signals-git-feature-branch",
+        "signals-git-dirty-non-ui",
+        "signals-git-dirty-renamed"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/20",
+      "label": [
+        "doctor"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:65",
+      "currentSource": "crates/cli/src/main.rs:71",
+      "concreteOracleCaseIds": [
+        "doctor-help",
+        "doctor-help-short",
+        "doctor-empty-text",
+        "doctor-empty-json",
+        "doctor-visual-only-text",
+        "doctor-visual-only-json",
+        "doctor-product-only-text",
+        "doctor-product-only-json",
+        "doctor-full-text",
+        "doctor-full-json",
+        "doctor-order-boot-and-deep",
+        "doctor-full-sidecar-stale",
+        "doctor-native-ios-text",
+        "doctor-native-ios-json",
+        "doctor-adaptive-text",
+        "doctor-adaptive-json",
+        "doctor-bad-platform-text",
+        "doctor-bad-platform-json",
+        "doctor-monorepo-text",
+        "doctor-monorepo-json",
+        "doctor-monorepo-target-a",
+        "doctor-monorepo-target-b",
+        "doctor-monorepo-child-cwd",
+        "doctor-monorepo-roots-match-nothing",
+        "doctor-legacy-text",
+        "doctor-legacy-json",
+        "doctor-legacy-fix",
+        "doctor-legacy-fix-json",
+        "doctor-legacy-fix-twice",
+        "doctor-legacy-fix-no-overwrite",
+        "doctor-fix-stamps-product",
+        "doctor-fix-clean",
+        "doctor-target-missing-value",
+        "doctor-target-eq-empty",
+        "doctor-target-file",
+        "doctor-hook-conflict",
+        "doctor-legacy-live-dir",
+        "doctor-design-seed-marker",
+        "doctor-design-coverage-missing-all",
+        "doctor-sidecar-schema-missing",
+        "doctor-config-local-and-shared",
+        "doctor-config-malformed",
+        "doctor-config-array",
+        "doctor-hook-script-missing",
+        "doctor-hook-script-present",
+        "doctor-design-drift",
+        "doctor-design-no-drift"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/21",
+      "label": [
+        "concept-seed"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:66",
+      "currentSource": "crates/cli/src/main.rs:72",
+      "concreteOracleCaseIds": [
+        "seed-scope-invalid",
+        "seed-reroll-invalid",
+        "seed-register-invalid",
+        "seed-register-without-reroll",
+        "seed-register-surface",
+        "seed-mode-invalid",
+        "seed-grain-invalid",
+        "seed-platform-invalid",
+        "seed-candidate-count-invalid",
+        "seed-no-product-gate",
+        "seed-direction-local",
+        "seed-direction-local-reroll",
+        "seed-direction-local-reroll-bolder",
+        "seed-direction-local-reroll-safer",
+        "seed-mode-rules-persuade",
+        "seed-mode-rules-experience",
+        "seed-mode-rules-operate",
+        "seed-mode-rules-read",
+        "seed-mode-rules-missing-file",
+        "seed-mode-rules-missing-section",
+        "seed-direction-local-count-5",
+        "seed-direction-local-operate",
+        "seed-direction-local-unscoped",
+        "seed-direction-env-key",
+        "seed-surface-local",
+        "seed-surface-local-default-scope",
+        "seed-surface-local-grain-flow",
+        "seed-surface-local-compositions",
+        "seed-surface-local-card-base",
+        "seed-degraded-direction",
+        "seed-degraded-surface",
+        "seed-degraded-safer",
+        "seed-degraded-bolder",
+        "seed-degraded-no-product-gate",
+        "seed-chosen-telemetry-off",
+        "seed-kind-assigned-telemetry-off",
+        "seed-chosen-bad-kind",
+        "seed-chosen-no-id-challenger",
+        "seed-chosen-api-unreachable"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/22",
+      "label": [
+        "generate-image"
+      ],
+      "group": "network-host",
+      "historicalSource": "crates/cli/src/main.rs:67",
+      "currentSource": "crates/cli/src/main.rs:73"
+    },
+    {
+      "snapshotPointer": "/cli/root/23",
+      "label": [
+        "serve-question"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:68",
+      "currentSource": "crates/cli/src/main.rs:74",
+      "concreteOracleCaseIds": [
+        "question-schema",
+        "question-disabled",
+        "question-headless-ci",
+        "question-headless-ci-start",
+        "question-wait-no-key",
+        "question-wait-no-server",
+        "question-wait-answer-ready",
+        "question-wait-answer-reroll",
+        "question-wait-answer-canon-followup",
+        "question-wait-answer-raw",
+        "question-wait-flip",
+        "question-wait-page-closed",
+        "question-wait-dead-pid",
+        "question-wait-comp-sidecar-missing",
+        "question-wait-answer-comp-sidecar-missing",
+        "question-wait-comp-stale",
+        "question-update-comps-next",
+        "question-update-code-led-no-next",
+        "question-update-comps-landed-no-next",
+        "question-wait-answer-comp-round",
+        "question-stop-no-key",
+        "question-stop-nothing",
+        "question-stop-clears-files",
+        "question-update-no-key",
+        "question-update-empty-options",
+        "question-update-no-server",
+        "question-payload-no-options"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/24",
+      "label": [
+        "component-review"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:69",
+      "currentSource": "crates/cli/src/main.rs:75",
+      "concreteOracleCaseIds": [
+        "component-review-usage",
+        "component-review-plan-missing-plates",
+        "component-review-plan",
+        "component-review-plan-absolute-paths"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/25",
+      "label": [
+        "comp-spec"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:71",
+      "currentSource": "crates/cli/src/main.rs:77",
+      "concreteOracleCaseIds": [
+        "comp-spec-grid",
+        "comp-spec-regions",
+        "comp-spec-print",
+        "comp-spec-plate-prompt",
+        "comp-spec-usage",
+        "comp-spec-excluded-reference",
+        "comp-spec-refuses-painted-chrome"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/26",
+      "label": [
+        "comp-diff"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:72",
+      "currentSource": "crates/cli/src/main.rs:78",
+      "concreteOracleCaseIds": [
+        "comp-diff-json",
+        "comp-diff-text",
+        "comp-diff-no-spec",
+        "comp-diff-threshold-below",
+        "comp-diff-usage"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/27",
+      "label": [
+        "font-match"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:73",
+      "currentSource": "crates/cli/src/main.rs:79",
+      "concreteOracleCaseIds": [
+        "font-match-measure",
+        "font-match-usage"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/28",
+      "label": [
+        "capture-server"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:77",
+      "currentSource": "crates/cli/src/main.rs:83"
+    },
+    {
+      "snapshotPointer": "/cli/root/29",
+      "label": [
+        "build-phase"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:80",
+      "currentSource": "crates/cli/src/main.rs:86",
+      "concreteOracleCaseIds": [
+        "build-phase-start-status",
+        "build-phase-usage"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/30",
+      "label": [
+        "hook"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:95",
+      "currentSource": "crates/cli/src/main.rs:101",
+      "concreteOracleCaseIds": [
+        "hook-stop-baseline-new-finding",
+        "hook-stop-baseline-import-only",
+        "hook-edit-tsx-fresh",
+        "hook-edit-css-fresh",
+        "hook-edit-html-fresh",
+        "hook-edit-clean-tsx",
+        "hook-edit-non-ui-ts",
+        "hook-edit-missing-file",
+        "hook-edit-outside-project",
+        "hook-edit-sensitive",
+        "hook-edit-generated",
+        "hook-edit-write-tool",
+        "hook-edit-multiedit",
+        "hook-edit-no-file-path",
+        "hook-stdin-empty",
+        "hook-stdin-malformed",
+        "hook-stdin-array",
+        "hook-env-disabled",
+        "hook-env-reentrant",
+        "hook-env-quiet",
+        "hook-harness-github-edit",
+        "hook-harness-github-apply-patch",
+        "hook-harness-codex-apply-patch",
+        "hook-harness-cursor-shaped",
+        "hook-harness-forced-github",
+        "hook-audit-log",
+        "hook-native-platform-skip",
+        "hook-config-disabled",
+        "hook-config-ignore-rule",
+        "hook-config-ignore-file",
+        "hook-config-per-edit-all",
+        "hook-config-max-findings-1",
+        "hook-session-fresh-then-pending-then-stop",
+        "hook-session-stop-active",
+        "hook-stop-no-touched",
+        "hook-session-suppression-after-6",
+        "hook-session-two-sessions",
+        "hook-session-grok-edit-then-stop",
+        "hook-session-codex-stop-decision"
+      ]
+    },
+    {
+      "snapshotPointer": "/cli/root/31",
+      "label": [
+        "hook-before-edit"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:96",
+      "currentSource": "crates/cli/src/main.rs:102"
+    },
+    {
+      "snapshotPointer": "/cli/root/32",
+      "label": [
+        "hooks",
+        "hook-admin"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:97",
+      "currentSource": "crates/cli/src/main.rs:103"
+    },
+    {
+      "snapshotPointer": "/cli/root/33",
+      "label": [
+        "init"
+      ],
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:104",
+      "currentSource": "crates/cli/src/main.rs:110"
+    },
+    {
+      "snapshotPointer": "/cli/dynamicRoutes/0",
+      "label": "/cli/dynamicRoutes/0",
+      "group": "browser-live-ime",
+      "historicalSource": "crates/cli/src/main.rs:98",
+      "currentSource": "crates/cli/src/main.rs:98"
+    },
+    {
+      "snapshotPointer": "/cli/dynamicRoutes/1",
+      "label": "/cli/dynamicRoutes/1",
+      "group": "browser-live-ime",
+      "historicalSource": "crates/cli/src/main.rs:101",
+      "currentSource": "crates/cli/src/main.rs:101"
+    },
+    {
+      "snapshotPointer": "/cli/live/0",
+      "label": [
+        "live"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:65",
+      "currentSource": "crates/live/src/lib.rs:65"
+    },
+    {
+      "snapshotPointer": "/cli/live/1",
+      "label": [
+        "live-target"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:66",
+      "currentSource": "crates/live/src/lib.rs:66"
+    },
+    {
+      "snapshotPointer": "/cli/live/2",
+      "label": [
+        "live-status",
+        "status"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:67",
+      "currentSource": "crates/live/src/lib.rs:67"
+    },
+    {
+      "snapshotPointer": "/cli/live/3",
+      "label": [
+        "live-resume",
+        "resume"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:68",
+      "currentSource": "crates/live/src/lib.rs:68"
+    },
+    {
+      "snapshotPointer": "/cli/live/4",
+      "label": [
+        "live-complete",
+        "complete"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:69",
+      "currentSource": "crates/live/src/lib.rs:69"
+    },
+    {
+      "snapshotPointer": "/cli/live/5",
+      "label": [
+        "live-inject",
+        "inject"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:70",
+      "currentSource": "crates/live/src/lib.rs:70"
+    },
+    {
+      "snapshotPointer": "/cli/live/6",
+      "label": [
+        "live-wrap",
+        "wrap"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:71",
+      "currentSource": "crates/live/src/lib.rs:71"
+    },
+    {
+      "snapshotPointer": "/cli/live/7",
+      "label": [
+        "live-insert",
+        "insert"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:72",
+      "currentSource": "crates/live/src/lib.rs:72"
+    },
+    {
+      "snapshotPointer": "/cli/live/8",
+      "label": [
+        "live-accept",
+        "accept"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:73",
+      "currentSource": "crates/live/src/lib.rs:73"
+    },
+    {
+      "snapshotPointer": "/cli/live/9",
+      "label": [
+        "live-server"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:74",
+      "currentSource": "crates/live/src/lib.rs:74"
+    },
+    {
+      "snapshotPointer": "/cli/live/10",
+      "label": [
+        "live-generate"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:75",
+      "currentSource": "crates/live/src/lib.rs:75"
+    },
+    {
+      "snapshotPointer": "/cli/live/11",
+      "label": [
+        "live-poll",
+        "poll"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:76",
+      "currentSource": "crates/live/src/lib.rs:76"
+    },
+    {
+      "snapshotPointer": "/cli/live/12",
+      "label": [
+        "live-commit-manual-edits",
+        "commit-manual-edits"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:77",
+      "currentSource": "crates/live/src/lib.rs:77"
+    },
+    {
+      "snapshotPointer": "/cli/live/13",
+      "label": [
+        "live-discard-manual-edits",
+        "discard-manual-edits"
+      ],
+      "group": "browser-live-ime",
+      "historicalSource": "crates/live/src/lib.rs:80",
+      "currentSource": "crates/live/src/lib.rs:80"
+    },
+    {
+      "snapshotPointer": "/cli/skills",
+      "label": "/cli/skills",
+      "group": "install-state",
+      "historicalSource": "crates/skills/src/commands.rs:52",
+      "currentSource": "crates/skills/src/commands.rs:49"
+    },
+    {
+      "snapshotPointer": "/cli/ignores",
+      "label": "/cli/ignores",
+      "group": "cli",
+      "historicalSource": "crates/detect/src/ignores.rs:45",
+      "currentSource": "crates/detect/src/ignores.rs:526"
+    },
+    {
+      "snapshotPointer": "/cli/hooks",
+      "label": "/cli/hooks",
+      "group": "cli",
+      "historicalSource": "crates/hook/src/admin.rs:1338",
+      "currentSource": "crates/hook/src/admin.rs:1408"
+    },
+    {
+      "snapshotPointer": "/cli/surfaceBrief",
+      "label": "/cli/surfaceBrief",
+      "group": "cli",
+      "historicalSource": "crates/context/src/surface_brief_cli.rs:37",
+      "currentSource": "crates/context/src/surface_brief_cli.rs:20"
+    },
+    {
+      "snapshotPointer": "/cli/componentReview",
+      "label": "/cli/componentReview",
+      "group": "cli",
+      "historicalSource": "crates/context/src/component_review/mod.rs:58",
+      "currentSource": "crates/context/src/component_review/mod.rs:48"
+    },
+    {
+      "snapshotPointer": "/cli/critiqueStorage",
+      "label": "/cli/critiqueStorage",
+      "group": "cli",
+      "historicalSource": "crates/context/src/critique_storage.rs:446",
+      "currentSource": "crates/context/src/critique_storage.rs:445"
+    },
+    {
+      "snapshotPointer": "/cli/pin",
+      "label": "/cli/pin",
+      "group": "cli",
+      "historicalSource": "crates/context/src/pin.rs:214",
+      "currentSource": "crates/context/src/pin.rs:240"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/0",
+      "label": "check-plate",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3003",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3160"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/1",
+      "label": "completion",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3033",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3190"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/2",
+      "label": "start",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3041",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3199"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/3",
+      "label": "status",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3102",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3267"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/4",
+      "label": "scaffold",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3110",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3275"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/5",
+      "label": "note",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3127",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3292"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/6",
+      "label": "record",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3137",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3302"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/7",
+      "label": "advance",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3190",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3373"
+    },
+    {
+      "snapshotPointer": "/cli/buildPhase/entries/8",
+      "label": "finish",
+      "group": "cli",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:3235",
+      "currentSource": "crates/comp-verbs/src/build_phase.rs:3418"
+    },
+    {
+      "snapshotPointer": "/designCommands/0",
+      "label": "craft",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:48",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:50"
+    },
+    {
+      "snapshotPointer": "/designCommands/1",
+      "label": "shape",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:49",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:51"
+    },
+    {
+      "snapshotPointer": "/designCommands/2",
+      "label": "init",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:50",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:52"
+    },
+    {
+      "snapshotPointer": "/designCommands/3",
+      "label": "document",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:51",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:53"
+    },
+    {
+      "snapshotPointer": "/designCommands/4",
+      "label": "extract",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:52",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:54"
+    },
+    {
+      "snapshotPointer": "/designCommands/5",
+      "label": "critique",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:53",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:55"
+    },
+    {
+      "snapshotPointer": "/designCommands/6",
+      "label": "audit",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:54",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:56"
+    },
+    {
+      "snapshotPointer": "/designCommands/7",
+      "label": "polish",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:55",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:57"
+    },
+    {
+      "snapshotPointer": "/designCommands/8",
+      "label": "bolder",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:56",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:58"
+    },
+    {
+      "snapshotPointer": "/designCommands/9",
+      "label": "quieter",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:57",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:59"
+    },
+    {
+      "snapshotPointer": "/designCommands/10",
+      "label": "distill",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:58",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:60"
+    },
+    {
+      "snapshotPointer": "/designCommands/11",
+      "label": "harden",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:59",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:61"
+    },
+    {
+      "snapshotPointer": "/designCommands/12",
+      "label": "onboard",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:60",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:62"
+    },
+    {
+      "snapshotPointer": "/designCommands/13",
+      "label": "animate",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:61",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:63"
+    },
+    {
+      "snapshotPointer": "/designCommands/14",
+      "label": "colorize",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:62",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:64"
+    },
+    {
+      "snapshotPointer": "/designCommands/15",
+      "label": "typeset",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:63",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:65"
+    },
+    {
+      "snapshotPointer": "/designCommands/16",
+      "label": "layout",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:64",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:66"
+    },
+    {
+      "snapshotPointer": "/designCommands/17",
+      "label": "delight",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:65",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:67"
+    },
+    {
+      "snapshotPointer": "/designCommands/18",
+      "label": "overdrive",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:66",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:68"
+    },
+    {
+      "snapshotPointer": "/designCommands/19",
+      "label": "clarify",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:67",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:69"
+    },
+    {
+      "snapshotPointer": "/designCommands/20",
+      "label": "adapt",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:68",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:70"
+    },
+    {
+      "snapshotPointer": "/designCommands/21",
+      "label": "optimize",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:69",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:71"
+    },
+    {
+      "snapshotPointer": "/designCommands/22",
+      "label": "live",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:70",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:72"
+    },
+    {
+      "snapshotPointer": "/designCommands/23",
+      "label": "generate",
+      "group": "design-routing",
+      "historicalSource": "skill/SKILL.src.md:71",
+      "currentSource": "skills/phoenix-ui/src/SKILL.src.md:73"
+    },
+    {
+      "snapshotPointer": "/providers/0",
+      "label": "cursor",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:13",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/1",
+      "label": "claude-code",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:27",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/2",
+      "label": "gemini",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:40",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/3",
+      "label": "dsh",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:49",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/4",
+      "label": "codex",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:63",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/5",
+      "label": "agents",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:80",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/6",
+      "label": "github",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:90",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/7",
+      "label": "kiro",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:106",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/8",
+      "label": "opencode",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:113",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/9",
+      "label": "pi",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:120",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/10",
+      "label": "qoder",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:127",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/11",
+      "label": "trae-cn",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:134",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/12",
+      "label": "trae",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:142",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/13",
+      "label": "rovo-dev",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:149",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/14",
+      "label": "vibe",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:156",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/15",
+      "label": "veto",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:163",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/16",
+      "label": "grok",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:170",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/17",
+      "label": "antigravity",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:187",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/providers/18",
+      "label": "hermes",
+      "group": "provider",
+      "historicalSource": "scripts/lib/transformers/providers.js:194",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/modes",
+      "label": [
+        "persuade",
+        "operate",
+        "read",
+        "experience"
+      ],
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/catalog.rs:18",
+      "currentSource": "crates/context/src/catalog.rs:18"
+    },
+    {
+      "snapshotPointer": "/platforms/0",
+      "label": "darwin-arm64",
+      "group": "platform-artifact",
+      "historicalSource": "crates/skills/src/engine_binary.rs:21",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/platforms/1",
+      "label": "darwin-x64",
+      "group": "platform-artifact",
+      "historicalSource": "crates/skills/src/engine_binary.rs:21",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/platforms/2",
+      "label": "linux-x64",
+      "group": "platform-artifact",
+      "historicalSource": "crates/skills/src/engine_binary.rs:21",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/platforms/3",
+      "label": "linux-arm64",
+      "group": "platform-artifact",
+      "historicalSource": "crates/skills/src/engine_binary.rs:21",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/0",
+      "label": "PRODUCT.md / DESIGN.md / DESIGN.json",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/context.rs:341",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/1",
+      "label": ".impeccable/config.json / config.local.json",
+      "group": "install-state",
+      "historicalSource": "crates/detect/src/config.rs:16",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/2",
+      "label": ".impeccable/design.json",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/staleness.rs:63",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/3",
+      "label": ".impeccable/surfaces",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/surface_briefs.rs:11",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/4",
+      "label": ".impeccable/critique",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/critique_storage.rs:1",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/5",
+      "label": ".impeccable/live/config.json / server.json / sessions / annotations",
+      "group": "install-state",
+      "historicalSource": "crates/live/src/paths.rs:9",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/6",
+      "label": ".impeccable-live.json / .impeccable-live/sessions",
+      "group": "install-state",
+      "historicalSource": "crates/live/src/paths.rs:53",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/7",
+      "label": ".impeccable/live/inject-journal.json",
+      "group": "install-state",
+      "historicalSource": "crates/live/src/journal.rs:13",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/8",
+      "label": ".impeccable/live/pending-manual-edits.json",
+      "group": "install-state",
+      "historicalSource": "crates/live/src/pending_edits.rs:10",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/9",
+      "label": ".impeccable/hook.cache.json / hook.pending.json / hook session state",
+      "group": "install-state",
+      "historicalSource": "crates/hook/src/hook_lib.rs:136",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/10",
+      "label": "~/.impeccable/bin/<version> / update-check.json / staleness-check.json",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/context_cli.rs:470",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/11",
+      "label": ".impeccable/questions / mocks/decision",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/serve_question.rs:291",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/statePaths/12",
+      "label": "~/.impeccable/component-reviews / .impeccable/review",
+      "group": "install-state",
+      "historicalSource": "crates/context/src/component_review/mod.rs:48",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/0",
+      "label": "ALL_PROXY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/http.rs:19"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/1",
+      "label": "BROWSER",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/browser_open.rs:40"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/2",
+      "label": "CARGO_TARGET_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/bundle/src/lib.rs:346"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/3",
+      "label": "CHROME_PATH",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/discovery.rs:20"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/4",
+      "label": "CI",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/lib.rs:63",
+        "crates/cli/src/font_render.rs:36",
+        "crates/context/src/component_review/mod.rs:134"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/5",
+      "label": "CLAUDE_CODE_OAUTH_TOKEN",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1410"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/6",
+      "label": "CODEX_THREAD_ID",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/build_phase.rs:3036",
+        "crates/comp-verbs/src/build_phase.rs:3085"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/7",
+      "label": "COMSPEC",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/serve_question.rs:1207"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/8",
+      "label": "ComSpec",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:469"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/9",
+      "label": "DISPLAY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:134",
+        "crates/context/src/component_review/mod.rs:135"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/10",
+      "label": "DO_NOT_TRACK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:136"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/11",
+      "label": "DSH_HOME",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/providers.rs:99"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/12",
+      "label": "HERMES_HOME",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/providers.rs:86"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/13",
+      "label": "HOME",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/discovery.rs:73",
+        "crates/context/src/util.rs:267",
+        "crates/context/src/util.rs:278",
+        "crates/hook/src/hook_lib.rs:171"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/14",
+      "label": "HTTPS_PROXY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/http.rs:19"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/15",
+      "label": "HTTP_PROXY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/http.rs:20"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/16",
+      "label": "IMPECCABLE_AGENT_TARGET_CLAIM_LEASE_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/server_state.rs:797"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/17",
+      "label": "IMPECCABLE_AGENT_TARGET_RESOLVE_GRACE_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/server_state.rs:808"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/18",
+      "label": "IMPECCABLE_AGENT_TARGET_TIMEOUT_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/server_state.rs:788"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/19",
+      "label": "IMPECCABLE_API_TIMEOUT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:69"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/20",
+      "label": "IMPECCABLE_API_URL",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:80"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/21",
+      "label": "IMPECCABLE_BIN",
+      "group": "frozen-env",
+      "historicalSource": [
+        "skill/scripts/impeccable:4"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/22",
+      "label": "IMPECCABLE_BROWSER",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/discovery.rs:18",
+        "crates/live/src/browser_open.rs:23"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/23",
+      "label": "IMPECCABLE_BUNDLE_PATH",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/bundle.rs:295"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/24",
+      "label": "IMPECCABLE_BUNDLE_SKIP_WASM_PACK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/bundle/src/lib.rs:299"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/25",
+      "label": "IMPECCABLE_CACHE_ROOT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook_lib.rs:164"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/26",
+      "label": "IMPECCABLE_CAPTURE_CAPABILITY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/cli/src/capture_service.rs:112",
+        "crates/cli/src/capture_service.rs:370"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/27",
+      "label": "IMPECCABLE_CAPTURE_PORT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/cli/src/capture_service.rs:369"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/28",
+      "label": "IMPECCABLE_CAPTURE_REVIEW_SESSION",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/cli/src/capture_service.rs:116"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/29",
+      "label": "IMPECCABLE_CARD_BASE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:85"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/30",
+      "label": "IMPECCABLE_CATALOG_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/font_match.rs:388",
+        "crates/context/src/concept_seed.rs:366"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/31",
+      "label": "IMPECCABLE_COMPONENT_REVIEW_IDLE_TIMEOUT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:145"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/32",
+      "label": "IMPECCABLE_COMPONENT_REVIEW_PENDING",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/cli/src/capture_service.rs:118"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/33",
+      "label": "IMPECCABLE_COMPONENT_REVIEW_SESSIONS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/build_phase.rs:2448",
+        "crates/comp-verbs/src/build_phase.rs:2472"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/34",
+      "label": "IMPECCABLE_COMPONENT_REVIEW_TOOL",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/cli/src/capture_service.rs:119",
+        "crates/comp-verbs/src/build_phase.rs:2447",
+        "crates/context/src/component_review/mod.rs:87"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/35",
+      "label": "IMPECCABLE_COMPOSITIONS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:454"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/36",
+      "label": "IMPECCABLE_CONCEPT_SEED",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:576"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/37",
+      "label": "IMPECCABLE_CONTEXT_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context.rs:342"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/38",
+      "label": "IMPECCABLE_CRITIQUE_META",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/critique_storage.rs:477"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/39",
+      "label": "IMPECCABLE_DEV_URL_CANDIDATES",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/live_boot.rs:292",
+        "crates/live/src/live_generate.rs:322",
+        "crates/live/src/live_generate.rs:325",
+        "crates/live/src/live_generate.rs:531"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/40",
+      "label": "IMPECCABLE_DOWNLOAD_BASE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/engine_binary.rs:116"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/41",
+      "label": "IMPECCABLE_HOME",
+      "group": "frozen-env",
+      "historicalSource": [
+        "skill/scripts/impeccable:78"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/42",
+      "label": "IMPECCABLE_HOOK_COMPLETION_ONLY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook.rs:711"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/43",
+      "label": "IMPECCABLE_HOOK_DEPTH",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook.rs:596",
+        "crates/hook/src/hook.rs:72"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/44",
+      "label": "IMPECCABLE_HOOK_DISABLED",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context_cli.rs:49",
+        "crates/hook/src/admin.rs:586",
+        "crates/hook/src/before_edit.rs:671",
+        "crates/hook/src/hook.rs:605",
+        "crates/hook/src/hook.rs:81",
+        "crates/hook/src/hook.rs:907",
+        "crates/hook/src/hook.rs:915"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/45",
+      "label": "IMPECCABLE_HOOK_HARNESS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook_lib.rs:1883"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/46",
+      "label": "IMPECCABLE_HOOK_LOG",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook_lib.rs:2410"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/47",
+      "label": "IMPECCABLE_HOOK_QUIET",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/hook/src/hook.rs:185"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/48",
+      "label": "IMPECCABLE_IMAGE_GEN_FAKE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/generate_image.rs:275"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/49",
+      "label": "IMPECCABLE_LAUNCHER_PROBE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "skill/scripts/impeccable:16"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/50",
+      "label": "IMPECCABLE_LIVE_APPLY_EVENT_HARD_TIMEOUT_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/manual_edits/apply.rs:42"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/51",
+      "label": "IMPECCABLE_LIVE_APPLY_EVENT_SOFT_DEADLINE_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/manual_edits/apply.rs:50"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/52",
+      "label": "IMPECCABLE_LIVE_CONFIG",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/paths.rs:34"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/53",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1274",
+        "crates/live/src/live_server.rs:2425"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/54",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_EFFORT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1512"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/55",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_MOCK_DELAY_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:128"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/56",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_MOCK_RESULT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1177"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/57",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_MOCK_WRITES",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1201"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/58",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_MODEL",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:1527",
+        "crates/live/src/copy_edit_agent.rs:1552"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/59",
+      "label": "IMPECCABLE_LIVE_COPY_AGENT_TIMEOUT_MS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/live_commit_manual_edits.rs:45",
+        "crates/live/src/live_server.rs:2434"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/60",
+      "label": "IMPECCABLE_LIVE_DEBUG_EVENTS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/live_server.rs:155"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/61",
+      "label": "IMPECCABLE_LIVE_MANUAL_EDIT_CHUNK_SIZE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/manual_edits/apply.rs:62"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/62",
+      "label": "IMPECCABLE_LIVE_MANUAL_EDIT_REPAIR_ATTEMPTS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/manual_edits/commit.rs:319"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/63",
+      "label": "IMPECCABLE_LIVE_SVELTE_COMPONENT",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/svelte_component.rs:36"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/64",
+      "label": "IMPECCABLE_NATIVE_CAPTURE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/build_phase.rs:1208",
+        "crates/comp-verbs/src/build_phase.rs:3080",
+        "crates/comp-verbs/src/build_phase.rs:3253",
+        "crates/comp-verbs/src/build_phase.rs:3268"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/65",
+      "label": "IMPECCABLE_NO_STALENESS_CHECK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/staleness_notice.rs:65"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/66",
+      "label": "IMPECCABLE_NO_TELEMETRY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/concept_seed.rs:136"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/67",
+      "label": "IMPECCABLE_NO_UPDATE_CHECK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context_cli.rs:510"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/68",
+      "label": "IMPECCABLE_PALETTE_SEED",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/palette.rs:109"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/69",
+      "label": "IMPECCABLE_PROVIDER_ID",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/provider.rs:90"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/70",
+      "label": "IMPECCABLE_QUESTION_DISABLED",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:136",
+        "crates/context/src/serve_question.rs:537"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/71",
+      "label": "IMPECCABLE_QUESTION_FORCE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:136",
+        "crates/context/src/serve_question.rs:542"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/72",
+      "label": "IMPECCABLE_SELF",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/build_phase.rs:60",
+        "crates/context/src/component_review/mod.rs:78",
+        "crates/context/src/doctor.rs:243",
+        "crates/context/src/provider.rs:100"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/73",
+      "label": "IMPECCABLE_SESSION_ID",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/build_phase.rs:3035",
+        "crates/comp-verbs/src/build_phase.rs:3084"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/74",
+      "label": "IMPECCABLE_SKILL_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/comp-verbs/src/font_match.rs:394",
+        "crates/context/src/provider.rs:86"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/75",
+      "label": "IMPECCABLE_STALENESS_CACHE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/staleness_notice.rs:11"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/76",
+      "label": "IMPECCABLE_SYNTAX_CWD",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:389"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/77",
+      "label": "IMPECCABLE_SYNTAX_FILE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:390"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/78",
+      "label": "IMPECCABLE_SYNTAX_PLUGINS",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/live/src/copy_edit_agent.rs:392"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/79",
+      "label": "IMPECCABLE_UPDATE_CACHE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context_cli.rs:433"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/80",
+      "label": "IMPECCABLE_UPDATE_HOST",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context_cli.rs:472"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/81",
+      "label": "IMPECCABLE_XTASK_SKIP_WASM_PACK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/bundle/src/lib.rs:300"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/82",
+      "label": "NO_COLOR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/prompt.rs:28"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/83",
+      "label": "OPENAI_API_KEY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/context_cli.rs:175",
+        "crates/context/src/generate_image.rs:304"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/84",
+      "label": "OPENCODE_CONFIG_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/pin.rs:122",
+        "crates/skills/src/providers.rs:74"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/85",
+      "label": "PATH",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/discovery.rs:104",
+        "crates/context/src/context_cli.rs:227"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/86",
+      "label": "PROCESSOR_ARCHITECTURE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "skill/scripts/impeccable.cmd:23"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/87",
+      "label": "PUPPETEER_DANGEROUS_NO_SANDBOX",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/lib.rs:74",
+        "crates/cli/src/font_render.rs:40"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/88",
+      "label": "PUPPETEER_EXECUTABLE_PATH",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/browser/src/discovery.rs:19"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/89",
+      "label": "SSH_CONNECTION",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:134"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/90",
+      "label": "SSL_CERT_DIR",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/http.rs:16"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/91",
+      "label": "SSL_CERT_FILE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/http.rs:16"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/92",
+      "label": "TERM",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/skills/src/prompt.rs:29",
+        "crates/skills/src/prompt.rs:39"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/93",
+      "label": "USERPROFILE",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/util.rs:260",
+        "crates/context/src/util.rs:265",
+        "crates/context/src/util.rs:272",
+        "crates/hook/src/hook_lib.rs:169"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/94",
+      "label": "WASM_PACK",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/bundle/src/lib.rs:302"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/95",
+      "label": "WAYLAND_DISPLAY",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/component_review/mod.rs:135"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/environment/96",
+      "label": "XDG_CONFIG_HOME",
+      "group": "frozen-env",
+      "historicalSource": [
+        "crates/context/src/pin.rs:125",
+        "crates/skills/src/providers.rs:77"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/0",
+      "label": "upstream-version",
+      "group": "network-host",
+      "historicalSource": "crates/context/src/context_cli.rs:470",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/1",
+      "label": "upstream-command-help",
+      "group": "network-host",
+      "historicalSource": "crates/skills/src/commands.rs:87",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/2",
+      "label": "upstream-bundle",
+      "group": "network-host",
+      "historicalSource": "crates/skills/src/bundle.rs:310",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/3",
+      "label": "upstream-engine",
+      "group": "network-host",
+      "historicalSource": "crates/skills/src/engine_binary.rs:17",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/4",
+      "label": "direction-roll",
+      "group": "network-host",
+      "historicalSource": "crates/context/src/concept_seed.rs:105",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/5",
+      "label": "chosen-telemetry",
+      "group": "network-host",
+      "historicalSource": "crates/context/src/concept_seed.rs:140",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/6",
+      "label": "card-assets",
+      "group": "network-host",
+      "historicalSource": "crates/context/src/concept_seed.rs:84",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/7",
+      "label": "google-font-specimen",
+      "group": "network-host",
+      "historicalSource": "crates/cli/src/font_render.rs:80",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/8",
+      "label": "google-font-scaffold",
+      "group": "network-host",
+      "historicalSource": "crates/comp-verbs/src/build_phase.rs:1014",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/9",
+      "label": "explicit-image-api",
+      "group": "network-host",
+      "historicalSource": "crates/context/src/generate_image.rs:248",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/10",
+      "label": "explicit-page-url",
+      "group": "network-host",
+      "historicalSource": "crates/browser/src/lib.rs:51",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/networkContacts/11",
+      "label": "loopback-live-question-capture",
+      "group": "network-host",
+      "historicalSource": "crates/cli/src/capture_service.rs:107",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/subprocesses/0",
+      "label": "copy-edit-secondary-agent",
+      "group": "network-host",
+      "historicalSource": "crates/live/src/copy_edit_agent.rs:1269",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/subprocesses/1",
+      "label": "local-runtime-helpers",
+      "group": "network-host",
+      "historicalSource": "crates/common/src/proc.rs:216",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/backports/0",
+      "label": "E12-IME",
+      "group": "browser-live-ime",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/backports/1",
+      "label": "E12-CODEX-WINDOWS",
+      "group": "platform-artifact",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/0",
+      "label": "provider-scan-limits",
+      "group": "provider",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/1",
+      "label": "hook-emission-vs-install",
+      "group": "provider",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/2",
+      "label": "oracle-coverage",
+      "group": "cli",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/3",
+      "label": "full-e12-not-imported",
+      "group": "catalog-context",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/4",
+      "label": "provider-command-prefix",
+      "group": "provider",
+      "historicalSource": "crates/context/src/provider.rs:98",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/5",
+      "label": "baseline-native-wasm-parity",
+      "group": "numeric",
+      "historicalSource": null,
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/knownGaps/6",
+      "label": "baseline-oracle-unaccepted-finding",
+      "group": "cli",
+      "historicalSource": [
+        "tests/oracle/run.mjs:34",
+        "tests/oracle/DELTAS.md:76",
+        "tests/oracle/DELTAS.md:101"
+      ],
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/designPlatforms/0",
+      "label": "web",
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/context.rs:1103",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/designPlatforms/1",
+      "label": "ios",
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/context.rs:1103",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/designPlatforms/2",
+      "label": "android",
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/context.rs:1103",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/designPlatforms/3",
+      "label": "adaptive",
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/context.rs:1103",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/engines/0",
+      "label": "static-text/css",
+      "group": "cli",
+      "historicalSource": "crates/detect/src/lib.rs:33",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/engines/1",
+      "label": "static-html",
+      "group": "cli",
+      "historicalSource": "crates/cli/src/main.rs:124",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/engines/2",
+      "label": "native-browser",
+      "group": "browser-live-ime",
+      "historicalSource": "crates/browser/src/lib.rs:51",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/engines/3",
+      "label": "in-page-wasm",
+      "group": "numeric",
+      "historicalSource": "crates/wasm/src/lib.rs:46",
+      "currentSource": null
+    },
+    {
+      "snapshotPointer": "/directionLibrary",
+      "label": "/directionLibrary",
+      "group": "catalog-context",
+      "historicalSource": "crates/context/src/concept_seed.rs:263",
+      "currentSource": null
+    }
+  ],
+  "deferredNonblockingSnapshotEntries": [
+    {
+      "pointer": "/platforms/4",
+      "tag": "windows-x64",
+      "reason": "Current user decision defers Windows; retain未验证, do not relabelPASS"
+    },
+    {
+      "pointer": "/platforms/5",
+      "tag": "windows-arm64-consumer",
+      "reason": "Current user decision defers Windows; retain未验证, do not relabelPASS"
+    }
+  ],
+  "genuinelyUnobservedScopes": [
+    {
+      "scope": "Real paid image/asset account success",
+      "evidence": "Offline/API fixture contract only; no current real-account receipt found",
+      "disposition": "Explicit opt-in account scope under9.3, not default automatic test; retain unrun"
+    },
+    {
+      "scope": "Historical JS/browser differential when old module/harness missing",
+      "evidence": "Known early-return/missingHistoricalJsDifferential; native/WASM vectors and strict concrete oracle provide alternative evidence",
+      "disposition": "Retain method gap and scope of substitute evidence; no fake JS differential pass"
+    },
+    {
+      "scope": "Individual arbitrary environment key combinations",
+      "evidence": "Source enumeration plus exercised semantic groups; no independent whole97-key runtime matrix",
+      "disposition": "Preserve snapshot未验证; attach observed group scope, no new broad combinatorial test demand"
+    },
+    {
+      "scope": "24 independent design command provider sessions",
+      "evidence": "All24 source/reference/generation verified, natural design+representative explicit paths actually observed",
+      "disposition": "Do not claim24 fresh runs; plan asks generated contracts plus actual request routing, not mechanically24 sessions"
+    }
+  ],
+  "historicalTestOnlyMethods": [
+    {
+      "scope": "Historical ignored Impeccable skill-release signature test",
+      "status": "not-run historical test-only method",
+      "test": "bundle_signature::tests::verifies_reviewed_release_with_production_keyring",
+      "source": "tools/phoenix-ui/crates/skills/src/bundle_signature.rs:120",
+      "compileScope": "bundle_signature module only under cfg(test), skills/src/lib.rs:7-8",
+      "target": "Legacy pbakaus/impeccable skill-v*/universal.zip release signature, selected by release_version at bundle_signature.rs:24-31",
+      "productionBoundary": "Phoenix download/download_file reject remote skill/engine transport; actual local installer stages LocalBundle. The legacy signed remote transport is only cfg(test) at bundle.rs:272/282.",
+      "blocksCurrentA": false,
+      "newUpstreamOrSignatureRunRequired": false,
+      "disposition": "Preserve unrun historical method, with deterministic compatibility fixture coverage separate. Do not present it as a browser test, production download path or A acceptance prerequisite."
+    }
+  ],
+  "remaining": [
+    "Corresponding closing-tree complete native/Node18 CI after metadata candidate commit",
+    "M3 internal acceptance commit and progress SHA bookkeeping, then B integration"
+  ],
+  "sourceScope": "A capability acceptance only. B profiles/review protocol/final package and publication retain their separate milestones."
+}

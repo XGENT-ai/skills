@@ -2,6 +2,8 @@
 
 本账本供 Phoenix 实施者核对固定上游接口、逐项承接差异和验收缺口。机器清单为 [capabilities.json](capabilities.json)，来源摘要为 [UPSTREAM.json](UPSTREAM.json)，计划为 [phoenix-ui.md](../../docs/plan/phoenix-ui.md)。
 
+**当前A验收范围与缺项见 [acceptance-a.json](acceptance-a.json) 及 [M3当前复用清单](../../docs/plan/phoenix-ui.records/M3.md#当前验收复用清单)。** 下文和capabilities中的来源捕获快照保留当时的“未验证”状态；它们不覆盖后续已登记的实际执行结果。索引逐项绑定256个blocksA来源条目与12组有明确范围的证据，仍未完成的候选CI/提交单列。续做先按索引复用已过组，只补缺项或受影响检查。
+
 ## 基线与证据范围
 
 | 项目 | 固定事实 |

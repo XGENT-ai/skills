@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "c14ac8fdd0d548e01c6112503455044fb28793558a78430ebd2eb48bba0e5c92",
+    "cargoLockSha256": "f4bd5f42307343de22bf7a2aa08ec8c9a2a63c02a8ffce0ac50ce0019e11a744",
     "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "9921c700e572460ee7324a53ad554741c8866086e26d72cc5ffcd64fe81daee0",
@@ -2183,7 +2183,31 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/cli",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/cli/Cargo.toml",
-      "manifestSha256": "e3ea858748f74df46f3a0bce643f9142b83f151bee9df6eb3463b26186ffee11",
+      "manifestSha256": "52062367945b5af92c8cbc41b4b63515bb3fc59af925e9af4d8cc7b2e0e89891",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
+          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+          "originalLocation": "tools/phoenix-ui/LICENSE"
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
+          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "originalLocation": "tools/phoenix-ui/NOTICE.md"
+        }
+      ],
+      "licenseLocations": [
+        "tools/phoenix-ui/LICENSE"
+      ]
+    },
+    {
+      "name": "phoenix-ui-install",
+      "version": "0.1.0",
+      "license": "Apache-2.0",
+      "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/install",
+      "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
+      "localManifest": "tools/phoenix-ui/crates/install/Cargo.toml",
+      "manifestSha256": "a6fbecc9cc00c96dbf6d419306f6db13fa492f946e20ae07da09b80ebab7da83",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -5920,7 +5944,7 @@
     {
       "path": "skills/phoenix-ui/src/scripts/live-browser.js",
       "importedPath": "skill/scripts/live-browser.js",
-      "sha256": "ebc4b17746d31f078ded39664ab9850118a38c10af53f1c2ab13bfeca97746ea",
+      "sha256": "14cfebc0c97e6284308678d4970714feb06528b872a5ffa39423523a669afced",
       "license": "Apache-2.0",
       "licenses": [
         {
