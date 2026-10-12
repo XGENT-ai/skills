@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "generic",
+  "version": "1.0.0",
+  "authority": "advisory",
+  "scope": "project",
+  "license": "MIT",
+  "sources": [
+    {
+      "path": "skills/design-md/SKILL.md",
+      "section": "1. \u6536\u96c6\u80fd\u7ea6\u675f\u5b9e\u73b0\u7684\u8bc1\u636e",
+      "sha256": "915cfe922e5f3ec07c180cd6929ed0c33765e4c65d8fe966c274ff8feb735dae"
+    },
+    {
+      "path": "skills/review-ui/SKILL.md",
+      "section": "\u53ea\u8ba4\u771f\u5b9e\u6548\u679c",
+      "sha256": "aece1102a5b810fc492263196d3df6797f00f232b62926495786ea5ebfeae365"
+    }
+  ],
+  "tokenReferences": [],
+  "rules": [
+    "Read accepted project rules and user decisions before proposing design changes.",
+    "Preserve established tokens and describe implementation differences separately.",
+    "Verify UI claims in the running product and retain the observed evidence."
+  ]
+}

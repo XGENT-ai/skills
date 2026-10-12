@@ -111,6 +111,8 @@ Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
+
+   UI 循环可沿用人工 Markdown，或通过匹配的 Phoenix engine 管理证据与轮次。已有 managed 索引时从原轮与 revision 续接；engine 缺失、版本不匹配或状态损坏时保持只读，恢复固定版本后再继续。人工历史只经明确的 `review import` 接管，不能清零未知次数；CLI 操作成功不代表 UI 通过，真实取证和独立评审仍是判定依据。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
@@ -224,9 +226,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 | Skill | 说明 |
 | --- | --- |
-| [design-reference](skills/design-reference/SKILL.md) | 寻找、比较页面或组件的视觉参考，提炼适合当前产品、有来源的设计方向与 brief |
-| [design-md](skills/design-md/SKILL.md) | 从仓库、网站或明确设计决策提炼和维护 DESIGN.md，保留既定规范并报告实现偏差 |
-| [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较筛选、权限、表格、批量操作和编辑流程，交付适合现有产品的交互方案与验收条件 |
+| [design-reference](skills/design-reference/SKILL.md) | 寻找视觉参考并形成有来源的 brief；可读 Phoenix context，已接受方向按授权保存原文和路径/hash 映射供恢复 |
+| [design-md](skills/design-md/SKILL.md) | 提炼和维护 DESIGN.md，保留规范并报告偏差；可读 Phoenix 原文/解析覆盖，写入仍按用户决定与证据 |
+| [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较交互方案并交付状态与验收条件；可读 Phoenix 产品/已接受方向，业务能力仍核实实际接口 |
 | [kpi-dashboard-design](skills/kpi-dashboard-design/SKILL.md) | 设计 KPI 仪表盘的指标选择、信息层级与数据可视化 |
 | [landing-page-conversion-audit](skills/landing-page-conversion-audit/SKILL.md) | 审查落地页、销售页或结账流程的转化障碍，按预期收入影响排序修复建议 |
 

@@ -188,6 +188,145 @@ pub fn resolve_project_root(cwd: &str, options: &TargetOptions, env: &Env) -> St
     resolve_project(cwd, options, env).project_root
 }
 
+/// Project discovery for the design JSON and accepted-brief interfaces. The
+/// inherited text interface keeps its cwd-based resolution contract.
+pub fn resolve_context_project(cwd: &str, options: &TargetOptions, env: &Env) -> Project {
+    let mut project = resolve_project(cwd, options, env);
+    if project.is_monorepo {
+        return project;
+    }
+    let git_root = find_git_boundary_root(&project.target_dir, env);
+    let home = jsp::resolve(&homedir(env), &[]);
+    let mut dir = project.target_dir.clone();
+    loop {
+        if dir == home {
+            break;
+        }
+        let fallback = jsp::basename(&dir) == "docs"
+            || (jsp::basename(&dir) == "context"
+                && jsp::basename(&jsp::dirname(&dir)) == ".agents");
+        if has_git_boundary(&dir)
+            || exists(&jsp::join(&[&dir, "package.json"]))
+            || exists(&jsp::join(&[&dir, ".phoenix-ui"]))
+            || (!fallback && resolve_local_context_dir(&dir).is_some())
+        {
+            project.project_root = dir;
+            break;
+        }
+        let parent = jsp::dirname(&dir);
+        if parent == dir {
+            break;
+        }
+        dir = parent;
+    }
+    project.repo_root = git_root.unwrap_or_else(|| project.project_root.clone());
+    project
+}
+
+/// Resolve each document independently, so PRODUCT.md at the root cannot hide
+/// DESIGN.md in a supported fallback directory. This reads without migration.
+pub fn resolve_context_documents(cwd: &str, options: &TargetOptions, env: &Env) -> Resolved {
+    let project = resolve_context_project(cwd, options, env);
+    let find = |root: &str, names: &[&str]| {
+        first_existing(root, names).or_else(|| {
+            FALLBACK_DIRS
+                .iter()
+                .find_map(|relative| first_existing(&jsp::join(&[root, relative]), names))
+        })
+    };
+    let mut product_path = find(&project.project_root, &PRODUCT_NAMES)
+        .or_else(|| find(&project.repo_root, &PRODUCT_NAMES));
+    let mut design_path = find(&project.project_root, &DESIGN_NAMES)
+        .or_else(|| find(&project.repo_root, &DESIGN_NAMES));
+    let mut env_context_dir = None;
+    if product_path.is_none() && design_path.is_none() {
+        env_context_dir = resolve_env_context_dir(cwd, env);
+        if let Some(dir) = &env_context_dir {
+            product_path = first_existing(dir, &PRODUCT_NAMES);
+            design_path = first_existing(dir, &DESIGN_NAMES);
+        }
+    }
+    let context_dir = product_path
+        .as_deref()
+        .or(design_path.as_deref())
+        .map(jsp::dirname)
+        .unwrap_or_else(|| env_context_dir.unwrap_or_else(|| project.project_root.clone()));
+    Resolved {
+        context_dir,
+        product_path,
+        design_path,
+        project_root: project.project_root,
+        repo_root: project.repo_root,
+        is_monorepo: project.is_monorepo,
+        target_dir: project.target_dir,
+    }
+}
+
+pub fn is_context_surface_target(target: &str) -> bool {
+    target.starts_with("http://") || target.starts_with("https://") || target.starts_with("route:")
+}
+
+/// Logical surfaces belong to the project selected by cwd; file targets retain
+/// caller-relative workspace resolution. Never turn a URL into a file path.
+pub fn resolve_context_target(cwd: &str, target: &str, env: &Env) -> Result<String, String> {
+    let lower = target.trim().to_ascii_lowercase();
+    if lower.starts_with("http://") || lower.starts_with("https://") {
+        let url = crate::url::parse(target).ok_or("A valid surface target URL is required")?;
+        if !url.username.is_empty() || !url.password.is_empty() {
+            return Err("Brief target URLs must not contain credentials".into());
+        }
+    }
+    let project = resolve_context_project(cwd, &TargetOptions::default(), env);
+    if let Some(normalized) =
+        crate::surface_briefs::normalize_surface_target(Some(target), &project.project_root)
+    {
+        if is_context_surface_target(&normalized) {
+            return Ok(normalized);
+        }
+    }
+    if lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("route:")
+    {
+        return Err("A concrete surface target is required".into());
+    }
+    Ok(resolve_target_path(cwd, target, env))
+}
+
+pub fn resolve_context_selection(
+    cwd: &str,
+    options: &TargetOptions,
+    env: &Env,
+) -> Option<TargetSelection> {
+    let mut selection = resolve_target_selection(cwd, options, env)?;
+    for candidate in &mut selection.target_candidates {
+        let project_root = jsp::resolve(&selection.repo_root, &[&candidate.path]);
+        let resolved = resolve_context_documents(
+            &selection.repo_root,
+            &TargetOptions {
+                target_path: Some(jsp::resolve(
+                    &selection.repo_root,
+                    &[&candidate.target_example],
+                )),
+            },
+            env,
+        );
+        candidate.product_status = context_source_status(
+            resolved.product_path.as_deref(),
+            &selection.repo_root,
+            &project_root,
+        );
+        candidate.design_status = context_source_status(
+            resolved.design_path.as_deref(),
+            &selection.repo_root,
+            &project_root,
+        );
+        candidate.product_path =
+            context_source_path(resolved.product_path.as_deref(), &selection.repo_root);
+        candidate.design_path =
+            context_source_path(resolved.design_path.as_deref(), &selection.repo_root);
+    }
+    Some(selection)
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct TargetCandidate {
     pub name: String,

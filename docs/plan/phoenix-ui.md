@@ -42,13 +42,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-12T12:18:00+08:00
+- 最近更新：2026-10-12T16:01:10+08:00
 - 当前进度：3/6 个里程碑完成
-- 当前状态：进行中；A五门及CI23九制品核验通过，M3内部完成提交1ef9e37f4fd8与CI完整tree相同。整体3/6，B维护源仍隔离，开始串行集成。
+- 当前状态：进行中；整体3/6。Root统一源的Rust1253/lint/WASM已过，原始完整入口因mbx回收engine路径而actual1；保存同编译字节的入口修正与严格oracle860/轻量回归已验。下一步推送验证候选，最终四平台完整入口及tarball/真实闭环待验。
 - 最近完成：M3 · 安装迁移与 A 内部收口
-- 下一步：Root将M4/M5/M6维护源增量串行集成到已验A；保留安装迁移和四平台范围，统一生成版本/输入/许可，验证接通后的接口与最终闭环。原已过组按源复用。
+- 下一步：正常推送同一授权验证ref，保存新候选SHA/tree及四平台CI终态；按固定九原ZIP演练交接并打单一最终tarball，完成必要provider/真实UI/升级回滚。复用本地已过组，不把独立oracle补验写成原始入口actual0。
 - 当前阻塞：
-- 代码基线：Root内部完成HEAD 1ef9e37f4fd86f17a59b649a0eec67f546d6d115，tree d1badbde689ca2ff57a11742a3891600f727ca0d，与CI23候选a44658dfdfdb1068fba0a123ef6751ca36fb2886完整tree相同；四native/Node18及九原制品核验成功。进度/台账dirty，B尚未纳入Root。
+- 代码基线：Root dirty@cf7f2b762137825092b57be1954bf28acb7407da（HEAD tree c06353d4ef148528fd6d4927fb21a731a24cd20a）；B维护源已串行集成，未提交。夹具修后binaryfeef67532b73f36f59473b30dc1af5c8a9aac5cd69e13b031819b8db7e6e1cdb、567输入60a0e84a9e230f1adfdb865dfb31c74a6434895a3b5f5cf96333a33516a88173、bundle6c93502f4445254a7be7427b6002a206bcb059d0b56cbc90d66672a8357268b0；A完成1ef9e37与CI23 tree相同。
 
 ### 完成记录
 
@@ -57,9 +57,9 @@
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 1ef9e37f4fd8 |
 | M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 1ef9e37f4fd8；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8 |
 | M3 | 已完成 | 2026-10-12T12:14:10+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过；能力/源码不变组有明确复用边界。内部收口，B未集成。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb |
-| M4 | 进行中 | 2026-10-12T05:31:39+08:00 | 独立开发包真实安装/Codex四设计子集通过；模块整理后新制品消费、镜像完整runtime892/WASM8474/oracle860通过。Root集成/真实浏览器及完整V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M5 | 进行中 | 2026-10-12T03:43:31+08:00 | native帮助5/5及完整runtime通过；机器/人工loop文档同步、轻量入口与四例源码合同咨询通过。M4 context与真实V-7/V-8待验。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M6 | 进行中 | 2026-10-12T02:01:43+08:00 | 限定修复真实CI许可形态，AWS/curl替身47/47、轻量257过/6既定跳过及producer bin锚点通过；最终B融合/CI/tarball/真实闭环尚未完成。 | [M6 记录](phoenix-ui.records/M6.md) | 未到M6完成提交点；隔离准备尚未提交 |
+| M4 | 进行中 | 2026-10-12T16:01:10+08:00 | Root统一context/brief/profile的公开函数组在本地完整运行通过；原始入口终态及oracle补验已分开记录，最终包V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；Root融合改动尚未提交 |
+| M5 | 进行中 | 2026-10-12T16:01:10+08:00 | Root review及CLI协议在本地1253项Rust范围通过，strict oracle860与轻量过；真实取证及最终包V-7/V-9待验。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；Root融合改动尚未提交 |
+| M6 | 进行中 | 2026-10-12T16:01:10+08:00 | 本地Rust1253/lint/WASM过，原始入口因GC路径丢失actual1；修正入口后独立oracle860/轻量过，准备最终验证CI，未宣称完整入口0。 | [M6 记录](phoenix-ui.records/M6.md) | 未到M6完成提交点；Root融合改动尚未提交 |
 
 ## 0. 需求、范围与决策
 

@@ -52,6 +52,9 @@ fn run(args: &[String], io: &mut Io) -> i32 {
         "detect" => impeccable_detect::run_detect(rest, io, &engines()),
         "ignores" | "ignore" => impeccable_detect::run_ignores(rest, io),
         "skills" => impeccable_skills::run(rest, io),
+        "review" => {
+            phoenix_ui_review::cli::run(rest, &io.cwd, io.stdout.as_mut(), io.stderr.as_mut())
+        }
         // Project installs are transactional; the inherited installer keeps
         // the user level and the help text that documents both.
         "install" | "update" if !user_level_or_help(rest) => {

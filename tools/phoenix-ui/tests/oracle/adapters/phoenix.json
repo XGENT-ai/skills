@@ -4220,17 +4220,25 @@
             "stdout"
           ],
           "beforeSha256": "e873c116ff35971f59e7930d120d1ab63e0448dba847879200e448c2ffa0b672",
-          "afterSha256": "be1569f89199c15a3f61be3b403b44a23737aaec2aac4eda36e68f363357a729",
+          "afterSha256": "0e35ccb134d0db1e956904535f044a54d55b0af8ca028ae8371e3b3b737f8a7c",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable <command> [options]\n\nCommands:\n  detect [file-or-dir-or-url...]   Scan for UI anti-patterns and design quality issues\n  ignores                          Manage detector ignore rules, files, and values\n  help                             List all available skills and commands\n  install                          Install impeccable skills into your project or global harness\n  link                             Symlink skills from a local checkout or submodule\n  update                           Update skills to the latest version\n  check                            Check if skill updates are available\n\nOptions:\n  --help       Show this help message\n  --version    Show version number\n\nCompatibility:\n  impeccable skills <command>       Legacy namespace; still supported.\n",
-              "after": "Usage: phoenix-ui <command> [options]\n\nCommands:\n  detect [file-or-dir-or-url...]   Scan for UI anti-patterns and design quality issues\n  ignores                          Manage detector ignore rules, files, and values\n  help                             List all available skills and commands\n  install --bundle-root DIR        Install skills from an explicit local Phoenix bundle\n  link --bundle-root DIR           Link skills from an explicit local Phoenix bundle\n  update --bundle-root DIR         Update skills from the specified local bundle\n  check                            Check local installation contracts\n\nOptions:\n  --help       Show this help message\n  --version    Show version number\n\nCompatibility:\n  phoenix-ui skills <command>       Legacy namespace; still supported.\n",
+              "after": "Usage: phoenix-ui <command> [options]\n\nCommands:\n  detect [file-or-dir-or-url...]   Scan for UI anti-patterns and design quality issues\n  ignores                          Manage detector ignore rules, files, and values\n  help                             List all available skills and commands\n  install --bundle-root DIR        Install skills from an explicit local Phoenix bundle\n  link --bundle-root DIR           Link skills from an explicit local Phoenix bundle\n  update --bundle-root DIR         Update skills from the specified local bundle\n  check                            Check local installation contracts\n  review <command>                 Manage persistent UI review evidence and rounds\n\nOptions:\n  --help       Show this help message\n  --version    Show version number\n\nCompatibility:\n  phoenix-ui skills <command>       Legacy namespace; still supported.\n",
               "reason": "source-defined-Phoenix-public-help",
               "source": [
                 {
                   "file": "crates/detect/src/lib.rs",
                   "line": 60
+                },
+                {
+                  "file": "crates/detect/src/lib.rs",
+                  "line": 70
+                },
+                {
+                  "file": "crates/cli/src/main.rs",
+                  "line": 55
                 }
               ]
             }
@@ -57584,17 +57592,17 @@
             "stderr"
           ],
           "beforeSha256": "25d2f3c214a76de8606fb04f51cc90c4469792ddb3fc09c5abbc440fb4a1969c",
-          "afterSha256": "16b3f97d5b3240f699563668099deb5222c19091d51141097c927ff07b3211f5",
+          "afterSha256": "72c45cfc46b2c09fb5eea6581a9068d32dfd6a8ae8df4831cda4d61ec71e3228",
           "edits": [
             {
               "offset": 0,
-              "before": "usage: impeccable surface-brief ",
-              "after": "usage: phoenix-ui surface-brief ",
-              "reason": "final-visible-public-identity",
+              "before": "usage: impeccable surface-brief <path|list|read|write> [target] [body-file] [related-target ...]\n",
+              "after": "usage: phoenix-ui surface-brief <path|list|read|write|link> [target] [body-file] [related-target ...]\n",
+              "reason": "source-defined-surface-brief-link-usage",
               "source": [
                 {
                   "file": "crates/context/src/surface_brief_cli.rs",
-                  "line": 65
+                  "line": 90
                 }
               ]
             }
@@ -57611,17 +57619,17 @@
             "stderr"
           ],
           "beforeSha256": "25d2f3c214a76de8606fb04f51cc90c4469792ddb3fc09c5abbc440fb4a1969c",
-          "afterSha256": "16b3f97d5b3240f699563668099deb5222c19091d51141097c927ff07b3211f5",
+          "afterSha256": "72c45cfc46b2c09fb5eea6581a9068d32dfd6a8ae8df4831cda4d61ec71e3228",
           "edits": [
             {
               "offset": 0,
-              "before": "usage: impeccable surface-brief ",
-              "after": "usage: phoenix-ui surface-brief ",
-              "reason": "final-visible-public-identity",
+              "before": "usage: impeccable surface-brief <path|list|read|write> [target] [body-file] [related-target ...]\n",
+              "after": "usage: phoenix-ui surface-brief <path|list|read|write|link> [target] [body-file] [related-target ...]\n",
+              "reason": "source-defined-surface-brief-link-usage",
               "source": [
                 {
                   "file": "crates/context/src/surface_brief_cli.rs",
-                  "line": 65
+                  "line": 90
                 }
               ]
             }
@@ -73635,7 +73643,7 @@
     },
     {
       "file": "crates/cli/src/main.rs",
-      "sha256": "27d3817907cb2c7dc06d6219d4ed9d6b95027d3f7998ad6dca63a9c03f293c42"
+      "sha256": "c83ff7f0e949e6a5aea311cc85472ca144ca35c2148c3b2c3c93f086794f97ff"
     },
     {
       "file": "crates/common/src/jsp.rs",
@@ -73655,11 +73663,11 @@
     },
     {
       "file": "crates/context/src/context.rs",
-      "sha256": "5fd3b04aab9da74869cbb9dfa6f25f5d14a8ff345649d48346e5d587fd8977a2"
+      "sha256": "83bcd5d6f789dced620f88b5210f06bb4fb994045dde4a1fb7441ebc7745ce0b"
     },
     {
       "file": "crates/context/src/context_cli.rs",
-      "sha256": "b020bf07842969b039b396c95f56e0ce0d44e8d3b40a52988b7ed3922c2ef2c9"
+      "sha256": "58d96e5a5ea2920337a24bbaadce9530c89710cebd0bf79ec0fadafd9efc1b94"
     },
     {
       "file": "crates/context/src/critique_storage.rs",
@@ -73707,7 +73715,7 @@
     },
     {
       "file": "crates/context/src/surface_brief_cli.rs",
-      "sha256": "1422433c0503af88734d5f2541ebcd63954c49f11c43cca3bf8e68cd3d884685"
+      "sha256": "1bc600b7548a8c1a9bb2e59b60551fe904b251057dc815e74987de26ad7987d2"
     },
     {
       "file": "crates/context/src/util.rs",
@@ -73723,7 +73731,7 @@
     },
     {
       "file": "crates/detect/src/lib.rs",
-      "sha256": "d912bfe7819879f0cac66bddf10082fb820ffc3682b8c0c4927ff64bd807ccb5"
+      "sha256": "20cb3d4af28a28db1356d30b7bb5493784365f21ff07afb5077f901cff90cebf"
     },
     {
       "file": "crates/hook/src/admin.rs",

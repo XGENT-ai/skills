@@ -67,6 +67,7 @@ Commands:
   link --bundle-root DIR           Link skills from an explicit local Phoenix bundle
   update --bundle-root DIR         Update skills from the specified local bundle
   check                            Check local installation contracts
+  review <command>                 Manage persistent UI review evidence and rounds
 
 Options:
   --help       Show this help message

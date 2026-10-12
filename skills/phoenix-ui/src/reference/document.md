@@ -1,5 +1,7 @@
 Generate a `DESIGN.md` file at the project root that captures the current visual design system, so AI agents generating new screens stay on-brand.
 
+Use design-md's writing authority and source rules. Preserve an existing Markdown structure, YAML, unknown fields, comments and explicit tokens; partial context parsing does not authorize deleting or rewriting them. Existing accepted decisions and frozen targets require their own approved change scope. The canonical format below is a template for a newly authorized document or format migration, not a prerequisite for reading an incumbent DESIGN.md. A profile cannot supply missing colors or fonts.
+
 DESIGN.md follows the [official DESIGN.md format spec](https://raw.githubusercontent.com/google-labs-code/design.md/main/docs/spec.md): optional YAML frontmatter carrying machine-readable design tokens, followed by up to eight markdown sections in a fixed order. **Tokens are normative; prose provides context for how to apply them.** Sections may be omitted when not relevant, but those present stay in the specified order. Use the canonical headings below so the file remains portable across DESIGN.md-aware tools.
 
 ## The frontmatter: token schema
@@ -68,7 +70,7 @@ Omit irrelevant sections rather than filling them with invented rules. Put respo
 - An existing `DESIGN.md` is stale (the design has drifted).
 - Before a large redesign, to capture the current state as a reference.
 
-If a `DESIGN.md` already exists, **do not silently overwrite it**. Show the user the existing file first. {{ask_instruction}} The choice is refresh, overwrite, or merge.
+If a `DESIGN.md` already exists, read it and follow the already authorized refresh, overwrite or merge scope. When that choice is unresolved, show the existing source and ask once about the intended change. Preserve explicit tokens and unknown fields through either path.
 
 ## Two paths
 
@@ -115,7 +117,7 @@ Skip anything the project doesn't have. Empty scale keys or fabricated tokens po
 
 ### Step 3: Ask the user for qualitative language
 
-The following require creative input that cannot be auto-extracted. Ask them in two structured rounds of no more than three questions each (or the harness's lower limit), waiting between rounds:
+Reuse qualitative decisions already present in the original request, accepted brief or existing DESIGN.md. Ask about the following only when a material decision is still missing, in structured rounds of no more than three questions each (or the harness's lower limit), waiting between rounds:
 
 - **Creative North Star**: a single named metaphor for the whole system ("The Editorial Sanctuary", "The Golden State Curator", "The Lab Notebook"). Offer 2-3 options that honor PRODUCT.md's brand personality.
 - **Overview voice**: mood adjectives, aesthetic philosophy in 2-3 sentences, and any confirmed visual anti-reference.

@@ -95,3 +95,58 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具或 go
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
 - skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）继续公开，可单独安装；`phoenix-ui` skill 标为 internal，只通过 npm 安装器分发。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
 - 原 `vendor/impeccable/` 与 `scripts/vendor-impeccable.mjs`、`scripts/publish-vendor-r2.mjs` 只作来源历史保留，不是安装或更新入口。
+
+## 融合用法与 UI 验收
+
+本节适用于支持结构化 context 与 managed 评审协议的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 从实际回执/候选包读取；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。
+
+视觉参考用 `design-reference`，交互选型用 `ui-pattern-research`，维护项目规范用 `design-md`，已选方向的实现继续用 `phoenix-ui`。先读取明确目标的上下文：
+
+```bash
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui context --target "route:/orders" --json
+```
+
+核对 `projectRoot`、`target.path`、原始 `body` 与 `provenance`；`selection_required` 时确认候选，不自动取第一个。`parseCoverage` 是有限解析范围，正文和未支持的 YAML 仍按原文核实，空 `conflicts` 不证明正文无冲突。profile/defaultAdvice 是建议，不能替代项目规范、补未知 token 或回套冻结目标。
+
+用户明确接受方向后，登记原 brief 和真实接受引用，再回读 context。仅 `surfaceBrief.status: accepted`、`usable: true` 且目标适用时沿用方向；`present` 是提案，`stale`、有接受记录的 `missing` 或 `ambiguous` 要核对原文与决定，不自动重抽方向：
+
+```bash
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link "route:/orders" "docs/design/orders-brief.md" --decision "<实际接受决定引用>"
+```
+
+`link` 保存原文件路径、SHA-256 与接受记录，原 brief 留在选定仓库，不复制第二份可编辑正文。URL/route 是逻辑目标，`target.exists: null` 不表示文件缺失。设计流程详见包内 `design-reference`、`ui-pattern-research`、`design-md` 的实际指令。
+
+用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。先按固定包回执核对 `engine-probe` 身份、实际根帮助和本循环状态，只有无旧历史的新循环才 begin：
+
+```bash
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review status --prefix "docs/ui/orders" --json
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review begin --prefix "docs/ui/orders" --target "docs/ui/orders.ui-target.md" --tested-version "docs/ui/orders.tested-version.json" --json
+```
+
+`--tested-version` 的 JSON 由宿主提供真实 HEAD 加 clean/dirty 指纹，或可核对的 build ID，并与本轮应用/采集一致；省略时为 Unknown，不能判通过。context 提供目标和规范来源，不自动生产版本记录。后续 capture、judge-pack、judge add、finalize、apply record 使用返回的 round/current revision 和实际合同输入；**退出 0 不等于 UI 通过**，必须回读 verdict 与报告，`confirmation_required` 仍为草稿。参数与输入边界见 [Phoenix managed 评审协议](../skills/review-ui/references/phoenix-review.md)，目标、报告和处置沿 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md)。
+
+已有 Markdown 历史无 managed 索引时继续 manual，只有显式 `review import --prefix <前缀> --input <映射.json> --json` 才接管；未知历史不能填零。`legacyMarkdown` 无法确定历史最佳时返回 3 并保持人工循环。managed 的 engine 缺失/不匹配、损坏或未知 schema 时只读历史，可收集未登记素材，不计分、裁定或修复产品代码；恢复匹配版本后续接原 round/revision，不删索引或换前缀绕过。生成区被手改时先另存原文与 hash，用 `projectionRebase` 显式核对副本、当前 hash 和 cycle revision 后恢复权威区块；要保留的采集/处置再以当前 revision 提交。封存报告与评审原文不覆盖。
+
+## 维护者：统一候选与本地交接
+
+A 阶段只内部验收，不单独发布。M6 先在专用统一候选树整合 A、M4/M5、发布工具与同步元数据，再从同一 HEAD/tree/构建输入生成最终 binary 和 bundle；隔离模块的旧制品或相近 SHA 不替代它。维护工具按 mise 与 build-tools.lock.json 固定，Node 18 是消费底线；工具缺失/版本不符在 prepare 阶段处理，不在 build/test 中隐式补装：
+
+```bash
+cd tools/phoenix-ui
+mise exec --no-deps -- node ../../scripts/prepare-phoenix-ui.mjs --prepare
+# 按 environmentFile 回执，在当前 shell 导出其中的 WASM_BINDGEN、
+# WASM_OPT、PHOENIX_CARGO_DENY；Linux ARM64 还需 PHOENIX_UI_BROWSER。
+mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write
+mise exec --no-deps -- npm --prefix ../.. test
+mise exec --no-deps -- node ../../scripts/build-phoenix-ui.mjs --development --output-dir ../../local/phoenix-ui/development-release
+mise exec --no-deps -- node ../../scripts/smoke-phoenix-ui.mjs --release-dir ../../local/phoenix-ui/development-release --target <本机平台> --stage-runtime
+mise exec --no-deps -- npm --prefix ../.. run test:phoenix
+```
+
+prepare 显式联网准备锁定依赖、工具、浏览器、迁移包和公告快照；随后 audit/build/runtime 使用已准备缓存与离线合同，`CARGO_NET_OFFLINE` 不单独证明全部网络已禁止。`--development` 仅是本机开发制品。`check-phoenix-deps.mjs --distribution-dir <目录>` 另核对分发许可，真实 browser/provider 会话仍分别取证。完整维护入口见 [prepare](../scripts/prepare-phoenix-ui.mjs)、[build](../scripts/build-phoenix-ui.mjs)、[audit](../scripts/check-phoenix-deps.mjs)、[runtime tests](../scripts/test-phoenix-ui.mjs)。
+
+[CI workflow](../.github/workflows/phoenix-ui.yml) 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，另有 Node18 consumer。固定成功 run 的四份 native、四份 phase evidence、一份 Node18 evidence 必须保留原始 ZIP/digest、HEAD/tree、工具链、输入/制品摘要、许可及全部真实 step/phase 结果。CI 不持 R2/npm 凭据；缺平台、失败 phase 或摘要不符不能交接。
+
+维护者用与候选 package.json 兼容的 checkout，只搬运已测字节，不重编；先做 HTTP/R2 替身演练，实际上传另行授权。仓根 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 使用现有 `AGENT_RELEASE_R2_*` 环境变量与固定 `--run-id`、`--source-commit`、`--source-tree`、run/jobs/artifacts 原始记录及 `--archives-dir`、`--output-dir` 参数；不自动读 `.env.cf` 或发布 npm。条件上传拒绝覆盖，部分成功保留对象；显式 `--resume` 获取输出 OS 锁并回读已有对象，仅复用相同 size/SHA。具体校验与恢复以该脚本为准。
+
+四平台公共 URL 回读全部通过后才冻结 release manifest 与交接清单，再用相同 manifest/资源字节打一次最终 tarball，记录 SHA-256。用**同一 tarball**完成新装、旧包迁移、A→B 升级/回滚和真实融合验收；获得另行授权后才用于 npm 发布，不重新生成 manifest 或重打包后直接发布。替身、开发包和四平台 CI 不独自证明最终 B、线上 URL 或 M6 退出门通过；本指南不填写未验证的最终 hash。

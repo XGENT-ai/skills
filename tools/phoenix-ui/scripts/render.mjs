@@ -168,7 +168,7 @@ async function main() {
     assert.equal(inputs().digest, input.digest, 'Source changed during rendering');
     if (check) {
       assert.deepEqual(JSON.parse(fs.readFileSync(path.join(target.skill, 'GENERATED.json'))), record, 'Generated sources are stale');
-      const current = Object.fromEntries(Object.entries(tree(target.skill)).filter(([file]) => file !== 'GENERATED.json' && !file.startsWith('src/') && file !== '.npmignore'));
+      const current = Object.fromEntries(Object.entries(tree(target.skill)).filter(([file]) => file !== 'GENERATED.json' && !file.startsWith('src/') && !file.startsWith('evals/') && file !== '.npmignore'));
       assert.deepEqual(current, record.outputs.skill, 'Generated skill differs from its source');
       assert.deepEqual(tree(target.dist), record.outputs.providers, 'Generated provider files are stale');
       assert.deepEqual(tree(path.join(target.vendor, 'bundle')), record.outputs.bundle, 'Generated bundle is stale');

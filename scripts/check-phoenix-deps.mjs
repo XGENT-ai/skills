@@ -394,7 +394,10 @@ export function collectInventory(metadata, cargoLock, nodePackages) {
     if (!p || (p.source ?? undefined) !== locked.source) throw new Error(`Cargo metadata/lock mismatch: ${locked.name}@${locked.version}`);
     const directory = path.dirname(p.manifest_path);
     if (locked.source && locked.source !== 'registry+https://github.com/rust-lang/crates.io-index') throw new Error(`Unsupported Cargo source: ${locked.source}`);
-    const sourceUrl = locked.source ? `https://static.crates.io/crates/${p.name}/${p.name}-${p.version}.crate` : `${upstream.repository}/tree/${upstream.sourceCommit}/${path.relative(workspace, directory).split(path.sep).join('/')}`;
+    const importedManifest = path.relative(workspace, p.manifest_path).split(path.sep).join('/');
+    const imported = Object.hasOwn(upstream.importedFiles, importedManifest);
+    const sourceUrl = locked.source ? `https://static.crates.io/crates/${p.name}/${p.name}-${p.version}.crate`
+      : imported ? `${upstream.repository}/tree/${upstream.sourceCommit}/${path.relative(workspace, directory).split(path.sep).join('/')}` : undefined;
     let licenses;
     let licenseLocations;
     if (locked.source) {
@@ -416,7 +419,8 @@ export function collectInventory(metadata, cargoLock, nodePackages) {
       }
     } else { licenses = [runtimeLicense, runtimeNotice]; licenseLocations = ['tools/phoenix-ui/LICENSE']; }
     return { name: p.name, version: p.version, license: p.license, sourceUrl, ...(locked.checksum ? { checksum: locked.checksum, sourceUnmodified: true } : {
-      sourceEvidence: 'Imported Apache-2.0 base; local workspace version/modifications are not an upstream release',
+      sourceEvidence: imported ? 'Imported Apache-2.0 base; local workspace version/modifications are not an upstream release'
+        : 'New local Phoenix workspace source; not present in the pinned upstream import',
       localManifest: path.relative(root, p.manifest_path).split(path.sep).join('/'), manifestSha256: fileHash(p.manifest_path),
     }), licenses, licenseLocations };
   });

@@ -456,6 +456,9 @@ fn load_native_platform_references(platform: Option<&str>, provider: &Provider) 
 // ─── cli ───────────────────────────────────────────────────────────────────
 
 pub fn run(args: &[String], io: &mut Io) -> i32 {
+    if args.iter().any(|arg| arg == "--json") {
+        return crate::context_json::run(args, io);
+    }
     let cwd = io.cwd.to_string_lossy().into_owned();
     let env = io.env.clone();
     let provider = crate::provider::detect(&env, &cwd);

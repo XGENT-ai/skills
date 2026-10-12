@@ -331,6 +331,11 @@ fn external_auxiliary_copies_are_kept_and_only_a_different_copy_keeps_integratio
         project.join(".claude/skills/design-md/evals/scenarios.md"),
     )
     .unwrap();
+    fs::copy(
+        auxiliary().join("design-md/evals/fresh-context.md"),
+        project.join(".claude/skills/design-md/evals/fresh-context.md"),
+    )
+    .unwrap();
     let identical =
         installer::install(&request(&sandbox, &project, &[".claude"], false, "aux-1")).unwrap();
     assert_eq!(identical.status, Status::Installed);

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +9,7 @@ import { workspace, preflight, buildEnvironment, offlineNetworkProfile, testNetw
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const prepared = preflight();
 const env = buildEnvironment(prepared);
+let runtimeDir;
 function command(command, args, options = {}) {
   const result = spawnSync(command, args, { cwd: workspace, env, stdio: 'inherit', ...options });
   if (result.error || result.status !== 0) throw result.error || new Error(`${command} exited ${result.status}`);
@@ -25,9 +27,15 @@ try {
   cargo(['xtask', 'bundle', '--check']);
   const engineBuild = cargo(['build', '-p', 'phoenix-ui', '--bin', 'phoenix-ui', '--locked', '--offline', '--message-format=json'],
     { stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  const engine = engineBuild.stdout.trim().split('\n').map(line => JSON.parse(line))
+  const builtEngine = engineBuild.stdout.trim().split('\n').map(line => JSON.parse(line))
     .find(record => record.reason === 'compiler-artifact' && record.target.name === 'phoenix-ui' && record.executable)?.executable;
-  if (!engine) throw new Error('Cargo did not report the current native engine artifact.');
+  if (!builtEngine) throw new Error('Cargo did not report the current native engine artifact.');
+  // Later mbx commands can collect the managed target that owns this artifact.
+  // Keep the same compiler bytes alive for Node installation and oracle replay.
+  runtimeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-runtime-'));
+  const engine = path.join(runtimeDir, path.basename(builtEngine));
+  fs.copyFileSync(builtEngine, engine);
+  fs.chmodSync(engine, 0o755);
   env.PHOENIX_UI_BIN = engine;
   command(process.execPath, ['--test', '--test-name-pattern=critique collision inputs', path.join(root, 'test/phoenix-ui/oracle.test.js')]);
   // Node installer → Rust installer with this engine; old packages come from preparation.
@@ -53,4 +61,6 @@ try {
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
+} finally {
+  if (runtimeDir) fs.rmSync(runtimeDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 }

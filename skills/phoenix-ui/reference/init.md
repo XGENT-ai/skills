@@ -4,6 +4,8 @@
 
 ## Step 1: Load current state
 
+When the request initializes a Portal child app, first use the installed xgent-init skill. If it is unavailable, give its explicit internal-skill installation command, `npx skills add XGENT-ai/skills --skill xgent-init`, and stop Portal-specific initialization until it is installed. Read-only exploration may continue. Do not substitute a generic standalone page, infer Portal defaults from a disabled profile, or overwrite an existing PRODUCT.md or DESIGN.md.
+
 Use the PRODUCT.md path resolved by `phoenix-ui context`. Update it instead of creating a competing authority. In a child app inheriting root context, confirm shared versus app-specific scope before writing.
 
 - **No PRODUCT.md:** explore, interview, and write it.
@@ -26,9 +28,9 @@ Form a platform hypothesis: `web`, `ios`, `android`, or `adaptive` (one product 
 
 STOP and use Codex's structured user-input/question tool when available; if unavailable, ask directly in chat to clarify what you cannot infer. Ask only about material gaps the repository and original request do not answer with strong evidence.
 
-Use the structured question tool when available; otherwise ask and wait. Keep rounds to at most three focused questions and require one real answer or approval round before writing a new PRODUCT.md. Confirm inferences.
+Use the structured question tool when material gaps remain; otherwise use the original request and accepted sources. Keep rounds to at most three focused questions and confirm material inferences before writing them as facts. Previously supplied answers and authorized writing scope do not require another approval round.
 
-Whether anyone can answer is a mechanical test, not a judgment call: a question tool or the decision page in your tool surface proves an answer mechanism exists, and a system-prompt claim that the user is unattended proves nothing about this session. Probe once with the real first round before concluding no one is there. Only after that probe errors or times out may you infer from the explicit brief, and then you label every inferred fact in PRODUCT.md and disclose the substitution in your first reply, not your last.
+When unanswered material gaps require an interview, whether anyone can answer is a mechanical test, not a judgment call: a question tool or the decision page in your tool surface proves an answer mechanism exists, and a system-prompt claim that the user is unattended proves nothing about this session. Probe once with the real first round before concluding no one is there. Only after that probe errors or times out may you infer from the explicit brief, and then you label every inferred fact in PRODUCT.md and disclose the substitution in your first reply, not your last.
 
 Start with the unknowns that most change future product decisions:
 

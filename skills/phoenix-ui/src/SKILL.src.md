@@ -16,11 +16,12 @@ Install this runtime through `@xgent-ai/skills` on npm. Source copies from skill
 Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
 - Dream big and bold. Distinct, beautiful, outstanding and highly inspiring work.
-- Verify in bounded passes, not a loop, and the ceiling covers the whole cycle: screenshots, defect scans, micro-edits, and rebuilds alike. Build fully, inspect once with a batched round (desktop and mobile together on the web; the shipped device classes on a native platform), fix everything it shows in one batch, confirm with at most one more round, and stop polishing. Open-ended self-QA burns the user's money doing worse what the finish handoffs do better.
+- Keep Phoenix design self-QA to one batched inspection and at most one confirmation after fixing the findings. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
 
 ## Setup
 
 1. Run `<skill-base-dir>/scripts/phoenix-ui context` once per session, where `<skill-base-dir>` contains this SKILL.md; keep cwd at the user's project. It resolves every `{{scripts_path}}/phoenix-ui <verb>` command in this skill and its references. This release supports macOS and Linux. The thin launcher requires Node >=18 and validates the fixed manifest, binary digest and Phoenix engine version before running. Users do not need Rust. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance; follow its directives. <!-- rule:skill-setup-context -->
+   For design facts, also read `{{scripts_path}}/phoenix-ui context --target <primary-target> --json`: product, design, surfaceBrief, provenance, parseCoverage and conflicts retain their original sources. Read the original when coverage is partial. An explicitly enabled profile provides advice; product truth, accepted directions and frozen targets retain authority. Missing context or a disabled profile supplies no template defaults. If JSON mode is unavailable, read the originals directly and disclose that the profile and brief mapping were not loaded; do not install or upgrade as a side effect.
 2. Load the request's playbook: its Commands-table reference for an explicit/implied sub-command, or [reference/new-work.md](reference/new-work.md) for a new surface or replacement visual world. Inspect target and incumbent visual truth before editing. When the app cannot run, start with committed visual-regression goldens or screenshot fixtures; verify target and freshness against current tokens, CSS, components, or assets, resolve conflicts, and compare theme/variant captures. <!-- rule:skill-setup-command-ref --> <!-- rule:skill-setup-read-project -->
 3. After resolving analysis and direction, read [reference/craft-floor.md](reference/craft-floor.md) immediately before any UI edit, including small refinements. It carries the quality floor, the absolute bans, and the reflexes no detector catches. Do not load it for planning-only work. <!-- rule:skill-craft-floor-load -->
 
@@ -29,7 +30,7 @@ Core principles:
 ## How to design
 
 - **The brief wins.** Honor pinned aesthetics, eras, materials, fonts, and palettes even when they conflict with a saturated-pattern warning. Redirecting a clear brief toward your taste is failure. <!-- rule:skill-brief-wins -->
-- **Refinement preserves; redesign replaces.** Refinement keeps the incumbent identity, behavior, copy, and everything outside scope. Ask before replacing factual copy or adding claims. Redesign keeps product truth, content, function, native affordances, and constraints, but treats the old look as evidence and anti-reference; choose a replacement world in new-work and replace DESIGN.md. Never split the difference into polish on the discarded look. <!-- rule:skill-world-change-semantics -->
+- **Refinement preserves; redesign replaces.** Refinement keeps the incumbent identity, behavior, copy, and everything outside scope. Ask before replacing factual copy or adding claims. Redesign keeps product truth, content, function, native affordances, and constraints; choose a replacement world within the authorized scope. Changes to an existing DESIGN.md follow design-md's writing authority and the user's accepted decisions. Record approval for changes to frozen targets before replacing them. <!-- rule:skill-world-change-semantics -->
 - **Visual authority is evidence, not a filename.** Missing DESIGN.md alone does not make a project greenfield; new-work decides whether to preserve, expand, or replace the incumbent world. <!-- rule:skill-new-work-gate -->
 
 ## Modes
@@ -74,13 +75,16 @@ Choose the mode from the requested surface, not the product, and persist it only
 
 Routing: <!-- rule:skill-routing -->
 
+- **Continue an accepted direction for this target:** reuse the original brief returned by context. A matching accepted hash restores the direction across sessions without another interview or concept roll. A stale, missing or ambiguous mapping requires resolving the original source and acceptance decision; do not select by mtime or silently accept changed bytes. If the user requests a different direction, record that change scope and use design-reference for the new choice.
+- **Visual references/direction:** use design-reference. **Interaction-pattern choice:** use ui-pattern-research. **Create/update DESIGN.md:** use design-md's source and writing rules. Phoenix shape consumes the accepted interaction choice and develops the remaining surface decisions.
+- **Independent UI acceptance:** route to review-ui; an existing UI report routes repairs to apply-ui-review. If the required skill is unavailable, report that prerequisite rather than claim Phoenix's design review completed that acceptance.
 - **No argument:** read [routing.md](reference/routing.md) and present its context-aware menu; never auto-run a command.
 - **Explicit or clearly implied request to run a command:** load its reference (native variant on native platforms) and follow it. Ask once if two commands fit.
 - **Workflow or command-selection question:** read [Workflow questions](reference/routing.md#workflow-questions).
 - **Otherwise:** treat the request as general design work. Missing PRODUCT.md routes a new surface or replacement world through init, then new-work; a narrow refinement of existing code proceeds on the incumbent implementation as `phoenix-ui context` directs, offering init afterward rather than blocking on it.
 - `teach` aliases `init`. `craft` is a deprecated alias for ordinary new-work and adds nothing. `shape` owns task discovery, then enters new-work only for visual-world and surface-concept decisions.
 
-After init writes PRODUCT.md, resume without rerunning `phoenix-ui context`; init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
+After an authorized context or brief write, refresh `context --target <primary-target> --json` before using the changed facts. Init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
 
 **Pin / Unpin:** `{{scripts_path}}/phoenix-ui pin <pin|unpin> <command>` creates or removes a standalone `{{command_prefix}}<command>` shortcut. Report the script's result concisely; relay stderr verbatim on error.
 

@@ -135,6 +135,7 @@ components:
 
 > 本文件只管**长什么样**。SDK 行为（主题 / 语言 / 面包屑 / 弹层 / 路由）以 `portal-micro-app` skill 为准；
 > 设计推进用 `phoenix-ui` skill（它开工前会读本文件与 `PRODUCT.md`）。
+> Phoenix 的结构化解析只覆盖支持的字段，正文规则仍需读原文，缺项不补模板值；使用本模板不会自动启用 Portal profile，项目须显式选择，其建议不替代本文件的既定规范。
 
 **关键特征：**
 - 冷调 slate 中性色，浅色底是 `paper` (#FAFAFC)，深色底是 `ink` (#0B1220)；两套都是一等公民。

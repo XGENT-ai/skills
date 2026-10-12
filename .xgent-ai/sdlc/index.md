@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-12：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)设计Ready，整体3/6；[M3内部收口](../../docs/plan/phoenix-ui.records/M3.md)完成1ef9e37，完整tree与CI23相同，九原制品核验成功。后续Root串行集成[M4](../../docs/plan/phoenix-ui.records/M4.md)、[M5](../../docs/plan/phoenix-ui.records/M5.md)、[M6](../../docs/plan/phoenix-ui.records/M6.md)，B最终终验待完成。
+- 2026-10-12：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)设计Ready，整体3/6；M3内部收口已过，Root已串行集成[M4](../../docs/plan/phoenix-ui.records/M4.md)、[M5](../../docs/plan/phoenix-ui.records/M5.md)、[M6](../../docs/plan/phoenix-ui.records/M6.md)并生成214图/567输入开发制品，本地1253 Rust/lint/WASM及独立oracle860/轻量过，原完整入口actual1保留；产物生命周期修正待新CI全入口验证，最终包/真实闭环待验。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

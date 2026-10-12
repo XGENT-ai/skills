@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-12T01:40:44.932Z",
+  "checkedAt": "2026-10-12T04:38:05.743Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -18,10 +18,10 @@
     "preparedAt": "2026-10-09T11:25:56.705Z"
   },
   "inputs": {
-    "cargoLockSha256": "f4bd5f42307343de22bf7a2aa08ec8c9a2a63c02a8ffce0ac50ce0019e11a744",
+    "cargoLockSha256": "a515381d79151ed168cbaf3f9d9164c10b8266099d252c3a4a96f990322e4925",
     "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
-    "checkerSha256": "9921c700e572460ee7324a53ad554741c8866086e26d72cc5ffcd64fe81daee0",
+    "checkerSha256": "806b2e325b8b8b4832e7827581061ee50bf56879f4ab275de1139e3760c933f3",
     "buildToolsSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
   },
   "npm": {
@@ -45,7 +45,7 @@
       },
       "licenses": {
         "errors": 0,
-        "helps": 210,
+        "helps": 213,
         "notes": 2,
         "warnings": 0
       }
@@ -53,11 +53,11 @@
     "findings": []
   },
   "inventory": {
-    "rustPackages": 211,
+    "rustPackages": 214,
     "nodePackages": 54,
     "bundledPackages": 1,
     "resources": 42,
-    "preservedTexts": 186
+    "preservedTexts": 188
   },
   "commands": {
     "prepare": "node scripts/check-phoenix-deps.mjs --prepare",
@@ -66,9 +66,8 @@
     "nodePreparation": "mise exec --no-deps -- bun audit --json + explicit npm bulk request for every locked/bundled package"
   },
   "distribution": {
-    "status": "passed",
-    "requiredFiles": 188,
-    "directory": "local/phoenix-ui/development-release"
+    "status": "not-run",
+    "reason": "No binary/npm distribution directory was supplied"
   },
   "blockers": []
 }

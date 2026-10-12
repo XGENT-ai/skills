@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "f4bd5f42307343de22bf7a2aa08ec8c9a2a63c02a8ffce0ac50ce0019e11a744",
+    "cargoLockSha256": "a515381d79151ed168cbaf3f9d9164c10b8266099d252c3a4a96f990322e4925",
     "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
-    "checkerSha256": "9921c700e572460ee7324a53ad554741c8866086e26d72cc5ffcd64fe81daee0",
+    "checkerSha256": "806b2e325b8b8b4832e7827581061ee50bf56879f4ab275de1139e3760c933f3",
     "buildToolsSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
   },
   "rust": [
@@ -2183,7 +2183,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/cli",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/cli/Cargo.toml",
-      "manifestSha256": "52062367945b5af92c8cbc41b4b63515bb3fc59af925e9af4d8cc7b2e0e89891",
+      "manifestSha256": "0ec730d077bfa686392a7ddbad871e0156cb7f964645bcae77161d6bc25a0b57",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2204,10 +2204,32 @@
       "name": "phoenix-ui-install",
       "version": "0.1.0",
       "license": "Apache-2.0",
-      "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/install",
-      "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
+      "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
       "localManifest": "tools/phoenix-ui/crates/install/Cargo.toml",
       "manifestSha256": "a6fbecc9cc00c96dbf6d419306f6db13fa492f946e20ae07da09b80ebab7da83",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
+          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+          "originalLocation": "tools/phoenix-ui/LICENSE"
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
+          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "originalLocation": "tools/phoenix-ui/NOTICE.md"
+        }
+      ],
+      "licenseLocations": [
+        "tools/phoenix-ui/LICENSE"
+      ]
+    },
+    {
+      "name": "phoenix-ui-review",
+      "version": "0.1.0",
+      "license": "Apache-2.0",
+      "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
+      "localManifest": "tools/phoenix-ui/crates/review/Cargo.toml",
+      "manifestSha256": "f288929b2892f94980e67a9d579e1956c0a8e779d7ecdec270d431432aa1e1bb",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2327,6 +2349,24 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/proc-macro2/1.0.107/source/Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "pulldown-cmark",
+      "version": "0.13.1",
+      "license": "MIT",
+      "sourceUrl": "https://static.crates.io/crates/pulldown-cmark/pulldown-cmark-0.13.1.crate",
+      "checksum": "83c41efbf8f90ac44de7f3a868f0867851d261b56291732d0cbf7cceaaeb55a6",
+      "sourceUnmodified": true,
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b.txt",
+          "sha256": "c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b",
+          "originalLocation": "https://docs.rs/crate/pulldown-cmark/0.13.1/source/LICENSE"
+        }
+      ],
+      "licenseLocations": [
+        "https://docs.rs/crate/pulldown-cmark/0.13.1/source/Cargo.toml.orig"
       ]
     },
     {
@@ -3566,6 +3606,29 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/typenum/1.20.1/source/Cargo.toml.orig"
+      ]
+    },
+    {
+      "name": "unicase",
+      "version": "2.9.0",
+      "license": "MIT OR Apache-2.0",
+      "sourceUrl": "https://static.crates.io/crates/unicase/unicase-2.9.0.crate",
+      "checksum": "dbc4bc3a9f746d862c45cb89d705aa10f187bb96c76001afab07a0d35ce60142",
+      "sourceUnmodified": true,
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "originalLocation": "https://docs.rs/crate/unicase/2.9.0/source/LICENSE-APACHE"
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/4f6bd11a0f17fe5b085ace1daaedb7b002a08316850dd9577c246c6a68a68e8c.txt",
+          "sha256": "4f6bd11a0f17fe5b085ace1daaedb7b002a08316850dd9577c246c6a68a68e8c",
+          "originalLocation": "https://docs.rs/crate/unicase/2.9.0/source/LICENSE-MIT"
+        }
+      ],
+      "licenseLocations": [
+        "https://docs.rs/crate/unicase/2.9.0/source/Cargo.toml.orig"
       ]
     },
     {

@@ -18,6 +18,9 @@ fn summary(brief: &SurfaceBrief, project_root: &str) -> Value {
 }
 
 pub fn run(args: &[String], io: &mut Io) -> i32 {
+    if args.first().is_some_and(|arg| arg == "link") {
+        return crate::accepted_briefs::run(args, io);
+    }
     let cwd = io.cwd.to_string_lossy().into_owned();
     let env = io.env.clone();
     let command = args.first().map(String::as_str);
@@ -84,7 +87,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
             }
         }
         _ => {
-            io.err("usage: phoenix-ui surface-brief <path|list|read|write> [target] [body-file] [related-target ...]\n");
+            io.err("usage: phoenix-ui surface-brief <path|list|read|write|link> [target] [body-file] [related-target ...]\n");
             1
         }
     }
