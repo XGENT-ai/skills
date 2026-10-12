@@ -1252,23 +1252,27 @@ fn coverage_section(input: &ReportInput<'_>, from: &str) -> Result<String, Store
     let round = input.round;
     let mut tools = Vec::new();
     let mut captured = 0;
-    let mut missing = Vec::new();
+    // Missing cells grouped by their recorded reason, in matrix order.
+    let mut missing: Vec<(String, Vec<String>)> = Vec::new();
     for cell in &round.matrix.cells {
-        match finalize::current_capture(round, &cell.key).map(|c| &c.input.observation) {
+        let reason = match finalize::current_capture(round, &cell.key).map(|c| &c.input.observation)
+        {
             Some(Observation::Captured { tool, .. }) => {
                 captured += 1;
                 if !tools.contains(tool) {
                     tools.push(tool.clone());
                 }
+                continue;
             }
-            Some(Observation::Missing { reason }) => missing.push(format!(
-                "{}（{}）",
-                cell_text(&cell.key),
-                table_text(reason)
-            )),
-            None => missing.push(format!("{}（未登记）", cell_text(&cell.key))),
+            Some(Observation::Missing { reason }) => table_text(reason),
+            None => "未登记".to_owned(),
+        };
+        match missing.iter_mut().find(|(known, _)| *known == reason) {
+            Some((_, cells)) => cells.push(cell_text(&cell.key)),
+            None => missing.push((reason, vec![cell_text(&cell.key)])),
         }
     }
+    let missing_count: usize = missing.iter().map(|(_, cells)| cells.len()).sum();
     let recaptured: Vec<String> = round
         .captures
         .iter()
@@ -1345,12 +1349,19 @@ fn coverage_section(input: &ReportInput<'_>, from: &str) -> Result<String, Store
         ));
     }
     text.push_str(&format!(
-        "\n- 格子：已采 {captured} / {}；未采：{}；补采：{}\n- 环境噪声：未单独登记，如有见核对说明\n",
+        "\n- 格子：已采 {captured} / {}；{}；补采：{}\n- 环境噪声：未单独登记，如有见核对说明\n",
         round.matrix.cells.len(),
         if missing.is_empty() {
-            "无".to_owned()
+            "未采：无".to_owned()
         } else {
-            missing.join("、")
+            format!(
+                "未采 {missing_count} 格：{}",
+                missing
+                    .iter()
+                    .map(|(reason, cells)| format!("{reason}（{}）", cells.join("、")))
+                    .collect::<Vec<_>>()
+                    .join("；")
+            )
         },
         if recaptured.is_empty() {
             "无".to_owned()

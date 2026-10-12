@@ -285,6 +285,20 @@ fn captures(
     Ok(output)
 }
 
+/// Reviewers reassess the unit's open reviewer-sourced gaps; host-measured gaps are
+/// rechecked by the host and closed gaps are not reopened.
+fn open_gaps(conclusion: &finalize::UnitConclusion, unit: &str) -> Vec<GapIdentity> {
+    conclusion
+        .gaps
+        .iter()
+        .filter(|gap| gap.origin == finalize::GapOrigin::Reviewer && !finalize::closed(gap.status))
+        .map(|gap| GapIdentity {
+            id: gap.id.clone(),
+            unit_id: unit.into(),
+        })
+        .collect()
+}
+
 pub(super) fn materials(
     lock: &CycleLock,
     cycle: &Cycle,
@@ -297,13 +311,52 @@ pub(super) fn materials(
     let legacy = legacy::load(lock, cycle, sources)?;
     for unit in units {
         let covered = output.len();
+        // The newest covering round's open gaps stay authoritative. A covering round
+        // without any registered judge (e.g. sealed with every cell missing) leaves
+        // nothing to reassess from, so images and reviewer text come from the latest
+        // covering round that has one; with none, the newest round is shown unreviewed.
+        let mut newest = None;
+        let mut material = None;
+        for link in cycle.rounds.iter().rev() {
+            if ordinal(&link.round_id)? >= ordinal(&round.round_id)? {
+                continue;
+            }
+            let (_, previous) = load_round(lock, cycle, Path::new(&link.path))?;
+            if !previous.matrix.selected_units().contains(&unit.as_str()) {
+                continue;
+            }
+            let result = finalize::load_result(lock, cycle, &previous, sources)?;
+            let conclusion = result
+                .units
+                .iter()
+                .find(|old| old.unit_id == *unit)
+                .ok_or_else(|| error(4, "Historical unit conclusion is missing"))?;
+            if newest.is_none() {
+                newest = Some((link.round_id.clone(), open_gaps(conclusion, unit)));
+            }
+            if !conclusion.judge_refs.is_empty() {
+                material = Some(link.round_id.clone());
+                break;
+            }
+        }
+        let has_legacy = legacy
+            .as_ref()
+            .is_some_and(|map| map.units.iter().any(|material| material.unit_id == *unit));
+        let material = material.or_else(|| {
+            newest
+                .as_ref()
+                .filter(|_| !has_legacy)
+                .map(|(id, _)| id.clone())
+        });
         for link in cycle.rounds.iter().rev() {
             if ordinal(&link.round_id)? >= ordinal(&round.round_id)? {
                 continue;
             }
             let (snapshot, previous) = load_round(lock, cycle, Path::new(&link.path))?;
             sources.push((relative(&link.path)?, snapshot.hash));
-            if !previous.matrix.selected_units().contains(&unit.as_str()) {
+            if !previous.matrix.selected_units().contains(&unit.as_str())
+                || material.as_ref() != Some(&link.round_id)
+            {
                 continue;
             }
             let result = finalize::load_result(lock, cycle, &previous, sources)?;
@@ -385,19 +438,9 @@ pub(super) fn materials(
                 target_fingerprint: previous.target_fingerprint,
                 captures,
                 judges,
-                // Reviewers reassess the unit's open reviewer-sourced gaps; host-measured
-                // gaps are rechecked by the host and closed gaps are not reopened.
-                gaps: conclusion
-                    .gaps
-                    .iter()
-                    .filter(|gap| {
-                        gap.origin == finalize::GapOrigin::Reviewer && !finalize::closed(gap.status)
-                    })
-                    .map(|gap| GapIdentity {
-                        id: gap.id.clone(),
-                        unit_id: unit.clone(),
-                    })
-                    .collect(),
+                gaps: newest
+                    .take()
+                    .map_or_else(|| open_gaps(conclusion, unit), |(_, gaps)| gaps),
                 unreviewed_reason: conclusion.unreviewed_reason.clone(),
                 target_changes: Vec::new(),
                 legacy: None,

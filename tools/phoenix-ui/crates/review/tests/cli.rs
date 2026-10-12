@@ -1142,6 +1142,62 @@ fn round_projections_follow_the_markdown_contracts() {
     assert!(!applied.contains("\"workingTree\""), "{applied}");
 }
 
+#[test]
+fn an_unjudged_covering_round_does_not_hide_the_last_judged_material() {
+    let p = Project::new(&["U1"]);
+    reviewed(
+        &p,
+        None,
+        &unit("U1", ["2", "2", "2", "1"], &[("", "P1", "3")]).titled("顶栏图标偏大"),
+    );
+    // r2 covers U1 but its only cell is missing; it is sealed as 需补证 without a judge.
+    let r2 = p.begin(&[]);
+    let (code, value) = p.capture(
+        &r2,
+        "U1",
+        1,
+        Shot::Missing("Sandbox refused the local server"),
+    );
+    assert_eq!(code, 0, "{value}");
+    let (code, out) = p.finalize(&r2, json!({}));
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(out["verdict"], "需补证");
+    let report = fs::read_to_string(p.root.join(format!("{PREFIX}.ui-review.r2.md"))).unwrap();
+    assert!(
+        report.contains("未采 1 格：Sandbox refused the local server（U1 / default / "),
+        "{report}"
+    );
+    // The next round's reviewers get r1's images and reviewer text for the open gap.
+    let r3 = p.begin(&[]);
+    p.capture_all(&r3);
+    let (_, manifest) = p.pack(&r3, None);
+    let previous = &manifest["previousUnits"][0];
+    assert_eq!(previous["roundId"], "r1", "{previous}");
+    assert_eq!(previous["gaps"], json!([{"id": "UI-01", "unitId": "U1"}]));
+    assert_eq!(previous["judges"][0]["unit"]["gaps"][0]["key"], "UI-01");
+    assert_eq!(
+        previous["judges"][0]["unit"]["gaps"][0]["summary"]
+            .as_str()
+            .unwrap()
+            .trim_end(),
+        "顶栏图标偏大"
+    );
+    assert_eq!(
+        previous["captures"][0]["input"]["observation"]["status"],
+        "captured"
+    );
+    assert!(previous["unreviewedReason"].is_null(), "{previous}");
+    let (code, value) = p.judge(
+        &r3,
+        "reviewer-a",
+        &unit("U1", ["3", "3", "3", "1"], &[]).prev("UI-01", "已解决"),
+    );
+    assert_eq!(code, 0, "{value}");
+    let (code, out) = p.finalize(&r3, json!({}));
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(result_gap(&p, &r3, "UI-01")["status"], "已解决");
+}
+
 // ── V-8 / §9.2: table-driven CLI sequences ─────────────────────────────────
 
 struct Expect {
