@@ -1198,6 +1198,36 @@ fn an_unjudged_covering_round_does_not_hide_the_last_judged_material() {
     assert_eq!(result_gap(&p, &r3, "UI-01")["status"], "已解决");
 }
 
+#[test]
+fn an_unused_packet_that_no_longer_reproduces_does_not_block_new_packets() {
+    let p = Project::new(&["U1", "U2"]);
+    let round = p.begin(&[]);
+    p.capture_all(&round);
+    let (stale, _) = p.pack(&round, Some("U1"));
+    // An unused export that no longer reproduces, such as one written under the
+    // material rules of an earlier engine before an upgrade in the middle of a round.
+    let manifest = p.root.join(stale["manifest"].as_str().unwrap());
+    let mut bytes = fs::read(&manifest).unwrap();
+    bytes.push(b'\n');
+    fs::write(&manifest, bytes).unwrap();
+    let (code, value) = p.run(&["judge-pack", "--round", &round, "--units", "U1"]);
+    assert_eq!(
+        code, 3,
+        "the drifted packet itself is never reused: {value}"
+    );
+    let (code, value) = p.run(&["judge-pack", "--round", &round]);
+    assert_eq!(code, 0, "{value}");
+    let (code, value) = p.judge(
+        &round,
+        "reviewer-a",
+        &unit("U1", ["3", "3", "3", "1"], &[]).and("U2", ["3", "3", "3", "1"], &[]),
+    );
+    assert_eq!(code, 0, "{value}");
+    let (code, out) = p.finalize(&round, json!({}));
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(out["verdict"], "通过验收");
+}
+
 // ── V-8 / §9.2: table-driven CLI sequences ─────────────────────────────────
 
 struct Expect {

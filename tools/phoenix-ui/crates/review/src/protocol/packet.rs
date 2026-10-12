@@ -332,8 +332,10 @@ fn create_packet(
             "Packet units must list unique units in the round scope",
         ));
     }
-    for old in &round.packets {
-        load(&lock, &round, old, &mut sources)?;
+    // Packets that registered judges used must stay intact; an unused packet need not
+    // reproduce (e.g. one exported under an earlier engine's material rules).
+    for file in &round.judges {
+        judgement::load(&lock, &round, &cycle, file, &mut sources)?;
     }
     let complete = |unit: &str| {
         round.target_snapshot.missing.is_empty()
@@ -486,6 +488,7 @@ fn create_packet(
         .iter()
         .find(|old| old.packet_hash == packet_hash)
     {
+        load(&lock, &round, reference, &mut sources)?;
         return Ok(reference.clone());
     }
     let directory = path.parent().unwrap().join("judge-pack").join(&packet_hash);
