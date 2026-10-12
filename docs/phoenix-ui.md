@@ -116,12 +116,16 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link
 
 `link` 保存原文件路径、SHA-256 与接受记录，原 brief 留在选定仓库，不复制第二份可编辑正文。URL/route 是逻辑目标，`target.exists: null` 不表示文件缺失。设计流程详见包内 `design-reference`、`ui-pattern-research`、`design-md` 的实际指令。
 
-用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。先按固定包回执核对 `engine-probe` 身份、实际根帮助和本循环状态，只有无旧历史的新循环才 begin：
+用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。先按固定包回执核对 `engine-probe` 身份，再查实际 `review` 帮助、输入形状和本循环状态，只有无旧历史的新循环才 begin：
 
 ```bash
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review --help
+npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review schema --json
 npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review status --prefix "docs/ui/orders" --json
 npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review begin --prefix "docs/ui/orders" --target "docs/ui/orders.ui-target.md" --tested-version "docs/ui/orders.tested-version.json" --json
 ```
+
+`review schema --json` 返回 `reviewSchema: 1`、`discoveryVersion: 1` 的完整 typed examples 与枚举变体，可用 `--kind tested-version` 等选择一种输入。它描述当前 serde 字段形状，不是完整 JSON Schema；样例的文字、数字和布尔值均为占位，不证明执行成功或当前 UI 事实。真实身份、路径、hash、版本和 revision 取实际操作与取证。帮助和 schema 不读写循环；新前缀的父目录不存在时，`status` 可直接返回 `absent`，不创建目录或循环。
 
 `--tested-version` 的 JSON 由宿主提供真实 HEAD 加 clean/dirty 指纹，或可核对的 build ID，并与本轮应用/采集一致；省略时为 Unknown，不能判通过。context 提供目标和规范来源，不自动生产版本记录。后续 capture、judge-pack、judge add、finalize、apply record 使用返回的 round/current revision 和实际合同输入；**退出 0 不等于 UI 通过**，必须回读 verdict 与报告，`confirmation_required` 仍为草稿。参数与输入边界见 [Phoenix managed 评审协议](../skills/review-ui/references/phoenix-review.md)，目标、报告和处置沿 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md)。
 

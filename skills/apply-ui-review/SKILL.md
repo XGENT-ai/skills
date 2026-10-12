@@ -20,7 +20,7 @@ description: 用于按 UI 验收评审报告修复界面差距；不用于初次
 
 已有 Phoenix managed 索引时，修复前核对固定版本 engine 身份与实际 review 协议；缺失、不匹配、未来 schema 或状态损坏时只读历史，可收集未登记素材，不改产品代码、目标、处置、计数、报告生成区或计划记录。说明恢复匹配 engine 的方法，恢复后续接原循环；不以人工降级、新前缀或重置基线绕过它。
 
-安装包包含 `review-ui` 时，按其 [Phoenix 评审协议](../review-ui/references/phoenix-review.md) 发现能力与续接状态；单独使用本技能时仍遵守上述边界，机器输入只依实际 CLI 帮助及 schema/capability 返回，不猜字段。managed 处置用 `review apply record` 登记当前轮，带当前 applied revision；旧 Markdown 的接入必须显式 `review import`，历史不明的尝试、重构次数不视为零。
+安装包包含 `review-ui` 时，按其 [Phoenix 评审协议](../review-ui/references/phoenix-review.md) 发现能力与续接状态；单独使用本技能时仍遵守上述边界，机器输入只依实际 `review --help` 与 `review schema --json` 返回的 typed examples，不猜字段；样例不是证据，身份、hash 和 revision 取真实操作与材料。managed 处置用 `review apply record` 登记当前轮，带当前 applied revision；旧 Markdown 的接入必须显式 `review import`，历史不明的尝试、重构次数不视为零。
 
 ## 1. 锚定输入
 

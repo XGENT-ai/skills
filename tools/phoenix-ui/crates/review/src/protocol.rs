@@ -302,7 +302,12 @@ fn manual_history(root: &Path, prefix: &str) -> Result<bool, StoreError> {
         "{}.ui-review.r",
         base.file_name().unwrap().to_string_lossy()
     );
-    for entry in fs::read_dir(base.parent().unwrap()).map_err(|e| error(4, e))? {
+    let entries = match fs::read_dir(base.parent().unwrap()) {
+        Ok(entries) => entries,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(e) => return Err(error(4, e)),
+    };
+    for entry in entries {
         let entry = entry.map_err(|e| error(4, e))?;
         let name = entry.file_name();
         if name

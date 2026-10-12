@@ -79,6 +79,8 @@ Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github
 
 安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。原 `vendor/impeccable/` 与 `scripts/vendor-impeccable.mjs`、`scripts/publish-vendor-r2.mjs` 只作来源历史保留,不再是安装或更新入口。
 
+managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](skills/review-ui/references/phoenix-review.md)。
+
 ## Skills 列表
 
 以下按用途分组列出 `skills/` 中的 skill。点击名称查看使用条件与完整流程。

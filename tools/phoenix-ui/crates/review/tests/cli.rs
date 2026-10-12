@@ -1,6 +1,10 @@
 //! Public `review` CLI regressions. Generated 2×2 PNGs and declared provenance are
 //! structural fixtures: they prove bindings and state transitions, not UI truth.
-use phoenix_ui_review::cli;
+use phoenix_ui_review::{
+    capture_evidence::{CaptureInput, TestedVersion},
+    cli,
+    protocol::{applied, finalize, judgement, legacy},
+};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
@@ -487,6 +491,147 @@ fn reviewed(p: &Project, scope: Option<&str>, judge: &Judge) -> (String, Value) 
 }
 
 // ── V-7: arguments, identity, CAS, recovery and projections ────────────────
+
+#[test]
+fn discovery_help_lists_the_public_verbs_and_input_discovery_path() {
+    let p = Project::new(&["U1"]);
+    for verb in ["--help", "-h", "help"] {
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        assert_eq!(cli::run(&[verb.into()], &p.root, &mut out, &mut err), 0);
+        assert!(err.is_empty());
+        let text = String::from_utf8(out).unwrap();
+        for entry in [
+            "begin",
+            "capture add",
+            "judge-pack",
+            "judge add",
+            "finalize",
+            "apply record",
+            "status",
+            "import",
+            "schema --json",
+            "--tested-version",
+            "--mappings",
+            "--expect-cycle-revision",
+            "--kind",
+        ] {
+            assert!(text.contains(entry), "missing {entry} in {text}");
+        }
+        let help = p.ok(&[verb]);
+        assert_eq!(help["command"], "help");
+        assert_eq!(help["readOnly"], true);
+    }
+}
+
+#[test]
+fn discovery_schema_exposes_typed_input_roots_and_variants() {
+    fn parses<T: serde::de::DeserializeOwned>(inputs: &Value, kind: &str) {
+        for sample in inputs[kind]["examples"].as_array().unwrap() {
+            serde_json::from_str::<T>(&sample["value"].to_string()).unwrap();
+        }
+    }
+    let p = Project::new(&["U1"]);
+    let schema = p.ok(&["schema"]);
+    assert_eq!(schema["command"], "schema");
+    assert_eq!(schema["reviewSchema"], 1);
+    assert_eq!(schema["discoveryVersion"], 1);
+    assert_eq!(schema["format"], "typed-examples");
+    assert_eq!(schema["readOnly"], true);
+    assert_eq!(schema["examplesAreEvidence"], false);
+    let inputs = &schema["inputs"];
+    parses::<TestedVersion>(inputs, "tested-version");
+    parses::<CaptureInput>(inputs, "capture");
+    parses::<judgement::JudgeInput>(inputs, "judge");
+    parses::<Vec<judgement::GapMapping>>(inputs, "mappings");
+    parses::<finalize::Adjudication>(inputs, "adjudication");
+    for sample in inputs["adjudication"]["examples"].as_array().unwrap() {
+        assert_eq!(sample["value"]["applied"], json!([]));
+    }
+    parses::<finalize::RuntimeCheck>(inputs, "runtime-check");
+    parses::<applied::Input>(inputs, "applied");
+    let imported = inputs["import"]["examples"].as_array().unwrap();
+    assert_eq!(imported.len(), 2);
+    serde_json::from_str::<legacy::LegacyMap>(&imported[0]["value"].to_string()).unwrap();
+    serde_json::from_str::<legacy::Rebase>(&imported[1]["value"].to_string()).unwrap();
+    assert_eq!(imported[0]["value"]["kind"], "legacyMarkdown");
+    assert_eq!(imported[1]["value"]["kind"], "projectionRebase");
+    assert_eq!(
+        inputs["capture"]["examples"][0]["value"]["observation"]["status"],
+        "missing"
+    );
+    assert_eq!(
+        inputs["capture"]["examples"][1]["value"]["observation"]["status"],
+        "captured"
+    );
+    assert_eq!(
+        inputs["judge"]["examples"][0]["value"]["conversion"]["kind"],
+        "reviewerStructured"
+    );
+    assert_eq!(
+        inputs["judge"]["examples"][1]["value"]["conversion"]["kind"],
+        "hostVerified"
+    );
+    assert_eq!(
+        inputs["applied"]["examples"][0]["value"]["items"][0]["selfCheck"]["kind"],
+        "not_run"
+    );
+    assert_eq!(
+        inputs["applied"]["examples"][1]["value"]["items"][0]["selfCheck"]["kind"],
+        "page"
+    );
+    assert_eq!(
+        schema["variants"]["Origin"],
+        json!(["browser", "simulator", "native"])
+    );
+    assert_eq!(
+        schema["variants"]["Disposition"],
+        json!(["已修改待评审", "不采纳", "待决定", "阻塞", "未处理"])
+    );
+    for kind in schema["kinds"].as_array().unwrap() {
+        let kind = kind.as_str().unwrap();
+        let selected = p.ok(&["schema", "--kind", kind]);
+        assert_eq!(selected["inputs"].as_object().unwrap().len(), 1);
+        assert_eq!(selected["inputs"][kind], inputs[kind]);
+    }
+}
+
+#[test]
+fn discovery_is_read_only_and_unknown_kinds_remain_input_errors() {
+    let p = Project::new(&["U1"]);
+    p.begin(&[]);
+    fs::write(
+        p.root.join(format!("{PREFIX}.ui-review.json")),
+        "do not read this cycle",
+    )
+    .unwrap();
+    let before = tree(&p.root);
+    p.ok(&["--help"]);
+    p.ok(&["schema"]);
+    let (code, value) = p.run(&["schema", "--kind", "not-a-kind"]);
+    assert_eq!(code, 2);
+    assert_eq!(value["command"], "schema");
+    assert!(value["error"].as_str().unwrap().contains("not-a-kind"));
+    assert_eq!(
+        tree(&p.root),
+        before,
+        "discovery must not create or change files"
+    );
+    let absent = p.root.join("does-not-exist");
+    for args in [vec!["--help", "--json"], vec!["schema", "--json"]] {
+        let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        assert_eq!(cli::run(&args, &absent, &mut out, &mut err), 0);
+        assert!(err.is_empty());
+        assert_eq!(
+            serde_json::from_slice::<Value>(&out).unwrap()["readOnly"],
+            true
+        );
+    }
+    assert!(
+        !absent.exists(),
+        "discovery must work without opening a project"
+    );
+}
 
 #[test]
 fn arguments_schema_and_paths_fail_with_exit_2_and_one_json_object() {
@@ -1967,6 +2112,21 @@ fn unknown_status(p: &Project) -> Value {
         "status must not create or change files"
     );
     value
+}
+
+#[test]
+fn status_nested_prefix_without_parent_is_absent_and_does_not_create_it() {
+    let p = Project::new(&["U1"]);
+    let before = tree(&p.root);
+    for prefix in ["docs/ui/new/orders", "new-project/ui/orders"] {
+        let value = p.ok(&["status", "--prefix", prefix]);
+        assert_eq!(value["state"], "absent");
+        assert!(value["verdict"].is_null());
+        assert_eq!(value["next"], json!(["begin"]));
+        assert_eq!(tree(&p.root), before);
+    }
+    assert!(!p.root.join("docs/ui").exists());
+    assert!(!p.root.join("new-project").exists());
 }
 
 #[test]

@@ -28,7 +28,7 @@ description: 用于界面实现后的 UI/UX 验收或修复复审；不用于代
 
 已有 managed 索引时，先按 [Phoenix 评审协议](references/phoenix-review.md) 核对固定版本 engine 的身份与实际支持的 review 协议。缺失、不匹配、未来 schema 或索引损坏时只读历史，可收集未登记素材；不计分、不裁定、不写处置、计数或报告生成区，也不新建循环来绕过原状态。说明恢复匹配 engine 的方法，恢复后续接原轮次与 revision。
 
-匹配时由 `review begin` 分配轮次并冻结目标与矩阵，后续依次登记采集、读取白名单 packet、登记评审原文、裁定与回读。JSON 输入按实际 CLI 帮助及 schema/capability 返回构造，不猜字段。旧 Markdown 只有经显式 `review import` 才进入 managed 循环；历史不明的尝试或重构次数不能当作零。
+匹配时由 `review begin` 分配轮次并冻结目标与矩阵，后续依次登记采集、读取白名单 packet、登记评审原文、裁定与回读。JSON 输入按实际 `review --help` 与 `review schema --json` 返回的 typed examples 构造，不猜字段；样例不是证据，身份、hash 和 revision 必须取真实操作与材料。旧 Markdown 只有经显式 `review import` 才进入 managed 循环；历史不明的尝试或重构次数不能当作零。
 
 ## 1. 锚定对象与目标包
 

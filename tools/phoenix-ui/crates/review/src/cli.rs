@@ -20,6 +20,40 @@ use std::{
 
 type Outcome = Result<Value, StoreError>;
 
+mod schema;
+
+const HELP: &str = "Usage: phoenix-ui review <command> [flags] [--json]
+
+Commands and flags:
+  begin --prefix <prefix> --target <target.md>
+        [--plan <plan.md>] [--scope <unit IDs>] [--threshold <decimal>]
+        [--tested-version <tested-version.json>]
+  capture add --round <round> --input <capture.json> --expect-revision <revision>
+  judge-pack --round <round> [--units <unit IDs>]
+  judge add --round <round> --input <judge.json> --raw <reviewer.txt>
+        --packet <packet hash or manifest path> --expect-revision <revision>
+        [--mappings <mappings.json>]
+  finalize --round <round> --input <adjudication.json>
+        --expect-revision <revision>
+        (append a whole-UI waiver: use --expect-cycle-revision <revision> instead)
+  apply record --round <round> --input <applied.json> --expect-revision <revision>
+  status --prefix <prefix>
+  import --prefix <prefix> --input <legacy-map-or-rebase.json>
+  schema --json [--kind <kind>]
+  help | --help | -h
+
+Input discovery kinds: tested-version, capture, judge, mappings, adjudication,
+runtime-check, applied, import. schema returns versioned typed examples and enum
+variants, not JSON Schema or real evidence. Replace all example identities,
+paths, hashes, versions and revisions with actual operation/evidence values.
+
+Help and schema are read-only and do not open a cycle. Lists use comma-separated
+IDs; --round accepts a round directory or its round.json. --json writes exactly
+one object to stdout; diagnostics go to stderr. Exit 0 means a successful query
+or operation, never UI acceptance. Errors: 2 input, 3 conflict, 4 environment or
+unknown managed state. Finalization may return confirmation_required and remain
+a draft. Use the fixed package's matching engine before querying or writing.";
+
 pub fn run(args: &[String], cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn Write) -> i32 {
     let json_mode = args.iter().any(|arg| arg == "--json");
     let (command, result) = dispatch(args, cwd);
@@ -39,6 +73,8 @@ pub fn run(args: &[String], cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn
             }
             if json_mode {
                 let _ = writeln!(stdout, "{value}");
+            } else if command == "help" {
+                let _ = writeln!(stdout, "{HELP}");
             } else {
                 let status = if unknown { "unknown" } else { "ok" };
                 let _ = writeln!(stdout, "phoenix-ui review {command}: {status}");
@@ -77,24 +113,30 @@ pub fn run(args: &[String], cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn
 
 fn dispatch(args: &[String], cwd: &Path) -> (String, Outcome) {
     let word = |n: usize| args.get(n).map(String::as_str);
-    let (command, rest) = match (word(0), word(1)) {
-        (Some("capture"), Some("add")) => ("capture add", &args[2..]),
-        (Some("judge"), Some("add")) => ("judge add", &args[2..]),
-        (Some("apply"), Some("record")) => ("apply record", &args[2..]),
-        (Some(verb @ ("begin" | "judge-pack" | "finalize" | "status" | "import")), _) => {
-            (verb, &args[1..])
-        }
-        _ => {
-            return (
+    let (command, rest) =
+        match (word(0), word(1)) {
+            (Some("help" | "--help" | "-h"), _) => ("help", &args[1..]),
+            (Some("capture"), Some("add")) => ("capture add", &args[2..]),
+            (Some("judge"), Some("add")) => ("judge add", &args[2..]),
+            (Some("apply"), Some("record")) => ("apply record", &args[2..]),
+            (
+                Some(verb @ ("begin" | "judge-pack" | "finalize" | "status" | "import" | "schema")),
+                _,
+            ) => (verb, &args[1..]),
+            _ => return (
                 args.first().cloned().unwrap_or_default(),
                 Err(error(
                     2,
-                    "Unknown review command; expected begin, capture add, judge-pack, judge add, finalize, apply record, status or import",
+                    "Unknown review command; use phoenix-ui review --help for supported commands",
                 )),
-            )
-        }
-    };
+            ),
+        };
     let result = match command {
+        "help" => Flags::parse(rest, &[])
+            .map(|_| json!({"reviewSchema": 1, "readOnly": true, "help": HELP})),
+        "schema" => {
+            Flags::parse(rest, &["kind"]).and_then(|flags| schema::query(flags.get("kind")))
+        }
         "begin" => begin(cwd, rest),
         "capture add" => capture_add(cwd, rest),
         "judge-pack" => judge_pack(cwd, rest),

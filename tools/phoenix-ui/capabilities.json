@@ -1256,6 +1256,36 @@
         "recapture"
       ],
       "currentPhaseSource": "crates/comp-verbs/src/build_phase.rs:27"
+    },
+    "reviewDiscovery": {
+      "helpAliases": [
+        "--help",
+        "-h",
+        "help"
+      ],
+      "schemaCommand": "review schema --json [--kind <kind>]",
+      "reviewSchema": 1,
+      "discoveryVersion": 1,
+      "format": "typed-examples",
+      "kinds": [
+        "tested-version",
+        "capture",
+        "judge",
+        "mappings",
+        "adjudication",
+        "runtime-check",
+        "applied",
+        "import"
+      ],
+      "sources": [
+        "crates/review/src/cli.rs:25",
+        "crates/review/src/cli/schema.rs:47"
+      ],
+      "sourceStatus": "source-verified",
+      "runtimeStatus": "passed-scoped-development",
+      "boundary": "Serde-checked wire examples/enum variants only; no current UI evidence or policy validation, no cycle read/write. Original candidate lacked these entry points; updated native/final consumer acceptance pending.",
+      "evidence": "local/phoenix-ui/b-discovery-current/discovery-native-checks",
+      "binarySha256": "35e37c206d418cf70ef880c4b6cf75effb179fa40a77e1209f67cde06a1a234a"
     }
   },
   "designCommands": [
@@ -7194,7 +7224,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/review/src/cli.rs": {
-        "sha256": "a7313fcb0061172eb49771a3815defc8d9d0568eb15183916d014f07880e43c0",
+        "sha256": "2b9efed288a4e8d1c3596d9eb9e24f2752e039e6a5fe17c373a5b1cdff7643d6",
         "sourceScope": "current-fork"
       },
       "scripts/build-phoenix-ui.mjs": {
@@ -7204,6 +7234,14 @@
       "scripts/publish-phoenix-ui-r2.mjs": {
         "sha256": "8d3ecd701a71282a49cec58dc0774c5bdee4fe7732051ab2d7f945dc352cb9df",
         "sourceScope": "current-fork"
+      },
+      "tools/phoenix-ui/crates/review/src/cli/schema.rs": {
+        "sha256": "c2ef61a314a4f1ed93030ccca9aad52d9068e82f7ee35f33cbb131292bd46ed9",
+        "sourceScope": "current-fork"
+      },
+      "tools/phoenix-ui/crates/review/src/protocol.rs": {
+        "sha256": "610a032d4a0ece004bb68d332353ea162a85a02e205cd8c771047698c5b75446",
+        "sourceScope": "current-fork"
       }
     },
     "generatedBundle": {
@@ -7211,7 +7249,7 @@
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
       "manifestSha256": "6c93502f4445254a7be7427b6002a206bcb059d0b56cbc90d66672a8357268b0",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "ba950cd2eba9732561e76ede5be787e5061560954c94c7f4309e9afb80b06b9e",
+      "generationManifestSha256": "9dd0158435621dc45d8da73af6cae4784f13588135ed667486e84eabf13fba28",
       "generator": "Bun 1.3.14",
       "inputSha256": "2ff87c55206e717d56e666929b7ebfb049d29046f1cdb1ba93034061b7c36740",
       "engineManifest": "verified",
@@ -7353,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "8d028348bd2b45fa984ea4cc717da17f1ebc03476f7971583a6ff0c0d17adf63",
+        "sha256": "bb16b9628a35fb3711aab1ef23abeb275eb9ab534fded83808b7924a37bee027",
         "distribution": "development",
-        "sourceInputSha256": "60a0e84a9e230f1adfdb865dfb31c74a6434895a3b5f5cf96333a33516a88173",
+        "sourceInputSha256": "a9971b1e7e166138d73b7fef23c40b1317dd70bdc99004458b7aaad70055e56e",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "feef67532b73f36f59473b30dc1af5c8a9aac5cd69e13b031819b8db7e6e1cdb",
-            "size": 20345688
+            "sha256": "35e37c206d418cf70ef880c4b6cf75effb179fa40a77e1209f67cde06a1a234a",
+            "size": 20702120
           }
         },
-        "limitation": "Development envelope carries only the listed darwin-arm64 engine. The build record is sourceState=dirty and fullRuntimeTests=not-run-by-build-script; B native matrix and runtime/UI acceptance are separate."
+        "limitation": "Development darwin-arm64 only for readonly discovery/status repair; sourceState dirty and full runtime not-run-by-build-script. Prior CI24/e1 scope preserved; fixed final CI/package acceptance pending."
       }
     },
     "directionLibrary": {
