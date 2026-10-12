@@ -105,6 +105,8 @@ pub(super) struct Loaded {
     pub before: Option<Snapshot>,
     pub ledger: Option<Ledger>,
     pub records: Vec<Record>,
+    /// Each recorded round's sealed verdict line, for the repair source line.
+    pub verdicts: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -151,7 +153,12 @@ pub fn record(
         before,
         ledger: previous,
         records,
+        mut verdicts,
     } = load(&lock, &cycle, &mut sources)?;
+    verdicts.insert(
+        round.round_id.clone(),
+        report::verdict_text(&result.outcome),
+    );
     if previous.as_ref().map_or(0, |ledger| ledger.revision) != expected_revision {
         return Err(error(
             3,
@@ -456,7 +463,7 @@ pub fn record(
     };
     let mut all_records = records.to_vec();
     all_records.push(entry);
-    let body = body(&all_records, &cycle, &record_path)?;
+    let body = body(&all_records, &cycle, &record_path, &verdicts)?;
     let _record_lock = CycleLock::acquire_project(&root, &record_file)?;
     let current = match fs::read(lock.path(&record_file)?) {
         Ok(bytes) => Some(bytes),
@@ -539,6 +546,7 @@ pub(super) fn load(
             before: None,
             ledger: None,
             records: Vec::new(),
+            verdicts: BTreeMap::new(),
         });
     };
     let ledger: Ledger = serde_json::from_slice(&snapshot.bytes).map_err(|e| error(4, e))?;
@@ -555,6 +563,7 @@ pub(super) fn load(
         ));
     }
     let mut records = Vec::new();
+    let mut verdicts = BTreeMap::new();
     let mut previous_round = 0;
     for (n, file) in ledger.records.iter().enumerate() {
         let bytes = require_file(lock, file, sources)?;
@@ -598,6 +607,10 @@ pub(super) fn load(
             return Err(error(4, "Applied record is not bound to the sealed result"));
         }
         let result = finalize::load_result(lock, cycle, &round, sources)?;
+        verdicts.insert(
+            record.round_id.clone(),
+            report::verdict_text(&result.outcome),
+        );
         let ids: BTreeSet<_> = result
             .units
             .iter()
@@ -639,7 +652,7 @@ pub(super) fn load(
         &[],
         &block_id(cycle),
         None,
-        &body(&records, cycle, &ledger.record_path)?,
+        &body(&records, cycle, &ledger.record_path, &verdicts)?,
     )?;
     if projected.block_hash != ledger.projection_hash {
         return Err(error(
@@ -651,6 +664,7 @@ pub(super) fn load(
         before: Some(snapshot),
         ledger: Some(ledger),
         records,
+        verdicts,
     })
 }
 
@@ -658,7 +672,7 @@ fn escaped(value: &str) -> String {
     value.replace('|', "\\|").replace(['\r', '\n'], " ")
 }
 
-fn link(label: &str, target: &str, record_path: &str) -> Result<String, StoreError> {
+pub(super) fn link(label: &str, target: &str, record_path: &str) -> Result<String, StoreError> {
     let file = relative(target)?;
     let record = relative(record_path)?;
     let parent: Vec<_> = record
@@ -695,6 +709,7 @@ pub(super) fn body(
     records: &[Record],
     cycle: &Cycle,
     record_path: &str,
+    verdicts: &BTreeMap<String, String>,
 ) -> Result<Vec<u8>, StoreError> {
     let mut groups = BTreeMap::<u32, Vec<&Record>>::new();
     for record in records {
@@ -706,18 +721,43 @@ pub(super) fn body(
     let mut text = "## UI 验收修复\n\n".to_owned();
     for entries in groups.values() {
         let latest = entries.last().unwrap();
+        let label = report::round_label(&latest.round_id);
+        let fingerprint = latest
+            .baseline
+            .split_once(':')
+            .map_or(latest.baseline.as_str(), |(_, value)| value);
+        let mut changed = BTreeSet::new();
+        for record in entries {
+            for item in &record.input.items {
+                changed.extend(item.changes.iter().map(|change| change.path.as_str()));
+            }
+        }
         text.push_str(&format!(
-            "### {} → 修复 · {}\n\n- 来源：{}；目标包 {}（目标基线 {}）\n- 修复版本：{}\n",
-            latest.round_id,
+            "### {label} → 修复 · {}\n\n- 来源：{}（判定：{}）；目标包 {} · 目标指纹 {}\n- 修复版本：{}{}\n",
             escaped(&latest.input.at),
             link(
-                &format!("{} 报告", latest.round_id),
+                &format!("{label} 报告"),
                 &report_path(&cycle.prefix, &latest.round_id),
                 record_path,
             )?,
-            link("目标包", &cycle.target, record_path)?,
-            latest.baseline,
-            escaped(&String::from_utf8(encode(&latest.input.tested_version)?).unwrap())
+            verdicts
+                .get(&latest.round_id)
+                .map_or("未知", String::as_str),
+            link(
+                cycle.target.rsplit('/').next().unwrap_or(&cycle.target),
+                &cycle.target,
+                record_path
+            )?,
+            fingerprint.chars().take(12).collect::<String>(),
+            report::version_text(&latest.input.tested_version),
+            if changed.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "；改动 {}",
+                    escaped(&changed.into_iter().collect::<Vec<_>>().join("、"))
+                )
+            }
         ));
         let refactors: Vec<_> = entries
             .iter()
@@ -729,7 +769,7 @@ pub(super) fn body(
         for refactor in refactors {
             text.push_str(&format!(
                 "- 重构轮：{}；假设 {} → {}；预期 {}\n",
-                escaped(&String::from_utf8(encode(&refactor.scope)?).unwrap()),
+                report::refactor_scope(&refactor.scope),
                 escaped(&refactor.hypothesis),
                 escaped(&refactor.change),
                 escaped(&refactor.expected)
@@ -745,7 +785,7 @@ pub(super) fn body(
             }
         }
         for (id, (item, record)) in &items {
-            let status = String::from_utf8(encode(&item.disposition)?).unwrap();
+            let status = report::disposition_text(item.disposition);
             let check = match &item.self_check {
                 SelfCheck::NotRun { reason } => format!("未运行：{}", reason),
                 SelfCheck::Page { notes, .. } => format!(
@@ -768,7 +808,7 @@ pub(super) fn body(
                 "| {} | {} | {} | {} | {} |\n",
                 escaped(id),
                 escaped(&item.verification),
-                status.trim_matches('"'),
+                status,
                 escaped(
                     &item
                         .changes

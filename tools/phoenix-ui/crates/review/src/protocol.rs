@@ -21,6 +21,7 @@ pub mod history;
 pub mod judgement;
 pub mod legacy;
 pub mod packet;
+mod report;
 pub mod status;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -727,15 +728,67 @@ fn table_text(text: &str) -> String {
 }
 
 fn capture_body(round: &Round) -> Result<Vec<u8>, StoreError> {
-    let mut body = format!("# {} · 采集清单\n\n- 目标指纹：{} · {}\n- 被测版本：{}\n- 每格只以最新 attempt 计算覆盖；历史图片保留为取证记录。\n\n| 单元 | 状态 | 视口 | 主题 | 步骤 | attempt | 有效记录 | 图像/缺项 | 出处与核对 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n", round.round_id, round.target_snapshot.algorithm, round.target_fingerprint, table_text(&String::from_utf8(encode(&round.tested_version)?).unwrap()));
+    let from = round_path(&round.prefix, ordinal(&round.round_id)?)
+        .parent()
+        .unwrap()
+        .join("capture.md")
+        .to_string_lossy()
+        .into_owned();
+    let mut viewports = Vec::new();
+    let mut themes = Vec::new();
+    for unit in &round.matrix.units {
+        for viewport in &unit.viewports {
+            let text = report::viewport_text(viewport);
+            if !viewports.contains(&text) {
+                viewports.push(text);
+            }
+        }
+        for theme in &unit.themes {
+            if !themes.contains(&theme.id) {
+                themes.push(theme.id.clone());
+            }
+        }
+    }
+    let mut tools = Vec::new();
+    for entry in &round.captures {
+        if let Observation::Captured { tool, .. } = &entry.input.observation {
+            if !tools.contains(tool) {
+                tools.push(tool.clone());
+            }
+        }
+    }
+    let mut body = format!(
+        "# {} · 采集清单\n\n- 被测版本：{}\n- 目标指纹：{} · {}\n- 采集条件：视口 {}；主题 {}；工具 {}\n- 每格只以最新 attempt 计算覆盖；历史图片保留为取证记录。\n\n| 单元 | 状态 | 步骤 | 视口 | 主题 | attempt | 有效 | 截图或缺项 | 访问地址 | 拍摄时间 | 工具 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n",
+        report::round_label(&round.round_id),
+        report::version_text(&round.tested_version),
+        round.target_snapshot.algorithm,
+        round.target_fingerprint,
+        viewports.join("、"),
+        themes.join("、"),
+        if tools.is_empty() {
+            "无".to_owned()
+        } else {
+            tools.iter().map(|tool| table_text(tool)).collect::<Vec<_>>().join("、")
+        }
+    );
+    let mut provenance = String::new();
     for entry in &round.captures {
         let cell = &entry.input.cell;
         let current = !round
             .captures
             .iter()
             .any(|other| other.input.cell == *cell && other.input.attempt > entry.input.attempt);
+        let viewport = round
+            .matrix
+            .cells
+            .iter()
+            .find(|frozen| frozen.key == *cell)
+            .map_or_else(
+                || cell.viewport_id.clone(),
+                |frozen| report::viewport_text(&frozen.viewport),
+            );
         let details = match &entry.input.observation {
-            Observation::Missing { reason } => format!("missing | {}", table_text(reason)),
+            Observation::Missing { reason } => format!("缺项：{} | — | — | —", table_text(reason)),
             Observation::Captured {
                 tool,
                 address,
@@ -743,36 +796,73 @@ fn capture_body(round: &Round) -> Result<Vec<u8>, StoreError> {
                 human_check,
                 interactions,
                 ..
-            } => format!(
-                "{} | {} · {} · {} · {} · {}",
-                entry.frozen_image.as_ref().unwrap().path,
-                table_text(tool),
-                table_text(address),
-                table_text(taken_at),
-                table_text(&human_check.notes),
-                table_text(&serde_json::to_string(interactions).map_err(|e| error(2, e))?)
-            ),
+            } => {
+                let image = entry.frozen_image.as_ref().unwrap();
+                provenance.push_str(&format!(
+                    "### {} · {} · {} · {} · {}（attempt {}）\n\n- 主 agent 核对：{}（开图 {} · 当前产品 {} · 当前版本 {}）\n",
+                    cell.unit_id,
+                    cell.state_id,
+                    cell.step_id,
+                    cell.viewport_id,
+                    cell.theme_id,
+                    entry.input.attempt,
+                    table_text(&human_check.notes),
+                    if human_check.opened { "是" } else { "否" },
+                    if human_check.current_product { "是" } else { "否" },
+                    if human_check.current_version { "是" } else { "否" },
+                ));
+                if interactions.is_empty() {
+                    provenance.push_str("- 操作：无\n");
+                } else {
+                    provenance.push_str("- 操作：\n");
+                    for (n, step) in interactions.iter().enumerate() {
+                        provenance.push_str(&format!(
+                            "  {}. {} → {}\n",
+                            n + 1,
+                            table_text(&step.action),
+                            table_text(&step.observed)
+                        ));
+                    }
+                }
+                provenance.push('\n');
+                let name = image.path.rsplit('/').next().unwrap_or(&image.path);
+                format!(
+                    "{} | {} | {} | {}",
+                    applied::link(name, &image.path, &from)?,
+                    table_text(address),
+                    table_text(taken_at),
+                    table_text(tool)
+                )
+            }
         };
         body.push_str(&format!(
             "| {} | {} | {} | {} | {} | {} | {} | {} |\n",
             cell.unit_id,
             cell.state_id,
-            cell.viewport_id,
-            cell.theme_id,
             cell.step_id,
+            viewport,
+            cell.theme_id,
             entry.input.attempt,
             if current { "当前" } else { "历史" },
             details
         ));
     }
-    for cell in &round.matrix.cells {
-        if !round
-            .captures
-            .iter()
-            .any(|entry| entry.input.cell == cell.key)
-        {
+    let unregistered: Vec<_> = round
+        .matrix
+        .cells
+        .iter()
+        .filter(|cell| {
+            !round
+                .captures
+                .iter()
+                .any(|entry| entry.input.cell == cell.key)
+        })
+        .collect();
+    if !unregistered.is_empty() {
+        body.push_str("\n尚未登记的格子：\n\n");
+        for cell in unregistered {
             body.push_str(&format!(
-                "\n- 未采：{} / {} / {} / {} / {}\n",
+                "- {} / {} / {} / {} / {}\n",
                 cell.key.unit_id,
                 cell.key.state_id,
                 cell.key.viewport_id,
@@ -780,6 +870,10 @@ fn capture_body(round: &Round) -> Result<Vec<u8>, StoreError> {
                 cell.key.step_id
             ));
         }
+    }
+    if !provenance.is_empty() {
+        body.push_str("\n## 出处核对与操作记录\n\n");
+        body.push_str(&provenance);
     }
     Ok(body.into_bytes())
 }

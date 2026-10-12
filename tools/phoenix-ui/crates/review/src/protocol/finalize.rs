@@ -206,7 +206,10 @@ fn rank(severity: Severity) -> u8 {
     }
 }
 
-fn current_capture<'a>(round: &'a Round, cell: &CellKey) -> Option<&'a RegisteredCapture> {
+pub(super) fn current_capture<'a>(
+    round: &'a Round,
+    cell: &CellKey,
+) -> Option<&'a RegisteredCapture> {
     round
         .captures
         .iter()
@@ -829,153 +832,6 @@ fn validate_adjudication(
     Ok(checks)
 }
 
-fn report_body(
-    round: &Round,
-    units: &[UnitConclusion],
-    carried: &[Gap],
-    outcome: &Outcome,
-    input: &Adjudication,
-) -> Result<Vec<u8>, StoreError> {
-    let verdict = String::from_utf8(encode(&outcome.verdict)?).unwrap();
-    let mut text=format!("# {} · UI 验收\n\n- 判定：{}\n- 目标基线：{}\n- 被测版本：{}\n- 本轮分数：{}\n- 历史最佳：{}\n- 范围：{}\n\n",round.round_id,verdict.trim_matches('"'),round.baseline,table_text(&String::from_utf8(encode(&round.tested_version)?).unwrap()),outcome.scoring.score.map_or_else(||"无全量分数".into(),|score|score.to_string()),outcome.scoring.historical_best.map_or_else(||"无完整全量历史".into(),|score|score.to_string()),if round.full {"全量"}else{"限定范围"});
-    let waivers: Vec<_> = input
-        .decisions
-        .iter()
-        .filter(|decision| decision.kind == DecisionKind::WholeUiWaiver)
-        .map(|decision| Waiver {
-            round_id: round.round_id.clone(),
-            decision: decision.clone(),
-        })
-        .collect();
-    if !waivers.is_empty() {
-        text.push_str(&String::from_utf8(waiver_body(&waivers)?).unwrap());
-        text.push('\n');
-    }
-    for unit in units {
-        text.push_str(&format!("## {}\n\n", unit.unit_id));
-        if let Some(selected) = &unit.selected {
-            text.push_str(&format!(
-                "四维：{} / {} / {} / {}；单元分数：{}；采用评审：{}\n\n",
-                selected.scores[0],
-                selected.scores[1],
-                selected.scores[2],
-                selected.scores[3],
-                unit.score.unwrap(),
-                unit.selected_reviewer.as_ref().unwrap()
-            ));
-            for reason in &selected.reasons {
-                text.push_str(&format!("- {}\n", table_text(reason)));
-            }
-        } else {
-            text.push_str(&format!(
-                "未评：{}\n",
-                unit.unreviewed_reason.as_ref().unwrap()
-            ));
-        }
-        for gap in &unit.gaps {
-            text.push_str(&format!(
-                "\n### {} · {:?} · {:?}\n",
-                gap.id, gap.severity, gap.status
-            ));
-            for detail in &gap.details {
-                text.push_str(&format!(
-                    "\n- {}：{}；当前：{}；期望：{}；修法：{}；图片：{}；依据：{}（{}）\n",
-                    detail.reviewer_id,
-                    table_text(&detail.gap.location),
-                    table_text(&detail.gap.current),
-                    table_text(&detail.gap.expected),
-                    table_text(&detail.gap.fix),
-                    detail.gap.image.path,
-                    detail.gap.basis.path,
-                    table_text(&detail.gap.basis_location)
-                ));
-            }
-            for (file, finding) in &gap.runtime_findings {
-                text.push_str(&format!(
-                    "\n- 页面实测：{}；依据：{}；记录：{}\n",
-                    table_text(&finding.description),
-                    finding.basis.path,
-                    file.path
-                ));
-            }
-        }
-    }
-    if !carried.is_empty() {
-        text.push_str("\n## 范围外未关闭差距\n\n");
-        for gap in carried {
-            text.push_str(&format!(
-                "- {} · {} · {:?} · 本轮未复核\n",
-                gap.id, gap.unit_id, gap.severity
-            ));
-        }
-    }
-    text.push_str("\n## 实测补充与决定引用\n\n");
-    text.push_str(&table_text(&input.notes));
-    text.push('\n');
-    for decision in &input.decisions {
-        text.push_str(&format!(
-            "\n- {} · {} · 原话：{} · 影响：{}；原评分、差距和判定保留。\n",
-            decision.date,
-            decision.source.path,
-            table_text(&decision.quote),
-            table_text(&decision.impact)
-        ));
-    }
-    Ok(text.into_bytes())
-}
-
-fn judge_body(round: &Round, units: &[UnitConclusion]) -> Vec<u8> {
-    let mut text = format!("# {} · 独立评审结论\n\n", round.round_id);
-    for unit in units {
-        text.push_str(&format!("## {}\n\n", unit.unit_id));
-        if let Some(selected) = &unit.selected {
-            text.push_str(&format!(
-                "四维：{} / {} / {} / {}；采用评审：{}\n\n",
-                selected.scores[0],
-                selected.scores[1],
-                selected.scores[2],
-                selected.scores[3],
-                unit.selected_reviewer.as_deref().unwrap()
-            ));
-            for reason in &selected.reasons {
-                text.push_str(&format!("- {}\n", table_text(reason)));
-            }
-            for suggestion in &selected.suggestions {
-                text.push_str(&format!(
-                    "- suggestions（不扣分）：{}\n",
-                    table_text(suggestion)
-                ));
-            }
-        } else {
-            text.push_str("本轮未评；未生成单元分数。\n");
-        }
-        for gap in &unit.gaps {
-            if gap.origin != GapOrigin::Reviewer || closed(gap.status) {
-                continue;
-            }
-            text.push_str(&format!(
-                "\n### {} · {:?} · {:?}\n",
-                gap.id, gap.severity, gap.status
-            ));
-            if gap.details.is_empty() {
-                text.push_str("\n- 沿用旧差距；本轮评审结论见上。\n");
-            }
-            for detail in &gap.details {
-                text.push_str(&format!(
-                    "\n- {}：{}；当前：{}；期望：{}；修法：{}；可挽回：{}\n",
-                    detail.reviewer_id,
-                    table_text(&detail.gap.location),
-                    table_text(&detail.gap.current),
-                    table_text(&detail.gap.expected),
-                    table_text(&detail.gap.fix),
-                    detail.gap.recoverable
-                ));
-            }
-        }
-    }
-    text.into_bytes()
-}
-
 pub fn run(
     project: &Path,
     path: &Path,
@@ -1099,32 +955,44 @@ pub fn run(
             matches!(capture.input.observation, Observation::Captured { .. })
         })
     });
-    let mut unseen = false;
+    let mut judges = Vec::new();
     for file in &round.judges {
         let record = judgement::load(&lock, &round, &cycle, file, &mut sources)?;
-        if !current_judge(&lock, &round, &record, &mut sources)? {
-            continue;
-        }
-        unseen |= record
+        let current = current_judge(&lock, &round, &record, &mut sources)?;
+        judges.push((file.clone(), record, current));
+    }
+    let mut unseen = Vec::new();
+    for (_, record, _) in judges.iter().filter(|(_, _, current)| *current) {
+        for cell in record
             .input
             .units
             .iter()
             .flat_map(|unit| &unit.unseen_cells)
-            .any(|unseen| {
+            .filter(|unseen| {
                 !checks.iter().any(|(_, check)| {
                     check.kind == CheckKind::Page
                         && check.status == CheckStatus::Passed
                         && check.cell == unseen.cell
                 })
-            });
+            })
+        {
+            if !unseen.contains(&cell.cell) {
+                unseen.push(cell.cell.clone());
+            }
+        }
     }
+    let unavailable: Vec<_> = checks
+        .iter()
+        .filter(|(_, check)| {
+            check.kind == CheckKind::Page && check.status == CheckStatus::Unavailable
+        })
+        .map(|(_, check)| check.cell.clone())
+        .collect();
     let evidence_complete = round.target_snapshot.missing.is_empty()
         && round.tested_version.known()
         && images_complete
-        && !unseen
-        && !checks.iter().any(|(_, check)| {
-            check.kind == CheckKind::Page && check.status == CheckStatus::Unavailable
-        });
+        && unseen.is_empty()
+        && unavailable.is_empty();
     let mut confirmed = true;
     for unit in &units {
         let mut reviewers = BTreeSet::new();
@@ -1185,14 +1053,94 @@ pub fn run(
     if outcome.scoring.confirmation_required {
         return Ok(Response::ConfirmationRequired { outcome });
     }
-    let body = report_body(&round, &units, &carried, &outcome, &input)?;
+    let cells = |cells: &[CellKey]| {
+        cells
+            .iter()
+            .map(|cell| {
+                format!(
+                    "{} / {} / {} / {} / {}",
+                    cell.unit_id, cell.state_id, cell.viewport_id, cell.theme_id, cell.step_id
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("、")
+    };
+    let mut evidence_gaps = Vec::new();
+    if !round.target_snapshot.missing.is_empty() {
+        evidence_gaps.push(format!(
+            "目标包缺少 {}，补齐期望或附件",
+            round.target_snapshot.missing.join("、")
+        ));
+    }
+    if !round.tested_version.known() {
+        evidence_gaps.push("被测版本未知，begin 时提供 HEAD 加工作树指纹或可核对的构建 ID".into());
+    }
+    let missing = missing_cells(&round);
+    if !missing.is_empty() {
+        evidence_gaps.push(format!(
+            "{} 个格子没有采到，按目标包「采集」节补采：{}",
+            missing.len(),
+            cells(&missing)
+        ));
+    }
+    if !unseen.is_empty() {
+        evidence_gaps.push(format!(
+            "评审看不出的格子，补采后另派全新评审：{}",
+            cells(&unseen)
+        ));
+    }
+    if !unavailable.is_empty() {
+        evidence_gaps.push(format!("页面实测不可用：{}", cells(&unavailable)));
+    }
+    let unscored: Vec<_> = units
+        .iter()
+        .filter(|unit| unit.score.is_none())
+        .map(|unit| unit.unit_id.as_str())
+        .collect();
+    if !unscored.is_empty() {
+        evidence_gaps.push(format!(
+            "单元 {} 没有有效的独立评审结论，派发全新评审",
+            unscored.join("、")
+        ));
+    }
+    let unverified: Vec<_> = units
+        .iter()
+        .flat_map(|unit| &unit.gaps)
+        .filter(|gap| {
+            gap.recaptured
+                && gap.status == GapStatus::Unverified
+                && matches!(gap.severity, Severity::P0 | Severity::P1)
+        })
+        .map(|gap| gap.id.as_str())
+        .collect();
+    if !unverified.is_empty() {
+        evidence_gaps.push(format!(
+            "P0/P1 差距补采后仍待核实：{}",
+            unverified.join("、")
+        ));
+    }
+    let body = report::report(&report::ReportInput {
+        cycle: &cycle,
+        round: &round,
+        units: &units,
+        carried: &carried,
+        outcome: &outcome,
+        adjudication: &input,
+        prior: &prior,
+        records: &records,
+        legacy: legacy.as_ref(),
+        judges: &judges,
+        checks: &checks,
+        previous_open: &history.open,
+        evidence_gaps: &evidence_gaps,
+    })?;
     let report_path = relative(&report_path(&prefix, &round.round_id))?;
     let report = FileEvidence {
         path: report_path.to_string_lossy().into_owned(),
         sha256: hash(&body),
     };
     let judge_path = path.parent().unwrap().join("judge.md");
-    let judge_bytes = judge_body(&round, &units);
+    let judge_bytes = report::judge_list(&cycle, &round, &units, &prior, &judges)?;
     let judge_projection = FileEvidence {
         path: judge_path.to_string_lossy().into_owned(),
         sha256: hash(&judge_bytes),
@@ -1316,10 +1264,10 @@ pub(super) fn waiver_body(waivers: &[Waiver]) -> Result<Vec<u8>, StoreError> {
         let decision = &waiver.decision;
         text.push_str(&format!(
             "- {} · {} · 原话：{} · 被测版本：{} · 豁免差距：{} · 剩余影响：{} · 来源：{}；原分数、差距与判定保留，豁免不算已解决。\n",
-            waiver.round_id,
+            report::round_label(&waiver.round_id),
             table_text(&decision.date),
             table_text(&decision.quote),
-            table_text(&String::from_utf8(encode(&decision.tested_version)?).unwrap()),
+            report::version_text(&decision.tested_version),
             if decision.issue_ids.is_empty() {
                 "无".to_owned()
             } else {
@@ -1421,14 +1369,18 @@ pub(super) fn split_report(
     }
 }
 
-/// Places a waiver block after the verdict: before the first unit section and
-/// after any waiver recorded when the round was sealed.
+/// Places a waiver block after the verdict: before the section that follows the
+/// verdict and after any waiver recorded when the round was sealed.
 pub(super) fn with_waiver_block(sealed: &[u8], block: Option<&[u8]>) -> Vec<u8> {
     let Some(block) = block else {
         return sealed.to_vec();
     };
+    let verdict = "\n## 验收判定\n".as_bytes();
     let mut at = sealed.len();
-    let mut offset = 0;
+    let mut offset = sealed
+        .windows(verdict.len())
+        .position(|w| w == verdict)
+        .map_or(0, |found| found + verdict.len() - 1);
     while let Some(found) = sealed[offset..].windows(4).position(|w| w == b"\n## ") {
         let start = offset + found + 1;
         if !sealed[start..].starts_with("## 用户豁免通过\n".as_bytes()) {

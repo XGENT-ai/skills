@@ -158,6 +158,9 @@ fn clean_unit(unit: &mut judgement::UnitInput) {
         ] {
             *text = packet::expectation_text(text);
         }
+        if let Some(summary) = &mut gap.summary {
+            *summary = packet::expectation_text(summary);
+        }
     }
 }
 

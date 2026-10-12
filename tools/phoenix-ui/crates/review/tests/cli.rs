@@ -279,11 +279,15 @@ impl Project {
                     } else {
                         (*key).to_owned()
                     };
-                    json!({"key": key, "cell": capture["input"]["cell"],
+                    let mut gap = json!({"key": key, "cell": capture["input"]["cell"],
                         "image": capture["input"]["observation"]["image"], "dimension": "视觉",
                         "location": "Header icon", "current": "Icon is 32px", "expected": "Icon is 24px",
                         "basis": basis, "basisLocation": "Accepted icon scale", "fix": "Use the 24px icon token",
-                        "severity": severity, "recoverable": recoverable})
+                        "severity": severity, "recoverable": recoverable});
+                    if let Some(summary) = spec.summary {
+                        gap["summary"] = summary.into();
+                    }
+                    gap
                 })
                 .collect();
             units.push(json!({"unitId": unit, "scores": scores,
@@ -456,6 +460,7 @@ struct Judge {
     previous: Vec<(&'static str, &'static str)>,
     mappings: Vec<Value>,
     packet_units: Option<&'static str>,
+    summary: Option<&'static str>,
 }
 
 fn unit(name: &'static str, scores: [&'static str; 4], gaps: &[GapSpec]) -> Judge {
@@ -472,6 +477,10 @@ impl Judge {
     }
     fn prev(mut self, id: &'static str, status: &'static str) -> Self {
         self.previous.push((id, status));
+        self
+    }
+    fn titled(mut self, summary: &'static str) -> Self {
+        self.summary = Some(summary);
         self
     }
 }
@@ -931,7 +940,7 @@ fn round_reports_keep_the_markdown_names_without_a_latest_block() {
     assert_eq!(out["report"]["path"], first, "{out}");
     let r1 = fs::read(p.root.join(&first)).unwrap();
     let text = String::from_utf8(r1.clone()).unwrap();
-    assert!(text.starts_with("# r1 · UI 验收\n"), "{text}");
+    assert!(text.starts_with("# R1 · UI 验收报告\n"), "{text}");
     assert!(!text.contains("phoenix-ui:"), "no generated latest block");
     assert!(!p.root.join(format!("{PREFIX}.ui-review.r1.md")).exists());
     let (_, out) = reviewed(
@@ -943,7 +952,7 @@ fn round_reports_keep_the_markdown_names_without_a_latest_block() {
     assert_eq!(out["report"]["path"], second, "{out}");
     assert!(fs::read_to_string(p.root.join(&second))
         .unwrap()
-        .starts_with("# r2 · UI 验收\n"));
+        .starts_with("# R2 · UI 验收报告\n"));
     assert_eq!(
         fs::read(p.root.join(&first)).unwrap(),
         r1,
@@ -978,6 +987,159 @@ fn generated_section_edits_conflict_while_unrelated_text_survives() {
     assert_eq!(code, 3, "{value}");
     assert_eq!(fs::read_to_string(&list).unwrap(), edited);
     assert_eq!(fs::read(p.root.join(&round)).unwrap(), before);
+}
+
+/// Positions of `needles` in `text`, asserting each exists and they appear in order.
+fn in_order(text: &str, needles: &[&str]) {
+    let mut at = 0;
+    for needle in needles {
+        let found = text[at..]
+            .find(needle)
+            .unwrap_or_else(|| panic!("missing or out of order: {needle}\n{text}"));
+        at += found + needle.len();
+    }
+}
+
+#[test]
+fn round_projections_follow_the_markdown_contracts() {
+    let p = Project::new(&["U1", "U2"]);
+    let (r1, out) = reviewed(
+        &p,
+        None,
+        &unit(
+            "U1",
+            ["2", "2", "2", "1"],
+            &[("", "P1", "1.5"), ("", "P2", "1.5")],
+        )
+        .and("U2", ["3", "3", "3", "1"], &[])
+        .titled("顶栏图标偏大"),
+    );
+    assert_eq!(out["verdict"], "需要修改", "{out}");
+    let (code, value) = p.apply(
+        &r1,
+        &[("UI-01", "已修改待评审"), ("UI-02", "不采纳")],
+        json!([]),
+    );
+    assert_eq!(code, 0, "{value}");
+    let (r2, out) = reviewed(
+        &p,
+        None,
+        &unit(
+            "U1",
+            ["2", "2", "2", "1"],
+            &[("UI-01", "P1", "1.5"), ("UI-02", "P2", "1.5")],
+        ),
+    );
+    assert_eq!(out["verdict"], "需要修改", "{out}");
+    let fingerprint = p.round(&r2)["targetFingerprint"].as_str().unwrap()[..12].to_owned();
+    let report = fs::read_to_string(p.root.join(format!("{PREFIX}.ui-review.r2.md"))).unwrap();
+    assert!(report.starts_with("# R2 · UI 验收报告\n\n## 评审对象\n\n| 轮次 | 开发计划 | 目标包 | 被测版本 | 截图 | 上轮报告 |\n"), "{report}");
+    in_order(
+        &report,
+        &[
+            &format!("| R2 | 无 | [orders.ui-target.md](orders.ui-target.md) · {fingerprint} | HEAD 未知；构建 cli-structural-fixture；http://localhost:8080/orders | [r2](orders.ui-captures/r2/) | [orders.ui-review.md](orders.ui-review.md) |"),
+            "## 验收判定\n\n判定：需要修改 · 停滞预警（UI-01 所在 U1） · 待裁定（UI-02）\n",
+            "本轮分数 7（U1）；门槛 8；历史最佳 7。",
+            "## 评分\n\n| 单元 | 布局 | 视觉 | 交互与状态 | 细节 | 单元分 | 达标 | 采用评审 |",
+            "| U1 | 2 | 2 | 2 | 1 | 7 | 否 | reviewer-a |",
+            "| U2 | 3 | 3 | 3 | 1 | 10 | 是 | reviewer-a |",
+            "- 本轮分数：7（U1）；历史最佳：7；门槛：8",
+            "- 布局：Layout reason",
+            "## 轮次轨迹\n\n| 轮次 | 本轮分数（最低单元） | 历史最佳 | 未关闭 P0/P1 | 重构轮 | 备注 |",
+            "| R1 | 7（U1） | 7 | 1 | — | 首轮 · 需要修改 |",
+            "| R2 | 7（U1） | 7 | 1 | — | 需要修改 · 停滞预警（UI-01 所在 U1） · 待裁定（UI-02） |",
+            "## 上轮差距复核\n\n| 编号 | 上轮严重度与摘要 | 上轮处置（取自修复记录） | 本轮结果 | 依据 |",
+            "| UI-01 | P1 · 顶栏图标偏大 | 已修改待评审 | 仍存在 | 评审 reviewer-a：Current image reassessed against the previous conclusion（[U1-default-2-light.png](orders.ui-captures/r2/evidence/U1-default-2-light.png)） |",
+            "| UI-02 | P2 · 顶栏图标偏大 | 不采纳 | 仍存在 |",
+            "## 差距清单\n\n### UI-01 · [P1] 顶栏图标偏大（U1 · 视觉 · 可挽回 1.5）\n",
+            "- 本轮结果：仍存在（沿用 R1 编号）",
+            "- 位置：[U1-default-2-light.png](orders.ui-captures/r2/evidence/U1-default-2-light.png) Header icon",
+            "- 现状 → 期望：Icon is 32px → Icon is 24px（依据：[目标包](orders.ui-target.md) · Accepted icon scale）",
+            "- 修法：Use the 24px icon token",
+            "- 来源：评审 R2（reviewer-a）",
+            "### UI-02 · [P2] 顶栏图标偏大（U1 · 视觉 · 可挽回 1.5） · 待裁定\n",
+            "## 待裁定事项\n\n### UI-02",
+            "修复记录最近处置为不采纳，本轮评审仍判仍存在",
+            "R1 → 修复：不采纳",
+            "## 建议（不扣分）",
+            "## 机器检查\n\n未检查",
+            "## 采集与覆盖",
+            "已采 2 / 2",
+            "Host observation notes for a structural fixture",
+        ],
+    );
+    for leak in ["\"workingTree\"", "Present", "session=private", "{   "] {
+        assert!(
+            !report.contains(leak),
+            "{leak} leaked into the report\n{report}"
+        );
+    }
+    // The first report has no previous-gap review and names no previous report.
+    let first = fs::read_to_string(p.root.join(format!("{PREFIX}.ui-review.md"))).unwrap();
+    assert!(first.starts_with("# R1 · UI 验收报告\n"), "{first}");
+    assert!(!first.contains("## 上轮差距复核"), "{first}");
+    assert!(
+        first.contains("| [r1](orders.ui-captures/r1/) | 无 |"),
+        "{first}"
+    );
+    assert!(
+        first.contains(
+            "### UI-01 · [P1] 顶栏图标偏大（U1 · 视觉 · 可挽回 1.5）\n\n- 本轮结果：本轮新增"
+        ),
+        "{first}"
+    );
+    // judge.md keeps only reviewer conclusions: scores, open reviewer gaps and suggestions.
+    let round_dir = Path::new(&r2).parent().unwrap();
+    let judge = fs::read_to_string(p.root.join(round_dir.join("judge.md"))).unwrap();
+    in_order(
+        &judge,
+        &[
+            "# R2 · 评审结论\n",
+            "## U1\n\n采用评审：reviewer-a\n\n| 布局 | 视觉 | 交互与状态 | 细节 | 单元分 |\n| --- | --- | --- | --- | --- |\n| 2 | 2 | 2 | 1 | 7 |\n",
+            "- 布局：Layout reason",
+            "### 未关闭差距\n\n#### UI-01 · [P1] 顶栏图标偏大（U1 · 视觉 · 可挽回 1.5）\n",
+            "- 本轮结论：仍存在",
+            "- 位置：[U1-default-2-light.png](evidence/U1-default-2-light.png) Header icon",
+            "### 建议（不扣分）\n\n无",
+            "## U2",
+        ],
+    );
+    for excluded in ["门槛", "判定", "不采纳", "Host observation", "Present"] {
+        assert!(
+            !judge.contains(excluded),
+            "{excluded} leaked into judge.md\n{judge}"
+        );
+    }
+    // capture.md lists readable versions, viewports and per-image provenance.
+    let capture = fs::read_to_string(p.root.join(round_dir.join("capture.md"))).unwrap();
+    in_order(
+        &capture,
+        &[
+            "# R2 · 采集清单",
+            "- 被测版本：HEAD 未知；构建 cli-structural-fixture",
+            &format!("- 目标指纹：phoenix-ui-target-v1 · {fingerprint}"),
+            "| 单元 | 状态 | 步骤 | 视口 | 主题 | attempt | 有效 | 截图或缺项 | 访问地址 | 拍摄时间 | 工具 |",
+            "[U1-default-2-light.png](evidence/U1-default-2-light.png) | http://localhost:8080/orders | 2026-10-10T04:00:00Z | structural fixture, not a product capture |",
+            "## 出处核对与操作记录",
+            "- 主 agent 核对：Declared per-image check of a generated fixture",
+        ],
+    );
+    assert!(capture.contains("2×2"), "{capture}");
+    assert!(!capture.contains("\"workingTree\""), "{capture}");
+    // The repair record names the report verdict, target fingerprint and readable version.
+    let applied =
+        fs::read_to_string(p.root.join(format!("{PREFIX}.ui-review.applied.md"))).unwrap();
+    in_order(
+        &applied,
+        &[
+            "### R1 → 修复 · 2026-10-10T06:00:00Z",
+            &format!("- 来源：[R1 报告](orders.ui-review.md)（判定：需要修改）；目标包 [orders.ui-target.md](orders.ui-target.md) · 目标指纹 {fingerprint}"),
+            "- 修复版本：HEAD 未知；构建 fix-build；改动 card.tsx",
+            "- 重构轮：无",
+            "| UI-01 | Observed on the running page fixture | 已修改待评审 | card.tsx | 未运行：Structural fixture has no running app |",
+        ],
+    );
+    assert!(!applied.contains("\"workingTree\""), "{applied}");
 }
 
 // ── V-8 / §9.2: table-driven CLI sequences ─────────────────────────────────
@@ -1965,7 +2127,7 @@ fn whole_ui_waiver_is_appended_and_keeps_scores_and_gaps_unresolved() {
     let waived = text.find("用户豁免通过").unwrap();
     let end = text.find(":end -->\n\n").unwrap() + ":end -->\n\n".len();
     assert!(verdict < begin && begin < waived && waived < end, "{text}");
-    assert!(text[end..].starts_with("## U1\n"), "{text}");
+    assert!(text[end..].starts_with("## 评分\n"), "{text}");
     assert!(text.contains("接受当前整体界面"));
     assert_eq!(format!("{}{}", &text[..begin], &text[end..]), sealed_report);
     assert_eq!(fs::read(&first).unwrap(), first_report);
@@ -2049,7 +2211,7 @@ fn waiver_at_finalize_is_recorded_after_the_verdict_without_changing_it() {
         waived < begin && text[begin..end].contains("Second acceptance"),
         "{text}"
     );
-    assert!(text[end..].starts_with("## U1\n"), "{text}");
+    assert!(text[end..].starts_with("## 评分\n"), "{text}");
     assert_eq!(format!("{}{}", &text[..begin], &text[end..]), report);
 }
 

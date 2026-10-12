@@ -318,7 +318,7 @@ fn applied_revision_cas_preserves_unrelated_record_text_and_immutable_inputs() {
     assert_eq!(fs::read(f.0.join(&first.record.path)).unwrap(), original);
     let body = fs::read_to_string(&record_path).unwrap();
     assert!(body.contains("Unrelated milestone note."));
-    assert_eq!(body.matches("### r1 → 修复").count(), 1);
+    assert_eq!(body.matches("### R1 → 修复").count(), 1);
 }
 
 #[test]
@@ -396,7 +396,7 @@ fn applied_multiple_dispositions_remain_one_markdown_table_with_evidence_links()
         rows[first + 1].starts_with("| UI-02 |"),
         "Notes must follow the complete table"
     );
-    assert!(body.contains("[r1 报告]"));
+    assert!(body.contains("[R1 报告]"));
     assert!(body.contains("[UI-01 自检]"));
     assert!(body.contains("- 用户方向：无"));
     assert!(body.contains("- 未完项：无"));
@@ -435,7 +435,7 @@ fn applied_plan_record_location_is_selected_once_without_replacing_plan_text() {
     protocol::applied::record(&f.0, &f.round(), 1, input).unwrap();
     let body = fs::read_to_string(f.0.join(record_path)).unwrap();
     assert!(body.starts_with("# M2\n\nExisting milestone evidence."));
-    assert_eq!(body.matches("### r1 → 修复").count(), 1);
+    assert_eq!(body.matches("### R1 → 修复").count(), 1);
     assert!(body.contains("(../orders.ui-review.md)"));
     assert!(!f.0.join("docs/plan.records/M3.md").exists());
 }
@@ -847,6 +847,7 @@ fn judge_input(f: &Fixture, reviewer: &str) -> protocol::judgement::JudgeInput {
                 fix: "Use the accepted icon token".into(),
                 severity: phoenix_ui_review::policy::Severity::P2,
                 recoverable: "1".parse().unwrap(),
+                summary: None,
             }],
             suggestions: vec!["Optional copy alternative, no deduction".into()],
             unseen_cells: vec![],
@@ -1589,7 +1590,7 @@ fn a_latest_missing_attempt_is_current_and_the_older_image_is_history() {
     assert_eq!(round.captures.len(), 2);
     let md = fs::read_to_string(f.0.join(f.round().parent().unwrap().join("capture.md"))).unwrap();
     assert!(md.contains("| 1 | 历史 |"));
-    assert!(md.contains("| 2 | 当前 | missing | Latest state could not be captured"));
+    assert!(md.contains("| 2 | 当前 | 缺项：Latest state could not be captured"));
 }
 
 #[test]

@@ -81,7 +81,7 @@ pub(super) fn query(kind: Option<&str>) -> Outcome {
         "units": [{"unitId": cell["unitId"], "scores": ["0", "0", "0", "0"], "reasons": ["EXAMPLE_ONLY", "EXAMPLE_ONLY", "EXAMPLE_ONLY", "EXAMPLE_ONLY"],
             "gaps": [{"key": "EXAMPLE_TEMPORARY_GAP_KEY", "cell": cell, "image": file, "dimension": "EXAMPLE_ONLY",
                 "location": "EXAMPLE_ONLY", "current": "EXAMPLE_ONLY", "expected": "EXAMPLE_ONLY", "basis": file,
-                "basisLocation": "EXAMPLE_ONLY", "fix": "EXAMPLE_ONLY", "severity": Severity::P2, "recoverable": "0"}],
+                "basisLocation": "EXAMPLE_ONLY", "fix": "EXAMPLE_ONLY", "severity": Severity::P2, "recoverable": "0", "summary": "EXAMPLE_ONLY"}],
             "suggestions": ["EXAMPLE_ONLY"], "unseenCells": [{"cell": cell, "reason": "EXAMPLE_ONLY"}]}],
         "unreviewedUnits": [{"unitId": "EXAMPLE_OTHER_UNIT_FROM_PACKET", "reason": "EXAMPLE_ONLY"}],
         "previous": [{"id": "EXAMPLE_ISSUE_ID_FROM_PACKET", "status": GapStatus::Unverified, "basis": basis}],

@@ -52,6 +52,10 @@ pub struct GapInput {
     pub fix: String,
     pub severity: Severity,
     pub recoverable: Decimal,
+    /// The reviewer's own short title for the gap, copied from the raw text when it
+    /// has one; reports otherwise derive the title from `current`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -311,6 +315,10 @@ fn validate_input(
                 ]
                 .iter()
                 .any(|value| value.trim().is_empty())
+                || gap
+                    .summary
+                    .as_ref()
+                    .is_some_and(|summary| summary.trim().is_empty())
             {
                 return Err(error(
                     2,

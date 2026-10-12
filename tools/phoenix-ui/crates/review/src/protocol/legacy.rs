@@ -683,7 +683,12 @@ fn rebase_projection(root: &Path, prefix: &str, input: Rebase) -> Result<Value, 
         {
             blocks.push((
                 format!("apply-{short}"),
-                applied::body(&applied.records, &cycle, &ledger.record_path)?,
+                applied::body(
+                    &applied.records,
+                    &cycle,
+                    &ledger.record_path,
+                    &applied.verdicts,
+                )?,
                 ledger.projection_hash.clone(),
             ));
         } else if let Some(round) = rounds.last().filter(|round| {
