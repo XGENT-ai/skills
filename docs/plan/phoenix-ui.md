@@ -42,23 +42,24 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-11T23:05:20+08:00
-- 当前进度：2/6 个里程碑完成
-- 当前状态：进行中；CI21三native通过，Darwin x64被90分钟job限时取消、Node18跳过；上限修为120分钟并通过轻量检查，下一矩阵待推。Safari桌面已解锁但测试页hidden，真实IME待前台；M4补测终态已收集且缺口保留。
-- 最近完成：M2 · 自主 Rust 运行时与构建制品
-- 下一步：提交并正常推送120分钟workflow候选到同一授权ref，取得四native与Node18终态/artifact；Safari前台完成真实IME和行3/5。M3收口后集成M4/M5，安装后补验其真实入口。
-- 当前阻塞：Safari测试页document.visibilityState=hidden，真实输入与可视走查待用户前台；CI21 x64超时已定位，修正后的完整矩阵尚未运行。
-- 代码基线：Root HEAD ebb9d0b6c3d96396d788ec79410360596dfe3008；A编译524输入与已验engine c86fbb47…逐hash一致，仅workflow限时与进度dirty；origin/CI21为同一HEAD。M4/M5源仍隔离。
+- 最近更新：2026-10-12T12:18:00+08:00
+- 当前进度：3/6 个里程碑完成
+- 当前状态：进行中；A五门及CI23九制品核验通过，M3内部完成提交1ef9e37f4fd8与CI完整tree相同。整体3/6，B维护源仍隔离，开始串行集成。
+- 最近完成：M3 · 安装迁移与 A 内部收口
+- 下一步：Root将M4/M5/M6维护源增量串行集成到已验A；保留安装迁移和四平台范围，统一生成版本/输入/许可，验证接通后的接口与最终闭环。原已过组按源复用。
+- 当前阻塞：
+- 代码基线：Root内部完成HEAD 1ef9e37f4fd86f17a59b649a0eec67f546d6d115，tree d1badbde689ca2ff57a11742a3891600f727ca0d，与CI23候选a44658dfdfdb1068fba0a123ef6751ca36fb2886完整tree相同；四native/Node18及九原制品核验成功。进度/台账dirty，B尚未纳入Root。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 待提交 |
-| M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 待提交（M3收口）；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8；未到M3完成提交点 |
-| M3 | 进行中 | 2026-10-11T23:05:20+08:00 | CI21三native通过，x64取消与Node18跳过保留；120分钟workflow本地检查通过，Safari前台/IME与新矩阵待验。 | [M3 记录](phoenix-ui.records/M3.md) | 未到M3完成提交点；验证候选 3e236198e72a、9d97862c21dc；CI21 HEAD ebb9d0b6c3d9 |
-| M4 | 进行中 | 2026-10-11T23:05:20+08:00 | 四项补测终态已收集：D3/URL通过，route证据不足、R4 harness不完整；原35题不改判，安装后V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
-| M5 | 进行中 | 2026-10-10T20:10:00+08:00 | clippy修复，7项合同口径裁定并实现（报告命名、处置、豁免等），隔离树217通过；A树接线与真实V-7/V-8未完成。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 1ef9e37f4fd8 |
+| M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 1ef9e37f4fd8；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8 |
+| M3 | 已完成 | 2026-10-12T12:14:10+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过；能力/源码不变组有明确复用边界。内部收口，B未集成。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb |
+| M4 | 进行中 | 2026-10-12T05:31:39+08:00 | 独立开发包真实安装/Codex四设计子集通过；模块整理后新制品消费、镜像完整runtime892/WASM8474/oracle860通过。Root集成/真实浏览器及完整V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M5 | 进行中 | 2026-10-12T03:43:31+08:00 | native帮助5/5及完整runtime通过；机器/人工loop文档同步、轻量入口与四例源码合同咨询通过。M4 context与真实V-7/V-8待验。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；隔离改动尚未提交 |
+| M6 | 进行中 | 2026-10-12T02:01:43+08:00 | 限定修复真实CI许可形态，AWS/curl替身47/47、轻量257过/6既定跳过及producer bin锚点通过；最终B融合/CI/tarball/真实闭环尚未完成。 | [M6 记录](phoenix-ui.records/M6.md) | 未到M6完成提交点；隔离准备尚未提交 |
 
 ## 0. 需求、范围与决策
 
@@ -605,7 +606,7 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 
 | # | 里程碑 | 前置依赖 | 内容与并行边界 | 验证/退出条件 |
 | --- | --- | --- | --- | --- |
-| M1 | 固定来源与可运行基线 | 已定范围、§2.2、固定源码可获取 | 导入源码/测试；固定工具链；能力与 lint 基线、两项已知补丁登记、migration-sources/迁移 fixture、固定 web fixture；适配轻量测试入口和 AGENTS 测试说明 | V-1 通过；原版失败分型/允许差异有证据；迁移 fixture 与 web 启动可用；回写「实施进度」 |
+| M1 | 固定来源与可运行基线 | 已定范围、§2.2、固定源码可获取 | 导入源码/测试；固定工具链；能力与 lint 基线、两项已知补丁登记、migration-sources/迁移 fixture、固定 web fixture；适配轻量测试入口和 AGENTS 测试说明 | 1ef9e37f4fd8 |
 | M2 | 自主 Rust 运行时与构建制品 | M1/V-1；固定源码、工具链与能力基线 | 自主运行时/launcher、单源生成器与bundle、本地方向库/网络边界、已知补丁、native/WASM一致性、开发包和四平台构建CI | 受影响V-2局部检查及V-3生成器/第一次四平台矩阵通过；保留未验provider/浏览器终验边界；回写「实施进度」 |
 | M3 | 安装迁移与 A 内部收口 | M2 binary/manifest/schema、V-2；M1 迁移/web fixture；验证分支推送授权已到位 | Node/Rust 顺序与条目事务、提示过渡入口；§1.3 M3 同步落点、安装/回滚说明；A 树独立生成 bundle；跨平台/实会话/迁移后回滚 | V-2、V-3、V-4、V-5、V-10 通过；A 路由和能力账本完整，CI SHA/树与收口成果匹配；仅分支内部验收，不带入 main 发布；回写「实施进度」 |
 | M4 | 设计上下文与可选偏好 | M2 稳定 context/状态契约与相关 V-2；V-9 子集依赖 M2 transformer/开发包安装；共享主树改动等 M3 收口 | 三个 design skills、brief 持久化与 Portal 缺 skill 路径；profile/来源/解析/catalog；§1.3 M4 落点。在独立 worktree 可先开发 | V-6、V-9 设计子集通过；规范不被偏好覆盖；回写「实施进度」 |
