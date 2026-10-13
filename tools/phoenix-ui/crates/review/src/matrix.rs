@@ -259,6 +259,13 @@ impl FrozenMatrix {
                 .collect(),
         }
     }
+    /// Cells of the units this round covers; `cells` keeps every unit's cells.
+    pub fn selected_cells(&self) -> impl Iterator<Item = &FrozenCell> {
+        let selected = self.selected_units();
+        self.cells
+            .iter()
+            .filter(move |cell| selected.contains(&cell.key.unit_id.as_str()))
+    }
     pub fn screenshot_name(&self, cell: &CellKey, attempt: u32) -> Result<String, StoreError> {
         self.validate()?;
         if attempt == 0 {

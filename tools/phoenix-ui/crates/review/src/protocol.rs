@@ -625,6 +625,17 @@ fn verified_sources(
     round: &Round,
     path: &Path,
 ) -> Result<Vec<(PathBuf, String)>, StoreError> {
+    verified_target(root, lock, cycle, round, path).map(|(sources, _)| sources)
+}
+
+/// `verified_sources` with the current target, which matches the frozen one.
+fn verified_target(
+    root: &Path,
+    lock: &CycleLock,
+    cycle: &Cycle,
+    round: &Round,
+    path: &Path,
+) -> Result<(Vec<(PathBuf, String)>, target::TargetSnapshot), StoreError> {
     let current = target::freeze(&checked(root, &cycle.target)?, root, &[])?;
     if current.fingerprint != round.target_fingerprint {
         return Err(error(3, "Target expectations or attachments changed; open a new baseline after the current round"));
@@ -706,7 +717,7 @@ fn verified_sources(
             return Err(error(4, "Round contains duplicate capture registrations"));
         }
     }
-    Ok(sources)
+    Ok((sources, current))
 }
 
 fn capture_attempt(entry: &RegisteredCapture) -> CaptureAttempt {
@@ -995,8 +1006,7 @@ pub fn add_capture(
 pub fn missing_cells(round: &Round) -> Vec<crate::capture::CellKey> {
     round
         .matrix
-        .cells
-        .iter()
+        .selected_cells()
         .filter(|cell| {
             !round
                 .captures

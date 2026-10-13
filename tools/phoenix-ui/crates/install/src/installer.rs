@@ -345,6 +345,7 @@ fn package_hashes(files: &BTreeMap<String, Payload>) -> BTreeMap<String, String>
 /// auxiliary copies only keep the integration from being complete.
 fn discover_personal(
     home: &Path,
+    project: &Path,
     providers: &[String],
     auxiliary: Option<&BTreeMap<String, BTreeMap<String, Payload>>>,
     conflicts: &mut Vec<Conflict>,
@@ -430,34 +431,42 @@ fn discover_personal(
             });
         }
     }
-    for file in [
-        ".claude/settings.json",
-        ".claude/plugins/installed_plugins.json",
+    // Claude loads a plugin by the `enabledPlugins` value of the most specific
+    // settings file naming it (local, then project, then user). The install
+    // registry only records installs, which stay when a plugin is disabled.
+    let mut decided: BTreeMap<String, (bool, PathBuf)> = BTreeMap::new();
+    for path in [
+        home.join(".claude/settings.json"),
+        project.join(".claude/settings.json"),
+        project.join(".claude/settings.local.json"),
     ] {
-        let path = home.join(file);
         let Ok(bytes) = read_bounded(&path, 4 * 1024 * 1024) else {
             continue;
         };
         let Ok(value) = serde_json::from_slice::<Value>(&bytes) else {
             continue;
         };
-        let enabled = value
+        for (id, state) in value
             .get("enabledPlugins")
-            .or_else(|| value.get("plugins"))
             .and_then(Value::as_object)
-            .is_some_and(|plugins| {
-                plugins
-                    .iter()
-                    .any(|(id, state)| id.starts_with("impeccable") && state != &Value::Bool(false))
-            });
-        if enabled {
-            conflicts.push(Conflict {
-                path: path.display().to_string(),
-                provider: None,
-                kind: ConflictKind::PersonalEntry,
-                message: "an Impeccable plugin is enabled for this user; disable it (/plugin), reload the agent, then rerun the install".into(),
-            });
+            .into_iter()
+            .flatten()
+            .filter(|(id, _)| id.starts_with("impeccable"))
+        {
+            decided.insert(id.clone(), (state != &Value::Bool(false), path.clone()));
         }
+    }
+    let enabled_in: BTreeSet<_> = decided
+        .into_values()
+        .filter_map(|(enabled, path)| enabled.then_some(path))
+        .collect();
+    for path in enabled_in {
+        conflicts.push(Conflict {
+            path: path.display().to_string(),
+            provider: None,
+            kind: ConflictKind::PersonalEntry,
+            message: "an Impeccable plugin is enabled by this settings file; disable it (/plugin, or false here), reload the agent, then rerun the install".into(),
+        });
     }
 }
 
@@ -593,8 +602,9 @@ fn prune_empty(root: &Path, paths: impl IntoIterator<Item = String>) {
 const EXCLUDE_OPEN: &str = "# phoenix-ui-install-ignore-start";
 const EXCLUDE_CLOSE: &str = "# phoenix-ui-install-ignore-end";
 
-/// Backups and the lock are machine-local. Add them once to the enclosing
-/// repository's `.git/info/exclude`; never edit a committed ignore file. Best
+/// Backups, the lock and the migrated local configuration are machine-local.
+/// Keep them in the enclosing repository's `.git/info/exclude`, replacing a
+/// block an earlier version wrote; never edit a committed ignore file. Best
 /// effort: a project outside git, or an unwritable exclude, keeps going.
 fn exclude_local_state(root: &Path) {
     let Some(dot_git) = root
@@ -620,21 +630,38 @@ fn exclude_local_state(root: &Path) {
         &git_dir.to_string_lossy(),
     ));
     let existing = fs::read_to_string(&target).unwrap_or_default();
-    if existing.contains(EXCLUDE_OPEN) {
+    let block = format!(
+        "{EXCLUDE_OPEN}\n**/.phoenix-ui/migrations/\n**/.phoenix-ui/install/install.lock\n**/.phoenix-ui/config.local.json\n{EXCLUDE_CLOSE}\n"
+    );
+    let updated = match existing.find(EXCLUDE_OPEN).and_then(|start| {
+        existing[start..]
+            .find(EXCLUDE_CLOSE)
+            .map(|end| (start, start + end + EXCLUDE_CLOSE.len()))
+    }) {
+        Some((start, end)) => {
+            let end = if existing[end..].starts_with('\n') {
+                end + 1
+            } else {
+                end
+            };
+            format!("{}{block}{}", &existing[..start], &existing[end..])
+        }
+        None => {
+            let separator = if existing.is_empty() || existing.ends_with('\n') {
+                ""
+            } else {
+                "\n"
+            };
+            format!("{existing}{separator}{block}")
+        }
+    };
+    if updated == existing {
         return;
     }
-    let separator = if existing.is_empty() || existing.ends_with('\n') {
-        ""
-    } else {
-        "\n"
-    };
-    let block = format!(
-        "{existing}{separator}{EXCLUDE_OPEN}\n**/.phoenix-ui/migrations/\n**/.phoenix-ui/install/install.lock\n{EXCLUDE_CLOSE}\n"
-    );
     if let Some(parent) = target.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    let _ = fs::write(&target, block);
+    let _ = fs::write(&target, updated);
 }
 
 fn journal_paths(root: &Path, transaction_id: &str) -> Vec<String> {
@@ -760,6 +787,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
     if let Some(home) = &request.home {
         discover_personal(
             home,
+            project.root(),
             &request.providers,
             auxiliary.as_ref(),
             &mut report.conflicts,
@@ -1030,6 +1058,9 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
                         .count()
         });
     if unchanged {
+        if !request.dry_run {
+            exclude_local_state(project.root());
+        }
         report.status = if pending {
             Status::IntegrationPending
         } else {

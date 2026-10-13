@@ -167,7 +167,7 @@ fn empty_project_prepares_no_data_or_state() {
 #[test]
 fn config_and_local_copy_preserve_bytes_unknown_fields_and_use_retain_rollback() {
     let fixture = Fixture::new();
-    let shared=b"{\n // user comment\n \"hook\":{\"enabled\":true},\n \"buildPath\":\"comp\",\n \"unknown\":{\"precise\":1.230000000000000000000000}\n}\n";
+    let shared=b"{\n  \"hook\":{\"enabled\":true},\n \"buildPath\":\"comp\",\n \"unknown\":{\"precise\":1.230000000000000000000000}\n}\n";
     let local = b"{\"browser\":\"Safari\",\"projectRoots\":[\"apps/*\"],\"localUnknown\":true}\n";
     fixture.write(".impeccable/config.json", shared);
     fixture.write(".impeccable/config.local.json", local);
@@ -227,6 +227,42 @@ fn config_and_local_copy_preserve_bytes_unknown_fields_and_use_retain_rollback()
         fs::read(fixture.0.join(".impeccable/config.json")).unwrap(),
         shared
     );
+}
+
+/// Phoenix readers parse `.phoenix-ui` config and sidecar files as strict JSON, so a
+/// commented file would migrate and then be unreadable or silently ignored.
+#[test]
+fn commented_config_and_sidecar_stay_in_place_as_conflicts() {
+    for (path, bytes) in [
+        (
+            ".impeccable/config.json",
+            &b"{\n // user comment\n \"buildPath\":\"code\"\n}\n"[..],
+        ),
+        (
+            ".impeccable/config.local.json",
+            &b"{\"browser\":\"Safari\" /* mine */}"[..],
+        ),
+        (
+            ".impeccable/design.json",
+            &b"{\n // generated\n \"schemaVersion\":2\n}\n"[..],
+        ),
+    ] {
+        let fixture = Fixture::new();
+        fixture.write(path, bytes);
+        let prepared = prepare(&fixture.project(), &selected(&[".claude"]));
+        assert!(prepared.changes.is_empty(), "{path}");
+        let conflict = prepared
+            .conflicts
+            .iter()
+            .find(|c| c.path == path)
+            .unwrap_or_else(|| panic!("{path}: {:?}", prepared.conflicts));
+        assert_eq!(
+            conflict.kind,
+            phoenix_ui_install::classify::ConflictKind::InvalidJson
+        );
+        assert!(conflict.message.contains("strict JSON"), "{conflict:?}");
+        assert!(!fixture.0.join(".phoenix-ui").exists());
+    }
 }
 
 #[test]
@@ -326,9 +362,9 @@ fn design_bytes() -> Vec<u8> {
 }
 
 #[test]
-fn registered_path_fields_change_without_rewriting_unknown_text_or_jsonc() {
+fn registered_path_fields_change_without_rewriting_unknown_text() {
     let fixture = Fixture::new();
-    let bytes=b"{\n // keep this comment\n \"hook\":{\"auditLog\":\".impeccable/logs/audit.jsonl\",\"unknown\":\".impeccable/untouched\"},\n \"unknownNumber\":1.2300000000000000000000\n}\n";
+    let bytes=b"{\n  \"hook\":{\"auditLog\":\".impeccable/logs/audit.jsonl\",\"unknown\":\".impeccable/untouched\"},\n \"unknownNumber\":1.2300000000000000000000\n}\n";
     fixture.write(".impeccable/config.json", bytes);
     let prepared = prepare(&fixture.project(), &selected(&[".claude"]));
     assert!(prepared.conflicts.is_empty(), "{:?}", prepared.conflicts);

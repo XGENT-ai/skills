@@ -821,6 +821,161 @@ fn backups_and_lock_are_excluded_locally_once_without_touching_committed_files()
     );
 }
 
+fn git(cwd: &Path, args: &[&str]) -> bool {
+    Command::new("git")
+        .args(args)
+        .current_dir(cwd)
+        .env("GIT_CONFIG_GLOBAL", cwd.join("no-global-config"))
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .output()
+        .unwrap()
+        .status
+        .success()
+}
+
+/// A migrated `config.local.json` holds machine paths and personal choices; it is
+/// ignored as soon as the install finishes, in a subproject and in a linked
+/// worktree, and a reinstall adds the line to an exclude block written earlier.
+#[test]
+fn migrated_local_config_is_ignored_and_a_reinstall_restores_the_protection() {
+    let sandbox = Sandbox::new();
+    let repo = sandbox.project();
+    assert!(git(&repo, &["init", "-q"]));
+    assert!(git(
+        &repo,
+        &[
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "init"
+        ]
+    ));
+    let linked = sandbox.0.join("linked worktree");
+    assert!(git(
+        &repo,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            &linked.to_string_lossy()
+        ]
+    ));
+    let local = "apps/web/.phoenix-ui/config.local.json";
+    for (root, id) in [(&repo, "local-config-1"), (&linked, "local-config-2")] {
+        let project = root.join("apps/web");
+        fs::create_dir_all(project.join(".impeccable")).unwrap();
+        fs::write(
+            project.join(".impeccable/config.local.json"),
+            "{\"browser\":\"/Users/me/Chrome\"}\n",
+        )
+        .unwrap();
+        let report =
+            installer::install(&request(&sandbox, &project, &[".claude"], false, id)).unwrap();
+        assert_eq!(report.status, Status::Installed, "{:?}", report.conflicts);
+        assert!(root.join(local).is_file());
+        assert!(git(root, &["check-ignore", "-q", local]), "{id}");
+    }
+    // An earlier candidate wrote the block without the local configuration.
+    let exclude = repo.join(".git/info/exclude");
+    let current = fs::read_to_string(&exclude).unwrap();
+    fs::write(
+        &exclude,
+        current.replace("**/.phoenix-ui/config.local.json\n", ""),
+    )
+    .unwrap();
+    assert!(!git(&repo, &["check-ignore", "-q", local]));
+    let again = installer::install(&request(
+        &sandbox,
+        &repo.join("apps/web"),
+        &[".claude"],
+        false,
+        "local-config-3",
+    ))
+    .unwrap();
+    assert_eq!(again.status, Status::Unchanged, "{:?}", again.conflicts);
+    assert!(git(&repo, &["check-ignore", "-q", local]));
+    assert_eq!(fs::read_to_string(&exclude).unwrap(), current);
+}
+
+/// Claude decides a plugin's state from `enabledPlugins` (local over project over
+/// user); the install registry only records that it was installed.
+#[test]
+fn only_an_effectively_enabled_old_plugin_blocks_activation() {
+    let sandbox = Sandbox::new();
+    let project = sandbox.project();
+    let home = sandbox.home();
+    fs::create_dir_all(home.join(".claude/plugins")).unwrap();
+    fs::create_dir_all(project.join(".claude")).unwrap();
+    fs::write(
+        home.join(".claude/plugins/installed_plugins.json"),
+        serde_json::to_vec(&json!({"version": 2, "plugins": {"impeccable@fixture-marketplace": [
+            {"scope": "user", "installPath": "/plugins/cache/impeccable/1.0.0", "version": "1.0.0"}]}}))
+        .unwrap(),
+    )
+    .unwrap();
+    let id = "impeccable@fixture-marketplace";
+    let set = |path: PathBuf, state: Option<bool>| match state {
+        Some(state) => fs::write(
+            path,
+            serde_json::to_vec(&json!({"enabledPlugins": {id: state}})).unwrap(),
+        )
+        .unwrap(),
+        None => {
+            let _ = fs::remove_file(path);
+        }
+    };
+    for (user, shared, local, blocked) in [
+        (Some(false), None, None, None),
+        (None, None, None, None),
+        (Some(true), None, None, Some(".claude/settings.json")),
+        (Some(false), Some(true), None, Some(".claude/settings.json")),
+        (Some(false), Some(true), Some(false), None),
+        (Some(true), None, Some(false), None),
+        (
+            Some(false),
+            None,
+            Some(true),
+            Some(".claude/settings.local.json"),
+        ),
+    ] {
+        set(home.join(".claude/settings.json"), user);
+        set(project.join(".claude/settings.json"), shared);
+        set(project.join(".claude/settings.local.json"), local);
+        let case = format!("user {user:?}, project {shared:?}, local {local:?}");
+        let report =
+            installer::install(&request(&sandbox, &project, &[".claude"], true, "plugins"))
+                .unwrap();
+        let plugin: Vec<_> = report
+            .conflicts
+            .iter()
+            .filter(|c| c.message.contains("plugin"))
+            .collect();
+        match blocked {
+            None => {
+                assert!(plugin.is_empty(), "{case}: {plugin:?}");
+                assert_eq!(report.status, Status::Planned, "{case}");
+            }
+            Some(file) => {
+                assert_eq!(report.status, Status::Conflict, "{case}");
+                assert_eq!(plugin.len(), 1, "{case}: {plugin:?}");
+                assert!(plugin[0].path.ends_with(file), "{case}: {plugin:?}");
+                let expected = if user == Some(true) && shared.is_none() {
+                    home.join(file)
+                } else {
+                    project.join(file)
+                };
+                assert_eq!(Path::new(&plugin[0].path), expected, "{case}");
+            }
+        }
+    }
+}
+
 /// The inherited `--project` is a boolean for the current project; project
 /// installs refuse the user-level-only options instead of ignoring them.
 #[test]

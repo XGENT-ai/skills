@@ -1252,9 +1252,9 @@ fn coverage_section(input: &ReportInput<'_>, from: &str) -> Result<String, Store
     let round = input.round;
     let mut tools = Vec::new();
     let mut captured = 0;
-    // Missing cells grouped by their recorded reason, in matrix order.
+    // Missing cells of the covered units grouped by their recorded reason, in matrix order.
     let mut missing: Vec<(String, Vec<String>)> = Vec::new();
-    for cell in &round.matrix.cells {
+    for cell in round.matrix.selected_cells() {
         let reason = match finalize::current_capture(round, &cell.key).map(|c| &c.input.observation)
         {
             Some(Observation::Captured { tool, .. }) => {
@@ -1350,7 +1350,7 @@ fn coverage_section(input: &ReportInput<'_>, from: &str) -> Result<String, Store
     }
     text.push_str(&format!(
         "\n- 格子：已采 {captured} / {}；{}；补采：{}\n- 环境噪声：未单独登记，如有见核对说明\n",
-        round.matrix.cells.len(),
+        round.matrix.selected_cells().count(),
         if missing.is_empty() {
             "未采：无".to_owned()
         } else {

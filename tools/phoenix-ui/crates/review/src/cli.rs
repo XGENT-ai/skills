@@ -274,8 +274,7 @@ fn begin(cwd: &Path, args: &[String]) -> Outcome {
     let directory = path.parent().unwrap();
     let cells: Vec<Value> = round
         .matrix
-        .cells
-        .iter()
+        .selected_cells()
         .map(|cell| {
             json!({"cell": cell.key, "viewport": cell.viewport,
                 "path": directory.join(&cell.filename).to_string_lossy()})

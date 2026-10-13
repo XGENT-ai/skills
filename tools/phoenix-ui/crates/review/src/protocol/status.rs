@@ -18,7 +18,7 @@ pub fn inspect(project: &Path, prefix: &str) -> Result<Value, StoreError> {
         });
     }
     let lock = CycleLock::observe(&root, &index)?;
-    Ok(managed(&lock, prefix).unwrap_or_else(|problem| {
+    Ok(managed(&root, &lock, prefix).unwrap_or_else(|problem| {
         json!({"state": "unknown", "prefix": prefix, "verdict": null,
             "problem": {"exitCode": problem.code, "message": problem.message},
             "reason": "Managed state is damaged, from an unsupported schema, or no longer matches its evidence; it is neither absent nor passed",
@@ -40,7 +40,7 @@ fn intact(
     Ok(project_block(&bytes, block, expected, b"probe").is_ok())
 }
 
-fn managed(lock: &CycleLock, prefix: &str) -> Result<Value, StoreError> {
+fn managed(root: &Path, lock: &CycleLock, prefix: &str) -> Result<Value, StoreError> {
     let pending = lock.pending_publication()?;
     let cycle = load_cycle(lock, prefix)?.ok_or_else(|| error(4, "Managed cycle is missing"))?;
     let applied = applied::load(lock, &cycle, &mut Vec::new())?;
@@ -71,6 +71,12 @@ fn managed(lock: &CycleLock, prefix: &str) -> Result<Value, StoreError> {
             entry["waived"] = json!(cycle.waivers.iter().any(|w| w.round_id == round.round_id));
             sealed.push((round.clone(), result));
         } else {
+            // Read a draft as its next write reads it: changed target, capture or
+            // judge evidence leaves the state unknown rather than ready.
+            verified_sources(root, lock, &cycle, &round, path)?;
+            for file in &round.judges {
+                judgement::load(lock, &round, &cycle, file, &mut Vec::new())?;
+            }
             let packets = round.packets.len();
             let judges = round.judges.len();
             let missing = missing_cells(&round);

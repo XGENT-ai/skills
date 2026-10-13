@@ -42,13 +42,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-13T16:51:35+08:00
-- 当前进度：6/6 个里程碑完成
-- 当前状态：已完成；最终候选a5ed3cc/CI33全绿，最终tarball a1628c0f的V-4、替身演练与单次pack通过，原V5 r6限定轮在最终包上恢复并封存。公开发布与合并未执行。
-- 最近完成：M6 · B闭环终验与发布准备
-- 下一步：代码评审——用 review-code 以本计划路径为参数评审完成记录中的提交；公开R2/npm发布与合并另行授权，发布候选若需包含后续提交（如a391a03）须按§10重跑CI与交接。
+- 最近更新：2026-10-13T20:35:00+08:00
+- 当前进度：5/6 个里程碑完成
+- 当前状态：进行中；R1代码评审F-01–F-07已修复并本地验证（npm test通过；test:phoenix仅oracle 1/860因本机Docker占用8080失败，修复前二进制同样失败），M6原最终候选a5ed3cc/CI33证据不覆盖修复后代码，已重开。用户授权本分支合并并推送origin/main；公开R2/npm发布未执行。
+- 最近完成：M5 · review-ui 可恢复机器协议
+- 下一步：用 review-code 以本计划路径复审R1修复；通过后按§10生成含修复的新验证候选，跑四native+Node18 CI，同一最终tarball重跑V-4、受影响V-7与V-10，回写M6。
 - 当前阻塞：无
-- 代码基线：a5ed3cc5219f575b480e726b56be3d87be34a79d/tree 3b86dd19d46c11c09a21c63d3b289a9cee831cd2（CI33）；分支上其后有用户提交a391a03（仅agi-mode文档）及本计划完成提交。最终链证据在local/phoenix-ui/wt-a5ed3cc（a5ed3cc的detached worktree）与b-final8、b-v9-final/r6-final8。
+- 代码基线：修复见完成记录M3/M5「修复」SHA，起点28789e48；a5ed3cc/tree 3b86dd19（CI33）及local/phoenix-ui/wt-a5ed3cc、b-final8、b-v9-final/r6-final8最终链证据只覆盖修复前代码。
 
 ### 完成记录
 
@@ -56,10 +56,10 @@
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 1ef9e37f4fd8 |
 | M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 1ef9e37f4fd8；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8 |
-| M3 | 已完成 | 2026-10-12T12:14:10+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过；能力/源码不变组有明确复用边界。内部收口，B未集成。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb |
+| M3 | 已完成 | 2026-10-13T20:35:00+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过。R1评审F-01–F-04已修复并本地验证，最终包重验归M6。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb |
 | M4 | 已完成 | 2026-10-13T13:49:43+08:00 | V-6与设计子集V-9退出；真实provider/规范/Portal/接受方向及未变54输入有明确证据，整期门归M6。 | [M4 记录](phoenix-ui.records/M4.md) | 7901ce186eed |
-| M5 | 已完成 | 2026-10-13T16:51:35+08:00 | V-7、V-8退出；最终包上原r6恢复、补评与限定轮封存完成，人工/机器降级边界与原判定词保留。 | [M5 记录](phoenix-ui.records/M5.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
-| M6 | 已完成 | 2026-10-13T16:51:35+08:00 | CI33全绿；最终tarball a1628c0f的V-4、替身与单次pack、受影响V-2/V-3/V-5/V-6/V-8及V-9/V-10通过；发布/合并另行授权。 | [M6 记录](phoenix-ui.records/M6.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
+| M5 | 已完成 | 2026-10-13T20:35:00+08:00 | V-7、V-8退出；最终包上原r6恢复与限定轮封存完成。R1评审F-05–F-07已修复并本地验证，真实取证重验归M6。 | [M5 记录](phoenix-ui.records/M5.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
+| M6 | 进行中 | 2026-10-13T20:35:00+08:00 | 原CI33/最终tarball a1628c0f证据只覆盖a5ed3cc；R1修复后待复审及新候选CI、最终包V-4/V-7/V-10重验。公开发布未执行。 | [M6 记录](phoenix-ui.records/M6.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
 
 ## 0. 需求、范围与决策
 

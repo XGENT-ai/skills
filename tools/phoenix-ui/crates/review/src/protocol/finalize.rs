@@ -964,7 +964,7 @@ pub fn run(
             },
         );
     }
-    let images_complete = round.matrix.cells.iter().all(|cell| {
+    let images_complete = round.matrix.selected_cells().all(|cell| {
         current_capture(&round, &cell.key).is_some_and(|capture| {
             matches!(capture.input.observation, Observation::Captured { .. })
         })

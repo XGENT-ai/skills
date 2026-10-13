@@ -2520,6 +2520,157 @@ fn damaged_future_drifted_or_publishing_state_is_unknown_never_pass() {
     assert_eq!(p.round(&r1)["finalization"]["status"], "finalized");
 }
 
+/// Draft evidence that the next write would reject is unknown to the read-only
+/// status too; the unchanged draft stays managed.
+#[test]
+fn status_checks_registered_draft_evidence_like_the_next_write() {
+    let p = Project::new(&["U1"]);
+    let round = p.begin(&[]);
+    p.capture_all(&round);
+    let (code, value) = p.judge(
+        &round,
+        "reviewer-a",
+        &unit("U1", ["3", "2.5", "2", "1"], &[("", "P2", "1.5")]),
+    );
+    assert_eq!(code, 0, "{value}");
+    assert_eq!(read_only_status(&p)["next"][0], "finalize");
+    let state = p.round(&round);
+    let capture = &state["captures"][0];
+    let judge = p.read(state["judges"][0]["path"].as_str().unwrap());
+    let paths = [
+        state["targetSnapshot"]["expectations"]["path"].clone(),
+        capture["input"]["observation"]["image"]["path"].clone(),
+        capture["frozenImage"]["path"].clone(),
+        state["judges"][0]["path"].clone(),
+        judge["raw"]["path"].clone(),
+    ];
+    let restore = |path: &Path, bytes: &[u8]| fs::write(path, bytes).unwrap();
+    // The target expectation changes from 24px to 32px.
+    let target = p.root.join(TARGET);
+    let original = fs::read(&target).unwrap();
+    p.set_target("Accepted icon scale 32px.", "Open the real app.");
+    let unknown = unknown_status(&p);
+    let (code, _) = p.run(&["judge-pack", "--round", &round]);
+    assert_eq!(
+        (unknown["problem"]["exitCode"].as_i64(), code),
+        (Some(3), 3)
+    );
+    restore(&target, &original);
+    for path in paths.iter().map(|p| p.as_str().unwrap()) {
+        let file = p.root.join(path);
+        let original = fs::read(&file).unwrap();
+        let mut changed = original.clone();
+        changed.extend_from_slice(b"\n");
+        for change in [Some(changed), None] {
+            match &change {
+                Some(bytes) => fs::write(&file, bytes).unwrap(),
+                None => fs::remove_file(&file).unwrap(),
+            }
+            let unknown = unknown_status(&p);
+            let (code, _) = p.run(&["judge-pack", "--round", &round]);
+            assert_ne!(code, 0, "{path}");
+            assert_eq!(unknown["problem"]["exitCode"], code, "{path}: {unknown}");
+            restore(&file, &original);
+        }
+    }
+    let draft = read_only_status(&p);
+    assert_eq!(draft["state"], "managed");
+    assert_eq!(draft["current"]["state"], "draft");
+    assert_eq!(draft["next"][0], "finalize");
+}
+
+/// A scoped round measures capture coverage over its own units: units outside the
+/// scope are 本轮未复核, not missing evidence of this round.
+#[test]
+fn scoped_rounds_measure_capture_coverage_over_the_selected_units() {
+    let p = Project::new(&["U1", "U2"]);
+    let (code, begun) = p.begin_with(&["--scope", "U1"]);
+    assert_eq!(code, 0, "{begun}");
+    let round = begun["round"].as_str().unwrap().to_owned();
+    assert!(begun["cells"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|c| c["cell"]["unitId"] == "U1"));
+    let draft = read_only_status(&p);
+    assert_eq!(
+        draft["current"]["missingCells"].as_array().unwrap().len(),
+        1
+    );
+    assert_eq!(draft["current"]["missingCells"][0]["unitId"], "U1");
+    p.capture_all(&round);
+    assert_eq!(read_only_status(&p)["current"]["missingCells"], json!([]));
+    let (code, value) = p.judge(
+        &round,
+        "reviewer-a",
+        &unit("U1", ["3", "2", "1", "1"], &[("", "P2", "3")]),
+    );
+    assert_eq!(code, 0, "{value}");
+    let (code, sealed) = p.finalize(&round, json!({}));
+    assert_eq!(code, 0, "{sealed}");
+    assert_eq!(sealed["verdict"], "需要修改", "{sealed}");
+    assert_eq!(
+        p.read(sealed["result"]["path"].as_str().unwrap())["evidenceComplete"],
+        true
+    );
+    let report =
+        fs::read_to_string(p.root.join(sealed["report"]["path"].as_str().unwrap())).unwrap();
+    assert!(report.contains("已采 1 / 1"), "{report}");
+    assert!(!report.contains("U2 / default"), "{report}");
+
+    // The scoped unit's own missing capture still needs evidence.
+    let r2 = p.begin(&["--scope", "U1"]);
+    let (code, value) = p.capture(&r2, "U1", 1, Shot::Missing("App did not start"));
+    assert_eq!(code, 0, "{value}");
+    assert_eq!(value["missingCells"].as_array().unwrap().len(), 1);
+    assert_eq!(value["missingCells"][0]["unitId"], "U1");
+    let (code, sealed) = p.finalize(&r2, json!({}));
+    assert_eq!(code, 0, "{sealed}");
+    assert_eq!(sealed["verdict"], "需补证", "{sealed}");
+}
+
+/// An attachment cited only in one unit's row blocks only that unit; a missing
+/// shared expectation source still blocks every unit.
+#[test]
+fn a_unit_specific_missing_attachment_blocks_only_that_unit() {
+    let p = Project::new(&["U1", "U2"]);
+    let text = fs::read_to_string(p.root.join(TARGET)).unwrap().replace(
+        "| U2 Screen | default | 2×2 | light | [Design](../DESIGN.md) |",
+        "| U2 Screen | default | 2×2 | light | [Spec](missing.md) |",
+    );
+    fs::write(p.root.join(TARGET), text).unwrap();
+    let (code, begun) = p.begin_with(&[]);
+    assert_eq!(code, 0, "{begun}");
+    assert_eq!(
+        begun["targetMissing"],
+        json!(["Unreadable target attachment: docs/missing.md"])
+    );
+    let round = begun["round"].as_str().unwrap().to_owned();
+    p.capture_all(&round);
+    let (packet, _) = p.pack(&round, None);
+    assert_eq!(packet["units"], json!(["U1"]), "{packet}");
+    assert_eq!(packet["unreviewedUnits"][0]["unitId"], "U2", "{packet}");
+    let judge = Judge {
+        packet_units: Some("U1"),
+        ..unit("U1", ["3", "2.5", "2", "1"], &[("", "P2", "1.5")])
+    };
+    let (code, value) = p.judge(&round, "reviewer-a", &judge);
+    assert_eq!(code, 0, "{value}");
+    let (code, sealed) = p.finalize(&round, json!({}));
+    assert_eq!(code, 0, "{sealed}");
+    assert_eq!(sealed["verdict"], "需补证", "{sealed}");
+    let result = p.read(sealed["result"]["path"].as_str().unwrap());
+    assert_eq!(result["units"][0]["score"], "8.5", "{result}");
+    assert!(result["units"][1]["score"].is_null(), "{result}");
+
+    let shared = Project::new(&["U1", "U2"]);
+    fs::remove_file(shared.root.join("docs/orders.ui-target/orders.png")).unwrap();
+    let round = shared.begin(&[]);
+    shared.capture_all(&round);
+    let (code, value) = shared.run(&["judge-pack", "--round", &round, "--units", "U1"]);
+    assert_eq!(code, 2, "{value}");
+}
+
 // ── import: explicit legacy mapping, unknowns stay unknown ─────────────────
 
 fn evidence(p: &Project, path: &str, bytes: &[u8]) -> Value {

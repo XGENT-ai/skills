@@ -336,7 +336,7 @@ fn create_packet(
     if round.finalization.is_some() {
         return Err(error(3, "Finalized rounds cannot create new packets"));
     }
-    let mut sources = verified_sources(&root, &lock, &cycle, &round, path)?;
+    let (mut sources, target) = verified_target(&root, &lock, &cycle, &round, path)?;
     let selected = round.matrix.selected_units();
     let requested =
         units.unwrap_or_else(|| selected.iter().map(|unit| (*unit).to_owned()).collect());
@@ -357,7 +357,7 @@ fn create_packet(
         judgement::load(&lock, &round, &cycle, file, &mut sources)?;
     }
     let complete = |unit: &str| {
-        round.target_snapshot.missing.is_empty()
+        target.missing_for(unit).next().is_none()
             && round
                 .matrix
                 .cells

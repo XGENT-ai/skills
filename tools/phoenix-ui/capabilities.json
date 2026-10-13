@@ -219,14 +219,14 @@
         "source": "crates/cli/src/main.rs:54",
         "oldBehavior": "legacy skills namespace 分派 help/install/link/update/check。",
         "disposition": "retain",
-        "newBehavior": "保留行为；公开身份与持久化位置改为 Phoenix。",
+        "newBehavior": "保留help/link/check与用户级install/update；项目范围的install/update与根命令同走Rust事务安装（dry-run只读）；公开身份与持久化位置改为 Phoenix。",
         "reason": "优先承接固定版本；身份/状态隔离按计划。",
         "blocksA": true,
         "verification": {
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:54"
+        "currentSource": "crates/cli/src/main.rs:55"
       },
       {
         "names": [
@@ -242,7 +242,7 @@
           "status": "未验证",
           "method": "review crate与CLI回归；B集成runtime、真实UI评审循环及CI另行验收"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:64"
       },
       {
         "names": [
@@ -258,7 +258,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:64"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -274,7 +274,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:60"
+        "currentSource": "crates/cli/src/main.rs:69"
       },
       {
         "names": [
@@ -290,7 +290,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:64"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -306,7 +306,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:60"
+        "currentSource": "crates/cli/src/main.rs:69"
       },
       {
         "names": [
@@ -322,7 +322,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:64"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -338,7 +338,7 @@
           "status": "未验证",
           "method": "install crate迁移/回滚用例 + Node两阶段tarball安装 + 真实旧包项目迁移/回滚"
         },
-        "currentSource": "crates/cli/src/main.rs:63"
+        "currentSource": "crates/cli/src/main.rs:72"
       },
       {
         "names": [
@@ -354,7 +354,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:66"
+        "currentSource": "crates/cli/src/main.rs:75"
       },
       {
         "names": [
@@ -370,7 +370,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:67"
+        "currentSource": "crates/cli/src/main.rs:76"
       },
       {
         "names": [
@@ -386,7 +386,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:68"
+        "currentSource": "crates/cli/src/main.rs:77"
       },
       {
         "names": [
@@ -402,7 +402,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:69"
+        "currentSource": "crates/cli/src/main.rs:78"
       },
       {
         "names": [
@@ -418,7 +418,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:70"
+        "currentSource": "crates/cli/src/main.rs:79"
       },
       {
         "names": [
@@ -434,7 +434,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:71"
+        "currentSource": "crates/cli/src/main.rs:80"
       },
       {
         "names": [
@@ -450,7 +450,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:72"
+        "currentSource": "crates/cli/src/main.rs:81"
       },
       {
         "names": [
@@ -467,7 +467,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:73"
+        "currentSource": "crates/cli/src/main.rs:82"
       },
       {
         "names": [
@@ -483,7 +483,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:74"
+        "currentSource": "crates/cli/src/main.rs:83"
       },
       {
         "names": [
@@ -499,7 +499,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:75"
+        "currentSource": "crates/cli/src/main.rs:84"
       },
       {
         "names": [
@@ -515,7 +515,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:76"
+        "currentSource": "crates/cli/src/main.rs:85"
       },
       {
         "names": [
@@ -531,7 +531,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:77"
+        "currentSource": "crates/cli/src/main.rs:86"
       },
       {
         "names": [
@@ -547,7 +547,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:78"
+        "currentSource": "crates/cli/src/main.rs:87"
       },
       {
         "names": [
@@ -563,7 +563,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:80"
+        "currentSource": "crates/cli/src/main.rs:89"
       },
       {
         "names": [
@@ -579,7 +579,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:81"
+        "currentSource": "crates/cli/src/main.rs:90"
       },
       {
         "names": [
@@ -595,7 +595,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:82"
+        "currentSource": "crates/cli/src/main.rs:91"
       },
       {
         "names": [
@@ -611,7 +611,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:86"
+        "currentSource": "crates/cli/src/main.rs:95"
       },
       {
         "names": [
@@ -627,7 +627,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:89"
+        "currentSource": "crates/cli/src/main.rs:98"
       },
       {
         "names": [
@@ -643,7 +643,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:104"
+        "currentSource": "crates/cli/src/main.rs:113"
       },
       {
         "names": [
@@ -659,7 +659,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:105"
+        "currentSource": "crates/cli/src/main.rs:114"
       },
       {
         "names": [
@@ -676,7 +676,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:106"
+        "currentSource": "crates/cli/src/main.rs:115"
       },
       {
         "names": [
@@ -692,7 +692,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:113"
+        "currentSource": "crates/cli/src/main.rs:122"
       }
     ],
     "dynamicRoutes": [
@@ -706,7 +706,7 @@
           "status": "未验证",
           "method": "native argv 各 live* 正/反例"
         },
-        "currentSource": "crates/cli/src/main.rs:107"
+        "currentSource": "crates/cli/src/main.rs:116"
       },
       {
         "pattern": "path/flag/URL/existing target",
@@ -718,7 +718,7 @@
           "status": "未验证",
           "method": "tests/oracle/cases/detect.mjs"
         },
-        "currentSource": "crates/cli/src/main.rs:110"
+        "currentSource": "crates/cli/src/main.rs:119"
       }
     ],
     "live": [
@@ -5667,7 +5667,7 @@
         "importedPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "currentPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "baselineSha256": "00b20a738560363eb3ab4daa78fb56f35654d3bfcb9d1144548cc6cba954e497",
-        "currentSha256": "c83ff7f0e949e6a5aea311cc85472ca144ca35c2148c3b2c3c93f086794f97ff"
+        "currentSha256": "7425571cd348c66c47862c41e6a44e2fbed6be991d45ee5079d93d05128a5f5a"
       },
       "crates/common/src/proc.rs": {
         "importedPath": "tools/phoenix-ui/crates/common/src/proc.rs",
@@ -7224,7 +7224,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/review/src/cli.rs": {
-        "sha256": "2b9efed288a4e8d1c3596d9eb9e24f2752e039e6a5fe17c373a5b1cdff7643d6",
+        "sha256": "8829fc68c5241751997b164f83fef3b1cc0c0cb09bb3eed1a32673e863c58ea8",
         "sourceScope": "current-fork"
       },
       "scripts/build-phoenix-ui.mjs": {
@@ -7240,7 +7240,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/review/src/protocol.rs": {
-        "sha256": "caeb12f043a907329f30c4236dbc24d3113bf46d774fb61b5aaf34a4a608da07",
+        "sha256": "a28b1ca06eb85fd96828a9c47d4ad53e544083e76398a88ba7b7b2185e86519d",
         "sourceScope": "current-fork"
       }
     },

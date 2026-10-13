@@ -2,7 +2,7 @@ use crate::storage::{error, hash, StoreError};
 use pulldown_cmark::{BrokenLink, Event, HeadingLevel, LinkType, Options, Parser, Tag, TagEnd};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeMap,
+    collections::{btree_map::Entry, BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
 };
@@ -43,6 +43,20 @@ pub struct TargetSnapshot {
     pub sections: Vec<Section>,
     pub attachments: Vec<Attachment>,
     pub missing: Vec<String>,
+    /// Missing items cited only in rows of the unit table, by unit ID. Any other
+    /// missing item, such as one in the shared expectations, affects every unit.
+    pub unit_missing: BTreeMap<String, BTreeSet<String>>,
+}
+
+impl TargetSnapshot {
+    /// The missing expectation sources `unit` depends on.
+    pub fn missing_for<'a>(&'a self, unit: &'a str) -> impl Iterator<Item = &'a String> {
+        self.missing.iter().filter(move |item| {
+            self.unit_missing
+                .get(*item)
+                .is_none_or(|units| units.contains(unit))
+        })
+    }
 }
 
 pub fn freeze(
@@ -70,6 +84,9 @@ pub fn freeze(
             references: Vec::new(),
         })
         .collect::<Vec<_>>();
+    let rows = unit_rows(&text, &ranges);
+    // `None` marks a missing item that some citation outside a unit row shares.
+    let mut owners = BTreeMap::<String, Option<BTreeSet<String>>>::new();
     let mut missing = Vec::new();
     for name in ["单元", "规范要点"] {
         if !sections.iter().any(|section| section.name == name) {
@@ -114,6 +131,24 @@ pub fn freeze(
         if !image && link_type == LinkType::ShortcutUnknown {
             continue;
         }
+        let row = rows
+            .iter()
+            .find(|(start, end, _)| range.start >= *start && range.start < *end)
+            .map(|(_, _, unit)| unit.as_str());
+        let mut note = |message: String| {
+            match (owners.entry(message.clone()), row) {
+                (Entry::Vacant(entry), Some(unit)) => {
+                    entry.insert(Some(BTreeSet::from([unit.to_owned()])));
+                }
+                (Entry::Occupied(mut entry), Some(unit)) => {
+                    if let Some(units) = entry.get_mut() {
+                        units.insert(unit.to_owned());
+                    }
+                }
+                (entry, None) => *entry.or_default() = None,
+            }
+            missing.push(message);
+        };
         if !id.is_empty() {
             sections[index].references.push(Reference {
                 id: id.into_string(),
@@ -122,7 +157,7 @@ pub fn freeze(
             });
         }
         if let Some(reference) = destination.strip_prefix("phoenix-unresolved:") {
-            missing.push(format!("Unresolved target reference: {reference}"));
+            note(format!("Unresolved target reference: {reference}"));
             continue;
         }
         if destination.starts_with('#') || destination.is_empty() {
@@ -131,7 +166,7 @@ pub fn freeze(
         let uri = url::Url::parse(&destination).ok();
         if destination.starts_with("//") || uri.as_ref().is_some_and(|url| url.scheme() != "file") {
             if image {
-                missing.push(format!(
+                note(format!(
                     "Remote target image needs a local export: {destination}"
                 ));
             }
@@ -152,7 +187,7 @@ pub fn freeze(
         };
         let attachment = read_attachment(&root, &normalize(&local), &sources)?;
         if attachment.sha256.is_none() {
-            missing.push(format!(
+            note(format!(
                 "Unreadable target attachment: {}",
                 attachment.logical_path
             ));
@@ -194,7 +229,55 @@ pub fn freeze(
         sections,
         attachments,
         missing,
+        unit_missing: owners
+            .into_iter()
+            .filter_map(|(item, units)| Some((item, units?)))
+            .collect(),
     })
+}
+
+/// Body rows of the unit table with the unit ID each row defines, as byte ranges
+/// of `text`, so a source cited in one row is attributed to that unit alone.
+fn unit_rows(text: &str, ranges: &[(String, usize, usize)]) -> Vec<(usize, usize, String)> {
+    let Some((_, start, end)) = ranges.iter().find(|(name, _, _)| name == "单元") else {
+        return Vec::new();
+    };
+    let mut rows = Vec::new();
+    let mut column = None;
+    let mut row = None::<(usize, Vec<String>)>;
+    let mut cell = None::<String>;
+    for (event, range) in
+        Parser::new_ext(&text[*start..*end], Options::ENABLE_TABLES).into_offset_iter()
+    {
+        match event {
+            Event::Start(Tag::TableHead | Tag::TableRow) => row = Some((range.start, Vec::new())),
+            Event::Start(Tag::TableCell) => cell = Some(String::new()),
+            Event::Text(value) | Event::Code(value) => {
+                if let Some(cell) = &mut cell {
+                    cell.push_str(&value);
+                }
+            }
+            Event::End(TagEnd::TableCell) => {
+                if let (Some(text), Some((_, cells))) = (cell.take(), &mut row) {
+                    cells.push(text.trim().to_owned());
+                }
+            }
+            Event::End(TagEnd::TableHead) => {
+                column = row
+                    .take()
+                    .and_then(|(_, cells)| cells.iter().position(|name| name == "单元"));
+            }
+            Event::End(TagEnd::TableRow) => {
+                let unit = row.take().zip(column).and_then(|((from, cells), column)| {
+                    let id = cells.get(column)?.split_whitespace().next()?;
+                    Some((start + from, start + range.end, id.to_owned()))
+                });
+                rows.extend(unit);
+            }
+            _ => (),
+        }
+    }
+    rows
 }
 
 fn part(digest: &mut Sha256, value: &str) {

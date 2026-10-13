@@ -543,13 +543,21 @@ fn detector(
     }
     Ok(())
 }
+/// Phoenix reads `.phoenix-ui` configuration and sidecars as strict JSON. A file
+/// only the JSONC editor accepts would migrate and then be unreadable or ignored.
+fn strict_json(bytes: &[u8]) -> std::result::Result<Value, String> {
+    serde_json::from_slice::<Value>(bytes).map_err(|e| {
+        format!("Phoenix reads this file as strict JSON ({e}); remove comments or trailing commas, then rerun; original bytes are retained")
+    })?;
+    json::parse_value(bytes).map_err(|e| e.message)
+}
 fn config(
     root: &Path,
     path: &str,
     bytes: &[u8],
     result: &mut PreparedData,
 ) -> std::result::Result<Vec<u8>, String> {
-    let value = json::parse_value(bytes).map_err(|e| e.message)?;
+    let value = strict_json(bytes)?;
     let map = object(&value, "config")?;
     reject_transient(&value, "")?;
     let known = [
@@ -711,7 +719,7 @@ fn design(
     bytes: &[u8],
     result: &mut PreparedData,
 ) -> std::result::Result<Vec<u8>, String> {
-    let value = json::parse_value(bytes).map_err(|e| e.message)?;
+    let value = strict_json(bytes)?;
     let map = object(&value, "design")?;
     check(
         !map.keys().any(|key| transient_key(key)),
