@@ -7186,7 +7186,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "20ee888302d4e6a57a91387fb9686b07ac73bd4da7f453320fe2456453d5ec4e",
+        "sha256": "8b1723fb51e6aad9bfc0bc5ba8e09b5a373b0e33c251331f6ca14ff6b1c261ef",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7247,11 +7247,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "6c93502f4445254a7be7427b6002a206bcb059d0b56cbc90d66672a8357268b0",
+      "manifestSha256": "95bca755477c6864e11eab1104d2147d0d4c80dca24ec15a058c6af4d96e7c30",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "43a5c6f4b58aa712b3456cbf96f8799d8ca8353377a247af217d4686b620c762",
+      "generationManifestSha256": "c0a87b5cc6cd35ee527184beb1e3e20886223130e209f2a652aaeb60d8dcc439",
       "generator": "Bun 1.3.14",
-      "inputSha256": "2ff87c55206e717d56e666929b7ebfb049d29046f1cdb1ba93034061b7c36740",
+      "inputSha256": "c5c32748444236a0fe97df5b010904e610a7b919b29ea108b5645167ffd2c301",
       "engineManifest": "verified",
       "outputsCount": 1736,
       "providers": 19,
@@ -7391,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "cb1751af1757f1d6cb4dd0905c6c410dce43899768c7f52b944e2ad3619e3707",
+        "sha256": "9c58d6d8485ed52412f72f8be15ead8fa7803f46c77d2011cc224e2f1cccade1",
         "distribution": "development",
-        "sourceInputSha256": "2607e2693ac81e16e8b16a71086807a44af46f5a5bccccdc5d8c4c5b04cc0bac",
+        "sourceInputSha256": "49b56db5665da873d2811d91b3e77cde34778baa40658a4398b6c27ce7d8caed",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "9e75ea5407151c0a023dda6c7168088c7359c1907db7e8279be44cfaa7acc05c",
-            "size": 20881304
+            "sha256": "594d1238c09b9b3423f0221d2b7b7ebf5e19fbe8511a1f52873ad47afdfc5d03",
+            "size": 20862472
           }
         },
-        "limitation": "Development darwin-arm64 only for the managed report, previous-material, unused-packet and validation-memo repairs; sourceState dirty and full runtime not-run-by-build-script. CI29/4f122e10 scope preserved; the next fixed CI and final package acceptance are pending."
+        "limitation": "Development darwin-arm64 only for the review historical-validation and hook EPIPE repairs; sourceState dirty and full runtime not-run-by-build-script. Fixed four-platform CI and final package acceptance are pending."
       }
     },
     "directionLibrary": {

@@ -331,7 +331,11 @@ async function main(args, options = {}) {
         && !args.some(a => a === '--auxiliary-root' || a.startsWith('--auxiliary-root='))) childArgs.push('--auxiliary-root', path.dirname(options.skillDir));
     return await new Promise((resolve, reject) => {
       const child = spawn(binary, childArgs, { env: childEnv, stdio: hook ? ['pipe', 'inherit', 'inherit'] : 'inherit', windowsHide: true });
-      if (hook) child.stdin.end(input);
+      if (hook) {
+        // The engine may answer before reading the whole event; its exit code decides.
+        child.stdin.on('error', error => { if (error.code !== 'EPIPE') reject(error); });
+        child.stdin.end(input);
+      }
       const interrupt = () => child.kill('SIGINT');
       const terminate = () => child.kill('SIGTERM');
       process.on('SIGINT', interrupt);

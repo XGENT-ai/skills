@@ -354,6 +354,39 @@ test('guard and restored bootstrap share markers; verified installation clears t
   assert.equal(shell(f, command, event).stdout, '');
 });
 
+test('a hook engine that exits before reading the whole event keeps the hook result', posix, async t => {
+  const f = fixture(t);
+  const command = await commandFor(f, 'codex');
+  f.env.PHOENIX_UI_PROVIDER_ID = 'codex';
+  const scripts = restoreLauncher(f, '.agents', 'agents');
+  const release = path.join(f.root, 'release');
+  fs.mkdirSync(release);
+  const target = platformTarget();
+  const asset = `phoenix-ui-${target}`;
+  // A protocol fixture engine that answers the hook without reading its input.
+  const bytes = Buffer.from(`#!/usr/bin/env node\nif (process.argv[2] === 'engine-probe') { console.log('phoenix-ui-engine 0.1.0'); } else { console.log(JSON.stringify({ argv: process.argv.slice(2) })); process.exit(0); }\n`);
+  const manifest = {
+    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: '0.7.0-rc.0',
+    sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: 'b'.repeat(64), reviewSchema: 1,
+    engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } },
+  };
+  const manifestBytes = JSON.stringify(manifest, null, 2) + '\n';
+  fs.writeFileSync(path.join(scripts, 'ENGINE.json'), manifestBytes);
+  fs.writeFileSync(path.join(release, 'VERSION.json'), manifestBytes);
+  fs.writeFileSync(path.join(release, asset), bytes, { mode: 0o700 });
+  fs.writeFileSync(path.join(release, 'THIRD-PARTY.json'), '{}\n');
+  fs.writeFileSync(path.join(release, 'THIRD-PARTY-NOTICES.md'), 'Protocol fixture.\n');
+  fs.mkdirSync(path.join(release, 'THIRD-PARTY-LICENSES'));
+  const installCommand = `${quote(path.join(scripts, 'phoenix-ui'))} engine install --project ${quote(f.project)} --release-dir ${quote(release)} --json`;
+  const install = shell(f, installCommand, '');
+  assert.equal(install.status, 0, install.stderr);
+  // Larger than any pipe buffer, so the write is still pending when the engine exits.
+  const event = JSON.stringify({ cwd: f.project, session_id: 'large', hook_event_name: 'PostToolUse', tool_input: { content: 'x'.repeat(4 * 1024 * 1024) } });
+  const result = shell(f, command, event);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), { argv: ['hook'] });
+});
+
 test('restored launcher deduplicates the guard before a valid engine manifest is available', posix, async t => {
   for (const [provider, rawProvider, providerDir] of [
     ['claude', 'claude-code', '.claude'], ['codex', 'agents', '.agents'],
