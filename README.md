@@ -210,14 +210,14 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 | Skill | 说明 |
 | --- | --- |
-| [agi-mode](skills/agi-mode/SKILL.md) | 自主推进复杂任务到可验证交付；含 SDLC 阶段指引、项目状态/what-next 与分类状态记录 |
+| [agi-mode](skills/agi-mode/SKILL.md) | 通用问题助手，不知道如何推进时从这里开始；核心是自进化 loop，SDLC 与项目状态为按需能力 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
 | [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
 | [experience-capture](skills/experience-capture/SKILL.md) | 开发中轻量收集踩坑、纠正及自动化线索，供用户随后发起复盘 |
 
-自进化流程集中在 `agi-mode` 内：[Eval](skills/agi-mode/playbooks/eval.md) 建立可信判定，[Hillclimb](skills/agi-mode/playbooks/hillclimb.md) 管理搜索，[Arena](skills/agi-mode/playbooks/arena.md) 提供不同候选，[Reflection](skills/agi-mode/playbooks/reflection.md) 提炼教训。协作与记录约定见 [技能演化](skills/agi-mode/references/skill-evolution.md)。
+`agi-mode` 的自进化 loop：真实任务反馈 → 改进假设 → 评测与搜索 → 最终确认 → 采用与沉淀 → 后续反馈。[Reflection](skills/agi-mode/playbooks/reflection.md) 提炼假设，[Eval](skills/agi-mode/playbooks/eval.md) 建立可信判定，[Hillclimb](skills/agi-mode/playbooks/hillclimb.md) 管理搜索，[Arena](skills/agi-mode/playbooks/arena.md) 按需提供不同候选。协作与记录约定见 [技能演化](skills/agi-mode/references/skill-evolution.md)。
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
