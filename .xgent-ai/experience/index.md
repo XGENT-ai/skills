@@ -12,3 +12,4 @@
 | 76041099-ce1d-45e2-9b95-766a0c81ad0b | SDLC skill 手动闭环交接优化 | [记录](76041099-ce1d-45e2-9b95-766a0c81ad0b.md) |
 | e385a2ce-a3a2-4153-b6bb-e7b685c92b67 | SDLC 新增 review-ui / apply-ui-review | [记录](e385a2ce-a3a2-4153-b6bb-e7b685c92b67.md) |
 | 0545b9c0-af40-4fc3-8b04-625848749766 | Phoenix UI 构建环境 | [记录](0545b9c0-af40-4fc3-8b04-625848749766.md) |
+| 01a1342e-e554-7b21-a30a-553b6fdb37aa | init-sdlc 工作项可读性 | [记录](01a1342e-e554-7b21-a30a-553b6fdb37aa.md) |

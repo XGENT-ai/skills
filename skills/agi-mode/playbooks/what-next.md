@@ -80,11 +80,17 @@
 
 ## 交付
 
-先用一句话说明总体情况和可见性边界，再给紧凑表格：`工作项 | 文档就绪码 | 实施状态码 | 各轮评审/处置 | 证据 | 下一步`，附 PRD/计划/来源链接。状态格只写固定状态码加必要的短限定（如 4/4、R2）；证据格写 evidence_status，非 confirmed 时附一句原因（如“stale：完成后 2 个提交未覆盖”）；详细依据留在来源链接与台账，表格里不堆免责说明。下一步写可直接复制的命令。例如：
+先用一句话说明总体情况和可见性边界，再给紧凑表格：`工作项（名称 / 原文文件） | 文档状态 | 实施进度 | 各轮评审/处置 | 证据 | 下一步`。聊天答复和写入台账的“当前重点”都遵循以下要求：
+
+- **每项可定位**：工作项写业务主题或原文标题、文档类型及原文的仓根相对路径，路径文字直接可见并尽量可点击，如“登录一期（开发计划）· [goal/LOGIN-P1.md](goal/LOGIN-P1.md)”。不能只写“PRD”“开发计划”“来源 CR”，也不能只链接 UUID 状态页；状态页可作补充入口。同名文件用目录和期次区分。材料没有本地文件时写实际来源链接与范围，不编造文件名。
+- **状态可理解**：用中文说明当前状态、进度和影响下一步的具体原因，同时保留固定状态码、轮次及证据码用于核对，如“实施受阻，3/7 完成：来源尚未提供完整对账接口（dev-plan-implementation-blocked）”。证据写“已核实（confirmed）”“待补证（provisional）”“已过期（stale）”“有冲突（conflict）”或“无可读依据（unknown）”，非 confirmed 时简述原因；不要只堆状态码或把部分交付写成整体完成。详细依据留在来源链接与台账。
+- **下一步可执行**：说明对哪个文件/事项做什么、当前缺什么以及怎样算完成，再给带实际输入路径的可复制命令。引用期次、里程碑或问题 ID 时同时说明事项含义，如“M4（接入外部待办来源）”，不要只写“接续 Q&A”“补齐契约”“取得解锁证据”。等待外部材料时列出所需交付，将下游动作明确写为条件满足后执行；材料未说明的含义或解除条件标为待核实。
+
+例如：
 
 ```text
-| goal/LOGIN-P1.md | dev-plan-ready | dev-plan-completed 4/4 | 代码评审 R2 review-not-required | confirmed | $review-prd-dev-gaps goal/LOGIN-P1.md |
-| goal/BILLING.md | dev-plan-blocked | dev-plan-not-started | 计划评审 R1 review-applied | stale：评审后 §5 有改动 | $resolve-blocked goal/BILLING.md |
+| 登录一期（开发计划）· [goal/LOGIN-P1.md](goal/LOGIN-P1.md) | 已就绪（dev-plan-ready） | 已完成 4/4（dev-plan-completed） | 代码评审 R2 无需整改（review-not-required） | 已核实（confirmed） | $review-prd-dev-gaps goal/LOGIN-P1.md：核对登录一期需求覆盖，记录遗漏与差异 |
+| 计费（开发计划）· [goal/BILLING.md](goal/BILLING.md) | 设计受阻：退款范围待定（dev-plan-blocked） | 尚未开始（dev-plan-not-started） | 计划评审 R1 意见已处理（review-applied） | 已过期（stale）：评审后 §5 退款范围有改动 | $resolve-blocked goal/BILLING.md：确认退款范围并回写 §5，重判就绪后才能开发 |
 ```
 
 PRD 没有计划、代码评审没有计划关联也单列，不静默遗漏。原文状态滞后时明确说明；验收事实另列，不冒充已定义统一验收流程。
