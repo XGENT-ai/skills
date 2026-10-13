@@ -43,6 +43,40 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       assert.ok(!result.stdout.includes("private@localhost"),"不回显非法来源中的凭据");
       passed++;
     }
+    // usageMetrics[].label：门户收平台语言键 { "zh-CN", en?, "zh-TW"? }，旧形状 { zh, en?, tw? } 仍收。
+    for (const [label,value,valid] of [
+      ["metric label zh-CN", {"zh-CN":"完成任务数",en:"Jobs"}, true],
+      ["metric label legacy zh", {zh:"完成任务数"}, true],
+      ["metric label en only", {en:"Jobs"}, false],
+      ["metric label blank", {"zh-CN":"  "}, false],
+      ["metric label string", "完成任务数", false],
+    ]) {
+      const manifest = {listingKey:"demo",name:"Demo",version:"1",usageMetrics:[{key:"demo.jobs",kind:"counter",unit:"count",label:value}]};
+      writeFileSync(join(root,"app.manifest.json"),JSON.stringify(manifest));
+      const result = spawnSync(process.execPath,[preflight,"--offline","--config","fixture.env","--key","demo","--dist","dist","--version","1","--manifest","app.manifest.json"],{cwd:root,env:{PATH:process.env.PATH},encoding:"utf8",timeout:15000});
+      assert.equal(result.status,valid?0:1,label);
+      passed++;
+    }
+    // requiredEnvNotes 与 Dashboard 组件：与门户提交面同口径（坏的在 CI 里就拦住）。
+    for (const [label,extra,valid] of [
+      ["env note ok", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_TITLE:"报表抬头"}}, true],
+      ["env note undeclared key", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_OTHER:"x"}}, false],
+      ["env note blank", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_TITLE:" "}}, false],
+      ["env note too long", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_TITLE:"长".repeat(201)}}, false],
+      ["widget ok", {dashboardWidgets:[{key:"w",source:"app",owner:"demo",type:"topic_list",title:"W"}]}, true],
+      ["widget nested key", {dashboard:{widgets:[{key:"w",source:"app",owner:"demo",type:"metric",title:"W"}]}}, false],
+      ["widget type typo", {dashboardWidgets:[{key:"w",source:"app",owner:"demo",type:"topic-list",title:"W"}]}, false],
+      ["widget owner mismatch", {dashboardWidgets:[{key:"w",source:"app",owner:"other",type:"metric",title:"W"}]}, false],
+      ["admin page ok", {adminPages:{platform:{route:"/admin/settings",label:{"zh-CN":"设置",en:"Settings"}},tenant:{route:"/settings",label:"设置"}}}, true],
+      ["admin page escape", {adminPages:{platform:{route:"//evil.example",label:"x"}}}, false],
+      ["admin page no zh-CN", {adminPages:{tenant:{route:"/s",label:{en:"S"}}}}, false],
+      ["admin page unknown level", {adminPages:{console:{route:"/s",label:"x"}}}, false],
+    ]) {
+      writeFileSync(join(root,"app.manifest.json"),JSON.stringify({listingKey:"demo",name:"Demo",version:"1",...extra}));
+      const result = spawnSync(process.execPath,[preflight,"--offline","--config","fixture.env","--key","demo","--dist","dist","--version","1","--manifest","app.manifest.json"],{cwd:root,env:{PATH:process.env.PATH},encoding:"utf8",timeout:15000});
+      assert.equal(result.status,valid?0:1,label);
+      passed++;
+    }
     assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="origin normalization")[1]),{imgSrc:["https://example.com"]});passed++;
     assert.throws(()=>normalizeEmbedCsp(Object.defineProperty({},"scriptSrc",{get(){throw new Error("must-not-run");}})),/accessors/);passed++;
     console.log(`exported preflight: ${passed}/0`);

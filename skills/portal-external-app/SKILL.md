@@ -22,6 +22,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
+| 一个配置项该放哪（环境变量 / 平台级或租户级管理页 / 应用内设置 / 用户偏好），`requiredEnvNotes` 与 `adminPages` 怎么写 | [references/config-placement.md](references/config-placement.md) |
 
 ## 先判形态（决定后面走哪条线）
 
@@ -139,16 +140,21 @@ job(deploy|redeploy)
 换版后 `refusing to start`，而发布方那侧只看到成功。2026-08-19 知识库把 `XGENT_OPENAI_*`
 整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
 但 base URL/model/**dims** 静默回落默认值。所以收交付物时仍要求：改必需 env 必须**同步改
-manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新增/改名的必需 env」列进 checklist。发布面本身
+manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新增/改名的必需 env」列进 checklist。
+**业务参数别塞进 `requiredEnv`**：审批人只懂环境，不懂你的业务。能在代码里给缺省值就不进清单；
+确实要让平台部署时覆盖，就在顶层 `requiredEnvNotes`（`{ 键名: 一句说明 }`，≤200 字，只给需要解释的键写）
+里写清填什么、不确定时填什么，审批屏会贴在键名旁。放哪一层的完整判断见下文「配置放哪一层」。发布面本身
 （令牌、tag 不可变、`--wait` / `--wait-review` / `status`）见 `xgent-app-release` skill。
 
 ### 值从哪来：三档键名约定（照这张表命名，绝大多数键零手填）
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
-| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` | 平台换版时自己算并注入，没有人手填 |
+| **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET`（声明了 `exchangeTargets` 时） | 平台换版时自己算并注入，没有人手填 |
 | **自动供给** | 库连接串 · Redis 地址 · 对象存储桶 · Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
-| **自定** | 其余一切 | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+| **自定** | 其余**环境依赖**（第三方地址、第三方密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+
+业务参数不在这张表里：先给代码缺省值；要进清单就配 `requiredEnvNotes`（见上一节末尾与「配置放哪一层」）。
 
 `<PREFIX>` = `listingKey` 全大写、连字符换下划线。`PORTAL_BASE_URL` 是门户**公开源**（也是调
 别的 App `/svc/<key>` 的基址），`API_BASE_URL` 是内部 portal-api，**不代理 `/svc`**。
@@ -216,9 +222,18 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 被拒时对方只会收到一句泛化的「当前环境不满足…，提案已转入待审核队列」（池、网段、机器名
 一个字都不出门户控制台）—— 所以**差在哪要由门户侧的人告诉他们**，别让对方对着一句话猜。
 
-## 无前端服务的租户管理员配置
+## 配置放哪一层
 
-外部团队实现 `GET/PUT /v1/settings`（TDT 四道闸）；**门户侧要按 App 补三件**（不是零改码）：`<key>-token` 铸造端点 + `<key>-config-api.ts` + `AppForm` 配置 Section——参照 files / llm-gateway，步骤见 portal-backend-app skill。接入新服务时把这三件列入门户侧工作量（omni-parser 至今欠着）。
+收交付物时逐项问「这个配置是哪一类」，完整判断表见 [references/config-placement.md](references/config-placement.md)。要点：
+
+- **环境依赖**进 `requiredEnv`；**业务参数**先给代码缺省值，确需覆盖才进清单并配 `requiredEnvNotes`——审批人只懂环境。
+- **全平台一份、要随时改** ⇒ 平台级管理页 `adminPages.platform`；**每租户不同** ⇒ 租户级管理页 `adminPages.tenant`。
+  页面由 App 自己做，门户嵌进应用市场编辑页 / 租户应用配置，**门户零改码**（治理档，需审批）。
+- **应用内业务设置** ⇒ 应用内设置页 + `aclManifest` 授权；**用户偏好** ⇒ App 自己按用户存。
+
+**无前端的服务型 App** 没有页面可嵌：它的租户管理员配置仍要**门户按 App 补三件**（不是零改码）——
+`<key>-token` 铸造端点 + `<key>-config-api.ts` + `AppForm` 配置 Section，参照 files / llm-gateway，
+步骤见 portal-backend-app skill；接入时把这三件列入门户侧工作量。有前端的 App 一律走 `adminPages`。
 
 ## 先看平台有没有，别自建一套
 
@@ -245,7 +260,7 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 | 币种与汇率 | `currency.read` | `GET /api/v1/currency` |
 | 判权限（PID） | — | `POST /api/v1/acl/check` |
 | 用户级设置 | `settings.read` / `settings.write` | `/api/v1/settings/me` |
-| Dashboard 卡片 | `widget.write` | 见 portal-micro-app skill |
+| Dashboard 卡片 | `widget.write`（**用户态**，服务态令牌推不了） | `PUT /api/v1/dashboard/widgets/:key/data`；清单顶层 `dashboardWidgets` 声明（不是 `dashboard.widgets`）。有用户关心的状态就该暴露至少一个，前端用 SDK 推；完整契约见 portal-micro-app skill 的 Widget 一节 |
 
 ### B. App 型公共服务 —— 走 `/svc/<key>` + 令牌交换
 

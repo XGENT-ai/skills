@@ -34,10 +34,15 @@ interface InitPayload {
   host: string;         // Portal web 源，拼可分享深链用
   theme: "light" | "dark";
   locale: string;       // "zh-CN" | "en" | "zh-TW"
+  localeOrder?: string[]; // 租户语言次序（回退链用）；旧宿主缺省
   user: { id: string; name: string } | null;
+  tenant?: { id: string; name: string; slug: string | null } | null; // 当前租户；旧宿主缺省，判空
   route: string | null; // 深链：地址栏 ?r= 携带的内部路由，用于还原
   fullscreen: boolean;
   acl?: AclInit;        // { bypass, permissions:[{pid,scope}], groups }
+  serviceBinary?: boolean; // 宿主能代理 callServiceBinary；旧宿主缺省，standalone 由 SDK 置 true
+  executableDownloadBase?: string; // 平台配置的可执行文件下载基址（无产品前缀）
+  adminPage?: "platform" | "tenant"; // 被门户嵌成管理页（清单 adminPages）时有值：只渲染那一页，收起自己的侧栏/顶栏
 }
 ```
 
@@ -65,7 +70,7 @@ sdk.acl.scope("myapp:page:items");           // "own" | "team" | "all"
 // 写入 Portal
 await sdk.notify({ title, body, type, link: "/app/your-app" });
 
-// Dashboard Widget（需 Manifest dashboard.widgets[] 声明 + widget.write）
+// Dashboard Widget（需 Manifest 顶层 dashboardWidgets[] 声明 + scopes 含 widget.write；数据按当前用户存）
 await sdk.dashboard.putWidgetData("activity", { title, items: [...] }, { staleAfterSec: 3600 });
 await sdk.dashboard.clearWidgetData("activity");
 
@@ -81,6 +86,9 @@ await sdk.scheduler.update(task.id, { status: "paused" }); await sdk.scheduler.c
 // 调你自己的独立后端（宿主代理，零跨域）
 const data = await sdk.callService("myapp", "/api/things", { method: "GET" });
 // sdk.files.* 即 callService("files", …) 的薄封装
+
+// 取自家后端的完整二进制响应（≤ 32 MiB，见 §5.2；需 portal-sdk ≥ 0.5.4）
+const { data, contentType, size } = await sdk.callServiceBinary("myapp", `/exports/${id}/content`, { method: "POST" });
 
 // 下载文件（跨源预签名 URL 唯一安全姿势，见 §5.1）
 import { openDownload } from "@xgent/portal-sdk";
@@ -187,6 +195,34 @@ openDownload(url);            // ✅ 顶层弹窗不受 frame-src 管，一闪�
 - 宿主 sandbox 的 `allow-downloads` 是**另一半**（已有）：缺它，弹窗会开但文件被静默丢弃。它治不了上面那个导航拦截，两件事别混。
 - 服务端要保证 URL 带 `Content-Disposition: attachment`（files-server 的 `/:id/download` 默认如此），否则新标签页变成预览而不是落盘。
 - 例外：**blob:/同源** URL（前端自己生成的 CSV 等）用 `<a download>.click()` 没问题，属性生效、不产生导航。
+
+### 5.2 受控字节：`callServiceBinary`
+
+字节不能暴露成签名 URL 时（一次性领取证明、App 自己判领取资格），由你的后端直接返回字节，前端用 `callServiceBinary` 取。它和 `callService` 同一个地址解析与取票，区别在于把**完整**响应读完后以 `ArrayBuffer` 交给你：
+
+```ts
+import { type ServiceBinaryError } from "@xgent/portal-sdk";
+const init = await sdk.ready();
+if (init.serviceBinary !== true) return showHostTooOld();   // iframe 内的旧宿主：HOST_UNSUPPORTED
+try {
+  const { data, size } = await sdk.callServiceBinary("myapp", `/exports/${id}/content`, {
+    method: "POST", headers: { "x-claim-proof": proof }, timeoutMs: 600_000, signal,
+  });
+  if (size !== expected.size || await sdk.files.digest(data) !== expected.sha256) throw new Error("摘要不符");
+  const url = URL.createObjectURL(new Blob([data], { type: "application/zip" }));
+  Object.assign(document.createElement("a"), { href: url, download: expected.fileName }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+} catch (error) {
+  const { code, status, details } = error as ServiceBinaryError;   // 两种传输形状相同
+}
+```
+
+- **上限 33,554,432 字节**，整段读完才交付，不交出截断的字节；没有流式、断点续传，也没有进度事件。实测领取 32 MiB 时页面峰值内存增量约为上限的 2 倍。
+- **它不判业务**：你的 `{ok:false}` 信封原样 reject（code / message / details，带 HTTP status）；`{ok:true,data:null}` 是 `EMPTY_RESPONSE`；其他 JSON 是 `UNEXPECTED_RESPONSE` —— **JSON 文件不能经它领取**，二进制接口要返回非 JSON 的 content-type。
+- **其余失败码**：超限 `TOO_LARGE`；跳转、断流、网络失败 `TRANSPORT_FAILED`；长度不符 `TRUNCATED`；非 2xx 且不是信封 `HTTP_ERROR`；路径含 `..` 等为 `INVALID_PATH`；SDK 本地码 `NOT_READY` / `HOST_UNSUPPORTED` / `TIMEOUT` / `ABORTED`。取票失败（如 `EXCHANGE_NOT_ALLOWED`）原样到达，后端收不到请求。
+- ⚠️ **只在 401 时换票重试一次**（`callService` 是 401/403 都重试）：403 可能出现在你已消耗一次性证明之后，重发等于重放。所以后端的 401 只能出现在消耗证明之前。另外，复用的 keep-alive 连接若在你写出任何响应字节前被关闭，Chrome 会自己把同一请求重发一次（任何方法），宿主拦不住 —— **一次性证明的消费方必须拒绝第二次出示**。
+- `timeoutMs` 是从发起到读完的**总期限**，缺省 120 s，慢网下不够下完 32 MiB，按大小放宽。`signal` 可取消；iframe 重载、换代或离开 App 都会让调用得到 `ABORTED`，可用 `setDirty(true)` 让宿主在离开前确认。
+- 响应头只给 `contentType`，不回传 `Content-Disposition`：文件名从你自己的 JSON 里取。存盘用同源 `blob:` 加 `<a download>`（sandbox 已带 `allow-downloads`）。
 
 ## 6. 最小可用例子
 

@@ -101,7 +101,7 @@ metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` �
 「未注册 —— 请在 usageMetrics 里声明」，不再是无提示的静默失真）。
 指标注册表 = 内置 `USAGE_METRICS` ∪ 各 listing 的 manifest `usageMetrics` 声明：
 **外部 App 在自己 manifest 的 `usageMetrics` 里声明 gauge 条目**
-（`[{ key, kind: "gauge", unit: "count", label: {zh,…} }]`，key 前缀必须=listingKey、
+（`[{ key, kind: "gauge", unit: "count", label: {"zh-CN",…} }]`，key 前缀必须=listingKey、
 金额单位 microAmount 不开放；治理档，批准后生效）——不再需要门户发版；
 平台内建指标由平台维护，外部 App 无需修改平台代码。
 

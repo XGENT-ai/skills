@@ -263,10 +263,18 @@ if (!manifestPath) {
     for (const [i, n] of (Array.isArray(mf.navItems) ? mf.navItems : []).entries())
       if (n && typeof n.label !== "string")
         err(`manifest.navItems[${i}].label 必须是字符串（导航项标题不支持多语；现在是${shown(n.label)}）`);
-    for (const [i, w] of (Array.isArray(mf.dashboardWidgets) ? mf.dashboardWidgets : []).entries())
+    if (mf.dashboard !== undefined)
+      err(`manifest.dashboard 不是有效字段 —— Dashboard 组件声明在顶层 dashboardWidgets（数组）里；嵌套的 dashboard.widgets 门户从不读取，新门户提交即拒`);
+    const WIDGET_TYPES = ["metric", "activity", "insight", "topic_grid", "topic_list"];
+    for (const [i, w] of (Array.isArray(mf.dashboardWidgets) ? mf.dashboardWidgets : []).entries()) {
       for (const f of ["title", "subtitle", "description"])
         if (w && w[f] !== undefined && typeof w[f] !== "string")
           err(`manifest.dashboardWidgets[${i}].${f} 必须是字符串（Widget 文案不支持多语）`);
+      if (w && !WIDGET_TYPES.includes(w.type))
+        err(`manifest.dashboardWidgets[${i}].type 只能是 ${WIDGET_TYPES.join(" / ")}（现在是${shown(w.type)}；注意是下划线）`);
+      if (w && w.owner !== key)
+        err(`manifest.dashboardWidgets[${i}].owner 必须等于 listingKey「${key}」（现在是${shown(w.owner)}）`);
+    }
 
     /* ② scopeLabels = 同意屏正文，jsonb，**支持**多语对象。这里查的是三种「配了不生效」：
        键不在 scopes 里（写入时被静默丢弃）、多语对象缺 zh-CN（回退终点）、
@@ -308,15 +316,47 @@ if (!manifestPath) {
       );
     if (labelOk) ok(`scopeLabels ${labelOk} 条形状合法`);
 
-    /* ③ usageMetrics[].label 是【第三种】形状：键名是 zh/en/tw，不是 zh-CN/zh-TW。
-       写成 zh-CN 会被门户判成缺 label.zh，提交即拒（连提案都不落）。 */
+    /* ③ usageMetrics[].label 必须是对象：语言键与 scopeLabels 同一套 zh-CN / en / zh-TW，
+       旧形状 zh / en / tw 门户仍收并归一。缺 zh-CN（旧形状缺 zh）门户提交即拒（连提案都不落）。
+       判定与门户 normalizeMetricLabel 同口径：取 zh-CN ?? zh，须是非空白字符串。 */
     for (const [i, u] of (Array.isArray(mf.usageMetrics) ? mf.usageMetrics : []).entries()) {
       const l = u?.label;
-      if (!isObj(l) || typeof l.zh !== "string" || !l.zh.trim())
+      const zh = isObj(l) ? l["zh-CN"] ?? l.zh : undefined;
+      if (typeof zh !== "string" || !zh.trim())
         err(
-          `manifest.usageMetrics[${i}].label 必须是 { "zh": "…" }（en / tw 可选，缺省回退 zh）——` +
-            `注意这里的键是 zh / en / tw，不是 scopeLabels 那套 zh-CN / zh-TW / en。写错门户提交即拒。`,
+          `manifest.usageMetrics[${i}].label 必须是 { "zh-CN": "…" }（en / zh-TW 可选，缺省回退 zh-CN）——` +
+            `必须是对象，不能是纯字符串；旧形状 { "zh": "…" } 仍可用。缺 zh-CN 门户提交即拒。`,
         );
+    }
+    /* ③c adminPages：门户嵌进管理面的 App 自有页面。{ platform?, tenant? }，每级 { route, label }；
+       route 是 App 内路由（/ 开头、不能 //），label 是字符串或带 zh-CN 的多语对象。门户提交面会再判一次。 */
+    if (mf.adminPages !== undefined && mf.adminPages !== null) {
+      if (!isObj(mf.adminPages) || Array.isArray(mf.adminPages)) err(`manifest.adminPages 必须是对象 { platform?, tenant? }`);
+      else
+        for (const [level, decl] of Object.entries(mf.adminPages)) {
+          if (level !== "platform" && level !== "tenant") { err(`manifest.adminPages 只支持 platform / tenant（得到「${level}」）`); continue; }
+          if (decl === null) continue;
+          const extra = isObj(decl) ? Object.keys(decl).filter((k) => k !== "route" && k !== "label") : [];
+          const route = decl?.route, label = decl?.label;
+          if (!isObj(decl) || extra.length) err(`manifest.adminPages.${level} 必须是 { route, label }${extra.length ? `（多了 ${extra.join("、")}）` : ""}`);
+          else if (typeof route !== "string" || !route.startsWith("/") || route.startsWith("//") || /(^|\/)\.\.(\/|$)/.test(route))
+            err(`manifest.adminPages.${level}.route 必须是 App 内路由（以 / 开头，不能 //、不能 ..）`);
+          else if (!(typeof label === "string" ? label.trim() : isObj(label) && typeof label["zh-CN"] === "string" && label["zh-CN"].trim()))
+            err(`manifest.adminPages.${level}.label 必须是非空字符串，或带 "zh-CN" 的多语对象`);
+        }
+    }
+    /* ③b requiredEnvNotes：只能给 requiredEnv 里的键写说明，非空、≤200 字（与门户同口径）。 */
+    if (mf.requiredEnvNotes !== undefined) {
+      const declaredEnv = new Set((Array.isArray(mf.requiredEnv) ? mf.requiredEnv : [])
+        .map((e) => (typeof e === "string" ? e : typeof e?.key === "string" ? e.key : null)).filter(Boolean));
+      if (!isObj(mf.requiredEnvNotes) || Array.isArray(mf.requiredEnvNotes))
+        err(`manifest.requiredEnvNotes 必须是对象 { "键名": "说明" }`);
+      else
+        for (const [k, note] of Object.entries(mf.requiredEnvNotes)) {
+          if (!declaredEnv.has(k)) err(`manifest.requiredEnvNotes 的「${k}」不在 requiredEnv 里 —— 说明只能写给声明过的键`);
+          else if (typeof note !== "string" || !note.trim()) err(`manifest.requiredEnvNotes 的「${k}」必须是非空字符串`);
+          else if (note.trim().length > 200) err(`manifest.requiredEnvNotes 的「${k}」超过 200 字（它显示在审批屏上，不是文档）`);
+        }
     }
     /* ④ 像库 / Redis 连接串、却不按约定命名的键：平台自动供给不到它，落到审批屏就是
        「平台管理员多点一下」。**只 warn 不阻断** —— 键名归 App，这里只是告诉你便宜的写法。 */
@@ -325,13 +365,15 @@ if (!manifestPath) {
     const envKeys = (Array.isArray(mf.requiredEnv) ? mf.requiredEnv : [])
       .map((e) => (typeof e === "string" ? e : typeof e?.key === "string" ? e.key : null))
       .filter(Boolean);
-    const unbound = envKeys.filter((k) => /(DATABASE_URL|_DSN|POSTGRES|REDIS)/.test(k) && !CONVENTIONAL.has(k));
+    // requiredServices[].envKey 显式绑定过的键，平台照样自动供给，不算「供给不到」。
+    const BOUND = new Set((Array.isArray(mf.requiredServices) ? mf.requiredServices : []).map((s) => s?.envKey).filter((k) => typeof k === "string"));
+    const unbound = envKeys.filter((k) => /(DATABASE_URL|_DSN|POSTGRES|REDIS)/.test(k) && !CONVENTIONAL.has(k) && !BOUND.has(k));
     if (unbound.length)
       warn(
         `这几个键看着是库 / Redis 连接串，但平台自动供给不到它们：${unbound.slice(0, 4).join(" ")}${unbound.length > 4 ? " …" : ""}` +
-          `\n      → 改用约定名就零手填：${PREFIX ? `${PREFIX}_DATABASE_URL` : "<PREFIX>_DATABASE_URL"} / REDIS_CONN_STRING，` +
-          `并在 requiredServices 里声明要哪条服务（只写 name / kind / note，多一个字段整份清单会被拒收）。` +
-          `\n      不改也能发 —— 只是平台管理员要在审批屏上逐个点「从平台服务取值」，多等一轮。`,
+          `\n      → 改用约定名就零手填：${PREFIX ? `${PREFIX}_DATABASE_URL` : "<PREFIX>_DATABASE_URL"} / REDIS_CONN_STRING；` +
+          `名字改不了（上游定死）就在 requiredServices 里用 envKey 绑定：{ "kind": "postgres", "name": "main", "envKey": "${unbound[0]}" }。` +
+          `\n      不改也能发 —— 只是平台管理员要在审批屏上逐个手选服务取值，多等一轮。`,
       );
 
     if (!errs.some((m) => m.startsWith(`manifest.`) || m.startsWith(`${manifestPath} `)))

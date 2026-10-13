@@ -22,7 +22,7 @@ description: '用于开发、修改或排查 XGENT Portal 的 iframe 微应用�
 
 1. 在 App 自己的仓库新建 Vite + React 前端，配置固定空闲端口并开启 `strictPort`，避免自动换端口后加载错应用。
 2. 安装下述公开分发的 SDK/UI 包，按本地 [SDK 参考](references/sdk-reference.md) 接入握手与路由。
-3. 在自己的 `app.manifest.json` 声明 `navItems` / `scopes` / `aclManifest` / `dashboard.widgets`；租户管理员不能代填开发者声明。
+3. 在自己的 `app.manifest.json` 声明 `navItems` / `scopes` / `aclManifest` / `dashboardWidgets`（顶层数组，见 [Widget 契约](references/open-api-and-extensions.md#3-dashboard-widget应用动态)）；租户管理员不能代填开发者声明。
 4. Vite `base` 设为 `/apps/<key>/`，构建 `dist/`，用 `xgent-app-release` skill 的 `publish --dist` / `publish --manifest` 提交；涉及治理字段等待审批，按本次 proposal 的交付状态核对结果。
 5. 本地联调用 `portal-dev-setup` 的一盒环境。生产优先 `sdk.callService` 与同源托管；需要开发 CORS 白名单时交平台管理员处理。
 6. 在真实浏览器从宿主进入并走通主路径、路由往返与权限边界；不以构建通过代替 UI 验证。
@@ -62,7 +62,7 @@ skill 的「第 0 步」。仓里还没有 `.xgent-registry.env` ⇒ 停下，�
 
 ## 设计红线（平台一致性）
 
-- **不自建**「设置」页/导航（租户配置走平台应用配置页）、**不自建**审计页（写 `POST /api/v1/audit`）。
+- **配置界面别挂进你自己的导航**：全平台可热改的配置做平台级管理页、每租户不同的做租户级管理页，都在清单 `adminPages` 里声明，由门户嵌进应用市场编辑页 / 租户应用配置；应用内的业务设置才做应用内设置页（`aclManifest` 授权）。判断表见 portal-external-app skill「配置放哪一层」。**不自建**审计页（写 `POST /api/v1/audit`）。
 - **不做**「同步通讯录」：成员选择一律用 `@xgent/portal-ui` 的 `UserPicker` 按需 curated。
 - 列表页服务端分页，复用 `Page<T>` 契约与现有 helpers。
 - 复用 `@xgent/portal-ui` 已有组件再造新轮子。

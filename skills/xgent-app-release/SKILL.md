@@ -11,11 +11,11 @@ description: '用于从 App 仓库发布或排查 XGENT 门户版本：前端 di
 每次提交在门户侧落成一条**发布提案**，按内容自动定级：
 
 - **自动通过档**：`dist`（前端产物）· `version` · `deployDescriptor.image` · 展示字段
-  （name / tagline / desc / icon / color / cat / navItems / dashboardWidgets）——
+  （name / tagline / desc / icon / color / cat / navItems / dashboardWidgets）· `requiredEnvNotes`（env 键的说明）——
   自动通过并应用清单/产物；后端与网关需分别确认，且每次留档（时间 + diff + 令牌前缀）。
 - **审核档**：其余一切（scopes / ACL 清单 / 依赖 / 跨应用授权 / 服务地址 / 席位 /
   授权文案 scopeLabels / iframe 指向 embedUrl / 部署形态 / 部署前置 env 键清单
-  requiredEnv / 服务账号身份 serviceAccount.clientId / 首次接入）都会改变权限面，
+  requiredEnv / 服务账号身份 serviceAccount.clientId / 嵌进门户管理面的管理页 adminPages / 首次接入）都会改变权限面，
   ⇒ 提交成功但进入平台管理员的「发布审核」队列，**批准前库里一字不动**。
   被拒绝时 `status` 与 `--wait` 都能看到原因。
 - **`helpEntry`（版头那枚帮助按钮）按【值】分档**，同一个字段两种命运：写 App 内路由
@@ -51,7 +51,7 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 | `name` | 纯字符串 | 给对象不报错，但会被**拍平成 zh-CN**，另外两种语言就此丢掉 |
 | `scopeLabels[<scope>]` | 字符串 **或** `{ "zh-CN": …, "zh-TW": …, "en": … }` | 同意屏按门户当前语言解析，回退链 当前语言 → `zh-CN` → `en` → 键名。**`zh-CN` 是回退终点，必写** |
 | `aclManifest` 里的 `label` / `name` / `desc` | 同上（字符串或多语对象） | 角色矩阵按请求语言解析 |
-| `usageMetrics[].label` | **`{ "zh": …, "en"?: …, "tw"?: … }`** —— 键名和上面那套**不一样** | 缺 `zh` ⇒ 提交即拒 |
+| `usageMetrics[].label` | **只能是对象** `{ "zh-CN": …, "en"?: …, "zh-TW"?: … }`（语言键同上；旧形状 `{ "zh", "en", "tw" }` 仍收，落库归一） | 给纯字符串或缺 `zh-CN` ⇒ 提交即拒 |
 
 `scopeLabels` 另有两条静默失效，一条报错都没有：
 
@@ -299,11 +299,42 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
 | **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务替你建库 / 取地址并注入（见下面「服务怎么绑到键」） |
-| **自定** | 其余一切（第三方 API key、业务开关…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
+| **自定** | 其余**环境依赖**（第三方服务地址、第三方 API key…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
+
+业务参数（超时、阈值、默认文案、功能开关…）**不在这张表里**：先看下面「业务参数」一节。
 
 `<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
 `PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
 `API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+### 业务参数：能不进清单就不进；进了就写 `requiredEnvNotes`
+
+审批你发版的平台管理员只负责**环境**：地址、连接串、密钥、这台机器上的事。你的业务参数他不懂，
+也**不该被要求懂**。照这个顺序判一个配置项该放哪：
+
+1. **环境依赖、全平台一份、部署后不变（改了就要换版）** ⇒ `requiredEnv`，键名尽量按上表的约定名，零手填。
+2. **业务参数、全平台一份、改了要换版** ⇒ **先在代码里给缺省值，不进清单**。确实要让平台在部署时
+   覆盖，才进 `requiredEnv`，并且**必须**在 `requiredEnvNotes` 里写一句：填什么、不确定时填什么。
+   进了 `requiredEnv` 的键批准前**必须有值**（缺了就是 `REQUIRED_ENV_MISSING`），审批人照你这句话填。
+3. **全平台一份、要能随时改、不想换版** ⇒ 这不是环境变量。做成你自己的「平台设置」页，由门户嵌进
+   应用市场的编辑页（见 portal-external-app skill「配置放哪一层」）。
+4. **每个租户不同** ⇒ 租户管理员的应用配置页（同上）。
+5. **应用内的业务设置** ⇒ 你应用里的设置页，按 ACL 授权（租户管理员默认可改）。
+
+```jsonc
+"requiredEnv": ["WISH_LIST_DATABASE_URL", "WISH_LIST_REPORT_TITLE"],
+"requiredEnvNotes": {
+  "WISH_LIST_REPORT_TITLE": "导出报表的抬头。不确定就填「心愿单月报」"
+}
+```
+
+- 只给**需要解释的**键写；键必须在本清单的 `requiredEnv` 里（写错键名提交即拒）；说明非空、≤200 字。
+- 说明显示在审批屏对应键名旁边（标「应用说明」）。**只改说明是自动档**，不会为一句话进人工审。
+- 说明会原样展示给审批人：**别在里面写任何值或密钥**。
+- 旧版门户不认识这个字段：不会拒收，但会把这次发布转人工审一次；门户升级后恢复自动档。
+- 键名会影响审批屏给不给「从平台服务取值」：只有 `…DATABASE_URL` / 带 `POSTGRES` 的键给数据库、
+  带 `REDIS` 的给 Redis，其余一律不给（防止有人给业务参数建一个库）。键名看着像密钥
+  （`…_SECRET` / `…_TOKEN` / `…_KEY` 等）时，审批屏会提醒管理员写进 envFile 而不是明文手填。
 
 ### 调用门户内的其他 App：从 `PORTAL_BASE_URL` 派生地址
 
@@ -375,11 +406,13 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 批准时平台按登记的那条服务替你建库、生成专用角色与连接串，注进约定名那个键；值加密保管在平台侧，
 **永远不回显给任何人**，换版时注入。
 
-- **`requiredServices` 的每一条只能带 `name` / `kind` / `note`**，多一个字段整份清单会被拒收
+- **`requiredServices` 的每一条只能带 `name` / `kind` / `note` / `envKey`**，多一个字段整份清单会被拒收
   （`VALIDATION_FAILED`）—— 别往里加自定义键。
 - 连 `requiredServices` 都不写、只在 `requiredEnv` 里写了约定名 ⇒ 用该类型的**缺省服务**，一样能供给。
-- **键名不按约定来（例如 `ZO_META_POSTGRES_DSN` 这种上游定死的名字）也能发**，只是平台管理员
-  要在审批屏上点一下「从平台服务取值」，每次发版多等一轮。预检会对这类键给你一条 warn。
+- **键名不按约定来（例如 `ZO_META_POSTGRES_DSN` 这种上游定死的名字）⇒ 用 `envKey` 显式绑定**：
+  `{ "kind": "postgres", "name": "main", "envKey": "ZO_META_POSTGRES_DSN" }`，批准时照样自动供给。
+  `envKey` 只对 postgres / redis 这类单键服务有效（kafka / 对象存储 / http 不支持）。不绑定的话，
+  平台管理员要在审批屏上手选一条服务取值，每次发版多等一轮；预检会对这类键给你一条 warn。
 
 另外：**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
 拿到令牌就能用，你那侧只管调。
