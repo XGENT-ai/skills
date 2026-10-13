@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 2,
+  "catalogVersion": "phoenix-2026-01",
+  "authoringStatus": "draft",
+  "reviews": {
+    "phoenix-persuade-claim-proof-decision": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "df79966a9273",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "persuade"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-persuade-fit-cost-next-step": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "83ffb571e6c8",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "persuade"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-operate-record-detail-action": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "cde2ff82425d",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "operate"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-operate-before-after-commit": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "a7af085294d8",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "operate"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-read-overview-body-evidence": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "18786987507f",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "read"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-read-parallel-explanation": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "cc4c8b952bce",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "read"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-experience-choose-explore-return": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "0e79aa68d2dc",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "experience"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    },
+    "phoenix-experience-arrange-preview-revise": {
+      "status": "approved",
+      "reviewedBy": "Phoenix catalog authoring",
+      "reviewedAt": "2026-10-09T01:33:08.485Z",
+      "formHash": "553630c4e5fd",
+      "rating": 2,
+      "breadth": "general",
+      "allowedModes": [
+        "experience"
+      ],
+      "note": "approved 仅表示可供建议的原创作者策展条目；目录仍为 draft，未获用户接受且运行时验收尚未完成，不是项目已接受的设计规范，也不代表实拍、实现或运行时验收。"
+    }
+  }
+}

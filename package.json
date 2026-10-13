@@ -1,7 +1,7 @@
 {
   "name": "@xgent-ai/skills",
-  "version": "0.6.0",
-  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 vendor 的 impeccable",
+  "version": "0.7.0-rc.0",
+  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 Phoenix UI 设计工具与 UI 验收 skills",
   "keywords": [
     "claude-code",
     "skills",
@@ -13,10 +13,12 @@
   },
   "license": "MIT",
   "bin": {
-    "xgent-skills": "bin/xgent-skills.js"
+    "xgent-skills": "bin/xgent-skills.js",
+    "phoenix-ui": "bin/phoenix-ui.js"
   },
   "scripts": {
-    "test": "node --test test/*.test.js test/*/*.test.js && for d in test/codex test/dev-plan test/skills skills/agi-mode/evals; do python3 -m unittest discover -s \"$d\" -p 'test_*.py' || exit 1; done"
+    "test": "node scripts/run-tests.mjs",
+    "test:phoenix": "node scripts/test-phoenix-ui.mjs"
   },
   "files": [
     "bin",
@@ -27,11 +29,15 @@
     "hooks/claude/context-goal-guard.js",
     "hooks/claude/settings.example.json",
     "docs/claude-context-goal-guard.md",
+    "docs/phoenix-ui.md",
     "skills",
-    "vendor/impeccable/bundle",
-    "vendor/impeccable/VERSION.json",
-    "vendor/impeccable/LICENSE",
-    "vendor/impeccable/NOTICE.md"
+    "vendor/phoenix-ui/bundle",
+    "vendor/phoenix-ui/VERSION.json",
+    "vendor/phoenix-ui/LICENSE",
+    "vendor/phoenix-ui/NOTICE.md",
+    "vendor/phoenix-ui/THIRD-PARTY.json",
+    "vendor/phoenix-ui/THIRD-PARTY-NOTICES.md",
+    "vendor/phoenix-ui/THIRD-PARTY-LICENSES"
   ],
   "engines": {
     "node": ">=18"

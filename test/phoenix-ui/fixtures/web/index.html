@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phoenix UI fixture · Tasks</title>
+<style>
+  :root { color-scheme: light; --bg:#f5f6f8; --paper:#fff; --ink:#202733; --muted:#596373; --line:#d6dce5; --accent:#2454a3; }
+  :root[data-theme=dark] { color-scheme:dark; --bg:#171c24; --paper:#232b37; --ink:#f0f3f8; --muted:#bcc6d4; --line:#536174; --accent:#accaff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif; }
+  button { font:inherit; padding:8px 16px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); cursor:pointer; }
+  button:focus-visible, a:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+  header { background:var(--paper); border-bottom:1px solid var(--line); padding:16px 32px; display:flex; justify-content:space-between; align-items:center; }
+  header a { color:var(--accent); }
+  main { max-width:1100px; margin:40px auto; padding:0 24px; }
+  .title { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
+  h1 { font-size:28px; margin:0; }
+  p { color:var(--muted); margin:8px 0; }
+  table { width:100%; border-collapse:collapse; background:var(--paper); border:1px solid var(--line); }
+  th,td { text-align:left; padding:16px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-size:14px; }
+  #message { padding:32px; background:var(--paper); border:1px solid var(--line); }
+  dialog { background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:24px; width:min(420px,calc(100% - 32px)); }
+  dialog::backdrop { background:#0008; }
+  @media (max-width:600px) { header { padding:16px; } main { margin:24px auto; padding:0 16px; } .title { align-items:flex-start; } th,td { padding:12px; } th:nth-child(2),td:nth-child(2) { display:none; } }
+</style>
+<header><strong>Phoenix workspace</strong><a href="/?state=default">Tasks</a></header>
+<main>
+  <div class="title"><div><h1>Tasks</h1><p>Release readiness · deterministic fixture</p></div><button id="filter" type="button">Filter</button></div>
+  <div id="message" role="status">Loading tasks…</div>
+  <table hidden><thead><tr><th scope="col">Task</th><th scope="col">Owner</th><th scope="col">Status</th></tr></thead><tbody></tbody></table>
+</main>
+<dialog aria-labelledby="filter-title"><h2 id="filter-title">Filter tasks</h2><p>This fixture shows every seeded task.</p><button id="close" type="button">Done</button></dialog>
+<script>
+  const params=new URLSearchParams(location.search);
+  document.documentElement.dataset.theme=params.get('theme') || 'light';
+  const dialog=document.querySelector('dialog');
+  document.querySelector('#filter').onclick=()=>dialog.showModal();
+  document.querySelector('#close').onclick=()=>dialog.close();
+  fetch('/api/tasks?state='+encodeURIComponent(params.get('state') || 'default')).then(async response=>{
+    if(!response.ok) throw new Error('Tasks are unavailable. Try again.');
+    return response.json();
+  }).then(data=>{
+    document.documentElement.dataset.seed=data.seed;
+    const message=document.querySelector('#message');
+    if(!data.tasks.length) { message.textContent='No tasks yet.'; return; }
+    const body=document.querySelector('tbody');
+    for(const task of data.tasks) {
+      const row=body.insertRow();
+      for(const value of [task.name,task.owner,task.status]) row.insertCell().textContent=value;
+    }
+    message.hidden=true;
+    document.querySelector('table').hidden=false;
+  }).catch(error=>{ document.querySelector('#message').textContent=error.message; });
+</script>
+</html>

@@ -7,6 +7,7 @@
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
 | 091b457b-53b0-4d16-bb58-406a02ccf1f6 | xgent-init 历史方案 / 091b457b-53b0-4d16-bb58-406a02ccf1f6 | [入口](091b457b-53b0-4d16-bb58-406a02ccf1f6/index.md) |
+| 7818a838-d021-4b2e-92c7-6d57c7ae8af0 | XGENT Phoenix UI / 7818a838-d021-4b2e-92c7-6d57c7ae8af0 | [入口](7818a838-d021-4b2e-92c7-6d57c7ae8af0/index.md) |
 | 90d15d49-af8b-4e97-bb61-dadb6498747c | Claude Code goal 上下文收尾提醒 / 90d15d49-af8b-4e97-bb61-dadb6498747c | [入口](90d15d49-af8b-4e97-bb61-dadb6498747c/index.md) |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | Codex goal 上下文收尾提醒 / b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [入口](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460/index.md) |
 

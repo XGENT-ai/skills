@@ -1,0 +1,46 @@
+--- a/scripts/lib/transformers/hooks.js
++++ b/scripts/lib/transformers/hooks.js
+@@ -51,12 +51,17 @@
+ export const guardedLauncher = (launcherPath, verb = 'hook') =>
+   `[ ! -f "${launcherPath}" ] || "${launcherPath}" ${verb}`;
+ 
+-// cmd.exe form for harnesses that read a `commandWindows` sibling (Codex
+-// 0.146.0+ selects it on Windows; issue #452). `exit /b` forwards the
+-// launcher's errorlevel. Paths keep forward slashes; cmd.exe accepts them in
+-// quoted paths and it is the form the CLI already writes.
+-export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') =>
+-  `if exist "${launcherCmdPath}" ("${launcherCmdPath}" ${verb} & exit /b)`;
++// Windows form for harnesses that read a `commandWindows` sibling (Codex
++// 0.146.0+ selects it on Windows; issue #452). Codex runs it in the session
++// shell, PowerShell by default and cmd.exe only as a fallback (#848), so the
++// string starts with `cmd /c`, an ordinary command in both, and cmd.exe gets
++// the guard: a missing launcher exits 0, a failing one non-zero. Backslash
++// separators: PowerShell drops the quotes around a space-free argument, and
++// cmd.exe would read a bare `/` as a switch.
++export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') => {
++  const quoted = `"${launcherCmdPath.replaceAll('/', '\\')}"`;
++  return `cmd /c if exist ${quoted} ${quoted} ${verb}`;
++};
+ 
+ function stopEntry(command, commandWindows) {
+   return {
+--- a/.codex/hooks.json
++++ b/.codex/hooks.json
+@@ -7,7 +7,7 @@
+           {
+             "type": "command",
+             "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+-            "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
++            "commandWindows": "cmd /c if exist \".codex\\skills\\impeccable\\scripts\\impeccable.cmd\" \".codex\\skills\\impeccable\\scripts\\impeccable.cmd\" hook",
+             "timeout": 5,
+             "statusMessage": "Checking UI changes"
+           }
+@@ -20,7 +20,7 @@
+           {
+             "type": "command",
+             "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+-            "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
++            "commandWindows": "cmd /c if exist \".codex\\skills\\impeccable\\scripts\\impeccable.cmd\" \".codex\\skills\\impeccable\\scripts\\impeccable.cmd\" hook",
+             "timeout": 30,
+             "statusMessage": "Design deep pass"
+           }

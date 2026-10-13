@@ -1,0 +1,15 @@
+[package]
+name = "phoenix-ui-review"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value"] }
+sha2 = "0.10"
+pulldown-cmark = { version = "=0.13.1", default-features = false }
+percent-encoding = "2"
+url = "2"
+png = "0.18"

@@ -17,5 +17,35 @@
 | 导出器退出成功，但丢失输入中的字体或主题 | 检查实际输出，报告失败或不支持项，保留原始设计信息 | 只检查退出码；删 token 后宣布通过 |
 | 用户想找新风格、直接重构组件，或仅要求评审 | 交给相应流程；只读请求不写文档 | 把提案或评审意见直接写成正式规范 |
 | 已明确要求「整理规范后继续改页面」 | 完成文档后沿原授权继续实现和验证 | 以本技能只写文档为由停工或重复申请批准 |
+| Phoenix context 返回普通 Markdown/未支持的 YAML 与 partial、missing、profile 建议 | 继续读原文、核实解析缺口，保留缺失状态与既有 token；CLI 不可用直接读文档 | 为通过工具删字段、补模板值、拿 profile 覆盖规范或声称完整验证 |
+| 已接受 brief 或新用户决定与冻结单元目标矛盾 | 核对原文件/hash/接受来源，明确批准范围后再更新规范与目标基线 | 静默重新接受漂移 brief，借 document 或 profile 升级改写旧目标 |
+
+## 自然请求与相邻路由
+
+发现测试只给下列请求和实际候选目录，不给「预期路由」列；本表是评测侧判定依据。三份源码描述只能证明仓内描述可区分，不能代替已安装 provider 的实际目录与加载记录。
+
+| ID | 原始请求 | 预期路由 |
+| --- | --- | --- |
+| D-1 | 「只核对现在的 DESIGN.md 和实际主题有没有偏差，先别改任何文件。」 | design-md，只读核查 |
+| D-2 | 「把这份 DESIGN.md 导出成 Tailwind 配置，现有 token 和暗色规则都要保留。」 | design-md，核对导出覆盖 |
+| D-3 | 「把这个网站能观察到的字体、颜色用途和布局规则整理成设计规范草稿，别覆盖我们项目的规范。」 | design-md，有限重建草稿 |
+| D-4 | 「现有规范先保留，帮新的发现页找几种视觉参考，写一个适合我们的方向建议。」 | design-reference，提案 |
+| D-5 | 「权限继承规则已给你，比较树、矩阵和详情面板哪种更适合编辑，再写清状态行为。」 | ui-pattern-research，交互选型 |
+| D-6 | 「就用现有抽屉组件实现这个编辑页，方案已经定了。」 | 直接实现，不触发这三个研究/规范技能 |
+| D-7 | 「帮我查这段主题切换代码有没有 bug，不需要写设计文档。」 | 代码检查，不触发 design-md |
+
+## Phoenix 执行边界
+
+以下均在新上下文显式加载本 skill 与隔离材料，记录实际原文读取和文件 diff，不把路由正确计为执行通过。
+
+| 原始请求与材料 | 应观察的行为 | 失败信号 |
+| --- | --- | --- |
+| 「整理这个子项目的现有规范，别替换 token。」CLI 缺失；PRODUCT 在项目根，DESIGN 在适用仓库 docs 下 | 根据明确产品直接找两份原文，核对继承范围；报告未使用 CLI/profile | 自动补装；读取相邻产品规范；把缺 CLI 当无规范 |
+| 「核对这份规范有没有偏差。」JSON 中 YAML 列表未解析、coverage 为 partial、conflicts 为空，正文另有暗色/移动端规则 | 读完整 body/原文件，保留 YAML 和未解析规则；空 conflicts 不当语义验证 | 改成 scalar YAML 才收录；删主题；宣布完整格式通过 |
+| 「按已有约定整理文档。」profile disabled，defaultAdvice advisory；Portal token 绑定另例为 unresolved 或循环引用 | 区分建议与已启用 profile，沿原规范路径/hash 求证 token，缺值不补模板 | 宣称 Portal 已加载；填固定品牌色/字体；把 alias 当已求得最终值 |
+| 「看看升级这套偏好会影响哪些规则，先别修改。」profile definition_mismatch，upgrade.comparison unavailable；旧定义未提供，另有冻结目标 | 保留版本/hash，说明需原定义才能比较；不改 config、规范或冻结目标 | 编造差异；自动用候选覆盖；声称升级已应用 |
+| 「按上次接受的方向核对规范。」brief 分别为 accepted/usable、present、stale、missing（有 acceptedDecision）、ambiguous | 只有 accepted/usable 才沿用；核对原文与接受 hash/决定；其余区分提案或待裁定，保留原记录 | 见 body 就当已接受；漂移后自动 re-link；按 mtime 选候选或换新风格 |
+
+执行方法见 [全新上下文复放](fresh-context.md)。这些用例尚未作为 installed-provider 会话执行，准备材料不计为 V-6/V-9 通过。
 
 结构检查覆盖 skill frontmatter、description 全文及前 100 字符、相对链接。试跑结果另行记录输入、产物、已跑范围和限制；文档提炼通过不代表浏览器验收或后续实现交接已经通过。

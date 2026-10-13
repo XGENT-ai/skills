@@ -17,6 +17,14 @@ description: 用于比较筛选器、权限编辑、表格、批量操作及编�
 
 先读请求、产品文档、已有界面、相关组件及接口。用一句话写出「谁要完成什么，以及当前困难」。只询问会改变方案的缺失信息，其余标为假设继续；关键业务规则未知时不擅自定规则：给出条件结论，并说明每种可能答案会怎样改变推荐、状态行为或接口需求。
 
+可用 Phoenix CLI 时，先运行 `phoenix-ui context --target <明确目标> --json`，核对 `projectRoot`、`target.path`；`status: selection_required` 时确认 `target.candidates`，不自动取第一个。读取 `product`、`design`、`surfaceBrief` 的原始 `body` 与 `provenance` 的路径、section、hash、显式/继承关系；`parseCoverage` 中 `coverage: partial` 仍需核实普通 Markdown、未支持的 YAML 和正文规则。`conflicts` 逐项核实，空数组不证明业务或正文没有矛盾；缺文档不补模板值。缺 CLI 或输出不可用时直接找目标产品及适用仓库的原文，不自动安装工具或声称 profile 已加载。
+
+读取 JSON 时，仅 `surfaceBrief.status: accepted`、`usable: true` 且适用时沿用方向，核对原文、`sha256`、`acceptedSha256` 与 `acceptedDecision`。`present` 为未接受提案；`stale`、有接受记录的 `missing` 或 `ambiguous` 时保留原记录并核对原文件/候选与用户决定，不按 mtime 选择、自动重新接受或抽取风格。无 CLI 时从原 brief 核实适用目标与真实接受决定，仍可沿用方向，不声称机器映射已校验。
+
+`defaultAdvice` 仅是 generic 流程建议，不代表 `profile` 已启用。显式 `enabled` profile 仍为 advisory；核对 `source`、版本、`definitionSha256`、可选的 `acceptedDefinitionSha256` 及 `tokenBindings` 的原规范路径/hash，沿原 token 引用核实值。`unresolved`、无效或循环引用不能补模板值。`version_mismatch`、`definition_mismatch` 或 `profile_definition_mismatch` 只提示候选，`upgrade.comparison: unavailable` 时找原定义才能说明差异，不自动接受或升级。
+
+按 `precedence` 核对用户决定、冻结目标/已接受规范、已选择 profile、工具建议；它是政策，不是正文冲突检测。用户决定与冻结目标冲突须明确变更范围并取得决定；profile 规则只有接受为项目规范后才参与新目标，升级不回套冻结目标。context、profile 和 brief 均不证明业务接口支持某种操作，接口能力仍按实际代码或运行结果核实。
+
 按本题需要确认：
 
 - 用户是频繁批处理还是偶尔查看；是在找单条、比较多条，还是修改一组对象。

@@ -20,6 +20,7 @@ FRONTMATTER_KEYS = {
     "metadata",
     "compatibility",
     "allowed-tools",
+    "internal",
 }
 OPENAI_KEYS = {"interface", "policy"}
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.S)

@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from bash_check import run_progress
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,10 +103,7 @@ class PlanCheckTest(unittest.TestCase):
 
     def test_trimmed_initial_plan_and_references_pass_all_structural_checks(self):
         self.assertIn("WARN 0", self.run_check(PLAN))
-        result = subprocess.run(
-            ["bash", str(SKILL / "scripts/check_progress.sh"), str(self.plan), self.temp.name],
-            text=True, capture_output=True, timeout=5,
-        )
+        result = run_progress(SKILL / "scripts/check_progress.sh", self.plan, self.temp.name, 5)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_real_execution_protocol_is_not_template_residue(self):

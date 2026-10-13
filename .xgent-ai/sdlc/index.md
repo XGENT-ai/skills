@@ -18,6 +18,8 @@
 
 ## 当前重点与发现范围
 
+- 2026-10-13：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)代码评审[R1](status/review/eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2.md)的7项已修复并验证，M6因运行时改动重开（5/6）；下一步review-code复审，再以新候选跑CI与最终包验收。
+
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
 - 首选：[Codex guard](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md)：dev-plan-ready / dev-plan-completed（3/3），证据 stale。计划评审 F-01–F-09 已 review-applied；初轮代码评审 review-not-required 仅覆盖原快照。执行 `$review-code docs/plan/codex-context-goal-guard.md`，复审后续阈值、Git 根目录路径和显式安装变更，明确受影响验收的证据覆盖。

@@ -18,7 +18,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包 vendor 的 [impeccable](#vendor-的-impeccable),并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒:
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具与 UI 验收 skills,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒:
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -29,7 +29,9 @@ npx @xgent-ai/skills install
 
 | 选项 | 说明 |
 | --- | --- |
-| `--no-impeccable` | 跳过 impeccable,仍安装 XGENT 的 hooks 与 settings |
+| `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings;不删除已装版本 |
+| `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
+| `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
 | `--context-goal-guard` | 显式安装 Codex goal 上下文收尾提醒(默认不安装);需要 Python 3.9+ |
@@ -38,16 +40,16 @@ npx @xgent-ai/skills install
 | `--claude-context-goal-guard` | 显式安装 Claude Code goal 上下文收尾提醒(默认不安装) |
 | `--no-claude-context-goal-guard` | 跳过 Claude Code goal guard(默认行为);已有 guard 保留 |
 | `--claude-context-goal-guard-threshold=N` | Claude Code guard 的触发阈值百分比(1–99 整数,默认 70),同时表示安装;重装不给则沿用已装的值 |
-| `--providers=a,b` | 指定 impeccable 装进哪些 harness 目录(如 `--providers=.claude,.cursor`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
-| `--force` | 强制重装,并允许覆盖非法 JSON 的 hook 配置(先存 `.bak`);不覆盖已有 `AGENTS.md` |
+| `--providers=a,b` | 指定 Phoenix UI 装进哪些 harness 目录(如 `--providers=.claude,.cursor`;`codex` 同时选 `.agents` 与 `.codex`);默认按项目里已有的目录判断,一个都没有时只装 `.claude` |
+| `--force` | 允许覆盖非法 JSON 的 guard 配置(先存 `.bak`);不覆盖已有 `AGENTS.md`,也不放宽 Phoenix UI 的冲突保护 |
 
-安装是幂等的:hook 文件与 skill 目录按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并,impeccable 的 hook 按标记剔旧再合并,项目自己的 hook 与其他配置都保持不动。
+安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。所有只读预检通过后才写项目:先写 XGENT 部分,再由 Phoenix UI 的 Rust 执行器在项目锁内重读并事务化写入自己的 skill、hooks 与回执,项目自己的 hook 与其他配置都保持不动。Phoenix 冲突时整个安装在写项目前停止;两阶段之间中断时重跑即可。
 
 `install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文,包括使用 `--force` 时。
 
 非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
 
-`install` 默认不安装 Codex goal 上下文收尾提醒,也不询问;仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装。此选项不受 `--providers` 或 `--no-impeccable` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。显式安装时先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
+`install` 默认不安装 Codex goal 上下文收尾提醒,也不询问;仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装。此选项不受 `--providers` 或 `--no-phoenix-ui` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。显式安装时先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
 
 安装后会显示用户必须完成的步骤:从目标项目启动 Codex、信任项目 `.codex/` 层,在 `/hooks` 中审阅、信任并启用两个 handler,对**当前 goal** 明确超过阈值(默认 65%)时先保存进度和交接、再暂停的策略。安装输出提供可复制的指令;安装和信任本身不构成暂停授权。恢复 goal 或新开对话后需重新明确策略。当前仅验证 Codex 0.160.0、macOS arm64,完整限制与停用方法见 [启用说明](docs/codex-context-goal-guard.md)。
 
@@ -57,7 +59,7 @@ Codex guard 已接入源码与 npm 打包清单,尚未发布到 npm;发布后可
 node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard
 ```
 
-`install` 默认不安装 Claude Code goal 上下文收尾提醒,也不询问;仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装,不受 `--providers` 或 `--no-impeccable` 影响。显式安装时复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
+`install` 默认不安装 Claude Code goal 上下文收尾提醒,也不询问;仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装,不受 `--providers` 或 `--no-phoenix-ui` 影响。显式安装时复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
 
 安装后需重启会话、信任工作区,并在 `/hooks` 中确认两个 handler 来源为 local settings。当前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64 与 Opus 5.5 / Sonnet 5.5 / Haiku 4.5,完整限制、接续与停用方法见 [启用说明](docs/claude-context-goal-guard.md)。从源码安装:`node bin/xgent-skills.js install /absolute/path/to/project --claude-context-goal-guard`。
 
@@ -67,30 +69,17 @@ Portal 的产品和设计规范仍保留在 [PRODUCT 模板](skills/xgent-init/r
 npx skills add XGENT-ai/skills --skill xgent-init
 ```
 
-## vendor 的 impeccable
+## Phoenix UI
 
-[impeccable](https://github.com/pbakaus/impeccable)(Apache-2.0)整个 vendor 在 `vendor/impeccable/` 里:skill bundle 以去重形态随 npm 包发布,十几 MB 的 engine 二进制不进包、改放自家 R2,由 `install` 按 `VERSION.json` 里的地址与 sha256 取。官方的 `npx impeccable install` 要先从 GitHub 下 bundle、首次跑 hook 时再下 engine,墙内经常卡在 `Download failed`;这里 bundle 一步不联网,engine 只走一次 R2(装过一次就落在 `~/.impeccable/` 里,之后都不用了)。
+Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `vendor/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
-`vendor/impeccable/bundle/` 不是 `universal.zip` 解开的样子,而是它的去重形态:文件内容存在 `blobs/<sha256>`,`manifest.json` 里每个 harness 一张 `路径 → sha` 的清单。上游给 19 个 harness 目录各放了一整套 skill,其中 83% 的字节是同一批文件(光 `scripts/data/font-index.json` 就是 1.1 MB × 19 份、内容完全相同),各 harness 真正不同的只有 43 个路径 —— 有的差在路径 token(`.claude/skills/...` vs `.cursor/skills/...`),有的差在按 harness 改写过的措辞(有 `AskUserQuestion` 工具的 harness 写"调用该工具",没有的写"直接问用户")。`install` 按清单把文件写回去,装出来的结果与直接展开 zip 逐字节一致(上游 `impeccable doctor` 报 no drift)。当前 bundle 展开约 39.4 MiB,去重后约 6.7 MiB。
+- **engine**:按包内 `vendor/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/`(`PHOENIX_UI_HOME` 可改),本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
+- **旧 impeccable 项目**:安装时只认领本包已发布版本(0.3.0–0.6.0)写入且未改动的文件与 hook,备份后移除,并在原位置留一个只指向新命令的提示入口;用户改过的文件、未知 wrapper、个人级旧入口或运行中的 live 残留会阻止激活并列出处理步骤。`AGENTS.md`、`CLAUDE.md` 等文档里的旧入口只报告行号,不自动改写。
+- **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。
 
-装出来的东西和上游 `impeccable install` 的工程内安装一致(`impeccable doctor` 报 no drift):
+安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。原 `vendor/impeccable/` 与 `scripts/vendor-impeccable.mjs`、`scripts/publish-vendor-r2.mjs` 只作来源历史保留,不再是安装或更新入口。
 
-- `<harness>/skills/impeccable/`、`<harness>/agents/`、`<harness>/commands/`:按项目里已有的 harness 目录装,可用 `--providers` 指定;
-- hook manifest:Claude Code 写 `.claude/settings.local.json`(共享的 `settings.json` 里已有 impeccable hook 时以它为准),Cursor 写 `.cursor/hooks.json`,Codex 写 `.codex/hooks.json`,Copilot / Grok 写各自的 `hooks/impeccable.json`;
-- engine 二进制:只收 Apple Silicon macOS(darwin-arm64),放进 `~/.impeccable/bin/<版本>/`,一台机器一份,所有项目和 `npx impeccable` 共用。缓存里已是对的那份就不再下;从本仓源码跑时直接用 `vendor/impeccable/engine/` 里的,不联网。Intel Mac、其它平台以及 R2 拉不动时都只是跳过这一步,安装照常完成,由 launcher 首次运行时自己下载。
-
-升级 vendor 的版本(维护者执行,需要 curl、unzip 与 aws CLI):
-
-```bash
-node scripts/vendor-impeccable.mjs    # 抓上游 bundle + engine 到 vendor/
-node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION.json
-```
-
-第一步取上游最新 release,按 ed25519 签名验 bundle、按 `.sha256` 验 engine 二进制,全部通过才落盘,并把版本与校验和写进 `vendor/impeccable/VERSION.json`;bundle 在落盘前按内容去重成 `blobs/` + `manifest.json`。要加别的平台,改脚本里的 `ENGINE_TARGETS`。
-
-第二步把 engine 传到 R2 的 `vendor/impeccable/engine/v<版本>/<平台>/impeccable`,传完回读公共地址核一遍 sha256,再把 url 写进 `VERSION.json` 的 `engines`。凭据读仓库根的 `.env.cf`(`AGENT_RELEASE_R2_*`,已 gitignore,不在库里)。两步的顺序不能反 —— 第一步会重写 `VERSION.json`,先传就把 url 冲掉了;漏了第二步,发出去的包里 engine 没有下载地址,用户那边只会看到"跳过"。
-
-当前收录:skill 4.5.0 / engine 0.1.11(darwin-arm64)。上游许可与三方声明见 `vendor/impeccable/LICENSE` 与 `vendor/impeccable/NOTICE.md`。
+managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](skills/review-ui/references/phoenix-review.md)。
 
 ## Skills 列表
 
@@ -125,6 +114,8 @@ node scripts/publish-vendor-r2.mjs    # engine 传 R2,下载地址回写 VERSION
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
+
+   UI 循环可沿用人工 Markdown，或通过匹配的 Phoenix engine 管理证据与轮次。已有 managed 索引时从原轮与 revision 续接；engine 缺失、版本不匹配或状态损坏时保持只读，恢复固定版本后再继续。人工历史只经明确的 `review import` 接管，不能清零未知次数；CLI 操作成功不代表 UI 通过，真实取证和独立评审仍是判定依据。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
 **跨项目入口按角色固定**：提出方始终用 `crd` 起草/修订需求、整合接收方返回稿、答复反问；接收方始终用 `crd-respond <CRD>` 评估/答复需求或续接提出方澄清。双方收到文件或追加消息都不切换角色，归属不明先核实。接收方默认在原文末追加有证据的评估答复，需改本方代码时实际调用 `dev-plan`（未决契约按就绪门标 `Blocked`），生成计划从第 2 步继续；仅原样追加/收录不重新评估或生成计划，仅评估不落盘，仅答复不生成计划，不自动发送或实施。
@@ -157,7 +148,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 使用 $agi-mode what-next 更新状态，核对并行计划和最近几轮评审。
 ```
 
-`init-sdlc` 按需创建状态目录和索引，核实并登记现有材料；可重复运行，沿用已有台账并补齐缺项，不重置历史。兼容原有 `what-next 初始化` 写法。其他 SDLC skill 在台账启用后维护相关状态，首次启用可直接运行上述初始化入口。
+`init-sdlc` 按需创建状态目录和索引，核实并登记现有材料；可重复运行，沿用已有台账并补齐缺项，不重置历史。兼容原有 `what-next 初始化` 写法。初始化和状态查询按“业务主题 / 文档类型 / 原文文件路径”列出每个工作项，用通俗语言说明进展、具体阻塞及下一步的完成条件，并保留状态与证据码；聊天摘要和台账当前重点都能直接定位原文件。其他 SDLC skill 在台账启用后维护相关状态，首次启用可直接运行上述初始化入口。
 
 [状态目录约定](skills/agi-mode/references/workspace-layout.md)使用仓根 `.xgent-ai/sdlc/` **只保存开发状态**。PRD、开发计划、评审报告、实施/验收记录和证据继续按用户习惯存放，台账通过链接引用，不改变其路径或复制正文。
 
@@ -241,9 +232,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 | Skill | 说明 |
 | --- | --- |
-| [design-reference](skills/design-reference/SKILL.md) | 寻找、比较页面或组件的视觉参考，提炼适合当前产品、有来源的设计方向与 brief |
-| [design-md](skills/design-md/SKILL.md) | 从仓库、网站或明确设计决策提炼和维护 DESIGN.md，保留既定规范并报告实现偏差 |
-| [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较筛选、权限、表格、批量操作和编辑流程，交付适合现有产品的交互方案与验收条件 |
+| [design-reference](skills/design-reference/SKILL.md) | 寻找视觉参考并形成有来源的 brief；可读 Phoenix context，已接受方向按授权保存原文和路径/hash 映射供恢复 |
+| [design-md](skills/design-md/SKILL.md) | 提炼和维护 DESIGN.md，保留规范并报告偏差；可读 Phoenix 原文/解析覆盖，写入仍按用户决定与证据 |
+| [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较交互方案并交付状态与验收条件；可读 Phoenix 产品/已接受方向，业务能力仍核实实际接口 |
 | [kpi-dashboard-design](skills/kpi-dashboard-design/SKILL.md) | 设计 KPI 仪表盘的指标选择、信息层级与数据可视化 |
 | [landing-page-conversion-audit](skills/landing-page-conversion-audit/SKILL.md) | 审查落地页、销售页或结账流程的转化障碍，按预期收入影响排序修复建议 |
 

@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+  "engineCommit": "86be0f02dcdaaeb3f9b6780711dbdc03a14ce222",
+  "observedAt": "2026-10-08T19:08:00+08:00",
+  "platform": "darwin-arm64",
+  "sourceManifestSha256": "3a0343c5b9ee14270fbc9cf33cf2d0d83661b9da9b8c033538e139fdfafe95d0",
+  "nativeBuild": {
+    "elapsedSeconds": 136.31,
+    "peakRssBytes": 2505752576,
+    "artifactSha256": "e99441d027be9fc00ff25da74bb1371f30cf17ece270327bab14dc9ce76c7d31"
+  },
+  "rust": {
+    "passed": 819,
+    "failed": 0,
+    "explicitIgnored": 9,
+    "explicitChromiumRerunPassed": 8,
+    "missingHistoricalJsDifferential": 1
+  },
+  "oracle": {
+    "cases": 860,
+    "exactPass": 859,
+    "unregisteredDifference": {
+      "caseId": "detect-dir-json-all-fixtures",
+      "goldenSha256": "c794c37e279e36880108913c1683ced7497d7772f849e6291a49983b906b58a7",
+      "actualSha256": "f1d4000f09e4e4d183e12b436895c5ee6c9bc350dc3d426b2b6ccb891f25e97f",
+      "exit": [
+        2,
+        2
+      ],
+      "counts": [
+        436,
+        437
+      ],
+      "goldenOnly": [],
+      "actualOnly": [
+        {
+          "antipattern": "italic-serif-display",
+          "name": "Italic serif display headline",
+          "description": "Oversized italic serif (Fraunces, Recoleta, Playfair, Newsreader-italic) as the primary hero headline reads as taste in isolation but has become the universal AI-startup landing page hero. Set roman, or move to a non-serif display face. Editorial / magazine register may legitimately want this — judge by context.",
+          "severity": "warning",
+          "category": "slop",
+          "file": "<REPO>/tests/fixtures/antipatterns/italic-serif-display.html",
+          "line": 0,
+          "snippet": "italic serif h1 (fraunces) at 72px \"Inline Em Inside Roman\""
+        }
+      ],
+      "diff": [
+        "stdout differs:\n  line 1941\n  - \"    \\\"snippet\\\": \\\"italic serif h1 (customserifface) at 56px \\\\\\\"Unknown Serif Generic Fallback\\\\\\\"\\\"\"\n  + \"    \\\"snippet\\\": \\\"italic serif h1 (fraunces) at 72px \\\\\\\"Inline Em Inside Roman\\\\\\\"\\\"\""
+      ]
+    },
+    "upstreamRunnerIncorrectlyLabelsHistoricalCaseAccepted": true
+  },
+  "wasm": {
+    "vectors": 8321,
+    "goldenFailures": 27,
+    "nativeGoldenFailures": 0,
+    "parityFailures": 27,
+    "deltas": [
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 4,
+        "expected": 0.005605391624202723,
+        "wasm": 0.005605391624202722,
+        "native": 0.005605391624202723
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 26,
+        "expected": 0.08021982031446832,
+        "wasm": 0.08021982031446831,
+        "native": 0.08021982031446832
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 28,
+        "expected": 0.21586050011389923,
+        "wasm": 0.2158605001138992,
+        "native": 0.21586050011389923
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 31,
+        "expected": 0.08233466065263306,
+        "wasm": 0.08233466065263308,
+        "native": 0.08233466065263306
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 42,
+        "expected": 0.8743801358521288,
+        "wasm": 0.8743801358521289,
+        "native": 0.8743801358521288
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 44,
+        "expected": 0.007192213462265998,
+        "wasm": 0.0071922134622659974,
+        "native": 0.007192213462265998
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 79,
+        "expected": 0.7304607400903537,
+        "wasm": 0.7304607400903536,
+        "native": 0.7304607400903537
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 80,
+        "expected": 0.006158245625066072,
+        "wasm": 0.006158245625066074,
+        "native": 0.006158245625066072
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 87,
+        "expected": 0.006153537392127704,
+        "wasm": 0.006153537392127705,
+        "native": 0.006153537392127704
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 97,
+        "expected": 0.24162279570388456,
+        "wasm": 0.24162279570388454,
+        "native": 0.24162279570388456
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 139,
+        "expected": 0.49037505583959606,
+        "wasm": 0.490375055839596,
+        "native": 0.49037505583959606
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 152,
+        "expected": 0.11152716919023972,
+        "wasm": 0.11152716919023971,
+        "native": 0.11152716919023972
+      },
+      {
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "line": 156,
+        "expected": 0.012257165963026248,
+        "wasm": 0.012257165963026246,
+        "native": 0.012257165963026248
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 2,
+        "expected": 16.275267230207366,
+        "wasm": 16.27526723020737,
+        "native": 16.275267230207366
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 5,
+        "expected": 17.320238625461315,
+        "wasm": 17.320238625461318,
+        "native": 17.320238625461315
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 6,
+        "expected": 15.251758382371863,
+        "wasm": 15.251758382371865,
+        "native": 15.251758382371863
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 7,
+        "expected": 16.957984334321456,
+        "wasm": 16.95798433432146,
+        "native": 16.957984334321456
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 33,
+        "expected": 2.1750407435109995,
+        "wasm": 2.175040743511,
+        "native": 2.1750407435109995
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 41,
+        "expected": 15.273611795117231,
+        "wasm": 15.273611795117233,
+        "native": 15.273611795117231
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 44,
+        "expected": 7.678879301289789,
+        "wasm": 7.678879301289791,
+        "native": 7.678879301289789
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 82,
+        "expected": 13.897527093367696,
+        "wasm": 13.897527093367694,
+        "native": 13.897527093367696
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 83,
+        "expected": 14.788635410637344,
+        "wasm": 14.78863541063734,
+        "native": 14.788635410637344
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 109,
+        "expected": 16.275267230207366,
+        "wasm": 16.27526723020737,
+        "native": 16.275267230207366
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 150,
+        "expected": 1.1238374603583177,
+        "wasm": 1.1238374603583179,
+        "native": 1.1238374603583177
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 169,
+        "expected": 17.31006827391836,
+        "wasm": 17.310068273918365,
+        "native": 17.31006827391836
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 170,
+        "expected": 6.5004544143490515,
+        "wasm": 6.500454414349052,
+        "native": 6.5004544143490515
+      },
+      {
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "line": 176,
+        "expected": 15.086341548461323,
+        "wasm": 15.086341548461325,
+        "native": 15.086341548461323
+      }
+    ],
+    "functionsWithoutRecordedVectors": [
+      "shared.color/hwbToRgb",
+      "rules.checks/enclosingCssSelector",
+      "rules.checks/isZeroOffset",
+      "rules.checks/collectPulseKeyframes",
+      "rules.checks/stripReducedMotionBlocks",
+      "rules.checks/checkHoverContrast",
+      "rules.checks/resolveHeroHeadingSizePx",
+      "rules.checks/cssTextHasDarkRootBg",
+      "rules.checks/isRoundDotRadius",
+      "rules.checks/buildHtmlPatternCorpora"
+    ],
+    "absolutePathScan": "passed"
+  },
+  "performance": {
+    "schemaVersion": 1,
+    "platform": "darwin",
+    "arch": "arm64",
+    "binarySha256": "e99441d027be9fc00ff25da74bb1371f30cf17ece270327bab14dc9ce76c7d31",
+    "fixtureSha256": "b45a830d029cd8614ee5baea2e2036f137ccb3eeff7ebe79ebb91ac70bb276fd",
+    "samples": 7,
+    "hookState": "fresh project state for every sample",
+    "results": [
+      {
+        "name": "startup",
+        "medianMs": 8.941917000000004,
+        "maxRssBytes": 6701056,
+        "durationMs": [
+          10.335792000000005,
+          8.811292000000002,
+          8.544249999999998,
+          8.908458000000003,
+          10.850540999999993,
+          8.941917000000004,
+          9.145499999999998
+        ],
+        "peakRssBytes": [
+          6668288,
+          6684672,
+          6635520,
+          6668288,
+          6684672,
+          6651904,
+          6701056
+        ]
+      },
+      {
+        "name": "detect",
+        "medianMs": 20.934541999999993,
+        "maxRssBytes": 16646144,
+        "durationMs": [
+          22.023584,
+          20.345958999999993,
+          20.728166999999985,
+          20.934541999999993,
+          20.714167000000003,
+          21.118875000000003,
+          21.134792000000004
+        ],
+        "peakRssBytes": [
+          16433152,
+          16531456,
+          16646144,
+          16564224,
+          16433152,
+          16433152,
+          16482304
+        ]
+      },
+      {
+        "name": "hook",
+        "medianMs": 22.26970799999998,
+        "maxRssBytes": 17252352,
+        "durationMs": [
+          22.637332999999984,
+          23.33375000000001,
+          22.325917000000004,
+          22.26970799999998,
+          21.93754100000001,
+          22.098041000000023,
+          21.961874999999964
+        ],
+        "peakRssBytes": [
+          17006592,
+          16629760,
+          17252352,
+          17203200,
+          17186816,
+          17072128,
+          17121280
+        ]
+      }
+    ]
+  },
+  "logs": {
+    "directory": "local/phoenix-ui",
+    "sha256": {
+      "baseline-build.log": "3ba7d5a4743a47e3d7fe63c6619b7d63566bf20bc02d21437e21902b7c332f20",
+      "baseline-tests-serial.log": "3c88d02eeb2b44ae55215b488bc276846f37b5515d3cea042253d0b0d8478cb2",
+      "baseline-ignored-browser.log": "e69bd07417d4c318f330753b3837c0dfd565a0e3b57fefc4a6cfa42b59d39401",
+      "baseline-oracle-original.log": "4e90b2dc5ff31974b8d85fc4d72ac081e9576715a41d6dc61cd32a01eb4b455f",
+      "baseline-wasm-117.log": "ed6caea2f555848148c817b8218e182557cfff78c4e909ef2696f2f10e4c9834",
+      "baseline-wasm-117-processes.jsonl": "46d7f601d6bce6f6e0ed8a99965cd93235a9e8f58fbf7c605b98a818fec3a2f2",
+      "baseline-wasm-vectors.log": "b5dfac98cc3ab913c6c73bffd2cb1df427f6e76e3987cf46728e51612c3bafc8",
+      "baseline-fmt.log": "65d2cd51ed48ffbd45a1b6110e1901d4dd9d5dd0a877415335f14aed1e69aaa1",
+      "baseline-clippy-complete.jsonl": "65f666b6465bbea8bf2cca2792a4e418738b8424e36984f23ae35c26415dfd0c",
+      "migration-fixtures-real.log": "09995c083b53d2f46cbdde8be6531768941f24d60dcff1fe1cc7e5ceda014ca3",
+      "repository-tests-final-m1.log": "bd945912a68e6151618192f471f7cc3bf6ce2712bcbfb0b9452344deeddf4af3"
+    },
+    "visibility": "ignored local evidence; commands and curated results are tracked; raw logs are only available in the current checkout"
+  }
+}

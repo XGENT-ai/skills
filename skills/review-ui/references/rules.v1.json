@@ -1,0 +1,1853 @@
+{
+  "schemaVersion": 1,
+  "ruleVersion": "1.0.0",
+  "contractHashes": {
+    "skills/review-ui/references/report-contract.md": "989f2618bf56c5a65eefa7cc59c0a1c91103106411843d13874145873242b083",
+    "skills/review-ui/references/judge.md": "0b7f31a6fb7405723fec363a79e411c60fe540e9641ea787600a8ea6abcbfad5",
+    "skills/review-ui/references/target-and-capture.md": "cf973f39db932564bfa7f7cdffa4bd0c82072bacb8276f119476d6db19b33cf3",
+    "skills/apply-ui-review/references/record-contract.md": "ac99a2fc1028e66326ff37040c7be957c1e537b9bed061a6129d7debefa63308"
+  },
+  "parameters": {
+    "dimensionMaxima": [
+      "3",
+      "3",
+      "3",
+      "1"
+    ],
+    "defaultThreshold": "8",
+    "confirmationMargin": "0.5",
+    "plateauWindow": 3,
+    "minimumBestGrowth": "1.0",
+    "maxRefactorsPerScope": 1
+  },
+  "verdictOrder": [
+    "需补证",
+    "通过验收",
+    "需用户裁定",
+    "需要修改"
+  ],
+  "applicability": {
+    "globalScore": [
+      "full round",
+      "complete evidence",
+      "all units judged",
+      "minimum unit score"
+    ],
+    "confirmation": [
+      "preliminary full pass",
+      "no P0/P1 gating gaps",
+      "minimum unit score < threshold + 0.5",
+      "same materials; fresh reviewer; per-unit whole-review minimum; gap union"
+    ],
+    "globalPlateau": [
+      "current score below threshold",
+      "at least three valid complete full rounds in same target baseline",
+      "historical best grows less than 1.0 from two valid rounds earlier"
+    ],
+    "stubbornGap": [
+      "P0-P2 only",
+      "attempted before a present/regressed assessment, or two consecutive partial assessments each preceded by an attempt",
+      "unknown legacy attempt history is not zero"
+    ],
+    "stagnation": [
+      "warning remains warning without recorded refactor",
+      "recorded refactor plus warning becomes stagnation",
+      "unknown legacy refactor count is not zero"
+    ],
+    "reviewerStatusMerge": [
+      "one old gap judged by several reviewers of the same packet keeps the earliest status in reviewerStatusPrecedence",
+      "an open or unverified status from any reviewer beats a closing one (gap union)"
+    ],
+    "priorDisposition": [
+      "only repair records since the gap's last independent judgement",
+      "a later record in the same round replaces that round's earlier disposition for the gap",
+      "attempted: some round's final disposition is 已修改待评审",
+      "latest: the most recent round's final disposition; 不采纳 with a reassessed open gap, or 待决定/阻塞, is pending",
+      "attempted and latest are evaluated independently"
+    ]
+  },
+  "waiver": {
+    "verdict": "用户豁免通过",
+    "appendOnly": true,
+    "preserveScoreAndGaps": true
+  },
+  "dispositions": [
+    "已修改待评审",
+    "不采纳",
+    "待决定",
+    "阻塞",
+    "未处理"
+  ],
+  "gapStatuses": [
+    "已解决",
+    "部分解决",
+    "仍存在",
+    "回归",
+    "待核实",
+    "不再适用",
+    "本轮未复核"
+  ],
+  "reviewerStatusPrecedence": [
+    "回归",
+    "仍存在",
+    "部分解决",
+    "待核实",
+    "已解决",
+    "不再适用"
+  ],
+  "scoringCases": [
+    {
+      "name": "minimum-not-average",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "9",
+          "7"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "7",
+        "historicalBest": "7",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "confirmation-window",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "8.2",
+          "8.3"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "8.2",
+        "historicalBest": "8.2",
+        "confirmationRequired": true,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "confirmation-open-upper-boundary",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "8.5"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "8.5",
+        "historicalBest": "8.5",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "confirmation-raw-decimal-boundary",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "8.499999999999999999999999999999999999"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "8.499999999999999999999999999999999999",
+        "historicalBest": "8.499999999999999999999999999999999999",
+        "confirmationRequired": true,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "maximum-threshold-needs-confirmation",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "10"
+        ],
+        "threshold": "10",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "10",
+        "historicalBest": "10",
+        "confirmationRequired": true,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "gating-gap-prevents-preliminary-pass",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "8.2"
+        ],
+        "threshold": "8",
+        "gatingGaps": true,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "8.2",
+        "historicalBest": "8.2",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "confirmation-lower-score",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "7.8"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": true,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": "7.8",
+        "historicalBest": "7.8",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "missing-unit-is-unknown",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "9",
+          null
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": []
+      },
+      "expected": {
+        "score": null,
+        "historicalBest": null,
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "missing-capture-excludes-round",
+      "input": {
+        "full": true,
+        "evidenceComplete": false,
+        "unitScores": [
+          "6.8"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "6",
+          "6.5"
+        ]
+      },
+      "expected": {
+        "score": null,
+        "historicalBest": "6.5",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "scoped-round-excludes-window",
+      "input": {
+        "full": false,
+        "evidenceComplete": true,
+        "unitScores": [
+          "9"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "6",
+          "6.5"
+        ]
+      },
+      "expected": {
+        "score": null,
+        "historicalBest": "6.5",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "three-full-round-plateau",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "6.8"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "6",
+          "6.5"
+        ]
+      },
+      "expected": {
+        "score": "6.8",
+        "historicalBest": "6.8",
+        "confirmationRequired": false,
+        "globalPlateau": true
+      }
+    },
+    {
+      "name": "exact-one-point-growth",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "7"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "6",
+          "6.5"
+        ]
+      },
+      "expected": {
+        "score": "7",
+        "historicalBest": "7",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "decimal-one-point-growth",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "4.1"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "3.1",
+          "3.6"
+        ]
+      },
+      "expected": {
+        "score": "4.1",
+        "historicalBest": "4.1",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    },
+    {
+      "name": "prior-high-best-does-not-exempt-plateau",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "7.6"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "8.2",
+          "7.5"
+        ]
+      },
+      "expected": {
+        "score": "7.6",
+        "historicalBest": "8.2",
+        "confirmationRequired": false,
+        "globalPlateau": true
+      }
+    },
+    {
+      "name": "two-rounds-do-not-warn",
+      "input": {
+        "full": true,
+        "evidenceComplete": true,
+        "unitScores": [
+          "6.8"
+        ],
+        "threshold": "8",
+        "gatingGaps": false,
+        "confirmed": false,
+        "previousFullScores": [
+          "6.5"
+        ]
+      },
+      "expected": {
+        "score": "6.8",
+        "historicalBest": "6.8",
+        "confirmationRequired": false,
+        "globalPlateau": false
+      }
+    }
+  ],
+  "adjudicationCases": [
+    {
+      "name": "missing-capture-wins-over-score",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": false,
+          "unitScores": [
+            "9"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需补证",
+        "scoring": {
+          "score": null,
+          "historicalBest": null,
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "missing-unit-wins-over-gating",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "9",
+            null
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P1",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需补证",
+        "scoring": {
+          "score": null,
+          "historicalBest": null,
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "scoped-high-score-needs-full-round",
+      "input": {
+        "scores": {
+          "full": false,
+          "evidenceComplete": true,
+          "unitScores": [
+            "9"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需补证",
+        "scoring": {
+          "score": null,
+          "historicalBest": null,
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "p0-p1-suppresses-pass-and-confirmation",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.2"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P1",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "8.2",
+          "historicalBest": "8.2",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "p2-p3-do-not-block-full-pass",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.5"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": true,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "通过验收",
+        "scoring": {
+          "score": "8.5",
+          "historicalBest": "8.5",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "confirmation-required-is-not-a-verdict",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.2"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": null,
+        "scoring": {
+          "score": "8.2",
+          "historicalBest": "8.2",
+          "confirmationRequired": true,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "confirmation-lower-score-needs-modification",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": true,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "all-gating-gaps-pending-at-threshold",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.2"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P1",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": true,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "8.2",
+          "historicalBest": "8.2",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "low-score-without-repairable-gaps",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": true,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "low-score-with-repairable-gap",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "declined-but-assessed-present-is-pending",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": "不采纳"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "attempt-and-later-decline-are-evaluated-independently",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "不采纳"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞预警"
+          }
+        ],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "pending-state-persists-across-untreated-round",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": "未处理"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": true,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "resolved-gap-clears-pending-state",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.5"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "已解决",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": true,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "通过验收",
+        "scoring": {
+          "score": "8.5",
+          "historicalBest": "8.5",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "recaptured-unverified-gating-gap-needs-evidence",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "9"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P1",
+            "assessments": [
+              {
+                "status": "待核实",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": true
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需补证",
+        "scoring": {
+          "score": "9",
+          "historicalBest": "9",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "actual-modification-plus-present-warns",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞预警"
+          }
+        ],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "unattempted-gap-does-not-warn",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": "未处理"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "two-modified-partial-assessments-warn",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              },
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞预警"
+          }
+        ],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "one-unmodified-partial-assessment-does-not-warn",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": "未处理"
+                }
+              },
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "p3-modification-is-not-stubborn",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P3",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "not-reviewed-does-not-invent-an-attempt",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "本轮未复核",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "recorded-gap-refactor-plus-warning-stalls",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞"
+          }
+        ],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "p2-stall-still-does-not-block-high-score",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "8.5"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "通过验收",
+        "scoring": {
+          "score": "8.5",
+          "historicalBest": "8.5",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞"
+          }
+        ],
+        "pendingDecisions": [
+          "UI-01"
+        ]
+      }
+    },
+    {
+      "name": "global-warning-without-refactor-remains-warning",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "6.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": [
+            "6",
+            "6.5"
+          ]
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "6.8",
+          "historicalBest": "6.8",
+          "confirmationRequired": false,
+          "globalPlateau": true
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "global"
+            },
+            "state": "停滞预警"
+          }
+        ],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "global-recorded-refactor-plus-warning-stalls",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "6.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": [
+            "6",
+            "6.5"
+          ]
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "recorded"
+      },
+      "expected": {
+        "verdict": "需用户裁定",
+        "scoring": {
+          "score": "6.8",
+          "historicalBest": "6.8",
+          "confirmationRequired": false,
+          "globalPlateau": true
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "global"
+            },
+            "state": "停滞"
+          }
+        ],
+        "pendingDecisions": []
+      }
+    },
+    {
+      "name": "unknown-legacy-global-refactor-is-not-zero",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "6.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": [
+            "6",
+            "6.5"
+          ]
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "unknown"
+      },
+      "error": "global refactor history is unknown"
+    },
+    {
+      "name": "unknown-legacy-gap-refactor-is-not-zero",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "unknown",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "error": "gap refactor history is unknown"
+    },
+    {
+      "name": "unknown-legacy-attempt-is-not-zero",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "仍存在",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": null
+                },
+                "dispositionUnknown": true
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "error": "gap attempt history is unknown"
+    },
+    {
+      "name": "scoped-unreviewed-round-does-not-reset-consecutive-partials",
+      "input": {
+        "scores": {
+          "full": true,
+          "evidenceComplete": true,
+          "unitScores": [
+            "7.8"
+          ],
+          "threshold": "8",
+          "gatingGaps": false,
+          "confirmed": false,
+          "previousFullScores": []
+        },
+        "gaps": [
+          {
+            "id": "UI-01",
+            "unitId": "U1",
+            "severity": "P2",
+            "assessments": [
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              },
+              {
+                "status": "本轮未复核",
+                "priorDisposition": {
+                  "attempted": false,
+                  "latest": "未处理"
+                }
+              },
+              {
+                "status": "部分解决",
+                "priorDisposition": {
+                  "attempted": true,
+                  "latest": "已修改待评审"
+                }
+              }
+            ],
+            "inScope": true,
+            "pendingDecision": false,
+            "refactor": "not_recorded",
+            "recaptured": false
+          }
+        ],
+        "globalRefactor": "not_recorded"
+      },
+      "expected": {
+        "verdict": "需要修改",
+        "scoring": {
+          "score": "7.8",
+          "historicalBest": "7.8",
+          "confirmationRequired": false,
+          "globalPlateau": false
+        },
+        "warnings": [
+          {
+            "scope": {
+              "kind": "gap",
+              "gapId": "UI-01",
+              "unitId": "U1"
+            },
+            "state": "停滞预警"
+          }
+        ],
+        "pendingDecisions": []
+      }
+    }
+  ]
+}

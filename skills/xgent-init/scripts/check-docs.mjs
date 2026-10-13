@@ -4,9 +4,9 @@
  *
  *   node check-docs.mjs [目标仓根，默认 .]
  *
- * 挡的是模型输出的三类漂移：残留占位（用户还得手工编辑）、结构走样（impeccable
- * 按标题逐字解析，多一段少一段就读不出来）、过度替换（把 `Page<T>` 这种类型名
- * 当槽位换掉了）。内容质量不归它管。
+ * 挡的是模型输出的三类漂移：残留占位（用户还得手工编辑）、偏离本 skill 的模板
+ * 结构、过度替换（把 `Page<T>` 这种类型名当槽位换掉了）。这是模板结构与槽位检查，
+ * 不代表 Phoenix 的解析覆盖，也不是完整 YAML、token 或设计规则验证。内容质量不归它管。
  *
  * 零依赖，纯 Node ≥18。退出码：有 ✗ → 1，否则 0（! 只是提醒，不拦）。
  */
@@ -128,7 +128,7 @@ if (product) {
   const got = h2(product);
   if (got.join(" | ") !== PRODUCT_H2.join(" | ")) {
     err(
-      `PRODUCT.md 的二级标题必须是这七个、按这个顺序（impeccable 逐字解析）：\n` +
+      `PRODUCT.md 的二级标题必须是这七个、按这个顺序（本 skill 的模板结构约定）：\n` +
         `      期望  ${PRODUCT_H2.join(" / ")}\n` +
         `      实际  ${got.length ? got.join(" / ") : "（一个都没有）"}`
     );
@@ -169,7 +169,7 @@ const DESIGN_H2 = ["1. Overview", "2. Colors", "3. Typography", "4. Elevation", 
 if (design) {
   const lines = design.split("\n");
   if (lines[0] !== "---") {
-    err(`DESIGN.md 第 1 行必须是 \`---\`（YAML frontmatter 不在开头就整块解析不出来），实际：${JSON.stringify(lines[0].slice(0, 40))}`);
+    err(`DESIGN.md 第 1 行必须是 \`---\`（本模板的格式约定），实际：${JSON.stringify(lines[0].slice(0, 40))}`);
   } else {
     ok("DESIGN.md frontmatter 从第 1 行开始");
   }
@@ -206,7 +206,7 @@ if (design) {
   const got = h2(design);
   if (got.join(" | ") !== DESIGN_H2.join(" | ")) {
     err(
-      `DESIGN.md 正文必须恰好六段、名字与顺序照抄（Google Stitch 格式，impeccable 逐字解析）：\n` +
+      `DESIGN.md 正文必须恰好六段、名字与顺序照抄（Google Stitch 模板结构约定）：\n` +
         `      期望  ${DESIGN_H2.join(" / ")}\n` +
         `      实际  ${got.length ? got.join(" / ") : "（一个都没有）"}`
     );

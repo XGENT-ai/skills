@@ -2,11 +2,13 @@
 
 AGENTS.md 使用通用模板原样创建，不填项目槽位，也不与 CLAUDE.md 镜像。以下指南用于 `external-app-PRODUCT.template.md` 和 `external-app-DESIGN.template.md`；只填产品与设计槽位，保留 Portal 规范。
 
-## 0. 三条硬约束（改坏了 impeccable 就解析不出来）
+## 0. 三条硬约束（本模板的结构约定）
 
 - **PRODUCT.md**：七个二级标题，名字与顺序固定 —— `Register` / `Users` / `Product Purpose` / `Brand Personality` / `Anti-references` / `Design Principles` / `Accessibility & Inclusion`。别改名、别加段、别调序。`## Register` 的正文只能是裸词 `product` 或 `brand`，不加句号、不加解释。
-- **DESIGN.md**：YAML frontmatter 必须从**文件第 1 行**开始（前面多一个空行就整块解析不出来），正文**恰好六段**，名字与顺序照抄 —— `1. Overview` / `2. Colors` / `3. Typography` / `4. Elevation` / `5. Components` / `6. Do's and Don'ts`。不要加 Layout / Motion / Responsive 这类第七段，把内容折进六段里。
+- **DESIGN.md**：YAML frontmatter 必须从**文件第 1 行**开始（本模板的格式约定，前面不加空行），正文**恰好六段**，名字与顺序照抄 —— `1. Overview` / `2. Colors` / `3. Typography` / `4. Elevation` / `5. Components` / `6. Do's and Don'ts`。不要加 Layout / Motion / Responsive 这类第七段，把内容折进六段里。
 - **平台口径的事实源是目标仓里已装的 skill**，不是这三份文件：`portal-external-app`（接入契约 · `app.manifest.json` · `/svc` 与健康检查）· `portal-micro-app`（SDK 握手 / 版头 / consent / iframe 坑）· `xgent-app-release`（发布提案 · 产物打包 · 排错）· `xgent-image-push`（镜像构建与推送）· `portal-dev-setup`（一盒本地联调）· `portal-app-exchange`（跨应用调用）。**门户仓的文档目标仓访问不到，别在生成的文件里引它的路径。**
+
+这些是模板合同，`check-docs.mjs` 只检查结构与槽位，不证明 Phoenix 完整解析。Phoenix context 保留原文、路径/hash；结构化视图仅支持 YAML 标量映射和已识别标题，`parseCoverage` 的部分覆盖、未支持项与 `conflicts` 仍须回到原文核实，不删规范或用模板值补齐缺项。Portal profile 须由项目显式启用并核对 ID/版本、定义来源与 token 绑定，规则及 `defaultAdvice` 只作建议，不能覆盖既定规范或冻结目标；CLI 不可用时人工读原文，不自动安装、改配置或声称 profile 已加载。
 
 ## 1. 项目事实
 

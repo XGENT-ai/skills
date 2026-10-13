@@ -1,0 +1,8 @@
+{
+  "seed": "phoenix-ui-v1",
+  "tasks": [
+    { "id": "T-001", "name": "Review launch copy", "owner": "Design", "status": "Ready" },
+    { "id": "T-002", "name": "Check mobile navigation", "owner": "Product", "status": "In progress" },
+    { "id": "T-003", "name": "Verify form feedback", "owner": "Engineering", "status": "Ready" }
+  ]
+}

@@ -1,0 +1,1302 @@
+{
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".agent",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".agents",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".claude",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".codex",
+      "source": "0.3.0.json",
+      "channels": [
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".cursor",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".dsh",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".gemini",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".github",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".grok",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".hermes",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".kiro",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".opencode",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".pi",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".qoder",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".rovodev",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".trae",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".trae-cn",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".veto",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.3.0",
+      "provider": ".vibe",
+      "source": "0.3.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".agent",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".agents",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".claude",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".codex",
+      "source": "0.4.0.json",
+      "channels": [
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".cursor",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".dsh",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".gemini",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".github",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".grok",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".hermes",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".kiro",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".opencode",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".pi",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".qoder",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".rovodev",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".trae",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".trae-cn",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".veto",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.4.0",
+      "provider": ".vibe",
+      "source": "0.4.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".agent",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".agents",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".claude",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".codex",
+      "source": "0.5.0.json",
+      "channels": [
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".cursor",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".dsh",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".gemini",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".github",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".grok",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".hermes",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".kiro",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".opencode",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".pi",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".qoder",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".rovodev",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".trae",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".trae-cn",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".veto",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.5.0",
+      "provider": ".vibe",
+      "source": "0.5.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".agent",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".agents",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".claude",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".codex",
+      "source": "0.6.0.json",
+      "channels": [
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".cursor",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".dsh",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".gemini",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".github",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".grok",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [
+        "bundle",
+        "xgent-installer"
+      ],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".hermes",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".kiro",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".opencode",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".pi",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".qoder",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".rovodev",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".trae",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".trae-cn",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".veto",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    },
+    {
+      "packageVersion": "0.6.0",
+      "provider": ".vibe",
+      "source": "0.6.0.json",
+      "channels": [
+        "xgent-installer",
+        "bundle"
+      ],
+      "hookShapes": [],
+      "scenarios": [
+        "unmodified",
+        "modified-skill",
+        "copied-skill",
+        "symlink-skill"
+      ]
+    }
+  ],
+  "additionalScenarios": [
+    "mixed-handlers",
+    "custom-allow",
+    "modified-handler",
+    "legacy-js-hooks",
+    "pin-shortcut",
+    "modified-pin",
+    "live-residue",
+    "personal-shadow",
+    "unknown-upstream",
+    "unrelated-entry",
+    "claude-shared-and-local",
+    "additional-skills",
+    "modified-auxiliary",
+    "symlink-auxiliary",
+    "skills-only"
+  ]
+}

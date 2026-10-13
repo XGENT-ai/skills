@@ -1,0 +1,5107 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate-native-wasm-exact-verified-all-pure-interfaces-covered",
+  "baselineCommit": "508d7e8955de3b3caf2d8676e85206723d41a887",
+  "candidate": {
+    "patch": "0003-shared-rust-pow.patch",
+    "patchSha256": "ef3acb2392e2ec4df1e4d4a1895fe51cb2de13e79faba701677635a66b4b8be6",
+    "file": "crates/foundation/src/js.rs",
+    "beforeSha256": "f686e0ff3d6d4448ceae5d5f9d6f47e084e80b847bd6133b999522eb2dd1a6a2",
+    "afterSha256": "73be58b25457470055db9896cf28efc1481fb7bee1c63243fa7505208d3fd9b8",
+    "kernel": "libm::pow",
+    "specialCases": [
+      {
+        "args": [
+          1,
+          {
+            "$nan": true
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          2,
+          {
+            "$nan": true
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          {
+            "$nan": true
+          },
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          {
+            "$nan": true
+          },
+          {
+            "$negzero": true
+          }
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          {
+            "$nan": true
+          },
+          2
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          1,
+          {
+            "$inf": 1
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          1,
+          {
+            "$inf": -1
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          -1,
+          {
+            "$inf": 1
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          -1,
+          {
+            "$inf": -1
+          }
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          {
+            "$negzero": true
+          },
+          0.5
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          {
+            "$negzero": true
+          },
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          {
+            "$negzero": true
+          },
+          3
+        ],
+        "expected": {
+          "$negzero": true
+        }
+      },
+      {
+        "args": [
+          {
+            "$negzero": true
+          },
+          -2
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          {
+            "$negzero": true
+          },
+          -3
+        ],
+        "expected": {
+          "$inf": -1
+        }
+      },
+      {
+        "args": [
+          0,
+          -3
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          {
+            "$inf": 1
+          },
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          {
+            "$inf": 1
+          },
+          0.5
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          {
+            "$inf": 1
+          },
+          -3
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          {
+            "$inf": -1
+          },
+          0.5
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          {
+            "$inf": -1
+          },
+          2
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          {
+            "$inf": -1
+          },
+          3
+        ],
+        "expected": {
+          "$inf": -1
+        }
+      },
+      {
+        "args": [
+          {
+            "$inf": -1
+          },
+          -2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          {
+            "$inf": -1
+          },
+          -3
+        ],
+        "expected": {
+          "$negzero": true
+        }
+      },
+      {
+        "args": [
+          -2,
+          0.5
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          -8,
+          0.3333333333333333
+        ],
+        "expected": {
+          "$nan": true
+        }
+      },
+      {
+        "args": [
+          -2,
+          3
+        ],
+        "expected": -8
+      },
+      {
+        "args": [
+          -2,
+          -3
+        ],
+        "expected": -0.125
+      },
+      {
+        "args": [
+          2,
+          {
+            "$inf": 1
+          }
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          2,
+          {
+            "$inf": -1
+          }
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          0.5,
+          {
+            "$inf": 1
+          }
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          0.5,
+          {
+            "$inf": -1
+          }
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      },
+      {
+        "args": [
+          5e-324,
+          1
+        ],
+        "expected": 5e-324
+      },
+      {
+        "args": [
+          5e-324,
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          1.7976931348623157e+308,
+          2
+        ],
+        "expected": {
+          "$inf": 1
+        }
+      }
+    ]
+  },
+  "dependency": {
+    "name": "libm",
+    "version": "0.2.16",
+    "requirement": "=0.2.16",
+    "defaultFeatures": false,
+    "license": "MIT",
+    "rustVersion": "1.63",
+    "packageSha256": "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981",
+    "powSourceSha256": "c5566d0f48682d107e8803b0ed204ff3521503348f18a4f26cbe3f47fef15192",
+    "licenseSourceSha256": "3823dda7cf046602f4b4e77ec8e227863dc4736037cc85bb33d9f19febe16bb7"
+  },
+  "artifacts": {
+    "baselineNative": {
+      "path": "tools/phoenix-ui/target/debug/examples/replay_vectors-730d6867f7bcfd92",
+      "sha256": "fab51f7e43be75a0a8b8076dcb9af92411b19b4469b11f45ea008d84d574f32e"
+    },
+    "candidateNative": {
+      "path": "tools/phoenix-ui/target/debug/examples/replay_vectors",
+      "sha256": "ce1ba5a175ed4e62166a320477c5cf3d970647b6c8df1f451a204f6877e035d1",
+      "profile": "debug"
+    },
+    "baselineWasm": {
+      "path": "local/phoenix-ui/bindgen-before-opt/impeccable_bg_117.wasm",
+      "sha256": "a0e226a4001f0637b2554d99bebe3f7cc6f0556409fc335ee8de26d16c23fdb8"
+    },
+    "baselineBindings": {
+      "path": "local/phoenix-ui/bindgen-before-opt/impeccable.js",
+      "sha256": "72a130d37362718196c25637c1cb5d5d60168553c2d7ead524476401fe1f44aa"
+    },
+    "candidateWasm": {
+      "path": "tools/phoenix-ui/target/wasm-bundle/impeccable_bg.wasm",
+      "sha256": "5d16c823966cdc7f97bd2d25980254e80ae845d96841ff81826ef3a3c3d0c85e"
+    },
+    "candidateBindings": {
+      "path": "tools/phoenix-ui/target/wasm-bundle/impeccable.js",
+      "sha256": "72a130d37362718196c25637c1cb5d5d60168553c2d7ead524476401fe1f44aa"
+    },
+    "currentVerificationWasm": {
+      "path": "tools/phoenix-ui/target/wasm-verification/impeccable_bg.wasm",
+      "sha256": "dfd67d615b1ec3d86283cd94cef4739e931a52c10cc5382e8158c4fbc288ff0e",
+      "sourceVersion": "0.1.0"
+    },
+    "currentVerificationBindings": {
+      "path": "tools/phoenix-ui/target/wasm-verification/impeccable.js",
+      "sha256": "425c00701fa2e0c138d765929ad7399f14802d874cde9ca3aaa040853ec3e122"
+    },
+    "currentVerificationNative": {
+      "path": "tools/phoenix-ui/target/debug/examples/replay_vectors",
+      "sha256": "ce1ba5a175ed4e62166a320477c5cf3d970647b6c8df1f451a204f6877e035d1"
+    }
+  },
+  "validation": {
+    "foundationLibTests": {
+      "passed": 38,
+      "failed": 0,
+      "specialCaseCount": 34
+    },
+    "nativeRecorded": {
+      "calls": 8321,
+      "baselineGoldenFailures": 0,
+      "candidateGoldenDifferences": 27,
+      "ruleResultDifferences": 0,
+      "callsByModule": {
+        "shared.color": 1729,
+        "shared.inline-ignores": 118,
+        "rules.checks": 6474
+      }
+    },
+    "candidateWasm": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "recordedCalls": 8321,
+      "boundaryCalls": 99,
+      "calls": 8420,
+      "goldenFailures": 0,
+      "nativeGoldenFailures": 0,
+      "parityFailures": 0,
+      "webAssemblyValid": true
+    },
+    "transitionalRuntime": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "calls": 8420,
+      "native": "candidateNative",
+      "wasm": "baselineWasm",
+      "bindings": "baselineBindings"
+    },
+    "currentVerification": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "historicalCalls": 8321,
+      "boundaryCalls": 99,
+      "specificationCalls": 54,
+      "calls": 8474,
+      "exportedInterfaces": 72,
+      "interfacesWithoutCoverage": [],
+      "goldenFailures": 0,
+      "nativeGoldenFailures": 0,
+      "parityFailures": 0,
+      "webAssemblyValid": true,
+      "wasmSourceVersion": "0.1.0",
+      "nativeReuse": "Authorized libm candidate debug artifact reused across public-version rebranding; current WASM rebuilt at version0.1.0."
+    }
+  },
+  "recordedFunctions": [
+    {
+      "module": "shared.color",
+      "functions": [
+        "isNeutralColor",
+        "parseRgb",
+        "relativeLuminance",
+        "contrastRatio",
+        "parseGradientColors",
+        "extractColorFunctionTokens",
+        "hasChroma",
+        "getHue",
+        "colorToHex",
+        "oklabToRgb",
+        "oklchToRgb",
+        "labToRgb",
+        "lchToRgb",
+        "colorFunctionToRgb",
+        "hslToRgb",
+        "hwbToRgb",
+        "splitTopLevelCommas",
+        "parseColorMix",
+        "parseAnyColor",
+        "compositeColorOver",
+        "isNoPaintColorValue"
+      ]
+    },
+    {
+      "module": "shared.inline-ignores",
+      "functions": [
+        "parseInlineIgnores",
+        "isInlineIgnored",
+        "applyInlineIgnores"
+      ]
+    },
+    {
+      "module": "rules.checks",
+      "functions": [
+        "isEmojiOnlyText",
+        "collectCssCustomProps",
+        "enclosingCssSelector",
+        "cssLengthToPx",
+        "isZeroOffset",
+        "collectMarqueeKeyframes",
+        "collectPulseKeyframes",
+        "stripReducedMotionBlocks"
+      ]
+    },
+    {
+      "module": "rules.checks",
+      "functions": [
+        "parseRadiusToPx",
+        "resolveVarRefs",
+        "parseColorResolved",
+        "resolveLengthPx",
+        "shadowMaxBlurPx",
+        "parseNumberedLabelText"
+      ]
+    },
+    {
+      "module": "rules.checks",
+      "functions": [
+        "checkBorders",
+        "checkColors",
+        "checkHoverContrast",
+        "isCardLikeFromProps",
+        "checkIconTile",
+        "resolveSerif",
+        "checkItalicSerif",
+        "isAccentColor",
+        "resolveHeroHeadingSizePx",
+        "checkHeroEyebrow",
+        "checkKickerAboveHeading",
+        "checkMotion",
+        "checkGlow",
+        "cssTextHasDarkRootBg",
+        "scanCssTextForGlow",
+        "scanCssTextForGridBackground",
+        "scanCssTextForRadialHalo",
+        "scanCssTextForPseudoStripe",
+        "scanCssTextForInsetStripe",
+        "scanCssTextForMarquee",
+        "isRoundDotRadius",
+        "scanCssTextForPulsingDot",
+        "scanHtmlForShapeAssembledIllustration",
+        "buildHtmlPatternCorpora",
+        "checkHtmlPatterns"
+      ]
+    },
+    {
+      "module": "rules.checks",
+      "functions": [
+        "checkRadialSpotlight",
+        "checkOversizedH1",
+        "checkGptThinBorderWideShadow",
+        "checkContentHiddenAtRest",
+        "isCreamColor",
+        "isKickerCandidate",
+        "isNumberedSectionLabelCandidate",
+        "checkNumberedSectionLabels",
+        "checkEmDashOveruse"
+      ]
+    }
+  ],
+  "recordedSources": {
+    "tests/oracle/vectors/calls/shared.color/isNeutralColor.jsonl": "8222ce6e04fd7fcf2aa361b24669ad08a6e4f644c8688c44b4f45d9504e81948",
+    "tests/oracle/vectors/calls/shared.color/parseRgb.jsonl": "5fbe5d01f0b406d95b7ab114733a66113acd6bae6db9e99bd8104ea65d4e1b8c",
+    "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+    "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+    "tests/oracle/vectors/calls/shared.color/parseGradientColors.jsonl": "1db8a836cad2bfe1571491ed63ffe4d4ffe577ea4d4c55baf1a0da0e0bc7cd82",
+    "tests/oracle/vectors/calls/shared.color/extractColorFunctionTokens.jsonl": "f450eef249cc1c9f73366c509f9c9989fa32c180cfef9713c62bc3ea21ec9744",
+    "tests/oracle/vectors/calls/shared.color/hasChroma.jsonl": "1c3b48aec14ecf802930920ee879b95e358f8d76fb8a0aeba3be870b8208ae02",
+    "tests/oracle/vectors/calls/shared.color/getHue.jsonl": "e5700ccdcd3e7f8cc3d3433bfdb845281c77735d980493e52f5228009a34c1f3",
+    "tests/oracle/vectors/calls/shared.color/colorToHex.jsonl": "813293c1906b73a1748a4b543dcab0a71eb9245efbead71db3a2a08ed5405307",
+    "tests/oracle/vectors/calls/shared.color/oklabToRgb.jsonl": "5723e08f964e61a91c214ce98eaa7dc815e09262a1adb7acd09c815fc34a0c6e",
+    "tests/oracle/vectors/calls/shared.color/oklchToRgb.jsonl": "056b8c510def706e450169af5f2de111d481331355c13645a7fc0377dcd27c7e",
+    "tests/oracle/vectors/calls/shared.color/labToRgb.jsonl": "46dc97076c61d83026ecb9be05afcd411f0e571d8fd1a730eecadbefaf134da7",
+    "tests/oracle/vectors/calls/shared.color/lchToRgb.jsonl": "82f1d4d15a3d21bc42d8269c0ee87bb2fa9d2ef6738c7fd0bfd586fdc23823cc",
+    "tests/oracle/vectors/calls/shared.color/colorFunctionToRgb.jsonl": "6649818d87d1494bff447abe505283e916610fdae163f798d81231d1ca191a39",
+    "tests/oracle/vectors/calls/shared.color/hslToRgb.jsonl": "fcc6ab7389fd7a20e28a80661547df1d31c1505030cf2c32d8f3256d26ad8ea4",
+    "tests/oracle/vectors/calls/shared.color/splitTopLevelCommas.jsonl": "53576553dfe8a9ba5c544564897861bfd214727e57aa972bf4bde9b8aef3af6f",
+    "tests/oracle/vectors/calls/shared.color/parseColorMix.jsonl": "31810ecff0febf97ce04c018d8b511eaa38ffbecdbd887b9ff340f24081334dd",
+    "tests/oracle/vectors/calls/shared.color/parseAnyColor.jsonl": "a62fb7f94133c30357d2bf886ccc528a08fcc18e5adfc25b5f62ca62d404cbe1",
+    "tests/oracle/vectors/calls/shared.color/compositeColorOver.jsonl": "3949c42727cc87484a0696e6456f7e5643b1e48896fa7c75d288c2d10345981a",
+    "tests/oracle/vectors/calls/shared.color/isNoPaintColorValue.jsonl": "945b0664ed1d189154016ff6952eff14eda8e8aee611ccd3d21ddd23fb78c4f5",
+    "tests/oracle/vectors/calls/shared.inline-ignores/parseInlineIgnores.jsonl": "b6caab37e240f2c07705f3a8121e3877f78022c7522961925aa6855fdee3d586",
+    "tests/oracle/vectors/calls/shared.inline-ignores/isInlineIgnored.jsonl": "260e085fa6010c024068d2c8d54500abfb3d4e9571b20b47f6f3043ab1b0865e",
+    "tests/oracle/vectors/calls/shared.inline-ignores/applyInlineIgnores.jsonl": "3149abd9611a46ee1859b1f7d06c544be2c1c69113713d0c66dd7a26c61a513e",
+    "tests/oracle/vectors/calls/rules.checks/isEmojiOnlyText.jsonl": "ee9e4a76ed70ac9e041a8654b5ecd8d2684fb571945ec1cb49d57c9ead038613",
+    "tests/oracle/vectors/calls/rules.checks/collectCssCustomProps.jsonl": "911877c55f894d02dd3766494c07ec92a20660bb2b7c41d7416592ce12f35655",
+    "tests/oracle/vectors/calls/rules.checks/cssLengthToPx.jsonl": "a114a913d8e90b803ebbe3933603f69e6d8a897ed086232249c581e08c02be3a",
+    "tests/oracle/vectors/calls/rules.checks/collectMarqueeKeyframes.jsonl": "15eddc62353dbf092d703bff141f2c49b9feb47bee8cb5e74545f26c5f18a14c",
+    "tests/oracle/vectors/calls/rules.checks/parseRadiusToPx.jsonl": "873d943b328a20905811f5a34a286552f1e61972be67d609701d23d4e7eabc8e",
+    "tests/oracle/vectors/calls/rules.checks/resolveVarRefs.jsonl": "31604ea6a37775371232103d16001b4c9644f1e87a2663cb7aa58d8a2da97d68",
+    "tests/oracle/vectors/calls/rules.checks/parseColorResolved.jsonl": "1e045458d7875b0a023e62329faf44a5389aceb3fce92cd78877bc4f51756d06",
+    "tests/oracle/vectors/calls/rules.checks/resolveLengthPx.jsonl": "37c2f190f143f3d047b3e7513aca92b1a198437d52703b5fe910a894a91a31dc",
+    "tests/oracle/vectors/calls/rules.checks/shadowMaxBlurPx.jsonl": "05dbfbd038d06a86a6d0396e3b49e228f32b95220e88df6bfb5ab238375ab7e9",
+    "tests/oracle/vectors/calls/rules.checks/parseNumberedLabelText.jsonl": "a6da35ede2b01d2807782acc471edb753abf48d64332661f517a15609aec8cdf",
+    "tests/oracle/vectors/calls/rules.checks/checkBorders.jsonl": "f4f8cb03c33905f25d5a4aff29a5accc6a9538a2182ace5ea93309ad12e13e95",
+    "tests/oracle/vectors/calls/rules.checks/checkColors.jsonl": "83aebd70729cf8ecffef9ae27337454f40a21e9c9ef0c0a3cace313db45a848e",
+    "tests/oracle/vectors/calls/rules.checks/isCardLikeFromProps.jsonl": "8ad16643ab1b569660f384dd12d8b5abf93c925ec5477d3c8559dafe2359e150",
+    "tests/oracle/vectors/calls/rules.checks/checkIconTile.jsonl": "7b29063d8a8952b132dbc630f67a699a7611da89ba1877e5fc751da2e74d55b7",
+    "tests/oracle/vectors/calls/rules.checks/resolveSerif.jsonl": "2bbe3c8bdd13363e0332393e0064dc5026f3eb8af1fe0ec2ddf7844275ef1e58",
+    "tests/oracle/vectors/calls/rules.checks/checkItalicSerif.jsonl": "02ef8519a5fc1783dc5e6ec7e828a663d0b3bb3f1492b21bb56ac9a750535b8f",
+    "tests/oracle/vectors/calls/rules.checks/isAccentColor.jsonl": "3ac41ac041d4214519f26b28085fd1c6deebeb30aa1bbe1feb9e0716a798b426",
+    "tests/oracle/vectors/calls/rules.checks/checkHeroEyebrow.jsonl": "b8b3755999f3dcd75d8d9329bf9019d8f3d425f22415b23c9ab096eb729934e3",
+    "tests/oracle/vectors/calls/rules.checks/checkKickerAboveHeading.jsonl": "18eae7dc3ddbdfc80fbf37e27effa1f9e7643e6804cfa068b9fd606530a46b0f",
+    "tests/oracle/vectors/calls/rules.checks/checkMotion.jsonl": "f050c5be8c53db3d9b3edf9a9f714613e4f9817945d20c2263a9730b21f05398",
+    "tests/oracle/vectors/calls/rules.checks/checkGlow.jsonl": "65feb6b0af3096aee96e56d44b915ecf083ae90456eef12a32576700e93cef13",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForGlow.jsonl": "2e9a03896471a7a8fda1c4cce1e27c6cace1cc980452b88d2e219ca11cc8e847",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForGridBackground.jsonl": "e477dd70202d8bb4711dcc19cbbe9b53b3b1db9f965e03c10e74ac79fed59ccd",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForRadialHalo.jsonl": "1d91fea9403a358a5fcf7b990bb8032f9a82760263e1ef17e1734de2e040263e",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForPseudoStripe.jsonl": "e13f4b4e454fe5eba892bae0d9bbdf978b8ae3fdb99a13b00a466be281a42cb0",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForInsetStripe.jsonl": "22bb8930830b8a56f4dedf363eb79117126f85ea842099cad8c820ffa40b747c",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForMarquee.jsonl": "ba753b9d44fac6970bc95bfd1a0550bfa1476c661c86ce4e81a1acac2feabb14",
+    "tests/oracle/vectors/calls/rules.checks/scanCssTextForPulsingDot.jsonl": "e70bfca37d3d972599eef72da45d51cb7b5d7c0dee141e1fa456e2e9e02b7a32",
+    "tests/oracle/vectors/calls/rules.checks/scanHtmlForShapeAssembledIllustration.jsonl": "7225d177307cba1c8ca3bc6e4ad98706c71c6942d5d9d0e478c877ddf139a58a",
+    "tests/oracle/vectors/calls/rules.checks/checkHtmlPatterns.jsonl": "77abe42cd5b88d866a0b3e79113ba049d97b65209ab0b070ab2076daf0e79d52",
+    "tests/oracle/vectors/calls/rules.checks/checkRadialSpotlight.jsonl": "ce307b77148c6e85a321808114ba0c2744f5f51ff56e907e2eaae240f481b181",
+    "tests/oracle/vectors/calls/rules.checks/checkOversizedH1.jsonl": "4cac9b672717f6fb2d9e096681a97cb75abc891e0a705c24da9879c1109a8beb",
+    "tests/oracle/vectors/calls/rules.checks/checkGptThinBorderWideShadow.jsonl": "e3ad428bce8fd70f2052c6e5c3829b9db237080d0f42a66d306fecbcbe7c69b8",
+    "tests/oracle/vectors/calls/rules.checks/checkContentHiddenAtRest.jsonl": "5e4da730e21ebfa1a19956ff94382607742e247a1c71b7818ac5bdf5be9fd835",
+    "tests/oracle/vectors/calls/rules.checks/isCreamColor.jsonl": "c02b32f085bcaca6b2120f935597e20d4d0738265f180016a22e2c28a442f54a",
+    "tests/oracle/vectors/calls/rules.checks/isKickerCandidate.jsonl": "82be1141b1e422913c96b9e1fe877507dfcbcd1e5da209cf818c24d1176368bd",
+    "tests/oracle/vectors/calls/rules.checks/isNumberedSectionLabelCandidate.jsonl": "74ec5fba9c559a80d717346d9ca2444e5c6d3dc2fad4dd416a8e620571cf38e5",
+    "tests/oracle/vectors/calls/rules.checks/checkNumberedSectionLabels.jsonl": "f73aea559fbb3aa32a2d3b5c64a8abe46904bf4f1394f23a7a6fe02e5bf1519c",
+    "tests/oracle/vectors/calls/rules.checks/checkEmDashOveruse.jsonl": "49e9db986f8dd0758c95ffdae41f08e7ad0d7f57103511d84e19df5ed5e4add7"
+  },
+  "overrides": [
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 4,
+      "index": 262,
+      "argsSha256": "8ea848761cc9c826e7e7520b1e28c0e2c3ed2076c49c441f9bc268e179522eac",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.005605391624202723,
+      "newResult": 0.005605391624202722,
+      "oldBits": "0x3f76f5addb50c915",
+      "newBits": "0x3f76f5addb50c914",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 80,
+          "g": 80,
+          "b": 80,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 26,
+      "index": 284,
+      "argsSha256": "ebb6b11de78de5f5dac35bbf025f5b4e06a3d875ae038cab0d44aaa8d2400f57",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.08021982031446832,
+      "newResult": 0.08021982031446831,
+      "oldBits": "0x3fb4894940bddbfb",
+      "newBits": "0x3fb4894940bddbfa",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 28,
+      "index": 286,
+      "argsSha256": "ec8e8b343c03e907ed36cc22b1ded52d216b1acf7d9e0fcb4eb68b3e0a3e11b1",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.21586050011389923,
+      "newResult": 0.2158605001138992,
+      "oldBits": "0x3fcba1511e3e632c",
+      "newBits": "0x3fcba1511e3e632b",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 91,
+          "g": 79,
+          "b": 68,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 31,
+      "index": 289,
+      "argsSha256": "4f3aff380dcaed5afcd0e28f2cc3610949e2fdb75935df81cdf2e8d58a161630",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.08233466065263306,
+      "newResult": 0.08233466065263308,
+      "oldBits": "0x3fb513e262d48fa8",
+      "newBits": "0x3fb513e262d48fa9",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 240,
+          "g": 240,
+          "b": 245,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 42,
+      "index": 300,
+      "argsSha256": "a14e29aaa00c7293820032b15490c527b87c8399974e647c10ddc731b5bb662e",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.8743801358521288,
+      "newResult": 0.8743801358521289,
+      "oldBits": "0x3febfaec0cf838c6",
+      "newBits": "0x3febfaec0cf838c7",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 20,
+          "g": 20,
+          "b": 25,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 44,
+      "index": 302,
+      "argsSha256": "ca597542b1892141810593f9aaa9d9ec5286f17c374bc73847da313334405129",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.007192213462265998,
+      "newResult": 0.0071922134622659974,
+      "oldBits": "0x3f7d759519b35637",
+      "newBits": "0x3f7d759519b35636",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 222,
+          "g": 222,
+          "b": 222,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 79,
+      "index": 337,
+      "argsSha256": "2d0e3b6a2d5ea83e4681eb7342297eadf8cb7b30ed41f7c6be558483c3af17e4",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.7304607400903537,
+      "newResult": 0.7304607400903536,
+      "oldBits": "0x3fe75fef33b6669b",
+      "newBits": "0x3fe75fef33b6669a",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 20,
+          "g": 18,
+          "b": 15,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 80,
+      "index": 338,
+      "argsSha256": "0795b3a6c1a2ff9bf8985efb4f329221aec42b4f514dd9098dc7ed65ff4852a5",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.006158245625066072,
+      "newResult": 0.006158245625066074,
+      "oldBits": "0x3f79396378f75f8d",
+      "newBits": "0x3f79396378f75f8f",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 18,
+          "g": 18,
+          "b": 21,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 87,
+      "index": 345,
+      "argsSha256": "987920cfb556ae0747c5584c1f6ab32761360a5d011e410f606f9be9af4e70ae",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.006153537392127704,
+      "newResult": 0.006153537392127705,
+      "oldBits": "0x3f7934739da994be",
+      "newBits": "0x3f7934739da994bf",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 255,
+          "g": 0,
+          "b": 170,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 97,
+      "index": 355,
+      "argsSha256": "17cd13e4172ad39b340bdbe14dc04d74dda83c0e9a3f7d13d48b61a212ab731a",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.24162279570388456,
+      "newResult": 0.24162279570388454,
+      "oldBits": "0x3fceed7eeac21540",
+      "newBits": "0x3fceed7eeac2153f",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 234,
+          "g": 176,
+          "b": 74,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 139,
+      "index": 397,
+      "argsSha256": "ee0b8a1a09433fab0fa9b35abd841ebac567ad6dcdbd628310fd7484731efa0e",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.49037505583959606,
+      "newResult": 0.490375055839596,
+      "oldBits": "0x3fdf624e0ee6bc3c",
+      "newBits": "0x3fdf624e0ee6bc3b",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 170,
+          "g": 51,
+          "b": 51,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 152,
+      "index": 410,
+      "argsSha256": "0775753d821a8159e6483537dd7f114e6fce5340c48ddbc422b168e5318e7306",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.11152716919023972,
+      "newResult": 0.11152716919023971,
+      "oldBits": "0x3fbc8d0b68499c1e",
+      "newBits": "0x3fbc8d0b68499c1d",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "relativeLuminance",
+      "args": [
+        {
+          "r": 26,
+          "g": 29,
+          "b": 36,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/relativeLuminance.jsonl",
+      "line": 156,
+      "index": 414,
+      "argsSha256": "d6d0e77a2f8b1ba96339c3352b520f51929b833b660148bf964b129bd9543213",
+      "sourceSha256": "2fa07d8314c4ae1cc6df41532152a772fdac199daab3b177c3e51b56b6f51fa7",
+      "oldResult": 0.012257165963026248,
+      "newResult": 0.012257165963026246,
+      "oldBits": "0x3f891a48f79f6bab",
+      "newBits": "0x3f891a48f79f6baa",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 238,
+          "g": 238,
+          "b": 238,
+          "a": 1
+        },
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 2,
+      "index": 418,
+      "argsSha256": "519b4b71c7c78c237e6b7dc84440f98851418d96733a759aa6b90c7487edbab9",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 16.275267230207366,
+      "newResult": 16.27526723020737,
+      "oldBits": "0x40304677e9c766b1",
+      "newBits": "0x40304677e9c766b2",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        },
+        {
+          "r": 245,
+          "g": 245,
+          "b": 245,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 5,
+      "index": 421,
+      "argsSha256": "de74ee53757925c26168b17245467d37d3e6b011e6e36230b5d4057afe75ec9d",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 17.320238625461315,
+      "newResult": 17.320238625461318,
+      "oldBits": "0x403151fb289745b8",
+      "newBits": "0x403151fb289745b9",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        },
+        {
+          "r": 229,
+          "g": 231,
+          "b": 235,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 6,
+      "index": 422,
+      "argsSha256": "2e332aa5f366200dde92aa018d14950de492ac7b9e8cd49872b31b1635086095",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 15.251758382371863,
+      "newResult": 15.251758382371865,
+      "oldBits": "0x402e80e679858fe1",
+      "newBits": "0x402e80e679858fe2",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        },
+        {
+          "r": 254,
+          "g": 243,
+          "b": 199,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 7,
+      "index": 423,
+      "argsSha256": "b40cd4d24cda4aa2c90b543f1815ef403e0852729395620b64bbda086236319e",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 16.957984334321456,
+      "newResult": 16.95798433432146,
+      "oldBits": "0x4030f53e7619fdb1",
+      "newBits": "0x4030f53e7619fdb2",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 91,
+          "g": 79,
+          "b": 68,
+          "a": 1
+        },
+        {
+          "r": 31,
+          "g": 26,
+          "b": 21,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 33,
+      "index": 449,
+      "argsSha256": "44f78dca7b5183921dc1a5c8d6c3929e36af1a471d8e905f815fbfe2778202a3",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 2.1750407435109995,
+      "newResult": 2.175040743511,
+      "oldBits": "0x4001667bc2e6c734",
+      "newBits": "0x4001667bc2e6c735",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 240,
+          "g": 240,
+          "b": 245,
+          "a": 1
+        },
+        {
+          "r": 26,
+          "g": 26,
+          "b": 30,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 41,
+      "index": 457,
+      "argsSha256": "9e22cc011f390f933371f24b43c7468a2163da83dc148ed8cf7bcdea0548e16a",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 15.273611795117231,
+      "newResult": 15.273611795117233,
+      "oldBits": "0x402e8c16d85fa81f",
+      "newBits": "0x402e8c16d85fa820",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 240,
+          "g": 240,
+          "b": 245,
+          "a": 1
+        },
+        {
+          "r": 30,
+          "g": 64,
+          "b": 175,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 44,
+      "index": 460,
+      "argsSha256": "1c74ad161dc493fbc999e7906757e54ac9a2661eb22baaa684fb674002967338",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 7.678879301289789,
+      "newResult": 7.678879301289791,
+      "oldBits": "0x401eb72c22b3e247",
+      "newBits": "0x401eb72c22b3e249",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 222,
+          "g": 222,
+          "b": 222,
+          "a": 1
+        },
+        {
+          "r": 20,
+          "g": 18,
+          "b": 15,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 82,
+      "index": 498,
+      "argsSha256": "8a23025b4ccd235370452810ef5ff3a1553346a2152dec010d5e4e63643eefa9",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 13.897527093367696,
+      "newResult": 13.897527093367694,
+      "oldBits": "0x402bcb88abd2938e",
+      "newBits": "0x402bcb88abd2938d",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 222,
+          "g": 222,
+          "b": 222,
+          "a": 1
+        },
+        {
+          "r": 10,
+          "g": 9,
+          "b": 8,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 83,
+      "index": 499,
+      "argsSha256": "1231323a43a26cf83cf620e3cac038605bdadc0abd019397f44fbde8ff15eaa7",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 14.788635410637344,
+      "newResult": 14.78863541063734,
+      "oldBits": "0x402d93c805424f52",
+      "newBits": "0x402d93c805424f50",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        },
+        {
+          "r": 238,
+          "g": 238,
+          "b": 238,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 109,
+      "index": 525,
+      "argsSha256": "cda6891de0b8ba534f7e2451da716119d99aa5ff3eb71d1f9798d5da457e55a9",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 16.275267230207366,
+      "newResult": 16.27526723020737,
+      "oldBits": "0x40304677e9c766b1",
+      "newBits": "0x40304677e9c766b2",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 183,
+          "g": 198,
+          "b": 222,
+          "a": 1
+        },
+        {
+          "r": 234,
+          "g": 176,
+          "b": 74,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 150,
+      "index": 566,
+      "argsSha256": "cfeecacc26e807af3af8c6df3cf4805ff0586a49bcbf03a3ff6a7723ddbd855b",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 1.1238374603583177,
+      "newResult": 1.1238374603583179,
+      "oldBits": "0x3ff1fb3cfd242384",
+      "newBits": "0x3ff1fb3cfd242385",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 17,
+          "g": 17,
+          "b": 17,
+          "a": 1
+        },
+        {
+          "r": 244,
+          "g": 245,
+          "b": 247,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 169,
+      "index": 585,
+      "argsSha256": "2addcc33296152d2836f6d82f35451e09fc2aaf137d4edf6438dfa173fa282e0",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 17.31006827391836,
+      "newResult": 17.310068273918365,
+      "oldBits": "0x40314f60a26801ac",
+      "newBits": "0x40314f60a26801ad",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 170,
+          "g": 51,
+          "b": 51,
+          "a": 1
+        },
+        {
+          "r": 255,
+          "g": 255,
+          "b": 255,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 170,
+      "index": 586,
+      "argsSha256": "3a55bfdc6d2bcd1de7ddda5f2104518a61ce9011a873dcc9a1ba0e7cbc0272a1",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 6.5004544143490515,
+      "newResult": 6.500454414349052,
+      "oldBits": "0x401a00771f3b1271",
+      "newBits": "0x401a00771f3b1272",
+      "kind": "finite-scalar-kernel-change"
+    },
+    {
+      "module": "shared.color",
+      "name": "contrastRatio",
+      "args": [
+        {
+          "r": 246,
+          "g": 242,
+          "b": 232,
+          "a": 1
+        },
+        {
+          "r": 26,
+          "g": 29,
+          "b": 36,
+          "a": 1
+        }
+      ],
+      "file": "tests/oracle/vectors/calls/shared.color/contrastRatio.jsonl",
+      "line": 176,
+      "index": 592,
+      "argsSha256": "9e559bacf5950876263256453ae37c1e040bb2f9a7d7ff03d0879ac6052ef973",
+      "sourceSha256": "869ff6aa708febb7e9101b928cab96589c2a46d971e3df85da46200bc5cc546d",
+      "oldResult": 15.086341548461323,
+      "newResult": 15.086341548461325,
+      "oldBits": "0x402e2c34f59ddad2",
+      "newBits": "0x402e2c34f59ddad3",
+      "kind": "finite-scalar-kernel-change"
+    }
+  ],
+  "boundaries": {
+    "cases": 99,
+    "baselineClassificationChanges": [],
+    "baselineWasmCandidateNativeExactDifferences": 0,
+    "probes": [
+      {
+        "id": "contrast-3/-8",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536547,
+            "g": 148.87702996536547,
+            "b": 148.87702996536547,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 3.0000000000000075,
+        "baselineWasm": 3.0000000000000075,
+        "candidateNative": 3.0000000000000075,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/-8",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536547,
+              "g": 148.87702996536547,
+              "b": 148.87702996536547,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/-8",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536547,
+              "g": 148.87702996536547,
+              "b": 148.87702996536547,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/-2",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536564,
+            "g": 148.87702996536564,
+            "b": 148.87702996536564,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 3.0000000000000018,
+        "baselineWasm": 3.0000000000000018,
+        "candidateNative": 3.0000000000000018,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/-2",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536564,
+              "g": 148.87702996536564,
+              "b": 148.87702996536564,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/-2",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536564,
+              "g": 148.87702996536564,
+              "b": 148.87702996536564,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/-1",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536567,
+            "g": 148.87702996536567,
+            "b": 148.87702996536567,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 3.0000000000000004,
+        "baselineWasm": 3.0000000000000004,
+        "candidateNative": 3.0000000000000004,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/-1",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536567,
+              "g": 148.87702996536567,
+              "b": 148.87702996536567,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/-1",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536567,
+              "g": 148.87702996536567,
+              "b": 148.87702996536567,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/0",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.8770299653657,
+            "g": 148.8770299653657,
+            "b": 148.8770299653657,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 2.9999999999999996,
+        "baselineWasm": 2.9999999999999996,
+        "candidateNative": 2.9999999999999996,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/0",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.8770299653657,
+              "g": 148.8770299653657,
+              "b": 148.8770299653657,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/0",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.8770299653657,
+              "g": 148.8770299653657,
+              "b": 148.8770299653657,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb994.e085092adb994.e085092adb9 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/1",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536572,
+            "g": 148.87702996536572,
+            "b": 148.87702996536572,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 2.9999999999999982,
+        "baselineWasm": 2.9999999999999982,
+        "candidateNative": 2.9999999999999982,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/1",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536572,
+              "g": 148.87702996536572,
+              "b": 148.87702996536572,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/1",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536572,
+              "g": 148.87702996536572,
+              "b": 148.87702996536572,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adb9894.e085092adb9894.e085092adb98 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/2",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536575,
+            "g": 148.87702996536575,
+            "b": 148.87702996536575,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 2.999999999999997,
+        "baselineWasm": 2.999999999999997,
+        "candidateNative": 2.999999999999997,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/2",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536575,
+              "g": 148.87702996536575,
+              "b": 148.87702996536575,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/2",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536575,
+              "g": 148.87702996536575,
+              "b": 148.87702996536575,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adba94.e085092adba94.e085092adba on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/8",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.87702996536592,
+            "g": 148.87702996536592,
+            "b": 148.87702996536592,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 2.9999999999999907,
+        "baselineWasm": 2.9999999999999907,
+        "candidateNative": 2.9999999999999907,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/8",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.87702996536592,
+              "g": 148.87702996536592,
+              "b": 148.87702996536592,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/8",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.87702996536592,
+              "g": 148.87702996536592,
+              "b": 148.87702996536592,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e085092adbd94.e085092adbd94.e085092adbd on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/-1e-6",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.8770289653657,
+            "g": 148.8770289653657,
+            "b": 148.8770289653657,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 3.000000037884294,
+        "baselineWasm": 3.000000037884294,
+        "candidateNative": 3.000000037884294,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/-1e-6",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.8770289653657,
+              "g": 148.8770289653657,
+              "b": 148.8770289653657,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/-1e-6",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.8770289653657,
+              "g": 148.8770289653657,
+              "b": 148.8770289653657,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-3/+1e-6",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 148.8770309653657,
+            "g": 148.8770309653657,
+            "b": 148.8770309653657,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 2.9999999621157043,
+        "baselineWasm": 2.9999999621157043,
+        "candidateNative": 2.9999999621157043,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-3/+1e-6",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 148.8770309653657,
+              "g": 148.8770309653657,
+              "b": 148.8770309653657,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "3.00:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-3/+1e-6",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 148.8770309653657,
+              "g": 148.8770309653657,
+              "b": 148.8770309653657,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 3.0:1 (need 3:1) — text #94.e08519f1d3394.e08519f1d3394.e08519f1d33 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/-8",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027944,
+            "g": 118.65635698027944,
+            "b": 118.65635698027944,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.500000000000008,
+        "baselineWasm": 4.500000000000008,
+        "candidateNative": 4.500000000000008,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/-8",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027944,
+              "g": 118.65635698027944,
+              "b": 118.65635698027944,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/-8",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027944,
+              "g": 118.65635698027944,
+              "b": 118.65635698027944,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/-2",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027953,
+            "g": 118.65635698027953,
+            "b": 118.65635698027953,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.500000000000003,
+        "baselineWasm": 4.500000000000003,
+        "candidateNative": 4.500000000000003,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/-2",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027953,
+              "g": 118.65635698027953,
+              "b": 118.65635698027953,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/-2",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027953,
+              "g": 118.65635698027953,
+              "b": 118.65635698027953,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/-1",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027954,
+            "g": 118.65635698027954,
+            "b": 118.65635698027954,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.500000000000001,
+        "baselineWasm": 4.500000000000001,
+        "candidateNative": 4.500000000000001,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/-1",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027954,
+              "g": 118.65635698027954,
+              "b": 118.65635698027954,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/-1",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027954,
+              "g": 118.65635698027954,
+              "b": 118.65635698027954,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/0",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027955,
+            "g": 118.65635698027955,
+            "b": 118.65635698027955,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.500000000000001,
+        "baselineWasm": 4.500000000000001,
+        "candidateNative": 4.500000000000001,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/0",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027955,
+              "g": 118.65635698027955,
+              "b": 118.65635698027955,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/0",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027955,
+              "g": 118.65635698027955,
+              "b": 118.65635698027955,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/1",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027957,
+            "g": 118.65635698027957,
+            "b": 118.65635698027957,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.499999999999999,
+        "baselineWasm": 4.499999999999999,
+        "candidateNative": 4.499999999999999,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/1",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027957,
+              "g": 118.65635698027957,
+              "b": 118.65635698027957,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/1",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027957,
+              "g": 118.65635698027957,
+              "b": 118.65635698027957,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5476.a80702d4cd5476.a80702d4cd54 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/2",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027958,
+            "g": 118.65635698027958,
+            "b": 118.65635698027958,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.499999999999999,
+        "baselineWasm": 4.499999999999999,
+        "candidateNative": 4.499999999999999,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/2",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027958,
+              "g": 118.65635698027958,
+              "b": 118.65635698027958,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/2",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027958,
+              "g": 118.65635698027958,
+              "b": 118.65635698027958,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd5876.a80702d4cd5876.a80702d4cd58 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/8",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635698027967,
+            "g": 118.65635698027967,
+            "b": 118.65635698027967,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.499999999999994,
+        "baselineWasm": 4.499999999999994,
+        "candidateNative": 4.499999999999994,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/8",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635698027967,
+              "g": 118.65635698027967,
+              "b": 118.65635698027967,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/8",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635698027967,
+              "g": 118.65635698027967,
+              "b": 118.65635698027967,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a80702d4cd776.a80702d4cd776.a80702d4cd7 on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/-1e-6",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635598027956,
+            "g": 118.65635598027956,
+            "b": 118.65635598027956,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.500000063955589,
+        "baselineWasm": 4.500000063955589,
+        "candidateNative": 4.500000063955589,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/-1e-6",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635598027956,
+              "g": 118.65635598027956,
+              "b": 118.65635598027956,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/-1e-6",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635598027956,
+              "g": 118.65635598027956,
+              "b": 118.65635598027956,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "contrast-4.5/+1e-6",
+        "module": "shared.color",
+        "name": "contrastRatio",
+        "args": [
+          {
+            "r": 118.65635798027955,
+            "g": 118.65635798027955,
+            "b": 118.65635798027955,
+            "a": 1
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          }
+        ],
+        "baselineNative": 4.499999936044413,
+        "baselineWasm": 4.499999936044413,
+        "candidateNative": 4.499999936044413,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "color-rule-4.5/+1e-6",
+        "module": "rules.checks",
+        "name": "checkColors",
+        "args": [
+          {
+            "tag": "div",
+            "textColor": {
+              "r": 118.65635798027955,
+              "g": 118.65635798027955,
+              "b": 118.65635798027955,
+              "a": 1
+            },
+            "bgColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "effectiveBgStops": null,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false,
+            "bgClip": "",
+            "bgImage": "none",
+            "classList": ""
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": "4.50:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "hover-rule-4.5/+1e-6",
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 118.65635798027955,
+              "g": 118.65635798027955,
+              "b": 118.65635798027955,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 4.5:1 (need 4.5:1) — text #76.a807139bc4f76.a807139bc4f76.a807139bc4f on #ffffff"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/-8",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.0435042202148,
+            "g": 89.0435042202148,
+            "b": 89.0435042202148,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.09999999999999967,
+        "baselineWasm": 0.09999999999999967,
+        "candidateNative": 0.09999999999999967,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/-8",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.0435042202148,
+              "g": 89.0435042202148,
+              "b": 89.0435042202148,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/-8",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.49999999999989,89.49999999999989,89.49999999999989); }"
+        ],
+        "baselineNative": true,
+        "baselineWasm": true,
+        "candidateNative": true,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/-2",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350422021488,
+            "g": 89.04350422021488,
+            "b": 89.04350422021488,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.09999999999999988,
+        "baselineWasm": 0.09999999999999988,
+        "candidateNative": 0.09999999999999988,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/-2",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350422021488,
+              "g": 89.04350422021488,
+              "b": 89.04350422021488,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/-2",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.49999999999997,89.49999999999997,89.49999999999997); }"
+        ],
+        "baselineNative": true,
+        "baselineWasm": true,
+        "candidateNative": true,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/-1",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.0435042202149,
+            "g": 89.0435042202149,
+            "b": 89.0435042202149,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.09999999999999992,
+        "baselineWasm": 0.09999999999999992,
+        "candidateNative": 0.09999999999999992,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/-1",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.0435042202149,
+              "g": 89.0435042202149,
+              "b": 89.0435042202149,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/-1",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.49999999999999,89.49999999999999,89.49999999999999); }"
+        ],
+        "baselineNative": true,
+        "baselineWasm": true,
+        "candidateNative": true,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/0",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350422021491,
+            "g": 89.04350422021491,
+            "b": 89.04350422021491,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.1,
+        "baselineWasm": 0.1,
+        "candidateNative": 0.1,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/0",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350422021491,
+              "g": 89.04350422021491,
+              "b": 89.04350422021491,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/0",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.5,89.5,89.5); }"
+        ],
+        "baselineNative": false,
+        "baselineWasm": false,
+        "candidateNative": false,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/1",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350422021493,
+            "g": 89.04350422021493,
+            "b": 89.04350422021493,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.10000000000000003,
+        "baselineWasm": 0.10000000000000003,
+        "candidateNative": 0.10000000000000003,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/1",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350422021493,
+              "g": 89.04350422021493,
+              "b": 89.04350422021493,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/1",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.50000000000001,89.50000000000001,89.50000000000001); }"
+        ],
+        "baselineNative": false,
+        "baselineWasm": false,
+        "candidateNative": false,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/2",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350422021494,
+            "g": 89.04350422021494,
+            "b": 89.04350422021494,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.10000000000000006,
+        "baselineWasm": 0.10000000000000006,
+        "candidateNative": 0.10000000000000006,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/2",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350422021494,
+              "g": 89.04350422021494,
+              "b": 89.04350422021494,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/2",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.50000000000003,89.50000000000003,89.50000000000003); }"
+        ],
+        "baselineNative": false,
+        "baselineWasm": false,
+        "candidateNative": false,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/8",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350422021503,
+            "g": 89.04350422021503,
+            "b": 89.04350422021503,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.10000000000000024,
+        "baselineWasm": 0.10000000000000024,
+        "candidateNative": 0.10000000000000024,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/8",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350422021503,
+              "g": 89.04350422021503,
+              "b": 89.04350422021503,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/8",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.50000000000011,89.50000000000011,89.50000000000011); }"
+        ],
+        "baselineNative": false,
+        "baselineWasm": false,
+        "candidateNative": false,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/-1e-6",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350322021492,
+            "g": 89.04350322021492,
+            "b": 89.04350322021492,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.09999999767145161,
+        "baselineWasm": 0.09999999767145161,
+        "candidateNative": 0.09999999767145161,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/-1e-6",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350322021492,
+              "g": 89.04350322021492,
+              "b": 89.04350322021492,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "baselineWasm": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "candidateNative": [
+          {
+            "id": "dark-glow",
+            "snippet": "Colored box-shadow glow (#00ffff) on dark background"
+          }
+        ],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/-1e-6",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.499999,89.499999,89.499999); }"
+        ],
+        "baselineNative": true,
+        "baselineWasm": true,
+        "candidateNative": true,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "dark-luminance/+1e-6",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 89.04350522021491,
+            "g": 89.04350522021491,
+            "b": 89.04350522021491,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.10000000232854836,
+        "baselineWasm": 0.10000000232854839,
+        "candidateNative": 0.10000000232854839,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "glow-rule/+1e-6",
+        "module": "rules.checks",
+        "name": "checkGlow",
+        "args": [
+          {
+            "boxShadow": "1px 1px 24px #00ffff",
+            "textShadow": "none",
+            "effectiveBg": {
+              "r": 89.04350522021491,
+              "g": 89.04350522021491,
+              "b": 89.04350522021491,
+              "a": 1
+            }
+          }
+        ],
+        "baselineNative": [],
+        "baselineWasm": [],
+        "candidateNative": [],
+        "classificationUnchanged": true
+      },
+      {
+        "id": "css-dark-root-round/+1e-6",
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          "body { background: rgb(89.500001,89.500001,89.500001); }"
+        ],
+        "baselineNative": false,
+        "baselineWasm": false,
+        "candidateNative": false,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/-8",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016399999999987,
+            "g": 10.016399999999987,
+            "b": 10.016399999999987,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.0030402476780185717,
+        "baselineWasm": 0.0030402476780185717,
+        "candidateNative": 0.0030402476780185717,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/-2",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016399999999997,
+            "g": 10.016399999999997,
+            "b": 10.016399999999997,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.003040247678018575,
+        "baselineWasm": 0.003040247678018575,
+        "candidateNative": 0.003040247678018575,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/-1",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016399999999999,
+            "g": 10.016399999999999,
+            "b": 10.016399999999999,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.0030402476780185756,
+        "baselineWasm": 0.0030402476780185756,
+        "candidateNative": 0.0030402476780185756,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/0",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.0164,
+            "g": 10.0164,
+            "b": 10.0164,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.003040247678018576,
+        "baselineWasm": 0.003040247678018576,
+        "candidateNative": 0.003040247678018576,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/1",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016400000000003,
+            "g": 10.016400000000003,
+            "b": 10.016400000000003,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.003039492486225864,
+        "baselineWasm": 0.003039492486225864,
+        "candidateNative": 0.003039492486225864,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/2",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016400000000004,
+            "g": 10.016400000000004,
+            "b": 10.016400000000004,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.0030394924862258655,
+        "baselineWasm": 0.0030394924862258655,
+        "candidateNative": 0.0030394924862258655,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/8",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016400000000015,
+            "g": 10.016400000000015,
+            "b": 10.016400000000015,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.003039492486225868,
+        "baselineWasm": 0.003039492486225868,
+        "candidateNative": 0.003039492486225868,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/-1e-6",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016399000000002,
+            "g": 10.016399000000002,
+            "b": 10.016399000000002,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.0030402473744915925,
+        "baselineWasm": 0.0030402473744915925,
+        "candidateNative": 0.0030402473744915925,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "gamma-branch/+1e-6",
+        "module": "shared.color",
+        "name": "relativeLuminance",
+        "args": [
+          {
+            "r": 10.016401,
+            "g": 10.016401,
+            "b": 10.016401,
+            "a": 1
+          }
+        ],
+        "baselineNative": 0.0030394927896517116,
+        "baselineWasm": 0.0030394927896517116,
+        "candidateNative": 0.0030394927896517116,
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/-8",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268467,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/-2",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268474,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/-1",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268475,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/0",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268476,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/1",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268477,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/2",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268478,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/8",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981807305268485,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/-1e-6",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981797305268476,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 127,
+          "g": 127,
+          "b": 127,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      },
+      {
+        "id": "srgb-round/+1e-6",
+        "module": "shared.color",
+        "name": "oklabToRgb",
+        "args": [
+          0.5981817305268476,
+          0,
+          0
+        ],
+        "baselineNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "baselineWasm": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "candidateNative": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        },
+        "classificationUnchanged": true
+      }
+    ],
+    "baselineNativeCandidateNativeExactDifferences": 1
+  },
+  "italic": {
+    "classification": "stale-directory-golden",
+    "singleFile": "tests/oracle/golden/detect-fixture-json-italic-serif-display-html.json",
+    "singleFileSha256": "2f14722bca498de5ac2342ccb696b64353249ec7cb6937c86f10e8e3a0380d28",
+    "directoryFile": "tests/oracle/golden/detect-dir-json-all-fixtures.json",
+    "directoryFileSha256": "431c5ee2777d178c66ed6cb331c691a9d64406d09454b88a307c9c8e19de2fb7",
+    "singleCount": 8,
+    "directorySubsetCount": 7,
+    "missingFromDirectory": [
+      {
+        "antipattern": "italic-serif-display",
+        "name": "Italic serif display headline",
+        "description": "Oversized italic serif (Fraunces, Recoleta, Playfair, Newsreader-italic) as the primary hero headline reads as taste in isolation but has become the universal AI-startup landing page hero. Set roman, or move to a non-serif display face. Editorial / magazine register may legitimately want this — judge by context.",
+        "severity": "warning",
+        "category": "slop",
+        "file": "<REPO>/tests/fixtures/antipatterns/italic-serif-display.html",
+        "line": 0,
+        "snippet": "italic serif h1 (fraunces) at 72px \"Inline Em Inside Roman\""
+      }
+    ],
+    "extraInDirectory": [],
+    "directoryActualOnly": [
+      {
+        "antipattern": "italic-serif-display",
+        "name": "Italic serif display headline",
+        "description": "Oversized italic serif (Fraunces, Recoleta, Playfair, Newsreader-italic) as the primary hero headline reads as taste in isolation but has become the universal AI-startup landing page hero. Set roman, or move to a non-serif display face. Editorial / magazine register may legitimately want this — judge by context.",
+        "severity": "warning",
+        "category": "slop",
+        "file": "<REPO>/tests/fixtures/antipatterns/italic-serif-display.html",
+        "line": 0,
+        "snippet": "italic serif h1 (fraunces) at 72px \"Inline Em Inside Roman\""
+      }
+    ],
+    "actualSingle": {
+      "binarySha256": "e99441d027be9fc00ff25da74bb1371f30cf17ece270327bab14dc9ce76c7d31",
+      "exit": 2,
+      "exactMatchToSingleGolden": true
+    },
+    "sources": [
+      "tests/fixtures/antipatterns/italic-serif-display.html:146",
+      "crates/html/src/adapters.rs:706",
+      "crates/core/src/browser/element_checks.rs:559",
+      "tests/oracle/cases/detect.mjs:25",
+      "tests/oracle/cases/detect.mjs:36"
+    ]
+  },
+  "references": [
+    {
+      "title": "Rust f64::powf unspecified precision",
+      "url": "https://doc.rust-lang.org/std/primitive.f64.html#method.powf"
+    },
+    {
+      "title": "ECMAScript Number::exponentiate",
+      "url": "https://tc39.es/ecma262/2024/#sec-numeric-types-number-exponentiate"
+    },
+    {
+      "title": "libm 0.2.16 pow",
+      "url": "https://docs.rs/libm/0.2.16/libm/fn.pow.html"
+    }
+  ],
+  "recordedFunctionsWithoutVectors": [
+    "shared.color/hwbToRgb",
+    "rules.checks/enclosingCssSelector",
+    "rules.checks/isZeroOffset",
+    "rules.checks/collectPulseKeyframes",
+    "rules.checks/stripReducedMotionBlocks",
+    "rules.checks/checkHoverContrast",
+    "rules.checks/resolveHeroHeadingSizePx",
+    "rules.checks/cssTextHasDarkRootBg",
+    "rules.checks/isRoundDotRadius",
+    "rules.checks/buildHtmlPatternCorpora"
+  ],
+  "supplemental": {
+    "kind": "phoenix-specification-vectors",
+    "origin": "Independent hand-authored literal expectations from the documented interfaces and simple observable decisions; not re-recorded JavaScript and not copied from either candidate runtime.",
+    "cases": 54,
+    "interfaces": [
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "file": "crates/foundation/src/color.rs",
+        "line": 551,
+        "shape": "(h,w,blackness) -> RGBA",
+        "baselineSha256": "b610db8876e5fae4e18f2fd727ce05b283d5492fae051348f52d92d034e88f26"
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "file": "crates/foundation/src/css/scan.rs",
+        "line": 81,
+        "shape": "(css,UTF16index) -> string|null",
+        "baselineSha256": "e8c38aba3ca76af6b196af599c2e5116da794375c0bcf5a5d0d59424316c0791"
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "file": "crates/foundation/src/css/scan.rs",
+        "line": 180,
+        "shape": "(value) -> boolean",
+        "baselineSha256": "e8c38aba3ca76af6b196af599c2e5116da794375c0bcf5a5d0d59424316c0791"
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "file": "crates/foundation/src/css/scan.rs",
+        "line": 307,
+        "shape": "(css) -> $map(name,boolean)",
+        "baselineSha256": "e8c38aba3ca76af6b196af599c2e5116da794375c0bcf5a5d0d59424316c0791"
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "file": "crates/foundation/src/css/scan.rs",
+        "line": 400,
+        "shape": "(css) -> string",
+        "baselineSha256": "e8c38aba3ca76af6b196af599c2e5116da794375c0bcf5a5d0d59424316c0791"
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "file": "crates/core/src/checks/rules.rs",
+        "line": 336,
+        "shape": "(options) -> RuleHit[]",
+        "baselineSha256": "0aed540d8685a65ef1fe0c5f5a53bbd081bdc1fd678c435d37dcc09fb4a9791d"
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "file": "crates/core/src/checks/rules.rs",
+        "line": 605,
+        "shape": "(value) -> pixels",
+        "baselineSha256": "0aed540d8685a65ef1fe0c5f5a53bbd081bdc1fd678c435d37dcc09fb4a9791d"
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "file": "crates/core/src/checks/css_scan.rs",
+        "line": 104,
+        "shape": "(css) -> boolean",
+        "baselineSha256": "7949fc33666742cb50a796f459d5760d9984fea8765c9bd0f7cda23fd5ebe444"
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "file": "crates/core/src/checks/css_scan.rs",
+        "line": 1248,
+        "shape": "(radius,width,height) -> boolean",
+        "baselineSha256": "7949fc33666742cb50a796f459d5760d9984fea8765c9bd0f7cda23fd5ebe444"
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "file": "crates/core/src/checks/html_patterns.rs",
+        "line": 185,
+        "shape": "(html) -> {styleText,classText}",
+        "baselineSha256": "441b277f8a08be2707e834c53db7f724d2ee2f63dcc4c9776cb36273da5b2f81"
+      }
+    ],
+    "probes": [
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/red",
+        "args": [
+          0,
+          0,
+          0
+        ],
+        "expected": {
+          "r": 255,
+          "g": 0,
+          "b": 0,
+          "a": 1
+        }
+      },
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/green",
+        "args": [
+          120,
+          0,
+          0
+        ],
+        "expected": {
+          "r": 0,
+          "g": 255,
+          "b": 0,
+          "a": 1
+        }
+      },
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/blue",
+        "args": [
+          240,
+          0,
+          0
+        ],
+        "expected": {
+          "r": 0,
+          "g": 0,
+          "b": 255,
+          "a": 1
+        }
+      },
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/white",
+        "args": [
+          60,
+          1,
+          0
+        ],
+        "expected": {
+          "r": 255,
+          "g": 255,
+          "b": 255,
+          "a": 1
+        }
+      },
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/black",
+        "args": [
+          60,
+          0,
+          1
+        ],
+        "expected": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 1
+        }
+      },
+      {
+        "module": "shared.color",
+        "name": "hwbToRgb",
+        "id": "supplemental/hwbToRgb/neutral-sum-one",
+        "args": [
+          0,
+          0.5,
+          0.5
+        ],
+        "expected": {
+          "r": 128,
+          "g": 128,
+          "b": 128,
+          "a": 1
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "id": "supplemental/enclosingCssSelector/empty",
+        "args": [
+          "",
+          0
+        ],
+        "expected": null
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "id": "supplemental/enclosingCssSelector/simple",
+        "args": [
+          ".a { color:red; }",
+          5
+        ],
+        "expected": ".a"
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "id": "supplemental/enclosingCssSelector/after-closed",
+        "args": [
+          ".a {color:red;} tail",
+          19
+        ],
+        "expected": null
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "id": "supplemental/enclosingCssSelector/comment-brace",
+        "args": [
+          "/* } */ .a {color:red;}",
+          12
+        ],
+        "expected": ".a"
+      },
+      {
+        "module": "rules.checks",
+        "name": "enclosingCssSelector",
+        "id": "supplemental/enclosingCssSelector/utf16-selector",
+        "args": [
+          ".😄{color:red}",
+          4
+        ],
+        "expected": ".😄"
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "id": "supplemental/isZeroOffset/missing",
+        "args": [
+          null
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "id": "supplemental/isZeroOffset/zero",
+        "args": [
+          "0"
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "id": "supplemental/isZeroOffset/px",
+        "args": [
+          "0px"
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "id": "supplemental/isZeroOffset/negative-rem",
+        "args": [
+          " -0rem "
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "isZeroOffset",
+        "id": "supplemental/isZeroOffset/fractional-text",
+        "args": [
+          "0.0"
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "id": "supplemental/collectPulseKeyframes/empty",
+        "args": [
+          ""
+        ],
+        "expected": {
+          "$map": []
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "id": "supplemental/collectPulseKeyframes/opacity",
+        "args": [
+          "@keyframes pulse{from{opacity:0}to{opacity:1}}"
+        ],
+        "expected": {
+          "$map": [
+            [
+              "pulse",
+              true
+            ]
+          ]
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "id": "supplemental/collectPulseKeyframes/translation",
+        "args": [
+          "@keyframes move{from{transform:translateX(0)}to{transform:translateX(1px)}}"
+        ],
+        "expected": {
+          "$map": [
+            [
+              "move",
+              false
+            ]
+          ]
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "id": "supplemental/collectPulseKeyframes/duplicate-upgrade",
+        "args": [
+          "@keyframes same{from{left:0}to{left:1px}}@keyframes same{from{transform:scale(1)}to{transform:scale(2)}}"
+        ],
+        "expected": {
+          "$map": [
+            [
+              "same",
+              true
+            ]
+          ]
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "collectPulseKeyframes",
+        "id": "supplemental/collectPulseKeyframes/map-order",
+        "args": [
+          "@keyframes z{from{opacity:0}to{opacity:1}}@keyframes a{from{left:0}to{left:1px}}"
+        ],
+        "expected": {
+          "$map": [
+            [
+              "z",
+              true
+            ],
+            [
+              "a",
+              false
+            ]
+          ]
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "id": "supplemental/stripReducedMotionBlocks/empty",
+        "args": [
+          ""
+        ],
+        "expected": ""
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "id": "supplemental/stripReducedMotionBlocks/plain",
+        "args": [
+          "a{opacity:1}"
+        ],
+        "expected": "a{opacity:1}"
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "id": "supplemental/stripReducedMotionBlocks/remove",
+        "args": [
+          ".a{}@media (prefers-reduced-motion: reduce){.b{animation:none}}.c{}"
+        ],
+        "expected": ".a{}.c{}"
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "id": "supplemental/stripReducedMotionBlocks/no-preference",
+        "args": [
+          "@media (prefers-reduced-motion: no-preference){.a{animation:spin}}"
+        ],
+        "expected": "@media (prefers-reduced-motion: no-preference){.a{animation:spin}}"
+      },
+      {
+        "module": "rules.checks",
+        "name": "stripReducedMotionBlocks",
+        "id": "supplemental/stripReducedMotionBlocks/nested",
+        "args": [
+          "@MEDIA (prefers-reduced-motion: reduce){@supports(display:grid){.a{animation:none}}}.out{}"
+        ],
+        "expected": ".out{}"
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/missing",
+        "args": [
+          {}
+        ],
+        "expected": []
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/normal-low",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "expected": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 1.0:1 (need 4.5:1) — text #ffffff on #ffffff"
+          }
+        ]
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/large-low",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 24,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "expected": [
+          {
+            "id": "low-contrast",
+            "snippet": ":hover state 1.0:1 (need 3:1) — text #ffffff on #ffffff"
+          }
+        ]
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/sufficient",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "expected": []
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/emoji",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 1,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": true
+          }
+        ],
+        "expected": []
+      },
+      {
+        "module": "rules.checks",
+        "name": "checkHoverContrast",
+        "id": "supplemental/checkHoverContrast/transparent-safe-tag",
+        "args": [
+          {
+            "tag": "a",
+            "textColor": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "bg": {
+              "r": 255,
+              "g": 255,
+              "b": 255,
+              "a": 1
+            },
+            "ownBgAlpha": 0,
+            "fontSize": 16,
+            "fontWeight": 400,
+            "hasDirectText": true,
+            "isEmojiOnly": false
+          }
+        ],
+        "expected": []
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "id": "supplemental/resolveHeroHeadingSizePx/missing",
+        "args": [
+          null
+        ],
+        "expected": 0
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "id": "supplemental/resolveHeroHeadingSizePx/px",
+        "args": [
+          "48px"
+        ],
+        "expected": 48
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "id": "supplemental/resolveHeroHeadingSizePx/rem",
+        "args": [
+          "3rem"
+        ],
+        "expected": 48
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "id": "supplemental/resolveHeroHeadingSizePx/clamp",
+        "args": [
+          "clamp(2rem,5vw,4rem)"
+        ],
+        "expected": 64
+      },
+      {
+        "module": "rules.checks",
+        "name": "resolveHeroHeadingSizePx",
+        "id": "supplemental/resolveHeroHeadingSizePx/unsupported-vw",
+        "args": [
+          "10vw"
+        ],
+        "expected": 0
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/empty",
+        "args": [
+          ""
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/non-root",
+        "args": [
+          ".card{background:#000;}"
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/dark",
+        "args": [
+          "body{background:#000;}"
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/light",
+        "args": [
+          "html{background:#fff;}"
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/custom-property",
+        "args": [
+          ":root{--canvas:#000;} body{background:var(--canvas);}"
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "id": "supplemental/cssTextHasDarkRootBg/alpha-boundary",
+        "args": [
+          "body{background:rgba(0,0,0,0.5);}"
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/empty",
+        "args": [
+          "",
+          10,
+          10
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/below-percent",
+        "args": [
+          "39%",
+          10,
+          10
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/at-percent",
+        "args": [
+          "40%",
+          10,
+          10
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/below-size",
+        "args": [
+          "3.9px",
+          10,
+          10
+        ],
+        "expected": false
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/at-size",
+        "args": [
+          "4px",
+          10,
+          10
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "isRoundDotRadius",
+        "id": "supplemental/isRoundDotRadius/large-radius",
+        "args": [
+          "999px",
+          10000,
+          10000
+        ],
+        "expected": true
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "id": "supplemental/buildHtmlPatternCorpora/empty",
+        "args": [
+          ""
+        ],
+        "expected": {
+          "styleText": "",
+          "classText": ""
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "id": "supplemental/buildHtmlPatternCorpora/plain-css",
+        "args": [
+          ".a{color:red}"
+        ],
+        "expected": {
+          "styleText": ".a{color:red}",
+          "classText": ".a{color:red}"
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "id": "supplemental/buildHtmlPatternCorpora/style-and-inline",
+        "args": [
+          "<style>.a{color:red}</style><div class=\"a b\" style=\"opacity:.5\"></div>"
+        ],
+        "expected": {
+          "styleText": ".a{color:red}\nstyle=\"opacity:.5\"",
+          "classText": "a b"
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "id": "supplemental/buildHtmlPatternCorpora/class-order",
+        "args": [
+          "<div class=\"one\"></div><span class='two three'></span>"
+        ],
+        "expected": {
+          "styleText": "",
+          "classText": "one\ntwo three"
+        }
+      },
+      {
+        "module": "rules.checks",
+        "name": "buildHtmlPatternCorpora",
+        "id": "supplemental/buildHtmlPatternCorpora/uppercase-style",
+        "args": [
+          "<STYLE>.a{color:red}</STYLE>"
+        ],
+        "expected": {
+          "styleText": ".a{color:red}",
+          "classText": ""
+        }
+      }
+    ],
+    "validation": {
+      "status": "native-wasm-exact-verified",
+      "cases": 54,
+      "candidateNativeFailures": 0,
+      "candidateWasmFailures": 0,
+      "parityFailures": 0,
+      "baselineNativeFailures": 0,
+      "baselineNativeRole": "Additional historical evidence executed explicitly; never a default local-directory dependency."
+    },
+    "literalCorrections": [
+      {
+        "ids": [
+          "supplemental/checkHoverContrast/normal-low",
+          "supplemental/checkHoverContrast/large-low"
+        ],
+        "cause": "Handwritten display string omitted the fixed one-decimal ratio format; source rules.rs uses to_fixed(ratio,1). The finding/classification was unchanged.",
+        "source": "crates/core/src/checks/rules.rs:360"
+      },
+      {
+        "ids": [
+          "supplemental/cssTextHasDarkRootBg/non-root"
+        ],
+        "cause": "The fixed source explicitly matches DARK_BG_RE/TW_DARK_BG_RE against all content before root-scoped parsing; this helper is a conservative background heuristic despite its name. Both fixed baseline and candidates return true.",
+        "source": "crates/core/src/checks/css_scan.rs:106"
+      },
+      {
+        "ids": [
+          "supplemental/cssTextHasDarkRootBg/custom-property"
+        ],
+        "cause": "The original adjacent selector input exposed a pre-existing non-overlapping-captures limitation; the positive custom-property vector now includes the separating space. The original logical mismatch is retained separately in knownLimitations.",
+        "source": "crates/core/src/checks/css_scan.rs:82"
+      }
+    ],
+    "knownLimitations": [
+      {
+        "module": "rules.checks",
+        "name": "cssTextHasDarkRootBg",
+        "args": [
+          ":root{--canvas:#000;}body{background:var(--canvas);}"
+        ],
+        "expectedLogical": true,
+        "baselineNative": false,
+        "candidateNative": false,
+        "candidateWasm": false,
+        "classification": "pre-existing-adjacent-root-selector-parser-limitation",
+        "source": "crates/core/src/checks/css_scan.rs:82",
+        "cause": "ROOT_BLOCK_RE consumes the prior closing brace; the next immediately adjacent body selector has no reusable preceding delimiter. This is not fixed or waived by numeric parity."
+      }
+    ]
+  }
+}

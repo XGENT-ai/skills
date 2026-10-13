@@ -1,0 +1,1715 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "0.5.0",
+  "sourceCommit": "19999ebfc0a7eb213ed2716b649b444ef97d4bd9",
+  "skillVersion": "4.5.0",
+  "engineVersion": "0.1.11",
+  "installerSha256": "5067ae747701ea92f25003e34477eea53b9dcf7f08101e36ac6a2c71abdf7691",
+  "versionSha256": "4cf48a06e3e4abffa19916cb33315c3c5b453974759dd9e1f0f06abe9ac39fa6",
+  "bundleManifestSha256": "5323a7f880c9899e63b3077864b7f986f64aa8cafac7b5b082f0cd6f114ea3ec",
+  "tarball": "https://registry.npmjs.org/@xgent-ai/skills/-/skills-0.5.0.tgz",
+  "provenance": {
+    "primary": "verified-published-npm-tarball",
+    "npm": {
+      "filename": "xgent-ai-skills-0.5.0.tgz",
+      "url": "https://registry.npmjs.org/@xgent-ai/skills/-/skills-0.5.0.tgz",
+      "sha256": "74376bcf6ea3227857653b184e21fb2cbcc85058a503346ca878aa2d40934119",
+      "shasum": "5f9f35c1161fb16485f124cbaace77b763d5780d",
+      "integrity": "sha512-N7Yr6UMrO6o4oxffV0SJmxFh+l0XC3QhVG+sPMikA+LN+QqjvAIoqw5jilsFby61qt7T++5Dr2wmvCeHAemrzw==",
+      "size": 5691613,
+      "unpackedSize": 18643444,
+      "verifiedFileCount": 1051,
+      "extractedBytesVerified": true
+    },
+    "git": {
+      "versionReference": "19999ebfc0a7eb213ed2716b649b444ef97d4bd9",
+      "comparison": {
+        "bin/xgent-skills.js": {
+          "npmSha256": "5067ae747701ea92f25003e34477eea53b9dcf7f08101e36ac6a2c71abdf7691",
+          "gitSha256": "5067ae747701ea92f25003e34477eea53b9dcf7f08101e36ac6a2c71abdf7691",
+          "matches": true
+        },
+        "vendor/impeccable/VERSION.json": {
+          "npmSha256": "4cf48a06e3e4abffa19916cb33315c3c5b453974759dd9e1f0f06abe9ac39fa6",
+          "gitSha256": "4cf48a06e3e4abffa19916cb33315c3c5b453974759dd9e1f0f06abe9ac39fa6",
+          "matches": true
+        },
+        "vendor/impeccable/bundle/manifest.json": {
+          "npmSha256": "5323a7f880c9899e63b3077864b7f986f64aa8cafac7b5b082f0cd6f114ea3ec",
+          "gitSha256": "5323a7f880c9899e63b3077864b7f986f64aa8cafac7b5b082f0cd6f114ea3ec",
+          "matches": true
+        }
+      },
+      "migrationFilesCommit": "19999ebfc0a7eb213ed2716b649b444ef97d4bd9",
+      "gitPackageVersion": "0.5.0",
+      "scope": "installer, VERSION.json, bundle manifest and all published bundle blobs; not the complete npm package tree",
+      "matchedFileCount": 415,
+      "allMigrationFilesMatch": true
+    }
+  },
+  "legacyHooks": {
+    "markers": [
+      "skills/impeccable/scripts/hook-probe.mjs",
+      "skills/impeccable/scripts/hook.mjs",
+      "skills/impeccable/scripts/hook-before-edit.mjs",
+      "skills/impeccable/scripts/hook-after-edit.mjs",
+      "skills/impeccable/scripts/hook-stop.mjs"
+    ],
+    "evidence": "bin/xgent-skills.js",
+    "releasedScriptBodiesAvailable": false
+  },
+  "xgent": {
+    "managedSettings": {
+      "statusLine": {
+        "type": "command",
+        "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/xgent-statusline.js\"",
+        "padding": 0
+      }
+    },
+    "hookFiles": {
+      ".claude/hooks/xgent-statusline.js": "724f52ecf0f87eb94aeacc17e391ab30c074d9067d5d546a61c9a0e8775a1647"
+    }
+  },
+  "providers": {
+    ".agent": {
+      "files": {
+        "skills/impeccable/SKILL.md": "a93397adc906e245c69b42d4b25931fc92dc75baa60ca9a3749ba23b52ba01a0",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "207d443cabe4e6fe1351f91785748957f757bf1e7aeca405433c0329dad46a15",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "9eb03b319ce7a2b281bc85ed1b0a437eb05ab2f765fc267354f9f9e6cbfadc25",
+        "skills/impeccable/reference/degraded/asset-producer.md": "647bab2f5cf6279d58d808f4df05d1ac63c1c86c6df9d13406ae776458653995",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "4df48b7a86d525ad12e7889a1fd16b06ed4b25a9470c359c7193a6d82649262f",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "2499b18f26639694344ca95682f47c65494f730cfff88aa9bd2aa83a22e5926d",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "b626e0677288a1660e9ce80c4f0454b527010239681f6b8dcc0f36b4a4d6bcb2",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "d7211a816aa8ca1111701930f7cdab82b4c8caa94c9a37522c1d7945209b01c2",
+        "skills/impeccable/reference/live-setup.md": "745b1f74877f6b3445da48af65dc45c66c3daa7738cb9a928aaa900889c2a204",
+        "skills/impeccable/reference/live.md": "5b5dcf7029376ee6fbcf13e5975eb828dd1dbf41736c1bd5017dcda8173b1ebc",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "796bbd8231413fcbf22eb7e6f40c402842aa4b10b1894545a7b05d9201ca7c4a",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "b5f4fbb4a044c3f5ec14adc847222488f00fccabbf79ecd0b21084c8d319d616",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "8157b5a376e46980117f1ad6d08b24ee7be966f5de64b041bd213d486ea8c077",
+        "skills/impeccable/reference/routing.md": "c06effcdc60859157208d3b7ee23d56160f2386f6a2dfa2514ba82fe21828ae0",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "012f548547fae48ebdd22a3c3af8a01032641fddd530e3783bd73b7358ab2c49",
+        "skills/impeccable/reference/visualize.md": "857c4a0db5859f1fa91152db684528299dfc552525f50f416d1625a270e12671",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".agents": {
+      "files": {
+        "skills/impeccable/SKILL.md": "37680abf9a8e446619fcd33862718f483d197bf2652f966adca8dc54d2909b9d",
+        "skills/impeccable/agents/impeccable_asset_producer.toml": "d6a51f4df6d76f16b95ab81268a689f4c5936d505c5bb25c80ad7423f927bbc6",
+        "skills/impeccable/agents/impeccable_documenter.toml": "2feb3768125ba6469c92a50d516727e6d42f44579165ddfd33409948e2a3803d",
+        "skills/impeccable/agents/impeccable_finish_reviewer.toml": "d57c3e0453f601ad688911fca4471057c7b46b561fcd42a1e12a581101c5186c",
+        "skills/impeccable/agents/impeccable_manual_edit_applier.toml": "6c9ce3e27ec4520ead001da3aad2a2ebba481c4e5cd22873db8890259ee579fe",
+        "skills/impeccable/agents/openai.yaml": "cbd8bd68fa00935dd0f179adb169252629cf7ee443ea9dc7db77e7ef2cf77446",
+        "skills/impeccable/reference/adapt.md": "871a8e4d749b807c693ebabd83defbd6c76e1bd2a0f53a28a460cb1308ba8634",
+        "skills/impeccable/reference/adapt.native.md": "6acc0bf221a4ddc6e5c6438348920b2ca2393b29c4314dbde2cdc23f2b1a9639",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "d658c48ffbe0031e8e3b318996cad6ceafe29e40aa50d5bb25e4bf1d6839dc7c",
+        "skills/impeccable/reference/audit.md": "d5f83912eda93d42f93522bb74aeff0ea04d9c559577ec52fcccc130dd03166d",
+        "skills/impeccable/reference/audit.native.md": "960cb922bc934adbf9192e9428ff6bec1f382038166f02a785939c93b7391067",
+        "skills/impeccable/reference/bolder.md": "f964506c0fae87b3c2c1db7016ddc9be9ef970bbcf5548d684b997b5d5991586",
+        "skills/impeccable/reference/clarify.md": "173dd66abe65633910dcb04a51f40d6ff2a793f87088f022a02fc4cad24dd133",
+        "skills/impeccable/reference/colorize.md": "bc5f71f1129d0f2c310d913d07c8dc609a1d25644121bd78c308f42d52a0b9e9",
+        "skills/impeccable/reference/component-review.md": "514a27fc9830455828d337cfc2fa95fa86be8e5464501bbabb9aca09a66b40ad",
+        "skills/impeccable/reference/craft-floor.md": "e802e4f7bdc89050a9c0f2ca506e1d493a2316e6e810c0336c57aa073717ef3e",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "cb8caddbb3919e5bf7f252143b519fb16db28a244642d937b186cb89962d9201",
+        "skills/impeccable/reference/degraded/asset-producer.md": "754e9f0aa2101245a83cb17d8cc5bc49cf87997b29a83dedbfff283dbd0a8c4f",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "098a891028ce59c212b747d3c70468dd750aff7053a703d1336045ed31e0da7c",
+        "skills/impeccable/reference/distill.md": "ea8432c90c30ecb0426662a681ead5c0941113079704e1a766cda09e85b15b4f",
+        "skills/impeccable/reference/doctor.md": "a98b397cedeeaa1da57f3395b3d9b6c1fc477f4247fb9dc13e4da3da588283ff",
+        "skills/impeccable/reference/document.md": "3673248740bcdd1122ccc610093ba2fe52f3943a61ce0b7170b74dc49e5b6098",
+        "skills/impeccable/reference/extract.md": "31b90048c0b540daec46762a10c2b6b6434737a89af005054d8b848d829d003b",
+        "skills/impeccable/reference/generate.md": "53628d05b7eff0d4f48b95e48fad40266452fe1b42f398bd88dd9328353e0dd8",
+        "skills/impeccable/reference/harden.md": "16ba7fca1973c5faf53dd2ca523559129c0fe9e5f8d50b645f527afa78186cd2",
+        "skills/impeccable/reference/hooks.md": "56cc1bba51e6805de370160ce4a9399fef3740571204f13c3c751725870305e5",
+        "skills/impeccable/reference/init.md": "bb069b43c09109d7031b0374e31955749fec657b252d39782f11e8985aca2b51",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "0bc7d7971b3edf2acd0580e847458dc6d84129d90715b452799ace3bed815c7c",
+        "skills/impeccable/reference/live-setup.md": "2b5b2fbf5f658f34ea1997fb1aeebe01604d05187f75c6a4f1f55a5bc78520a4",
+        "skills/impeccable/reference/live.md": "68c5636a7858dd0b5137a9229c15e25fdc2ee40a0f8a4e9d809f78e809256262",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "634257e766b1fecacd25e27dbfc7e21ef3b440b01e94e92b8b17711018d8a661",
+        "skills/impeccable/reference/onboard.md": "ef2dde00030580ed2765cbf7be9b2ea4a6f64cb915b804fd6f6abcf38051c7b9",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "f672ef8251a3ed4051a053d30819664951b17540b2899acd27d20e500c234abc",
+        "skills/impeccable/reference/overdrive.md": "fce6688138d2ceb1e3d2cde5231f54b1d8dc8748b4c95a7919aa83b6f924cf96",
+        "skills/impeccable/reference/polish.md": "81666fc7f783b4e3514db6554e713dc0479bd9cdedb06e93d15f8b579aae869a",
+        "skills/impeccable/reference/quieter.md": "190a4e642ca362d7499f3c3ab123e21f18f75457d11f072b545a183f296e6495",
+        "skills/impeccable/reference/region-map.md": "778cedc9199b407d3e23fa1041e38d548b00b1101a33517aa2a2eb299f9d0edc",
+        "skills/impeccable/reference/routing.md": "77ae09542fbc10aa4e8b119d6fd19359908a47c13c30068d6a150bfdb50e3e10",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "442749aed338f51c1a3ccfb182c6ade9b74b90590b67984062ac94a5b100e914",
+        "skills/impeccable/reference/visualize.md": "88549c11ea55d5dfc9f551db9a9c270d7362a9d42aa83db7747c9a7f020e1255",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hookArtifact": {
+        "source": ".codex/hooks.json",
+        "destination": ".codex/hooks.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "599afc25c1d6d083e4d4e60e1617ab05f6c5ecd52be75473f3788063219aa174",
+          "value": {
+            "hooks": {
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write|apply_patch",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "shape": "xgent-installer",
+          "value": {
+            "hooks": {
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write|apply_patch",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".agents/skills/impeccable/scripts/impeccable\" ] || \".agents/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".agents/skills/impeccable/scripts/impeccable.cmd\" (\".agents/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".agents/skills/impeccable/scripts/impeccable\" ] || \".agents/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".agents/skills/impeccable/scripts/impeccable.cmd\" (\".agents/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".claude": {
+      "files": {
+        "agents/impeccable-asset-producer.md": "45dcea8da47cc21f447041daa942cf5d92cddde9a5a02c196cedbd159c829304",
+        "agents/impeccable-documenter.md": "6bc62a59f6fef0b749927c8d10e9849ab2411199d86d70772a86f8e83ac309f5",
+        "agents/impeccable-finish-reviewer.md": "08398fa2d8e2b06b849f1c0f032e1e93b832e9294aed35c1c7f62b938d62ee80",
+        "agents/impeccable-manual-edit-applier.md": "b2d71ff0df7ed49e06dfc4acfce3d3f7eb48afa68be04763ee8c08354df50a07",
+        "settings.json": "ba0d96d88ab40fad1cb522e60b11affc568cfe9d340110ac5e71f834ac3d0f4a",
+        "skills/impeccable/SKILL.md": "2b9379cdb329890eebe2384fbaa23f771745f30d8cfc43e180ebd092e69bcd2f",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "4879f38b23d0a251a63cbb0327e660296194cd2e71eb4da3236c6ebfe5807746",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "814610dee1081abc4213476ff0c4ae3e8f457909550d250ea0f89953687c85c6",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "c9284892cb1f21aaeaf93fdf2e9e7a679d05e0baa8ddf309a79a9790d262ad38",
+        "skills/impeccable/reference/degraded/asset-producer.md": "5e6eea05456108b8766cf354dda998e90b6a5ecca7f15d807e28659ee78c306f",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "b2f60e0154bf0e687badc46d8c8420e2118a9a6e21162050722be779dc02cb6d",
+        "skills/impeccable/reference/doctor.md": "d6a1fa1689642a6db9027493747d7ed54f9e0cae660472022c0a0a8dfdead3f4",
+        "skills/impeccable/reference/document.md": "87b3db688c7963898bda8096f7868fed05ec5a0a80d14298e8b906b70cdf9c42",
+        "skills/impeccable/reference/extract.md": "bfc51972fbf387566dc9e29c8b1af479a66ab401fdbce659fae9e6a5a9d85316",
+        "skills/impeccable/reference/generate.md": "fc149b5bc7a8d0cc9b9bf86e5013793f3857c1c302212e9aaf101cb95427386b",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "51032bb883137007127d30189b44b516d0e6140271bf5881da7eca76f8bd282c",
+        "skills/impeccable/reference/init.md": "78c236dadb7e70337dc9dfa67e65fc15b7abed137ad320c16410ddfa7aec34f9",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "64802d14087fc96b38ef3881fef8098b36068d07f3b942031637b18eef3dd2af",
+        "skills/impeccable/reference/live-setup.md": "6e7e3b7c4cf331cdb43f4546c164acd6c45a267ce3289dcfa87e13202d98c747",
+        "skills/impeccable/reference/live.md": "b4def5b57733b6ba233570bd5691a536901f8b15479fc0111a2cde56224d0e1a",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "de70398719140e4951aa111e9625de5ed916ad1ef0877e4ab6f6b4a7e3cc5f8f",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "a9856cb40da6519b1334bcfc75a4fbe83bef39ca86ee6f3effcb2a96794c627c",
+        "skills/impeccable/reference/polish.md": "b8d49a3cab3428d9f351502e9c2c5802cef187e0d2af626ef3e1cd1837fd06bf",
+        "skills/impeccable/reference/quieter.md": "ee6d6d127c1c2ab3526d529a8e3698be2185b5e346ac617f37501de2c0698b97",
+        "skills/impeccable/reference/region-map.md": "4ea8e05d0f88d24f182ad554da84317f90b9730e29fad262143ddf423a1f8645",
+        "skills/impeccable/reference/routing.md": "56285b28b0ffe471761c2ad062d3f933ed2346ca1b617f1323a30fed99a1a852",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "696c15f96d49a03091b71a408151a3297521f7a8231b98ca9b1103667a0b5f89",
+        "skills/impeccable/reference/visualize.md": "cdf8a88b9865599c58fe285041d2d46eea7d9bd2d4075d82de358191742b20ad",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hookArtifact": {
+        "source": ".claude/settings.json",
+        "destination": ".claude/settings.local.json",
+        "shared": ".claude/settings.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "ba0d96d88ab40fad1cb522e60b11affc568cfe9d340110ac5e71f834ac3d0f4a",
+          "value": {
+            "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop.",
+            "hooks": {
+              "SessionStart": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Preparing build session"
+                    }
+                  ]
+                }
+              ],
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "shape": "xgent-installer",
+          "value": {
+            "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop.",
+            "hooks": {
+              "SessionStart": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Preparing build session"
+                    }
+                  ]
+                }
+              ],
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".codex": {
+      "files": {
+        "hooks.json": "599afc25c1d6d083e4d4e60e1617ab05f6c5ecd52be75473f3788063219aa174",
+        "skills/impeccable/SKILL.md": "5855d7595b0212bb8d521e0265378d437df8d2343d5f8a30408c3edde0a14d96",
+        "skills/impeccable/agents/impeccable_asset_producer.toml": "dc3aeccbea3e997704ce8b170f56b0eaf343a14ad4fedb22a6dbee0f205aa37f",
+        "skills/impeccable/agents/impeccable_documenter.toml": "2feb3768125ba6469c92a50d516727e6d42f44579165ddfd33409948e2a3803d",
+        "skills/impeccable/agents/impeccable_finish_reviewer.toml": "d57c3e0453f601ad688911fca4471057c7b46b561fcd42a1e12a581101c5186c",
+        "skills/impeccable/agents/impeccable_manual_edit_applier.toml": "6c9ce3e27ec4520ead001da3aad2a2ebba481c4e5cd22873db8890259ee579fe",
+        "skills/impeccable/agents/openai.yaml": "cbd8bd68fa00935dd0f179adb169252629cf7ee443ea9dc7db77e7ef2cf77446",
+        "skills/impeccable/reference/adapt.md": "871a8e4d749b807c693ebabd83defbd6c76e1bd2a0f53a28a460cb1308ba8634",
+        "skills/impeccable/reference/adapt.native.md": "6acc0bf221a4ddc6e5c6438348920b2ca2393b29c4314dbde2cdc23f2b1a9639",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "d658c48ffbe0031e8e3b318996cad6ceafe29e40aa50d5bb25e4bf1d6839dc7c",
+        "skills/impeccable/reference/audit.md": "d5f83912eda93d42f93522bb74aeff0ea04d9c559577ec52fcccc130dd03166d",
+        "skills/impeccable/reference/audit.native.md": "960cb922bc934adbf9192e9428ff6bec1f382038166f02a785939c93b7391067",
+        "skills/impeccable/reference/bolder.md": "f964506c0fae87b3c2c1db7016ddc9be9ef970bbcf5548d684b997b5d5991586",
+        "skills/impeccable/reference/clarify.md": "173dd66abe65633910dcb04a51f40d6ff2a793f87088f022a02fc4cad24dd133",
+        "skills/impeccable/reference/colorize.md": "bc5f71f1129d0f2c310d913d07c8dc609a1d25644121bd78c308f42d52a0b9e9",
+        "skills/impeccable/reference/component-review.md": "3253eab02b62efa80abc74a5c85da08f3e2c6c20dff8dec38f4d236cbbfa0f3c",
+        "skills/impeccable/reference/craft-floor.md": "e802e4f7bdc89050a9c0f2ca506e1d493a2316e6e810c0336c57aa073717ef3e",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "4a8a45a46b79948a64b484edf389aa0b00fc80de855470cbabe3c7c71268f345",
+        "skills/impeccable/reference/degraded/asset-producer.md": "5a9626fb8c1e9051155c68626fe7c765a55be325113245d44b4991fc3d3b014e",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "098a891028ce59c212b747d3c70468dd750aff7053a703d1336045ed31e0da7c",
+        "skills/impeccable/reference/distill.md": "ea8432c90c30ecb0426662a681ead5c0941113079704e1a766cda09e85b15b4f",
+        "skills/impeccable/reference/doctor.md": "49a7b37b98fb6e3ef68154174677ff4b9f1715efcffdbf6b30c3535b3e4e302c",
+        "skills/impeccable/reference/document.md": "3673248740bcdd1122ccc610093ba2fe52f3943a61ce0b7170b74dc49e5b6098",
+        "skills/impeccable/reference/extract.md": "31b90048c0b540daec46762a10c2b6b6434737a89af005054d8b848d829d003b",
+        "skills/impeccable/reference/generate.md": "162b814ddd1133923b9584bb95f85959e64844c94341d6bf10a81c06ab7cc02c",
+        "skills/impeccable/reference/harden.md": "16ba7fca1973c5faf53dd2ca523559129c0fe9e5f8d50b645f527afa78186cd2",
+        "skills/impeccable/reference/hooks.md": "fb32d99751c5fc24493ff4460be1767bd5236dc820fd337775067c0620d1a7a6",
+        "skills/impeccable/reference/init.md": "bb069b43c09109d7031b0374e31955749fec657b252d39782f11e8985aca2b51",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "706c68612a7c6b899a0abf0b407eca7cabcd371deae60f830aa38aa86947694e",
+        "skills/impeccable/reference/live-setup.md": "bea6ebfda78c51b9cf372097a1d77431d0f6bcd96eadec13a2ac95afbb87fb6d",
+        "skills/impeccable/reference/live.md": "e7dd10af2c3c18c60dc20734d55ff870c323a10dadd337600f7bb980fc6b53c8",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "1c11cb8ea42536c7a51e197f1aa32198960bb89262da2eaf32e0feb03c70792c",
+        "skills/impeccable/reference/onboard.md": "ef2dde00030580ed2765cbf7be9b2ea4a6f64cb915b804fd6f6abcf38051c7b9",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "f672ef8251a3ed4051a053d30819664951b17540b2899acd27d20e500c234abc",
+        "skills/impeccable/reference/overdrive.md": "fce6688138d2ceb1e3d2cde5231f54b1d8dc8748b4c95a7919aa83b6f924cf96",
+        "skills/impeccable/reference/polish.md": "03b30331c176a248a3b3bd17abdff1a1fd658f09ffb2a412b36ae9627dd3f33b",
+        "skills/impeccable/reference/quieter.md": "190a4e642ca362d7499f3c3ab123e21f18f75457d11f072b545a183f296e6495",
+        "skills/impeccable/reference/region-map.md": "98384b78af087855dbb526ec1e870a676ecd87f57237643dfea815317dad8a07",
+        "skills/impeccable/reference/routing.md": "ec81b008d2641402e3352b09b1a90562ef7a24598d7c5aded475038cce63aca0",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "244e5b7bca6d22a51b4e22104a52a36e477056b03d257b56d1d4e319cd6167a8",
+        "skills/impeccable/reference/visualize.md": "9a4aa0d4903eabee987fdc92053466ff7f6eb0604797aee0efe67d67999b3eae",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": false,
+      "hookArtifact": {
+        "source": ".codex/hooks.json",
+        "destination": ".codex/hooks.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "599afc25c1d6d083e4d4e60e1617ab05f6c5ecd52be75473f3788063219aa174",
+          "value": {
+            "hooks": {
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write|apply_patch",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".codex/skills/impeccable/scripts/impeccable\" ] || \".codex/skills/impeccable/scripts/impeccable\" hook",
+                      "commandWindows": "if exist \".codex/skills/impeccable/scripts/impeccable.cmd\" (\".codex/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".cursor": {
+      "files": {
+        "agents/impeccable-asset-producer.md": "99e4a6facdb07986aa721bda8a4e35466b30091f32e38d7a71d9fcbe3591f65a",
+        "agents/impeccable-documenter.md": "37aeddc0f2031fa89d72519ae2e7542c267872f81786fb8288fca0a49118be11",
+        "agents/impeccable-finish-reviewer.md": "6575a657642ccdab42d0743ceaee06621c77811b4dc4f21c616e28aabf5e28ef",
+        "agents/impeccable-manual-edit-applier.md": "3af7c46309f748ff3845f16455a431ec0e9e807e5e3a965e96e9ee75a1198eb8",
+        "hooks.json": "95b07450ad1ea0b7adc369587b06e52404945bbaa5d87f7491fac7ffd0e6e2ae",
+        "skills/impeccable/SKILL.md": "4700adf4542874f204c680ebad8317a97bf7169dbc04147082618ab59ce70c7d",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "40cd6024312a1339aa66801df533afa543e60c36e708f0f9659dd8d558f83dce",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "a7f036f4217933db8a96cf2f0ba251b15f388839d62bcf95720ce0b7152dd185",
+        "skills/impeccable/reference/degraded/asset-producer.md": "1547005438784032de3254cb35bff393e8187d7a459d0c20a693d9bfb0b5c1a4",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "08d78eb31c561256f83baa0afa742a660f1467aa2c81be2f60c2b7f9c770d66e",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "af35b5fb6e45acb6483a5fbb864c3eaa9c57bacc43857f48183c836041c670ae",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "d7b99a57652cb8741d57a15ba7e06de4707fac02a97e5e001179da007272f2b8",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "47b3461f6f76db80fdc49fc7542552d65fed24edc8d30d903cb76aefbad0ed05",
+        "skills/impeccable/reference/live-setup.md": "bb59a1f78f3d2aa78e4b024fe203117155f50946a9e4bbe65c1b3b3abdcee356",
+        "skills/impeccable/reference/live.md": "7fd1617d5a86b7a1a0bf9d6e291b334ac41a3efce31031eeaef11de7cd7e75b4",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "d2e16da9bb6b33c931378d1bf57dcfff5dc426a71434bc352cec6aece715a66f",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "bdf9a59beea111ac6f98f5624854feb5a5a1d60b1989edbbfabf3dc6f357a7e6",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "2ce1722bd1a9f366182d9357d629796b1448f7a0126a854df507eb044d891cab",
+        "skills/impeccable/reference/routing.md": "a892e337eee548d53252abb72ba5aa85cbcf556ffd8dc74e05534652c010d574",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "1640c70b984a43e729d72d046109f87243ae84ecd64d2600a007d140558123cc",
+        "skills/impeccable/reference/visualize.md": "da3b2399814db89d67959268c646601957d3e8c641b09a5bdbce84217c1c2cfe",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hookArtifact": {
+        "source": ".cursor/hooks.json",
+        "destination": ".cursor/hooks.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "95b07450ad1ea0b7adc369587b06e52404945bbaa5d87f7491fac7ffd0e6e2ae",
+          "value": {
+            "version": 1,
+            "hooks": {
+              "preToolUse": [
+                {
+                  "command": "[ ! -f \".cursor/skills/impeccable/scripts/impeccable\" ] || \".cursor/skills/impeccable/scripts/impeccable\" hook-before-edit",
+                  "timeout": 5
+                }
+              ]
+            }
+          }
+        },
+        {
+          "shape": "xgent-installer",
+          "value": {
+            "version": 1,
+            "hooks": {
+              "preToolUse": [
+                {
+                  "command": "[ ! -f \".cursor/skills/impeccable/scripts/impeccable\" ] || \".cursor/skills/impeccable/scripts/impeccable\" hook-before-edit",
+                  "timeout": 5
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".dsh": {
+      "files": {
+        "skills/impeccable/SKILL.md": "00d167d9183c8d0c6c0682055107382e6672bacf7a712de0abc8f157c2cb2210",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "00f053b877a92a9847d69eec2403e40c757152f30a5ca807c5033c58d7c297f1",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "af5842c4844b692b817319d5375611d4211dc7f459fb12da358baefc3a6cd373",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "238e1967d933ca5739db708f7ad9f72ca8b34bc4c9b9e1c07b0a06dcf9d00681",
+        "skills/impeccable/reference/degraded/asset-producer.md": "b8938fea3399aa639b4c873248035c219658069eef7be62672254e2f72c056f4",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "37c9a2122efa64dc8789eb47d196150b0bc635e0ba95042fd381ff157002ed50",
+        "skills/impeccable/reference/doctor.md": "2f02f96f889e0c8e0e90806af1ef17e0c162a6cc402068f434d3f7608d9deda3",
+        "skills/impeccable/reference/document.md": "19c5bfce570a0e2bddd4d9c788936ff9070c90299363c4853ba77bfd37306e20",
+        "skills/impeccable/reference/extract.md": "4ad7c5d5821f85c2311ff91746d9b9cf272dbe0a9a5b61687f77681f5a13f812",
+        "skills/impeccable/reference/generate.md": "055c571f2960b8f929d6a8d3806a4d32dfcb9750b3ef8b60adc8930fff34b559",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "b719be9c5d4ced5d649ec6c0c90630196e7ee513d0da482aef13c705fdc23ab6",
+        "skills/impeccable/reference/init.md": "5c036648951d555e73be63161e5c9edcba146d8e9f64b1604ffdea765cde5d9d",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "8c34f78d71ac02c99303c7e0ca9ef30341aa9ecdeb75804dcba7e36a127914c1",
+        "skills/impeccable/reference/live-setup.md": "532d6387db6f5da1a59dc7d29ce4d8ba6ca044626c367dc16e1cb8b981eb2d9a",
+        "skills/impeccable/reference/live.md": "ec6338b20047099601e4bac8b2efcd597f800d5e437259f6c15d23090400621b",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "14ef0ab84c10331f8af6b4124387a3f80b493175a04a3f89200719b4b5aea221",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "e68467ba99684d8c975a8a2725145d29db41d70659c7544ea54cc6632660cea3",
+        "skills/impeccable/reference/polish.md": "ff0ab1361f52d70d3ff0d23090d78794a75afdfa2f8c1cee5491dee69215faaa",
+        "skills/impeccable/reference/quieter.md": "84a06415956986cb215139b3efda7b3c7a5bb6f502a3b3d9300f0744a970e620",
+        "skills/impeccable/reference/region-map.md": "6d21d8e2729effaecc5b6239dadbcffb1ec8d51e8bdadeb47a39827266a61c5e",
+        "skills/impeccable/reference/routing.md": "400419aaa20f710e1a7e5ca1fce9e8bc995c4db84053f40cf778d987619e0210",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "3bcf81b938a0f0309e9ed6616f4bd18d82f07e2801411ee4cce51220d417eb95",
+        "skills/impeccable/reference/visualize.md": "eba472f6190541c28e2e647ed019f43564ba5b92d629963f34c899175b25b31e",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".gemini": {
+      "files": {
+        "settings.json": "16498466a97a5b19a593d5b3f245468c71784bea069d7fc8aa9690db5ac1d968",
+        "skills/impeccable/SKILL.md": "dd66761b291c7dbca6e9efd22023e38f8c53ad310f3a6cdab5dc7ecd7ae8f31f",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "4777bbeaff2efcd6a2a66b07aacaaf57cd32f3fab1c1da5a0513937fafb48bd1",
+        "skills/impeccable/reference/craft-floor.md": "e8ee6c08e94b80324173d89d6f4cdc5b4829ea6858b3a11fc186588a490cada4",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "4bceaf3346b6f5100b5a54deaae49a38b975dd134df2836675848f06ff1e7e11",
+        "skills/impeccable/reference/degraded/asset-producer.md": "eb3e86876c20f1cfc443dcbe48d8f41fea6e815082a304610be432272429a06d",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "48bb7c3b738f57fa4f3f714d7e3e919879036f3e751135a9acc1c5ede1850ea6",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "92b7ab84c828fa888f4882c417c3d7f8fde2e5445b40f96f4fc8181a3e058afc",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "765d3e890cd7f58ca94b6834181052166e9c4f9ef06278dc241da4d64da2d595",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "e02ba7f4417e84b3bd5ec65287c4a14cf163ca3ac6f8ee37d8f709d0c8b0b6d2",
+        "skills/impeccable/reference/live-setup.md": "bf3b8883f8550744e08754af82a78939ab8b1237e5fad6f38d819e2f17e8a389",
+        "skills/impeccable/reference/live.md": "b824bb76a657d3edd65e89807dcb21a3679eab39292423066e11368b35afba79",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "e1075ea5b34ac9c60f7c5bda97356eeaf1b683b599592d324fd3704f0852ad7a",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "79114c6bf78b5a1838fe19bf033f3be85b232560eebf190ff8586aaec34ea170",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "c100b67a4ae248ad564182b181acb1ee2fe64c00049aeef62d4e7a3213726f37",
+        "skills/impeccable/reference/routing.md": "1f6c3a1d7344f44eaa88b6f38334ad7d7b60201709589039a58cee73de486f5d",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "05aa836a190f4ff62e5d4619738bdb891d83d85e35d81c2e6e322d1dc084d802",
+        "skills/impeccable/reference/visualize.md": "6f7f1639a933ed88e116aa8ab0cfb951096930d14f413349ae22ed04e28d2358",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".github": {
+      "files": {
+        "agents/impeccable-asset-producer.agent.md": "50f3b5714ca3e2c1bcf070003733407935ee050609d3123c2c065489fbc9950b",
+        "agents/impeccable-documenter.agent.md": "4fb6d2fcc8afaf827a7377ddd604725264fd83be871e2d35062e9d1939144404",
+        "agents/impeccable-finish-reviewer.agent.md": "c6b3bc811eb23d90ff9add1e0e5b40999a0bbbab364f5e6d08061f36d30429a5",
+        "agents/impeccable-manual-edit-applier.agent.md": "a423108e7e31a54564e2e0794186394f842625fd9f7d7ce6e6615362511503a2",
+        "hooks/impeccable.json": "076a31941acbaa81013c8c511e146ed4138128eb5e9895dae3e9a27a25ac4f04",
+        "skills/impeccable/SKILL.md": "6528f2aebe4a425b724de293c8f6dc8a42ca80c7f1ed3039b8b9a813b004956a",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "0dd1e6ccf053cb80e057caf7bf2fef30fd0197a41d907a1a8d2d2d02f6978674",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "8ff60b8b5369d364f732f8de10479a39294e65341b3e0b6497b21de5c8e34b2d",
+        "skills/impeccable/reference/degraded/asset-producer.md": "3bed76a0d528e2d73da8acae4dc63702bdb5baca5ab11600d70e75fc9f2ba90b",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "f9cbbad0cc08fb9bd69d4d3046067c6cf820b89cdaf7af8c81c671fb0a62b6ae",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "9287af96048c58ed0e72493cf7eb90c3957d4ba8b19e70ecf5d1f54264e9e597",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "41ef23c048ab739f48afdce26a2678d36ee40bcced34ef4b969d1d8ffafca64c",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "3e3b6fdc6afbc2c2a734d08d6a18b393b7139c56f28f91f82e13e5555b98018a",
+        "skills/impeccable/reference/live-setup.md": "5db17cd013c10dca0012bc18aee7276280941579aa50757682e9ce60c4f7a006",
+        "skills/impeccable/reference/live.md": "571526fd5c60a586ff65bdb3f8333f26c36ae227f5f5ece826f4a43b4d4aee0f",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "529cb2ace696ec11a86f4b010c9b137acf282072e483932181be1871df2aa690",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "402373ef95962ecb81dd3d7cf70ecb3bd3e22a2bd2aabb4c0d76f7f4f9447870",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "cf3d3a296890ac1ee363fee930f252e20d0935cd575367ad017b3cdc2dc5a50d",
+        "skills/impeccable/reference/routing.md": "19b439d7d16e139357459d3874f739ea94dbdffeb2a0e201df1620ed1e40574d",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "713cac92a71ef45e8b700180d881f830096cfe2b0615e79b276ccc4a12c051e0",
+        "skills/impeccable/reference/visualize.md": "7212014fb2477d1d54aedaa79cdb861071a58afb2ae6d4dc5a495fa4810c6f8a",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hookArtifact": {
+        "source": ".github/hooks/impeccable.json",
+        "destination": ".github/hooks/impeccable.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "076a31941acbaa81013c8c511e146ed4138128eb5e9895dae3e9a27a25ac4f04",
+          "value": {
+            "version": 1,
+            "hooks": {
+              "postToolUse": [
+                {
+                  "type": "command",
+                  "matcher": "edit|create|apply_patch",
+                  "bash": "[ ! -f \"$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts/impeccable\" ] || \"$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts/impeccable\" hook",
+                  "timeoutSec": 5
+                }
+              ]
+            }
+          }
+        },
+        {
+          "shape": "xgent-installer",
+          "value": {
+            "version": 1,
+            "hooks": {
+              "postToolUse": [
+                {
+                  "type": "command",
+                  "matcher": "edit|create|apply_patch",
+                  "bash": "[ ! -f \"$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts/impeccable\" ] || \"$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts/impeccable\" hook",
+                  "timeoutSec": 5
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".grok": {
+      "files": {
+        "agents/impeccable-asset-producer.md": "a7e8e60df83c6f47590467094ab2a13f1fe28ce45959a4e69dd89575a4208646",
+        "agents/impeccable-documenter.md": "6bc62a59f6fef0b749927c8d10e9849ab2411199d86d70772a86f8e83ac309f5",
+        "agents/impeccable-finish-reviewer.md": "08398fa2d8e2b06b849f1c0f032e1e93b832e9294aed35c1c7f62b938d62ee80",
+        "agents/impeccable-manual-edit-applier.md": "b2d71ff0df7ed49e06dfc4acfce3d3f7eb48afa68be04763ee8c08354df50a07",
+        "hooks/impeccable.json": "e44ca51f24c4736f9aee6024182b0409aa12ec94812b7ec94745e0999ed06a70",
+        "skills/impeccable/SKILL.md": "20e2111b3e065e8e8054f715ea3902e64b77886b30d2bddee723558f22942620",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "4879f38b23d0a251a63cbb0327e660296194cd2e71eb4da3236c6ebfe5807746",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "7e36403ed58e0e82c0e42bf2fbea1c066b8e63276978647a6f1e44bf1edb23fb",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "521391d55814fdef6cd648ed62154a14d77b324004a0fc2d06c0a4e97857eab2",
+        "skills/impeccable/reference/degraded/asset-producer.md": "492a8030d11e2f4908d934bd817bd6d16a3164056c74a7172f60e2cec5ff3055",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "b2f60e0154bf0e687badc46d8c8420e2118a9a6e21162050722be779dc02cb6d",
+        "skills/impeccable/reference/doctor.md": "9e161532dc6731581d7a5f35bda5a2865e5248df7aff90e6dfc9221409893e35",
+        "skills/impeccable/reference/document.md": "87b3db688c7963898bda8096f7868fed05ec5a0a80d14298e8b906b70cdf9c42",
+        "skills/impeccable/reference/extract.md": "bfc51972fbf387566dc9e29c8b1af479a66ab401fdbce659fae9e6a5a9d85316",
+        "skills/impeccable/reference/generate.md": "485774d58dfd5796956024cdd9c12f05e692a3703f70b12a02ab43918885c3fd",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "488da2e7406c6b4b5c92d7bc8cbd370cdaafc82a5f3ab5adbcffb21d1d1c4df4",
+        "skills/impeccable/reference/init.md": "78c236dadb7e70337dc9dfa67e65fc15b7abed137ad320c16410ddfa7aec34f9",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "b314a0c5bd844f6471ea3031aeb9299674d972fbdd1615d99d16478de437d26d",
+        "skills/impeccable/reference/live-setup.md": "0bb4085f6dda702846e0e56bd4f797aa1b046ab48eca02644448e368f3820f88",
+        "skills/impeccable/reference/live.md": "171777f8a8596d2ffdb43f4b935a7c6c12859ace233967f868a566390a59708e",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "a1af8b8a97665a3692eb39872c235796684a387a0b83785872f81aebd9dab046",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "a9856cb40da6519b1334bcfc75a4fbe83bef39ca86ee6f3effcb2a96794c627c",
+        "skills/impeccable/reference/polish.md": "df23e9ee5b689a05ed88f42e9a36aaffa2e6e28b1d56e2832acaa1d3603fd363",
+        "skills/impeccable/reference/quieter.md": "ee6d6d127c1c2ab3526d529a8e3698be2185b5e346ac617f37501de2c0698b97",
+        "skills/impeccable/reference/region-map.md": "9db3c0857f4c2c8877b1fe24a47a229fee0de76ec9057bd8ee95f0677fb58d74",
+        "skills/impeccable/reference/routing.md": "9f2993499adadfdef4065a9a7fb69c75f888d892d4ee6bdbe62619bc772f495c",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "8c06daf096984cf71cf4133ea284dd6eaf503208da828816836ea41dfb69a234",
+        "skills/impeccable/reference/visualize.md": "4972f28d96897c8dec891f0de7a0d9d51f36030ff780ed9d960241c75413da2b",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hookArtifact": {
+        "source": ".grok/hooks/impeccable.json",
+        "destination": ".grok/hooks/impeccable.json"
+      },
+      "hooks": [
+        {
+          "shape": "bundle",
+          "blobSha256": "e44ca51f24c4736f9aee6024182b0409aa12ec94812b7ec94745e0999ed06a70",
+          "value": {
+            "hooks": {
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write|MultiEdit",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".grok/skills/impeccable/scripts/impeccable\" ] || \".grok/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".grok/skills/impeccable/scripts/impeccable\" ] || \".grok/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "shape": "xgent-installer",
+          "value": {
+            "hooks": {
+              "PostToolUse": [
+                {
+                  "matcher": "Edit|Write|MultiEdit",
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".grok/skills/impeccable/scripts/impeccable\" ] || \".grok/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 5,
+                      "statusMessage": "Checking UI changes"
+                    }
+                  ]
+                }
+              ],
+              "Stop": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "[ ! -f \".grok/skills/impeccable/scripts/impeccable\" ] || \".grok/skills/impeccable/scripts/impeccable\" hook",
+                      "timeout": 30,
+                      "statusMessage": "Design deep pass"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    ".hermes": {
+      "files": {
+        "skills/impeccable/SKILL.md": "f254d59ff973e907cacdc2c34b8b4de075437d292de31dac30e10a9d7035086c",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "7b1a4cc5ce94837c8309962a204c47361927e442b7a1c3cc472f90276eca8b8c",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "88749ebbe9bc87250765a07c2b959508262bd0e276ad60baa53e6e48c3579143",
+        "skills/impeccable/reference/degraded/asset-producer.md": "511ecde67e6bd976c9bdfa8d92f0dba359621344f8135c2a5ce5a66b385a4cb5",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "f7b854effc55c8f07e40a415e0d6b5c333f4042fbc849fac73d52619c8d053a1",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "dd953992625c240fd1842aaf533a865aabd09487cbc16fa01fe8bb4b4365b843",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "28f65b42c1ce9aaea35dc37a51257d7c703bb7f6553ebe3b8ca238a1007251e0",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "904859c8160b02330b04db23a8eeeb4ef55bcaa10f5208b8d73a1718334633e7",
+        "skills/impeccable/reference/live-setup.md": "29f741b71e75fd39c65ca6df4b01b5f6c4f3c4c7adf23b47a3220ce2c0251f24",
+        "skills/impeccable/reference/live.md": "eaa50e8cd95e00a94a257db2bff4eafd820696ba75a08a384a00517c3402924e",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "8449781319a33d4a10a7fab9bfa4812241c303b95f33703b300b097dba51089a",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "0bf6f08bf34d24cd88a78d544add9e4d71478bcf939926cde32f4e164882c775",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "b3b1d5a4c80ce279d88896601deee9ccfeacdae0d0cd433600985a5f7ac93c72",
+        "skills/impeccable/reference/routing.md": "43dbfcb7c2e54c9cca9fce66024f17c06a2f2be645547b718b75c8828a463de2",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "64807d8f43267f4ed879e997834bbf793bd4605ba1dc65f4b545324b660a7063",
+        "skills/impeccable/reference/visualize.md": "881a58aadf300bcc8f4947243e82192ae8dd7f14822a70fabc84fc74a5f9199c",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".kiro": {
+      "files": {
+        "skills/impeccable/SKILL.md": "bdd676c8f29295addfdbceaab285bb1184ec3ef7ff60501908b97ea8269580c4",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "4a6f0386bff78bb42efa285df2919e75209ec336672cf5fff91ba66ffb352eaa",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "1971edc3784273bd8da7b1980779c6159471e857992faa6637178109cb130503",
+        "skills/impeccable/reference/degraded/asset-producer.md": "2bc5d62463cc83d6417df7b8f4a02b4135e2b1bb654aa7727890662496f86e3d",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "2e4846117a2fcdc1e4bc9570a5333da839649cb8ccdac6a30a87591ca05b4bb0",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "e9861052457cc1ddc42c687bb8c33a877834ced94fed74af2a4f00f6bae50795",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "26cd88d10f8a14ed0ddb6e6b21e5e2c981f410eac93afa179202c354d7d1c0d5",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "52e861ac390a62c4473ae0cf87ff18dd6d721afa6557910492dd8ed28bd9970d",
+        "skills/impeccable/reference/live-setup.md": "0e081d496eba4bd77aca81723d59120c10177a71c9551a60ab923c356fb3cf38",
+        "skills/impeccable/reference/live.md": "e26ddd48211aae08fe6debf2a7a4308aa081ed224668cde528e451888db0e3e3",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "1d7145fd5bf65282b2e05cf42faf41766d68e83e2b75f460b3b62d81ada5e5d7",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "add1bee76f897f989166a5b9ad1b38d9173248e29d668d5c885ae9a0eff73861",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "571f5c3bcf01c9b1bd02ab853a54db3f88375c4b8f39dd67d53e983a33e08bb7",
+        "skills/impeccable/reference/routing.md": "223f08673b267f81d7586f686afe05d7cd7529a8e11ac37d979f95c2ceaae8ce",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "08812a8618de7bd2f63a51298e9c2558031237e8efba280062ccb636101e25e1",
+        "skills/impeccable/reference/visualize.md": "a27399e3056c77a28ddd310fb5b4dee6e8e440dfa1737f7e38815097bec4c3a9",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".opencode": {
+      "files": {
+        "commands/impeccable.md": "73bd60faec1d8360753595f1ee9e970b44933448202767d7b0e87c275d399396",
+        "skills/impeccable/SKILL.md": "ef2e97cd690baf6fe5c895dd2d8844aff9fcc4a8bc04973402678a739c81d712",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "c1f3766091019b6f9183bc1d11b1e0fe03d44c168dc05a682c55df32f904dcfd",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "b2732083f8f1d1924d38f84f179491430aebda8e0fd1f1d0785e3f883bcf3a40",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "73549b5536699c915156339976192fb38534bb43158cf9262ff5b89090388c64",
+        "skills/impeccable/reference/degraded/asset-producer.md": "0bc2bc36ca6e74f9f610392f1a4fb8f57b2676238ba1f9c65cd8714f5d27e8a2",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "42a71df98075f66e6eb396b69ef3d6b1c3db46d1c1d24b4edc9d15f53d193ecb",
+        "skills/impeccable/reference/doctor.md": "c6f15d20d8d8748c4c475ff70cdb0ee426f2e6c9e7eab6169311f4dffd279ea1",
+        "skills/impeccable/reference/document.md": "79f85e381d1d6fdc8d39f54e1c8753fccf19b4ba3abb9827b6a7cc61eb376d1f",
+        "skills/impeccable/reference/extract.md": "8eb39a13e3d3650d4261f8fb06e91d6c0b888ca12ddbd3a5610cd8f0b05ad176",
+        "skills/impeccable/reference/generate.md": "c2dfc965319745c403b99e00e9e97de15f1300ea721bd3f708f0ac47aadc537b",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "deaaa533475b6a9f7dd52e01a1f1997aa3af146694334981650f8c846f939559",
+        "skills/impeccable/reference/init.md": "dcf7340da023e64144af5768b8bf44ecf45b1bfdec12d3b1c9e6618f17f8c60a",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "86d10faab62da852aa1f4304157871545c853da708b6fe61c80aefb552c1f300",
+        "skills/impeccable/reference/live-setup.md": "a4cfd2330c8cca94b62986679b3f9e3bb9ada0cb30c2c63c5d19c6039f5a45ae",
+        "skills/impeccable/reference/live.md": "464c0c2b33d278375aec66caf95518f5e7ccd0aad1bea3f9dd553ed47815daa1",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "d6489d7f3e607ce3f8514a7a7d3a0eb5e8f1ac55859eaf7d5c31b53de8fab9f3",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "3753448bca49da76dd8b12d5a8b4264414673f26e49028d37616faa8beb210b7",
+        "skills/impeccable/reference/polish.md": "4b0e2eea17f297daa06b17578131775be099ef43addf91007f4b7e295454f64f",
+        "skills/impeccable/reference/quieter.md": "dfd6f341b156bc604e7556b27cba437d5870fbc82d4c673d0127cf18151b2226",
+        "skills/impeccable/reference/region-map.md": "f5efb1b1dd4cd18e1d4789d7c8e0188f4342b25fffd53af6088ba8b67774fb99",
+        "skills/impeccable/reference/routing.md": "1c6258015ed02c522948f8f1a3b6457395a8f7954497b87c1cd83f1791f9f819",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "1652d639d91889a08bda7f351456c43ee30e5677aa4866a90f375e1e4be15deb",
+        "skills/impeccable/reference/visualize.md": "3ef9a43006bc68d83bc958fc8401e59f9beb6379048f5ced047747fdad05b895",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".pi": {
+      "files": {
+        "skills/impeccable/SKILL.md": "50d4b14134fc06daeac0aab6960800f171ef85250d3bcce6f246cf81e824463f",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "0c064c9975f25f6eb5cf7911c2eeafd3e695d729f8c86a49a24ff2d76cb3cd94",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "b0e1a0721a1e47675a8750cfb608138743dd9fa9c047146e5cc8f82b9041be7a",
+        "skills/impeccable/reference/degraded/asset-producer.md": "a9e63b2df611805e845e0bb1cca1a0c27e83640a78185c9fd9de90d53a539cdc",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "5c4cd151c97dae824a039211d7ccfba4c572b76d8f079c6186ba1dd5dae7732b",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "06b20bd42e5682a42c5d6fbfaad4c55e66ff9b9d99a604bd31d3545af120fc2d",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "09310582ed23393b171eb99ad4a288cc422ac53c26d76311586ce54c6df77b22",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "11f75834c26ecd8a5b0afdf696e838953b235dc4835b7293bbc6b1bc27dd3106",
+        "skills/impeccable/reference/live-setup.md": "d87879329982d608866e4babd31c61438ec34c68483e529761fbf420203eeebd",
+        "skills/impeccable/reference/live.md": "8a2d316593a631579bbb2f3fcb90d4488f85e97f69698dd2dd4fb50766f537d3",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "fb5fec24adafa48df43eece6907c1c986a4772cbdc64142c881f00c3b312e9ca",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "98afc4c6da252e90c6b783079b6f157bf94a13dd4351392e881edd2a100edf6a",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "7c417abe75f0ce4341b6f5acbadcafbbeabcc32cdb13c930aecc5cabda9f9242",
+        "skills/impeccable/reference/routing.md": "1b289c8c09de9d4442109ada91b1fa3a190e113a310cab7aa26a3633c5df0bb0",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "420d82fe41884b7aa8c28750520146d8160c91396ac332a96b2d82a90b017fb2",
+        "skills/impeccable/reference/visualize.md": "0ed5986d1503399f48c11104df5e523a63be2d6558770ebfbbeb2323ca3f2ad3",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".qoder": {
+      "files": {
+        "skills/impeccable/SKILL.md": "3149a87bbed84bffe3558d5eaf1dc596b2e84d3c1be290fc7b1c13e481ae0803",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "1725ca4aa546a34770f29191b58bf8dc14957d4258fb9e7d02f7b1c59c412ea4",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "bb9d4bb369216e892eea25adeaefc5a3e09bb4abd31e3475b79e47b3aee2a6af",
+        "skills/impeccable/reference/degraded/asset-producer.md": "83d614fec61078175383012a088f49a9c0bb08b9ebd2b651c77cb94a323474ab",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "39ac044f2e45a9e7eed8eb68fe91d32938160eb7f8fa93d2afc42fc80a0c3c10",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "44a60aedcc350c2d7d501d0f830a31a586a6511a9ff9b4e361cb328bb747339d",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "08346755b13f1a3f7c6fb4e512387884b80467aaeff109fd41f5521d2a95635a",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "e71524578eb2bda3b8d2da3d8b8371239a2179c5fa866f9f7e48bcac45a8cd6f",
+        "skills/impeccable/reference/live-setup.md": "e2e275495354eeccb7e59af7d74e2ff1f371839bd6aaec1266428760995fb24c",
+        "skills/impeccable/reference/live.md": "2c2ed6286bd74adef4f24ef442e2e1bc0780d44bc060aa2a4c03a03988dbafd5",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "0605c8729dc638a46798e90ab12486fe3ae3372a869757cfb387a08e23b3c84a",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "d1366aa4802b364893c2a14b16fe95c3b7fab79f9f69eb272fd1538f7cb1ce2c",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "ab80e6a971baa66342548a846ce3fb69824ef9ef4e0f26c6f02685f225d00bbd",
+        "skills/impeccable/reference/routing.md": "93c53421c3376f695fe9dad5c82102f74bb5dd15e4ced81bb4ad50a71e5f1027",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "7ad26830c7399a118cdbd4465a5426bc1919015aba99fd15959dc6deb8edc8d6",
+        "skills/impeccable/reference/visualize.md": "f84b653ede0804d21e6210c6d21fd5352023914fedceae6ff14e20f1e93b06e7",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".rovodev": {
+      "files": {
+        "skills/impeccable/SKILL.md": "1898529e994bf0a31ee9ff3f87c343caea3d8a7e0986f404e129fbf89078ade0",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "3bd55b35c253f7841ca4e6e1a855a4b477d59aa2daf6e61e93fd685caaaff131",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "2b58041cd82d819d12762b10becb95f8253c661bf6a9de40f61fc01c1204b743",
+        "skills/impeccable/reference/degraded/asset-producer.md": "5e354ae11913d5846faa3681a9ed98b68d1881fbbb1ecebf0769e3010bb0a426",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "9f1151faffbaadba0ddf5c09a4b2a82c9a12c900a2c1a9dac9863ba9ba0f420e",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "14c9c9a7816026dd77494d06b8d1777c8d64785126b0c9ac8db5ebd996dfd6b6",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "bc48bca63dff44e1f0205bafb64e16b2d6fb294ace405dbc9ae06a3bc6107154",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "c83d6a13fdfb58835c845f61aed3fc6dca17b5569d33387ced840bc13424f354",
+        "skills/impeccable/reference/live-setup.md": "5515d5210fbe2ef64e611ef2827a7204b7cea2f9df059f3ea499931f45065d93",
+        "skills/impeccable/reference/live.md": "0e18ac33b7e6a247b658fcaf926d9eac028399597dbaba366f1d2f2b884a383b",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "e85da3098368807689009184eca2bb09a91bdb6cb1be3e7a61f91f1ae31cd69b",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "b29e10f4506af2277739ad2373bc91c9fff41dbe76c9907f45152b4178cc6b6c",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "3b2b60f23fa8ed9d73e721e17142c3933dc5318fa9a251742a76fee890ac81a8",
+        "skills/impeccable/reference/routing.md": "eba609589a5a051643a7bae60b7cceef7cfe44d0f8bd9229e61473ac75910fb3",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "3970c8e24615610b0246585e49146f6762d5082b3c8fddc08a00940d6e72d394",
+        "skills/impeccable/reference/visualize.md": "dcc1572e739cdabcbf084f276b447cb686aa18459896e6d8fe29f4d7d807bd1d",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".trae": {
+      "files": {
+        "skills/impeccable/SKILL.md": "6f4dfe968f47302ea64dca0e02f8c6d81497d93e4f436d09236e305456cbcc02",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "a75b892696469e3ccd2af33c9eef793e635efc3c5ac45336b0c1373d90c856b0",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "08a2980eae0bfea1f00229899defc28ec92c7ecb875bf5fb02e4ba80dad6c394",
+        "skills/impeccable/reference/degraded/asset-producer.md": "b4be5499f404a926cdd2c55d8fb7409ba74a56b3d0c7d865594cc0254d3e499a",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "a1a56df5fd51be403ca85a2f8054bb6f2bfeee443556c7798c2482e412fb6a09",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "80191b3580a996a2045105976f728e0f46de22c412fc7640741add9767b2d8f4",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "5415103ca4422ea1422e23bfe9f9bae181f5d6d6407442f7fba31856ada58d12",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "93eda27117930692a20f668f1cb0a80b7e14ab865998faba567cd721116081d4",
+        "skills/impeccable/reference/live-setup.md": "bf92a4a51b29de9661c5fa82f3d79244718a67d385ef661990f0c4a5b367e843",
+        "skills/impeccable/reference/live.md": "c327bf17f2af186f87164dee5fb5468746a9b137f0b604365d531ac9387f3712",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "00c067253d37cd20a41dbe9c806d6a72cbff983ad1418b3c3e447998f577b9c2",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "16d99e9fe8e75d69042bc4fda12e93daa7e10f9fa6c00b12b0f0580b119a4cfd",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "4435529820c3fc2eceae8b1ee35c906a34c7612fb860117e896152b45aee0770",
+        "skills/impeccable/reference/routing.md": "7af7fcc09c6b14f26ba78734460a2f9dddd2dcd2e2fa0c47c682f539e2f4cad5",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "f7a9e3f30fe07b0d98351730e9895d50bba96dd42fe91c0d9b9a76ef62e53322",
+        "skills/impeccable/reference/visualize.md": "9e82126a2e08aa365f9c430d383cf6e1921e04d1e0a1b5777716ff97828cfad8",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".trae-cn": {
+      "files": {
+        "skills/impeccable/SKILL.md": "6d9258a49c0b0583ec255eeb1092554298d5eea676fb9391f5a5a1377c3fd770",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "e3c2031978cd670d7150ff3140f12cf8b6882ef638ea9a9985caffa9a80c8713",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "5ce0631eacaae6d9fbb23ade26a774a20142cb40d3a8d5608a3fb9dbc4116b60",
+        "skills/impeccable/reference/degraded/asset-producer.md": "73f8bdec7d9a97476fd7d7e0b4114b5c3e9c7b84c22cbb876cd18c3e64a9b8c5",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "808291e15746c9a64d9ede3ad3f06664b0a72970aa95052e064a96f1bfbed361",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "e7af7ad18b307a3171fcf49421df2a557f93289d27af2430f10ee74e2a2fc2d3",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "95f0c7935a6d0375e09ae67ae0066c0ce7b583bf1d445d268cc4d2f4f900b1bb",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "b6dfd3df9a371e7d179d365cc1d72c11d4ed91b6507c0e1dbec0843419542f66",
+        "skills/impeccable/reference/live-setup.md": "0617b37a905f0486c1ab4e91a287c8ef8292e253095c340f452d591206272f73",
+        "skills/impeccable/reference/live.md": "3f2c351303b74e217907006fb9c55ada2ef596e9710c13d631e20506d17b9ee8",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "9d45e5f6c082de6df4a2cfff11deb969715c49b5d9891d100dd1b2252c5bdcdd",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "d2455359baf5f9e75360c7094e28a16937c8674619e07d58f30d2b5abfd31e53",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "087f6715114e901c2ce00b438e75b82fd48978c020a782f3dc361d39eb7198a6",
+        "skills/impeccable/reference/routing.md": "016c082dcd2aa8f3c080a757c8ed335c6070a904bd2f39668bb9d3e6f95929c1",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "1d72b494f46a60e6c9c06e89bab79789dd85e11f62fb4286a03abf26d352dc1f",
+        "skills/impeccable/reference/visualize.md": "1bb3bdce54386e96e21b5956713a80583e6b3b9d1170f3bb8dec3819fa341bc3",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".veto": {
+      "files": {
+        "skills/impeccable/SKILL.md": "8373668da1aa37c39888809ed9e834a7edfcb884af12f74934c270d004fba626",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "6428239079f98fd6500e9fd032dd289b52052da7a4364ff357b0a5341b6444db",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "b6a2ef031313d3848ab2928875298550836f0f9ff7bdf5772e918c5c610ea448",
+        "skills/impeccable/reference/degraded/asset-producer.md": "2ac1624b1253f3b6fcf2da54d54293624176539b2e9609a49245e7e46c65ca5f",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "05e86f37d7fa381c5e8a04b6212490a27904d3be3e9384862a0764d3daba6d78",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "713a942482531ef8ef103adf48d9decd7327697450e444289aa0479458e4ee1f",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "ec86b8633fbeb14ef2272f220fdd98089972b03b99da83e49eeb6a8b73b00617",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "424ff273e7ab283d6695d127bb502675627193f5b752d7b43b7524bcfc42f43f",
+        "skills/impeccable/reference/live-setup.md": "199d5d3db1197e053a2eb9c3cb927d44cbaaaeb57745c1ada3fd775ba50d9291",
+        "skills/impeccable/reference/live.md": "f1601095679d7d8cf6fef6845598c70d8734190709c1404fa0026e28fef2faaa",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "484ea165f6d49ecc15b7a5c5623e377f2e203f4dad366df23eae99255ecf4572",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "bdfd2a879ca65e437481eac5309f2283da225121630935d89ed902cfdf470c8e",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "e3af212117e0c552b0976687200fe8f95846a01725a482e8e4dbfd75e40dbfa6",
+        "skills/impeccable/reference/routing.md": "e07176229b8a330970ca3c9c5e3dd68c2aaeb726285e30f471e91053d7f8e798",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "3565d038a2eeab88a8b18ff52e6630008ab30f867f9df922a38ce8980440b2e3",
+        "skills/impeccable/reference/visualize.md": "d4a9e18a879bbb92aa0a56e16b45481090dffa4470efdecf52fb0da8c900be5d",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    },
+    ".vibe": {
+      "files": {
+        "skills/impeccable/SKILL.md": "53de37260c4f1c37e467557e9b038faa0f285b056bb2b95f435e0a7d1b69b0de",
+        "skills/impeccable/reference/adapt.md": "0648e4e06d01cabc91fa7dc19256ceedeeeea213b9265e9d36b0918370e16fb2",
+        "skills/impeccable/reference/adapt.native.md": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
+        "skills/impeccable/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+        "skills/impeccable/reference/animate.md": "94b4ce6299fea93d9f256b2d25705961a76bc5ea940c56db4145686ebc99df1b",
+        "skills/impeccable/reference/audit.md": "d9963fd73bf6129fe0c8ec25c5148f50617ec85683b8eeae7e411c9a42e2db33",
+        "skills/impeccable/reference/audit.native.md": "fe91fcf28638f95577af481a50edaf339d6c9a3ad3b9fa477bc81c116b8bc392",
+        "skills/impeccable/reference/bolder.md": "37565671b09d983ea1ad83a9e9190bc37255d93c68445958c6facecc7e0f7c4f",
+        "skills/impeccable/reference/clarify.md": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+        "skills/impeccable/reference/colorize.md": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+        "skills/impeccable/reference/component-review.md": "f0fbe529f63961a027bada2e6a3cbe86f4af0dba4b8e1010da22b007f9002f66",
+        "skills/impeccable/reference/craft-floor.md": "96e2e6bd4fcf9a2c6da65fb029f96d9176308fae2efd9d8653d3b8d838960e07",
+        "skills/impeccable/reference/craft.md": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+        "skills/impeccable/reference/critique.md": "b14dc725606717be881a058bb691c0af1860cc8ad98d48e5a4789fe1a7de5458",
+        "skills/impeccable/reference/degraded/asset-producer.md": "1e2f696760ee55fb154bdcc302c7d7b0fbb807e0308130594bd892dae14dc9ea",
+        "skills/impeccable/reference/degraded/documenter.md": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+        "skills/impeccable/reference/degraded/finish-reviewer.md": "275dd1b6e63bbd30d2713227c4f79b880a8bc4e01cc48d392068bb86939d3afa",
+        "skills/impeccable/reference/degraded/manual-edit-applier.md": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+        "skills/impeccable/reference/delight.md": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+        "skills/impeccable/reference/distill.md": "74e20b26c29242bbebf79760315f7f0788e001566695618cfc70805484c6f92a",
+        "skills/impeccable/reference/doctor.md": "57e28934208e3eac653ab59c5c6a5e4eace44906d8ac86472988242d777ca5a1",
+        "skills/impeccable/reference/document.md": "7848f40e224cf520bd8554943c9816a1ff8c97b1db57af0844e3b1ebb223d91f",
+        "skills/impeccable/reference/extract.md": "54e71283cbd5646021fcd8eaa28d85852ec5288109c306aca9db9e2e4832338e",
+        "skills/impeccable/reference/generate.md": "0221a193d111a9de33a785706a603e55dd974a115f549dbdf74e0f9ec72bde7d",
+        "skills/impeccable/reference/harden.md": "3898bd9b56a042e860a0db4fb4dd81ac81126fa218b604702e2ac0c2287ae09b",
+        "skills/impeccable/reference/hooks.md": "4e3cc4d0e229ca96dd2e28fb2da0478a7f0bb64e447d07a652c425d8fbc57573",
+        "skills/impeccable/reference/init.md": "ac695dd89d5f1261004cfa966526f5d5e913c92fa0640d4d71cb42493effad08",
+        "skills/impeccable/reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+        "skills/impeccable/reference/layout.md": "5be952da521a2d5fb799c834d14ce5388284374bc23c5efcec737a05aa65d878",
+        "skills/impeccable/reference/live-setup.md": "0a151a54959a15eb32fa338890d5d64ac48a9d54d2d5442c3c7708a4c27c1858",
+        "skills/impeccable/reference/live.md": "a7045711a1f0dd2cd5bd98e57ff615f638d7e29738bdd618cf15e83fea5993b9",
+        "skills/impeccable/reference/mode-operate.md": "385a0efe833bd4afe4a257e7159590de0cf1b7fd8f7b213b732f1e537c62dab7",
+        "skills/impeccable/reference/mode-persuade.md": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+        "skills/impeccable/reference/mode-read.md": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+        "skills/impeccable/reference/new-work.md": "0ccf57f758eb0d53bc32c5c77156f016e528d20fe2c2740662bf19964dfbb00b",
+        "skills/impeccable/reference/onboard.md": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
+        "skills/impeccable/reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+        "skills/impeccable/reference/optimize.md": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
+        "skills/impeccable/reference/overdrive.md": "96e508039c719c0815701c36b8418b18baee1967f915fa29b23b84861ae8ea94",
+        "skills/impeccable/reference/polish.md": "69be9bb887f4d8ba4ead24928f9b97d122c796e731652fc0c08f195ab8ec2815",
+        "skills/impeccable/reference/quieter.md": "494d6fcb4701c437597c2ed16a9595af92f3d9ad53c944c96a2fb563bd766af5",
+        "skills/impeccable/reference/region-map.md": "e6e18e7c23cfe82961d90b9714cb466c20bd83f222ac63e9339b6b2c304e1787",
+        "skills/impeccable/reference/routing.md": "412dd9a5238aee223397591fe49b3bd27b6b53d649a0e67ed8570f3e199cebb9",
+        "skills/impeccable/reference/shape.md": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+        "skills/impeccable/reference/typeset.md": "b7fcd2b03539d1029c8774fa806e6f4c677448e9e97e15f69b066022536c5491",
+        "skills/impeccable/reference/visualize.md": "5a07d4769a741cd00fdf8c95b943ef072eb12cd0c9e2c2d2622d5fe0a4fa3894",
+        "skills/impeccable/scripts/VERSION": "66d60356172ccafdd334fca9bf33243c8409216a733dcde0d66a24fd70ee8132",
+        "skills/impeccable/scripts/command-metadata.json": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+        "skills/impeccable/scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+        "skills/impeccable/scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+        "skills/impeccable/scripts/impeccable": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+        "skills/impeccable/scripts/impeccable.cmd": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+        "skills/impeccable/scripts/live-browser-dom.js": "de1b7404f4cdfd7b515196afb17b74b1980f0bc88cb8681ae93a76ca48ec7bdb",
+        "skills/impeccable/scripts/live-browser-ignores.js": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+        "skills/impeccable/scripts/live-browser-session.js": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+        "skills/impeccable/scripts/live-browser.js": "f68a3d68ac92606e91aa8878e003d9432ddd09aa97ca01c6b3ce46c937dca316",
+        "skills/impeccable/scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
+      },
+      "exec": [
+        "skills/impeccable/scripts/impeccable"
+      ],
+      "installerSelectable": true,
+      "hooks": []
+    }
+  }
+}

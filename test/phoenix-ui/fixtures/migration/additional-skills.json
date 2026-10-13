@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "https://github.com/XGENT-ai/skills",
+  "sourceCommit": "b2289fa05f1e4f0251bc3a86e3c04f182aba156e",
+  "channel": "user-installed-skills-sh-or-copy",
+  "installedByOldNpmInstaller": false,
+  "files": {
+    "apply-ui-review/SKILL.md": "dbc0a1ccd77f1b76b3dc904f1f7f9cb657e32e30f031c7f02548ec636500037a",
+    "apply-ui-review/agents/openai.yaml": "5f40b886249d708be2bbc8979f4a1bda6ca9731436983d773c79f870771e45a0",
+    "apply-ui-review/evals/scenarios.md": "5d6221c98d176691d7268d74e6d5b914126fc7ad214691e903669214b1379ea3",
+    "apply-ui-review/references/record-contract.md": "6fef7d0aeb6d4bb186fc37425e8f3dc32e1909c4e6f9f887f04218e167018d73",
+    "design-md/SKILL.md": "ba19c427f25679220ca343f0f609c7b51edef0b336ed5441fc4e701382f623a4",
+    "design-md/evals/scenarios.md": "de33ff88a251a96b98018835f6c9fbdae17fac1361fbe0affddcceba612fe425",
+    "design-md/references/format.md": "7ccc1bc355e0d5b08ac3595f9807e1ba5a00d7f3fb20009e0304f188c0359e1c",
+    "design-reference/SKILL.md": "70fc6523763a2018461d592d450e0d88d4a75dbf7876af818646f0944eb9d780",
+    "design-reference/evals/scenarios.md": "c5c2b1d20abaf71018a064f8a0926f773298533661e05686f6185c4aed8b973a",
+    "design-reference/references/sources.md": "57f613eb39dadcec328b49f102a2966c2709d1cbe22f7b6a047313ce3188e05e",
+    "review-ui/SKILL.md": "aece1102a5b810fc492263196d3df6797f00f232b62926495786ea5ebfeae365",
+    "review-ui/agents/openai.yaml": "ad0f9cb4dcf9614bbe2ec56592a402b92401873bcd6b52e435ec6eacc94cd85a",
+    "review-ui/evals/scenarios.md": "50b7db4a3e905728d81fc9fd058fd200a789b397d0ce2c7fb0dd38e1e3592680",
+    "review-ui/references/judge.md": "260ea3eda00c33c642803c67212eeeb799f1307c4e1afa802ae51c2e7c96b2a4",
+    "review-ui/references/report-contract.md": "0a641bf972a1eabc51d9636aa9c74e0821ea30b879f937b3279e5a6f5d739b0b",
+    "review-ui/references/target-and-capture.md": "d92729c9959cc9490c551c85091dd916bb76015708ac76405c2959507c4c6b03",
+    "ui-pattern-research/SKILL.md": "7f39b1c176ad2d12b7385419d4ada37b6b46f4226b9d6b387e540f13dab902e4",
+    "ui-pattern-research/evals/scenarios.md": "d0a9256639fa3f7fbae49e26441acb6c7902f7519c6256b92f99cdbc916fcafb",
+    "ui-pattern-research/references/patterns.md": "a5a4387b1549c2a63396f62ea2499d9349e01bb602717d3dde3927e5de91c226"
+  }
+}

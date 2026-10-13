@@ -19,7 +19,7 @@ description: 用于评审既有开发计划、技术方案或开工条件；不�
 - 从实际可用位置读取 `dev-plan/SKILL.md` 的写作/评审部分及 `references/plan-skeleton.md`；复杂架构按需读 `references/architecture-quality.md`，调度审查按需读 `references/execution-workflow.md`；实施期合同以骨架的「实施者定位」「实施进度」两节为准。借它们核对合同，不按计划实施。
 - 找不到 `dev-plan` 时说明无法核对其模板专属要求，继续本技能的四项实质审查。用户自定义模板或历史计划不因章节名不同而报错；没有证据表明适用的新版格式规则，不追溯强加。
 - 新版 `dev-plan` 允许单份需求映射、检查 ID 引用、按测试组记录证据及阶段集中验收；按 `references/review-lenses.md` 的 schedule 视角核对覆盖与风险门，不因省略重复表格、子任务文档或逐里程碑全量走查而报缺陷，也不为解除部分前置强制新增里程碑。
-- 发现与任务相关的专项 skill 时只加载所需部分。UI/UX 评审按目标仓规则加载设计 skill（如 `impeccable`），不借机重设计产品。
+- 发现与任务相关的专项 skill 时只加载所需部分。UI/UX 评审按目标仓规则加载设计 skill（如 `phoenix-ui`），不借机重设计产品。
 
 ## 1. 锚定输入与审查基线
 

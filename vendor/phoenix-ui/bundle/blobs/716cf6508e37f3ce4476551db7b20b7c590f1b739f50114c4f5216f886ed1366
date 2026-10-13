@@ -1,0 +1,787 @@
+{
+  "schemaVersion": 8,
+  "catalogVersion": "phoenix-2026-01",
+  "authoringStatus": "draft",
+  "qualityBar": {
+    "principle": "An original direction must explain a concrete task, a distinct usable structure, and an honest implementation path. Identity choices support readable information, explicit state, accessible controls, and project context rather than substituting for them.",
+    "rejectIf": [
+      "The entry cannot name a concrete applicable task or explain why its structure helps that task.",
+      "Decoration obscures content, object identity, scope, or a required operational control.",
+      "Meaningful states rely only on color, hover, dragging, animation, sound, or invented outcomes.",
+      "The proposal invents evidence, testimonials, participant counts, acceptance, assets, or measured results.",
+      "The entry repeats another structure and changes only colors, fonts, or promotional adjectives.",
+      "Implementation needs an unprovided remote asset or an undisclosed external service.",
+      "The direction contradicts project constraints or promises unsupported recovery, permissions, or certainty."
+    ],
+    "reviewAxes": [
+      "Concrete task fit",
+      "Information hierarchy",
+      "Object and location clarity",
+      "Evidence and cost clarity",
+      "Interaction and recovery boundaries",
+      "Distinct identity translation",
+      "Narrow viewport behavior",
+      "Accessible input and readable contrast",
+      "Honest state and provenance",
+      "Original structural contribution"
+    ]
+  },
+  "wells": [
+    {
+      "id": "phoenix-graphic",
+      "label": "Graphic decisions",
+      "tier": "graphic",
+      "description": "Original visual structures arranging comparable information, locating operational work, and making reading or participation state legible."
+    },
+    {
+      "id": "phoenix-interaction",
+      "label": "Interaction decisions",
+      "tier": "interaction",
+      "description": "Original interactions for inspecting, revising, committing, and returning with explicit user control and understandable state."
+    },
+    {
+      "id": "phoenix-atmosphere",
+      "label": "Atmosphere decisions",
+      "tier": "atmosphere",
+      "description": "Original pacing and attention conditions subordinate to readable information, voluntary participation, and usable controls."
+    }
+  ],
+  "families": [
+    {
+      "id": "phoenix-persuade-graphic",
+      "label": "Comparable offers",
+      "well": "phoenix-graphic",
+      "description": "Original graphic structures exposing evidence, scope, and cost behind a purchase decision.",
+      "concepts": [
+        {
+          "id": "phoenix-persuade-proof-comparison",
+          "form": "A proof-led service comparison, aligned criteria connect each promise to a bounded claim and a visible price unit.",
+          "lineage": "Original synthesis of subscription comparison needs: readers must compare equivalent limits before selecting an offer.",
+          "tags": [
+            "aligned-criteria",
+            "bounded-claims",
+            "price-units"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a pale mineral field and dark ink grid; reserve one accessible blue for the offered next step.",
+            "Type/composition: Place a concise promise above the comparison; align units and limits instead of enlarging every price.",
+            "Topology/navigation: Keep plan names beside the same criteria; place evidence directly after the claim it qualifies.",
+            "Controls/state: Label included, limited, and unavailable states in text; name each plan selection action clearly.",
+            "Responsive/motion: Stack labeled plan groups on narrow screens; retain criterion order and avoid animated ranking."
+          ],
+          "spark": "Make the reason to choose visible in the comparison itself: one row shows a limit, its evidence, and its cost basis without asking readers to decode promotional badges.",
+          "webLeverage": "Use semantic table headers, tabular numerals, and linked evidence notes; preserve criterion labels in the stacked mobile presentation.",
+          "applicability": "适用于 SaaS 订阅比较、服务套餐选择与采购预评估，价格、限制和证据须有真实可核对的数据。",
+          "thesis": "用相同标准、明确单位和邻近证据降低选择成本，让视觉强调跟随真实差异。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Proof-led comparison",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-persuade-cost-visible-offer",
+          "form": "A cost-visible service offer, one total is anchored to included work, exclusions, and the timing of each payment.",
+          "lineage": "Original arrangement for implementation quotes, where headline prices can obscure scope and payment obligations.",
+          "tags": [
+            "scope-boundary",
+            "cost-breakdown",
+            "payment-timing"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use warm white and charcoal; a restrained ochre marks scope boundaries with sufficient contrast.",
+            "Type/composition: Give total and billing basis a shared heading; set inclusions and exclusions at the same readable size.",
+            "Topology/navigation: Arrange scope, cost, and payment schedule in one path; keep the next step after the complete offer.",
+            "Controls/state: Show selected options and recalculated totals explicitly; label an estimate when it is not binding.",
+            "Responsive/motion: Stack the breakdown without hiding exclusions; update values without number-counting motion."
+          ],
+          "spark": "Let an offer feel considered through its transparent edges: customers can locate what is included, what costs extra, and when payment happens before reaching the decision button.",
+          "webLeverage": "Use a description list for scope and a labeled cost breakdown; announce recalculation without moving keyboard focus.",
+          "applicability": "适用于咨询、实施服务或课程套餐报价页，需要明确交付范围、税费口径与付款时间。",
+          "thesis": "报价的可信度来自可读的边界与成本关系，而不是弱化排除项。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Cost-visible offer",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-persuade-interaction",
+      "label": "Inspectable decisions",
+      "well": "phoenix-interaction",
+      "description": "Original interactions allowing a buyer to inspect fit and supporting claims before deciding.",
+      "concepts": [
+        {
+          "id": "phoenix-persuade-fit-check",
+          "form": "A progressive offer fit check, explicit requirements reveal a suitable option and the assumptions behind it in a short editable sequence.",
+          "lineage": "Original interaction for buyers who can state needs but cannot yet translate them into a service tier.",
+          "tags": [
+            "requirement-sequence",
+            "visible-assumptions",
+            "editable-choice"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a neutral question field and deep teal selected states; keep unselected choices readable.",
+            "Type/composition: Give each question one clear sentence; place a concise explanation beside the resulting recommendation.",
+            "Topology/navigation: Retain answers in an editable summary; connect the proposed plan to the requirements that caused it.",
+            "Controls/state: Allow back, meaningful skip, and clear actions; disclose unknown fit instead of inventing certainty.",
+            "Responsive/motion: Use one mobile column; preserve focus on step changes and remove transition motion on request."
+          ],
+          "spark": "Make a recommendation inspectable: changing one requirement reveals the precise reason the option changes, with no fabricated savings or compulsory contact form.",
+          "webLeverage": "Use grouped radio inputs, explicit step headings, and a result summary exposing how answers map to an offer.",
+          "applicability": "适用于可依据明确条件筛选的订阅或服务产品，推荐逻辑须可解释且不强制收集联系方式。",
+          "thesis": "通过可修改的需求和可见判断依据协助选择，不把问卷伪装成确定性销售结论。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Progressive fit check",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-persuade-trust-chain",
+          "form": "An inspectable procurement claim chain, each claim opens its actual supporting document, scope, date, and limitation in place.",
+          "lineage": "Original pattern for enterprise evaluation, where supporting evidence needs a stated scope before guiding a purchase.",
+          "tags": [
+            "claim-evidence",
+            "scope-disclosure",
+            "in-place-inspection"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use restrained graphite and white; differentiate evidence types by text labels rather than badge color.",
+            "Type/composition: Follow each short claim heading with its qualification; keep document dates easy to scan.",
+            "Topology/navigation: Group evidence beneath its claim; keep the purchasing path outside expanded supporting detail.",
+            "Controls/state: Label unavailable or outdated evidence honestly; expand detail with a named control and clear close action.",
+            "Responsive/motion: Stack claim and evidence on mobile; preserve reading position when details expand and avoid surprise motion."
+          ],
+          "spark": "A credible claim survives being opened: readers can inspect which part is supported, when the evidence was issued, and what remains outside its scope without interpreting a decorative seal.",
+          "webLeverage": "Use details and summary for concise evidence, accessible links for actual attachments, and explicit issue-date text.",
+          "applicability": "适用于企业采购、安全能力说明与资质页面，仅展示确有授权且仍有效的材料。",
+          "thesis": "让证据、范围与时效直接约束宣传语，避免把装饰性认证图案当作可信度。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Inspectable trust chain",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-persuade-atmosphere",
+      "label": "Considerate invitations",
+      "well": "phoenix-atmosphere",
+      "description": "Original invitations sustained by practical participation and attendance information.",
+      "concepts": [
+        {
+          "id": "phoenix-persuade-measured-welcome",
+          "form": "A measured membership welcome, a hospitable introduction is bounded by clear participation expectations and booking conditions.",
+          "lineage": "Original balance for community membership pages, joining a welcoming impression to practical attendance and access information.",
+          "tags": [
+            "welcoming-boundary",
+            "participation-expectations",
+            "booking-clarity"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use soft cream and muted green; render practical conditions in dark text rather than faint footnotes.",
+            "Type/composition: Pair a brief welcome with readable expectations; give booking information equal clarity to the invitation.",
+            "Topology/navigation: Move from purpose to participation rules to booking; retain cost, accessibility, and cancellation details nearby.",
+            "Controls/state: Name availability and booking states plainly; use real member accounts only when supplied and authorized.",
+            "Responsive/motion: Keep generous but bounded mobile spacing; use still surfaces without an obligatory animated introduction."
+          ],
+          "spark": "Create warmth through considerate information: someone can understand how they will be welcomed, what participation involves, and what they may need to arrange before choosing to join.",
+          "webLeverage": "Use semantic headings, an accessible conditions list, and a booking action naming the concrete next step.",
+          "applicability": "适用于会员空间、社区活动或共享设施介绍与报名，需要真实规则、费用及无障碍信息。",
+          "thesis": "欢迎感来自预先照顾参与者的实际疑问，并与清晰参与边界共同成立。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Measured welcome",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-persuade-focused-launch",
+          "form": "A focused event registration stage, one invitation is framed by the actual date, access conditions, and a single registration path.",
+          "lineage": "Original staging for a public event, where attendance facts should sustain the invitation rather than compete with it.",
+          "tags": [
+            "single-invitation",
+            "attendance-facts",
+            "registration-path"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use deep indigo around a high-contrast light content region; one coral accent identifies registration.",
+            "Type/composition: Give the event name a readable distinctive scale; align date, time zone, location, and access notes below it.",
+            "Topology/navigation: Hold one invitation first; follow with attendance details and then the complete registration step.",
+            "Controls/state: State open, full, and closed registration honestly; show countdowns only for real meaningful deadlines.",
+            "Responsive/motion: Let the heading wrap naturally on mobile; provide a still alternative to optional ambient movement."
+          ],
+          "spark": "Give the launch a memorable center without requiring spectacle: a strong invitation and precise attendance facts make the next step feel clear, timely, and achievable.",
+          "webLeverage": "Use time elements with visible time zones, explicit location information, and a clearly labeled registration form.",
+          "applicability": "适用于讲座、发布活动或工作坊报名，不适用于没有真实截止时间却制造紧迫感的促销。",
+          "thesis": "聚焦一项真实邀请，并用准确到场信息支撑视觉张力。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Focused launch stage",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-operate-graphic",
+      "label": "Located operational work",
+      "well": "phoenix-graphic",
+      "description": "Original operational structures preserving object identity, state, evidence, and action scope.",
+      "concepts": [
+        {
+          "id": "phoenix-operate-density-location",
+          "form": "A located operations table, stable record labels and workspace context make dense rows navigable without losing the current task.",
+          "lineage": "Original response to multi-workspace operations, where similar records need durable identifiers and clear scope before compression.",
+          "tags": [
+            "stable-identifiers",
+            "workspace-scope",
+            "dense-reading"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a light neutral table field and dark text; reserve labeled status colors for operational meaning.",
+            "Type/composition: Align identifiers and quantities consistently; prioritize row labels over decorative summary metrics.",
+            "Topology/navigation: Keep workspace scope above the table and record identity beside detail; preserve the return location.",
+            "Controls/state: Expose sort, filter, selection, and loading states separately; keep row actions individually named.",
+            "Responsive/motion: Prioritize essential mobile columns; allow labeled overflow and retain location without animated shifts."
+          ],
+          "spark": "A busy table stays calm when location is dependable: operators know which workspace and record they are changing after filtering, opening detail, or returning from an action.",
+          "webLeverage": "Use semantic table headers, labeled sort controls, tabular numerals, and a stable focus target after closing detail.",
+          "applicability": "适用于多工作区 Portal、库存列表、工单管理或操作后台，需要稳定记录 ID 与明确当前作用域。",
+          "thesis": "先保证位置、对象和操作范围可辨，再提高信息密度。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Density with location",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-operate-change-difference",
+          "form": "A difference-centered approval view, current and proposed values align beside their scope, impact, and explicit approval decision.",
+          "lineage": "Original structure for deployment approvals, where reviewers must assess a change rather than rediscover the whole record.",
+          "tags": [
+            "aligned-difference",
+            "impact-scope",
+            "approval-decision"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use neutral comparison surfaces; additions and removals have text signs and accessible colors of equal visibility.",
+            "Type/composition: Align field names and old/new values; separate impact summary from approval action in the type hierarchy.",
+            "Topology/navigation: Place changed fields first, then dependencies and unchanged context; keep affected scope visible throughout.",
+            "Controls/state: Distinguish pending, approved, rejected, and outdated proposals; refresh the preview after source changes.",
+            "Responsive/motion: Stack labeled old and new values on mobile; avoid animated diffs that interfere with review or copying."
+          ],
+          "spark": "Treat a proposal as a precise difference: reviewers can identify what changes, who or what is affected, and whether the preview remains current before reaching approval.",
+          "webLeverage": "Use labeled comparison regions and accessible change summaries; do not rely on red and green alone to indicate changes.",
+          "applicability": "适用于部署审批、权限变更或配置修改 Portal，需要可获取的当前值、拟议值和影响范围。",
+          "thesis": "审批围绕变化和影响组织，避免让审阅者自行比较整份表单。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Change as difference",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-operate-reconcile-place",
+          "form": "An in-place reconciliation sheet, source values, proposed matches, and correction reasons remain adjacent during review.",
+          "lineage": "Original layout for matching imported business records, where correction requires retained source context.",
+          "tags": [
+            "source-adjacency",
+            "match-review",
+            "correction-reason"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use white data surfaces and restrained blue selection; label amber mismatches with readable contrast.",
+            "Type/composition: Align source and target values by field; give conflicting values equal readable weight before any recommendation.",
+            "Topology/navigation: Connect unmatched records, proposed matches, and evidence; retain the active row when editing.",
+            "Controls/state: Separate unmatched, suggested, confirmed, and failed states; do not silently replace original source data.",
+            "Responsive/motion: Stack matched pairs by field on mobile; provide immediate edit feedback without unexpectedly moving corrected rows."
+          ],
+          "spark": "Make a reconciliation decision explainable by keeping its evidence beside it: inspect a source, amend a suggested match, and record a concrete reason without changing screens.",
+          "webLeverage": "Use labeled field pairs, accessible edit forms, preserved row focus, and an explicit validation summary for failed corrections.",
+          "applicability": "适用于财务导入、客户去重或数据映射后台，须保留原始数据并能解释候选匹配。",
+          "thesis": "把来源、建议和修正依据放在同一决策位置，减少记忆负担与误改。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Reconcile in place",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-operate-exception-summary",
+          "form": "An exception-first monitoring summary, actionable abnormal states dominate while normal counts provide stable operational context.",
+          "lineage": "Original hierarchy for monitoring dashboards, where ornamental metrics can distract from exceptions needing a response.",
+          "tags": [
+            "actionable-exceptions",
+            "normal-context",
+            "severity-order"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a quiet neutral field; apply restrained severity colors only with readable labels and symbols.",
+            "Type/composition: Place actionable exceptions above compact normal totals; use tabular values without oversize decoration.",
+            "Topology/navigation: Order exceptions by declared severity and time; connect each to scope, evidence, and a useful next action.",
+            "Controls/state: Distinguish acknowledged, resolved, stale, and unknown data; show refresh time and preserve manual investigation.",
+            "Responsive/motion: Prioritize exception detail on mobile; update counts without flashing, surprise resorting, or ornamental motion."
+          ],
+          "spark": "A monitoring overview answers where attention is needed now: quiet normal totals provide scale while each exception identifies an affected object, data freshness, and a useful next action.",
+          "webLeverage": "Use accessible status summaries, visible timestamps, polite update announcements, and links to concrete investigation records.",
+          "applicability": "适用于基础设施或业务监控 dashboard，已有真实异常、严重级别、数据时效及处置入口。",
+          "thesis": "让可行动异常决定层级，正常指标只提供判断所需背景。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Exception-first summary",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-operate-traceable-state",
+          "form": "A traceable task state board, record identifiers, owners, deadlines, and transition history explain what each operational state means.",
+          "lineage": "Original organization for permission and task queues, where status labels need ownership and transition context.",
+          "tags": [
+            "state-history",
+            "explicit-owner",
+            "record-trace"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a neutral board and thin dividers; use labeled state markers rather than many saturated card colors.",
+            "Type/composition: Prioritize record ID and task name; keep owner, due date, and last change in a predictable text rhythm.",
+            "Topology/navigation: Connect queue summary, task detail, and chronological history; distinguish current state from prior states.",
+            "Controls/state: Name permitted transitions and consequences; explain unavailable actions and avoid implicit state changes.",
+            "Responsive/motion: Convert lanes to labeled mobile lists; retain state grouping and provide still feedback after transitions."
+          ],
+          "spark": "Make state trustworthy through its visible path: operators can see who owns the work, what happened most recently, and which next transition is actually available.",
+          "webLeverage": "Use semantic lists and time elements, accessible state labels, and explicit transition controls with immediate result confirmation.",
+          "applicability": "适用于权限申请、审批工单或工作分派后台，需要真实负责人、状态机与变更历史。",
+          "thesis": "用责任、时间和可追溯变化解释状态，而不是只给任务贴颜色标签。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Traceable work state",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-operate-interaction",
+      "label": "Scoped operational actions",
+      "well": "phoenix-interaction",
+      "description": "Original interactions clarifying selection, commitment, partial failure, and actual recovery boundaries.",
+      "concepts": [
+        {
+          "id": "phoenix-operate-batch-preview",
+          "form": "A scoped batch action preview, affected records and consequences are inspected before one explicit commit with recoverable failure detail.",
+          "lineage": "Original interaction for bulk actions, where selection scope and partial failure must remain understandable.",
+          "tags": [
+            "scoped-selection",
+            "commit-preview",
+            "partial-failure"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use neutral work surfaces and one strong action accent; destructive actions carry text and restrained warning color.",
+            "Type/composition: Give selected count, scope, and consequence summary distinct headings; keep individual failures readable.",
+            "Topology/navigation: Separate selection, preview, commitment, and result; return to the same records after cancellation or failure.",
+            "Controls/state: State whether hidden records are selected; retry failed items and promise undo only when actually supported.",
+            "Responsive/motion: Keep commit and summary connected on mobile; report progress without blocking access to result detail."
+          ],
+          "spark": "A bulk action earns confidence through a specific preview: operators know which records will change, can cancel before commitment, and can recover from partial failure without guessing.",
+          "webLeverage": "Use grouped selection controls, a labeled confirmation region, accessible progress, and per-record retry actions in the result list.",
+          "applicability": "适用于批量发布、导入或权限调整，系统须可列出受影响记录并返回单项失败详情。",
+          "thesis": "批处理效率建立在清晰作用域、显式提交和诚实恢复能力之上。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Safe batch preview",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-read-graphic",
+      "label": "Readable argument maps",
+      "well": "phoenix-graphic",
+      "description": "Original reading structures that locate questions, claims, examples, and evidence.",
+      "concepts": [
+        {
+          "id": "phoenix-read-argument-evidence",
+          "form": "An evidence-adjacent argument page, numbered claims and bounded supporting notes distinguish assertion from documented support.",
+          "lineage": "Original structure for policy writing, where readers must inspect a claim basis without losing the argument.",
+          "tags": [
+            "numbered-claims",
+            "adjacent-support",
+            "argument-continuity"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use ivory and charcoal; a muted blue identifies evidence links without coloring whole paragraphs.",
+            "Type/composition: Use a readable body measure; give claims, supporting notes, and quoted material consistent distinct type roles.",
+            "Topology/navigation: Keep the argument in a main column and short notes nearby; connect longer evidence through stable anchors.",
+            "Controls/state: Label unsupported or disputed claims when supplied; let note navigation return to its originating sentence.",
+            "Responsive/motion: Move notes after their paragraphs on mobile; preserve anchor location and avoid scroll-driven text animation."
+          ],
+          "spark": "Let readers follow an argument and question it together: numbered claims point to bounded support while the page keeps the distinction between an assertion and its evidence visible.",
+          "webLeverage": "Use headings, accessible note backlinks, real quotation attribution when supplied, and durable fragment links for individual claims.",
+          "applicability": "适用于政策说明、研究解释或知识文章，作者能提供真实依据并区分事实、推断与争议。",
+          "thesis": "使论证与证据可以分别阅读、互相定位，避免视觉形式替代证据质量。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Argument with evidence",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-read-scan-depth",
+          "form": "A scan-first technical guide, concise section promises and a stable reading column locate a question before leading into detail.",
+          "lineage": "Original hierarchy for technical guides, where navigation describes answered questions rather than decorative chapter names.",
+          "tags": [
+            "question-headings",
+            "section-promises",
+            "stable-measure"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use white and light stone with a restrained violet link accent; reserve tinted regions for bounded examples.",
+            "Type/composition: Use descriptive headings and brief summaries; give code, explanations, and cautions recognizable type roles.",
+            "Topology/navigation: Place an overview before the reading column; keep the current section discoverable in a compact contents list.",
+            "Controls/state: Name optional copy controls and collapsed detail; never hide required setup steps in decorative disclosures.",
+            "Responsive/motion: Use a labeled contents disclosure on mobile; preserve readable code overflow and a stable reading position."
+          ],
+          "spark": "Offer a useful first pass before depth: readers can scan what each section resolves, enter relevant detail, and return to a clear overview while retaining the context of their question.",
+          "webLeverage": "Use semantic heading anchors, accessible contents navigation, labeled code blocks, and optional copy-result announcements.",
+          "applicability": "适用于开发者指南、使用手册或长篇技术解释，章节能以具体问题或结果命名。",
+          "thesis": "先提供可扫描的问题地图，再用稳定阅读宽度承载细节。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Scan before depth",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-read-interaction",
+      "label": "Context-preserving reading",
+      "well": "phoenix-interaction",
+      "description": "Original interactions resolving terms and changed meaning without losing reading position.",
+      "concepts": [
+        {
+          "id": "phoenix-read-threaded-definitions",
+          "form": "A contextual definition thread, an unfamiliar term opens a bounded explanation beside its sentence and returns focus to the same reading position.",
+          "lineage": "Original interaction for specialist material, where a glossary resolves uncertainty without replacing the article.",
+          "tags": [
+            "contextual-definition",
+            "focus-return",
+            "bounded-disclosure"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Keep the reading surface; identify defined terms through an accessible underline and restrained accent.",
+            "Type/composition: Keep definitions near body size; explain the term before optional examples or deeper references.",
+            "Topology/navigation: Attach each definition to its sentence; offer a full glossary without forcing navigation away.",
+            "Controls/state: Name expand and close actions with explicit state; preserve selection and focus when dismissing an explanation.",
+            "Responsive/motion: Place definitions below their sentence on mobile; work without hover and suppress reveal motion on request."
+          ],
+          "spark": "Turn a difficult term into a small interruption rather than a lost reading session: the explanation stays grounded in the sentence and closes with the reader exactly where they were.",
+          "webLeverage": "Use button-controlled disclosures with aria-expanded, associated definition regions, and keyboard focus restoration on close.",
+          "applicability": "适用于法律、医学常识或技术文章的术语解释，解释内容由项目提供且不代替专业判断。",
+          "thesis": "把解释放回使用语境，让读者补足知识后继续同一段阅读。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Threaded definitions",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-read-paired-interpretations",
+          "form": "A paired migration explanation, corresponding old and new statements stay aligned while readers inspect the practical reason for each change.",
+          "lineage": "Original reading interaction for versioned documentation, comparing meaning and consequences instead of an unbounded text diff.",
+          "tags": [
+            "paired-statements",
+            "change-reason",
+            "reading-position"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use equal neutral reading surfaces; label versions in text and use one accessible accent for changed meaning.",
+            "Type/composition: Align corresponding headings; label changed and unchanged sections while keeping explanations readable.",
+            "Topology/navigation: Connect old statement, new statement, and practical explanation in each section with a common contents map.",
+            "Controls/state: Provide explicit version or comparison controls; retain the active section and focus when the view changes.",
+            "Responsive/motion: Stack labeled versions by section on mobile; avoid forced synchronized scrolling or animated replacement."
+          ],
+          "spark": "Let comparison explain rather than overwhelm: corresponding statements share a section, and a practical reason tells readers whether a change affects their existing implementation.",
+          "webLeverage": "Use stable section IDs, accessible view controls, and labeled version regions; preserve focus when switching representations.",
+          "applicability": "适用于 API 迁移、政策修订对照或产品版本指南，需要可对应的前后文本与真实变更原因。",
+          "thesis": "对齐含义和后果，帮助读者判断变化对自己的影响。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Paired interpretations",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-read-atmosphere",
+      "label": "Sustained finite reading",
+      "well": "phoenix-atmosphere",
+      "description": "Original reading conditions with visible evidence, finite sections, and reader control.",
+      "concepts": [
+        {
+          "id": "phoenix-read-quiet-evidence",
+          "form": "A quiet research reading field, a consistent text measure and restrained evidence margin sustain attention without hiding references.",
+          "lineage": "Original atmosphere for research summaries, where calm reading and inspectable references need to coexist.",
+          "tags": [
+            "sustained-reading",
+            "evidence-margin",
+            "quiet-hierarchy"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use softly tinted neutral surfaces and dark text; maintain reference contrast instead of fading it into margins.",
+            "Type/composition: Use readable body scale and leading; distinguish abstract, body, and citations through modest type changes.",
+            "Topology/navigation: Keep a stable central measure; place short reference cues nearby and complete citations after the body.",
+            "Controls/state: Offer text sizing where supported; keep citation links clear and avoid controls covering the paragraph.",
+            "Responsive/motion: Move margin cues into mobile reading flow; retain still surfaces without ambient movement during reading."
+          ],
+          "spark": "Make the reading field quiet without making evidence quiet: a stable measure sustains attention while references remain easy to inspect at the moment a reader wants to verify a point.",
+          "webLeverage": "Use responsive readable measures, semantic citations and backlinks, with layout reflow remaining usable at enlarged text sizes.",
+          "applicability": "适用于研究摘要、长篇分析或资料整理，已有真实引用并需支持持续阅读及放大文字。",
+          "thesis": "用稳定排版降低干扰，同时保留证据可见性和可访问性。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Quiet evidence reading",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-read-bounded-longread",
+          "form": "A bounded longread sequence, clearly ended sections and optional local resume points make a lengthy explanation navigable rather than endless.",
+          "lineage": "Original pacing for educational material, using finite sections and reader-controlled resumption to reduce orientation effort.",
+          "tags": [
+            "finite-sections",
+            "optional-resume",
+            "reading-pace"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use warm neutral surfaces and a restrained rust accent; mark section boundaries with spacing rather than decoration.",
+            "Type/composition: Keep titles and ending summaries readable; make progress estimates subordinate to the actual content.",
+            "Topology/navigation: Use named finite sections; show the next section and a clear route back to the contents.",
+            "Controls/state: Make resume storage optional and explain its locality; do not turn reading markers into achievement claims.",
+            "Responsive/motion: Keep mobile section boundaries visible; respect reduced motion without automatic advancement or infinite loading."
+          ],
+          "spark": "Offer places to stop with confidence: each section closes a thought, the next is named, and an optional local bookmark supports resumption without manufactured streaks or compulsory tracking.",
+          "webLeverage": "Use anchored sections and explicit previous/next links; separate an opt-in local reading marker from analytics or account state.",
+          "applicability": "适用于自学材料、长篇产品说明或知识内容，允许自行暂停且本地续读可选。",
+          "thesis": "给内容真实边界和读者控制的节奏，不把持续阅读变成强制留存机制。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Bounded longread",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-experience-graphic",
+      "label": "Legible participation",
+      "well": "phoenix-graphic",
+      "description": "Original participation structures clarifying choices, rules, and actual personal or group state.",
+      "concepts": [
+        {
+          "id": "phoenix-experience-choice-grid",
+          "form": "A shared workshop choice grid, equivalent alternatives and explicit personal selection states ground collective discussion in actual choices.",
+          "lineage": "Original organization for workshops, where comparable alternatives need a distinction between personal and group state.",
+          "tags": [
+            "equal-alternatives",
+            "personal-selection",
+            "group-state"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a light neutral board and accessible plum selection; distinguish group totals through labeled text.",
+            "Type/composition: Give alternatives equal title and description roles; separate personal choices from actual aggregate counts.",
+            "Topology/navigation: Arrange options by shared criteria; keep the discussion prompt and submission state visible nearby.",
+            "Controls/state: Label selected, submitted, unavailable, and pending states; never invent participant totals or consensus.",
+            "Responsive/motion: Stack options in the same mobile order; retain selection and remove celebratory motion on request."
+          ],
+          "spark": "Make group activity legible without pretending agreement: alternatives receive equal space, each participant identifies their own choice, and shared results appear only when real data exists.",
+          "webLeverage": "Use grouped selection inputs, explicit submission feedback, and labeled totals only when backed by actual shared-session data.",
+          "applicability": "适用于工作坊选项讨论或团队共创，群体结果必须来自真实会话，个人选择与汇总状态分开。",
+          "thesis": "清楚展示可比较选择和个人状态，避免用虚构共识推动参与。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Shared choice grid",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-experience-visible-rules",
+          "form": "A visible-rules learning exercise, a compact play field keeps the current task, legal actions, and actual outcome understandable at every step.",
+          "lineage": "Original structure for educational puzzles, where expressive play must not require guessing rules or interpreting invented rewards.",
+          "tags": [
+            "explicit-rules",
+            "legal-actions",
+            "actual-outcome"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a light field and two accessible task/result accents; express correctness through readable text.",
+            "Type/composition: Give the challenge a strong heading; keep short rules and specific feedback close to the action.",
+            "Topology/navigation: Keep task, legal actions, and recent outcome in one bounded field with a clear restart path.",
+            "Controls/state: Show valid, invalid, incomplete, and completed states honestly; permit rule inspection before answering.",
+            "Responsive/motion: Use one mobile column; provide keyboard input and a still alternative to any optional result animation."
+          ],
+          "spark": "Let play be expressive and understandable together: learners see what can be done now, receive a specific explanation of the result, and retry without hidden rules or reward theatrics.",
+          "webLeverage": "Use semantic forms, accessible validation, keyboard-operable actions, and a result region announced only when it changes.",
+          "applicability": "适用于小型知识测验、逻辑练习或教学演示，必须有明确规则及真实可判断的结果。",
+          "thesis": "把规则、当前行动和反馈做成同一可理解体验，不让表达遮蔽可用性。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Visible-rules play",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-experience-interaction",
+      "label": "Revisable exploration",
+      "well": "phoenix-interaction",
+      "description": "Original exploration and co-authoring interactions with visible paths, accessible revision, and reliable return.",
+      "concepts": [
+        {
+          "id": "phoenix-experience-branch-return",
+          "form": "A reversible exploration branch, a visible path connects optional detail to the choice that opened it and preserves context on return.",
+          "lineage": "Original interaction for exhibit exploration, where curiosity needs optional branches that do not strand the visitor.",
+          "tags": [
+            "visible-path",
+            "optional-branch",
+            "context-return"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use neutral exploration surfaces and an accessible cyan active-branch accent; label visited states.",
+            "Type/composition: Show each branch title and purpose; make the return label as readable as the forward choice.",
+            "Topology/navigation: Retain a visible path from starting choice to detail; return to the same option and preserved context.",
+            "Controls/state: Provide explicit back and restart; distinguish visited from completed without claiming exploration proves learning.",
+            "Responsive/motion: Use a single mobile path; restore return focus and provide instant transitions under reduced motion."
+          ],
+          "spark": "Make a detour feel safe through a visible return: visitors can open an optional explanation, understand where they are, and return to the same choice with their place intact.",
+          "webLeverage": "Use stable fragment or route states, explicit back links, accessible path navigation, and focus restoration after closing a branch.",
+          "applicability": "适用于展览说明、产品探索或互动教学，分支内容可选且能返回原选项位置。",
+          "thesis": "以可见路径与可靠返回支持自主探索，不把访问伪称为理解或完成。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Branch and return",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-experience-coauthored-sequence",
+          "form": "A revisable sequence workshop, ordered contributions and an explicit preview build a shared result without drag-only controls.",
+          "lineage": "Original interaction for ordering activities, where participants inspect, revise, and explain the sequence they are building.",
+          "tags": [
+            "ordered-contributions",
+            "explicit-preview",
+            "accessible-revision"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a quiet neutral field and warm blue active-item accent; label ownership and order readably.",
+            "Type/composition: Give contributions clear titles and sequence numbers; distinguish editable items from current preview.",
+            "Topology/navigation: Place editable order beside its result; keep the selected item and revision history discoverable.",
+            "Controls/state: Provide move-up, move-down, remove, and supported undo; expose conflicts rather than silently overwriting edits.",
+            "Responsive/motion: Stack editor and preview on mobile; retain focus after a move and make reorder motion optional."
+          ],
+          "spark": "Grow the shared result through understandable revisions: inspect the order, move a contribution through buttons or keys, and preview the consequence before explaining why the sequence works.",
+          "webLeverage": "Use ordered lists, named move controls, accessible position announcements, and conflict feedback for actual shared updates.",
+          "applicability": "适用于故事排序、共创提纲或教学步骤编排，须支持按钮或键盘排序并明确反馈冲突。",
+          "thesis": "把顺序、修改和结果放在可操作关系中，避免只靠拖拽表达协作。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Co-authored sequence",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phoenix-experience-atmosphere",
+      "label": "Voluntary paced attention",
+      "well": "phoenix-atmosphere",
+      "description": "Original attention conditions with optional pacing and a clear stop, without controlling emotion.",
+      "concepts": [
+        {
+          "id": "phoenix-experience-light-ritual",
+          "form": "A light-touch practice ritual, short optional stages give a listening or language exercise a calm beginning, pause, and finish.",
+          "lineage": "Original pacing for brief practice, where considered atmosphere supports user control rather than imposing emotional outcomes.",
+          "tags": [
+            "short-stages",
+            "pause-control",
+            "clear-finish"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use warm neutral surfaces and subdued teal accents; maintain high-contrast instructions and playback state.",
+            "Type/composition: Use one short instruction per stage; give pause, resume, and finish consistently readable prominence.",
+            "Topology/navigation: Keep finite named stages with visible position and a direct path to stop or leave.",
+            "Controls/state: Let users control playback and pace; request permission for real microphones and do not promise therapeutic effects.",
+            "Responsive/motion: Keep mobile controls usable; respect reduced motion and never make animation or sound mandatory."
+          ],
+          "spark": "Give brief practice a considered rhythm without taking control away: participants know what each stage asks, can pause at any point, and reach an honest finite ending.",
+          "webLeverage": "Use explicit media controls only with supplied assets, visible stage labels, actual recording permissions, and reduced-motion preferences.",
+          "applicability": "适用于短时语言、聆听或专注练习；音频由项目提供，可随时暂停或离开且不宣称疗效。",
+          "thesis": "以有限步骤和自主节奏营造氛围，保留停止权并避免强迫情绪体验。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Light-touch practice ritual",
+            "license": "Apache-2.0"
+          }
+        },
+        {
+          "id": "phoenix-experience-calm-reveal",
+          "form": "A calm detail reveal space, optional explanations share one quiet stage while visitors choose what to inspect and when to return.",
+          "lineage": "Original atmosphere for text-led discovery, where selective detail creates attention without requiring unprovided imagery.",
+          "tags": [
+            "optional-detail",
+            "quiet-stage",
+            "visitor-pace"
+          ],
+          "strength": "dual",
+          "system": [
+            "Palette/material: Use a slate outer field and high-contrast light detail surface; one clear accent marks the selected topic.",
+            "Type/composition: Use short descriptive topic titles; keep explanations bounded and return actions easy to find.",
+            "Topology/navigation: Connect a small topic overview to one active detail region; preserve selection when visitors return.",
+            "Controls/state: Expose selected and closed states through text and focus; avoid hover-only reveals and automatic carousels.",
+            "Responsive/motion: Stack mobile overview and detail; use still changes by default and make optional transitions removable."
+          ],
+          "spark": "Invite deliberate inspection on a quiet stage: visitors choose a topic, inspect a bounded explanation, and return to a recognizable overview without imaginary photographs or forced animation.",
+          "webLeverage": "Use labeled disclosures, a stable detail region, visible focus, and semantic text that works without images or motion.",
+          "applicability": "适用于文字主导展品说明、产品细节探索或小型知识展览，无需外部图片即可实施。",
+          "thesis": "以可选择细节和稳定舞台形成注意力，不用未提供媒体或自动轮播充当体验。",
+          "source": {
+            "kind": "original",
+            "title": "Phoenix original concept: Calm reveal space",
+            "license": "Apache-2.0"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -21,7 +21,7 @@
 node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard
 ```
 
-发布包含此功能的新版本后，可用 `npx @xgent-ai/skills install --context-goal-guard`。交互和非交互安装均默认跳过 guard，不再询问。仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装；`--no-context-goal-guard` 显式跳过并保留已有 guard，不能与安装参数同时使用。此选择独立于 `--providers`、`--no-impeccable` 和 `--xgent-init`。
+发布包含此功能的新版本后，可用 `npx @xgent-ai/skills install --context-goal-guard`。交互和非交互安装均默认跳过 guard，不再询问。仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装；`--no-context-goal-guard` 显式跳过并保留已有 guard，不能与安装参数同时使用。此选择独立于 `--providers`、`--no-phoenix-ui`（旧 `--no-impeccable` 为弃用别名）和 `--xgent-init`。
 
 请安装到目标 Git 仓库根目录。安装器检查 `python3` 为 3.9+ 且包含 SQLite 标准库，然后复制脚本到目标项目 `.codex/hooks/context-goal-guard.py`，将两个同步 handler 合并到 `.codex/hooks.json`，使用 `$(git rev-parse --show-toplevel)` 在运行时定位脚本，超时设为 3 秒，配置不包含本机项目绝对路径。其他事件、handler、matcher 和顶层字段保留；重复安装更新 guard，不重复添加，也会替换旧版 guard 的绝对路径命令。非法 JSON 默认报错，`--force` 可先备份为 `.bak` 再覆盖；合法 JSON 的未知结构需手动修复。
 

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "portal",
+  "version": "1.0.0",
+  "authority": "advisory",
+  "scope": "portal-content-area",
+  "license": "MIT",
+  "sources": [
+    {
+      "path": "skills/xgent-init/references/external-app-DESIGN.template.md",
+      "section": "1. Overview；2. Colors",
+      "sha256": "a231a4e9e412b3954887939a56b28f696760746b8f30634434927833e7ab9286"
+    }
+  ],
+  "tokenReferences": [
+    "colors.app-identity",
+    "colors.app-identity-dark"
+  ],
+  "rules": [
+    "Design the app content area; global navigation, login and shell settings belong to the host.",
+    "Use accepted project semantic tokens and chosen fonts; template samples are not project defaults.",
+    "Implement host theme and language responsibilities through the project SDK contract.",
+    "Declare styles within the iframe document and verify the accepted light and dark themes.",
+    "Consult the available portal-micro-app skill for SDK behavior; report its absence before relying on an unknown host contract."
+  ]
+}

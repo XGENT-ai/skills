@@ -186,4 +186,4 @@ if __name__ == "__main__":
         result = run(json.load(sys.stdin), sys.argv[1:])
     except (ValueError, TypeError, KeyError, OSError, sqlite3.Error):
         result = UNAVAILABLE
-    print(json.dumps(result, ensure_ascii=False))
+    print(json.dumps(result))

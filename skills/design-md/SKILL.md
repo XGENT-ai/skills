@@ -25,6 +25,14 @@ description: 用于从现有仓库、网站或明确设计决策创建、更新�
 
 **仓库输入：**先读现有规范与用户明确决策，再读当前产品实际使用的主题、token、共享原语及代表页面。沿导入、样式入口或运行结果确认来源生效；未接入的旧目录、展示 demo 和未来方案不当作当前事实。
 
+可用 Phoenix CLI 时，运行 `phoenix-ui context --target <明确目标> --json`，先核对 `projectRoot`、`target.path` 与适用产品；`status: selection_required` 时确认 `target.candidates`，不能取第一个候选。读取 `product`、`design`、`surfaceBrief` 的原始 `body` 和 `provenance` 的路径、section、hash、显式/继承关系。`parseCoverage` 中 `coverage: partial` 只说明有限解析；普通 Markdown、未支持的 YAML、主题和响应式规则仍按原文核实。`conflicts` 逐项处理，空数组不证明正文没有矛盾；`missing` 不补模板值。CLI 缺失或输出不可用时，根据明确目标直接找产品及适用仓库的原文件，不自动安装工具，也不声称加载了 profile。
+
+读取 JSON 时，仅当 `surfaceBrief.status: accepted` 且 `usable: true`，才把原 brief 在适用目标内的方向视为已接受；核对 `path`、`sha256`、`acceptedSha256` 和 `acceptedDecision`。`present` 只是未接受提案；`stale`、有接受记录的 `missing` 或 `ambiguous` 保留原接受来源，核实漂移、缺失或候选，不按修改时间替换、自动重新接受或改抽方向。无 CLI 时从原 brief 核实适用目标与真实接受决定，仍可沿用方向，不声称机器映射已校验。
+
+`defaultAdvice` 是独立的 generic 流程建议，不代表 `profile` 已启用，不提供缺失设计值。仅 `profile.status: enabled` 表示项目显式选择了该版本；其规则仍为 advisory。核对 `profile.source`、`version`、`definitionSha256`、可选的 `acceptedDefinitionSha256` 及 `tokenBindings` 的原规范路径/hash；`present` 绑定也要追踪原 token 引用，`unresolved`、无效或循环引用不能用模板色值填补。`version_mismatch`、`definition_mismatch` 或 `profile_definition_mismatch` 冲突只给升级候选；`upgrade.comparison: unavailable` 时须找原定义才能说明差异，不能编造 diff 或自动接受、改配置。
+
+按 `precedence` 核对当前用户决定、冻结单元目标/已接受项目规范、已选择 profile、工具默认建议；这是裁定政策，context 没有验证正文冲突或改变目标。当前决定与冻结目标矛盾时明确变更范围并取得决定；profile 规则只有被接受为项目规范后才可参与新目标，不回套已冻结目标。规范写入仍遵循本 skill 的授权与证据规则；Phoenix document 请求也按同一边界处理。
+
 检查构建品牌、租户配置和运行时注入是否覆盖样式变量。有覆盖链时记录默认值与覆盖范围；只读到基础 CSS，不能声称所有部署和租户最终使用同一个值。
 
 区分两种权威：规范表达「应该如何」，源码和运行结果表达「目前如何」。实现不符时报告偏差；只有本次授权或明确取代旧约定的证据才能改写规范。重复出现的硬编码值是模式线索，不自动获得正式 token 或品牌意图的地位。
@@ -46,6 +54,8 @@ description: 用于从现有仓库、网站或明确设计决策创建、更新�
 ## 3. 写入或更新
 
 沿用已有文档结构和项目契约；无实质变更则保持文件不动。新建时从产品范围、视觉规则及必要组件指导开始，只添加有内容的部分。
+
+已接受 brief 只提供其明确范围内的设计决定；原文漂移、缺失或多方向冲突先核对接受来源，不重新接受。用户决定与已冻结单元目标矛盾时，明确需变更的基线并取得决定，不能借规范维护或 profile 升级改写旧目标。
 
 需要机器可读 token、Google DESIGN.md 格式或导出时，读 [格式与验证](references/format.md)。纯 Markdown 项目不必迁移格式；已有 YAML 也不能为了过工具检查而删掉设计信息。
 
