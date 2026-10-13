@@ -79,6 +79,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Keep procedures, exhaustive error-code lists, tool details and duplicate bilingual explanations in the body or references. Descriptions should help select the skill, not enumerate its workflow.
 - After editing, read both the full description and its first 100 characters. Preserve intent and meaningful boundaries; do not shorten by mechanically cutting text. Validate YAML with `npm test` and confirm unrelated frontmatter and instructions remain intact. Generic validators such as Codex's `quick_validate.py` reject `argument-hint` and `disable-model-invocation`, which this repository uses on purpose.
 
+## 7. Reference Skill Integration Gate
+
+**Show the proposed changes before integrating a reference skill into an existing skill.**
+
+- This gate applies when borrowing or merging rules or workflows from another skill; ordinary edits without reference integration do not trigger it. Read the target's current rules and the relevant reference passages first.
+- Before editing the target, present a concrete review checklist in chat or the requested plan. For each proposed change, give the target file/rule, current behavior, reference source/passage, proposed adoption/adaptation/rejection, impact on existing principles and stance, and verification method. Explicitly assess applicability boundaries, invocation policy, authorization, interfaces and acceptance requirements where affected.
+- Existing principles and stance are the baseline. Adapt or reject conflicting reference rules rather than silently replacing that baseline. A request to integrate a reference does not itself authorize changing principles, stance or invocation/authorization policy; unresolved changes to them require explicit user direction. Existing explicit authorization remains valid and must not be requested again.
+- After implementation, check the diff against the checklist. Before making additional behavior changes, update the checklist and resolve any new conflict; do not provide the checklist only after the merge is done.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
