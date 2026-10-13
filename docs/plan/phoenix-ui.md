@@ -42,13 +42,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-12T16:01:10+08:00
-- 当前进度：3/6 个里程碑完成
-- 当前状态：进行中；整体3/6。Root统一源的Rust1253/lint/WASM已过，原始完整入口因mbx回收engine路径而actual1；保存同编译字节的入口修正与严格oracle860/轻量回归已验。下一步推送验证候选，最终四平台完整入口及tarball/真实闭环待验。
-- 最近完成：M3 · 安装迁移与 A 内部收口
-- 下一步：正常推送同一授权验证ref，保存新候选SHA/tree及四平台CI终态；按固定九原ZIP演练交接并打单一最终tarball，完成必要provider/真实UI/升级回滚。复用本地已过组，不把独立oracle补验写成原始入口actual0。
-- 当前阻塞：
-- 代码基线：Root dirty@cf7f2b762137825092b57be1954bf28acb7407da（HEAD tree c06353d4ef148528fd6d4927fb21a731a24cd20a）；B维护源已串行集成，未提交。夹具修后binaryfeef67532b73f36f59473b30dc1af5c8a9aac5cd69e13b031819b8db7e6e1cdb、567输入60a0e84a9e230f1adfdb865dfb31c74a6434895a3b5f5cf96333a33516a88173、bundle6c93502f4445254a7be7427b6002a206bcb059d0b56cbc90d66672a8357268b0；A完成1ef9e37与CI23 tree相同。
+- 最近更新：2026-10-13T16:51:35+08:00
+- 当前进度：6/6 个里程碑完成
+- 当前状态：已完成；最终候选a5ed3cc/CI33全绿，最终tarball a1628c0f的V-4、替身演练与单次pack通过，原V5 r6限定轮在最终包上恢复并封存。公开发布与合并未执行。
+- 最近完成：M6 · B闭环终验与发布准备
+- 下一步：代码评审——用 review-code 以本计划路径为参数评审完成记录中的提交；公开R2/npm发布与合并另行授权，发布候选若需包含后续提交（如a391a03）须按§10重跑CI与交接。
+- 当前阻塞：无
+- 代码基线：a5ed3cc5219f575b480e726b56be3d87be34a79d/tree 3b86dd19d46c11c09a21c63d3b289a9cee831cd2（CI33）；分支上其后有用户提交a391a03（仅agi-mode文档）及本计划完成提交。最终链证据在local/phoenix-ui/wt-a5ed3cc（a5ed3cc的detached worktree）与b-final8、b-v9-final/r6-final8。
 
 ### 完成记录
 
@@ -57,9 +57,9 @@
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 1ef9e37f4fd8 |
 | M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 1ef9e37f4fd8；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8 |
 | M3 | 已完成 | 2026-10-12T12:14:10+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过；能力/源码不变组有明确复用边界。内部收口，B未集成。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb |
-| M4 | 进行中 | 2026-10-12T16:01:10+08:00 | Root统一context/brief/profile的公开函数组在本地完整运行通过；原始入口终态及oracle补验已分开记录，最终包V-6/V-9待验。 | [M4 记录](phoenix-ui.records/M4.md) | 未到M6完成提交点；Root融合改动尚未提交 |
-| M5 | 进行中 | 2026-10-12T16:01:10+08:00 | Root review及CLI协议在本地1253项Rust范围通过，strict oracle860与轻量过；真实取证及最终包V-7/V-9待验。 | [M5 记录](phoenix-ui.records/M5.md) | 未到M6完成提交点；Root融合改动尚未提交 |
-| M6 | 进行中 | 2026-10-12T16:01:10+08:00 | 本地Rust1253/lint/WASM过，原始入口因GC路径丢失actual1；修正入口后独立oracle860/轻量过，准备最终验证CI，未宣称完整入口0。 | [M6 记录](phoenix-ui.records/M6.md) | 未到M6完成提交点；Root融合改动尚未提交 |
+| M4 | 已完成 | 2026-10-13T13:49:43+08:00 | V-6与设计子集V-9退出；真实provider/规范/Portal/接受方向及未变54输入有明确证据，整期门归M6。 | [M4 记录](phoenix-ui.records/M4.md) | 待提交 |
+| M5 | 已完成 | 2026-10-13T16:51:35+08:00 | V-7、V-8退出；最终包上原r6恢复、补评与限定轮封存完成，人工/机器降级边界与原判定词保留。 | [M5 记录](phoenix-ui.records/M5.md) | 待提交；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
+| M6 | 已完成 | 2026-10-13T16:51:35+08:00 | CI33全绿；最终tarball a1628c0f的V-4、替身与单次pack、受影响V-2/V-3/V-5/V-6/V-8及V-9/V-10通过；发布/合并另行授权。 | [M6 记录](phoenix-ui.records/M6.md) | 待提交；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
 
 ## 0. 需求、范围与决策
 
@@ -202,7 +202,7 @@ M1 建立★ `tools/phoenix-ui/compatibility.md`，按可执行 verb、skill 命
 | ★ skills/phoenix-ui/ | M2 唯一可编辑设计源置于 src/（SKILL.src.md、reference 模板、scripts、素材、subagents）；根 SKILL.md 及 reference/scripts 等是提交的通用渲染，禁止手改，metadata 记录来源。M4/M5 同步融合入口 |
 | ★ tools/phoenix-ui/scripts/ | M2 承接上游 Bun/provider transformer，锁定其必要依赖；从 skills/phoenix-ui/src 单源生成通用 SKILL.md/配套文件与 19 份 provider 产物；子代理从 src/subagents 映射到 provider 的 agents/commands，不混入仅供元数据的 agents/openai.yaml |
 | ★ tools/phoenix-ui/crates/review/；★ skills/review-ui/references/rules.v1.json | M5 实现协议、规则投影与合同 hash 门；同步 review-ui / apply-ui-review 合同、两份现有 agents/openai.yaml |
-| ★ tools/phoenix-ui/profiles/、catalog/ | M2 本地候选最小闭环；M4 generic 与显式 Portal profile、真实自有条目及 context 适配 |
+| ★ tools/phoenix-ui/profiles/；方向库单源 skills/phoenix-ui/src/scripts/data/catalog/ | M2 本地候选最小闭环（目录随技能生成并由 context 内置读取）；M4 generic 与显式 Portal profile、真实自有条目及 context 适配 |
 | ★ vendor/phoenix-ui/ | M2 生成去重 bundle、VERSION.json、许可清单；M3 A 阶段候选，M6 最终候选；engine 不入 Git/npm |
 | ★ bin/phoenix-ui.js；bin/xgent-skills.js | M2 薄 launcher/engine 补装；M3 接入 Rust 事务、兼容 flag、安装提示；默认切换受 §8 发布门约束 |
 | ★ scripts/build-phoenix-ui.mjs、publish-phoenix-ui-r2.mjs | M2 构建入口；M6 发布脚本、制品交接和替身演练，保留代理语义 |
@@ -391,7 +391,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 - 全局平台期只统计同基线至少三个有全量分数的轮次；本轮分数低于门槛，且本轮历史最佳比两个有效轮次前的历史最佳提高不足 1.0 才触发。限定范围/不完整轮不推进此窗口。
 - 顽固差距只针对 P0–P2，依“实际已修改待评审”与下轮仍存在/回归、或连续部分解决条件计算。没有真实修改不算尝试；不采纳仍被判存在进入待裁定。
 - 每个基线内，全局或某条差距所对应重构范围最多一次；发出预警但没有重构记录时仍为预警，不能直接升级停滞。目标基线变更重置最佳/停滞/重构计数，适用旧差距继续沿用 ID，ID 永不复用。
-- 每单元上一轮为最近一次覆盖它的轮次；不同单元可能来自不同 rN。修复记录只能到“已修改待评审”，是否解决归下一轮独立评审。
+- 每单元上一轮为最近一次覆盖它且有评审结论的轮次（覆盖但无任何评审结论的缺证轮不算）；不同单元可能来自不同 rN。修复记录只能到“已修改待评审”，是否解决归下一轮独立评审。
 - 同一 packet 的多位评审对同一旧差距结论不一时取较严状态：回归 > 仍存在 > 部分解决 > 待核实 > 已解决 > 不再适用。同一轮的处置以该轮最后一次记录为准；自上次独立评审以来，任一轮最终处置为“已修改待评审”即计一次尝试，最近一轮最终处置为“不采纳”时保持待裁定，二者分别判断。处置只针对该轮报告差距清单中的未关闭差距。
 
 上述口径的完整文本保留在原合同；工具文档不另造同义判定词。M5 在 review-ui references 增加 rules.v1.json，记录参数、顺序、适用条件、反例及四份合同的 SHA-256；它是合同的机读投影，不是另一份政策。Rust 与人工模式的黄金用例共用此表；合同 hash 或规则版本变化时测试失败，必须同时核对规则表、review crate、技能及用例，并更新 AGENTS.md 的接口同步清单。若实现发现歧义，先用最小反例修订合同并补测试，不能默默选一种算法。
