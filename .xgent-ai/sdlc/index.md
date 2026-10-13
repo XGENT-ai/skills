@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-13：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)代码评审[R1](status/review/eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2.md)的7项已修复并验证，M6因运行时改动重开（5/6）；下一步review-code复审，再以新候选跑CI与最终包验收。
+- 2026-10-13：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)代码复审[R2](status/review/3833fbb3-87bd-4e75-8a81-e2e3d7622a90.md)确认6项已解决、F-03部分解决（P2），需要修改；F-03已按Claude实际Git根/主worktree local来源补修并本地验证，下一步review-code复审（R3）。M6保持5/6、待新候选CI与最终包验收；R1原报告与历史自检保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。

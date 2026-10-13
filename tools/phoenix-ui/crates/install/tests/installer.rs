@@ -976,6 +976,231 @@ fn only_an_effectively_enabled_old_plugin_blocks_activation() {
     }
 }
 
+/// In a repository Claude reads the local settings at the checkout root, or the
+/// main checkout's root from a linked worktree; a file an older Claude left in
+/// the starting directory still applies below it. A worktree without a main
+/// checkout, and a repository rooted at the home directory, keep it in the
+/// starting directory. Expectations match `claude plugin list` 2.1.296.
+#[test]
+fn old_plugin_state_follows_the_local_settings_claude_reads_in_a_repository() {
+    let sandbox = Sandbox::new();
+    let home = sandbox.home();
+    let repo = sandbox.project();
+    let commit = |dir: &Path| {
+        assert!(git(
+            dir,
+            &[
+                "-c",
+                "user.name=fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "init"
+            ]
+        ));
+    };
+    assert!(git(&repo, &["init", "-q"]));
+    commit(&repo);
+    let linked = sandbox.0.join("linked worktree");
+    assert!(git(
+        &repo,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            &linked.to_string_lossy()
+        ]
+    ));
+    let bare = sandbox.0.join("bare.git");
+    let bare_linked = sandbox.0.join("bare worktree");
+    assert!(git(
+        &sandbox.0,
+        &[
+            "clone",
+            "-q",
+            "--bare",
+            &repo.to_string_lossy(),
+            &bare.to_string_lossy()
+        ]
+    ));
+    assert!(git(
+        &bare,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            &bare_linked.to_string_lossy()
+        ]
+    ));
+    assert!(git(&home, &["init", "-q"]));
+    let web = repo.join("apps/web");
+    let linked_web = linked.join("apps/web");
+    let bare_web = bare_linked.join("apps/web");
+    let home_web = home.join("apps/web");
+    for dir in [
+        &repo,
+        &web,
+        &linked,
+        &linked_web,
+        &bare_linked,
+        &bare_web,
+        &home_web,
+    ] {
+        fs::create_dir_all(dir.join(".claude")).unwrap();
+    }
+    let id = "impeccable@fixture-marketplace";
+    let local = ".claude/settings.local.json";
+    let user = home.join(".claude/settings.json");
+    fs::create_dir_all(home.join(".claude/plugins")).unwrap();
+    fs::write(
+        home.join(".claude/plugins/installed_plugins.json"),
+        serde_json::to_vec(&json!({"version": 2, "plugins": {id: [
+            {"scope": "user", "installPath": "/plugins/cache/impeccable/1.0.0", "version": "1.0.0"}]}}))
+        .unwrap(),
+    )
+    .unwrap();
+    let files = [
+        user.clone(),
+        repo.join(local),
+        web.join(".claude/settings.json"),
+        web.join(local),
+        linked.join(local),
+        linked_web.join(local),
+        bare_linked.join(local),
+        bare_web.join(local),
+        home.join(local),
+        home_web.join(local),
+    ];
+    for (project, settings, blocked) in [
+        (&repo, vec![(&user, true), (&repo.join(local), false)], None),
+        (&web, vec![(&user, true), (&repo.join(local), false)], None),
+        (
+            &web,
+            vec![(&user, false), (&repo.join(local), true)],
+            Some(repo.join(local)),
+        ),
+        (
+            &web,
+            vec![
+                (&user, true),
+                (&repo.join(local), true),
+                (&web.join(local), false),
+            ],
+            Some(repo.join(local)),
+        ),
+        (
+            &web,
+            vec![
+                (&user, false),
+                (&repo.join(local), false),
+                (&web.join(local), true),
+            ],
+            None,
+        ),
+        (&web, vec![(&user, true), (&web.join(local), false)], None),
+        (
+            &web,
+            vec![(&user, false), (&web.join(local), true)],
+            Some(web.join(local)),
+        ),
+        (
+            &web,
+            vec![
+                (&user, false),
+                (&web.join(".claude/settings.json"), true),
+                (&web.join(local), false),
+            ],
+            None,
+        ),
+        (
+            &linked,
+            vec![(&user, true), (&repo.join(local), false)],
+            None,
+        ),
+        (
+            &linked,
+            vec![
+                (&user, true),
+                (&repo.join(local), true),
+                (&linked.join(local), false),
+            ],
+            Some(repo.join(local)),
+        ),
+        (
+            &linked_web,
+            vec![(&user, true), (&repo.join(local), false)],
+            None,
+        ),
+        (
+            &linked_web,
+            vec![(&user, false), (&linked.join(local), true)],
+            None,
+        ),
+        (
+            &bare_web,
+            vec![(&user, false), (&bare_linked.join(local), true)],
+            None,
+        ),
+        (
+            &bare_web,
+            vec![(&user, false), (&bare_web.join(local), true)],
+            Some(bare_web.join(local)),
+        ),
+        (
+            &home_web,
+            vec![(&user, false), (&home.join(local), true)],
+            None,
+        ),
+        (
+            &home_web,
+            vec![(&user, true), (&home_web.join(local), false)],
+            None,
+        ),
+    ] {
+        for file in &files {
+            let _ = fs::remove_file(file);
+        }
+        for (file, state) in &settings {
+            fs::write(
+                file,
+                serde_json::to_vec(&json!({"enabledPlugins": {id: state}})).unwrap(),
+            )
+            .unwrap();
+        }
+        let case = format!(
+            "{} with {:?}",
+            project.display(),
+            settings
+                .iter()
+                .map(|(file, state)| (file.strip_prefix(&sandbox.0).unwrap(), state))
+                .collect::<Vec<_>>()
+        );
+        let report =
+            installer::install(&request(&sandbox, project, &[".claude"], true, "plugins")).unwrap();
+        let plugin: Vec<_> = report
+            .conflicts
+            .iter()
+            .filter(|c| c.message.contains("plugin"))
+            .map(|c| PathBuf::from(&c.path))
+            .collect();
+        match blocked {
+            None => {
+                assert!(plugin.is_empty(), "{case}: {plugin:?}");
+                assert_eq!(report.status, Status::Planned, "{case}");
+            }
+            Some(file) => {
+                assert_eq!(report.status, Status::Conflict, "{case}");
+                assert_eq!(plugin, [file], "{case}");
+            }
+        }
+    }
+}
+
 /// The inherited `--project` is a boolean for the current project; project
 /// installs refuse the user-level-only options instead of ignoring them.
 #[test]
