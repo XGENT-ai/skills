@@ -2,7 +2,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     cell::RefCell,
-    collections::HashMap,
+    collections::{BTreeSet, HashMap},
     fs::{self, File, OpenOptions, TryLockError},
     io::Write,
     path::{Component, Path, PathBuf},
@@ -80,6 +80,9 @@ impl CycleLock {
         }
         let mut registered = Vec::new();
         let value = validate(&mut registered)?;
+        // Shared earlier facts can reach this result through several judge packets.
+        registered.sort_unstable();
+        registered.dedup();
         let bytes = serde_json::to_vec(&value).map_err(|e| error(4, e))?;
         sources.extend(registered.iter().cloned());
         self.memo.borrow_mut().insert(key, (bytes, registered));
@@ -200,7 +203,10 @@ impl CycleLock {
     }
 
     pub(crate) fn verify_sources(&self, sources: &[(PathBuf, String)]) -> Result<(), StoreError> {
-        for (path, expected_hash) in sources {
+        // Old journals may repeat a fact thousands of times. Keep distinct hashes
+        // for one path so incompatible observations still conflict.
+        let unique: BTreeSet<_> = sources.iter().collect();
+        for (path, expected_hash) in unique {
             let bytes = fs::read(self.path(path)?).map_err(|e| error(3, e))?;
             if hash(&bytes) != *expected_hash {
                 return Err(error(3, "A frozen source changed"));
@@ -296,5 +302,67 @@ impl CycleLock {
             let _ = fs::remove_file(&temporary);
         }
         result
+    }
+}
+
+#[cfg(test)]
+mod memo_tests {
+    use super::*;
+
+    fn lock() -> CycleLock {
+        CycleLock {
+            root: PathBuf::new(),
+            lock_path: PathBuf::new(),
+            _lock: None,
+            memo: RefCell::default(),
+        }
+    }
+
+    #[test]
+    fn nested_memo_dependencies_stay_bounded_by_distinct_source_facts() {
+        let lock = lock();
+        let mut sources = Vec::new();
+        lock.memoized("0".into(), &mut sources, |registered| {
+            registered.push((PathBuf::from("source-a"), "a".repeat(64)));
+            registered.push((PathBuf::from("source-b"), "b".repeat(64)));
+            Ok(0_u64)
+        })
+        .unwrap();
+        for level in 1..9 {
+            sources.clear();
+            lock.memoized(level.to_string(), &mut sources, |registered| {
+                for _ in 0..3 {
+                    let _: u64 = lock.memoized((level - 1).to_string(), registered, |_| {
+                        panic!("A validated dependency must be reused")
+                    })?;
+                }
+                Ok(level as u64)
+            })
+            .unwrap();
+            assert_eq!(sources.len(), 2, "Dependency fan-out at level {level}");
+        }
+    }
+
+    #[test]
+    fn memo_dependencies_preserve_conflicting_hashes_for_the_same_path() {
+        let lock = lock();
+        let mut sources = Vec::new();
+        let _: u64 = lock
+            .memoized("conflict".into(), &mut sources, |registered| {
+                registered.push((PathBuf::from("source"), "a".repeat(64)));
+                registered.push((PathBuf::from("source"), "b".repeat(64)));
+                registered.push((PathBuf::from("source"), "a".repeat(64)));
+                Ok(1)
+            })
+            .unwrap();
+        assert_eq!(sources.len(), 2);
+        assert_ne!(sources[0].1, sources[1].1);
+        sources.clear();
+        let _: u64 = lock
+            .memoized("conflict".into(), &mut sources, |_| {
+                panic!("A memo hit must retain both original source facts")
+            })
+            .unwrap();
+        assert_eq!(sources.len(), 2);
     }
 }

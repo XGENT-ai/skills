@@ -100,8 +100,10 @@ impl CycleLock {
                 return Err(error(code, "Invalid publication path or content digest"));
             }
         }
-        for (path, _) in &journal.sources {
-            if paths.contains(&self.path(path)?) || self.path(path)? == journal_path {
+        let source_paths: HashSet<_> = journal.sources.iter().map(|(path, _)| path).collect();
+        for path in source_paths {
+            let path = self.path(path)?;
+            if paths.contains(&path) || path == journal_path {
                 return Err(error(code, "Frozen sources cannot be publication outputs"));
             }
         }
@@ -191,7 +193,10 @@ impl CycleLock {
         if self.publication_pending()? {
             return Err(error(3, "A pending publication must be recovered first"));
         }
-        self.compare(round, expected, sources)?;
+        let mut sources = sources.to_vec();
+        sources.sort_unstable();
+        sources.dedup();
+        self.compare(round, expected, &sources)?;
         if let Some(expected) = expected {
             if is_finalized(&expected.bytes, 4)? {
                 return Err(error(3, "Finalized round facts are immutable"));
@@ -230,13 +235,13 @@ impl CycleLock {
             operation,
             round: round.to_owned(),
             writes,
-            sources: sources.to_vec(),
+            sources: sources.clone(),
         };
         self.validate_journal(&journal, 2)?;
         let bytes = serde_json::to_vec_pretty(&journal).map_err(|e| error(2, e))?;
         self.write_atomic(&self.publication_path(), &bytes, || {
             self.check_file(&self.publication_path(), None)?;
-            self.verify_sources(sources)?;
+            self.verify_sources(&sources)?;
             for write in &journal.writes {
                 self.check_file(&write.path, write.before_hash().as_deref())?;
             }
