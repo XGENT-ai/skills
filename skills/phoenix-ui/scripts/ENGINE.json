@@ -3,18 +3,18 @@
   "distribution": "development",
   "toolVersion": "0.1.0",
   "npmPackageVersion": "0.7.0-rc.0",
-  "sourceCommit": "526c692556857d69ceb1934b7415f83145f63723",
-  "sourceTree": "f941f536054f4f05cbd62b174013615ff4d51ed2",
+  "sourceCommit": "17d5716b6427026cb5df75e63889e06e12fa8c8f",
+  "sourceTree": "4efa09b06538c7e8b0e9d3f6738c432a1ba8f654",
   "sourceState": "dirty",
-  "sourceInputSha256": "cebbfe26a13fee77255a5fb32cbeac0c370652f401d3a1b6e9441f5511dd05a4",
+  "sourceInputSha256": "4c826935dd5a81096a1aa41518452df815b5b1708bf54799a4d6d186e00f6452",
   "bundleSchema": 1,
   "bundleSha256": "95bca755477c6864e11eab1104d2147d0d4c80dca24ec15a058c6af4d96e7c30",
   "reviewSchema": 1,
   "engines": {
     "darwin-arm64": {
       "asset": "phoenix-ui-darwin-arm64",
-      "sha256": "4e93b8de2b2122041a869a9ab34c3ed42a55846cda94c6dc8d2a6b9909b31e89",
-      "size": 20885912
+      "sha256": "ed736bb4095e02eb51b7024ddc961b672cae31dd07af03375a68f375edc1705d",
+      "size": 20942024
     }
   }
 }

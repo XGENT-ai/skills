@@ -1011,7 +1011,6 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
                 let _ = request.respond(ok_resp());
                 continue;
             }
-            let _ = request.respond(ok_resp());
             // /answer
             let parsed = serde_json::from_str::<Value>(&body).ok().and_then(|v| v.as_object().cloned()).unwrap_or_default();
             let option_id = parsed.get("optionId").cloned().unwrap_or(Value::Null);
@@ -1050,18 +1049,27 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
                 }
             }
             let answer = json_compact(&Value::Object(ans));
+            if let Some(k) = st.detached_key.clone() {
+                if std::fs::create_dir_all(&st.qdir)
+                    .and_then(|_| {
+                        write_atomic(&answer_file(&st.qdir, &k), &format!("{}\n", answer))
+                    })
+                    .is_err()
+                {
+                    let _ = request.respond(tiny_http::Response::empty(500));
+                    continue;
+                }
+            } else {
+                print_answer(io, &answer);
+                let _ = io.stdout.flush();
+            }
             let was_awaiting = st.awaiting_next;
             st.awaiting_next = (is_reroll || followup_open) && st.detached_key.is_some();
             if st.awaiting_next && !was_awaiting {
                 st.awaiting_next_since = now_ms();
             }
-            if let Some(k) = st.detached_key.clone() {
-                let _ = std::fs::create_dir_all(&st.qdir);
-                let _ = std::fs::write(answer_file(&st.qdir, &k), format!("{}\n", answer));
-            } else {
-                print_answer(io, &answer);
-                let _ = io.stdout.flush();
-            }
+            // A successful response also promises pollers a complete answer.
+            let _ = request.respond(ok_resp());
             if !((is_reroll || followup_open) && st.detached_key.is_some()) {
                 drop(st);
                 sleep_ms(150);

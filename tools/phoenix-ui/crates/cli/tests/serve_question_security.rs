@@ -4,7 +4,6 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::Path;
 
 fn raw_request(port: u16, method: &str, target: &str, headers: &[(&str, &str)], body: Option<&str>) -> (u16, String) {
     let mut s = TcpStream::connect(("127.0.0.1", port)).expect("connect");
@@ -134,7 +133,19 @@ fn detached_posts_require_key_and_loopback_host_origin() {
         assert_eq!(st, 200, "keyed flip");
         assert!(flip_path.exists(), "flip file written");
 
-        // With the key (and a loopback Origin) the answer lands.
+        // An answer that cannot be published must not be acknowledged as saved.
+        std::fs::create_dir(&answer_path).map_err(|e| e.to_string())?;
+        let (st, _) = raw_request(
+            port,
+            "POST",
+            &format!("/answer?key={}", key),
+            &[json, ("Origin", &format!("http://127.0.0.1:{}", port))],
+            Some(body),
+        );
+        assert_eq!(st, 500, "answer publication failed");
+        std::fs::remove_dir(&answer_path).map_err(|e| e.to_string())?;
+
+        // With the key (and a loopback Origin), 200 means the full answer is ready.
         let (st, _) = raw_request(
             port,
             "POST",
@@ -143,7 +154,6 @@ fn detached_posts_require_key_and_loopback_host_origin() {
             Some(body),
         );
         assert_eq!(st, 200, "keyed answer");
-        wait_for(&answer_path);
         let answer = std::fs::read_to_string(&answer_path).map_err(|e| e.to_string())?;
         assert!(answer.contains(r#""optionId":"assigned""#), "answer recorded: {}", answer);
         Ok(())
@@ -153,11 +163,4 @@ fn detached_posts_require_key_and_loopback_host_origin() {
     let _ = child.wait();
     let _ = std::fs::remove_dir_all(&dir);
     result.expect("serve-question security scenario");
-}
-
-fn wait_for(p: &Path) {
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
-    while !p.exists() && std::time::Instant::now() < deadline {
-        std::thread::sleep(std::time::Duration::from_millis(25));
-    }
 }
