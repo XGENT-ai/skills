@@ -95,7 +95,7 @@ import { openDownload } from "@xgent/portal-sdk";
 openDownload(presignedUrl);
 
 // 与宿主 UI 协作
-sdk.resize(document.body.scrollHeight + 8);
+sdk.resize(document.body.scrollHeight + 8);   // 仅内容高度型；满高型不调，见下文「iframe 高度」
 sdk.navigate("/app/another-app");            // 让宿主跳 Portal 内路由
 sdk.routeSync("/detail");                    // 内部路由 → 地址栏 ?r=（可分享/刷新还原）
 sdk.setBreadcrumbs([                         // 页面层级 → 宿主版头面包屑
@@ -163,6 +163,24 @@ sdk.onFullscreen(on => ...);
 帮助中心、接入指引这类低频页面不该长期占着 App 侧栏一个位置：声明 `helpEntry` 让它挂在
 版头那枚帮助按钮上，并把这一级显式推进面包屑，进去之后位置依然清楚。范例是研发项目管理
 的帮助中心（指引 + FAQ）。
+
+### iframe 高度：满高型与内容高度型（软键盘）
+
+宿主给 iframe 的高度只有两种模式，按 App 形态二选一：
+
+| | 满高型 | 内容高度型 |
+| --- | --- | --- |
+| 适合 | 编辑器、聊天、带底部输入栏的 App | 文档式页面、短表单 |
+| 写法 | **不调** `sdk.resize()`；外壳 `height: 100dvh`（或 `100%`），内部滚动 | `sdk.resize(document.body.scrollHeight + 8)`，iframe 变成固定像素高，由宿主滚动区滚动 |
+| 软键盘弹出 | iframe 的布局视口随宿主可见区变矮，iframe 内触发 `resize`；收起后恢复 | Android：宿主滚动区随布局视口变矮，浏览器把焦点输入框滚入可视区；iOS：宿主不调整，保持浏览器原生平移 |
+
+- **调过一次 `resize` 就是内容高度型**：宿主不会再把 iframe 恢复为满高，也不再为它让位。满高型 App 不要为了「追可视区」去调 `resize`。
+- **满高型 App 自己负责两件事**：
+  1. 在 `window` 的 `resize` 里让当前插入点或焦点输入框保持可见，例如对焦点输入框 `scrollIntoView({ block: "nearest" })`，或按选区矩形调整内部滚动容器的 `scrollTop`。宿主只改 iframe 尺寸，不动 App 的内部滚动。
+  2. iOS 上输入控件（`input` / `textarea` / `contenteditable`）的**计算字号 ≥16px**。字号更小时 Safari 聚焦即放大页面，宿主检测到缩放就不让位，键盘照旧盖住底部。
+- App 拿不到也不需要键盘高度：没有对应的 SDK 事件，iframe 里的 `100dvh` / `innerHeight` 已经是可见区。
+- **不承诺**：键盘高度数值；与键盘动画逐帧同步（按帧合并，可能滞后一两帧）；捏合缩放与聚焦放大状态下的让位；横屏加键盘时的最小可用高度（可能很矮，甚至为 0）；iPad 浮动 / 分离键盘（不缩小可视区，不触发）；外接 / 硬件键盘（iPad 快捷栏可能触发，不承诺）；键盘打开时拖动期间的短暂闪跳；全屏状态下内容高度型 App 的滚动；门户自身页面在 iOS 上的让位。
+- **standalone**（App 自己就是顶层页面）：门户不介入，App 自己设置 viewport meta（如 `interactive-widget=resizes-content`）并监听自己的 `visualViewport`。
 
 ## 4. Consent（授权与同意）
 
@@ -238,6 +256,7 @@ async function main() {
   const user = await sdk.userinfo().catch(() => null);
   document.body.innerHTML = `当前用户：${user?.name ?? "—"}`;
   sdk.onTheme(t => document.documentElement.dataset.theme = t);
+  // 这是内容高度型页面：按内容报高度。满高型（编辑器、聊天）不要调，见 §3「iframe 高度」。
   sdk.resize(document.body.scrollHeight + 8);
 }
 main();

@@ -45,7 +45,8 @@ skill 的「第 0 步」。仓里还没有 `.xgent-registry.env` ⇒ 停下，�
 - **App 内不要自绘图标与名称**：版头最左那一级恒为「应用图标 + 应用名」且可点回应用首页，App 再画一份就是同屏说两次，而且租户改过 App 名之后两处会说得不一样（`apps.name` 租户可改、i18n 词条改不了）。tagline / 副标题同理（应用中心已展示过）。可以留：角色 / 工作区 / 当前对象这类**运行期事实**，以及 `main.tsx` 里脱离门户打开时的 standalone 壳。浏览器验收时检查版头与 App 内容没有重复标题。
 - **帮助页入口 `helpEntry`**：清单里声明一个可空字符串，版头工具条最右侧（全屏与刷新的**左边**）就多一枚帮助按钮；不声明就不出按钮。两种形态：`"/help"` = App 内路由（宿主置 `?r=`，不离开门户，**自动档**）、`"https://docs.example.com"` = 外站文档（新标签 + `noopener`，**走治理审核**，因为门户版头等于替这个域名背书）。`/…` 与 crumb `route` 同一条规则；外站必须 https（`http://` 连回环也拒）、无 fragment。它是**安装期快照**，改了要 bump 自己的 `version`；**租户不可覆盖**（想指向自家知识库去知识库 App 建条目）。门户不托管、不渲染、不翻译帮助正文。
 - **低频入口放版头、不占侧栏**：帮助中心 / 接入指引这类低频页别长期占着侧栏一个位置 —— 用 `helpEntry` 挂到版头，并把这一级显式推进面包屑。
-- 主题/语言：订阅 `sdk.onTheme` / `sdk.onLocale`；高度用 `sdk.resize`；未保存更改 `sdk.setDirty(true)` 让宿主拦离开。
+- 主题/语言：订阅 `sdk.onTheme` / `sdk.onLocale`；未保存更改 `sdk.setDirty(true)` 让宿主拦离开。
+- **iframe 高度二选一**：满高型（编辑器、聊天、带底部输入栏）**不调** `sdk.resize`，外壳 `height: 100dvh`（或 `100%`）+ 内部滚动——软键盘缩小可见区时宿主让 iframe 一起变矮、在 iframe 内触发 `resize`，App 在 `resize` 里把插入点 / 焦点输入框滚回视图，且 iOS 上输入控件计算字号 ≥16px（更小时 Safari 聚焦即放大，宿主不让位）；内容高度型调 `sdk.resize(scrollHeight)`，由宿主滚动区滚动，**调过一次就不再复位为满高、也不再为键盘让位**。没有键盘高度事件，也不需要。详见 [SDK 参考「iframe 高度」](references/sdk-reference.md#iframe-高度满高型与内容高度型软键盘)。
 
 ## Consent 硬规则
 
