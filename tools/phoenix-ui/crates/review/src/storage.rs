@@ -1,6 +1,8 @@
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
+    cell::RefCell,
+    collections::HashMap,
     fs::{self, File, OpenOptions, TryLockError},
     io::Write,
     path::{Component, Path, PathBuf},
@@ -50,14 +52,40 @@ pub struct Snapshot {
     pub bytes: Vec<u8>,
 }
 
+/// Sources a validation registered, kept with its serialized result.
+type Memo = (Vec<u8>, Vec<(PathBuf, String)>);
+
 #[derive(Debug)]
 pub struct CycleLock {
     root: PathBuf,
     lock_path: PathBuf,
     _lock: Option<File>,
+    memo: RefCell<HashMap<String, Memo>>,
 }
 
 impl CycleLock {
+    /// Validates a sealed or content-addressed fact once per held lock. `key` must
+    /// name the exact bytes the validation reads; a hit replays the sources the
+    /// first validation registered, so later conflict checks still cover them.
+    pub(crate) fn memoized<T: Serialize + DeserializeOwned>(
+        &self,
+        key: String,
+        sources: &mut Vec<(PathBuf, String)>,
+        validate: impl FnOnce(&mut Vec<(PathBuf, String)>) -> Result<T, StoreError>,
+    ) -> Result<T, StoreError> {
+        let hit = self.memo.borrow().get(&key).cloned();
+        if let Some((bytes, registered)) = hit {
+            sources.extend(registered);
+            return serde_json::from_slice(&bytes).map_err(|e| error(4, e));
+        }
+        let mut registered = Vec::new();
+        let value = validate(&mut registered)?;
+        let bytes = serde_json::to_vec(&value).map_err(|e| error(4, e))?;
+        sources.extend(registered.iter().cloned());
+        self.memo.borrow_mut().insert(key, (bytes, registered));
+        Ok(value)
+    }
+
     /// The index identifies the cycle lock; writes remain bounded by the project.
     /// This allows the fixed plan record to live outside the report directory.
     pub fn acquire_project(project: &Path, index: &Path) -> Result<Self, StoreError> {
@@ -108,6 +136,7 @@ impl CycleLock {
             root,
             lock_path,
             _lock: Some(lock),
+            memo: RefCell::default(),
         })
     }
 
@@ -121,6 +150,7 @@ impl CycleLock {
             root,
             lock_path,
             _lock: None,
+            memo: RefCell::default(),
         })
     }
 

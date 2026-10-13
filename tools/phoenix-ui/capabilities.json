@@ -7249,7 +7249,7 @@
       "manifest": "vendor/phoenix-ui/bundle/manifest.json",
       "manifestSha256": "6c93502f4445254a7be7427b6002a206bcb059d0b56cbc90d66672a8357268b0",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "84971832745892aa40aed65e147900090f3d480b88a3a80ffb0fadebe1f78f06",
+      "generationManifestSha256": "43a5c6f4b58aa712b3456cbf96f8799d8ca8353377a247af217d4686b620c762",
       "generator": "Bun 1.3.14",
       "inputSha256": "2ff87c55206e717d56e666929b7ebfb049d29046f1cdb1ba93034061b7c36740",
       "engineManifest": "verified",
@@ -7391,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "84678aba785f6edc173f3abbe93d9cab60245ddd037f465c68b464bb4008eee2",
+        "sha256": "cb1751af1757f1d6cb4dd0905c6c410dce43899768c7f52b944e2ad3619e3707",
         "distribution": "development",
-        "sourceInputSha256": "61d151267560a2d735ccc04d25a846d510dc8133ec050934f03d4a6bf009b7e9",
+        "sourceInputSha256": "2607e2693ac81e16e8b16a71086807a44af46f5a5bccccdc5d8c4c5b04cc0bac",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "24f850f35e3589700d004ab44f2235a0296d4766d5f6137756f4c4b7a34b4b3d",
-            "size": 20836072
+            "sha256": "9e75ea5407151c0a023dda6c7168088c7359c1907db7e8279be44cfaa7acc05c",
+            "size": 20881304
           }
         },
-        "limitation": "Development darwin-arm64 only for the managed report projection, previous-material and unused-packet repairs; sourceState dirty and full runtime not-run-by-build-script. CI27/ddcebe01 scope preserved; the next fixed CI and final package acceptance are pending."
+        "limitation": "Development darwin-arm64 only for the managed report, previous-material, unused-packet and validation-memo repairs; sourceState dirty and full runtime not-run-by-build-script. CI29/4f122e10 scope preserved; the next fixed CI and final package acceptance are pending."
       }
     },
     "directionLibrary": {

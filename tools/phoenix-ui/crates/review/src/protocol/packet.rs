@@ -95,6 +95,25 @@ pub(super) fn load(
     reference: &PacketRef,
     sources: &mut Vec<(PathBuf, String)>,
 ) -> Result<Manifest, StoreError> {
+    let cycle =
+        load_cycle(lock, &round.prefix)?.ok_or_else(|| error(4, "Managed cycle is missing"))?;
+    let key = format!(
+        "packet:{}:{}:{}",
+        hash(&encode(&cycle)?),
+        hash(&encode(round)?),
+        reference.packet_hash
+    );
+    lock.memoized(key, sources, |sources| {
+        validate(lock, round, reference, sources)
+    })
+}
+
+fn validate(
+    lock: &CycleLock,
+    round: &Round,
+    reference: &PacketRef,
+    sources: &mut Vec<(PathBuf, String)>,
+) -> Result<Manifest, StoreError> {
     let directory = round_path(&round.prefix, ordinal(&round.round_id)?)
         .parent()
         .unwrap()

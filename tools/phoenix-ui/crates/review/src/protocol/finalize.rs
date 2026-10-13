@@ -238,6 +238,20 @@ pub(super) fn load_result(
     round: &Round,
     sources: &mut Vec<(PathBuf, String)>,
 ) -> Result<ResultRecord, StoreError> {
+    // Validating a round recurses into earlier rounds through its judge packets;
+    // each exact cycle/round/result state is validated once per held lock.
+    let key = format!("result:{}:{}", hash(&encode(cycle)?), hash(&encode(round)?));
+    lock.memoized(key, sources, |sources| {
+        validate_result(lock, cycle, round, sources)
+    })
+}
+
+fn validate_result(
+    lock: &CycleLock,
+    cycle: &Cycle,
+    round: &Round,
+    sources: &mut Vec<(PathBuf, String)>,
+) -> Result<ResultRecord, StoreError> {
     let reference = &round
         .finalization
         .as_ref()
