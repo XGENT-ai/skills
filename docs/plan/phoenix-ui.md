@@ -42,13 +42,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-13T20:35:00+08:00
-- 当前进度：5/6 个里程碑完成
-- 当前状态：进行中；R1代码评审F-01–F-07已修复并本地验证（npm test通过；test:phoenix仅oracle 1/860因本机Docker占用8080失败，修复前二进制同样失败），M6原最终候选a5ed3cc/CI33证据不覆盖修复后代码，已重开。用户授权本分支合并并推送origin/main；公开R2/npm发布未执行。
-- 最近完成：M5 · review-ui 可恢复机器协议
-- 下一步：用 review-code 以本计划路径复审R1修复；通过后按§10生成含修复的新验证候选，跑四native+Node18 CI，同一最终tarball重跑V-4、受影响V-7与V-10，回写M6。
+- 最近更新：2026-10-14T20:43:15+08:00
+- 当前进度：6/6 个里程碑完成
+- 当前状态：已完成；R3复审通过后，含R1修复与R2补修的候选8f67527经CI34四native/Node18全绿，同一最终tarball 08f14e50的V-4八组、受影响V-7/V-8与V-10通过；V-9评审闭环在最终包重跑（按报告修复→限定复审→全量独立复审通过验收10）及§9.3场景通过；本机完整test:phoenix单次退出0。M6重新收口。验证分支已推送8f67527；origin/main只含R1修复，R2补修未合并；公开R2/npm发布未执行。
+- 最近完成：M6 · B 闭环终验与发布准备
+- 下一步：代码评审——R1–R3已覆盖全部实现与修复，候选8f67527即R3所审提交，本次收口只改计划/记录，无代码改动时无需再跑 review-code；此后若改代码，用 review-code 以本计划路径评审。合并main（含R2补修）与公开R2/npm发布另行授权。
 - 当前阻塞：无
-- 代码基线：修复见完成记录M3/M5「修复」SHA，起点28789e48；a5ed3cc/tree 3b86dd19（CI33）及local/phoenix-ui/wt-a5ed3cc、b-final8、b-v9-final/r6-final8最终链证据只覆盖修复前代码。
+- 代码基线：最终候选8f6752774204/tree 15b003f5（CI34），最终链证据在local/phoenix-ui/wt-8f67527/local/phoenix-ui/b-final9；修复见完成记录M3/M5「修复」SHA。a5ed3cc/tree 3b86dd19（CI33）及wt-a5ed3cc、b-final8、b-v9-final/r6-final8为修复前历史证据。
 
 ### 完成记录
 
@@ -56,10 +56,10 @@
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-08T19:12:49+08:00 | 固定来源、工具和真实迁移/Web 输入；原 build/测试/oracle/性能及既有失败已分型登记，V-2 一致性仍待 M2 关闭。 | [M1 记录](phoenix-ui.records/M1.md) | 1ef9e37f4fd8 |
 | M2 | 已完成 | 2026-10-11T17:40:41+08:00 | 用户将Windows整体延期；CI19本期四native及Node18 consumer success，M2退出。M3新源码候选CI另验。 | [M2 记录](phoenix-ui.records/M2.md) | 1ef9e37f4fd8；候选实现 624147968ecc；CI修复候选 19630c25aa4e、de3a85739ddc、da0f780478a7；3eec43f153c1；544f76e4cea6；5090fb5a1040；a07cb752f29d；1cef4e883bfb；d5b6753bc3d4；b75f1513b19e；889fccbf084d；f189b65f80cb；22d9e507d021；16543bfbf9c0；67e2817acf76；d107adf24b56；36885072fc6b；142aba6a56b8 |
-| M3 | 已完成 | 2026-10-13T20:35:00+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过。R1评审F-01–F-04已修复并本地验证，最终包重验归M6。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb；修复 43a27a3c0a7f |
+| M3 | 已完成 | 2026-10-13T23:55:14+08:00 | 内部完成tree等于CI23；A五门、四native/Node18及九原制品核验通过。R1评审F-01–F-04已修复，R2判F-03部分解决后补修并本地验证，最终包重验归M6。 | [M3 记录](phoenix-ui.records/M3.md) | 1ef9e37f4fd8；验证候选 3e236198e72a、9d97862c21dc、17d188aed2dc、a44658dfdfdb；修复 43a27a3c0a7f；修复 36ec3f48f63d |
 | M4 | 已完成 | 2026-10-13T13:49:43+08:00 | V-6与设计子集V-9退出；真实provider/规范/Portal/接受方向及未变54输入有明确证据，整期门归M6。 | [M4 记录](phoenix-ui.records/M4.md) | 7901ce186eed |
 | M5 | 已完成 | 2026-10-13T20:35:00+08:00 | V-7、V-8退出；最终包上原r6恢复与限定轮封存完成。R1评审F-05–F-07已修复并本地验证，真实取证重验归M6。 | [M5 记录](phoenix-ui.records/M5.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录）；修复 43a27a3c0a7f |
-| M6 | 进行中 | 2026-10-13T20:35:00+08:00 | 原CI33/最终tarball a1628c0f证据只覆盖a5ed3cc；R1修复后待复审及新候选CI、最终包V-4/V-7/V-10重验。公开发布未执行。 | [M6 记录](phoenix-ui.records/M6.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录） |
+| M6 | 已完成 | 2026-10-14T20:43:15+08:00 | 含R1/R2修复的候选8f67527经CI34全绿；最终tarball 08f14e50的V-4八组、R1–R2修复反例、真实UI项目status、V-9闭环与§9.3重跑及V-10通过，其余复用组按编译输入差异界定。公开发布与合并未执行。 | [M6 记录](phoenix-ui.records/M6.md) | 7901ce186eed；验证候选a5ed3cc5219f、17d5716b6427及此前候选（见记录）；验证候选8f6752774204；2af3e3e76213；fafaea4ee744 |
 
 ## 0. 需求、范围与决策
 

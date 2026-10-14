@@ -438,8 +438,10 @@ fn discover_personal(
     for path in [
         home.join(".claude/settings.json"),
         project.join(".claude/settings.json"),
-        project.join(".claude/settings.local.json"),
-    ] {
+    ]
+    .into_iter()
+    .chain(claude_local_settings(home, project))
+    {
         let Ok(bytes) = read_bounded(&path, 4 * 1024 * 1024) else {
             continue;
         };
@@ -468,6 +470,70 @@ fn discover_personal(
             message: "an Impeccable plugin is enabled by this settings file; disable it (/plugin, or false here), reload the agent, then rerun the install".into(),
         });
     }
+}
+
+/// The `.claude/settings.local.json` files Claude reads for a session started
+/// in `project`, lowest precedence first. In a repository Claude keeps the file
+/// at the checkout root, the main checkout's root from a linked worktree, and
+/// still reads one an older version left in the starting directory below it.
+fn claude_local_settings(home: &Path, project: &Path) -> Vec<PathBuf> {
+    let started = project.join(".claude/settings.local.json");
+    match claude_local_root(home, project) {
+        Some(root) if root != project => vec![started, root.join(".claude/settings.local.json")],
+        _ => vec![started],
+    }
+}
+
+/// Outside git, on Windows, in a worktree without a main checkout, at a home
+/// directory root, or when the root, its `.git` or its `.claude` belongs to
+/// another user, Claude keeps the local file in the starting directory.
+fn claude_local_root(home: &Path, project: &Path) -> Option<PathBuf> {
+    if cfg!(windows) {
+        return None;
+    }
+    let (top, git_dir) = enclosing_git(project)?;
+    let root = match fs::read_to_string(git_dir.join("commondir")) {
+        Ok(common) => {
+            let common = PathBuf::from(impeccable_common::jsp::resolve(
+                &git_dir.to_string_lossy(),
+                &[common.trim()],
+            ));
+            if common.file_name()? != ".git" {
+                return None;
+            }
+            common.parent()?.to_path_buf()
+        }
+        Err(_) => top,
+    };
+    if root == fs::canonicalize(home).unwrap_or_else(|_| home.to_path_buf()) {
+        return None;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        // getuid always succeeds and touches no memory.
+        let uid = unsafe { libc::getuid() };
+        if [root.clone(), root.join(".git"), root.join(".claude")]
+            .iter()
+            .any(|path| fs::symlink_metadata(path).is_ok_and(|meta| meta.uid() != uid))
+        {
+            return None;
+        }
+    }
+    Some(root)
+}
+
+/// The checkout holding the nearest `.git` above `dir`, and the git directory
+/// that entry is or names.
+fn enclosing_git(dir: &Path) -> Option<(PathBuf, PathBuf)> {
+    let top = dir.ancestors().find(|d| d.join(".git").exists())?;
+    let dot_git = top.join(".git");
+    if dot_git.is_dir() {
+        return Some((top.to_path_buf(), dot_git));
+    }
+    let text = fs::read_to_string(&dot_git).ok()?;
+    let git_dir = top.join(text.trim().strip_prefix("gitdir:")?.trim());
+    Some((top.to_path_buf(), git_dir))
 }
 
 /// Global skills that skills.sh recorded as installed from the upstream repository.
@@ -607,24 +673,8 @@ const EXCLUDE_CLOSE: &str = "# phoenix-ui-install-ignore-end";
 /// block an earlier version wrote; never edit a committed ignore file. Best
 /// effort: a project outside git, or an unwritable exclude, keeps going.
 fn exclude_local_state(root: &Path) {
-    let Some(dot_git) = root
-        .ancestors()
-        .map(|dir| dir.join(".git"))
-        .find(|p| p.exists())
-    else {
+    let Some((_, git_dir)) = enclosing_git(root) else {
         return;
-    };
-    let git_dir = if dot_git.is_dir() {
-        dot_git
-    } else {
-        let Some(dir) = fs::read_to_string(&dot_git).ok().and_then(|text| {
-            text.trim()
-                .strip_prefix("gitdir:")
-                .map(|d| d.trim().to_string())
-        }) else {
-            return;
-        };
-        dot_git.parent().unwrap_or(root).join(dir)
     };
     let target = PathBuf::from(impeccable_common::git::info_exclude(
         &git_dir.to_string_lossy(),
