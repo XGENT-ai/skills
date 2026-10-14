@@ -116,7 +116,7 @@ async function fixture(t, control = {}) {
   const license = Buffer.from('Fixture license, no real native acceptance.\n');
   const licenses = [{ path: `THIRD-PARTY-LICENSES/${hash(license)}.txt`, sha256: hash(license) }];
   const inventory = { schemaVersion: 1, inputs: {}, rust: [{ name: 'fixture', version: '1.0.0', license: 'MIT', licenses }], node: [], bundled: [], resources: [] };
-  const meta = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: '0.7.0-rc.0',
+  const meta = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: JSON.parse(packageBytes).version,
     sourceCommit: head, sourceTree: tree, sourceState: 'dirty', bundleSchema: 1, bundleSha256: hash(bundleBytes), reviewSchema: 1 };
   const items = [], jobs = [];
   for (let i = 0; i < targets.length; i++) {
