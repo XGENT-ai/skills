@@ -16,6 +16,7 @@
 | 2ffdc11c-c121-488e-a100-94bfb6a9315c | implementation / plan | [事实记录](2ffdc11c-c121-488e-a100-94bfb6a9315c.md) |
 | 30e911a8-d345-4b07-9b33-2d7d7e667514 | implementation / plan | [事实记录](30e911a8-d345-4b07-9b33-2d7d7e667514.md) |
 | 34763793-aa30-4f8f-8a54-9204df2f39f4 | implementation / plan | [事实记录](34763793-aa30-4f8f-8a54-9204df2f39f4.md) |
+| 34caabd2-ec7b-48a3-acf0-b5d260c08788 | release / v0.7.0-rc.0 | [事实记录](34caabd2-ec7b-48a3-acf0-b5d260c08788.md) |
 | 355503a6-19e2-4e09-878e-2a2cb3a7aeda | implementation / plan | [事实记录](355503a6-19e2-4e09-878e-2a2cb3a7aeda.md) |
 | 37f7d79b-b49a-498a-9bdd-5c4f7170e17b | "implementation" / "plan" | [事实记录](37f7d79b-b49a-498a-9bdd-5c4f7170e17b.md) |
 | 38945684-d67b-4208-bc66-298961313c16 | "implementation" / "plan" | [事实记录](38945684-d67b-4208-bc66-298961313c16.md) |
