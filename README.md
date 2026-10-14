@@ -92,7 +92,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
 | [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复、答复反问并维护需求与 Q&A 当前视图 |
 | [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方使用：基于最新工作树评估需求与长期方案，在原文末答复或续接澄清；需改本方代码时调用 dev-plan，不实施。仅原样追加/收录不重评或生成计划 |
-| [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行、可跨对话续做的开发计划 |
+| [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行计划，明确开发对象、排除与外部前置，支持跨对话续做 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
 | [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
 | [review-prd](skills/review-prd/SKILL.md) | 核实代码现状，评审产品价值、体验、AI、SMAR、UAT 与分期终验，默认将完整报告落盘并回读核验 |
@@ -110,7 +110,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 **手动闭环**：各 SDLC skill 结束时先给明确判定，再给可直接复制的下一条命令（Codex 写作 `$<skill>`，Claude Code 写作 `/<skill>`），由你决定是否执行。`P1`、`P2` 表示期次（Phase）。
 
 1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
-2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`（可多次，直至 Ready），`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次。
+2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`（可多次，直至 Ready），`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
