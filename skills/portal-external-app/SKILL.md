@@ -19,6 +19,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
 | 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
+| 服务账号写进应用空间的文件，要让作者本人在文件管理里看得到 | [references/files-member-docs.md](references/files-member-docs.md)：`onBehalfOf` 署名、成员只读可见、成员内容隐私开关 |
 | 原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
@@ -281,7 +282,8 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 
 | 这份字节归谁 | 姿态 | 落在哪 | 用户在文件管理里 |
 | --- | --- | --- | --- |
-| **归 App**：系统产物、用户删不得、随 App 生命周期消失 | 服务账号 `client_credentials`（无用户上下文） | 你自己的**应用空间**（不传 spaceId，懒创建） | 默认只有租户管理员看得到 |
+| **归 App**：系统产物、用户删不得、随 App 生命周期消失 | 服务账号 `client_credentials`（无用户上下文） | 你自己的**应用空间**（不传 spaceId，懒创建） | 只有租户管理员看得到（要让作者看见用下一行） |
+| **归 App，但作者要看得见**：文件由你掌控、用户删改不得，作者本人要在文件管理里找到它 | 服务账号 + `onBehalfOf=<成员的门户 user_id>` 署名 | 你自己的**应用空间** | 署名成员在「我的应用文件」里**只读**可见，其他成员看不到；读 [代成员保存](references/files-member-docs.md) |
 | **归用户**：用户主动另存、他看得见删得掉、算他的空间 | 令牌交换换出的 `aud=files` **用户态**令牌 | 用户选的**个人/团队空间**（带 spaceId） | 就在他自己的空间里 |
 
 **公开固定内容 URL 是 Files 的特权服务态能力**：申请 `privilegedServiceScopes` 中的
@@ -292,8 +294,8 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 
 ⚠️ **别因为「要写」就默认必须服务态**：用户态持有 `files.write` 完全合法 —— `exchangeTargets`
 背书的是整个命名空间，平台不再按读写另行裁量。凡是「用户在你的界面里点一下、另存到我的
-空间」这类功能**只能**用用户态：服务态写进去的是应用空间，用户在文件管理里根本看不见自己
-刚存的东西。用户态写也不丢归因 —— 交换出的令牌带 `azp=<你的 key>`，files 侧照样落
+空间」这类功能**只能**用用户态：服务态写进去的是应用空间，不署名用户根本看不见自己刚存的
+东西，署名了也只能只读查看，不在他自己的空间里、删不掉。用户态写也不丢归因 —— 交换出的令牌带 `azp=<你的 key>`，files 侧照样落
 `viaApp` 溯源，按来源 App 聚合展示。
 
 ### 已经立过的红线（同一条道理，都是「平台有、别自建」）
