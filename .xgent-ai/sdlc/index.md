@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-14：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)代码复审[R3](status/review/207ec261-6cff-436e-b8eb-ba88c49df34c.md)在当前补修范围通过；F-03关闭，其余六项维持已解决，无新增独立缺陷。M6保持5/6、进行中，下一步新候选四native/Node18 CI与同一最终包验收；完整入口Node启动及8080环境证据限制见报告。R1/R2原结论保留。
+- 2026-10-14：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)6/6完成。代码复审[R3](status/review/207ec261-6cff-436e-b8eb-ba88c49df34c.md)通过后，M6在含R1/R2修复的候选8f67527上重新收口：CI34四native/Node18全绿，同一最终tarball的V-4八组、修复反例与真实UI项目status通过。合并main（含R2补修）与公开发布待另行授权。R1/R2原结论保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
