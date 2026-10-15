@@ -1,0 +1,4 @@
+interface:
+  display_name: "功能逐项确认"
+  short_description: "逐项讲清 PRD 或开发计划的功能与价值，用确认、驳回、修改的选择打磨文档"
+  default_prompt: "使用 $spec-human-decision，逐项确认指定 PRD 或 Dev-plan 中的功能，简述做什么、为什么需要，开发计划另述怎么做；通过交互工具提供确认、驳回、修改三个选项，修改须附说明，并按最终决定修订文档。"
