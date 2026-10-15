@@ -18,7 +18,7 @@
 
 ## 当前重点与发现范围
 
-- 2026-10-14：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)6/6完成。代码复审[R3](status/review/207ec261-6cff-436e-b8eb-ba88c49df34c.md)通过后，M6在含R1/R2修复的候选8f67527上重新收口：CI34四native/Node18全绿，同一最终tarball的V-4八组、修复反例、真实UI项目status及V-9评审闭环重跑（全量独立复审通过验收10）通过，本机完整test:phoenix退出0。已按用户授权以f6c871c合并到main（含R2补修）；engine已公开上传R2（v0.7.0-rc.0）并经真实URL同包验收，npm待用户发布。R1/R2原结论保留。
+- 2026-10-14：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)6/6完成。代码复审[R3](status/review/207ec261-6cff-436e-b8eb-ba88c49df34c.md)通过后，M6在含R1/R2修复的候选8f67527上重新收口：CI34四native/Node18全绿，同一最终tarball的V-4八组、修复反例、真实UI项目status及V-9评审闭环重跑（全量独立复审通过验收10）通过，本机完整test:phoenix退出0。已按用户授权以f6c871c合并到main（含R2补修）；engine已公开上传R2（v0.7.0-rc.0）并经真实URL同包验收（rc未发npm）。2026-10-15：0.7.0误从检出发布且不可安装（未deprecate），0.7.1经[发布登记](events/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0/7b9d490a-c71d-4304-a483-2cba21a7d9a8.md)所述流程发布为latest并回读一致。R1/R2原结论保留。
 
 - 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
 - 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
