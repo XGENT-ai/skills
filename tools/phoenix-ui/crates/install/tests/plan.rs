@@ -36,7 +36,7 @@ fn bundle() -> PathBuf {
                 .ancestors()
                 .nth(4)
                 .unwrap()
-                .join("vendor/phoenix-ui/bundle")
+                .join("dist/phoenix-ui/bundle")
         })
 }
 fn manifest(providers: &[String]) -> Manifest {

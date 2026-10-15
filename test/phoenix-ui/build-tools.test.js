@@ -344,8 +344,8 @@ async function runtimeFixture(t) {
     'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs': '// fixture generated bootstrap\n',
     'skills/phoenix-ui/scripts/ENGINE.json': version,
     'skills/phoenix-ui/src/editable.md': 'must not distribute the editable source\n',
-    'vendor/phoenix-ui/bundle/manifest.json': bundle,
-    'vendor/phoenix-ui/LICENSE': 'fixture license\n', 'vendor/phoenix-ui/NOTICE.md': 'fixture notice\n',
+    'dist/phoenix-ui/bundle/manifest.json': bundle,
+    'dist/phoenix-ui/LICENSE': 'fixture license\n', 'dist/phoenix-ui/NOTICE.md': 'fixture notice\n',
   })) {
     const file = path.join(pkg, relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, value);
   }
@@ -361,9 +361,9 @@ test('runtime stage carries the exact manifest, generated portable files, bundle
   validateRuntimeArtifact(f.release, f.target);
   const output = stageRuntime(f.release, f.pkg);
   assert.equal(fs.existsSync(path.join(output, 'skills/phoenix-ui/src')), false);
-  assert(fs.readFileSync(path.join(output, 'vendor/phoenix-ui/VERSION.json')).equals(f.version));
+  assert(fs.readFileSync(path.join(output, 'dist/phoenix-ui/VERSION.json')).equals(f.version));
   assert(fs.readFileSync(path.join(output, 'skills/phoenix-ui/scripts/ENGINE.json')).equals(f.version));
-  assert.equal(fs.readFileSync(path.join(output, 'vendor/phoenix-ui/THIRD-PARTY-LICENSES/terms.txt'), 'utf8'), 'full fixture terms\n');
+  assert.equal(fs.readFileSync(path.join(output, 'dist/phoenix-ui/THIRD-PARTY-LICENSES/terms.txt'), 'utf8'), 'full fixture terms\n');
   fs.appendFileSync(path.join(f.release, f.asset), 'tampered');
   assert.throws(() => validateRuntimeArtifact(f.release, f.target), /size differs/);
 });

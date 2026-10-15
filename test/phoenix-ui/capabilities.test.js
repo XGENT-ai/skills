@@ -250,7 +250,8 @@ test('all 19 provider outputs are distinguished from native install and pin scan
   const cap = inventory();
   const { PROVIDERS } = await import(pathToFileURL(path.join(workspace, 'scripts/lib/transformers/providers.js')));
   const { hooksJsonFor } = await import(pathToFileURL(path.join(workspace, 'scripts/lib/transformers/hooks.js')));
-  const bundle = JSON.parse(fs.readFileSync(path.resolve(workspace, '../../vendor/impeccable/bundle/manifest.json'), 'utf8'));
+  // The published 0.6.0 bundle (pinned migration source, same upstream manifest as 0.4.0/0.5.0).
+  const bundle = JSON.parse(read('migration-sources/0.6.0.json'));
   const installDirs = constant(read('crates/skills/src/providers.rs'), 'PROVIDER_DIRS');
   const pinDirs = constant(read('crates/context/src/pin.rs'), 'HARNESS_DIRS');
   const contextDirs = [...read('crates/context/src/provider.rs').split('fn provider_from_skill_dir(')[1]
@@ -422,7 +423,8 @@ test('the two E12 patch candidates have pinned input and patch hashes', () => {
   const cap = inventory();
   const upstream = JSON.parse(read('UPSTREAM.json'));
   const sources = JSON.parse(read('patches/sources.json'));
-  const bundle = JSON.parse(fs.readFileSync(path.resolve(workspace, '../../vendor/impeccable/bundle/manifest.json'), 'utf8'));
+  // The published 0.6.0 bundle (pinned migration source, same upstream manifest as 0.4.0/0.5.0).
+  const bundle = JSON.parse(read('migration-sources/0.6.0.json'));
   assert.equal(sources.candidateCommit, '83dc4b60ca4c3a13ea3cde748804858d37ef47c9');
   assert.deepEqual(cap.backports.map((entry) => entry.id), ['E12-IME', 'E12-CODEX-WINDOWS']);
   for (const patch of sources.patches) {
@@ -453,13 +455,11 @@ test('review patches reconstruct exactly the recorded candidate files in memory'
       const file = patch.files.find((entry) => lines[0] === `--- a/${entry.path}`);
       assert.ok(file);
       assert.equal(lines[1], `+++ b/${file.path}`);
-      // Immutable published bytes and the pinned emitter snapshot survive
-      // subsequent source moves, branding and applied fixes.
-      const blob = path.join(repository, 'vendor/impeccable/bundle/blobs', file.beforeSha256);
+      // Pinned snapshots of the published upstream bytes survive subsequent
+      // source moves, branding and applied fixes.
       const snapshot = path.join(workspace, 'patches/source-snapshots', file.beforeSha256);
       const before = file.path === '.codex/hooks.json' ? file.edits[0].before
-        : fs.existsSync(blob) ? fs.readFileSync(blob, 'utf8')
-          : fs.existsSync(snapshot) ? fs.readFileSync(snapshot, 'utf8') : read(file.path);
+        : fs.existsSync(snapshot) ? fs.readFileSync(snapshot, 'utf8') : read(file.path);
       assert.equal(sha256(before), file.beforeSha256);
       const input = before.trimEnd().split('\n');
       const output = [];

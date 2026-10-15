@@ -7228,11 +7228,11 @@
         "sourceScope": "current-fork"
       },
       "scripts/build-phoenix-ui.mjs": {
-        "sha256": "0f7a21ba5ae2d52609d9a580f3a7fd9f3fdc43ec810de0b1d6071852fc4042a0",
+        "sha256": "819faf0649c117eec19bf89ec9e9056cc23dea24610db08fe4a8f8e37f5456b1",
         "sourceScope": "current-fork"
       },
       "scripts/publish-phoenix-ui-r2.mjs": {
-        "sha256": "8d3ecd701a71282a49cec58dc0774c5bdee4fe7732051ab2d7f945dc352cb9df",
+        "sha256": "ce138910ad63c2f1179c75d8f246ead0f2ff21254eb68b3d9f63071071dfbe38",
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/review/src/cli/schema.rs": {
@@ -7246,12 +7246,12 @@
     },
     "generatedBundle": {
       "sourceScope": "current-generated",
-      "manifest": "vendor/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "95bca755477c6864e11eab1104d2147d0d4c80dca24ec15a058c6af4d96e7c30",
+      "manifest": "dist/phoenix-ui/bundle/manifest.json",
+      "manifestSha256": "26ac1c512c9a8ea78902639260cefcb1fb7e05a2deb9f2060757e58be5b6adcb",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "bb5ee7d03fa0a3908cc359f13cb3367c2762af207101158f58ae58338e732293",
+      "generationManifestSha256": "93a911101dfe196a0778c3e15b1e6dc6f01a09dfef3e7bd7968f4b3f466a8cba",
       "generator": "Bun 1.3.14",
-      "inputSha256": "c5c32748444236a0fe97df5b010904e610a7b919b29ea108b5645167ffd2c301",
+      "inputSha256": "df63c36432c6b47ddc7576171936c06c64e0a572357d4260323f4e2d880f900d",
       "engineManifest": "verified",
       "outputsCount": 1736,
       "providers": 19,
@@ -7390,18 +7390,18 @@
         }
       ],
       "engineManifestEvidence": {
-        "path": "vendor/phoenix-ui/VERSION.json",
-        "sha256": "2f9ba673bfc19656213d7d4074f13bae592273b13c17350da07e83fd06e18dfc",
+        "path": "dist/phoenix-ui/VERSION.json",
+        "sha256": "ef117761c8aea95a1a925bb53ece6e8de6917e8c40173d09c122e4848bc69532",
         "distribution": "development",
-        "sourceInputSha256": "08bf7298149945f2f213eaf1099c0181d039d6fab601cdb403fe77e207f7f9cb",
+        "sourceInputSha256": "96602a177d61024f4a44f7138ad8e3045409f8987858a41d6ae5571b8fc02aa8",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "d53926941940a1e137889f46ae619892ee6d00d4cdf1624c0cca1afc8e5c6b31",
-            "size": 20924536
+            "sha256": "f224782d2dd74f888be74ffa8e523916a9223680e3e4bc713e7793a4a3a12969",
+            "size": 20965240
           }
         },
-        "limitation": "Development darwin-arm64 rebuilt for the 0.7.1 version bump; sourceState dirty. Release engines come from the full CI run, not from this local build."
+        "limitation": "Development darwin-arm64 rebuilt for the vendor/phoenix-ui → dist/phoenix-ui move; sourceState dirty. Release engines come from the full CI run, not from this local build."
       }
     },
     "directionLibrary": {

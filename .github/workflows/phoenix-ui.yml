@@ -13,7 +13,7 @@ on:
       - 'bin/phoenix-ui.js'
       - 'tools/phoenix-ui/**'
       - 'skills/phoenix-ui/**'
-      - 'vendor/phoenix-ui/**'
+      - 'dist/phoenix-ui/**'
       - 'test/**'
   pull_request:
     paths: *phoenix_paths

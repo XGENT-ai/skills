@@ -23,7 +23,7 @@ const smokeChecks = { 'engine-probe': 0, version: 0, 'root-help': 0, 'local-comm
   'static-html-detect': 2, 'local-context': 0, 'hook-session-start': 0, 'node-missing-engine': 4,
   'node-explicit-offline-install': 0, 'node-engine-version': 0, 'node-context': 0, 'local-bundle-check': 0 };
 const generatedInputs = ['tools/phoenix-ui/crates/live/assets/bundle-inputs.json', 'tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js'];
-const derivedFiles = ['vendor/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json', 'skills/phoenix-ui/GENERATED.json'];
+const derivedFiles = ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json', 'skills/phoenix-ui/GENERATED.json'];
 // These locked target crates ship source license declarations, not standalone
 // terms. Match the producer's exact fixed source shape; this is not a general
 // licenseLocations fallback (and never replaces complete MPL terms).
@@ -184,7 +184,7 @@ export function validateHandoff(options, staging) {
     assert.deepEqual(digest(path.join(directory, build.binary.asset)), { size: build.binary.size, sha256: build.binary.sha256 }, `${target} tested binary digest differs`);
     for (const name of ['engineIdentity', 'browserInputs', 'skillGeneration']) assert.equal(build.checks[name], 'passed', `${target} build check ${name} failed`);
     assert.equal(build.bundleSha256, m.bundleSha256, `${target} build bundle digest differs`);
-    const bundleDir = path.join(runtime, 'vendor/phoenix-ui/bundle'), bundleBytes = bytes(path.join(bundleDir, 'manifest.json'));
+    const bundleDir = path.join(runtime, 'dist/phoenix-ui/bundle'), bundleBytes = bytes(path.join(bundleDir, 'manifest.json'));
     assert.equal(sha256(bundleBytes), m.bundleSha256, `${target} bundle digest differs`);
     const bundle = JSON.parse(bundleBytes);
     assert(bundle.schema === 1 && bundle.providers && Object.keys(bundle.providers).length && bundle.derivedRuntimeManifest === 'skills/phoenix-ui/scripts/ENGINE.json', 'Invalid bundle contract');
@@ -214,16 +214,16 @@ export function validateHandoff(options, staging) {
       assert(safePath(name) && /^[a-f0-9]{64}$/.test(hash), 'Invalid generated provider resource');
       if (name.endsWith('/skills/phoenix-ui/scripts/ENGINE.json')) assert.equal(hash, manifest.hash, 'Generation provider engine digest differs');
     }
-    for (const [section, prefix] of [['skill', 'skills/phoenix-ui/'], ['bundle', 'vendor/phoenix-ui/bundle/'], ['notices', 'vendor/phoenix-ui/']]) {
+    for (const [section, prefix] of [['skill', 'skills/phoenix-ui/'], ['bundle', 'dist/phoenix-ui/bundle/'], ['notices', 'dist/phoenix-ui/']]) {
       for (const [name, hash] of Object.entries(generated.outputs[section])) {
         assert(safePath(name) && /^[a-f0-9]{64}$/.test(hash), 'Invalid generated resource');
         assert.equal(inv[`${prefix}${name}`]?.sha256, hash, `Generated resource digest differs: ${name}`);
       }
     }
     for (const name of ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', ...Object.keys(inventory(path.join(directory, 'THIRD-PARTY-LICENSES'), 'THIRD-PARTY-LICENSES/'))]) {
-      assert.deepEqual(inv[`vendor/phoenix-ui/${name}`], digest(path.join(directory, name)), 'Runtime license sidecar differs');
+      assert.deepEqual(inv[`dist/phoenix-ui/${name}`], digest(path.join(directory, name)), 'Runtime license sidecar differs');
     }
-    for (const name of ['LICENSE', 'NOTICE.md']) assert(inv[`vendor/phoenix-ui/${name}`]?.size, `Missing ${name}`);
+    for (const name of ['LICENSE', 'NOTICE.md']) assert(inv[`dist/phoenix-ui/${name}`]?.size, `Missing ${name}`);
     const phase = readJson(path.join(staging, `phoenix-ui-${target}-evidence`, `${target}-ci-results.json`));
     assert(phase.schemaVersion === 1 && phase.target === target && phase.sourceCommit === options.sourceCommit && phase.workflowRun === options.runId, `${target} phase identity differs`);
     for (const name of Object.keys(phases)) assert.equal(phase.phases[name], 'success', `${target} phase ${name} did not succeed`);
@@ -265,7 +265,7 @@ export function validateHandoff(options, staging) {
     assert(runtimeBinHash && runtimeBinHash === buildInputs[i][npmBin], `${target} candidate npm bin input digest is missing or differs: ${npmBin}`);
     executable(target, platforms[target].binary.asset, 'engine', platforms[target].binary.sha256);
     executable(target, `runtime/${npmBin}`, 'npm-bin', runtimeBinHash);
-    const bundle = readJson(path.join(staging, `phoenix-ui-${target}`, 'runtime/vendor/phoenix-ui/bundle/manifest.json'));
+    const bundle = readJson(path.join(staging, `phoenix-ui-${target}`, 'runtime/dist/phoenix-ui/bundle/manifest.json'));
     const executed = new Set();
     for (const provider of Object.values(bundle.providers)) {
       assert(Array.isArray(provider.exec), 'Invalid bundle exec declaration');
@@ -395,7 +395,7 @@ export async function publishRelease(options, env = process.env) {
     const canonical = path.join(staging, `phoenix-ui-${handoff.canonicalTarget}`);
     copyArtifact(path.join(canonical, 'runtime'), path.join(out, 'runtime'));
     for (const name of ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES']) copyArtifact(path.join(canonical, name), path.join(out, name));
-    for (const name of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(canonical, 'runtime/vendor/phoenix-ui', name), path.join(out, name));
+    for (const name of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(canonical, 'runtime/dist/phoenix-ui', name), path.join(out, name));
     for (const object of objects) fs.copyFileSync(path.join(staging, `phoenix-ui-${object.target}`, object.asset), path.join(out, object.asset));
     for (const name of derivedFiles.slice(0, 2)) fs.writeFileSync(path.join(out, 'runtime', name), manifestBytes);
     const generatedFile = path.join(out, 'runtime', derivedFiles[2]);

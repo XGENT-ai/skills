@@ -339,7 +339,7 @@ test('platform fallback, proxy precedence and no_proxy keep the declared consume
 test('the npm bin adds the package bundle to installer verbs and the auxiliary skills to project installs only', async t => {
   const f = fixture(t);
   await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
-  const bundleRoot = path.join(f.root, 'package/vendor/phoenix-ui/bundle');
+  const bundleRoot = path.join(f.root, 'package/dist/phoenix-ui/bundle');
   const skillDir = path.join(f.root, 'package/skills/phoenix-ui');
   const argv = async args => {
     const script = `require(${JSON.stringify(path.join(f.scripts, 'phoenix-bootstrap.cjs'))}).main(${JSON.stringify(args)}, ${JSON.stringify({

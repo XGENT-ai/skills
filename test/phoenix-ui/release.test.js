@@ -12,8 +12,8 @@ const release = path.join(checkout, 'scripts/release-phoenix-ui.mjs');
 function packageRoot(t, manifest) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix release guard '));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.mkdirSync(path.join(root, 'vendor/phoenix-ui'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'vendor/phoenix-ui/VERSION.json'), JSON.stringify(manifest));
+  fs.mkdirSync(path.join(root, 'dist/phoenix-ui'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'dist/phoenix-ui/VERSION.json'), JSON.stringify(manifest));
   return root;
 }
 const runGuard = root => spawnSync(process.execPath, [guard, root], { encoding: 'utf8' });
