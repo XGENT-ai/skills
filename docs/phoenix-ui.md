@@ -167,7 +167,7 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上新装（engine 从公共 URL 下载），并做 0.3.0/0.6.0 迁移与回滚。
 6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
 
-每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/`，中断后重跑会复核已有产物再续接。预发布版本必须加 `--tag`。
+每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/`，中断后重跑会复核已有产物再续接。预发布版本必须加 `--tag`。CI 测过的提交之后 main 又有新提交时，用 `git worktree add <目录> <该SHA>` 在该提交上执行，产物留在那个 worktree 的 `local/` 下。
 
 在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里的 `vendor/phoenix-ui/VERSION.json` 是开发清单，没有 engine 下载地址。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
 

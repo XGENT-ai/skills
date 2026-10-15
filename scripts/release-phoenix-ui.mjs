@@ -204,7 +204,8 @@ async function main() {
       '--manifest', manifestFile, '--manifest-sha256', manifestSha256, '--node18', node18, '--node25', process.execPath, '--output-dir', out,
       '--legacy-dir', path.join(root, 'local/phoenix-ui')], { allowFailure: true });
     const resultsFile = path.join(out, 'results.json'), results = fs.existsSync(resultsFile) ? readJson(resultsFile) : {};
-    assert(result.status === 0 && results.status === 'release-check-passed', `Install check failed (${resultsFile}): ${(result.stderr || '').slice(-2000)}`);
+    const failures = [results.error, ...(results.groups || []).filter(g => g.error).map(g => `${g.node.version} ${g.kind}: ${g.error.trim()}`)].filter(Boolean);
+    assert(result.status === 0 && results.status === 'release-check-passed', `Install check failed (${resultsFile}):\n${failures.join('\n') || (result.stderr || '').slice(-2000)}`);
     fs.writeFileSync(passedFile, json({ tarballSha256: digests.sha256, results: path.relative(dir, out), groups: results.groups.map(g => `${g.node.version} ${g.kind}`) }));
   }
   console.log(readJson(passedFile).groups.join('\n'));
@@ -220,9 +221,10 @@ async function main() {
     command(process.execPath, [npmCli, ...args], { inherit: true });
   }
   let registry;
-  for (let attempt = 0; attempt < 10 && !registry; attempt++) {
+  // npm can take several minutes to expose a new version (0.7.1 took about six).
+  for (let attempt = 0; attempt < 60 && !registry; attempt++) {
     registry = registryVersion(pkg.name, pkg.version);
-    if (!registry) await new Promise(resolve => setTimeout(resolve, 6000));
+    if (!registry) await new Promise(resolve => setTimeout(resolve, 10000));
   }
   assert(registry, 'Published version is not visible on the registry yet; rerun to verify');
   assert.equal(registry.shasum, digests.shasum, 'Registry shasum differs from the released tarball');
