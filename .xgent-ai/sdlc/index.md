@@ -6,8 +6,8 @@
 
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
-| event-template.md | 状态规则或模板 | [入口](event-template.md) |
-| events | 下级导航 | [入口](events/index.md) |
+| event-template.md | 按需补充事件模板，普通进展不使用 | [入口](event-template.md) |
+| events | 历史及必要补充事件，按需追溯 | [入口](events/index.md) |
 | protocol.md | 状态规则或模板 | [入口](protocol.md) |
 | state-model.md | 状态规则或模板 | [入口](state-model.md) |
 | status | 下级导航 | [入口](status/index.md) |
@@ -16,16 +16,18 @@
 
 改变本目录内容的执行者按[目录索引维护规则](protocol.md)（目录索引维护一节）同步索引：先保存事实和状态，再维护本层及入口变化的祖先；无变化不重写。创建子目录时同步建立其 index.md；合并按 ID 与路径保留双方记录，缺失目标先标待核对，不按时间覆盖或删除历史。查询只报告问题。
 
-## 当前重点与发现范围
+## 当前重点
 
-- 2026-10-14：[Phoenix UI计划](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md)6/6完成。代码复审[R3](status/review/207ec261-6cff-436e-b8eb-ba88c49df34c.md)通过后，M6在含R1/R2修复的候选8f67527上重新收口：CI34四native/Node18全绿，同一最终tarball的V-4八组、修复反例、真实UI项目status及V-9评审闭环重跑（全量独立复审通过验收10）通过，本机完整test:phoenix退出0。已按用户授权以f6c871c合并到main（含R2补修）；engine已公开上传R2（v0.7.0-rc.0）并经真实URL同包验收，npm待用户发布。R1/R2原结论保留。
+以下沿用各状态页原核查结果，本次精简未重判业务状态或重跑产品验收；继续前核对当前来源。完整对象见[状态导航](status/index.md)，历史按需读取。
 
-- 本轮核查：2026-10-07T04:11:20+11:00；本地 main / `1f9d85651c33dc1ca11ddcda7dac2b69bbe30c74`；观察开始时 clean，保存后仅台账 dirty。未 fetch/pull，未核实远端及其他机器的实时状态。
-- 协议 v3 沿用；本轮确认 state-model.md / event-template.md 指纹与原版 v1 一致，按兼容规则升级至 state-model v2 和新版事件模板。旧事件及对象 ID 保留，归档页保留原观察。新增 6 条接续事件，共 16 条；仍登记 3 份计划（2 份活动、1 份归档）、2 份独立评审，未发现独立 PRD。
-- 首选：[Codex guard](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md)：dev-plan-ready / dev-plan-completed（3/3），证据 stale。计划评审 F-01–F-09 已 review-applied；初轮代码评审 review-not-required 仅覆盖原快照。执行 `$review-code docs/plan/codex-context-goal-guard.md`，复审后续阈值、Git 根目录路径和显式安装变更，明确受影响验收的证据覆盖。
-- 可独立跟进：[Claude guard](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md)：dev-plan-ready（provisional，未发现文档评审）/ dev-plan-completed（4/4，stale）。执行 `$review-code docs/plan/claude-context-goal-guard.md`，核对默认 70% 与历史 65% 记录、当前安装入口和 V-6 口径；Opus/Sonnet 真实触发与生产 --resume 为原计划声明的后续范围。两项共用安装器，若后续修复触及共享文件需统一处理。
-- 两份计划的完成记录均无提交列；里程碑记录存在，所引用起始基线及主分支成果提交可达。独立 Codex 验证 ref `63fc5faf56f5ac186211501f065b4d2a96479491` 可取回但非 main 祖先，只是历史验收快照。按 v2 保留已完成状态，以证据质量表达后续改动覆盖限制，未发现应重开原里程碑的实际失败证据。
-- 后续提交范围：`54c565c`（可配置阈值）、`f7c4ea2`（Codex Git 根目录路径）、`4d70f33`（两种 guard 取消安装询问，默认跳过、显式 flag 安装）。Claude 原计划 §5.5 / V-6 与 M3 记录仍描述询问；源文同步及新行为验证交由后续评审核对，本轮不改原文。
-- [xgent-init 历史方案](status/plan/091b457b-53b0-4d16-bb58-406a02ccf1f6.md) 按原文历史标记保留归档入口，不重新判定就绪/实施或推荐旧待办。验收/集成/发布统一枚举仍 TBD；计划 completed 与历史评审通过不等于当前产品终验或发布。
-- 发现范围：本地项目文档、docs/plan 及其记录、原文关联报告、相关 hooks/测试/安装器与可用 Git 历史；技能模板/安装副本、依赖、机器缓存不列为项目工作项。evals/agi-mode/practices 是技能设计/验证记录，不是项目开发计划。未展开归档历史逐项验收，忽略目录及其他机器未盘点。[README](../../README.md) 提供当前技能说明。
-- 本轮仅升级状态口径、校准跟进与建议并检查结构；未执行业务测试、apply 或新评审，未提交/推送，本次更新尚未随 Git 共享。
+| 工作项 / 原文 | 原登记进展与证据 | 下一步及完成条件 |
+| --- | --- | --- |
+| Phoenix UI（开发计划）· [docs/plan/phoenix-ui.md](../../docs/plan/phoenix-ui.md) · [状态](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 实施 6/6（dev-plan-completed / confirmed），R3 修复范围通过；已合并，R2 engine 已上传，npm 待发布 | 核对发布是否已完成；仍待发布时由用户发布同一 tarball，再核对摘要。原结论与各轮限制见状态页。 |
+| Codex guard（开发计划）· [docs/plan/codex-context-goal-guard.md](../../docs/plan/codex-context-goal-guard.md) · [状态](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 实施 3/3（dev-plan-completed / stale），初轮评审只覆盖原快照 | `$review-code docs/plan/codex-context-goal-guard.md`：覆盖后续阈值、Git 根目录路径和显式安装变更，明确受影响验收的证据。 |
+| Claude guard（开发计划）· [docs/plan/claude-context-goal-guard.md](../../docs/plan/claude-context-goal-guard.md) · [状态](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md) | 实施 4/4（dev-plan-completed / stale）；未发现文档评审，就绪证据 provisional | `$review-code docs/plan/claude-context-goal-guard.md`：核对阈值、安装入口和 V-6 口径。与 Codex guard 共用安装器，涉及共享改动时统一核查。 |
+
+[xgent-init 历史方案](../../docs/plan/xgent-init.md)保持[归档入口](status/plan/091b457b-53b0-4d16-bb58-406a02ccf1f6.md)，不恢复旧待办。开发完成不自动代表产品终验或发布。
+
+## 台账维护
+
+2026-10-15 按用户精简要求切换至协议 v4 / state-model v3。日常只更新当前页，必要时才新增补充事件；原 110 条事件及 ID 保留。活动页的历史清单已核对前序覆盖后压缩为末端和历史入口，归档页保留原观察。原产物、评审判定、核查时间及项目授权未改变；旧评审建议已改为指向计划当前状态，历史限制按原核查时点解释；唯一待决、未解问题和证据限制继续保留在对应状态页。无变化不重写，当前页后续直接回写的事实不能被旧事件覆盖。此次维护未提交、未推送。

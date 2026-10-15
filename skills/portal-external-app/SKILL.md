@@ -21,6 +21,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
 | 服务账号写进应用空间的文件，要让作者本人在文件管理里看得到 | [references/files-member-docs.md](references/files-member-docs.md)：`onBehalfOf` 署名、成员只读可见、成员内容隐私开关 |
 | 原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
+| 用户以 CLI、MCP、个人自动化调用 App，或接入门户多服务用户密钥与服务发现 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录；不改门户业务代码 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
 | 一个配置项该放哪（环境变量 / 平台级或租户级管理页 / 应用内设置 / 用户偏好），`requiredEnvNotes` 与 `adminPages` 怎么写 | [references/config-placement.md](references/config-placement.md) |

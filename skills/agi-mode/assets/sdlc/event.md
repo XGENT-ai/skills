@@ -30,4 +30,4 @@ relations: []
 - 未完项与限制：<缺证、未同步、待决；没有则写无，不填猜测>
 - 下一步及解除条件：<动作 + 可观察完成判据；无后续则说明>
 
-<!-- 创建事件时替换占位并移除此注释。source_state 有原文状态则保留其文字，否则 null；可选 candidate_state 仅在 state 为 unknown 时使用，只能写模型中的对应枚举。kind=review 时补 review_type: prd / dev-plan / code / other。sources.path、artifact 均按仓根解析；正文 Markdown 链接按本文件目录解析。relations 如 {type: covers, target: 对象UUID, scope: FR-1}；评审对所审对象用 reviews，复审对前轮用 rechecks。 -->
+<!-- 仅在仓内协议要求独立留存时创建，正文说明为何原产物与当前页不足以保留该事实；普通进度直接更新对象状态页。创建时替换占位并移除此注释。source_state 有原文状态则保留，否则 null；candidate_state 仅在 state 为 unknown 时使用对应枚举。kind=review 时补 review_type: prd / dev-plan / code / other。sources.path、artifact 按仓根解析，正文链接按本文件目录解析。relations 如 {type: covers, target: 对象UUID, scope: FR-1}；评审用 reviews，复审用 rechecks。 -->

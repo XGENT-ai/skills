@@ -109,7 +109,7 @@ disable-model-invocation: true
 | 开发流程、产物分工、交接或技能选择；sdlc | [SDLC 指引](playbooks/sdlc.md) |
 | 项目状态、下一步、初始化或更新跟进表；init-sdlc / what-next | [项目状态与下一步](playbooks/what-next.md) |
 
-SDLC 咨询支持 `$agi-mode sdlc [问题]` 与自然语言，项目判断由 what-next 核实事实。`what-next` 默认只读；`init-sdlc [PRD/计划/范围]`（兼容 `what-next 初始化`）初始化，`what-next 更新` 保存变化。状态与原文位置遵循 [目录约定](references/workspace-layout.md)，状态不代替原产物，不从文件名推定完成。
+SDLC 咨询支持 `$agi-mode sdlc [问题]` 与自然语言，项目判断由 what-next 核实事实。`what-next` 默认只读；`init-sdlc [PRD/计划/范围]`（兼容 `what-next 初始化`）初始化，`what-next 更新` 保存变化。状态与原文位置遵循 [目录约定](references/workspace-layout.md)，新台账日常只更新对象当前页，必要时才独立留存事件；已有台账按仓内协议。状态不代替原产物，不从文件名推定完成。
 
 ## 复用项目验证能力
 
