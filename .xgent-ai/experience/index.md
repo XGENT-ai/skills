@@ -24,3 +24,5 @@
 - a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
 
 - 39e564f7-edb4-4aed-aaf7-7a33bcdf0a59 · [npm 默认入口修复](39e564f7-edb4-4aed-aaf7-7a33bcdf0a59.md)
+
+- 45736d49-0eaa-4431-b8b2-b0d67559a36a · [Phoenix 安装扫描范围修复](45736d49-0eaa-4431-b8b2-b0d67559a36a.md)

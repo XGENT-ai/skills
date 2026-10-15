@@ -40,6 +40,8 @@ pub struct Request<'a> {
     pub providers: Vec<String>,
     /// Home directory for read-only personal discovery; `None` skips it.
     pub home: Option<PathBuf>,
+    /// Scan business sources only for an explicit `migrate --from impeccable`.
+    pub scan_sources: bool,
     pub dry_run: bool,
     pub transaction_id: String,
 }
@@ -862,7 +864,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
     report.migration_sources = sorted_unique(carried_sources.into_iter().chain(legacy_sources));
     // Legacy data moves once, on the install that replaces the old tool.
     let legacy = if active.is_none() {
-        let data = data::prepare_legacy_data(&project, &prepared.inventory)?;
+        let data = data::prepare_legacy_data(&project, &prepared.inventory, request.scan_sources)?;
         report.conflicts.extend(
             data.conflicts
                 .iter()

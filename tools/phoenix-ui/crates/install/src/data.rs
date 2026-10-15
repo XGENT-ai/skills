@@ -8,9 +8,10 @@
 //! only to validated copied artifacts; hook.auditLog is a registered output
 //! path. Unknown fields and prose retain their original bytes. Build/accepted
 //! families without complete producer mappings block preparation. The bounded
-//! text-source scan excludes .git, node_modules, vendor, target, provider roots
-//! and the separately inspected state namespaces. Caller discovery must cover
-//! external stores, overridden live roots, and arbitrary capture ready files.
+//! text-source scan is opt-in for explicit migration and excludes .git,
+//! node_modules, vendor, target, provider roots and the separately inspected state
+//! namespaces. Caller discovery must cover external stores, overridden live
+//! roots, and arbitrary capture ready files.
 use crate::{
     classify::{Conflict, ConflictKind, EntryKind, Inventory, Preserved},
     disk, json, sha256, Change, Error, ExpectedFile, JsonPatch, JsonSlot, JsonStep, Payload,
@@ -72,7 +73,13 @@ pub struct PreparedData {
 /// Prepare migration of persistent project data and selected fixed pins without
 /// writing state. The caller merges these changes with the bundle plan, preserves
 /// source snapshots, and repeats preparation if an old source changes before apply.
-pub fn prepare_legacy_data(project: &Project, inventory: &Inventory) -> Result<PreparedData> {
+/// Ordinary installation checks fixed legacy paths; explicit migration may also
+/// scan business sources for orphaned injection markers.
+pub fn prepare_legacy_data(
+    project: &Project,
+    inventory: &Inventory,
+    scan_sources: bool,
+) -> Result<PreparedData> {
     let mut result = PreparedData {
         conflicts: inventory.conflicts.clone(),
         preserved: inventory.preserved.clone(),
@@ -134,7 +141,6 @@ pub fn prepare_legacy_data(project: &Project, inventory: &Inventory) -> Result<P
         copy(project.root(), &path, file, bytes, &mut result);
     }
     pins(project.root(), inventory, &mut result)?;
-    let providers = provider_ids()?;
     for path in [".impeccable-live.json", ".impeccable-live"] {
         match disk::checked(project.root(), path).and_then(|full| {
             match fs::symlink_metadata(&full) {
@@ -148,8 +154,11 @@ pub fn prepare_legacy_data(project: &Project, inventory: &Inventory) -> Result<P
             Err(error) => conflict(&mut result, path, ConflictKind::Symlink, &error.message),
         }
     }
-    let mut budget = (0, 0);
-    source_residue(project.root(), "", &providers, &mut budget, &mut result)?;
+    if scan_sources {
+        let providers = provider_ids()?;
+        let mut budget = (0, 0);
+        source_residue(project.root(), "", &providers, &mut budget, &mut result)?;
+    }
     result.changes.sort_by(|a, b| a.path().cmp(b.path()));
     result
         .conflicts

@@ -399,6 +399,7 @@ fn run(args: &[String], io: &mut Io, migrate: bool) -> i32 {
             auxiliary_root: auxiliary_root.as_deref(),
             providers,
             home: io.home(),
+            scan_sources: migrate,
             dry_run: parsed.dry_run,
             transaction_id: parsed.transaction_id.clone().unwrap_or_else(transaction_id),
         };

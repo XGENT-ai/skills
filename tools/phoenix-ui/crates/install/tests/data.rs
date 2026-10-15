@@ -104,7 +104,7 @@ fn inventory(root: &Path) -> BTreeMap<PathBuf, (String, u32)> {
 fn prepare(project: &Project, selected: &[String]) -> phoenix_ui_install::data::PreparedData {
     let before = inventory(project.root());
     let classified = classify_project(project.root(), selected).unwrap();
-    let prepared = prepare_legacy_data(project, &classified).unwrap();
+    let prepared = prepare_legacy_data(project, &classified, true).unwrap();
     assert_eq!(
         inventory(project.root()),
         before,
@@ -926,7 +926,7 @@ fn fixed_pin_inventory_staleness_customization_wrong_path_and_existing_target_ar
             _ => unreachable!(),
         }
         let before = inventory(project.root());
-        let p = prepare_legacy_data(&project, &classified).unwrap();
+        let p = prepare_legacy_data(&project, &classified, true).unwrap();
         assert_eq!(inventory(project.root()), before);
         assert!(p.changes.is_empty(), "{edit}");
         assert!(p.resolved_pin_paths.is_empty());
@@ -1100,7 +1100,7 @@ fn unsupported_config_reports_unknown_fields_and_keeps_each_provider_conflict() 
             message: "outside migration selection".into(),
         });
     }
-    let p = prepare_legacy_data(&f.project(), &classified).unwrap();
+    let p = prepare_legacy_data(&f.project(), &classified, true).unwrap();
     assert_eq!(
         p.conflicts.len(),
         2,
