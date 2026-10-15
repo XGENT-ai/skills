@@ -21,3 +21,4 @@
 - a73358a8-f2bf-4dd3-be50-3251e3b0f921 · [dev-plan 开发范围边界](a73358a8-f2bf-4dd3-be50-3251e3b0f921.md)
 
 - d1f6623b-b070-4187-bb6f-54fea834ddc4 · [spec-human-decision 决策记录共存](d1f6623b-b070-4187-bb6f-54fea834ddc4.md)
+- a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
