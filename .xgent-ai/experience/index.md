@@ -22,3 +22,5 @@
 
 - d1f6623b-b070-4187-bb6f-54fea834ddc4 · [spec-human-decision 决策记录共存](d1f6623b-b070-4187-bb6f-54fea834ddc4.md)
 - a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
+
+- 39e564f7-edb4-4aed-aaf7-7a33bcdf0a59 · [npm 默认入口修复](39e564f7-edb4-4aed-aaf7-7a33bcdf0a59.md)
