@@ -69,7 +69,7 @@ fn repository() -> PathBuf {
 }
 fn bundle() -> &'static Path {
     static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
-    PATH.get_or_init(|| repository().join("vendor/phoenix-ui/bundle"))
+    PATH.get_or_init(|| repository().join("dist/phoenix-ui/bundle"))
 }
 fn auxiliary() -> &'static Path {
     static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();

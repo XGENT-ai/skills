@@ -1,6 +1,6 @@
 # XGENT Phoenix UI：安装、迁移与回滚
 
-Phoenix UI 是 XGENT 自主维护的设计工具，承接 [impeccable](https://github.com/pbakaus/impeccable) skill 4.5.0 / engine 0.1.11 的固定源码（Apache-2.0）。版本、规则、构建和发布都由本仓控制：不查询上游 latest，不从上游或 impeccable.style 下载任何东西。来源、修改标识与三方许可见包内 `vendor/phoenix-ui/NOTICE.md`、`THIRD-PARTY-NOTICES.md`。
+Phoenix UI 是 XGENT 自主维护的设计工具，承接 [impeccable](https://github.com/pbakaus/impeccable) skill 4.5.0 / engine 0.1.11 的固定源码（Apache-2.0）。版本、规则、构建和发布都由本仓控制：不查询上游 latest，不从上游或 impeccable.style 下载任何东西。来源、修改标识与三方许可见包内 `dist/phoenix-ui/NOTICE.md`、`THIRD-PARTY-NOTICES.md`。
 
 ## 安装
 
@@ -13,7 +13,7 @@ npx @xgent-ai/skills install
 
 一次安装分两段，先完成全部只读预检再写项目：
 
-1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `vendor/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入、合并与迁移。任何一项失败都不写项目。
+1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入、合并与迁移。任何一项失败都不写项目。
 2. **写入**：先写 XGENT 部分（statusline hook、settings、可选 guard 与 AGENTS.md），再由 Rust 安装执行器在项目锁内重读这些文件，事务化写入 Phoenix 的 skill、agents、hooks、五个辅助 skill 和安装回执 `.phoenix-ui/install/active.json`。两段之间被打断时，已完成的 XGENT 部分保留、Phoenix 不激活，直接重跑同一命令即可。Phoenix 写入中途失败（如磁盘已满）时状态为「待恢复」，可能已部分写入；重跑同一命令会先按日志回滚或补完上次事务再安装。
 
 安装输出逐项列出写入、合并与移除，状态为「已安装 / 未变 / 冲突,未激活 / 待恢复 / 已安装但融合未就绪」之一，并给出事务 ID、备份位置、完整回滚命令和各工具的重载步骤。只有状态为「已安装」或「未变」时才打印「完成」；冲突与融合未就绪以退出码 3 结束，engine 或文件环境失败以 4 结束，参数错误为 1（XGENT 部分）或 2（Phoenix 执行器）。
@@ -94,7 +94,7 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具或 go
 
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
 - skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）继续公开，可单独安装；`phoenix-ui` skill 标为 internal，只通过 npm 安装器分发。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
-- 原 `vendor/impeccable/` 与 `scripts/vendor-impeccable.mjs`、`scripts/publish-vendor-r2.mjs` 只作来源历史保留，不是安装或更新入口。
+- 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；旧安装的迁移依据是 `tools/phoenix-ui/migration-sources/` 中按 npm 包核对过的固定记录。
 
 ## 融合用法与 UI 验收
 
@@ -169,6 +169,6 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 
 每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/`，中断后重跑会复核已有产物再续接。预发布版本必须加 `--tag`。CI 测过的提交之后 main 又有新提交时，用 `git worktree add <目录> <该SHA>` 在该提交上执行，产物留在那个 worktree 的 `local/` 下。
 
-在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里的 `vendor/phoenix-ui/VERSION.json` 是开发清单，没有 engine 下载地址。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
+在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里的 `dist/phoenix-ui/VERSION.json` 是开发清单，没有 engine 下载地址。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
 
 M6 终验在日常发布检查之外，还用同一 tarball 做过 A→B 升级/回滚与真实融合验收（见计划 M6 记录）；替身、开发包和四平台 CI 都不能单独证明线上 URL 或最终包可用。

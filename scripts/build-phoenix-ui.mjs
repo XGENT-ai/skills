@@ -88,7 +88,7 @@ try {
   assert.equal(sha(JSON.stringify(sourceInputs())), inputSha256, 'Source changed during native build');
   const bytes = fs.readFileSync(executable), target = bootstrap.platformTarget();
   const asset = `phoenix-ui-${target}${target === 'windows-x64' ? '.exe' : ''}`;
-  const bundleSha256 = sha(fs.readFileSync(path.join(root, 'vendor/phoenix-ui/bundle/manifest.json')));
+  const bundleSha256 = sha(fs.readFileSync(path.join(root, 'dist/phoenix-ui/bundle/manifest.json')));
   const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version;
   const sourceCommit = git(['rev-parse', 'HEAD']);
   const sourceTree = git(['rev-parse', 'HEAD^{tree}']);
@@ -101,10 +101,10 @@ try {
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(path.join(outputDir, asset), bytes, { mode: 0o755 });
   fs.writeFileSync(path.join(outputDir, 'VERSION.json'), manifestBytes);
-  fs.writeFileSync(path.join(root, 'vendor/phoenix-ui/VERSION.json'), manifestBytes);
+  fs.writeFileSync(path.join(root, 'dist/phoenix-ui/VERSION.json'), manifestBytes);
   for (const name of ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES']) {
     const source = path.join(workspace, name);
-    for (const destination of [outputDir, path.join(root, 'vendor/phoenix-ui')]) {
+    for (const destination of [outputDir, path.join(root, 'dist/phoenix-ui')]) {
       fs.rmSync(path.join(destination, name), { force: true, recursive: true });
       fs.cpSync(source, path.join(destination, name), { recursive: true });
     }

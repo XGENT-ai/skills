@@ -189,7 +189,7 @@ PRODUCT Platform识别`web/ios/android/adaptive`，iOS与Android组合可解析�
 
 当前 fork 的生成、安装扫描、context 识别与 pin 范围分别为 19/18/19/19。Codex 与 agents 都使用 `$` 命令前缀（[provider.rs:105](crates/context/src/provider.rs#L105)）；`.codex` 是公开 bundle 的 hook-only 配置，skill 与 launcher 从 `.agents` 消费。每项当前生成根路径和 bundle 消费路径分别登记于 JSON `current.providers`；真实安装、hook 与 provider 会话仍未验证。
 
-当前生成目录根为 `tools/phoenix-ui/dist/providers/<key>/<configDir>/`，每项都有 `skills/phoenix-ui/SKILL.md`、`scripts/phoenix-ui`、`scripts/phoenix-ui.cmd` 和四份 `scripts/data/catalog/*.json`。公开 bundle 来源为 [manifest.json](../../vendor/phoenix-ui/bundle/manifest.json)。
+当前生成目录根为 `tools/phoenix-ui/dist/providers/<key>/<configDir>/`，每项都有 `skills/phoenix-ui/SKILL.md`、`scripts/phoenix-ui`、`scripts/phoenix-ui.cmd` 和四份 `scripts/data/catalog/*.json`。公开 bundle 来源为 [manifest.json](../../dist/phoenix-ui/bundle/manifest.json)。
 
 | 当前 provider / 定义源码 | 生成目录后缀 | bundle skill 目录 / hook 文件 | 当前安装/context/pin扫描 | 运行验收 |
 | --- | --- | --- | --- | --- |
@@ -215,7 +215,7 @@ PRODUCT Platform识别`web/ios/android/adaptive`，iOS与Android组合可解析�
 
 M2 时的生成源码与普通 payload 已逐项核对：19 个 provider 输出数据副本共 76 份；bundle 18 份 skill payload 共 72 份数据副本与自有源 JSON SHA 一致，1162 个文件引用的 blob SHA 匹配。该轮 GENERATED.json 的 input SHA 为 `d2c66b4ad94d99ce4db2543d33e134c484a522a989858ee09adff6d308d29238`，bundle SHA 为 `59ac0870f793256ac5c4874984aca4b8682e721bcd896c8ecbce7cf8e111f011`，登记 1739 个输出，`engineManifest=verified`。该轮 VERSION.json 是 development manifest，只列 darwin-arm64，engine SHA 为 `dd11af8288b9f5c5c830793a33828efd11cb629399fc67191c1016afa05c8ec8`，source-input SHA 为 `4a0eaadc4e5e9759af9e3543da34f55023d564e4b9f734a07e6f08eb97df88c1`；生成文件/hash/manifest 对应关系已经静态核对。此历史静态合同不证明当前 runtime 或平台分发验收，该轮原 oracle 证明另列于下方。
 
-当前 A 树的生成输入、输出和 engine 清单由 [capabilities.json](capabilities.json) 的 `current.generatedBundle` 关联 [GENERATED.json](../../skills/phoenix-ui/GENERATED.json) 与 [VERSION.json](../../vendor/phoenix-ui/VERSION.json)，随重建刷新并由轻量测试逐 hash 核对；当前运行时、包消费者与 CI 证据见 [M3 记录](../../docs/plan/phoenix-ui.records/M3.md)。正式发布清单要求本期 macOS/Linux 四平台，任一缺失仍拒绝；已有 Windows 元数据解析保留，不要求 Windows 资产，也不表示本期支持 Windows。
+当前 A 树的生成输入、输出和 engine 清单由 [capabilities.json](capabilities.json) 的 `current.generatedBundle` 关联 [GENERATED.json](../../skills/phoenix-ui/GENERATED.json) 与 [VERSION.json](../../dist/phoenix-ui/VERSION.json)，随重建刷新并由轻量测试逐 hash 核对；当前运行时、包消费者与 CI 证据见 [M3 记录](../../docs/plan/phoenix-ui.records/M3.md)。正式发布清单要求本期 macOS/Linux 四平台，任一缺失仍拒绝；已有 Windows 元数据解析保留，不要求 Windows 资产，也不表示本期支持 Windows。
 
 此前 M2 的 `--without-engine` 静态证明保留：1719 个输出，`engineManifest=not-generated`，input SHA `8fe8afe13c1e90b906758ed4ecbecbb8c3002ebd7a5ec4f8238a5f3c49e05137`，bundle SHA `8d71719fa3808d709c1ee8245bb375844d81e3bef1bef172743491912b040a09`。它属于历史渲染证据，不能充当当前完整 freshness。
 

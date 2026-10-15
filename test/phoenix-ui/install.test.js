@@ -36,14 +36,14 @@ function packageFor(t, executable) {
   fs.mkdirSync(bin);
   for (const name of ['xgent-skills.js', 'phoenix-ui.js']) fs.copyFileSync(path.join(repository, 'bin', name), path.join(bin, name));
   for (const dir of ['.claude', 'hooks', 'skills']) link(path.join(repository, dir), path.join(root, dir));
-  const vendor = path.join(root, 'vendor', 'phoenix-ui');
+  const vendor = path.join(root, 'dist', 'phoenix-ui');
   fs.mkdirSync(vendor, { recursive: true });
   // The installer refuses a symlinked bundle root.
-  fs.cpSync(path.join(repository, 'vendor/phoenix-ui/bundle'), path.join(vendor, 'bundle'), { recursive: true });
+  fs.cpSync(path.join(repository, 'dist/phoenix-ui/bundle'), path.join(vendor, 'bundle'), { recursive: true });
   const target = process.platform === 'win32' ? 'windows-x64' : `${process.platform}-${process.arch}`;
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const bytes = fs.readFileSync(executable);
-  const manifest = { ...JSON.parse(fs.readFileSync(path.join(repository, 'vendor/phoenix-ui/VERSION.json'))),
+  const manifest = { ...JSON.parse(fs.readFileSync(path.join(repository, 'dist/phoenix-ui/VERSION.json'))),
     distribution: 'development', engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } } };
   const manifestBytes = JSON.stringify(manifest, null, 2) + '\n';
   const release = path.join(root, 'release');
@@ -51,7 +51,7 @@ function packageFor(t, executable) {
   for (const directory of [vendor, release]) fs.writeFileSync(path.join(directory, 'VERSION.json'), manifestBytes);
   fs.writeFileSync(path.join(release, asset), bytes, { mode: 0o755 });
   for (const name of ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES']) {
-    fs.cpSync(path.join(repository, 'vendor/phoenix-ui', name), path.join(release, name), { recursive: true });
+    fs.cpSync(path.join(repository, 'dist/phoenix-ui', name), path.join(release, name), { recursive: true });
   }
   return { root, release, cache: sandbox(t, 'phoenix cache'), home: sandbox(t, 'phoenix home') };
 }

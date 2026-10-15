@@ -96,7 +96,7 @@ function render(stage, input) {
 
 function addEngineManifest(output, withoutEngine) {
   if (withoutEngine) return;
-  const file = path.join(repository, 'vendor/phoenix-ui/VERSION.json');
+  const file = path.join(repository, 'dist/phoenix-ui/VERSION.json');
   // Use the same consumer validator, including all-platform requirements.
   const { manifestAt } = require(path.join(source, 'scripts/phoenix-bootstrap.cjs'));
   const manifest = manifestAt(file);
@@ -157,7 +157,7 @@ async function main() {
   }
   assert(!(check && withoutEngine), 'Freshness checks require a verified engine manifest');
   const target = outputRoot ? { skill: path.join(outputRoot, 'skill'), dist: path.join(outputRoot, 'dist'), vendor: path.join(outputRoot, 'vendor') }
-    : { skill: path.join(repository, 'skills/phoenix-ui'), dist: path.join(workspace, 'dist/providers'), vendor: path.join(repository, 'vendor/phoenix-ui') };
+    : { skill: path.join(repository, 'skills/phoenix-ui'), dist: path.join(workspace, 'dist/providers'), vendor: path.join(repository, 'dist/phoenix-ui') };
   const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-render-'));
   try {
     const input = inputs(), output = render(stage, input);

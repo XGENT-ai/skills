@@ -56,7 +56,7 @@ assert.equal(handoff.runId, options['--run-id']); assert.equal(handoff.sourceCom
 assert.equal(manifest.data.sourceCommit, handoff.sourceCommit); assert.equal(manifest.data.sourceTree, handoff.sourceTree);
 assert.equal(handoff.manifestSha256, manifest.hash); assert.equal(handoff.manifestSize, manifest.bytes.length);
 assert.deepEqual(inventory(release, '', true), handoff.files, 'Frozen release bytes differ from handoff');
-const derived = ['vendor/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json', 'skills/phoenix-ui/GENERATED.json'];
+const derived = ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json', 'skills/phoenix-ui/GENERATED.json'];
 assert.deepEqual(handoff.derivedReleaseFiles, derived);
 const targets = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'];
 assert.deepEqual(Object.keys(handoff.platforms).sort(), targets); assert.deepEqual(Object.keys(manifest.data.engines).sort(), targets);
@@ -120,12 +120,12 @@ for (const relative of derived.slice(0, 2)) assert.equal(runtime[relative]?.sha2
 const generated = JSON.parse(bytes(path.join(release, 'runtime/skills/phoenix-ui/GENERATED.json')));
 assert.equal(generated.engineManifest, 'verified'); assert.equal(generated.inputSha256, sha(JSON.stringify(generated.inputs))); assert.equal(generated.bundleSha256, manifest.data.bundleSha256);
 for (const [name, expected] of Object.entries(generated.outputs.providers)) if (name.endsWith('/skills/phoenix-ui/scripts/ENGINE.json')) assert.equal(expected, manifest.hash, `GEN provider ENGINE differs ${name}`);
-for (const [section, prefix] of [['skill', 'skills/phoenix-ui/'], ['bundle', 'vendor/phoenix-ui/bundle/'], ['notices', 'vendor/phoenix-ui/']]) {
+for (const [section, prefix] of [['skill', 'skills/phoenix-ui/'], ['bundle', 'dist/phoenix-ui/bundle/'], ['notices', 'dist/phoenix-ui/']]) {
   for (const [name, expected] of Object.entries(generated.outputs[section])) assert.equal(runtime[`${prefix}${name}`]?.sha256, expected, `GEN binding differs ${section}/${name}`);
 }
-assert.equal(runtime['vendor/phoenix-ui/bundle/manifest.json']?.sha256, manifest.data.bundleSha256);
-for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md']) assert.deepEqual(runtime[`vendor/phoenix-ui/${name}`], handoff.files[name], `License sidecar differs ${name}`);
-assert(Object.keys(runtime).some(name => name.startsWith('vendor/phoenix-ui/THIRD-PARTY-LICENSES/')));
+assert.equal(runtime['dist/phoenix-ui/bundle/manifest.json']?.sha256, manifest.data.bundleSha256);
+for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md']) assert.deepEqual(runtime[`dist/phoenix-ui/${name}`], handoff.files[name], `License sidecar differs ${name}`);
+assert(Object.keys(runtime).some(name => name.startsWith('dist/phoenix-ui/THIRD-PARTY-LICENSES/')));
 const expectedStageFiles = { ...Object.fromEntries([...sources].map(([name, source]) => [name, { size: source.size, sha256: source.sha256 }])), ...runtime };
 const plan = { runId: handoff.runId, sourceCommit: handoff.sourceCommit, sourceTree: handoff.sourceTree, manifestSha256: manifest.hash, handoffSha256: sha(handoffBytes), buildRecordSha256: sha(buildBytes),
   scriptSha256: sha(bytes(fileURLToPath(import.meta.url))), packageJsonSha256: sources.get('package.json').sha256, canonicalInputSha256: build.inputSha256, generatedInputDifferences,

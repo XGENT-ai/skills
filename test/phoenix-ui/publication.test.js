@@ -32,7 +32,7 @@ function updateInputs(f, target, change) {
   const dir = path.join(f.extracted, `phoenix-ui-${target}`), file = path.join(dir, 'build-record.json');
   const record = readJson(file); change(record.inputs); record.inputSha256 = hash(JSON.stringify(record.inputs)); write(file,json(record));
   const manifest = readJson(path.join(dir,'VERSION.json')); manifest.sourceInputSha256 = record.inputSha256;
-  for (const name of ['VERSION.json','runtime/vendor/phoenix-ui/VERSION.json','runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir,name),json(manifest));
+  for (const name of ['VERSION.json','runtime/dist/phoenix-ui/VERSION.json','runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir,name),json(manifest));
   const smoke = readJson(path.join(dir,'runtime-smoke-node25.json')); smoke.manifestSha256 = hash(json(manifest)); write(path.join(dir,'runtime-smoke-node25.json'),json(smoke));
   if (target === 'linux-x64') { const file = path.join(f.extracted,'phoenix-ui-node18-consumer-evidence/runtime-smoke-node18.json'); const node18 = readJson(file); node18.manifestSha256 = smoke.manifestSha256; write(file,json(node18)); }
   const generatedFile = path.join(dir,'runtime/skills/phoenix-ui/GENERATED.json'), generated = readJson(generatedFile);
@@ -48,7 +48,7 @@ function addLicenseDeclaration(f, entries, kind = 'rust') {
   for (const target of targets) {
     const dir=path.join(f.extracted,`phoenix-ui-${target}`), catalog=readJson(path.join(dir,'THIRD-PARTY.json'));
     catalog[kind].push(...entries);
-    for (const name of ['THIRD-PARTY.json','runtime/vendor/phoenix-ui/THIRD-PARTY.json']) write(path.join(dir,name),json(catalog));
+    for (const name of ['THIRD-PARTY.json','runtime/dist/phoenix-ui/THIRD-PARTY.json']) write(path.join(dir,name),json(catalog));
   }
   f.repack();
 }
@@ -133,9 +133,9 @@ async function fixture(t, control = {}) {
     const checks = ['engine-probe', 'version', 'root-help', 'local-command-catalog', 'static-html-detect', 'local-context', 'hook-session-start', 'node-missing-engine', 'node-explicit-offline-install', 'node-engine-version', 'node-context', 'local-bundle-check'].map(name => ({ name, exitCode: name === 'static-html-detect' ? 2 : name === 'node-missing-engine' ? 4 : 0 }));
     const smoke = { schemaVersion: 1, status: 'passed', target, mode: 'native', host: { platform: target.split('-')[0], architecture: target.split('-')[1], node: 'v25.2.1' }, manifestSha256: hash(json(manifest)), binarySha256: engine.sha256, checks };
     write(path.join(dir, 'runtime-smoke-node25.json'), json(smoke));
-    write(path.join(dir, 'runtime/vendor/phoenix-ui/bundle/manifest.json'), bundleBytes);
-    write(path.join(dir, `runtime/vendor/phoenix-ui/bundle/blobs/${blobHash}`), blob);
-    for (const data of [portableBytes, bootstrapBytes, launcherBytes]) write(path.join(dir, `runtime/vendor/phoenix-ui/bundle/blobs/${hash(data)}`), data);
+    write(path.join(dir, 'runtime/dist/phoenix-ui/bundle/manifest.json'), bundleBytes);
+    write(path.join(dir, `runtime/dist/phoenix-ui/bundle/blobs/${blobHash}`), blob);
+    for (const data of [portableBytes, bootstrapBytes, launcherBytes]) write(path.join(dir, `runtime/dist/phoenix-ui/bundle/blobs/${hash(data)}`), data);
     write(path.join(dir, 'runtime/skills/phoenix-ui/SKILL.md'), blob);
     write(path.join(dir, 'runtime/bin/phoenix-ui.js'), binBytes);
     fs.chmodSync(path.join(dir, 'runtime/bin/phoenix-ui.js'), 0o755);
@@ -143,15 +143,15 @@ async function fixture(t, control = {}) {
     fs.chmodSync(path.join(dir, 'runtime/skills/phoenix-ui/scripts/phoenix-ui'), 0o755);
     write(path.join(dir, 'runtime/skills/phoenix-ui/scripts/phoenix-bootstrap.cjs'), bootstrapBytes);
     write(path.join(dir, 'runtime/skills/phoenix-ui/scripts/phoenix-launcher.cjs'), launcherBytes);
-    for (const name of ['runtime/vendor/phoenix-ui/VERSION.json', 'runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir, name), json(manifest));
+    for (const name of ['runtime/dist/phoenix-ui/VERSION.json', 'runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir, name), json(manifest));
     const generatedInputs = { 'tools/phoenix-ui/Cargo.toml': inputs['tools/phoenix-ui/Cargo.toml'] };
     write(path.join(dir, 'runtime/skills/phoenix-ui/GENERATED.json'), json({ schemaVersion: 1, generator: 'Bun 1.3.14', inputSha256: hash(JSON.stringify(generatedInputs)), inputs: generatedInputs, bundleSha256: meta.bundleSha256, engineManifest: 'verified', outputs: { skill: { 'SKILL.md': blobHash, 'scripts/ENGINE.json': hash(json(manifest)), 'scripts/phoenix-ui': hash(portableBytes), 'scripts/phoenix-bootstrap.cjs': hash(bootstrapBytes), 'scripts/phoenix-launcher.cjs':hash(launcherBytes) }, providers: { 'claude-code/.claude/skills/phoenix-ui/scripts/ENGINE.json': hash(json(manifest)), 'codex/.codex/skills/phoenix-ui/scripts/ENGINE.json': hash(json(manifest)) }, bundle: { 'manifest.json': hash(bundleBytes), [`blobs/${blobHash}`]: blobHash, [`blobs/${hash(portableBytes)}`]: hash(portableBytes), [`blobs/${hash(bootstrapBytes)}`]: hash(bootstrapBytes), [`blobs/${hash(launcherBytes)}`]:hash(launcherBytes) }, notices: { LICENSE: hash('Fixture LICENSE\n'), 'NOTICE.md': hash('Fixture NOTICE.md\n') } } }));
-    for (const prefix of ['', 'runtime/vendor/phoenix-ui/']) {
+    for (const prefix of ['', 'runtime/dist/phoenix-ui/']) {
       write(path.join(dir, `${prefix}THIRD-PARTY.json`), json(inventory));
       write(path.join(dir, `${prefix}THIRD-PARTY-NOTICES.md`), 'Fixture notices.\n');
       write(path.join(dir, prefix, licenses[0].path), license);
     }
-    for (const name of ['LICENSE', 'NOTICE.md']) write(path.join(dir, 'runtime/vendor/phoenix-ui', name), `Fixture ${name}\n`);
+    for (const name of ['LICENSE', 'NOTICE.md']) write(path.join(dir, 'runtime/dist/phoenix-ui', name), `Fixture ${name}\n`);
     const evidenceDir = path.join(extracted, `phoenix-ui-${target}-evidence`);
     write(path.join(evidenceDir, `${target}-ci-results.json`), json({ schemaVersion: 1, workflowRun: runId, sourceCommit: head, target, phases: Object.fromEntries(Object.keys(phases).map(name => [name, 'success'])) }));
     jobs.push({ id: i + 10, run_id: Number(runId), head_sha: head, name: `Native ${target}`, status: 'completed', conclusion: 'success', steps: Object.values(phases).map(name => ({ name, status: 'completed', conclusion: 'success' })) });
@@ -291,16 +291,16 @@ test('publication restores ordinary Unix file and directory modes while dropping
   const f = await fixture(t);
   const modes = Object.fromEntries(targets.map(target => [`phoenix-ui-${target}`, {
     [`phoenix-ui-${target}`]: 0o104755, 'runtime/bin/phoenix-ui.js': 0o106755,
-    'runtime/bin/': 0o043750, 'runtime/vendor/phoenix-ui/NOTICE.md': 0o106640,
+    'runtime/bin/': 0o043750, 'runtime/dist/phoenix-ui/NOTICE.md': 0o106640,
   }]));
   const rewrite = spawnSync('python3', ['-c', 'import sys,json,zipfile,os\np=json.loads(sys.stdin.read())\nfor name,modes in p["modes"].items():\n archive=os.path.join(p["archives"],name+".zip")\n with zipfile.ZipFile(archive) as source: items=[(i,source.read(i.filename)) for i in source.infolist()]\n with zipfile.ZipFile(archive,"w") as destination:\n  for i,data in items:\n   if i.filename in modes: i.external_attr=(modes[i.filename]<<16)|(i.external_attr&0xffff)\n   destination.writestr(i,data)',], {input:JSON.stringify({archives:f.archives,modes}),encoding:'utf8'});
   assert.equal(rewrite.status, 0, rewrite.stderr);
   for (const artifact of f.artifacts.artifacts) artifact.digest = `sha256:${hash(fs.readFileSync(path.join(f.archives, `${artifact.name}.zip`)))}`;
   write(path.join(f.root, 'artifacts.json'), json(f.artifacts));
   const result = await f.publish(); assert.equal(result.code, 0, result.stderr);
-  const actual = Object.fromEntries(['phoenix-ui-darwin-arm64', 'runtime/bin/phoenix-ui.js', 'runtime/bin', 'runtime/vendor/phoenix-ui/NOTICE.md'].map(name => [name, fs.statSync(path.join(result.output,name)).mode & 0o7777]));
+  const actual = Object.fromEntries(['phoenix-ui-darwin-arm64', 'runtime/bin/phoenix-ui.js', 'runtime/bin', 'runtime/dist/phoenix-ui/NOTICE.md'].map(name => [name, fs.statSync(path.join(result.output,name)).mode & 0o7777]));
   write(path.join(f.root, 'safe-mode-results.json'), json({zipModes:modes,outputModes:actual}));
-  assert.deepEqual(actual, {'phoenix-ui-darwin-arm64':0o755,'runtime/bin/phoenix-ui.js':0o755,'runtime/bin':0o750,'runtime/vendor/phoenix-ui/NOTICE.md':0o640});
+  assert.deepEqual(actual, {'phoenix-ui-darwin-arm64':0o755,'runtime/bin/phoenix-ui.js':0o755,'runtime/bin':0o750,'runtime/dist/phoenix-ui/NOTICE.md':0o640});
 });
 
 for (const kind of ['archive input', 'output directory', 'control directory', 'lock file']) test(`publication refuses a symlink or unexpected type for its ${kind} without changing the target`, async t => {
@@ -403,14 +403,14 @@ const preflightCases = {
     const dir = path.join(f.extracted, 'phoenix-ui-linux-arm64'), p = path.join(dir, 'build-record.json');
     const r = readJson(p); r.inputs['tools/phoenix-ui/Cargo.toml'] = 'd'.repeat(64); r.inputSha256 = hash(JSON.stringify(r.inputs)); write(p, json(r));
     const m = readJson(path.join(dir, 'VERSION.json')); m.sourceInputSha256 = r.inputSha256;
-    for (const name of ['VERSION.json', 'runtime/vendor/phoenix-ui/VERSION.json', 'runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir, name), json(m));
+    for (const name of ['VERSION.json', 'runtime/dist/phoenix-ui/VERSION.json', 'runtime/skills/phoenix-ui/scripts/ENGINE.json']) write(path.join(dir, name), json(m));
     const smoke = readJson(path.join(dir, 'runtime-smoke-node25.json')); smoke.manifestSha256 = hash(json(m)); write(path.join(dir, 'runtime-smoke-node25.json'), json(smoke));
     const g = readJson(path.join(dir, 'runtime/skills/phoenix-ui/GENERATED.json')); g.outputs.skill['scripts/ENGINE.json'] = hash(json(m));
     for (const name of Object.keys(g.outputs.providers)) g.outputs.providers[name] = hash(json(m));
     g.inputs['tools/phoenix-ui/Cargo.toml'] = r.inputs['tools/phoenix-ui/Cargo.toml']; g.inputSha256 = hash(JSON.stringify(g.inputs)); write(path.join(dir, 'runtime/skills/phoenix-ui/GENERATED.json'), json(g));
   },
   'changed tested binary': f => { write(path.join(f.extracted, 'phoenix-ui-darwin-arm64/phoenix-ui-darwin-arm64'), 'tampered'); },
-  'changed resource blob': f => { const p = path.join(f.extracted, 'phoenix-ui-darwin-arm64/runtime/vendor/phoenix-ui/bundle/blobs'); write(path.join(p, fs.readdirSync(p)[0]), 'tampered'); },
+  'changed resource blob': f => { const p = path.join(f.extracted, 'phoenix-ui-darwin-arm64/runtime/dist/phoenix-ui/bundle/blobs'); write(path.join(p, fs.readdirSync(p)[0]), 'tampered'); },
   'changed preserved license': f => { const p = path.join(f.extracted, 'phoenix-ui-darwin-arm64/THIRD-PARTY-LICENSES'); write(path.join(p, fs.readdirSync(p)[0]), 'tampered'); },
   'missing Node 18 acceptance': f => { f.jobs.find(j => j.name === 'Node 18 portable consumer smoke').conclusion = 'skipped'; },
 };

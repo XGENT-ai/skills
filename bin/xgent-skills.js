@@ -33,10 +33,10 @@ const MANAGED_SETTINGS = {
 // ─── Phoenix UI ─────────────────────────────────────────────────────────────
 // Phoenix 的 skill、hooks、旧 impeccable 迁移与回滚全部由 Rust 安装执行器事务化
 // 完成;这里只把包内 manifest 固定的 engine 校验进用户 cache,再以参数数组调用
-// 它,不在 JS 里再写一套配置合并。旧 vendor/impeccable 安装路径已停用。
+// 它,不在 JS 里再写一套配置合并。旧 vendor/impeccable 安装路径已移除。
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
-const PHOENIX_DIR = path.join(PKG_ROOT, 'vendor', 'phoenix-ui');
+const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
 const PHOENIX_STATUS = {
   planned: '计划', installed: '已安装', unchanged: '未变', conflict: '冲突,未激活',
   'recovery-required': '待恢复', 'integration-pending': '已安装但融合未就绪',

@@ -42,13 +42,13 @@ export function stageRuntime(releaseDir, packageRoot = root) {
   fs.cpSync(sourceSkill, path.join(dest, 'skills/phoenix-ui'), {
     recursive: true, dereference: false, filter: file => file !== path.join(sourceSkill, 'src'),
   });
-  const vendor = path.join(dest, 'vendor/phoenix-ui');
+  const vendor = path.join(dest, 'dist/phoenix-ui');
   fs.mkdirSync(vendor, { recursive: true });
-  fs.cpSync(path.join(packageRoot, 'vendor/phoenix-ui/bundle'), path.join(vendor, 'bundle'), { recursive: true });
+  fs.cpSync(path.join(packageRoot, 'dist/phoenix-ui/bundle'), path.join(vendor, 'bundle'), { recursive: true });
   for (const name of ['VERSION.json', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES']) {
     fs.cpSync(path.join(releaseDir, name), path.join(vendor, name), { recursive: true });
   }
-  for (const name of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(packageRoot, 'vendor/phoenix-ui', name), path.join(vendor, name));
+  for (const name of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(packageRoot, 'dist/phoenix-ui', name), path.join(vendor, name));
   const manifestBytes = fs.readFileSync(path.join(releaseDir, 'VERSION.json'));
   assert(fs.readFileSync(path.join(dest, 'skills/phoenix-ui/scripts/ENGINE.json')).equals(manifestBytes), 'Generated ENGINE.json differs from the artifact VERSION bytes');
   return dest;
@@ -66,8 +66,8 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     const { manifest, file } = validateRuntimeArtifact(releaseDir, target);
     record.manifestSha256 = manifest.hash; record.binarySha256 = manifest.data.engines[target].sha256;
     const runtime = stage ? stageRuntime(releaseDir) : path.join(releaseDir, 'runtime');
-    assert(fs.readFileSync(path.join(runtime, 'vendor/phoenix-ui/VERSION.json')).equals(manifest.bytes), 'Downloaded runtime VERSION bytes differ');
-    const bundle = fs.readFileSync(path.join(runtime, 'vendor/phoenix-ui/bundle/manifest.json'));
+    assert(fs.readFileSync(path.join(runtime, 'dist/phoenix-ui/VERSION.json')).equals(manifest.bytes), 'Downloaded runtime VERSION bytes differ');
+    const bundle = fs.readFileSync(path.join(runtime, 'dist/phoenix-ui/bundle/manifest.json'));
     assert.equal(bootstrap.sha256(bundle), manifest.data.bundleSha256, 'Runtime bundle digest differs');
     if (process.platform !== 'win32') fs.chmodSync(file, 0o755); // Artifacts do not preserve Unix execute modes.
     temporary = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'phoenix ci smoke space '));
@@ -102,7 +102,7 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     assert.equal(JSON.parse(node('node-explicit-offline-install', ['engine', 'install', '--project', project, '--release-dir', releaseDir, '--json'], 0)).status, 'installed');
     assert.equal(node('node-engine-version', ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(node('node-context', ['context', '--target', project], 0), /Phoenix CI local fixture/);
-    assert.equal(JSON.parse(node('local-bundle-check', ['skills', 'check', '--bundle-root', path.join(runtime, 'vendor/phoenix-ui/bundle'), '--json'], 0)).status, 'not-installed');
+    assert.equal(JSON.parse(node('local-bundle-check', ['skills', 'check', '--bundle-root', path.join(runtime, 'dist/phoenix-ui/bundle'), '--json'], 0)).status, 'not-installed');
     record.status = 'passed'; record.finishedAt = new Date().toISOString();
     return record;
   } catch (error) { record.status = 'failed'; record.error = error.message; throw error; }

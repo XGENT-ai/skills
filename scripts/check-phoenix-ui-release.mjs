@@ -34,7 +34,7 @@ function member(archive, relative) {
 }
 const B = bootstrap.manifestAt(options['--manifest']);
 assert.equal(B.data.distribution, 'release', 'Final B must use the frozen release manifest');
-assert(member(options['--tarball'], 'vendor/phoenix-ui/VERSION.json').equals(B.bytes), 'Final tarball manifest bytes differ');
+assert(member(options['--tarball'], 'dist/phoenix-ui/VERSION.json').equals(B.bytes), 'Final tarball manifest bytes differ');
 const pkg = JSON.parse(member(options['--tarball'], 'package.json'));
 assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, B.data.npmPackageVersion);
 assert.deepEqual(Object.keys(B.data.engines).sort(), ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64']);
@@ -122,7 +122,7 @@ for (const major of [18, 25]) {
   const info = JSON.parse(run(`node${major}-identity`, node, ['-p', 'JSON.stringify({version:process.version,target:process.platform+"-"+process.arch})'], base, setupEnv).stdout);
   assert(info.version.startsWith(`v${major}.`), 'Wrong supplied Node major'); assert(B.data.engines[info.target], 'Release does not support this Node host');
   const pkg = npmInstall(node, path.join(raw, 'B.tgz'), path.join(base, 'B consumer'), setupEnv, `node${major}-B`);
-  assert(fs.readFileSync(path.join(pkg, 'vendor/phoenix-ui/VERSION.json')).equals(B.bytes));
+  assert(fs.readFileSync(path.join(pkg, 'dist/phoenix-ui/VERSION.json')).equals(B.bytes));
   const bBin = path.join(pkg, 'bin/phoenix-ui.js');
   for (const kind of ['fresh', 'legacy-0.3.0', 'legacy-0.6.0']) {
     const groupBase = path.join(base, kind); fs.mkdirSync(groupBase);
@@ -164,7 +164,7 @@ for (const major of [18, 25]) {
       assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project, outsideHistory), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));
-      run(`node${major}-${kind}-bundle-check`, node, [bBin, 'skills', 'check', '--bundle-root', path.join(pkg, 'vendor/phoenix-ui/bundle'), '--json'], project, env);
+      run(`node${major}-${kind}-bundle-check`, node, [bBin, 'skills', 'check', '--bundle-root', path.join(pkg, 'dist/phoenix-ui/bundle'), '--json'], project, env);
       group.transaction = rollback(node, pkg, project, env, first, `node${major}-${kind}-rollback`);
       const restored = snapshot(groupBase, 'rolled-back', project);
       if (kind === 'fresh') { for (const [file, digest] of Object.entries(original)) assert.equal(restored[file], digest); assert(!fs.existsSync(path.join(project, '.claude/skills/phoenix-ui'))); }

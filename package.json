@@ -1,6 +1,6 @@
 {
   "name": "@xgent-ai/skills",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 Phoenix UI 设计工具与 UI 验收 skills",
   "keywords": [
     "claude-code",
@@ -33,13 +33,13 @@
     "docs/claude-context-goal-guard.md",
     "docs/phoenix-ui.md",
     "skills",
-    "vendor/phoenix-ui/bundle",
-    "vendor/phoenix-ui/VERSION.json",
-    "vendor/phoenix-ui/LICENSE",
-    "vendor/phoenix-ui/NOTICE.md",
-    "vendor/phoenix-ui/THIRD-PARTY.json",
-    "vendor/phoenix-ui/THIRD-PARTY-NOTICES.md",
-    "vendor/phoenix-ui/THIRD-PARTY-LICENSES"
+    "dist/phoenix-ui/bundle",
+    "dist/phoenix-ui/VERSION.json",
+    "dist/phoenix-ui/LICENSE",
+    "dist/phoenix-ui/NOTICE.md",
+    "dist/phoenix-ui/THIRD-PARTY.json",
+    "dist/phoenix-ui/THIRD-PARTY-NOTICES.md",
+    "dist/phoenix-ui/THIRD-PARTY-LICENSES"
   ],
   "engines": {
     "node": ">=18"

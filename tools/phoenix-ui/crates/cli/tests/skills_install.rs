@@ -60,7 +60,7 @@ fn bundle() -> String {
         .ancestors()
         .nth(4)
         .unwrap()
-        .join("vendor/phoenix-ui/bundle")
+        .join("dist/phoenix-ui/bundle")
         .to_string_lossy()
         .into_owned()
 }
