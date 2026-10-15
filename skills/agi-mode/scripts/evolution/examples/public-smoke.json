@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "protocol_id": "public-ansible-smoke-v1",
+  "question": "Verify SSH container isolation, Codex startup and the fixed public verifier.",
+  "mode": "smoke",
+  "target": {
+    "kind": "skill",
+    "repo": "/path/to/instruction-repo",
+    "repo_id": "XGENT-ai/skills",
+    "base_commit": "<TARGET_GIT_SHA>",
+    "allowed_paths": [
+      "skills/debugging/SKILL.md"
+    ],
+    "surfaces": {
+      "skill": [
+        "skills/debugging/SKILL.md"
+      ],
+      "agents": []
+    },
+    "protected_rules": []
+  },
+  "source": {
+    "paths": [
+      "skills/debugging"
+    ],
+    "new_paths": []
+  },
+  "runtime": {
+    "provider": "ssh",
+    "ssh_target": "operator@evaluation-host",
+    "remote_root": "/home/operator/.local/state/xgent-evolution",
+    "docker_binary": "/usr/bin/docker",
+    "docker_version": "29.5.2",
+    "codex_architecture": "x86_64",
+    "authentication": null,
+    "harbor_version": "0.24.0",
+    "codex_version": "0.162.1"
+  },
+  "authority": {
+    "repo": "/path/to/instruction-repo",
+    "export_paths": [
+      "skills/debugging"
+    ],
+    "write_paths": [],
+    "remote_host": "operator@evaluation-host",
+    "remote_root": "/home/operator/.local/state/xgent-evolution",
+    "auth_path": null,
+    "allow_remote": true,
+    "allow_apply": false,
+    "allow_unverified": false
+  },
+  "budget": {
+    "max_candidates": 1,
+    "max_trials": 3,
+    "max_parallel_trials": 1,
+    "per_trial_timeout_sec": 900,
+    "total_deadline_sec": 3600,
+    "recovery_window_sec": 180,
+    "max_retries": 0
+  },
+  "measurement": {
+    "objective": "quality",
+    "primary_metric": "task_success",
+    "minimum_effect": 0.05,
+    "confidence_level": 0.95,
+    "minimum_groups": 5,
+    "repeats": 1,
+    "seed": 20261015,
+    "checkpoint": "fixed",
+    "confirmation": "once",
+    "weights": {
+      "instance_ansible__ansible-0ea40e09d1b35bcb69ff4d9cecf3d0defa4b36e8-v30a923fb5c164d6cd18280c02422f75e611e8fb2": 1
+    }
+  },
+  "guardrails": [
+    {
+      "name": "task_contract",
+      "minimum": 1
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "instance_ansible__ansible-0ea40e09d1b35bcb69ff4d9cecf3d0defa4b36e8-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+      "group_id": "ansible-vars-union",
+      "repo_id": "ansible/ansible",
+      "base_commit": "f7234968d241d7171aadb1e873a67510753f3163",
+      "repo_path": "/app",
+      "split": "search",
+      "task_path": "/path/to/SWE-bench_Pro-os/v2/tasks/instance_ansible__ansible-0ea40e09d1b35bcb69ff4d9cecf3d0defa4b36e8-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+      "source": {
+        "kind": "pro_v2",
+        "revision": "66f92766bba642462d4bbe5479e83f91f9211862",
+        "family": "vars-union"
+      },
+      "public_paths": [
+        "instruction.md",
+        "task.toml",
+        "environment/Dockerfile"
+      ],
+      "grader_paths": [
+        "tests/config.json",
+        "tests/parser.py",
+        "tests/run_script.sh",
+        "tests/test.sh",
+        "tests/test_patch.patch"
+      ],
+      "oracle_paths": [
+        "solution/gold_patch.diff",
+        "solution/solve.sh"
+      ],
+      "image": "ghcr.io/scaleapi/swe-bench_pro-v2@sha256:7cae127d37e28600d08026f70cbc2aef029ab2c9daf0bba67c912cec5fb4d0d0",
+      "platform": "linux/amd64",
+      "observable_requirements": [
+        "Implement the public request and satisfy its fixed verifier."
+      ],
+      "information_cutoff": "2026-10-15T00:00:00+00:00"
+    }
+  ],
+  "conditions": [
+    {
+      "condition_id": "baseline",
+      "skill": "baseline",
+      "agents": "fixed",
+      "overrides": {}
+    }
+  ],
+  "baseline_condition": "baseline"
+}

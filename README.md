@@ -200,6 +200,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | Skill | 说明 |
 | --- | --- |
 | [agi-mode](skills/agi-mode/SKILL.md) | 通用问题助手，不知道如何推进时从这里开始；核心是自进化 loop，SDLC 与项目状态为按需能力 |
+| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 诊断、精简或优化仓库 AGENTS.md；保留原则与授权，使用同仓任务远端评测，确认后按 CAS 采用 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
@@ -209,6 +210,12 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 `agi-mode` 的自进化 loop：真实任务反馈 → 改进假设 → 评测与搜索 → 最终确认 → 采用与沉淀 → 后续反馈。[Reflection](skills/agi-mode/playbooks/reflection.md) 提炼假设，[Eval](skills/agi-mode/playbooks/eval.md) 建立可信判定，[Hillclimb](skills/agi-mode/playbooks/hillclimb.md) 管理搜索，[Arena](skills/agi-mode/playbooks/arena.md) 按需提供不同候选。协作与记录约定见 [技能演化](skills/agi-mode/references/skill-evolution.md)。
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
+
+明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
+
+工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；不自动提交、发布或安装全局配置。已在指定 SSH/Docker 组合完成真实隔离、任务对照/搜索、自然请求/CAS 与故障恢复验收；本次独立确认样本不足，未证明候选优于基线。
+
+安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
 
 `experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具，并回写处置。
 

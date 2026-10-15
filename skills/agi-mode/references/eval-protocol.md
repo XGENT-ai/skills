@@ -2,6 +2,8 @@
 
 在建立可复现评测或接续多轮搜索时读取。优先映射到项目现有格式；以下是最小内容约定，不是必须实现的框架。空缺标为未知或未执行，不用示例数值冒充观测。
 
+使用可选 [远端工具](remote-evolution.md) 时，JobSpec 对应此协议，protocol.json 与内容寻址包保存实际字节，remote.json 保存执行/容器身份、阶段、原退出及产物清单。results.jsonl 和 attempts.jsonl 保留原失败与重试链；report.json 是聚合机器源，report.md 是其人读视图。执行来源、实际读取/调用与效果证据分层记录；schema 或静态校验不产生性能结论。
+
 ## 协议：首轮前固定
 
 ```yaml

@@ -10,6 +10,7 @@
 | 7818a838-d021-4b2e-92c7-6d57c7ae8af0 | [XGENT Phoenix UI](../../../../docs/plan/phoenix-ui.md) | [状态](7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 活动 |
 | 90d15d49-af8b-4e97-bb61-dadb6498747c | [Claude Code goal 上下文收尾提醒](../../../../docs/plan/claude-context-goal-guard.md) | [状态](90d15d49-af8b-4e97-bb61-dadb6498747c.md) | 活动 |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [Codex goal 上下文收尾提醒](../../../../docs/plan/codex-context-goal-guard.md) | [状态](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 活动 |
+| bbae83cd-7065-4f90-a350-5e6439fdfed6 | [AGENTS.md 与 Skills 自进化](../../../../docs/plan/agent-instruction-evolution.md) | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 活动 |
 
 ## 维护约定
 

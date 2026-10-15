@@ -22,3 +22,4 @@
 
 - d1f6623b-b070-4187-bb6f-54fea834ddc4 · [spec-human-decision 决策记录共存](d1f6623b-b070-4187-bb6f-54fea834ddc4.md)
 - a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
+- `bbae83cd-7065-4f90-a350-5e6439fdfed6` · Agent Instruction Evolution · [记录](bbae83cd-7065-4f90-a350-5e6439fdfed6.md)
