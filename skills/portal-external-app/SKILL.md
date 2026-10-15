@@ -1,6 +1,6 @@
 ---
 name: portal-external-app
-description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖对接契约、manifest、注册、鉴权、原生客户端登录、/svc 路由、健康检查与一盒联调。'
+description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖 manifest、注册、鉴权、成员客户端与终端用户身份、/svc 路由、健康检查与一盒联调。'
 ---
 
 # portal-external-app · 外部镜像服务类应用接入
@@ -20,7 +20,8 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
 | 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
 | 服务账号写进应用空间的文件，要让作者本人在文件管理里看得到 | [references/files-member-docs.md](references/files-member-docs.md)：`onBehalfOf` 署名、成员只读可见、成员内容隐私开关 |
-| 原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
+| 门户成员的原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
+| 顾客/学生等终端用户的完整能力、租户用户中心、托管注册登录、账号与隐私治理 | [references/end-users.md](references/end-users.md)：先区分成员与终端身份，再按任务读认证协议或生命周期接口 |
 | 用户以 CLI、MCP、个人自动化调用 App，或接入门户多服务用户密钥与服务发现 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录；不改门户业务代码 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
@@ -36,6 +37,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
     租户永远勾不到（症状：功能上线了、租户面却没有任何可选项）。判断口径与两条路的差别见
     [integration-contract.md §3.1](references/integration-contract.md)。
 - 它自带认证体系（API-Key/节点 Token/gRPC）？→ 按 integration-contract.md §6 划界：门户面必走 TDT 四道闸；自有节点面保持原认证但**不得**进 `/svc`（`/svc` 只转发 HTTP :8080）。
+- 用户是租户旗下网站/App 的顾客、学生等终端用户？→ 先读 [终端身份](references/end-users.md)。它是 `kind=enduser`，不使用门户成员的 `/oauth/*`、成员角色或席位；不能把普通后台路由一起开放给它。
 
 ## 交付物评审 checklist（收外部团队东西时逐项验）
 
@@ -49,6 +51,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 8. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
    角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
 9. 对接契约文档：按 [references/contract-doc-template.md](references/contract-doc-template.md) 的结构与精度。**没有这份文档的接入不算完成**——新服务（如任务网关）要先补。
+10. **终端用户**：如有注册、登录、找回、密码管理、注销或个人数据请求，按 [终端用户参考](references/end-users.md) 核对身份 owner、realm、profile/client、服务权限、容量与业务数据分工；区分管理 UI、App API 和本人流程，不把成员 OAuth 当顾客认证。
 
 ## 资源服务器硬契约（外部实现最常炸的四处）
 
@@ -264,6 +267,13 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 | 用户级设置 | `settings.read` / `settings.write` | `/api/v1/settings/me` |
 | Dashboard 卡片 | `widget.write`（**用户态**，服务态令牌推不了） | `PUT /api/v1/dashboard/widgets/:key/data`；清单顶层 `dashboardWidgets` 声明（不是 `dashboard.widgets`）。有用户关心的状态就该暴露至少一个，前端用 SDK 推；完整契约见 portal-micro-app skill 的 Widget 一节 |
 
+### 终端用户身份也是门户能力，但使用专门服务身份
+
+注册、凭据、会话、条款与隐私接口在 `/api/v1/end-users*` 等基座路径，管理入口为「用户中心」。
+它们不走 `/svc/user-center`，也不走成员的交换流程；`endusers.*` 和 `privacy.requests.*`
+是 SERVICE_ONLY scope，按需经 `privilegedServiceScopes` 申请。终端身份不是成员通讯录，
+登录、当前限制和完整分工见 [终端用户参考](references/end-users.md)。
+
 ### B. App 型公共服务 —— 走 `/svc/<key>` + 令牌交换
 
 这些是**独立 App**，不是基座端点：要在清单里声明 `exchangeTargets`，用交换来的
@@ -315,6 +325,9 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 - 两个模型**二选一**，都只有 **backed listing** 可声明：`seatBased`（计门户成员用不用得了这个
   App，门户在 TDT 签发时收口，App 侧零代码）/ `seatRoles`（App 自管账号或资源，门户只发数、
   App 自己在建号路径上收口）。
+- 上面是 App 席位/业务资源模型；平台托管终端身份另用租户共享的 `portal.end_users`，
+  由平台在身份创建/删除时占用/归还，归档仍占额。不要拿成员席位代替或再扣一份身份容量，
+  见 [终端用户容量](references/end-users.md)。
 - **role 由对方在 `app.manifest.json` 里声明**（不需要门户改代码）；**各套餐的数值进不了
   manifest**，只有平台管理员在控制台能写 —— 应用侧一条写路径都没有。
   这是有意的：数值是商务面，改它等于改可售卖档位。

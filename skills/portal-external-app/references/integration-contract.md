@@ -61,6 +61,8 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 
 **三种令牌来路 × 授权姿势**：
 
+以下表格描述成员/服务端点。若 App 还面向终端用户，按 §3.2 单独开放具名端点，不放宽这些后台闸。
+
 | 来路 | kind | user_id | 授权依据 |
 | --- | --- | --- | --- |
 | 自己前端（宿主注入 / callService） | user | 有 | scope + PID/ACL |
@@ -78,7 +80,7 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 | 建的人 | 平台管理员 / 你的 manifest 声明 | **租户自己的管理员**，不经平台 |
 | 典型用途 | 你的服务端调门户（files/notification/audit/seats…） | 该租户的采集器、脚本、CI **调你** |
 | 租户范围 | 由平台决定（可 `all`） | **恒 allowlist=[他自己那一个租户]**，请求体里出现别的租户 id 直接 `VALIDATION_FAILED` |
-| `azp` | manifest 里的 `serviceScopes.ownerAppKey` | = 租户选的那个已装 App 的 listingKey（**用户填不了、也不用填**） |
+| `azp` | 平台服务账号的 `ownerAppKey`；manifest 注册默认绑定自己的 `listingKey`（`serviceScopes` 是 scope 字符串数组） | = 租户选的那个已装 App 的 listingKey（**用户填不了、也不用填**） |
 | 可选 scope | `serviceScopes` / `privilegedServiceScopes`（可含 SERVICE_ONLY，走审批） | **只有 `scopes`（用户态那份清单）里、属于你自己命名空间的那些**；平台基础 scope 与 SERVICE_ONLY 一律不可选 |
 
 **⚠️ 对你的唯一要求，就在最后一行**：租户自助的 scope 池取的是**该租户安装你时那份 `apps.scopes`
@@ -103,6 +105,21 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 - **密钥只显示一次**，可轮换/吊销；轮换即刻作废在途令牌。
 - **审计**落在该租户自己的审计日志里（创建/轮换/吊销/删除/每一次签发）。
 - 每租户有个数上限（默认 10）。
+
+### 3.2 终端用户端点：显式开放，使用本地业务授权
+
+平台另有 `kind=enduser` 身份，完整能力与接入见 [终端用户参考](end-users.md)。
+`@xgent/portal-server-sdk` 缺省只收 user/service；仅在顾客端点配置
+`acceptedPrincipalKinds:["enduser"]`、`acceptedCredentialTypes:["tdt"]`，校验 tenant、
+ownerAppKey、siteKey、目标 audience、endUserId 与本地业务权限。该主体没有成员
+user_id/role/groups/permissions，bypass/isPlatformAdmin 恒 false；不要套用成员管理员/PID 闸，
+也不要把整个后端都改成接收终端用户。
+
+HTTP 自省须保留 `end_user_id/session_id/owner_app_key/site_key/euv`；
+SDK 的 EndUserAuthContext 使用相应驼峰字段。终端用户正缓存上限 **50 秒**（不是上面的 55 秒），
+仍受 exp 截断，端到端撤销预算 60 秒；敏感操作可用 strictIntrospection。
+终端用户登录使用 `/api/public/end-user-auth/*`，不是成员 `/oauth/*`；
+业务资料留在 App，平台身份管理走专门的服务态权限。
 
 ## 4. 健康检查
 

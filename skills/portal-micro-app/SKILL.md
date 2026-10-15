@@ -7,6 +7,10 @@ description: '用于开发、修改或排查 XGENT Portal 的 iframe 微应用�
 
 微应用是被 Portal 以沙箱 iframe 嵌入的普通 Web 页面：**不自己实现登录、不持有 App Secret**，身份由宿主经 postMessage 握手注入。本文件是工作流与红线；具体契约按需读 `references/`（可整目录拷到任何 App repo 使用）。
 
+这里的宿主身份是门户成员。若同一个产品另有面向顾客/学生的独立网站或原生客户端，
+终端身份的注册、登录、会话与隐私治理读 `portal-external-app` skill 的 `references/end-users.md`；
+不能把成员 SDK 握手、角色或成员 OAuth 直接当作终端用户认证。
+
 
 `/apps/<key>/` 是线上前端挂载 URL；本文的 `references/` 相对于本 skill 目录。
 

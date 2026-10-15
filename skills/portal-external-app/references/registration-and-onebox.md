@@ -14,6 +14,9 @@
     `privilegedServiceScopes` 里的，租户面**一条也勾不到**（见 integration-contract.md §3.1）。
     `scopeLabels` 同时是那个勾选列表的正文——不写就只显示裸 scope 串。
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
+- 终端身份：`endUserRealms:{"mode":"fixed","siteKeys":["customers"]}` 或 `{"mode":"dynamic"}`，
+  声明本 App 的身份空间范围；不创建托管 profile/client、不授额度，也不是成员的 publicClient。
+  顾客/学生认证与生命周期按 [终端用户接入](end-users.md) 配置；endusers.* 等服务权限经特权审批申请。
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
 - 部署/运维：`requiredEnvNotes`（`{ 键名: 说明 }`，给 `requiredEnv` 里需要解释的键写一句给审批人看的话，≤200 字；纯展示、自动档）、`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 登记表核对已有服务；支持自动供给的类型按选定档案建资源并注入约定键，不收 `envKey`）
 
