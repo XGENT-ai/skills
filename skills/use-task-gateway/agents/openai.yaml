@@ -1,0 +1,3 @@
+interface:
+  display_name: "Use Task Gateway"
+  short_description: "帮助其他 App 接入 Task Gateway，可靠提交异步任务并恢复查询、回收结果"
