@@ -18,7 +18,9 @@
   },
   "scripts": {
     "test": "node scripts/run-tests.mjs",
-    "test:phoenix": "node scripts/test-phoenix-ui.mjs"
+    "test:phoenix": "node scripts/test-phoenix-ui.mjs",
+    "release:phoenix": "node scripts/release-phoenix-ui.mjs",
+    "prepublishOnly": "node scripts/require-release-package.mjs"
   },
   "files": [
     "bin",

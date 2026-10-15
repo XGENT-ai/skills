@@ -151,6 +151,24 @@ prepare 显式联网准备锁定依赖、工具、浏览器、迁移包和公告
 
 [CI workflow](../.github/workflows/phoenix-ui.yml) 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，另有 Node18 consumer。固定成功 run 的四份 native、四份 phase evidence、一份 Node18 evidence 必须保留原始 ZIP/digest、HEAD/tree、工具链、输入/制品摘要、许可及全部真实 step/phase 结果。CI 不持 R2/npm 凭据；缺平台、失败 phase 或摘要不符不能交接。
 
-维护者用与候选 package.json 兼容的 checkout，只搬运已测字节，不重编；先做 HTTP/R2 替身演练，实际上传另行授权。仓根 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 使用现有 `AGENT_RELEASE_R2_*` 环境变量与固定 `--run-id`、`--source-commit`、`--source-tree`、run/jobs/artifacts 原始记录及 `--archives-dir`、`--output-dir` 参数；不自动读 `.env.cf` 或发布 npm。条件上传拒绝覆盖，部分成功保留对象；显式 `--resume` 获取输出 OS 锁并回读已有对象，仅复用相同 size/SHA。具体校验与恢复以该脚本为准。
+发布只用一条命令，在**干净、已推送且 Phoenix CI 成功**的 HEAD 上执行。版本号先在 `package.json` 改好，并用上面的开发构建同步 `VERSION.json`/`ENGINE.json`/`GENERATED.json`：
 
-四平台公共 URL 回读全部通过后才冻结 release manifest 与交接清单，再用相同 manifest/资源字节打一次最终 tarball，记录 SHA-256。用**同一 tarball**完成新装、旧包迁移、A→B 升级/回滚和真实融合验收；获得另行授权后才用于 npm 发布，不重新生成 manifest 或重打包后直接发布。替身、开发包和四平台 CI 不独自证明最终 B、线上 URL 或 M6 退出门通过；本指南不填写未验证的最终 hash。
+```bash
+mise exec --no-deps -- npm run release:phoenix                      # 上传 R2 与 npm 发布前各确认一次，npm 会要 OTP
+mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到安装检查；再跑一次不带参数即发布
+```
+
+[release-phoenix-ui.mjs](../scripts/release-phoenix-ui.mjs) 依次执行，任一步失败即停：
+
+1. 核对工作树干净、npm 上还没有这个版本，找到该提交成功的 Phoenix CI run（也可用 `--run-id` 指定）。
+2. 下载 CI 的九个原始 ZIP，逐个核对 GitHub digest。
+3. 用 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 条件上传四个 engine（已存在即拒绝覆盖），公共 URL 回读通过后冻结 release manifest。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。
+4. 用 [pack-phoenix-ui-release.mjs](../scripts/pack-phoenix-ui-release.mjs) 只打一次 tarball。
+5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上新装（engine 从公共 URL 下载），并做 0.3.0/0.6.0 迁移与回滚。
+6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
+
+每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/`，中断后重跑会复核已有产物再续接。预发布版本必须加 `--tag`。
+
+在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里的 `vendor/phoenix-ui/VERSION.json` 是开发清单，没有 engine 下载地址。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
+
+M6 终验在日常发布检查之外，还用同一 tarball 做过 A→B 升级/回滚与真实融合验收（见计划 M6 记录）；替身、开发包和四平台 CI 都不能单独证明线上 URL 或最终包可用。
