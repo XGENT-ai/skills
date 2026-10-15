@@ -22,7 +22,7 @@
 
 | 工作项 / 原文 | 原登记进展与证据 | 下一步及完成条件 |
 | --- | --- | --- |
-| Phoenix UI（开发计划）· [docs/plan/phoenix-ui.md](../../docs/plan/phoenix-ui.md) · [状态](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 实施 6/6（dev-plan-completed / confirmed），R3 修复范围通过；已合并，R2 engine 已上传，npm 待发布 | 核对发布是否已完成；仍待发布时由用户发布同一 tarball，再核对摘要。原结论与各轮限制见状态页。 |
+| Phoenix UI（开发计划）· [docs/plan/phoenix-ui.md](../../docs/plan/phoenix-ui.md) · [状态](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 实施 6/6（dev-plan-completed / confirmed），R3 修复范围通过；已合并；0.7.1 据[发布登记](events/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0/7b9d490a-c71d-4304-a483-2cba21a7d9a8.md)发布为 latest 并回读一致；0.7.0 误发不可安装，未 deprecate；rc 未发 npm | 后续版本用 `npm run release:phoenix`；发布工具如需评审，以计划路径 review-code。原结论与各轮限制见状态页。 |
 | Codex guard（开发计划）· [docs/plan/codex-context-goal-guard.md](../../docs/plan/codex-context-goal-guard.md) · [状态](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 实施 3/3（dev-plan-completed / stale），初轮评审只覆盖原快照 | `$review-code docs/plan/codex-context-goal-guard.md`：覆盖后续阈值、Git 根目录路径和显式安装变更，明确受影响验收的证据。 |
 | Claude guard（开发计划）· [docs/plan/claude-context-goal-guard.md](../../docs/plan/claude-context-goal-guard.md) · [状态](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md) | 实施 4/4（dev-plan-completed / stale）；未发现文档评审，就绪证据 provisional | `$review-code docs/plan/claude-context-goal-guard.md`：核对阈值、安装入口和 V-6 口径。与 Codex guard 共用安装器，涉及共享改动时统一核查。 |
 
