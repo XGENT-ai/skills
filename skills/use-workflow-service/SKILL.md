@@ -1,11 +1,23 @@
 ---
 name: use-workflow-service
-description: '用于其他 App、服务或 Agent 经 Portal 接入 workflow；不用于 workflow 自身开发发布或仅接 Task Gateway 执行器。提供鉴权、流程编排、事件、动作面与 MCP 指引。'
+description: '用于判断工作流与 Agent + Skill 的分工，或其他 App／服务经 Portal 接入 workflow；不用于 workflow 自身开发发布或仅接 Task Gateway 执行器。提供选型、编排与调用指引。'
 ---
 
 # use-workflow-service
 
 把流程接进调用方已有业务：记录执行意图 → 经 Portal 鉴权调用 → 保存实例关联 → 恢复查询或推送事实 → 按真实终态更新业务。Workflow 负责流程版本、审批、等待与编排；业务 App 仍拥有业务对象、权限和实际执行效果。
+
+## 先决定编排方式
+
+用户询问 Agentic 编排、工作流与 Skill 的选择，或尚未确定技术路径时，先读 [工作流与 Agent + Skill 的选型](references/orchestration-choice.md)，再决定是否接入本服务。按控制权和业务状态的归属选择：
+
+| 选择 | 适用边界 |
+| --- | --- |
+| 工作流 | 业务阶段、规则分支与交接可预先约定，需要独立的实例状态、审批、事件等待或恢复；节点可以调用 LLM |
+| Agent + Skill | 下一步须根据现场反馈判断，主要工作是探索、排障、研究或开发；由现有 Agent runtime 承载执行与必要恢复 |
+| 混合 | 外部业务阶段稳定，某个阶段内部需要自主探索；工作流管阶段与交接，Agent 在动作节点的约定范围内求解 |
+
+普通代码、单次模型调用或已有 job 系统足够时沿用它们。用了 LLM、任务耗时长、步骤多、需要复用知识，都不足以单独成为接入工作流的理由。Skill 提供方法与资源，本身不提供调度、持久化或审批机制；选型咨询不自动创建、发布或运行流程。
 
 ## 先选接入方向
 
