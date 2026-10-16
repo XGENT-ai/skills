@@ -1212,11 +1212,13 @@ pub fn polyline_bend_contacts(left: &[Point], right: &[Point]) -> Vec<Point> {
     contacts
 }
 
+pub type CrossingPredicate<'a> = &'a dyn Fn(&Value, &Value, &ProperCrossing) -> bool;
+
 pub struct CrossingOptions<'a> {
     pub contract: InputContract,
     pub merge_forward_collinear_waypoints: bool,
     pub include_shared_endpoints: Option<RelationPairPredicate<'a>>,
-    pub crossing_resolved: Option<&'a dyn Fn(&Value, &Value, &ProperCrossing) -> bool>,
+    pub crossing_resolved: Option<CrossingPredicate<'a>>,
 }
 impl Default for CrossingOptions<'_> {
     fn default() -> Self {

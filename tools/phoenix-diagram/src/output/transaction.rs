@@ -499,7 +499,7 @@ fn pending_record(
         }))
     })();
     operation.map_err(|mut error: OutputError| {
-        error.public_state = unix::public_state(&slot.parent, &slot.name);
+        error.public_state = Box::new(unix::public_state(&slot.parent, &slot.name));
         error.recovery_directory = Some(path.clone());
         if !error.preserved.contains(&path) {
             error.preserved.push(path);
@@ -813,7 +813,7 @@ fn prepare(
         })
     })();
     operation.map_err(|mut error: OutputError| {
-        error.public_state = unix::public_state(&slot.parent, &slot.name);
+        error.public_state = Box::new(unix::public_state(&slot.parent, &slot.name));
         if slot
             .parent
             .entry(
@@ -871,14 +871,11 @@ fn rollback(slot: &OutputSlot, transaction: &Transaction, mut error: OutputError
             if let Ok(Some(name)) = optional_name(directory, &["previous", "previous-retired"]) {
                 if bind_expected(directory.clone(), &name, &previous.identity, 1).is_ok()
                     && unix::link(directory, &name, &slot.parent, &slot.name).is_ok()
+                    && previous.verify_at(&slot.parent, &slot.name, 2).is_ok()
+                    && previous.verify_at(directory, &name, 2).is_ok()
+                    && directory.unlink_private(&name, false).is_ok()
                 {
-                    if previous.verify_at(&slot.parent, &slot.name, 2).is_ok()
-                        && previous.verify_at(directory, &name, 2).is_ok()
-                    {
-                        if directory.unlink_private(&name, false).is_ok() {
-                            restored = true;
-                        }
-                    }
+                    restored = true;
                 }
             }
         }
@@ -901,7 +898,7 @@ fn rollback(slot: &OutputSlot, transaction: &Transaction, mut error: OutputError
             &mut |_, _| Ok(()),
         );
     }
-    error.public_state = unix::public_state(&slot.parent, &slot.name);
+    error.public_state = Box::new(unix::public_state(&slot.parent, &slot.name));
     if slot
         .parent
         .entry(&transaction.record.recovery.name)
@@ -1134,7 +1131,7 @@ fn publish_mode(
     })()
     .map_err(|mut error: OutputError| {
         error.committed = true;
-        error.public_state = current_state(&slot.parent, &slot.name);
+        error.public_state = Box::new(current_state(&slot.parent, &slot.name));
         error.recovery_directory = recovery_directory.clone();
         error.preserved = vec![slot.path()];
         if let Some(path) = &recovery_directory {
@@ -1183,7 +1180,7 @@ fn recovery_error(
     };
     let state = parent
         .map(|(p, n)| current_state(p, n))
-        .unwrap_or(error.public_state);
+        .unwrap_or(*error.public_state);
     result(
         directory,
         status,

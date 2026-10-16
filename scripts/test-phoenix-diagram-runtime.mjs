@@ -4,7 +4,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
-import { REQUIRED_EXPORT_SCOPE, verifyPrintSample } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
+import { REQUIRED_EXPORT_SCOPE, verifyPrintSample, verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
 import { root,TYPES,XSS_LITERAL,CoreError,identity,requiredCoverage,readSnapshot,readBound,bound,requireThat,inspectFinalize,verifyReviewTransition,assertXssArtifact,publicNpmCommand } from './test-phoenix-diagram-core.mjs';
 
@@ -315,6 +315,7 @@ export function verifyReaderReport(report,artifact,{offline=false,content=false}
     const pdf=readBound(sample.nativePrint.pdf,'actual native print PDF').content;
     requireThat(pdf.subarray(0,5).toString()==='%PDF-' && pdf.subarray(-64).includes(Buffer.from('%%EOF')) && (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length===sample.nativePrint.pdf.pages,'Native print PDF bytes differ from the reported scope');
   }
+  verifyMotionSuppression(report.motionSuppression);
   verifyReaderInteractions(report.readerInteractions);
 }
 

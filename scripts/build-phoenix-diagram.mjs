@@ -5,6 +5,7 @@
 // exact Rust source tuples, isolated output and full offline license resources.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -414,9 +415,43 @@ function viewerIdentity(repoRoot) {
     sourceManifest: recordFor('tools/phoenix-diagram/viewer/source-manifest.json', regular(path.join(repoRoot, 'tools/phoenix-diagram/viewer/source-manifest.json')).bytes) };
 }
 function expectedProbe() { return `${TOOL}-engine ${TOOL_VERSION} input=1 receipt=1 viewer=${VIEWER_REVISION}\n`; }
-function validateEngine(engine, sourceSha, binary) {
-  assert(engine?.sourceInputSha256 === sourceSha && engine.inputContractSchema === 1 && engine.receiptSchema === 1 && engine.viewerRevision === VIEWER_REVISION
-    && engine.binary?.sha256 === binary.sha256 && engine.binary.bytes === binary.size, 'Native engine identity differs from source/config/binary');
+export function validateEngine(engine, sourceSha, binary) {
+  assert(engine && typeof engine === 'object', 'Native doctor engine identity is missing');
+  for (const [field, actual, expected] of [
+    ['sourceInputSha256', engine.sourceInputSha256, sourceSha], ['inputContractSchema', engine.inputContractSchema, 1],
+    ['receiptSchema', engine.receiptSchema, 1], ['viewerRevision', engine.viewerRevision, VIEWER_REVISION],
+    ['binary.sha256', engine.binary?.sha256, binary.sha256], ['binary.bytes', engine.binary?.bytes, binary.size],
+  ]) assert.equal(actual, expected, `Native engine ${field} differs: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+}
+export function probeNativeArtifact(executable, { binaryBytes, sourceSha, target, env = process.env }) {
+  const original = regular(executable, { executable: true });
+  assert(original.bytes.equals(binaryBytes), 'Native binary differs from the frozen compiler-artifact bytes before probing');
+  // Cargo may hardlink its public executable and deps artifact. The runtime's
+  // current_exe binding intentionally requires one link; probe an owned copy
+  // of the exact compiler bytes instead of weakening that runtime contract.
+  const directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-diagram-native-probe-')));
+  const probeExecutable = path.join(directory, TOOL);
+  try {
+    fs.chmodSync(directory, 0o700);
+    const descriptor = fs.openSync(probeExecutable, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o700);
+    try { fs.writeFileSync(descriptor, binaryBytes); fs.fchmodSync(descriptor, 0o700); } finally { fs.closeSync(descriptor); }
+    assert(regular(probeExecutable, { links: 1, mode: 0o700, executable: true }).bytes.equals(binaryBytes), 'Private native probe bytes differ');
+    const probe = command(probeExecutable, ['engine-probe'], { env, timeout: 15000 });
+    assert.equal(probe.stdout, expectedProbe(), 'Native engine probe identity differs');
+    const doctorResult = command(probeExecutable, ['doctor', '--json'], { env, allowFailure: true, timeout: 15000 });
+    let doctor;
+    const binary = { asset: `${TOOL}-${target}`, ...identity(binaryBytes) };
+    try {
+      doctor = JSON.parse(doctorResult.stdout);
+      assert.equal(doctor.toolVersion, TOOL_VERSION, 'Native doctor tool version differs');
+      validateEngine(doctor.engine, sourceSha, binary);
+    } catch (error) {
+      throw new Error(`${error.message}; native doctor ${JSON.stringify({ exitCode: doctorResult.status, signal: doctorResult.signal, diagnostics: doctor?.diagnostics || null, stderr: doctorResult.stderr, ...(!doctor ? { stdout: doctorResult.stdout.slice(0, 4096) } : {}) })}`);
+    }
+    assert(regular(probeExecutable, { links: 1, mode: 0o700, executable: true }).bytes.equals(binaryBytes), 'Private native probe bytes changed');
+    assert(regular(executable, { executable: true }).bytes.equals(binaryBytes), 'Native binary changed while probing');
+    return { probe, doctorResult, doctor, binary, compilerLinks: Number(original.stat.nlink), probeExecutable };
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
 }
 
 export function validateDevelopmentArtifact(directory, { repoRoot = root, requireClean = false } = {}) {
@@ -556,12 +591,8 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
   const artifact = selectCompilerArtifact(result.stdout, workspace), binaryBytes = regular(artifact.executable, { executable: true }).bytes;
   const nativeInputs = regular(path.join(artifact.outDir, 'source-inputs.json')).bytes;
   assert(nativeInputs.equals(inputs.bytes), 'Rust build.rs source-input bytes differ from the Node snapshot');
-  const probe = command(artifact.executable, ['engine-probe'], { env, timeout: 15000 }); assert.equal(probe.stdout, expectedProbe(), 'Native engine probe identity differs');
-  const doctorResult = command(artifact.executable, ['doctor', '--json'], { env, allowFailure: true, timeout: 15000 }), doctor = JSON.parse(doctorResult.stdout);
-  const binary = { asset: `${TOOL}-${target}`, ...identity(binaryBytes) };
-  assert.equal(doctor.toolVersion, TOOL_VERSION, 'Native doctor tool version differs');
-  validateEngine(doctor.engine, inputs.sha256, binary);
-  assert(regular(artifact.executable).bytes.equals(binaryBytes), 'Native binary changed while probing');
+  const { probe, doctorResult, doctor, binary, compilerLinks } = probeNativeArtifact(artifact.executable, { binaryBytes, sourceSha: inputs.sha256, target, env });
+  if (compilerLinks !== 1) process.stderr.write(`Phoenix Diagram native artifact: compilerLinks=${compilerLinks}, probeLinks=1, bytes=${binary.size}, sha256=${binary.sha256}\n`);
   const browser = browserObservation(doctor, target, env, repoRoot);
   assertSourceInputsUnchanged(inputs, sourceInputs(repoRoot));
   assert(bundleFiles(repoRoot).bytes.equals(bundle.bytes), 'Bundle source or executable modes changed during compilation');

@@ -29,7 +29,7 @@ pub(super) struct Error {
     pub stage: &'static str,
     pub message: String,
     pub retained: Option<PathBuf>,
-    pub resources: Option<Value>,
+    pub resources: Option<Box<Value>>,
 }
 
 impl Error {
@@ -272,7 +272,7 @@ fn startup_failure(
             json!({"code":failure.code,"phase":failure.stage,"message":failure.message});
         failure = error;
     }
-    failure.resources = Some(resources);
+    failure.resources = Some(Box::new(resources));
     failure
 }
 impl Drop for Process {

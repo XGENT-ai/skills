@@ -1,9 +1,9 @@
 //! Assertions over measured DOM facts, separate from transport execution.
 use super::{
-    BROWSER_MEASUREMENT_CHECKS, BrowserCheck, BrowserCoverage, BrowserStatus, CheckStatus, Theme,
-    Viewport,
+    BrowserCheck, BrowserCoverage, BrowserStatus, CheckStatus, Theme, Viewport,
+    BROWSER_MEASUREMENT_CHECKS,
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 pub(super) fn pending_checks() -> Vec<BrowserCheck> {
     BROWSER_MEASUREMENT_CHECKS
@@ -408,18 +408,14 @@ mod tests {
             ],
         );
         assert_eq!(coverage.status, BrowserStatus::Failed);
-        assert!(
-            coverage
-                .checks
-                .iter()
-                .find(|entry| entry.name == "offline-resources")
-                .is_some_and(|entry| entry.status == CheckStatus::Failed)
-        );
-        assert!(
-            summarize(&[coverage])
-                .iter()
-                .all(|entry| entry.status != CheckStatus::Pass)
-        );
+        assert!(coverage
+            .checks
+            .iter()
+            .find(|entry| entry.name == "offline-resources")
+            .is_some_and(|entry| entry.status == CheckStatus::Failed));
+        assert!(summarize(&[coverage])
+            .iter()
+            .all(|entry| entry.status != CheckStatus::Pass));
     }
 
     #[test]

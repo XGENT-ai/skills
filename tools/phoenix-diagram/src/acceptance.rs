@@ -124,7 +124,7 @@ fn checkpoint_with(
         || current.dev() != created.dev()
         || current.ino() != created.ino()
         || entry.st_dev as u64 != created.dev()
-        || entry.st_ino as u64 != created.ino()
+        || entry.st_ino != created.ino()
         || entry.st_nlink != 1
         || entry.st_mode & libc::S_IFMT != libc::S_IFREG
         || actual != bytes
@@ -263,38 +263,32 @@ mod tests {
     fn unknown_directory_permissions_and_symlinks_fail_closed() {
         let root = Temp::new();
         let missing = root.0.join("missing");
-        assert!(
-            invoke(
-                &root.0,
-                Some(OsStr::new("1")),
-                Some(missing.as_os_str()),
-                Some(OsStr::new("after-retire"))
-            )
-            .is_err()
-        );
+        assert!(invoke(
+            &root.0,
+            Some(OsStr::new("1")),
+            Some(missing.as_os_str()),
+            Some(OsStr::new("after-retire"))
+        )
+        .is_err());
         let public = root.0.join("public");
         fs::create_dir(&public).unwrap();
         fs::set_permissions(&public, fs::Permissions::from_mode(0o755)).unwrap();
-        assert!(
-            invoke(
-                &root.0,
-                Some(OsStr::new("1")),
-                Some(public.as_os_str()),
-                Some(OsStr::new("after-retire"))
-            )
-            .is_err()
-        );
+        assert!(invoke(
+            &root.0,
+            Some(OsStr::new("1")),
+            Some(public.as_os_str()),
+            Some(OsStr::new("after-retire"))
+        )
+        .is_err());
         let alias = root.0.join("alias");
         std::os::unix::fs::symlink(&root.0, &alias).unwrap();
-        assert!(
-            invoke(
-                &root.0,
-                Some(OsStr::new("1")),
-                Some(alias.as_os_str()),
-                Some(OsStr::new("after-retire"))
-            )
-            .is_err()
-        );
+        assert!(invoke(
+            &root.0,
+            Some(OsStr::new("1")),
+            Some(alias.as_os_str()),
+            Some(OsStr::new("after-retire"))
+        )
+        .is_err());
         assert!(!root.0.join("checkpoint.json").exists());
     }
 

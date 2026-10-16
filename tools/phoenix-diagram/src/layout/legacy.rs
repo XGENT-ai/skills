@@ -39,6 +39,8 @@ fn sides(raw: &Value, a: Rect, b: Rect) -> (String, String) {
     };
     (chosen("fromSide", from), chosen("toSide", to))
 }
+// Preserve the source router's explicit boxes, anchors, sides and spread mode.
+#[allow(clippy::too_many_arguments)]
 fn route(
     raw: &Value,
     a: Rect,
@@ -278,7 +280,10 @@ pub(super) fn compile(
     if !errors.is_empty() {
         return Err(errors);
     }
-    let mut groups: Vec<((usize, String), Vec<(usize, bool, usize)>)> = vec![];
+    // Members retain transition index, source-end flag and counterpart node.
+    type PortMember = (usize, bool, usize);
+    type PortGroup = ((usize, String), Vec<PortMember>);
+    let mut groups: Vec<PortGroup> = vec![];
     for (index, raw) in transitions.iter().enumerate() {
         if raw.get("via").is_some()
             || raw.get("channelX").is_some()

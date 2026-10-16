@@ -208,7 +208,7 @@ pub(super) fn initial(context: &mut Context<'_>) {
             *plate = initial[index].clone();
         }
     }
-    for index in 0..context.labels.len() {
+    for (index, original) in initial.iter().enumerate().take(context.labels.len()) {
         let current = context.labels[index].clone();
         if !occlusions.contains(&current.index()) {
             continue;
@@ -219,7 +219,7 @@ pub(super) fn initial(context: &mut Context<'_>) {
         }) {
             continue;
         }
-        let mut preferred = initial[index].clone();
+        let mut preferred = original.clone();
         let extra = preferred.label.bounds.height - 16.0;
         preferred.label.bounds.y -= extra;
         preferred.label.position.y -= extra;

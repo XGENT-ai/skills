@@ -340,6 +340,8 @@ fn titles(
     measured
 }
 
+// Keep source geometry and independent title/readability constraints explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn resolve_titles(
     raw: &[Boundary],
     nodes: &[Node],
@@ -378,6 +380,8 @@ pub(super) fn resolve_titles(
     boundaries
 }
 
+// Legend placement checks each source geometry collection independently.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn legends(
     entries: &[LegendEntry],
     nodes: &[Node],

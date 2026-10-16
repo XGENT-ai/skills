@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-16T17:51:30+08:00
+- 最近更新：2026-10-16T19:08:19+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交已冻结候选能力并固定CI源码版本；M7继续全量回归、四平台唯一tgz与真实host/图像/最终聚合验收
+- 下一步：提交已通过Diagram全量的新统一源码并重跑四平台CI；固定Node25的UI复验继续，再完成唯一tgz、真实host/图像与最终聚合
 - 当前阻塞：无
-- 代码基线：阶段A提交98dfb34；M6候选能力提交d9e83cd；M7验收进行中
+- 代码基线：阶段A98dfb34、M6能力d9e83cd；首轮c733d73 CI失败，dirty@c733d73的builder/motion门/严格检查修复待提交，尚无最终tgz
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-16T17:37:28+08:00 | 先启动不受M6 collector影响的V16完整UI runtime；最终包、四平台及真实host尚未运行 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | — |
+| M7 | 进行中 | 2026-10-16T19:08:19+08:00 | 固定Node25的npm与Diagram全量绿，真实motion单例绿；UI重跑中，新源码待提交并重新取得同包四平台/host证据 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | — |
 
 ## 0. 需求、范围与决策
 
@@ -493,7 +493,7 @@ Mermaid 是宿主的语义输入，不新增 Rust Mermaid parser：flowchart/gra
 | V-12 | WORK-F11、WORK-N2、WORK-N5：独立 build/pack 的来源/四平台完整性/许可证/包内文件、Node18 消费入口、错误资源拒绝和 publish guard | `node --test test/phoenix-diagram/build.test.js test/phoenix-diagram/candidate.test.js`；`node --test test/phoenix-ui/release.test.js`；固定 artifact fixtures 测少平台、异 commit/bundle、坏 digest/许可/候选 URL，不能据此宣称平台通过 | M6 局部 |
 | V-13 | WORK-F2 全部 P1 AC、WORK-F11 provider、C-2：真实新会话加载且自然意图/三类 Mermaid/旧 JSON/缺事实/修复停滞与默认审核行为正确 | 临时无 Rust 项目用最终 tgz 安装；分别在已登录 Claude Code、Codex 的全新项目会话发起 §9.2 场景。仅提供包内 skill/schema/example 和题目材料；Agent 记录真实会话入口、工具版本、实际候选/产物/缺口；不从历史上下文提示答案 | M7，阶段 B 收口；普通 provider 目录测试不替代 |
 | V-14 | WORK-F11/AC-1、AC-2、AC-5：同一最终 tgz 四平台原生消费，在线真实传输/缓存/零网络离线、坏引擎/不支持平台/预检失败，消费环境无 Rust；UI 和 diagram 状态互不改写 | `.github/workflows/phoenix-diagram.yml` 的四个 consume jobs 与 Node18 job；统一入口 `node scripts/check-phoenix-diagram-candidate.mjs --candidate-dir DIR --target PLATFORM`，DIR/PLATFORM 使用 workflow 当前真实值；验证步骤见 §5.6、§9.3；保存 run/commit 与 artifact digest 链接 | M7，阶段 B 收口；M6 只交付构建/装配能力，不提前宣称四平台通过 |
-| V-15 | P1 全部 23 条 AC 的最终包业务链路：所有五类从 npm 入口生成、审核后原 delivery/browser 身份的 complete 汇总、读者操作和真实导出、内容完整/离线/XSS/故障结果；无 Rust/源码时依包内说明完成 kill 后公开恢复与幂等/保护断言 | `node scripts/test-phoenix-diagram.mjs --stage distribution --candidate-dir DIR`；从最终 tgz 运行，Agent 读图后调用 review-record；依 §9.3 经 npm 入口 recover-output，验证说明文件实际在包内；原语义检查引用 V-2–V-5 的未失效断言。旧/new JSON 输入摘要、实际文件格式和各阶段状态逐项核对 | M7，阶段 B 收口；final binary/bundle/入口已改变，开发制品证据不得直接替代 |
+| V-15 | P1 全部 23 条 AC 的最终包业务链路：所有五类从 npm 入口生成、审核后原 delivery/browser 身份的 complete 汇总、读者操作和真实导出、双主题Still/Live下reduce/hidden八样本的真实暂停/恢复与静态事实保留、内容完整/离线/XSS/故障结果；无 Rust/源码时依包内说明完成 kill 后公开恢复与幂等/保护断言 | `node scripts/test-phoenix-diagram.mjs --stage distribution --candidate-dir DIR`；从最终 tgz 运行，Agent 读图后调用 review-record；依 §9.3 经 npm 入口 recover-output，验证说明文件实际在包内；原语义检查引用 V-2–V-5 的未失效断言。旧/new JSON 输入摘要、实际文件格式和各阶段状态逐项核对 | M7，阶段 B 收口；final binary/bundle/入口已改变，开发制品证据不得直接替代 |
 | V-16 | C-3：同包接入未破坏仓库 Node/Python/metadata 与 Phoenix UI runtime；fmt/clippy、锁定依赖和干净构建实际成功 | `npm test`；`npm run test:phoenix`；`npm run test:diagram`（新增脚本执行全量 diagram Rust/静态检查，真实 browser/export 用 V-14/V-15 的当前证据）；`mise exec --no-deps -- mbx fmt --manifest-path tools/phoenix-diagram/Cargo.toml -- --check`；`mise exec --no-deps -- mbx clippy --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline --all-targets -- -D warnings` | M7，阶段 B 收口；全量仅在此收口执行 |
 
 V-11 的 install stage 仅构建并测试受共同入口影响的 UI 安装组：先复用既有 UI prepare 环境；以 `mise exec --no-deps -- mbx build --manifest-path tools/phoenix-ui/Cargo.toml -p phoenix-ui --bin phoenix-ui --locked --offline --message-format=json` 读取 compiler-artifact 的真实 executable，临时复制固定 binary，将该路径传为 `PHOENIX_UI_BIN` 后执行 `node --test test/phoenix-ui/install.test.js`。不改 UI manifest/源码、不运行全量 UI runtime；环境未准备时显式运行既有 `scripts/prepare-phoenix-ui.mjs --prepare`，不能把缺 engine 的跳过记为通过。共同入口的 diagram bootstrap 必须在启用分支才读取 diagram manifest，既有 UI-only fixture 在明确 skip 后仍可运行。

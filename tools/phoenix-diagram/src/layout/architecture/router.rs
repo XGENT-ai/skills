@@ -577,7 +577,10 @@ impl Router<'_> {
         }
     }
     fn spread_ports(&mut self) {
-        let mut groups: Vec<(usize, Side, Vec<(usize, usize, usize)>)> = vec![];
+        // Members retain edge index, endpoint index and counterpart node.
+        type PortMember = (usize, usize, usize);
+        type PortGroup = (usize, Side, Vec<PortMember>);
+        let mut groups: Vec<PortGroup> = vec![];
         for (index, edge) in self.edges.iter().enumerate() {
             if edge.explicit() || edge.raw.get("labelAt").is_some() {
                 continue;

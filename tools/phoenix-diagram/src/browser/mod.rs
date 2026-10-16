@@ -459,7 +459,7 @@ fn append_failure(receipt: &mut BrowserReceipt, error: cdp::Error) {
     diagnostic.stage = "browser".into();
     diagnostic.evidence = json!({"phase":error.stage,"retainedPath":error.retained});
     if let Some(resources) = error.resources {
-        diagnostic.evidence["resources"] = resources;
+        diagnostic.evidence["resources"] = *resources;
     }
     receipt.diagnostics.push(diagnostic);
 }
@@ -473,11 +473,11 @@ fn cleanup_evidence(receipt: &mut BrowserReceipt, evidence: &mut Option<evidence
 }
 
 /// Read-only discovery for doctor; never downloads or opens a browser.
-pub fn discover_browser() -> Result<PathBuf, Diagnostic> {
+pub fn discover_browser() -> Result<PathBuf, Box<Diagnostic>> {
     discovery::find(None).map_err(|error| {
         let mut diagnostic = Diagnostic::error(None, error.code, "", error.message);
         diagnostic.stage = "browser".into();
-        diagnostic
+        Box::new(diagnostic)
     })
 }
 
@@ -603,4 +603,55 @@ pub fn validate_receipt_coverage(receipt: &BrowserReceipt, capture: bool) -> boo
         }
     }
     actual == expected
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn small_browser_error_preserves_public_cleanup_diagnostics() {
+        let identity = FileIdentity {
+            sha256: "0".repeat(64),
+            bytes: 0,
+        };
+        let artifact = BoundArtifact {
+            path: "/diagnostic-only/diagram.html".into(),
+            candidate: BoundFile {
+                path: "/diagnostic-only/candidate.json".into(),
+                identity: identity.clone(),
+            },
+            artifact: identity,
+            config_sha256: "1".repeat(64),
+            engine: Value::Null,
+            delivery_receipt_id: "diagnostic-only".into(),
+        };
+        let mut receipt = check_browser(
+            &artifact,
+            &BrowserOptions {
+                startup_timeout: Duration::ZERO,
+                ..BrowserOptions::default()
+            },
+        );
+        receipt.diagnostics.clear();
+        let resources = json!({"processSpawned":true,"childPid":42,"profile":"/diagnostic-only/profile","startupState":"waiting-for-devtools-endpoint","cleanupStatus":"failed","whileHandling":{"code":"browser/startup-timeout","phase":"startup","message":"deadline expired"}});
+        let mut error = cdp::Error::new("browser/cleanup", "cleanup", "owned profile retained");
+        assert!(std::mem::size_of_val(&error) <= 96);
+        error.retained = Some("/diagnostic-only/profile".into());
+        error.resources = Some(Box::new(resources.clone()));
+        append_failure(&mut receipt, error);
+        let diagnostic = serde_json::to_value(&receipt.diagnostics[0]).unwrap();
+        assert_eq!(diagnostic["code"], "browser/cleanup");
+        assert_eq!(diagnostic["stage"], "browser");
+        assert_eq!(diagnostic["message"], "owned profile retained");
+        assert_eq!(
+            diagnostic["evidence"],
+            json!({"phase":"cleanup","retainedPath":"/diagnostic-only/profile","resources":resources})
+        );
+        assert_eq!(receipt.exit_code(), 4);
+        assert_eq!(
+            serde_json::to_value(Box::new(receipt.diagnostics[0].clone())).unwrap(),
+            diagnostic
+        );
+    }
 }

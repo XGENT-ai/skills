@@ -169,7 +169,7 @@ fn label_box(input: &DiagramInput, edge: &Edge) -> (f64, f64) {
         },
     )
 }
-fn variant<'a>(model: &'a Model, index: usize) -> &'a str {
+fn variant(model: &Model, index: usize) -> &str {
     model.edges[index].raw["variant"]
         .as_str()
         .filter(|s| !s.is_empty())
@@ -193,11 +193,11 @@ fn preferred_width(input: &DiagramInput, raw: &Value) -> f64 {
     } else {
         26.0 + units(input, step) * 8.0 * 0.6
     });
+    // Text units count string scalars; fixed coefficients keep widths finite.
     (units(input, string(raw, "label")) * 12.0 * 0.6 + left + 8.0)
         .max(need(string(raw, "sublabel"), 9.0))
         .max(need(string(raw, "tag"), 8.0))
-        .max(140.0)
-        .min(220.0)
+        .clamp(140.0, 220.0)
         .ceil()
 }
 
@@ -979,7 +979,7 @@ fn frame_exits(model: &Model, connectors: &mut [Connector], ports: &mut [Port]) 
             }
         }
         let delta = (exit - ports[port].x).abs();
-        if delta >= 0.5 && delta < 24.0 {
+        if (0.5..24.0).contains(&delta) {
             let r = model.states[target].bounds;
             if exit >= r.x + 12.0
                 && exit <= r.x + r.width - 12.0

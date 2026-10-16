@@ -52,6 +52,7 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
         fs::rename(&absent, &candidate).unwrap()
     })
     .unwrap_err();
+    assert!(std::mem::size_of_val(&failed) <= 128);
     assert_eq!(
         failed.status,
         Status::Failed,
@@ -65,6 +66,45 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
         check(&output, true, &engine).status,
         Status::Pass,
         "A separate command may verify the restored input"
+    );
+}
+
+#[test]
+fn small_failure_handles_preserve_the_failed_check_json_contract() {
+    // Wire-format fixture only; it does not claim an executed native gate.
+    let engine = EngineIdentity {
+        source_input_sha256: "a".repeat(64),
+        input_contract_schema: 1,
+        receipt_schema: 1,
+        viewer_revision: "phoenix-v1".into(),
+        binary: FileIdentity {
+            sha256: "b".repeat(64),
+            bytes: 7,
+        },
+    };
+    assert!(std::mem::size_of::<support::Result<()>>() <= 128);
+    let failure = support::fail("check", "fixture/failure", "Fixture failure", 4);
+    let receipt = provenance::failed(&engine, true, failure);
+    assert_eq!(receipt.exit_code(), 4);
+    assert_eq!(
+        serde_json::to_value(receipt).unwrap(),
+        serde_json::json!({
+            "schemaVersion":1,"tool":"phoenix-diagram","toolVersion":crate::TOOL_VERSION,
+            "command":"check","status":"failed",
+            "diagnostics":[{
+                "stage":"check","code":"fixture/failure","severity":"error",
+                "message":"Fixture failure","subject":{"diagramType":null,"path":""},
+                "evidence":null,"supportedFixes":[]
+            }],
+            "provenance":"unknown","scope":"strict-provenance",
+            "candidate":null,"artifact":null,"configSha256":null,
+            "engine":{
+                "sourceInputSha256":"a".repeat(64),"inputContractSchema":1,
+                "receiptSchema":1,"viewerRevision":"phoenix-v1",
+                "binary":{"sha256":"b".repeat(64),"bytes":7}
+            },
+            "deliveryReceiptId":null,"deliveryReceipt":null,"checks":[],"composition":null
+        })
     );
 }
 

@@ -51,7 +51,7 @@ pub struct OutputError {
     pub kind: ErrorKind,
     pub code: String,
     pub message: String,
-    pub public_state: PublicState,
+    pub public_state: Box<PublicState>,
     pub recovery_directory: Option<PathBuf>,
     pub preserved: Vec<PathBuf>,
     pub committed: bool,
@@ -69,9 +69,9 @@ impl OutputError {
             kind,
             code: code.into(),
             message: message.into(),
-            public_state: PublicState::Unknown {
+            public_state: Box::new(PublicState::Unknown {
                 reason: "not inspected".into(),
-            },
+            }),
             recovery_directory: None,
             preserved: vec![],
             committed: false,
@@ -301,7 +301,11 @@ pub struct PendingPublication {
 }
 impl Publication {
     pub fn exit_code(&self) -> u8 {
-        if self.cleanup_complete { 0 } else { 3 }
+        if self.cleanup_complete {
+            0
+        } else {
+            3
+        }
     }
 }
 
@@ -420,5 +424,60 @@ pub(crate) mod test_support {
         observer: super::Observer<'_>,
     ) -> super::OutputResult<super::Publication> {
         super::transaction::publish_with_mode(slot, bytes, mode, sources, observer)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn small_output_error_preserves_public_state_json() {
+        let identity = FileIdentity {
+            device: "1".into(),
+            inode: "2".into(),
+            links: 1,
+            mode: 0o644,
+            uid: 501,
+            sha256: "a".repeat(64),
+            bytes: 3,
+        };
+        for (state, expected) in [
+            (PublicState::Absent, serde_json::json!({"kind":"absent"})),
+            (
+                PublicState::File {
+                    identity: identity.clone(),
+                },
+                serde_json::json!({"kind":"file","identity":identity}),
+            ),
+            (
+                PublicState::Untrusted {
+                    entry_type: "symbolic-link".into(),
+                },
+                serde_json::json!({"kind":"untrusted","entry_type":"symbolic-link"}),
+            ),
+            (
+                PublicState::Unknown {
+                    reason: "not inspected".into(),
+                },
+                serde_json::json!({"kind":"unknown","reason":"not inspected"}),
+            ),
+        ] {
+            let mut error = OutputError::conflict("output/fixture");
+            error.public_state = Box::new(state);
+            error.recovery_directory = Some(PathBuf::from("/recovery"));
+            error.preserved = vec![PathBuf::from("/output.html")];
+            error.committed = true;
+            assert!(std::mem::size_of_val(&error) <= 128);
+            assert_eq!(error.exit_code(), 3);
+            assert_eq!(
+                serde_json::to_value(error).unwrap(),
+                serde_json::json!({
+                    "kind":"conflict","code":"output/fixture","message":"output/fixture",
+                    "publicState":expected,"recoveryDirectory":"/recovery",
+                    "preserved":["/output.html"],"committed":true
+                })
+            );
+        }
     }
 }

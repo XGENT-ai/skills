@@ -241,12 +241,30 @@ test('reader evidence requires all four print observations after otherwise compl
   }
 });
 
+function motionScopeFixture() {
+  return {status:'pass',observations:['dark','light'].flatMap(theme=>['still','live'].flatMap(mode=>['reduced-motion','page-hidden'].map(condition=>{
+    const state=suppressed=>({reader:{mode:suppressed?'still':mode,owner:'',focus:null,view:null,viewBox:'0 0 500 300',preset:'classic',transform:'',clip:'',nodes:[{id:'a',label:'A',text:['A']}],edges:[],text:['A'],eligibleMotion:true},capable:true,preference:mode==='live'?'live':null,reducedMotion:suppressed && condition==='reduced-motion',hidden:suppressed && condition==='page-hidden',visibilityState:suppressed && condition==='page-hidden'?'hidden':'visible',printMedia:false,documentHidden:suppressed && condition==='page-hidden'?'true':null,button:{disabled:suppressed && condition==='reduced-motion',pressed:!suppressed && mode==='live'?'true':'false'},animationCount:2,running:!suppressed && mode==='live'?2:0,meaning:{total:1,visible:[0]}});
+    return {theme,mode,condition,status:'pass',method:condition==='reduced-motion'?'cdp-prefers-reduced-motion':'cdp-owned-target-visibility',motionApplicable:mode==='live',before:state(false),during:state(true),after:state(false),inputs:[{type:'click',trusted:true,target:{id:'btn-motion'}}],ownedTargets:condition==='page-hidden'?{subject:'subject',cover:'cover',browserContext:'context'}:undefined,events:condition==='reduced-motion'?[{type:'reduced-motion',trusted:true,matches:true},{type:'reduced-motion',trusted:true,matches:false}]:[{type:'visibilitychange',trusted:true,hidden:true,visibilityState:'hidden'},{type:'visibilitychange',trusted:true,hidden:false,visibilityState:'visible'}]};
+  })))};
+}
+
+test('reader evidence requires the native motion-suppression matrix before accepting an old report',async t=>{
+  const {verifyReaderReport}=await import('../../scripts/test-phoenix-diagram-runtime.mjs'),{identity}=await import(modulePath),directory=temp(t),file=path.join(directory,'inert-motion-protocol.pdf');
+  // Inert protocol bytes exercise only the gate, never real Reader acceptance.
+  fs.writeFileSync(file,'%PDF-1.7\n1 0 obj <</Type /Page>> endobj\n%%EOF\n');const reference={path:file,identity:identity(fs.readFileSync(file))};
+  const artifact={path:'/unit/diagram.html',identity:{sha256:'a'.repeat(64),bytes:10}},observations=['dark','light'].flatMap(theme=>['still','live'].map(mode=>({theme,mode,status:'pass',motionApplicable:mode==='live',before:{mode},during:{mode},after:{mode},motionBefore:{printMedia:false,running:mode==='live'?2:0},motionDuring:{printMedia:true,running:0,staticCount:1,hiddenStatic:0},motionAfter:{printMedia:false,running:mode==='live'?2:0},nativePrint:{events:[{type:'beforeprint'},{type:'afterprint'}],pdf:{...reference,signature:'PDF',eof:true,pages:1}}})));
+  const report={schemaVersion:1,kind:'real-browser-export',status:'pass',artifact:{path:artifact.path,...artifact.identity},actualBrowserVersion:'Chrome/fixture',resources:{status:'pass',requests:[],loadingFailed:[]},errors:[],stateRestoration:{status:'pass',print:{status:'pass',method:'cdp-print-media-and-native-print-to-pdf',observations}},exports:['light','dark'].flatMap(theme=>['still','live'].flatMap(mode=>['svg','png','jpeg','webp','webm'].map(format=>({...reference,theme,mode,format,status:'pass'})))),clipboard:{success:{status:'pass',path:file,...reference.identity},permissionDenied:{status:'pass'},capabilityUnavailable:{status:'pass',fallback:reference}}};
+  for(const motionSuppression of [undefined,{status:'not-run',observations:[]},{status:'pass',observations:[]}])assert.throws(()=>verifyReaderReport({...report,motionSuppression},artifact),/motion suppression/i);
+  assert.throws(()=>verifyReaderReport({...report,motionSuppression:motionScopeFixture()},artifact),/Reader interaction/i,'the new scope must preserve the existing UI gate');
+});
+
 test('reader evidence rejects legacy reports and status-only claims without actual UI interaction scope',async t=>{
   const {verifyReaderReport}=await import('../../scripts/test-phoenix-diagram-runtime.mjs'),{identity}=await import(modulePath),directory=temp(t),file=path.join(directory,'inert-protocol.pdf');
   // Inert protocol bytes reach the interaction gate; they never prove exports.
   fs.writeFileSync(file,'%PDF-1.7\n1 0 obj <</Type /Page>> endobj\n%%EOF\n');const reference={path:file,identity:identity(fs.readFileSync(file))};
   const artifact={path:'/unit/diagram.html',identity:{sha256:'a'.repeat(64),bytes:10}},observations=['dark','light'].flatMap(theme=>['still','live'].map(mode=>({theme,mode,status:'pass',motionApplicable:mode==='live',before:{mode},during:{mode},after:{mode},motionBefore:{printMedia:false,running:mode==='live'?2:0},motionDuring:{printMedia:true,running:0,staticCount:1,hiddenStatic:0},motionAfter:{printMedia:false,running:mode==='live'?2:0},nativePrint:{events:[{type:'beforeprint'},{type:'afterprint'}],pdf:{...reference,signature:'PDF',eof:true,pages:1}}})));
   const report={schemaVersion:1,kind:'real-browser-export',status:'pass',artifact:{path:artifact.path,...artifact.identity},actualBrowserVersion:'Chrome/fixture',resources:{status:'pass',requests:[],loadingFailed:[]},errors:[],stateRestoration:{status:'pass',print:{status:'pass',method:'cdp-print-media-and-native-print-to-pdf',observations}},exports:['light','dark'].flatMap(theme=>['still','live'].flatMap(mode=>['svg','png','jpeg','webp','webm'].map(format=>({...reference,theme,mode,format,status:'pass'})))),clipboard:{success:{status:'pass',path:file,...reference.identity},permissionDenied:{status:'pass'},capabilityUnavailable:{status:'pass',fallback:reference}}};
+  report.motionSuppression=motionScopeFixture();
   for(const readerInteractions of [undefined,{status:'not-run',observations:[]},{status:'pass',observations:['camera','search-empty','search-label','search-id','search-no-match','details','keyboard','style'].map(name=>({name,status:'pass',before:{},after:{},result:{}}))}]){
     report.readerInteractions=readerInteractions;assert.throws(()=>verifyReaderReport(report,artifact),/Reader interaction/i);
   }

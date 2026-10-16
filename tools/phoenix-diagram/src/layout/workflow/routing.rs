@@ -187,6 +187,8 @@ impl Router<'_> {
         let bottom = self.measured.lane_tops[a] + self.measured.lane_heights[a];
         bottom + (self.measured.lane_tops[b] - bottom) * bias
     }
+    // Endpoint boxes, anchors and authored sides are distinct route constraints.
+    #[allow(clippy::too_many_arguments)]
     fn one_bend(
         &self,
         edge: &Value,
@@ -783,6 +785,8 @@ impl Router<'_> {
         }
         evidence
     }
+    // Keep source route constraints and candidate tie-break offset explicit.
+    #[allow(clippy::too_many_arguments)]
     fn candidates(
         &self,
         edge: &Entry,
@@ -1024,6 +1028,8 @@ impl Router<'_> {
             .concat()
         }
     }
+    // Preserve the source router's explicit boxes, anchors and authored sides.
+    #[allow(clippy::too_many_arguments)]
     fn raw_via(
         &self,
         edge: &Value,
@@ -1383,6 +1389,8 @@ impl Router<'_> {
             output
         }
     }
+    // Keep endpoint constraints and the source candidate ordinal independent.
+    #[allow(clippy::too_many_arguments)]
     fn expanded_candidate(
         &self,
         edge: &Entry,
@@ -2106,7 +2114,10 @@ fn port_spread(
     edges: &[Entry],
     sides: &[(String, String)],
 ) -> BTreeMap<usize, (Option<Point>, Option<Point>)> {
-    let mut groups: BTreeMap<(String, String), Vec<(usize, bool, &Node, &Node)>> = BTreeMap::new();
+    // Members retain edge index, source-end flag, owner and counterpart nodes.
+    type PortMember<'a> = (usize, bool, &'a Node, &'a Node);
+    type PortGroups<'a> = BTreeMap<(String, String), Vec<PortMember<'a>>>;
+    let mut groups: PortGroups<'_> = BTreeMap::new();
     for (index, edge) in edges.iter().enumerate() {
         if !automatic(&edge.value) || edge.value.get("labelAt").is_some() {
             continue;

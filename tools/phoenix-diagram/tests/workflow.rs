@@ -873,7 +873,7 @@ fn preset_label_segment_repair_preserves_the_fixed_route_and_requires_a_complete
     for case in oracle["cases"].as_array().unwrap().iter().filter(|case| {
         case["contract"] == "phoenix-v1"
             && case["name"].as_str().unwrap().starts_with("preset-label-")
-            && case["name"].as_str().unwrap().contains("local-segment") == false
+            && !case["name"].as_str().unwrap().contains("local-segment")
     }) {
         let errors = compile_document(&case["document"], InputContract::PhoenixV1).unwrap_err();
         assert!(errors[0]

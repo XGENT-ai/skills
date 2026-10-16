@@ -281,7 +281,7 @@ fn malformed_geometry_is_unknown_and_does_not_report_composition_pass() {
         json!({"from":"a","to":"b"}),
         vec![p(f64::NAN, 0.0), p(40.0, 0.0)],
     );
-    assert!(collect_border_runs(&[route.clone()], &[frame]).is_empty());
+    assert!(collect_border_runs(std::slice::from_ref(&route), &[frame]).is_empty());
     assert!(collect_proper_crossings(&[route], &Default::default()).is_empty());
     let labels = [LabelRect::new(
         7,

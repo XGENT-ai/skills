@@ -37,7 +37,7 @@ pub fn check(output: &Path, strict: bool, engine: &EngineIdentity) -> CheckRecei
 pub fn bound_artifact(
     output: &Path,
     engine: &EngineIdentity,
-) -> Result<BoundArtifact, CheckReceipt> {
+) -> Result<BoundArtifact, Box<CheckReceipt>> {
     bound_artifact_observed(output, engine, || {})
 }
 
@@ -45,12 +45,12 @@ fn bound_artifact_observed(
     output: &Path,
     engine: &EngineIdentity,
     after_failure: impl FnOnce(),
-) -> Result<BoundArtifact, CheckReceipt> {
+) -> Result<BoundArtifact, Box<CheckReceipt>> {
     match provenance::current(output, engine) {
         Ok(current) => Ok(current.bound_artifact()),
         Err(failure) => {
             after_failure();
-            Err(provenance::failed(engine, true, failure))
+            Err(Box::new(provenance::failed(engine, true, failure)))
         }
     }
 }
@@ -60,7 +60,7 @@ pub fn browser_check(
     engine: &EngineIdentity,
     options: &BrowserOptions,
     visual: bool,
-) -> Result<BrowserCommandReceipt, CheckReceipt> {
+) -> Result<BrowserCommandReceipt, Box<CheckReceipt>> {
     transaction::browser_check(output, engine, options, visual)
 }
 

@@ -7,10 +7,11 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_TIMEOUTS, discoverBrowser, ExportBrowser } from './support/export-browser.mjs';
-import { installExportProbe, awaitReader, snapshotReader, printMotionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
+import { installExportProbe, awaitReader, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, runReaderInteractions } from './support/export-reader.mjs';
 
-export const REQUIRED_EXPORT_SCOPE = Object.freeze({ themes: ['dark', 'light'], modes: ['still', 'live'], formats: ['svg', 'png', 'jpeg', 'webp', 'webm'], clipboard: ['success', 'permission-denied', 'capability-unavailable'], print: { themes: ['dark', 'light'], modes: ['still', 'live'], method: 'cdp-print-media-and-native-print-to-pdf' }, readerInteractions: REQUIRED_READER_INTERACTIONS });
+export const REQUIRED_EXPORT_SCOPE = Object.freeze({ themes: ['dark', 'light'], modes: ['still', 'live'], formats: ['svg', 'png', 'jpeg', 'webp', 'webm'], clipboard: ['success', 'permission-denied', 'capability-unavailable'], print: { themes: ['dark', 'light'], modes: ['still', 'live'], method: 'cdp-print-media-and-native-print-to-pdf' }, readerInteractions: REQUIRED_READER_INTERACTIONS,
+  motionSuppression: { themes: ['dark', 'light'], modes: ['still', 'live'], conditions: ['reduced-motion', 'page-hidden'], methods: { 'reduced-motion': 'cdp-prefers-reduced-motion', 'page-hidden': 'cdp-owned-target-visibility' } } });
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export function verifyCanonicalFacts(actual, expected) {
@@ -25,6 +26,49 @@ export function verifyPrintSample(sample) {
   if (sample.mode === 'still' && (before.running || after.running)) throw new Error('Print changed the Still motion preference');
   const events = sample.nativePrint?.events, pdf = sample.nativePrint?.pdf;
   if (!Array.isArray(events) || events.length !== 2 || events[0].type !== 'beforeprint' || events[1].type !== 'afterprint' || pdf?.signature !== 'PDF' || !pdf.eof || !(pdf.pages > 0) || !(pdf.identity?.bytes > 32) || !/^[a-f0-9]{64}$/.test(pdf.identity?.sha256 || '') || typeof pdf.path !== 'string') throw new Error('Print lacks actual native lifecycle events or valid PDF bytes');
+  return true;
+}
+
+function verifyMotionSuppressionSample(sample) {
+  const need = (value, message) => { if (!value) throw new Error('Motion suppression ' + message); };
+  const { before, during, after, mode, condition } = sample, snapshots = [before, during, after];
+  need(sample.status === 'pass' && sample.method === REQUIRED_EXPORT_SCOPE.motionSuppression.methods[condition], 'sample is incomplete or uses an unrecognized method');
+  for (const state of snapshots) {
+    const reader = state?.reader;
+    need(reader && ['mode', 'owner', 'focus', 'view', 'viewBox', 'preset', 'transform', 'clip', 'nodes', 'edges', 'text'].every(field => Object.hasOwn(reader, field)) && typeof reader.viewBox === 'string' && reader.viewBox.length > 0 && Array.isArray(reader.nodes) && reader.nodes.length > 0 && reader.nodes.every(node => typeof node.id === 'string' && node.id && Array.isArray(node.text)) && Array.isArray(reader.edges) && reader.edges.every(edge => typeof edge.geometry === 'string' && typeof edge.from === 'string' && typeof edge.to === 'string') && Array.isArray(reader.text) && reader.text.length > 0 && reader.text.every(text => typeof text === 'string') && typeof reader.eligibleMotion === 'boolean', 'lacks complete authored Reader facts');
+    need(Number.isInteger(state.animationCount) && state.animationCount >= 0 && Number.isInteger(state.running) && state.running >= 0 && state.running <= state.animationCount && typeof state.capable === 'boolean' && state.printMedia === false, 'lacks actual screen animation observations');
+    need(Number.isInteger(state.meaning?.total) && state.meaning.total > 0 && Array.isArray(state.meaning.visible) && state.meaning.visible.length > 0 && new Set(state.meaning.visible).size === state.meaning.visible.length && state.meaning.visible.every(index => Number.isInteger(index) && index >= 0 && index < state.meaning.total), 'lacks painted static meaning');
+  }
+  need(before.reader.mode === mode && during.reader.mode === 'still' && after.reader.mode === mode, 'did not pause and restore the selected mode');
+  for (const state of [during, after]) {
+    need(['owner', 'focus', 'view', 'viewBox', 'preset', 'transform', 'clip', 'nodes', 'edges', 'text', 'eligibleMotion'].every(field => JSON.stringify(before.reader[field]) === JSON.stringify(state.reader[field])), 'changed authored facts or Reader exploration');
+    need(state.capable === before.capable && state.preference === before.preference && state.meaning.total === before.meaning.total && before.meaning.visible.every(index => state.meaning.visible.includes(index)), 'lost static meaning or changed the saved preference');
+  }
+  need(before.preference === (mode === 'live' ? 'live' : null), 'does not bind the selected user preference');
+  need([before, after].every(state => state.reducedMotion === false && state.hidden === false && state.visibilityState === 'visible' && state.documentHidden === null && state.button?.disabled === false && state.button.pressed === (mode === 'live' ? 'true' : 'false')), 'did not restore actual visible, unrestricted playback');
+  need(during.running === 0 && during.button?.pressed === 'false', 'left running motion during suppression');
+  const applicable = mode === 'live' && ((before.capable && before.reader.eligibleMotion) || before.animationCount > 0);
+  need(sample.motionApplicable === applicable && (!applicable || before.running > 0 && after.running > 0) && (mode !== 'still' || before.running === 0 && after.running === 0), 'lacks a positive Live pause/resume or changed Still playback');
+  need(Array.isArray(sample.inputs) && sample.inputs.some(input => input.type === 'click' && input.trusted === true && input.target?.id === 'btn-motion'), 'lacks a trusted user playback selection');
+  need(Array.isArray(sample.events), 'lacks native transition events');
+  if (condition === 'reduced-motion') {
+    const events = sample.events.filter(event => event.type === 'reduced-motion');
+    need(during.reducedMotion === true && during.hidden === false && during.visibilityState === 'visible' && during.documentHidden === null && during.button.disabled === true && events.length === 2 && events.every(event => event.trusted === true) && events[0].matches === true && events[1].matches === false, 'did not observe the actual reduced-motion transition and restoration');
+  } else {
+    const events = sample.events.filter(event => event.type === 'visibilitychange'), targets = sample.ownedTargets;
+    need(condition === 'page-hidden' && targets && ['subject', 'cover', 'browserContext'].every(key => typeof targets[key] === 'string' && targets[key]) && targets.subject !== targets.cover, 'does not identify isolated owned visibility targets');
+    need(during.reducedMotion === false && during.hidden === true && during.visibilityState === 'hidden' && during.documentHidden === 'true' && during.button.disabled === false && events.length === 2 && events.every(event => event.trusted === true) && events[0].hidden === true && events[0].visibilityState === 'hidden' && events[1].hidden === false && events[1].visibilityState === 'visible', 'did not observe an actual hidden document and its native restoration');
+  }
+}
+
+export function verifyMotionSuppression(value) {
+  if (value?.status !== 'pass' || !Array.isArray(value.observations) || value.observations.length !== 8) throw new Error('Motion suppression scope is incomplete');
+  const seen = new Set(), scope = REQUIRED_EXPORT_SCOPE.motionSuppression;
+  for (const sample of value.observations) {
+    const key = `${sample.theme}:${sample.mode}:${sample.condition}`;
+    if (!scope.themes.includes(sample.theme) || !scope.modes.includes(sample.mode) || !scope.conditions.includes(sample.condition) || seen.has(key)) throw new Error('Motion suppression scope is duplicated or unrecognized');
+    seen.add(key); verifyMotionSuppressionSample(sample);
+  }
   return true;
 }
 
@@ -88,6 +132,7 @@ async function withBrowserPage(options, kind, run) {
     exports: kind === 'exports' ? REQUIRED_EXPORT_SCOPE.themes.flatMap(theme => REQUIRED_EXPORT_SCOPE.modes.flatMap(mode => REQUIRED_EXPORT_SCOPE.formats.map(format => ({ theme, mode, format, status: 'not-run' })))) : [],
     clipboard: kind === 'exports' ? { success: { status: 'not-run' }, permissionDenied: { status: 'not-run' }, capabilityUnavailable: { status: 'not-run' } } : {},
     readerInteractions: { status: 'not-run', observations: REQUIRED_READER_INTERACTIONS.map(name => ({ name, status: 'not-run' })) },
+    motionSuppression: kind === 'exports' ? { status: 'not-run', observations: REQUIRED_EXPORT_SCOPE.motionSuppression.themes.flatMap(theme => REQUIRED_EXPORT_SCOPE.motionSuppression.modes.flatMap(mode => REQUIRED_EXPORT_SCOPE.motionSuppression.conditions.map(condition => ({ theme, mode, condition, status: 'not-run' })))) } : undefined,
     stateRestoration: { status: 'not-run', observations: [], print: { status: 'not-run', method: REQUIRED_EXPORT_SCOPE.print.method, observations: [] } }, resources: { status: 'not-run', requests: [], loadingFailed: [], observations: [] },
     offline: { requested: options.offline === true, status: 'not-run', method: 'cdp-network-emulation', configured: false, remoteRequests: [] }, errors: [], receiptPath: path.join(directory, 'index.json') };
   let browser, cdp = options.cdp, contextId, targetId, sessionId, unsubscribe, stage = 'browser/discovery';
@@ -139,7 +184,7 @@ async function withBrowserPage(options, kind, run) {
     };
     let startup;
     const page = {
-      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, timeouts,
+      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts,
       async load(theme = 'dark', suppressClipboard = false) {
         if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
         startup = (await send('Page.addScriptToEvaluateOnNewDocument', { source: '(' + installExportProbe.toString() + ')(' + JSON.stringify({ suppressClipboard }) + ');' })).identifier;
@@ -236,6 +281,72 @@ async function permission(page, setting) {
   for (const name of ['clipboard-read', 'clipboard-write']) await page.send('Browser.setPermission', { permission: { name }, setting, browserContextId: page.contextId }, undefined);
 }
 
+async function runMotionSuppression(page, onProgress) {
+  const { report, evaluate, send } = page, scope = REQUIRED_EXPORT_SCOPE.motionSuppression;
+  const observe = async () => evaluate(motionSuppressionSnapshot, await evaluate(snapshotReader));
+  report.motionSuppression.status = 'incomplete';
+  for (const sample of report.motionSuppression.observations) {
+    const { theme, mode, condition } = sample;
+    onProgress?.({ stage: 'motion-suppression', theme, mode, condition });
+    sample.status = 'incomplete'; sample.method = scope.methods[condition];
+    await send('Target.activateTarget', { targetId: page.targetId });
+    await page.load(theme);
+    const inputStart = await evaluate(() => __phoenixDiagramExportProbe.readerInputs.length);
+    // Every sample records an explicit native selection, including Still. The
+    // fresh-reader default is checked earlier, before any saved preference.
+    if ((await evaluate(snapshotReader)).mode === mode) await page.click('#btn-motion');
+    await page.click('#btn-motion');
+    await evaluate(awaitReader);
+    sample.before = await observe();
+    sample.inputs = await evaluate(start => __phoenixDiagramExportProbe.readerInputs.slice(start), inputStart);
+    sample.motionApplicable = mode === 'live' && ((sample.before.capable && sample.before.reader.eligibleMotion) || sample.before.animationCount > 0);
+    const eventStart = await evaluate(() => __phoenixDiagramExportProbe.motionEvents.length);
+    let coverTargetId;
+    try {
+      if (condition === 'reduced-motion') {
+        // This proves the browser media-query branch, not a host OS setting.
+        await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+      } else {
+        await send('Emulation.setFocusEmulationEnabled', { enabled: false });
+        coverTargetId = (await send('Target.createTarget', { url: 'about:blank', browserContextId: page.contextId, background: false })).targetId;
+        sample.ownedTargets = { subject: page.targetId, cover: coverTargetId, browserContext: page.contextId };
+        await send('Target.activateTarget', { targetId: coverTargetId });
+      }
+      await waitFor(async () => {
+        // Wait for delivery before reading governor.mode(): its live branch
+        // itself reads MediaQueryList.matches, ahead of the queued change.
+        const nativeEvent = await evaluate(({ start, condition }) => __phoenixDiagramExportProbe.motionEvents.slice(start).some(event => event.trusted === true && (condition === 'reduced-motion' ? event.type === 'reduced-motion' && event.matches === true : event.type === 'visibilitychange' && event.hidden === true && event.visibilityState === 'hidden')), { start: eventStart, condition });
+        if (!nativeEvent) return false;
+        sample.during = await observe();
+        const state = sample.during, suppressed = condition === 'reduced-motion' ? state.reducedMotion === true && state.button.disabled === true : state.hidden === true && state.visibilityState === 'hidden' && state.documentHidden === 'true';
+        return suppressed && state.reader.mode === 'still' && state.running === 0;
+      }, page.timeouts.actionMs, 'Actual ' + condition + ' suppression');
+    } finally {
+      if (condition === 'reduced-motion') {
+        await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+      } else {
+        try {
+          await send('Target.activateTarget', { targetId: page.targetId });
+          // Never manufacture visibility with a property override, dispatched
+          // event or focus emulation. It must return before re-enabling focus.
+          await waitFor(() => evaluate(() => !document.hidden && document.visibilityState === 'visible'), page.timeouts.actionMs, 'Actual visible document restoration');
+        } finally {
+          try { if (coverTargetId) await send('Target.closeTarget', { targetId: coverTargetId }); }
+          finally { await send('Emulation.setFocusEmulationEnabled', { enabled: true }); }
+        }
+      }
+      await evaluate(awaitReader);
+      sample.after = await observe();
+      sample.events = await evaluate(start => __phoenixDiagramExportProbe.motionEvents.slice(start), eventStart);
+    }
+    sample.status = 'pass';
+    try { verifyMotionSuppressionSample(sample); } catch (error) { sample.status = 'incomplete'; throw error; }
+    await page.resources(`${theme}-${mode}-${condition}`);
+  }
+  report.motionSuppression.status = 'pass';
+  verifyMotionSuppression(report.motionSuppression);
+}
+
 export async function runExportAcceptance(options) {
   return withBrowserPage(options, 'exports', async page => {
     const { report, evaluate } = page;
@@ -293,6 +404,7 @@ export async function runExportAcceptance(options) {
       }
     }
     report.stateRestoration.print.status = 'pass';
+    await runMotionSuppression(page, options.onProgress);
     await page.load('dark');
     await permission(page, 'granted');
     const clipboardState = await evaluate(snapshotReader);

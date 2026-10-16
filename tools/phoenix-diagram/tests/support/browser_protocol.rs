@@ -80,8 +80,8 @@ pub(crate) struct ProtocolFixture {
 impl ProtocolFixture {
     pub(crate) fn new(mode: Mode) -> Self {
         use std::sync::{
-            Arc, Mutex,
             atomic::{AtomicBool, Ordering},
+            Arc, Mutex,
         };
         let listener = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
         listener.set_nonblocking(true).unwrap();
@@ -271,7 +271,7 @@ fn png(width: u32, height: u32) -> Vec<u8> {
         body.extend_from_slice(data);
         output.extend_from_slice(&crc(&body).to_be_bytes());
     }
-    let raw = vec![0u8; ((width as usize + 7) / 8 + 1) * height as usize];
+    let raw = vec![0u8; ((width as usize).div_ceil(8) + 1) * height as usize];
     let mut zlib = vec![0x78, 0x01];
     let mut chunks = raw.chunks(65535).peekable();
     while let Some(chunk) = chunks.next() {

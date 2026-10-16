@@ -90,6 +90,8 @@ fn group_span(
     (left, right - left)
 }
 
+// Source collections and independent rank/width overrides remain explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn measure(
     input: &DiagramInput,
     lanes: &[Entry],

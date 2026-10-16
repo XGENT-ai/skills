@@ -165,7 +165,7 @@ impl Directory {
         };
         Ok(Some(Entry {
             device: metadata.st_dev as u64,
-            inode: metadata.st_ino as u64,
+            inode: metadata.st_ino,
             links: metadata.st_nlink as u64,
             mode: (metadata.st_mode & 0o7777) as u32,
             uid: metadata.st_uid,

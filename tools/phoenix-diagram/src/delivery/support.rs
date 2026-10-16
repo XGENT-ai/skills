@@ -12,15 +12,15 @@ pub(super) struct Failure {
     pub diagnostic: Diagnostic,
     pub exit: u8,
 }
-pub(super) type Result<T> = std::result::Result<T, Failure>;
+pub(super) type Result<T> = std::result::Result<T, Box<Failure>>;
 
-pub(super) fn fail(stage: &str, code: &str, message: impl Into<String>, exit: u8) -> Failure {
+pub(super) fn fail(stage: &str, code: &str, message: impl Into<String>, exit: u8) -> Box<Failure> {
     let mut diagnostic = Diagnostic::error(None, code, "", message);
     diagnostic.stage = stage.into();
-    Failure { diagnostic, exit }
+    Box::new(Failure { diagnostic, exit })
 }
 
-pub(super) fn output_error(stage: &str, error: output::OutputError) -> Failure {
+pub(super) fn output_error(stage: &str, error: output::OutputError) -> Box<Failure> {
     let mut failure = fail(stage, &error.code, &error.message, error.exit_code());
     failure.diagnostic.evidence = serde_json::to_value(error).expect("output errors serialize");
     failure

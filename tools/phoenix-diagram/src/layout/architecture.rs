@@ -625,6 +625,8 @@ fn engineering_profile(document: &Value, errors: &mut Diagnostics) {
     }
 }
 
+// Validate the distinct compiled geometry collections without hiding inputs.
+#[allow(clippy::too_many_arguments)]
 fn validate(
     nodes: &[Node],
     edges: &[router::Edge],

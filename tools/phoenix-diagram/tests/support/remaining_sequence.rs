@@ -1,10 +1,10 @@
-use phoenix_diagram::input::{CompileOptions, DiagramType, InputContract, Quality, parse_input};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
 use phoenix_diagram::layout as sequence;
 use phoenix_diagram::{
     diagnostic::Diagnostics,
     scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text},
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 fn corpus() -> Value {
     serde_json::from_slice(include_bytes!("../fixtures/sequence/oracle.json")).unwrap()
@@ -551,7 +551,7 @@ fn sequence_all_facts_and_authored_ranges_survive_without_reordering() {
                 document["messages"][index]["y"].as_f64().unwrap()
             );
             assert_eq!(
-                message.note.as_ref().map(String::as_str),
+                message.note.as_deref(),
                 document["messages"][index]["note"].as_str()
             );
         }

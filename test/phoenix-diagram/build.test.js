@@ -82,6 +82,56 @@ test('actual Node --version output binds the same version in observation and det
   assert.equal(api.observedToolVersions({ ...details, node: 'not a version' }).node, undefined);
 });
 
+test('real compiler-artifact hardlinks are probed through an owned single-link snapshot without weakening identity', {
+  skip: !process.env.PHOENIX_DIAGRAM_BIN ? 'Requires explicit stable PHOENIX_DIAGRAM_BIN; no automatic build or download' : !['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].includes(`${process.platform}-${process.arch}`) ? 'Native probe requires a supported Unix host' : false,
+}, async t => {
+  const api = await moduleReady, directory = temporary(t), source = fs.realpathSync(process.env.PHOENIX_DIAGRAM_BIN);
+  const original = fs.statSync(source, { bigint: true }), binaryBytes = fs.readFileSync(source), sourceDigest = sha(binaryBytes);
+  t.after(() => {
+    const current = fs.statSync(source, { bigint: true });
+    assert.equal(current.ino, original.ino); assert.equal(current.nlink, original.nlink);
+    assert.equal(sha(fs.readFileSync(source)), sourceDigest, 'The supplied release/cohort engine must remain untouched');
+  });
+  const executable = write(directory, 'compiler artifact', binaryBytes, 0o700);
+  const before = spawnSync(executable, ['doctor', '--json'], { encoding: 'utf8', timeout: 15000 });
+  const native = JSON.parse(before.stdout); assert.ok(native.engine, before.stdout + before.stderr);
+  assert.equal(native.engine.binary.sha256, sourceDigest);
+  fs.linkSync(executable, path.join(directory, 'cargo hardlink alias'));
+  assert.equal(fs.statSync(executable).nlink, 2);
+  const actual = spawnSync(executable, ['doctor', '--json'], { encoding: 'utf8', timeout: 15000 });
+  assert.equal(actual.status, 4); assert.match(actual.stdout, /engine\/current-binary/); assert.match(actual.stdout, /output\/file-identity-or-links-changed/);
+  const options = { binaryBytes, sourceSha: native.engine.sourceInputSha256, target: `${process.platform}-${process.arch}` };
+  const result = api.probeNativeArtifact(executable, options);
+  assert.deepEqual(result.doctor.engine, native.engine);
+  assert.notEqual(result.probeExecutable, executable);
+  assert.equal(fs.existsSync(result.probeExecutable), false, 'The private probe executable is cleaned after the real doctor exits');
+  assert.equal(result.compilerLinks, 2);
+  assert.equal(fs.statSync(executable).nlink, 2);
+  assert.deepEqual(fs.readFileSync(executable), binaryBytes);
+  assert.throws(() => api.probeNativeArtifact(executable, { ...options, sourceSha: '0'.repeat(64) }), /sourceInputSha256/);
+  for (const [field, value] of [['inputContractSchema', 2], ['receiptSchema', 2], ['viewerRevision', 'foreign']]) {
+    assert.throws(() => api.validateEngine({ ...native.engine, [field]: value }, options.sourceSha, result.binary), new RegExp(field));
+  }
+  for (const [field, value] of [['sha256', '0'.repeat(64)], ['bytes', binaryBytes.length + 1]]) {
+    assert.throws(() => api.validateEngine({ ...native.engine, binary: { ...native.engine.binary, [field]: value } }, options.sourceSha, result.binary), new RegExp(`binary\\.${field}`));
+  }
+  assert.throws(() => api.probeNativeArtifact(executable, { ...options, binaryBytes: Buffer.concat([binaryBytes, Buffer.from('changed snapshot')]) }), /binary.*changed|binary.*differ/i);
+  const mkdtemp = fs.mkdtempSync;
+  t.mock.method(fs, 'mkdtempSync', (...args) => {
+    const owned = mkdtemp(...args); fs.appendFileSync(executable, 'changed original artifact'); return owned;
+  });
+  assert.throws(() => api.probeNativeArtifact(executable, options), /binary changed while probing/i);
+});
+
+test('failed doctor diagnostics remain visible instead of a combined identity assertion', async t => {
+  if (process.platform === 'win32') { t.skip('Unix protocol refusal fixture'); return; }
+  const api = await moduleReady, directory = temporary(t);
+  // Refusal-only protocol fixture. Every successful native probe is tested
+  // above using a real supplied engine, never this script.
+  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1');else{console.log(JSON.stringify({toolVersion:'0.1.0',diagnostics:[{code:'engine/current-binary',message:'output/file-identity-or-links-changed'}]}));process.exitCode=4;}\n`, 0o700);
+  assert.throws(() => api.probeNativeArtifact(executable, { binaryBytes: fs.readFileSync(executable), sourceSha: 'a'.repeat(64), target: `${process.platform}-${process.arch}` }), error => /engine identity is missing/.test(error.message) && /"exitCode":4/.test(error.message) && /engine\/current-binary/.test(error.message) && /output\/file-identity-or-links-changed/.test(error.message));
+});
+
 test('source tuples follow native roots, include package identity and exclude only derived ENGINE', async t => {
   const api = await moduleReady, directory = sourceFixture(t);
   write(directory, 'skills/phoenix-diagram/ENGINE.json', '{"derived":true}\n');

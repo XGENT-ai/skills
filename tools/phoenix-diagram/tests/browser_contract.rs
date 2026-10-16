@@ -1,10 +1,10 @@
 #[path = "support/browser_protocol.rs"]
 mod browser_protocol;
-use browser_protocol::{Mode, ProtocolFixture, assert_owned_browser_cleaned, launcher};
+use browser_protocol::{assert_owned_browser_cleaned, launcher, Mode, ProtocolFixture};
 
 use phoenix_diagram::browser::{
-    BoundArtifact, BoundFile, BrowserOptions, BrowserStatus, check_browser,
-    validate_receipt_coverage,
+    check_browser, validate_receipt_coverage, BoundArtifact, BoundFile, BrowserOptions,
+    BrowserStatus,
 };
 use phoenix_diagram::check::FileIdentity;
 use serde_json::json;
@@ -87,12 +87,10 @@ fn an_explicit_missing_browser_is_a_configuration_failure() {
     );
     assert_eq!(receipt.status, BrowserStatus::Failed);
     assert_eq!(receipt.exit_code(), 4);
-    assert!(
-        receipt
-            .diagnostics
-            .iter()
-            .any(|entry| entry.code == "browser/configured-path")
-    );
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/configured-path"));
     assert!(receipt.coverage.is_empty());
     assert!(receipt.screenshots.is_empty());
 }
@@ -109,22 +107,18 @@ fn artifact_and_candidate_hash_mismatches_stop_before_browser_launch() {
             ..Default::default()
         },
     );
-    assert!(
-        receipt
-            .diagnostics
-            .iter()
-            .any(|entry| entry.code == "browser/artifact-changed")
-    );
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/artifact-changed"));
     assert_eq!(receipt.exit_code(), 1);
     fs::write(&artifact.path, b"<!doctype html><title>Test</title>").unwrap();
     fs::write(&artifact.candidate.path, b"changed candidate").unwrap();
     let receipt = check_browser(&artifact, &BrowserOptions::default());
-    assert!(
-        receipt
-            .diagnostics
-            .iter()
-            .any(|entry| entry.code == "browser/candidate-changed")
-    );
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/candidate-changed"));
     assert!(receipt.coverage.is_empty());
 }
 
@@ -305,12 +299,10 @@ fn protocol_fixture_records_all_scopes_and_exclusively_seals_four_long_captures(
             .count(),
         4
     );
-    assert!(
-        commands
-            .iter()
-            .filter(|request| request["method"] == "Page.captureScreenshot")
-            .all(|request| request["params"]["captureBeyondViewport"] == true)
-    );
+    assert!(commands
+        .iter()
+        .filter(|request| request["method"] == "Page.captureScreenshot")
+        .all(|request| request["params"]["captureBeyondViewport"] == true));
     let mut missing = receipt.clone();
     missing.coverage.pop();
     assert!(!validate_receipt_coverage(&missing, true));
@@ -396,12 +388,10 @@ fn any_existing_screenshot_entry_is_preserved_without_launching() {
         );
         assert_eq!(receipt.status, BrowserStatus::Failed);
         assert_eq!(receipt.exit_code(), 3);
-        assert!(
-            receipt
-                .diagnostics
-                .iter()
-                .any(|entry| entry.code == "browser/evidence-conflict")
-        );
+        assert!(receipt
+            .diagnostics
+            .iter()
+            .any(|entry| entry.code == "browser/evidence-conflict"));
         assert!(!temp.0.join("child-pid").exists());
         assert_eq!(fs::read(&original).unwrap(), b"preserve me");
         assert_eq!(fs::read_dir(&out_dir).unwrap().count(), 1);
@@ -419,7 +409,7 @@ fn any_existing_screenshot_entry_is_preserved_without_launching() {
 #[ignore = "real Chrome and native Reader acceptance run only at the core stage"]
 fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
     use phoenix_diagram::{
-        input::{CompileOptions, DiagramType, Quality, parse_input},
+        input::{parse_input, CompileOptions, DiagramType, Quality},
         layout,
         render::{self, EmbeddedAssets},
     };
@@ -548,20 +538,16 @@ fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
         let visibility = &coverage.metrics["semanticVisibility"];
         assert_eq!(visibility["initialDetailLevel"], "map");
         for kind in ["context", "fine"] {
-            assert!(
-                visibility["initial"][kind]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .all(|entry| entry["visible"] == false)
-            );
-            assert!(
-                visibility["inspection"][kind]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .all(|entry| entry["visible"] == true)
-            );
+            assert!(visibility["initial"][kind]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|entry| entry["visible"] == false));
+            assert!(visibility["inspection"][kind]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|entry| entry["visible"] == true));
         }
         assert_eq!(visibility["inspectionDetailLevel"], "full");
         assert_eq!(visibility["restoration"]["ok"], true);
@@ -629,7 +615,7 @@ fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
 #[ignore = "real Chrome and native Reader acceptance run only at the core stage"]
 fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exemptions() {
     use phoenix_diagram::{
-        input::{CompileOptions, DiagramType, Quality, parse_input},
+        input::{parse_input, CompileOptions, DiagramType, Quality},
         layout,
         render::{self, EmbeddedAssets},
     };
@@ -704,11 +690,9 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
                 5,
                 "title, both kinds and both runtime counts stay checked"
             );
-            assert!(
-                legend
-                    .iter()
-                    .all(|entry| entry["failures"].as_array().unwrap().is_empty())
-            );
+            assert!(legend
+                .iter()
+                .all(|entry| entry["failures"].as_array().unwrap().is_empty()));
         } else {
             assert!(coverage.metrics["fullScrollHeight"].as_f64().unwrap() > 844.0);
             assert_eq!(coverage.metrics["scrollHeight"], 844);
@@ -761,13 +745,11 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
                 if coverage.viewport.width != 390 || coverage.viewport.height != 844 {
                     continue;
                 }
-                assert!(
-                    coverage.metrics["readerFlow"]["notes"]
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .any(|note| note["bounds"]["bottom"].as_f64().unwrap() > 844.0)
-                );
+                assert!(coverage.metrics["readerFlow"]["notes"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|note| note["bounds"]["bottom"].as_f64().unwrap() > 844.0));
                 assert_eq!(coverage.metrics["readerFlow"]["unclipped"], false);
             }
             checked_scopes += 1;

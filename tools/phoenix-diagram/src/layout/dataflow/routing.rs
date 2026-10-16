@@ -145,7 +145,10 @@ pub(super) fn rebalance(context: &mut Context<'_>) -> bool {
 }
 
 pub(super) fn spread_ports(context: &mut Context<'_>) {
-    let mut groups: Vec<(usize, String, Vec<(usize, bool, usize)>)> = Vec::new();
+    // Members retain flow index, source-end flag and counterpart node.
+    type PortMember = (usize, bool, usize);
+    type PortGroup = (usize, String, Vec<PortMember>);
+    let mut groups: Vec<PortGroup> = Vec::new();
     for (index, flow) in context.flows.iter().enumerate() {
         let raw = &flow.raw;
         if (!string(raw, "route").is_empty() && raw["route"] != "auto")
@@ -867,7 +870,9 @@ pub(super) fn repair_routes(context: &mut Context<'_>) {
 }
 
 fn reorder_ports(context: &mut Context<'_>) {
-    let mut groups: Vec<(usize, String, Vec<(usize, bool)>)> = Vec::new();
+    type PortEndpoint = (usize, bool);
+    type PortGroup = (usize, String, Vec<PortEndpoint>);
+    let mut groups: Vec<PortGroup> = Vec::new();
     for (index, flow) in context.flows.iter().enumerate() {
         for (node, side, from) in [
             (flow.from, &flow.sides.0, true),

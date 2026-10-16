@@ -219,7 +219,7 @@ fn empty(engine: &EngineIdentity, strict: bool) -> CheckReceipt {
     }
 }
 
-pub(super) fn failed(engine: &EngineIdentity, strict: bool, failure: Failure) -> CheckReceipt {
+pub(super) fn failed(engine: &EngineIdentity, strict: bool, failure: Box<Failure>) -> CheckReceipt {
     let mut result = empty(engine, strict);
     result.exit = failure.exit;
     result.diagnostics.push(failure.diagnostic);

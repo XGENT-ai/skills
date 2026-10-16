@@ -5,7 +5,7 @@ use output::test_support::{self, Phase};
 use output::*;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
-use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt, symlink};
+use std::os::unix::fs::{symlink, DirBuilderExt, MetadataExt, PermissionsExt};
 use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -1252,12 +1252,10 @@ fn output_later_public_witness_claimant_cannot_be_removed_after_quarantine() {
     assert_eq!(recover_publication(&recovery).exit_code(), 3);
 }
 
-fn filesystem_snapshot(root: &Path) -> Vec<(PathBuf, u32, u64, u64, u64, i64, i64, Vec<u8>)> {
-    fn visit(
-        root: &Path,
-        relative: &Path,
-        rows: &mut Vec<(PathBuf, u32, u64, u64, u64, i64, i64, Vec<u8>)>,
-    ) {
+type FilesystemSnapshotRow = (PathBuf, u32, u64, u64, u64, i64, i64, Vec<u8>);
+
+fn filesystem_snapshot(root: &Path) -> Vec<FilesystemSnapshotRow> {
+    fn visit(root: &Path, relative: &Path, rows: &mut Vec<FilesystemSnapshotRow>) {
         let path = root.join(relative);
         let metadata = path.symlink_metadata().unwrap();
         let content = if metadata.is_file() {

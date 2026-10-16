@@ -295,11 +295,30 @@ fn deferred_fields_are_reported_individually_without_removing_facts() {
 
 #[test]
 fn stage_references_check_schema_integer_values_including_decimal_representation() {
-    let mut document:serde_json::Value=serde_json::from_slice(include_bytes!("../upstream/legacy-2.17/examples/product-analytics.dataflow.json")).unwrap();
-    document["schema_version"]=json!(1.0);
-    document["nodes"][0]["stage"]=json!(0.0);
-    parse_input(&serde_json::to_vec(&document).unwrap(),DiagramType::Dataflow,&CompileOptions::default()).unwrap();
-    document["nodes"][0]["stage"]=json!(document["stages"].as_array().unwrap().len() as f64);
-    let diagnostics=parse_input(&serde_json::to_vec(&document).unwrap(),DiagramType::Dataflow,&CompileOptions::default()).err().expect("An out-of-bounds floating representation of an integer stage must fail");
-    assert!(diagnostics.iter().any(|diagnostic|diagnostic.code=="input/unknown-reference" && diagnostic.subject.path=="/nodes/0/stage"),"{diagnostics:?}");
+    let mut document: serde_json::Value = serde_json::from_slice(include_bytes!(
+        "../upstream/legacy-2.17/examples/product-analytics.dataflow.json"
+    ))
+    .unwrap();
+    document["schema_version"] = json!(1.0);
+    document["nodes"][0]["stage"] = json!(0.0);
+    parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Dataflow,
+        &CompileOptions::default(),
+    )
+    .unwrap();
+    document["nodes"][0]["stage"] = json!(document["stages"].as_array().unwrap().len() as f64);
+    let diagnostics = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Dataflow,
+        &CompileOptions::default(),
+    )
+    .expect_err("An out-of-bounds floating representation of an integer stage must fail");
+    assert!(
+        diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "input/unknown-reference"
+                && diagnostic.subject.path == "/nodes/0/stage"),
+        "{diagnostics:?}"
+    );
 }

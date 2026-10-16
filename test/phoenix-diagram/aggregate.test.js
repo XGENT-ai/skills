@@ -72,6 +72,14 @@ test('Reader aggregation requires the shared eight-scope interaction gate instea
   assert.throws(()=>checkReaderInteractionEvidence({status:'pass',observations:claimed.observations.slice(1)}));
 });
 
+test('Reader aggregation uses the shared native motion-suppression gate and rejects old export reports',async()=>{
+  const {checkMotionSuppressionEvidence,readerEvidence}=await api(),{verifyMotionSuppression}=await import('../../tools/phoenix-diagram/tests/export-acceptance.mjs');
+  assert.equal(typeof checkMotionSuppressionEvidence,'function');assert.equal(checkMotionSuppressionEvidence,verifyMotionSuppression);
+  for(const value of [undefined,{status:'not-run'},{status:'pass',observations:[]}])assert.throws(()=>checkMotionSuppressionEvidence(value),/motion suppression/i);
+  const artifact={path:'/unit/diagram.html',identity:{sha256:'a'.repeat(64),bytes:10}},report={schemaVersion:1,kind:'real-browser-export',status:'pass',artifact:{path:artifact.path,...artifact.identity},actualBrowserVersion:'Chrome/fixture',offline:{requested:true,status:'pass',configured:true,remoteRequests:[]},resources:{status:'pass',requests:[],loadingFailed:[]},errors:[]};
+  assert.throws(()=>readerEvidence(report,{bytes(){throw new Error('must reject the missing motion matrix first');}},artifact),/motion suppression/i);
+});
+
 function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,status='pass',command='finalize'}={}) {
   // Synthetic native-event grammar and raw file bytes only, never host proof.
   const directory='/fixture/provider',project=directory+'/project',program=project+'/.agents/skills/phoenix-diagram/scripts/phoenix-diagram',script=directory+'/capture-stdio.mjs',nodePath=fs.realpathSync(process.execPath),quote='An installed skill excerpt long enough for the native read binding fixture.';

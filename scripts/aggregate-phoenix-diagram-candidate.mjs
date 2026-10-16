@@ -9,10 +9,11 @@ import { isDeepStrictEqual as same } from 'node:util';
 import { TARGETS,readTarballInventory } from './pack-phoenix-diagram-candidate.mjs';
 import { validateCandidate,targetForHost } from './check-phoenix-diagram-candidate.mjs';
 import { TYPES,requiredArtifactChecks,BROWSER_CHECKS,VIEWPORTS,identity,readSnapshot,readBound,requireThat,assertXssArtifact } from './test-phoenix-diagram-core.mjs';
-import { verifyFileSignature,verifyPrintSample } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
+import { verifyFileSignature,verifyPrintSample,verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
 import { COLLECTOR_MEMBER,parseCaptureArgs } from '../tools/phoenix-diagram/tests/support/capture-stdio.mjs';
 export { verifyReaderInteractions as checkReaderInteractionEvidence };
+export { verifyMotionSuppression as checkMotionSuppressionEvidence };
 
 const HASH=/^[a-f0-9]{64}$/;
 const KINDS=['diagram','labels','cards','relationship-occlusion','hierarchy','controls'];
@@ -281,9 +282,10 @@ export async function main(argv=process.argv.slice(2)) {
   catch(error){process.stdout.write(`${JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'aggregate-candidate',status:'incomplete',handoff:'incomplete',diagnostics:[{code:'aggregate/incomplete',message:error.message}]})}\n`);return 1;}
 }
 if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url))process.exitCode=await main();
-function readerEvidence(report,store,artifact,{content=false}={}) {
+export function readerEvidence(report,store,artifact,{content=false}={}) {
   need(report.status==='pass' && report.kind===(content?'real-browser-content':'real-browser-export') && report.artifact.path===artifact.path && same({sha256:report.artifact.sha256,bytes:report.artifact.bytes},artifact.identity) && /(?:Chrome|Chromium)\//.test(report.actualBrowserVersion || ''),'Actual Reader artifact/version differs');need(report.offline?.requested===true && report.offline.status==='pass' && report.offline.configured===true && report.offline.remoteRequests?.length===0 && report.resources?.status==='pass' && report.resources.loadingFailed?.length===0 && report.resources.requests?.every(row=>!/^(?:https?|wss?):/i.test(row.url)) && report.errors?.length===0,'Actual offline/resource scope is incomplete');
   if(content){need(report.content?.status==='pass' && report.content.literalPresent===true && report.content.sentinelDefined===false,'Actual XSS content was omitted or executed');return;}
+  verifyMotionSuppression(report.motionSuppression);
   verifyReaderInteractions(report.readerInteractions);
   checkPrintEvidence(report.stateRestoration?.print,reference=>store.bytes(reference));
   need(report.exports?.length===20 && report.stateRestoration?.status==='pass','Real export/Reader-restoration scope is incomplete');const seen=new Set();for(const file of report.exports){const key=`${file.theme}:${file.mode}:${file.format}`;need(!seen.has(key) && ['dark','light'].includes(file.theme) && ['still','live'].includes(file.mode) && ['svg','png','jpeg','webp','webm'].includes(file.format) && file.status==='pass' && file.decode?.valid===true && file.decode.width>0 && file.decode.height>0,'Actual export decode scope is incomplete');seen.add(key);verifyFileSignature(store.bytes(file),file.format,file.mime);if(file.format==='svg')need(file.canonical?.complete===true && file.canonical.utf8===true,'Canonical SVG is incomplete');}

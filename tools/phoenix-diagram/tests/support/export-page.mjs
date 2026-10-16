@@ -3,11 +3,13 @@
 // delegates, independent namespace, canonical facts and real decoder evidence.
 
 export function installExportProbe({ suppressClipboard = false } = {}) {
-  const state = { urls: new Map(), downloads: [], errors: [], writes: [], constructions: [], tracks: [], recorders: [], printEvents: [], readerInputs: [], inCopyHandler: false, suppressClipboard };
+  const state = { urls: new Map(), downloads: [], errors: [], writes: [], constructions: [], tracks: [], recorders: [], printEvents: [], motionEvents: [], readerInputs: [], inCopyHandler: false, suppressClipboard };
   window.__phoenixDiagramExportProbe = state;
   addEventListener('error', event => state.errors.push(String(event.message)));
   addEventListener('unhandledrejection', event => state.errors.push(String(event.reason)));
   for (const type of ['beforeprint', 'afterprint']) addEventListener(type, () => state.printEvents.push({ type }));
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => state.motionEvents.push({ type: 'reduced-motion', trusted: event.isTrusted, matches: event.matches }));
+  document.addEventListener('visibilitychange', event => state.motionEvents.push({ type: 'visibilitychange', trusted: event.isTrusted, hidden: document.hidden, visibilityState: document.visibilityState }));
   for (const type of ['click', 'keydown', 'input', 'pointerdown', 'pointermove', 'pointerup']) document.addEventListener(type, event => {
     if (type === 'pointermove' && !(event.buttons & 1)) return;
     const element = event.target instanceof Element ? event.target : document.activeElement;
@@ -92,6 +94,28 @@ export function printMotionSnapshot() {
   return { printMedia: matchMedia('print').matches, capable: PhoenixDiagram.motionGovernor.capable === true,
     running: svg.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length,
     staticCount: meaning.length, hiddenStatic: meaning.filter(hidden).length };
+}
+
+// Synchronous observation also works in a genuinely hidden document, where
+// requestAnimationFrame and Reader layout-stability promises may be suspended.
+export function motionSuppressionSnapshot(reader) {
+  const svg = document.querySelector('.diagram-container svg'), html = document.documentElement, button = document.querySelector('#btn-motion');
+  if (!svg || !button || typeof svg.getAnimations !== 'function') throw new Error('Motion suppression observation is unavailable');
+  const runtime = '[data-ambient-flow-overlay], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-semantic-lens-overlay], [data-relationship-pulse-overlay], [data-relationship-hit-overlay], [data-legend-bridge-runtime]';
+  const meaning = Array.from(svg.querySelectorAll('[data-node-id], path[data-edge-from], line[data-edge-from], polyline[data-edge-from], text')).filter(element => !element.closest(runtime));
+  const visible = element => {
+    for (let current = element; current; current = current.parentElement) {
+      const style = getComputedStyle(current);
+      if (style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility) || Number(style.opacity) === 0) return false;
+      if (current === svg) break;
+    }
+    return true;
+  };
+  const animations = svg.getAnimations({ subtree: true });
+  return { reader, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, hidden: document.hidden, visibilityState: document.visibilityState, printMedia: matchMedia('print').matches,
+    documentHidden: html.getAttribute('data-document-hidden'), ambientMotion: html.getAttribute('data-ambient-motion'), capable: PhoenixDiagram.motionGovernor.capable === true,
+    preference: localStorage.getItem('phoenix-diagram-motion'), button: { disabled: button.disabled, pressed: button.getAttribute('aria-pressed') },
+    animationCount: animations.length, running: animations.filter(animation => animation.playState === 'running').length, meaning: { total: meaning.length, visible: meaning.flatMap((element, index) => visible(element) ? [index] : []) } };
 }
 
 export function readResources() {

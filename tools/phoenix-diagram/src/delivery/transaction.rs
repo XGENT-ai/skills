@@ -193,7 +193,7 @@ fn publish(
     Ok(artifact)
 }
 
-fn record_delivery_failure(receipt: &mut DeliveryReceipt, failure: Failure) {
+fn record_delivery_failure(receipt: &mut DeliveryReceipt, failure: Box<Failure>) {
     receipt.status = Status::Failed;
     receipt.exit = failure.exit;
     receipt.diagnostics.push(failure.diagnostic);
@@ -446,7 +446,7 @@ pub(super) fn browser_check(
     engine: &EngineIdentity,
     options: &BrowserOptions,
     visual: bool,
-) -> std::result::Result<BrowserCommandReceipt, CheckReceipt> {
+) -> std::result::Result<BrowserCommandReceipt, Box<CheckReceipt>> {
     let command = if visual {
         "visual-check"
     } else {
@@ -459,7 +459,7 @@ pub(super) fn browser_check(
             let mut failed = provenance::failed(engine, true, error);
             failed.command = command.into();
             failed.status = Status::Failed;
-            return Err(failed);
+            return Err(Box::new(failed));
         }
     };
     let current = match provenance::current_locked(output, engine, &slot) {
@@ -467,7 +467,7 @@ pub(super) fn browser_check(
         Err(failure) => {
             let mut failed = provenance::failed(engine, true, failure);
             failed.command = command.into();
-            return Err(failed);
+            return Err(Box::new(failed));
         }
     };
     let mut options = options.clone();

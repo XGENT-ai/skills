@@ -12,6 +12,7 @@ import { artifactIdentity, validateInput, verifyFileSignature, verifyCanonicalFa
 import { DEFAULT_TIMEOUTS, ownedProfile, discoverBrowser, browserArguments, PipeCdp } from './support/export-browser.mjs';
 import * as probes from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, sendReaderKey, verifyReaderInteractions } from './support/export-reader.mjs';
+import * as acceptance from './export-acceptance.mjs';
 
 function temporary(t) { const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-export-controller-')); t.after(() => fs.rmSync(directory, { recursive: true, force: true })); return directory; }
 
@@ -22,6 +23,7 @@ test('configuration requires fixed HTML/text inputs and finite explicit deadline
   for (const invalid of [{}, { ...options, artifactPath: '/tmp/file.js' }, { ...options, timeouts: { actionMs: Infinity } }, { ...options, timeouts: { startupMs: 0 } }, { ...options, expectedLiteral: {} }, { ...options, sentinelName: 'x);alert(1)//' }, { ...options, offline: 'true' }]) assert.throws(() => validateInput(invalid));
   assert.deepEqual(REQUIRED_EXPORT_SCOPE.formats, ['svg', 'png', 'jpeg', 'webp', 'webm']);
   assert.equal(REQUIRED_EXPORT_SCOPE.themes.length * REQUIRED_EXPORT_SCOPE.modes.length * REQUIRED_EXPORT_SCOPE.formats.length, 20);
+  assert.deepEqual(REQUIRED_EXPORT_SCOPE.motionSuppression?.conditions, ['reduced-motion', 'page-hidden']);
 });
 
 test('byte signature preflight rejects a suffix/MIME claim and empty/wrong bytes', () => {
@@ -121,6 +123,53 @@ test('print acceptance rejects missing native events, ongoing print motion and u
   for (const mutate of invalid) { const value = structuredClone(sample); mutate(value); assert.throws(() => verifyPrintSample(value), /[Pp]rint/); }
 });
 
+function motionSuppressionFixture(staticOnly = false) {
+  const observations = ['dark', 'light'].flatMap(theme => ['still', 'live'].flatMap(mode => ['reduced-motion', 'page-hidden'].map(condition => {
+    const snapshot = suppressed => ({ reader: { mode: suppressed ? 'still' : mode, owner: '', focus: null, view: null, viewBox: '0 0 500 300', preset: 'classic', transform: '', clip: '', nodes: [{ id: 'a', label: 'A', text: ['A'] }], edges: [], text: ['A', 'Legend'], eligibleMotion: !staticOnly },
+      reducedMotion: suppressed && condition === 'reduced-motion', hidden: suppressed && condition === 'page-hidden', visibilityState: suppressed && condition === 'page-hidden' ? 'hidden' : 'visible', printMedia: false,
+      documentHidden: suppressed && condition === 'page-hidden' ? 'true' : null, capable: true, preference: mode === 'live' ? 'live' : null,
+      button: { disabled: suppressed && condition === 'reduced-motion', pressed: !suppressed && mode === 'live' ? 'true' : 'false' }, animationCount: staticOnly ? 0 : 2, running: !staticOnly && !suppressed && mode === 'live' ? 2 : 0, meaning: { total: 3, visible: [0, 1, 2] } });
+    return { theme, mode, condition, status: 'pass', method: condition === 'reduced-motion' ? 'cdp-prefers-reduced-motion' : 'cdp-owned-target-visibility', motionApplicable: !staticOnly && mode === 'live', before: snapshot(false), during: snapshot(true), after: snapshot(false),
+      inputs: [{ type: 'click', trusted: true, target: { id: 'btn-motion' } }], ownedTargets: condition === 'page-hidden' ? { subject: 'owned-subject', cover: 'owned-cover', browserContext: 'owned-context' } : undefined,
+      events: condition === 'reduced-motion' ? [{ type: 'reduced-motion', trusted: true, matches: true }, { type: 'reduced-motion', trusted: true, matches: false }] : [{ type: 'visibilitychange', trusted: true, hidden: true, visibilityState: 'hidden' }, { type: 'visibilitychange', trusted: true, hidden: false, visibilityState: 'visible' }] };
+  })));
+  return { status: 'pass', observations };
+}
+
+test('motion suppression requires eight native transitions, complete static facts and unchanged user preference', () => {
+  assert.equal(typeof acceptance.verifyMotionSuppression, 'function');
+  const verify = acceptance.verifyMotionSuppression, valid = motionSuppressionFixture();
+  assert.doesNotThrow(() => verify(valid));
+  assert.doesNotThrow(() => verify(motionSuppressionFixture(true)), 'a genuinely static SVG needs no invented animation');
+  for (const missing of [undefined, { status: 'not-run' }, { status: 'pass', observations: [] }]) assert.throws(() => verify(missing), /motion suppression/i);
+  for (const mutate of [
+    v => { v.observations.pop(); },
+    v => { v.observations[1] = structuredClone(v.observations[0]); },
+    v => { v.observations[0].status = 'incomplete'; },
+    v => { v.observations[0].method = 'VM-matchMedia-stub'; },
+    v => { v.observations[0].events[0].trusted = false; },
+    v => { v.observations[0].during.reducedMotion = false; },
+    v => { v.observations[0].during.button.disabled = false; },
+    v => { v.observations[1].during.hidden = false; },
+    v => { v.observations[1].during.visibilityState = 'visible'; },
+    v => { v.observations[1].events[0].hidden = false; },
+    v => { v.observations[1].ownedTargets.cover = v.observations[1].ownedTargets.subject; },
+    v => { v.observations[2].motionApplicable = false; },
+    v => { v.observations[2].before.running = 0; },
+    v => { v.observations[2].during.running = 1; },
+    v => { v.observations[2].after.running = 0; },
+    v => { v.observations[0].before.running = 1; },
+    v => { v.observations[0].during.preference = 'live'; },
+    v => { v.observations[0].after.reader.text.pop(); },
+    v => { v.observations[0].during.reader.viewBox = '0 0 1 1'; },
+    v => { v.observations[0].during.meaning.visible.pop(); },
+    v => { for (const key of ['before', 'during', 'after']) delete v.observations[0][key].reader.nodes; },
+    v => { v.observations[0].inputs[0].trusted = false; },
+    v => { v.observations[0].events.reverse(); },
+    v => { v.observations[0].after.reader.mode = 'live'; },
+  ]) { const invalid = structuredClone(valid); mutate(invalid); assert.throws(() => verify(invalid), /motion suppression/i); }
+});
+
 test('Reader interaction gate rejects absent scope, fabricated input, wrong search/detail feedback and changed authored geometry', () => {
   const geometry = { viewBox: '0 0 500 300', nodes: [{ id: 'a', label: 'Alpha', body: { x: '20', y: '30', width: '100', height: '50' } }], edges: [], text: [{ text: 'Alpha', x: '70', y: '55' }] };
   const state = { geometry, camera: { scale: 1, x: 0, y: 0 }, paintedCamera: { scale: 1, x: 0, y: 0 }, focus: null, finder: { open: false, query: '', results: [], emptyHidden: true, status: '' }, details: { hidden: true, painted: false, id: '', label: '' }, preset: 'classic', htmlPreset: 'classic', active: { id: 'btn-node-finder', view: null } };
@@ -176,6 +225,8 @@ test('missing configured browser yields an explicit non-pass receipt with no exp
   assert.equal(result.status, 'failed'); assert.equal(result.browser, null); assert.equal(result.exports.length, 20); assert.ok(result.exports.every(scope => scope.status === 'not-run')); assert.equal(result.resources.status, 'not-run');
   assert.deepEqual(result.offline, { requested: true, status: 'not-run', method: 'cdp-network-emulation', configured: false, remoteRequests: [] });
   assert.equal(result.clipboard.success.status, 'not-run'); assert.equal(result.clipboard.permissionDenied.status, 'not-run'); assert.equal(result.clipboard.capabilityUnavailable.status, 'not-run');
+  assert.equal(result.motionSuppression?.status, 'not-run');
+  assert.equal(result.motionSuppression?.observations.length, 8);
   assert.equal(result.errors[0].code, 'browser/configured-path'); assert.deepEqual(result.artifact, before); assert.deepEqual(artifactIdentity(file), before);
   assert.deepEqual(JSON.parse(fs.readFileSync(result.receiptPath, 'utf8')).artifact, before);
   const receiptBytes = fs.readFileSync(result.receiptPath);
