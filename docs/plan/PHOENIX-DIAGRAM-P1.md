@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-17T06:39:18+08:00
+- 最近更新：2026-10-17T07:43:44+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交已通过局部/完整轻量检查的冻结修复，启动新clean四Native/唯一同tgz；开发预检与真实两host各22、四平台原图、Node18、strict聚合及23AC分别按原身份收口
+- 下一步：提交固定npm10维护修复并启动新独立CI；认证新四Native/唯一包后建fresh44项目，优先六真实澄清，再完成两host各22、四平台原图、精确Node18、strict聚合与23AC
 - 当前阻塞：无
-- 代码基线：dirty@51c1738：SKILL7513B/e092e2b6、创作默认值4926B/79457c07与19文件bundle3a82708b同步，native输入40311b9f；图例及工具栏修复已各真red→green，56局部、3原输入30视口/12实图/210控件、真实DOM正/四反例与修订前完整轻量通过，最新默认值完整轻量检查已通过。旧7e V13 failed、CI现completed/cancelled已封存；7513 Codex候选静态语义passed但路由未完成，Claude仍开发复验，列位置隔离正例支持补布局修复指引，新clean同包未产生。
+- 代码基线：7f3136c（tree fb87d696/input40311b9f/bundle3a82708b）四Native与assemble实际success，11原ZIP及唯一tgz bd12bfcf/harness已认证；Intel consumer在npm11.6.2安装层ECOMPROMISED、cases=0，整轮不可final，正式模型0。固定npm10的44项目/88安装已完成，新生产prepare与公开断网安装smoke通过；维护修复完整npm412pass/22原skip、Python四组通过，待提交新独立CI。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-17T06:39:18+08:00 | 图例/工具栏真实red→green、56局部/30视口/12实图/210控件及严格反例过；7513语义自核与布局修复指引已同步，开发工作流保真实未完；新同包尚未收口 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c |
+| M7 | 进行中 | 2026-10-17T07:43:44+08:00 | 7f四Native/assemble及原档认证完成；Intel npm11安装失败，正式模型0；固定npm10真实prepare/公开安装smoke与完整轻量绿，待新CI | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c |
 
 ## 0. 需求、范围与决策
 

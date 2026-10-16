@@ -19,6 +19,26 @@ test('consumer options bind a real host target and keep review resume explicit',
   assert.throws(()=>parseOptions(['--candidate-dir','/candidate','--target','not-a-target']),/target|platform/i);
   assert.throws(()=>parseOptions(['--candidate-dir','a','--candidate-dir','b','--target','linux-x64']),/duplicate/i);
 });
+test('consumer accepts an explicit absolute npm CLI without changing its native Node target',async()=>{
+  const {parseOptions}=await api(),args=['--candidate-dir','/candidate','--target',`${process.platform}-${process.arch}`];
+  assert.equal(parseOptions([...args,'--npm-cli','/owned/npm/package/bin/npm-cli.js']).npmCliPath,'/owned/npm/package/bin/npm-cli.js');
+  assert.throws(()=>parseOptions([...args,'--npm-cli','relative/npm-cli.js']),/absolute/i);
+  assert.throws(()=>parseOptions([...args,'--npm-cli','/one','--npm-cli','/two']),/duplicate/i);
+});
+test('consumer environment retains npm diagnostics and never falls back from a bad selected CLI',async t=>{
+  const {makeEnvironment}=await api(),directory=temporary(t),environment=makeEnvironment(directory);
+  assert.equal(environment.nodePath,fs.realpathSync(process.execPath));assert.equal(environment.env.npm_config_logs_max,'10');
+  const bad=path.join(temporary(t),'missing-cli.js');
+  assert.throws(()=>makeEnvironment(temporary(t),{npmCliPath:bad}),/missing-cli|ENOENT/i);
+});
+test('resume binds the original selected npm CLI and rejects changed bytes or another path',async t=>{
+  const {verifyNpmSelection}=await api(),{readSnapshot,bound}=await import('../../scripts/test-phoenix-diagram-core.mjs');
+  const file=path.join(temporary(t),'npm-cli.js');fs.writeFileSync(file,'// inert binding fixture, never an npm installation\n');
+  const environment={npmCliPath:file,npmCli:bound(readSnapshot(file))};
+  assert.doesNotThrow(()=>verifyNpmSelection(environment,file));
+  assert.throws(()=>verifyNpmSelection(environment,path.join(path.dirname(file),'other-cli.js')),/npm|selected|transport/i);
+  fs.appendFileSync(file,'// changed\n');assert.throws(()=>verifyNpmSelection(environment,file),/changed|identity|binding/i);
+});
 test('candidate inventory rehashes every byte and rejects additions, aliases and traversal before writes',async t=>{
   const {verifyCandidateInventory}=await api();const f=inventoryFixture(t);assert.equal(verifyCandidateInventory(f.dir).files.size,1);
   fs.writeFileSync(path.join(f.dir,'fixture.tgz'),'tampered');assert.throws(()=>verifyCandidateInventory(f.dir),/digest|byte|size|inventory/i);

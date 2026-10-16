@@ -410,9 +410,9 @@ jobs:
           const bytes=fs.readFileSync(`local/phoenix-diagram/download/candidate/${record.tarball.path}`);
           assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),process.env.PHOENIX_DIAGRAM_TGZ_SHA256);
           NODE
-      - name: Explicit browser-only preparation without a Rust toolchain
+      - name: Explicit pinned npm and browser preparation without a Rust toolchain
         id: prepare
-        run: node local/phoenix-diagram/harness/scripts/prepare-phoenix-diagram.mjs --prepare-browser
+        run: node local/phoenix-diagram/harness/scripts/prepare-phoenix-diagram.mjs --prepare-consumer
       - name: Permit the pinned Chromium sandbox on Linux ARM
         if: matrix.platform == 'linux-arm64'
         run: |
@@ -430,7 +430,7 @@ jobs:
       # product bin, installer, native engine and Reader operation uses the tgz.
       - name: Consume the unchanged tgz through its package entry points
         id: consume
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }}
+        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}"
       - name: Select the original files for actual image review
         id: review_material
         if: steps.consume.outcome == 'success'
@@ -494,7 +494,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PHOENIX_DIAGRAM_RESUME_STATE: ${{ steps.consume.outputs.state_path }}
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --resume "$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review/$GITHUB_RUN_ID"
+        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --resume "$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review/$GITHUB_RUN_ID"
       - name: Record actual consumer phases
         if: always()
         env:
@@ -523,6 +523,7 @@ jobs:
           path: |
             local/phoenix-diagram/ci-prepare/
             ${{ steps.prepare.outputs.browser_evidence_dir }}
+            ${{ steps.prepare.outputs.npm_evidence_dir }}
             ${{ steps.consume.outputs.evidence_dir }}
           include-hidden-files: true
           if-no-files-found: error
@@ -581,12 +582,12 @@ jobs:
           const bytes=fs.readFileSync(`local/phoenix-diagram/download/candidate/${record.tarball.path}`);
           assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),process.env.PHOENIX_DIAGRAM_TGZ_SHA256);
           NODE
-      - name: Explicit browser-only preparation on Node 18
+      - name: Explicit pinned npm and browser preparation on Node 18
         id: prepare
-        run: node local/phoenix-diagram/harness/scripts/prepare-phoenix-diagram.mjs --prepare-browser
+        run: node local/phoenix-diagram/harness/scripts/prepare-phoenix-diagram.mjs --prepare-consumer
       - name: Consume only the same tgz on the declared Node floor
         id: consume
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target linux-x64
+        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target linux-x64 --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}"
       - name: Record actual Node 18 consumer phases
         if: always()
         env:
@@ -611,6 +612,7 @@ jobs:
           path: |
             local/phoenix-diagram/ci-prepare/
             ${{ steps.prepare.outputs.browser_evidence_dir }}
+            ${{ steps.prepare.outputs.npm_evidence_dir }}
             ${{ steps.consume.outputs.evidence_dir }}
           include-hidden-files: true
           if-no-files-found: error

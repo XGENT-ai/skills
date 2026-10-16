@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
+const { gzipSync } = require('node:zlib');
 const root = path.resolve(__dirname, '../..');
 const prepare = import('../../scripts/prepare-phoenix-diagram.mjs');
 const source = import('../../scripts/check-phoenix-diagram-source.mjs');
@@ -94,13 +95,60 @@ test('all consumers use one digest-bound candidate, with a separate Node 18 floo
     assert.match(consumer, /PHOENIX_DIAGRAM_TGZ_SHA256: \$\{\{ needs\.assemble\.outputs\.tgz-sha256 \}\}/);
     assert.match(consumer, /name: phoenix-diagram-harness/);
     assert.match(consumer, /PHOENIX_DIAGRAM_HARNESS_SHA256: \$\{\{ needs\.assemble\.outputs\.harness-sha256 \}\}/);
-    assert.match(consumer, /node local\/phoenix-diagram\/harness\/scripts\/prepare-phoenix-diagram\.mjs --prepare-browser/);
+    assert.match(consumer, /node local\/phoenix-diagram\/harness\/scripts\/prepare-phoenix-diagram\.mjs --prepare-consumer/);
     assert.match(consumer, /node local\/phoenix-diagram\/harness\/scripts\/check-phoenix-diagram-candidate\.mjs --candidate-dir local\/phoenix-diagram\/download\/candidate --target/);
+    assert.match(consumer, /--npm-cli "\$\{\{ steps\.prepare\.outputs\.npm_cli_path \}\}"/);
+    assert.match(consumer, /steps\.prepare\.outputs\.npm_evidence_dir/);
     assert.doesNotMatch(consumer, /actions\/checkout|sandbox-exec|deny file-read|--no-sandbox/);
     assert.doesNotMatch(consumer, /mise-action|mbx|rustup|cargo |--prepare\s*\n|npm install|npm exec/);
   }
   assert.match(job(text, 'node18-consumer'), /node-version: '18\.20\.8'/);
   for (const output of ['candidate-sha256', 'tgz-sha256', 'source-commit', 'artifact-id', 'artifact-digest', 'harness-sha256', 'harness-artifact-id', 'harness-artifact-digest']) assert.ok(assemble.includes(output), output);
+});
+
+function npmToolFixture(extra=[]) {
+  // Archive/transport mechanism only: this tiny package is not real npm proof.
+  const files=[['package/package.json',JSON.stringify({name:'npm',version:'10.5.0',bin:{npm:'bin/npm-cli.js',npx:'bin/npx-cli.js'}})],['package/bin/npm-cli.js',"process.stdout.write('10.5.0\\n');\n"],['package/bin/npx-cli.js','// inert npx fixture\n'],['package/node_modules/dependency/index.js','// inert bundled dependency\n'],...extra],chunks=[];
+  for(const [name,text,type='0'] of files) {
+    const body=Buffer.from(text),header=Buffer.alloc(512),octal=(offset,length,value)=>header.write(value.toString(8).padStart(length-1,'0')+'\0',offset,length);
+    header.write(name);octal(100,8,0o644);octal(108,8,0);octal(116,8,0);octal(124,12,body.length);octal(136,12,0);header.fill(32,148,156);header.write(type,156);header.write('ustar\0',257);
+    const checksum=header.reduce((sum,byte)=>sum+byte,0);header.write(checksum.toString(8).padStart(6,'0')+'\0 ',148,8);
+    chunks.push(header,body,Buffer.alloc((512-body.length%512)%512));
+  }
+  const bytes=gzipSync(Buffer.concat([...chunks,Buffer.alloc(1024)])),pin={package:'npm',version:'10.5.0',url:'https://registry.npmjs.org/npm/-/npm-10.5.0.tgz',size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),integrity:'sha512-'+createHash('sha512').update(bytes).digest('base64')};
+  return{bytes,pin};
+}
+
+test('consumer npm preparation verifies every archive byte before extracting and binds bundled dependencies',async t=>{
+  const preparer=await prepare,fixture=npmToolFixture(),directory=temporary(t);
+  const record=await preparer.prepareNpm({directory,pin:fixture.pin,download:async()=>fixture.bytes});
+  assert.equal(record.status,'prepared');assert.equal(record.version,'10.5.0');assert.equal(record.node,process.version);
+  assert.equal(record.npmEnvironment.npm_config_cache,path.join(directory,'cache'));
+  assert.equal(record.npmEnvironment.npm_config_logs_max,'10');
+  assert.notEqual(record.npmEnvironment.npm_config_userconfig,record.npmEnvironment.npm_config_globalconfig);
+  for(const key of ['npm_config_userconfig','npm_config_globalconfig'])assert.equal(fs.readFileSync(record.npmEnvironment[key],'utf8'),'');
+  assert.equal(record.npmCliPath,path.join(directory,'package/bin/npm-cli.js'));
+  const checked=preparer.inspectNpm(record.npmCliPath,{pin:fixture.pin});assert.equal(checked.version,'10.5.0');
+  assert.equal(checked.npx.path,path.join(directory,'package/bin/npx-cli.js'));
+  fs.appendFileSync(path.join(directory,'package/node_modules/dependency/index.js'),'// changed\n');
+  assert.throws(()=>preparer.inspectNpm(record.npmCliPath,{pin:fixture.pin}),/npm|member|digest|changed/i);
+});
+
+test('npm preparation rejects corrupt archives, aliases and traversal without extracting a package',async t=>{
+  const preparer=await prepare;
+  for(const failure of ['digest','traversal','symlink']) {
+    const fixture=npmToolFixture(failure==='traversal'?[['package/../escape','bad']]:failure==='symlink'?[['package/bin/alias','','2']]:[]),directory=temporary(t);
+    const bytes=failure==='digest'?Buffer.concat([fixture.bytes,Buffer.from('changed')]):fixture.bytes;
+    await assert.rejects(()=>preparer.prepareNpm({directory,pin:fixture.pin,download:async()=>bytes}),/npm|archive|digest|SHA|unsafe|member|link/i);
+    assert.equal(fs.existsSync(path.join(directory,'package')),false);assert.equal(fs.existsSync(path.join(directory,'escape')),false);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(directory,'preparation.json'))).status,'failed');
+  }
+});
+
+test('consumer ARM browser preparation uses its explicitly prepared npm instead of the bundled CLI',async()=>{
+  const preparer=await prepare,selected='/owned/npm/package/bin/npm-cli.js';
+  const commands=preparer.browserPreparationCommands('linux-arm64',{directory:'/owned/browser-tools',npmCliPath:selected});
+  assert.equal(commands[0][0],process.execPath);assert.equal(commands[0][1][0],selected);
 });
 
 test('workflow phase evidence records actual outcomes without inventing provider or image review acceptance', () => {
