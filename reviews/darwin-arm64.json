@@ -1,0 +1,1165 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-candidate-review",
+  "repository": "XGENT-ai/skills",
+  "runId": "38907214275",
+  "target": "darwin-arm64",
+  "nonce": "bc5fcfa2f16a499becf1ef8bcdece593",
+  "stateSha256": "b6bcb7a1e4e0a28eb035b0d661bcf59bb5c05c07db91796e6f294c237840e12a",
+  "candidateSha256": "5a63722aaa680993d86007ae629b89b3aecc67d8ff8a35e5429d985039003035",
+  "sourceCommit": "55ba9908221d72863d1ff82b36cca7b406515dd1",
+  "records": {
+    "new-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/diagram.html",
+        "identity": {
+          "sha256": "dd85f53a9243d90ecf2c6bb7043eaf4d9d662843aeff9c527fe13ab88aafd127",
+          "bytes": 943399
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/candidate.json",
+        "identity": {
+          "sha256": "af2adbcf0f7a8ed531236a10489938063dfd33d497085219481a83fe8a7113d7",
+          "bytes": 552
+        }
+      },
+      "configSha256": "a431f5949d4f5146a1c5b7a01d3164606391078499ecc313ef1a2821632b5454",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "7bb75c3e-6206-481c-af51-7652e221badb",
+      "browserReceiptIdentity": {
+        "sha256": "6c9424a3583ca3950c254ba44dc63cc895e49fe3cffb4b6b61a08e52fb4a0107",
+        "bytes": 430211
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "4dbdc9977fd39fad9b9d4659ba53447d634ca688dedf00d3aff8d3f6238e64cd",
+              "bytes": 51907
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 light视口）。本MacARM图的Client与Service主文字、Request右向箭头和标签清楚，与同TGZ两节点一关系一致。左下Frontend 1/Backend 1图例、右下Route/Lens/缩放、右上主题/Classic/Still/Export均完整且不盖住连接；Node index两项完整。候选无说明卡，标题/主图/索引层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "32ff94c1ffee04496aff6c79d25405a7b7f27df212428f8202befdbd5d160132",
+              "bytes": 51733
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 dark视口）。深色图中Client/Service青绿轮廓及白色文字可辨，Request灰箭头向右且端点未被标签盖住，关系与候选一致。图例两类别及各1计数、下方两项索引和全部可见工具条完整；无说明卡遗漏，主图和索引层级分开，未见裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "362c88fce55b0a3f6b239b4707b8f7453cc0adfa802725c0cab529db9f15e2c0",
+              "bytes": 60116
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 light视口）。高屏MacARM原图显示Client→Service的Request，箭头头部和节点文字完整。左下图例和右下导航距离清楚，标题/主图/两项索引层级稳定；无候选说明卡。顶栏与底部控件未遮住节点、标签或关系。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "e5b1afbdff359c9c367cb1dbdd814012ec479c012f668c47e2d7357558d641db",
+              "bytes": 60703
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 dark视口）。深色高屏图中两节点、Request标签和向右箭头清楚，Frontend 1/Backend 1图例及Node index两项均完整；候选无说明卡。标题与控件的文字可辨，右下工具栏没有与图例/关系重叠，未观察到平台额外裁切。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/diagram.html",
+        "identity": {
+          "sha256": "b15e4d2b13984acad50844a6016cd24f6d58080438640f9afb133db849d112e6",
+          "bytes": 959647
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/candidate.json",
+        "identity": {
+          "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+          "bytes": 3793
+        }
+      },
+      "configSha256": "554561b4636080c31ae6a048fe1ce0ed898fdfc98e4325b7a5fc66c16339476d",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "39c23c80-04b2-4bba-9045-563a06da2aed",
+      "browserReceiptIdentity": {
+        "sha256": "82b6fd414092a6ee8bc3e5df7fdefe33d80dbb27356b8c2ea395e64234f57d9b",
+        "bytes": 1782810
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "561a22d45b6a2068470dfaf7c74d9d4d764f82d38f73ee50e6241be4cc084d2c",
+              "bytes": 155882
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1160原PNG（1440×900 light视口）。10节点、AWS Region/sg-api边界、主请求链与S3/SQS/Worker副链可见，三张Edge/Application/Security说明卡及10项索引完整，图例与导航没有互盖。但同TGZ事实规定API→Redis；本图read-through板盖住Redis底部向上箭头，只有verify JWT的红色下箭头在共轴段明显，关系方向歧义。标题和边界层级清楚，其余主要标签可读。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "cf13e32e13078fb47050459b00624e57b52700ab35d16c4666404efecb61670b",
+              "bytes": 166431
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1160原PNG（1440×900 dark视口）。深色MacARM图能看清主链、节点副标题、两层边界和各关系标签，三卡全文/10项索引/图例与工具栏完整。阻断缺陷：API→Redis的read-through向上箭头被Redis下方标签plate盖住，与verify JWT下行末段共轴，不能凭图可靠判断cache方向；这不是主题或控件裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "4fa1506e62d917360a5b0cc5e58d2ac8a872605aa747390d8e380588b9ed2b3c",
+              "bytes": 196585
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1533原PNG（2048×1320 light视口）。高屏原图中主请求链、static入S3、enqueue入SQS及SQS→Worker可追踪，标题、六类图例、三卡和十项索引完整。API/Redis局部仍未能看到read-through向上箭头，标签板贴在Redis底边，而verify JWT入API的红色下箭头明显；相反方向共轴关系存在遮挡/歧义。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "07de2fcf375fd976051069dc92ce06d0b58219163e302ab06708f1a7a5803fc0",
+              "bytes": 215017
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1533原PNG（2048×1320 dark视口）。深色高屏图的主字、副字和两层边界可辨，三说明卡及Node index十项完整，顶栏/右下导航互不盖住内容。read-through标签仍压住API→Redis终点箭头，灰线与verify JWT下行红线共轴，只有向下箭头清楚。此labels/relationship-occlusion缺陷与候选规定的向上cache方向冲突。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "failed",
+      "findings": [
+        "relationship-occlusion / labels：本平台四幅图的read-through标签plate遮住API→Redis的向上终点箭头，且与verify JWT进入API的红色向下线共轴，cache-read-through方向无法可靠从图辨认。"
+      ]
+    },
+    "new-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/diagram.html",
+        "identity": {
+          "sha256": "42a19da69b87f2366d9a54624771fc230077f32b5c8268563aabeab28e3a69e3",
+          "bytes": 942824
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/candidate.json",
+        "identity": {
+          "sha256": "e2421e77955c3b4e9bf225b9f1e50f1cf3d2304d85b2420f3c87b7c2448ccb87",
+          "bytes": 608
+        }
+      },
+      "configSha256": "c44df891617030c21ff144bfd9abb70653360baba93d540391b7e7aa6a31bfab",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "1def3d18-f37b-4bf6-b83a-8bf93b7561e3",
+      "browserReceiptIdentity": {
+        "sha256": "d9bfdb066ae119060c7a0b8078e5db9dd1b875f3015e3657765c6a5d29aff786",
+        "bytes": 455411
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "8e731ea6788c11836e27b42b0af8440df2091208b44cc3ffaf76e807b576b210",
+              "bytes": 52591
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×900原PNG（1440×900 light视口）。Work泳道与Prepare→Complete的Continue主链符合候选；主字、标签及右向箭头完整，标签在箭头上方。标题/泳道/节点层级清楚，无authored说明卡；两项Node index完整。左下Agent logic 2图例、右下Route/Lens/缩放、顶栏控件互不遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "6b98f033a3bdd5e4d99e2984182fa6abd70b9f9ad91f63591e3cc837a2d016fc",
+              "bytes": 54910
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×900原PNG（1440×900 dark视口）。深色图仍能清楚辨认Work、Prepare/Complete和Continue方向，箭头头部未被文字板盖住。图例计数2及两项索引完整，候选没有说明卡；主图与索引层级独立，Classic/Still/Export和底部导航未裁切或压住关系。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "c3552d2fde3953a8ac6159058473adfd744d44d7fc255b45d1441e6e9f0b379e",
+              "bytes": 66521
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1320原PNG（2048×1320 light视口）。高屏图的Work容器完整包住两节点，Continue文字及右箭头清楚，与候选mainPath一致。无说明卡，Node index两项完整；标题、阶段层次、Agent logic 2图例和工具条均可辨，没有箭头或文字遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "428c429e0f1cf709fa8b8dcad75fcd8607a8ff1fa899758882cd097208ac232e",
+              "bytes": 71538
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1320原PNG（2048×1320 dark视口）。深色高屏图的Prepare→Complete主路径可辨，Continue与其箭头分开，节点边框和主字对比清楚。两项Node index和图例完整，无authored卡片遗漏；上下控件和主图分离，未发现平台额外裁切。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/diagram.html",
+        "identity": {
+          "sha256": "0790d0341a56c5cbb62a52c65d3fb3abcda1a7782cef95f3b6d44aca6a4e0162",
+          "bytes": 969242
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/candidate.json",
+        "identity": {
+          "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+          "bytes": 5687
+        }
+      },
+      "configSha256": "f1e43cce35e32e721a5bb25953695f652230f2b94e819d3aa5256395ff8e281a",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "1ba195fe-d5fa-4231-9f94-71d0ee786462",
+      "browserReceiptIdentity": {
+        "sha256": "601c0ab026eebe0ca10f8d5871b5629971a6f5a991d730d4597f19c8d69fa1fb",
+        "bytes": 2175430
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "a8c6da98e34ef908bbcf2c5347413dc6ea58708578c0ceb9411bbd7e14f56c12",
+              "bytes": 413987
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1178原PNG（1440×900 light视口）。四泳道/三阶段/四分组与12节点可见。逐条追踪User→Chat→Planner→Router→Approval→Tool→External→Final，needs approval?/denied及Retry分支、record result回Trace与trace + memory方向均符合候选，标签未压住箭头。两张Compiler Contract/Runtime Semantics卡及12项索引完整，图例和上下工具栏无互盖，层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "0188c035bfe949a064170f7c794cf2ff7e0cb573503d40136b2cb11eca9c53f1",
+              "bytes": 444049
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1178原PNG（1440×900 dark视口）。深色图的plan/needs approval?/denied/record result/trace + memory可读，Approval入Tool、Blocked→Retry、External右外绕入Final及下绕入Trace的箭头清楚。四泳道及各组标题层级保留，两说明卡和12项索引全文可见；Flow/Still/Export与右下导航没有遮挡内容。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "a42990063966594ba1e889a1ee48f1599c81c85c3a8f5a24c4aa075d133d9c44",
+              "bytes": 533259
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1571原PNG（2048×1320 light视口）。高屏原图完整保留12节点、四泳道、三阶段和四组；风险分支与证据回路可沿路径追踪，同候选方向一致。特别确认External→Final左向末端、External→Trace向上末端和Store→Trace右向头部没有被标签遮住。两说明卡、12项索引、7类图例及上下控件完整，层级分明。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "48cfea3fc17485823e805c400b87412899783a6abef6e3ed6f0719fd8b5990e7",
+              "bytes": 583202
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1571原PNG（2048×1320 dark视口）。深色高屏里主链、denied/Retry分支及证据路径全部可辨，必要标签和端点箭头均与候选相符。阶段/泳道/分组层级清楚，Compiler Contract/Runtime Semantics两卡及12项Node index未截断；图例和导航条间隔清楚，未见MacARM额外遮挡。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/diagram.html",
+        "identity": {
+          "sha256": "6c04179f481b235fd74a66bddcbec20647cab552184b4f139499559c31a6bce2",
+          "bytes": 939469
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/candidate.json",
+        "identity": {
+          "sha256": "f3a87f15792cf20071ab01887ccc1761a6528adbee7161453e59f5eaad845d85",
+          "bytes": 583
+        }
+      },
+      "configSha256": "e78d0c85851afca84fadc9a023885f6659769e4d27cc0af39f987cf419ab2c47",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "550edc7b-79af-49dd-947b-8e8c542f8f9f",
+      "browserReceiptIdentity": {
+        "sha256": "1f4c8f087c07df2ec0ce35c24c9fd8fce3e43cca9f81634162e7b5cdcfc8a9c8",
+        "bytes": 474082
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "a0686714f1746200a9c0bfc6878fe62215155bcd18b1c0e24c0159b42f2a8078",
+              "bytes": 50830
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 light视口）。Client/Service、Request右行和Result虚线左行与候选一致，先后顺序正确，两标签及箭头完整且不互盖。标题/participant/消息层级清楚；无说明卡，Node index两项完整。左下return/message图例与右下导航、顶栏控件分开，未见裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "215a8fbdee50f0d8b916c2617e75de019958894218306adc68786144c6a504d0",
+              "bytes": 50631
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 dark视口）。深色MacARM图两participant文字及两条相反方向消息可辨，Request/Result标签没有压住箭头头部。无authored说明卡，索引两项和return/message图例完整；主图层级与顶栏/底部导航可读，没有控件遮挡关系。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "c0090679c4511b51368dfa03c5f205d78a197616adfa693f89ad7020fb9accf1",
+              "bytes": 59304
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 light视口）。高屏原图中Request向Service、Result回Client的方向、标签和生命线均完整，符合候选y顺序。无说明卡，Node index两项完整；图例、导航、标题和工具条层级分离，没有文字或关系端点遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "1913eb5abff0efd30412234bcab16e77ff42676ee2cd239178cfc333602e85f0",
+              "bytes": 59443
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 dark视口）。深色高屏仍能看清Client/Service主字、右向Request和左向Result，线型与图例对应。两项索引、上下控件完整，无说明卡遗漏；标签位于各自连线上方，箭头及生命线未被盖住，未发现平台额外裁切。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/diagram.html",
+        "identity": {
+          "sha256": "2d9364884db586bb94a557b70c365cec3f0785f5a2fef35fec2d0e7d7416259b",
+          "bytes": 965287
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/candidate.json",
+        "identity": {
+          "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+          "bytes": 4370
+        }
+      },
+      "configSha256": "3b27ad012cb562fbbf9a607f420613ecccd6b2d0575ee149c526f8ca878bc320",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "4953a280-e425-4256-8806-5d8ed305f598",
+      "browserReceiptIdentity": {
+        "sha256": "74181e33d892de9403bfe083907eafffa0042721648294fbb65f4dd6a92ed104",
+        "bytes": 1807429
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "62729d7b1bcdfe9106d2ee9c06eeb2f52d7d13e1a57717c7fa26a713c5291b8b",
+              "bytes": 421564
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1269原PNG（1440×900 light视口）。七participant和Accept/Background work/Notify + reconcile三段完整；14消息逐条与候选对应，含202确认、retry、persist、webhook和最终200，所有箭头方向可追踪且不被标签压住。三说明卡各3条内容及7项索引完整；图例与底部导航分离，标题/participant/消息/卡片层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "f3c112753c451c54830c2dde071d8dd02e6d02d63eebd329ca1c61082b181dc4",
+              "bytes": 463536
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1269原PNG（1440×900 dark视口）。深色原长图可读到14消息名称，Provider→Worker返回、Worker→Queue重试、Notifier→Client回调及Store→API完成方向清楚；activation没有盖住端点。三卡全文和7项索引完整，三段标题与生命线层次可辨，Flow/Still/Export及底部导航未遮住消息。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "08db9380a39565fd273a2ba32a1e74046fa4989fe612475d2ff537c8c8cabe82",
+              "bytes": 585669
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1690原PNG（2048×1320 light视口）。高屏MacARM原图完整显示七participant、三分段和14消息；重点核signed webhook左行、persist final state右行、completed/200左行，均符合候选。主副文字和端点箭头可辨；三卡9条内容、7项索引、四类图例及工具栏完整，未见关系遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "42235b496b3dd755f2d305f688c7b3636c1d195876261a591846c754045b4506",
+              "bytes": 648838
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1690原PNG（2048×1320 dark视口）。深色高屏图中14消息均可追踪，三段时序与candidate一致，生命线和activation不妨碍读取方向。Fast Acknowledgement/Bounded Recovery/Two Observation Paths三卡全文、7项索引及顶栏/底部导航完整，标题/主图/说明材料层级明确，未发现额外平台缺陷。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/diagram.html",
+        "identity": {
+          "sha256": "fb84d21538b74b12991ac2f079d1db9e4a7c1584c506913bb64b221027e11ebe",
+          "bytes": 938776
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/candidate.json",
+        "identity": {
+          "sha256": "f773be76cbb4618e8e1209c634209621f7db9707d5dcc9305555e4be46206865",
+          "bytes": 558
+        }
+      },
+      "configSha256": "f93b5fbe147a84c5fc222cda65a6b286b3feb27e9d8fffe4d43cd1fd3e6de70e",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "d302742f-b433-422e-9703-e5d799dce512",
+      "browserReceiptIdentity": {
+        "sha256": "0da6030844d942df56dd2d90dbe9bd6f2d706a79025cd72c2ff8a5d0eda86520",
+        "bytes": 464846
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "a36e146c6464444cf41f3d8e765bd7d8d547f775128e123c89f044ce35f1cab8",
+              "bytes": 57488
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 light视口）。Source/Process阶段与Input store→Transform的records数据流符合候选，阶段标题、主字及右箭头清楚，标签未遮住头部。无说明卡，图下Node index两项完整；data store 1/data flow图例和上下工具条完整分开，主图层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "56e4f3a7cd815174cc9b75b10afa53ffc263c4e81457362f60ea06289dc4d2cf",
+              "bytes": 57853
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 dark视口）。深色图两阶段标题与两节点主字可辨，records灰色右箭头完整且方向正确；标签未压住节点或箭头。无authored卡片，Node index两项、左下图例/计数、右下导航和顶栏控件均完整，未见裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "5fcf12616ed3767c7ed753e22d2799590bf988195d5a986b0cf387dc8a04c9e6",
+              "bytes": 66091
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 light视口）。高屏原图中Source/Process容器与两节点有清楚层级，records文字和右箭头符合候选；无说明卡遗漏，Node index两项完整。图例在左下、导航在右下留有间隔，主标题及工具条没有遮挡主图。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "20c82c5922f759f27bb5f47d109ceb50240844a9934bc75271731311972074ed",
+              "bytes": 66899
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 dark视口）。深色高屏图的Input store→Transform、records和阶段标题仍可读，箭头不被文字板盖住。无候选说明卡，两项索引及图例计数完整；顶栏与底部Route/Lens/缩放可辨且不遮住节点、关系或图例。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/diagram.html",
+        "identity": {
+          "sha256": "a1e6989c26e0498c5c24a9d31fcafa9c608efce181ec993bf0d9203ca0d61c01",
+          "bytes": 969327
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/candidate.json",
+        "identity": {
+          "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+          "bytes": 5618
+        }
+      },
+      "configSha256": "a80507b10ba6e60f69e2d5c1d4672e1a857e3cbbf1eeef0bf160802055f1d779",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "56962283-a901-4588-ab92-5a2641a774f5",
+      "browserReceiptIdentity": {
+        "sha256": "b981128f6cf727d1ef750f992ee6906d49ba9318a533b8935a2cd7efbbb27ebc",
+        "bytes": 2561899
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "3e38a3df0210d56b01fbae141c085cd7f91571ed07bdb3c9a33605f56e4b8e75",
+              "bytes": 186274
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1096原PNG（1440×900 light视口）。同候选五阶段、10节点和10flow逐条核对；每条名称及classification双行完整，PII链、主数据链和派生消费链均可追踪，metrics SQL向上与daily aggregates向下箭头清楚。三卡9条内容、10项索引完整；标题/阶段/节点层级与图例/控件分离，未发现标签盖住终点。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "441f584c4533b7986941b7520af4b1976d146dc195c88572937de7c5ce563b19",
+              "bytes": 194764
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1096原PNG（1440×900 dark视口）。深色MacARM原图仍能辨认十条flow及classification，identity+consent/identity map/restricted join与accepted/normalized路径有清楚样式区别；metrics SQL、daily aggregates、feature vectors终点方向明确。三卡全文换行未截断，10项索引、图例与上下工具条完整，层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "307e23032e0284ec4f209b43364ff5062cbf12a89a0c50f55c1f2e59a922e489",
+              "bytes": 231241
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1415原PNG（2048×1320 light视口）。高屏原图的两source入Edge、Edge→Consent→Vault→Dashboards及Edge→Stream→Warehouse→Features→Model路径和十个双行标签完整，对应候选。各终点箭头可读，尤其上行metrics SQL与下行batch不混淆。三说明卡和十项索引完整，五阶段/主图/卡片层级及工具栏间距清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "30ddfe435dc6cce8a4eed7a370b9b3ea1c2025d6d8139fe4e2c599a4c9fb224c",
+              "bytes": 244384
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1415原PNG（2048×1320 dark视口）。深色高屏图的10节点/五阶段和十个label+classification可辨，所有关系方向能沿独立带标签路径追踪；未观察到箭头被plate或控件遮住。Primary Data Path/Sensitive Boundary/Derived Consumers三卡9条内容、10项索引、五类图例及上下控件完整，没有额外平台裁切。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "c1ad6713a5032c5434d06eda8080687d9e9275839c6fd1b006a75e81f57ae003",
+          "bytes": 939150
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "aa09cfb1cbff35d1d31cef5babd9dd74a6cd8568e92e86d429aeaa74c493dae8",
+          "bytes": 496
+        }
+      },
+      "configSha256": "935fd4b80d68f056c0332fa5934bda6d9444d267d83164801bf28caf89b62dc9",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "547c9152-4cc1-4361-8a1d-944f01dcc789",
+      "browserReceiptIdentity": {
+        "sha256": "7fa4f1d7ebd464328766b02323d61290b14a41788fa05403d7463504210e7039",
+        "bytes": 449870
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "3eb4f0afe3a8054063b92f4ac32ea402c92a6ee5bf794838df294dd22e6530df",
+              "bytes": 53840
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 light视口）。Created→Complete的Finish过渡符合候选，起始圆点、进入箭头、成功终态双边框及右向Finish箭头完整；标签不压住头部。无authored说明卡，Node index两项完整；initial state 1/success 1/final state图例、标题与上下工具栏层级清楚且互不遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "9c76535a42a99b63ee068fff8aa4d9a29fd67fb93aa8c650648f4be9dea119d3",
+              "bytes": 53321
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1005原PNG（1440×900 dark视口）。深色MacARM图Created/Complete主字和绿色Finish右箭头清楚，初态圆点与终态轮廓可区分，未见标签或控件盖住关系。两项Node index、状态图例及计数完整；候选没有说明卡，顶栏和底部导航均未裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "e1fbde577a4ea81e2644396a4be4ff90c151da8dfab5e6a7f2d87ad839728df4",
+              "bytes": 62356
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 light视口）。高屏图完整显示两状态及Finish右行方向，文字、初态点和终态双边框与候选一致。无说明卡，图下索引两项可读；标题/主图/图例/索引层次清楚，右下导航和顶栏控件不遮住过渡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f593ff89ae035a648391471668b871928cb1d7f10dfc00aedab3fc67458e16a2",
+              "bytes": 62338
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1425原PNG（2048×1320 dark视口）。深色高屏图的Created→Complete、Finish及两类状态标记完整可辨，端点箭头未被标签板盖住。候选无说明卡，索引两项和图例计数完整；顶栏/底部导航可读，未观察到关系遮挡或额外平台裁切。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "7d7c45c05310f721ac6b908a5666bb28803847ba2b3231b515a12b5b6e63813f",
+          "bytes": 962665
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+          "bytes": 4274
+        }
+      },
+      "configSha256": "fa816d1cd137a3459d9bee5316817db787808a76f9d86977c203cf90860f5a95",
+      "engine": {
+        "sourceInputSha256": "6ca1da238af5e88722bd36bca6bef0111f10b54c6d1e7e86ec2b1b369b2529c4",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "74a85b55691cd2220a5b3d5e190e034f3b661fa8e0d0c3271fb4afa4dbd1849d",
+          "bytes": 12638752
+        }
+      },
+      "deliveryReceiptId": "701e57eb-eb8d-4645-b452-be6b1702faac",
+      "browserReceiptIdentity": {
+        "sha256": "feea5f4c69202a35f8cd735bc6e0df9985b1cabc603c95cc38920ae59ad2d6ca",
+        "bytes": 1974172
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "8615d51839d5be93d3ae82e09ec622c36c99fcdf314f923cdf2709fcf5e63e08",
+              "bytes": 400809
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1225原PNG（1440×900 light视口）。完整原图逐一核到候选11状态及副标题，5个Release phases顺序清楚；中带保留Approval/health wait/Rollback controller联合标题，Terminal exits独立。6条显式过渡的三列下行箭头均可辨且方向正确，没有文字或控件遮住；三卡各3条内容、11项索引和六类计数图例完整。标题/主图/卡片层级清楚。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "135920607c49e59d90563ec2d862792daeeb7abe2c11c0586e9db73291d1f784",
+              "bytes": 430168
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 1440×1225原PNG（1440×900 dark视口）。深色长图的11状态、三带标题和6个下行箭头完整，Needs Approval→Cancelled、Rolling Back→Failed、Health Paused→Rolled Back与候选一致。Promotion Rail/Wait States/Explicit Endings三卡9条内容及11项索引全文可见；图例与右下导航、顶栏不相交，未见裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "3c81d58afe5ee206686de5cb605d80c9650e229531f10ad2b63d6317022388eb",
+              "bytes": 466169
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1597原PNG（2048×1320 light视口）。高屏MacARM图显示11状态与6显式过渡，Verifying/Ready/Live三列分别进入相应等待/恢复状态再到终点，方向和标签与候选一致。三带层级清楚，三卡9条内容、11项索引和六类图例计数完整；上下控件不遮住状态或端点。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-0fbE0F/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f262b8ee1dbb6679110b56c1df8774a842163a3bec62b1e3586d1a9194bdcfd9",
+              "bytes": 503931
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "已用view_image完整查看本MacARM 2048×1597原PNG（2048×1320 dark视口）。深色高屏图主副状态文字和6个下行箭头可辨，主阶段/等待恢复/终态三带层级清楚；没有观察到关系或文字遮挡。三说明卡、11项索引、状态图例计数与顶栏/底部导航均完整，同候选语义一致，未发现额外MacARM视觉问题。"
+        }
+      ],
+      "reviewer": "Codex /root/diagram_geometry_quality; darwin-arm64 original-PNG review",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    }
+  }
+}
