@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-16T20:39:00+08:00
+- 最近更新：2026-10-16T20:43:16+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：V-16已收口；修CI的Linux网络隔离权限并收集当前Mac消费结果，再取新源码统一同包，完成真实host、图像审核与最终聚合
+- 下一步：V-16已收口；继续3f97df8/run38902242854统一同包，同时保留旧Mac消费诊断；取得新候选后完成真实host、图像审核与最终聚合
 - 当前阻塞：无
-- 代码基线：阶段A98dfb34、M6能力d9e83cd；3c8c3ac/c629a04已推送。run38896333174四Native及assemble成功，三Linux消费uid_map权限失败、两Mac仍消费；产品输入仍6ca1da2，CI定向修复中
+- 代码基线：阶段A98dfb34、M6能力d9e83cd；CI定向修复3f97df8已推独立ref。新run38902242854四Native运行、两Linux早期隔离真实成功；旧c629三Linux消费失败、两Mac仍消费；产品输入仍6ca1da2
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-16T20:39:00+08:00 | V16全量通过；c629a04四Native及唯一装配成功，三Linux消费uid_map失败、两Mac仍消费，定向修CI；host及最终聚合未收口 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04 |
+| M7 | 进行中 | 2026-10-16T20:43:16+08:00 | V16全量通过；新3f97df8四Native运行、两Linux隔离早期smoke成功；旧c629消费失败保留。host及最终同包聚合未收口 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8 |
 
 ## 0. 需求、范围与决策
 
