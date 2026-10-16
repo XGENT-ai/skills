@@ -51,19 +51,19 @@
 - 当前进度：5/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M4 · 连续交付、阅读/导出与原生阶段收口
-- 下一步：按阶段A提交M1–M5实现和记录；M6补真实大回执的严格采集绑定后固定候选输入，进入M7全量回归、同包四平台与真实host验收
+- 下一步：M6补真实大回执的严格采集绑定后固定候选输入，进入M7全量回归、同包四平台与真实host验收
 - 当前阻塞：无
-- 代码基线：dirty@4a65a1525f9ed03c775a0e18935901e1edbb773f
+- 代码基线：阶段A提交98dfb34；M6候选控制器仍有未提交改动
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-10-16T10:28:31+08:00 | 冻结来源、工具与双输入合同；V-1/V-2 通过，布局/浏览器尚未验收 | [M1 记录](PHOENIX-DIAGRAM-P1.records/M1.md) | 待提交 |
-| M2 | 已完成 | 2026-10-16T13:19:48+08:00 | V-3/V-4 通过；两类实际 SVG、独立检查与 pin 修复闭环已有定向证据 | [M2 记录](PHOENIX-DIAGRAM-P1.records/M2.md) | 待提交 |
-| M3 | 已完成 | 2026-10-16T13:19:48+08:00 | V-5 通过；remaining_types 18/18、文本 7/7，已知 CJK/SEA 差异已清 | [M3 记录](PHOENIX-DIAGRAM-P1.records/M3.md) | 待提交 |
-| M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 待提交 |
-| M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 待提交 |
+| M1 | 已完成 | 2026-10-16T10:28:31+08:00 | 冻结来源、工具与双输入合同；V-1/V-2 通过，布局/浏览器尚未验收 | [M1 记录](PHOENIX-DIAGRAM-P1.records/M1.md) | 98dfb34 |
+| M2 | 已完成 | 2026-10-16T13:19:48+08:00 | V-3/V-4 通过；两类实际 SVG、独立检查与 pin 修复闭环已有定向证据 | [M2 记录](PHOENIX-DIAGRAM-P1.records/M2.md) | 98dfb34 |
+| M3 | 已完成 | 2026-10-16T13:19:48+08:00 | V-5 通过；remaining_types 18/18、文本 7/7，已知 CJK/SEA 差异已清 | [M3 记录](PHOENIX-DIAGRAM-P1.records/M3.md) | 98dfb34 |
+| M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
+| M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 进行中 | 2026-10-16T17:19:39+08:00 | release5与共享dist实物校验通过，资源28绿、Reader/聚合接线53×两版绿；V12余项及同clean HEAD候选待收口 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | — |
 
 ## 0. 需求、范围与决策
