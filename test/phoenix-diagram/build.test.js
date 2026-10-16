@@ -193,6 +193,17 @@ test('Cargo JSON selects exactly the reported native diagram binary and its own 
   assert.throws(() => api.selectCompilerArtifact('not JSON\n', workspace), /JSON/);
 });
 
+test('maintained distribution bundle matches the source skill before native builds', async () => {
+  const bundle = (await moduleReady).bundleFiles(root), directory = path.join(root, 'dist/phoenix-diagram/bundle');
+  for (const [name, bytes] of bundle.files) {
+    const file = path.join(directory, name), stat = fs.lstatSync(file);
+    assert.ok(stat.isFile() && !stat.isSymbolicLink(), `Distribution bundle is not a regular file: ${name}`);
+    assert.ok(fs.readFileSync(file).equals(bytes), `Distribution bundle differs from the source skill: ${name}`);
+    assert.equal(stat.mode & 0o777, bundle.manifest.files.find(row => row.path === name).mode, `Distribution bundle mode differs: ${name}`);
+  }
+  assert.ok(fs.readFileSync(path.join(directory, 'manifest.json')).equals(bundle.bytes), 'Distribution bundle manifest differs from the source skill');
+});
+
 test('bundle copies only the independent skill allowlist and leaves ENGINE out of manifest files', async t => {
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');

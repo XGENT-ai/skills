@@ -256,12 +256,13 @@ function providerEvidence(entry,cohort,tarInventory) {
       const summary=store.json(evidence.summary),reply=actualReply(capture,evidence.pdResult,evidence.reply,store);header(summary,'finalize');need(reply.deliveryReceiptId===summary.deliveryReceiptId && same(reply.stages,summary.stages) && summary.automatedStatus==='pass' && summary.visualReview?.status==='required-pending' && summary.deliveryStatus==='incomplete' && evidence.quote?.trim() && response.includes(evidence.quote),'Visual-pending case was incorrectly called complete');
     }
   }
-  return{provider:entry.provider,status:'pass',sessionIds:[...sessions.keys()],scenarioIds:record.scenarios.map(row=>row.id),scope:'Actual native JSONL/tool reads and owned candidate artifacts, with explicit per-scenario human semantic observations'};
+  return{provider:entry.provider,status:'pass',sessionIds:[...sessions.keys()],scenarioIds:record.scenarios.map(row=>row.id),scope:'Actual native JSONL/tool reads and owned candidate artifacts, with explicit per-scenario recorded reviewer semantic observations'};
 }
 
 function liveApi(endpoint) {
   need(process.env.GITHUB_TOKEN,'A read-only GITHUB_TOKEN with actions:read is required');need(/^\/repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/actions\/(?:runs\/\d+|jobs\/\d+|artifacts\/\d+)$/.test(endpoint),'Unexpected read-only Actions API endpoint');
-  const result=spawnSync('gh',['api','--hostname','github.com','--method','GET','-H','Accept: application/vnd.github+json',endpoint],{encoding:'utf8',maxBuffer:16*1024*1024,timeout:30000,env:{HOME:process.env.HOME,PATH:process.env.PATH,GH_TOKEN:process.env.GITHUB_TOKEN,GH_HOST:'github.com',GH_PROMPT_DISABLED:'1'}});need(!result.error && result.status===0,`Actual Actions provenance could not be read: ${result.error?.message || result.stderr}`);return JSON.parse(result.stdout);
+  const env={HOME:process.env.HOME,PATH:process.env.PATH,GH_TOKEN:process.env.GITHUB_TOKEN,GH_HOST:'github.com',GH_PROMPT_DISABLED:'1'};for(const name of ['HTTP_PROXY','HTTPS_PROXY','NO_PROXY'])if(process.env[name]!==undefined)env[name]=process.env[name];
+  const result=spawnSync('gh',['api','--hostname','github.com','--method','GET','-H','Accept: application/vnd.github+json',endpoint],{encoding:'utf8',maxBuffer:16*1024*1024,timeout:30000,env});need(!result.error && result.status===0,`Actual Actions provenance could not be read: ${result.error?.message || result.stderr}`);return JSON.parse(result.stdout);
 }
 function candidateArtifact(entry,cohort,api,name) {
   need(entry.archive.identity.sha256===entry.digest,'Actions input archive digest differs');const metadata=api(`/repos/${cohort.repository}/actions/artifacts/${entry.id}`);need(metadata.id===entry.id && metadata.name===name && metadata.digest===`sha256:${entry.digest}` && metadata.expired===false && String(metadata.workflow_run?.id)===String(cohort.runId) && metadata.workflow_run.head_sha===cohort.source.commit,'Actual candidate/harness artifact provenance differs');

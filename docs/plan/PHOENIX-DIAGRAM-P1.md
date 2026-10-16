@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-16T23:50:06+08:00
+- 最近更新：2026-10-17T00:31:15+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交定向修复并启动新同源候选；完成四平台实际消费/看图及Kimi两host全场景，新skill事实停步规则须fresh角色验证
+- 下一步：提交dist副本同步修复并取得新同源候选，完成四平台消费/看图及Kimi两host全场景；新bundle先验证三类缺事实停步
 - 当前阻塞：无
-- 代码基线：阶段A98dfb34、M6能力d9e83cd；55/run38907214275已失败封历史。本次定向修复十Rust组96pass/2原ignored、严格fmt/clippy0、npm400pass/22skip；两份真实native四图复验修复截图/方向，source input5178ad1/bundle077d49c待新CI四平台同源装配，未计M7完成
+- 代码基线：阶段A98dfb34、M6能力d9e83cd；2c133da/run38927792779四Native成功，pack因dist SKILL副本滞后失败、消费者skip。本地已仅同步dist SKILL/manifest并补实际仓库回归，双Node影响组46pass/1原skip、完整npm401pass/22skip及Python四组通过；真实native共享160文件预检通过。input5178ad1/bundle077d49c未变，新同包仍待验
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-16T23:50:06+08:00 | 55失败封历史；截图/保pins方向修复已真实native复验，Intel等待/失败证据及provider协议局部红绿；缺事实停步规则加强，待新同源四平台与fresh角色全场景 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da |
+| M7 | 进行中 | 2026-10-17T00:31:15+08:00 | 2c四Native成功但pack拒绝滞后dist副本；同步两文件及先红后绿回归已完成、npm401pass/22skip，新clean CI与同包消费/两host22类待收口 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da |
 
 ## 0. 需求、范围与决策
 
