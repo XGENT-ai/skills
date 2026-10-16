@@ -1,0 +1,3 @@
+interface:
+  display_name: "Use Workflow Service"
+  short_description: "帮助其他 App 和服务经 Portal 接入工作流，正确处理鉴权、事件、编排与执行结果"
