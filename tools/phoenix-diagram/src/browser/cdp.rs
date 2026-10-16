@@ -542,8 +542,17 @@ impl Browser {
     }
 
     pub fn screenshot(&mut self, viewport: Viewport, full_page: bool) -> Result<String> {
+        const STABLE_LAYOUT: &str = r#"(async function () {
+          await document.fonts.ready;
+          await window.PhoenixDiagram.layoutStability.whenStable();
+          await new Promise(function (resolve) {
+            requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+          });
+          return true;
+        })()"#;
         let mut params = json!({"format":"png","fromSurface":true,"captureBeyondViewport":false});
         if full_page {
+            self.evaluate(STABLE_LAYOUT)?;
             let layout = self.send_page("Page.getLayoutMetrics", json!({}))?;
             let height = layout
                 .pointer("/cssContentSize/height")
@@ -561,7 +570,45 @@ impl Browser {
             params["clip"] =
                 json!({"x":0,"y":0,"width":viewport.width,"height":height.ceil(),"scale":1});
         }
-        let result = self.send_page("Page.captureScreenshot", params)?;
+        let result = if full_page {
+            // Chrome's full-page capture briefly emulates a 1x1 view as a
+            // scrollbar workaround. Keep that internal resize from clearing
+            // the Reader's already settled rail while its pixels are captured.
+            // The owned page reached this point through the executing probe;
+            // restore script execution even if suspension or capture fails.
+            let captured = self
+                .send_page(
+                    "Emulation.setScriptExecutionDisabled",
+                    json!({"value":true}),
+                )
+                .and_then(|_| self.send_page("Page.captureScreenshot", params));
+            let restored = self
+                .send_page(
+                    "Emulation.setScriptExecutionDisabled",
+                    json!({"value":false}),
+                )
+                .and_then(|_| self.evaluate(STABLE_LAYOUT));
+            match (captured, restored) {
+                (Ok(image), Ok(_)) => Ok(image),
+                (Err(error), Ok(_)) | (Ok(_), Err(error)) => Err(error),
+                (Err(capture), Err(mut restoration)) => {
+                    let restoration_resources = restoration.resources.take();
+                    restoration.resources = Some(Box::new(json!({
+                        "restoration":restoration_resources,
+                        "whileHandling":{
+                            "code":capture.code,
+                            "phase":capture.stage,
+                            "message":capture.message,
+                            "retainedPath":capture.retained,
+                            "resources":capture.resources
+                        }
+                    })));
+                    Err(restoration)
+                }
+            }
+        } else {
+            self.send_page("Page.captureScreenshot", params)
+        }?;
         required_string(&result, "data", "Page.captureScreenshot")
     }
 

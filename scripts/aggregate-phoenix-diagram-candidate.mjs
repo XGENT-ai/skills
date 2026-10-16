@@ -139,7 +139,11 @@ function pairPayload(call,result,toolUseId) {
   const right=eventPayload(result);
   if(eventPayload(call).type==='function_call') {
     if(right?.type!=='function_call_output' || right.call_id!==selected.id)return null;
-    let output=right.output,exitCode;try{const wrapped=JSON.parse(output);if(object(wrapped) && typeof wrapped.output==='string'){output=wrapped.output;exitCode=wrapped.exit_code??wrapped.exitCode;}}catch{}
+    let output=right.output,exitCode;
+    if(typeof output==='string' && output.startsWith('Chunk ID:')) {
+      const wrapped=/^Chunk ID: [a-f0-9]{6}\nWall time: \d+(?:\.\d+)? seconds\nProcess exited with code (\d{1,3})\nOriginal token count: \d+\nOutput:\n([\s\S]*)$/.exec(output);
+      need(wrapped && Number(wrapped[1])<=255,'Unsupported native process exit wrapper');exitCode=Number(wrapped[1]);output=wrapped[2];
+    } else try{const wrapped=JSON.parse(output);if(object(wrapped) && typeof wrapped.output==='string'){output=wrapped.output;exitCode=wrapped.exit_code??wrapped.exitCode;}}catch{}
     return{...selected,output:text(output),exitCode,error:typeof exitCode==='number' && exitCode!==0};
   }
   if(result.type!=='item.completed' || right?.id!==selected.id || !['command_execution','mcp_tool_call'].includes(right.type))return null;
@@ -179,7 +183,7 @@ function capturedReply(capture,proof,bytesFor) {
   need(same(identity(bytesFor(collector.script)),capture.collectorIdentity) && same(collector.script.identity,capture.collectorIdentity),'Collector template differs from authenticated harness');
   const words=literalWords(commandOf(pair));need(words[0]===collector.nodePath && words[1]===collector.script.path,'Wrong collector producer or Node entry');
   const options=parseCaptureArgs(words.slice(2));need(dto.schemaVersion===1 && dto.tool==='phoenix-diagram' && same(dto.collector?.identity,capture.collectorIdentity) && dto.collector.path===collector.script.path && dto.node?.path===collector.nodePath && /^v\d+\./.test(dto.node.version || '') && dto.program===options.program && dto.cwd===options.cwd && same(dto.argv,options.argv) && dto.stdout?.path===options.stdout && dto.stderr?.path===options.stderr,'Collector command/argv/file binding differs');
-  need(Number.isInteger(dto.exitCode) && dto.exitCode>=0 && dto.exitCode<=255 && dto.signal===null && (pair.exitCode===undefined || pair.exitCode===dto.exitCode) && (pair.errorFlag===undefined || pair.errorFlag===(dto.exitCode!==0)),'Native capture exit or signal is inconsistent');
+  need(Number.isInteger(dto.exitCode) && dto.exitCode>=0 && dto.exitCode<=255 && dto.signal===null && (pair.exitCode===undefined?capture.provider==='claude-code':pair.exitCode===dto.exitCode) && (pair.errorFlag===undefined || pair.errorFlag===(dto.exitCode!==0)),'Native capture exit or signal is inconsistent');
   need(dto.cwd===capture.capture.cwd && dto.installedReceipt?.path===capture.session.installedReceipt.path && same(dto.installedReceipt.identity,capture.session.installedReceipt.identity),'Collector installation binding differs');
   const installed=JSON.parse(digest(bytesFor(dto.installedReceipt),dto.installedReceipt.identity,'Installed receipt')),relative=path.posix.relative(dto.cwd,dto.program),owned=installed.ownership?.find(value=>value.path===relative);
   need(/^\.(?:agents|claude)\/skills\/phoenix-diagram\/scripts\/phoenix-diagram$/.test(relative) && dto.launcher?.path===dto.program && owned && owned.identity.sha256===dto.launcher.identity.sha256 && owned.identity.bytes===dto.launcher.identity.bytes,'Collector did not execute the owned installed launcher');
@@ -189,21 +193,24 @@ function capturedReply(capture,proof,bytesFor) {
   return{dto,pair};
 }
 function anchor(bytes,value) {need(Number.isSafeInteger(value?.offset) && Number.isSafeInteger(value.length) && value.offset>=0 && value.length>0 && value.offset+value.length<=bytes.length,'Native transcript event anchor is missing');const selected=bytes.subarray(value.offset,value.offset+value.length);need(sha(selected)===value.sha256 && (value.offset===0 || bytes[value.offset-1]===10) && (value.offset+value.length===bytes.length || bytes[value.offset+value.length-1]===10),'Native transcript event byte anchor differs');return JSON.parse(selected.toString('utf8'));}
-export function checkProviderCapture(session,bytesFor,provider=session?.provider,{collectorIdentity,tarInventory}={}) {
-  need(['claude-code','codex'].includes(provider) && session?.capture && session.transcript && session.version && session.installedReceipt && session.loadedReads?.length>=2 && session.pdCall,'Real provider capture/session/transcript evidence is missing');
+export function checkProviderCapture(session,bytesFor,provider=session?.provider,{collectorIdentity,tarInventory,scenarioRows}={}) {
+  const clarificationOnly=Array.isArray(scenarioRows) && scenarioRows.length>0 && scenarioRows.every(row=>row.sessionId===session?.id && PROVIDER_SCENARIOS.some(required=>required.id===row.id && required.kind==='clarification'));
+  need(['claude-code','codex'].includes(provider) && session?.capture && session.transcript && session.version && session.installedReceipt && session.loadedReads?.length>=(clarificationOnly?1:2) && (clarificationOnly || session.pdCall),'Real provider capture/session/transcript evidence is missing');
   const capture=JSON.parse(bytesFor(session.capture)),version=JSON.parse(bytesFor(session.version)),raw=bytesFor(session.transcript),events=raw.toString('utf8').split('\n').filter(Boolean).map(line=>JSON.parse(line));
   const formats=provider==='claude-code'?['claude-stream-json']:['codex-exec-json','codex-session-json'];need(formats.includes(session.format),'Unknown native provider transcript format');need(session.format==='codex-session-json'?capture.nativeSessionFile===session.transcript.path || capture.transcriptSource?.path===capture.nativeSessionFile && same(capture.transcriptSource.identity,session.transcript.identity):same(capture.stdout,session.transcript),'Provider transcript is not bound to the actual stdout/native session file');
   need(capture.exitCode===0 && version.exitCode===0 && typeof capture.program==='string' && capture.program.trim() && capture.program===version.program && Array.isArray(capture.argv) && capture.argv.every(value=>typeof value==='string') && !capture.argv.some(value=>value==='resume' || (provider==='claude-code'?/^(?:--resume|--continue|-r|-c)(?:=|$)/:/^(?:--resume|--continue)(?:=|$)/).test(value)) && version.argv?.includes('--version'),'Provider CLI/version capture is missing or resumed');need((provider==='codex'?/codex/i:/claude/i).test(version.stdout || ''),'Observed provider version does not identify the requested client');
   const start=provider==='claude-code'?events.find(event=>event.type==='system' && event.subtype==='init'):events.find(event=>event.type==='thread.started' || event.type==='session_meta');const id=start?.session_id || start?.thread_id || start?.payload?.id;
   need(start && typeof session.id==='string' && session.id.trim() && id===session.id && events.some(event=>provider==='claude-code'?event.type==='result' && event.is_error===false && event.session_id===session.id:event.type==='turn.completed' || event.type==='event_msg' && event.payload?.type==='task_complete'),'Real native provider session start/completion is missing');
   need(capture.cwd && typeof capture.cwd==='string' && capture.cwd.startsWith('/') && !events.filter(toolEvent).some(event=>/\/renderers\/|\/tools\/phoenix-diagram\/src\/|\/test\/phoenix-diagram\//.test(toolCallText(event))),'Provider accessed implementation/renderer/test material');
-  const captured={session,raw,events,capture,version,collectorIdentity,tarInventory};
+  const captured={session,provider,raw,events,capture,version,collectorIdentity,tarInventory};
   if(session.collector)need(collectorIdentity && same(session.collector.script?.identity,collectorIdentity) && same(identity(bytesFor(session.collector.script)),collectorIdentity) && path.isAbsolute(session.collector.nodePath) && path.basename(session.collector.nodePath)==='node','Collector template lacks authenticated harness identity or an explicit Node entry');
   for(const read of session.loadedReads){const pair=proofPair(captured,read),source=bytesFor(read.file).toString('utf8');need(!pair.error && (pair.exitCode===undefined || pair.exitCode===0) && text(pair.input).includes(read.file.path) && typeof read.quote==='string' && read.quote.length>=40 && source.includes(read.quote) && pair.output.includes(read.quote),'Installed skill/reference tool call/result pair did not actually read the owned file');}
-  need(session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/SKILL.md$/.test(read.file.path)) && session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/references\/[^/]+\.md$/.test(read.file.path)),'Actual installed SKILL and reference reads are both required');
-  const pair=proofPair(captured,session.pdCall);
-  if(pair.output.includes('phoenix-diagram-stdio-capture')){const {dto}=capturedReply(captured,session.pdCall,bytesFor);need(JSON.parse(bytesFor(dto.stdout)).tool==='phoenix-diagram','Collector stdout is not a PD reply');}
-  else {directPd(pair,session,raw);need(!pair.error && /"tool"\s*:\s*"phoenix-diagram"/.test(pair.output),'Installed PD entry execution tool call/result pair is missing');}
+  need(session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/SKILL.md$/.test(read.file.path)) && (clarificationOnly || session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/references\/[^/]+\.md$/.test(read.file.path))),'Actual installed SKILL and required reference reads are missing');
+  if(session.pdCall) {
+    const pair=proofPair(captured,session.pdCall);
+    if(pair.output.includes('phoenix-diagram-stdio-capture')){const {dto}=capturedReply(captured,session.pdCall,bytesFor);need(JSON.parse(bytesFor(dto.stdout)).tool==='phoenix-diagram','Collector stdout is not a PD reply');}
+    else {directPd(pair,session,raw);need(!pair.error && /"tool"\s*:\s*"phoenix-diagram"/.test(pair.output),'Installed PD entry execution tool call/result pair is missing');}
+  }
   return captured;
 }
 export function checkProviderReply(capture,proof,reference,bytesFor,{outcome='success'}={}) {
@@ -212,8 +219,9 @@ export function checkProviderReply(capture,proof,reference,bytesFor,{outcome='su
     const {dto}=capturedReply(capture,proof,bytesFor);need(dto.stdout.path===reference.path && same(dto.stdout.identity,reference.identity),'Collector stdout is not this original reply');argv=dto.argv;exitCode=dto.exitCode;
   } else {argv=directPd(pair,capture.session,capture.raw).argv;need(pair.output.includes(bytes.toString('utf8').trim()),'Actual PD execution/result does not contain this exact CLI reply');exitCode=pair.exitCode??(pair.error?1:0);}
   need(PD_COMMANDS.includes(argv[0]) && receipt.command===argv[0],'Actual PD argv names a different reply command');
-  if(['validate','deliver','finalize'].includes(argv[0]))need(TYPES.includes(argv[1]) && (!receipt.candidate || argv[2]===receipt.candidate.path) && (!['deliver','finalize'].includes(argv[0]) || !receipt.artifact?.path || argv[3]===receipt.artifact.path),'Actual PD argv/input/output differs from its reply');
-  else if(['check','browser-check','visual-check','review-record'].includes(argv[0]))need(!receipt.artifact?.path || argv[1]===receipt.artifact.path,'Actual PD argv names another artifact');
+  const namesPath=(argument,expected)=>typeof argument==='string' && path.posix.resolve(capture.capture.cwd,argument)===expected;
+  if(['validate','deliver','finalize'].includes(argv[0]))need(TYPES.includes(argv[1]) && (!receipt.candidate || namesPath(argv[2],receipt.candidate.path)) && (!['deliver','finalize'].includes(argv[0]) || !receipt.artifact?.path || namesPath(argv[3],receipt.artifact.path)),'Actual PD argv/input/output differs from its reply');
+  else if(['check','browser-check','visual-check','review-record'].includes(argv[0]))need(!receipt.artifact?.path || namesPath(argv[1],receipt.artifact.path),'Actual PD argv names another artifact');
   need(outcome==='failure'?exitCode!==0 && receipt.status!=='pass':outcome==='success' && exitCode===0 && !pair.error && receipt.status==='pass','Native process exit does not match the expected success/failure outcome');return receipt;
 }
 function actualReply(capture,proof,reference,store,outcome='success') {return checkProviderReply(capture,proof,reference,value=>store.bytes(value),{outcome});}
@@ -223,7 +231,8 @@ function providerEvidence(entry,cohort,tarInventory) {
   const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot),record=store.relativeJson(entry.recordMember);
   need(record.schemaVersion===1 && record.kind==='phoenix-diagram-provider-acceptance' && record.provider===entry.provider && record.repository===cohort.repository && String(record.runId)===String(cohort.runId) && Number(record.runAttempt)===cohort.runAttempt && record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source),'Provider candidate/source/run binding differs');checkProviderCoverage(record.scenarios);need(record.sessions?.length>0 && new Set(record.sessions.map(row=>row.id)).size===record.sessions.length,'Real fresh provider sessions are missing/duplicated');
   const sessions=new Map();for(const session of record.sessions) {
-    const captured=checkProviderCapture(session,reference=>store.bytes(reference),entry.provider,{collectorIdentity:cohort.collectorIdentity,tarInventory}),installed=store.json(session.installedReceipt);
+    const scenarioRows=record.scenarios.filter(row=>row.sessionId===session.id);
+    const captured=checkProviderCapture(session,reference=>store.bytes(reference),entry.provider,{collectorIdentity:cohort.collectorIdentity,tarInventory,scenarioRows}),installed=store.json(session.installedReceipt);
     need(installed.schemaVersion===1 && installed.tool==='phoenix-diagram' && installed.npmPackageVersion===cohort.npmPackageVersion && installed.engine?.sourceInputSha256===cohort.source.inputSha256 && Object.values(cohort.engines).some(engine=>same(installed.engine.binary,{sha256:engine.sha256,bytes:engine.size})) && installed.bundleManifestSha256===cohort.bundleSha256 && installed.engineManifestSha256===cohort.versionSha256,'Actual project installation receipt differs from this npm candidate');
     for(const read of session.loadedReads){const suffix=/\/skills\/phoenix-diagram\/(.+)$/.exec(read.file.path)?.[1],expected=tarInventory.get(`skills/phoenix-diagram/${suffix}`);need(expected && same(identity(store.bytes(read.file)),{sha256:expected.sha256,bytes:expected.size}) && installed.ownership?.some(owned=>read.file.path.endsWith(owned.path) && owned.identity.sha256===expected.sha256 && owned.identity.bytes===expected.size),'Loaded installed resource is not owned by this candidate');}
     sessions.set(session.id,{session,...captured,installedEngine:installed.engine});

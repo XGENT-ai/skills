@@ -88,17 +88,85 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   const candidate={path:project+'/candidate.json',identity:identity(Buffer.from('{}'))},artifact={path:project+'/diagram.html',identity:identity(Buffer.from('inert'))},receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command,status,diagnostics:[],candidate,artifact,payload:'x'.repeat(227144)};
   const reply=put(directory+'/stdout.json',JSON.stringify(receipt)+'\n'),stderr=put(directory+'/stderr.txt',''),argv=command==='finalize'?['finalize','workflow',candidate.path,artifact.path,'--json']:['validate','workflow',candidate.path,'--json'];
   const dto={schemaVersion:1,kind:'phoenix-diagram-stdio-capture',tool:'phoenix-diagram',collector,node:{path:nodePath,version:process.version},program,argv,cwd:project,installedReceipt,launcher,exitCode,signal:null,stdout:reply,stderr};
-  const tokens=[nodePath,script,'--program',program,'--cwd',project,'--stdout',reply.path,'--stderr',stderr.path,'--',...argv],cmd=tokens.map(value=>`'${value}'`).join(' ');
+  const commandFor=argv=>[nodePath,script,'--program',program,'--cwd',dto.cwd,'--stdout',reply.path,'--stderr',stderr.path,'--',...argv].map(value=>`'${value}'`).join(' '),cmd=commandFor(argv);
   const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command}};
-  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:cmd,aggregated_output:output,exit_code:exit,status:'completed'}};
+  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:cmd,aggregated_output:output,exit_code:exit,status:'completed'}};
   const skill=put(project+'/.agents/skills/phoenix-diagram/SKILL.md',quote),reference=put(project+'/.agents/skills/phoenix-diagram/references/delivery-contract.md',quote),rows=[provider==='claude-code'?{type:'system',subtype:'init',session_id:'fixture-session'}:{type:'thread.started',thread_id:'fixture-session'},call('read-skill',`cat '${skill.path}'`),result('read-skill',quote),call('read-ref',`cat '${reference.path}'`),result('read-ref',quote),call('pd',cmd),result('pd',JSON.stringify(dto),exitCode),provider==='claude-code'?{type:'result',session_id:'fixture-session',is_error:false}:{type:'turn.completed'}];
-  function build() {
-    const lines=rows.map(row=>Buffer.from(JSON.stringify(row)+'\n')),raw=Buffer.concat(lines),anchors=lines.map((line,index)=>({offset:lines.slice(0,index).reduce((sum,row)=>sum+row.length,0),length:line.length,sha256:identity(line).sha256})),transcript=put(directory+'/native.jsonl',raw),version=put(directory+'/version.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:['--version'],exitCode:0,stdout:provider==='codex'?'codex-cli fixture':'Claude Code fixture'})),capture=put(directory+'/capture.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:provider==='codex'?['exec','--json']:['--output-format','stream-json'],cwd:project,exitCode:0,stdout:transcript}));
-    const session={id:'fixture-session',provider,format:provider==='codex'?'codex-exec-json':'claude-stream-json',capture,version,transcript,installedReceipt,collector:{script:collector,nodePath},loadedReads:[{file:skill,quote,call:anchors[1],result:anchors[2]},{file:reference,quote,call:anchors[3],result:anchors[4]}],pdCall:{call:anchors[5],result:anchors[6]}};
+  function build({skillOnly=false,withoutPd=false}={}) {
+    const selected=rows.filter((_,index)=>!(skillOnly && [3,4].includes(index)) && !(withoutPd && [5,6].includes(index)));
+    const lines=selected.map(row=>Buffer.from(JSON.stringify(row)+'\n')),raw=Buffer.concat(lines),anchors=lines.map((line,index)=>({offset:lines.slice(0,index).reduce((sum,row)=>sum+row.length,0),length:line.length,sha256:identity(line).sha256})),transcript=put(directory+'/native.jsonl',raw),version=put(directory+'/version.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:['--version'],exitCode:0,stdout:provider==='codex'?'codex-cli fixture':'Claude Code fixture'})),capture=put(directory+'/capture.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:provider==='codex'?['exec','--json']:['--output-format','stream-json'],cwd:project,exitCode:0,stdout:transcript})),at=index=>anchors[selected.indexOf(rows[index])];
+    const session={id:'fixture-session',provider,format:provider==='codex'?'codex-exec-json':'claude-stream-json',capture,version,transcript,installedReceipt,collector:{script:collector,nodePath},loadedReads:[{file:skill,quote,call:at(1),result:at(2)},...(!skillOnly?[{file:reference,quote,call:at(3),result:at(4)}]:[])],pdCall:withoutPd?undefined:{call:at(5),result:at(6)}};
     return{session,proof:session.pdCall,read:ref=>{const bytes=files.get(ref.path);assert.ok(bytes,'fixture file exists: '+ref.path);return bytes;}};
   }
-  return{build,rows,dto,receipt,reply,files,templateIdentity:identity(template),collector,cmd,put,replaceResult(value,exit=0){rows[6]=result('pd',JSON.stringify(value),exit);}};
+  return{build,rows,dto,receipt,reply,files,templateIdentity:identity(template),collector,cmd,put,replaceArgv(argv){dto.argv=argv;rows[5]=call('pd',commandFor(argv));},replaceResult(value,exit=0){rows[6]=result('pd',JSON.stringify(value),exit);}};
 }
+test('clarification-only session scope permits real SKILL reads with a doctor or no PD call',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const provider of ['claude-code','codex'])for(const withDoctor of [false,true]){
+    const f=stdioProviderFixture({provider,command:'doctor'});f.replaceArgv(['doctor','--json']);f.replaceResult(f.dto);
+    const b=f.build({skillOnly:true,withoutPd:!withDoctor});if(!withDoctor)delete b.session.collector;
+    const scenarioRows=['missing-date','missing-amount','missing-condition'].map(id=>({id,sessionId:b.session.id}));
+    assert.equal(checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows}).capture.exitCode,0);
+  }
+});
+test('clarification-only scope cannot come from session claims, empty or mixed scenario rows',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const provider of ['claude-code','codex'])for(const scenarioRows of [undefined,[],[{id:'missing-date',sessionId:'other'}],[{id:'unknown',sessionId:'fixture-session',kind:'clarification'}],...['intent-workflow','repairable-diagnostic','stalled-repair','browser-failed','visual-pending'].map(id=>[{id:'missing-date',sessionId:'fixture-session'},{id,sessionId:'fixture-session',kind:'clarification'}])]){
+    const f=stdioProviderFixture({provider}),b=f.build({skillOnly:true,withoutPd:true});b.session.clarificationOnly=true;b.session.scenarios=[{id:'missing-date',kind:'clarification'}];
+    assert.throws(()=>checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows}),/capture|evidence|reference|PD/i);
+  }
+});
+test('clarification-only scope still requires a real SKILL read and strict optional PD evidence',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const provider of ['claude-code','codex'])for(const fault of ['missing-skill-proof','different-read','doctor-exit']){
+    const f=stdioProviderFixture({provider,command:'doctor'});f.replaceArgv(['doctor','--json']);
+    if(fault==='different-read'){if(provider==='claude-code')f.rows[1].message.content[0].input.command="cat '/different/NOT-SKILL.md'";else f.rows[1].payload.arguments=JSON.stringify({cmd:"cat '/different/NOT-SKILL.md'"});}
+    if(fault==='doctor-exit')f.dto.exitCode=1;f.replaceResult(f.dto);
+    const b=f.build({skillOnly:fault!=='missing-skill-proof',withoutPd:fault!=='doctor-exit'});if(fault==='missing-skill-proof')b.session.loadedReads=b.session.loadedReads.slice(1);
+    assert.throws(()=>checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'missing-date',sessionId:b.session.id}]}),/capture|evidence|skill|read|exit|inconsistent/i,provider+' '+fault);
+  }
+});
+test('provider reply paths resolve exact relative argv from the authenticated capture cwd',async()=>{
+  const {checkProviderCapture,checkProviderReply}=await api();
+  for(const provider of ['claude-code','codex'])for(const command of ['validate','deliver','finalize','check','browser-check','visual-check','review-record']){
+    const f=stdioProviderFixture({provider,command}),argv=['validate','deliver','finalize'].includes(command)?[command,'workflow','candidate.json',...(command==='validate'?[]:['./diagram.html']),'--json']:[command,'diagram.html','--json'];
+    f.replaceArgv(argv);f.replaceResult(f.dto);const b=f.build(),capture=checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity});
+    assert.deepEqual(checkProviderReply(capture,b.proof,f.reply,b.read),f.receipt,provider+' '+command);
+  }
+});
+test('relative provider paths reject other projects, wrong argv slots and a different collector cwd',async()=>{
+  const {checkProviderCapture,checkProviderReply}=await api();
+  for(const provider of ['claude-code','codex'])for(const fault of ['parent-input','parent-output','absolute-other-project','swapped-slots','collector-cwd']){
+    const f=stdioProviderFixture({provider}),argv=['finalize','workflow','candidate.json','diagram.html','--json'];
+    if(fault==='parent-input')argv[2]='../other-project/candidate.json';
+    else if(fault==='parent-output')argv[3]='../other-project/diagram.html';
+    else if(fault==='absolute-other-project')argv[2]='/fixture/provider/other-project/candidate.json';
+    else if(fault==='swapped-slots')[argv[2],argv[3]]=[argv[3],argv[2]];
+    else f.dto.cwd='/fixture/provider/other-project';
+    f.replaceArgv(argv);f.replaceResult(f.dto);const b=f.build();
+    assert.throws(()=>{const capture=checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity});checkProviderReply(capture,b.proof,f.reply,b.read);},/argv|input|output|artifact|installation|binding/i,provider+' '+fault);
+  }
+});
+test('Codex typed outputs bind the observed native process wrapper exit to the collector',async()=>{
+  const {checkProviderCapture,checkProviderReply}=await api();
+  for(const exitCode of [0,1]){
+    const f=stdioProviderFixture({shape:'function-native-output',exitCode,status:exitCode?'failed':'pass',command:'validate'}),b=f.build(),capture=checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity});
+    assert.deepEqual(checkProviderReply(capture,b.proof,f.reply,b.read,{outcome:exitCode?'failure':'success'}),f.receipt);
+    if(exitCode)assert.throws(()=>checkProviderReply(capture,b.proof,f.reply,b.read),/exit|success|failure/i);
+  }
+  for(const [nativeExit,dtoExit] of [[1,0],[0,1]]){
+    const f=stdioProviderFixture({shape:'function-native-output',exitCode:dtoExit,status:dtoExit?'failed':'pass'});f.replaceResult(f.dto,nativeExit);const b=f.build();
+    assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/exit|inconsistent/i);
+  }
+});
+test('Codex native process wrappers reject missing, duplicated or foreign exit prefixes',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const fault of ['missing-exit','duplicate-exit','foreign-prefix'])for(const claimedProvider of ['codex','claude-code',undefined]){
+    const f=stdioProviderFixture({shape:'function-native-output'}),output=f.rows[6].payload.output;
+    f.rows[6].payload.output=fault==='missing-exit'?output.replace('Process exited with code 0\n',''):fault==='duplicate-exit'?output.replace('Process exited with code 0\n','Process exited with code 0\nProcess exited with code 1\n'):'Other output\n'+output;
+    const b=f.build();b.session.provider=claimedProvider;assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/exit|wrapper|inconsistent/i,fault+' '+claimedProvider);
+  }
+});
 test('large native stdout is accepted through authenticated collector files for Claude and Codex event forms',async()=>{
   const {checkProviderCapture,checkProviderReply}=await api();assert.equal(typeof checkProviderReply,'function');
   for(const config of [{provider:'claude-code'},{shape:'function-cmd'},{shape:'function-command'},{shape:'command-execution'}]){

@@ -53,9 +53,10 @@ export async function invokeNative(engine,args,{options={},env={},prefix=[],time
   const publicCommand=options.publicNpm?publicNpmCommand(options.publicNpm,args):null;
   const executable=publicCommand?.program || engine.path,argv=publicCommand?.args || args;
   const command=prefix.length?prefix[0]:executable;
-  const parameters=prefix.length?[...prefix.slice(1),executable,...argv]:argv;
+  const parameters=prefix.length?[...prefix.slice(1),executable,...argv]:[...argv];
   return await new Promise((resolve,reject)=>{
-    const child=spawn(command,parameters,{cwd:publicCommand?.cwd || root,env:runtimeEnvironment(options,env),stdio:['ignore','pipe','pipe'],detached:true});
+    const cwd=publicCommand?.cwd || root,startedAt=new Date().toISOString(),started=process.hrtime.bigint();
+    const child=spawn(command,parameters,{cwd,env:runtimeEnvironment(options,env),stdio:['ignore','pipe','pipe'],detached:true});
     let stdout=[],stderr=[],size=0,failure,timer;
     const accept=(chunks,chunk)=>{size+=chunk.length;if(size>64*1024*1024){failure=new CoreError('core/native-output-limit','Native output exceeded the maintenance capture limit',{exitCode:4});stopOwned(child,'SIGKILL');}else chunks.push(chunk);};
     child.stdout.on('data',chunk=>accept(stdout,chunk));child.stderr.on('data',chunk=>accept(stderr,chunk));
@@ -64,13 +65,14 @@ export async function invokeNative(engine,args,{options={},env={},prefix=[],time
     const checkpoint=onSpawn?Promise.resolve().then(()=>onSpawn(child)).catch(error=>{failure=error;stopOwned(child,'SIGKILL');}):Promise.resolve();
     child.on('close',async(code,signal)=>{
       clearTimeout(timer);
+      const processResult={program:command,argv:[...parameters],cwd,pid:child.pid??null,startedAt,closedAt:new Date().toISOString(),elapsedMs:Number(process.hrtime.bigint()-started)/1e6,exitCode:code,signal,stdout:Buffer.concat(stdout),stderr:Buffer.concat(stderr)};
       try{
         await checkpoint;
         readBound(engine,'native engine');if(failure)throw failure;
-        const output=Buffer.concat(stdout).toString('utf8'),errors=Buffer.concat(stderr).toString('utf8');let receipt;
+        const output=processResult.stdout.toString('utf8'),errors=processResult.stderr.toString('utf8');let receipt;
         if(json && output.trim())receipt=JSON.parse(output.trim());
         resolve({exitCode:code??4,signal,stdout:output,stderr:errors,receipt});
-      }catch(error){reject(error);}
+      }catch(error){Object.defineProperty(error,'processResult',{value:processResult,configurable:true});reject(error);}
     });
   });
 }

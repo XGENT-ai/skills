@@ -62,6 +62,11 @@ pub(crate) fn assert_owned_browser_cleaned(root: &Path) {
 pub(crate) enum Mode {
     ProtocolError,
     ProtocolTimeout,
+    CaptureFailure {
+        restore_fails: bool,
+    },
+    ScriptRestoreFailure,
+    RestoredLayoutFailure,
     Complete {
         remote: bool,
         change_artifact: Option<PathBuf>,
@@ -122,6 +127,7 @@ impl ProtocolFixture {
             let mut theme = "light".to_owned();
             let mut document_url = String::new();
             let mut changed = false;
+            let mut capture_restored = false;
             while !worker_stop.load(Ordering::Relaxed) {
                 let message = match socket.read() {
                     Ok(tungstenite::Message::Text(text)) => text,
@@ -150,6 +156,36 @@ impl ProtocolFixture {
                     let _=socket.send(tungstenite::Message::Text(json!({"id":id,"error":{"code":-32000,"message":"fixture protocol rejection"}}).to_string().into()));
                     continue;
                 }
+                let restore = method == "Emulation.setScriptExecutionDisabled"
+                    && request["params"]["value"] == false;
+                let rejection = if method == "Page.captureScreenshot"
+                    && matches!(mode, Mode::CaptureFailure { .. })
+                {
+                    Some("fixture capture rejected")
+                } else if restore
+                    && matches!(
+                        mode,
+                        Mode::ScriptRestoreFailure
+                            | Mode::CaptureFailure {
+                                restore_fails: true
+                            }
+                    )
+                {
+                    Some("fixture script restore rejected")
+                } else {
+                    None
+                };
+                if let Some(message) = rejection {
+                    let _ = socket.send(tungstenite::Message::Text(
+                        json!({"id":id,"error":{"code":-32000,"message":message}})
+                            .to_string()
+                            .into(),
+                    ));
+                    continue;
+                }
+                if restore {
+                    capture_restored = true;
+                }
                 let result = match method {
                     "Browser.getVersion" => {
                         json!({"product":"FixtureChrome/protocol-only","protocolVersion":"1.3"})
@@ -162,6 +198,7 @@ impl ProtocolFixture {
                         json!({})
                     }
                     "Page.navigate" => {
+                        capture_restored = false;
                         document_url = request["params"]["url"].as_str().unwrap().to_owned();
                         let url =
                             url::Url::parse(request["params"]["url"].as_str().unwrap()).unwrap();
@@ -178,6 +215,14 @@ impl ProtocolFixture {
                         json!({"frameId":"fixture-frame"})
                     }
                     "Runtime.evaluate" => {
+                        if capture_restored && matches!(mode, Mode::RestoredLayoutFailure) {
+                            let _ = socket.send(tungstenite::Message::Text(
+                                json!({"id":id,"result":{"exceptionDetails":{"text":"fixture restored layout did not stabilize"}}})
+                                    .to_string()
+                                    .into(),
+                            ));
+                            continue;
+                        }
                         if !changed {
                             if let Mode::Complete {
                                 change_artifact: Some(path),
@@ -192,7 +237,13 @@ impl ProtocolFixture {
                             width,
                             height,
                             &theme,
-                            matches!(mode, Mode::Complete { long: true, .. }),
+                            matches!(
+                                mode,
+                                Mode::Complete { long: true, .. }
+                                    | Mode::CaptureFailure { .. }
+                                    | Mode::ScriptRestoreFailure
+                                    | Mode::RestoredLayoutFailure
+                            ),
                         );
                         metrics["documentUrl"] = json!(document_url);
                         json!({"result":{"type":"object","value":metrics}})

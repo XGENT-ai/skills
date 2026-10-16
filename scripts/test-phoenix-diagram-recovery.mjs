@@ -58,7 +58,8 @@ async function interrupt(index,options,invoke,args,scenarioRoot,phase,target) {
   const checkpoint=directory(path.join(scenarioRoot,`checkpoint-${phase}`));let observed;
   const result=await invoke(index.engine,args,{options,json:false,env:{PHOENIX_DIAGRAM_ACCEPTANCE:'1',PHOENIX_DIAGRAM_CHECKPOINT_DIR:checkpoint,PHOENIX_DIAGRAM_CHECKPOINT_PHASE:phase},onSpawn:async child=>{
     const pidMatches=options.publicNpm?(pid,leader)=>{const result=spawnSync('/bin/ps',['-o','pgid=','-p',String(pid)],{encoding:'utf8',timeout:3000});return !result.error && result.status===0 && result.stdout.trim()===String(leader);}:undefined;
-    observed=await waitForCheckpoint(child,path.join(checkpoint,'checkpoint.json'),{phase,target,pidMatches});
+    // Public npm startup/preflight precedes the independent native checkpoint hold.
+    observed=await waitForCheckpoint(child,path.join(checkpoint,'checkpoint.json'),{phase,target,pidMatches,timeoutMs:options.publicNpm?60000:12000});
     if(phase==='after-retire')requireThat(!exists(target),'The interruption window did not retire the old public file');
     else requireThat(same(digest(target),identity(OLD)),'Recovery interruption did not preserve the original public bytes');
     // invokeNative owns a fresh detached process group; never signal another PID.
@@ -91,7 +92,7 @@ export async function runRecoveryScenarios(index,options,{invoke}) {
   if(!source)return{status:'not-run',reason:'A new architecture source is required for public recovery scenarios'};
   readBound(source.candidate,'recovery candidate');const parent=directory(path.join(index.runRoot,`recovery-${randomBytes(8).toString('hex')}`)),scenarios=[];
   for(const id of ['restore-and-repeat','later-claimant','record-tamper','backup-tamper','parent-replacement','kill-after-recovery-link','kill-after-witness-quarantine','kill-recovery-later-claimant']) {
-    let scenario;
+    const scenarioRoot=path.join(parent,id);let scenario;
     try {
       scenario=await prepareScenario(index,options,invoke,parent,id,source.candidate);
       const {target,locator,scenarioRoot,outputParent}=scenario;
@@ -138,7 +139,15 @@ export async function runRecoveryScenarios(index,options,{invoke}) {
       // saved copies plus public CLI receipts remain immutable evidence.
       delete scenario.locator;delete scenario.backup;scenarios.push(scenario);
     } catch(error) {
-      scenarios.push({id,status:'failed',exitCode:error.exitCode || 1,diagnostics:[{code:error.code || 'core/recovery',message:error.message}],...(scenario?{root:scenario.scenarioRoot}:{})});
+      const failed={id,status:'failed',exitCode:error.exitCode || 1,diagnostics:[{code:error.code || 'core/recovery',message:error.message}],root:scenarioRoot};
+      if(error.processResult)try {
+        const metadata=fs.lstatSync(scenarioRoot);
+        requireThat(metadata.isDirectory() && !metadata.isSymbolicLink() && fs.realpathSync(scenarioRoot)===scenarioRoot && metadata.uid===process.getuid() && (metadata.mode&0o7777)===0o700,'Failed process evidence requires the existing owned 0700 scenario directory','core/recovery-process-evidence');
+        const {stdout,stderr,...details}=error.processResult;requireThat(Buffer.isBuffer(stdout) && Buffer.isBuffer(stderr),'Failed process raw bytes are missing','core/recovery-process-evidence');
+        const captured={...details,stdout:writeNew(path.join(scenarioRoot,'failed-process.stdout'),stdout),stderr:writeNew(path.join(scenarioRoot,'failed-process.stderr'),stderr)};
+        failed.process=writeNew(path.join(scenarioRoot,'failed-process.json'),captured);
+      }catch(cause){failed.diagnostics.push({code:cause.code || 'core/recovery-process-evidence',message:cause.message});}
+      scenarios.push(failed);
     }
   }
   return{status:scenarios.every(scenario=>scenario.status==='pass')?'pass':'failed',root:parent,scope:'real native public recover-output and actual filesystem/SIGKILL; no browser or visual evidence',scenarios};

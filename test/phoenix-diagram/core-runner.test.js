@@ -8,6 +8,86 @@ const modulePath='../../scripts/test-phoenix-diagram-core.mjs';
 
 function temp(t) {const directory=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'phoenix-core-controller-unit-')));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));return directory;}
 
+async function failedOwnedNode(t) {
+  // A real owned Node process exercises maintenance capture, not native acceptance.
+  const {readSnapshot,bound,CoreError,root}=await import(modulePath),{invokeNative}=await import('../../scripts/test-phoenix-diagram-runtime.mjs');
+  const directory=temp(t);fs.chmodSync(directory,0o700);const program=path.join(directory,'node');fs.copyFileSync(fs.realpathSync(process.execPath),program,fs.constants.COPYFILE_FICLONE);fs.chmodSync(program,0o700);
+  const engine=bound(readSnapshot(program)),ready=path.join(directory,'ready'),stdout=Buffer.from('756e6974207374646f757400ff0a','hex'),stderr=Buffer.from('756e69742073746465727200fe0a','hex');
+  const args=['-e',`const fs=require('node:fs');fs.writeSync(1,Buffer.from('${stdout.toString('hex')}','hex'));fs.writeSync(2,Buffer.from('${stderr.toString('hex')}','hex'));fs.writeFileSync(process.argv[1],'ready');setInterval(()=>{},1000);`,ready];
+  let child,closed,error;
+  try {
+    await invokeNative(engine,args,{json:false,timeoutMs:5000,onSpawn:async owned=>{
+      child=owned;closed=new Promise(resolve=>child.once('close',resolve));const deadline=Date.now()+3000;
+      while(!fs.existsSync(ready)){assert(Date.now()<deadline,'Node did not publish its real stdout/stderr barrier');assert.equal(child.exitCode,null);assert.equal(child.signalCode,null);await new Promise(resolve=>setTimeout(resolve,5));}
+      throw new CoreError('core/checkpoint-timeout','Maintenance unit injected checkpoint rejection',{exitCode:4});
+    }});
+  }catch(cause){error=cause;}finally{
+    if(child && child.exitCode===null && child.signalCode===null)try{process.kill(-child.pid,'SIGKILL');}catch(cause){if(cause.code!=='ESRCH')throw cause;}
+    if(closed)await closed;
+  }
+  assert(error);assert.equal(error.code,'core/checkpoint-timeout');assert.equal(child.signalCode,'SIGKILL');assert.throws(()=>process.kill(child.pid,0),{code:'ESRCH'});
+  return{error,engine,program,args,cwd:root,pid:child.pid,stdout,stderr};
+}
+
+test('invokeNative preserves real process evidence when onSpawn rejects after stdout and stderr',async t=>{
+  const f=await failedOwnedNode(t),result=f.error.processResult;assert(result,'Failed process evidence must survive rejection');
+  assert.equal(result.program,f.program);assert.deepEqual(result.argv,f.args);assert.equal(result.cwd,f.cwd);assert.equal(result.pid,f.pid);assert.equal(result.exitCode,null);assert.equal(result.signal,'SIGKILL');
+  assert(Number.isFinite(Date.parse(result.startedAt)));assert(Date.parse(result.closedAt)>=Date.parse(result.startedAt));assert(Number.isFinite(result.elapsedMs)&&result.elapsedMs>=0);
+  assert.deepEqual(result.stdout,f.stdout);assert.deepEqual(result.stderr,f.stderr);assert.equal(Object.hasOwn(result,'env'),false);assert.equal(Object.keys(f.error).includes('processResult'),false);
+  const {invokeNative}=await import('../../scripts/test-phoenix-diagram-runtime.mjs'),success=await invokeNative(f.engine,['-e','process.stdout.write("{}")']);
+  assert.deepEqual(Object.keys(success).sort(),['exitCode','signal','stdout','stderr','receipt'].sort());assert.equal(success.exitCode,0);assert.equal(success.signal,null);assert.deepEqual(success.receipt,{});
+});
+
+test('failed recovery scenarios retain original process bytes as owned file references',async t=>{
+  const f=await failedOwnedNode(t),{runRecoveryScenarios}=await import('../../scripts/test-phoenix-diagram-recovery.mjs'),{readSnapshot,readBound,bound}=await import(modulePath),runRoot=temp(t);fs.chmodSync(runRoot,0o700);
+  const candidate=path.join(runRoot,'candidate.json');fs.writeFileSync(candidate,'{}');
+  // Inject the captured maintenance failure; no native recovery acceptance runs.
+  const report=await runRecoveryScenarios({runRoot,engine:f.engine,cases:[{type:'architecture',contract:'phoenix-v1',candidate:bound(readSnapshot(candidate))}]},{},{invoke:async()=>{throw f.error;}});
+  assert.equal(report.status,'failed');assert.equal(report.scenarios.length,8);
+  for(const scenario of report.scenarios){
+    assert.equal(scenario.status,'failed');assert.equal(scenario.exitCode,4);assert.equal(scenario.diagnostics[0].code,'core/checkpoint-timeout');assert(scenario.process,'Failed scenario must point to persisted process evidence');
+    const processRecord=JSON.parse(readBound(scenario.process,'unit failed process record').content);
+    assert.equal(processRecord.program,f.program);assert.deepEqual(processRecord.argv,f.args);assert.equal(processRecord.cwd,f.cwd);assert.equal(processRecord.pid,f.pid);assert.equal(processRecord.exitCode,null);assert.equal(processRecord.signal,'SIGKILL');assert.equal(processRecord.elapsedMs,f.error.processResult.elapsedMs);
+    assert.deepEqual(readBound(processRecord.stdout,'unit raw stdout').content,f.stdout);assert.deepEqual(readBound(processRecord.stderr,'unit raw stderr').content,f.stderr);
+    for(const reference of [scenario.process,processRecord.stdout,processRecord.stderr]){const metadata=fs.lstatSync(reference.path);assert.equal(path.dirname(reference.path),scenario.root);assert(metadata.isFile()&&!metadata.isSymbolicLink());assert.equal(metadata.nlink,1);assert.equal(metadata.mode&0o7777,0o600);assert.equal(metadata.uid,process.getuid());}
+    assert.equal(fs.lstatSync(scenario.root).mode&0o7777,0o700);
+  }
+  assert(!JSON.stringify(report).includes(f.stdout.toString('utf8')));assert(!JSON.stringify(report).includes(f.stderr.toString('utf8')));
+  for(const fault of ['claimed-file','nonprivate-directory']){
+    const refused=await runRecoveryScenarios({runRoot,engine:f.engine,cases:[{type:'architecture',contract:'phoenix-v1',candidate:bound(readSnapshot(candidate))}]},{},{invoke:async(_engine,_args,settings)=>{
+      const directory=path.dirname(settings.env.PHOENIX_DIAGRAM_CHECKPOINT_DIR);
+      if(fault==='claimed-file')fs.writeFileSync(path.join(directory,'failed-process.stdout'),'later claimant');else fs.chmodSync(directory,0o755);
+      throw f.error;
+    }});
+    assert.equal(refused.status,'failed');
+    for(const scenario of refused.scenarios){assert.equal(scenario.diagnostics[0].code,'core/checkpoint-timeout');assert.equal(scenario.diagnostics.length,2);assert.equal(scenario.process,undefined);assert(!fs.existsSync(path.join(scenario.root,'failed-process.json')));if(fault==='claimed-file')assert.equal(fs.readFileSync(path.join(scenario.root,'failed-process.stdout'),'utf8'),'later claimant');else assert(!fs.existsSync(path.join(scenario.root,'failed-process.stdout')));}
+  }
+});
+
+test('public npm recovery observes a delayed owned marker without inventing native recovery success',{timeout:25000},async t=>{
+  const {spawn}=require('node:child_process'),{runRecoveryScenarios}=await import('../../scripts/test-phoenix-diagram-recovery.mjs'),{readSnapshot,bound,CoreError}=await import(modulePath);
+  const runRoot=temp(t);fs.chmodSync(runRoot,0o700);const candidate=path.join(runRoot,'candidate.json');fs.writeFileSync(candidate,'{}');
+  let calls=0,child,markerObserved=false,elapsedMs,closedResult,markerFile;
+  // Inert Node process and injected adapter only; public npm selects the wait
+  // branch, but no npm/native command or real recovery journal is supplied.
+  const report=await runRecoveryScenarios({runRoot,engine:{},cases:[{type:'architecture',contract:'phoenix-v1',candidate:bound(readSnapshot(candidate))}]},{publicNpm:{}},{invoke:async(_engine,args,settings)=>{
+    if(++calls!==1)throw new CoreError('unit/no-native-acceptance','No native recovery command runs in this maintenance fixture');
+    markerFile=path.join(settings.env.PHOENIX_DIAGRAM_CHECKPOINT_DIR,'checkpoint.json');const phase=settings.env.PHOENIX_DIAGRAM_CHECKPOINT_PHASE,target=args[3];
+    const script="const fs=require('node:fs');const [marker,target,phase]=process.argv.slice(1);setTimeout(()=>{fs.unlinkSync(target);fs.writeFileSync(marker,JSON.stringify({schemaVersion:1,pid:process.pid,phase,target}),{flag:'wx',mode:0o600});},13000);setTimeout(()=>process.exit(2),18000);";
+    const started=process.hrtime.bigint();child=spawn(fs.realpathSync(process.execPath),['-e',script,markerFile,target,phase],{cwd:runRoot,stdio:'ignore',detached:true});
+    let spawnError;child.once('error',error=>{spawnError=error;});const closed=new Promise(resolve=>child.once('close',(exitCode,signal)=>resolve({exitCode,signal})));
+    try{await settings.onSpawn(child);markerObserved=true;}finally{
+      if(child.pid && child.exitCode===null && child.signalCode===null)try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+      closedResult=await closed;elapsedMs=Number(process.hrtime.bigint()-started)/1e6;
+    }
+    if(spawnError)throw spawnError;return{...closedResult,stdout:'',stderr:''};
+  }});
+  assert.equal(markerObserved,true,JSON.stringify(report.scenarios[0].diagnostics));assert(elapsedMs>=13000);assert.equal(closedResult.exitCode,null);assert.equal(closedResult.signal,'SIGKILL');assert.throws(()=>process.kill(child.pid,0),{code:'ESRCH'});
+  assert.equal(JSON.parse(fs.readFileSync(markerFile,'utf8')).pid,child.pid);assert.equal(calls,8);assert.equal(report.status,'failed');assert(report.scenarios.every(scenario=>scenario.status==='failed'));
+  assert.match(report.scenarios[0].diagnostics[0].message,/No durable recovery record/);assert(report.scenarios.slice(1).every(scenario=>scenario.diagnostics[0].code==='unit/no-native-acceptance'));
+  t.diagnostic(`Maintenance Node marker observed after ${elapsedMs.toFixed(2)}ms; owned child reaped with SIGKILL; no native acceptance.`);
+});
+
 test('core options separate initial execution, review-only resume and unimplemented stages',async()=>{
   const {parseOptions}=await import(modulePath);
   const initial=parseOptions(['--stage','core','--engine','/native/phoenix-diagram','--output-dir','/tmp/core']);

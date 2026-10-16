@@ -3,7 +3,7 @@ use crate::geometry::{
     finite_point, finite_rect, format_number as number, polyline_path, rounded_path,
 };
 use crate::input::{DiagramType, InputContract};
-use crate::scene::{CompiledDiagram, DiagramFacts, Rect, Text};
+use crate::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
 
@@ -300,6 +300,175 @@ fn validate_geometry(scene: &CompiledDiagram) -> Result<(), Diagnostics> {
     Ok(())
 }
 
+// A pinned label can cover the terminal arrow without covering its route. Add
+// one redundant glyph on that same straight path, without changing any pins.
+fn architecture_direction_cue_ref_x(
+    scene: &CompiledDiagram,
+    index: usize,
+    width: f64,
+) -> Option<f64> {
+    if scene.diagram_type != DiagramType::Architecture {
+        return None;
+    }
+    let [start, end] = scene.relations[index].points.as_slice() else {
+        return None;
+    };
+    let (dx, dy) = (end.x - start.x, end.y - start.y);
+    let length = dx.hypot(dy);
+    let stroke = number(width).parse::<f64>().ok()?;
+    if (dx != 0.0 && dy != 0.0)
+        || !length.is_finite()
+        || length <= 0.0
+        || stroke <= 0.0
+        || !(stroke * 10.0).is_finite()
+    {
+        return None;
+    }
+    let axis = Point {
+        x: dx / length,
+        y: dy / length,
+    };
+    let normal = Point {
+        x: -axis.y,
+        y: axis.x,
+    };
+    let project = |rect: Rect, direction: Point| {
+        let (a, extent) = if direction.x == 0.0 {
+            ((rect.y - start.y) * direction.y, rect.height * direction.y)
+        } else {
+            ((rect.x - start.x) * direction.x, rect.width * direction.x)
+        };
+        (a.min(a + extent), a.max(a + extent))
+    };
+    let plates: Vec<_> = scene
+        .relations
+        .iter()
+        .filter_map(|r| r.label_plate)
+        .chain(scene.containers.iter().filter_map(|c| c.label_plate))
+        .collect();
+    let covered = plates.iter().any(|plate| {
+        let (a, b) = project(*plate, axis);
+        let (left, right) = project(*plate, normal);
+        let first = a.max(length - 9.0 * stroke);
+        let last = b.min(length + stroke);
+        let half = (length + stroke - first) * 0.35;
+        first < last && left < half && right > -half
+    });
+    if !covered {
+        return None;
+    }
+
+    let (canvas_start, canvas_end) = project(scene.view_box, axis);
+    let (canvas_left, canvas_right) = project(scene.view_box, normal);
+    let half = 3.5 * stroke;
+    let minimum = (9.0 * stroke).max(canvas_start + 9.0 * stroke);
+    let maximum = (length - stroke).min(canvas_end - stroke);
+    if minimum >= maximum || canvas_left > -half || canvas_right < half {
+        return None;
+    }
+    let mut forbidden = Vec::new();
+    let mut block = |rect: Rect, ink: f64| {
+        let (left, right) = project(rect, normal);
+        if left - ink < half && right + ink > -half {
+            let (a, b) = project(rect, axis);
+            forbidden.push((a - ink - stroke, b + ink + 9.0 * stroke));
+        }
+    };
+    for node in &scene.nodes {
+        block(node.bounds, 0.75);
+    }
+    for plate in plates {
+        block(plate, 0.0);
+    }
+    for legend in &scene.legends {
+        block(legend.bounds, 0.0);
+    }
+    for container in &scene.containers {
+        let r = container.bounds;
+        for border in [
+            Rect {
+                x: r.x,
+                y: r.y,
+                width: r.width,
+                height: 0.0,
+            },
+            Rect {
+                x: r.x,
+                y: r.y + r.height,
+                width: r.width,
+                height: 0.0,
+            },
+            Rect {
+                x: r.x,
+                y: r.y,
+                width: 0.0,
+                height: r.height,
+            },
+            Rect {
+                x: r.x + r.width,
+                y: r.y,
+                width: 0.0,
+                height: r.height,
+            },
+        ] {
+            block(border, 0.5);
+        }
+    }
+    for (other_index, other) in scene.relations.iter().enumerate() {
+        if other_index == index {
+            continue;
+        }
+        let ink =
+            other.authored.facts["width"]
+                .as_f64()
+                .unwrap_or(if other.variant == "emphasis" {
+                    1.8
+                } else {
+                    1.5
+                })
+                / 2.0;
+        for pair in other.points.windows(2) {
+            block(
+                Rect {
+                    x: pair[0].x.min(pair[1].x),
+                    y: pair[0].y.min(pair[1].y),
+                    width: (pair[1].x - pair[0].x).abs(),
+                    height: (pair[1].y - pair[0].y).abs(),
+                },
+                ink,
+            );
+        }
+    }
+    forbidden.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
+    let mut cursor = minimum;
+    let mut clear = Vec::new();
+    for (a, b) in forbidden {
+        if b <= cursor {
+            continue;
+        }
+        if a >= maximum {
+            break;
+        }
+        if a > cursor {
+            clear.push((cursor, a));
+        }
+        cursor = cursor.max(b);
+        if cursor >= maximum {
+            break;
+        }
+    }
+    if cursor < maximum {
+        clear.push((cursor, maximum));
+    }
+    clear.into_iter().rev().find_map(|(a, b)| {
+        // The emitted SVG uses the existing fixed numeric precision. Recheck
+        // that exact reference point rather than relying on unprinted digits.
+        let reference = number(9.0 * stroke - (a + b) / 2.0).parse::<f64>().ok()?;
+        let offset = 9.0 * stroke - reference;
+        (offset > a && offset < b).then_some(reference)
+    })
+}
+
 fn render_svg(scene: &CompiledDiagram) -> String {
     let mut svg = String::new();
     let profile = match scene.quality {
@@ -431,6 +600,11 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             } else {
                 1.4
             });
+        let direction_cue = architecture_direction_cue_ref_x(scene, index, width);
+        if let Some(reference) = direction_cue {
+            let stroke = number(width).parse::<f64>().expect("finite stroke width");
+            write!(svg,"<defs><marker id=\"phoenix-direction-cue-{index}\" markerUnits=\"userSpaceOnUse\" markerWidth=\"{}\" markerHeight=\"{}\" refX=\"{}\" refY=\"{}\" orient=\"auto\"><polygon points=\"0 0,{} {},0 {}\" class=\"m-{variant}\"/></marker></defs>",number(stroke*10.0),number(stroke*7.0),number(reference),number(stroke*3.5),number(stroke*10.0),number(stroke*3.5),number(stroke*7.0)).unwrap();
+        }
         let route = if scene.diagram_type == DiagramType::Workflow && scene.schema_version == 2 {
             let mut radius: f64 = 8.0;
             for (i, pair) in relation.points.windows(2).enumerate() {
@@ -468,6 +642,9 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             write!(svg,"<g data-graph-role=\"automatic-crossover\"><path data-graph-role=\"automatic-crossover-underlay\" d=\"{route}\" fill=\"none\" stroke=\"var(--mask)\" stroke-width=\"{}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" pointer-events=\"none\"/>",number(width+4.0)).unwrap();
         }
         write!(svg,"<path {attrs} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{route}\" class=\"a-{variant}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-end=\"url(#{marker})\"",index.min(12),number(width)).unwrap();
+        if direction_cue.is_some() {
+            write!(svg, " marker-start=\"url(#phoenix-direction-cue-{index})\"").unwrap();
+        }
         if scene.diagram_type == DiagramType::Sequence && relation.variant == "return" {
             svg.push_str(" stroke-dasharray=\"3,5\"");
         }

@@ -33,7 +33,7 @@ cp .agents/skills/phoenix-diagram/examples/minimal.workflow.json candidate.json
 "$PD" finalize workflow candidate.json diagram.html --out-dir evidence-01 --json
 ```
 
-示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。五类之外的结构或缺事实应明确提出，不靠删节点、删关系、缩字或隐藏溢出来通过。
+示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。所需日期、金额或业务条件缺失时，先询问，答复前不写 candidate 或生成图，也不附“草拟”“默认”“待确认”的猜测值；只有用户明确要求拟定这些值时才提供标为建议的方案。事实齐备后只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。五类之外的结构应明确提出，不靠删节点、删关系、缩字或隐藏溢出来通过。
 
 公开命令：
 
@@ -108,7 +108,7 @@ HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风�
 
 ## 验证结果与发行边界
 
-本机 macOS arm64 开发引擎已通过五类旧/新共10例的四道自动门和确定性检查，并在实际查看40张暗亮截图后，经原身份 `review-record` 达到完整交付。十例的Reader操作、20项导出、4项打印和剪贴板检查，以及另十例离线生成/检查/阅读导出、8个公开中断恢复场景均已通过；审核绑定拒绝及summary写失败后的同记录重试也已核验。构建、装配、许可和发布保护的局部检查通过。这些开发结果不代替最终 npm tgz 的消费验收。
+阶段A的本机 macOS arm64 开发引擎曾通过五类旧/新共10例的四道自动门和确定性检查，并在实际查看40张暗亮截图后，经原身份 `review-record` 达到完整交付。十例的Reader操作、20项导出、4项打印和剪贴板检查，以及另十例离线生成/检查/阅读导出、8个公开中断恢复场景均已通过；审核绑定拒绝及summary写失败后的同记录重试也已核验。构建、装配、许可和发布保护的局部检查通过。这些开发结果不代替最终 npm tgz 的消费验收。
 
 最终候选须另附 `kind: phoenix-diagram-candidate-aggregate` 的聚合回执。核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取四个平台、精确Node18.20.8及Claude Code/Codex的实际结果。完整 Reader 范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
 

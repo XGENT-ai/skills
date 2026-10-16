@@ -1,6 +1,7 @@
 use input::{parse_input, CompileOptions, DiagramType, InputContract};
 use phoenix_diagram::layout::architecture;
-use phoenix_diagram::{diagnostic, input, scene};
+use phoenix_diagram::{diagnostic, geometry, input, render, scene};
+use scraper::{Html, Selector};
 use serde_json::{json, Value};
 
 fn compile(
@@ -408,5 +409,230 @@ fn integral_json_numbers_are_valid_grid_indices() {
             (scene.nodes[0].bounds.x, scene.nodes[0].bounds.y),
             (840.0, 184.0)
         );
+    }
+}
+
+fn direction_cue_svg(scene: &scene::CompiledDiagram) -> Html {
+    let bytes = render::render(scene, &render::EmbeddedAssets::builtin()).unwrap();
+    Html::parse_document(std::str::from_utf8(&bytes).unwrap())
+}
+
+fn direction_cue_bounds(
+    html: &Html,
+    scene: &scene::CompiledDiagram,
+    index: usize,
+) -> Option<scene::Rect> {
+    let path = html
+        .select(&Selector::parse(&format!("path[data-edge-key='{index}']")).unwrap())
+        .next()
+        .unwrap();
+    let reference = path.value().attr("marker-start")?;
+    let marker = html
+        .select(
+            &Selector::parse(&format!(
+                "marker[id='{}']",
+                reference
+                    .strip_prefix("url(#")
+                    .unwrap()
+                    .strip_suffix(')')
+                    .unwrap()
+            ))
+            .unwrap(),
+        )
+        .next()
+        .unwrap();
+    assert_eq!(marker.value().attr("markerUnits"), Some("userSpaceOnUse"));
+    let number = |key| marker.value().attr(key).unwrap().parse::<f64>().unwrap();
+    let polygon = marker
+        .select(&Selector::parse("polygon").unwrap())
+        .next()
+        .unwrap();
+    let coordinates: Vec<f64> = polygon
+        .value()
+        .attr("points")
+        .unwrap()
+        .split(|c: char| c.is_whitespace() || c == ',')
+        .filter(|v| !v.is_empty())
+        .map(|v| v.parse().unwrap())
+        .collect();
+    assert_eq!(
+        coordinates.len(),
+        6,
+        "one triangular cue, not another relationship"
+    );
+    let points = &scene.relations[index].points;
+    let length = (points[1].x - points[0].x).hypot(points[1].y - points[0].y);
+    let (x, y) = (
+        (points[1].x - points[0].x) / length,
+        (points[1].y - points[0].y) / length,
+    );
+    let actual: Vec<_> = coordinates
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|p| scene::Point {
+            x: points[0].x + x * (p[0] - number("refX")) - y * (p[1] - number("refY")),
+            y: points[0].y + y * (p[0] - number("refX")) + x * (p[1] - number("refY")),
+        })
+        .collect();
+    let min_x = actual.iter().map(|p| p.x).fold(f64::INFINITY, f64::min);
+    let min_y = actual.iter().map(|p| p.y).fold(f64::INFINITY, f64::min);
+    Some(scene::Rect {
+        x: min_x,
+        y: min_y,
+        width: actual.iter().map(|p| p.x).fold(f64::NEG_INFINITY, f64::max) - min_x,
+        height: actual.iter().map(|p| p.y).fold(f64::NEG_INFINITY, f64::max) - min_y,
+    })
+}
+
+#[test]
+fn direction_cue_preserves_the_frozen_legacy_pins_and_all_facts() {
+    let document: Value = serde_json::from_slice(include_bytes!(
+        "../upstream/legacy-2.17/examples/web-app.architecture.json"
+    ))
+    .unwrap();
+    let compiled = compile(&document, InputContract::Legacy217).unwrap();
+    let html = direction_cue_svg(&compiled);
+    let cue = direction_cue_bounds(&html, &compiled, 5)
+        .expect("masked upward endpoint needs a redundant same-edge direction cue");
+    assert!(cue.width > 5.0 && cue.height > 5.0);
+    assert_eq!(
+        html.select(&Selector::parse("path[data-edge-from][data-edge-to]").unwrap())
+            .count(),
+        9
+    );
+    let path = html
+        .select(&Selector::parse("path[data-edge-key='5']").unwrap())
+        .next()
+        .unwrap();
+    assert_eq!(path.value().attr("d"), Some("M 735 300 L 735 210"));
+    assert_eq!(
+        path.value().attr("data-composition-points"),
+        Some("735,300;735,210")
+    );
+    assert_eq!(path.value().attr("marker-end"), Some("url(#arrowhead)"));
+    let metadata: Value = serde_json::from_str(
+        &html
+            .select(&Selector::parse("#phoenix-diagram-metadata").unwrap())
+            .next()
+            .unwrap()
+            .text()
+            .collect::<String>(),
+    )
+    .unwrap();
+    assert_eq!(metadata["graph"]["relations"], document["connections"]);
+    assert_eq!(metadata["graph"]["nodes"], document["components"]);
+    assert_eq!(metadata["graph"]["relations"][5]["labelDy"], -68);
+    let title = html
+        .select(&Selector::parse("[data-graph-role='structural-frame-label-mask']").unwrap())
+        .next()
+        .unwrap();
+    for (key, value) in [
+        ("x", "224"),
+        ("y", "130"),
+        ("width", "123.4"),
+        ("height", "16"),
+    ] {
+        assert_eq!(title.value().attr(key), Some(value));
+    }
+    for plate in compiled
+        .nodes
+        .iter()
+        .map(|node| node.bounds)
+        .chain(
+            compiled
+                .relations
+                .iter()
+                .filter_map(|edge| edge.label_plate),
+        )
+        .chain(
+            compiled
+                .containers
+                .iter()
+                .filter_map(|frame| frame.label_plate),
+        )
+    {
+        assert!(
+            !geometry::rects_overlap(&cue, &plate, 0.0),
+            "cue crossed an existing node/label/title: {cue:?} {plate:?}"
+        );
+    }
+    for other in html
+        .select(&Selector::parse("path[data-edge-from][data-edge-to]").unwrap())
+        .filter(|p| p.value().attr("data-edge-key") != Some("5"))
+    {
+        let analysis =
+            phoenix_diagram::check::path::analyze_svg_path(other.value().attr("d").unwrap())
+                .unwrap();
+        let half_width = other
+            .value()
+            .attr("stroke-width")
+            .unwrap()
+            .parse::<f64>()
+            .unwrap()
+            / 2.0;
+        for segment in analysis.subpaths.iter().flat_map(|part| &part.segments) {
+            assert!(
+                !geometry::segment_intersects_rect(segment.start, segment.end, &cue, half_width),
+                "cue crossed another actual path"
+            );
+        }
+    }
+}
+
+#[test]
+fn direction_cue_is_generic_for_all_four_straight_directions() {
+    for (source, target, from_side, to_side, label_at) in [
+        ([100, 300], [100, 100], "top", "bottom", [160, 172]),
+        ([100, 100], [100, 300], "bottom", "top", [160, 294]),
+        ([100, 100], [400, 100], "right", "left", [383, 130]),
+        ([400, 100], [100, 100], "left", "right", [237, 130]),
+    ] {
+        let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Pinned cue","output":"diagram.html","legend":{"mode":"hidden"}},"components":[{"id":"origin","type":"backend","label":"Source","pos":source,"size":[120,60]},{"id":"destination","type":"database","label":"Target","pos":target,"size":[120,60]}],"connections":[{"from":"origin","to":"destination","fromSide":from_side,"toSide":to_side,"label":"R","labelAt":label_at}]});
+        let compiled = compile(&document, InputContract::Legacy217).unwrap();
+        let html = direction_cue_svg(&compiled);
+        let cue = direction_cue_bounds(&html, &compiled, 0)
+            .expect("the generic blocked-marker rule must not depend on sample ids");
+        for plate in compiled.nodes.iter().map(|node| node.bounds).chain(
+            compiled
+                .relations
+                .iter()
+                .filter_map(|edge| edge.label_plate),
+        ) {
+            assert!(!geometry::rects_overlap(&cue, &plate, 0.0));
+        }
+        let path = html
+            .select(&Selector::parse("path[data-edge-key='0']").unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(
+            path.value().attr("d"),
+            Some(geometry::rounded_path(&compiled.relations[0].points, 8.0).as_str())
+        );
+        assert_eq!(path.value().attr("marker-end"), Some("url(#arrowhead)"));
+    }
+}
+
+#[test]
+fn direction_cue_leaves_unobstructed_and_fully_blocked_legacy_edges_unchanged() {
+    let base = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"No cue","output":"diagram.html","legend":{"mode":"hidden"}},"components":[{"id":"a","type":"backend","label":"A","pos":[100,100],"size":[120,60]},{"id":"b","type":"database","label":"B","pos":[100,184],"size":[120,60]}],"connections":[{"from":"a","to":"b","fromSide":"bottom","toSide":"top"}]});
+    for labelled in [false, true] {
+        let mut document = base.clone();
+        if labelled {
+            document["connections"][0]["label"] = json!("R");
+            document["connections"][0]["labelAt"] = json!([160, 177]);
+        }
+        let compiled = compile(&document, InputContract::Legacy217).unwrap();
+        let html = direction_cue_svg(&compiled);
+        assert!(
+            direction_cue_bounds(&html, &compiled, 0).is_none(),
+            "do not move pins or invent an unsafe cue to force visual success"
+        );
+        let path = html
+            .select(&Selector::parse("path[data-edge-key='0']").unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(path.value().attr("d"), Some("M 160 160 L 160 184"));
+        assert_eq!(path.value().attr("marker-end"), Some("url(#arrowhead)"));
     }
 }

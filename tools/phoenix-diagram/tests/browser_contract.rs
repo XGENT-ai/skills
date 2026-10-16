@@ -321,6 +321,156 @@ fn protocol_fixture_records_all_scopes_and_exclusively_seals_four_long_captures(
 }
 
 #[test]
+fn full_page_capture_preserves_the_stable_reader_and_restores_script_execution() {
+    let temp = TempDir::new();
+    let fixture = ProtocolFixture::new(Mode::Complete {
+        remote: false,
+        change_artifact: None,
+        long: true,
+    });
+    let receipt = check_browser(
+        &temp.artifact(),
+        &BrowserOptions {
+            executable: Some(launcher(&temp.0, Some(&fixture.endpoint))),
+            capture: true,
+            out_dir: Some(temp.0.join("evidence")),
+            ..Default::default()
+        },
+    );
+    assert_eq!(
+        receipt.status,
+        BrowserStatus::Pass,
+        "{:?}",
+        receipt.diagnostics
+    );
+    assert_eq!(receipt.screenshots.len(), 4);
+    assert_owned_browser_cleaned(&temp.0);
+    let commands = fixture.commands.lock().unwrap();
+    for (index, command) in commands.iter().enumerate() {
+        if command["method"] != "Page.captureScreenshot" {
+            continue;
+        }
+        let suspend = &commands[index - 1];
+        assert_eq!(suspend["method"], "Emulation.setScriptExecutionDisabled");
+        assert_eq!(suspend["params"]["value"], true);
+        let restore = &commands[index + 1];
+        assert_eq!(restore["method"], "Emulation.setScriptExecutionDisabled");
+        assert_eq!(restore["params"]["value"], false);
+        let settled = &commands[index + 2];
+        assert_eq!(settled["method"], "Runtime.evaluate");
+        assert_eq!(settled["params"]["awaitPromise"], true);
+        let expression = settled["params"]["expression"].as_str().unwrap();
+        assert!(expression.contains("layoutStability.whenStable"));
+        assert!(expression.contains("await"));
+        assert_eq!(suspend["sessionId"], command["sessionId"]);
+        assert_eq!(restore["sessionId"], command["sessionId"]);
+    }
+}
+
+#[test]
+fn full_page_protection_leaves_short_viewport_captures_unchanged() {
+    let temp = TempDir::new();
+    let fixture = ProtocolFixture::new(Mode::Complete {
+        remote: false,
+        change_artifact: None,
+        long: false,
+    });
+    let receipt = check_browser(
+        &temp.artifact(),
+        &BrowserOptions {
+            executable: Some(launcher(&temp.0, Some(&fixture.endpoint))),
+            capture: true,
+            out_dir: Some(temp.0.join("evidence")),
+            ..Default::default()
+        },
+    );
+    assert_eq!(
+        receipt.status,
+        BrowserStatus::Pass,
+        "{:?}",
+        receipt.diagnostics
+    );
+    assert!(receipt.screenshots.iter().all(|image| !image.full_page));
+    assert_owned_browser_cleaned(&temp.0);
+    assert!(!fixture
+        .commands
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|command| { command["method"] == "Emulation.setScriptExecutionDisabled" }));
+}
+
+fn assert_full_page_failure(mode: Mode, messages: &[&str]) {
+    let temp = TempDir::new();
+    let fixture = ProtocolFixture::new(mode);
+    let out_dir = temp.0.join("evidence");
+    let receipt = check_browser(
+        &temp.artifact(),
+        &BrowserOptions {
+            executable: Some(launcher(&temp.0, Some(&fixture.endpoint))),
+            capture: true,
+            out_dir: Some(out_dir.clone()),
+            ..Default::default()
+        },
+    );
+    assert_eq!(receipt.status, BrowserStatus::Failed);
+    assert_ne!(receipt.exit_code(), 0);
+    assert!(receipt.screenshots.is_empty());
+    assert!(!out_dir.exists() || fs::read_dir(&out_dir).unwrap().next().is_none());
+    assert_owned_browser_cleaned(&temp.0);
+    assert!(
+        fixture.commands.lock().unwrap().iter().any(|command| {
+            command["method"] == "Emulation.setScriptExecutionDisabled"
+                && command["params"]["value"] == false
+        }),
+        "script restoration must be attempted even when capture fails"
+    );
+    let diagnostics = serde_json::to_string(&receipt.diagnostics).unwrap();
+    for message in messages {
+        assert!(diagnostics.contains(message), "{diagnostics}");
+    }
+}
+
+#[test]
+fn full_page_capture_error_still_restores_scripts() {
+    assert_full_page_failure(
+        Mode::CaptureFailure {
+            restore_fails: false,
+        },
+        &["fixture capture rejected"],
+    );
+}
+
+#[test]
+fn full_page_script_restore_error_cannot_publish_a_passed_capture() {
+    assert_full_page_failure(
+        Mode::ScriptRestoreFailure,
+        &["fixture script restore rejected"],
+    );
+}
+
+#[test]
+fn full_page_script_restore_error_retains_the_capture_error() {
+    assert_full_page_failure(
+        Mode::CaptureFailure {
+            restore_fails: true,
+        },
+        &[
+            "fixture capture rejected",
+            "fixture script restore rejected",
+        ],
+    );
+}
+
+#[test]
+fn full_page_restored_layout_error_cannot_publish_a_passed_capture() {
+    assert_full_page_failure(
+        Mode::RestoredLayoutFailure,
+        &["fixture restored layout did not stabilize"],
+    );
+}
+
+#[test]
 fn remote_requests_fail_and_during_inspection_changes_cannot_receive_evidence() {
     for remote in [true, false] {
         let temp = TempDir::new();
