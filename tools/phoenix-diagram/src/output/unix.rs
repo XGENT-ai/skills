@@ -468,6 +468,13 @@ pub(super) struct SlotLock {
     pub target_name: String,
     binding: FileBinding,
 }
+impl Drop for SlotLock {
+    fn drop(&mut self) {
+        // Close alone can leave flock held by an unrelated child before exec.
+        // This runs only after the final primary/sidecar Arc guard is dropped.
+        let _ = self.binding.file.unlock();
+    }
+}
 impl SlotLock {
     pub fn acquire(parent: Arc<Directory>, target_name: &str) -> OutputResult<Self> {
         Self::acquire_mode(parent, target_name, true)
@@ -508,8 +515,15 @@ impl SlotLock {
                 return Err(OutputError::io("output/lock", error));
             }
         }
-        let (identity, content) = snapshot(&file, &parent, &name, 1)?;
+        let (identity, content) = match snapshot(&file, &parent, &name, 1) {
+            Ok(snapshot) => snapshot,
+            Err(error) => {
+                let _ = file.unlock();
+                return Err(error);
+            }
+        };
         if identity.mode != 0o600 || identity.uid != uid() || content != bytes {
+            let _ = file.unlock();
             return Err(OutputError::conflict("output/unknown-lock-file"));
         }
         let binding = FileBinding {

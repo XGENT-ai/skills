@@ -262,6 +262,12 @@ fn output_os_lock_is_process_scoped_and_sidecars_share_the_existing_guard() {
     assert!(slot.capture_related(&output, &[]).is_err());
     assert_eq!(fs::read(sidecar.path()).unwrap(), b"receipt");
     assert_eq!(fs::read(summary.path()).unwrap(), b"summary");
+    drop(slot);
+    assert_eq!(capture_slot(&output, &[]).unwrap_err().code, "output/busy");
+    drop(sidecar);
+    assert_eq!(capture_slot(&output, &[]).unwrap_err().code, "output/busy");
+    drop(summary);
+    assert!(capture_slot(&output, &[]).is_ok());
 }
 
 #[test]
