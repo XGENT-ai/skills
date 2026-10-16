@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use std::{
     fs,
+    os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
     process::{Command, Output},
     sync::atomic::{AtomicU64, Ordering},
@@ -20,7 +21,7 @@ impl Project {
                 .as_nanos(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
-        fs::create_dir(&path).unwrap();
+        fs::DirBuilder::new().mode(0o700).create(&path).unwrap();
         Self(path)
     }
     fn candidate(&self) -> PathBuf {
@@ -34,11 +35,19 @@ impl Drop for Project {
         fs::remove_dir_all(&self.0).unwrap();
     }
 }
+fn native_engine() -> (Project, PathBuf) {
+    let root = Project::new();
+    let executable = root.0.join("phoenix-diagram");
+    // Cargo can hardlink its public executable to the deps artifact. Keep the
+    // runtime's single-link contract and execute a copy of the compiler bytes.
+    fs::copy(env!("CARGO_BIN_EXE_phoenix-diagram"), &executable).unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(fs::symlink_metadata(&executable).unwrap().nlink(), 1);
+    (root, executable)
+}
 fn run(args: &[&std::ffi::OsStr]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_phoenix-diagram"))
-        .args(args)
-        .output()
-        .unwrap()
+    let (_engine_root, executable) = native_engine();
+    Command::new(executable).args(args).output().unwrap()
 }
 fn parsed(output: &Output) -> Value {
     serde_json::from_slice(&output.stdout).unwrap_or_else(|e| {
@@ -111,6 +120,30 @@ fn cli_validate_uses_the_builtin_reader_and_only_exposes_layout_on_request() {
     assert!(with_layout.status.success());
     assert!(parsed(&with_layout)["layout"].is_object());
     assert_eq!(fs::read_dir(&project.0).unwrap().count(), 1);
+}
+
+#[test]
+fn cli_keeps_rejecting_a_hardlinked_engine_and_accepts_its_single_link_bytes() {
+    let project = Project::new();
+    let candidate = project.candidate();
+    let (engine_root, executable) = native_engine();
+    let alias = engine_root.0.join("cargo-alias");
+    fs::hard_link(&executable, &alias).unwrap();
+    let args = [
+        flag("validate"),
+        flag("architecture"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ];
+    let rejected = Command::new(&executable).args(args).output().unwrap();
+    assert_eq!(rejected.status.code(), Some(4));
+    assert_eq!(
+        parsed(&rejected)["diagnostics"][0]["code"],
+        "engine/current-binary"
+    );
+    fs::remove_file(alias).unwrap();
+    let accepted = Command::new(executable).args(args).output().unwrap();
+    assert!(accepted.status.success(), "{:?}", parsed(&accepted));
 }
 
 #[test]
@@ -187,7 +220,8 @@ fn cli_finalize_reports_environment_failure_after_the_html_commit() {
     let project = Project::new();
     let candidate = project.candidate();
     let html = project.0.join("final.html");
-    let output = Command::new(env!("CARGO_BIN_EXE_phoenix-diagram"))
+    let (_engine_root, executable) = native_engine();
+    let output = Command::new(executable)
         .args([
             flag("finalize"),
             flag("architecture"),

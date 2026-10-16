@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
-use std::os::unix::fs::{symlink, DirBuilderExt, PermissionsExt};
+use std::os::unix::fs::{symlink, DirBuilderExt, MetadataExt, PermissionsExt};
 use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -128,11 +128,20 @@ fn fixture(root: &Workspace) -> InstallRequest {
     }))
     .unwrap();
     write(&bundle.join("manifest.json"), &manifest, 0o644);
-    let engine = PathBuf::from(env!("CARGO_BIN_EXE_phoenix-diagram"));
+    let compiled = Path::new(env!("CARGO_BIN_EXE_phoenix-diagram"));
     let (engine_size, engine_sha256) = ENGINE_DIGEST.get_or_init(|| {
-        let bytes = fs::read(&engine).unwrap();
+        let bytes = fs::read(compiled).unwrap();
         (bytes.len() as u64, digest(&bytes))
     });
+    // Cargo artifacts may have multiple links; probe only an owned byte copy.
+    let engine = root.path("phoenix-diagram");
+    assert_eq!(fs::copy(compiled, &engine).unwrap(), *engine_size);
+    fs::set_permissions(&engine, fs::Permissions::from_mode(0o700)).unwrap();
+    let metadata = fs::symlink_metadata(&engine).unwrap();
+    assert!(metadata.is_file() && !metadata.is_symlink());
+    assert_eq!(metadata.nlink(), 1);
+    assert_eq!(metadata.uid(), fs::metadata(&root.0).unwrap().uid());
+    assert_eq!(digest(&fs::read(&engine).unwrap()), *engine_sha256);
     let version = serde_json::to_vec(&json!({
         "schemaVersion":1,"distribution":"development","tool":"phoenix-diagram",
         "toolVersion":"0.1.0","npmPackageVersion":env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"),"sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
