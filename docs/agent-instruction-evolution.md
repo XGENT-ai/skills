@@ -1,10 +1,10 @@
 # 比较与改进仓库指令
 
-`optimize-agents-md` 处理仓库 AGENTS 的诊断和优化；skill 的行为比较沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。已完成指定 SSH/Docker 组合的真实隔离、任务校准、对照/搜索、自然请求/CAS 与恢复验收；本次独立确认仍为 inconclusive，没有采用性能候选。
+`optimize-agents-md` 处理仓库 AGENTS 的诊断和优化；skill 的行为比较沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。首期已完成指定 SSH/Docker 组合的执行流程验收，独立确认 inconclusive，没有采用效果候选。当前工具只支持二元 task_success 主指标，尚不能区分同样成功的解法质量；[v2 设计](plan/agent-instruction-evolution-v2.md)先处理判定器辨别力与基线余量，实施进度见该计划。
 
 仅诊断时，给出目标仓库、文件范围和目的即可，例如“只诊断这个仓库的 AGENTS，保留现有原则，先别改文件”。skill 会核对根、嵌套和 override 的实际作用域，交付有仓库事实依据的建议。没有该仓可重放任务时，候选保持未验证，不借其他仓库的分数宣称提升。
 
-需要实际评测时，同时安装 `optimize-agents-md` 和 `agi-mode`，定位真实的 agi-mode 安装目录。使用其 `scripts/evolution` 中的独立 Python 项目，要求 Python 3.12+、uv 和 SSH；远端由运行者提供 Docker、固定镜像与明确授权的 Codex 登录。模型调用、候选生成和判定均在远端独立容器中执行。本机只校验、打包、编排、保存证据和按授权采用。
+需要实际评测时，同时安装 `optimize-agents-md` 和 `agi-mode`，定位真实的 agi-mode 安装目录。使用该安装目录中的独立 Python 项目（仓内源码：[agi-mode/scripts/evolution](../skills/agi-mode/scripts/evolution/)），要求 Python 3.12+、uv 和 SSH；远端由运行者提供 Docker、固定镜像与明确授权的 Codex 登录。模型调用、候选生成和判定均在远端独立容器中执行。本机只校验、打包、编排、保存证据和按授权采用。
 
 ```bash
 uv sync --locked --project /path/to/agi-mode/scripts/evolution
@@ -24,4 +24,4 @@ uv run --locked --project /path/to/agi-mode/scripts/evolution xgent-evolve apply
 
 已明确授权的客观事实修正可按手册保全独立 correction.json 包并采用，结果始终标记 unverified。确认未通过或文件被用户并发修改时保留原文件和候选；多文件写回失败只恢复仍为工具所写的内容，恢复清单留在运行目录。工具不会随采用提交、发布、全局安装或修改用户全局规则。
 
-本期验收固定 Harbor 0.24.0、Codex CLI 0.162.1、gpt-6.1-sol/high 和两类 Ansible 真实任务。确认候选与初始基线都完成任务，差值为 0；每侧仅一个来源组，低于预设最低 5 组，因此不支持泛化或提升声明。NodeBB/Vuls 以及一次 Python 解释器段错误的失败证据均保留。采用与确认通过的单元边界已覆盖，真实自然请求验证了未确认候选拒绝和并发文件的 CAS 保护。新主机、镜像与用户任务仍须按自己的冻结协议校准。
+首期验收固定 Harbor 0.24.0、Codex CLI 0.162.1、gpt-6.1-sol/high 和两类 Ansible 真实任务。确认候选与初始基线都完成任务，二元成功分差值为 0；每侧仅一个来源组，低于预设最低 5 组。样本不足与评分维度饱和是两个问题：现有结果不支持泛化或提升声明，也没有测量解法质量的差异，不能仅补够组数便宣称质量评价有效。NodeBB/Vuls 以及一次 Python 解释器段错误的失败证据均保留。采用与确认通过的单元边界已覆盖，真实自然请求验证了未确认候选拒绝和并发文件的 CAS 保护。新主机、镜像与用户任务仍须按自己的冻结协议校准。

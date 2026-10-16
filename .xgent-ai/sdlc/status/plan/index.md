@@ -11,6 +11,7 @@
 | 90d15d49-af8b-4e97-bb61-dadb6498747c | [Claude Code goal 上下文收尾提醒](../../../../docs/plan/claude-context-goal-guard.md) | [状态](90d15d49-af8b-4e97-bb61-dadb6498747c.md) | 活动 |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [Codex goal 上下文收尾提醒](../../../../docs/plan/codex-context-goal-guard.md) | [状态](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 活动 |
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | [AGENTS.md 与 Skills 自进化](../../../../docs/plan/agent-instruction-evolution.md) | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 活动 |
+| 49a107bf-abd1-462b-9910-ff664d6be67d | [指令质量评测与自进化 v2](../../../../docs/plan/agent-instruction-evolution-v2.md) | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 活动 |
 
 ## 维护约定
 

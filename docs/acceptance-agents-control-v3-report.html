@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>acceptance-agents-control-v3 指令演化实验解读</title>
+<style>
+  :root { --ink:#1a2230; --muted:#5a6675; --line:#e3e8ee; --bg:#f6f8fa; --accent:#2f6fed; --warn:#9a6b00; --warnbg:#fff7e6; --warnline:#f0c36d; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:var(--ink); line-height:1.75; }
+  main { max-width:880px; margin:0 auto; padding:28px 18px 56px; }
+  h1 { font-size:1.55rem; line-height:1.4; margin:0 0 14px; }
+  h2 { font-size:1.15rem; margin:36px 0 10px; padding-left:10px; border-left:4px solid var(--accent); }
+  p { margin:10px 0; }
+  ul { margin:8px 0; padding-left:22px; }
+  li { margin:4px 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; background:#f0f3f6; padding:1px 5px; border-radius:4px; font-size:.88em; word-break:break-all; }
+  .lede { font-size:1.02rem; }
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:18px 0 6px; }
+  .metric { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .metric .v { font-size:1.4rem; font-weight:700; line-height:1.3; }
+  .metric .l { font-size:.78rem; color:var(--muted); margin-top:2px; }
+  .metric.verdict { background:var(--warnbg); border-color:var(--warnline); }
+  .metric.verdict .v { color:var(--warn); }
+  .tablewrap { overflow-x:auto; margin:12px 0; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; min-width:560px; }
+  th, td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f0f3f6; white-space:nowrap; }
+  td.num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .note { font-size:.85rem; color:var(--muted); }
+  figure { margin:16px 0; }
+  figcaption { font-size:.82rem; color:var(--muted); margin-top:6px; }
+  svg { width:100%; height:auto; display:block; }
+  footer { margin-top:44px; padding-top:14px; border-top:1px solid var(--line); font-size:.8rem; color:var(--muted); }
+  footer code { font-size:.78rem; }
+</style>
+</head>
+<body>
+<main>
+<h1>acceptance-agents-control-v3：一次 AGENTS.md 指令演化实验，结论是无法下结论</h1>
+<p class="lede">这次实验给 ansible/ansible 仓库的 <code>AGENTS.md</code> 加了两条测试纪律（候选版 A1c），在全新沙箱里和原版（A0）对比智能体修题的成功率。结论是无法下结论（inconclusive）：不是候选版被证明无效，而是这次运行收集的独立样本太少，够不上协议设定的判定门槛。报告同时写明：仅凭这次结果，不允许采用 A1c。</p>
+
+<div class="metrics">
+  <div class="metric verdict"><div class="v">inconclusive</div><div class="l">总结论与确认阶段结论相同：证据不足，不能下结论</div></div>
+  <div class="metric"><div class="v">6</div><div class="l">有效任务运行；登记执行共 18 次，基础设施无效 0 次</div></div>
+  <div class="metric"><div class="v">0.0</div><div class="l">每个对比的质量差（两组指令都解出了题）</div></div>
+  <div class="metric"><div class="v">[-1.0, 1.0]</div><div class="l">质量差的置信区间——退化成整个取值范围</div></div>
+  <div class="metric"><div class="v">0</div><div class="l">护栏回归次数（task_contract 6 次全过）</div></div>
+  <div class="metric"><div class="v">未知</div><div class="l">成本：远程登录不暴露可靠计费数据</div></div>
+</div>
+
+<h2>实验在测什么</h2>
+<p>测的是一份给智能体看的仓库指令。基线 A0 的 <code>AGENTS.md</code> 只有 219 字节，装着两条受保护规则：保持既有公开接口、改动不超出请求范围。候选 A1c 有 356 字节，在这两条之上追加了两条测试纪律：</p>
+<ul>
+  <li>改动的 Python 代码要跑相关的单元测试；</li>
+  <li>报告跑过的测试命令和结果；没跑的要说明原因。</li>
+</ul>
+<p>两条受保护规则在候选版里逐字保留——这个实验关心的正是「加纪律」会不会在不破坏接口与范围约束的前提下提高成功率。</p>
+<p>这次运行本身是一次重新校准（协议号 <code>ssh-acceptance-agents-scope-control-v3-fresh-calibration</code>）：此前预检时发生过一次 Python 解释器段错误，协议要求在全新沙箱里重测同一组对照，并保留那次失败的运行。</p>
+
+<h2>怎么测</h2>
+<figure>
+<svg viewBox="0 0 960 350" role="img" aria-label="实验结构：A0 与 A1c 两份 AGENTS.md 分别在两个 ansible 用例组上运行，配对比较后进入 bootstrap 估计，因独立组数不足判为 inconclusive">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a94a3"/>
+    </marker>
+  </defs>
+  <!-- left: bundles -->
+  <rect x="16" y="36" width="212" height="96" rx="10" fill="#f6f8fa" stroke="#c4ccd8"/>
+  <text x="32" y="62" font-size="15" font-weight="700" fill="#1a2230">A0 基线</text>
+  <text x="32" y="84" font-size="12.5" fill="#5a6675">AGENTS.md · 219 字节</text>
+  <text x="32" y="103" font-size="12.5" fill="#5a6675">接口保护 + 范围控制</text>
+  <text x="32" y="121" font-size="12.5" fill="#5a6675">（两条受保护规则）</text>
+  <rect x="16" y="206" width="212" height="108" rx="10" fill="#eef4ff" stroke="#2f6fed"/>
+  <text x="32" y="232" font-size="15" font-weight="700" fill="#1a2230">A1c 候选</text>
+  <text x="32" y="254" font-size="12.5" fill="#5a6675">AGENTS.md · 356 字节</text>
+  <text x="32" y="273" font-size="12.5" fill="#5a6675">A0 全部规则 + 两条测试纪律</text>
+  <text x="32" y="292" font-size="12.5" fill="#5a6675">（跑单测并报告结果）</text>
+  <!-- middle: cases -->
+  <rect x="360" y="36" width="250" height="96" rx="10" fill="#ffffff" stroke="#c4ccd8"/>
+  <text x="376" y="62" font-size="14" font-weight="700" fill="#1a2230">ansible-vars-union</text>
+  <text x="376" y="84" font-size="12.5" fill="#5a6675">SWE-bench Pro v2 修题任务</text>
+  <text x="376" y="103" font-size="12.5" fill="#5a6675">split：search（搜索组）</text>
+  <text x="376" y="121" font-size="12.5" fill="#5a6675">A0、A1c 各跑 1 次</text>
+  <rect x="360" y="206" width="250" height="96" rx="10" fill="#ffffff" stroke="#c4ccd8"/>
+  <text x="376" y="232" font-size="14" font-weight="700" fill="#1a2230">ansible-password-lookup</text>
+  <text x="376" y="254" font-size="12.5" fill="#5a6675">SWE-bench Pro v2 修题任务</text>
+  <text x="376" y="273" font-size="12.5" fill="#5a6675">split：confirmation（确认组）</text>
+  <text x="376" y="291" font-size="12.5" fill="#5a6675">A0、A1c 各跑 1 次</text>
+  <!-- right: stats + verdict -->
+  <rect x="700" y="36" width="244" height="96" rx="10" fill="#f6f8fa" stroke="#c4ccd8"/>
+  <text x="716" y="62" font-size="14" font-weight="700" fill="#1a2230">配对 bootstrap 估计</text>
+  <text x="716" y="84" font-size="12.5" fill="#5a6675">10,000 次重采样 · 置信水平 0.95</text>
+  <text x="716" y="103" font-size="12.5" fill="#5a6675">每个对比独立组数：1</text>
+  <text x="716" y="121" font-size="12.5" fill="#5a6675">协议门槛：≥ 5 个独立组</text>
+  <rect x="700" y="206" width="244" height="96" rx="10" fill="#fff7e6" stroke="#f0c36d"/>
+  <text x="716" y="232" font-size="14" font-weight="700" fill="#9a6b00">inconclusive</text>
+  <text x="716" y="254" font-size="12.5" fill="#5a6675">区间退化为 [-1.0, 1.0]</text>
+  <text x="716" y="273" font-size="12.5" fill="#5a6675">无法区分有无效应</text>
+  <text x="716" y="292" font-size="12.5" fill="#5a6675">不允许据此采用 A1c</text>
+  <!-- arrows -->
+  <line x1="228" y1="84" x2="352" y2="84" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="228" y1="120" x2="352" y2="240" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="228" y1="232" x2="352" y2="104" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="228" y1="268" x2="352" y2="268" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="610" y1="84" x2="692" y2="84" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="610" y1="254" x2="692" y2="110" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="822" y1="132" x2="822" y2="198" stroke="#8a94a3" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="832" y="170" font-size="12" fill="#5a6675">独立组 1 &lt; 5</text>
+</svg>
+<figcaption>实验结构：两份指令包 × 两个修题用例，同用例内的两次运行配对比较，再由 bootstrap 估计质量差。图外加一次 A/A 对照（基线包对自己，search 组，对比名 <code>aa</code>），用来校验测量管线本身。</figcaption>
+</figure>
+<p>执行环境：通过 SSH 在远程机器（<code>wisley@100.90.115.31</code>）上的 Docker 沙箱里运行，Codex 0.162.1，模型 <code>gpt-6.1-sol</code>，单次任务超时 1800 秒，总预算 18 次执行、deadline 28800 秒（8 小时）。每道题的成败由固定验证器（grader）判定，智能体拿不到验证器和标准答案。</p>
+<p>开跑前的冒烟检查验证了隔离性：环境探针确认凭据隐藏、控制面不可写、外网阻断、无验证器泄露等 11 项全部通过；oracle 标准解法在两道题上得分 1.0，空提交得分 0.0——验证器能区分「解出来了」和「没解」。</p>
+
+<h2>实际跑出了什么</h2>
+<p>6 次任务运行全部通过：不管用的是 A0 还是 A1c，智能体都解出了两道题。于是每个对比的质量差都是 0.0，护栏（task_contract，最低要求 1 次通过）6 次全过，0 次回归、0 次行为失败。</p>
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr>
+      <th title="对比的名字：aa 是基线对自己的 A/A 校验；initial:A1c 是搜索组上 A0 对 A1c；confirmation 是确认组上 A0 对 A1c">对比</th>
+      <th title="能独立配成「同题两次运行」的用例组数。协议判定要求是至少 5 个">配对组数</th>
+      <th title="候选减基线的任务成功率差（每组成对计算后加权）">质量差</th>
+      <th title="质量差的 95% bootstrap 置信区间；[-1.0, 1.0] 是有界均值护栏下的整个取值范围">区间</th>
+      <th title="护栏回归次数 / 未知护栏状态数">护栏回归 / 未知</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>aa</code>（A/A 校验）</td><td class="num">1</td><td class="num">0.0</td><td class="num">[-1.0, 1.0]</td><td class="num">0 / 0</td></tr>
+    <tr><td><code>initial:A1c</code>（search）</td><td class="num">1</td><td class="num">0.0</td><td class="num">[-1.0, 1.0]</td><td class="num">0 / 0</td></tr>
+    <tr><td><code>confirmation</code></td><td class="num">1</td><td class="num">0.0</td><td class="num">[-1.0, 1.0]</td><td class="num">0 / 0</td></tr>
+  </tbody>
+</table>
+</div>
+<p>任务运行明细（分数来自 grader，耗时与 token 来自执行记录 <code>results.jsonl</code>）：</p>
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr>
+      <th title="所属的对比">对比</th>
+      <th title="这次运行装入沙箱的指令包">条件</th>
+      <th title="修题用例组">用例组</th>
+      <th title="固定验证器给出的分数，1.0 为通过">grader 分数</th>
+      <th title="单次任务运行墙钟耗时">耗时（秒）</th>
+      <th title="模型输入 token 数">输入 tokens</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>aa</code></td><td>aa_0（基线包）</td><td>vars-union</td><td class="num">1.0</td><td class="num">67.25</td><td class="num">220,343</td></tr>
+    <tr><td><code>aa</code></td><td>aa_1（基线包）</td><td>vars-union</td><td class="num">1.0</td><td class="num">71.10</td><td class="num">210,875</td></tr>
+    <tr><td><code>initial</code></td><td>A0</td><td>vars-union</td><td class="num">1.0</td><td class="num">76.79</td><td class="num">213,779</td></tr>
+    <tr><td><code>initial</code></td><td>A1c</td><td>vars-union</td><td class="num">1.0</td><td class="num">76.90</td><td class="num">155,593</td></tr>
+    <tr><td><code>confirmation</code></td><td>A0</td><td>password-lookup</td><td class="num">1.0</td><td class="num">104.60</td><td class="num">215,890</td></tr>
+    <tr><td><code>confirmation</code></td><td>A1c</td><td>password-lookup</td><td class="num">1.0</td><td class="num">112.17</td><td class="num">326,809</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>为什么仍然是「无法下结论」</h2>
+<p>问题不在结果，在样本量。协议的判定门槛是：至少 5 个独立用例组（<code>minimum_groups: 5</code>），最小可采纳效应 0.05。这次每个对比只有 1 个独立组——每道题只跑了一次 A0 和一次 A1c。独立组不够，统计方法（<code>paired_source_group_bootstrap_with_bounded_mean_guard</code>）给不出有意义的区间，只能退回有界护栏的整个取值范围 [-1.0, 1.0]，也就是「从完全无效到完全有效都排除不了」。判定原因记为 <code>missing_pairs_checks_or_independent_groups</code>。</p>
+<p>「6 次全过」不等于「指令无所谓」：它同样兼容「两条测试纪律有帮助，但题太简单、两组都过了」。这次运行区分不了这两种情形，这正是 inconclusive 的含义。</p>
+
+<h2>口径与未知项</h2>
+<ul>
+  <li><strong>18 与 6 的关系</strong>：报告口径是「有效任务运行 6、基础设施无效 0、登记执行 18」。<code>results.jsonl</code> 里可读到的记录是 5 次冒烟执行（1 次环境探针，每道题各 1 次 oracle 和 1 次空提交）加 6 次任务执行，每次任务执行另对应一次独立的 grader 评分执行。报告没有逐项拆解 18 的完整构成。</li>
+  <li><strong>成本未知</strong>：所有运行的 cost 字段为空；报告注明原因是远程登录不暴露可靠的计费数据（<code>missing_or_invalid_resource_evidence</code>）。</li>
+  <li><strong>证据缺口</strong>：报告记录为无。</li>
+  <li><strong>结论边界</strong>：只对冻结的仓库、任务族和指定模型成立；provider 快照身份可能不可观测。换模型、换任务族，结论不算数。</li>
+</ul>
+
+<h2>接下来</h2>
+<p>报告原文的处置是：「Search keep alone does not permit adoption.」——这次结果不能作为采用 A1c 的依据。要判定两条测试纪律是否有效，需要按协议补足独立用例组（至少 5 个）后重跑对比。完整的配对估计在 <code>report.json</code>，原始尝试与失败运行保留在 <code>attempts.jsonl</code> 和 <code>results.jsonl</code>。</p>
+
+<footer>
+<p>原文出处：<code>local/evolution/acceptance-agents-control-v3/report.md</code>（2026-10-16 生成），本解读对照同目录 <code>report.json</code>、<code>protocol.json</code>、<code>results.jsonl</code> 写成。run_id <code>e2f24f74-4263-4983-9877-d9b126214fb2</code>；protocol_id <code>ssh-acceptance-agents-scope-control-v3-fresh-calibration</code>；protocol_hash <code>9203a76abce326896d2b82694552a9d4b04300260fd8e5a535fe960e3ab596da</code>；results_sha256 <code>21f210680e4b0118ed949a68c5c44aaa6c412f3074991261b48fcaa58f5b5bba</code>。注意：原文引用的 <code>attempts.jsonl</code> 在解读读取时不在该目录中。</p>
+</footer>
+</main>
+</body>
+</html>
