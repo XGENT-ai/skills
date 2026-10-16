@@ -81,6 +81,35 @@ jobs:
         with:
           node-version: '25.2.1'
           package-manager-cache: false
+      - &linux_netns
+        name: Permit and verify the Linux offline namespace
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          id -u
+          readlink /proc/self/ns/user
+          readlink /proc/self/ns/net
+          cat /proc/self/uid_map
+          cat /proc/self/attr/current
+          profile="$RUNNER_TEMP/phoenix-diagram-unshare.apparmor"
+          # Ubuntu 24.04 application-scoped userns permission:
+          # https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890
+          cat > "$profile" <<'EOF'
+          abi <abi/4.0>,
+          include <tunables/global>
+          profile phoenix-diagram-unshare "/usr/bin/unshare" flags=(unconfined) {
+            userns,
+          }
+          EOF
+          sudo apparmor_parser --replace "$profile"
+          /usr/bin/unshare --user --map-current-user --net -- /usr/bin/true
+          /usr/bin/unshare --user --map-current-user --net -- /bin/sh -eu -c '
+            id -u
+            readlink /proc/self/ns/user
+            readlink /proc/self/ns/net
+            cat /proc/self/uid_map
+            cat /proc/self/attr/current
+          '
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           version: '2026.9.12'
@@ -350,6 +379,7 @@ jobs:
         with:
           node-version: '25.2.1'
           package-manager-cache: false
+      - *linux_netns
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: phoenix-diagram-candidate
@@ -477,6 +507,7 @@ jobs:
         with:
           node-version: '18.20.8'
           package-manager-cache: false
+      - *linux_netns
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: phoenix-diagram-candidate

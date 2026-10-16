@@ -40,6 +40,29 @@ test('native builds preserve clean source and native permissions before the sing
   assert.doesNotMatch(assemble, /writeFileSync\([^\n]*(?:ENGINE|VERSION|source-inputs)/);
 });
 
+test('every Linux runner prepares the narrow unshare profile and fails early on the actual offline namespace command', () => {
+  const text=workflow(),native=job(text,'native'),consume=job(text,'consume'),floor=job(text,'node18-consumer');
+  const step=/      - &linux_netns\n([\s\S]*?)(?=\n      - )/.exec(native)?.[1];
+  assert.ok(step,'One reusable Linux namespace preparation step is required');
+  assert.equal((text.match(/&linux_netns\b/g)||[]).length,1);
+  assert.equal((text.match(/- \*linux_netns\b/g)||[]).length,2);
+  assert.match(step,/if: runner\.os == 'Linux'/);
+  assert.match(step,/set -euo pipefail/);
+  assert.match(step,/profile phoenix-diagram-unshare "\/usr\/bin\/unshare" flags=\(unconfined\)\s*\{\s*userns,\s*\}/);
+  const load=step.indexOf('sudo apparmor_parser --replace "$profile"'),smoke=step.indexOf('/usr/bin/unshare --user --map-current-user --net -- /usr/bin/true');
+  assert.ok(load>=0&&smoke>load,'Load the application profile before running the unchanged namespace command');
+  assert.match(step,/\/usr\/bin\/unshare --user --map-current-user --net -- \/bin\/sh/);
+  for(const diagnostic of ['id -u','/proc/self/ns/user','/proc/self/ns/net','/proc/self/uid_map'])assert.ok(step.includes(diagnostic),diagnostic);
+  assert.ok(native.indexOf('&linux_netns')<native.indexOf('name: Explicit online native and browser preparation'));
+  for(const consumer of [consume,floor])assert.ok(consumer.indexOf('- *linux_netns')>0&&consumer.indexOf('- *linux_netns')<consumer.indexOf('uses: actions/download-artifact'),'Each new Linux consumer must load the profile before downloading or installing');
+  assert.doesNotMatch(step,/continue-on-error|\|\|\s*true|sudo\s+\/usr\/bin\/unshare/);
+  assert.doesNotMatch(text,/sysctl|apparmor_restrict_unprivileged_userns\s*=\s*0|--no-sandbox/);
+  const script=/        run: \|\n([\s\S]*)/.exec(step)?.[1].replace(/^ {10}/gm,'');
+  assert.ok(script,'Extract the actual namespace preparation shell fragment');
+  const syntax=spawnSync('/bin/bash',['-n'],{input:script,encoding:'utf8'});
+  assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('assembly identity step uses the actual packer size/hash contract and freezes the candidate envelope bytes', t => {
   const directory = temporary(t), text = job(workflow(), 'assemble');
   const step = /- name: Freeze the candidate envelope and actual identities([\s\S]*?)(?=\n      - name: Upload)/.exec(text)?.[1];
