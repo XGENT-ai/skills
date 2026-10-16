@@ -1,7 +1,8 @@
 /*
 Derived from Archify 3.1.0 viewer/reader-layout.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent namespace and native legacy portrait height fitting.
+Phoenix modifications: independent namespace, native legacy portrait height fitting,
+and viewport-contained legend corners.
 Exact narrow source adaptation: reader-layout-adaptations.json.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
@@ -198,8 +199,9 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         var nav = diagram.querySelector('.diagram-nav');
         var navRect = visible(nav) ? nav.getBoundingClientRect() : null;
         // Long or multi-row legends retain their canonical position if the
-        // spare corner cannot hold them clear of the dock and content area.
-        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||
+        // spare corner cannot hold them in the viewport and clear of the dock and content area.
+        if (left < 0 || top < 0 || left + box.width * scale > window.innerWidth || bottom > window.innerHeight ||
+            left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||
             (navRect && left < navRect.right + 10 && left + box.width * scale > navRect.left - 10 &&
               top < navRect.bottom + 10 && bottom > navRect.top - 10)) {
           clearLegend();

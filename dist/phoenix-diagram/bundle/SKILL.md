@@ -45,6 +45,8 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 ```
 
 1. 新稿只读所选 `schemas/<type>.schema.json`、[common schema](schemas/common.schema.json)、一个匹配示例及[创作默认值](references/authoring-defaults.md)，随即写完整 candidate。新稿设置 `meta.input_contract: "phoenix-v1"`、`meta.quality_profile: "showcase"`；从自动路线和自动标签开始。保留用户提供的固定几何，不在首稿预先添加 `via`、`channelX`、`channelY` 或 `labelAt`。
+
+   写出 candidate 或完成涉及语义的修复后，按原材料逐分支走读实际可走路径，核对条件、动作、执行者与先后关系；进入处理步骤不等于已经通过或获准。仅在某条件成立后允许的动作，必须留在该条件控制的分支上，不能前移为其他分支的共同前置动作，也不能因合并节点或回路改变原有顺序。跨阶段适用的动作要在主图明确其完整范围，逐一核对这些阶段均可执行，不能缩成仅少数阶段可达，或增加先完成其他动作的前置条件。线型、颜色与图例也必须对应材料给出的关系含义；未说明的同步/异步、批处理等执行方式，使用不承诺该含义的普通关系表达，不能凭画图习惯补成事实。节点、标签齐全或卡片复述不代表路径等价；只据已给事实修正，必需事实缺失时沿用前述澄清规则，不自行补规则。
 2. 已有完整 candidate 直接进入 `finalize`。不先读 renderer、扫描全仓或重新改写输入。未标记的旧 JSON 默认按 `legacy-2.17` 处理，不静默切换新合同。
 
    ```sh

@@ -1,7 +1,7 @@
 /*
 Derived from Archify 3.1.0 viewer/viewer-chrome-layout.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace only.
+Phoenix modifications: independent namespace, bounded dock lift and actual screen-coordinate receipts.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -148,10 +148,10 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         };
         return lastReceipt;
       }
-      /* When the stage runs below the viewport, the dock lifts to the viewport
-         floor so its controls stay reachable while reading. Stage-rail
-         decisions and receipts use its resting position, so the lift never
-         feeds back into layout. */
+      /* Lift only through spare space below the canonical stage. A long stage
+         keeps its dock in the bottom rail, reachable by document scrolling.
+         Baseline rail decisions use its resting position to avoid feedback;
+         public measurements always use the displayed screen rectangle. */
       var lift = 0;
       var liftFrame = 0;
       function restingNavRect() {
@@ -165,12 +165,15 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         if (eligible()) {
           var rest = restingNavRect();
           var box = container.getBoundingClientRect();
-          next = Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16)));
+          var stage = protectedStageRect();
+          var maxLift = Math.max(0, Math.floor(rest.top - stage.bottom - SAFE_GAP));
+          next = Math.min(maxLift, Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16))));
         }
         if (next === lift) return;
         lift = next;
         if (lift) container.style.setProperty('--phoenix-diagram-dock-lift', lift + 'px');
         else container.style.removeProperty('--phoenix-diagram-dock-lift');
+        schedule();
       }
       function scheduleLift() {
         if (!liftFrame) liftFrame = requestAnimationFrame(updateLift);
@@ -191,7 +194,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
           if (reserve === 0 && restorableReserve > 0) {
             if (writeReserve(restorableReserve)) return null;
           }
-          var cameraNavRect = restingNavRect();
+          var cameraNavRect = nav.getBoundingClientRect();
           var cameraLegendRect = visible(legend) ? legend.getBoundingClientRect() : null;
           var cameraStageRect = protectedStageRect();
           var cameraIntersectionArea = usable(cameraLegendRect) && intersectionArea(cameraNavRect, cameraStageRect) > 0
@@ -233,7 +236,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
           if (writeReserve(reserve + remaining)) return null;
         }
 
-        navRect = restingNavRect();
+        navRect = nav.getBoundingClientRect();
         legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
         stageRect = protectedStageRect();
         stageGap = navRect.top - stageRect.bottom;
@@ -288,7 +291,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       }
       function stableSnapshot() {
         var containerRect = container ? container.getBoundingClientRect() : { width: 0, height: 0 };
-        var navRect = nav ? restingNavRect() : { top: 0, left: 0 };
+        var navRect = nav ? nav.getBoundingClientRect() : { top: 0, left: 0 };
         var legendRect = legend ? legend.getBoundingClientRect() : { top: 0, left: 0 };
         return [
           reserve,
@@ -352,7 +355,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         reprobe: reprobe,
         whenStable: whenStable,
         stageRect: protectedStageRect,
-        dockRect: function () { return nav ? restingNavRect() : null; },
+        dockRect: function () { return nav ? nav.getBoundingClientRect() : null; },
         active: function () { return reserve > 0; },
         receipt: function () { return lastReceipt || measure(); }
       };

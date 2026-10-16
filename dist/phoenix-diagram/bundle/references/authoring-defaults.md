@@ -19,7 +19,7 @@
 ## 布局
 
 - Architecture：先按真实连接组织主路径与子系统，支线靠近负责节点；保留真实边界及显式坐标。新稿可用 schema 的 grid 字段组织有意义的行，省略无依据的固定 viewBox，先用自动路线。
-- Workflow：保留泳道、条件、分支、回路及 mainPath。新稿省略固定 viewBox 和手工宽度，让编译器测量标签；已有 v1 固定几何不切成 v2。
+- Workflow：保留泳道、条件、分支、回路及 mainPath。新稿省略固定 viewBox 和手工宽度，让编译器测量标签；已有 v1 固定几何不切成 v2。若实测自动路线无解或仍有共用通道，优先调整相关未固定节点的 `col` 或间距，给整条路线留出空间；随后再按诊断决定端口或路线 pins。
 - Sequence：保留参与者顺序、消息方向、`y`、同步/异步、return 与完整 notes。新稿省略 `meta.column_fit` 和 viewBox 使用新合同默认布局；旧合同缺省 fixed 保持原样。参与者内部动作放在其真实跨参与者消息的 note 中，不造 self-message。给 note 的实际换行高度留空间，28px 基础消息间距不代表 note 容量；修复时协调后续消息、segment 和 activation，不能删 note 含义。
 - Dataflow：明确每个输入由哪个 producer 实际输出，组合转换应保留独立标注的各路输入。真实存储端使用 `database`，内存计算通过生成它的 `backend` 表达。以 stage/row 网格开始；普通数据用 default，主数据 emphasis，确有策略/PII 含义才用 security，异步批处理才用 dashed。
 - Lifecycle：`mainPath` 列出真实主路径，并显式写出每条 transition；保留退出边的 label、note、variant。等待用 waiting，可恢复失败必须存在真实返回边。不得把终止或无法恢复伪装成 recovery。

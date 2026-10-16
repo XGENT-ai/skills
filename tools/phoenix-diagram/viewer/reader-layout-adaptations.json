@@ -4,7 +4,7 @@
   "sourcePath": "viewer/reader-layout.js",
   "sourceSha256": "9c32519bc9e0d06bd8e744cbbc81bad9d9f02287a73a5694b834413922133da4",
   "normalizedSourceSha256": "992355c7815b337887d58cd00a01d4e4c5680e64eec8fe1bca7879b95406e40a",
-  "adaptedBodySha256": "0ba18c7c78b52773a5635a2b391d955f8fbf9654ac42127b9a52734e3e0f41d9",
+  "adaptedBodySha256": "607b47a8b8f770e2996088ab9a7d6d48edcd41d0bbcb0df5440cba582934c135",
   "license": "MIT; see LICENSE.txt",
   "hunks": [
     {
@@ -13,6 +13,13 @@
       "sourceByteOffset": 1387,
       "sourceText": "      var WIDE_RATIO = 1.55;\n",
       "replacementText": "      var WIDE_RATIO = 1.55;\n      // Native legacy geometry retains its authored canvas and routes; only\n      // the desktop reading scale joins the existing measured-height path.\n      if (svg && svg.getAttribute('data-input-contract') === 'legacy-2.17' && ratio < WIDE_RATIO) {\n        measuredHeightFit = true;\n      }\n"
+    },
+    {
+      "scope": "reader legend viewport containment",
+      "sourceLine": 188,
+      "sourceByteOffset": 10233,
+      "sourceText": "        // spare corner cannot hold them clear of the dock and content area.\n        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n",
+      "replacementText": "        // spare corner cannot hold them in the viewport and clear of the dock and content area.\n        if (left < 0 || top < 0 || left + box.width * scale > window.innerWidth || bottom > window.innerHeight ||\n            left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n"
     }
   ]
 }

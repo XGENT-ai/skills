@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/viewer-chrome-layout.js",
+  "sourceSha256": "288f801150004b82496b1f16450adf5da7c59696cd657008b7e9c809b5c8a1eb",
+  "normalizedSourceSha256": "c6e20b4c408d0869422b28c2707be39cf8f97e24ba1fb0eaafb67f18cc501314",
+  "adaptedBodySha256": "903c6522e57f3a0bd8cafb312f3e8d7542cba88649edfdb978169976b2848dce",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "bounded stage-clear dock lift",
+      "sourceLine": 144,
+      "sourceByteOffset": 5604,
+      "sourceText": "      /* When the stage runs below the viewport, the dock lifts to the viewport\n         floor so its controls stay reachable while reading. Stage-rail\n         decisions and receipts use its resting position, so the lift never\n         feeds back into layout. */\n      var lift = 0;\n      var liftFrame = 0;\n      function restingNavRect() {\n        var rect = nav.getBoundingClientRect();\n        if (!lift) return rect;\n        return { x: rect.x, y: rect.y + lift, left: rect.left, right: rect.right, top: rect.top + lift, bottom: rect.bottom + lift, width: rect.width, height: rect.height };\n      }\n      function updateLift() {\n        liftFrame = 0;\n        var next = 0;\n        if (eligible()) {\n          var rest = restingNavRect();\n          var box = container.getBoundingClientRect();\n          next = Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16)));\n        }\n        if (next === lift) return;\n        lift = next;\n        if (lift) container.style.setProperty('--phoenix-diagram-dock-lift', lift + 'px');\n        else container.style.removeProperty('--phoenix-diagram-dock-lift');\n      }\n",
+      "replacementText": "      /* Lift only through spare space below the canonical stage. A long stage\n         keeps its dock in the bottom rail, reachable by document scrolling.\n         Baseline rail decisions use its resting position to avoid feedback;\n         public measurements always use the displayed screen rectangle. */\n      var lift = 0;\n      var liftFrame = 0;\n      function restingNavRect() {\n        var rect = nav.getBoundingClientRect();\n        if (!lift) return rect;\n        return { x: rect.x, y: rect.y + lift, left: rect.left, right: rect.right, top: rect.top + lift, bottom: rect.bottom + lift, width: rect.width, height: rect.height };\n      }\n      function updateLift() {\n        liftFrame = 0;\n        var next = 0;\n        if (eligible()) {\n          var rest = restingNavRect();\n          var box = container.getBoundingClientRect();\n          var stage = protectedStageRect();\n          var maxLift = Math.max(0, Math.floor(rest.top - stage.bottom - SAFE_GAP));\n          next = Math.min(maxLift, Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16))));\n        }\n        if (next === lift) return;\n        lift = next;\n        if (lift) container.style.setProperty('--phoenix-diagram-dock-lift', lift + 'px');\n        else container.style.removeProperty('--phoenix-diagram-dock-lift');\n        schedule();\n      }\n"
+    },
+    {
+      "scope": "camera screen-coordinate receipt",
+      "sourceLine": 187,
+      "sourceByteOffset": 7647,
+      "sourceText": "          var cameraNavRect = restingNavRect();\n",
+      "replacementText": "          var cameraNavRect = nav.getBoundingClientRect();\n"
+    },
+    {
+      "scope": "baseline screen-coordinate receipt",
+      "sourceLine": 229,
+      "sourceByteOffset": 9839,
+      "sourceText": "        navRect = restingNavRect();\n",
+      "replacementText": "        navRect = nav.getBoundingClientRect();\n"
+    },
+    {
+      "scope": "displayed dock stability snapshot",
+      "sourceLine": 284,
+      "sourceByteOffset": 12146,
+      "sourceText": "        var navRect = nav ? restingNavRect() : { top: 0, left: 0 };\n",
+      "replacementText": "        var navRect = nav ? nav.getBoundingClientRect() : { top: 0, left: 0 };\n"
+    },
+    {
+      "scope": "public displayed dock rectangle",
+      "sourceLine": 348,
+      "sourceByteOffset": 15215,
+      "sourceText": "        dockRect: function () { return nav ? restingNavRect() : null; },\n",
+      "replacementText": "        dockRect: function () { return nav ? nav.getBoundingClientRect() : null; },\n"
+    }
+  ]
+}

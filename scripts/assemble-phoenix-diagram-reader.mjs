@@ -49,24 +49,71 @@ function regularText(file) {
 
 function verifyReaderLayout(source, workspace, members) {
   const audit = regularText(path.join(workspace, 'viewer/reader-layout-adaptations.json'));
-  if (digest(audit) !== '8d1d09f132b8490494d85665ba2c8566dcfdf1d59f2af968f71a31b83f54a2d3') {
-    throw new Error('Reader Layout adaptation differs from the pinned legacy-fit hunk');
+  if (digest(audit) !== '54cca6193e579fc570a6ee68952e4769ebb05ca504cd9164e51598645693708a') {
+    throw new Error('Reader Layout adaptation differs from the pinned legacy-fit and legend-viewport hunks');
   }
   const adaptation = JSON.parse(audit), frozen = members.get('viewer/reader-layout.js');
   const normalized = namespaceSource(frozen), original = Buffer.from(normalized);
   if (adaptation.sourcePath !== 'viewer/reader-layout.js' || adaptation.sourceSha256 !== digest(frozen)
-      || adaptation.normalizedSourceSha256 !== digest(normalized) || adaptation.hunks.length !== 1) {
+      || adaptation.normalizedSourceSha256 !== digest(normalized) || adaptation.hunks.length !== 2) {
     throw new Error('Reader Layout adaptation does not match its frozen source');
   }
-  const [hunk] = adaptation.hunks, before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
-  if (hunk.scope !== 'native legacy portrait height fitting' || hunk.sourceText !== '      var WIDE_RATIO = 1.55;\n'
-      || !original.subarray(at, at + before.length).equals(before)
-      || normalized.slice(0, at).split('\n').length !== hunk.sourceLine) {
-    throw new Error('Reader Layout adaptation is outside its legacy-fit classification');
+  const expectedHunks = [
+    ['native legacy portrait height fitting', '      var WIDE_RATIO = 1.55;\n'],
+    ['reader legend viewport containment', '        // spare corner cannot hold them clear of the dock and content area.\n'
+      + '        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n'],
+  ];
+  const parts = []; let consumed = 0;
+  for (const [index, hunk] of adaptation.hunks.entries()) {
+    const before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
+    if (hunk.scope !== expectedHunks[index][0] || hunk.sourceText !== expectedHunks[index][1] || at < consumed
+        || !original.subarray(at, at + before.length).equals(before)
+        || original.subarray(0, at).toString().split('\n').length !== hunk.sourceLine) {
+      throw new Error('Reader Layout adaptation is outside its legacy-fit and legend-viewport classifications');
+    }
+    parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
   }
-  const adapted = Buffer.concat([original.subarray(0, at), Buffer.from(hunk.replacementText), original.subarray(at + before.length)]).toString();
+  parts.push(original.subarray(consumed));
+  const adapted = Buffer.concat(parts).toString();
   if (digest(adapted) !== adaptation.adaptedBodySha256 || source.replace(/^\/\*[\s\S]*?\*\/\n/, '') !== adapted) {
     throw new Error('Reader Layout source differs outside its recorded frozen adaptation');
+  }
+}
+
+function verifyChromeLayout(source, workspace, members) {
+  const audit = regularText(path.join(workspace, 'viewer/chrome-layout-adaptations.json'));
+  if (digest(audit) !== '1fbf56dbb754d8214325a7ccf14881cf8fae30dd4041873f3c79ec0cab2365b0') {
+    throw new Error('Chrome Layout adaptation differs from the pinned dock-lift and screen-measurement hunks');
+  }
+  const adaptation = JSON.parse(audit), frozen = members.get('viewer/viewer-chrome-layout.js');
+  const normalized = namespaceSource(frozen), original = Buffer.from(normalized);
+  if (adaptation.schemaVersion !== 1 || adaptation.sourcePath !== 'viewer/viewer-chrome-layout.js'
+      || adaptation.sourceSha256 !== digest(frozen) || adaptation.normalizedSourceSha256 !== digest(normalized)
+      || adaptation.hunks.length !== 5) {
+    throw new Error('Chrome Layout adaptation does not match its frozen source');
+  }
+  const expectedHunks = [
+    ['bounded stage-clear dock lift', 144, 5604],
+    ['camera screen-coordinate receipt', 187, 7647],
+    ['baseline screen-coordinate receipt', 229, 9839],
+    ['displayed dock stability snapshot', 284, 12146],
+    ['public displayed dock rectangle', 348, 15215],
+  ];
+  const parts = []; let consumed = 0;
+  for (const [index, hunk] of adaptation.hunks.entries()) {
+    const before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
+    const [scope, line, offset] = expectedHunks[index];
+    if (hunk.scope !== scope || hunk.sourceLine !== line || at !== offset || at < consumed
+        || !original.subarray(at, at + before.length).equals(before)
+        || original.subarray(0, at).toString().split('\n').length !== line) {
+      throw new Error('Chrome Layout adaptation is outside its dock-lift and screen-measurement classifications');
+    }
+    parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
+  }
+  parts.push(original.subarray(consumed));
+  const adapted = Buffer.concat(parts).toString();
+  if (digest(adapted) !== adaptation.adaptedBodySha256 || source.replace(/^\/\*[\s\S]*?\*\/\n/, '') !== adapted) {
+    throw new Error('Chrome Layout source differs outside its recorded frozen adaptations');
   }
 }
 
@@ -189,6 +236,7 @@ export function assembleReader({ workspace = defaultWorkspace, check = false } =
   for (const [marker, file, indent = 0] of fragments) {
     const source = regularText(path.join(workspace, 'viewer', file));
     if (file === 'reader-layout.js') verifyReaderLayout(source, workspace, members);
+    if (file === 'viewer-chrome-layout.js') verifyChromeLayout(source, workspace, members);
     if (file === 'viewer.css') verifyReaderCss(source, workspace, members);
     const nested = source.match(/\/\* PHOENIX:[A-Z_]+ \*\//g) || [];
     const allowed = file === 'export.js' ? [childMarker] : [];

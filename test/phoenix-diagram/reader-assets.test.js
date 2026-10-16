@@ -81,7 +81,7 @@ test('assembly rejects missing, duplicate, unknown and wrongly nested fragments 
   }
 });
 
-test('assembly rejects Reader Layout changes outside its one audited legacy-fit hunk before writing', async t => {
+test('assembly rejects Reader Layout changes outside its two audited narrow hunks before writing', async t => {
   const { assembleReader } = await import(modulePath);
   for (const mutation of ['append', 'prefix', 'manifest', 'readability-floor']) {
     const directory = sandbox(t), reader = path.join(directory, 'viewer/reader-layout.js');
@@ -91,6 +91,22 @@ test('assembly rejects Reader Layout changes outside its one audited legacy-fit 
     if (mutation === 'readability-floor') fs.writeFileSync(reader, fs.readFileSync(reader, 'utf8').replace('MIN_PROJECTED_NODE_TEXT_PX = 6;', 'MIN_PROJECTED_NODE_TEXT_PX = 1;'));
     const before = hash(fs.readFileSync(path.join(directory, 'assets/template.html')));
     assert.throws(() => assembleReader({ workspace: directory }), /Reader Layout.*(?:source|adaptation|frozen)/i, mutation);
+    assert.equal(hash(fs.readFileSync(path.join(directory, 'assets/template.html'))), before);
+  }
+});
+
+test('assembly rejects Chrome Layout changes outside its audited lift and screen-measurement hunks before writing', async t => {
+  const { assembleReader } = await import(modulePath);
+  for (const mutation of ['append', 'prefix', 'manifest', 'stage-boundary', 'virtual-dock', 'virtual-receipt']) {
+    const directory = sandbox(t), chrome = path.join(directory, 'viewer/viewer-chrome-layout.js');
+    if (mutation === 'append') fs.appendFileSync(chrome, '\nPhoenixDiagram.unrecordedChromeChange = true;\n');
+    if (mutation === 'prefix') fs.writeFileSync(chrome, 'PhoenixDiagram.unrecordedChromeChange = true;\n' + fs.readFileSync(chrome, 'utf8'));
+    if (mutation === 'manifest') fs.appendFileSync(path.join(directory, 'viewer/chrome-layout-adaptations.json'), '\n');
+    if (mutation === 'stage-boundary') fs.writeFileSync(chrome, fs.readFileSync(chrome, 'utf8').replace('rest.top - stage.bottom - SAFE_GAP', 'rest.top - stage.bottom + SAFE_GAP'));
+    if (mutation === 'virtual-dock') fs.writeFileSync(chrome, fs.readFileSync(chrome, 'utf8').replace('dockRect: function () { return nav ? nav.getBoundingClientRect()', 'dockRect: function () { return nav ? restingNavRect()'));
+    if (mutation === 'virtual-receipt') fs.writeFileSync(chrome, fs.readFileSync(chrome, 'utf8').replace('var cameraNavRect = nav.getBoundingClientRect();', 'var cameraNavRect = restingNavRect();'));
+    const before = hash(fs.readFileSync(path.join(directory, 'assets/template.html')));
+    assert.throws(() => assembleReader({ workspace: directory }), /Chrome Layout.*(?:source|adaptation|frozen)/i, mutation);
     assert.equal(hash(fs.readFileSync(path.join(directory, 'assets/template.html'))), before);
   }
 });
@@ -148,14 +164,25 @@ test('classic script order and private canonical/recorder cleanup retain the fro
       assert.equal(adaptation.sourcePath, 'viewer/reader-layout.js');
       assert.equal(adaptation.sourceSha256, hash(frozen));
       assert.equal(adaptation.normalizedSourceSha256, hash(expected));
-      assert.equal(adaptation.hunks.length, 1);
-      const [hunk] = adaptation.hunks;
-      assert.equal(hunk.scope, 'native legacy portrait height fitting');
-      assert.equal(hunk.sourceText, '      var WIDE_RATIO = 1.55;\n');
-      assert.match(hunk.replacementText, /svg\.getAttribute\('data-input-contract'\) === 'legacy-2\.17' && ratio < WIDE_RATIO/);
-      const original = Buffer.from(expected), before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
-      assert.ok(original.subarray(at, at + before.length).equals(before));
-      expected = Buffer.concat([original.subarray(0, at), Buffer.from(hunk.replacementText), original.subarray(at + before.length)]).toString();
+      assert.equal(adaptation.hunks.length, 2);
+      const [legacy, viewport] = adaptation.hunks;
+      assert.equal(legacy.scope, 'native legacy portrait height fitting');
+      assert.equal(legacy.sourceText, '      var WIDE_RATIO = 1.55;\n');
+      assert.match(legacy.replacementText, /svg\.getAttribute\('data-input-contract'\) === 'legacy-2\.17' && ratio < WIDE_RATIO/);
+      assert.equal(viewport.scope, 'reader legend viewport containment');
+      assert.equal(viewport.sourceText, '        // spare corner cannot hold them clear of the dock and content area.\n'
+        + '        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n');
+      assert.match(viewport.replacementText, /left < 0 \|\| top < 0 \|\| left \+ box\.width \* scale > window\.innerWidth \|\| bottom > window\.innerHeight/);
+      const original = Buffer.from(expected), parts = []; let consumed = 0;
+      for (const hunk of adaptation.hunks) {
+        const before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
+        assert.ok(at >= consumed, 'audited Reader Layout adaptations must not overlap');
+        assert.ok(original.subarray(at, at + before.length).equals(before));
+        assert.equal(original.subarray(0, at).toString().split('\n').length, hunk.sourceLine);
+        parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
+      }
+      parts.push(original.subarray(consumed));
+      expected = Buffer.concat(parts).toString();
       assert.equal(hash(expected), adaptation.adaptedBodySha256);
     }
     assert.ok(actual.endsWith(expected), `${file} must retain its complete source body outside recorded adaptations`);
@@ -188,6 +215,35 @@ test('embedded font bytes, full OFL and source MIT notices survive assembly and 
   assert.match(html, /THE FONT SOFTWARE IS PROVIDED "AS IS"/);
   assert.match(read('assets/svg-definitions.svg'), /id="arrowhead-dashed"/);
   assert.match(read('assets/node-card-style.svg'), /svg\[data-node-ui\]/);
+});
+
+test('bounded dock lift and actual screen measurements are the only Chrome Layout body adaptations', async () => {
+  const { namespaceSource } = await import(modulePath);
+  const frozen = frozenMember('viewer/viewer-chrome-layout.js'), normalized = namespaceSource(frozen);
+  const adaptation = JSON.parse(read('viewer/chrome-layout-adaptations.json'));
+  assert.equal(adaptation.schemaVersion, 1);
+  assert.equal(adaptation.sourcePath, 'viewer/viewer-chrome-layout.js');
+  assert.equal(adaptation.sourceSha256, hash(frozen));
+  assert.equal(adaptation.normalizedSourceSha256, hash(normalized));
+  assert.deepEqual(adaptation.hunks.map(hunk => [hunk.scope, hunk.sourceLine, hunk.sourceByteOffset]), [
+    ['bounded stage-clear dock lift', 144, 5604],
+    ['camera screen-coordinate receipt', 187, 7647],
+    ['baseline screen-coordinate receipt', 229, 9839],
+    ['displayed dock stability snapshot', 284, 12146],
+    ['public displayed dock rectangle', 348, 15215],
+  ]);
+  const original = Buffer.from(normalized), parts = []; let consumed = 0;
+  for (const hunk of adaptation.hunks) {
+    const at = hunk.sourceByteOffset, before = Buffer.from(hunk.sourceText);
+    assert.ok(at >= consumed);
+    assert.ok(original.subarray(at, at + before.length).equals(before));
+    assert.equal(original.subarray(0, at).toString().split('\n').length, hunk.sourceLine);
+    parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
+  }
+  parts.push(original.subarray(consumed));
+  const expected = Buffer.concat(parts).toString();
+  assert.equal(hash(expected), adaptation.adaptedBodySha256);
+  assert.equal(read('viewer/viewer-chrome-layout.js').replace(/^\/\*[\s\S]*?\*\/\n/, ''), expected);
 });
 
 test('narrow dock clearance and native legacy compact chrome are the only CSS body adaptations', async () => {
