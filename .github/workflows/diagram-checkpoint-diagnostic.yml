@@ -1,0 +1,116 @@
+# Unexecuted ignored draft. Root may copy ONLY this workflow and the controller
+# into a fresh diagnostics/diagram-checkpoint-macintel worktree/branch.
+# Neither destination matches the main Diagram workflow's push path filters.
+name: Diagram Intel checkpoint diagnostic
+on:
+  push:
+    branches: ['diagnostics/diagram-checkpoint-macintel']
+    paths:
+      - '.github/workflows/diagram-checkpoint-diagnostic.yml'
+      - 'scripts/diagnose-diagram-checkpoint.mjs'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe-once:
+    if: github.repository == 'XGENT-ai/skills' && github.ref == 'refs/heads/diagnostics/diagram-checkpoint-macintel'
+    runs-on: macos-15-intel
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: '/scripts/diagnose-diagram-checkpoint.mjs'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '25.2.1'
+          package-manager-cache: false
+      - name: Download and authenticate the two existing final55 artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+          input_root="$(mktemp -d "$RUNNER_TEMP/diagram-intel-input.XXXXXX")"
+          chmod 700 "$input_root"
+          printf 'DIAG_INPUT_ROOT=%s\n' "$input_root" >> "$GITHUB_ENV"
+          for artifact in 12050117772 12050207785; do
+            mkdir "$input_root/$artifact"
+            gh api --hostname github.com --method GET "repos/XGENT-ai/skills/actions/artifacts/$artifact" > "$input_root/$artifact/metadata.json"
+            gh api --hostname github.com --method GET "repos/XGENT-ai/skills/actions/artifacts/$artifact/zip" > "$input_root/$artifact/artifact.zip"
+          done
+          export DIAG_INPUT_ROOT="$input_root"
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,stat,tarfile,zipfile
+          root=pathlib.Path(os.environ['DIAG_INPUT_ROOT'])
+          source='55ba9908221d72863d1ff82b36cca7b406515dd1'
+          rows=[
+            (12050117772,'phoenix-diagram-candidate','f1ef33cda91b3c183044aad2266240918a5c715c16250f6358e1292132241588',33911927,'phoenix-diagram-candidate.tar','c40572c5db86a4813e1f69910d78c40896f624363b445cfdf1a3a35da35fe9e2',65187840,'candidate-input'),
+            (12050207785,'phoenix-diagram-harness','1d3d945c7a131abfc8ee5a0c7953a25991c4dbfcdd34fae4389cd26f845f9901',114437,'phoenix-diagram-harness.tar','c00ecaa80494b541bc09f20077b376260efcf9a5bea4441be507c0d835d0a4f7',450560,'harness'),
+          ]
+          transfer={'kind':'diagnostic-final55-transfer','runId':38907214275,'sourceCommit':source,'artifacts':[],'acceptance':'not-run'}
+          for aid,name,zsha,zsize,tarname,tsha,tsize,dest in rows:
+            folder=root/str(aid);meta=json.loads((folder/'metadata.json').read_text());raw=(folder/'artifact.zip').read_bytes()
+            assert meta['id']==aid and meta['name']==name and meta['expired'] is False
+            assert meta['workflow_run']['id']==38907214275 and meta['workflow_run']['head_sha']==source
+            assert meta['digest']=='sha256:'+zsha and meta['size_in_bytes']==zsize
+            assert len(raw)==zsize and hashlib.sha256(raw).hexdigest()==zsha
+            with zipfile.ZipFile(folder/'artifact.zip') as archive:
+              members=archive.infolist();assert len(members)==1
+              item=members[0];assert item.filename==tarname and not item.is_dir() and not item.flag_bits&1
+              assert stat.S_IFMT(item.external_attr>>16) in (0,stat.S_IFREG) and item.file_size==tsize
+              payload=archive.read(item);assert len(payload)==tsize and hashlib.sha256(payload).hexdigest()==tsha
+            tarpath=folder/tarname
+            with tarpath.open('xb') as stream:stream.write(payload)
+            output=root/dest;output.mkdir(mode=0o700);seen=set()
+            with tarfile.open(tarpath) as archive:
+              for item in archive:
+                namepath=item.name.rstrip('/');parts=namepath.split('/')
+                assert namepath and not namepath.startswith('/') and '\\' not in namepath and all(p not in ('','.','..') for p in parts)
+                assert namepath.casefold() not in seen;seen.add(namepath.casefold())
+                assert item.isdir() or item.isfile()
+                if dest=='candidate-input':assert parts[0]=='candidate'
+                target=output.joinpath(*parts)
+                if item.isdir():target.mkdir(mode=0o700,parents=True,exist_ok=True);continue
+                assert item.mode&0o777 in (0o600,0o644,0o700,0o755)
+                target.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+                with target.open('xb') as stream,archive.extractfile(item) as sourcefile:
+                  stream.write(sourcefile.read())
+                os.chmod(target,item.mode&0o777)
+            transfer['artifacts'].append({'id':aid,'name':name,'zip':{'sha256':zsha,'bytes':zsize},'archive':{'sha256':tsha,'bytes':tsize},'directory':str(output)})
+          (root/'evidence').mkdir(mode=0o700)
+          with (root/'transfer.json').open('x') as stream:json.dump(transfer,stream,indent=2)
+          PY
+      - name: One public npm checkpoint observation and explicit recovery
+        id: diagnostic
+        run: |
+          set -euo pipefail
+          node scripts/diagnose-diagram-checkpoint.mjs --run-diagnostic \
+            --candidate-dir "$DIAG_INPUT_ROOT/candidate-input/candidate" \
+            --harness-dir "$DIAG_INPUT_ROOT/harness" \
+            --candidate-archive "$DIAG_INPUT_ROOT/12050117772/phoenix-diagram-candidate.tar" \
+            --harness-archive "$DIAG_INPUT_ROOT/12050207785/phoenix-diagram-harness.tar" \
+            --output-parent "$DIAG_INPUT_ROOT/evidence"
+      - name: Preserve all raw timing and command evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: diagram-intel-checkpoint-diagnostic-${{ github.run_id }}
+          path: |
+            ${{ env.DIAG_INPUT_ROOT }}/transfer.json
+            ${{ env.DIAG_INPUT_ROOT }}/12050117772/metadata.json
+            ${{ env.DIAG_INPUT_ROOT }}/12050207785/metadata.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/logs
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/diagnostic.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/environment.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/candidate.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/observed-checkpoint.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/located-record.json
+            ${{ env.DIAG_INPUT_ROOT }}/evidence/*/output
+          if-no-files-found: error
+          retention-days: 14
