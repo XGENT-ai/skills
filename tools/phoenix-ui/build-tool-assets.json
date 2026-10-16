@@ -11,11 +11,11 @@
     "darwin-x64": {
       "tool": "mr-boxington",
       "package": "mbx",
-      "version": "1.21.1",
+      "version": "1.24.0",
       "url": "https://github.com/jdx/mr-boxington",
-      "revision": "a0a44c61ca6aaa8da41d59deeebdfc46fc9d3313",
-      "source": "https://github.com/jdx/mr-boxington/tree/a0a44c61ca6aaa8da41d59deeebdfc46fc9d3313",
-      "reason": "The official v1.21.1 release has no x86_64-apple-darwin asset; build the same version natively during explicit preparation."
+      "revision": "1b62dc2c795c93630d4ce28c4d9d2540d6e776ea",
+      "source": "https://github.com/jdx/mr-boxington/tree/1b62dc2c795c93630d4ce28c4d9d2540d6e776ea",
+      "reason": "The official v1.24.0 release has no x86_64-apple-darwin asset; build the same version natively during explicit preparation."
     }
   },
   "linuxArmBrowser": {

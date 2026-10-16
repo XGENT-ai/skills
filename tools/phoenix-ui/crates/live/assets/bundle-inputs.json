@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "06f98fef0fe53d3e836e547145af342b7839794314b91dfe933cef5cddbf4f31",
+  "inputSha256": "9dd7f3ffc10f792f63d56b6afcf5f0bed82e1985af17b9b32dffd3e295043876",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
@@ -55,7 +55,7 @@
       "size": 1496
     },
     "build-tools.lock.json": {
-      "sha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6",
+      "sha256": "a58ae8b0b7b973fd68d611b5f613807b6658a8917fc70729ea8f6ac0a74f7bf1",
       "size": 251
     },
     "crates/bundle/Cargo.toml": {
@@ -315,7 +315,7 @@
       "size": 39
     },
     "repository/mise.toml": {
-      "sha256": "7e05237b3575e57bb64044782d95e8f089fa1287cbe7773b94b97adbe507ddd2",
+      "sha256": "c764721cf74ad5f8dc925ad69d3162465aee96685f5df80b93dee008d1d3d299",
       "size": 194
     },
     "repository/rust-toolchain.toml": {
@@ -323,8 +323,8 @@
       "size": 123
     },
     "repository/scripts/phoenix-build-tools.mjs": {
-      "sha256": "135d050e2dda4e480aa8508298e4e701fc51354481c1ca239d56bc777a0c9eb5",
-      "size": 7985
+      "sha256": "b2d3e8a333a3331f7fe272816a74fbee4a81f402571f0134b12fbd7a98d72ce0",
+      "size": 7981
     }
   },
   "options": {
@@ -359,8 +359,8 @@
       "size": 21779
     },
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "04fa58774c242e7c4516963a4cb5b431d42d7fe64bc41812368dddcbfc203969",
-      "size": 2236626
+      "sha256": "eecc6bd09d7327312ab03e533b9f5d4dfca4cf8236fa8bffbdf38fbc50c676a8",
+      "size": 2236770
     }
   }
 }
