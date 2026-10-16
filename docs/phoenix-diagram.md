@@ -33,7 +33,7 @@ cp .agents/skills/phoenix-diagram/examples/minimal.workflow.json candidate.json
 "$PD" finalize workflow candidate.json diagram.html --out-dir evidence-01 --json
 ```
 
-示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。所需日期、金额或业务条件缺失时，先询问，答复前不写 candidate 或生成图，也不附“草拟”“默认”“待确认”的猜测值；只有用户明确要求拟定这些值时才提供标为建议的方案。事实齐备后只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。五类之外的结构应明确提出，不靠删节点、删关系、缩字或隐藏溢出来通过。
+示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。所需日期、金额或业务条件缺失时，先询问，答复前不写 candidate 或生成图，也不附“草拟”“默认”“待确认”的猜测值；只有用户明确要求拟定这些值时才提供标为建议的方案。材料明确指出必需事实尚未提供时，不能先画省略规则的版本或用缺失规则卡片代替询问；说明提问或字段格式只用未赋值占位符，不附具体值或业务规则的假设例子。事实齐备后只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。五类之外的结构应明确提出，不靠删节点、删关系、缩字或隐藏溢出来通过。
 
 公开命令：
 

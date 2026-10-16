@@ -92,14 +92,73 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command}};
   const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:cmd,aggregated_output:output,exit_code:exit,status:'completed'}};
   const skill=put(project+'/.agents/skills/phoenix-diagram/SKILL.md',quote),reference=put(project+'/.agents/skills/phoenix-diagram/references/delivery-contract.md',quote),rows=[provider==='claude-code'?{type:'system',subtype:'init',session_id:'fixture-session'}:{type:'thread.started',thread_id:'fixture-session'},call('read-skill',`cat '${skill.path}'`),result('read-skill',quote),call('read-ref',`cat '${reference.path}'`),result('read-ref',quote),call('pd',cmd),result('pd',JSON.stringify(dto),exitCode),provider==='claude-code'?{type:'result',session_id:'fixture-session',is_error:false}:{type:'turn.completed'}];
-  function build({skillOnly=false,withoutPd=false}={}) {
+  function build({skillOnly=false,withoutPd=false,skillInjection,beforeSkillInjection}={}) {
     const selected=rows.filter((_,index)=>!(skillOnly && [3,4].includes(index)) && !(withoutPd && [5,6].includes(index)));
+    if(skillInjection)selected.splice(selected.indexOf(rows[2])+1,0,...(beforeSkillInjection?[beforeSkillInjection]:[]),skillInjection);
     const lines=selected.map(row=>Buffer.from(JSON.stringify(row)+'\n')),raw=Buffer.concat(lines),anchors=lines.map((line,index)=>({offset:lines.slice(0,index).reduce((sum,row)=>sum+row.length,0),length:line.length,sha256:identity(line).sha256})),transcript=put(directory+'/native.jsonl',raw),version=put(directory+'/version.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:['--version'],exitCode:0,stdout:provider==='codex'?'codex-cli fixture':'Claude Code fixture'})),capture=put(directory+'/capture.json',JSON.stringify({program:provider==='codex'?'codex':'claude',argv:provider==='codex'?['exec','--json']:['--output-format','stream-json'],cwd:project,exitCode:0,stdout:transcript})),at=index=>anchors[selected.indexOf(rows[index])];
-    const session={id:'fixture-session',provider,format:provider==='codex'?'codex-exec-json':'claude-stream-json',capture,version,transcript,installedReceipt,collector:{script:collector,nodePath},loadedReads:[{file:skill,quote,call:at(1),result:at(2)},...(!skillOnly?[{file:reference,quote,call:at(3),result:at(4)}]:[])],pdCall:withoutPd?undefined:{call:at(5),result:at(6)}};
+    const session={id:'fixture-session',provider,format:provider==='codex'?'codex-exec-json':'claude-stream-json',capture,version,transcript,installedReceipt,collector:{script:collector,nodePath},loadedReads:[{file:skill,quote,call:at(1),result:at(2),...(skillInjection?{injection:anchors[selected.indexOf(skillInjection)]}:{})},...(!skillOnly?[{file:reference,quote,call:at(3),result:at(4)}]:[])],pdCall:withoutPd?undefined:{call:at(5),result:at(6)}};
     return{session,proof:session.pdCall,read:ref=>{const bytes=files.get(ref.path);assert.ok(bytes,'fixture file exists: '+ref.path);return bytes;}};
   }
   return{build,rows,dto,receipt,reply,files,templateIdentity:identity(template),collector,cmd,put,replaceArgv(argv){dto.argv=argv;rows[5]=call('pd',commandFor(argv));},replaceResult(value,exit=0){rows[6]=result('pd',JSON.stringify(value),exit);}};
 }
+function skillInjectionFixture(provider='claude-code') {
+  const f=stdioProviderFixture({provider,command:'doctor'}),read=f.build().session.loadedReads[0],body='# Phoenix Diagram\n\n'+read.quote+'\n',source='---\nname: phoenix-diagram\n---\n\n'+body;
+  Object.assign(read.file,f.put(read.file.path.replace('/.agents/','/.claude/'),source));
+  f.rows[1]={type:'assistant',session_id:'fixture-session',message:{role:'assistant',content:[{type:'tool_use',id:'read-skill',name:'Skill',input:{skill:'phoenix-diagram'}}]}};
+  f.rows[2]={type:'user',session_id:'fixture-session',message:{role:'user',content:[{type:'tool_result',tool_use_id:'read-skill',content:'Launching skill: phoenix-diagram'}]},tool_use_result:{success:true,commandName:'phoenix-diagram'}};
+  const injection={type:'user',session_id:'fixture-session',isSynthetic:true,message:{role:'user',content:[{type:'text',text:'Base directory for this skill: '+path.posix.dirname(read.file.path)+'\n\n'+body}]}};
+  if(provider==='codex'){
+    f.rows[1]={type:'response_item',payload:{type:'function_call',name:'Skill',call_id:'read-skill',arguments:JSON.stringify({skill:'phoenix-diagram'})}};
+    f.rows[2]={type:'response_item',payload:{type:'function_call_output',call_id:'read-skill',output:JSON.stringify({output:'Launching skill: phoenix-diagram',exit_code:0})},tool_use_result:{success:true,commandName:'phoenix-diagram'}};
+  }
+  f.replaceArgv(['doctor','--json']);f.replaceResult(f.dto);
+  return{...f,body,source,injection,build:options=>f.build({skillOnly:true,withoutPd:true,skillInjection:injection,...options})};
+}
+test('Claude native Skill loading binds the complete adjacent synthetic owned SKILL body',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const mode of ['clarification','doctor','delivery']){
+    const f=skillInjectionFixture(),b=f.build({skillOnly:mode!=='delivery',withoutPd:mode==='clarification'}),scenarioRows=[{id:mode==='delivery'?'intent-workflow':'missing-condition',sessionId:b.session.id}];
+    assert.equal(checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows}).capture.exitCode,0,mode);
+  }
+});
+test('native Skill loading rejects claims, altered bodies and unbound or nonadjacent host events',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const fault of ['no-injection','wrong-skill','launching-only','ordinary-user','assistant-injection','wrong-role','call-session','result-session','injection-session','wrong-directory','other-project-file-and-injection','changed-body','frontmatter-body','intervening-event','failed-result','wrong-command-name','error-result','wrong-id','quote-only','extra-content','codex-skill']){
+    const f=skillInjectionFixture(fault==='codex-skill'?'codex':'claude-code'),options={};
+    if(fault==='no-injection')options.skillInjection=null;
+    else if(fault==='wrong-skill')f.rows[1].message.content[0].input.skill='phoenix-ui';
+    else if(fault==='launching-only')delete f.rows[2].tool_use_result;
+    else if(fault==='ordinary-user')delete f.injection.isSynthetic;
+    else if(fault==='assistant-injection')f.injection.type='assistant';
+    else if(fault==='wrong-role')f.injection.message.role='assistant';
+    else if(fault==='call-session')f.rows[1].session_id='different-session';
+    else if(fault==='result-session')f.rows[2].session_id='different-session';
+    else if(fault==='injection-session')f.injection.session_id='different-session';
+    else if(fault==='wrong-directory')f.injection.message.content[0].text=f.injection.message.content[0].text.replace('/project/','/other-project/');
+    else if(fault==='other-project-file-and-injection'){
+      const read=f.build().session.loadedReads[0],previous=read.file.path;Object.assign(read.file,f.put(previous.replace('/project/','/other-project/'),f.source));
+      f.injection.message.content[0].text=f.injection.message.content[0].text.replace(path.posix.dirname(previous),path.posix.dirname(read.file.path));
+    }
+    else if(fault==='changed-body')f.injection.message.content[0].text+='Altered rules.\n';
+    else if(fault==='frontmatter-body')f.injection.message.content[0].text=f.injection.message.content[0].text.replace(f.body,f.source);
+    else if(fault==='intervening-event')options.beforeSkillInjection={type:'system',subtype:'status',session_id:'fixture-session'};
+    else if(fault==='failed-result')f.rows[2].tool_use_result.success=false;
+    else if(fault==='wrong-command-name')f.rows[2].tool_use_result.commandName='phoenix-ui';
+    else if(fault==='error-result')f.rows[2].message.content[0].is_error=true;
+    else if(fault==='wrong-id')f.rows[2].message.content[0].tool_use_id='other-tool';
+    else if(fault==='quote-only')f.injection.message.content[0].text=f.injection.message.content[0].text.replace(f.body,f.build().session.loadedReads[0].quote);
+    else if(fault==='extra-content')f.injection.message.content.push({type:'text',text:'Unbound extra instructions.'});
+    const b=f.build(options);
+    assert.throws(()=>checkProviderCapture(b.session,b.read,b.session.provider,{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'missing-condition',sessionId:b.session.id}]}),/skill|read|injection|pair|tool/i,fault);
+  }
+});
+test('native Skill loading preserves nonclarification reference and PD requirements',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const id of ['intent-workflow','repairable-diagnostic','stalled-repair','browser-unavailable','visual-pending']){
+    const f=skillInjectionFixture(),b=f.build();
+    assert.throws(()=>checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows:[{id,sessionId:b.session.id}]}),/capture|evidence|reference|PD/i,id);
+  }
+});
 test('clarification-only session scope permits real SKILL reads with a doctor or no PD call',async()=>{
   const {checkProviderCapture}=await api();
   for(const provider of ['claude-code','codex'])for(const withDoctor of [false,true]){
