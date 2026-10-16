@@ -1,0 +1,1163 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-candidate-review",
+  "repository": "XGENT-ai/skills",
+  "runId": "38956641866",
+  "target": "darwin-arm64",
+  "nonce": "111a020df0658f3abb0cc523e048b46a",
+  "stateSha256": "0db04d5dfbec0538dfd5c8f5e534e864549b55aa570f4dd26ec12ff9a836edcf",
+  "candidateSha256": "dbca07afa7429f2594f0e8beaa08dbf596ab4913480ce5a2f9aac0a3c070a9ad",
+  "sourceCommit": "7e37f2a17619ea9fb563c049278689693b0a298e",
+  "records": {
+    "new-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/diagram.html",
+        "identity": {
+          "sha256": "dd85f53a9243d90ecf2c6bb7043eaf4d9d662843aeff9c527fe13ab88aafd127",
+          "bytes": 943399
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/candidate.json",
+        "identity": {
+          "sha256": "af2adbcf0f7a8ed531236a10489938063dfd33d497085219481a83fe8a7113d7",
+          "bytes": 552
+        }
+      },
+      "configSha256": "a431f5949d4f5146a1c5b7a01d3164606391078499ecc313ef1a2821632b5454",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "cf4f24be-8e5e-49cb-9232-67ca75dff006",
+      "browserReceiptIdentity": {
+        "sha256": "3c149abd70a8bbab567c0c9b2f0c4fc49864ec49d00d7a18aa532df6cdd3ed99",
+        "bytes": 430104
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "4dbdc9977fd39fad9b9d4659ba53447d634ca688dedf00d3aff8d3f6238e64cd",
+              "bytes": 51907
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色原图已逐幅查看。Client/Service 两组件及 Request 右向关系与输入一致，Request 文本在箭头上方可读，没有节点或控件遮挡。两列层级清楚；未配置说明卡，Node index 两项完整。Frontend/Backend 计数图例与右下导航栏分开，顶部控件完整。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "32ff94c1ffee04496aff6c79d25405a7b7f27df212428f8202befdbd5d160132",
+              "bytes": 51733
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色原图已查看。青色 Client、绿色 Service 和灰色右箭头清晰，Request 标签有独立底板，方向与事实一致。无作者说明卡，两项索引在图下完整显示；图例位于左下、dock 位于右下，均未遮住主图或标签，顶部导出等控件完整。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "ac024970ee064e59d33cf3ebb00fec639da4bae0a7a978895ba0593dc6a740fb",
+              "bytes": 60076
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整原图已查看。两节点与 Client→Service 单关系完整，标签可读、箭头末端可见，中央留白没有造成事实遗漏。Frontend 1/Backend 1 图例及两项 Node index 均完整，无作者卡；上下控件与图例、索引互不遮挡。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "b77da9090722797ff7926a155595848dbb8b7eb9144db4fd7433248e0036c116",
+              "bytes": 60667
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。Client/Service 与 Request 单向箭头在暗色下可辨，主图层级与节点类型清楚，无交叠遮线问题。未配置作者卡，两节点索引完整；左下图例和右下 ROUTE/LENS/缩放等控件各有空间，页尾无裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/diagram.html",
+        "identity": {
+          "sha256": "af85e8ddb6b53ecc18c423ee70813bb8b7d1cf99b88befbd3f11f4b92c0d55af",
+          "bytes": 959914
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/candidate.json",
+        "identity": {
+          "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+          "bytes": 3793
+        }
+      },
+      "configSha256": "554561b4636080c31ae6a048fe1ce0ed898fdfc98e4325b7a5fc66c16339476d",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "73a93184-c52c-4422-a0b0-abcd2f45974c",
+      "browserReceiptIdentity": {
+        "sha256": "8cc7952386489e8d5efb36fd1b4e84dc08d29276c5644f1cb03c54f1189d356c",
+        "bytes": 1782720
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "845ac183863212128ab3c16c9ef1e311cc41fc4bff10e3dec2de34b2fe0fe274",
+              "bytes": 156312
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色完整长图已查看。十组件及九关系完整：HTTPS 主链向右，static/enqueue 向下，SQS 向 Worker，JWT 红箭头向 API、read-through 灰箭头向 Redis。JWT 与缓存短段靠近但箭头和标签可区分；AWS Region 与 sg-api 标题仍可读、边界包围对象正确。Edge/Application/Security 三卡七项和十项索引完整，六类图例与 dock 无覆盖。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "d9763a373c14ccd2d3abd2f4ad9a16afa6840773856fd87087eea5c8be537ad6",
+              "bytes": 166727
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色长图已查看。十个名称/副标题、HTTPS/verify JWT/read-through/SQL/static/enqueue 关系文字都可辨。红色 JWT 下向提示与灰色缓存上向箭头保持相反方向可读，Auth/Users 在 AWS 外，LB/API 在 sg-api 内。三卡七项含 OAI、JWT+PKCE 等事实，十节点索引完整；图例 External 1 在工具栏上方完整显示，控件没有盖住文字。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "96185afdd146151e9b28627ec70c361364b31037e661d0be66552940ceaf3d8b",
+              "bytes": 197265
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整原图已查看。AWS 八个内部组件与外部 Users/Auth 的层级清楚，sg-api 标题和 LB/API 范围可读。九条连接端点与方向可追踪，JWT 经过区域标题所在横向但标题底板文字清晰；read-through 指 Redis、JWT 指 API，不混淆。三张卡、十项索引和六类图例完整，dock 位于下方右侧空区。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "42a9e9b55e2d9baf2fbdb61dcca7022b69fd52126dd32534b117947673cba26d",
+              "bytes": 215448
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。十节点、九关系及两个边界完整，主链、静态资产、异步任务及身份/缓存路径均可辨，AWS/sg-api 标签未因连线失读。共享短竖段的两方向箭头清楚，所有必要关系标签可见。三卡七条、十节点索引与类型计数图例完整，页面底部和顶部控件无裁切遮挡。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/diagram.html",
+        "identity": {
+          "sha256": "42a19da69b87f2366d9a54624771fc230077f32b5c8268563aabeab28e3a69e3",
+          "bytes": 942824
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/candidate.json",
+        "identity": {
+          "sha256": "e2421e77955c3b4e9bf225b9f1e50f1cf3d2304d85b2420f3c87b7c2448ccb87",
+          "bytes": 608
+        }
+      },
+      "configSha256": "c44df891617030c21ff144bfd9abb70653360baba93d540391b7e7aa6a31bfab",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "2e40a0d3-438d-4bc2-928f-4c12c3af7c14",
+      "browserReceiptIdentity": {
+        "sha256": "54b36a8a3f0ec62a003df3c5efbbfde19619a7e38c68bba22f04bcdf4545a71a",
+        "bytes": 455405
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "8e731ea6788c11836e27b42b0af8440df2091208b44cc3ffaf76e807b576b210",
+              "bytes": 52591
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色图已查看。单一 Work 泳道含 Prepare/Complete 两节点，Continue 关系由左向右进入 Complete，标签有清晰底板，没有遮住箭头或节点。主路径与泳道层级清楚；无说明卡，两节点索引和 Agent logic 2 图例完整，顶部/底部控件未裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "6b98f033a3bdd5e4d99e2984182fa6abd70b9f9ad91f63591e3cc837a2d016fc",
+              "bytes": 54910
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色图已查看。Prepare→Complete 的主边和 Continue 标签清楚，两个绿色节点在 Work 泳道内，没有多余分支或事实缺漏。未配置作者卡，Node index 两项完整；图例与右下 dock 距离充足，全部控件可见。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "3669529b5701bcd1aacfdc6dbe8a03e2b993de13c4023281597fbc30ad1b1cb4",
+              "bytes": 66516
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色原图已查看。01/Work、Prepare、Complete 和 Continue 四项文字可读，右向箭头末端明确，泳道没有盖线。无作者说明卡，两项节点索引完整，Agent logic 计数为 2；图例与工具栏分开，上方主题/Still/导出及底部导航控件完整。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "b7eda1311e580fbf3b099f4a9bd85ae29fa064e4b93ab30003c3f1bfd3e1c739",
+              "bytes": 71526
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色原图已查看。Work 泳道主路径由 Prepare 指向 Complete，Continue 标签与箭头分离可读，层级和边向符合输入。未配置说明卡，两节点索引完整。图例、底部 dock 和顶部控件均不遮挡图内容，页面边缘没有裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/diagram.html",
+        "identity": {
+          "sha256": "0790d0341a56c5cbb62a52c65d3fb3abcda1a7782cef95f3b6d44aca6a4e0162",
+          "bytes": 969242
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/candidate.json",
+        "identity": {
+          "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+          "bytes": 5687
+        }
+      },
+      "configSha256": "f1e43cce35e32e721a5bb25953695f652230f2b94e819d3aa5256395ff8e281a",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "57fa283b-af99-452b-a152-909124e58664",
+      "browserReceiptIdentity": {
+        "sha256": "057e9096f83042007b6f8fa6727e5bb2ff7c96df6bf073a9d8ed4c5f0ac41399",
+        "bytes": 2175333
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "8ced80019812cc1c7270ed1158969ec9a47f04f6194ad46f38ebc1f7d8e035fe",
+              "bytes": 403140
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色完整长图已查看。十二节点、四泳道、三阶段和四分组都完整；十一关系中主链从 User 经审批/工具到 External，再由右侧回路进入 Final Reply。denied 向上进入 Blocked，Blocked→Retry、record result 回 Trace、Context Store→Trace 均可辨。审批出边短共享段未遮住方向或 denied 文本。两卡四项、十二项索引和七类图例完整，dock 不遮图例。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "82b9f0509fcc55909e3bc6aae4ada602a7307a7a0102595b373c7e4d327b6c29",
+              "bytes": 433154
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色完整长图已查看。各节点主/副标题、plan、needs approval?、denied、trace + memory、record result 标签可读；成功主路径、拒绝支路、外部返回与证据回流方向清楚。四泳道/三个阶段及 Planning/Human stop/Evidence/Tool 分组层级可辨。两张说明卡与十二节点索引完整，图例在工具栏上方保留全七项，控件无覆盖。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "fc593ed0dd414df1e68f78542c1f212584d5d320d6cd52ffd2c391faa7580b4e",
+              "bytes": 557185
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色原长图已查看。十二节点及十一条关系可逐一追踪，主路径和 External→Final 的右侧回返完整；审批到 Tool 的绿色边、审批到 Blocked 的红色边及到 Retry 的紫边明确。分组与泳道标题没有被路径压住，record result 底部回 Trace 的上箭头可见。两卡四条、十二索引项及七种图例完整，右下控件独立。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "e33df0b5485b1ed56cc334b0f90487a6ce9d338239dd4049d9be18d836342d9d",
+              "bytes": 592254
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整长图已查看。十二节点/副标题、四泳道、三阶段、四分组全部可辨。十一关系的端点和箭头清楚，审批短共享末段不妨碍区分执行与 denied，证据/记忆双输入 Trace 及 Final Reply 返回均完整。Compiler Contract/Runtime Semantics 两卡、十二项索引完整；图例及 dock 没有遮挡或页面底部裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/diagram.html",
+        "identity": {
+          "sha256": "6c04179f481b235fd74a66bddcbec20647cab552184b4f139499559c31a6bce2",
+          "bytes": 939469
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/candidate.json",
+        "identity": {
+          "sha256": "f3a87f15792cf20071ab01887ccc1761a6528adbee7161453e59f5eaad845d85",
+          "bytes": 583
+        }
+      },
+      "configSha256": "e78d0c85851afca84fadc9a023885f6659769e4d27cc0af39f987cf419ab2c47",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "fa50624f-4dba-419e-a03d-e2d726807c35",
+      "browserReceiptIdentity": {
+        "sha256": "1bf7423929741043e2ac5af8d28576139fe0fb7e2f70d3b6aa0a447b4d151f93",
+        "bytes": 474082
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "a0686714f1746200a9c0bfc6878fe62215155bcd18b1c0e24c0159b42f2a8078",
+              "bytes": 50830
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色原图已查看。Client/Service 两参与者及生命线完整，Request 实线由 Client 向 Service，随后 Result 虚线反向回 Client，先后顺序和箭头均明确。两个标签无重叠；无作者说明卡，两项索引和 return/message 图例完整，dock 与图例分开。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "215a8fbdee50f0d8b916c2617e75de019958894218306adc68786144c6a504d0",
+              "bytes": 50631
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色原图已查看。两个参与者名称、生命线及 Request/Result 文字可读；请求右行、返回左行，线型区分清楚，没有控件或标签压住关系。未配置说明卡，Node index 两项完整，顶部导出/Still 等与底部导航控件均可见。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "c0090679c4511b51368dfa03c5f205d78a197616adfa693f89ad7020fb9accf1",
+              "bytes": 59304
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整原图已查看。两参与者与两个消息完整，Request 在上并向右，Result 在下并向左；生命线端点与时间顺序清楚，无文字或线重叠。无说明卡，图例两个线型及两节点索引全部可见，左右下角的图例/dock 互不覆盖。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "1913eb5abff0efd30412234bcab16e77ff42676ee2cd239178cfc333602e85f0",
+              "bytes": 59443
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。Client、Service 和两个消息标签清晰，Request 实线箭头入 Service、Result 虚线回 Client，关系没有误向或遮挡。未配置作者卡，两项节点索引完整；图例和上下控件均完整，长图页尾未裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/diagram.html",
+        "identity": {
+          "sha256": "2d9364884db586bb94a557b70c365cec3f0785f5a2fef35fec2d0e7d7416259b",
+          "bytes": 965287
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/candidate.json",
+        "identity": {
+          "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+          "bytes": 4370
+        }
+      },
+      "configSha256": "3b27ad012cb562fbbf9a607f420613ecccd6b2d0575ee149c526f8ca878bc320",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "4729aea5-4102-4786-9bcf-3da8951c7512",
+      "browserReceiptIdentity": {
+        "sha256": "be201602b1bd1e13865fc76793fde95c41e91c6c960b38c192ecbb987277dad5",
+        "bytes": 1807429
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "49cdff2b419e81ab6a071d3ec7153ccad9cec2cee06b6860ac16592b0684d8f2",
+              "bytes": 411437
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色完整长图已查看。七参与者及副标题、Accept/Background work/Notify + reconcile 三段、十四消息和七个激活区均完整。快速 POST/enqueue/202、执行与超时重入 Queue、先 persist 再通知以及 webhook/轮询两条观察路方向可辨。消息文字没有被激活条遮住；三卡九项和七项索引完整，四类图例在 dock 上方未受覆盖。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "9ac495f1198f9a4e6863411aab6fa3cbbf9cfaef62955fd4b1d02c4e94b9974d",
+              "bytes": 449995
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色完整长图已查看。全部十四标签可读，Worker→Queue 的 timeout retry、Notifier→Client 的 signed webhook 与 Job Store→API→Client 的返回箭头向左，其他请求/持久化方向与输入一致。七参与者和三段层级清楚，生命线/激活区可追踪。三张说明卡九条及七节点索引完整，图例、dock 和页面尾部均无遮挡裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "92f95403f94a7bd67cb874defd4aa6dd65a088bbb7626e7e9ecfae8dba62c36d",
+              "bytes": 551664
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色原长图已查看。七参与者、三阶段、十四消息顺序及七激活区完整；202 在后台工作前返回，状态持久化在通知前，GET/status/completed/200 返回链清楚。所有关系标签与箭头可辨，没有串行时序混淆。Fast Acknowledgement/Bounded Recovery/Two Observation Paths 三卡九项与七项索引可见，图例和工具栏分开。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "03c27ebe2444cb6d9ab88c55d05ad4ce8703aef79d06726c1fc41cb60ed0b864",
+              "bytes": 618559
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整长图已查看。请求、返回、异步通知及重试四种路径清楚，十四消息文字/方向与原输入一致；三分段、七个参与者和激活条均可辨，无标签重叠造成含义丢失。三卡九条、七节点索引与四类线型图例全部显示，dock 在图例下方独立，所有控件和长图底部完整。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/diagram.html",
+        "identity": {
+          "sha256": "fb84d21538b74b12991ac2f079d1db9e4a7c1584c506913bb64b221027e11ebe",
+          "bytes": 938776
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/candidate.json",
+        "identity": {
+          "sha256": "f773be76cbb4618e8e1209c634209621f7db9707d5dcc9305555e4be46206865",
+          "bytes": 558
+        }
+      },
+      "configSha256": "f93b5fbe147a84c5fc222cda65a6b286b3feb27e9d8fffe4d43cd1fd3e6de70e",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "ce01a844-8111-438b-8fed-19b7b1540f38",
+      "browserReceiptIdentity": {
+        "sha256": "a9079dc3853887c8d3676b71f1cd2998b226fad4c0d62142eb96117bf244508c",
+        "bytes": 464964
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "a36e146c6464444cf41f3d8e765bd7d8d547f775128e123c89f044ce35f1cab8",
+              "bytes": 57488
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色原图已查看。Source 与 Process 两阶段完整，Input store→Transform 的 records 流向右，箭头和文本清晰，无节点/关系遮挡。阶段层级和存储/处理类型可辨；没有作者说明卡，Node index 两项完整。data store/data flow 图例与 dock 分开，顶部控件未裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "56e4f3a7cd815174cc9b75b10afa53ffc263c4e81457362f60ea06289dc4d2cf",
+              "bytes": 57853
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色原图已查看。紫色 Input store、绿色 Transform、records 标签和右向箭头均可读，两阶段虚线边界没有压住标签。无说明卡，两节点索引完整；左下图例与右下工具栏互不覆盖，主题/Still/导出与导航控件全部显示。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "abfe636c2df30e11e62c208fe74a8659831ba210c9297cf06a4b92d621dcd6fa",
+              "bytes": 66071
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整原图已查看。两个阶段、两个节点与 records 唯一关系全部显示，箭头指入 Transform，文字间隔清楚，没有连线交叠。未配置作者卡，图例与两项索引完整。固定 dock 保持在右下空区，顶部及长图页尾均完整。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "20c82c5922f759f27bb5f47d109ceb50240844a9934bc75271731311972074ed",
+              "bytes": 66899
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。Source/Process、Input store/Transform 文字与 records 关系清晰，数据从左向右的含义完整，无额外分支或事实丢失。无作者说明卡，索引两项可读；图例、dock 和上下控件之间没有遮挡，页面边缘无裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/diagram.html",
+        "identity": {
+          "sha256": "a1e6989c26e0498c5c24a9d31fcafa9c608efce181ec993bf0d9203ca0d61c01",
+          "bytes": 969327
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/candidate.json",
+        "identity": {
+          "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+          "bytes": 5618
+        }
+      },
+      "configSha256": "a80507b10ba6e60f69e2d5c1d4672e1a857e3cbbf1eeef0bf160802055f1d779",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "b999a221-d22c-430a-bb56-b38cd63ce2e2",
+      "browserReceiptIdentity": {
+        "sha256": "ba61d6f79499f2922a360c07330a08cd52ebdd07cbc748eedc2f28a33fd14d1f",
+        "bytes": 2561898
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "042b2e6baa15f5a9e0dcba4d5f3cb6685fd2f8b9df6fbec5dfe5ec339952a5a9",
+              "bytes": 186774
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色完整原图已查看。Sources/Ingest/Process/Store/Consume 五阶段、十节点主/副标题和十条流标签及分类文字均可读。Web/Mobile 入 Edge 后分别走 consent/PII 与 Event Stream，后续 Warehouse 查询和批处理分支方向明确；入 Edge 的短共享段仍能追踪两个来源。三卡九项、十索引项完整，五类图例未被 dock 盖住。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "1ecf542d5ee1f6088db6d76a08a02de87c9eef0c9233ab4f538cdd91633ecfab",
+              "bytes": 195031
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色原长图已查看。十节点与五阶段层级清楚，clickstream/app events、identity+consent/identity map、accepted/normalized facts、daily aggregates、metrics SQL、feature vectors、restricted join 各标签和箭头可辨。Warehouse 向 Feature Store 下行、查询向 Dashboards 上行、安全 join 右行互不混淆。三张说明卡、十节点索引和图例完整，工具栏无覆盖。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "bb83aaa67064fe3a2018edc7f098298351dcbd4d03821b9150924e9e4577c827",
+              "bytes": 231677
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整长图已查看。十个节点名称/副标题与十流的数据名、classification 都清楚；红色身份/PII 支路、绿色主数据流、紫色批处理及灰色指标查询各自可追踪，没有遮线丢失方向。五阶段完整。三卡九项和十项索引全部可见，左下五类图例与右下导航栏分离。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "d7e577ebb9fde77f2d3f3501c511dcfd13142ea26170dcc636fee06320164231",
+              "bytes": 244551
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。五阶段、十节点和十流的标签/分类/端点均可辨，批准限定的 restricted join、非 PII facts、daily aggregates 与 feature vectors 分支含义清楚，未发生交叠误连。三张卡九条与十节点索引完整；五种图例、顶部控件和 dock 均完整，长图尾部没有裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "c1ad6713a5032c5434d06eda8080687d9e9275839c6fd1b006a75e81f57ae003",
+          "bytes": 939150
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "aa09cfb1cbff35d1d31cef5babd9dd74a6cd8568e92e86d429aeaa74c493dae8",
+          "bytes": 496
+        }
+      },
+      "configSha256": "935fd4b80d68f056c0332fa5934bda6d9444d267d83164801bf28caf89b62dc9",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "884207ea-0f0f-4257-8b43-9cef8996025c",
+      "browserReceiptIdentity": {
+        "sha256": "f784f1f9634a4a32d7389f5ea2a6f136467a4c6c00406455c77442737414a316",
+        "bytes": 449916
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "3eb4f0afe3a8054063b92f4ac32ea402c92a6ee5bf794838df294dd22e6530df",
+              "bytes": 53840
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色原图已查看。初始圆点及入 Created 的箭头、Created→Complete 的 Finish 转换完整；Complete 双边框与成功图标清晰，文字未被边线遮住，状态层级可辨。无作者说明卡，两项 Node index 完整。initial state/success/final state 图例与右下 dock 分开，顶部控件完整。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "9c76535a42a99b63ee068fff8aa4d9a29fd67fb93aa8c650648f4be9dea119d3",
+              "bytes": 53321
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色原图已查看。Created/Complete、Finish 标签与右向箭头可读，开始提示和成功终态双框没有缺失，主路径含义清楚。未配置说明卡，索引两项完整；三类图例及主题/Still/导出、底部导航控件都未遮挡节点或文字。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "ac730c130526d95ffb8db56b70333a389c2827f1d945054a51af87592cf9a975",
+              "bytes": 62746
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色完整原图已查看。两个状态、Finish 转换、初始入向和双边终态均完整，箭头端点明确，无关系交叠造成误读。没有作者卡，两节点索引与三类图例完整。右下工具栏位于独立空区，上方控件及页面尾部无裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f593ff89ae035a648391471668b871928cb1d7f10dfc00aedab3fc67458e16a2",
+              "bytes": 62338
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整原图已查看。Created 到 Complete 的 Finish 主路径及初始点/双边终态提示清楚，节点名与关系名可读。无说明卡，两项索引在图下完整显示；图例、dock 和顶部控件互不覆盖，完整长图没有事实裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "7d7c45c05310f721ac6b908a5666bb28803847ba2b3231b515a12b5b6e63813f",
+          "bytes": 962665
+        }
+      },
+      "candidate": {
+        "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+          "bytes": 4274
+        }
+      },
+      "configSha256": "fa816d1cd137a3459d9bee5316817db787808a76f9d86977c203cf90860f5a95",
+      "engine": {
+        "sourceInputSha256": "d7b862d55c4c5be7ef7f08fcf57d5c528bf6ac947914af39f721f14958f05878",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "63c83a62cd0c11bf1c2a29f82322253dc7cd17e89214c7372205530c113e02be",
+          "bytes": 12655280
+        }
+      },
+      "deliveryReceiptId": "56447f99-8f1c-41c1-bdd8-7048d5ad840f",
+      "browserReceiptIdentity": {
+        "sha256": "89160444a85555a5ea5d755c260bb56a3134413e25fd31e8dab0c274bbdbc3aa",
+        "bytes": 1973814
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "6d559f2a7c74b025f0862a805608b0a97df3a418c67a3c41d5012fcc77646d9f",
+              "bytes": 406667
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 1440 亮色完整长图已查看。十一状态名称/副标题完整，Queued/Building/Verifying/Ready/Live 五阶段主轨顺序清楚；中层审批/回滚/健康等待与下层三个终结结果分明。Verifying→Approval→Cancelled、Ready→Rolling Back→Failed、Live→Health Paused→Rolled Back 六箭头均向下且端点可辨。三卡九项、十一项索引及六类图例完整，dock 没有遮住图例。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "acd7c3258c4ad7e6f9c02d194ac59fff2772a6e40ebb719f7ffeb7c22af9571d",
+              "bytes": 437584
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 1440 暗色完整长图已查看。主轨五状态、中层 Needs Approval/Rolling Back/Health Paused、底层 Cancelled/Failed/Rolled Back 共十一状态均可读，六条支线的方向清楚。层级标题、主副文本和状态图标未被线遮住。Promotion Rail/Wait States/Explicit Endings 三卡九项及十一节点索引完整，六类图例在 dock 上方保留，控件无裁切。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "23d88aa20764804ddf5d77f955a764068015a771d0baeeac6033a57ab07596cb",
+              "bytes": 466851
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 2048 亮色原长图已查看。十一状态、五阶段主轨和审批/健康等待及回滚控制的中层说明完整，六条显式下行转换能逐一追踪，失败与服务恢复终点含义明确。标签没有相互覆盖。三卡九条、十一项索引及 start/active/waiting/decision/success/failure 六类图例完整，右下工具栏独立。"
+        },
+        {
+          "file": {
+            "path": "/private/var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/phoenix-diagram-consumer-fm39Qx/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f262b8ee1dbb6679110b56c1df8774a842163a3bec62b1e3586d1a9194bdcfd9",
+              "bytes": 503931
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 2048 暗色完整长图已查看。五个主轨状态和六个支线状态的名称/副标题均清晰；审批拒绝、回滚失败及健康暂停后恢复三条二段路径的六箭头完整、无误向。三层标题与关系无遮挡冲突。三张卡九项、十一节点索引和六类图例全部可见，dock、顶部控件及页面尾部完整。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual darwin-arm64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    }
+  }
+}
