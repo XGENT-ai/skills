@@ -1,0 +1,124 @@
+'use strict';
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
+
+const root = path.resolve(__dirname, '../..');
+const skill = path.join(root, 'skills/phoenix-diagram');
+const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime'];
+const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
+
+test('the new skill has a bounded five-type description and normal automatic discovery', () => {
+  const entry = read('SKILL.md');
+  const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(entry)?.[1];
+  assert.ok(frontmatter, 'valid frontmatter boundary');
+  assert.match(frontmatter, /^name: phoenix-diagram$/m);
+  const description = JSON.parse(/^description: (".*")$/m.exec(frontmatter)?.[1] || 'null');
+  assert.equal(typeof description, 'string');
+  assert.ok(Array.from(description).length <= 200);
+  const first100 = Array.from(description).slice(0, 100).join('');
+  for (const word of ['架构', '工作流', '时序', '数据流', '生命周期', '数值图表', '仪表盘']) assert.ok(first100.includes(word), word);
+  assert.doesNotMatch(frontmatter, /disable-model-invocation|allow_implicit_invocation/);
+  assert.equal(fs.existsSync(path.join(skill, 'agents/openai.yaml')), false);
+});
+
+test('entry and conditional references resolve within the installed skill package', () => {
+  const documents = ['SKILL.md', ...references.map(name => `references/${name}.md`)];
+  const entry = read(documents[0]);
+  for (const name of references) assert.ok(entry.includes(`references/${name}.md`), name);
+  for (const file of documents) {
+    const content = read(file);
+    for (const match of content.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+      const target = match[1].split('#')[0];
+      if (!target || /^[a-z]+:/i.test(target)) continue;
+      const resolved = path.resolve(skill, path.dirname(file), target);
+      assert.ok(!path.relative(skill, resolved).startsWith('..'), `${file}: outside bundle ${target}`);
+      assert.ok(fs.statSync(resolved).isFile(), `${file}: missing ${target}`);
+    }
+  }
+  assert.ok(fs.statSync(path.join(skill, 'scripts/phoenix-diagram')).isFile());
+});
+
+test('all five guide examples are new-contract complete semantic inputs with automatic routes', () => {
+  const collections = { architecture: ['components', 'connections'], workflow: ['nodes', 'edges'],
+    sequence: ['participants', 'messages'], dataflow: ['nodes', 'flows'], lifecycle: ['states', 'transitions'] };
+  for (const type of types) {
+    const document = JSON.parse(read(`examples/minimal.${type}.json`));
+    assert.equal(document.diagram_type, type);
+    assert.equal(document.schema_version, type === 'workflow' ? 2 : type === 'lifecycle' ? 3 : 1);
+    assert.equal(document.meta.input_contract, 'phoenix-v1');
+    assert.equal(document.meta.quality_profile, 'showcase');
+    assert.equal(document.meta.output, `minimal.${type}.html`);
+    const [nodes, relationships] = collections[type].map(name => document[name]);
+    assert.ok(nodes.length >= 2 && relationships.length >= 1, type);
+    const identities = new Set(nodes.map(node => node.id));
+    assert.equal(identities.size, nodes.length);
+    for (const relation of relationships) {
+      assert.ok(identities.has(relation.from) && identities.has(relation.to), type);
+      assert.ok(relation.label.trim(), type);
+      for (const pin of ['via', 'channelX', 'channelY', 'labelAt', 'fromSide', 'toSide']) assert.equal(pin in relation, false, pin);
+    }
+    if (document.mainPath) for (let i = 1; i < document.mainPath.length; i += 1) {
+      assert.ok(relationships.some(relation => relation.from === document.mainPath[i - 1] && relation.to === document.mainPath[i]), type);
+    }
+  }
+});
+
+test('documented commands use the flat native launcher without legacy renderer flags', () => {
+  const documents = ['SKILL.md', ...references.map(name => `references/${name}.md`)].map(read).join('\n');
+  assert.match(documents, /scripts\/phoenix-diagram/);
+  assert.doesNotMatch(documents, /node\s+(?:bin\/archify|[^\n]*render-(?:architecture|workflow|sequence|dataflow|lifecycle))/);
+  assert.doesNotMatch(documents, /--repo-root|--candidate-sha256|--require-provenance/);
+  const cli = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/src/cli.rs'), 'utf8');
+  for (const command of ['guide', 'validate', 'deliver', 'check', 'browser-check', 'visual-check', 'finalize', 'review-record', 'recover-output', 'doctor']) {
+    if (new RegExp(`"\\$PD" ${command}\\b`).test(documents)) assert.ok(cli.includes(command), command);
+  }
+});
+
+test('the packaged review draft recipe preserves receipt bindings and leaves observation pending', t => {
+  const contract = read('references/delivery-contract.md');
+  const recipe = /<<'NODE'\n([\s\S]*?)\nNODE/.exec(contract)?.[1];
+  assert.ok(recipe, 'executable Node review draft recipe');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-diagram-skill-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const identity = { sha256: 'a'.repeat(64), bytes: 100 };
+  const bound = name => ({ path: path.join(directory, name), identity });
+  const screenshots = [1440, 2048].flatMap(width => ['light', 'dark'].map(theme => ({ ...bound(`${width}-${theme}.png`),
+    viewport: { width, height: width === 1440 ? 900 : 1320 }, theme })));
+  const browser = { screenshots };
+  fs.writeFileSync(path.join(directory, 'browser.json'), JSON.stringify(browser));
+  const summary = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.1.0', automatedStatus: 'pass',
+    stages: ['validate', 'deliver', 'check', 'browser-check'].map(name => ({ name, status: 'pass' })),
+    candidate: { ...bound('candidate.json'), originalBinding: { protocolFixture: true } },
+    artifact: { ...bound('diagram.html'), originalBinding: { protocolFixture: true } },
+    configSha256: 'b'.repeat(64), engine: { sourceInputSha256: 'c'.repeat(64), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v1', binary: identity },
+    deliveryReceiptId: 'protocol-fixture-no-visual-claim', browserReceiptIdentity: identity, evidence: { browserReceipt: bound('browser.json') } };
+  const summaryPath = path.join(directory, 'summary.json'), recordPath = path.join(directory, 'review.json');
+  fs.writeFileSync(summaryPath, JSON.stringify(summary));
+  const result = spawnSync(process.execPath, ['-', summaryPath, recordPath], { input: recipe, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const record = JSON.parse(fs.readFileSync(recordPath));
+  assert.deepEqual(Object.keys(record).sort(), ['schemaVersion', 'tool', 'toolVersion', 'command', 'status', 'diagnostics',
+    'artifact', 'candidate', 'configSha256', 'engine', 'deliveryReceiptId', 'browserReceiptIdentity', 'screenshotIdentities', 'reviewer', 'scope', 'verdict', 'findings'].sort());
+  assert.deepEqual(record.artifact, bound('diagram.html'));
+  assert.deepEqual(record.candidate, bound('candidate.json'));
+  assert.deepEqual(record.engine, summary.engine);
+  assert.equal(record.deliveryReceiptId, summary.deliveryReceiptId);
+  assert.deepEqual(record.browserReceiptIdentity, identity);
+  assert.equal(record.verdict, 'unavailable');
+  assert.equal(record.reviewer, '');
+  assert.ok(record.findings.length > 0);
+  assert.deepEqual(record.scope, ['diagram', 'labels', 'cards', 'relationship-occlusion', 'hierarchy', 'controls']);
+  assert.equal(record.screenshotIdentities.length, 4);
+  for (const [index, observation] of record.screenshotIdentities.entries()) {
+    assert.deepEqual(observation.file, { path: screenshots[index].path, identity });
+    assert.equal(observation.observed, false);
+    assert.equal(observation.observations, '');
+  }
+  const retry = spawnSync(process.execPath, ['-', summaryPath, recordPath], { input: recipe, encoding: 'utf8' });
+  assert.notEqual(retry.status, 0, 'draft creation must preserve an existing review');
+});

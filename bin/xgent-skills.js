@@ -37,6 +37,8 @@ const MANAGED_SETTINGS = {
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
 const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
+const diagramBootstrap = require('../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs');
+const DIAGRAM_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-diagram');
 const PHOENIX_STATUS = {
   planned: '计划', installed: '已安装', unchanged: '未变', conflict: '冲突,未激活',
   'recovery-required': '待恢复', 'integration-pending': '已安装但融合未就绪',
@@ -89,6 +91,56 @@ async function preparePhoenix(targetDir, options) {
     throw phoenixFailure(3, 'Phoenix UI 预检发现冲突,未修改项目。解决上列冲突后重跑;或加 --no-phoenix-ui 先安装其余部分。');
   }
   return { manifest, binary, args };
+}
+
+function runDiagram(binary, args) {
+  const result = spawnSync(binary, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true });
+  if (result.error) throw phoenixFailure(4, `无法运行 Phoenix Diagram engine: ${result.error.message}`);
+  try {
+    return { code: result.status, report: JSON.parse(result.stdout) };
+  } catch {
+    throw phoenixFailure([2, 3].includes(result.status) ? result.status : 4,
+      `Phoenix Diagram 安装执行器失败(exit ${result.status}): ${(result.stderr || '').trim()}`);
+  }
+}
+
+async function prepareDiagram(targetDir, options) {
+  try {
+    const ready = await diagramBootstrap.preflight({
+      project: targetDir, manifestPath: path.join(DIAGRAM_DIR, 'VERSION.json'),
+      bundleRoot: path.join(DIAGRAM_DIR, 'bundle'), packageJsonPath: path.join(PKG_ROOT, 'package.json'),
+      releaseDir: options.diagramReleaseDir, env: process.env, allowInstall: true, checkReceipt: false,
+    });
+    const args = ['install', '--project', targetDir, '--bundle-root', ready.bundleRoot, '--json'];
+    if (options.providers) args.push('--providers', options.providers);
+    const planned = runDiagram(ready.enginePath, [...args, '--dry-run']);
+    // A known pending transaction is recovered only by the later explicit apply.
+    const recoverable = planned.code === 3 && planned.report.status === 'recovery-required'
+      && planned.report.conflicts?.length === 0;
+    if ((planned.code !== 0 && !recoverable) || !['planned', 'unchanged', 'recovery-required'].includes(planned.report.status)) {
+      printDiagram(planned.report, ready.manifest);
+      throw phoenixFailure(planned.code || 3, 'Phoenix Diagram 预检失败');
+    }
+    return { manifest: ready.manifest, binary: ready.enginePath, args };
+  } catch (error) {
+    throw phoenixFailure(Number.isInteger(error.code) ? error.code : 4, `Phoenix Diagram 未就绪,未修改项目: ${error.message}\n`
+      + '  可用 --diagram-release-dir=DIR 指向匹配的完整离线目录,或加 --no-phoenix-diagram 跳过本工具。');
+  }
+}
+
+function printDiagram(report, manifest) {
+  const { toolVersion, npmPackageVersion } = manifest.data;
+  console.log(`Phoenix Diagram ${toolVersion} (@xgent-ai/skills@${npmPackageVersion}): ${PHOENIX_STATUS[report.status] || report.status}`);
+  for (const item of report.writes || []) console.log(`  写入  ${item.path}`);
+  for (const item of report.conflicts || []) console.log(`  冲突  ${item.path}: ${item.message}`);
+  for (const item of report.diagnostics || []) console.log(`  诊断  ${item.code}: ${item.message}`);
+  if (report.recovered?.length) console.log(`  恢复  ${report.recovered.join(', ')}`);
+  if (report.transactionId) console.log(`  事务  ${report.transactionId};日志 ${report.journal};备份 ${report.backup}`);
+  if (report.status === 'installed') {
+    for (const provider of (report.providers || []).filter(p => p !== '.codex')) console.log(`  重载  ${provider}: 新开项目会话加载 ${provider === '.agents' ? '$' : '/'}phoenix-diagram`);
+  }
+  if (report.recoveryCommand && report.status === 'recovery-required') console.log(`  恢复命令  ${report.recoveryCommand}`);
+  for (const item of report.localIgnore || []) console.log(`  本地说明  ${item}`);
 }
 
 function groupedPaths(paths) {
@@ -335,6 +387,7 @@ function usage() {
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill、hooks 与五个辅助 skill;engine 校验后
                   放入用户 cache;旧 impeccable 项目事务化迁移、可回滚),
+                  以及 Phoenix Diagram(五类图解 skill 与独立原生 engine),
                   并询问是否创建通用的 AGENTS.md;
                   Codex / Claude Code goal 上下文收尾提醒默认不安装
   help            显示本帮助
@@ -342,7 +395,9 @@ function usage() {
 install 选项:
   --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings(不删除已装版本)
   --no-impeccable       已弃用,等同 --no-phoenix-ui
+  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
   --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
+  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
   --context-goal-guard  显式安装 Codex goal guard(默认不安装,需要 Python 3.9+)
@@ -353,18 +408,18 @@ install 选项:
   --no-claude-context-goal-guard 跳过 Claude Code goal guard(默认行为,保留已有 guard)
   --claude-context-goal-guard-threshold=N  Claude Code guard 的阈值百分比(1–99 整数,
                         默认 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};重装时不给则沿用已装的值),同时表示安装
-  --providers=a,b       指定 Phoenix UI 装进哪些 harness 目录(默认按项目里已有的
+  --providers=a,b       指定两个 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
   --force               允许覆盖非法 JSON 的 guard 配置(先存 .bak),不覆盖已有 AGENTS.md;
-                        不放宽 Phoenix UI:用户改动与冲突始终保留,按提示解决后重跑
+                        不放宽两个 Phoenix 工具:用户改动与冲突始终保留,按提示解决后重跑
 `);
 }
 
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
-    && !['--providers=', '--release-dir=', '--context-goal-guard-threshold=', '--claude-context-goal-guard-threshold='].some((p) => f.startsWith(p)));
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
+    && !['--providers=', '--release-dir=', '--diagram-release-dir=', '--context-goal-guard-threshold=', '--claude-context-goal-guard-threshold='].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
@@ -401,11 +456,14 @@ async function install(args) {
   const codexThreshold = thresholds['--context-goal-guard-threshold'];
   const claudeThreshold = thresholds['--claude-context-goal-guard-threshold'];
   const releaseDir = flags.find((f) => f.startsWith('--release-dir='))?.slice('--release-dir='.length);
+  const diagramReleaseDir = flags.find((f) => f.startsWith('--diagram-release-dir='))?.slice('--diagram-release-dir='.length);
   const options = {
     phoenix: !flags.includes('--no-phoenix-ui') && !flags.includes('--no-impeccable'),
+    diagram: !flags.includes('--no-phoenix-diagram'),
     force: flags.includes('--force'),
     providers: flags.find((f) => f.startsWith('--providers='))?.slice('--providers='.length),
     releaseDir: releaseDir ? path.resolve(releaseDir) : undefined,
+    diagramReleaseDir: diagramReleaseDir ? path.resolve(diagramReleaseDir) : undefined,
   };
 
   // 跳过 Phoenix 时仍按包内 bundle 校验 --providers,保持旧参数语义;启用时由执行器校验。
@@ -447,6 +505,7 @@ async function install(args) {
   const codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
   const claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
   const phoenix = options.phoenix ? await preparePhoenix(targetDir, options) : null;
+  const diagram = options.diagram ? await prepareDiagram(targetDir, options) : null;
   const rl = process.stdin.isTTY && askAgents
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
@@ -497,16 +556,33 @@ async function install(args) {
     try {
       applied = runPhoenix(phoenix.binary, phoenix.args);
     } catch (error) {
-      console.log('未完成: XGENT 部分已安装;Phoenix UI 待恢复(安装被中断,可能已部分写入),按下方错误处理后重跑本命令,会先按日志恢复(可重复执行)。');
+      console.log(`未完成: XGENT 部分已安装;Phoenix UI 待恢复(安装被中断,可能已部分写入),按下方错误处理后重跑本命令,会先按日志恢复(可重复执行)。${diagram ? 'Phoenix Diagram 未执行。' : ''}`);
       throw error;
     }
     printPhoenix(applied.report, phoenix.manifest);
     if (applied.code !== 0) {
       process.exitCode = applied.code;
       console.log(`未完成: XGENT 部分已安装;Phoenix UI ${PHOENIX_STATUS[applied.report.status] || applied.report.status},按上方提示处理后重跑。`);
+      if (diagram) console.log('  待执行  Phoenix Diagram');
       return;
     }
     console.log('  提示  在 agent 对话里(不是终端)输入 /phoenix-ui init 完成设计上下文;Codex 用 $phoenix-ui');
+  }
+  if (diagram) {
+    const completed = `XGENT 已安装${phoenix ? ',Phoenix UI 已完成' : ''}`;
+    let applied;
+    try {
+      applied = runDiagram(diagram.binary, diagram.args);
+    } catch (error) {
+      console.log(`未完成: ${completed};Phoenix Diagram 可能已部分写入,按错误和项目日志重跑恢复。`);
+      throw error;
+    }
+    printDiagram(applied.report, diagram.manifest);
+    if (applied.code !== 0) {
+      process.exitCode = applied.code;
+      console.log(`未完成: ${completed};Phoenix Diagram ${applied.report.status},保留前段结果,按上述提示重跑。`);
+      return;
+    }
   }
   console.log(`完成: ${targetDir}`);
 }

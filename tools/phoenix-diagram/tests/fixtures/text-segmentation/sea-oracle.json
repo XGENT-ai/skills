@@ -1,0 +1,10702 @@
+{
+  "format": 1,
+  "source": {
+    "node": "25.2.1",
+    "icu": "77.1",
+    "unicode": "16.0",
+    "locale": "en-US"
+  },
+  "cases": [
+    {
+      "name": "thai-lookahead",
+      "text": "แพนด้าแดง สัตว์เลี้ยงลูกด้วยนมชนิดหนึ่ง มีชื่อวิทยาศาสตร์ว่า",
+      "wordBoundaries": [
+        0,
+        18,
+        27,
+        28,
+        43,
+        61,
+        70,
+        82,
+        88,
+        100,
+        115,
+        116,
+        134,
+        167,
+        176
+      ]
+    },
+    {
+      "name": "thai-mixed",
+      "text": "aภาษาไทยภาษาไทยb",
+      "wordBoundaries": [
+        0,
+        13,
+        22,
+        34,
+        44
+      ]
+    },
+    {
+      "name": "thai-suffix",
+      "text": "ภาษาไทยฯ ภาษาไทยๆ ภาษาไทยๆๆ ภาษาไทยฯๆ",
+      "wordBoundaries": [
+        0,
+        12,
+        24,
+        25,
+        37,
+        49,
+        50,
+        62,
+        74,
+        77,
+        78,
+        90,
+        105
+      ]
+    },
+    {
+      "name": "thai-unknown",
+      "text": "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณ",
+      "wordBoundaries": [
+        0,
+        57
+      ]
+    },
+    {
+      "name": "thai-marks",
+      "text": "ภาษา́ไทย ภาษา﻿ไทย ภาษัไทย",
+      "wordBoundaries": [
+        0,
+        23,
+        24,
+        48,
+        49,
+        61,
+        70
+      ]
+    },
+    {
+      "name": "thai-short",
+      "text": "กขคง กขคงจ กขฯ กขๆ กๆๆ",
+      "wordBoundaries": [
+        0,
+        12,
+        13,
+        19,
+        28,
+        29,
+        38,
+        39,
+        48,
+        49,
+        58
+      ]
+    },
+    {
+      "name": "lao",
+      "text": "ພາສາລາວທົດສອບການເຮັດວຽກ",
+      "wordBoundaries": [
+        0,
+        12,
+        21,
+        39,
+        60,
+        69
+      ]
+    },
+    {
+      "name": "lao-mixed",
+      "text": "aພາສາລາວb",
+      "wordBoundaries": [
+        0,
+        13,
+        23
+      ]
+    },
+    {
+      "name": "lao-unknown",
+      "text": "ກຂຄຆງຈຉຊຌຍຎຏຐຑຒຓ",
+      "wordBoundaries": [
+        0,
+        3,
+        6,
+        48
+      ]
+    },
+    {
+      "name": "lao-marks",
+      "text": "ພາສາ́ລາວ ພາສາ﻿ລາວ",
+      "wordBoundaries": [
+        0,
+        23,
+        24,
+        48
+      ]
+    },
+    {
+      "name": "burmese",
+      "text": "မြန်မာစာမြန်မာစာမြန်မာစာ",
+      "wordBoundaries": [
+        0,
+        18,
+        24,
+        42,
+        48,
+        66,
+        72
+      ]
+    },
+    {
+      "name": "burmese-mixed",
+      "text": "aမြန်မာစာမြန်မာစာb",
+      "wordBoundaries": [
+        0,
+        19,
+        25,
+        43,
+        50
+      ]
+    },
+    {
+      "name": "burmese-unknown",
+      "text": "ကခဂဃငစဆဇဈဉညဋဌဍဎဏ",
+      "wordBoundaries": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39,
+        42,
+        45,
+        48
+      ]
+    },
+    {
+      "name": "burmese-marks",
+      "text": "မြန်မာ́စာ မြန်မာ﻿စာ",
+      "wordBoundaries": [
+        0,
+        26,
+        27,
+        54
+      ]
+    },
+    {
+      "name": "burmese-unicode16",
+      "text": "𑛐𑛑မြန်မာ𑛣စာ",
+      "wordBoundaries": [
+        0,
+        36
+      ]
+    },
+    {
+      "name": "khmer",
+      "text": "ភាសាខ្មែរសាកល្បងការងារ",
+      "wordBoundaries": [
+        0,
+        27,
+        48,
+        66
+      ]
+    },
+    {
+      "name": "khmer-mixed",
+      "text": "aភាសាខ្មែរភាសាខ្មែរb",
+      "wordBoundaries": [
+        0,
+        28,
+        56
+      ]
+    },
+    {
+      "name": "khmer-unknown",
+      "text": "កខគឃងចឆជឈញដឋឌឍណ",
+      "wordBoundaries": [
+        0,
+        3,
+        6,
+        9,
+        18,
+        21,
+        24,
+        33,
+        36,
+        39,
+        42,
+        45
+      ]
+    },
+    {
+      "name": "khmer-coeng",
+      "text": "ក្សក្ស ក្ខខ្មែរ ខ្មែរក្រោម",
+      "wordBoundaries": [
+        0,
+        9,
+        18,
+        19,
+        28,
+        43,
+        44,
+        74
+      ]
+    },
+    {
+      "name": "khmer-marks",
+      "text": "ភាសា́ខ្មែរ ភាសា﻿ខ្មែរ",
+      "wordBoundaries": [
+        0,
+        29,
+        30,
+        60
+      ]
+    },
+    {
+      "name": "mixed-dictionaries",
+      "text": "ภาษาไทยພາສາລາວမြန်မာစာភាសាខ្មែរ",
+      "wordBoundaries": [
+        0,
+        12,
+        33,
+        60,
+        93
+      ]
+    },
+    {
+      "name": "thaidict-holdout-0",
+      "text": "กกกระชุก",
+      "wordBoundaries": [
+        0,
+        6,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-0",
+      "text": "aกกกระชุกb",
+      "wordBoundaries": [
+        0,
+        7,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-0",
+      "text": "กก́กระชุก",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-1",
+      "text": "กระชุกกระอุก",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-1",
+      "text": "aกระชุกกระอุกb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-1",
+      "text": "กระชุก́กระอุก",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-2",
+      "text": "กระอุกกฤษฏี",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-2",
+      "text": "aกระอุกกฤษฏีb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-2",
+      "text": "กระอุก́กฤษฏี",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-3",
+      "text": "กฤษฏีกะลอ",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-3",
+      "text": "aกฤษฏีกะลอb",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-3",
+      "text": "กฤษฏี́กะลอ",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-4",
+      "text": "กะลอกางเกง",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-4",
+      "text": "aกะลอกางเกงb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-4",
+      "text": "กะลอ́กางเกง",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-5",
+      "text": "กางเกงกิจการ",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-5",
+      "text": "aกางเกงกิจการb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-5",
+      "text": "กางเกง́กิจการ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-6",
+      "text": "กิจการก้าม",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-6",
+      "text": "aกิจการก้ามb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-6",
+      "text": "กิจการ́ก้าม",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-7",
+      "text": "ก้ามขออภัย",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-7",
+      "text": "aก้ามขออภัยb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-7",
+      "text": "ก้าม́ขออภัย",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-8",
+      "text": "ขออภัยข้องใจ",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-8",
+      "text": "aขออภัยข้องใจb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-8",
+      "text": "ขออภัย́ข้องใจ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-9",
+      "text": "ข้องใจคลอด",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-9",
+      "text": "aข้องใจคลอดb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-9",
+      "text": "ข้องใจ́คลอด",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-10",
+      "text": "คลอดคอเคซอยด์",
+      "wordBoundaries": [
+        0,
+        12,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-10",
+      "text": "aคลอดคอเคซอยด์b",
+      "wordBoundaries": [
+        0,
+        13,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-10",
+      "text": "คลอด́คอเคซอยด์",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-11",
+      "text": "คอเคซอยด์คุณธรรม",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "thaidict-mixed-11",
+      "text": "aคอเคซอยด์คุณธรรมb",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-mark-11",
+      "text": "คอเคซอยด์́คุณธรรม",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-holdout-12",
+      "text": "คุณธรรมจดจำ",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-12",
+      "text": "aคุณธรรมจดจำb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-12",
+      "text": "คุณธรรม́จดจำ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-13",
+      "text": "จดจำจับจิต",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-13",
+      "text": "aจดจำจับจิตb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-13",
+      "text": "จดจำ́จับจิต",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-14",
+      "text": "จับจิตจุดยืน",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-14",
+      "text": "aจับจิตจุดยืนb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-14",
+      "text": "จับจิต́จุดยืน",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-15",
+      "text": "จุดยืนฉ้อโกง",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-15",
+      "text": "aจุดยืนฉ้อโกงb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-15",
+      "text": "จุดยืน́ฉ้อโกง",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-16",
+      "text": "ฉ้อโกงชั้น",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-16",
+      "text": "aฉ้อโกงชั้นb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-16",
+      "text": "ฉ้อโกง́ชั้น",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-17",
+      "text": "ชั้นช่างไฟ",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-17",
+      "text": "aชั้นช่างไฟb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-17",
+      "text": "ชั้น́ช่างไฟ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-18",
+      "text": "ช่างไฟซึ้ง",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-18",
+      "text": "aช่างไฟซึ้งb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-18",
+      "text": "ช่างไฟ́ซึ้ง",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-19",
+      "text": "ซึ้งดาดฟ้า",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-19",
+      "text": "aซึ้งดาดฟ้าb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-19",
+      "text": "ซึ้ง́ดาดฟ้า",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-20",
+      "text": "ดาดฟ้าด่า",
+      "wordBoundaries": [
+        0,
+        18,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-20",
+      "text": "aดาดฟ้าด่าb",
+      "wordBoundaries": [
+        0,
+        19,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-20",
+      "text": "ดาดฟ้า́ด่า",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-21",
+      "text": "ด่าตอบ",
+      "wordBoundaries": [
+        0,
+        9,
+        18
+      ]
+    },
+    {
+      "name": "thaidict-mixed-21",
+      "text": "aด่าตอบb",
+      "wordBoundaries": [
+        0,
+        10,
+        20
+      ]
+    },
+    {
+      "name": "thaidict-mark-21",
+      "text": "ด่า́ตอบ",
+      "wordBoundaries": [
+        0,
+        20
+      ]
+    },
+    {
+      "name": "thaidict-holdout-22",
+      "text": "ตอบตาบ",
+      "wordBoundaries": [
+        0,
+        9,
+        18
+      ]
+    },
+    {
+      "name": "thaidict-mixed-22",
+      "text": "aตอบตาบb",
+      "wordBoundaries": [
+        0,
+        10,
+        20
+      ]
+    },
+    {
+      "name": "thaidict-mark-22",
+      "text": "ตอบ́ตาบ",
+      "wordBoundaries": [
+        0,
+        20
+      ]
+    },
+    {
+      "name": "thaidict-holdout-23",
+      "text": "ตาบตุ๋ยตุ่ย",
+      "wordBoundaries": [
+        0,
+        9,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-23",
+      "text": "aตาบตุ๋ยตุ่ยb",
+      "wordBoundaries": [
+        0,
+        10,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-23",
+      "text": "ตาบ́ตุ๋ยตุ่ย",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-24",
+      "text": "ตุ๋ยตุ่ยถูกใจ",
+      "wordBoundaries": [
+        0,
+        24,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-24",
+      "text": "aตุ๋ยตุ่ยถูกใจb",
+      "wordBoundaries": [
+        0,
+        25,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-24",
+      "text": "ตุ๋ยตุ่ย́ถูกใจ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-25",
+      "text": "ถูกใจทะท้าว",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-25",
+      "text": "aถูกใจทะท้าวb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-25",
+      "text": "ถูกใจ́ทะท้าว",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-26",
+      "text": "ทะท้าวทิดอร์",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-26",
+      "text": "aทะท้าวทิดอร์b",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-26",
+      "text": "ทะท้าว́ทิดอร์",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-27",
+      "text": "ทิดอร์ธตรฐ",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-27",
+      "text": "aทิดอร์ธตรฐb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-27",
+      "text": "ทิดอร์́ธตรฐ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-28",
+      "text": "ธตรฐนริศ",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-28",
+      "text": "aธตรฐนริศb",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-28",
+      "text": "ธตรฐ́นริศ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-29",
+      "text": "นริศนาวา",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-29",
+      "text": "aนริศนาวาb",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-29",
+      "text": "นริศ́นาวา",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-30",
+      "text": "นาวาน้อยหน่า",
+      "wordBoundaries": [
+        0,
+        12,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-30",
+      "text": "aนาวาน้อยหน่าb",
+      "wordBoundaries": [
+        0,
+        13,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-30",
+      "text": "นาวา́น้อยหน่า",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-31",
+      "text": "น้อยหน่าบอบบาง",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "thaidict-mixed-31",
+      "text": "aน้อยหน่าบอบบางb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-mark-31",
+      "text": "น้อยหน่า́บอบบาง",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-holdout-32",
+      "text": "บอบบางบาทรช",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-32",
+      "text": "aบอบบางบาทรชb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-32",
+      "text": "บอบบาง́บาทรช",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-33",
+      "text": "บาทรชบูติค",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-33",
+      "text": "aบาทรชบูติคb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-33",
+      "text": "บาทรช́บูติค",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-34",
+      "text": "บูติคประกาศิต",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-34",
+      "text": "aบูติคประกาศิตb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-34",
+      "text": "บูติค́ประกาศิต",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-35",
+      "text": "ประกาศิตประเวศ",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "thaidict-mixed-35",
+      "text": "aประกาศิตประเวศb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-mark-35",
+      "text": "ประกาศิต́ประเวศ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-holdout-36",
+      "text": "ประเวศปล้อง",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-36",
+      "text": "aประเวศปล้องb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-36",
+      "text": "ประเวศ́ปล้อง",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-37",
+      "text": "ปล้องปาดหาว",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-37",
+      "text": "aปล้องปาดหาวb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-37",
+      "text": "ปล้อง́ปาดหาว",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-38",
+      "text": "ปาดหาวป่าเกด",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-38",
+      "text": "aปาดหาวป่าเกดb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-38",
+      "text": "ปาดหาว́ป่าเกด",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-39",
+      "text": "ป่าเกดผู้ใหญ่",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-39",
+      "text": "aป่าเกดผู้ใหญ่b",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-39",
+      "text": "ป่าเกด́ผู้ใหญ่",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-40",
+      "text": "ผู้ใหญ่พรพัฒนา",
+      "wordBoundaries": [
+        0,
+        21,
+        42
+      ]
+    },
+    {
+      "name": "thaidict-mixed-40",
+      "text": "aผู้ใหญ่พรพัฒนาb",
+      "wordBoundaries": [
+        0,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-mark-40",
+      "text": "ผู้ใหญ่́พรพัฒนา",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-holdout-41",
+      "text": "พรพัฒนาพลั่ง",
+      "wordBoundaries": [
+        0,
+        21,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-41",
+      "text": "aพรพัฒนาพลั่งb",
+      "wordBoundaries": [
+        0,
+        22,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-41",
+      "text": "พรพัฒนา́พลั่ง",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-42",
+      "text": "พลั่งพาต้า",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-42",
+      "text": "aพลั่งพาต้าb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-42",
+      "text": "พลั่ง́พาต้า",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-43",
+      "text": "พาต้าพื้นดี",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-43",
+      "text": "aพาต้าพื้นดีb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-43",
+      "text": "พาต้า́พื้นดี",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-44",
+      "text": "พื้นดีฟ้าร้อง",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-44",
+      "text": "aพื้นดีฟ้าร้องb",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-44",
+      "text": "พื้นดี́ฟ้าร้อง",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-45",
+      "text": "ฟ้าร้องภูเขา",
+      "wordBoundaries": [
+        0,
+        21,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-45",
+      "text": "aฟ้าร้องภูเขาb",
+      "wordBoundaries": [
+        0,
+        22,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-45",
+      "text": "ฟ้าร้อง́ภูเขา",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-46",
+      "text": "ภูเขามหุรดี",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-46",
+      "text": "aภูเขามหุรดีb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-46",
+      "text": "ภูเขา́มหุรดี",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-47",
+      "text": "มหุรดีมั่นคง",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-47",
+      "text": "aมหุรดีมั่นคงb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-47",
+      "text": "มหุรดี́มั่นคง",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-48",
+      "text": "มั่นคงมีเดียม",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-48",
+      "text": "aมั่นคงมีเดียมb",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-48",
+      "text": "มั่นคง́มีเดียม",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-49",
+      "text": "มีเดียมยองใย",
+      "wordBoundaries": [
+        0,
+        21,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-49",
+      "text": "aมีเดียมยองใยb",
+      "wordBoundaries": [
+        0,
+        22,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-49",
+      "text": "มีเดียม́ยองใย",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-50",
+      "text": "ยองใยยุว",
+      "wordBoundaries": [
+        0,
+        15,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-50",
+      "text": "aยองใยยุวb",
+      "wordBoundaries": [
+        0,
+        16,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-50",
+      "text": "ยองใย́ยุว",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-51",
+      "text": "ยุวระบอบ",
+      "wordBoundaries": [
+        0,
+        9,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-51",
+      "text": "aยุวระบอบb",
+      "wordBoundaries": [
+        0,
+        10,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-51",
+      "text": "ยุว́ระบอบ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-52",
+      "text": "ระบอบราคะ",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-52",
+      "text": "aระบอบราคะb",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-52",
+      "text": "ระบอบ́ราคะ",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-53",
+      "text": "ราคะรี้ริก",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-53",
+      "text": "aราคะรี้ริกb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-53",
+      "text": "ราคะ́รี้ริก",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-54",
+      "text": "รี้ริกลมขึ้น",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-54",
+      "text": "aรี้ริกลมขึ้นb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-54",
+      "text": "รี้ริก́ลมขึ้น",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-55",
+      "text": "ลมขึ้นลาซูไรต์",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "thaidict-mixed-55",
+      "text": "aลมขึ้นลาซูไรต์b",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-mark-55",
+      "text": "ลมขึ้น́ลาซูไรต์",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-holdout-56",
+      "text": "ลาซูไรต์ลูกกก",
+      "wordBoundaries": [
+        0,
+        24,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-56",
+      "text": "aลาซูไรต์ลูกกกb",
+      "wordBoundaries": [
+        0,
+        25,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-56",
+      "text": "ลาซูไรต์́ลูกกก",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-57",
+      "text": "ลูกกกวรรธก",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-57",
+      "text": "aลูกกกวรรธกb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-57",
+      "text": "ลูกกก́วรรธก",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-58",
+      "text": "วรรธกวาณิช",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-58",
+      "text": "aวรรธกวาณิชb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-58",
+      "text": "วรรธก́วาณิช",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-59",
+      "text": "วาณิชวิภู",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-59",
+      "text": "aวาณิชวิภูb",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-59",
+      "text": "วาณิช́วิภู",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-60",
+      "text": "วิภูศรัท",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-60",
+      "text": "aวิภูศรัทb",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-60",
+      "text": "วิภู́ศรัท",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-61",
+      "text": "ศรัทศูนย์ชุมชน",
+      "wordBoundaries": [
+        0,
+        12,
+        42
+      ]
+    },
+    {
+      "name": "thaidict-mixed-61",
+      "text": "aศรัทศูนย์ชุมชนb",
+      "wordBoundaries": [
+        0,
+        13,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-mark-61",
+      "text": "ศรัท́ศูนย์ชุมชน",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "thaidict-holdout-62",
+      "text": "ศูนย์ชุมชนสมคะเน",
+      "wordBoundaries": [
+        0,
+        30,
+        48
+      ]
+    },
+    {
+      "name": "thaidict-mixed-62",
+      "text": "aศูนย์ชุมชนสมคะเนb",
+      "wordBoundaries": [
+        0,
+        31,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-mark-62",
+      "text": "ศูนย์ชุมชน́สมคะเน",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-holdout-63",
+      "text": "สมคะเนสลาง",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-63",
+      "text": "aสมคะเนสลางb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-63",
+      "text": "สมคะเน́สลาง",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-64",
+      "text": "สลางสังกัปปะ",
+      "wordBoundaries": [
+        0,
+        12,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-64",
+      "text": "aสลางสังกัปปะb",
+      "wordBoundaries": [
+        0,
+        13,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-64",
+      "text": "สลาง́สังกัปปะ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-65",
+      "text": "สังกัปปะสาณ",
+      "wordBoundaries": [
+        0,
+        24,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-65",
+      "text": "aสังกัปปะสาณb",
+      "wordBoundaries": [
+        0,
+        25,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-65",
+      "text": "สังกัปปะ́สาณ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-66",
+      "text": "สาณสิงคลี",
+      "wordBoundaries": [
+        0,
+        9,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-66",
+      "text": "aสาณสิงคลีb",
+      "wordBoundaries": [
+        0,
+        10,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-66",
+      "text": "สาณ́สิงคลี",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-67",
+      "text": "สิงคลีสุพิศมร",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-67",
+      "text": "aสิงคลีสุพิศมรb",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-67",
+      "text": "สิงคลี́สุพิศมร",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-68",
+      "text": "สุพิศมรหนวกหู",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-68",
+      "text": "aสุพิศมรหนวกหูb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-68",
+      "text": "สุพิศมร́หนวกหู",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-69",
+      "text": "หนวกหูหริ่งๆ",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-69",
+      "text": "aหนวกหูหริ่งๆb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-69",
+      "text": "หนวกหู́หริ่งๆ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-70",
+      "text": "หริ่งๆหัสต์",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-70",
+      "text": "aหริ่งๆหัสต์b",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-70",
+      "text": "หริ่งๆ́หัสต์",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-71",
+      "text": "หัสต์อดิศัย",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-71",
+      "text": "aหัสต์อดิศัยb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-71",
+      "text": "หัสต์́อดิศัย",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-72",
+      "text": "อดิศัยอยุธยา",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-72",
+      "text": "aอดิศัยอยุธยาb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-72",
+      "text": "อดิศัย́อยุธยา",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-73",
+      "text": "อยุธยาอะไหล่",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-73",
+      "text": "aอยุธยาอะไหล่b",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-73",
+      "text": "อยุธยา́อะไหล่",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-74",
+      "text": "อะไหล่อาขยาต",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-74",
+      "text": "aอะไหล่อาขยาตb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-74",
+      "text": "อะไหล่́อาขยาต",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-75",
+      "text": "อาขยาตอิงอร",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-75",
+      "text": "aอาขยาตอิงอรb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-75",
+      "text": "อาขยาต́อิงอร",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-76",
+      "text": "อิงอรอุทก",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-76",
+      "text": "aอิงอรอุทกb",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-76",
+      "text": "อิงอร́อุทก",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-77",
+      "text": "อุทกฮอนชู",
+      "wordBoundaries": [
+        0,
+        12,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-77",
+      "text": "aอุทกฮอนชูb",
+      "wordBoundaries": [
+        0,
+        13,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-77",
+      "text": "อุทก́ฮอนชู",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-78",
+      "text": "ฮอนชูเก็งชวน",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-78",
+      "text": "aฮอนชูเก็งชวนb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-78",
+      "text": "ฮอนชู́เก็งชวน",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-79",
+      "text": "เก็งชวนเงี่ยน",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-79",
+      "text": "aเก็งชวนเงี่ยนb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-79",
+      "text": "เก็งชวน́เงี่ยน",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-80",
+      "text": "เงี่ยนเซนติลิตร",
+      "wordBoundaries": [
+        0,
+        18,
+        45
+      ]
+    },
+    {
+      "name": "thaidict-mixed-80",
+      "text": "aเงี่ยนเซนติลิตรb",
+      "wordBoundaries": [
+        0,
+        19,
+        47
+      ]
+    },
+    {
+      "name": "thaidict-mark-80",
+      "text": "เงี่ยน́เซนติลิตร",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "thaidict-holdout-81",
+      "text": "เซนติลิตรเต่า",
+      "wordBoundaries": [
+        0,
+        27,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-81",
+      "text": "aเซนติลิตรเต่าb",
+      "wordBoundaries": [
+        0,
+        28,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-81",
+      "text": "เซนติลิตร́เต่า",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-82",
+      "text": "เต่าเนมิตก",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-82",
+      "text": "aเต่าเนมิตกb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-82",
+      "text": "เต่า́เนมิตก",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-83",
+      "text": "เนมิตกเป็นการ",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "thaidict-mixed-83",
+      "text": "aเนมิตกเป็นการb",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-mark-83",
+      "text": "เนมิตก́เป็นการ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "thaidict-holdout-84",
+      "text": "เป็นการเมฆ",
+      "wordBoundaries": [
+        0,
+        21,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-84",
+      "text": "aเป็นการเมฆb",
+      "wordBoundaries": [
+        0,
+        22,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-84",
+      "text": "เป็นการ́เมฆ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-85",
+      "text": "เมฆเรือนแก้ว",
+      "wordBoundaries": [
+        0,
+        9,
+        36
+      ]
+    },
+    {
+      "name": "thaidict-mixed-85",
+      "text": "aเมฆเรือนแก้วb",
+      "wordBoundaries": [
+        0,
+        10,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-mark-85",
+      "text": "เมฆ́เรือนแก้ว",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "thaidict-holdout-86",
+      "text": "เรือนแก้วเวิร์กโฟลว์",
+      "wordBoundaries": [
+        0,
+        27,
+        60
+      ]
+    },
+    {
+      "name": "thaidict-mixed-86",
+      "text": "aเรือนแก้วเวิร์กโฟลว์b",
+      "wordBoundaries": [
+        0,
+        28,
+        62
+      ]
+    },
+    {
+      "name": "thaidict-mark-86",
+      "text": "เรือนแก้ว́เวิร์กโฟลว์",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "thaidict-holdout-87",
+      "text": "เวิร์กโฟลว์เหน่ง",
+      "wordBoundaries": [
+        0,
+        33,
+        48
+      ]
+    },
+    {
+      "name": "thaidict-mixed-87",
+      "text": "aเวิร์กโฟลว์เหน่งb",
+      "wordBoundaries": [
+        0,
+        34,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-mark-87",
+      "text": "เวิร์กโฟลว์́เหน่ง",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-holdout-88",
+      "text": "เหน่งเอ็นเตอร์เทน",
+      "wordBoundaries": [
+        0,
+        15,
+        51
+      ]
+    },
+    {
+      "name": "thaidict-mixed-88",
+      "text": "aเหน่งเอ็นเตอร์เทนb",
+      "wordBoundaries": [
+        0,
+        16,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-mark-88",
+      "text": "เหน่ง́เอ็นเตอร์เทน",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-holdout-89",
+      "text": "เอ็นเตอร์เทนแจ๊ด",
+      "wordBoundaries": [
+        0,
+        36,
+        48
+      ]
+    },
+    {
+      "name": "thaidict-mixed-89",
+      "text": "aเอ็นเตอร์เทนแจ๊ดb",
+      "wordBoundaries": [
+        0,
+        37,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-mark-89",
+      "text": "เอ็นเตอร์เทน́แจ๊ด",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "thaidict-holdout-90",
+      "text": "แจ๊ดแปทู",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-90",
+      "text": "aแจ๊ดแปทูb",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-90",
+      "text": "แจ๊ด́แปทู",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-91",
+      "text": "แปทูแม้ว่า",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-91",
+      "text": "aแปทูแม้ว่าb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-91",
+      "text": "แปทู́แม้ว่า",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-92",
+      "text": "แม้ว่าแอปพลิเคชัน",
+      "wordBoundaries": [
+        0,
+        18,
+        51
+      ]
+    },
+    {
+      "name": "thaidict-mixed-92",
+      "text": "aแม้ว่าแอปพลิเคชันb",
+      "wordBoundaries": [
+        0,
+        19,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-mark-92",
+      "text": "แม้ว่า́แอปพลิเคชัน",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-holdout-93",
+      "text": "แอปพลิเคชันโงกเงก",
+      "wordBoundaries": [
+        0,
+        33,
+        51
+      ]
+    },
+    {
+      "name": "thaidict-mixed-93",
+      "text": "aแอปพลิเคชันโงกเงกb",
+      "wordBoundaries": [
+        0,
+        34,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-mark-93",
+      "text": "แอปพลิเคชัน́โงกเงก",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "thaidict-holdout-94",
+      "text": "โงกเงกโบนิน",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-94",
+      "text": "aโงกเงกโบนินb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-94",
+      "text": "โงกเงก́โบนิน",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-95",
+      "text": "โบนินโมโลไค",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "thaidict-mixed-95",
+      "text": "aโบนินโมโลไคb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-mark-95",
+      "text": "โบนิน́โมโลไค",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "thaidict-holdout-96",
+      "text": "โมโลไคโหม่",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "thaidict-mixed-96",
+      "text": "aโมโลไคโหม่b",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-mark-96",
+      "text": "โมโลไค́โหม่",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "thaidict-holdout-97",
+      "text": "โหม่ไขว้",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "thaidict-mixed-97",
+      "text": "aโหม่ไขว้b",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-mark-97",
+      "text": "โหม่́ไขว้",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "thaidict-holdout-98",
+      "text": "ไขว้ไพรชน",
+      "wordBoundaries": [
+        0,
+        12,
+        27
+      ]
+    },
+    {
+      "name": "thaidict-mixed-98",
+      "text": "aไขว้ไพรชนb",
+      "wordBoundaries": [
+        0,
+        13,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-mark-98",
+      "text": "ไขว้́ไพรชน",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "thaidict-holdout-99",
+      "text": "ไพรชนกก",
+      "wordBoundaries": [
+        0,
+        15,
+        21
+      ]
+    },
+    {
+      "name": "thaidict-mixed-99",
+      "text": "aไพรชนกกb",
+      "wordBoundaries": [
+        0,
+        16,
+        23
+      ]
+    },
+    {
+      "name": "thaidict-mark-99",
+      "text": "ไพรชน́กก",
+      "wordBoundaries": [
+        0,
+        23
+      ]
+    },
+    {
+      "name": "laodict-holdout-0",
+      "text": "ກໍກະສາ",
+      "wordBoundaries": [
+        0,
+        6,
+        18
+      ]
+    },
+    {
+      "name": "laodict-mixed-0",
+      "text": "aກໍກະສາb",
+      "wordBoundaries": [
+        0,
+        7,
+        20
+      ]
+    },
+    {
+      "name": "laodict-mark-0",
+      "text": "ກໍ́ກະສາ",
+      "wordBoundaries": [
+        0,
+        20
+      ]
+    },
+    {
+      "name": "laodict-holdout-1",
+      "text": "ກະສາກະປ໋ອງ",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-1",
+      "text": "aກະສາກະປ໋ອງb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-1",
+      "text": "ກະສາ́ກະປ໋ອງ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-2",
+      "text": "ກະປ໋ອງກາງກັບດັກ",
+      "wordBoundaries": [
+        0,
+        18,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-2",
+      "text": "aກະປ໋ອງກາງກັບດັກb",
+      "wordBoundaries": [
+        0,
+        19,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-2",
+      "text": "ກະປ໋ອງ́ກາງກັບດັກ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-3",
+      "text": "ກາງກັບດັກການຊິດການໂຮຍ",
+      "wordBoundaries": [
+        0,
+        27,
+        63
+      ]
+    },
+    {
+      "name": "laodict-mixed-3",
+      "text": "aກາງກັບດັກການຊິດການໂຮຍb",
+      "wordBoundaries": [
+        0,
+        28,
+        65
+      ]
+    },
+    {
+      "name": "laodict-mark-3",
+      "text": "ກາງກັບດັກ́ການຊິດການໂຮຍ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "laodict-holdout-4",
+      "text": "ການຊິດການໂຮຍການໄຝ່ສູງ",
+      "wordBoundaries": [
+        0,
+        36,
+        63
+      ]
+    },
+    {
+      "name": "laodict-mixed-4",
+      "text": "aການຊິດການໂຮຍການໄຝ່ສູງb",
+      "wordBoundaries": [
+        0,
+        37,
+        65
+      ]
+    },
+    {
+      "name": "laodict-mark-4",
+      "text": "ການຊິດການໂຮຍ́ການໄຝ່ສູງ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "laodict-holdout-5",
+      "text": "ການໄຝ່ສູງກາລະສຸດຕະ",
+      "wordBoundaries": [
+        0,
+        27,
+        54
+      ]
+    },
+    {
+      "name": "laodict-mixed-5",
+      "text": "aການໄຝ່ສູງກາລະສຸດຕະb",
+      "wordBoundaries": [
+        0,
+        28,
+        56
+      ]
+    },
+    {
+      "name": "laodict-mark-5",
+      "text": "ການໄຝ່ສູງ́ກາລະສຸດຕະ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "laodict-holdout-6",
+      "text": "ກາລະສຸດຕະກິລາ",
+      "wordBoundaries": [
+        0,
+        27,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-6",
+      "text": "aກາລະສຸດຕະກິລາb",
+      "wordBoundaries": [
+        0,
+        28,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-6",
+      "text": "ກາລະສຸດຕະ́ກິລາ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-7",
+      "text": "ກິລາກົກນໍ",
+      "wordBoundaries": [
+        0,
+        12,
+        27
+      ]
+    },
+    {
+      "name": "laodict-mixed-7",
+      "text": "aກິລາກົກນໍb",
+      "wordBoundaries": [
+        0,
+        13,
+        29
+      ]
+    },
+    {
+      "name": "laodict-mark-7",
+      "text": "ກິລາ́ກົກນໍ",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "laodict-holdout-8",
+      "text": "ກົກນໍເກເບີ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-8",
+      "text": "aກົກນໍເກເບີb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-8",
+      "text": "ກົກນໍ́ເກເບີ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-9",
+      "text": "ເກເບີໂກນານີຢາ",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-9",
+      "text": "aເກເບີໂກນານີຢາb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-9",
+      "text": "ເກເບີ́ໂກນານີຢາ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-10",
+      "text": "ໂກນານີຢາຂະໝອງ",
+      "wordBoundaries": [
+        0,
+        24,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-10",
+      "text": "aໂກນານີຢາຂະໝອງb",
+      "wordBoundaries": [
+        0,
+        25,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-10",
+      "text": "ໂກນານີຢາ́ຂະໝອງ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-11",
+      "text": "ຂະໝອງຂີ້ເຫລັກ",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-11",
+      "text": "aຂະໝອງຂີ້ເຫລັກb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-11",
+      "text": "ຂະໝອງ́ຂີ້ເຫລັກ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-12",
+      "text": "ຂີ້ເຫລັກເຂົ້າໜົມຂີ້ມ້າ",
+      "wordBoundaries": [
+        0,
+        24,
+        66
+      ]
+    },
+    {
+      "name": "laodict-mixed-12",
+      "text": "aຂີ້ເຫລັກເຂົ້າໜົມຂີ້ມ້າb",
+      "wordBoundaries": [
+        0,
+        25,
+        68
+      ]
+    },
+    {
+      "name": "laodict-mark-12",
+      "text": "ຂີ້ເຫລັກ́ເຂົ້າໜົມຂີ້ມ້າ",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "laodict-holdout-13",
+      "text": "ເຂົ້າໜົມຂີ້ມ້າຄວາມເສົ້າໝອງ",
+      "wordBoundaries": [
+        0,
+        42,
+        78
+      ]
+    },
+    {
+      "name": "laodict-mixed-13",
+      "text": "aເຂົ້າໜົມຂີ້ມ້າຄວາມເສົ້າໝອງb",
+      "wordBoundaries": [
+        0,
+        43,
+        80
+      ]
+    },
+    {
+      "name": "laodict-mark-13",
+      "text": "ເຂົ້າໜົມຂີ້ມ້າ́ຄວາມເສົ້າໝອງ",
+      "wordBoundaries": [
+        0,
+        80
+      ]
+    },
+    {
+      "name": "laodict-holdout-14",
+      "text": "ຄວາມເສົ້າໝອງຄວາມຫາຍະນະ",
+      "wordBoundaries": [
+        0,
+        36,
+        66
+      ]
+    },
+    {
+      "name": "laodict-mixed-14",
+      "text": "aຄວາມເສົ້າໝອງຄວາມຫາຍະນະb",
+      "wordBoundaries": [
+        0,
+        37,
+        68
+      ]
+    },
+    {
+      "name": "laodict-mark-14",
+      "text": "ຄວາມເສົ້າໝອງ́ຄວາມຫາຍະນະ",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "laodict-holdout-15",
+      "text": "ຄວາມຫາຍະນະຄາຊາ",
+      "wordBoundaries": [
+        0,
+        30,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-15",
+      "text": "aຄວາມຫາຍະນະຄາຊາb",
+      "wordBoundaries": [
+        0,
+        31,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-15",
+      "text": "ຄວາມຫາຍະນະ́ຄາຊາ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-16",
+      "text": "ຄາຊາຄີຕະ",
+      "wordBoundaries": [
+        0,
+        12,
+        24
+      ]
+    },
+    {
+      "name": "laodict-mixed-16",
+      "text": "aຄາຊາຄີຕະb",
+      "wordBoundaries": [
+        0,
+        13,
+        26
+      ]
+    },
+    {
+      "name": "laodict-mark-16",
+      "text": "ຄາຊາ́ຄີຕະ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "laodict-holdout-17",
+      "text": "ຄີຕະຄົນໂສທາຍ",
+      "wordBoundaries": [
+        0,
+        12,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-17",
+      "text": "aຄີຕະຄົນໂສທາຍb",
+      "wordBoundaries": [
+        0,
+        13,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-17",
+      "text": "ຄີຕະ́ຄົນໂສທາຍ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-18",
+      "text": "ຄົນໂສທາຍຄົນແລ່ນໄວ",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-18",
+      "text": "aຄົນໂສທາຍຄົນແລ່ນໄວb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-18",
+      "text": "ຄົນໂສທາຍ́ຄົນແລ່ນໄວ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-19",
+      "text": "ຄົນແລ່ນໄວເຄື່ອງສັກກະລະບູຊາ",
+      "wordBoundaries": [
+        0,
+        27,
+        78
+      ]
+    },
+    {
+      "name": "laodict-mixed-19",
+      "text": "aຄົນແລ່ນໄວເຄື່ອງສັກກະລະບູຊາb",
+      "wordBoundaries": [
+        0,
+        28,
+        80
+      ]
+    },
+    {
+      "name": "laodict-mark-19",
+      "text": "ຄົນແລ່ນໄວ́ເຄື່ອງສັກກະລະບູຊາ",
+      "wordBoundaries": [
+        0,
+        80
+      ]
+    },
+    {
+      "name": "laodict-holdout-20",
+      "text": "ເຄື່ອງສັກກະລະບູຊາງ້ອມ",
+      "wordBoundaries": [
+        0,
+        51,
+        63
+      ]
+    },
+    {
+      "name": "laodict-mixed-20",
+      "text": "aເຄື່ອງສັກກະລະບູຊາງ້ອມb",
+      "wordBoundaries": [
+        0,
+        52,
+        65
+      ]
+    },
+    {
+      "name": "laodict-mark-20",
+      "text": "ເຄື່ອງສັກກະລະບູຊາ́ງ້ອມ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "laodict-holdout-21",
+      "text": "ງ້ອມຈອມທັບ",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-21",
+      "text": "aງ້ອມຈອມທັບb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-21",
+      "text": "ງ້ອມ́ຈອມທັບ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-22",
+      "text": "ຈອມທັບຈິດຕະກອນ",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-22",
+      "text": "aຈອມທັບຈິດຕະກອນb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-22",
+      "text": "ຈອມທັບ́ຈິດຕະກອນ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-23",
+      "text": "ຈິດຕະກອນເຈັບປ່ວຍ",
+      "wordBoundaries": [
+        0,
+        24,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-23",
+      "text": "aຈິດຕະກອນເຈັບປ່ວຍb",
+      "wordBoundaries": [
+        0,
+        25,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-23",
+      "text": "ຈິດຕະກອນ́ເຈັບປ່ວຍ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-24",
+      "text": "ເຈັບປ່ວຍສໍ້ຫຼໍ້",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-24",
+      "text": "aເຈັບປ່ວຍສໍ້ຫຼໍ້b",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-24",
+      "text": "ເຈັບປ່ວຍ́ສໍ້ຫຼໍ້",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-25",
+      "text": "ສໍ້ຫຼໍ້ສະມາ",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-25",
+      "text": "aສໍ້ຫຼໍ້ສະມາb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-25",
+      "text": "ສໍ້ຫຼໍ້́ສະມາ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-26",
+      "text": "ສະມາສະອິດ",
+      "wordBoundaries": [
+        0,
+        12,
+        27
+      ]
+    },
+    {
+      "name": "laodict-mixed-26",
+      "text": "aສະມາສະອິດb",
+      "wordBoundaries": [
+        0,
+        13,
+        29
+      ]
+    },
+    {
+      "name": "laodict-mark-26",
+      "text": "ສະມາ́ສະອິດ",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "laodict-holdout-27",
+      "text": "ສະອິດສັບປຸລີສະ",
+      "wordBoundaries": [
+        0,
+        15,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-27",
+      "text": "aສະອິດສັບປຸລີສະb",
+      "wordBoundaries": [
+        0,
+        16,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-27",
+      "text": "ສະອິດ́ສັບປຸລີສະ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-28",
+      "text": "ສັບປຸລີສະສຳປະໂຍກ",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-28",
+      "text": "aສັບປຸລີສະສຳປະໂຍກb",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-28",
+      "text": "ສັບປຸລີສະ́ສຳປະໂຍກ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-29",
+      "text": "ສຳປະໂຍກສີລິມຸງຄຸນ",
+      "wordBoundaries": [
+        0,
+        21,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-29",
+      "text": "aສຳປະໂຍກສີລິມຸງຄຸນb",
+      "wordBoundaries": [
+        0,
+        22,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-29",
+      "text": "ສຳປະໂຍກ́ສີລິມຸງຄຸນ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-30",
+      "text": "ສີລິມຸງຄຸນສູເມີ",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-30",
+      "text": "aສີລິມຸງຄຸນສູເມີb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-30",
+      "text": "ສີລິມຸງຄຸນ́ສູເມີ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-31",
+      "text": "ສູເມີເສິງສາງ",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-31",
+      "text": "aສູເມີເສິງສາງb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-31",
+      "text": "ສູເມີ́ເສິງສາງ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-32",
+      "text": "ເສິງສາງຊະບາ",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-32",
+      "text": "aເສິງສາງຊະບາb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-32",
+      "text": "ເສິງສາງ́ຊະບາ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-33",
+      "text": "ຊະບາຊາວກາຊາ",
+      "wordBoundaries": [
+        0,
+        12,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-33",
+      "text": "aຊະບາຊາວກາຊາb",
+      "wordBoundaries": [
+        0,
+        13,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-33",
+      "text": "ຊະບາ́ຊາວກາຊາ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-34",
+      "text": "ຊາວກາຊາຊີຕົ້ນ",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-34",
+      "text": "aຊາວກາຊາຊີຕົ້ນb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-34",
+      "text": "ຊາວກາຊາ́ຊີຕົ້ນ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-35",
+      "text": "ຊີຕົ້ນເຊເດຄີຢາ",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-35",
+      "text": "aຊີຕົ້ນເຊເດຄີຢາb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-35",
+      "text": "ຊີຕົ້ນ́ເຊເດຄີຢາ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-36",
+      "text": "ເຊເດຄີຢາໂຊເຮດ",
+      "wordBoundaries": [
+        0,
+        24,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-36",
+      "text": "aເຊເດຄີຢາໂຊເຮດb",
+      "wordBoundaries": [
+        0,
+        25,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-36",
+      "text": "ເຊເດຄີຢາ́ໂຊເຮດ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-37",
+      "text": "ໂຊເຮດຍຸດໂທ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-37",
+      "text": "aໂຊເຮດຍຸດໂທb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-37",
+      "text": "ໂຊເຮດ́ຍຸດໂທ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-38",
+      "text": "ຍຸດໂທດາໂກນ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-38",
+      "text": "aຍຸດໂທດາໂກນb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-38",
+      "text": "ຍຸດໂທ́ດາໂກນ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-39",
+      "text": "ດາໂກນເດຍໂບໂລ",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-39",
+      "text": "aດາໂກນເດຍໂບໂລb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-39",
+      "text": "ດາໂກນ́ເດຍໂບໂລ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-40",
+      "text": "ເດຍໂບໂລຕະບະ",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-40",
+      "text": "aເດຍໂບໂລຕະບະb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-40",
+      "text": "ເດຍໂບໂລ́ຕະບະ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-41",
+      "text": "ຕະບະຕາວ",
+      "wordBoundaries": [
+        0,
+        12,
+        21
+      ]
+    },
+    {
+      "name": "laodict-mixed-41",
+      "text": "aຕະບະຕາວb",
+      "wordBoundaries": [
+        0,
+        13,
+        23
+      ]
+    },
+    {
+      "name": "laodict-mark-41",
+      "text": "ຕະບະ́ຕາວ",
+      "wordBoundaries": [
+        0,
+        23
+      ]
+    },
+    {
+      "name": "laodict-holdout-42",
+      "text": "ຕາວຕົກສີ",
+      "wordBoundaries": [
+        0,
+        9,
+        24
+      ]
+    },
+    {
+      "name": "laodict-mixed-42",
+      "text": "aຕາວຕົກສີb",
+      "wordBoundaries": [
+        0,
+        10,
+        26
+      ]
+    },
+    {
+      "name": "laodict-mark-42",
+      "text": "ຕາວ́ຕົກສີ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "laodict-holdout-43",
+      "text": "ຕົກສີເຕນອາບີບ",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-43",
+      "text": "aຕົກສີເຕນອາບີບb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-43",
+      "text": "ຕົກສີ́ເຕນອາບີບ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-44",
+      "text": "ເຕນອາບີບຖ້ວຍຕວງ",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-44",
+      "text": "aເຕນອາບີບຖ້ວຍຕວງb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-44",
+      "text": "ເຕນອາບີບ́ຖ້ວຍຕວງ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-45",
+      "text": "ຖ້ວຍຕວງທໍລະ",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-45",
+      "text": "aຖ້ວຍຕວງທໍລະb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-45",
+      "text": "ຖ້ວຍຕວງ́ທໍລະ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-46",
+      "text": "ທໍລະທາງຕາເວັນຕົກ",
+      "wordBoundaries": [
+        0,
+        12,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-46",
+      "text": "aທໍລະທາງຕາເວັນຕົກb",
+      "wordBoundaries": [
+        0,
+        13,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-46",
+      "text": "ທໍລະ́ທາງຕາເວັນຕົກ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-47",
+      "text": "ທາງຕາເວັນຕົກທຸສິນ",
+      "wordBoundaries": [
+        0,
+        36,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-47",
+      "text": "aທາງຕາເວັນຕົກທຸສິນb",
+      "wordBoundaries": [
+        0,
+        37,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-47",
+      "text": "ທາງຕາເວັນຕົກ́ທຸສິນ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-48",
+      "text": "ທຸສິນນໍເລດ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-48",
+      "text": "aທຸສິນນໍເລດb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-48",
+      "text": "ທຸສິນ́ນໍເລດ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-49",
+      "text": "ນໍເລດນໍ້າສົມ",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-49",
+      "text": "aນໍເລດນໍ້າສົມb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-49",
+      "text": "ນໍເລດ́ນໍ້າສົມ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-50",
+      "text": "ນໍ້າສົມນິນ",
+      "wordBoundaries": [
+        0,
+        21,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-50",
+      "text": "aນໍ້າສົມນິນb",
+      "wordBoundaries": [
+        0,
+        22,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-50",
+      "text": "ນໍ້າສົມ́ນິນ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-51",
+      "text": "ນິນເນຣີ",
+      "wordBoundaries": [
+        0,
+        9,
+        21
+      ]
+    },
+    {
+      "name": "laodict-mixed-51",
+      "text": "aນິນເນຣີb",
+      "wordBoundaries": [
+        0,
+        10,
+        23
+      ]
+    },
+    {
+      "name": "laodict-mark-51",
+      "text": "ນິນ́ເນຣີ",
+      "wordBoundaries": [
+        0,
+        23
+      ]
+    },
+    {
+      "name": "laodict-holdout-52",
+      "text": "ເນຣີບ່ອນພັກ",
+      "wordBoundaries": [
+        0,
+        12,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-52",
+      "text": "aເນຣີບ່ອນພັກb",
+      "wordBoundaries": [
+        0,
+        13,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-52",
+      "text": "ເນຣີ́ບ່ອນພັກ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-53",
+      "text": "ບ່ອນພັກບາລາມີ",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-53",
+      "text": "aບ່ອນພັກບາລາມີb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-53",
+      "text": "ບ່ອນພັກ́ບາລາມີ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-54",
+      "text": "ບາລາມີບົ້ງເລັນ",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-54",
+      "text": "aບາລາມີບົ້ງເລັນb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-54",
+      "text": "ບາລາມີ́ບົ້ງເລັນ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-55",
+      "text": "ບົ້ງເລັນເບົ້າຕາ",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-55",
+      "text": "aບົ້ງເລັນເບົ້າຕາb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-55",
+      "text": "ບົ້ງເລັນ́ເບົ້າຕາ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-56",
+      "text": "ເບົ້າຕາປະຊາລາດ",
+      "wordBoundaries": [
+        0,
+        21,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-56",
+      "text": "aເບົ້າຕາປະຊາລາດb",
+      "wordBoundaries": [
+        0,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-56",
+      "text": "ເບົ້າຕາ́ປະຊາລາດ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-57",
+      "text": "ປະຊາລາດປັດເຈກ",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "laodict-mixed-57",
+      "text": "aປະຊາລາດປັດເຈກb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "laodict-mark-57",
+      "text": "ປະຊາລາດ́ປັດເຈກ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "laodict-holdout-58",
+      "text": "ປັດເຈກປາພົດ",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-58",
+      "text": "aປັດເຈກປາພົດb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-58",
+      "text": "ປັດເຈກ́ປາພົດ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-59",
+      "text": "ປາພົດປູ່ຍ່າ",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-59",
+      "text": "aປາພົດປູ່ຍ່າb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-59",
+      "text": "ປາພົດ́ປູ່ຍ່າ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-60",
+      "text": "ປູ່ຍ່າແປດສິບເຈັດ",
+      "wordBoundaries": [
+        0,
+        18,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-60",
+      "text": "aປູ່ຍ່າແປດສິບເຈັດb",
+      "wordBoundaries": [
+        0,
+        19,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-60",
+      "text": "ປູ່ຍ່າ́ແປດສິບເຈັດ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-61",
+      "text": "ແປດສິບເຈັດຜ່າເຜີຍ",
+      "wordBoundaries": [
+        0,
+        30,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-61",
+      "text": "aແປດສິບເຈັດຜ່າເຜີຍb",
+      "wordBoundaries": [
+        0,
+        31,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-61",
+      "text": "ແປດສິບເຈັດ́ຜ່າເຜີຍ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-62",
+      "text": "ຜ່າເຜີຍຜູ້ທີ່ຫູໜວກ",
+      "wordBoundaries": [
+        0,
+        21,
+        54
+      ]
+    },
+    {
+      "name": "laodict-mixed-62",
+      "text": "aຜ່າເຜີຍຜູ້ທີ່ຫູໜວກb",
+      "wordBoundaries": [
+        0,
+        22,
+        56
+      ]
+    },
+    {
+      "name": "laodict-mark-62",
+      "text": "ຜ່າເຜີຍ́ຜູ້ທີ່ຫູໜວກ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "laodict-holdout-63",
+      "text": "ຜູ້ທີ່ຫູໜວກຝອຍນິກ",
+      "wordBoundaries": [
+        0,
+        33,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-63",
+      "text": "aຜູ້ທີ່ຫູໜວກຝອຍນິກb",
+      "wordBoundaries": [
+        0,
+        34,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-63",
+      "text": "ຜູ້ທີ່ຫູໜວກ́ຝອຍນິກ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-64",
+      "text": "ຝອຍນິກພອມຜໍ່",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-64",
+      "text": "aຝອຍນິກພອມຜໍ່b",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-64",
+      "text": "ຝອຍນິກ́ພອມຜໍ່",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-65",
+      "text": "ພອມຜໍ່ພັນທະນັງ",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-65",
+      "text": "aພອມຜໍ່ພັນທະນັງb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-65",
+      "text": "ພອມຜໍ່́ພັນທະນັງ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-66",
+      "text": "ພັນທະນັງພີ່ນາງ",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-66",
+      "text": "aພັນທະນັງພີ່ນາງb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-66",
+      "text": "ພັນທະນັງ́ພີ່ນາງ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-67",
+      "text": "ພີ່ນາງເພື່ອນເຈົ້າບ່າວ",
+      "wordBoundaries": [
+        0,
+        18,
+        63
+      ]
+    },
+    {
+      "name": "laodict-mixed-67",
+      "text": "aພີ່ນາງເພື່ອນເຈົ້າບ່າວb",
+      "wordBoundaries": [
+        0,
+        19,
+        65
+      ]
+    },
+    {
+      "name": "laodict-mark-67",
+      "text": "ພີ່ນາງ́ເພື່ອນເຈົ້າບ່າວ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "laodict-holdout-68",
+      "text": "ເພື່ອນເຈົ້າບ່າວເຟືອນຟື້ນ",
+      "wordBoundaries": [
+        0,
+        45,
+        72
+      ]
+    },
+    {
+      "name": "laodict-mixed-68",
+      "text": "aເພື່ອນເຈົ້າບ່າວເຟືອນຟື້ນb",
+      "wordBoundaries": [
+        0,
+        46,
+        74
+      ]
+    },
+    {
+      "name": "laodict-mark-68",
+      "text": "ເພື່ອນເຈົ້າບ່າວ́ເຟືອນຟື້ນ",
+      "wordBoundaries": [
+        0,
+        74
+      ]
+    },
+    {
+      "name": "laodict-holdout-69",
+      "text": "ເຟືອນຟື້ນມັກນາເດບາຍ",
+      "wordBoundaries": [
+        0,
+        27,
+        57
+      ]
+    },
+    {
+      "name": "laodict-mixed-69",
+      "text": "aເຟືອນຟື້ນມັກນາເດບາຍb",
+      "wordBoundaries": [
+        0,
+        28,
+        59
+      ]
+    },
+    {
+      "name": "laodict-mark-69",
+      "text": "ເຟືອນຟື້ນ́ມັກນາເດບາຍ",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "laodict-holdout-70",
+      "text": "ມັກນາເດບາຍມາເຮີຊາລານຫັດສະບັດ",
+      "wordBoundaries": [
+        0,
+        30,
+        84
+      ]
+    },
+    {
+      "name": "laodict-mixed-70",
+      "text": "aມັກນາເດບາຍມາເຮີຊາລານຫັດສະບັດb",
+      "wordBoundaries": [
+        0,
+        31,
+        86
+      ]
+    },
+    {
+      "name": "laodict-mark-70",
+      "text": "ມັກນາເດບາຍ́ມາເຮີຊາລານຫັດສະບັດ",
+      "wordBoundaries": [
+        0,
+        86
+      ]
+    },
+    {
+      "name": "laodict-holdout-71",
+      "text": "ມາເຮີຊາລານຫັດສະບັດມົກໝົ້ນ",
+      "wordBoundaries": [
+        0,
+        54,
+        75
+      ]
+    },
+    {
+      "name": "laodict-mixed-71",
+      "text": "aມາເຮີຊາລານຫັດສະບັດມົກໝົ້ນb",
+      "wordBoundaries": [
+        0,
+        55,
+        77
+      ]
+    },
+    {
+      "name": "laodict-mark-71",
+      "text": "ມາເຮີຊາລານຫັດສະບັດ́ມົກໝົ້ນ",
+      "wordBoundaries": [
+        0,
+        77
+      ]
+    },
+    {
+      "name": "laodict-holdout-72",
+      "text": "ມົກໝົ້ນແມງຫົວຄວາຍ",
+      "wordBoundaries": [
+        0,
+        21,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-72",
+      "text": "aມົກໝົ້ນແມງຫົວຄວາຍb",
+      "wordBoundaries": [
+        0,
+        22,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-72",
+      "text": "ມົກໝົ້ນ́ແມງຫົວຄວາຍ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-73",
+      "text": "ແມງຫົວຄວາຍຢັ້ງຢືນ",
+      "wordBoundaries": [
+        0,
+        30,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-73",
+      "text": "aແມງຫົວຄວາຍຢັ້ງຢືນb",
+      "wordBoundaries": [
+        0,
+        31,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-73",
+      "text": "ແມງຫົວຄວາຍ́ຢັ້ງຢືນ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-74",
+      "text": "ຢັ້ງຢືນເຢໂຊຮາຢາ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-74",
+      "text": "aຢັ້ງຢືນເຢໂຊຮາຢາb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-74",
+      "text": "ຢັ້ງຢືນ́ເຢໂຊຮາຢາ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-75",
+      "text": "ເຢໂຊຮາຢາເຣເມັດ",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-75",
+      "text": "aເຢໂຊຮາຢາເຣເມັດb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-75",
+      "text": "ເຢໂຊຮາຢາ́ເຣເມັດ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-76",
+      "text": "ເຣເມັດລັກລອບ",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-76",
+      "text": "aເຣເມັດລັກລອບb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-76",
+      "text": "ເຣເມັດ́ລັກລອບ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-77",
+      "text": "ລັກລອບລຳຄອງ",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-77",
+      "text": "aລັກລອບລຳຄອງb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-77",
+      "text": "ລັກລອບ́ລຳຄອງ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-78",
+      "text": "ລຳຄອງລູຊົງ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-78",
+      "text": "aລຳຄອງລູຊົງb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-78",
+      "text": "ລຳຄອງ́ລູຊົງ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-79",
+      "text": "ລູຊົງເລືອດໃນອົກ",
+      "wordBoundaries": [
+        0,
+        15,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-79",
+      "text": "aລູຊົງເລືອດໃນອົກb",
+      "wordBoundaries": [
+        0,
+        16,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-79",
+      "text": "ລູຊົງ́ເລືອດໃນອົກ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-80",
+      "text": "ເລືອດໃນອົກວັນທີ່",
+      "wordBoundaries": [
+        0,
+        30,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-80",
+      "text": "aເລືອດໃນອົກວັນທີ່b",
+      "wordBoundaries": [
+        0,
+        31,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-80",
+      "text": "ເລືອດໃນອົກ́ວັນທີ່",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-81",
+      "text": "ວັນທີ່ວິບູນ",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-81",
+      "text": "aວັນທີ່ວິບູນb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-81",
+      "text": "ວັນທີ່́ວິບູນ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-82",
+      "text": "ວິບູນຫໍກອງ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-82",
+      "text": "aວິບູນຫໍກອງb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-82",
+      "text": "ວິບູນ́ຫໍກອງ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-83",
+      "text": "ຫໍກອງໜຳ",
+      "wordBoundaries": [
+        0,
+        15,
+        21
+      ]
+    },
+    {
+      "name": "laodict-mixed-83",
+      "text": "aຫໍກອງໜຳb",
+      "wordBoundaries": [
+        0,
+        16,
+        23
+      ]
+    },
+    {
+      "name": "laodict-mark-83",
+      "text": "ຫໍກອງ́ໜຳ",
+      "wordBoundaries": [
+        0,
+        23
+      ]
+    },
+    {
+      "name": "laodict-holdout-84",
+      "text": "ໜຳໝາຊົ່ວ",
+      "wordBoundaries": [
+        0,
+        6,
+        24
+      ]
+    },
+    {
+      "name": "laodict-mixed-84",
+      "text": "aໜຳໝາຊົ່ວb",
+      "wordBoundaries": [
+        0,
+        7,
+        26
+      ]
+    },
+    {
+      "name": "laodict-mark-84",
+      "text": "ໜຳ́ໝາຊົ່ວ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "laodict-holdout-85",
+      "text": "ໝາຊົ່ວຫວຸດ",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "laodict-mixed-85",
+      "text": "aໝາຊົ່ວຫວຸດb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "laodict-mark-85",
+      "text": "ໝາຊົ່ວ́ຫວຸດ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "laodict-holdout-86",
+      "text": "ຫວຸດຫູໄວຕາໄວ",
+      "wordBoundaries": [
+        0,
+        12,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-86",
+      "text": "aຫວຸດຫູໄວຕາໄວb",
+      "wordBoundaries": [
+        0,
+        13,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-86",
+      "text": "ຫວຸດ́ຫູໄວຕາໄວ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-87",
+      "text": "ຫູໄວຕາໄວເຫງັນອົ້ມ",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-87",
+      "text": "aຫູໄວຕາໄວເຫງັນອົ້ມb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-87",
+      "text": "ຫູໄວຕາໄວ́ເຫງັນອົ້ມ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-88",
+      "text": "ເຫງັນອົ້ມໂຫລາຈານ",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "laodict-mixed-88",
+      "text": "aເຫງັນອົ້ມໂຫລາຈານb",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "laodict-mark-88",
+      "text": "ເຫງັນອົ້ມ́ໂຫລາຈານ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "laodict-holdout-89",
+      "text": "ໂຫລາຈານອະທິໂມກ",
+      "wordBoundaries": [
+        0,
+        21,
+        42
+      ]
+    },
+    {
+      "name": "laodict-mixed-89",
+      "text": "aໂຫລາຈານອະທິໂມກb",
+      "wordBoundaries": [
+        0,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "laodict-mark-89",
+      "text": "ໂຫລາຈານ́ອະທິໂມກ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "laodict-holdout-90",
+      "text": "ອະທິໂມກອັດສະວິນ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-90",
+      "text": "aອະທິໂມກອັດສະວິນb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-90",
+      "text": "ອະທິໂມກ́ອັດສະວິນ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-91",
+      "text": "ອັດສະວິນອາຍະສານ",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-91",
+      "text": "aອັດສະວິນອາຍະສານb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-91",
+      "text": "ອັດສະວິນ́ອາຍະສານ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-92",
+      "text": "ອາຍະສານອາຣີດາທາ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-92",
+      "text": "aອາຍະສານອາຣີດາທາb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-92",
+      "text": "ອາຍະສານ́ອາຣີດາທາ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-93",
+      "text": "ອາຣີດາທາອີ້",
+      "wordBoundaries": [
+        0,
+        24,
+        33
+      ]
+    },
+    {
+      "name": "laodict-mixed-93",
+      "text": "aອາຣີດາທາອີ້b",
+      "wordBoundaries": [
+        0,
+        25,
+        35
+      ]
+    },
+    {
+      "name": "laodict-mark-93",
+      "text": "ອາຣີດາທາ́ອີ້",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "laodict-holdout-94",
+      "text": "ອີ້ອຸໂມງ",
+      "wordBoundaries": [
+        0,
+        9,
+        24
+      ]
+    },
+    {
+      "name": "laodict-mixed-94",
+      "text": "aອີ້ອຸໂມງb",
+      "wordBoundaries": [
+        0,
+        10,
+        26
+      ]
+    },
+    {
+      "name": "laodict-mark-94",
+      "text": "ອີ້́ອຸໂມງ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "laodict-holdout-95",
+      "text": "ອຸໂມງເອມໂອຢູ",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-95",
+      "text": "aອຸໂມງເອມໂອຢູb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-95",
+      "text": "ອຸໂມງ́ເອມໂອຢູ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-96",
+      "text": "ເອມໂອຢູໂອບາດີຢາ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "laodict-mixed-96",
+      "text": "aເອມໂອຢູໂອບາດີຢາb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "laodict-mark-96",
+      "text": "ເອມໂອຢູ́ໂອບາດີຢາ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "laodict-holdout-97",
+      "text": "ໂອບາດີຢາຮາຊາມາເວດ",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "laodict-mixed-97",
+      "text": "aໂອບາດີຢາຮາຊາມາເວດb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "laodict-mark-97",
+      "text": "ໂອບາດີຢາ́ຮາຊາມາເວດ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "laodict-holdout-98",
+      "text": "ຮາຊາມາເວດຮົກ",
+      "wordBoundaries": [
+        0,
+        27,
+        36
+      ]
+    },
+    {
+      "name": "laodict-mixed-98",
+      "text": "aຮາຊາມາເວດຮົກb",
+      "wordBoundaries": [
+        0,
+        28,
+        38
+      ]
+    },
+    {
+      "name": "laodict-mark-98",
+      "text": "ຮາຊາມາເວດ́ຮົກ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "laodict-holdout-99",
+      "text": "ຮົກກໍ",
+      "wordBoundaries": [
+        0,
+        9,
+        15
+      ]
+    },
+    {
+      "name": "laodict-mixed-99",
+      "text": "aຮົກກໍb",
+      "wordBoundaries": [
+        0,
+        10,
+        17
+      ]
+    },
+    {
+      "name": "laodict-mark-99",
+      "text": "ຮົກ́ກໍ",
+      "wordBoundaries": [
+        0,
+        17
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-0",
+      "text": "ကကတိုးကိုင်ဆောင်သည်",
+      "wordBoundaries": [
+        0,
+        18,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-0",
+      "text": "aကကတိုးကိုင်ဆောင်သည်b",
+      "wordBoundaries": [
+        0,
+        19,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-0",
+      "text": "ကကတိုး́ကိုင်ဆောင်သည်",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-1",
+      "text": "ကိုင်ဆောင်သည်ကျည်အ",
+      "wordBoundaries": [
+        0,
+        39,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-1",
+      "text": "aကိုင်ဆောင်သည်ကျည်အb",
+      "wordBoundaries": [
+        0,
+        40,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-1",
+      "text": "ကိုင်ဆောင်သည်́ကျည်အ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-2",
+      "text": "ကျည်အခေါစာကျွေးသည်",
+      "wordBoundaries": [
+        0,
+        15,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-2",
+      "text": "aကျည်အခေါစာကျွေးသည်b",
+      "wordBoundaries": [
+        0,
+        16,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-2",
+      "text": "ကျည်အ́ခေါစာကျွေးသည်",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-3",
+      "text": "ခေါစာကျွေးသည်ခွစာ",
+      "wordBoundaries": [
+        0,
+        39,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-3",
+      "text": "aခေါစာကျွေးသည်ခွစာb",
+      "wordBoundaries": [
+        0,
+        40,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-3",
+      "text": "ခေါစာကျွေးသည်́ခွစာ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-4",
+      "text": "ခွစာငုံသည်",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-4",
+      "text": "aခွစာငုံသည်b",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "burmesedict-mark-4",
+      "text": "ခွစာ́ငုံသည်",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-5",
+      "text": "ငုံသည်စာသင်",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-5",
+      "text": "aငုံသည်စာသင်b",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-5",
+      "text": "ငုံသည်́စာသင်",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-6",
+      "text": "စာသင်စည်",
+      "wordBoundaries": [
+        0,
+        15,
+        24
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-6",
+      "text": "aစာသင်စည်b",
+      "wordBoundaries": [
+        0,
+        16,
+        26
+      ]
+    },
+    {
+      "name": "burmesedict-mark-6",
+      "text": "စာသင်́စည်",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-7",
+      "text": "စည်ဆေးဖိုးဝါးခ",
+      "wordBoundaries": [
+        0,
+        9,
+        42
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-7",
+      "text": "aစည်ဆေးဖိုးဝါးခb",
+      "wordBoundaries": [
+        0,
+        10,
+        44
+      ]
+    },
+    {
+      "name": "burmesedict-mark-7",
+      "text": "စည်́ဆေးဖိုးဝါးခ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-8",
+      "text": "ဆေးဖိုးဝါးခဇက်ခွံ့သည်",
+      "wordBoundaries": [
+        0,
+        33,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-8",
+      "text": "aဆေးဖိုးဝါးခဇက်ခွံ့သည်b",
+      "wordBoundaries": [
+        0,
+        34,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-8",
+      "text": "ဆေးဖိုးဝါးခ́ဇက်ခွံ့သည်",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-9",
+      "text": "ဇက်ခွံ့သည်တယောထိုးသည်",
+      "wordBoundaries": [
+        0,
+        30,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-9",
+      "text": "aဇက်ခွံ့သည်တယောထိုးသည်b",
+      "wordBoundaries": [
+        0,
+        31,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-9",
+      "text": "ဇက်ခွံ့သည်́တယောထိုးသည်",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-10",
+      "text": "တယောထိုးသည်တင်ပြသည်",
+      "wordBoundaries": [
+        0,
+        33,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-10",
+      "text": "aတယောထိုးသည်တင်ပြသည်b",
+      "wordBoundaries": [
+        0,
+        34,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-10",
+      "text": "တယောထိုးသည်́တင်ပြသည်",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-11",
+      "text": "တင်ပြသည်တွေ့ရှိသည်",
+      "wordBoundaries": [
+        0,
+        24,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-11",
+      "text": "aတင်ပြသည်တွေ့ရှိသည်b",
+      "wordBoundaries": [
+        0,
+        25,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-11",
+      "text": "တင်ပြသည်́တွေ့ရှိသည်",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-12",
+      "text": "တွေ့ရှိသည်ထိပ်တုံးစေသည်",
+      "wordBoundaries": [
+        0,
+        30,
+        69
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-12",
+      "text": "aတွေ့ရှိသည်ထိပ်တုံးစေသည်b",
+      "wordBoundaries": [
+        0,
+        31,
+        71
+      ]
+    },
+    {
+      "name": "burmesedict-mark-12",
+      "text": "တွေ့ရှိသည်́ထိပ်တုံးစေသည်",
+      "wordBoundaries": [
+        0,
+        71
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-13",
+      "text": "ထိပ်တုံးစေသည်ဓာတ်ပြား",
+      "wordBoundaries": [
+        0,
+        39,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-13",
+      "text": "aထိပ်တုံးစေသည်ဓာတ်ပြားb",
+      "wordBoundaries": [
+        0,
+        40,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-13",
+      "text": "ထိပ်တုံးစေသည်́ဓာတ်ပြား",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-14",
+      "text": "ဓာတ်ပြားနိုင်ငံတော်တံဆိပ်",
+      "wordBoundaries": [
+        0,
+        24,
+        75
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-14",
+      "text": "aဓာတ်ပြားနိုင်ငံတော်တံဆိပ်b",
+      "wordBoundaries": [
+        0,
+        25,
+        77
+      ]
+    },
+    {
+      "name": "burmesedict-mark-14",
+      "text": "ဓာတ်ပြား́နိုင်ငံတော်တံဆိပ်",
+      "wordBoundaries": [
+        0,
+        77
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-15",
+      "text": "နိုင်ငံတော်တံဆိပ်ပစောက်ရိုး",
+      "wordBoundaries": [
+        0,
+        51,
+        81
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-15",
+      "text": "aနိုင်ငံတော်တံဆိပ်ပစောက်ရိုးb",
+      "wordBoundaries": [
+        0,
+        52,
+        83
+      ]
+    },
+    {
+      "name": "burmesedict-mark-15",
+      "text": "နိုင်ငံတော်တံဆိပ်́ပစောက်ရိုး",
+      "wordBoundaries": [
+        0,
+        83
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-16",
+      "text": "ပစောက်ရိုးပေါက်ပင်",
+      "wordBoundaries": [
+        0,
+        30,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-16",
+      "text": "aပစောက်ရိုးပေါက်ပင်b",
+      "wordBoundaries": [
+        0,
+        31,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-16",
+      "text": "ပစောက်ရိုး́ပေါက်ပင်",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-17",
+      "text": "ပေါက်ပင်ပျောက်ပျက်သည်",
+      "wordBoundaries": [
+        0,
+        24,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-17",
+      "text": "aပေါက်ပင်ပျောက်ပျက်သည်b",
+      "wordBoundaries": [
+        0,
+        25,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-17",
+      "text": "ပေါက်ပင်́ပျောက်ပျက်သည်",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-18",
+      "text": "ပျောက်ပျက်သည်ဖော့",
+      "wordBoundaries": [
+        0,
+        39,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-18",
+      "text": "aပျောက်ပျက်သည်ဖော့b",
+      "wordBoundaries": [
+        0,
+        40,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-18",
+      "text": "ပျောက်ပျက်သည်́ဖော့",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-19",
+      "text": "ဖော့ဗို့အား",
+      "wordBoundaries": [
+        0,
+        12,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-19",
+      "text": "aဖော့ဗို့အားb",
+      "wordBoundaries": [
+        0,
+        13,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-19",
+      "text": "ဖော့́ဗို့အား",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-20",
+      "text": "ဗို့အားဘယ်ကို",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-20",
+      "text": "aဗို့အားဘယ်ကိုb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-20",
+      "text": "ဗို့အား́ဘယ်ကို",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-21",
+      "text": "ဘယ်ကိုမိုးခိုသား",
+      "wordBoundaries": [
+        0,
+        18,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-21",
+      "text": "aဘယ်ကိုမိုးခိုသားb",
+      "wordBoundaries": [
+        0,
+        19,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-21",
+      "text": "ဘယ်ကို́မိုးခိုသား",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-22",
+      "text": "မိုးခိုသားမျက်နှာလိုက်သည်",
+      "wordBoundaries": [
+        0,
+        30,
+        75
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-22",
+      "text": "aမိုးခိုသားမျက်နှာလိုက်သည်b",
+      "wordBoundaries": [
+        0,
+        31,
+        77
+      ]
+    },
+    {
+      "name": "burmesedict-mark-22",
+      "text": "မိုးခိုသား́မျက်နှာလိုက်သည်",
+      "wordBoundaries": [
+        0,
+        77
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-23",
+      "text": "မျက်နှာလိုက်သည်မှော်",
+      "wordBoundaries": [
+        0,
+        45,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-23",
+      "text": "aမျက်နှာလိုက်သည်မှော်b",
+      "wordBoundaries": [
+        0,
+        46,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-23",
+      "text": "မျက်နှာလိုက်သည်́မှော်",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-24",
+      "text": "မှော်ယုန်",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-24",
+      "text": "aမှော်ယုန်b",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "burmesedict-mark-24",
+      "text": "မှော်́ယုန်",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-25",
+      "text": "ယုန်ရေနွေးကြမ်း",
+      "wordBoundaries": [
+        0,
+        12,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-25",
+      "text": "aယုန်ရေနွေးကြမ်းb",
+      "wordBoundaries": [
+        0,
+        13,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-25",
+      "text": "ယုန်́ရေနွေးကြမ်း",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-26",
+      "text": "ရေနွေးကြမ်းရင့်ချော်",
+      "wordBoundaries": [
+        0,
+        33,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-26",
+      "text": "aရေနွေးကြမ်းရင့်ချော်b",
+      "wordBoundaries": [
+        0,
+        34,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-26",
+      "text": "ရေနွေးကြမ်း́ရင့်ချော်",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-27",
+      "text": "ရင့်ချော်ရှာဖွေရေး",
+      "wordBoundaries": [
+        0,
+        27,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-27",
+      "text": "aရင့်ချော်ရှာဖွေရေးb",
+      "wordBoundaries": [
+        0,
+        28,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-27",
+      "text": "ရင့်ချော်́ရှာဖွေရေး",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-28",
+      "text": "ရှာဖွေရေးလသာမှန်အိမ်",
+      "wordBoundaries": [
+        0,
+        27,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-28",
+      "text": "aရှာဖွေရေးလသာမှန်အိမ်b",
+      "wordBoundaries": [
+        0,
+        28,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-28",
+      "text": "ရှာဖွေရေး́လသာမှန်အိမ်",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-29",
+      "text": "လသာမှန်အိမ်လေ့လာသူ",
+      "wordBoundaries": [
+        0,
+        33,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-29",
+      "text": "aလသာမှန်အိမ်လေ့လာသူb",
+      "wordBoundaries": [
+        0,
+        34,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-29",
+      "text": "လသာမှန်အိမ်́လေ့လာသူ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-30",
+      "text": "လေ့လာသူလက်မှုပညာ",
+      "wordBoundaries": [
+        0,
+        21,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-30",
+      "text": "aလေ့လာသူလက်မှုပညာb",
+      "wordBoundaries": [
+        0,
+        22,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-30",
+      "text": "လေ့လာသူ́လက်မှုပညာ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-31",
+      "text": "လက်မှုပညာလုပ်ရည်",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-31",
+      "text": "aလက်မှုပညာလုပ်ရည်b",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-31",
+      "text": "လက်မှုပညာ́လုပ်ရည်",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-32",
+      "text": "လုပ်ရည်လှုပ်ရှားမှု",
+      "wordBoundaries": [
+        0,
+        21,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-32",
+      "text": "aလုပ်ရည်လှုပ်ရှားမှုb",
+      "wordBoundaries": [
+        0,
+        22,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-32",
+      "text": "လုပ်ရည်́လှုပ်ရှားမှု",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-33",
+      "text": "လှုပ်ရှားမှုဝိုက်ချ",
+      "wordBoundaries": [
+        0,
+        36,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-33",
+      "text": "aလှုပ်ရှားမှုဝိုက်ချb",
+      "wordBoundaries": [
+        0,
+        37,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-33",
+      "text": "လှုပ်ရှားမှု́ဝိုက်ချ",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-34",
+      "text": "ဝိုက်ချသဘောခွေ့",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-34",
+      "text": "aဝိုက်ချသဘောခွေ့b",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-34",
+      "text": "ဝိုက်ချ́သဘောခွေ့",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-35",
+      "text": "သဘောခွေ့သုညကမ႓ာ",
+      "wordBoundaries": [
+        0,
+        24,
+        33,
+        36,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-35",
+      "text": "aသဘောခွေ့သုညကမ႓ာb",
+      "wordBoundaries": [
+        0,
+        25,
+        34,
+        37,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-35",
+      "text": "သဘောခွေ့́သုညကမ႓ာ",
+      "wordBoundaries": [
+        0,
+        35,
+        38,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-36",
+      "text": "သုညကမ႓ာသိုးမ",
+      "wordBoundaries": [
+        0,
+        9,
+        12,
+        21,
+        36
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-36",
+      "text": "aသုညကမ႓ာသိုးမb",
+      "wordBoundaries": [
+        0,
+        10,
+        13,
+        22,
+        38
+      ]
+    },
+    {
+      "name": "burmesedict-mark-36",
+      "text": "သုညကမ႓ာ́သိုးမ",
+      "wordBoundaries": [
+        0,
+        9,
+        12,
+        38
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-37",
+      "text": "သိုးမသုတ်တံ",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-37",
+      "text": "aသိုးမသုတ်တံb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-37",
+      "text": "သိုးမ́သုတ်တံ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-38",
+      "text": "သုတ်တံဟဝါ",
+      "wordBoundaries": [
+        0,
+        18,
+        27
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-38",
+      "text": "aသုတ်တံဟဝါb",
+      "wordBoundaries": [
+        0,
+        19,
+        29
+      ]
+    },
+    {
+      "name": "burmesedict-mark-38",
+      "text": "သုတ်တံ́ဟဝါ",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-39",
+      "text": "ဟဝါအကြံတုံးဉာဏ်တုံး",
+      "wordBoundaries": [
+        0,
+        9,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-39",
+      "text": "aဟဝါအကြံတုံးဉာဏ်တုံးb",
+      "wordBoundaries": [
+        0,
+        10,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-39",
+      "text": "ဟဝါ́အကြံတုံးဉာဏ်တုံး",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-40",
+      "text": "အကြံတုံးဉာဏ်တုံးအခွန်ဘဏ္ဍာ",
+      "wordBoundaries": [
+        0,
+        48,
+        78
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-40",
+      "text": "aအကြံတုံးဉာဏ်တုံးအခွန်ဘဏ္ဍာb",
+      "wordBoundaries": [
+        0,
+        49,
+        80
+      ]
+    },
+    {
+      "name": "burmesedict-mark-40",
+      "text": "အကြံတုံးဉာဏ်တုံး́အခွန်ဘဏ္ဍာ",
+      "wordBoundaries": [
+        0,
+        80
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-41",
+      "text": "အခွန်ဘဏ္ဍာအညွှန့်အဖူး",
+      "wordBoundaries": [
+        0,
+        30,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-41",
+      "text": "aအခွန်ဘဏ္ဍာအညွှန့်အဖူးb",
+      "wordBoundaries": [
+        0,
+        31,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-41",
+      "text": "အခွန်ဘဏ္ဍာ́အညွှန့်အဖူး",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-42",
+      "text": "အညွှန့်အဖူးအနောက်တောင်",
+      "wordBoundaries": [
+        0,
+        33,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-42",
+      "text": "aအညွှန့်အဖူးအနောက်တောင်b",
+      "wordBoundaries": [
+        0,
+        34,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-42",
+      "text": "အညွှန့်အဖူး́အနောက်တောင်",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-43",
+      "text": "အနောက်တောင်အဖျားဆွတ်",
+      "wordBoundaries": [
+        0,
+        33,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-43",
+      "text": "aအနောက်တောင်အဖျားဆွတ်b",
+      "wordBoundaries": [
+        0,
+        34,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-43",
+      "text": "အနောက်တောင်́အဖျားဆွတ်",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-44",
+      "text": "အဖျားဆွတ်အသားဝါရောဂါ",
+      "wordBoundaries": [
+        0,
+        27,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-44",
+      "text": "aအဖျားဆွတ်အသားဝါရောဂါb",
+      "wordBoundaries": [
+        0,
+        28,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-44",
+      "text": "အဖျားဆွတ်́အသားဝါရောဂါ",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-45",
+      "text": "အသားဝါရောဂါအားတောင့်",
+      "wordBoundaries": [
+        0,
+        33,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-45",
+      "text": "aအသားဝါရောဂါအားတောင့်b",
+      "wordBoundaries": [
+        0,
+        34,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-45",
+      "text": "အသားဝါရောဂါ́အားတောင့်",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-46",
+      "text": "အားတောင့်အံဝှက်",
+      "wordBoundaries": [
+        0,
+        27,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-46",
+      "text": "aအားတောင့်အံဝှက်b",
+      "wordBoundaries": [
+        0,
+        28,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-46",
+      "text": "အားတောင့်́အံဝှက်",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-47",
+      "text": "အံဝှက်အန်လက်ပစ်",
+      "wordBoundaries": [
+        0,
+        18,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-47",
+      "text": "aအံဝှက်အန်လက်ပစ်b",
+      "wordBoundaries": [
+        0,
+        19,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-47",
+      "text": "အံဝှက်́အန်လက်ပစ်",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-48",
+      "text": "အန်လက်ပစ်ကယောပင်",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-48",
+      "text": "aအန်လက်ပစ်ကယောပင်b",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-48",
+      "text": "အန်လက်ပစ်́ကယောပင်",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-49",
+      "text": "ကယောပင်ကင်းဖလောင်ကောင်",
+      "wordBoundaries": [
+        0,
+        21,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-49",
+      "text": "aကယောပင်ကင်းဖလောင်ကောင်b",
+      "wordBoundaries": [
+        0,
+        22,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-49",
+      "text": "ကယောပင်́ကင်းဖလောင်ကောင်",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-50",
+      "text": "ကင်းဖလောင်ကောင်ကျပန်း",
+      "wordBoundaries": [
+        0,
+        45,
+        63
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-50",
+      "text": "aကင်းဖလောင်ကောင်ကျပန်းb",
+      "wordBoundaries": [
+        0,
+        46,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-mark-50",
+      "text": "ကင်းဖလောင်ကောင်́ကျပန်း",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-51",
+      "text": "ကျပန်းကျုံးမြောင်း",
+      "wordBoundaries": [
+        0,
+        18,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-51",
+      "text": "aကျပန်းကျုံးမြောင်းb",
+      "wordBoundaries": [
+        0,
+        19,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-51",
+      "text": "ကျပန်း́ကျုံးမြောင်း",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-52",
+      "text": "ကျုံးမြောင်းကြည်းဟီး",
+      "wordBoundaries": [
+        0,
+        36,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-52",
+      "text": "aကျုံးမြောင်းကြည်းဟီးb",
+      "wordBoundaries": [
+        0,
+        37,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-52",
+      "text": "ကျုံးမြောင်း́ကြည်းဟီး",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-53",
+      "text": "ကြည်းဟီးခယဝယ",
+      "wordBoundaries": [
+        0,
+        24,
+        36
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-53",
+      "text": "aကြည်းဟီးခယဝယb",
+      "wordBoundaries": [
+        0,
+        25,
+        38
+      ]
+    },
+    {
+      "name": "burmesedict-mark-53",
+      "text": "ကြည်းဟီး́ခယဝယ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-54",
+      "text": "ခယဝယခေါင်းပွာ",
+      "wordBoundaries": [
+        0,
+        12,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-54",
+      "text": "aခယဝယခေါင်းပွာb",
+      "wordBoundaries": [
+        0,
+        13,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-54",
+      "text": "ခယဝယ́ခေါင်းပွာ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-55",
+      "text": "ခေါင်းပွာချည်သေ့",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-55",
+      "text": "aခေါင်းပွာချည်သေ့b",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-55",
+      "text": "ခေါင်းပွာ́ချည်သေ့",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-56",
+      "text": "ချည်သေ့ချွင်ချွင်",
+      "wordBoundaries": [
+        0,
+        21,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-56",
+      "text": "aချည်သေ့ချွင်ချွင်b",
+      "wordBoundaries": [
+        0,
+        22,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-56",
+      "text": "ချည်သေ့́ချွင်ချွင်",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-57",
+      "text": "ချွင်ချွင်ငါးရာ",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-57",
+      "text": "aချွင်ချွင်ငါးရာb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-57",
+      "text": "ချွင်ချွင်́ငါးရာ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-58",
+      "text": "ငါးရာစပါးရိုင်း",
+      "wordBoundaries": [
+        0,
+        15,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-58",
+      "text": "aငါးရာစပါးရိုင်းb",
+      "wordBoundaries": [
+        0,
+        16,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-58",
+      "text": "ငါးရာ́စပါးရိုင်း",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-59",
+      "text": "စပါးရိုင်းစက္ကဝါက်",
+      "wordBoundaries": [
+        0,
+        30,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-59",
+      "text": "aစပါးရိုင်းစက္ကဝါက်b",
+      "wordBoundaries": [
+        0,
+        31,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-59",
+      "text": "စပါးရိုင်း́စက္ကဝါက်",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-60",
+      "text": "စက္ကဝါက်စုတ်စုတ်",
+      "wordBoundaries": [
+        0,
+        24,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-60",
+      "text": "aစက္ကဝါက်စုတ်စုတ်b",
+      "wordBoundaries": [
+        0,
+        25,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-60",
+      "text": "စက္ကဝါက်́စုတ်စုတ်",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-61",
+      "text": "စုတ်စုတ်ဆေးတစ်ဖုံ",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-61",
+      "text": "aစုတ်စုတ်ဆေးတစ်ဖုံb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-61",
+      "text": "စုတ်စုတ်́ဆေးတစ်ဖုံ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-62",
+      "text": "ဆေးတစ်ဖုံဆပ်သွားဘီး",
+      "wordBoundaries": [
+        0,
+        27,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-62",
+      "text": "aဆေးတစ်ဖုံဆပ်သွားဘီးb",
+      "wordBoundaries": [
+        0,
+        28,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-62",
+      "text": "ဆေးတစ်ဖုံ́ဆပ်သွားဘီး",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-63",
+      "text": "ဆပ်သွားဘီးညခင်း",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-63",
+      "text": "aဆပ်သွားဘီးညခင်းb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-63",
+      "text": "ဆပ်သွားဘီး́ညခင်း",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-64",
+      "text": "ညခင်းတမြုံ့မြုံ့",
+      "wordBoundaries": [
+        0,
+        15,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-64",
+      "text": "aညခင်းတမြုံ့မြုံ့b",
+      "wordBoundaries": [
+        0,
+        16,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-64",
+      "text": "ညခင်း́တမြုံ့မြုံ့",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-65",
+      "text": "တမြုံ့မြုံ့တံတားထိုး",
+      "wordBoundaries": [
+        0,
+        33,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-65",
+      "text": "aတမြုံ့မြုံ့တံတားထိုးb",
+      "wordBoundaries": [
+        0,
+        34,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-65",
+      "text": "တမြုံ့မြုံ့́တံတားထိုး",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-66",
+      "text": "တံတားထိုးတစ်ပွက်ဆူ",
+      "wordBoundaries": [
+        0,
+        27,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-66",
+      "text": "aတံတားထိုးတစ်ပွက်ဆူb",
+      "wordBoundaries": [
+        0,
+        28,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-66",
+      "text": "တံတားထိုး́တစ်ပွက်ဆူ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-67",
+      "text": "တစ်ပွက်ဆူတွန့်ခွေထား",
+      "wordBoundaries": [
+        0,
+        27,
+        60
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-67",
+      "text": "aတစ်ပွက်ဆူတွန့်ခွေထားb",
+      "wordBoundaries": [
+        0,
+        28,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-mark-67",
+      "text": "တစ်ပွက်ဆူ́တွန့်ခွေထား",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-68",
+      "text": "တွန့်ခွေထားထပ်ထပ်",
+      "wordBoundaries": [
+        0,
+        33,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-68",
+      "text": "aတွန့်ခွေထားထပ်ထပ်b",
+      "wordBoundaries": [
+        0,
+        34,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-68",
+      "text": "တွန့်ခွေထား́ထပ်ထပ်",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-69",
+      "text": "ထပ်ထပ်ဒိဋ္ဌ",
+      "wordBoundaries": [
+        0,
+        18,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-69",
+      "text": "aထပ်ထပ်ဒိဋ္ဌb",
+      "wordBoundaries": [
+        0,
+        19,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-69",
+      "text": "ထပ်ထပ်́ဒိဋ္ဌ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-70",
+      "text": "ဒိဋ္ဌနားရင်းအုပ်",
+      "wordBoundaries": [
+        0,
+        15,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-70",
+      "text": "aဒိဋ္ဌနားရင်းအုပ်b",
+      "wordBoundaries": [
+        0,
+        16,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-70",
+      "text": "ဒိဋ္ဌ́နားရင်းအုပ်",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-71",
+      "text": "နားရင်းအုပ်နုတ်",
+      "wordBoundaries": [
+        0,
+        33,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-71",
+      "text": "aနားရင်းအုပ်နုတ်b",
+      "wordBoundaries": [
+        0,
+        34,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-71",
+      "text": "နားရင်းအုပ်́နုတ်",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-72",
+      "text": "နုတ်နှုတ်လွတ်",
+      "wordBoundaries": [
+        0,
+        12,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-72",
+      "text": "aနုတ်နှုတ်လွတ်b",
+      "wordBoundaries": [
+        0,
+        13,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-72",
+      "text": "နုတ်́နှုတ်လွတ်",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-73",
+      "text": "နှုတ်လွတ်ပုဆိုးတန်းတင်",
+      "wordBoundaries": [
+        0,
+        27,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-73",
+      "text": "aနှုတ်လွတ်ပုဆိုးတန်းတင်b",
+      "wordBoundaries": [
+        0,
+        28,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-73",
+      "text": "နှုတ်လွတ်́ပုဆိုးတန်းတင်",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-74",
+      "text": "ပုဆိုးတန်းတင်ပေါင်းဘက်",
+      "wordBoundaries": [
+        0,
+        39,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-74",
+      "text": "aပုဆိုးတန်းတင်ပေါင်းဘက်b",
+      "wordBoundaries": [
+        0,
+        40,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-74",
+      "text": "ပုဆိုးတန်းတင်́ပေါင်းဘက်",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-75",
+      "text": "ပေါင်းဘက်ပုံယင်",
+      "wordBoundaries": [
+        0,
+        27,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-75",
+      "text": "aပေါင်းဘက်ပုံယင်b",
+      "wordBoundaries": [
+        0,
+        28,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-75",
+      "text": "ပေါင်းဘက်́ပုံယင်",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-76",
+      "text": "ပုံယင်ပြောင်ချော်",
+      "wordBoundaries": [
+        0,
+        18,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-76",
+      "text": "aပုံယင်ပြောင်ချော်b",
+      "wordBoundaries": [
+        0,
+        19,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-76",
+      "text": "ပုံယင်́ပြောင်ချော်",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-77",
+      "text": "ပြောင်ချော်ဖူးရရှု",
+      "wordBoundaries": [
+        0,
+        33,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-77",
+      "text": "aပြောင်ချော်ဖူးရရှုb",
+      "wordBoundaries": [
+        0,
+        34,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-77",
+      "text": "ပြောင်ချော်́ဖူးရရှု",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-78",
+      "text": "ဖူးရရှုဖြဲ",
+      "wordBoundaries": [
+        0,
+        21,
+        30
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-78",
+      "text": "aဖူးရရှုဖြဲb",
+      "wordBoundaries": [
+        0,
+        22,
+        32
+      ]
+    },
+    {
+      "name": "burmesedict-mark-78",
+      "text": "ဖူးရရှု́ဖြဲ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-79",
+      "text": "ဖြဲဘူးဆင်စွယ်",
+      "wordBoundaries": [
+        0,
+        9,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-79",
+      "text": "aဖြဲဘူးဆင်စွယ်b",
+      "wordBoundaries": [
+        0,
+        10,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-79",
+      "text": "ဖြဲ́ဘူးဆင်စွယ်",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-80",
+      "text": "ဘူးဆင်စွယ်မီးကြာ",
+      "wordBoundaries": [
+        0,
+        30,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-80",
+      "text": "aဘူးဆင်စွယ်မီးကြာb",
+      "wordBoundaries": [
+        0,
+        31,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-80",
+      "text": "ဘူးဆင်စွယ်́မီးကြာ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-81",
+      "text": "မီးကြာမင်းထုပ်",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-81",
+      "text": "aမီးကြာမင်းထုပ်b",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "burmesedict-mark-81",
+      "text": "မီးကြာ́မင်းထုပ်",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-82",
+      "text": "မင်းထုပ်မျက်နှာထားကြီး",
+      "wordBoundaries": [
+        0,
+        24,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-82",
+      "text": "aမင်းထုပ်မျက်နှာထားကြီးb",
+      "wordBoundaries": [
+        0,
+        25,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-82",
+      "text": "မင်းထုပ်́မျက်နှာထားကြီး",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-83",
+      "text": "မျက်နှာထားကြီးမြင်းကံကျွေး",
+      "wordBoundaries": [
+        0,
+        42,
+        78
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-83",
+      "text": "aမျက်နှာထားကြီးမြင်းကံကျွေးb",
+      "wordBoundaries": [
+        0,
+        43,
+        80
+      ]
+    },
+    {
+      "name": "burmesedict-mark-83",
+      "text": "မျက်နှာထားကြီး́မြင်းကံကျွေး",
+      "wordBoundaries": [
+        0,
+        80
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-84",
+      "text": "မြင်းကံကျွေးမျှတ",
+      "wordBoundaries": [
+        0,
+        36,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-84",
+      "text": "aမြင်းကံကျွေးမျှတb",
+      "wordBoundaries": [
+        0,
+        37,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-84",
+      "text": "မြင်းကံကျွေး́မျှတ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-85",
+      "text": "မျှတရိနွမ်း",
+      "wordBoundaries": [
+        0,
+        12,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-85",
+      "text": "aမျှတရိနွမ်းb",
+      "wordBoundaries": [
+        0,
+        13,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-85",
+      "text": "မျှတ́ရိနွမ်း",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-86",
+      "text": "ရိနွမ်းရပ်သစ်",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-86",
+      "text": "aရိနွမ်းရပ်သစ်b",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-86",
+      "text": "ရိနွမ်း́ရပ်သစ်",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-87",
+      "text": "ရပ်သစ်လူပျိုစကား",
+      "wordBoundaries": [
+        0,
+        18,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-87",
+      "text": "aရပ်သစ်လူပျိုစကားb",
+      "wordBoundaries": [
+        0,
+        19,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-87",
+      "text": "ရပ်သစ်́လူပျိုစကား",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-88",
+      "text": "လူပျိုစကားလက်သိ",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-88",
+      "text": "aလူပျိုစကားလက်သိb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-88",
+      "text": "လူပျိုစကား́လက်သိ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-89",
+      "text": "လက်သိလှည့်ကား",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-89",
+      "text": "aလက်သိလှည့်ကားb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-mark-89",
+      "text": "လက်သိ́လှည့်ကား",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-90",
+      "text": "လှည့်ကားဝမ်းချုဆေး",
+      "wordBoundaries": [
+        0,
+        24,
+        54
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-90",
+      "text": "aလှည့်ကားဝမ်းချုဆေးb",
+      "wordBoundaries": [
+        0,
+        25,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-mark-90",
+      "text": "လှည့်ကား́ဝမ်းချုဆေး",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-91",
+      "text": "ဝမ်းချုဆေးသူရိယာ",
+      "wordBoundaries": [
+        0,
+        30,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-91",
+      "text": "aဝမ်းချုဆေးသူရိယာb",
+      "wordBoundaries": [
+        0,
+        31,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-91",
+      "text": "ဝမ်းချုဆေး́သူရိယာ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-92",
+      "text": "သူရိယာသောင်းပြောင်း",
+      "wordBoundaries": [
+        0,
+        18,
+        57
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-92",
+      "text": "aသူရိယာသောင်းပြောင်းb",
+      "wordBoundaries": [
+        0,
+        19,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-mark-92",
+      "text": "သူရိယာ́သောင်းပြောင်း",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-93",
+      "text": "သောင်းပြောင်းသျှတ်သမား",
+      "wordBoundaries": [
+        0,
+        39,
+        66
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-93",
+      "text": "aသောင်းပြောင်းသျှတ်သမားb",
+      "wordBoundaries": [
+        0,
+        40,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-mark-93",
+      "text": "သောင်းပြောင်း́သျှတ်သမား",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-94",
+      "text": "သျှတ်သမားအစုအရုံး",
+      "wordBoundaries": [
+        0,
+        27,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-94",
+      "text": "aသျှတ်သမားအစုအရုံးb",
+      "wordBoundaries": [
+        0,
+        28,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-94",
+      "text": "သျှတ်သမား́အစုအရုံး",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-95",
+      "text": "အစုအရုံးအပျိုကညာ",
+      "wordBoundaries": [
+        0,
+        24,
+        48
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-95",
+      "text": "aအစုအရုံးအပျိုကညာb",
+      "wordBoundaries": [
+        0,
+        25,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-mark-95",
+      "text": "အစုအရုံး́အပျိုကညာ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-96",
+      "text": "အပျိုကညာအမျှပေး",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-96",
+      "text": "aအပျိုကညာအမျှပေးb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-96",
+      "text": "အပျိုကညာ́အမျှပေး",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-97",
+      "text": "အမျှပေးအဝှမ်းအကော",
+      "wordBoundaries": [
+        0,
+        21,
+        51
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-97",
+      "text": "aအမျှပေးအဝှမ်းအကောb",
+      "wordBoundaries": [
+        0,
+        22,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-mark-97",
+      "text": "အမျှပေး́အဝှမ်းအကော",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-98",
+      "text": "အဝှမ်းအကောအေ၍ခဲ",
+      "wordBoundaries": [
+        0,
+        30,
+        36,
+        39,
+        45
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-98",
+      "text": "aအဝှမ်းအကောအေ၍ခဲb",
+      "wordBoundaries": [
+        0,
+        31,
+        37,
+        40,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-mark-98",
+      "text": "အဝှမ်းအကော́အေ၍ခဲ",
+      "wordBoundaries": [
+        0,
+        38,
+        41,
+        47
+      ]
+    },
+    {
+      "name": "burmesedict-holdout-99",
+      "text": "အေ၍ခဲကကတိုး",
+      "wordBoundaries": [
+        0,
+        6,
+        9,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "burmesedict-mixed-99",
+      "text": "aအေ၍ခဲကကတိုးb",
+      "wordBoundaries": [
+        0,
+        7,
+        10,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "burmesedict-mark-99",
+      "text": "အေ၍ခဲ́ကကတိုး",
+      "wordBoundaries": [
+        0,
+        6,
+        9,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-0",
+      "text": "កកន្ត្រៃ",
+      "wordBoundaries": [
+        0,
+        3,
+        24
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-0",
+      "text": "aកកន្ត្រៃb",
+      "wordBoundaries": [
+        0,
+        4,
+        26
+      ]
+    },
+    {
+      "name": "khmerdict-mark-0",
+      "text": "ក́កន្ត្រៃ",
+      "wordBoundaries": [
+        0,
+        26
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-1",
+      "text": "កន្ត្រៃកាច់យកស្រុក",
+      "wordBoundaries": [
+        0,
+        21,
+        54
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-1",
+      "text": "aកន្ត្រៃកាច់យកស្រុកb",
+      "wordBoundaries": [
+        0,
+        22,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-mark-1",
+      "text": "កន្ត្រៃ́កាច់យកស្រុក",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-2",
+      "text": "កាច់យកស្រុកការិយាល័យក្រុមវិវាទ",
+      "wordBoundaries": [
+        0,
+        33,
+        90
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-2",
+      "text": "aកាច់យកស្រុកការិយាល័យក្រុមវិវាទb",
+      "wordBoundaries": [
+        0,
+        34,
+        92
+      ]
+    },
+    {
+      "name": "khmerdict-mark-2",
+      "text": "កាច់យកស្រុក́ការិយាល័យក្រុមវិវាទ",
+      "wordBoundaries": [
+        0,
+        92
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-3",
+      "text": "ការិយាល័យក្រុមវិវាទកូនសម្លី",
+      "wordBoundaries": [
+        0,
+        57,
+        81
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-3",
+      "text": "aការិយាល័យក្រុមវិវាទកូនសម្លីb",
+      "wordBoundaries": [
+        0,
+        58,
+        83
+      ]
+    },
+    {
+      "name": "khmerdict-mark-3",
+      "text": "ការិយាល័យក្រុមវិវាទ́កូនសម្លី",
+      "wordBoundaries": [
+        0,
+        83
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-4",
+      "text": "កូនសម្លីកំប៉ោង",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-4",
+      "text": "aកូនសម្លីកំប៉ោងb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-4",
+      "text": "កូនសម្លី́កំប៉ោង",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-5",
+      "text": "កំប៉ោងក្បួនហោរ",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-5",
+      "text": "aកំប៉ោងក្បួនហោរb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-5",
+      "text": "កំប៉ោង́ក្បួនហោរ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-6",
+      "text": "ក្បួនហោរក្រិស",
+      "wordBoundaries": [
+        0,
+        24,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-6",
+      "text": "aក្បួនហោរក្រិសb",
+      "wordBoundaries": [
+        0,
+        25,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-6",
+      "text": "ក្បួនហោរ́ក្រិស",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-7",
+      "text": "ក្រិសខានធ្វើ",
+      "wordBoundaries": [
+        0,
+        15,
+        36
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-7",
+      "text": "aក្រិសខានធ្វើb",
+      "wordBoundaries": [
+        0,
+        16,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-mark-7",
+      "text": "ក្រិស́ខានធ្វើ",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-8",
+      "text": "ខានធ្វើខ្នងបង្អែក",
+      "wordBoundaries": [
+        0,
+        21,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-8",
+      "text": "aខានធ្វើខ្នងបង្អែកb",
+      "wordBoundaries": [
+        0,
+        22,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-8",
+      "text": "ខានធ្វើ́ខ្នងបង្អែក",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-9",
+      "text": "ខ្នងបង្អែកខ្សោយបេះដូង",
+      "wordBoundaries": [
+        0,
+        30,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-9",
+      "text": "aខ្នងបង្អែកខ្សោយបេះដូងb",
+      "wordBoundaries": [
+        0,
+        31,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-9",
+      "text": "ខ្នងបង្អែក́ខ្សោយបេះដូង",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-10",
+      "text": "ខ្សោយបេះដូងគុណានុភាព",
+      "wordBoundaries": [
+        0,
+        33,
+        60
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-10",
+      "text": "aខ្សោយបេះដូងគុណានុភាពb",
+      "wordBoundaries": [
+        0,
+        34,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-mark-10",
+      "text": "ខ្សោយបេះដូង́គុណានុភាព",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-11",
+      "text": "គុណានុភាពគ្រវាត់",
+      "wordBoundaries": [
+        0,
+        27,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-11",
+      "text": "aគុណានុភាពគ្រវាត់b",
+      "wordBoundaries": [
+        0,
+        28,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-11",
+      "text": "គុណានុភាព́គ្រវាត់",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-12",
+      "text": "គ្រវាត់ងងីសងងូស",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-12",
+      "text": "aគ្រវាត់ងងីសងងូសb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-12",
+      "text": "គ្រវាត់́ងងីសងងូស",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-13",
+      "text": "ងងីសងងូសចន្លោះទុក",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-13",
+      "text": "aងងីសងងូសចន្លោះទុកb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-13",
+      "text": "ងងីសងងូស́ចន្លោះទុក",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-14",
+      "text": "ចន្លោះទុកចិត្តទូលំទូលាយ",
+      "wordBoundaries": [
+        0,
+        27,
+        69
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-14",
+      "text": "aចន្លោះទុកចិត្តទូលំទូលាយb",
+      "wordBoundaries": [
+        0,
+        28,
+        71
+      ]
+    },
+    {
+      "name": "khmerdict-mark-14",
+      "text": "ចន្លោះទុក́ចិត្តទូលំទូលាយ",
+      "wordBoundaries": [
+        0,
+        71
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-15",
+      "text": "ចិត្តទូលំទូលាយចោទ",
+      "wordBoundaries": [
+        0,
+        42,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-15",
+      "text": "aចិត្តទូលំទូលាយចោទb",
+      "wordBoundaries": [
+        0,
+        43,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-15",
+      "text": "ចិត្តទូលំទូលាយ́ចោទ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-16",
+      "text": "ចោទច្រត់ទំពាំង",
+      "wordBoundaries": [
+        0,
+        9,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-16",
+      "text": "aចោទច្រត់ទំពាំងb",
+      "wordBoundaries": [
+        0,
+        10,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-16",
+      "text": "ចោទ́ច្រត់ទំពាំង",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-17",
+      "text": "ច្រត់ទំពាំងឆ្មាត់",
+      "wordBoundaries": [
+        0,
+        33,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-17",
+      "text": "aច្រត់ទំពាំងឆ្មាត់b",
+      "wordBoundaries": [
+        0,
+        34,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-17",
+      "text": "ច្រត់ទំពាំង́ឆ្មាត់",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-18",
+      "text": "ឆ្មាត់ជលាម្ពុជៈ",
+      "wordBoundaries": [
+        0,
+        18,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-18",
+      "text": "aឆ្មាត់ជលាម្ពុជៈb",
+      "wordBoundaries": [
+        0,
+        19,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-18",
+      "text": "ឆ្មាត់́ជលាម្ពុជៈ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-19",
+      "text": "ជលាម្ពុជៈជួនជា",
+      "wordBoundaries": [
+        0,
+        27,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-19",
+      "text": "aជលាម្ពុជៈជួនជាb",
+      "wordBoundaries": [
+        0,
+        28,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-19",
+      "text": "ជលាម្ពុជៈ́ជួនជា",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-20",
+      "text": "ជួនជាជ្រាក",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-20",
+      "text": "aជួនជាជ្រាកb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-20",
+      "text": "ជួនជា́ជ្រាក",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-21",
+      "text": "ជ្រាកញាត់",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-21",
+      "text": "aជ្រាកញាត់b",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-mark-21",
+      "text": "ជ្រាក́ញាត់",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-22",
+      "text": "ញាត់ដាំដុះ",
+      "wordBoundaries": [
+        0,
+        12,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-22",
+      "text": "aញាត់ដាំដុះb",
+      "wordBoundaries": [
+        0,
+        13,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-22",
+      "text": "ញាត់́ដាំដុះ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-23",
+      "text": "ដាំដុះដៀម",
+      "wordBoundaries": [
+        0,
+        18,
+        27
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-23",
+      "text": "aដាំដុះដៀមb",
+      "wordBoundaries": [
+        0,
+        19,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-mark-23",
+      "text": "ដាំដុះ́ដៀម",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-24",
+      "text": "ដៀមឋបនភណ្ឌ",
+      "wordBoundaries": [
+        0,
+        9,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-24",
+      "text": "aដៀមឋបនភណ្ឌb",
+      "wordBoundaries": [
+        0,
+        10,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-24",
+      "text": "ដៀម́ឋបនភណ្ឌ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-25",
+      "text": "ឋបនភណ្ឌតាមបុរាណ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-25",
+      "text": "aឋបនភណ្ឌតាមបុរាណb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-25",
+      "text": "ឋបនភណ្ឌ́តាមបុរាណ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-26",
+      "text": "តាមបុរាណតំបន់សមត្ថកិច្ច",
+      "wordBoundaries": [
+        0,
+        24,
+        69
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-26",
+      "text": "aតាមបុរាណតំបន់សមត្ថកិច្ចb",
+      "wordBoundaries": [
+        0,
+        25,
+        71
+      ]
+    },
+    {
+      "name": "khmerdict-mark-26",
+      "text": "តាមបុរាណ́តំបន់សមត្ថកិច្ច",
+      "wordBoundaries": [
+        0,
+        71
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-27",
+      "text": "តំបន់សមត្ថកិច្ចត្រុក",
+      "wordBoundaries": [
+        0,
+        45,
+        60
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-27",
+      "text": "aតំបន់សមត្ថកិច្ចត្រុកb",
+      "wordBoundaries": [
+        0,
+        46,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-mark-27",
+      "text": "តំបន់សមត្ថកិច្ច́ត្រុក",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-28",
+      "text": "ត្រុកថ្នាល",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-28",
+      "text": "aត្រុកថ្នាលb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-28",
+      "text": "ត្រុក́ថ្នាល",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-29",
+      "text": "ថ្នាលទម្រើសកូន",
+      "wordBoundaries": [
+        0,
+        15,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-29",
+      "text": "aថ្នាលទម្រើសកូនb",
+      "wordBoundaries": [
+        0,
+        16,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-29",
+      "text": "ថ្នាល́ទម្រើសកូន",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-30",
+      "text": "ទម្រើសកូនទីទុកឯកសារ",
+      "wordBoundaries": [
+        0,
+        27,
+        57
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-30",
+      "text": "aទម្រើសកូនទីទុកឯកសារb",
+      "wordBoundaries": [
+        0,
+        28,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-mark-30",
+      "text": "ទម្រើសកូន́ទីទុកឯកសារ",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-31",
+      "text": "ទីទុកឯកសារទួទ័រ",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-31",
+      "text": "aទីទុកឯកសារទួទ័រb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-31",
+      "text": "ទីទុកឯកសារ́ទួទ័រ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-32",
+      "text": "ទួទ័រទ្រព្យសាធារណៈ",
+      "wordBoundaries": [
+        0,
+        15,
+        54
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-32",
+      "text": "aទួទ័រទ្រព្យសាធារណៈb",
+      "wordBoundaries": [
+        0,
+        16,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-mark-32",
+      "text": "ទួទ័រ́ទ្រព្យសាធារណៈ",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-33",
+      "text": "ទ្រព្យសាធារណៈធ័មមៈនុញ",
+      "wordBoundaries": [
+        0,
+        39,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-33",
+      "text": "aទ្រព្យសាធារណៈធ័មមៈនុញb",
+      "wordBoundaries": [
+        0,
+        40,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-33",
+      "text": "ទ្រព្យសាធារណៈ́ធ័មមៈនុញ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-34",
+      "text": "ធ័មមៈនុញនវកភាព",
+      "wordBoundaries": [
+        0,
+        24,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-34",
+      "text": "aធ័មមៈនុញនវកភាពb",
+      "wordBoundaries": [
+        0,
+        25,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-34",
+      "text": "ធ័មមៈនុញ́នវកភាព",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-35",
+      "text": "នវកភាពនិយាយលះ",
+      "wordBoundaries": [
+        0,
+        18,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-35",
+      "text": "aនវកភាពនិយាយលះb",
+      "wordBoundaries": [
+        0,
+        19,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-35",
+      "text": "នវកភាព́និយាយលះ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-36",
+      "text": "និយាយលះបង់ពន្ធ",
+      "wordBoundaries": [
+        0,
+        21,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-36",
+      "text": "aនិយាយលះបង់ពន្ធb",
+      "wordBoundaries": [
+        0,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-36",
+      "text": "និយាយលះ́បង់ពន្ធ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-37",
+      "text": "បង់ពន្ធបដិបទា",
+      "wordBoundaries": [
+        0,
+        21,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-37",
+      "text": "aបង់ពន្ធបដិបទាb",
+      "wordBoundaries": [
+        0,
+        22,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-37",
+      "text": "បង់ពន្ធ́បដិបទា",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-38",
+      "text": "បដិបទាបពន្ធកថា",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-38",
+      "text": "aបដិបទាបពន្ធកថាb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-38",
+      "text": "បដិបទា́បពន្ធកថា",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-39",
+      "text": "បពន្ធកថាបាយក្តាំងគំទឹក",
+      "wordBoundaries": [
+        0,
+        24,
+        66
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-39",
+      "text": "aបពន្ធកថាបាយក្តាំងគំទឹកb",
+      "wordBoundaries": [
+        0,
+        25,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-mark-39",
+      "text": "បពន្ធកថា́បាយក្តាំងគំទឹក",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-40",
+      "text": "បាយក្តាំងគំទឹកបុលល័ក្ត",
+      "wordBoundaries": [
+        0,
+        42,
+        66
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-40",
+      "text": "aបាយក្តាំងគំទឹកបុលល័ក្តb",
+      "wordBoundaries": [
+        0,
+        43,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-mark-40",
+      "text": "បាយក្តាំងគំទឹក́បុលល័ក្ត",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-41",
+      "text": "បុលល័ក្តបំផតពោះ",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-41",
+      "text": "aបុលល័ក្តបំផតពោះb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-41",
+      "text": "បុលល័ក្ត́បំផតពោះ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-42",
+      "text": "បំផតពោះប៊ឹង",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-42",
+      "text": "aបំផតពោះប៊ឹងb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-mark-42",
+      "text": "បំផតពោះ́ប៊ឹង",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-43",
+      "text": "ប៊ឹងប្រពឹ្រត្ត",
+      "wordBoundaries": [
+        0,
+        12,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-43",
+      "text": "aប៊ឹងប្រពឹ្រត្តb",
+      "wordBoundaries": [
+        0,
+        13,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-43",
+      "text": "ប៊ឹង́ប្រពឹ្រត្ត",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-44",
+      "text": "ប្រពឹ្រត្តប្រាសាទនាងខ្មៅ",
+      "wordBoundaries": [
+        0,
+        30,
+        72
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-44",
+      "text": "aប្រពឹ្រត្តប្រាសាទនាងខ្មៅb",
+      "wordBoundaries": [
+        0,
+        31,
+        74
+      ]
+    },
+    {
+      "name": "khmerdict-mark-44",
+      "text": "ប្រពឹ្រត្ត́ប្រាសាទនាងខ្មៅ",
+      "wordBoundaries": [
+        0,
+        74
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-45",
+      "text": "ប្រាសាទនាងខ្មៅផា៍ជី",
+      "wordBoundaries": [
+        0,
+        42,
+        57
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-45",
+      "text": "aប្រាសាទនាងខ្មៅផា៍ជីb",
+      "wordBoundaries": [
+        0,
+        43,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-mark-45",
+      "text": "ប្រាសាទនាងខ្មៅ́ផា៍ជី",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-46",
+      "text": "ផា៍ជីផ្លានប្រមេន",
+      "wordBoundaries": [
+        0,
+        15,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-46",
+      "text": "aផា៍ជីផ្លានប្រមេនb",
+      "wordBoundaries": [
+        0,
+        16,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-46",
+      "text": "ផា៍ជី́ផ្លានប្រមេន",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-47",
+      "text": "ផ្លានប្រមេនពភក់",
+      "wordBoundaries": [
+        0,
+        33,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-47",
+      "text": "aផ្លានប្រមេនពភក់b",
+      "wordBoundaries": [
+        0,
+        34,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-47",
+      "text": "ផ្លានប្រមេន́ពភក់",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-48",
+      "text": "ពភក់ពិសស្បែក",
+      "wordBoundaries": [
+        0,
+        12,
+        36
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-48",
+      "text": "aពភក់ពិសស្បែកb",
+      "wordBoundaries": [
+        0,
+        13,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-mark-48",
+      "text": "ពភក់́ពិសស្បែក",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-49",
+      "text": "ពិសស្បែកពំនូនដី",
+      "wordBoundaries": [
+        0,
+        24,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-49",
+      "text": "aពិសស្បែកពំនូនដីb",
+      "wordBoundaries": [
+        0,
+        25,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-49",
+      "text": "ពិសស្បែក́ពំនូនដី",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-50",
+      "text": "ពំនូនដីព្រះខាន់ថ្លា",
+      "wordBoundaries": [
+        0,
+        21,
+        57
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-50",
+      "text": "aពំនូនដីព្រះខាន់ថ្លាb",
+      "wordBoundaries": [
+        0,
+        22,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-mark-50",
+      "text": "ពំនូនដី́ព្រះខាន់ថ្លា",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-51",
+      "text": "ព្រះខាន់ថ្លាភាំងឆ្ងល់",
+      "wordBoundaries": [
+        0,
+        36,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-51",
+      "text": "aព្រះខាន់ថ្លាភាំងឆ្ងល់b",
+      "wordBoundaries": [
+        0,
+        37,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-51",
+      "text": "ព្រះខាន់ថ្លា́ភាំងឆ្ងល់",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-52",
+      "text": "ភាំងឆ្ងល់ភ្លេចមុខភ្លេចក្រោយ",
+      "wordBoundaries": [
+        0,
+        27,
+        81
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-52",
+      "text": "aភាំងឆ្ងល់ភ្លេចមុខភ្លេចក្រោយb",
+      "wordBoundaries": [
+        0,
+        28,
+        83
+      ]
+    },
+    {
+      "name": "khmerdict-mark-52",
+      "text": "ភាំងឆ្ងល់́ភ្លេចមុខភ្លេចក្រោយ",
+      "wordBoundaries": [
+        0,
+        83
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-53",
+      "text": "ភ្លេចមុខភ្លេចក្រោយមហាខត្តិវង្ស",
+      "wordBoundaries": [
+        0,
+        54,
+        90
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-53",
+      "text": "aភ្លេចមុខភ្លេចក្រោយមហាខត្តិវង្សb",
+      "wordBoundaries": [
+        0,
+        55,
+        92
+      ]
+    },
+    {
+      "name": "khmerdict-mark-53",
+      "text": "ភ្លេចមុខភ្លេចក្រោយ́មហាខត្តិវង្ស",
+      "wordBoundaries": [
+        0,
+        92
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-54",
+      "text": "មហាខត្តិវង្សមិច្ជាជីវៈ",
+      "wordBoundaries": [
+        0,
+        36,
+        66
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-54",
+      "text": "aមហាខត្តិវង្សមិច្ជាជីវៈb",
+      "wordBoundaries": [
+        0,
+        37,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-mark-54",
+      "text": "មហាខត្តិវង្ស́មិច្ជាជីវៈ",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-55",
+      "text": "មិច្ជាជីវៈមួលសំដី",
+      "wordBoundaries": [
+        0,
+        30,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-55",
+      "text": "aមិច្ជាជីវៈមួលសំដីb",
+      "wordBoundaries": [
+        0,
+        31,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-55",
+      "text": "មិច្ជាជីវៈ́មួលសំដី",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-56",
+      "text": "មួលសំដីម៉ូនីទ័រ",
+      "wordBoundaries": [
+        0,
+        21,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-56",
+      "text": "aមួលសំដីម៉ូនីទ័រb",
+      "wordBoundaries": [
+        0,
+        22,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-56",
+      "text": "មួលសំដី́ម៉ូនីទ័រ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-57",
+      "text": "ម៉ូនីទ័រយសវុឌ្ឍិ",
+      "wordBoundaries": [
+        0,
+        24,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-57",
+      "text": "aម៉ូនីទ័រយសវុឌ្ឍិb",
+      "wordBoundaries": [
+        0,
+        25,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-57",
+      "text": "ម៉ូនីទ័រ́យសវុឌ្ឍិ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-58",
+      "text": "យសវុឌ្ឍិរកៀស",
+      "wordBoundaries": [
+        0,
+        24,
+        36
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-58",
+      "text": "aយសវុឌ្ឍិរកៀសb",
+      "wordBoundaries": [
+        0,
+        25,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-mark-58",
+      "text": "យសវុឌ្ឍិ́រកៀស",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-59",
+      "text": "រកៀសរត្តុប្បល",
+      "wordBoundaries": [
+        0,
+        12,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-59",
+      "text": "aរកៀសរត្តុប្បលb",
+      "wordBoundaries": [
+        0,
+        13,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-59",
+      "text": "រកៀស́រត្តុប្បល",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-60",
+      "text": "រត្តុប្បលរលាស់សំពត់",
+      "wordBoundaries": [
+        0,
+        27,
+        57
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-60",
+      "text": "aរត្តុប្បលរលាស់សំពត់b",
+      "wordBoundaries": [
+        0,
+        28,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-mark-60",
+      "text": "រត្តុប្បល́រលាស់សំពត់",
+      "wordBoundaries": [
+        0,
+        59
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-61",
+      "text": "រលាស់សំពត់រាជបញ្ញត្តិ",
+      "wordBoundaries": [
+        0,
+        30,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-61",
+      "text": "aរលាស់សំពត់រាជបញ្ញត្តិb",
+      "wordBoundaries": [
+        0,
+        31,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-61",
+      "text": "រលាស់សំពត់́រាជបញ្ញត្តិ",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-62",
+      "text": "រាជបញ្ញត្តិរូបភព",
+      "wordBoundaries": [
+        0,
+        33,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-62",
+      "text": "aរាជបញ្ញត្តិរូបភពb",
+      "wordBoundaries": [
+        0,
+        34,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-62",
+      "text": "រាជបញ្ញត្តិ́រូបភព",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-63",
+      "text": "រូបភពរំលា",
+      "wordBoundaries": [
+        0,
+        15,
+        27
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-63",
+      "text": "aរូបភពរំលាb",
+      "wordBoundaries": [
+        0,
+        16,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-mark-63",
+      "text": "រូបភព́រំលា",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-64",
+      "text": "រំលាលាតតម្បាញ",
+      "wordBoundaries": [
+        0,
+        12,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-64",
+      "text": "aរំលាលាតតម្បាញb",
+      "wordBoundaries": [
+        0,
+        13,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-64",
+      "text": "រំលា́លាតតម្បាញ",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-65",
+      "text": "លាតតម្បាញលេងបៀ",
+      "wordBoundaries": [
+        0,
+        27,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-65",
+      "text": "aលាតតម្បាញលេងបៀb",
+      "wordBoundaries": [
+        0,
+        28,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-65",
+      "text": "លាតតម្បាញ́លេងបៀ",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-66",
+      "text": "លេងបៀល្បែងគ",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-66",
+      "text": "aលេងបៀល្បែងគb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-mark-66",
+      "text": "លេងបៀ́ល្បែងគ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-67",
+      "text": "ល្បែងគវរនារី",
+      "wordBoundaries": [
+        0,
+        18,
+        36
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-67",
+      "text": "aល្បែងគវរនារីb",
+      "wordBoundaries": [
+        0,
+        19,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-mark-67",
+      "text": "ល្បែងគ́វរនារី",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-68",
+      "text": "វរនារីវិជ្ជាកាម",
+      "wordBoundaries": [
+        0,
+        18,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-68",
+      "text": "aវរនារីវិជ្ជាកាមb",
+      "wordBoundaries": [
+        0,
+        19,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-68",
+      "text": "វរនារី́វិជ្ជាកាម",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-69",
+      "text": "វិជ្ជាកាមវិសមាន",
+      "wordBoundaries": [
+        0,
+        27,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-69",
+      "text": "aវិជ្ជាកាមវិសមានb",
+      "wordBoundaries": [
+        0,
+        28,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-69",
+      "text": "វិជ្ជាកាម́វិសមាន",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-70",
+      "text": "វិសមានវ៉ែត",
+      "wordBoundaries": [
+        0,
+        18,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-70",
+      "text": "aវិសមានវ៉ែតb",
+      "wordBoundaries": [
+        0,
+        19,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-70",
+      "text": "វិសមាន́វ៉ែត",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-71",
+      "text": "វ៉ែតសង្គមមនុស្ស",
+      "wordBoundaries": [
+        0,
+        12,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-71",
+      "text": "aវ៉ែតសង្គមមនុស្សb",
+      "wordBoundaries": [
+        0,
+        13,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-71",
+      "text": "វ៉ែត́សង្គមមនុស្ស",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-72",
+      "text": "សង្គមមនុស្សសន្ដាបទុក្ខ",
+      "wordBoundaries": [
+        0,
+        33,
+        66
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-72",
+      "text": "aសង្គមមនុស្សសន្ដាបទុក្ខb",
+      "wordBoundaries": [
+        0,
+        34,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-mark-72",
+      "text": "សង្គមមនុស្ស́សន្ដាបទុក្ខ",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-73",
+      "text": "សន្ដាបទុក្ខសមាសទ",
+      "wordBoundaries": [
+        0,
+        33,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-73",
+      "text": "aសន្ដាបទុក្ខសមាសទb",
+      "wordBoundaries": [
+        0,
+        34,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-73",
+      "text": "សន្ដាបទុក្ខ́សមាសទ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-74",
+      "text": "សមាសទសម្លុយ",
+      "wordBoundaries": [
+        0,
+        15,
+        33
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-74",
+      "text": "aសមាសទសម្លុយb",
+      "wordBoundaries": [
+        0,
+        16,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-mark-74",
+      "text": "សមាសទ́សម្លុយ",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-75",
+      "text": "សម្លុយសាធារណជន",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-75",
+      "text": "aសម្លុយសាធារណជនb",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-75",
+      "text": "សម្លុយ́សាធារណជន",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-76",
+      "text": "សាធារណជនសិទ្ធានុញ្ញាត",
+      "wordBoundaries": [
+        0,
+        24,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-76",
+      "text": "aសាធារណជនសិទ្ធានុញ្ញាតb",
+      "wordBoundaries": [
+        0,
+        25,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-76",
+      "text": "សាធារណជន́សិទ្ធានុញ្ញាត",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-77",
+      "text": "សិទ្ធានុញ្ញាតសុទិន្ន",
+      "wordBoundaries": [
+        0,
+        39,
+        60
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-77",
+      "text": "aសិទ្ធានុញ្ញាតសុទិន្នb",
+      "wordBoundaries": [
+        0,
+        40,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-mark-77",
+      "text": "សិទ្ធានុញ្ញាត́សុទិន្ន",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-78",
+      "text": "សុទិន្នសើស្បែក",
+      "wordBoundaries": [
+        0,
+        21,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-78",
+      "text": "aសុទិន្នសើស្បែកb",
+      "wordBoundaries": [
+        0,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-78",
+      "text": "សុទិន្ន́សើស្បែក",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-79",
+      "text": "សើស្បែកសំចត",
+      "wordBoundaries": [
+        0,
+        21,
+        33
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-79",
+      "text": "aសើស្បែកសំចតb",
+      "wordBoundaries": [
+        0,
+        22,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-mark-79",
+      "text": "សើស្បែក́សំចត",
+      "wordBoundaries": [
+        0,
+        35
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-80",
+      "text": "សំចតស៊ីជី",
+      "wordBoundaries": [
+        0,
+        12,
+        27
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-80",
+      "text": "aសំចតស៊ីជីb",
+      "wordBoundaries": [
+        0,
+        13,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-mark-80",
+      "text": "សំចត́ស៊ីជី",
+      "wordBoundaries": [
+        0,
+        29
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-81",
+      "text": "ស៊ីជីស្តាំ",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-81",
+      "text": "aស៊ីជីស្តាំb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-81",
+      "text": "ស៊ីជី́ស្តាំ",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-82",
+      "text": "ស្តាំស្មោក",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-82",
+      "text": "aស្តាំស្មោកb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-82",
+      "text": "ស្តាំ́ស្មោក",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-83",
+      "text": "ស្មោកស្រេង",
+      "wordBoundaries": [
+        0,
+        15,
+        30
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-83",
+      "text": "aស្មោកស្រេងb",
+      "wordBoundaries": [
+        0,
+        16,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-mark-83",
+      "text": "ស្មោក́ស្រេង",
+      "wordBoundaries": [
+        0,
+        32
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-84",
+      "text": "ស្រេងហត្ថិបាល",
+      "wordBoundaries": [
+        0,
+        15,
+        39
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-84",
+      "text": "aស្រេងហត្ថិបាលb",
+      "wordBoundaries": [
+        0,
+        16,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-mark-84",
+      "text": "ស្រេង́ហត្ថិបាល",
+      "wordBoundaries": [
+        0,
+        41
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-85",
+      "text": "ហត្ថិបាលហែអម",
+      "wordBoundaries": [
+        0,
+        24,
+        36
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-85",
+      "text": "aហត្ថិបាលហែអមb",
+      "wordBoundaries": [
+        0,
+        25,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-mark-85",
+      "text": "ហត្ថិបាល́ហែអម",
+      "wordBoundaries": [
+        0,
+        38
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-86",
+      "text": "ហែអមអកម៌ក្រិយា",
+      "wordBoundaries": [
+        0,
+        12,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-86",
+      "text": "aហែអមអកម៌ក្រិយាb",
+      "wordBoundaries": [
+        0,
+        13,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-86",
+      "text": "ហែអម́អកម៌ក្រិយា",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-87",
+      "text": "អកម៌ក្រិយាអង្សហារិនី",
+      "wordBoundaries": [
+        0,
+        30,
+        60
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-87",
+      "text": "aអកម៌ក្រិយាអង្សហារិនីb",
+      "wordBoundaries": [
+        0,
+        31,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-mark-87",
+      "text": "អកម៌ក្រិយា́អង្សហារិនី",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-88",
+      "text": "អង្សហារិនីអធម្មវាទិនី",
+      "wordBoundaries": [
+        0,
+        30,
+        63
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-88",
+      "text": "aអង្សហារិនីអធម្មវាទិនីb",
+      "wordBoundaries": [
+        0,
+        31,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-mark-88",
+      "text": "អង្សហារិនី́អធម្មវាទិនី",
+      "wordBoundaries": [
+        0,
+        65
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-89",
+      "text": "អធម្មវាទិនីអន្តាយ",
+      "wordBoundaries": [
+        0,
+        33,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-89",
+      "text": "aអធម្មវាទិនីអន្តាយb",
+      "wordBoundaries": [
+        0,
+        34,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-89",
+      "text": "អធម្មវាទិនី́អន្តាយ",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-90",
+      "text": "អន្តាយអភិសាបន៍",
+      "wordBoundaries": [
+        0,
+        18,
+        42
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-90",
+      "text": "aអន្តាយអភិសាបន៍b",
+      "wordBoundaries": [
+        0,
+        19,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-mark-90",
+      "text": "អន្តាយ́អភិសាបន៍",
+      "wordBoundaries": [
+        0,
+        44
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-91",
+      "text": "អភិសាបន៍អសាធារណជន",
+      "wordBoundaries": [
+        0,
+        24,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-91",
+      "text": "aអភិសាបន៍អសាធារណជនb",
+      "wordBoundaries": [
+        0,
+        25,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-91",
+      "text": "អភិសាបន៍́អសាធារណជន",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-92",
+      "text": "អសាធារណជនអាចរិយបូជកៈ",
+      "wordBoundaries": [
+        0,
+        27,
+        60
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-92",
+      "text": "aអសាធារណជនអាចរិយបូជកៈb",
+      "wordBoundaries": [
+        0,
+        28,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-mark-92",
+      "text": "អសាធារណជន́អាចរិយបូជកៈ",
+      "wordBoundaries": [
+        0,
+        62
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-93",
+      "text": "អាចរិយបូជកៈអារម្មណប្បភេទ",
+      "wordBoundaries": [
+        0,
+        33,
+        72
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-93",
+      "text": "aអាចរិយបូជកៈអារម្មណប្បភេទb",
+      "wordBoundaries": [
+        0,
+        34,
+        74
+      ]
+    },
+    {
+      "name": "khmerdict-mark-93",
+      "text": "អាចរិយបូជកៈ́អារម្មណប្បភេទ",
+      "wordBoundaries": [
+        0,
+        74
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-94",
+      "text": "អារម្មណប្បភេទអួរ",
+      "wordBoundaries": [
+        0,
+        39,
+        48
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-94",
+      "text": "aអារម្មណប្បភេទអួរb",
+      "wordBoundaries": [
+        0,
+        40,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-mark-94",
+      "text": "អារម្មណប្បភេទ́អួរ",
+      "wordBoundaries": [
+        0,
+        50
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-95",
+      "text": "អួរអ្នកកាន់ចង្កូត",
+      "wordBoundaries": [
+        0,
+        9,
+        51
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-95",
+      "text": "aអួរអ្នកកាន់ចង្កូតb",
+      "wordBoundaries": [
+        0,
+        10,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-mark-95",
+      "text": "អួរ́អ្នកកាន់ចង្កូត",
+      "wordBoundaries": [
+        0,
+        53
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-96",
+      "text": "អ្នកកាន់ចង្កូតឥត្ថីរូប",
+      "wordBoundaries": [
+        0,
+        42,
+        66
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-96",
+      "text": "aអ្នកកាន់ចង្កូតឥត្ថីរូបb",
+      "wordBoundaries": [
+        0,
+        43,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-mark-96",
+      "text": "អ្នកកាន់ចង្កូត́ឥត្ថីរូប",
+      "wordBoundaries": [
+        0,
+        68
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-97",
+      "text": "ឥត្ថីរូបឧបឃាតកកម្ម",
+      "wordBoundaries": [
+        0,
+        24,
+        54
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-97",
+      "text": "aឥត្ថីរូបឧបឃាតកកម្មb",
+      "wordBoundaries": [
+        0,
+        25,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-mark-97",
+      "text": "ឥត្ថីរូប́ឧបឃាតកកម្ម",
+      "wordBoundaries": [
+        0,
+        56
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-98",
+      "text": "ឧបឃាតកកម្មឬបរ៉ិ",
+      "wordBoundaries": [
+        0,
+        30,
+        45
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-98",
+      "text": "aឧបឃាតកកម្មឬបរ៉ិb",
+      "wordBoundaries": [
+        0,
+        31,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-mark-98",
+      "text": "ឧបឃាតកកម្ម́ឬបរ៉ិ",
+      "wordBoundaries": [
+        0,
+        47
+      ]
+    },
+    {
+      "name": "khmerdict-holdout-99",
+      "text": "ឬបរ៉ិក",
+      "wordBoundaries": [
+        0,
+        15,
+        18
+      ]
+    },
+    {
+      "name": "khmerdict-mixed-99",
+      "text": "aឬបរ៉ិកb",
+      "wordBoundaries": [
+        0,
+        16,
+        20
+      ]
+    },
+    {
+      "name": "khmerdict-mark-99",
+      "text": "ឬបរ៉ិ́ក",
+      "wordBoundaries": [
+        0,
+        20
+      ]
+    }
+  ]
+}

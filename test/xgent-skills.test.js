@@ -20,7 +20,7 @@ function project(t) {
 function run(dir, flags = [], input, env = process.env) {
   // 仅模拟终端检测,输入仍经过 CLI 的 readline 询问和回答处理。
   const prefix = input === undefined ? [] : ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);'];
-  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-phoenix-ui', ...flags], {
+  return spawnSync(process.execPath, [...prefix, cli, 'install', dir, '--no-phoenix-ui', '--no-phoenix-diagram', ...flags], {
     input: input ?? '', encoding: 'utf8', timeout: 10000, env,
   });
 }
@@ -183,7 +183,7 @@ for (const input of [undefined, 'y\n', ' YES \n', 'n\n', '\n', '']) {
 test('accepting AGENTS.md does not prompt for or install either guard', (t) => {
   const dir = project(t);
   const result = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
-    cli, 'install', dir, '--no-impeccable'], { input: 'y\ny\n', encoding: 'utf8', timeout: 10000 });
+    cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable'], { input: 'y\ny\n', encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   assertAgents(dir);
   assert.doesNotMatch(result.stdout, /是否安装.*goal/);
@@ -197,7 +197,7 @@ test('non-interactive default and explicit guard skip leave existing Codex files
   const file = path.join(dir, '.codex', 'hooks.json');
   fs.writeFileSync(file, 'existing config');
   for (const flags of [[], ['--no-context-goal-guard']]) {
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-impeccable', '--no-xgent-init', ...flags],
+    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init', ...flags],
       { input: '', encoding: 'utf8', timeout: 10000 });
     assert.equal(result.status, 0, result.stderr);
     assert.doesNotMatch(result.stdout, /\[y\/N\]/);
@@ -436,7 +436,7 @@ test('non-interactive default and explicit Claude guard skip leave local setting
   const file = path.join(dir, '.claude', 'settings.local.json');
   fs.writeFileSync(file, 'existing config');
   for (const flags of [[], ['--no-claude-context-goal-guard']]) {
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-impeccable', '--no-xgent-init', '--no-context-goal-guard', ...flags],
+    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init', '--no-context-goal-guard', ...flags],
       { input: '', encoding: 'utf8', timeout: 10000 });
     assert.equal(result.status, 0, result.stderr);
     assert.doesNotMatch(result.stdout, /\[y\/N\]/);
@@ -467,7 +467,7 @@ function guardCommands(manifest, events, marker) {
 test('threshold flags set each guard separately, imply installation and survive reinstalls', (t) => {
   const dir = project(t);
   const first = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
-    cli, 'install', dir, '--no-impeccable', '--no-xgent-init',
+    cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init',
     '--context-goal-guard-threshold=60', '--claude-context-goal-guard-threshold=75'], { input: '', encoding: 'utf8', timeout: 10000 });
   assert.equal(first.status, 0, first.stderr);
   assert.doesNotMatch(first.stdout, /\[y\/N\]/);
@@ -504,7 +504,7 @@ for (const flag of ['--context-goal-guard-threshold', '--claude-context-goal-gua
   test(`${flag} conflicts with skipping the same guard`, (t) => {
     const dir = project(t);
     const skip = flag.replace(/^--/, '--no-').replace(/-threshold$/, '');
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-impeccable', '--no-xgent-init',
+    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init',
       '--no-context-goal-guard', '--no-claude-context-goal-guard', `${flag}=70`], { input: '', encoding: 'utf8', timeout: 10000 });
     assert.equal(result.status, 1);
     assert.match(result.stderr, new RegExp(`${skip}`));
@@ -515,7 +515,7 @@ for (const flag of ['--context-goal-guard-threshold', '--claude-context-goal-gua
 test('deprecated --no-impeccable skips Phoenix UI like --no-phoenix-ui and says so', (t) => {
   const dir = project(t);
   const home = project(t);
-  const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-impeccable', '--no-xgent-init'], {
+  const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init'], {
     input: '', encoding: 'utf8', timeout: 10000, env: { ...process.env, PHOENIX_UI_HOME: home },
   });
   assert.equal(result.status, 0, result.stderr);

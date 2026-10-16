@@ -26,3 +26,5 @@
 - 39e564f7-edb4-4aed-aaf7-7a33bcdf0a59 · [npm 默认入口修复](39e564f7-edb4-4aed-aaf7-7a33bcdf0a59.md)
 
 - 45736d49-0eaa-4431-b8b2-b0d67559a36a · [Phoenix 安装扫描范围修复](45736d49-0eaa-4431-b8b2-b0d67559a36a.md)
+
+- 4aca696e-867c-40da-9e16-d8b33bcd5cd2 · [Phoenix Diagram P1 schema 移植线索](4aca696e-867c-40da-9e16-d8b33bcd5cd2.md)

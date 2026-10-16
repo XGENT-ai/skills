@@ -46,3 +46,7 @@ __pycache__/
 /tools/phoenix-ui/extension/detector/
 /tools/phoenix-ui/node_modules/
 /dist/phoenix-ui/engine/
+
+/tools/phoenix-diagram/target/
+/tools/phoenix-diagram/dist/
+/dist/phoenix-diagram/engine/

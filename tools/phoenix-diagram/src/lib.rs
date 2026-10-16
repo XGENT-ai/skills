@@ -1,0 +1,17 @@
+pub mod browser;
+pub mod check;
+pub mod delivery;
+pub mod diagnostic;
+pub mod geometry;
+pub mod input;
+pub mod install;
+pub mod layout;
+pub mod output;
+pub mod render;
+pub mod scene;
+mod schema;
+
+pub const TOOL_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const INPUT_CONTRACT_SCHEMA: u32 = 1;
+pub const RECEIPT_SCHEMA: u32 = 1;
+pub const VIEWER_REVISION: &str = "phoenix-v1";

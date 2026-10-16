@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/reader-layout.js",
+  "sourceSha256": "9c32519bc9e0d06bd8e744cbbc81bad9d9f02287a73a5694b834413922133da4",
+  "normalizedSourceSha256": "992355c7815b337887d58cd00a01d4e4c5680e64eec8fe1bca7879b95406e40a",
+  "adaptedBodySha256": "0ba18c7c78b52773a5635a2b391d955f8fbf9654ac42127b9a52734e3e0f41d9",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "native legacy portrait height fitting",
+      "sourceLine": 26,
+      "sourceByteOffset": 1387,
+      "sourceText": "      var WIDE_RATIO = 1.55;\n",
+      "replacementText": "      var WIDE_RATIO = 1.55;\n      // Native legacy geometry retains its authored canvas and routes; only\n      // the desktop reading scale joins the existing measured-height path.\n      if (svg && svg.getAttribute('data-input-contract') === 'legacy-2.17' && ratio < WIDE_RATIO) {\n        measuredHeightFit = true;\n      }\n"
+    }
+  ]
+}

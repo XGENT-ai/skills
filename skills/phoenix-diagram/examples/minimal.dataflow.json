@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": { "title": "Records dataflow", "output": "minimal.dataflow.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "stages": [{ "label": "Source" }, { "label": "Process" }],
+  "nodes": [
+    { "id": "source", "type": "database", "label": "Input store", "stage": 0, "row": 0 },
+    { "id": "process", "type": "backend", "label": "Transform", "stage": 1, "row": 0 }
+  ],
+  "flows": [{ "id": "records", "from": "source", "to": "process", "label": "records" }]
+}

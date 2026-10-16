@@ -57,7 +57,7 @@ function packageFor(t, executable) {
 }
 
 function install(pkg, project, flags = [], home = pkg.home) {
-  return spawnSync(process.execPath, [path.join(pkg.root, 'bin/xgent-skills.js'), 'install', project, '--no-xgent-init',
+  return spawnSync(process.execPath, [path.join(pkg.root, 'bin/xgent-skills.js'), 'install', project, '--no-phoenix-diagram', '--no-xgent-init',
     `--release-dir=${pkg.release}`, ...flags], {
     encoding: 'utf8', input: '', timeout: 600000,
     env: { ...process.env, HOME: home, USERPROFILE: home, PHOENIX_UI_HOME: pkg.cache },

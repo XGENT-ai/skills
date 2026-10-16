@@ -1,0 +1,6 @@
+#!/bin/sh
+# Apache-2.0: Phoenix UI shell-launcher pattern, engine 0.1.0.
+# Phoenix modification: isolated diagram launcher; no acquisition on this path.
+set -eu
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec node "$dir/phoenix-launcher.cjs" "$@"

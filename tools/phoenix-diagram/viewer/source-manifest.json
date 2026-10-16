@@ -1,0 +1,142 @@
+{
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "files": [
+    {
+      "source": "viewer/export-cleanup.js",
+      "path": "export-cleanup.js",
+      "sha256": "0c1dbea83f72d4d6727621fc9f1f2372360a74cd8e85102e3c755f25fc156540"
+    },
+    {
+      "source": "viewer/export.js",
+      "path": "export.js",
+      "sha256": "98dd1fb3d7d9267e294a1dfa401c6d803b3a882b1d091df4dc4b80b7ee52c5c4"
+    },
+    {
+      "source": "viewer/focus.js",
+      "path": "focus.js",
+      "sha256": "db03fcc25183ee27b281f7917f8a40849733680bebe1a2fdd0bbdc01cc0d05d0"
+    },
+    {
+      "source": "viewer/intent-trace.js",
+      "path": "intent-trace.js",
+      "sha256": "a7f6692fb23830c311d00dd52af943ac549138f3966ff058e182b797a96d19b6"
+    },
+    {
+      "source": "archify/locales/en.json",
+      "path": "locales/en.json",
+      "sha256": "1e8b43d8ba6d8ae75c2b393b2edb43cac5e142f33cbc2d1a2351e0e8baf9e1aa"
+    },
+    {
+      "source": "archify/locales/es.json",
+      "path": "locales/es.json",
+      "sha256": "f2b971994cb9f7091758e605931b4b4959103ed0090916fe281bfb2f2e1e5cc7"
+    },
+    {
+      "source": "archify/locales/ko.json",
+      "path": "locales/ko.json",
+      "sha256": "b7f2be52c61e4ced665ea62bb0670b4c2615a6c706127246a44bbcffdf65f8be"
+    },
+    {
+      "source": "archify/locales/manifest.json",
+      "path": "locales/manifest.json",
+      "sha256": "c4d53064cfc2ed8d5e0fd72305bfebce746b4097a32ead87b96cccef69e2f7c7"
+    },
+    {
+      "source": "archify/locales/README.md",
+      "path": "locales/README.md",
+      "sha256": "f1b4e5693aca48655da29dd22b31d719057a701fd4c39bc6d426a1ec41f90ecd"
+    },
+    {
+      "source": "archify/locales/zh-CN.json",
+      "path": "locales/zh-CN.json",
+      "sha256": "83d870452e9ff3459a3cae88be6900d9a98b268e6cfba94b608a7c10f484e485"
+    },
+    {
+      "source": "archify/locales/zh-TW.json",
+      "path": "locales/zh-TW.json",
+      "sha256": "0db367aec82cf92b08d4335d5ed021480801f7ae79b1e2c1a0c79b27d4eafb2e"
+    },
+    {
+      "source": "viewer/motion-governor.js",
+      "path": "motion-governor.js",
+      "sha256": "c07c9679a36eb053e2122077037048f2e4c3dadfb479c3a8d0e838922b48ad81"
+    },
+    {
+      "source": "viewer/node-finder.js",
+      "path": "node-finder.js",
+      "sha256": "a55f660596c07179a2ddbe9a5dad8808c4eea3ade6158e4f66c488fc6907988c"
+    },
+    {
+      "source": "viewer/node-outline.js",
+      "path": "node-outline.js",
+      "sha256": "b184dc2a0c70214230eb43e0692a5e55fbd3a361a8cb39c623c40af3f9cf21bf"
+    },
+    {
+      "source": "viewer/reader-layout.js",
+      "path": "reader-layout.js",
+      "sha256": "9c32519bc9e0d06bd8e744cbbc81bad9d9f02287a73a5694b834413922133da4"
+    },
+    {
+      "source": "viewer/route-probe.js",
+      "path": "route-probe.js",
+      "sha256": "9e590ece0316bfde0b3ee1dfa9fac1a6897d7d813939ba939eb5832630318e6e"
+    },
+    {
+      "source": "viewer/semantic-lens.js",
+      "path": "semantic-lens.js",
+      "sha256": "caca8f4b8cdc2e156dbb395e511d946a115f29a098414ce62b33c23e0ba90923"
+    },
+    {
+      "source": "viewer/semantic-radar.js",
+      "path": "semantic-radar.js",
+      "sha256": "fe9cd7972020867fe4a9372f11c49c7edfe08eca0f9b16871c11da452d6e0f60"
+    },
+    {
+      "source": "viewer/template.source.html",
+      "path": "template.source.html",
+      "sha256": "c39a3291277b4eaf0c5e3e5a7147f3486c87793868d455a2c336859306ee7b07"
+    },
+    {
+      "source": "viewer/tree-branches.js",
+      "path": "tree-branches.js",
+      "sha256": "839abcb661c1b43c855c327076a3512f6eb20253e15a96a7a8dce00cbaa9ee95"
+    },
+    {
+      "source": "viewer/viewer-camera.js",
+      "path": "viewer-camera.js",
+      "sha256": "4e3a569b5884e3a51db9777bd5519e39f5c3939ac7836b65b15a560ceb6d8cfb"
+    },
+    {
+      "source": "viewer/viewer-chrome-layout.js",
+      "path": "viewer-chrome-layout.js",
+      "sha256": "288f801150004b82496b1f16450adf5da7c59696cd657008b7e9c809b5c8a1eb"
+    },
+    {
+      "source": "viewer/viewer.css",
+      "path": "viewer.css",
+      "sha256": "1ed42144dac2fa9f6f74a4ec91190b2a9728d0d0268c99189486e3e4fc5821fa"
+    }
+  ],
+  "phoenixAdaptations": [
+    {
+      "path": "export.js",
+      "record": "export-adaptations.json"
+    },
+    {
+      "path": "viewer.css",
+      "record": "css-adaptations.json"
+    },
+    {
+      "path": "locales/en.json",
+      "addedKeys": [
+        "viewer.export.downloadPngInstead"
+      ]
+    },
+    {
+      "path": "locales/zh-CN.json",
+      "addedKeys": [
+        "viewer.export.downloadPngInstead"
+      ]
+    }
+  ]
+}

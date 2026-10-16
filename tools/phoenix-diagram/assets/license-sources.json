@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "rust": [
+    {
+      "name": "jsonschema-regex",
+      "version": "0.58.6",
+      "checksum": "a968fffd387b2ab005bf00c1851f5d26e90df05b6f7ad609ed0d620033cca5e7",
+      "license": "MIT",
+      "selectedLicense": "MIT",
+      "repository": "https://github.com/Stranger6667/jsonschema",
+      "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+      "pathInVcs": "crates/jsonschema-regex",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "crates/jsonschema-regex/Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/crates/jsonschema-regex/Cargo.toml",
+          "size": 374,
+          "sha256": "0dfc740a2dd8466356f0ef1dd7ce56d795fd67e421d4949379f8b640aad68ba0"
+        },
+        "cargoManifestSha256": "0274bed679c5cda4876367818ae5e70d0f33c9d4e7d3c479927ff31b5a33ecca",
+        "vcsInfoSha256": "5cdf5be701eb41261e0c7c2598ce2fa1a8c7cbafb704d2ca36e4502204efa5d3",
+        "workspaceManifest": {
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/Cargo.toml",
+          "size": 1294,
+          "sha256": "cc637e24d6a7cc90a0658c4cd4566929e42ec5d5813dcef246d0d3614a21ca98"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/jsonschema-0.58.6-MIT.txt",
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "LICENSE",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/LICENSE",
+          "size": 1075,
+          "sha256": "117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038"
+        }
+      ]
+    },
+    {
+      "name": "jsonschema-value",
+      "version": "0.58.6",
+      "checksum": "39b7670345e5ce87371339d13705dbb9276b7e3e934bbe1efa2c6734a1f65a96",
+      "license": "MIT",
+      "selectedLicense": "MIT",
+      "repository": "https://github.com/Stranger6667/jsonschema",
+      "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+      "pathInVcs": "crates/jsonschema-value",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "crates/jsonschema-value/Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/crates/jsonschema-value/Cargo.toml",
+          "size": 1966,
+          "sha256": "fc9363e8e19857cdd58db66ce582a24cb0dd3047684955728e67b94b46b7e8cd"
+        },
+        "cargoManifestSha256": "8270a39ed0531eaf4de5ff516df9e09d17d3c2a697b0b428b02673a661f37844",
+        "vcsInfoSha256": "ee8166ff3889517d9b0ff72c62a57bea91d872c2d46160033de2c60340cb06dc",
+        "readme": {
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "crates/jsonschema-value/README.md",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/crates/jsonschema-value/README.md",
+          "size": 428,
+          "sha256": "bb70b119d16af0e45cd1e7649a0f7f45b17ed13f72f59298225bf06fb919a920"
+        },
+        "workspaceManifest": {
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/Cargo.toml",
+          "size": 1294,
+          "sha256": "cc637e24d6a7cc90a0658c4cd4566929e42ec5d5813dcef246d0d3614a21ca98"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/jsonschema-0.58.6-MIT.txt",
+          "repository": "https://github.com/Stranger6667/jsonschema",
+          "revision": "55ac1664384793c5d3b20745d3f9c169dfe2c06f",
+          "sourcePath": "LICENSE",
+          "url": "https://raw.githubusercontent.com/Stranger6667/jsonschema/55ac1664384793c5d3b20745d3f9c169dfe2c06f/LICENSE",
+          "size": 1075,
+          "sha256": "117829c3ca21efb132d81a44b55363d395ab8eea18526873bc828da4c0e5f038"
+        }
+      ]
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "checksum": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
+      "selectedLicense": "MIT",
+      "repository": "https://github.com/r-efi/r-efi",
+      "revision": "97b55bed1c2c91dcbf787674849f05337ff80b33",
+      "pathInVcs": "",
+      "selection": "MIT branch; the complete unmodified AUTHORS includes the MIT permission and disclaimer text and this revision's copyright notices. Apache-2.0/LGPL statements in AUTHORS are not counted as their full license texts.",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/r-efi/r-efi",
+          "revision": "97b55bed1c2c91dcbf787674849f05337ff80b33",
+          "sourcePath": "Cargo.toml",
+          "url": "https://raw.githubusercontent.com/r-efi/r-efi/97b55bed1c2c91dcbf787674849f05337ff80b33/Cargo.toml",
+          "size": 1226,
+          "sha256": "57b6d9b9a1b6524f6b4dcc1dd24970ac03e6959786a6cfedaec9ba52878b4d3e"
+        },
+        "cargoManifestSha256": "dba000c0173b09b1e3b69afa42a715b5ab64355e6502ce6d9d1767c7845cf402",
+        "vcsInfoSha256": "50e0c72ee0164f182d7b5db0213cdb1626bad950f2443b05d006c28c7f0641b5",
+        "readme": {
+          "repository": "https://github.com/r-efi/r-efi",
+          "revision": "97b55bed1c2c91dcbf787674849f05337ff80b33",
+          "sourcePath": "README.md",
+          "url": "https://raw.githubusercontent.com/r-efi/r-efi/97b55bed1c2c91dcbf787674849f05337ff80b33/README.md",
+          "size": 2919,
+          "sha256": "420f65fec3ba2e89d49da51b222d2881d26959037a7b7d3794143db4bd4627b1"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/r-efi-5.3.0-MIT-AUTHORS.txt",
+          "repository": "https://github.com/r-efi/r-efi",
+          "revision": "97b55bed1c2c91dcbf787674849f05337ff80b33",
+          "sourcePath": "AUTHORS",
+          "url": "https://raw.githubusercontent.com/r-efi/r-efi/97b55bed1c2c91dcbf787674849f05337ff80b33/AUTHORS",
+          "size": 3693,
+          "sha256": "ff92bed461f50338dd703a9ba9aee496a425957873df1d91192776e4bdf5dda7"
+        }
+      ]
+    },
+    {
+      "name": "selectors",
+      "version": "0.38.0",
+      "checksum": "8adfa1c298912827b8a28b223b3b874357397ae706e6190acd9bf28cee99114d",
+      "license": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "repository": "https://github.com/servo/stylo",
+      "revision": "572ecba2d1600e7c3d490586692a209faf703baa",
+      "pathInVcs": "selectors",
+      "selection": "MPL-2.0 declared by this crate and its source notice; the Stylo revision contains no complete MPL text. The full version 2.0 text comes from Mozilla's official Bedrock repository at the separately pinned license-text revision.",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/servo/stylo",
+          "revision": "572ecba2d1600e7c3d490586692a209faf703baa",
+          "sourcePath": "selectors/Cargo.toml",
+          "url": "https://raw.githubusercontent.com/servo/stylo/572ecba2d1600e7c3d490586692a209faf703baa/selectors/Cargo.toml",
+          "size": 868,
+          "sha256": "26a19ba53c3dfff3f572e04f72ed224dca7b03a76a8e0593fc48b458ec6ab535"
+        },
+        "cargoManifestSha256": "83630f5e117638281303f757127dfffc3f621c8d2ff03f99ff7f7589748bacd8",
+        "vcsInfoSha256": "1ddc4845786a1b1ebc7fb2f940878d9b923c4385d7d66841f25c765d1312fe74",
+        "readme": {
+          "repository": "https://github.com/servo/stylo",
+          "revision": "572ecba2d1600e7c3d490586692a209faf703baa",
+          "sourcePath": "selectors/README.md",
+          "url": "https://raw.githubusercontent.com/servo/stylo/572ecba2d1600e7c3d490586692a209faf703baa/selectors/README.md",
+          "size": 1170,
+          "sha256": "c0a9128170286f7c593f0c316f00d4a9c8671140bbd9d59f7e6c001d696b2810"
+        },
+        "sourceNotice": {
+          "repository": "https://github.com/servo/stylo",
+          "revision": "572ecba2d1600e7c3d490586692a209faf703baa",
+          "sourcePath": "selectors/lib.rs",
+          "url": "https://raw.githubusercontent.com/servo/stylo/572ecba2d1600e7c3d490586692a209faf703baa/selectors/lib.rs",
+          "size": 643,
+          "sha256": "d54c6e13e9e952dac17d209171df8657e3cae93beaddace4906150cdec8d02e9",
+          "header": "/* This Source Code Form is subject to the terms of the Mozilla Public\n * License, v. 2.0. If a copy of the MPL was not distributed with this\n * file, You can obtain one at https://mozilla.org/MPL/2.0/. */\n",
+          "headerSize": 206,
+          "headerSha256": "766674381e88a468d55e07de3596987391cf0e8beebe51baf4fddf11078785b3",
+          "licenseReference": "https://mozilla.org/MPL/2.0/"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/selectors-0.38.0-MPL-2.0.txt",
+          "repository": "https://github.com/mozilla/bedrock",
+          "revision": "a15178c3c7c976c67b3641af77cae0b66093a175",
+          "sourcePath": "media/MPL/2.0/index.txt",
+          "url": "https://raw.githubusercontent.com/mozilla/bedrock/a15178c3c7c976c67b3641af77cae0b66093a175/media/MPL/2.0/index.txt",
+          "size": 16726,
+          "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
+        }
+      ]
+    },
+    {
+      "name": "uuid-simd",
+      "version": "0.8.0",
+      "checksum": "23b082222b4f6619906941c17eb2297fff4c2fb96cb60164170522942a200bd8",
+      "license": "MIT",
+      "selectedLicense": "MIT",
+      "repository": "https://github.com/Nugine/simd",
+      "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+      "pathInVcs": "crates/uuid-simd",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "crates/uuid-simd/Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/crates/uuid-simd/Cargo.toml",
+          "size": 852,
+          "sha256": "c403470724eee7edf65a6596ffb86f12814724cd67d4d34423b77e91a9a148e4"
+        },
+        "cargoManifestSha256": "ec723e989ff2ceff4e2d51c831093fb3e5f5e69f8496afd01bbf6648e37e2464",
+        "vcsInfoSha256": "9235ab068fdb6b50a2b0fdad57df40ed34461ea3a81e7d3a1584962f3f84e5a9",
+        "readme": {
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "crates/uuid-simd/README.md",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/crates/uuid-simd/README.md",
+          "size": 437,
+          "sha256": "7ab240fee8858bc5f779430196578adbddd80dc74725bb37d2ddb5ea590cdb30"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/uuid-simd-0.8.0-MIT.txt",
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "LICENSE",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+          "size": 1062,
+          "sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d"
+        }
+      ]
+    },
+    {
+      "name": "vsimd",
+      "version": "0.8.0",
+      "checksum": "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64",
+      "license": "MIT",
+      "selectedLicense": "MIT",
+      "repository": "https://github.com/Nugine/simd",
+      "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+      "pathInVcs": "crates/vsimd",
+      "applicability": {
+        "packageManifest": {
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "crates/vsimd/Cargo.toml",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/crates/vsimd/Cargo.toml",
+          "size": 585,
+          "sha256": "cc626a72f9f89509460429bc40702d4b1d65118392790dea3e2cbf852884843d"
+        },
+        "cargoManifestSha256": "7a3defd1f3b642bc229a518351f3feb23a69ddaf0349414562edbeeca40d60ad",
+        "vcsInfoSha256": "b6a479e65704d09745d31e0d86d23ca44ba673b01ddd0da81cc8ba619a92b2aa",
+        "readme": {
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "crates/vsimd/README.md",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/crates/vsimd/README.md",
+          "size": 382,
+          "sha256": "f0accc1732bf72b4635825e7d55e37b3bfe46c56d3d933bdd88b68787666fba9"
+        }
+      },
+      "files": [
+        {
+          "path": "licenses/uuid-simd-0.8.0-MIT.txt",
+          "repository": "https://github.com/Nugine/simd",
+          "revision": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+          "sourcePath": "LICENSE",
+          "url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+          "size": 1062,
+          "sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d"
+        }
+      ]
+    }
+  ]
+}

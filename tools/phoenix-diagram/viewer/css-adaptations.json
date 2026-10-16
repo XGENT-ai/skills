@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/viewer.css",
+  "sourceSha256": "1ed42144dac2fa9f6f74a4ec91190b2a9728d0d0268c99189486e3e4fc5821fa",
+  "normalizedSourceSha256": "e53e43fadf403335a619f67cd5a4d0dc3b98107902c3d9d5e1d34e136416eb0e",
+  "adaptedBodySha256": "0e19ba4f2bbfb15a44810b84b6e65f8edd5dd29d385744f9517f6474c101b25b",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "native legacy portrait compact chrome",
+      "sourceLine": 2417,
+      "sourceByteOffset": 82173,
+      "sourceText": "  html[data-nav-stage-rail=\"true\"] .cards { margin-top: 0.375rem; }\n}\n",
+      "replacementText": "  html[data-nav-stage-rail=\"true\"] .cards { margin-top: 0.375rem; }\n}\n\n/* Fixed legacy portraits retain the 6px text floor and 32px dock controls.\n   A short desktop spends less space on outer chrome, not authored geometry. */\n@media screen and (min-width: 1024px) and (max-height: 920px) {\n  html[data-reader-layout=\"adaptive\"]:not([data-diagram-shape=\"wide\"]):not([data-embed=\"true\"]):not([data-present=\"true\"]):has(.diagram-container svg[data-input-contract=\"legacy-2.17\"]) body { padding-block: 2px; }\n  html[data-reader-layout=\"adaptive\"]:not([data-diagram-shape=\"wide\"]):not([data-embed=\"true\"]):not([data-present=\"true\"]):has(.diagram-container svg[data-input-contract=\"legacy-2.17\"]) :is(.header, .header-row) { margin-bottom: 0; }\n  html[data-reader-layout=\"adaptive\"]:not([data-diagram-shape=\"wide\"]):not([data-embed=\"true\"]):not([data-present=\"true\"]):has(.diagram-container svg[data-input-contract=\"legacy-2.17\"]) .diagram-container { padding-top: 2px; }\n  html[data-reader-layout=\"adaptive\"]:not([data-diagram-shape=\"wide\"]):not([data-embed=\"true\"]):not([data-present=\"true\"]):has(.diagram-container svg[data-input-contract=\"legacy-2.17\"]) .diagram-nav { bottom: 4px; padding: 1px; }\n}\n"
+    },
+    {
+      "scope": "ordinary narrow navigation clearance",
+      "sourceLine": 3688,
+      "sourceByteOffset": 131207,
+      "sourceText": "  html:not([data-embed=\"true\"]) .diagram-container {\n    padding: 0.75rem 0.75rem 4.25rem;\n  }",
+      "replacementText": "  html:not([data-embed=\"true\"]) .diagram-container {\n    padding: 0.75rem 0.75rem 4.5rem;\n  }"
+    }
+  ]
+}

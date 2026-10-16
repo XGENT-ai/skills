@@ -13,6 +13,7 @@ function packageRoot(t, manifest) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix release guard '));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'dist/phoenix-ui'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: '@xgent-ai/skills', version: '0.7.4', bin: { 'phoenix-ui': 'bin/phoenix-ui.js' }, files: ['dist/phoenix-ui'] }));
   fs.writeFileSync(path.join(root, 'dist/phoenix-ui/VERSION.json'), JSON.stringify(manifest));
   return root;
 }

@@ -23,6 +23,8 @@
 | 工作项 / 类型 | 原文 | 状态页 |
 | --- | --- | --- |
 | Phoenix UI（开发计划） | [docs/plan/phoenix-ui.md](../../docs/plan/phoenix-ui.md) | [状态](status/plan/7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) |
+| Phoenix Diagram（PRD） | [docs/PRD-PHOENIX-DIAGRAM.md](../../docs/PRD-PHOENIX-DIAGRAM.md) | [状态](status/prd/06d03c42-b8de-4f89-bddc-e20f595b5fd2.md) |
+| Phoenix Diagram P1（开发计划） | [docs/plan/PHOENIX-DIAGRAM-P1.md](../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](status/plan/3cdd61a5-ef48-4526-8b3b-4271426843e8.md) |
 | Codex guard（开发计划） | [docs/plan/codex-context-goal-guard.md](../../docs/plan/codex-context-goal-guard.md) | [状态](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) |
 | Claude guard（开发计划） | [docs/plan/claude-context-goal-guard.md](../../docs/plan/claude-context-goal-guard.md) | [状态](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md) |
 

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "rust": "1.99.0",
+  "mrBoxington": "1.21.1",
+  "node": "25.2.1"
+}

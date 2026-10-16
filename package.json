@@ -1,7 +1,7 @@
 {
   "name": "@xgent-ai/skills",
   "version": "0.7.4",
-  "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 Phoenix UI 设计工具与 UI 验收 skills",
+  "description": "XGENT skills 与项目辅助工具:安装 hooks、settings、Phoenix UI 与独立 Phoenix Diagram 图解候选",
   "keywords": [
     "claude-code",
     "skills",
@@ -15,11 +15,13 @@
   "bin": {
     "skills": "bin/xgent-skills.js",
     "xgent-skills": "bin/xgent-skills.js",
-    "phoenix-ui": "bin/phoenix-ui.js"
+    "phoenix-ui": "bin/phoenix-ui.js",
+    "phoenix-diagram": "bin/phoenix-diagram.js"
   },
   "scripts": {
     "test": "node scripts/run-tests.mjs",
     "test:phoenix": "node scripts/test-phoenix-ui.mjs",
+    "test:diagram": "node scripts/test-phoenix-diagram-native.mjs",
     "release:phoenix": "node scripts/release-phoenix-ui.mjs",
     "prepublishOnly": "node scripts/require-release-package.mjs"
   },
@@ -33,6 +35,7 @@
     "hooks/claude/settings.example.json",
     "docs/claude-context-goal-guard.md",
     "docs/phoenix-ui.md",
+    "docs/phoenix-diagram.md",
     "skills",
     "dist/phoenix-ui/bundle",
     "dist/phoenix-ui/VERSION.json",
@@ -40,7 +43,14 @@
     "dist/phoenix-ui/NOTICE.md",
     "dist/phoenix-ui/THIRD-PARTY.json",
     "dist/phoenix-ui/THIRD-PARTY-NOTICES.md",
-    "dist/phoenix-ui/THIRD-PARTY-LICENSES"
+    "dist/phoenix-ui/THIRD-PARTY-LICENSES",
+    "dist/phoenix-diagram/bundle",
+    "dist/phoenix-diagram/VERSION.json",
+    "dist/phoenix-diagram/LICENSE",
+    "dist/phoenix-diagram/NOTICE.md",
+    "dist/phoenix-diagram/THIRD-PARTY.json",
+    "dist/phoenix-diagram/THIRD-PARTY-NOTICES.md",
+    "dist/phoenix-diagram/THIRD-PARTY-LICENSES"
   ],
   "engines": {
     "node": ">=18"
