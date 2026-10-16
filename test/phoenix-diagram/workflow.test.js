@@ -115,15 +115,93 @@ test('workflow phase evidence records actual outcomes without inventing provider
 
 test('visual review resumes the original consumer state in the same running job after publishing review requests', () => {
   const consume = job(workflow(), 'consume'), node18 = job(workflow(), 'node18-consumer');
+  const material = consume.indexOf('id: review_material');
   const request = consume.indexOf('name: Upload the bound screenshots for actual image review');
   const resume = consume.indexOf('name: Resume the same delivery after actual image review');
-  assert.ok(request > consume.indexOf('id: consume') && resume > request);
+  assert.ok(material > consume.indexOf('id: consume') && request > material && resume > request);
   assert.match(consume, /name: phoenix-diagram-review-request-\$\{\{ matrix\.platform \}\}/);
-  assert.match(consume, /path: \$\{\{ steps\.consume\.outputs\.evidence_dir \}\}/);
+  const upload = /id: review_request\n([\s\S]*?)(?=\n      #)/.exec(consume)?.[1];
+  assert.match(upload, /if: steps\.consume\.outcome == 'success' && steps\.review_material\.outcome == 'success'/);
+  assert.match(upload, /path: \$\{\{ steps\.review_material\.outputs\.review_paths \}\}/);
+  assert.match(consume, /if: steps\.consume\.outcome == 'success' && steps\.review_request\.outcome == 'success'/);
   assert.match(consume, /steps\.consume\.outputs\.state_path/);
   assert.match(consume, /--resume "\$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review\/\$GITHUB_RUN_ID"/);
-  assert.match(consume, /timeout-minutes: 90/);
+  assert.match(consume, /timeout-minutes: 90/); assert.match(consume, /timeout-minutes: 120/);
+  const finalUpload = /name: phoenix-diagram-consume-\$\{\{ matrix\.platform \}\}-evidence([\s\S]*)/.exec(consume)?.[1];
+  assert.match(finalUpload, /steps\.consume\.outputs\.evidence_dir/);
+  assert.match(finalUpload, /include-hidden-files: true/);
   assert.doesNotMatch(node18, /--resume|--review-ref/);
+});
+
+function reviewMaterialScript() {
+  const step = /- name: Select the original files for actual image review\n([\s\S]*?)(?=\n      - name:)/.exec(job(workflow(), 'consume'))?.[1];
+  assert.ok(step, 'Select bound review files before uploading the request');
+  assert.match(step, /id: review_material/); assert.match(step, /if: steps\.consume\.outcome == 'success'/);
+  for (const name of ['state_path', 'evidence_dir']) assert.match(step, new RegExp(`steps\\.consume\\.outputs\\.${name}`));
+  const script = /node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/.exec(step)?.[1];
+  assert.ok(script, 'Execute the actual inline selector');
+  const shell = /run: \|\n([\s\S]*)/.exec(step)?.[1].replace(/^ {10}/gm, '');
+  const syntax = spawnSync('/bin/bash', ['-n'], { input: shell, encoding: 'utf8' });
+  assert.equal(syntax.status, 0, syntax.stderr); return script;
+}
+
+async function reviewMaterialFixture(t) {
+  const directory = temporary(t), runRoot = path.join(directory, 'original evidence'), harness = path.join(directory, 'local/phoenix-diagram/harness/scripts');
+  fs.mkdirSync(runRoot, { mode: 0o700 }); fs.mkdirSync(harness, { recursive: true });
+  fs.copyFileSync(path.join(root, 'scripts/test-phoenix-diagram-core.mjs'), path.join(harness, 'test-phoenix-diagram-core.mjs'));
+  const { readSnapshot, bound } = await import('../../scripts/test-phoenix-diagram-core.mjs');
+  const write = (file, value) => { fs.writeFileSync(file, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value), { mode: 0o600 }); return bound(readSnapshot(file)); };
+  // File-selection mechanism fixture only, never native or visual acceptance.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6vWQAAAAASUVORK5CYII=', 'base64');
+  const cases = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].flatMap(type => ['new', 'legacy'].map(contract => {
+    const id = `${contract}-${type}`, folder = path.join(runRoot, id); fs.mkdirSync(folder);
+    return { id, state: { screenshots: [1440, 2048].flatMap(width => ['light', 'dark'].map(theme => ({ ...write(path.join(folder, `${width}-${theme}.png`), png), viewport: { width, height: width === 1440 ? 900 : 1320 }, theme }))) } };
+  }));
+  const stat = fs.statSync(runRoot), sourceCommit = 'a'.repeat(40), tgzSha = 'b'.repeat(64);
+  const state = { schemaVersion: 1, kind: 'phoenix-diagram-candidate-consumer', repository: 'fixture/repository', runId: '12345', runAttempt: '1', job: 'consume', target: 'darwin-arm64', nonce: 'c'.repeat(32), runRoot, directoryBinding: { device: String(stat.dev), inode: String(stat.ino), uid: stat.uid }, source: { commit: sourceCommit }, candidate: { tarball: { identity: { sha256: tgzSha, bytes: 123 } } }, phase: 'pending-review', automatedStatus: 'pass', status: 'automated-pass', cases };
+  const stateFile = write(path.join(runRoot, 'consumer-state.json'), state);
+  const request = { schemaVersion: 1, kind: 'phoenix-diagram-review-request', state: stateFile, envelope: { schemaVersion: 1, kind: 'phoenix-diagram-candidate-review', repository: state.repository, runId: state.runId, target: state.target, nonce: state.nonce, stateSha256: stateFile.identity.sha256, candidateSha256: tgzSha, sourceCommit, records: Object.fromEntries(cases.map(entry => [entry.id, { screenshotIdentities: entry.state.screenshots.map(file => ({ file: { path: file.path, identity: file.identity }, viewport: file.viewport, theme: file.theme })) }])) } };
+  const requestFile = write(path.join(runRoot, 'review-request.json'), request), output = path.join(directory, 'github-output');
+  fs.mkdirSync(path.join(runRoot, 'npm-cache')); write(path.join(runRoot, 'npm-cache/omit.tgz'), 'cache');
+  fs.mkdirSync(path.join(runRoot, 'exports')); write(path.join(runRoot, 'exports/omit.png'), png);
+  const files = [stateFile, requestFile, ...cases.flatMap(entry => entry.state.screenshots.map(file => bound(readSnapshot(file.path))))];
+  const env = { ...process.env, PHOENIX_REVIEW_STATE: stateFile.path, PHOENIX_REVIEW_ROOT: runRoot, PHOENIX_REVIEW_TARGET: state.target, GITHUB_REPOSITORY: state.repository, GITHUB_RUN_ID: state.runId, GITHUB_RUN_ATTEMPT: state.runAttempt, GITHUB_JOB: state.job, GITHUB_SHA: sourceCommit, PHOENIX_DIAGRAM_SOURCE_COMMIT: sourceCommit, PHOENIX_DIAGRAM_TGZ_SHA256: tgzSha, GITHUB_OUTPUT: output };
+  const run = () => spawnSync(process.execPath, ['--input-type=module'], { input: reviewMaterialScript(), cwd: directory, encoding: 'utf8', env });
+  return { run, files, request, requestFile, state, output, env, write, readSnapshot, bound };
+}
+
+test('review upload selects exactly the 42 original bound files without caches, exports or rewrites', async t => {
+  const fixture = await reviewMaterialFixture(t), result = fixture.run(); assert.equal(result.status, 0, result.stderr);
+  const output = fs.readFileSync(fixture.output, 'utf8'), match = /^review_paths<<([^\n]+)\n([\s\S]*)\n\1\n$/.exec(output); assert.ok(match, output);
+  const selected = match[2].split('\n'); assert.equal(selected.length, 42); assert.equal(new Set(selected).size, 42);
+  assert.deepEqual(selected, fixture.files.map(file => file.path));
+  assert.equal(path.dirname(selected[0]), fixture.state.runRoot); assert.equal(path.dirname(selected[1]), fixture.state.runRoot);
+  assert.ok(selected.every(file => !path.relative(fixture.state.runRoot, file).startsWith('..')));
+  assert.doesNotMatch(selected.join('\n'), /npm-cache|\/exports\/|[*?\[\]]/);
+  for (const file of fixture.files) assert.deepEqual(fixture.bound(fixture.readSnapshot(file.path)), file, 'Original file bytes and physical bindings must remain unchanged');
+});
+
+test('review file selection rejects changed screenshot bytes and a missing screenshot before producing outputs', async t => {
+  for (const failure of ['changed', 'missing']) {
+    const fixture = await reviewMaterialFixture(t), file = fixture.files[2].path;
+    if (failure === 'changed') fs.appendFileSync(file, 'changed'); else fs.unlinkSync(file);
+    assert.notEqual(fixture.run().status, 0, failure); assert.ok(!fs.existsSync(fixture.output), failure);
+  }
+});
+
+test('review file selection rejects wrong state SHA, nonce, current workflow and screenshot scope', async t => {
+  for (const failure of ['state-sha', 'nonce', 'run', 'source', 'tgz', 'duplicate-screenshot', 'missing-case']) {
+    const fixture = await reviewMaterialFixture(t);
+    if (failure === 'state-sha') fixture.request.state.identity.sha256 = 'd'.repeat(64);
+    if (failure === 'nonce') fixture.request.envelope.nonce = 'd'.repeat(32);
+    if (failure === 'run') fixture.env.GITHUB_RUN_ID = '999';
+    if (failure === 'source') fixture.env.PHOENIX_DIAGRAM_SOURCE_COMMIT = 'd'.repeat(40);
+    if (failure === 'tgz') fixture.env.PHOENIX_DIAGRAM_TGZ_SHA256 = 'd'.repeat(64);
+    if (failure === 'duplicate-screenshot') fixture.request.envelope.records[fixture.state.cases[0].id].screenshotIdentities[1] = fixture.request.envelope.records[fixture.state.cases[0].id].screenshotIdentities[0];
+    if (failure === 'missing-case') delete fixture.request.envelope.records[fixture.state.cases[0].id];
+    fs.writeFileSync(fixture.requestFile.path, JSON.stringify(fixture.request));
+    assert.notEqual(fixture.run().status, 0, failure); assert.ok(!fs.existsSync(fixture.output), failure);
+  }
 });
 
 test('browser pin helpers preserve fixed source identity and reject every changed Chromium field', async () => {

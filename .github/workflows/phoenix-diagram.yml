@@ -431,13 +431,56 @@ jobs:
       - name: Consume the unchanged tgz through its package entry points
         id: consume
         run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }}
+      - name: Select the original files for actual image review
+        id: review_material
+        if: steps.consume.outcome == 'success'
+        env:
+          PHOENIX_REVIEW_STATE: ${{ steps.consume.outputs.state_path }}
+          PHOENIX_REVIEW_ROOT: ${{ steps.consume.outputs.evidence_dir }}
+          PHOENIX_REVIEW_TARGET: ${{ matrix.platform }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path'; import assert from 'node:assert/strict'; import {randomBytes} from 'node:crypto';
+          import {readSnapshot,readBound,bound} from './local/phoenix-diagram/harness/scripts/test-phoenix-diagram-core.mjs';
+          const root=process.env.PHOENIX_REVIEW_ROOT,stat=fs.lstatSync(root),file=readSnapshot(process.env.PHOENIX_REVIEW_STATE),state=JSON.parse(file.content);
+          assert(path.isAbsolute(root) && fs.realpathSync(root)===root && stat.isDirectory() && !stat.isSymbolicLink() && stat.uid===process.getuid() && (stat.mode&0o7777)===0o700);
+          assert.equal(file.path,path.join(root,'consumer-state.json')); assert.equal(state.runRoot,root);
+          assert.deepEqual(state.directoryBinding,{device:String(stat.dev),inode:String(stat.ino),uid:stat.uid});
+          assert.equal(state.schemaVersion,1); assert.equal(state.kind,'phoenix-diagram-candidate-consumer');
+          assert.equal(state.phase,'pending-review'); assert.equal(state.automatedStatus,'pass'); assert.equal(state.status,'automated-pass');
+          for(const [name,expected] of Object.entries({repository:process.env.GITHUB_REPOSITORY,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT || '1',job:process.env.GITHUB_JOB,target:process.env.PHOENIX_REVIEW_TARGET})) {assert(expected);assert.equal(state[name],expected);}
+          assert.match(state.nonce,/^[a-f0-9]{32}$/); assert.match(process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT,/^[a-f0-9]{40}$/); assert.match(process.env.PHOENIX_DIAGRAM_TGZ_SHA256,/^[a-f0-9]{64}$/);
+          assert.equal(state.source.commit,process.env.GITHUB_SHA); assert.equal(state.source.commit,process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT);
+          assert.equal(state.candidate.tarball.identity.sha256,process.env.PHOENIX_DIAGRAM_TGZ_SHA256);
+          const requestFile=readSnapshot(path.join(root,'review-request.json')),request=JSON.parse(requestFile.content),envelope=request.envelope;
+          assert.equal(request.schemaVersion,1); assert.equal(request.kind,'phoenix-diagram-review-request'); assert.deepEqual(request.state,bound(file)); readBound(request.state,'original consumer state');
+          assert.equal(envelope.schemaVersion,1); assert.equal(envelope.kind,'phoenix-diagram-candidate-review');
+          for(const [name,expected] of Object.entries({repository:state.repository,runId:state.runId,target:state.target,nonce:state.nonce,stateSha256:file.identity.sha256,candidateSha256:state.candidate.tarball.identity.sha256,sourceCommit:state.source.commit}))assert.equal(envelope[name],expected);
+          const ids=['architecture','workflow','sequence','dataflow','lifecycle'].flatMap(type=>[`new-${type}`,`legacy-${type}`]);
+          assert.deepEqual(state.cases.map(entry=>entry.id).sort(),ids.slice().sort()); assert.deepEqual(Object.keys(envelope.records).sort(),ids.slice().sort());
+          const files=[bound(file),bound(requestFile)],scopes=['1440x900:light','1440x900:dark','2048x1320:light','2048x1320:dark'];
+          for(const entry of state.cases) {
+            const screenshots=entry.state.screenshots,observations=envelope.records[entry.id].screenshotIdentities;
+            assert.equal(screenshots.length,4); assert.equal(observations.length,4);
+            assert.deepEqual(screenshots.map(image=>`${image.viewport.width}x${image.viewport.height}:${image.theme}`).sort(),scopes.slice().sort());
+            for(const [index,image] of screenshots.entries()) {
+              assert.deepEqual(observations[index].file,{path:image.path,identity:image.identity}); assert.deepEqual(observations[index].viewport,image.viewport); assert.equal(observations[index].theme,image.theme);
+              const current=readBound(image,'original review screenshot'); assert.equal(current.path,image.path); assert(current.path.startsWith(root+path.sep) && path.extname(current.path)==='.png');
+              assert.equal(current.content.subarray(0,8).toString('hex'),'89504e470d0a1a0a'); files.push(bound(current));
+            }
+          }
+          assert.equal(files.length,42); assert.equal(new Set(files.map(entry=>entry.path)).size,42);
+          for(const entry of files) {assert(!/[\x00-\x1f\x7f*?\[\]{}!]/.test(entry.path));readBound(entry,'unchanged original review material');}
+          const delimiter=`PHOENIX_REVIEW_${randomBytes(12).toString('hex')}`;
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`review_paths<<${delimiter}\n${files.map(entry=>entry.path).join('\n')}\n${delimiter}\n`);
+          NODE
       - name: Upload the bound screenshots for actual image review
         id: review_request
-        if: always() && steps.consume.outputs.evidence_dir != ''
+        if: steps.consume.outcome == 'success' && steps.review_material.outcome == 'success'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: phoenix-diagram-review-request-${{ matrix.platform }}
-          path: ${{ steps.consume.outputs.evidence_dir }}
+          path: ${{ steps.review_material.outputs.review_paths }}
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
