@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-16T19:44:58+08:00
+- 最近更新：2026-10-16T19:51:19+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交已通过CLI/install影响组的单链接测试夹具修复，重跑统一四平台；固定Node25的UI复验继续，最终同包/host/图像与聚合未收口
+- 下一步：继续c629a04的四平台run38896333174及固定Node25的UI复验，取得唯一同包后完成真实host、图像审核与最终聚合
 - 当前阻塞：无
-- 代码基线：阶段A98dfb34、M6能力d9e83cd；候选修复3c8c3ac已推送，f02ad45仅本地计划回填；run38892362675的Linux CLI测试失败，两份测试夹具窄修dirty，产品输入仍6ca1da2
+- 代码基线：阶段A98dfb34、M6能力d9e83cd；候选修复3c8c3ac及夹具修复c629a04已推送；当前run38896333174四Native运行中，产品输入仍6ca1da2，包外记录回写中
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-16T19:44:58+08:00 | 已有npm/Diagram全量与motion单例绿；新CI Linux探测已过、CLI夹具失败，局部clippy/CLI6/6/install20/20均绿；UI重跑继续 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac |
+| M7 | 进行中 | 2026-10-16T19:51:19+08:00 | 已有npm/Diagram全量与motion单例绿，夹具clippy/CLI6/install20均绿；c629a04新run四Native运行中，UI重跑继续 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04 |
 
 ## 0. 需求、范围与决策
 
