@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-17T02:16:36+08:00
+- 最近更新：2026-10-17T03:39:46+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交已验证的锁释放修复并跑新clean源码四平台CI；再验三类停步、同包图像及Kimi两host各22类
+- 下一步：提交已完成六fresh开发复核的6569B澄清分支，再实际新同源四平台/唯一包CI；优先三缺事实正式角色，再完成两host22类与最终聚合
 - 当前阻塞：无
-- 代码基线：2b59b3a/tree d7b75cd已push，run38942281186的Mac ARM与Linux x64 native失败、Intel与ARM成功，本轮终态failure/无候选且完整封存。真实pre-exec回归先红output/busy，最终Arc显式unlock及两条获锁后失败释放已落实；88项影响组、fmt/clippy0、完整npm404pass/22skip与Python四组通过。修复未提交，native input9e93e128、bundle462c/Reader/skill未改；dbbd旧V13失败、两Linux80图passed不计新最终通过
+- 代码基线：0c5829c/run38946210226四Native+assemble、cd5565e9包认证/44安装成功，但两条件角色Claude failed、Codex passed，余42未跑不能final。当前6569B/source d7b862d5/bundle72a9a081未提交，source/quickstart/dist同步；两host六fresh开发预检独立passed，npm404pass22skip/Python四组通过，仅开发层。Rust/Reader未改，旧失败与dbbd160图/CI成功各保原范围
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-17T02:16:36+08:00 | 2b59/run38942281186终态两native失败并封存；真实继承FD回归先红，显式unlock后88项影响组/fmt/clippy/npm通过，新clean源码CI待启动；旧平台/host各保范围 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c |
+| M7 | 进行中 | 2026-10-17T03:39:46+08:00 | 0c四Native+assemble及44安装成功，但Claude条件例补问假设规则failed；6569B澄清三步已完成六fresh开发独立复核及npm，下一clean同包/两host22类仍待收口 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c |
 
 ## 0. 需求、范围与决策
 
