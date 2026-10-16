@@ -61,6 +61,7 @@ const inputReport = { scope: 'release-check', B: { tarball: options['--tarball']
 for (const [name, file] of [['B.tgz', options['--tarball']], ['B.VERSION.json', options['--manifest']]]) fs.copyFileSync(file, path.join(raw, name), fs.constants.COPYFILE_EXCL);
 const sourceBindings = new Map([[path.join(raw, 'B.tgz'), options['--tarball-sha256']], ...oldSources.map(source => [source.archive, source.source.provenance.npm.sha256])]);
 for (const [file, expected] of [...sourceBindings, [path.join(raw, 'B.VERSION.json'), B.hash]]) assert.equal(sha(fs.readFileSync(file)), expected, 'Copied input bytes differ');
+sourceBindings.set(`file:${path.join(raw, 'B.tgz')}`, options['--tarball-sha256']);
 const record = { ...inputReport, status: 'running', out, commands: [], groups: [], startedAt: new Date().toISOString() };
 const save = () => fs.writeFileSync(path.join(out, 'results.json'), json(record));
 function run(name, program, argv, cwd = out, env = process.env, expected = 0) {
@@ -100,10 +101,16 @@ function npmInstall(node, archive, destination, env, name) {
   run(`${name}-npm-install`, node, [npm, 'install', '--offline', '--no-audit', '--no-fund', archive], destination, env);
   const pkg = path.join(destination, 'node_modules/@xgent-ai/skills');
   for (const bin of ['phoenix-ui.js', 'xgent-skills.js']) sourceBindings.set(path.join(pkg, 'bin', bin), sourceBindings.get(archive));
+  const npx = path.join(path.dirname(npm), 'npx-cli.js');
+  const runtime = run(`${name}-npx-runtime`, node, [npx, '--offline', '--yes', `--package=file:${archive}`, 'node', '-p', 'process.execPath'], destination,
+    { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
+  assert.equal(fs.realpathSync(runtime.stdout.trim()), fs.realpathSync(node), 'npx used a different Node runtime');
   return pkg;
 }
-function install(node, pkg, project, env, name, release) {
-  return run(name, node, [path.join(pkg, 'bin/xgent-skills.js'), 'install', project, '--no-xgent-init', ...(release ? [`--release-dir=${release}`] : [])], project, env);
+function install(node, project, env, name, release) {
+  const npx = path.resolve(path.dirname(node), '../lib/node_modules/npm/bin/npx-cli.js');
+  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...(release ? [`--release-dir=${release}`] : [])], project,
+    { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
 function rollback(node, pkg, project, env, output, name) {
   const id = /--rollback (phoenix-\S+)/.exec(output.stdout)?.[1]; assert(id, 'Missing actual rollback transaction');
@@ -142,7 +149,7 @@ for (const major of [18, 25]) {
         const engine = JSON.parse(run(`node${major}-HTTP-engine-install`, node, [bBin, 'engine', 'install', '--project', project, '--json'], project, env).stdout);
         assert.equal(engine.status, 'installed'); assert.equal(sha(fs.readFileSync(engine.binary)), B.data.engines[info.target].sha256);
       }
-      const first = install(node, pkg, project, env, `node${major}-${kind}-install`);
+      const first = install(node, project, env, `node${major}-${kind}-install`);
       assert.match(first.stdout, new RegExp(`Phoenix UI ${B.data.toolVersion.replaceAll('.', '\\.')} \\(@xgent-ai/skills@[^)]+\\): 已安装`));
       assert.match(first.stdout, /完成: /); assert.match(first.stdout, /回滚  npm exec --package=@xgent-ai\/skills@\S+ -- phoenix-ui migrate --rollback phoenix-\S+ --project /);
       if (kind.startsWith('legacy-')) {
@@ -160,7 +167,10 @@ for (const major of [18, 25]) {
       group.installedBEngineSha256 = sha(fs.readFileSync(bootstrap.enginePath(B, info.target, env)));
       assert.equal(group.installedBEngineSha256, B.data.engines[info.target].sha256);
       const installed = snapshot(groupBase, 'installed', project);
-      const second = install(node, pkg, project, env, `node${major}-${kind}-rerun`);
+      for (const file of ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']) assert.equal(installed[file], original[file], `Installer changed ${file}`);
+      assert.deepEqual(Object.fromEntries(Object.entries(installed).filter(([file]) => file.startsWith('node_modules/'))),
+        Object.fromEntries(Object.entries(original).filter(([file]) => file.startsWith('node_modules/'))), 'Installer changed node_modules');
+      const second = install(node, project, env, `node${major}-${kind}-rerun`);
       assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project, outsideHistory), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));

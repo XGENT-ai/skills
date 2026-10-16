@@ -38,6 +38,8 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 
 安装器只认领本包已发布版本（`@xgent-ai/skills` 0.3.0–0.6.0，对应 skill 4.3.1/4.5.0）写入且未被改动的文件和 hook：
 
+普通安装只检查 `.impeccable/`、`.impeccable-live`、`.impeccable-live.json` 及各工具固定的 skills、hooks 路径，不递归扫描业务源码。显式执行 `phoenix-ui migrate --from impeccable --project <项目> --bundle-root <bundle目录>` 时，才额外扫描源码中的孤立注入和变体标记；完整参数见 `phoenix-ui migrate --help`。
+
 - 未改动的旧 skill、agents、commands 移入 `.phoenix-ui/migrations/<事务ID>/` 备份；旧 hook 分组或嵌套 handler 按完整结构精确匹配后移除，邻近的用户 handler、matcher 与未知字段原样保留。
 - 每个旧 skill 位置留一个限期提示入口 `impeccable`，只在被显式调用时列出新命令，不挂 hook、不调用旧工具；下一个主版本移除。
 - `.impeccable/` 中可迁移的配置、设计 sidecar 与已核验的数据复制到 `.phoenix-ui/`，未知键原样保留并报告「未迁移」；固定快捷 pin 重新生成为 Phoenix 版本。
@@ -49,7 +51,7 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 | 情况 | 处理 |
 | --- | --- |
 | 旧 skill 或旧 hook 被用户改过、被 shell 包装，或结构无法唯一确定 | 输出列出文件与条目；先备份/还原或移出活跃目录，再重跑 |
-| 旧 live 会话、注入或变体残留 | 用旧项目的 launcher 正常停止、`live-inject --remove`、接受或丢弃变体；不要按 PID 杀进程 |
+| 固定旧状态路径或注入日志中记录的 live、注入或变体残留；显式迁移还检查源码中的孤立标记 | 用旧项目的 launcher 正常停止、`live-inject --remove`、接受或丢弃变体；不要按 PID 杀进程 |
 | 个人级（如 `~/.claude/skills/impeccable`）旧入口、旧 hook 或插件 | 安装器只读发现、不改个人配置；按输出在对应工具中禁用或移除后重载并重跑 |
 | 外部管理的辅助 skill 副本与本包不同（含 skills.sh 副本、符号链接） | Phoenix 仍激活，状态为「已安装但融合未就绪」；按输出用 `npx skills add XGENT-ai/skills --skill <名称>` 更新，或备份后移出活跃目录再重跑 |
 

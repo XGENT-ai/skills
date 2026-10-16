@@ -109,6 +109,33 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.deepEqual(tree(project, (rel) => rel.startsWith('.phoenix-ui/')), before);
 });
 
+for (const shape of ['large', 'deep']) {
+  test(`default install keeps Phoenix enabled without scanning a ${shape} business tree`, { skip }, async (t) => {
+    const pkg = packageFor(t, engine);
+    const fixture = shape === 'deep' ? await oldProject(t) : null;
+    const project = fixture?.projectRoot || sandbox(t, 'phoenix large project');
+    const source = path.join(project, 'src');
+    fs.mkdirSync(source);
+    if (shape === 'large') {
+      for (let i = 0; i <= 10000; i += 1) fs.writeFileSync(path.join(source, `${i}.js`), 'export default true;\n');
+    } else {
+      const nested = path.join(source, ...Array(33).fill('a'));
+      fs.mkdirSync(nested, { recursive: true });
+      fs.writeFileSync(path.join(nested, 'page.html'), '<!-- impeccable-live-start -->');
+    }
+    const before = tree(source);
+    const first = install(pkg, project, [], fixture?.homeRoot || pkg.home);
+    assert.equal(first.status, 0, first.stdout + first.stderr);
+    assert.match(first.stdout, /: 已安装/);
+    assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+    if (fixture) assert.match(first.stdout, /迁移  认领 impeccable 旧版安装/);
+    const second = install(pkg, project, [], fixture?.homeRoot || pkg.home);
+    assert.equal(second.status, 0, second.stdout + second.stderr);
+    assert.match(second.stdout, /: 未变\n/);
+    assert.deepEqual(tree(source), before, 'installation must preserve the business source tree');
+  });
+}
+
 test('an old 0.6.0 project migrates through the Node installer and rolls back byte-for-byte through the npm bin', { skip }, async (t) => {
   const pkg = packageFor(t, engine);
   const fixture = await oldProject(t, ['claude-shared-and-local', 'custom-allow', 'unrelated-entry']);

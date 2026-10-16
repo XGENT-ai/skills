@@ -25,6 +25,12 @@ npx skills add XGENT-ai/skills --skill dev-plan
 npx @xgent-ai/skills install
 ```
 
+0.7.3 补齐了 npx 默认入口。旧版 0.7.2 会报 `could not determine executable to run`,使用该版本时请显式指定安装器:
+
+```bash
+npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
+```
+
 选项:
 
 | 选项 | 说明 |

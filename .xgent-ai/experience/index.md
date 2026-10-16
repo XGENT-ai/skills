@@ -23,3 +23,7 @@
 - d1f6623b-b070-4187-bb6f-54fea834ddc4 · [spec-human-decision 决策记录共存](d1f6623b-b070-4187-bb6f-54fea834ddc4.md)
 - a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
 - `bbae83cd-7065-4f90-a350-5e6439fdfed6` · Agent Instruction Evolution · [记录](bbae83cd-7065-4f90-a350-5e6439fdfed6.md)
+
+- 39e564f7-edb4-4aed-aaf7-7a33bcdf0a59 · [npm 默认入口修复](39e564f7-edb4-4aed-aaf7-7a33bcdf0a59.md)
+
+- 45736d49-0eaa-4431-b8b2-b0d67559a36a · [Phoenix 安装扫描范围修复](45736d49-0eaa-4431-b8b2-b0d67559a36a.md)

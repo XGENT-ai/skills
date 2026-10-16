@@ -1,6 +1,6 @@
 {
   "name": "@xgent-ai/skills",
-  "version": "0.7.2",
+  "version": "0.7.4",
   "description": "XGENT skills 与 Claude Code 辅助工具:通过 npx 为项目安装 hooks、启用 settings,并安装 Phoenix UI 设计工具与 UI 验收 skills",
   "keywords": [
     "claude-code",
@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "bin": {
+    "skills": "bin/xgent-skills.js",
     "xgent-skills": "bin/xgent-skills.js",
     "phoenix-ui": "bin/phoenix-ui.js"
   },

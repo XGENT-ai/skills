@@ -42,9 +42,9 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-15T11:09:15+08:00
+- 最近更新：2026-10-15T15:09:15+08:00
 - 当前进度：6/6 个里程碑完成
-- 当前状态：已完成；R3复审通过后，含R1修复与R2补修的候选8f67527经CI34四native/Node18全绿，同一最终tarball 08f14e50的V-4八组、受影响V-7/V-8与V-10通过；V-9评审闭环在最终包重跑（按报告修复→限定复审→全量独立复审通过验收10）及§9.3场景通过；本机完整test:phoenix单次退出0。M6重新收口。验证分支已推送8f67527；用户2026-10-14授权后，本分支（含R2补修）以f6c871c合并到main，main上Phoenix输入与8f67527逐文件相同；公开R2已上传v0.7.0-rc.0并经真实URL同包V-4验收（rc未发npm）。0.7.0被从检出直接发布、engine不可安装（按用户决定不deprecate）；0.7.1经`npm run release:phoenix`（R2 v0.7.1、tarball df9c2cef…、6组安装检查）由用户发布为latest，registry回读一致。
+- 当前状态：已完成；R3复审通过后，含R1修复与R2补修的候选8f67527经CI34四native/Node18全绿，同一最终tarball 08f14e50的V-4八组、受影响V-7/V-8与V-10通过；V-9评审闭环在最终包重跑（按报告修复→限定复审→全量独立复审通过验收10）及§9.3场景通过；本机完整test:phoenix单次退出0。M6重新收口。验证分支已推送8f67527；用户2026-10-14授权后，本分支（含R2补修）以f6c871c合并到main，main上Phoenix输入与8f67527逐文件相同；公开R2已上传v0.7.0-rc.0并经真实URL同包V-4验收（rc未发npm）。0.7.0被从检出直接发布、engine不可安装（按用户决定不deprecate）；0.7.1经`npm run release:phoenix`（R2 v0.7.1、tarball df9c2cef…、6组安装检查）由用户发布为latest，registry回读一致。0.7.2（包内容移到dist/phoenix-ui、删除旧vendor/impeccable副本）经同一流程发布为latest并回读一致。
 - 最近完成：M6 · B 闭环终验与发布准备
 - 下一步：代码评审——R1–R3已覆盖全部实现与修复，候选8f67527即R3所审提交，本次收口只改计划/记录，无代码改动时无需再跑 review-code；此后若改代码，用 review-code 以本计划路径评审。发布工具6a60d85及其修正未跑review-code，需要时以本计划路径评审；后续版本用 `npm run release:phoenix` 发布（见docs/phoenix-ui.md）。
 - 当前阻塞：无

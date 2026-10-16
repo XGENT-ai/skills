@@ -90,6 +90,7 @@ fn request<'a>(
         auxiliary_root: Some(auxiliary()),
         providers: providers.iter().map(|p| p.to_string()).collect(),
         home: Some(sandbox.home()),
+        scan_sources: false,
         dry_run,
         transaction_id: id.into(),
     }
@@ -205,6 +206,76 @@ fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
         after, before,
         "rollback must remove Phoenix files and the directories it left empty"
     );
+}
+
+#[test]
+fn ordinary_install_leaves_source_scanning_to_explicit_migration() {
+    let sandbox = Sandbox::new();
+    let project = sandbox.project();
+    let source = project.join("src/page.html");
+    fs::create_dir_all(source.parent().unwrap()).unwrap();
+    fs::write(&source, "<!-- impeccable-live-start -->").unwrap();
+    let before = entries(&project);
+    let bundle_arg = bundle().to_string_lossy().into_owned();
+    for (verb, expected) in [("install", "planned"), ("migrate", "conflict")] {
+        let mut args = vec![
+            verb,
+            "--project",
+            "--bundle-root",
+            &bundle_arg,
+            "--dry-run",
+            "--json",
+        ];
+        if verb == "migrate" {
+            args.extend(["--from", "impeccable"]);
+        }
+        let (code, stdout, stderr) = run_cli(&args, &project, &sandbox.home());
+        assert_eq!(code, if verb == "migrate" { 3 } else { 0 }, "{stderr}");
+        let report: Value = serde_json::from_str(&stdout).unwrap();
+        assert_eq!(report["status"], expected, "{report}");
+        if verb == "migrate" {
+            assert!(report["conflicts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|c| c["path"] == "src/page.html"));
+        }
+        assert_eq!(
+            entries(&project),
+            before,
+            "{verb} --dry-run wrote project files"
+        );
+    }
+}
+
+#[test]
+fn ordinary_install_still_blocks_live_residue_in_fixed_legacy_paths() {
+    for path in [
+        ".impeccable/live/sessions/old.jsonl",
+        ".impeccable-live.json",
+        ".impeccable-live/session.json",
+    ] {
+        let sandbox = Sandbox::new();
+        let project = sandbox.project();
+        let file = project.join(path);
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(file, "{}").unwrap();
+        let before = entries(&project);
+        let report = installer::install(&request(
+            &sandbox,
+            &project,
+            &[".claude"],
+            false,
+            "fixed-residue",
+        ))
+        .unwrap();
+        assert_eq!(report.status, Status::Conflict, "{path}: {report:?}");
+        assert_eq!(
+            entries(&project),
+            before,
+            "fixed legacy residue must block before writes"
+        );
+    }
 }
 
 #[test]
