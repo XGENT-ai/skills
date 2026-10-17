@@ -171,10 +171,62 @@ function directPd(pair,session,raw) {
   need(program==='phoenix-diagram' || /\/(?:scripts\/phoenix-diagram|bin\/phoenix-diagram\.js)$/.test(program || ''),'Actual execution is not the PD entry');need(PD_COMMANDS.includes(words[0]),'Wrong PD command');return{program,argv:words};
 }
 function proofPair(capture,proof) {
+  if(Object.hasOwn(proof,'polls'))return asyncCollectorPair(capture,proof);
   const resultRef=proof.result || proof,result=anchor(capture.raw,resultRef);let choices;
   if(proof.call){need(proof.call.offset<resultRef.offset,'Tool result precedes its call');choices=[{event:anchor(capture.raw,proof.call),ref:proof.call}];}
   else choices=capture.events.filter(toolEvent).filter(event=>capture.events.indexOf(event)<capture.events.indexOf(capture.events.find(value=>same(value,result)))).map(event=>({event}));
   const pairs=choices.map(({event})=>pairPayload(event,result,proof.toolUseId)).filter(Boolean);need(pairs.length===1,'Actual tool call/result ID pair is missing or ambiguous');return pairs[0];
+}
+function asyncCollectorPair(capture,proof) {
+  need(capture.provider==='codex' && Array.isArray(proof.polls) && proof.polls.length>0,'Async collector requires explicit Codex process polls');
+  const callsById=new Map(),resultsById=new Map();
+  for(const event of capture.events)if(event.type==='response_item') {
+    const payload=event.payload || {},map=payload.type==='function_call'?callsById:payload.type==='function_call_output'?resultsById:null;
+    if(map){need(typeof payload.call_id==='string' && payload.call_id && !map.has(payload.call_id),'Async collector native tool IDs are missing or duplicated');map.set(payload.call_id,event);}
+  }
+  const execNames=['exec_command','functions.exec_command'],pollNames=['write_stdin','functions.write_stdin'];
+  const running=/^Chunk ID: [a-f0-9]{6}\nWall time: \d+(?:\.\d+)? seconds\nProcess running with session ID ([1-9]\d*)\nOriginal token count: \d+\nOutput:\n([\s\S]*)$/;
+  const exited=/^Chunk ID: [a-f0-9]{6}\nWall time: \d+(?:\.\d+)? seconds\nProcess exited with code (\d{1,3})\nOriginal token count: \d+\nOutput:\n([\s\S]*)$/;
+  function nativePair(value) {
+    need(value?.call && value.result && typeof value.toolUseId==='string' && !Object.hasOwn(value,'polls'),'Async collector requires each original call/result ID pair');
+    need(value.call.offset<value.result.offset,'Async collector native result precedes its call');
+    const call=anchor(capture.raw,value.call),result=anchor(capture.raw,value.result),selected=calls(call);
+    need(call.type==='response_item' && result.type==='response_item' && selected.length===1 && selected[0].id===value.toolUseId
+      && result.payload?.type==='function_call_output' && result.payload.call_id===value.toolUseId
+      && same(callsById.get(value.toolUseId),call) && same(resultsById.get(value.toolUseId),result),'Async collector actual tool call/result ID pair differs');
+    const output=result.payload.output,live=typeof output==='string' && running.exec(output),done=typeof output==='string' && exited.exec(output);
+    need(live || done && Number(done[1])<=255,'Async collector has an unsupported native process wrapper');
+    if(live)need(Number.isSafeInteger(Number(live[1])),'Async collector session ID is not an exact integer');
+    return{...selected[0],output:(live || done)[2],running:!!live,sessionId:live?Number(live[1]):null,exitCode:done?Number(done[1]):undefined};
+  }
+  const {polls:pollProofs,...producerProof}=proof,producer=nativePair(producerProof);
+  need(execNames.includes(producer.name) && producer.running && !producer.output.trim(),'Async collector producer must yield one empty running result');
+  const collector=capture.session.collector,words=literalWords(commandOf(producer));
+  need(collector && words[0]===collector.nodePath && words[1]===collector.script.path,'Async collector requires the fixed literal collector producer');
+  const sessionId=producer.sessionId,owners=[],actualPolls=[];
+  for(const [id,event] of callsById) {
+    const call=calls(event)[0];
+    if(execNames.includes(call?.name)) {
+      const output=resultsById.get(id)?.payload?.output,match=typeof output==='string' && running.exec(output);
+      if(match && Number(match[1])===sessionId)owners.push(id);
+    }
+    if(pollNames.includes(call?.name) && call.input?.session_id===sessionId)actualPolls.push(id);
+  }
+  need(same(owners,[producer.id]),'Async collector process session has another producer or a session collision');
+  need(same(actualPolls,pollProofs.map(value=>value.toolUseId)),'Async collector polls are missing, duplicated or outside the original process chain');
+  const expectedName=producer.name==='exec_command'?'write_stdin':'functions.write_stdin',polls=[];let previous=proof.result;
+  for(const [index,value] of pollProofs.entries()) {
+    need(value.call?.offset>=previous.offset+previous.length,'Async collector process polls overlap or precede their original result');
+    const poll=nativePair(value);
+    need(poll.name===expectedName && poll.input?.session_id===sessionId && (!Object.hasOwn(poll.input,'chars') || poll.input.chars===''),'Async collector poll actor/session differs or writes stdin');
+    if(index<pollProofs.length-1)need(poll.running && poll.sessionId===sessionId && !poll.output.trim(),'Async collector intermediate poll changed session or emitted output');
+    else need(!poll.running,'Async collector terminal poll has no native exit');
+    polls.push(poll);previous=value.result;
+  }
+  const terminal=polls.at(-1);
+  // This is a verified producer view, not a fabricated cross-ID native pair:
+  // the durable proof retains the producer result and every poll's own ID.
+  return{id:producer.id,name:producer.name,input:producer.input,output:terminal.output,exitCode:terminal.exitCode,error:terminal.exitCode!==0,producer,polls};
 }
 function metadataLine(output) {const rows=output.split('\n').flatMap(line=>{try{const value=JSON.parse(line);return value?.kind==='phoenix-diagram-stdio-capture'?[value]:[];}catch{return[];}});need(rows.length===1,'Missing or ambiguous collector result');return rows[0];}
 function capturedReply(capture,proof,bytesFor) {

@@ -101,6 +101,27 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   }
   return{build,rows,dto,receipt,reply,files,templateIdentity:identity(template),collector,cmd,put,replaceArgv(argv){dto.argv=argv;rows[5]=call('pd',commandFor(argv));},replaceResult(value,exit=0){rows[6]=result('pd',JSON.stringify(value),exit);}};
 }
+function asyncStdioProviderFixture({pollCount=1,exitCode=0,namespaced=false,omitChars=false}={}) {
+  const f=stdioProviderFixture({shape:'function-native-output',exitCode,status:exitCode?'failed':'pass'}),sessionId=46683;
+  const running=()=>`Chunk ID: 0069c8\nWall time: 10.0026 seconds\nProcess running with session ID ${sessionId}\nOriginal token count: 0\nOutput:\n`;
+  const terminal=structuredClone(f.rows[6]),polls=[];
+  f.rows[0]={type:'session_meta',payload:{id:'fixture-session'}};
+  f.rows[5].payload.name=namespaced?'functions.exec_command':'exec_command';
+  f.rows[6].payload.output=running();
+  for(let index=0;index<pollCount;index++) {
+    const id=`poll-${index}`,call={type:'response_item',payload:{type:'function_call',name:namespaced?'functions.write_stdin':'write_stdin',call_id:id,arguments:JSON.stringify({session_id:sessionId,...(!omitChars?{chars:''}:{}),yield_time_ms:30000})}},result=structuredClone(terminal);
+    result.payload.call_id=id;if(index<pollCount-1)result.payload.output=running();
+    polls.push({call,result});f.rows.splice(f.rows.length-1,0,call,result);
+  }
+  f.rows[f.rows.length-1]={type:'event_msg',payload:{type:'task_complete'}};
+  return{...f,polls,sessionId,build(){
+    const b=f.build(),raw=b.read(b.session.transcript),lines=raw.toString('utf8').trimEnd().split('\n').map(line=>Buffer.from(line+'\n')),at=row=>{const index=f.rows.indexOf(row);return{offset:lines.slice(0,index).reduce((sum,line)=>sum+line.length,0),length:lines[index].length,sha256:identity(lines[index]).sha256};};
+    b.proof.polls=polls.map(({call,result})=>({call:at(call),result:at(result),toolUseId:call.payload.call_id}));
+    b.proof.toolUseId='pd';b.session.format='codex-session-json';
+    const capture=JSON.parse(b.read(b.session.capture));capture.nativeSessionFile=b.session.transcript.path;
+    b.session.capture=f.put(b.session.capture.path,JSON.stringify(capture));return b;
+  }};
+}
 function skillInjectionFixture(provider='claude-code') {
   const f=stdioProviderFixture({provider,command:'doctor'}),read=f.build().session.loadedReads[0],body='# Phoenix Diagram\n\n'+read.quote+'\n',source='---\nname: phoenix-diagram\n---\n\n'+body;
   Object.assign(read.file,f.put(read.file.path.replace('/.agents/','/.claude/'),source));
@@ -217,6 +238,47 @@ test('Codex typed outputs bind the observed native process wrapper exit to the c
     const f=stdioProviderFixture({shape:'function-native-output',exitCode:dtoExit,status:dtoExit?'failed':'pass'});f.replaceResult(f.dto,nativeExit);const b=f.build();
     assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/exit|inconsistent/i);
   }
+});
+test('async collector proof preserves the producer and every read-only poll ID through terminal DTO binding',async()=>{
+  const {checkProviderCapture,checkProviderReply}=await api();
+  for(const config of [{pollCount:1},{pollCount:2},{pollCount:2,namespaced:true},{pollCount:2,omitChars:true},{exitCode:1}]){
+    const f=asyncStdioProviderFixture(config),b=f.build(),capture=checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity});
+    assert.deepEqual(checkProviderReply(capture,b.proof,f.reply,b.read,{outcome:config.exitCode?'failure':'success'}),f.receipt);
+    assert.equal(b.proof.toolUseId,'pd');assert.equal(b.proof.polls.length,config.pollCount || 1);
+    if(config.exitCode)assert.throws(()=>checkProviderReply(capture,b.proof,f.reply,b.read),/exit|success|failure/i);
+  }
+});
+test('async collector proof rejects foreign, ambiguous, mutating and omitted process continuations',async t=>{
+  const {checkProviderCapture,checkProviderReply}=await api();
+  for(const fault of ['unknown-session','session-collision','duplicate-call','duplicate-result','missing-poll','extra-poll','stdin','null-chars','number-chars','actor','wrong-result-id','cross-id','running-dto','terminal-session','duplicate-dto','other-command','other-collector','stdout','original-bytes'])await t.test(fault,()=>{
+    const f=asyncStdioProviderFixture({pollCount:2}),first=f.polls[0],last=f.polls[1];
+    if(fault==='unknown-session')first.call.payload.arguments=JSON.stringify({session_id:46684,chars:''});
+    else if(fault==='session-collision'){const call=structuredClone(f.rows[5]),result=structuredClone(f.rows[6]);call.payload.call_id=result.payload.call_id='another-producer';f.rows.splice(7,0,call,result);}
+    else if(fault==='duplicate-call')f.rows.splice(7,0,structuredClone(first.call));
+    else if(fault==='duplicate-result')f.rows.splice(7,0,structuredClone(first.result));
+    else if(fault==='extra-poll'){const call=structuredClone(first.call),result=structuredClone(first.result);call.payload.call_id=result.payload.call_id='unclaimed-poll';f.rows.splice(7,0,call,result);}
+    else if(fault==='stdin')first.call.payload.arguments=JSON.stringify({session_id:46683,chars:'write to the running process\n'});
+    else if(fault==='null-chars')first.call.payload.arguments=JSON.stringify({session_id:46683,chars:null});
+    else if(fault==='number-chars')first.call.payload.arguments=JSON.stringify({session_id:46683,chars:0});
+    else if(fault==='actor')first.call.payload.name='functions.write_stdin';
+    else if(fault==='wrong-result-id')last.result.payload.call_id='another-native-tool-id';
+    else if(fault==='running-dto')f.rows[6].payload.output+=JSON.stringify(f.dto)+'\n';
+    else if(fault==='terminal-session')first.result.payload.output=first.result.payload.output.replace('session ID 46683','session ID 46684');
+    else if(fault==='duplicate-dto')last.result.payload.output+=JSON.stringify(f.dto)+'\n';
+    else if(fault==='other-command'){f.dto.argv[0]='validate';last.result.payload.output=last.result.payload.output.replace("\"finalize\"","\"validate\"");}
+    else if(fault==='other-collector'){f.dto.collector={...f.collector,path:'/fixture/other-collector.mjs'};last.result.payload.output=last.result.payload.output.replace(f.collector.path,f.dto.collector.path);}
+    else if(fault==='stdout')f.files.set(f.reply.path,Buffer.from('changed original CLI stdout'));
+    const b=f.build();
+    if(fault==='missing-poll')b.proof.polls.shift();
+    if(fault==='cross-id'){b.proof.result=b.proof.polls.at(-1).result;delete b.proof.polls;}
+    if(fault==='original-bytes')b.proof.polls[0].result.sha256='0'.repeat(64);
+    assert.throws(()=>{const capture=checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity});checkProviderReply(capture,b.proof,f.reply,b.read);},/async|native|collector|pair|tool|anchor|stdout|digest|bytes|command|argv|binding/i);
+  });
+});
+test('async collector support does not admit interrupted or incomplete provider sessions',async()=>{
+  const {checkProviderCapture}=await api(),f=asyncStdioProviderFixture(),b=f.build(),capture=JSON.parse(b.read(b.session.capture));
+  capture.exitCode=null;capture.signal='SIGKILL';capture.timedOut=false;b.session.capture=f.put(b.session.capture.path,JSON.stringify(capture));
+  assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/CLI\/version|missing|session/i);
 });
 test('Codex native process wrappers reject missing, duplicated or foreign exit prefixes',async()=>{
   const {checkProviderCapture}=await api();
