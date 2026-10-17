@@ -204,11 +204,12 @@ fn path_matches_declaration(
             }
             geometry::rounded_path(points, radius)
         }
+        Some(DiagramType::Lifecycle) if workflow_v2 => geometry::lifecycle_v3_path(points),
         Some(DiagramType::Lifecycle) => geometry::rounded_path(
             points,
             authored
                 .and_then(|v| v["cornerRadius"].as_f64())
-                .unwrap_or(if workflow_v2 { 12.0 } else { 10.0 }),
+                .unwrap_or(10.0),
         ),
         _ => geometry::polyline_path(points),
     };

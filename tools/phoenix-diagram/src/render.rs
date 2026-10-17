@@ -1,6 +1,7 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::geometry::{
-    finite_point, finite_rect, format_number as number, polyline_path, rounded_path,
+    finite_point, finite_rect, format_number as number, lifecycle_v3_path, polyline_path,
+    rounded_path,
 };
 use crate::input::{DiagramType, InputContract};
 use crate::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
@@ -621,14 +622,14 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         } else if scene.diagram_type == DiagramType::Architecture {
             rounded_path(&relation.points, 8.0)
         } else if scene.diagram_type == DiagramType::Lifecycle {
-            rounded_path(
-                &relation.points,
-                if legacy_lifecycle {
-                    facts["cornerRadius"].as_f64().unwrap_or(10.0)
-                } else {
-                    12.0
-                },
-            )
+            if legacy_lifecycle {
+                rounded_path(
+                    &relation.points,
+                    facts["cornerRadius"].as_f64().unwrap_or(10.0),
+                )
+            } else {
+                lifecycle_v3_path(&relation.points)
+            }
         } else {
             polyline_path(&relation.points)
         };

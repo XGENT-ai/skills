@@ -145,6 +145,7 @@ fn lifecycle_rendering_preserves_frozen_paths_primary_labels_and_state_markers()
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/lifecycle/oracle.json")).unwrap();
     let mut failures = vec![];
+    let mut adapted_paths = 0;
     for case in oracle["cases"]
         .as_array()
         .unwrap()
@@ -175,17 +176,64 @@ fn lifecycle_rendering_preserves_frozen_paths_primary_labels_and_state_markers()
                 .select(&selector("path[data-graph-role='edge']"))
                 .find(|e| e.value().attr("data-edge-key") == Some(edge_key))
                 .unwrap();
-            if !same_path(
-                edge.value().attr("d").unwrap(),
-                expected.value().attr("d").unwrap(),
-            ) || [
-                "class",
-                "stroke-width",
-                "marker-end",
-                "data-composition-junction",
-            ]
-            .into_iter()
-            .any(|a| edge.value().attr(a) != expected.value().attr(a))
+            let source_path = expected.value().attr("d").unwrap();
+            // The frozen source emits a 2px straight cap on these two self-loops.
+            let adaptation = match (
+                contract,
+                case["name"].as_str().unwrap(),
+                edge_key,
+                expected.value().attr("data-edge-id"),
+            ) {
+                ("phoenix-v1", "nested-arcs-and-self-loop", "4", Some("bb")) => Some((
+                    "M 338 94 L 338 76 Q 338 64 350 64 L 352 64 Q 364 64 364 76 L 364 94",
+                    "M 338 94 L 338 73 Q 338 64 347 64 L 355 64 Q 364 64 364 73 L 364 94",
+                    "338,94;338,64;364,64;364,94",
+                )),
+                ("phoenix-v1", "lower-parallels-and-loop", "6", Some("xx")) => Some((
+                    "M 162.5 248 L 162.5 270 Q 162.5 282 174.5 282 L 176.5 282 Q 188.5 282 188.5 270 L 188.5 248",
+                    "M 162.5 248 L 162.5 273 Q 162.5 282 171.5 282 L 179.5 282 Q 188.5 282 188.5 273 L 188.5 248",
+                    "162.5,248;162.5,282;188.5,282;188.5,248",
+                )),
+                _ => None,
+            };
+            let expected_path = if let Some((frozen, corrected, points)) = adaptation {
+                adapted_paths += 1;
+                assert_eq!(source_path, frozen, "{key}: frozen self-loop {edge_key}");
+                for element in [expected, edge] {
+                    assert_eq!(
+                        element.value().attr("data-composition-points"),
+                        Some(points),
+                        "{key}: unchanged self-loop points {edge_key}"
+                    );
+                }
+                let analysis =
+                    phoenix_diagram::check::path::analyze_svg_path(edge.value().attr("d").unwrap())
+                        .unwrap();
+                let runs: Vec<_> = analysis
+                    .subpaths
+                    .iter()
+                    .flat_map(|part| &part.straight_segments)
+                    .collect();
+                assert_eq!(runs.len(), 3, "{key}: retained self-loop runs {edge_key}");
+                assert!(
+                    runs.iter().all(|run| {
+                        (run.end.x - run.start.x).hypot(run.end.y - run.start.y) >= 8.0
+                    }),
+                    "{key}: self-loop run clearance {edge_key}"
+                );
+                corrected
+            } else {
+                source_path
+            };
+            if !same_path(edge.value().attr("d").unwrap(), expected_path)
+                || [
+                    "class",
+                    "stroke-width",
+                    "marker-end",
+                    "data-composition-junction",
+                ]
+                .into_iter()
+                .any(|a| edge.value().attr(a) != expected.value().attr(a))
             {
                 failures.push(format!("{key}: route/style/junction {edge_key}"));
             }
@@ -242,6 +290,7 @@ fn lifecycle_rendering_preserves_frozen_paths_primary_labels_and_state_markers()
         }
         if actual.select(&selector("[data-composition-frame-kind='lifecycle-band'][data-graph-role='structural-frame']")).next().is_some() {failures.push(format!("{key}: band became a structural frame"));}
     }
+    assert_eq!(adapted_paths, 2, "Only the two frozen 2px self-loops adapt");
     assert!(
         failures.is_empty(),
         "{} SVG failures:\n{}",

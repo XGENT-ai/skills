@@ -207,6 +207,129 @@ fn actual_html_is_checked_and_tampering_fails_independently_of_scene() {
 }
 
 #[test]
+fn automatic_lifecycle_waiting_self_loop_passes_showcase_rhythm() {
+    use phoenix_diagram::{
+        input::{parse_input, CompileOptions},
+        layout,
+    };
+
+    let document = json!({
+        "schema_version": 3,
+        "diagram_type": "lifecycle",
+        "meta": {
+            "title": "Waiting self-loop regression",
+            "output": "minimal.html",
+            "input_contract": "phoenix-v1",
+            "quality_profile": "showcase",
+            "locale": "en"
+        },
+        "mainPath": ["created", "waiting", "succeeded"],
+        "states": [
+            {"id": "created", "type": "start", "label": "Created"},
+            {"id": "waiting", "type": "waiting", "label": "Waiting"},
+            {"id": "succeeded", "type": "success", "label": "Succeeded"}
+        ],
+        "transitions": [
+            {"id": "enqueue", "from": "created", "to": "waiting", "label": "queued"},
+            {"id": "complete", "from": "waiting", "to": "succeeded", "label": "complete"},
+            {"id": "stay", "from": "waiting", "to": "waiting", "label": "resources unavailable"}
+        ]
+    });
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        quality: Some(Quality::Showcase),
+        ..Default::default()
+    };
+    let input = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Lifecycle,
+        &options,
+    )
+    .unwrap();
+    let scene = layout::compile(&input, &options).unwrap();
+    assert_eq!(scene.nodes.len(), 3);
+    assert_eq!(scene.relations.len(), 3);
+    let self_loop = scene
+        .relations
+        .iter()
+        .find(|relation| relation.from == "waiting" && relation.to == "waiting")
+        .unwrap();
+    assert!(self_loop
+        .points
+        .windows(2)
+        .all(|pair| { (pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y) >= 8.0 }));
+
+    let original = scene.clone();
+    let rendered = render(&scene, &EmbeddedAssets::builtin()).unwrap();
+    assert_eq!(scene, original);
+    let checked = check_html(&rendered, Quality::Showcase);
+    assert_eq!(
+        checked.composition["metrics"]["route_rhythm"], 0,
+        "{:?}",
+        checked.diagnostics
+    );
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+
+    let document = scraper::Html::parse_document(std::str::from_utf8(&rendered).unwrap());
+    let selector = scraper::Selector::parse(
+        "path[data-graph-role='edge'][data-edge-from='waiting'][data-edge-to='waiting']",
+    )
+    .unwrap();
+    let path = document.select(&selector).next().unwrap();
+    let analysis =
+        phoenix_diagram::check::path::analyze_svg_path(path.value().attr("d").unwrap()).unwrap();
+    let horizontal_runs: Vec<_> = analysis
+        .subpaths
+        .iter()
+        .flat_map(|part| &part.straight_segments)
+        .filter(|segment| (segment.start.y - segment.end.y).abs() < 0.01)
+        .collect();
+    assert_eq!(
+        horizontal_runs.len(),
+        1,
+        "The self-loop top run must remain"
+    );
+    assert!((horizontal_runs[0].end.x - horizontal_runs[0].start.x).abs() >= 8.0);
+
+    let tampered_path = phoenix_diagram::geometry::rounded_path(&self_loop.points, 8.0);
+    let target = format!(
+        "data-graph-role=\"edge\" data-composition-points=\"{}\" d=\"",
+        path.value().attr("data-composition-points").unwrap()
+    );
+    let original_path = format!("{target}{}\"", path.value().attr("d").unwrap());
+    let original_html = std::str::from_utf8(&rendered).unwrap();
+    assert_eq!(original_html.matches(&original_path).count(), 1);
+    let tampered = original_html.replacen(&original_path, &format!("{target}{tampered_path}\""), 1);
+    assert_ne!(tampered.as_bytes(), rendered);
+    let checked = check_html(tampered.as_bytes(), Quality::Showcase);
+    assert!(
+        checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "artifact/path-binding"),
+        "{:?}",
+        checked.diagnostics
+    );
+
+    let mut spacious = scene.clone();
+    let spacious_loop = spacious
+        .relations
+        .iter_mut()
+        .find(|relation| relation.from == "waiting" && relation.to == "waiting")
+        .unwrap();
+    for (index, point) in spacious_loop.points.iter_mut().enumerate() {
+        point.x += if index < 2 { -11.0 } else { 11.0 };
+    }
+    let expected = phoenix_diagram::geometry::rounded_path(&spacious_loop.points, 12.0);
+    let rendered = render(&spacious, &EmbeddedAssets::builtin()).unwrap();
+    let checked = check_html(&rendered, Quality::Showcase);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+    let document = scraper::Html::parse_document(std::str::from_utf8(&rendered).unwrap());
+    let path = document.select(&selector).next().unwrap();
+    assert_eq!(path.value().attr("d").unwrap(), expected);
+}
+
+#[test]
 fn body_only_transform_is_a_semantic_geometry_failure() {
     let original = String::from_utf8(html(&scene())).unwrap();
     let altered = original.replacen(

@@ -411,3 +411,38 @@ pub fn rounded_path(points: &[Point], radius: f64) -> String {
     ));
     commands.join(" ")
 }
+
+pub fn lifecycle_v3_path(points: &[Point]) -> String {
+    let mut radius: f64 = 12.0;
+    let lengths: Vec<_> = points
+        .windows(2)
+        .map(|pair| (pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y))
+        .collect();
+    let trims: Vec<_> = lengths
+        .windows(2)
+        .map(|pair| {
+            let trim = radius.min(pair[0] / 2.0).min(pair[1] / 2.0);
+            if trim < 1.0 {
+                0.0
+            } else {
+                trim
+            }
+        })
+        .collect();
+    let has_micro_run = lengths.iter().enumerate().any(|(index, length)| {
+        let before = if index > 0 { trims[index - 1] } else { 0.0 };
+        let after = trims.get(index).copied().unwrap_or(0.0);
+        let remaining = length - before - after;
+        remaining > EPSILON && remaining < 8.0 - EPSILON
+    });
+    if has_micro_run {
+        // Keep valid rounded paths unchanged and retain a visible run at each turn.
+        for (index, length) in lengths.iter().enumerate() {
+            let corners = usize::from(index > 0) + usize::from(index + 1 < lengths.len());
+            if corners > 0 {
+                radius = radius.min(((length - 8.0) / corners as f64).max(0.0));
+            }
+        }
+    }
+    rounded_path(points, radius)
+}

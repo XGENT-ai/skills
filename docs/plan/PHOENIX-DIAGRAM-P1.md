@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-17T10:29:16+08:00
+- 最近更新：2026-10-17T16:18:55+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：封存9fea失败六例、提交7845指南并启动新同源CI；新包六例passed后完成两host各22、四平台实图/精确Node18完整档、strict聚合及23AC
+- 下一步：冻结clean source并取得新同包CI/真实host各22；完成四平台实图、strict聚合/23AC后最终提交与单独SHA回填
 - 当前阻塞：无
-- 代码基线：本地7845B指南已针对9fea/Codex024非必要角色细化问题作最小修订，19源/dist同字节；input6e0d2b42/bundle6f9c1bbd，待clean提交与新同源CI。旧9fea/1787六capture自然0，已有独立Cl001/Cdx023/025 passed、Cdx024 failed，Cl002/003语义待回；余38未启动，六事实/图像/giant闸closed。维护Skill.args全文解析已双Node61/61，本轮完整npm469项447pass/22原skip、Python全绿。
+- 代码基线：Waiting自循环修复与指南补充已冻结：渲染/严格路径绑定共用canonical圆角生成，原points/语义/合格路径d及legacy规则保留，冻结oracle不改、仅两条错误微线段精确投影适配。先红后绿与完整维护检查已证；Node25轻量447pass/22原skip/0fail，Diagram Rust264pass/2原ignored、Node/Reader通过。新input146/b5a5f2f4、bundle19/15aaeacd；开发引擎已构建，两原候选和最小例各validate/finalize自然0、四门全pass，完整scene与原baseline相等，12PNG实际查看。当前仅开发回归，视觉正式状态仍pending；待clean source提交与新最终CI/真实host复验。af2已封存为历史，不得冒用为新包最终证据；M7仍待同包四平台、各22、strict聚合和23AC。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-17T10:29:16+08:00 | 旧9fea六例中Cdx024角色细化failed；7845指南/Skill.args维护修复与完整npm绿，待新clean同源CI，图像闸closed | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770 |
+| M7 | 进行中 | 2026-10-17T16:18:55+08:00 | 自循环与指南修复本地检查已过：Rust264/Node447及既有skip；开发3例四门与12实图已复验，同包CI/各22/最终聚合待齐，af2已历史封存 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770 |
 
 ## 0. 需求、范围与决策
 
@@ -419,7 +419,7 @@ consume jobs 四个平台都从 tgz 中运行 npm bin→bootstrap→native insta
 
 Mermaid 是宿主的语义输入，不新增 Rust Mermaid parser：flowchart/graph 映射 workflow 或组件 architecture；sequenceDiagram 保留参与者、消息方向及同步/异步；stateDiagram 映射 lifecycle 并保留主路径、等待与恢复边。schema 不支持或事实不明时报告缺口，不造参与者、条件、日期或金额。示例结构不能成为私有事实。保留用户主要语言和代码/产品标识；P1 不声称五种界面语言已验收。
 
-修复依据 diagnostic subject/evidence/supportedFixes，只编辑相关布局邻域，语义清单、来源与必要文本保持。维护历史最佳客观错误数；连续两轮不优于历史最佳即停止并列未解决项。视觉纠正按实际观察，改 candidate 后旧证据失效，重跑受影响检查并采集新证据。缺工具/图像能力时只如实交付可用文件与未完成门，不安装、不手工造一份被称为 Rust 校验通过的替代图。
+修复依据 diagnostic subject/evidence/supportedFixes，只编辑相关布局邻域，语义清单、来源与必要文本保持。维护历史最佳客观错误数；连续两轮不优于历史最佳即停止并列未解决项。同一失败门保留可比较的历史；前门实际通过后首次进入后门属于进展，但重建交付、返回已记录门或改变错误种类均不重置该门历史，不给环境失败无限重试。视觉纠正按实际观察，改 candidate 后旧证据失效，重跑受影响检查并采集新证据。缺工具/图像能力时只如实交付可用文件与未完成门，不安装、不手工造一份被称为 Rust 校验通过的替代图。
 
 ### 6.2 阅读界面与状态
 
