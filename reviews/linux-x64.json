@@ -1,0 +1,1163 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-candidate-review",
+  "repository": "XGENT-ai/skills",
+  "runId": "38995144713",
+  "target": "linux-x64",
+  "nonce": "a8c6037f0462383a80ef97e3662e009c",
+  "stateSha256": "de109392c99ba497e1382d0ffa78e4dd54ae0a2dde4e8313ff6c124512114d9b",
+  "candidateSha256": "a1e1591ae86d3a902b996a301898014624ead0b9d65f90c367bc8d5f281aa0c1",
+  "sourceCommit": "af2b770693cd5382a06fad0456c8351d84785350",
+  "records": {
+    "new-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/diagram.html",
+        "identity": {
+          "sha256": "92931b14cdf1c4e4325b4a4c165e519e455e1415eb90677877a9e70d4a9b345f",
+          "bytes": 943854
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/candidate.json",
+        "identity": {
+          "sha256": "af2adbcf0f7a8ed531236a10489938063dfd33d497085219481a83fe8a7113d7",
+          "bytes": 552
+        }
+      },
+      "configSha256": "a431f5949d4f5146a1c5b7a01d3164606391078499ecc313ef1a2821632b5454",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "a933b758-8bcb-4178-b4c4-262740ac6bc4",
+      "browserReceiptIdentity": {
+        "sha256": "e3c9651b8d1d6d19f30078954a5692573dba8b65622f312516d3bf94363d9aab",
+        "bytes": 430801
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "d7f4fa17ebe05aab23d63d1b16f54aa54253cd199da5fe868af539d83219846b",
+              "bytes": 49542
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色原图已查看。Client 与 Service 两节点、上方 Request 标签及指向 Service 的右箭头清楚，没有文字或连线遮挡。两列层级明确，左下 Frontend/Backend 图例、两项节点索引完整，dock 在右下独立区域，顶部控件完整。 已对照本轮 af2 原输入：两个组件、Client→Service 的 Request、两列及无作者卡的事实一致。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "74e1c6b04477248041b8a9d3b66f3b8527796da67fc0b7b5a3bfe16e80106280",
+              "bytes": 50175
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色原图已查看。青色 Client/绿色 Service 的名称、Request 标签和灰色右向箭头可读；节点与关系层级清楚，没有交叠。画面没有作者说明卡，两项索引和两类计数图例完整；顶部和底部控件均未盖住内容。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "c66a078e564527bcd28b5fcef55944d1d59ef8e4ef847e7bf23e8304311ce37d",
+              "bytes": 57873
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。两个节点和 Request 单边完整，箭头端点明确，文本没有被节点边线压住。Frontend 1/Backend 1 图例与两项 Node index 可读，画面无作者卡；dock 与图例分开，上方控件及页尾完整。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "ff3b5a90b00afd073a214de0f2ef60dc5390e0ed331f56f9ea5bf935f3e3b065",
+              "bytes": 59505
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。Client、Service 和 Request 文字均可辨，单箭头向右，层级清楚，无关系交叠。两项节点索引及左下图例完整；图例、dock 与顶部导出/Still 等控件没有相互遮挡，长图底部没有裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/diagram.html",
+        "identity": {
+          "sha256": "90c85e6d797e5c56dbc9c03714881d50b163fb3e9efdd5385c4917046dcd9510",
+          "bytes": 960369
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/candidate.json",
+        "identity": {
+          "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+          "bytes": 3793
+        }
+      },
+      "configSha256": "554561b4636080c31ae6a048fe1ce0ed898fdfc98e4325b7a5fc66c16339476d",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "88a887d7-74f8-43ae-a7cf-c59fb69446c4",
+      "browserReceiptIdentity": {
+        "sha256": "5056a5c78f3b587cfa4be461fa2f21231b3ea7beed3240ac8bb691761f30f3e6",
+        "bytes": 1786396
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "6ce1e9f3331959c65c3b5f3f8cbe52736413435bc9a23c74d6570935fa4c21d5",
+              "bytes": 146930
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色完整长图已查看。画面十组件与九条连接均能追踪，主链右行，static/enqueue 下行，JWT 红箭头指入 API、缓存灰箭头指向 Redis；短共享竖段的相反方向仍可辨。AWS/sg-api 标题清楚，内外组件层级明确。三卡七条、十项索引和六类图例完整，dock 没有覆盖图例。 已对照本轮 af2 原输入：十组件、九关系、AWS 八对象/sg-api 两对象层级与三卡七项一致；特别 API→Redis read-through 与 Auth→API verify JWT 方向可辨。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "a4584478ba117a2dad9a78df22a4a127df5e955fa4fe91ede9045cd3f0d6d9f7",
+              "bytes": 157537
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色长图已查看。节点名称/副标题及 HTTPS、verify JWT、read-through、SQL、static、enqueue 标签可读；红 JWT 下向与灰缓存上向箭头清楚，AWS 与 sg-api 范围可辨。三张说明卡含 OAI/JWT+PKCE 等文字，十项索引完整；External 1 图例显示完整，与右下控件分离。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "966d8790357217c9283a6a7cdff2d79a0828b147e68748a81b022365d9838597",
+              "bytes": 186883
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。十组件及主链/认证/缓存/静态/异步路径清楚，九连接端点与方向可辨。JWT 横线经过 AWS 标题区域，但标题底板文字仍可读，sg-api 标题和内部两节点未遮挡。三卡七项、十节点索引和六类图例全部显示，dock 位于下方独立空区。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "a4006f981ea651a00a71a3f36d3273fb07aef292663f430714a7d7ef5355d870",
+              "bytes": 205121
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。Auth/Users 与 AWS 内组件层级清楚，sg-api 标题可读；JWT 下行和 read-through 上行在相邻短段仍有清晰箭头区分，其余主链与两条下行支路可追踪。三卡、十项索引及完整六类图例均可见，工具栏和页面边缘没有裁切或覆盖。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/diagram.html",
+        "identity": {
+          "sha256": "a60c9e8af387cb65855f1e7e4bc95ff4a4bebad3aa826bbc18beec0e4107af14",
+          "bytes": 943279
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/candidate.json",
+        "identity": {
+          "sha256": "e2421e77955c3b4e9bf225b9f1e50f1cf3d2304d85b2420f3c87b7c2448ccb87",
+          "bytes": 608
+        }
+      },
+      "configSha256": "c44df891617030c21ff144bfd9abb70653360baba93d540391b7e7aa6a31bfab",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "7bf28d01-249f-4816-a152-c28f685c9db8",
+      "browserReceiptIdentity": {
+        "sha256": "96cac629184fc486cc4d86315ec78d73d9e7006a2aa2e733b8658f4d5c568d4d",
+        "bytes": 454781
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "fd1389620a4f32f5c84503589c5247cd831755e2a1dda2cf1ac5dba360397bc4",
+              "bytes": 50265
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色图已查看。01/Work 泳道、Prepare/Complete 两节点和 Continue 标签清楚，灰色箭头由 Prepare 指向 Complete，端点未被底板遮住。画面无作者说明卡，两项 Node index、Agent logic 2 图例完整；顶部与底部控件未裁切。 已对照本轮 af2 原输入：Work 单泳道、Prepare→Complete 的 Continue 主路径及无作者说明卡一致。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "0d49b3c1f155d5fc86ac41f59231ffd786cd8f38d1530ac913aaf70ea6959dc5",
+              "bytes": 52947
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色图已查看。单泳道中的两个绿色节点、Continue 单关系及右向箭头完整，主路径层级清晰，没有节点/标签交叠。两节点索引和图例可读，图例与 dock 分开，全部顶部/底部控件显示完整。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "312105dc5ae7cdbda67cb641c1449e80fa7988007e0d580b374a7ba1ccfaff4c",
+              "bytes": 64250
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色原图已查看。Work 泳道名称、Prepare、Complete 及 Continue 均清楚，唯一箭头右行且终点可见。无作者卡片，节点索引两项与 Agent logic 2 计数完整；固定工具栏位于右下空区，未遮住主图或图例。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "aeedd2fd3d905841b8c85bf08813eca94b51fc164c051f541d2b4cb807d01105",
+              "bytes": 69310
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色原图已查看。Prepare→Complete 的关系、Continue 标签和单泳道层级可辨，没有遮挡或箭头混淆。两项索引完整，画面无作者卡；左侧图例、右下 dock 及顶部主题/Still/导出控件均完整可见。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/diagram.html",
+        "identity": {
+          "sha256": "1e7e28a0253d6b265a638bee2c9b69e719647aa734cfbad3db333f75090a8c11",
+          "bytes": 969697
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/candidate.json",
+        "identity": {
+          "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+          "bytes": 5687
+        }
+      },
+      "configSha256": "f1e43cce35e32e721a5bb25953695f652230f2b94e819d3aa5256395ff8e281a",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "8a9caa87-fbaa-4c09-a83a-369688a7ab24",
+      "browserReceiptIdentity": {
+        "sha256": "a797d97c44bf232c6e5526928468c968df2d0f1894662aaf12ab9b575fdec4ac",
+        "bytes": 2176526
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "d8bdcc105f915429764279dde3748f3d064d665d23df1deaf7e103aebeea621f",
+              "bytes": 407251
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色完整长图已查看。画面十二节点、四泳道、三阶段和四个分组可辨，主链从 User 经计划/路由/审批/工具到 External，再沿右侧返回 Final Reply。denied 支路向上入 Blocked、Blocked→Retry 及两路入 Trace 的箭头清楚；审批短共享段未妨碍区分。两卡四项、十二索引项和七类图例完整，dock 无覆盖。 已对照本轮 af2 原输入：十二节点、十一关系、四泳道/三阶段/四分组、两卡四项均一致，执行与拒绝支路及返回/证据方向完整。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "6dfd1e8935f1cc9276eebf9828abd395265330ca3f649c2360f611ad27446644",
+              "bytes": 436346
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色长图已查看。plan、needs approval?、denied、trace + memory 和 record result 均可读，主路径、拒绝支路、外部返回与底部证据回流端点可追踪。四泳道、三阶段、各分组层级清楚。两张说明卡和十二项节点索引完整，图例在工具栏上方全部显示，控件无裁切。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "c32c869f8ea70a6c7dc1ea68f9ea95b014b71e579cff2ec25f51ae1a63636d79",
+              "bytes": 529364
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。十二节点名称/副标题清晰，十一关系方向可辨；Approval 的绿色执行边与红色 denied 支路、External→Final 右侧返回与 External→Trace 底部回流互不混淆。各泳道/阶段/分组标题可读，两卡四条与十二索引项完整，七种图例未被 dock 遮挡。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "8b1c5258bec22987bf18b3c5c2c2e4f1b4fe988ee9556f79430e642359beaed5",
+              "bytes": 578081
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。十二节点、四泳道、三阶段及四分组清楚，执行、审批拒绝、修订、记忆与记录结果路径均能追踪；无箭头或关系标签被节点挡住。Compiler Contract/Runtime Semantics 两卡及十二节点索引完整；图例和 dock 分开，顶部/底部控件没有裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/diagram.html",
+        "identity": {
+          "sha256": "035eb671ac548825cbf1317c75fd13a82db14a9fca183bef7c650f43d08fcb6b",
+          "bytes": 939924
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/candidate.json",
+        "identity": {
+          "sha256": "f3a87f15792cf20071ab01887ccc1761a6528adbee7161453e59f5eaad845d85",
+          "bytes": 583
+        }
+      },
+      "configSha256": "e78d0c85851afca84fadc9a023885f6659769e4d27cc0af39f987cf419ab2c47",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "afa27f70-a48e-4c26-9d2f-cb8dffc18f90",
+      "browserReceiptIdentity": {
+        "sha256": "68ea1d3415bb0586d7f010c2c05a237c699829492c6636a950fc33b1483c1c92",
+        "bytes": 473973
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "af357ee62da8d71724e3bd8996a41f71c9afe7f1a53ebe43cc45d46b6eab6901",
+              "bytes": 49150
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色原图已查看。Client/Service 两参与者、生命线及 Request/Result 两消息完整；Request 实线向右、Result 虚线向左，顺序和端点清楚。无消息文字遮挡，画面无作者卡，两项节点索引及 return/message 图例完整，dock 独立。 已对照本轮 af2 原输入：Client/Service 两参与者、Request 请求及 Result 返回的顺序/方向、无作者说明卡一致。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "020d55efbae5e65ed4a10d1e463feec3892fc0e435b37dc22bb1829d0fd58b26",
+              "bytes": 49818
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色原图已查看。参与者名、两条生命线和两个消息标签可读，请求入 Service、返回回 Client 的箭头明确，线型可区分。两项索引和图例完整，画面无作者卡；上下控件未遮住关系或文字。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "24c4fcdb8abbed3df03e8c220abb0098b048d7cd7b54c277167bf59de978f124",
+              "bytes": 57490
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。两参与者与上方 Request、下方 Result 完整，实线右行与虚线左行的关系没有交叠或误读。两项节点索引和两类线型图例可读，画面无作者说明卡，顶部控件与右下 dock 无裁切。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "970e71f8c9921da4be2ea977197dfb2b357fe99b12a4651e7142891e0af6c846",
+              "bytes": 58728
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。Client、Service、Request、Result 全部可读，生命线层级及请求后返回的时间顺序清楚；没有箭头或标签被遮住。两项 Node index 完整，左下图例和右下工具栏互不覆盖，上方控件也完整。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/diagram.html",
+        "identity": {
+          "sha256": "4fb95d925cd48deb1f2e19df103d0963017dc447d95b694bc688d1b6b85cbfb3",
+          "bytes": 965742
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/candidate.json",
+        "identity": {
+          "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+          "bytes": 4370
+        }
+      },
+      "configSha256": "3b27ad012cb562fbbf9a607f420613ecccd6b2d0575ee149c526f8ca878bc320",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "b733ba95-f425-4750-ba53-4187d5e75079",
+      "browserReceiptIdentity": {
+        "sha256": "a4bb20d7feceff811a21e4b2c748f7ca7119af0170ea0b41e8bad6f90f7e9c04",
+        "bytes": 1810794
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "e80ba21caa240b47e0b029888e9512e7e7c4c948701786454e95bfdbe1c13041",
+              "bytes": 410491
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色完整长图已查看。七参与者/副标题、Accept/Background work/Notify + reconcile 三段、十四消息和七激活区可辨。202 在后台工作前返回，timeout retry 回 Queue、持久化后通知与 webhook/状态查询两条观察路方向清楚。三张卡九项、七项索引完整，图例与 dock 分开。 已对照本轮 af2 原输入：七参与者、十四消息、三分段、七激活区与三卡九项一致，202 快速确认、重试入队、先持久化后通知及两条观察路径方向正确。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "3c391059321b4237af1bc4a7041d983aac936d24fc79d54d192886d2eef8d130",
+              "bytes": 443306
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色完整长图已查看。十四消息文字和各箭头可读，Worker→Queue 的重试、Notifier→Client 的 webhook、Store→API→Client 的状态返回均向左；生命线与激活区能追踪，分段层级清楚。三卡九条、七节点索引和四类线型图例完整，没有被工具栏遮挡。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "554a5c19dfa7e07b159c31f9b995a2f1dd51e2c062f0e6d1c4e7a414441c71cd",
+              "bytes": 560563
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色原长图已查看。七参与者、三分段、十四消息顺序及七激活区全部可辨；POST/enqueue/202、工作/重试、persist/job.completed/webhook 与 GET/read/completed/200 各路径清楚，无文字交叠。三张说明卡九项和七项节点索引完整，dock 在图例下方有独立空间。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "c4ea61d2af1b4f2ff83f8328180f2224e0d7007c750b73144b430645a850a9e3",
+              "bytes": 607059
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整长图已查看。请求、返回、异步通知及重试的端点与线型均可辨，十四消息文字未被激活条压住，七参与者与三段层级完整。三卡九项、七节点索引和图例均显示完整；顶部控件、dock 与长图尾部无裁切或覆盖。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/diagram.html",
+        "identity": {
+          "sha256": "f78ee7364b5bfecb9ab9f5668558a7d2d681e985fd059e7b1c5a2d5b75d2eeb2",
+          "bytes": 939231
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/candidate.json",
+        "identity": {
+          "sha256": "f773be76cbb4618e8e1209c634209621f7db9707d5dcc9305555e4be46206865",
+          "bytes": 558
+        }
+      },
+      "configSha256": "f93b5fbe147a84c5fc222cda65a6b286b3feb27e9d8fffe4d43cd1fd3e6de70e",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "94c58785-4ea1-4747-a24c-e29cdee0907e",
+      "browserReceiptIdentity": {
+        "sha256": "cc3b19c2b6164743f0425acca00d36c28baa46a80806584ac6595d50b5bd6101",
+        "bytes": 467535
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "f6c93b13162bf8e82ee158ff6a1542daec0a8ddcc1be13ffd5d11f0b098f1936",
+              "bytes": 56303
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色原图已查看并对照 af2 原输入。Source/Process 两阶段、Input store/Transform 两节点和 records 右向数据流一致，标签与箭头可读，无关系遮挡。无作者卡，两项节点索引完整；左下图例、右下 dock 与顶部控件互不覆盖。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "93c71c2fb67c97cfb1bbede7a8443e1445b0fd260174576bff0f3a8d958595e3",
+              "bytes": 56854
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色原图已查看。两阶段标题、紫色 Input store、绿色 Transform 与 records 唯一箭头均可辨，数据从存储向处理右行，没有节点或文字交叠。无作者说明卡，两项索引及图例完整，顶部/底部控件无裁切。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "5c744870a04889e467d8077ea45d2e413e42d56af96408e3a16b39519aa7ddcb",
+              "bytes": 64716
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。Source→Process 层级、Input store→Transform 的 records 边完整，箭头端点清楚。无作者卡，data store/data flow 图例和两节点索引全部显示；dock 位于独立右下空区，页面底部完整。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "b5b9975d3ce0f57a97ded83bf4e8bde15f9145f2741629c5935bf26923293bd4",
+              "bytes": 65845
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。两个阶段、两个节点及 records 文本/箭头清晰，方向与本轮输入一致，没有额外分支或线遮字。无说明卡，Node index 两项完整；图例、固定工具栏与顶部主题/Still/导出控件完整可见。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/diagram.html",
+        "identity": {
+          "sha256": "bbc4a3d5c8f0d39d23a2a28dfb011a4971879fc2afd060db746d1a9b2496e418",
+          "bytes": 969782
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/candidate.json",
+        "identity": {
+          "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+          "bytes": 5618
+        }
+      },
+      "configSha256": "a80507b10ba6e60f69e2d5c1d4672e1a857e3cbbf1eeef0bf160802055f1d779",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "48bdb96e-df85-4eea-9922-04f1c858f9d3",
+      "browserReceiptIdentity": {
+        "sha256": "c4bae516f7bf89b3df680ea5da127a31e00267c3f12952e5fcbf5b5706f2f6e9",
+        "bytes": 2567692
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "3e6ba3d6328a4eaad15ffed99138f8f4c7b62c0501b7f5d69651eaaf84b3c82a",
+              "bytes": 173100
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色完整原图已查看并对照 af2 输入。五阶段、十节点名称/副标题与十条流的标签/classification 一致，两个来源入 Edge、consent/PII 支路、流处理入仓和后续查询/批处理方向清楚。入 Edge 的短汇合段可追踪来源；三卡九项、十索引项完整，五类图例与 dock 分离。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "5e7543f6cc644a0e819cfd14dcfff1917003846137dbb8ed99e5e350ca96f7d0",
+              "bytes": 182472
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色长图已查看。clickstream/app events、identity+consent、identity map、accepted/normalized facts、daily aggregates、metrics SQL、feature vectors 和 restricted join 均可读，箭头方向清楚。五阶段层级与十节点完整，Warehouse 下行至 Feature Store、查询上行至 Dashboards 不混淆。三卡、十索引项及图例完整，控件无遮挡。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "00091aa46390e6aefdd580064eef98a6814c2dc6fc12cc8913882f4b1d2563ee",
+              "bytes": 216938
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整长图已查看。十节点主/副标题、十流数据名和分类文字清楚；红色安全支路、绿色主数据、紫色批处理与灰查询分开可辨，端点和箭头与输入一致。五阶段完整，三张卡九条和十项索引无遗漏；图例与右下工具栏有独立空间。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "fba4c0fcb8e50953daafb0a33ed28a44b793eb16fcd0aa0db7dcedc5ebab8a6f",
+              "bytes": 231147
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。五阶段、十节点和十流的方向/标签/classification 均可辨，approved-only join、非PII规范化数据及派生特征路径含义清楚，无遮线误连。三张说明卡九项、十节点索引和五类图例完整；dock、顶部控件与长图尾部无裁切覆盖。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "466a002a3957835f2b536381543c6f7fac1bec92ad29beb647e11a105ae2f13f",
+          "bytes": 939605
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "aa09cfb1cbff35d1d31cef5babd9dd74a6cd8568e92e86d429aeaa74c493dae8",
+          "bytes": 496
+        }
+      },
+      "configSha256": "935fd4b80d68f056c0332fa5934bda6d9444d267d83164801bf28caf89b62dc9",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "4a56e318-58a2-4475-be46-6108d76c664b",
+      "browserReceiptIdentity": {
+        "sha256": "50e4670e26e0c1631dce7e46c14c078e6d41982e5aafb7b0987648ac500d027b",
+        "bytes": 452045
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "330448641040a25e66206854cb949db7e5ad08fd50caa05ef674d221333387f6",
+              "bytes": 50914
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色原图已查看并对照 af2 输入。初始圆点入 Created、Finish 右向转到 Complete，成功状态双边框/图标清晰；两状态一转换一致，没有关系遮挡或标签丢失。无作者卡，两项索引和三类图例完整，dock 与顶部控件无遮挡裁切。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "66a6b6be64bfe2239faa5ed78073b50e43675e86a2eb4808b88ac81f22dd0522",
+              "bytes": 51861
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色原图已查看。Created、Complete 和 Finish 文字清楚，初始提示、绿色右向转换与双框终态可辨，层级明确，无节点边框压住标签。无说明卡，两项索引完整；左下图例、右下工具栏和顶部控件各有独立空间。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "d3611fcf0377972be33c33de7936de9e914a4363afb4dce3203f626cdc66e346",
+              "bytes": 59520
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色完整原图已查看。两状态及 Finish 主边完整，箭头明确入 Complete，初始点与终态双框提示没有缺失。无作者卡，initial state/success/final state 图例及两项索引完整，dock 没有覆盖主图或图例，页尾完整。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "cb7250bba0556073955a34940e53bf8c69156c1d09255cc94ba4379e938b0e45",
+              "bytes": 60977
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整原图已查看。Created→Complete 的 Finish 方向与本轮事实一致，节点名和关系名可读，开始及成功终态含义清楚，无交叠遮线。无作者说明卡，两节点索引和图例完整；顶部/底部控件及长图底部均未裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "68f18f0302cfdecd7cc59456b6a236fae06ab352defb3193bff2d50149b85837",
+          "bytes": 963120
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+          "bytes": 4274
+        }
+      },
+      "configSha256": "fa816d1cd137a3459d9bee5316817db787808a76f9d86977c203cf90860f5a95",
+      "engine": {
+        "sourceInputSha256": "6e0d2b4261d49198c3414aa176a818621ef2173e9c4d69a8d35a5f5699b0c743",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "d026c589f699adfa7e708d4a7b797fcf69300f552052330b8595e47c3d7ef522",
+          "bytes": 15160648
+        }
+      },
+      "deliveryReceiptId": "087563f8-3163-47ab-bc42-8796237f4dff",
+      "browserReceiptIdentity": {
+        "sha256": "0ba5486d60274cbe338a8a6e4827e123f32a20fc734ffbd1b026879314cd8f86",
+        "bytes": 1983816
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "ee359c056518aab291a4cff466ece904bbeaec7b435cb046ca9fd3f41dcb8585",
+              "bytes": 367647
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 亮色完整长图已查看并对照 af2 输入。十一状态/副标题、五阶段主轨及中层等待/回滚与终结层清楚；Verifying→Needs Approval→Cancelled、Ready→Rolling Back→Failed、Live→Health Paused→Rolled Back 六条下行转换端点明确。三卡九项、十一索引项和六类图例完整，dock 未盖住文字。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "29c0e449645b9e4d8a4e605fe159eb70a75ed27fe2226ddf7e0f28d477839a4b",
+              "bytes": 408554
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 1440 暗色完整长图已查看。Queued 到 Live 五阶段顺序、中层审批/回滚/健康等待及底层三个终结结果可辨，六个箭头均向下，层级标题和状态名没有被线遮住。三张说明卡九条、十一节点索引完整，六类图例与工具栏分离，顶部/底部控件无裁切。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "6feebf3eed4e38ccff134a66ed145e7d1e647aeb043441cc13df996af0445a87",
+              "bytes": 450811
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 亮色原长图已查看。十一状态主/副标题、五阶段轨道及等待/回滚控制中层说明完整，审批拒绝、回滚失败和暂停后恢复三条二段支路方向清楚，与原输入一致。三卡九项、十一项索引及 start/active/waiting/decision/success/failure 图例完整，dock 位于独立右下区域。"
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-luh0go/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "94991530cd4974106d382efde4146c2ec3f3a3d126877264d5c7a21e4cd6bf7d",
+              "bytes": 511001
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "本轮 Linux x64 2048 暗色完整长图已查看。十一状态与三层含义可辨，六条显式转换方向和失败/恢复终点清楚，无关系交叠造成文字或箭头丢失。三张说明卡九项、十一节点索引及六类计数图例全部显示，固定工具栏、顶部控件和长图尾部没有遮挡裁切。"
+        }
+      ],
+      "reviewer": "Codex agent /root/diagram_composition (actual linux-x64 PNG review)",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    }
+  }
+}
