@@ -17,7 +17,7 @@ description: '用于其他 App 接入 XGENT Task Gateway 完成异步任务，�
 | --- | --- |
 | 用户代表调用、后台 SA、manifest 与换票排错 | [references/authentication.md](references/authentication.md) |
 | HTTP 提交、持久化、幂等、状态、取消、回调、重试 | [references/task-api.md](references/task-api.md) |
-| 新接 VM/CLI/API 执行能力、任务一直 pending 或领取后失败 | [references/workers.md](references/workers.md) |
+| 新接 VM/CLI/API 执行能力、SSH 部署能力确认、任务一直 pending 或领取后失败 | [references/workers.md](references/workers.md) |
 | 明确接入 workflow 引擎动作目录、placement/lease 或运行中止 | [references/workflow-actions.md](references/workflow-actions.md)；先核验引擎专用身份 |
 
 实施普通 App 接入时读取前两份；已有执行服务时不用改节点部署。
@@ -56,4 +56,4 @@ description: '用于其他 App 接入 XGENT Task Gateway 完成异步任务，�
 
 ## 契约维护依据
 
-本包按 `xgent-ai-task-gateway` 提交 `5e90da9`（2026-10-16 核对）编写，可整目录移到其他 App 使用。引用的源码路径是维护线索，不是运行依赖。若能访问更新源码，优先核对 `gateway/src/portal/{gate,tasks,routes}.rs`、`gateway/src/portal/workflow_actions/`、`gateway/src/agent/config.rs` 和 `proto/src/gateway.proto`；其次参考 `docs/API.md`、`docs/portal-app-contract.md`、`docs/PORTAL-APP-INTEGRATION.md`。部署可能落后于源码，需通过目标环境验证能力。
+本包任务接入契约以 `xgent-ai-task-gateway` 提交 `5e90da9` 为基线（2026-10-16 核对）；SSH 接入说明已核对 `aeca179`（1.9.3，2026-10-17）。可整目录移到其他 App 使用。引用的源码路径是维护线索，不是运行依赖。若能访问更新源码，优先核对 `gateway/src/portal/{gate,tasks,routes,onboarding}.rs`、`gateway/src/portal/workflow_actions/`、`gateway/src/agent/config.rs` 和 `proto/src/gateway.proto`；其次参考 `docs/API.md`、`docs/portal-app-contract.md`、`docs/PORTAL-APP-INTEGRATION.md`。部署可能落后于源码，需通过目标环境验证能力。

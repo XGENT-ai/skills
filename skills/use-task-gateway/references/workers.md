@@ -8,9 +8,17 @@ App 调用 `service_name`，节点反向领取该服务队列；普通任务请�
 
 租户管理员创建 `POST /v1/services`（`task_gateway.admin` + 用户 admin role），填写展示名、描述、可选 template_id 和超时；保存服务器返回的真实 name，创建体中的 name 不用于指定物理名。服务 `provisioned=false` 时用 `POST /v1/services/{name}/provision` 修复队列，无需重复创建。
 
-手工接入由管理员用 `POST /v1/node-tokens` 为该机的完整服务集合签发 Node Token，凭据只展示一次。若使用门户自动 SSH 部署，平台须先启用部署能力、准备模板，并由机器所有者完成 SSH/主机指纹信任；不要把“接异步任务”默认扩展成 SSH 部署。自动部署会按保存快照生成完整 agent 配置并重启该机 agent，可能覆盖手工 YAML；当前服务 PATCH 只改展示名/描述，不是 executor 更新接口。
+手工接入由管理员用 `POST /v1/node-tokens` 为该机的完整服务集合签发 Node Token，凭据只展示一次。
 
 先确认服务在线节点，再验证实际任务。缺 VM、依赖服务或容器时请求用户/运维提供环境，不擅自拉镜像或安装。
+
+## SSH 自动部署的能力确认
+
+需要新增机器且选择 SSH 自动部署时，先用具有 `task_gateway.read` 的 TDT 调用目标 Gateway 的 `GET /v1/onboarding`。HTTP 成功且信封 `ok:true` 后，读取 `data.auto_deploy`；鉴权或请求失败不能当成能力关闭。`auto_deploy=false` 时向网关维护方提供实际环境和版本，按用户选择使用手工接入或等待开通；不要把“接异步任务”默认扩展成机器部署。
+
+1.9.3 的打包配置默认启用 SSH 部署，根密钥由**网关自己的 manifest** 声明生成，并由支持该能力的门户在同一部署复用。调用方 App 不声明或持有网关根密钥。正常开通和升级由网关维护方通过 manifest、新镜像与发布链完成，不要求管理员登录系统手改环境，也不能通过重新生成存量密钥绕过故障。目标门户和网关仍须完成对应升级与发布；新版 skill 或本地 onebox 验证通过不代表线上能力已开启。
+
+能力确认后仍需准备目标服务/模板，并由机器所有者安装租户 SSH 公钥、核对目标主机指纹。自动部署会按保存快照生成完整 agent 配置并重启该机 agent，可能覆盖手工 YAML；当前服务 PATCH 只改展示名/描述，不是 executor 更新接口。五步向导可见只证明入口可用，实际部署成功还须确认 agent 上线并完成真实任务。
 
 ## 最小多服务格式配置
 
