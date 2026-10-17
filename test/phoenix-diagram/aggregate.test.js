@@ -142,6 +142,33 @@ test('Claude native Skill loading binds the complete adjacent synthetic owned SK
     assert.equal(checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows}).capture.exitCode,0,mode);
   }
 });
+test('Claude Skill args bind only the exact native argument suffix after the complete owned body',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const args of ['画账号恢复流程，部分条件未说明。','原题的压缩改写\n保留原参数尾换行\n']) {
+    const f=skillInjectionFixture();f.rows[1].message.content[0].input.args=args;
+    f.injection.message.content[0].text+='\n\nARGUMENTS: '+args;
+    const b=f.build();assert.equal(checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'missing-condition',sessionId:b.session.id}]}).capture.exitCode,0);
+  }
+});
+test('Claude Skill args reject invalid input shapes, altered suffixes and trimmed owned bodies',async t=>{
+  const {checkProviderCapture}=await api();
+  for(const fault of ['empty','null','number','array','object','extra-key','different-args','missing-suffix','extra-suffix','newline-count','trim-body'])await t.test(fault,()=>{
+    const f=skillInjectionFixture(),input=f.rows[1].message.content[0].input,args='原条件仍需澄清';input.args=args;
+    f.injection.message.content[0].text+='\n\nARGUMENTS: '+args;
+    if(fault==='empty')input.args='';
+    else if(fault==='null')input.args=null;
+    else if(fault==='number')input.args=1;
+    else if(fault==='array')input.args=[args];
+    else if(fault==='object')input.args={text:args};
+    else if(fault==='extra-key')input.extra='unbound input';
+    else if(fault==='different-args')input.args='another original tool argument';
+    else if(fault==='missing-suffix')f.injection.message.content[0].text=f.injection.message.content[0].text.replace('\n\nARGUMENTS: '+args,'');
+    else if(fault==='extra-suffix')f.injection.message.content[0].text+=' unbound addition';
+    else if(fault==='newline-count')f.injection.message.content[0].text=f.injection.message.content[0].text.replace('\n\nARGUMENTS: ','\nARGUMENTS: ');
+    else if(fault==='trim-body')f.injection.message.content[0].text=f.injection.message.content[0].text.replace(f.body+'\n\nARGUMENTS: ',f.body.trimEnd()+'\n\nARGUMENTS: ');
+    const b=f.build();assert.throws(()=>checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'missing-condition',sessionId:b.session.id}]}),/Skill|injection|body|read/i);
+  });
+});
 test('native Skill loading rejects claims, altered bodies and unbound or nonadjacent host events',async()=>{
   const {checkProviderCapture}=await api();
   for(const fault of ['no-injection','wrong-skill','launching-only','ordinary-user','assistant-injection','wrong-role','call-session','result-session','injection-session','wrong-directory','other-project-file-and-injection','changed-body','frontmatter-body','intervening-event','failed-result','wrong-command-name','error-result','wrong-id','quote-only','extra-content','codex-skill']){

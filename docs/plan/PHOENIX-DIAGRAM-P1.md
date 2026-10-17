@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-17T08:56:50+08:00
+- 最近更新：2026-10-17T10:29:16+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交已通过机制/完整轻量的7722入口与strict async修复，启动新clean四Native/唯一包/fresh44；新包优先六缺事实，再完成两host各22、四平台实图/精确Node18完整原档、strict聚合与23AC
+- 下一步：封存9fea失败六例、提交7845指南并启动新同源CI；新包六例passed后完成两host各22、四平台实图/精确Node18完整档、strict聚合及23AC
 - 当前阻塞：无
-- 代码基线：dirty@775fe1e：7722B/208074eb明示缺事实入口、quickstart14d91f7d与19文件bundle44d81a3f/146输入d101c3fa已同步；strict async两Node各48/48，完整npm434pass/22原skip及Python四组通过。旧base+覆盖指南开发准备被真实归属校验拒绝，模型0/inconclusive，待新clean完整候选验证。90/a875仅Claude001passed、Codex023failed/人为中断，42未启，cohort不可final；其Node18及两Linux自动pass只保原范围。
+- 代码基线：本地7845B指南已针对9fea/Codex024非必要角色细化问题作最小修订，19源/dist同字节；input6e0d2b42/bundle6f9c1bbd，待clean提交与新同源CI。旧9fea/1787六capture自然0，已有独立Cl001/Cdx023/025 passed、Cdx024 failed，Cl002/003语义待回；余38未启动，六事实/图像/giant闸closed。维护Skill.args全文解析已双Node61/61，本轮完整npm469项447pass/22原skip、Python全绿。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-17T08:56:50+08:00 | 90/a875 V13 failed保原；7722入口及async双Node48/48、完整npm434/22/Python绿；旧base覆盖指南预检归属校验拒绝/模型0，待新clean同包正式重验 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa |
+| M7 | 进行中 | 2026-10-17T10:29:16+08:00 | 旧9fea六例中Cdx024角色细化failed；7845指南/Skill.args维护修复与完整npm绿，待新clean同源CI，图像闸closed | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa |
 
 ## 0. 需求、范围与决策
 
