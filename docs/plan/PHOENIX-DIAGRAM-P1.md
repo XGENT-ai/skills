@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-17T16:18:55+08:00
+- 最近更新：2026-10-18T12:26:23+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：冻结clean source并取得新同包CI/真实host各22；完成四平台实图、strict聚合/23AC后最终提交与单独SHA回填
+- 下一步：提交已验证的Workflow源并启动同包CI，收齐维护结果；新包持久宿主各22、strict聚合与23AC后最终提交
 - 当前阻塞：无
-- 代码基线：Waiting自循环修复与指南补充已冻结：渲染/严格路径绑定共用canonical圆角生成，原points/语义/合格路径d及legacy规则保留，冻结oracle不改、仅两条错误微线段精确投影适配。先红后绿与完整维护检查已证；Node25轻量447pass/22原skip/0fail，Diagram Rust264pass/2原ignored、Node/Reader通过。新input146/b5a5f2f4、bundle19/15aaeacd；开发引擎已构建，两原候选和最小例各validate/finalize自然0、四门全pass，完整scene与原baseline相等，12PNG实际查看。当前仅开发回归，视觉正式状态仍pending；待clean source提交与新最终CI/真实host复验。af2已封存为历史，不得冒用为新包最终证据；M7仍待同包四平台、各22、strict聚合和23AC。
+- 代码基线：dirty@b36ee49：Workflow主标签自动宽度及真实圆角交叉成本修复已先红后绿，Workflow14/14、npm447pass/22原skip/0fail；新密集9节点17关系经四门/四原图实审、同身份complete。原始首稿同字节恢复后新native仍3处layout corridor，不冒称解决所有几何；调整三列的维护复现不删事实。原20c平台原档仅证明旧包，旧宿主原件缺失；旧包持久44安装已自然0但模型0，后续仅使用新source同包。完整diagram与UI runtime仍运行，M7仍6/7。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
 | M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
 | M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-17T16:18:55+08:00 | 自循环与指南修复本地检查已过：Rust264/Node447及既有skip；开发3例四门与12实图已复验，同包CI/各22/最终聚合待齐，af2已历史封存 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80 |
+| M7 | 进行中 | 2026-10-18T12:26:23+08:00 | Workflow宽度/圆角修复14/14，447轻量通过；密集9节点17关系四门/四图同身份complete；新同包CI、各22/strict仍待 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80 |
 
 ## 0. 需求、范围与决策
 
@@ -323,6 +323,8 @@ bundle manifest 用 `schemaVersion:1, tool, version, files:[{path,size,sha256,mo
 输入闸顺序固定：参数/类型和合同→读取确切 UTF-8 JSON→schema→跨集合唯一身份/引用及图型语义→固定几何/结构布局→实际 HTML/SVG 检查。重复身份不能先装进 Map 再被覆盖；实体与关系的显式 id 共用身份域，须检查跨集合冲突。lanes、phases、groups、views 各自保持集合内唯一，引用按所属集合解析；冻结的两版 incident-response 样例允许 phase/node 同名 recover，release-delivery 允许 lane/node 同名 approval，不能把这些合法容器身份与实体混装。unknown endpoints、方向矛盾、mainPath 缺边或失序、无效 activation/segment 范围均指向原 JSON pointer。source fields 的后续期次处置在 schema 后、编译前完成，不绕过核心语义闸。
 
 布局移植的执行顺序为：测量文本/节点及显式 pins→类型专属容器/主路径→自动 ports/routes→labels 与有界 repair→图例和 canvas→完整几何检查→一次 SVG 序列化。workflow/dataflow 的同一 resolved scene 被 validate、layout-json 与 render 共用；architecture 的障碍及边界归属、sequence 的参与者/消息顺序、lifecycle 的主路径/共享出口规则保持源实现的判据和 tie-break。所有 repair 保留节点、关系、文本、note 和来源字段，不用节点数限、重新排序或缩字越过读取下限消除错误。
+
+Workflow 的 `phoenix-v1` v2 自动主标签按完整文本测量宽度，不再受参考实现的 200px 自动增长上限限制；辅助文本仍保留原增长预算。显式节点宽度、固定 viewBox/绝对路线 pins 及 legacy-2.17 几何保持原合同；不改写标签或缩字取得通过。同一合同的现有 route crossing 成本还核对实际 canonical 圆角路径采样，避免折线无 proper crossing、圆角却真正相交；保留原候选集、搜索预算及检查阈值。路径生成由渲染与严格路径绑定共用，artifact 检查仍独立检查实际 SVG；显式 pins 只可按经完整编译验证的可选建议修改。V-4 覆盖两项适配，M7 再验实际产物。
 
 `check_html` 独立解析实际文档：只允许一个主 SVG，数值有限、路径可解析、正交/显式直连合同、非目标节点穿越、箭头端点方向、相关/无关 corridor、标签/路由/边界/图例遮挡、路由节奏、canvas 与声明的阅读合同。showcase 要求适用的组成检查全部执行且零错误/零警告；standard 保留源合同中的警告和检查范围。回执列具名 checks，不把旧版“固定 4/9 项”的数字当成通过捷径；缺任一适用检查为失败。
 

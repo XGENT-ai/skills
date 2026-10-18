@@ -55,7 +55,7 @@ fn automatic_width(input: &DiagramInput, node: &Value) -> f64 {
             width = width.max(((units(input, content) * preferred * 0.6 + 8.0) / 4.0).ceil() * 4.0);
         }
     }
-    width.min(200.0)
+    width.min(200.0).max(label_width)
 }
 fn group_span(
     input: &DiagramInput,

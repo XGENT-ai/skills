@@ -272,6 +272,110 @@ fn compile_document(
 }
 
 #[test]
+fn automatic_primary_labels_can_exceed_the_auxiliary_text_width_limit() {
+    let mut document: Value = serde_json::from_str(include_str!(
+        "../../../skills/phoenix-diagram/examples/minimal.workflow.json"
+    ))
+    .unwrap();
+    let label = "预算已批准且金额 ≤ 人民币10000元？";
+    document["nodes"][0]["label"] = label.into();
+    for quality in ["standard", "showcase"] {
+        document["meta"]["quality_profile"] = quality.into();
+        let compiled = compile_document(&document, InputContract::PhoenixV1)
+            .unwrap_or_else(|errors| panic!("{quality}: {errors:?}"));
+        let node = compiled
+            .nodes
+            .iter()
+            .find(|node| node.authored.id == "prepare")
+            .unwrap();
+        assert!(node.bounds.width > 200.0);
+        assert_eq!(node.authored.facts, document["nodes"][0]);
+        assert_eq!(node.text[0].content, label);
+        assert!(node.text[0].font_size >= 9.0);
+        assert_eq!(compiled.relations.len(), 1);
+        assert_eq!(compiled.relations[0].from, "prepare");
+        assert_eq!(compiled.relations[0].to, "complete");
+    }
+    document["nodes"][0]["width"] = 200.into();
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic.code == "layout/constraint"
+            && diagnostic.subject.path == "/nodes/0/label"
+            && diagnostic.evidence["availableWidthPx"] == 192.0
+    }));
+}
+
+#[test]
+fn automatic_workflow_routes_remain_separated_after_corner_rounding() {
+    let document: Value = serde_json::from_str(include_str!(
+        "fixtures/workflow/withdrawal-fanin.workflow.json"
+    ))
+    .unwrap();
+    let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    assert_eq!(
+        scene.nodes.len(),
+        document["nodes"].as_array().unwrap().len()
+    );
+    assert_eq!(
+        scene.relations.len(),
+        document["edges"].as_array().unwrap().len()
+    );
+    let html = phoenix_diagram::render::render(
+        &scene,
+        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let checked = phoenix_diagram::check::check_html(&html, Quality::Showcase);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+
+    let mut crossing = scene.clone();
+    for (id, coordinates) in [
+        (
+            "e-submit-check",
+            vec![
+                (152.0, 119.0),
+                (174.0, 119.0),
+                (174.0, 201.0),
+                (220.0, 201.0),
+                (220.0, 217.0),
+            ],
+        ),
+        (
+            "e-supplement-check",
+            vec![
+                (184.0, 119.0),
+                (168.0, 119.0),
+                (168.0, 296.0),
+                (220.0, 296.0),
+                (220.0, 269.0),
+            ],
+        ),
+    ] {
+        crossing
+            .relations
+            .iter_mut()
+            .find(|relation| relation.authored.id == id)
+            .unwrap()
+            .points = coordinates
+            .into_iter()
+            .map(|(x, y)| phoenix_diagram::scene::Point { x, y })
+            .collect();
+    }
+    let rejected = phoenix_diagram::check::check_html(
+        &phoenix_diagram::render::render(
+            &crossing,
+            &phoenix_diagram::render::EmbeddedAssets::builtin(),
+        )
+        .unwrap(),
+        Quality::Showcase,
+    );
+    assert!(rejected
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.code == "composition/proper-crossing"));
+}
+
+#[test]
 fn pin_failures_propose_only_repairs_that_pass_the_complete_native_compiler() {
     let document = fixture("v2-absolute-pins", "phoenix-v1");
     let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
@@ -563,6 +667,35 @@ fn apply_pin_changes(document: &Value, changes: &[Value]) -> Value {
     candidate
 }
 
+fn visible_curve_pin_case(case: &Value) -> Value {
+    let mut native = case.clone();
+    if case["contract"] == "phoenix-v1" && case["name"] == "crossing-redundant-controls/showcase" {
+        let changes = case["repairs"][0].as_array().unwrap();
+        assert_eq!(
+            changes
+                .iter()
+                .map(|change| change["path"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            [
+                "/edges/0/via",
+                "/edges/0/channelY",
+                "/edges/1/via",
+                "/edges/1/channelX"
+            ]
+        );
+        // Visible-curve routing keeps the first route's fixed geometry. The
+        // frozen source oracle still records its older four-assertion repair.
+        native["repairs"][0] = Value::Array(changes[2..].to_vec());
+        native["diagnostic"]["evidence"]["conflictingPins"] = Value::Array(
+            case["diagnostic"]["evidence"]["conflictingPins"]
+                .as_array()
+                .unwrap()[2..]
+                .to_vec(),
+        );
+    }
+    native
+}
+
 #[test]
 fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compilers() {
     let oracle: Value =
@@ -570,6 +703,8 @@ fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compiler
     let mut failures = Vec::new();
     let mut source_exceptions = 0;
     for case in oracle["cases"].as_array().unwrap() {
+        let native = visible_curve_pin_case(case);
+        let case = &native;
         let name = format!("{}/{}", case["contract"], case["name"]);
         if std::panic::catch_unwind(|| {
             let contract = if case["contract"] == "legacy-2.17" {
@@ -696,6 +831,8 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
             ]
             .contains(&case["diagnostic"]["code"].as_str().unwrap_or_default())
     }) {
+        let native = visible_curve_pin_case(case);
+        let case = &native;
         let name = format!("{}/{}", case["contract"], case["name"]);
         if std::panic::catch_unwind(|| {
             let contract = if case["contract"] == "legacy-2.17" {
@@ -743,9 +880,21 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
                     }
                 }
                 let candidate = apply_pin_changes(&case["document"], changes);
-                compile_document(&candidate, contract).unwrap_or_else(|errors| {
+                let compiled = compile_document(&candidate, contract).unwrap_or_else(|errors| {
                     panic!("{name}: unverified repair {repair}: {errors:?}")
                 });
+                if case["contract"] == "phoenix-v1"
+                    && case["name"] == "crossing-redundant-controls/showcase"
+                {
+                    assert_eq!(candidate["edges"][0], case["document"]["edges"][0]);
+                    let rendered = phoenix_diagram::render::render(
+                        &compiled,
+                        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+                    )
+                    .unwrap();
+                    let checked = phoenix_diagram::check::check_html(&rendered, Quality::Showcase);
+                    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+                }
                 // Only the advertised optional geometry fields may change.
                 let mut before = case["document"].clone();
                 let mut after = candidate;
@@ -804,7 +953,7 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
     }
     assert_eq!(
         joint_cases, 4,
-        "Both contracts have two-edge minimal sets of two and four removals"
+        "Retain all four multi-assertion repair cases"
     );
     assert!(
         failures.is_empty(),

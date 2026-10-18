@@ -190,20 +190,7 @@ fn path_matches_declaration(
 ) -> bool {
     let expected = match kind {
         Some(DiagramType::Architecture) => geometry::rounded_path(points, 8.0),
-        Some(DiagramType::Workflow) if workflow_v2 => {
-            let mut radius: f64 = 8.0;
-            for (i, pair) in points.windows(2).enumerate() {
-                let corners = usize::from(i > 0) + usize::from(i + 2 < points.len());
-                if corners > 0 {
-                    radius = radius.min(
-                        (((pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y) - 8.0)
-                            / corners as f64)
-                            .max(0.0),
-                    );
-                }
-            }
-            geometry::rounded_path(points, radius)
-        }
+        Some(DiagramType::Workflow) if workflow_v2 => geometry::workflow_v2_path(points),
         Some(DiagramType::Lifecycle) if workflow_v2 => geometry::lifecycle_v3_path(points),
         Some(DiagramType::Lifecycle) => geometry::rounded_path(
             points,

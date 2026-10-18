@@ -1,7 +1,8 @@
 use super::measure::{Measurement, LEGACY_COLUMNS};
 use super::*;
 use crate::geometry::composition::{
-    collect_ambiguous_corridors, collect_border_runs, CorridorOptions, Frame, RoutedRelation,
+    collect_ambiguous_corridors, collect_border_runs, collect_proper_crossings, CorridorOptions,
+    CrossingOptions, Frame, RoutedRelation,
 };
 use crate::geometry::{
     anchor, label_point, normalize_route_points, polyline_length, proper_segment_intersection,
@@ -76,6 +77,13 @@ fn point(value: &Value) -> Point {
 }
 fn distance(a: Point, b: Point) -> f64 {
     (a.x - b.x).abs() + (a.y - b.y).abs()
+}
+fn visible_route(points: &[Point]) -> Vec<Point> {
+    crate::check::path::analyze_svg_path(&crate::geometry::workflow_v2_path(points))
+        .expect("Finite workflow geometry generates a supported SVG path")
+        .subpaths
+        .remove(0)
+        .points
 }
 fn stub(point: Point, side: &str) -> Point {
     match side {
@@ -885,11 +893,15 @@ impl Router<'_> {
         let mut parallel = 0.0_f64;
         let mut label_deficit = 0.0;
         let plate = self.plate(edge, points);
+        let visible = (self.input.input_contract == InputContract::PhoenixV1
+            && self.measured.readable)
+            .then(|| visible_route(points));
         for other in &self.placed {
             let shared_endpoint = [string(edge, "from"), string(edge, "to")]
                 .iter()
                 .any(|id| *id == other.from || *id == other.to);
             if !shared_endpoint || self.input.input_contract == InputContract::PhoenixV1 {
+                let previous_crossings = crossings;
                 for a in points.windows(2) {
                     for b in other.points.windows(2) {
                         if proper_segment_intersection(a[0], a[1], b[0], b[1]).is_some() {
@@ -897,6 +909,31 @@ impl Router<'_> {
                         }
                         if self.input.input_contract == InputContract::Legacy217 {
                             shared += axis_overlap(a[0], a[1], b[0], b[1]);
+                        }
+                    }
+                }
+                if crossings == previous_crossings {
+                    if let Some(visible) = &visible {
+                        let routed = [
+                            RoutedRelation::new(0, edge.clone(), visible.clone()),
+                            RoutedRelation::new(
+                                1,
+                                other.authored.facts.clone(),
+                                visible_route(&other.points),
+                            ),
+                        ];
+                        if !collect_proper_crossings(
+                            &routed,
+                            &CrossingOptions {
+                                contract: self.input.input_contract,
+                                merge_forward_collinear_waypoints: true,
+                                include_shared_endpoints: Some(&|_, _| true),
+                                ..Default::default()
+                            },
+                        )
+                        .is_empty()
+                        {
+                            crossings += 1.0;
                         }
                     }
                 }

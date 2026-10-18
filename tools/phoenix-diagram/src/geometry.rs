@@ -412,6 +412,20 @@ pub fn rounded_path(points: &[Point], radius: f64) -> String {
     commands.join(" ")
 }
 
+pub fn workflow_v2_path(points: &[Point]) -> String {
+    let mut radius: f64 = 8.0;
+    for (i, pair) in points.windows(2).enumerate() {
+        let corners = usize::from(i > 0) + usize::from(i + 2 < points.len());
+        if corners > 0 {
+            radius = radius.min(
+                (((pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y) - 8.0) / corners as f64)
+                    .max(0.0),
+            );
+        }
+    }
+    rounded_path(points, radius)
+}
+
 pub fn lifecycle_v3_path(points: &[Point]) -> String {
     let mut radius: f64 = 12.0;
     let lengths: Vec<_> = points

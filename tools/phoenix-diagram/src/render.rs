@@ -1,7 +1,7 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::geometry::{
     finite_point, finite_rect, format_number as number, lifecycle_v3_path, polyline_path,
-    rounded_path,
+    rounded_path, workflow_v2_path,
 };
 use crate::input::{DiagramType, InputContract};
 use crate::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
@@ -607,18 +607,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             write!(svg,"<defs><marker id=\"phoenix-direction-cue-{index}\" markerUnits=\"userSpaceOnUse\" markerWidth=\"{}\" markerHeight=\"{}\" refX=\"{}\" refY=\"{}\" orient=\"auto\"><polygon points=\"0 0,{} {},0 {}\" class=\"m-{variant}\"/></marker></defs>",number(stroke*10.0),number(stroke*7.0),number(reference),number(stroke*3.5),number(stroke*10.0),number(stroke*3.5),number(stroke*7.0)).unwrap();
         }
         let route = if scene.diagram_type == DiagramType::Workflow && scene.schema_version == 2 {
-            let mut radius: f64 = 8.0;
-            for (i, pair) in relation.points.windows(2).enumerate() {
-                let corners = usize::from(i > 0) + usize::from(i + 2 < relation.points.len());
-                if corners > 0 {
-                    radius = radius.min(
-                        (((pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y) - 8.0)
-                            / corners as f64)
-                            .max(0.0),
-                    );
-                }
-            }
-            rounded_path(&relation.points, radius)
+            workflow_v2_path(&relation.points)
         } else if scene.diagram_type == DiagramType::Architecture {
             rounded_path(&relation.points, 8.0)
         } else if scene.diagram_type == DiagramType::Lifecycle {

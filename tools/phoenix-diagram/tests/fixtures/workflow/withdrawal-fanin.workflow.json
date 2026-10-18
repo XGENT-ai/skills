@@ -1,0 +1,107 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "采购申请审批流程",
+    "output": "procurement-approval.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": { "label": "申请人（发起人）" },
+        "backend": { "label": "采购专员 / 经理 / 财务" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "applicant", "label": "申请人" },
+    { "id": "specialist", "label": "采购专员" },
+    { "id": "manager", "label": "经理" },
+    { "id": "finance", "label": "财务" }
+  ],
+  "nodes": [
+    { "id": "submit", "lane": "applicant", "col": 0, "type": "external", "label": "提交申请和报价单", "icon": "start" },
+    { "id": "check", "lane": "specialist", "col": 1, "type": "backend", "label": "检查资料", "sublabel": "核对申请与报价单是否齐全", "icon": "briefcase" },
+    { "id": "supplement", "lane": "applicant", "col": 1, "type": "external", "label": "补充资料后重新提交", "icon": "person" },
+    { "id": "approve", "lane": "manager", "col": 2, "type": "backend", "label": "经理审批", "icon": "decision" },
+    { "id": "decide", "lane": "manager", "col": 3, "type": "backend", "label": "预算已批准且金额 ≤ 人民币10000元？", "icon": "decision" },
+    { "id": "financeReview", "lane": "finance", "col": 5, "type": "backend", "label": "财务复核", "icon": "briefcase" },
+    { "id": "reconfirm", "lane": "manager", "col": 4, "type": "backend", "label": "经理重新确认", "icon": "decision" },
+    { "id": "order", "lane": "specialist", "col": 3, "type": "backend", "label": "下单", "sublabel": "由采购专员执行", "icon": "success" },
+    { "id": "withdrawn", "lane": "applicant", "col": 2, "type": "external", "label": "已撤回（流程终止）", "icon": "stop" }
+  ],
+  "edges": [
+    { "id": "e-submit-check", "from": "submit", "to": "check", "role": "main" },
+    { "id": "e-check-supplement", "from": "check", "to": "supplement", "label": "缺资料，退回补充", "role": "branch" },
+    { "id": "e-supplement-check", "from": "supplement", "to": "check", "label": "补充后重新提交", "role": "return" },
+    { "id": "e-check-approve", "from": "check", "to": "approve", "label": "资料齐全", "role": "main" },
+    { "id": "e-approve-decide", "from": "approve", "to": "decide", "role": "main" },
+    { "id": "e-decide-order", "from": "decide", "to": "order", "label": "是：经理批准后下单", "role": "main" },
+    { "id": "e-decide-finance", "from": "decide", "to": "financeReview", "label": "其余情况", "role": "branch" },
+    { "id": "e-finance-order", "from": "financeReview", "to": "order", "label": "财务通过", "role": "branch" },
+    { "id": "e-finance-reconfirm", "from": "financeReview", "to": "reconfirm", "label": "财务拒绝", "role": "error" },
+    { "id": "e-reconfirm-finance", "from": "reconfirm", "to": "financeReview", "label": "重新提交复核", "role": "return" },
+    { "id": "e-wd-submit", "from": "submit", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-check", "from": "check", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-supplement", "from": "supplement", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-approve", "from": "approve", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-decide", "from": "decide", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-finance", "from": "financeReview", "to": "withdrawn", "label": "申请人撤回", "role": "branch" },
+    { "id": "e-wd-reconfirm", "from": "reconfirm", "to": "withdrawn", "label": "申请人撤回", "role": "branch" }
+  ],
+  "mainPath": ["submit", "check", "approve", "decide", "order"],
+  "semanticChecks": {
+    "allowedRoots": ["submit"],
+    "allowedTerminals": ["order", "withdrawn"],
+    "requiredEdges": [
+      { "from": "check", "to": "supplement" },
+      { "from": "supplement", "to": "check" },
+      { "from": "decide", "to": "order" },
+      { "from": "decide", "to": "financeReview" },
+      { "from": "financeReview", "to": "order" },
+      { "from": "financeReview", "to": "reconfirm" },
+      { "from": "reconfirm", "to": "financeReview" }
+    ],
+    "requiredPaths": [
+      { "from": "submit", "to": "order" },
+      { "from": "supplement", "to": "order" },
+      { "from": "submit", "to": "withdrawn" },
+      { "from": "check", "to": "withdrawn" },
+      { "from": "supplement", "to": "withdrawn" },
+      { "from": "approve", "to": "withdrawn" },
+      { "from": "financeReview", "to": "withdrawn" },
+      { "from": "reconfirm", "to": "withdrawn" }
+    ]
+  },
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "下单执行",
+      "items": [
+        "所有下单动作均由采购专员执行",
+        "预算已批准且金额不超过人民币10000元：经理批准后由采购专员下单",
+        "其余情况经财务复核通过后由采购专员下单"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "财务复核回路",
+      "items": [
+        "其余情况先交财务复核",
+        "财务拒绝则回到经理重新确认",
+        "经理重新确认后再次提交财务复核"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "撤回规则",
+      "items": [
+        "申请人可在下单前撤回申请",
+        "撤回适用于提交、补充资料、资料检查、经理审批、条件判断、财务复核与重新确认各阶段",
+        "撤回后流程终止"
+      ]
+    }
+  ]
+}
