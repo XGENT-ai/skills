@@ -326,6 +326,20 @@ fn install_dry_run_has_no_project_writes_and_uses_real_engine() {
         .recovery_command
         .as_deref()
         .is_some_and(|s| !s.contains("rollback")));
+    let recovery = receipt.recovery_command.as_ref().unwrap();
+    assert!(!recovery.contains("npm exec"), "{recovery}");
+    let retried = Command::new("/bin/sh")
+        .args(["-c", &format!("{recovery} --dry-run")])
+        .output()
+        .unwrap();
+    assert!(
+        retried.status.success(),
+        "{}",
+        String::from_utf8_lossy(&retried.stderr)
+    );
+    let report: Value = serde_json::from_slice(&retried.stdout).unwrap();
+    assert_eq!(report["status"], "planned");
+    assert_eq!(snapshot(&request.project), before);
 }
 
 #[test]

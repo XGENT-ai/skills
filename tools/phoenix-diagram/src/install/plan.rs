@@ -146,7 +146,19 @@ pub(super) fn prepare_loaded(
     receipt.npm_package_version = Some(bundle.version.npm_package_version.clone());
     receipt.bundle_manifest_sha256 = Some(bundle.manifest_sha256.clone());
     receipt.version_manifest_sha256 = Some(bundle.version_sha256.clone());
-    receipt.recovery_command = Some(format!("npm exec --package=@xgent-ai/skills@{} -- phoenix-diagram install --project {} --bundle-root {} --json", bundle.version.npm_package_version, super::quote(&project.path), super::quote(&bundle.root.path)));
+    let recovery_entry = if bundle.version.distribution == "release" {
+        format!(
+            "npm exec --package=@xgent-ai/skills@{} -- phoenix-diagram",
+            bundle.version.npm_package_version
+        )
+    } else {
+        super::quote(&request.engine)
+    };
+    receipt.recovery_command = Some(format!(
+        "{recovery_entry} install --project {} --bundle-root {} --json",
+        super::quote(&project.path),
+        super::quote(&bundle.root.path)
+    ));
     let mut changes = vec![];
     let mut carried = BTreeMap::new();
     let mut inventory = Inventory::default();

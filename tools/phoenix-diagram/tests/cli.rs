@@ -63,6 +63,37 @@ fn flag(value: &str) -> &std::ffi::OsStr {
 }
 
 #[test]
+fn cli_doctor_keeps_package_recovery_context_without_assuming_a_registry_release() {
+    let (_engine_root, executable) = native_engine();
+    let direct = Command::new(&executable)
+        .args(["doctor", "--json"])
+        .env_remove("PHOENIX_DIAGRAM_SETUP_COMMAND")
+        .env(
+            "PHOENIX_DIAGRAM_BROWSER",
+            "/missing-phoenix-diagram-browser",
+        )
+        .output()
+        .unwrap();
+    let recovery = parsed(&direct)["recovery"]["engineInstall"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    assert!(!recovery.contains("npm exec"), "{recovery}");
+    assert!(recovery.contains(env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION")));
+    let expected = "node '/candidate/bin/phoenix-diagram.js' engine install --project . --release-dir '/candidate/release'";
+    let launched = Command::new(executable)
+        .args(["doctor", "--json"])
+        .env("PHOENIX_DIAGRAM_SETUP_COMMAND", expected)
+        .env(
+            "PHOENIX_DIAGRAM_BROWSER",
+            "/missing-phoenix-diagram-browser",
+        )
+        .output()
+        .unwrap();
+    assert_eq!(parsed(&launched)["recovery"]["engineInstall"], expected);
+}
+
+#[test]
 fn cli_help_and_engine_probe_work_without_writing_project_files() {
     let probe = run(&[flag("engine-probe")]);
     assert!(probe.status.success());

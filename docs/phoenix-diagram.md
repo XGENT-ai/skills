@@ -14,11 +14,11 @@ node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
   --diagram-release-dir="$RELEASE_DIR"
 ```
 
-这里跳过 UI 是候选消费范围：包内 UI 原资源保持原样，不能把它当作 diagram 四平台发行的证据。总安装器默认启用两个 Phoenix 工具；`--release-dir` 只控制 UI，`--diagram-release-dir` 只控制 diagram，`--no-phoenix-diagram` 跳过且保留已有 diagram 安装。所有选项、XGENT、UI、diagram 预检均先于项目写入。执行顺序为 XGENT → UI → diagram；后段失败会报告前段已完成项，不回滚另一个工具。
+这里跳过 UI 是候选消费范围：包内 UI 原资源保持原样，不能把它当作 diagram 四平台发行的证据。总安装器默认启用两个 Phoenix 工具；不支持 diagram 的平台默认跳过 diagram 并说明，显式指定 `--diagram-release-dir` 时仍在写项目前失败。`--release-dir` 只控制 UI，`--diagram-release-dir` 只控制 diagram，`--no-phoenix-diagram` 跳过且保留已有 diagram 安装。所有选项、XGENT、UI、diagram 预检均先于项目写入。执行顺序为 XGENT → UI → diagram；后段失败会报告前段已完成项，不回滚另一个工具。
 
 默认按项目已有 provider 目录选择，空项目用 `.claude`。`codex` 识别 `.agents` 或 `.codex`，diagram skill 仅进入 `$PROJECT/.agents/skills/phoenix-diagram`；本工具不新增 hooks、settings、AGENTS 或个人级 skill。新开 Claude Code/Codex 项目会话后核对实际加载的 skill 路径。安装状态位于 `$PROJECT/.phoenix-diagram/install/`，请按输出提示在本地忽略；不要删除整个目录作为恢复手段。
 
-引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执给出的固定 npm 包版本 `engine install` 命令。离线目录缺少清单、任一平台资源或许可证时直接失败，不回退在线下载。
+引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。该目录按当前 VERSION/ENGINE 的原字节、引擎摘要和许可校验；遗失候选包或配套目录时须重新取得同一 tgz 和资源。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。candidate/release 离线目录必须含四平台；development 只校验清单声明的全部平台资源，单平台开发制品不计四平台验收。目录缺少声明的资源、清单或许可证时直接失败，不回退在线下载。
 
 ## 从候选到 HTML
 
@@ -100,7 +100,7 @@ ls -la "<原输出父目录>"
 | invalid | 参数或不支持的记录格式，读取 diagnostics | 2 |
 | failed | I/O 或运行失败，读取 diagnostics | 4 |
 
-返回的 `target` 只在可信记录核验后提供。文件恢复不生成 delivery/browser/visual 通过回执，后续交付仍需适用检查。项目安装中断则重跑原显式 install，让 Rust 在日志与 after 身份仍匹配时恢复；用户后来修改不会被 before 备份盲覆盖。
+返回的 `target` 只在可信记录核验后提供。文件恢复不生成 delivery/browser/visual 通过回执，后续交付仍需适用检查。项目安装中断则重跑原显式 install，让 Rust 在日志与 after 身份仍匹配时恢复；candidate/development 安装回执的 `recoveryCommand` 使用本次已验证的原生引擎与 bundle，不从 registry 另取同名包。引擎缓存也已遗失时先按上文恢复匹配引擎。用户后来修改不会被 before 备份盲覆盖。
 
 ## 阅读与导出
 

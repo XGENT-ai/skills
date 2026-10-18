@@ -4,6 +4,11 @@ name: Phoenix Diagram
 
 on:
   workflow_dispatch:
+    inputs:
+      await_review:
+        description: Wait for actual image review in the original consumer jobs
+        type: boolean
+        default: false
   push:
     paths: &diagram_paths
       - '.github/workflows/phoenix-diagram.yml'
@@ -489,7 +494,7 @@ jobs:
       # read-only polling step never pushes a ref or starts another finalize.
       - name: Resume the same delivery after actual image review
         id: review
-        if: steps.consume.outcome == 'success' && steps.review_request.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && inputs.await_review == true && steps.consume.outcome == 'success' && steps.review_request.outcome == 'success'
         timeout-minutes: 90
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -504,7 +509,7 @@ jobs:
           PHOENIX_REVIEW_RESULT: ${{ steps.review.outcome }}
           PHOENIX_REVIEW_ARTIFACT_ID: ${{ steps.review_request.outputs.artifact-id }}
           PHOENIX_REVIEW_ARTIFACT_DIGEST: ${{ steps.review_request.outputs.artifact-digest }}
-          PHOENIX_STATE_PATH: ${{ steps.review.outputs.state_path }}
+          PHOENIX_STATE_PATH: ${{ steps.review.outputs.state_path || steps.consume.outputs.state_path }}
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';

@@ -202,6 +202,11 @@ test('maintained distribution bundle matches the source skill before native buil
     assert.equal(stat.mode & 0o777, bundle.manifest.files.find(row => row.path === name).mode, `Distribution bundle mode differs: ${name}`);
   }
   assert.ok(fs.readFileSync(path.join(directory, 'manifest.json')).equals(bundle.bytes), 'Distribution bundle manifest differs from the source skill');
+  const versionBytes = fs.readFileSync(path.join(root, 'dist/phoenix-diagram/VERSION.json'));
+  assert.equal(JSON.parse(versionBytes).bundleSha256, sha(bundle.bytes), 'VERSION must bind the maintained bundle manifest');
+  for (const file of ['skills/phoenix-diagram/ENGINE.json', 'dist/phoenix-diagram/bundle/ENGINE.json']) {
+    assert.deepEqual(fs.readFileSync(path.join(root, file)), versionBytes, `${file} must match VERSION byte for byte`);
+  }
 });
 
 test('bundle copies only the independent skill allowlist and leaves ENGINE out of manifest files', async t => {

@@ -285,8 +285,14 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         }
         let browser = browser::doctor_browser();
         let ready = browser["status"] == "available";
+        let recovery = std::env::var("PHOENIX_DIAGRAM_SETUP_COMMAND").unwrap_or_else(|_| {
+            format!(
+                "Use the matching local @xgent-ai/skills@{} package bootstrap: phoenix-diagram engine install --project . --release-dir MATCHING_RELEASE_DIR",
+                env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION")
+            )
+        });
         return Ok((
-            json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"doctor","status":if ready {"pass"} else {"failed"},"ready":ready,"engine":engine,"platform":{"os":std::env::consts::OS,"architecture":std::env::consts::ARCH},"resources":{"status":"available","readerBytes":EmbeddedAssets::builtin().template.len()},"browser":browser,"supportedTypes":DiagramType::ALL,"diagnostics":[],"recovery":{"engineInstall":format!("npm exec --package=@xgent-ai/skills@{} -- phoenix-diagram engine install --project .",env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"))}}),
+            json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"doctor","status":if ready {"pass"} else {"failed"},"ready":ready,"engine":engine,"platform":{"os":std::env::consts::OS,"architecture":std::env::consts::ARCH},"resources":{"status":"available","readerBytes":EmbeddedAssets::builtin().template.len()},"browser":browser,"supportedTypes":DiagramType::ALL,"diagnostics":[],"recovery":{"engineInstall":recovery}}),
             if ready { 0 } else { 4 },
         ));
     }

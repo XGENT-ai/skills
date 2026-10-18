@@ -28,3 +28,5 @@
 - 45736d49-0eaa-4431-b8b2-b0d67559a36a · [Phoenix 安装扫描范围修复](45736d49-0eaa-4431-b8b2-b0d67559a36a.md)
 
 - 4aca696e-867c-40da-9e16-d8b33bcd5cd2 · [Phoenix Diagram P1 schema 移植线索](4aca696e-867c-40da-9e16-d8b33bcd5cd2.md)
+
+- 548eefe7-8199-4266-856b-ad7166be8448 · [Phoenix Diagram R1 修复线索](548eefe7-8199-4266-856b-ad7166be8448.md)

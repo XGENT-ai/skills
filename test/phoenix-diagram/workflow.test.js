@@ -7,6 +7,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 const { gzipSync } = require('node:zlib');
+const { runInNewContext } = require('node:vm');
 const root = path.resolve(__dirname, '../..');
 const prepare = import('../../scripts/prepare-phoenix-diagram.mjs');
 const source = import('../../scripts/check-phoenix-diagram-source.mjs');
@@ -23,7 +24,7 @@ test('workflow uses four native runners and only the already fixed UI action com
     assert.match(consume, new RegExp(`platform: ${name}\\s+runner: ${pin.runner}`));
   }
   for (const match of text.matchAll(/uses:\s*([^@\s]+)@([^\s]+)/g)) assert.equal(match[2], assets.actions[match[1]]?.commit, match[0]);
-  assert.match(text, /contents: read/); assert.doesNotMatch(text, /contents: write|npm publish|gh release|workflow_dispatch:[^\n]*\n[ \t]+inputs:/);
+  assert.match(text, /contents: read/); assert.doesNotMatch(text, /contents: write|npm publish|gh release/);
 });
 
 test('native builds preserve clean source and native permissions before the single candidate assembly', () => {
@@ -157,6 +158,7 @@ test('workflow phase evidence records actual outcomes without inventing provider
   assert.match(text, /GITHUB_RUN_ID/); assert.match(text, /GITHUB_SHA/);
   assert.match(text, /providerSessionAcceptance: 'not-run'/);
   assert.match(text, /visualReview: 'required-pending'/);
+  assert.match(text, /PHOENIX_STATE_PATH: \$\{\{ steps\.review\.outputs\.state_path \|\| steps\.consume\.outputs\.state_path \}\}/);
   assert.doesNotMatch(text, /(?:providerSessionAcceptance|visualReview): ['"](?:pass|passed|complete)['"]/);
   assert.match(text, /apparmor_parser --replace/); assert.doesNotMatch(text, /--no-sandbox/);
 });
@@ -171,7 +173,18 @@ test('visual review resumes the original consumer state in the same running job 
   const upload = /id: review_request\n([\s\S]*?)(?=\n      #)/.exec(consume)?.[1];
   assert.match(upload, /if: steps\.consume\.outcome == 'success' && steps\.review_material\.outcome == 'success'/);
   assert.match(upload, /path: \$\{\{ steps\.review_material\.outputs\.review_paths \}\}/);
-  assert.match(consume, /if: steps\.consume\.outcome == 'success' && steps\.review_request\.outcome == 'success'/);
+  const condition = /id: review\n\s+if: ([^\n]+)/.exec(consume)?.[1];
+  assert.ok(condition, 'Review continuation has an explicit trigger condition');
+  const steps = { consume: { outcome: 'success' }, review_request: { outcome: 'success' } };
+  for (const event of ['push', 'pull_request', 'workflow_dispatch']) {
+    for (const awaitReview of [false, true]) {
+      assert.equal(runInNewContext(condition, { github: { event_name: event }, inputs: { await_review: awaitReview }, steps }), event === 'workflow_dispatch' && awaitReview);
+    }
+  }
+  for (const failed of ['consume', 'review_request']) {
+    assert.equal(runInNewContext(condition, { github: { event_name: 'workflow_dispatch' }, inputs: { await_review: true }, steps: { ...steps, [failed]: { outcome: 'failure' } } }), false);
+  }
+  assert.match(workflow(), /await_review:\n\s+description: [^\n]+\n\s+type: boolean\n\s+default: false/);
   assert.match(consume, /steps\.consume\.outputs\.state_path/);
   assert.match(consume, /--resume "\$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review\/\$GITHUB_RUN_ID"/);
   assert.match(consume, /timeout-minutes: 90/); assert.match(consume, /timeout-minutes: 120/);

@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-18T19:54:25+08:00
-- 当前进度：7/7 个里程碑完成
-- 当前状态：已完成
-- 最近完成：M7 · 同包四平台、真实 host 与 P1 收口
-- 下一步：代码评审：`$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`
+- 最近更新：2026-10-18T21:50:52+08:00
+- 当前进度：6/7 个里程碑完成
+- 当前状态：进行中
+- 最近完成：M6 · 四平台构建与唯一候选装配
+- 下一步：本轮本地检查已通过，提交后交代码复审：`$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`；M7 另以修后同一最终 tgz 补 V-13–V-15，正式审核使用 `workflow_dispatch` / `await_review=true`。
 - 当前阻塞：无
-- 代码基线：源码292386b（tree07acab6e、input146/4dcb3ab6、bundle19/15aaeac）同CI39097200153全部10jobs成功，四平台40原交付complete、Node18.20.8自动范围通过；两host各22场景、两份原档ZIP、生产聚合handoff=passed及23AC/46子条件全部通过，三组本地维护均通过。最终收口仅更新记录，已验收源码/包身份保持；M7最终验收记录提交51c6379，全部里程碑提交已回填。
+- 代码基线：R1 修复 dirty@5bb5668813e92c31aeff859e0f0d2fd8aa388536，F-01–F-05 代码已修复，本地 npm test、真实恢复/CLI、fmt/clippy 与 Phoenix runtime 通过，见 M4–M7；F-01/F-02 的真实新候选证据未补。此前 292386b / CI39097200153 的四平台与宿主/23AC 证据保留为旧候选历史，新 binary/bundle/说明改变最终包身份，M7 重开，尚未取得新同包收口证据。
 
 ### 完成记录
 
@@ -62,10 +62,10 @@
 | M1 | 已完成 | 2026-10-16T10:28:31+08:00 | 冻结来源、工具与双输入合同；V-1/V-2 通过，布局/浏览器尚未验收 | [M1 记录](PHOENIX-DIAGRAM-P1.records/M1.md) | 98dfb34 |
 | M2 | 已完成 | 2026-10-16T13:19:48+08:00 | V-3/V-4 通过；两类实际 SVG、独立检查与 pin 修复闭环已有定向证据 | [M2 记录](PHOENIX-DIAGRAM-P1.records/M2.md) | 98dfb34 |
 | M3 | 已完成 | 2026-10-16T13:19:48+08:00 | V-5 通过；remaining_types 18/18、文本 7/7，已知 CJK/SEA 差异已清 | [M3 记录](PHOENIX-DIAGRAM-P1.records/M3.md) | 98dfb34 |
-| M5 | 已完成 | 2026-10-16T16:13:58+08:00 | V-10/V-11 指定范围通过；native20/Node18×两版/共装5/npm入口71，原UI7案同binary下以局部复验收口 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
-| M4 | 已完成 | 2026-10-16T17:32:02+08:00 | V-6–V-9通过；10例原身份complete，全部Reader/导出/离线、8公开恢复、审核篡改与summary失败重试通过 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
-| M6 | 已完成 | 2026-10-16T17:51:30+08:00 | V-12通过；build/pack/dist/21文件harness及严格聚合、stdio采集齐备，影响组72×两版绿；真实平台留M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 已完成 | 2026-10-18T19:54:25+08:00 | 同包四平台40原交付complete；两host各22场景通过；两ZIP、生产strict及23AC/46子条件齐备 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379 |
+| M5 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 恢复与平台兼容本地通过：bootstrap 20/20、单平台 development 实包恢复及模拟 win32；新包终验归 M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
+| M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
+| M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
+| M7 | 进行中 | 2026-10-18T21:50:52+08:00 | R1 五项本地修复；F-01/F-02 新候选真实 CI/最终包证据未齐，M7 重开 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379 |
 
 ## 0. 需求、范围与决策
 
@@ -103,7 +103,7 @@
 | D4 | 产品期次 | P1 提供只声明五类能力的新 skill，与 archify 并存 | 不修改旧 skill、README 旧路由或文档调用方；新增说明明确候选边界；P3 再原位接管 | C-4；PRD 的 WORK-F10 全部属于 P3 |
 | D5 | 自动与视觉门 | `finalize` 完成四道自动门并默认采图；实际审核后由 `review-record` 原位收口，不再 deliver | 在原 delivery/browser 身份下刷新 summary 并返回自动、视觉及完整状态；不另设汇总命令，不由 CLI 代评图像 | WORK-F4、WORK-N1；PRD §5.3 C3/C4；§3.2、§5.3 |
 | D6 | 安装隔离 | 单独 bootstrap、manifest、cache、项目回执和最小 Rust 安装器 | 允许复制已核对的底层范式；不抽象/参数化整个 UI 安装器，不带入 hooks、review policy、impeccable 迁移或 shim | WORK-F11、C-2；UI 安装器硬编码命名空间且承担很多本期不需要的职责 |
-| D7 | 版本 | tool 首版为 `0.1.0`；npmPackageVersion 始终读取该候选的根 `package.json` | engine probe 同时校对工具/输入/阅读器合同；不把当前包版本或参考 3.1.0 当成新工具版本；构建不自行 bump/publish | WORK-F11、WORK-N2；§3.3 |
+| D7 | 版本 | tool 首版为 `0.1.0`；npmPackageVersion 始终读取该候选的根 `package.json`；candidate/development 恢复使用当前本地包/已装 skill 与匹配 release-dir，只有 release 使用 registry 固定版本 | engine probe 同时校对工具/输入/阅读器合同；不把当前包版本或参考 3.1.0 当成新工具版本；候选由 VERSION/ENGINE 原字节、引擎及 bundle 摘要区分，不以同名同版本替代产物身份；构建不自行 bump/publish | WORK-F11、WORK-N2；§3.3；用户在 R1 修复中确认按 distribution 区分恢复指引 |
 | D8 | 输出发布恢复 | 提供显式 `recover-output <private-recovery-directory> --json`，由 CLI 调用 output 的条件恢复 | 不在重跑生成时隐式选择旧事务；用户按包内说明定位并指名一次事务，仅恢复该次发布，不承接安装迁移或跨版本 rollback | WORK-N4；参考 `local/archify-main/archify/bin/recover-output.mjs` / `atomic-output.mjs::recoverRetiredPublication`；§5.2 |
 
 ### 0.3 ADR-lite
@@ -300,7 +300,7 @@ bundle manifest 用 `schemaVersion:1, tool, version, files:[{path,size,sha256,mo
 
 ### 5.1 CLI、输入闸与布局
 
-外部命令均为 `phoenix-diagram`；npm 调用形态为 `npm exec --package=@xgent-ai/skills@<候选包版本> -- phoenix-diagram ...`，本仓对应 `node bin/phoenix-diagram.js ...`。参数用数组传给 native binary，不经 shell 拼接。`--help` 和 launcher 自身的版本/恢复指引可在缺引擎时读取，不下载。
+外部命令均为 `phoenix-diagram`；候选 npm 调用形态为 `npm exec --package=<同一候选 tgz> -- phoenix-diagram ...`，解包后对应 `node <包目录>/bin/phoenix-diagram.js ...`，本仓对应 `node bin/phoenix-diagram.js ...`。只有 distribution=release 使用 `npm exec --package=@xgent-ai/skills@<固定发行版本> -- phoenix-diagram ...`。candidate/development 的 `setupCommand` 与 doctor 的 `recovery.engineInstall` 使用当前本地入口和 `--release-dir MATCHING_RELEASE_DIR`；接收者填入该候选配套完整资源的实际绝对路径，按原清单与摘要校验，不能从 registry 取同名同版本的另一份包。Node 将同一恢复指引传给原生 doctor；直接调用原生 binary 时提示使用匹配包的 bootstrap，不推定 registry 已发行。参数用数组传给 native binary，不经 shell 拼接。`--help` 和 launcher 自身的版本/恢复指引可在缺引擎时读取，不下载。
 
 | 命令 | 行为与必需参数 | 写入范围 / 成功含义 |
 | --- | --- | --- |
@@ -381,11 +381,11 @@ sidecar 以输出名派生，超文件系统组件长度时按完整 basename �
 
 ### 5.5 npm 获取与项目安装
 
-总安装器新增默认启用 diagram 的分支，提供 `--no-phoenix-diagram` 与 `--diagram-release-dir=DIR`；`--no-phoenix-ui` 和原 `--release-dir` 继续只控制 UI。`--providers` 共同适用但每个工具独立报告。选项、guard/XGENT 配置、UI 和 diagram 的全部预检完成后才执行任何项目写入；diagram 被跳过时仍校验 provider 参数，且不删除有效安装。
+总安装器在支持平台默认启用 diagram，提供 `--no-phoenix-diagram` 与 `--diagram-release-dir=DIR`；不支持平台上未显式指定 diagram 资源时跳过并说明，显式资源请求仍在写项目前失败；`--no-phoenix-ui` 和原 `--release-dir` 继续只控制 UI。`--providers` 共同适用但每个工具独立报告。选项、guard/XGENT 配置、UI 和 diagram 的全部预检完成后才执行任何项目写入；diagram 被跳过时仍校验 provider 参数，且不删除有效安装。
 
-bootstrap 按 §3.3 校验 manifest、平台、bundle、大小、SHA-256 与 engine probe；普通命令仅查 cache/active，缺失时退出 4 并给固定 npmPackageVersion 的 `phoenix-diagram engine install` 指引。显式 engine install 才允许 HTTPS 下载；loopback HTTP 只作候选传输验证；不接受凭据 URL、非本机明文 HTTP 或不受限重定向。复制 UI bootstrap 已有的代理、超时、重定向和有界下载行为，换独立命名空间；新文件头标来源与修改，保留其测试边界，不抽取公用下载框架。
+bootstrap 按 §3.3 校验 manifest、平台、bundle、大小、SHA-256 与 engine probe；普通命令仅查 cache/active，缺失时退出 4 并按 D7/§5.1 给当前分发身份的 `phoenix-diagram engine install` 指引。显式 engine install 才允许 HTTPS 下载；loopback HTTP 只作候选传输验证；不接受凭据 URL、非本机明文 HTTP 或不受限重定向。复制 UI bootstrap 已有的代理、超时、重定向和有界下载行为，换独立命名空间；新文件头标来源与修改，保留其测试边界，不抽取公用下载框架。
 
-`--diagram-release-dir` 下 VERSION.json 必须与包内清单逐字一致，并含完整四平台资源/许可/清单；当前平台引擎仍重算大小、digest、probe。目录缺资源失败且零网络，不回退在线。先 staging 到内容地址 cache、核验后可见；包资源和 cache 均验证，不能仅因 cache 已有文件就信任。Node 18 的 smoke 必须实际调用这些消费文件。
+`--diagram-release-dir` 下 VERSION.json 必须与包内清单逐字一致，并含完整资源/许可/清单；candidate/release 必须有四平台，development 按其清单声明的全部平台校验，单平台开发制品不计四平台验收；当前平台引擎仍重算大小、digest、probe。目录缺资源失败且零网络，不回退在线。先 staging 到内容地址 cache、核验后可见；包资源和 cache 均验证，不能仅因 cache 已有文件就信任。Node 18 的 smoke 必须实际调用这些消费文件。
 
 Rust `plan_install` 解析 §3.3 白名单并确认项目/provider；默认规则复制 UI 的 19 项列表，不重扫业务源码。`codex` / .agents / .codex 的选择语义沿 UI，实际 diagram skill 只进 .agents，.codex 不新增 hook。项目相同 managed bytes 返回 unchanged 的前提是原 ownership 的物理身份仍 current（device/inode/links/mode/uid 与 digest/bytes 均匹配）；同字节的原子重写、新 inode 或无有效 diagram ownership 的同名文件均不认领。用户修改、symlink、未知父目录和额外文件返回 conflict，预检零写入；Node launcher 与 native 使用同一判定。
 
@@ -411,7 +411,7 @@ consume jobs 四个平台都从 tgz 中运行 npm bin→bootstrap→native insta
 
 为保实际消费环境无检出源码，consume 与 Node18 jobs 不执行 checkout；assemble 从同一源码生成单独的维护 harness 并绑定其真实 tar SHA/GitHub artifact digest。harness 只含 Node 验收控制器、浏览器准备 helper/pin 和必要许可，不含 Rust/src/Cargo/target、Node renderer 或上游 archive，不进入 npm 包。candidate 根另附四原生构建共有的 canonical source-inputs.json 并纳入 files；完整 frozen archive/source gate 在 native/assemble 执行，consumer 仅核 canonical tuples、四 build receipts、assembly 的实际 artifact/归档/tgz 摘要和 commit。实际应用命令只用 tgz 的 npm bin/已装 launcher，项目/cache/home/PATH 独立，PATH 无 rustc/cargo；Chrome 保自身 sandbox，网络禁用与 CDP 事实单独记录，不为拒读源码给 macOS Chrome 叠加不兼容的 sandbox-exec。
 
-四 native consumer 的自动步骤完成后先上传 review-request 中间证据，handoff 保持 pending-review，原 job 与文件系统继续存活。维护者实际读取每张绑定图片后，将 JSON 记录通过本仓专用 `phoenix-diagram-review/<runId>` 分支的 `reviews/<target>.json` 提供；这只是验收数据通道，不发布 npm/R2 或产品页面。外层 checker 以只读 gh API 最多等待 90 分钟，核 repository/runId/target/nonce/state SHA/candidate SHA/sourceCommit 和每条原绑定，写本地独占记录，经包内公开 review-record 在同一 delivery/browser 身份收口。不能结束 job 后复制文件到新机重建物理身份、不能再次 finalize 原图来补审核；超时/缺审核保留未完成。Node18 job 单独报告自动范围，不能据此宣称视觉/provider 或整期通过；凭据不进入状态、归档或应用子进程。
+四 native consumer 的自动步骤完成后先上传 review-request 中间证据，handoff 保持 pending-review。普通 push/PR 与默认 dispatch 到此结束自动检查，不等待实际图像审核，也不计 P1 完成；正式收口使用显式 `workflow_dispatch` 且 `await_review=true`，保留原 job 与文件系统继续存活。维护者实际读取每张绑定图片后，将 JSON 记录通过本仓专用 `phoenix-diagram-review/<runId>` 分支的 `reviews/<target>.json` 提供；这只是验收数据通道，不发布 npm/R2 或产品页面。显式审核模式的外层 checker 以只读 gh API 等待 85 分钟（步骤上限 90 分钟），核 repository/runId/target/nonce/state SHA/candidate SHA/sourceCommit 和每条原绑定，写本地独占记录，经包内公开 review-record 在同一 delivery/browser 身份收口。不能结束 job 后复制文件到新机重建物理身份、不能再次 finalize 原图来补审核；超时/缺审核保留未完成。Node18 job 单独报告自动范围，不能据此宣称视觉/provider 或整期通过；凭据不进入状态、归档或应用子进程。
 
 ## 6. 作者与阅读器交互
 

@@ -163,10 +163,61 @@ filesystemTest('ordinary missing engine performs no installation and names the c
   const result = await run(f, ['guide', 'workflow', '--json']);
   assert.equal(result.code, 4, result.stderr);
   const receipt = JSON.parse(result.stdout);
-  assert.equal(receipt.status, 'unavailable'); assert.ok(receipt.setupCommand.includes(`@xgent-ai/skills@${packageVersion()}`));
-  assert.match(receipt.setupCommand, /phoenix-diagram engine install --project/);
+  assert.equal(receipt.status, 'unavailable');
+  assert.ok(receipt.setupCommand.includes(path.join(f.pkg, 'bin/phoenix-diagram.js')));
+  assert.doesNotMatch(receipt.setupCommand, /npm exec|--package=@xgent-ai\/skills/);
+  assert.match(receipt.setupCommand, /engine install --project/);
   assert.equal(requests, 0); assert.equal(fs.existsSync(f.home), false);
   assert.deepEqual(fs.readdirSync(f.project), ['.git']);
+});
+filesystemTest('only release recovery points to the registry; nonrelease recovery keeps the local package or installed skill', t => {
+  const f = fixture(t), { setupCommand, shellQuote, manifestAt } = boot();
+  for (const distribution of ['development', 'candidate', 'release']) {
+    f.version.distribution = distribution;
+    for (const meta of Object.values(f.version.engines)) meta.url = 'https://download.example.test/engine';
+    f.seal();
+    const manifest = manifestAt(f.manifestPath), command = setupCommand(manifest, f.project, { ...f.options, releaseDir: f.release });
+    assert.ok(command.includes(`--project ${shellQuote(f.project)}`));
+    if (distribution === 'release') {
+      assert.match(command, new RegExp(`npm exec --package=@xgent-ai/skills@${packageVersion()}`));
+    } else {
+      assert.ok(command.includes(shellQuote(path.join(f.pkg, 'bin/phoenix-diagram.js'))));
+      assert.ok(command.includes(`--release-dir ${shellQuote(f.release)}`));
+      assert.doesNotMatch(command, /npm exec|--package=@xgent-ai\/skills/);
+      const installed = setupCommand(manifest, f.project, { skillDir: path.join(f.project, '.agents/skills/phoenix-diagram') });
+      assert.ok(installed.includes(path.join(f.project, '.agents/skills/phoenix-diagram/scripts/phoenix-launcher.cjs')));
+    }
+  }
+  assert.doesNotMatch(setupCommand(null, f.project, { ...f.options, manifestPath: path.join(f.temp, 'missing') }), /npm exec|--package=@xgent-ai\/skills/);
+});
+nativeTest('nonrelease recovery instructions restore an empty cache from the matching offline resources', async t => {
+  for (const distribution of ['development', 'candidate']) {
+    const f = fixture(t, { distribution });
+    if (distribution === 'development') {
+      f.version.engines = { [f.target]: f.version.engines[f.target] };
+      f.seal();
+    }
+    if (distribution === 'candidate') {
+      for (const meta of Object.values(f.version.engines)) meta.url = 'http://127.0.0.1:1/unavailable';
+      f.seal();
+    }
+    f.offline();
+    const unavailable = await run(f, ['doctor', '--json']);
+    assert.equal(unavailable.code, 4);
+    assert.equal(fs.existsSync(f.home), false);
+    const instruction = JSON.parse(unavailable.stdout).setupCommand;
+    assert.doesNotMatch(instruction, /npm exec|--package=@xgent-ai\/skills/);
+    // The resource directory is supplied by the candidate recipient, as the
+    // package's recovery instructions require; no registry lookup is involved.
+    const recovery = instruction.replace(boot().shellQuote('MATCHING_RELEASE_DIR'), boot().shellQuote(f.release));
+    assert.notEqual(recovery, instruction);
+    const restored = await command('/bin/sh', ['-c', recovery], { cwd: f.project, env: f.env });
+    assert.equal(restored.code, 0, restored.stderr);
+    assert.equal(hash(fs.readFileSync(boot().enginePath(boot().manifestAt(f.manifestPath), f.target, f.env))), hash(f.bytes));
+    const doctor = await run(f, ['doctor', '--json']);
+    assert.equal(JSON.parse(doctor.stdout).recovery.engineInstall, instruction);
+    assert.deepEqual(fs.readdirSync(f.project), ['.git']);
+  }
 });
 filesystemTest('explicit acquisition rejects invalid project arguments without writing state', async t => {
   const f = fixture(t);
@@ -391,6 +442,15 @@ nativeTest('a real native install yields a working installed launcher without an
   const shell=await command(path.join(skill,'scripts/phoenix-diagram'),['guide','workflow','--json'],{cwd:f.project,env:f.env});
   assert.equal(shell.code,0,shell.stderr);assert.deepEqual(JSON.parse(shell.stdout),JSON.parse(actual.stdout));
   const launch=()=>command(process.execPath,[path.join(skill,'scripts/phoenix-launcher.cjs'),'guide','workflow','--json'],{cwd:f.project,env:f.env});
+  fs.rmSync(f.home, { recursive: true });
+  const unavailable = await launch();
+  assert.equal(unavailable.code, 4);
+  const recovery = JSON.parse(unavailable.stdout).setupCommand;
+  assert.ok(recovery.includes(path.join(skill, 'scripts/phoenix-launcher.cjs')));
+  assert.doesNotMatch(recovery, /npm exec|--package=@xgent-ai\/skills/);
+  const restored = await command('/bin/sh', ['-c', recovery.replace(boot().shellQuote('MATCHING_RELEASE_DIR'), boot().shellQuote(f.release))], { cwd: f.project, env: f.env });
+  assert.equal(restored.code, 0, restored.stderr);
+  assert.equal((await launch()).code, 0);
   const activePath=path.join(f.project,'.phoenix-diagram/install/active.json');
   const activeBytes=fs.readFileSync(activePath);
   const active=JSON.parse(activeBytes);

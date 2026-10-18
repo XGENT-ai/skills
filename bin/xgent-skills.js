@@ -465,6 +465,11 @@ async function install(args) {
     releaseDir: releaseDir ? path.resolve(releaseDir) : undefined,
     diagramReleaseDir: diagramReleaseDir ? path.resolve(diagramReleaseDir) : undefined,
   };
+  if (options.diagram && !diagramBootstrap.TARGETS.includes(`${process.platform}-${process.arch}`)) {
+    if (diagramReleaseDir !== undefined) diagramBootstrap.platformTarget();
+    options.diagram = false;
+    console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的四个 macOS/Linux 平台内。`);
+  }
 
   // 跳过 Phoenix 时仍按包内 bundle 校验 --providers,保持旧参数语义;启用时由执行器校验。
   if (!options.phoenix && options.providers) {

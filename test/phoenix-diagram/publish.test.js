@@ -36,6 +36,14 @@ function fixture(t) {
 }
 const guard=dir=>spawnSync(process.execPath,[path.join(root,'scripts/require-release-package.mjs'),dir],{encoding:'utf8'});
 
+test('the publish guard refuses development packages when invoked through a workspace symlink', { skip: process.platform === 'win32' }, t => {
+  const f = fixture(t), alias = path.join(f.dir, 'workspace');
+  fs.symlinkSync(root, alias, 'dir');
+  const result = spawnSync(process.execPath, [path.join(alias, 'scripts/require-release-package.mjs'), root], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Refusing to publish:.*development/);
+});
+
 test('diagram resources cannot bypass the publish guard through a valid UI manifest',t=>{
   const f=fixture(t); fs.unlinkSync(path.join(f.dir,'dist/phoenix-diagram/VERSION.json'));
   const result=guard(f.dir); assert.equal(result.status,1); assert.match(result.stderr,/phoenix-diagram/i);

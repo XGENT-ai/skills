@@ -182,10 +182,10 @@ function legalResources(root) {
 function verifyOffline(releaseDir, manifest, packageBundle) {
   const offline = manifestAt(path.join(releaseDir, 'VERSION.json'));
   if (!offline.bytes.equals(manifest.bytes)) throw failure('Offline VERSION manifest differs byte-for-byte from this npm package.');
-  if (TARGETS.some(target => !manifest.data.engines[target])) throw failure('Offline release must contain all four platform assets.');
+  if (manifest.data.distribution !== 'development' && TARGETS.some(target => !manifest.data.engines[target])) throw failure('Offline release must contain all four platform assets.');
   const bundle = verifyBundle(path.join(releaseDir, 'bundle'), manifest);
   if (packageBundle && !bundle.bytes.equals(packageBundle.bytes)) throw failure('Offline bundle manifest differs from the package.');
-  for (const target of TARGETS) {
+  for (const target of Object.keys(manifest.data.engines)) {
     const meta = manifest.data.engines[target];
     const { size, digest } = readRegular(childFile(releaseDir, meta.asset), MAX_ENGINE, undefined, true);
     if (size !== meta.size || digest !== meta.sha256) throw failure(`Offline engine digest or size differs: ${target}`);
@@ -483,9 +483,15 @@ async function preflight(options = {}) {
 }
 function shellQuote(value) { return `'${String(value).replaceAll("'", "'\"'\"'")}'`; }
 function setupCommand(manifest, project, options = {}) {
-  let version = manifest?.data.npmPackageVersion;
-  if (!version) { try { version = packageVersion(options); } catch { /* A broken package cannot provide a trustworthy recovery version. */ } }
-  return version ? `npm exec --package=@xgent-ai/skills@${version} -- phoenix-diagram engine install --project ${shellQuote(project)}` : 'Reinstall the matching @xgent-ai/skills npm package, then run phoenix-diagram engine install --project DIR.';
+  if (!manifest) {
+    try { manifest = manifestAt(options.manifestPath || path.join(options.skillDir || path.join(__dirname, '..'), 'ENGINE.json'), options); }
+    catch { /* Unknown distribution must not imply a registry release. */ }
+  }
+  if (manifest?.data.distribution === 'release') return `npm exec --package=@xgent-ai/skills@${manifest.data.npmPackageVersion} -- phoenix-diagram engine install --project ${shellQuote(project)}`;
+  const launcher = options.packageJsonPath
+    ? path.join(path.dirname(path.resolve(options.packageJsonPath)), 'bin/phoenix-diagram.js')
+    : path.join(options.skillDir || path.join(__dirname, '..'), 'scripts/phoenix-launcher.cjs');
+  return `${shellQuote(process.execPath)} ${shellQuote(path.resolve(launcher))} engine install --project ${shellQuote(project)} --release-dir ${shellQuote(options.releaseDir || 'MATCHING_RELEASE_DIR')}`;
 }
 function help(options, args = []) {
   let version;
@@ -528,7 +534,7 @@ async function main(args, options = {}) {
     manifest = ready.manifest; target = ready.target; project = ready.project;
     const childArgs = [...args];
     if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);
-    const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot };
+    const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot, PHOENIX_DIAGRAM_SETUP_COMMAND: setupCommand(manifest, project, options) };
     const code = await new Promise((resolve, reject) => {
       const child = spawn(ready.enginePath, childArgs, { env: childEnv, stdio: 'inherit', windowsHide: true });
       const interrupt = () => child.kill('SIGINT'); const terminate = () => child.kill('SIGTERM');
