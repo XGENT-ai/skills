@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-18T21:50:52+08:00
+- 最近更新：2026-10-18T21:52:25+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配
-- 下一步：本轮本地检查已通过，提交后交代码复审：`$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`；M7 另以修后同一最终 tgz 补 V-13–V-15，正式审核使用 `workflow_dispatch` / `await_review=true`。
+- 下一步：本轮本地修复已提交，交代码复审：`$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`；M7 另以修后同一最终 tgz 补 V-13–V-15，正式审核使用 `workflow_dispatch` / `await_review=true`。
 - 当前阻塞：无
-- 代码基线：R1 修复 dirty@5bb5668813e92c31aeff859e0f0d2fd8aa388536，F-01–F-05 代码已修复，本地 npm test、真实恢复/CLI、fmt/clippy 与 Phoenix runtime 通过，见 M4–M7；F-01/F-02 的真实新候选证据未补。此前 292386b / CI39097200153 的四平台与宿主/23AC 证据保留为旧候选历史，新 binary/bundle/说明改变最终包身份，M7 重开，尚未取得新同包收口证据。
+- 代码基线：R1 修复提交 6904c9a（验证基线 dirty@5bb5668，当前源码输入 807e97d8），F-01–F-05 代码已修复，本地 npm test、真实恢复/CLI、fmt/clippy 与 Phoenix runtime 通过，见 M4–M7；F-01/F-02 的真实新候选证据未补。此前 292386b / CI39097200153 的四平台与宿主/23AC 证据保留为旧候选历史，新 binary/bundle/说明改变最终包身份，M7 重开，尚未取得新同包收口证据。
 
 ### 完成记录
 
@@ -62,10 +62,10 @@
 | M1 | 已完成 | 2026-10-16T10:28:31+08:00 | 冻结来源、工具与双输入合同；V-1/V-2 通过，布局/浏览器尚未验收 | [M1 记录](PHOENIX-DIAGRAM-P1.records/M1.md) | 98dfb34 |
 | M2 | 已完成 | 2026-10-16T13:19:48+08:00 | V-3/V-4 通过；两类实际 SVG、独立检查与 pin 修复闭环已有定向证据 | [M2 记录](PHOENIX-DIAGRAM-P1.records/M2.md) | 98dfb34 |
 | M3 | 已完成 | 2026-10-16T13:19:48+08:00 | V-5 通过；remaining_types 18/18、文本 7/7，已知 CJK/SEA 差异已清 | [M3 记录](PHOENIX-DIAGRAM-P1.records/M3.md) | 98dfb34 |
-| M5 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 恢复与平台兼容本地通过：bootstrap 20/20、单平台 development 实包恢复及模拟 win32；新包终验归 M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34 |
-| M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34 |
-| M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd |
-| M7 | 进行中 | 2026-10-18T21:50:52+08:00 | R1 五项本地修复；F-01/F-02 新候选真实 CI/最终包证据未齐，M7 重开 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379 |
+| M5 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 恢复与平台兼容本地通过：bootstrap 20/20、单平台 development 实包恢复及模拟 win32；新包终验归 M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a |
+| M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
+| M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
+| M7 | 进行中 | 2026-10-18T21:50:52+08:00 | R1 五项本地修复；F-01/F-02 新候选真实 CI/最终包证据未齐，M7 重开 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a |
 
 ## 0. 需求、范围与决策
 
