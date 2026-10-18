@@ -1,0 +1,1163 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-candidate-review",
+  "repository": "XGENT-ai/skills",
+  "runId": "39097200153",
+  "target": "linux-arm64",
+  "nonce": "5b21d9070b857da282406de168e5b1b5",
+  "stateSha256": "ebe612393801f3842a951024cfa0f265ba5592c4854432c767e7e005d9e686b4",
+  "candidateSha256": "2fe5980d5e805dc1214b956c435cfd77172d748b2bffede8dfdf9382cc450e23",
+  "sourceCommit": "292386bf4b34e2d0e004731e9283cda7d3d1e1df",
+  "records": {
+    "new-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/diagram.html",
+        "identity": {
+          "sha256": "92931b14cdf1c4e4325b4a4c165e519e455e1415eb90677877a9e70d4a9b345f",
+          "bytes": 943854
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/candidate.json",
+        "identity": {
+          "sha256": "af2adbcf0f7a8ed531236a10489938063dfd33d497085219481a83fe8a7113d7",
+          "bytes": 552
+        }
+      },
+      "configSha256": "a431f5949d4f5146a1c5b7a01d3164606391078499ecc313ef1a2821632b5454",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "0f889f68-859e-4295-abc3-e87f54c9a391",
+      "browserReceiptIdentity": {
+        "sha256": "ce5974be208ee3c674a8a1da48fbca5e5c36bff20acabf6fb7431ac72b929d42",
+        "bytes": 430678
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "f569426451d3d9216dc83e79d520cdb7966e4eac94bf2d0156f47ac94ada4715",
+              "bytes": 49572
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Light: the Request architecture title and the two Client/Service cards are readable in the full page. Client is left of Service; the Request label sits above the connecting line and its arrow points right into Service without covering either name. Frontend/Backend legend and the two-entry node index are complete. No notes or expanded detail panel covers the diagram. Theme, Classic, Still, fullscreen, Export and the lower exploration/zoom controls are separate from the drawing."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "0b56e32c6f63945e08d9b722f4ab49bc76d90046e4a08b0c2fbac02a190cc5d3",
+              "bytes": 49100
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Dark: cyan Client and green Service remain distinct against the dark canvas, with both names legible. The Request pill and rightward arrow are visible in the gap; neither arrowhead nor text is lost. The Frontend/Backend legend and Client/Service index remain readable below. Title and top controls fit; Route/Lens/search/help/zoom controls occupy the lower right without obscuring nodes. No clipped card or open detail panel is visible."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "4a409fa301779ac671b8911fb4c09cb77a5877df9524593768fc33e4aca0e973",
+              "bytes": 57873
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large light: the entire page includes the centered Client to Service pair, bottom legend and node index. The Request text is above the rightward arrow; node labels and small type icons stay separate. The large canvas whitespace does not hide additional content. Title has clear hierarchy over the diagram, and both top toolbar and bottom exploration/zoom toolbar fit inside their own areas. There are no authored notes/cards in this minimal source."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "6d2a9985c3e677d6b4807bfef2e4e61d679233ebe7f97bbadadba539d78c7411",
+              "bytes": 58438
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large dark: Client and Service labels, their cyan/green outlines and the rightward Request connection are all visible at the original image size. The Request label does not cover either node name or the arrowhead. Legend, node index and complete page bottom are present with readable contrast. The title, theme/style/Still/fullscreen/Export controls and lower tool strip remain distinct and do not overlap the main graph. No clipping or visual defect was seen."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-architecture": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/diagram.html",
+        "identity": {
+          "sha256": "90c85e6d797e5c56dbc9c03714881d50b163fb3e9efdd5385c4917046dcd9510",
+          "bytes": 960369
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/candidate.json",
+        "identity": {
+          "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+          "bytes": 3793
+        }
+      },
+      "configSha256": "554561b4636080c31ae6a048fe1ce0ed898fdfc98e4325b7a5fc66c16339476d",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "2723db7a-57b7-4013-a581-98df915f563b",
+      "browserReceiptIdentity": {
+        "sha256": "5a7cb48e9f1aa3c50975d443346fdd13dbc4b66a368ecb3ab4bbf2ad11d1c9f3",
+        "bytes": 1785745
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "cc59fe7df7f58f787256d558b48da8823588c9ab1fc47c525a275abb678daa70",
+              "bytes": 146865
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1160, viewport 1440x900. Light: all ten Web App components, their sublabels, the AWS Region and nested sg-api boundary are visible. The Users to CloudFront to Load Balancer to API Server to PostgreSQL path points right; static and enqueue branches point down, and SQS points to Worker. JWT is traceable from Auth Provider to the downward API arrow; the route passes behind the readable region heading and shares a short corridor with the upward Redis path, with both directional arrowheads visible. Edge/Application/Security cards and node index are complete. Toolbars do not cover nodes."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "edf974017063fe59151b089e0f3ad47cd25500277d26a86018de8ad9e8a6342b",
+              "bytes": 156784
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1160, viewport 1440x900. Dark: the external Users/Auth Provider nodes, region enclosure, nested API security group and all cloud/backend/database/queue nodes retain clear colors and readable labels. HTTPS/SQL/static/enqueue/read-through/verify JWT text remains visible. The JWT downward head and Redis upward head can both be identified despite their common vertical corridor. All three explanatory cards and ten-entry index are in the full page; legend and controls remain outside the graph content. No unreadable or clipped object was seen."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "395d6d9acade229c3f834f53ffc26a2a5247bfd5d5e5cd82a07bece403fd8d50",
+              "bytes": 187214
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1533, viewport 2048x1320. Large light: the full AWS region hierarchy and sg-api enclosure remain visible, including Users/Auth Provider outside the region, Redis above API and S3/SQS/Worker below. Main arrows run rightward, static/enqueue arrows downward and API read-through upward. The JWT elbow can be followed under the region-heading background into API; its head is distinct from the Redis head. Component sublabels and all Edge/Application/Security bullets are readable; complete node index and both toolbars fit without covering the graph."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-architecture/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "b632299114eb25793831805019e89dde9df8503af66088fb40d2ebbbfa4afa43",
+              "bytes": 205571
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1533, viewport 2048x1320. Large dark: all ten component names/sublabels and nested region/security boundaries are legible; color separates Auth/security, cloud, databases and backend. The horizontal request path and lower asynchronous path have visible arrowheads, while JWT and read-through remain traceable through their shared vertical corridor. Region and relationship labels have readable backgrounds. The legend, three complete cards and node index are below the drawing with clear hierarchy. Theme/style/Still/Export and lower zoom/exploration controls do not obscure content."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/diagram.html",
+        "identity": {
+          "sha256": "a60c9e8af387cb65855f1e7e4bc95ff4a4bebad3aa826bbc18beec0e4107af14",
+          "bytes": 943279
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/candidate.json",
+        "identity": {
+          "sha256": "e2421e77955c3b4e9bf225b9f1e50f1cf3d2304d85b2420f3c87b7c2448ccb87",
+          "bytes": 608
+        }
+      },
+      "configSha256": "c44df891617030c21ff144bfd9abb70653360baba93d540391b7e7aa6a31bfab",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "5c0a713a-5c87-450d-a13d-df7582eedee2",
+      "browserReceiptIdentity": {
+        "sha256": "e9242c5a1d392affbe4be001fd70f81a6beef04ab6d5e46d767e450a306e7276",
+        "bytes": 454902
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "ed712bd52124b5ed40941af1f2ccce9eb89a901e0424b1a57a32ac0fc518935b",
+              "bytes": 50063
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x900, viewport 1440x900. Light: Request workflow shows a single 01 / Work lane containing Prepare and Complete. Continue is readable above a rightward arrow ending at Complete; labels and icons fit inside their nodes. The lane boundary does not cut through text. Agent logic legend and two-node index are complete, with no authored notes/cards. Title and top controls are separate; the bottom Route/Lens/search/help/zoom strip stays in open canvas and no element is clipped."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "d20bc57d386789562e1f910ae63af51641702fd2d34ad3cfb2d2663a6cc511c2",
+              "bytes": 52314
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x900, viewport 1440x900. Dark: Prepare and Complete are readable in green outlined nodes inside the Work lane. Continue and its rightward arrowhead remain visible in the gap, without touching node text. Lane title, Agent logic legend and node index retain readable contrast. The full page has no obscuring detail card. Top theme/Classic/Still/fullscreen/Export and lower exploration/zoom controls fit and do not cover the workflow."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "8115e03adc5d3606becbe53b7dc81843d86986aaf6d71ca90ab803baae776266",
+              "bytes": 63940
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1320, viewport 2048x1320. Large light: the Work lane, Prepare/Complete pair and Continue arrow are enlarged and complete. The arrow points into Complete, its label is above the line, and both node labels are unobstructed. Lane heading and Agent logic legend establish a clear hierarchy; the two-entry index is fully visible below the canvas. No notes or detail cards are present in the minimal example. Header controls and bottom tool strip remain clear of nodes."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f630e1254d8666f97fa1bc1b0f9f653f2cb3fd1fa16fda0f89aaf60858bc2cda",
+              "bytes": 68846
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1320, viewport 2048x1320. Large dark: the 01 / Work lane encloses both green nodes without clipping. Prepare to Complete direction is clear from the visible right-pointing head; Continue text is readable and separated from the node names. Agent logic legend and lower index are intact. The title and separate top toolbar have clear contrast; lower Route/Lens/search/help/zoom controls remain in empty canvas and do not occlude any relationship or label."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-workflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/diagram.html",
+        "identity": {
+          "sha256": "1e7e28a0253d6b265a638bee2c9b69e719647aa734cfbad3db333f75090a8c11",
+          "bytes": 969697
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/candidate.json",
+        "identity": {
+          "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+          "bytes": 5687
+        }
+      },
+      "configSha256": "f1e43cce35e32e721a5bb25953695f652230f2b94e819d3aa5256395ff8e281a",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "5eabfc31-1b5b-47bc-ad27-dcf4950f743a",
+      "browserReceiptIdentity": {
+        "sha256": "9950e90ec33eb9697c3f626192f24a95061cbcd8d9c557022de8d1aef72bf6a8",
+        "bytes": 2176567
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "208e89e85761cda8338f61cc20f2a2eea5175930788c6416c605fd88dbd3b421",
+              "bytes": 407361
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1178, viewport 1440x900. Light: all four lanes and the Intake, Plan + route, Execute + report phase headings are visible, with the Planning loop, policy stop and evidence/tool group hierarchy intact. The plan route reaches Agent Planner, needs approval? reaches Approval Gate, denied turns up into Blocked, and Retry Path points right. The external return runs up the outside-right corridor into Final Reply; record result returns along the bottom into Trace Log. All twelve node labels/sublabels, both complete explanatory cards, legend and node index are readable. Controls do not cover content."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "a58e7b42e277d75e0116f14a7a266d73a61fd5122232c90e8b4a193ef0a29f63",
+              "bytes": 435937
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1178, viewport 1440x900. Dark: twelve nodes remain distinguishable across the four dashed lanes; User Interface, Agent Runtime, Policy & Recovery and Tool Execution & Evidence headings are readable. Cyan approved work, pink approval/denial and purple trace/memory paths can each be followed with visible destination heads. The outside-right Final Reply return and bottom Trace Log return stay separate from nodes and legend. The Compiler Contract/Runtime Semantics cards and full node index remain visible below; the top and lower toolbars are unobstructed."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "e34d822625f531364a8ccc86159b47ccce5c3939127a69b311e01e8a69853dc0",
+              "bytes": 529434
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1571, viewport 2048x1320. Large light: the full four-lane graph fits with readable phase/group headings and all node labels, sublabels and tags. Chat Surface routes down then right into Agent Planner; approval denial reaches Blocked, retry points right, approved work reaches Tool Call. External API returns up the outside-right path to Final Reply and the dashed bottom result path enters Trace Log from below, clear of legend. Both explanatory cards and all twelve index entries are complete. Title, style/Still/Export and lower exploration controls do not overlap the graph."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-workflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "05fe2446e4f7a8aad26507781d7ea4f71dc8b19d60faac7f5f7e52f6038fedc2",
+              "bytes": 577616
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1571, viewport 2048x1320. Large dark: all lanes, phase headings and nested planning/policy/evidence/tool groups are visible with distinct borders. Node text is legible, including the narrow Tool Call sublabel. Main, security and evidence routes have visible endpoints; the long external return reaches Final Reply from the right and the bottom dashed return enters Trace Log without masking the legend. The two cards and twelve-entry index retain complete text. Header and lower tool strip remain separate from graph objects; no clipped content or ambiguous arrow direction was seen."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/diagram.html",
+        "identity": {
+          "sha256": "035eb671ac548825cbf1317c75fd13a82db14a9fca183bef7c650f43d08fcb6b",
+          "bytes": 939924
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/candidate.json",
+        "identity": {
+          "sha256": "f3a87f15792cf20071ab01887ccc1761a6528adbee7161453e59f5eaad845d85",
+          "bytes": 583
+        }
+      },
+      "configSha256": "e78d0c85851afca84fadc9a023885f6659769e4d27cc0af39f987cf419ab2c47",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "54d0d9c3-a606-4c87-a278-a9fa7368a8ea",
+      "browserReceiptIdentity": {
+        "sha256": "3a2655a6842032111999780cf1fdbb9fc2bd6add2334d75e661d555217dc77a9",
+        "bytes": 473986
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "8a21ab01b1e94195e6685b6d54767dc559c93bcc67e0ceafbba5823997c20607",
+              "bytes": 49273
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Light: Client and Service participant cards and their two vertical lifelines are fully visible. Request is the upper solid message pointing right to Service; Result is lower, dashed and points left to Client. Both labels sit above their own lines and neither touches the participant text. The return/message legend and two-entry index are complete, with no authored notes/cards. Title and top controls are clear; lower exploration/zoom controls are outside the message area."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "5dcc99b98a3ef8710cbcb51d191b1d46c9a7a2a9173d9b84595e96887e2cf6c7",
+              "bytes": 49060
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Dark: the cyan Client and green Service headers remain readable, with separated lifelines below them. The upper Request head points right and the lower dashed Result head points left, preserving the return distinction. Label backgrounds keep both message names legible without covering heads. Legend and node index remain visible at the bottom of the full page; the header toolbar and lower tool strip do not obscure either participant or message."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "34a368be0485e50ca473afcdc7b0e7da4c4a946edf830d43e51cbe91dca1023e",
+              "bytes": 57670
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large light: the centered participant pair, both lifelines and two ordered messages are complete. Request runs from Client to Service above the leftward dashed Result. The large canvas leaves labels and arrowheads clear; participant names and icons fit inside cards. The return/message legend and complete index are below, with no extra notes panel. Title, theme/style/Still/fullscreen/Export and lower search/zoom controls fit cleanly."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "61d1f284c8f0f18f9d5057a7034c420d1f32e67afa0a6f0e3569b0054f2d4eb4",
+              "bytes": 57883
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large dark: the original full page shows readable Client/Service cards, upper rightward Request and lower leftward dashed Result. Both endpoint heads are distinct from the lifelines and text; message ordering is visually unambiguous. The return/message legend and both index entries remain readable. No card is clipped, no relationship crosses a label, and both top and lower control groups remain clear of the sequence."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-sequence": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/diagram.html",
+        "identity": {
+          "sha256": "4fb95d925cd48deb1f2e19df103d0963017dc447d95b694bc688d1b6b85cbfb3",
+          "bytes": 965742
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/candidate.json",
+        "identity": {
+          "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+          "bytes": 4370
+        }
+      },
+      "configSha256": "3b27ad012cb562fbbf9a607f420613ecccd6b2d0575ee149c526f8ca878bc320",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "019ab138-5840-4b14-8b0c-8f77be529d9c",
+      "browserReceiptIdentity": {
+        "sha256": "48c1de06661cd8194682104683662bf1f627e90d29b0ef984ab54ede0bf5ca25",
+        "bytes": 1810635
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "c1134b900feb83ded38a90794187c1f5c8c76e5291c3c7a2d24d03508b2c0658",
+              "bytes": 410481
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1269, viewport 1440x900. Light: the full long image contains all seven participants, activation bars and three bands. On specific word-by-word reinspection at original 1440-pixel width, the participant sublabels are identifiable as mobile app, request edge, durable work, background, external API, source of truth and webhook. Accept, Background work and Notify + reconcile are readable. All fourteen messages can be identified, including POST /jobs, 202 + job id, result / timeout, retry if timeout, persist final state, signed webhook, GET /jobs/:id and 200 final result. Main-graph text is noticeably small, but no specific label is unreadable, clipped or occluded. Request/return/async directions remain distinct. Legend, three complete explanatory cards and seven-entry index are present; toolbars do not cover content."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "af534dbda66fdd6ec09c34f04a8b8d07b1a68b96579ce2ac6a9575c5f46622f3",
+              "bytes": 442699
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1269, viewport 1440x900. Dark: all seven participant names and sublabels remain identifiable on specific original-width reinspection, including request edge under Jobs API and source of truth under Job Store. The three phase captions and fourteen message labels can be read: enqueue job/deliver/perform work, result / timeout/retry if timeout, persist final state, job.completed/signed webhook and GET /jobs/:id/read status/completed/200 final result remain distinct. The fine main-graph text is small and less prominent than the title/cards/index, recorded as a limitation; there is no identified unreadable segment, truncation or label collision. Return and retry heads point left and notification heads retain their destinations. Legend, three cards, index and both control areas are complete."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "87061504963afc277c58dadf5ba590bf984116d45665c654fa1a022cf70c8222",
+              "bytes": 560642
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1690, viewport 2048x1320. Large light: the entire vertical sequence is visible from the seven participant headers to the final 200 result. Accept/background/notify bands and activation bars establish clear order. Arrowheads show API to Queue, Queue to Worker, Worker to Provider, timeout back to Worker/Queue, persistence to Job Store, notification to Notifier and webhook to Client; the polling path returns from Job Store through API to Client. Every message label has its own row. Legend, three complete note cards and seven-entry index remain readable below; no control overlaps content."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-sequence/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "b491428f0964f5870bcfe1d2a27d0515f789499e617613ce33d70cf494dfff5f",
+              "bytes": 606453
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1690, viewport 2048x1320. Large dark: all participant names/sublabels, three section headings and fourteen message labels are visible. Request/return/async styles remain distinct; retry points back to Queue, job.completed points to Notifier, signed webhook points to Client, and the final polling responses point left. Lifelines and activation bars do not hide message names or destination heads. Fast Acknowledgement, Bounded Recovery and Two Observation Paths cards have complete bullets, followed by the full index. Header and lower tool strip fit without clipping."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/diagram.html",
+        "identity": {
+          "sha256": "f78ee7364b5bfecb9ab9f5668558a7d2d681e985fd059e7b1c5a2d5b75d2eeb2",
+          "bytes": 939231
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/candidate.json",
+        "identity": {
+          "sha256": "f773be76cbb4618e8e1209c634209621f7db9707d5dcc9305555e4be46206865",
+          "bytes": 558
+        }
+      },
+      "configSha256": "f93b5fbe147a84c5fc222cda65a6b286b3feb27e9d8fffe4d43cd1fd3e6de70e",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "013c9771-b766-4929-a0aa-962d2801de48",
+      "browserReceiptIdentity": {
+        "sha256": "2c05bf9416abefec1b088ee07c7e883919e0ff48a7a1adcb45c5a684e58b293a",
+        "bytes": 467844
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "d09b309ae5d8383664bdcbca63a089db6b39f62b8b321c67e1fab90bb787a029",
+              "bytes": 56168
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Light: Records dataflow contains a purple Input store in 01 / Source and green Transform in 02 / Process. The records label is above a rightward arrow ending at Transform; it does not cover either node name or stage heading. Both stage enclosures, the data store/data flow legend and two-entry index are complete. No explanatory notes/cards are authored. Top toolbar and lower Route/Lens/search/help/zoom controls are separated from the graph."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "7183caa767e20f659215e691d5f9bd2c2b602c91ccc75d88032a96140554520a",
+              "bytes": 56210
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Dark: the two dashed Source/Process stage boundaries and readable Input store/Transform labels remain visible. The records flow points right into Transform with a distinct head and legible label background. Purple store and green process colors preserve the role distinction. The legend, full lower index and title are readable, with no obscuring detail panel. Both top and bottom control groups fit and do not cover a stage or arrow."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "b9bc9e8d87909737aa9d5a487300cc814bb648379f48ea4060549bac95b42ff8",
+              "bytes": 64629
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large light: complete Source and Process columns surround the centered Input store/Transform pair. The records text sits above its horizontal rightward flow, clear of labels and boundaries. Node names, type icons and stage headings remain readable; the legend and both index entries are fully visible at the page bottom. There are no notes/cards in this minimal fixture. Header theme/style/Still/fullscreen/Export and lower exploration controls do not obstruct content."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "3398cbcbe2584dafeaa2d1dcac8d9ae0df2c7a1ee75dbcdb72d502699d358b4d",
+              "bytes": 65196
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large dark: the Input store and Transform cards, stage headings and rightward records arrow are fully visible on the dark canvas. Neither dashed stage border nor label background obscures the destination arrowhead or node text. Data store/data flow legend and the two-node index have readable contrast and complete page bounds. Title is above the diagram and the top and lower control strips occupy clear areas, with no clipping or overlap."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-dataflow": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/diagram.html",
+        "identity": {
+          "sha256": "bbc4a3d5c8f0d39d23a2a28dfb011a4971879fc2afd060db746d1a9b2496e418",
+          "bytes": 969782
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/candidate.json",
+        "identity": {
+          "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+          "bytes": 5618
+        }
+      },
+      "configSha256": "a80507b10ba6e60f69e2d5c1d4672e1a857e3cbbf1eeef0bf160802055f1d779",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "2808dcd9-f057-4cad-8d22-81865129d1e7",
+      "browserReceiptIdentity": {
+        "sha256": "8b44d698080f475b390103d9b8278810656cd94aa0c33d171309027b7fcaa498",
+        "bytes": 2566049
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "941781956ceb8292cb4425d452a615243abd7f10ed367833e7057d1038355a43",
+              "bytes": 173635
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1096, viewport 1440x900. Light: all ten nodes fit within five labeled Sources/Ingest/Process/Store/Consume stage columns. Web/Mobile feeds enter Edge API, accepted events reaches Event Stream, normalized facts reaches Warehouse, and SQL points up into Dashboards. The separate pink Consent Gate to PII Vault to restricted Dashboards path remains visible, with classification sublabels; daily aggregates points down to Feature Store and feature vectors right to ML Model. Labels stay clear of node text and arrowheads. All three complete explanatory cards, legend and ten-node index are visible; controls do not cover them."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "31e629f5aab42e9901cedbf1e1065b4015f33a15920b23dfbf510de159bc303f",
+              "bytes": 181798
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1096, viewport 1440x900. Dark: five stage headers and ten node labels/sublabels remain readable. Green collection/normalized flows, pink identity/consent/restricted joins and purple batch/feature paths are distinguishable; their destination heads are visible. Clickstream/app-events entries converge at Edge API without obscuring their labels, and metrics SQL reaches Dashboards from below. Classification text remains legible on its backgrounds. Primary Data Path, Sensitive Boundary and Derived Consumers cards and the full index are intact; toolbars stay outside graph objects."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "e356375a26d2b66b292adf3c4724a22fe3efd20e3c9db578739c9575efd39302",
+              "bytes": 217353
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1415, viewport 2048x1320. Large light: the full five-column hierarchy is visible with Source client nodes left, Consent/Event Stream in Process, distinct PII/Warehouse/Feature stores and Dashboard/ML consumers right. All named assets and classification sublabels are readable. Arrow directions preserve the collection, approved PII join, SQL read and derived feature paths; daily aggregates is downward and feature vectors is rightward. No label covers node text or a destination head. Legend, three complete cards and ten-entry index fit below; title and control groups remain separate."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-dataflow/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "8de8edd14561a393c9f2fbcaeb2d7c0a20da2f4923d3de63abb537bf330aadf1",
+              "bytes": 230677
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1415, viewport 2048x1320. Large dark: all stage headings, node names, sublabels and flow/classification pairs are visible with clear role colors. The collection path runs left to right through Event Stream/Warehouse; consent/PII runs across the upper row, SQL rises to Dashboards and batch aggregation drops to Feature Store before ML Model. Arrowheads and text are not hidden by stage enclosures. The full legend, three explanatory cards and ten-entry index remain readable at the page bottom; header and lower exploration/zoom controls do not obscure content."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "new-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "466a002a3957835f2b536381543c6f7fac1bec92ad29beb647e11a105ae2f13f",
+          "bytes": 939605
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "aa09cfb1cbff35d1d31cef5babd9dd74a6cd8568e92e86d429aeaa74c493dae8",
+          "bytes": 496
+        }
+      },
+      "configSha256": "935fd4b80d68f056c0332fa5934bda6d9444d267d83164801bf28caf89b62dc9",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "eff22e72-da06-44c8-b9d1-b16f2c350476",
+      "browserReceiptIdentity": {
+        "sha256": "3b84cd9ba0473fa8d57c21f1d7507553f4e4cbe2a2968461dbc329a1e636a984",
+        "bytes": 451718
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "484ba3d8d78e33f03152d1378d431ebec133a4d1635ae177c01417fe74ad6525",
+              "bytes": 51230
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Light: Request lifecycle shows an initial green dot and arrow into Created, followed by a rightward Finish transition into the double-bordered Complete success state. Created/Complete names and Finish label are readable and not touched by the arrows. Initial/success/final-state legend and both node-index entries are complete. The minimal fixture has no notes/cards. Title and top controls fit; lower exploration/zoom controls are clear of the lifecycle."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "a6a2811898f22f26919ca964576d4b137d16e9752a00203c9f1aa267c5ca2e28",
+              "bytes": 50614
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1005, viewport 1440x900. Dark: the start dot, cyan Created state, green Complete state with double final outline and rightward Finish arrow are all visible. The Finish label has readable contrast and stays above the relationship rather than covering the head or state names. Legend and two-entry index remain readable at the bottom of the full image. No detail card hides the graph; top theme/style/Still/fullscreen/Export and lower tool strip occupy separate areas."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "392a9c0096067d3c9aa8ec579eb6b42aff9b571613554ca511ec691c130fbdde",
+              "bytes": 59831
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large light: the entire two-state lifecycle is visible, including the initial dot, entry arrow, Finish arrow pointing right and Complete final outline. Node names and small success icon fit within the cards; the transition label remains separated from endpoints. The initial/success/final-state legend and complete node index are readable below. There are no authored note cards. Header and lower controls remain clear of all state objects with no clipping."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/new-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "d412586029f23c07252451c912fca312612afdf56638d80c044457704eeae0d6",
+              "bytes": 59794
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1425, viewport 2048x1320. Large dark: Created and Complete are legible on their cyan/green state cards, with the initial-dot entry and rightward Finish transition intact. The double Complete border visibly distinguishes the final state. Finish text and both arrowheads are unobstructed. The legend and full index remain inside the captured page; title, header toolbar and lower Route/Lens/search/help/zoom strip have clear placement and do not cover content."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    },
+    "legacy-lifecycle": {
+      "schemaVersion": 1,
+      "tool": "phoenix-diagram",
+      "toolVersion": "0.1.0",
+      "command": "review-record",
+      "status": "pass",
+      "diagnostics": [],
+      "artifact": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/diagram.html",
+        "identity": {
+          "sha256": "68f18f0302cfdecd7cc59456b6a236fae06ab352defb3193bff2d50149b85837",
+          "bytes": 963120
+        }
+      },
+      "candidate": {
+        "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/candidate.json",
+        "identity": {
+          "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+          "bytes": 4274
+        }
+      },
+      "configSha256": "fa816d1cd137a3459d9bee5316817db787808a76f9d86977c203cf90860f5a95",
+      "engine": {
+        "sourceInputSha256": "4dcb3ab62d14a4ae3b257b4633ff21fa176b92e3ebf9197576e54890baa4c928",
+        "inputContractSchema": 1,
+        "receiptSchema": 1,
+        "viewerRevision": "phoenix-v1",
+        "binary": {
+          "sha256": "a3be6ec3280b4322f5b942b2e4ba575c08f413f87f46a58e8de735665c573aa3",
+          "bytes": 13573848
+        }
+      },
+      "deliveryReceiptId": "df0ec7c5-872a-40da-9959-91bf9bd5c383",
+      "browserReceiptIdentity": {
+        "sha256": "40b5d98a5c319c16a415722d2e1f3967ca58864d178ed8abe812934da2d97fa2",
+        "bytes": 1982285
+      },
+      "screenshotIdentities": [
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.light.png",
+            "identity": {
+              "sha256": "b3295d344f42200919be94d35f9d9933e6015a79b0e97b71399b558953417f33",
+              "bytes": 367682
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1204, viewport 1440x900. Light: all eleven states are visible across the ordered Release phases rail, combined Approval + health wait + Rollback controller row and Terminal exits row. Queued/Building/Verifying/Ready/Live names and sublabels fit; the three downward branches lead to Needs Approval/Rolling Back/Health Paused, then Cancelled/Failed/Rolled Back with distinct visible heads. Branches do not cross state text. Legend, Promotion Rail/Wait States/Explicit Endings cards and full index are complete. Top and lower controls are clear of the graph."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/browser/diagram.visual-check.1440x900.dark.png",
+            "identity": {
+              "sha256": "04d00354fbe6f1d5867db33e321b1af5ec1ae81632e1455d5640a3fbfa4aec71",
+              "bytes": 408300
+            }
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 1440x1204, viewport 1440x900. Dark: eleven state labels/sublabels and all three row headings are readable, with distinct start/active/waiting/decision/success/failure colors and icons. The horizontal release rail preserves the left-to-right five-phase order. Downward security branches end at Needs Approval/Cancelled and Rolling Back/Failed; the Live health branch reaches Health Paused then Rolled Back. Destination heads remain visible without label overlap. All note-card bullets, legend and eleven-entry index remain in the full page; controls do not obscure them."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.light.png",
+            "identity": {
+              "sha256": "80a3c5f65dc8d0bc519a28e471260b90ce167e3917f046895af25b2565f5e193",
+              "bytes": 450870
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "light",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1597, viewport 2048x1320. Large light: the complete release hierarchy shows five ordered top states, three waiting/recovery states and three terminal exits with readable text and icons. The six vertical transitions all point down to their intended states; success restoration is visually distinct from the pink cancellation/failure paths. Row separators and labels do not mask relationships. The legend has all six role groups, and the three explanatory cards plus eleven-entry index are complete. Header and lower tool strip fit without clipping or overlapping the drawing."
+        },
+        {
+          "file": {
+            "path": "/tmp/phoenix-diagram-consumer-ceEOH3/core/cases/legacy-lifecycle/browser/diagram.visual-check.2048x1320.dark.png",
+            "identity": {
+              "sha256": "f3a28857d51a378802ca3dc3279f3c4a87892dcef4b25c6f51d7939d8ab4f44a",
+              "bytes": 510357
+            }
+          },
+          "viewport": {
+            "width": 2048,
+            "height": 1320
+          },
+          "theme": "dark",
+          "observed": true,
+          "observations": "Actually opened this current PNG using functions.view_image detail=original; actual size 2048x1597, viewport 2048x1320. Large dark: Release phases, Approval + health wait + Rollback controller and Terminal exits are visible with all eleven state names/sublabels. The top rail and vertical paths remain clear; downward heads identify approval/cancellation, rollback/failure and health-pause/restored outcomes. Colors and state icons preserve the hierarchy without obscuring text. Promotion Rail, Wait States and Explicit Endings cards contain complete bullets, followed by the full index. The title and both control areas remain readable and separate from graph objects."
+        }
+      ],
+      "reviewer": "Codex visual_linux_arm64",
+      "scope": [
+        "diagram",
+        "labels",
+        "cards",
+        "relationship-occlusion",
+        "hierarchy",
+        "controls"
+      ],
+      "verdict": "passed",
+      "findings": []
+    }
+  }
+}
