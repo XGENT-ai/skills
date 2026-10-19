@@ -64,7 +64,12 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
 普通 launcher 和安装脚本需要 Node.js 18+；图解核心为 Rust，消费环境不需要 Rust、Cargo 或检出源码。普通命令只验证已存在的引擎，不下载、不更新、不安装，不主动打开用户浏览器页面或启动 preview 服务。`finalize` 的隔离浏览器验收属于默认交付路径。
 
-工具或图像能力不可用时如实保留 `unavailable` / `not-run` / `required-pending` 和未完成门，交付可用 candidate 或已有文件。缺引擎时给出错误回执中固定包版本的 `setupCommand`；只有用户已明确请求引擎安装才执行该命令。无 shell 时不能手写 SVG 冒充 Rust 校验通过。出现 `recovery-required` 时按交付合同识别确切事务，不自动选择恢复记录。
+工具或图像能力不可用时如实保留 `unavailable` / `not-run` / `required-pending` 和未完成门，交付可用 candidate 或已有文件。无 shell 时不能手写 SVG 冒充 Rust 校验通过。出现 `recovery-required` 时按交付合同识别确切事务，不自动选择恢复记录。
+
+缺引擎时给出错误回执的 `setupCommand`；只有用户已明确请求引擎安装才执行，并按当前 `ENGINE.json` 的 `distribution` 处理：
+
+- `release`：使用回执给出的固定发行版本命令。
+- `candidate` / `development`：先取得该候选配套完整 release-dir 的实际绝对路径，未提供时向用户询问；将命令中的 `MATCHING_RELEASE_DIR` 替换为该路径后再执行。不猜测目录，也不改用 registry 获取同名同版本的另一份包。
 
 首次阅读为 Still，用户主动选择 Live。保留用户主要语言和原样的产品、代码、协议与 API 标识。只在用户请求 Reader 功能、导出或阅读交互时读[阅读器运行约定](references/viewer-runtime.md)。
 
