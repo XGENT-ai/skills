@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-18T21:52:25+08:00
-- 当前进度：6/7 个里程碑完成
-- 当前状态：进行中
-- 最近完成：M6 · 四平台构建与唯一候选装配
-- 下一步：本轮本地修复已提交，交代码复审：`$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`；M7 另以修后同一最终 tgz 补 V-13–V-15，正式审核使用 `workflow_dispatch` / `await_review=true`。
+- 最近更新：2026-10-19T11:33:25+08:00
+- 当前进度：7/7 个里程碑完成
+- 当前状态：已完成
+- 最近完成：M7 · 同包四平台、真实 host 与 P1 收口
+- 下一步：由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`，按完成记录评审本轮提交及仍存在的未提交改动。
 - 当前阻塞：无
-- 代码基线：R1 修复提交 6904c9a（验证基线 dirty@5bb5668，当前源码输入 807e97d8），F-01–F-05 代码已修复，本地 npm test、真实恢复/CLI、fmt/clippy 与 Phoenix runtime 通过，见 M4–M7；F-01/F-02 的真实新候选证据未补。此前 292386b / CI39097200153 的四平台与宿主/23AC 证据保留为旧候选历史，新 binary/bundle/说明改变最终包身份，M7 重开，尚未取得新同包收口证据。
+- 代码基线：验收源码1e27a5a/tree5ee7c5cf/input807e97d8/bundle10dec879，正式CI39142536978与唯一tgz607735ed；四平台、精确Node18及两宿主各22场景的未改生产聚合pass/handoff=passed，23AC/46条件逐条通过。57会话及未选失败保原，最后workflow仅限新虚构代码审批题+通用提示范围；P2/P3与公开发行边界保持。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 恢复与平台兼容本地通过：bootstrap 20/20、单平台 development 实包恢复及模拟 win32；新包终验归 M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a |
 | M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
 | M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
-| M7 | 进行中 | 2026-10-18T21:50:52+08:00 | R1 五项本地修复；F-01/F-02 新候选真实 CI/最终包证据未齐，M7 重开 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a |
+| M7 | 已完成 | 2026-10-19T11:33:25+08:00 | 同包四平台/精确Node18、两宿主各22及生产聚合通过，23AC/46条件收口，57会话与历史失败保原 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；待提交 |
 
 ## 0. 需求、范围与决策
 
