@@ -30,3 +30,5 @@
 - 4aca696e-867c-40da-9e16-d8b33bcd5cd2 · [Phoenix Diagram P1 schema 移植线索](4aca696e-867c-40da-9e16-d8b33bcd5cd2.md)
 
 - 548eefe7-8199-4266-856b-ad7166be8448 · [Phoenix Diagram R1 修复线索](548eefe7-8199-4266-856b-ad7166be8448.md)
+
+- 01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0 · [Phoenix Diagram M7 续验](01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0.md)

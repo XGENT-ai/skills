@@ -69,7 +69,9 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 缺引擎时给出错误回执的 `setupCommand`；只有用户已明确请求引擎安装才执行，并按当前 `ENGINE.json` 的 `distribution` 处理：
 
 - `release`：使用回执给出的固定发行版本命令。
-- `candidate` / `development`：先取得该候选配套完整 release-dir 的实际绝对路径，未提供时向用户询问；将命令中的 `MATCHING_RELEASE_DIR` 替换为该路径后再执行。不猜测目录，也不改用 registry 获取同名同版本的另一份包。
+- `candidate` / `development`：先核对用户或本题已提供材料是否明确给出了配套完整 release-dir 的实际绝对路径。
+  - **未提供路径：只询问该绝对路径并停止安装，等待答复。** 安装授权不包含寻找或推定候选资源来源；不搜索项目外目录，不猜路径，不省略 `--release-dir` 试装，也不执行含 `MATCHING_RELEASE_DIR` 占位符的命令。
+  - **已提供路径：** 将回执命令中的 `MATCHING_RELEASE_DIR` 替换为该实际绝对路径后再执行；不改用 registry 获取同名同版本的另一份包。
 
 首次阅读为 Still，用户主动选择 Live。保留用户主要语言和原样的产品、代码、协议与 API 标识。只在用户请求 Reader 功能、导出或阅读交互时读[阅读器运行约定](references/viewer-runtime.md)。
 

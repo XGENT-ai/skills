@@ -18,7 +18,7 @@ node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
 
 默认按项目已有 provider 目录选择，空项目用 `.claude`。`codex` 识别 `.agents` 或 `.codex`，diagram skill 仅进入 `$PROJECT/.agents/skills/phoenix-diagram`；本工具不新增 hooks、settings、AGENTS 或个人级 skill。新开 Claude Code/Codex 项目会话后核对实际加载的 skill 路径。安装状态位于 `$PROJECT/.phoenix-diagram/install/`，请按输出提示在本地忽略；不要删除整个目录作为恢复手段。
 
-引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。该目录按当前 VERSION/ENGINE 的原字节、引擎摘要和许可校验；遗失候选包或配套目录时须重新取得同一 tgz 和资源。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。candidate/release 离线目录必须含四平台；development 只校验清单声明的全部平台资源，单平台开发制品不计四平台验收。目录缺少声明的资源、清单或许可证时直接失败，不回退在线下载。
+引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。用户或已提供材料尚未明确给出该路径时，先询问并停止安装，等待答复；安装授权不代替资源路径，不搜索项目外目录、猜路径、省略 `--release-dir` 试装或执行占位符。该目录按当前 VERSION/ENGINE 的原字节、引擎摘要和许可校验；遗失候选包或配套目录时须重新取得同一 tgz 和资源。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。candidate/release 离线目录必须含四平台；development 只校验清单声明的全部平台资源，单平台开发制品不计四平台验收。目录缺少声明的资源、清单或许可证时直接失败，不回退在线下载。
 
 ## 从候选到 HTML
 

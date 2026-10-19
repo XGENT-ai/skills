@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-19T14:13:24+08:00
+- 最近更新：2026-10-19T15:30:40+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：以修复后的clean源码补齐M7受影响同包与宿主恢复证据，完成后由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`；修复提交及未提交改动均纳入复审。
-- 当前阻塞：无
-- 代码基线：R3/F-06修复dirty@e0c68b4，仅恢复说明及派生资源改变；实建development input94f373dc/bundle476c86e8/engine d745cdd8，本地bootstrap20/20、轻量及tgz3e252024已装恢复通过。1e27a5a/CI39142536978/tgz607735ed的23AC最终通过保为历史，不证明新包完成；P2/P3与公开发行边界保持。
+- 下一步：提交并固定缺路径停止修正，取得新clean四平台候选，完成最终同包V-13–V-15及23AC审计；完成后由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`。
+- 当前阻塞：无外部依赖阻塞；新最终候选及同包宿主/消费验收待执行。
+- 代码基线：缺路径停止修正dirty@5305796，仅SKILL恢复分支/包内说明/派生身份改变；两宿主局部prototype均停步，实建development input336ed1d3/bundle4805c3a4/binaryb84b210a，bootstrap20/20、完整轻量及tgz15bf97fe公开恢复4→0→0通过。旧CI39209556591已主动取消，原档/失败与旧部分通过保原，旧宿主队列均终态；新同包与23AC未收口，分期/发行边界保持。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-19T14:13:24+08:00 | R3/F-06恢复说明与派生制品同步；bootstrap20/20、固定Node25轻量及新development tgz恢复通过，最终包/宿主归M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a；修复 a0e79aa |
 | M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
 | M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
-| M7 | 进行中 | 2026-10-19T14:13:24+08:00 | R3/F-06改变源码输入/bundle/引擎及包身份，本地修复已验；新最终候选的受影响四平台/Node18/宿主与聚合待验，旧收口保为历史 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8 |
+| M7 | 进行中 | 2026-10-19T15:30:40+08:00 | 缺路径停步说明修正、实建派生资源、bootstrap20/20、完整轻量及新development tgz4→0→0通过；旧cohort主动收束，新clean同包/宿主/23AC待验 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8 |
 
 ## 0. 需求、范围与决策
 
@@ -300,7 +300,7 @@ bundle manifest 用 `schemaVersion:1, tool, version, files:[{path,size,sha256,mo
 
 ### 5.1 CLI、输入闸与布局
 
-外部命令均为 `phoenix-diagram`；候选 npm 调用形态为 `npm exec --package=<同一候选 tgz> -- phoenix-diagram ...`，解包后对应 `node <包目录>/bin/phoenix-diagram.js ...`，本仓对应 `node bin/phoenix-diagram.js ...`。只有 distribution=release 使用 `npm exec --package=@xgent-ai/skills@<固定发行版本> -- phoenix-diagram ...`。candidate/development 的 `setupCommand` 与 doctor 的 `recovery.engineInstall` 使用当前本地入口和 `--release-dir MATCHING_RELEASE_DIR`；接收者填入该候选配套完整资源的实际绝对路径，按原清单与摘要校验，不能从 registry 取同名同版本的另一份包。Node 将同一恢复指引传给原生 doctor；直接调用原生 binary 时提示使用匹配包的 bootstrap，不推定 registry 已发行。参数用数组传给 native binary，不经 shell 拼接。`--help` 和 launcher 自身的版本/恢复指引可在缺引擎时读取，不下载。
+外部命令均为 `phoenix-diagram`；候选 npm 调用形态为 `npm exec --package=<同一候选 tgz> -- phoenix-diagram ...`，解包后对应 `node <包目录>/bin/phoenix-diagram.js ...`，本仓对应 `node bin/phoenix-diagram.js ...`。只有 distribution=release 使用 `npm exec --package=@xgent-ai/skills@<固定发行版本> -- phoenix-diagram ...`。candidate/development 的 `setupCommand` 与 doctor 的 `recovery.engineInstall` 使用当前本地入口和 `--release-dir MATCHING_RELEASE_DIR`；接收者填入该候选配套完整资源的实际绝对路径，按原清单与摘要校验，不能从 registry 取同名同版本的另一份包。宿主先核对用户或已提供材料是否明确给出该路径；未提供时先询问并停止安装，不搜索项目外目录、猜路径、省略参数试装或执行占位符。明确安装授权仍不代替配套资源路径。Node 将同一恢复指引传给原生 doctor；直接调用原生 binary 时提示使用匹配包的 bootstrap，不推定 registry 已发行。参数用数组传给 native binary，不经 shell 拼接。`--help` 和 launcher 自身的版本/恢复指引可在缺引擎时读取，不下载。
 
 | 命令 | 行为与必需参数 | 写入范围 / 成功含义 |
 | --- | --- | --- |
