@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-19T15:30:40+08:00
+- 最近更新：2026-10-19T15:33:40+08:00
 - 当前进度：6/7 个里程碑完成
 - 当前状态：进行中
 - 最近完成：M6 · 四平台构建与唯一候选装配能力
-- 下一步：提交并固定缺路径停止修正，取得新clean四平台候选，完成最终同包V-13–V-15及23AC审计；完成后由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`。
+- 下一步：以已提交的缺路径停止修正取得新clean四平台候选，完成最终同包V-13–V-15及23AC审计；完成后由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P1.md`。
 - 当前阻塞：无外部依赖阻塞；新最终候选及同包宿主/消费验收待执行。
-- 代码基线：缺路径停止修正dirty@5305796，仅SKILL恢复分支/包内说明/派生身份改变；两宿主局部prototype均停步，实建development input336ed1d3/bundle4805c3a4/binaryb84b210a，bootstrap20/20、完整轻量及tgz15bf97fe公开恢复4→0→0通过。旧CI39209556591已主动取消，原档/失败与旧部分通过保原，旧宿主队列均终态；新同包与23AC未收口，分期/发行边界保持。
+- 代码基线：缺路径停止修正已提交8222b79；本地构建验证基线dirty@5305796，仅SKILL恢复分支/包内说明/派生身份改变；两宿主局部prototype均停步，实建development input336ed1d3/bundle4805c3a4/binaryb84b210a，bootstrap20/20、完整轻量及tgz15bf97fe公开恢复4→0→0通过。旧CI39209556591已主动取消，原档/失败与旧部分通过保原，旧宿主队列均终态；新同包与23AC未收口，分期/发行边界保持。
 
 ### 完成记录
 
@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-19T14:13:24+08:00 | R3/F-06恢复说明与派生制品同步；bootstrap20/20、固定Node25轻量及新development tgz恢复通过，最终包/宿主归M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a；修复 a0e79aa |
 | M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
 | M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
-| M7 | 进行中 | 2026-10-19T15:30:40+08:00 | 缺路径停步说明修正、实建派生资源、bootstrap20/20、完整轻量及新development tgz4→0→0通过；旧cohort主动收束，新clean同包/宿主/23AC待验 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8 |
+| M7 | 进行中 | 2026-10-19T15:33:40+08:00 | 缺路径停步说明修正、实建派生资源、bootstrap20/20、完整轻量及新development tgz4→0→0通过；旧cohort主动收束，新clean同包/宿主/23AC待验 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8；修复 8222b79 |
 
 ## 0. 需求、范围与决策
 
@@ -536,7 +536,7 @@ V-9/V-15 的审核闭环须保存首次 finalize 的 deliveryReceiptId、browser
 | M4 | 连续交付、阅读/导出与原生阶段收口 | 五类编译/检查的 V-3、V-4、V-5；可提前开发稳定输出与 Reader 接缝，终验须五类齐备 | ★ output/delivery/browser/CLI、viewer/assets 装配、§3.2 回执及 core 测试入口；按参考 atomic-output/finalize/recover-output/check-render-output、UI CDP 子集与 Viewer README；落实 §5.1–§5.4、§6，含审核后同身份 summary 与公开输出恢复/定位说明。输出状态机与共享 Viewer 单人负责，可并行定向测试；主 agent 收口 | V-6、V-7、V-8、V-9 全通过，真实审核后 complete 可达、公开输出恢复及保护断言通过，阶段 A 当前产物可交付；回写「实施进度」 |
 | M5 | 新 skill 与隔离 npm/项目安装 | §3.2/§3.3 已定合同，M1 schema；正向安装需 M4 的真实 native binary，不要求等 CI | ★ 新 skill/resources/launchers、bin/phoenix-diagram.js、install.rs；修改 bin/xgent-skills.js、package 与说明；按 UI bootstrap/preparePhoenix/providers/transaction 必要范式落实 §5.5。主 agent 单写总安装器/package，skill 与 Rust installer 可分文件开发 | V-10、V-11 通过，P1 五类声明准确且旧入口/调用方未被替换；回写「实施进度」 |
 | M6 | 四平台构建与唯一候选装配能力 | M4 的 native 核心、M5 的包/安装接口；source/bundle 输入已固定 | ★ build/pack/candidate-check 脚本、workflow、dist 与许可，发布 guard 最小接入，按现有 UI build/native workflow 与 release 测试的来源/完整性范式落实 §5.6/§8。主 agent 固定共享包输入，四平台 build 各用独立 host，不合并相近 commit 的资源 | V-12 通过；构建、装配与证据校验入口齐备；平台真实消费及 host 终验留 M7；回写「实施进度」 |
-| M7 | 同包四平台、真实 host 与 P1 收口 | 最终同 HEAD/tree/input 的四平台 engines、唯一 candidate tgz/release-dir、M5 安装能力；V-10–V-12 的局部证据 | 主 agent 统一候选与实际 run；执行 §9 的最终包、原生、Node18、Claude/Codex 新会话、图像审核后收口、无 Rust 消费者输出恢复、回归/离线与失败路径；必要修复只重跑失效证据。包内 docs/phoenix-diagram.md 写真实范围、恢复说明、结果与公开发行缺口，不触发公开发布 | V-13、V-14、V-15、V-16 全通过且 23 条 P1 AC 可追溯；审核/恢复经最终包公开入口验证；其余期次未冒充终验；回写「实施进度」 |
+| M7 | 同包四平台、真实 host 与 P1 收口 | 2026-10-19T15:33:40+08:00 | 主 agent 统一候选与实际 run；执行 §9 的最终包、原生、Node18、Claude/Codex 新会话、图像审核后收口、无 Rust 消费者输出恢复、回归/离线与失败路径；必要修复只重跑失效证据。包内 docs/phoenix-diagram.md 写真实范围、恢复说明、结果与公开发行缺口，不触发公开发布 | V-13、V-14、V-15、V-16 全通过且 23 条 P1 AC 可追溯；审核/恢复经最终包公开入口验证；其余期次未冒充终验；回写「实施进度」；修复 8222b79 |
 
 提交点：M4（阶段 A 收口）提交该阶段实现与记录；M7（阶段 B / 全部完成）最终提交。每个提交点按顶部协议回填 SHA 并单独提交计划更新；仅暂存本计划相关文件。阶段 B 中为获得同 SHA CI 制品可先提交必要候选代码，但不能在 M7 验收前将其记完成；最终验收修复产生新 SHA 时重新取得受影响原生/包证据。
 
