@@ -298,7 +298,7 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
-| **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务替你建库 / 取地址并注入（见下面「服务怎么绑到键」） |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键 | 批准时平台按登记的服务代建资源 / 取地址并注入（见下面「服务怎么绑到键」） |
 | **自定** | 其余**环境依赖**（第三方服务地址、第三方 API key…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
 
 业务参数（超时、阈值、默认文案、功能开关…）**不在这张表里**：先看下面「业务参数」一节。
@@ -414,7 +414,53 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   `envKey` 只对 postgres / redis 这类单键服务有效（kafka / 对象存储 / http 不支持）。不绑定的话，
   平台管理员要在审批屏上手选一条服务取值，每次发版多等一轮；预检会对这类键给你一条 warn。
 
-另外：**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
+### 对象存储：应用池直供 S3 五键
+
+这条路径用于 App 自管的底层对象，后端用 S3 SDK 直连，不经过 Files。需要用户/团队文件空间、
+文件权限、配额、预览或清理时走 Files；两条路径的选型见 `portal-external-app` skill 的
+「文件与对象存储」。**Files 的「应用空间」不等于这里的应用专属 bucket。**
+
+以 `listingKey=wish-list` 为例，下面是合并进现有 manifest 的存储声明片段，其他必需键照常保留：
+
+```jsonc
+"requiredServices": [
+  { "kind": "objectStorage", "name": "main" }
+],
+"requiredEnv": [
+  "WISH_LIST_S3_ENDPOINT",
+  "WISH_LIST_S3_REGION",
+  "WISH_LIST_S3_BUCKET",
+  "WISH_LIST_S3_ACCESS_KEY_ID",
+  "WISH_LIST_S3_SECRET_ACCESS_KEY"
+]
+```
+
+- `main` 换成目标环境已登记的对象存储服务名，用于服务可用性闸；它**不是桶名或池 ID**。
+  首次开通按实际落点 VM 的地域选择应用池，未命中用兜底池；只使用 `role=app`，不回退租户池。
+- 发布提案批准时平台按 `listingKey` 建桶并加密保管整组连接参数，部署时注入。**每应用一个桶，
+  该应用的所有租户共用**；不会为每个租户或安装实例另建桶，也不会自动添加租户目录。
+  App 须自行实现租户隔离、权限、计量和对象清理；它们不自动进入 Files 的配额、计量与退出清理。
+- 五键固定为 `<PREFIX>_S3_ENDPOINT` / `_S3_REGION` / `_S3_BUCKET` / `_S3_ACCESS_KEY_ID` /
+  `_S3_SECRET_ACCESS_KEY`（每项均带 `<PREFIX>`）。`objectStorage` **不支持 `envKey`**，带上即拒；
+  约定名是 `_S3_BUCKET`，镜像若只读 `_S3_BUCKET_NAME` 等其他名字，需在应用配置层适配。
+  只声明该 `requiredServices` 也会整组供给；显式列出五键便于启动校验与交付检查，只交键名、不交值。
+  仅用 `requiredEnv` 的兼容路径以 `<PREFIX>_S3_ACCESS_KEY_ID` 为触发键，仍供给整组；
+  只写 endpoint / region / bucket 不会触发自动供给。
+- **管理员不必逐键取值**：已匹配应用池时，审批页显示「批准时自动供给」，直接批准即可。
+  需要手动选池或提前供给时，在五键任意一行选择 `objectStorage` 应用池并点击「取值」，
+  一次写入全部五键，刷新后整组显示「已取值」。只切换下拉选项、不点「取值」不会保存选择；
+  不要为五个键分别选池。没有可用应用池时先由平台管理员配置，不能拿租户池替代。
+- 注入的是应用池**共用的数据面凭据**，不含管理凭据，也不是 per-App / per-tenant 子凭据；
+  独立桶不等于独立云权限。凭据只留后端，不回显、不写日志、不交给前端。
+- 重发、重试与重部署沿用已登记的桶和存储池；改变落点地域不会自动搬桶或迁移对象。
+  租户卸载也不自动删除这个共用桶。需要迁移、清理或轮换池凭据时由平台与 App 协调。
+
+以上自动供给发生在**发布提案批准链路**。一盒 `onebox.sh add` 的直接注册路径仍须按
+`portal-dev-setup` 配好 RustFS 连接参数和桶名；不能只写这条声明就认为五键已到位。
+
+### 通用环境变量约束
+
+**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
 拿到令牌就能用，你那侧只管调。
 
 **六条别踩：**

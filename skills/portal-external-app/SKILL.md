@@ -46,7 +46,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 3. env 契约表：**镜像实际读取的变量名**（镜像自有前缀与门户契约别名的映射必须写清；有的镜像不读裸 `PORT`）；
 4. **迁移入口**：迁移文件在镜像里、二进制上有一个迁移 argv（见下节）。「迁移脚本留在自己 repo 里」= 不合格；
 5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）；**`/health` 必须通过 [健康契约验收](references/health-contract.md)**，按平台同一判据验证正常与依赖故障；信封响应不能只检查 HTTP 200；
-6. **有没有重复造平台已有的能力**：自己存文件 / 自己发通知 / 自己记审计 / 自己排定时任务 / 自己算配额 —— 逐项对照下面两张表，命中就要求改走平台面；
+6. **是否复用平台能力**：文件按下文「文件与对象存储」选择 Files 或平台 `objectStorage`，后者须明确 App 自管的租户隔离、计量与清理；通知、审计、定时任务、配额仍按下面两张表复用平台面；
 7. **租户自助凭证**：这个服务有没有「租户拿自己的程序直接调你」的场景（日志/指标摄取、批量导入、CI 回写）？有就检查那条 scope 在不在 manifest 的 **`scopes`** 里 —— 不在的话租户面开不出凭证，只能退回「找平台管理员代建」（见 [integration-contract.md §3.1](references/integration-contract.md)）；
 8. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
    角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
@@ -156,7 +156,7 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET`（声明了 `exchangeTargets` 时） | 平台换版时自己算并注入，没有人手填 |
-| **自动供给** | 库连接串 · Redis 地址 · 对象存储桶 · Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键（每应用一桶）· Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
 | **自定** | 其余**环境依赖**（第三方地址、第三方密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
 
 业务参数不在这张表里：先给代码缺省值；要进清单就配 `requiredEnvNotes`（见上一节末尾与「配置放哪一层」）。
@@ -288,8 +288,24 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 ⚠️ **连字符 listingKey ↔ 下划线 scope**：`omni-parser` 的 scope 是 `omni_parser.*`，
 `llm-gateway` 的是 `llm_gateway.*`。两个命名空间，写混了是 `VALIDATION_FAILED`。
 
-**文件这条尤其别自己来**：字节一律落 files，别自己挂卷、别自己接 S3 —— 否则租户的配额、
-审计、预览、清理全都绕过了平台。落进去用哪种姿态，按**这份字节归谁**二选一：
+### 文件与对象存储：两条接入路径
+
+| | Files 文件服务 | `objectStorage` 基础设施 |
+| --- | --- | --- |
+| 接入 | 调 `/svc/files`，使用获准的用户态或服务态令牌 | 清单声明 `requiredServices: [{"kind":"objectStorage","name":"main"}]`，后端用 S3 SDK 直连；`main` 换成目标环境已登记的服务名 |
+| 桶与租户 | 托管模式使用租户池 `role=tenant`：多租户共用 bucket，默认按 `t/<tenantId>/` 前缀隔离 | 使用应用池 `role=app`：按 `listingKey` 每应用一个 bucket，该应用所有租户共用；租户安装时不另建桶 |
+| 隔离与治理 | Files 按租户、空间与权限收口，提供文件配额、计量、预览和清理能力 | 平台不自动加租户前缀；App 自行校验租户、组织对象 key，并负责权限、计量和生命周期；不自动纳入 Files 治理 |
+| 适用 | 用户/团队文件、需要平台文件治理的应用文件 | 自带 S3 存储引擎、索引快照或缓存等由 App 自管的底层对象 |
+
+**Files 的「应用空间」是某个租户内的逻辑空间，不是应用专属 bucket。** 租户在 Files 中自配的
+bucket 与凭据优先于托管池；存储位置由 Files 解析，调用 App 不取得租户池的 S3 凭据。
+
+应用池当前注入的是**池级共用的数据面凭据**，不发 per-App / per-tenant 子凭据；每应用独立桶
+不代表云侧已做跨 App 权限隔离。声明与五项 S3 环境变量见 `xgent-app-release` skill 的
+「对象存储：应用池直供 S3 五键」。五键按整组供给，不需要管理员逐键取值。
+
+应受平台文件治理的字节走 Files；App 自管底层对象可使用平台 `objectStorage`。以下用户态、
+服务态与空间选择**仅适用于 Files**，按**这份字节归谁**选择：
 
 | 这份字节归谁 | 姿态 | 落在哪 | 用户在文件管理里 |
 | --- | --- | --- | --- |
