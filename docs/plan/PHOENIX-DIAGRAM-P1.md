@@ -62,7 +62,7 @@
 | M1 | 已完成 | 2026-10-16T10:28:31+08:00 | 冻结来源、工具与双输入合同；V-1/V-2 通过，布局/浏览器尚未验收 | [M1 记录](PHOENIX-DIAGRAM-P1.records/M1.md) | 98dfb34 |
 | M2 | 已完成 | 2026-10-16T13:19:48+08:00 | V-3/V-4 通过；两类实际 SVG、独立检查与 pin 修复闭环已有定向证据 | [M2 记录](PHOENIX-DIAGRAM-P1.records/M2.md) | 98dfb34 |
 | M3 | 已完成 | 2026-10-16T13:19:48+08:00 | V-5 通过；remaining_types 18/18、文本 7/7，已知 CJK/SEA 差异已清 | [M3 记录](PHOENIX-DIAGRAM-P1.records/M3.md) | 98dfb34 |
-| M5 | 已完成 | 2026-10-19T14:13:24+08:00 | R3/F-06恢复说明与派生制品同步；bootstrap20/20、固定Node25轻量及新development tgz恢复通过，最终包/宿主归M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a |
+| M5 | 已完成 | 2026-10-19T14:13:24+08:00 | R3/F-06恢复说明与派生制品同步；bootstrap20/20、固定Node25轻量及新development tgz恢复通过，最终包/宿主归M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a；修复 a0e79aa |
 | M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
 | M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
 | M7 | 进行中 | 2026-10-19T14:13:24+08:00 | R3/F-06改变源码输入/bundle/引擎及包身份，本地修复已验；新最终候选的受影响四平台/Node18/宿主与聚合待验，旧收口保为历史 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8 |
