@@ -65,7 +65,7 @@
 | M5 | 已完成 | 2026-10-19T14:13:24+08:00 | R3/F-06恢复说明与派生制品同步；bootstrap20/20、固定Node25轻量及新development tgz恢复通过，最终包/宿主归M7 | [M5 记录](PHOENIX-DIAGRAM-P1.records/M5.md) | 98dfb34；修复 6904c9a；修复 a0e79aa |
 | M4 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 doctor 恢复接缝 7/7；核心未改证据保留，新包终验归 M7 | [M4 记录](PHOENIX-DIAGRAM-P1.records/M4.md) | 98dfb34；修复 6904c9a |
 | M6 | 已完成 | 2026-10-18T21:50:52+08:00 | R1 CI 审核改显式触发，三份清单同步实建制品，symlink 发布保护通过；真实 CI 待 M7 | [M6 记录](PHOENIX-DIAGRAM-P1.records/M6.md) | d9e83cd；修复 6904c9a |
-| M7 | 已完成 | 2026-10-20T13:51:01+08:00 | 同包四平台/精确Node18、双宿主各22及6恢复通过；原FS审核收口、生产聚合exit0/passed与23AC/46追溯完成，V-13–V-16通过 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8；修复 8222b79 |
+| M7 | 已完成 | 2026-10-20T13:51:01+08:00 | 同包四平台/精确Node18、双宿主各22及6恢复通过；原FS审核收口、生产聚合exit0/passed与23AC/46追溯完成，V-13–V-16通过 | [M7 记录](PHOENIX-DIAGRAM-P1.records/M7.md) | 3c8c3ac、c629a04、3f97df8、55ba990、2c133da、dbbd728、2b59b3a、0c5829c、7e37f2a、7f3136c、90bc8b5、9fea3fa、af2b770、20c7f80、292386b、51c6379；修复 6904c9a；6b980c8；修复 8222b79；72bedfb |
 
 ## 0. 需求、范围与决策
 
