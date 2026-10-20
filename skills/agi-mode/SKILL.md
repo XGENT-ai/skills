@@ -22,6 +22,8 @@ disable-model-invocation: true
 
 每环只加载当前需要的流程，共用判定协议和搜索状态；协作与沉淀读 [技能演化](references/skill-evolution.md)。这些流程内置于本 skill，外部 `autoresearch`、`arena`、`reflect` 是兼容入口，单独安装 agi-mode 即可运行。
 
+真实 coding 任务上的远端比较或有界搜索，可按当前阶段读取 [远端执行工具](references/remote-evolution.md)。它是可选执行能力，沿用 Eval/Hillclimb 的协议、判定词和授权；缺配置时保留未执行状态。仓库 AGENTS 专项优化可路由至已安装的 `optimize-agents-md`，仅诊断只读，缺同仓任务时交未验证候选。
+
 先固定目标、质量底线、可改范围和基线，再改候选。判定器有缺陷时升协议版本并重测，不把换尺当进步。用于选方案的反馈属于开发证据；泛化结论需要未参与选择的任务，重复同题只证明稳定性。没有行为对照时，规则修订仍是改进假设。
 
 普通任务先完成当前目标；已授权持续改进时才运行完整搜索。持久修改 skill、全局指令、工具或偏好须在授权范围内，不从一次纠正推导永久规则。保留机制、证据、适用边界、反例与回退点；能力评估读 [进化证据](references/evolution-evidence.md)。

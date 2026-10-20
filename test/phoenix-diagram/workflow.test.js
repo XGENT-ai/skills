@@ -299,7 +299,7 @@ test('ARM browser preparation is diagram-local, explicitly online and binds the 
 });
 
 test('Intel preparation uses the fixed native mbx bootstrap without importing UI tool preparation', async () => {
-  const preparer = await prepare, versions = { rust: '1.99.0', node: '25.2.1', mrBoxington: '1.21.1' };
+  const preparer = await prepare, versions = (await source).loadVersions();
   const commands = preparer.preparationCommands(versions, true, { platform: 'darwin-x64', boxingtonAvailable: false });
   const bootstrap = commands.find(([, args]) => args.includes('--git'));
   assert.ok(bootstrap); assert.ok(bootstrap[1].includes(assets.nativeBootstrap['darwin-x64'].revision));

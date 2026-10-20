@@ -4,7 +4,7 @@
   "providers": {
     ".agent": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "d21ccafc83495872c80ec9873ad4fbfb4223837a747b524aa03b6d819f7c08e3",
+        "skills/phoenix-ui/SKILL.md": "1e09a22e8343b4292cda8bac02e3849c8b1b259465514bbe4bcec6b2ad27793a",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -154,7 +154,7 @@
         "agents/phoenix-ui-finish-reviewer.md": "6c7f23e449c6dcfa42f1f5ae2ab9577090ee62f0105961ab4022a116e6584415",
         "agents/phoenix-ui-manual-edit-applier.md": "e9ae01346d86c065d8926c0e6e0b3382715907d1f4463295f56aa17e23de3f9c",
         "settings.json": "291e5556000a273f55136bb708164dad8bbc78b7e928ab9c740069d837babc14",
-        "skills/phoenix-ui/SKILL.md": "99f49df49ade2ca21deffcc752fc8a76c9a6645f5416b9314ea3ab1bd010f34c",
+        "skills/phoenix-ui/SKILL.md": "b99148b63068ef6e9b850be8625455836ef733d7cb4cf66426ff077964af5ccb",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -235,7 +235,7 @@
         "agents/phoenix-ui-finish-reviewer.md": "5f0862fa372fd0fc17124cf59f2c9468625dd7ec60021ac0754f7c58ae11bcab",
         "agents/phoenix-ui-manual-edit-applier.md": "96b676e62383553ca64359393ed9e741bdd7d2ca2eaf22da1cedb7bb295e1cb4",
         "hooks.json": "17eb84adcefab70df0b61fa2494538d59a8d2ebf7504956dd98b5bf1d554bbcf",
-        "skills/phoenix-ui/SKILL.md": "b544da38492c15f5295053b64189a9ec5ebe446c77138ac52ca7bd9da9c0e842",
+        "skills/phoenix-ui/SKILL.md": "26eaa813c2e89781e967e544c4bb8bb5df7844fb1d7b615367880feb9445dc8f",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -305,7 +305,7 @@
     },
     ".dsh": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "d9f1d8e01b40a8d7310e367f7e3da7d1fac5850313082feb853093b7eb36d2bd",
+        "skills/phoenix-ui/SKILL.md": "5d4774fcf0fe70d749406a42d20c8ae7ed13230e6e19d39c65b060e4dfde1bf2",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -451,7 +451,7 @@
         "agents/phoenix-ui-finish-reviewer.agent.md": "958b524c7481795413b14980caee397c7fc199c03920cacc1147b34c8ca561a5",
         "agents/phoenix-ui-manual-edit-applier.agent.md": "1e9022e6f932fa3911fe34363845f0332a910b561a280bf39a1556ede9cc24df",
         "hooks/phoenix-ui.json": "3550c4701a0e662a5d40f4a104aeab8426283839e4958beff1338724587db34c",
-        "skills/phoenix-ui/SKILL.md": "3077452231f1ce3c48ae5d8dd912b14ab30de55a270a031d07065357bc1cca94",
+        "skills/phoenix-ui/SKILL.md": "60dd82b78f7e0b2d715c09b30b21694fc114a95962b958ba2d5252272b8eecf9",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -526,7 +526,7 @@
         "agents/phoenix-ui-finish-reviewer.md": "6c7f23e449c6dcfa42f1f5ae2ab9577090ee62f0105961ab4022a116e6584415",
         "agents/phoenix-ui-manual-edit-applier.md": "e9ae01346d86c065d8926c0e6e0b3382715907d1f4463295f56aa17e23de3f9c",
         "hooks/phoenix-ui.json": "9603fd34a99e4b5bc99bf850fa6e20c99336cb862a668a399c20c4c66f3480cd",
-        "skills/phoenix-ui/SKILL.md": "1ba392d45294b3e90cc7f3964f134ae685118bbbcc84ca944953a4270ec67a54",
+        "skills/phoenix-ui/SKILL.md": "ab3e192433eb40dba3ce174421ffeb17b43d31e84c60dcb9914d39f5cfa7eda0",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -596,7 +596,7 @@
     },
     ".hermes": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "3759780bd25526f7eaa3793c010356bccb850d40db931e0c6d47d35e81e96f96",
+        "skills/phoenix-ui/SKILL.md": "e0f311db49b74e4b51b8b547d616f26f0c8cab4d63f37c6dae2f969bf6217325",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -666,7 +666,7 @@
     },
     ".kiro": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "b49cdd7f125d9cb5ce10de7d39c5e3daff7d6649b9ac1c5ffd36a0aebdc4e7ca",
+        "skills/phoenix-ui/SKILL.md": "db1d48c499d1739997c744b2686f71a62dcdc3081be4587432b62321a4edd70c",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -737,7 +737,7 @@
     ".opencode": {
       "files": {
         "commands/phoenix-ui.md": "b80f3648b2f5b0e9e668f0fcd7d12a93e8fb72634a8604552376fe5923e1cbae",
-        "skills/phoenix-ui/SKILL.md": "335ccd78685b679dc0c880fc46139d0fa94aebcfa6e5ff848fd0599b187d25c4",
+        "skills/phoenix-ui/SKILL.md": "95906d7cedfafddb55a73fd212074380fc792aa6529ded1a53aae3cb383b89b3",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -807,7 +807,7 @@
     },
     ".pi": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "3133bec6998506bf92baeeabba39438c5ee27aa3330c2e6245f9df216fbe7b2d",
+        "skills/phoenix-ui/SKILL.md": "546e52598005648fe5fe7b936aaa2fd080e30d795d1741232b8ea57f1d7bdfc0",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -877,7 +877,7 @@
     },
     ".qoder": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "5f5fc6bb04605feb7ac6f6b19e35ff2f8d39e11a89fdd260159c6829f27b4a4d",
+        "skills/phoenix-ui/SKILL.md": "144c33e5af5b938893cdeab5d9b7942b8773c4ddd75d957fd4b1d0752577e094",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -947,7 +947,7 @@
     },
     ".rovodev": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "ec8968ee6a8e42b952e5ece2369ba69f40185c62a135ed54e930df3170421d9c",
+        "skills/phoenix-ui/SKILL.md": "636e15c5d2be440f2a6838f17b3c3f46830a2fbca71b8d6f3d69b16440683dd9",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -1017,7 +1017,7 @@
     },
     ".trae": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "48b7e6acf597d4f0320834db1393003451d1bd7c0d024dd62f7577a398b2e320",
+        "skills/phoenix-ui/SKILL.md": "93c57e1819dec11a4f13e90efe043f3a657f898b282d56bcbc6e16e4fe9ed71b",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -1087,7 +1087,7 @@
     },
     ".trae-cn": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "a64a45a4e082a0d05daf711080cb7c3195f15fb6b3f3dce0521f4816b64452f3",
+        "skills/phoenix-ui/SKILL.md": "6bd6ed5b7f984fb9de8b66d75924fa23140a671faf2941897a51cfd2961379e7",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -1157,7 +1157,7 @@
     },
     ".veto": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "882bfe4d8ffd9bc217b0c1bdd5e3cf659cd4b46598d631c4649aaaf0e13333ce",
+        "skills/phoenix-ui/SKILL.md": "20e55ecfa752a43fd9387940bcce687544532cfb68e04804331f4de31101b462",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
@@ -1227,7 +1227,7 @@
     },
     ".vibe": {
       "files": {
-        "skills/phoenix-ui/SKILL.md": "6530364f99c98b9ae9a8f9f3d34866a6393a75e75db48d8c0cbb49dd93a69f81",
+        "skills/phoenix-ui/SKILL.md": "a7a465878b490e2fbd3648948bcca63e7fa396440e38420610b53f9cd578afff",
         "skills/phoenix-ui/reference/adapt.md": "1c04a48d6f265209fdc79c5bf561d00aca892fa41f7eb48248c7848ad2b63eaf",
         "skills/phoenix-ui/reference/adapt.native.md": "3bfb871bd09629b58c791de3a054e1b81f546024aae5c0933ba6f2ecf76f50d5",
         "skills/phoenix-ui/reference/android.md": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",

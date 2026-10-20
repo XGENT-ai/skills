@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "rust": "1.99.0",
-  "mrBoxington": "1.21.1",
+  "mrBoxington": "1.24.0",
   "node": "25.2.1",
   "consumerNpm": {
     "package": "npm",

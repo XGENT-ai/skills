@@ -4,6 +4,8 @@
 
 决策入口：选假设读 [信息价值](../principles/information-first.md)，平台期读 [检验前提](../principles/challenge-premises.md)，目标与资源取舍读 [收敛](../principles/bounded-convergence.md)。持续维护 skill 时读 [技能演化与协作](../references/skill-evolution.md)。
 
+需要可运行的远端候选搜索时，读取 [指令进化工具](../references/remote-evolution.md)。run 的 search 模式执行本流程，resume 只接续已登记的冻结任务；工具状态仍区分 search_best 与 confirmed_best，保留 keep/discard/inconclusive/invalid。缺远端能力不启动替代的本机评测，已有授权和有限预算跨恢复沿用。
+
 ## 1. 固定目标、可改表面与比较基线
 
 1. 从真实任务确定主指标、方向、最小值得采用的收益、质量底线与成本约束。覆盖率、通过数、代码行数或 prompt 长度等代理指标须有真实目标依据，不能靠删测试或必要指令涨分。先选择“提升质量”或“质量在预定界限内保持，降低成本／复杂度”；不能看到结果后换目标。

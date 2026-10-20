@@ -10,6 +10,8 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 
 `/apps/<key>/` 与 `/svc/<key>/` 是线上 URL；本文的 `references/` 和 `scripts/` 相对于本 skill 目录。
 
+品牌图：在开发者应用的 App 概览上传 SVG / PNG / WebP（≤2 MiB），取得门户平台存储的 `/api/assets/app-logo/<listingKey>/<sha256>.<ext>` URL，回填源清单 `logoUrl` 并递增版本。只能引用本 App 这一路径；外链、data URI、`/apps/<key>/` 图、查询串与其他 App key 均拒。`icon` 仍填命名字形，导航不显示品牌图；品牌图原比例原色展示，坏图回退字形。需要已配置的平台自用存储池与显式 `developer:action:branding.manage` + 维护者资格，租户 App 编辑者不能改此字段。
+
 ## 按任务读参考
 
 | 任务 | 读 |

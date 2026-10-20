@@ -1,0 +1,4 @@
+interface:
+  display_name: "接入 LLM Gateway"
+  short_description: "为 App 后端接入统一模型调用、幂等恢复与媒体任务回收"
+  default_prompt: "使用 $use-llm-gateway 为当前 App 接入 XGENT 大模型网关的统一 /v1 调用面。"

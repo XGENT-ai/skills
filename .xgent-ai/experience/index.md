@@ -22,6 +22,7 @@
 
 - d1f6623b-b070-4187-bb6f-54fea834ddc4 · [spec-human-decision 决策记录共存](d1f6623b-b070-4187-bb6f-54fea834ddc4.md)
 - a6ed3bd2-e2b7-47a1-896c-f896d1261a11 · [SDLC 台账减少共享修改](a6ed3bd2-e2b7-47a1-896c-f896d1261a11.md)
+- `bbae83cd-7065-4f90-a350-5e6439fdfed6` · Agent Instruction Evolution · [记录](bbae83cd-7065-4f90-a350-5e6439fdfed6.md)
 
 - 39e564f7-edb4-4aed-aaf7-7a33bcdf0a59 · [npm 默认入口修复](39e564f7-edb4-4aed-aaf7-7a33bcdf0a59.md)
 
@@ -32,3 +33,9 @@
 - 548eefe7-8199-4266-856b-ad7166be8448 · [Phoenix Diagram R1 修复线索](548eefe7-8199-4266-856b-ad7166be8448.md)
 
 - 01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0 · [Phoenix Diagram M7 续验](01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0.md)
+
+- 2ab53e07-899c-4289-9b4a-4bf93c8b5deb · [合并 origin/main 验证环境](2ab53e07-899c-4289-9b4a-4bf93c8b5deb.md)
+
+- 2d9914fc-8f95-405c-83ed-59a229072efe · [resolve-blocked 外部依赖请求](2d9914fc-8f95-405c-83ed-59a229072efe.md)
+
+- 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)

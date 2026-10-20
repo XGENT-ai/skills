@@ -1,0 +1,3 @@
+interface:
+  display_name: "Use Workflow Service"
+  short_description: "界定工作流与 Agent + Skill 的分工，帮助 App 和服务经 Portal 接入与编排"

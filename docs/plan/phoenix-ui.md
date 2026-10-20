@@ -254,7 +254,7 @@ flowchart LR
 
 ```toml
 [tools]
-mr-boxington = "1.21.1"
+mr-boxington = "1.24.0"
 rust = { version = "1.99.0", mr_boxington = true, profile = "minimal", components = ["rustfmt", "clippy"], targets = ["wasm32-unknown-unknown"] }
 ```
 

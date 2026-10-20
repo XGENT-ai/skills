@@ -112,7 +112,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过 |
 | [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告对照截图与目标核实并修复界面差距、自检；停滞预警时重构思路，提交登记后交回复审 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
-| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 逐项讲清开发计划中的阻塞事项，先查证、需拍板的交互确认并给推荐，存 decisions 文档并回改计划 |
+| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 逐项查证开发计划阻塞，需拍板的交互确认，外部依赖通过 CRD 提出 CR；存 decisions 文档并回改计划，给出 agent 可执行的下一步 |
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
 
@@ -121,7 +121,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 需要逐项确定功能取舍时，可在 PRD 或开发计划成稿后使用 `spec-human-decision <文档>`：每项简述功能与价值，开发计划另述做法；选择确认、驳回或附说明修改，修订版再确认，并同步文档与决定记录。这是可选的用户决策环节，技术评审与开工条件仍按下述回路核对。
 
 1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
-2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`（可多次，直至 Ready），`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
+2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证或交互确认，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
@@ -208,6 +208,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | Skill | 说明 |
 | --- | --- |
 | [agi-mode](skills/agi-mode/SKILL.md) | 通用问题助手，不知道如何推进时从这里开始；核心是自进化 loop，SDLC 与项目状态为按需能力 |
+| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 诊断、精简或优化仓库 AGENTS.md；保留原则与授权，使用同仓任务远端评测，确认后按 CAS 采用 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
@@ -217,6 +218,12 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 `agi-mode` 的自进化 loop：真实任务反馈 → 改进假设 → 评测与搜索 → 最终确认 → 采用与沉淀 → 后续反馈。[Reflection](skills/agi-mode/playbooks/reflection.md) 提炼假设，[Eval](skills/agi-mode/playbooks/eval.md) 建立可信判定，[Hillclimb](skills/agi-mode/playbooks/hillclimb.md) 管理搜索，[Arena](skills/agi-mode/playbooks/arena.md) 按需提供不同候选。协作与记录约定见 [技能演化](skills/agi-mode/references/skill-evolution.md)。
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
+
+明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
+
+工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；不自动提交、发布或安装全局配置。已在指定 SSH/Docker 组合完成真实隔离、任务对照/搜索、自然请求/CAS 与故障恢复验收；本次独立确认样本不足，未证明候选优于基线。
+
+安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
 
 `experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具，并回写处置。
 

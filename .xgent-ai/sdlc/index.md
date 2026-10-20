@@ -27,5 +27,6 @@
 | Phoenix Diagram P1（开发计划） | [docs/plan/PHOENIX-DIAGRAM-P1.md](../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](status/plan/3cdd61a5-ef48-4526-8b3b-4271426843e8.md) |
 | Codex guard（开发计划） | [docs/plan/codex-context-goal-guard.md](../../docs/plan/codex-context-goal-guard.md) | [状态](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) |
 | Claude guard（开发计划） | [docs/plan/claude-context-goal-guard.md](../../docs/plan/claude-context-goal-guard.md) | [状态](status/plan/90d15d49-af8b-4e97-bb61-dadb6498747c.md) |
+| AGENTS.md 与 Skills 自进化（开发计划） | [docs/plan/agent-instruction-evolution.md](../../docs/plan/agent-instruction-evolution.md) | [状态](status/plan/bbae83cd-7065-4f90-a350-5e6439fdfed6.md) |
 
 [xgent-init 历史方案](../../docs/plan/xgent-init.md)保持[归档入口](status/plan/091b457b-53b0-4d16-bb58-406a02ccf1f6.md)。

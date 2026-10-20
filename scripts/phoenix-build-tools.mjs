@@ -94,7 +94,7 @@ export function preflight() {
     const cargo = find('cargo');
     console.log(JSON.stringify({path: process.env.PATH, cargo, realCargo: fs.realpathSync(cargo), mise: find('mise')}));
   `]));
-  // mbx 1.21.1's doctor does not recognize mise's universal command wrapper.
+  // Verify mise's universal command wrapper independently of mbx doctor.
   validateCargoWrapper(toolsEnv);
   const lock = fs.readFileSync(path.join(workspace, 'Cargo.lock'), 'utf8');
   if (!lock.includes(`name = "wasm-bindgen"\nversion = "${versions.wasmBindgen}"`)) {
