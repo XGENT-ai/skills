@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-22T03:30:00+08:00
+- 最近更新：2026-10-22T03:40:00+08:00
 - 当前进度：7/8 个里程碑完成
-- 当前状态：M7 已完成（D12 workflow 修复后开发引擎 `p2-native-8`：M6 收口在 `p2-core-9` 重做 handoff=passed；V-11 第三轮 62 例全部 passed 并归档；V-10 通过），未提交；M8 待开始
+- 当前状态：M7 已完成并提交 `e09bc82`（D12 workflow 修复后开发引擎 `p2-native-8`：M6 收口在 `p2-core-9` 重做 handoff=passed；V-11 第三轮 62 例全部 passed 并归档；V-10 通过）；M8 进行中：候选源码已提交
 - 最近完成：M7 · skill、说明、包脚本与宿主验收
-- 下一步：M8：提交候选源码（同时为 M6 完成记录按“修复”追加 SHA）→ 四平台 CI → 唯一 tgz/release-dir → 本机 distribution 收口 → 宿主证据按 §9.3 绑定（bundle 除 ENGINE.json 外逐文件相同、sourceInputSha256 = `7fcabd88…`）→ P2 聚合 → 全量回归
+- 下一步：M8：以 `e09bc82` 推独立 CI 分支并 dispatch 四平台 CI → 唯一 tgz/release-dir → 本机 distribution 收口 → 宿主证据按 §9.3 绑定（bundle 除 ENGINE.json 外逐文件相同、sourceInputSha256 = `7fcabd88…`）→ P2 聚合 → 全量回归
 - 当前阻塞：无（磁盘约 7.5GiB 可用，M8 本机收口前需经用户同意清理被取代的本地运行目录）
-- 代码基线：`0a8c6a8` 之上未提交：aggregate 与其测试、引擎修复（`src/browser/observation.rs`、`src/input/semantics.rs`、`src/layout/workflow{,/measure,/routing,/validate}.rs`、`tests/workflow.rs` 与 `fixtures/workflow/repair-*.workflow.json`、`viewer/reader-layout{.js,-adaptations.json}`、`assets/template.html`、装配器与 `reader-assets.test.js`）、corpus 范围与 `core-runner.test.js`、skill 停滞规则（`SKILL.md`、`references/authoring-defaults.md`、`docs/phoenix-diagram.md`）、dist/ENGINE 同步、计划与 M6/M7 记录、状态台账
+- 代码基线：main / `e09bc82`（M7 与 M6 修复，候选源码）；之后只有计划文件的 SHA 回填提交
 
 ### 完成记录
 
@@ -64,8 +64,8 @@
 | M2 | 已完成 | 2026-10-20T20:36:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7 |
 | M3 | 已完成 | 2026-10-20T20:36:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
-| M6 | 已完成 | 2026-10-22T03:30:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；V-11 暴露的 3.1.0 参考 JSON 浏览器门与分组标题修引擎后，在 `p2-core-8`（`p2-native-7`）重做第 1–5 步、handoff=passed，V-7–V-9 通过；M7 的 D12 workflow 修复改变引擎身份后在 `p2-core-9`（`p2-native-8`）再次重做第 1–5 步与全部范围，handoff=passed | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7 |
-| M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | 待提交 |
+| M6 | 已完成 | 2026-10-22T03:30:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；V-11 暴露的 3.1.0 参考 JSON 浏览器门与分组标题修引擎后，在 `p2-core-8`（`p2-native-7`）重做第 1–5 步、handoff=passed，V-7–V-9 通过；M7 的 D12 workflow 修复改变引擎身份后在 `p2-core-9`（`p2-native-8`）再次重做第 1–5 步与全部范围，handoff=passed | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82 |
+| M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
 
 ## 0. 需求、范围与决策
 
