@@ -49,22 +49,22 @@
 
 - 最近更新：2026-10-21T11:06:00+08:00
 - 当前进度：6/8 个里程碑完成
-- 当前状态：阶段 A（M1–M6）已完成，`p2-core-6` 收口 handoff=passed，在 M6 提交点提交；M7 的 skill/脚本/V-10 局部已过，development 包已打并装好 V-11 的 47 例，宿主会话未开始
+- 当前状态：阶段 A（M1–M6）已完成，`p2-core-6` 收口 handoff=passed，已在 M6 提交点提交；M7 的 skill/脚本/V-10 局部已过，development 包已打并装好 V-11 的 47 例，宿主会话未开始
 - 最近完成：M6 · 阶段 A 收口：本机十类原生交付、阅读与来源
 - 下一步：按 [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md)「继续动作」在负载回落后跑 V-11 试点（Claude case-019、Codex case-035），再批量 45 例、审核与归档；随后 M8。工作树 `../skills-p2-wt/m2`、`m3` 与旧 scratchpad `base` 已合入，可 `git worktree remove`
 - 当前阻塞：无（环境：系统负载常 > 100、磁盘余量约 5 GiB，均来自其他项目；15s Chrome 超时按记录续接）
-- 代码基线：`e29d4cafcada8809335e0a3dfaa939be95bb9643`
+- 代码基线：`711a5b7`（M6 提交）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-10-20T18:58:00+08:00 | 十类输入合同、语义门、场景类型、唯一目录与 i18n、0.2.0/phoenix-v2 身份、chrono 依赖与 `--sync-dist`；V-1、V-2 通过 | [M1 记录](PHOENIX-DIAGRAM-P2.records/M1.md) | 待提交 |
-| M4 | 已完成 | 2026-10-20T19:40:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行） | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 待提交 |
-| M2 | 已完成 | 2026-10-20T20:36:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 待提交 |
-| M3 | 已完成 | 2026-10-20T20:36:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 待提交 |
-| M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 待提交 |
-| M6 | 已完成 | 2026-10-21T11:06:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；`p2-core-6` 第 3–5 步全部通过、handoff=passed，V-7–V-9 通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 待提交 |
+| M1 | 已完成 | 2026-10-20T18:58:00+08:00 | 十类输入合同、语义门、场景类型、唯一目录与 i18n、0.2.0/phoenix-v2 身份、chrono 依赖与 `--sync-dist`；V-1、V-2 通过 | [M1 记录](PHOENIX-DIAGRAM-P2.records/M1.md) | 711a5b7 |
+| M4 | 已完成 | 2026-10-20T19:40:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行） | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 711a5b7 |
+| M2 | 已完成 | 2026-10-20T20:36:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7 |
+| M3 | 已完成 | 2026-10-20T20:36:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7 |
+| M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
+| M6 | 已完成 | 2026-10-21T11:06:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；`p2-core-6` 第 3–5 步全部通过、handoff=passed，V-7–V-9 通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7 |
 | M7 | 进行中 | 2026-10-21T11:06:00+08:00 | check-candidate 十类/范围/本地审核、workflow 15 例、aggregate `--profile p2`、docs 验收段已改，V-10 局部与 `npm test` 通过；development 包已打、47 例已装，宿主会话未开始 | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | — |
 
 ## 0. 需求、范围与决策
