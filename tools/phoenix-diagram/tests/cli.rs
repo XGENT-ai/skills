@@ -40,7 +40,14 @@ fn native_engine() -> (Project, PathBuf) {
     let executable = root.0.join("phoenix-diagram");
     // Cargo can hardlink its public executable to the deps artifact. Keep the
     // runtime's single-link contract and execute a copy of the compiler bytes.
-    fs::copy(env!("CARGO_BIN_EXE_phoenix-diagram"), &executable).unwrap();
+    // A child process writes it: a write descriptor held by this process could
+    // be inherited by a parallel test's fork and fail the exec with ETXTBSY.
+    let copied = Command::new("/bin/cp")
+        .arg(env!("CARGO_BIN_EXE_phoenix-diagram"))
+        .arg(&executable)
+        .status()
+        .unwrap();
+    assert!(copied.success());
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     assert_eq!(fs::symlink_metadata(&executable).unwrap().nlink(), 1);
     (root, executable)

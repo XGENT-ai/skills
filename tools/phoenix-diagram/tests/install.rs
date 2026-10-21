@@ -134,8 +134,16 @@ fn fixture(root: &Workspace) -> InstallRequest {
         (bytes.len() as u64, digest(&bytes))
     });
     // Cargo artifacts may have multiple links; probe only an owned byte copy.
+    // A child process writes it: a write descriptor held by this process could
+    // be inherited by a parallel test's fork and fail the exec with ETXTBSY.
     let engine = root.path("phoenix-diagram");
-    assert_eq!(fs::copy(compiled, &engine).unwrap(), *engine_size);
+    let copied = Command::new("/bin/cp")
+        .arg(compiled)
+        .arg(&engine)
+        .status()
+        .unwrap();
+    assert!(copied.success());
+    assert_eq!(fs::metadata(&engine).unwrap().len(), *engine_size);
     fs::set_permissions(&engine, fs::Permissions::from_mode(0o700)).unwrap();
     let metadata = fs::symlink_metadata(&engine).unwrap();
     assert!(metadata.is_file() && !metadata.is_symlink());
