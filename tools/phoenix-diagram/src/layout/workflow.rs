@@ -125,6 +125,7 @@ pub fn compile(
         Ok(scene) => Ok(scene),
         Err(mut diagnostics) => {
             verify_repairs(input, options, &mut diagnostics);
+            verify_text_capacity(input, options, &mut diagnostics);
             Err(diagnostics)
         }
     }
@@ -134,10 +135,20 @@ fn compile_internal(
     input: &DiagramInput,
     options: &CompileOptions,
 ) -> Result<CompiledDiagram, Diagnostics> {
+    compile_searching(input, options, true)
+}
+
+// Without `side_search` the repair passes stop where they would search side
+// pairs; every layout that passes this way passes the same way with it.
+fn compile_searching(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    side_search: bool,
+) -> Result<CompiledDiagram, Diagnostics> {
     let mut widths = std::collections::BTreeMap::new();
     let mut minimum_tick = 60;
     loop {
-        let result = compile_attempt(input, options, &widths);
+        let result = compile_attempt(input, options, &widths, side_search);
         if input.input_contract != InputContract::PhoenixV1
             || number(&input.document, "schema_version", 1.0) != 2.0
             || input.quality != crate::input::Quality::Showcase
@@ -196,6 +207,7 @@ fn compile_attempt(
     input: &DiagramInput,
     options: &CompileOptions,
     width_overrides: &std::collections::BTreeMap<String, f64>,
+    side_search: bool,
 ) -> Result<CompiledDiagram, Diagnostics> {
     let mut feedback = routing::Feedback::default();
     let mut current = compile_plan(input, options, width_overrides, &feedback);
@@ -205,6 +217,7 @@ fn compile_attempt(
         return current;
     }
     let mut best = current.clone();
+    let mut best_feedback = feedback.clone();
     let error_count = |result: &Result<CompiledDiagram, Diagnostics>| {
         result
             .as_ref()
@@ -288,9 +301,294 @@ fn compile_attempt(
         });
         if error_count(&current) < error_count(&best) || repairable {
             best = current.clone();
+            best_feedback = feedback.clone();
         }
     }
+    repair_composition(
+        input,
+        options,
+        width_overrides,
+        best,
+        best_feedback,
+        side_search,
+    )
+}
+
+const COMPOSITION_REPAIRS: [&str; 3] = [
+    "composition/ambiguous-corridor",
+    "composition/proper-crossing",
+    "composition/arrowhead-collision",
+];
+
+// Only a layout that still has composition hits gets these passes, so layouts
+// that already compile keep their exact geometry. A pass is kept only when it
+// strictly improves the rank. Readability and canvas errors are reported only
+// after the layout checks pass, so reaching them is progress; among layout
+// errors, other codes count first, then corridor and arrowhead hits, then
+// crossings, which a halo can still resolve.
+fn repair_composition(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    width_overrides: &std::collections::BTreeMap<String, f64>,
+    mut best: Result<CompiledDiagram, Diagnostics>,
+    mut feedback: routing::Feedback,
+    side_search: bool,
+) -> Result<CompiledDiagram, Diagnostics> {
+    let base = feedback.clone();
+    let mut searches = 0;
+    // Stage 2: routing failed before any layout check; 1: layout checks
+    // failed; 0: only readability or canvas checks remain.
+    let rank = |result: &Result<CompiledDiagram, Diagnostics>| {
+        let mut rank = (0, 0, 0, 0, 0);
+        for diagnostic in result.as_ref().err().into_iter().flatten() {
+            if diagnostic.severity != crate::diagnostic::Severity::Error {
+                continue;
+            }
+            match diagnostic.code.as_str() {
+                "workflow/sublabel-readability" | "workflow/viewbox-capacity" => rank.4 += 1,
+                "composition/proper-crossing" => rank.3 += 1,
+                code if COMPOSITION_REPAIRS.contains(&code) => rank.2 += 1,
+                "workflow/solver-budget-exhausted"
+                | "workflow/explicit-pin-conflict"
+                | "workflow/route-preset-conflict"
+                | "workflow/layout-feedback" => rank.0 = 2,
+                _ => rank.1 += 1,
+            }
+        }
+        if rank.0 == 0 && rank.1 + rank.2 + rank.3 > 0 {
+            rank.0 = 1;
+        }
+        rank
+    };
+    for _ in 0..8 {
+        let Err(diagnostics) = &best else {
+            break;
+        };
+        let errors = diagnostics
+            .iter()
+            .filter(|diagnostic| {
+                diagnostic.severity == crate::diagnostic::Severity::Error
+                    && COMPOSITION_REPAIRS.contains(&diagnostic.code.as_str())
+            })
+            .collect::<Vec<_>>();
+        let Some(scene) = errors
+            .iter()
+            .find_map(|diagnostic| diagnostic.evidence.get("measuredScene"))
+            .and_then(|scene| serde_json::from_value::<CompiledDiagram>(scene.clone()).ok())
+        else {
+            break;
+        };
+        let pair = |diagnostic: &Diagnostic| {
+            let a = diagnostic.evidence["relationIndex"].as_u64().or_else(|| {
+                diagnostic
+                    .subject
+                    .path
+                    .strip_prefix("/edges/")?
+                    .parse()
+                    .ok()
+            });
+            let b = diagnostic
+                .evidence
+                .pointer("/otherRelationship/index")
+                .and_then(Value::as_u64);
+            a.zip(b).map(|(a, b)| (a as usize, b as usize))
+        };
+        let mut proposals = Vec::new();
+        // Pairs that meet at a node keep the sides they actually use, so the
+        // next attempt spreads their ports on that side.
+        let actual = actual_sides(&scene);
+        let ends = |index: usize| {
+            array(&input.document, "edges")
+                .get(index)
+                .map(|edge| [string(edge, "from"), string(edge, "to")])
+        };
+        let mut spread = feedback.clone();
+        for (a, b) in errors
+            .iter()
+            .filter(|diagnostic| diagnostic.code != "composition/proper-crossing")
+            .filter_map(|diagnostic| pair(diagnostic))
+        {
+            if let (Some(left), Some(right)) = (ends(a), ends(b)) {
+                if left.iter().any(|id| right.contains(id)) {
+                    for index in [a, b] {
+                        if let Some(sides) = actual.get(&index) {
+                            spread.sides.entry(index).or_insert_with(|| sides.clone());
+                        }
+                    }
+                }
+            }
+        }
+        if spread.sides != feedback.sides {
+            proposals.push(spread);
+        }
+        if !feedback.channels
+            && errors
+                .iter()
+                .any(|diagnostic| diagnostic.code == "composition/ambiguous-corridor")
+        {
+            let mut channels = feedback.clone();
+            channels.channels = true;
+            proposals.push(channels);
+        }
+        let mut halo = feedback.clone();
+        for (a, b) in errors
+            .iter()
+            .filter(|diagnostic| diagnostic.code == "composition/proper-crossing")
+            .filter_map(|diagnostic| pair(diagnostic))
+        {
+            halo.halo.extend([a, b]);
+        }
+        if halo.halo != feedback.halo {
+            proposals.push(halo);
+        }
+        let forced_pair = errors
+            .iter()
+            .filter(|diagnostic| diagnostic.code != "composition/proper-crossing")
+            .find_map(|diagnostic| pair(diagnostic));
+        let mut improved = false;
+        for next in proposals {
+            let current = compile_plan(input, options, width_overrides, &next);
+            if rank(&current) < rank(&best) {
+                best = current;
+                feedback = next;
+                improved = true;
+                break;
+            }
+        }
+        if improved {
+            continue;
+        }
+        // Only when none of those helps may an end pair of the first corridor
+        // or arrowhead hit take another side pair, keeping the best strictly
+        // better layout. Two such searches keep a failing workflow's report
+        // prompt; the drafts this repairs need no more.
+        let Some((a, b)) = forced_pair.filter(|_| side_search && searches < 2) else {
+            break;
+        };
+        searches += 1;
+        // Earlier passes can leave too little room for another side pair, so
+        // the pair is also tried from the state before any repair pass and
+        // from the plain first attempt.
+        let mut starts = vec![feedback.clone()];
+        for start in [base.clone(), routing::Feedback::default()] {
+            if !starts.contains(&start) {
+                starts.push(start);
+            }
+        }
+        let mut chosen: Option<(Result<CompiledDiagram, Diagnostics>, routing::Feedback)> = None;
+        for start in starts {
+            if chosen.is_some() {
+                break;
+            }
+            for index in [b, a] {
+                let Some(edge) = array(&input.document, "edges").get(index) else {
+                    continue;
+                };
+                if !["", "auto"].contains(&string(edge, "route"))
+                    || [
+                        "via", "channelX", "channelY", "fromSide", "toSide", "labelAt",
+                    ]
+                    .iter()
+                    .any(|field| edge.get(*field).is_some())
+                    || start.force.contains_key(&index)
+                {
+                    continue;
+                }
+                for from_side in ["right", "bottom", "left", "top"] {
+                    for to_side in ["right", "bottom", "left", "top"] {
+                        if actual.get(&index) == Some(&(from_side.to_owned(), to_side.to_owned())) {
+                            continue;
+                        }
+                        let mut next = start.clone();
+                        next.force
+                            .insert(index, (from_side.to_owned(), to_side.to_owned()));
+                        next.sides
+                            .insert(index, (from_side.to_owned(), to_side.to_owned()));
+                        let mut current = compile_plan(input, options, width_overrides, &next);
+                        // A new side pair can move crossings and shared
+                        // corridors elsewhere; halos and parallel lanes may
+                        // still resolve those.
+                        if rank(&current) >= rank(&best) {
+                            let mut polished = next.clone();
+                            for diagnostic in current.as_ref().err().into_iter().flatten() {
+                                match diagnostic.code.as_str() {
+                                    "composition/proper-crossing" => {
+                                        polished.halo.extend(
+                                            pair(diagnostic)
+                                                .map(|(a, b)| [a, b])
+                                                .into_iter()
+                                                .flatten(),
+                                        );
+                                    }
+                                    "composition/ambiguous-corridor" => polished.channels = true,
+                                    _ => {}
+                                }
+                            }
+                            if polished != next {
+                                let again =
+                                    compile_plan(input, options, width_overrides, &polished);
+                                if rank(&again) < rank(&current) {
+                                    current = again;
+                                    next = polished;
+                                }
+                            }
+                        }
+                        if rank(&current) < rank(&best)
+                            && chosen
+                                .as_ref()
+                                .is_none_or(|(result, _)| rank(&current) < rank(result))
+                        {
+                            chosen = Some((current, next));
+                        }
+                    }
+                }
+            }
+        }
+        let Some((current, next)) = chosen else {
+            break;
+        };
+        best = current;
+        feedback = next;
+    }
     best
+}
+
+// The node side each routed end leaves or enters, keyed by source edge index.
+fn actual_sides(scene: &CompiledDiagram) -> std::collections::BTreeMap<usize, (String, String)> {
+    let side_at = |point: Point, bounds: &Rect| {
+        let near = |a: f64, b: f64| (a - b).abs() <= 0.0001;
+        if near(point.x, bounds.x) {
+            "left"
+        } else if near(point.x, bounds.x + bounds.width) {
+            "right"
+        } else if near(point.y, bounds.y) {
+            "top"
+        } else {
+            "bottom"
+        }
+    };
+    scene
+        .relations
+        .iter()
+        .filter_map(|relation| {
+            let index = relation
+                .authored
+                .source_path
+                .rsplit('/')
+                .next()?
+                .parse()
+                .ok()?;
+            let node = |id: &str| scene.nodes.iter().find(|node| node.authored.id == id);
+            let (from, to) = (node(&relation.from)?, node(&relation.to)?);
+            Some((
+                index,
+                (
+                    side_at(*relation.points.first()?, &from.bounds).to_owned(),
+                    side_at(*relation.points.last()?, &to.bounds).to_owned(),
+                ),
+            ))
+        })
+        .collect()
 }
 
 fn compile_plan(
@@ -348,6 +646,22 @@ fn compile_plan(
                 .then_with(|| string(&a.value, "id").cmp(string(&b.value, "id")))
         });
     }
+    // A forced side pair is measured and routed exactly like authored
+    // endpoint sides; the relation keeps the authored facts.
+    let planned = edges
+        .iter()
+        .map(|edge| {
+            let mut value = edge.value.clone();
+            if let Some((from_side, to_side)) = routing_feedback.force.get(&edge.index) {
+                value["fromSide"] = Value::String(from_side.clone());
+                value["toSide"] = Value::String(to_side.clone());
+            }
+            Entry {
+                index: edge.index,
+                value,
+            }
+        })
+        .collect::<Vec<_>>();
     let mut feedback_gap = 0.0_f64;
     let mut rank_minimums = std::collections::BTreeMap::new();
     let mut resolved = None;
@@ -356,15 +670,23 @@ fn compile_plan(
             input,
             &lanes,
             &nodes,
-            &edges,
+            &planned,
             &phases,
             &groups,
             feedback_gap,
             &rank_minimums,
             width_overrides,
         )?;
-        match routing::route(input, &measured, &edges, routing_feedback) {
-            Ok(relations) => {
+        match routing::route(input, &measured, &planned, routing_feedback) {
+            Ok(mut relations) => {
+                for relation in &mut relations {
+                    if let Some(edge) = edges.iter().find(|edge| {
+                        routing_feedback.force.contains_key(&edge.index)
+                            && relation.authored.source_path == format!("/edges/{}", edge.index)
+                    }) {
+                        relation.authored = routing::edge_authored(edge);
+                    }
+                }
                 resolved = Some((measured, relations));
                 break;
             }
@@ -474,6 +796,7 @@ fn compile_plan(
         },
         diagnostics: Vec::new(),
     };
+    measure::clear_group_titles(input, &measured, &mut scene);
     validation::validate(input, &measured, &mut scene)?;
     measure::finalize(input, &measured, &mut scene)?;
     measure::validate_readable_text(input, &mut scene)?;
@@ -625,7 +948,337 @@ fn verify_repairs(input: &DiagramInput, options: &CompileOptions, diagnostics: &
             diagnostic.evidence["verifiedRepairs"] = Value::Array(verified);
         }
     }
+    if input.input_contract == InputContract::PhoenixV1
+        && number(&input.document, "schema_version", 1.0) == 2.0
+    {
+        verify_workflow_repair(input, options, diagnostics);
+    }
     verify_composition_advice(input, options, diagnostics);
+}
+
+// When the named pins alone are not the cause, the whole workflow may still
+// pass with automatic routing for every edge, by itself or with its texts
+// within a verified limit, so geometry and text are repaired in one round.
+// This sits beside the minimal repairs in `verifiedRepairs`.
+fn verify_workflow_repair(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    diagnostics: &mut Diagnostics,
+) {
+    let unrepaired = |diagnostic: &Diagnostic| {
+        ([
+            "workflow/explicit-pin-conflict",
+            "workflow/route-preset-conflict",
+        ]
+        .contains(&diagnostic.code.as_str())
+            || COMPOSITION_REPAIRS.contains(&diagnostic.code.as_str()))
+            && diagnostic.supported_fixes.is_empty()
+    };
+    if !diagnostics.iter().any(unrepaired) {
+        return;
+    }
+    let changes = route_pin_removals(&input.document);
+    if changes.is_empty() {
+        return;
+    }
+    let mut candidate = input.document.clone();
+    for change in &changes {
+        let (parent, key) = change["path"].as_str().unwrap().rsplit_once('/').unwrap();
+        candidate
+            .pointer_mut(parent)
+            .and_then(Value::as_object_mut)
+            .unwrap()
+            .remove(key);
+    }
+    let candidate_options = CompileOptions {
+        input_contract: Some(input.input_contract),
+        quality: Some(input.quality),
+        ..options.clone()
+    };
+    let Ok(candidate_input) = crate::input::parse_input(
+        &serde_json::to_vec(&candidate).expect("JSON candidate"),
+        DiagramType::Workflow,
+        &candidate_options,
+    ) else {
+        return;
+    };
+    let removals = changes
+        .iter()
+        .map(|change| format!("remove {}", change["path"].as_str().unwrap()))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let (fix, repair) = match compile_internal(&candidate_input, &candidate_options) {
+        Ok(_) => (
+            format!("If these geometry assertions are optional, apply {removals} together; the complete workflow then passes native compilation"),
+            json!({"scope":"complete-workflow-compile","changes":changes}),
+        ),
+        Err(found)
+            if found.iter().all(|diagnostic| {
+                diagnostic.severity != crate::diagnostic::Severity::Error
+                    || text_capacity_path(diagnostic).is_some()
+            }) =>
+        {
+            let mut paths = found
+                .iter()
+                .filter_map(text_capacity_path)
+                .map(str::to_owned)
+                .collect();
+            let Some(limit) = text_capacity_limit(input, options, &candidate, &mut paths, &[])
+            else {
+                return;
+            };
+            let listed = paths.iter().cloned().collect::<Vec<_>>().join(", ");
+            (
+                format!("If these geometry assertions are optional, apply {removals} together, and keep every text in [{listed}] within {limit} text units (a CJK character counts as 2), moving any detail beyond that into a card item; the complete workflow then passes native compilation"),
+                json!({"scope":"complete-workflow-compile","changes":changes,"textCapacity":{"maximumUnits":limit,"paths":paths}}),
+            )
+        }
+        Err(_) => return,
+    };
+    for diagnostic in diagnostics
+        .iter_mut()
+        .filter(|diagnostic| unrepaired(diagnostic))
+    {
+        diagnostic.supported_fixes.push(fix.clone());
+        diagnostic.evidence["verifiedWorkflowRepair"] = repair.clone();
+    }
+}
+
+// The node text field a text-capacity diagnostic names, if it is one.
+fn text_capacity_path(diagnostic: &Diagnostic) -> Option<&str> {
+    let path = diagnostic.subject.path.as_str();
+    let fits = diagnostic.code == "workflow/sublabel-readability"
+        || diagnostic.code == "layout/constraint"
+            && diagnostic
+                .message
+                .ends_with("does not fit its authored width");
+    (fits
+        && ["/label", "/sublabel", "/tag"]
+            .iter()
+            .any(|field| path.ends_with(field)))
+    .then_some(path)
+}
+
+// The longest prefix of `text` within `limit` text units.
+fn within_units(input: &DiagramInput, text: &str, limit: f64) -> String {
+    let mut result = String::new();
+    for character in text.chars() {
+        let mut next = result.clone();
+        next.push(character);
+        if units(input, &next) > limit {
+            break;
+        }
+        result = next;
+    }
+    result
+}
+
+// `document` with every text in `paths` cut to `limit` text units; a label
+// keeps its first character and other texts are removed at zero.
+fn cut_texts(
+    input: &DiagramInput,
+    document: &Value,
+    paths: &std::collections::BTreeSet<String>,
+    limit: usize,
+) -> Value {
+    let mut candidate = document.clone();
+    for path in paths {
+        let text = string_at(document, path);
+        let mut cut = within_units(input, &text, limit as f64);
+        if cut.is_empty() && path.ends_with("/label") {
+            cut = text.chars().take(1).collect();
+        }
+        if cut.is_empty() {
+            let (parent, key) = path.rsplit_once('/').unwrap();
+            if let Some(object) = candidate.pointer_mut(parent).and_then(Value::as_object_mut) {
+                object.remove(key);
+            }
+        } else if let Some(value) = candidate.pointer_mut(path) {
+            *value = Value::String(cut);
+        }
+    }
+    candidate
+}
+
+fn string_at(document: &Value, path: &str) -> String {
+    document
+        .pointer(path)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_owned()
+}
+
+// Text that does not fit is the author's to shorten, so the verified advice is
+// a length: the largest common limit for every text in `paths` with which the
+// complete workflow reports no text-capacity diagnostic and no error outside
+// `tolerated`. Texts are measured in stages (authored width, then the final
+// readability floor), so cutting the named texts can expose others; those
+// join `paths`. A probe that must pass outright first skips the side-pair
+// search: a layout that passes without it passes identically with it.
+fn text_capacity_limit(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    document: &Value,
+    paths: &mut std::collections::BTreeSet<String>,
+    tolerated: &[(String, String)],
+) -> Option<usize> {
+    let candidate_options = CompileOptions {
+        input_contract: Some(input.input_contract),
+        quality: Some(input.quality),
+        ..options.clone()
+    };
+    let probe = |paths: &std::collections::BTreeSet<String>, limit: usize| {
+        let candidate = cut_texts(input, document, paths, limit);
+        let candidate_input = crate::input::parse_input(
+            &serde_json::to_vec(&candidate).expect("JSON capacity probe"),
+            DiagramType::Workflow,
+            &candidate_options,
+        )
+        .ok()?;
+        let result = tolerated
+            .is_empty()
+            .then(|| compile_searching(&candidate_input, &candidate_options, false))
+            .filter(Result::is_ok)
+            .unwrap_or_else(|| compile_searching(&candidate_input, &candidate_options, true));
+        Some(
+            result
+                .err()
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|diagnostic| diagnostic.severity == crate::diagnostic::Severity::Error)
+                .collect::<Vec<_>>(),
+        )
+    };
+    let passes = |found: &[Diagnostic]| {
+        found.iter().all(|diagnostic| {
+            text_capacity_path(diagnostic).is_none()
+                && tolerated.iter().any(|(code, path)| {
+                    *code == diagnostic.code && *path == diagnostic.subject.path
+                })
+        })
+    };
+    let mut feasible = false;
+    for _ in 0..4 {
+        let found = probe(paths, 0)?;
+        let exposed = found
+            .iter()
+            .filter_map(text_capacity_path)
+            .filter(|path| !paths.contains(*path))
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        if exposed.is_empty() {
+            feasible = passes(&found);
+            break;
+        }
+        paths.extend(exposed);
+    }
+    if !feasible {
+        return None;
+    }
+    let (mut low, mut high) = (
+        0,
+        paths
+            .iter()
+            .map(|path| units(input, &string_at(document, path)))
+            .fold(0.0_f64, f64::max) as usize,
+    );
+    while low + 1 < high {
+        let middle = (low + high) / 2;
+        if probe(paths, middle).is_some_and(|found| passes(&found)) {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    Some(low)
+}
+
+fn text_capacity_advice(
+    input: &DiagramInput,
+    path: &str,
+    limit: usize,
+    paths: &std::collections::BTreeSet<String>,
+) -> String {
+    let listed = paths.iter().cloned().collect::<Vec<_>>().join(", ");
+    if limit == 0 {
+        format!("Move the detail in {path} into a card item; with every text in [{listed}] moved to cards (labels keep one character) the complete workflow passes its text-capacity checks")
+    } else {
+        format!(
+            "Keep every text in [{listed}] within {limit} text units (a CJK character counts as 2; {path} is now {}), moving any detail beyond that into a card item; the complete workflow then passes its text-capacity checks",
+            units(input, &string_at(&input.document, path))
+        )
+    }
+}
+
+fn verify_text_capacity(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    diagnostics: &mut Diagnostics,
+) {
+    if input.input_contract != InputContract::PhoenixV1
+        || number(&input.document, "schema_version", 1.0) != 2.0
+    {
+        return;
+    }
+    let mut paths = diagnostics
+        .iter()
+        .filter_map(text_capacity_path)
+        .map(str::to_owned)
+        .collect::<std::collections::BTreeSet<_>>();
+    if paths.is_empty() {
+        return;
+    }
+    let tolerated = diagnostics
+        .iter()
+        .filter(|diagnostic| {
+            diagnostic.severity == crate::diagnostic::Severity::Error
+                && text_capacity_path(diagnostic).is_none()
+        })
+        .map(|diagnostic| (diagnostic.code.clone(), diagnostic.subject.path.clone()))
+        .collect::<Vec<_>>();
+    let Some(limit) = text_capacity_limit(input, options, &input.document, &mut paths, &tolerated)
+    else {
+        return;
+    };
+    for diagnostic in diagnostics.iter_mut() {
+        let Some(path) = text_capacity_path(diagnostic).map(str::to_owned) else {
+            continue;
+        };
+        diagnostic
+            .supported_fixes
+            .insert(0, text_capacity_advice(input, &path, limit, &paths));
+        diagnostic.evidence["verifiedTextCapacity"] =
+            json!({"scope":"complete-workflow-compile","maximumUnits":limit,"paths":paths});
+    }
+}
+
+// Every authored routing control in the workflow, as removals.
+fn route_pin_removals(document: &Value) -> Vec<Value> {
+    let fields = [
+        "via",
+        "channelX",
+        "channelY",
+        "labelAt",
+        "labelDx",
+        "labelDy",
+        "labelSegment",
+        "route",
+        "fromSide",
+        "toSide",
+    ];
+    array(document, "edges")
+        .iter()
+        .enumerate()
+        .flat_map(|(index, edge)| {
+            fields
+                .iter()
+                .filter(move |field| {
+                    edge.get(**field).is_some()
+                        && !(**field == "route" && string(edge, "route") == "auto")
+                })
+                .map(move |field| json!({"op":"remove","path":format!("/edges/{index}/{field}")}))
+        })
+        .collect()
 }
 
 fn removal_combinations(values: &[Value], size: usize) -> Vec<Vec<Value>> {

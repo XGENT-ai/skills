@@ -1263,6 +1263,111 @@ pub(super) fn finalize(
     Ok(())
 }
 
+// A fixed (schema 1) frame is only as tall as its nodes, so a group title at
+// its frozen in-frame offset can land on a member or a route. Under phoenix-v1
+// such a title moves to the frame's top border, the slot readable frames
+// reserve for it, or else to the lane-title row above, at the leftmost
+// position within the frame clear of nodes, routes and other text. Titles
+// already clear, and all 2.17 geometry, stay as authored.
+pub(super) fn clear_group_titles(
+    input: &DiagramInput,
+    measured: &Measurement,
+    scene: &mut CompiledDiagram,
+) {
+    if measured.readable || input.input_contract != InputContract::PhoenixV1 {
+        return;
+    }
+    let contract = input.input_contract;
+    let glyph = |text: &Text, x: f64, baseline: f64| {
+        crate::geometry::text_glyph_box(
+            &text.content,
+            x,
+            baseline,
+            text.font_size,
+            &text.anchor,
+            contract,
+        )
+    };
+    let mut blockers: Vec<Rect> = scene.nodes.iter().map(|node| node.bounds).collect();
+    for relation in &scene.relations {
+        blockers.extend(relation.label_plate);
+        blockers.extend(relation.note_bounds);
+    }
+    blockers.extend(scene.legends.iter().map(|legend| legend.bounds));
+    let mut texts = scene
+        .containers
+        .iter()
+        .flat_map(|container| container.text.iter())
+        .chain(scene.text.iter())
+        .map(|text| {
+            (
+                text.source_path.clone(),
+                glyph(text, text.position.x, text.position.y),
+            )
+        })
+        .collect::<Vec<_>>();
+    for index in 0..scene.containers.len() {
+        let container = &scene.containers[index];
+        if container.authored.kind != "group" || container.text.len() != 1 {
+            continue;
+        }
+        let title = &container.text[0];
+        let mut obstacles = blockers.clone();
+        obstacles.extend(
+            texts
+                .iter()
+                .filter(|(path, _)| *path != title.source_path)
+                .map(|(_, rect)| *rect),
+        );
+        // Routes keep room for an arrowhead's half width.
+        let clear = |rect: &Rect| {
+            obstacles
+                .iter()
+                .all(|other| !rects_overlap_for_contract(rect, other, 2.0, contract))
+                && scene.relations.iter().all(|relation| {
+                    relation.points.windows(2).all(|pair| {
+                        !crate::geometry::segment_intersects_rect(pair[0], pair[1], rect, 6.0)
+                    })
+                })
+        };
+        if clear(&glyph(title, title.position.x, title.position.y)) {
+            continue;
+        }
+        let frame = container.bounds;
+        // Candidates start at the frame inset and just past each blocker's
+        // right edge; route points stand in for the vertical runs they cross.
+        let mut starts = vec![frame.x + 10.0];
+        starts.extend(obstacles.iter().map(|rect| rect.x + rect.width + 2.5));
+        starts.extend(
+            scene
+                .relations
+                .iter()
+                .flat_map(|relation| relation.points.iter().map(|point| point.x + 6.5)),
+        );
+        starts.retain(|x| *x >= frame.x + 10.0);
+        starts.sort_by(f64::total_cmp);
+        let placed = [frame.y - 2.0, frame.y - 16.0]
+            .into_iter()
+            .find_map(|baseline| {
+                starts
+                    .iter()
+                    .map(|x| (Point { x: *x, y: baseline }, glyph(title, *x, baseline)))
+                    .find(|(_, rect)| {
+                        rect.x + rect.width <= frame.x + frame.width - 10.0
+                            && rect.y >= 0.0
+                            && clear(rect)
+                    })
+            });
+        if let Some((position, rect)) = placed {
+            let path = title.source_path.clone();
+            scene.containers[index].text[0].position = position;
+            if let Some(entry) = texts.iter_mut().find(|(source, _)| *source == path) {
+                entry.1 = rect;
+            }
+        }
+    }
+}
+
 pub(super) fn validate_readable_text(
     input: &DiagramInput,
     scene: &mut CompiledDiagram,

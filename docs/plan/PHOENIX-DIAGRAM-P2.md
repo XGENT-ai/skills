@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-21T11:06:00+08:00
-- 当前进度：6/8 个里程碑完成
-- 当前状态：阶段 A（M1–M6）已完成，`p2-core-6` 收口 handoff=passed，已在 M6 提交点提交；M7 的 skill/脚本/V-10 局部已过，development 包已打并装好 V-11 的 47 例，宿主会话未开始
-- 最近完成：M6 · 阶段 A 收口：本机十类原生交付、阅读与来源
-- 下一步：按 [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md)「继续动作」在负载回落后跑 V-11 试点（Claude case-019、Codex case-035），再批量 45 例、审核与归档；随后 M8。工作树 `../skills-p2-wt/m2`、`m3` 与旧 scratchpad `base` 已合入，可 `git worktree remove`
-- 当前阻塞：无（环境：系统负载常 > 100、磁盘余量约 5 GiB，均来自其他项目；15s Chrome 超时按记录续接）
-- 代码基线：`711a5b7`（M6 提交）
+- 最近更新：2026-10-22T03:30:00+08:00
+- 当前进度：7/8 个里程碑完成
+- 当前状态：M7 已完成（D12 workflow 修复后开发引擎 `p2-native-8`：M6 收口在 `p2-core-9` 重做 handoff=passed；V-11 第三轮 62 例全部 passed 并归档；V-10 通过），未提交；M8 待开始
+- 最近完成：M7 · skill、说明、包脚本与宿主验收
+- 下一步：M8：提交候选源码（同时为 M6 完成记录按“修复”追加 SHA）→ 四平台 CI → 唯一 tgz/release-dir → 本机 distribution 收口 → 宿主证据按 §9.3 绑定（bundle 除 ENGINE.json 外逐文件相同、sourceInputSha256 = `7fcabd88…`）→ P2 聚合 → 全量回归
+- 当前阻塞：无（磁盘约 7.5GiB 可用，M8 本机收口前需经用户同意清理被取代的本地运行目录）
+- 代码基线：`0a8c6a8` 之上未提交：aggregate 与其测试、引擎修复（`src/browser/observation.rs`、`src/input/semantics.rs`、`src/layout/workflow{,/measure,/routing,/validate}.rs`、`tests/workflow.rs` 与 `fixtures/workflow/repair-*.workflow.json`、`viewer/reader-layout{.js,-adaptations.json}`、`assets/template.html`、装配器与 `reader-assets.test.js`）、corpus 范围与 `core-runner.test.js`、skill 停滞规则（`SKILL.md`、`references/authoring-defaults.md`、`docs/phoenix-diagram.md`）、dist/ENGINE 同步、计划与 M6/M7 记录、状态台账
 
 ### 完成记录
 
@@ -64,8 +64,8 @@
 | M2 | 已完成 | 2026-10-20T20:36:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7 |
 | M3 | 已完成 | 2026-10-20T20:36:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
-| M6 | 已完成 | 2026-10-21T11:06:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；`p2-core-6` 第 3–5 步全部通过、handoff=passed，V-7–V-9 通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7 |
-| M7 | 进行中 | 2026-10-21T11:06:00+08:00 | check-candidate 十类/范围/本地审核、workflow 15 例、aggregate `--profile p2`、docs 验收段已改，V-10 局部与 `npm test` 通过；development 包已打、47 例已装，宿主会话未开始 | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | — |
+| M6 | 已完成 | 2026-10-22T03:30:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；V-11 暴露的 3.1.0 参考 JSON 浏览器门与分组标题修引擎后，在 `p2-core-8`（`p2-native-7`）重做第 1–5 步、handoff=passed，V-7–V-9 通过；M7 的 D12 workflow 修复改变引擎身份后在 `p2-core-9`（`p2-native-8`）再次重做第 1–5 步与全部范围，handoff=passed | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7 |
+| M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -108,6 +108,7 @@
 | D9 | 收口拓扑 | 见 ADR-2 | — | C-4；P1 M7 成本 |
 | D10 | 宿主覆盖 | Claude Code 跑 §9.2 全部 31 行；Codex 跑 P2 新增 13 行加 3 行回归抽样；任一 Codex 行与 Claude Code 的同行为不一致时，Codex 补跑全部回归行 | 两宿主都验证新增能力；回归行验证的是两宿主共用的同一 skill 文本。代价是 Codex 上 P1 行的覆盖从全量降为抽样 | §9.2；P1 M7 记录的会话成本 |
 | D11 | 开发包同步 | `scripts/build-phoenix-diagram.mjs` 增 `--sync-dist`：把刚构建的 development VERSION、bundle 与 ENGINE 逐字同步到 `dist/phoenix-diagram/` 与 `skills/phoenix-diagram/ENGINE.json` | 去掉 P1 的手工三份清单同步（P1 曾因 dist 内 SKILL.md 未同步导致 pack 失败） | P1 M6 记录 F-03 行、M7 记录 :521 |
+| D12 | workflow 布局停滞（V-11 暴露，用户裁定 2026-10-21） | phoenix-v1 schema 2 的 workflow 在基础布局失败后进入修复轮：按实际选用的边分散端口、外侧平行通道、对残余交叉启用已验收的交叉光晕、对错误对尝试强制边组合；pin 冲突与组合错误给出“撤掉全部路由 pin”的已验证修法；文字容量诊断给出经整图重编验证的长度上限 | 已通过的图几何不变，legacy-2.17 不变，不放宽检查阈值（布局期交叉判定与产物检查同样接受双方带光晕的交叉）；整图撤 pin 修法记为 `verifiedWorkflowRepair`，冻结 oracle 的最小修法与冲突分类不变；`input/main-path` 列倒退另给最少改列修法。偏差：冻结 oracle 中只因一处自动边交叉被拒的 `optional-placement-advice` 现以光晕通过、不再给摆放建议。引擎身份改变，M6 收口与 V-11 全部 62 行重跑 | M7 记录「继续动作」第 7 项；冻结 3.1.0 对同样首稿同样拒绝渲染 |
 
 ### 0.3 ADR-lite
 
@@ -542,7 +543,7 @@ legacy-2.17 architecture 的 repository/sources（provider 仅 github|gitee）�
 | V-5 | WORK-F3/AC-1–AC-3、WORK-F4（来源维度）、WORK-N5（保持）：<br>- 真实临时 git 仓库覆盖十类各一条来源，以及 web、local-only、SSH origin、GitHub/Gitee/GitLab/自托管链接格式；<br>- 每个 unverified 原因（含 dirty 工作树、缺提交、缺文件、越界、无 git、无 repo-root）；<br>- 工作树路径：正常嵌套文件 verified；中间段 symlink、末段 symlink、末段非普通文件均为 `worktree-differs`；<br>- 零网络：用本地 `file://` 源 `clone --filter=blob:none` 造只带 `remote.<name>.promisor`/`partialclonefilter` 的缺对象仓库（源可达，任何懒抓取都会写入）。分别在本机 git、PATH 前置包装模拟 < 2.45（报旧版本号并删去 `GIT_NO_LAZY_FETCH` 后转发）、只删该变量三种条件下核对：原因码正确，缺失对象仍缺失；超时时整个进程组被终止。有真实旧版 git 时加跑并记版本，否则记未运行，不以模拟冒充；<br>- 凭据与路径逃逸拒绝；<br>- status 计算；evidenceSha256 进入 configSha256 并保持确定性；<br>- 严格当前性拒绝篡改的 `sourceEvidence`；<br>- 来源三态的 Reader 显示 | `mbx test` `--test evidence --test delivery`；`node --test tools/phoenix-diagram/tests/viewer/evidence.test.mjs` | M4 局部 |
 | V-6 | WORK-F5/AC-2、AC-4，WORK-F6/AC-2，WORK-N1/AC-4（Reader 层）：<br>- §6.1 状态机；<br>- 范围卡片 canonical=false 与徽标；<br>- 五语言目录与回退；<br>- 树导出为完整树；<br>- 导出控制器对范围卡片与新五类的格式范围、文件名与 canonical 元数据（单测不启动 Chrome；真实格式文件与浏览器解码归 V-7） | `node --test tools/phoenix-diagram/tests/viewer/unit.test.mjs tools/phoenix-diagram/tests/viewer/explore.test.mjs tools/phoenix-diagram/tests/viewer/catalogs.test.mjs tools/phoenix-diagram/tests/export-acceptance.test.mjs` | M5 局部 |
 | V-7 | 阶段 A 收口。WORK-F1、F4、F5、F6、N1 全部 AC，以及 N2/AC-2、N4/N5 保持：<br>- 原五类 × 两合同加新五类 × phoenix-v1，共 15 例，各跑真实生成 → 四门 → 五视口 × 两主题；<br>- Agent 逐张实际查看暗亮截图后 `review-record` → complete；<br>- 每例（含新五类的五种格式）20 次真实导出，核对文件签名并经浏览器解码；PNG 剪贴板与能力失败分支、八个 reduce/hidden 样本、打印；<br>- 每类一条探索剧本（★ `support/explore-reader.mjs`：筛选、Route 有路/无路、Reach 有/空、树折叠、概览定位、展示进出、深链接重载再清除、键盘可达、详情关闭），以及作者源文件 sha256 不变；<br>- 有关系的八类各导出一张 Route 卡片与一张 Reach 卡片，卡片文件同样核对签名与浏览器解码；<br>- 确定性重放、XSS、离线与 P1 八项输出恢复演练 | 先以 `node --test test/phoenix-diagram/core-runner.test.js` 锁定 M6 的 runner 增量（15 例选择、新五类无 legacy 用例、新开关缺省 not-run）。再在本机 darwin-arm64 用真实 Rust + Chrome 依次执行，命令均经 `mise exec --no-deps --`，`<n>` 为本轮序号：<br>1. 引擎：`node scripts/build-phoenix-diagram.mjs --development --output-dir local/phoenix-diagram/p2-native-<n>`；以下 BIN 为其中的 `phoenix-diagram-darwin-arm64`，各步显式传 `--engine BIN`，不依赖 `PHOENIX_DIAGRAM_BIN`；<br>2. 初跑：`node scripts/test-phoenix-diagram.mjs --stage core --engine BIN --output-dir local/phoenix-diagram/p2-core-<n>`，15 例真实 finalize，视觉保持 required-pending；<br>3. 收口范围：同入口加 `--resume <最新 index> --reader --recovery --offline` 与 ★ `--explore --corpus --evidence --locale`，不再 finalize 原例；<br>4. 看图：Agent 逐张打开最新 index 列出的 15 例暗亮截图，按 `review-record` 的记录格式写入运行目录的 `actual-reviews/`，再写 review map `{"records":{"<case-id>":"<记录绝对路径>"}}`；V-8/V-9 片段截图同样逐张查看，按截图 sha256 在 M6 记录登记观察，不进 review map；<br>5. 登记：同入口加 `--resume <最新 index> --review-file <review map>`，原位 review-record。<br>每次续接都用上一步产生的最新 index；失败只修受影响项再续接。未启用或未运行的范围保持 not-run，handoff 不得为 passed；不为取得 complete 重新 finalize | M6，阶段 A 收口 |
-| V-8 | WORK-N3/AC-2、WORK-F1/AC-2（真实规模）：<br>- 25 份参考 JSON 中，原五类显式 `--input-contract phoenix-v1`，新五类缺省；<br>- deliver 与严格检查通过，核心事实（id、方向、标签、显式几何）逐项与输入一致；<br>- deferredFields 只含 brand/views/animation；<br>- lifecycle：`deployment-release` 按 legacy-2.17 v1 与参考 v3 两份分别核对；<br>- 原 JSON 与 15 份参考 HTML 前后 sha256 不变；<br>- 新五类 10 份经 browser-check，在 1440×900 暗亮下实际看图 | V-7 第 3 步的 `--corpus`；看图按 V-7 第 4 步登记观察 | M6，阶段 A 收口 |
+| V-8 | WORK-N3/AC-2、WORK-F1/AC-2（真实规模）：<br>- 25 份参考 JSON 中，原五类显式 `--input-contract phoenix-v1`，新五类缺省；<br>- deliver 与严格检查通过，核心事实（id、方向、标签、显式几何）逐项与输入一致；<br>- deferredFields 只含 brand/views/animation；<br>- lifecycle：`deployment-release` 按 legacy-2.17 v1 与参考 v3 两份分别核对；<br>- 原 JSON 与 15 份参考 HTML 前后 sha256 不变；<br>- 25 份参考 JSON（原五类 15 份与新五类 10 份）均按原样交付并经 browser-check，在 1440×900 暗亮下实际看图 | V-7 第 3 步的 `--corpus`；看图按 V-7 第 4 步登记观察 | M6，阶段 A 收口 |
 | V-9 | WORK-F3 全部 AC、WORK-N1/AC-4（端到端）：<br>- 本仓固定提交的 architecture 与 timeline 来源 verified，用 `gh api repos/XGENT-ai/skills/contents/<path>?ref=<sha>` 只读核对 href 指向的文件存在；<br>- 修改一个被引用文件后为 worktree-differs；<br>- local-only tree；<br>- illustrative waterfall 与日精度 timeline；<br>- 来源三态在详情中显示，并实际看图；<br>- 五语言各一张 timeline 加 `fr` 回退，界面无截断并实际看图 | V-7 第 3 步的 `--evidence`、`--locale`；看图按 V-7 第 4 步登记观察；`gh` 已登录，网络缺席时记链接存在性未运行 | M6，阶段 A 收口 |
 | V-10 | C-2、C-3、§0.6：<br>- skill 描述与前 100 字；<br>- 类型表、schema 与示例一致且十类示例均能 finalize；<br>- 接口复述同步（`--repo-root`、十类）；<br>- 十类与 0.2.0 的脚本/测试列表；<br>- P2 聚合配置单测；<br>- §0.6 逐行对照 diff；<br>- archify 与调用方未被修改 | `node --test test/phoenix-diagram/skill.test.js test/phoenix-diagram/package.test.js test/phoenix-diagram/build.test.js test/phoenix-diagram/core-runner.test.js test/phoenix-diagram/aggregate.test.js test/phoenix-diagram/candidate.test.js test/phoenix-diagram/workflow.test.js`；`grep -rn 'phoenix-diagram' README.md docs skills --include='*.md'` 人工核对；`git diff --stat -- skills/archify skills/elintp skills/documentation-writer` 为空 | M7 局部 |
 | V-11 | WORK-F2 全部 AC、WORK-F3（创作侧）、WORK-F4/AC-3（宿主报告）、WORK-N1/AC-4（作者语言）：§9.2 场景在真实新会话中行为正确 | development 包：`mise exec --no-deps -- node scripts/build-phoenix-diagram.mjs --development --output-dir DIR --sync-dist`（★ `--sync-dist`），再 `mise exec --no-deps -- npm pack --json --pack-destination DIR`；在临时无 Rust 项目安装后，分别在已登录的 Claude Code、Codex 全新会话中发起 | M7；结果按 §9.3 绑定规则供 M8 复用 |
@@ -602,7 +603,7 @@ Claude Code 共 31 行，Codex 共 16 行。一次真实会话可覆盖多行。
 | M4 | 仓库来源核对与显示 | M1 的 V-1；与 M2/M3 并行，新类型的端到端渲染断言待 M2/M3 | ★ `evidence.rs` 与子模块（§5.3）、CLI `--repo-root`、`delivery/*` 回执/当前性/配置摘要、`render.rs` 的 `sourceEvidence`、Reader 三态显示与 ★ `tests/viewer/evidence.test.mjs`；照参考两 `.mjs` 与 P1 delivery 回执范式 | V-5 通过；回写「实施进度」 |
 | M5 | 十类 Reader 探索、范围卡片与五语言 | M2、M3 的 Reader 属性（V-3、V-4）；M4 的显示（V-5） | §6.1–§6.3：补齐 Rust 输出的探索属性、`lang` 与回执 `locale`、★ `explore.test.mjs`、★ `catalogs.test.mjs`、`export-acceptance` 的控制器单测增范围卡片与新五类格式范围（真实导出留 M6） | V-6 通过；回写「实施进度」 |
 | M6 | 阶段 A 收口：本机十类原生交付、阅读与来源 | M1–M5 的 V-1–V-6 | 先交付 core 收口 runner：`test-phoenix-diagram-core.mjs` 的十类与 15 例覆盖（legacy-2.17 只要求原五类）及 ★ 四个范围开关的参数与 HELP；core 入口委托的 `test-phoenix-diagram-runtime.mjs` 中 `DEFAULT_CASES`（新五类只建 phoenix-v1 用例）与 corpus/evidence/locale/explore/卡片段的执行；★ `support/explore-reader.mjs`；`test/phoenix-diagram/core-runner.test.js` 对应用例。再按 V-7 的命令序列运行 core stage，实际看图与 review-record，失败只修受影响项并重跑失效检查；主 agent 负责 | V-7、V-8、V-9 通过，阶段 A 产物可交付；回写「实施进度」 |
-| M7 | skill、说明、包脚本与宿主验收 | M6 通过（引擎行为稳定）；§0.6 清单 | 按 §0.6 与 §6.5 改 skill/references/docs/README；runtime 的包消费/CI 增量（core 用例与收口段已在 M6）、`candidate`（包内十类 manifest，并为 V-13 启用所需范围开关）/`aggregate --profile p2`/`pack`/workflow 与其余 `test/phoenix-diagram/*` 的十类与 0.2.0；development 包上跑 §9.2；skill 修订后只重跑受影响行 | V-10、V-11 通过，skill 文本冻结；回写「实施进度」 |
+| M7 | skill、说明、包脚本与宿主验收 | M6 通过（引擎行为稳定）；§0.6 清单 | 按 §0.6 与 §6.5 改 skill/references/docs/README；按 D12 改进 workflow 布局修复与可执行诊断（改后重做 M6 收口）；runtime 的包消费/CI 增量（core 用例与收口段已在 M6）、`candidate`（包内十类 manifest，并为 V-13 启用所需范围开关）/`aggregate --profile p2`/`pack`/workflow 与其余 `test/phoenix-diagram/*` 的十类与 0.2.0；development 包上跑 §9.2；skill 修订后只重跑受影响行 | V-10、V-11 通过，skill 文本冻结；回写「实施进度」 |
 | M8 | 四平台候选与 P2 收口 | M7 冻结的源码；V-10、V-11 | 提交候选源码 → 四平台 CI → 唯一 tgz/release-dir → 本机 distribution 收口 → 宿主证据绑定核对 → P2 聚合 → 全量回归；必要修复只重跑失效证据 | V-12、V-13、V-14 全通过，14 条 P2 AC 与七条终验需求可追溯；N2/N3/F11/N4/N5 未冒充终验；回写「实施进度」 |
 
 提交点：M6（阶段 A 收口）、M8（阶段 B / 全部完成）。M8 为取得同 SHA 的 CI 制品，可先提交候选代码，但验收通过前不记完成；最终修复产生新 SHA 时，按 §9.3 只重取受影响证据。

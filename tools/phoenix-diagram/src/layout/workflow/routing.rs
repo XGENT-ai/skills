@@ -30,10 +30,21 @@ struct Router<'a> {
     feedback: &'a Feedback,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, PartialEq)]
 pub(super) struct Feedback {
     pub route_first: Vec<usize>,
     pub fan_in_label_clearance: bool,
+    // Repair passes only, keyed by source edge index. `sides` are the node
+    // sides an earlier attempt actually used, so ports are spread among the
+    // edges that really meet on a side; `halo` names automatic edges whose
+    // remaining crossings are drawn as crossover halos.
+    pub sides: BTreeMap<usize, (String, String)>,
+    pub halo: BTreeSet<usize>,
+    // Repair passes only: outside corridors also get parallel lanes, so
+    // routes that share a detour can run side by side.
+    pub channels: bool,
+    // Repair passes only: the side pair an automatic edge must use.
+    pub force: BTreeMap<usize, (String, String)>,
 }
 
 fn center(node: &Node) -> Point {
@@ -245,6 +256,11 @@ impl Router<'_> {
                 string(value, field).to_owned()
             }
         };
+        if let Some((from_side, to_side)) = self.feedback.sides.get(&edge.index) {
+            if automatic(value) {
+                return (authored("fromSide", from_side), authored("toSide", to_side));
+            }
+        }
         let mut preferred = (
             authored("fromSide", natural.0),
             authored("toSide", natural.1),
@@ -875,6 +891,49 @@ impl Router<'_> {
         for shift in [-12.0, 12.0, -24.0, 24.0] {
             vias.push(corridor_y(start, end, from_side, to_side, gap + shift));
             vias.push(corridor_x(start, end, from_side, to_side, mid + shift));
+        }
+        if self.feedback.channels {
+            for shift in [12.0, 24.0, 36.0] {
+                vias.push(corridor_x(
+                    start,
+                    end,
+                    from_side,
+                    to_side,
+                    self.measured.lane_width + 52.0 + shift,
+                ));
+                vias.push(corridor_y(start, end, from_side, to_side, bottom + shift));
+                if top - shift >= 8.0 {
+                    vias.push(corridor_y(start, end, from_side, to_side, top - shift));
+                }
+                vias.push(corridor_y(
+                    start,
+                    end,
+                    from_side,
+                    to_side,
+                    gap + shift + 24.0,
+                ));
+                vias.push(corridor_y(
+                    start,
+                    end,
+                    from_side,
+                    to_side,
+                    gap - shift - 24.0,
+                ));
+                vias.push(corridor_x(
+                    start,
+                    end,
+                    from_side,
+                    to_side,
+                    mid + shift + 24.0,
+                ));
+                vias.push(corridor_x(
+                    start,
+                    end,
+                    from_side,
+                    to_side,
+                    mid - shift - 24.0,
+                ));
+            }
         }
         vias.into_iter().map(|via| join(start, via, end)).collect()
     }
@@ -1564,10 +1623,14 @@ impl Router<'_> {
         let end =
             self.endpoint_candidates(value, to, natural.1, anchor(&to.bounds, natural.1), from)[0];
         let aligned = vec![start, end];
+        // In a repair pass the edge's spread ports take precedence over the
+        // centred straight shortcut.
+        let spread = !self.feedback.sides.is_empty() && (ports.0.is_some() || ports.1.is_some());
         if self.input.input_contract == InputContract::PhoenixV1
             && value.get("fromSide").is_none()
             && value.get("toSide").is_none()
             && value.get("labelAt").is_none()
+            && !spread
             && self
                 .rejection(value, &aligned, natural.0, natural.1)
                 .is_none()
@@ -1925,29 +1988,7 @@ impl Router<'_> {
         )])
     }
     fn relation(&self, edge: &Entry, candidate: Candidate) -> Relation {
-        let author = authored(
-            edge,
-            "edges",
-            if string(&edge.value, "role").is_empty() {
-                "edge"
-            } else {
-                string(&edge.value, "role")
-            },
-            &[
-                "fromSide",
-                "toSide",
-                "route",
-                "via",
-                "channelX",
-                "channelY",
-                "bias",
-                "labelAt",
-                "labelDx",
-                "labelDy",
-                "labelSegment",
-                "width",
-            ],
-        );
+        let author = edge_authored(edge);
         let plate = self.plate(&edge.value, &candidate.points);
         let label = string(&edge.value, "label");
         let position = if label.is_empty() {
@@ -1956,7 +1997,7 @@ impl Router<'_> {
             self.label_position(&edge.value, &candidate.points)
         };
         Relation {
-            crossover_halo: false,
+            crossover_halo: self.feedback.halo.contains(&edge.index) && automatic(&edge.value),
             independent_ports: false,
             junction: None,
             label_owner: None,
@@ -2018,6 +2059,32 @@ impl Router<'_> {
         }
         Ok(())
     }
+}
+
+pub(super) fn edge_authored(edge: &Entry) -> Authored {
+    authored(
+        edge,
+        "edges",
+        if string(&edge.value, "role").is_empty() {
+            "edge"
+        } else {
+            string(&edge.value, "role")
+        },
+        &[
+            "fromSide",
+            "toSide",
+            "route",
+            "via",
+            "channelX",
+            "channelY",
+            "bias",
+            "labelAt",
+            "labelDx",
+            "labelDy",
+            "labelSegment",
+            "width",
+        ],
+    )
 }
 
 pub(super) fn route(

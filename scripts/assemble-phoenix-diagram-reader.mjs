@@ -49,8 +49,8 @@ function regularText(file) {
 
 function verifyReaderLayout(source, workspace, members) {
   const audit = regularText(path.join(workspace, 'viewer/reader-layout-adaptations.json'));
-  if (digest(audit) !== '54cca6193e579fc570a6ee68952e4769ebb05ca504cd9164e51598645693708a') {
-    throw new Error('Reader Layout adaptation differs from the pinned legacy-fit and legend-viewport hunks');
+  if (digest(audit) !== '3d0aa076156f8edb65bac6e227455bd5c84cd69f68d0d7d611c08bbc0eb952ef') {
+    throw new Error('Reader Layout adaptation differs from the pinned fixed-canvas-fit and legend-viewport hunks');
   }
   const adaptation = JSON.parse(audit), frozen = members.get('viewer/reader-layout.js');
   const normalized = namespaceSource(frozen), original = Buffer.from(normalized);
@@ -59,7 +59,7 @@ function verifyReaderLayout(source, workspace, members) {
     throw new Error('Reader Layout adaptation does not match its frozen source');
   }
   const expectedHunks = [
-    ['native legacy portrait height fitting', '      var WIDE_RATIO = 1.55;\n'],
+    ['native fixed-canvas portrait height fitting', '      var WIDE_RATIO = 1.55;\n'],
     ['reader legend viewport containment', '        // spare corner cannot hold them clear of the dock and content area.\n'
       + '        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n'],
   ];
@@ -69,7 +69,7 @@ function verifyReaderLayout(source, workspace, members) {
     if (hunk.scope !== expectedHunks[index][0] || hunk.sourceText !== expectedHunks[index][1] || at < consumed
         || !original.subarray(at, at + before.length).equals(before)
         || original.subarray(0, at).toString().split('\n').length !== hunk.sourceLine) {
-      throw new Error('Reader Layout adaptation is outside its legacy-fit and legend-viewport classifications');
+      throw new Error('Reader Layout adaptation is outside its fixed-canvas-fit and legend-viewport classifications');
     }
     parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
   }

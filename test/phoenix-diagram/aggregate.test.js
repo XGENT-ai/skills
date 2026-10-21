@@ -89,8 +89,10 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   const reply=put(directory+'/stdout.json',JSON.stringify(receipt)+'\n'),stderr=put(directory+'/stderr.txt',''),argv=command==='finalize'?['finalize','workflow',candidate.path,artifact.path,'--json']:['validate','workflow',candidate.path,'--json'];
   const dto={schemaVersion:1,kind:'phoenix-diagram-stdio-capture',tool:'phoenix-diagram',collector,node:{path:nodePath,version:process.version},program,argv,cwd:project,installedReceipt,launcher,exitCode,signal:null,stdout:reply,stderr};
   const commandFor=argv=>[nodePath,script,'--program',program,'--cwd',dto.cwd,'--stdout',reply.path,'--stderr',stderr.path,'--',...argv].map(value=>`'${value}'`).join(' '),cmd=commandFor(argv);
-  const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command}};
-  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:cmd,aggregated_output:output,exit_code:exit,status:'completed'}};
+  // Codex unified exec records each command as `/bin/zsh -c "<literal>"`.
+  const shell=command=>shape==='command-execution-shell'?`/bin/zsh -c "${command}"`:command;
+  const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command:shell(command)}};
+  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:shell(cmd),aggregated_output:output,exit_code:exit,status:'completed'}};
   const skill=put(project+'/.agents/skills/phoenix-diagram/SKILL.md',quote),reference=put(project+'/.agents/skills/phoenix-diagram/references/delivery-contract.md',quote),rows=[provider==='claude-code'?{type:'system',subtype:'init',session_id:'fixture-session'}:{type:'thread.started',thread_id:'fixture-session'},call('read-skill',`cat '${skill.path}'`),result('read-skill',quote),call('read-ref',`cat '${reference.path}'`),result('read-ref',quote),call('pd',cmd),result('pd',JSON.stringify(dto),exitCode),provider==='claude-code'?{type:'result',session_id:'fixture-session',is_error:false}:{type:'turn.completed'}];
   function build({skillOnly=false,withoutPd=false,skillInjection,beforeSkillInjection}={}) {
     const selected=rows.filter((_,index)=>!(skillOnly && [3,4].includes(index)) && !(withoutPd && [5,6].includes(index)));
@@ -207,6 +209,20 @@ test('native Skill loading preserves nonclarification reference and PD requireme
     assert.throws(()=>checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows:[{id,sessionId:b.session.id}]}),/capture|evidence|reference|PD/i,id);
   }
 });
+test('P2 repair and stall sessions need only the real SKILL read but keep their PD call',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const provider of ['claude-code','codex'])for(const ids of [['stalled-repair'],['repairable-diagnostic'],['missing-date','stalled-repair']]){
+    const f=stdioProviderFixture({provider}),b=f.build({skillOnly:true}),scenarioRows=ids.map(id=>({id,sessionId:b.session.id}));
+    assert.equal(checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows,profile:'p2'}).capture.exitCode,0,ids.join());
+    assert.throws(()=>checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows}),/evidence|reference/i,'p1 '+ids.join());
+    const noPd=f.build({skillOnly:true,withoutPd:true});delete noPd.session.collector;
+    assert.throws(()=>checkProviderCapture(noPd.session,noPd.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows:ids.map(id=>({id,sessionId:noPd.session.id})),profile:'p2'}),/capture|evidence/i,'no PD '+ids.join());
+  }
+  for(const id of ['intent-workflow','browser-failed','visual-pending']){
+    const f=stdioProviderFixture(),b=f.build({skillOnly:true});
+    assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'stalled-repair',sessionId:b.session.id},{id,sessionId:b.session.id}],profile:'p2'}),/evidence|reference/i,id);
+  }
+});
 test('clarification-only session scope permits real SKILL reads with a doctor or no PD call',async()=>{
   const {checkProviderCapture}=await api();
   for(const provider of ['claude-code','codex'])for(const withDoctor of [false,true]){
@@ -317,9 +333,16 @@ test('Codex native process wrappers reject missing, duplicated or foreign exit p
 });
 test('large native stdout is accepted through authenticated collector files for Claude and Codex event forms',async()=>{
   const {checkProviderCapture,checkProviderReply}=await api();assert.equal(typeof checkProviderReply,'function');
-  for(const config of [{provider:'claude-code'},{shape:'function-cmd'},{shape:'function-command'},{shape:'command-execution'}]){
+  for(const config of [{provider:'claude-code'},{shape:'function-cmd'},{shape:'function-command'},{shape:'command-execution'},{shape:'command-execution-shell'}]){
     const f=stdioProviderFixture(config),b=f.build(),capture=checkProviderCapture(b.session,b.read,b.session.provider,{collectorIdentity:f.templateIdentity});
     assert.deepEqual(checkProviderReply(capture,b.proof,f.reply,b.read),f.receipt);assert.ok(f.files.get(f.reply.path).length>227144);assert.ok(Buffer.byteLength(JSON.stringify(f.rows[6]))<6000);
+  }
+});
+test('a shell-wrapped Codex command counts only when its one literal argument is the collector call',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const wrap of [cmd=>`/bin/zsh -c "${cmd}; rm -f x"`,cmd=>`/bin/zsh -c "${cmd}" extra`,cmd=>`/bin/zsh -lc "${cmd}"`,cmd=>`/usr/bin/env -c "${cmd}"`]){
+    const f=stdioProviderFixture({shape:'command-execution-shell'});f.rows[5].item.command=wrap(f.cmd);f.rows[6].item.command=wrap(f.cmd);
+    const b=f.build();assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/collector|PD|shell|execution/i,wrap('x'));
   }
 });
 test('collector proof rejects modified bytes, producer/template/argv claims, wrong IDs and foreign result payloads',async()=>{
@@ -378,6 +401,14 @@ test('P2 profile covers fifteen cases and per-provider host rows instead of the 
   assert.equal(checkProviderCoverage(codex.map(row=>({id:row.id})),codex),undefined);assert.throws(()=>checkProviderCoverage(PROVIDER_SCENARIOS.map(row=>({id:row.id})),codex),/coverage/);assert.throws(()=>checkProviderCoverage(codex.slice(1).map(row=>({id:row.id})),codex),/coverage/);
   const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'],input={platforms:targets.map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};
   assert.throws(()=>checkInputSlots(input,'p2'),/local darwin-arm64/);assert.equal(checkInputSlots({...input,local:{target:'darwin-arm64',runRoot:'/run',state:{path:'/run/consumer-state.json'}}},'p2'),undefined);
+});
+test('D10: Codex covers either its sampled rows or, after a divergence, every Claude Code row',async()=>{
+  const {P2_PROVIDER_SCENARIOS,p2ProviderScenarios,checkProviderCoverage}=await api(),claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex,ids=rows=>rows.map(row=>({id:row.id}));
+  assert.equal(p2ProviderScenarios('codex',ids(codex)),codex);assert.equal(checkProviderCoverage(ids(codex),p2ProviderScenarios('codex',ids(codex))),undefined);
+  assert.equal(p2ProviderScenarios('codex',ids(claude)),claude);assert.equal(checkProviderCoverage(ids(claude),p2ProviderScenarios('codex',ids(claude))),undefined);
+  // A partial expansion is neither set: it must still fail coverage.
+  const partial=ids([...codex,claude.find(row=>row.id==='intent-architecture')]);assert.throws(()=>checkProviderCoverage(partial,p2ProviderScenarios('codex',partial)),/coverage/);
+  assert.equal(p2ProviderScenarios('claude-code',ids(codex)),claude);
 });
 test('automatic-only platform jobs need the consume step but not the review step',async()=>{
   const {checkJobProof}=await api(),expected=cohort(),entry={target:'linux-x64',jobId:45,artifact:{id:67,name:'phoenix-diagram-consume-linux-x64-evidence',digest:'1'.repeat(64)}};

@@ -65,7 +65,7 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
    第二种用于带来源的仓库图。退出码 0 不代表来源已核对：读回执 `evidence.status`（`verified`、`partial`、`unverified` 或 `none`）及 `evidence.unverified`、`evidence.unsourced`。
 
-3. 读取真实阶段及 diagnostic 的 `subject`、`evidence`、`supportedFixes`，只修相关邻域。修复后重新 finalize；必要时用 `validate <type> candidate.json --layout-json --json` 定向诊断。首次失败时按实际失败门记录客观 error 数、历史最佳值和停滞计数0；同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。计数达到2立即停止并列出未解决项；错误种类变化不能重置计数，也不允许再试一次。重建交付或返回已记录门时，沿用该门历史，不因新回执重新初始化；环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。不能删语义、降低质量、缩字或隐藏溢出来换通过。
+3. 读取真实阶段及 diagnostic 的 `subject`、`evidence`、`supportedFixes`，只修相关邻域。修复后重新 finalize；必要时用 `validate <type> candidate.json --layout-json --json` 定向诊断。首次失败时按实际失败门记录客观 error 数、历史最佳值和停滞计数0；同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。计数达到2立即停止并列出未解决项；错误种类变化不能重置计数，也不允许再试一次。重建交付或返回已记录门时，沿用该门历史，不因新回执重新初始化；环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；同一 validate 门内诊断 `stage` 首次由 `input` 变为 `layout` 也算进入后门。`supportedFixes` 写明经整图验证时，按它列出的全部路径一并修改；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。不能删语义、降低质量、缩字或隐藏溢出来换通过。
 4. 按[交付合同](references/delivery-contract.md)实际打开当前四张暗/亮截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后 `review-record` 登记，再回读**同一交付**的当前 summary。只为登记审核或取得完整状态不得再次 finalize。
 
 自动四门通过后，视觉状态仍可能是 `required-pending`；只有四门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 且身份仍绑定当前输入/HTML/配置/引擎/截图时，才能报告完整交付。修改 candidate 会使旧证据失效，需要新交付及对应的新审核。

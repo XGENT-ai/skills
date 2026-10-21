@@ -383,3 +383,27 @@ test('binding rejection rehearsal restores only its own mutation and preserves a
   await assert.rejects(()=>withMutatedFile(original,Buffer.from('known mutation'),async()=>{fs.writeFileSync(file,'a later user edit');}),/claimant|changed|mutation/i);
   assert.equal(fs.readFileSync(file,'utf8'),'a later user edit');
 });
+
+test('the corpus browser-checks every 3.1.0 reference JSON, original five types included',{skip:!fs.existsSync(path.join(__dirname,'../../local/phoenix-diagram/reference/archify/examples'))?'Requires the gitignored verified reference unpack':false},async t=>{
+  const {run}=await import('../../scripts/test-phoenix-diagram-scopes.mjs'),{LEGACY_TYPES}=await import(modulePath),runRoot=temp(t);
+  const collections={architecture:['components','connections'],workflow:['nodes','edges'],sequence:['participants','messages'],dataflow:['nodes','flows'],lifecycle:['states','transitions'],erd:['entities','relationships'],class:['types','relationships'],tree:['nodes',null],timeline:['events',null],waterfall:['spans',null]};
+  const attr=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'),checked=[];
+  // A fake engine renders only what the corpus inspects: metadata nodes, one element per node and directed relations.
+  const invoke=async(_engine,[command,...args])=>{
+    if(command==='deliver'){
+      const [type,candidate,output]=args,document=JSON.parse(fs.readFileSync(candidate,'utf8')),[nodes,relations]=collections[type],authored=document[nodes] || [];
+      const edges=relations?document[relations] || []:type==='tree'?authored.filter(node=>node.parent!==undefined).map(node=>({from:node.parent,to:node.id})):[];
+      fs.writeFileSync(output,`<script id="phoenix-diagram-metadata" type="application/json">${JSON.stringify({graph:{nodes:authored}})}</script>${authored.map(node=>`<g data-node-id="${attr(node.id)}"></g>`).join('')}${edges.map(edge=>`<g data-edge-from="${attr(edge.from)}" data-edge-to="${attr(edge.to)}"></g>`).join('')}`);
+      return{exitCode:0,receipt:{status:'pass',inputContract:args.includes('--input-contract') || !LEGACY_TYPES.includes(type) || document.schema_version===3?'phoenix-v1':'legacy-2.17',compatibility:{coreCompatibility:'pass',deferredFields:[]}}};
+    }
+    if(command==='check')return{exitCode:0,receipt:{provenance:'current'}};
+    const directory=args[args.indexOf('--out-dir')+1];fs.mkdirSync(directory);checked.push(args[0]);
+    return{exitCode:0,receipt:{status:'pass',screenshots:['light','dark'].map(theme=>{const file=path.join(directory,`${theme}.png`);fs.writeFileSync(file,theme);return{path:file,identity:{sha256:theme,bytes:theme.length},theme,viewport:{width:1440,height:900}};})}};
+  };
+  const report=await run('corpus',{runRoot,engine:{path:'/fake/engine'}},{},{invoke});
+  const references=report.cases.filter(entry=>entry.contract==='phoenix-v1');
+  assert.equal(report.references,25);assert.equal(references.length,25);assert.equal(checked.length,25);
+  assert.ok(LEGACY_TYPES.every(type=>references.some(entry=>entry.type===type && entry.screenshots?.length===2)),'each original type has actual-viewing screenshots');
+  assert.ok(references.every(entry=>entry.screenshots?.length===2 && entry.visual));
+  assert.ok(report.cases.filter(entry=>entry.contract==='legacy-2.17').every(entry=>entry.screenshots===undefined));
+});

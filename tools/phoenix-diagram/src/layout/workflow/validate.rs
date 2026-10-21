@@ -47,11 +47,11 @@ pub(super) fn validate(
         .relations
         .iter()
         .map(|relation| {
-            RoutedRelation::new(
-                relation_index(relation),
-                relation.authored.facts.clone(),
-                relation.points.clone(),
-            )
+            let mut facts = relation.authored.facts.clone();
+            if relation.crossover_halo {
+                facts["verifiedHalo"] = Value::Bool(true);
+            }
+            RoutedRelation::new(relation_index(relation), facts, relation.points.clone())
         })
         .collect::<Vec<_>>();
     let labels = scene
@@ -198,7 +198,11 @@ pub(super) fn validate(
                 contract: input.input_contract,
                 merge_forward_collinear_waypoints: readable,
                 include_shared_endpoints: Some(&|_, _| phoenix && readable),
-                ..Default::default()
+                // Same rule as the artifact check: a crossing is drawn
+                // legibly when both routes carry a crossover halo.
+                crossing_resolved: Some(&|left, right, _| {
+                    left["verifiedHalo"] == true && right["verifiedHalo"] == true
+                }),
             },
         ) {
             let mut diagnostic = relation_diagnostic(

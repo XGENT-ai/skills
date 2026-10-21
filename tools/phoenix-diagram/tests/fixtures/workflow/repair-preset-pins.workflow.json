@@ -1,0 +1,445 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "代码变更申请流程",
+    "output": "change-approval.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "提交者"
+        },
+        "backend": {
+          "label": "维护者"
+        },
+        "cloud": {
+          "label": "负责人"
+        },
+        "security": {
+          "label": "安全审查员"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "submission",
+      "label": "申请与补充"
+    },
+    {
+      "id": "materials-stage",
+      "label": "材料检查"
+    },
+    {
+      "id": "approval-stage",
+      "label": "负责人审批"
+    },
+    {
+      "id": "security-stage",
+      "label": "安全复核与重新确认"
+    },
+    {
+      "id": "merge-stage",
+      "label": "维护者合并"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "submit",
+      "lane": "submission",
+      "col": 2,
+      "type": "frontend",
+      "icon": "start",
+      "label": "提交者提交申请",
+      "sublabel": "提交变更和测试说明"
+    },
+    {
+      "id": "supplement",
+      "lane": "submission",
+      "col": 4,
+      "type": "frontend",
+      "icon": "active",
+      "label": "提交者补充材料",
+      "sublabel": "提交者补齐后重提"
+    },
+    {
+      "id": "materials",
+      "lane": "materials-stage",
+      "col": 2,
+      "type": "backend",
+      "icon": "decision",
+      "label": "维护者检查材料",
+      "sublabel": "维护者核对是否齐全"
+    },
+    {
+      "id": "merged",
+      "lane": "merge-stage",
+      "col": 4,
+      "type": "backend",
+      "icon": "success",
+      "label": "维护者执行合并",
+      "sublabel": "已合并 · 流程结束"
+    },
+    {
+      "id": "approval",
+      "lane": "approval-stage",
+      "col": 2,
+      "type": "cloud",
+      "icon": "decision",
+      "label": "负责人审批",
+      "sublabel": "风险方案已确认且涉及文件≤10个？"
+    },
+    {
+      "id": "approved",
+      "lane": "approval-stage",
+      "col": 4,
+      "type": "cloud",
+      "icon": "success",
+      "label": "负责人批准",
+      "sublabel": "仅限两个条件均满足"
+    },
+    {
+      "id": "reconfirm",
+      "lane": "security-stage",
+      "col": 4,
+      "type": "cloud",
+      "icon": "active",
+      "label": "负责人重新确认",
+      "sublabel": "确认后再次交安全复核"
+    },
+    {
+      "id": "security",
+      "lane": "security-stage",
+      "col": 2,
+      "type": "security",
+      "icon": "decision",
+      "label": "安全审查员复核",
+      "sublabel": "安全审查员作出复核结果"
+    },
+    {
+      "id": "withdrawn-submit",
+      "lane": "submission",
+      "col": 1,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-supplement",
+      "lane": "submission",
+      "col": 5,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-materials",
+      "lane": "materials-stage",
+      "col": 1,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-approval",
+      "lane": "approval-stage",
+      "col": 1,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-approved",
+      "lane": "approval-stage",
+      "col": 5,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-security",
+      "lane": "security-stage",
+      "col": 1,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    },
+    {
+      "id": "withdrawn-reconfirm",
+      "lane": "security-stage",
+      "col": 5,
+      "type": "frontend",
+      "icon": "stop",
+      "label": "已撤回",
+      "sublabel": "提交者终止本次申请"
+    }
+  ],
+  "edges": [
+    {
+      "id": "submit-materials",
+      "from": "submit",
+      "to": "materials",
+      "label": "提交材料",
+      "role": "main"
+    },
+    {
+      "id": "missing",
+      "from": "materials",
+      "to": "supplement",
+      "label": "缺材料：退回补充",
+      "role": "return",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "resubmit",
+      "from": "supplement",
+      "to": "materials",
+      "label": "补齐后重提",
+      "role": "main",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "complete",
+      "from": "materials",
+      "to": "approval",
+      "label": "材料齐全",
+      "role": "main"
+    },
+    {
+      "id": "eligible",
+      "from": "approval",
+      "to": "approved",
+      "label": "是：两个条件均满足",
+      "role": "main"
+    },
+    {
+      "id": "other",
+      "from": "approval",
+      "to": "security",
+      "label": "其余情况：先交安全复核",
+      "role": "branch"
+    },
+    {
+      "id": "approved-merge",
+      "from": "approved",
+      "to": "merged",
+      "label": "批准后交维护者合并",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "route": "outside-right"
+    },
+    {
+      "id": "security-pass",
+      "from": "security",
+      "to": "merged",
+      "label": "复核通过：交维护者合并",
+      "role": "branch"
+    },
+    {
+      "id": "security-reject",
+      "from": "security",
+      "to": "reconfirm",
+      "label": "复核拒绝",
+      "role": "return",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "review-again",
+      "from": "reconfirm",
+      "to": "security",
+      "label": "重新确认后再次复核",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "withdraw-submit",
+      "from": "submit",
+      "to": "withdrawn-submit",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "withdraw-supplement",
+      "from": "supplement",
+      "to": "withdrawn-supplement",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "withdraw-materials",
+      "from": "materials",
+      "to": "withdrawn-materials",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "withdraw-approval",
+      "from": "approval",
+      "to": "withdrawn-approval",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "withdraw-approved",
+      "from": "approved",
+      "to": "withdrawn-approved",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "withdraw-security",
+      "from": "security",
+      "to": "withdrawn-security",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "withdraw-reconfirm",
+      "from": "reconfirm",
+      "to": "withdrawn-reconfirm",
+      "label": "提交者撤回",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "mainPath": [
+    "submit",
+    "materials",
+    "approval",
+    "approved",
+    "merged"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "submit"
+    ],
+    "allowedTerminals": [
+      "merged",
+      "withdrawn-submit",
+      "withdrawn-supplement",
+      "withdrawn-materials",
+      "withdrawn-approval",
+      "withdrawn-approved",
+      "withdrawn-security",
+      "withdrawn-reconfirm"
+    ],
+    "requiredEdges": [
+      {
+        "from": "materials",
+        "to": "supplement"
+      },
+      {
+        "from": "supplement",
+        "to": "materials"
+      },
+      {
+        "from": "approval",
+        "to": "approved"
+      },
+      {
+        "from": "approval",
+        "to": "security"
+      },
+      {
+        "from": "approved",
+        "to": "merged"
+      },
+      {
+        "from": "security",
+        "to": "merged"
+      },
+      {
+        "from": "security",
+        "to": "reconfirm"
+      },
+      {
+        "from": "reconfirm",
+        "to": "security"
+      },
+      {
+        "from": "submit",
+        "to": "withdrawn-submit"
+      },
+      {
+        "from": "supplement",
+        "to": "withdrawn-supplement"
+      },
+      {
+        "from": "materials",
+        "to": "withdrawn-materials"
+      },
+      {
+        "from": "approval",
+        "to": "withdrawn-approval"
+      },
+      {
+        "from": "approved",
+        "to": "withdrawn-approved"
+      },
+      {
+        "from": "security",
+        "to": "withdrawn-security"
+      },
+      {
+        "from": "reconfirm",
+        "to": "withdrawn-reconfirm"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "负责人直接批准的条件",
+      "items": [
+        "风险方案已确认，且涉及文件不超过10个；两个条件必须同时满足。",
+        "其余情况先交安全审查员复核，负责人进入审批不等于已经批准。"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "安全复核的往返",
+      "items": [
+        "复核拒绝 → 负责人重新确认 → 再次交安全审查员复核。",
+        "重新确认后仍须复核通过，才能由维护者合并。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "撤回与执行职责",
+      "items": [
+        "提交、补充材料、材料检查、负责人审批、负责人批准、安全复核和重新确认阶段，均可由提交者撤回。",
+        "各阶段旁的“已撤回”表示同一种终止结果；每条撤回线都可直接结束本次申请。",
+        "图中两条合并路径均汇入“维护者执行合并”；合并后流程结束。",
+        "本图为虚构的验收流程，不代表实际组织制度。"
+      ]
+    }
+  ]
+}

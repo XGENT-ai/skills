@@ -63,9 +63,11 @@ async function corpus(index,options,{invoke}) {
     const document=JSON.parse(readBound(candidate,'corpus candidate').content.toString('utf8'));
     const artifact=bound(readSnapshot(output)),facts=verifyCoreFacts(document,type,readBound(artifact,'corpus artifact').content.toString('utf8'));
     const record={name:entry.name,type,contract:entry.contract,schemaVersion:document.schema_version,candidate,artifact,facts,deferred:deferred.map(field=>field.path),delivery:writeNew(path.join(caseRoot,'delivery.json'),delivered.receipt),strict:writeNew(path.join(caseRoot,'strict.json'),strict.receipt)};
-    if(!LEGACY_TYPES.includes(type)) {
+    // Every 3.1.0 reference passes the browser gate as delivered; the 2.17
+    // lifecycle only proves the old contract's core facts.
+    if(entry.contract==='phoenix-v1') {
       const visual=await invoke(index.engine,['visual-check',output,'--out-dir',path.join(caseRoot,'browser'),'--json'],{options});
-      requireThat(visual.exitCode===0 && visual.receipt?.status==='pass','New-type reference failed browser checks');
+      requireThat(visual.exitCode===0 && visual.receipt?.status==='pass',`Reference ${entry.name} failed browser checks`);
       record.screenshots=visual.receipt.screenshots.filter(shot=>shot.viewport.width===1440 && shot.viewport.height===900).map(shot=>({path:shot.path,identity:shot.identity,theme:shot.theme,viewing:'required'}));
       requireThat(record.screenshots.length===2,'Dark and light 1440x900 screenshots are required for actual viewing');
       record.visual=writeNew(path.join(caseRoot,'visual-check.json'),visual.receipt);

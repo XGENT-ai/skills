@@ -165,10 +165,10 @@ test('classic script order and private canonical/recorder cleanup retain the fro
       assert.equal(adaptation.sourceSha256, hash(frozen));
       assert.equal(adaptation.normalizedSourceSha256, hash(expected));
       assert.equal(adaptation.hunks.length, 2);
-      const [legacy, viewport] = adaptation.hunks;
-      assert.equal(legacy.scope, 'native legacy portrait height fitting');
-      assert.equal(legacy.sourceText, '      var WIDE_RATIO = 1.55;\n');
-      assert.match(legacy.replacementText, /svg\.getAttribute\('data-input-contract'\) === 'legacy-2\.17' && ratio < WIDE_RATIO/);
+      const [fixed, viewport] = adaptation.hunks;
+      assert.equal(fixed.scope, 'native fixed-canvas portrait height fitting');
+      assert.equal(fixed.sourceText, '      var WIDE_RATIO = 1.55;\n');
+      assert.match(fixed.replacementText, /ratio < WIDE_RATIO && \(svg\.getAttribute\('data-input-contract'\) === 'legacy-2\.17' \|\|\n\s+\['contain', 'legacy', ''\]\.indexOf\(readerFit \|\| ''\) !== -1\)/);
       assert.equal(viewport.scope, 'reader legend viewport containment');
       assert.equal(viewport.sourceText, '        // spare corner cannot hold them clear of the dock and content area.\n'
         + '        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||\n');

@@ -280,6 +280,49 @@ fn main_path(
             );
         }
     }
+    // The fewest column changes that keep every main-path step at or after
+    // its predecessor: the longest non-decreasing run of columns stays, and
+    // each other step takes the column of the kept step before it (or after
+    // it, at the start), so one round fixes all backward steps together.
+    let steps = path
+        .iter()
+        .filter_map(|id| {
+            let index = nodes.iter().position(|node| node["id"] == *id)?;
+            Some((index, nodes[index]["col"].as_f64()?))
+        })
+        .collect::<Vec<_>>();
+    let mut length = vec![1; steps.len()];
+    let mut previous = vec![None; steps.len()];
+    for i in 0..steps.len() {
+        for j in 0..i {
+            if steps[j].1 <= steps[i].1 && length[j] + 1 > length[i] {
+                length[i] = length[j] + 1;
+                previous[i] = Some(j);
+            }
+        }
+    }
+    let mut kept = vec![false; steps.len()];
+    let mut cursor = (0..steps.len()).rev().max_by_key(|i| length[*i]);
+    while let Some(i) = cursor {
+        kept[i] = true;
+        cursor = previous[i];
+    }
+    let mut forward = Vec::new();
+    let mut running = None;
+    for (i, (index, col)) in steps.iter().enumerate() {
+        if kept[i] {
+            running = Some(*col);
+            continue;
+        }
+        let target = running.unwrap_or_else(|| {
+            (i..steps.len())
+                .find(|j| kept[*j])
+                .map_or(*col, |j| steps[j].1)
+        });
+        if target != *col {
+            forward.push(format!("/nodes/{index}/col to {target}"));
+        }
+    }
     for (index, pair) in path.windows(2).enumerate() {
         if !relations
             .iter()
@@ -300,12 +343,20 @@ fn main_path(
                 .iter()
                 .find(|node| node["id"] == pair[1])
                 .and_then(|node| node["col"].as_f64());
-            if matches!((from, to), (Some(from), Some(to)) if to < from) {
-                checks.error(
-                    "input/main-path",
-                    &format!("/mainPath/{}", index + 1),
-                    "Main path moves backward through columns",
-                );
+            if let (Some(from), Some(to)) = (from, to) {
+                if to < from {
+                    checks.error(
+                        "input/main-path",
+                        &format!("/mainPath/{}", index + 1),
+                        "Main path moves backward through columns",
+                    );
+                    let error = checks.errors.last_mut().expect("just inserted diagnostic");
+                    error.evidence = json!({"from":pair[0],"fromCol":from,"to":pair[1],"toCol":to});
+                    error.supported_fixes = vec![
+                        format!("Set {} so every mainPath step stays in or after its predecessor's column", forward.join(", ")),
+                        format!("If {} is a return or retry, end mainPath at /mainPath/{index} and keep that step as its relation", pair[1].as_str().unwrap_or_default()),
+                    ];
+                }
             }
         }
     }
