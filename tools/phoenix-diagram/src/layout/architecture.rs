@@ -12,8 +12,7 @@ use serde_json::{json, Value};
 
 #[path = "architecture/presentation.rs"]
 mod presentation;
-#[path = "architecture/router.rs"]
-mod router;
+use super::router;
 
 fn string(value: &Value, field: &str) -> String {
     value[field].as_str().unwrap_or("").to_owned()
@@ -230,6 +229,7 @@ pub fn compile(
                     size: 11.0,
                 })
             },
+            detail_rows: Vec::new(),
         });
     }
     if !errors.is_empty() {
@@ -237,10 +237,21 @@ pub fn compile(
     }
     let raw_boundaries = presentation::measure_boundaries(document, &nodes, contract);
     let edges = router::connections(document, &nodes);
+    let frames: Vec<_> = raw_boundaries
+        .iter()
+        .map(|boundary| router::Frame {
+            bounds: boundary.bounds,
+            radius: if boundary.raw["kind"] == "security-group" {
+                8.0
+            } else {
+                12.0
+            },
+        })
+        .collect();
     let routes = router::route(
         &nodes,
         &edges,
-        &raw_boundaries,
+        &frames,
         contract,
         meta.get("viewBox").is_none(),
     );
@@ -398,6 +409,8 @@ pub fn compile(
                         )]
                     })
                     .unwrap_or_default(),
+                marker_start: None,
+                marker_end: None,
             }
         })
         .collect();

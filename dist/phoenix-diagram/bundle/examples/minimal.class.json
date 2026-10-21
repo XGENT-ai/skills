@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": { "title": "Payment types", "output": "minimal.class.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "layout": { "mode": "grid" },
+  "types": [
+    { "id": "gateway", "label": "PaymentGateway", "kind": "interface", "row": 0, "col": 0.5, "methods": [
+      { "name": "charge", "parameters": "amount: Money", "returns": "Receipt", "visibility": "public" }
+    ] },
+    { "id": "card", "label": "CardGateway", "kind": "class", "row": 1, "col": 0, "attributes": [
+      { "name": "token", "type": "string", "visibility": "private" }
+    ], "methods": [
+      { "name": "charge", "parameters": "amount: Money", "returns": "Receipt", "visibility": "public" }
+    ] },
+    { "id": "wallet", "label": "WalletGateway", "kind": "class", "row": 1, "col": 1, "methods": [
+      { "name": "charge", "parameters": "amount: Money", "returns": "Receipt", "visibility": "public" }
+    ] }
+  ],
+  "relationships": [
+    { "id": "card_implements", "from": "card", "to": "gateway", "kind": "realization" },
+    { "id": "wallet_implements", "from": "wallet", "to": "gateway", "kind": "realization" }
+  ]
+}

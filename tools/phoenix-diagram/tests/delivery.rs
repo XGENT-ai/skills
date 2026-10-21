@@ -45,7 +45,7 @@ fn engine() -> EngineIdentity {
         source_input_sha256: sha256(b"delivery test fixture source identity"),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
     }
 }
@@ -61,6 +61,7 @@ fn request<'a>(
         options,
         engine,
         assets,
+        repo_root: None,
     }
 }
 
@@ -267,6 +268,14 @@ fn browser_failure_keeps_the_new_html_and_review_cannot_invent_a_pass() {
     );
     assert_eq!(receipt.stages[3].status, Status::Failed);
     assert!(receipt.produced_by_this_run);
+    assert_eq!(
+        receipt.locale,
+        json!({"requested":null,"resolved":"en","fallback":false})
+    );
+    assert_eq!(
+        receipt.evidence["status"], "none",
+        "an uncited diagram reports no source evidence"
+    );
     assert_ne!(fs::read(&output).unwrap(), b"old artifact");
     assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
     let record = temp.join("review.json");
@@ -349,4 +358,44 @@ fn strict_config_cannot_claim_another_input_contract_for_the_existing_html() {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.code == "provenance/config"));
+}
+
+#[test]
+fn resolved_interface_language_drives_lang_and_the_finalize_receipt() {
+    let temp = Temp::new();
+    let engine = engine();
+    let assets = EmbeddedAssets { template: TEMPLATE };
+    let browser = BrowserOptions {
+        executable: Some(temp.join("missing-chrome")),
+        ..BrowserOptions::default()
+    };
+    for (index, (authored, resolved, fallback)) in [
+        ("zh-cn", "zh-CN", false),
+        ("fr", "en", true),
+        ("zh-tw", "zh-TW", false),
+        ("es-MX", "en", true),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut document: Value = serde_json::from_slice(&source()).unwrap();
+        document["meta"]["locale"] = json!(authored);
+        let candidate = temp.join(&format!("candidate-{index}.json"));
+        fs::write(&candidate, serde_json::to_vec(&document).unwrap()).unwrap();
+        let output = temp.join(&format!("report-{index}.html"));
+        let options = CompileOptions::default();
+        let receipt = delivery::finalize(
+            &request(&candidate, &options, &engine, &assets),
+            &output,
+            &browser,
+        );
+        assert!(receipt.produced_by_this_run, "{:?}", receipt.diagnostics);
+        assert_eq!(
+            receipt.locale,
+            json!({"requested":authored,"resolved":resolved,"fallback":fallback})
+        );
+        let html = fs::read_to_string(&output).unwrap();
+        assert!(html.starts_with(&format!("<!doctype html><html lang=\"{resolved}\"")));
+        assert!(html.contains(&format!(" lang=\"{resolved}\" data-diagram-type=")));
+    }
 }

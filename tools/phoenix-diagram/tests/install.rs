@@ -124,7 +124,7 @@ fn fixture(root: &Workspace) -> InstallRequest {
         })
         .collect();
     let manifest = serde_json::to_vec(&json!({
-        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.1.0","files":files
+        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.2.0","files":files
     }))
     .unwrap();
     write(&bundle.join("manifest.json"), &manifest, 0o644);
@@ -144,9 +144,9 @@ fn fixture(root: &Workspace) -> InstallRequest {
     assert_eq!(digest(&fs::read(&engine).unwrap()), *engine_sha256);
     let version = serde_json::to_vec(&json!({
         "schemaVersion":1,"distribution":"development","tool":"phoenix-diagram",
-        "toolVersion":"0.1.0","npmPackageVersion":env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"),"sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "toolVersion":"0.2.0","npmPackageVersion":env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"),"sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),
-        "inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1",
+        "inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2",
         "bundleSha256":digest(&manifest),
         "engines":{platform():{"asset":format!("phoenix-diagram-{}",platform()),"size":engine_size,"sha256":engine_sha256}}
     }))
@@ -520,7 +520,7 @@ fn install_rejects_bundle_tampering_before_any_project_write() {
             "engine" => write(&request.bundle_root.join("ENGINE.json"), b"{}", 0o644),
             "probe" => {
                 let fake = root.path("fake-engine");
-                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\\n'\n", 0o755);
+                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
                 request.engine = fake;
             }
             _ => unreachable!(),

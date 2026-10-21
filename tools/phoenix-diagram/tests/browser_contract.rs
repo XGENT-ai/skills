@@ -43,7 +43,7 @@ impl TempDir {
             },
             artifact: FileIdentity::of(b"<!doctype html><title>Test</title>"),
             config_sha256: "a".repeat(64),
-            engine: json!({"sourceInputSha256":"b".repeat(64),"inputContractSchema":1,"viewerRevision":"phoenix-v1","receiptSchema":1}),
+            engine: json!({"sourceInputSha256":"b".repeat(64),"inputContractSchema":1,"viewerRevision":"phoenix-v2","receiptSchema":1}),
             delivery_receipt_id: "delivery-test".into(),
         }
     }
@@ -582,7 +582,7 @@ fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
         "native fixture precondition: {:?}",
         check.diagnostics
     );
-    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
+    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
     let inspect = |name: &str, bytes: &[u8]| {
         let path = temp.0.join(format!("{name}.html"));
         fs::write(&path, bytes).unwrap();
@@ -786,7 +786,7 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
         phoenix_diagram::check::check_html(&baseline, Quality::Standard).status,
         "pass"
     );
-    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
+    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
     let inspect = |name: &str, bytes: &[u8]| {
         let path = temp.0.join(format!("{name}.html"));
         fs::write(&path, bytes).unwrap();

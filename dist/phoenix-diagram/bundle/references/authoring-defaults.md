@@ -12,9 +12,9 @@
 
 ## 新旧合同
 
-新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余三类为 1。已有未标记 JSON 保留原字节，按 `legacy-2.17` 验证；不要仅为套用新默认值迁移合同。CLI 的显式 `--input-contract` 覆盖必须与用户已授权的导入意图一致。
+新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余八类为 1。ER、类、树、时间线、耗时瀑布只有 `phoenix-v1`，未标记时也按它读取。已有未标记 JSON 保留原字节，按 `legacy-2.17` 验证；不要仅为套用新默认值迁移合同。CLI 的显式 `--input-contract` 覆盖必须与用户已授权的导入意图一致。
 
-读取 `compatibility.coreCompatibility` 与 `compatibility.deferredFields`。品牌、repository sources、旧 guided views 等延期字段逐项报告处理结果及期次，并保留原 JSON；不能将有延期字段的整份输入称为全量兼容，也不能借延期删除核心事实。P1 不执行品牌查询/采集、仓库来源自动核对或旧安装认领。
+读取 `compatibility.coreCompatibility` 与 `compatibility.deferredFields`。品牌、旧 guided views 与旧播放偏好等延期字段逐项报告处理结果及期次，并保留原 JSON；不能将有延期字段的整份输入称为全量兼容，也不能借延期删除核心事实。不执行品牌查询/采集或旧安装认领。`sources` 与 `meta.repository` 不再延期，交付时按[仓库来源创作](repository-authoring.md)核对。
 
 ## 布局
 
@@ -23,12 +23,17 @@
 - Sequence：保留参与者顺序、消息方向、`y`、同步/异步、return 与完整 notes。新稿省略 `meta.column_fit` 和 viewBox 使用新合同默认布局；旧合同缺省 fixed 保持原样。参与者内部动作放在其真实跨参与者消息的 note 中，不造 self-message。给 note 的实际换行高度留空间，28px 基础消息间距不代表 note 容量；修复时协调后续消息、segment 和 activation，不能删 note 含义。
 - Dataflow：明确每个输入由哪个 producer 实际输出，组合转换应保留独立标注的各路输入。真实存储端使用 `database`，内存计算通过生成它的 `backend` 表达。以 stage/row 网格开始；普通数据用 default，主数据 emphasis，确有策略/PII 含义才用 security，异步批处理才用 dashed。
 - Lifecycle：`mainPath` 列出真实主路径，并显式写出每条 transition；保留退出边的 label、note、variant。等待用 waiting，可恢复失败必须存在真实返回边。不得把终止或无法恢复伪装成 recovery。
+- ERD：表优先，列出每张表的全部物理列，保留源 SQL 类型；字段注释写进类型串（如 `varchar(64)｜客户名`），卡片可解释约束但不能代替字段列表。`key` 写出该列承担的全部角色（如 `["pk", "fk"]`），外键必须带 `entity.attribute` 形式的 `references`。关系两端各写最大基数，`fromOptional`/`toOptional` 只把该端最小值降为零。按已核实的功能域写 `tag`，同域表占一块实心的行、列或矩形格子，不夹无关表；有 tag 的表必须用 `row`/`col`。自引用留作外键列，不画自连边。默认仍用 showcase；大型 schema 停滞时按上文停滞规则报告，可询问用户是否改用 standard，未经要求不先降级。
+- Class：每个类型写 `kind`；只选解释所需的成员，成员不截断，长签名由编译器折行。关系从 `from` 读向 `to`：realization 只能由非接口指向接口，inheritance 不跨接口边界，继承不能成环。超类放在子类上方，用 `row`/`col` 摆放。
+- Tree：恰一个根，其余节点各写一个 `parent`，链接只表示包含，不表达调用或数据流。浅而均衡的分解用 `layout.direction: "down"`，深或叶子多的（如仓库目录）用 `"right"`。`collapsed` 只决定阅读器的初始折叠，导出始终是完整树。
+- Timeline：每个 `at` 是带 `Z` 或 `±HH:MM` 的 ISO 时间；`meta.timezone` 是显示时钟（IANA 名或固定偏移，缺省 UTC）。`meta.evidence` 必填：记录到的事件用 `observed`，说明性的用 `illustrative`，不把推测或近似的时间标为 observed。只有日期的记录写在该偏移的 12:00 并设 `precision: "day"`，不在卡片里另作说明。声明 `lanes` 时每个事件都要写其中一个 lane；只按输入画事件，不补缺口。
+- Waterfall：跨度的 `start` 与 `end` 或 `duration` 用同一 `meta.unit`；两者同写时必须一致，没有记录结束的跨度必须 `status: "incomplete"`。`meta.evidence` 只有真实计时（trace、日志、性能剖析）才写 `measured`，否则写 `illustrative`；不从代码结构推断时长，也不为计时去运行项目。百分比是相对整体墙钟，父子时长不相加；输入没写依赖时不标关键路径。
 
 只有实测缺陷或用户固定几何要求才添加 route/label pins。自动端口方向是离开/进入边界的方向合同；不得接受穿过无关不透明节点、含混共用通道或标签盖住其他关系的路线。
 
 ## 文本与展示
 
-沿用户选择或对话主语言创作，保留原样标识。`meta.locale` 仅选择 Viewer 固定界面，P1 使用 `en` / `zh-CN`；其他语言需说明固定界面和 `<html lang>` 英文 fallback，不翻译作者内容，也不声称完整五语已验收。
+沿用户选择或对话主语言创作，保留原样标识；繁体中文请求写繁体内容。`meta.locale` 只选择 Viewer 固定界面，支持 `en`、`zh-CN`、`zh-TW`、`es`、`ko`（大小写不敏感）；其他标签回退英文界面和 `<html lang="en">`，回执 `locale.fallback` 为 true，需在答复中说明。不翻译作者内容。
 
 省略默认 `meta.visual_preset` 得到 classic；省略 subtitle、legend 得到标题与 truthful auto。其他视觉风格、额外副标题须有用户请求。`engineering_profile` 仅在明确请求且事实已知的部署所有权场景启用，启用后不为过检而删除。
 

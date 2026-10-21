@@ -109,6 +109,11 @@ pub(super) fn validate(
         DiagramType::Sequence => ("participants", "messages"),
         DiagramType::Dataflow => ("nodes", "flows"),
         DiagramType::Lifecycle => ("states", "transitions"),
+        DiagramType::Erd => ("entities", "relationships"),
+        DiagramType::Class => ("types", "relationships"),
+        DiagramType::Tree => ("nodes", "relationships"),
+        DiagramType::Timeline => ("events", "relationships"),
+        DiagramType::Waterfall => ("spans", "relationships"),
     };
     let nodes = array(document, node_collection);
     let relations = array(document, relation_collection);
@@ -118,23 +123,36 @@ pub(super) fn validate(
         kind,
         errors: Vec::new(),
     };
-    let mut identities = HashMap::new();
-    checks.unique(nodes, &format!("/{node_collection}"), &mut identities);
-    checks.unique(
-        relations,
-        &format!("/{relation_collection}"),
-        &mut identities,
+    // Tree, timeline and waterfall keep the frozen renderers' own identity codes.
+    let typed_identity = matches!(
+        kind,
+        DiagramType::Tree | DiagramType::Timeline | DiagramType::Waterfall
     );
-    for collection in ["lanes", "phases", "groups"] {
+    let mut identities = HashMap::new();
+    if !typed_identity {
+        checks.unique(nodes, &format!("/{node_collection}"), &mut identities);
         checks.unique(
-            array(document, collection),
-            &format!("/{collection}"),
-            &mut HashMap::new(),
+            relations,
+            &format!("/{relation_collection}"),
+            &mut identities,
         );
+    }
+    if kind.has_legacy_contract() {
+        for collection in ["lanes", "phases", "groups"] {
+            checks.unique(
+                array(document, collection),
+                &format!("/{collection}"),
+                &mut HashMap::new(),
+            );
+        }
     }
     let views = array(&document["meta"], "views");
     checks.unique(views, "/meta/views", &mut HashMap::new());
-    let focus_ids: HashSet<&str> = identities.keys().copied().collect();
+    let focus_ids: HashSet<&str> = if typed_identity {
+        known_nodes.clone()
+    } else {
+        identities.keys().copied().collect()
+    };
     for (index, view) in views.iter().enumerate() {
         for (focus_index, value) in array(view, "focus").iter().enumerate() {
             checks.reference(
@@ -169,15 +187,6 @@ pub(super) fn validate(
                 "input/unknown-reference",
                 &format!("{path}/stage"),
                 "Stage index is outside the authored stages array",
-            );
-        }
-        for (source_index, source) in array(node, "sources").iter().enumerate() {
-            checks.ordered_range(
-                source,
-                &format!("{path}/sources/{source_index}"),
-                "line",
-                "end_line",
-                false,
             );
         }
     }
@@ -236,6 +245,14 @@ pub(super) fn validate(
     }
     if kind == DiagramType::Workflow || kind == DiagramType::Lifecycle {
         main_path(document, nodes, relations, &known_nodes, &mut checks);
+    }
+    match kind {
+        DiagramType::Erd => erd_checks(document, nodes, relations, &mut checks),
+        DiagramType::Class => class_checks(nodes, relations, &mut checks),
+        DiagramType::Tree => parent_checks(nodes, "nodes", "tree", true, &mut checks),
+        DiagramType::Timeline => timeline_checks(document, nodes, &mut checks),
+        DiagramType::Waterfall => waterfall_checks(nodes, &mut checks),
+        _ => {}
     }
     if checks.errors.is_empty() {
         Ok(())
@@ -366,4 +383,433 @@ fn workflow_checks(
             }
         }
     }
+}
+
+fn self_relationships(relations: &[Value], checks: &mut Checks) {
+    for (index, relation) in relations.iter().enumerate() {
+        if relation["from"].is_string() && relation["from"] == relation["to"] {
+            let kind = checks.kind.as_str();
+            checks.error(
+                &format!("{kind}/self-relationship"),
+                &format!("/relationships/{index}"),
+                "A relationship connects a node to itself; describe the self-reference in a card",
+            );
+        }
+    }
+}
+
+fn duplicate_members(items: &[Value], collection: &str, field: &str, checks: &mut Checks) {
+    for (index, item) in items.iter().enumerate() {
+        let mut seen = HashSet::new();
+        for (member, value) in array(item, field).iter().enumerate() {
+            if let Some(name) = value["name"].as_str() {
+                if !seen.insert(name) {
+                    let kind = checks.kind.as_str();
+                    checks.error(
+                        &format!("{kind}/duplicate-attribute"),
+                        &format!("/{collection}/{index}/{field}/{member}/name"),
+                        format!("Attribute {name} is declared twice"),
+                    );
+                }
+            }
+        }
+    }
+}
+
+// Grid cells are facts the author places; geometry-dependent checks run after layout.
+fn erd_checks(document: &Value, entities: &[Value], relations: &[Value], checks: &mut Checks) {
+    duplicate_members(entities, "entities", "attributes", checks);
+    let by_id: HashMap<&str, &Value> = entities
+        .iter()
+        .filter_map(|entity| Some((entity["id"].as_str()?, entity)))
+        .collect();
+    for (index, entity) in entities.iter().enumerate() {
+        for (member, attribute) in array(entity, "attributes").iter().enumerate() {
+            let Some((table, column)) = attribute["references"]
+                .as_str()
+                .and_then(|value| value.split_once('.'))
+            else {
+                continue;
+            };
+            let path = format!("/entities/{index}/attributes/{member}/references");
+            match by_id.get(table) {
+                None => checks.error(
+                    "input/unknown-reference",
+                    &path,
+                    format!("Unknown referenced entity: {table}"),
+                ),
+                Some(target)
+                    if !array(target, "attributes")
+                        .iter()
+                        .any(|candidate| candidate["name"] == column) =>
+                {
+                    checks.error(
+                        "input/unknown-reference",
+                        &path,
+                        format!("Entity {table} has no attribute {column}"),
+                    )
+                }
+                Some(_) => {}
+            }
+        }
+    }
+    self_relationships(relations, checks);
+    let grid = document.get("layout").is_some()
+        || entities
+            .iter()
+            .any(|entity| entity["row"].is_number() && entity["col"].is_number());
+    let mut cells = HashMap::new();
+    for (index, entity) in entities.iter().enumerate() {
+        if entity["pos"].is_array() {
+            continue;
+        }
+        let path = format!("/entities/{index}");
+        let (Some(row), Some(col)) = (entity["row"].as_u64(), entity["col"].as_u64()) else {
+            checks.error(
+                "erd/grid-placement",
+                &path,
+                if grid {
+                    "Entity needs pos [x,y] or grid row/col"
+                } else {
+                    "Entity needs pos [x,y] or a grid layout with row/col"
+                },
+            );
+            continue;
+        };
+        if let Some(previous) = cells.insert((row, col), index) {
+            checks.error(
+                "erd/grid-cell-conflict",
+                &path,
+                format!("Entities {previous} and {index} share grid cell row {row} col {col}"),
+            );
+        }
+    }
+}
+
+fn class_checks(types: &[Value], relations: &[Value], checks: &mut Checks) {
+    duplicate_members(types, "types", "attributes", checks);
+    let mut cells = HashMap::new();
+    for (index, item) in types.iter().enumerate() {
+        if item["pos"].is_array() {
+            continue;
+        }
+        let path = format!("/types/{index}");
+        let (Some(row), Some(col)) = (item["row"].as_u64(), item["col"].as_f64()) else {
+            checks.error(
+                "class/grid-placement",
+                &path,
+                "Type needs grid row/col (col may be a half step) or an absolute pos [x,y]",
+            );
+            continue;
+        };
+        // A half column straddles the two columns beside it.
+        let (left, right) = (col.floor() as u64, col.ceil() as u64);
+        for cell in if left == right {
+            vec![left]
+        } else {
+            vec![left, right]
+        } {
+            if let Some(previous) = cells.insert((row, cell), index) {
+                checks.error(
+                    "class/grid-cell-conflict",
+                    &path,
+                    format!("Types {previous} and {index} share grid cell row {row} col {cell}"),
+                );
+            }
+        }
+    }
+    self_relationships(relations, checks);
+    let kinds: HashMap<&str, &str> = types
+        .iter()
+        .filter_map(|item| {
+            Some((
+                item["id"].as_str()?,
+                item["kind"].as_str().unwrap_or("class"),
+            ))
+        })
+        .collect();
+    let mut parents: Vec<(&str, &str)> = Vec::new();
+    for (index, relation) in relations.iter().enumerate() {
+        let (Some(from), Some(to)) = (relation["from"].as_str(), relation["to"].as_str()) else {
+            continue;
+        };
+        let (Some(&from_kind), Some(&to_kind)) = (kinds.get(from), kinds.get(to)) else {
+            continue;
+        };
+        if from == to {
+            continue;
+        }
+        let path = format!("/relationships/{index}");
+        match relation["kind"].as_str() {
+            Some("realization") if to_kind != "interface" || from_kind == "interface" => {
+                checks.error(
+                    "class/realization-target",
+                    &path,
+                    format!("Realization runs from a non-interface type to an interface, not {from_kind} -> {to_kind}"),
+                )
+            }
+            Some("inheritance") => {
+                if (from_kind == "interface") != (to_kind == "interface") {
+                    checks.error(
+                        "class/inheritance-kind",
+                        &path,
+                        format!("Inheritance crosses an interface boundary ({from_kind} -> {to_kind}); use realization"),
+                    );
+                }
+                parents.push((from, to));
+            }
+            _ => {}
+        }
+    }
+    // Depth-first walk in first-declaration order, as the frozen renderer reports one cycle.
+    let mut order: Vec<&str> = Vec::new();
+    for (from, _) in &parents {
+        if !order.contains(from) {
+            order.push(from);
+        }
+    }
+    fn visit<'a>(
+        id: &'a str,
+        parents: &[(&'a str, &'a str)],
+        state: &mut HashMap<&'a str, bool>,
+        stack: &mut Vec<&'a str>,
+    ) -> Option<Vec<&'a str>> {
+        match state.get(id) {
+            Some(true) => return None,
+            Some(false) => {
+                let start = stack.iter().position(|item| *item == id)?;
+                let mut cycle = stack[start..].to_vec();
+                cycle.push(id);
+                return Some(cycle);
+            }
+            None => {}
+        }
+        state.insert(id, false);
+        stack.push(id);
+        for (_, parent) in parents.iter().filter(|(from, _)| *from == id) {
+            if let Some(cycle) = visit(parent, parents, state, stack) {
+                return Some(cycle);
+            }
+        }
+        stack.pop();
+        state.insert(id, true);
+        None
+    }
+    let mut state = HashMap::new();
+    for id in order {
+        if let Some(cycle) = visit(id, &parents, &mut state, &mut Vec::new()) {
+            checks.error(
+                "class/inheritance-cycle",
+                "/relationships",
+                format!("Inheritance forms a cycle: {}", cycle.join(" -> ")),
+            );
+            checks
+                .errors
+                .last_mut()
+                .expect("just inserted diagnostic")
+                .evidence = json!({"cycle":cycle});
+            break;
+        }
+    }
+}
+
+// One declared parent per item; nothing is inferred, so a missing parent, a
+// cycle, or (for trees) a second root is refused.
+fn parent_checks(
+    items: &[Value],
+    collection: &str,
+    prefix: &str,
+    single_root: bool,
+    checks: &mut Checks,
+) {
+    let mut by_id: HashMap<&str, &Value> = HashMap::new();
+    for (index, item) in items.iter().enumerate() {
+        let Some(id) = item["id"].as_str() else {
+            continue;
+        };
+        if by_id.insert(id, item).is_some() {
+            checks.error(
+                &format!("{prefix}/duplicate-id"),
+                &format!("/{collection}/{index}/id"),
+                format!("Identity {id} is declared twice"),
+            );
+            checks
+                .errors
+                .last_mut()
+                .expect("just inserted diagnostic")
+                .subject
+                .identity = Some(id.into());
+        }
+    }
+    for (index, item) in items.iter().enumerate() {
+        if let Some(parent) = item["parent"].as_str() {
+            if !by_id.contains_key(parent) {
+                checks.error(
+                    &format!("{prefix}/missing-parent"),
+                    &format!("/{collection}/{index}/parent"),
+                    format!("Parent {parent} is not declared"),
+                );
+            }
+        }
+    }
+    let roots: Vec<&str> = items
+        .iter()
+        .filter(|item| item.get("parent").is_none())
+        .filter_map(|item| item["id"].as_str())
+        .collect();
+    if single_root && roots.len() != 1 {
+        checks.error(
+            &format!("{prefix}/root-count"),
+            &format!("/{collection}"),
+            format!(
+                "A tree has one root, but {} nodes have no parent",
+                roots.len()
+            ),
+        );
+        checks
+            .errors
+            .last_mut()
+            .expect("just inserted diagnostic")
+            .evidence = json!({"roots":roots});
+    }
+    let mut reported = HashSet::new();
+    for (index, item) in items.iter().enumerate() {
+        let mut chain: Vec<&str> = Vec::new();
+        let mut current = Some(item);
+        while let Some(node) = current {
+            let (Some(id), Some(parent)) = (node["id"].as_str(), node["parent"].as_str()) else {
+                break;
+            };
+            if chain.contains(&id) {
+                break;
+            }
+            chain.push(id);
+            current = by_id.get(parent).copied();
+        }
+        let Some(id) = current.and_then(|node| node["id"].as_str()) else {
+            continue;
+        };
+        if let Some(start) = chain.iter().position(|item| *item == id) {
+            let cycle = chain[start..].to_vec();
+            let mut key = cycle.clone();
+            key.sort_unstable();
+            if reported.insert(key) {
+                checks.error(
+                    &format!("{prefix}/cycle"),
+                    &format!("/{collection}/{index}/parent"),
+                    format!("Parent links form a cycle: {}", cycle.join(" -> ")),
+                );
+                checks
+                    .errors
+                    .last_mut()
+                    .expect("just inserted diagnostic")
+                    .evidence = json!({"cycle":cycle});
+            }
+        }
+    }
+}
+
+fn timeline_checks(document: &Value, events: &[Value], checks: &mut Checks) {
+    use crate::format::time;
+    let timezone = document["meta"]["timezone"].as_str().unwrap_or("UTC");
+    if time::zone(timezone).is_none() {
+        checks.error(
+            "timeline/invalid-timezone",
+            "/meta/timezone",
+            format!(
+                "{timezone:?} is neither a recognised time zone nor a UTC offset such as +05:30"
+            ),
+        );
+    }
+    let mut lanes = HashSet::new();
+    for (index, lane) in array(document, "lanes").iter().enumerate() {
+        if let Some(id) = lane["id"].as_str() {
+            if !lanes.insert(id) {
+                checks.error(
+                    "timeline/duplicate-lane-id",
+                    &format!("/lanes/{index}/id"),
+                    format!("Lane {id} is declared twice"),
+                );
+            }
+        }
+    }
+    let mut seen = HashSet::new();
+    for (index, event) in events.iter().enumerate() {
+        let path = format!("/events/{index}");
+        if let Some(id) = event["id"].as_str() {
+            if !seen.insert(id) {
+                checks.error(
+                    "timeline/duplicate-id",
+                    &format!("{path}/id"),
+                    format!("Event {id} is declared twice"),
+                );
+            }
+        }
+        let at = event["at"].as_str().unwrap_or_default();
+        let valid = time::valid_calendar_date(at) && time::parse_timestamp(at).is_some();
+        if !valid {
+            checks.error(
+                "timeline/invalid-timestamp",
+                &format!("{path}/at"),
+                format!("{at:?} is not a valid date and time"),
+            );
+        }
+        if !lanes.is_empty()
+            && !event["lane"]
+                .as_str()
+                .is_some_and(|lane| lanes.contains(lane))
+        {
+            checks.error(
+                "timeline/unknown-lane",
+                &format!("{path}/lane"),
+                "Event lane is not one of the declared lanes",
+            );
+        }
+        // A date-only record is placed at noon of the authored offset; the
+        // authored clock must say so rather than claim a recorded time.
+        if valid && event["precision"] == "day" {
+            let clock = &at[11..at.len() - if at.ends_with('Z') { 1 } else { 6 }];
+            let noon = clock == "12:00"
+                || clock.strip_prefix("12:00:00").is_some_and(|rest| {
+                    rest.is_empty() || rest[1..].bytes().all(|byte| byte == b'0')
+                });
+            if !noon {
+                checks.error(
+                    "timeline/day-precision-time",
+                    &format!("{path}/precision"),
+                    "A day-precision event must be authored at 12:00 of its offset",
+                );
+            }
+        }
+    }
+}
+
+// Bars come only from recorded timing: end or duration (agreeing when both),
+// and only an incomplete span may state neither.
+fn waterfall_checks(spans: &[Value], checks: &mut Checks) {
+    for (index, span) in spans.iter().enumerate() {
+        let path = format!("/spans/{index}");
+        let start = span["start"].as_f64().unwrap_or_default();
+        let (end, duration) = (span["end"].as_f64(), span["duration"].as_f64());
+        let mut timing = |message: String| {
+            checks.error("waterfall/invalid-timing", &path, message);
+        };
+        if duration.is_some_and(|duration| !(start + duration).is_finite()) {
+            timing("The derived end is outside the finite numeric range".into());
+        }
+        if let Some(end) = end.filter(|end| *end < start) {
+            timing(format!("Span ends ({end}) before it starts ({start})"));
+        }
+        if let (Some(end), Some(duration)) = (end, duration) {
+            if (end - start - duration).abs() > 1e-9 {
+                timing(format!(
+                    "End {end} and duration {duration} disagree with start {start}"
+                ));
+            }
+        }
+        if end.is_none() && duration.is_none() && span["status"] != "incomplete" {
+            timing("A span without a recorded end or duration must be marked incomplete".into());
+        }
+    }
+    parent_checks(spans, "spans", "waterfall", false, checks);
 }

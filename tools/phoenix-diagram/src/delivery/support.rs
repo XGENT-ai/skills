@@ -180,6 +180,14 @@ pub(super) fn passed_check(check: &ArtifactCheck) -> bool {
             || check.composition["summary"]["warnings"] == 0)
 }
 
+/// Finalize receipts and summaries repeat only the evidence status and digest.
+pub(super) fn evidence_summary(validation: &Value) -> Value {
+    match validation.get("status") {
+        Some(status) => json!({"status":status,"evidenceSha256":validation["evidenceSha256"]}),
+        None => json!({}),
+    }
+}
+
 pub(super) fn config(input: &crate::input::DiagramInput) -> EffectiveConfig {
     EffectiveConfig {
         diagram_type: input.diagram_type,

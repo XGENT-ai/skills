@@ -8,11 +8,11 @@ const { spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
-const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
-const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime'];
+const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'];
+const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring'];
 const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
 
-test('the new skill has a bounded five-type description and normal automatic discovery', () => {
+test('the skill has a bounded ten-type description with its exclusions up front and normal automatic discovery', () => {
   const entry = read('SKILL.md');
   const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(entry)?.[1];
   assert.ok(frontmatter, 'valid frontmatter boundary');
@@ -21,7 +21,8 @@ test('the new skill has a bounded five-type description and normal automatic dis
   assert.equal(typeof description, 'string');
   assert.ok(Array.from(description).length <= 200);
   const first100 = Array.from(description).slice(0, 100).join('');
-  for (const word of ['架构', '工作流', '时序', '数据流', '生命周期', '数值图表', '仪表盘']) assert.ok(first100.includes(word), word);
+  for (const word of ['架构', '工作流', '时序', '数据流', '状态', 'ER', '类', '树', '时间线', '瀑布', 'Mermaid', '数值图表', '仪表盘', 'infographic']) assert.ok(first100.includes(word), word);
+  assert.match(frontmatter, /^ {2}version: "0\.2\.0"$/m);
   assert.doesNotMatch(frontmatter, /disable-model-invocation|allow_implicit_invocation/);
   assert.equal(fs.existsSync(path.join(skill, 'agents/openai.yaml')), false);
 });
@@ -43,9 +44,12 @@ test('entry and conditional references resolve within the installed skill packag
   assert.ok(fs.statSync(path.join(skill, 'scripts/phoenix-diagram')).isFile());
 });
 
-test('all five guide examples are new-contract complete semantic inputs with automatic routes', () => {
+test('all ten guide examples are new-contract complete semantic inputs with automatic routes', () => {
   const collections = { architecture: ['components', 'connections'], workflow: ['nodes', 'edges'],
-    sequence: ['participants', 'messages'], dataflow: ['nodes', 'flows'], lifecycle: ['states', 'transitions'] };
+    sequence: ['participants', 'messages'], dataflow: ['nodes', 'flows'], lifecycle: ['states', 'transitions'],
+    erd: ['entities', 'relationships'], class: ['types', 'relationships'], tree: ['nodes'], timeline: ['events'], waterfall: ['spans'] };
+  // Only the original five label every relationship; erd/class labels are optional and tree edges derive from parent.
+  const labelled = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
   for (const type of types) {
     const document = JSON.parse(read(`examples/minimal.${type}.json`));
     assert.equal(document.diagram_type, type);
@@ -53,15 +57,17 @@ test('all five guide examples are new-contract complete semantic inputs with aut
     assert.equal(document.meta.input_contract, 'phoenix-v1');
     assert.equal(document.meta.quality_profile, 'showcase');
     assert.equal(document.meta.output, `minimal.${type}.html`);
-    const [nodes, relationships] = collections[type].map(name => document[name]);
-    assert.ok(nodes.length >= 2 && relationships.length >= 1, type);
+    const [nodes, relationships = nodes.filter(node => node.parent).map(node => ({ from: node.parent, to: node.id }))] = collections[type].map(name => document[name]);
+    assert.ok(nodes.length >= 2, type);
     const identities = new Set(nodes.map(node => node.id));
     assert.equal(identities.size, nodes.length);
-    for (const relation of relationships) {
+    if (type !== 'timeline' && type !== 'waterfall') assert.ok(relationships.length >= 1, type);
+    for (const relation of collections[type][1] ? relationships : []) {
       assert.ok(identities.has(relation.from) && identities.has(relation.to), type);
-      assert.ok(relation.label.trim(), type);
+      if (labelled.includes(type)) assert.ok(relation.label.trim(), type);
       for (const pin of ['via', 'channelX', 'channelY', 'labelAt', 'fromSide', 'toSide']) assert.equal(pin in relation, false, pin);
     }
+    for (const relation of relationships) assert.ok(identities.has(relation.from) && identities.has(relation.to), type);
     if (document.mainPath) for (let i = 1; i < document.mainPath.length; i += 1) {
       assert.ok(relationships.some(relation => relation.from === document.mainPath[i - 1] && relation.to === document.mainPath[i]), type);
     }
@@ -72,7 +78,9 @@ test('documented commands use the flat native launcher without legacy renderer f
   const documents = ['SKILL.md', ...references.map(name => `references/${name}.md`)].map(read).join('\n');
   assert.match(documents, /scripts\/phoenix-diagram/);
   assert.doesNotMatch(documents, /node\s+(?:bin\/archify|[^\n]*render-(?:architecture|workflow|sequence|dataflow|lifecycle))/);
-  assert.doesNotMatch(documents, /--repo-root|--candidate-sha256|--require-provenance/);
+  assert.doesNotMatch(documents, /--candidate-sha256|--require-provenance/);
+  assert.match(documents, /finalize <type> candidate\.json diagram\.html --repo-root/);
+  assert.match(documents, /evidence\.status/);
   const cli = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/src/cli.rs'), 'utf8');
   for (const command of ['guide', 'validate', 'deliver', 'check', 'browser-check', 'visual-check', 'finalize', 'review-record', 'recover-output', 'doctor']) {
     if (new RegExp(`"\\$PD" ${command}\\b`).test(documents)) assert.ok(cli.includes(command), command);
@@ -91,11 +99,11 @@ test('the packaged review draft recipe preserves receipt bindings and leaves obs
     viewport: { width, height: width === 1440 ? 900 : 1320 }, theme })));
   const browser = { screenshots };
   fs.writeFileSync(path.join(directory, 'browser.json'), JSON.stringify(browser));
-  const summary = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.1.0', automatedStatus: 'pass',
+  const summary = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.2.0', automatedStatus: 'pass',
     stages: ['validate', 'deliver', 'check', 'browser-check'].map(name => ({ name, status: 'pass' })),
     candidate: { ...bound('candidate.json'), originalBinding: { protocolFixture: true } },
     artifact: { ...bound('diagram.html'), originalBinding: { protocolFixture: true } },
-    configSha256: 'b'.repeat(64), engine: { sourceInputSha256: 'c'.repeat(64), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v1', binary: identity },
+    configSha256: 'b'.repeat(64), engine: { sourceInputSha256: 'c'.repeat(64), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', binary: identity },
     deliveryReceiptId: 'protocol-fixture-no-visual-claim', browserReceiptIdentity: identity, evidence: { browserReceipt: bound('browser.json') } };
   const summaryPath = path.join(directory, 'summary.json'), recordPath = path.join(directory, 'review.json');
   fs.writeFileSync(summaryPath, JSON.stringify(summary));

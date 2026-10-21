@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "diagram_type": "tree",
+  "meta": { "title": "Service ownership", "output": "minimal.tree.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "nodes": [
+    { "id": "platform", "label": "Platform", "sublabel": "Owned capabilities" },
+    { "id": "payments", "label": "Payments", "parent": "platform" },
+    { "id": "card", "label": "Card payments", "parent": "payments" },
+    { "id": "wallet", "label": "Wallet payments", "parent": "payments" },
+    { "id": "operations", "label": "Operations", "parent": "platform", "collapsed": true },
+    { "id": "refunds", "label": "Refunds", "parent": "operations" }
+  ]
+}

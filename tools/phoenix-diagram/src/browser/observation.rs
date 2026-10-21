@@ -117,7 +117,7 @@ pub(super) fn classify(
     add(
         "rendered-dom",
         dom_ok,
-        json!({"mainSvgCount":1,"nodeCount":"nonempty","readerPanelCanvas":true,"semanticVisibility":"all authored node bodies, primary labels and paths; context/fine at Full; fitted overview restored"}),
+        json!({"mainSvgCount":1,"nodeCount":"nonempty","readerPanelCanvas":true,"semanticVisibility":"all authored node bodies, primary labels and paths; context/fine at Full; initial tree folds measured unfolded and restored; fitted overview restored"}),
         json!({"svgCount":metrics["svgCount"],"nodeCount":metrics["nodeCount"],"reader":metrics["readerRect"],"panel":metrics["panelRect"],"svg":metrics["svgRect"],"semanticVisibility":metrics["semanticVisibility"]}),
     );
     // The frozen 6px floor is a desktop contract. Narrow samples still report

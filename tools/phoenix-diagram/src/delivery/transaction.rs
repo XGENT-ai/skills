@@ -27,7 +27,7 @@ fn delivery_receipt(validation: &ValidationReceipt) -> DeliveryReceipt {
         checks: validation.checks.clone(),
         composition: validation.composition.clone(),
         commit_state: CommitState::NotCommitted,
-        evidence: json!({}),
+        evidence: validation.evidence.clone(),
         exit: validation.exit_code(),
     }
 }
@@ -244,7 +244,8 @@ pub(super) fn finalize(
         },
         delivery_status: "incomplete".into(),
         produced_by_this_run: false,
-        evidence: json!({}),
+        evidence: evidence_summary(&prepared.receipt.evidence),
+        locale: prepared.locale.clone(),
         exit: prepared.receipt.exit_code(),
     };
     stage(&mut summary, 0, prepared.receipt.status, &prepared.receipt);

@@ -235,7 +235,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | --- | --- |
 | [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
 | [archify](skills/archify/SKILL.md) | 将架构、流程、时序、数据流与状态关系制作成交互式 HTML 图，支持 Mermaid 输入和多格式导出 |
-| [phoenix-diagram](skills/phoenix-diagram/SKILL.md) | 独立 npm 候选：五类 Rust 图解、离线阅读与实际图像审核；[安装与验收范围](docs/phoenix-diagram.md) |
+| [phoenix-diagram](skills/phoenix-diagram/SKILL.md) | 独立 npm 候选：十类 Rust 图解（含 ER、类、树、时间线、耗时瀑布）、仓库来源核对、五语言离线阅读与实际图像审核；[安装与验收范围](docs/phoenix-diagram.md) |
 | [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
 | [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |

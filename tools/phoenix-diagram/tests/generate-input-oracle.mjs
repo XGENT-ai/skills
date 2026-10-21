@@ -13,10 +13,11 @@ const referenceArg = process.argv.indexOf('--reference-root');
 const referenceRoot = referenceArg < 0
   ? path.join(projectRoot, 'local/phoenix-diagram/reference/archify')
   : path.resolve(process.argv[referenceArg + 1]);
-const kinds = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+const legacyKinds = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+const phoenixKinds = [...legacyKinds, 'erd', 'class', 'tree', 'timeline', 'waterfall'];
 const sources = [
-  ['legacy-2.17', path.join(projectRoot, 'tools/phoenix-diagram/upstream/legacy-2.17')],
-  ['phoenix-v1', referenceRoot],
+  ['legacy-2.17', path.join(projectRoot, 'tools/phoenix-diagram/upstream/legacy-2.17'), legacyKinds],
+  ['phoenix-v1', referenceRoot, phoenixKinds],
 ];
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const encode = key => key.replaceAll('~', '~0').replaceAll('/', '~1');
@@ -27,7 +28,7 @@ const clone = value => structuredClone(value);
 // An alternate extraction is only a location change, never a new source baseline.
 verifyFrozenSources({ localReference: null });
 const checkedSources = [];
-for (const [contract, sourceRoot] of sources) {
+for (const [contract, sourceRoot, kinds] of sources) {
   const manifestName = contract === 'legacy-2.17' ? 'legacy-2.17-manifest.json' : 'archify-3.1.0-manifest.json';
   const manifestBytes = await readFile(path.join(projectRoot, 'tools/phoenix-diagram/upstream', manifestName));
   const manifest = new Map(JSON.parse(manifestBytes).map(([name, size, hash]) => [name, { size, hash }]));
@@ -43,7 +44,7 @@ for (const [contract, sourceRoot] of sources) {
     assert.equal(sha256(bytes), expected.hash, `${sourceRoot}/${relative}: pinned SHA-256 differs`);
     files.set(relative, bytes);
   }
-  checkedSources.push({ contract, sourceRoot, manifestName, manifestSha256: sha256(manifestBytes), examples, oracleFiles, files });
+  checkedSources.push({ contract, sourceRoot, kinds, manifestName, manifestSha256: sha256(manifestBytes), examples, oracleFiles, files });
 }
 
 function patch(document, operation) {
@@ -95,6 +96,8 @@ function sample(unresolved, owner, schemas, pointer = '') {
     if (schema.pattern === '^[a-fA-F0-9]{40}$') return 'a'.repeat(40);
     if (schema.pattern === '^[a-f0-9]{64}$') return 'a'.repeat(64);
     if (schema.pattern?.startsWith('^https?://')) return 'https://example.test/corpus.svg';
+    if (schema.pattern?.startsWith('^\\d{4}-\\d{2}-\\d{2}T')) return '2026-01-01T12:00Z';
+    if (schema.pattern === '^[^.]+\\.[^.]+$') return 'a.a';
     if (pointer.endsWith('/locale')) return 'en';
     return 'a'.repeat(Math.max(1, schema.minLength || 0));
   }
@@ -135,7 +138,7 @@ function walk(unresolved, owner, schemas, pointer, value, visit) {
 }
 
 await mkdir(fixtureRoot, { recursive: true });
-for (const { contract, sourceRoot, manifestName, manifestSha256, examples, oracleFiles, files } of checkedSources) {
+for (const { contract, sourceRoot, kinds, manifestName, manifestSha256, examples, oracleFiles, files } of checkedSources) {
   const validatorFile = path.join(sourceRoot, 'renderers/shared/generated-validators.mjs');
   const validators = await import(pathToFileURL(validatorFile).href);
   const schemas = {};
@@ -238,6 +241,22 @@ for (const { contract, sourceRoot, manifestName, manifestSha256, examples, oracl
       }
     });
     specimen.fields = [...new Set(fields)];
+    // Phoenix's only schema extension beyond the input_contract marker (plan D7):
+    // the frozen validator plus an optional precision enum on timeline events.
+    if (contract === 'phoenix-v1' && kind === 'timeline') {
+      const extended = document => {
+        const precision = document?.events?.[0]?.precision;
+        const original = clone(document);
+        if (original?.events?.[0]) delete original.events[0].precision;
+        extended.errors = null;
+        const valid = validators.timeline(original) && (precision === undefined || ['day', 'time'].includes(precision));
+        if (!valid) extended.errors = validators.timeline.errors || [{ instancePath: '/events/0/precision', keyword: 'enum', params: { allowedValues: ['day', 'time'] } }];
+        return valid;
+      };
+      for (const [name, value] of [['day', 'day'], ['time', 'time'], ['unknown-enum', 'hour'], ['wrong-type', 1], ['null', null]]) {
+        addCase(specimen, `d7:/events/0/precision:${name}`, [{ op: 'set', path: '/events/0/precision', value }], extended);
+      }
+    }
     for (const reference of ['https://example.invalid/external.schema.json', 'file:///etc/passwd', 'common.schema.json#/$defs/id']) {
       addCase(specimen, `input-ref:${reference}`, [{ op: 'set', path: '/$ref', value: reference }], validators[kind]);
     }
@@ -249,6 +268,6 @@ for (const { contract, sourceRoot, manifestName, manifestSha256, examples, oracl
   }
 }
 assert.equal(oracle.examples.filter(example => example.contract === 'legacy-2.17').length, 14);
-assert.equal(oracle.examples.filter(example => example.contract === 'phoenix-v1').length, 15);
+assert.equal(oracle.examples.filter(example => example.contract === 'phoenix-v1').length, 25);
 await writeFile(path.join(fixtureRoot, 'schema-oracle.json'), `${JSON.stringify({ ...oracle, cases: undefined }).slice(0, -1)},\n"cases":[\n${oracle.cases.map(testCase => JSON.stringify(testCase)).join(',\n')}\n]}\n`);
 console.log(`Wrote ${oracle.examples.length} frozen examples, ${oracle.specimens.length} all-field specimens, ${oracle.cases.length} oracle cases.`);

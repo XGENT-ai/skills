@@ -1,8 +1,8 @@
 // Adapted from Archify 3.1.0 archify/bin/visual-check.mjs::inspect.
 // Copyright (c) 2026 tt-a1i (Archify), (c) 2025 Cocoon AI. MIT.
 // Phoenix changes: DOM/control/resource coverage, both themes, narrow sample,
-// strict finite values, complete semantic paint/depth inspection and restored
-// document-flow checks. This measures, not reviews.
+// strict finite values, complete semantic paint/depth inspection (initial tree
+// folds included) and restored document-flow checks. This measures, not reviews.
 (async function () {
   'use strict';
   var runtime = window.PhoenixDiagram;
@@ -27,6 +27,11 @@
   };
   await (document.fonts ? document.fonts.ready : Promise.resolve());
   await stable();
+  // An authored initial fold hides a tree branch only in the reading state:
+  // measure the whole tree, then return the reader to that fold.
+  var treeBranches = runtime && runtime.treeBranches;
+  var initialFold = treeBranches && treeBranches.active === true ? treeBranches.collapsedIds() : [];
+  if (initialFold.length) { treeBranches.restoreAll(); await stable(); }
   var html = document.documentElement;
   var reader = document.querySelector('.container');
   var diagram = document.querySelector('.diagram-container');
@@ -208,7 +213,8 @@
         owner: edge ? { kind: 'edge', id: edge.getAttribute('data-edge-id'), from: edge.getAttribute('data-edge-from'), to: edge.getAttribute('data-edge-to') }
           : node ? { kind: 'node', id: node.getAttribute('data-node-id') } : { kind: 'boundary', id: null } });
       if (node) {
-        var box = node.querySelector(':scope > rect:not(.c-mask)') || node.querySelector(':scope > rect');
+        // A waterfall row frames its name column and span bar.
+        var box = node.querySelector(':scope > rect.wf-row') || node.querySelector(':scope > [data-graph-role="node-body"]') || node.querySelector(':scope > rect:not(.c-mask)') || node.querySelector(':scope > rect');
         if (box && !contains(rect(box), bounds, 1)) nodeClips.push({ id: node.getAttribute('data-node-id'), text: (element.textContent || '').trim(), box: rect(box), textBounds: bounds });
       }
     });
@@ -278,6 +284,16 @@
   var documentScrollUnclipped = Boolean(svgRect && diagramRect && contains(diagramRect, svgRect, 1)
     && diagram.scrollHeight <= diagram.clientHeight + 1 && diagram.scrollWidth <= diagram.clientWidth + 1
     && [html, document.body].every(function (element) { return !['hidden', 'clip'].includes(getComputedStyle(element).overflowY); }));
+  if (initialFold.length) {
+    initialFold.forEach(function (id) { treeBranches.collapse(id); });
+    await stable();
+    var refolded = treeBranches.collapsedIds();
+    semanticVisibility.treeFold = { unfoldedForInspection: initialFold, restored: refolded };
+    if (refolded.length !== initialFold.length || initialFold.some(function (id) { return refolded.indexOf(id) < 0; })) {
+      semanticVisibility.failures.push({ kind: 'restoration', reason: 'tree-fold-not-restored' });
+      semanticVisibility.ok = false;
+    }
+  }
   var media = Array.from(document.querySelectorAll('audio,video')).map(function (element) { return { tag: element.tagName, paused: element.paused, ended: element.ended, error: element.error ? { code: element.error.code, message: element.error.message } : null }; });
   return {
     documentUrl: window.location.href,

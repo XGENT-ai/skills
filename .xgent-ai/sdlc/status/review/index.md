@@ -15,6 +15,7 @@
 | 44cd681d-69af-4d4a-af3c-df12562db52c | [Phoenix UI 开发计划评审（首轮）](../../../../docs/plan/phoenix-ui.review.md) | [状态](44cd681d-69af-4d4a-af3c-df12562db52c.md) | 活动 |
 | 599a4664-e089-4c42-901f-0d870d39e9f5 | [Phoenix Diagram P1 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.review.md) | [状态](599a4664-e089-4c42-901f-0d870d39e9f5.md) | 活动 |
 | 68af25e5-856b-4d48-9b73-b3f892abb419 | [Phoenix Diagram PRD 评审](../../../../docs/PRD-PHOENIX-DIAGRAM.review.md) | [状态](68af25e5-856b-4d48-9b73-b3f892abb419.md) | 活动 |
+| 72bbedc0-7192-47a1-bbd3-dea11c9f11c3 | [Phoenix Diagram P2 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.review.md) | [状态](72bbedc0-7192-47a1-bbd3-dea11c9f11c3.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
 | 88cb4f52-4171-4daf-b298-1d9e1c538848 | [Phoenix Diagram P1 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P1.prd-dev-gaps.md) | [状态](88cb4f52-4171-4daf-b298-1d9e1c538848.md) | 活动 |
 | 9a6386c1-91c6-4a95-98b4-989e9b806613 | [AGENTS.md 与 Skills 自进化开发计划首审](../../../../docs/plan/agent-instruction-evolution.review.md) | [状态](9a6386c1-91c6-4a95-98b4-989e9b806613.md) | 活动 |

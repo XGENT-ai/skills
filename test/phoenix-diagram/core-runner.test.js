@@ -97,12 +97,37 @@ test('core options separate initial execution, review-only resume and unimplemen
   assert.throws(()=>parseOptions(['--stage','install','--engine','/native/phoenix-diagram']),/not implemented/i);
   assert.throws(()=>parseOptions(['--stage','core','--engine','/native/phoenix-diagram','--review-file','/tmp/reviews.json']),/resume/i);
   assert.throws(()=>parseOptions(['--stage','core','--engine','/native/phoenix-diagram','--engine','/other']),/duplicate/i);
+  for(const scope of ['explore','corpus','evidence','locale']) {
+    assert.equal(initial[scope],false,`--${scope} defaults to not requested`);
+    assert.equal(parseOptions(['--stage','core','--engine','/native/phoenix-diagram','--resume','/tmp/core/index.json',`--${scope}`])[scope],true);
+    assert.throws(()=>parseOptions(['--stage','core','--engine','/native/phoenix-diagram',`--${scope}=yes`]),/takes no value/);
+  }
 });
 
-test('coverage requires each type in both contracts and rejects duplicate case identities',async()=>{
-  const {requiredCoverage,TYPES}=await import(modulePath);
-  const cases=TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].map(contract=>({id:`${contract==='phoenix-v1'?'new':'legacy'}-${type}`,type,contract})));
-  assert.equal(requiredCoverage(cases).complete,true);
+test('unrequested acceptance scopes stay not-run and keep the handoff incomplete',async()=>{
+  const {recomputeIndex,SCOPES}=await import('../../scripts/test-phoenix-diagram-runtime.mjs');
+  const passed={status:'pass'},state={automatedStatus:'pass',visualReview:'passed',deliveryStatus:'complete'};
+  const index={coverage:{complete:true},cases:[{state,determinism:passed,reader:passed,review:{idempotent:passed}}],content:passed,recovery:passed,offline:passed,reviewBindings:passed,newDelivery:passed,reviewRecovery:{status:'pass',retryStatus:'pass'},...Object.fromEntries(SCOPES.map(name=>[name,{status:'not-run'}]))};
+  assert.equal(recomputeIndex(index).handoff,'incomplete');
+  assert.equal(recomputeIndex({...index,...Object.fromEntries(SCOPES.map(name=>[name,passed]))}).handoff,'passed');
+  assert.equal(recomputeIndex({...index,...Object.fromEntries(SCOPES.map(name=>[name,passed])),corpus:{status:'failed'}}).status,'failed');
+  // A package consumer fixes its required subset; the remaining scopes stay not-run.
+  const consumer={...index,requiredScopes:['explore','evidence','locale']};
+  assert.equal(recomputeIndex(consumer).handoff,'incomplete');
+  assert.equal(recomputeIndex({...consumer,explore:passed,evidence:passed,locale:passed}).handoff,'passed');
+  assert.equal(recomputeIndex({...consumer,explore:passed,evidence:passed,locale:{status:'failed'}}).handoff,'incomplete');
+});
+
+test('coverage requires the five legacy types in both contracts and the five new types in phoenix-v1 only',async()=>{
+  const {requiredCoverage,TYPES,contractsFor}=await import(modulePath),{DEFAULT_CASES,SCOPES}=await import('../../scripts/test-phoenix-diagram-runtime.mjs');
+  assert.deepEqual(TYPES,['architecture','workflow','sequence','dataflow','lifecycle','erd','class','tree','timeline','waterfall']);
+  const cases=TYPES.flatMap(type=>contractsFor(type).map(contract=>({id:`${contract==='phoenix-v1'?'new':'legacy'}-${type}`,type,contract})));
+  assert.equal(cases.length,15);assert.equal(requiredCoverage(cases).complete,true);
+  assert.deepEqual(DEFAULT_CASES.map(entry=>entry.id),cases.map(entry=>entry.id));
+  assert.ok(DEFAULT_CASES.every(entry=>entry.contract==='legacy-2.17'?entry.source.includes('upstream/legacy-2.17/examples'):entry.source.endsWith(`examples/minimal.${entry.type}.json`)));
+  assert.throws(()=>requiredCoverage([...cases,{id:'legacy-erd',type:'erd',contract:'legacy-2.17'}]),/unsupported case type or contract/i);
+  assert.deepEqual(requiredCoverage(cases.filter(entry=>entry.id!=='new-timeline')).missing,[{type:'timeline',contract:'phoenix-v1'}]);
+  assert.deepEqual(SCOPES,['explore','corpus','evidence','locale']);
   const missing=requiredCoverage(cases.slice(1));assert.equal(missing.complete,false);assert.equal(missing.missing.length,1);
   assert.throws(()=>requiredCoverage([...cases,cases[0]]),/duplicate/i);
   assert.throws(()=>requiredCoverage([{id:'../escape',type:'architecture',contract:'phoenix-v1'}]),/case|identity|unsafe/i);
@@ -120,12 +145,12 @@ async function finalizeFixture(t,{contract='phoenix-v1',directory=temp(t),marked
   const {identity,ARTIFACT_CHECKS,BROWSER_CHECKS,VIEWPORTS}=await import(modulePath);
   const write=(name,bytes)=>{const file=path.join(directory,name);fs.writeFileSync(file,bytes);return{path:file,identity:identity(Buffer.from(bytes))};};
   const candidate=write('candidate.json',JSON.stringify({diagram_type:'architecture',meta:marked?{input_contract:contract}:{}})),artifact=write('diagram.html','unit fixture; not a rendered acceptance artifact');
-  const engine={sourceInputSha256:'a'.repeat(64),inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v1',binary:identity(Buffer.from('unit fixture'))};
+  const engine={sourceInputSha256:'a'.repeat(64),inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',binary:identity(Buffer.from('unit fixture'))};
   // The actual legacy native receipt executes these 20 scopes. These inert
   // files exercise the ledger protocol, never native/browser acceptance.
   const checks=ARTIFACT_CHECKS.filter(name=>contract!=='legacy-2.17' || !['arrowhead_separation','label_canvas_containment'].includes(name)).map(name=>({name,status:'pass',scope:{unitFixture:true}}));const composition={schemaVersion:1,profile:'showcase',status:'pass',summary:{errors:0,warnings:0}};
-  const config={diagramType:'architecture',inputContract:contract,quality:'showcase',viewerRevision:'phoenix-v1'};
-  const common={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',status:'pass',diagnostics:[],candidate,engine,configSha256:'c'.repeat(64)};
+  const config={diagramType:'architecture',inputContract:contract,quality:'showcase',viewerRevision:'phoenix-v2'};
+  const common={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',status:'pass',diagnostics:[],candidate,engine,configSha256:'c'.repeat(64)};
   const validate={...common,command:'validate',artifact:artifact.identity,config,checks,composition};
   const deliver={...common,command:'deliver',artifact,inputContract:contract,config,receiptId:'11111111-1111-4111-8111-111111111111',commitState:'committed',checks,composition};
   const delivery=write('diagram.delivery.json',JSON.stringify(deliver));
@@ -210,7 +235,7 @@ test('finalize evidence rejects basic checks, missing stages, identity drift and
 test('review continuation requires original receipt identity and current complete summary',async t=>{
   const {verifyReviewTransition,identity}=await import(modulePath);const f=await finalizeFixture(t);
   const record=path.join(path.dirname(f.summaryFile.path),'review.json');fs.writeFileSync(record,'unit fixture record');
-  const reply={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'review-record',status:'pass',diagnostics:[],automatedStatus:'pass',deliveryReceiptId:f.summary.deliveryReceiptId,browserReceiptIdentity:f.summary.browserReceiptIdentity,visualReview:{status:'passed',record:{path:record,identity:identity(fs.readFileSync(record))}},deliveryStatus:'complete',evidence:{}};
+  const reply={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'review-record',status:'pass',diagnostics:[],automatedStatus:'pass',deliveryReceiptId:f.summary.deliveryReceiptId,browserReceiptIdentity:f.summary.browserReceiptIdentity,visualReview:{status:'passed',record:{path:record,identity:identity(fs.readFileSync(record))}},deliveryStatus:'complete',evidence:{}};
   const stored=structuredClone(f.summary);delete stored.evidence.summaryReceipt;stored.visualReview=reply.visualReview;stored.deliveryStatus='complete';fs.writeFileSync(f.summaryFile.path,JSON.stringify(stored));reply.evidence.summaryReceipt={path:f.summaryFile.path,identity:identity(fs.readFileSync(f.summaryFile.path))};
   assert.equal(verifyReviewTransition(f.summary,reply).deliveryStatus,'complete');
   const different=structuredClone(reply);different.deliveryReceiptId='22222222-2222-4222-8222-222222222222';assert.throws(()=>verifyReviewTransition(f.summary,different),/identity|delivery|receipt/i);
@@ -245,7 +270,7 @@ test('review orchestration invokes only review-record and keeps original deliver
   await resumeReviews(index,{reviewFile:mapping},{invoke:async(_engine,args)=>{
     calls.push(args);assert.equal(args[0],'review-record');
     const stored=JSON.parse(fs.readFileSync(f.summaryFile.path));stored.visualReview={status:'passed',record:{path:record,identity:identity(fs.readFileSync(record))}};stored.deliveryStatus='complete';fs.writeFileSync(f.summaryFile.path,JSON.stringify(stored));
-    return{exitCode:0,receipt:{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'review-record',status:'pass',diagnostics:[],automatedStatus:'pass',visualReview:stored.visualReview,deliveryStatus:'complete',deliveryReceiptId:stored.deliveryReceiptId,browserReceiptIdentity:stored.browserReceiptIdentity,evidence:{summaryReceipt:{path:f.summaryFile.path,identity:identity(fs.readFileSync(f.summaryFile.path))}}}};
+    return{exitCode:0,receipt:{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'review-record',status:'pass',diagnostics:[],automatedStatus:'pass',visualReview:stored.visualReview,deliveryStatus:'complete',deliveryReceiptId:stored.deliveryReceiptId,browserReceiptIdentity:stored.browserReceiptIdentity,evidence:{summaryReceipt:{path:f.summaryFile.path,identity:identity(fs.readFileSync(f.summaryFile.path))}}}};
   }});
   assert.equal(calls.length,1);assert.equal(index.cases[0].state.deliveryStatus,'complete');assert.equal(index.cases[0].state.deliveryReceiptId,f.summary.deliveryReceiptId);assert.deepEqual(index.cases[0].state.browserReceiptIdentity,f.summary.browserReceiptIdentity);
   fs.writeFileSync(f.context.candidate.path,'changed candidate');
@@ -274,7 +299,7 @@ test('maintenance markers bind the owned child and phase without authorizing a r
 test('recovery outcomes require public bytes, truthful state and no invented delivery evidence',async t=>{
   const {verifyRecoveryOutcome}=await import('../../scripts/test-phoenix-diagram-recovery.mjs');
   const {identity}=await import(modulePath);const directory=temp(t),target=path.join(directory,'diagram.html');fs.writeFileSync(target,'old bytes');
-  const restored={exitCode:0,receipt:{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'recover-output',status:'pass',recoveryStatus:'recovered',target,publicState:{kind:'file',identity:identity(Buffer.from('old bytes'))},preserved:[],diagnostics:[]}};
+  const restored={exitCode:0,receipt:{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'recover-output',status:'pass',recoveryStatus:'recovered',target,publicState:{kind:'file',identity:identity(Buffer.from('old bytes'))},preserved:[],diagnostics:[]}};
   assert.equal(verifyRecoveryOutcome(restored,{mode:'recovered',target,expected:identity(Buffer.from('old bytes'))}).status,'pass');
   fs.writeFileSync(target,'later claimant');assert.throws(()=>verifyRecoveryOutcome(restored,{mode:'recovered',target,expected:identity(Buffer.from('old bytes'))}),/bytes|identity|public/i);
   const refused={...restored,exitCode:3,receipt:{...restored.receipt,status:'failed',recoveryStatus:'preserved',publicState:{kind:'file',identity:identity(Buffer.from('later claimant'))},preserved:['retained recovery']}};

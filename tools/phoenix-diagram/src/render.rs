@@ -1,12 +1,41 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
+use crate::evidence::SourceEvidence;
 use crate::geometry::{
     finite_point, finite_rect, format_number as number, lifecycle_v3_path, polyline_path,
     rounded_path, workflow_v2_path,
 };
 use crate::input::{DiagramType, InputContract};
-use crate::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
+use crate::scene::{Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
+
+mod class;
+mod erd;
+mod timeline;
+mod tree;
+mod waterfall;
+
+type LegendGlyph = fn(&CompiledDiagram, &Card, f64, &mut String);
+
+/// What a type outside the original five contributes to the shared SVG frame:
+/// root attributes, extra definitions, its body and its legend glyphs.
+struct TypeRenderer {
+    root_attributes: fn(&CompiledDiagram) -> String,
+    defs: fn(&CompiledDiagram) -> String,
+    body: fn(&CompiledDiagram, &mut String),
+    legend_glyph: LegendGlyph,
+}
+
+fn type_renderer(kind: DiagramType) -> Option<TypeRenderer> {
+    match kind {
+        DiagramType::Erd => Some(erd::RENDERER),
+        DiagramType::Class => Some(class::RENDERER),
+        DiagramType::Tree => Some(tree::RENDERER),
+        DiagramType::Timeline => Some(timeline::RENDERER),
+        DiagramType::Waterfall => Some(waterfall::RENDERER),
+        _ => None,
+    }
+}
 
 pub struct EmbeddedAssets<'a> {
     pub template: &'a str,
@@ -486,7 +515,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         crate::input::InputContract::PhoenixV1 => "phoenix-v1",
     };
     write!(svg,"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{} {} {} {}\" role=\"img\" aria-labelledby=\"phoenix-diagram-title phoenix-diagram-description\" lang=\"{}\" data-diagram-type=\"{}\" data-layout-contract=\"{contract}\" data-quality-profile=\"{profile}\" data-reader-fit=\"{}\" data-animation=\"trace\" data-preset=\"{}\">",
-        number(scene.view_box.x),number(scene.view_box.y),number(scene.view_box.width),number(scene.view_box.height),scene.meta["locale"].as_str().map(escape_text).unwrap_or_else(||"en".into()),scene.diagram_type.as_str(),escape_text(&scene.reader_fit),scene.meta["visual_preset"].as_str().map(escape_text).unwrap_or_else(||"classic".into())).unwrap();
+        number(scene.view_box.x),number(scene.view_box.y),number(scene.view_box.width),number(scene.view_box.height),escape_text(&crate::i18n::resolve(&scene.meta).resolved),scene.diagram_type.as_str(),escape_text(&scene.reader_fit),scene.meta["visual_preset"].as_str().map(escape_text).unwrap_or_else(||"classic".into())).unwrap();
     // Append metadata to the root tag before any authored content is inserted.
     svg.pop();
     write!(svg, " data-input-contract=\"{input_contract}\"").unwrap();
@@ -510,13 +539,25 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             _ => {}
         }
     }
+    let extended = type_renderer(scene.diagram_type);
+    if let Some(renderer) = &extended {
+        svg.push_str(&(renderer.root_attributes)(scene));
+    }
     svg.push('>');
     write!(svg,"<title id=\"phoenix-diagram-title\">{}</title><desc id=\"phoenix-diagram-description\">{}</desc>",attribute(&scene.meta,"title"),attribute(&scene.meta,"subtitle")).unwrap();
     svg.push_str(include_str!("../assets/svg-definitions.svg"));
     if node_ui {
         svg.push_str(include_str!("../assets/node-card-style.svg"));
     }
+    if let Some(renderer) = &extended {
+        svg.push_str(&(renderer.defs)(scene));
+    }
     svg.push_str("<rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\"/>");
+    if let Some(renderer) = &extended {
+        (renderer.body)(scene, &mut svg);
+        write_legends(scene, &mut svg, Some(renderer.legend_glyph));
+        return svg;
+    }
     for container in &scene.containers {
         let kind = escape_text(&container.authored.kind);
         let class = match container.authored.kind.as_str() {
@@ -833,6 +874,11 @@ fn render_svg(scene: &CompiledDiagram) -> String {
     for text in &scene.text {
         svg.push_str(&text_markup(text, "t-muted", ""));
     }
+    write_legends(scene, &mut svg, None);
+    svg
+}
+
+fn write_legends(scene: &CompiledDiagram, svg: &mut String, glyph: Option<LegendGlyph>) {
     svg.push_str("<!-- Legend -->");
     svg.push_str("<g data-legend=\"\" data-legend-bridge=\"\">");
     for legend in &scene.legends {
@@ -875,7 +921,9 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         }
         svg.push('>');
         if kind != "legend-title" {
-            if arrow_legend {
+            if let Some(glyph) = glyph {
+                glyph(scene, legend, baseline, svg);
+            } else if arrow_legend {
                 let variant = if matches!(kind, "emphasis" | "security" | "dashed") {
                     kind
                 } else {
@@ -892,7 +940,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
                 && kind == "start"
             {
                 initial_marker(
-                    &mut svg,
+                    svg,
                     legend.bounds.x + 4.5,
                     legend.bounds.x + 24.0,
                     baseline - 3.5,
@@ -931,12 +979,20 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         svg.push_str("</g>");
     }
     svg.push_str("</g></svg>");
-    svg
 }
 
 pub fn render(
     scene: &CompiledDiagram,
     assets: &EmbeddedAssets<'_>,
+) -> Result<Vec<u8>, Diagnostics> {
+    render_with_evidence(scene, assets, &SourceEvidence::none())
+}
+
+/// The artifact with the source evidence observed for its candidate.
+pub fn render_with_evidence(
+    scene: &CompiledDiagram,
+    assets: &EmbeddedAssets<'_>,
+    evidence: &SourceEvidence,
 ) -> Result<Vec<u8>, Diagnostics> {
     validate_geometry(scene)?;
     let mut cards = String::from("<div class=\"cards\">");
@@ -956,7 +1012,7 @@ pub fn render(
     }
     cards.push_str("</div>");
     let metadata=serde_json::to_string(&json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"inputContract":scene.input_contract,"quality":scene.quality,"readerFit":scene.reader_fit,
-        "graph":{"nodes":scene.nodes.iter().map(|node|&node.authored.facts).collect::<Vec<_>>(),"relations":scene.relations.iter().map(|relation|&relation.authored.facts).collect::<Vec<_>>()},"cards":scene.cards.iter().map(|card|&card.authored.facts).collect::<Vec<_>>(),"presentation":{"relations":scene.relations.iter().map(|r|json!({"variant":r.variant,"labelOwner":r.label_owner,"junction":r.junction})).collect::<Vec<_>>()},"facts":scene.facts})).expect("serializable metadata").replace('<',"\\u003c").replace('>',"\\u003e").replace('&',"\\u0026");
+        "graph":{"nodes":scene.nodes.iter().map(|node|&node.authored.facts).collect::<Vec<_>>(),"relations":scene.relations.iter().map(|relation|&relation.authored.facts).collect::<Vec<_>>()},"cards":scene.cards.iter().map(|card|&card.authored.facts).collect::<Vec<_>>(),"presentation":{"relations":scene.relations.iter().map(|r|json!({"variant":r.variant,"labelOwner":r.label_owner,"junction":r.junction})).collect::<Vec<_>>()},"facts":scene.facts,"sourceEvidence":evidence})).expect("serializable metadata").replace('<',"\\u003c").replace('>',"\\u003e").replace('&',"\\u0026");
     let title = attribute(&scene.meta, "title");
     let subtitle = scene.meta["subtitle"]
         .as_str()
@@ -966,10 +1022,7 @@ pub fn render(
     let replacements = [
         (
             "LOCALE",
-            scene.meta["locale"]
-                .as_str()
-                .map(escape_text)
-                .unwrap_or_else(|| "en".into()),
+            escape_text(&crate::i18n::resolve(&scene.meta).resolved),
         ),
         (
             "PRESET",

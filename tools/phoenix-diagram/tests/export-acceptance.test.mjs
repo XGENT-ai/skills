@@ -13,6 +13,8 @@ import { DEFAULT_TIMEOUTS, ownedProfile, discoverBrowser, browserArguments, Pipe
 import * as probes from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, sendReaderKey, verifyReaderInteractions } from './support/export-reader.mjs';
 import * as acceptance from './export-acceptance.mjs';
+import { bootReader, bundledCatalogs, dispatch, plain } from './viewer/fixtures/reader.mjs';
+import * as diagrams from './viewer/fixtures/diagrams.mjs';
 
 function temporary(t) { const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-export-controller-')); t.after(() => fs.rmSync(directory, { recursive: true, force: true })); return directory; }
 
@@ -233,4 +235,184 @@ test('missing configured browser yields an explicit non-pass receipt with no exp
   await assert.rejects(runExportAcceptance({ artifactPath: file, evidenceDir: directory, browserPath: path.join(directory, 'missing-chrome') }), /EEXIST/);
   assert.ok(fs.readFileSync(result.receiptPath).equals(receiptBytes));
   await assert.rejects(runContentAcceptance({ artifactPath: file, evidenceDir: directory }), /expectedLiteral/);
+});
+
+// Controller-level checks of the assembled Reader's export module over the
+// deterministic DOM fixture. Canvas, Image and MediaRecorder are fixtures, so
+// these receipts and file names say nothing about real encoded files.
+const RECEIPT = ['format', 'canonical', 'variant', 'route-state-clean', 'reach-state-clean', 'width', 'height', 'error-format', 'error'];
+const exportReceipt = env => Object.fromEntries(RECEIPT.map(name => [name, env.html.getAttribute('data-last-export-' + name)]));
+const catalogText = (key, values = {}) => bundledCatalogs.en[key].replace(/\{([a-zA-Z0-9_]+)\}/g, (match, name) => Object.hasOwn(values, name) ? String(values[name]) : match);
+const authoredFacts = svg => ({
+  nodes: svg.querySelectorAll('[data-node-id]').map(node => node.getAttribute('data-node-id')),
+  edges: svg.querySelectorAll('[data-edge-from][data-edge-to]').map(edge => [edge.getAttribute('data-edge-key'), edge.getAttribute('data-edge-from'), edge.getAttribute('data-edge-to')].join(' ')),
+});
+const EXPLORATION_STATE = '[data-share-route], [data-share-reach], [data-share-route-match], [data-share-reach-match], [data-route-match], [data-reach-match], [data-focus-match], [data-focus-selected], [data-tree-hidden], [data-tree-collapsed], [data-route-probe-overlay], [data-relationship-hit-overlay]';
+
+async function bootDiagram(svg, type, meta = {}) {
+  const env = bootReader({ svg, metadata: diagrams.metadata(type, meta) });
+  await env.settle(60);
+  assert.deepEqual(env.errors, []);
+  return env;
+}
+async function settled(env, action, duration = 120) {
+  const pending = action();
+  await env.settle(duration);
+  return pending;
+}
+function shareItems(env) {
+  env.api.exportMenu.open();
+  const state = ['route-share-card', 'reach-share-card'].map(action => {
+    const item = env.$(`#export-menu button[data-action="${action}"]`);
+    return { action, hidden: item.hidden, disabled: item.disabled };
+  });
+  env.api.exportMenu.close();
+  return state;
+}
+
+test('Route and Reach share cards report non-canonical variant receipts and named files; a later canonical export is the complete diagram', async () => {
+  const env = await bootDiagram(diagrams.graph(), 'architecture', { title: 'Payments Platform' });
+  const live = authoredFacts(env.svg);
+  env.api.routeProbe.begin({ source: 'a' });
+  env.api.routeProbe.choose('d');
+  await settled(env, () => env.api.exportMenu.downloadRouteShareCard());
+  assert.deepEqual(exportReceipt(env), { format: 'share-card', canonical: 'false', variant: 'route', 'route-state-clean': 'true', 'reach-state-clean': null, width: '1200', height: '630', 'error-format': null, error: null });
+  assert.ok(Number(env.html.getAttribute('data-last-export-bytes')) > 0);
+  assert.equal(env.downloads.at(-1).filename, 'payments-platform-route-share-card.png');
+  const routeCard = env.serialized.at(-1);
+  assert.equal(routeCard.hasAttribute('data-share-route'), true);
+  assert.deepEqual(routeCard.querySelectorAll('[data-node-id][data-share-route-match]').map(node => node.getAttribute('data-node-id')), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(routeCard.querySelectorAll('[data-edge-key][data-share-route-match]').map(edge => edge.getAttribute('data-edge-key')), ['0', '1', '2']);
+  assert.equal(routeCard.querySelector('[data-share-route-start]').getAttribute('data-node-id'), 'a');
+  assert.equal(routeCard.querySelector('[data-share-route-end]').getAttribute('data-node-id'), 'd');
+  assert.equal(routeCard.querySelectorAll('[data-route-match], [data-route-probe-overlay]').length, 0, 'the card is rebuilt from the snapshot, not from live route marks');
+  assert.ok(env.api.routeProbe.result(), 'exporting a card keeps the reader on its route');
+  assert.equal(env.downloads.at(-1).blob.type, 'image/png');
+
+  await settled(env, () => env.api.exportMenu.run('svg'));
+  assert.deepEqual(exportReceipt(env), { format: 'svg', canonical: 'true', variant: null, 'route-state-clean': null, 'reach-state-clean': null, width: null, height: null, 'error-format': null, error: null });
+  assert.equal(env.downloads.at(-1).filename, 'payments-platform.svg');
+  const canonical = env.serialized.at(-1);
+  assert.deepEqual(authoredFacts(canonical), live);
+  assert.equal(canonical.querySelectorAll(EXPLORATION_STATE).length, 0);
+
+  env.api.routeProbe.clear();
+  for (const [origin, direction] of [['d', 'upstream'], ['a', 'downstream']]) {
+    env.api.focus.set(origin);
+    assert.equal(env.api.focus.reach(direction), true);
+    await settled(env, () => env.api.exportMenu.downloadReachShareCard());
+    assert.deepEqual(exportReceipt(env), { format: 'share-card', canonical: 'false', variant: 'reach', 'route-state-clean': null, 'reach-state-clean': 'true', width: '1200', height: '630', 'error-format': null, error: null });
+    assert.equal(env.downloads.at(-1).filename, `payments-platform-${direction}-reach-share-card.png`);
+    const reachCard = env.serialized.at(-1);
+    assert.equal(reachCard.getAttribute('data-share-reach'), direction);
+    assert.equal(reachCard.querySelector('[data-share-reach-origin]').getAttribute('data-node-id'), origin);
+  }
+  assert.equal(env.api.focus.reachability().direction, 'downstream');
+  for (const format of ['png', 'svg-light']) {
+    await settled(env, () => env.api.exportMenu.run(format));
+    assert.equal(exportReceipt(env).canonical, 'true');
+    assert.equal(exportReceipt(env).variant, null);
+    assert.deepEqual(authoredFacts(env.serialized.at(-1)), live);
+    assert.equal(env.serialized.at(-1).querySelectorAll(EXPLORATION_STATE).length, 0);
+  }
+  assert.deepEqual(env.downloads.map(download => download.filename), ['payments-platform-route-share-card.png', 'payments-platform.svg', 'payments-platform-upstream-reach-share-card.png',
+    'payments-platform-downstream-reach-share-card.png', 'payments-platform.png', 'payments-platform-light.svg']);
+});
+
+test('without a valid snapshot the share-card items stay hidden and exports report routeRequired/reachRequired', async () => {
+  const env = await bootDiagram(diagrams.graph(), 'architecture');
+  assert.deepEqual(shareItems(env), [{ action: 'route-share-card', hidden: true, disabled: true }, { action: 'reach-share-card', hidden: true, disabled: true }]);
+  await assert.rejects(env.api.exportMenu.shareCard({ variant: 'route' }), { message: catalogText('viewer.export.routeRequired') });
+  await assert.rejects(env.api.exportMenu.shareCard({ variant: 'reach' }), { message: catalogText('viewer.export.reachRequired') });
+  await assert.rejects(env.api.exportMenu.shareCard({ variant: 'canonical' }), { message: catalogText('viewer.export.unknownVariant', { variant: 'canonical' }) });
+
+  env.click('#export-menu button[data-action="route-share-card"]');
+  await env.settle(60);
+  assert.deepEqual(env.alerts, [], 'a hidden menu item does nothing');
+  for (const [run, required, failed] of [['downloadRouteShareCard', 'viewer.export.routeRequired', 'viewer.export.routeFailed'], ['downloadReachShareCard', 'viewer.export.reachRequired', 'viewer.export.reachFailed']]) {
+    await settled(env, () => env.api.exportMenu[run]());
+    assert.equal(env.alerts.at(-1), catalogText(failed, { message: catalogText(required) }));
+    assert.deepEqual(exportReceipt(env), { format: null, canonical: null, variant: null, 'route-state-clean': null, 'reach-state-clean': null, width: null, height: null, 'error-format': 'share-card', error: catalogText(required) });
+  }
+  assert.equal(env.downloads.length, 0);
+
+  const conflicted = await bootDiagram(diagrams.graph({ nodes: [...diagrams.GRAPH_NODES, { id: 'b', label: 'Bravo copy', kind: 'backend', x: 240, y: 400 }] }), 'architecture');
+  conflicted.api.routeProbe.begin({ source: 'a' });
+  assert.equal(conflicted.api.routeProbe.choose('d'), true);
+  conflicted.api.focus.set('a', { preserveRoute: true });
+  conflicted.api.focus.reach('downstream');
+  assert.deepEqual(shareItems(conflicted).map(item => item.hidden), [true, true]);
+  await assert.rejects(conflicted.api.exportMenu.shareCard({ variant: 'route' }), { message: catalogText('viewer.export.routeRequired') });
+  await assert.rejects(conflicted.api.exportMenu.shareCard({ variant: 'reach' }), { message: catalogText('viewer.export.reachRequired') });
+  assert.equal(conflicted.downloads.length, 0);
+});
+
+const NEW_TYPES = [
+  ['erd', () => diagrams.entityGraph('erd')], ['class', () => diagrams.entityGraph('class')], ['tree', () => diagrams.tree()],
+  ['timeline', () => diagrams.timeline()], ['waterfall', () => diagrams.waterfall()],
+];
+const FORMAT_FILES = { svg: '.svg', 'svg-light': '-light.svg', 'svg-dark': '-dark.svg', png: '.png', jpeg: '.jpeg', webp: '.webp', webm: '.webm' };
+
+for (const [type, build] of NEW_TYPES) {
+  test(`${type} offers every export format with canonical receipts and its own file name`, async () => {
+    const env = await bootDiagram(build(), type, { title: `Checkout ${type}` });
+    assert.equal(env.svg.getAttribute('data-diagram-type'), type);
+    assert.equal(env.svg.getAttribute('data-animation'), 'trace', 'export keys motion on data-animation, not on the diagram type or choreography');
+    const formats = env.$$('#export-menu button[data-format]').map(item => [item.getAttribute('data-format'), item.disabled]);
+    assert.deepEqual(formats, [['png', false], ['jpeg', false], ['webp', false], ['svg', false], ['svg-light', false], ['svg-dark', false], ['webm', false]]);
+    assert.equal(env.api.motion.canRecord(), true);
+    const live = authoredFacts(env.svg);
+    for (const format of Object.keys(FORMAT_FILES)) {
+      await settled(env, () => env.api.exportMenu.run(format), format === 'webm' ? 9000 : 120);
+      assert.deepEqual(exportReceipt(env), { format: format.startsWith('svg') ? 'svg' : format, canonical: 'true', variant: null, 'route-state-clean': null, 'reach-state-clean': null, width: null, height: null, 'error-format': null, error: null }, `${type} ${format}`);
+      assert.equal(env.downloads.at(-1).filename, `checkout-${type}${FORMAT_FILES[format]}`);
+      assert.deepEqual(authoredFacts(env.serialized.at(-1)), live, `${type} ${format} keeps every authored node and relationship`);
+    }
+    assert.equal(env.downloads.length, 7);
+    assert.deepEqual(env.alerts, []);
+  });
+}
+
+test('a diagram without trace motion keeps the static formats and disables WebM', async () => {
+  const env = await bootDiagram(diagrams.timeline().replace(' data-animation="trace"', ''), 'timeline');
+  const webm = env.$('#export-menu button[data-format="webm"]');
+  assert.equal(webm.disabled, true);
+  assert.equal(webm.title, catalogText('viewer.export.unsupported'));
+  assert.deepEqual(env.$$('#export-menu button[data-format]').filter(item => item.disabled).map(item => item.getAttribute('data-format')), ['webm']);
+});
+
+test('tree exports write the complete hierarchy while the live view keeps its collapsed branches', async () => {
+  const env = await bootDiagram(diagrams.tree(), 'tree', { title: 'Org Tree' });
+  env.api.treeBranches.collapse('payments');
+  assert.deepEqual(plain(env.api.treeBranches.collapsedIds()).sort(), ['ops', 'payments']);
+  const hiddenLive = env.svg.querySelectorAll('[data-node-id][data-tree-hidden]').map(node => node.getAttribute('data-node-id'));
+  assert.deepEqual(hiddenLive, ['card', 'wallet', 'refunds']);
+  for (const format of ['svg', 'png', 'svg-dark']) {
+    await settled(env, () => env.api.exportMenu.run(format));
+    const clone = env.serialized.at(-1);
+    assert.equal(exportReceipt(env).canonical, 'true');
+    assert.equal(clone.hasAttribute('data-tree-any-collapsed'), false);
+    assert.equal(clone.querySelectorAll('[data-tree-hidden], [data-tree-collapsed]').length, 0, `${format} contains every branch`);
+    assert.deepEqual(clone.querySelectorAll('[data-tree-toggle]').map(toggle => [toggle.getAttribute('aria-expanded'), toggle.getAttribute('aria-label') === toggle.getAttribute('data-tree-label-collapse')]), [['true', true], ['true', true], ['true', true]]);
+    assert.equal(clone.querySelectorAll('[data-node-id]').length, 6);
+    assert.equal(clone.querySelectorAll('[data-edge-from]').length, 5);
+  }
+  assert.deepEqual(plain(env.api.treeBranches.collapsedIds()).sort(), ['ops', 'payments'], 'export never changes the reading state');
+  assert.deepEqual(env.svg.querySelectorAll('[data-node-id][data-tree-hidden]').map(node => node.getAttribute('data-node-id')), hiddenLive);
+  assert.deepEqual(env.downloads.map(download => download.filename), ['org-tree.svg', 'org-tree.png', 'org-tree-dark.svg']);
+});
+
+test('printing a collapsed tree shows every branch and restores the reading state afterwards', async () => {
+  const env = await bootDiagram(diagrams.tree(), 'tree');
+  env.api.treeBranches.collapse('payments');
+  env.setMedia('print', true);
+  dispatch(env.window, 'beforeprint');
+  await env.settle(40);
+  assert.equal(env.svg.querySelectorAll('[data-node-id][data-tree-hidden], [data-edge-from][data-tree-hidden], [data-tree-collapsed]').length, 0, 'print shows the complete tree');
+  assert.equal(env.svg.hasAttribute('data-tree-any-collapsed'), false);
+  env.setMedia('print', false);
+  dispatch(env.window, 'afterprint');
+  await env.settle(40);
+  assert.deepEqual(plain(env.api.treeBranches.collapsedIds()).sort(), ['ops', 'payments']);
+  assert.deepEqual(env.svg.querySelectorAll('[data-node-id][data-tree-hidden]').map(node => node.getAttribute('data-node-id')), ['card', 'wallet', 'refunds']);
 });

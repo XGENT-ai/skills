@@ -1,7 +1,8 @@
 /*
 Derived from Archify 3.1.0 viewer/semantic-lens.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace only.
+Phoenix modifications: independent JavaScript/storage/CSS namespace; a click on the
+trigger's translated label counts as a launcher click.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -641,7 +642,8 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       document.addEventListener('click', function (event) {
         var eventPath = typeof event.composedPath === 'function' ? event.composedPath() : [];
         var clickedInside = eventPath.indexOf(panel) >= 0 || panel.contains(event.target);
-        var clickedLauncher = event.target === trigger || legendEntries.some(function (entry) {
+        // Phoenix wraps the trigger text in a translated span, so test containment.
+        var clickedLauncher = trigger.contains(event.target) || legendEntries.some(function (entry) {
           return event.target === entry || entry.contains(event.target);
         });
         if (!panel.hidden && !clickedInside && !clickedLauncher) close({ restoreFocus: false });

@@ -268,6 +268,7 @@ jobs:
             scripts/test-phoenix-diagram.mjs \
             scripts/test-phoenix-diagram-core.mjs \
             scripts/test-phoenix-diagram-runtime.mjs \
+            scripts/test-phoenix-diagram-scopes.mjs \
             scripts/test-phoenix-diagram-recovery.mjs \
             scripts/pack-phoenix-diagram-candidate.mjs \
             scripts/build-phoenix-diagram.mjs \
@@ -278,6 +279,7 @@ jobs:
             tools/phoenix-diagram/tests/support/export-browser.mjs \
             tools/phoenix-diagram/tests/support/export-page.mjs \
             tools/phoenix-diagram/tests/support/export-reader.mjs \
+            tools/phoenix-diagram/tests/support/explore-reader.mjs \
             tools/phoenix-diagram/tests/support/capture-stdio.mjs \
             tools/phoenix-ui/build-tool-assets.json \
             tools/phoenix-diagram/build-tools.lock.json \
@@ -446,7 +448,7 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs'; import path from 'node:path'; import assert from 'node:assert/strict'; import {randomBytes} from 'node:crypto';
-          import {readSnapshot,readBound,bound} from './local/phoenix-diagram/harness/scripts/test-phoenix-diagram-core.mjs';
+          import {readSnapshot,readBound,bound,TYPES,contractsFor} from './local/phoenix-diagram/harness/scripts/test-phoenix-diagram-core.mjs';
           const root=process.env.PHOENIX_REVIEW_ROOT,stat=fs.lstatSync(root),file=readSnapshot(process.env.PHOENIX_REVIEW_STATE),state=JSON.parse(file.content);
           assert(path.isAbsolute(root) && fs.realpathSync(root)===root && stat.isDirectory() && !stat.isSymbolicLink() && stat.uid===process.getuid() && (stat.mode&0o7777)===0o700);
           assert.equal(file.path,path.join(root,'consumer-state.json')); assert.equal(state.runRoot,root);
@@ -461,7 +463,7 @@ jobs:
           assert.equal(request.schemaVersion,1); assert.equal(request.kind,'phoenix-diagram-review-request'); assert.deepEqual(request.state,bound(file)); readBound(request.state,'original consumer state');
           assert.equal(envelope.schemaVersion,1); assert.equal(envelope.kind,'phoenix-diagram-candidate-review');
           for(const [name,expected] of Object.entries({repository:state.repository,runId:state.runId,target:state.target,nonce:state.nonce,stateSha256:file.identity.sha256,candidateSha256:state.candidate.tarball.identity.sha256,sourceCommit:state.source.commit}))assert.equal(envelope[name],expected);
-          const ids=['architecture','workflow','sequence','dataflow','lifecycle'].flatMap(type=>[`new-${type}`,`legacy-${type}`]);
+          const ids=TYPES.flatMap(type=>contractsFor(type).map(contract=>`${contract==='phoenix-v1'?'new':'legacy'}-${type}`));
           assert.deepEqual(state.cases.map(entry=>entry.id).sort(),ids.slice().sort()); assert.deepEqual(Object.keys(envelope.records).sort(),ids.slice().sort());
           const files=[bound(file),bound(requestFile)],scopes=['1440x900:light','1440x900:dark','2048x1320:light','2048x1320:dark'];
           for(const entry of state.cases) {
@@ -474,7 +476,7 @@ jobs:
               assert.equal(current.content.subarray(0,8).toString('hex'),'89504e470d0a1a0a'); files.push(bound(current));
             }
           }
-          assert.equal(files.length,42); assert.equal(new Set(files.map(entry=>entry.path)).size,42);
+          assert.equal(files.length,62); assert.equal(new Set(files.map(entry=>entry.path)).size,62);
           for(const entry of files) {assert(!/[\x00-\x1f\x7f*?\[\]{}!]/.test(entry.path));readBound(entry,'unchanged original review material');}
           const delimiter=`PHOENIX_REVIEW_${randomBytes(12).toString('hex')}`;
           fs.appendFileSync(process.env.GITHUB_OUTPUT,`review_paths<<${delimiter}\n${files.map(entry=>entry.path).join('\n')}\n${delimiter}\n`);

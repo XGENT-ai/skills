@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// Of the skill, only the embedded schemas define engine behavior; its text,
+// examples and derived ENGINE.json do not.
 const INPUTS: &[&str] = &[
     "package.json",
     "tools/phoenix-diagram/Cargo.toml",
@@ -14,7 +16,7 @@ const INPUTS: &[&str] = &[
     "tools/phoenix-diagram/viewer",
     "tools/phoenix-diagram/upstream/SOURCE.json",
     "tools/phoenix-diagram/upstream/legacy-2.17/schemas",
-    "skills/phoenix-diagram",
+    "skills/phoenix-diagram/schemas",
 ];
 
 fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {
@@ -34,10 +36,11 @@ fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {
             "non-regular build input: {}",
             path.display()
         );
-        let relative = path.strip_prefix(root).expect("input within source tree");
-        if relative != Path::new("skills/phoenix-diagram/ENGINE.json") {
-            files.push(relative.to_path_buf());
-        }
+        files.push(
+            path.strip_prefix(root)
+                .expect("input within source tree")
+                .to_path_buf(),
+        );
     }
 }
 

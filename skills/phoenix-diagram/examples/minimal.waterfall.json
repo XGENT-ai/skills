@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "diagram_type": "waterfall",
+  "meta": { "title": "Checkout request", "output": "minimal.waterfall.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en", "evidence": "illustrative", "unit": "ms" },
+  "spans": [
+    { "id": "request", "name": "POST /checkout", "service": "checkout", "start": 0, "end": 420 },
+    { "id": "auth", "name": "Authenticate", "service": "identity", "parent": "request", "start": 0, "duration": 60 },
+    { "id": "stock", "name": "Reserve stock", "service": "inventory", "parent": "request", "start": 60, "duration": 180 },
+    { "id": "charge", "name": "Charge card", "service": "payments", "parent": "request", "start": 240, "duration": 150, "status": "error" },
+    { "id": "receipt", "name": "Send receipt", "parent": "request", "start": 390, "status": "incomplete" }
+  ]
+}

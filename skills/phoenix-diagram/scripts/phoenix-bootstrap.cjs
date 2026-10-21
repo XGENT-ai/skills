@@ -19,7 +19,7 @@ const net = require('node:net');
 const { spawn, spawnSync } = require('node:child_process');
 
 const TOOL = 'phoenix-diagram';
-const TOOL_VERSION = '0.1.0';
+const TOOL_VERSION = '0.2.0';
 const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
 const PROVIDERS = ['.agent', '.agents', '.claude', '.codex', '.cursor', '.dsh', '.gemini', '.github', '.grok', '.hermes', '.kiro', '.opencode', '.pi', '.qoder', '.rovodev', '.trae', '.trae-cn', '.veto', '.vibe'];
 const SHA = /^[a-f0-9]{64}$/;
@@ -111,7 +111,7 @@ function manifestAt(file, options = {}) {
   if (!object(data) || Object.keys(data).some(key => !keys.includes(key)) || data.schemaVersion !== 1 || data.tool !== TOOL || data.toolVersion !== TOOL_VERSION
     || !['development', 'candidate', 'release'].includes(data.distribution) || !SEMVER.test(data.npmPackageVersion || '') || npmVersion && data.npmPackageVersion !== npmVersion
     || !/^[a-f0-9]{40}$/.test(data.sourceCommit || '') || !SHA.test(data.sourceInputSha256 || '') || !SHA.test(data.bundleSha256 || '')
-    || data.inputContractSchema !== 1 || data.receiptSchema !== 1 || data.viewerRevision !== 'phoenix-v1' || !object(data.engines)) throw failure('Invalid Phoenix Diagram package manifest or fixed package/version/contract identity.');
+    || data.inputContractSchema !== 1 || data.receiptSchema !== 1 || data.viewerRevision !== 'phoenix-v2' || !object(data.engines)) throw failure('Invalid Phoenix Diagram package manifest or fixed package/version/contract identity.');
   const targets = Object.keys(data.engines);
   if (!targets.length || targets.some(target => !TARGETS.includes(target)) || data.distribution !== 'development' && TARGETS.some(target => !targets.includes(target))) throw failure('Engine manifest is missing a supported platform or names an unknown target.');
   for (const [target, engine] of Object.entries(data.engines)) {
@@ -207,7 +207,7 @@ function verifyEngine(file, manifest, target, env = process.env) {
   const { size, digest, stat } = readRegular(file, MAX_ENGINE, undefined, true);
   if (size !== meta.size || digest !== meta.sha256 || Number(stat.mode & 0o111n) === 0) throw failure('Phoenix Diagram binary digest, size or executable mode differs from VERSION.');
   const probe = spawnSync(file, ['engine-probe'], { env, encoding: 'utf8', timeout: 3000, maxBuffer: 4096, windowsHide: true });
-  if (probe.error || probe.status !== 0 || probe.stdout !== `phoenix-diagram-engine ${TOOL_VERSION} input=1 receipt=1 viewer=phoenix-v1\n`) throw failure(`Phoenix Diagram engine probe identity differs: ${JSON.stringify({ error: probe.error?.code || null, status: probe.status, signal: probe.signal, stdout: probe.stdout, stderr: probe.stderr })}`);
+  if (probe.error || probe.status !== 0 || probe.stdout !== `phoenix-diagram-engine ${TOOL_VERSION} input=1 receipt=1 viewer=phoenix-v2\n`) throw failure(`Phoenix Diagram engine probe identity differs: ${JSON.stringify({ error: probe.error?.code || null, status: probe.status, signal: probe.signal, stdout: probe.stdout, stderr: probe.stderr })}`);
   const after = fs.lstatSync(file, { bigint: true });
   if (after.dev !== stat.dev || after.ino !== stat.ino || after.size !== stat.size || after.mtimeNs !== stat.mtimeNs || after.ctimeNs !== stat.ctimeNs) throw failure('Phoenix Diagram binary changed during its probe.');
   return file;
@@ -412,7 +412,7 @@ function verifyReceipt(project, manifest, options = {}) {
   const transaction = active.transactionId;
   if (active.schemaVersion !== 1 || active.tool !== TOOL || active.toolVersion !== TOOL_VERSION || !/^[a-f0-9]{32}$/.test(transaction || '') || !same(active.project, physical(fs.statSync(project, { bigint: true })))
     || active.npmPackageVersion !== version.npmPackageVersion || active.bundleManifestSha256 !== version.bundleSha256 || active.engineManifestSha256 !== manifest.hash
-    || active.engine?.sourceInputSha256 !== version.sourceInputSha256 || active.engine?.inputContractSchema !== 1 || active.engine?.receiptSchema !== 1 || active.engine?.viewerRevision !== 'phoenix-v1'
+    || active.engine?.sourceInputSha256 !== version.sourceInputSha256 || active.engine?.inputContractSchema !== 1 || active.engine?.receiptSchema !== 1 || active.engine?.viewerRevision !== 'phoenix-v2'
     || !Object.values(version.engines).some(meta => meta.sha256 === active.engine?.binary?.sha256 && meta.size === active.engine?.binary?.bytes)
     || !Array.isArray(active.providers) || !active.providers.length || new Set(active.providers).size !== active.providers.length || active.providers.some(provider => !PROVIDERS.includes(provider))
     || active.journal !== `.phoenix-diagram/install/journals/${transaction}.json` || active.backup !== `.phoenix-diagram/install/transactions/${transaction}/before`

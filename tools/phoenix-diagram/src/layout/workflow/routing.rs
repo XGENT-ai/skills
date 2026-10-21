@@ -1990,6 +1990,8 @@ impl Router<'_> {
                 )]
             },
             authored: author,
+            marker_start: None,
+            marker_end: None,
         }
     }
     fn validate_label_pin(&self, edge: &Entry, candidate: &Candidate) -> Result<(), Diagnostics> {

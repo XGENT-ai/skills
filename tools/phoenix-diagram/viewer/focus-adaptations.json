@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/focus.js",
+  "sourceSha256": "db03fcc25183ee27b281f7917f8a40849733680bebe1a2fdd0bbdc01cc0d05d0",
+  "normalizedSourceSha256": "05a3f6779be8b4f6eae22752ec3d21710e93970ab716f2bdf180e959b7fe1d7e",
+  "adaptedBodySha256": "d4a7ceb36110144dd5ed329144aed09e03eeab0f6a74f23899880c488cb109ba",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 20,
+      "sourceByteOffset": 1158,
+      "sourceText": "",
+      "replacementText": "      var evidenceStatus = evidence.querySelector('.semantic-passport-evidence-status');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 340,
+      "sourceByteOffset": 16671,
+      "sourceText": "",
+      "replacementText": "        evidence.removeAttribute('title');\n        var state = PhoenixDiagram.sourceEvidence.state(id);\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 342,
+      "sourceByteOffset": 16802,
+      "sourceText": "        if (!repository || !sources.length) {\n",
+      "replacementText": "        if (!repository || !state) {\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 346,
+      "sourceByteOffset": 16910,
+      "sourceText": "        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision;\n        if (repository.href) {\n          repositoryLink.href = repository.href;\n",
+      "replacementText": "        evidence.setAttribute('data-evidence-state', state);\n        // Pending and absent evidence reuse the verified styling in amber and slate.\n        if (state === 'verified') evidence.style.removeProperty('--backend-stroke');\n        else evidence.style.setProperty('--backend-stroke', state === 'unverified' ? 'var(--cloud-stroke)' : 'var(--external-stroke)');\n        evidenceStatus.textContent = viewerText(state === 'verified' ? 'viewer.passport.verified' : 'viewer.passport.evidence.' + state);\n        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision +\n          (repository.linkMode === 'local-only' ? ' · ' + viewerText('viewer.passport.evidence.localOnly') : '');\n        if (repository.treeHref) {\n          repositoryLink.href = repository.treeHref;\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 351,
+      "sourceByteOffset": 17225,
+      "sourceText": "        evidence.title = viewerText('viewer.passport.verificationScope');\n",
+      "replacementText": "        if (state === 'verified') evidence.title = viewerText('viewer.passport.verificationScope');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 353,
+      "sourceByteOffset": 17343,
+      "sourceText": "          var link = document.createElement(source.href ? 'a' : 'div');\n",
+      "replacementText": "          var verified = source.state === 'verified';\n          var link = document.createElement(verified && source.href ? 'a' : 'div');\n          link.setAttribute('data-evidence-state', verified ? 'verified' : 'unverified');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 369,
+      "sourceByteOffset": 18358,
+      "sourceText": "          sourcePath.textContent = source.path;\n",
+      "replacementText": "          sourcePath.textContent = verified ? source.path : source.path + ' · ' +\n            viewerText('viewer.passport.evidence.unverified') + ': ' +\n            viewerText('viewer.passport.evidence.reason.' + source.reason);\n"
+    }
+  ]
+}

@@ -99,7 +99,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     assert!(probe.status.success());
     assert_eq!(
         String::from_utf8(probe.stdout).unwrap(),
-        "phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\n"
+        "phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n"
     );
     let help = run(&[flag("--help")]);
     assert!(help.status.success());
@@ -116,10 +116,45 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     ] {
         assert!(text.contains(command), "{command}");
     }
+    assert!(text.starts_with("phoenix-diagram 0.2.0\n"));
+    assert!(text.contains(
+        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall."
+    ));
     let recovery = run(&[flag("recover-output"), flag("--help")]);
     assert!(recovery.status.success());
     let text = String::from_utf8(recovery.stdout).unwrap();
     assert!(text.contains("publication-recovery-v1.json") && text.contains("ls -la"));
+}
+
+#[test]
+fn cli_guide_routes_the_ten_types_and_lists_alternatives_when_ambiguous() {
+    let guide = |scenario: &str| {
+        let output = run(&[flag("guide"), flag(scenario), flag("--json")]);
+        assert!(output.status.success());
+        parsed(&output)["matches"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|entry| entry["type"].as_str().unwrap().to_owned())
+            .collect::<Vec<_>>()
+    };
+    for (scenario, kind) in [
+        ("订单库的表结构与外键", "erd"),
+        ("支付处理器的类图与接口实现", "class"),
+        ("仓库目录结构", "tree"),
+        ("事故复盘时间线", "timeline"),
+        ("一次请求的耗时瀑布", "waterfall"),
+        ("convert this erDiagram", "erd"),
+        ("convert this classDiagram", "class"),
+    ] {
+        assert_eq!(guide(scenario), [kind], "{scenario}");
+    }
+    let output = run(&[flag("guide"), flag("类图"), flag("--json")]);
+    assert_eq!(
+        parsed(&output)["matches"][0]["schema"],
+        "schemas/class.schema.json"
+    );
+    assert_eq!(guide("something vague").len(), 10);
 }
 
 #[test]
@@ -231,10 +266,29 @@ fn cli_usage_errors_are_json_and_recovery_absence_is_idempotent() {
             flag("--unknown"),
             flag("--json"),
         ],
+        vec![
+            flag("validate"),
+            flag("architecture"),
+            flag("unused.json"),
+            flag("--repo-root"),
+            flag("/nonexistent/phoenix-repository"),
+            flag("--json"),
+        ],
+        vec![
+            flag("check"),
+            flag("unused.html"),
+            flag("--repo-root"),
+            flag("."),
+            flag("--json"),
+        ],
     ] {
         let output = run(&args);
         assert_eq!(output.status.code(), Some(2));
         assert_eq!(parsed(&output)["tool"], "phoenix-diagram");
+        assert_eq!(
+            parsed(&output)["diagnostics"][0]["code"],
+            "arguments/invalid"
+        );
     }
     let project = Project::new();
     let recovery = project

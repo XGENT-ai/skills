@@ -85,7 +85,7 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   const directory='/fixture/provider',project=directory+'/project',program=project+'/.agents/skills/phoenix-diagram/scripts/phoenix-diagram',script=directory+'/capture-stdio.mjs',nodePath=fs.realpathSync(process.execPath),quote='An installed skill excerpt long enough for the native read binding fixture.';
   const files=new Map(),put=(name,bytes)=>{bytes=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);files.set(name,bytes);return{path:name,identity:identity(bytes)};};
   const template=fs.readFileSync(path.join(__dirname,'../../tools/phoenix-diagram/tests/support/capture-stdio.mjs')),collector=put(script,template),launcher=put(program,fs.readFileSync(path.join(__dirname,'../../skills/phoenix-diagram/scripts/phoenix-diagram'))),installedReceipt=put(project+'/.phoenix-diagram/install/active.json',JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',ownership:[{path:'.agents/skills/phoenix-diagram/scripts/phoenix-diagram',identity:launcher.identity}]}));
-  const candidate={path:project+'/candidate.json',identity:identity(Buffer.from('{}'))},artifact={path:project+'/diagram.html',identity:identity(Buffer.from('inert'))},receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command,status,diagnostics:[],candidate,artifact,payload:'x'.repeat(227144)};
+  const candidate={path:project+'/candidate.json',identity:identity(Buffer.from('{}'))},artifact={path:project+'/diagram.html',identity:identity(Buffer.from('inert'))},receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command,status,diagnostics:[],candidate,artifact,payload:'x'.repeat(227144)};
   const reply=put(directory+'/stdout.json',JSON.stringify(receipt)+'\n'),stderr=put(directory+'/stderr.txt',''),argv=command==='finalize'?['finalize','workflow',candidate.path,artifact.path,'--json']:['validate','workflow',candidate.path,'--json'];
   const dto={schemaVersion:1,kind:'phoenix-diagram-stdio-capture',tool:'phoenix-diagram',collector,node:{path:nodePath,version:process.version},program,argv,cwd:project,installedReceipt,launcher,exitCode,signal:null,stdout:reply,stderr};
   const commandFor=argv=>[nodePath,script,'--program',program,'--cwd',dto.cwd,'--stdout',reply.path,'--stderr',stderr.path,'--',...argv].map(value=>`'${value}'`).join(' '),cmd=commandFor(argv);
@@ -367,4 +367,47 @@ test('inline replies still require complete bytes from the exact direct PD tool 
     const b=f.build();delete b.session.collector;const verify=()=>checkProviderReply(checkProviderCapture(b.session,b.read,b.session.provider),b.proof,f.reply,b.read);
     if(fault)assert.throws(verify,/PD|tool|execution|reply|command|shell/i,fault);else assert.deepEqual(verify(),f.receipt);
   }
+});
+test('P2 profile covers fifteen cases and per-provider host rows instead of the P1 matrix',async()=>{
+  const {PROFILE_CASES,PROVIDER_SCENARIOS,P2_PROVIDER_SCENARIOS,checkProviderCoverage,checkInputSlots}=await api();
+  assert.equal(PROFILE_CASES.p1.length,10);assert.equal(PROFILE_CASES.p2.length,15);assert.ok(PROFILE_CASES.p2.includes('erd:phoenix-v1'));assert.ok(!PROFILE_CASES.p2.includes('erd:legacy-2.17'));
+  assert.equal(PROVIDER_SCENARIOS.length,22);assert.ok(!PROVIDER_SCENARIOS.some(row=>row.id==='intent-erd'));
+  const claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex;assert.equal(claude.length,31);assert.equal(codex.length,16);
+  assert.deepEqual(claude.filter(row=>row.id.startsWith('legacy-')).map(row=>row.id),['legacy-lifecycle']);
+  for(const id of ['intent-workflow','mermaid-sequence','stalled-repair','repo-dirty','locale-zh-tw','reference-31-json'])assert.ok(codex.some(row=>row.id===id),id);assert.ok(!codex.some(row=>row.id==='missing-date'));
+  assert.equal(checkProviderCoverage(codex.map(row=>({id:row.id})),codex),undefined);assert.throws(()=>checkProviderCoverage(PROVIDER_SCENARIOS.map(row=>({id:row.id})),codex),/coverage/);assert.throws(()=>checkProviderCoverage(codex.slice(1).map(row=>({id:row.id})),codex),/coverage/);
+  const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'],input={platforms:targets.map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};
+  assert.throws(()=>checkInputSlots(input,'p2'),/local darwin-arm64/);assert.equal(checkInputSlots({...input,local:{target:'darwin-arm64',runRoot:'/run',state:{path:'/run/consumer-state.json'}}},'p2'),undefined);
+});
+test('automatic-only platform jobs need the consume step but not the review step',async()=>{
+  const {checkJobProof}=await api(),expected=cohort(),entry={target:'linux-x64',jobId:45,artifact:{id:67,name:'phoenix-diagram-consume-linux-x64-evidence',digest:'1'.repeat(64)}};
+  const job={id:45,run_id:123,run_attempt:2,status:'completed',conclusion:'success',name:'Consume the same tgz on linux-x64',head_sha:expected.source.commit,started_at:'2026-10-16T00:00:00Z',completed_at:'2026-10-16T01:00:00Z',steps:[{name:'Consume the unchanged tgz through its package entry points',conclusion:'success'},{name:'Resume the same delivery after actual image review',conclusion:'skipped'}]},artifact={id:67,name:entry.artifact.name,digest:`sha256:${entry.artifact.digest}`,expired:false,created_at:'2026-10-16T00:59:00Z',workflow_run:{id:123,head_sha:expected.source.commit}};
+  assert.equal(checkJobProof(job,artifact,entry,expected,{reviewed:false}),undefined);assert.throws(()=>checkJobProof(job,artifact,entry,expected),/step|review/i);
+  assert.throws(()=>checkJobProof({...job,steps:[{...job.steps[0],conclusion:'failure'}]},artifact,entry,expected,{reviewed:false}),/step/i);
+});
+test('local directory evidence rehashes original files in place and rejects foreign, changed or linked paths',async t=>{
+  const {DirectoryEvidence}=await api(),directory=temp(t),bytes=Buffer.from('{"scope":"inert local bytes only"}\n'),file=path.join(directory,'state.json');fs.writeFileSync(file,bytes);
+  const store=new DirectoryEvidence(directory),reference={path:file,identity:identity(bytes)};assert.deepEqual(store.json(reference),{scope:'inert local bytes only'});
+  assert.throws(()=>store.bytes({...reference,identity:{...reference.identity,sha256:'0'.repeat(64)}}),/digest|bytes/i);assert.throws(()=>store.bytes({path:'/etc/hosts',identity:reference.identity}),/root|path/i);
+  fs.symlinkSync(file,path.join(directory,'alias.json'));assert.throws(()=>store.bytes({path:path.join(directory,'alias.json'),identity:reference.identity}),/root|path|symlink/i);
+  assert.throws(()=>new DirectoryEvidence('relative/run'),/canonical|ENOENT/i);
+});
+test('host sessions on a development package count only with the final bundle and engine source',async()=>{
+  const {checkDevelopmentPackage}=await api(),expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const version={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:'0.7.4',sourceInputSha256:expected.source.inputSha256,bundleSha256:expected.bundleSha256,engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:1,sha256:'8'.repeat(64)}}};
+  assert.equal(checkDevelopmentPackage(version,expected),version);
+  for(const change of [{bundleSha256:'0'.repeat(64)},{sourceInputSha256:'0'.repeat(64)},{distribution:'release'},{toolVersion:'0.1.0'},{engines:{}}])assert.throws(()=>checkDevelopmentPackage({...version,...change},expected),/bundle|engine source/,JSON.stringify(change));
+});
+test('P2 delivery rows require their evidence, timing, language and unchanged-reference facts',async()=>{
+  const {p2Outcome}=await api(),files=new Map(),ref=(name,bytes)=>{files.set(name,bytes);return{path:name,identity:identity(bytes)};},store={bytes:reference=>files.get(reference.path)};
+  const make=({candidate,html='<svg></svg>',evidence={status:'none'},delivery={status:'none'},locale={requested:'en',resolved:'en',fallback:false}})=>({evidence,locale,candidate:ref(`/c-${files.size}`,Buffer.from(JSON.stringify(candidate))),artifact:ref(`/a-${files.size}`,Buffer.from(html)),stages:[{},{receipt:{evidence:delivery}}]});
+  const verified=make({candidate:{meta:{}},evidence:{status:'verified'},delivery:{status:'verified',counts:{verified:2},repository:{url:'https://github.com/o/r'}}});
+  assert.equal(p2Outcome({evidence:'verified'},verified,{},store,''),undefined);assert.throws(()=>p2Outcome({evidence:'verified'},make({candidate:{meta:{}},evidence:{status:'partial'}}),{},store,''),/verified/);
+  const dirty=make({candidate:{meta:{}},evidence:{status:'partial'},delivery:{status:'partial',unverified:[{pointer:'/components/0/sources/0',nodeId:'gate',reason:'worktree-differs'}]}});
+  assert.equal(p2Outcome({evidence:'worktree-differs'},dirty,{quote:'src/input.rs 有未提交改动'},store,'注意：src/input.rs 有未提交改动，来源待核实。'),undefined);assert.throws(()=>p2Outcome({evidence:'worktree-differs'},dirty,{quote:'src/input.rs 有未提交改动'},store,'已全部核对。'),/reply/);
+  const day=make({candidate:{events:[{precision:'day'}]},html:'<svg data-timeline-evidence="observed"></svg>'});assert.equal(p2Outcome({timing:'day'},day,{},store,''),undefined);assert.throws(()=>p2Outcome({timing:'day'},make({candidate:{events:[{}]},html:'<svg data-timeline-evidence="observed"></svg>'}),{},store,''),/day-precision/);
+  const sketch=make({candidate:{},html:'<svg data-waterfall-evidence="illustrative"></svg>'});assert.equal(p2Outcome({timing:'illustrative'},sketch,{quote:'示意'},store,'耗时为示意'),undefined);assert.throws(()=>p2Outcome({timing:'illustrative'},sketch,{quote:'示意'},store,'实测耗时'),/Illustrative/);
+  const zh=make({candidate:{meta:{locale:'zh-TW'}},locale:{requested:'zh-TW',resolved:'zh-TW',fallback:false}});assert.equal(p2Outcome({locale:'zh-TW'},zh,{},store,''),undefined);assert.throws(()=>p2Outcome({locale:'zh-TW'},make({candidate:{meta:{locale:'zh-TW'}},locale:{requested:'zh-TW',resolved:'en',fallback:true}}),{},store,''),/language/);
+  const original={schema_version:1,diagram_type:'workflow',meta:{title:'Reference'}},reference=make({candidate:original}),kept={original:ref('/original.json',Buffer.from(JSON.stringify(original)))};
+  assert.equal(p2Outcome({unchangedOriginal:true},reference,kept,store,''),undefined);assert.throws(()=>p2Outcome({unchangedOriginal:true},make({candidate:{...original,meta:{...original.meta,input_contract:'phoenix-v1'}}}),kept,store,''),/rewritten/);
 });

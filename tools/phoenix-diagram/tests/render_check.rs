@@ -45,6 +45,7 @@ fn scene() -> CompiledDiagram {
             sigil: None,
             label: "A".into(),
             text: vec![text("A", 70.0, 110.0)],
+            detail_rows: Vec::new(),
         },
         Node {
             authored: authored(
@@ -61,6 +62,7 @@ fn scene() -> CompiledDiagram {
             sigil: None,
             label: "B".into(),
             text: vec![text("B", 460.0, 110.0)],
+            detail_rows: Vec::new(),
         },
     ];
     CompiledDiagram {
@@ -105,6 +107,8 @@ fn scene() -> CompiledDiagram {
                 text("request", 265.0, 98.0),
                 text("asynchronous", 265.0, 112.0),
             ],
+            marker_start: None,
+            marker_end: None,
         }],
         containers: vec![],
         text: vec![],
@@ -510,6 +514,7 @@ fn a_crossover_requires_both_real_bound_underlays_not_only_flags() {
             sigil: None,
             label: id.into(),
             text: vec![text(id, x + 40.0, y + 24.0)],
+            detail_rows: Vec::new(),
         });
     }
     for (id, from, to, points) in [
@@ -542,6 +547,8 @@ fn a_crossover_requires_both_real_bound_underlays_not_only_flags() {
             points,
             label_plate: None,
             text: vec![],
+            marker_start: None,
+            marker_end: None,
         });
     }
     let rendered = String::from_utf8(html(&scene)).unwrap();
@@ -564,4 +571,147 @@ fn a_crossover_requires_both_real_bound_underlays_not_only_flags() {
             .iter()
             .any(|diagnostic| diagnostic.code == "composition/proper-crossing"));
     }
+}
+
+#[test]
+fn legacy_sigils_clear_their_labels_and_a_touching_sigil_fails() {
+    use phoenix_diagram::{
+        geometry::{rects_overlap, text_glyph_box},
+        input::{parse_input, CompileOptions},
+        layout,
+    };
+
+    for (kind, file) in [
+        (
+            DiagramType::Sequence,
+            include_str!("../upstream/legacy-2.17/examples/async-job-roundtrip.sequence.json"),
+        ),
+        (
+            DiagramType::Dataflow,
+            include_str!("../upstream/legacy-2.17/examples/product-analytics.dataflow.json"),
+        ),
+    ] {
+        let options = CompileOptions {
+            input_contract: Some(InputContract::Legacy217),
+            ..Default::default()
+        };
+        let input = parse_input(file.as_bytes(), kind, &options).unwrap();
+        let scene = layout::compile(&input, &options).unwrap();
+        let mut moved = 0;
+        for node in &scene.nodes {
+            let Some(sigil) = &node.sigil else { continue };
+            let mark = Rect {
+                x: sigil.position.x,
+                y: sigil.position.y,
+                width: sigil.size,
+                height: sigil.size,
+            };
+            for text in node
+                .text
+                .iter()
+                .filter(|text| text.source_path.ends_with("/label"))
+            {
+                let label = text_glyph_box(
+                    &text.content,
+                    text.position.x,
+                    text.position.y,
+                    text.font_size,
+                    &text.anchor,
+                    InputContract::Legacy217,
+                );
+                assert!(!rects_overlap(&mark, &label, 1.0), "{}", node.authored.id);
+            }
+            moved += usize::from(sigil.position.y == node.bounds.y + 3.0);
+        }
+        assert!(moved > 0, "{kind:?} reference has a touching sigil to move");
+        let rendered = render(&scene, &EmbeddedAssets::builtin()).unwrap();
+        let checked = check_html(&rendered, scene.quality);
+        assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+
+        // Restoring one frozen corner position makes the sigil touch its label again.
+        let node = scene
+            .nodes
+            .iter()
+            .find(|node| {
+                node.sigil
+                    .as_ref()
+                    .is_some_and(|sigil| sigil.position.y == node.bounds.y + 3.0)
+            })
+            .unwrap();
+        let sigil = node.sigil.as_ref().unwrap();
+        let html = String::from_utf8(rendered).unwrap();
+        let current = format!(
+            "translate({} {}) scale({})",
+            phoenix_diagram::geometry::format_number(sigil.position.x),
+            phoenix_diagram::geometry::format_number(sigil.position.y),
+            phoenix_diagram::geometry::format_number(sigil.size / 16.0)
+        );
+        let frozen = format!(
+            "translate({} {}) scale(0.6875)",
+            phoenix_diagram::geometry::format_number(sigil.position.x),
+            phoenix_diagram::geometry::format_number(node.bounds.y + 6.0)
+        );
+        assert_eq!(html.matches(&current).count(), 1, "{current}");
+        let tampered = html.replace(&current, &frozen);
+        let checked = check_html(tampered.as_bytes(), scene.quality);
+        let entry = checked
+            .checks
+            .iter()
+            .find(|entry| entry.name == "node_geometry")
+            .unwrap();
+        assert_eq!(entry.status, "failed");
+        assert!(checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "artifact/sigil-label-overlap"));
+    }
+}
+
+#[test]
+fn reference_dataflow_joins_keep_the_frozen_arrowhead_scope() {
+    use phoenix_diagram::{
+        input::{parse_input, CompileOptions},
+        layout,
+    };
+
+    // Both 3.1.0 examples converge two flows on one port: auto-routed in
+    // event-stream, author-pinned in product-analytics. The frozen check
+    // treats such shared ports as joins.
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        ..Default::default()
+    };
+    for file in [
+        include_str!("fixtures/input/phoenix-v1/event-stream.dataflow.json"),
+        include_str!("fixtures/input/phoenix-v1/product-analytics.dataflow.json"),
+    ] {
+        let input = parse_input(file.as_bytes(), DiagramType::Dataflow, &options).unwrap();
+        let scene = layout::compile(&input, &options).unwrap();
+        let rendered = render(&scene, &EmbeddedAssets::builtin()).unwrap();
+        let checked = check_html(&rendered, scene.quality);
+        assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+    }
+
+    // The same coincident tips fail once the pair claims independent ports.
+    let file = include_str!("fixtures/input/phoenix-v1/event-stream.dataflow.json");
+    let input = parse_input(file.as_bytes(), DiagramType::Dataflow, &options).unwrap();
+    let mut scene = layout::compile(&input, &options).unwrap();
+    for relation in scene
+        .relations
+        .iter_mut()
+        .filter(|relation| relation.to == "state")
+    {
+        relation.crossover_halo = true;
+        relation.independent_ports = true;
+    }
+    let rendered = render(&scene, &EmbeddedAssets::builtin()).unwrap();
+    let checked = check_html(&rendered, scene.quality);
+    assert!(
+        checked
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "composition/arrowhead-collision"),
+        "{:?}",
+        checked.diagnostics
+    );
 }

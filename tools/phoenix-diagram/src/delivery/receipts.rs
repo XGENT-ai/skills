@@ -77,6 +77,7 @@ pub struct ValidationReceipt {
     pub compatibility: Option<Compatibility>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
+    pub evidence: Value,
     #[serde(skip)]
     pub layout: Option<Value>,
     #[serde(skip)]
@@ -192,6 +193,7 @@ pub struct FinalizeReceipt {
     pub delivery_status: String,
     pub produced_by_this_run: bool,
     pub evidence: Value,
+    pub locale: Value,
     #[serde(skip)]
     pub(super) exit: u8,
 }

@@ -19,6 +19,16 @@ test('consumer options bind a real host target and keep review resume explicit',
   assert.throws(()=>parseOptions(['--candidate-dir','/candidate','--target','not-a-target']),/target|platform/i);
   assert.throws(()=>parseOptions(['--candidate-dir','a','--candidate-dir','b','--target','linux-x64']),/duplicate/i);
 });
+test('local consumption adds explicit scopes and resumes from a review file instead of a workflow branch',async()=>{
+  const {parseOptions,CONSUMER_SCOPES}=await api(),args=['--candidate-dir','/candidate','--target',`${process.platform}-${process.arch}`];
+  assert.deepEqual(CONSUMER_SCOPES,['explore','evidence','locale']);
+  const scoped=parseOptions([...args,'--explore','--locale','--evidence','--evidence-repo','/checkout']);assert.equal(scoped.explore,true);assert.equal(scoped.locale,true);assert.equal(scoped.evidenceRepository,'/checkout');
+  assert.throws(()=>parseOptions([...args,'--evidence']),/evidence-repo/);assert.throws(()=>parseOptions([...args,'--evidence-repo','/checkout']),/evidence/);
+  assert.throws(()=>parseOptions([...args,'--evidence','--evidence-repo','relative']),/absolute/);assert.throws(()=>parseOptions([...args,'--explore=yes']),/no value/);assert.throws(()=>parseOptions([...args,'--corpus']),/unknown/i);
+  assert.equal(parseOptions([...args,'--resume','/state.json','--review-file','/envelope.json']).reviewFile,'/envelope.json');
+  assert.throws(()=>parseOptions([...args,'--resume','/state.json']),/exactly one/);assert.throws(()=>parseOptions([...args,'--resume','/state.json','--review-file','/a','--review-ref','phoenix-diagram-review/1']),/exactly one/);
+  assert.throws(()=>parseOptions([...args,'--review-file','/envelope.json']),/resume/);assert.throws(()=>parseOptions([...args,'--resume','/state.json','--review-file','/a','--explore']),/initial/);
+});
 test('consumer accepts an explicit absolute npm CLI without changing its native Node target',async()=>{
   const {parseOptions}=await api(),args=['--candidate-dir','/candidate','--target',`${process.platform}-${process.arch}`];
   assert.equal(parseOptions([...args,'--npm-cli','/owned/npm/package/bin/npm-cli.js']).npmCliPath,'/owned/npm/package/bin/npm-cli.js');

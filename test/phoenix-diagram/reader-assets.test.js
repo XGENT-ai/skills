@@ -34,7 +34,7 @@ function sandbox(t) {
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   fs.cpSync(path.join(workspace, 'viewer'), path.join(directory, 'viewer'), { recursive: true });
   fs.mkdirSync(path.join(directory, 'assets'));
-  for (const file of ['template.html', 'svg-definitions.svg', 'node-card-style.svg']) {
+  for (const file of ['template.html', 'catalogs.json', 'svg-definitions.svg', 'node-card-style.svg']) {
     fs.copyFileSync(path.join(workspace, 'assets', file), path.join(directory, 'assets', file));
   }
   return directory;
@@ -45,7 +45,7 @@ test('reader is a complete offline Phoenix artifact with exactly eight native sl
   assert.deepEqual([...html.matchAll(/\{\{PHOENIX:([^}]+)\}\}/g)].map(match => match[1]).sort(), [...slots].sort());
   assert.equal((html.match(/id="phoenix-diagram-metadata"/g) || []).length, 1);
   assert.match(html, /window\.PhoenixDiagram\s*=/);
-  assert.match(html, /name="generator" content="phoenix-diagram 0\.1\.0"/);
+  assert.match(html, /name="generator" content="phoenix-diagram 0\.2\.0"/);
   assert.doesNotMatch(html, /\{\{i18n:|\[PROJECT NAME\]|\bvar Archify\b|localStorage[^\n]*archify-/);
   assert.doesNotMatch(html, /<(?:script|link)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/)/i);
   assert.doesNotMatch(html, /@import\s|url\(["']?https?:|\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon)\s*\(/);
@@ -55,7 +55,7 @@ test('reader is a complete offline Phoenix artifact with exactly eight native sl
 test('assembly is deterministic, checks without writes, and rejects stale output', async t => {
   const { assembleReader } = await import(modulePath);
   const directory = sandbox(t);
-  const files = ['template.html', 'svg-definitions.svg', 'node-card-style.svg'];
+  const files = ['template.html', 'catalogs.json', 'svg-definitions.svg', 'node-card-style.svg'];
   const before = files.map(file => hash(fs.readFileSync(path.join(directory, 'assets', file))));
   assembleReader({ workspace: directory, check: true });
   assert.deepEqual(files.map(file => hash(fs.readFileSync(path.join(directory, 'assets', file)))), before);
@@ -179,6 +179,30 @@ test('classic script order and private canonical/recorder cleanup retain the fro
         assert.ok(at >= consumed, 'audited Reader Layout adaptations must not overlap');
         assert.ok(original.subarray(at, at + before.length).equals(before));
         assert.equal(original.subarray(0, at).toString().split('\n').length, hunk.sourceLine);
+        parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
+      }
+      parts.push(original.subarray(consumed));
+      expected = Buffer.concat(parts).toString();
+      assert.equal(hash(expected), adaptation.adaptedBodySha256);
+    }
+    if (file === 'focus.js') {
+      const adaptation = JSON.parse(read('viewer/focus-adaptations.json'));
+      assert.equal(adaptation.sourcePath, 'viewer/focus.js');
+      assert.equal(adaptation.sourceSha256, hash(frozen));
+      assert.equal(adaptation.normalizedSourceSha256, hash(expected));
+      const bindings = expected.indexOf("      var evidence = document.getElementById('focus-evidence');");
+      const linksLine = expected.indexOf("      var evidenceLinks = document.getElementById('focus-evidence-links');\n");
+      const ranges = [[bindings, linksLine + "      var evidenceLinks = document.getElementById('focus-evidence-links');\n".length],
+        [expected.indexOf('      function renderSourceEvidence(id) {'), expected.indexOf('      function renderPassport(id, node) {')]];
+      assert.ok(ranges.flat().every(at => at >= 0));
+      const original = Buffer.from(expected), parts = []; let consumed = 0;
+      for (const hunk of adaptation.hunks) {
+        const before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
+        assert.equal(hunk.scope, 'passport source evidence states');
+        assert.ok(at >= consumed, 'audited focus adaptations must not overlap');
+        assert.ok(ranges.some(([start, end]) => at >= Buffer.byteLength(expected.slice(0, start)) && at + before.length <= Buffer.byteLength(expected.slice(0, end))),
+          'focus adaptations stay inside the evidence bindings and the source evidence renderer');
+        assert.ok(original.subarray(at, at + before.length).equals(before));
         parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
       }
       parts.push(original.subarray(consumed));
@@ -325,5 +349,28 @@ test('native metadata locale adaptation keeps author strings in safe text and at
     assert.equal(context.window.PhoenixDiagram.metadata.graph.nodes[0].label, hostile);
     assert.equal(context.phoenixDiagramI18nData.messages['viewer.export.downloadPngInstead'],
       meta.locale === 'zh-CN' ? chinese['viewer.export.downloadPngInstead'] : english['viewer.export.downloadPngInstead']);
+  }
+});
+
+test('template and native renderer read one normalized five-language catalog', async t => {
+  const { assembleReader } = await import(modulePath);
+  const catalogs = JSON.parse(read('assets/catalogs.json'));
+  const embedded = /var phoenixDiagramBundledCatalogs = (\{.*?\});\n/s.exec(read('assets/template.html'))?.[1];
+  assert.deepEqual(JSON.parse(embedded), catalogs);
+  assert.deepEqual(Object.keys(catalogs), ['en', 'zh-CN', 'zh-TW', 'es', 'ko']);
+  assert.equal(catalogs.en['viewer.export.card.routeBadge'], 'PHOENIX DIAGRAM · ROUTE · {hops}');
+  assert.equal(catalogs.ko['viewer.preset.badge.editorialPlate'], 'PHOENIX DIAGRAM / 도판 04');
+  for (const [locale, catalog] of Object.entries(catalogs)) {
+    assert.deepEqual(Object.keys(catalog).sort(), Object.keys(catalogs.en).sort(), locale);
+    assert.ok(Object.values(catalog).every(message => !/archify/i.test(message)), locale);
+  }
+  for (const mutation of ['replace', 'placeholder', 'missing']) {
+    const directory = sandbox(t), file = path.join(directory, 'viewer/catalog-adaptations.json');
+    const adaptations = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (mutation === 'replace') adaptations.messages['timeline.axis'] = { en: 'Clock' };
+    if (mutation === 'placeholder') adaptations.messages['timeline.precision.day'].es = 'solo {fecha}';
+    if (mutation === 'missing') delete adaptations.messages['timeline.precision.day'].ko;
+    fs.writeFileSync(file, JSON.stringify(adaptations));
+    assert.throws(() => assembleReader({ workspace: directory, check: true }), /replace|placeholders|key set/, mutation);
   }
 });

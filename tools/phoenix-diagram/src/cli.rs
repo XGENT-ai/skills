@@ -18,7 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.1.0\n\nengine-probe\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle.\nUnmarked input uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 const RECOVERY_HELP: &str = "recover-output <private-recovery-directory> --json\n\nAfter an interrupted publication, locate its durable record in the original output parent:\n  ls -la \"<original output parent>\"\nRead .phoenix-diagram-recovery-<id>/publication-recovery-v1.json and identify its target.\nCleanup can retain the same record at .phoenix-diagram-recovery-<id>.cleanup.json or .phoenix-diagram-output-cleanup/<id>.json.\nAlways pass the original .phoenix-diagram-recovery-<id> directory, even if it is now absent.\nThe fixed cleanup directory retains its bound owner-v1.json. Unknown entries or ambiguous records are preserved and rejected.\nMultiple records require an explicit choice. The command preserves later claimants and changed bindings.\nRecovery restores file bytes; delivery checks and image review remain separate.\n";
 
 struct Arguments {
@@ -60,7 +60,7 @@ impl Arguments {
                         None
                     }
                     "quality" | "input-contract" | "out-dir" | "record" | "project"
-                    | "bundle-root" | "providers" => Some(
+                    | "bundle-root" | "providers" | "repo-root" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -168,6 +168,91 @@ fn guide(scenario: &str) -> Value {
         (
             DiagramType::Lifecycle,
             &["lifecycle", "state", "生命周期", "状态"][..],
+        ),
+        (
+            DiagramType::Erd,
+            &[
+                "erd",
+                "erdiagram",
+                "entity",
+                "table",
+                "primary key",
+                "foreign key",
+                "cardinality",
+                "实体",
+                "表结构",
+                "数据表",
+                "数据库表",
+                "主键",
+                "外键",
+                "基数",
+            ][..],
+        ),
+        (
+            DiagramType::Class,
+            &[
+                "class",
+                "interface",
+                "uml",
+                "inheritance",
+                "realization",
+                "composition",
+                "类图",
+                "接口",
+                "继承",
+                "实现关系",
+                "组合",
+            ][..],
+        ),
+        (
+            DiagramType::Tree,
+            &[
+                "tree",
+                "hierarchy",
+                "breakdown",
+                "repository layout",
+                "org chart",
+                "module tree",
+                "树",
+                "层级",
+                "层次",
+                "目录结构",
+                "组织结构",
+                "分解",
+                "模块树",
+            ][..],
+        ),
+        (
+            DiagramType::Timeline,
+            &[
+                "timeline",
+                "incident",
+                "release history",
+                "timestamp",
+                "chronology",
+                "时间线",
+                "时间轴",
+                "事故",
+                "复盘",
+                "发布历史",
+                "时间戳",
+            ][..],
+        ),
+        (
+            DiagramType::Waterfall,
+            &[
+                "waterfall",
+                "span",
+                "trace",
+                "latency",
+                "duration",
+                "where the time went",
+                "瀑布",
+                "耗时",
+                "链路",
+                "延迟",
+                "调用跨度",
+            ][..],
         ),
     ];
     let mut matches: Vec<_> = hints
@@ -298,12 +383,16 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     }
     if matches!(command, "validate" | "deliver" | "finalize") {
         args.allow(if command == "validate" {
-            &["quality", "input-contract", "layout-json"][..]
+            &["quality", "input-contract", "layout-json", "repo-root"][..]
         } else if command == "finalize" {
-            &["quality", "input-contract", "out-dir"][..]
+            &["quality", "input-contract", "out-dir", "repo-root"][..]
         } else {
-            &["quality", "input-contract"][..]
+            &["quality", "input-contract", "repo-root"][..]
         })?;
+        let repo_root = args.value("repo-root").map(Path::new);
+        if repo_root.is_some_and(|root| !root.is_dir()) {
+            return Err("--repo-root must be an existing directory".into());
+        }
         let count = if command == "validate" { 2 } else { 3 };
         if positional.len() != count {
             return Err(format!(
@@ -324,6 +413,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             options: &options,
             engine: &engine,
             assets: &assets,
+            repo_root,
         };
         return Ok(match command {
             "validate" => {

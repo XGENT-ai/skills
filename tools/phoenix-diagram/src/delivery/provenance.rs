@@ -128,7 +128,7 @@ pub(super) fn current_locked(
         quality: Some(cfg.quality),
         viewer_revision: cfg.viewer_revision.clone(),
     };
-    let parsed =
+    let mut parsed =
         parse_input(candidate.bytes(), cfg.diagram_type, &options).map_err(|diagnostics| {
             let mut error = fail(
                 "check",
@@ -140,6 +140,25 @@ pub(super) fn current_locked(
                 serde_json::to_value(diagnostics).expect("diagnostics serialize");
             error
         })?;
+    // Git is not consulted again: the artifact's evidence must be the one the
+    // receipt digested, and it must cite exactly the candidate's sources.
+    let evidence = std::str::from_utf8(artifact.bytes())
+        .ok()
+        .and_then(|source| super::metadata::embedded(&scraper::Html::parse_document(source)))
+        .ok_or("Artifact metadata is missing")
+        .and_then(|metadata| crate::evidence::bound(&parsed, &metadata))
+        .map_err(|message| fail("check", "provenance/evidence-mismatch", message, 1))?;
+    if receipt.evidence.get("evidenceSha256") != Some(&serde_json::json!(evidence.digest()))
+        || receipt.evidence.get("status") != Some(&serde_json::json!(evidence.status))
+    {
+        return Err(fail(
+            "check",
+            "provenance/evidence-mismatch",
+            "Artifact source evidence differs from the delivery receipt",
+            1,
+        ));
+    }
+    parsed.bind_evidence(evidence.digest().as_deref());
     if config(&parsed) != *cfg
         || receipt.config_sha256.as_deref() != Some(parsed.config_sha256.as_str())
         || receipt.compatibility.as_ref() != Some(&parsed.compatibility)

@@ -23,15 +23,7 @@ fn rejects(bytes: &[u8], options: CompileOptions, code: &str, path: &str) {
 
 #[test]
 fn unsupported_types_are_rejected_before_reading_input() {
-    for kind in [
-        "erd",
-        "class",
-        "tree",
-        "timeline",
-        "waterfall",
-        "unknown",
-        "Sequence",
-    ] {
+    for kind in ["unknown", "Sequence", "ERD", "chart", "dashboard"] {
         let diagnostic = kind.parse::<DiagramType>().unwrap_err().remove(0);
         assert_eq!(diagnostic.code, "input/unsupported-type");
     }
@@ -285,11 +277,11 @@ fn deferred_fields_are_reported_individually_without_removing_facts() {
         .deferred_fields
         .iter()
         .any(|field| field.path == "/participants/0/brand" && field.phase == "P3"));
-    assert!(input
+    assert!(!input
         .compatibility
         .deferred_fields
         .iter()
-        .any(|field| field.path == "/meta/repository" && field.phase == "P2"));
+        .any(|field| field.path == "/meta/repository"));
     assert_eq!(input.document, document);
 }
 

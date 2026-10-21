@@ -3,30 +3,86 @@ use jsonschema::{Registry, Validator};
 use serde_json::Value;
 use std::sync::OnceLock;
 
-const LEGACY: [&str; 6] = [
-    include_str!("../upstream/legacy-2.17/schemas/common.schema.json"),
-    include_str!("../upstream/legacy-2.17/schemas/architecture.schema.json"),
-    include_str!("../upstream/legacy-2.17/schemas/workflow.schema.json"),
-    include_str!("../upstream/legacy-2.17/schemas/sequence.schema.json"),
-    include_str!("../upstream/legacy-2.17/schemas/dataflow.schema.json"),
-    include_str!("../upstream/legacy-2.17/schemas/lifecycle.schema.json"),
+const LEGACY_COMMON: &str = include_str!("../upstream/legacy-2.17/schemas/common.schema.json");
+const LEGACY: [(DiagramType, &str); 5] = [
+    (
+        DiagramType::Architecture,
+        include_str!("../upstream/legacy-2.17/schemas/architecture.schema.json"),
+    ),
+    (
+        DiagramType::Workflow,
+        include_str!("../upstream/legacy-2.17/schemas/workflow.schema.json"),
+    ),
+    (
+        DiagramType::Sequence,
+        include_str!("../upstream/legacy-2.17/schemas/sequence.schema.json"),
+    ),
+    (
+        DiagramType::Dataflow,
+        include_str!("../upstream/legacy-2.17/schemas/dataflow.schema.json"),
+    ),
+    (
+        DiagramType::Lifecycle,
+        include_str!("../upstream/legacy-2.17/schemas/lifecycle.schema.json"),
+    ),
 ];
-const PHOENIX: [&str; 6] = [
-    include_str!("../../../skills/phoenix-diagram/schemas/common.schema.json"),
-    include_str!("../../../skills/phoenix-diagram/schemas/architecture.schema.json"),
-    include_str!("../../../skills/phoenix-diagram/schemas/workflow.schema.json"),
-    include_str!("../../../skills/phoenix-diagram/schemas/sequence.schema.json"),
-    include_str!("../../../skills/phoenix-diagram/schemas/dataflow.schema.json"),
-    include_str!("../../../skills/phoenix-diagram/schemas/lifecycle.schema.json"),
+const PHOENIX_COMMON: &str =
+    include_str!("../../../skills/phoenix-diagram/schemas/common.schema.json");
+const PHOENIX: [(DiagramType, &str); 10] = [
+    (
+        DiagramType::Architecture,
+        include_str!("../../../skills/phoenix-diagram/schemas/architecture.schema.json"),
+    ),
+    (
+        DiagramType::Workflow,
+        include_str!("../../../skills/phoenix-diagram/schemas/workflow.schema.json"),
+    ),
+    (
+        DiagramType::Sequence,
+        include_str!("../../../skills/phoenix-diagram/schemas/sequence.schema.json"),
+    ),
+    (
+        DiagramType::Dataflow,
+        include_str!("../../../skills/phoenix-diagram/schemas/dataflow.schema.json"),
+    ),
+    (
+        DiagramType::Lifecycle,
+        include_str!("../../../skills/phoenix-diagram/schemas/lifecycle.schema.json"),
+    ),
+    (
+        DiagramType::Erd,
+        include_str!("../../../skills/phoenix-diagram/schemas/erd.schema.json"),
+    ),
+    (
+        DiagramType::Class,
+        include_str!("../../../skills/phoenix-diagram/schemas/class.schema.json"),
+    ),
+    (
+        DiagramType::Tree,
+        include_str!("../../../skills/phoenix-diagram/schemas/tree.schema.json"),
+    ),
+    (
+        DiagramType::Timeline,
+        include_str!("../../../skills/phoenix-diagram/schemas/timeline.schema.json"),
+    ),
+    (
+        DiagramType::Waterfall,
+        include_str!("../../../skills/phoenix-diagram/schemas/waterfall.schema.json"),
+    ),
 ];
 
+fn sources(contract: InputContract) -> (&'static str, &'static [(DiagramType, &'static str)]) {
+    match contract {
+        InputContract::Legacy217 => (LEGACY_COMMON, &LEGACY),
+        InputContract::PhoenixV1 => (PHOENIX_COMMON, &PHOENIX),
+    }
+}
+
+// The common schema comes first; each type schema follows in table order.
 fn schemas(contract: InputContract) -> Result<Vec<Value>, String> {
-    let source = match contract {
-        InputContract::Legacy217 => LEGACY,
-        InputContract::PhoenixV1 => PHOENIX,
-    };
-    let mut schemas: Vec<Value> = source
-        .iter()
+    let (common, types) = sources(contract);
+    let mut schemas: Vec<Value> = std::iter::once(common)
+        .chain(types.iter().map(|(_, bytes)| *bytes))
         .map(|bytes| serde_json::from_str(bytes).map_err(|error| error.to_string()))
         .collect::<Result<_, _>>()?;
     if contract == InputContract::PhoenixV1 {
@@ -81,10 +137,12 @@ pub(crate) fn validator(
         .get_or_init(|| build(contract))
         .as_ref()
         .map_err(String::as_str)?;
-    Ok(&validators[DiagramType::ALL
+    let index = sources(contract)
+        .1
         .iter()
-        .position(|value| *value == kind)
-        .expect("supported diagram type")])
+        .position(|(value, _)| *value == kind)
+        .ok_or("The input contract has no schema for this diagram type")?;
+    Ok(&validators[index])
 }
 
 #[cfg(test)]
@@ -104,7 +162,7 @@ mod tests {
 
     #[test]
     fn adaptation_changes_only_the_exact_surrogate_pattern() {
-        let original: Value = serde_json::from_str(PHOENIX[0]).unwrap();
+        let original: Value = serde_json::from_str(PHOENIX_COMMON).unwrap();
         let mut adapted = schemas(InputContract::PhoenixV1).unwrap().remove(0);
         *adapted
             .pointer_mut("/$defs/portableOutputPath/allOf/2/not/pattern")

@@ -82,7 +82,9 @@ export function printMotionSnapshot() {
   const svg = document.querySelector('.diagram-container > svg');
   if (!svg || typeof svg.getAnimations !== 'function') throw new Error('Print motion observation is unavailable');
   const runtime = '[data-ambient-flow-overlay], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-semantic-lens-overlay], [data-relationship-pulse-overlay], [data-relationship-hit-overlay], [data-legend-bridge-runtime]';
-  const meaning = Array.from(svg.querySelectorAll('[data-node-id], path[data-edge-from], line[data-edge-from], polyline[data-edge-from], text')).filter(element => !element.closest(runtime));
+  // Tree toggles are Reader controls; their child-count badges stay hidden while a branch is open.
+  const controls = '[data-tree-toggle], [data-tree-expand-all]';
+  const meaning = Array.from(svg.querySelectorAll('[data-node-id], path[data-edge-from], line[data-edge-from], polyline[data-edge-from], text')).filter(element => !element.closest(runtime) && !element.closest(controls));
   const hidden = element => {
     for (let current = element; current; current = current.parentElement) {
       const style = getComputedStyle(current);

@@ -4,7 +4,10 @@ import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-export const TYPES = ['architecture','workflow','sequence','dataflow','lifecycle'];
+export const LEGACY_TYPES = ['architecture','workflow','sequence','dataflow','lifecycle'];
+export const TYPES = [...LEGACY_TYPES,'erd','class','tree','timeline','waterfall'];
+// Only the five frozen 2.17 types have a legacy input contract.
+export function contractsFor(type) {return LEGACY_TYPES.includes(type)?['phoenix-v1','legacy-2.17']:['phoenix-v1'];}
 export const ARTIFACT_CHECKS = ['single_svg','diagram_contract','finite_svg','node_geometry','node_separation','canvas_containment','desktop_readability','semantic_transforms','svg_path_data','route_binding','orthogonal_arrows','relationship_endpoints','semantic_content','relationship_crossings','relationship_corridors','arrowhead_separation','container_border_runs','route_rhythm','label_route_clearance','label_canvas_containment','non_target_node_clearance','legend_clearance'];
 export function requiredArtifactChecks(contract) {
   requireThat(['phoenix-v1','legacy-2.17'].includes(contract),'Unsupported or missing selected input contract');
@@ -16,7 +19,7 @@ export const XSS_LITERAL = '</script><script>globalThis.__phoenixDiagramXss=1</s
 export const identity = bytes => ({sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length});
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const HEADER = {schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0'};
+const HEADER = {schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0'};
 const THEMES = ['light','dark'];
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const HASH = /^[0-9a-f]{64}$/;
@@ -31,13 +34,13 @@ function ordinary(value) {return value!==null && typeof value==='object' && !Arr
 function validHeader(value,command) {return ordinary(value) && Object.entries(HEADER).every(([key,expected])=>value[key]===expected) && value.command===command && Array.isArray(value.diagnostics);}
 
 export function parseOptions(argv) {
-  const result={stage:'core',reader:false,recovery:false,offline:false};const seen=new Set();
+  const result={stage:'core',reader:false,recovery:false,offline:false,explore:false,corpus:false,evidence:false,locale:false};const seen=new Set();
   const values={stage:'stage',engine:'engine','output-dir':'outputDir',resume:'resume','review-file':'reviewFile','case-manifest':'caseManifest',browser:'browserPath'};
   for(let at=0;at<argv.length;at++) {
     const argument=argv[at];requireThat(argument.startsWith('--'),`Unknown argument ${argument}`,'arguments/invalid');
     const match=/^--([^=]+)(?:=(.*))?$/.exec(argument),key=match[1];
     requireThat(!seen.has(key),`Duplicate --${key}`,'arguments/invalid');seen.add(key);
-    if(['reader','recovery','offline','help'].includes(key)) {requireThat(match[2]===undefined,`--${key} takes no value`,'arguments/invalid');result[key]=true;continue;}
+    if(['reader','recovery','offline','explore','corpus','evidence','locale','help'].includes(key)) {requireThat(match[2]===undefined,`--${key} takes no value`,'arguments/invalid');result[key]=true;continue;}
     requireThat(Object.hasOwn(values,key),`Unknown option --${key}`,'arguments/invalid');
     const value=match[2]??argv[++at];requireThat(typeof value==='string' && value.length>0 && !value.startsWith('--'),`--${key} needs a value`,'arguments/invalid');result[values[key]]=value;
   }
@@ -55,9 +58,9 @@ export function requiredCoverage(cases) {
   requireThat(Array.isArray(cases) && cases.length>0,'Case coverage must be nonempty');const ids=new Set(),seen=new Set();
   for(const entry of cases) {
     requireThat(ID.test(entry.id),`Unsafe case identity ${entry.id}`);requireThat(!ids.has(entry.id),`Duplicate case identity ${entry.id}`);ids.add(entry.id);
-    requireThat(TYPES.includes(entry.type) && ['phoenix-v1','legacy-2.17'].includes(entry.contract),`Unsupported case type or contract: ${entry.id}`);seen.add(`${entry.type}:${entry.contract}`);
+    requireThat(TYPES.includes(entry.type) && contractsFor(entry.type).includes(entry.contract),`Unsupported case type or contract: ${entry.id}`);seen.add(`${entry.type}:${entry.contract}`);
   }
-  const missing=TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].filter(contract=>!seen.has(`${type}:${contract}`)).map(contract=>({type,contract})));
+  const missing=TYPES.flatMap(type=>contractsFor(type).filter(contract=>!seen.has(`${type}:${contract}`)).map(contract=>({type,contract})));
   return{complete:missing.length===0,requiredTypes:TYPES,requiredContracts:['phoenix-v1','legacy-2.17'],missing};
 }
 
@@ -188,6 +191,7 @@ export function assertXssArtifact(bytes,literal=XSS_LITERAL) {
 export const HELP = `Usage:
   node scripts/test-phoenix-diagram.mjs --stage core --engine PATH [--output-dir DIR] [--case-manifest FILE]
   node scripts/test-phoenix-diagram.mjs --stage core --engine PATH --resume INDEX [--review-file MAP.json] [--reader] [--recovery] [--offline]
+      [--explore] [--corpus] [--evidence] [--locale]
 
 The native engine must be an actual local build. This controller never builds or downloads it.
 The initial run executes real finalize and leaves image review required-pending.
@@ -197,6 +201,11 @@ The initial run also uses an independent output to prove that a fresh delivery
 cannot inherit an earlier review. The original output closes only by review-record.
 --recovery uses explicit maintenance checkpoints and public recover-output commands.
 --offline records OS-denied native generation/check and separate CDP offline reading.
+--explore drives each case's Reader exploration and Route/Reach share cards in Chrome.
+--corpus delivers every frozen reference JSON and checks its core facts and bytes.
+--evidence checks pinned repository sources (verified, worktree change, local-only)
+and dated/illustrative timing in Chrome; --locale renders the five interface
+languages plus an unsupported-tag fallback. Their screenshots need actual viewing.
 Unexecuted scopes stay not-run; automatic success alone cannot complete core acceptance.
 Distribution routes to the candidate checker. --stage install runs the limited
 UI installation group; native regressions use npm run test:diagram.

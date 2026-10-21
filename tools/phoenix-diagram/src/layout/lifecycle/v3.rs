@@ -2025,6 +2025,7 @@ pub(super) fn compile(
             }),
             label: label.into(),
             text: texts,
+            detail_rows: Vec::new(),
         });
     }
     let entries = presentation::legend_entries(input, &nodes, !finals.is_empty());
@@ -2117,6 +2118,8 @@ pub(super) fn compile(
             note_backdrop: None,
             label_plate: plate,
             text: texts,
+            marker_start: None,
+            marker_end: None,
         });
     }
     let containers = geometry

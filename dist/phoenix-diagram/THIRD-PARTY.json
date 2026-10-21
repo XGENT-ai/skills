@@ -549,6 +549,44 @@
       ]
     },
     {
+      "name": "chrono-tz",
+      "version": "0.10.4",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a6139a8597ed92cf816dfb33f5dd6cf0bb93a6adc938f11039f371bc5bcd26c3",
+      "repository": "https://github.com/chronotope/chrono-tz",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/4789210f4df8abc03fce1cddd9c2ba517f184840687f2815d741de282c1aa93a.txt",
+          "size": 12183,
+          "sha256": "4789210f4df8abc03fce1cddd9c2ba517f184840687f2815d741de282c1aa93a",
+          "originalLocation": "https://docs.rs/crate/chrono-tz/0.10.4/source/LICENSE",
+          "source": {
+            "url": "https://docs.rs/crate/chrono-tz/0.10.4/source/LICENSE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "chrono",
+      "version": "0.4.45",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327",
+      "repository": "https://github.com/chronotope/chrono",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/946c9835d8034d24404f8cfec5f4654cee5dad17e944afc3d06d742cf2882831.txt",
+          "size": 12307,
+          "sha256": "946c9835d8034d24404f8cfec5f4654cee5dad17e944afc3d06d742cf2882831",
+          "originalLocation": "https://docs.rs/crate/chrono/0.4.45/source/LICENSE.txt",
+          "source": {
+            "url": "https://docs.rs/crate/chrono/0.4.45/source/LICENSE.txt"
+          }
+        }
+      ]
+    },
+    {
       "name": "cpufeatures",
       "version": "0.2.17",
       "license": "MIT OR Apache-2.0",
@@ -2254,6 +2292,25 @@
     },
     {
       "name": "phf",
+      "version": "0.12.1",
+      "license": "MIT",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "913273894cec178f401a31ec4b656318d95473527be05c0752cc41cdc32be8b7",
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38.txt",
+          "size": 1099,
+          "sha256": "0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38",
+          "originalLocation": "https://docs.rs/crate/phf/0.12.1/source/LICENSE",
+          "source": {
+            "url": "https://docs.rs/crate/phf/0.12.1/source/LICENSE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "phf",
       "version": "0.13.1",
       "license": "MIT",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
@@ -2330,6 +2387,25 @@
     },
     {
       "name": "phf_shared",
+      "version": "0.12.1",
+      "license": "MIT",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "06005508882fb681fd97892ecff4b7fd0fee13ef1aa569f8695dae7ab9099981",
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38.txt",
+          "size": 1099,
+          "sha256": "0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38",
+          "originalLocation": "https://docs.rs/crate/phf_shared/0.12.1/source/LICENSE",
+          "source": {
+            "url": "https://docs.rs/crate/phf_shared/0.12.1/source/LICENSE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "phf_shared",
       "version": "0.13.1",
       "license": "MIT",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
@@ -2349,7 +2425,7 @@
     },
     {
       "name": "phoenix-diagram",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "source": "local",
       "manifest": "tools/phoenix-diagram/Cargo.toml",

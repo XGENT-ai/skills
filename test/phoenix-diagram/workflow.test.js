@@ -210,12 +210,12 @@ async function reviewMaterialFixture(t) {
   const directory = temporary(t), runRoot = path.join(directory, 'original evidence'), harness = path.join(directory, 'local/phoenix-diagram/harness/scripts');
   fs.mkdirSync(runRoot, { mode: 0o700 }); fs.mkdirSync(harness, { recursive: true });
   fs.copyFileSync(path.join(root, 'scripts/test-phoenix-diagram-core.mjs'), path.join(harness, 'test-phoenix-diagram-core.mjs'));
-  const { readSnapshot, bound } = await import('../../scripts/test-phoenix-diagram-core.mjs');
+  const { readSnapshot, bound, TYPES, contractsFor } = await import('../../scripts/test-phoenix-diagram-core.mjs');
   const write = (file, value) => { fs.writeFileSync(file, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value), { mode: 0o600 }); return bound(readSnapshot(file)); };
   // File-selection mechanism fixture only, never native or visual acceptance.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6vWQAAAAASUVORK5CYII=', 'base64');
-  const cases = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].flatMap(type => ['new', 'legacy'].map(contract => {
-    const id = `${contract}-${type}`, folder = path.join(runRoot, id); fs.mkdirSync(folder);
+  const cases = TYPES.flatMap(type => contractsFor(type).map(contract => {
+    const id = `${contract === 'phoenix-v1' ? 'new' : 'legacy'}-${type}`, folder = path.join(runRoot, id); fs.mkdirSync(folder);
     return { id, state: { screenshots: [1440, 2048].flatMap(width => ['light', 'dark'].map(theme => ({ ...write(path.join(folder, `${width}-${theme}.png`), png), viewport: { width, height: width === 1440 ? 900 : 1320 }, theme }))) } };
   }));
   const stat = fs.statSync(runRoot), sourceCommit = 'a'.repeat(40), tgzSha = 'b'.repeat(64);
@@ -231,10 +231,10 @@ async function reviewMaterialFixture(t) {
   return { run, files, request, requestFile, state, output, env, write, readSnapshot, bound };
 }
 
-test('review upload selects exactly the 42 original bound files without caches, exports or rewrites', async t => {
+test('review upload selects exactly the 62 original bound files without caches, exports or rewrites', async t => {
   const fixture = await reviewMaterialFixture(t), result = fixture.run(); assert.equal(result.status, 0, result.stderr);
   const output = fs.readFileSync(fixture.output, 'utf8'), match = /^review_paths<<([^\n]+)\n([\s\S]*)\n\1\n$/.exec(output); assert.ok(match, output);
-  const selected = match[2].split('\n'); assert.equal(selected.length, 42); assert.equal(new Set(selected).size, 42);
+  const selected = match[2].split('\n'); assert.equal(selected.length, 62); assert.equal(new Set(selected).size, 62);
   assert.deepEqual(selected, fixture.files.map(file => file.path));
   assert.equal(path.dirname(selected[0]), fixture.state.runRoot); assert.equal(path.dirname(selected[1]), fixture.state.runRoot);
   assert.ok(selected.every(file => !path.relative(fixture.state.runRoot, file).startsWith('..')));
@@ -311,7 +311,7 @@ test('isolated harness imports and browser-only preparation require neither sour
   const step = /- name: Archive the isolated maintenance harness([\s\S]*?)(?=\n      - name:)/.exec(assemble)?.[1];
   assert.ok(step, 'Explicit harness allowlist archive');
   const files = [...step.matchAll(/^\s+((?:scripts|skills|tools)\/[a-zA-Z0-9/_.-]+|LICENSE)(?: \\)?$/gm)].map(match => match[1]);
-  assert.equal(files.length, 21); assert.equal(new Set(files).size, files.length);
+  assert.equal(files.length, 23); assert.equal(new Set(files).size, files.length);
   assert.ok(files.includes('tools/phoenix-diagram/tests/support/capture-stdio.mjs'));
   assert.doesNotMatch(files.join('\n'), /(?:^|\/)(?:src|target|node_modules|upstream|renderers)(?:\/|$)|\.rs$|Cargo\.(?:lock|toml)|\.tar/mi);
   const archive = path.join(temporary(t), 'harness.tar');

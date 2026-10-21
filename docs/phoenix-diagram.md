@@ -1,6 +1,6 @@
 # Phoenix Diagram 候选
 
-Phoenix Diagram 0.1.0 提供 architecture、workflow、sequence、dataflow、lifecycle 的原生生成、独立 HTML 阅读与导出。新稿声明 `meta.input_contract: "phoenix-v1"`；未标记的旧五类 JSON 按 `legacy-2.17` 解释，原 JSON/HTML 不被迁移。它与 archify 并存。数值图表、仪表盘及另外五种 infographic 不在 P1 范围。
+Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。它与 archify 并存。数值图表、仪表盘及其他 infographic 不在范围内。
 
 目前实现与验收仍在进行，四平台、真实 provider 和最终包的完整交接尚未完成。candidate 的 loopback 下载地址仅用于隔离验收；本次没有公开 npm/R2 发布。
 
@@ -33,25 +33,27 @@ cp .agents/skills/phoenix-diagram/examples/minimal.workflow.json candidate.json
 "$PD" finalize workflow candidate.json diagram.html --out-dir evidence-01 --json
 ```
 
-示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。所需日期、金额或业务条件缺失时，先询问，答复前不写 candidate 或生成图，也不附“草拟”“默认”“待确认”的猜测值；只有用户明确要求拟定这些值时才提供标为建议的方案。普通依据材料作图时，原材料已明确指出业务条件、日期或金额缺失，就直接走澄清分支；不能以主干仍可画或已有结果标签为由继续作图。其他必需事实未提供时，先提取阻止交付的缺口，改成开放式问题；不发散到材料未提及的可选分支、异常路径或设计选择。已给出的角色、关系和标签直接按原文使用，不以细化称谓、层级或内部细节为由追加问题。发送前删去候选答案、假设例子、扩展问题和流程复述，只输出剩下的简短问题列表并结束；字段格式只给未赋值占位符，不追加创作步骤、草拟流程或具体值，也不用缺失规则卡片代替询问。事实齐备后只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。五类之外的结构应明确提出，不靠删节点、删关系、缩字或隐藏溢出来通过。
+示例只教结构，实际 candidate 应由授权事实写成，不能把示例当作用户的系统信息。所需日期、金额或业务条件缺失时，先询问，答复前不写 candidate 或生成图，也不附“草拟”“默认”“待确认”的猜测值；只有用户明确要求拟定这些值时才提供标为建议的方案。普通依据材料作图时，原材料已明确指出业务条件、日期或金额缺失，就直接走澄清分支；不能以主干仍可画或已有结果标签为由继续作图。其他必需事实未提供时，先提取阻止交付的缺口，改成开放式问题；不发散到材料未提及的可选分支、异常路径或设计选择。已给出的角色、关系和标签直接按原文使用，不以细化称谓、层级或内部细节为由追加问题。发送前删去候选答案、假设例子、扩展问题和流程复述，只输出剩下的简短问题列表并结束；字段格式只给未赋值占位符，不追加创作步骤、草拟流程或具体值，也不用缺失规则卡片代替询问。事实齐备后只读匹配的 schema/common/example 即可开始。新稿默认 showcase，先自动路线；Mermaid 的 flowchart/graph、sequenceDiagram、stateDiagram、erDiagram、classDiagram 由宿主保留语义后写 JSON，Rust CLI 不包含 Mermaid parser。十类之外的结构应明确提出，不靠删节点、删列、删成员、删关系、缩字或隐藏溢出来通过。
 
 新稿或涉及语义的修复完成后，按原材料逐分支走读条件、动作、执行者与先后关系。进入处理步骤不等于已经通过或获准；条件内的动作不能前移为其他分支的共同前置动作，也不能因合并节点或回路改变顺序。跨阶段适用的动作，先按原文枚举许可覆盖的全部非终态，再逐项核对主图路径；例如“任一下单前可撤回”也覆盖提交、补充材料等适用阶段。每个适用阶段都应能行使该许可并抵达相应结果，无需先满足额外条件或完成审批、提交、补交等其他业务动作。无条件且不执行业务动作的瞬时起始跳转可与后续阶段等价，显式覆盖全部适用阶段的结构也可等价表达，不要求逐节点各画一条直接边。卡片或“各阶段可……”文案不能代替主图中这项许可的完整范围。线型、颜色与图例要对应原事实；未说明的同步/异步、批处理等执行方式，用不承诺该含义的普通关系表达。节点和标签齐全、卡片复述正确，都不能代替主图路径与原事实一致；只据已给事实修正，必需事实缺失时仍先澄清。
 
 公开命令：
 
 ```text
-validate <type> <candidate.json> [--layout-json] [--quality standard|showcase] [--input-contract NAME] --json
-deliver <type> <candidate.json> <output.html> [compile options] --json
+validate <type> <candidate.json> [--layout-json] [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] --json
+deliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json
 check <output.html> [--strict-provenance] --json
 browser-check <output.html> [--out-dir DIR] --json
 visual-check <output.html> [--out-dir DIR] --json
-finalize <type> <candidate.json> <output.html> [compile options] [--out-dir DIR] --json
+finalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json
 review-record <output.html> --record <review.json> --json
 recover-output <private-recovery-directory> --json
 install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json
 ```
 
-显式 quality/input-contract 与 candidate 已声明值冲突会失败。保留旧合同默认值、固定节点、方向、标签与 route pins；延期的品牌/仓库展示字段在兼容回执中逐项列出，不代表完整兼容已通过。普通 stdout 为一个 JSON；不要仅用退出码判断完整交付。
+显式 quality/input-contract 与 candidate 已声明值冲突会失败。保留旧合同默认值、固定节点、方向、标签与 route pins；延期到 P3 的品牌、guided views 与旧播放偏好在兼容回执中逐项列出，不代表完整兼容已通过。普通 stdout 为一个 JSON；不要仅用退出码判断完整交付。
+
+主要元素带 `sources`、`meta.repository` 固定 40 位提交时，用 `--repo-root` 指向该仓库顶层目录。核对只读、不联网：origin 一致、提交存在、文件与行在该提交中存在，并逐段比较工作树文件（不跟随符号链接）。凭据 URL、路径逃逸、非法行区间、provider 与主机不符或网页链接用了不支持的主机会在输入阶段失败。其他不能核对的情形（缺 `--repo-root`、git 不可用或超时、缺提交或对象、文件缺失、行越界、工作树不同、旧版 git 遇部分克隆）只把对应来源记为待核实并附原因，HTML 照常生成；回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，与四门结论分开报告。时间线的日期型记录用 `precision: "day"`，没有记录的耗时瀑布用 `meta.evidence: "illustrative"`。
 
 首次失败时按实际失败门记录客观 error 数、历史最佳值和停滞计数0；同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。计数达到2立即停止并列出未解决项；错误种类变化不能重置计数，也不允许再试一次。重建交付或返回已记录门时，沿用该门历史，不因新回执重新初始化；环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。
 
@@ -104,7 +106,7 @@ ls -la "<原输出父目录>"
 
 ## 阅读与导出
 
-HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风格、平移缩放、标签/id 搜索及详情；首次为 Still，用户选择 Live 后才保存偏好。缩减动画、页面隐藏、打印和导出临时暂停，静态图仍保留含义。页面可按声明的可读纵向画布滚动，不能用水平裁切或内部滚动掩盖内容。
+HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风格、平移缩放、标签/id/来源路径搜索及详情；首次为 Still，用户选择 Live 后才保存偏好。十类都可做语义筛选、概览定位、展示模式和深链接；有已著关系的八类可找 Route 与上/下游 Reach，并导出标明范围、非 canonical 的范围卡片；树可折叠分支，导出与打印始终为完整树。详情按已核对、待核实（附原因）、未提供来源三态显示来源。界面语言按 `meta.locale` 选择五种之一，其他标签回退英文，finalize 回执的 `locale` 记录结果。缩减动画、页面隐藏、打印和导出临时暂停，静态图仍保留含义。页面可按声明的可读纵向画布滚动，不能用水平裁切或内部滚动掩盖内容。
 
 支持 PNG/JPEG/WebP、主题 SVG、WebM 和 PNG 复制。能力/权限拒绝、空 Blob、编码/录制失败都应返回明确失败与可用替代动作；格式实际可用性以当前浏览器结果为准。字体许可随独立 HTML/SVG 保留。源码与第三方许可位于独立发行目录 LICENSE、NOTICE、THIRD-PARTY.json/NOTICES/LICENSES；参考归属与 Phoenix 修改单列。
 
@@ -112,8 +114,13 @@ HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风�
 
 ## 验证结果与发行边界
 
-阶段A的本机 macOS arm64 开发引擎曾通过五类旧/新共10例的四道自动门和确定性检查，并在实际查看40张暗亮截图后，经原身份 `review-record` 达到完整交付。十例的Reader操作、20项导出、4项打印和剪贴板检查，以及另十例离线生成/检查/阅读导出、8个公开中断恢复场景均已通过；审核绑定拒绝及summary写失败后的同记录重试也已核验。构建、装配、许可和发布保护的局部检查通过。这些开发结果不代替最终 npm tgz 的消费验收。
+阶段A在本机 macOS arm64 开发引擎上，十类共15例（原五类的新/旧合同各一例、新五类各一例）通过四道自动门和确定性检查，实际查看60张暗亮截图后经原身份 `review-record` 达到完整交付。15例的Reader操作、20项导出、打印与剪贴板检查，离线生成/检查/阅读导出和8个公开中断恢复场景均已通过。十类探索（筛选、Route、Reach、树折叠、概览、展示、深链接、键盘与详情）通过，有已著关系的八类各导出一张Route与Reach范围卡片。冻结3.1.0参考包的25份JSON核心事实可被消费，原JSON与15份参考HTML字节不变。本仓固定提交的来源核对覆盖已核对（含GitHub链接存在性）、工作树改动、仅本地和未提供来源四种显示，示意耗时与日精度时间线已核对。五种界面语言与fr英文回退均实际看图。这些开发结果不代替最终 npm tgz 的消费验收。
 
-最终候选须另附 `kind: phoenix-diagram-candidate-aggregate` 的聚合回执。核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取四个平台、精确Node18.20.8及Claude Code/Codex的实际结果。完整 Reader 范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
+最终候选须另附 `kind: phoenix-diagram-candidate-aggregate`、`profile: "p2"` 的聚合回执。先核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取以下三类实际结果：
+- 四个平台与精确Node18.20.8对同一tgz的自动消费：15例四门全过，视觉保持待审。
+- darwin-arm64本机对同一tgz的完整消费：15例实际看图后 `review-record`，以及探索与范围卡片、来源与界面语言范围。
+- Claude Code、Codex真实会话：它们在bundle与引擎来源都相同的development包上取得。
+
+完整Reader范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
 
 本说明在最终封包前固定，封包后的验收结果保存在绑定原tgz摘要的独立聚合回执中。补写结果或修复包内文件会改变tgz身份，需要重新装配并取得适用的新证据。当前尚未取得最终同包四平台及真实provider的完整通过结果，也没有公开npm/R2发行；development清单和候选loopback地址不能用于宣称公开在线安装已可用。

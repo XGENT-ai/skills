@@ -21,9 +21,8 @@ export const TARGETS = Object.freeze({
   'linux-arm64': 'aarch64-unknown-linux-gnu',
 });
 const TOOL = 'phoenix-diagram';
-const TOOL_VERSION = '0.1.0';
-const VIEWER_REVISION = 'phoenix-v1';
-const DERIVED_ENGINE = 'skills/phoenix-diagram/ENGINE.json';
+const TOOL_VERSION = '0.2.0';
+const VIEWER_REVISION = 'phoenix-v2';
 const HASH = /^[a-f0-9]{64}$/;
 const COMMIT = /^[a-f0-9]{40}$/;
 const CRATES = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -84,7 +83,6 @@ function nativeInputRoots(repoRoot) {
   assert(body, 'Native build.rs input roots are unavailable');
   const strings = [...body.matchAll(/"([^"\\]*)"/g)];
   assert(strings.length && /^[\s,]*$/.test(body.replace(/"[^"\\]*"/g, '')), 'Unsupported native build.rs input-root declaration');
-  assert(source.includes(`Path::new("${DERIVED_ENGINE}")`), 'Native derived ENGINE exclusion differs');
   return strings.map(match => relative(match[1]));
 }
 
@@ -96,7 +94,6 @@ export function sourceInputs(repoRoot = root) {
     if (stat.isDirectory()) for (const child of walk(file)) names.add(`${name}/${child}`);
     else { assert(stat.isFile(), `Nonregular native source root: ${name}`); names.add(name); }
   }
-  names.delete(DERIVED_ENGINE);
   const entries = [...names].sort(compare).map(name => { const bytes = regular(path.join(repoRoot, name)).bytes; return [name, bytes.length, sha(bytes)]; });
   const bytes = encode(entries);
   return { roots, entries, bytes, sha256: sha(bytes) };
@@ -152,7 +149,7 @@ export function bundleFiles(repoRoot = root) {
     files.set(name, bytes); descriptors.push({ path: name, ...identity(bytes), mode });
   }
   for (const name of ['SKILL.md', 'scripts/phoenix-diagram', 'scripts/phoenix-launcher.cjs', 'scripts/phoenix-bootstrap.cjs',
-    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map(kind => `schemas/${kind}.schema.json`)]) {
+    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'].map(kind => `schemas/${kind}.schema.json`)]) {
     assert(files.has(name), `Missing required diagram bundle source: ${name}`);
   }
   const manifest = { schemaVersion: 1, tool: TOOL, version: TOOL_VERSION, files: descriptors }, bytes = pretty(manifest);
@@ -624,18 +621,42 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
     binarySha256: binary.sha256, bundleSha256: bundle.sha256, licenseSha256: legal.sha256, fullRuntimeTests: 'not-run-by-build-script' };
 }
 
+// The maintained distribution is the built artifact without its engine binary
+// and build-only records; skills/phoenix-diagram/ENGINE.json repeats VERSION.
+export function syncDist(builtDirectory, repoRoot = root) {
+  const version = JSON.parse(regular(path.join(builtDirectory, 'VERSION.json')).bytes);
+  const excluded = new Set(['source-inputs.json', 'build-receipt.json', ...Object.values(version.engines).map(engine => engine.asset)]);
+  const files = walk(builtDirectory).filter(name => !excluded.has(name)).map(name => {
+    const { bytes, stat } = regular(path.join(builtDirectory, name));
+    return [name, bytes, stat.mode & 0o111n ? 0o755 : 0o644];
+  });
+  const target = path.join(repoRoot, 'dist/phoenix-diagram');
+  fs.rmSync(target, { recursive: true, force: true });
+  for (const [name, bytes, mode] of files) {
+    const file = path.join(target, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, bytes, { mode }); fs.chmodSync(file, mode);
+  }
+  const engine = path.join(repoRoot, 'skills/phoenix-diagram/ENGINE.json');
+  fs.writeFileSync(engine, files.find(([name]) => name === 'VERSION.json')[1]);
+  return { directory: path.relative(repoRoot, target), files: files.length, engine: path.relative(repoRoot, engine) };
+}
+
 export function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') {
-    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --development --output-dir DIR\nBuilds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n'); return 0;
+    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --development --output-dir DIR [--sync-dist]\nBuilds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n--sync-dist then copies its VERSION, bundle and legal files to dist/phoenix-diagram and VERSION to skills/phoenix-diagram/ENGINE.json.\n'); return 0;
   }
-  let development = false, outputDir;
+  let development = false, outputDir, sync = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--development' && !development) development = true;
+    else if (args[i] === '--sync-dist' && !sync) sync = true;
     else if (args[i] === '--output-dir' && !outputDir && args[i + 1] && !args[i + 1].startsWith('--')) outputDir = path.resolve(args[++i]);
-    else throw new Error('Usage: --development --output-dir DIR; unknown, duplicate or incomplete build argument');
+    else throw new Error('Usage: --development --output-dir DIR [--sync-dist]; unknown, duplicate or incomplete build argument');
   }
   assert(development && outputDir, 'A native one-platform build requires --development --output-dir DIR');
-  process.stdout.write(pretty(buildDevelopment({ outputDir }))); return 0;
+  const result = buildDevelopment({ outputDir });
+  if (sync) result.synced = syncDist(result.directory);
+  process.stdout.write(pretty(result)); return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

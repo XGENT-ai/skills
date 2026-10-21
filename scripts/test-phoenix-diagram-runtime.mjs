@@ -6,19 +6,22 @@ import { randomBytes } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { REQUIRED_EXPORT_SCOPE, verifyPrintSample, verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
-import { root,TYPES,XSS_LITERAL,CoreError,identity,requiredCoverage,readSnapshot,readBound,bound,requireThat,inspectFinalize,verifyReviewTransition,assertXssArtifact,publicNpmCommand } from './test-phoenix-diagram-core.mjs';
+import { root,TYPES,contractsFor,XSS_LITERAL,CoreError,identity,requiredCoverage,readSnapshot,readBound,bound,requireThat,inspectFinalize,verifyReviewTransition,assertXssArtifact,publicNpmCommand } from './test-phoenix-diagram-core.mjs';
 
 const INDEX_KIND='phoenix-diagram-core-acceptance';
 const LEGACY={architecture:'web-app',workflow:'agent-tool-call',sequence:'async-job-roundtrip',dataflow:'product-analytics',lifecycle:'deployment-release'};
 const CHECKPOINT_VARIABLES=['PHOENIX_DIAGRAM_ACCEPTANCE','PHOENIX_DIAGRAM_CHECKPOINT_DIR','PHOENIX_DIAGRAM_CHECKPOINT_PHASE'];
 const same=isDeepStrictEqual;
+// Acceptance scopes run on resume against the finalized cases; each stays not-run until requested.
+// The core stage requires all of them for handoff; a package consumer fixes its own subset at creation.
+export const SCOPES=['explore','corpus','evidence','locale'];
 export const DEFAULT_CASES=TYPES.flatMap(type=>[
   {id:`new-${type}`,type,contract:'phoenix-v1',source:path.join(root,'skills/phoenix-diagram/examples',`minimal.${type}.json`)},
-  {id:`legacy-${type}`,type,contract:'legacy-2.17',source:path.join(root,'tools/phoenix-diagram/upstream/legacy-2.17/examples',`${LEGACY[type]}.${type}.json`)},
+  ...(contractsFor(type).includes('legacy-2.17')?[{id:`legacy-${type}`,type,contract:'legacy-2.17',source:path.join(root,'tools/phoenix-diagram/upstream/legacy-2.17/examples',`${LEGACY[type]}.${type}.json`)}]:[]),
 ]);
 
 function diagnostic(error) {return{stage:error.stage || 'core',code:error.code || 'core/execution',message:error.message};}
-function header(command) {return{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command};}
+function header(command) {return{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command};}
 function writeNew(file,value,mode=0o600) {const content=Buffer.isBuffer(value)?value:Buffer.from(`${JSON.stringify(value,null,2)}\n`);fs.writeFileSync(file,content,{flag:'wx',mode});return bound(readSnapshot(file));}
 function privateDirectory(directory,{existing=false}={}) {
   if(!existing)fs.mkdirSync(directory,{mode:0o700});
@@ -89,9 +92,9 @@ async function prepareEngine(options,runRoot,index) {
     const directory=privateDirectory(path.join(runRoot,'engine'));const file=path.join(directory,'phoenix-diagram');writeNew(file,supplied.content,0o700);engine={...bound(readSnapshot(file)),source:bound(supplied)};
   }
   const probe=await invokeNative(engine,['engine-probe'],{options,json:false});
-  requireThat(probe.exitCode===0 && probe.stdout.trim()==='phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1','Native engine probe identity did not match the supported contracts','core/engine-probe');
+  requireThat(probe.exitCode===0 && probe.stdout.trim()==='phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2','Native engine probe identity did not match the supported contracts','core/engine-probe');
   const doctor=await invokeNative(engine,['doctor','--json'],{options});const declared=doctor.receipt?.engine;
-  requireThat(declared && /^[0-9a-f]{64}$/.test(declared.sourceInputSha256) && declared.inputContractSchema===1 && declared.receiptSchema===1 && declared.viewerRevision==='phoenix-v1' && same(declared.binary,engine.identity),'Doctor did not bind the actual native binary and source identity','core/engine-identity');
+  requireThat(declared && /^[0-9a-f]{64}$/.test(declared.sourceInputSha256) && declared.inputContractSchema===1 && declared.receiptSchema===1 && declared.viewerRevision==='phoenix-v2' && same(declared.binary,engine.identity),'Doctor did not bind the actual native binary and source identity','core/engine-identity');
   if(index)requireThat(same(declared,index.engine.engineIdentity),'Engine identity changed during resume','core/stale-engine');
   return{...engine,engineIdentity:declared,probe:probe.stdout.trim(),doctor:{status:doctor.receipt.status,browser:doctor.receipt.browser,platform:doctor.receipt.platform}};
 }
@@ -385,6 +388,14 @@ export function refreshEvidence(index) {
     for(const reference of scenario.retained || [])readBound(reference,'retained conflict evidence');
     if(scenario.finalPublic?.absent)requireThat(!fs.existsSync(scenario.finalPublic.path),'A later claimant changed the expected absent scenario output');else if(scenario.finalPublic)readBound(scenario.finalPublic,'recovery scenario public file');
   }
+  // Every file a passed scope bound (path, identity and physical binding) must still be current.
+  const rebind=value=>{
+    if(Array.isArray(value)){value.forEach(rebind);return;}
+    if(!value || typeof value!=='object')return;
+    if(typeof value.path==='string' && value.identity && value.binding)readBound(value,'scope evidence');
+    Object.values(value).forEach(rebind);
+  };
+  for(const name of SCOPES)if(index[name]?.status==='pass')rebind(index[name]);
   if(index.offline?.status==='pass') {
     requireThat(index.offline.cases.length===index.cases.length,'Offline case scope is incomplete');
     for(const sample of index.offline.cases) {
@@ -419,10 +430,10 @@ export function recomputeIndex(index) {
   const states=index.cases.map(entry=>entry.state || {automatedStatus:'not-run',visualReview:'required-pending',deliveryStatus:'incomplete'});
   const automatic=states.every(state=>state.automatedStatus==='pass')?'pass':states.some(state=>state.automatedStatus==='failed')?'failed':states.some(state=>state.automatedStatus==='unavailable')?'unavailable':'not-run';
   const complete=states.every(state=>state.deliveryStatus==='complete' && state.visualReview==='passed');
-  const phaseNames=['content','recovery','offline','reader','review','reviewRecovery','reviewBindings','newDelivery'];
+  const phaseNames=['content','recovery','offline','reader','review','reviewRecovery','reviewBindings','newDelivery',...SCOPES];
   const requestedFailures=index.cases.some(entry=>entry.reader?.status==='failed') || phaseNames.some(key=>index[key]?.status==='failed');
   const unavailable=index.cases.some(entry=>entry.reader?.status==='unavailable') || phaseNames.some(key=>index[key]?.status==='unavailable');
-  const allScopes=index.coverage.complete && automatic==='pass' && complete && index.cases.every(entry=>entry.determinism?.status==='pass' && entry.reader?.status==='pass' && entry.review?.idempotent?.status==='pass') && ['content','recovery','offline','reviewBindings','newDelivery'].every(key=>index[key]?.status==='pass') && index.reviewRecovery?.status==='pass' && index.reviewRecovery.retryStatus==='pass';
+  const allScopes=index.coverage.complete && automatic==='pass' && complete && index.cases.every(entry=>entry.determinism?.status==='pass' && entry.reader?.status==='pass' && entry.review?.idempotent?.status==='pass') && ['content','recovery','offline','reviewBindings','newDelivery',...(index.requiredScopes || SCOPES)].every(key=>index[key]?.status==='pass') && index.reviewRecovery?.status==='pass' && index.reviewRecovery.retryStatus==='pass';
   const status=automatic==='failed' || requestedFailures?'failed':allScopes?'pass':'incomplete';
   const exitCode=status==='failed'?1:automatic==='unavailable'?5:unavailable?4:0;
   return{...index,status,automatedStatus:automatic,visualReview:complete?'passed':states.some(state=>state.visualReview==='failed')?'failed':states.some(state=>state.visualReview==='unavailable')?'unavailable':'required-pending',handoff:allScopes?'passed':'incomplete',exitCode};
@@ -436,10 +447,11 @@ export async function runCoreStage(options) {
     index.runRoot=privateDirectory(index.runRoot,{existing:true});requireThat(path.dirname(snapshot.path)===index.runRoot,'Index must be inside its original run directory');
     index.engine=await prepareEngine(options,index.runRoot,index);index.coverage=requiredCoverage(index.cases);
   } else {
+    requireThat(!options.requiredScopes || options.requiredScopes.every(name=>SCOPES.includes(name) && options[name]),'Required acceptance scopes must be known and requested');
     const inputs=material(options);
     const directory=options.outputDir?path.resolve(options.outputDir):fs.mkdtempSync(path.join(os.tmpdir(),'phoenix-diagram-core-'));
     const runRoot=privateDirectory(directory,{existing:!options.outputDir});privateDirectory(path.join(runRoot,'cases'));
-    index={...header('test-phoenix-diagram'),kind:INDEX_KIND,stage:'core',runRoot,coverage:inputs.coverage,cases:[],content:{status:'not-run'},recovery:{status:'not-run'},offline:{status:'not-run'},reviewRecovery:{status:'not-run'},reviewBindings:{status:'not-run'},newDelivery:{status:'not-run'},diagnostics:[]};
+    index={...header('test-phoenix-diagram'),kind:INDEX_KIND,stage:'core',runRoot,coverage:inputs.coverage,cases:[],content:{status:'not-run'},recovery:{status:'not-run'},offline:{status:'not-run'},reviewRecovery:{status:'not-run'},reviewBindings:{status:'not-run'},newDelivery:{status:'not-run'},...Object.fromEntries(SCOPES.map(name=>[name,{status:'not-run'}])),...(options.requiredScopes?{requiredScopes:[...options.requiredScopes]}:{}),diagnostics:[]};
     index.engine=await prepareEngine(options,runRoot);
     for(const definition of inputs.cases)index.cases.push(await executeCase(definition,index,options));
     try{index.content=await contentArtifact(index,options);}catch(error){index.content={status:'failed',diagnostics:[diagnostic(error)]};}
@@ -458,6 +470,8 @@ export async function runCoreStage(options) {
   if(options.reader)await phase('reader',()=>runReader(index,options));
   if(options.recovery)await phase('recovery',async()=>{index.recovery=await(await import('./test-phoenix-diagram-recovery.mjs')).runRecoveryScenarios(index,options,{invoke:invokeNative});});
   if(options.offline)await phase('offline',async()=>{index.offline=await runOffline(index,options);});
+  const scopes=await import('./test-phoenix-diagram-scopes.mjs');
+  for(const name of SCOPES)if(options[name])await phase(name,async()=>{index[name]=await scopes.run(name,index,options,{invoke:invokeNative});});
   refreshEvidence(index);index=recomputeIndex(index);return persist(index,previous);
 }
 

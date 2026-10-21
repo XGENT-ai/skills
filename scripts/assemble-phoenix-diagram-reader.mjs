@@ -170,7 +170,11 @@ function escape(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
-function catalogsAt(workspace) {
+const placeholders = message => [...new Set([...message.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map(match => match[1]))].sort();
+
+// The single normalized catalog source: frozen catalogs with Phoenix identity,
+// plus catalog-adaptations.json entries that each add a key a locale lacks.
+export function catalogsAt(workspace) {
   const directory = path.join(workspace, 'viewer/locales');
   const manifest = JSON.parse(regularText(path.join(directory, 'manifest.json')));
   const result = {};
@@ -178,9 +182,28 @@ function catalogsAt(workspace) {
     if (!/^[a-zA-Z0-9-]+\.json$/.test(file) || Object.hasOwn(result, locale)) throw new Error('Invalid Reader catalog manifest');
     const catalog = JSON.parse(regularText(path.join(directory, file)));
     result[locale] = Object.fromEntries(Object.entries(catalog).map(([key, value]) => [key,
-      typeof value === 'string' ? value.replace(/\bArchify\b/g, 'Phoenix Diagram') : value]));
+      typeof value === 'string' ? value.replace(/\bArchify\b/g, 'Phoenix Diagram').replace(/\bARCHIFY\b/g, 'PHOENIX DIAGRAM') : value]));
+  }
+  const adaptations = JSON.parse(regularText(path.join(workspace, 'viewer/catalog-adaptations.json')));
+  if (adaptations.schemaVersion !== 1 || !adaptations.messages || typeof adaptations.messages !== 'object') throw new Error('Invalid Reader catalog adaptations');
+  for (const [key, translations] of Object.entries(adaptations.messages)) {
+    for (const [locale, message] of Object.entries(translations)) {
+      if (!result[locale] || typeof message !== 'string' || !message) throw new Error(`Invalid Reader catalog adaptation ${locale} ${key}`);
+      if (Object.hasOwn(result[locale], key)) throw new Error(`Reader catalog adaptation would replace ${locale} ${key}`);
+      result[locale][key] = message;
+    }
   }
   if (!result.en || !result['zh-CN']) throw new Error('Reader requires bundled English and Simplified Chinese catalogs');
+  const keys = Object.keys(result.en).sort();
+  for (const [locale, catalog] of Object.entries(result)) {
+    if (JSON.stringify(Object.keys(catalog).sort()) !== JSON.stringify(keys)) throw new Error(`Reader catalog ${locale} key set differs from en`);
+    for (const key of keys) {
+      if (typeof catalog[key] !== 'string' || JSON.stringify(placeholders(catalog[key])) !== JSON.stringify(placeholders(result.en[key]))) {
+        throw new Error(`Reader catalog ${locale} ${key} placeholders differ from en`);
+      }
+      if (/archify/i.test(catalog[key])) throw new Error(`Reader catalog ${locale} ${key} keeps the Archify identity`);
+    }
+  }
   return result;
 }
 
@@ -257,6 +280,7 @@ export function assembleReader({ workspace = defaultWorkspace, check = false } =
     + members.get('LICENSE') + '-->\n';
   const outputs = [
     ['template.html', generated],
+    ['catalogs.json', JSON.stringify(catalogs, null, 2) + '\n'],
     ['svg-definitions.svg', attribution + definitionsFrom(members) + '\n'],
     ['node-card-style.svg', attribution + nodeCardStyleFrom(members) + '\n'],
   ];

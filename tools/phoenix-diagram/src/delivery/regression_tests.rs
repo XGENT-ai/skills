@@ -101,7 +101,7 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
         source_input_sha256: sha256(b"source test fixture"),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
     };
     let assets = EmbeddedAssets {
@@ -114,6 +114,7 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
             options: &options,
             engine: &engine,
             assets: &assets,
+            repo_root: None,
         },
         &output,
     );
@@ -153,7 +154,7 @@ fn small_failure_handles_preserve_the_failed_check_json_contract() {
         source_input_sha256: "a".repeat(64),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity {
             sha256: "b".repeat(64),
             bytes: 7,
@@ -177,7 +178,7 @@ fn small_failure_handles_preserve_the_failed_check_json_contract() {
             "candidate":null,"artifact":null,"configSha256":null,
             "engine":{
                 "sourceInputSha256":"a".repeat(64),"inputContractSchema":1,
-                "receiptSchema":1,"viewerRevision":"phoenix-v1",
+                "receiptSchema":1,"viewerRevision":"phoenix-v2",
                 "binary":{"sha256":"b".repeat(64),"bytes":7}
             },
             "deliveryReceiptId":null,"deliveryReceipt":null,"checks":[],"composition":null

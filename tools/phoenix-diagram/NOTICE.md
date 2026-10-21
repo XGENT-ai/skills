@@ -24,3 +24,5 @@ ICU 适配及数据的 Unicode-3.0 许可和完整第三方 notices 保存在 [a
 `selectors` 0.38.0 的适用性来自 Stylo 提交 `572ecba2d1600e7c3d490586692a209faf703baa` 的 Cargo 声明及 `selectors/lib.rs` 原始 MPL-2.0 文件头；该提交未携带 MPL 全文。清单分别保留该源码文件和文件头的 SHA-256，并从其明确指向的 Mozilla 官方 MPL 2.0 取得全文：字节来自 [Mozilla Bedrock 固定提交中的版本 2.0 文本](https://github.com/mozilla/bedrock/blob/a15178c3c7c976c67b3641af77cae0b66093a175/media/MPL/2.0/index.txt)。这份通用许可正文独立于 Stylo 源码提交，不借用其他项目的 MIT/Apache 版权或宣称 Stylo 仓库自带该全文。
 
 完整快照和 legacy oracle 的导入闭包包含历史第三方品牌数据及对应原始 notices，供开发期参考。冻结源码独立于消费者运行资源，来源归档不进入 npm 包。P1 的运行资源不携带 Simple Icons 或官方品牌数据。
+
+时间线时区由 `chrono-tz` 0.10.4 编译期内置的 tzdata 2025b 计算，`chrono` 0.4.45 负责日期与固定偏移；两者的 MIT/Apache-2.0 全文随 Cargo.lock 从各自 crate 收集。tz 代码与数据按其 `tz/LICENSE` 属于公有领域，`chrono-tz` 的 LICENSE 同样声明其许可不适用于 tzdb 文件。

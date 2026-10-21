@@ -17,7 +17,7 @@ export async function main(argv = process.argv.slice(2)) {
     process.stdout.write(`${JSON.stringify(result)}\n`);
     return result.exitCode;
   } catch (error) {
-    process.stdout.write(`${JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'test-phoenix-diagram',status:'failed',diagnostics:[{stage:error.stage || 'controller',code:error.code || 'controller/failure',message:error.message}]})}\n`);
+    process.stdout.write(`${JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'test-phoenix-diagram',status:'failed',diagnostics:[{stage:error.stage || 'controller',code:error.code || 'controller/failure',message:error.message}]})}\n`);
     return error.exitCode || (typeof error.errno==='number'?4:1);
   }
 }

@@ -1,3 +1,4 @@
+use phoenix_diagram::geometry::{rects_overlap, text_glyph_box};
 use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
 use phoenix_diagram::layout as dataflow;
 use phoenix_diagram::scene::{DiagramFacts, Rect, Text};
@@ -185,8 +186,36 @@ fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
                     "{context}"
                 );
                 near(sigil.position.x, &oracle["sigil"]["x"], &context);
-                near(sigil.position.y, &oracle["sigil"]["y"], &context);
-                near(sigil.size, &oracle["sigil"]["size"], &context);
+                // A frozen sigil that touches its label moves into the card's
+                // top rail and shrinks to clear it (recorded P2 deviation).
+                let frozen = Rect {
+                    x: oracle["sigil"]["x"].as_f64().unwrap(),
+                    y: oracle["sigil"]["y"].as_f64().unwrap(),
+                    width: oracle["sigil"]["size"].as_f64().unwrap(),
+                    height: oracle["sigil"]["size"].as_f64().unwrap(),
+                };
+                let touches = node
+                    .text
+                    .iter()
+                    .filter(|text| text.source_path.ends_with("/label"))
+                    .any(|text| {
+                        let label = text_glyph_box(
+                            &text.content,
+                            text.position.x,
+                            text.position.y,
+                            text.font_size,
+                            &text.anchor,
+                            input.input_contract,
+                        );
+                        rects_overlap(&frozen, &label, 1.0)
+                    });
+                if touches {
+                    assert_eq!(sigil.position.y, node.bounds.y + 3.0, "{context}");
+                    assert!(sigil.size >= 7.0 && sigil.size < frozen.width, "{context}");
+                } else {
+                    near(sigil.position.y, &oracle["sigil"]["y"], &context);
+                    near(sigil.size, &oracle["sigil"]["size"], &context);
+                }
             }
         }
         assert_eq!(

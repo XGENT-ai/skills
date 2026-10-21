@@ -1,9 +1,34 @@
-use super::*;
-use crate::geometry::{anchor, label_point, normalize_route_points, proper_segment_intersection};
+// Shared orthogonal router for architecture, erd and class, ported from the
+// frozen renderers/architecture/routing.mjs createRouter. One router is bound to
+// one set of measured boxes; caller-owned options follow the source options.
+use crate::geometry::{
+    anchor, label_point, normalize_route_points, proper_segment_intersection,
+    segment_intersects_rect, text_units_for_contract,
+};
 use crate::geometry::{labels as shared_labels, route_quality};
+use crate::input::InputContract;
+use crate::scene::{Node, Point, Rect};
+use serde_json::Value;
+use std::collections::HashSet;
+
+fn string(value: &Value, field: &str) -> String {
+    value[field].as_str().unwrap_or("").to_owned()
+}
+fn number(value: &Value, field: &str, fallback: f64) -> f64 {
+    value[field].as_f64().unwrap_or(fallback)
+}
+fn list(value: &Value) -> &[Value] {
+    value.as_array().map_or(&[], Vec::as_slice)
+}
+fn point(value: &Value) -> Option<Point> {
+    Some(Point {
+        x: value.get(0)?.as_f64()?,
+        y: value.get(1)?.as_f64()?,
+    })
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Side {
+pub(crate) enum Side {
     Right,
     Bottom,
     Left,
@@ -19,7 +44,7 @@ impl Side {
             Self::Top => "top",
         }
     }
-    fn parse(value: &Value) -> Option<Self> {
+    pub fn parse(value: &Value) -> Option<Self> {
         match value.as_str() {
             Some("right") => Some(Self::Right),
             Some("bottom") => Some(Self::Bottom),
@@ -36,7 +61,7 @@ impl Side {
             Self::Top => Point { x: 0.0, y: -1.0 },
         }
     }
-    fn opposite(self) -> Self {
+    pub fn opposite(self) -> Self {
         match self {
             Self::Right => Self::Left,
             Self::Bottom => Self::Top,
@@ -44,17 +69,17 @@ impl Side {
             Self::Top => Self::Bottom,
         }
     }
-    fn horizontal(self) -> bool {
+    pub fn horizontal(self) -> bool {
         matches!(self, Self::Left | Self::Right)
     }
 }
-#[derive(Clone, Copy, Debug)]
-pub(super) struct Sides {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Sides {
     pub from: Side,
     pub to: Side,
 }
 #[derive(Clone)]
-pub(super) struct Edge {
+pub(crate) struct Edge {
     pub raw: Value,
     pub index: usize,
     pub from: usize,
@@ -87,12 +112,12 @@ impl Edge {
     }
 }
 #[derive(Clone, Debug)]
-pub(super) struct Route {
+pub(crate) struct Route {
     pub points: Vec<Point>,
     pub sides: Sides,
 }
 #[derive(Clone)]
-pub(super) struct Label {
+pub(crate) struct Label {
     pub edge: usize,
     pub rect: Rect,
     pub anchor: Point,
@@ -135,7 +160,7 @@ impl Label {
     }
 }
 
-pub(super) fn place_labels(
+pub(crate) fn place_labels(
     labels: &mut [Label],
     routes: &[Route],
     nodes: &[Node],
@@ -168,7 +193,7 @@ pub(super) fn place_labels(
         label.anchor = resolved.position;
     }
 }
-pub(super) fn connections(document: &Value, nodes: &[Node]) -> Vec<Edge> {
+pub(crate) fn connections(document: &Value, nodes: &[Node]) -> Vec<Edge> {
     list(&document["connections"])
         .iter()
         .enumerate()
@@ -257,7 +282,7 @@ fn endpoint_honors(a: Point, b: Point, side: Side) -> bool {
         Side::Top => dx.abs() <= 0.0001 && dy < -0.0001,
     }
 }
-pub(super) fn honors(points: &[Point], sides: Sides) -> bool {
+pub(crate) fn honors(points: &[Point], sides: Sides) -> bool {
     let normalized = normalize_route_points(points);
     normalized.len() >= 2
         && endpoint_honors(normalized[0], normalized[1], sides.from)
@@ -267,7 +292,7 @@ pub(super) fn honors(points: &[Point], sides: Sides) -> bool {
             sides.to,
         )
 }
-pub(super) fn authored_sides_honored(edge: &Edge, route: &Route) -> bool {
+pub(crate) fn authored_sides_honored(edge: &Edge, route: &Route) -> bool {
     if !edge.explicit() {
         return honors(&route.points, route.sides);
     }
@@ -345,119 +370,128 @@ struct Geometry {
     crowded: bool,
 }
 
+/// A structural frame whose straight borders an automatic route may cross but
+/// never follow.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Frame {
+    pub bounds: Rect,
+    pub radius: f64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Endpoint {
+    Source,
+    Target,
+}
+
+/// What a caller-owned candidate family sees for one relationship.
+pub(crate) struct CandidateContext<'a> {
+    pub edge: &'a Edge,
+    pub start: Point,
+    pub end: Point,
+    pub sides: Sides,
+}
+
+pub(crate) type SideFor<'a> = &'a dyn Fn(&Edge, Endpoint) -> Option<Side>;
+pub(crate) type PreferredCandidates<'a> = &'a dyn Fn(&CandidateContext<'_>) -> Vec<Vec<Point>>;
+
+/// Caller-owned routing preferences of the source router. The defaults are the
+/// architecture behavior; the legacy-2.17 router ignores every option.
+#[derive(Clone, Copy)]
+pub(crate) struct RouterOptions<'a> {
+    /// Endpoint side for an unpinned side; `None` keeps the shared inference.
+    pub side_for: Option<SideFor<'a>>,
+    /// Widest spacing the automatic port spread may use on one shared side.
+    pub max_port_spacing: f64,
+    /// Interior points tried before the shared candidate families.
+    pub preferred_candidates: Option<PreferredCandidates<'a>>,
+    /// Hold automatic routes to the drawn-route rhythm floors.
+    pub composition_floors: bool,
+    /// Before an obstacle search that may cross earlier routes, search one that
+    /// treats every unrelated resolved route as a wall.
+    pub crossing_free_grid_first: bool,
+    /// When positive, the obstacle search first keeps this far from components
+    /// a route merely passes.
+    pub component_gap_px: f64,
+    /// Shortest first and last segment of a bent automatic route.
+    pub minimum_terminal_segment_px: f64,
+    /// Keep relationships that share an endpoint on distinct ports and corridors.
+    pub distinct_automatic_ports: bool,
+    /// Reserve each routed label so later routes keep clear of it.
+    pub label_reservations: bool,
+}
+
+impl Default for RouterOptions<'_> {
+    fn default() -> Self {
+        Self {
+            side_for: None,
+            max_port_spacing: 14.0,
+            preferred_candidates: None,
+            composition_floors: true,
+            crossing_free_grid_first: false,
+            component_gap_px: 0.0,
+            minimum_terminal_segment_px: 0.0,
+            distinct_automatic_ports: true,
+            label_reservations: true,
+        }
+    }
+}
+
 struct Router<'a> {
     nodes: &'a [Node],
     edges: &'a [Edge],
     frames: Vec<route_quality::Segment>,
     legacy: bool,
+    options: RouterOptions<'a>,
     inferred: Vec<Sides>,
     ports: Vec<[Option<Point>; 2]>,
     cache: Vec<Option<Route>>,
     reserved: Vec<Label>,
+    // Routes that follow a caller-owned corridor; the readability sweep keeps them.
+    owned: HashSet<usize>,
     honor_labels: bool,
     allow_grid: bool,
     grid_count: usize,
 }
 
-pub(super) fn route(
+pub(crate) fn route(
     nodes: &[Node],
     edges: &[Edge],
-    boundaries: &[presentation::Boundary],
+    frames: &[Frame],
     contract: InputContract,
     grow_bottom: bool,
 ) -> Vec<Route> {
-    let legacy = contract == InputContract::Legacy217;
-    let mut router = Router {
+    route_with(
         nodes,
         edges,
-        frames: vec![],
-        legacy,
-        inferred: vec![],
-        ports: vec![[None, None]; edges.len()],
-        cache: vec![None; edges.len()],
-        reserved: vec![],
-        honor_labels: true,
-        allow_grid: true,
-        grid_count: 0,
-    };
-    for boundary in boundaries {
-        let r = boundary.bounds;
-        let radius = if boundary.raw["kind"] == "security-group" {
-            8.0_f64
-        } else {
-            12.0_f64
-        }
-        .min(r.width / 2.0)
-        .min(r.height / 2.0);
-        let left = r.x;
-        let right = r.x + r.width;
-        let top = r.y;
-        let bottom = r.y + r.height;
-        for (a, b) in [
-            (
-                Point {
-                    x: left + radius,
-                    y: top,
-                },
-                Point {
-                    x: right - radius,
-                    y: top,
-                },
-            ),
-            (
-                Point {
-                    x: right,
-                    y: top + radius,
-                },
-                Point {
-                    x: right,
-                    y: bottom - radius,
-                },
-            ),
-            (
-                Point {
-                    x: right - radius,
-                    y: bottom,
-                },
-                Point {
-                    x: left + radius,
-                    y: bottom,
-                },
-            ),
-            (
-                Point {
-                    x: left,
-                    y: bottom - radius,
-                },
-                Point {
-                    x: left,
-                    y: top + radius,
-                },
-            ),
-        ] {
-            if span(a, b) > 0.0001 {
-                router
-                    .frames
-                    .push(route_quality::Segment { start: a, end: b });
-            }
-        }
-    }
-    router.inferred = edges
-        .iter()
-        .map(|edge| {
-            let mut sides = default_sides(nodes[edge.from].bounds, nodes[edge.to].bounds, legacy);
-            if !legacy {
-                if let Some(fanout) = router.fanout(edge) {
-                    sides = fanout;
-                }
-            }
-            Sides {
-                from: Side::parse(&edge.raw["fromSide"]).unwrap_or(sides.from),
-                to: Side::parse(&edge.raw["toSide"]).unwrap_or(sides.to),
-            }
-        })
-        .collect();
-    router.spread_ports();
+        frames,
+        contract,
+        grow_bottom,
+        RouterOptions::default(),
+    )
+}
+
+/// Inferred endpoint sides and automatic port spread, before any route exists.
+/// A caller that groups relationships before routing reads them here.
+pub(crate) fn inferred_ports<'a>(
+    nodes: &'a [Node],
+    edges: &'a [Edge],
+    options: RouterOptions<'a>,
+) -> (Vec<Sides>, Vec<[Option<Point>; 2]>) {
+    let router = Router::new(nodes, edges, &[], InputContract::PhoenixV1, options);
+    (router.inferred, router.ports)
+}
+
+pub(crate) fn route_with<'a>(
+    nodes: &'a [Node],
+    edges: &'a [Edge],
+    frames: &[Frame],
+    contract: InputContract,
+    grow_bottom: bool,
+    options: RouterOptions<'a>,
+) -> Vec<Route> {
+    let mut router = Router::new(nodes, edges, frames, contract, options);
+    let legacy = router.legacy;
     let mut order: Vec<usize> = (0..edges.len()).collect();
     if !legacy {
         order.sort_by(|a, b| {
@@ -505,7 +539,116 @@ pub(super) fn route(
     router.cache.into_iter().map(Option::unwrap).collect()
 }
 
-impl Router<'_> {
+impl<'a> Router<'a> {
+    fn new(
+        nodes: &'a [Node],
+        edges: &'a [Edge],
+        frames: &[Frame],
+        contract: InputContract,
+        options: RouterOptions<'a>,
+    ) -> Self {
+        let legacy = contract == InputContract::Legacy217;
+        let mut router = Router {
+            nodes,
+            edges,
+            frames: vec![],
+            legacy,
+            options,
+            inferred: vec![],
+            ports: vec![[None, None]; edges.len()],
+            cache: vec![None; edges.len()],
+            reserved: vec![],
+            owned: HashSet::new(),
+            honor_labels: true,
+            allow_grid: true,
+            grid_count: 0,
+        };
+        for frame in frames {
+            let r = frame.bounds;
+            let radius = frame.radius.min(r.width / 2.0).min(r.height / 2.0);
+            let left = r.x;
+            let right = r.x + r.width;
+            let top = r.y;
+            let bottom = r.y + r.height;
+            for (a, b) in [
+                (
+                    Point {
+                        x: left + radius,
+                        y: top,
+                    },
+                    Point {
+                        x: right - radius,
+                        y: top,
+                    },
+                ),
+                (
+                    Point {
+                        x: right,
+                        y: top + radius,
+                    },
+                    Point {
+                        x: right,
+                        y: bottom - radius,
+                    },
+                ),
+                (
+                    Point {
+                        x: right - radius,
+                        y: bottom,
+                    },
+                    Point {
+                        x: left + radius,
+                        y: bottom,
+                    },
+                ),
+                (
+                    Point {
+                        x: left,
+                        y: bottom - radius,
+                    },
+                    Point {
+                        x: left,
+                        y: top + radius,
+                    },
+                ),
+            ] {
+                if span(a, b) > 0.0001 {
+                    router
+                        .frames
+                        .push(route_quality::Segment { start: a, end: b });
+                }
+            }
+        }
+        router.inferred = edges
+            .iter()
+            .map(|edge| {
+                let default = default_sides(nodes[edge.from].bounds, nodes[edge.to].bounds, legacy);
+                let fanout = if legacy { None } else { router.fanout(edge) };
+                let hook = |endpoint| {
+                    if legacy {
+                        None
+                    } else {
+                        router
+                            .options
+                            .side_for
+                            .and_then(|side_for| side_for(edge, endpoint))
+                    }
+                };
+                Sides {
+                    from: Side::parse(&edge.raw["fromSide"])
+                        .or_else(|| hook(Endpoint::Source))
+                        .or(fanout.map(|sides| sides.from))
+                        .unwrap_or(default.from),
+                    to: Side::parse(&edge.raw["toSide"])
+                        .or_else(|| hook(Endpoint::Target))
+                        .or(fanout.map(|sides| sides.to))
+                        .unwrap_or(default.to),
+                }
+            })
+            .collect();
+        router.spread_ports();
+        router
+    }
     fn fanout(&self, edge: &Edge) -> Option<Sides> {
         let vertical = |node: usize, other: usize| -> Option<Side> {
             let a = self.nodes[node].bounds;
@@ -627,24 +770,31 @@ impl Router<'_> {
                 rect.width
             };
             let usable = (extent - 32.0).max(0.0);
-            let spacing = 14.0_f64.min(usable / (items.len() - 1) as f64);
+            let maximum = if self.legacy {
+                14.0
+            } else {
+                self.options.max_port_spacing
+            };
+            let spacing = maximum.min(usable / (items.len() - 1) as f64);
             if spacing <= 0.0 {
                 continue;
             }
+            // Width-aware spreading reserves the whole group together.
+            let width_aware = !self.legacy && self.options.distinct_automatic_ports;
             let gaps: Vec<f64> = items
                 .windows(2)
                 .map(|pair| {
                     let a = &self.edges[pair[0].0];
                     let b = &self.edges[pair[1].0];
-                    if !self.legacy && 3.5 * (a.stroke() + b.stroke()) > 14.0 {
-                        port_spacing(a, b)
+                    if width_aware && 3.5 * (a.stroke() + b.stroke()) > 14.0 {
+                        port_spacing(a, b).max(maximum)
                     } else {
-                        14.0
+                        14.0_f64.max(maximum)
                     }
                 })
                 .collect();
             let total: f64 = gaps.iter().sum();
-            let wide = !self.legacy && total <= usable && gaps.iter().any(|gap| *gap > 14.0);
+            let wide = width_aware && total <= usable && gaps.iter().any(|gap| *gap > maximum);
             let mut offset = -total / 2.0;
             for (slot, (index, endpoint, _)) in items.iter().enumerate() {
                 let shift = if wide {
@@ -693,7 +843,15 @@ impl Router<'_> {
         })
     }
     fn floors(&self, points: &[Point]) -> bool {
-        rhythm(points)
+        let terminal = self.options.minimum_terminal_segment_px;
+        if terminal > 0.0
+            && points.len() > 2
+            && (span(points[0], points[1]) < terminal
+                || span(points[points.len() - 2], points[points.len() - 1]) < terminal)
+        {
+            return false;
+        }
+        (!self.options.composition_floors || rhythm(points))
             && !self.frames.iter().any(|border| {
                 points
                     .windows(2)
@@ -721,7 +879,8 @@ impl Router<'_> {
     }
     fn independent(&self, index: usize, other: usize) -> bool {
         !shares(&self.edges[index], &self.edges[other])
-            || (!self.edges[other].explicit()
+            || (self.options.distinct_automatic_ports
+                && !self.edges[other].explicit()
                 && self.edges[other].raw.get("labelAt").is_none()
                 && self.edges[index].raw.get("labelAt").is_none())
     }
@@ -777,8 +936,9 @@ impl Router<'_> {
             )
         }
     }
-    fn endpoint(&self, index: usize, endpoint: usize, side: Side) -> (Point, bool, bool) {
+    fn endpoint(&self, index: usize, endpoint: usize, sides: Sides) -> (Point, bool, bool) {
         let edge = &self.edges[index];
+        let side = if endpoint == 0 { sides.from } else { sides.to };
         let inferred = if endpoint == 0 {
             self.inferred[index].from
         } else {
@@ -786,13 +946,24 @@ impl Router<'_> {
         };
         let node = if endpoint == 0 { edge.from } else { edge.to };
         let rect = self.nodes[node].bounds;
-        let initial = if side == inferred {
+        // Shared spread slots keep their place only on the inferred sides; without
+        // distinct ports the whole relationship has to keep its inferred pair.
+        let keeps_slot = if self.legacy || self.options.distinct_automatic_ports {
+            side == inferred
+        } else {
+            sides == self.inferred[index]
+        };
+        let initial = if keeps_slot {
             self.ports[index][endpoint]
         } else {
             None
         };
         let preferred = initial.unwrap_or_else(|| anchor(&rect, side.name()));
-        if self.legacy || edge.explicit() || edge.raw.get("labelAt").is_some() {
+        if self.legacy
+            || !self.options.distinct_automatic_ports
+            || edge.explicit()
+            || edge.raw.get("labelAt").is_some()
+        {
             return (preferred, initial.is_some(), false);
         }
         let mut occupied = vec![];
@@ -857,8 +1028,8 @@ impl Router<'_> {
         (preferred, true, true)
     }
     fn geometry(&self, index: usize, sides: Sides) -> Geometry {
-        let (mut start, from_spread, from_crowded) = self.endpoint(index, 0, sides.from);
-        let (mut end, to_spread, to_crowded) = self.endpoint(index, 1, sides.to);
+        let (mut start, from_spread, from_crowded) = self.endpoint(index, 0, sides);
+        let (mut end, to_spread, to_crowded) = self.endpoint(index, 1, sides);
         let edge = &self.edges[index];
         let opposite = sides.from.opposite() == sides.to;
         if !edge.explicit()
@@ -1099,6 +1270,28 @@ impl Router<'_> {
             "orthogonal-v" => return vertical,
             _ => {}
         }
+        // A caller-owned corridor (a bundled trunk, a dedicated lane) wins over
+        // the generic families; a candidate that breaks the endpoint contract
+        // or meets an obstacle is skipped.
+        if let Some(preferred) = self.options.preferred_candidates.filter(|_| !self.legacy) {
+            let context = CandidateContext {
+                edge,
+                start,
+                end,
+                sides,
+            };
+            for candidate in preferred(&context) {
+                let points = join(start, &candidate, end);
+                if honors(&points, sides)
+                    && self.clears_endpoints(index, &points)
+                    && self.clears_components(index, &points)
+                    && self.floors(&points)
+                    && !self.conflicts(index, &points, resolved)
+                {
+                    return candidate;
+                }
+            }
+        }
         let dx = (start.x - end.x).abs();
         let dy = (start.y - end.y).abs();
         let direct = [start, end];
@@ -1180,6 +1373,7 @@ impl Router<'_> {
             }
             return fallback;
         }
+        let distinct = self.options.distinct_automatic_ports;
         let mut first_feasible = None;
         for via in ordered {
             let points = join(start, &via, end);
@@ -1187,13 +1381,15 @@ impl Router<'_> {
                 && self.clears_components(index, &points)
                 && self.floors(&points)
                 && !self.conflicts(index, &points, resolved)
-                && !self.overlaps(index, &points, resolved)
-                && self.sibling_crossings(index, &points, resolved) == 0
+                && (!distinct
+                    || (!self.overlaps(index, &points, resolved)
+                        && self.sibling_crossings(index, &points, resolved) == 0))
             {
                 if self.edges[index].raw["label"]
                     .as_str()
                     .unwrap_or("")
                     .is_empty()
+                    || !self.options.label_reservations
                     || self
                         .reserve(index, &points, resolved, &self.reserved)
                         .is_some()
@@ -1223,14 +1419,19 @@ impl Router<'_> {
             }
             values
         };
-        let alternatives = channels(start.x, end.x, mid_x)
-            .into_iter()
-            .map(|x| vec![Point { x, y: start.y }, Point { x, y: end.y }])
-            .chain(
-                channels(start.y, end.y, mid_y)
-                    .into_iter()
-                    .map(|y| vec![Point { x: start.x, y }, Point { x: end.x, y }]),
-            );
+        let alternatives: Vec<_> = if distinct {
+            channels(start.x, end.x, mid_x)
+                .into_iter()
+                .map(|x| vec![Point { x, y: start.y }, Point { x, y: end.y }])
+                .chain(
+                    channels(start.y, end.y, mid_y)
+                        .into_iter()
+                        .map(|y| vec![Point { x: start.x, y }, Point { x: end.x, y }]),
+                )
+                .collect()
+        } else {
+            vec![]
+        };
         for via in alternatives {
             let points = join(start, &via, end);
             if honors(&points, sides)
@@ -1247,8 +1448,104 @@ impl Router<'_> {
         if !self.allow_grid || self.grid_count >= 64 {
             return fallback;
         }
-        self.grid_count += 1;
-        let mut obstacles: Vec<_> = self.nodes.iter().map(|node| node.bounds).collect();
+        let gaps = if self.options.component_gap_px > 0.0 {
+            vec![self.options.component_gap_px, 0.0]
+        } else {
+            vec![0.0]
+        };
+        if self.options.crossing_free_grid_first {
+            let unrelated: Vec<_> = resolved
+                .iter()
+                .filter(|other| !shares(&self.edges[index], &self.edges[**other]))
+                .flat_map(|other| self.segments(*other))
+                .collect();
+            for gap in if unrelated.is_empty() {
+                &[][..]
+            } else {
+                &gaps[..]
+            } {
+                self.grid_count += 1;
+                if let Some(points) = self.grid_search(index, geometry, *gap, &unrelated, false) {
+                    if self.clears_endpoints(index, &points)
+                        && self.clears_components(index, &points)
+                        && !self.conflicts(index, &points, resolved)
+                        && !self.overlaps(index, &points, resolved)
+                        && self.floors(&points)
+                        && spaced_route_is_clean(&points, *gap)
+                    {
+                        return points[1..points.len() - 1].to_vec();
+                    }
+                }
+            }
+        }
+        let avoided: Vec<_> = resolved
+            .iter()
+            .filter(|other| {
+                distinct
+                    && shares(&self.edges[index], &self.edges[**other])
+                    && !self.edges[**other].explicit()
+                    && self.edges[**other].raw.get("labelAt").is_none()
+                    && self.edges[index].raw.get("labelAt").is_none()
+            })
+            .flat_map(|other| self.segments(*other))
+            .collect();
+        for gap in gaps {
+            self.grid_count += 1;
+            if let Some(points) = self.grid_search(index, geometry, gap, &avoided, true) {
+                if self.clears_endpoints(index, &points)
+                    && self.clears_components(index, &points)
+                    && !self.overlaps(index, &points, resolved)
+                    && self.floors(&points)
+                    && spaced_route_is_clean(&points, gap)
+                {
+                    return points[1..points.len() - 1].to_vec();
+                }
+            }
+        }
+        fallback
+    }
+    fn segments(&self, index: usize) -> Vec<route_quality::Segment> {
+        self.cache[index]
+            .as_ref()
+            .unwrap()
+            .points
+            .windows(2)
+            .map(|pair| route_quality::Segment {
+                start: pair[0],
+                end: pair[1],
+            })
+            .collect()
+    }
+    // Bounded obstacle-grid search. A positive gap keeps the route that far
+    // from every component it only passes; its own endpoints keep the grid's
+    // 2px clearance.
+    fn grid_search(
+        &self,
+        index: usize,
+        geometry: Geometry,
+        gap: f64,
+        avoided: &[route_quality::Segment],
+        allow_crossings: bool,
+    ) -> Option<Vec<Point>> {
+        let edge = &self.edges[index];
+        let mut obstacles: Vec<_> = self
+            .nodes
+            .iter()
+            .enumerate()
+            .map(|(node, item)| {
+                let bounds = item.bounds;
+                if gap == 0.0 || node == edge.from || node == edge.to {
+                    bounds
+                } else {
+                    Rect {
+                        x: bounds.x - gap,
+                        y: bounds.y - gap,
+                        width: bounds.width + gap * 2.0,
+                        height: bounds.height + gap * 2.0,
+                    }
+                }
+            })
+            .collect();
         if self.honor_labels {
             obstacles.extend(self.reserved.iter().map(|label| Rect {
                 x: label.rect.x - 2.0,
@@ -1257,56 +1554,29 @@ impl Router<'_> {
                 height: label.rect.height + 4.0,
             }));
         }
-        let avoided: Vec<_> = resolved
-            .iter()
-            .filter(|other| {
-                shares(&self.edges[index], &self.edges[**other])
-                    && !self.edges[**other].explicit()
-                    && self.edges[**other].raw.get("labelAt").is_none()
-                    && self.edges[index].raw.get("labelAt").is_none()
-            })
-            .flat_map(|other| {
-                self.cache[*other]
-                    .as_ref()
-                    .unwrap()
-                    .points
-                    .windows(2)
-                    .map(|pair| route_quality::Segment {
-                        start: pair[0],
-                        end: pair[1],
-                    })
-            })
-            .collect();
-        let points = [start, end];
+        let points = [geometry.start, geometry.end];
         let mut options = route_quality::GridRouteOptions::new(
-            start,
-            end,
+            geometry.start,
+            geometry.end,
             &points,
             &obstacles,
-            sides.from.name(),
-            sides.to.name(),
+            geometry.sides.from.name(),
+            geometry.sides.to.name(),
         );
         options.clearance = 2.0;
         options.maximum_obstacle_count = 80;
         options.endpoint_stub_px = Some(24.0);
         options.maximum_grid_nodes = 4096.0;
-        options.avoided_segments = &avoided;
-        options.allow_avoided_crossings = true;
+        options.avoided_segments = avoided;
+        options.allow_avoided_crossings = allow_crossings;
         options.minimum_avoided_overlap_px = 8.0;
         options.route_separation_px = 8.0;
         options.minimum_segment_px = 16.0;
         options.border_segments = &self.frames;
         options.bend_penalty_px = 48.0;
-        if let Some(searched) = route_quality::shortest_orthogonal_grid_route(&options).route {
-            if self.clears_endpoints(index, &searched.points)
-                && self.clears_components(index, &searched.points)
-                && !self.overlaps(index, &searched.points, resolved)
-                && self.floors(&searched.points)
-            {
-                return searched.points[1..searched.points.len() - 1].to_vec();
-            }
-        }
-        fallback
+        route_quality::shortest_orthogonal_grid_route(&options)
+            .route
+            .map(|route| route.points)
     }
     fn routed(&mut self, index: usize, geometry: Geometry, resolved: &[usize]) -> Route {
         let via = self.route_via(index, geometry, resolved);
@@ -1389,6 +1659,9 @@ impl Router<'_> {
         resolved: &[usize],
         labels: &[Label],
     ) -> Option<Label> {
+        if !self.options.label_reservations {
+            return None;
+        }
         let label = Label::new(
             index,
             &self.edges[index].raw,
@@ -1561,6 +1834,7 @@ impl Router<'_> {
         for first in resolved {
             let edge = &self.edges[*first];
             if paired.contains(first)
+                || self.owned.contains(first)
                 || edge.explicit()
                 || edge.label_pinned()
                 || Side::parse(&edge.raw["fromSide"]).is_some()
@@ -1572,6 +1846,7 @@ impl Router<'_> {
                 *index != *first
                     && self.edges[*index].from == edge.to
                     && self.edges[*index].to == edge.from
+                    && !self.owned.contains(index)
                     && !self.edges[*index].explicit()
                     && !self.edges[*index].label_pinned()
                     && Side::parse(&self.edges[*index].raw["fromSide"]).is_none()
@@ -1742,7 +2017,11 @@ impl Router<'_> {
     ) {
         for index in resolved {
             let edge = &self.edges[*index];
-            if joint.contains(index) || edge.explicit() || edge.label_pinned() {
+            if joint.contains(index)
+                || self.owned.contains(index)
+                || edge.explicit()
+                || edge.label_pinned()
+            {
                 continue;
             }
             let others: Vec<_> = resolved
@@ -1759,7 +2038,9 @@ impl Router<'_> {
                 .cloned()
                 .collect();
             let current_label = self.reserve(*index, &route.points, &others, &labels);
-            let blocked = !string(&edge.raw, "label").is_empty() && current_label.is_none();
+            let blocked = self.options.label_reservations
+                && !string(&edge.raw, "label").is_empty()
+                && current_label.is_none();
             if !blocked && crossings == 0 && (only_crossings || route.points.len() <= 4) {
                 continue;
             }
@@ -1792,7 +2073,9 @@ impl Router<'_> {
                     &others.iter().copied().chain([*index]).collect::<Vec<_>>(),
                     &labels,
                 );
-                if !self.label_clear(label.as_ref(), *index, &others, &labels, bounds) {
+                if self.options.label_reservations
+                    && !self.label_clear(label.as_ref(), *index, &others, &labels, bounds)
+                {
                     continue;
                 }
                 if only_crossings
@@ -1826,6 +2109,7 @@ impl Router<'_> {
             let original = self.cache[*index].as_ref().unwrap().clone();
             if original.points.len() < 4
                 || joint.contains(index)
+                || self.owned.contains(index)
                 || edge.explicit()
                 || edge.label_pinned()
             {
@@ -1945,7 +2229,10 @@ impl Router<'_> {
             return None;
         }
         let owner = displaced[0].edge;
-        if self.edges[owner].explicit() || self.edges[owner].label_pinned() {
+        if self.owned.contains(&owner)
+            || self.edges[owner].explicit()
+            || self.edges[owner].label_pinned()
+        {
             return None;
         }
         let mut labels: Vec<_> = self
@@ -1983,7 +2270,11 @@ impl Router<'_> {
     ) {
         for index in resolved {
             let edge = &self.edges[*index];
-            if joint.contains(index) || edge.explicit() || edge.label_pinned() {
+            if joint.contains(index)
+                || self.owned.contains(index)
+                || edge.explicit()
+                || edge.label_pinned()
+            {
                 continue;
             }
             let others: Vec<_> = resolved
@@ -2040,6 +2331,7 @@ impl Router<'_> {
             let original = self.cache[*index].as_ref().unwrap().clone();
             if original.points.len() < 4
                 || joint.contains(index)
+                || self.owned.contains(index)
                 || edge.explicit()
                 || edge.label_pinned()
             {
@@ -2153,6 +2445,27 @@ impl Router<'_> {
             return;
         }
         let mut bounds = self.scene_bounds(resolved);
+        // A caller-owned corridor is the route its renderer draws around; the
+        // sweep must not trade it for a shorter lane.
+        if let Some(preferred) = self.options.preferred_candidates {
+            self.owned = resolved
+                .iter()
+                .copied()
+                .filter(|index| {
+                    let route = self.cache[*index].as_ref().unwrap();
+                    let context = CandidateContext {
+                        edge: &self.edges[*index],
+                        start: route.points[0],
+                        end: *route.points.last().unwrap(),
+                        sides: route.sides,
+                    };
+                    let interior = &route.points[1..route.points.len() - 1];
+                    preferred(&context)
+                        .iter()
+                        .any(|candidate| candidate.as_slice() == interior)
+                })
+                .collect();
+        }
         self.allow_grid = false;
         let joint = self.improve_reciprocals(resolved, bounds);
         self.improve_complex(resolved, bounds, &joint, false);
@@ -2167,6 +2480,15 @@ impl Router<'_> {
     }
 }
 
+// A spaced search is a readability preference, so its route must also read
+// cleanly as drawn: full rhythm floors and terminal segments that outlast a
+// rounded corner and an end marker.
+fn spaced_route_is_clean(points: &[Point], gap: f64) -> bool {
+    gap == 0.0
+        || (span(points[0], points[1]) >= 16.0
+            && span(points[points.len() - 2], points[points.len() - 1]) >= 16.0
+            && rhythm(points))
+}
 fn length(points: &[Point]) -> f64 {
     points.windows(2).map(|pair| span(pair[0], pair[1])).sum()
 }

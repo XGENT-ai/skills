@@ -681,6 +681,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                     size: sigil_size,
                 }),
                 text: texts,
+                detail_rows: Vec::new(),
             }
         })
         .collect();
@@ -758,6 +759,8 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                 points: flow.points.clone(),
                 label_plate: Some(plate.label.bounds),
                 text: texts,
+                marker_start: None,
+                marker_end: None,
             }
         })
         .collect();

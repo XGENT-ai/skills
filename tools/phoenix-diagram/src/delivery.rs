@@ -20,6 +20,8 @@ pub struct CompileRequest<'a> {
     pub options: &'a CompileOptions,
     pub engine: &'a EngineIdentity,
     pub assets: &'a EmbeddedAssets<'a>,
+    /// The local checkout cited sources are checked against, if given.
+    pub repo_root: Option<&'a Path>,
 }
 
 pub fn validate(request: &CompileRequest<'_>) -> ValidationReceipt {

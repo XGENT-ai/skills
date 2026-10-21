@@ -23,7 +23,7 @@ test.after(()=>{if(engines?.warmUiCache)fs.rmSync(engines.warmUiCache,{recursive
 function realEngines(){
   if(engines)return engines;
   const ui=process.env.PHOENIX_UI_BIN,diagram=process.env.PHOENIX_DIAGRAM_BIN;
-  for(const [file,expected] of [[ui,'phoenix-ui-engine 0.1.0\n'],[diagram,'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\n']]){
+  for(const [file,expected] of [[ui,'phoenix-ui-engine 0.1.0\n'],[diagram,'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n']]){
     const probe=spawnSync(file,['engine-probe'],{encoding:'utf8',timeout:3000,maxBuffer:4096});
     assert.equal(probe.status,0,probe.error?.message||probe.stderr);assert.equal(probe.stdout,expected);
   }
@@ -62,7 +62,7 @@ async function fixture(t,{warmUi=true}={}){
   }
   write(path.join(diagramDist,'bundle/manifest.json'),bundle.bytes);
   const npmPackageVersion=JSON.parse(fs.readFileSync(path.join(pkg,'package.json'))).version;
-  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.1.0',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v1',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
+  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
   for(const file of [path.join(diagramDist,'VERSION.json'),path.join(diagramDist,'bundle/ENGINE.json'),path.join(pkg,'skills/phoenix-diagram/ENGINE.json')])write(file,encoded(diagramVersion));
   // Declared legal inventory is complete for this format fixture. M6 separately
   // verifies the actual complete Rust/font/upstream release license closure.

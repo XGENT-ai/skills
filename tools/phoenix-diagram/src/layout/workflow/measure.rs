@@ -587,6 +587,7 @@ pub(super) fn measure(
             bounds,
             label: string(value, "label").into(),
             text: node_text,
+            detail_rows: Vec::new(),
         });
     }
     if !readable {

@@ -11,3 +11,9 @@ Export 的必要边界适配记录于 [export-adaptations.json](export-adaptatio
 六份 JetBrains Mono variable WOFF2 子集保持来源的确切字节；版权与 [SIL OFL 1.1 全文](JetBrainsMono-OFL.txt) 同时保留在模板内，导出沿原序列化路径将字体及许可嵌入 SVG。未引入品牌标识数据、远程字体、上游更新检查或远程运行资源。
 
 `assets/svg-definitions.svg` 来自冻结 `archify/renderers/shared/utils.mjs::renderDefinitions`，两份输入合同的定义完全相同。`assets/node-card-style.svg` 来自 3.1.0 的 `node-card-style.mjs::nodeCardStyle`；调用方仅为 Phoenix 合同的 architecture/workflow 启用 `data-node-ui`。生成后的 HTML 内含 MIT 全文与 OFL；消费者不需要 Node 或源码树。
+
+语义护照的来源显示适配记录于 [focus-adaptations.json](focus-adaptations.json)：来源证据改由原生元数据的 `sourceEvidence` 提供，按已核对、待核实（附原因）与未提供来源三态显示，只有已核对且为 web 模式的来源生成外链。测试同样重建整份 focus.js 源码并校验这些片段之外的全部字节。
+
+`semantic-lens.js` 的外部点击判定改为“点在触发按钮内”：装配器把按钮文字包进可切换语言的 span，真实点击落在 span 上时原判定会把刚打开的筛选面板立即关闭。
+
+`tree-branches.js` 每次更新时重新查询带祖先标记的元素，使启动后才克隆的关系点击区随分支一起折叠与展开；打印期间显示完整树，打印结束恢复阅读状态。

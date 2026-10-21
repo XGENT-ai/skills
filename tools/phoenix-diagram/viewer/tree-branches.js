@@ -1,7 +1,9 @@
 /*
 Derived from Archify 3.1.0 viewer/tree-branches.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace only.
+Phoenix modifications: independent JavaScript/storage/CSS namespace; ancestors are
+queried on every update so later relationship hit targets follow their branch, and
+printing shows the complete tree.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -21,23 +23,26 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       Array.prototype.forEach.call(svg.querySelectorAll('[data-tree-toggle]'), function (toggle) {
         toggles[toggle.getAttribute('data-tree-toggle')] = toggle;
       });
-      var tagged = svg.querySelectorAll('[data-tree-ancestors]');
       var expandAll = svg.querySelector('[data-tree-expand-all]');
+      var printing = false;
 
       function ancestors(el) {
         return (el.getAttribute('data-tree-ancestors') || '').split(' ').filter(Boolean);
       }
 
       function apply() {
-        Array.prototype.forEach.call(tagged, function (el) {
-          var hidden = ancestors(el).some(function (id) { return collapsed[id]; });
+        // Printing shows every branch; the reading state returns afterwards.
+        var shown = printing ? Object.create(null) : collapsed;
+        // Relationship hit targets are cloned after start-up, so query live.
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-tree-ancestors]'), function (el) {
+          var hidden = ancestors(el).some(function (id) { return shown[id]; });
           if (hidden) el.setAttribute('data-tree-hidden', '');
           else el.removeAttribute('data-tree-hidden');
         });
         var any = false;
         Object.keys(toggles).forEach(function (id) {
           var toggle = toggles[id];
-          var isCollapsed = Boolean(collapsed[id]);
+          var isCollapsed = Boolean(shown[id]);
           any = any || isCollapsed;
           toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
           toggle.setAttribute('aria-label', toggle.getAttribute(isCollapsed ? 'data-tree-label-expand' : 'data-tree-label-collapse') || '');
@@ -121,6 +126,8 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       Object.keys(toggles).forEach(function (id) {
         if (toggles[id].hasAttribute('data-tree-initially-collapsed')) collapsed[id] = true;
       });
+      window.addEventListener('beforeprint', function () { printing = true; apply(); });
+      window.addEventListener('afterprint', function () { printing = false; apply(); });
       apply();
 
       return {

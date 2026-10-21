@@ -518,6 +518,7 @@ pub fn compile(
             }),
             label: label.into(),
             text: texts,
+            detail_rows: Vec::new(),
         });
     }
     let title_y = legend
@@ -688,6 +689,8 @@ pub fn compile(
                 ],
                 label_plate: layout.label_rect(message),
                 text: texts,
+                marker_start: None,
+                marker_end: None,
             }
         })
         .collect();

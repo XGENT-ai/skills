@@ -1,7 +1,8 @@
 /*
 Derived from Archify 3.1.0 viewer/focus.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace only.
+Phoenix modifications: independent JavaScript/storage/CSS namespace; passport
+source evidence states recorded in focus-adaptations.json.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -24,6 +25,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       var evidence = document.getElementById('focus-evidence');
       var repositoryLink = document.getElementById('focus-repository');
       var evidenceLinks = document.getElementById('focus-evidence-links');
+      var evidenceStatus = evidence.querySelector('.semantic-passport-evidence-status');
       var summary = document.getElementById('focus-summary');
       var reachSection = document.getElementById('focus-reach');
       var reachStatus = document.getElementById('focus-reach-status');
@@ -344,20 +346,30 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         repositoryLink.removeAttribute('href');
         repositoryLink.removeAttribute('aria-label');
         repositoryLink.textContent = '';
+        evidence.removeAttribute('title');
+        var state = PhoenixDiagram.sourceEvidence.state(id);
         var sources = PhoenixDiagram.sourceEvidence.node(id);
         var repository = PhoenixDiagram.sourceEvidence.repository();
-        if (!repository || !sources.length) {
+        if (!repository || !state) {
           evidence.hidden = true;
           return;
         }
-        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision;
-        if (repository.href) {
-          repositoryLink.href = repository.href;
+        evidence.setAttribute('data-evidence-state', state);
+        // Pending and absent evidence reuse the verified styling in amber and slate.
+        if (state === 'verified') evidence.style.removeProperty('--backend-stroke');
+        else evidence.style.setProperty('--backend-stroke', state === 'unverified' ? 'var(--cloud-stroke)' : 'var(--external-stroke)');
+        evidenceStatus.textContent = viewerText(state === 'verified' ? 'viewer.passport.verified' : 'viewer.passport.evidence.' + state);
+        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision +
+          (repository.linkMode === 'local-only' ? ' · ' + viewerText('viewer.passport.evidence.localOnly') : '');
+        if (repository.treeHref) {
+          repositoryLink.href = repository.treeHref;
           repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
         }
-        evidence.title = viewerText('viewer.passport.verificationScope');
+        if (state === 'verified') evidence.title = viewerText('viewer.passport.verificationScope');
         sources.forEach(function (source) {
-          var link = document.createElement(source.href ? 'a' : 'div');
+          var verified = source.state === 'verified';
+          var link = document.createElement(verified && source.href ? 'a' : 'div');
+          link.setAttribute('data-evidence-state', verified ? 'verified' : 'unverified');
           link.className = 'semantic-passport-source';
           if (source.href) {
             link.href = source.href;
@@ -373,7 +385,9 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
             ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + (source.href ? ' ↗' : '')
             : source.href ? viewerText('viewer.passport.source.openLink') : '';
           var sourcePath = document.createElement('small');
-          sourcePath.textContent = source.path;
+          sourcePath.textContent = verified ? source.path : source.path + ' · ' +
+            viewerText('viewer.passport.evidence.unverified') + ': ' +
+            viewerText('viewer.passport.evidence.reason.' + source.reason);
           link.appendChild(name);
           link.appendChild(location);
           link.appendChild(sourcePath);

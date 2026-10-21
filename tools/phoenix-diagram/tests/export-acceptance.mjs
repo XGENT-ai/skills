@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_TIMEOUTS, discoverBrowser, ExportBrowser } from './support/export-browser.mjs';
+import { runExplore, verifyExplore } from './support/explore-reader.mjs';
 import { installExportProbe, awaitReader, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, runReaderInteractions } from './support/export-reader.mjs';
 
@@ -126,8 +127,8 @@ function resourceClean(resources) { return resources.anchorsAttached === 0 && re
 
 async function withBrowserPage(options, kind, run) {
   const timeouts = validateInput(options), artifact = artifactIdentity(options.artifactPath);
-  const directory = makeDirectory(options.evidenceDir, kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : 'content');
-  const report = { schemaVersion: 1, tool: 'phoenix-diagram', kind: kind === 'exports' ? 'real-browser-export' : kind === 'interactions' ? 'real-browser-reader-interactions' : 'real-browser-content', status: 'not-run', artifact, browser: null, actualBrowserVersion: null, timeouts,
+  const directory = makeDirectory(options.evidenceDir, kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : kind === 'explore' ? 'explore' : 'content');
+  const report = { schemaVersion: 1, tool: 'phoenix-diagram', kind: kind === 'exports' ? 'real-browser-export' : kind === 'interactions' ? 'real-browser-reader-interactions' : kind === 'explore' ? 'real-browser-explore' : 'real-browser-content', status: 'not-run', artifact, browser: null, actualBrowserVersion: null, timeouts,
     scope: kind === 'exports' ? REQUIRED_EXPORT_SCOPE : kind === 'interactions' ? { readerInteractions: REQUIRED_READER_INTERACTIONS } : { content: true },
     exports: kind === 'exports' ? REQUIRED_EXPORT_SCOPE.themes.flatMap(theme => REQUIRED_EXPORT_SCOPE.modes.flatMap(mode => REQUIRED_EXPORT_SCOPE.formats.map(format => ({ theme, mode, format, status: 'not-run' })))) : [],
     clipboard: kind === 'exports' ? { success: { status: 'not-run' }, permissionDenied: { status: 'not-run' }, capabilityUnavailable: { status: 'not-run' } } : {},
@@ -185,10 +186,17 @@ async function withBrowserPage(options, kind, run) {
     let startup;
     const page = {
       report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts,
-      async load(theme = 'dark', suppressClipboard = false) {
+      async load(theme = 'dark', suppressClipboard = false, { query = {}, hash = '' } = {}) {
         if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
         startup = (await send('Page.addScriptToEvaluateOnNewDocument', { source: '(' + installExportProbe.toString() + ')(' + JSON.stringify({ suppressClipboard }) + ');' })).identifier;
         const url = new URL(pathToFileURL(artifact.path)); url.searchParams.set('theme', theme);
+        for (const [name, value] of Object.entries(query)) url.searchParams.set(name, value);
+        url.hash = hash;
+        if (hash || Object.keys(query).length) {
+          // A hash-only change is a same-document navigation without a load event.
+          const blank = loads; await send('Page.navigate', { url: 'about:blank' });
+          await waitFor(() => loads > blank, timeouts.commandMs, 'Blank page load');
+        }
         const before = loads, navigation = await send('Page.navigate', { url: url.href });
         if (navigation.errorText) throw new Error('Export page navigation: ' + navigation.errorText);
         frameId = navigation.frameId;
@@ -238,6 +246,31 @@ async function withBrowserPage(options, kind, run) {
         if (receipt['data-last-export-format'] !== format || receipt['data-last-export-canonical'] !== 'true') throw new Error('Reader did not report a canonical actual export');
         return { format, status: 'pass', path: output, identity: { sha256: sha256(bytes), bytes: bytes.length }, signature, download: { guid: completed.guid, name: captured.name }, ...decoded, receipt };
       },
+      // A Route/Reach share card: a scoped, non-canonical PNG from the export menu.
+      async card(action, basename) {
+        const beforeCount = await evaluate(() => __phoenixDiagramExportProbe.downloads.length);
+        await evaluate(() => PhoenixDiagram.exportMenu.open()); await page.click('button[data-action="' + action + '"]');
+        const captured = await waitFor(() => evaluate(before => {
+          const state = __phoenixDiagramExportProbe, download = state.downloads[before];
+          if (download) return { url: download.url, name: download.name, bytes: download.blob?.size, mime: download.blob?.type };
+          const error = document.documentElement.getAttribute('data-last-export-error');
+          if (error) throw new Error(error); return null;
+        }, beforeCount), timeouts.actionMs, action + ' download');
+        const completed = await waitFor(() => {
+          const entry = [...downloads.values()].find(value => value.url === captured.url);
+          if (entry?.state === 'canceled') throw new Error('Chrome canceled ' + action);
+          return entry?.state === 'completed' ? entry : null;
+        }, timeouts.actionMs, action + ' download completion');
+        if (!/^[a-zA-Z0-9-]+$/.test(completed.guid)) throw new Error('Unsafe Chrome download identifier');
+        const file = path.join(downloadDirectory, completed.guid);
+        await waitFor(() => fs.existsSync(file), timeouts.commandMs, 'Downloaded card');
+        const bytes = fs.readFileSync(file), signature = verifyFileSignature(bytes, 'png', captured.mime);
+        const decoded = await evaluate(inspectBlob, { url: captured.url, kind: 'png', expected: {}, decodeMs: timeouts.decodeMs });
+        if (decoded.sha256 !== sha256(bytes) || decoded.bytes !== bytes.length) throw new Error('Actual downloaded card differs from the encoded Blob');
+        const output = path.join(directory, basename + '.png'); fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o600 });
+        const receipt = await evaluate(() => Object.fromEntries(Array.from(document.documentElement.attributes).filter(attribute => attribute.name.startsWith('data-last-export-')).map(attribute => [attribute.name, attribute.value])));
+        return { action, status: 'pass', path: output, identity: { sha256: sha256(bytes), bytes: bytes.length }, signature, download: { guid: completed.guid, name: captured.name }, ...decoded, receipt };
+      },
       async resources(label) {
         let last;
         try {
@@ -245,7 +278,7 @@ async function withBrowserPage(options, kind, run) {
         } finally { if (last) report.resources.observations.push({ label, clean: resourceClean(last), ...last }); }
       },
     };
-    stage = kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : 'content';
+    stage = kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : kind === 'explore' ? 'explore' : 'content';
     await run(page);
     report.resources.requests = requests;
     report.resources.loadingFailed = loadingFailed;
@@ -458,6 +491,57 @@ export async function runExportAcceptance(options) {
 export async function runReaderInteractionAcceptance(options) {
   return withBrowserPage(options, 'interactions', async page => {
     await runReaderInteractions(page, options.onProgress);
+    page.report.stateRestoration = { status: 'not-applicable', observations: [] };
+  });
+}
+
+// Exploration plus, for diagrams with authored relations, one Route and one Reach card.
+export async function runExploreAcceptance(options) {
+  return withBrowserPage(options, 'explore', async page => {
+    await page.load('dark');
+    const metadata = await page.evaluate(() => JSON.parse(document.getElementById('phoenix-diagram-metadata').textContent));
+    const exploration = await runExplore(page, metadata, options.onProgress);
+    verifyExplore(exploration);
+    page.report.explore = exploration;
+    page.report.cards = [];
+    const plan = exploration.plan;
+    if (plan.pathPair && plan.reachNode) {
+      await page.load('dark', false, { hash: 'route=' + plan.pathPair.join('~') });
+      page.report.cards.push(await page.card('route-share-card', 'route-share-card'));
+      await page.load('dark', false, { hash: 'focus=' + plan.reachNode + '&reach=downstream' });
+      page.report.cards.push(await page.card('reach-share-card', 'downstream-reach-share-card'));
+      for (const [card, variant, suffix] of [[page.report.cards[0], 'route', '-route-share-card.png'], [page.report.cards[1], 'reach', '-downstream-reach-share-card.png']]) {
+        if (card.receipt['data-last-export-canonical'] !== 'false' || card.receipt['data-last-export-variant'] !== variant || !card.download.name.endsWith(suffix)) throw new Error('Share card is not a scoped non-canonical ' + variant + ' export');
+      }
+    }
+    page.report.stateRestoration = { status: 'not-applicable', observations: [] };
+  });
+}
+
+// Focus each requested node and capture its details panel for actual viewing,
+// with the source evidence state the Reader displays.
+export async function runPassportAcceptance(options) {
+  return withBrowserPage(options, 'explore', async page => {
+    page.report.passports = [];
+    for (const { id, theme = 'dark' } of options.nodes) {
+      await page.load(theme, false, { hash: 'focus=' + id });
+      await delay(400);
+      const state = await page.evaluate(id => {
+        const evidence = document.getElementById('focus-evidence'), rows = Array.from(document.querySelectorAll('#focus-evidence-links > *'));
+        return { focus: PhoenixDiagram.focus.active(), detailsHidden: document.getElementById('focus-chip').hidden, hidden: evidence.hidden,
+          state: evidence.getAttribute('data-evidence-state'), status: evidence.querySelector('.semantic-passport-evidence-status').textContent,
+          repository: document.getElementById('focus-repository').textContent, repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
+          rows: rows.map(row => ({ tag: row.localName, state: row.getAttribute('data-evidence-state'), href: row.getAttribute('href'), text: row.textContent })), label: document.querySelector('[data-node-id="' + id + '"]').getAttribute('aria-label'),
+          // Status, repository, path and pending reason must be readable in full, not ellipsized.
+          clipped: Array.from(evidence.querySelectorAll('.semantic-passport-evidence-status, .semantic-passport-repository, .semantic-passport-source strong, .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
+      }, id);
+      if (state.focus !== id || state.detailsHidden || state.hidden) throw new Error('Details did not show source evidence for ' + id);
+      if (state.clipped.length) throw new Error('Source evidence text is clipped for ' + id + ': ' + state.clipped.join(' | '));
+      const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
+      const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}.png`);
+      fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
+      page.report.passports.push({ id, theme, ...state, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
+    }
     page.report.stateRestoration = { status: 'not-applicable', observations: [] };
   });
 }

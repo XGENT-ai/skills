@@ -26,7 +26,7 @@ function realEngine() {
   assert.ok(fs.existsSync(file), 'A built native engine is required; this success path never uses a fake probe');
   const probe = spawnSync(file, ['engine-probe'], { encoding: 'utf8' });
   assert.equal(probe.status, 0, probe.stderr);
-  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\n');
+  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n');
   const doctor = spawnSync(file, ['doctor', '--json'], { encoding: 'utf8' });
   const engine = JSON.parse(doctor.stdout).engine;
   assert.equal(engine.inputContractSchema, 1);
@@ -67,13 +67,13 @@ function fixture(t, changes = {}) {
     ]),
   ];
   for (const [name, bytes, mode] of files) write(path.join(bundleRoot, name), bytes, mode);
-  const inventory = { schemaVersion: 1, tool: 'phoenix-diagram', version: '0.1.0', files: files.map(([name, bytes, mode]) => ({ path: name, size: bytes.length, sha256: hash(bytes), mode })) };
+  const inventory = { schemaVersion: 1, tool: 'phoenix-diagram', version: '0.2.0', files: files.map(([name, bytes, mode]) => ({ path: name, size: bytes.length, sha256: hash(bytes), mode })) };
   write(path.join(bundleRoot, 'manifest.json'), JSON.stringify(inventory) + '\n');
   // Metadata-only fixtures cannot execute successfully. They keep structural
   // and pre-acquisition refusal tests available in a fresh source checkout.
   const {bytes,engine}=process.env.PHOENIX_DIAGRAM_BIN?realEngine():{bytes:Buffer.from('Inert pre-execution metadata fixture; not an engine.'),engine:{sourceInputSha256:'a'.repeat(64)}};
   const engines = Object.fromEntries(boot().TARGETS.map(target => [target, { asset: `phoenix-diagram-${target}`, size: bytes.length, sha256: hash(bytes) }]));
-  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.1.0', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v1', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
+  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
   const manifestPath = path.join(dist, 'VERSION.json');
   const env = { ...process.env, PHOENIX_DIAGRAM_HOME: home, PHOENIX_UI_HOME: path.join(temp, 'ui-home'), HTTP_PROXY: '', http_proxy: '', HTTPS_PROXY: '', https_proxy: '', ALL_PROXY: '', all_proxy: '', NO_PROXY: '', no_proxy: '' };
   const f = { temp, pkg, dist, bundleRoot, project, home, release, packageJsonPath, manifestPath, inventory, version, env, bytes, target: supportedUnix?boot().platformTarget():boot().TARGETS[0] };
@@ -246,7 +246,7 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
   const ready = await boot().preflight(f.options);
   assert.equal(ready.bundleRoot, f.bundleRoot); assert.equal(ready.versionManifestPath, f.manifestPath);
   assert.equal(ready.version.npmPackageVersion, packageVersion());
-  const expected = path.join(f.home, 'bin', '0.1.0', f.target, f.version.engines[f.target].sha256, 'phoenix-diagram');
+  const expected = path.join(f.home, 'bin', '0.2.0', f.target, f.version.engines[f.target].sha256, 'phoenix-diagram');
   assert.equal(ready.enginePath, expected); assert.equal(hash(fs.readFileSync(expected)), hash(f.bytes));
   assert.equal(fs.existsSync(f.env.PHOENIX_UI_HOME), false); assert.deepEqual(fs.readdirSync(f.project), ['.git']);
   const scenario = 'workflow ; $(touch never-created) with spaces';
@@ -262,7 +262,7 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
 });
 filesystemTest('package identity, bundle inventory, ENGINE bytes and file modes are verified before execution', t => {
   const f = fixture(t);
-  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.2.0'], ['npmPackageVersion', '9.9.9'], ['inputContractSchema', 2], ['receiptSchema', 2], ['viewerRevision', 'foreign'], ['sourceCommit', 'bad'], ['sourceInputSha256', 'bad']]) {
+  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.1.0'], ['npmPackageVersion', '9.9.9'], ['inputContractSchema', 2], ['receiptSchema', 2], ['viewerRevision', 'foreign'], ['sourceCommit', 'bad'], ['sourceInputSha256', 'bad']]) {
     const original = f.version[field]; f.version[field] = value; f.seal();
     assert.throws(() => boot().manifestAt(f.manifestPath, { packageJsonPath: f.packageJsonPath }), undefined, field);
     f.version[field] = original;

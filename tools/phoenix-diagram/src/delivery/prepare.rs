@@ -12,6 +12,8 @@ pub(super) struct Preparation {
     pub receipt: ValidationReceipt,
     pub source: Option<FileBinding>,
     pub compiled: Option<Compiled>,
+    /// The interface language the artifact resolves, for finalize receipts.
+    pub locale: serde_json::Value,
 }
 
 pub(super) fn prepare(request: &CompileRequest<'_>) -> Preparation {
@@ -31,11 +33,13 @@ pub(super) fn prepare(request: &CompileRequest<'_>) -> Preparation {
             compatibility: None,
             checks: vec![],
             composition: serde_json::Value::Null,
+            evidence: serde_json::json!({}),
             layout: None,
             exit: 1,
         },
         source: None,
         compiled: None,
+        locale: serde_json::json!({}),
     };
     let build = (|| {
         if !valid_engine(request.engine)
@@ -48,13 +52,24 @@ pub(super) fn prepare(request: &CompileRequest<'_>) -> Preparation {
         result.receipt.candidate = Some(reference(&source));
         result.source = Some(source);
         let source = result.source.as_ref().expect("captured source");
-        let input = match parse_input(source.bytes(), request.kind, request.options) {
+        let mut input = match parse_input(source.bytes(), request.kind, request.options) {
             Ok(input) => input,
             Err(diagnostics) => {
                 result.receipt.diagnostics = diagnostics;
                 return Ok(());
             }
         };
+        let evidence = match crate::evidence::verify(&input, request.repo_root) {
+            Ok(evidence) => evidence,
+            Err(diagnostics) => {
+                result.receipt.diagnostics = diagnostics;
+                return Ok(());
+            }
+        };
+        input.bind_evidence(evidence.digest().as_deref());
+        let locale = crate::i18n::resolve(&input.document["meta"]);
+        result.locale = serde_json::json!({"requested":locale.requested,"resolved":locale.resolved,"fallback":locale.fallback});
+        result.receipt.evidence = evidence.receipt();
         result.receipt.config = Some(config(&input));
         result.receipt.config_sha256 = Some(input.config_sha256.clone());
         result.receipt.compatibility = Some(input.compatibility.clone());
@@ -65,7 +80,7 @@ pub(super) fn prepare(request: &CompileRequest<'_>) -> Preparation {
                 return Ok(());
             }
         };
-        let html = match crate::render::render(&scene, request.assets) {
+        let html = match crate::render::render_with_evidence(&scene, request.assets, &evidence) {
             Ok(html) => html,
             Err(diagnostics) => {
                 result.receipt.diagnostics = diagnostics;

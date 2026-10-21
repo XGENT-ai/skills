@@ -6,11 +6,14 @@
 
 ```sh
 "$PD" finalize <type> candidate.json diagram.html --json
+"$PD" finalize <type> candidate.json diagram.html --repo-root "<仓库根>" --json
 ```
+
+带 `sources` 或 `meta.repository` 的图用第二种，`--repo-root` 只接受 `validate`、`deliver`、`finalize`。来源核对独立于四门：回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，校验与交付回执另列 `evidence.unverified`（pointer、元素、原因）与 `evidence.unsourced`。结构错误（凭据 URL、路径逃逸、非法行区间、provider 与主机不符、网页链接用了不支持的主机）在 input 阶段失败且不生成 HTML。
 
 固定顺序为 `validate → deliver → check → browser-check`。首个非 pass 阶段后其余阶段保持 `not-run`。`validate` 做输入/布局与独立 artifact 检查；`deliver` 发布本次 HTML；`check` 严格绑定当前交付；`browser-check` 检查浏览器实测并采集当前截图。读取每个阶段真实 status，不能补造通过。
 
-stdout 是单一 JSON。保留首次成功自动验收的 `deliveryReceiptId`、`browserReceiptIdentity`、`candidate` / `artifact` 的 `path` 与 `identity:{sha256,bytes}`、`configSha256` 和完整 `engine`。HTML 已提交不等于整体完成；自动四门通过后，`visualReview.status` 仍为 `required-pending`，`deliveryStatus` 为 `incomplete`。
+stdout 是单一 JSON。保留首次成功自动验收的 `deliveryReceiptId`、`browserReceiptIdentity`、`candidate` / `artifact` 的 `path` 与 `identity:{sha256,bytes}`、`configSha256` 和完整 `engine`。HTML 已提交不等于整体完成；自动四门通过后，`visualReview.status` 仍为 `required-pending`，`deliveryStatus` 为 `incomplete`。finalize 回执的 `locale` 给出请求、解析后的界面语言与是否回退英文。
 
 从 `evidence.summaryReceipt.path` 或 `evidence.summaryPath` 定位本次 summary，从 `evidence.browserReceipt.path` 读取绑定的浏览器回执。summary 在输出旁，`--out-dir` 指定截图/浏览器证据目录；按回执给出的真实路径读取，勿猜测文件名或跨图混用。
 
