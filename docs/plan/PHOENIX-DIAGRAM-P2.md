@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-22T21:45:00+08:00
+- 最近更新：2026-10-22T23:55:00+08:00
 - 当前进度：6/8 个里程碑完成
-- 当前状态：进行中。R4 后按用户裁定重做 M6/M8：修 waterfall 详情与详情标题的窄屏截断、ERD 短折弯（4px 起点碎段），聚合按 D13 增加宿主证据复用通道。新开发引擎 `p2-native-11`（源 `2712deae…`）上 M6 第 1–2 步通过、第 3 步运行中；V-11 受影响 8 行在 `p2-v11g` 全部审核 passed 并归档（[M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md#评审修复后的重做进行中)）
+- 当前状态：进行中。候选 `aa4608c` 的本机 distribution 消费暴露 Chrome 钥匙串弹窗，按用户裁定在引擎与 harness 的 Chrome 启动参数加 `--use-mock-keychain`，引擎源改为 `07d3da1e…`；`p2-core-12` 的 M6 收口随之失效。在 `p2-native-12` 上重做 M6（第 1–2 步通过、第 3 步运行中）与 V-11 受影响 8 行（`p2-v11h`，已审 5 行 passed）（[M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md#评审修复后的重做进行中)）
 - 最近完成：M7 · skill、说明、包脚本与宿主验收
-- 下一步：提交候选源码并推候选分支、dispatch 四平台 CI；完成 M6 第 3–5 步与 V-8/V-9 新截图实看；CI 后用最终引擎重放沿用行、本机 distribution 收口、P2 聚合与 V-14
+- 下一步：提交含钥匙串修复的候选源码，推候选分支并 dispatch 四平台 CI；完成 M6 第 3–5 步与 v11h 其余行审核归档；CI 后用最终引擎重放沿用行、本机 distribution 收口、P2 聚合与 V-14
 - 当前阻塞：无
-- 代码基线：main / `5d6a511` 之上的未提交修复；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 已同步到 `p2-native-11`
+- 代码基线：main / `aa4608c` 之上的未提交修复；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 已同步到 `p2-native-12`
 
 ### 完成记录
 
@@ -61,12 +61,12 @@
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-20T18:58:00+08:00 | 十类输入合同、语义门、场景类型、唯一目录与 i18n、0.2.0/phoenix-v2 身份、chrono 依赖与 `--sync-dist`；V-1、V-2 通过 | [M1 记录](PHOENIX-DIAGRAM-P2.records/M1.md) | 711a5b7 |
 | M4 | 已完成 | 2026-10-22T11:00:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行）；R1 F-01 修复：非法 URL 诊断不回显凭据 | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 711a5b7、修复 1b9f910 |
-| M2 | 已完成 | 2026-10-22T16:55:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed；R1 F-03 修复：表详情列出外键目标；R2 续项：详情 context 换行完整显示，V-8 增多外键详情检查；R3 F-04：窄屏详情限高可滚动，Reach 不被导航条遮挡，详情检查改为窄屏触摸并操作 Reach | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7、修复 1b9f910、修复 7842b95、修复 768e739 |
+| M2 | 已完成 | 2026-10-22T22:00:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed；R1 F-03 修复：表详情列出外键目标；R2 续项：详情 context 换行完整显示，V-8 增多外键详情检查；R3 F-04：窄屏详情限高可滚动，Reach 不被导航条遮挡，详情检查改为窄屏触摸并操作 Reach；M8 重做中：详情与标题在窄屏换行、ERD 相邻表短折弯直线相连（V-11 首稿 13/13 曾撞 4px 碎段） | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7、修复 1b9f910、修复 7842b95、修复 768e739、修复 aa4608c |
 | M3 | 已完成 | 2026-10-22T11:00:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验；R1 F-02 修复：跨年时间线显示年份 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7、修复 1b9f910 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
 | M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
-| M6 | 进行中 | 2026-10-22T11:00:00+08:00 | 原 V-7–V-9 在 `p2-core-9`（`p2-native-8`）通过、handoff=passed；R1 修复改变引擎源，ERD 产物随之改变，需在新引擎上重做第 1–5 步 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82 |
-| M8 | 进行中 | 2026-10-22T11:00:00+08:00 | 原最终候选 `a8f3ec4` 的 V-12–V-14 与 P2 聚合通过；R1 修复改变引擎源，需生成新候选并只重取受影响证据（四平台 CI、宿主受影响行、distribution、聚合、V-14） | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18 |
+| M6 | 进行中 | 2026-10-22T23:55:00+08:00 | 评审修复与重做中的三项修复后曾在 `p2-native-11` / `p2-core-12` 收口通过（handoff=passed）；钥匙串修复改变引擎源，在 `p2-native-12` / `p2-core-13` 重做第 1–5 步，第 1–2 步通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82、修复 aa4608c |
+| M8 | 进行中 | 2026-10-22T23:55:00+08:00 | 原最终候选 `a8f3ec4` 的 V-12–V-14 与 P2 聚合只证明旧引擎；候选 `aa4608c` 因 Chrome 钥匙串弹窗被取代，修复后需新候选重取受影响证据（四平台 CI、宿主 8 行与重放、distribution、聚合、V-14） | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18 |
 
 ## 0. 需求、范围与决策
 

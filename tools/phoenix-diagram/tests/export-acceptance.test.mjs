@@ -56,7 +56,7 @@ test('explicit browser discovery never falls back and arguments retain the sandb
   assert.throws(() => discoverBrowser({ env: { PHOENIX_DIAGRAM_BROWSER: path.join(directory, 'absent') } }), error => error.code === 'browser/configured-path');
   assert.equal(discoverBrowser({ browserPath: process.execPath }), fs.realpathSync(process.execPath));
   const args = browserArguments(directory);
-  assert.ok(args.includes('--remote-debugging-pipe')); assert.ok(args.includes('--user-data-dir=' + directory)); assert.ok(!args.includes('--no-sandbox'));
+  assert.ok(args.includes('--remote-debugging-pipe')); assert.ok(args.includes('--user-data-dir=' + directory)); assert.ok(!args.includes('--no-sandbox')); assert.ok(args.includes('--use-mock-keychain'));
   assert.equal(DEFAULT_TIMEOUTS.startupMs, 90000); assert.equal(DEFAULT_TIMEOUTS.commandMs, 15000);
 });
 

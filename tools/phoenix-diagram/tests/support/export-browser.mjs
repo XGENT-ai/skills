@@ -64,7 +64,7 @@ export function discoverBrowser({ browserPath, env = process.env, platform = pro
 }
 
 export function browserArguments(profile, { noSandbox = false } = {}) {
-  return [...(noSandbox ? ['--no-sandbox'] : []), '--headless=new', '--remote-debugging-pipe', '--disable-gpu', '--hide-scrollbars', '--disable-background-networking', '--disable-component-update', '--disable-default-apps', '--disable-sync', '--metrics-recording-only', '--no-first-run', '--no-default-browser-check', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--force-device-scale-factor=1', `--user-data-dir=${profile}`, 'about:blank'];
+  return [...(noSandbox ? ['--no-sandbox'] : []), '--headless=new', '--remote-debugging-pipe', '--disable-gpu', '--hide-scrollbars', '--disable-background-networking', '--disable-component-update', '--disable-default-apps', '--disable-sync', '--metrics-recording-only', '--no-first-run', '--use-mock-keychain', '--no-default-browser-check', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--force-device-scale-factor=1', `--user-data-dir=${profile}`, 'about:blank'];
 }
 
 export class PipeCdp {

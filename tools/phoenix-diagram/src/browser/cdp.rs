@@ -189,6 +189,9 @@ pub(super) fn chrome_args(profile: &Path) -> Vec<String> {
         "--metrics-recording-only",
         "--no-first-run",
         "--no-default-browser-check",
+        // A browser launched without the user's keychain (an isolated HOME)
+        // would otherwise prompt for one; captures never need stored secrets.
+        "--use-mock-keychain",
         "--disable-background-timer-throttling",
         "--disable-backgrounding-occluded-windows",
         "--disable-renderer-backgrounding",
@@ -865,5 +868,18 @@ impl Connection {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn chrome_keeps_its_secrets_out_of_the_user_keychain() {
+        let args = chrome_args(Path::new("/tmp/profile"));
+        assert!(
+            args.iter().any(|arg| arg == "--use-mock-keychain"),
+            "{args:?}"
+        );
     }
 }
