@@ -628,6 +628,45 @@ fn a_foreign_key_names_its_target_column_in_the_table_detail() {
 }
 
 #[test]
+fn a_short_jog_between_side_by_side_tables_is_drawn_straight() {
+    // Host first drafts: a two-column table beside a four-column one in the same
+    // row. Their centres are 20px apart, so a dogleg would leave a 4px straight
+    // piece between its rounded corners, below the micro-segment floor.
+    let table = |id: &str, row: u64, col: u64, columns: usize| {
+        let attributes: Vec<_> = (0..columns)
+            .map(|n| {
+                let mut column = json!({"name": format!("c{n}"), "type": "bigint"});
+                if n == 0 {
+                    column["key"] = json!("pk");
+                }
+                column
+            })
+            .collect();
+        json!({"id": id, "label": id, "row": row, "col": col, "attributes": attributes})
+    };
+    for (left, right) in [("PUBLISHER", "EDITION"), ("product", "order_item")] {
+        let document = json!({
+            "schema_version": 1,
+            "diagram_type": "erd",
+            "meta": {"title": "Schema", "output": "schema.html", "quality_profile": "showcase"},
+            "layout": {"mode": "grid"},
+            "entities": [table("a", 0, 0, 2), table("b", 0, 1, 3), table(left, 1, 0, 2), table(right, 1, 1, 4)],
+            "relationships": [
+                {"from": "a", "to": "b", "label": "writes", "fromCardinality": "one", "toCardinality": "many", "toOptional": true},
+                {"from": "b", "to": right, "label": "published as", "fromCardinality": "one", "toCardinality": "many"},
+                {"from": left, "to": right, "label": "prints", "fromCardinality": "one", "fromOptional": true, "toCardinality": "many", "toOptional": true}
+            ]
+        });
+        let scene = compile(&document, DiagramType::Erd, Quality::Showcase).unwrap();
+        let result = check_html(html(&scene).as_bytes(), Quality::Showcase);
+        assert_eq!(result.status, "pass", "{left}: {:#?}", result.diagnostics);
+        let relation = &scene.relations[2];
+        assert_eq!(relation.points.len(), 2, "{left}: {:?}", relation.points);
+        assert_eq!(relation.points[0].y, relation.points[1].y);
+    }
+}
+
+#[test]
 fn the_bundled_example_compiles_under_its_persisted_contract() {
     let bytes = include_bytes!("../../../skills/phoenix-diagram/examples/minimal.erd.json");
     let options = CompileOptions::default();

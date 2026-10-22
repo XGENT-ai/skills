@@ -573,8 +573,8 @@ export async function runPassportAcceptance(options) {
           repository: document.getElementById('focus-repository').textContent, repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
           rows: rows.map(row => ({ tag: row.localName, state: row.getAttribute('data-evidence-state'), href: row.getAttribute('href'), text: row.textContent })), label: document.querySelector('[data-node-id="' + id + '"]').getAttribute('aria-label'),
           context: document.getElementById('focus-context').textContent,
-          // Detail, metadata, status, repository, path and pending reason must be readable in full, not ellipsized.
-          clipped: Array.from(document.querySelectorAll('#focus-detail, #focus-passport-meta > *, #focus-evidence .semantic-passport-evidence-status, #focus-evidence .semantic-passport-repository, #focus-evidence .semantic-passport-source strong, #focus-evidence .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
+          // Title, detail, metadata, status, repository, path and pending reason must be readable in full, not ellipsized.
+          clipped: Array.from(document.querySelectorAll('#relationship-lens-title, #focus-detail, #focus-passport-meta > *, #focus-evidence .semantic-passport-evidence-status, #focus-evidence .semantic-passport-repository, #focus-evidence .semantic-passport-source strong, #focus-evidence .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
       }, id);
       if (state.focus !== id || state.detailsHidden || (state.hidden && options.evidence !== false)) throw new Error('Details did not show' + (options.evidence === false ? '' : ' source evidence') + ' for ' + id);
       if (state.clipped.length) throw new Error('Details text is clipped for ' + id + ': ' + state.clipped.join(' | '));

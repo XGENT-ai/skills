@@ -419,6 +419,9 @@ pub(crate) struct RouterOptions<'a> {
     pub distinct_automatic_ports: bool,
     /// Reserve each routed label so later routes keep clear of it.
     pub label_reservations: bool,
+    /// Without reservations the caller places labels, so a labeled route stays
+    /// bent; one whose jog is shorter than this may still be straightened.
+    pub straighten_jog_below_px: f64,
 }
 
 impl Default for RouterOptions<'_> {
@@ -433,6 +436,7 @@ impl Default for RouterOptions<'_> {
             minimum_terminal_segment_px: 0.0,
             distinct_automatic_ports: true,
             label_reservations: true,
+            straighten_jog_below_px: 0.0,
         }
     }
 }
@@ -2165,6 +2169,12 @@ impl<'a> Router<'a> {
                 .cloned()
                 .collect();
             let before = self.crossing_count(*index, &original.points, &others);
+            let short_jog = original.points[1..original.points.len() - 1]
+                .windows(2)
+                .any(|pair| {
+                    (pair[1].x - pair[0].x).abs() + (pair[1].y - pair[0].y).abs()
+                        < self.options.straighten_jog_below_px
+                });
             let a = coordinate(geometry.start, side);
             let b = coordinate(geometry.end, side);
             for lane in unique(
@@ -2196,7 +2206,9 @@ impl<'a> Router<'a> {
                     &others.iter().copied().chain([*index]).collect::<Vec<_>>(),
                     &labels,
                 );
-                if !self.label_clear(label.as_ref(), *index, &others, &labels, bounds) {
+                if !self.label_clear(label.as_ref(), *index, &others, &labels, bounds)
+                    && !(short_jog && !self.options.label_reservations)
+                {
                     continue;
                 }
                 self.cache[*index] = Some(candidate);

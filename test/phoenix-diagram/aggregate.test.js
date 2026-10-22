@@ -442,3 +442,51 @@ test('P2 delivery rows require their evidence, timing, language and unchanged-re
   const original={schema_version:1,diagram_type:'workflow',meta:{title:'Reference'}},reference=make({candidate:original}),kept={original:ref('/original.json',Buffer.from(JSON.stringify(original)))};
   assert.equal(p2Outcome({unchangedOriginal:true},reference,kept,store,''),undefined);assert.throws(()=>p2Outcome({unchangedOriginal:true},make({candidate:{...original,meta:{...original.meta,input_contract:'phoenix-v1'}}}),kept,store,''),/rewritten/);
 });
+test('a host record on an earlier engine of the same bundle is only a reuse source, never a strict binding',async()=>{
+  const {checkReusedPackage}=await api(),expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const version={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:'0.7.4',sourceInputSha256:'7'.repeat(64),bundleSha256:expected.bundleSha256,engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:1,sha256:'8'.repeat(64)}}};
+  assert.equal(checkReusedPackage(version,expected),version);
+  for(const change of [{sourceInputSha256:expected.source.inputSha256},{sourceInputSha256:'x'},{bundleSha256:'0'.repeat(64)},{npmPackageVersion:'0.7.5'},{distribution:'release'},{toolVersion:'0.1.0'},{engines:{}}])assert.throws(()=>checkReusedPackage({...version,...change},expected),/Reused development package/,JSON.stringify(change));
+});
+test('rerun host rows replace only themselves; every other planned row comes from the complete earlier record',async()=>{
+  const {P2_PROVIDER_SCENARIOS,p2ReuseRows}=await api(),claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex,ids=rows=>rows.map(row=>({id:row.id}));
+  const rerun=['intent-erd','mermaid-er','intent-timeline','repo-timeline'].map(id=>({id}));
+  const result=p2ReuseRows('claude-code',rerun,ids(claude));
+  assert.equal(result.scenarios,claude);assert.deepEqual(result.reused,claude.map(row=>row.id).filter(id=>!rerun.some(row=>row.id===id)));
+  // D10: an earlier Codex record that already covers every Claude Code row keeps that scope.
+  assert.equal(p2ReuseRows('codex',rerun,ids(claude)).scenarios,claude);assert.equal(p2ReuseRows('codex',rerun,ids(codex)).reused.length,codex.length-4);
+  assert.throws(()=>p2ReuseRows('claude-code',[],ids(claude)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('claude-code',[...rerun,{id:'intent-erd'}],ids(claude)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('codex',[{id:'intent-architecture'}],ids(codex)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('claude-code',rerun,ids(claude.slice(1))),/coverage/);
+});
+test('the diagram SVG is the single svg element of a delivered page',async()=>{
+  const {diagramSvg}=await api();
+  assert.equal(diagramSvg('<style>svg{}</style><div><svg viewBox="0 0 1 1"><g/></svg></div><script>{}</script>'),'<svg viewBox="0 0 1 1"><g/></svg>');
+  for(const html of ['<div></div>','<svg></svg><svg></svg>','<svg>'])assert.throws(()=>diagramSvg(html),/single diagram SVG/,html);
+});
+test('a reused host row needs the final engine to reproduce its diagram and failed validations',async()=>{
+  const {checkReplay}=await api(),files=new Map(),ref=(name,value)=>{const bytes=Buffer.from(typeof value==='string'?value:JSON.stringify(value));files.set(name,bytes);return{path:name,identity:identity(bytes)};},store={bytes:reference=>{const bytes=files.get(reference.path);assert.ok(bytes && identity(bytes).sha256===reference.identity.sha256,'store digest');return bytes;},json(reference){return JSON.parse(this.bytes(reference).toString('utf8'));}};
+  const final={...cohort(),engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:9,sha256:'8'.repeat(64)}}},engine={sourceInputSha256:final.source.inputSha256,binary:{sha256:'8'.repeat(64),bytes:9}};
+  const config={diagramType:'architecture',inputContract:'phoenix-v1',quality:'showcase',viewerRevision:'phoenix-v2'},candidate=identity(Buffer.from('candidate')),snapshot=identity(Buffer.from('snapshot'));
+  const original=ref('original.html','<style>.a{}</style><svg id="d"><g/></svg><script>{"engine":"old"}</script>');
+  const receipt=(command,fields)=>({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command,diagnostics:[],engine,config,...fields});
+  const replayed=ref('replay.html','<style>.b{}</style><svg id="d"><g/></svg><script>{"engine":"new"}</script>');
+  const deliver=fields=>({command:'deliver',original,artifact:replayed,receipt:ref(`deliver-${files.size}.json`,receipt('deliver',{status:'pass',candidate:{path:'/c',identity:candidate},artifact:{path:'/o',identity:replayed.identity},...fields}))});
+  const validate=fields=>({command:'validate',receipt:ref(`validate-${files.size}.json`,receipt('validate',{status:'failed',candidate:{path:'/s',identity:snapshot},diagnostics:[{code:'architecture/grid-cell',severity:'error'},{code:'layout/x',severity:'warning'}],...fields}))});
+  const expected=[{command:'deliver',candidate,artifact:original.identity,config},{command:'validate',candidate:snapshot,codes:['architecture/grid-cell'],config}];
+  assert.equal(checkReplay(expected,{id:'repairable-diagnostic',replays:[deliver(),validate()]},final,store),undefined);
+  const rejects=(replays,pattern,label)=>assert.throws(()=>checkReplay(expected,{id:'repairable-diagnostic',replays},final,store),pattern,label);
+  const changed=ref('changed.html','<svg id="d"><g transform="x"/></svg>');
+  rejects([{...deliver({artifact:{path:'/o',identity:changed.identity}}),artifact:changed},validate()],/diagram differs/,'svg');
+  rejects([deliver({engine:{...engine,sourceInputSha256:'7'.repeat(64)}}),validate()],/final engine/,'old engine');
+  rejects([deliver({engine:{...engine,binary:{sha256:'0'.repeat(64),bytes:9}}}),validate()],/final engine/,'foreign binary');
+  rejects([deliver({candidate:{path:'/c',identity:snapshot}}),validate()],/final engine from the original input/,'other input');
+  rejects([deliver({config:{...config,quality:'standard'}}),validate()],/configuration/,'config');
+  rejects([deliver({status:'failed'}),validate()],/replay/i,'failed delivery');
+  rejects([deliver(),validate({diagnostics:[{code:'layout/other',severity:'error'}]})],/diagnostics differ/,'codes');
+  rejects([deliver(),validate({status:'pass'})],/replay/i,'validation passes now');
+  rejects([deliver()],/replay/i,'missing validation');
+  rejects([deliver(),validate(),validate()],/replay/i,'extra replay');
+  rejects([{...deliver(),original:ref('other.html','<svg></svg>')},validate()],/replay/i,'other original');
+});

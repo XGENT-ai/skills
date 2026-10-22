@@ -5092,6 +5092,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* A long context, such as every foreign key target of a table, wraps too. The
        radius still rounds a one-line chip fully but keeps wrapped lines inside it. */
     .semantic-passport-meta [data-passport="context"] { white-space: normal; overflow-wrap: anywhere; border-radius: 0.625rem; }
+    /* The title and the detail line, such as a span's timing and share of the
+       wall clock, wrap on a narrow panel. */
+    .relationship-lens-title,
+    .semantic-passport-detail { white-space: normal; overflow-wrap: anywhere; }
     /* On a short narrow canvas the details can be taller than the room above the
        navigation (0.5rem inset, 54px dock, 10px placement gap, 0.5rem top inset).
        Capped there, the panel fits above the navigation and scrolls, so every

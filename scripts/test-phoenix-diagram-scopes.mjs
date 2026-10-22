@@ -58,7 +58,7 @@ const LONG_FOREIGN_KEYS={schema_version:1,diagram_type:'erd',meta:{title:'Orders
 async function details(passports,options,caseRoot,output,name,document,nodes) {
   const report=await passports({artifactPath:output,evidenceDir:directory(path.join(caseRoot,'passports')),browserPath:options.browserPath,offline:true,evidence:false,nodes});
   requireThat(report.status==='pass',`${name} details failed: ${JSON.stringify(report.errors)}`);
-  for(const passport of report.passports)requireThat(document.entities.find(entity=>entity.id===passport.id).attributes.filter(attribute=>attribute.references).every(attribute=>passport.context.includes(`${attribute.name} → ${attribute.references}`)),`${name} details omit a foreign key target of ${passport.id}`);
+  if(document.diagram_type==='erd')for(const passport of report.passports)requireThat(document.entities.find(entity=>entity.id===passport.id).attributes.filter(attribute=>attribute.references).every(attribute=>passport.context.includes(`${attribute.name} → ${attribute.references}`)),`${name} details omit a foreign key target of ${passport.id}`);
   return{passports:report.passports,record:{receipt:bound(readSnapshot(report.receiptPath)),screenshots:report.passports.map(passport=>({id:passport.id,theme:passport.theme,viewport:passport.viewport,path:passport.screenshot.path,identity:passport.screenshot.identity,viewing:'required'}))}};
 }
 
@@ -93,6 +93,9 @@ async function corpus(index,options,{invoke,passports}) {
       // A table with several foreign keys names every target in its details, on desktop and narrow screens.
       const tables=type==='erd'?document.entities.filter(entity=>(entity.attributes || []).filter(attribute=>attribute.references).length>1):[];
       if(tables.length)record.passports=(await details(passports,options,caseRoot,output,`Reference ${entry.name}`,document,tables.flatMap(entity=>DETAIL_VIEWPORTS.map(viewport=>({id:entity.id,theme:'light',viewport}))))).record;
+      // A top-level span carries the longest timing detail, which reads in full on a narrow screen.
+      const spans=type==='waterfall'?document.spans.filter(span=>span.parent===undefined):[];
+      if(spans.length)record.passports=(await details(passports,options,caseRoot,output,`Reference ${entry.name}`,document,spans.map(span=>({id:span.id,theme:'light',viewport:DETAIL_VIEWPORTS[1]})))).record;
     }
     cases.push(record);
   }

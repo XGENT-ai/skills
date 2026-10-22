@@ -701,6 +701,9 @@ pub fn compile(
         minimum_terminal_segment_px: 14.0,
         distinct_automatic_ports: false,
         label_reservations: false,
+        // Two 8px rounded corners leave a jog shorter than 24px under the 8px
+        // micro-segment floor; such a route between facing tables runs straight.
+        straighten_jog_below_px: 24.0,
         ..RouterOptions::default()
     };
     let (inferred, ports) = router::inferred_ports(&nodes, &edges, base);
