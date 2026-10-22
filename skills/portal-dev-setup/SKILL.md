@@ -351,6 +351,37 @@ App 都要改一次 skill，等于把问题换了个地方。manifest 里已经�
 租户的顺序是「`add` → 浏览器里勾选安装 → 再跑一次 `add`」（幂等）；之后装的租户会随安装
 自动补布（EXCHANGE-SECRET-HOLD 的安装路径布线）。
 
+App 自己的独立密钥用 `requiredEnv` 的 `generate` 声明，仍不在清单里带值：
+
+```jsonc
+"requiredEnv": [
+  {
+    "key": "WORKER_DATA_KEY",
+    "renamedFrom": "WORKER_LEGACY_DATA_KEY",
+    "generate": { "bytes": 32, "encoding": "base64" }
+  }
+],
+"requiredEnvNotes": { "WORKER_DATA_KEY": "用于保护应用持久化数据；应用兼容消费旧键名" }
+```
+
+`bytes` 必须是 16–64 的整数；`encoding` 只接受标准带填充 `base64` 或小写 `hex`；
+`generate` 只收这两个字段。`add` 在 SA / App Secret 之后生成这些键，写入权限为 600 的共享
+`compose.env`，日志只显示键名与 `***`。已有非空主键就保留；没有主键但旧别名有值时，
+沿用旧名，不创建新主键，缺键检查也显示兼容满足。声明 `generate` + `renamedFrom` 就承诺
+App 继续识别旧名；重跑 `add` 不能替不兼容的 App 迁移密钥。普通不带 `generate` 的缺键提示不变。
+
+一盒是可信团队共享调试环境：主 App 和 `add` 的其他 App 都可能读到整份 `compose.env`，
+同名生成键共享同一值。生产则按 App、按 brand 分别生成并加密保管，只向所属独立部署注入；
+一盒结果不能作为生产隔离证据。生产禁止对平台派生键、服务自动供给目标声明 `generate`，
+套件共享后端成员也不支持。旧键已在平台保管时不能借 `renamedFrom` 改名，应保留原键。
+生成规格变化与既有保管规格冲突会拒绝；不提供读取值或轮换入口，保管行丢失应恢复备份，不能重生成修复。
+
+`add`、`up`、`upgrade`、`init` 用 `<一盒目录>/.onebox-env.lock/` 串行保护配置写入，
+并发调用在写入前退出，可在前一条结束后重试。正常结束或捕获退出只释放自己的锁；
+异常中断留下锁时，先读 `owner` 中的 `pid`、`started`，用 `ps -p <pid> -o lstart=,command=`
+核对进程身份。确认原进程已结束后才手工删除该锁目录；脚本不自动抢锁或重新生成密钥。
+旧镜像不认识 `generate` 时，`register-app` 拒收，`add` 按「注册失败」中止；已写入的值保留供升级后重试。
+
 **清单从哪来**（优先级从高到低）：
 
 ```bash
@@ -546,11 +577,34 @@ services:
 
 ### 升级：换资产，保留本机配置与对象
 
+镜像升级不会更新宿主上的 skill 与 `onebox.sh`。使用 `requiredEnv[].generate` 前，先从公开渠道
+更新安装的 `portal-dev-setup`（同一次安装可更新 `portal-external-app`、`xgent-app-release`）：
+
 ```bash
-S="$SKILL_DIR/scripts/onebox.sh"
+npx skills add XGENT-ai/skills
+```
+
+选中所需 skill 后，从实际安装目录重新设置 `S`，核对脚本摘要与发布说明中的最低组合，再操作镜像：
+
+```bash
+S="<实际安装的 portal-dev-setup 目录>/scripts/onebox.sh"
+shasum -a 256 "$S"
+"$S" pull
 "$S" upgrade --image <registry>/<项目>/one-box:v<版本>-<sha>
 "$S" up
+"$S" add <listingKey> --manifest app.manifest.json
 ```
+
+最低支持组合目前**未发布**，不能把仓内脚本或当前 `latest` 当作已交付版本。发布时须同时填齐：
+
+| 证据 | 当前状态 |
+| --- | --- |
+| 首个支持的门户提交与 `APP_VERSION` | 未发布 |
+| 匹配的一盒 runtime / proxy 不可变镜像 tag | 未发布 |
+| `XGENT-ai/skills` 可取回的公开提交 | 未发布 |
+| 该公开提交中 `onebox.sh` 的 SHA-256 | 未发布 |
+
+只有镜像新、宿主脚本旧的组合不会为 App 生成声明密钥；只有脚本新、镜像旧则在注册时拒收。
 
 不指定 `--image` 时使用当前 `XGENT_IMAGE`；显式换 runtime 后会按同仓同 tag 推导 proxy，
 需要不同反代镜像可加 `--proxy-image <ref>`。`upgrade` 要求已有 `compose.env`，

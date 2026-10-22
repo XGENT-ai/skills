@@ -18,7 +18,7 @@
   声明本 App 的身份空间范围；不创建托管 profile/client、不授额度，也不是成员的 publicClient。
   顾客/学生认证与生命周期按 [终端用户接入](end-users.md) 配置；endusers.* 等服务权限经特权审批申请。
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
-- 部署/运维：`requiredEnvNotes`（`{ 键名: 说明 }`，给 `requiredEnv` 里需要解释的键写一句给审批人看的话，≤200 字；纯展示、自动档）、`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名。键集合一变提案转入「发布审核」，且**批准前门户会比对 `descriptor.env ∪ envFile` 的键集合，缺了拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 登记表核对已有服务；支持自动供给的类型按选定档案建资源并注入约定键，不收 `envKey`）
+- 部署/运维：`requiredEnvNotes`（`{ 键名: 说明 }`，给 `requiredEnv` 里需要解释的键写一句给审批人看的话，≤200 字；纯展示、自动档）、`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名，或加 `generate` 声明独立密钥规格，见 §3.1。键名、改名或生成规格一变提案转入「发布审核」，且**批准前门户会核对实际来源，缺键拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 登记表核对已有服务；支持自动供给的类型按选定档案建资源并注入约定键，不收 `envKey`）
 
 ⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口已经写进 Caddy 的 `/svc` map、也是在跑的容器发布出来的口）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
 **例外**：`extraPorts[].host` **不参与退让**，撞了硬拒——那些是对外契约口（worker 节点连的就是那个数字），静默挪走等于把它们全断掉，且门户侧一条都测不到。
@@ -126,6 +126,31 @@ SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批�
 
 ⚠️ **secret 一致红线**：平台落库的服务账号 secret 与你镜像 env 里的必须一致。漂移症状 = 自省 401，或「跨应用授权缺失/未开启」（实为 `SECRET_INVALID`）。排查：对你侧 secret 求 sha256 与门户 DB 存的哈希比对。
 
+### 3.1 声明由平台生成的独立密钥
+
+```jsonc
+"requiredEnv": [
+  {
+    "key": "WORKER_DATA_KEY",
+    "renamedFrom": "WORKER_LEGACY_DATA_KEY",
+    "generate": { "bytes": 32, "encoding": "base64" }
+  }
+],
+"requiredEnvNotes": { "WORKER_DATA_KEY": "保护应用持久化数据；应用兼容消费旧键名" }
+```
+
+`generate` 只收 `bytes`（16–64 整数）与 `encoding`（标准带填充 `base64` / 小写 `hex`），
+不含密钥值。声明或规格变化进发布审核；首供在批准时完成，值加密保管且永不回显，后续
+发布、重试与部署复用。已有 descriptor 主键或可读 envFile 主键保留，匹配的保管行也保留；
+descriptor 旧名按同值改名。带 `generate` + `renamedFrom` 时，可读 envFile 只有旧名也可满足：
+保持文件原样、原名注入，App 继续消费旧名，不复制到新键、不生成新主键。
+不带 `generate` 的旧名条目仍走原缺键规则。
+
+生产仅支持独立 descriptor 部署，按 App、按 brand 各自生成。平台派生键、服务自动供给目标
+不得再声明 `generate`，套件共享后端成员拒绝。envFile 不可读、来源冲突或保管规格不一致
+都硬拦；旧键已由平台保管时不能用 `renamedFrom` 改名，须保留原键。没有读取值或轮换入口；
+保管行丢失须恢复备份，不能用重生成修复原密文。
+
 ## 4. 一盒联调流程
 
 分工：平台交**两个门户镜像** + `deploy/` 目录（含 `app-devkit/` 与 `onebox/`）。你交
@@ -147,13 +172,23 @@ SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批�
 Apple Silicon），生产门户走另一条链。无 registry 访问时则要离线 `docker save` tar，`docker load` 即可
 （那条路上镜像的本地 tag 可能叫 `ai-portal-one-box:local` / `xgent-ai-portal-proxy:local`）。
 
-已有一盒不要重跑 `init --force` 来升级。使用已安装 `portal-dev-setup` skill 的脚本：
+镜像升级不会更新宿主脚本。先从公开渠道更新 `portal-dev-setup`，核对实际安装的脚本摘要，
+再更新匹配镜像；已有一盒不要重跑 `init --force` 来升级：
 
 ```bash
+npx skills add XGENT-ai/skills
 S="<portal-dev-setup 的 SKILL.md 所在目录>/scripts/onebox.sh"
+shasum -a 256 "$S"
+"$S" pull
 "$S" upgrade --image <registry>/<项目>/one-box:v<版本>-<sha>
 "$S" up
+"$S" add <listingKey> --manifest app.manifest.json
 ```
+
+`generate` 的最低组合目前**未发布**：首个支持的门户提交 / `APP_VERSION`、一盒 runtime / proxy
+不可变 tag、`XGENT-ai/skills` 公开提交及 `onebox.sh` SHA-256 均待正式发布后填齐。
+按发布说明逐项核对，不能从现有样例 tag 或 `latest` 推断支持。新脚本配旧镜像时，
+`register-app` 拒收未知字段，`add` 按「注册失败」中止；只更新镜像不会补齐旧宿主脚本的生成能力。
 
 初始化是 `init` → `up`；升级是 `upgrade` → `up`；主动删数据重置才是 `dc down -v` → `init --force` → `up`。
 升级保留 `compose.env`、`generated/`、`backup/`、端口、密钥和卷，只追加变更的镜像/版本行，
@@ -161,6 +196,13 @@ S="<portal-dev-setup 的 SKILL.md 所在目录>/scripts/onebox.sh"
 `up` 仍重种门户库（租户/用户/清单/安装），不会重种 App 自己的数据库。
 数据库启动前按现有 PG_VERSION 保留大版本和挂载布局；未知/冲突布局拒绝启动，不能用删卷来解决。
 门户升级不执行 PostgreSQL 大版本迁移，后者需要单独备份与维护窗口。
+
+新版 `add` 在 SA / App Secret 后按 §3.1 生成独立密钥，非空主键保留，旧别名有值则沿用旧名，
+缺键检查也显示兼容满足。它写入共享 `compose.env`，主调试 App 和其他 App 均可能读到；
+同名键共享同一值，只适用于可信团队，不承诺生产的 App / brand 隔离。
+`init` / `up` / `add` / `upgrade` 用 `<一盒目录>/.onebox-env.lock/` 保护写入，并发调用先退出再重试。
+异常中断留下锁时核对 `owner` 记录的 PID 与进程启动时间，确认原进程已结束后才手工清理；
+脚本只释放自己的锁，不自动抢锁或重生成。
 
 对象存储是 RustFS，原 `MINIO_*` 与 `minio:9000` 地址继续使用。`up`/`add`/建桶都先通过迁移门，
 旧 MinIO 卷复制到新卷并核对后才提交；原卷及 `backup/` 的镜像归档、清单、回退入口保留。

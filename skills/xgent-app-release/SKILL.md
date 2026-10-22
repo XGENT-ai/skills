@@ -39,7 +39,7 @@ SERVICE_ONLY scope（如 `seats.read`）写进 `serviceScopes` 都会**提交即
 reason 会原文展示给审批人，写清楚用途能少一轮往返。上报自己的用量指标，先在
 `usageMetrics` 里声明（key 必须以你的 listingKey. 开头；同样治理档）——没声明的
 metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
-用 `requiredEnv`（只交键名），值由平台注入、自动供给或管理员配置 —— 见下面「镜像要环境变量」。
+用 `requiredEnv`（键名与可选生成规格），值由平台注入、自动供给、声明生成或管理员配置 —— 见下面「镜像要环境变量」。
 
 ### 文案字段：哪些支持多语，哪些不支持
 
@@ -292,20 +292,53 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 
 ## 镜像要环境变量：**键名归你，值归平台**
 
-manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。唯一的表达
-方式是 **`requiredEnv`（只交键名）**。值从哪来分三档 —— 照这张表命名，绝大多数键**零手填**：
+manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。使用
+**`requiredEnv` 声明键名与可选的生成规格**。值从哪来按下表区分：
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
 | **自动供给** | 库连接串 · Redis 地址 · 对象存储五键 | 批准时平台按登记的服务代建资源 / 取地址并注入（见下面「服务怎么绑到键」） |
-| **自定** | 其余**环境依赖**（第三方服务地址、第三方 API key…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
+| **随机生成** | App 独立密钥，声明 `generate` | 批准时生成、加密保管，后续换版复用，值永不回显 |
+| **自定** | 其余**环境依赖**（第三方服务地址、第三方已有 API key…） | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
 
 业务参数（超时、阈值、默认文案、功能开关…）**不在这张表里**：先看下面「业务参数」一节。
 
 `<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
 `PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
 `API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+### 独立密钥：只声明生成规格
+
+```jsonc
+"requiredEnv": [
+  {
+    "key": "WORKER_DATA_KEY",
+    "renamedFrom": "WORKER_LEGACY_DATA_KEY",
+    "generate": { "bytes": 32, "encoding": "base64" }
+  }
+],
+"requiredEnvNotes": { "WORKER_DATA_KEY": "保护应用持久化数据；应用兼容消费旧键名" }
+```
+
+`generate` 只收 `bytes`（16–64 整数）与 `encoding`（标准带填充 `base64` / 小写 `hex`）。
+新增、撤回或改变规格都需审批；首供在批准时完成，生产按 App、按 brand 各自生成，
+加密保管并只向所属独立 descriptor 部署注入。重发、重试、重部署与重启复用原值，
+不覆盖存量值；没有读取值或轮换入口，丢失应从备份恢复，不能重生成修复原密文。
+
+有主键沿用主键；descriptor 旧名可以同值搬到新键。可读 `envFile` 只有旧名时，
+`generate` + `renamedFrom` 表示 App 仍能消费旧名，门户原样注入文件、不创建新主键，
+审批屏显示沿用旧名。不要引导运维改文件或手填 NEW。普通无 `generate` 的改名规则不变。
+不可读 envFile、来源冲突、已保管规格冲突均硬拦；旧键已由平台保管时拒绝改名。
+平台派生键和服务自动供给目标不能声明 `generate`，套件共享后端成员也不支持。
+
+旧门户 / 旧一盒镜像会拒收 `generate`（`VALIDATION_FAILED`），须先升级平台，不能用手填绕过。
+最低门户提交 / `APP_VERSION`、一盒 runtime / proxy tag、公开 skill 提交与脚本 SHA-256
+目前均**未发布**，发布后按完整组合核对。一盒宿主脚本不随镜像更新：先执行
+`npx skills add XGENT-ai/skills` 更新 `portal-dev-setup`，从实际安装目录用
+`shasum -a 256 <脚本路径>` 核对后再 pull / upgrade / up / add，步骤见该 skill §6。
+新版 `add` 把生成值写进共享的 `<一盒目录>/compose.env`，沿用已有主键或旧别名；同名键共享值，
+主 App 和其他 App 均可能读取，限可信团队调试，不能作为生产 App 隔离证据。
 
 ### 业务参数：能不进清单就不进；进了就写 `requiredEnvNotes`
 
@@ -487,8 +520,8 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   ```
 
   批准时门户把旧键在 **`descriptor.env`** 里的值搬到新键，审批屏如实显示「将沿用旧键的现有值」。
-  ⚠️ **值在 envFile 里的搬不了**（那是主机上的文件，门户连写都不写它）—— 那种情况审批屏会把这一条
-  判成「缺」，并告诉运维去把那一行改名。仍然只带键名，不带值。
+  ⚠️ **值在 envFile 里的搬不了**（门户不写主机文件）。普通条目仍判缺；带 `generate` 的条目
+  可兼容沿用文件旧名，由 App 消费，不改文件、不复制值、不生成 NEW。旧键已由平台保管则拒绝改名。
   两条写法约束：`renamedFrom` 不能等于 `key`；旧键**不能**同时还留在清单里（那等于说「它既被改掉
   又仍然必需」，提交即拒）。改名生效之后 **`renamedFrom` 留着就行** —— 它是幂等的（新键已有值就不再搬），
   而摘掉它本身是一次清单变更，会平白再进一次人工审。

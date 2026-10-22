@@ -73,6 +73,10 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 
 ## 一盒初始化与升级
 
+宿主 skill 与镜像分别更新：先 `npx skills add XGENT-ai/skills` 更新 `portal-dev-setup`，
+从实际安装目录核对 `onebox.sh` 的 SHA-256，再按发布说明的匹配镜像操作。
+`requiredEnv[].generate` 的最低门户提交 / `APP_VERSION`、一盒 tag、公开 skill 提交和脚本摘要
+目前均**未发布**；完整证据状态见 `portal-dev-setup` §6，不能默认当前 `latest` 已支持。
 首次联调用 `portal-dev-setup` 的 `onebox.sh init` → `up`；已有一盒换版本用
 `upgrade [--image <ref>]` → `up`；沿用 latest 先 `pull` 更新缓存，已加载的本地新镜像可离线升级。
 不使用 `init --force` 代替升级。升级保留配置、generated/、backup/、
@@ -88,7 +92,8 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
   （无行先建 draft 占位），对方 `publish --manifest … --dist … --image …` ⇒ 首次必进
   「发布审核」队列 ⇒ 批准后更新清单、服务账号与已装租户，后端和网关分别交付。
-  密钥一次性回显给审批人；平台运行配置由管理员维护，App 团队无需修改门户代码。
+  SA / 交换密钥一次性回显给审批人；`requiredEnv[].generate` 声明的独立密钥永不回显。
+  平台运行配置由管理员维护，App 团队无需修改门户代码。
   特权服务态 scope 经 manifest 的 `privilegedServiceScopes` 申请、逐项审批后授予；
   用量指标经 manifest `usageMetrics` 声明（治理档）。批准不等于部署与网关已经生效，
   交付判据见 [公开入口](references/public-entrypoints.md)。
@@ -141,8 +146,9 @@ job(deploy|redeploy)
 「知会门户」变成流程内动作的那道门。**CR-3 之后它还是一道真闸**：批准前门户拿这张清单比对
 `descriptor.env ∪ envFile` 的键集合（只看键在不在，不读值），缺了就拒绝生效
 （`REQUIRED_ENV_MISSING`，提案留 pending）；审批屏逐键标状态，非密钥可当场填。改名要写成
-`{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去（**envFile 里的搬不了**，
-门户不写那个文件，那一条会判「缺」并提示运维改名）。仍有一件它管不到：对方
+`{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去。普通条目在
+`envFile` 中的旧名仍判缺；带 `generate` 的条目可沿用可读文件中的旧名，App 必须兼容消费，
+不改文件、不复制值、不生成新主键。旧键已由平台保管时拒绝改名。仍有一件它管不到：对方
 **不写进 `requiredEnv`** 的静默改名依旧无门可拦 —— 症状是服务
 换版后 `refusing to start`，而发布方那侧只看到成功。2026-08-19 知识库把 `XGENT_OPENAI_*`
 整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
@@ -153,13 +159,21 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 里写清填什么、不确定时填什么，审批屏会贴在键名旁。放哪一层的完整判断见下文「配置放哪一层」。发布面本身
 （令牌、tag 不可变、`--wait` / `--wait-review` / `status`）见 `xgent-app-release` skill。
 
-### 值从哪来：三档键名约定（照这张表命名，绝大多数键零手填）
+### 值从哪来：键名约定与独立密钥生成
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET`（声明了 `exchangeTargets` 时） | 平台换版时自己算并注入，没有人手填 |
 | **自动供给** | 库连接串 · Redis 地址 · 对象存储五键（每应用一桶）· Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
-| **自定** | 其余**环境依赖**（第三方地址、第三方密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+| **随机生成** | App 独立密钥，声明 `{ key, generate: { bytes: 32, encoding: "base64" } }` | 批准时生成、加密保管；换版复用，值永不回显 |
+| **自定** | 其余**环境依赖**（第三方地址、第三方已有密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+
+`generate` 仅收 `bytes`（16–64 整数）与 `encoding`（标准带填充 `base64` / 小写 `hex`）。
+不可用于平台派生键或服务供给目标，生产只支持独立 descriptor 部署，套件共享后端成员拒绝。
+已有主键或匹配保管值保留；规格冲突、来源冲突、不可读 `envFile` 均硬拦，不能填新值绕过。
+`generate` 的增加、撤回、规格变化都需审批；已生成值不覆盖、不提供读取或轮换入口，丢失应恢复备份。
+一盒新版 `add` 在共享的 `<一盒目录>/compose.env` 中首供并稳定复用，同名键共享同一值；主 App 与其他 App
+均可能读到，适用于可信团队调试。生产则按 App、按 brand 隔离，不以一盒结果证明生产隔离。
 
 业务参数不在这张表里：先给代码缺省值；要进清单就配 `requiredEnvNotes`（见上一节末尾与「配置放哪一层」）。
 
