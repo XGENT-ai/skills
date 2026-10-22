@@ -257,10 +257,14 @@ fn repository(input: &DiagramInput, errors: &mut Diagnostics) -> Option<Reposito
     let location = match location::parse_remote(url, true, provider) {
         Ok(location) => location,
         Err(rejection) => {
-            let mut diagnostic = error(kind, "url-invalid", "/meta/repository/url", format!(
-                "{} must be a credential-free HTTP(S) or Git SSH repository address without query, fragment or dot segments",
-                location::redact(url)
-            ));
+            // A rejected address is never echoed: no redaction can find the
+            // credentials of every malformed one.
+            let mut diagnostic = error(
+                kind,
+                "url-invalid",
+                "/meta/repository/url",
+                "url must be a credential-free HTTP(S) or Git SSH repository address without query, fragment or dot segments",
+            );
             diagnostic.evidence = json!({"reason": if rejection == Rejection::Credentials { "credentials" } else { "syntax" }});
             errors.push(diagnostic);
             return None;

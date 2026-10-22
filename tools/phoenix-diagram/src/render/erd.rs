@@ -339,10 +339,27 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
         _ => (&[][..], &[][..]),
     };
     let steps = steps(entities, relationships, false);
-    let context = locale.text("node.context.erd", &[]);
+    let entity_context = locale.text("node.context.erd", &[]);
     for node in &scene.nodes {
         let facts = &node.authored.facts;
         let (sublabel, tag) = (facts["sublabel"].as_str(), facts["tag"].as_str());
+        // A key badge cannot say which column a foreign key references; the
+        // table detail names it, after the segment the node index groups by.
+        let targets: Vec<String> = facts["attributes"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice)
+            .iter()
+            .filter_map(|attribute| {
+                let target = attribute["references"].as_str()?;
+                let name = attribute["name"].as_str().unwrap_or_default();
+                Some(format!("{name} → {target}"))
+            })
+            .collect();
+        let context = if targets.is_empty() {
+            entity_context.clone()
+        } else {
+            format!("{entity_context} \u{203a} {}", targets.join(", "))
+        };
         let b = node.bounds;
         let r = 8.0;
         let header = b.y

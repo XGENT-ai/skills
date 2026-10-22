@@ -79,11 +79,13 @@ fn units(text: &str) -> f64 {
 }
 
 /// The display clock: the zone's wall time, with seconds when any event has
-/// them and dates when the events span more than one wall-clock day.
+/// them, dates when the events span more than one wall-clock day and years
+/// when they span more than one wall-clock year.
 pub(crate) struct Clock {
     zone: Zone,
     seconds: bool,
     multi_day: bool,
+    multi_year: bool,
 }
 
 impl Clock {
@@ -95,13 +97,17 @@ impl Clock {
             zone,
             seconds: instants.iter().any(|t| t.rem_euclid(MINUTE) != 0),
             multi_day: (a.year, a.month, a.day) != (b.year, b.month, b.day),
+            multi_year: a.year != b.year,
         })
     }
 
     pub(crate) fn label(&self, ms: i64, seconds: bool, date: bool) -> String {
         let wall = time::wall(ms, &self.zone);
         let mut label = String::new();
-        if date {
+        if date && self.multi_year {
+            // Month and day alone would name the same date in every year.
+            label.push_str(&format!("{} ", self.date(ms)));
+        } else if date {
             label.push_str(&format!("{:02}-{:02} ", wall.month, wall.day));
         }
         label.push_str(&format!("{:02}:{:02}", wall.hour, wall.minute));
@@ -888,8 +894,7 @@ pub fn compile(
     let mut taken: Vec<(f64, f64)> = Vec::new();
     let mut last_date: Option<String> = None;
     for tick in &ticks {
-        let wall = time::wall(tick.t, &clock.zone);
-        let day = format!("{:02}-{:02}", wall.month, wall.day);
+        let day = clock.date(tick.t);
         let label = clock.label(
             tick.t,
             tick_seconds,

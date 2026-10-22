@@ -455,6 +455,55 @@ fn minimal_example_keeps_time_facts_and_passes_showcase() {
     assert_eq!(metadata["graph"]["relations"], json!([]));
 }
 
+#[test]
+fn events_in_different_years_name_their_year_in_labels_ticks_and_details() {
+    let document = json!({
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {"title": "Release history", "output": "history.html", "evidence": "observed"},
+        "events": [
+            {"id": "a", "at": "2020-01-01T00:00Z", "title": "Start"},
+            {"id": "b", "at": "2026-01-01T00:00Z", "title": "Today"}
+        ]
+    });
+    let scene = compile(&document, DiagramType::Timeline).unwrap();
+    let html = html(&scene);
+    let check = check_html(html.as_bytes(), scene.quality);
+    assert_eq!(check.status, "pass", "{:?}", check.diagnostics);
+    let svg = Html::parse_fragment(&svg_of(&html));
+    for (id, date) in [("a", "2020-01-01"), ("b", "2026-01-01")] {
+        let node = svg
+            .select(&select(&format!("g[data-node-id='{id}']")))
+            .next()
+            .unwrap();
+        let time: String = node
+            .select(&select("text.tl-time"))
+            .next()
+            .unwrap()
+            .text()
+            .collect();
+        assert_eq!(time, format!("{date} 00:00"), "{id}");
+        let context = node.value().attr("data-node-context").unwrap();
+        assert!(
+            context.contains(&format!("{date} 00:00:00")),
+            "{id}: {context}"
+        );
+    }
+    let dated: Vec<String> = svg
+        .select(&select("text.tl-tick"))
+        .map(|tick| tick.text().collect::<String>())
+        .filter(|label| label.split(' ').next().unwrap().contains('-'))
+        .collect();
+    assert!(!dated.is_empty());
+    for label in dated {
+        assert_eq!(
+            label.split(' ').next().unwrap().split('-').count(),
+            3,
+            "{label}"
+        );
+    }
+}
+
 #[track_caller]
 fn failing_codes(html: &str) -> Vec<String> {
     let check = check_html(html.as_bytes(), Quality::Showcase);

@@ -604,7 +604,20 @@ fn credentials_escapes_and_inconsistent_ranges_fail_the_input_with_pointers() {
         json!("https://user:secret-token@github.com/example/repo");
     let found = rejects(&document, "repository/url-invalid", "/meta/repository/url");
     assert_eq!(found["evidence"]["reason"], "credentials");
-    assert!(!found["message"].as_str().unwrap().contains("secret-token"));
+    assert!(!found.to_string().contains("secret-token"));
+    for url in [
+        " https://user:secret-token@github.com/example/repo",
+        "\thttps://user:secret-token@github.com/example/repo",
+        "\u{1}https://user:secret-token@github.com/example/repo",
+        "https://user:secret-token@github.com/example/repo\n",
+        "git+https://user:secret-token@github.com/example/repo",
+        "user:secret-token@github.com/example/repo",
+    ] {
+        document["meta"]["repository"]["url"] = json!(url);
+        let found = rejects(&document, "repository/url-invalid", "/meta/repository/url");
+        assert_eq!(found["evidence"]["reason"], "syntax", "{url:?}");
+        assert!(!found.to_string().contains("secret-token"), "{url:?}");
+    }
     for (url, reason) in [
         ("https://github.com/a/../b", "syntax"),
         ("https://github.com/a/b?x=1", "syntax"),

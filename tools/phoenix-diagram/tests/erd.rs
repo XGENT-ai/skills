@@ -198,12 +198,66 @@ fn scene_geometry_matches_the_frozen_renderer() {
     }
 }
 
+/// The table detail Phoenix adds after the reference context: each foreign
+/// key's column and the column it references.
+fn foreign_key_targets(entity: &Value) -> String {
+    let targets: Vec<String> = entity["attributes"]
+        .as_array()
+        .map_or(&[][..], Vec::as_slice)
+        .iter()
+        .filter_map(|attribute| {
+            let target = attribute["references"].as_str()?;
+            Some(format!(
+                "{} → {target}",
+                attribute["name"].as_str().unwrap()
+            ))
+        })
+        .collect();
+    if targets.is_empty() {
+        String::new()
+    } else {
+        format!(" \u{203a} {}", targets.join(", "))
+    }
+}
+
+/// The frozen renderer omits foreign key targets; strip them to compare the rest.
+fn without_foreign_key_targets(
+    mut elements: Vec<svg_oracle::Element>,
+    case: &Value,
+) -> Vec<svg_oracle::Element> {
+    for entity in case["document"]["entities"].as_array().unwrap() {
+        let suffix = foreign_key_targets(entity);
+        if suffix.is_empty() {
+            continue;
+        }
+        let id = entity["id"].as_str().unwrap();
+        let node = find(&elements, |e| {
+            e.tag == "g" && e.attr("data-node-id") == Some(id)
+        })[0];
+        for key in ["data-node-context", "aria-label"] {
+            let value = elements[node].attr(key).unwrap();
+            assert!(value.contains(&suffix), "{id} {key}: {value}");
+            let value = value.replacen(&suffix, "", 1);
+            elements[node]
+                .attrs
+                .insert(key.into(), Value::String(value));
+        }
+        for index in descendants(&elements, node) {
+            if elements[index].tag == "title" {
+                assert!(elements[index].text.contains(&suffix), "{id} title");
+                elements[index].text = elements[index].text.replacen(&suffix, "", 1);
+            }
+        }
+    }
+    elements
+}
+
 #[test]
 fn rendered_svg_matches_the_frozen_renderer() {
     for case in cases(true) {
         let name = case["name"].as_str().unwrap();
         let scene = erd(&case);
-        let actual = rendered_elements(&html(&scene));
+        let actual = without_foreign_key_targets(rendered_elements(&html(&scene)), &case);
         let expected = oracle_elements(&case);
         let root = (&expected[0], &actual[0]);
         assert_eq!(root.1.attr("data-erd-ui"), Some("cards"), "{name}");
@@ -519,6 +573,58 @@ fn the_gate_notices_a_dropped_column_key_or_end() {
             result.checks
         );
     }
+}
+
+#[test]
+fn a_foreign_key_names_its_target_column_in_the_table_detail() {
+    let mut contexts = vec![];
+    for target in ["customer.id", "customer.external_id"] {
+        let document = json!({
+            "schema_version": 1,
+            "diagram_type": "erd",
+            "meta": {"title": "Orders", "output": "orders.html", "quality_profile": "showcase"},
+            "entities": [
+                {"id": "customer", "label": "customer", "row": 0, "col": 0, "attributes": [
+                    {"name": "id", "type": "bigint", "key": "pk"},
+                    {"name": "external_id", "type": "bigint", "key": "uk"}
+                ]},
+                {"id": "orders", "label": "orders", "row": 0, "col": 1, "attributes": [
+                    {"name": "id", "type": "bigint", "key": "pk"},
+                    {"name": "customer_ref", "type": "bigint", "key": "fk", "references": target}
+                ]}
+            ],
+            "relationships": [
+                {"from": "orders", "to": "customer", "fromCardinality": "many", "toCardinality": "one"}
+            ]
+        });
+        let scene = compile(&document, DiagramType::Erd, Quality::Showcase).unwrap();
+        let rendered = html(&scene);
+        let result = check_html(rendered.as_bytes(), Quality::Showcase);
+        assert_eq!(result.status, "pass", "{target}: {:#?}", result.diagnostics);
+        let elements = rendered_elements(&rendered);
+        let orders = find(&elements, |e| {
+            e.tag == "g" && e.attr("data-node-id") == Some("orders")
+        })[0];
+        let expected = format!("customer_ref → {target}");
+        for key in ["data-node-context", "aria-label"] {
+            let value = elements[orders].attr(key).unwrap();
+            assert!(value.contains(&expected), "{key}: {value}");
+        }
+        let title = descendants(&elements, orders)
+            .into_iter()
+            .find(|index| elements[*index].tag == "title")
+            .unwrap();
+        assert!(
+            elements[title].text.contains(&expected),
+            "{}",
+            elements[title].text
+        );
+        let context = elements[orders].attr("data-node-context").unwrap();
+        // The node index groups tables by the first segment.
+        assert_eq!(context.split(" \u{203a} ").next(), Some("Entity"));
+        contexts.push(context.to_owned());
+    }
+    assert_ne!(contexts[0], contexts[1]);
 }
 
 #[test]

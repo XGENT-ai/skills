@@ -47,26 +47,26 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-22T09:50:00+08:00
-- 当前进度：8/8 个里程碑完成
-- 当前状态：已完成。最终候选 `a8f3ec4`：dispatch run 39689275122 四平台全部 success；本机 darwin-arm64 完整审核消费 complete；P2 聚合 handoff=passed；V-14 全量通过
-- 最近完成：M8 · 四平台候选与 P2 收口
-- 下一步：代码评审：由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P2.md`，按完成记录评审本计划提交
-- 当前阻塞：无（磁盘约 6.7GiB 可用；`local/phoenix-diagram/` 下被取代的运行目录是否清理由用户决定）
-- 代码基线：main / `8539d18`（M8 收口记录；最终候选源码 `a8f3ec4` = `e09bc82` 加 ETXTBSY 测试修复）；之后只有计划文件的 SHA 回填提交
+- 最近更新：2026-10-22T11:00:00+08:00
+- 当前进度：6/8 个里程碑完成
+- 当前状态：进行中。R1 代码评审 F-01–F-03 已修复并通过局部回归；修复改变引擎源，最终候选 `a8f3ec4` 及 M6 收口证据不再对应当前源码，M6、M8 重开，重做范围见 [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md#评审修复后的重做范围)
+- 最近完成：M7 · skill、说明、包脚本与宿主验收
+- 下一步：用户发起 `/review-code docs/plan/PHOENIX-DIAGRAM-P2.md` 复审修复；通过后在新引擎上重做 M6 的 V-7 第 1–5 步，再按 M8 生成新候选（四平台 CI、§9.3 宿主受影响行、distribution 收口、P2 聚合、V-14）
+- 当前阻塞：无（复审不受影响）；重做收口前须腾出磁盘：约 2.0GiB 可用，`local/phoenix-diagram/` 下被取代的运行目录是否清理由用户决定
+- 代码基线：main / `0b5b37d` 之上的 R1 修复提交（见完成记录 M2–M4「修复」）；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 仍指向旧候选引擎 `7fcabd88…`
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-20T18:58:00+08:00 | 十类输入合同、语义门、场景类型、唯一目录与 i18n、0.2.0/phoenix-v2 身份、chrono 依赖与 `--sync-dist`；V-1、V-2 通过 | [M1 记录](PHOENIX-DIAGRAM-P2.records/M1.md) | 711a5b7 |
-| M4 | 已完成 | 2026-10-20T19:40:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行） | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 711a5b7 |
-| M2 | 已完成 | 2026-10-20T20:36:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7 |
-| M3 | 已完成 | 2026-10-20T20:36:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7 |
+| M4 | 已完成 | 2026-10-22T11:00:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行）；R1 F-01 修复：非法 URL 诊断不回显凭据 | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 711a5b7 |
+| M2 | 已完成 | 2026-10-22T11:00:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed；R1 F-03 修复：表详情列出外键目标 | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7 |
+| M3 | 已完成 | 2026-10-22T11:00:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验；R1 F-02 修复：跨年时间线显示年份 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
-| M6 | 已完成 | 2026-10-22T03:30:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；V-11 暴露的 3.1.0 参考 JSON 浏览器门与分组标题修引擎后，在 `p2-core-8`（`p2-native-7`）重做第 1–5 步、handoff=passed，V-7–V-9 通过；M7 的 D12 workflow 修复改变引擎身份后在 `p2-core-9`（`p2-native-8`）再次重做第 1–5 步与全部范围，handoff=passed | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82 |
 | M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
-| M8 | 已完成 | 2026-10-22T09:45:00+08:00 | `e09bc82` 的三个 CI run 因离线导出 15s 超时与 Linux 测试 ETXTBSY 作废，`a8f3ec4` 修测试竞态；最终 dispatch run 39689275122 四平台全部 success，三平台新五类截图实看；本机完整审核消费 complete，宿主证据按 §9.3 复用，P2 聚合 handoff=passed；V-12–V-14 通过 | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18 |
+| M6 | 进行中 | 2026-10-22T11:00:00+08:00 | 原 V-7–V-9 在 `p2-core-9`（`p2-native-8`）通过、handoff=passed；R1 修复改变引擎源，ERD 产物随之改变，需在新引擎上重做第 1–5 步 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82 |
+| M8 | 进行中 | 2026-10-22T11:00:00+08:00 | 原最终候选 `a8f3ec4` 的 V-12–V-14 与 P2 聚合通过；R1 修复改变引擎源，需生成新候选并只重取受影响证据（四平台 CI、宿主受影响行、distribution、聚合、V-14） | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18 |
 
 ## 0. 需求、范围与决策
 
@@ -359,10 +359,10 @@ timeline `precision`（仅 phoenix-v1）：
 
 | 图型 | 参考锚点 | 移植要点 | Reader 属性 / 阅读合同 |
 | --- | --- | --- | --- |
-| erd | `render-erd.mjs` `buildLayoutReport` :1337、`renderSvg` :1483、`labelColumnGaps` :170、`autoViewBox` :503（最多 4 次扩图例带）；`grid.mjs` `bandedLayout` :61 | 按列取最宽、按行取最高的 banded grid；共享路由带 erd 选项（端口间距 ≤24，否则 `layout/marker-capacity`）；按功能域画实心矩形带，否则 `erd/domain-not-drawn`；头与行字号走 `fitted_node_font_size`，容量不足报 `erd/header-text-capacity`、`erd/attribute-text-capacity`；鸦脚 marker（参考 :407）；不画品牌 | `data-er-row`、`data-er-badge`、行 `data-detail="context"`、图例 hover 样式（参考 :1456–1522）；无 `meta.viewBox` 时 `data-reader-fit="intrinsic-height"`、`data-reader-min-text="7.5"` |
+| erd | `render-erd.mjs` `buildLayoutReport` :1337、`renderSvg` :1483、`labelColumnGaps` :170、`autoViewBox` :503（最多 4 次扩图例带）；`grid.mjs` `bandedLayout` :61 | 按列取最宽、按行取最高的 banded grid；共享路由带 erd 选项（端口间距 ≤24，否则 `layout/marker-capacity`）；按功能域画实心矩形带，否则 `erd/domain-not-drawn`；头与行字号走 `fitted_node_font_size`，容量不足报 `erd/header-text-capacity`、`erd/attribute-text-capacity`；鸦脚 marker（参考 :407）；不画品牌 | `data-er-row`、`data-er-badge`、行 `data-detail="context"`、图例 hover 样式（参考 :1456–1522）；表的 context、aria-label 与 `<title>` 在参考文案后以 ` › ` 列出“外键列 → 目标”（参考未显示，WORK-F1 要求外键目标可读；节点目录仍按首段分组）；无 `meta.viewBox` 时 `data-reader-fit="intrinsic-height"`、`data-reader-min-text="7.5"` |
 | class | `render-class.mjs` `fillLines` :149、`wrapMember` :173、`ordinaryRouter` :455、继承总线 :416–449、冲突回退 :472–520、`NOTATION` :282 | 复用 erd grid，类型在行内垂直居中；成员按参考正则与悬挂缩进（参数 4、续行 2）折行，不截断；两个以上子类且间距 ≥40px 时成继承总线，冲突时整组回退到路由器；`class/title-text-capacity` | `data-class-*`、成员 `data-detail="context"`、总线 `data-motion-path`；阅读合同同 erd |
 | tree | `render-tree.mjs` `wrapText` :123、`STACK_MIN` :160、`renderSvg` :497 | 按代分带，按子树跨度排布，父居中；向下布局时连续 3 个以上叶子堆成缩进列表；直角连线；CJK 按参考字符类切分；`collapsed` 只决定 Reader 初始折叠，静态 SVG 与导出始终是完整树 | `data-tree-ui`、`data-tree-toggle`、`-ancestors`、`-initially-collapsed`、`-expand-all`、`-label-expand/collapse`、`-count`（参考 :477、:500）；阅读合同同 erd |
-| timeline | `render-timeline.mjs` 的断轴规则（间隔大于中位数 8 倍且大于跨度 10% 时断开，至多 8 处，`SEGMENT_FLOOR` 28）、`TICKS` :257、泳道卡片上下择位 :318–356、`renderHeader` :423 | 刻度按显示时区墙钟对齐；证据徽标 observed/illustrative；轴说明写时区、偏移、单日日期与压缩披露；D7 的日精度显示 | `data-timeline-ui`、`-at`、`-ms`、`-x`、`-lane`、`-break`、`-evidence`、`-axis-caption`，编排 `sweep`；`intrinsic-height` + 7.5 |
+| timeline | `render-timeline.mjs` 的断轴规则（间隔大于中位数 8 倍且大于跨度 10% 时断开，至多 8 处，`SEGMENT_FLOOR` 28）、`TICKS` :257、泳道卡片上下择位 :318–356、`renderHeader` :423 | 刻度按显示时区墙钟对齐；证据徽标 observed/illustrative；轴说明写时区、偏移、单日日期与压缩披露；D7 的日精度显示；事件跨墙钟年份时，刻度、卡片与详情的日期带年份（参考只显示月日） | `data-timeline-ui`、`-at`、`-ms`、`-x`、`-lane`、`-break`、`-evidence`、`-axis-caption`，编排 `sweep`；`intrinsic-height` + 7.5 |
 | waterfall | `render-waterfall.mjs` 行序（深度优先，按 start 再按索引）、`NICE` 刻度 [1,2,2.5,5]、开放跨度画到 t1、`number` :131、证据徽标 :234–247 | 单一线性比例尺；红色保留给 error，服务配色至多五色循环；incomplete 显示“≥ 时长”下界；名称列宽取自 `text_units` | `data-waterfall-start`、`-end`、`-duration`、`-status`、`data-waterfall-evidence`，编排 `replay`；`data-reader-fit="width-first"` + 7.5，由 `browser/observation.rs` 既有 width-first 例外判定 |
 
 oracle 沿 P1 方式：生成器在已核对解包上执行原 renderer，取场景几何、文本、关系点、Reader 属性集合与被拒用例的诊断；Rust 比较场景几何（容差 1e-8）与渲染几何（容差 1e-5）。含 `brand` 的参考输入先删去 brand 再生成几何 oracle；原件另测延期字段报告与核心事实。
@@ -377,7 +377,8 @@ oracle 沿 P1 方式：生成器在已核对解包上执行原 renderer，取场
 - `url-invalid`：
   - 含空白、`\`、控制字符、`?`、`#`，或含点段/空段；
   - SSH 用户不是 `git`，或带密码；
-  - 任何 HTTP(S) userinfo（evidence 字段写 `credentials`，诊断中的 URL 经 redact）。
+  - 任何 HTTP(S) userinfo（evidence 字段写 `credentials`）。
+  - 诊断沿参考不回显作者给的 URL；畸形 URL 中的凭据无法可靠脱敏。
 - `provider-invalid`：provider 与主机不符。
 - `links-unsupported`：web 模式要求 GitHub/Gitee/gitlab.com，或显式 `provider: "gitlab"` 的自托管主机，且为 https、端口 443、`owner/repo` 路径（GitLab 允许嵌套组）。
 - `path-invalid` / `path-escape`：前导 `/`、反斜杠、控制字符或换行；空段、`.`、`..`，或首段为 `.git`。

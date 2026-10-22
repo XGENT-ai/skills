@@ -214,28 +214,6 @@ pub(crate) fn parse_remote(
     })
 }
 
-/// `redactRepositoryRemote`: removes userinfo, query and fragment for diagnostics.
-pub(crate) fn redact(value: &str) -> String {
-    let mut result = value.to_owned();
-    if let Some(cut) = result.find(['?', '#']) {
-        result.truncate(cut);
-        result.push_str("?REDACTED");
-    }
-    let lower = result.to_ascii_lowercase();
-    if let Some(scheme) = ["https://", "http://", "ssh://"]
-        .into_iter()
-        .find(|scheme| lower.starts_with(scheme))
-    {
-        let authority_end = result[scheme.len()..]
-            .find('/')
-            .map_or(result.len(), |at| at + scheme.len());
-        if let Some(at) = result[scheme.len()..authority_end].rfind('@') {
-            result.replace_range(scheme.len()..scheme.len() + at, "REDACTED");
-        }
-    }
-    result
-}
-
 pub(crate) fn source_href(
     provider: &str,
     url: &str,
@@ -333,10 +311,6 @@ mod tests {
                 "{value}"
             );
         }
-        assert_eq!(
-            redact("https://user:token@github.com/a/b?token=1"),
-            "https://REDACTED@github.com/a/b?REDACTED"
-        );
     }
 
     #[test]

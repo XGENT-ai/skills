@@ -196,6 +196,47 @@ fn cli_validate_uses_the_builtin_reader_and_only_exposes_layout_on_request() {
 }
 
 #[test]
+fn cli_never_prints_the_credentials_of_a_rejected_repository_address() {
+    let project = Project::new();
+    let candidate = project.candidate();
+    let mut document: Value = serde_json::from_slice(&fs::read(&candidate).unwrap()).unwrap();
+    document["meta"]["repository"] = json!({
+        "url": " https://user:secret-token@github.com/example/repo",
+        "revision": "a".repeat(40)
+    });
+    fs::write(&candidate, serde_json::to_vec(&document).unwrap()).unwrap();
+    let html = project.0.join("diagram.html");
+    for args in [
+        vec![
+            flag("validate"),
+            flag("architecture"),
+            candidate.as_os_str(),
+            flag("--json"),
+        ],
+        vec![
+            flag("validate"),
+            flag("architecture"),
+            candidate.as_os_str(),
+        ],
+        vec![
+            flag("deliver"),
+            flag("architecture"),
+            candidate.as_os_str(),
+            html.as_os_str(),
+            flag("--json"),
+        ],
+    ] {
+        let output = run(&args);
+        assert_eq!(output.status.code(), Some(1), "{args:?}");
+        let printed =
+            String::from_utf8_lossy(&[output.stdout, output.stderr].concat()).into_owned();
+        assert!(printed.contains("repository/url-invalid"), "{printed}");
+        assert!(!printed.contains("secret-token"), "{printed}");
+    }
+    assert!(!html.exists());
+}
+
+#[test]
 fn cli_keeps_rejecting_a_hardlinked_engine_and_accepts_its_single_link_bytes() {
     let project = Project::new();
     let candidate = project.candidate();
