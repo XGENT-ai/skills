@@ -66,7 +66,7 @@ function run(f, args, input = '') {
     child.stderr.on('data', data => { stderr += data; });
     child.once('error', reject);
     child.once('close', code => resolve({ code, stdout, stderr }));
-    child.stdin.end(input);
+    child.stdin.end(input || undefined);
   });
 }
 
