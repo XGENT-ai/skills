@@ -6,7 +6,7 @@ license: Apache 2.0
 metadata:
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 750b2f7015712fd0c1d99fa84efb3b579dca20a86fc856f735d52c4670187da0
+  source_sha256: 5c927aea719c3d5648b13943c104508009f50ceb59aef7e0317d9b33215311aa
 ---
 
 Phoenix UI provides local design tools for frontend work. Follow the project's product truth, accepted direction, and design rules; use the command references to create complete, accessible interfaces with a clear visual direction.

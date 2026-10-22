@@ -37,6 +37,8 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | --- | --- |
 | `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings;不删除已装版本 |
 | `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
+| `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
+| `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram 候选,不删除已装版本 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
@@ -81,8 +83,8 @@ npx skills add XGENT-ai/skills --skill xgent-init
 
 Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
-- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/`(`PHOENIX_UI_HOME` 可改),本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
-- **旧 impeccable 项目**:安装时只认领本包已发布版本(0.3.0–0.6.0)写入且未改动的文件与 hook,备份后移除,并在原位置留一个只指向新命令的提示入口;用户改过的文件、未知 wrapper、个人级旧入口或运行中的 live 残留会阻止激活并列出处理步骤。`AGENTS.md`、`CLAUDE.md` 等文档里的旧入口只报告行号,不自动改写。
+- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
+- **已有工具**:安装时发现 impeccable 会询问是否替换。选择替换则直接删除所选 provider 的项目级及个人级旧入口和旧 hooks,不备份、不留转跳入口;选择保留则共存,不阻止 Phoenix 安装,无交互环境默认保留。没有安装事务状态的 Phoenix 源码副本直接删除后重装。业务源码、旧工具的数据和文档不改动;共享配置中的其他 hooks 保留。
 - **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。
 
 安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除,需要时从 git 历史查看。

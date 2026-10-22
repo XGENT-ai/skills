@@ -907,7 +907,7 @@
       "upstreamPath": "crates/skills/src/commands.rs",
       "upstreamSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
       "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
-      "currentSha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948",
+      "currentSha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843",
       "change": "modified"
     },
     {

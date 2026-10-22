@@ -42,3 +42,5 @@
 - 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)
 
 - 074c0f0e-40db-4006-aa7a-bb0a2d1b68a2 · [合并 origin/main 的本机测试环境](074c0f0e-40db-4006-aa7a-bb0a2d1b68a2.md)
+
+- 837a3f59-702b-4195-8e5c-39a07ca47966 · [Phoenix 安装冲突修复](837a3f59-702b-4195-8e5c-39a07ca47966.md)

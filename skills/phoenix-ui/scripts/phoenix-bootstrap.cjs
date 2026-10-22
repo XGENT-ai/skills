@@ -59,7 +59,8 @@ function cacheRoot(env = process.env) {
 }
 
 function enginePath(manifest, target, env = process.env) {
-  return path.join(cacheRoot(env), 'bin', manifest.data.toolVersion, target, target.startsWith('windows-') ? 'phoenix-ui.exe' : 'phoenix-ui');
+  return path.join(cacheRoot(env), 'bin', manifest.data.toolVersion, target, manifest.data.engines[target].sha256,
+    target.startsWith('windows-') ? 'phoenix-ui.exe' : 'phoenix-ui');
 }
 
 function projectRoot(start) {

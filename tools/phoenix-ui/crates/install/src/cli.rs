@@ -32,7 +32,7 @@ const PROVIDERS: [&str; 19] = [
 ];
 const DEFAULT_PROVIDERS: [&str; 1] = [".claude"];
 
-pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--auxiliary-root DIR] [--providers a,b] [--dry-run] [--json] [--transaction-id ID]\n";
+pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--auxiliary-root DIR] [--providers a,b] [--keep-impeccable] [--dry-run] [--json] [--transaction-id ID]\n";
 pub const MIGRATE_USAGE: &str = "Usage: phoenix-ui migrate --from impeccable --project DIR --bundle-root DIR [--auxiliary-root DIR] [--providers a,b] [--dry-run] [--json]\n       phoenix-ui migrate --rollback TRANSACTION --project DIR [--json]\n       phoenix-ui migrate --recover --project DIR [--json]\n";
 
 #[derive(Default)]
@@ -47,6 +47,7 @@ struct Args {
     recover: bool,
     dry_run: bool,
     json: bool,
+    keep_impeccable: bool,
 }
 
 fn parse(args: &[String]) -> Result<Args, String> {
@@ -97,6 +98,7 @@ fn parse(args: &[String]) -> Result<Args, String> {
             "--recover" if inline.is_none() => parsed.recover = true,
             "--dry-run" if inline.is_none() => parsed.dry_run = true,
             "--json" if inline.is_none() => parsed.json = true,
+            "--keep-impeccable" if inline.is_none() => parsed.keep_impeccable = true,
             "--yes" | "-y" if inline.is_none() => {}
             _ => return Err(format!("unknown argument: {arg}")),
         }
@@ -326,6 +328,14 @@ fn run(args: &[String], io: &mut Io, migrate: bool) -> i32 {
         Ok(parsed) => parsed,
         Err(message) => return fail(io, ErrorKind::InvalidPlan, &message, usage),
     };
+    if migrate && parsed.keep_impeccable {
+        return fail(
+            io,
+            ErrorKind::InvalidPlan,
+            "--keep-impeccable belongs to install",
+            usage,
+        );
+    }
     // `install` defaults to the current project; `migrate` names it explicitly.
     let project = parsed.project.as_deref().or((!migrate).then_some("."));
     let Some(project) = project.map(|p| resolve(io, p)) else {
@@ -400,6 +410,7 @@ fn run(args: &[String], io: &mut Io, migrate: bool) -> i32 {
             providers,
             home: io.home(),
             scan_sources: migrate,
+            keep_impeccable: parsed.keep_impeccable,
             dry_run: parsed.dry_run,
             transaction_id: parsed.transaction_id.clone().unwrap_or_else(transaction_id),
         };
