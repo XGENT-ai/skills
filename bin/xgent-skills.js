@@ -119,7 +119,7 @@ function preparePhoenixTools(project, providers) {
     }
   }
   const oldCommand = value => typeof value === 'string'
-    && /(?:skills[\\/]impeccable[\\/]scripts[\\/]impeccable(?:\.cmd)?|(?:^|[\s"'])impeccable\s+hook\b)/.test(value);
+    && /(?:skills[\\/]impeccable[\\/]scripts[\\/](?:impeccable(?:\.cmd)?|hook(?:-(?:probe|before-edit|after-edit|stop))?\.mjs)|(?:^|[\s"'])impeccable\s+hook\b)/.test(value);
   const oldHandler = value => value?.type === 'command'
     && [value.command, value.commandWindows].some(oldCommand);
   const originals = [...configs].map(file => ({ file, before: fs.readFileSync(file) }));

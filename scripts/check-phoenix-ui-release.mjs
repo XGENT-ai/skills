@@ -168,6 +168,10 @@ for (const major of [18, 25]) {
           for (const directory of [project, env.HOME]) for (const provider of ['.claude', '.agents']) {
             assert(!fs.existsSync(path.join(directory, provider, 'skills/impeccable')));
           }
+          for (const file of ['.claude/settings.json', '.claude/settings.local.json', '.codex/hooks.json']) {
+            const settings = path.join(project, file);
+            if (fs.existsSync(settings)) assert.doesNotMatch(JSON.stringify(JSON.parse(fs.readFileSync(settings)).hooks), /skills[\\/]impeccable[\\/]scripts/);
+          }
         } else {
           assert.match(first.stdout, /保留.*impeccable/);
           for (const [file, digest] of Object.entries(original).filter(([file]) => file.includes('/skills/impeccable/'))) {

@@ -115,6 +115,7 @@ test('--replace-impeccable deletes old project and personal tools without a tool
     fs.mkdirSync(path.join(root, '.codex'), { recursive: true });
     fs.writeFileSync(path.join(root, '.codex/hooks.json'), JSON.stringify({ hooks: { Stop: [{ matcher: 'keep matcher', hooks: [
       { type: 'command', command: '.agents/skills/impeccable/scripts/impeccable hook' },
+      { type: 'command', command: 'node ".agents/skills/impeccable/scripts/hook.mjs"' },
       { type: 'command', command: 'keep-other-hook' },
     ] }] }, custom: true }));
   }
