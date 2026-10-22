@@ -47,23 +47,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-23T03:35:00+08:00
+- 最近更新：2026-10-23T03:50:00+08:00
 - 当前进度：5/5 个里程碑完成
-- 当前状态：全部里程碑已完成；V-4–V-10 已通过；待最终提交
+- 当前状态：全部里程碑已完成并提交；下一步代码评审
 - 最近完成：M5 · 阶段收口
-- 下一步：按「提交」提交本计划交付（提交点 M5），把短 SHA 回填完成记录后再单独提交计划文件更新；提交完成后按「全部完成」由用户发起 `review-code`。
+- 下一步：代码评审。用 review-code 以本计划路径为参数评审本计划：它从完成记录找到要审的提交 `3e3885b`，并纳入未提交改动。
 - 当前阻塞：无
-- 代码基线：dirty@8a45e70（未提交；M1–M5 全部交付与开发构建生成物；release `local/phoenix-ui/development-release`，binary sha256 `91744c6f…`）
+- 代码基线：`3e3885b`（提交点 M5，含 M1–M5 交付与开发构建生成物；release `local/phoenix-ui/development-release`，binary sha256 `91744c6f…`）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 已完成 | 2026-10-23T00:40:00+08:00 | phoenix-ui skill 与 design-reference 守则、场景 10–14/4 行落位；V-6 通过；生成物待 M5 重建 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 待提交 |
-| M1 | 已完成 | 2026-10-23T01:50:00+08:00 | 规则包骨架/接线/两条文本规则/R-7 别名；V-1、V-2、lint 通过；证据账本已重绑 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 待提交 |
-| M2 | 已完成 | 2026-10-23T02:25:00+08:00 | 6 条页面规则、fixture 与 V-4 期望表；V-3 与 lint 通过，真实 Chrome 上期望表首跑通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T02:05:00+08:00 | 全量 oracle 860/860 通过，13 个 case 的 advisory 差异逐字段登记并写 DELTAS；用户文档与兼容账本同步 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 待提交 |
-| M5 | 已完成 | 2026-10-23T03:35:00+08:00 | V-4 真实 Chrome 期望表 14/14；V-7 语料 10 条逐条判定无误报；V-8 开发构建/审计/smoke/npm test/test:phoenix 全绿；V-9 十会话与 V-10 核对通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 待提交 |
+| M4 | 已完成 | 2026-10-23T00:40:00+08:00 | phoenix-ui skill 与 design-reference 守则、场景 10–14/4 行落位；V-6 通过；生成物待 M5 重建 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 3e3885b |
+| M1 | 已完成 | 2026-10-23T01:50:00+08:00 | 规则包骨架/接线/两条文本规则/R-7 别名；V-1、V-2、lint 通过；证据账本已重绑 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 3e3885b |
+| M2 | 已完成 | 2026-10-23T02:25:00+08:00 | 6 条页面规则、fixture 与 V-4 期望表；V-3 与 lint 通过，真实 Chrome 上期望表首跑通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 3e3885b |
+| M3 | 已完成 | 2026-10-23T02:05:00+08:00 | 全量 oracle 860/860 通过，13 个 case 的 advisory 差异逐字段登记并写 DELTAS；用户文档与兼容账本同步 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 3e3885b |
+| M5 | 已完成 | 2026-10-23T03:35:00+08:00 | V-4 真实 Chrome 期望表 14/14；V-7 语料 10 条逐条判定无误报；V-8 开发构建/审计/smoke/npm test/test:phoenix 全绿；V-9 十会话与 V-10 核对通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 3e3885b |
 
 ## 0. 需求、范围与决策
 
