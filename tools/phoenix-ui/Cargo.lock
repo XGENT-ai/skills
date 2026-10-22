@@ -656,6 +656,7 @@ dependencies = [
  "impeccable-core",
  "impeccable-detect",
  "once_cell",
+ "phoenix-ui-rules",
  "regex",
  "serde_json",
  "sha2",
@@ -954,6 +955,7 @@ dependencies = [
  "impeccable-skills",
  "phoenix-ui-install",
  "phoenix-ui-review",
+ "phoenix-ui-rules",
  "serde_json",
  "sha2",
 ]
@@ -980,6 +982,16 @@ dependencies = [
  "serde_json",
  "sha2",
  "url",
+]
+
+[[package]]
+name = "phoenix-ui-rules"
+version = "0.1.0"
+dependencies = [
+ "impeccable-core",
+ "impeccable-detect",
+ "once_cell",
+ "regex",
 ]
 
 [[package]]

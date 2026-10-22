@@ -1,17 +1,24 @@
 //! Port of `cli/engine/shared/inline-ignores.mjs`: eslint-disable-style
 //! waivers that live in the scanned file (`impeccable-disable`,
 //! `impeccable-disable-line`, `impeccable-disable-next-line`).
+//!
+//! XGENT addition (R-7): the same three directive words are also accepted with
+//! the `phoenix-ui-` prefix the phoenix-ui skill tells agents to write. Only the
+//! prefix is aliased; the directive words, rule-list parsing and the `*`
+//! wildcard are unchanged.
 
 use crate::js::{self, ci, WS};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 /// JS `DIRECTIVE_RE` =
-/// `/impeccable-(disable-next-line|disable-line|disable)\b[ \t]*([^\n\r]*)/gi`.
+/// `/impeccable-(disable-next-line|disable-line|disable)\b[ \t]*([^\n\r]*)/gi`,
+/// with the `phoenix-ui-` prefix accepted as an alias (R-7).
 static DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(&format!(
-        r"{imp}-({dnl}|{dl}|{d})(?-u:\b)[ \t]*([^\n\r]*)",
+        r"(?:{imp}|{phoenix})-({dnl}|{dl}|{d})(?-u:\b)[ \t]*([^\n\r]*)",
         imp = ci("impeccable"),
+        phoenix = ci("phoenix-ui"),
         dnl = ci("disable-next-line"),
         dl = ci("disable-line"),
         d = ci("disable")
@@ -35,8 +42,15 @@ static REASON_SEP_RE: Lazy<Regex> =
 static TOKEN_SPLIT_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(&format!(r"[{},]+", js::WS_CHARS)).unwrap());
 
-/// Cheap bail-out `/impeccable-disable/i`.
-static HAS_DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(&ci("impeccable-disable")).unwrap());
+/// Cheap bail-out `/(?:impeccable|phoenix-ui)-disable/i`.
+static HAS_DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(
+        "(?:{imp}|{phoenix})",
+        imp = ci("impeccable-disable"),
+        phoenix = ci("phoenix-ui-disable")
+    ))
+    .unwrap()
+});
 
 /// An insertion-ordered set of rule ids (JS `Set<string>`).
 pub type RuleSet = Vec<String>;
@@ -204,5 +218,52 @@ mod tests {
         assert_eq!(d.next_line, vec![(4, vec!["bounce-easing".to_string()])]);
         let bare = parse_inline_ignores(Some("<!-- impeccable-disable -->"));
         assert_eq!(bare.file, vec!["*"]);
+    }
+
+    #[test]
+    fn parses_the_phoenix_ui_prefix_too() {
+        let src = "// phoenix-ui-disable-next-line xgent/transition-all -- local rule\nx /* PHOENIX-UI-DISABLE-LINE bounce-easing */\n<!-- phoenix-ui-disable low-contrast -->\n";
+        let d = parse_inline_ignores(Some(src));
+        assert_eq!(
+            d.next_line,
+            vec![(2, vec!["xgent/transition-all".to_string()])]
+        );
+        assert_eq!(d.line, vec![(2, vec!["bounce-easing".to_string()])]);
+        assert_eq!(d.file, vec!["low-contrast"]);
+    }
+
+    #[test]
+    fn both_prefixes_waive_findings_with_the_same_words() {
+        struct Hit<'a> {
+            id: &'a str,
+            line: f64,
+        }
+        impl IgnorableFinding for Hit<'_> {
+            fn antipattern(&self) -> Option<&str> {
+                Some(self.id)
+            }
+            fn line_number(&self) -> f64 {
+                self.line
+            }
+        }
+        for prefix in ["impeccable", "phoenix-ui"] {
+            let content = format!("// {prefix}-disable-next-line xgent/transition-all\n.a {{}}\n");
+            let waived = apply_inline_ignores(
+                vec![Hit {
+                    id: "xgent/transition-all",
+                    line: 2.0,
+                }],
+                Some(&content),
+            );
+            assert!(waived.is_empty(), "{prefix}");
+            let kept = apply_inline_ignores(
+                vec![Hit {
+                    id: "xgent/transition-all",
+                    line: 3.0,
+                }],
+                Some(&content),
+            );
+            assert_eq!(kept.len(), 1, "{prefix}");
+        }
     }
 }

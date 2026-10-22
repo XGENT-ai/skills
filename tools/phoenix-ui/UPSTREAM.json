@@ -883,7 +883,7 @@
     "tests/new-work-e2e/user-bot.mjs": "689bc82c86430b44d1db4a127ce1fa659162a95929fd827888639de3d9b54706",
     "tests/new-work-e2e.test.mjs": "f41ea0892fc276d3e6804292f8985bf0240343644fbc3ba9554cd1cdbe01c9c9",
     "tests/openai-plugin.test.mjs": "64c5220efd5789a9b5e38321d852d9a20e0a45c7e40c80e2002eb043972a6205",
-    "tests/oracle/DELTAS.md": "d40482976c5a753cd246c02b864a2b487910d0256aae8226d80d546a701c76cd",
+    "tests/oracle/DELTAS.md": "268189c3c1ecf7c10d1fd139f1c60296123441deb15655d72cf517f726001eea",
     "tests/oracle/README.md": "ee04678833163b2b5e2d433834e53414c00ee326c6b28c82435f920d4dd3cdd1",
     "tests/oracle/cases/comp.mjs": "43918b4db50888235e84baf050855225503052cc510e3f4793612ee65684e8ab",
     "tests/oracle/cases/context.mjs": "26e394713d032a8278d0fe56c946a20dfd40f6dba21727919612d162fbbfac5e",
@@ -2099,7 +2099,7 @@
     "scripts/lib/zip.js": "84c3e69ba9ca6a60df347c5cbe0cc997ebd996e8f46c382b96a2dca5b0067a17",
     "scripts/bundle-signing-keys.json": "97b15cb3676b4bdfb3a6a006572ca7396224433d5bbe603c314a6b9f4b8bc98e"
   },
-  "importManifestSha256": "3a0343c5b9ee14270fbc9cf33cf2d0d83661b9da9b8c033538e139fdfafe95d0",
+  "importManifestSha256": "96c98f301316245178127585b399ab8044a60011cf9e6c91015bdfc58c07da74",
   "patches": [
     {
       "id": "E12-IME",

@@ -6,6 +6,7 @@
 
 | 对象 ID | 标题 / 来源 | 状态页 | 活动 / 归档 |
 | --- | --- | --- | --- |
+| 0a3ce7b8-4697-4225-be2f-09f368cb8d6e | [Phoenix UI 借鉴 hallmark](../../../../docs/plan/phoenix-ui-hallmark.md) | [状态](0a3ce7b8-4697-4225-be2f-09f368cb8d6e.md) | 活动 |
 | 091b457b-53b0-4d16-bb58-406a02ccf1f6 | [xgent-init 历史方案](../../../../docs/plan/xgent-init.md) | [状态](091b457b-53b0-4d16-bb58-406a02ccf1f6.md) | 归档 |
 | 3cdd61a5-ef48-4526-8b3b-4271426843e8 | [Phoenix Diagram P1](../../../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](3cdd61a5-ef48-4526-8b3b-4271426843e8.md) | 活动 |
 | 7818a838-d021-4b2e-92c7-6d57c7ae8af0 | [XGENT Phoenix UI](../../../../docs/plan/phoenix-ui.md) | [状态](7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 活动 |

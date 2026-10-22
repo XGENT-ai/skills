@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "a515381d79151ed168cbaf3f9d9164c10b8266099d252c3a4a96f990322e4925",
+    "cargoLockSha256": "e4ada7cd2350a2d4a4c30d44a8c017a9a2442ed467e75a638ab4793b257be817",
     "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "806b2e325b8b8b4832e7827581061ee50bf56879f4ab275de1139e3760c933f3",
-    "buildToolsSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
+    "buildToolsSha256": "a58ae8b0b7b973fd68d611b5f613807b6658a8917fc70729ea8f6ac0a74f7bf1"
   },
   "rust": [
     {
@@ -1531,7 +1531,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/hook",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/hook/Cargo.toml",
-      "manifestSha256": "1016098555fa394aba0be0056eeea3dd1276da65de228fa52adafe4ebf6d14ca",
+      "manifestSha256": "76f7f7951335b8c427b5ead05c240a43088550ba9168f866c1a14125668b56f8",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2183,7 +2183,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/cli",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/cli/Cargo.toml",
-      "manifestSha256": "0ec730d077bfa686392a7ddbad871e0156cb7f964645bcae77161d6bc25a0b57",
+      "manifestSha256": "1ea99f065b0ff8d914df0e5d1f21b5b1c3f853df7c291c14e0d08de65e593dd2",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2230,6 +2230,29 @@
       "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
       "localManifest": "tools/phoenix-ui/crates/review/Cargo.toml",
       "manifestSha256": "f288929b2892f94980e67a9d579e1956c0a8e779d7ecdec270d431432aa1e1bb",
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
+          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+          "originalLocation": "tools/phoenix-ui/LICENSE"
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
+          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "originalLocation": "tools/phoenix-ui/NOTICE.md"
+        }
+      ],
+      "licenseLocations": [
+        "tools/phoenix-ui/LICENSE"
+      ]
+    },
+    {
+      "name": "phoenix-ui-rules",
+      "version": "0.1.0",
+      "license": "Apache-2.0",
+      "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
+      "localManifest": "tools/phoenix-ui/crates/rules/Cargo.toml",
+      "manifestSha256": "6a250669989a8b58fc1bf2281a6c5b3594550fddc19c3a7d025c2a177a1c41d1",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -6615,7 +6638,7 @@
     {
       "path": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
       "importedPath": "crates/live/assets/detect-antipatterns-browser.js",
-      "sha256": "04fa58774c242e7c4516963a4cb5b431d42d7fe64bc41812368dddcbfc203969",
+      "sha256": "c82a88999a698be2efd66a07fcb378c7cb0ae64536c9300da943baae14e2ac0a",
       "license": "Apache-2.0",
       "licenses": [
         {

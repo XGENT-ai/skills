@@ -11,6 +11,7 @@ use std::rc::Rc;
 
 use impeccable_core::findings::Finding;
 use impeccable_core::js;
+use impeccable_core::rule_pack::RulePack;
 use impeccable_detect::config::{
     extract_finding_ignore_value, filter_detection_findings, matches_any_glob,
     normalize_ignore_rule, normalize_ignore_value, normalize_ignore_value_entries, DetectionConfig,
@@ -218,6 +219,10 @@ pub struct Runtime<'a> {
     /// (JS: `node '<abs>/hook-admin.mjs'`; here `'<self>' hooks`).
     pub hook_admin_command: String,
     pub html: &'a dyn HtmlEngine,
+    /// The XGENT rule pack the host linked in. Every scan this runtime drives
+    /// uses it, stop baselines included, so pre-existing pack findings are not
+    /// later counted as newly introduced.
+    pub rule_pack: Option<&'static dyn RulePack>,
     /// `process.platform === 'win32'` (command-arg quoting).
     pub win32: bool,
     canonical_cache: std::cell::RefCell<HashMap<String, String>>,
@@ -230,6 +235,7 @@ impl<'a> Runtime<'a> {
         impeccable_command: String,
         self_cmd: &str,
         html: &'a dyn HtmlEngine,
+        rule_pack: Option<&'static dyn RulePack>,
     ) -> Self {
         let win32 = cfg!(windows);
         Runtime {
@@ -238,6 +244,7 @@ impl<'a> Runtime<'a> {
             impeccable_command,
             hook_admin_command: format!("{} hooks", quote_command_arg(self_cmd, win32)),
             html,
+            rule_pack,
             win32,
             canonical_cache: std::cell::RefCell::new(HashMap::new()),
         }
@@ -1618,6 +1625,8 @@ pub fn should_emit_ack_for_file(file_path: &str, config: &HookConfig) -> bool {
 #[derive(Default, Clone)]
 pub struct HookScanOptions {
     pub design_system: Option<Rc<DesignSystem>>,
+    /// The rule pack the scan hands to the engines; `None` keeps built-ins.
+    pub rule_pack: Option<&'static dyn RulePack>,
 }
 
 impl HookScanOptions {
@@ -1633,7 +1642,7 @@ impl HookScanOptions {
             design_system: self.design_system.clone(),
             viewport: None,
             profile: None,
-            rule_pack: None,
+            rule_pack: self.rule_pack,
         }
     }
 }
@@ -1645,6 +1654,7 @@ pub fn design_system_options(config: &HookConfig, project_cwd: &str) -> HookScan
     }
     HookScanOptions {
         design_system: load_design_system_for_cwd(project_cwd).map(Rc::new),
+        rule_pack: None,
     }
 }
 
@@ -1655,24 +1665,28 @@ pub fn design_system_options_for_file(
     project_cwd: &str,
     file_path: &str,
 ) -> HookScanOptions {
-    if !config.design_system_enabled {
-        return HookScanOptions::default();
-    }
-    let project = impeccable_context::context::resolve_project(
-        project_cwd,
-        &impeccable_context::target_args::TargetOptions {
-            target_path: Some(file_path.to_string()),
-        },
-        &rt.env,
-    );
-    // A local DESIGN.md owns the scope even if it has no usable frontmatter.
-    // Fall back only when the app has no document, never to a sibling app.
-    let root = if resolve_design_md_path(&project.project_root).is_some() {
-        &project.project_root
+    let mut scan = if !config.design_system_enabled {
+        HookScanOptions::default()
     } else {
-        &project.repo_root
+        let project = impeccable_context::context::resolve_project(
+            project_cwd,
+            &impeccable_context::target_args::TargetOptions {
+                target_path: Some(file_path.to_string()),
+            },
+            &rt.env,
+        );
+        // A local DESIGN.md owns the scope even if it has no usable
+        // frontmatter. Fall back only when the app has no document, never to
+        // a sibling app.
+        let root = if resolve_design_md_path(&project.project_root).is_some() {
+            &project.project_root
+        } else {
+            &project.repo_root
+        };
+        design_system_options(config, root)
     };
-    design_system_options(config, root)
+    scan.rule_pack = rt.rule_pack;
+    scan
 }
 
 /// The detector the hook drives: the regex engine from `impeccable-detect`
@@ -1686,7 +1700,7 @@ pub fn detector_detect_text(
         profile: None,
         design_system: scan.design_system.as_deref(),
         inline_ignores: true,
-        rule_pack: None,
+        rule_pack: scan.rule_pack,
     };
     detect_text(content, file_path, &opts)
 }

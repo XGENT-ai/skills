@@ -313,6 +313,7 @@ fn rt_with(cwd: &str, env: HashMap<String, String>) -> Runtime<'static> {
         "/phoenix-ui".to_string(),
         "/opt/bin/phoenix-ui",
         &HTML,
+        None,
     )
 }
 
@@ -2755,4 +2756,108 @@ fn run_hook_stands_down_before_the_edit_cap_can_suppress_a_live_file() {
         assert!(out.audit.get("suppressed").is_none(), "edit {i}: {:?}", out.audit);
         assert!(out.audit.get("editCount").is_none(), "edit {i}: the cap is not bumped for a live wrap");
     }
+}
+
+// ── xgent rule pack (PHOENIX-HALLMARK M1) ────────────────────────────────
+
+/// A runtime wired to the shipped XGENT rule pack, the way the binary wires
+/// it. `install` is idempotent for the same static rows.
+fn rt_with_pack(cwd: &str) -> Runtime<'static> {
+    impeccable_core::rule_pack::install(&phoenix_ui_rules::PACK);
+    Runtime::new(
+        cwd.to_string(),
+        HashMap::new(),
+        "/phoenix-ui".to_string(),
+        "/opt/bin/phoenix-ui",
+        &HTML,
+        Some(&phoenix_ui_rules::PACK),
+    )
+}
+
+const FOCUS_CLASS_ISSUE: &str =
+    "const save = <button className=\"focus:outline-none\">Save</button>;\n";
+
+#[test]
+fn rule_pack_findings_reach_the_hook_and_ignore_rule_filters_them() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    // The warning rules are not in the immediate per-edit tier, so the hook
+    // test opts out of tiering; the Stop path is covered separately below.
+    t.write(
+        ".phoenix-ui/config.json",
+        r#"{"hook":{"perEditRules":"all"}}"#,
+    );
+    let file = t.write("src/Button.tsx", FOCUS_CLASS_ISSUE);
+    let r = rt_with_pack(&cwd);
+    let out = hook::run_hook(&r, &edit_event(&cwd, &file, "s1")).stdout;
+    assert!(out.contains("xgent/focus-outline-removed"), "{out}");
+    assert!(
+        out.contains("Focus outline removed without replacement"),
+        "{out}"
+    );
+
+    t.write(
+        ".phoenix-ui/config.json",
+        r#"{"hook":{"perEditRules":"all"},"detector":{"ignoreRules":["xgent/focus-outline-removed"]}}"#,
+    );
+    let r = rt_with_pack(&cwd);
+    let out = hook::run_hook(&r, &edit_event(&cwd, &file, "s2")).stdout;
+    assert!(!out.contains("xgent/focus-outline-removed"), "{out}");
+}
+
+#[test]
+fn stop_baseline_does_not_blame_pre_existing_rule_pack_findings() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    let before = format!("// saved\n{FOCUS_CLASS_ISSUE}");
+    let file = t.write("src/Button.tsx", FOCUS_CLASS_ISSUE);
+    let r = rt_with_pack(&cwd);
+    hook::run_hook(
+        &r,
+        &edit_with_original(&cwd, &file, "s1", &before, "// saved\n", ""),
+    );
+    let stop = hook::run_stop_hook(&r, &stop_event(&cwd, "s1"));
+    assert!(stop.stdout.is_empty(), "{}", stop.stdout);
+    assert_eq!(stop.audit["preExistingFindings"], json!(1));
+
+    // The same finding introduced by an edit is new.
+    let clean = "const save = <button>Save</button>;\n";
+    let file = t.write("src/Save.tsx", FOCUS_CLASS_ISSUE);
+    let r = rt_with_pack(&cwd);
+    hook::run_hook(
+        &r,
+        &edit_with_original(&cwd, &file, "s2", clean, clean, FOCUS_CLASS_ISSUE),
+    );
+    let stop = hook::run_stop_hook(&r, &stop_event(&cwd, "s2"));
+    assert!(
+        stop.stdout.contains("[xgent/focus-outline-removed]"),
+        "{}",
+        stop.stdout
+    );
+    assert!(stop.stdout.contains("[new]"), "{}", stop.stdout);
+}
+
+#[test]
+fn before_edit_denies_unrelated_edits_to_a_file_with_a_rule_pack_finding() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    let file = t.write(
+        "src/App.css",
+        ".card { color: #111; }\n.btn:focus { outline: none; }\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": "color: #111", "new_string": "color: #222"}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert!(out.starts_with("{\"permission\":\"deny\""), "{out}");
+    assert!(out.contains("xgent/focus-outline-removed"), "{out}");
 }

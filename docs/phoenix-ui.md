@@ -110,6 +110,32 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 - skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）继续公开，可单独安装；`phoenix-ui` skill 标为 internal，只通过 npm 安装器分发。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
 - 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；旧安装的迁移依据是 `tools/phoenix-ui/migration-sources/` 中按 npm 包核对过的固定记录。
 
+## XGENT 自有检测规则
+
+Phoenix UI 在承接上游的 61 条内置规则之外，另带一组 XGENT 自有规则（ID 以 `xgent/` 开头）。它们默认启用、与内置规则分开定义，可以按规则单独关闭。规则包只装进原生 `phoenix-ui` 二进制：`detect`（源码文件与 URL 目标）和设计 hook 会运行它；live 叠层与浏览器扩展在页面内使用 WASM 检测、不加载这个规则包，所以同一页面在叠层或扩展里看不到下面这些发现，结果可能与 `detect <url>` 不同；需要这部分发现时以 `detect` 的结果为准。
+
+| 规则 ID | 检测方式 | 级别 | 关闭方式 |
+| --- | --- | --- | --- |
+| `xgent/transition-all` | 源码文件（文本扫描） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、inline 豁免、`--no-advisory` |
+| `xgent/focus-outline-removed` | 源码文件（文本扫描） | warning | `detector.ignoreRules`、`hooks ignore-rule`、inline 豁免 |
+| `xgent/wrapped-control-label` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/control-height-mismatch` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/unlabeled-inline-svg` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/redrawn-window-chrome` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/emoji-icon` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/font-family-count` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+
+「源码文件」指文本扫描，覆盖 CSS、HTML、Vue、JSX、TSX 等前端源文件；「页面」指把 http(s):// 或 file:// URL 交给 `detect`，由真实浏览器渲染后检查，可用 `--viewport <W>x<H>` 指定视口（默认 1280x800）。warning 级发现计入失败数，可能让退出码为 2；advisory 单独列出、不改变退出码，`--no-advisory` 只能隐藏 advisory 级发现。两条文本规则也随设计 hook 在编辑后运行：`xgent/focus-outline-removed` 会在 Stop 深检提醒中给出，并在 Cursor before-edit 中拒绝写入；`xgent/transition-all` 是 advisory，hook 默认不输出 advisory 发现。页面规则依赖浏览器渲染，hook 不会产生它们，需要时单独运行 `detect <url>`。
+
+关闭方式（按影响范围选择）：
+
+- `detector.ignoreRules`：项目级关闭，手动 `detect` 与 hook 共用这份过滤；配置在 `.phoenix-ui/config.json`，本地覆盖在 `.phoenix-ui/config.local.json`。不要手改这两个文件，走下面的 hooks 命令。
+- `hooks ignore-rule <id>`：把规则 ID 追加到 `detector.ignoreRules` 的受支持写法，影响整个项目；范围较大，先征得用户同意。只关一个文件中的一条时用 `phoenix-ui hooks ignore-value <id> "*" --file <path>`，窄例外默认写入项目共享 config。
+- inline 豁免：`impeccable-disable*`（引擎原有）与 `phoenix-ui-disable*`（skill 文案）两种前缀都生效；词形为 `disable`（整个文件）、`disable-line`、`disable-next-line`（单行），后接一个或多个规则 ID（逗号分隔）或 `*`，可带 `: 理由` 或 `-- 理由`。内联标记按源文件内容生效；URL 扫描读取渲染后的页面，页面规则的例外用项目级忽略。`--no-inline-ignores`（或 `--no-config`）可绕过内联豁免。
+- `detect --no-advisory`：只在单次扫描中隐藏 advisory 级发现，warning 级发现与退出码不受影响。
+
+在 Cursor 上启用新版本后，本来含无替代 `focus:outline-none` 的文件会对任何编辑触发 before-edit 拒绝：该检查扫描整份投影后的文件，不扣除编辑前已经存在的发现，所以与该焦点样式无关的编辑也会被拒。处理方式是先修掉该文件的焦点样式；确需临时放行时用 `phoenix-ui hooks ignore-value xgent/focus-outline-removed "*" --file <path>` 只关这个文件中的这一条。不要为绕过拒绝改用 inline 豁免。例外默认通过 `ignore-value` 写入项目 config；`ignore-file`、`ignore-rule` 影响面更大，应先征得用户同意。
+
 ## 融合用法与 UI 验收
 
 本节适用于支持结构化 context 与 managed 评审协议的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 从实际回执/候选包读取；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。

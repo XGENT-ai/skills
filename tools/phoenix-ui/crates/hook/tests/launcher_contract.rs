@@ -50,6 +50,7 @@ impl Fixture {
             "/phoenix-ui".into(),
             "phoenix-ui",
             &HTML,
+            None,
         )
     }
 

@@ -25,6 +25,10 @@ fn main() {
 }
 
 fn run(args: &[String], io: &mut Io) -> i32 {
+    // Installed before any verb scans: the registry resolves each pack
+    // finding's name, description and severity. Idempotent and panic-free
+    // unless an id collides with a built-in rule.
+    impeccable_core::rule_pack::install(&phoenix_ui_rules::PACK);
     // cli/bin/cli.js dispatch: help / version / detect / ignores / skills verbs
     let Some(verb) = args.first().map(String::as_str) else {
         io.out(impeccable_detect::ROOT_USAGE);
@@ -110,9 +114,18 @@ fn run(args: &[String], io: &mut Io) -> i32 {
                 Err(e) => { io.err(&format!("Native capture service: {e}\n")); 1 }
             }
         }
-        "hook" => impeccable_hook::run_hook(rest, io, engines().html),
-        "hook-before-edit" => impeccable_hook::run_hook_before_edit(rest, io, engines().html),
-        "hooks" | "hook-admin" => impeccable_hook::run_hook_admin(rest, io),
+        "hook" => {
+            impeccable_hook::run_hook(rest, io, engines().html, Some(&phoenix_ui_rules::PACK))
+        }
+        "hook-before-edit" => impeccable_hook::run_hook_before_edit(
+            rest,
+            io,
+            engines().html,
+            Some(&phoenix_ui_rules::PACK),
+        ),
+        "hooks" | "hook-admin" => {
+            impeccable_hook::run_hook_admin(rest, io, Some(&phoenix_ui_rules::PACK))
+        }
         v if v.starts_with("live") => impeccable_live::run(v, rest, io),
         // `npx impeccable src/` shorthand: a path-shaped, flag, URL, or existing
         // first arg is a detect target (cli.js looksLikeDetectTarget).
@@ -155,6 +168,7 @@ fn engines() -> impeccable_detect::Engines<'static> {
     impeccable_detect::Engines {
         html: &HTML,
         url: Some(url_engine()),
+        rule_pack: Some(&phoenix_ui_rules::PACK),
     }
 }
 

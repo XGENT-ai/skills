@@ -19,11 +19,16 @@ mod stop_baseline;
 pub mod util;
 
 use impeccable_common::Io;
+use impeccable_core::rule_pack::RulePack;
 use impeccable_detect::engines::HtmlEngine;
 
 pub use hook_lib::Runtime;
 
-fn runtime<'a>(io: &Io, html: &'a dyn HtmlEngine) -> Runtime<'a> {
+fn runtime<'a>(
+    io: &Io,
+    html: &'a dyn HtmlEngine,
+    rule_pack: Option<&'static dyn RulePack>,
+) -> Runtime<'a> {
     let cwd = io.cwd.to_string_lossy().into_owned();
     let provider = impeccable_context::provider::detect(&io.env, &cwd);
     Runtime::new(
@@ -32,26 +37,41 @@ fn runtime<'a>(io: &Io, html: &'a dyn HtmlEngine) -> Runtime<'a> {
         provider.command,
         &provider.self_cmd,
         html,
+        rule_pack,
     )
 }
 
 /// `phoenix-ui hook` (PostToolUse per-edit pass + Stop deep pass). Exit 0.
-pub fn run_hook(_args: &[String], io: &mut Io, html: &dyn HtmlEngine) -> i32 {
+pub fn run_hook(
+    _args: &[String],
+    io: &mut Io,
+    html: &dyn HtmlEngine,
+    rule_pack: Option<&'static dyn RulePack>,
+) -> i32 {
     let stdin = io.stdin().to_string();
-    let rt = runtime(io, html);
+    let rt = runtime(io, html, rule_pack);
     hook::run(&rt, &stdin, io)
 }
 
 /// `phoenix-ui hook-before-edit` (Cursor preToolUse gate). Exit 0.
-pub fn run_hook_before_edit(_args: &[String], io: &mut Io, html: &dyn HtmlEngine) -> i32 {
+pub fn run_hook_before_edit(
+    _args: &[String],
+    io: &mut Io,
+    html: &dyn HtmlEngine,
+    rule_pack: Option<&'static dyn RulePack>,
+) -> i32 {
     let stdin = io.stdin().to_string();
-    let rt = runtime(io, html);
+    let rt = runtime(io, html, rule_pack);
     before_edit::run(&rt, &stdin, io)
 }
 
 /// `phoenix-ui hooks <action> [args]` (hook-admin.mjs).
-pub fn run_hook_admin(args: &[String], io: &mut Io) -> i32 {
+pub fn run_hook_admin(
+    args: &[String],
+    io: &mut Io,
+    rule_pack: Option<&'static dyn RulePack>,
+) -> i32 {
     static NONE: impeccable_detect::MissingHtmlEngine = impeccable_detect::MissingHtmlEngine;
-    let rt = runtime(io, &NONE);
+    let rt = runtime(io, &NONE, rule_pack);
     admin::run(&rt, args, io)
 }

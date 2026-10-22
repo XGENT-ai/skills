@@ -331,10 +331,15 @@ test('the only stale Italic delta is proven by the unchanged single-file golden'
   const delta = metadata.italic, historical = readGolden(delta.id);
   const expected = phoenixExpected(delta.id, historical, 'linux');
   const oldFindings = JSON.parse(historical.stdout), findings = JSON.parse(expected.stdout);
+  // PHOENIX-HALLMARK registers four advisory xgent/transition-all findings on
+  // this directory case (DELTAS.md, 2026-10-23); the single-file italic proof
+  // still separates those from the stale-directory finding.
+  const xgentAdded = findings.filter((f) => f.antipattern === 'xgent/transition-all');
+  assert.equal(xgentAdded.length, 4);
   assert.equal(oldFindings.length, 436);
-  assert.equal(findings.length, oldFindings.length + 1);
+  assert.equal(findings.length, oldFindings.length + 1 + xgentAdded.length);
   assert.deepEqual(findings.filter((f) => f.snippet === delta.finding.snippet), [delta.finding]);
-  assert.deepEqual(findings.filter((f) => f.snippet !== delta.finding.snippet), oldFindings);
+  assert.deepEqual(findings.filter((f) => f.snippet !== delta.finding.snippet && f.antipattern !== 'xgent/transition-all'), oldFindings);
   assert.deepEqual({ ...expected, stdout: '' }, { ...historical, stdout: '' });
   assert.deepEqual(diffResults(expected, expected), []);
   for (const mutate of [

@@ -533,6 +533,13 @@
       "change": "modified"
     },
     {
+      "upstreamPath": "crates/foundation/src/inline_ignores.rs",
+      "upstreamSha256": "80d9fd059f5e872ec080a178855b095ce0725ad7aee7cb307036d6d2706ea5d5",
+      "currentPath": "tools/phoenix-ui/crates/foundation/src/inline_ignores.rs",
+      "currentSha256": "40735af938445287767807534655362dc8c46f7af4da09cb82b7957b42d2e704",
+      "change": "modified"
+    },
+    {
       "upstreamPath": "crates/foundation/src/js.rs",
       "upstreamSha256": "f686e0ff3d6d4448ceae5d5f9d6f47e084e80b847bd6133b999522eb2dd1a6a2",
       "currentPath": "tools/phoenix-ui/crates/foundation/src/js.rs",
