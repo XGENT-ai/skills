@@ -53,7 +53,7 @@
 - 最近完成：M7 · skill、说明、包脚本与宿主验收
 - 下一步：用户发起 `/review-code docs/plan/PHOENIX-DIAGRAM-P2.md` 复审 R2 修复；通过后在新引擎上重做 M6 的 V-7 第 1–5 步，再按 M8 生成新候选（四平台 CI、§9.3 宿主受影响行、distribution 收口、P2 聚合、V-14）
 - 当前阻塞：无（复审不受影响）；重做收口前须腾出磁盘：约 3.4GiB 可用，`local/phoenix-diagram/` 下被取代的运行目录是否清理由用户决定
-- 代码基线：main / 修复 `1b9f910`（R1 F-01–F-03）；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 仍指向旧候选引擎 `7fcabd88…`
+- 代码基线：main / 修复 `1b9f910`（R1 F-01–F-03）、`7842b95`（R2 F-03 续项）；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 仍指向旧候选引擎 `7fcabd88…`
 
 ### 完成记录
 
@@ -61,7 +61,7 @@
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-10-20T18:58:00+08:00 | 十类输入合同、语义门、场景类型、唯一目录与 i18n、0.2.0/phoenix-v2 身份、chrono 依赖与 `--sync-dist`；V-1、V-2 通过 | [M1 记录](PHOENIX-DIAGRAM-P2.records/M1.md) | 711a5b7 |
 | M4 | 已完成 | 2026-10-22T11:00:00+08:00 | git 只读来源核对、`--repo-root`、回执/配置摘要/严格当前性绑定 `sourceEvidence`、Reader 三态；V-5 通过（真实旧版 git 未运行）；R1 F-01 修复：非法 URL 诊断不回显凭据 | [M4 记录](PHOENIX-DIAGRAM-P2.records/M4.md) | 711a5b7、修复 1b9f910 |
-| M2 | 已完成 | 2026-10-22T15:50:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed；R1 F-03 修复：表详情列出外键目标；R2 续项：详情 context 换行完整显示，V-8 增多外键详情检查 | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7、修复 1b9f910 |
+| M2 | 已完成 | 2026-10-22T15:50:00+08:00 | 共享路由、erd 与 class 布局/渲染/检查、关系 marker 资产与 oracle；V-3 通过，合并后全 crate 332 passed；R1 F-03 修复：表详情列出外键目标；R2 续项：详情 context 换行完整显示，V-8 增多外键详情检查 | [M2 记录](PHOENIX-DIAGRAM-P2.records/M2.md) | 711a5b7、修复 1b9f910、修复 7842b95 |
 | M3 | 已完成 | 2026-10-22T11:00:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验；R1 F-02 修复：跨年时间线显示年份 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7、修复 1b9f910 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
 | M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
