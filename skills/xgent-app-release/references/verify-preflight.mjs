@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, openSync, writeSync, closeSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,6 +77,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const result = spawnSync(process.execPath,[preflight,"--offline","--config","fixture.env","--key","demo","--dist","dist","--version","1","--manifest","app.manifest.json"],{cwd:root,env:{PATH:process.env.PATH},encoding:"utf8",timeout:15000});
       assert.equal(result.status,valid?0:1,label);
       passed++;
+    }
+    // 单包上限与门户 MAX_DIST_BYTES 同为 200 MiB：用不可压缩内容逼近边界，199 MiB 放行、201 MiB 拒绝。
+    {
+      const blob = join(root,"dist/blob.bin");
+      const grow = (mib) => { const fd = openSync(blob,"a"); for (let i = 0; i < mib; i++) writeSync(fd,randomBytes(1024*1024)); closeSync(fd); };
+      const run = () => spawnSync(process.execPath,[preflight,"--offline","--config","fixture.env","--key","demo","--dist","dist","--version","1","--manifest","app.manifest.json"],{cwd:root,env:{PATH:process.env.PATH},encoding:"utf8",timeout:120000});
+      writeFileSync(join(root,"app.manifest.json"),JSON.stringify({listingKey:"demo",name:"Demo",version:"1"}));
+      grow(199);
+      assert.equal(run().status,0,"dist 199 MiB");
+      passed++;
+      grow(2);
+      const over = run();
+      assert.equal(over.status,1,"dist 201 MiB");
+      assert.match(over.stdout,/单包 200 MiB 上限/,"dist 201 MiB");
+      passed++;
+      rmSync(blob);
     }
     assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="origin normalization")[1]),{imgSrc:["https://example.com"]});passed++;
     assert.throws(()=>normalizeEmbedCsp(Object.defineProperty({},"scriptSrc",{get(){throw new Error("must-not-run");}})),/accessors/);passed++;

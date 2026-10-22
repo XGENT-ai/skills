@@ -19,7 +19,8 @@ catalog 只收 manifest；旧版发布成功后会删归档。有 distDigest 不
 | `404` | 令牌不是为这个 `--key` 签发的（也可能该 listing 不存在——门户**故意**不区分） | 核对 `--key` 与签发时的 key 逐字相同；换一个你确定存在的 key 试同一枚令牌 |
 | `GET …/<key>/status` 返回 `404`，但同一枚令牌 whoami `200` | **这个门户上还没有只读面**（它比发布面晚一版上线），不是令牌的问题 | 见下面「`/status` 报 404 怎么分诊」。别改令牌、别重发 |
 | `200` 但 `ok:false`，说缺根 `index.html` | 打包套了一层 | 用 `tar czf x.tgz -C dist .`，不是 `tar czf x.tgz dist`；或 `--dist` 指错了一层 |
-| `200` 但 `ok:false`，说超 64MB | source map / 未压缩素材打进产物了 | `du -sh dist`，关掉 sourcemap 再看 |
+| `200` 但 `ok:false`，说「前端产物过大（>200MB）」 | 单个包超 200 MiB：source map / 未压缩素材打进产物了 | `du -sh dist`，关掉 sourcemap 再看 |
+| 上传拿不到 `{ok:…}` 响应体：连接被断开、挂到超时或返回非 200 | 整个请求超过 256 MiB（门户 HTTP 层上限，到不了业务校验）；套件批次最常见，各成员的包是合计的 | 把这次所有 `dist` / `dist__<key>` 与 manifest 的字节加起来看 |
 | `200` 但 `ok:false`，说版本号非法 | 只能字母/数字/`. _ + -`，≤64 字符 | 别把 `v1.2.3 (build 42)` 这种带空格括号的塞进去 |
 | `200` 但 `ok:false`，说属治理字段不接受散字段 | 往表单里直接塞 `scopes=...` / `aclManifest=...` 之类 | 散字段只认 `dist`/`version`/`image`/`manifest`；治理变更写进 `app.manifest.json` 用 `--manifest` 整份提交，进「发布审核」 |
 | `200` 但 `ok:false`，`PROPOSAL_PENDING` | 该 App 已有一条待审提案挡路——待审期间**任何**新提交都拒，纯 dist/version 也一样（放行会「后交先生效」） | 等平台审批，或先撤回：`DELETE …/proposals/<id>`（错误 details 里带在审提案 id） |

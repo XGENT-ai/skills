@@ -25,7 +25,7 @@ import { spawnSync } from "node:child_process";
 import { loadConfig, parseArgs, pick, warnIfProxyIgnored } from "./registry-config.mjs";
 import { normalizeEmbedCsp } from "../references/embed-csp.mjs";
 
-const MAX_BYTES = 64 * 1024 * 1024; // 门户侧上限，超了直接 VALIDATION_FAILED
+const MAX_BYTES = 200 * 1024 * 1024; // 门户单包上限（MAX_DIST_BYTES），超了直接 VALIDATION_FAILED；整个请求另有 256 MiB 上限
 const VERSION_RE = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/; // 与门户逐字一致
 const KEY_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
@@ -133,8 +133,8 @@ if (distStat?.isDirectory()) {
       const size = statSync(out).size;
       const mb = (size / 1024 / 1024).toFixed(1);
       const entries = readdirSync(dist).length;
-      if (size > MAX_BYTES) err(`打包后 ${mb}MB，超过门户 64MB 上限 —— 先查 source map / 未压缩素材是不是打进来了`);
-      else ok(`打包 ${mb}MB · ${entries} 个顶层条目`);
+      if (size > MAX_BYTES) err(`打包后 ${mb} MiB，超过门户单包 200 MiB 上限 —— 先查 source map / 未压缩素材是不是打进来了`);
+      else ok(`打包 ${mb} MiB · ${entries} 个顶层条目`);
     }
   } finally {
     rmSync(temp, { recursive: true, force: true });
