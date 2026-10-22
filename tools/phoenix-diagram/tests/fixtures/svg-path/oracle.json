@@ -1,0 +1,5065 @@
+{
+  "format": 1,
+  "source": "local/phoenix-diagram/reference/archify/renderers/shared/svg-path-analysis.mjs",
+  "sourceSha256": "4c498ef5ba090a2d658c2ce3d80145f4cc63da9462f547b621206250096957c5",
+  "cases": [
+    {
+      "name": "empty",
+      "d": "",
+      "expected": {
+        "ok": true,
+        "subpaths": []
+      },
+      "routeSubpaths": []
+    },
+    {
+      "name": "ascii-whitespace",
+      "d": " \t\r\n",
+      "expected": {
+        "ok": true,
+        "subpaths": []
+      },
+      "routeSubpaths": []
+    },
+    {
+      "name": "move-only",
+      "d": "M 1 2",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "absolute-line",
+      "d": "M 0 0 L 20 30",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                20,
+                30
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  20,
+                  30
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  20,
+                  30
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            20,
+            30
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "implicit-moveto-lines",
+      "d": "M 1 2 3 4 5 6",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-moveto-lines",
+      "d": "m 1 2 3 4 -2 -1",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                2,
+                5
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  4,
+                  6
+                ],
+                "end": [
+                  2,
+                  5
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  4,
+                  6
+                ],
+                "end": [
+                  2,
+                  5
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            2,
+            5
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-lines",
+      "d": "M 10 20 l 4 -2 -1 3",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                10,
+                20
+              ],
+              [
+                14,
+                18
+              ],
+              [
+                13,
+                21
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  10,
+                  20
+                ],
+                "end": [
+                  14,
+                  18
+                ]
+              },
+              {
+                "start": [
+                  14,
+                  18
+                ],
+                "end": [
+                  13,
+                  21
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  10,
+                  20
+                ],
+                "end": [
+                  14,
+                  18
+                ]
+              },
+              {
+                "start": [
+                  14,
+                  18
+                ],
+                "end": [
+                  13,
+                  21
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            10,
+            20
+          ],
+          [
+            14,
+            18
+          ],
+          [
+            13,
+            21
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "horizontal-vertical",
+      "d": "M 1 2 H 4 8 V 10 -1 h -3 2 v 9 -4",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                8,
+                2
+              ],
+              [
+                8,
+                10
+              ],
+              [
+                8,
+                -1
+              ],
+              [
+                5,
+                -1
+              ],
+              [
+                7,
+                -1
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                7,
+                4
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  4,
+                  2
+                ],
+                "end": [
+                  8,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  2
+                ],
+                "end": [
+                  8,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  10
+                ],
+                "end": [
+                  8,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  -1
+                ],
+                "end": [
+                  5,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  -1
+                ],
+                "end": [
+                  7,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  7,
+                  -1
+                ],
+                "end": [
+                  7,
+                  8
+                ]
+              },
+              {
+                "start": [
+                  7,
+                  8
+                ],
+                "end": [
+                  7,
+                  4
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  4,
+                  2
+                ],
+                "end": [
+                  8,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  2
+                ],
+                "end": [
+                  8,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  10
+                ],
+                "end": [
+                  8,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  8,
+                  -1
+                ],
+                "end": [
+                  5,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  -1
+                ],
+                "end": [
+                  7,
+                  -1
+                ]
+              },
+              {
+                "start": [
+                  7,
+                  -1
+                ],
+                "end": [
+                  7,
+                  8
+                ]
+              },
+              {
+                "start": [
+                  7,
+                  8
+                ],
+                "end": [
+                  7,
+                  4
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            8,
+            2
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            8,
+            -1
+          ],
+          [
+            5,
+            -1
+          ],
+          [
+            7,
+            -1
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            7,
+            4
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-moveto-after-line",
+      "d": "M 1 2 L 4 5 m 2 3 4 5",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                4,
+                5
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  5
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  4,
+                  5
+                ]
+              }
+            ],
+            "closed": false
+          },
+          {
+            "points": [
+              [
+                6,
+                8
+              ],
+              [
+                10,
+                13
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  6,
+                  8
+                ],
+                "end": [
+                  10,
+                  13
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  6,
+                  8
+                ],
+                "end": [
+                  10,
+                  13
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        [
+          [
+            6,
+            8
+          ],
+          [
+            10,
+            13
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "signed-adjacent-numbers",
+      "d": "M+1-2L-3+4",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                -2
+              ],
+              [
+                -3,
+                4
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  -2
+                ],
+                "end": [
+                  -3,
+                  4
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  -2
+                ],
+                "end": [
+                  -3,
+                  4
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            -2
+          ],
+          [
+            -3,
+            4
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "decimal-adjacent-numbers",
+      "d": "M.5.25L1.2.3",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0.5,
+                0.25
+              ],
+              [
+                1.2,
+                0.3
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0.5,
+                  0.25
+                ],
+                "end": [
+                  1.2,
+                  0.3
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0.5,
+                  0.25
+                ],
+                "end": [
+                  1.2,
+                  0.3
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0.5,
+            0.25
+          ],
+          [
+            1.2,
+            0.3
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "decimal-exponent",
+      "d": "M+1.e2-.25E+2L2.5e-1+3E1",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                100,
+                -25
+              ],
+              [
+                0.25,
+                30
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  100,
+                  -25
+                ],
+                "end": [
+                  0.25,
+                  30
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  100,
+                  -25
+                ],
+                "end": [
+                  0.25,
+                  30
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            100,
+            -25
+          ],
+          [
+            0.25,
+            30
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "commas-and-whitespace",
+      "d": "M 1 , 2, 3,4 L5, 6",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "zero-length-line",
+      "d": "M 1 1 L 1 1",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  1
+                ],
+                "end": [
+                  1,
+                  1
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  1
+                ],
+                "end": [
+                  1,
+                  1
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "negative-zero",
+      "d": "M -0 -0 L +0 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "underflow",
+      "d": "M 1e-999 -1e-999 L 0 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "extreme-finite-span",
+      "d": "M -1e308 0 L 1e308 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                -1e+308,
+                0
+              ],
+              [
+                1e+308,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  -1e+308,
+                  0
+                ],
+                "end": [
+                  1e+308,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  -1e+308,
+                  0
+                ],
+                "end": [
+                  1e+308,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            -1e+308,
+            0
+          ],
+          [
+            1e+308,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "closepath",
+      "d": "M 1 2 L 5 6 Z",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  6
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  6
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-closepath",
+      "d": "m 1 2 l 4 4 z",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  6
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  6
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "close-move-only",
+      "d": "M 1 2Z",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "close-twice",
+      "d": "M 1 2L3 4ZZ",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "line-after-close",
+      "d": "M 1 2 L 3 4 Z L 7 8",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          },
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                7,
+                8
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  7,
+                  8
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  7,
+                  8
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            7,
+            8
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-line-after-close",
+      "d": "M 1 2 L 3 4 Z l 7 8",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          },
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                8,
+                10
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  8,
+                  10
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  8,
+                  10
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            8,
+            10
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "quadratic-after-close",
+      "d": "M 1 2 L 3 4 Z Q 7 8 9 10",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          },
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                2.4375,
+                3.4375
+              ],
+              [
+                3.75,
+                4.75
+              ],
+              [
+                4.9375,
+                5.9375
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                6.9375,
+                7.9375
+              ],
+              [
+                7.75,
+                8.75
+              ],
+              [
+                8.4375,
+                9.4375
+              ],
+              [
+                9,
+                10
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  2.4375,
+                  3.4375
+                ]
+              },
+              {
+                "start": [
+                  2.4375,
+                  3.4375
+                ],
+                "end": [
+                  3.75,
+                  4.75
+                ]
+              },
+              {
+                "start": [
+                  3.75,
+                  4.75
+                ],
+                "end": [
+                  4.9375,
+                  5.9375
+                ]
+              },
+              {
+                "start": [
+                  4.9375,
+                  5.9375
+                ],
+                "end": [
+                  6,
+                  7
+                ]
+              },
+              {
+                "start": [
+                  6,
+                  7
+                ],
+                "end": [
+                  6.9375,
+                  7.9375
+                ]
+              },
+              {
+                "start": [
+                  6.9375,
+                  7.9375
+                ],
+                "end": [
+                  7.75,
+                  8.75
+                ]
+              },
+              {
+                "start": [
+                  7.75,
+                  8.75
+                ],
+                "end": [
+                  8.4375,
+                  9.4375
+                ]
+              },
+              {
+                "start": [
+                  8.4375,
+                  9.4375
+                ],
+                "end": [
+                  9,
+                  10
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  9,
+                  10
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            9,
+            10
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "relative-move-after-close",
+      "d": "M 1 2 L 3 4 Z m 7 8 l 1 2",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1,
+                  2
+                ],
+                "end": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "start": [
+                  3,
+                  4
+                ],
+                "end": [
+                  1,
+                  2
+                ]
+              }
+            ],
+            "closed": true
+          },
+          {
+            "points": [
+              [
+                8,
+                10
+              ],
+              [
+                9,
+                12
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  8,
+                  10
+                ],
+                "end": [
+                  9,
+                  12
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  8,
+                  10
+                ],
+                "end": [
+                  9,
+                  12
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        [
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            12
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "disconnected-subpaths",
+      "d": "M 0 0 L 10 0 M 100 0 L 110 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                10,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  10,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  10,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          },
+          {
+            "points": [
+              [
+                100,
+                0
+              ],
+              [
+                110,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  100,
+                  0
+                ],
+                "end": [
+                  110,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  100,
+                  0
+                ],
+                "end": [
+                  110,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            10,
+            0
+          ]
+        ],
+        [
+          [
+            100,
+            0
+          ],
+          [
+            110,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "consecutive-moves",
+      "d": "M 0 0 M 10 10 m 5 5",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ]
+            ],
+            "segments": [],
+            "straightSegments": [],
+            "closed": false
+          },
+          {
+            "points": [
+              [
+                10,
+                10
+              ]
+            ],
+            "segments": [],
+            "straightSegments": [],
+            "closed": false
+          },
+          {
+            "points": [
+              [
+                15,
+                15
+              ]
+            ],
+            "segments": [],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "name": "quadratic",
+      "d": "M 0 0 Q 10 20 20 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                2.5,
+                4.375
+              ],
+              [
+                5,
+                7.5
+              ],
+              [
+                7.5,
+                9.375
+              ],
+              [
+                10,
+                10
+              ],
+              [
+                12.5,
+                9.375
+              ],
+              [
+                15,
+                7.5
+              ],
+              [
+                17.5,
+                4.375
+              ],
+              [
+                20,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  2.5,
+                  4.375
+                ],
+                "end": [
+                  5,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  7.5
+                ],
+                "end": [
+                  7.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  7.5,
+                  9.375
+                ],
+                "end": [
+                  10,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  10,
+                  10
+                ],
+                "end": [
+                  12.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  12.5,
+                  9.375
+                ],
+                "end": [
+                  15,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  15,
+                  7.5
+                ],
+                "end": [
+                  17.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  17.5,
+                  4.375
+                ],
+                "end": [
+                  20,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "relative-quadratic",
+      "d": "M 4 5 q 10 20 20 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                4,
+                5
+              ],
+              [
+                6.5,
+                9.375
+              ],
+              [
+                9,
+                12.5
+              ],
+              [
+                11.5,
+                14.375
+              ],
+              [
+                14,
+                15
+              ],
+              [
+                16.5,
+                14.375
+              ],
+              [
+                19,
+                12.5
+              ],
+              [
+                21.5,
+                9.375
+              ],
+              [
+                24,
+                5
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  4,
+                  5
+                ],
+                "end": [
+                  6.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  6.5,
+                  9.375
+                ],
+                "end": [
+                  9,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  9,
+                  12.5
+                ],
+                "end": [
+                  11.5,
+                  14.375
+                ]
+              },
+              {
+                "start": [
+                  11.5,
+                  14.375
+                ],
+                "end": [
+                  14,
+                  15
+                ]
+              },
+              {
+                "start": [
+                  14,
+                  15
+                ],
+                "end": [
+                  16.5,
+                  14.375
+                ]
+              },
+              {
+                "start": [
+                  16.5,
+                  14.375
+                ],
+                "end": [
+                  19,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  19,
+                  12.5
+                ],
+                "end": [
+                  21.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  21.5,
+                  9.375
+                ],
+                "end": [
+                  24,
+                  5
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "repeated-quadratic",
+      "d": "M 0 0 Q 10 20 20 0 30 -20 40 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                2.5,
+                4.375
+              ],
+              [
+                5,
+                7.5
+              ],
+              [
+                7.5,
+                9.375
+              ],
+              [
+                10,
+                10
+              ],
+              [
+                12.5,
+                9.375
+              ],
+              [
+                15,
+                7.5
+              ],
+              [
+                17.5,
+                4.375
+              ],
+              [
+                20,
+                0
+              ],
+              [
+                22.5,
+                -4.375
+              ],
+              [
+                25,
+                -7.5
+              ],
+              [
+                27.5,
+                -9.375
+              ],
+              [
+                30,
+                -10
+              ],
+              [
+                32.5,
+                -9.375
+              ],
+              [
+                35,
+                -7.5
+              ],
+              [
+                37.5,
+                -4.375
+              ],
+              [
+                40,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  2.5,
+                  4.375
+                ],
+                "end": [
+                  5,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  7.5
+                ],
+                "end": [
+                  7.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  7.5,
+                  9.375
+                ],
+                "end": [
+                  10,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  10,
+                  10
+                ],
+                "end": [
+                  12.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  12.5,
+                  9.375
+                ],
+                "end": [
+                  15,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  15,
+                  7.5
+                ],
+                "end": [
+                  17.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  17.5,
+                  4.375
+                ],
+                "end": [
+                  20,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  20,
+                  0
+                ],
+                "end": [
+                  22.5,
+                  -4.375
+                ]
+              },
+              {
+                "start": [
+                  22.5,
+                  -4.375
+                ],
+                "end": [
+                  25,
+                  -7.5
+                ]
+              },
+              {
+                "start": [
+                  25,
+                  -7.5
+                ],
+                "end": [
+                  27.5,
+                  -9.375
+                ]
+              },
+              {
+                "start": [
+                  27.5,
+                  -9.375
+                ],
+                "end": [
+                  30,
+                  -10
+                ]
+              },
+              {
+                "start": [
+                  30,
+                  -10
+                ],
+                "end": [
+                  32.5,
+                  -9.375
+                ]
+              },
+              {
+                "start": [
+                  32.5,
+                  -9.375
+                ],
+                "end": [
+                  35,
+                  -7.5
+                ]
+              },
+              {
+                "start": [
+                  35,
+                  -7.5
+                ],
+                "end": [
+                  37.5,
+                  -4.375
+                ]
+              },
+              {
+                "start": [
+                  37.5,
+                  -4.375
+                ],
+                "end": [
+                  40,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "repeated-relative-quadratic",
+      "d": "m 4 5 q 10 20 20 0 10 -20 20 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                4,
+                5
+              ],
+              [
+                6.5,
+                9.375
+              ],
+              [
+                9,
+                12.5
+              ],
+              [
+                11.5,
+                14.375
+              ],
+              [
+                14,
+                15
+              ],
+              [
+                16.5,
+                14.375
+              ],
+              [
+                19,
+                12.5
+              ],
+              [
+                21.5,
+                9.375
+              ],
+              [
+                24,
+                5
+              ],
+              [
+                26.5,
+                0.625
+              ],
+              [
+                29,
+                -2.5
+              ],
+              [
+                31.5,
+                -4.375
+              ],
+              [
+                34,
+                -5
+              ],
+              [
+                36.5,
+                -4.375
+              ],
+              [
+                39,
+                -2.5
+              ],
+              [
+                41.5,
+                0.625
+              ],
+              [
+                44,
+                5
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  4,
+                  5
+                ],
+                "end": [
+                  6.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  6.5,
+                  9.375
+                ],
+                "end": [
+                  9,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  9,
+                  12.5
+                ],
+                "end": [
+                  11.5,
+                  14.375
+                ]
+              },
+              {
+                "start": [
+                  11.5,
+                  14.375
+                ],
+                "end": [
+                  14,
+                  15
+                ]
+              },
+              {
+                "start": [
+                  14,
+                  15
+                ],
+                "end": [
+                  16.5,
+                  14.375
+                ]
+              },
+              {
+                "start": [
+                  16.5,
+                  14.375
+                ],
+                "end": [
+                  19,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  19,
+                  12.5
+                ],
+                "end": [
+                  21.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  21.5,
+                  9.375
+                ],
+                "end": [
+                  24,
+                  5
+                ]
+              },
+              {
+                "start": [
+                  24,
+                  5
+                ],
+                "end": [
+                  26.5,
+                  0.625
+                ]
+              },
+              {
+                "start": [
+                  26.5,
+                  0.625
+                ],
+                "end": [
+                  29,
+                  -2.5
+                ]
+              },
+              {
+                "start": [
+                  29,
+                  -2.5
+                ],
+                "end": [
+                  31.5,
+                  -4.375
+                ]
+              },
+              {
+                "start": [
+                  31.5,
+                  -4.375
+                ],
+                "end": [
+                  34,
+                  -5
+                ]
+              },
+              {
+                "start": [
+                  34,
+                  -5
+                ],
+                "end": [
+                  36.5,
+                  -4.375
+                ]
+              },
+              {
+                "start": [
+                  36.5,
+                  -4.375
+                ],
+                "end": [
+                  39,
+                  -2.5
+                ]
+              },
+              {
+                "start": [
+                  39,
+                  -2.5
+                ],
+                "end": [
+                  41.5,
+                  0.625
+                ]
+              },
+              {
+                "start": [
+                  41.5,
+                  0.625
+                ],
+                "end": [
+                  44,
+                  5
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "collinear-quadratic",
+      "d": "M 0 0 Q 10 10 20 20",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                2.5,
+                2.5
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                7.5,
+                7.5
+              ],
+              [
+                10,
+                10
+              ],
+              [
+                12.5,
+                12.5
+              ],
+              [
+                15,
+                15
+              ],
+              [
+                17.5,
+                17.5
+              ],
+              [
+                20,
+                20
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2.5,
+                  2.5
+                ]
+              },
+              {
+                "start": [
+                  2.5,
+                  2.5
+                ],
+                "end": [
+                  5,
+                  5
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  5
+                ],
+                "end": [
+                  7.5,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  7.5,
+                  7.5
+                ],
+                "end": [
+                  10,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  10,
+                  10
+                ],
+                "end": [
+                  12.5,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  12.5,
+                  12.5
+                ],
+                "end": [
+                  15,
+                  15
+                ]
+              },
+              {
+                "start": [
+                  15,
+                  15
+                ],
+                "end": [
+                  17.5,
+                  17.5
+                ]
+              },
+              {
+                "start": [
+                  17.5,
+                  17.5
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            20,
+            20
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "collinear-quadratic-reversal",
+      "d": "M 0 0 Q 30 30 20 20",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                6.875,
+                6.875
+              ],
+              [
+                12.5,
+                12.5
+              ],
+              [
+                16.875,
+                16.875
+              ],
+              [
+                20,
+                20
+              ],
+              [
+                21.875,
+                21.875
+              ],
+              [
+                22.5,
+                22.5
+              ],
+              [
+                21.875,
+                21.875
+              ],
+              [
+                20,
+                20
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  6.875,
+                  6.875
+                ]
+              },
+              {
+                "start": [
+                  6.875,
+                  6.875
+                ],
+                "end": [
+                  12.5,
+                  12.5
+                ]
+              },
+              {
+                "start": [
+                  12.5,
+                  12.5
+                ],
+                "end": [
+                  16.875,
+                  16.875
+                ]
+              },
+              {
+                "start": [
+                  16.875,
+                  16.875
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              },
+              {
+                "start": [
+                  20,
+                  20
+                ],
+                "end": [
+                  21.875,
+                  21.875
+                ]
+              },
+              {
+                "start": [
+                  21.875,
+                  21.875
+                ],
+                "end": [
+                  22.5,
+                  22.5
+                ]
+              },
+              {
+                "start": [
+                  22.5,
+                  22.5
+                ],
+                "end": [
+                  21.875,
+                  21.875
+                ]
+              },
+              {
+                "start": [
+                  21.875,
+                  21.875
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            20,
+            20
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "zero-endpoint-quadratic",
+      "d": "M 0 0 Q 10 10 0 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                2.1875,
+                2.1875
+              ],
+              [
+                3.75,
+                3.75
+              ],
+              [
+                4.6875,
+                4.6875
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4.6875,
+                4.6875
+              ],
+              [
+                3.75,
+                3.75
+              ],
+              [
+                2.1875,
+                2.1875
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2.1875,
+                  2.1875
+                ]
+              },
+              {
+                "start": [
+                  2.1875,
+                  2.1875
+                ],
+                "end": [
+                  3.75,
+                  3.75
+                ]
+              },
+              {
+                "start": [
+                  3.75,
+                  3.75
+                ],
+                "end": [
+                  4.6875,
+                  4.6875
+                ]
+              },
+              {
+                "start": [
+                  4.6875,
+                  4.6875
+                ],
+                "end": [
+                  5,
+                  5
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  5
+                ],
+                "end": [
+                  4.6875,
+                  4.6875
+                ]
+              },
+              {
+                "start": [
+                  4.6875,
+                  4.6875
+                ],
+                "end": [
+                  3.75,
+                  3.75
+                ]
+              },
+              {
+                "start": [
+                  3.75,
+                  3.75
+                ],
+                "end": [
+                  2.1875,
+                  2.1875
+                ]
+              },
+              {
+                "start": [
+                  2.1875,
+                  2.1875
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "near-collinear-quadratic",
+      "d": "M 0 0 Q 1 .0000000001 2 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.25,
+                2.1875000000000002e-11
+              ],
+              [
+                0.5,
+                3.75e-11
+              ],
+              [
+                0.75,
+                4.6875e-11
+              ],
+              [
+                1,
+                5e-11
+              ],
+              [
+                1.25,
+                4.6875e-11
+              ],
+              [
+                1.5,
+                3.75e-11
+              ],
+              [
+                1.75,
+                2.1875000000000002e-11
+              ],
+              [
+                2,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0.25,
+                  2.1875000000000002e-11
+                ]
+              },
+              {
+                "start": [
+                  0.25,
+                  2.1875000000000002e-11
+                ],
+                "end": [
+                  0.5,
+                  3.75e-11
+                ]
+              },
+              {
+                "start": [
+                  0.5,
+                  3.75e-11
+                ],
+                "end": [
+                  0.75,
+                  4.6875e-11
+                ]
+              },
+              {
+                "start": [
+                  0.75,
+                  4.6875e-11
+                ],
+                "end": [
+                  1,
+                  5e-11
+                ]
+              },
+              {
+                "start": [
+                  1,
+                  5e-11
+                ],
+                "end": [
+                  1.25,
+                  4.6875e-11
+                ]
+              },
+              {
+                "start": [
+                  1.25,
+                  4.6875e-11
+                ],
+                "end": [
+                  1.5,
+                  3.75e-11
+                ]
+              },
+              {
+                "start": [
+                  1.5,
+                  3.75e-11
+                ],
+                "end": [
+                  1.75,
+                  2.1875000000000002e-11
+                ]
+              },
+              {
+                "start": [
+                  1.75,
+                  2.1875000000000002e-11
+                ],
+                "end": [
+                  2,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "non-collinear-quadratic",
+      "d": "M 0 0 Q 1 .000000001 2 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.25,
+                2.1875000000000002e-10
+              ],
+              [
+                0.5,
+                3.7500000000000005e-10
+              ],
+              [
+                0.75,
+                4.687500000000001e-10
+              ],
+              [
+                1,
+                5e-10
+              ],
+              [
+                1.25,
+                4.687500000000001e-10
+              ],
+              [
+                1.5,
+                3.7500000000000005e-10
+              ],
+              [
+                1.75,
+                2.1875000000000002e-10
+              ],
+              [
+                2,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  0.25,
+                  2.1875000000000002e-10
+                ]
+              },
+              {
+                "start": [
+                  0.25,
+                  2.1875000000000002e-10
+                ],
+                "end": [
+                  0.5,
+                  3.7500000000000005e-10
+                ]
+              },
+              {
+                "start": [
+                  0.5,
+                  3.7500000000000005e-10
+                ],
+                "end": [
+                  0.75,
+                  4.687500000000001e-10
+                ]
+              },
+              {
+                "start": [
+                  0.75,
+                  4.687500000000001e-10
+                ],
+                "end": [
+                  1,
+                  5e-10
+                ]
+              },
+              {
+                "start": [
+                  1,
+                  5e-10
+                ],
+                "end": [
+                  1.25,
+                  4.687500000000001e-10
+                ]
+              },
+              {
+                "start": [
+                  1.25,
+                  4.687500000000001e-10
+                ],
+                "end": [
+                  1.5,
+                  3.7500000000000005e-10
+                ]
+              },
+              {
+                "start": [
+                  1.5,
+                  3.7500000000000005e-10
+                ],
+                "end": [
+                  1.75,
+                  2.1875000000000002e-10
+                ]
+              },
+              {
+                "start": [
+                  1.75,
+                  2.1875000000000002e-10
+                ],
+                "end": [
+                  2,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        []
+      ]
+    },
+    {
+      "name": "curved-only-subpath",
+      "d": "M 0 0 Q 10 20 20 0 M 50 0 L 60 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                2.5,
+                4.375
+              ],
+              [
+                5,
+                7.5
+              ],
+              [
+                7.5,
+                9.375
+              ],
+              [
+                10,
+                10
+              ],
+              [
+                12.5,
+                9.375
+              ],
+              [
+                15,
+                7.5
+              ],
+              [
+                17.5,
+                4.375
+              ],
+              [
+                20,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  2.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  2.5,
+                  4.375
+                ],
+                "end": [
+                  5,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  5,
+                  7.5
+                ],
+                "end": [
+                  7.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  7.5,
+                  9.375
+                ],
+                "end": [
+                  10,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  10,
+                  10
+                ],
+                "end": [
+                  12.5,
+                  9.375
+                ]
+              },
+              {
+                "start": [
+                  12.5,
+                  9.375
+                ],
+                "end": [
+                  15,
+                  7.5
+                ]
+              },
+              {
+                "start": [
+                  15,
+                  7.5
+                ],
+                "end": [
+                  17.5,
+                  4.375
+                ]
+              },
+              {
+                "start": [
+                  17.5,
+                  4.375
+                ],
+                "end": [
+                  20,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [],
+            "closed": false
+          },
+          {
+            "points": [
+              [
+                50,
+                0
+              ],
+              [
+                60,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  50,
+                  0
+                ],
+                "end": [
+                  60,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  50,
+                  0
+                ],
+                "end": [
+                  60,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [],
+        [
+          [
+            50,
+            0
+          ],
+          [
+            60,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "curve-between-straight-parts",
+      "d": "M 0 0 L 10 0 Q 20 0 20 10 L 20 20",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                10,
+                0
+              ],
+              [
+                12.34375,
+                0.15625
+              ],
+              [
+                14.375,
+                0.625
+              ],
+              [
+                16.09375,
+                1.40625
+              ],
+              [
+                17.5,
+                2.5
+              ],
+              [
+                18.59375,
+                3.90625
+              ],
+              [
+                19.375,
+                5.625
+              ],
+              [
+                19.84375,
+                7.65625
+              ],
+              [
+                20,
+                10
+              ],
+              [
+                20,
+                20
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  10,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  10,
+                  0
+                ],
+                "end": [
+                  12.34375,
+                  0.15625
+                ]
+              },
+              {
+                "start": [
+                  12.34375,
+                  0.15625
+                ],
+                "end": [
+                  14.375,
+                  0.625
+                ]
+              },
+              {
+                "start": [
+                  14.375,
+                  0.625
+                ],
+                "end": [
+                  16.09375,
+                  1.40625
+                ]
+              },
+              {
+                "start": [
+                  16.09375,
+                  1.40625
+                ],
+                "end": [
+                  17.5,
+                  2.5
+                ]
+              },
+              {
+                "start": [
+                  17.5,
+                  2.5
+                ],
+                "end": [
+                  18.59375,
+                  3.90625
+                ]
+              },
+              {
+                "start": [
+                  18.59375,
+                  3.90625
+                ],
+                "end": [
+                  19.375,
+                  5.625
+                ]
+              },
+              {
+                "start": [
+                  19.375,
+                  5.625
+                ],
+                "end": [
+                  19.84375,
+                  7.65625
+                ]
+              },
+              {
+                "start": [
+                  19.84375,
+                  7.65625
+                ],
+                "end": [
+                  20,
+                  10
+                ]
+              },
+              {
+                "start": [
+                  20,
+                  10
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  0,
+                  0
+                ],
+                "end": [
+                  10,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  20,
+                  10
+                ],
+                "end": [
+                  20,
+                  20
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            10,
+            0
+          ]
+        ],
+        [
+          [
+            20,
+            10
+          ],
+          [
+            20,
+            20
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "invalid-first-number",
+      "d": "1 2",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 0,
+          "reason": "a command is required after closepath"
+        }
+      }
+    },
+    {
+      "name": "invalid-first-line",
+      "d": "L 1 2",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 0,
+          "reason": "the first command must be moveto",
+          "command": "L"
+        }
+      }
+    },
+    {
+      "name": "invalid-first-close",
+      "d": "Z",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 0,
+          "reason": "the first command must be moveto",
+          "command": "Z"
+        }
+      }
+    },
+    {
+      "name": "invalid-first-unsupported",
+      "d": "C 1 2 3 4 5 6",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 0,
+          "reason": "the first command must be moveto",
+          "command": "C"
+        }
+      }
+    },
+    {
+      "name": "unknown-command",
+      "d": "M 0 0 R 1 2",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 6,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "invalid-character",
+      "d": "M 0 0 @",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 6,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "unicode-character",
+      "d": "M 0 0 🦀",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 6,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "non-ascii-whitespace",
+      "d": "M 0 0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 3,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "form-feed",
+      "d": "M 0\f0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 3,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "bare-sign",
+      "d": "M 0 +",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "bare-decimal-point",
+      "d": "M 0 .",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "missing-exponent",
+      "d": "M 0 1e",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 5,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "missing-exponent-after-sign",
+      "d": "M 0 1e+",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 5,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "double-exponent",
+      "d": "M 0 1e2e3",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 7,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "nan",
+      "d": "M 0 NaN",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "infinity",
+      "d": "M 0 Infinity",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "overflow-number",
+      "d": "M 0 1e309",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "coordinate is not finite"
+        }
+      }
+    },
+    {
+      "name": "negative-overflow-number",
+      "d": "M 0 -1e309",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "coordinate is not finite"
+        }
+      }
+    },
+    {
+      "name": "overflow-relative-move",
+      "d": "M 1e308 0 m 1e308 0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 12,
+          "reason": "computed coordinate is not finite",
+          "command": "m"
+        }
+      }
+    },
+    {
+      "name": "overflow-relative-horizontal",
+      "d": "M 1e308 0 h 1e308",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 12,
+          "reason": "computed coordinate is not finite",
+          "command": "h"
+        }
+      }
+    },
+    {
+      "name": "overflow-relative-vertical",
+      "d": "M 0 -1e308 v -1e308",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 13,
+          "reason": "computed coordinate is not finite",
+          "command": "v"
+        }
+      }
+    },
+    {
+      "name": "overflow-relative-control",
+      "d": "M 1e308 0 q 1e308 0 -1 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 12,
+          "reason": "computed coordinate is not finite",
+          "command": "q"
+        }
+      }
+    },
+    {
+      "name": "overflow-relative-end",
+      "d": "M 1e308 0 q -1 1 1e308 0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 12,
+          "reason": "computed coordinate is not finite",
+          "command": "q"
+        }
+      }
+    },
+    {
+      "name": "extreme-finite-sampled-coordinate",
+      "d": "M 1.7976931348623157e308 0 Q 1.7976931348623157e308 0 1.7976931348623157e308 0",
+      "expected": {
+        "ok": true,
+        "subpaths": [
+          {
+            "points": [
+              [
+                1.7976931348623157e+308,
+                0
+              ],
+              [
+                1.7976931348623157e+308,
+                0
+              ],
+              [
+                1.7976931348623155e+308,
+                0
+              ],
+              [
+                1.7976931348623157e+308,
+                0
+              ],
+              [
+                1.7976931348623157e+308,
+                0
+              ],
+              [
+                1.7976931348623155e+308,
+                0
+              ],
+              [
+                1.7976931348623155e+308,
+                0
+              ],
+              [
+                1.7976931348623157e+308,
+                0
+              ],
+              [
+                1.7976931348623157e+308,
+                0
+              ]
+            ],
+            "segments": [
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623155e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623155e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623155e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623155e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623155e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623155e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              },
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              }
+            ],
+            "straightSegments": [
+              {
+                "start": [
+                  1.7976931348623157e+308,
+                  0
+                ],
+                "end": [
+                  1.7976931348623157e+308,
+                  0
+                ]
+              }
+            ],
+            "closed": false
+          }
+        ]
+      },
+      "routeSubpaths": [
+        [
+          [
+            1.7976931348623157e+308,
+            0
+          ],
+          [
+            1.7976931348623157e+308,
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "numbers-after-close",
+      "d": "M 0 0 Z 1 2",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 8,
+          "reason": "a command is required after closepath"
+        }
+      }
+    },
+    {
+      "name": "trailing-move",
+      "d": "M 0 0 M",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 7,
+          "reason": "command M requires 2 parameters",
+          "command": "M"
+        }
+      }
+    },
+    {
+      "name": "trailing-line",
+      "d": "M 0 0 L",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 7,
+          "reason": "command L requires 2 parameters",
+          "command": "L"
+        }
+      }
+    },
+    {
+      "name": "interrupted-parameters",
+      "d": "M 0 0 Q 1 L 2 3",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 10,
+          "reason": "command Q requires 4 parameters",
+          "command": "Q"
+        }
+      }
+    },
+    {
+      "name": "leading-comma",
+      "d": ",M 0 0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 0,
+          "reason": "unexpected comma"
+        }
+      }
+    },
+    {
+      "name": "comma-after-command",
+      "d": "M,0 0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 1,
+          "reason": "unexpected comma"
+        }
+      }
+    },
+    {
+      "name": "repeated-comma",
+      "d": "M 0,,0",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 4,
+          "reason": "unexpected comma"
+        }
+      }
+    },
+    {
+      "name": "trailing-comma",
+      "d": "M 0 0,",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 5,
+          "reason": "trailing comma"
+        }
+      }
+    },
+    {
+      "name": "comma-before-command",
+      "d": "M 0 0,L 1 2",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 5,
+          "reason": "a comma must separate numbers"
+        }
+      }
+    },
+    {
+      "name": "comma-after-close",
+      "d": "M 0 0 Z,",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 7,
+          "reason": "unexpected comma"
+        }
+      }
+    },
+    {
+      "name": "unsupported-before-lexical-error",
+      "d": "M 0 0 C 1 2 @",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 12,
+          "reason": "expected a number or supported path command"
+        }
+      }
+    },
+    {
+      "name": "unsupported-C",
+      "d": "M 0 0 C 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "C"
+        }
+      }
+    },
+    {
+      "name": "unsupported-c",
+      "d": "M 0 0 c 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "c"
+        }
+      }
+    },
+    {
+      "name": "unsupported-A",
+      "d": "M 0 0 A 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "A"
+        }
+      }
+    },
+    {
+      "name": "unsupported-a",
+      "d": "M 0 0 a 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "a"
+        }
+      }
+    },
+    {
+      "name": "unsupported-S",
+      "d": "M 0 0 S 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "S"
+        }
+      }
+    },
+    {
+      "name": "unsupported-s",
+      "d": "M 0 0 s 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "s"
+        }
+      }
+    },
+    {
+      "name": "unsupported-T",
+      "d": "M 0 0 T 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "T"
+        }
+      }
+    },
+    {
+      "name": "unsupported-t",
+      "d": "M 0 0 t 1 2 3 4 5 6 7",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-unsupported",
+          "tokenOffset": 6,
+          "reason": "path command is not supported by artifact analysis",
+          "command": "t"
+        }
+      }
+    },
+    {
+      "name": "incomplete-M-0",
+      "d": "M ",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 2,
+          "reason": "command M requires 2 parameters",
+          "command": "M"
+        }
+      }
+    },
+    {
+      "name": "incomplete-M-1",
+      "d": "M 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 3,
+          "reason": "command M requires 2 parameters",
+          "command": "M"
+        }
+      }
+    },
+    {
+      "name": "incomplete-L-0",
+      "d": "M 0 0 L ",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 8,
+          "reason": "command L requires 2 parameters",
+          "command": "L"
+        }
+      }
+    },
+    {
+      "name": "incomplete-L-1",
+      "d": "M 0 0 L 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 9,
+          "reason": "command L requires 2 parameters",
+          "command": "L"
+        }
+      }
+    },
+    {
+      "name": "incomplete-H-0",
+      "d": "M 0 0 H ",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 8,
+          "reason": "command H requires 1 parameters",
+          "command": "H"
+        }
+      }
+    },
+    {
+      "name": "incomplete-V-0",
+      "d": "M 0 0 V ",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 8,
+          "reason": "command V requires 1 parameters",
+          "command": "V"
+        }
+      }
+    },
+    {
+      "name": "incomplete-Q-0",
+      "d": "M 0 0 Q ",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 8,
+          "reason": "command Q requires 4 parameters",
+          "command": "Q"
+        }
+      }
+    },
+    {
+      "name": "incomplete-Q-1",
+      "d": "M 0 0 Q 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 9,
+          "reason": "command Q requires 4 parameters",
+          "command": "Q"
+        }
+      }
+    },
+    {
+      "name": "incomplete-Q-2",
+      "d": "M 0 0 Q 1 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 11,
+          "reason": "command Q requires 4 parameters",
+          "command": "Q"
+        }
+      }
+    },
+    {
+      "name": "incomplete-Q-3",
+      "d": "M 0 0 Q 1 1 1",
+      "expected": {
+        "ok": false,
+        "error": {
+          "code": "artifact/svg-path-malformed",
+          "tokenOffset": 13,
+          "reason": "command Q requires 4 parameters",
+          "command": "Q"
+        }
+      }
+    }
+  ]
+}

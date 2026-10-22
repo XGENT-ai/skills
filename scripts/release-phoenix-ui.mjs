@@ -17,6 +17,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { assertUiOnlyRelease } from './require-release-package.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = 'XGENT-ai/skills';
@@ -138,6 +139,7 @@ async function main() {
   assert.equal(command('git', ['status', '--porcelain']).stdout, '', 'Commit or stash changes first; the release is built from HEAD only');
   const head = command('git', ['rev-parse', 'HEAD']).stdout.trim(), tree = command('git', ['rev-parse', 'HEAD^{tree}']).stdout.trim();
   const pkg = readJson(path.join(root, 'package.json'));
+  assertUiOnlyRelease(root);
   const prerelease = pkg.version.includes('-');
   assert(!prerelease || options['--tag'], `${pkg.version} is a prerelease; pass --tag (for example --tag next)`);
   const dir = path.join(root, 'local/phoenix-ui/releases', `v${pkg.version}-${head.slice(0, 12)}`);

@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "modification": "Rust ports of word rules, dictionary dispatch, CJK cost segmentation and Southeast Asian three-word lookahead; original source fixtures are unmodified.",
+  "license": "ICU77-LICENSE",
+  "files": [
+    {
+      "file": "icu77-dictionarydata.cpp",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/common/dictionarydata.cpp",
+      "sha256": "cb84f0fff65be65425a6be6b4871cd464862c705d7e7244f91d770b0bd7b1820"
+    },
+    {
+      "file": "icu77-thaidict.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/dictionaries/thaidict.txt",
+      "sha256": "3166abde40c0f44ab91c28f5ce96d7d1472cb7882e1c0bda0a72f8f69dba4274"
+    },
+    {
+      "file": "icu77-laodict.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/dictionaries/laodict.txt",
+      "sha256": "3c876934a3fa81031d2333525eafaca6a7c9f842e3b98f18c38880420afb5d36"
+    },
+    {
+      "file": "icu77-burmesedict.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/dictionaries/burmesedict.txt",
+      "sha256": "61d8abc3d9102b2f9bf0c9f44db0d7ab89b18172d8cd26832e4c83174bd8673b"
+    },
+    {
+      "file": "icu77-khmerdict.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/dictionaries/khmerdict.txt",
+      "sha256": "87bee2d17cd5148aa36957eb05409eefc124de8ad519b81b789298ef3e60b5d9"
+    },
+    {
+      "file": "icu77-dictbe.cpp",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/common/dictbe.cpp",
+      "sha256": "7ff35464a40669eb77ef4931f0fe6a041392f12603f07908af309dda3e22a022"
+    },
+    {
+      "file": "icu77-cjdict.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/dictionaries/cjdict.txt",
+      "sha256": "e73fd72048981d0cc13e9dc436a7eaba07ffb6eff58c8a59dc75c1df746663a0"
+    },
+    {
+      "file": "icu77-word.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/brkitr/rules/word.txt",
+      "sha256": "8c623551556473c97f32a1ecc22716c4d73fbf71b8dc500a4b461302ca146171"
+    },
+    {
+      "file": "icu77-rbbi-cache.cpp",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/common/rbbi_cache.cpp",
+      "sha256": "2dbb8d13fff4c9763a37573a471a6c994777ad38c1653bb88b4fe253bcf9c35f"
+    },
+    {
+      "file": "icu4x2-dictionary-source.rs",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu4x/icu%402.0.0/provider/source/src/segmenter/dictionary.rs",
+      "sha256": "a7975b90b8b709b39bc7067f9fc1e8065f63347a34016a3b663e93bad2f11400"
+    },
+    {
+      "file": "icu4x2-trie-value-format.md",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu4x/icu%402.0.0/components/normalizer/trie-value-format.md",
+      "sha256": "c8f6ce6e69f4a34342ea13d5510c6df188971a09806089430b60fbb29a3073cb"
+    },
+    {
+      "file": "ICU77-LICENSE",
+      "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/LICENSE",
+      "sha256": "451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca"
+    }
+  ]
+}

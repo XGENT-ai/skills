@@ -102,7 +102,9 @@ sdk.setBreadcrumbs([                         // 页面层级 → 宿主版头面
   { label: "需求池", route: "/requirements" },
   { label: "FR-12 登录页改造" },             // 末级不带 route（它就是当前页）
 ]);                                          // 首页推 []；整条 trail 全量覆盖
-sdk.setDirty(true);                          // 未保存更改 → 宿主拦截离开
+sdk.setDirty(true);                          // 拦 Shell 离开、刷新/关闭、跨 pathname 的前进后退
+                                             // 同 App ?r= 不拦；取消保留原 iframe
+                                             // 需要含门户提交 1590f2e3 的运行件；仅升级 SDK 不启用旧宿主
 sdk.requestFullscreen(true);
 
 // 订阅宿主事件

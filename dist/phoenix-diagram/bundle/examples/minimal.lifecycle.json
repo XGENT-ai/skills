@@ -1,0 +1,11 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": { "title": "Request lifecycle", "output": "minimal.lifecycle.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "mainPath": ["created", "complete"],
+  "states": [
+    { "id": "created", "type": "start", "label": "Created" },
+    { "id": "complete", "type": "success", "label": "Complete" }
+  ],
+  "transitions": [{ "id": "finish", "from": "created", "to": "complete", "label": "Finish" }]
+}

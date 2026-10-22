@@ -1,0 +1,360 @@
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
+use phoenix_diagram::layout as dataflow;
+use phoenix_diagram::scene::{DiagramFacts, Rect, Text};
+use serde_json::{json, Value};
+
+fn corpus() -> Value {
+    serde_json::from_str(include_str!("../fixtures/dataflow/oracle.json")).unwrap()
+}
+fn near(actual: f64, expected: &Value, context: &str) {
+    assert!(
+        (actual - expected.as_f64().unwrap()).abs() < 1e-8,
+        "{context}: {actual} != {expected}"
+    );
+}
+fn bounds(actual: Rect, expected: &Value, context: &str) {
+    for (value, key) in [
+        (actual.x, "x"),
+        (actual.y, "y"),
+        (actual.width, "width"),
+        (actual.height, "height"),
+    ] {
+        near(value, &expected[key], &format!("{context}/{key}"));
+    }
+}
+fn texts(actual: &[Text], expected: &[Value], context: &str) {
+    assert_eq!(
+        actual.len(),
+        expected.len(),
+        "{context}: every rendered line must survive"
+    );
+    for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+        let context = format!("{context}/text/{index}");
+        assert_eq!(
+            actual.content,
+            expected["text"].as_str().unwrap(),
+            "{context}"
+        );
+        assert_eq!(
+            actual.anchor,
+            expected["anchor"].as_str().unwrap(),
+            "{context}"
+        );
+        near(actual.position.x, &expected["x"], &context);
+        near(actual.position.y, &expected["y"], &context);
+        near(actual.font_size, &expected["fontSize"], &context);
+    }
+}
+
+#[test]
+fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
+    let mut accepted = 0;
+    let mut rejected = 0;
+    for case in corpus()["cases"].as_array().unwrap() {
+        let contract = if case["contract"] == "legacy-2.17" {
+            InputContract::Legacy217
+        } else {
+            InputContract::PhoenixV1
+        };
+        let options = CompileOptions {
+            input_contract: Some(contract),
+            quality: case["qualityOption"].as_str().map(|quality| {
+                if quality == "standard" {
+                    Quality::Standard
+                } else {
+                    Quality::Showcase
+                }
+            }),
+            ..Default::default()
+        };
+        let bytes = serde_json::to_vec(&case["document"]).unwrap();
+        let context = format!("{}/{}", case["contract"], case["name"]);
+        let input = match parse_input(&bytes, DiagramType::Dataflow, &options) {
+            Ok(input) => input,
+            Err(errors) => {
+                assert_ne!(
+                    case["ok"], true,
+                    "{context}: valid source core rejected by input gate: {errors:?}"
+                );
+                rejected += 1;
+                continue;
+            }
+        };
+        let before = input.document.clone();
+        let result = dataflow::compile(&input, &options);
+        assert_eq!(
+            input.document, before,
+            "{context}: authored source must remain intact"
+        );
+        assert_eq!(
+            input.source_bytes, bytes,
+            "{context}: input bytes must remain intact"
+        );
+        if case["ok"] != true {
+            let errors = result.expect_err(&format!(
+                "{context}: source failed layout must not become an accepted scene"
+            ));
+            assert!(!errors.is_empty(), "{context}");
+            assert!(
+                errors.iter().all(|error| !error.code.is_empty()
+                    && (error.subject.path.is_empty() || error.subject.path.starts_with('/'))),
+                "{context}"
+            );
+            for expected in case["diagnostics"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|error| {
+                    error["code"]
+                        .as_str()
+                        .is_some_and(|code| code.starts_with("dataflow/node-"))
+                })
+            {
+                assert!(
+                    errors
+                        .iter()
+                        .any(|actual| actual.code == expected["code"].as_str().unwrap()),
+                    "{context}: retain actionable source error {}",
+                    expected["code"]
+                );
+            }
+            rejected += 1;
+            continue;
+        }
+        let scene = result
+            .unwrap_or_else(|errors| panic!("{context}: source accepted actual SVG: {errors:?}"));
+        accepted += 1;
+        assert_eq!(scene.schema_version, 1);
+        assert_eq!(
+            serde_json::to_value(scene.quality).unwrap(),
+            case["effectiveQuality"],
+            "{context}: effective quality must drive the compiled layout"
+        );
+        assert_eq!(scene.meta, input.document["meta"]);
+        let DiagramFacts::Dataflow {
+            stages,
+            nodes,
+            flows,
+        } = &scene.facts
+        else {
+            panic!("{context}: retain dataflow facts");
+        };
+        assert_eq!(stages, input.document["stages"].as_array().unwrap());
+        assert_eq!(nodes, input.document["nodes"].as_array().unwrap());
+        assert_eq!(flows, input.document["flows"].as_array().unwrap());
+        let expected = &case["expected"];
+        near(scene.view_box.width, &expected["viewBox"][0], &context);
+        near(scene.view_box.height, &expected["viewBox"][1], &context);
+        assert_eq!(
+            scene.reader_fit,
+            expected["readerFit"].as_str().unwrap(),
+            "{context}"
+        );
+        assert_eq!(
+            scene.nodes.len(),
+            expected["nodes"].as_array().unwrap().len(),
+            "{context}"
+        );
+        for (index, (node, oracle)) in scene
+            .nodes
+            .iter()
+            .zip(expected["nodes"].as_array().unwrap())
+            .enumerate()
+        {
+            assert_eq!(
+                node.authored.id,
+                oracle["id"].as_str().unwrap(),
+                "{context}"
+            );
+            assert_eq!(node.authored.facts, input.document["nodes"][index]);
+            assert_eq!(node.authored.source_path, format!("/nodes/{index}"));
+            assert!(!node.authored.geometry_provenance.is_empty());
+            bounds(
+                node.bounds,
+                &oracle["bounds"],
+                &format!("{context}/nodes/{index}"),
+            );
+            texts(&node.text, oracle["texts"].as_array().unwrap(), &context);
+            if oracle["sigil"].is_null() {
+                assert!(node.sigil.is_none());
+            } else {
+                let sigil = node.sigil.as_ref().unwrap();
+                assert_eq!(
+                    sigil.kind,
+                    oracle["sigil"]["kind"].as_str().unwrap(),
+                    "{context}"
+                );
+                near(sigil.position.x, &oracle["sigil"]["x"], &context);
+                near(sigil.position.y, &oracle["sigil"]["y"], &context);
+                near(sigil.size, &oracle["sigil"]["size"], &context);
+            }
+        }
+        assert_eq!(
+            scene.relations.len(),
+            expected["flows"].as_array().unwrap().len(),
+            "{context}"
+        );
+        for (index, (flow, oracle)) in scene
+            .relations
+            .iter()
+            .zip(expected["flows"].as_array().unwrap())
+            .enumerate()
+        {
+            assert_eq!(flow.authored.facts, input.document["flows"][index]);
+            assert_eq!(flow.authored.source_path, format!("/flows/{index}"));
+            assert!(!flow.authored.geometry_provenance.is_empty());
+            assert_eq!(
+                flow.from,
+                input.document["flows"][index]["from"].as_str().unwrap()
+            );
+            assert_eq!(
+                flow.to,
+                input.document["flows"][index]["to"].as_str().unwrap()
+            );
+            assert_eq!(
+                flow.label,
+                input.document["flows"][index]["label"].as_str().unwrap()
+            );
+            assert_eq!(
+                flow.note.as_deref(),
+                input.document["flows"][index]["classification"].as_str()
+            );
+            assert_eq!(
+                flow.crossover_halo,
+                oracle["halo"].as_bool().unwrap(),
+                "{context}"
+            );
+            assert_eq!(
+                flow.points.len(),
+                oracle["points"].as_array().unwrap().len(),
+                "{context}/flows/{index}: preserve all actual route points"
+            );
+            for (actual, point) in flow.points.iter().zip(oracle["points"].as_array().unwrap()) {
+                near(actual.x, &point[0], &context);
+                near(actual.y, &point[1], &context);
+            }
+            bounds(
+                flow.label_plate.unwrap(),
+                &oracle["plate"],
+                &format!("{context}/flows/{index}/label"),
+            );
+            texts(&flow.text, oracle["texts"].as_array().unwrap(), &context);
+        }
+        assert_eq!(
+            scene.containers.len(),
+            expected["frames"].as_array().unwrap().len(),
+            "{context}"
+        );
+        let mut stage_texts = Vec::new();
+        for (index, (stage, oracle)) in scene
+            .containers
+            .iter()
+            .zip(expected["frames"].as_array().unwrap())
+            .enumerate()
+        {
+            bounds(
+                stage.bounds,
+                &oracle["bounds"],
+                &format!("{context}/stages/{index}"),
+            );
+            assert_eq!(stage.authored.facts, input.document["stages"][index]);
+            assert_eq!(
+                stage.members,
+                input.document["nodes"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter(|node| node["stage"].as_f64() == Some(index as f64))
+                    .map(|node| node["id"].as_str().unwrap().to_owned())
+                    .collect::<Vec<_>>()
+            );
+            stage_texts.extend(stage.text.iter().cloned());
+        }
+        texts(
+            &stage_texts,
+            expected["stageTexts"].as_array().unwrap(),
+            &format!("{context}/stage-headers"),
+        );
+        let title = scene
+            .legends
+            .iter()
+            .filter(|card| card.authored.kind == "legend-title")
+            .flat_map(|card| card.text.clone())
+            .collect::<Vec<_>>();
+        texts(
+            &title,
+            expected["legendTitle"].as_array().unwrap(),
+            &format!("{context}/legend-title"),
+        );
+        let entries = scene
+            .legends
+            .iter()
+            .filter(|card| card.authored.kind != "legend-title")
+            .collect::<Vec<_>>();
+        assert_eq!(
+            entries.len(),
+            expected["legend"].as_array().unwrap().len(),
+            "{context}/legend"
+        );
+        for (entry, oracle) in entries.iter().zip(expected["legend"].as_array().unwrap()) {
+            assert_eq!(
+                entry.authored.kind,
+                oracle["kind"].as_str().unwrap(),
+                "{context}/legend"
+            );
+            near(entry.bounds.x, &oracle["x"], &context);
+            near(entry.bounds.width, &oracle["width"], &context);
+            near(entry.bounds.y + 10.0, &oracle["baseline"], &context);
+            texts(
+                &entry.text,
+                oracle["texts"].as_array().unwrap(),
+                &format!("{context}/legend"),
+            );
+        }
+    }
+    assert_eq!(accepted, 62);
+    assert_eq!(rejected, 22);
+}
+
+#[test]
+fn dataflow_schema_integers_accept_float_lexemes_and_keep_explicit_geometry() {
+    let corpus = corpus();
+    let case = corpus["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| {
+            case["name"] == "row-dogleg-label-segment-zero" && case["contract"] == "legacy-2.17"
+        })
+        .unwrap();
+    let mut document = case["document"].clone();
+    document["schema_version"] = json!(1.0);
+    document["nodes"][0]["stage"] = json!(0.0);
+    document["nodes"][0]["row"] = json!(0.0);
+    document["nodes"][1]["stage"] = json!(1.0);
+    document["nodes"][1]["row"] = json!(1.0);
+    document["flows"][0]["labelSegment"] = json!(0.0);
+    let options = CompileOptions {
+        input_contract: Some(InputContract::Legacy217),
+        ..Default::default()
+    };
+    let input = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Dataflow,
+        &options,
+    )
+    .unwrap();
+    let scene = dataflow::compile(&input, &options).unwrap();
+    bounds(
+        scene.nodes[0].bounds,
+        &case["expected"]["nodes"][0]["bounds"],
+        "float integer lexemes",
+    );
+    assert_eq!(
+        scene.relations[0].text[0].position,
+        phoenix_diagram::scene::Point {
+            x: 181.75,
+            y: 147.0
+        }
+    );
+}

@@ -318,3 +318,9 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 | `git` 连不上本机 Gitea/GitHub | 一盒是 `NODE_ENV=production`，SSRF 守卫默认拒环回与私网 —— 把目标 hostname 显式列进 `GIT_ALLOWED_HOSTS` |
 | 视频海报/网格缩略图不出 | 一盒没装 ffmpeg，`PREVIEW_MEDIA_CONVERTER_URL` 应留空（§4.1）；其余预览不受影响 |
 | 起了一盒把另一套栈的容器停了 | `COMPOSE_PROJECT_NAME` 没改（§4.2） |
+
+## 品牌图（logoUrl）
+
+开发者应用概览提供上传与地址复制。接口 `POST /api/v1/developer/apps/:key/logo` 以开发者用户 TDT 和原始图片字节请求；服务端验证当前租户、显式开发者页面/品牌动作 PID、维护者关系、字节格式与 2 MiB 上限。成功 `{ok:true,data:{url}}`，同时写 listing 并同步存量安装；同字节 URL 幂等。平台存储未配置返回 `STORAGE_NOT_CONFIGURED`，不可回退为 data URI。
+
+将 URL 填入源 `app.manifest.json` 的 `logoUrl` 并递增版本。字段省略沿用，`null` 清空；只支持 `/api/assets/app-logo/<本 listingKey>/<64位小写sha256>.(svg|png|webp)`。展示字段按自动档发布，存量安装与新装一致，保留租户自定义名称。品牌显示在市场、应用中心、启动器、宿主版头与授权屏；左侧导航保持 `icon` 命名字形。跨部署清单目录会剔除这个单部署资产地址，目标门户须重新上传品牌图并回填 URL。需要包含门户提交 `1590f2e3` 的运行件（本期一盒 tag `wise-pdf-p1-1590f2e3-20261019`）。

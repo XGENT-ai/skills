@@ -7,6 +7,7 @@
 | 文件 / 子目录 | 用途 / 对象 ID / 事件范围 | 入口 |
 | --- | --- | --- |
 | plan | 下级导航 | [入口](plan/index.md) |
+| prd | PRD 当前状态与来源 | [入口](prd/index.md) |
 | review | 下级导航 | [入口](review/index.md) |
 
 ## 维护约定

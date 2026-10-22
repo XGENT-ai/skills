@@ -28,8 +28,15 @@
 
 - 45736d49-0eaa-4431-b8b2-b0d67559a36a · [Phoenix 安装扫描范围修复](45736d49-0eaa-4431-b8b2-b0d67559a36a.md)
 
+- 4aca696e-867c-40da-9e16-d8b33bcd5cd2 · [Phoenix Diagram P1 schema 移植线索](4aca696e-867c-40da-9e16-d8b33bcd5cd2.md)
+
+- 548eefe7-8199-4266-856b-ad7166be8448 · [Phoenix Diagram R1 修复线索](548eefe7-8199-4266-856b-ad7166be8448.md)
+
+- 01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0 · [Phoenix Diagram M7 续验](01a152d0-f3e6-7de1-920c-b4b9a1dfc9c0.md)
+
 - 2ab53e07-899c-4289-9b4a-4bf93c8b5deb · [合并 origin/main 验证环境](2ab53e07-899c-4289-9b4a-4bf93c8b5deb.md)
 
 - 2d9914fc-8f95-405c-83ed-59a229072efe · [resolve-blocked 外部依赖请求](2d9914fc-8f95-405c-83ed-59a229072efe.md)
 
 - `49a107bf-abd1-462b-9910-ff664d6be67d` · 指令质量评测与自进化 v2 · [记录](49a107bf-abd1-462b-9910-ff664d6be67d.md)
+- 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)

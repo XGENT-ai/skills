@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "rust": "1.99.0",
+  "mrBoxington": "1.24.0",
+  "node": "25.2.1",
+  "consumerNpm": {
+    "package": "npm",
+    "version": "10.5.0",
+    "url": "https://registry.npmjs.org/npm/-/npm-10.5.0.tgz",
+    "size": 2518464,
+    "sha256": "17ca6e08e7633b624e8f870db81a78f46afe119de62bcaf0a7407574139198fc",
+    "integrity": "sha512-Ejxwvfh9YnWVU2yA5FzoYLTW52vxHCz+MHrOFg9Cc8IFgF/6f5AGPAvb5WTay5DIUP1NIfN3VBZ0cLlGO0Ys+A==",
+    "engines": "^18.17.0 || >=20.5.0"
+  }
+}

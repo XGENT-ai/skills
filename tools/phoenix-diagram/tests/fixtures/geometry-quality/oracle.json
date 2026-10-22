@@ -1,0 +1,5485 @@
+{
+  "format": 1,
+  "source": "local/phoenix-diagram/reference/archify/renderers/shared",
+  "labelCases": [
+    {
+      "name": "valid-label-retains-original-anchor",
+      "input": {
+        "labels": [
+          {
+            "x": 70,
+            "y": 40,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 100,
+            "ly": 50,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "placementBottom": 20,
+        "maxOwnRouteDistance": 1
+      },
+      "expected": [
+        {
+          "x": 70,
+          "y": 40,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 100,
+          "ly": 50,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "pin-labelAt-retains-collision",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {
+              "labelAt": [
+                110,
+                100
+              ]
+            }
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 90,
+            "y": 80,
+            "width": 60,
+            "height": 60
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {
+            "labelAt": [
+              110,
+              100
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "pin-labelDx-retains-collision",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {
+              "labelDx": 0
+            }
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 90,
+            "y": 80,
+            "width": 60,
+            "height": 60
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {
+            "labelDx": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "pin-labelDy-retains-collision",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {
+              "labelDy": 0
+            }
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 90,
+            "y": 80,
+            "width": 60,
+            "height": 60
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {
+            "labelDy": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "pin-labelSegment-retains-collision",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {
+              "labelSegment": 0
+            }
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 90,
+            "y": 80,
+            "width": 60,
+            "height": 60
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {
+            "labelSegment": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "horizontal-fixed-fractions-before-sliding",
+      "input": {
+        "labels": [
+          {
+            "x": 100,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 130,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 100,
+            "y": 80,
+            "width": 80,
+            "height": 50
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 185,
+          "y": 80,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 215,
+          "ly": 90,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "vertical-candidates-keep-source-order",
+      "input": {
+        "labels": [
+          {
+            "x": 150,
+            "y": 120,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 180,
+            "ly": 130,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                180,
+                20
+              ],
+              [
+                180,
+                260
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 160,
+            "y": 110,
+            "width": 50,
+            "height": 50
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 114,
+          "y": 73,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 144,
+          "ly": 83,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "later-label-vacates-earlier-label-only-slot",
+      "input": {
+        "labels": [
+          {
+            "x": 202,
+            "y": 80,
+            "width": 56,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 230,
+            "ly": 90,
+            "relation": {}
+          },
+          {
+            "x": 82,
+            "y": 80,
+            "width": 56,
+            "height": 20,
+            "relationIndex": 1,
+            "lx": 110,
+            "ly": 90,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                80,
+                100
+              ],
+              [
+                140,
+                100
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                230,
+                30
+              ],
+              [
+                370,
+                30
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 200,
+            "y": 70,
+            "width": 60,
+            "height": 40
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          400,
+          140
+        ],
+        "placementBottom": 108,
+        "gridSweep": true,
+        "fallbackRing": false
+      },
+      "expected": [
+        {
+          "x": 82,
+          "y": 80,
+          "width": 56,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 90,
+          "relation": {}
+        },
+        {
+          "x": 272,
+          "y": 10,
+          "width": 56,
+          "height": 20,
+          "relationIndex": 1,
+          "lx": 300,
+          "ly": 20,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "sliding-finds-unsampled-obstacle-edge-slot",
+      "input": {
+        "labels": [
+          {
+            "x": 10,
+            "y": 80,
+            "width": 80,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 50,
+            "ly": 90,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                480,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 0,
+            "y": 60,
+            "width": 153,
+            "height": 40
+          },
+          {
+            "x": 237,
+            "y": 60,
+            "width": 263,
+            "height": 40
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "placementBottom": 100,
+        "fallbackRing": false
+      },
+      "expected": [
+        {
+          "x": 155,
+          "y": 80,
+          "width": 80,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 195,
+          "ly": 90,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "vertical-sliding-finds-unsampled-obstacle-edge-slot",
+      "input": {
+        "labels": [
+          {
+            "x": 84,
+            "y": 10,
+            "width": 20,
+            "height": 80,
+            "relationIndex": 0,
+            "lx": 94,
+            "ly": 20,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                100,
+                20
+              ],
+              [
+                100,
+                480
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 60,
+            "y": 0,
+            "width": 80,
+            "height": 153
+          },
+          {
+            "x": 60,
+            "y": 237,
+            "width": 80,
+            "height": 263
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          200,
+          500
+        ],
+        "fallbackRing": false
+      },
+      "expected": [
+        {
+          "x": 74,
+          "y": 155,
+          "width": 20,
+          "height": 80,
+          "relationIndex": 0,
+          "lx": 84,
+          "ly": 165,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-sweep-reranks-a-valid-label",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                480,
+                150
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 220,
+          "y": 130,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 250,
+          "ly": 140,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-padding-protects-caller-plate-measurement",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                480,
+                150
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [
+          {
+            "x": 0,
+            "y": 100,
+            "width": 500,
+            "height": 28
+          }
+        ],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 220,
+          "y": 160,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 250,
+          "ly": 170,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-reciprocal-horizontal-high-neighbour",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                480,
+                150
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                480,
+                174
+              ],
+              [
+                20,
+                174
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 220,
+          "y": 130,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 250,
+          "ly": 140,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-reciprocal-horizontal-low-neighbour",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                480,
+                150
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                480,
+                126
+              ],
+              [
+                20,
+                126
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 220,
+          "y": 160,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 250,
+          "ly": 170,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-reciprocal-vertical-high-neighbour",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                160,
+                20
+              ],
+              [
+                160,
+                260
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                184,
+                260
+              ],
+              [
+                184,
+                20
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 94,
+          "y": 133,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 124,
+          "ly": 143,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "grid-reciprocal-vertical-low-neighbour",
+      "input": {
+        "labels": [
+          {
+            "x": 50,
+            "y": 30,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 80,
+            "ly": 40,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                160,
+                20
+              ],
+              [
+                160,
+                260
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                136,
+                260
+              ],
+              [
+                136,
+                20
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "gridSweep": true
+      },
+      "expected": [
+        {
+          "x": 166,
+          "y": 133,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 196,
+          "ly": 143,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "fallback-ring-fixed-offset-order",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                100,
+                100
+              ],
+              [
+                120,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 230,
+            "height": 160
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          240,
+          240
+        ],
+        "keepFallbackNearRoute": false
+      },
+      "expected": [
+        {
+          "x": 0,
+          "y": 14,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 30,
+          "ly": 24,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "fallback-ring-rejects-distant-island",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                100,
+                100
+              ],
+              [
+                120,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 230,
+            "height": 160
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          240,
+          240
+        ],
+        "keepFallbackNearRoute": true
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "maximum-own-route-distance-bounds-fallback",
+      "input": {
+        "labels": [
+          {
+            "x": 80,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 110,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                100,
+                100
+              ],
+              [
+                120,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 230,
+            "height": 160
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          240,
+          240
+        ],
+        "maxOwnRouteDistance": 30
+      },
+      "expected": [
+        {
+          "x": 80,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 110,
+          "ly": 100,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "no-feasible-position-keeps-original-failure",
+      "input": {
+        "labels": [
+          {
+            "x": 70,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 100,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                180,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 200
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          200,
+          200
+        ]
+      },
+      "expected": [
+        {
+          "x": 70,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 100,
+          "ly": 100,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "route-mask-clearance-exactly-four-pixels",
+      "input": {
+        "labels": [
+          {
+            "x": 120,
+            "y": 76,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 150,
+            "ly": 86,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                280,
+                150
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 120,
+          "y": 76,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 150,
+          "ly": 86,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "route-mask-clearance-inside-four-pixels",
+      "input": {
+        "labels": [
+          {
+            "x": 120,
+            "y": 76.0002,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 150,
+            "ly": 86.0002,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                150
+              ],
+              [
+                280,
+                150
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 120,
+          "y": 130,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 150,
+          "ly": 140,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "diagonal-route-is-only-a-mask-not-a-placement-segment",
+      "input": {
+        "labels": [
+          {
+            "x": 120,
+            "y": 140,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 150,
+            "ly": 150,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                20
+              ],
+              [
+                280,
+                280
+              ]
+            ]
+          }
+        ],
+        "components": [
+          {
+            "x": 100,
+            "y": 100,
+            "width": 100,
+            "height": 100
+          }
+        ],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "fallbackRing": false
+      },
+      "expected": [
+        {
+          "x": 120,
+          "y": 140,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 150,
+          "ly": 150,
+          "relation": {}
+        }
+      ]
+    },
+    {
+      "name": "spatial-grid-overflow-still-masks-route",
+      "input": {
+        "labels": [
+          {
+            "x": 120,
+            "y": 90,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 0,
+            "lx": 150,
+            "ly": 100,
+            "relation": {}
+          }
+        ],
+        "routes": [
+          {
+            "relationIndex": 0,
+            "points": [
+              [
+                20,
+                100
+              ],
+              [
+                280,
+                100
+              ]
+            ]
+          },
+          {
+            "relationIndex": 1,
+            "points": [
+              [
+                -1000000000000000000,
+                100
+              ],
+              [
+                1000000000000000000,
+                100
+              ]
+            ]
+          }
+        ],
+        "components": [],
+        "titles": [],
+        "viewBox": [
+          500,
+          300
+        ]
+      },
+      "expected": [
+        {
+          "x": 120,
+          "y": 110,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 0,
+          "lx": 150,
+          "ly": 120,
+          "relation": {}
+        }
+      ]
+    }
+  ],
+  "reservationCases": [
+    {
+      "name": "reserves-beside-own-route",
+      "input": {
+        "label": {
+          "x": 120,
+          "y": 80,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 2,
+          "lx": 150,
+          "ly": 90,
+          "relation": {}
+        },
+        "points": [
+          [
+            20,
+            100
+          ],
+          [
+            280,
+            100
+          ]
+        ],
+        "routes": [],
+        "labels": [],
+        "components": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "placementBottom": 300
+      },
+      "expected": {
+        "x": 120,
+        "y": 80,
+        "width": 60,
+        "height": 20,
+        "relationIndex": -1,
+        "lx": 150,
+        "ly": 90,
+        "relation": {}
+      }
+    },
+    {
+      "name": "does-not-reserve-an-unrepairable-component-collision",
+      "input": {
+        "label": {
+          "x": 70,
+          "y": 90,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 2,
+          "lx": 100,
+          "ly": 100,
+          "relation": {}
+        },
+        "points": [
+          [
+            90,
+            100
+          ],
+          [
+            110,
+            100
+          ]
+        ],
+        "routes": [],
+        "labels": [],
+        "components": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 200
+          }
+        ],
+        "viewBox": [
+          200,
+          200
+        ],
+        "placementBottom": 200
+      },
+      "expected": null
+    },
+    {
+      "name": "reservation-only-rejects-component-overlap",
+      "input": {
+        "label": {
+          "x": -70,
+          "y": -50,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 2,
+          "lx": -40,
+          "ly": -40,
+          "relation": {}
+        },
+        "points": [
+          [
+            -50,
+            -30
+          ],
+          [
+            -30,
+            -30
+          ]
+        ],
+        "routes": [],
+        "labels": [],
+        "components": [],
+        "viewBox": [
+          20,
+          20
+        ],
+        "placementBottom": 20
+      },
+      "expected": {
+        "x": -70,
+        "y": -50,
+        "width": 60,
+        "height": 20,
+        "relationIndex": -1,
+        "lx": -40,
+        "ly": -40,
+        "relation": {}
+      }
+    },
+    {
+      "name": "reservation-preserves-pinned-anchor",
+      "input": {
+        "label": {
+          "x": 120,
+          "y": 80,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 2,
+          "lx": 150,
+          "ly": 90,
+          "relation": {
+            "labelDx": 0
+          }
+        },
+        "points": [
+          [
+            20,
+            100
+          ],
+          [
+            280,
+            100
+          ]
+        ],
+        "routes": [
+          {
+            "relationIndex": 3,
+            "points": [
+              [
+                0,
+                90
+              ],
+              [
+                300,
+                90
+              ]
+            ]
+          }
+        ],
+        "labels": [],
+        "components": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "placementBottom": 300
+      },
+      "expected": {
+        "x": 120,
+        "y": 80,
+        "width": 60,
+        "height": 20,
+        "relationIndex": -1,
+        "lx": 150,
+        "ly": 90,
+        "relation": {
+          "labelDx": 0
+        }
+      }
+    },
+    {
+      "name": "reservation-honours-existing-route-and-label-inventory",
+      "input": {
+        "label": {
+          "x": 120,
+          "y": 80,
+          "width": 60,
+          "height": 20,
+          "relationIndex": 2,
+          "lx": 150,
+          "ly": 90,
+          "relation": {}
+        },
+        "points": [
+          [
+            20,
+            100
+          ],
+          [
+            280,
+            100
+          ]
+        ],
+        "routes": [
+          {
+            "relationIndex": 3,
+            "points": [
+              [
+                0,
+                90
+              ],
+              [
+                300,
+                90
+              ]
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "x": 120,
+            "y": 110,
+            "width": 60,
+            "height": 20,
+            "relationIndex": 4,
+            "lx": 150,
+            "ly": 120,
+            "relation": {}
+          }
+        ],
+        "components": [],
+        "viewBox": [
+          500,
+          300
+        ],
+        "placementBottom": 300
+      },
+      "expected": {
+        "x": 55,
+        "y": 110,
+        "width": 60,
+        "height": 20,
+        "relationIndex": -1,
+        "lx": 85,
+        "ly": 120,
+        "relation": {}
+      }
+    }
+  ],
+  "gridCases": [
+    {
+      "name": "straight-route",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 260,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 4,
+        "candidateNodeCount": 3,
+        "usableNodeCount": 3,
+        "graphEdgeCount": 2,
+        "visitedNodeCount": 2,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "symmetric-obstacle-retains-minheap-tie-break",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 100,
+            "y": 40,
+            "width": 100,
+            "height": 40
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            97,
+            60
+          ],
+          [
+            97,
+            37
+          ],
+          [
+            276,
+            37
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 306,
+        "obstacleCount": 1
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 1,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 8,
+        "candidateNodeCount": 15,
+        "usableNodeCount": 15,
+        "graphEdgeCount": 21,
+        "visitedNodeCount": 33,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "all-obstacles-remain-visible-outside-initial-route-bounds",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 100,
+            "y": 40,
+            "width": 100,
+            "height": 40
+          },
+          {
+            "x": 220,
+            "y": -30,
+            "width": 20,
+            "height": 70
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            24,
+            60
+          ],
+          [
+            24,
+            83
+          ],
+          [
+            276,
+            83
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 306,
+        "obstacleCount": 2
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 2,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 11,
+        "candidateNodeCount": 28,
+        "usableNodeCount": 28,
+        "graphEdgeCount": 43,
+        "visitedNodeCount": 62,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "avoid-crossing-and-touching-occupied-interior",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "avoidedSegments": [
+          {
+            "start": [
+              150,
+              0
+            ],
+            "end": [
+              150,
+              120
+            ]
+          }
+        ]
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            142,
+            60
+          ],
+          [
+            142,
+            0
+          ],
+          [
+            158,
+            0
+          ],
+          [
+            158,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 380,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 1,
+        "coordinateCount": 9,
+        "candidateNodeCount": 18,
+        "usableNodeCount": 17,
+        "graphEdgeCount": 23,
+        "visitedNodeCount": 39,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "allow-proper-avoided-crossing",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "avoidedSegments": [
+          {
+            "start": [
+              150,
+              0
+            ],
+            "end": [
+              150,
+              120
+            ]
+          }
+        ],
+        "allowAvoidedCrossings": true
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 260,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 1,
+        "coordinateCount": 9,
+        "candidateNodeCount": 18,
+        "usableNodeCount": 18,
+        "graphEdgeCount": 25,
+        "visitedNodeCount": 34,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "avoid-collinear-corridor-at-overlap-threshold",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "avoidedSegments": [
+          {
+            "start": [
+              100,
+              60
+            ],
+            "end": [
+              108,
+              60
+            ]
+          }
+        ]
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            24,
+            60
+          ],
+          [
+            24,
+            52
+          ],
+          [
+            276,
+            52
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 276,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 1,
+        "coordinateCount": 8,
+        "candidateNodeCount": 15,
+        "usableNodeCount": 15,
+        "graphEdgeCount": 21,
+        "visitedNodeCount": 35,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "disjoint-segment-with-zero-overlap-threshold-rejects-edges",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "avoidedSegments": [
+          {
+            "start": [
+              600,
+              600
+            ],
+            "end": [
+              610,
+              600
+            ]
+          }
+        ],
+        "minimumAvoidedOverlapPx": 0
+      },
+      "acceptMode": "all",
+      "acceptCalls": 0,
+      "expected": null,
+      "metrics": {
+        "status": "no-route",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 1,
+        "coordinateCount": 17,
+        "candidateNodeCount": 36,
+        "usableNodeCount": 36,
+        "graphEdgeCount": 0,
+        "visitedNodeCount": 2,
+        "attemptCount": 2
+      }
+    },
+    {
+      "name": "frame-border-may-be-crossed-but-never-borrowed",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "borderSegments": [
+          {
+            "start": [
+              50,
+              60
+            ],
+            "end": [
+              250,
+              60
+            ]
+          }
+        ]
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            24,
+            60
+          ],
+          [
+            24,
+            68
+          ],
+          [
+            276,
+            68
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 276,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 6,
+        "candidateNodeCount": 9,
+        "usableNodeCount": 9,
+        "graphEdgeCount": 11,
+        "visitedNodeCount": 17,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "border-recovery-adds-full-segment-corridor",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "borderSegments": [
+          {
+            "start": [
+              24,
+              -40
+            ],
+            "end": [
+              24,
+              150
+            ]
+          }
+        ],
+        "routeSeparationPx": 2,
+        "minimumSegmentPx": 8
+      },
+      "acceptMode": "reject-first",
+      "acceptCalls": 2,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 260,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 9,
+        "candidateNodeCount": 7,
+        "usableNodeCount": 7,
+        "graphEdgeCount": 5,
+        "visitedNodeCount": 5,
+        "attemptCount": 2
+      }
+    },
+    {
+      "name": "caller-rejection-retries-denser-grid-with-same-budget",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 100,
+            "y": 40,
+            "width": 100,
+            "height": 40
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "reject-first",
+      "acceptCalls": 2,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            24,
+            60
+          ],
+          [
+            24,
+            37
+          ],
+          [
+            276,
+            37
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 306,
+        "obstacleCount": 1
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 1,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 15,
+        "candidateNodeCount": 27,
+        "usableNodeCount": 27,
+        "graphEdgeCount": 37,
+        "visitedNodeCount": 57,
+        "attemptCount": 2
+      }
+    },
+    {
+      "name": "retry-cannot-reset-original-grid-node-budget",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "maximumGridNodes": 4
+      },
+      "acceptMode": "reject-first",
+      "acceptCalls": 1,
+      "expected": null,
+      "metrics": {
+        "status": "node-budget-exceeded",
+        "maximumGridNodes": 4,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 7,
+        "candidateNodeCount": 5,
+        "usableNodeCount": 3,
+        "graphEdgeCount": 2,
+        "visitedNodeCount": 2,
+        "attemptCount": 2
+      }
+    },
+    {
+      "name": "rejected-both-candidates-remains-rejected",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "none",
+      "acceptCalls": 2,
+      "expected": null,
+      "metrics": {
+        "status": "rejected",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 7,
+        "candidateNodeCount": 5,
+        "usableNodeCount": 5,
+        "graphEdgeCount": 3,
+        "visitedNodeCount": 4,
+        "attemptCount": 2
+      }
+    },
+    {
+      "name": "node-budget-is-not-a-success",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "maximumGridNodes": 0
+      },
+      "acceptMode": "all",
+      "acceptCalls": 0,
+      "expected": null,
+      "metrics": {
+        "status": "node-budget-exceeded",
+        "maximumGridNodes": 0,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 4,
+        "candidateNodeCount": 3,
+        "usableNodeCount": 0,
+        "graphEdgeCount": 0,
+        "visitedNodeCount": 0,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "obstacle-budget-is-not-a-success",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 100,
+            "y": 40,
+            "width": 100,
+            "height": 40
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 0
+      },
+      "acceptMode": "all",
+      "acceptCalls": 0,
+      "expected": null,
+      "metrics": {
+        "status": "obstacle-budget-exceeded",
+        "maximumGridNodes": null,
+        "obstacleCount": 1,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 0,
+        "candidateNodeCount": 0,
+        "usableNodeCount": 0,
+        "graphEdgeCount": 0,
+        "visitedNodeCount": 0,
+        "attemptCount": 0
+      }
+    },
+    {
+      "name": "blocked-endpoint-does-not-start-search",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 20,
+            "y": 50,
+            "width": 20,
+            "height": 20
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "all",
+      "acceptCalls": 0,
+      "expected": null,
+      "metrics": {
+        "status": "endpoint-blocked",
+        "maximumGridNodes": null,
+        "obstacleCount": 1,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 7,
+        "candidateNodeCount": 12,
+        "usableNodeCount": 11,
+        "graphEdgeCount": 0,
+        "visitedNodeCount": 0,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "unsupported-side-does-not-pretend-to-route",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "diagonal",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80
+      },
+      "acceptMode": "all",
+      "acceptCalls": 0,
+      "expected": null,
+      "metrics": {
+        "status": "unsupported-endpoint-side",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 0,
+        "candidateNodeCount": 0,
+        "usableNodeCount": 0,
+        "graphEdgeCount": 0,
+        "visitedNodeCount": 0,
+        "attemptCount": 0
+      }
+    },
+    {
+      "name": "bend-penalty-keeps-direction-in-search-state",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            95,
+            60
+          ],
+          [
+            104,
+            80
+          ],
+          [
+            109,
+            91
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [
+          {
+            "x": 100,
+            "y": 40,
+            "width": 100,
+            "height": 40
+          }
+        ],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "bendPenaltyPx": 64
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            95,
+            60
+          ],
+          [
+            95,
+            37
+          ],
+          [
+            276,
+            37
+          ],
+          [
+            276,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 306,
+        "obstacleCount": 1
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 1,
+        "avoidedSegmentCount": 0,
+        "coordinateCount": 9,
+        "candidateNodeCount": 20,
+        "usableNodeCount": 20,
+        "graphEdgeCount": 29,
+        "visitedNodeCount": 49,
+        "attemptCount": 1
+      }
+    },
+    {
+      "name": "strict-overlap-below-corridor-threshold",
+      "input": {
+        "start": [
+          20,
+          60
+        ],
+        "end": [
+          280,
+          60
+        ],
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "obstacles": [],
+        "fromSide": "right",
+        "toSide": "left",
+        "clearance": 2,
+        "maximumObstacleCount": 80,
+        "avoidedSegments": [
+          {
+            "start": [
+              100,
+              60
+            ],
+            "end": [
+              107.999,
+              60
+            ]
+          }
+        ]
+      },
+      "acceptMode": "all",
+      "acceptCalls": 1,
+      "expected": {
+        "points": [
+          [
+            20,
+            60
+          ],
+          [
+            280,
+            60
+          ]
+        ],
+        "length": 260,
+        "obstacleCount": 0
+      },
+      "metrics": {
+        "status": "routed",
+        "maximumGridNodes": null,
+        "obstacleCount": 0,
+        "avoidedSegmentCount": 1,
+        "coordinateCount": 7,
+        "candidateNodeCount": 12,
+        "usableNodeCount": 12,
+        "graphEdgeCount": 17,
+        "visitedNodeCount": 25,
+        "attemptCount": 1
+      }
+    }
+  ],
+  "detourCases": [
+    {
+      "name": "authored-empty-excursion-is-rejected",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  360
+                ],
+                [
+                  260,
+                  360
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 860,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 3.31,
+              "excessLengthPx": 600,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 360,
+                "width": 260,
+                "height": 300
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 280,
+                "maximum": 280
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 300,
+                "point": [
+                  40,
+                  360
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "standard-profile-does-not-run-showcase-detour-check",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "standard"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "automatic-route-is-not-an-authored-detour",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "unknown-endpoint-is-not-evaluated-as-a-detour",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "diagonal-via-is-outside-orthogonal-detour-scope",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                120,
+                360
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                120,
+                360
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "short-authored-route-does-not-exceed-detour-threshold",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                100
+              ],
+              [
+                260,
+                100
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                100
+              ],
+              [
+                260,
+                100
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "opaque-obstacle-explains-long-route",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                560
+              ],
+              [
+                260,
+                560
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                560
+              ],
+              [
+                260,
+                560
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 100,
+            "y": -500,
+            "width": 100,
+            "height": 1000
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "related-shared-outer-corridor-31.999",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          },
+          {
+            "id": "ac",
+            "from": "a",
+            "to": "c",
+            "via": [],
+            "points": [
+              [
+                100,
+                360
+              ],
+              [
+                131.999,
+                360
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  360
+                ],
+                [
+                  260,
+                  360
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 860,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 3.31,
+              "excessLengthPx": 600,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 360,
+                "width": 260,
+                "height": 300
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 280,
+                "maximum": 280
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 300,
+                "point": [
+                  40,
+                  360
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "related-shared-outer-corridor-32",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          },
+          {
+            "id": "ac",
+            "from": "a",
+            "to": "c",
+            "via": [],
+            "points": [
+              [
+                100,
+                360
+              ],
+              [
+                132,
+                360
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "unrelated-shared-outer-corridor-does-not-excuse-detour",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          },
+          {
+            "id": "cd",
+            "from": "c",
+            "to": "d",
+            "via": [],
+            "points": [
+              [
+                100,
+                360
+              ],
+              [
+                200,
+                360
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  360
+                ],
+                [
+                  260,
+                  360
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 860,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 3.31,
+              "excessLengthPx": 600,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 360,
+                "width": 260,
+                "height": 300
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 280,
+                "maximum": 280
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 300,
+                "point": [
+                  40,
+                  360
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty-control-inside-wide-content-bounds-is-still-distant",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": -500,
+            "width": 20,
+            "height": 1
+          },
+          {
+            "x": 280,
+            "y": 500,
+            "width": 20,
+            "height": 1
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 0px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 0px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  360
+                ],
+                [
+                  260,
+                  360
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 860,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 3.31,
+              "excessLengthPx": 600,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 360,
+                "width": 260,
+                "height": 300
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": -500,
+                "right": 300,
+                "bottom": 501,
+                "width": 300,
+                "height": 1001
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "maximum": 0
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 300,
+                "point": [
+                  40,
+                  360
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "detour-obstacle-budget-leaves-evaluation-incomplete",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "maximumObstacleCount": 1
+        }
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "empty-excursion-threshold-can-exclude-nearby-route",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumEmptyExcursionPx": 301
+        }
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "exact-empty-excursion-threshold-is-inclusive",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumEmptyExcursionPx": 300
+        }
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 860px, 3.31x the 260px shortest obstacle-clearing orthogonal route, and reaches 280px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  360
+                ],
+                [
+                  260,
+                  360
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 860,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 3.31,
+              "excessLengthPx": 600,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 360,
+                "width": 260,
+                "height": 300
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 280,
+                "maximum": 280
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 300,
+                "point": [
+                  40,
+                  360
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 300
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "detour-ratio-threshold-2.5",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                255
+              ],
+              [
+                260,
+                255
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                255
+              ],
+              [
+                260,
+                255
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumDetourRatio": 2.5
+        }
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 650px, 2.5x the 260px shortest obstacle-clearing orthogonal route, and reaches 175px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 650px, 2.5x the 260px shortest obstacle-clearing orthogonal route, and reaches 175px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  255
+                ],
+                [
+                  260,
+                  255
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 650,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 2.5,
+              "excessLengthPx": 390,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 255,
+                "width": 260,
+                "height": 195
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 175,
+                "maximum": 175
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 195,
+                "point": [
+                  40,
+                  255
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 2.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "detour-ratio-threshold-2.500001",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                255
+              ],
+              [
+                260,
+                255
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                255
+              ],
+              [
+                260,
+                255
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumDetourRatio": 2.500001
+        }
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "detour-excess-length-threshold-200",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                160
+              ],
+              [
+                260,
+                160
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                160
+              ],
+              [
+                260,
+                160
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumDetourRatio": 1.5,
+          "minimumExcessLengthPx": 200
+        }
+      },
+      "expected": {
+        "messages": [
+          "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 460px, 1.77x the 260px shortest obstacle-clearing orthogonal route, and reaches 80px beyond the content bounds — remove the distant via corridor or move it close to the connected content."
+        ],
+        "diagnostics": [
+          {
+            "code": "composition/excessive-route-detour",
+            "severity": "error",
+            "message": "[composition/excessive-route-detour] architecture connections[0] id \"ab\" \"a\" -> \"b\" travels 460px, 1.77x the 260px shortest obstacle-clearing orthogonal route, and reaches 80px beyond the content bounds — remove the distant via corridor or move it close to the connected content.",
+            "subject": {
+              "diagramType": "architecture",
+              "collection": "connections",
+              "index": 0,
+              "id": "ab",
+              "from": "a",
+              "to": "b"
+            },
+            "evidence": {
+              "points": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  40,
+                  60
+                ],
+                [
+                  40,
+                  160
+                ],
+                [
+                  260,
+                  160
+                ],
+                [
+                  260,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "actualLengthPx": 460,
+              "shortestLegalPoints": [
+                [
+                  20,
+                  60
+                ],
+                [
+                  280,
+                  60
+                ]
+              ],
+              "shortestLegalLengthPx": 260,
+              "detourRatio": 1.77,
+              "excessLengthPx": 200,
+              "routeBounds": {
+                "left": 20,
+                "top": 60,
+                "right": 280,
+                "bottom": 160,
+                "width": 260,
+                "height": 100
+              },
+              "contentBounds": {
+                "left": 0,
+                "top": 40,
+                "right": 300,
+                "bottom": 80,
+                "width": 300,
+                "height": 40
+              },
+              "emptyExcursionPx": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 80,
+                "maximum": 80
+              },
+              "emptyControlPointClearancePx": {
+                "maximum": 100,
+                "point": [
+                  40,
+                  160
+                ]
+              },
+              "obstacleCount": 2,
+              "thresholds": {
+                "minimumDetourRatio": 1.5,
+                "minimumExcessLengthPx": 200,
+                "minimumEmptyExcursionPx": 96
+              }
+            },
+            "supportedFixes": [
+              "remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "detour-excess-length-threshold-200.0001",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                160
+              ],
+              [
+                260,
+                160
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                160
+              ],
+              [
+                260,
+                160
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ]
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase",
+        "thresholds": {
+          "minimumDetourRatio": 1.5,
+          "minimumExcessLengthPx": 200.0001
+        }
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "explicit-unsupported-side-cannot-prove-detour-check",
+      "input": {
+        "relations": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b",
+            "via": [
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ]
+            ],
+            "points": [
+              [
+                20,
+                60
+              ],
+              [
+                40,
+                60
+              ],
+              [
+                40,
+                360
+              ],
+              [
+                260,
+                360
+              ],
+              [
+                260,
+                60
+              ],
+              [
+                280,
+                60
+              ]
+            ],
+            "fromSide": "diagonal"
+          }
+        ],
+        "obstacles": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "contentRects": [
+          {
+            "x": 0,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          },
+          {
+            "x": 280,
+            "y": 40,
+            "width": 20,
+            "height": 40
+          }
+        ],
+        "endpointIds": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "diagramType": "architecture",
+        "relationCollection": "connections",
+        "profile": "showcase"
+      },
+      "expected": {
+        "messages": [],
+        "diagnostics": []
+      }
+    }
+  ]
+}

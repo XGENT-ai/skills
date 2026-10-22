@@ -1,0 +1,7562 @@
+{
+  "referenceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "legacyRevision": "4a65a1525f9ed03c775a0e18935901e1edbb773f",
+  "cases": [
+    {
+      "name": "free",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "client",
+            "type": "backend",
+            "label": "client",
+            "pos": [
+              60,
+              100
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "service",
+            "type": "backend",
+            "label": "service",
+            "pos": [
+              360,
+              100
+            ],
+            "size": [
+              120,
+              60
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "request",
+            "from": "client",
+            "to": "service",
+            "label": "request",
+            "variant": "emphasis"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            520,
+            228
+          ],
+          "components": [
+            {
+              "id": "client",
+              "type": "backend",
+              "label": "client",
+              "x": 60.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                60,
+                100
+              ]
+            },
+            {
+              "id": "service",
+              "type": "backend",
+              "label": "service",
+              "x": 360.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                360,
+                100
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "client",
+              "to": "service",
+              "label": "request",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  180.0,
+                  130.0
+                ],
+                [
+                  360.0,
+                  130.0
+                ]
+              ],
+              "labelAt": [
+                270.0,
+                120.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            520,
+            228
+          ],
+          "components": [
+            {
+              "id": "client",
+              "type": "backend",
+              "label": "client",
+              "x": 60.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                60,
+                100
+              ]
+            },
+            {
+              "id": "service",
+              "type": "backend",
+              "label": "service",
+              "x": 360.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                360,
+                100
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "client",
+              "to": "service",
+              "label": "request",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  180.0,
+                  130.0
+                ],
+                [
+                  360.0,
+                  130.0
+                ]
+              ],
+              "labelAt": [
+                270.0,
+                120.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "grid",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "a",
+            "type": "frontend",
+            "label": "UI",
+            "row": 0,
+            "col": 0
+          },
+          {
+            "id": "b",
+            "type": "backend",
+            "label": "API",
+            "row": 0,
+            "col": 2
+          },
+          {
+            "id": "c",
+            "type": "database",
+            "label": "Store",
+            "row": 1,
+            "col": 2,
+            "pos": [
+              470,
+              300
+            ],
+            "size": [
+              150,
+              70
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "a",
+            "to": "b"
+          },
+          {
+            "from": "b",
+            "to": "c",
+            "fromSide": "bottom",
+            "toSide": "top"
+          }
+        ],
+        "layout": {
+          "mode": "grid",
+          "origin": [
+            70,
+            100
+          ],
+          "cols": 3,
+          "gapX": 45,
+          "gapY": 60,
+          "cellW": 140,
+          "cellH": 70
+        }
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            660,
+            438
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "frontend",
+              "label": "UI",
+              "x": 70.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "row": 0,
+              "col": 0
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "API",
+              "x": 440.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "row": 0,
+              "col": 2
+            },
+            {
+              "id": "c",
+              "type": "database",
+              "label": "Store",
+              "x": 470.0,
+              "y": 300.0,
+              "width": 150.0,
+              "height": 70.0,
+              "row": 1,
+              "col": 2,
+              "pos": [
+                470,
+                300
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  190.0,
+                  130.0
+                ],
+                [
+                  440.0,
+                  130.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "b",
+              "to": "c",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  500.0,
+                  160.0
+                ],
+                [
+                  500.0,
+                  230.0
+                ],
+                [
+                  545.0,
+                  230.0
+                ],
+                [
+                  545.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            660,
+            438
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "frontend",
+              "label": "UI",
+              "x": 70.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "row": 0,
+              "col": 0
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "API",
+              "x": 440.0,
+              "y": 100.0,
+              "width": 120.0,
+              "height": 60.0,
+              "row": 0,
+              "col": 2
+            },
+            {
+              "id": "c",
+              "type": "database",
+              "label": "Store",
+              "x": 470.0,
+              "y": 300.0,
+              "width": 150.0,
+              "height": 70.0,
+              "row": 1,
+              "col": 2,
+              "pos": [
+                470,
+                300
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  190.0,
+                  130.0
+                ],
+                [
+                  440.0,
+                  130.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "b",
+              "to": "c",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  500.0,
+                  160.0
+                ],
+                [
+                  500.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "pins",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "a",
+            "type": "backend",
+            "label": "a",
+            "pos": [
+              60,
+              80
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "b",
+            "type": "backend",
+            "label": "b",
+            "pos": [
+              450,
+              250
+            ],
+            "size": [
+              120,
+              60
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "fixed",
+            "from": "a",
+            "to": "b",
+            "fromSide": "right",
+            "toSide": "top",
+            "via": [
+              [
+                240,
+                110
+              ],
+              [
+                240,
+                110
+              ],
+              [
+                510,
+                110
+              ],
+              [
+                510,
+                180
+              ]
+            ],
+            "label": "fixed route",
+            "labelAt": [
+              360,
+              94
+            ],
+            "width": 2
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            610,
+            378
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 60.0,
+              "y": 80.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                60,
+                80
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 450.0,
+              "y": 250.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                450,
+                250
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": "fixed route",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  180.0,
+                  110.0
+                ],
+                [
+                  240.0,
+                  110.0
+                ],
+                [
+                  240.0,
+                  110.0
+                ],
+                [
+                  510.0,
+                  110.0
+                ],
+                [
+                  510.0,
+                  180.0
+                ],
+                [
+                  510.0,
+                  250.0
+                ]
+              ],
+              "labelAt": [
+                360.0,
+                94.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            610,
+            378
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 60.0,
+              "y": 80.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                60,
+                80
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 450.0,
+              "y": 250.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                450,
+                250
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": "fixed route",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  180.0,
+                  110.0
+                ],
+                [
+                  240.0,
+                  110.0
+                ],
+                [
+                  240.0,
+                  110.0
+                ],
+                [
+                  510.0,
+                  110.0
+                ],
+                [
+                  510.0,
+                  180.0
+                ],
+                [
+                  510.0,
+                  250.0
+                ]
+              ],
+              "labelAt": [
+                360.0,
+                94.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "dominant-axis",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "hub",
+            "pos": [
+              300,
+              80
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "spoke",
+            "type": "backend",
+            "label": "spoke",
+            "pos": [
+              360,
+              350
+            ],
+            "size": [
+              120,
+              60
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "hub",
+            "to": "spoke"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            520,
+            478
+          ],
+          "components": [
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "hub",
+              "x": 300.0,
+              "y": 80.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                300,
+                80
+              ]
+            },
+            {
+              "id": "spoke",
+              "type": "backend",
+              "label": "spoke",
+              "x": 360.0,
+              "y": 350.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                360,
+                350
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "hub",
+              "to": "spoke",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  376.0,
+                  140.0
+                ],
+                [
+                  376.0,
+                  350.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "boundaries",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "a",
+            "type": "backend",
+            "label": "a",
+            "pos": [
+              100,
+              130
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "b",
+            "type": "backend",
+            "label": "b",
+            "pos": [
+              400,
+              130
+            ],
+            "size": [
+              120,
+              60
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "a",
+            "to": "b",
+            "label": "cross"
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Region",
+            "wraps": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "kind": "security-group",
+            "label": "Private",
+            "wraps": [
+              "a"
+            ],
+            "pad": 20
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            590,
+            278
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 100.0,
+              "y": 130.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                100,
+                130
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 400.0,
+              "y": 130.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                400,
+                130
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Region",
+              "x": 70.0,
+              "y": 100.0,
+              "width": 480.0,
+              "height": 110.0,
+              "wraps": [
+                "a",
+                "b"
+              ],
+              "titlePlate": {
+                "x": 74.0,
+                "y": 92.0,
+                "width": 42.4,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "Private",
+              "x": 80.0,
+              "y": 108.0,
+              "width": 160.0,
+              "height": 102.0,
+              "wraps": [
+                "a"
+              ],
+              "titlePlate": {
+                "x": 84.0,
+                "y": 110.0,
+                "width": 47.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": "cross",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  220.0,
+                  160.0
+                ],
+                [
+                  400.0,
+                  160.0
+                ]
+              ],
+              "labelAt": [
+                310.0,
+                150.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            590,
+            278
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 100.0,
+              "y": 130.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                100,
+                130
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 400.0,
+              "y": 130.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                400,
+                130
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Region",
+              "x": 70.0,
+              "y": 100.0,
+              "width": 480.0,
+              "height": 110.0,
+              "wraps": [
+                "a",
+                "b"
+              ],
+              "titlePlate": {
+                "x": 74.0,
+                "y": 92.0,
+                "width": 42.4,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "Private",
+              "x": 80.0,
+              "y": 108.0,
+              "width": 160.0,
+              "height": 102.0,
+              "wraps": [
+                "a"
+              ],
+              "titlePlate": {
+                "x": 84.0,
+                "y": 110.0,
+                "width": 47.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": "cross",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  220.0,
+                  160.0
+                ],
+                [
+                  400.0,
+                  160.0
+                ]
+              ],
+              "labelAt": [
+                310.0,
+                150.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reciprocal",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "runtime",
+            "type": "backend",
+            "label": "runtime",
+            "pos": [
+              40,
+              120
+            ],
+            "size": [
+              200,
+              80
+            ]
+          },
+          {
+            "id": "agents",
+            "type": "backend",
+            "label": "agents",
+            "pos": [
+              440,
+              120
+            ],
+            "size": [
+              200,
+              80
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "spawn",
+            "from": "runtime",
+            "to": "agents",
+            "label": "spawn"
+          },
+          {
+            "id": "report",
+            "from": "agents",
+            "to": "runtime",
+            "label": "report"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            680,
+            268
+          ],
+          "components": [
+            {
+              "id": "runtime",
+              "type": "backend",
+              "label": "runtime",
+              "x": 40.0,
+              "y": 120.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                40,
+                120
+              ]
+            },
+            {
+              "id": "agents",
+              "type": "backend",
+              "label": "agents",
+              "x": 440.0,
+              "y": 120.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                120
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "runtime",
+              "to": "agents",
+              "label": "spawn",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  240.0,
+                  167.0
+                ],
+                [
+                  440.0,
+                  167.0
+                ]
+              ],
+              "labelAt": [
+                340.0,
+                157.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "agents",
+              "to": "runtime",
+              "label": "report",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  440.0,
+                  153.0
+                ],
+                [
+                  240.0,
+                  153.0
+                ]
+              ],
+              "labelAt": [
+                340.0,
+                143.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            680,
+            268
+          ],
+          "components": [
+            {
+              "id": "runtime",
+              "type": "backend",
+              "label": "runtime",
+              "x": 40.0,
+              "y": 120.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                40,
+                120
+              ]
+            },
+            {
+              "id": "agents",
+              "type": "backend",
+              "label": "agents",
+              "x": 440.0,
+              "y": 120.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                120
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "runtime",
+              "to": "agents",
+              "label": "spawn",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  240.0,
+                  167.0
+                ],
+                [
+                  440.0,
+                  167.0
+                ]
+              ],
+              "labelAt": [
+                340.0,
+                157.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "agents",
+              "to": "runtime",
+              "label": "report",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  440.0,
+                  153.0
+                ],
+                [
+                  240.0,
+                  153.0
+                ]
+              ],
+              "labelAt": [
+                340.0,
+                143.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "fanout",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "hub",
+            "pos": [
+              300,
+              60
+            ],
+            "size": [
+              200,
+              80
+            ]
+          },
+          {
+            "id": "west",
+            "type": "backend",
+            "label": "west",
+            "pos": [
+              60,
+              300
+            ],
+            "size": [
+              180,
+              80
+            ]
+          },
+          {
+            "id": "middle",
+            "type": "backend",
+            "label": "middle",
+            "pos": [
+              310,
+              300
+            ],
+            "size": [
+              180,
+              80
+            ]
+          },
+          {
+            "id": "east",
+            "type": "backend",
+            "label": "east",
+            "pos": [
+              560,
+              300
+            ],
+            "size": [
+              180,
+              80
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "left",
+            "from": "hub",
+            "to": "west"
+          },
+          {
+            "id": "center",
+            "from": "hub",
+            "to": "middle"
+          },
+          {
+            "id": "right",
+            "from": "hub",
+            "to": "east"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            780,
+            448
+          ],
+          "components": [
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "hub",
+              "x": 300.0,
+              "y": 60.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                300,
+                60
+              ]
+            },
+            {
+              "id": "west",
+              "type": "backend",
+              "label": "west",
+              "x": 60.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                60,
+                300
+              ]
+            },
+            {
+              "id": "middle",
+              "type": "backend",
+              "label": "middle",
+              "x": 310.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                310,
+                300
+              ]
+            },
+            {
+              "id": "east",
+              "type": "backend",
+              "label": "east",
+              "x": 560.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                560,
+                300
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "hub",
+              "to": "west",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  300.0,
+                  100.0
+                ],
+                [
+                  270.0,
+                  100.0
+                ],
+                [
+                  270.0,
+                  340.0
+                ],
+                [
+                  240.0,
+                  340.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "hub",
+              "to": "middle",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  400.0,
+                  140.0
+                ],
+                [
+                  400.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "hub",
+              "to": "east",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  500.0,
+                  100.0
+                ],
+                [
+                  530.0,
+                  100.0
+                ],
+                [
+                  530.0,
+                  340.0
+                ],
+                [
+                  560.0,
+                  340.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            780,
+            448
+          ],
+          "components": [
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "hub",
+              "x": 300.0,
+              "y": 60.0,
+              "width": 200.0,
+              "height": 80.0,
+              "pos": [
+                300,
+                60
+              ]
+            },
+            {
+              "id": "west",
+              "type": "backend",
+              "label": "west",
+              "x": 60.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                60,
+                300
+              ]
+            },
+            {
+              "id": "middle",
+              "type": "backend",
+              "label": "middle",
+              "x": 310.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                310,
+                300
+              ]
+            },
+            {
+              "id": "east",
+              "type": "backend",
+              "label": "east",
+              "x": 560.0,
+              "y": 300.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                560,
+                300
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "hub",
+              "to": "west",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  300.0,
+                  124.0
+                ],
+                [
+                  224.0,
+                  124.0
+                ],
+                [
+                  224.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "hub",
+              "to": "middle",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  400.0,
+                  140.0
+                ],
+                [
+                  400.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "hub",
+              "to": "east",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  500.0,
+                  124.0
+                ],
+                [
+                  576.0,
+                  124.0
+                ],
+                [
+                  576.0,
+                  300.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "obstacle",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "a",
+            "type": "backend",
+            "label": "a",
+            "pos": [
+              60,
+              160
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "b",
+            "type": "backend",
+            "label": "b",
+            "pos": [
+              600,
+              160
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "block",
+            "type": "backend",
+            "label": "block",
+            "pos": [
+              280,
+              80
+            ],
+            "size": [
+              200,
+              260
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "across",
+            "from": "a",
+            "to": "b"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            760,
+            408
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 60.0,
+              "y": 160.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                60,
+                160
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 600.0,
+              "y": 160.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                600,
+                160
+              ]
+            },
+            {
+              "id": "block",
+              "type": "backend",
+              "label": "block",
+              "x": 280.0,
+              "y": 80.0,
+              "width": 200.0,
+              "height": 260.0,
+              "pos": [
+                280,
+                80
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "b",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  180.0,
+                  190.0
+                ],
+                [
+                  277.0,
+                  190.0
+                ],
+                [
+                  277.0,
+                  77.0
+                ],
+                [
+                  576.0,
+                  77.0
+                ],
+                [
+                  576.0,
+                  190.0
+                ],
+                [
+                  600.0,
+                  190.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "corner",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Architecture oracle",
+          "legend": {
+            "mode": "hidden"
+          },
+          "output": "diagram.html"
+        },
+        "components": [
+          {
+            "id": "runtime",
+            "type": "backend",
+            "label": "runtime",
+            "pos": [
+              440,
+              230
+            ],
+            "size": [
+              230,
+              80
+            ]
+          },
+          {
+            "id": "tasks",
+            "type": "backend",
+            "label": "tasks",
+            "pos": [
+              870,
+              450
+            ],
+            "size": [
+              230,
+              80
+            ]
+          },
+          {
+            "id": "tunnel",
+            "type": "backend",
+            "label": "tunnel",
+            "pos": [
+              440,
+              650
+            ],
+            "size": [
+              230,
+              80
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "watch",
+            "from": "runtime",
+            "to": "tasks",
+            "label": "watch",
+            "fromSide": "bottom",
+            "toSide": "left"
+          },
+          {
+            "id": "tunnel-link",
+            "from": "tunnel",
+            "to": "runtime",
+            "fromSide": "top",
+            "toSide": "bottom"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            1140,
+            798
+          ],
+          "components": [
+            {
+              "id": "runtime",
+              "type": "backend",
+              "label": "runtime",
+              "x": 440.0,
+              "y": 230.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                230
+              ]
+            },
+            {
+              "id": "tasks",
+              "type": "backend",
+              "label": "tasks",
+              "x": 870.0,
+              "y": 450.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                870,
+                450
+              ]
+            },
+            {
+              "id": "tunnel",
+              "type": "backend",
+              "label": "tunnel",
+              "x": 440.0,
+              "y": 650.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                650
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "runtime",
+              "to": "tasks",
+              "label": "watch",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  562.0,
+                  310.0
+                ],
+                [
+                  562.0,
+                  334.0
+                ],
+                [
+                  846.0,
+                  334.0
+                ],
+                [
+                  846.0,
+                  490.0
+                ],
+                [
+                  870.0,
+                  490.0
+                ]
+              ],
+              "labelAt": [
+                704.0,
+                324.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "tunnel",
+              "to": "runtime",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  548.0,
+                  650.0
+                ],
+                [
+                  548.0,
+                  310.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            1140,
+            798
+          ],
+          "components": [
+            {
+              "id": "runtime",
+              "type": "backend",
+              "label": "runtime",
+              "x": 440.0,
+              "y": 230.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                230
+              ]
+            },
+            {
+              "id": "tasks",
+              "type": "backend",
+              "label": "tasks",
+              "x": 870.0,
+              "y": 450.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                870,
+                450
+              ]
+            },
+            {
+              "id": "tunnel",
+              "type": "backend",
+              "label": "tunnel",
+              "x": 440.0,
+              "y": 650.0,
+              "width": 230.0,
+              "height": 80.0,
+              "pos": [
+                440,
+                650
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "runtime",
+              "to": "tasks",
+              "label": "watch",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  562.0,
+                  310.0
+                ],
+                [
+                  562.0,
+                  490.0
+                ],
+                [
+                  870.0,
+                  490.0
+                ]
+              ],
+              "labelAt": [
+                716.0,
+                480.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "tunnel",
+              "to": "runtime",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  548.0,
+                  650.0
+                ],
+                [
+                  548.0,
+                  310.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "web-app.architecture",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Sample Web App",
+          "output": "web-app-rendered.html",
+          "quality_profile": "showcase",
+          "views": [
+            {
+              "id": "request-path",
+              "label": "Primary request path",
+              "focus": [
+                "users",
+                "cdn",
+                "lb",
+                "api",
+                "db"
+              ],
+              "note": "Follow the primary customer request from the edge to durable state."
+            },
+            {
+              "id": "identity-and-cache",
+              "label": "Identity and cache",
+              "focus": [
+                "auth",
+                "api",
+                "cache"
+              ],
+              "note": "Isolate authentication and the read-through cache beside the request path."
+            },
+            {
+              "id": "async-work",
+              "label": "Static and async work",
+              "focus": [
+                "cdn",
+                "s3",
+                "api",
+                "queue",
+                "worker"
+              ],
+              "note": "See the two secondary paths without adding noise to the main request."
+            }
+          ]
+        },
+        "components": [
+          {
+            "id": "users",
+            "type": "external",
+            "label": "Users",
+            "sublabel": "Browser / Mobile",
+            "pos": [
+              40,
+              300
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "auth",
+            "type": "security",
+            "label": "Auth Provider",
+            "sublabel": "OAuth 2.0",
+            "pos": [
+              40,
+              110
+            ],
+            "size": [
+              120,
+              64
+            ],
+            "tag": "JWT + PKCE"
+          },
+          {
+            "id": "cdn",
+            "type": "cloud",
+            "label": "CloudFront",
+            "sublabel": "CDN",
+            "pos": [
+              250,
+              300
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "lb",
+            "type": "cloud",
+            "label": "Load Balancer",
+            "sublabel": "HTTPS :443",
+            "pos": [
+              460,
+              300
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "api",
+            "type": "backend",
+            "label": "API Server",
+            "sublabel": "FastAPI :8000",
+            "pos": [
+              670,
+              300
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "cache",
+            "type": "database",
+            "label": "Redis",
+            "sublabel": "cache :6379",
+            "pos": [
+              670,
+              150
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "db",
+            "type": "database",
+            "label": "PostgreSQL",
+            "sublabel": "primary :5432",
+            "pos": [
+              880,
+              300
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "s3",
+            "type": "cloud",
+            "label": "S3",
+            "sublabel": "static assets",
+            "pos": [
+              250,
+              440
+            ],
+            "size": [
+              130,
+              60
+            ],
+            "tag": "OAI protected"
+          },
+          {
+            "id": "queue",
+            "type": "messagebus",
+            "label": "SQS",
+            "sublabel": "job queue",
+            "pos": [
+              670,
+              440
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "worker",
+            "type": "backend",
+            "label": "Worker",
+            "sublabel": "async jobs",
+            "pos": [
+              880,
+              440
+            ],
+            "size": [
+              130,
+              60
+            ]
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "AWS Region: us-west-2",
+            "wraps": [
+              "cdn",
+              "lb",
+              "api",
+              "cache",
+              "db",
+              "s3",
+              "queue",
+              "worker"
+            ]
+          },
+          {
+            "kind": "security-group",
+            "label": "sg-api :443/:8000",
+            "wraps": [
+              "lb",
+              "api"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "users-to-cdn",
+            "from": "users",
+            "to": "cdn",
+            "label": "HTTPS",
+            "variant": "emphasis"
+          },
+          {
+            "id": "jwt-verification",
+            "from": "auth",
+            "to": "api",
+            "label": "verify JWT",
+            "variant": "security",
+            "fromSide": "right",
+            "toSide": "top",
+            "via": [
+              [
+                620,
+                142
+              ],
+              [
+                620,
+                246
+              ],
+              [
+                735,
+                246
+              ]
+            ]
+          },
+          {
+            "id": "cdn-to-lb",
+            "from": "cdn",
+            "to": "lb"
+          },
+          {
+            "id": "static-assets",
+            "from": "cdn",
+            "to": "s3",
+            "label": "static",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 58
+          },
+          {
+            "id": "lb-to-api",
+            "from": "lb",
+            "to": "api"
+          },
+          {
+            "id": "cache-read-through",
+            "from": "api",
+            "to": "cache",
+            "label": "read-through",
+            "fromSide": "top",
+            "toSide": "bottom",
+            "labelDy": -68
+          },
+          {
+            "id": "api-sql",
+            "from": "api",
+            "to": "db",
+            "label": "SQL"
+          },
+          {
+            "id": "enqueue-job",
+            "from": "api",
+            "to": "queue",
+            "label": "enqueue",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 58
+          },
+          {
+            "id": "queue-to-worker",
+            "from": "queue",
+            "to": "worker"
+          }
+        ],
+        "cards": [
+          {
+            "dot": "cyan",
+            "title": "Edge",
+            "items": [
+              "CloudFront CDN fronts all traffic",
+              "S3 serves static assets via OAI"
+            ]
+          },
+          {
+            "dot": "emerald",
+            "title": "Application",
+            "items": [
+              "FastAPI behind an HTTPS load balancer",
+              "Redis read-through cache",
+              "Async work drained from SQS by a worker"
+            ]
+          },
+          {
+            "dot": "rose",
+            "title": "Security",
+            "items": [
+              "OAuth 2.0 with JWT + PKCE",
+              "API + LB isolated in a security group"
+            ]
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            1080,
+            588
+          ],
+          "components": [
+            {
+              "id": "users",
+              "type": "external",
+              "label": "Users",
+              "x": 40.0,
+              "y": 300.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                40,
+                300
+              ]
+            },
+            {
+              "id": "auth",
+              "type": "security",
+              "label": "Auth Provider",
+              "x": 40.0,
+              "y": 110.0,
+              "width": 120.0,
+              "height": 64.0,
+              "pos": [
+                40,
+                110
+              ]
+            },
+            {
+              "id": "cdn",
+              "type": "cloud",
+              "label": "CloudFront",
+              "x": 250.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                250,
+                300
+              ]
+            },
+            {
+              "id": "lb",
+              "type": "cloud",
+              "label": "Load Balancer",
+              "x": 460.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                460,
+                300
+              ]
+            },
+            {
+              "id": "api",
+              "type": "backend",
+              "label": "API Server",
+              "x": 670.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                300
+              ]
+            },
+            {
+              "id": "cache",
+              "type": "database",
+              "label": "Redis",
+              "x": 670.0,
+              "y": 150.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                150
+              ]
+            },
+            {
+              "id": "db",
+              "type": "database",
+              "label": "PostgreSQL",
+              "x": 880.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                880,
+                300
+              ]
+            },
+            {
+              "id": "s3",
+              "type": "cloud",
+              "label": "S3",
+              "x": 250.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                250,
+                440
+              ]
+            },
+            {
+              "id": "queue",
+              "type": "messagebus",
+              "label": "SQS",
+              "x": 670.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                440
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Worker",
+              "x": 880.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                880,
+                440
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "AWS Region: us-west-2",
+              "x": 220.0,
+              "y": 120.0,
+              "width": 820.0,
+              "height": 400.0,
+              "wraps": [
+                "cdn",
+                "lb",
+                "api",
+                "cache",
+                "db",
+                "s3",
+                "queue",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 224.0,
+                "y": 130.0,
+                "width": 123.39999999999999,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "sg-api :443/:8000",
+              "x": 430.0,
+              "y": 270.0,
+              "width": 400.0,
+              "height": 110.0,
+              "wraps": [
+                "lb",
+                "api"
+              ],
+              "titlePlate": {
+                "x": 434.0,
+                "y": 280.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "users",
+              "to": "cdn",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  330.0
+                ],
+                [
+                  250.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                205.0,
+                320.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "auth",
+              "to": "api",
+              "label": "verify JWT",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  142.0
+                ],
+                [
+                  620.0,
+                  142.0
+                ],
+                [
+                  620.0,
+                  246.0
+                ],
+                [
+                  735.0,
+                  246.0
+                ],
+                [
+                  735.0,
+                  300.0
+                ]
+              ],
+              "labelAt": [
+                620.0,
+                184.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "cdn",
+              "to": "lb",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  380.0,
+                  330.0
+                ],
+                [
+                  460.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "cdn",
+              "to": "s3",
+              "label": "static",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  315.0,
+                  360.0
+                ],
+                [
+                  315.0,
+                  440.0
+                ]
+              ],
+              "labelAt": [
+                315.0,
+                408.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "lb",
+              "to": "api",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  590.0,
+                  330.0
+                ],
+                [
+                  670.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api",
+              "to": "cache",
+              "label": "read-through",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  735.0,
+                  300.0
+                ],
+                [
+                  735.0,
+                  210.0
+                ]
+              ],
+              "labelAt": [
+                735.0,
+                222.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api",
+              "to": "db",
+              "label": "SQL",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  800.0,
+                  330.0
+                ],
+                [
+                  880.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                840.0,
+                320.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api",
+              "to": "queue",
+              "label": "enqueue",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  735.0,
+                  360.0
+                ],
+                [
+                  735.0,
+                  440.0
+                ]
+              ],
+              "labelAt": [
+                735.0,
+                408.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "queue",
+              "to": "worker",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  800.0,
+                  470.0
+                ],
+                [
+                  880.0,
+                  470.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            1080,
+            588
+          ],
+          "components": [
+            {
+              "id": "users",
+              "type": "external",
+              "label": "Users",
+              "x": 40.0,
+              "y": 300.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                40,
+                300
+              ]
+            },
+            {
+              "id": "auth",
+              "type": "security",
+              "label": "Auth Provider",
+              "x": 40.0,
+              "y": 110.0,
+              "width": 120.0,
+              "height": 64.0,
+              "pos": [
+                40,
+                110
+              ]
+            },
+            {
+              "id": "cdn",
+              "type": "cloud",
+              "label": "CloudFront",
+              "x": 250.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                250,
+                300
+              ]
+            },
+            {
+              "id": "lb",
+              "type": "cloud",
+              "label": "Load Balancer",
+              "x": 460.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                460,
+                300
+              ]
+            },
+            {
+              "id": "api",
+              "type": "backend",
+              "label": "API Server",
+              "x": 670.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                300
+              ]
+            },
+            {
+              "id": "cache",
+              "type": "database",
+              "label": "Redis",
+              "x": 670.0,
+              "y": 150.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                150
+              ]
+            },
+            {
+              "id": "db",
+              "type": "database",
+              "label": "PostgreSQL",
+              "x": 880.0,
+              "y": 300.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                880,
+                300
+              ]
+            },
+            {
+              "id": "s3",
+              "type": "cloud",
+              "label": "S3",
+              "x": 250.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                250,
+                440
+              ]
+            },
+            {
+              "id": "queue",
+              "type": "messagebus",
+              "label": "SQS",
+              "x": 670.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                670,
+                440
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Worker",
+              "x": 880.0,
+              "y": 440.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                880,
+                440
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "AWS Region: us-west-2",
+              "x": 220.0,
+              "y": 120.0,
+              "width": 820.0,
+              "height": 400.0,
+              "wraps": [
+                "cdn",
+                "lb",
+                "api",
+                "cache",
+                "db",
+                "s3",
+                "queue",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 628.0,
+                "y": 130.0,
+                "width": 123.39999999999999,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "sg-api :443/:8000",
+              "x": 430.0,
+              "y": 270.0,
+              "width": 400.0,
+              "height": 110.0,
+              "wraps": [
+                "lb",
+                "api"
+              ],
+              "titlePlate": {
+                "x": 434.0,
+                "y": 280.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "users",
+              "to": "cdn",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  330.0
+                ],
+                [
+                  250.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                205.0,
+                320.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "auth",
+              "to": "api",
+              "label": "verify JWT",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  142.0
+                ],
+                [
+                  620.0,
+                  142.0
+                ],
+                [
+                  620.0,
+                  246.0
+                ],
+                [
+                  735.0,
+                  246.0
+                ],
+                [
+                  735.0,
+                  300.0
+                ]
+              ],
+              "labelAt": [
+                620.0,
+                184.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "cdn",
+              "to": "lb",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  380.0,
+                  330.0
+                ],
+                [
+                  460.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "cdn",
+              "to": "s3",
+              "label": "static",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  315.0,
+                  360.0
+                ],
+                [
+                  315.0,
+                  440.0
+                ]
+              ],
+              "labelAt": [
+                315.0,
+                408.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "lb",
+              "to": "api",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  590.0,
+                  330.0
+                ],
+                [
+                  670.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "api",
+              "to": "cache",
+              "label": "read-through",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  735.0,
+                  300.0
+                ],
+                [
+                  735.0,
+                  210.0
+                ]
+              ],
+              "labelAt": [
+                735.0,
+                222.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "api",
+              "to": "db",
+              "label": "SQL",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  800.0,
+                  330.0
+                ],
+                [
+                  880.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                840.0,
+                320.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "api",
+              "to": "queue",
+              "label": "enqueue",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  735.0,
+                  360.0
+                ],
+                [
+                  735.0,
+                  440.0
+                ]
+              ],
+              "labelAt": [
+                735.0,
+                408.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "queue",
+              "to": "worker",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  800.0,
+                  470.0
+                ],
+                [
+                  880.0,
+                  470.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "production-deployment.architecture",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Production Deployment Ownership",
+          "output": "examples/production-deployment.html",
+          "visual_preset": "blueprint",
+          "animation": "trace",
+          "quality_profile": "showcase",
+          "engineering_profile": "deployment-ownership",
+          "views": [
+            {
+              "id": "request-boundary",
+              "label": "Request crosses the edge",
+              "focus": [
+                "clients",
+                "edge",
+                "gateway",
+                "api_a",
+                "api_b"
+              ],
+              "note": "Follow public traffic into the private application network."
+            },
+            {
+              "id": "state-ownership",
+              "label": "State and ownership",
+              "focus": [
+                "api_a",
+                "api_b",
+                "redis",
+                "postgres",
+                "replica"
+              ],
+              "note": "Separate stateless platform workloads from data-team-owned state."
+            },
+            {
+              "id": "async-operations",
+              "label": "Async and operations",
+              "focus": [
+                "api_b",
+                "events",
+                "worker",
+                "audit",
+                "observability"
+              ],
+              "note": "See the asynchronous work and the evidence it emits."
+            }
+          ]
+        },
+        "components": [
+          {
+            "id": "clients",
+            "type": "external",
+            "label": "Customers",
+            "sublabel": "web + mobile",
+            "pos": [
+              38,
+              300
+            ],
+            "size": [
+              122,
+              60
+            ]
+          },
+          {
+            "id": "edge",
+            "type": "cloud",
+            "label": "Global Edge",
+            "sublabel": "CDN + WAF",
+            "pos": [
+              230,
+              300
+            ],
+            "size": [
+              126,
+              60
+            ],
+            "tag": "edge team"
+          },
+          {
+            "id": "gateway",
+            "type": "security",
+            "label": "API Gateway",
+            "sublabel": "public :443",
+            "pos": [
+              430,
+              300
+            ],
+            "size": [
+              128,
+              60
+            ],
+            "tag": "platform"
+          },
+          {
+            "id": "api_a",
+            "type": "backend",
+            "label": "API Pods / AZ-a",
+            "sublabel": "private subnet",
+            "pos": [
+              630,
+              195
+            ],
+            "size": [
+              136,
+              62
+            ],
+            "tag": "app team"
+          },
+          {
+            "id": "api_b",
+            "type": "backend",
+            "label": "API Pods / AZ-b",
+            "sublabel": "private subnet",
+            "pos": [
+              630,
+              405
+            ],
+            "size": [
+              136,
+              62
+            ],
+            "tag": "app team"
+          },
+          {
+            "id": "redis",
+            "type": "database",
+            "label": "Redis",
+            "sublabel": "multi-AZ cache",
+            "pos": [
+              840,
+              195
+            ],
+            "size": [
+              126,
+              62
+            ],
+            "tag": "platform"
+          },
+          {
+            "id": "postgres",
+            "type": "database",
+            "label": "PostgreSQL",
+            "sublabel": "primary / encrypted",
+            "pos": [
+              840,
+              405
+            ],
+            "size": [
+              126,
+              62
+            ],
+            "tag": "data team"
+          },
+          {
+            "id": "events",
+            "type": "messagebus",
+            "label": "Event Bus",
+            "sublabel": "orders.v1",
+            "pos": [
+              1040,
+              300
+            ],
+            "size": [
+              126,
+              60
+            ],
+            "tag": "platform"
+          },
+          {
+            "id": "worker",
+            "type": "backend",
+            "label": "Workers",
+            "sublabel": "private workload",
+            "pos": [
+              1190,
+              300
+            ],
+            "size": [
+              126,
+              60
+            ],
+            "tag": "app team"
+          },
+          {
+            "id": "replica",
+            "type": "database",
+            "label": "DR Replica",
+            "sublabel": "eu-west-1",
+            "pos": [
+              1040,
+              578
+            ],
+            "size": [
+              126,
+              62
+            ],
+            "tag": "data team"
+          },
+          {
+            "id": "audit",
+            "type": "cloud",
+            "label": "Audit Archive",
+            "sublabel": "immutable objects",
+            "pos": [
+              1190,
+              450
+            ],
+            "size": [
+              126,
+              62
+            ],
+            "tag": "security"
+          },
+          {
+            "id": "observability",
+            "type": "external",
+            "label": "Observability",
+            "sublabel": "metrics + traces",
+            "pos": [
+              1190,
+              85
+            ],
+            "size": [
+              126,
+              62
+            ],
+            "tag": "SRE"
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "AWS us-east-1 / production",
+            "wraps": [
+              "edge",
+              "gateway",
+              "api_a",
+              "api_b",
+              "redis",
+              "postgres",
+              "events",
+              "worker",
+              "audit"
+            ],
+            "pad": 20
+          },
+          {
+            "kind": "security-group",
+            "label": "private application network",
+            "wraps": [
+              "api_a",
+              "api_b",
+              "redis",
+              "postgres",
+              "events",
+              "worker"
+            ],
+            "pad": 14
+          },
+          {
+            "kind": "region",
+            "label": "AWS eu-west-1 / disaster recovery",
+            "wraps": [
+              "replica"
+            ]
+          },
+          {
+            "kind": "security-group",
+            "label": "DR private subnet",
+            "wraps": [
+              "replica"
+            ],
+            "pad": 14
+          }
+        ],
+        "connections": [
+          {
+            "from": "clients",
+            "to": "edge",
+            "label": "HTTPS",
+            "variant": "emphasis"
+          },
+          {
+            "from": "edge",
+            "to": "gateway",
+            "label": "mTLS",
+            "variant": "security"
+          },
+          {
+            "from": "gateway",
+            "to": "api_a",
+            "label": "VPC route",
+            "variant": "emphasis",
+            "route": "orthogonal-h",
+            "labelAt": [
+              594,
+              275
+            ]
+          },
+          {
+            "from": "gateway",
+            "to": "api_b",
+            "label": "VPC route",
+            "variant": "emphasis",
+            "route": "orthogonal-h",
+            "labelAt": [
+              594,
+              385
+            ]
+          },
+          {
+            "from": "api_a",
+            "to": "redis",
+            "label": "cache",
+            "route": "straight"
+          },
+          {
+            "from": "api_b",
+            "to": "postgres",
+            "label": "SQL",
+            "route": "straight"
+          },
+          {
+            "from": "api_a",
+            "to": "events",
+            "label": "publish",
+            "variant": "dashed",
+            "fromSide": "top",
+            "toSide": "top",
+            "via": [
+              [
+                698,
+                170
+              ],
+              [
+                1103,
+                170
+              ]
+            ]
+          },
+          {
+            "from": "api_b",
+            "to": "events",
+            "variant": "dashed",
+            "fromSide": "top",
+            "toSide": "bottom",
+            "via": [
+              [
+                698,
+                380
+              ],
+              [
+                1103,
+                380
+              ]
+            ]
+          },
+          {
+            "from": "events",
+            "to": "worker",
+            "variant": "emphasis"
+          },
+          {
+            "from": "postgres",
+            "to": "replica",
+            "label": "cross-region WAL",
+            "variant": "security",
+            "route": "orthogonal-v",
+            "labelAt": [
+              1003,
+              529
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "audit",
+            "label": "evidence",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 58
+          },
+          {
+            "from": "worker",
+            "to": "observability",
+            "label": "OTLP",
+            "variant": "dashed",
+            "route": "orthogonal-v"
+          }
+        ],
+        "cards": [
+          {
+            "dot": "cyan",
+            "title": "Runtime Ownership",
+            "items": [
+              "Platform owns the edge, gateway, cache, and event bus",
+              "Application teams own API pods and workers",
+              "Data owns primary and disaster-recovery state"
+            ]
+          },
+          {
+            "dot": "rose",
+            "title": "Named Crossings",
+            "items": [
+              "Public HTTPS terminates at the managed edge",
+              "mTLS crosses into the application network",
+              "Cross-region WAL is explicit and encrypted"
+            ]
+          },
+          {
+            "dot": "emerald",
+            "title": "Operational Evidence",
+            "items": [
+              "Workers emit traces to SRE-owned observability",
+              "Audit evidence lands in immutable storage",
+              "Unknown placement should remain marked, never invented"
+            ]
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            1376,
+            728
+          ],
+          "components": [
+            {
+              "id": "clients",
+              "type": "external",
+              "label": "Customers",
+              "x": 38.0,
+              "y": 300.0,
+              "width": 122.0,
+              "height": 60.0,
+              "pos": [
+                38,
+                300
+              ]
+            },
+            {
+              "id": "edge",
+              "type": "cloud",
+              "label": "Global Edge",
+              "x": 230.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                230,
+                300
+              ]
+            },
+            {
+              "id": "gateway",
+              "type": "security",
+              "label": "API Gateway",
+              "x": 430.0,
+              "y": 300.0,
+              "width": 128.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                300
+              ]
+            },
+            {
+              "id": "api_a",
+              "type": "backend",
+              "label": "API Pods / AZ-a",
+              "x": 630.0,
+              "y": 195.0,
+              "width": 136.0,
+              "height": 62.0,
+              "pos": [
+                630,
+                195
+              ]
+            },
+            {
+              "id": "api_b",
+              "type": "backend",
+              "label": "API Pods / AZ-b",
+              "x": 630.0,
+              "y": 405.0,
+              "width": 136.0,
+              "height": 62.0,
+              "pos": [
+                630,
+                405
+              ]
+            },
+            {
+              "id": "redis",
+              "type": "database",
+              "label": "Redis",
+              "x": 840.0,
+              "y": 195.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                840,
+                195
+              ]
+            },
+            {
+              "id": "postgres",
+              "type": "database",
+              "label": "PostgreSQL",
+              "x": 840.0,
+              "y": 405.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                840,
+                405
+              ]
+            },
+            {
+              "id": "events",
+              "type": "messagebus",
+              "label": "Event Bus",
+              "x": 1040.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                1040,
+                300
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Workers",
+              "x": 1190.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                1190,
+                300
+              ]
+            },
+            {
+              "id": "replica",
+              "type": "database",
+              "label": "DR Replica",
+              "x": 1040.0,
+              "y": 578.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1040,
+                578
+              ]
+            },
+            {
+              "id": "audit",
+              "type": "cloud",
+              "label": "Audit Archive",
+              "x": 1190.0,
+              "y": 450.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1190,
+                450
+              ]
+            },
+            {
+              "id": "observability",
+              "type": "external",
+              "label": "Observability",
+              "x": 1190.0,
+              "y": 85.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1190,
+                85
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "AWS us-east-1 / production",
+              "x": 210.0,
+              "y": 171.0,
+              "width": 1126.0,
+              "height": 361.0,
+              "wraps": [
+                "edge",
+                "gateway",
+                "api_a",
+                "api_b",
+                "redis",
+                "postgres",
+                "events",
+                "worker",
+                "audit"
+              ],
+              "titlePlate": {
+                "x": 214.0,
+                "y": 175.0,
+                "width": 150.4,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "private application network",
+              "x": 616.0,
+              "y": 171.0,
+              "width": 714.0,
+              "height": 316.0,
+              "wraps": [
+                "api_a",
+                "api_b",
+                "redis",
+                "postgres",
+                "events",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 620.0,
+                "y": 175.0,
+                "width": 155.79999999999998,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "region",
+              "label": "AWS eu-west-1 / disaster recovery",
+              "x": 1006.1135384870968,
+              "y": 536.0,
+              "width": 193.77292302580642,
+              "height": 124.0,
+              "wraps": [
+                "replica"
+              ],
+              "titlePlate": {
+                "x": 1010.1135384870968,
+                "y": 540.0,
+                "width": 185.77292302580642,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "DR private subnet",
+              "x": 1026.0,
+              "y": 554.0,
+              "width": 154.0,
+              "height": 106.0,
+              "wraps": [
+                "replica"
+              ],
+              "titlePlate": {
+                "x": 1030.0,
+                "y": 558.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "clients",
+              "to": "edge",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  330.0
+                ],
+                [
+                  230.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                195.0,
+                320.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "edge",
+              "to": "gateway",
+              "label": "mTLS",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  356.0,
+                  330.0
+                ],
+                [
+                  430.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                393.0,
+                320.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "gateway",
+              "to": "api_a",
+              "label": "VPC route",
+              "variant": "emphasis",
+              "route": "orthogonal-h",
+              "points": [
+                [
+                  558.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  226.0
+                ],
+                [
+                  630.0,
+                  226.0
+                ]
+              ],
+              "labelAt": [
+                594.0,
+                275.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "gateway",
+              "to": "api_b",
+              "label": "VPC route",
+              "variant": "emphasis",
+              "route": "orthogonal-h",
+              "points": [
+                [
+                  558.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  436.0
+                ],
+                [
+                  630.0,
+                  436.0
+                ]
+              ],
+              "labelAt": [
+                594.0,
+                385.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_a",
+              "to": "redis",
+              "label": "cache",
+              "variant": "default",
+              "route": "straight",
+              "points": [
+                [
+                  766.0,
+                  226.0
+                ],
+                [
+                  840.0,
+                  226.0
+                ]
+              ],
+              "labelAt": [
+                803.0,
+                216.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_b",
+              "to": "postgres",
+              "label": "SQL",
+              "variant": "default",
+              "route": "straight",
+              "points": [
+                [
+                  766.0,
+                  436.0
+                ],
+                [
+                  840.0,
+                  436.0
+                ]
+              ],
+              "labelAt": [
+                803.0,
+                426.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_a",
+              "to": "events",
+              "label": "publish",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  698.0,
+                  195.0
+                ],
+                [
+                  698.0,
+                  170.0
+                ],
+                [
+                  1103.0,
+                  170.0
+                ],
+                [
+                  1103.0,
+                  300.0
+                ]
+              ],
+              "labelAt": [
+                900.5,
+                160.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_b",
+              "to": "events",
+              "label": null,
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  698.0,
+                  405.0
+                ],
+                [
+                  698.0,
+                  380.0
+                ],
+                [
+                  1103.0,
+                  380.0
+                ],
+                [
+                  1103.0,
+                  360.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "events",
+              "to": "worker",
+              "label": null,
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  1166.0,
+                  330.0
+                ],
+                [
+                  1190.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "postgres",
+              "to": "replica",
+              "label": "cross-region WAL",
+              "variant": "security",
+              "route": "orthogonal-v",
+              "points": [
+                [
+                  966.0,
+                  436.0
+                ],
+                [
+                  966.0,
+                  522.5
+                ],
+                [
+                  1040.0,
+                  522.5
+                ],
+                [
+                  1040.0,
+                  609.0
+                ]
+              ],
+              "labelAt": [
+                1003.0,
+                529.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "worker",
+              "to": "audit",
+              "label": "evidence",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  1253.0,
+                  360.0
+                ],
+                [
+                  1253.0,
+                  450.0
+                ]
+              ],
+              "labelAt": [
+                1253.0,
+                408.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "worker",
+              "to": "observability",
+              "label": "OTLP",
+              "variant": "dashed",
+              "route": "orthogonal-v",
+              "points": [
+                [
+                  1253.0,
+                  300.0
+                ],
+                [
+                  1253.0,
+                  223.5
+                ],
+                [
+                  1253.0,
+                  223.5
+                ],
+                [
+                  1253.0,
+                  147.0
+                ]
+              ],
+              "labelAt": [
+                1253.0,
+                213.5
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            1376,
+            728
+          ],
+          "components": [
+            {
+              "id": "clients",
+              "type": "external",
+              "label": "Customers",
+              "x": 38.0,
+              "y": 300.0,
+              "width": 122.0,
+              "height": 60.0,
+              "pos": [
+                38,
+                300
+              ]
+            },
+            {
+              "id": "edge",
+              "type": "cloud",
+              "label": "Global Edge",
+              "x": 230.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                230,
+                300
+              ]
+            },
+            {
+              "id": "gateway",
+              "type": "security",
+              "label": "API Gateway",
+              "x": 430.0,
+              "y": 300.0,
+              "width": 128.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                300
+              ]
+            },
+            {
+              "id": "api_a",
+              "type": "backend",
+              "label": "API Pods / AZ-a",
+              "x": 630.0,
+              "y": 195.0,
+              "width": 136.0,
+              "height": 62.0,
+              "pos": [
+                630,
+                195
+              ]
+            },
+            {
+              "id": "api_b",
+              "type": "backend",
+              "label": "API Pods / AZ-b",
+              "x": 630.0,
+              "y": 405.0,
+              "width": 136.0,
+              "height": 62.0,
+              "pos": [
+                630,
+                405
+              ]
+            },
+            {
+              "id": "redis",
+              "type": "database",
+              "label": "Redis",
+              "x": 840.0,
+              "y": 195.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                840,
+                195
+              ]
+            },
+            {
+              "id": "postgres",
+              "type": "database",
+              "label": "PostgreSQL",
+              "x": 840.0,
+              "y": 405.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                840,
+                405
+              ]
+            },
+            {
+              "id": "events",
+              "type": "messagebus",
+              "label": "Event Bus",
+              "x": 1040.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                1040,
+                300
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Workers",
+              "x": 1190.0,
+              "y": 300.0,
+              "width": 126.0,
+              "height": 60.0,
+              "pos": [
+                1190,
+                300
+              ]
+            },
+            {
+              "id": "replica",
+              "type": "database",
+              "label": "DR Replica",
+              "x": 1040.0,
+              "y": 578.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1040,
+                578
+              ]
+            },
+            {
+              "id": "audit",
+              "type": "cloud",
+              "label": "Audit Archive",
+              "x": 1190.0,
+              "y": 450.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1190,
+                450
+              ]
+            },
+            {
+              "id": "observability",
+              "type": "external",
+              "label": "Observability",
+              "x": 1190.0,
+              "y": 85.0,
+              "width": 126.0,
+              "height": 62.0,
+              "pos": [
+                1190,
+                85
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "AWS us-east-1 / production",
+              "x": 210.0,
+              "y": 171.0,
+              "width": 1126.0,
+              "height": 361.0,
+              "wraps": [
+                "edge",
+                "gateway",
+                "api_a",
+                "api_b",
+                "redis",
+                "postgres",
+                "events",
+                "worker",
+                "audit"
+              ],
+              "titlePlate": {
+                "x": 214.0,
+                "y": 175.0,
+                "width": 150.4,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "private application network",
+              "x": 616.0,
+              "y": 171.0,
+              "width": 714.0,
+              "height": 316.0,
+              "wraps": [
+                "api_a",
+                "api_b",
+                "redis",
+                "postgres",
+                "events",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 706.0,
+                "y": 175.0,
+                "width": 155.79999999999998,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "region",
+              "label": "AWS eu-west-1 / disaster recovery",
+              "x": 1006.1135384870968,
+              "y": 536.0,
+              "width": 193.77292302580642,
+              "height": 124.0,
+              "wraps": [
+                "replica"
+              ],
+              "titlePlate": {
+                "x": 1010.1135384870968,
+                "y": 540.0,
+                "width": 185.77292302580642,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "DR private subnet",
+              "x": 1026.0,
+              "y": 554.0,
+              "width": 154.0,
+              "height": 106.0,
+              "wraps": [
+                "replica"
+              ],
+              "titlePlate": {
+                "x": 1048.0,
+                "y": 558.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "clients",
+              "to": "edge",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  330.0
+                ],
+                [
+                  230.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                195.0,
+                320.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "edge",
+              "to": "gateway",
+              "label": "mTLS",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  356.0,
+                  330.0
+                ],
+                [
+                  430.0,
+                  330.0
+                ]
+              ],
+              "labelAt": [
+                393.0,
+                320.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "gateway",
+              "to": "api_a",
+              "label": "VPC route",
+              "variant": "emphasis",
+              "route": "orthogonal-h",
+              "points": [
+                [
+                  558.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  226.0
+                ],
+                [
+                  630.0,
+                  226.0
+                ]
+              ],
+              "labelAt": [
+                594.0,
+                275.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "gateway",
+              "to": "api_b",
+              "label": "VPC route",
+              "variant": "emphasis",
+              "route": "orthogonal-h",
+              "points": [
+                [
+                  558.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  330.0
+                ],
+                [
+                  594.0,
+                  436.0
+                ],
+                [
+                  630.0,
+                  436.0
+                ]
+              ],
+              "labelAt": [
+                594.0,
+                385.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_a",
+              "to": "redis",
+              "label": "cache",
+              "variant": "default",
+              "route": "straight",
+              "points": [
+                [
+                  766.0,
+                  226.0
+                ],
+                [
+                  840.0,
+                  226.0
+                ]
+              ],
+              "labelAt": [
+                803.0,
+                216.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_b",
+              "to": "postgres",
+              "label": "SQL",
+              "variant": "default",
+              "route": "straight",
+              "points": [
+                [
+                  766.0,
+                  436.0
+                ],
+                [
+                  840.0,
+                  436.0
+                ]
+              ],
+              "labelAt": [
+                803.0,
+                426.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_a",
+              "to": "events",
+              "label": "publish",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  698.0,
+                  195.0
+                ],
+                [
+                  698.0,
+                  170.0
+                ],
+                [
+                  1103.0,
+                  170.0
+                ],
+                [
+                  1103.0,
+                  300.0
+                ]
+              ],
+              "labelAt": [
+                900.5,
+                160.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "api_b",
+              "to": "events",
+              "label": null,
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  698.0,
+                  405.0
+                ],
+                [
+                  698.0,
+                  380.0
+                ],
+                [
+                  1103.0,
+                  380.0
+                ],
+                [
+                  1103.0,
+                  360.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "events",
+              "to": "worker",
+              "label": null,
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  1166.0,
+                  330.0
+                ],
+                [
+                  1190.0,
+                  330.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "postgres",
+              "to": "replica",
+              "label": "cross-region WAL",
+              "variant": "security",
+              "route": "orthogonal-v",
+              "points": [
+                [
+                  966.0,
+                  436.0
+                ],
+                [
+                  966.0,
+                  522.5
+                ],
+                [
+                  1040.0,
+                  522.5
+                ],
+                [
+                  1040.0,
+                  609.0
+                ]
+              ],
+              "labelAt": [
+                1003.0,
+                529.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "worker",
+              "to": "audit",
+              "label": "evidence",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  1253.0,
+                  360.0
+                ],
+                [
+                  1253.0,
+                  450.0
+                ]
+              ],
+              "labelAt": [
+                1253.0,
+                408.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "worker",
+              "to": "observability",
+              "label": "OTLP",
+              "variant": "dashed",
+              "route": "orthogonal-v",
+              "points": [
+                [
+                  1253.0,
+                  300.0
+                ],
+                [
+                  1253.0,
+                  223.5
+                ],
+                [
+                  1253.0,
+                  223.5
+                ],
+                [
+                  1253.0,
+                  147.0
+                ]
+              ],
+              "labelAt": [
+                1253.0,
+                213.5
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "checkout-platform.base.architecture",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Checkout Platform — Baseline",
+          "visual_preset": "signal-flow"
+        },
+        "components": [
+          {
+            "id": "buyers",
+            "type": "external",
+            "label": "Buyers",
+            "sublabel": "Web + mobile",
+            "pos": [
+              40,
+              250
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "edge",
+            "type": "cloud",
+            "label": "Edge Gateway",
+            "sublabel": "TLS + routing",
+            "pos": [
+              220,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "checkout",
+            "type": "backend",
+            "label": "Checkout API",
+            "sublabel": "v1 service",
+            "pos": [
+              430,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "cache",
+            "type": "database",
+            "label": "Session Cache",
+            "sublabel": "Redis",
+            "pos": [
+              430,
+              100
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "orders",
+            "type": "database",
+            "label": "Orders",
+            "sublabel": "PostgreSQL",
+            "pos": [
+              640,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "queue",
+            "type": "messagebus",
+            "label": "Order Events",
+            "sublabel": "durable queue",
+            "pos": [
+              430,
+              400
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "worker",
+            "type": "backend",
+            "label": "Fulfilment",
+            "sublabel": "async worker",
+            "pos": [
+              640,
+              400
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "payments",
+            "type": "external",
+            "label": "Payment Rail",
+            "sublabel": "external",
+            "pos": [
+              850,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Production region",
+            "wraps": [
+              "edge",
+              "checkout",
+              "cache",
+              "orders",
+              "queue",
+              "worker"
+            ]
+          },
+          {
+            "kind": "security-group",
+            "label": "Checkout trust zone",
+            "wraps": [
+              "checkout",
+              "orders"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "buyer-request",
+            "from": "buyers",
+            "to": "edge",
+            "label": "HTTPS",
+            "variant": "emphasis"
+          },
+          {
+            "id": "edge-checkout",
+            "from": "edge",
+            "to": "checkout"
+          },
+          {
+            "id": "session-read",
+            "from": "checkout",
+            "to": "cache",
+            "label": "session",
+            "fromSide": "top",
+            "toSide": "bottom",
+            "labelDy": -66
+          },
+          {
+            "id": "persist-order",
+            "from": "checkout",
+            "to": "orders",
+            "label": "SQL"
+          },
+          {
+            "id": "publish-order",
+            "from": "checkout",
+            "to": "queue",
+            "label": "accepted",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 66
+          },
+          {
+            "id": "consume-order",
+            "from": "queue",
+            "to": "worker"
+          },
+          {
+            "id": "authorize-payment",
+            "from": "orders",
+            "to": "payments",
+            "label": "authorize",
+            "variant": "security"
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            1020,
+            548
+          ],
+          "components": [
+            {
+              "id": "buyers",
+              "type": "external",
+              "label": "Buyers",
+              "x": 40.0,
+              "y": 250.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                40,
+                250
+              ]
+            },
+            {
+              "id": "edge",
+              "type": "cloud",
+              "label": "Edge Gateway",
+              "x": 220.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                220,
+                250
+              ]
+            },
+            {
+              "id": "checkout",
+              "type": "backend",
+              "label": "Checkout API",
+              "x": 430.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                250
+              ]
+            },
+            {
+              "id": "cache",
+              "type": "database",
+              "label": "Session Cache",
+              "x": 430.0,
+              "y": 100.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                100
+              ]
+            },
+            {
+              "id": "orders",
+              "type": "database",
+              "label": "Orders",
+              "x": 640.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                640,
+                250
+              ]
+            },
+            {
+              "id": "queue",
+              "type": "messagebus",
+              "label": "Order Events",
+              "x": 430.0,
+              "y": 400.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                400
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Fulfilment",
+              "x": 640.0,
+              "y": 400.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                640,
+                400
+              ]
+            },
+            {
+              "id": "payments",
+              "type": "external",
+              "label": "Payment Rail",
+              "x": 850.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                850,
+                250
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Production region",
+              "x": 190.0,
+              "y": 70.0,
+              "width": 610.0,
+              "height": 410.0,
+              "wraps": [
+                "edge",
+                "checkout",
+                "cache",
+                "orders",
+                "queue",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 194.0,
+                "y": 80.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "Checkout trust zone",
+              "x": 400.0,
+              "y": 220.0,
+              "width": 400.0,
+              "height": 110.0,
+              "wraps": [
+                "checkout",
+                "orders"
+              ],
+              "titlePlate": {
+                "x": 404.0,
+                "y": 230.0,
+                "width": 112.6,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "buyers",
+              "to": "edge",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  280.0
+                ],
+                [
+                  220.0,
+                  280.0
+                ]
+              ],
+              "labelAt": [
+                190.0,
+                270.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "edge",
+              "to": "checkout",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  350.0,
+                  280.0
+                ],
+                [
+                  430.0,
+                  280.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "cache",
+              "label": "session",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  495.0,
+                  250.0
+                ],
+                [
+                  495.0,
+                  160.0
+                ]
+              ],
+              "labelAt": [
+                495.0,
+                174.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "orders",
+              "label": "SQL",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  560.0,
+                  280.0
+                ],
+                [
+                  640.0,
+                  280.0
+                ]
+              ],
+              "labelAt": [
+                600.0,
+                270.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "queue",
+              "label": "accepted",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  495.0,
+                  310.0
+                ],
+                [
+                  495.0,
+                  400.0
+                ]
+              ],
+              "labelAt": [
+                495.0,
+                366.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "queue",
+              "to": "worker",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  560.0,
+                  430.0
+                ],
+                [
+                  640.0,
+                  430.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "orders",
+              "to": "payments",
+              "label": "authorize",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  770.0,
+                  280.0
+                ],
+                [
+                  850.0,
+                  280.0
+                ]
+              ],
+              "labelAt": [
+                810.0,
+                270.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        }
+      }
+    },
+    {
+      "name": "checkout-platform.head.architecture",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Checkout Platform — Fraud Gate",
+          "visual_preset": "signal-flow"
+        },
+        "components": [
+          {
+            "id": "buyers",
+            "type": "external",
+            "label": "Buyers",
+            "sublabel": "Web + mobile",
+            "pos": [
+              40,
+              250
+            ],
+            "size": [
+              120,
+              60
+            ]
+          },
+          {
+            "id": "edge",
+            "type": "cloud",
+            "label": "Edge Gateway",
+            "sublabel": "TLS + routing",
+            "pos": [
+              220,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "checkout",
+            "type": "backend",
+            "label": "Checkout API",
+            "sublabel": "v2 idempotent",
+            "pos": [
+              430,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "fraud",
+            "type": "security",
+            "label": "Fraud Gate",
+            "sublabel": "policy scoring",
+            "pos": [
+              640,
+              100
+            ],
+            "size": [
+              130,
+              60
+            ],
+            "tag": "new owner"
+          },
+          {
+            "id": "orders",
+            "type": "database",
+            "label": "Orders",
+            "sublabel": "PostgreSQL",
+            "pos": [
+              640,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "queue",
+            "type": "messagebus",
+            "label": "Order Events",
+            "sublabel": "durable queue",
+            "pos": [
+              430,
+              420
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "worker",
+            "type": "backend",
+            "label": "Fulfilment",
+            "sublabel": "async worker",
+            "pos": [
+              640,
+              400
+            ],
+            "size": [
+              130,
+              60
+            ]
+          },
+          {
+            "id": "payments",
+            "type": "external",
+            "label": "Payment Rail",
+            "sublabel": "external",
+            "pos": [
+              850,
+              250
+            ],
+            "size": [
+              130,
+              60
+            ]
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Production region",
+            "wraps": [
+              "edge",
+              "checkout",
+              "fraud",
+              "orders",
+              "queue",
+              "worker"
+            ]
+          },
+          {
+            "kind": "security-group",
+            "label": "Checkout trust zone",
+            "wraps": [
+              "checkout",
+              "fraud",
+              "orders"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "buyer-request",
+            "from": "buyers",
+            "to": "edge",
+            "label": "HTTPS",
+            "variant": "emphasis"
+          },
+          {
+            "id": "edge-checkout",
+            "from": "edge",
+            "to": "checkout"
+          },
+          {
+            "id": "fraud-check",
+            "from": "checkout",
+            "to": "fraud",
+            "label": "screen",
+            "variant": "security",
+            "fromSide": "top",
+            "toSide": "bottom",
+            "labelDy": -66
+          },
+          {
+            "id": "persist-order",
+            "from": "checkout",
+            "to": "orders",
+            "label": "SQL tx"
+          },
+          {
+            "id": "publish-order",
+            "from": "checkout",
+            "to": "queue",
+            "label": "accepted",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 76
+          },
+          {
+            "id": "consume-order",
+            "from": "queue",
+            "to": "worker"
+          },
+          {
+            "id": "authorize-payment",
+            "from": "fraud",
+            "to": "payments",
+            "label": "authorize",
+            "variant": "security",
+            "fromSide": "right",
+            "toSide": "top",
+            "via": [
+              [
+                820,
+                130
+              ],
+              [
+                915,
+                130
+              ]
+            ]
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            1020,
+            568
+          ],
+          "components": [
+            {
+              "id": "buyers",
+              "type": "external",
+              "label": "Buyers",
+              "x": 40.0,
+              "y": 250.0,
+              "width": 120.0,
+              "height": 60.0,
+              "pos": [
+                40,
+                250
+              ]
+            },
+            {
+              "id": "edge",
+              "type": "cloud",
+              "label": "Edge Gateway",
+              "x": 220.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                220,
+                250
+              ]
+            },
+            {
+              "id": "checkout",
+              "type": "backend",
+              "label": "Checkout API",
+              "x": 430.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                250
+              ]
+            },
+            {
+              "id": "fraud",
+              "type": "security",
+              "label": "Fraud Gate",
+              "x": 640.0,
+              "y": 100.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                640,
+                100
+              ]
+            },
+            {
+              "id": "orders",
+              "type": "database",
+              "label": "Orders",
+              "x": 640.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                640,
+                250
+              ]
+            },
+            {
+              "id": "queue",
+              "type": "messagebus",
+              "label": "Order Events",
+              "x": 430.0,
+              "y": 420.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                430,
+                420
+              ]
+            },
+            {
+              "id": "worker",
+              "type": "backend",
+              "label": "Fulfilment",
+              "x": 640.0,
+              "y": 400.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                640,
+                400
+              ]
+            },
+            {
+              "id": "payments",
+              "type": "external",
+              "label": "Payment Rail",
+              "x": 850.0,
+              "y": 250.0,
+              "width": 130.0,
+              "height": 60.0,
+              "pos": [
+                850,
+                250
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Production region",
+              "x": 190.0,
+              "y": 70.0,
+              "width": 610.0,
+              "height": 430.0,
+              "wraps": [
+                "edge",
+                "checkout",
+                "fraud",
+                "orders",
+                "queue",
+                "worker"
+              ],
+              "titlePlate": {
+                "x": 194.0,
+                "y": 80.0,
+                "width": 101.8,
+                "height": 16.0
+              }
+            },
+            {
+              "kind": "security-group",
+              "label": "Checkout trust zone",
+              "x": 400.0,
+              "y": 70.0,
+              "width": 400.0,
+              "height": 260.0,
+              "wraps": [
+                "checkout",
+                "fraud",
+                "orders"
+              ],
+              "titlePlate": {
+                "x": 404.0,
+                "y": 80.0,
+                "width": 112.6,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "buyers",
+              "to": "edge",
+              "label": "HTTPS",
+              "variant": "emphasis",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  280.0
+                ],
+                [
+                  220.0,
+                  280.0
+                ]
+              ],
+              "labelAt": [
+                190.0,
+                270.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "edge",
+              "to": "checkout",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  350.0,
+                  280.0
+                ],
+                [
+                  430.0,
+                  280.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "fraud",
+              "label": "screen",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  495.0,
+                  250.0
+                ],
+                [
+                  495.0,
+                  205.0
+                ],
+                [
+                  705.0,
+                  205.0
+                ],
+                [
+                  705.0,
+                  160.0
+                ]
+              ],
+              "labelAt": [
+                600.0,
+                129.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "orders",
+              "label": "SQL tx",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  560.0,
+                  280.0
+                ],
+                [
+                  640.0,
+                  280.0
+                ]
+              ],
+              "labelAt": [
+                600.0,
+                270.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "checkout",
+              "to": "queue",
+              "label": "accepted",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  495.0,
+                  310.0
+                ],
+                [
+                  495.0,
+                  420.0
+                ]
+              ],
+              "labelAt": [
+                495.0,
+                376.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "queue",
+              "to": "worker",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  560.0,
+                  450.0
+                ],
+                [
+                  600.0,
+                  450.0
+                ],
+                [
+                  600.0,
+                  430.0
+                ],
+                [
+                  640.0,
+                  430.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "fraud",
+              "to": "payments",
+              "label": "authorize",
+              "variant": "security",
+              "route": "auto",
+              "points": [
+                [
+                  770.0,
+                  130.0
+                ],
+                [
+                  820.0,
+                  130.0
+                ],
+                [
+                  915.0,
+                  130.0
+                ],
+                [
+                  915.0,
+                  250.0
+                ]
+              ],
+              "labelAt": [
+                867.5,
+                120.0
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        }
+      }
+    },
+    {
+      "name": "title-rail",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Storage reader",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "writer",
+            "type": "backend",
+            "label": "Writer",
+            "pos": [
+              330,
+              40
+            ],
+            "size": [
+              210,
+              70
+            ]
+          },
+          {
+            "id": "reader",
+            "type": "frontend",
+            "label": "Reader",
+            "pos": [
+              50,
+              240
+            ],
+            "size": [
+              210,
+              70
+            ]
+          },
+          {
+            "id": "backend",
+            "type": "database",
+            "label": "Storage",
+            "pos": [
+              330,
+              240
+            ],
+            "size": [
+              210,
+              70
+            ]
+          },
+          {
+            "id": "other",
+            "type": "backend",
+            "label": "Other",
+            "pos": [
+              270,
+              130
+            ],
+            "size": [
+              100,
+              60
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "writer",
+            "to": "reader",
+            "label": "read",
+            "fromSide": "bottom",
+            "toSide": "top"
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Storage backend",
+            "wraps": [
+              "backend"
+            ],
+            "pad": 16
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            596,
+            398
+          ],
+          "components": [
+            {
+              "id": "writer",
+              "type": "backend",
+              "label": "Writer",
+              "x": 330.0,
+              "y": 40.0,
+              "width": 210.0,
+              "height": 70.0,
+              "pos": [
+                330,
+                40
+              ]
+            },
+            {
+              "id": "reader",
+              "type": "frontend",
+              "label": "Reader",
+              "x": 50.0,
+              "y": 240.0,
+              "width": 210.0,
+              "height": 70.0,
+              "pos": [
+                50,
+                240
+              ]
+            },
+            {
+              "id": "backend",
+              "type": "database",
+              "label": "Storage",
+              "x": 330.0,
+              "y": 240.0,
+              "width": 210.0,
+              "height": 70.0,
+              "pos": [
+                330,
+                240
+              ]
+            },
+            {
+              "id": "other",
+              "type": "backend",
+              "label": "Other",
+              "x": 270.0,
+              "y": 130.0,
+              "width": 100.0,
+              "height": 60.0,
+              "pos": [
+                270,
+                130
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Storage backend",
+              "x": 314.0,
+              "y": 216.0,
+              "width": 242.0,
+              "height": 114.0,
+              "wraps": [
+                "backend"
+              ],
+              "titlePlate": {
+                "x": 318.0,
+                "y": 220.0,
+                "width": 91.0,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "writer",
+              "to": "reader",
+              "label": "read",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  435.0,
+                  110.0
+                ],
+                [
+                  435.0,
+                  207.0
+                ],
+                [
+                  155.0,
+                  207.0
+                ],
+                [
+                  155.0,
+                  240.0
+                ]
+              ],
+              "labelAt": [
+                414.0,
+                161.5
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reciprocal-labels",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Payment interaction",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "service",
+            "type": "backend",
+            "label": "Payment service",
+            "pos": [
+              40,
+              40
+            ],
+            "size": [
+              200,
+              74
+            ]
+          },
+          {
+            "id": "provider",
+            "type": "external",
+            "label": "Provider",
+            "pos": [
+              320,
+              40
+            ],
+            "size": [
+              190,
+              74
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "service",
+            "to": "provider",
+            "label": "同步支付请求"
+          },
+          {
+            "from": "provider",
+            "to": "service",
+            "label": "支付回调",
+            "variant": "dashed"
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Internal",
+            "wraps": [
+              "service"
+            ],
+            "pad": 22
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            550,
+            202
+          ],
+          "components": [
+            {
+              "id": "service",
+              "type": "backend",
+              "label": "Payment service",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 200.0,
+              "height": 74.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "provider",
+              "type": "external",
+              "label": "Provider",
+              "x": 320.0,
+              "y": 40.0,
+              "width": 190.0,
+              "height": 74.0,
+              "pos": [
+                320,
+                40
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Internal",
+              "x": 18.0,
+              "y": 16.0,
+              "width": 244.0,
+              "height": 118.0,
+              "wraps": [
+                "service"
+              ],
+              "titlePlate": {
+                "x": 22.0,
+                "y": 20.0,
+                "width": 53.199999999999996,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "service",
+              "to": "provider",
+              "label": "同步支付请求",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  240.0,
+                  84.0
+                ],
+                [
+                  320.0,
+                  84.0
+                ]
+              ],
+              "labelAt": [
+                280.0,
+                104.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "provider",
+              "to": "service",
+              "label": "支付回调",
+              "variant": "dashed",
+              "route": "auto",
+              "points": [
+                [
+                  320.0,
+                  70.0
+                ],
+                [
+                  240.0,
+                  70.0
+                ]
+              ],
+              "labelAt": [
+                280.0,
+                60.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "boundary-corridor",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Storage boundary",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "producer",
+            "type": "backend",
+            "label": "Producer",
+            "pos": [
+              100,
+              80
+            ],
+            "size": [
+              180,
+              72
+            ]
+          },
+          {
+            "id": "store",
+            "type": "database",
+            "label": "Storage",
+            "pos": [
+              100,
+              280
+            ],
+            "size": [
+              180,
+              72
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "producer",
+            "to": "store",
+            "label": "Persist",
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        ],
+        "boundaries": [
+          {
+            "kind": "region",
+            "label": "Stored data",
+            "wraps": [
+              "store"
+            ],
+            "pad": 24
+          }
+        ]
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            382,
+            440
+          ],
+          "components": [
+            {
+              "id": "producer",
+              "type": "backend",
+              "label": "Producer",
+              "x": 100.0,
+              "y": 80.0,
+              "width": 180.0,
+              "height": 72.0,
+              "pos": [
+                100,
+                80
+              ]
+            },
+            {
+              "id": "store",
+              "type": "database",
+              "label": "Storage",
+              "x": 100.0,
+              "y": 280.0,
+              "width": 180.0,
+              "height": 72.0,
+              "pos": [
+                100,
+                280
+              ]
+            }
+          ],
+          "boundaries": [
+            {
+              "kind": "region",
+              "label": "Stored data",
+              "x": 76.0,
+              "y": 256.0,
+              "width": 228.0,
+              "height": 116.0,
+              "wraps": [
+                "store"
+              ],
+              "titlePlate": {
+                "x": 80.0,
+                "y": 260.0,
+                "width": 69.4,
+                "height": 16.0
+              }
+            }
+          ],
+          "connections": [
+            {
+              "from": "producer",
+              "to": "store",
+              "label": "Persist",
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  280.0,
+                  116.0
+                ],
+                [
+                  320.0,
+                  116.0
+                ],
+                [
+                  320.0,
+                  316.0
+                ],
+                [
+                  280.0,
+                  316.0
+                ]
+              ],
+              "labelAt": [
+                320.0,
+                206.0
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "final-ports",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Shared destination",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "a",
+            "type": "backend",
+            "label": "a",
+            "pos": [
+              40,
+              40
+            ],
+            "size": [
+              180,
+              68
+            ]
+          },
+          {
+            "id": "b",
+            "type": "backend",
+            "label": "b",
+            "pos": [
+              290,
+              40
+            ],
+            "size": [
+              180,
+              68
+            ]
+          },
+          {
+            "id": "c",
+            "type": "backend",
+            "label": "c",
+            "pos": [
+              800,
+              40
+            ],
+            "size": [
+              180,
+              68
+            ]
+          },
+          {
+            "id": "block",
+            "type": "backend",
+            "label": "block",
+            "pos": [
+              0,
+              400
+            ],
+            "size": [
+              180,
+              68
+            ]
+          },
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "hub",
+            "pos": [
+              40,
+              485
+            ],
+            "size": [
+              180,
+              68
+            ]
+          },
+          {
+            "id": "store",
+            "type": "backend",
+            "label": "store",
+            "pos": [
+              290,
+              485
+            ],
+            "size": [
+              180,
+              68
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "a-hub",
+            "from": "a",
+            "to": "hub"
+          },
+          {
+            "id": "b-hub",
+            "from": "b",
+            "to": "hub"
+          },
+          {
+            "id": "c-hub",
+            "from": "c",
+            "to": "hub"
+          }
+        ],
+        "boundaries": []
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": false,
+          "viewBox": null,
+          "components": null,
+          "boundaries": null,
+          "connections": null
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            1020,
+            645
+          ],
+          "components": [
+            {
+              "id": "a",
+              "type": "backend",
+              "label": "a",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "b",
+              "type": "backend",
+              "label": "b",
+              "x": 290.0,
+              "y": 40.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                290,
+                40
+              ]
+            },
+            {
+              "id": "c",
+              "type": "backend",
+              "label": "c",
+              "x": 800.0,
+              "y": 40.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                800,
+                40
+              ]
+            },
+            {
+              "id": "block",
+              "type": "backend",
+              "label": "block",
+              "x": 0.0,
+              "y": 400.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                0,
+                400
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "hub",
+              "x": 40.0,
+              "y": 485.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                485
+              ]
+            },
+            {
+              "id": "store",
+              "type": "backend",
+              "label": "store",
+              "x": 290.0,
+              "y": 485.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                290,
+                485
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "a",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  130.0,
+                  108.0
+                ],
+                [
+                  130.0,
+                  397.0
+                ],
+                [
+                  223.0,
+                  397.0
+                ],
+                [
+                  223.0,
+                  577.0
+                ],
+                [
+                  130.0,
+                  577.0
+                ],
+                [
+                  130.0,
+                  553.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "b",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  290.0,
+                  74.0
+                ],
+                [
+                  255.0,
+                  74.0
+                ],
+                [
+                  255.0,
+                  519.0
+                ],
+                [
+                  220.0,
+                  519.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "c",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  890.0,
+                  108.0
+                ],
+                [
+                  890.0,
+                  463.0
+                ],
+                [
+                  287.0,
+                  463.0
+                ],
+                [
+                  287.0,
+                  505.0
+                ],
+                [
+                  220.0,
+                  505.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wide-ports-68",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Wide incoming arrows",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "source-0",
+            "type": "backend",
+            "label": "Source 0",
+            "pos": [
+              40,
+              40
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "source-1",
+            "type": "backend",
+            "label": "Source 1",
+            "pos": [
+              40,
+              180
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "Hub",
+            "pos": [
+              600,
+              140
+            ],
+            "size": [
+              180,
+              68
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "edge-0",
+            "from": "source-0",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          },
+          {
+            "id": "edge-1",
+            "from": "source-1",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          }
+        ],
+        "boundaries": []
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            820,
+            316
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  167.0
+                ],
+                [
+                  600.0,
+                  167.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  181.0
+                ],
+                [
+                  600.0,
+                  181.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            820,
+            316
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 68.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  144.0,
+                  108.0
+                ],
+                [
+                  144.0,
+                  156.0
+                ],
+                [
+                  600.0,
+                  156.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  189.75
+                ],
+                [
+                  600.0,
+                  189.75
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wide-ports-72",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Wide incoming arrows",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "source-0",
+            "type": "backend",
+            "label": "Source 0",
+            "pos": [
+              40,
+              40
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "source-1",
+            "type": "backend",
+            "label": "Source 1",
+            "pos": [
+              40,
+              180
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "Hub",
+            "pos": [
+              600,
+              140
+            ],
+            "size": [
+              180,
+              72
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "edge-0",
+            "from": "source-0",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          },
+          {
+            "id": "edge-1",
+            "from": "source-1",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          }
+        ],
+        "boundaries": []
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            820,
+            316
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 72.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  169.0
+                ],
+                [
+                  600.0,
+                  169.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  183.0
+                ],
+                [
+                  600.0,
+                  183.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            820,
+            316
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 72.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  144.0,
+                  108.0
+                ],
+                [
+                  144.0,
+                  156.0
+                ],
+                [
+                  600.0,
+                  156.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  196.0
+                ],
+                [
+                  600.0,
+                  196.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wide-ports-80",
+      "input": {
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {
+          "title": "Wide incoming arrows",
+          "output": "diagram.html",
+          "quality_profile": "showcase"
+        },
+        "components": [
+          {
+            "id": "source-0",
+            "type": "backend",
+            "label": "Source 0",
+            "pos": [
+              40,
+              40
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "source-1",
+            "type": "backend",
+            "label": "Source 1",
+            "pos": [
+              40,
+              180
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "source-2",
+            "type": "backend",
+            "label": "Source 2",
+            "pos": [
+              40,
+              320
+            ],
+            "size": [
+              120,
+              68
+            ]
+          },
+          {
+            "id": "hub",
+            "type": "backend",
+            "label": "Hub",
+            "pos": [
+              600,
+              140
+            ],
+            "size": [
+              180,
+              80
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "id": "edge-0",
+            "from": "source-0",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          },
+          {
+            "id": "edge-1",
+            "from": "source-1",
+            "to": "hub",
+            "toSide": "left",
+            "width": 1
+          },
+          {
+            "id": "edge-2",
+            "from": "source-2",
+            "to": "hub",
+            "toSide": "left",
+            "width": 4
+          }
+        ],
+        "boundaries": []
+      },
+      "oracles": {
+        "legacy-2.17": {
+          "success": true,
+          "viewBox": [
+            820,
+            456
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "source-2",
+              "type": "backend",
+              "label": "Source 2",
+              "x": 40.0,
+              "y": 320.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                320
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  74.0
+                ],
+                [
+                  380.0,
+                  166.0
+                ],
+                [
+                  600.0,
+                  166.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  180.0
+                ],
+                [
+                  600.0,
+                  180.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            },
+            {
+              "from": "source-2",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  354.0
+                ],
+                [
+                  380.0,
+                  354.0
+                ],
+                [
+                  380.0,
+                  194.0
+                ],
+                [
+                  600.0,
+                  194.0
+                ]
+              ],
+              "crossoverHalo": false,
+              "independentPorts": false
+            }
+          ]
+        },
+        "phoenix-v1": {
+          "success": true,
+          "viewBox": [
+            820,
+            456
+          ],
+          "components": [
+            {
+              "id": "source-0",
+              "type": "backend",
+              "label": "Source 0",
+              "x": 40.0,
+              "y": 40.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                40
+              ]
+            },
+            {
+              "id": "source-1",
+              "type": "backend",
+              "label": "Source 1",
+              "x": 40.0,
+              "y": 180.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                180
+              ]
+            },
+            {
+              "id": "source-2",
+              "type": "backend",
+              "label": "Source 2",
+              "x": 40.0,
+              "y": 320.0,
+              "width": 120.0,
+              "height": 68.0,
+              "pos": [
+                40,
+                320
+              ]
+            },
+            {
+              "id": "hub",
+              "type": "backend",
+              "label": "Hub",
+              "x": 600.0,
+              "y": 140.0,
+              "width": 180.0,
+              "height": 80.0,
+              "pos": [
+                600,
+                140
+              ]
+            }
+          ],
+          "boundaries": [],
+          "connections": [
+            {
+              "from": "source-0",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  144.0,
+                  108.0
+                ],
+                [
+                  144.0,
+                  156.0
+                ],
+                [
+                  600.0,
+                  156.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "source-1",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  214.0
+                ],
+                [
+                  380.0,
+                  180.0
+                ],
+                [
+                  600.0,
+                  180.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            },
+            {
+              "from": "source-2",
+              "to": "hub",
+              "label": null,
+              "variant": "default",
+              "route": "auto",
+              "points": [
+                [
+                  160.0,
+                  354.0
+                ],
+                [
+                  576.0,
+                  354.0
+                ],
+                [
+                  576.0,
+                  201.0
+                ],
+                [
+                  600.0,
+                  201.0
+                ]
+              ],
+              "crossoverHalo": true,
+              "independentPorts": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "geometryEvidence": "Unrounded SVG structural-frame/node rectangles, data-composition-points and edge-label text positions from actual frozen Node renderer output; layout-json supplies semantic mapping and viewBox."
+}

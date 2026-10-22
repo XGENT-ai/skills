@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "Request architecture", "output": "minimal.architecture.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "layout": { "mode": "grid", "cols": 2 },
+  "components": [
+    { "id": "client", "type": "frontend", "label": "Client", "row": 0, "col": 0 },
+    { "id": "service", "type": "backend", "label": "Service", "row": 0, "col": 1 }
+  ],
+  "connections": [{ "id": "request", "from": "client", "to": "service", "label": "Request" }]
+}

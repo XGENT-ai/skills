@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/export.js",
+  "sourceSha256": "98dd1fb3d7d9267e294a1dfa401c6d803b3a882b1d091df4dc4b80b7ee52c5c4",
+  "normalizedSourceSha256": "cb190bdb073fb84ab9c6f09a6fbf3ef10e7e15b100fb440525eb2ab9def7d6b9",
+  "adaptedBodySha256": "f6a1e67ee459da1419502467290580958d6e0667c160ca49ee4ec572533a3796",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 568,
+      "sourceByteOffset": 30096,
+      "sourceText": "          var img = new Image();\n",
+      "replacementText": "          var img = null;\n          var settled = false;\n          var sourceReleased = false;\n          function releaseSource() {\n            if (img) { img.onload = null; img.onerror = null; }\n            if (!sourceReleased) { sourceReleased = true; URL.revokeObjectURL(svgUrl); }\n          }\n          function finish(error, blob) {\n            if (settled) return;\n            settled = true;\n            releaseSource();\n            if (error) reject(error);\n            else resolve(blob);\n          }\n          try { img = new Image(); }\n          catch (error) { finish(error); return; }\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 570,
+      "sourceByteOffset": 30166,
+      "sourceText": "",
+      "replacementText": "            if (settled) return;\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 581,
+      "sourceByteOffset": 30823,
+      "sourceText": "              URL.revokeObjectURL(svgUrl);\n",
+      "replacementText": "              releaseSource();\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 586,
+      "sourceByteOffset": 31110,
+      "sourceText": "                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));\n                else resolve(blob);\n",
+      "replacementText": "                if (!blob || !blob.size) finish(exportError('viewer.export.error.toBlobNull', { label: format }));\n                else finish(null, blob);\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 590,
+      "sourceByteOffset": 31310,
+      "sourceText": "              URL.revokeObjectURL(svgUrl);\n              reject(error);\n",
+      "replacementText": "              finish(error);\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 595,
+      "sourceByteOffset": 31448,
+      "sourceText": "            URL.revokeObjectURL(svgUrl);\n            reject(e);\n",
+      "replacementText": "            finish(e);\n"
+    },
+    {
+      "scope": "rasterize terminal cleanup",
+      "sourceLine": 598,
+      "sourceByteOffset": 31525,
+      "sourceText": "          img.src = svgUrl;\n",
+      "replacementText": "          try { img.src = svgUrl; }\n          catch (error) { finish(error); }\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 645,
+      "sourceByteOffset": 34051,
+      "sourceText": "          var img = new Image();\n",
+      "replacementText": "          var img = null;\n          var settled = false;\n          var sourceReleased = false;\n          function releaseSource() {\n            if (img) { img.onload = null; img.onerror = null; }\n            if (!sourceReleased) { sourceReleased = true; URL.revokeObjectURL(svgUrl); }\n          }\n          function finish(error, blob) {\n            if (settled) return;\n            settled = true;\n            releaseSource();\n            if (error) reject(error);\n            else resolve(blob);\n          }\n          try { img = new Image(); }\n          catch (error) { finish(error); return; }\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 647,
+      "sourceByteOffset": 34121,
+      "sourceText": "",
+      "replacementText": "            if (settled) return;\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 731,
+      "sourceByteOffset": 38922,
+      "sourceText": "              URL.revokeObjectURL(svgUrl);\n",
+      "replacementText": "              releaseSource();\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 734,
+      "sourceByteOffset": 39012,
+      "sourceText": "                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));\n                else resolve(blob);\n",
+      "replacementText": "                if (!blob || !blob.size) finish(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));\n                else finish(null, blob);\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 738,
+      "sourceByteOffset": 39241,
+      "sourceText": "              URL.revokeObjectURL(svgUrl);\n              reject(error);\n",
+      "replacementText": "              finish(error);\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 743,
+      "sourceByteOffset": 39379,
+      "sourceText": "            URL.revokeObjectURL(svgUrl);\n            reject(e);\n",
+      "replacementText": "            finish(e);\n"
+    },
+    {
+      "scope": "share-card terminal cleanup",
+      "sourceLine": 746,
+      "sourceByteOffset": 39456,
+      "sourceText": "          img.src = svgUrl;\n",
+      "replacementText": "          try { img.src = svgUrl; }\n          catch (error) { finish(error); }\n"
+    },
+    {
+      "scope": "MediaRecorder stop deadline",
+      "sourceLine": 968,
+      "sourceByteOffset": 49408,
+      "sourceText": "",
+      "replacementText": "          var stopTimer = 0;\n"
+    },
+    {
+      "scope": "MediaRecorder stop deadline",
+      "sourceLine": 977,
+      "sourceByteOffset": 49754,
+      "sourceText": "",
+      "replacementText": "            clearTimeout(stopTimer);\n"
+    },
+    {
+      "scope": "MediaRecorder stop deadline",
+      "sourceLine": 1043,
+      "sourceByteOffset": 53136,
+      "sourceText": "",
+      "replacementText": "                    // A provider can stop its stream without delivering the\n                    // terminal event. Bound that wait and clean this action.\n                    stopTimer = setTimeout(function () {\n                      var error = new Error('WebM encoder did not complete after stop');\n                      error.name = 'TimeoutError';\n                      finish(error);\n                    }, 2000);\n"
+    },
+    {
+      "scope": "clipboard capability feedback",
+      "sourceLine": 1112,
+      "sourceByteOffset": 56077,
+      "sourceText": "          it.title = viewerText('viewer.export.clipboardUnsupported');\n",
+      "replacementText": "          it.title = viewerText('viewer.export.clipboardUnsupported') + ' ' + viewerText('viewer.export.downloadPngInstead');\n"
+    },
+    {
+      "scope": "clipboard failure PNG guidance",
+      "sourceLine": 1354,
+      "sourceByteOffset": 67851,
+      "sourceText": "          alert(viewerText('viewer.export.clipboardUnsupported.short'));\n",
+      "replacementText": "          alert(viewerText('viewer.export.clipboardUnsupported.short') + ' ' + viewerText('viewer.export.downloadPngInstead'));\n"
+    },
+    {
+      "scope": "clipboard failure PNG guidance",
+      "sourceLine": 1364,
+      "sourceByteOffset": 68280,
+      "sourceText": "          }));\n",
+      "replacementText": "          }) + ' ' + viewerText('viewer.export.downloadPngInstead'));\n"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+[package]
+name = "phoenix-diagram"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+jsonschema = { version = "=0.58.6", default-features = false }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.151", features = ["preserve_order"] }
+sha2 = "=0.10.9"
+scraper = "=0.27.0"
+icu_segmenter = { version = "=2.0.0", default-features = false, features = ["compiled_data"] }
+icu_segmenter_data = "=2.0.0"
+icu_collections = { version = "=2.0.0", default-features = false }
+icu_provider = { version = "=2.3.1", default-features = false, features = ["sync"] }
+icu_normalizer = { version = "=2.0.0", default-features = false, features = ["compiled_data"] }
+icu_normalizer_data = "=2.0.0"
+icu_properties = { version = "=2.0.2", default-features = false, features = ["compiled_data"] }
+libc = "=0.2.190"
+tungstenite = { version = "=0.28.0", default-features = false, features = ["handshake"] }
+base64 = "=0.22.1"
+url = "=2.5.8"
+# ICU 2.0's baked locale data requires Cow conversions even with defaults off.
+zerofrom = { version = "=0.1.8", default-features = false, features = ["alloc"] }
+
+[build-dependencies]
+serde_json = { version = "=1.0.151", features = ["preserve_order"] }
+sha2 = "=0.10.9"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
