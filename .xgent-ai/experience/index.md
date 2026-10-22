@@ -40,3 +40,5 @@
 
 - `49a107bf-abd1-462b-9910-ff664d6be67d` · 指令质量评测与自进化 v2 · [记录](49a107bf-abd1-462b-9910-ff664d6be67d.md)
 - 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)
+
+- 074c0f0e-40db-4006-aa7a-bb0a2d1b68a2 · [合并 origin/main 的本机测试环境](074c0f0e-40db-4006-aa7a-bb0a2d1b68a2.md)
