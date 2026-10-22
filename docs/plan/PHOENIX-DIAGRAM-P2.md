@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-22T23:55:00+08:00
-- 当前进度：6/8 个里程碑完成
-- 当前状态：进行中。候选 `aa4608c` 的本机 distribution 消费暴露 Chrome 钥匙串弹窗，按用户裁定在引擎与 harness 的 Chrome 启动参数加 `--use-mock-keychain`，引擎源改为 `07d3da1e…`；`p2-core-12` 的 M6 收口随之失效。在 `p2-native-12` 上重做 M6（第 1–2 步通过、第 3 步运行中）与 V-11 受影响 8 行（`p2-v11h`，已审 5 行 passed）（[M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md#评审修复后的重做进行中)）
-- 最近完成：M7 · skill、说明、包脚本与宿主验收
-- 下一步：提交含钥匙串修复的候选源码，推候选分支并 dispatch 四平台 CI；完成 M6 第 3–5 步与 v11h 其余行审核归档；CI 后用最终引擎重放沿用行、本机 distribution 收口、P2 聚合与 V-14
+- 最近更新：2026-10-23T04:05:00+08:00
+- 当前进度：8/8 个里程碑完成
+- 当前状态：已完成。最终候选 `c1703a9`（run 39816459249）：四平台 CI、本机 distribution 收口、宿主证据（v11h 重跑 8 行加 v11d 沿用行与最终引擎重放）与 P2 聚合 handoff=passed，V-14 通过（[M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md)）
+- 最近完成：M8 · 四平台候选与 P2 收口
+- 下一步：代码评审——由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P2.md`
 - 当前阻塞：无
-- 代码基线：main / `aa4608c` 之上的未提交修复；`skills/phoenix-diagram/ENGINE.json` 与 `dist/` 已同步到 `p2-native-12`
+- 代码基线：main / `c1703a9`（候选，已推 `claude/phoenix-diagram-p2-candidate-20261022-r4`）加收口记录提交；main 未推送
 
 ### 完成记录
 
@@ -65,8 +65,8 @@
 | M3 | 已完成 | 2026-10-22T11:00:00+08:00 | 数字与时区格式 oracle，tree/timeline/waterfall 布局/渲染/检查与日精度；V-4 通过，tree 恢复 10px 圆角后复验；R1 F-02 修复：跨年时间线显示年份 | [M3 记录](PHOENIX-DIAGRAM-P2.records/M3.md) | 711a5b7、修复 1b9f910 |
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
 | M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
-| M6 | 进行中 | 2026-10-22T23:55:00+08:00 | 评审修复与重做中的三项修复后曾在 `p2-native-11` / `p2-core-12` 收口通过（handoff=passed）；钥匙串修复改变引擎源，在 `p2-native-12` / `p2-core-13` 重做第 1–5 步，第 1–2 步通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82、修复 aa4608c |
-| M8 | 进行中 | 2026-10-22T23:55:00+08:00 | 原最终候选 `a8f3ec4` 的 V-12–V-14 与 P2 聚合只证明旧引擎；候选 `aa4608c` 因 Chrome 钥匙串弹窗被取代，修复后需新候选重取受影响证据（四平台 CI、宿主 8 行与重放、distribution、聚合、V-14） | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18 |
+| M6 | 已完成 | 2026-10-23T02:35:00+08:00 | 评审修复、重做中的三项修复与 Chrome 钥匙串修复后，在 `p2-native-12` / `p2-core-13` 重做 V-7 第 1–5 步与全部范围，handoff=passed；V-7–V-9 通过 | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82、修复 aa4608c |
+| M8 | 已完成 | 2026-10-23T04:05:00+08:00 | 最终候选 `c1703a9`（Chrome 钥匙串修复）：run 39816459249 四平台全部 success，本机 distribution complete/passed，宿主证据按 D13 复用并重放，P2 聚合 handoff=passed；V-12–V-14 通过 | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、8539d18、c1703a9 |
 
 ## 0. 需求、范围与决策
 
