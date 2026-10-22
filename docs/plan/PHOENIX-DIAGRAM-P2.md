@@ -47,13 +47,13 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-22T03:40:00+08:00
-- 当前进度：7/8 个里程碑完成
-- 当前状态：M7 已完成并提交 `e09bc82`（D12 workflow 修复后开发引擎 `p2-native-8`：M6 收口在 `p2-core-9` 重做 handoff=passed；V-11 第三轮 62 例全部 passed 并归档；V-10 通过）；M8 进行中：候选源码已提交
-- 最近完成：M7 · skill、说明、包脚本与宿主验收
-- 下一步：M8：以 `e09bc82` 推独立 CI 分支并 dispatch 四平台 CI → 唯一 tgz/release-dir → 本机 distribution 收口 → 宿主证据按 §9.3 绑定（bundle 除 ENGINE.json 外逐文件相同、sourceInputSha256 = `7fcabd88…`）→ P2 聚合 → 全量回归
-- 当前阻塞：无（磁盘约 7.5GiB 可用，M8 本机收口前需经用户同意清理被取代的本地运行目录）
-- 代码基线：main / `e09bc82`（M7 与 M6 修复，候选源码）；之后只有计划文件的 SHA 回填提交
+- 最近更新：2026-10-22T09:45:00+08:00
+- 当前进度：8/8 个里程碑完成
+- 当前状态：已完成。最终候选 `a8f3ec4`：dispatch run 39689275122 四平台全部 success；本机 darwin-arm64 完整审核消费 complete；P2 聚合 handoff=passed；V-14 全量通过
+- 最近完成：M8 · 四平台候选与 P2 收口
+- 下一步：回写 M8 最终提交 SHA；随后由用户发起 `$review-code docs/plan/PHOENIX-DIAGRAM-P2.md`，按完成记录评审本计划提交
+- 当前阻塞：无（磁盘约 6.7GiB 可用；`local/phoenix-diagram/` 下被取代的运行目录是否清理由用户决定）
+- 代码基线：main / `a8f3ec4`（最终候选源码：`e09bc82` 加 ETXTBSY 测试修复），之后为 M8 收口记录提交
 
 ### 完成记录
 
@@ -66,6 +66,7 @@
 | M5 | 已完成 | 2026-10-20T21:08:00+08:00 | locale 回执与 `lang`、Reader explore/catalogs 测试、语义透镜与树分支修复；十类真实产物探索通过，V-6 102 pass | [M5 记录](PHOENIX-DIAGRAM-P2.records/M5.md) | 711a5b7 |
 | M6 | 已完成 | 2026-10-22T03:30:00+08:00 | 收口修复 dataflow 箭头范围、tree 打印、探索同点、取证文档与来源详情截断；V-11 暴露的 3.1.0 参考 JSON 浏览器门与分组标题修引擎后，在 `p2-core-8`（`p2-native-7`）重做第 1–5 步、handoff=passed，V-7–V-9 通过；M7 的 D12 workflow 修复改变引擎身份后在 `p2-core-9`（`p2-native-8`）再次重做第 1–5 步与全部范围，handoff=passed | [M6 记录](PHOENIX-DIAGRAM-P2.records/M6.md) | 711a5b7、修复 e09bc82 |
 | M7 | 已完成 | 2026-10-22T03:30:00+08:00 | skill/说明/包脚本十类与 P2 聚合；按 D12 修 workflow 布局（修复轮、光晕、整图撤 pin、文字上限、主路径修法）；新引擎上 M6 收口重做通过，V-10 通过，V-11 第三轮 62 例全部 passed | [M7 记录](PHOENIX-DIAGRAM-P2.records/M7.md) | e09bc82 |
+| M8 | 已完成 | 2026-10-22T09:45:00+08:00 | `e09bc82` 的三个 CI run 因离线导出 15s 超时与 Linux 测试 ETXTBSY 作废，`a8f3ec4` 修测试竞态；最终 dispatch run 39689275122 四平台全部 success，三平台新五类截图实看；本机完整审核消费 complete，宿主证据按 §9.3 复用，P2 聚合 handoff=passed；V-12–V-14 通过 | [M8 记录](PHOENIX-DIAGRAM-P2.records/M8.md) | a8f3ec4、待提交 |
 
 ## 0. 需求、范围与决策
 
