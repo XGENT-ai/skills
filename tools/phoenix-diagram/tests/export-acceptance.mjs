@@ -518,17 +518,50 @@ export async function runExploreAcceptance(options) {
   });
 }
 
+// The first enabled Reach control of the open details takes a trusted tap on a
+// touch screen, or a click. A panel taller than its room is first scrolled by a
+// real gesture; the control's center must hit the control, not the navigation.
+export async function operateReach(page, id, touch) {
+  const locate = () => page.evaluate(() => {
+    const section = document.getElementById('focus-reach'), button = ['downstream', 'upstream'].map(direction => document.getElementById('btn-reach-' + direction)).find(button => !button.disabled);
+    if (section.hidden || !button) return null;
+    const box = button.getBoundingClientRect(), panel = document.getElementById('focus-chip').getBoundingClientRect();
+    const x = box.left + box.width / 2, y = box.top + box.height / 2, hit = document.elementFromPoint(x, y);
+    return { direction: button.id.slice('btn-reach-'.length), x, y, inPanel: y > panel.top && y < panel.bottom, onControl: Boolean(hit && button.contains(hit)), hit: hit ? hit.id || hit.localName : null, from: { x: Math.round(panel.left + panel.width / 2), y: Math.round(panel.top + 24) } };
+  });
+  let control = await locate(), scrolled = false;
+  if (!control) return { status: 'not-applicable' };
+  if (!control.inPanel) {
+    await page.send('Input.synthesizeScrollGesture', { ...control.from, yDistance: -Math.ceil(control.y - control.from.y), gestureSourceType: touch ? 'touch' : 'mouse', speed: 1200 });
+    control = await locate(); scrolled = true;
+  }
+  if (!control.inPanel || !control.onControl) throw new Error('Reach ' + control.direction + ' of ' + id + ' cannot be operated; its center hits ' + control.hit);
+  const point = { x: control.x, y: control.y };
+  if (touch) {
+    await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...point, radiusX: 1, radiusY: 1, force: 1, id: 1 }] });
+    await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } else {
+    await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1 });
+    await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1 });
+  }
+  const reach = await waitFor(() => page.evaluate(direction => { const reach = PhoenixDiagram.focus.reachability(); return reach && reach.direction === direction ? reach : null; }, control.direction), 2000, 'Trusted ' + (touch ? 'tap' : 'click') + ' on Reach ' + control.direction + ' of ' + id);
+  if (reach.originId !== id) throw new Error('Reach ' + control.direction + ' started from ' + reach.originId + ' instead of ' + id);
+  return { status: 'pass', direction: control.direction, input: touch ? 'touch' : 'mouse', scrolled, nodeIds: reach.nodeIds };
+}
+
 // Focus each requested node and capture its details panel for actual viewing,
-// with the source evidence state the Reader displays. `evidence: false` accepts
-// details without source evidence; a node may name its own viewport.
+// with the source evidence state the Reader displays, then operate its Reach.
+// `evidence: false` accepts details without source evidence; a node may name
+// its own viewport, and a narrow one (720px or less) is a touch screen.
 export async function runPassportAcceptance(options) {
   return withBrowserPage(options, 'explore', async page => {
     page.report.passports = [];
     let current = '1440x900';
     for (const { id, theme = 'dark', viewport = { width: 1440, height: 900 } } of options.nodes) {
-      const size = viewport.width + 'x' + viewport.height;
+      const size = viewport.width + 'x' + viewport.height, touch = viewport.width <= 720;
       if (size !== current) {
-        await page.send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: false });
+        await page.send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: touch });
+        await page.send('Emulation.setTouchEmulationEnabled', touch ? { enabled: true, maxTouchPoints: 1 } : { enabled: false });
         current = size;
       }
       await page.load(theme, false, { hash: 'focus=' + id });
@@ -548,7 +581,8 @@ export async function runPassportAcceptance(options) {
       const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
       const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}${size === '1440x900' ? '' : '-' + size}.png`);
       fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
-      page.report.passports.push({ id, theme, viewport, ...state, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
+      const reach = await operateReach(page, id, touch);
+      page.report.passports.push({ id, theme, viewport, ...state, reach, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
     }
     page.report.stateRestoration = { status: 'not-applicable', observations: [] };
   });

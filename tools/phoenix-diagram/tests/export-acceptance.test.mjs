@@ -220,6 +220,27 @@ test('native Reader Enter carries its character so browser button activation is 
   assert.deepEqual(calls.map(call => ({ type: call.params.type, text: call.params.text })), [{ type: 'keyDown', text: '\r' }, { type: 'keyUp', text: undefined }]);
 });
 
+test('details Reach takes a trusted tap or click on its own control, after a real scroll when the panel hides it', async () => {
+  const control = (inPanel, hit = 'btn-reach-downstream') => ({ direction: 'downstream', x: 221, y: 375, inPanel, onControl: hit === 'btn-reach-downstream', hit, from: { x: 195, y: 183 } });
+  const page = (located, reach = { direction: 'downstream', originId: 'orders', nodeIds: ['orders', 'customer'] }) => {
+    const calls = [], queue = [...located];
+    // Locating takes no argument; the Reach state is read for one direction.
+    return { calls, send: async (method, params) => calls.push([method, params.type || params.gestureSourceType]), evaluate: async (_fn, direction) => direction === undefined ? queue.shift() : reach };
+  };
+  const narrow = page([control(false), control(true)]);
+  assert.deepEqual(await acceptance.operateReach(narrow, 'orders', true), { status: 'pass', direction: 'downstream', input: 'touch', scrolled: true, nodeIds: ['orders', 'customer'] });
+  assert.deepEqual(narrow.calls, [['Input.synthesizeScrollGesture', 'touch'], ['Input.dispatchTouchEvent', 'touchStart'], ['Input.dispatchTouchEvent', 'touchEnd']]);
+  const desktop = page([control(true)]);
+  assert.equal((await acceptance.operateReach(desktop, 'orders', false)).input, 'mouse');
+  assert.deepEqual(desktop.calls, [['Input.dispatchMouseEvent', 'mousePressed'], ['Input.dispatchMouseEvent', 'mouseReleased']]);
+  // A control under the navigation is never tapped; no control means nothing to operate.
+  const covered = page([control(false, 'btn-node-finder'), control(true, 'btn-node-finder')]);
+  await assert.rejects(acceptance.operateReach(covered, 'orders', true), /its center hits btn-node-finder/);
+  assert.ok(covered.calls.every(([method]) => method === 'Input.synthesizeScrollGesture'));
+  assert.deepEqual(await acceptance.operateReach(page([null]), 'orders', true), { status: 'not-applicable' });
+  await assert.rejects(acceptance.operateReach(page([control(true)], { direction: 'downstream', originId: 'customer', nodeIds: [] }), 'orders', true), /started from customer instead of orders/);
+});
+
 test('missing configured browser yields an explicit non-pass receipt with no exported files', async t => {
   const directory = temporary(t), file = path.join(directory, 'artifact.html'); fs.writeFileSync(file, '<!doctype html><title>immutable fixture</title>');
   const before = artifactIdentity(file);

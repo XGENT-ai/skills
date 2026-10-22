@@ -402,12 +402,12 @@ test('the corpus browser-checks every 3.1.0 reference JSON, original five types 
   };
   // Fake details show what the given context function writes; the real Reader runs in the actual corpus scope.
   const details=[];
-  const passportsWith=context=>async({artifactPath,evidenceDir,nodes,evidence})=>{
+  const passportsWith=(context,reach={status:'pass',direction:'downstream',input:'touch'})=>async({artifactPath,evidenceDir,nodes,evidence})=>{
     const caseRoot=path.dirname(artifactPath),document=JSON.parse(fs.readFileSync(path.join(caseRoot,'candidate.json'),'utf8')),receiptPath=path.join(evidenceDir,'index.json');
     details.push({name:path.basename(caseRoot),evidence,nodes});fs.writeFileSync(receiptPath,'{}');
-    return{status:'pass',receiptPath,passports:nodes.map(({id,viewport})=>{
-      const file=path.join(evidenceDir,`${id}-${viewport.width}.png`),keys=document.entities.find(entity=>entity.id===id).attributes.filter(attribute=>attribute.references);fs.writeFileSync(file,id);
-      return{id,viewport,context:context(keys),screenshot:{path:file,identity:{sha256:id,bytes:id.length}}};
+    return{status:'pass',receiptPath,passports:nodes.map(({id,theme,viewport})=>{
+      const file=path.join(evidenceDir,`${id}-${theme}-${viewport.width}.png`),keys=document.entities.find(entity=>entity.id===id).attributes.filter(attribute=>attribute.references);fs.writeFileSync(file,id);
+      return{id,theme,viewport,context:context(keys),reach,screenshot:{path:file,identity:{sha256:id,bytes:id.length}}};
     })};
   };
   const complete=keys=>'Entity › '+keys.map(key=>`${key.name} → ${key.references}`).join(', ');
@@ -418,11 +418,18 @@ test('the corpus browser-checks every 3.1.0 reference JSON, original five types 
   assert.ok(references.every(entry=>entry.screenshots?.length===2 && entry.visual));
   assert.ok(report.cases.filter(entry=>entry.contract==='legacy-2.17').every(entry=>entry.screenshots===undefined));
   // Only ERD tables with several foreign keys are opened, each at 1440x900 and 390x844, without requiring source evidence.
-  assert.deepEqual(details.map(entry=>[entry.name,entry.evidence,entry.nodes.map(node=>`${node.id}@${node.viewport.width}x${node.viewport.height}`)]),[
+  assert.deepEqual(details.filter(entry=>entry.name!=='erd-long-foreign-keys').map(entry=>[entry.name,entry.evidence,entry.nodes.map(node=>`${node.id}@${node.viewport.width}x${node.viewport.height}`)]),[
     ['orders.erd',false,['order_item@1440x900','order_item@390x844']],
     ['subscription-billing.erd',false,['membership@1440x900','membership@390x844','subscription@1440x900','subscription@390x844','payment@1440x900','payment@390x844']],
   ]);
   assert.ok(references.filter(entry=>entry.type==='erd').every(entry=>entry.passports.screenshots.length>0 && entry.passports.screenshots.every(shot=>shot.viewing==='required')));
-  // Details that omit the last foreign key target fail the corpus.
+  // An ERD with three long foreign keys is delivered and its details opened at 390x844 in both themes; Reach must take a touch.
+  const long=details.find(entry=>entry.name==='erd-long-foreign-keys'),candidate=JSON.parse(fs.readFileSync(report.narrowDetails.candidate.path,'utf8'));
+  assert.deepEqual(long.nodes.map(node=>`${node.id}@${node.viewport.width}x${node.viewport.height}:${node.theme}`),['orders@390x844:light','orders@390x844:dark']);
+  assert.equal(long.evidence,false);assert.equal(candidate.entities.find(entity=>entity.id==='orders').attributes.filter(attribute=>attribute.references).length,3);
+  assert.deepEqual(report.narrowDetails.reach.map(reach=>[reach.theme,reach.status,reach.input]),[['light','pass','touch'],['dark','pass','touch']]);
+  assert.ok(report.narrowDetails.screenshots.length===2 && report.narrowDetails.screenshots.every(shot=>shot.viewing==='required'));
+  // Details that omit the last foreign key target, or whose Reach was not operated, fail the corpus.
   await assert.rejects(run('corpus',{runRoot:temp(t),engine:{path:'/fake/engine'}},{},{invoke,passports:passportsWith(keys=>complete(keys.slice(0,-1)))}),/omit a foreign key target of order_item/);
+  await assert.rejects(run('corpus',{runRoot:temp(t),engine:{path:'/fake/engine'}},{},{invoke,passports:passportsWith(complete,{status:'not-applicable'})}),/Long foreign key ERD details leave Reach unusable by touch/);
 });

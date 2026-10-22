@@ -45,6 +45,23 @@ export function verifyCoreFacts(document,type,html) {
 }
 
 const DETAIL_VIEWPORTS=[{width:1440,height:900},{width:390,height:844}];
+// Three long foreign keys make the orders details taller than the room above the
+// navigation of its short canvas at 390x844.
+const LONG_FOREIGN_KEYS={schema_version:1,diagram_type:'erd',meta:{title:'Orders',quality_profile:'showcase'},
+  entities:[
+    {id:'customer_account_external_identity',label:'customer',row:0,col:0,width:340,attributes:[{name:'id',type:'bigint',key:'pk'},{name:'external_account_identifier',type:'bigint',key:'uk'}]},
+    {id:'orders',label:'orders',row:0,col:1,width:340,attributes:[{name:'id',type:'bigint',key:'pk'},...[1,2,3].map(n=>({name:`customer_billing_identifier_${n}`,type:'bigint',key:'fk',references:'customer_account_external_identity.external_account_identifier'}))]},
+  ],
+  relationships:[{from:'orders',to:'customer_account_external_identity',fromCardinality:'many',toCardinality:'one'}]};
+
+// Open the details of each node; every foreign key target of its table is shown in full.
+async function details(passports,options,caseRoot,output,name,document,nodes) {
+  const report=await passports({artifactPath:output,evidenceDir:directory(path.join(caseRoot,'passports')),browserPath:options.browserPath,offline:true,evidence:false,nodes});
+  requireThat(report.status==='pass',`${name} details failed: ${JSON.stringify(report.errors)}`);
+  for(const passport of report.passports)requireThat(document.entities.find(entity=>entity.id===passport.id).attributes.filter(attribute=>attribute.references).every(attribute=>passport.context.includes(`${attribute.name} → ${attribute.references}`)),`${name} details omit a foreign key target of ${passport.id}`);
+  return{passports:report.passports,record:{receipt:bound(readSnapshot(report.receiptPath)),screenshots:report.passports.map(passport=>({id:passport.id,theme:passport.theme,viewport:passport.viewport,path:passport.screenshot.path,identity:passport.screenshot.identity,viewing:'required'}))}};
+}
+
 async function corpus(index,options,{invoke,passports}) {
   if(index.corpus?.status==='pass')return index.corpus;
   passports??=(await import('../tools/phoenix-diagram/tests/export-acceptance.mjs')).runPassportAcceptance;
@@ -75,20 +92,22 @@ async function corpus(index,options,{invoke,passports}) {
       record.visual=writeNew(path.join(caseRoot,'visual-check.json'),visual.receipt);
       // A table with several foreign keys names every target in its details, on desktop and narrow screens.
       const tables=type==='erd'?document.entities.filter(entity=>(entity.attributes || []).filter(attribute=>attribute.references).length>1):[];
-      if(tables.length) {
-        const report=await passports({artifactPath:output,evidenceDir:directory(path.join(caseRoot,'passports')),browserPath:options.browserPath,offline:true,evidence:false,nodes:tables.flatMap(entity=>DETAIL_VIEWPORTS.map(viewport=>({id:entity.id,theme:'light',viewport})))});
-        requireThat(report.status==='pass',`Reference ${entry.name} details failed: ${JSON.stringify(report.errors)}`);
-        for(const passport of report.passports)requireThat(tables.find(entity=>entity.id===passport.id).attributes.filter(attribute=>attribute.references).every(attribute=>passport.context.includes(`${attribute.name} → ${attribute.references}`)),`Reference ${entry.name} details omit a foreign key target of ${passport.id}`);
-        record.passports={receipt:bound(readSnapshot(report.receiptPath)),screenshots:report.passports.map(passport=>({id:passport.id,viewport:passport.viewport,path:passport.screenshot.path,identity:passport.screenshot.identity,viewing:'required'}))};
-      }
+      if(tables.length)record.passports=(await details(passports,options,caseRoot,output,`Reference ${entry.name}`,document,tables.flatMap(entity=>DETAIL_VIEWPORTS.map(viewport=>({id:entity.id,theme:'light',viewport}))))).record;
     }
     cases.push(record);
   }
+  // Details taller than their room on a narrow screen still read in full and keep Reach to a touch, in both themes.
+  const longRoot=directory(path.join(scopeRoot,'erd-long-foreign-keys')),longCandidate=writeNew(path.join(longRoot,'candidate.json'),LONG_FOREIGN_KEYS),longOutput=path.join(longRoot,'diagram.html');
+  const longDelivered=await invoke(index.engine,['deliver','erd',longCandidate.path,longOutput,'--json'],{options});
+  requireThat(longDelivered.exitCode===0 && longDelivered.receipt?.status==='pass',`The long foreign key ERD did not deliver: ${JSON.stringify(longDelivered.receipt?.diagnostics || longDelivered.stderr)}`);
+  const long=await details(passports,options,longRoot,longOutput,'Long foreign key ERD',LONG_FOREIGN_KEYS,['light','dark'].map(theme=>({id:'orders',theme,viewport:{width:390,height:844}})));
+  requireThat(long.passports.length===2 && long.passports.every(passport=>passport.reach?.status==='pass'),'Long foreign key ERD details leave Reach unusable by touch');
+  const narrowDetails={candidate:longCandidate,artifact:bound(readSnapshot(longOutput)),delivery:writeNew(path.join(longRoot,'delivery.json'),longDelivered.receipt),reach:long.passports.map(passport=>({theme:passport.theme,...passport.reach})),...long.record};
   const after=referenceFiles();
   requireThat(JSON.stringify(after)===JSON.stringify(before),'A frozen reference JSON or HTML changed during the corpus run');
   const lifecycle=cases.filter(entry=>entry.name.startsWith('deployment-release.lifecycle'));
   requireThat(lifecycle.length===2 && lifecycle.some(entry=>entry.contract==='legacy-2.17' && entry.schemaVersion===1) && lifecycle.some(entry=>entry.contract==='phoenix-v1' && entry.schemaVersion===3),'Legacy v1 and reference v3 lifecycle are not both checked');
-  return{status:'pass',references:before.filter(entry=>typeOf(entry.name)).length,html:before.filter(entry=>entry.name.endsWith('.html')).length,unchanged:after.map(entry=>({name:entry.name,identity:entry.identity})),cases};
+  return{status:'pass',references:before.filter(entry=>typeOf(entry.name)).length,html:before.filter(entry=>entry.name.endsWith('.html')).length,unchanged:after.map(entry=>({name:entry.name,identity:entry.identity})),cases,narrowDetails};
 }
 
 function git(cwd,args) {
