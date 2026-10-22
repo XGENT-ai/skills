@@ -86,6 +86,76 @@ async function oldProject(t, scenarios = [], providers = ['.claude', '.agents'])
   return fixture;
 }
 
+test('--keep-impeccable installs Phoenix beside customized project and personal tools', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix coexist project');
+  const old = '.agents/skills/impeccable/SKILL.md';
+  for (const root of [project, pkg.home]) {
+    fs.mkdirSync(path.dirname(path.join(root, old)), { recursive: true });
+    fs.writeFileSync(path.join(root, old), 'customized Impeccable tool\n');
+  }
+  const hooks = { hooks: { Stop: [{ hooks: [{ type: 'command', command: '.agents/skills/impeccable/scripts/impeccable hook' }] }] } };
+  fs.mkdirSync(path.join(project, '.codex'));
+  fs.writeFileSync(path.join(project, '.codex/hooks.json'), JSON.stringify(hooks));
+  const result = install(pkg, project, ['--keep-impeccable', '--providers=codex']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  for (const root of [project, pkg.home]) assert.equal(fs.readFileSync(path.join(root, old), 'utf8'), 'customized Impeccable tool\n');
+  const commands = JSON.stringify(JSON.parse(fs.readFileSync(path.join(project, '.codex/hooks.json'))).hooks);
+  assert.match(commands, /impeccable/);
+  assert.match(commands, /phoenix-ui/);
+  assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+});
+
+test('--replace-impeccable deletes old project and personal tools without a tool backup', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix replace project');
+  for (const root of [project, pkg.home]) {
+    fs.mkdirSync(path.join(root, '.agents/skills/impeccable'), { recursive: true });
+    fs.writeFileSync(path.join(root, '.agents/skills/impeccable/SKILL.md'), 'old tool to delete\n');
+    fs.mkdirSync(path.join(root, '.codex'), { recursive: true });
+    fs.writeFileSync(path.join(root, '.codex/hooks.json'), JSON.stringify({ hooks: { Stop: [{ matcher: 'keep matcher', hooks: [
+      { type: 'command', command: '.agents/skills/impeccable/scripts/impeccable hook' },
+      { type: 'command', command: 'keep-other-hook' },
+    ] }] }, custom: true }));
+  }
+  const result = install(pkg, project, ['--replace-impeccable', '--providers=codex']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  for (const root of [project, pkg.home]) {
+    assert.equal(fs.existsSync(path.join(root, '.agents/skills/impeccable')), false);
+    const config = JSON.parse(fs.readFileSync(path.join(root, '.codex/hooks.json')));
+    assert.equal(config.custom, true);
+    assert.match(JSON.stringify(config.hooks), /keep-other-hook/);
+    assert.doesNotMatch(JSON.stringify(config.hooks), /impeccable/);
+  }
+  assert.doesNotMatch(result.stdout, /迁移  认领|保留一个迁移主版本/);
+  const active = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
+  assert.ok(active.ownership.every(item => !item.path.includes('impeccable')));
+});
+
+test('source-only Phoenix copies are reinstalled without a receipt conflict or an old-tool backup', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix source project');
+  fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(project, '.agents/skills/phoenix-ui'), { recursive: true });
+  fs.writeFileSync(path.join(project, '.agents/skills/phoenix-ui/source-only-marker'), 'old source copy\n');
+  const result = install(pkg, project, ['--keep-impeccable', '--providers=codex']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(fs.existsSync(path.join(project, '.agents/skills/phoenix-ui/source-only-marker')), false);
+  assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+  assert.match(result.stdout, /重新安装.*\.agents\/skills\/phoenix-ui/);
+});
+
+test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix default coexist');
+  const old = path.join(project, '.claude/skills/impeccable/SKILL.md');
+  fs.mkdirSync(path.dirname(old), { recursive: true });
+  fs.writeFileSync(old, 'keep this tool\n');
+  const result = install(pkg, project);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(fs.readFileSync(old, 'utf8'), 'keep this tool\n');
+  assert.match(result.stdout, /保留.*impeccable/);
+});
+
 test('fresh install activates Phoenix after the XGENT part and a rerun changes nothing', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix fresh project');
@@ -128,7 +198,7 @@ for (const shape of ['large', 'deep']) {
     assert.equal(first.status, 0, first.stdout + first.stderr);
     assert.match(first.stdout, /: 已安装/);
     assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
-    if (fixture) assert.match(first.stdout, /迁移  认领 impeccable 旧版安装/);
+    if (fixture) assert.match(first.stdout, /保留.*impeccable/);
     const second = install(pkg, project, [], fixture?.homeRoot || pkg.home);
     assert.equal(second.status, 0, second.stdout + second.stderr);
     assert.match(second.stdout, /: 未变\n/);
@@ -136,18 +206,25 @@ for (const shape of ['large', 'deep']) {
   });
 }
 
-test('an old 0.6.0 project migrates through the Node installer and rolls back byte-for-byte through the npm bin', { skip }, async (t) => {
+test('explicit legacy migration through the npm bin still rolls back byte-for-byte', { skip }, async (t) => {
   const pkg = packageFor(t, engine);
   const fixture = await oldProject(t, ['claude-shared-and-local', 'custom-allow', 'unrelated-entry']);
+  const xgent = install(pkg, fixture.projectRoot, ['--no-phoenix-ui'], fixture.homeRoot);
+  assert.equal(xgent.status, 0, xgent.stdout + xgent.stderr);
   const original = tree(fixture.projectRoot);
-  const result = install(pkg, fixture.projectRoot, [], fixture.homeRoot);
+  const env = { ...process.env, HOME: fixture.homeRoot, USERPROFILE: fixture.homeRoot, PHOENIX_UI_HOME: pkg.cache };
+  const ready = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'engine', 'install', '--project', fixture.projectRoot, '--release-dir', pkg.release], { encoding: 'utf8', env });
+  assert.equal(ready.status, 0, ready.stdout + ready.stderr);
+  const result = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--from', 'impeccable', '--project', fixture.projectRoot,
+    '--bundle-root', path.join(pkg.root, 'dist/phoenix-ui/bundle'), '--auxiliary-root', path.join(pkg.root, 'skills')], { encoding: 'utf8', env });
   assert.equal(result.status, 0, result.stdout + result.stderr + (result.error?.message || ''));
-  assert.match(result.stdout, /迁移  认领 impeccable 旧版安装/);
-  assert.match(result.stdout, /命令  \.agents: \$impeccable → \$phoenix-ui;\.claude: \/impeccable → \/phoenix-ui/);
-  assert.match(result.stdout, /说明  AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);
-  assert.match(result.stdout, /重载  \.agents\/\.codex: 在 Codex 中运行 \/hooks/);
+  assert.match(result.stdout, /installed/);
+  assert.match(result.stdout, /AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);
   const transition = fs.readFileSync(path.join(fixture.projectRoot, '.claude/skills/impeccable/SKILL.md'), 'utf8');
   assert.match(transition, /\/phoenix-ui/);
+  const again = install(pkg, fixture.projectRoot, ['--replace-impeccable'], fixture.homeRoot);
+  assert.equal(again.status, 0, again.stdout + again.stderr);
+  assert.match(again.stdout, /: 未变\n/);
   const id = /--rollback (phoenix-\S+)/.exec(result.stdout)[1];
   const rollback = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--rollback', id, '--project', fixture.projectRoot], {
     encoding: 'utf8', timeout: 600000,
@@ -157,9 +234,11 @@ test('an old 0.6.0 project migrates through the Node installer and rolls back by
   assert.deepEqual(tree(fixture.projectRoot, (rel) => rel.startsWith('.phoenix-ui/')), original);
 });
 
-test('a user-modified old skill blocks Phoenix before any project write, including the XGENT part', { skip }, async (t) => {
+test('an unrelated hook conflict stops installation before deleting a source-only Phoenix copy', { skip }, async (t) => {
   const pkg = packageFor(t, engine);
   const fixture = await oldProject(t, ['modified-skill']);
+  fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(fixture.projectRoot, '.agents/skills/phoenix-ui'), { recursive: true });
+  fs.writeFileSync(path.join(fixture.projectRoot, '.codex/hooks.json'), '[]\n');
   const original = tree(fixture.projectRoot);
   const result = install(pkg, fixture.projectRoot, ['--claude-context-goal-guard'], fixture.homeRoot);
   assert.equal(result.status, 3, result.stdout + result.stderr);

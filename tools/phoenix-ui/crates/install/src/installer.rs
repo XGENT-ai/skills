@@ -42,6 +42,8 @@ pub struct Request<'a> {
     pub home: Option<PathBuf>,
     /// Scan business sources only for an explicit `migrate --from impeccable`.
     pub scan_sources: bool,
+    /// Install alongside Impeccable without inspecting or migrating its state.
+    pub keep_impeccable: bool,
     pub dry_run: bool,
     pub transaction_id: String,
 }
@@ -352,6 +354,7 @@ fn discover_personal(
     auxiliary: Option<&BTreeMap<String, BTreeMap<String, Payload>>>,
     conflicts: &mut Vec<Conflict>,
     findings: &mut Vec<Finding>,
+    keep_impeccable: bool,
 ) {
     let mut skill_roots = Vec::new();
     let mut hook_files = Vec::new();
@@ -382,7 +385,7 @@ fn discover_personal(
     let locked_upstream = skills_sh_upstream_skills(home);
     for (root, overrides_project) in skill_roots {
         let old = home.join(root).join("impeccable");
-        if fs::symlink_metadata(&old).is_ok() {
+        if !keep_impeccable && fs::symlink_metadata(&old).is_ok() {
             conflicts.push(Conflict {
                 path: old.display().to_string(),
                 provider: None,
@@ -424,7 +427,9 @@ fn discover_personal(
             continue;
         };
         let text = String::from_utf8_lossy(&bytes);
-        if text.contains("skills/impeccable/scripts") || text.contains("impeccable hook") {
+        if !keep_impeccable
+            && (text.contains("skills/impeccable/scripts") || text.contains("impeccable hook"))
+        {
             conflicts.push(Conflict {
                 path: path.display().to_string(),
                 provider: None,
@@ -464,7 +469,7 @@ fn discover_personal(
         .into_values()
         .filter_map(|(enabled, path)| enabled.then_some(path))
         .collect();
-    for path in enabled_in {
+    for path in enabled_in.into_iter().filter(|_| !keep_impeccable) {
         conflicts.push(Conflict {
             path: path.display().to_string(),
             provider: None,
@@ -818,6 +823,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
         manifest,
         &request.transaction_id,
         true,
+        request.keep_impeccable,
     ) {
         Ok(prepared) => prepared,
         Err(error) if error.kind == ErrorKind::RecoveryRequired => {
@@ -844,6 +850,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
             auxiliary.as_ref(),
             &mut report.conflicts,
             &mut report.findings,
+            request.keep_impeccable,
         );
     }
     let legacy_sources = sorted_unique(
@@ -863,7 +870,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
     );
     report.migration_sources = sorted_unique(carried_sources.into_iter().chain(legacy_sources));
     // Legacy data moves once, on the install that replaces the old tool.
-    let legacy = if active.is_none() {
+    let legacy = if active.is_none() && !request.keep_impeccable {
         let data = data::prepare_legacy_data(&project, &prepared.inventory, request.scan_sources)?;
         report.conflicts.extend(
             data.conflicts

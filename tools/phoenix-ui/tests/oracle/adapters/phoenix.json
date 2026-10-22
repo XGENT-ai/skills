@@ -56833,12 +56833,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -56860,12 +56860,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -56941,12 +56941,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -73394,12 +73394,13 @@
       "detect-fixture-text-framework-next-cssinjs",
       "detect-fixture-text-framework-next-modules",
       "detect-fixture-text-framework-next-tailwind",
-      "detect-framework-next-modules-text"
+      "detect-framework-next-modules-text",
+      "detect-fixture-text-framework-vite"
     ],
     "platform": "darwin",
     "profile": "(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))",
     "scope": "native synchronous runStep only; no daemon or other cases",
-    "reason": "static Next.js source fixtures must not discover an unrelated application listener on port 3000",
+    "reason": "static Next.js and Vite source fixtures must not discover an unrelated application listener on ports 3000 or 8080",
     "expected": "unchanged original output bytes, except separately registered public CLI wording",
     "source": [
       {
@@ -73411,7 +73412,7 @@
         "line": 11
       }
     ],
-    "validation": "Exact four-ID allowlist and retained argv are unit-tested; actual nested sandbox replay is separately recorded, never inferred."
+    "validation": "Exact five-ID allowlist and retained argv are unit-tested; actual nested sandbox replay is separately recorded, never inferred."
   },
   "platformPreconditions": {
     "policy": "Each entry establishes a POSIX fixture fact on another platform or reports a listed platform skip; outputs and goldens are not rewritten.",
@@ -73791,7 +73792,7 @@
     },
     {
       "file": "crates/skills/src/commands.rs",
-      "sha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948"
+      "sha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843"
     },
     {
       "file": "tests/oracle/adapters/critique-clock.mjs",

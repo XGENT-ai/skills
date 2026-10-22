@@ -57,7 +57,7 @@ export function verifyCorpus() {
     if (entry.sourceCommit !== upstream.sourceCommit || sha256(fs.readFileSync(path.join(REPO_ROOT, entry.path))) !== entry.sha256) throw new Error(`external root fixture changed: ${entry.path}`);
   }
   if (upstream.importedFiles[metadata.externalProjectFixture.target] !== metadata.externalProjectFixture.targetSha256) throw new Error('external project target is not pinned');
-  if (JSON.stringify(metadata.nativeNetworkPreconditions.ids) !== JSON.stringify(isolatedCases) || metadata.nativeNetworkPreconditions.profile !== offlineNetworkProfile) throw new Error('native network precondition differs from the reviewed four cases');
+  if (JSON.stringify(metadata.nativeNetworkPreconditions.ids) !== JSON.stringify(isolatedCases) || metadata.nativeNetworkPreconditions.profile !== offlineNetworkProfile) throw new Error('native network precondition differs from the reviewed static cases');
   for (const entry of metadata.currentEvidenceFiles) if (sha256(fs.readFileSync(path.join(REPO_ROOT,entry.file))) !== entry.sha256) throw new Error(`current expectation source changed: ${entry.file}`);
   return { sourceCommit: upstream.sourceCommit, files: files.length };
 }

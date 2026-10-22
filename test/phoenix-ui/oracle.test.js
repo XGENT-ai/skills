@@ -214,10 +214,10 @@ test('invalid flag exits remain historical and only four explicit missing catalo
   }
 });
 
-test('Darwin IP isolation is restricted to four static native invocations and preserves the original argv', async () => {
+test('Darwin IP isolation is restricted to five static native invocations and preserves the original argv', async () => {
   const { isolatedCases,nativeInvocation,offlineNetworkProfile,metadata,loadPhoenixCases }=await adapter;
   assert.deepEqual(isolatedCases,metadata.nativeNetworkPreconditions.ids);
-  assert.equal(isolatedCases.length,4);
+  assert.equal(isolatedCases.length,5);
   const {cases}=await loadPhoenixCases('/tmp/precise-native-engine');
   const argv=['/tmp/precise-native-engine','detect','fixture','--json'];
   for (const item of cases) {

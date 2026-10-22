@@ -8,6 +8,7 @@
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const readline = require('node:readline');
 
 const PKG_ROOT = path.join(__dirname, '..');
@@ -31,9 +32,8 @@ const MANAGED_SETTINGS = {
 };
 
 // ─── Phoenix UI ─────────────────────────────────────────────────────────────
-// Phoenix 的 skill、hooks、旧 impeccable 迁移与回滚全部由 Rust 安装执行器事务化
-// 完成;这里只把包内 manifest 固定的 engine 校验进用户 cache,再以参数数组调用
-// 它,不在 JS 里再写一套配置合并。旧 vendor/impeccable 安装路径已移除。
+// Phoenix 的受管安装、hooks 与回执由 Rust 执行器事务化完成。
+// 旧工具是否删除由 npm 安装入口询问,工具清理不备份、不迁移旧数据。
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
 const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
@@ -69,6 +69,112 @@ function runPhoenix(binary, args) {
   }
 }
 
+// Tool directories are reinstallable. Shared settings retain unrelated entries.
+function preparePhoenixTools(project, providers) {
+  const refresh = [];
+  const legacy = new Set();
+  const configs = new Set();
+  const parents = new Map();
+  let managed = [];
+  try {
+    managed = readJson(path.join(project, '.phoenix-ui/install/active.json')).ownership
+      .filter(item => item.sha256).map(item => item.path);
+  } catch { /* The engine reports an absent or invalid receipt during preflight. */ }
+  const present = (file) => !!fs.lstatSync(file, { throwIfNoEntry: false });
+  const checked = (root, relative) => {
+    const file = path.join(root, relative);
+    parents.set(file, root);
+    return file;
+  };
+  const home = fs.realpathSync(os.homedir());
+  for (const provider of providers) {
+    const roots = provider === '.agents' || provider === '.codex'
+      ? ['.agents', '.codex'] : [provider];
+    for (const root of [project, home]) {
+      for (const dir of roots) {
+        for (const relative of [
+          `${dir}/skills/impeccable`, `${dir}/commands/impeccable.md`,
+          ...['asset-producer', 'documenter', 'finish-reviewer', 'manual-edit-applier']
+            .map(name => `${dir}/agents/impeccable-${name}.md`),
+        ]) {
+          // An earlier explicit migration may own a Phoenix compatibility entry.
+          if (root === project && managed.some(file => file === relative || file.startsWith(`${relative}/`))) continue;
+          const file = checked(root, relative);
+          if (present(file)) legacy.add(file);
+        }
+        const shared = dir === '.claude' ? ['settings.json', 'settings.local.json']
+          : dir === '.gemini' ? ['settings.json']
+            : ['.github', '.grok'].includes(dir) ? ['hooks/impeccable.json', 'hooks/phoenix-ui.json'] : ['hooks.json'];
+        for (const relative of shared) {
+          const file = checked(root, `${dir}/${relative}`);
+          if (present(file)) configs.add(file);
+        }
+      }
+    }
+    if (!fs.existsSync(path.join(project, '.phoenix-ui/install'))) {
+      const file = checked(project, `${provider}/skills/phoenix-ui`);
+      if (present(file)) refresh.push(file);
+    }
+  }
+  const oldCommand = value => typeof value === 'string'
+    && /(?:skills[\\/]impeccable[\\/]scripts[\\/]impeccable(?:\.cmd)?|(?:^|[\s"'])impeccable\s+hook\b)/.test(value);
+  const oldHandler = value => value?.type === 'command'
+    && [value.command, value.commandWindows].some(oldCommand);
+  const originals = [...configs].map(file => ({ file, before: fs.readFileSync(file) }));
+  const hasLegacy = legacy.size > 0 || originals.some(({ before }) =>
+    /impeccable/.test(before.toString()) && (oldCommand(before.toString().replaceAll('\\"', '"')) || /"impeccable[^"\n]*"\s*:\s*true/.test(before.toString())));
+  const covers = relative => refresh.some(file => {
+    const target = path.relative(project, file).split(path.sep).join('/');
+    return relative === target || relative.startsWith(`${target}/`);
+  });
+  return {
+    hasLegacy, covers,
+    apply(replace) {
+      const updates = [];
+      if (replace) {
+        const clean = value => {
+          if (Array.isArray(value)) return value.filter(item => !oldHandler(item))
+            .flatMap(item => {
+              const next = clean(item);
+              return item?.hooks?.length > 0 && Array.isArray(next.hooks) && next.hooks.length === 0 ? [] : [next];
+            });
+          if (!value || typeof value !== 'object') return value;
+          return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clean(item)]));
+        };
+        for (const item of originals) {
+          let data;
+          try { data = JSON.parse(item.before.toString('utf8')); }
+          catch { throw phoenixFailure(1, `无法移除旧 hooks,配置不是合法 JSON: ${item.file}`); }
+          const next = { ...data };
+          if (data.hooks) next.hooks = clean(data.hooks);
+          if (data.enabledPlugins) next.enabledPlugins = Object.fromEntries(Object.entries(data.enabledPlugins)
+            .map(([key, value]) => [key, key.startsWith('impeccable') ? false : value]));
+          if (JSON.stringify(data) !== JSON.stringify(next)) updates.push({ ...item, after: JSON.stringify(next, null, 2) + '\n' });
+        }
+        for (const item of updates) {
+          if (!fs.readFileSync(item.file).equals(item.before)) throw phoenixFailure(3, `配置在预检后发生变化,请重跑: ${item.file}`);
+        }
+      }
+      const removals = [...refresh, ...(replace ? legacy : [])];
+      for (const file of [...removals, ...updates.map(item => item.file)]) {
+        for (let dir = path.dirname(file); dir !== parents.get(file); dir = path.dirname(dir)) {
+          if (fs.lstatSync(dir, { throwIfNoEntry: false })?.isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
+        }
+        if (updates.some(item => item.file === file) && fs.lstatSync(file).isSymbolicLink()) throw phoenixFailure(3, `共享配置是符号链接,未修改: ${file}`);
+      }
+      for (const file of removals) {
+        fs.rmSync(file, { recursive: true, force: true });
+        console.log(`  ${refresh.includes(file) ? '重新安装' : '删除'}  ${file}`);
+      }
+      for (const item of updates) {
+        fs.writeFileSync(item.file, item.after);
+        console.log(`  更新  ${item.file} (移除 impeccable hooks/插件启用项)`);
+      }
+      if (hasLegacy && !replace) console.log('  保留  impeccable,与 Phoenix UI 共存');
+    },
+  };
+}
+
 // 预检只写用户 cache 里的 engine;dry-run 不写项目。冲突时整个安装在写项目前停下。
 async function preparePhoenix(targetDir, options) {
   const manifest = bootstrap.manifestAt(path.join(PHOENIX_DIR, 'VERSION.json'));
@@ -81,14 +187,15 @@ async function preparePhoenix(targetDir, options) {
       + '  可用 --release-dir=DIR 指向已核验的离线 release 目录,或加 --no-phoenix-ui 先安装其余部分。');
   }
   const args = ['install', '--project', targetDir, '--bundle-root', path.join(PHOENIX_DIR, 'bundle'),
-    '--auxiliary-root', path.join(PKG_ROOT, 'skills'), '--json'];
+    '--auxiliary-root', path.join(PKG_ROOT, 'skills'), '--keep-impeccable', '--json'];
   if (options.providers) args.push('--providers', options.providers);
   const plan = runPhoenix(binary, [...args, '--dry-run']).report;
-  if (plan.status === 'conflict') {
+  const tools = preparePhoenixTools(plan.project, plan.providers);
+  if (plan.status === 'conflict' && plan.conflicts.some(conflict => !tools.covers(conflict.path))) {
     printPhoenix(plan, manifest);
     throw phoenixFailure(3, 'Phoenix UI 预检发现冲突,未修改项目。解决上列冲突后重跑;或加 --no-phoenix-ui 先安装其余部分。');
   }
-  return { manifest, binary, args };
+  return { manifest, binary, args, tools };
 }
 
 function groupedPaths(paths) {
@@ -334,7 +441,7 @@ function usage() {
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill、hooks 与五个辅助 skill;engine 校验后
-                  放入用户 cache;旧 impeccable 项目事务化迁移、可回滚),
+                  放入用户 cache;旧 impeccable 可选择替换或共存),
                   并询问是否创建通用的 AGENTS.md;
                   Codex / Claude Code goal 上下文收尾提醒默认不安装
   help            显示本帮助
@@ -342,6 +449,8 @@ function usage() {
 install 选项:
   --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings(不删除已装版本)
   --no-impeccable       已弃用,等同 --no-phoenix-ui
+  --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
+  --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
   --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
@@ -356,14 +465,14 @@ install 选项:
   --providers=a,b       指定 Phoenix UI 装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
   --force               允许覆盖非法 JSON 的 guard 配置(先存 .bak),不覆盖已有 AGENTS.md;
-                        不放宽 Phoenix UI:用户改动与冲突始终保留,按提示解决后重跑
+                        不绕过 Phoenix 受管安装及共享配置的冲突保护
 `);
 }
 
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
     && !['--providers=', '--release-dir=', '--context-goal-guard-threshold=', '--claude-context-goal-guard-threshold='].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
@@ -373,6 +482,9 @@ async function install(args) {
   if (flags.includes('--xgent-init') && flags.includes('--no-xgent-init')) {
     console.error('错误: --xgent-init 与 --no-xgent-init 不能同时使用');
     process.exit(1);
+  }
+  if (flags.includes('--replace-impeccable') && flags.includes('--keep-impeccable')) {
+    throw phoenixFailure(1, '--replace-impeccable 与 --keep-impeccable 不能同时使用');
   }
   if (flags.includes('--context-goal-guard') && flags.includes('--no-context-goal-guard')) {
     console.error('错误: --context-goal-guard 与 --no-context-goal-guard 不能同时使用');
@@ -444,20 +556,32 @@ async function install(args) {
   const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
   const guard = flags.includes('--context-goal-guard') || codexThreshold !== undefined;
   const claudeGuard = flags.includes('--claude-context-goal-guard') || claudeThreshold !== undefined;
-  const codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
-  const claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
+  let codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
+  let claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
   const phoenix = options.phoenix ? await preparePhoenix(targetDir, options) : null;
-  const rl = process.stdin.isTTY && askAgents
+  const askReplace = phoenix?.tools.hasLegacy && !flags.includes('--replace-impeccable') && !flags.includes('--keep-impeccable');
+  const rl = process.stdin.isTTY && (askAgents || askReplace)
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
   rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
   let agents;
+  let replace = flags.includes('--replace-impeccable');
   try {
+    if (askReplace) replace = await confirm(
+      '发现旧 impeccable,是否删除并替换为 Phoenix UI(含个人级入口,不备份)? [y/N] ',
+      '  保留  impeccable:无交互环境默认共存;可用 --replace-impeccable 替换', answers);
     agents = flags.includes('--xgent-init') || (askAgents && await confirm(
       '是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ',
       '  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建', answers));
   } finally {
     rl?.close();
+  }
+  if (phoenix) {
+    phoenix.tools.apply(replace);
+    // Cleanup may change shared settings that the optional guards also merge.
+    if (fs.existsSync(settingsPath)) settings = readJson(settingsPath);
+    codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
+    claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
   }
   codexGuardPlan?.write();
   claudeGuardPlan?.write();
