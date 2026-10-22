@@ -519,11 +519,18 @@ export async function runExploreAcceptance(options) {
 }
 
 // Focus each requested node and capture its details panel for actual viewing,
-// with the source evidence state the Reader displays.
+// with the source evidence state the Reader displays. `evidence: false` accepts
+// details without source evidence; a node may name its own viewport.
 export async function runPassportAcceptance(options) {
   return withBrowserPage(options, 'explore', async page => {
     page.report.passports = [];
-    for (const { id, theme = 'dark' } of options.nodes) {
+    let current = '1440x900';
+    for (const { id, theme = 'dark', viewport = { width: 1440, height: 900 } } of options.nodes) {
+      const size = viewport.width + 'x' + viewport.height;
+      if (size !== current) {
+        await page.send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: false });
+        current = size;
+      }
       await page.load(theme, false, { hash: 'focus=' + id });
       await delay(400);
       const state = await page.evaluate(id => {
@@ -532,15 +539,16 @@ export async function runPassportAcceptance(options) {
           state: evidence.getAttribute('data-evidence-state'), status: evidence.querySelector('.semantic-passport-evidence-status').textContent,
           repository: document.getElementById('focus-repository').textContent, repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
           rows: rows.map(row => ({ tag: row.localName, state: row.getAttribute('data-evidence-state'), href: row.getAttribute('href'), text: row.textContent })), label: document.querySelector('[data-node-id="' + id + '"]').getAttribute('aria-label'),
-          // Status, repository, path and pending reason must be readable in full, not ellipsized.
-          clipped: Array.from(evidence.querySelectorAll('.semantic-passport-evidence-status, .semantic-passport-repository, .semantic-passport-source strong, .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
+          context: document.getElementById('focus-context').textContent,
+          // Detail, metadata, status, repository, path and pending reason must be readable in full, not ellipsized.
+          clipped: Array.from(document.querySelectorAll('#focus-detail, #focus-passport-meta > *, #focus-evidence .semantic-passport-evidence-status, #focus-evidence .semantic-passport-repository, #focus-evidence .semantic-passport-source strong, #focus-evidence .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
       }, id);
-      if (state.focus !== id || state.detailsHidden || state.hidden) throw new Error('Details did not show source evidence for ' + id);
-      if (state.clipped.length) throw new Error('Source evidence text is clipped for ' + id + ': ' + state.clipped.join(' | '));
+      if (state.focus !== id || state.detailsHidden || (state.hidden && options.evidence !== false)) throw new Error('Details did not show' + (options.evidence === false ? '' : ' source evidence') + ' for ' + id);
+      if (state.clipped.length) throw new Error('Details text is clipped for ' + id + ': ' + state.clipped.join(' | '));
       const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
-      const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}.png`);
+      const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}${size === '1440x900' ? '' : '-' + size}.png`);
       fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
-      page.report.passports.push({ id, theme, ...state, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
+      page.report.passports.push({ id, theme, viewport, ...state, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
     }
     page.report.stateRestoration = { status: 'not-applicable', observations: [] };
   });

@@ -400,10 +400,29 @@ test('the corpus browser-checks every 3.1.0 reference JSON, original five types 
     const directory=args[args.indexOf('--out-dir')+1];fs.mkdirSync(directory);checked.push(args[0]);
     return{exitCode:0,receipt:{status:'pass',screenshots:['light','dark'].map(theme=>{const file=path.join(directory,`${theme}.png`);fs.writeFileSync(file,theme);return{path:file,identity:{sha256:theme,bytes:theme.length},theme,viewport:{width:1440,height:900}};})}};
   };
-  const report=await run('corpus',{runRoot,engine:{path:'/fake/engine'}},{},{invoke});
+  // Fake details show what the given context function writes; the real Reader runs in the actual corpus scope.
+  const details=[];
+  const passportsWith=context=>async({artifactPath,evidenceDir,nodes,evidence})=>{
+    const caseRoot=path.dirname(artifactPath),document=JSON.parse(fs.readFileSync(path.join(caseRoot,'candidate.json'),'utf8')),receiptPath=path.join(evidenceDir,'index.json');
+    details.push({name:path.basename(caseRoot),evidence,nodes});fs.writeFileSync(receiptPath,'{}');
+    return{status:'pass',receiptPath,passports:nodes.map(({id,viewport})=>{
+      const file=path.join(evidenceDir,`${id}-${viewport.width}.png`),keys=document.entities.find(entity=>entity.id===id).attributes.filter(attribute=>attribute.references);fs.writeFileSync(file,id);
+      return{id,viewport,context:context(keys),screenshot:{path:file,identity:{sha256:id,bytes:id.length}}};
+    })};
+  };
+  const complete=keys=>'Entity › '+keys.map(key=>`${key.name} → ${key.references}`).join(', ');
+  const report=await run('corpus',{runRoot,engine:{path:'/fake/engine'}},{},{invoke,passports:passportsWith(complete)});
   const references=report.cases.filter(entry=>entry.contract==='phoenix-v1');
   assert.equal(report.references,25);assert.equal(references.length,25);assert.equal(checked.length,25);
   assert.ok(LEGACY_TYPES.every(type=>references.some(entry=>entry.type===type && entry.screenshots?.length===2)),'each original type has actual-viewing screenshots');
   assert.ok(references.every(entry=>entry.screenshots?.length===2 && entry.visual));
   assert.ok(report.cases.filter(entry=>entry.contract==='legacy-2.17').every(entry=>entry.screenshots===undefined));
+  // Only ERD tables with several foreign keys are opened, each at 1440x900 and 390x844, without requiring source evidence.
+  assert.deepEqual(details.map(entry=>[entry.name,entry.evidence,entry.nodes.map(node=>`${node.id}@${node.viewport.width}x${node.viewport.height}`)]),[
+    ['orders.erd',false,['order_item@1440x900','order_item@390x844']],
+    ['subscription-billing.erd',false,['membership@1440x900','membership@390x844','subscription@1440x900','subscription@390x844','payment@1440x900','payment@390x844']],
+  ]);
+  assert.ok(references.filter(entry=>entry.type==='erd').every(entry=>entry.passports.screenshots.length>0 && entry.passports.screenshots.every(shot=>shot.viewing==='required')));
+  // Details that omit the last foreign key target fail the corpus.
+  await assert.rejects(run('corpus',{runRoot:temp(t),engine:{path:'/fake/engine'}},{},{invoke,passports:passportsWith(keys=>complete(keys.slice(0,-1)))}),/omit a foreign key target of order_item/);
 });

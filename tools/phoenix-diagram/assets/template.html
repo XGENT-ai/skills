@@ -5089,6 +5089,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .semantic-passport-repository,
     .semantic-passport-source strong,
     .semantic-passport-source small { white-space: normal; overflow-wrap: anywhere; }
+    /* A long context, such as every foreign key target of a table, wraps too. The
+       radius still rounds a one-line chip fully but keeps wrapped lines inside it. */
+    .semantic-passport-meta [data-passport="context"] { white-space: normal; overflow-wrap: anywhere; border-radius: 0.625rem; }
   </style>
 </head>
 <body>

@@ -44,8 +44,10 @@ export function verifyCoreFacts(document,type,html) {
   return{nodes:authored.length,relations:expected.length};
 }
 
-async function corpus(index,options,{invoke}) {
+const DETAIL_VIEWPORTS=[{width:1440,height:900},{width:390,height:844}];
+async function corpus(index,options,{invoke,passports}) {
   if(index.corpus?.status==='pass')return index.corpus;
+  passports??=(await import('../tools/phoenix-diagram/tests/export-acceptance.mjs')).runPassportAcceptance;
   const scopeRoot=directory(path.join(index.runRoot,`corpus-${randomBytes(8).toString('hex')}`));
   const before=referenceFiles(),cases=[];
   const legacyLifecycle=path.join(root,'tools/phoenix-diagram/upstream/legacy-2.17/examples/deployment-release.lifecycle.json');
@@ -71,6 +73,14 @@ async function corpus(index,options,{invoke}) {
       record.screenshots=visual.receipt.screenshots.filter(shot=>shot.viewport.width===1440 && shot.viewport.height===900).map(shot=>({path:shot.path,identity:shot.identity,theme:shot.theme,viewing:'required'}));
       requireThat(record.screenshots.length===2,'Dark and light 1440x900 screenshots are required for actual viewing');
       record.visual=writeNew(path.join(caseRoot,'visual-check.json'),visual.receipt);
+      // A table with several foreign keys names every target in its details, on desktop and narrow screens.
+      const tables=type==='erd'?document.entities.filter(entity=>(entity.attributes || []).filter(attribute=>attribute.references).length>1):[];
+      if(tables.length) {
+        const report=await passports({artifactPath:output,evidenceDir:directory(path.join(caseRoot,'passports')),browserPath:options.browserPath,offline:true,evidence:false,nodes:tables.flatMap(entity=>DETAIL_VIEWPORTS.map(viewport=>({id:entity.id,theme:'light',viewport})))});
+        requireThat(report.status==='pass',`Reference ${entry.name} details failed: ${JSON.stringify(report.errors)}`);
+        for(const passport of report.passports)requireThat(tables.find(entity=>entity.id===passport.id).attributes.filter(attribute=>attribute.references).every(attribute=>passport.context.includes(`${attribute.name} → ${attribute.references}`)),`Reference ${entry.name} details omit a foreign key target of ${passport.id}`);
+        record.passports={receipt:bound(readSnapshot(report.receiptPath)),screenshots:report.passports.map(passport=>({id:passport.id,viewport:passport.viewport,path:passport.screenshot.path,identity:passport.screenshot.identity,viewing:'required'}))};
+      }
     }
     cases.push(record);
   }
