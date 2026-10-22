@@ -44,3 +44,7 @@
 - 074c0f0e-40db-4006-aa7a-bb0a2d1b68a2 · [合并 origin/main 的本机测试环境](074c0f0e-40db-4006-aa7a-bb0a2d1b68a2.md)
 
 - 837a3f59-702b-4195-8e5c-39a07ca47966 · [Phoenix 安装冲突修复](837a3f59-702b-4195-8e5c-39a07ca47966.md)
+
+- b74bc53b-7244-4bb9-b8e6-0b19aadedddc · [Phoenix UI 初始化与 subagent 门槛纠正](b74bc53b-7244-4bb9-b8e6-0b19aadedddc.md)
+
+- 78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f · [SDLC 长任务收敛与真实交付](78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f.md)

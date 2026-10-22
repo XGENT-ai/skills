@@ -83,6 +83,8 @@ npx skills add XGENT-ai/skills --skill xgent-init
 
 Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
+Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
+
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
 - **已有工具**:安装时发现 impeccable 会询问是否替换。选择替换则直接删除所选 provider 的项目级及个人级旧入口和旧 hooks,不备份、不留转跳入口;选择保留则共存,不阻止 Phoenix 安装,无交互环境默认保留。没有安装事务状态的 Phoenix 源码副本直接删除后重装。业务源码、旧工具的数据和文档不改动;共享配置中的其他 hooks 保留。
 - **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。

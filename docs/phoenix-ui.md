@@ -115,6 +115,8 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具或 go
 
 本节适用于支持结构化 context 与 managed 评审协议的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 从实际回执/候选包读取；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。
 
+Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 直接依据目标项目的事实和已确认信息生成或补齐 PRODUCT.md，不依赖 `xgent-init`；产品边界、平台和设计约束均来自项目本身，不预设宿主平台或接入方式。subagent 与并行方式由 coding agent 结合自身能力、策略和用户约束选择，Phoenix 不另设授权询问或等待步骤；critique 的单上下文执行仍须先完成 A 再运行 B，并披露降级原因。
+
 视觉参考用 `design-reference`，交互选型用 `ui-pattern-research`，维护项目规范用 `design-md`，已选方向的实现继续用 `phoenix-ui`。先读取明确目标的上下文：
 
 ```bash

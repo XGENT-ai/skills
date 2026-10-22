@@ -6,16 +6,17 @@ license: Apache 2.0
 metadata:
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 5c927aea719c3d5648b13943c104508009f50ceb59aef7e0317d9b33215311aa
+  source_sha256: c9733be7e6d05dbff54b46569fa9afa0076e88a9303a9cf6f2061ac05f3d626e
 ---
 
-Phoenix UI provides local design tools for frontend work. Follow the project's product truth, accepted direction, and design rules; use the command references to create complete, accessible interfaces with a clear visual direction.
+Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
 
 Install this runtime through `@xgent-ai/skills` on npm. Source copies from skills.sh do not include an engine installation. The engine does not update or download during context, detection, or hooks. Explicit `engine install` restores the version pinned by the installed package.
 
 Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
 - Dream big and bold. Distinct, beautiful, outstanding and highly inspiring work.
+- Let the coding agent choose sub-agents and parallelism for efficiency under its own orchestration policy and the user's constraints. Phoenix adds no separate approval or waiting step for delegation.
 - Keep Phoenix design self-QA to one batched inspection and at most one confirmation after fixing the findings. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
 
 ## Setup
