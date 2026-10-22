@@ -14,12 +14,6 @@ const readline = require('node:readline');
 const PKG_ROOT = path.join(__dirname, '..');
 const HOOKS_SRC_DIR = path.join(PKG_ROOT, '.claude', 'hooks');
 const AGENTS_TEMPLATE = path.join(PKG_ROOT, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
-const CONTEXT_GOAL_GUARD_SRC = path.join(PKG_ROOT, 'hooks', 'codex', 'context-goal-guard.py');
-// 不放进 .claude/hooks:那里的文件会被无条件复制到目标项目,绕过用户选择。
-const CLAUDE_CONTEXT_GOAL_GUARD_SRC = path.join(PKG_ROOT, 'hooks', 'claude', 'context-goal-guard.js');
-// 与两份脚本内置的默认阈值一致;安装器总是把阈值写进 handler 命令,在 /hooks 里可见。
-const CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD = 65;
-const CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD = 70;
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -46,13 +40,6 @@ const PHOENIX_STATUS = {
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
-}
-
-function writeFileIfChanged(dest, content) {
-  if (fs.existsSync(dest) && content.equals(fs.readFileSync(dest))) return false;
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, content, { mode: 0o644 });
-  return true;
 }
 
 function phoenixFailure(code, message) {
@@ -306,175 +293,6 @@ async function confirm(question, skipMessage, answers) {
   return /^(y|yes)$/i.test(value.trim());
 }
 
-// 重装没给阈值 flag 时沿用旧 handler 里的值。
-function guardThreshold(command) {
-  return Number(/ --threshold ([1-9][0-9]?)$/.exec(command)?.[1]) || undefined;
-}
-
-// 先校验并算出内容,返回写入动作;任何项目写入都在全部预检之后。
-function prepareContextGoalGuard(targetDir, force, threshold) {
-  const python = spawnSync('python3', ['-c', 'import sys, sqlite3; sys.exit(0 if sys.version_info >= (3, 9) else 1)'],
-    { encoding: 'utf8', timeout: 5000 });
-  if (python.status !== 0) {
-    throw new Error('Codex goal guard 需要含 sqlite3 的 Python 3.9 或更高版本。请先安装并用 python3 --version 核对,确保 Codex 运行环境也能找到 python3,再重试;或加 --no-context-goal-guard 跳过。');
-  }
-  const manifestPath = path.join(targetDir, '.codex', 'hooks.json');
-  let existing = {};
-  let backup = false;
-  if (fs.existsSync(manifestPath)) {
-    try {
-      existing = readJson(manifestPath);
-    } catch (error) {
-      if (!(error instanceof SyntaxError)) throw error;
-      if (!force) throw new Error(`${manifestPath} 不是合法 JSON,未修改;请先手动修复,或加 --force 备份为 .bak 后覆盖。`);
-      backup = true;
-    }
-  }
-  // 合法 JSON 的未知结构不能当成空配置,否则会丢失用户的 hooks。
-  if (!existing || typeof existing !== 'object' || Array.isArray(existing)
-      || (existing.hooks !== undefined && (!existing.hooks || typeof existing.hooks !== 'object' || Array.isArray(existing.hooks)))
-      || Object.values(existing.hooks || {}).some((entries) => !Array.isArray(entries))) {
-    throw new Error(`${manifestPath} 的 hooks 结构不受支持,未修改;请先手动修复为事件数组。`);
-  }
-  const scriptPath = path.join(fs.realpathSync(targetDir), '.codex', 'hooks', 'context-goal-guard.py');
-  let previous;
-  const hooks = { ...existing.hooks };
-  for (const event of ['PreToolUse', 'Stop']) {
-    const kept = [];
-    for (const entry of hooks[event] || []) {
-      if (!Array.isArray(entry?.hooks)) {
-        kept.push(entry);
-        continue;
-      }
-      const handlers = entry.hooks.filter((handler) => {
-        const guard = handler?.type === 'command' && typeof handler.command === 'string'
-          && /\.codex\/hooks\/context-goal-guard\.py(?:['"\s]|$)/.test(handler.command);
-        if (guard) previous ??= guardThreshold(handler.command);
-        return !guard;
-      });
-      if (handlers.length === entry.hooks.length) kept.push(entry);
-      else if (handlers.length > 0) kept.push({ ...entry, hooks: handlers });
-    }
-    hooks[event] = kept;
-  }
-  const limit = threshold ?? previous ?? CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD;
-  // 运行时从 Git 根目录定位,避免配置绑定安装机器或会话子目录。
-  const command = `python3 "$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py" --threshold ${limit}`;
-  const handler = { type: 'command', command, timeout: 3 };
-  // 已有且仅有同一 handler 时保留原字节和位置:Phoenix 安装器随后会在同一文件追加自己的分组。
-  const installed = !backup && ['PreToolUse', 'Stop'].every((event) => {
-    const guards = (existing.hooks?.[event] || []).flatMap((entry) => (Array.isArray(entry?.hooks) ? entry.hooks : []))
-      .filter((item) => /\.codex\/hooks\/context-goal-guard\.py(?:['"\s]|$)/.test(item?.command ?? ''));
-    return guards.length === 1 && JSON.stringify(guards[0]) === JSON.stringify(handler);
-  });
-  for (const event of ['PreToolUse', 'Stop']) hooks[event].push({ hooks: [handler] });
-  const script = fs.readFileSync(CONTEXT_GOAL_GUARD_SRC);
-  const manifest = installed ? fs.readFileSync(manifestPath) : Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
-  return {
-    limit,
-    write() {
-      if (backup) fs.copyFileSync(manifestPath, `${manifestPath}.bak`);
-      console.log(`  ${writeFileIfChanged(scriptPath, script) ? '写入' : '未变'}  .codex/hooks/context-goal-guard.py`);
-      console.log(`  ${writeFileIfChanged(manifestPath, manifest) ? '写入' : '未变'}  .codex/hooks.json (context goal guard)`);
-    },
-  };
-}
-
-function printContextGoalGuardSteps(threshold) {
-  console.log(`
-Codex goal guard 已部署,请完成以下操作后使用:
-  1. 在目标项目运行 codex --version;目前仅验证 Codex 0.160.0、macOS arm64。
-     其他版本的会话格式不自动兼容;请先在隔离项目验证。
-  2. 从目标项目启动 Codex,审阅并信任项目 .codex/ 层。
-     在 Codex 对话中输入 /hooks,找到本项目 .codex/hooks.json 的
-     PreToolUse 和 Stop 两个 context-goal-guard.py handler,分别审阅、信任并启用。
-     核对两者来源和状态,确认其他 hooks 仍保留;配置或脚本更新后重新审阅信任。
-  3. 安装与信任不构成暂停授权。请在当前 goal 的用户指令中明确(可复制):
-     对当前 goal,如果本地估算上下文使用率严格超过 ${threshold}%,请先安全收尾,
-     按已有任务约定保存进度和交接说明,再使用原生 goal 工具将其设为 paused
-     并核对,无需二次确认。未完成工作不要标为 complete。请提醒我自己新开对话继续。
-  4. 先用测试 goal 验证提醒与真实 paused 状态。/goal resume 撤销先前暂停请求,
-     需重新明确策略;新开对话也需手动设置新 goal 并重新明确策略。
-     暂停失败时在原对话输入 /goal pause;临时停用可在 /hooks 中禁用这两个 handler。
-  提示: 请安装到 Git 仓库根目录;Codex 运行环境必须能找到 git 和 Python 3.9+。
-        hook 运行时从 Git 根目录定位脚本;没有 active goal 时不会触发。
-`);
-}
-
-// 与 prepareContextGoalGuard 形状相似,但文件、事件和匹配式都不同,暂不抽公共函数。
-function prepareClaudeContextGoalGuard(targetDir, force, threshold) {
-  const settingsPath = path.join(targetDir, '.claude', 'settings.local.json');
-  let existing = {};
-  let backup = false;
-  if (fs.existsSync(settingsPath)) {
-    try {
-      existing = readJson(settingsPath);
-    } catch (error) {
-      if (!(error instanceof SyntaxError)) throw error;
-      if (!force) throw new Error(`${settingsPath} 不是合法 JSON,未修改;请先手动修复,或加 --force 备份为 .bak 后覆盖。`);
-      backup = true;
-    }
-  }
-  // 合法 JSON 的未知结构不能当成空配置,否则会丢失用户的设置。
-  if (!existing || typeof existing !== 'object' || Array.isArray(existing)
-      || (existing.hooks !== undefined && (!existing.hooks || typeof existing.hooks !== 'object' || Array.isArray(existing.hooks)))
-      || Object.values(existing.hooks || {}).some((entries) => !Array.isArray(entries))) {
-    throw new Error(`${settingsPath} 的 hooks 结构不受支持,未修改;请先手动修复为事件数组。`);
-  }
-  let previous;
-  const hooks = { ...existing.hooks };
-  for (const event of ['PostToolBatch', 'Stop']) {
-    const kept = [];
-    for (const entry of hooks[event] || []) {
-      if (!Array.isArray(entry?.hooks)) {
-        kept.push(entry);
-        continue;
-      }
-      const handlers = entry.hooks.filter((handler) => {
-        const guard = handler?.type === 'command' && typeof handler.command === 'string'
-          && /\.claude\/hooks\/context-goal-guard\.js(?:['"\s]|$)/.test(handler.command);
-        if (guard) previous ??= guardThreshold(handler.command);
-        return !guard;
-      });
-      if (handlers.length === entry.hooks.length) kept.push(entry);
-      else if (handlers.length > 0) kept.push({ ...entry, hooks: handlers });
-    }
-    hooks[event] = kept;
-  }
-  const limit = threshold ?? previous ?? CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD;
-  const command = `node "$CLAUDE_PROJECT_DIR/.claude/hooks/context-goal-guard.js" --threshold ${limit}`;
-  for (const event of ['PostToolBatch', 'Stop']) hooks[event].push({ hooks: [{ type: 'command', command, timeout: 5 }] });
-  const script = fs.readFileSync(CLAUDE_CONTEXT_GOAL_GUARD_SRC);
-  const settings = Buffer.from(JSON.stringify({ ...existing, hooks }, null, 2) + '\n');
-  return {
-    limit,
-    write() {
-      if (backup) fs.copyFileSync(settingsPath, `${settingsPath}.bak`);
-      console.log(`  ${writeFileIfChanged(path.join(targetDir, '.claude', 'hooks', 'context-goal-guard.js'), script) ? '写入' : '未变'}  .claude/hooks/context-goal-guard.js`);
-      console.log(`  ${writeFileIfChanged(settingsPath, settings) ? '写入' : '未变'}  .claude/settings.local.json (context goal guard)`);
-    },
-  };
-}
-
-function printClaudeContextGoalGuardSteps(threshold) {
-  console.log(`
-Claude Code goal guard 已部署,请完成以下操作后使用:
-  1. 运行 claude --version;目前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64,
-     以及 claude-opus-5-5、claude-sonnet-5-5(1M)与 claude-haiku-4-5-20251001(200k)。
-     可在 statusLine 输入的 context_window.context_window_size 核对窗口,不一致时不要启用。
-  2. 重启 Claude Code 会话并信任本工作区;输入 /hooks,确认 PostToolBatch 与 Stop
-     各有一个 context-goal-guard.js handler,来源为 .claude/settings.local.json,其他 hooks 仍在。
-  3. 先用测试 goal 验证:估算上下文严格超过 ${threshold}% 时 agent 收到收尾提醒;回合结束时
-     界面可能先出现「Stop hook error: …」(收尾请求,属正常),随后出现 Goal paused。
-  4. 接续:在同一项目目录新开对话或 /clear,提供计划路径或交接摘要,并重新设置 /goal;
-     新对话不继承 goal。原会话发消息或 --resume 会恢复 goal 并再次触发暂停,
-     不再需要时在原会话 /goal clear。
-  5. 停用:从 .claude/settings.local.json 删除这两个 handler 并重启会话;
-     不要用 disableAllHooks,它会连 /goal 一起禁用。
-  说明见 @xgent-ai/skills 包内 docs/claude-context-goal-guard.md;没有 active goal 时不会触发。
-`);
-}
-
 function createAgents(targetDir) {
   const dest = path.join(targetDir, 'AGENTS.md');
   try {
@@ -495,8 +313,7 @@ function usage() {
                   Phoenix UI(设计 skill、hooks 与五个辅助 skill;engine 校验后
                   放入用户 cache;旧 impeccable 可选择替换或共存),
                   以及 Phoenix Diagram(五类图解 skill 与独立原生 engine),
-                  并询问是否创建通用的 AGENTS.md;
-                  Codex / Claude Code goal 上下文收尾提醒默认不安装
+                  并询问是否创建通用的 AGENTS.md
   help            显示本帮助
 
 install 选项:
@@ -509,26 +326,16 @@ install 选项:
   --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
-  --context-goal-guard  显式安装 Codex goal guard(默认不安装,需要 Python 3.9+)
-  --no-context-goal-guard 跳过 Codex goal guard(默认行为,保留已有 guard)
-  --context-goal-guard-threshold=N  Codex guard 的阈值百分比(1–99 整数,默认 ${CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};
-                        重装时不给则沿用已装的值),同时表示安装
-  --claude-context-goal-guard 显式安装 Claude Code goal guard(默认不安装)
-  --no-claude-context-goal-guard 跳过 Claude Code goal guard(默认行为,保留已有 guard)
-  --claude-context-goal-guard-threshold=N  Claude Code guard 的阈值百分比(1–99 整数,
-                        默认 ${CLAUDE_CONTEXT_GOAL_GUARD_DEFAULT_THRESHOLD};重装时不给则沿用已装的值),同时表示安装
   --providers=a,b       指定两个 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
-  --force               允许覆盖非法 JSON 的 guard 配置(先存 .bak),不覆盖已有 AGENTS.md;
-                        不绕过 Phoenix 受管安装及共享配置的冲突保护
 `);
 }
 
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init', '--context-goal-guard', '--no-context-goal-guard', '--claude-context-goal-guard', '--no-claude-context-goal-guard', '--force'].includes(f)
-    && !['--providers=', '--release-dir=', '--diagram-release-dir=', '--context-goal-guard-threshold=', '--claude-context-goal-guard-threshold='].some((p) => f.startsWith(p)));
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init'].includes(f)
+    && !['--providers=', '--release-dir=', '--diagram-release-dir='].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
@@ -541,38 +348,11 @@ async function install(args) {
   if (flags.includes('--replace-impeccable') && flags.includes('--keep-impeccable')) {
     throw phoenixFailure(1, '--replace-impeccable 与 --keep-impeccable 不能同时使用');
   }
-  if (flags.includes('--context-goal-guard') && flags.includes('--no-context-goal-guard')) {
-    console.error('错误: --context-goal-guard 与 --no-context-goal-guard 不能同时使用');
-    process.exit(1);
-  }
-  if (flags.includes('--claude-context-goal-guard') && flags.includes('--no-claude-context-goal-guard')) {
-    console.error('错误: --claude-context-goal-guard 与 --no-claude-context-goal-guard 不能同时使用');
-    process.exit(1);
-  }
-  const thresholds = {};
-  for (const [name, skip] of [['--context-goal-guard-threshold', '--no-context-goal-guard'],
-    ['--claude-context-goal-guard-threshold', '--no-claude-context-goal-guard']]) {
-    const flag = flags.find((f) => f.startsWith(`${name}=`));
-    if (flag === undefined) continue;
-    const value = flag.slice(name.length + 1);
-    if (!/^[1-9][0-9]?$/.test(value)) {
-      console.error(`错误: ${name} 需要 1–99 的整数百分比,收到 "${value}"`);
-      process.exit(1);
-    }
-    if (flags.includes(skip)) {
-      console.error(`错误: ${name} 与 ${skip} 不能同时使用`);
-      process.exit(1);
-    }
-    thresholds[name] = Number(value);
-  }
-  const codexThreshold = thresholds['--context-goal-guard-threshold'];
-  const claudeThreshold = thresholds['--claude-context-goal-guard-threshold'];
   const releaseDir = flags.find((f) => f.startsWith('--release-dir='))?.slice('--release-dir='.length);
   const diagramReleaseDir = flags.find((f) => f.startsWith('--diagram-release-dir='))?.slice('--diagram-release-dir='.length);
   const options = {
     phoenix: !flags.includes('--no-phoenix-ui') && !flags.includes('--no-impeccable'),
     diagram: !flags.includes('--no-phoenix-diagram'),
-    force: flags.includes('--force'),
     providers: flags.find((f) => f.startsWith('--providers='))?.slice('--providers='.length),
     releaseDir: releaseDir ? path.resolve(releaseDir) : undefined,
     diagramReleaseDir: diagramReleaseDir ? path.resolve(diagramReleaseDir) : undefined,
@@ -617,10 +397,6 @@ async function install(args) {
   }
   const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
   const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
-  const guard = flags.includes('--context-goal-guard') || codexThreshold !== undefined;
-  const claudeGuard = flags.includes('--claude-context-goal-guard') || claudeThreshold !== undefined;
-  let codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
-  let claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
   const phoenix = options.phoenix ? await preparePhoenix(targetDir, options) : null;
   const diagram = options.diagram ? await prepareDiagram(targetDir, options) : null;
   const askReplace = phoenix?.tools.hasLegacy && !flags.includes('--replace-impeccable') && !flags.includes('--keep-impeccable');
@@ -642,13 +418,9 @@ async function install(args) {
   }
   if (phoenix) {
     phoenix.tools.apply(replace);
-    // Cleanup may change shared settings that the optional guards also merge.
+    // Cleanup may change shared settings.
     if (fs.existsSync(settingsPath)) settings = readJson(settingsPath);
-    codexGuardPlan = guard ? prepareContextGoalGuard(targetDir, options.force, codexThreshold) : null;
-    claudeGuardPlan = claudeGuard ? prepareClaudeContextGoalGuard(targetDir, options.force, claudeThreshold) : null;
   }
-  codexGuardPlan?.write();
-  claudeGuardPlan?.write();
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -676,8 +448,6 @@ async function install(args) {
 
   if (agents) createAgents(targetDir);
   else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
-  if (codexGuardPlan) printContextGoalGuardSteps(codexGuardPlan.limit);
-  if (claudeGuardPlan) printClaudeContextGoalGuardSteps(claudeGuardPlan.limit);
 
   // XGENT 部分已完成;Phoenix 在锁内重读这些文件后再应用,中断时可重试。
   if (phoenix) {

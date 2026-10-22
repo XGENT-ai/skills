@@ -241,7 +241,7 @@ test('an unrelated hook conflict stops installation before deleting a source-onl
   fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(fixture.projectRoot, '.agents/skills/phoenix-ui'), { recursive: true });
   fs.writeFileSync(path.join(fixture.projectRoot, '.codex/hooks.json'), '[]\n');
   const original = tree(fixture.projectRoot);
-  const result = install(pkg, fixture.projectRoot, ['--claude-context-goal-guard'], fixture.homeRoot);
+  const result = install(pkg, fixture.projectRoot, [], fixture.homeRoot);
   assert.equal(result.status, 3, result.stdout + result.stderr);
   assert.match(result.stdout, /: 冲突,未激活/);
   assert.match(result.stdout, /  冲突  /);
@@ -249,18 +249,14 @@ test('an unrelated hook conflict stops installation before deleting a source-onl
   assert.deepEqual(tree(fixture.projectRoot), original);
 });
 
-test('both goal guards and the Phoenix hooks keep exactly one handler each across repeated installs', { skip }, (t) => {
+test('repeated installs keep the Phoenix hooks and project state unchanged', { skip }, (t) => {
   const pkg = packageFor(t, engine);
-  const project = sandbox(t, 'phoenix guard project');
-  const flags = ['--providers=claude,codex', '--claude-context-goal-guard', ...(spawnSync('python3', ['--version']).status === 0 ? ['--context-goal-guard'] : [])];
+  const project = sandbox(t, 'phoenix repeat project');
+  const flags = ['--providers=claude,codex'];
   let first;
   for (let i = 0; i < 2; i += 1) {
     const result = install(pkg, project, flags);
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    const local = JSON.parse(fs.readFileSync(path.join(project, '.claude/settings.local.json'), 'utf8'));
-    for (const event of ['PostToolBatch', 'Stop']) {
-      assert.equal(local.hooks[event].flatMap((entry) => entry.hooks).filter((handler) => handler.command.includes('context-goal-guard.js')).length, 1, event);
-    }
     const handlers = [path.join(project, '.claude/settings.json'), path.join(project, '.claude/settings.local.json'), path.join(project, '.codex/hooks.json')]
       .filter((file) => fs.existsSync(file))
       .flatMap((file) => Object.values(JSON.parse(fs.readFileSync(file, 'utf8')).hooks || {}).flat().flatMap((entry) => entry.hooks || []));

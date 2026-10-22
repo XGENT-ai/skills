@@ -44,34 +44,13 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
-| `--context-goal-guard` | 显式安装 Codex goal 上下文收尾提醒(默认不安装);需要 Python 3.9+ |
-| `--no-context-goal-guard` | 跳过 Codex goal guard(默认行为);已有 guard 保留 |
-| `--context-goal-guard-threshold=N` | Codex guard 的触发阈值百分比(1–99 整数,默认 65),同时表示安装;重装不给则沿用已装的值 |
-| `--claude-context-goal-guard` | 显式安装 Claude Code goal 上下文收尾提醒(默认不安装) |
-| `--no-claude-context-goal-guard` | 跳过 Claude Code goal guard(默认行为);已有 guard 保留 |
-| `--claude-context-goal-guard-threshold=N` | Claude Code guard 的触发阈值百分比(1–99 整数,默认 70),同时表示安装;重装不给则沿用已装的值 |
 | `--providers=a,b` | 指定两个 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
-| `--force` | 允许覆盖非法 JSON 的 guard 配置(先存 `.bak`);不覆盖已有 `AGENTS.md`,不放宽两个 Phoenix 工具的冲突保护 |
 
 安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI、Phoenix Diagram 顺序写项目,两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[包内说明](docs/phoenix-diagram.md)。
 
-`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文,包括使用 `--force` 时。
+`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文。
 
 非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
-
-`install` 默认不安装 Codex goal 上下文收尾提醒,也不询问;仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装。此选项不受 `--providers` 或 `--no-phoenix-ui` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。显式安装时先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
-
-安装后会显示用户必须完成的步骤:从目标项目启动 Codex、信任项目 `.codex/` 层,在 `/hooks` 中审阅、信任并启用两个 handler,对**当前 goal** 明确超过阈值(默认 65%)时先保存进度和交接、再暂停的策略。安装输出提供可复制的指令;安装和信任本身不构成暂停授权。恢复 goal 或新开对话后需重新明确策略。当前仅验证 Codex 0.160.0、macOS arm64,完整限制与停用方法见 [启用说明](docs/codex-context-goal-guard.md)。
-
-Codex guard 已接入源码与 npm 打包清单,尚未发布到 npm;发布后可用 `npx @xgent-ai/skills install --context-goal-guard`。当前可从本仓库源码为目标项目安装:
-
-```bash
-node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard
-```
-
-`install` 默认不安装 Claude Code goal 上下文收尾提醒,也不询问;仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装,不受 `--providers` 或 `--no-phoenix-ui` 影响。显式安装时复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
-
-安装后需重启会话、信任工作区,并在 `/hooks` 中确认两个 handler 来源为 local settings。当前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64 与 Opus 5.5 / Sonnet 5.5 / Haiku 4.5,完整限制、接续与停用方法见 [启用说明](docs/claude-context-goal-guard.md)。从源码安装:`node bin/xgent-skills.js install /absolute/path/to/project --claude-context-goal-guard`。
 
 Portal 的产品和设计规范仍保留在 [PRODUCT 模板](skills/xgent-init/references/external-app-PRODUCT.template.md) 与 [DESIGN 模板](skills/xgent-init/references/external-app-DESIGN.template.md) 中。需要生成项目上下文时,显式安装并在 Agent 对话中使用 [xgent-init](skills/xgent-init/SKILL.md),它读取清单与代码事实,补齐 PRODUCT.md / DESIGN.md (无前端的 service 型不新生成 DESIGN.md),已有文件保留:
 
@@ -238,7 +217,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 
 安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
 
-`experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具，并回写处置。
+`experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议并回写已审条目的处置，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具。
 
 整体方法见 [agi-mode 自进化方法论](docs/agi-mode-evolution-methodology.md)，说明样本沉淀、重放、进化实践和能力评估，以及通用方法与业务实践案例的边界。
 

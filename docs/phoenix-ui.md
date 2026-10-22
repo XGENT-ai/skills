@@ -26,7 +26,6 @@ npx @xgent-ai/skills install
 | `--keep-impeccable` | 保留 impeccable，与 Phoenix UI 共存，不再询问；无交互环境默认保留 |
 | `--release-dir=DIR` | 离线安装 engine：DIR 是发布者整理的完整 release 目录（`VERSION.json`、各平台 engine、许可与清单），必须与当前包的 manifest 完全一致，零网络 |
 | `--providers=a,b` | 指定安装目标目录；`codex` 同时选择 `.agents`（skills）与 `.codex`（hooks）。默认按项目里已有的目录判断，都没有时只装 `.claude` |
-| `--force` | 只影响 guard 的非法 JSON 备份覆盖；不放宽 Phoenix 的冲突保护 |
 
 **engine**：放在 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`（可用 `PHOENIX_UI_HOME` 改 engine cache 的根目录；提醒去重标记也在其中），按引擎摘要隔离，新旧项目固定的引擎可以共存，也不覆盖旧版缓存。hook、context 等普通运行不联网补下载：engine 缺失或版本不符时 hook 放行并每会话提醒一次补装命令，CLI 返回 4 并给出固定包版本的命令：
 
@@ -103,7 +102,7 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui migrate --rollback
 | `.gemini` | Gemini CLI | skills、`.gemini/settings.json` hooks | 重新打开会话 |
 | `.agent`、`.dsh`、`.hermes`、`.kiro`、`.opencode`、`.pi`、`.qoder`、`.rovodev`、`.trae`、`.trae-cn`、`.veto`、`.vibe` | 对应工具 | skills（无 hooks） | 重新打开会话 |
 
-Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具或 goal guard 的分组（包括都没有 matcher 的分组）互不影响，重复安装不产生重复 handler。安装器测试覆盖各目录的文件与 hook 合并；工具真实加载以各自会话为准，同名 skill 的优先级按工具规则（Claude Code 个人级优先于项目级），安装器无法确定时会提示待人工核对。
+Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含旧版 goal guard）的分组（包括都没有 matcher 的分组）互不影响，重复安装不产生重复 handler。安装器测试覆盖各目录的文件与 hook 合并；工具真实加载以各自会话为准，同名 skill 的优先级按工具规则（Claude Code 个人级优先于项目级），安装器无法确定时会提示待人工核对。
 
 ## 渠道
 

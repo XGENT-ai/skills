@@ -25,192 +25,12 @@ function run(dir, flags = [], input, env = process.env) {
   });
 }
 
-function runGuard(dir, flags = [], input, env) {
-  return run(dir, ['--no-xgent-init', '--context-goal-guard', ...flags], input, env);
-}
-
-function guardManifest(dir) {
-  return JSON.parse(fs.readFileSync(path.join(dir, '.codex', 'hooks.json'), 'utf8'));
-}
-
-test('guard opt-in copies the script, creates both hooks and prints manual steps', (t) => {
-  const dir = project(t);
-  const result = runGuard(dir);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(fs.readFileSync(path.join(dir, '.codex', 'hooks', 'context-goal-guard.py'), 'utf8'),
-    fs.readFileSync(path.join(root, 'hooks', 'codex', 'context-goal-guard.py'), 'utf8'));
-  const manifest = guardManifest(dir);
-  for (const event of ['PreToolUse', 'Stop']) {
-    assert.equal(manifest.hooks[event].length, 1);
-    assert.equal(manifest.hooks[event][0].hooks[0].timeout, 3);
-    assert.equal(manifest.hooks[event][0].hooks[0].type, 'command');
-    assert.equal(manifest.hooks[event][0].hooks[0].command,
-      'python3 "$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py" --threshold 65');
-  }
-  assert.match(result.stdout, /严格超过 65%/);
-  for (const text of ['/hooks', '信任', '0.160.0', '65%', 'paused', '/goal resume', '/goal pause', '新开对话']) {
-    assert.ok(result.stdout.includes(text), text);
-  }
-});
-
-test('guard merge preserves mixed handlers and fields and is idempotent', (t) => {
-  const dir = project(t);
-  const codex = path.join(dir, '.codex');
-  fs.mkdirSync(codex);
-  const file = path.join(codex, 'hooks.json');
-  const custom = { type: 'command', command: 'custom-hook', timeout: 8 };
-  const impeccable = { type: 'command', command: '".agents/skills/impeccable/scripts/impeccable" hook' };
-  const mixed = { matcher: 'Bash', customField: true, hooks: [custom,
-    { type: 'command', command: 'python3 "/old/.codex/hooks/context-goal-guard.py"', timeout: 9 }] };
-  const existing = { version: 1, description: 'keep', custom: { preserve: true }, hooks: {
-    PreToolUse: [mixed], Stop: [{ hooks: [impeccable] }], SessionStart: [{ hooks: [custom] }],
-  } };
-  fs.writeFileSync(file, JSON.stringify(existing));
-  const first = runGuard(dir, ['--providers=.claude']);
-  assert.equal(first.status, 0, first.stderr);
-  const next = guardManifest(dir);
-  assert.deepEqual(next.custom, existing.custom);
-  assert.equal(next.description, existing.description);
-  assert.equal(next.version, existing.version);
-  assert.deepEqual(next.hooks.SessionStart, existing.hooks.SessionStart);
-  assert.deepEqual(next.hooks.PreToolUse[0], { ...mixed, hooks: [custom] });
-  assert.deepEqual(next.hooks.Stop[0], existing.hooks.Stop[0]);
-  assert.equal(next.hooks.PreToolUse.length, 2);
-  assert.equal(next.hooks.Stop.length, 2);
-  const script = path.join(codex, 'hooks', 'context-goal-guard.py');
-  fs.utimesSync(script, 1000, 1000);
-  fs.utimesSync(file, 1000, 1000);
-  const second = runGuard(dir);
-  assert.equal(second.status, 0, second.stderr);
-  assert.deepEqual(guardManifest(dir), next);
-  assert.equal(fs.statSync(file).mtimeMs, 1000000);
-  assert.equal(fs.statSync(script).mtimeMs, 1000000);
-});
-
-test('an installed guard keeps its place and the file bytes when another tool appended entries after it', (t) => {
-  const dir = project(t);
-  assert.equal(runGuard(dir).status, 0);
-  const file = path.join(dir, '.codex', 'hooks.json');
-  const manifest = guardManifest(dir);
-  // The Phoenix installer appends its own group compactly after the guard.
-  manifest.hooks.Stop.push({ hooks: [{ type: 'command', command: 'later-tool', timeout: 30 }] });
-  const bytes = Buffer.from(JSON.stringify(manifest));
-  fs.writeFileSync(file, bytes);
-  const again = runGuard(dir);
-  assert.equal(again.status, 0, again.stderr);
-  assert.match(again.stdout, /未变  \.codex\/hooks\.json \(context goal guard\)/);
-  assert.ok(fs.readFileSync(file).equals(bytes));
-});
-
-test('guard command resolves the Git root after moving the repo and from subdirectories with shell characters', (t) => {
-  const base = project(t);
-  const dir = path.join(base, "My 'Project $HOME `id` $(touch injected)");
-  fs.mkdirSync(dir);
-  const alias = path.join(base, 'alias');
-  fs.symlinkSync(dir, alias);
-  const result = runGuard(alias);
-  assert.equal(result.status, 0, result.stderr);
-  const command = guardManifest(dir).hooks.PreToolUse[0].hooks[0].command;
-  const init = spawnSync('git', ['init', dir], { encoding: 'utf8' });
-  assert.equal(init.status, 0, init.stderr);
-  assert.equal(command.includes(base), false);
-  const moved = path.join(base, "Moved 'Project $HOME `id` $(touch injected)");
-  fs.renameSync(dir, moved);
-  const subdir = path.join(moved, 'sub directory');
-  fs.mkdirSync(subdir);
-  const example = JSON.parse(fs.readFileSync(path.join(root, 'hooks', 'codex', 'hooks.example.json'), 'utf8'));
-  for (const event of ['PreToolUse', 'Stop']) {
-    assert.equal(example.hooks[event][0].hooks[0].command, command);
-    for (const cwd of [moved, subdir]) {
-      const hook = spawnSync('sh', ['-c', command], {
-        cwd, input: JSON.stringify({ hook_event_name: event, stop_hook_active: false, agent_id: 'test-child' }), encoding: 'utf8',
-      });
-      assert.equal(hook.status, 0, hook.stderr);
-      assert.deepEqual(JSON.parse(hook.stdout), {});
-      assert.equal(fs.existsSync(path.join(cwd, 'injected')), false);
-    }
-  }
-  assert.equal(fs.existsSync(path.join(base, 'injected')), false);
-});
-
-test('missing Python fails guard installation before creating files and gives guidance', (t) => {
-  const dir = project(t);
-  const result = runGuard(dir, [], undefined, { ...process.env, PATH: dir });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /Python 3\.9/);
-  assert.match(result.stderr, /python3 --version/);
-  assert.deepEqual(fs.readdirSync(dir), []);
-});
-
-for (const raw of ['invalid json', '[]', '{"hooks":{"Stop":{}}}', '{"hooks":null}']) {
-  test(`guard refuses malformed manifest ${raw} without overwriting it`, (t) => {
-    const dir = project(t);
-    fs.mkdirSync(path.join(dir, '.codex'));
-    const file = path.join(dir, '.codex', 'hooks.json');
-    fs.writeFileSync(file, raw);
-    const result = runGuard(dir);
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /未修改/);
-    assert.equal(fs.readFileSync(file, 'utf8'), raw);
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks')), false);
-  });
-}
-
-test('force backs up invalid guard JSON before replacing it', (t) => {
-  const dir = project(t);
-  fs.mkdirSync(path.join(dir, '.codex'));
-  const file = path.join(dir, '.codex', 'hooks.json');
-  fs.writeFileSync(file, 'invalid json');
-  const result = runGuard(dir, ['--force']);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(fs.readFileSync(`${file}.bak`, 'utf8'), 'invalid json');
-  assert.equal(guardManifest(dir).hooks.Stop.length, 1);
-});
-
-for (const input of [undefined, 'y\n', ' YES \n', 'n\n', '\n', '']) {
-  test(`default install skips both guards without prompting with input ${JSON.stringify(input)}`, (t) => {
-    const dir = project(t);
-    const actual = run(dir, ['--no-xgent-init'], input);
-    assert.equal(actual.status, 0, actual.stderr);
-    assert.doesNotMatch(actual.stdout, /\[y\/N\]/);
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), false);
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks', 'context-goal-guard.py')), false);
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), false);
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), false);
-  });
-}
-
-test('accepting AGENTS.md does not prompt for or install either guard', (t) => {
+test('accepting AGENTS.md through the prompt creates it', (t) => {
   const dir = project(t);
   const result = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
     cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable'], { input: 'y\ny\n', encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   assertAgents(dir);
-  assert.doesNotMatch(result.stdout, /是否安装.*goal/);
-  assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), false);
-  assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), false);
-});
-
-test('non-interactive default and explicit guard skip leave existing Codex files untouched', (t) => {
-  const dir = project(t);
-  fs.mkdirSync(path.join(dir, '.codex'));
-  const file = path.join(dir, '.codex', 'hooks.json');
-  fs.writeFileSync(file, 'existing config');
-  for (const flags of [[], ['--no-context-goal-guard']]) {
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init', ...flags],
-      { input: '', encoding: 'utf8', timeout: 10000 });
-    assert.equal(result.status, 0, result.stderr);
-    assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-    assert.equal(fs.readFileSync(file, 'utf8'), 'existing config');
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks')), false);
-  }
-});
-
-test('conflicting guard flags fail before creating files', (t) => {
-  const dir = project(t);
-  const result = runGuard(dir, ['--no-context-goal-guard']);
-  assert.equal(result.status, 1);
-  assert.deepEqual(fs.readdirSync(dir), []);
 });
 
 function assertAgents(dir) {
@@ -271,11 +91,11 @@ test('explicit creation is independent of providers, preserves settings and is i
   assertAgents(dir);
 });
 
-test('existing AGENTS.md is preserved without prompting, even with --force', (t) => {
+test('existing AGENTS.md is preserved without prompting', (t) => {
   const dir = project(t);
   const agents = path.join(dir, 'AGENTS.md');
   fs.writeFileSync(agents, 'project conventions');
-  for (const flags of [[], ['--xgent-init'], ['--xgent-init', '--force']]) {
+  for (const flags of [[], ['--xgent-init']]) {
     const result = run(dir, flags, 'y\n');
     assert.equal(result.status, 0, result.stderr);
     assert.doesNotMatch(result.stdout, /\[y\/N\]/);
@@ -299,215 +119,11 @@ test('explicit skip bypasses the prompt and preserves existing documents and ski
   assert.equal(fs.readFileSync(claude, 'utf8'), 'existing Claude instructions');
 });
 
-for (const flags of [['--xgent-init', '--no-xgent-init'], ['--xgent-init', '--providers=unknown']]) {
+for (const flags of [['--xgent-init', '--no-xgent-init'], ['--xgent-init', '--providers=unknown'], ['--context-goal-guard'], ['--force']]) {
   test(`invalid options ${flags.join(' ')} fail before writing files`, (t) => {
     const dir = project(t);
     const result = run(dir, flags);
     assert.equal(result.status, 1);
-    assert.deepEqual(fs.readdirSync(dir), []);
-  });
-}
-
-const CLAUDE_GUARD_COMMAND = 'node "$CLAUDE_PROJECT_DIR/.claude/hooks/context-goal-guard.js" --threshold 70';
-
-function runClaudeGuard(dir, flags = [], input, env) {
-  return run(dir, ['--no-xgent-init', '--claude-context-goal-guard', ...flags], input, env);
-}
-
-function claudeSettings(dir) {
-  return JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.local.json'), 'utf8'));
-}
-
-function claudeGuardHandlers(settings, event) {
-  return settings.hooks[event].flatMap((entry) => entry.hooks).filter((handler) => handler.command.includes('context-goal-guard.js'));
-}
-
-test('Claude guard opt-in copies the script, adds both local handlers and prints manual steps', (t) => {
-  const dir = project(t);
-  const result = runClaudeGuard(dir);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(fs.readFileSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js'), 'utf8'),
-    fs.readFileSync(path.join(root, 'hooks', 'claude', 'context-goal-guard.js'), 'utf8'));
-  const settings = claudeSettings(dir);
-  for (const event of ['PostToolBatch', 'Stop']) {
-    assert.deepEqual(settings.hooks[event], [{ hooks: [{ type: 'command', command: CLAUDE_GUARD_COMMAND, timeout: 5 }] }]);
-  }
-  assert.deepEqual(Object.keys(settings.hooks).sort(), ['PostToolBatch', 'Stop']);
-  assert.equal(fs.existsSync(path.join(dir, '.codex')), false);
-  assert.equal(JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).hooks, undefined);
-  for (const text of ['claude --version', '2.1.288', '信任', '/hooks', 'settings.local.json', '70%', 'Goal paused',
-    '/clear', '/goal', 'Stop hook error', 'disableAllHooks', 'context_window_size']) {
-    assert.ok(result.stdout.includes(text), text);
-  }
-});
-
-test('installed Claude guard command runs from a project path with shell characters', (t) => {
-  const base = project(t);
-  const dir = path.join(base, "My 'Project $HOME `id` $(touch injected)");
-  fs.mkdirSync(dir);
-  const result = runClaudeGuard(dir);
-  assert.equal(result.status, 0, result.stderr);
-  const hook = spawnSync('sh', ['-c', claudeSettings(dir).hooks.Stop[0].hooks[0].command], {
-    cwd: base, input: JSON.stringify({ hook_event_name: 'Stop', stop_hook_active: false, transcript_path: path.join(dir, 'none') }),
-    encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
-  });
-  assert.equal(hook.status, 0, hook.stderr);
-  assert.match(JSON.parse(hook.stdout).systemMessage, /检测不可用/);
-  assert.equal(fs.existsSync(path.join(base, 'injected')), false);
-});
-
-test('Claude guard merge preserves other settings and handlers and is idempotent', (t) => {
-  const dir = project(t);
-  const claude = path.join(dir, '.claude');
-  fs.mkdirSync(claude);
-  const file = path.join(claude, 'settings.local.json');
-  const custom = { type: 'command', command: 'custom-hook', timeout: 8 };
-  const old = { type: 'command', command: 'node "/old/place/.claude/hooks/context-goal-guard.js"', timeout: 9 };
-  const mixed = { matcher: 'Bash', customField: true, hooks: [custom, old] };
-  const existing = { permissions: { allow: ['Bash(ls)'] }, env: { KEEP: '1' }, hooks: {
-    PostToolBatch: [mixed], Stop: [{ hooks: [old] }, { hooks: [custom] }], SessionStart: [{ hooks: [custom] }],
-  } };
-  fs.writeFileSync(file, JSON.stringify(existing));
-  const first = runClaudeGuard(dir);
-  assert.equal(first.status, 0, first.stderr);
-  const next = claudeSettings(dir);
-  assert.deepEqual(next.permissions, existing.permissions);
-  assert.deepEqual(next.env, existing.env);
-  assert.deepEqual(next.hooks.SessionStart, existing.hooks.SessionStart);
-  assert.deepEqual(next.hooks.PostToolBatch, [{ ...mixed, hooks: [custom] },
-    { hooks: [{ type: 'command', command: CLAUDE_GUARD_COMMAND, timeout: 5 }] }]);
-  assert.deepEqual(next.hooks.Stop, [{ hooks: [custom] },
-    { hooks: [{ type: 'command', command: CLAUDE_GUARD_COMMAND, timeout: 5 }] }]);
-  const script = path.join(claude, 'hooks', 'context-goal-guard.js');
-  fs.utimesSync(script, 1000, 1000);
-  fs.utimesSync(file, 1000, 1000);
-  const second = runClaudeGuard(dir);
-  assert.equal(second.status, 0, second.stderr);
-  assert.match(second.stdout, /未变 {2}\.claude\/settings\.local\.json/);
-  assert.deepEqual(claudeSettings(dir), next);
-  assert.equal(fs.statSync(file).mtimeMs, 1000000);
-  assert.equal(fs.statSync(script).mtimeMs, 1000000);
-});
-
-for (const raw of ['invalid json', '[]', '{"hooks":{"Stop":{}}}', '{"hooks":null}']) {
-  test(`Claude guard refuses malformed settings ${raw} without overwriting it`, (t) => {
-    const dir = project(t);
-    fs.mkdirSync(path.join(dir, '.claude'));
-    const file = path.join(dir, '.claude', 'settings.local.json');
-    fs.writeFileSync(file, raw);
-    const result = runClaudeGuard(dir);
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /未修改/);
-    assert.equal(fs.readFileSync(file, 'utf8'), raw);
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks')), false);
-  });
-}
-
-test('force backs up invalid Claude settings before replacing them', (t) => {
-  const dir = project(t);
-  fs.mkdirSync(path.join(dir, '.claude'));
-  const file = path.join(dir, '.claude', 'settings.local.json');
-  fs.writeFileSync(file, 'invalid json');
-  const result = runClaudeGuard(dir, ['--force']);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(fs.readFileSync(`${file}.bak`, 'utf8'), 'invalid json');
-  assert.equal(claudeGuardHandlers(claudeSettings(dir), 'Stop').length, 1);
-});
-
-for (const [flags, codex, claude] of [
-  [['--context-goal-guard'], true, false],
-  [['--claude-context-goal-guard'], false, true],
-  [['--context-goal-guard', '--claude-context-goal-guard'], true, true],
-]) {
-  test(`explicit guard flags ${flags.join(' ')} install independently without prompting`, (t) => {
-    const dir = project(t);
-    const result = run(dir, ['--no-xgent-init', ...flags], 'n\n');
-    assert.equal(result.status, 0, result.stderr);
-    assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-    assert.equal(fs.existsSync(path.join(dir, '.codex', 'hooks.json')), codex);
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.local.json')), claude);
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), claude);
-  });
-}
-
-test('non-interactive default and explicit Claude guard skip leave local settings untouched', (t) => {
-  const dir = project(t);
-  fs.mkdirSync(path.join(dir, '.claude'));
-  const file = path.join(dir, '.claude', 'settings.local.json');
-  fs.writeFileSync(file, 'existing config');
-  for (const flags of [[], ['--no-claude-context-goal-guard']]) {
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init', '--no-context-goal-guard', ...flags],
-      { input: '', encoding: 'utf8', timeout: 10000 });
-    assert.equal(result.status, 0, result.stderr);
-    assert.doesNotMatch(result.stdout, /\[y\/N\]/);
-    assert.equal(fs.readFileSync(file, 'utf8'), 'existing config');
-    assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'context-goal-guard.js')), false);
-  }
-});
-
-test('conflicting Claude guard flags fail before creating files', (t) => {
-  const dir = project(t);
-  const result = runClaudeGuard(dir, ['--no-claude-context-goal-guard']);
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /--claude-context-goal-guard 与 --no-claude-context-goal-guard 不能同时使用/);
-  assert.deepEqual(fs.readdirSync(dir), []);
-});
-
-test('help lists both Claude guard flags', () => {
-  const result = spawnSync(process.execPath, [cli, 'help'], { encoding: 'utf8' });
-  assert.match(result.stdout, /--claude-context-goal-guard/);
-  assert.match(result.stdout, /--no-claude-context-goal-guard/);
-});
-
-function guardCommands(manifest, events, marker) {
-  return events.map((event) => manifest.hooks[event].flatMap((entry) => entry.hooks)
-    .filter((handler) => handler.command.includes(marker)).map((handler) => handler.command));
-}
-
-test('threshold flags set each guard separately, imply installation and survive reinstalls', (t) => {
-  const dir = project(t);
-  const first = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
-    cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init',
-    '--context-goal-guard-threshold=60', '--claude-context-goal-guard-threshold=75'], { input: '', encoding: 'utf8', timeout: 10000 });
-  assert.equal(first.status, 0, first.stderr);
-  assert.doesNotMatch(first.stdout, /\[y\/N\]/);
-  assert.match(first.stdout, /严格超过 60%/);
-  assert.match(first.stdout, /严格超过 75%/);
-  const codex = () => guardCommands(guardManifest(dir), ['PreToolUse', 'Stop'], 'context-goal-guard.py');
-  const claude = () => guardCommands(claudeSettings(dir), ['PostToolBatch', 'Stop'], 'context-goal-guard.js');
-  for (const [command] of codex()) assert.match(command, / --threshold 60$/);
-  for (const [command] of claude()) assert.equal(command, CLAUDE_GUARD_COMMAND.replace('70', '75'));
-
-  const kept = run(dir, ['--no-xgent-init', '--context-goal-guard', '--claude-context-goal-guard']);
-  assert.equal(kept.status, 0, kept.stderr);
-  for (const commands of [...codex(), ...claude()]) assert.equal(commands.length, 1);
-  for (const [command] of codex()) assert.match(command, / --threshold 60$/);
-  for (const [command] of claude()) assert.match(command, / --threshold 75$/);
-  assert.match(kept.stdout, /严格超过 75%/);
-
-  const changed = run(dir, ['--no-xgent-init', '--claude-context-goal-guard-threshold=68']);
-  assert.equal(changed.status, 0, changed.stderr);
-  for (const [command] of claude()) assert.match(command, / --threshold 68$/);
-  for (const [command] of codex()) assert.match(command, / --threshold 60$/);
-});
-
-for (const flag of ['--context-goal-guard-threshold', '--claude-context-goal-guard-threshold']) {
-  for (const value of ['0', '100', '6.5', '065', 'abc', '']) {
-    test(`${flag}=${value} fails before creating files`, (t) => {
-      const dir = project(t);
-      const result = run(dir, ['--no-xgent-init', `${flag}=${value}`]);
-      assert.equal(result.status, 1);
-      assert.match(result.stderr, new RegExp(`${flag}.*1–99`));
-      assert.deepEqual(fs.readdirSync(dir), []);
-    });
-  }
-  test(`${flag} conflicts with skipping the same guard`, (t) => {
-    const dir = project(t);
-    const skip = flag.replace(/^--/, '--no-').replace(/-threshold$/, '');
-    const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable', '--no-xgent-init',
-      '--no-context-goal-guard', '--no-claude-context-goal-guard', `${flag}=70`], { input: '', encoding: 'utf8', timeout: 10000 });
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, new RegExp(`${skip}`));
     assert.deepEqual(fs.readdirSync(dir), []);
   });
 }
@@ -544,11 +160,11 @@ test('an unavailable Phoenix engine stops the whole install before any project w
   assert.equal(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'), '{"keep":true}\n');
 });
 
-test('invalid settings.json stops the install before XGENT hooks or guards are written', (t) => {
+test('invalid settings.json stops the install before XGENT hooks are written', (t) => {
   const dir = project(t);
   fs.mkdirSync(path.join(dir, '.claude'));
   fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), 'not json');
-  const result = run(dir, ['--xgent-init', '--claude-context-goal-guard']);
+  const result = run(dir, ['--xgent-init']);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /不是合法 JSON/);
   assert.deepEqual(fs.readdirSync(dir), ['.claude']);
