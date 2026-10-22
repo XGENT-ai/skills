@@ -28,6 +28,8 @@
 /skills/swarm-workspace
 skills/swarm/evals/evals.json
 skills-lock.json
+.env
+.env.local
 .env.cf
 
 /local
