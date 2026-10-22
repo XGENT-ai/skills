@@ -17,6 +17,11 @@ from protocol import (
 
 
 class ProtocolTests(JobFixture):
+    def test_v1_keeps_the_frozen_amd64_platform_contract(self):
+        self.spec["cases"][0]["platform"] = "linux/arm64"
+        with self.assertRaisesRegex(ProtocolError, "case.platform"):
+            prepare(self.write())
+
     def test_public_task_aliases_cannot_count_as_independent_groups(self):
         import copy
 

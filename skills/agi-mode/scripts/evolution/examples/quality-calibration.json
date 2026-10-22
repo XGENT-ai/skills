@@ -1,0 +1,128 @@
+{
+  "schema_version": 2,
+  "protocol_id": "authorized-repository-continuous-quality-v1",
+  "question": "Can the calibrated quality measure detect actionable improvement headroom in this repository's bug-fix tasks?",
+  "mode": "calibrate",
+  "target": {
+    "kind": "agents",
+    "repo": "/path/to/authorized-repository",
+    "repo_id": "owner/authorized-repository",
+    "base_commit": "<TARGET_GIT_SHA>",
+    "allowed_paths": ["AGENTS.md"],
+    "surfaces": {"skill": [], "agents": ["AGENTS.md"]},
+    "protected_rules": []
+  },
+  "source": {
+    "paths": ["AGENTS.md", "src"],
+    "new_paths": [],
+    "fixed_skill_roots": []
+  },
+  "runtime": {
+    "provider": "ssh",
+    "ssh_target": "operator@evaluation-host",
+    "remote_root": "/home/operator/.local/state/xgent-evolution",
+    "docker_binary": "/usr/bin/docker",
+    "docker_version": "29.5.2",
+    "codex_architecture": "x86_64",
+    "harbor_version": "0.24.0",
+    "codex_version": "0.162.1",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "tools": ["shell"],
+    "sampling": {"seed": null},
+    "authentication": {
+      "mode": "remote_codex_login",
+      "path": "/home/operator/.codex/auth.json"
+    }
+  },
+  "authority": {
+    "repo": "/path/to/authorized-repository",
+    "export_paths": ["AGENTS.md", "src"],
+    "write_paths": [],
+    "remote_host": "operator@evaluation-host",
+    "remote_root": "/home/operator/.local/state/xgent-evolution",
+    "auth_path": "/home/operator/.codex/auth.json",
+    "evaluation_root": "/path/to/authorized-quality-materials",
+    "allow_remote": false,
+    "allow_apply": false,
+    "allow_unverified": false,
+    "allow_typesafe_auxiliary": false
+  },
+  "budget": {
+    "max_candidates": 1,
+    "max_trials": 100,
+    "max_parallel_trials": 1,
+    "per_trial_timeout_sec": 900,
+    "total_deadline_sec": 14400,
+    "recovery_window_sec": 180,
+    "max_retries": 0,
+    "max_auxiliary_calls": 20
+  },
+  "measurement": {
+    "objective": "quality",
+    "primary_metric": "task_quality",
+    "minimum_effect": "<MEANINGFUL_POINT_GAIN_DIVIDED_BY_100>",
+    "minimum_effect_reason": "<PUBLIC_CRITERION_AND_WEIGHT_EXPLAINING_THE_GAIN>",
+    "confidence_level": 0.95,
+    "minimum_groups": "<FROM_PRECISION_AND_BUDGET_DIAGNOSTIC>",
+    "repeats": 1,
+    "seed": 20261016,
+    "checkpoint": "fixed",
+    "confirmation": "once",
+    "weights": {"replay-case": 1}
+  },
+  "guardrails": [{"name": "task_contract", "minimum": 1}],
+  "evaluation": {
+    "scoring": "continuous_100_v1",
+    "root": "/path/to/authorized-quality-materials",
+    "paths": [
+      "rubric.json",
+      "calibration.json",
+      "auxiliary-rubric.json",
+      "auxiliary-calibration.json",
+      "artifacts/low.patch",
+      "artifacts/high.patch",
+      "artifacts/renamed.patch",
+      "artifacts/rejected.patch",
+      "artifacts/injected.patch",
+      "artifacts/proxy.patch",
+      "artifacts/unseen-real-low.patch",
+      "artifacts/unseen-real-high.patch",
+      "context/verified-tool-log.txt"
+    ],
+    "rubrics": {"replay-case": "rubric.json"},
+    "calibration": "calibration.json",
+    "auxiliary": {
+      "provider": "typesafe",
+      "model": "jev-1.14.0",
+      "long_context": false,
+      "criterion_ids": ["<SEMANTIC_CRITERION_ID_FROM_RUBRIC>"],
+      "rubric_path": "auxiliary-rubric.json",
+      "calibration_path": "auxiliary-calibration.json",
+      "authentication": {"source": "controller_env", "name": "TYPESAFE_API_KEY"}
+    }
+  },
+  "cases": [
+    {
+      "case_id": "replay-case",
+      "group_id": "authorized-bug-family",
+      "repo_id": "owner/authorized-repository",
+      "base_commit": "<TARGET_GIT_SHA>",
+      "split": "search",
+      "task_path": "/path/to/authorized-tasks/replay-case",
+      "repo_path": "/app",
+      "source": {"kind": "repo", "revision": "<TARGET_GIT_SHA>", "family": "authorized-bug-family"},
+      "public_paths": ["instruction.md", "environment/Dockerfile"],
+      "grader_paths": ["tests/test.sh"],
+      "oracle_paths": ["solution/solve.sh"],
+      "image": "registry.example/authorized-task@sha256:<IMAGE_DIGEST>",
+      "platform": "linux/amd64",
+      "observable_requirements": ["<PUBLIC_BUG_FIX_REQUIREMENT>"],
+      "information_cutoff": "<ISO_TIMESTAMP_WITH_TIMEZONE>"
+    }
+  ],
+  "conditions": [
+    {"condition_id": "baseline", "skill": "fixed", "agents": "baseline", "overrides": {}}
+  ],
+  "baseline_condition": "baseline"
+}

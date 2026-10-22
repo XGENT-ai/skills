@@ -31,3 +31,5 @@
 - 2ab53e07-899c-4289-9b4a-4bf93c8b5deb · [合并 origin/main 验证环境](2ab53e07-899c-4289-9b4a-4bf93c8b5deb.md)
 
 - 2d9914fc-8f95-405c-83ed-59a229072efe · [resolve-blocked 外部依赖请求](2d9914fc-8f95-405c-83ed-59a229072efe.md)
+
+- `49a107bf-abd1-462b-9910-ff664d6be67d` · 指令质量评测与自进化 v2 · [记录](49a107bf-abd1-462b-9910-ff664d6be67d.md)

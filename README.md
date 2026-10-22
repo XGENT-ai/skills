@@ -217,9 +217,18 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
-明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
+明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；v2 先校准质量、诊断余量/噪声/预算，TypeSafe 独立校准后仅辅助 search，完整长文可按协议显式启用长上下文并独立校准，采用仍依赖主质量确认与 CAS。agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
 
-工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；不自动提交、发布或安装全局配置。已在指定 SSH/Docker 组合完成真实隔离、任务对照/搜索、自然请求/CAS 与故障恢复验收；本次独立确认样本不足，未证明候选优于基线。
+工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
+
+自然发现验收可用 `source.fixed_skill_roots` 显式提供完整固定背景目录，目标缺席/候选切换保持其他技能字节；实际目录、读取与任务行为分别记录，单独的目标技能执行不代表完整目录发现已通过。
+
+v2运行质量项可显式声明`verifier/`公开观测文件，按白名单接收固定grader的实际运行事实；验收分与运行证据分开，缺证据保持unknown，独立观测不替代新增回归测试。
+新百分表保留其他已知分项，不因单项unknown全表清空；已知硬失败控制可显式声明不可观察的非gate项并要求双评一致未知，成功控制、底线、排序及辅助资格保持严格。
+新百分rubric还可显式让程序从已校验逐项判断派生评审状态，避免把产物失败误作测量无效；旧协议默认保持，新格式需重新校准。
+固定预算项可显式要求双评数值及校准固定参考完全相同，分歧保持unknown及原分；缺省程度容差保持，同分仍须核对依据，详见远端手册。
+
+v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜像；默认及v1/Pro V2仍amd64。平台改变后重新校准，不能迁移旧分或资格；详见[远端手册](skills/agi-mode/references/remote-evolution.md)。
 
 安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
 
