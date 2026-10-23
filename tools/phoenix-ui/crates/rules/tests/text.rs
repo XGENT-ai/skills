@@ -207,6 +207,199 @@ const g = <div className=\"focus:not(:focus-visible)\" />;
 }
 
 #[test]
+fn focus_outline_removed_ignores_comment_examples() {
+    // TSX line, block, and JSX comments are not class strings.
+    let tsx = "\
+// <button className=\"focus:outline-none\">Save</button>
+/* <a className=\"focus-visible:outline-none\">Docs</a> */
+{/* <input className={`md:focus:outline-none`} /> */}
+const real = <button className=\"focus:outline-none\">Save</button>;
+";
+    let findings = scan(tsx, ".tsx");
+    assert_eq!(lines(&findings), vec![4.0], "{findings:#?}");
+    assert_eq!(snippets(&findings), vec!["focus:outline-none"]);
+
+    // HTML comments are not class strings either.
+    let html = "\
+<!-- <button class=\"focus:outline-none\">Save</button> -->
+<button class=\"focus:outline-none\">Save</button>
+";
+    let findings = scan(html, ".html");
+    assert_eq!(lines(&findings), vec![2.0], "{findings:#?}");
+
+    // `//` inside a string literal is part of the URL, not a line comment:
+    // the class string after it on the same line still counts.
+    let url = "const docs = \"https://example.com\"; const save = \"focus:outline-none\";\n";
+    assert_eq!(lines(&scan(url, ".tsx")), vec![1.0]);
+
+    // A commented-out CSS block is not a finding; the live one is.
+    let css = "/* .btn:focus { outline: none; } */\n.btn:focus { outline: none; }\n";
+    assert_eq!(lines(&scan(css, ".css")), vec![2.0]);
+}
+
+#[test]
+fn focus_outline_removed_distinguishes_focus_variants_from_lookalikes() {
+    let content = "\
+const a = <div className=\"focus-within:outline-none\">A</div>;
+const b = <div className=\"not-focus:outline-none\">B</div>;
+const c = <div className=\"group-focus:outline-none\">C</div>;
+const d = <div className=\"hover:outline-none\">D</div>;
+const e = <div className=\"focus:outline-none\">E</div>;
+const f = <div className=\"focus-visible:outline-none\">F</div>;
+const g = <div className=\"[&:focus]:outline-none\">G</div>;
+const h = <div className=\"[&:focus-visible]:outline-none\">H</div>;
+const i = <div className=\"data-[focus]:outline-none\">I</div>;
+const j = <div className=\"focus-within:outline-none focus:outline-none\">J</div>;
+const k = <div className=\"focus:outline-none focus-within:border-white\">K</div>;
+";
+    let findings = scan(content, ".tsx");
+    assert_eq!(
+        lines(&findings),
+        vec![5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0],
+        "{findings:#?}"
+    );
+    assert_eq!(
+        snippets(&findings),
+        vec![
+            "focus:outline-none",
+            "focus-visible:outline-none",
+            "[&:focus]:outline-none",
+            "[&:focus-visible]:outline-none",
+            "data-[focus]:outline-none",
+            "focus-within:outline-none focus:outline-none",
+            "focus:outline-none focus-within:border-white",
+        ]
+    );
+}
+
+#[test]
+fn focus_outline_removed_ignores_negated_arbitrary_focus_conditions() {
+    // A focus pseudo-class inside `:not(…)` applies when focus is absent;
+    // only positive arbitrary focus conditions count as removed focus.
+    let content = "\
+const a = <div className=\"[&:focus]:outline-none\">A</div>;
+const b = <div className=\"[&:focus-visible]:outline-none\">B</div>;
+const c = <div className=\"[&:not(:focus)]:outline-none\">C</div>;
+const d = <div className=\"[&:not(:focus-visible)]:outline-none\">D</div>;
+const e = <div className=\"[&:not(:is(:focus))]:outline-none\">E</div>;
+const f = <div className=\"[&:not(:focus):hover]:outline-none\">F</div>;
+const g = <div className=\"[&:not(:hover):focus]:outline-none\">G</div>;
+const h = <div className=\"focus-within:outline-none\">H</div>;
+const i = <div className=\"not-focus:outline-none\">I</div>;
+";
+    let findings = scan(content, ".tsx");
+    assert_eq!(lines(&findings), vec![1.0, 2.0, 7.0], "{findings:#?}");
+    assert_eq!(
+        snippets(&findings),
+        vec![
+            "[&:focus]:outline-none",
+            "[&:focus-visible]:outline-none",
+            "[&:not(:hover):focus]:outline-none",
+        ]
+    );
+}
+
+#[test]
+fn focus_outline_removed_evaluates_static_class_expressions_as_one_string() {
+    let content = "\
+const single = <button className=\"focus:outline-none\">A</button>;
+const concat = <button className={\"focus:outline-none \" + \"focus-visible:ring-2\"}>B</button>;
+const dynamic = <button className={\"focus:outline-none \" + extra}>C</button>;
+const dynamic_left = <button className={extra + \" focus:outline-none\"}>D</button>;
+const parenthesized = <button className={\"focus:outline-none \" + (open ? \"ring-2\" : \"\")}>E</button>;
+const static_removal = <button className={\"focus:outline-none \" + \"\"}>F</button>;
+const template_dynamic = <button className={`focus:outline-none ${extra}`}>G</button>;
+";
+    let findings = scan(content, ".tsx");
+    assert_eq!(lines(&findings), vec![1.0, 6.0], "{findings:#?}");
+    assert_eq!(
+        snippets(&findings),
+        vec!["focus:outline-none", "focus:outline-none"]
+    );
+}
+
+#[test]
+fn focus_outline_removed_matches_complete_zero_length_values() {
+    let content = "\
+.a:focus { outline: 0; }
+.b:focus { outline: 0px; }
+.c:focus { outline: 0rem; }
+.d:focus { outline: 0.0; }
+.e:focus { outline: 0.00px; }
+.f:focus { outline-width: 0px; }
+.g:focus { outline: 0.5px solid black; }
+.h:focus { outline-width: 0.5px; }
+.i:focus { outline: none; }
+";
+    let findings = scan(content, ".css");
+    assert_eq!(
+        lines(&findings),
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 9.0],
+        "{findings:#?}"
+    );
+    assert_eq!(
+        snippets(&findings),
+        vec![".a:focus", ".b:focus", ".c:focus", ".d:focus", ".e:focus", ".f:focus", ".i:focus"]
+    );
+}
+
+#[test]
+fn focus_outline_removed_ignores_color_function_zeros() {
+    // `0` inside a color function is a color channel, not a zero width; the
+    // shorthand's components are split on top-level whitespace only.
+    let content = "\
+.a:focus { outline: 1px solid rgba(0,0,0,0.5); }
+.b:focus { outline: 2px solid oklch(0 0 0); }
+.c:focus { outline: 0px solid black; }
+";
+    let findings = scan(content, ".css");
+    assert_eq!(lines(&findings), vec![3.0], "{findings:#?}");
+    assert_eq!(snippets(&findings), vec![".c:focus"]);
+}
+
+#[test]
+fn transition_all_scans_only_css_positions_in_markup() {
+    // Body copy and comments quote the declaration; only the <style> block,
+    // the style attribute values, and the Tailwind class are real CSS.
+    let content = "\
+<!doctype html>
+<html>
+<head>
+<style>
+  .card { transition: all 0.2s ease; }
+</style>
+</head>
+<body>
+  <!-- <div class=\"transition-all\">example</div> -->
+  <h4>transition: all</h4>
+  <p>Never write transition: all in prose.</p>
+  <div style=\"transition: all 0.2s ease\">Animated</div>
+  <div style='transition: all 0.2s ease'>Single-quoted</div>
+  <div class=\"transition-all\">Tailwind</div>
+</body>
+</html>
+";
+    for ext in [".html", ".htm", ".vue", ".svelte", ".astro"] {
+        let findings = scan(content, ext);
+        assert_eq!(
+            lines(&findings),
+            vec![5.0, 12.0, 13.0, 14.0],
+            "{ext}: {findings:#?}"
+        );
+        assert_eq!(
+            snippets(&findings),
+            vec![
+                ".card { transition: all 0.2s ease; }",
+                "<div style=\"transition: all 0.2s ease\">Animated</div>",
+                "<div style='transition: all 0.2s ease'>Single-quoted</div>",
+                "<div class=\"transition-all\">Tailwind</div>",
+            ],
+            "{ext}"
+        );
+    }
+}
+
+#[test]
 fn findings_are_emitted_in_rule_then_line_order() {
     let content = ".a { transition: all .2s; }\n.b:focus { outline: none; }\n";
     let findings = scan(content, ".css");

@@ -275,6 +275,23 @@ fn unlabeled_inline_svg_accepts_names_hidden_decorations_and_control_context() {
     dom.add_text(title, "Logo");
     assert!(element_type_ids(&dom, titled).is_empty());
 
+    // An SVG `title` attribute is an accessible name too (F-05).
+    let titled_attribute = svg_of_size(&mut dom, body, 24.0);
+    dom.set_attr(titled_attribute, "title", "Company logo");
+    assert!(element_type_ids(&dom, titled_attribute).is_empty());
+
+    let spaced_title = svg_of_size(&mut dom, body, 24.0);
+    dom.set_attr(spaced_title, "title", "  Company logo  ");
+    assert!(element_type_ids(&dom, spaced_title).is_empty());
+
+    // A blank title attribute is not a name.
+    let blank_title = svg_of_size(&mut dom, body, 24.0);
+    dom.set_attr(blank_title, "title", "   ");
+    assert_eq!(
+        element_type_ids(&dom, blank_title),
+        vec!["xgent/unlabeled-inline-svg"]
+    );
+
     // A graphic that names its control (inside a button, link, label, summary,
     // role=button/link, or a labelled region) is covered by that context.
     let button = dom.add(Some(body), "button");
@@ -439,6 +456,72 @@ fn redrawn_window_chrome_rejects_reordered_or_off_geometry_dots() {
     }
 }
 
+#[test]
+fn redrawn_window_chrome_ignores_aria_hidden_but_not_real_hiding() {
+    // Window chrome is decorative and commonly aria-hidden for the
+    // accessibility tree while still painted; the visual rule must keep
+    // seeing it (F-07).
+    let (mut dom, body) = page();
+    let bar = dom.add(Some(body), "div");
+    dom.set_attr(bar, "aria-hidden", "true");
+    dot(&mut dom, bar, 0.0, "rgb(255, 0, 0)");
+    dot(&mut dom, bar, 20.0, "rgb(255, 165, 0)");
+    dot(&mut dom, bar, 40.0, "rgb(0, 160, 60)");
+    assert_eq!(
+        element_type_ids(&dom, bar),
+        vec!["xgent/redrawn-window-chrome"]
+    );
+
+    // A dot's own aria-hidden hides it from the accessibility tree, not from
+    // the page.
+    let (mut dom, body) = page();
+    let bar = dom.add(Some(body), "div");
+    let red = dot(&mut dom, bar, 0.0, "rgb(255, 0, 0)");
+    dom.set_attr(red, "aria-hidden", "true");
+    dot(&mut dom, bar, 20.0, "rgb(255, 165, 0)");
+    dot(&mut dom, bar, 40.0, "rgb(0, 160, 60)");
+    assert_eq!(
+        element_type_ids(&dom, bar),
+        vec!["xgent/redrawn-window-chrome"]
+    );
+
+    // Real hiding still stands down, on the bar or on a dot.
+    let cases: &[(&str, &str, bool)] = &[
+        ("display", "none", false),
+        ("visibility", "hidden", false),
+        ("visibility", "collapse", false),
+        ("opacity", "0", false),
+        ("opacity", "0.01", false),
+        ("opacity", "0.02", true),
+        ("contentVisibility", "hidden", false),
+    ];
+    for &(property, value, reports) in cases {
+        let (mut dom, body) = page();
+        let bar = dom.add(Some(body), "div");
+        dom.set_style(bar, property, value);
+        dot(&mut dom, bar, 0.0, "rgb(255, 0, 0)");
+        dot(&mut dom, bar, 20.0, "rgb(255, 165, 0)");
+        dot(&mut dom, bar, 40.0, "rgb(0, 160, 60)");
+        assert_eq!(
+            !element_type_ids(&dom, bar).is_empty(),
+            reports,
+            "bar {property}: {value}"
+        );
+
+        let (mut dom, body) = page();
+        let bar = dom.add(Some(body), "div");
+        let red = dot(&mut dom, bar, 0.0, "rgb(255, 0, 0)");
+        dot(&mut dom, bar, 20.0, "rgb(255, 165, 0)");
+        dot(&mut dom, bar, 40.0, "rgb(0, 160, 60)");
+        dom.set_style(red, property, value);
+        assert_eq!(
+            !element_type_ids(&dom, bar).is_empty(),
+            reports,
+            "dot {property}: {value}"
+        );
+    }
+}
+
 // ─── emoji-icon ────────────────────────────────────────────────────────────
 
 fn emoji_before_heading(dom: &mut FakeDom, body: ElId, emoji: &str, heading: &str) -> ElId {
@@ -525,6 +608,10 @@ fn emoji_icon_needs_two_candidates_and_a_heading() {
 fn emoji_icon_accepts_an_only_child_before_a_heading() {
     let (mut dom, body) = page();
     let wrapper = dom.add(Some(body), "div");
+    // Real pages inherit font-size: both the wrapper and its icon clear the
+    // 20px threshold, so the candidate must be chosen by who owns the text,
+    // not by size (F-06).
+    dom.set_style(wrapper, "fontSize", "24px");
     let icon = dom.add(Some(wrapper), "span");
     dom.add_text(icon, "🚀");
     dom.set_style(icon, "fontSize", "24px");
@@ -539,6 +626,95 @@ fn emoji_icon_accepts_an_only_child_before_a_heading() {
         findings[0].finding.detail,
         "emoji \"🚀\" used as an icon before <h3>"
     );
+}
+
+#[test]
+fn emoji_icon_wrapped_icons_report_the_text_owner_only() {
+    // A wrapper's text_content is its child's emoji; only the child owns the
+    // emoji as text, so one wrapped icon stays one candidate (F-06).
+    let (mut dom, body) = page();
+    let wrapper = dom.add(Some(body), "div");
+    dom.set_style(wrapper, "fontSize", "24px");
+    let icon = dom.add(Some(wrapper), "span");
+    dom.add_text(icon, "🚀");
+    dom.set_style(icon, "fontSize", "24px");
+    let heading = dom.add(Some(body), "h2");
+    dom.add_text(heading, "Feature");
+    assert!(page_findings(&dom).is_empty(), "one wrapped icon alone");
+
+    let wrapper_second = dom.add(Some(body), "div");
+    dom.set_style(wrapper_second, "fontSize", "24px");
+    let second_icon = dom.add(Some(wrapper_second), "span");
+    dom.add_text(second_icon, "⚡");
+    dom.set_style(second_icon, "fontSize", "24px");
+    let second_heading = dom.add(Some(body), "h2");
+    dom.add_text(second_heading, "Build");
+    let findings = page_findings(&dom);
+    assert_eq!(findings.len(), 2, "{findings:?}");
+    assert_eq!(findings[0].el, Some(icon));
+    assert_eq!(findings[1].el, Some(second_icon));
+
+    // Whitespace beside the wrapped icon does not make the wrapper its owner.
+    let (mut dom, body) = page();
+    let wrapper = dom.add(Some(body), "div");
+    dom.set_style(wrapper, "fontSize", "24px");
+    dom.add_text(wrapper, " ");
+    let icon = dom.add(Some(wrapper), "span");
+    dom.add_text(icon, "🚀");
+    dom.set_style(icon, "fontSize", "24px");
+    dom.add_text(wrapper, "\n  ");
+    let heading = dom.add(Some(body), "h2");
+    dom.add_text(heading, "Feature");
+    let second = emoji_before_heading(&mut dom, body, "⚡", "h3");
+    let findings = page_findings(&dom);
+    assert_eq!(findings.len(), 2, "{findings:?}");
+    assert_eq!(findings[0].el, Some(icon));
+    assert_eq!(findings[1].el, Some(second));
+}
+
+#[test]
+fn emoji_icon_ignores_aria_hidden_but_not_real_hiding() {
+    // Decorative emoji are commonly aria-hidden for the accessibility tree
+    // while still painted; two visible icons still report (F-07).
+    let (mut dom, body) = page();
+    let rocket = emoji_before_heading(&mut dom, body, "🚀", "h2");
+    dom.set_attr(rocket, "aria-hidden", "true");
+    let bolt = emoji_before_heading(&mut dom, body, "⚡", "h3");
+    dom.set_attr(bolt, "aria-hidden", "true");
+    let findings = page_findings(&dom);
+    assert_eq!(findings.len(), 2, "{findings:?}");
+    assert_eq!(findings[0].el, Some(rocket));
+    assert_eq!(findings[1].el, Some(bolt));
+
+    // An aria-hidden wrapper hides the icons from screen readers only.
+    let (mut dom, body) = page();
+    let section = dom.add(Some(body), "div");
+    dom.set_attr(section, "aria-hidden", "true");
+    emoji_before_heading(&mut dom, section, "🚀", "h2");
+    emoji_before_heading(&mut dom, section, "⚡", "h2");
+    assert_eq!(page_findings(&dom).len(), 2);
+
+    // Real hiding still stands down.
+    for &(property, value) in &[
+        ("display", "none"),
+        ("visibility", "hidden"),
+        ("opacity", "0"),
+        ("contentVisibility", "hidden"),
+    ] {
+        let (mut dom, body) = page();
+        for emoji in ["🚀", "⚡"] {
+            let icon = dom.add(Some(body), "div");
+            dom.add_text(icon, emoji);
+            dom.set_style(icon, "fontSize", "24px");
+            dom.set_style(icon, property, value);
+            let heading = dom.add(Some(body), "h2");
+            dom.add_text(heading, "Feature");
+        }
+        assert!(
+            page_findings(&dom).is_empty(),
+            "{property}: {value} should not report"
+        );
+    }
 }
 
 // ─── font-family-count ─────────────────────────────────────────────────────

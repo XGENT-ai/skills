@@ -2861,3 +2861,29 @@ fn before_edit_denies_unrelated_edits_to_a_file_with_a_rule_pack_finding() {
     assert!(out.starts_with("{\"permission\":\"deny\""), "{out}");
     assert!(out.contains("xgent/focus-outline-removed"), "{out}");
 }
+
+#[test]
+fn before_edit_allows_unrelated_edits_when_focus_examples_are_comments_only() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    // The only `focus:outline-none` spellings are explanatory comments; the
+    // file has no removed outline, so the edit gate must not deny the change.
+    let file = t.write(
+        "src/App.tsx",
+        "// Never ship className=\"focus:outline-none\" without a replacement.\n\
+         /* <a className=\"focus-visible:outline-none\">Docs</a> */\n\
+         export const value = 'ready';\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": "'ready'", "new_string": "'done'"}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert_eq!(out, "{\"permission\":\"allow\"}", "{out}");
+}

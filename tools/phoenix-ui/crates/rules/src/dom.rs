@@ -257,6 +257,11 @@ fn unlabeled_inline_svg(dom: &dyn Dom, el: ElId) -> Vec<BrowserFinding> {
     {
         return Vec::new();
     }
+    // An SVG `title` attribute names the graphic the way a child <title>
+    // element does (F-05); `title=""` is not a name.
+    if !js::trim(&attribute(dom, el, "title")).is_empty() {
+        return Vec::new();
+    }
     if dom.children(el).iter().any(|child| {
         tag_lower(dom, *child) == "title" && !js::trim(&dom.text_content(*child)).is_empty()
     }) {
@@ -307,7 +312,7 @@ fn window_dots(dom: &dyn Dom, dots: &[ElId]) -> bool {
     let mut rects = Vec::with_capacity(3);
     let mut hues = Vec::with_capacity(3);
     for dot in dots {
-        if !is_rendered_for_browser_rule(dom, *dot) {
+        if !is_visually_rendered(dom, *dot) {
             return false;
         }
         let rect = dom.rect(*dot);
@@ -387,11 +392,17 @@ fn green_hue(hue: f64) -> bool {
 fn emoji_icon(dom: &dyn Dom) -> Vec<ElFinding> {
     let mut candidates: Vec<(ElId, String, String)> = Vec::new();
     for el in all_elements(dom) {
-        if !is_rendered_for_browser_rule(dom, el) {
+        if !is_visually_rendered(dom, el) {
             continue;
         }
         let text = js::trim(&dom.text_content(el)).to_string();
         if text.is_empty() || !EMOJI_RE.is_match(&text) {
+            continue;
+        }
+        // A wrapper's text_content is its child's emoji; only the element
+        // that owns the emoji as its own direct text owns the icon, so one
+        // wrapped icon stays one candidate (F-06).
+        if js::trim(&dom.direct_text_nodes(el).concat()) != text {
             continue;
         }
         let font_size = style_px(dom, el, "fontSize");
@@ -529,6 +540,32 @@ fn has_direct_text(dom: &dyn Dom, el: ElId) -> bool {
     dom.direct_text_nodes(el)
         .iter()
         .any(|node| !js::trim(node).is_empty())
+}
+
+/// The rendered-visibility walk for the visual rules: display, visibility,
+/// opacity and content-visibility, on the element or any ancestor. It does
+/// not read `aria-hidden`, unlike the engine's browser-rule helper: window
+/// chrome dots and emoji are routinely aria-hidden for the accessibility
+/// tree while still painted, and a rule about what the page shows must not
+/// let one ARIA attribute erase it (F-07). The SVG accessibility rule keeps
+/// using `is_rendered_for_browser_rule`, so an aria-hidden graphic is still
+/// skipped there.
+fn is_visually_rendered(dom: &dyn Dom, el: ElId) -> bool {
+    let mut cur = Some(el);
+    while let Some(c) = cur {
+        let visibility = js::to_lower_case(&dom.style(c, "visibility"));
+        if dom.style(c, "display") == "none" || visibility == "hidden" || visibility == "collapse" {
+            return false;
+        }
+        if style_px(dom, c, "opacity") <= 0.01 {
+            return false;
+        }
+        if js::to_lower_case(&dom.style(c, "contentVisibility")) == "hidden" {
+            return false;
+        }
+        cur = dom.parent(c);
+    }
+    true
 }
 
 fn tag_lower(dom: &dyn Dom, el: ElId) -> String {

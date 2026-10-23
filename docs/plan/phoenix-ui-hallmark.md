@@ -47,23 +47,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-23T03:50:00+08:00
+- 最近更新：2026-10-23T11:00:00+08:00
 - 当前进度：5/5 个里程碑完成
-- 当前状态：全部里程碑已完成并提交；下一步代码评审
+- 当前状态：5/5 里程碑交付完成；代码评审 R1（8 项 P2、2 项 P3）已逐项处置并本地验证，提交后交独立复审
 - 最近完成：M5 · 阶段收口
-- 下一步：代码评审。用 review-code 以本计划路径为参数评审本计划：它从完成记录找到要审的提交 `3e3885b`，并纳入未提交改动。
+- 下一步：代码复审。用 review-code 以本计划路径为参数复审修复提交；F-01–F-10 的处置与证据见各里程碑记录的「代码评审 R1 修复」节。
 - 当前阻塞：无
-- 代码基线：`3e3885b`（提交点 M5，含 M1–M5 交付与开发构建生成物；release `local/phoenix-ui/development-release`，binary sha256 `91744c6f…`）
+- 代码基线：M5 交付 `3e3885b`；代码评审 R1 修复工作树 dirty@0be853c（源码输入 `a68bf113…`、开发构建 binary sha256 `6bf2c7c7…`、bundleSha256 `a35570d9…`），修复提交 SHA 提交后回填
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 已完成 | 2026-10-23T00:40:00+08:00 | phoenix-ui skill 与 design-reference 守则、场景 10–14/4 行落位；V-6 通过；生成物待 M5 重建 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 3e3885b |
-| M1 | 已完成 | 2026-10-23T01:50:00+08:00 | 规则包骨架/接线/两条文本规则/R-7 别名；V-1、V-2、lint 通过；证据账本已重绑 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 3e3885b |
-| M2 | 已完成 | 2026-10-23T02:25:00+08:00 | 6 条页面规则、fixture 与 V-4 期望表；V-3 与 lint 通过，真实 Chrome 上期望表首跑通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 3e3885b |
-| M3 | 已完成 | 2026-10-23T02:05:00+08:00 | 全量 oracle 860/860 通过，13 个 case 的 advisory 差异逐字段登记并写 DELTAS；用户文档与兼容账本同步 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 3e3885b |
-| M5 | 已完成 | 2026-10-23T03:35:00+08:00 | V-4 真实 Chrome 期望表 14/14；V-7 语料 10 条逐条判定无误报；V-8 开发构建/审计/smoke/npm test/test:phoenix 全绿；V-9 十会话与 V-10 核对通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 3e3885b |
+| M4 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-09：operate 标签指引不再默认折行并同步计划 §6.3；生成物由 R1 构建同步 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 3e3885b |
+| M1 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-01–F-04、F-08 文本部分：注释、focus 变体、静态拼接、零长度与标记 CSS 位置；V-1/V-2/lint/回归通过 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 3e3885b |
+| M2 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-05–F-07：SVG title 名称、emoji 文本归属、视觉可见性与 aria-hidden 分离；V-3/V-4 真实 Chrome 通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 3e3885b |
+| M3 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-08 oracle 部分：5 个 case 精确期望更正、DELTAS/UPSTREAM/能力账本同步；V-5 860/860 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 3e3885b |
+| M5 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-10：定稿后重建开发构建并重绑产物；sourceInputSha256 复现一致，capabilities/audit/smoke/npm test/test:phoenix 通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 3e3885b |
 
 ## 0. 需求、范围与决策
 
@@ -271,19 +271,21 @@
 通用约定：
 - 属性名写法、可见性判定、矩形与文本读取沿用 crates/core/src/browser/quality.rs 与 element_checks.rs 对 `Dom` 的用法；颜色一律用 `impeccable_core::browser::element_checks::parse_rgb_or_any`（内置元素规则同款，兼容 `oklch()`、`color()` 等非 rgb 序列化），彩度与色相用 `has_chroma`、`get_hue`（导入方式同 crates/core/src/checks/rules.rs:6-9）。只用 `parse_rgb` 会让用 oklch 写的颜色静默漏报。
 - 祖先判断一律沿 `parent` 向上遍历比较 tag 与属性，不依赖快照选择器引擎对属性选择器的支持。
+- 文本规则扫描前先把注释替换为等长空白（保留字节偏移、换行与行号）：所有扩展的 `/* … */`；JS/TS/JSX 的 `//` 行注释（字符串字面量内的 `//` 不算）；HTML/Vue/Svelte/Astro 的 `<!-- … -->`。注释里的示例不是代码，不产生发现。
+- 视觉检查（窗口圆点、emoji）按实际渲染可见性判断（display、visibility、opacity、content-visibility），不因自身或祖先 `aria-hidden="true"` 跳过；SVG 无障碍规则仍把 `aria-hidden` 作为跳过条件。
 - 文本规则处理的扩展名：`.css .scss .sass .less .html .htm .vue .svelte .astro .jsx .tsx .js .ts .mjs .cjs`，其他返回空。
 - 正则用 `once_cell::sync::Lazy` 编译一次；不得 `unwrap` 解析结果或越界索引。
 - `name`/`description` 为用户可见英文，与内置描述风格一致；下列描述为定稿措辞。
 
 **`xgent/transition-all`** · 文本 · category `quality` · severity `advisory` · scopes 无
-- 逐行扫描：CSS 类文件先把 `/* … */` 注释替换为等长空白（保留换行与行号）再匹配；JS/TS 类文件只跳过以 `//` 开头的行；不以「trim 后以 `*` 开头」作为跳过条件（那会吞掉 `* { transition: all .2s }` 这类通配选择器行）。
+- 逐行扫描：CSS 类文件在注释空白替换后的文本上匹配；JS/TS 类文件只跳过以 `//` 开头的行；不以「trim 后以 `*` 开头」作为跳过条件（那会吞掉 `* { transition: all .2s }` 这类通配选择器行）。标记类文件（`.html .htm .vue .svelte .astro`）的声明分支只在 `<style>…</style>` 块体与 `style="…"`/`style='…'` 属性值内匹配，正文与注释里的示例不命中；类名 token 分支仍扫全文（注释已空白化）。
 - 命中任一：正则 `(?i)\btransition(?:-property)?\s*:\s*['"]?all\b`；或类名 token 正则 ``(?:^|[\s"'`{])(?:[\w-]+:)*transition-all(?:$|[\s"'`}])``。
 - 每行至多 1 条；line 从 1 计；snippet 为 trim 后行首 120 个字符。
 - name：`Transition on all properties`；description：`transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.`
 
 **`xgent/focus-outline-removed`** · 文本 · `quality` · warning（severity 为 None）· scopes 无
-- 样式块分支：把 `/* … */` 注释替换为等长空白（保留换行与行号）后，用 `([^{}]+)\{([^{}]*)\}` 匹配不含嵌套的块。选择器去掉 `:focus-within` 后仍含 `:focus`；声明含 `outline\s*:\s*(?:none|0)\b` 或 `outline-(?:style|width)\s*:\s*(?:none|0)\b`；同块不含 `box-shadow`、`border`、`background`、`text-decoration`、`outline-color` 声明；整个文件不含 `:focus-visible` → 命中，line 为选择器首行。
-- 类名分支：对每个 `"…"`、`'…'`、`` `…` `` 内文本按空白切 token，并解析每个 token 的变体链（`a:b:util` → 变体 `[a, b]`、工具类 `util`；`[&:focus-visible]:outline-2`、`data-[focus]:outline-2` 整段算一个变体）。命中条件：存在工具类为 `outline-none` 且变体链含 `focus` 或 `focus-visible` 的 token，且同串中没有含 `ring` 的 token、没有另一个变体链含 `focus`/`focus-visible` 而工具类不是 `outline-none` 的 token → 命中，line 为该串所在行。命中与豁免用同一套变体链定义，所以 `focus:outline-none dark:focus:border-white`、`md:focus-visible:outline-2`、`[&:focus-visible]:outline-2`、`data-[focus]:outline-2` 都算已写替代。
+- 样式块分支：在注释空白替换后的文本上用 `([^{}]+)\{([^{}]*)\}` 匹配不含嵌套的块。选择器去掉 `:focus-within` 后仍含 `:focus`；声明含 `none`，或 `outline`/`outline-width` 的完整零长度值（`0`、`0px`、`0rem`、`0.0`、`0.00px` 等；值取顶层空白分隔的完整分量，颜色函数里的 `0` 不算，`0.5px` 不算）；同块不含 `box-shadow`、`border`、`background`、`text-decoration`、`outline-color` 声明；整个文件不含 `:focus-visible` → 命中，line 为选择器首行。
+- 类名分支：对每个 `"…"`、`'…'`、`` `…` `` 内文本按空白切 token；可静态确定的相邻字符串 `+` 拼接合并为一个类名串，含动态操作数或 `${}` 插值时不断言缺少替代。解析每个 token 的变体链（`a:b:util` → 变体 `[a, b]`、工具类 `util`；`[&:focus-visible]:outline-2`、`data-[focus]:outline-2` 整段算一个变体）。命中条件：存在工具类为 `outline-none` 且变体链指向焦点本身（`focus`、`focus-visible`；任意选择器变体中未被 `:not(...)` 否定的对应伪类；`data-[focus]`/`data-[focus-visible]`；`focus-within`、`not-focus` 等子串不算）的 token，且同串中没有含 `ring` 的 token、没有另一个变体链含焦点、工具类不是 `outline-none` 的 token → 命中，line 为该串所在行。命中与豁免用同一套变体链定义，所以 `focus:outline-none dark:focus:border-white`、`md:focus-visible:outline-2`、`[&:focus-visible]:outline-2`、`data-[focus]:outline-2` 都算已写替代。
 - 单独的 `outline-none`（多用于不可聚焦元素）不处理。
 - name：`Focus outline removed without replacement`；description：`The focus outline is removed and nothing else marks keyboard focus, so keyboard users lose their place. Keep the outline, or replace it under :focus-visible with a ring, border, or background change that meets 3:1 contrast.`
 
@@ -302,17 +304,17 @@
 
 **`xgent/unlabeled-inline-svg`** · 元素 · `quality` · warning · scopes 无
 - 候选：tag `svg`，且祖先中没有 `svg`（只评估最外层）。
-- 跳过：不可见；宽或高 < 16px；自身 `aria-hidden="true"` 或 role 为 `presentation`、`none`；自身 `aria-label` 或 `aria-labelledby` 非空；有文本非空的直接子元素 `title`；任一祖先 `aria-hidden="true"`；任一祖先 tag 属于 a、button、label、summary，或 role 为 `button`、`link`，或带非空 `aria-label`/`aria-labelledby`。
+- 跳过：不可见；宽或高 < 16px；自身 `aria-hidden="true"` 或 role 为 `presentation`、`none`；自身 `aria-label`、`aria-labelledby` 或 `title` 属性非空（SVG 的 `title` 属性提供可访问名称，与子 `<title>` 同效）；有文本非空的直接子元素 `title`；任一祖先 `aria-hidden="true"`；任一祖先 tag 属于 a、button、label、summary，或 role 为 `button`、`link`，或带非空 `aria-label`/`aria-labelledby`。
 - snippet：`<svg {w}×{h}> has no accessible name and is not aria-hidden`。
 - name：`Unlabeled inline SVG`；description：`An inline SVG has neither an accessible name nor aria-hidden, so screen readers announce an unnamed graphic. Hide decorative art with aria-hidden="true"; give meaningful graphics role="img" and a name.`
 
 **`xgent/redrawn-window-chrome`** · 元素 · `slop` · `advisory` · scopes 无
-- 对元素 P 取前 6 个元素子节点，寻找连续 3 个 c1–c3：均可见；宽高 6–16px 且宽高差 ≤ 1px；`border-radius` ≥ 宽的 45%（px 换算，百分比直接比较）；背景色按 `parse_rgb_or_any` 解析后 alpha ≥ 0.5 且有彩度（用 oklch 写的圆点同样要命中）；色相依次落在红 [340°, 360°) ∪ [0°, 20°]、琥珀 [25°, 60°]、绿 [85°, 160°]；三者垂直中心差 ≤ 2px，相邻水平间距 0–12px。
+- 对元素 P 取前 6 个元素子节点，寻找连续 3 个 c1–c3：均按实际渲染可见（display、visibility、opacity、content-visibility；不看 `aria-hidden`）；宽高 6–16px 且宽高差 ≤ 1px；`border-radius` ≥ 宽的 45%（px 换算，百分比直接比较）；背景色按 `parse_rgb_or_any` 解析后 alpha ≥ 0.5 且有彩度（用 oklch 写的圆点同样要命中）；色相依次落在红 [340°, 360°) ∪ [0°, 20°]、琥珀 [25°, 60°]、绿 [85°, 160°]；三者垂直中心差 ≤ 2px，相邻水平间距 0–12px。
 - 命中报在 P 上，每个 P 至多 1 条；snippet：`three window-control dots in <{tagP}>`。
 - name：`Re-drawn window chrome`；description：`Red, amber, and green dots draw a fake window title bar. The visitor's browser already supplies chrome; show the real screenshot in a plain figure or let the content stand without a costume frame.`
 
 **`xgent/emoji-icon`** · 页面级 · `slop` · `advisory` · scopes 无
-- 候选 E：可见；`text_content` trim 后整串匹配 `^\p{Emoji_Presentation}(?:\u{FE0F}|\u{200D}\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*$`；`font-size` ≥ 20px；E 的下一个元素兄弟为 h1–h6，或 E 是父元素唯一的元素子节点且父元素的下一个元素兄弟为 h1–h6。首字符用 `Emoji_Presentation` 而非 `Extended_Pictographic`：后者包含 `©`、`®`、`‼`、`▶`、`★` 等文本符号，会把正文前的符号当成 emoji；前者也包含国旗的区域指示符。数字键帽（`1️⃣`）仍不覆盖，属规则描述之外的符号。
+- 候选 E：按实际渲染可见（display、visibility、opacity、content-visibility；不看 `aria-hidden`）；`text_content` trim 后整串匹配 `^\p{Emoji_Presentation}(?:\u{FE0F}|\u{200D}\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*$`；该 emoji 是 E 自己的直接文本（`direct_text_nodes` trim 后等于 `text_content` trim，包裹元素不算候选，同一渲染图标只算一个）；`font-size` ≥ 20px；E 的下一个元素兄弟为 h1–h6，或 E 是父元素唯一的元素子节点且父元素的下一个元素兄弟为 h1–h6。首字符用 `Emoji_Presentation` 而非 `Extended_Pictographic`：后者包含 `©`、`®`、`‼`、`▶`、`★` 等文本符号，会把正文前的符号当成 emoji；前者也包含国旗的区域指示符。数字键帽（`1️⃣`）仍不覆盖，属规则描述之外的符号。
 - 全页候选 ≥ 2 时对每个候选报 1 条（el 为候选）；不足 2 个不报。
 - snippet：`emoji "{emoji}" used as an icon before <{hN}>`。
 - name：`Emoji used as icons`；description：`Emoji stand in for feature or step icons. They render differently on every platform and share no stroke or weight. Use one icon set or authored SVG, or lead with the heading.`
@@ -357,7 +359,7 @@ reference/operate.md「## Components」末新增 `### Controls and forms`，十�
 6. 悬停样式放在 `@media (hover: hover)` 内；任何功能不只能靠悬停到达。adapt.md:229-241 已有这个口径，这里只补表单控件与 `focus-visible` 的对应做法，不重复完整章节。
 7. 数字列与会变化的计数用 `font-variant-numeric: tabular-nums`。
 8. 结果在原处可见时静默完成，toast 留给失败与看不见的结果；可撤销的操作优先提供撤销而不是确认弹窗。撤销入口不受静默规则限制：按操作风险放在 toast、行内或菜单内，不能因为默认静默而让用户找不到撤销。
-9. 按钮、标签页与导航标签在所有支持的宽度下保持一个可读单元：优先重排、换行或移动控件，不靠 `nowrap` 或截断把文字压回一行（那会触发内置的 `text-overflow`）；项目或本地化另有规定时从其规定。
+9. 按钮、标签页与导航标签在所有支持的宽度下保持一个可读单元：重排控件所在行或移动控件，不默认让标签文字自身折行（会触发 `xgent/wrapped-control-label`），也不靠 `nowrap` 或截断把文字压回一行（那会触发内置的 `text-overflow`）；项目或本地化另有规定时从其规定。
 10. 检查 hover、focus-visible、active 时用浏览器强制伪类（DevTools 或 CDP），不在产品样式里为预览加专用类。
 
 ### 6.4 craft-floor（R-3）

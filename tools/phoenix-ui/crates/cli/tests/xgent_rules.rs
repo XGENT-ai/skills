@@ -272,12 +272,24 @@ fn detect_json_url(url: &str, cwd: &Path, extra: &[&str]) -> Vec<Value> {
 const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
     ("controls.html", &["xgent/control-height-mismatch"]),
     ("svg.html", &["xgent/unlabeled-inline-svg"]),
+    ("svg-title.html", &["xgent/unlabeled-inline-svg"]),
     ("chrome.html", &["xgent/redrawn-window-chrome"]),
     ("chrome-oklch.html", &["xgent/redrawn-window-chrome"]),
+    ("chrome-aria-hidden.html", &["xgent/redrawn-window-chrome"]),
     (
         "emoji-icons.html",
         &["xgent/emoji-icon", "xgent/emoji-icon"],
     ),
+    (
+        "emoji-wrapped.html",
+        &["xgent/emoji-icon", "xgent/emoji-icon"],
+    ),
+    ("emoji-wrapped-single.html", &[]),
+    (
+        "emoji-aria-hidden.html",
+        &["xgent/emoji-icon", "xgent/emoji-icon"],
+    ),
+    ("hidden-visuals.html", &[]),
     ("fonts.html", &["xgent/font-family-count"]),
     ("clean.html", &[]),
 ];

@@ -6,7 +6,7 @@
     "engineCommit": "86be0f02dcdaaeb3f9b6780711dbdc03a14ce222",
     "skillVersion": "4.5.0",
     "engineVersion": "0.1.11",
-    "importManifestSha256": "96c98f301316245178127585b399ab8044a60011cf9e6c91015bdfc58c07da74",
+    "importManifestSha256": "733c18bfcd220fc7cfe21238598fd28cd2da74c2245fcedfd2aae80af6a1a5c6",
     "importedFileCount": 2091,
     "sourceCheckout": "local/phoenix-ui/upstream",
     "e12Checkout": "local/phoenix-ui/engine-0.1.12"
@@ -124,7 +124,7 @@
     "tests/fixtures/concept-catalog/composition-reviews.json": "f054a3feddfb459bf10fcca0245d459e8f8c09559d418dad8bb0fc454a7aa3dd",
     "tests/fixtures/concept-catalog/concept-ingredients.json": "ca1b0d092fa9c19005a16e7d2c6c53fd50cf83aebded6d19bc0d1b63968de1bb",
     "tests/fixtures/concept-catalog/concept-reviews.json": "2e44f86e0584cb50ccc4d001f8e20a44db2cca23883c9038e268fb5100ecc39d",
-    "tests/oracle/DELTAS.md": "268189c3c1ecf7c10d1fd139f1c60296123441deb15655d72cf517f726001eea",
+    "tests/oracle/DELTAS.md": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f",
     "tests/oracle/run.mjs": "0be2ec5de3f07b78870ebe318b826b55be0ff5dcb898c6d81070e9dba699d97e"
   },
   "cli": {
@@ -6206,8 +6206,8 @@
       "tests/oracle/DELTAS.md": {
         "importedPath": "tools/phoenix-ui/tests/oracle/DELTAS.md",
         "currentPath": "tools/phoenix-ui/tests/oracle/DELTAS.md",
-        "baselineSha256": "268189c3c1ecf7c10d1fd139f1c60296123441deb15655d72cf517f726001eea",
-        "currentSha256": "268189c3c1ecf7c10d1fd139f1c60296123441deb15655d72cf517f726001eea"
+        "baselineSha256": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f",
+        "currentSha256": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f"
       },
       "tests/oracle/run.mjs": {
         "importedPath": "tools/phoenix-ui/tests/oracle/run.mjs",
@@ -7247,11 +7247,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "dist/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "95bd47c34803e32aa4c3fda545403da2781c56bd732237fca1f78a11ce709d27",
+      "manifestSha256": "a35570d9538bfc3cf1d088d367e987dbd15edc9c47e2ae55c713745ec651ee95",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "550423e5dc9425deecb7098a0115bf372fcaa61e1259cb841e54229bba1446a1",
+      "generationManifestSha256": "f56e67a618eaa62ff82ccaa9fa853423c96dc8c99395e74b3ff9f3312e61cee6",
       "generator": "Bun 1.3.14",
-      "inputSha256": "db9070e961c177a123a75a03b431ffb5353344b696b9dfb036584400c1f42294",
+      "inputSha256": "0373592bd1816746801e33d048c42075dca27b752f2c16d5567921f65870069a",
       "engineManifest": "verified",
       "outputsCount": 1751,
       "providers": 19,
@@ -7259,7 +7259,7 @@
       "bundledCatalogCopies": 72,
       "status": "source-payload-hashes-verified",
       "runtimeStatus": "未验证",
-      "limitation": "PHOENIX-HALLMARK M5 development render: the XGENT rule pack, the M4 skill/design-reference guidance and the M1–M3 source changes are part of this build. Generation/build source hashes and the listed local darwin-arm64 engine are bound here; full runtime, browser, provider session, CI and release acceptance are recorded separately.",
+      "limitation": "PHOENIX-HALLMARK code review R1 repair: the corrected XGENT rule pack, the F-09 operate guidance and the regenerated skill/bundle outputs are part of this build. Generation/build source hashes and the listed local darwin-arm64 engine are bound here; full runtime, browser, provider session, CI and release acceptance are recorded separately.",
       "historicalRenders": [
         {
           "scope": "M2 earlier ordinary render before the development ENGINE manifest",
@@ -7391,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "dist/phoenix-ui/VERSION.json",
-        "sha256": "52ceba328c5db0e8d7c16095f31fa4d5802ec5ee5159cbd34331c78f23f617a9",
+        "sha256": "36d8e2e8fa0cba653394d2a6ce8f8b8f28c75d572f3a6911b45991a070926ae4",
         "distribution": "development",
-        "sourceInputSha256": "4953165a2b9794c84d4e8a0942dd75516ceba5a314aa5130e113db8252ccaa28",
+        "sourceInputSha256": "a68bf113bb7977f11cd88580d36979e5aa4b8de123a556e986dea228bcd7582d",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "91744c6f4799c590dc7be1ed899f2b9fd112f7f72e38afa03703c8324af9e658",
-            "size": 18366736
+            "sha256": "6bf2c7c7d54e9cd4bb6a7357d8cd11c6f7c72c4730e810e4751b00126fc8ddec",
+            "size": 18383280
           }
         },
-        "limitation": "Development darwin-arm64 built in PHOENIX-HALLMARK M5 from the current worktree; only this platform and engine bytes are bound. Five-platform CI, provider sessions and release publication are recorded separately."
+        "limitation": "Development darwin-arm64 rebuilt in PHOENIX-HALLMARK code review R1 (F-01–F-10 fixes) from the current worktree; only this platform and engine bytes are bound. Five-platform CI, provider sessions and release publication are recorded separately."
       }
     },
     "directionLibrary": {
