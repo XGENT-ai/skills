@@ -17,6 +17,7 @@
 | 44cd681d-69af-4d4a-af3c-df12562db52c | [Phoenix UI 开发计划评审（首轮）](../../../../docs/plan/phoenix-ui.review.md) | [状态](44cd681d-69af-4d4a-af3c-df12562db52c.md) | 活动 |
 | 599a4664-e089-4c42-901f-0d870d39e9f5 | [Phoenix Diagram P1 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.review.md) | [状态](599a4664-e089-4c42-901f-0d870d39e9f5.md) | 活动 |
 | 68af25e5-856b-4d48-9b73-b3f892abb419 | [Phoenix Diagram PRD 评审](../../../../docs/PRD-PHOENIX-DIAGRAM.review.md) | [状态](68af25e5-856b-4d48-9b73-b3f892abb419.md) | 活动 |
+| 69e27b35-e431-46f8-8cf2-9c8c1a2bf87f | [Phoenix UI 借鉴 hallmark R4代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r4.md) | [状态](69e27b35-e431-46f8-8cf2-9c8c1a2bf87f.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
 | 7a527f25-29bf-494e-9397-0f438b5e35f0 | [Phoenix UI 借鉴 hallmark R3代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r3.md) | [状态](7a527f25-29bf-494e-9397-0f438b5e35f0.md) | 活动 |
 | 8f7aad13-3cd2-48b7-a358-385f1b6726fb | [Phoenix UI 借鉴 hallmark 开发计划评审](../../../../docs/plan/phoenix-ui-hallmark.review.md) | [状态](8f7aad13-3cd2-48b7-a358-385f1b6726fb.md) | 活动 |

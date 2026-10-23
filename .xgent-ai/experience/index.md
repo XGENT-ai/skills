@@ -48,3 +48,4 @@
 - b74bc53b-7244-4bb9-b8e6-0b19aadedddc · [Phoenix UI 初始化与 subagent 门槛纠正](b74bc53b-7244-4bb9-b8e6-0b19aadedddc.md)
 
 - 78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f · [SDLC 长任务收敛与真实交付](78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f.md)
+- 3e3db19e-9909-4216-aa61-15b7d0104cb7 · [PHOENIX-HALLMARK R3 代码评审处置](3e3db19e-9909-4216-aa61-15b7d0104cb7.md)
