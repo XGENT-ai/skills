@@ -18,6 +18,7 @@
 | 599a4664-e089-4c42-901f-0d870d39e9f5 | [Phoenix Diagram P1 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.review.md) | [状态](599a4664-e089-4c42-901f-0d870d39e9f5.md) | 活动 |
 | 68af25e5-856b-4d48-9b73-b3f892abb419 | [Phoenix Diagram PRD 评审](../../../../docs/PRD-PHOENIX-DIAGRAM.review.md) | [状态](68af25e5-856b-4d48-9b73-b3f892abb419.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
+| 7a527f25-29bf-494e-9397-0f438b5e35f0 | [Phoenix UI 借鉴 hallmark R3代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r3.md) | [状态](7a527f25-29bf-494e-9397-0f438b5e35f0.md) | 活动 |
 | 8f7aad13-3cd2-48b7-a358-385f1b6726fb | [Phoenix UI 借鉴 hallmark 开发计划评审](../../../../docs/plan/phoenix-ui-hallmark.review.md) | [状态](8f7aad13-3cd2-48b7-a358-385f1b6726fb.md) | 活动 |
 | 88cb4f52-4171-4daf-b298-1d9e1c538848 | [Phoenix Diagram P1 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P1.prd-dev-gaps.md) | [状态](88cb4f52-4171-4daf-b298-1d9e1c538848.md) | 活动 |
 | 9a6386c1-91c6-4a95-98b4-989e9b806613 | [AGENTS.md 与 Skills 自进化开发计划首审](../../../../docs/plan/agent-instruction-evolution.review.md) | [状态](9a6386c1-91c6-4a95-98b4-989e9b806613.md) | 活动 |

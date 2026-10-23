@@ -2938,3 +2938,54 @@ fn before_edit_denies_an_edit_when_a_static_class_expression_has_no_replacement(
     assert!(out.starts_with("{\"permission\":\"deny\""), "{out}");
     assert!(out.contains("xgent/focus-outline-removed"), "{out}");
 }
+
+#[test]
+fn before_edit_allows_edits_when_nested_or_unknown_class_expressions_prove_no_removal() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    // The nested call is one static class list with a ring; the other two have
+    // an operand the engine cannot read, so nothing is asserted (R3 F-03).
+    let file = t.write(
+        "src/App.tsx",
+        "const cn = (...parts: string[]) => parts.join(\" \");\n\
+         export const a = <button className={cn((\"focus:outline-none\"), cn(\"focus-visible:ring-2\"))}>Save</button>;\n\
+         export const b = <button className={(\"focus:outline-none \") + extra}>Open</button>;\n\
+         export const c = <button className={cn((\"focus:outline-none\"), extra)}>Close</button>;\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": ">Save<", "new_string": ">Save now<"}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert_eq!(out, "{\"permission\":\"allow\"}", "{out}");
+}
+
+#[test]
+fn before_edit_denies_an_edit_when_a_nested_static_expression_has_no_replacement() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    let file = t.write(
+        "src/App.tsx",
+        "const cn = (...parts: string[]) => parts.join(\" \");\n\
+         export const a = <button className={cn((\"focus:outline-none\"), cn(\"mt-2\"))}>Save</button>;\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": ">Save<", "new_string": ">Save now<"}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert!(out.starts_with("{\"permission\":\"deny\""), "{out}");
+    assert!(out.contains("xgent/focus-outline-removed"), "{out}");
+}

@@ -348,6 +348,99 @@ const join_dynamic_separator = <button className={[\"focus:outline-none\", \"rin
 }
 
 #[test]
+fn focus_outline_removed_reads_the_complete_class_expression() {
+    // The class list is the outermost static expression a literal belongs to,
+    // not the first group that parses on its own. Anything the engine cannot
+    // read around it — a variable, a sibling condition, a member call, an
+    // interpolation, a call that gives the literal another meaning — makes the
+    // list unknown, and an unknown list is never reported (R3 F-03).
+    let content = "\
+const cn = (...parts: string[]) => parts.join(\" \");
+const safe = <button className={cn((\"focus:outline-none\"), cn(\"focus-visible:ring-2\"))}>A</button>;
+const missing = <button className={cn((\"focus:outline-none\"), cn(\"mt-2\"))}>B</button>;
+const grouped_dynamic = <button className={(\"focus:outline-none \") + extra}>C</button>;
+const nested_dynamic = <button className={cn((\"focus:outline-none\"), extra)}>D</button>;
+const branch_sibling = <button className={cn((\"focus:outline-none\"), open && \"focus-visible:ring-2\")}>E</button>;
+const conditional_sibling = <button className={cn(base, open ? \"focus:outline-none\" : \"\")}>F</button>;
+const conditional = <button className={open ? \"focus:outline-none\" : \"focus-visible:ring-2\"}>G</button>;
+const conditional_call = <button className={cn(open ? \"focus:outline-none\" : \"\")}>H</button>;
+const object_key = <button className={clsx(\"focus-visible:ring-2\", { \"focus:outline-none\": active })}>I</button>;
+const variant = cva(\"focus-visible:ring-2\", { variants: { tone: { plain: \"focus:outline-none\" } } });
+const styles = { plain: \"focus:outline-none\" };
+const transformed = <button className={\"focus:outline-none\".trim()}>J</button>;
+const interpolated = <button className={`focus-visible:ring-2 ${open ? \"focus:outline-none\" : \"\"}`}>K</button>;
+";
+    let findings = scan(content, ".tsx");
+    assert_eq!(lines(&findings), vec![3.0, 8.0, 9.0, 12.0], "{findings:#?}");
+    assert_eq!(
+        snippets(&findings),
+        vec![
+            "focus:outline-none mt-2",
+            "focus:outline-none",
+            "focus:outline-none",
+            "focus:outline-none",
+        ]
+    );
+}
+
+#[test]
+fn focus_outline_removed_survives_apostrophes_and_markup_neighbors() {
+    // An apostrophe in body copy is not a string delimiter for the class
+    // literal after it, and a spread or a framework attribute after the class
+    // attribute ends the expression rather than making it unknown.
+    let tsx = "\
+export const a = <div><p>Don't</p><button className=\"focus:outline-none\">A</button></div>;
+export const b = <button className=\"focus:outline-none\" {...rest}>B</button>;
+export const c = 'z';
+";
+    let findings = scan(tsx, ".tsx");
+    assert_eq!(lines(&findings), vec![1.0, 2.0], "{findings:#?}");
+
+    let vue = "\
+<template>
+  <button class=\"focus:outline-none\" :disabled=\"busy\">A</button>
+  <button class=\"focus:outline-none\" @click=\"go\">B</button>
+  <button :class=\"'focus:outline-none'\">C</button>
+  <button :class=\"['focus:outline-none', 'focus-visible:ring-2']\">D</button>
+</template>
+";
+    let findings = scan(vue, ".vue");
+    assert_eq!(lines(&findings), vec![2.0, 3.0, 4.0], "{findings:#?}");
+}
+
+#[test]
+fn focus_outline_removed_scans_large_markup_in_linear_time() {
+    // Every attribute literal in one large JSX return group is its own class
+    // list; resolving each must not re-read the whole group (R3 F-12).
+    let mut content = String::from("export function App(){ return (<>\n");
+    for index in 0..6_000 {
+        content.push_str(&format!(
+            "<button className=\"px-2 py-1\" title=\"Save item {index}\">Save</button>\n"
+        ));
+    }
+    content.push_str("</>); }\n");
+    // Prose that quotes a value after a colon reads like a conditional branch;
+    // looking for its bound must not scan the rest of the page.
+    let mut prose = String::new();
+    for index in 0..6_000 {
+        prose.push_str(&format!(
+            "<p>Step {index}: \"Save item {index}\" and continue</p>\n"
+        ));
+    }
+    for (content, ext) in [(&content, ".tsx"), (&prose, ".html")] {
+        let started = std::time::Instant::now();
+        let findings = scan(content, ext);
+        let elapsed = started.elapsed();
+        assert!(findings.is_empty(), "{ext}: {findings:#?}");
+        assert!(
+            elapsed < std::time::Duration::from_secs(3),
+            "{ext}: scanning {} bytes took {elapsed:?}",
+            content.len()
+        );
+    }
+}
+
+#[test]
 fn focus_outline_removed_reads_priority_suffix_after_the_value() {
     // `!important` is a declaration priority, not part of the value: the
     // compact form removes the outline exactly like the spaced one (F-11).
@@ -458,6 +551,36 @@ fn transition_all_scans_only_css_positions_in_markup() {
             "{ext}"
         );
     }
+}
+
+#[test]
+fn transition_all_reads_markup_by_attribute_and_raw_text_context() {
+    // A style example inside another attribute's value, a `<style>` string in
+    // a script, and tags quoted in raw-text elements are not declarations;
+    // bound style attributes, real style attributes after a brace value that
+    // contains `>`, and real style blocks are (R3 F-08).
+    let content = "\
+<p title='Avoid style=\"transition: all .2s\"'>Guide</p>
+<p data-example='style=\"transition: all .2s\"'>Guide</p>
+<script>const tpl = \"<style>.x { transition: all .2s; }</style>\";</script>
+<textarea><div style=\"transition: all .2s\">Example</div></textarea>
+<title>Avoid <b style=\"transition: all .2s\"></title>
+<div :style=\"{ transition: 'all .2s' }\">Bound</div>
+<div class={a > b ? 'x' : 'y'} style=\"transition: all .2s\">Braced</div>
+<style>.y { transition: all .2s; }</style>
+";
+    for ext in [".html", ".htm", ".vue", ".svelte", ".astro"] {
+        let findings = scan(content, ext);
+        assert_eq!(
+            lines(&findings),
+            vec![6.0, 7.0, 8.0],
+            "{ext}: {findings:#?}"
+        );
+    }
+    // An unclosed `<style>` is not a style block for the rest of the file.
+    let unclosed =
+        "<div style=\"transition: all .2s\">A</div>\n<style>.b { transition: all .2s }\n";
+    assert_eq!(lines(&scan(unclosed, ".html")), vec![1.0]);
 }
 
 #[test]
