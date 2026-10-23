@@ -289,6 +289,7 @@ pub fn compile(
         &raw_boundaries,
         &nodes,
         &routes,
+        &edges,
         &labels,
         &extra,
         &entries,

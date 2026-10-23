@@ -8,7 +8,7 @@
 >
 > 需求来源：[PHOENIX-DIAGRAM PRD v1.0](../PRD-PHOENIX-DIAGRAM.md) · **P2（第2期）补齐**；原计划：[PHOENIX-DIAGRAM-P2](PHOENIX-DIAGRAM-P2.md)；范围由[差异报告](PHOENIX-DIAGRAM-P2.prd-dev-gaps.md)的 G-01/G-02/G-03/G-06、FU-1–FU-4 确定。原报告 D-01/D-02 的既有决定继续有效。
 >
-> 本期交付：**六个有效参考时区的原生兼容、准确浏览器失败回执、ERD 必需事实先澄清，以及与既定 Reader 行为一致的维护测试**。
+> 本期交付：**六个有效参考时区的原生兼容、准确浏览器失败回执、关系事实边界，以及与既定 Reader 行为一致的维护测试**。M4 实际验收补入类图不猜数量下界；用户另行授权修复架构图自动 wrap 标题遮挡既有连线，边界见 D6/D7。
 > **开发范围：本仓 tools/phoenix-diagram/ 的时间、浏览器/交付及测试；skills/phoenix-diagram/ 的既有 ERD 创作规则与 Timeline 时区说明；diagram 来源/构建/验收脚本与 dist；docs/phoenix-diagram.md 的受影响说明。**
 > 本期独特职责：只补已交付 P2 的确认缺口，不重做原计划八个里程碑；新里程碑和验收记录保持独立。
 > **顶层排除：接受或延期这些遗漏、改变语义/质量/视觉门、增加时区库或 Node 运行期依赖、P3 功能、公开发行、活跃安装和 Phoenix UI 产品修改。**
@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-23T14:27:21+08:00
+- 最近更新：2026-10-23T18:33:01+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：实施中；真实失败矩阵12/12及前四区视觉审核通过，六区剩余/全量维护/宿主与四平台尚待收口
+- 当前状态：实施中；新引擎V-4六区/24图/12失败对照、WAL四图、完整Diagram/轻量/Clippy已过；V-5主15例自动过、60图正审，66项目准备进行中
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：按计划冻结候选源码并启动CI；只补MST失败导出及PST/YST，继续维护/core/新宿主并核查Claude API403；见M4记录
-- 当前阻塞：无
-- 代码基线：codex/phoenix-diagram-p2-gaps-20261023 / fd0be93；产品源码、测试、skill、dist和本计划记录已冻结提交；M4终验未完成，既有无关未提交记录保留
+- 下一步：按提交点条款冻结当前源码启动远端四平台；本机项目准备后先核Class/ERD关键用例再各31行/额外正反例，续V-5及同包闭环/聚合；见M4记录
+- 当前阻塞：无（D7范围已获用户明确授权）
+- 代码基线：codex/phoenix-diagram-p2-gaps-20261023 / c27358b（源码fd0be93）；D6/D7及后续记录为dirty，旧cohort原档保留、不作为新bundle完成证明
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-23T14:23:04+08:00 | 真实失败矩阵12/12、前四区16张实看审核通过；六区剩余与其余终验未完成，Claude读取前API403待核查 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M4 | 进行中 | 2026-10-23T18:33:01+08:00 | 新引擎V-4六区/24原图/12对照、WAL四图及完整Diagram/轻量/Clippy过；V-5主回归与66项目准备中，新宿主/CI/同包终验尚待 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93 |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93 |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93 |
@@ -94,6 +94,8 @@
 | D3 | ERD缺事实 | 具体检查两端最大/最小参与数和FK可空依据；缺必需事实按现行开放问题即停 | 不增加审批或默认值，不改已有JSON/schema；明确材料/显式Mermaid不多问 | SKILL.md首部，报告G-03 |
 | D4 | 过期Reader断言 | 按现行Reader条件分组测行为，加入原生维护入口 | 保留真实适配，不通过回退实现迎合旧断言；既定排除与源几何不变仍须验证 | reader-layout.js:36–42，reader-layout.test.mjs:164；G-06 |
 | D5 | 重新取证范围 | 引擎与bundle冻结后，一次阶段收口：本机、四平台、两宿主全量及新增缺事实反例 | C-3要求相同bundle，D3改变bundle后原宿主记录不能复用；旧证据只作对照 | 原计划§9.3、D10/D13，原计划候选收口中的完整31行×两宿主 |
+| D6 | 类图数量事实 | 未给下界时保留“多个”等原义，不从成员独立存在推出整体可以空，不补0..*/1..*；明确数量照用，可选数值不触发多余提问 | 具体化现有“不补私有事实”原则，不修改schema、触发/授权或验收门；bundle变化后重新取得宿主证据 | M4原生case-020实际输出无依据0..*；原SKILL事实原则；class-facts.json |
+| D7 | 自动wrap标题遮挡 | 保留显式orthogonal-v及固定节点/原路径，自动wrap标题在顶轨无解时避让既有线与marker，必要时按实测扩展派生底部空间 | 不改变原JSON、用户固定几何、显式路线/标题、质量要求；只修架构标题布局及直接回归 | 用户2026-10-23明确“允许最小修复”；production-deployment两主题实际图、原SVG与红测试 |
 
 D1 是局部可逆选择：直接六区专用历史表与规则比引入完整ICU时间栈局部，且不改变已有API/依赖。两者均能精确实现；本次只缺六区，后者会扩大数据、构建与许可面。未来确有更多ICU专属规则时再评估完整库。D2保留现有 Evidence/OutputSlot，不引入新的目录管理框架。
 
@@ -139,10 +141,11 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | tools/phoenix-diagram/src/browser/mod.rs、src/browser/evidence.rs、src/delivery/transaction.rs；tests/browser_contract.rs、tests/delivery.rs、tests/cli.rs（未带tools/前缀的短路径相对tools/phoenix-diagram/） | 目录生命周期与首因传播；沿Evidence目录/临时文件保护和OutputSlot回执提交，不改输出事务语义 |
 | skills/phoenix-diagram/SKILL.md、references/authoring-defaults.md（后者相对skill目录）；test/phoenix-diagram/skill.test.js；docs/phoenix-diagram.md | ERD事实检查及澄清规则同步；M3一并同步authoring-defaults的Timeline时区接受范围（见§5.1）；描述/名称/metadata/其他原则保留 |
 | tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs；scripts/test-phoenix-diagram-native.mjs | 既定高度适配的断言与日常接线；不改reader-layout.js/viewer.css |
-| ★ tools/phoenix-diagram/tests/gaps-acceptance.mjs；★ tests/support/gaps-browser.mjs；★ tests/provider/erd-facts.json（后两者相对工具目录） | 有界真实回归入口、12组浏览器失败辅助片段与固定ERD原题/完整正例；接线方式见§9 |
+| ★ tools/phoenix-diagram/tests/gaps-acceptance.mjs；★ tests/support/gaps-browser.mjs；★ tests/provider/erd-facts.json；★ tests/provider/class-facts.json（后三者相对工具目录） | 有界真实回归入口、12组浏览器失败辅助片段及关系事实原题/明确正例；审核字段与作者题面分离，接线见§9 |
+| tools/phoenix-diagram/src/layout/architecture/presentation.rs及必要直接架构调用方；tests/architecture.rs、tests/render_source.rs（后两者相对工具目录） | D7获授权的自动wrap标题避让；锁原节点与显式路径，原参考JSON/oracle只读，只替换该已修标题的旧坐标断言，其余原回归保持 |
 | skills/phoenix-diagram/ENGINE.json；dist/phoenix-diagram/ | 通过既有build --sync-dist生成，不手写身份 |
 
-不修改Cargo依赖、输入schema、其他renderer、Phoenix UI、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
+不修改Cargo依赖、输入schema、D7以外的其他renderer、Phoenix UI、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
 
 ## 2. 模块与接口
 
@@ -172,7 +175,7 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | ICU77.1文本/现有Unicode许可 | 已核实足够 | §1.1与报告E7；许可已在SOURCE/nativeText及构建中固定 | 固定独立时间数据身份，复用全文；不更新其他tzdb | 缺源/改字节即离线失败 |
 | chrono/chrono-tz | 已核实足够 | time.rs现有Named/Fixed与日期运算；报告E7路线 | 不新增依赖；仅新增专用变体 | 未知名称仍timeline/invalid-timezone |
 | Browser Evidence/OutputSlot | 已核实缺口 | 报告E4四组对照、evidence.rs创建/清理、transaction先seal后diagnostics | §5.2精确增量，输出事务本身不变 | 不掩盖浏览器首因；目录真实失败独立保留 |
-| 已登录Claude Code、Codex及Chrome | 已核实足够 | M8/报告E1/E3与原生会话、浏览器原件 | 临时项目/新包/新会话；按既有采集方式，不改用户配置 | 超时/配额/图像不可用记未完成，不能代验 |
+| Claude Code、Codex及Chrome | 三者真实入口已运行；Claude官网额度不可用，用户指定TokenHub已成功 | 新M4原生会话及用户2026-10-23授权；仓根.env.local已就位，额外原题与正式001均退出0 | 临时项目/新包/新会话；Claude仅子进程设置指定BASE_URL、MODEL及AUTH_TOKEN，不改全局配置，不将token写回执 | 超时/配额/图像不可用记未完成，不能代验 |
 | 四平台CI/同包harness | 已核实足够 | run39816459249及报告E1 | 源码冻结后按原计划候选收口独立候选流程重取；不修改CI审核政策 | 平台缺结果不收口 |
 | npm/R2公开发布、活跃安装 | 范围外 | 原计划§8、C-2 | 零写入 | 继续保留发行guard |
 
@@ -209,6 +212,8 @@ M3统一维护authoring-defaults.md：Timeline行说明既有IANA名、固定偏
 
 ★ tests/provider/erd-facts.json保存：报告E3的原题原字节、完整正例（独立题面明确customer_id非空、商品可无明细）、显式Mermaid邻接正例及预期缺口的独立审核字段。给宿主的题面不含判据/评分词。现有intent-erd正例使用完整材料；原题另作缺事实反例，不改历史会话。审核先逐条列“材料依据→候选端点/卡片断言”，再判事实是否通过；自动/视觉complete不得覆盖语义失败。
 
+M4实际class原题出现无依据的0..*，按D6具体化同一事实边界：类图的关系种类、生命周期与两端数量分别取证。成员可独立存在不证明整体可以没有成员；保留已给“多个”等数量含义，不补未给下界，可选数值不阻止已明确关系的创作。class-facts.json固定484字节原题及另行明确两端数量的Mermaid正例，作者只读prompt。静态检查只保护材料身份/隔离；新bundle须在全新上下文先核普通类图与明确数量输入，再完成D5全范围，旧failed不回判passed。
+
 ### 6.2 Reader既定行为测试同步
 
 reader-layout.test.mjs只修改与原计划固定画布适配冲突的测试分组：
@@ -217,6 +222,10 @@ reader-layout.test.mjs只修改与原计划固定画布适配冲突的测试分�
 - 对非宽固定画布contain/legacy/空fit，包括缺contract和phoenix-v1，断言已进入高度适配、源SVG/viewBox/点/文字完全不变、可读下限和必要authored溢出标识正确。
 - 保留narrow/embed/present/print排除；契约未知但fit为固定画布时按实际条件验证，不以猜测合同改变已有代码。
 - 加入scripts/test-phoenix-diagram-native.mjs的常规Node测试列表。不会改Reader运行代码或为过测降低断言。
+
+### 6.3 已授权的架构标题遮挡修复
+
+production-deployment的postgres→replica为显式orthogonal-v，保留原四点903,467→903,553.5→1103,553.5→1103,640及固定节点。现有两层wrap标题在顶轨占满宽度，最终遮住WAL末段/marker；不把这条线改称auto或改端口。只对无显式标题位置的自动wrap增加合法标题轨道，按实际标题高度/间距分配必要派生底部空间；标题不能压节点、另一标题、连线/marker、legend或超出已固定画布。冻结参考输入/oracle不改；仅该已证实错误的phoenix-v1逐字标题坐标预期改为更强的可见性、原路径/节点/事实不变断言，其他逐字回归保持。用户已明确授权最小修复，不改变一般显式几何政策。
 
 ## 7. NFR、安全与运行保障
 
@@ -252,7 +261,7 @@ reader-layout.test.mjs只修改与原计划固定画布适配冲突的测试分�
 | --- | --- | --- | --- |
 | V-1 | F1/N3六区兼容、N2来源；去例外后修前红，修后全部Node边界/墙钟/标签一致；数据篡改失败且不自修 | node tools/phoenix-diagram/tests/fixtures/format/generate.mjs --check；mbx test --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline --test format --test timeline；node --test tools/phoenix-diagram/upstream/source-check.test.mjs；node scripts/check-phoenix-diagram-source.mjs --check | M1局部，解锁新时区真实收口 |
 | V-2 | F4/N4/N5失败目录：fresh/precreated、缺席/配置/launch/协议失败，首因/阶段/无截图/保护准确；修前红 | mbx test --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline --test delivery --test browser_contract --test cli；沿现有ProtocolFixture和真实Temp目录，配置缺失不冒充unavailable，真实unavailable归V-4 | M2局部 |
-| V-3 | F2事实提示、N1/N3固定画布断言与维护接线；名称/描述/原原则不漂移；按§5.1核对Timeline说明含六个名称及既有接受范围，schema保持不变；Reader失败断言先红后绿 | node --test test/phoenix-diagram/skill.test.js tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs；静态核对native runner确实列入该套件；完整frontmatter由V-8的npm test验证 | M3局部 |
+| V-3 | F2关系事实提示、Class材料身份与明确数量相邻正例，N1/N3固定画布断言与维护接线；名称/描述/原原则不漂移；按§5.1核对Timeline说明含六个名称及既有接受范围，schema保持不变；Reader失败断言先红后绿 | node --test test/phoenix-diagram/skill.test.js tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs；静态核对native runner确实列入该套件；完整frontmatter由V-8的npm test验证 | M3局部 |
 | V-4 | F1/F4/N3/N4真实新增路径：六区原参考副本finalize/strict/可见时间/导出；12种浏览器命令×目录×环境对照，原文件/证据保护 | ★ node tools/phoenix-diagram/tests/gaps-acceptance.mjs --engine <新开发引擎绝对路径> --output-dir <新运行目录>；本机darwin-arm64、Chrome和sandbox-exec；入口实现见§9.1；六个新时区交付各自四张截图（2视口×暗亮主题，共24张）均逐张实际查看，在本运行新产生且已finalize的各delivery上按现行review-record分别原位登记 | M4唯一阶段收口 |
 | V-5 | 十类已有路径及FU-4回归：core十五例、Reader/导出/恢复/拒网/explore/corpus/evidence/locale、真实看图 | 沿原计划core收口第1–5步，目录使用本计划独立代号；node scripts/test-phoenix-diagram.mjs --stage core --engine <BIN> --output-dir <DIR>，再按最新index依次--resume --reader --recovery --offline --explore --corpus --evidence --locale，最后--review-file <实际记录map>；不得为取得complete重做原delivery | M4唯一阶段收口 |
 | V-6 | F2全部原宿主范围及G-03反例；F4失败答复；真实新包读取后发生行为，不能带修订提示重判 | 用冻结后development包安装临时项目，沿原计划宿主/候选收口的factory/capture/index/review/archive和现有采集器，Claude/Codex各31行；intent-erd用完整正例；额外在每宿主新会话原样投放erd-facts原题，先问且无candidate/HTML/补造选项才过；所问须覆盖erd-facts.json预期缺口（商品最小参与数、orders.customer_id可空性），不重复询问材料已给事实，按独立审核字段逐条核对并留记录。原始会话/安装摘要/加载读取/语义账本/截图归档 | M4唯一阶段收口；仅角色模拟，不招募真人 |
@@ -272,6 +281,8 @@ reader-layout.test.mjs只修改与原计划固定画布适配冲突的测试分�
 ### 9.2 取证安排
 
 M1–M3只运行各自局部检查；全量、模型、四平台和真实浏览器集中M4。准备脚本、fixture和契约随所属代码里程碑交付，但真实入口只在M4运行。M4失败只重跑失败与受修复影响的证据；源码/bundle再次变化时按实际摘要作废受影响结果，不机械全量重跑，也不借旧bundle复用新文本行为。
+
+V-7沿用既有聚合器的完整ZIP身份验证：`ArchiveEvidence`先核对本机ZIP摘要，再按原路径提取所需成员；只有远端索引或选取文件不能满足该接口。本次据此限定原计划§9.3留存例外：冻结后锁定一个新cohort，仅取回该次四平台consume evidence及Node18 evidence共五个必需ZIP，生成后先核对API体积/摘要与本机可用空间，不取native目标包或整套日志ZIP。只按需提取回执和待看截图，不将完整消费目录解包；聚合的身份、语义及视觉门不变。candidate/harness仍按既有同包转移流程取回。run39911661359的五份原档已留存，只作前一候选基线，不拼接到新cohort；新run/commit及逐artifact不可变API绑定写M4记录。
 
 原计划候选收口的技术账号、候选workflow、OS拒网和工具环境为执行资源；保留其实际获取方式与已授权范围。配额/CI/图像工具临时不可用时记录未完成并推进不依赖项，不降低本计划退出门。
 

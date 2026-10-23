@@ -88,6 +88,24 @@ test('documented commands use the flat native launcher without legacy renderer f
   }
 });
 
+test('class acceptance keeps unspecified quantities separate from explicit Mermaid multiplicities', () => {
+  const facts = JSON.parse(fs.readFileSync(path.join(root, 'tools/phoenix-diagram/tests/provider/class-facts.json'), 'utf8'));
+  const prompt = Buffer.from(facts.natural.prompt);
+  assert.equal(facts.schemaVersion, 1);
+  assert.equal(prompt.length, 484);
+  assert.equal(createHash('sha256').update(prompt).digest('hex'), 'ad7ce3fcec3c8df8da4defa70e39a5c3ab45ee2a56146d3e1a59b7922b286cda');
+  assert.deepEqual(facts.natural.source.promptIdentity, { bytes: prompt.length, sha256: createHash('sha256').update(prompt).digest('hex') });
+  assert.equal(facts.natural.review.relationship.minimumProvided, false);
+  assert.deepEqual(facts.natural.review.relationship.numericCardinalityMaterials, []);
+  for (const item of [facts.natural, facts.explicitMermaid]) {
+    assert.deepEqual(item.review.expectedMissingFacts, []);
+    for (const passage of item.review.relationship.materials) assert.ok(item.prompt.includes(passage), passage);
+    assert.doesNotMatch(item.prompt, /expectedMissingFacts|minimumProvided|verdict|评分|判据/);
+  }
+  assert.equal(facts.explicitMermaid.review.relationship.fromMultiplicity, '0..1');
+  assert.equal(facts.explicitMermaid.review.relationship.toMultiplicity, '0..*');
+});
+
 test('ERD acceptance material preserves the original bytes and separates prompts from review facts', () => {
   const facts = JSON.parse(fs.readFileSync(path.join(root, 'tools/phoenix-diagram/tests/provider/erd-facts.json'), 'utf8'));
   assert.equal(facts.schemaVersion, 1);

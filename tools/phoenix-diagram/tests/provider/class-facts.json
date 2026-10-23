@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "natural": {
+    "source": {
+      "sessionId": "66a912b5-73de-433e-997a-61c5a4bc2872",
+      "caseId": "case-020",
+      "promptIdentity": {
+        "bytes": 484,
+        "sha256": "ad7ce3fcec3c8df8da4defa70e39a5c3ab45ee2a56146d3e1a59b7922b286cda"
+      }
+    },
+    "prompt": "请用一张图说明支付模块的类型关系：PaymentProcessor 是接口，有 authorize(amount: Money): AuthResult 和 capture(authId: String): void 两个方法；CardProcessor 和 WalletProcessor 都实现这个接口，其中 CardProcessor 有私有字段 gateway: GatewayClient。Checkout 类拥有一个 Cart，Cart 随 Checkout 一起创建和销毁；Checkout 调用 PaymentProcessor 完成支付；Cart 包含多个 LineItem，LineItem 可以脱离 Cart 单独存在。\n",
+    "review": {
+      "expectedMissingFacts": [],
+      "relationship": {
+        "from": "Cart",
+        "to": "LineItem",
+        "kind": "aggregation",
+        "materials": [
+          "Cart 包含多个 LineItem",
+          "LineItem 可以脱离 Cart 单独存在"
+        ],
+        "maximum": "many",
+        "minimumProvided": false,
+        "numericCardinalityMaterials": []
+      },
+      "requirements": [
+        "保留多个的数量含义与独立生命周期，不从一端的生命周期推另一端的零下界",
+        "不追加0..*、1..*等未给出的下界，也不为可选数值标注询问",
+        "其他已给类型、成员及关系完整保留"
+      ]
+    }
+  },
+  "explicitMermaid": {
+    "prompt": "请把下面的 Mermaid 类图转成可交付图解，保留类型、聚合关系和两端数量：\n```mermaid\nclassDiagram\n  class Cart\n  class LineItem\n  Cart \"0..1\" o-- \"0..*\" LineItem : contains\n```\n",
+    "review": {
+      "expectedMissingFacts": [],
+      "relationship": {
+        "from": "Cart",
+        "to": "LineItem",
+        "kind": "aggregation",
+        "materials": [
+          "Cart \"0..1\" o-- \"0..*\" LineItem : contains"
+        ],
+        "fromMultiplicity": "0..1",
+        "toMultiplicity": "0..*"
+      },
+      "requirements": [
+        "两端数量已给出，直接保留，不重复询问或删掉数量"
+      ]
+    }
+  },
+  "reviewInstructions": [
+    "分别核对每个数量所指的端点及其材料依据，生命周期不替代数量",
+    "作者只收到prompt；review字段只供独立审核者使用",
+    "实际查看当前图和卡片中的数量；自动通过不代表事实通过"
+  ]
+}

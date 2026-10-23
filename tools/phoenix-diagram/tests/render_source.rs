@@ -144,7 +144,26 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
         let html = render(&scene, &EmbeddedAssets { template: TEMPLATE }).unwrap();
         let dom = Html::parse_document(std::str::from_utf8(&html).unwrap());
         let key = format!("{}/{}", case["contract"], case["name"]);
+        let repaired_footer = contract == InputContract::PhoenixV1
+            && case["name"] == "production-deployment.architecture";
         for expected in case["geometry"]["texts"].as_array().unwrap() {
+            let is_legend_text = expected["content"] == "Legend"
+                || case["geometry"]["legends"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|legend| legend["texts"].as_array().unwrap().contains(expected));
+            let mut expected = expected.clone();
+            if repaired_footer {
+                // This one formerly occluded title now sits 2px below the
+                // child frame (bottom 660); its 16px height and 2px inset
+                // grow the automatic canvas and its legend by exactly 20px.
+                if expected["content"] == "AWS eu-west-1 / disaster recovery" {
+                    expected["y"] = Value::from(662.0 + expected["font"].as_f64().unwrap() + 4.0);
+                } else if is_legend_text {
+                    expected["y"] = Value::from(expected["y"].as_f64().unwrap() + 20.0);
+                }
+            }
             let found = dom.select(&Selector::parse("svg text").unwrap()).any(|t| {
                 t.text().collect::<String>() == expected["content"].as_str().unwrap()
                     && [("x", "x"), ("y", "y"), ("font-size", "font")].iter().all(
@@ -168,6 +187,10 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
                 .select(&Selector::parse("g[data-graph-role='legend']").unwrap())
                 .find(|e| e.value().attr("data-legend-semantic-kind") == Some(kind));
             for expected in legend["swatches"].as_array().unwrap() {
+                let mut expected = expected.clone();
+                if repaired_footer {
+                    expected["y"] = Value::from(expected["y"].as_f64().unwrap() + 20.0);
+                }
                 if !found.is_some_and(|g| {
                     g.select(&Selector::parse("rect").unwrap()).any(|r| {
                         r.value().attr("class") == expected["class"].as_str()

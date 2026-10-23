@@ -229,6 +229,55 @@ pub(super) fn auto_canvas(
 fn title_width(label: &str, font: f64, contract: InputContract) -> f64 {
     (text_units_for_contract(label, contract) * font * 0.6 + 10.0).max(30.0)
 }
+
+fn marker_bounds(route: &router::Route, edge: &router::Edge) -> Option<Rect> {
+    let pair = route
+        .points
+        .windows(2)
+        .rev()
+        .find(|pair| pair[0] != pair[1])?;
+    let end = pair[1];
+    let length = (end.x - pair[0].x).hypot(end.y - pair[0].y);
+    let (dx, dy) = ((end.x - pair[0].x) / length, (end.y - pair[0].y) / length);
+    let stroke = number(
+        &edge.raw,
+        "width",
+        if edge.raw["variant"] == "emphasis" {
+            1.8
+        } else {
+            1.5
+        },
+    );
+    // The shared SVG marker is 10x7, referenced at (9, 3.5), in stroke units.
+    let points = [(-9.0, -3.5), (1.0, 0.0), (-9.0, 3.5)].map(|(x, y)| Point {
+        x: end.x + (dx * x - dy * y) * stroke,
+        y: end.y + (dy * x + dx * y) * stroke,
+    });
+    let x = points
+        .iter()
+        .map(|point| point.x)
+        .fold(f64::INFINITY, f64::min);
+    let y = points
+        .iter()
+        .map(|point| point.y)
+        .fold(f64::INFINITY, f64::min);
+    Some(Rect {
+        x,
+        y,
+        width: points
+            .iter()
+            .map(|point| point.x)
+            .fold(f64::NEG_INFINITY, f64::max)
+            - x,
+        height: points
+            .iter()
+            .map(|point| point.y)
+            .fold(f64::NEG_INFINITY, f64::max)
+            - y,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
 fn titles(
     raw: &[Boundary],
     nodes: &[Node],
@@ -237,6 +286,7 @@ fn titles(
     minimum: f64,
     enforce: bool,
     contract: InputContract,
+    markers: &[Rect],
 ) -> Vec<Boundary> {
     let mut order: Vec<usize> = (0..raw.len()).collect();
     order.sort_by(|a, b| {
@@ -246,6 +296,7 @@ fn titles(
     });
     let mut measured = raw.to_vec();
     let mut placed: Vec<Rect> = vec![];
+    let mut placed_frames: Vec<Rect> = vec![];
     for index in order {
         let boundary = &mut measured[index];
         let label = string(&boundary.raw, "label");
@@ -285,8 +336,7 @@ fn titles(
                 .fold(f64::INFINITY, f64::min);
         }
         if enforce && contract == InputContract::PhoenixV1 {
-            let clear = |x: f64| {
-                let candidate = Rect { x, ..title };
+            let clear = |candidate: Rect| {
                 !routes
                     .iter()
                     .flat_map(|route| route.points.windows(2))
@@ -295,9 +345,10 @@ fn titles(
                         .iter()
                         .chain(nodes.iter().map(|node| &node.bounds))
                         .chain(labels.iter().map(|label| &label.rect))
+                        .chain(markers)
                         .any(|other| rects_overlap_for_contract(&candidate, other, 0.0, contract))
             };
-            if !clear(title.x) {
+            if !clear(title) {
                 let left = boundary.bounds.x + 4.0;
                 let right = boundary.bounds.x + boundary.bounds.width - 4.0 - title.width;
                 let mut positions = vec![right];
@@ -322,9 +373,47 @@ fn titles(
                 positions.sort_by(f64::total_cmp);
                 if let Some(x) = positions
                     .into_iter()
-                    .find(|x| *x >= left && *x <= right && clear(*x))
+                    .find(|x| *x >= left && *x <= right && clear(Rect { x: *x, ..title }))
                 {
                     title.x = x;
+                } else {
+                    // A narrow wrap can have no clear top rail. Keep authored
+                    // routes and nodes; put its measured title below the members.
+                    let bottom = boundary.bounds.y + boundary.bounds.height;
+                    boundary.bounds.y = boundary.bounds.y.min(title.y - 4.0);
+                    boundary.bounds.height = bottom - boundary.bounds.y;
+                    let first = bottom - title.height - 2.0;
+                    let mut rows = vec![first];
+                    rows.extend(
+                        placed
+                            .iter()
+                            .chain(nodes.iter().map(|node| &node.bounds))
+                            .chain(labels.iter().map(|label| &label.rect))
+                            .chain(markers)
+                            .chain(&placed_frames)
+                            .map(|rect| rect.y + rect.height + 2.0),
+                    );
+                    rows.extend(
+                        routes
+                            .iter()
+                            .flat_map(|route| route.points.iter().map(|point| point.y + 4.0)),
+                    );
+                    rows.sort_by(f64::total_cmp);
+                    if let Some(candidate) = rows
+                        .into_iter()
+                        .filter(|y| *y >= first)
+                        .map(|y| Rect { y, ..title })
+                        .find(|candidate| {
+                            clear(*candidate)
+                                && !placed_frames.iter().any(|frame| {
+                                    rects_overlap_for_contract(candidate, frame, 2.0, contract)
+                                })
+                        })
+                    {
+                        title = candidate;
+                        boundary.bounds.height =
+                            bottom.max(title.y + title.height + 2.0) - boundary.bounds.y;
+                    }
                 }
             }
         }
@@ -336,6 +425,7 @@ fn titles(
         }
         boundary.title = title;
         boundary.font = font;
+        placed_frames.push(boundary.bounds);
     }
     measured
 }
@@ -346,6 +436,7 @@ pub(super) fn resolve_titles(
     raw: &[Boundary],
     nodes: &[Node],
     routes: &[router::Route],
+    edges: &[router::Edge],
     labels: &[router::Label],
     extra: &[Rect],
     entries: &[LegendEntry],
@@ -354,7 +445,12 @@ pub(super) fn resolve_titles(
     contract: InputContract,
     errors: &mut Diagnostics,
 ) -> Vec<Boundary> {
-    let mut boundaries = titles(raw, nodes, routes, labels, 6.0, enforce, contract);
+    let markers: Vec<_> = routes
+        .iter()
+        .zip(edges)
+        .filter_map(|(route, edge)| marker_bounds(route, edge))
+        .collect();
+    let mut boundaries = titles(raw, nodes, routes, labels, 6.0, enforce, contract, &markers);
     if !enforce || boundaries.is_empty() {
         return boundaries;
     }
@@ -363,7 +459,9 @@ pub(super) fn resolve_titles(
             .unwrap_or_else(|| auto_canvas(nodes, &boundaries, extra, entries))
             .width;
         let minimum = 6.0_f64.max(6.0 / (930.0 / width).min(1.0) + 1e-6);
-        boundaries = titles(raw, nodes, routes, labels, minimum, enforce, contract);
+        boundaries = titles(
+            raw, nodes, routes, labels, minimum, enforce, contract, &markers,
+        );
         let final_width = canvas
             .unwrap_or_else(|| auto_canvas(nodes, &boundaries, extra, entries))
             .width;
