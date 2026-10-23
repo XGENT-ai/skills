@@ -51,7 +51,7 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 "$PD" guide "API 调用链" --json
 ```
 
-1. 新稿只读所选 `schemas/<type>.schema.json`、[common schema](schemas/common.schema.json)、一个匹配示例及[创作默认值](references/authoring-defaults.md)，随即写完整 candidate。新稿设置 `meta.input_contract: "phoenix-v1"`、`meta.quality_profile: "showcase"`；从自动路线和自动标签开始。保留用户提供的固定几何，不在首稿预先添加 `via`、`channelX`、`channelY` 或 `labelAt`。ER 图列出每张表的全部物理列及其类型和键角色，外键写 `references`；时间线每个时刻带明确偏移；没有记录的计时只能标为示意。
+1. 新稿只读所选 `schemas/<type>.schema.json`、[common schema](schemas/common.schema.json)、一个匹配示例及[创作默认值](references/authoring-defaults.md)。必需资料的宿主读取返回若被截断，先分段补齐缺失内容，再写完整 candidate；子进程 stdout 完整不代表宿主返回完整。新稿设置 `meta.input_contract: "phoenix-v1"`、`meta.quality_profile: "showcase"`；从自动路线和自动标签开始。保留用户提供的固定几何，不在首稿预先添加 `via`、`channelX`、`channelY` 或 `labelAt`。ER 图列出每张表的全部物理列及其类型和键角色，外键写 `references`；时间线每个时刻带明确偏移；没有记录的计时只能标为示意。
 
    ER 图写 candidate 前，分别核对关系每端的最大基数、最小参与数与引用列可空性。外键只证明引用目标，不自动证明 `NOT NULL`；“可有多个”不单独证明最小数为零。以已给 SQL 约束、联合主键、显式文字或 Mermaid 端点为依据，材料已明确就直接使用，不重复询问或要求另选表现形式。需要表示的最小数或可空性缺少依据时，按前述开放问题规则先问并停止；不先画 `0..N`/`1` 再标“待确认”，不用卡片兜底。用户明确授权拟定规则时仍走建议分支。
 
