@@ -53,14 +53,14 @@
 - 最近完成：M2 · 准确浏览器失败状态与回执
 - 下一步：完成r4两宿主各5小门，再准备正式31×2；同源CI先构建，小门通过再取必需制品/跑本机同tgz及聚合，见M4记录
 - 当前阻塞：无（D7范围已获用户明确授权）
-- 代码基线：61007da（源码f04d4c9、D7/r2修复8b5c66b、原实现fd0be93）；r4措辞和生成物dirty，engine sourceInput/二进制同r2，M4仍未收口
+- 代码基线：候选源码9abb063（r3 f04d4c9、D7/r2 8b5c66b、原实现fd0be93）；r4措辞和生成物已提交，engine sourceInput/二进制同r2，M4仍未收口
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M4 | 进行中 | 2026-10-23T20:46:09+08:00 | V-5全部门/152原图收口；r4十小门10/20核验过、A/W新会话已启动；冻结新源码并行CI构建，宿主/同包终验待 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9 |
+| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063 |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93 |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93 |
 
