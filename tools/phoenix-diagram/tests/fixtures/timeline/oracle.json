@@ -2829,6 +2829,1146 @@
    "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: IST (UTC+05:30) · 2026-10-01</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">07:30</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">07:35</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">07:40</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">07:45</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">07:50</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 10-01 07:30:00 UTC+05:30\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 10-01 07:30:00 UTC+05:30\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 10-01 07:30:00 UTC+05:30</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">07:30</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 10-01 07:35:00 UTC+05:30\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 10-01 07:35:00 UTC+05:30\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 10-01 07:35:00 UTC+05:30</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">07:35</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 10-01 07:40:00 UTC+05:30\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 10-01 07:40:00 UTC+05:30\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 10-01 07:40:00 UTC+05:30</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">07:40</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 10-01 07:45:00 UTC+05:30\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 10-01 07:45:00 UTC+05:30\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 10-01 07:45:00 UTC+05:30</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">07:45</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 10-01 07:50:00 UTC+05:30\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 10-01 07:50:00 UTC+05:30\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 10-01 07:50:00 UTC+05:30</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">07:50</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
   },
   {
+   "name": "incident-zone-SystemVu2fAST4ADT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/AST4ADT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/AST4ADT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/AST4ADT (UTC-03:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">23:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">23:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">23:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">23:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">23:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 23:00:00 UTC-03:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 23:00:00 UTC-03:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 23:00:00 UTC-03:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">23:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 23:05:00 UTC-03:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 23:05:00 UTC-03:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 23:05:00 UTC-03:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">23:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 23:10:00 UTC-03:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 23:10:00 UTC-03:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 23:10:00 UTC-03:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">23:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 23:15:00 UTC-03:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 23:15:00 UTC-03:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 23:15:00 UTC-03:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">23:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 23:20:00 UTC-03:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 23:20:00 UTC-03:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 23:20:00 UTC-03:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">23:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
+   "name": "incident-zone-SystemVu2fCST6CDT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/CST6CDT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/CST6CDT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/CST6CDT (UTC-05:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">21:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">21:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">21:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">21:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">21:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 21:00:00 UTC-05:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 21:00:00 UTC-05:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 21:00:00 UTC-05:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">21:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 21:05:00 UTC-05:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 21:05:00 UTC-05:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 21:05:00 UTC-05:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">21:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 21:10:00 UTC-05:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 21:10:00 UTC-05:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 21:10:00 UTC-05:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">21:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 21:15:00 UTC-05:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 21:15:00 UTC-05:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 21:15:00 UTC-05:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">21:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 21:20:00 UTC-05:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 21:20:00 UTC-05:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 21:20:00 UTC-05:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">21:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
+   "name": "incident-zone-SystemVu2fEST5EDT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/EST5EDT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/EST5EDT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/EST5EDT (UTC-04:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">22:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">22:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">22:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">22:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">22:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 22:00:00 UTC-04:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 22:00:00 UTC-04:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 22:00:00 UTC-04:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">22:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 22:05:00 UTC-04:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 22:05:00 UTC-04:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 22:05:00 UTC-04:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">22:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 22:10:00 UTC-04:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 22:10:00 UTC-04:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 22:10:00 UTC-04:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">22:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 22:15:00 UTC-04:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 22:15:00 UTC-04:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 22:15:00 UTC-04:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">22:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 22:20:00 UTC-04:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 22:20:00 UTC-04:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 22:20:00 UTC-04:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">22:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
+   "name": "incident-zone-SystemVu2fMST7MDT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/MST7MDT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/MST7MDT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/MST7MDT (UTC-06:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">20:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">20:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">20:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">20:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">20:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 20:00:00 UTC-06:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 20:00:00 UTC-06:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 20:00:00 UTC-06:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">20:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 20:05:00 UTC-06:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 20:05:00 UTC-06:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 20:05:00 UTC-06:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">20:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 20:10:00 UTC-06:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 20:10:00 UTC-06:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 20:10:00 UTC-06:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">20:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 20:15:00 UTC-06:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 20:15:00 UTC-06:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 20:15:00 UTC-06:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">20:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 20:20:00 UTC-06:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 20:20:00 UTC-06:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 20:20:00 UTC-06:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">20:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
+   "name": "incident-zone-SystemVu2fPST8PDT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/PST8PDT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/PST8PDT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/PST8PDT (UTC-07:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">19:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">19:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">19:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">19:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">19:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 19:00:00 UTC-07:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 19:00:00 UTC-07:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 19:00:00 UTC-07:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">19:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 19:05:00 UTC-07:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 19:05:00 UTC-07:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 19:05:00 UTC-07:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">19:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 19:10:00 UTC-07:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 19:10:00 UTC-07:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 19:10:00 UTC-07:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">19:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 19:15:00 UTC-07:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 19:15:00 UTC-07:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 19:15:00 UTC-07:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">19:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 19:20:00 UTC-07:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 19:20:00 UTC-07:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 19:20:00 UTC-07:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">19:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
+   "name": "incident-zone-SystemVu2fYST9YDT",
+   "document": {
+    "schema_version": 1,
+    "diagram_type": "timeline",
+    "meta": {
+     "title": "Payment failure incident",
+     "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+     "output": "payment-incident-timeline.html",
+     "evidence": "illustrative",
+     "timezone": "SystemV/YST9YDT",
+     "quality_profile": "showcase"
+    },
+    "lanes": [
+     {
+      "id": "release",
+      "label": "Release"
+     },
+     {
+      "id": "monitoring",
+      "label": "Monitoring"
+     },
+     {
+      "id": "response",
+      "label": "Response"
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "at": "2026-10-01T10:00:00+08:00",
+      "title": "Deploy v2.4",
+      "detail": "New version starts serving payment requests.",
+      "lane": "release",
+      "kind": "change"
+     },
+     {
+      "id": "alert",
+      "at": "2026-10-01T10:05:00+08:00",
+      "title": "Payment failure alert",
+      "detail": "Error rate on /pay rises above the paging threshold.",
+      "lane": "monitoring",
+      "kind": "alert"
+     },
+     {
+      "id": "rollback",
+      "at": "2026-10-01T10:10:00+08:00",
+      "title": "Start rollback",
+      "detail": "On-call decides to return to v2.3.",
+      "lane": "response",
+      "kind": "action"
+     },
+     {
+      "id": "recovered",
+      "at": "2026-10-01T10:15:00+08:00",
+      "title": "Metrics recovered",
+      "detail": "Payment success rate back to baseline.",
+      "lane": "monitoring",
+      "kind": "recovery"
+     },
+     {
+      "id": "closed",
+      "at": "2026-10-01T10:20:00+08:00",
+      "title": "Incident closed",
+      "detail": "Stability confirmed; response ends.",
+      "lane": "response",
+      "kind": "action"
+     }
+    ]
+   },
+   "ok": true,
+   "layout": {
+    "diagram_type": "timeline",
+    "viewBox": [
+     1123,
+     485
+    ],
+    "timezone": "SystemV/YST9YDT",
+    "scalePxPerMinute": 39.4,
+    "segments": [
+     {
+      "start": 1790820000000,
+      "end": 1790821200000,
+      "x0": 221,
+      "x1": 1008.9999999999999
+     }
+    ],
+    "breaks": [],
+    "ticks": [
+     {
+      "t": 1790820000000,
+      "x": 221
+     },
+     {
+      "t": 1790820300000,
+      "x": 418
+     },
+     {
+      "t": 1790820600000,
+      "x": 615
+     },
+     {
+      "t": 1790820900000,
+      "x": 812
+     },
+     {
+      "t": 1790821200000,
+      "x": 1009
+     }
+    ],
+    "lanes": [
+     {
+      "id": "release",
+      "y": 112,
+      "height": 97,
+      "lineY": 136
+     },
+     {
+      "id": "monitoring",
+      "y": 219,
+      "height": 97,
+      "lineY": 243
+     },
+     {
+      "id": "response",
+      "y": 326,
+      "height": 97,
+      "lineY": 350
+     }
+    ],
+    "events": [
+     {
+      "id": "deploy",
+      "t": 1790820000000,
+      "lane": "release",
+      "x": 221,
+      "left": 165.5,
+      "top": 152,
+      "width": 111,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "alert",
+      "t": 1790820300000,
+      "lane": "monitoring",
+      "x": 418,
+      "left": 323,
+      "top": 259,
+      "width": 190,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "rollback",
+      "t": 1790820600000,
+      "lane": "response",
+      "x": 615,
+      "left": 547.5,
+      "top": 366,
+      "width": 135,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "recovered",
+      "t": 1790820900000,
+      "lane": "monitoring",
+      "x": 812,
+      "left": 733,
+      "top": 259,
+      "width": 158,
+      "height": 43,
+      "row": 0
+     },
+     {
+      "id": "closed",
+      "t": 1790821200000,
+      "lane": "response",
+      "x": 1009,
+      "left": 937.5,
+      "top": 366,
+      "width": 143,
+      "height": 43,
+      "row": 0
+     }
+    ]
+   },
+   "svg": "<svg viewBox=\"0 0 1123 485\" role=\"img\" lang=\"en\" aria-labelledby=\"archify-diagram-title archify-diagram-description\" data-animation=\"trace\" data-preset=\"classic\" data-quality-profile=\"showcase\" data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-fit=\"intrinsic-height\" data-reader-min-text=\"7.5\">\n        <title id=\"archify-diagram-title\">Payment failure incident</title>\n        <desc id=\"archify-diagram-description\">Illustrative incident: release, monitoring, and response events on one clock.</desc>\n        <!-- Definitions -->\n        <defs>\n          <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-default\" />\n          </marker>\n          <marker id=\"arrowhead-emphasis\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-emphasis\" />\n          </marker>\n          <marker id=\"arrowhead-security\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-security\" />\n          </marker>\n          <marker id=\"arrowhead-dashed\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">\n            <polygon points=\"0 0, 10 3.5, 0 7\" class=\"m-dashed\" />\n          </marker>\n          <pattern id=\"grid\" width=\"40\" height=\"40\" patternUnits=\"userSpaceOnUse\">\n            <path d=\"M 40 0 L 0 0 0 40\" class=\"c-grid\" stroke-width=\"0.5\"/>\n          </pattern>\n        </defs>\n        <style>\n          svg[data-timeline-ui] .tl-grid { stroke: var(--lane-stroke); stroke-dasharray: 2 4; opacity: .7; }\n          svg[data-timeline-ui] .tl-axis { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-lane { fill: var(--lane-fill); stroke: none; opacity: .75; }\n          svg[data-timeline-ui] .tl-lane-alt { opacity: 0; }\n          svg[data-timeline-ui] .tl-lane-line { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-stem { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-card { fill-opacity: .55; stroke-opacity: .5; }\n          svg[data-timeline-ui] .tl-card.c-external { fill: var(--mask); stroke: var(--lane-stroke); stroke-opacity: 1; }\n          svg[data-timeline-ui] .tl-dot { stroke: var(--mask); }\n          svg[data-timeline-ui] .tl-halo { fill: var(--mask); }\n          svg[data-timeline-ui] .tl-break-band { opacity: .55; }\n          svg[data-timeline-ui] .tl-break-chip { fill: var(--mask); stroke: var(--lane-stroke); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-hatch { stroke: var(--lane-stroke); }\n          svg[data-timeline-ui] .tl-break-zig { stroke: var(--text-dim); }\n          svg[data-timeline-ui] .tl-accent-external { stroke: var(--external-stroke); }\n          svg[data-timeline-ui] .tl-stem-external { stroke: color-mix(in srgb, var(--external-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-external { fill: var(--external-fill); stroke: color-mix(in srgb, var(--external-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-frontend { stroke: var(--frontend-stroke); }\n          svg[data-timeline-ui] .tl-stem-frontend { stroke: color-mix(in srgb, var(--frontend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-frontend { fill: var(--frontend-fill); stroke: color-mix(in srgb, var(--frontend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-security { stroke: var(--security-stroke); }\n          svg[data-timeline-ui] .tl-stem-security { stroke: color-mix(in srgb, var(--security-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-security { fill: var(--security-fill); stroke: color-mix(in srgb, var(--security-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-messagebus { stroke: var(--messagebus-stroke); }\n          svg[data-timeline-ui] .tl-stem-messagebus { stroke: color-mix(in srgb, var(--messagebus-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-messagebus { fill: var(--messagebus-fill); stroke: color-mix(in srgb, var(--messagebus-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-accent-backend { stroke: var(--backend-stroke); }\n          svg[data-timeline-ui] .tl-stem-backend { stroke: color-mix(in srgb, var(--backend-stroke) 45%, var(--lane-stroke)); }\n          svg[data-timeline-ui] .tl-pin-backend { fill: var(--backend-fill); stroke: color-mix(in srgb, var(--backend-stroke) 35%, transparent); stroke-width: 1; }\n          svg[data-timeline-ui] .tl-tick, svg[data-timeline-ui] .tl-time { font-variant-numeric: tabular-nums; }\n        </style>\n\n        <!-- Background Grid -->\n        <rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\" />\n\n        <g data-timeline-evidence=\"illustrative\">\n          <rect x=\"28\" y=\"14\" width=\"132\" height=\"22\" rx=\"11\" class=\"c-messagebus\" stroke-width=\"1\"/>\n          <circle cx=\"39\" cy=\"25\" r=\"3\" class=\"t-messagebus\"/>\n          <text x=\"99\" y=\"29\" class=\"t-messagebus\" font-size=\"10.5\" font-weight=\"700\" text-anchor=\"middle\">Illustrative data</text>\n        </g>\n        <text data-timeline-axis-caption=\"\" x=\"174\" y=\"29.5\" class=\"t-muted\" font-size=\"11.5\">Time: SystemV/YST9YDT (UTC-08:00) · 2026-09-30</text>\n\n        <!-- Lanes -->\n        <g data-timeline-lane=\"release\">\n          <rect x=\"20\" y=\"112\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"136\" x2=\"1087\" y2=\"136\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"140.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Release</text>\n        </g>\n        <g data-timeline-lane=\"monitoring\">\n          <rect x=\"20\" y=\"219\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane tl-lane-alt\"/>\n          <line x1=\"143\" y1=\"243\" x2=\"1087\" y2=\"243\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"247.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Monitoring</text>\n        </g>\n        <g data-timeline-lane=\"response\">\n          <rect x=\"20\" y=\"326\" width=\"1075\" height=\"97\" rx=\"10\" class=\"tl-lane\"/>\n          <line x1=\"143\" y1=\"350\" x2=\"1087\" y2=\"350\" class=\"tl-lane-line\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n          <text x=\"28\" y=\"354.5\" class=\"t-primary\" font-size=\"13\" font-weight=\"700\">Response</text>\n        </g>\n\n        <!-- Time axis (proportional within each segment; breaks are disclosed) -->\n          <line x1=\"221\" y1=\"102\" x2=\"221\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"221\" y1=\"98\" x2=\"221\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"221\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">18:00</text>\n          <line x1=\"418\" y1=\"102\" x2=\"418\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"418\" y1=\"98\" x2=\"418\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"418\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">18:05</text>\n          <line x1=\"615\" y1=\"102\" x2=\"615\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"615\" y1=\"98\" x2=\"615\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"615\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">18:10</text>\n          <line x1=\"812\" y1=\"102\" x2=\"812\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"812\" y1=\"98\" x2=\"812\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"812\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">18:15</text>\n          <line x1=\"1009\" y1=\"102\" x2=\"1009\" y2=\"423\" class=\"tl-grid\" stroke-width=\"1\"/>\n          <line x1=\"1009\" y1=\"98\" x2=\"1009\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n          <text x=\"1009\" y=\"92\" class=\"t-muted tl-tick\" font-size=\"10.5\" text-anchor=\"middle\">18:20</text>\n          <line x1=\"143\" y1=\"102\" x2=\"1087\" y2=\"102\" class=\"tl-axis\" stroke-width=\"1\"/>\n\n\n        <!-- Stems sit behind every card, so a stacked card is never crossed by\n             another event's connector -->\n        <line data-detail=\"context\" data-timeline-stem=\"deploy\" x1=\"221\" y1=\"136\" x2=\"221\" y2=\"152\" class=\"tl-stem tl-stem-frontend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"alert\" x1=\"418\" y1=\"243\" x2=\"418\" y2=\"259\" class=\"tl-stem tl-stem-security\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"rollback\" x1=\"615\" y1=\"350\" x2=\"615\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"recovered\" x1=\"812\" y1=\"243\" x2=\"812\" y2=\"259\" class=\"tl-stem tl-stem-backend\" stroke-width=\"1\"/>\n        <line data-detail=\"context\" data-timeline-stem=\"closed\" x1=\"1009\" y1=\"350\" x2=\"1009\" y2=\"366\" class=\"tl-stem tl-stem-messagebus\" stroke-width=\"1\"/>\n\n        <!-- One halo layer under every dot, so events seconds apart merge into\n             one outlined capsule instead of cutting crescents into each other -->\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"7.5\" class=\"tl-halo\"/>\n        <circle data-detail=\"context\" cx=\"221\" cy=\"136\" r=\"6.5\" class=\"tl-pin tl-pin-frontend\"/>\n        <circle data-detail=\"context\" cx=\"418\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-security\"/>\n        <circle data-detail=\"context\" cx=\"615\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n        <circle data-detail=\"context\" cx=\"812\" cy=\"243\" r=\"6.5\" class=\"tl-pin tl-pin-backend\"/>\n        <circle data-detail=\"context\" cx=\"1009\" cy=\"350\" r=\"6.5\" class=\"tl-pin tl-pin-messagebus\"/>\n\n        <!-- Events in time order -->\n        <g id=\"node-deploy\" data-node-id=\"deploy\" data-node-label=\"Deploy v2.4\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Deploy v2.4, New version starts serving payment requests., Release › 09-30 18:00:00 UTC-08:00\" aria-pressed=\"false\" data-node-kind=\"frontend\" data-node-sublabel=\"New version starts serving payment requests.\" data-node-context=\"Release › 09-30 18:00:00 UTC-08:00\" data-timeline-at=\"2026-10-01T10:00:00+08:00\" data-timeline-ms=\"1790820000000\" data-timeline-x=\"221\">\n          <title>Deploy v2.4 · New version starts serving payment requests. · Release › 09-30 18:00:00 UTC-08:00</title>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"165.5\" y=\"152\" width=\"111\" height=\"43\" rx=\"7\" class=\"c-frontend tl-card\" data-animate=\"node\" style=\"--step:0\" stroke-width=\"1\"/>\n          <line x1=\"171.5\" y1=\"159\" x2=\"171.5\" y2=\"188\" class=\"tl-accent tl-accent-frontend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"179.5\" y=\"171\" class=\"t-frontend tl-time\" font-size=\"10.5\" font-weight=\"600\">18:00</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"179.5\" y=\"188\">Deploy v2.4</tspan></text>\n          <circle cx=\"221\" cy=\"136\" r=\"4.75\" class=\"t-frontend\"/>\n        </g>\n        <g id=\"node-alert\" data-node-id=\"alert\" data-node-label=\"Payment failure alert\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Payment failure alert, Error rate on /pay rises above the paging threshold., Monitoring › 09-30 18:05:00 UTC-08:00\" aria-pressed=\"false\" data-node-kind=\"security\" data-node-sublabel=\"Error rate on /pay rises above the paging threshold.\" data-node-context=\"Monitoring › 09-30 18:05:00 UTC-08:00\" data-timeline-at=\"2026-10-01T10:05:00+08:00\" data-timeline-ms=\"1790820300000\" data-timeline-x=\"418\">\n          <title>Payment failure alert · Error rate on /pay rises above the paging threshold. · Monitoring › 09-30 18:05:00 UTC-08:00</title>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"323\" y=\"259\" width=\"190\" height=\"43\" rx=\"7\" class=\"c-security tl-card\" data-animate=\"node\" style=\"--step:1\" stroke-width=\"1\"/>\n          <line x1=\"329\" y1=\"266\" x2=\"329\" y2=\"295\" class=\"tl-accent tl-accent-security\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"337\" y=\"278\" class=\"t-security tl-time\" font-size=\"10.5\" font-weight=\"600\">18:05</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"337\" y=\"295\">Payment failure alert</tspan></text>\n          <circle cx=\"418\" cy=\"243\" r=\"4.75\" class=\"t-security\"/>\n        </g>\n        <g id=\"node-rollback\" data-node-id=\"rollback\" data-node-label=\"Start rollback\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Start rollback, On-call decides to return to v2.3., Response › 09-30 18:10:00 UTC-08:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"On-call decides to return to v2.3.\" data-node-context=\"Response › 09-30 18:10:00 UTC-08:00\" data-timeline-at=\"2026-10-01T10:10:00+08:00\" data-timeline-ms=\"1790820600000\" data-timeline-x=\"615\">\n          <title>Start rollback · On-call decides to return to v2.3. · Response › 09-30 18:10:00 UTC-08:00</title>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"547.5\" y=\"366\" width=\"135\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:2\" stroke-width=\"1\"/>\n          <line x1=\"553.5\" y1=\"373\" x2=\"553.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"561.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">18:10</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"561.5\" y=\"402\">Start rollback</tspan></text>\n          <circle cx=\"615\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n        <g id=\"node-recovered\" data-node-id=\"recovered\" data-node-label=\"Metrics recovered\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Metrics recovered, Payment success rate back to baseline., Monitoring › 09-30 18:15:00 UTC-08:00\" aria-pressed=\"false\" data-node-kind=\"backend\" data-node-sublabel=\"Payment success rate back to baseline.\" data-node-context=\"Monitoring › 09-30 18:15:00 UTC-08:00\" data-timeline-at=\"2026-10-01T10:15:00+08:00\" data-timeline-ms=\"1790820900000\" data-timeline-x=\"812\">\n          <title>Metrics recovered · Payment success rate back to baseline. · Monitoring › 09-30 18:15:00 UTC-08:00</title>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"733\" y=\"259\" width=\"158\" height=\"43\" rx=\"7\" class=\"c-backend tl-card\" data-animate=\"node\" style=\"--step:3\" stroke-width=\"1\"/>\n          <line x1=\"739\" y1=\"266\" x2=\"739\" y2=\"295\" class=\"tl-accent tl-accent-backend\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"747\" y=\"278\" class=\"t-backend tl-time\" font-size=\"10.5\" font-weight=\"600\">18:15</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"747\" y=\"295\">Metrics recovered</tspan></text>\n          <circle cx=\"812\" cy=\"243\" r=\"4.75\" class=\"t-backend\"/>\n        </g>\n        <g id=\"node-closed\" data-node-id=\"closed\" data-node-label=\"Incident closed\" tabindex=\"0\" role=\"button\" aria-label=\"Focus Incident closed, Stability confirmed; response ends., Response › 09-30 18:20:00 UTC-08:00\" aria-pressed=\"false\" data-node-kind=\"messagebus\" data-node-sublabel=\"Stability confirmed; response ends.\" data-node-context=\"Response › 09-30 18:20:00 UTC-08:00\" data-timeline-at=\"2026-10-01T10:20:00+08:00\" data-timeline-ms=\"1790821200000\" data-timeline-x=\"1009\">\n          <title>Incident closed · Stability confirmed; response ends. · Response › 09-30 18:20:00 UTC-08:00</title>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-mask\"/>\n          <rect x=\"937.5\" y=\"366\" width=\"143\" height=\"43\" rx=\"7\" class=\"c-messagebus tl-card\" data-animate=\"node\" style=\"--step:4\" stroke-width=\"1\"/>\n          <line x1=\"943.5\" y1=\"373\" x2=\"943.5\" y2=\"402\" class=\"tl-accent tl-accent-messagebus\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n          <text x=\"951.5\" y=\"385\" class=\"t-messagebus tl-time\" font-size=\"10.5\" font-weight=\"600\">18:20</text>\n          <text data-node-label=\"\" class=\"t-primary\" font-size=\"12.5\" font-weight=\"650\"><tspan x=\"951.5\" y=\"402\">Incident closed</tspan></text>\n          <circle cx=\"1009\" cy=\"350\" r=\"4.75\" class=\"t-messagebus\"/>\n        </g>\n\n        <!-- Legend -->\n        <g data-legend=\"\">\n          <text x=\"28\" y=\"449\" class=\"t-primary\" font-size=\"12\" font-weight=\"650\">Legend</text>\n          <g data-legend-semantic-kind=\"change\" data-legend-x=\"28\" data-legend-baseline=\"469\" data-legend-width=\"71\">\n            <circle cx=\"34\" cy=\"465\" r=\"4.5\" class=\"t-frontend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"50\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Change</text>\n          </g>\n          <g data-legend-semantic-kind=\"alert\" data-legend-x=\"121\" data-legend-baseline=\"469\" data-legend-width=\"63\">\n            <circle cx=\"127\" cy=\"465\" r=\"4.5\" class=\"t-security tl-dot\" stroke-width=\"2\"/>\n            <text x=\"143\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Alert</text>\n          </g>\n          <g data-legend-semantic-kind=\"action\" data-legend-x=\"206\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"212\" cy=\"465\" r=\"4.5\" class=\"t-messagebus tl-dot\" stroke-width=\"2\"/>\n            <text x=\"228\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Response</text>\n          </g>\n          <g data-legend-semantic-kind=\"recovery\" data-legend-x=\"315\" data-legend-baseline=\"469\" data-legend-width=\"87\">\n            <circle cx=\"321\" cy=\"465\" r=\"4.5\" class=\"t-backend tl-dot\" stroke-width=\"2\"/>\n            <text x=\"337\" y=\"469\" class=\"t-muted\" font-size=\"13\" font-weight=\"500\">Recovery</text>\n          </g>\n        </g>\n      </svg>"
+  },
+  {
    "name": "dst-spring-new-york",
    "document": {
     "schema_version": 1,

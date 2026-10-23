@@ -161,12 +161,15 @@ test('legacy fitting stops at the readable floor and exposes unresolved overflow
   assert.equal(environment.svg.outerHTML, before);
 });
 
-test('wide legacy and other contracts retain their exact frozen Reader decisions', () => {
+test('wide canvases and measured-fit paths retain their exact frozen Reader decisions', () => {
   for (const options of [
     { viewBoxWidth: 1800, viewBoxHeight: 800 }, { viewBoxWidth: 1550, viewBoxHeight: 1000 },
-    { contract: null }, { contract: 'phoenix-v1' },
-    { contract: 'unknown' }, { contract: 'phoenix-v1', fit: 'intrinsic-height' },
+    { contract: null, viewBoxWidth: 1800, viewBoxHeight: 800 },
+    { contract: 'phoenix-v1', viewBoxWidth: 1550, viewBoxHeight: 1000 },
+    { contract: 'unknown', viewBoxWidth: 1550, viewBoxHeight: 1000 },
+    { contract: 'phoenix-v1', fit: 'intrinsic-height' },
     { contract: 'phoenix-v1', fit: 'width-first' }, { fit: 'intrinsic-height' },
+    { contract: null, fit: 'width-first' }, { contract: 'unknown', fit: 'intrinsic-height' },
   ]) {
     const current = reader(options), reference = reader({ ...options, source: frozen });
     current.flush(); reference.flush();
@@ -174,14 +177,41 @@ test('wide legacy and other contracts retain their exact frozen Reader decisions
   }
 });
 
-test('legacy eligibility preserves narrow, embedded, presentation and print exclusions', () => {
-  for (const options of [{ width: 1023 }, { width: 390 }, { embed: true }, { present: true }, { print: true }]) {
-    const environment = reader(options);
-    const before = environment.svg.outerHTML;
-    environment.flush();
-    assert.equal(environment.api.active(), false, JSON.stringify(options));
-    assert.equal(environment.svg.outerHTML, before);
-    assert.equal(environment.html.style.getPropertyValue('--phoenix-diagram-reader-width'), '');
+test('non-wide fixed canvases fit by height across legacy, missing and other contracts', () => {
+  for (const contract of ['legacy-2.17', null, 'phoenix-v1', 'unknown']) {
+    for (const fit of ['contain', 'legacy', '']) {
+      for (const [width, height] of [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]]) {
+        const environment = reader({ contract, fit, width, height });
+        const before = environment.svg.outerHTML;
+        environment.flush();
+        assert.equal(environment.api.active(), true, JSON.stringify({ contract, fit, width, height }));
+        assert.ok(environment.svg.getBoundingClientRect().bottom < height);
+        assert.ok(environment.projectedMinimum() >= 6);
+        assert.equal(environment.html.getAttribute('data-reader-overflow'), null);
+        assert.equal(environment.svg.outerHTML, before, 'Reader preserves all authored SVG geometry and text');
+      }
+      const tall = reader({ contract, fit, viewBoxHeight: 5000 });
+      const before = tall.svg.outerHTML;
+      tall.flush();
+      assert.equal(tall.api.active(), true);
+      assert.ok(tall.projectedMinimum() >= 6 && tall.projectedMinimum() < 6.1);
+      assert.ok(tall.svg.getBoundingClientRect().bottom > 900);
+      assert.equal(tall.html.getAttribute('data-reader-overflow'), 'authored');
+      assert.equal(tall.svg.outerHTML, before);
+    }
+  }
+});
+
+test('fixed-canvas eligibility preserves narrow, embedded, presentation and print exclusions', () => {
+  for (const contract of ['legacy-2.17', null, 'phoenix-v1', 'unknown']) {
+    for (const options of [{ width: 1023 }, { width: 390 }, { embed: true }, { present: true }, { print: true }]) {
+      const environment = reader({ ...options, contract });
+      const before = environment.svg.outerHTML;
+      environment.flush();
+      assert.equal(environment.api.active(), false, JSON.stringify({ ...options, contract }));
+      assert.equal(environment.svg.outerHTML, before);
+      assert.equal(environment.html.style.getPropertyValue('--phoenix-diagram-reader-width'), '');
+    }
   }
 });
 

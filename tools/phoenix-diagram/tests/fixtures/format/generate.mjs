@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyFrozenSources } from '../../../../../scripts/check-phoenix-diagram-source.mjs';
 
 assert.equal(process.version, 'v25.2.1', 'Use the pinned maintenance Node');
+assert.equal(process.versions.icu, '77.1', 'The oracle is bound to ICU 77.1');
 assert.equal(process.versions.tz, '2025b', 'The oracle is bound to tzdata 2025b');
 const root = fileURLToPath(new URL('../../../../../', import.meta.url));
 const reference = await realpath(path.join(root, 'local/phoenix-diagram/reference'));
@@ -28,6 +29,65 @@ const waterfallNumber = new Function(`${between(waterfallSource, 'function numbe
 const accepted = timezone => {
   try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); return true; } catch { return false; }
 };
+
+const systemVNames = ['SystemV/AST4ADT', 'SystemV/CST6CDT', 'SystemV/EST5EDT',
+  'SystemV/MST7MDT', 'SystemV/PST8PDT', 'SystemV/YST9YDT'];
+const zoneinfo = await readFile(new URL('./icu77-zoneinfo64.txt', import.meta.url), 'utf8');
+const vector = (source, name) => {
+  const match = source.match(new RegExp(`${name}:intvector \\{([^}]+)\\}`));
+  assert(match, `Missing ICU vector ${name}`);
+  return match[1].split(',').map(value => Number(value.trim()));
+};
+const systemV = systemVNames.map(name => {
+  const start = zoneinfo.indexOf(`/* ${name} */ :table {`);
+  assert(start >= 0, `Missing ICU zone ${name}`);
+  const source = zoneinfo.slice(start, zoneinfo.indexOf('} //Z#', start));
+  const raw = Number(source.match(/finalRaw:int \{ (-?\d+) \}/)?.[1]);
+  assert.equal(Number(source.match(/finalYear:int \{ (\d+) \}/)?.[1]), 1977);
+  assert(source.includes('finalRule { "SystemV" }'));
+  assert.deepEqual(vector(source, 'typeOffsets'), [raw, 0, raw, 3600]);
+  const transitions = vector(source, 'trans');
+  assert.equal(transitions.length, 150);
+  assert(transitions.every((value, index) => Number.isSafeInteger(value) && (!index || value > transitions[index - 1])));
+  assert.equal(source.match(/typeMap:bin \{ "([0-9]+)" \}/)?.[1], '0100'.repeat(75));
+  return { name, raw, transitions, standardTransitions: transitions.map(value => value + raw) };
+});
+for (const zone of systemV) assert.deepEqual(zone.standardTransitions, systemV[0].standardTransitions, zone.name);
+assert.deepEqual(vector(zoneinfo.slice(zoneinfo.indexOf('  SystemV:intvector {')), 'SystemV'),
+  [3, -30, -1, 7200, 0, 9, -31, -1, 7200, 0, 3600]);
+
+// Only the historical data is generated; the bounded Gregorian rule stays in Rust.
+const table = systemV[0].standardTransitions;
+const rustTable = `const TRANSITIONS: [i64; ${table.length}] = [\n${table.map(value => `    ${value},`).join('\n')}\n];`;
+const rustFile = new URL('../../../src/format/time/system_v.rs', import.meta.url);
+const rustSource = await readFile(rustFile, 'utf8');
+assert.match(rustSource, /const TRANSITIONS: \[i64; \d+\] = \[[\s\S]*?\n\];/);
+const generatedRust = rustSource.replace(/const TRANSITIONS: \[i64; \d+\] = \[[\s\S]*?\n\];/, rustTable);
+if (process.argv.includes('--check')) assert.equal(rustSource, generatedRust, 'SystemV Rust transitions');
+else await writeFile(rustFile, generatedRust);
+
+function lastSunday(year, month) {
+  const date = new Date(0);
+  date.setUTCFullYear(year, month, 0);
+  date.setUTCHours(2, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+  return date.getTime();
+}
+
+function systemVInstants(zone) {
+  const instants = new Set();
+  const boundary = ms => { for (const delta of [-1, 0, 1]) instants.add(ms + delta); };
+  for (const seconds of zone.transitions) boundary(seconds * 1000);
+  boundary(Date.UTC(1977, 0, 1) - zone.raw * 1000);
+  for (const year of [...Array.from({ length: 400 }, (_, index) => 1977 + index), 2400, 2800, 9999]) {
+    boundary(lastSunday(year, 4) - zone.raw * 1000);
+    boundary(lastSunday(year, 10) - (zone.raw + 3600) * 1000);
+    for (const month of [0, 6]) instants.add(Date.UTC(year, month, 15));
+  }
+  for (const at of ['0000-01-01T00:00Z', '0000-02-29T12:00Z', '0001-01-01T00:00Z',
+    '1976-12-31T23:59:59.999Z', '1977-01-01T00:00Z', '9999-12-31T23:59:59.999Z']) instants.add(Date.parse(at));
+  return instants;
+}
 
 // Deterministic magnitudes across the double range, plus the boundary list.
 let seed = 0x2f6b9d1;
@@ -76,8 +136,9 @@ const zoneNames = ['UTC', 'utc', 'Utc', 'Etc/UTC', 'GMT', 'Asia/Shanghai', 'asia
   'Europe/Dublin', 'Pacific/Apia', 'Etc/GMT+5', 'Etc/GMT-14', 'EST', 'US/Pacific', 'IST', 'PST', 'CST', 'SystemV/EST5',
   'Canada/East-Saskatchewan', 'US/Pacific-New',
   '+05:30', '+0530', '+01', '-2359', '−05:00', '-00:00', '+00', '-00', '+23:59', '−0130', '+14:00', '-12', '+00:00'];
+zoneNames.push(...systemVNames.flatMap(name => [name, name.toLowerCase(), name.toUpperCase()]));
 const rejectedZones = ['+24:00', '+05:60', '+5:30', '+05:30:00', 'Z', 'UTC+05:30', ' +05:30', '+05:30 ', ' UTC', 'UTC ', '',
-  'Mars/Phobos', 'SystemV/EST5EDT', '+05:3', '+0530:', '05:30', '+05.5', '+0530.0', '--05:00', '+-05:00', '−−05:00'];
+  'Mars/Phobos', 'SystemV/AST4EDT', 'SystemV/EST5EDT ', '+05:3', '+0530:', '05:30', '+05.5', '+0530.0', '--05:00', '+-05:00', '−−05:00'];
 const scanned = new Set(['UTC', 'Asia/Shanghai', 'America/New_York', 'Europe/London', 'Asia/Calcutta', 'Australia/Lord_Howe',
   'America/St_Johns', 'Asia/Kathmandu', 'Pacific/Chatham', 'Africa/Casablanca', 'America/Sao_Paulo', 'Europe/Dublin', 'Pacific/Apia',
   'US/Pacific', 'IST', 'PST', 'CST', 'Canada/East-Saskatchewan', 'US/Pacific-New']);
@@ -106,7 +167,9 @@ for (const timezone of [...zoneNames, ...rejectedZones]) {
     const instants = new Set([-62167219200000, -62135596800000, -62198755200000, -59011459201000, 0, -1, -500, 1772964000000,
       Date.parse('9999-12-31T23:59:59.999Z'), Date.parse('1900-01-01T00:00Z'), Date.parse('2050-07-01T12:00Z'), Date.parse('2099-01-15T12:00Z'),
       Date.parse('2099-07-15T12:00Z'), Date.parse('2026-10-01T10:05:07.5Z')]);
-    const named = !/^[+\-−]/.test(timezone);
+    const systemZone = systemV.find(zone => zone.name === timezone);
+    if (systemZone) for (const ms of systemVInstants(systemZone)) instants.add(ms);
+    const named = !/^[+\-−]/.test(timezone) && !timezone.toLowerCase().startsWith('systemv/');
     if (named && timezone === timezone.toUpperCase() ? false : named) {
       for (const t of transitions(zone, ...span(1880, 2041))) for (const delta of [-1000, -1, 0, 1000]) instants.add(t + delta);
     }

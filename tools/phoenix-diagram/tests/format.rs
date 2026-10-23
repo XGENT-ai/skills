@@ -104,12 +104,6 @@ fn zones_follow_icu_acceptance_wall_clock_and_offset_labels() {
     for case in oracle["zones"].as_array().unwrap() {
         let name = case["timezone"].as_str().unwrap();
         let zone = time::zone(name);
-        // ICU carries daylight-saving rules for SystemV/*DST that tzdata never
-        // had; they remain rejected rather than guessed.
-        if name.starts_with("SystemV/") && name.ends_with("DT") {
-            assert!(case["accepted"] == true && zone.is_none(), "{name}");
-            continue;
-        }
         assert_eq!(
             zone.is_some(),
             case["accepted"] == true,
@@ -159,5 +153,33 @@ fn fixed_offsets_normalize_like_icu() {
         "+05:30 ",
     ] {
         assert!(time::zone(rejected).is_none(), "{rejected:?}");
+    }
+}
+
+#[test]
+fn every_system_v_zone_has_historical_and_gregorian_cycle_samples() {
+    let oracle = oracle();
+    for name in [
+        "SystemV/AST4ADT",
+        "SystemV/CST6CDT",
+        "SystemV/EST5EDT",
+        "SystemV/MST7MDT",
+        "SystemV/PST8PDT",
+        "SystemV/YST9YDT",
+    ] {
+        assert!(matches!(time::zone(name), Some(time::Zone::SystemV(_))));
+        let case = oracle["zones"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["timezone"] == name)
+            .unwrap();
+        assert_eq!(case["accepted"], true);
+        assert!(case["samples"].as_array().unwrap().len() > 3500, "{name}");
+        assert_eq!(time::zone(&name.to_lowercase()), time::zone(name));
+        assert_eq!(time::zone(&name.to_uppercase()), time::zone(name));
+    }
+    for name in ["SystemV/AST4EDT", "SystemV/EST5EDT ", "SystemV/ZZZ0DST"] {
+        assert!(time::zone(name).is_none(), "{name}");
     }
 }

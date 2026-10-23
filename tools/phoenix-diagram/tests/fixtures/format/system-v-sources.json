@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "repository": "https://github.com/unicode-org/icu",
+  "release": "release-77-1",
+  "tzVersion": "2025a",
+  "zones": [
+    {
+      "name": "SystemV/AST4ADT",
+      "rawOffsetSeconds": -14400
+    },
+    {
+      "name": "SystemV/CST6CDT",
+      "rawOffsetSeconds": -21600
+    },
+    {
+      "name": "SystemV/EST5EDT",
+      "rawOffsetSeconds": -18000
+    },
+    {
+      "name": "SystemV/MST7MDT",
+      "rawOffsetSeconds": -25200
+    },
+    {
+      "name": "SystemV/PST8PDT",
+      "rawOffsetSeconds": -28800
+    },
+    {
+      "name": "SystemV/YST9YDT",
+      "rawOffsetSeconds": -32400
+    }
+  ],
+  "history": {
+    "transitionCount": 150,
+    "normalization": "UTC transition seconds + raw offset seconds",
+    "types": "DST then standard, alternating; standard before the first transition"
+  },
+  "finalRule": {
+    "name": "SystemV",
+    "fromYear": 1977,
+    "icuRule": [
+      3,
+      -30,
+      -1,
+      7200,
+      0,
+      9,
+      -31,
+      -1,
+      7200,
+      0,
+      3600
+    ],
+    "start": "Last Sunday in April at 02:00 standard time, inclusive",
+    "end": "Last Sunday in October at 02:00 daylight time, exclusive",
+    "daylightOffsetSeconds": 3600
+  },
+  "license": {
+    "path": "assets/icu77-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/LICENSE",
+    "size": 26487,
+    "sha256": "451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca",
+    "spdx": "Unicode-3.0"
+  },
+  "modification": "Rust adaptation of the six SystemV daylight-saving zones using normalized historical transitions and their final annual rule; the original ICU source fixture is unmodified.",
+  "source": {
+    "file": "icu77-zoneinfo64.txt",
+    "url": "https://raw.githubusercontent.com/unicode-org/icu/release-77-1/icu4c/source/data/misc/zoneinfo64.txt",
+    "size": 360734,
+    "sha256": "c0c34daadb59d2552252405b9be08894f83d2cd8145d0f6eb35e1557721dd55f"
+  }
+}

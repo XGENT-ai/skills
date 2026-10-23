@@ -288,6 +288,99 @@ fn browser_failure_keeps_the_new_html_and_review_cannot_invent_a_pass() {
 }
 
 #[test]
+fn finalize_seals_browser_failure_in_a_fresh_or_precreated_receipt_directory() {
+    for precreated in [false, true] {
+        let temp = Temp::new();
+        let candidate = temp.join("candidate.json");
+        let output = temp.join("report.html");
+        let out_dir = temp.join("evidence");
+        fs::write(&candidate, source()).unwrap();
+        if precreated {
+            fs::create_dir(&out_dir).unwrap();
+            fs::write(out_dir.join("unrelated"), b"preserve me").unwrap();
+        }
+        let options = CompileOptions::default();
+        let engine = engine();
+        let assets = EmbeddedAssets { template: TEMPLATE };
+        let receipt = delivery::finalize(
+            &request(&candidate, &options, &engine, &assets),
+            &output,
+            &BrowserOptions {
+                executable: Some(temp.join("missing-chrome")),
+                out_dir: Some(out_dir.clone()),
+                ..Default::default()
+            },
+        );
+        assert_eq!(receipt.exit_code(), 4, "{:?}", receipt.diagnostics);
+        assert!(receipt.stages[..3]
+            .iter()
+            .all(|stage| stage.status == Status::Pass));
+        assert_eq!(receipt.stages[3].status, Status::Failed);
+        assert!(receipt.produced_by_this_run);
+        assert_eq!(receipt.delivery_status, "incomplete");
+        assert!(receipt
+            .diagnostics
+            .iter()
+            .any(|entry| entry.code == "browser/configured-path"));
+        let browser_path = delivery::sidecar_paths(&output, Some(&out_dir)).browser;
+        let browser: Value = serde_json::from_slice(&fs::read(&browser_path).unwrap()).unwrap();
+        assert_eq!(browser["status"], "failed");
+        assert_eq!(browser["diagnostics"][0]["code"], "browser/configured-path");
+        assert_eq!(browser["screenshots"], json!([]));
+        assert_eq!(
+            receipt.evidence["browserReceipt"]["path"],
+            json!(fs::canonicalize(browser_path).unwrap())
+        );
+        assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
+        if precreated {
+            assert_eq!(fs::read(out_dir.join("unrelated")).unwrap(), b"preserve me");
+        }
+    }
+}
+
+#[test]
+fn finalize_retains_the_browser_diagnostic_when_its_receipt_cannot_be_sealed() {
+    let temp = Temp::new();
+    let candidate = temp.join("candidate.json");
+    let output = temp.join("report.html");
+    let out_dir = temp.join("evidence");
+    fs::write(&candidate, source()).unwrap();
+    fs::create_dir(&out_dir).unwrap();
+    let browser_path = delivery::sidecar_paths(&output, Some(&out_dir)).browser;
+    fs::write(&browser_path, b"prior browser evidence").unwrap();
+    let options = CompileOptions::default();
+    let engine = engine();
+    let assets = EmbeddedAssets { template: TEMPLATE };
+    let receipt = delivery::finalize(
+        &request(&candidate, &options, &engine, &assets),
+        &output,
+        &BrowserOptions {
+            executable: Some(temp.join("missing-chrome")),
+            out_dir: Some(out_dir),
+            ..Default::default()
+        },
+    );
+    assert!(receipt.stages[..3]
+        .iter()
+        .all(|stage| stage.status == Status::Pass));
+    assert_eq!(receipt.stages[3].status, Status::Failed);
+    assert_eq!(receipt.delivery_status, "incomplete");
+    assert_eq!(receipt.exit_code(), 3);
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/configured-path"));
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/evidence-conflict"));
+    assert!(receipt.browser_receipt_identity.is_none());
+    assert!(receipt.evidence.get("browserReceipt").is_none());
+    assert_eq!(fs::read(&browser_path).unwrap(), b"prior browser evidence");
+    assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
+}
+
+#[test]
 fn sidecar_names_are_bounded_and_have_one_shared_reserved_namespace() {
     for basename in [
         format!("{}.html", "a".repeat(248)),

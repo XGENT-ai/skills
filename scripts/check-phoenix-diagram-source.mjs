@@ -31,6 +31,21 @@ const nativeTextIdentity = {
   licenseSpdx: 'Unicode-3.0',
   modification: 'Rust ports of word rules, dictionary dispatch, CJK cost segmentation and Southeast Asian three-word lookahead; original source fixtures are unmodified.',
 };
+const nativeTimeIdentity = {
+  repository: 'https://github.com/unicode-org/icu',
+  release: 'release-77-1',
+  tzVersion: '2025a',
+  manifest: 'tests/fixtures/format/system-v-sources.json',
+  manifestSize: 1933,
+  manifestSha256: '5cca4def77aea4452b0877c10caee53d08ab0414e7a42706edffb9a6b6da0067',
+  fileCount: 1,
+  zoneCount: 6,
+  license: 'assets/icu77-LICENSE.txt',
+  licenseSize: 26487,
+  licenseSha256: '451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca',
+  licenseSpdx: 'Unicode-3.0',
+  modification: 'Rust adaptation of the six SystemV daylight-saving zones using normalized historical transitions and their final annual rule; the original ICU source fixture is unmodified.',
+};
 const rustLicenseIdentity = {
   manifest: 'assets/license-sources.json',
   manifestSize: 13949,
@@ -183,6 +198,39 @@ function verifyNativeTextSources(upstream, identity) {
     licenseSpdx: nativeTextIdentity.licenseSpdx, modification: manifest.modification };
 }
 
+function verifyNativeTimeSources(upstream, identity) {
+  if (!Object.entries(nativeTimeIdentity).every(([key, value]) => identity?.[key] === value)) {
+    throw new Error('Frozen native time identity differs from the pinned baseline');
+  }
+  const project = path.resolve(upstream, '..');
+  const manifestPath = path.join(project, nativeTimeIdentity.manifest);
+  const bytes = readFile(manifestPath, 'native time manifest');
+  if (bytes.length !== nativeTimeIdentity.manifestSize || sha256(bytes) !== nativeTimeIdentity.manifestSha256) {
+    throw new Error('Native time manifest differs from the pinned source bytes');
+  }
+  const manifest = JSON.parse(bytes);
+  if (manifest.format !== 1 || manifest.repository !== nativeTimeIdentity.repository
+      || manifest.release !== nativeTimeIdentity.release || manifest.tzVersion !== nativeTimeIdentity.tzVersion
+      || manifest.modification !== nativeTimeIdentity.modification || manifest.zones?.length !== nativeTimeIdentity.zoneCount
+      || manifest.license?.path !== nativeTimeIdentity.license || manifest.license.spdx !== nativeTimeIdentity.licenseSpdx
+      || manifest.license.size !== nativeTimeIdentity.licenseSize || manifest.license.sha256 !== nativeTimeIdentity.licenseSha256) {
+    throw new Error('Invalid pinned native time manifest');
+  }
+  const original = readFile(path.join(path.dirname(manifestPath), safeRelative(manifest.source.file)), 'native time source');
+  if (original.length !== manifest.source.size || sha256(original) !== manifest.source.sha256) {
+    throw new Error('Native time source size/SHA-256 differs from the pinned ICU77 bytes');
+  }
+  const license = readFile(path.join(project, nativeTimeIdentity.license), 'native time license');
+  if (license.length !== nativeTimeIdentity.licenseSize || sha256(license) !== nativeTimeIdentity.licenseSha256) {
+    throw new Error('Native time license differs from the pinned ICU77 source bytes');
+  }
+  return { manifest: nativeTimeIdentity.manifest, manifestSha256: nativeTimeIdentity.manifestSha256,
+    sourceSha256: manifest.source.sha256, fileCount: nativeTimeIdentity.fileCount, zoneCount: manifest.zones.length,
+    release: nativeTimeIdentity.release, tzVersion: nativeTimeIdentity.tzVersion,
+    license: nativeTimeIdentity.license, licenseSha256: nativeTimeIdentity.licenseSha256,
+    licenseSpdx: nativeTimeIdentity.licenseSpdx, modification: manifest.modification };
+}
+
 export function verifyRustLicenseSources({ project = workspace, identity } = {}) {
   if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'Rust license source identity')).rustLicenses;
   if (!identity || !canonical(identity).equals(canonical(rustLicenseIdentity))) {
@@ -267,6 +315,7 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     if (!readFile(path.join(upstream, name), 'frozen license').equals(recovered.members.get(member))) throw new Error(`Frozen license differs: ${name}`);
   }
   const nativeText = verifyNativeTextSources(upstream, source.nativeText);
+  const nativeTime = verifyNativeTimeSources(upstream, source.nativeTime);
   const rustLicenses = verifyRustLicenseSources({ project: path.resolve(upstream, '..'), identity: source.rustLicenses });
   let localStatus = 'absent; archive is authoritative';
   if (localReference && fs.existsSync(localReference)) {
@@ -279,6 +328,7 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     reference: { contentSha256: referenceSha256, archiveSha256, fileCount: recovered.rows.length, localStatus },
     legacy: { revision: legacyRevision, contentSha256: legacySha256, fileCount: legacy.length },
     nativeText,
+    nativeTime,
     rustLicenses,
   };
 }

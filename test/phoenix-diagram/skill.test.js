@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
+const { createHash } = require('node:crypto');
 
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
@@ -85,6 +86,32 @@ test('documented commands use the flat native launcher without legacy renderer f
   for (const command of ['guide', 'validate', 'deliver', 'check', 'browser-check', 'visual-check', 'finalize', 'review-record', 'recover-output', 'doctor']) {
     if (new RegExp(`"\\$PD" ${command}\\b`).test(documents)) assert.ok(cli.includes(command), command);
   }
+});
+
+test('ERD acceptance material preserves the original bytes and separates prompts from review facts', () => {
+  const facts = JSON.parse(fs.readFileSync(path.join(root, 'tools/phoenix-diagram/tests/provider/erd-facts.json'), 'utf8'));
+  assert.equal(facts.schemaVersion, 1);
+  const original = Buffer.from(facts.missingFacts.prompt);
+  assert.equal(original.length, 675);
+  assert.equal(createHash('sha256').update(original).digest('hex'), '3e8fe03b6b256f906b9a6490c23fa1587838fbb0a836c9115cba74f41df91fd7');
+  assert.deepEqual(facts.missingFacts.source.promptIdentity, {
+    bytes: original.length, sha256: createHash('sha256').update(original).digest('hex'),
+  });
+  assert.deepEqual(facts.missingFacts.review.expectedMissingFacts.map(gap => gap.subject), ['orders.customer_id', 'product -> order_item']);
+  for (const fact of facts.missingFacts.review.suppliedFacts) assert.ok(facts.missingFacts.prompt.includes(fact.material));
+  for (const material of [facts.complete, facts.explicitMermaid]) {
+    assert.deepEqual(material.review.expectedMissingFacts, []);
+    assert.equal(material.review.expectedRelationships.length, 3);
+    for (const relation of material.review.expectedRelationships) {
+      for (const passage of relation.materials) assert.ok(material.prompt.includes(passage), passage);
+    }
+  }
+  assert.match(facts.complete.prompt, /customer_id bigint 非空/);
+  assert.match(facts.complete.prompt, /一个商品可以没有明细/);
+  for (const material of [facts.missingFacts, facts.complete, facts.explicitMermaid]) {
+    assert.doesNotMatch(material.prompt, /expectedMissingFacts|expectedRelationships|verdict|评分|判据/);
+  }
+  assert.ok(facts.reviewInstructions.length > 0);
 });
 
 test('the packaged review draft recipe preserves receipt bindings and leaves observation pending', t => {

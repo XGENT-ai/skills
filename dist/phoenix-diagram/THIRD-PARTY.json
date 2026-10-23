@@ -62,7 +62,7 @@
       ]
     },
     {
-      "name": "ICU 77.1 native text adaptation",
+      "name": "ICU 77.1 native text and SystemV time adaptations",
       "license": "Unicode-3.0",
       "licenses": [
         {

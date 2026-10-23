@@ -912,6 +912,12 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         "-2359",
         "\u{2212}05:00",
         "-00:00",
+        "SystemV/AST4ADT",
+        "SystemV/CST6CDT",
+        "SystemV/EST5EDT",
+        "SystemV/MST7MDT",
+        "SystemV/PST8PDT",
+        "SystemV/YST9YDT",
     ] {
         let mut document = minimal(kind, "phoenix-v1");
         document["meta"]["timezone"] = json!(zone);
@@ -926,7 +932,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         "Z",
         "UTC+05:30",
         " UTC",
-        "SystemV/EST5EDT",
+        "SystemV/AST4EDT",
     ] {
         let mut document = minimal(kind, "phoenix-v1");
         document["meta"]["timezone"] = json!(zone);

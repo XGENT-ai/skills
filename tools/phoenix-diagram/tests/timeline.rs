@@ -268,7 +268,7 @@ fn frozen_timeline_oracle_geometry_text_and_reader_attributes() {
         );
         rendered += 1;
     }
-    assert_eq!(rendered, 28);
+    assert_eq!(rendered, 34);
     assert!(
         legends > 10 && breaks > 5,
         "{legends} legends, {breaks} breaks"
@@ -393,6 +393,58 @@ fn fixed_offset_zones_match_the_frozen_renderer_end_to_end() {
             .collect::<String>();
         assert_eq!(caption, &expected, "{zone}");
         assert!(caption.contains(&format!("{zone} (UTC")), "{caption}");
+    }
+}
+
+#[test]
+fn system_v_zones_preserve_the_frozen_incident_and_time_semantics() {
+    let original = cases()
+        .into_iter()
+        .find(|case| case["name"] == "payment-incident")
+        .unwrap()["document"]
+        .clone();
+    let zones: Vec<_> = cases()
+        .into_iter()
+        .filter(|case| {
+            case["document"]["meta"]["timezone"]
+                .as_str()
+                .is_some_and(|zone| zone.starts_with("SystemV/"))
+        })
+        .collect();
+    assert_eq!(zones.len(), 6);
+    for case in zones {
+        let document = &case["document"];
+        let mut restored = document.clone();
+        restored["meta"]["timezone"] = original["meta"]["timezone"].clone();
+        assert_eq!(restored, original, "only the timezone may change");
+        let zone = document["meta"]["timezone"].as_str().unwrap();
+        let scene = compile(document, DiagramType::Timeline).unwrap();
+        scene_matches_layout_report(&scene, &case["layout"], zone);
+        let actual_html = html(&scene);
+        let actual = Html::parse_fragment(&svg_of(&actual_html));
+        let reference = Html::parse_fragment(case["svg"].as_str().unwrap());
+        same_selection(
+            &reference,
+            &actual,
+            "text[data-timeline-axis-caption]",
+            &Rules {
+                extra: &[],
+                skip: &[],
+            },
+            zone,
+        );
+        same_selection(
+            &reference,
+            &actual,
+            "g[data-node-id]",
+            &Rules {
+                extra: &["data-source-path", "data-graph-role"],
+                skip: &[],
+            },
+            zone,
+        );
+        let check = check_html(actual_html.as_bytes(), scene.quality);
+        assert_eq!(check.status, "pass", "{zone}: {:?}", check.diagnostics);
     }
 }
 

@@ -56,7 +56,7 @@ function legalResourceFixture(t) {
     { name: 'Archify', license: 'MIT', licenses: [resource('tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt')] },
     { name: 'JetBrains Mono', license: 'OFL-1.1', licenses: [resource('tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt')] },
     { name: 'Phoenix UI CDP/install adaptations', license: 'Apache-2.0', licenses: [apache] },
-    { name: 'ICU 77.1 native text adaptation', license: 'Unicode-3.0', licenses: [resource('tools/phoenix-diagram/assets/icu77-LICENSE.txt')] },
+    { name: 'ICU 77.1 native text and SystemV time adaptations', license: 'Unicode-3.0', licenses: [resource('tools/phoenix-diagram/assets/icu77-LICENSE.txt')] },
     { name: 'Rust standard library', version: '1.99.0', license: 'MIT OR Apache-2.0', licenses: [
       ...['Apache-2.0.txt', 'BSD-2-Clause.txt', 'CC-BY-SA-4.0.txt', 'GCC-exception-3.1.txt', 'GPL-2.0-only.txt', 'GPL-3.0-or-later.txt',
         'ISC.txt', 'LLVM-exception.txt', 'MIT.txt', 'NCSA.txt', 'OFL-1.1.txt', 'Unicode-3.0.txt'].map(name =>

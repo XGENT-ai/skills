@@ -145,44 +145,56 @@ pub(super) struct Evidence {
     done: bool,
 }
 
-impl Evidence {
-    pub fn reserve(artifact: &Path, out_dir: Option<&Path>) -> Result<Self, Error> {
-        let requested = out_dir.or_else(|| artifact.parent()).ok_or_else(|| {
-            Error::new(
+fn receipt_directory(artifact: &Path, out_dir: Option<&Path>) -> Result<(PathBuf, bool), Error> {
+    let requested = out_dir.or_else(|| artifact.parent()).ok_or_else(|| {
+        Error::new(
+            "browser/evidence-path",
+            "evidence",
+            "No screenshot directory",
+        )
+    })?;
+    let created_directory = match fs::symlink_metadata(requested) {
+        Ok(stat) if stat.is_dir() && !stat.file_type().is_symlink() => false,
+        Ok(_) => {
+            return Err(Error::new(
+                "browser/evidence-conflict",
+                "evidence",
+                format!(
+                    "Screenshot directory is not an ordinary directory: {}",
+                    requested.display()
+                ),
+            ))
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            fs::DirBuilder::new()
+                .mode(0o700)
+                .create(requested)
+                .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?;
+            true
+        }
+        Err(e) => {
+            return Err(Error::new(
                 "browser/evidence-path",
                 "evidence",
-                "No screenshot directory",
-            )
-        })?;
-        let created_directory = match fs::symlink_metadata(requested) {
-            Ok(stat) if stat.is_dir() && !stat.file_type().is_symlink() => false,
-            Ok(_) => {
-                return Err(Error::new(
-                    "browser/evidence-conflict",
-                    "evidence",
-                    format!(
-                        "Screenshot directory is not an ordinary directory: {}",
-                        requested.display()
-                    ),
-                ))
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                fs::DirBuilder::new()
-                    .mode(0o700)
-                    .create(requested)
-                    .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?;
-                true
-            }
-            Err(e) => {
-                return Err(Error::new(
-                    "browser/evidence-path",
-                    "evidence",
-                    e.to_string(),
-                ))
-            }
-        };
-        let directory = fs::canonicalize(requested)
-            .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?;
+                e.to_string(),
+            ))
+        }
+    };
+    let directory = fs::canonicalize(requested)
+        .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?;
+    Ok((directory, created_directory))
+}
+
+pub(super) fn prepare_receipt_directory(
+    artifact: &Path,
+    out_dir: Option<&Path>,
+) -> Result<(), Error> {
+    receipt_directory(artifact, out_dir).map(|_| ())
+}
+
+impl Evidence {
+    pub fn reserve(artifact: &Path, out_dir: Option<&Path>) -> Result<Self, Error> {
+        let (directory, created_directory) = receipt_directory(artifact, out_dir)?;
         let directory_id = PhysicalFile::directory(
             &fs::symlink_metadata(&directory)
                 .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?,

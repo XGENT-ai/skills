@@ -330,6 +330,7 @@ pub(super) fn finalize(
             options.capture = true;
             let browser = browser::check_browser(&current.bound_artifact(), &options);
             stage(&mut summary, 3, browser_status(browser.status), &browser);
+            summary.diagnostics.extend(browser.diagnostics.clone());
             let sealed = match seal_browser(&slot, current, &browser, &options, false) {
                 Ok(file) => file,
                 Err(failure) => {
@@ -342,7 +343,6 @@ pub(super) fn finalize(
             summary.evidence["reviewPath"] =
                 json!(paths(current.artifact.path(), sealed.path().parent()).review);
             browser_file = Some(sealed);
-            summary.diagnostics.extend(browser.diagnostics.clone());
             summary.exit = browser.exit_code();
             if browser.status != BrowserStatus::Pass {
                 return Ok(());

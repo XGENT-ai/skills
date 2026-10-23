@@ -371,3 +371,113 @@ fn cli_finalize_reports_environment_failure_after_the_html_commit() {
     assert_eq!(receipt["deliveryStatus"], "incomplete");
     assert_eq!(receipt["stages"][3]["status"], "failed");
 }
+
+#[test]
+fn cli_browser_commands_seal_failures_in_fresh_and_precreated_directories() {
+    let (_engine_root, executable) = native_engine();
+    for command in ["finalize", "browser-check", "visual-check"] {
+        for precreated in [false, true] {
+            for failure in ["configured", "launch"] {
+                let project = Project::new();
+                let candidate = project.candidate();
+                let candidate_bytes = fs::read(&candidate).unwrap();
+                let html = project.0.join("diagram.html");
+                let out_dir = project.0.join("evidence");
+                if precreated {
+                    fs::create_dir(&out_dir).unwrap();
+                    fs::write(out_dir.join("unrelated"), b"preserve me").unwrap();
+                }
+                let mut args = vec![flag(command)];
+                if command == "finalize" {
+                    args.extend([flag("architecture"), candidate.as_os_str()]);
+                } else {
+                    let delivered = Command::new(&executable)
+                        .args([
+                            flag("deliver"),
+                            flag("architecture"),
+                            candidate.as_os_str(),
+                            html.as_os_str(),
+                            flag("--json"),
+                        ])
+                        .output()
+                        .unwrap();
+                    assert!(
+                        delivered.status.success(),
+                        "{}",
+                        String::from_utf8_lossy(&delivered.stdout)
+                    );
+                }
+                args.extend([
+                    html.as_os_str(),
+                    flag("--out-dir"),
+                    out_dir.as_os_str(),
+                    flag("--json"),
+                ]);
+                let browser = if failure == "configured" {
+                    project.0.join("missing-browser")
+                } else {
+                    PathBuf::from("/usr/bin/false")
+                };
+                let output = Command::new(&executable)
+                    .args(args)
+                    .env("PHOENIX_DIAGRAM_BROWSER", browser)
+                    .output()
+                    .unwrap();
+                assert_eq!(
+                    output.status.code(),
+                    Some(4),
+                    "{command}, {failure}: {}",
+                    String::from_utf8_lossy(&output.stdout)
+                );
+                let receipt = parsed(&output);
+                let code = if failure == "configured" {
+                    "browser/configured-path"
+                } else {
+                    "browser/launch"
+                };
+                assert!(receipt["diagnostics"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|entry| entry["code"] == code));
+                let sealed_path = receipt["evidence"]["browserReceipt"]["path"]
+                    .as_str()
+                    .unwrap();
+                let sealed: Value =
+                    serde_json::from_slice(&fs::read(sealed_path).unwrap()).unwrap();
+                assert_eq!(sealed["status"], "failed");
+                assert_eq!(sealed["diagnostics"][0]["code"], code);
+                assert_eq!(sealed["screenshots"], json!([]));
+                assert_eq!(
+                    sealed["artifact"],
+                    json!(phoenix_diagram::check::FileIdentity::of(
+                        &fs::read(&html).unwrap()
+                    ))
+                );
+                assert_eq!(fs::read(&candidate).unwrap(), candidate_bytes);
+                if command == "finalize" {
+                    assert_eq!(receipt["producedByThisRun"], true);
+                    assert_eq!(receipt["deliveryStatus"], "incomplete");
+                    assert!(receipt["stages"].as_array().unwrap()[..3]
+                        .iter()
+                        .all(|stage| stage["status"] == "pass"));
+                    assert_eq!(receipt["stages"][3]["status"], "failed");
+                }
+                assert!(fs::read_dir(&out_dir).unwrap().all(|entry| {
+                    let entry = entry.unwrap();
+                    !entry
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with("phoenix-diagram-browser-evidence-")
+                        && entry
+                            .path()
+                            .extension()
+                            .is_none_or(|extension| extension != "png")
+                }));
+                if precreated {
+                    assert_eq!(fs::read(out_dir.join("unrelated")).unwrap(), b"preserve me");
+                }
+            }
+        }
+    }
+}

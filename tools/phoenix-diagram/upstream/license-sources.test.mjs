@@ -83,6 +83,7 @@ function sourceFixture(t) {
     fs.cpSync(path.join(project, 'upstream', name), path.join(temporaryUpstream, name), { recursive: true });
   }
   for (const name of ['Cargo.lock', 'tests/fixtures/text-segmentation', 'assets/icu77-LICENSE.txt',
+    'tests/fixtures/format/system-v-sources.json', 'tests/fixtures/format/icu77-zoneinfo64.txt',
     'assets/license-sources.json', 'assets/licenses']) {
     fs.mkdirSync(path.dirname(path.join(directory, name)), { recursive: true });
     fs.cpSync(path.join(project, name), path.join(directory, name), { recursive: true });

@@ -15,6 +15,8 @@ Archify 阅读器模板嵌入的 JetBrains Mono 字体采用 SIL Open Font Licen
 
 原生文本分段模块将 [ICU 77.1 官方 release-77-1 来源](https://github.com/unicode-org/icu/tree/release-77-1/icu4c/source)中的词边界规则、字典分派、CJK 成本分段和东南亚三词前瞻算法适配为 Rust，并使用 ICU4X 2.0 代际的 Unicode 16.0 compiled dictionaries 与规范化数据。修改包括 Rust 存储、UTF-8 字节偏移和原生词典调用；原始来源文件保持未修改。12 个原始文件的官方取回 URL、逐文件 SHA-256 和修改声明见 [文本来源清单](tests/fixtures/text-segmentation/sources.json)，清单本身及许可副本的冻结身份登记在 [upstream/SOURCE.json](upstream/SOURCE.json) 的 `nativeText` 条目，其中路径以 `tools/phoenix-diagram/` 为基准。
 
+原生 SystemV 时间模块将该 ICU 77.1 来源的 [zoneinfo64.txt](https://github.com/unicode-org/icu/blob/release-77-1/icu4c/source/data/misc/zoneinfo64.txt) 中六个夏令时区适配为 Rust：`SystemV/AST4ADT`、`SystemV/CST6CDT`、`SystemV/EST5EDT`、`SystemV/MST7MDT`、`SystemV/PST8PDT` 和 `SystemV/YST9YDT`。修改包括归一化的 150 项历史转换表和 1977 年起的最终年度规则；原始文件保持未修改，其头部 tz 版本为 2025a。官方取回 URL、原始字节大小与 SHA-256、六区选择及规则见 [时间来源清单](tests/fixtures/format/system-v-sources.json)，独立冻结身份登记在 `upstream/SOURCE.json` 的 `nativeTime` 条目；只采用这六区的数据，不替换既有 IANA 时区库。
+
 ICU 适配及数据的 Unicode-3.0 许可和完整第三方 notices 保存在 [assets/icu77-LICENSE.txt](assets/icu77-LICENSE.txt)，该文件是官方 ICU 77.1 许可的原字节副本。开发期来源校验离线检查清单、每个原始文件及许可副本，来源缺失或字节变化时直接失败，不下载、恢复或刷新基线。这些原始开发 fixtures 不进入消费端 npm 包。
 
 六个锁定 Rust 依赖缺少独立许可文件的情形，由 [assets/license-sources.json](assets/license-sources.json) 和 [assets/licenses/](assets/licenses/) 中四份未修改的全文补齐。清单固定 crate 版本、Cargo.lock 归档 SHA-256、repository、`.cargo_vcs_info.json` 的 commit/path、原 Cargo/README 适用性证据，以及全文的原始 URL、大小和 SHA-256；其冻结身份与全文来源登记在 `upstream/SOURCE.json` 的 `rustLicenses` 条目。它们是发行构建的固定输入，普通来源检查、prepare 前置检查和 build 都不隐式下载、修补或更新这些许可。
@@ -25,4 +27,4 @@ ICU 适配及数据的 Unicode-3.0 许可和完整第三方 notices 保存在 [a
 
 完整快照和 legacy oracle 的导入闭包包含历史第三方品牌数据及对应原始 notices，供开发期参考。冻结源码独立于消费者运行资源，来源归档不进入 npm 包。P1 的运行资源不携带 Simple Icons 或官方品牌数据。
 
-时间线时区由 `chrono-tz` 0.10.4 编译期内置的 tzdata 2025b 计算，`chrono` 0.4.45 负责日期与固定偏移；两者的 MIT/Apache-2.0 全文随 Cargo.lock 从各自 crate 收集。tz 代码与数据按其 `tz/LICENSE` 属于公有领域，`chrono-tz` 的 LICENSE 同样声明其许可不适用于 tzdb 文件。
+时间线 IANA 命名时区由 `chrono-tz` 0.10.4 编译期内置的 tzdata 2025b 计算，上述六个 ICU 专属 SystemV 时区使用独立原生规则；`chrono` 0.4.45 负责日期与固定偏移。两者的 MIT/Apache-2.0 全文随 Cargo.lock 从各自 crate 收集。tz 代码与数据按其 `tz/LICENSE` 属于公有领域，`chrono-tz` 的 LICENSE 同样声明其许可不适用于 tzdb 文件。

@@ -25,7 +25,8 @@ const base = (events, meta = {}, extra = {}) => ({ schema_version: 1, diagram_ty
 const incident = await example('payment-incident.timeline.json');
 add('payment-incident', incident);
 add('archify-dev-activity', await example('archify-dev-activity.timeline.json'));
-for (const timezone of ['+05:30', '+0530', '+01', '-2359', '−05:00', '-00:00', 'UTC', 'utc', 'asia/calcutta', 'Asia/Calcutta', 'IST']) {
+for (const timezone of ['+05:30', '+0530', '+01', '-2359', '−05:00', '-00:00', 'UTC', 'utc', 'asia/calcutta', 'Asia/Calcutta', 'IST',
+  'SystemV/AST4ADT', 'SystemV/CST6CDT', 'SystemV/EST5EDT', 'SystemV/MST7MDT', 'SystemV/PST8PDT', 'SystemV/YST9YDT']) {
   const document = structuredClone(incident);
   document.meta.timezone = timezone;
   add(`incident-zone-${timezone.replace(/[^\w]/g, c => `u${c.codePointAt(0).toString(16)}`)}`, document);

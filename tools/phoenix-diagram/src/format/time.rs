@@ -1,20 +1,22 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, Offset, TimeZone, Timelike};
 use chrono_tz::{Tz, TZ_VARIANTS};
 
+mod system_v;
+
 const MINUTE: i64 = 60_000;
 const HOUR: i64 = 60 * MINUTE;
 const DAY: i64 = 24 * HOUR;
 
-/// A display zone as ICU accepts it: a named zone or a fixed UTC offset.
+/// A display zone accepted by ICU, including its SystemV daylight rules.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Zone {
     Named(Tz),
+    SystemV(i32),
     Fixed(FixedOffset),
 }
 
 // ICU 77.1 accepts these identifiers although tzdata does not list them. Each
 // target is the zone ICU resolves them to, or a zone with identical offsets.
-// The SystemV daylight-saving zones carry ICU-only rules and stay unsupported.
 const ICU_ALIASES: [(&str, &str); 33] = [
     ("ACT", "Australia/Darwin"),
     ("AET", "Australia/Sydney"),
@@ -179,6 +181,9 @@ pub fn zone(value: &str) -> Option<Zone> {
     }) {
         return Some(Zone::Named(zone));
     }
+    if let Some(raw) = system_v::raw(value) {
+        return Some(Zone::SystemV(raw));
+    }
     let (negative, rest) = match value.strip_prefix('+') {
         Some(rest) => (false, rest),
         None => (
@@ -216,6 +221,7 @@ pub struct Wall {
 
 fn offset_seconds(ms: i64, zone: &Zone) -> i64 {
     match zone {
+        Zone::SystemV(raw) => system_v::offset(ms, *raw),
         Zone::Fixed(offset) => i64::from(offset.local_minus_utc()),
         Zone::Named(tz) => DateTime::from_timestamp_millis(ms).map_or(0, |instant| {
             i64::from(

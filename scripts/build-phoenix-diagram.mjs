@@ -291,7 +291,7 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
     ['Archify', 'MIT', 'tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt'],
     ['JetBrains Mono', 'OFL-1.1', 'tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt'],
     ['Phoenix UI CDP/install adaptations', 'Apache-2.0', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0'],
-    ['ICU 77.1 native text adaptation', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
+    ['ICU 77.1 native text and SystemV time adaptations', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
   ]) runtime.push({ name, license, licenses: [preserve(regular(path.join(repoRoot, source)).bytes, source)] });
   const uiSource = JSON.parse(regular(path.join(repoRoot, 'tools/phoenix-ui/UPSTREAM.json')).bytes);
   assert(uiSource.license === 'Apache-2.0' && COMMIT.test(uiSource.engineCommit), 'Apache adaptation source identity is unavailable');
@@ -360,7 +360,7 @@ export function readLicenseResources(directory, locked, { repoRoot = root } = {}
     found.add(key);
   }
   assert.equal(found.size, expected.size, 'Full license catalog does not cover every locked Rust package');
-  const requiredRuntime = ['Archify', 'JetBrains Mono', 'Phoenix UI CDP/install adaptations', 'ICU 77.1 native text adaptation', 'Rust standard library'];
+  const requiredRuntime = ['Archify', 'JetBrains Mono', 'Phoenix UI CDP/install adaptations', 'ICU 77.1 native text and SystemV time adaptations', 'Rust standard library'];
   assert.deepEqual(catalog.runtime.map(item => item.name).sort(compare), requiredRuntime.sort(compare), 'Full runtime license catalog differs');
   for (const item of [...catalog.runtime, ...catalog.rust]) {
     assert(typeof item.license === 'string' && item.license && Array.isArray(item.licenses) && item.licenses.length, `Missing complete terms: ${item.name}`);

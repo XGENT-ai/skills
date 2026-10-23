@@ -57,6 +57,21 @@
     "licenseSpdx": "Unicode-3.0",
     "modification": "Rust ports of word rules, dictionary dispatch, CJK cost segmentation and Southeast Asian three-word lookahead; original source fixtures are unmodified."
   },
+  "nativeTime": {
+    "repository": "https://github.com/unicode-org/icu",
+    "release": "release-77-1",
+    "tzVersion": "2025a",
+    "manifest": "tests/fixtures/format/system-v-sources.json",
+    "manifestSize": 1933,
+    "manifestSha256": "5cca4def77aea4452b0877c10caee53d08ab0414e7a42706edffb9a6b6da0067",
+    "fileCount": 1,
+    "zoneCount": 6,
+    "license": "assets/icu77-LICENSE.txt",
+    "licenseSize": 26487,
+    "licenseSha256": "451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca",
+    "licenseSpdx": "Unicode-3.0",
+    "modification": "Rust adaptation of the six SystemV daylight-saving zones using normalized historical transitions and their final annual rule; the original ICU source fixture is unmodified."
+  },
   "rustLicenses": {
     "manifest": "assets/license-sources.json",
     "manifestSize": 13949,
