@@ -97,6 +97,13 @@ test('class acceptance keeps unspecified quantities separate from explicit Merma
   assert.deepEqual(facts.natural.source.promptIdentity, { bytes: prompt.length, sha256: createHash('sha256').update(prompt).digest('hex') });
   assert.equal(facts.natural.review.relationship.minimumProvided, false);
   assert.deepEqual(facts.natural.review.relationship.numericCardinalityMaterials, []);
+  assert.ok(Array.isArray(facts.natural.review.providedQuantities), 'Keep the supplied single Cart in the review ledger');
+  assert.deepEqual(facts.natural.review.providedQuantities.map(({ from, to, count }) => ({ from, to, count })), [
+    { from: 'Checkout', to: 'Cart', count: 1 },
+  ]);
+  for (const quantity of facts.natural.review.providedQuantities) {
+    for (const passage of quantity.materials) assert.ok(facts.natural.prompt.includes(passage), passage);
+  }
   for (const item of [facts.natural, facts.explicitMermaid]) {
     assert.deepEqual(item.review.expectedMissingFacts, []);
     for (const passage of item.review.relationship.materials) assert.ok(item.prompt.includes(passage), passage);

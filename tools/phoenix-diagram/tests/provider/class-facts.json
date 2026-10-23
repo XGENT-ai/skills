@@ -12,6 +12,16 @@
     "prompt": "请用一张图说明支付模块的类型关系：PaymentProcessor 是接口，有 authorize(amount: Money): AuthResult 和 capture(authId: String): void 两个方法；CardProcessor 和 WalletProcessor 都实现这个接口，其中 CardProcessor 有私有字段 gateway: GatewayClient。Checkout 类拥有一个 Cart，Cart 随 Checkout 一起创建和销毁；Checkout 调用 PaymentProcessor 完成支付；Cart 包含多个 LineItem，LineItem 可以脱离 Cart 单独存在。\n",
     "review": {
       "expectedMissingFacts": [],
+      "providedQuantities": [
+        {
+          "from": "Checkout",
+          "to": "Cart",
+          "count": 1,
+          "materials": [
+            "Checkout 类拥有一个 Cart"
+          ]
+        }
+      ],
       "relationship": {
         "from": "Cart",
         "to": "LineItem",
@@ -25,6 +35,7 @@
         "numericCardinalityMaterials": []
       },
       "requirements": [
+        "保留明确给出的单个Cart，可用关系数量或明确单值成员表达；组合与共同生命周期本身不替代数量",
         "保留多个的数量含义与独立生命周期，不从一端的生命周期推另一端的零下界",
         "不追加0..*、1..*等未给出的下界，也不为可选数值标注询问",
         "其他已给类型、成员及关系完整保留"
