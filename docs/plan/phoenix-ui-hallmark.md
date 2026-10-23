@@ -47,23 +47,23 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-23T11:00:00+08:00
+- 最近更新：2026-10-23T11:52:00+08:00
 - 当前进度：5/5 个里程碑完成
-- 当前状态：5/5 里程碑交付完成；代码评审 R1（8 项 P2、2 项 P3）已逐项处置并本地验证，提交后交独立复审
+- 当前状态：5/5 里程碑交付完成；代码评审 R1（8 项 P2、2 项 P3）已逐项处置、验证并提交，待独立复审
 - 最近完成：M5 · 阶段收口
-- 下一步：代码复审。用 review-code 以本计划路径为参数复审修复提交；F-01–F-10 的处置与证据见各里程碑记录的「代码评审 R1 修复」节。
+- 下一步：代码复审。用 review-code 以本计划路径为参数复审修复提交 `e532b60`；F-01–F-10 的处置与证据见各里程碑记录的「代码评审 R1 修复」节。
 - 当前阻塞：无
-- 代码基线：M5 交付 `3e3885b`；代码评审 R1 修复工作树 dirty@0be853c（源码输入 `a68bf113…`、开发构建 binary sha256 `6bf2c7c7…`、bundleSha256 `a35570d9…`），修复提交 SHA 提交后回填
+- 代码基线：M5 交付 `3e3885b`；代码评审 R1 修复提交 `e532b60`（源码输入 `a68bf113…`、开发构建 binary sha256 `6bf2c7c7…`、bundleSha256 `a35570d9…`）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-09：operate 标签指引不再默认折行并同步计划 §6.3；生成物由 R1 构建同步 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 3e3885b |
-| M1 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-01–F-04、F-08 文本部分：注释、focus 变体、静态拼接、零长度与标记 CSS 位置；V-1/V-2/lint/回归通过 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 3e3885b |
-| M2 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-05–F-07：SVG title 名称、emoji 文本归属、视觉可见性与 aria-hidden 分离；V-3/V-4 真实 Chrome 通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 3e3885b |
-| M3 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-08 oracle 部分：5 个 case 精确期望更正、DELTAS/UPSTREAM/能力账本同步；V-5 860/860 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 3e3885b |
-| M5 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-10：定稿后重建开发构建并重绑产物；sourceInputSha256 复现一致，capabilities/audit/smoke/npm test/test:phoenix 通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 3e3885b |
+| M4 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-09：operate 标签指引不再默认折行并同步计划 §6.3；生成物由 R1 构建同步 | [M4 记录](phoenix-ui-hallmark.records/M4.md) | 3e3885b；修复 e532b60 |
+| M1 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-01–F-04、F-08 文本部分：注释、focus 变体、静态拼接、零长度与标记 CSS 位置；V-1/V-2/lint/回归通过 | [M1 记录](phoenix-ui-hallmark.records/M1.md) | 3e3885b；修复 e532b60 |
+| M2 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-05–F-07：SVG title 名称、emoji 文本归属、视觉可见性与 aria-hidden 分离；V-3/V-4 真实 Chrome 通过 | [M2 记录](phoenix-ui-hallmark.records/M2.md) | 3e3885b；修复 e532b60 |
+| M3 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-08 oracle 部分：5 个 case 精确期望更正、DELTAS/UPSTREAM/能力账本同步；V-5 860/860 | [M3 记录](phoenix-ui-hallmark.records/M3.md) | 3e3885b；修复 e532b60 |
+| M5 | 已完成 | 2026-10-23T11:00:00+08:00 | R1 F-10：定稿后重建开发构建并重绑产物；sourceInputSha256 复现一致，capabilities/audit/smoke/npm test/test:phoenix 通过 | [M5 记录](phoenix-ui-hallmark.records/M5.md) | 3e3885b；修复 e532b60 |
 
 ## 0. 需求、范围与决策
 
