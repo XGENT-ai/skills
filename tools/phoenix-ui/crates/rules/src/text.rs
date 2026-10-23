@@ -179,7 +179,7 @@ fn check_focus_outline(blanked: &str, file_path: &str, findings: &mut Vec<Findin
     // Tailwind class strings: hit and waiver share one variant-chain parser, so
     // `focus:outline-none dark:focus:border-white` and
     // `[&:focus-visible]:outline-2` read as an already-written replacement.
-    for (start, class_string) in class_strings(blanked) {
+    for (start, class_string) in class_expressions(blanked) {
         if !class_string_removes_focus(&class_string) {
             continue;
         }
@@ -291,8 +291,9 @@ fn blank_delimited(
 }
 
 /// Keep only the stylesheet positions of a markup file — `<style>` bodies and
-/// `style="…"`/`style='…'` attribute values — and blank everything else with
-/// spaces, preserving byte offsets and newlines.
+/// `style="…"`/`style='…'` attribute values on real tags — and blank everything
+/// else with spaces, preserving byte offsets and newlines. A `style="…"` quoted
+/// in body copy is not a declaration (F-08).
 fn mask_markup_styles(source: &str) -> String {
     let mut keep = vec![false; source.len()];
     for capture in STYLE_BLOCK_RE.captures_iter(source) {
@@ -300,14 +301,14 @@ fn mask_markup_styles(source: &str) -> String {
             keep[body.start()..body.end()].fill(true);
         }
     }
-    for capture in STYLE_ATTR_DOUBLE_RE.captures_iter(source) {
-        if let Some(value) = capture.name("value") {
-            keep[value.start()..value.end()].fill(true);
-        }
-    }
-    for capture in STYLE_ATTR_SINGLE_RE.captures_iter(source) {
-        if let Some(value) = capture.name("value") {
-            keep[value.start()..value.end()].fill(true);
+    for (tag_start, tag_end) in tag_spans(source) {
+        let tag = &source[tag_start..tag_end];
+        for regex in [&*STYLE_ATTR_DOUBLE_RE, &*STYLE_ATTR_SINGLE_RE] {
+            for capture in regex.captures_iter(tag) {
+                if let Some(value) = capture.name("value") {
+                    keep[tag_start + value.start()..tag_start + value.end()].fill(true);
+                }
+            }
         }
     }
     let mut masked = String::with_capacity(source.len());
@@ -321,6 +322,72 @@ fn mask_markup_styles(source: &str) -> String {
     masked
 }
 
+/// The byte spans of the real tags in markup. A quoted tag in body copy is not
+/// one, so the scan only accepts `<name` or `</name`. Quoted attribute values
+/// may contain `>`, so the scan to the closing angle bracket tracks quotes;
+/// `<script>` and `<style>` bodies are code and CSS text, not tag attributes.
+fn tag_spans(source: &str) -> Vec<(usize, usize)> {
+    let bytes = source.as_bytes();
+    let mut spans = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        let Some(offset) = source[index..].find('<') else {
+            break;
+        };
+        let start = index + offset;
+        index = start + 1;
+        let mut name_start = start + 1;
+        let closing = bytes.get(name_start) == Some(&b'/');
+        if closing {
+            name_start += 1;
+        }
+        let mut name_end = name_start;
+        while name_end < bytes.len()
+            && (bytes[name_end].is_ascii_alphanumeric()
+                || matches!(bytes[name_end], b'-' | b':' | b'_'))
+        {
+            name_end += 1;
+        }
+        if name_end == name_start {
+            // `<!doctype>`, `<!-- … -->`, `<=`, or a stray `<` is not a tag.
+            continue;
+        }
+        let name = source[name_start..name_end].to_ascii_lowercase();
+        let mut cursor = name_end;
+        let mut quote: Option<u8> = None;
+        let mut end = None;
+        while cursor < bytes.len() {
+            let byte = bytes[cursor];
+            match quote {
+                Some(open) => {
+                    if byte == open {
+                        quote = None;
+                    }
+                }
+                None if byte == b'"' || byte == b'\'' => quote = Some(byte),
+                None if byte == b'>' => {
+                    end = Some(cursor + 1);
+                    break;
+                }
+                None => {}
+            }
+            cursor += 1;
+        }
+        let Some(end) = end else {
+            break;
+        };
+        spans.push((start, end));
+        index = end;
+        if !closing && (name == "script" || name == "style") {
+            let rest = source[end..].to_ascii_lowercase();
+            if let Some(close) = rest.find(&format!("</{name}")) {
+                index = end + close;
+            }
+        }
+    }
+    spans
+}
+
 /// Whether a CSS declaration list removes the outline: `outline`/`outline-style`
 /// set to `none`, or `outline`/`outline-width` set to a complete zero length.
 /// `0.5px` is not a zero length even though it starts with `0` (F-04).
@@ -330,7 +397,7 @@ fn removes_outline(declarations: &str) -> bool {
             return false;
         };
         let property = property.trim().to_ascii_lowercase();
-        let value = value.trim();
+        let value = strip_css_important(value);
         match property.as_str() {
             "outline" => css_value_components(value)
                 .into_iter()
@@ -346,6 +413,21 @@ fn removes_outline(declarations: &str) -> bool {
             _ => false,
         }
     })
+}
+
+/// Drop a trailing `!important`, which is a declaration priority rather than
+/// part of the value: `outline:none!important` removes the outline exactly like
+/// the spaced form (F-11). CSS also allows whitespace between `!` and
+/// `important`, so `none ! important` reads the same.
+fn strip_css_important(value: &str) -> &str {
+    let trimmed = value.trim();
+    let Some(bang) = trimmed.rfind('!') else {
+        return trimmed;
+    };
+    if trimmed[bang + 1..].trim().eq_ignore_ascii_case("important") {
+        return trimmed[..bang].trim_end();
+    }
+    trimmed
 }
 
 /// The top-level whitespace-separated components of a CSS value. Function
@@ -392,17 +474,52 @@ fn is_zero_length(token: &str) -> bool {
     number.parse::<f64>().is_ok_and(|value| value == 0.0)
 }
 
-/// The statically determinable class strings in `blanked`, as
-/// `(starting byte offset, text)` in source order. Adjacent string literals
-/// joined by `+` are one class string; an expression the engine cannot fully
-/// determine is skipped rather than asserted to lack a replacement (F-03).
-fn class_strings(blanked: &str) -> Vec<(usize, String)> {
-    struct Literal<'a> {
-        start: usize,
-        end: usize,
-        inner: &'a str,
-        template: bool,
+/// The statically determined class expressions in `blanked`, as
+/// `(starting byte offset, class list)` in source order. A class list is the
+/// whole expression a literal belongs to — `+` concatenation, array `join`, or
+/// a class-name call — and an expression the engine cannot evaluate is skipped
+/// rather than asserted to lack a replacement (F-03).
+fn class_expressions(blanked: &str) -> Vec<(usize, String)> {
+    let literals = literals(blanked);
+    let brackets = Brackets::new(blanked, &literals);
+    let mut candidates: Vec<(usize, usize, usize, String)> = Vec::new();
+    for (first, last) in literal_runs(blanked, &literals) {
+        let start = literals[first].start;
+        let Some((window, text)) =
+            expression_text(blanked, &literals, &brackets, start, literals[last].end)
+        else {
+            continue;
+        };
+        candidates.push((window.0, window.1, start, text));
     }
+    // Literals nested in a larger expression are one class list, so the widest
+    // window decides (`cn(["a", "b"].join(" "), "c")` reads as `a b c`).
+    let mut kept: Vec<(usize, usize, usize, String)> = Vec::new();
+    for candidate in candidates {
+        if kept
+            .iter()
+            .any(|other| other.0 <= candidate.0 && candidate.1 <= other.1)
+        {
+            continue;
+        }
+        kept.retain(|other| !(candidate.0 <= other.0 && other.1 <= candidate.1));
+        kept.push(candidate);
+    }
+    kept.into_iter()
+        .map(|(_, _, first_literal, text)| (first_literal, text))
+        .collect()
+}
+
+/// One string literal in the comment-blanked source.
+struct Literal<'a> {
+    start: usize,
+    end: usize,
+    inner: &'a str,
+    template: bool,
+}
+
+/// Every string literal in `blanked`, in source order.
+fn literals(blanked: &str) -> Vec<Literal<'_>> {
     let mut literals: Vec<Literal<'_>> = Vec::new();
     for regex in [&*DOUBLE_QUOTED_RE, &*SINGLE_QUOTED_RE, &*BACKTICK_RE] {
         for capture in regex.captures_iter(blanked) {
@@ -418,44 +535,480 @@ fn class_strings(blanked: &str) -> Vec<(usize, String)> {
         }
     }
     literals.sort_by_key(|literal| literal.start);
+    literals
+}
 
-    let mut strings = Vec::new();
+/// `(first, last)` literal indexes of each run whose literals are joined by
+/// static glue only.
+fn literal_runs(blanked: &str, literals: &[Literal<'_>]) -> Vec<(usize, usize)> {
+    let mut runs = Vec::new();
     let mut index = 0;
     while index < literals.len() {
         let mut last = index;
         while last + 1 < literals.len()
             && literals[last].end <= literals[last + 1].start
-            && blanked[literals[last].end..literals[last + 1].start].trim() == "+"
+            && combinable_gap(&blanked[literals[last].end..literals[last + 1].start])
         {
             last += 1;
         }
-        let chain = &literals[index..=last];
-        // A `+` beside the chain means an operand the engine cannot read:
-        // do not claim the class string has no replacement in that case.
-        let unresolved = preceding_non_space(blanked, chain[0].start) == Some('+')
-            || following_non_space(blanked, literals[last].end) == Some('+');
-        let interpolated = chain
-            .iter()
-            .any(|literal| literal.template && literal.inner.contains("${"));
-        if !unresolved && !interpolated {
-            let text = if chain.len() == 1 {
-                chain[0].inner.to_string()
-            } else {
-                chain.iter().map(|literal| literal.inner).collect()
-            };
-            strings.push((chain[0].start, text));
-        }
+        runs.push((index, last));
         index = last + 1;
     }
-    strings
+    runs
 }
 
-fn preceding_non_space(text: &str, index: usize) -> Option<char> {
-    text[..index].chars().rev().find(|ch| !ch.is_whitespace())
+/// Whether the text between two literals only joins them: `+` concatenation or
+/// `,` arguments/elements, possibly wrapped in parentheses or brackets.
+fn combinable_gap(gap: &str) -> bool {
+    let mut joins = false;
+    for ch in gap.chars() {
+        match ch {
+            '+' | ',' => joins = true,
+            '(' | ')' | '[' | ']' => {}
+            _ if ch.is_whitespace() => {}
+            _ => return false,
+        }
+    }
+    joins
 }
 
-fn following_non_space(text: &str, index: usize) -> Option<char> {
-    text[index..].chars().find(|ch| !ch.is_whitespace())
+/// The bracket pairs of `blanked`, with string literals skipped so a bracket
+/// quoted in a class name or label cannot break the nesting.
+struct Brackets {
+    pairs: Vec<(usize, usize)>,
+}
+
+impl Brackets {
+    fn new(blanked: &str, literals: &[Literal<'_>]) -> Self {
+        let mut pairs = Vec::new();
+        let mut stack: Vec<(char, usize)> = Vec::new();
+        let mut index = 0;
+        let mut literal_index = 0;
+        while index < blanked.len() {
+            if let Some(literal) = literals.get(literal_index) {
+                if literal.start == index {
+                    index = literal.end;
+                    literal_index += 1;
+                    continue;
+                }
+            }
+            let Some(ch) = blanked[index..].chars().next() else {
+                break;
+            };
+            match ch {
+                '(' | '[' | '{' => stack.push((ch, index)),
+                ')' | ']' | '}' => {
+                    let opener = match ch {
+                        ')' => '(',
+                        ']' => '[',
+                        _ => '{',
+                    };
+                    if let Some(position) = stack.iter().rposition(|(open, _)| *open == opener) {
+                        stack.truncate(position + 1);
+                        if let Some((_, open_index)) = stack.pop() {
+                            pairs.push((open_index, index));
+                        }
+                    }
+                }
+                _ => {}
+            }
+            index += ch.len_utf8();
+        }
+        Self { pairs }
+    }
+
+    /// The smallest pair that contains `start..end`.
+    fn enclosing(&self, start: usize, end: usize) -> Option<(usize, usize)> {
+        self.pairs
+            .iter()
+            .copied()
+            .filter(|(open, close)| *open < start && end <= *close)
+            .min_by_key(|(open, close)| close - open)
+    }
+
+    fn closer_of(&self, open: usize) -> Option<usize> {
+        self.pairs
+            .iter()
+            .find(|(pair_open, _)| *pair_open == open)
+            .map(|(_, close)| *close)
+    }
+
+    fn opener_of(&self, close: usize) -> Option<usize> {
+        self.pairs
+            .iter()
+            .find(|(_, pair_close)| *pair_close == close)
+            .map(|(open, _)| *open)
+    }
+}
+
+/// The class list of one literal run, with the window it was read from.
+/// `None` means the expression cannot be read statically.
+fn expression_text(
+    blanked: &str,
+    literals: &[Literal<'_>],
+    brackets: &Brackets,
+    start: usize,
+    end: usize,
+) -> Option<((usize, usize), String)> {
+    match group_window(blanked, brackets, start, end) {
+        GroupWindow::Transformed => None,
+        GroupWindow::Group(window_start, window_end) => {
+            let window = (window_start, window_end);
+            if let Some(text) = evaluate(blanked, literals, window) {
+                return Some((window, text));
+            }
+            // The group is not the class expression (`return (<button … />)`),
+            // so read the immediate expression around the literal instead.
+            let statement = statement_window(blanked, brackets, start, end)?;
+            if statement.comma {
+                // A sibling argument or element is unknown.
+                return None;
+            }
+            let window = (statement.start, statement.end);
+            Some((window, evaluate(blanked, literals, window)?))
+        }
+        GroupWindow::None => {
+            let statement = statement_window(blanked, brackets, start, end)?;
+            let window = (statement.start, statement.end);
+            Some((window, evaluate(blanked, literals, window)?))
+        }
+    }
+}
+
+fn evaluate(blanked: &str, literals: &[Literal<'_>], window: (usize, usize)) -> Option<String> {
+    let tokens = tokens_in(blanked, literals, window.0, window.1)?;
+    Parser::new(&tokens).parse()
+}
+
+/// The grouped expression a literal run belongs to, when there is one.
+enum GroupWindow {
+    /// No enclosing group: the statement window is the expression.
+    None,
+    /// The inside of the enclosing call, or the array literal with its `join`.
+    Group(usize, usize),
+    /// `[…].map(…)` and friends: a member call the engine cannot read.
+    Transformed,
+}
+
+fn group_window(blanked: &str, brackets: &Brackets, start: usize, end: usize) -> GroupWindow {
+    let Some((open, close)) = brackets.enclosing(start, end) else {
+        return GroupWindow::None;
+    };
+    match blanked[open..].chars().next() {
+        Some('(') => GroupWindow::Group(open + 1, close),
+        Some('[') => match join_call_end(blanked, brackets, close) {
+            Some(end) => GroupWindow::Group(open, end),
+            None => GroupWindow::Transformed,
+        },
+        // A block or object body also holds statements: read the expression
+        // inside it (`const label = "…";`), not the whole body.
+        _ => GroupWindow::None,
+    }
+}
+
+/// The end of a `[…].join(…)` member expression chained to the array closing at
+/// `close`, or the array's own end when nothing is chained to it. Any other
+/// member call may transform the list, so it makes the expression unreadable.
+fn join_call_end(blanked: &str, brackets: &Brackets, close: usize) -> Option<usize> {
+    let index = skip_whitespace(blanked, close + 1);
+    if !blanked[index..].starts_with('.') {
+        return Some(close + 1);
+    }
+    let after_dot = skip_whitespace(blanked, index + 1);
+    if !blanked[after_dot..].starts_with("join") {
+        return None;
+    }
+    let paren = skip_whitespace(blanked, after_dot + "join".len());
+    if !blanked[paren..].starts_with('(') {
+        return None;
+    }
+    Some(brackets.closer_of(paren)? + 1)
+}
+
+/// The immediate expression around a literal run, bounded by statement or
+/// operator punctuation rather than by a containing group. A `+` continues the
+/// expression; a bracket opened outside the run is walked through, and the
+/// parse decides whether an unreadable operand remains.
+fn statement_window(
+    blanked: &str,
+    brackets: &Brackets,
+    start: usize,
+    end: usize,
+) -> Option<Window> {
+    let (window_start, left_comma) = scan_left(blanked, brackets, start, end)?;
+    let (window_end, right_comma) = scan_right(blanked, brackets, start, end)?;
+    if window_start >= window_end {
+        return None;
+    }
+    Some(Window {
+        start: window_start,
+        end: window_end,
+        comma: left_comma || right_comma,
+    })
+}
+
+/// A statement expression window, and whether a comma delimits it (a sibling
+/// argument or element the engine cannot read).
+struct Window {
+    start: usize,
+    end: usize,
+    comma: bool,
+}
+
+fn scan_left(
+    blanked: &str,
+    brackets: &Brackets,
+    start: usize,
+    end: usize,
+) -> Option<(usize, bool)> {
+    let mut index = start;
+    loop {
+        index = skip_whitespace_back(blanked, index);
+        let Some(ch) = blanked[..index].chars().next_back() else {
+            return Some((0, false));
+        };
+        let char_start = index - ch.len_utf8();
+        match ch {
+            ')' | ']' | '}' => index = brackets.opener_of(char_start)?,
+            '+' => index = char_start,
+            '(' | '[' | '{' => {
+                if brackets
+                    .closer_of(char_start)
+                    .is_some_and(|close| close >= start && close < end)
+                {
+                    // The run's own grouping: keep scanning past it.
+                    index = char_start;
+                    continue;
+                }
+                return Some((index, false));
+            }
+            ch if is_ident_char(ch) => return Some((index, false)),
+            _ => return Some((index, ch == ',')),
+        }
+    }
+}
+
+fn scan_right(
+    blanked: &str,
+    brackets: &Brackets,
+    start: usize,
+    end: usize,
+) -> Option<(usize, bool)> {
+    let mut index = end;
+    loop {
+        index = skip_whitespace(blanked, index);
+        let Some(ch) = blanked[index..].chars().next() else {
+            return Some((blanked.len(), false));
+        };
+        match ch {
+            ')' | ']' | '}' => {
+                if brackets
+                    .opener_of(index)
+                    .is_some_and(|open| open >= start && open < end)
+                {
+                    index += ch.len_utf8();
+                    continue;
+                }
+                return Some((index, false));
+            }
+            '+' => index += ch.len_utf8(),
+            _ => return Some((index, ch == ',')),
+        }
+    }
+}
+
+/// A token of an expression window: a string literal, an identifier, or one
+/// punctuation character.
+enum Token<'a> {
+    Str { text: &'a str, template: bool },
+    Ident(&'a str),
+    Punct(char),
+}
+
+fn tokens_in<'a>(
+    blanked: &'a str,
+    literals: &[Literal<'a>],
+    start: usize,
+    end: usize,
+) -> Option<Vec<Token<'a>>> {
+    let mut tokens = Vec::new();
+    let mut index = start;
+    let mut literal_index = literals.partition_point(|literal| literal.start < start);
+    while index < end {
+        if let Some(literal) = literals.get(literal_index) {
+            if literal.start == index && literal.end <= end {
+                tokens.push(Token::Str {
+                    text: literal.inner,
+                    template: literal.template,
+                });
+                index = literal.end;
+                literal_index += 1;
+                continue;
+            }
+        }
+        let ch = blanked[index..end].chars().next()?;
+        if ch.is_whitespace() {
+            index += ch.len_utf8();
+        } else if is_ident_char(ch) {
+            let ident_start = index;
+            while index < end {
+                let next = blanked[index..end].chars().next()?;
+                if !is_ident_char(next) {
+                    break;
+                }
+                index += next.len_utf8();
+            }
+            tokens.push(Token::Ident(&blanked[ident_start..index]));
+        } else {
+            tokens.push(Token::Punct(ch));
+            index += ch.len_utf8();
+        }
+    }
+    Some(tokens)
+}
+
+/// Reads the small, static subset of JavaScript class expressions the rule can
+/// evaluate: string literals, `+` concatenation, parentheses, arrays with
+/// `join`, and calls whose arguments join with a space (the `cn`/`clsx`
+/// convention). Anything else — identifiers, conditionals, spreads — is
+/// unknown, and an unknown expression is never reported (F-03).
+struct Parser<'a, 'b> {
+    tokens: &'b [Token<'a>],
+    index: usize,
+}
+
+impl<'a, 'b> Parser<'a, 'b> {
+    fn new(tokens: &'b [Token<'a>]) -> Self {
+        Parser { tokens, index: 0 }
+    }
+
+    /// The whole window, read as a comma-separated class list.
+    fn parse(mut self) -> Option<String> {
+        let value = self.list()?;
+        (self.index == self.tokens.len()).then_some(value)
+    }
+
+    fn list(&mut self) -> Option<String> {
+        let mut parts = vec![self.expression()?];
+        while self.eat(',') {
+            parts.push(self.expression()?);
+        }
+        Some(parts.join(" "))
+    }
+
+    fn expression(&mut self) -> Option<String> {
+        let mut value = self.primary()?;
+        while self.eat('+') {
+            value.push_str(&self.primary()?);
+        }
+        Some(value)
+    }
+
+    fn primary(&mut self) -> Option<String> {
+        match self.tokens.get(self.index)? {
+            Token::Str { text, template } => {
+                if *template && text.contains("${") {
+                    return None;
+                }
+                let value = (*text).to_string();
+                self.index += 1;
+                Some(value)
+            }
+            Token::Punct('(') => {
+                self.index += 1;
+                let value = self.list()?;
+                self.expect(')')?;
+                Some(value)
+            }
+            Token::Punct('[') => self.array(),
+            Token::Ident(_) => {
+                // A class-name helper call: its arguments are the class list.
+                self.index += 1;
+                self.expect('(')?;
+                let value = self.list()?;
+                self.expect(')')?;
+                Some(value)
+            }
+            _ => None,
+        }
+    }
+
+    fn array(&mut self) -> Option<String> {
+        self.expect('[')?;
+        let mut parts = Vec::new();
+        if !self.peek(']') {
+            parts.push(self.expression()?);
+            while self.eat(',') {
+                if self.peek(']') {
+                    break;
+                }
+                parts.push(self.expression()?);
+            }
+        }
+        self.expect(']')?;
+        let separator = if self.eat('.') {
+            match self.tokens.get(self.index)? {
+                Token::Ident("join") => {
+                    self.index += 1;
+                    self.expect('(')?;
+                    let separator = self.expression()?;
+                    self.expect(')')?;
+                    separator
+                }
+                _ => return None,
+            }
+        } else {
+            " ".to_string()
+        };
+        Some(parts.join(&separator))
+    }
+
+    fn peek(&self, punct: char) -> bool {
+        matches!(self.tokens.get(self.index), Some(Token::Punct(next)) if *next == punct)
+    }
+
+    fn eat(&mut self, punct: char) -> bool {
+        if self.peek(punct) {
+            self.index += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn expect(&mut self, punct: char) -> Option<()> {
+        self.eat(punct).then_some(())
+    }
+}
+
+fn is_ident_char(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '$'
+}
+
+fn skip_whitespace(text: &str, mut index: usize) -> usize {
+    while index < text.len() {
+        let Some(ch) = text[index..].chars().next() else {
+            break;
+        };
+        if !ch.is_whitespace() {
+            break;
+        }
+        index += ch.len_utf8();
+    }
+    index
+}
+
+fn skip_whitespace_back(text: &str, mut index: usize) -> usize {
+    while index > 0 {
+        let Some(ch) = text[..index].chars().next_back() else {
+            break;
+        };
+        if !ch.is_whitespace() {
+            break;
+        }
+        index -= ch.len_utf8();
+    }
+    index
 }
 
 fn has_focus_replacement(declarations: &str) -> bool {

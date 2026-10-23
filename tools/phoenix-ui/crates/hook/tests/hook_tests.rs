@@ -2887,3 +2887,54 @@ fn before_edit_allows_unrelated_edits_when_focus_examples_are_comments_only() {
     assert_eq!(code, 0);
     assert_eq!(out, "{\"permission\":\"allow\"}", "{out}");
 }
+
+#[test]
+fn before_edit_allows_edits_when_static_class_expressions_include_their_replacement() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    // Each removed outline is joined into one class list with a written ring.
+    // The edit gate reads the whole expression, not the first literal (F-03).
+    let file = t.write(
+        "src/App.tsx",
+        "export const a = <button className={(\"focus:outline-none \") + (\"focus-visible:ring-2\")}>A</button>;\n\
+         export const b = <a className={[\"focus:outline-none\", \"focus-visible:ring-2\"].join(\" \")}>B</a>;\n\
+         export const c = <input className={cn(\"focus:outline-none\", \"focus-visible:ring-2\")} />;\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": "<input", "new_string": "<input type=\"text\""}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert_eq!(out, "{\"permission\":\"allow\"}", "{out}");
+}
+
+#[test]
+fn before_edit_denies_an_edit_when_a_static_class_expression_has_no_replacement() {
+    let t = Tmp::new();
+    let cwd = t.path();
+    t.write("package.json", "{}");
+    // `cn(...)` is read as one class list, so a call with no replacement is
+    // still a removed focus outline (F-03).
+    let file = t.write(
+        "src/App.tsx",
+        "export const a = <input className={cn(\"focus:outline-none\", \"mt-2\")} />;\n",
+    );
+    let r = rt_with_pack(&cwd);
+    let (out, code) = hbe(
+        &r,
+        &cursor(
+            &cwd,
+            "Edit",
+            json!({"file_path": file, "old_string": "\"mt-2\"", "new_string": "\"mt-3\""}),
+        ),
+    );
+    assert_eq!(code, 0);
+    assert!(out.starts_with("{\"permission\":\"deny\""), "{out}");
+    assert!(out.contains("xgent/focus-outline-removed"), "{out}");
+}

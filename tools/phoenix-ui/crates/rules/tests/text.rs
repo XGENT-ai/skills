@@ -189,6 +189,15 @@ const c = <input className={`md:focus:outline-none`} />;
 }
 
 #[test]
+fn focus_outline_removed_reads_literals_inside_grouped_jsx() {
+    // A `return (…)` grouping parenthesis is not an argument list: the literal
+    // is still a complete class string, not an unreadable expression.
+    let content = "\
+export function Actions() {\n  return (\n    <button className=\"focus:outline-none\">Save</button>\n  );\n}\n";
+    assert_eq!(lines(&scan(content, ".tsx")), vec![3.0]);
+}
+
+#[test]
 fn focus_outline_removed_accepts_any_written_focus_replacement() {
     let content = "\
 const a = <button className=\"focus-visible:outline-none focus-visible:ring-2\">A</button>;
@@ -309,12 +318,59 @@ const dynamic_left = <button className={extra + \" focus:outline-none\"}>D</butt
 const parenthesized = <button className={\"focus:outline-none \" + (open ? \"ring-2\" : \"\")}>E</button>;
 const static_removal = <button className={\"focus:outline-none \" + \"\"}>F</button>;
 const template_dynamic = <button className={`focus:outline-none ${extra}`}>G</button>;
+const bracket_concat = <button className={(\"focus:outline-none \") + (\"focus-visible:ring-2\")}>H</button>;
+const array_join = <button className={[\"focus:outline-none\", \"focus-visible:ring-2\"].join(\" \")}>I</button>;
+const call_join = <button className={cn(\"focus:outline-none\", \"focus-visible:ring-2\")}>J</button>;
+const nested_join = <button className={cn([\"focus:outline-none\", \"focus-visible:ring-2\"].join(\" \"), \"text-sm\")}>K</button>;
+const bracket_missing = <button className={(\"focus:outline-none \") + (\"text-sm\")}>L</button>;
+const join_missing = <button className={[\"focus:outline-none\", \"mt-2\"].join(\" \")}>M</button>;
+const call_missing = <button className={cn(\"focus:outline-none\", \"mt-2\")}>N</button>;
+const call_dynamic_arg = <button className={cn(\"focus:outline-none\", extra)}>O</button>;
+const join_dynamic_element = <button className={[\"focus:outline-none\", ...rest].join(\" \")}>P</button>;
+const join_dynamic_separator = <button className={[\"focus:outline-none\", \"ring-2\"].join(sep)}>Q</button>;
 ";
     let findings = scan(content, ".tsx");
-    assert_eq!(lines(&findings), vec![1.0, 6.0], "{findings:#?}");
+    assert_eq!(
+        lines(&findings),
+        vec![1.0, 6.0, 12.0, 13.0, 14.0],
+        "{findings:#?}"
+    );
     assert_eq!(
         snippets(&findings),
-        vec!["focus:outline-none", "focus:outline-none"]
+        vec![
+            "focus:outline-none",
+            "focus:outline-none",
+            "focus:outline-none text-sm",
+            "focus:outline-none mt-2",
+            "focus:outline-none mt-2",
+        ]
+    );
+}
+
+#[test]
+fn focus_outline_removed_reads_priority_suffix_after_the_value() {
+    // `!important` is a declaration priority, not part of the value: the
+    // compact form removes the outline exactly like the spaced one (F-11).
+    let content = "\
+.a:focus{outline:none!important}
+.b:focus{outline:0!important}
+.c:focus{outline-width:0!important}
+.d:focus{outline-style:none!important}
+.e:focus{outline:none ! important}
+.f:focus{outline:0.5px solid black!important}
+.g:focus{outline-width:0.5px!important}
+.h:focus{outline:none!important;box-shadow:0 0 0 2px red}
+.i:focus{outline-color:red!important}
+";
+    let findings = scan(content, ".css");
+    assert_eq!(
+        lines(&findings),
+        vec![1.0, 2.0, 3.0, 4.0, 5.0],
+        "{findings:#?}"
+    );
+    assert_eq!(
+        snippets(&findings),
+        vec![".a:focus", ".b:focus", ".c:focus", ".d:focus", ".e:focus"]
     );
 }
 
@@ -373,6 +429,10 @@ fn transition_all_scans_only_css_positions_in_markup() {
   <!-- <div class=\"transition-all\">example</div> -->
   <h4>transition: all</h4>
   <p>Never write transition: all in prose.</p>
+  <pre><code>&lt;div style=\"transition: all .2s\"&gt;Example&lt;/div&gt;</code></pre>
+  <p title=\"a &gt; b\">Escaped angle</p>
+  <div title=\"a > b\" style=\"transition: all 0.2s ease\">Real attribute</div>
+  <script>const tpl = '<div style=\"transition: all\">';</script>
   <div style=\"transition: all 0.2s ease\">Animated</div>
   <div style='transition: all 0.2s ease'>Single-quoted</div>
   <div class=\"transition-all\">Tailwind</div>
@@ -383,13 +443,14 @@ fn transition_all_scans_only_css_positions_in_markup() {
         let findings = scan(content, ext);
         assert_eq!(
             lines(&findings),
-            vec![5.0, 12.0, 13.0, 14.0],
+            vec![5.0, 14.0, 16.0, 17.0, 18.0],
             "{ext}: {findings:#?}"
         );
         assert_eq!(
             snippets(&findings),
             vec![
                 ".card { transition: all 0.2s ease; }",
+                "<div title=\"a > b\" style=\"transition: all 0.2s ease\">Real attribute</div>",
                 "<div style=\"transition: all 0.2s ease\">Animated</div>",
                 "<div style='transition: all 0.2s ease'>Single-quoted</div>",
                 "<div class=\"transition-all\">Tailwind</div>",
