@@ -51,3 +51,5 @@
 - 3e3db19e-9909-4216-aa61-15b7d0104cb7 · [PHOENIX-HALLMARK R3 代码评审处置](3e3db19e-9909-4216-aa61-15b7d0104cb7.md)
 
 - b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d · [use-prompt-dsl 语言规范编写](b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d.md)
+
+- 4d3ffe78-c28e-46e0-82e0-e711996b68fa · [dev-plan 连续实施与验证节奏](4d3ffe78-c28e-46e0-82e0-e711996b68fa.md)
