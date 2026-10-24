@@ -2,6 +2,7 @@
 name: optimize-agents-md
 argument-hint: "<repo 路径> [目标、文件范围、仅诊断或已授权任务包]"
 description: "用于用户要求诊断、精简或优化仓库 AGENTS.md；不用于普通编码、初始化或全局规则修改。基于仓库事实和该仓任务提出、评测并落实指令改进。"
+when_to_use: "用户会说「AGENTS.md 太长了」「整理一下仓库规则」「这条指令还有没有用」时。"
 compatibility: "远端评测需要已安装的 agi-mode 执行工具、Python 3.12+、uv、SSH/Docker 与已授权的远端 Codex 登录；诊断可独立进行。"
 ---
 

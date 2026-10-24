@@ -1,6 +1,7 @@
 ---
 name: experience-capture
 description: "开发中遇到非显然失败、用户纠正或可自动化的重复操作时，顺手保存极短线索；不打断主任务、不检索取证，纯咨询和只读任务不落盘。深入挖掘留给 agi-mode 复盘。"
+when_to_use: "用户说「记住这个坑」「下次别再踩」，或失败一时说不清原因、纠正过一次还会再犯时。"
 ---
 
 # Experience Capture

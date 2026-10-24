@@ -1,6 +1,7 @@
 ---
 name: landing-page-conversion-audit
 description: Use for page conversion audits; skip pages with no traffic or upstream audience/offer problems. Review landing, sales, opt-in, product and checkout pages; rank fixes by revenue impact.
+when_to_use: 'Requests like "why is this page not converting", "audit our signup page", or "where are we losing people at checkout".'
 ---
 
 # Landing Page Conversion Audit

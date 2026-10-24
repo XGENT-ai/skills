@@ -1,6 +1,7 @@
 ---
 name: portal-external-app
 description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖 manifest、注册、鉴权、成员客户端与终端用户身份、/svc 路由、健康检查与一盒联调。'
+when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填」「/svc 路由不通」时。"
 ---
 
 # portal-external-app · 外部镜像服务类应用接入

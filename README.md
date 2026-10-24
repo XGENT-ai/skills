@@ -76,6 +76,8 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 
 以下按用途分组列出 `skills/` 中的 skill。点击名称查看使用条件与完整流程。
 
+`review-*`、`apply-*`，以及 `agi-mode`、`arena`、`reflect` 等入口设了 `disable-model-invocation`，只能由你显式调用：Claude Code 用 `/名称`，Codex 用 `$名称`；模型不会自行发起。其余 skill 仍按 `description` 自动匹配。
+
 ### 需求、计划与评审
 
 | Skill | 说明 |
@@ -177,7 +179,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | --- | --- |
 | [architect](skills/architect/SKILL.md) | 实现前先设计类型、签名与模块结构，并在开发过程中持续校准 |
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
+| [tdd](skills/tdd/SKILL.md) | 先用失败测试复现缺陷再改实现，适用于有明确廉价测试路径的 TDD 与回归测试 |
 | [create-verification-skill](skills/create-verification-skill/SKILL.md) | 按应用或场景创建、维护 verify-*，复用现有测试并验证真实入口与交接；不依赖编辑器，可供 agi-mode 复用 |
+| [mcp-release-qa](skills/mcp-release-qa/SKILL.md) | 发布前验证 MCP server：用真实协议会话对照源码与文档核能力，测失败路径并留下可复现证据 |
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |
 | [rust](skills/rust/SKILL.md) | 编写和评审 Rust 代码，处理所有权、错误、性能、测试及 Tokio 异步模式 |
 | [sql-optimization](skills/sql-optimization/SKILL.md) | 分析 SQL 执行计划，优化查询、索引、分页与批量操作 |
@@ -194,7 +198,10 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 诊断、精简或优化仓库 AGENTS.md；保留原则与授权，使用同仓任务远端评测，确认后按 CAS 采用 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
+| [figure-it-out](skills/figure-it-out/SKILL.md) | 任务没有匹配的既有 playbook 时设计可审计的工作流：阶段、实验与决策记录 |
+| [automate-me](skills/automate-me/SKILL.md) | 把个人偏好和工作习惯固化成专属 `-mode` skill，按引导生成并试跑 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
+| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 编写、改写、解释 Prompt DSL，或按明确要求执行；用目标、约束、检查和循环表达任务，普通开发请求不自动套用 |
 | [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
 | [experience-capture](skills/experience-capture/SKILL.md) | 开发中轻量收集踩坑、纠正及自动化线索，供用户随后发起复盘 |
 
@@ -233,11 +240,15 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |
 | [meeting-minutes](skills/meeting-minutes/SKILL.md) | 整理会议议题、决定、负责人、截止日期与后续行动，生成会议纪要 |
 | [pardon](skills/pardon/SKILL.md) | 补充必要上下文，用当前会话语言把上一条回答重新讲清楚 |
+| [how](skills/how/SKILL.md) | 用代码证据讲清模块如何工作、分层与归属；设计理由用 `why` |
+| [why](skills/why/SKILL.md) | 追查设计取舍、回归或事故背后的原因；运行时行为用 `how` |
+| [teach](skills/teach/SKILL.md) | 由一个具体改动或子系统切入，讲清是什么、怎么运转、为什么这样设计 |
 
 ### 设计与转化
 
 | Skill | 说明 |
 | --- | --- |
+| [ui-loop](skills/ui-loop/SKILL.md) | 按获奖级视觉标准设计或打磨页面，逐项自检、对标、修补并循环复验，直到所有检查维度无可见改进 |
 | [design-reference](skills/design-reference/SKILL.md) | 寻找视觉参考并形成有来源的 brief；可读 Phoenix context，已接受方向按授权保存原文和路径/hash 映射供恢复 |
 | [design-md](skills/design-md/SKILL.md) | 提炼和维护 DESIGN.md，保留规范并报告偏差；可读 Phoenix 原文/解析覆盖，写入仍按用户决定与证据 |
 | [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较交互方案并交付状态与验收条件；可读 Phoenix 产品/已接受方向，业务能力仍核实实际接口 |
@@ -256,12 +267,17 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 | [portal-logging](skills/portal-logging/SKILL.md) | 将应用日志与遥测接入门户，配置采集器、写入身份、日志流和字段口径 |
 | [xgent-image-push](skills/xgent-image-push/SKILL.md) | 构建并推送 App 镜像到私有 Harbor，预检链路、镜像架构、tag 与保留策略 |
 | [xgent-app-release](skills/xgent-app-release/SKILL.md) | 使用发布令牌提交前端产物、镜像和 manifest 变更，处理发布提案与发布故障 |
+| [use-llm-gateway](skills/use-llm-gateway/SKILL.md) | 为 App 接入 LLM Gateway 统一 `/v1` 调用面，迁移旧调用并排查凭证、幂等与媒体任务 |
+| [use-task-gateway](skills/use-task-gateway/SKILL.md) | App 接入 Task Gateway 跑异步任务，处理鉴权、幂等、进度与结果回收 |
+| [use-workflow-service](skills/use-workflow-service/SKILL.md) | 判断 workflow 与 Agent + Skill 的分工，并按 Portal 接入与编排 |
 
 ## 目录结构
 
 每个 skill 位于 `skills/<name>/` 目录下,包含一个带 `name` 与 `description` frontmatter 的 `SKILL.md`:
 
-`description` 用于加载前的技能选择,按「触发条件与关键排除条件 → 核心产出」组织。整条建议不超过 200 字符,中文尽量在 100 字符左右;前 100 字符应能独立表达适用边界。这是本仓库的编辑目标,不是所有 coding agent 的统一截断上限。
+`description` 用于加载前的技能选择,按「触发条件与关键排除条件 → 核心产出」组织。整条建议不超过 250 字符,中文不超过 200 字符并尽量在 100 字符左右;前 100 字符应能独立表达适用边界。这是本仓库的编辑目标,不是所有 coding agent 的统一截断上限。
+
+`when_to_use` 补充 `description` 没覆盖的同义说法、触发短语或示例请求,不重复正文条件;客户端把它拼在描述后参与选择,不读取该字段的客户端仍按 `description` 触发。
 
 容易混淆的限制要紧跟触发条件,例如「仅写/评审计划,不用于按计划实施」,不能放在长段落末尾或只留在正文。操作步骤、完整错误码清单、工具细节和重复的双语说明放入正文或 references;精简后检查前缀是否仍表达原意,不要直接机械截字。
 

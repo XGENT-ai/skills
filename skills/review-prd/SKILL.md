@@ -2,6 +2,7 @@
 name: review-prd
 argument-hint: "<PRD路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]"
 description: 用于评审既有 PRD 的合理性、产品质量与可验收性；不用于从零写 PRD、评审技术计划或代码 diff。核实代码现状、需求、体验、UAT 与分期，默认落盘报告。
+disable-model-invocation: true
 ---
 
 # review-prd · 基于代码事实的产品需求评审

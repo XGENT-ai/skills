@@ -1,6 +1,7 @@
 ---
 name: phoenix-ui
 description: 用于前端设计、重设计、局部优化与 live 交互；不用于后端任务、仅维护设计规范或独立 UI 验收。结合项目上下文提供设计命令和本地检测，npm 安装后使用。
+when_to_use: "用户会说「这个页面重新设计一下」「调一下这个组件样式」「边看浏览器边改」时。"
 internal: true
 license: Apache 2.0
 metadata:

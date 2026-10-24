@@ -1,6 +1,7 @@
 ---
 name: xgent-app-release
 description: '用于从 App 仓库发布或排查 XGENT 门户版本：前端 dist、后端镜像、manifest 或首次接入。通过 release-cli 与发布令牌提交提案，处理 CI、待审及发布后故障。'
+when_to_use: "用户会说「发个版」「提案卡在待审」「发布后出故障」时。"
 ---
 
 # xgent-app-release · App 版本自助发布

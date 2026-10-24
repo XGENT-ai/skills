@@ -1,6 +1,7 @@
 ---
 name: portal-logging
 description: '用于将 App 日志或遥测接入 XGENT 门户「日志与监控」，或排查写入、查询异常。覆盖采集器、写入凭据与 scope、流命名、日志字段及多行合并。'
+when_to_use: "用户会说「日志进不了门户」「门户里查不到日志」「日志被拆成很多行」时。"
 ---
 
 # portal-logging · 把 App 的日志接进「日志与监控」

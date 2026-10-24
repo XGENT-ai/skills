@@ -1,6 +1,7 @@
 ---
 name: portal-dev-setup
 description: '用于在 App 自己的仓库启动、重置或排查 XGENT 门户 Docker 一盒（one-box）本地联调；不需克隆或修改门户源码。处理拉镜像、注册、端口、健康检查和联调故障。'
+when_to_use: "用户会说「本地起一套门户」「one-box 起不来」「联调连不上门户」时。"
 ---
 
 # 门户一盒 · 在自己 repo 里起一个真实门户

@@ -1,6 +1,7 @@
 ---
 name: archify
 description: Use when diagramming architecture, workflow, sequence, data-flow, lifecycle, or converting Mermaid. Create validated, interactive diagrams as standalone HTML with image and video export.
+when_to_use: 'Requests like "draw the request flow", "turn this Mermaid into a diagram", or "export it as PNG or video".'
 license: MIT
 metadata:
   version: "2.17"

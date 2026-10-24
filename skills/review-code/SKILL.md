@@ -2,6 +2,7 @@
 name: review-code
 argument-hint: "[开发计划] [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [报告路径] [仅聊天]"
 description: 用于评审代码 diff、提交、分支差异或开发计划登记的提交及修复复审；不用于单独评审计划、全仓普查或直接修复。核对旧问题与新增回归，落盘报告并判定是否需修改。
+disable-model-invocation: true
 ---
 
 # review-code · 代码变更评审

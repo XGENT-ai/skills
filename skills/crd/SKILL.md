@@ -1,6 +1,7 @@
 ---
 name: crd
 description: 跨项目 CRD 提出方使用：起草或修订需求、整合接收方回复并续接 Q&A；接收方评估与答复用 crd-respond，非 Kubernetes CRD、代码评审或直接实施。维护 CRD 与往返记录。
+when_to_use: "用户会说「给 XX 项目提个需求」「这条需求要改一版」「对方回了，接着问」这类提出方请求时。"
 ---
 
 # crd · 提出方的跨项目协作需求文档

@@ -1,6 +1,7 @@
 ---
 name: create-verification-skill
 description: "为指定应用或场景创建、维护验证 skill 时使用；不用于只写测试计划、一次性验收或只读咨询。生成可按范围执行的 verify-*，验证真实入口并保存证据，可供 agi-mode 复用。"
+when_to_use: "用户会说「给这个应用做个验证 skill」「把验收命令固化成可复跑的验证」时。"
 ---
 
 # Create Verification Skill

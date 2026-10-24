@@ -1,6 +1,7 @@
 ---
 name: meeting-minutes
 description: 'Use when turning internal meetings, transcripts or notes into concise minutes with decisions, action owners, due dates and follow-ups.'
+when_to_use: 'Requests like "turn these notes into minutes" or "summarize the call with owners and due dates".'
 ---
 
 # Meeting Minutes Skill — Short Internal Meetings

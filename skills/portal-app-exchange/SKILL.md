@@ -1,6 +1,7 @@
 ---
 name: portal-app-exchange
 description: '用于 XGENT 门户跨 App 调用、OAuth Token Exchange 布线与排错。处理 exchangeTargets、交换白名单、consent、scope 交集和授权失败。'
+when_to_use: "用户会说「A 调 B 拿不到 token」「交换被拒绝」「scope 对不上」时。"
 ---
 
 # portal-app-exchange · 跨应用调用（令牌交换）布线与排错

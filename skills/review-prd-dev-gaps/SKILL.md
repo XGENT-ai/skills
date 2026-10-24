@@ -2,6 +2,7 @@
 name: review-prd-dev-gaps
 argument-hint: "<已完成开发计划...> [PRD] [上轮报告] [复审/完整核查] [G-ID/范围] [仅报告] [报告路径]"
 description: 用于开发完成后的 PRD 覆盖核查；不用于 PRD 质量、计划设计或单次 diff 评审。对照已完成计划、记录和实现，区分遗漏与变更，交互裁定差异，必要时生成 gaps plan。
+disable-model-invocation: true
 ---
 
 # review-prd-dev-gaps · PRD 与开发交付差异核查

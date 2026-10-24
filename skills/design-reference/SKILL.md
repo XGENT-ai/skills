@@ -1,6 +1,7 @@
 ---
 name: design-reference
 description: 用于寻找页面或组件的视觉参考，或把网站、截图转成设计 brief；交互模式选型用 ui-pattern-research，既有规范提取用 design-md。输出有来源、适配当前产品的设计方向。
+when_to_use: "用户会说「找几个视觉参考」「看看这个站怎么做的」「把这张截图转成设计方向」时。"
 ---
 
 # design-reference · 从参考到设计方向

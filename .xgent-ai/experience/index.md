@@ -49,3 +49,5 @@
 
 - 78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f · [SDLC 长任务收敛与真实交付](78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f.md)
 - 3e3db19e-9909-4216-aa61-15b7d0104cb7 · [PHOENIX-HALLMARK R3 代码评审处置](3e3db19e-9909-4216-aa61-15b7d0104cb7.md)
+
+- b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d · [use-prompt-dsl 语言规范编写](b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d.md)

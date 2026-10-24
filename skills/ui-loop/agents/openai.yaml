@@ -1,0 +1,3 @@
+interface:
+  display_name: "UI Loop"
+  short_description: "以获奖作品为基准，循环检查并打磨页面的视觉、交互与响应式表现"

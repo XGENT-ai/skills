@@ -1,6 +1,7 @@
 ---
 name: xgent-image-push
 description: 用于 App 发版时构建、推送镜像到私有 Harbor，配置 CI 推送或排查 docker push 失败。仓库地址从本地配置读取；推送前检查链路、架构、tag 与保留策略。
+when_to_use: "用户会说「推个镜像」「docker push 被拒」「镜像架构不对」时。"
 ---
 
 # 推镜像到私有仓库

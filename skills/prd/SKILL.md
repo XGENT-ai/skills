@@ -2,6 +2,7 @@
 name: prd
 argument-hint: "<需求描述或PRD> [范围] [输出路径] [仅文档/录入SPMS]"
 description: 用于撰写、修订、拆分或录入产品需求；仅评审用 review-prd，技术方案用 dev-plan，测试用例用 test-plan。产出目标、FR/NFR、场景与 UAT 条件，可录入 SPMS。
+when_to_use: "用户会说「写个 PRD」「补一下验收标准」「把需求录到 SPMS」时。"
 ---
 
 # prd · 面向 SPMS 生命周期的需求撰写

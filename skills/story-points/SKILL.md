@@ -2,6 +2,7 @@
 name: story-points
 argument-hint: "<需求/工单key...> [开发计划/技术影响说明] [代码基线] [只估算/写回] [Sprint]"
 description: 用于给 SPMS 需求或工单估故事点、复核 Sprint 容量。按客观因子输出可复现的斐波那契点数与依据；仅在要求时写回 plannedPoints。
+when_to_use: "用户会说「估个点」「这期能做多少」「复核下 Sprint 容量」时。"
 ---
 
 # story-points · 可复现的故事点估算

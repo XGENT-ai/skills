@@ -2,6 +2,7 @@
 name: crd-respond
 argument-hint: "<接收方收到的 CRD 路径/链接/内容> [本方项目/仓库] [需求ID/范围] [仅评估/仅答复] [计划输出路径]"
 description: 跨项目 CRD 接收方使用：评估需求与长期方案、答复或续接澄清；提出方起草及整合回复用 crd，非 Kubernetes CRD 或直接实施。基于最新代码在原文末答复，需改代码用 dev-plan。
+when_to_use: "用户会说「评估一下对方这个需求」「在 CRD 末尾回一段」「继续答复他们的追问」这类接收方请求时。"
 ---
 
 # crd-respond · 接收方评估并答复 CRD
