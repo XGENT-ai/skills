@@ -47,22 +47,22 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-25T20:09:31+08:00
+- 最近更新：2026-10-25T20:10:36+08:00
 - 当前进度：3/4 个里程碑完成
 - 当前状态：实施中；R16正式58passed/4failed已全封存。Source17官方build/npm/pack及原14项目安装通过；Claude四项回归和Codex小门待原负载门启动，正冻结源码以并行远端CI
 - 最近完成：M2 · 准确浏览器失败状态与回执
 - 下一步：原负载门回落后执行Claude四项回归及独立Codex小门；冻结源码并行CI，按原门完成全量宿主、同包消费与归档聚合
 - 当前阻塞：尚未证明Source17消除Cl018延期交接、Cl026/027源码条件/命令身份、027宿主执行约束及Cl031审批分支遗漏；M4继续进行中
-- 代码基线：HEAD08c3703；Source17仅SKILL/docs集中补充既有规则，defaults与运行时未改；R16失败整轮及旧CI原件保留，不作为新包通过证据
+- 代码基线：Source17冻结1752533；仅SKILL/docs集中补充既有规则，defaults与运行时未改；开发包仍保留build时08c3703元数据，R16失败整轮及旧CI不作新包通过证据
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-25T20:09:31+08:00 | R16正式58passed/4failed已封存；Source17构建/metadata/原14初装过，宿主待原负载门；CI并行准备 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779 |
-| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779 |
-| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779 |
+| M4 | 进行中 | 2026-10-25T20:10:36+08:00 | R16正式58passed/4failed已封存；Source17构建/metadata/原14初装过，宿主待原负载门；CI并行准备 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533 |
+| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533 |
+| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533 |
 
 ## 0. 需求、范围与决策
 
@@ -305,7 +305,7 @@ V-7沿用既有聚合器的完整ZIP身份验证：`ArchiveEvidence`先核对本
 | M1 | 六区有效时间线的原生兼容 | 现有固定参考与§1.1已核路线 | §1.2时间模块、固定来源/校验/许可、oracle及format/timeline反例，照Named/Fixed与nativeText范式；真实入口中六区片段可并行准备，不提前跑收口 | V-1；回写「实施进度」 |
 | M2 | 准确浏览器失败状态与回执 | 当前Evidence/OutputSlot契约，不依赖M1完成 | §5.2的browser/evidence/transaction及真实FS/协议/CLI回归；真实入口12组片段随此完成，共享脚本由主实施者集成 | V-2；回写「实施进度」 |
 | M3 | ERD事实澄清与维护测试同步 | 现有SKILL事实原则；G-03原件与G-06失败已固定 | §6的SKILL/authoring-defaults/docs与erd-facts，并按§5.1同步Timeline时区说明；修reader-layout过期断言、纳入native runner；不改Reader产品代码，与M1/M2仅在构建集成时汇合 | V-3；回写「实施进度」 |
-| M4 | 进行中 | 2026-10-25T20:09:31+08:00 | R16正式58passed/4failed已封存；Source17构建/metadata/原14初装过，宿主待原负载门；CI并行准备 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M4 | 进行中 | 2026-10-25T20:10:36+08:00 | R16正式58passed/4failed已封存；Source17构建/metadata/原14初装过，宿主待原负载门；CI并行准备 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
 
 提交点：M4（全部里程碑完成后提交一次，并按顶部协议回填各完成记录SHA，再单独提交计划SHA回填）。为取得同SHA四平台制品，可按原计划候选收口先提交冻结候选源码，但所有终验未过前不记M4完成。若提前冻结提交，其SHA回填M1–M3行；M4最终提交覆盖收口验收记录及后续必要修复/生成物，SHA回填M4行。后续修复若影响M1–M3，按顶部协议在对应行追加修复SHA；源码/bundle改变按§9.2作废并重取受影响证据。不提前冻结提交时，最终提交SHA回填M1–M4各行。各次SHA回填均按顶部协议单独提交，回填提交不回填自己的SHA。
 
