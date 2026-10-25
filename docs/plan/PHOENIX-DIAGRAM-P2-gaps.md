@@ -47,22 +47,22 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-26T01:16:16+08:00
+- 最近更新：2026-10-26T01:21:46+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：实施中；Source19集中最小修订、官方build/npm/pack和实包/静态Root核验均0；额外两题plan/install0、audit待原资源门，原14初装同样等待。准备冻结候选并行CI，尚无Source19作者/正式62/新CI通过
+- 当前状态：实施中；Source19已按候选例外冻结21eb0b3，build/npm/pack与实包/静态核验均0；额外两题初装与Root实体ready过，001作者获go在原资源门等待，原十四初装已进执行；尚无新宿主通过或新CI通过
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：冻结当前已核候选并行远端CI，完成两组初装/Root实体ready后，以原模型复验两仓库及原十四门；全过后正式62/同包消费/归档聚合
+- 下一步：推送冻结及本次SHA回填，锁定新远端候选CI并行；完成两仓库和原十四小门，再正式62/同包消费/归档聚合
 - 当前阻塞：本机load高于原启动门，Source19初装审计与作者证据尚未取得；十四门/正式62/同包CI未完成，Source18失败保持、Deepseek选择未答，M4未完成
-- 代码基线：dirty@39b2bc7的Source19仅SKILL/docs及官方生成物；defaults不变，实际build sourceInputa45958a2/binary59d45937不变、新bundle18881489。Source18 bundle35fcecfe及失败、Source17/CI8均保留，不拼作Source19通过
+- 代码基线：Source19冻结21eb0b3e453bf47054a084051cda1489ece90d92；当前仅计划SHA回填与用户原有工作树改动。dev包VERSION仍实际sourceCommit39b2bc7，sourceInputa45958a2/engine59d45937、新bundle18881489；Source18/Source17/CI8保留但不拼新通过
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-26T01:16:16+08:00 | Source19 build/npm/pack与实包/静态Root核验0；两组初装待原资源门，准备冻结并行CI，无新作者/正式62通过；M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533 |
-| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533 |
-| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533 |
+| M4 | 进行中 | 2026-10-26T01:21:46+08:00 | Source19已冻结21eb0b3，build/npm/pack与Root核验0；额外两题ready、001获go待原门，原十四初装中，push/新CI待执行；M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3 |
+| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
+| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
 
 ## 0. 需求、范围与决策
 
