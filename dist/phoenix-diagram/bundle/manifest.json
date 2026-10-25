@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 13706,
-      "sha256": "f7ca6510649c6157d8f0ded93563f77eab780534e6968d2be5f53c0fe96307a7",
+      "size": 14645,
+      "sha256": "2a472b88104d38c5ef0fa23b2435e94ac8432f946a38fbb8eee4c9a82b2bab56",
       "mode": 420
     },
     {
@@ -71,8 +71,8 @@
     },
     {
       "path": "references/authoring-defaults.md",
-      "size": 11377,
-      "sha256": "ca7ff504eaac10f17e05f81cbb26a13574807d59801b1394e8e97f6d2233ddac",
+      "size": 12333,
+      "sha256": "c632d1c8946ad346bb49f0be3c893e4095d2cf11e84ec4743accf6b5f65f08c1",
       "mode": 420
     },
     {

@@ -1384,3 +1384,285 @@ fn backward_main_path_steps_get_the_fewest_column_changes() {
             .all(|diagnostic| diagnostic.code != "input/main-path"));
     }
 }
+
+fn approval_fixture(legend_case: bool) -> Value {
+    // Sealed R9 workflow snapshot 2 and its independently measured placement
+    // with enough target-port capacity. Neither fixture is an expected layout.
+    serde_json::from_str(if legend_case {
+        include_str!("fixtures/workflow/approval-legend.workflow.json")
+    } else {
+        include_str!("fixtures/workflow/approval-capacity.workflow.json")
+    })
+    .unwrap()
+}
+
+fn apply_optional_placement(document: &Value, repair: &Value) -> Value {
+    assert_eq!(repair["scope"], "complete-workflow-compile");
+    let changes = repair["changes"].as_array().unwrap();
+    assert!(!changes.is_empty());
+    let mut candidate = document.clone();
+    for change in changes {
+        let path = change["path"].as_str().expect("Repair change needs a path");
+        let op = change["op"].as_str().expect("Repair change needs an op");
+        let (parent, field) = path.rsplit_once('/').expect("Node-field repair path");
+        assert!(parent.starts_with("/nodes/"), "{op} {path}");
+        assert!(
+            ["col", "yOffset", "height"].contains(&field),
+            "Unexpected optional geometry change: {op} {path}"
+        );
+        assert_eq!(
+            op,
+            if document.pointer(path).is_some() {
+                "replace"
+            } else {
+                "add"
+            },
+            "Repair op must match the existing placement interface: {op} {path}"
+        );
+        if field == "height" {
+            assert!(
+                document.pointer(path).is_none(),
+                "Do not overwrite height: {op} {path}"
+            );
+        }
+        candidate
+            .pointer_mut(parent)
+            .unwrap()
+            .as_object_mut()
+            .unwrap()
+            .insert(field.into(), change["value"].clone());
+    }
+    let mut facts = candidate.clone();
+    for change in changes {
+        let path = change["path"].as_str().unwrap();
+        let (parent, field) = path.rsplit_once('/').unwrap();
+        let node = facts.pointer_mut(parent).unwrap().as_object_mut().unwrap();
+        match document.pointer(path) {
+            Some(value) => {
+                node.insert(field.into(), value.clone());
+            }
+            None => {
+                node.remove(field);
+            }
+        }
+    }
+    assert_eq!(
+        facts, *document,
+        "Only advertised optional geometry changes"
+    );
+    candidate
+}
+
+fn assert_approval_facts(document: &Value, scene: &phoenix_diagram::scene::CompiledDiagram) {
+    assert_eq!(scene.quality, Quality::Showcase);
+    assert_eq!(scene.meta, document["meta"]);
+    assert_eq!(
+        scene.nodes.len(),
+        document["nodes"].as_array().unwrap().len()
+    );
+    assert_eq!(
+        scene.relations.len(),
+        document["edges"].as_array().unwrap().len()
+    );
+    for authored in scene
+        .nodes
+        .iter()
+        .map(|node| &node.authored)
+        .chain(scene.relations.iter().map(|edge| &edge.authored))
+        .chain(scene.containers.iter().map(|lane| &lane.authored))
+        .chain(scene.cards.iter().map(|card| &card.authored))
+    {
+        assert_eq!(
+            document.pointer(&authored.source_path),
+            Some(&authored.facts)
+        );
+    }
+    let facts = serde_json::to_value(&scene.facts).unwrap();
+    assert_eq!(facts["main_path"], document["mainPath"]);
+    assert_eq!(facts["semantic_checks"], document["semanticChecks"]);
+    // Observed in the original height64 DTO: reconfirm is 10px, the other
+    // primary labels are 11px, and sublabels are 8px. These are this fixture's
+    // unchanged text sizes, not a general minimum for workflow labels.
+    for node in &scene.nodes {
+        for text in &node.text {
+            if text.source_path.ends_with("/label") {
+                let expected = if node.authored.id == "reconfirm" {
+                    10.0
+                } else {
+                    11.0
+                };
+                assert_eq!(text.font_size, expected, "{}", text.source_path);
+            } else if text.source_path.ends_with("/sublabel") {
+                assert_eq!(text.font_size, 8.0, "{}", text.source_path);
+            }
+        }
+    }
+}
+
+#[test]
+fn optional_placement_advice_resolves_target_capacity_without_changing_approval_facts() {
+    let document = approval_fixture(false);
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let advice = diagnostics
+        .iter()
+        .find(|diagnostic| {
+            diagnostic.evidence["verifiedRepair"]["kind"] == "optional-node-placement"
+        })
+        .expect("The failed workflow needs an optional complete, compilable repair");
+    assert!(!advice.supported_fixes.is_empty());
+    let repair = &advice.evidence["verifiedRepair"];
+    let candidate = apply_optional_placement(&document, repair);
+    let scene = compile_document(&candidate, InputContract::PhoenixV1)
+        .expect("Apply every advertised change, then compile the complete workflow");
+    assert_approval_facts(&candidate, &scene);
+}
+
+#[test]
+fn automatic_approval_legend_clears_the_rendered_withdrawal_route() {
+    let document = approval_fixture(true);
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        quality: Some(Quality::Showcase),
+        ..Default::default()
+    };
+    let bytes = serde_json::to_vec(&document).unwrap();
+    let input = parse_input(&bytes, DiagramType::Workflow, &options).unwrap();
+    // Match delivery::prepare, including the shared sigil-label clearance.
+    let scene = phoenix_diagram::layout::compile(&input, &options).unwrap();
+    assert_eq!(input.document, document);
+    assert_eq!(input.source_bytes, bytes);
+    assert_approval_facts(&document, &scene);
+    assert_eq!(scene.reader_fit, "width-first");
+    let html = phoenix_diagram::render::render(
+        &scene,
+        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let checked = phoenix_diagram::check::check_html(&html, Quality::Showcase);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+    assert_eq!(checked.composition["status"], "pass");
+    assert!(checked.checks.iter().all(|check| check.status == "pass"));
+}
+
+#[test]
+fn optional_capacity_advice_does_not_overwrite_an_explicit_target_height() {
+    let mut document = approval_fixture(false);
+    // State the old effective height explicitly: it is now an authored pin.
+    document["nodes"][8]["height"] = 52.into();
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic.severity == diagnostic::Severity::Error
+            && diagnostic.code.starts_with("composition/")
+    }));
+    for diagnostic in &diagnostics {
+        if let Some(changes) = diagnostic.evidence["verifiedRepair"]["changes"].as_array() {
+            for change in changes {
+                assert_ne!(
+                    change["path"], "/nodes/8/height",
+                    "An optional repair must retain the supplied target height: {change}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
+    for (name, contract, source_contract) in [
+        ("v2-simple", InputContract::PhoenixV1, "phoenix-v1"),
+        ("v2-simple", InputContract::Legacy217, "legacy-2.17"),
+        ("v1-simple", InputContract::PhoenixV1, "phoenix-v1"),
+    ] {
+        let document = fixture(name, source_contract);
+        let scene = compile_document(&document, contract).unwrap();
+        let html = phoenix_diagram::render::render(
+            &scene,
+            &phoenix_diagram::render::EmbeddedAssets::builtin(),
+        )
+        .unwrap();
+        let checked = phoenix_diagram::check::check_html(&html, scene.quality);
+        assert_eq!(
+            checked
+                .checks
+                .iter()
+                .find(|check| check.name == "legend_clearance")
+                .unwrap()
+                .status,
+            "pass",
+            "{source_contract}/{name}: {:?}",
+            checked.diagnostics
+        );
+
+        // An explicit version of the already selected side pair is a public
+        // fixed-route control. Compare the entire scene, removing only the
+        // pin metadata that differs between the two input documents.
+        let mut pinned = document.clone();
+        pinned["edges"][0]["fromSide"] = "right".into();
+        pinned["edges"][0]["toSide"] = "left".into();
+        let mut fixed = compile_document(&pinned, contract).unwrap();
+        assert_eq!(fixed.relations[0].authored.facts, pinned["edges"][0]);
+        fixed.relations[0].authored.facts = document["edges"][0].clone();
+        fixed.relations[0]
+            .authored
+            .geometry_provenance
+            .retain(|path| !["/edges/0/fromSide", "/edges/0/toSide"].contains(&path.as_str()));
+        assert_eq!(scene, fixed, "{source_contract}/{name}: clear full scene");
+
+        let mut framed = document.clone();
+        framed["meta"]["viewBox"] =
+            serde_json::json!([scene.view_box.width, scene.view_box.height]);
+        let mut fixed = compile_document(&framed, contract).unwrap();
+        assert_eq!(fixed.meta["viewBox"], framed["meta"]["viewBox"]);
+        fixed.meta.as_object_mut().unwrap().remove("viewBox");
+        let title = fixed
+            .legends
+            .iter_mut()
+            .find(|legend| legend.authored.source_path == "/meta")
+            .expect("The source fixture's legend title retains its meta facts");
+        assert_eq!(title.authored.facts["viewBox"], framed["meta"]["viewBox"]);
+        // The title copies its /meta source facts, including the same pin.
+        // Normalize only that duplicate; retain every geometry/text field.
+        title
+            .authored
+            .facts
+            .as_object_mut()
+            .unwrap()
+            .remove("viewBox");
+        assert_eq!(scene, fixed, "{source_contract}/{name}: fixed full scene");
+    }
+}
+
+#[test]
+fn a_wrapped_automatic_legend_can_grow_the_canvas_without_changing_contain_policy() {
+    let document = fixture("v2-simple", "phoenix-v1");
+    let baseline = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    // The frozen source case uses contain. Longer legend text exercises real
+    // automatic canvas growth, not an assignment to the readerFit field.
+    assert_eq!(baseline.reader_fit, "contain");
+    let mut wrapped = document.clone();
+    wrapped["meta"]["legend"] = serde_json::json!({
+        "mode": "auto",
+        "entries": {
+            "frontend": {"label": "前".repeat(50)},
+            "backend": {"label": "后".repeat(50)}
+        }
+    });
+    let expanded = compile_document(&wrapped, InputContract::PhoenixV1).unwrap();
+    assert!(expanded.view_box.height > baseline.view_box.height);
+    assert_eq!(expanded.reader_fit, baseline.reader_fit);
+    assert_eq!(
+        expanded.nodes, baseline.nodes,
+        "Node geometry and fonts stay intact"
+    );
+    assert_eq!(expanded.relations, baseline.relations);
+    assert_eq!(expanded.containers, baseline.containers);
+    assert_eq!(expanded.facts, baseline.facts);
+    assert_eq!(expanded.quality, baseline.quality);
+    let html = phoenix_diagram::render::render(
+        &expanded,
+        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let checked = phoenix_diagram::check::check_html(&html, expanded.quality);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+}

@@ -1186,6 +1186,118 @@ fn measure_containers(
     (containers, obstacles)
 }
 
+// Match the rendered-text envelope used by check.rs legend clearance. The
+// legend title's SVG text can start above its measured Card bounds.
+fn rendered_text_bounds(input: &DiagramInput, text: &Text) -> Rect {
+    let width = (units(input, &text.content) * text.font_size * 0.62).max(text.font_size);
+    let x = text.position.x
+        - match text.anchor.as_str() {
+            "middle" => width / 2.0,
+            "end" => width,
+            _ => 0.0,
+        };
+    Rect {
+        x,
+        y: text.position.y - text.font_size,
+        width,
+        height: text.font_size * 1.25,
+    }
+}
+
+// Only derived legends move. Authored geometry and already-clear layouts
+// remain unchanged; finalize() subsequently includes the new legend band.
+pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut CompiledDiagram) {
+    if input.input_contract != InputContract::PhoenixV1
+        || scene.schema_version != 2
+        || absolute(&input.document)
+        || !route_pin_removals(&input.document).is_empty()
+        || scene.legends.is_empty()
+    {
+        return;
+    }
+    let mut segments = Vec::new();
+    let mut labels = Vec::new();
+    for relation in &scene.relations {
+        let path = crate::geometry::workflow_v2_path(&relation.points);
+        let visible = crate::check::path::analyze_svg_path(&path)
+            .expect("Finite workflow geometry generates a supported SVG path");
+        for part in visible.subpaths {
+            segments.extend(part.points.windows(2).map(|pair| (pair[0], pair[1])));
+        }
+        if let Some(plate) = relation.label_plate {
+            labels.push(plate);
+        }
+        labels.extend(
+            relation
+                .text
+                .iter()
+                .map(|text| rendered_text_bounds(input, text)),
+        );
+    }
+    let reserved = scene
+        .legends
+        .iter()
+        .map(|legend| legend.bounds)
+        .collect::<Vec<_>>();
+    let mut boxes = Vec::new();
+    for legend in &scene.legends {
+        boxes.extend(
+            legend
+                .text
+                .iter()
+                .map(|text| rendered_text_bounds(input, text)),
+        );
+        if legend.authored.kind != "legend-title" {
+            // The Workflow glyph emitted by render::write_legends.
+            let baseline = legend
+                .text
+                .first()
+                .map_or(legend.bounds.y + 10.0, |text| text.position.y);
+            boxes.push(Rect {
+                x: legend.bounds.x,
+                y: baseline - 8.0,
+                width: 14.0,
+                height: 9.0,
+            });
+        }
+    }
+    let blocked = reserved.iter().any(|legend| {
+        segments
+            .iter()
+            .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 0.0))
+            || labels
+                .iter()
+                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+    }) || boxes.iter().any(|legend| {
+        segments
+            .iter()
+            .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 2.0))
+            || labels
+                .iter()
+                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+    });
+    if !blocked {
+        return;
+    }
+    let bottom = segments
+        .iter()
+        .flat_map(|(a, b)| [a.y, b.y])
+        .chain(labels.iter().map(|label| label.y + label.height))
+        .fold(f64::NEG_INFINITY, f64::max);
+    let top = boxes
+        .iter()
+        .chain(&reserved)
+        .map(|legend| legend.y)
+        .fold(f64::INFINITY, f64::min);
+    let shift = (bottom + 8.0 - top).max(0.0).ceil();
+    for legend in &mut scene.legends {
+        legend.bounds.y += shift;
+        for text in &mut legend.text {
+            text.position.y += shift;
+        }
+    }
+}
+
 pub(super) fn finalize(
     input: &DiagramInput,
     measured: &Measurement,

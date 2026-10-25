@@ -797,6 +797,7 @@ fn compile_plan(
         diagnostics: Vec::new(),
     };
     measure::clear_group_titles(input, &measured, &mut scene);
+    measure::clear_automatic_legends(input, &mut scene);
     validation::validate(input, &measured, &mut scene)?;
     measure::finalize(input, &measured, &mut scene)?;
     measure::validate_readable_text(input, &mut scene)?;
@@ -1304,20 +1305,124 @@ fn removal_combinations(values: &[Value], size: usize) -> Vec<Vec<Value>> {
     output
 }
 
-fn candidate_passes(input: &DiagramInput, options: &CompileOptions, candidate: &Value) -> bool {
+fn compile_candidate(
+    input: &DiagramInput,
+    options: &CompileOptions,
+    candidate: &Value,
+) -> Result<CompiledDiagram, Diagnostics> {
     let candidate_options = CompileOptions {
         input_contract: Some(input.input_contract),
         quality: Some(input.quality),
         ..options.clone()
     };
-    let Ok(candidate_input) = crate::input::parse_input(
+    let candidate_input = crate::input::parse_input(
         &serde_json::to_vec(candidate).expect("JSON proposal"),
         DiagramType::Workflow,
         &candidate_options,
-    ) else {
-        return false;
-    };
-    compile_internal(&candidate_input, &candidate_options).is_ok()
+    )?;
+    compile_internal(&candidate_input, &candidate_options)
+}
+
+fn candidate_passes(input: &DiagramInput, options: &CompileOptions, candidate: &Value) -> bool {
+    compile_candidate(input, options, candidate).is_ok()
+}
+
+// One optional fallback for a placement proposal whose only remaining errors
+// are vertical-side arrowhead capacity. A supplied height is never replaced.
+fn optional_target_heights(document: &Value, diagnostics: &Diagnostics) -> Option<Vec<Value>> {
+    let errors = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.severity == crate::diagnostic::Severity::Error)
+        .collect::<Vec<_>>();
+    if errors.is_empty()
+        || errors
+            .iter()
+            .any(|diagnostic| diagnostic.code != "composition/arrowhead-collision")
+    {
+        return None;
+    }
+    let scene =
+        serde_json::from_value::<CompiledDiagram>(errors[0].evidence.get("measuredScene")?.clone())
+            .ok()?;
+    let mut heights = std::collections::BTreeMap::<usize, f64>::new();
+    for diagnostic in errors {
+        let other = diagnostic
+            .evidence
+            .pointer("/otherRelationship/index")?
+            .as_u64()?;
+        let other_path = format!("/edges/{other}");
+        let left = scene
+            .relations
+            .iter()
+            .find(|relation| relation.authored.source_path == diagnostic.subject.path)?;
+        let right = scene
+            .relations
+            .iter()
+            .find(|relation| relation.authored.source_path == other_path)?;
+        if left.to != right.to {
+            return None;
+        }
+        let target = scene
+            .nodes
+            .iter()
+            .find(|node| node.authored.id == left.to)?;
+        let index = array(document, "nodes")
+            .iter()
+            .position(|node| string(node, "id") == left.to)?;
+        if document["nodes"][index].get("height").is_some() {
+            return None;
+        }
+        let a = left.points.last()?;
+        let b = right.points.last()?;
+        let vertical_side = (a.x - b.x).abs() < 0.0001
+            && [
+                (a.x - target.bounds.x).abs(),
+                (a.x - target.bounds.x - target.bounds.width).abs(),
+            ]
+            .iter()
+            .any(|distance| *distance < 0.0001);
+        let distance = number(&diagnostic.evidence, "distancePx", 0.0);
+        let minimum = number(&diagnostic.evidence, "minimumPx", 0.0);
+        if !vertical_side || distance <= 0.0 || minimum <= distance || target.bounds.height <= 32.0
+        {
+            return None;
+        }
+        // routing::port_spread reserves 16px at either end of the side.
+        let required =
+            ((32.0 + (target.bounds.height - 32.0) * minimum / distance) / 4.0).ceil() * 4.0;
+        if !required.is_finite() || required <= target.bounds.height {
+            return None;
+        }
+        heights
+            .entry(index)
+            .and_modify(|height| *height = height.max(required))
+            .or_insert(required);
+    }
+    Some(heights.into_iter().map(|(index, height)| {
+        json!({"op":"add","path":format!("/nodes/{index}/height"),"value":height})
+    }).collect())
+}
+
+fn verified_placement_repair(input: &DiagramInput, options: &CompileOptions) -> Option<Vec<Value>> {
+    let (mut proposed, mut changes) = placement::propose(&input.document)?;
+    if let Err(diagnostics) = compile_candidate(input, options, &proposed) {
+        if !route_pin_removals(&proposed).is_empty() {
+            return None;
+        }
+        let heights = optional_target_heights(&proposed, &diagnostics)?;
+        for change in &heights {
+            let (parent, field) = change["path"].as_str()?.rsplit_once('/')?;
+            proposed
+                .pointer_mut(parent)?
+                .as_object_mut()?
+                .insert(field.to_owned(), change["value"].clone());
+        }
+        if !candidate_passes(input, options, &proposed) {
+            return None;
+        }
+        changes.extend(heights);
+    }
+    Some(changes)
 }
 
 fn verify_composition_advice(
@@ -1401,9 +1506,16 @@ fn verify_composition_advice(
     {
         return;
     }
-    if let Some((proposed, changes)) = placement::propose(&input.document) {
-        if candidate_passes(input, options, &proposed) {
-            diagnostics[first].evidence["verifiedRepair"] = json!({"scope":"complete-workflow-compile","kind":"optional-node-placement","changes":changes});
+    if let Some(changes) = verified_placement_repair(input, options) {
+        let heights = changes.iter().any(|change| {
+            change["path"]
+                .as_str()
+                .is_some_and(|path| path.ends_with("/height"))
+        });
+        diagnostics[first].evidence["verifiedRepair"] = json!({"scope":"complete-workflow-compile","kind":"optional-node-placement","changes":changes});
+        if heights {
+            diagnostics[first].supported_fixes.insert(0,"If node columns, row offsets and previously unspecified heights are flexible, apply the complete optional-node-placement changes in evidence.verifiedRepair; every node, relation, lane, condition and mainPath is preserved and the complete workflow then passes native compilation".into());
+        } else {
             diagnostics[first].supported_fixes.insert(0,"If node columns and row offsets are flexible, apply the complete optional-node-placement changes in evidence.verifiedRepair; every authored node, relation, lane, condition and mainPath is preserved and the complete workflow then passes native compilation".into());
         }
     }
