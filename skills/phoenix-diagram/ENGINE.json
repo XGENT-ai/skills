@@ -4,12 +4,12 @@
   "tool": "phoenix-diagram",
   "toolVersion": "0.2.0",
   "npmPackageVersion": "0.7.4",
-  "sourceCommit": "a05f137f87da27fddee4b308e0b25b4de9a384a2",
+  "sourceCommit": "08c37034ba3b3b24ce4a1e994045d6dae540c0c9",
   "sourceInputSha256": "a45958a28c32f0a1968294baf9c3e6bb94e2bb59b38fcf57f35b0565056c11cf",
   "inputContractSchema": 1,
   "receiptSchema": 1,
   "viewerRevision": "phoenix-v2",
-  "bundleSha256": "e3cef358e246ddce7cd82827b6a639d4f4a6e9e9f696264c0f6e33ca8e32dca1",
+  "bundleSha256": "db236e9ebb371e43836a87bd1c274df09f8f26dc73023a3dffd330d7bb248531",
   "engines": {
     "darwin-arm64": {
       "asset": "phoenix-diagram-darwin-arm64",
