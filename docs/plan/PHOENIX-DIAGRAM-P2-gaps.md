@@ -4,7 +4,7 @@
 >
 > **计划状态：Ready**
 >
-> 调查基线：2026-10-23 · main / 93c4842ca2b2191fe13acc6b09472c8b5244c88f · dirty。当前产品代码与候选 c1703a9 同源；未提交内容为既有评审/状态记录及本计划关联的差异报告，不作为已实施修复。
+> 调查基线：2026-10-26 · codex/phoenix-diagram-p2-gaps-20261023 / 67d446e81da39e5cc7e2e515aeb1df6309f0b092 · dirty。调查时Source21三MD与原build生成dist/ENGINE尚未提交，当前源码冻结与实际产品身份见恢复快照；验收辅助与v2题面按§9.3–9.5实施，不能把计划文字当作已实现。
 >
 > 需求来源：[PHOENIX-DIAGRAM PRD v1.0](../PRD-PHOENIX-DIAGRAM.md) · **P2（第2期）补齐**；原计划：[PHOENIX-DIAGRAM-P2](PHOENIX-DIAGRAM-P2.md)；范围由[差异报告](PHOENIX-DIAGRAM-P2.prd-dev-gaps.md)的 G-01/G-02/G-03/G-06、FU-1–FU-4 确定。原报告 D-01/D-02 的既有决定继续有效。
 >
@@ -47,22 +47,22 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-26T11:06:49+08:00
+- 最近更新：2026-10-26T19:17:42+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：实施中；Source19正式58passed/2failed/2未启及两Deepseek对照failed已完整保留。Source20最小措辞和获准UI测试helper修复已应用，build/npm最终/pack均0，新bundle329b128a、NativeSourceInputa459/engine59d459不变。实际新包与安装控制已核，16预检临时安装进行中；作者/正式62/新CI及完整消费待执行；M4未完成
+- 当前状态：实施中；V-9无损诊断、机械计数、前驱恢复及版本化题面已实现并局部通过，私有factory/index接线完成。新版62正式+2反例初装进行中；Source21既有2通过/4失败保留，M4未完成
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：按原D12模型先做全新16预检（原十四加两原GLM仓库失败复验），通过后正式62；并行推进新cohort的CI与完整消费，按C-3使用新bundle证据，旧失败保留。全部规定门通过后聚合
-- 当前阻塞：
-- 代码基线：Source20冻结3263cf6；两MD/自动生成dist及ENGINE/获准UI测试helper已提交，用户原有dirty保持。Native20 VERSION实际sourceCommit365aac1，SourceInputa45958a2/engine59d45937、新bundle329b128a；Source19冻结21eb0b3及旧CI9仅作历史
+- 下一步：完成当前64项目初装与审计、单一harness清单及源码冻结；逐题fresh核验后沿D12各执行一次，同时推进独立本机/CI检查，按§9.5限次收尾
+- 当前阻塞：无外部阻塞；新版V-6/V-7及最终聚合仍待执行。初装未完成不启动作者，原失败不改判，全部最终强制门通过前M4保持未完成。
+- 代码基线：Source21产品与V-9源码冻结abcefeed057cfebfdb329f08c75fce08f927f44e；Native21保留原build的67d446e/dirty身份，SourceInputa45958a2/engine59d45937不变、新bundle d4a10828；V-9 collector42508146及v2题面为新harness输入，未重打产品包。Source20冻结3263cf6及CI10结论保留；用户原有dirty未动
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-26T11:06:49+08:00 | Source19已收齐58过/2失败/2未启；Source20最小修订及测试helper已应用，build/npm/pack过，新bundle329b，真实宿主/新CI/消费待验，M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6 |
-| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6 |
-| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6 |
+| M4 | 进行中 | 2026-10-26T19:17:42+08:00 | V-9实现，24/24定向及完整轻量通过；入口3项真实Native边界通过，v2私有接线完成，64项目初装进行中；M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
+| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
+| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 
 ## 0. 需求、范围与决策
 
@@ -84,6 +84,7 @@
 | C-2 | 范围与授权 | PRD §2.2/§7；原计划§0.5/§8；AGENTS.md | 只做本计划路径；不改archify/调用方、活跃安装、全局设置，不公开发布 | §0.4/0.5/1.2/8；V-7/V-8 | 已确认 |
 | C-3 | 证据合同 | 原计划D12/D13、§9.3；报告G-04/G-05及D-01/D-02 | 保留workflow适配和严格身份；bundle改变不得复用旧宿主记录；不改写历史完成记录 | §3/9；V-5–V-8 | 已确认 |
 | C-4 | Skill修订 | AGENTS.md、现行SKILL澄清原则、skills/agi-mode/playbooks/authoring-a-skill.md | 仅把既有事实原则具体化，不融合其他skill；description仅前置既有澄清/生成条件，原触发与排除范围、授权不变；全新上下文验证自然请求 | §6.1；V-3/V-6 | 已确认 |
+| C-5 | 验收设计 | 用户2026-10-26要求先修订验收设计；PRD WORK-F2/F3/F4 | 明确题面范围，分开记录产物、语义与宿主依从性；取消额外预检全过才可启动其他验收的调度门；保留两宿主完整覆盖、事实正确性、质量/视觉/身份及停止阈值，不改历史失败 | §9.3–9.5；V-6/V-9 | 已确认 |
 
 ### 0.2 决策表
 
@@ -96,17 +97,22 @@
 | D5 | 重新取证范围 | 引擎与bundle冻结后，一次阶段收口：本机、四平台、两宿主全量及新增缺事实反例 | C-3要求相同bundle，D3改变bundle后原宿主记录不能复用；旧证据只作对照 | 原计划§9.3、D10/D13，原计划候选收口中的完整31行×两宿主 |
 | D6 | 类图数量事实 | 未给下界不补0..*/1..*；逐条保留“一个/多个”等已给数量，组合/生命周期不能替代数量；明确数值和端点照用，可选数值不触发多余提问 | 具体化现有“不补私有事实”原则，不修改schema、触发/授权或验收门；bundle变化后重新取得宿主证据 | M4原生case-020实际输出无依据0..*；原SKILL事实原则；class-facts.json |
 | D7 | 自动wrap标题遮挡 | 保留显式orthogonal-v及固定节点/原路径，自动wrap标题在顶轨无解时避让既有线与marker，必要时按实测扩展派生底部空间 | 不改变原JSON、用户固定几何、显式路线/标题、质量要求；只修架构标题布局及直接回归 | 用户2026-10-23明确“允许最小修复”；production-deployment两主题实际图、原SVG与红测试 |
-| D8 | 宿主事实核对具体化 | 资格条件与批准结果分别保留；节点tag/sublabel、卡片同样不能从组件名称补任务执行方式，可省略标注不追加问题 | 沿用现有路径等价/不补事实原则，不改调用授权、schema或验收；新bundle先做两宿主各5小门再正式31行 | r3 Claude001 Worker异步任务、002低风险路径漏负责人批准的原件及独立审核；原SKILL第62行 |
+| D8 | 宿主事实核对具体化 | 资格条件与批准结果分别保留；节点tag/sublabel、卡片同样不能从组件名称补任务执行方式，可省略标注不追加问题 | 沿用现有路径等价/不补事实原则，不改调用授权、schema或验收；历史r4采用每宿主5小门；当前调度按D21，不设小门全过的启动前置 | r3 Claude001 Worker异步任务、002低风险路径漏负责人批准的原件及独立审核；原SKILL第62行 |
 | D9 | Workflow修复与必需读取 | 依实测整组路线优先调整未固定共享目标的列；自加端口冲突先撤掉；宿主读取截断补齐后再创作 | 具体化现有局部布局/完整读取原则，不加固定摆放、重试轮次或放宽停止/质量；renderer/schema不改 | r4 Code004正确停但未交付；原候选副本只改一列及三端口约束后四门/四原图/原位登记完整通过；common宿主返回截断证据 |
-| D10 | 未结束跨度的测量边界 | 请求/父跨度结束、trace精确采集截止与显示窗口分别取证；同trace已记录时刻可支持开放跨度下界，未给精确截止不等于无任何下界；不补精确时刻或最终耗时，保留incomplete | 具体化原“不补事实”原则，不新增可选追问或修改schema/质量；每宿主增原waterfall小门，r6共12小门再正式62行 | r5 Code054原411字节题只给请求end180，候选detail/卡片却断言trace截止180；独立failed账本 |
+| D10 | 未结束跨度的测量边界 | 请求/父跨度结束、trace精确采集截止与显示窗口分别取证；同trace已记录时刻可支持开放跨度下界，未给精确截止不等于无任何下界；不补精确时刻或最终耗时，保留incomplete | 具体化原“不补事实”原则，不新增可选追问或修改schema/质量；历史r6增加waterfall形成12小门；当前完整角色覆盖按§9.3 | r5 Code054原411字节题只给请求end180，候选detail/卡片却断言trace截止180；独立failed账本 |
 | D11 | 写前断言与答复事实核对 | 明确ERD省略optional仍断言最小值1，未知不能靠默认字段绕过；澄清直接从问题列表起；条件检查阶段不是瞬时起始跳转；Waterfall尾段解释也核未结束子跨度 | 沿用宿主拥有事实、引擎验证输入的分工，不新增事实推断服务或改变schema/授权/质量/停滞；r7同12小门全部重取，旧failed与同包诊断保留 | r6 GLM workflow检查阶段缺撤回、waterfall final零覆盖错句、ERD列表前言；Flash额外ERD实际补两端最小值并先图后交付；独立原会话账本 |
-| D12 | 实际验收后端与派生索引 | 同包预检固定Claude自然架构用deepseek/deepseek-flash，其余Claude用用户选定glm-5.3-flash，Code原gpt-6.1-sol/max；私有v14只补唯一current合法回退及已有封存native副本 | 原GLM架构failed不改，固定路线在正式31行前登记；不随机重试、不改原题/规则/质量/停止/原件或建模型服务，全部模型逐会话留档；13预检项目含1额外对照再加62正式，实为75项目/150安装回执 | r7标准11过1失败（P3视图未披露）；同包Flash自然架构新会话独立passed；A/B/A真实Edit与12原PNG、Code sealed-native四像素证明及14项私有索引预检 |
+| D12 | 实际验收后端与派生索引 | 同包预检固定Claude自然架构用deepseek/deepseek-flash，其余Claude用用户选定glm-5.3-flash，Code原gpt-6.1-sol/max；私有v14只补唯一current合法回退及已有封存native副本 | 原GLM架构failed不改，固定路线在正式31行前登记；不随机重试、不改原题/规则/质量/停止/原件或建模型服务，全部模型逐会话留档；历史r7为13预检加62正式；当前清单、身份与覆盖按§9.3–9.5 | r7标准11过1失败（P3视图未披露）；同包Flash自然架构新会话独立passed；A/B/A真实Edit与12原PNG、Code sealed-native四像素证明及14项私有索引预检 |
 | D13 | 非必需先后不追加问题 | “超预算还需批准”仅表达追加条件；材料未要求执行先后时不补造、不为细化先后追加问题 | 用户明确授权三处最小补例；不改事实/澄清原则、schema、调用授权、质量或模型路线。r8双宿主金额窄门+固定路线12小门，再正式62，共76项目/152安装回执；所有新bundle行为重取 | r7 Claude正式missing-amount在必需阈值/币种之外追问审批先后；原题、公开答复及failed独立审核；用户“按最小修订继续（推荐）” |
 | D14 | Workflow最小原生修复 | 可选整图修法仅为未指定高度的目标补足实测箭头间距，完整编译验证后才展示；新合同自动图例仅遇现有净距冲突才下移，并沿既有finalize扩派生画布 | 用户明确允许两处修复；不自动改原输入，不改固定viewBox/pins/旧合同/节点关系/文字字号、质量/停止或Reader策略。先复现红，再核真实render/check与固定几何负例，新引擎及bundle重新取证 | r9 CodeWorkflow原三轮1→1→5交付失败、四次有界私有诊断；用户call_59a33b4b2e5b4456a40a33b3d0c3f512答“允许这两处最小原生修复（推荐）” |
 | D15 | 未知项的比较证据 | 推导比较、极值或排序须由材料已给事实/数值/上下界支持；无法证明全体时明确已有范围，直接给定比较照用且不追加数值追问 | 沿既有不补事实原则作三处最小措辞具体化，已应用于R14；不改触发/授权/质量/停止/schema/renderer/原题/固定模型，不新加每个比例≥或固定词模板；新bundle按C-3全新十四门 | R13 ClWater003卡片称DB124为各子跨度最长，而日志start160且最终时长无上界；独立F1及Root实际原图核对；既有最小修订授权 |
-| D16 | 标题事实与交付位置 | 事实清单明确卡片标题与条目；答复使用回执真实产物路径，允许对本次工作目录有效的相对路径，不裁前缀冒充绝对路径 | 沿现有不补事实及返回产物位置合同作三MD五行补充，已在R15保全后应用R16；官方build/npm/pack及实包核验过、初装中。不增加绝对路径格式门、材料/步骤/配额，不改调用授权、质量停止、schema/native、原题或固定模型；新bundle仍须全新十四门 | R15 ClWorkflow三条唯一产物路径均错误；ClArchitecture卡片标题补“同步入口/异步通知”。Root已读原题、candidate、完整final及实际原图；既有最小修订授权 |
+| D16 | 标题事实与交付位置 | 事实清单明确卡片标题与条目；答复使用回执真实产物路径，允许对本次工作目录有效的相对路径，不裁前缀冒充绝对路径 | 沿现有不补事实及返回产物位置合同作三MD五行补充，已在R15保全后应用R16；官方build/npm/pack及实包核验过、初装中。不增加绝对路径格式门、材料/步骤/配额，不改调用授权、质量停止、schema/native、原题或固定模型；历史十四预检结果保留；当前角色覆盖与取证按§9.3–9.5 | R15 ClWorkflow三条唯一产物路径均错误；ClArchitecture卡片标题补“同步入口/异步通知”。Root已读原题、candidate、完整final及实际原图；既有最小修订授权 |
 | D17 | 既有资料、修复和源码条件约束 | 资料搜索遵守已授权范围，固定CLI不擅加env前缀；修复前实际补齐失败诊断并保留可回读逐门计数；沿调用实参和禁用开关核条件 | 用户选择收齐冻结轮后集中最小修复；Source20只改SKILL/docs六现有段，description/defaults、调用授权原则、schema/native、质量与停止2阈值、原题和D12模型保持。原十四预检加两原GLM仓库失败复验，再正式62，共78项目；新bundle全部行为重取 | Source19正式008实际读实现、015真实命令/权限/记录失败；用户选择的同包Deepseek两仓库分别暴露失败诊断读取/记录及条件校验无条件化，均保留failed；M4当前Source20记录 |
 | D18 | 测试辅助stdin早退 | 只在测试helper忽略早退子进程的EPIPE，其他stdin错误仍reject；真实退出码和输出断言保持 | 用户明确“容易修就顺便修掉”；仅test/phoenix-ui/bootstrap.test.js，1MiB输入稳定复现原红，再helper绿。Phoenix UI产品/协议/引擎不改，NativeSourceInput实核不变，19局部与最终npm全套通过 | Source20首轮npm的既有UI测试EPIPE；原helper无stdin error监听；确定性红exit1、绿19/19及最终473pass/23既有skip，见M4记录 |
+| D19 | 同条件/停止/路径与布局规则的最小补充 | 短路断言保留完整分支条件；停滞2后不改候选含best回退；相对路径按宿主实际cwd核对；未固定共用端点先留独立通道，不预定边缘/内部列或先堆pin | 沿既有最小修订授权、保留原原则/授权/模型/题/质量/停止2；仅SKILL/docs/defaults现有段，不改Native/schema或加资源/强制布局/新门。Source21历史四风险按旧顺序执行；D21替代其启动前置，最终覆盖与强制门不删减 | Source20四failed及两Workflow原件/有限诊断；D14范围只读未证实简单Native遗漏，当前候选尚待真实新包验证，见M4 |
+| D20 | Source21同包两仓库后端对照 | 用既有deepseek/deepseek-flash对两道仓库原题各开一次全新会话，GLM原failed保留；两题全部独审过才预先固定新路线 | 用户明确选择同包两题对照，实际两项均failed、固定条件未满足，D12保持。额外2项目/4安装回执独立于标准16；不随机重试、不改题/源码或放宽读取/质量/停止，不用诊断替正式题 | Source21四风险2passed/2failed及额外Deepseek0passed/2failed均已完整封存；当前明文规则未遵守的事实与原件见M4 |
+| D21 | 验收范围、证据读取与收尾 | 按§9.3版本化两道普通命令仓库题；62正式角色与2个ERD缺事实反例直接进入同一冻结清单，额外16小门不再作为启动前置。用§9.4无损视图与机械计数减轻宿主负担，按§9.5限次执行和局部失效重验 | C-5授权调整验收方法；不删最终覆盖、不接受错误源码断言、不放宽质量/视觉/停止，不自动换模型。旧题/旧失败保留，修订题是新版本，不能重判旧会话；不为复用两个旧Workflow改归档或collector身份合同 | 用户2026-10-26明确要求修订；Source21源码条件错误、约1MB回执内13次重复整图证据、额外预检串行阻塞；实际接口见§9.4 |
+
+D21选择移除重复调度前置并改进测试证据传输。继续增加预检/措辞或轮换模型不能解释既有规则已明确而宿主仍出错的原因，且会使新包重验成本反复扩大；只把语义错误降为警告则违反原事实要求。因此保留最终强制门，用定界题面、无损读取、独立调度和限次复验收尾。若真正产品行为或外部合同改变，再按影响面重核该决策。
 
 D1 是局部可逆选择：直接六区专用历史表与规则比引入完整ICU时间栈局部，且不改变已有API/依赖。两者均能精确实现；本次只缺六区，后者会扩大数据、构建与许可面。未来确有更多ICU专属规则时再评估完整库。D2保留现有 Evidence/OutputSlot，不引入新的目录管理框架。
 
@@ -138,6 +144,9 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 5. **已核实·缺口**：两宿主v11h原题缺两项ERD约束，却都先画成确定事实；Claude明确承认按常规理解定的。现行SKILL已有先问原则，但ERD小节只要求列、键、FK、功能域，没有把这两个易误推点具体化。→ 最小提示及能识别缺陷的验收（SKILL.md:11–23、references/authoring-defaults.md:28；报告E3/G-03）。
 6. **已核实·缺口**：Reader固定画布适配是原计划第七里程碑为通过有效参考JSON的已验证行为；旧测试仍要求contract=null/phoenix-v1等与冻结版完全一致。原计划第二里程碑的R2局部回归已记录此失败并未处理；本轮定向114项113pass/1fail，单跑同一断言失败，确认原生维护入口未包含该套件。→ 更新行为断言并纳入入口（报告G-06/E6）。
 7. **已核实·足够**：现有四平台候选、真实宿主账号/采集工具、Chrome、OS拒网与聚合可用。报告E1本轮生产聚合pass；不把这些旧证据记成本计划完成。
+8. **已核实·缺口**：Source21一个失败stdout为1,014,315B，13条diagnostic共享一个规范化后37,652B的measuredScene；宿主曾只返回持久化预览，随后筛除部分evidence/supportedFixes。现采集器只保存原字节并返回短FileRefs，尚无无损分页或逐调用计数视图。→ 仅增测试辅助的可选inspection模式及V-9，不改产品Native、技能规则或bundle。
+9. **已核实·边界**：archive对同provider记录的package/collector身份严格一致，aggregate用harness认证collector；旧small Workflow不能直接冒充新版正式记录。→ 保留旧passed归属，新collector正式行一次新采集，不为复用改归档合同。
+
 
 ### 1.2 文件清单
 
@@ -157,6 +166,8 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | tools/phoenix-diagram/src/layout/workflow.rs、src/layout/workflow/measure.rs、tests/workflow.rs及必要新回归fixture（后三者相对工具目录） | D14获授权的可选整图修法与自动图例净距避让；保留固定几何/旧合同/原oracle、实际字号及全部业务事实，只补实际红测试和必要边界 |
 | skills/phoenix-diagram/ENGINE.json；dist/phoenix-diagram/ | 通过既有build --sync-dist生成，不手写身份 |
 | test/phoenix-ui/bootstrap.test.js | D18仅测试helper的早退stdin EPIPE处理及大输入回归，保留CLI退出码/输出断言；不改Phoenix UI产品 |
+| tools/phoenix-diagram/tests/support/capture-stdio.mjs；test/phoenix-diagram/capture-stdio.test.js | D21仅维护采集器的可选无损诊断视图、分页与逐调用进度记录；默认四参数形式及原始stdout/stderr/真实子进程退出码保持，新增格式由V-9验证 |
+| ★ tools/phoenix-diagram/tests/provider/p2-scenarios.json；★ repo-main-facts.json（后者位于同目录）；★ test/phoenix-diagram/provider-acceptance.test.js | 固定现有31角色题面/材料身份及两个仓库题v2；判据与给作者的材料隔离，保护覆盖、范围和旧题版本。既有私有factory/index/review/archive就地复用，仅派生受影响接线，不再复制整套helper |
 
 不修改Cargo依赖、输入schema、D7/D14以外的其他renderer、Phoenix UI产品、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
 
@@ -225,7 +236,7 @@ M3统一维护authoring-defaults.md：Timeline行说明既有IANA名、固定偏
 
 ★ tests/provider/erd-facts.json保存：报告E3的原题原字节、完整正例（独立题面明确customer_id非空、商品可无明细）、显式Mermaid邻接正例及预期缺口的独立审核字段。给宿主的题面不含判据/评分词。现有intent-erd正例使用完整材料；原题另作缺事实反例，不改历史会话。审核先逐条列“材料依据→候选端点/卡片断言”，再判事实是否通过；自动/视觉complete不得覆盖语义失败。
 
-M4实际class原题出现无依据的0..*，按D6具体化同一事实边界：类图的关系种类、生命周期与两端数量分别取证。成员可独立存在不证明整体可以没有成员；保留已给“多个”等数量含义，不补未给下界，可选数值不阻止已明确关系的创作。class-facts.json固定484字节原题，审核字段分别登记明确的单个Cart与未给LineItem下界，另有明确两端数量的Mermaid正例，作者只读prompt。静态检查只保护材料身份/隔离；新bundle须在全新上下文先以额外小项目核普通类图、明确数量输入及ERD原题（每宿主各3项），通过后再准备正式各31行；这些小门不替代正式行，预计68项目/136安装回执。旧failed不回判passed，bundle改变也不复用旧passed。 r3正式材料又暴露节点执行方式与批准结果遗漏，按D8把原有事实核对覆盖到tag/sublabel、卡片，并分开资格与批准结果；r4在上述每宿主3小门外，原样增加architecture/workflow各1小门（每宿主5项、合10项目/20回执），全部通过再准备正式62项目，合计72项目/144回执。新增小门不替代任何正式行。 r4九小门通过，Code workflow原题正确停止但无完整交付；按D9最小细化现有布局修复与读取返回规则。r5仍同十小门、先两宿主workflow再其余八项；不得将root私有几何副本或旧passed代替新作者行为。r5正式waterfall又把父请求end180当作trace精确截止180，按D10分开测量事实与显示推导，保留未结束跨度及有据下界，不为可省略截止说明追加问题。r6每宿主原样增加waterfall一小门，合12项目/24回执；全部通过后再正式62项目，总74项目/148回执。 r6标准12项实际9过3失败；同包Flash额外workflow/waterfall通过，但ERD缺事实仍写candidate并交付，原件保留。按D11只具体化已有写前事实与答复规则，不靠模型轮换或重判旧结果收口；r7原标准沿用户选定glm-5.3-flash及Codex原配置，使用新bundle/原题/全新上下文重取同12项。标准11过1失败保留；按D12同包新会话用先前获授权Flash对照自然架构并独立通过，派生索引补实合法回退与原始像素来源后，固定后端的12必需角色覆盖均passed。正式Claude31行仅intent-architecture用deepseek/deepseek-flash，其余30行用glm-5.3-flash；Codex原配置。路线在正式创建/运行前登记，不按正式结果随机轮换或回判原failed。额外1诊断项目不代正式行，计入本轮75项目/150安装回执；旧bundle诊断另存不混用。 r7正式首12项独立11过1失败，用户已按D13授权r8最小修订；新轮直接沿D12固定路线重取12角色小门，并增加两宿主原missing-amount窄门，合14预检项目/28回执，再加62正式项目，总76项目/152回执。旧r7额外GLM架构诊断不重复计入r8，原失败不改判；单次金额通过只证明该原题，不代其余新会话或全部终验。
+M4实际class原题出现无依据的0..*，按D6具体化同一事实边界：类图关系、生命周期与两端数量分别取证，未给下界不补数字，明确数量正例照用。class-facts.json及erd-facts.json继续保护原题/明确正例与独立判据。历史r3–r21的预检、修订、后端对照及失败原档见[M4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)，不改判或拼作新通过。当前验收按§9.3–9.5执行；这些额外预检不再形成正式角色、CI或本机消费的串行启动门。
 
 ### 6.2 Reader既定行为测试同步
 
@@ -262,7 +273,7 @@ production-deployment的postgres→replica为显式orthogonal-v，保留原四�
 | 宿主补规则或先图后问 | 当前作者交付 | 保留原会话，事实验收失败 | 不记完整语义通过 | 材料→断言账本 | 修规则后全新会话，不回写历史passed | V-6 |
 | 新bundle沿用旧宿主记录 | 新候选 | 无产品数据变化 | 聚合不得收口 | bundle/引擎/会话身份 | 新包重新采集，不扩D13 | V-7 |
 
-发布顺序：M1–M3局部通过→冻结引擎/skill→M4开发包与本机收口/宿主→同源四平台候选→本机同tgz闭环/聚合。开发包构建、metadata与实包Root核验通过后，本机初装或宿主等待原资源门时，可并行远端候选构建与独立取证；Source17和Source19均按此调度。Source19十四门及全76初装审计实际通过后，按Code-only当前鲜度/Root-ready先执行Code31；Claude除两仓库外的29项直接沿formal创建前已登记的原D12路线，独立当前核验/Root-ready后用Code释放的作者名额接续，最多两作者。两仓库继续待用户明确模型选择，不从其余正式结果挑模型、不执行未获准覆盖路线。原全76的全62-fresh仅作初装历史，不回判已用Code或Claude为fresh。只调整调度，十四门通过后才准备正式62、V-6/V-7的全部退出条件和最终同包聚合顺序不变。沿原计划候选收口独立候选分支和既有授权范围，不推main、不运行npm/R2发布、不改活跃安装。
+发布顺序：M1–M3局部通过→冻结产品源码/引擎/skill及V-9验收资料→核开发包与初装身份→并行执行V-4/V-5/V-6/V-7/V-8中已具备前置的任务→完整聚合。正式宿主各题只依赖自己的安装、材料、模型路线和fresh检查；不等额外16小门全过。CI和本机消费不等宿主语义全过，最终聚合仍等所有必需门。最多两个作者；真实Chrome按已有隔离与负载门安排，本机消费集中一个浏览器任务。D12路线保持，未回答的Kimi建议不是执行授权；不继续模型轮换或只因宿主失误重打产品包。独立任务失败只阻塞自己的覆盖项，全部原失败保留。沿原候选分支执行，不推main、不运行npm/R2发布、不改活跃安装。
 
 回滚是撤销本计划代码/生成文件，保留旧候选及独立HTML；没有数据库迁移。新证据/旧证据均独立留存，不通过删除旧文件伪造恢复。回退后六区缺口与旧失败行为重新存在，不能记本计划验收完成。
 
@@ -277,9 +288,10 @@ production-deployment的postgres→replica为显式orthogonal-v，保留原四�
 | V-3 | F2关系事实提示、Class材料身份与明确数量相邻正例，N1/N3固定画布断言与维护接线；名称/描述/原原则不漂移；按§5.1核对Timeline说明含六个名称及既有接受范围，schema保持不变；Reader失败断言先红后绿 | node --test test/phoenix-diagram/skill.test.js tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs；静态核对native runner确实列入该套件；完整frontmatter由V-8的npm test验证 | M3局部 |
 | V-4 | F1/F4/N3/N4真实新增路径：六区原参考副本finalize/strict/可见时间/导出；12种浏览器命令×目录×环境对照，原文件/证据保护 | ★ node tools/phoenix-diagram/tests/gaps-acceptance.mjs --engine <新开发引擎绝对路径> --output-dir <新运行目录>；本机darwin-arm64、Chrome和sandbox-exec；入口实现见§9.1；六个新时区交付各自四张截图（2视口×暗亮主题，共24张）均逐张实际查看，在本运行新产生且已finalize的各delivery上按现行review-record分别原位登记 | M4唯一阶段收口 |
 | V-5 | 十类已有路径及FU-4回归：core十五例、Reader/导出/恢复/拒网/explore/corpus/evidence/locale、真实看图 | 沿原计划core收口第1–5步，目录使用本计划独立代号；node scripts/test-phoenix-diagram.mjs --stage core --engine <BIN> --output-dir <DIR>，再按最新index依次--resume --reader --recovery --offline --explore --corpus --evidence --locale，最后--review-file <实际记录map>；不得为取得complete重做原delivery | M4唯一阶段收口 |
-| V-6 | F2全部原宿主范围及G-03反例；F4失败答复；真实新包读取后发生行为，不能带修订提示重判 | 用冻结后development包安装临时项目，沿原计划宿主/候选收口的factory/capture/index/review/archive和现有采集器，Claude/Codex各31行；intent-erd用完整正例；额外在每宿主新会话原样投放erd-facts原题，先问且无candidate/HTML/补造选项才过；所问须覆盖erd-facts.json预期缺口（商品最小参与数、orders.customer_id可空性），不重复询问材料已给事实，按独立审核字段逐条核对并留记录。原始会话/安装摘要/加载读取/语义账本/截图归档 | M4唯一阶段收口；仅角色模拟，不招募真人 |
+| V-6 | F2全部原宿主范围及G-03反例；F4失败答复；真实新包读取后发生行为，不能带修订提示重判 | 用冻结后development包安装临时项目，沿原计划宿主/候选收口的factory/capture/index/review/archive和现有采集器，Claude/Codex各31行，按§9.3冻结角色/题面；无16预检全过的启动前置；intent-erd用完整正例；额外在每宿主新会话原样投放erd-facts原题，先问且无candidate/HTML/补造选项才过；所问须覆盖erd-facts.json预期缺口（商品最小参与数、orders.customer_id可空性），不重复询问材料已给事实，按独立审核字段逐条核对并留记录。原始会话/安装摘要/加载读取/语义账本/截图归档 | M4唯一阶段收口；仅角色模拟，不招募真人 |
 | V-7 | N2/C-2/C-3：新同包四平台与Node18、本机distribution、宿主/额外反例绑定；不混旧候选 | 原workflow_dispatch不设await_review，四平台自动与Node18按原计划四平台检查；同tgz本机--stage distribution，按原计划distribution检查公开入口/审核/恢复/来源/语言/explore；node scripts/aggregate-phoenix-diagram-candidate.mjs --profile p2 --input <新input> --output <新result>；新反例另链实际原档/版本，不冒充聚合内置行 | M4唯一阶段收口 |
 | V-8 | 仓库轻量/原生维护、依赖/许可/静态与scope不回归；Reader套件实际进入常规日志 | npm test；npm run test:diagram；npm run test:phoenix；mbx fmt --manifest-path tools/phoenix-diagram/Cargo.toml -- --check；mbx clippy --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline --all-targets -- -D warnings；沿既有prepare工具环境，不跳检查 | M4唯一阶段收口 |
+| V-9 | C-5验收支撑：原输出/退出不变、无损分页/完整修法、机械计数和前驱链、题面版本/判据隔离；不运行模型或浏览器 | node --test test/phoenix-diagram/capture-stdio.test.js test/phoenix-diagram/provider-acceptance.test.js；覆盖大JSON/重复与不同scene/Unicode/13→9→0及1→1→1/新门/断链/无DTO/原文件保护，确认默认旧参数仍兼容 | M4收口的测试支撑前置，仅变更处局部检查；通过后启动各独立终验 |
 
 ### 9.1 有界真实回归入口
 
@@ -293,11 +305,53 @@ production-deployment的postgres→replica为显式orthogonal-v，保留原四�
 
 ### 9.2 取证安排
 
-M1–M3只运行各自局部检查；全量、模型、四平台和真实浏览器集中M4。准备脚本、fixture和契约随所属代码里程碑交付，但真实入口只在M4运行。M4失败只重跑失败与受修复影响的证据；源码/bundle再次变化时按实际摘要作废受影响结果，不机械全量重跑，也不借旧bundle复用新文本行为。
+M1–M3局部检查与M4阶段收口分工保持。V-4/V-5/V-8已通过部分按实际sourceInput、合同、依赖及检查范围判断是否有效；只改测试辅助、题面或调度不使产品原生证据自动失效。修改skill/bundle仍按C-3重取受影响宿主行为；不得借旧bundle复用新文本行为。
 
-V-7沿用既有聚合器的完整ZIP身份验证：`ArchiveEvidence`先核对本机ZIP摘要，再按原路径提取所需成员；只有远端索引或选取文件不能满足该接口。本次据此限定原计划§9.3留存例外：冻结后锁定一个新cohort，仅取回该次四平台consume evidence及Node18 evidence共五个必需ZIP，生成后先核对API体积/摘要与本机可用空间，不取native目标包或整套日志ZIP。只按需提取回执和待看截图，不将完整消费目录解包；聚合的身份、语义及视觉门不变。candidate/harness仍按既有同包转移流程取回。run39911661359的五份原档已留存，只作前一候选基线，不拼接到新cohort；新run/commit及逐artifact不可变API绑定写M4记录。
+V-7保留原聚合器的完整ZIP身份验证：锁一个最终cohort，仅取该次四平台consume evidence及Node18 evidence五个必需ZIP，先核API体积/摘要和3GiB保留门，再按需提取。candidate/harness按原同包转移流程取回；旧run原档是否仍在本机以M4清理记录为准，不把已删除原档写成仍可取。最终新run/head/逐artifact身份写M4记录。候选源、bundle、tgz、collector/harness与会话的桥接须真实通过，不能手改VERSION或摘要。
 
-原计划候选收口的技术账号、候选workflow、OS拒网和工具环境为执行资源；保留其实际获取方式与已授权范围。配额/CI/图像工具临时不可用时记录未完成并推进不依赖项，不降低本计划退出门。
+### 9.3 冻结角色、题面与判据
+
+**最终覆盖保持64个角色**：Claude/Codex各31个正式scenario，加每宿主1个ERD缺事实反例。正式记录仍是31行，额外ERD按capture-only独立审核/绑定，不塞入aggregate的scenario列表。原额外16项属于风险诊断，不再作为另一套必跑前置。V-6不退回Codex默认抽样16行；两个宿主均保持完整31行。
+
+`p2-scenarios.json`登记现有31个scenario ID、原题版本/字节身份、材料与仓库准备方式。只修订`repo-verified`、`repo-dirty`的题面为`main-v2`，其他题面/材料逐字保持；ERD缺事实继续使用原erd-facts。`repo-main-facts.json`分开存作者题面与仅供审核的职责/路径断言；factory只投放作者字段和授权资料，不把源码答案、修订原因或评分提示交给作者。版本与身份留在测试清单和独审记录，不能通过改旧capture/request冒充v2。
+
+两个v2题面固定如下，`{{REPO}}`仅替换为该题只读仓库路径：
+
+- **repo-verified / main-v2**：仓库`{{REPO}}`已检出在固定提交。请解释从已安装skill入口执行普通命令`doctor --json`时，如何找到、校验并启动原生引擎，画成一张供评审使用的图，主要步骤对应具体源码行。前提是cwd就是已有合法安装回执的项目根，缓存引擎已存在；只解释这条正常路径。帮助/版本、显式引擎安装、升级、目录回退和异常恢复另有专项，不要求展开。只看直接相关文件，答复简短；这里只作源码解释，不执行被解释仓库的命令。
+- **repo-dirty / main-v2**：仓库`{{REPO}}`是本地工作副本。请解释`bin/phoenix-diagram.js`与`skills/phoenix-diagram/scripts/phoenix-launcher.cjs`分别接收普通命令`doctor --json`后如何交给已安装引擎，画成一张图，标出具体源码行。前提同上，只比较两入口的参数/配置、校验与交接正常路径；不展开帮助/版本、显式安装、升级或目录回退。另按实际来源核验说明未提交修改的影响，答复简短；不执行被解释仓库的命令。
+
+审核范围在运行前固定：第一题核入口、清单/平台与项目、合法回执、缓存校验/probe、spawn及参数/环境交接；第二题另核两入口传入配置差异和dirty来源披露。允许不同节点合并及文字表达，不设节点/引用数量配额。未要求的分支可以省略；若作者主动写出额外事实，仍须源码支持，错误断言仍判该题语义失败。旧宽题及GLM/Deepseek失败继续保留，不改判为v2通过。
+
+帮助/版本、`engine install`、普通`install`、`options.project`与argv、父目录回执选择的边界由现有`bootstrap.test.js`的公开入口/fixture做确定性检查；已有覆盖直接引用，缺失时只补精确边界反例，不改产品bootstrap来迎合题面。诊断修复/历史最佳/停止由原`repairable-diagnostic`和`stalled-repair`专项验证，来源partial由repo-dirty验证；不再要求一个主流程题穷举这些分支。
+
+每题独审分别登记**产物自动门、材料/源码语义、来源、实际视觉、宿主协议、证据身份**，注明失败归属。总判定仍要求全部适用的强制项通过：技术complete不覆盖事实错误；语义失败不抹掉真实自动/视觉通过；辅助脚本或登记草稿错误按实际恢复与身份判断，不混入布局停滞序列。诊断补读、原停止阈值、访问授权与如实答复继续核验，分类不是豁免。审核者事后推算计数不能冒写成作者已记录。
+
+### 9.4 测试辅助的无损诊断视图
+
+仅修改维护采集器及测试，不改Native/schema/skill/产品包。`build.rs::INPUTS`不包含tests/support，`package.json.files`也不包含该采集器；仍在冻结时实核sourceInput/bundle/tgz不变。采集器SHA变化只进入新harness和新会话，旧捕获不能冒称用了新采集器。
+
+- 原四路径参数及默认行为保持；新增可选`--inspection-dir <本项目新目录>`、`--previous-inspection <上一份inspection.json>`，PD参数仍在`--`之后。调用仍是固定字面量，采集器只运行一次原Native命令，原stdout/stderr及真实子退出码逐字保留。
+- factory先建本项目`stdio/inspection-chain/`（owned/ordinary/0700）。可选模式在此保存每次不可变`capture-N.json`及一个原子更新的`latest.json`，后者绑定sequence、原capture与当前inspection入口；在生成视图前先封存原capture DTO及previousCapture引用，并推进latest到该capture。派生失败也不能退回上一成功头；视图/进度未完整时只可走inspect恢复，不能继续Native修复。采集前以exclusive锁保护同项目链，要求previous与latest完全相同；已有链时不能省略previous或另起首链，不能用新candidate/文件名开叉。崩溃或锁遗留时保留原物，由Root核实原producer已退出后才恢复，不自动选择旧头或重置计数。
+- 新模式在项目内生成不可变`index.json`、数据分页和`progress.json`。索引绑定原capture/原stdout、完整diagnostics及所有字段，包含原`subject/evidence/supportedFixes`；仅按完整值摘要共享重复`measuredScene/source`，不删键、截字符串、改修法或替作者选择方案。展开去重引用后必须与原JSON深相等，原始字节仍以原文件/SHA为准。
+- 每个UTF-8分页最多8KiB，列出完整顺序、范围、字节数及摘要；索引本身过大也分页。作者读完整索引和全部被引用的唯一数据页；已验证同值的重复整图只读一次。页完整性/原文件变化/引用缺失必须显式失败，不能把预览当全文。该上限是传输分片，不是图内容或诊断数量上限。
+- 小入口`inspection.json`只含版本、原capture/原stdout身份、首个索引页、总页数/总字节及进度引用，必须不超过8KiB；超限显式失败，不递归生成更大的页清单。索引与数据均用有序页链，每页绑定下一页、序号、内容范围和摘要，单页编码后总长度不超过8KiB。超长单字符串同样分片；按Unicode码点边界分割，顺序拼接后UTF-8字节必须等于去重后的规范化JSON。完整展开还须与原JSON深相等，既不丢字符也不把数组/字符串改成预览。
+- `progress.json`由本次作者调用采集器时按真实各门DTO机械生成，记录失败门、阶段、客观error、历史最佳和stall；绑定上一索引，不因文件名/新candidate重置。首次失败stall0；严格改善才清零；input→layout及真正后门的规则沿现SKILL。无可验证DTO时标不可推导，不能用退出码猜error数；实际视觉发现仍按原审核记录取证，不由采集器代判。
+- 计数取值沿aggregate的`receiptErrors()`：优先合法`composition.summary.errors`，否则统计该回执`diagnostics`中severity=error的条数。`finalize`从实际failed阶段的内嵌receipt取数，不把顶层传播诊断与子门重复相加；成功门记0，not-run不推进历史，failed却无可靠计数则标不可推导。validate的input/layout阶段及后门分别按现规则归属；review-record登记和作者辅助命令单列，不能混入候选质量门的停滞序列。V-9覆盖顶层/内层重复、composition与diagnostic长度不同、failed零计数和阶段切换。
+- 后续调用须引用同项目最新有效前驱，拒绝断链、分叉或漏传前驱后重置；写目录沿现owned/ordinary/0700/exclusive规则。作者修复前实际读当前进度，达到2仍立即停止；采集器只给机械记录，不代替作者停止行为或把被拒尝试判成主动停止。
+- 派生失败保留原stdout/stderr/退出事实并标`inspection.failed`，阻塞该题的协议证据，不能重跑Native来重建视图。只能从同一原capture/原stdout在新目录重建派生物。原始采集结果与派生状态分开，不把派生失败改写成Native失败。
+- 增加仅派生入口`node tools/phoenix-diagram/tests/support/capture-stdio.mjs inspect --capture <已封存capture-N.json> --inspection-dir <本项目新目录>`；此入口禁止program/PD argv且绝不spawn。校验原capture、stdout/stderr、项目/安装与collector身份后，只重建latest对应capture的视图；sequence、Native调用数及计数历史不变，旧失败派生物保留，latest仅更新同一capture的派生引用。正常模式的Native已执行且原始采集完整时，外层仍保留真实子退出码，派生失败在inspection状态单列；原始采集不完整另记capture.failed，不能伪造完整DTO或Native失败。V-9用spawn标记验证inspect模式未执行程序。
+
+私有factory/index只补新fixture、可选参数和派生FileRefs接线；核心capture/review/archive/aggregate原逻辑复用，不复制整套helper、不新增审核服务。新collector的身份校验在索引/归档/聚合仍强制成立。
+
+### 9.5 有界执行、复用与收尾
+
+1. **先过V-9再冻结一次。** 固定Source21产品包、D12模型、v2题面、collector/harness及64角色清单，完成初装审计和每题fresh检查后即可调度；不再等待16语义预检全过。V-4/V-5/V-7/V-8和互不依赖宿主题并行推进，资源门和最多两作者保持。
+2. **每个必需角色先执行一次。** 同一输入/包/后端下不作语义抽签重试。失败先归因；只有已落实具体产品/题面/测试支撑修复，或同一会话尚未产生前的明确技术失败恢复，才允许该受影响角色一次定向复验。再次失败即保存未解决项并停止该角色，不开启第三次、另换模型或新一轮整包。Native会话内的原停止2规则独立保持，不把两种次数混算。
+3. **复用按真实合同。** 产品sourceInput/合同未变且覆盖仍适用的V-4/V-5/V-8证据保留；只重跑修复实际影响的项。旧Source21两个Workflow仍是已通过风险诊断，但旧collector与新formal的collector/package载体合同不同，不填新版正式31行；不为省两个会话放松归档deep equality或伪造新身份。旧bundle、失败会话、旧宽题均不能填当前清单。
+   冻结后的产品/题面/collector修复必须先列失效字段：仅派生视图可从原capture无Native重跑恢复；Native sourceInput、bundle、tgz、认证collector或实际题面改变时，按严格cohort合同处理，不能把不同身份的定向复验拼回原正式记录。定向复验在这种情况下只记修复诊断，M4仍未完成；新正式冻结清单及其实际失效覆盖必须另行明确，不计作原64角色的一次局部恢复，也不自动开始新一轮全量。
+4. **分别完成独立工作。** 一个模型的语义错误只阻塞对应V-6角色，不阻止其他题、本机消费或CI。最终可汇总的同cohort已冻结后再按预算取五个必需ZIP；不重复下载退役cohort、不为无产品缺口的宿主错误新建bundle。
+5. **结束判据明确。** M4仍须V-4–V-9全部通过、62正式及2反例全部有可追溯的通过结果、原聚合通过，才能记完成。限次后仍失败则完成其余独立检查，输出准确到角色的未通过清单、原失败及依赖模型，M4保持未完成；下一动作是处理已定位缺口或由用户决定支持范围，不能自动进入新的加规则/换模型/重打包循环。未获明确需求变更时，不能接受错误产物或延期原需求。
+
 
 ## 10. 里程碑与验收安排
 
@@ -308,7 +362,7 @@ V-7沿用既有聚合器的完整ZIP身份验证：`ArchiveEvidence`先核对本
 | M1 | 六区有效时间线的原生兼容 | 现有固定参考与§1.1已核路线 | §1.2时间模块、固定来源/校验/许可、oracle及format/timeline反例，照Named/Fixed与nativeText范式；真实入口中六区片段可并行准备，不提前跑收口 | V-1；回写「实施进度」 |
 | M2 | 准确浏览器失败状态与回执 | 当前Evidence/OutputSlot契约，不依赖M1完成 | §5.2的browser/evidence/transaction及真实FS/协议/CLI回归；真实入口12组片段随此完成，共享脚本由主实施者集成 | V-2；回写「实施进度」 |
 | M3 | ERD事实澄清与维护测试同步 | 现有SKILL事实原则；G-03原件与G-06失败已固定 | §6的SKILL/authoring-defaults/docs与erd-facts，并按§5.1同步Timeline时区说明；修reader-layout过期断言、纳入native runner；不改Reader产品代码，与M1/M2仅在构建集成时汇合 | V-3；回写「实施进度」 |
-| M4 | 新同包P2增量终验与回归收口 | M1–M3的V-1/V-2/V-3通过，源码/skill冻结 | §9真实入口、本机core、全新宿主与原题反例、四平台新候选/同tgz本机/聚合、仓库全量；主实施者统一浏览器/候选/证据身份，按原授权使用独立临时项目 | V-4–V-8全部通过；四项follow-up均有真实结果；回写「实施进度」 |
+| M4 | 新同包P2增量终验与回归收口 | M1–M3的V-1/V-2/V-3通过，源码/skill冻结 | §9真实入口、本机core、全新宿主与原题反例、四平台新候选/同tgz本机/聚合、仓库全量；主实施者统一浏览器/候选/证据身份，按原授权使用独立临时项目 | V-4–V-9全部通过；四项follow-up及64角色均有真实结果；回写「实施进度」 |
 
 提交点：M4（全部里程碑完成后提交一次，并按顶部协议回填各完成记录SHA，再单独提交计划SHA回填）。为取得同SHA四平台制品，可按原计划候选收口先提交冻结候选源码，但所有终验未过前不记M4完成。若提前冻结提交，其SHA回填M1–M3行；M4最终提交覆盖收口验收记录及后续必要修复/生成物，SHA回填M4行。后续修复若影响M1–M3，按顶部协议在对应行追加修复SHA；源码/bundle改变按§9.2作废并重取受影响证据。不提前冻结提交时，最终提交SHA回填M1–M4各行。各次SHA回填均按顶部协议单独提交，回填提交不回填自己的SHA。
 
@@ -318,13 +372,13 @@ V-7沿用既有聚合器的完整ZIP身份验证：`ArchiveEvidence`先核对本
 | --- | --- | --- | --- | --- |
 | 六区历史/最终边界 | 错误时间事实 | 实施者按固定数据+Node±1ms/400年循环，不近似IANA城市 | M1退出 | 路线已核，不阻塞实施 |
 | 证据目录生命周期与并发 | 可能误删/误写 | 实施者保留OutputSlot/Evidence身份保护，真实FS反例；不改事务模块 | M2退出 | 不阻塞实施，局部门必过 |
-| 文本修订不能保证宿主正确 | 事实验收仍可能失败 | V-6原题全新上下文对照，不通过就继续最小修订并作废相关bundle证据 | M4退出 | 不把未来结果当已过 |
-| bundle变化使旧宿主证据不适用 | 收口成本 | D5一次集中各31行并保留原题反例，不擅自放宽D13 | M4 | 已确定范围，无待决 |
+| 文本修订不能保证宿主正确 | 事实验收仍可能失败 | 按§9.3–9.5定界题目、分维度归因及限次复验；无规则缺口时不再改包/轮换模型 | M4退出 | 不把未来结果当已过 |
+| bundle变化使旧宿主证据不适用 | 收口成本 | D5按§9.3一次冻结各31行与原ERD反例；身份/collector不兼容的记录不复用 | M4 | 已确定范围，无待决 |
 | CPU争用/Chrome/CI/配额 | 取证中断 | 沿原计划本机/候选收口负载门、串行浏览器与按失效范围重试；缺资源记录未完成 | M4 | 终验执行风险 |
 | 公开联合发行未授权 | 无法宣称公开可安装 | C-2持续排除，保留guard | 任何公开写入前 | 不阻塞候选 |
 
 - 最终状态：**Ready**。
-- 定级理由：四项follow-up均有PRD或已实现行为依据；六区路线已与固定Node实测，目录/诊断根因和最小接口已追通，ERD规则只具体化现有原则，Reader只补验证。没有产品、权限、数据归属或关键NFR待决。0/4尚未实施，Ready不表示缺口已关闭。
+- 定级理由：四项follow-up均有PRD或已实现行为依据；六区路线已与固定Node实测，目录/诊断根因和最小接口已追通，ERD规则只具体化现有原则，Reader只补验证。没有产品、权限、数据归属或关键NFR待决。M1–M3已完成，M4仍进行中；验收设计可实施，Ready不表示缺口已关闭。
 
 ## 12. 已知坑与历史教训
 
