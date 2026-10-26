@@ -4,6 +4,7 @@
 
 | 任务 ID | 名称 | 入口 |
 | --- | --- | --- |
+| 01a17618-767f-7291-94b9-51b1abaa2c8d | PRD 最终答复漏掉下一步 | [记录](01a17618-767f-7291-94b9-51b1abaa2c8d.md) |
 | 5dd62493-7017-4e84-82e7-fbd5cab75cd9 | context-goal-guard 默认不安装 | [记录](5dd62493-7017-4e84-82e7-fbd5cab75cd9.md) |
 | dbef8d1b-fa3c-4014-85cc-2e39025bcf3f | 验证 skill 生成器增强 | [记录](dbef8d1b-fa3c-4014-85cc-2e39025bcf3f.md) |
 | b5f442b4-5534-487e-bc60-be03aad3022f | dev-plan 融合计划结构校验 | [记录](b5f442b4-5534-487e-bc60-be03aad3022f.md) |
@@ -53,3 +54,5 @@
 - b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d · [use-prompt-dsl 语言规范编写](b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d.md)
 
 - 4d3ffe78-c28e-46e0-82e0-e711996b68fa · [dev-plan 连续实施与验证节奏](4d3ffe78-c28e-46e0-82e0-e711996b68fa.md)
+
+- 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
