@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-26T01:21:46+08:00
+- 最近更新：2026-10-26T11:06:49+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：实施中；Source19已按候选例外冻结21eb0b3，build/npm/pack与实包/静态核验均0；额外两题初装与Root实体ready过，001作者获go在原资源门等待，原十四初装已进执行；尚无新宿主通过或新CI通过
+- 当前状态：实施中；Source19正式58passed/2failed/2未启及两Deepseek对照failed已完整保留。Source20最小措辞和获准UI测试helper修复已应用，build/npm最终/pack均0，新bundle329b128a、NativeSourceInputa459/engine59d459不变。实际新包与安装控制已核，16预检临时安装进行中；作者/正式62/新CI及完整消费待执行；M4未完成
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：推送冻结及本次SHA回填，锁定新远端候选CI并行；完成两仓库和原十四小门，再正式62/同包消费/归档聚合
-- 当前阻塞：本机load高于原启动门，Source19初装审计与作者证据尚未取得；十四门/正式62/同包CI未完成，Source18失败保持、Deepseek选择未答，M4未完成
-- 代码基线：Source19冻结21eb0b3e453bf47054a084051cda1489ece90d92；当前仅计划SHA回填与用户原有工作树改动。dev包VERSION仍实际sourceCommit39b2bc7，sourceInputa45958a2/engine59d45937、新bundle18881489；Source18/Source17/CI8保留但不拼新通过
+- 下一步：按原D12模型先做全新16预检（原十四加两原GLM仓库失败复验），通过后正式62；并行推进新cohort的CI与完整消费，按C-3使用新bundle证据，旧失败保留。全部规定门通过后聚合
+- 当前阻塞：
+- 代码基线：dirty@365aac16aab3bbef565ceefe318c82bc4ba723f2；Source20两MD/自动生成dist及ENGINE/获准UI测试helper待冻结提交，用户原有dirty保持。Native20 VERSION实际sourceCommit365aac1，SourceInputa45958a2/engine59d45937、新bundle329b128a；Source19冻结21eb0b3及旧CI9仅作历史
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-26T01:21:46+08:00 | Source19已冻结21eb0b3，build/npm/pack与Root核验0；额外两题ready、001获go待原门，原十四初装中，push/新CI待执行；M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M4 | 进行中 | 2026-10-26T11:06:49+08:00 | Source19已收齐58过/2失败/2未启；Source20最小修订及测试helper已应用，build/npm/pack过，新bundle329b，真实宿主/新CI/消费待验，M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3 |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
@@ -105,6 +105,8 @@
 | D14 | Workflow最小原生修复 | 可选整图修法仅为未指定高度的目标补足实测箭头间距，完整编译验证后才展示；新合同自动图例仅遇现有净距冲突才下移，并沿既有finalize扩派生画布 | 用户明确允许两处修复；不自动改原输入，不改固定viewBox/pins/旧合同/节点关系/文字字号、质量/停止或Reader策略。先复现红，再核真实render/check与固定几何负例，新引擎及bundle重新取证 | r9 CodeWorkflow原三轮1→1→5交付失败、四次有界私有诊断；用户call_59a33b4b2e5b4456a40a33b3d0c3f512答“允许这两处最小原生修复（推荐）” |
 | D15 | 未知项的比较证据 | 推导比较、极值或排序须由材料已给事实/数值/上下界支持；无法证明全体时明确已有范围，直接给定比较照用且不追加数值追问 | 沿既有不补事实原则作三处最小措辞具体化，已应用于R14；不改触发/授权/质量/停止/schema/renderer/原题/固定模型，不新加每个比例≥或固定词模板；新bundle按C-3全新十四门 | R13 ClWater003卡片称DB124为各子跨度最长，而日志start160且最终时长无上界；独立F1及Root实际原图核对；既有最小修订授权 |
 | D16 | 标题事实与交付位置 | 事实清单明确卡片标题与条目；答复使用回执真实产物路径，允许对本次工作目录有效的相对路径，不裁前缀冒充绝对路径 | 沿现有不补事实及返回产物位置合同作三MD五行补充，已在R15保全后应用R16；官方build/npm/pack及实包核验过、初装中。不增加绝对路径格式门、材料/步骤/配额，不改调用授权、质量停止、schema/native、原题或固定模型；新bundle仍须全新十四门 | R15 ClWorkflow三条唯一产物路径均错误；ClArchitecture卡片标题补“同步入口/异步通知”。Root已读原题、candidate、完整final及实际原图；既有最小修订授权 |
+| D17 | 既有资料、修复和源码条件约束 | 资料搜索遵守已授权范围，固定CLI不擅加env前缀；修复前实际补齐失败诊断并保留可回读逐门计数；沿调用实参和禁用开关核条件 | 用户选择收齐冻结轮后集中最小修复；Source20只改SKILL/docs六现有段，description/defaults、调用授权原则、schema/native、质量与停止2阈值、原题和D12模型保持。原十四预检加两原GLM仓库失败复验，再正式62，共78项目；新bundle全部行为重取 | Source19正式008实际读实现、015真实命令/权限/记录失败；用户选择的同包Deepseek两仓库分别暴露失败诊断读取/记录及条件校验无条件化，均保留failed；M4当前Source20记录 |
+| D18 | 测试辅助stdin早退 | 只在测试helper忽略早退子进程的EPIPE，其他stdin错误仍reject；真实退出码和输出断言保持 | 用户明确“容易修就顺便修掉”；仅test/phoenix-ui/bootstrap.test.js，1MiB输入稳定复现原红，再helper绿。Phoenix UI产品/协议/引擎不改，NativeSourceInput实核不变，19局部与最终npm全套通过 | Source20首轮npm的既有UI测试EPIPE；原helper无stdin error监听；确定性红exit1、绿19/19及最终473pass/23既有skip，见M4记录 |
 
 D1 是局部可逆选择：直接六区专用历史表与规则比引入完整ICU时间栈局部，且不改变已有API/依赖。两者均能精确实现；本次只缺六区，后者会扩大数据、构建与许可面。未来确有更多ICU专属规则时再评估完整库。D2保留现有 Evidence/OutputSlot，不引入新的目录管理框架。
 
@@ -154,8 +156,9 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | tools/phoenix-diagram/src/layout/architecture/presentation.rs及必要直接架构调用方；tests/architecture.rs、tests/render_source.rs（后两者相对工具目录） | D7获授权的自动wrap标题避让；锁原节点与显式路径，原参考JSON/oracle只读，只替换该已修标题的旧坐标断言，其余原回归保持 |
 | tools/phoenix-diagram/src/layout/workflow.rs、src/layout/workflow/measure.rs、tests/workflow.rs及必要新回归fixture（后三者相对工具目录） | D14获授权的可选整图修法与自动图例净距避让；保留固定几何/旧合同/原oracle、实际字号及全部业务事实，只补实际红测试和必要边界 |
 | skills/phoenix-diagram/ENGINE.json；dist/phoenix-diagram/ | 通过既有build --sync-dist生成，不手写身份 |
+| test/phoenix-ui/bootstrap.test.js | D18仅测试helper的早退stdin EPIPE处理及大输入回归，保留CLI退出码/输出断言；不改Phoenix UI产品 |
 
-不修改Cargo依赖、输入schema、D7/D14以外的其他renderer、Phoenix UI、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
+不修改Cargo依赖、输入schema、D7/D14以外的其他renderer、Phoenix UI产品、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
 
 ## 2. 模块与接口
 
@@ -259,7 +262,7 @@ production-deployment的postgres→replica为显式orthogonal-v，保留原四�
 | 宿主补规则或先图后问 | 当前作者交付 | 保留原会话，事实验收失败 | 不记完整语义通过 | 材料→断言账本 | 修规则后全新会话，不回写历史passed | V-6 |
 | 新bundle沿用旧宿主记录 | 新候选 | 无产品数据变化 | 聚合不得收口 | bundle/引擎/会话身份 | 新包重新采集，不扩D13 | V-7 |
 
-发布顺序：M1–M3局部通过→冻结引擎/skill→M4开发包与本机收口/宿主→同源四平台候选→本机同tgz闭环/聚合。开发包构建、metadata与实包Root核验通过后，本机初装或宿主等待原资源门时，可并行远端候选构建与独立取证；Source17和Source19均按此调度。只调整调度，十四门通过后才准备正式62、V-6/V-7的全部退出条件和最终同包聚合顺序不变。沿原计划候选收口独立候选分支和既有授权范围，不推main、不运行npm/R2发布、不改活跃安装。
+发布顺序：M1–M3局部通过→冻结引擎/skill→M4开发包与本机收口/宿主→同源四平台候选→本机同tgz闭环/聚合。开发包构建、metadata与实包Root核验通过后，本机初装或宿主等待原资源门时，可并行远端候选构建与独立取证；Source17和Source19均按此调度。Source19十四门及全76初装审计实际通过后，按Code-only当前鲜度/Root-ready先执行Code31；Claude除两仓库外的29项直接沿formal创建前已登记的原D12路线，独立当前核验/Root-ready后用Code释放的作者名额接续，最多两作者。两仓库继续待用户明确模型选择，不从其余正式结果挑模型、不执行未获准覆盖路线。原全76的全62-fresh仅作初装历史，不回判已用Code或Claude为fresh。只调整调度，十四门通过后才准备正式62、V-6/V-7的全部退出条件和最终同包聚合顺序不变。沿原计划候选收口独立候选分支和既有授权范围，不推main、不运行npm/R2发布、不改活跃安装。
 
 回滚是撤销本计划代码/生成文件，保留旧候选及独立HTML；没有数据库迁移。新证据/旧证据均独立留存，不通过删除旧文件伪造恢复。回退后六区缺口与旧失败行为重新存在，不能记本计划验收完成。
 
