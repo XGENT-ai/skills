@@ -53,16 +53,16 @@
 - 最近完成：M2 · 准确浏览器失败状态与回执
 - 下一步：按原D12模型先做全新16预检（原十四加两原GLM仓库失败复验），通过后正式62；并行推进新cohort的CI与完整消费，按C-3使用新bundle证据，旧失败保留。全部规定门通过后聚合
 - 当前阻塞：
-- 代码基线：dirty@365aac16aab3bbef565ceefe318c82bc4ba723f2；Source20两MD/自动生成dist及ENGINE/获准UI测试helper待冻结提交，用户原有dirty保持。Native20 VERSION实际sourceCommit365aac1，SourceInputa45958a2/engine59d45937、新bundle329b128a；Source19冻结21eb0b3及旧CI9仅作历史
+- 代码基线：Source20冻结3263cf6；两MD/自动生成dist及ENGINE/获准UI测试helper已提交，用户原有dirty保持。Native20 VERSION实际sourceCommit365aac1，SourceInputa45958a2/engine59d45937、新bundle329b128a；Source19冻结21eb0b3及旧CI9仅作历史
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M4 | 进行中 | 2026-10-26T11:06:49+08:00 | Source19已收齐58过/2失败/2未启；Source20最小修订及测试helper已应用，build/npm/pack过，新bundle329b，真实宿主/新CI/消费待验，M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
-| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3 |
-| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
-| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3 |
+| M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6 |
+| M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6 |
+| M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6 |
 
 ## 0. 需求、范围与决策
 
