@@ -1,0 +1,732 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-p2-provider-scenarios",
+  "version": "acceptance-v2",
+  "rows": [
+    {
+      "id": "intent-architecture",
+      "version": "original-v1",
+      "prompt": "请把下面的订单系统画成一张可探索的组件关系图，交给产品与工程同事阅读。浏览器通过 HTTPS 调用 API Gateway；Gateway 将订单请求交给 Order Service，将支付请求交给 Payment Service。Order Service 写 PostgreSQL、读写 Redis，并向 Event Queue 发布 OrderCreated；Worker 从队列取消息后调用 Email Service。支付服务只调用外部 Payment Gateway，不直接访问订单数据库。请保留这些组件、方向和协议标签。\n",
+      "promptIdentity": {
+        "sha256": "63541e17a3db147af370e30b33a78f6e7d93dbe73d759e9702c36ce3e960c424",
+        "bytes": 500
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "63541e17a3db147af370e30b33a78f6e7d93dbe73d759e9702c36ce3e960c424",
+          "bytes": 500
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-architecture.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-workflow",
+      "version": "original-v1",
+      "prompt": "以下是虚构的代码变更审批流程，用于流程图验收，不代表任何实际组织制度。\n请把代码变更申请过程画清楚。提交者提交变更和测试说明；维护者检查材料，缺材料退回提交者补充后重提。材料齐全进入负责人审批。风险方案已确认且涉及文件不超过10个的，由负责人批准后合并；其余先交安全审查员复核，复核拒绝则回到负责人重新确认，复核通过后合并。负责人重新确认后，再次交安全审查员复核。提交者可在合并前撤回。\n文中所有合并动作均由维护者执行。\n",
+      "promptIdentity": {
+        "sha256": "f58a9937dbfb5b6c11a3abad2ea8efe5d3583a32773f1927ae5a5780e10ec55a",
+        "bytes": 623
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "f58a9937dbfb5b6c11a3abad2ea8efe5d3583a32773f1927ae5a5780e10ec55a",
+          "bytes": 623
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-workflow.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-sequence",
+      "version": "original-v1",
+      "prompt": "请画一张支付请求的调用过程图。Client 同步调用 Checkout API 的 POST /checkout，API 同步请求 Payment Gateway 扣款；Gateway 返回 paymentId 和 accepted；API 随后向 Event Queue 异步发送 PaymentAccepted，并向 Client 返回 HTTP 202。Worker 消费该事件后异步调用 Notification Service 发通知。请区分请求、返回和异步消息，保留全部参与者。\n",
+      "promptIdentity": {
+        "sha256": "9327801d406e1206f12df23c9b44f1e20ee8c2e7e6a7e899ea811a1db3aa5578",
+        "bytes": 408
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "9327801d406e1206f12df23c9b44f1e20ee8c2e7e6a7e899ea811a1db3aa5578",
+          "bytes": 408
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-sequence.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-dataflow",
+      "version": "original-v1",
+      "prompt": "请解释销售数据怎样进入报表。Sales CSV 和 Refunds CSV 分别进入 Landing Store；Validation Job 校验列名和货币代码，错误记录写入 Reject Store，正确记录进入 Clean Tables；Daily Aggregator 按 UTC 自然日汇总，写入 Metrics Warehouse；BI Dashboard 和 Finance Export 分别读取汇总结果。保留两种输入、错误分流和两个消费端。\n",
+      "promptIdentity": {
+        "sha256": "af5f620d162276e08b30557306454066e4e88f544073bc28a23b322a1eb45779",
+        "bytes": 394
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "af5f620d162276e08b30557306454066e4e88f544073bc28a23b322a1eb45779",
+          "bytes": 394
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-dataflow.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-lifecycle",
+      "version": "original-v1",
+      "prompt": "请画出后台任务的状态变化。任务从 Created 进入 Waiting；调度成功进入 Running，资源暂缺留在 Waiting。Running 完成后到 Succeeded，执行错误到 Failed；Failed 经人工 Retry 回到 Waiting。用户可从 Waiting 或 Running 取消到 Cancelled。Succeeded 和 Cancelled 是终态。请保留等待、自循环和恢复路径。\n",
+      "promptIdentity": {
+        "sha256": "c99c49f51a622498193b675a5245c16c632e7ad501d811c7168f0f4fda33dc6a",
+        "bytes": 367
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "c99c49f51a622498193b675a5245c16c632e7ad501d811c7168f0f4fda33dc6a",
+          "bytes": 367
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-lifecycle.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-flowchart",
+      "version": "original-v1",
+      "prompt": "请把这段已有 Mermaid 转成可探索的独立图解，保留每条条件、退回和重试。\n```mermaid\nflowchart TD\n  A[接收申请] --> B{资料齐全?}\n  B -->|否| C[补充资料]\n  C --> A\n  B -->|是| D{预算已批准?}\n  D -->|否| E[申请预算]\n  E --> D\n  D -->|是| F[完成审批]\n```\n",
+      "promptIdentity": {
+        "sha256": "0c16624839be9994ec8928ce0ac87e87f093a4eaf7d06e3609bd1f24da8dda56",
+        "bytes": 307
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "0c16624839be9994ec8928ce0ac87e87f093a4eaf7d06e3609bd1f24da8dda56",
+          "bytes": 307
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-flowchart.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-graph",
+      "version": "original-v1",
+      "prompt": "请整理这份服务连接图，保留外部支付边界和失败回路。\n```mermaid\ngraph LR\n  Web[Web Client] -->|HTTPS| API[Order API]\n  API -->|SQL| DB[(Order DB)]\n  API -->|Payment| Pay[External Payment Gateway]\n  Pay -->|Rejected| Retry[Payment Retry]\n  Retry --> API\n  Pay -->|Accepted| Done[Receipt]\n```\n",
+      "promptIdentity": {
+        "sha256": "161938dddd8cee9c4c807fa863cbec824e9488e61ed96319486f3242f9e016c4",
+        "bytes": 314
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "161938dddd8cee9c4c807fa863cbec824e9488e61ed96319486f3242f9e016c4",
+          "bytes": 314
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-graph.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-sequence",
+      "version": "original-v1",
+      "prompt": "请将下面的 Mermaid 转成独立可交付图解，不能把返回或异步消息并进普通调用。\n```mermaid\nsequenceDiagram\n  participant C as Client\n  participant A as API\n  participant P as Payment Gateway\n  participant Q as Event Queue\n  participant W as Worker\n  C->>A: POST /checkout\n  A->>P: Authorize\n  P-->>A: paymentId, accepted\n  A-)Q: PaymentAccepted (async)\n  A-->>C: HTTP 202\n  Q-)W: Deliver PaymentAccepted (async)\n```\n",
+      "promptIdentity": {
+        "sha256": "57dfa74e7b21fad014e2c2521c2fc913a91ea9f76f3a20dac2c5d869608a5b71",
+        "bytes": 442
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "57dfa74e7b21fad014e2c2521c2fc913a91ea9f76f3a20dac2c5d869608a5b71",
+          "bytes": 442
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-sequence.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-state",
+      "version": "original-v1",
+      "prompt": "请把这份状态说明转换为独立交互图，保留等待、失败恢复和终态。\n```mermaid\nstateDiagram-v2\n  [*] --> Created\n  Created --> Waiting: Queued\n  Waiting --> Waiting: Capacity unavailable\n  Waiting --> Running: Scheduled\n  Running --> Failed: Execution error\n  Failed --> Waiting: Retry approved\n  Running --> Succeeded: Finished\n  Waiting --> Cancelled: Cancel requested\n  Succeeded --> [*]\n  Cancelled --> [*]\n```\n",
+      "promptIdentity": {
+        "sha256": "4b01cf4723dc065f1672aae9873526401bd1a73a9b804cd093751170ff75f260",
+        "bytes": 438
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "4b01cf4723dc065f1672aae9873526401bd1a73a9b804cd093751170ff75f260",
+          "bytes": 438
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-state.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "missing-date",
+      "version": "original-v1",
+      "prompt": "我需要向团队展示下月上线流程：内测、灰度、全量、复盘，必须在图上标清每一步的具体开始与截止日期。请依据这些材料制作；材料目前只有上述阶段和先后顺序。\n",
+      "promptIdentity": {
+        "sha256": "ab661d6abccb5e4b77ed657596cd9aff4622ed3afd2471c97b704fbca1d55de8",
+        "bytes": 223
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "ab661d6abccb5e4b77ed657596cd9aff4622ed3afd2471c97b704fbca1d55de8",
+          "bytes": 223
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/missing-date.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "missing-amount",
+      "version": "original-v1",
+      "prompt": "请画采购审批规则：低金额经理签字，高金额财务签字，超预算还需负责人批准。我需要图中标明各档金额和币种。但现有材料没有具体金额阈值或币种，也没有对应的制度文件。\n",
+      "promptIdentity": {
+        "sha256": "02c7f738141954626d2704db41eefad43032225712d3d76effa1daba63312f74",
+        "bytes": 238
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "02c7f738141954626d2704db41eefad43032225712d3d76effa1daba63312f74",
+          "bytes": 238
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/missing-amount.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "missing-condition",
+      "version": "original-v1",
+      "prompt": "请画账号恢复过程：提交申请后系统判断，通过则恢复，未通过则人工复核；人工复核还可能退回重提。材料没有说明系统判断通过的条件、人工复核接受的条件，以及什么情况下退回。请根据这些资料处理。\n",
+      "promptIdentity": {
+        "sha256": "d8db8ab0f98e9f4e8212d04ae43884339e8412a33bbd535d63e6003f69f6e48f",
+        "bytes": 277
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "d8db8ab0f98e9f4e8212d04ae43884339e8412a33bbd535d63e6003f69f6e48f",
+          "bytes": 277
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/missing-condition.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "repairable-diagnostic",
+      "version": "original-v1",
+      "prompt": "现有 input.json 未能正常交付。请保留其业务实体、所有关系和文字，依据实际工具诊断修复允许调整的布局，再按技能说明交接；不要通过删内容绕过问题。\n",
+      "promptIdentity": {
+        "sha256": "4b66af223b6a22f679de02e47f1324cf5bf541254489342273eaccdb509bf84d",
+        "bytes": 208
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "4b66af223b6a22f679de02e47f1324cf5bf541254489342273eaccdb509bf84d",
+          "bytes": 208
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/repairable-diagnostic.txt"
+      },
+      "materials": [
+        {
+          "name": "input.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Request service\",\n    \"output\": \"diagram.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Client\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Service\",\n      \"row\": 0,\n      \"col\": 0\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Request\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "7ba4e8f44d9ad7556709554fa0abebfa951a492215d58314220becff372234d0",
+            "bytes": 670
+          },
+          "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/materials/repairable-diagnostic/input.json"
+        }
+      ]
+    },
+    {
+      "id": "stalled-repair",
+      "version": "original-v1",
+      "prompt": "请继续处理给定 input.json。约束见 constraints.txt：其中列出的业务事实、必要文字和固定几何必须保留。只在授权的布局范围内尝试改善；若仍无法解决，请清楚说明卡住的项目和目前能交付的文件。\n",
+      "promptIdentity": {
+        "sha256": "28491227a40d3c10a3531c00abcf1edbbd6c0f633b0d010f74a7b0a0d01ae58e",
+        "bytes": 262
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "28491227a40d3c10a3531c00abcf1edbbd6c0f633b0d010f74a7b0a0d01ae58e",
+          "bytes": 262
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/stalled-repair.txt"
+      },
+      "materials": [
+        {
+          "name": "input.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Request service\",\n    \"output\": \"diagram.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\",\n    \"viewBox\": [\n      640,\n      320\n    ]\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Client\",\n      \"pos\": [\n        80,\n        80\n      ],\n      \"size\": [\n        180,\n        90\n      ]\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Service\",\n      \"pos\": [\n        380,\n        80\n      ],\n      \"size\": [\n        180,\n        90\n      ]\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Request\",\n      \"fromSide\": \"right\",\n      \"toSide\": \"left\",\n      \"labelAt\": [\n        170,\n        125\n      ]\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "ab898ee9f93470b6d692834357582139caefc4be20bc538ce013ee6c79463552",
+            "bytes": 895
+          },
+          "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/materials/stalled-repair/input.json"
+        },
+        {
+          "name": "constraints.txt",
+          "content": "业务事实：Client 向 Service 发送 Request；保留这两个实体、方向和全部现有文字。\n模板固定：meta.viewBox=[640,320]；Client.pos=[80,80]、size=[180,90]；Service.pos=[380,80]、size=[180,90]。不得改变上述坐标、尺寸、字段类型、input_contract、quality_profile、必要文字和关系端点。\n标注槽固定：Request 的 labelAt.y=125；labelAt.x 只允许在闭区间[170,172]内作局部调整；不得取消labelAt或用labelDx/labelDy、增加节点、改变字号、隐藏或移除标签来绕开标注槽。除此之外无布局修改授权。\n\n工作请求：请先取得原配置的实际诊断，再比较两种不同的授权标注位置，每次只改一个局部位置参数。不要扩大模板修改范围；若仍无法交付，请说明实际诊断、需重新确认的模板约束和能保留的文件。\n",
+          "identity": {
+            "sha256": "1959fb2aafb361c03ef2e85d3c43cd7069ac58ee199ef2ea02e08ad276f30883",
+            "bytes": 870
+          },
+          "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/materials/stalled-repair/constraints.txt"
+        }
+      ]
+    },
+    {
+      "id": "browser-unavailable",
+      "version": "original-v1",
+      "prompt": "请把这段售后流程制成独立可探索的图解并交接：客户提交工单，客服确认；资料不足则回客户补充，确认后交工程师处理，处理完成由客服通知客户。请如实说明实际完成的结果和仍缺的环节。\n",
+      "promptIdentity": {
+        "sha256": "b16b71fd65b8d54fc539ad6243e6d1b625bb6164d48a99c56bf9d5ba9776c136",
+        "bytes": 259
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "b16b71fd65b8d54fc539ad6243e6d1b625bb6164d48a99c56bf9d5ba9776c136",
+          "bytes": 259
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/browser-unavailable.txt"
+      },
+      "materials": [],
+      "sandboxProfile": {
+        "content": "(version 1)\n(allow default)\n(deny file-read*\n  (subpath \"/Applications/Google Chrome.app\")\n  (subpath \"/Users/rockie/Applications/Google Chrome.app\")\n  (subpath \"/Applications/Google Chrome Canary.app\")\n  (subpath \"/Users/rockie/Applications/Google Chrome Canary.app\")\n  (subpath \"/Applications/Chromium.app\")\n  (subpath \"/Users/rockie/Applications/Chromium.app\")\n)\n",
+        "identity": {
+          "sha256": "39b37ccd203e3d869246314d9a52cc6584200cc238624ba6046dd0750dc3e0c4",
+          "bytes": 366
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/profiles/browser-unavailable.sb"
+      }
+    },
+    {
+      "id": "browser-failed",
+      "version": "original-v1",
+      "prompt": "请画文件处理服务的组件连接并交接：Uploader 将文件写入 Object Store 并向 Work Queue 发送任务；Processor 从队列取任务、读取文件、把结果写入 Result Store；Portal 读取结果供用户查看。保持这些边的方向和组件名称。\n",
+      "promptIdentity": {
+        "sha256": "bc950722e1b150a72295249169e8e028a5e87c31ace5afcd1d8379fbec14ab3d",
+        "bytes": 279
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "bc950722e1b150a72295249169e8e028a5e87c31ace5afcd1d8379fbec14ab3d",
+          "bytes": 279
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/browser-failed.txt"
+      },
+      "materials": [],
+      "env": {
+        "PHOENIX_DIAGRAM_BROWSER": "/usr/bin/false"
+      }
+    },
+    {
+      "id": "visual-pending",
+      "version": "original-v1",
+      "prompt": "请把本次账号申请流程做成独立图解：申请人提交，主管确认；未通过则结束，通过后管理员开通并通知申请人。请先完成工具的自动检查并交给我候选和 HTML；截图由我下一步审阅，暂不替我登记视觉审核。\n",
+      "promptIdentity": {
+        "sha256": "313b19fb2a41c6dd86fac6323c9deb3c2a750263827fa193549a31b66e314876",
+        "bytes": 276
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "313b19fb2a41c6dd86fac6323c9deb3c2a750263827fa193549a31b66e314876",
+          "bytes": 276
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/visual-pending.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "legacy-lifecycle",
+      "version": "original-v1",
+      "prompt": "项目里有一份已存在的图解配置 input.json。请保留其中全部实体、关系、标签、固定几何及原有合同，不擅自升级或改写输入，按所安装技能的正常交付流程生成可交接的独立 HTML。若失败，明确说明实际诊断与能保留的文件。\n",
+      "promptIdentity": {
+        "sha256": "bde0a3519b63cc6454d2d4d4b394bd6447d98f047586d606d12a64e34c0e7e18",
+        "bytes": 299
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "bde0a3519b63cc6454d2d4d4b394bd6447d98f047586d606d12a64e34c0e7e18",
+          "bytes": 299
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/legacy-lifecycle.txt"
+      },
+      "materials": [
+        {
+          "name": "input.json",
+          "packageMember": "skills/archify/examples/deployment-release.lifecycle.json",
+          "identity": {
+            "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+            "bytes": 4274
+          }
+        }
+      ]
+    },
+    {
+      "id": "intent-erd",
+      "version": "original-v1",
+      "prompt": "请把我们订单库的表结构画出来，给新同事看懂表之间怎么关联：\n- customer：id bigint 主键；email varchar(255) 唯一；created_at timestamptz。\n- orders：id bigint 主键；customer_id bigint 非空，引用 customer.id；status varchar(32)；placed_at timestamptz。\n- order_item：order_id bigint，引用 orders.id；sku varchar(64)，引用 product.sku；两列共同作为主键；qty integer；unit_price numeric(12,2)。\n- product：sku varchar(64) 主键；title text。\n一个客户可以没有订单，也可以有多个订单；每个订单至少有一行明细；每行明细对应一个商品，一个商品可以没有明细，也可出现在多行明细里。\n",
+      "promptIdentity": {
+        "sha256": "b791b736bb2787350ca6ae735577f8b35f569e38954e9f5b20fb545f8aa844a8",
+        "bytes": 706
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "b791b736bb2787350ca6ae735577f8b35f569e38954e9f5b20fb545f8aa844a8",
+          "bytes": 706
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-erd.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-class",
+      "version": "original-v1",
+      "prompt": "请用一张图说明支付模块的类型关系：PaymentProcessor 是接口，有 authorize(amount: Money): AuthResult 和 capture(authId: String): void 两个方法；CardProcessor 和 WalletProcessor 都实现这个接口，其中 CardProcessor 有私有字段 gateway: GatewayClient。Checkout 类拥有一个 Cart，Cart 随 Checkout 一起创建和销毁；Checkout 调用 PaymentProcessor 完成支付；Cart 包含多个 LineItem，LineItem 可以脱离 Cart 单独存在。\n",
+      "promptIdentity": {
+        "sha256": "ad7ce3fcec3c8df8da4defa70e39a5c3ab45ee2a56146d3e1a59b7922b286cda",
+        "bytes": 484
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "ad7ce3fcec3c8df8da4defa70e39a5c3ab45ee2a56146d3e1a59b7922b286cda",
+          "bytes": 484
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-class.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-tree",
+      "version": "original-v1",
+      "prompt": "请把我们技术平台的能力拆分画出来：技术平台下分基础设施、数据、应用三块；基础设施包括计算、存储、网络；数据包括采集、数据仓库、报表；应用包括门户、移动端、开放 API。\n",
+      "promptIdentity": {
+        "sha256": "5166e7e3ef1468287a89ce8df0d99e8404dc954e39430b4fd01d972a1d3cc8b0",
+        "bytes": 245
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "5166e7e3ef1468287a89ce8df0d99e8404dc954e39430b4fd01d972a1d3cc8b0",
+          "bytes": 245
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-tree.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-timeline",
+      "version": "original-v1",
+      "prompt": "请根据值班记录把昨晚的支付故障过程做成时间线，时间都是北京时间，分“监控”和“值班”两条线：2026-10-19 21:02 监控告警：支付成功率跌到 92%；21:05 值班确认故障；21:18 值班回滚到 v3.4.1；21:26 监控显示成功率恢复到 99.5%；21:40 值班宣布故障结束。\n",
+      "promptIdentity": {
+        "sha256": "413324af353ef685aac2822a8895949129a27374f1e297af375ebe9b3f8600ce",
+        "bytes": 335
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "413324af353ef685aac2822a8895949129a27374f1e297af375ebe9b3f8600ce",
+          "bytes": 335
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-timeline.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "intent-waterfall",
+      "version": "original-v1",
+      "prompt": "下面是 trace 里一次 GET /orders/42 请求的跨度（单位毫秒，从请求开始计时）：整个请求 0 到 180；鉴权 2 到 20；查缓存 21 到 25，未命中；查数据库 26 到 150；序列化 151 到 172；写访问日志从 160 开始，trace 截止时还没有结束。鉴权、查缓存、查数据库、序列化和写日志都属于这次请求。请画出时间都花在了哪里。\n",
+      "promptIdentity": {
+        "sha256": "a35e703b58471202a0c5386de0587462089b1e558ee2d37fe2cb73b2363f35b6",
+        "bytes": 411
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "a35e703b58471202a0c5386de0587462089b1e558ee2d37fe2cb73b2363f35b6",
+          "bytes": 411
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/intent-waterfall.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-er",
+      "version": "original-v1",
+      "prompt": "请把下面的 Mermaid 转成可交付的图解，保留全部实体、字段、键和关系两端的基数：\n```mermaid\nerDiagram\n  AUTHOR ||--o{ BOOK : writes\n  BOOK ||--|{ EDITION : \"published as\"\n  PUBLISHER |o--o{ EDITION : prints\n  AUTHOR {\n    bigint id PK\n    varchar name\n  }\n  BOOK {\n    bigint id PK\n    bigint author_id FK\n    varchar title\n  }\n  EDITION {\n    bigint id PK\n    bigint book_id FK\n    bigint publisher_id FK\n    date published_on\n  }\n  PUBLISHER {\n    bigint id PK\n    varchar name UK\n  }\n```\n",
+      "promptIdentity": {
+        "sha256": "91f0ac9901de111b8d5741866dcbabfb8c302f77f37bb21bc83c8e992b0f1ec3",
+        "bytes": 522
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "91f0ac9901de111b8d5741866dcbabfb8c302f77f37bb21bc83c8e992b0f1ec3",
+          "bytes": 522
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-er.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "mermaid-class",
+      "version": "original-v1",
+      "prompt": "请把下面的 Mermaid 类图转成可交付的图解，保留类型种类、成员和关系种类：\n```mermaid\nclassDiagram\n  class Notifier {\n    <<interface>>\n    +send(message: Message) bool\n  }\n  class EmailNotifier {\n    -smtp: SmtpClient\n    +send(message: Message) bool\n  }\n  class SmsNotifier {\n    +send(message: Message) bool\n  }\n  class NotificationService {\n    -queue: Queue~Message~\n    +dispatch(message: Message) void\n  }\n  Notifier <|.. EmailNotifier\n  Notifier <|.. SmsNotifier\n  NotificationService o-- Notifier\n  NotificationService ..> Message\n  class Message {\n    +to: String\n    +body: String\n  }\n```\n",
+      "promptIdentity": {
+        "sha256": "92e3efab9ac7f517903f379808d6a3acc3dc411e3cf720dc1ff14315666026ba",
+        "bytes": 628
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "92e3efab9ac7f517903f379808d6a3acc3dc411e3cf720dc1ff14315666026ba",
+          "bytes": 628
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/mermaid-class.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "repo-verified",
+      "version": "main-v2",
+      "prompt": "仓库`{{REPO}}`已检出在固定提交。请解释从已安装skill入口执行普通命令`doctor --json`时，如何找到、校验并启动原生引擎，画成一张供评审使用的图，主要步骤对应具体源码行。前提是cwd就是已有合法安装回执的项目根，缓存引擎已存在；只解释这条正常路径。帮助/版本、显式引擎安装、升级、目录回退和异常恢复另有专项，不要求展开。只看直接相关文件，答复简短；这里只作源码解释，不执行被解释仓库的命令。\n",
+      "promptIdentity": {
+        "sha256": "085762fbd65fe895f9f0f90914d327481590df49ffb7c395cf54960534ac59a8",
+        "bytes": 554
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "a234ddcd75981fd4005c7fec173162c1377f2e1c6fd42c3006dd6281026002d7",
+          "bytes": 329
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/repo-verified.txt",
+        "prompt": "仓库 {{REPO}} 已检出在一个固定提交上。请解释其中 skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs 在执行命令前如何找到、校验并启动原生引擎，画成一张图给评审用；图上的主要步骤要能对回源码的具体行。只看和这个脚本直接相关的文件，答复简短。\n"
+      },
+      "materials": [],
+      "repo": {
+        "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+        "origin": "https://github.com/XGENT-ai/skills.git",
+        "checkout": "detached",
+        "readOnly": true,
+        "dirtyPath": null,
+        "dirtyAppend": null
+      }
+    },
+    {
+      "id": "repo-dirty",
+      "version": "main-v2",
+      "prompt": "仓库`{{REPO}}`是本地工作副本。请解释`bin/phoenix-diagram.js`与`skills/phoenix-diagram/scripts/phoenix-launcher.cjs`分别接收普通命令`doctor --json`后如何交给已安装引擎，画成一张图，标出具体源码行。前提同上，只比较两入口的参数/配置、校验与交接正常路径；不展开帮助/版本、显式安装、升级或目录回退。另按实际来源核验说明未提交修改的影响，答复简短；不执行被解释仓库的命令。\n",
+      "promptIdentity": {
+        "sha256": "c9a8c26fb37f5070d736a27c89456de7db26c2759968c0651168a87aebbc08ca",
+        "bytes": 498
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "c39ef8d0d999a7d316efd9520e94ffaeb52b9155ca99712891ee891ea9676867",
+          "bytes": 277
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/repo-dirty.txt",
+        "prompt": "仓库 {{REPO}} 是我本地的工作副本。请解释 bin/phoenix-diagram.js 与 skills/phoenix-diagram/scripts/phoenix-launcher.cjs 如何把用户命令交给安装好的图解引擎，画成一张图；图上的主要步骤要能对回源码的具体行，答复简短。\n"
+      },
+      "materials": [],
+      "repo": {
+        "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+        "origin": "https://github.com/XGENT-ai/skills.git",
+        "checkout": "detached",
+        "readOnly": true,
+        "dirtyPath": "skills/phoenix-diagram/scripts/phoenix-launcher.cjs",
+        "dirtyAppend": "\n// Local experiment: not committed.\n"
+      }
+    },
+    {
+      "id": "repo-timeline",
+      "version": "original-v1",
+      "prompt": "仓库 {{REPO}} 已检出在一个固定提交上。请根据其中 docs/plan/PHOENIX-DIAGRAM-P1.md 的调查基线和各里程碑完成记录，做一条 P1 从开始调查到各里程碑完成的时间线；每个事件要能对回记录所在的文件和行。\n",
+      "promptIdentity": {
+        "sha256": "743fa773ec7dc1865ef1a5e97c2b18702c411c4a35f40505c1a5288d919ed0c5",
+        "bytes": 264
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "743fa773ec7dc1865ef1a5e97c2b18702c411c4a35f40505c1a5288d919ed0c5",
+          "bytes": 264
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/repo-timeline.txt"
+      },
+      "materials": [],
+      "repo": {
+        "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+        "origin": "https://github.com/XGENT-ai/skills.git",
+        "checkout": "detached",
+        "readOnly": true,
+        "dirtyPath": null,
+        "dirtyAppend": null
+      }
+    },
+    {
+      "id": "waterfall-illustrative",
+      "version": "original-v1",
+      "prompt": "我想给新人讲一次网页请求的时间大致花在哪：经过网关、鉴权、查询数据库、渲染页面，最后返回。我们手头没有任何 trace 或监控数据，各步按常见情况大概给个毫秒数就行，画成一张图。\n",
+      "promptIdentity": {
+        "sha256": "d7d065edcee9abda1e7295d46f6191ce31c33d6ba9dcc4b18ce33908a7d33da4",
+        "bytes": 254
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "d7d065edcee9abda1e7295d46f6191ce31c33d6ba9dcc4b18ce33908a7d33da4",
+          "bytes": 254
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/waterfall-illustrative.txt"
+      },
+      "materials": []
+    },
+    {
+      "id": "reference-31-json",
+      "version": "original-v1",
+      "prompt": "项目里的 workflow.json 是我们以前用 Archify 3.1 导出的工作流图解数据。请直接用它生成可交付的独立 HTML，原文件不要改动。\n",
+      "promptIdentity": {
+        "sha256": "a4a13f5df24e655139e511100f59422a9c6206c42b7151f66cc7cbe5487c6932",
+        "bytes": 163
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "a4a13f5df24e655139e511100f59422a9c6206c42b7151f66cc7cbe5487c6932",
+          "bytes": 163
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/reference-31-json.txt"
+      },
+      "materials": [
+        {
+          "name": "workflow.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"workflow\",\n  \"meta\": {\n    \"title\": \"Incident Response Runbook\",\n    \"output\": \"examples/incident-response.html\",\n    \"animation\": \"trace\",\n    \"visual_preset\": \"signal-flow\",\n    \"quality_profile\": \"showcase\"\n  },\n  \"lanes\": [\n    { \"id\": \"signals\", \"label\": \"Signals\" },\n    { \"id\": \"responders\", \"label\": \"Incident Command\" },\n    { \"id\": \"mitigation\", \"label\": \"Service Mitigation\" },\n    { \"id\": \"recovery\", \"label\": \"Recovery Evidence\" },\n    { \"id\": \"communication\", \"label\": \"Stakeholder Communication\" },\n    { \"id\": \"exceptions\", \"label\": \"Escalation + Rollback\", \"variant\": \"exception\" }\n  ],\n  \"phases\": [\n    { \"id\": \"detect\", \"label\": \"Detect\", \"fromCol\": 0, \"toCol\": 1 },\n    { \"id\": \"respond\", \"label\": \"Triage + mitigate\", \"fromCol\": 2, \"toCol\": 3, \"variant\": \"emphasis\" },\n    { \"id\": \"recover\", \"label\": \"Verify + close\", \"fromCol\": 4, \"toCol\": 5, \"variant\": \"dashed\" }\n  ],\n  \"groups\": [\n    { \"id\": \"command\", \"label\": \"Incident command\", \"lane\": \"responders\", \"fromCol\": 1, \"toCol\": 3, \"variant\": \"emphasis\" },\n    { \"id\": \"exception_actions\", \"label\": \"If impact persists\", \"lane\": \"exceptions\", \"fromCol\": 3, \"toCol\": 5, \"variant\": \"security\" }\n  ],\n  \"mainPath\": [\"alert\", \"page\", \"triage\", \"contain\", \"recover\", \"verify\", \"close\"],\n  \"nodes\": [\n    { \"id\": \"alert\", \"lane\": \"signals\", \"col\": 0, \"type\": \"messagebus\", \"label\": \"SLO Alert\", \"sublabel\": \"burn rate\" },\n    { \"id\": \"page\", \"lane\": \"responders\", \"col\": 1, \"width\": 76, \"type\": \"external\", \"label\": \"Page On-call\", \"sublabel\": \"acknowledge\" },\n    { \"id\": \"triage\", \"lane\": \"responders\", \"col\": 2, \"width\": 64, \"type\": \"backend\", \"label\": \"Triage\", \"sublabel\": \"scope impact\" },\n    { \"id\": \"declare\", \"lane\": \"responders\", \"col\": 3, \"type\": \"security\", \"label\": \"Declare\", \"sublabel\": \"assign commander\", \"tag\": \"SEV-1/2\" },\n    { \"id\": \"contain\", \"lane\": \"mitigation\", \"col\": 3, \"width\": 72, \"type\": \"backend\", \"label\": \"Contain\", \"sublabel\": \"stop growth\" },\n    { \"id\": \"recover\", \"lane\": \"mitigation\", \"col\": 4, \"width\": 52, \"type\": \"cloud\", \"label\": \"Recover\", \"sublabel\": \"restore\" },\n    { \"id\": \"verify\", \"lane\": \"recovery\", \"col\": 5, \"type\": \"database\", \"label\": \"Verify\", \"sublabel\": \"SLO + traces\", \"tag\": \"15 min stable\" },\n    { \"id\": \"close\", \"lane\": \"communication\", \"col\": 5, \"type\": \"external\", \"label\": \"Resolve\", \"sublabel\": \"final update\" },\n    { \"id\": \"update\", \"lane\": \"communication\", \"col\": 3, \"type\": \"frontend\", \"label\": \"Status Update\", \"sublabel\": \"impact + ETA\" },\n    { \"id\": \"escalate\", \"lane\": \"exceptions\", \"col\": 3, \"width\": 72, \"type\": \"security\", \"label\": \"Escalate\", \"sublabel\": \"specialist\" },\n    { \"id\": \"rollback\", \"lane\": \"exceptions\", \"col\": 5, \"type\": \"messagebus\", \"label\": \"Rollback\", \"sublabel\": \"last good\" }\n  ],\n  \"edges\": [\n    { \"from\": \"alert\", \"to\": \"page\", \"label\": \"page\", \"variant\": \"emphasis\", \"route\": \"drop\", \"fromSide\": \"bottom\", \"toSide\": \"top\" },\n    { \"from\": \"page\", \"to\": \"triage\", \"route\": \"bottom-channel\", \"fromSide\": \"bottom\", \"toSide\": \"bottom\" },\n    { \"from\": \"triage\", \"to\": \"contain\", \"variant\": \"emphasis\", \"route\": \"drop\", \"fromSide\": \"bottom\", \"toSide\": \"top\" },\n    { \"from\": \"contain\", \"to\": \"recover\", \"route\": \"bottom-channel\", \"fromSide\": \"bottom\", \"toSide\": \"bottom\" },\n    { \"from\": \"recover\", \"to\": \"verify\", \"variant\": \"emphasis\", \"route\": \"drop\", \"fromSide\": \"bottom\", \"toSide\": \"top\" },\n    { \"from\": \"verify\", \"to\": \"close\", \"variant\": \"emphasis\", \"route\": \"drop\", \"fromSide\": \"bottom\", \"toSide\": \"top\" },\n    { \"from\": \"triage\", \"to\": \"declare\", \"variant\": \"security\" },\n    { \"from\": \"declare\", \"to\": \"update\", \"variant\": \"dashed\", \"fromSide\": \"top\", \"toSide\": \"left\", \"via\": [[430, 16], [20, 16], [20, 615]] },\n    { \"from\": \"update\", \"to\": \"escalate\", \"variant\": \"security\", \"route\": \"drop\", \"fromSide\": \"bottom\", \"toSide\": \"top\" },\n    { \"from\": \"verify\", \"to\": \"rollback\", \"variant\": \"security\", \"role\": \"error\", \"route\": \"outside-right\", \"fromSide\": \"right\", \"toSide\": \"right\" }\n  ],\n  \"cards\": [\n    { \"dot\": \"rose\", \"title\": \"Ownership First\", \"items\": [\"A page is not an incident until someone owns command\", \"Severity and scope are explicit before mitigation spreads\", \"Escalation names the missing expertise\"] },\n    { \"dot\": \"emerald\", \"title\": \"Recovery Is Evidence\", \"items\": [\"Mitigation can reduce impact without proving recovery\", \"SLOs and traces must stay healthy for a fixed window\", \"The final update follows verification, not optimism\"] },\n    { \"dot\": \"cyan\", \"title\": \"Communication Contract\", \"items\": [\"Stakeholders receive impact, action, and next update time\", \"Rollback remains visible as a deliberate response\", \"Every branch has an owner and observable exit\"] }\n  ]\n}\n",
+          "identity": {
+            "sha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
+            "bytes": 4723
+          },
+          "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/materials/reference-31-json/workflow.json"
+        }
+      ]
+    },
+    {
+      "id": "locale-zh-tw",
+      "version": "original-v1",
+      "prompt": "請幫我把請假審批流程畫成圖：員工提交請假申請，主管審核；三天以內的假由主管核准即可，超過三天的還要人資複核；任何一步駁回都通知員工並結束。\n",
+      "promptIdentity": {
+        "sha256": "c60a1f6175e02c95bae56b563c57a1db7fa40519072d35cbd03a1990ed811457",
+        "bytes": 208
+      },
+      "original": {
+        "version": "original-v1",
+        "identity": {
+          "sha256": "c60a1f6175e02c95bae56b563c57a1db7fa40519072d35cbd03a1990ed811457",
+          "bytes": 208
+        },
+        "source": "local/phoenix-diagram/p2-gaps-provider-prep-19/prompts/locale-zh-tw.txt"
+      },
+      "materials": []
+    }
+  ],
+  "providers": {
+    "claude": [
+      "intent-architecture",
+      "intent-workflow",
+      "intent-sequence",
+      "intent-dataflow",
+      "intent-lifecycle",
+      "mermaid-flowchart",
+      "mermaid-graph",
+      "mermaid-sequence",
+      "mermaid-state",
+      "missing-date",
+      "missing-amount",
+      "missing-condition",
+      "repairable-diagnostic",
+      "stalled-repair",
+      "browser-unavailable",
+      "browser-failed",
+      "visual-pending",
+      "legacy-lifecycle",
+      "intent-erd",
+      "intent-class",
+      "intent-tree",
+      "intent-timeline",
+      "intent-waterfall",
+      "mermaid-er",
+      "mermaid-class",
+      "repo-verified",
+      "repo-dirty",
+      "repo-timeline",
+      "waterfall-illustrative",
+      "reference-31-json",
+      "locale-zh-tw"
+    ],
+    "codex": [
+      "intent-architecture",
+      "intent-workflow",
+      "intent-sequence",
+      "intent-dataflow",
+      "intent-lifecycle",
+      "mermaid-flowchart",
+      "mermaid-graph",
+      "mermaid-sequence",
+      "mermaid-state",
+      "missing-date",
+      "missing-amount",
+      "missing-condition",
+      "repairable-diagnostic",
+      "stalled-repair",
+      "browser-unavailable",
+      "browser-failed",
+      "visual-pending",
+      "legacy-lifecycle",
+      "intent-erd",
+      "intent-class",
+      "intent-tree",
+      "intent-timeline",
+      "intent-waterfall",
+      "mermaid-er",
+      "mermaid-class",
+      "repo-verified",
+      "repo-dirty",
+      "repo-timeline",
+      "waterfall-illustrative",
+      "reference-31-json",
+      "locale-zh-tw"
+    ]
+  },
+  "counterexamples": {
+    "providers": [
+      "claude",
+      "codex"
+    ],
+    "fixture": "tools/phoenix-diagram/tests/provider/erd-facts.json",
+    "promptField": "missingFacts.prompt",
+    "id": "erd-missing-facts",
+    "promptIdentity": {
+      "bytes": 675,
+      "sha256": "3e8fe03b6b256f906b9a6490c23fa1587838fbb0a836c9115cba74f41df91fd7"
+    },
+    "captureOnly": true
+  }
+}

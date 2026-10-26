@@ -487,3 +487,70 @@ nativeTest('a real native install yields a working installed launcher without an
   const refused = await command(process.execPath, [path.join(skill, 'scripts/phoenix-launcher.cjs'), 'guide', 'workflow', '--json'], { cwd: f.project, env: f.env });
   assert.equal(refused.code, 4); assert.match(refused.stderr, /ownership|managed|digest/i);
 });
+
+nativeTest('ordinary install delegates package changes while ordinary commands and engine install bind the current receipt', async t => {
+  const f = fixture(t); f.offline();
+  await boot().preflight({ ...f.options, allowInstall: true, releaseDir: f.release });
+  const launch = args => command(process.execPath, [path.join(f.pkg, 'bin/phoenix-diagram.js'), ...args], { cwd: f.project, env: f.env });
+  const installed = await launch(['install', '--project', f.project, '--providers', 'codex', '--json']);
+  assert.equal(installed.code, 0, installed.stderr);
+  const activePath = path.join(f.project, '.phoenix-diagram/install/active.json');
+  const active = fs.readFileSync(activePath);
+  f.version.sourceCommit = 'b'.repeat(40); f.seal();
+  for (const args of [['doctor', '--json'], ['engine', 'install', '--project', f.project, '--json']]) {
+    const result = await launch(args);
+    assert.equal(result.code, 4, result.stderr);
+    assert.equal(JSON.parse(result.stdout).status, 'unavailable');
+    assert.match(result.stderr, /ownership.*package\/contract identity/i);
+  }
+  const planned = await launch(['install', '--project', f.project, '--providers', 'codex', '--dry-run', '--json']);
+  assert.equal(planned.code, 0, planned.stderr);
+  const report = JSON.parse(planned.stdout);
+  assert.equal(report.command, 'install');
+  assert.equal(report.status, 'planned');
+  assert.equal(report.project, f.project);
+  assert.deepEqual(fs.readFileSync(activePath), active, 'Native dry-run preserves the earlier valid ownership');
+});
+
+nativeTest('ordinary argv project stays native while preflight uses its internal project option', async t => {
+  const f = fixture(t); f.offline();
+  await boot().preflight({ ...f.options, allowInstall: true, releaseDir: f.release });
+  const target = path.join(f.temp, 'native install target');
+  fs.mkdirSync(path.join(target, '.git'), { recursive: true });
+  f.options.project = path.join(f.temp, 'missing bootstrap project');
+  const args = ['install', '--project', target, '--providers', 'codex', '--dry-run', '--json'];
+  const refused = await run(f, args);
+  assert.equal(refused.code, 2, refused.stderr);
+  assert.equal(JSON.parse(refused.stdout).status, 'unavailable');
+  assert.ok(refused.stderr.includes('Project is not an existing directory: ' + f.options.project));
+  f.options.project = f.project;
+  const planned = await run(f, args);
+  assert.equal(planned.code, 0, planned.stderr);
+  assert.equal(JSON.parse(planned.stdout).project, target, 'The native install still receives the original argv target');
+  const ready = await boot().preflight({ ...f.options, project: target });
+  assert.equal(ready.project, target, 'The API project option selects the bootstrap project independently');
+  assert.equal(fs.existsSync(path.join(target, '.phoenix-diagram/install/active.json')), false);
+});
+
+nativeTest('installed launchers respect a valid cwd parent receipt before their own project fallback', async t => {
+  const f = fixture(t); f.offline();
+  await boot().preflight({ ...f.options, allowInstall: true, releaseDir: f.release });
+  const other = path.join(f.temp, 'other installed project');
+  fs.mkdirSync(path.join(other, '.git'), { recursive: true });
+  for (const project of [f.project, other]) {
+    const installed = await command(process.execPath, [path.join(f.pkg, 'bin/phoenix-diagram.js'), 'install', '--project', project, '--providers', 'codex', '--json'], { cwd: f.project, env: f.env });
+    assert.equal(installed.code, 0, installed.stderr);
+  }
+  const roots = [f.project, other].map(project => path.join(project, '.agents/skills/phoenix-diagram'));
+  const directories = [f.project, other].map(project => path.join(project, 'nested', 'cwd'));
+  for (const directory of directories) fs.mkdirSync(directory, { recursive: true });
+  for (let i = 0; i < roots.length; i++) {
+    const result = await command(process.execPath, [path.join(roots[i], 'scripts/phoenix-launcher.cjs'), 'guide', 'workflow', '--json'], { cwd: directories[i], env: f.env });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).resourceRoot, roots[i]);
+  }
+  const wrongProject = await command(process.execPath, [path.join(roots[0], 'scripts/phoenix-launcher.cjs'), 'guide', 'workflow', '--json'], { cwd: directories[1], env: f.env });
+  assert.equal(wrongProject.code, 4, wrongProject.stderr);
+  assert.equal(JSON.parse(wrongProject.stdout).status, 'unavailable');
+  assert.match(wrongProject.stderr, /Launcher skill root is not managed by this project ownership record/);
+});
