@@ -192,16 +192,23 @@ test('classic script order and private canonical/recorder cleanup retain the fro
       assert.equal(adaptation.normalizedSourceSha256, hash(expected));
       const bindings = expected.indexOf("      var evidence = document.getElementById('focus-evidence');");
       const linksLine = expected.indexOf("      var evidenceLinks = document.getElementById('focus-evidence-links');\n");
-      const ranges = [[bindings, linksLine + "      var evidenceLinks = document.getElementById('focus-evidence-links');\n".length],
-        [expected.indexOf('      function renderSourceEvidence(id) {'), expected.indexOf('      function renderPassport(id, node) {')]];
-      assert.ok(ranges.flat().every(at => at >= 0));
+      const span = (start, end) => [expected.indexOf(start), expected.indexOf(end)];
+      // Each audited scope names the only source ranges its hunks may touch.
+      const scopes = {
+        'passport source evidence states': [[bindings, linksLine + "      var evidenceLinks = document.getElementById('focus-evidence-links');\n".length],
+          span('      function renderSourceEvidence(id) {', '      function renderPassport(id, node) {')],
+        'passport authored type': [span('      function renderPassport(id, node) {', '      function relationshipsFor(id, byId) {')],
+        'passport node clearance': [span('      var lensFrame = 0;', '      function requestLensPlacement() {'),
+          span('      function clear(options) {', '      function setMany(ids, options) {')],
+      };
+      assert.ok(Object.values(scopes).flat(2).every(at => at >= 0));
       const original = Buffer.from(expected), parts = []; let consumed = 0;
       for (const hunk of adaptation.hunks) {
         const before = Buffer.from(hunk.sourceText), at = hunk.sourceByteOffset;
-        assert.equal(hunk.scope, 'passport source evidence states');
+        assert.ok(Object.hasOwn(scopes, hunk.scope), `focus adaptation scope ${hunk.scope} is not audited`);
         assert.ok(at >= consumed, 'audited focus adaptations must not overlap');
-        assert.ok(ranges.some(([start, end]) => at >= Buffer.byteLength(expected.slice(0, start)) && at + before.length <= Buffer.byteLength(expected.slice(0, end))),
-          'focus adaptations stay inside the evidence bindings and the source evidence renderer');
+        assert.ok(scopes[hunk.scope].some(([start, end]) => at >= Buffer.byteLength(expected.slice(0, start)) && at + before.length <= Buffer.byteLength(expected.slice(0, end))),
+          `${hunk.scope} adaptations stay inside their declared ranges`);
         assert.ok(original.subarray(at, at + before.length).equals(before));
         parts.push(original.subarray(consumed, at), Buffer.from(hunk.replacementText)); consumed = at + before.length;
       }

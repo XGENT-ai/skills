@@ -216,6 +216,45 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .focus-chip { max-height: calc(100% - 5rem); overflow-y: auto; overscroll-behavior: contain; }
     }
   </style>
+  <style id="phoenix-diagram-narrow-stage">
+    @media (max-width: 720px) {
+      /* The whole dock stays inside a narrow stage. It may span the stage less
+         its 0.5rem insets; Route, Map and Lens show only their glyph (their
+         names stay the accessible label and title); buttons keep a 40px by
+         44px target; and a dock still too wide wraps instead of scrolling the
+         zoom readout and + out of sight. */
+      .diagram-nav { max-width: calc(100% - 1rem); flex-wrap: wrap; justify-content: flex-end; }
+      .diagram-nav button { min-width: 2.5rem; }
+      .diagram-nav #btn-route-probe,
+      .diagram-nav #btn-overview-map,
+      .diagram-nav #btn-semantic-lens { min-width: 2.5rem; padding-inline: 0; justify-content: center; }
+      .diagram-nav #btn-route-probe > [data-phoenix-i18n],
+      .diagram-nav #btn-overview-map > [data-phoenix-i18n],
+      .diagram-nav #btn-semantic-lens > [data-phoenix-i18n] { display: none; }
+      /* When no height of a short stage clears the focused node, focus.js
+         reserves this room below the drawing for the Passport; the dock
+         follows the stage bottom. */
+      html:not([data-embed="true"]):not([data-present="true"]) .diagram-container[data-passport-reserve] {
+        padding-bottom: calc(4.5rem + var(--phoenix-diagram-passport-reserve, 0px));
+      }
+      /* A zoomed-in stage adds Map; narrower targets keep that dock on one row. */
+      .diagram-container.is-pannable .diagram-nav button:not([data-view="reset"]),
+      .diagram-container.is-pannable .diagram-nav #btn-route-probe,
+      .diagram-container.is-pannable .diagram-nav #btn-overview-map,
+      .diagram-container.is-pannable .diagram-nav #btn-semantic-lens { min-width: 2.125rem; }
+      .diagram-container.is-pannable .diagram-nav #btn-node-finder,
+      .diagram-container.is-pannable .diagram-nav [data-view="out"] { margin-left: 0.25rem; }
+    }
+    @media (max-width: 385px) {
+      /* 360 to 385px phones keep the dock and its full readout on one row. */
+      .diagram-nav button,
+      .diagram-nav #btn-route-probe,
+      .diagram-nav #btn-overview-map,
+      .diagram-nav #btn-semantic-lens { min-width: 2.125rem; }
+      .diagram-nav #btn-node-finder,
+      .diagram-nav [data-view="out"] { margin-left: 0.25rem; }
+    }
+  </style>
 </head>
 <body>
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.

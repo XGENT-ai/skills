@@ -139,7 +139,7 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
                 Value::Null,
             )]);
         };
-        let inferred = routing::default_sides(&nodes[from], &nodes[to]);
+        let inferred = routing::inferred_sides(raw, &nodes[from], &nodes[to]);
         let side = |key, fallback: &str| {
             let value = string(raw, key);
             if value.is_empty() || value == "auto" {

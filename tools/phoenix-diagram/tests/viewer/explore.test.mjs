@@ -463,3 +463,111 @@ test('presentation enters and exits from its control, its shortcut and Escape af
   assert.equal(env.api.view.state().scale, 1);
   assert.equal(new URL(env.href).searchParams.has('present'), false);
 });
+
+// The Passport type chip names only an authored type: the untyped POST /checkout
+// span, a tree folder or a table shows no colour slot such as FRONTEND or EXTERNAL.
+test('the Passport presents an authored type and never a derived colour slot', async () => {
+  const shown = env => ({ hidden: env.$('#focus-kind').hidden, text: env.$('#focus-kind').textContent });
+  for (const [label, svg, type, id] of [
+    ['waterfall span', fixtures.waterfall(), 'waterfall', 'request'],
+    ['tree folder', fixtures.tree(), 'tree', 'payments'],
+    ['tree leaf', fixtures.tree(), 'tree', 'card'],
+    ['erd table', fixtures.entityGraph('erd'), 'erd', 'order'],
+    ['timeline event tone', fixtures.timeline(), 'timeline', 'kickoff'],
+    ['untyped component', fixtures.graph({ nodes: [...fixtures.GRAPH_NODES.slice(0, 5), { ...fixtures.GRAPH_NODES[5], kind: '' }] }), 'architecture', 'f'],
+  ]) {
+    const env = await open(svg, type, { hash: '#focus=' + id });
+    assert.equal(env.api.focus.active(), id, label);
+    assert.deepEqual(shown(env), { hidden: true, text: '' }, label);
+  }
+  const typed = await open(fixtures.graph(), 'architecture', { hash: '#focus=d' });
+  assert.deepEqual(shown(typed), { hidden: false, text: text('viewer.kind.database') }, 'an authored component type is shown');
+  const typedClass = await open(fixtures.entityGraph('class'), 'class', { hash: '#focus=order' });
+  assert.deepEqual(shown(typedClass), { hidden: false, text: text('viewer.kind.frontend') }, 'a class keeps its authored kind');
+});
+
+// Passport placement over rectangles measured in Chrome for the v3 corpus
+// captures (stage, Passport size, dock, legend and focused node). The fixture
+// lays the Passport out at its CSS offsets inside a 1px stage border.
+const box = (left, top, right, bottom) => ({ x: left, y: top, left, top, right, bottom, width: right - left, height: bottom - top });
+const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+async function measuredStage({ inner, container, chip: [cssLeft, width, height], dock, legend, node }) {
+  const env = await open(fixtures.graph({ nodes: [{ id: 'focused', label: 'Focused', kind: 'database', x: node[0], y: node[1], width: node[2] - node[0], height: node[3] - node[1] }], edges: [] }), 'architecture');
+  env.window.innerWidth = inner[0]; env.window.innerHeight = inner[1];
+  const stage = env.$('.diagram-container'), passport = env.$('#focus-chip');
+  const reserve = () => Number.parseFloat(stage.style.getPropertyValue('--phoenix-diagram-passport-reserve')) || 0;
+  stage.getBoundingClientRect = () => box(container[0], container[1], container[2], container[3] + reserve());
+  stage.clientLeft = 1;
+  Object.defineProperty(stage, 'clientWidth', { get: () => container[2] - container[0] - 2 });
+  passport.getBoundingClientRect = () => {
+    if (passport.hidden) return box(0, 0, 0, 0);
+    const left = container[0] + 1 + (passport.style.left ? Number.parseFloat(passport.style.left) : cssLeft);
+    const top = container[1] + 1 + (Number.parseFloat(passport.style.top) || 0);
+    return box(left, top, left + width, top + height);
+  };
+  env.$('.diagram-nav').getBoundingClientRect = () => box(dock[0], dock[1] + reserve(), dock[2], dock[3] + reserve());
+  env.svg.querySelector('[data-legend]').getBoundingClientRect = () => box(...legend);
+  const computed = env.window.getComputedStyle;
+  // The narrow stage keeps 4.5rem below the drawing for the dock, plus any reserve.
+  env.window.getComputedStyle = element => element !== stage ? computed(element)
+    : new Proxy({}, { get: (_, key) => key === 'paddingBottom' ? (72 + reserve()) + 'px' : key === 'borderBottomWidth' ? '1px' : computed(element)[key] });
+  const read = () => ({ passport: passport.getBoundingClientRect(), node: box(...node), dock: env.$('.diagram-nav').getBoundingClientRect(), legend: box(...legend),
+    stage: stage.getBoundingClientRect(), reserve: reserve(), reserved: stage.hasAttribute('data-passport-reserve') });
+  return { env, read };
+}
+
+test('a desktop Passport opens beside the focused table instead of over it (membership, 1440x900)', async () => {
+  const { env, read } = await measuredStage({ inner: [1440, 900], container: [32, 58, 1408, 878], chip: [16, 352, 316],
+    dock: [1014, 819, 1391, 861], legend: [67, 757, 885, 799], node: [82, 575, 356, 724] });
+  env.api.focus.set('focused');
+  const placed = read();
+  assert.equal(overlaps(placed.passport, placed.node), false, `Passport ${JSON.stringify(placed.passport)} covers the focused node`);
+  assert.equal(overlaps(placed.passport, placed.legend), false, 'the legend stays clear');
+  assert.ok(placed.passport.top >= placed.stage.top + 16 && placed.passport.bottom <= placed.stage.bottom - 16, 'the Passport stays on the stage');
+  assert.equal(placed.reserve, 0, 'a desktop stage never grows for the Passport');
+});
+
+test('a desktop Passport takes the stage\'s other side when no height in its column clears a tall node', async () => {
+  const { env, read } = await measuredStage({ inner: [1440, 900], container: [32, 58, 1408, 878], chip: [16, 352, 316],
+    dock: [1014, 819, 1391, 861], legend: [67, 757, 885, 799], node: [82, 160, 356, 724] });
+  env.api.focus.set('focused');
+  const placed = read();
+  assert.equal(overlaps(placed.passport, placed.node), false, `Passport ${JSON.stringify(placed.passport)} covers the focused node`);
+  assert.equal(overlaps(placed.passport, placed.dock), false, 'the dock stays clear');
+  assert.ok(placed.passport.right <= placed.stage.right - 16, 'the Passport stays on the stage');
+  env.api.focus.clear();
+  assert.equal(env.$('#focus-chip').style.left, '', 'closing the Passport returns it to its column');
+});
+
+test('a narrow Passport keeps the focused node visible: above it when there is room, else below the drawing', async () => {
+  const fits = await measuredStage({ inner: [390, 844], container: [16, 140, 374, 623], chip: [8, 340, 205],
+    dock: [41, 560, 365, 614], legend: [40, 522, 477, 545], node: [48, 425, 194, 504] });
+  fits.env.api.focus.set('focused');
+  const above = fits.read();
+  assert.deepEqual([above.passport.top, above.reserve, above.reserved], [211, 0, false], 'membership keeps its Passport above the table');
+  assert.equal(overlaps(above.passport, above.node), false);
+  for (const [name, geometry] of Object.entries({
+    payment: { container: [16, 140, 374, 623], chip: [8, 340, 205], dock: [41, 560, 365, 614], legend: [-236, 522, 201, 545], node: [318, 295, 459, 386] },
+    order_item: { container: [16, 140, 374, 578], chip: [8, 340, 205], dock: [41, 515, 365, 569], legend: [-272, 470, 267, 498], node: [235, 336, 418, 448] },
+    'long foreign keys orders': { container: [16, 140, 374, 421], chip: [8, 340, 199], dock: [41, 358, 365, 412], legend: [-141, 304, 421, 339], node: [232, 189, 541, 295] },
+    'POST /checkout': { container: [16, 184, 374, 474], chip: [8, 340, 198], dock: [41, 411, 365, 465], legend: [-134, 369, 164, 393], node: [4, 259, 506, 268] },
+  })) {
+    const { env, read } = await measuredStage({ inner: [390, 844], ...geometry });
+    env.api.focus.set('focused');
+    const placed = read();
+    assert.equal(overlaps(placed.passport, placed.node), false, `${name}: Passport ${JSON.stringify(placed.passport)} covers the focused node`);
+    assert.equal(placed.reserved, true, `${name}: the short stage reserves room below the drawing`);
+    assert.equal(placed.reserve, geometry.chip[2] + 10, name);
+    assert.equal(placed.passport.top, geometry.container[3] - 72 + 10, `${name}: the Passport sits below the drawing`);
+    assert.ok(placed.passport.bottom <= placed.dock.top && placed.dock.bottom <= placed.stage.bottom, `${name}: the dock follows below the Passport`);
+    assert.equal(overlaps(placed.passport, placed.legend), false, `${name}: the legend stays clear`);
+    env.api.focus.reposition();
+    assert.deepEqual(read(), placed, `${name}: placing again keeps the same room`);
+    env.html.setAttribute('data-present', 'true');
+    env.api.focus.reposition();
+    assert.equal(read().reserved, false, `${name}: a presentation stage fills the screen and does not grow`);
+    env.html.removeAttribute('data-present');
+    env.api.focus.clear();
+    assert.equal(read().reserved, false, `${name}: closing the Passport releases the room`);
+  }
+});

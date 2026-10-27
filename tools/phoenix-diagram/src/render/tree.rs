@@ -31,8 +31,9 @@ fn direction(scene: &CompiledDiagram) -> &str {
 }
 
 fn root_attributes(scene: &CompiledDiagram) -> String {
+    // Node kinds are colour slots for root, branch and leaf, not authored types.
     let mut attributes = format!(
-        " data-tree-ui=\"\" data-tree-direction=\"{}\"",
+        " data-tree-ui=\"\" data-tree-direction=\"{}\" data-node-kind-derived=\"\"",
         escape_text(direction(scene))
     );
     if scene.reader_fit == "intrinsic-height" {

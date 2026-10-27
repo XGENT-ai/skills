@@ -1,7 +1,7 @@
-use phoenix_diagram::geometry::{rects_overlap, text_glyph_box};
+use phoenix_diagram::geometry::{rects_overlap, segment_intersects_rect, text_glyph_box};
 use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
 use phoenix_diagram::layout as dataflow;
-use phoenix_diagram::scene::{DiagramFacts, Rect, Text};
+use phoenix_diagram::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 
 fn corpus() -> Value {
@@ -46,11 +46,106 @@ fn texts(actual: &[Text], expected: &[Value], context: &str) {
         near(actual.font_size, &expected["fontSize"], &context);
     }
 }
+/// An authored horizontal channel whose endpoint faces the frozen renderers
+/// chose automatically (lateral, by node order).
+fn inferred_channel(flow: &Value) -> bool {
+    matches!(
+        flow["route"].as_str(),
+        Some("bottom-channel" | "top-channel")
+    ) && flow.get("via").is_none()
+        && ["fromSide", "toSide"]
+            .iter()
+            .all(|key| flow[*key].as_str().is_none_or(|side| side == "auto"))
+}
+fn on_border(points: &[Point], rect: &Rect) -> bool {
+    let overlap = |a: f64, b: f64, low: f64, high: f64| a.max(b).min(high) - a.min(b).max(low);
+    points.windows(2).any(|pair| {
+        let (a, b) = (pair[0], pair[1]);
+        (a.x == b.x
+            && (a.x == rect.x || a.x == rect.x + rect.width)
+            && overlap(a.y, b.y, rect.y, rect.y + rect.height) > 0.0)
+            || (a.y == b.y
+                && (a.y == rect.y || a.y == rect.y + rect.height)
+                && overlap(a.x, b.x, rect.x, rect.x + rect.width) > 0.0)
+    })
+}
+/// D25 replaces only the frozen route of such a channel: its riser lands on
+/// the target's lateral border, so the final segment and arrowhead run along
+/// the border. The repaired route keeps the oracle's channel row and shape
+/// but reaches both nodes perpendicularly through the face toward the channel.
+fn channel_attachment(scene: &CompiledDiagram, index: usize, oracle: &Value, context: &str) {
+    let flow = &scene.relations[index];
+    let bounds = |id: &str| {
+        scene
+            .nodes
+            .iter()
+            .find(|node| node.authored.id == id)
+            .unwrap()
+            .bounds
+    };
+    let frozen: Vec<_> = oracle["points"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|point| Point {
+            x: point[0].as_f64().unwrap(),
+            y: point[1].as_f64().unwrap(),
+        })
+        .collect();
+    let (from, to) = (bounds(&flow.from), bounds(&flow.to));
+    assert!(
+        on_border(&frozen, &to),
+        "{context}: oracle no longer encodes the lateral channel defect; restore its exact route"
+    );
+    let points = &flow.points;
+    assert_eq!(points.len(), frozen.len(), "{context}: channel route shape");
+    assert_eq!(points.len(), 4, "{context}: channel route shape");
+    let row = frozen[1].y;
+    assert!(
+        points[1].y == row && points[2].y == row,
+        "{context}: keep the oracle channel row {row}: {points:?}"
+    );
+    for (rect, face, beyond) in [(from, points[0], points[1]), (to, points[3], points[2])] {
+        let face_y = if row < rect.y + rect.height / 2.0 {
+            rect.y
+        } else {
+            rect.y + rect.height
+        };
+        assert!(
+            face.x == beyond.x
+                && face.y == face_y
+                && (beyond.y - face.y) * (row - face.y) > 0.0
+                && face.x >= rect.x + 16.0
+                && face.x <= rect.x + rect.width - 16.0,
+            "{context}: channel must meet {rect:?} perpendicularly on its face toward row {row}: {points:?}"
+        );
+    }
+    for node in &scene.nodes {
+        assert!(
+            !on_border(points, &node.bounds),
+            "{context}: channel runs along {}: {points:?}",
+            node.authored.id
+        );
+        if node.authored.id != flow.from && node.authored.id != flow.to {
+            assert!(
+                points.windows(2).all(|pair| !segment_intersects_rect(
+                    pair[0],
+                    pair[1],
+                    &node.bounds,
+                    2.0
+                )),
+                "{context}: channel crosses {}: {points:?}",
+                node.authored.id
+            );
+        }
+    }
+}
 
 #[test]
 fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
     let mut accepted = 0;
     let mut rejected = 0;
+    let mut repaired_channels = 0;
     for case in corpus()["cases"].as_array().unwrap() {
         let contract = if case["contract"] == "legacy-2.17" {
             InputContract::Legacy217
@@ -253,14 +348,20 @@ fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
                 oracle["halo"].as_bool().unwrap(),
                 "{context}"
             );
-            assert_eq!(
-                flow.points.len(),
-                oracle["points"].as_array().unwrap().len(),
-                "{context}/flows/{index}: preserve all actual route points"
-            );
-            for (actual, point) in flow.points.iter().zip(oracle["points"].as_array().unwrap()) {
-                near(actual.x, &point[0], &context);
-                near(actual.y, &point[1], &context);
+            if inferred_channel(&input.document["flows"][index]) {
+                channel_attachment(&scene, index, oracle, &format!("{context}/flows/{index}"));
+                repaired_channels += 1;
+            } else {
+                assert_eq!(
+                    flow.points.len(),
+                    oracle["points"].as_array().unwrap().len(),
+                    "{context}/flows/{index}: preserve all actual route points"
+                );
+                for (actual, point) in flow.points.iter().zip(oracle["points"].as_array().unwrap())
+                {
+                    near(actual.x, &point[0], &context);
+                    near(actual.y, &point[1], &context);
+                }
             }
             bounds(
                 flow.label_plate.unwrap(),
@@ -343,6 +444,8 @@ fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
     }
     assert_eq!(accepted, 62);
     assert_eq!(rejected, 22);
+    // The event-stream poison-event flow in both examples and contracts.
+    assert_eq!(repaired_channels, 4);
 }
 
 #[test]

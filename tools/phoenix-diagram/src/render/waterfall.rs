@@ -30,8 +30,9 @@ fn unit(scene: &CompiledDiagram) -> &str {
 }
 
 fn root_attributes(scene: &CompiledDiagram) -> String {
+    // Span kinds are per-service colour slots, not authored types.
     format!(
-        " data-motion-choreography=\"replay\" data-waterfall-ui=\"\" data-waterfall-unit=\"{}\" data-reader-min-text=\"7.5\"",
+        " data-motion-choreography=\"replay\" data-waterfall-ui=\"\" data-waterfall-unit=\"{}\" data-reader-min-text=\"7.5\" data-node-kind-derived=\"\"",
         escape_text(unit(scene))
     )
 }

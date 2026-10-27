@@ -559,9 +559,23 @@ export async function runPassportAcceptance(options) {
       }
       await page.load(theme, false, { hash: 'focus=' + id });
       await delay(400);
-      const state = await page.evaluate(id => {
+      const state = await page.evaluate(async id => {
+        // Measure once the focus camera and the Passport placement have painted.
+        const stage = document.querySelector('.diagram-container'), frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+        while (stage.hasAttribute('data-camera-transaction')) await frame();
+        await frame(); await frame();
         const evidence = document.getElementById('focus-evidence'), rows = Array.from(document.querySelectorAll('#focus-evidence-links > *'));
-        return { focus: PhoenixDiagram.focus.active(), detailsHidden: document.getElementById('focus-chip').hidden, hidden: evidence.hidden,
+        const rect = element => { const box = element.getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }; };
+        const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+        const outside = (inner, outer) => inner.left < outer.left - 0.5 || inner.right > outer.right + 0.5 || inner.top < outer.top - 0.5 || inner.bottom > outer.bottom + 0.5;
+        const focused = document.querySelector('[data-node-id="' + id + '"]'), body = rect(focused.querySelector('[data-graph-role="node-body"]') || focused);
+        const passport = rect(document.getElementById('focus-chip')), area = rect(stage), dock = stage.querySelector('.diagram-nav'), dockArea = rect(dock);
+        return { focus: PhoenixDiagram.focus.active(),
+          // The focused node stays on the stage and out from under its Passport.
+          node: { rect: body, passport, onStage: meets(body, area), covered: meets(body, passport) },
+          // Every shown dock control, the zoom readout and + included, lies inside the dock and the stage.
+          dockOverflow: Array.from(dock.querySelectorAll('button')).filter(button => getComputedStyle(button).display !== 'none')
+            .filter(button => outside(rect(button), area) || outside(rect(button), dockArea)).map(button => button.id || button.getAttribute('data-view')), detailsHidden: document.getElementById('focus-chip').hidden, hidden: evidence.hidden,
           state: evidence.getAttribute('data-evidence-state'), status: evidence.querySelector('.semantic-passport-evidence-status').textContent,
           repository: document.getElementById('focus-repository').textContent, repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
           rows: rows.map(row => ({ tag: row.localName, state: row.getAttribute('data-evidence-state'), href: row.getAttribute('href'), text: row.textContent })), label: document.querySelector('[data-node-id="' + id + '"]').getAttribute('aria-label'),
@@ -574,6 +588,9 @@ export async function runPassportAcceptance(options) {
       const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
       const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}${size === '1440x900' ? '' : '-' + size}.png`);
       fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
+      // Checked after the capture so a failing view is still kept for viewing.
+      if (!state.node.onStage || state.node.covered) throw new Error('Details at ' + size + ' ' + (state.node.covered ? 'cover' : 'leave off the stage') + ' the focused node ' + id + ': ' + JSON.stringify(state.node));
+      if (state.dockOverflow.length) throw new Error('Dock controls fall outside the stage at ' + size + ': ' + state.dockOverflow.join(', '));
       const reach = await operateReach(page, id, touch);
       page.report.passports.push({ id, theme, viewport, ...state, reach, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
     }

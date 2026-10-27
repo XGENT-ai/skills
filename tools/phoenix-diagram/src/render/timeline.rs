@@ -12,7 +12,8 @@ pub(super) const RENDERER: TypeRenderer = TypeRenderer {
 };
 
 fn root_attributes(_scene: &CompiledDiagram) -> String {
-    " data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-min-text=\"7.5\"".into()
+    // Node kinds are the tones of the event kinds, not the authored kinds.
+    " data-motion-choreography=\"sweep\" data-timeline-ui=\"\" data-reader-min-text=\"7.5\" data-node-kind-derived=\"\"".into()
 }
 
 fn of_kind<'a>(scene: &'a CompiledDiagram, kind: &'a str) -> impl Iterator<Item = &'a Container> {

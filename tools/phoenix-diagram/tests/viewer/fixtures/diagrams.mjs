@@ -1,5 +1,6 @@
 // Native SVG fixtures shaped like the Rust renderer's Reader contract:
-// `g[data-node-id]` with one node body and `data-node-kind`, relationship
+// `g[data-node-id]` with one node body and `data-node-kind` (a derived colour
+// slot where the root carries `data-node-kind-derived`), relationship
 // paths with `data-edge-from/to/key` and an optional `data-edge-id`, and the
 // legend bridge with `data-legend-kind`. The frozen erd, class, timeline and
 // waterfall legends are not interactive and the tree draws none. Tree fixtures
@@ -69,7 +70,7 @@ export function entityGraph(type) {
     { from: 'customer', to: 'order', key: '0', id: 'places', label: 'places', d: 'M 160 64 L 320 64' },
     { from: 'order', to: 'line', key: '1', id: 'contains', label: 'contains', d: 'M 440 64 L 600 64' },
   ];
-  return svg({ type, body: edges.map(value => edge({ ...value, extra: { 'data-graph-role': 'edge', 'marker-start': 'url(#arrowhead)' } })).join('')
+  return svg({ type, attrs: type === 'erd' ? { 'data-node-kind-derived': '' } : {}, body: edges.map(value => edge({ ...value, extra: { 'data-graph-role': 'edge', 'marker-start': 'url(#arrowhead)' } })).join('')
     + nodes.map((value, index) => node({ ...value, step: index })).join('') + legend(type === 'erd' ? [{ kind: 'pk', label: 'Primary key' }] : [{ kind: 'inheritance', label: 'Inheritance' }], false) });
 }
 
@@ -108,7 +109,7 @@ export function tree() {
       'data-tree-label-collapse': `Collapse ${entry.label} (${hidden} below)`, 'data-tree-label-expand': `Expand ${entry.label} (${hidden} hidden)`, role: 'button', tabindex: 0, 'aria-expanded': 'true', 'aria-label': `Collapse ${entry.label} (${hidden} below)` })}>`
       + `<circle cx="${entry.x + 60}" cy="${entry.y + 56}" r="7" class="tree-toggle-disc"/></g>`;
   });
-  return svg({ type: 'tree', attrs: { 'data-tree-ui': '', 'data-tree-direction': 'down' }, body: edges.join('') + nodes.join('') + toggles.join('')
+  return svg({ type: 'tree', attrs: { 'data-tree-ui': '', 'data-tree-direction': 'down', 'data-node-kind-derived': '' }, body: edges.join('') + nodes.join('') + toggles.join('')
     + '<g data-tree-expand-all="" role="button" tabindex="0" aria-label="Expand all"><rect x="40" y="18" width="90" height="24" rx="12"/><text x="52" y="34">Expand all</text></g>' });
 }
 
@@ -119,7 +120,7 @@ export function timeline() {
     { id: 'beta', label: 'Beta', kind: 'backend', x: 360 },
     { id: 'launch', label: 'Launch', kind: 'database', x: 640 },
   ];
-  return svg({ type: 'timeline', attrs: { 'data-motion-choreography': 'sweep', 'data-timeline-ui': '' }, body:
+  return svg({ type: 'timeline', attrs: { 'data-motion-choreography': 'sweep', 'data-timeline-ui': '', 'data-node-kind-derived': '' }, body:
     '<g data-timeline-lane="main"><rect x="32" y="120" width="880" height="160" rx="10" class="tl-lane"/><line x1="48" y1="200" x2="900" y2="200" class="tl-lane-line"/></g>'
     + events.map((event, index) => node({ ...event, x: event.x - 60, y: 140, step: index, extra: { 'data-timeline-at': '2026-0' + (index + 1) + '-01', 'data-timeline-ms': String(1767225600000 + index * 2678400000), 'data-timeline-x': event.x } })).join('')
     + legend([{ kind: 'change', label: 'Change' }, { kind: 'release', label: 'Release', x: 120 }], false) });
@@ -131,7 +132,7 @@ export function waterfall() {
     { id: 'auth', label: 'auth', kind: 'backend', start: 4, end: 20, depth: 1 },
     { id: 'query', label: 'db query', kind: 'database', start: 22, end: 110, depth: 1 },
   ];
-  return svg({ type: 'waterfall', attrs: { 'data-motion-choreography': 'replay', 'data-waterfall-ui': '', 'data-waterfall-unit': 'ms', 'data-reader-fit': 'width-first' }, body:
+  return svg({ type: 'waterfall', attrs: { 'data-motion-choreography': 'replay', 'data-waterfall-ui': '', 'data-waterfall-unit': 'ms', 'data-reader-fit': 'width-first', 'data-node-kind-derived': '' }, body:
     spans.map((span, index) => node({ ...span, x: 200 + span.start * 5, y: 60 + index * 40, width: (span.end - span.start) * 5, height: 24, step: index,
       extra: { 'data-waterfall-start': span.start, 'data-waterfall-end': span.end, 'data-waterfall-duration': span.end - span.start, 'data-waterfall-depth': span.depth, 'data-waterfall-status': 'ok' } })).join('')
     + legend([{ kind: 'service:edge', label: 'edge' }, { kind: 'service:orders', label: 'orders', x: 120 }], false) });

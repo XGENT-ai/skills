@@ -29,7 +29,8 @@ const MARGIN: f64 = 24.0;
 fn root_attributes(scene: &CompiledDiagram) -> String {
     // An automatic canvas is intrinsic-height: the reader scrolls a tall schema
     // instead of shrinking its fields past this floor.
-    let mut attributes = String::from(" data-erd-ui=\"cards\"");
+    // Every table takes the database colour slot; it is not an authored type.
+    let mut attributes = String::from(" data-erd-ui=\"cards\" data-node-kind-derived=\"\"");
     if scene.meta.get("viewBox").is_none() {
         attributes.push_str(" data-reader-min-text=\"7.5\"");
     }
