@@ -7,6 +7,7 @@ const os=require('node:os');
 const {spawnSync}=require('node:child_process');
 const {createHash}=require('node:crypto');
 const collector=path.resolve(__dirname,'../../tools/phoenix-diagram/tests/support/capture-stdio.mjs');
+const progressReader=path.resolve(__dirname,'../../tools/phoenix-diagram/tests/support/read-current-progress.mjs');
 const identity=bytes=>({sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length});
 // These owned Node launchers test collection mechanics only. They are never
 // native engines, browser evidence, provider sessions or candidate acceptance.
@@ -144,4 +145,66 @@ test('raw captures and derived directories cannot consume the reserved project c
   const f=inspectionFixture(t);fs.writeFileSync(f.response,JSON.stringify(receipt(1)));
   for(const target of ['view','stdout']){const dir=target==='view'?path.join(f.chain,'view'):path.join(f.stdio,'view');const r=spawnSync(process.execPath,[collector,'--program',f.program,'--cwd',f.project,'--stdout',path.join(target==='stdout'?f.chain:f.stdio,'reserved.stdout'),'--stderr',path.join(f.stdio,'reserved.stderr'),'--inspection-dir',dir,'--','validate','--json'],{encoding:'utf8'});assert.equal(r.status,4);assert.equal(f.spawns(),0);}
   const r=f.run(receipt(1));assert.equal(r.status,3,r.stderr);const inspect=spawnSync(process.execPath,[collector,'inspect','--capture',r.capture.captureFile.path,'--inspection-dir',path.join(f.chain,'rebuild')],{encoding:'utf8'});assert.equal(inspect.status,4);assert.equal(f.spawns(),1);assert.equal(fs.existsSync(path.join(f.chain,'rebuild')),false);
+});
+
+function readCurrent(project) {
+  return spawnSync(process.execPath,[progressReader,'--project',project,'--json'],{encoding:'utf8'});
+}
+function projectState(project) {
+  const rows=[];
+  function walk(directory){for(const name of fs.readdirSync(directory).sort()){
+    const file=path.join(directory,name),stat=fs.lstatSync(file,{bigint:true});
+    rows.push([path.relative(project,file),String(stat.ino),String(stat.mtimeNs),String(stat.ctimeNs),Number(stat.mode),stat.isFile()?identity(fs.readFileSync(file)):null]);
+    if(stat.isDirectory())walk(file);
+  }}
+  walk(project);return rows;
+}
+test('current progress reader returns the latest mechanical values without writes or another native call',async t=>{
+  const f=inspectionFixture(t);f.run(receipt(2));f.run(receipt(2));
+  fs.writeFileSync(path.join(f.project,'progress.json'),JSON.stringify({best:99,stall:0}));
+  const before=projectState(f.project),spawns=f.spawns(),{readInspection}=await import(collector);
+  const result=readCurrent(f.project);assert.equal(result.status,0,result.stderr);
+  const view=JSON.parse(result.stdout);assert.equal(view.kind,'phoenix-diagram-current-progress-view');
+  assert.equal(view.inspection.path,f.previous);assert.deepEqual(view.data,readInspection(f.previous).progress);
+  assert.equal(view.data.sequence,2);assert.equal(view.data.observations[0].best,2);assert.equal(view.data.observations[0].stall,1);
+  assert.equal(view.reader.path,progressReader);assert.equal(view.progress.path,path.join(path.dirname(f.previous),'progress.json'));
+  assert.equal(f.spawns(),spawns);assert.deepEqual(projectState(f.project),before);
+});
+test('current progress reader refuses live producers, rewound heads and incomplete chain slots',t=>{
+  for(const fault of ['lock','rewound','uncommitted','unfinished']){
+    const f=inspectionFixture(t);f.run(receipt(1));const first=fs.readFileSync(path.join(f.chain,'latest.json'));f.run(receipt(1));
+    if(fault==='lock')fs.writeFileSync(path.join(f.chain,'.lock'),'preserve live producer');
+    else if(fault==='rewound')fs.writeFileSync(path.join(f.chain,'latest.json'),first);
+    else if(fault==='uncommitted')fs.writeFileSync(path.join(f.chain,'capture-3.json'),'preserve uncommitted capture');
+    else {const head=JSON.parse(fs.readFileSync(path.join(f.chain,'latest.json')));head.status='inspection.failed';fs.writeFileSync(path.join(f.chain,'latest.json'),JSON.stringify(head));}
+    const before=projectState(f.project),result=readCurrent(f.project);assert.equal(result.status,4,result.stderr);assert.equal(result.stdout,'');assert.equal(f.spawns(),2);assert.deepEqual(projectState(f.project),before);
+  }
+});
+test('current progress reader authenticates pages, raw stdout and progress before returning any values',t=>{
+  for(const fault of ['stdout','progress','page','project-alias']){
+    const f=inspectionFixture(t),captured=f.run(receipt(1));let project=f.project;
+    if(fault==='stdout')fs.appendFileSync(captured.capture.stdout.path,' ');
+    else if(fault==='progress')fs.appendFileSync(path.join(captured.dir,'progress.json'),' ');
+    else if(fault==='page'){
+      const index=JSON.parse(fs.readFileSync(path.join(captured.dir,'index.json')));fs.appendFileSync(index.document.firstPage.path,' ');
+    }else {project=path.join(f.directory,'alias');fs.symlinkSync(f.project,project);}
+    const before=projectState(f.project),result=readCurrent(project);assert.equal(result.status,4,result.stderr);assert.equal(result.stdout,'');assert.equal(f.spawns(),1);assert.deepEqual(projectState(f.project),before);
+  }
+});
+test('current progress reader preserves stopRequired and not-derivable without declaring quality success',t=>{
+  const stopped=inspectionFixture(t);stopped.run(receipt(1));stopped.run(receipt(1));stopped.run(receipt(1));
+  let result=readCurrent(stopped.project);assert.equal(result.status,0,result.stderr);let view=JSON.parse(result.stdout);
+  assert.equal(view.data.stopRequired,true);assert.equal(view.data.observations[0].stall,2);assert.equal(stopped.spawns(),3);assert.equal(view.status,undefined);
+  const unknown=inspectionFixture(t);unknown.run({schemaVersion:1,tool:'other',command:'validate',status:'failed',diagnostics:[]});
+  result=readCurrent(unknown.project);assert.equal(result.status,0,result.stderr);view=JSON.parse(result.stdout);
+  assert.equal(view.data.status,'not-derivable');assert.equal(unknown.spawns(),1);assert.equal(view.status,undefined);
+});
+test('current progress reader rejects a foreign head before opening the foreign inspection',async t=>{
+  const f=inspectionFixture(t),foreign=inspectionFixture(t);f.run(receipt(1));foreign.run(receipt(1));
+  const head=JSON.parse(fs.readFileSync(path.join(f.chain,'latest.json'))),other=JSON.parse(fs.readFileSync(path.join(foreign.chain,'latest.json')));
+  head.inspection=other.inspection;head.capture=other.capture;fs.writeFileSync(path.join(f.chain,'latest.json'),JSON.stringify(head));
+  const {readCurrentProgress}=await import(progressReader),open=fs.openSync,opened=[];
+  fs.openSync=function(file,...args){if(typeof file==='string' && file.startsWith(foreign.project+path.sep))opened.push(file);return open.call(this,file,...args);};
+  try{assert.throws(()=>readCurrentProgress(f.project));}finally{fs.openSync=open;}
+  assert.deepEqual(opened,[]);assert.equal(f.spawns(),1);assert.equal(foreign.spawns(),1);
 });
