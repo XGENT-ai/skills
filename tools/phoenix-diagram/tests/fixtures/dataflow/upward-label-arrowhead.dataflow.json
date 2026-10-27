@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "销售数据报表数据流",
+    "output": "sales-report-dataflow.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "stages": [
+    { "label": "输入与落地" },
+    { "label": "校验" },
+    { "label": "分流存储" },
+    { "label": "汇总与仓库" },
+    { "label": "消费" }
+  ],
+  "nodes": [
+    { "id": "sales-csv", "type": "database", "label": "Sales CSV", "stage": 0, "row": 0 },
+    { "id": "refunds-csv", "type": "database", "label": "Refunds CSV", "stage": 0, "row": 2 },
+    { "id": "landing-store", "type": "database", "label": "Landing Store", "stage": 0, "row": 1 },
+    { "id": "validation-job", "type": "backend", "label": "Validation Job", "stage": 1, "row": 1 },
+    { "id": "reject-store", "type": "database", "label": "Reject Store", "stage": 2, "row": 0 },
+    { "id": "clean-tables", "type": "database", "label": "Clean Tables", "stage": 2, "row": 2 },
+    { "id": "daily-aggregator", "type": "backend", "label": "Daily Aggregator", "stage": 3, "row": 2 },
+    { "id": "metrics-warehouse", "type": "database", "label": "Metrics Warehouse", "stage": 3, "row": 1 },
+    { "id": "bi-dashboard", "type": "frontend", "label": "BI Dashboard", "stage": 4, "row": 0 },
+    { "id": "finance-export", "type": "backend", "label": "Finance Export", "stage": 4, "row": 2 }
+  ],
+  "flows": [
+    { "id": "sales-in", "from": "sales-csv", "to": "landing-store", "label": "销售记录写入" },
+    { "id": "refunds-in", "from": "refunds-csv", "to": "landing-store", "label": "退款记录写入" },
+    { "id": "landed-read", "from": "landing-store", "to": "validation-job", "label": "落地记录读取", "variant": "emphasis" },
+    { "id": "reject-split", "from": "validation-job", "to": "reject-store", "label": "错误记录写入" },
+    { "id": "clean-write", "from": "validation-job", "to": "clean-tables", "label": "正确记录写入", "variant": "emphasis" },
+    { "id": "clean-read", "from": "clean-tables", "to": "daily-aggregator", "label": "清洗后记录读取", "variant": "emphasis" },
+    { "id": "agg-write", "from": "daily-aggregator", "to": "metrics-warehouse", "label": "按 UTC 自然日汇总写入", "variant": "emphasis" },
+    { "id": "bi-read", "from": "metrics-warehouse", "to": "bi-dashboard", "label": "汇总结果读取" },
+    { "id": "fin-read", "from": "metrics-warehouse", "to": "finance-export", "label": "汇总结果读取" }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "输入与落地",
+      "items": [
+        "Sales CSV 与 Refunds CSV 分别进入 Landing Store"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "校验与分流",
+      "items": [
+        "Validation Job 校验列名和货币代码",
+        "错误记录写入 Reject Store",
+        "正确记录进入 Clean Tables"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "汇总与消费",
+      "items": [
+        "Daily Aggregator 按 UTC 自然日汇总，写入 Metrics Warehouse",
+        "BI Dashboard 与 Finance Export 分别读取汇总结果"
+      ]
+    }
+  ]
+}

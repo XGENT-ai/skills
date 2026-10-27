@@ -26,17 +26,34 @@ pub(super) fn label_point(context: &Context<'_>, index: usize, points: &[Point])
         && points[0].x == points[1].x
         && !label_pinned(raw)
     {
-        let at = p(points[0].x, (points[0].y + points[1].y) / 2.0 - 10.0);
+        let middle = (points[0].y + points[1].y) / 2.0;
         let size = size(context.input, raw, &[]);
-        let rect = Rect {
+        let plate = |at: Point| Rect {
             x: at.x - size.x / 2.0,
             y: at.y - 11.0,
             width: size.x,
             height: size.y,
         };
-        if context.flows.iter().enumerate().all(|(other, flow)| {
-            other == index || flow.from != context.flows[index].from || !masks(&flow.points, &rect)
-        }) {
+        let clear = |rect: &Rect| {
+            context.flows.iter().enumerate().all(|(other, flow)| {
+                other == index
+                    || flow.from != context.flows[index].from
+                    || !masks(&flow.points, rect)
+            })
+        };
+        let at = p(points[0].x, middle - 10.0);
+        // Above the middle is toward the tip of an upward flow; mirror the
+        // plate below the middle rather than cover its own arrowhead.
+        if let Some(head) = composition::arrowhead(&context.composition_route(index, points)) {
+            let below = p(points[0].x, middle + 16.0);
+            if composition::label_covers_arrowhead(&plate(at), &head)
+                && !composition::label_covers_arrowhead(&plate(below), &head)
+                && clear(&plate(below))
+            {
+                return below;
+            }
+        }
+        if clear(&plate(at)) {
             return at;
         }
     }

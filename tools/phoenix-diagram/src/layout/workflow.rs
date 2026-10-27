@@ -243,9 +243,11 @@ fn compile_attempt(
             .collect::<Vec<_>>();
         if errors.is_empty()
             || errors.iter().any(|diagnostic| {
+                // A covered arrowhead may clear on the rerouted scene.
                 ![
                     "composition/ambiguous-corridor",
                     "composition/proper-crossing",
+                    "composition/label-arrowhead",
                 ]
                 .contains(&diagnostic.code.as_str())
             })
@@ -798,6 +800,7 @@ fn compile_plan(
     };
     measure::clear_group_titles(input, &measured, &mut scene);
     measure::clear_automatic_legends(input, &mut scene);
+    clear_label_arrowheads(input, &measured, &mut scene);
     validation::validate(input, &measured, &mut scene)?;
     measure::finalize(input, &measured, &mut scene)?;
     measure::validate_readable_text(input, &mut scene)?;
@@ -1303,6 +1306,137 @@ fn removal_combinations(values: &[Value], size: usize) -> Vec<Vec<Value>> {
     let mut output = Vec::new();
     visit(values, size, 0, &mut Vec::new(), &mut output);
     output
+}
+
+// Diagnostics the closing checks report for a scene, as (code, subject) keys.
+fn closing_checks(
+    input: &DiagramInput,
+    measured: &measure::Measurement,
+    scene: &CompiledDiagram,
+) -> Vec<(String, String)> {
+    let mut trial = scene.clone();
+    let failed = validation::validate(input, measured, &mut trial)
+        .and_then(|()| measure::finalize(input, measured, &mut trial))
+        .and_then(|()| measure::validate_readable_text(input, &mut trial))
+        .err()
+        .unwrap_or_default();
+    let mut keys: Vec<_> = trial
+        .diagnostics
+        .iter()
+        .chain(&failed)
+        .map(|diagnostic| (diagnostic.code.clone(), diagnostic.subject.path.clone()))
+        .collect();
+    keys.sort();
+    keys.dedup();
+    keys
+}
+
+// Readable positions along a route: each segment from the longest, at its
+// middle and then away from it, above/below a horizontal one or on/beside a
+// vertical one.
+fn label_positions(points: &[Point], width: f64) -> Vec<Point> {
+    let mut segments: Vec<_> = points
+        .windows(2)
+        .enumerate()
+        .map(|(index, pair)| {
+            (
+                index,
+                pair[0],
+                pair[1],
+                (pair[1].x - pair[0].x).hypot(pair[1].y - pair[0].y),
+            )
+        })
+        .filter(|(_, _, _, length)| *length >= 12.0)
+        .collect();
+    segments.sort_by(|a, b| b.3.total_cmp(&a.3).then(a.0.cmp(&b.0)));
+    let mut positions = Vec::new();
+    for (_, a, b, _) in segments {
+        for t in [0.5, 0.3, 0.7, 0.15, 0.85] {
+            let x = a.x + (b.x - a.x) * t;
+            let y = a.y + (b.y - a.y) * t;
+            if (a.y - b.y).abs() <= crate::geometry::EPSILON {
+                positions.extend([Point { x, y: y - 10.0 }, Point { x, y: y + 14.0 }]);
+            } else if (a.x - b.x).abs() <= crate::geometry::EPSILON {
+                positions.extend([
+                    Point { x, y: y + 3.0 },
+                    Point {
+                        x: x + width / 2.0 + 6.0,
+                        y: y + 3.0,
+                    },
+                    Point {
+                        x: x - width / 2.0 - 6.0,
+                        y: y + 3.0,
+                    },
+                ]);
+            }
+        }
+    }
+    positions
+}
+
+// A label over an arrowhead's tip or body hides the relationship's
+// direction. Each automatic label doing so moves to the first position along
+// its own route that covers none and adds no other diagnostic; author-pinned
+// labels stay as authored, and routes are never changed.
+fn clear_label_arrowheads(
+    input: &DiagramInput,
+    measured: &measure::Measurement,
+    scene: &mut CompiledDiagram,
+) {
+    use crate::geometry::composition::{arrowhead, label_covers_arrowhead, RoutedRelation};
+    // Standard quality keeps the reference compiler's label geometry.
+    if input.input_contract != InputContract::PhoenixV1
+        || scene.schema_version != 2
+        || input.quality != crate::input::Quality::Showcase
+    {
+        return;
+    }
+    let heads: Vec<_> = scene
+        .relations
+        .iter()
+        .enumerate()
+        .filter_map(|(index, relation)| {
+            let mut facts = relation.authored.facts.clone();
+            facts["variant"] = Value::String(relation.variant.clone());
+            arrowhead(&RoutedRelation::new(index, facts, relation.points.clone()))
+        })
+        .collect();
+    let covers = |rect: &Rect| heads.iter().any(|head| label_covers_arrowhead(rect, head));
+    for index in 0..scene.relations.len() {
+        let relation = &scene.relations[index];
+        let Some(plate) = relation.label_plate else {
+            continue;
+        };
+        if relation.text.len() != 1
+            || ["labelAt", "labelDx", "labelDy", "labelSegment"]
+                .iter()
+                .any(|key| relation.authored.facts.get(*key).is_some())
+            || !covers(&plate)
+        {
+            continue;
+        }
+        let baseline = closing_checks(input, measured, scene);
+        for position in label_positions(&relation.points, plate.width) {
+            let moved = Rect {
+                x: position.x - plate.width / 2.0,
+                y: position.y - 10.0,
+                ..plate
+            };
+            if covers(&moved) {
+                continue;
+            }
+            let mut trial = scene.clone();
+            trial.relations[index].label_plate = Some(moved);
+            trial.relations[index].text[0].position = position;
+            if closing_checks(input, measured, &trial)
+                .iter()
+                .all(|key| baseline.contains(key))
+            {
+                *scene = trial;
+                break;
+            }
+        }
+    }
 }
 
 fn compile_candidate(

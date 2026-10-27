@@ -971,6 +971,109 @@ pub fn collect_label_route_clearance(
     hits
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LabelArrowheadOverlap {
+    pub label_index: usize,
+    pub label_relation_index: isize,
+    pub arrow_relation_index: usize,
+    pub rect: Rect,
+    pub arrowhead: Rect,
+}
+
+// The rendered end marker (markerWidth 10, markerHeight 7, refX 9) scaled by
+// the stroke width: its tip one width past the route end and its base nine
+// back, 3.5 to each side.
+pub struct Arrowhead {
+    pub tip: Point,
+    pub centroid: Point,
+    pub bounds: Rect,
+}
+
+pub fn arrowhead(route: &RoutedRelation) -> Option<Arrowhead> {
+    let points = normalize_route_points(&route.points);
+    if points.len() < 2 || !route.target_endpoint || !truthy(&route.relation["to"]) {
+        return None;
+    }
+    let end = points[points.len() - 1];
+    let previous = points[points.len() - 2];
+    let length = ((end.x - previous.x).powi(2) + (end.y - previous.y).powi(2)).sqrt();
+    if !length.is_finite() || length <= EPSILON {
+        return None;
+    }
+    let width = route.relation["width"]
+        .as_f64()
+        .filter(|n| n.is_finite() && *n > 0.0)
+        .unwrap_or(if route.relation["variant"] == "emphasis" {
+            1.8
+        } else {
+            1.4
+        });
+    let (dx, dy) = ((end.x - previous.x) / length, (end.y - previous.y) / length);
+    let corners = [(1.0, 0.0), (-9.0, 3.5), (-9.0, -3.5)].map(|(u, v): (f64, f64)| Point {
+        x: end.x + (u * dx - v * dy) * width,
+        y: end.y + (u * dy + v * dx) * width,
+    });
+    let left = corners.iter().map(|p| p.x).fold(f64::INFINITY, f64::min);
+    let right = corners
+        .iter()
+        .map(|p| p.x)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let top = corners.iter().map(|p| p.y).fold(f64::INFINITY, f64::min);
+    let bottom = corners
+        .iter()
+        .map(|p| p.y)
+        .fold(f64::NEG_INFINITY, f64::max);
+    Some(Arrowhead {
+        tip: corners[0],
+        centroid: Point {
+            x: corners.iter().map(|p| p.x).sum::<f64>() / 3.0,
+            y: corners.iter().map(|p| p.y).sum::<f64>() / 3.0,
+        },
+        bounds: Rect {
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        },
+    })
+}
+
+// A plate over the tip or the body's centre hides the direction; one only
+// grazing a base corner does not.
+pub fn label_covers_arrowhead(rect: &Rect, head: &Arrowhead) -> bool {
+    finite_rect(rect)
+        && (crate::geometry::point_in_rect(head.tip, rect)
+            || crate::geometry::point_in_rect(head.centroid, rect))
+}
+
+// Unlike route clearance, a label's own route counts: covering its own
+// arrowhead hides the relationship's direction.
+pub fn collect_label_arrowhead_overlaps(
+    labels: &[LabelRect],
+    routed: &[RoutedRelation],
+) -> Vec<LabelArrowheadOverlap> {
+    let heads: Vec<_> = routed
+        .iter()
+        .filter_map(|route| arrowhead(route).map(|head| (route.relation_index, head)))
+        .collect();
+    let mut hits = Vec::new();
+    for (label_index, label) in labels.iter().enumerate() {
+        for (arrow_relation_index, head) in &heads {
+            if label_covers_arrowhead(&label.bounds, head) {
+                hits.push(LabelArrowheadOverlap {
+                    label_index,
+                    label_relation_index: label.relation_index,
+                    arrow_relation_index: *arrow_relation_index,
+                    rect: label.bounds,
+                    arrowhead: head.bounds,
+                });
+            }
+        }
+    }
+    hits
+}
+
 pub fn minimum_label_route_clearance(hits: &[LabelRouteClearance]) -> Option<f64> {
     hits.iter()
         .map(|hit| hit.clearance)

@@ -300,6 +300,24 @@ pub(super) fn check(context: &Context<'_>) -> Result<(), Diagnostics> {
             ));
         }
         if !context.legacy() {
+            // Author-pinned label positions are kept as authored.
+            let automatic: Vec<_> = labels
+                .iter()
+                .filter(|label| !label_pinned(&label.relation))
+                .cloned()
+                .collect();
+            for hit in composition::collect_label_arrowhead_overlaps(&automatic, &routed) {
+                errors.push(problem(
+                    context,
+                    "flows",
+                    hit.label_relation_index as usize,
+                    "composition/label-arrowhead",
+                    "Flow label covers an arrowhead",
+                    serde_json::to_value(hit).unwrap(),
+                ));
+            }
+        }
+        if !context.legacy() {
             for hit in composition::collect_label_canvas_overflow(
                 &labels,
                 &[context.view_box.width, context.view_box.height],

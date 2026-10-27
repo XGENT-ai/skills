@@ -288,6 +288,45 @@ pub(super) fn validate(
                 serde_json::to_value(&hit).unwrap(),
             ));
         }
+        if phoenix && readable {
+            // Author-pinned label positions are kept as authored.
+            let automatic = scene
+                .relations
+                .iter()
+                .filter(|relation| {
+                    !["labelAt", "labelDx", "labelDy", "labelSegment"]
+                        .iter()
+                        .any(|key| relation.authored.facts.get(*key).is_some())
+                })
+                .filter_map(|relation| {
+                    relation.label_plate.map(|plate| {
+                        LabelRect::new(
+                            relation_index(relation) as isize,
+                            relation.authored.facts.clone(),
+                            plate,
+                        )
+                    })
+                })
+                .collect::<Vec<_>>();
+            let arrows = scene
+                .relations
+                .iter()
+                .map(|relation| {
+                    let mut facts = relation.authored.facts.clone();
+                    facts["variant"] = Value::String(relation.variant.clone());
+                    RoutedRelation::new(relation_index(relation), facts, relation.points.clone())
+                })
+                .collect::<Vec<_>>();
+            for hit in collect_label_arrowhead_overlaps(&automatic, &arrows) {
+                diagnostics.push(relation_diagnostic(
+                    "composition/label-arrowhead",
+                    hit.label_relation_index as usize,
+                    scene,
+                    "Relationship label covers an arrowhead",
+                    serde_json::to_value(&hit).unwrap(),
+                ));
+            }
+        }
         if phoenix && !readable {
             for hit in collect_label_canvas_overflow(
                 &labels,
