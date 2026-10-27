@@ -359,9 +359,22 @@ export function checkProviderReply(capture,proof,reference,bytesFor,{outcome='su
 function actualReply(capture,proof,reference,store,outcome='success') {return checkProviderReply(capture,proof,reference,value=>store.bytes(value),{outcome});}
 function assistantText(event,provider) {const payload=eventPayload(event);need(provider==='claude-code'?event.type==='assistant' && event.message?.role==='assistant':payload?.type==='agent_message' || payload?.type==='message' && payload.role==='assistant' || event.type==='event_msg' && payload.type==='task_complete','Scenario response is not a native assistant message');return text(event);}
 function receiptErrors(receipt) {const errors=receipt.composition?.summary?.errors;return Number.isSafeInteger(errors)?errors:(receipt.diagnostics || []).filter(row=>row.severity==='error').length;}
-// P2 host sessions run on a development package; they count for the final candidate
-// only when its bundle and engine source are the same (bundle manifest excludes ENGINE.json).
-export function checkDevelopmentPackage(version,cohort) {
+// P2 host sessions run on the authenticated final candidate itself, or on a development
+// package that counts only when its bundle and engine source are the same (bundle
+// manifest excludes ENGINE.json).
+export function checkDevelopmentPackage(version,cohort,{record,candidate,bytesFor}={}) {
+  const sameCandidate=version?.distribution==='candidate' || record && HASH.test(cohort.tgzSha256 || '') && (record.candidateSha256===cohort.tgzSha256 || record.package?.tarball?.identity?.sha256===cohort.tgzSha256);
+  if(sameCandidate) {
+    // Only aggregateCandidate's authenticated validateCandidate result supplies
+    // these snapshots; provider source/bundle assertions cannot substitute them.
+    const manifest=candidate?.files?.get('release-dir/VERSION.json'),tgz=candidate?.tgz;
+    need(record?.package?.version && record.package.tarball && manifest && tgz && typeof bytesFor==='function' && Buffer.isBuffer(manifest.content) && Buffer.isBuffer(tgz.content),'Same-candidate provider package lacks its authenticated candidate VERSION/tgz');
+    need(same(identity(manifest.content),manifest.identity) && same(identity(tgz.content),tgz.identity) && manifest.identity.sha256===cohort.versionSha256 && tgz.identity.sha256===cohort.tgzSha256,'Authenticated candidate VERSION/tgz cohort differs');
+    need(version.distribution==='candidate' && same(version,candidate.version) && same(version,JSON.parse(manifest.content.toString('utf8'))) && same(candidate.source,cohort.source) && version.sourceCommit===cohort.source.commit && version.sourceInputSha256===cohort.source.inputSha256 && version.bundleSha256===cohort.bundleSha256 && version.npmPackageVersion===cohort.npmPackageVersion && same(sorted(Object.keys(version.engines || {})),sorted(TARGETS)) && same(version.engines,cohort.engines),'Same-candidate provider VERSION/source/complete engines differ');
+    need(record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source) && same(record.package.version.identity,manifest.identity) && same(record.package.tarball.identity,tgz.identity),'Same-candidate provider source/VERSION/tgz identity differs');
+    need(bytesFor(record.package.version).equals(manifest.content) && bytesFor(record.package.tarball).equals(tgz.content),'Same-candidate provider VERSION/tgz bytes differ');
+    return version;
+  }
   need(version?.schemaVersion===1 && version.distribution==='development' && version.tool==='phoenix-diagram' && version.toolVersion==='0.2.0' && version.npmPackageVersion===cohort.npmPackageVersion && version.sourceInputSha256===cohort.source.inputSha256 && version.bundleSha256===cohort.bundleSha256 && object(version.engines) && Object.keys(version.engines).length>0,'Development package bundle or engine source differs from the final candidate');
   return version;
 }
@@ -394,20 +407,20 @@ export function checkReplay(expected,row,cohort,store) {
     else{need(receipt.status!=='pass' && item.codes.length>0,'Final-engine validation replay no longer fails');need(same(errorCodes(receipt),item.codes),`The final engine's error diagnostics differ for host row ${row.id}; rerun it`);}
   }
 }
-function providerEvidence(entry,cohort,tarInventory,{profile='p1'}={}) {
-  if(profile!=='p2' || entry.reuse===undefined)return recordEvidence(entry,entry.provider,cohort,tarInventory,{profile});
+function providerEvidence(entry,cohort,tarInventory,{profile='p1',candidate}={}) {
+  if(profile!=='p2' || entry.reuse===undefined)return recordEvidence(entry,entry.provider,cohort,tarInventory,{profile,candidate});
   const reuse=entry.reuse;need(object(reuse) && object(reuse.replay),'Reused host rows need their earlier record and a final-engine replay');
   const current=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot).relativeJson(entry.recordMember),earlier=new ArchiveEvidence(reuse.archive,reuse.prefix,reuse.originalRoot).relativeJson(reuse.recordMember);
   const {scenarios,reused}=p2ReuseRows(entry.provider,current.scenarios,earlier.scenarios),store=new ArchiveEvidence(reuse.replay.archive,reuse.replay.prefix,reuse.replay.originalRoot),replays=store.relativeJson(reuse.replay.member);
   need(replays?.schemaVersion===1 && replays.kind==='phoenix-diagram-host-replay' && replays.provider===entry.provider && Array.isArray(replays.rows) && new Set(replays.rows.map(row=>row.id)).size===replays.rows.length,'Final-engine host replay record differs');
-  const rerun=recordEvidence(entry,entry.provider,cohort,tarInventory,{profile,scenarios,rows:current.scenarios.map(row=>row.id)}),kept=recordEvidence(reuse,entry.provider,cohort,tarInventory,{profile,scenarios,rows:reused,replay:{store,rows:replays.rows}});
+  const rerun=recordEvidence(entry,entry.provider,cohort,tarInventory,{profile,candidate,scenarios,rows:current.scenarios.map(row=>row.id)}),kept=recordEvidence(reuse,entry.provider,cohort,tarInventory,{profile,candidate,scenarios,rows:reused,replay:{store,rows:replays.rows}});
   return{provider:entry.provider,status:'pass',sessionIds:[...rerun.sessionIds,...kept.sessionIds],scenarioIds:scenarios.map(row=>row.id),rerunScenarioIds:rerun.scenarioIds,reused:{engineSource:kept.engineSource,scenarioIds:kept.scenarioIds},scope:`${rerun.scope}; rows kept from an earlier engine of the same bundle only where the final engine reproduces their diagrams and failed validations`};
 }
-function recordEvidence(entry,provider,cohort,tarInventory,{profile='p1',scenarios,rows,replay}={}) {
+function recordEvidence(entry,provider,cohort,tarInventory,{profile='p1',scenarios,rows,replay,candidate}={}) {
   const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot),record=store.relativeJson(entry.recordMember);scenarios??=profile==='p2'?p2ProviderScenarios(provider,record.scenarios):PROVIDER_SCENARIOS;
   need(record.schemaVersion===1 && record.kind==='phoenix-diagram-provider-acceptance' && record.provider===provider && scenarios,'Provider record kind/provider differs');
   let development;
-  if(profile==='p2'){need(record.profile==='p2' && record.package?.version,'P2 provider record lacks its development package');const version=store.json(record.package.version);development={version:replay?checkReusedPackage(version,cohort):checkDevelopmentPackage(version,cohort),sha256:record.package.version.identity.sha256};}
+  if(profile==='p2'){need(record.profile==='p2' && record.package?.version,'P2 provider record lacks its package VERSION');const version=store.json(record.package.version);development={version:replay?checkReusedPackage(version,cohort):checkDevelopmentPackage(version,cohort,{record,candidate,bytesFor:reference=>store.bytes(reference)}),sha256:record.package.version.identity.sha256};}
   else need(record.repository===cohort.repository && String(record.runId)===String(cohort.runId) && Number(record.runAttempt)===cohort.runAttempt && record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source),'Provider candidate/source/run binding differs');
   const engines=Object.values(development?.version.engines || cohort.engines),manifestSha256=development?.sha256 || cohort.versionSha256,source=development?.version.sourceInputSha256 ?? cohort.source.inputSha256;
   if(!rows)checkProviderCoverage(record.scenarios,scenarios);need(record.sessions?.length>0 && new Set(record.sessions.map(row=>row.id)).size===record.sessions.length,'Real fresh provider sessions are missing/duplicated');
@@ -480,10 +493,10 @@ export function aggregateCandidate(input,{api=liveApi,profile='p1'}={}) {
   for(const entry of input.platforms){const checked=check(`platform:${entry.target}`,()=>platformEvidence(entry,cohort,api,{reviewed,cases}));result.platforms.push(checked || {target:entry.target,status:'incomplete'});}
   result.node18=check('node18',()=>platformEvidence(input.node18,cohort,api,{node18:true,cases})) || {status:'incomplete'};
   if(profile==='p2')result.local=check('local',()=>localEvidence(input.local,cohort,{cases})) || {status:'incomplete'};
-  const inventory=readTarballInventory(candidate.tgz.content);for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory,{profile}));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
+  const inventory=readTarballInventory(candidate.tgz.content);for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory,{profile,candidate}));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
   if(result.diagnostics.length===0 && result.platforms.length===4 && result.platforms.every(row=>row.status==='pass') && result.node18.status==='pass' && (profile!=='p2' || result.local.status==='pass') && result.providers.length===2 && result.providers.every(row=>row.status==='pass')){result.status='pass';result.handoff='passed';}return result;
 }
-export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs [--profile p1|p2] --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. p2 checks the four platforms as automatic-only, adds the local darwin-arm64 full-review consumption and binds host sessions to a development package with the same bundle and engine source; a provider entry may keep rows from an earlier engine of the same bundle (reuse) when a final-engine replay reproduces the diagram and failed validations of each kept row. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
+export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs [--profile p1|p2] --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. p2 checks the four platforms as automatic-only, adds the local darwin-arm64 full-review consumption and binds host sessions to the identical authenticated candidate tgz/VERSION or a development package with the same bundle and engine source; a provider entry may keep rows from an earlier engine of the same bundle (reuse) when a final-engine replay reproduces the diagram and failed validations of each kept row. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
 export async function main(argv=process.argv.slice(2)) {
   if(argv.length===1 && argv[0]==='--help'){process.stdout.write(HELP);return 0;}let output;
   try{const options={};for(let at=0;at<argv.length;at++){const key=argv[at];need(['--input','--output','--profile'].includes(key) && !options[key] && argv[at+1] && !argv[at+1].startsWith('--'),'Expected unique --input/--output/--profile values');options[key]=argv[++at];}need(!options['--profile'] || Object.hasOwn(PROFILE_CASES,options['--profile']),'Unknown aggregate profile');need(options['--input'] && options['--output'],'--input and --output are required');output=path.resolve(options['--output']);need(!fs.existsSync(output),'Aggregate output already exists; preserve it');const input=JSON.parse(readSnapshot(options['--input']).content.toString('utf8')),result=aggregateCandidate(input,{profile:options['--profile'] || 'p1'});fs.writeFileSync(output,`${JSON.stringify(result,null,2)}\n`,{flag:'wx',mode:0o600});process.stdout.write(`${JSON.stringify(result)}\n`);return result.handoff==='passed'?0:1;}

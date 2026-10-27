@@ -429,6 +429,58 @@ test('host sessions on a development package count only with the final bundle an
   assert.equal(checkDevelopmentPackage(version,expected),version);
   for(const change of [{bundleSha256:'0'.repeat(64)},{sourceInputSha256:'0'.repeat(64)},{distribution:'release'},{toolVersion:'0.1.0'},{engines:{}}])assert.throws(()=>checkDevelopmentPackage({...version,...change},expected),/bundle|engine source/,JSON.stringify(change));
 });
+function sameCandidatePackageFixture() {
+  const expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const engines=Object.fromEntries(
+    ['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].map((target,index)=>[target,{asset:`phoenix-diagram-${target}`,size:index+1,sha256:String(index+1).repeat(64),url:`http://127.0.0.1:48765/phoenix-diagram-${target}`}])
+  );
+  const version={schemaVersion:1,distribution:'candidate',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:expected.npmPackageVersion,sourceCommit:expected.source.commit,sourceInputSha256:expected.source.inputSha256,bundleSha256:expected.bundleSha256,inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',engines};
+  const versionBytes=Buffer.from(JSON.stringify(version,null,2)+'\n'),tgzBytes=Buffer.from('Inert unit archive bytes; this fixture is not native/candidate acceptance evidence.');
+  Object.assign(expected,{engines,tgzSha256:identity(tgzBytes).sha256,versionSha256:identity(versionBytes).sha256});
+  const files=new Map(),put=(name,bytes)=>{files.set(name,bytes);return{path:name,identity:identity(bytes)};};
+  const record={source:structuredClone(expected.source),candidateSha256:expected.tgzSha256,package:{version:put('/archive/VERSION.json',versionBytes),tarball:put('/archive/package.tgz',tgzBytes)}};
+  // The aggregate supplies this view only from its successful validateCandidate,
+  // never from fields of the provider record. Here it is an inert boundary fixture.
+  const candidate={source:structuredClone(expected.source),version:structuredClone(version),tgz:{identity:identity(tgzBytes),content:tgzBytes},files:new Map([['release-dir/VERSION.json',{identity:identity(versionBytes),content:versionBytes}]])};
+  const context={record,candidate,bytesFor:reference=>{const bytes=files.get(reference.path);assert.ok(bytes);assert.deepEqual(identity(bytes),reference.identity);return bytes;}};
+  return{expected,version,context,files,put};
+}
+test('same-candidate provider packages retain their actual candidate VERSION and exact authenticated tgz',async()=>{
+  const {checkDevelopmentPackage}=await api(),f=sameCandidatePackageFixture();
+  assert.equal(checkDevelopmentPackage(f.version,f.expected,f.context),f.version);
+  assert.equal(f.version.distribution,'candidate');
+  assert.throws(()=>checkDevelopmentPackage(f.version,f.expected),/candidate|authenticated/i,'source/bundle claims without the authenticated candidate are insufficient');
+});
+test('same-candidate provider packages reject side archives, relabeling and altered VERSION bytes',async()=>{
+  const {checkDevelopmentPackage}=await api();
+  for(const fault of ['other-tgz','other-tgz-and-claim','missing-tgz','changed-version','reformatted-version','development-label','foreign-source','foreign-record-sha']) {
+    const f=sameCandidatePackageFixture(),{record}=f.context;
+    if(fault==='other-tgz' || fault==='other-tgz-and-claim') {
+      record.package.tarball=f.put('/archive/other.tgz',Buffer.from('Another archive with the same source, bundle and VERSION claims.'));
+      if(fault==='other-tgz-and-claim')record.candidateSha256=record.package.tarball.identity.sha256;
+    } else if(fault==='missing-tgz')delete record.package.tarball;
+    else if(fault==='changed-version') {f.version.extra='Unbound VERSION field';record.package.version=f.put('/archive/changed-VERSION.json',Buffer.from(JSON.stringify(f.version)));}
+    else if(fault==='reformatted-version')record.package.version=f.put('/archive/reformatted-VERSION.json',Buffer.from(JSON.stringify(f.version)));
+    else if(fault==='development-label') {f.version.distribution='development';record.package.version=f.put('/archive/relabeled-VERSION.json',Buffer.from(JSON.stringify(f.version)));}
+    else if(fault==='foreign-source')record.source.tree='0'.repeat(40);
+    else record.candidateSha256='0'.repeat(64);
+    assert.throws(()=>checkDevelopmentPackage(f.version,f.expected,f.context),/candidate|VERSION|tgz|source/i,fault);
+  }
+});
+test('same-candidate provider packages bind all four engines and the validated cohort snapshots',async()=>{
+  const {checkDevelopmentPackage}=await api();
+  for(const fault of ['non-host-engine','missing-engine','extra-engine','cohort-engine','cohort-version','cohort-source','changed-candidate-tgz']) {
+    const f=sameCandidatePackageFixture();
+    if(fault==='non-host-engine')f.version.engines['linux-arm64'].sha256='0'.repeat(64);
+    else if(fault==='missing-engine')delete f.version.engines['linux-arm64'];
+    else if(fault==='extra-engine')f.version.engines['win32-x64']={...f.version.engines['linux-x64']};
+    else if(fault==='cohort-engine') {f.expected.engines=structuredClone(f.expected.engines);f.expected.engines['linux-arm64'].size++;}
+    else if(fault==='cohort-version')f.expected.versionSha256='0'.repeat(64);
+    else if(fault==='cohort-source')f.context.candidate.source.commit='0'.repeat(40);
+    else f.context.candidate.tgz.content=Buffer.from('Changed after the validated candidate view was formed.');
+    assert.throws(()=>checkDevelopmentPackage(f.version,f.expected,f.context),/candidate|VERSION|engine|cohort|tgz/i,fault);
+  }
+});
 test('P2 delivery rows require their evidence, timing, language and unchanged-reference facts',async()=>{
   const {p2Outcome}=await api(),files=new Map(),ref=(name,bytes)=>{files.set(name,bytes);return{path:name,identity:identity(bytes)};},store={bytes:reference=>files.get(reference.path)};
   const make=({candidate,html='<svg></svg>',evidence={status:'none'},delivery={status:'none'},locale={requested:'en',resolved:'en',fallback:false}})=>({evidence,locale,candidate:ref(`/c-${files.size}`,Buffer.from(JSON.stringify(candidate))),artifact:ref(`/a-${files.size}`,Buffer.from(html)),stages:[{},{receipt:{evidence:delivery}}]});
