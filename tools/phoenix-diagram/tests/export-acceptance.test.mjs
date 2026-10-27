@@ -91,6 +91,24 @@ test('fixed browser probes parse without evaluating any authored literal', () =>
   assert.equal(globalThis.__phoenixDiagramXss, undefined);
 });
 
+test('trusted click coordinates follow the completed camera and scroll-driven panel placement', async () => {
+  let frame = 0, scrolled = false;
+  const button = {
+    scrollIntoView() { scrolled = true; },
+    getBoundingClientRect() {
+      return { left: 191.5, top: frame >= 5 ? 340 : 434, width: 125.5, height: 32 };
+    },
+  };
+  const stage = { hasAttribute: name => name === 'data-camera-transaction' && frame < 3 };
+  const context = {
+    document: { querySelector: selector => selector === '.diagram-container' ? stage : button },
+    requestAnimationFrame(callback) { queueMicrotask(() => callback(++frame * 16)); },
+  };
+  const point = await vm.runInNewContext('(' + probes.readerClickPoint.toString() + ')("#btn-reach-downstream")', context);
+  assert.equal(scrolled, true);
+  assert.deepEqual({ ...point }, { x: 254.25, y: 356 }, 'a delayed native press must still hit the final button, not its old location');
+});
+
 test('Reader snapshots exclude only explicitly marked runtime text and retain authored numeric legend text', () => {
   const texts = [
     { textContent: 'Legend', closest: () => null },

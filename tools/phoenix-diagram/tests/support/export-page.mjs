@@ -69,6 +69,20 @@ export function snapshotReader() {
   };
 }
 
+export async function readerClickPoint(selector) {
+  const node = document.querySelector(selector);
+  if (!node || node.disabled || node.hidden) throw new Error('Unavailable control: ' + selector);
+  node.scrollIntoView({ block: 'center', inline: 'center' });
+  // Focus can animate the camera after the control appears. Scrolling also
+  // queues Passport placement; measure after both have painted.
+  const stage = document.querySelector('.diagram-container');
+  while (stage?.hasAttribute('data-camera-transaction')) await new Promise(resolve => requestAnimationFrame(resolve));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const rect = node.getBoundingClientRect();
+  if (!(rect.width > 0 && rect.height > 0)) throw new Error('Control is not painted: ' + selector);
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 export async function awaitReader() {
   await document.fonts.ready;
   if (!window.PhoenixDiagram) throw new Error('Missing window.PhoenixDiagram');

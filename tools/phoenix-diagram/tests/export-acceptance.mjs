@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_TIMEOUTS, discoverBrowser, ExportBrowser } from './support/export-browser.mjs';
 import { runExplore, verifyExplore } from './support/explore-reader.mjs';
-import { installExportProbe, awaitReader, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
+import { installExportProbe, awaitReader, readerClickPoint, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, runReaderInteractions } from './support/export-reader.mjs';
 
 export const REQUIRED_EXPORT_SCOPE = Object.freeze({ themes: ['dark', 'light'], modes: ['still', 'live'], formats: ['svg', 'png', 'jpeg', 'webp', 'webm'], clipboard: ['success', 'permission-denied', 'capability-unavailable'], print: { themes: ['dark', 'light'], modes: ['still', 'live'], method: 'cdp-print-media-and-native-print-to-pdf' }, readerInteractions: REQUIRED_READER_INTERACTIONS,
@@ -206,14 +206,7 @@ async function withBrowserPage(options, kind, run) {
         return evaluate(snapshotReader);
       },
       async click(selector) {
-        const point = await evaluate(selector => {
-          const node = document.querySelector(selector);
-          if (!node || node.disabled || node.hidden) throw new Error('Unavailable control: ' + selector);
-          node.scrollIntoView({ block: 'center', inline: 'center' });
-          const rect = node.getBoundingClientRect();
-          if (!(rect.width > 0 && rect.height > 0)) throw new Error('Control is not painted: ' + selector);
-          return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        }, selector);
+        const point = await evaluate(readerClickPoint, selector);
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
       },
