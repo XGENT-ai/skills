@@ -47,11 +47,11 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-27T19:40:00+08:00
+- 最近更新：2026-10-27T22:25:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：M4进行中（v4记录）。D25修复提交e7eb4a5后，V-5 offline实测暴露其桌面护照另侧摆放与Export菜单的悬停回归，已最小修复为8067ac9并push，新CI run40496072738运行中；e7eb4a5候选及其V-4/V-5、部分初装只作诊断。
+- 当前状态：M4进行中（v4记录）。8067ac9新候选上V-4、V-5本机已通过（V-5 Reader间歇超时经诊断为既有环境敏感问题，低负载复跑通过并登记）；CI四Native/Assemble及4/5 consumer通过；64项目初装审计与冻结完成，两lane作者运行中。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：按[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“下一步”在新引擎上完成test:diagram/npm test与V-4/V-5重做；CI完成后取v5小制品、绑定、64项目初装审计与冻结、两lane作者，V-7、独审与聚合
+- 下一步：按[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“下一步”：作者完成后分批独审；test:diagram重跑；CI darwin-x64 consumer；V-7本机消费；聚合
 - 当前阻塞：无
 - 代码基线：护照本栏修复提交8067ac90831209560931c7f36a33225525e8ce09（已push，新候选来源）；SourceInput 715baf90、bundle d4a10828；用户原有dirty未动。
 
