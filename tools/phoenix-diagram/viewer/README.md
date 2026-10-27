@@ -16,7 +16,7 @@ mise exec --no-deps -- node --test test/phoenix-diagram/reader-assets.test.js
 
 局部行为入口为 `mise exec --no-deps -- node --test tools/phoenix-diagram/tests/viewer/unit.test.mjs`。必要修补涉及零字节图片、raster 单次清理、编码器 stop 终态的 2 秒等待预算，以及复制失败/不支持时联系已有 PNG 下载动作的提示；精确差异见 `export-adaptations.json`。该入口执行实际 Reader API，DOM、canvas、Image 与编码器边界由确定性 fixture 提供；它不能证明真实浏览器权限、打印样式或媒体文件可解码。
 
-语义护照的来源显示按原生元数据 `sourceEvidence` 分三态；类型标签只显示作者给出的类型，SVG 根带 `data-node-kind-derived` 时 `data-node-kind` 是渲染器派生的配色槽，不作类型显示；护照自动摆放避开聚焦节点，桌面本栏放不下时换到舞台另一侧，窄屏放不下时在图下方预留空间。`focus.js` 的这三类修改按各自范围记录在 `focus-adaptations.json`，`test/phoenix-diagram/reader-assets.test.js` 按记录与范围重建并逐字节校验其余部分。窄屏（≤720px）底部工具栏完整收入舞台及护照预留空间的样式在 `template.source.html` 的 `phoenix-diagram-narrow-stage` 样式块，不改冻结的 `viewer.css`。
+语义护照的来源显示按原生元数据 `sourceEvidence` 分三态；类型标签只显示作者给出的类型，SVG 根带 `data-node-kind-derived` 时 `data-node-kind` 是渲染器派生的配色槽，不作类型显示；护照自动摆放在本栏内避开聚焦节点（桌面始终留在本栏，不移到工具栏菜单展开的舞台另一侧），窄屏放不下时在图下方预留空间。`focus.js` 的这三类修改按各自范围记录在 `focus-adaptations.json`，`test/phoenix-diagram/reader-assets.test.js` 按记录与范围重建并逐字节校验其余部分。窄屏（≤720px）底部工具栏完整收入舞台及护照预留空间的样式在 `template.source.html` 的 `phoenix-diagram-narrow-stage` 样式块，不改冻结的 `viewer.css`。
 
 来源、修改及许可证见 [NOTICE.md](NOTICE.md)。不要直接编辑生成物；装配器的 `--check` 不写文件、不恢复来源、不安装工具或下载资源。
 

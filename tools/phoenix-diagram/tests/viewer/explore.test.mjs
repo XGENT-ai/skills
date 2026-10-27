@@ -527,16 +527,17 @@ test('a desktop Passport opens beside the focused table instead of over it (memb
   assert.equal(placed.reserve, 0, 'a desktop stage never grows for the Passport');
 });
 
-test('a desktop Passport takes the stage\'s other side when no height in its column clears a tall node', async () => {
+// The toolbar menus (Export, style) open over the stage's other side; a
+// Passport moved there sits under the pointer that just chose a menu item.
+test('a desktop Passport keeps its column, away from the toolbar menus, when no height there clears a tall node', async () => {
   const { env, read } = await measuredStage({ inner: [1440, 900], container: [32, 58, 1408, 878], chip: [16, 352, 316],
     dock: [1014, 819, 1391, 861], legend: [67, 757, 885, 799], node: [82, 160, 356, 724] });
   env.api.focus.set('focused');
   const placed = read();
-  assert.equal(overlaps(placed.passport, placed.node), false, `Passport ${JSON.stringify(placed.passport)} covers the focused node`);
-  assert.equal(overlaps(placed.passport, placed.dock), false, 'the dock stays clear');
-  assert.ok(placed.passport.right <= placed.stage.right - 16, 'the Passport stays on the stage');
-  env.api.focus.clear();
-  assert.equal(env.$('#focus-chip').style.left, '', 'closing the Passport returns it to its column');
+  assert.equal(env.$('#focus-chip').style.left, '', 'the Passport is not moved to the stage\'s other side');
+  assert.equal(placed.passport.left, placed.stage.left + 1 + 16, 'the Passport keeps its column');
+  assert.ok(placed.passport.top >= placed.stage.top + 16 && placed.passport.bottom <= placed.stage.bottom - 16, 'the Passport stays on the stage');
+  assert.equal(placed.reserve, 0, 'a desktop stage never grows for the Passport');
 });
 
 test('a narrow Passport keeps the focused node visible: above it when there is room, else below the drawing', async () => {

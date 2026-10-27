@@ -1217,8 +1217,6 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
           setPassportReserve(0);
           applyManualLensPosition(manualLensPosition);
           return;
-        } else {
-          chip.style.removeProperty('left');
         }
         var nodeCenter = nodeRect.top - containerRect.top + nodeRect.height / 2;
         var previewingOnMobile = mobile && chip.getAttribute('data-relationship-previewing') === 'true';
@@ -1301,22 +1299,11 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
               (parseFloat(stageStyle.borderBottomWidth) || 0) + safeGap;
             setPassportReserve(chipHeight + safeGap);
           }
-        } else if (placed !== null) {
-          setPassportReserve(0);
-          top = placed;
         } else {
-          // At 100% the camera cannot pan the node aside, so when no height in
-          // this column clears it, the Passport takes the stage's other side.
+          // The Passport keeps its column on a wide stage, clear of the
+          // toolbar menus that open over the stage's other side.
           setPassportReserve(0);
-          var currentLeft = chipRect.left - containerRect.left - (container.clientLeft || 0);
-          var otherLeft = Math.min(container.clientWidth - padding,
-            window.innerWidth - containerRect.left - padding) - chip.offsetWidth;
-          var shift = otherLeft - currentLeft;
-          var mirrored = shift > 0 ? clearTop(chipRect.left + shift, chipRect.right + shift, minTop, maxTop) : null;
-          if (mirrored !== null) {
-            top = mirrored;
-            chip.style.left = Math.round(otherLeft) + 'px';
-          }
+          if (placed !== null) top = placed;
         }
         chip.style.top = Math.round(top) + 'px';
         if (PhoenixDiagram.radar && typeof PhoenixDiagram.radar.sync === 'function') PhoenixDiagram.radar.sync();

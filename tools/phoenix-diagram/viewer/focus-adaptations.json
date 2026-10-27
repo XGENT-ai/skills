@@ -4,7 +4,7 @@
   "sourcePath": "viewer/focus.js",
   "sourceSha256": "db03fcc25183ee27b281f7917f8a40849733680bebe1a2fdd0bbdc01cc0d05d0",
   "normalizedSourceSha256": "05a3f6779be8b4f6eae22752ec3d21710e93970ab716f2bdf180e959b7fe1d7e",
-  "adaptedBodySha256": "0bd9e90b2f2c5391b7b1db55265534e057eb52995a99f651687e6fb0796cf669",
+  "adaptedBodySha256": "b8e19768e788e58f3126e9df25aad01f4f4e6844f855e9a22d1fabbc4f2d7cc3",
   "license": "MIT; see LICENSE.txt",
   "hunks": [
     {
@@ -93,13 +93,6 @@
     },
     {
       "scope": "passport node clearance",
-      "sourceLine": 1178,
-      "sourceByteOffset": 59994,
-      "sourceText": "",
-      "replacementText": "        } else {\n          chip.style.removeProperty('left');\n"
-    },
-    {
-      "scope": "passport node clearance",
       "sourceLine": 1203,
       "sourceByteOffset": 61360,
       "sourceText": "",
@@ -138,7 +131,7 @@
       "sourceLine": 1239,
       "sourceByteOffset": 63180,
       "sourceText": "          if (valid.length) top = valid[0];\n",
-      "replacementText": "          return valid.length ? valid[0] : null;\n        }\n        var placed = clearTop(chipRect.left, chipRect.right, minTop, maxTop);\n        if (mobile && html.getAttribute('data-present') !== 'true') {\n          // The camera stays at 100% on a narrow screen. When no height of the\n          // stage clears the focused node, the stage grows below the drawing\n          // and the Passport sits there, above the dock. A presentation stage\n          // fills the screen and cannot grow.\n          var stageFits = clearTop(chipRect.left, chipRect.right, padding,\n            Math.max(padding, stageHeight - padding - chipHeight)) !== null;\n          if (stageFits) {\n            setPassportReserve(0);\n            if (placed !== null) top = placed;\n          } else {\n            var stageStyle = window.getComputedStyle(container);\n            top = containerRect.height - (parseFloat(stageStyle.paddingBottom) || 0) -\n              (parseFloat(stageStyle.borderBottomWidth) || 0) + safeGap;\n            setPassportReserve(chipHeight + safeGap);\n          }\n        } else if (placed !== null) {\n          setPassportReserve(0);\n          top = placed;\n        } else {\n          // At 100% the camera cannot pan the node aside, so when no height in\n          // this column clears it, the Passport takes the stage's other side.\n          setPassportReserve(0);\n          var currentLeft = chipRect.left - containerRect.left - (container.clientLeft || 0);\n          var otherLeft = Math.min(container.clientWidth - padding,\n            window.innerWidth - containerRect.left - padding) - chip.offsetWidth;\n          var shift = otherLeft - currentLeft;\n          var mirrored = shift > 0 ? clearTop(chipRect.left + shift, chipRect.right + shift, minTop, maxTop) : null;\n          if (mirrored !== null) {\n            top = mirrored;\n            chip.style.left = Math.round(otherLeft) + 'px';\n          }\n"
+      "replacementText": "          return valid.length ? valid[0] : null;\n        }\n        var placed = clearTop(chipRect.left, chipRect.right, minTop, maxTop);\n        if (mobile && html.getAttribute('data-present') !== 'true') {\n          // The camera stays at 100% on a narrow screen. When no height of the\n          // stage clears the focused node, the stage grows below the drawing\n          // and the Passport sits there, above the dock. A presentation stage\n          // fills the screen and cannot grow.\n          var stageFits = clearTop(chipRect.left, chipRect.right, padding,\n            Math.max(padding, stageHeight - padding - chipHeight)) !== null;\n          if (stageFits) {\n            setPassportReserve(0);\n            if (placed !== null) top = placed;\n          } else {\n            var stageStyle = window.getComputedStyle(container);\n            top = containerRect.height - (parseFloat(stageStyle.paddingBottom) || 0) -\n              (parseFloat(stageStyle.borderBottomWidth) || 0) + safeGap;\n            setPassportReserve(chipHeight + safeGap);\n          }\n        } else {\n          // The Passport keeps its column on a wide stage, clear of the\n          // toolbar menus that open over the stage's other side.\n          setPassportReserve(0);\n          if (placed !== null) top = placed;\n"
     },
     {
       "scope": "passport node clearance",
