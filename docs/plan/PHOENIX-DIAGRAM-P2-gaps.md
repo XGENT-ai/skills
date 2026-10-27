@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-27T22:25:00+08:00
+- 最近更新：2026-10-27T23:10:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：M4进行中（v4记录）。8067ac9新候选上V-4、V-5本机已通过（V-5 Reader间歇超时经诊断为既有环境敏感问题，低负载复跑通过并登记）；CI四Native/Assemble及4/5 consumer通过；64项目初装审计与冻结完成，两lane作者运行中。
+- 当前状态：按用户要求暂停，待新对话继续；D24/D25授权保留，M4未完成。最终候选8067ac9（护照本栏修复）上V-4、V-5、V-8与CI四平台+Node18已通过；64角色cohort已冻结，作者执行到Claude 4/32、Codex 8/32时暂停（2个Codex独审passed；codex/intent-lifecycle为index误报待修；2个角色因暂停中断）。无运行中进程。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：按[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“下一步”：作者完成后分批独审；test:diagram重跑；CI darwin-x64 consumer；V-7本机消费；聚合
+- 下一步：新对话先读[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)末节“暂停交接”：续跑两lane、修index误报并恢复该角色、处理两中断角色、分批独审、低负载跑V-7本机消费，最后取五ZIP聚合
 - 当前阻塞：无
-- 代码基线：护照本栏修复提交8067ac90831209560931c7f36a33225525e8ce09（已push，新候选来源）；SourceInput 715baf90、bundle d4a10828；用户原有dirty未动。
+- 代码基线：产品最后提交8067ac90831209560931c7f36a33225525e8ce09（已push，候选来源）；SourceInput 715baf90、bundle d4a10828；其后仅docs本地提交（未push）；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-27T19:40:00+08:00 | D25修复e7eb4a5后实测发现护照另侧摆放回归，最小修复8067ac9、新CI运行中；e7eb4a5与v3结果只作诊断，按D24重做同包终验 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；终验待完成 |
+| M4 | 进行中 | 2026-10-27T23:10:00+08:00 | 8067ac9上V-4/V-5/V-8及CI同包通过；64角色冻结后作者执行中按用户要求暂停，独审/V-7/聚合待续 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
