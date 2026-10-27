@@ -47,7 +47,16 @@ fn check_case(case: &Value) {
         }),
         ..Default::default()
     };
-    let bytes = serde_json::to_vec(&case["document"]).unwrap();
+    let mut document = case["document"].clone();
+    if let Some(backend) = case["legends"]
+        .as_array()
+        .and_then(|entries| entries.iter().find(|entry| entry["kind"] == "backend"))
+    {
+        // Pin the frozen presentation through the public explicit-label
+        // contract. Neutral defaults have their own rendered regression.
+        document["meta"]["legend"]["entries"]["backend"]["label"] = backend["label"].clone();
+    }
+    let bytes = serde_json::to_vec(&document).unwrap();
     let parsed = parse_input(&bytes, DiagramType::Workflow, &options)
         .unwrap_or_else(|errors| panic!("{name}: input errors {errors:?}"));
     let result = workflow::compile(&parsed, &options);
@@ -82,7 +91,7 @@ fn check_case(case: &Value) {
     }
     if let Ok(scene) = result {
         assert_eq!(parsed.source_bytes, bytes, "{name}: original input");
-        assert_eq!(parsed.document, case["document"], "{name}: authored facts");
+        assert_eq!(parsed.document, document, "{name}: submitted facts");
         let expected = &case["receipt"];
         near(scene.view_box.width, &expected["viewBox"][0], &name);
         near(scene.view_box.height, &expected["viewBox"][1], &name);

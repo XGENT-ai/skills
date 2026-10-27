@@ -115,6 +115,99 @@ fn lifecycle_legends_preserve_initial_final_and_state_type_symbols() {
 }
 
 #[test]
+fn legacy_success_legend_does_not_claim_a_state_with_outgoing_transitions_is_terminal() {
+    let oracle: Value =
+        serde_json::from_str(include_str!("fixtures/lifecycle/oracle.json")).unwrap();
+    let original = &oracle["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["name"] == "deployment-release")
+        .unwrap()["document"];
+    assert!(original["transitions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|edge| edge["from"] == "live" && edge["to"] == "paused"));
+    for (locale, expected) in [("en", "success"), ("zh-CN", "成功")] {
+        let mut document = original.clone();
+        document["meta"]["locale"] = locale.into();
+        let actual = html(&document, DiagramType::Lifecycle, "legacy-2.17", "showcase");
+        let entry = actual
+            .select(&selector("[data-legend-semantic-kind='success']"))
+            .next()
+            .unwrap();
+        let labels: Vec<_> = entry
+            .select(&selector("text"))
+            .map(|text| text.text().collect::<String>())
+            .collect();
+        assert!(
+            labels.iter().any(|label| label == expected),
+            "{locale}: {labels:?}"
+        );
+        document["meta"]["legend"]["entries"]["success"]["label"] =
+            "Authored success outcome".into();
+        let explicit = html(&document, DiagramType::Lifecycle, "legacy-2.17", "showcase");
+        assert!(explicit
+            .select(&selector("[data-legend-semantic-kind='success'] text"))
+            .any(|text| text.text().collect::<String>() == "Authored success outcome"));
+    }
+}
+
+#[test]
+fn workflow_default_backend_legend_does_not_invent_an_agent_in_any_bundled_locale() {
+    let original: Value = serde_json::from_str(include_str!(
+        "../../../skills/phoenix-diagram/examples/minimal.workflow.json"
+    ))
+    .unwrap();
+    for contract in ["legacy-2.17", "phoenix-v1"] {
+        for (locale, expected) in [
+            (None, "Processing logic"),
+            (Some("en"), "Processing logic"),
+            (Some("zh-CN"), "处理逻辑"),
+            (Some("zh-TW"), "處理邏輯"),
+            (Some("es"), "Lógica de procesamiento"),
+            (Some("ko"), "처리 로직"),
+        ] {
+            // The frozen legacy input contract only accepts these two locales.
+            if contract == "legacy-2.17" && !matches!(locale, None | Some("en" | "zh-CN")) {
+                continue;
+            }
+            let mut document = original.clone();
+            document["meta"]["input_contract"] = contract.into();
+            document["meta"].as_object_mut().unwrap().remove("locale");
+            if let Some(locale) = locale {
+                document["meta"]["locale"] = locale.into();
+            }
+            let actual = html(&document, DiagramType::Workflow, contract, "showcase");
+            let labels: Vec<_> = actual
+                .select(&selector("[data-legend-semantic-kind='backend'] text"))
+                .map(|text| text.text().collect::<String>())
+                .collect();
+            assert!(
+                labels.iter().any(|label| label == expected),
+                "{contract}/{locale:?}: {labels:?}"
+            );
+        }
+        let mut document = original.clone();
+        document["meta"]["input_contract"] = contract.into();
+        if contract == "phoenix-v1" {
+            document["meta"]["translations"]["legend.workflow.backend"] =
+                "Authored processing".into();
+            let actual = html(&document, DiagramType::Workflow, contract, "showcase");
+            assert!(actual
+                .select(&selector("[data-legend-semantic-kind='backend'] text"))
+                .any(|text| text.text().collect::<String>() == "Authored processing"));
+        }
+        document["meta"]["legend"]["entries"]["backend"]["label"] = "Authored performer".into();
+        let actual = html(&document, DiagramType::Workflow, contract, "showcase");
+        assert!(actual
+            .select(&selector("[data-legend-semantic-kind='backend'] text"))
+            .any(|text| text.text().collect::<String>() == "Authored performer"));
+    }
+}
+
+#[test]
 fn dataflow_arrow_legends_remain_noninteractive_even_when_node_kinds_match() {
     let document: Value = serde_json::from_str(include_str!(
         "../upstream/legacy-2.17/examples/product-analytics.dataflow.json"

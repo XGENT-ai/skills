@@ -87,6 +87,18 @@ test('meta.locale selects a bundled catalog case-insensitively and sets html lan
   }
 });
 
+test('workflow backend defaults describe processing without inventing an agent', async () => {
+  for (const [locale, expected] of [
+    ['en', 'Processing logic'], ['zh-CN', '处理逻辑'], ['zh-TW', '處理邏輯'],
+    ['es', 'Lógica de procesamiento'], ['ko', '처리 로직'],
+  ]) {
+    const env = await reader({ locale });
+    assert.equal(env.window.viewerText('legend.workflow.backend'), expected, locale);
+    const overridden = await reader({ locale, translations: { 'legend.workflow.backend': 'Authored performer' } });
+    assert.equal(overridden.window.viewerText('legend.workflow.backend'), 'Authored performer', locale);
+  }
+});
+
 test('unsupported or absent locales fall back to English', async () => {
   for (const meta of [{}, { locale: 'fr' }, { locale: 'es-MX' }, { locale: 'zh' }, { locale: '' }, { locale: 42 }, { translations: { 'viewer.lens.instruction': 'No locale, no override.' } }]) {
     const env = await reader(meta, { lang: 'xx' });

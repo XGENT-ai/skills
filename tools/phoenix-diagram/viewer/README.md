@@ -8,7 +8,7 @@ mise exec --no-deps -- node scripts/assemble-phoenix-diagram-reader.mjs --check
 mise exec --no-deps -- node --test test/phoenix-diagram/reader-assets.test.js
 ```
 
-`template.source.html`、CSS 与 14 个 classic JavaScript 片段是维护源；`assets/template.html` 是供 Rust 嵌入的生成物。装配沿冻结脚本的顺序，Export 保持唯一的私有 Export Cleanup 子片段。`guided-views.js` 未进入参考脚本的装配列表，也未进入此运行资源。五个语言目录沿用 P1 状态（en/zh-CN 已追加 PNG 下载替代提示）；装配器把 `Archify`/`ARCHIFY` 改为 Phoenix 身份，再按 `catalog-adaptations.json` 只新增各目录缺少的键（不覆盖既有消息），生成唯一的 `assets/catalogs.json`，模板嵌入同一对象，Rust `src/i18n.rs` 也读取它。`--check` 断言五目录键集合与占位符逐键一致且无 Archify 残留。初始可读英文在装配时生成，启动后按元数据中的语言与有效覆写通过 `textContent`、安全属性更新，不将作者内容写入 HTML sink。
+`template.source.html`、CSS 与 14 个 classic JavaScript 片段是维护源；`assets/template.html` 是供 Rust 嵌入的生成物。装配沿冻结脚本的顺序，Export 保持唯一的私有 Export Cleanup 子片段。`guided-views.js` 未进入参考脚本的装配列表，也未进入此运行资源。五个语言目录以 P1 为基线（en/zh-CN 已追加 PNG 下载替代提示，workflow backend 的五语言默认图例使用中性的处理逻辑）；装配器把 `Archify`/`ARCHIFY` 改为 Phoenix 身份，再按 `catalog-adaptations.json` 只新增各目录缺少的键（不覆盖既有消息），生成唯一的 `assets/catalogs.json`，模板嵌入同一对象，Rust `src/i18n.rs` 也读取它。`--check` 断言五目录键集合与占位符逐键一致且无 Archify 残留。初始可读英文在装配时生成，启动后按元数据中的语言与有效覆写通过 `textContent`、安全属性更新，不将作者内容写入 HTML sink。
 
 唯一公共运行命名空间是 `window.PhoenixDiagram`。主图保持 `.diagram-container > svg`；节点、关系与图例使用原有语义属性。原生渲染器只替换 `LOCALE/PRESET/TITLE/HEADING/SUBTITLE/SVG/CARDS/METADATA` 八个唯一 `{{PHOENIX:...}}` 插槽。原始作者事实可由 `PhoenixDiagram.metadata` 读取；它不构成已核实的仓库来源证据。
 

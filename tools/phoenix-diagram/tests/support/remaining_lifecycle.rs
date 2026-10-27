@@ -89,7 +89,13 @@ fn compare_frozen_cases(only: Option<&str>) {
             input_contract: Some(contract),
             ..Default::default()
         };
-        let bytes = serde_json::to_vec(&case["document"]).unwrap();
+        let mut document = case["document"].clone();
+        if contract == InputContract::Legacy217 {
+            // Pin the immutable reference presentation with an explicit label;
+            // default success wording is covered by the rendered regression.
+            document["meta"]["legend"]["entries"]["success"]["label"] = "terminal success".into();
+        }
+        let bytes = serde_json::to_vec(&document).unwrap();
         let parsed = parse_input(&bytes, DiagramType::Lifecycle, &options);
         if case["ok"] == false {
             rejected += 1;

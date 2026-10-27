@@ -172,7 +172,7 @@ function escape(value) {
 
 const placeholders = message => [...new Set([...message.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map(match => match[1]))].sort();
 
-// The single normalized catalog source: frozen catalogs with Phoenix identity,
+// The single normalized catalog source: snapshot-derived catalogs with Phoenix identity,
 // plus catalog-adaptations.json entries that each add a key a locale lacks.
 export function catalogsAt(workspace) {
   const directory = path.join(workspace, 'viewer/locales');
