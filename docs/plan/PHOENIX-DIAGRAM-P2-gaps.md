@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-27T23:10:00+08:00
+- 最近更新：2026-10-28T02:40:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：按用户要求暂停，待新对话继续；D24/D25授权保留，M4未完成。最终候选8067ac9（护照本栏修复）上V-4、V-5、V-8与CI四平台+Node18已通过；64角色cohort已冻结，作者执行到Claude 4/32、Codex 8/32时暂停（2个Codex独审passed；codex/intent-lifecycle为index误报待修；2个角色因暂停中断）。无运行中进程。
+- 当前状态：v5终验暴露自动边标签压箭头（codex/mermaid-flowchart视觉失败），用户选D26本期修复；v5 cohort停止并作废只作诊断。D26修复提交5585a5f并push，同包CI run40560828981已锁定运行中；本机V-4/V-5在D26开发引擎（SourceInput b5506db7）上运行中，V-8（test:diagram、npm test）已在最终源码通过。M4未完成。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：新对话先读[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)末节“暂停交接”：续跑两lane、修index误报并恢复该角色、处理两中断角色、分批独审、低负载跑V-7本机消费，最后取五ZIP聚合
+- 下一步：见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“D26”节：V-4/V-5看图登记；CI候选取回校验后用`local/phoenix-diagram/make-provider-v6.py`建v6 provider（index采用修正版index-r1）初装冻结64角色、分批独审；V-7本机消费；取五ZIP聚合
 - 当前阻塞：无
-- 代码基线：产品最后提交8067ac90831209560931c7f36a33225525e8ce09（已push，候选来源）；SourceInput 715baf90、bundle d4a10828；其后仅docs本地提交（未push）；用户原有dirty未动。
+- 代码基线：产品最后提交5585a5f6aeb8682074bedce2fd1fbefb76652a5c（已push，候选来源）；开发SourceInput b5506db7、bundle d4a10828（skill未变）；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-27T23:10:00+08:00 | 8067ac9上V-4/V-5/V-8及CI同包通过；64角色冻结后作者执行中按用户要求暂停，独审/V-7/聚合待续 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；终验待完成 |
+| M4 | 进行中 | 2026-10-28T02:40:00+08:00 | D26自动标签压箭头修复5585a5f，v5 cohort作废；新同包CI与本机V-4/V-5运行中，64角色/V-7/聚合待做 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
@@ -114,6 +114,7 @@
 | D22 | 宿主成功回执的必要读取范围 | 失败diagnostic仍须完整实际读取；成功回执核必要交付字段，不要求无关DOM、composition或coverage明细全文进入宿主上下文。完整原件、分页、机械展开及身份验证保持 | 用户明确调整验收读取范围；事实、四门、视觉、来源、停止与身份不放宽。当前冻结题面/包/collector/会话均不改、不重跑Native；两份原failed报告保留，按新范围追加独审复核，不冒称作者曾读全成功DTO | 用户2026-10-26明确选择“仅强制失败诊断全文；成功回执核必要交付字段”；两宿主架构图已分别通过自动/语义/实际视觉/身份，仅成功DTO全文读取未过，原证据见M4记录 |
 | D23 | 项目内辅助读取的路径写法 | 相对读取若实际解析到同一授权项目内的同一原件，且必要字段与身份闭合，只记非阻断路径偏离；保留实际指令和调用，不冒称遵守了绝对路径写法 | 用户明确调整此项阻断级别；固定Native调用字面量、访问边界、原件身份及事实/质量/视觉/来源/计数/停止门保持。不改冻结输入或重跑作者/Native；原failed保留并另行复核 | 用户2026-10-26选择“同项目同原件的相对读取记为非阻断项”；Claude Mermaid sequence五维通过，唯一原失败为先cd再相对读取同项目正确回执，原证据见M4记录 |
 | D25 | v3实测暴露的既有Reader/旧渲染缺陷 | 本期最小修复四类：A 探索护照面板不遮挡聚焦节点；B 390窄屏底部工具栏完整可用；C 护照不把配色槽kind冒充作者类型；D 旧数据流路由末段沿目标边框导致箭头不入节点。均先红后绿，真实浏览器实看验证；E 聚焦缩放裁图例仍记已知限制 | 用户2026-10-27选择“本期修复（推荐）”；扩大§1.2对Reader与旧数据流渲染的排除，仅限上述四处及直接回归。原v3 cohort（候选61b621e8、64角色执行中途停止的3份draft/2份中断）全部作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7；事实/质量/停止/题面/D12模型不变 | v3 V-5扩展审阅B1/B2/C对core-12已验收同字节原图的新判定，Root亲看确认；见M4-v3记录 |
+| D26 | v5终验暴露的自动边标签压箭头 | “压箭头”指标签板覆盖箭头尖或箭体形心。showcase下未经作者固定（无labelAt/labelDx/labelDy/labelSegment）的workflow标签由路由后一次性调整：路线与路由搜索不变，仅压箭头的标签沿本路线改选不压任何箭头、且不新增任何收尾诊断的位置；dataflow showcase自动竖向标签在朝箭头一侧压箭头时镜像到中点另一侧。standard保持参考编译器几何，不压箭头的标签输出不变；无解时由新增`composition/label-arrowhead`在showcase报错（与label-route-clearance同级），workflow走廊反馈对其容忍。作者固定标签与architecture参考几何不在其内。先用case-037/case-004原candidate复现红再绿 | 用户2026-10-28选择"本期修复（推荐）"；扩大§1.2对workflow/dataflow渲染的排除，仅限自动标签放置、该判定及直接回归。v5 cohort（候选8067ac9，作者执行中停止）作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7/V-8；事实/质量/停止/题面/D12模型不变 | v5独审codex/mermaid-flowchart视觉失败，Root亲看E→D箭头被自身标签完全盖住；695个交付扫描：169个workflow-v2-auto交付中7个箭头≥90%被遮、16个部分遮挡，dataflow同类部分遮挡；现校验跳过标签自身路线且无标签—箭头判定。见M4-v4记录 |
 | D24 | 新同包终验与内部实施自主推进 | 授权一次新同包、原题原D12模型的62正式+2反例；本任务内冻结、重打包、接线与重验等内部选择自行推进，只有外部依赖确实无法解决才问用户 | 仍先明确实际失效覆盖与新冻结身份；事实/质量/视觉/来源/身份/停止2及限次规则保持，不拼回旧cohort，不无具体修复抽签。按真实candidate载体严格适配，不伪装development | 用户2026-10-27明确“授权，以后这种问题别问我，外部依赖搞不定才问我”；新执行见M4-v3记录 |
 
 D21选择移除重复调度前置并改进测试证据传输。继续增加预检/措辞或轮换模型不能解释既有规则已明确而宿主仍出错的原因，且会使新包重验成本反复扩大；只把语义错误降为警告则违反原事实要求。因此保留最终强制门，用定界题面、无损读取、独立调度和限次复验收尾。若真正产品行为或外部合同改变，再按影响面重核该决策。
@@ -168,13 +169,14 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | ★ tools/phoenix-diagram/tests/gaps-acceptance.mjs；★ tests/support/gaps-browser.mjs；★ tests/provider/erd-facts.json；★ tests/provider/class-facts.json（后三者相对工具目录） | 有界真实回归入口、12组浏览器失败辅助片段及关系事实原题/明确正例；审核字段与作者题面分离，接线见§9 |
 | tools/phoenix-diagram/src/layout/architecture/presentation.rs及必要直接架构调用方；tests/architecture.rs、tests/render_source.rs（后两者相对工具目录） | D7获授权的自动wrap标题避让；锁原节点与显式路径，原参考JSON/oracle只读，只替换该已修标题的旧坐标断言，其余原回归保持 |
 | tools/phoenix-diagram/src/layout/workflow.rs、src/layout/workflow/measure.rs、tests/workflow.rs及必要新回归fixture（后三者相对工具目录） | D14获授权的可选整图修法与自动图例净距避让；保留固定几何/旧合同/原oracle、实际字号及全部业务事实，只补实际红测试和必要边界 |
+| tools/phoenix-diagram/src/geometry/composition.rs、src/layout/workflow.rs、src/layout/workflow/validate.rs、src/layout/dataflow/capacity.rs、src/layout/dataflow/validation.rs；★tests/label_arrowhead.rs及两份原candidate fixture（除首个外均相对工具目录） | D26自动边标签避让箭头与`composition/label-arrowhead`判定；作者固定标签、路由、原oracle/参考几何不变，只补实际红测试和直接回归 |
 | skills/phoenix-diagram/ENGINE.json；dist/phoenix-diagram/ | 通过既有build --sync-dist生成，不手写身份 |
 | test/phoenix-ui/bootstrap.test.js | D18仅测试helper的早退stdin EPIPE处理及大输入回归，保留CLI退出码/输出断言；不改Phoenix UI产品 |
 | tools/phoenix-diagram/tests/support/capture-stdio.mjs；★tools/phoenix-diagram/tests/support/read-current-progress.mjs；test/phoenix-diagram/capture-stdio.test.js | D21仅维护采集器的可选无损诊断视图、分页与逐调用进度记录；当前只读入口复用完整校验，旧冻结collector保持。默认四参数及原stdout/stderr/真实退出码保持，新增格式由V-9验证 |
 | tools/phoenix-diagram/tests/export-acceptance.mjs；tools/phoenix-diagram/tests/support/export-page.mjs；tools/phoenix-diagram/tests/export-acceptance.test.mjs | §9.5单例复现后只修维护点击取点的镜头/滚动时序；原HTML、真实输入、Native及15秒门保持，局部和同延迟真实复验分别取证 |
 | ★ tools/phoenix-diagram/tests/provider/p2-scenarios.json；★ repo-main-facts.json（后者位于同目录）；★ test/phoenix-diagram/provider-acceptance.test.js | 固定现有31角色题面/材料身份及两个仓库题v2；判据与给作者的材料隔离，保护覆盖、范围和旧题版本。既有私有factory/index/review/archive就地复用，仅派生受影响接线，不再复制整套helper |
 
-不修改Cargo依赖、输入schema、D7/D14以外的其他renderer、Phoenix UI产品、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
+不修改Cargo依赖、输入schema、D7/D14/D25/D26以外的其他renderer、Phoenix UI产品、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
 
 ## 2. 模块与接口
 
