@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-26T19:17:42+08:00
+- 最近更新：2026-10-27T19:40:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：实施中；V-9无损诊断、机械计数、前驱恢复及版本化题面已实现并局部通过，私有factory/index接线完成。新版62正式+2反例初装进行中；Source21既有2通过/4失败保留，M4未完成
+- 当前状态：M4进行中（v4记录）。D25修复提交e7eb4a5后，V-5 offline实测暴露其桌面护照另侧摆放与Export菜单的悬停回归，已最小修复为8067ac9并push，新CI run40496072738运行中；e7eb4a5候选及其V-4/V-5、部分初装只作诊断。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：完成当前64项目初装与审计、单一harness清单及源码冻结；逐题fresh核验后沿D12各执行一次，同时推进独立本机/CI检查，按§9.5限次收尾
-- 当前阻塞：无外部阻塞；新版V-6/V-7及最终聚合仍待执行。初装未完成不启动作者，原失败不改判，全部最终强制门通过前M4保持未完成。
-- 代码基线：Source21产品与V-9源码冻结abcefeed057cfebfdb329f08c75fce08f927f44e；Native21保留原build的67d446e/dirty身份，SourceInputa45958a2/engine59d45937不变、新bundle d4a10828；V-9 collector42508146及v2题面为新harness输入，未重打产品包。Source20冻结3263cf6及CI10结论保留；用户原有dirty未动
+- 下一步：按[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“下一步”在新引擎上完成test:diagram/npm test与V-4/V-5重做；CI完成后取v5小制品、绑定、64项目初装审计与冻结、两lane作者，V-7、独审与聚合
+- 当前阻塞：无
+- 代码基线：护照本栏修复提交8067ac90831209560931c7f36a33225525e8ce09（已push，新候选来源）；SourceInput 715baf90、bundle d4a10828；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-26T19:17:42+08:00 | V-9实现，24/24定向及完整轻量通过；入口3项真实Native边界通过，v2私有接线完成，64项目初装进行中；M4未完成 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md) | 待提交 |
+| M4 | 进行中 | 2026-10-27T19:40:00+08:00 | D25修复e7eb4a5后实测发现护照另侧摆放回归，最小修复8067ac9、新CI运行中；e7eb4a5与v3结果只作诊断，按D24重做同包终验 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
@@ -111,6 +111,10 @@
 | D19 | 同条件/停止/路径与布局规则的最小补充 | 短路断言保留完整分支条件；停滞2后不改候选含best回退；相对路径按宿主实际cwd核对；未固定共用端点先留独立通道，不预定边缘/内部列或先堆pin | 沿既有最小修订授权、保留原原则/授权/模型/题/质量/停止2；仅SKILL/docs/defaults现有段，不改Native/schema或加资源/强制布局/新门。Source21历史四风险按旧顺序执行；D21替代其启动前置，最终覆盖与强制门不删减 | Source20四failed及两Workflow原件/有限诊断；D14范围只读未证实简单Native遗漏，当前候选尚待真实新包验证，见M4 |
 | D20 | Source21同包两仓库后端对照 | 用既有deepseek/deepseek-flash对两道仓库原题各开一次全新会话，GLM原failed保留；两题全部独审过才预先固定新路线 | 用户明确选择同包两题对照，实际两项均failed、固定条件未满足，D12保持。额外2项目/4安装回执独立于标准16；不随机重试、不改题/源码或放宽读取/质量/停止，不用诊断替正式题 | Source21四风险2passed/2failed及额外Deepseek0passed/2failed均已完整封存；当前明文规则未遵守的事实与原件见M4 |
 | D21 | 验收范围、证据读取与收尾 | 按§9.3版本化两道普通命令仓库题；62正式角色与2个ERD缺事实反例直接进入同一冻结清单，额外16小门不再作为启动前置。用§9.4无损视图与机械计数减轻宿主负担，按§9.5限次执行和局部失效重验 | C-5授权调整验收方法；不删最终覆盖、不接受错误源码断言、不放宽质量/视觉/停止，不自动换模型。旧题/旧失败保留，修订题是新版本，不能重判旧会话；不为复用两个旧Workflow改归档或collector身份合同 | 用户2026-10-26明确要求修订；Source21源码条件错误、约1MB回执内13次重复整图证据、额外预检串行阻塞；实际接口见§9.4 |
+| D22 | 宿主成功回执的必要读取范围 | 失败diagnostic仍须完整实际读取；成功回执核必要交付字段，不要求无关DOM、composition或coverage明细全文进入宿主上下文。完整原件、分页、机械展开及身份验证保持 | 用户明确调整验收读取范围；事实、四门、视觉、来源、停止与身份不放宽。当前冻结题面/包/collector/会话均不改、不重跑Native；两份原failed报告保留，按新范围追加独审复核，不冒称作者曾读全成功DTO | 用户2026-10-26明确选择“仅强制失败诊断全文；成功回执核必要交付字段”；两宿主架构图已分别通过自动/语义/实际视觉/身份，仅成功DTO全文读取未过，原证据见M4记录 |
+| D23 | 项目内辅助读取的路径写法 | 相对读取若实际解析到同一授权项目内的同一原件，且必要字段与身份闭合，只记非阻断路径偏离；保留实际指令和调用，不冒称遵守了绝对路径写法 | 用户明确调整此项阻断级别；固定Native调用字面量、访问边界、原件身份及事实/质量/视觉/来源/计数/停止门保持。不改冻结输入或重跑作者/Native；原failed保留并另行复核 | 用户2026-10-26选择“同项目同原件的相对读取记为非阻断项”；Claude Mermaid sequence五维通过，唯一原失败为先cd再相对读取同项目正确回执，原证据见M4记录 |
+| D25 | v3实测暴露的既有Reader/旧渲染缺陷 | 本期最小修复四类：A 探索护照面板不遮挡聚焦节点；B 390窄屏底部工具栏完整可用；C 护照不把配色槽kind冒充作者类型；D 旧数据流路由末段沿目标边框导致箭头不入节点。均先红后绿，真实浏览器实看验证；E 聚焦缩放裁图例仍记已知限制 | 用户2026-10-27选择“本期修复（推荐）”；扩大§1.2对Reader与旧数据流渲染的排除，仅限上述四处及直接回归。原v3 cohort（候选61b621e8、64角色执行中途停止的3份draft/2份中断）全部作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7；事实/质量/停止/题面/D12模型不变 | v3 V-5扩展审阅B1/B2/C对core-12已验收同字节原图的新判定，Root亲看确认；见M4-v3记录 |
+| D24 | 新同包终验与内部实施自主推进 | 授权一次新同包、原题原D12模型的62正式+2反例；本任务内冻结、重打包、接线与重验等内部选择自行推进，只有外部依赖确实无法解决才问用户 | 仍先明确实际失效覆盖与新冻结身份；事实/质量/视觉/来源/身份/停止2及限次规则保持，不拼回旧cohort，不无具体修复抽签。按真实candidate载体严格适配，不伪装development | 用户2026-10-27明确“授权，以后这种问题别问我，外部依赖搞不定才问我”；新执行见M4-v3记录 |
 
 D21选择移除重复调度前置并改进测试证据传输。继续增加预检/措辞或轮换模型不能解释既有规则已明确而宿主仍出错的原因，且会使新包重验成本反复扩大；只把语义错误降为警告则违反原事实要求。因此保留最终强制门，用定界题面、无损读取、独立调度和限次复验收尾。若真正产品行为或外部合同改变，再按影响面重核该决策。
 
@@ -166,7 +170,8 @@ D1 是局部可逆选择：直接六区专用历史表与规则比引入完整IC
 | tools/phoenix-diagram/src/layout/workflow.rs、src/layout/workflow/measure.rs、tests/workflow.rs及必要新回归fixture（后三者相对工具目录） | D14获授权的可选整图修法与自动图例净距避让；保留固定几何/旧合同/原oracle、实际字号及全部业务事实，只补实际红测试和必要边界 |
 | skills/phoenix-diagram/ENGINE.json；dist/phoenix-diagram/ | 通过既有build --sync-dist生成，不手写身份 |
 | test/phoenix-ui/bootstrap.test.js | D18仅测试helper的早退stdin EPIPE处理及大输入回归，保留CLI退出码/输出断言；不改Phoenix UI产品 |
-| tools/phoenix-diagram/tests/support/capture-stdio.mjs；test/phoenix-diagram/capture-stdio.test.js | D21仅维护采集器的可选无损诊断视图、分页与逐调用进度记录；默认四参数形式及原始stdout/stderr/真实子进程退出码保持，新增格式由V-9验证 |
+| tools/phoenix-diagram/tests/support/capture-stdio.mjs；★tools/phoenix-diagram/tests/support/read-current-progress.mjs；test/phoenix-diagram/capture-stdio.test.js | D21仅维护采集器的可选无损诊断视图、分页与逐调用进度记录；当前只读入口复用完整校验，旧冻结collector保持。默认四参数及原stdout/stderr/真实退出码保持，新增格式由V-9验证 |
+| tools/phoenix-diagram/tests/export-acceptance.mjs；tools/phoenix-diagram/tests/support/export-page.mjs；tools/phoenix-diagram/tests/export-acceptance.test.mjs | §9.5单例复现后只修维护点击取点的镜头/滚动时序；原HTML、真实输入、Native及15秒门保持，局部和同延迟真实复验分别取证 |
 | ★ tools/phoenix-diagram/tests/provider/p2-scenarios.json；★ repo-main-facts.json（后者位于同目录）；★ test/phoenix-diagram/provider-acceptance.test.js | 固定现有31角色题面/材料身份及两个仓库题v2；判据与给作者的材料隔离，保护覆盖、范围和旧题版本。既有私有factory/index/review/archive就地复用，仅派生受影响接线，不再复制整套helper |
 
 不修改Cargo依赖、输入schema、D7/D14以外的其他renderer、Phoenix UI产品、archify、elintp、documentation-writer及全局安装器。共享文件、构建与浏览器由主实施者统一负责；M1/M2可在稳定边界下独立推进，不强制委派。
@@ -324,7 +329,9 @@ V-7保留原聚合器的完整ZIP身份验证：锁一个最终cohort，仅取�
 
 帮助/版本、`engine install`、普通`install`、`options.project`与argv、父目录回执选择的边界由现有`bootstrap.test.js`的公开入口/fixture做确定性检查；已有覆盖直接引用，缺失时只补精确边界反例，不改产品bootstrap来迎合题面。诊断修复/历史最佳/停止由原`repairable-diagnostic`和`stalled-repair`专项验证，来源partial由repo-dirty验证；不再要求一个主流程题穷举这些分支。
 
-每题独审分别登记**产物自动门、材料/源码语义、来源、实际视觉、宿主协议、证据身份**，注明失败归属。总判定仍要求全部适用的强制项通过：技术complete不覆盖事实错误；语义失败不抹掉真实自动/视觉通过；辅助脚本或登记草稿错误按实际恢复与身份判断，不混入布局停滞序列。诊断补读、原停止阈值、访问授权与如实答复继续核验，分类不是豁免。审核者事后推算计数不能冒写成作者已记录。
+每题独审分别登记**产物自动门、材料/源码语义、来源、实际视觉、宿主协议、证据身份**，注明失败归属。总判定仍要求全部适用的强制项通过：技术complete不覆盖事实错误；语义失败不抹掉真实自动/视觉通过；辅助脚本或登记草稿错误按实际恢复与身份判断，不混入布局停滞序列。诊断补读、原停止阈值、访问授权与如实答复继续核验，分类不是豁免。审核者事后推算计数不能冒写成作者已记录。成功/失败回执的宿主读取范围按D22及§9.4分别核验。
+
+D23仅调整项目内辅助读取的路径写法：实际cwd、相对路径解析、原件内容与身份均证明是同一授权项目内的同一文件，必要信息实际取得时，记非阻断偏离。越界读取、错用别项目/别交付、原件替换或必要字段缺失仍失败；固定Native调用的字面量形式和参数不受此项豁免。原相对读取事实、原指令和原failed报告保留，按独立scope-addendum复核，不改写为作者原先用了绝对路径。
 
 ### 9.4 测试辅助的无损诊断视图
 
@@ -333,24 +340,29 @@ V-7保留原聚合器的完整ZIP身份验证：锁一个最终cohort，仅取�
 - 原四路径参数及默认行为保持；新增可选`--inspection-dir <本项目新目录>`、`--previous-inspection <上一份inspection.json>`，PD参数仍在`--`之后。调用仍是固定字面量，采集器只运行一次原Native命令，原stdout/stderr及真实子退出码逐字保留。
 - factory先建本项目`stdio/inspection-chain/`（owned/ordinary/0700）。可选模式在此保存每次不可变`capture-N.json`及一个原子更新的`latest.json`，后者绑定sequence、原capture与当前inspection入口；在生成视图前先封存原capture DTO及previousCapture引用，并推进latest到该capture。派生失败也不能退回上一成功头；视图/进度未完整时只可走inspect恢复，不能继续Native修复。采集前以exclusive锁保护同项目链，要求previous与latest完全相同；已有链时不能省略previous或另起首链，不能用新candidate/文件名开叉。崩溃或锁遗留时保留原物，由Root核实原producer已退出后才恢复，不自动选择旧头或重置计数。
 - 新模式在项目内生成不可变`index.json`、数据分页和`progress.json`。索引绑定原capture/原stdout、完整diagnostics及所有字段，包含原`subject/evidence/supportedFixes`；仅按完整值摘要共享重复`measuredScene/source`，不删键、截字符串、改修法或替作者选择方案。展开去重引用后必须与原JSON深相等，原始字节仍以原文件/SHA为准。
-- 每个UTF-8分页最多8KiB，列出完整顺序、范围、字节数及摘要；索引本身过大也分页。作者读完整索引和全部被引用的唯一数据页；已验证同值的重复整图只读一次。页完整性/原文件变化/引用缺失必须显式失败，不能把预览当全文。该上限是传输分片，不是图内容或诊断数量上限。
+- 每个UTF-8分页最多8KiB，列出完整顺序、范围、字节数及摘要；索引本身过大也分页。完整页链与原文件仍须机械校验；失败时作者实际读到完整diagnostic（包括全部`subject/evidence/supportedFixes`及引用的唯一测量/source值），已验证同值的重复整图只读一次。允许经完整校验的程序重组后定向返回完整诊断，不允许过滤诊断、删字段、截字符串或用预览代替。成功回执按下段核必要交付字段，不要求无关DOM、composition、coverage明细全文进入宿主上下文。页完整性/原文件变化/引用缺失必须显式失败。8KiB是传输分片上限，不是图内容或诊断数量上限。
 - 小入口`inspection.json`只含版本、原capture/原stdout身份、首个索引页、总页数/总字节及进度引用，必须不超过8KiB；超限显式失败，不递归生成更大的页清单。索引与数据均用有序页链，每页绑定下一页、序号、内容范围和摘要，单页编码后总长度不超过8KiB。超长单字符串同样分片；按Unicode码点边界分割，顺序拼接后UTF-8字节必须等于去重后的规范化JSON。完整展开还须与原JSON深相等，既不丢字符也不把数组/字符串改成预览。
 - `progress.json`由本次作者调用采集器时按真实各门DTO机械生成，记录失败门、阶段、客观error、历史最佳和stall；绑定上一索引，不因文件名/新candidate重置。首次失败stall0；严格改善才清零；input→layout及真正后门的规则沿现SKILL。无可验证DTO时标不可推导，不能用退出码猜error数；实际视觉发现仍按原审核记录取证，不由采集器代判。
 - 计数取值沿aggregate的`receiptErrors()`：优先合法`composition.summary.errors`，否则统计该回执`diagnostics`中severity=error的条数。`finalize`从实际failed阶段的内嵌receipt取数，不把顶层传播诊断与子门重复相加；成功门记0，not-run不推进历史，failed却无可靠计数则标不可推导。validate的input/layout阶段及后门分别按现规则归属；review-record登记和作者辅助命令单列，不能混入候选质量门的停滞序列。V-9覆盖顶层/内层重复、composition与diagnostic长度不同、failed零计数和阶段切换。
 - 后续调用须引用同项目最新有效前驱，拒绝断链、分叉或漏传前驱后重置；写目录沿现owned/ordinary/0700/exclusive规则。作者修复前实际读当前进度，达到2仍立即停止；采集器只给机械记录，不代替作者停止行为或把被拒尝试判成主动停止。
+- 只读维护入口`node tools/phoenix-diagram/tests/support/read-current-progress.mjs --project <授权项目绝对路径> --json`复用原完整校验，返回最新头绑定及完整机械进度；不执行Native、不写文件或恢复链。exit0只表示读取认证成功，仍须按实际status/stopRequired行动；锁、未完成或回退头、断链、跨项目及身份变化均拒绝。它不代替失败全文或成功必要字段读取；原冻结collector与会话保持，未来接线须另绑定维护资源身份。
 - 派生失败保留原stdout/stderr/退出事实并标`inspection.failed`，阻塞该题的协议证据，不能重跑Native来重建视图。只能从同一原capture/原stdout在新目录重建派生物。原始采集结果与派生状态分开，不把派生失败改写成Native失败。
 - 增加仅派生入口`node tools/phoenix-diagram/tests/support/capture-stdio.mjs inspect --capture <已封存capture-N.json> --inspection-dir <本项目新目录>`；此入口禁止program/PD argv且绝不spawn。校验原capture、stdout/stderr、项目/安装与collector身份后，只重建latest对应capture的视图；sequence、Native调用数及计数历史不变，旧失败派生物保留，latest仅更新同一capture的派生引用。正常模式的Native已执行且原始采集完整时，外层仍保留真实子退出码，派生失败在inspection状态单列；原始采集不完整另记capture.failed，不能伪造完整DTO或Native失败。V-9用spawn标记验证inspect模式未执行程序。
 
 私有factory/index只补新fixture、可选参数和派生FileRefs接线；核心capture/review/archive/aggregate原逻辑复用，不复制整套helper、不新增审核服务。新collector的身份校验在索引/归档/聚合仍强制成立。
 
+D22的成功读取范围沿现行交付合同：核实际各门状态、`automatedStatus`、`visualReview.status`、`deliveryStatus`，真实HTML/candidate/summary路径、原`deliveryReceiptId`及必要身份绑定，来源状态及待核实/未来源项，`compatibility.coreCompatibility/deferredFields`、`locale.fallback`等影响交付答复的字段。可用可追溯程序重组和定向提取；作者须实际取得所需判断与交接信息，不要求把已通过门的全部内部度量打印到上下文。与事实、来源、延期、警告或缺口有关的信息不能因成功而省略；实际看图、同一交付登记和身份闭合仍独立核验。
+
+当前冻结cohort的wrapper含成功DTO全文读取和辅助读取绝对路径要求。为保留实际题面、初装、collector和原始会话身份，不修改既有输入；独审按D22/D23生效范围核验，以独立scope-addendum绑定冻结清单及用户决定。相应原failed报告不覆盖，新增复核明确范围变化及原实际行为，不能改写成作者原先已读全文或使用绝对路径；这不是Native重试、包变更或另起一轮64角色。
+
 ### 9.5 有界执行、复用与收尾
 
-1. **先过V-9再冻结一次。** 固定Source21产品包、D12模型、v2题面、collector/harness及64角色清单，完成初装审计和每题fresh检查后即可调度；不再等待16语义预检全过。V-4/V-5/V-7/V-8和互不依赖宿主题并行推进，资源门和最多两作者保持。
+1. **先过V-9再冻结一次。** 原v2的Source21清单保留；当前按D24冻结新真实candidate包、原D12模型/v2题面、collector/读取入口/harness和64角色清单，包与提交身份以实际构建为准。完成初装审计和每题fresh检查后即可调度，不再等待16语义预检全过。V-4/V-5/V-7/V-8和互不依赖宿主题并行推进，资源门和最多两作者保持。
 2. **每个必需角色先执行一次。** 同一输入/包/后端下不作语义抽签重试。失败先归因；只有已落实具体产品/题面/测试支撑修复，或同一会话尚未产生前的明确技术失败恢复，才允许该受影响角色一次定向复验。再次失败即保存未解决项并停止该角色，不开启第三次、另换模型或新一轮整包。Native会话内的原停止2规则独立保持，不把两种次数混算。
 3. **复用按真实合同。** 产品sourceInput/合同未变且覆盖仍适用的V-4/V-5/V-8证据保留；只重跑修复实际影响的项。旧Source21两个Workflow仍是已通过风险诊断，但旧collector与新formal的collector/package载体合同不同，不填新版正式31行；不为省两个会话放松归档deep equality或伪造新身份。旧bundle、失败会话、旧宽题均不能填当前清单。
-   冻结后的产品/题面/collector修复必须先列失效字段：仅派生视图可从原capture无Native重跑恢复；Native sourceInput、bundle、tgz、认证collector或实际题面改变时，按严格cohort合同处理，不能把不同身份的定向复验拼回原正式记录。定向复验在这种情况下只记修复诊断，M4仍未完成；新正式冻结清单及其实际失效覆盖必须另行明确，不计作原64角色的一次局部恢复，也不自动开始新一轮全量。
+   冻结后的产品/题面/collector修复必须先列失效字段：仅派生视图可从原capture无Native重跑恢复；Native sourceInput、bundle、tgz、认证collector或实际题面改变时，按严格cohort合同处理，不能把不同身份的定向复验拼回原正式记录。定向复验在这种情况下只记修复诊断，M4仍未完成；新正式冻结清单及实际失效覆盖先明确，不计作原64角色的一次局部恢复；D24授权下由实施者自主完成必要的新同包重验，不再为此逐项询问用户，不作无具体修复的相同输入/包/后端抽签。
 4. **分别完成独立工作。** 一个模型的语义错误只阻塞对应V-6角色，不阻止其他题、本机消费或CI。最终可汇总的同cohort已冻结后再按预算取五个必需ZIP；不重复下载退役cohort、不为无产品缺口的宿主错误新建bundle。
-5. **结束判据明确。** M4仍须V-4–V-9全部通过、62正式及2反例全部有可追溯的通过结果、原聚合通过，才能记完成。限次后仍失败则完成其余独立检查，输出准确到角色的未通过清单、原失败及依赖模型，M4保持未完成；下一动作是处理已定位缺口或由用户决定支持范围，不能自动进入新的加规则/换模型/重打包循环。未获明确需求变更时，不能接受错误产物或延期原需求。
+5. **结束判据明确。** M4仍须V-4–V-9全部通过、62正式及2反例全部有可追溯的通过结果、原聚合通过，才能记完成。限次后仍失败则完成其余独立检查，输出准确到角色的未通过清单、原失败及依赖模型，M4保持未完成；下一动作是处理已定位缺口；D24授权内的候选冻结、重打包与重验等内部选择自行推进，只有外部依赖经核实无法解决时再问用户，不进入无具体修复的加规则/换模型/重打包循环。未获明确需求变更时，不能接受错误产物或延期原需求。
 
 
 ## 10. 里程碑与验收安排
