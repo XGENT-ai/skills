@@ -4,7 +4,7 @@
 
 决策入口：设计判定读 [验证器反证](../principles/falsifiable-verification.md)，核对行为读 [真实结果](../principles/prove-real-outcomes.md)，复用结果读 [证据时效](../principles/evidence-lifetime.md)。需要保存协议与逐次记录时用 [评测记录模板](../references/eval-protocol.md)，不要求另建评测平台。
 
-需要实际执行远端可重放任务时，可使用 [指令进化工具](../references/remote-evolution.md) 的 validate/run/resume；代码和文档任务分别提供匹配契约与量表，它消费本流程的冻结协议并保留逐次收据。v2 的 calibrate 先检验同成功产物的质量辨别力，再交基线/A/A 的余量、双评审差异、生成噪声和精度预算诊断；默认不通过时保留分数并停止搜索。只有显式获准的 bounded_exploration_v1 可在仅来源精度不足时执行最多一候选，质量门不变，不晋级/确认/采用，整体仍 inconclusive；许可与严格诊断分报，细则见工具手册。TypeSafe 独立逐维校准，只辅助 search，原主评价与确认保持独立。工具缺失、环境未验收或任务不可重放时仍交协议及缺口，不回退本机模型、不把配置成功当效果通过。目标仓库 AGENTS 的诊断与采用入口为已安装的 `optimize-agents-md`。
+需要实际执行远端可重放任务时，可使用 [指令进化工具](../references/remote-evolution.md) 的 validate/run/resume；代码和文档任务分别提供匹配契约与量表，它消费本流程的冻结协议并保留逐次收据。v2 的 calibrate 先检验同成功产物的质量辨别力，再交基线/A/A 的余量、双评审差异、生成噪声和精度预算诊断；默认不通过时保留分数并停止搜索。只有显式获准的 bounded_exploration_v1 可在仅来源精度不足时执行最多一候选，质量门不变，不晋级/确认/采用，整体仍 inconclusive；许可与严格诊断分报，细则见工具手册。TypeSafe 独立逐维校准，只辅助 search，原主评价与确认保持独立。工具缺失、环境未验收或任务不可重放时仍交协议及缺口，不回退本机模型、不把配置成功当效果通过。AGENTS.md 的精简与原则补齐使用已安装的 `optimize-agents-md` 和 `use-prompt-dsl`，保留项目事实与作用域；仅诊断只读，缺 DSL skill 时停止并建议完整安装，优化流程不写进目标文件。该工作不依赖本评测流程，也不以变短宣称行为收益。
 
 ## 1. 从真实任务建立样本
 

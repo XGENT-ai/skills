@@ -197,13 +197,13 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | Skill | 说明 |
 | --- | --- |
 | [agi-mode](skills/agi-mode/SKILL.md) | 通用问题助手，不知道如何推进时从这里开始；核心是自进化 loop，SDLC 与项目状态为按需能力 |
-| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 诊断、精简或优化仓库 AGENTS.md；保留原则与授权，使用同仓任务远端评测，确认后按 CAS 采用 |
+| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 精简所在代码仓库 AGENTS.md；用 use-prompt-dsl 形式化原则并补齐缺项，保留项目事实与作用域，缺 DSL skill 时停止并建议完整安装 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
 | [figure-it-out](skills/figure-it-out/SKILL.md) | 任务没有匹配的既有 playbook 时设计可审计的工作流：阶段、实验与决策记录 |
 | [automate-me](skills/automate-me/SKILL.md) | 把个人偏好和工作习惯固化成专属 `-mode` skill，按引导生成并试跑 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
-| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 编写、改写、解释 Prompt DSL，或按明确要求执行；用目标、约束、检查和循环表达任务，普通开发请求不自动套用 |
+| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 编写、改写、解释或按明确要求执行 Prompt DSL；POLICY 精炼常驻原则，任务程序表达目标、检查与循环，普通开发不自动套用 |
 | [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
 | [experience-capture](skills/experience-capture/SKILL.md) | 开发中轻量收集踩坑、纠正及自动化线索，供用户随后发起复盘 |
 
@@ -211,9 +211,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
-明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；v2 先校准质量、诊断余量/噪声/预算，TypeSafe 独立校准后仅辅助 search，完整长文可按协议显式启用长上下文并独立校准，采用仍依赖主质量确认与 CAS。agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
+明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 将原则压缩为精炼 POLICY，按语义去重并补齐 Think Before Coding 与八项 Coding Principles，保留项目事实、授权和作用域。缺少 DSL skill 或安装版不支持 POLICY 时停止，建议完整安装或更新本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
 
-工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
+独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
 
 自然发现验收可用 `source.fixed_skill_roots` 显式提供完整固定背景目录，目标缺席/候选切换保持其他技能字节；实际目录、读取与任务行为分别记录，单独的目标技能执行不代表完整目录发现已通过。
 

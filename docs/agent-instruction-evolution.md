@@ -1,12 +1,12 @@
 # 比较与改进仓库指令
 
-`optimize-agents-md` 处理仓库 AGENTS 的诊断和优化；skill 的行为比较沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。v1 保留二元 task_success；v2 独立测 task_quality，以任务成功作底线，并先校准辨别力、诊断基线余量/噪声/精度预算，再决定是否搜索。TypeSafe 独立校准后只辅助 search，主质量及采用仍由原链负责。[v2 实施进度](plan/agent-instruction-evolution-v2.md)区分本地接线与真实闭环，不沿用首期验收结论宣称新版已验收。
+`optimize-agents-md` 现专注于仓库 AGENTS.md 瘦身：依赖 `use-prompt-dsl` 的 POLICY 精炼原则、去重补缺，保留项目事实与作用域；仅诊断只读，缺 DSL skill 停止并建议完整安装，优化流程不写入目标文件。它不依赖本文的远端评测链路。skill 或指令的行为比较仍沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。v1 保留二元 task_success；v2 独立测 task_quality，以任务成功作底线，并先校准辨别力、诊断基线余量/噪声/精度预算，再决定是否搜索。TypeSafe 独立校准后只辅助 search，主质量及采用仍由原链负责。[v2 实施进度](plan/agent-instruction-evolution-v2.md)区分本地接线与真实闭环，不沿用首期验收结论宣称新版已验收。
 
 2026-10-22按现有结果阶段交付，计划仍为3/4，后续测评暂停。工程测试及已测真实子范围保留；完整skill三条件、已校准TypeSafe反馈进入真实optimizer和指令质量收益尚未完成验收。资源到位后换更稳定真实任务，以3.00分为最小实际收益重新资格和A/A；当前原probe回收缺口及恢复步骤见[M4阶段交付](plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
 
-仅诊断时，给出目标仓库、文件范围和目的即可，例如“只诊断这个仓库的 AGENTS，保留现有原则，先别改文件”。skill 会核对根、嵌套和 override 的实际作用域，交付有仓库事实依据的建议。没有该仓可重放任务时，候选保持未验证，不借其他仓库的分数宣称提升。
+仅诊断时，给出目标仓库、文件范围和目的即可，例如“只诊断这个仓库的 AGENTS，保留现有原则，先别改文件”。skill 会核对根、嵌套和 override 的实际作用域，交付有仓库事实依据的建议。优化请求可直接完成授权范围内的文件精简与原则补齐，不要求可重放任务；文件变化不构成行为质量提升证据。
 
-需要实际评测时，同时安装 `optimize-agents-md` 和 `agi-mode`，定位真实的 agi-mode 安装目录。使用该安装目录中的独立 Python 项目（仓内源码：[agi-mode/scripts/evolution](../skills/agi-mode/scripts/evolution/)），要求 Python 3.12+、uv 和 SSH；远端由运行者提供 Docker、固定镜像与明确授权的 Codex 登录。模型调用、候选生成和判定均在远端独立容器中执行。本机只校验、打包、编排、保存证据和按授权采用。
+另行要求实际行为评测时，使用已安装的 `agi-mode`，定位其真实安装目录；不要求安装 `optimize-agents-md`。使用该安装目录中的独立 Python 项目（仓内源码：[agi-mode/scripts/evolution](../skills/agi-mode/scripts/evolution/)），要求 Python 3.12+、uv 和 SSH；远端由运行者提供 Docker、固定镜像与明确授权的 Codex 登录。模型调用、候选生成和判定均在远端独立容器中执行。本机只校验、打包、编排、保存证据和按授权采用。
 
 ```bash
 uv sync --locked --project /path/to/agi-mode/scripts/evolution

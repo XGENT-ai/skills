@@ -56,3 +56,5 @@
 - 4d3ffe78-c28e-46e0-82e0-e711996b68fa · [dev-plan 连续实施与验证节奏](4d3ffe78-c28e-46e0-82e0-e711996b68fa.md)
 
 - 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
+
+- [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)

@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 每环只加载当前需要的流程，共用判定协议和搜索状态；协作与沉淀读 [技能演化](references/skill-evolution.md)。这些流程内置于本 skill，外部 `autoresearch`、`arena`、`reflect` 是兼容入口，单独安装 agi-mode 即可运行。
 
-真实可重放的代码或文档任务，可按当前阶段读取 [远端执行工具](references/remote-evolution.md)，提供匹配的任务契约与量表。它是可选执行能力，沿用 Eval/Hillclimb 的协议、判定词和授权；v2 先校准任务适配的多维质量与分辨力，再诊断基线余量/噪声/预算。默认严格；显式获准的一次探索只放行来源精度不足，不晋级/确认/采用，整体 inconclusive。TypeSafe 可在独立校准后辅助 search 反馈，不持有主分或采用权。缺配置时保留未执行状态。仓库 AGENTS 专项优化可路由至已安装的 `optimize-agents-md`，仅诊断只读，缺同仓任务时交未验证候选。
+真实可重放的代码或文档任务，可按当前阶段读取 [远端执行工具](references/remote-evolution.md)，提供匹配的任务契约与量表。它是可选执行能力，沿用 Eval/Hillclimb 的协议、判定词和授权；v2 先校准任务适配的多维质量与分辨力，再诊断基线余量/噪声/预算。默认严格；显式获准的一次探索只放行来源精度不足，不晋级/确认/采用，整体 inconclusive。TypeSafe 可在独立校准后辅助 search 反馈，不持有主分或采用权。缺配置时保留未执行状态。仓库 AGENTS 瘦身可路由至已安装的 `optimize-agents-md`：通过 `use-prompt-dsl` 的 POLICY 精炼原则、去重补缺，保留项目事实与作用域；仅诊断只读，缺 DSL skill 时停止并建议完整安装，优化流程不写入目标文件，也不依赖远端评测。
 
 先固定目标、质量底线、可改范围和基线，再改候选。判定器有缺陷时升协议版本并重测，不把换尺当进步。用于选方案的反馈属于开发证据；泛化结论需要未参与选择的任务，重复同题只证明稳定性。没有行为对照时，规则修订仍是改进假设。
 
