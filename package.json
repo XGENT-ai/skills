@@ -28,12 +28,6 @@
   "files": [
     "bin",
     ".claude/hooks",
-    "hooks/codex/context-goal-guard.py",
-    "hooks/codex/hooks.example.json",
-    "docs/codex-context-goal-guard.md",
-    "hooks/claude/context-goal-guard.js",
-    "hooks/claude/settings.example.json",
-    "docs/claude-context-goal-guard.md",
     "docs/phoenix-ui.md",
     "docs/phoenix-diagram.md",
     "skills",

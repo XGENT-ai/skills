@@ -1,6 +1,7 @@
 ---
 name: security-audit
 description: 'Use for code security audits or checks before commits/deployments. Trace data flows to find injection, auth, secrets, dependency, cryptography and business logic vulnerabilities.'
+when_to_use: 'Requests like "is this change safe to ship", "audit this endpoint for injection", or "check secrets and authz before deploy".'
 ---
 
 # Security Review

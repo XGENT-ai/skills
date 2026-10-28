@@ -2,6 +2,7 @@
 name: review-ui
 argument-hint: "[开发计划] [页面URL/路由] [设计稿/目标图] [上轮报告] [复审/重建基线] [单元/范围] [门槛分] [报告路径]"
 description: 用于界面实现后的 UI/UX 验收或修复复审；不用于代码 diff 评审、直接修复或从零设计。只认运行中界面的实拍截图与实测，不凭代码推断效果；由独立评审打分列差距，判定是否通过。
+disable-model-invocation: true
 ---
 
 # review-ui · UI/UX 验收评审

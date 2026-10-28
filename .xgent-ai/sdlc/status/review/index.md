@@ -6,7 +6,9 @@
 
 | 对象 ID | 标题 / 来源 | 状态页 | 活动 / 归档 |
 | --- | --- | --- | --- |
+| 1012ce80-e25c-4d14-9f91-60e2342882b1 | [Phoenix UI 借鉴 hallmark R2代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r2.md) | [状态](1012ce80-e25c-4d14-9f91-60e2342882b1.md) | 活动 |
 | 1e32f818-3bfe-4e1b-9bc3-18cc065b47cc | [Phoenix Diagram P2 R3代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r3.md) | [状态](1e32f818-3bfe-4e1b-9bc3-18cc065b47cc.md) | 活动 |
+| 1e55e17d-4399-4289-bd1c-131954c5208e | [Phoenix UI 借鉴 hallmark R1代码评审](../../../../docs/plan/phoenix-ui-hallmark.code-review.md) | [状态](1e55e17d-4399-4289-bd1c-131954c5208e.md) | 活动 |
 | 207ec261-6cff-436e-b8eb-ba88c49df34c | [Phoenix UI R3代码复审](../../../../docs/plan/phoenix-ui.code-review.r3.md) | [状态](207ec261-6cff-436e-b8eb-ba88c49df34c.md) | 活动 |
 | 2227d500-968d-4472-811f-eb720d61e58d | [Phoenix Diagram P1 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.code-review.md) | [状态](2227d500-968d-4472-811f-eb720d61e58d.md) | 活动 |
 | 27800238-d94f-45ad-9831-c6ab966ff351 | [Phoenix Diagram P1 R4代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.code-review.r4.md) | [状态](27800238-d94f-45ad-9831-c6ab966ff351.md) | 活动 |
@@ -18,10 +20,13 @@
 | 50e026b1-8ff1-4094-a1d1-cd4f47cb63c1 | [Phoenix Diagram P2 R4代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r4.md) | [状态](50e026b1-8ff1-4094-a1d1-cd4f47cb63c1.md) | 活动 |
 | 599a4664-e089-4c42-901f-0d870d39e9f5 | [Phoenix Diagram P1 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.review.md) | [状态](599a4664-e089-4c42-901f-0d870d39e9f5.md) | 活动 |
 | 68af25e5-856b-4d48-9b73-b3f892abb419 | [Phoenix Diagram PRD 评审](../../../../docs/PRD-PHOENIX-DIAGRAM.review.md) | [状态](68af25e5-856b-4d48-9b73-b3f892abb419.md) | 活动 |
+| 69e27b35-e431-46f8-8cf2-9c8c1a2bf87f | [Phoenix UI 借鉴 hallmark R4代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r4.md) | [状态](69e27b35-e431-46f8-8cf2-9c8c1a2bf87f.md) | 活动 |
 | 72bbedc0-7192-47a1-bbd3-dea11c9f11c3 | [Phoenix Diagram P2 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.review.md) | [状态](72bbedc0-7192-47a1-bbd3-dea11c9f11c3.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
+| 7a527f25-29bf-494e-9397-0f438b5e35f0 | [Phoenix UI 借鉴 hallmark R3代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r3.md) | [状态](7a527f25-29bf-494e-9397-0f438b5e35f0.md) | 活动 |
 | 851c947a-3d1a-489f-abbb-88c818afb2d8 | [Phoenix Diagram P2 R5代码修复效果与收口复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r5.md) | [状态](851c947a-3d1a-489f-abbb-88c818afb2d8.md) | 活动 |
 | 88cb4f52-4171-4daf-b298-1d9e1c538848 | [Phoenix Diagram P1 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P1.prd-dev-gaps.md) | [状态](88cb4f52-4171-4daf-b298-1d9e1c538848.md) | 活动 |
+| 8f7aad13-3cd2-48b7-a358-385f1b6726fb | [Phoenix UI 借鉴 hallmark 开发计划评审](../../../../docs/plan/phoenix-ui-hallmark.review.md) | [状态](8f7aad13-3cd2-48b7-a358-385f1b6726fb.md) | 活动 |
 | 96e105dd-da91-4da5-831d-d947f7a4630a | [Phoenix Diagram P2 PRD交付覆盖复审（gaps修复效果）](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.2026-10-28.md) | [状态](96e105dd-da91-4da5-831d-d947f7a4630a.md) | 活动 |
 | 98308b27-f2d8-4bf9-ace7-d2abec1022e4 | [Phoenix Diagram P2 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.md) | [状态](98308b27-f2d8-4bf9-ace7-d2abec1022e4.md) | 活动 |
 | 9a03cbc2-3524-4b92-9a2c-baf9d81964be | [Phoenix Diagram P2 gaps R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.code-review.md) | [状态](9a03cbc2-3524-4b92-9a2c-baf9d81964be.md) | 活动 |

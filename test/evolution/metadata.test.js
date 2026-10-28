@@ -18,10 +18,11 @@ test('AGENTS optimization remains discoverable within its first 100 description 
   assert.equal(/^disable-model-invocation:\s*true$/m.test(header), false);
   const agi = fs.readFileSync(path.join(root, 'skills/agi-mode/SKILL.md'), 'utf8');
   assert.ok(/^disable-model-invocation:\s*true$/m.test(agi));
-  assert.ok(/^compatibility:.*agi-mode.*Python.*uv.*SSH\/Docker/m.test(header));
+  assert.ok(/^compatibility:.*use-prompt-dsl/m.test(header));
+  assert.equal(/^compatibility:.*(?:agi-mode|Python|SSH)/m.test(header), false);
 });
 
-test('published routing surfaces expose the same dedicated skill and tool reference', () => {
+test('published routing surfaces expose the AGENTS skill and its DSL dependency', () => {
   const routes = [
     'README.md', 'skills/agi-mode/SKILL.md', 'skills/agi-mode/playbooks/eval.md',
     'skills/agi-mode/playbooks/sdlc.md', 'skills/agi-mode/playbooks/what-next.md',
@@ -31,12 +32,12 @@ test('published routing surfaces expose the same dedicated skill and tool refere
   for (const relative of routes) {
     const content = fs.readFileSync(path.join(root, relative), 'utf8');
     assert.ok(content.includes('optimize-agents-md'), relative);
-    assert.ok(content.includes('remote-evolution.md'), relative);
+    assert.ok(content.includes('use-prompt-dsl'), relative);
   }
 });
 
-test('new skill references resolve from its actual installation layout', () => {
-  for (const relative of ['skills/optimize-agents-md/SKILL.md', 'skills/optimize-agents-md/references/repo-agents.md']) {
+test('AGENTS skill references resolve from its actual installation layout', () => {
+  for (const relative of ['skills/optimize-agents-md/SKILL.md', 'skills/optimize-agents-md/assets/coding-principles.md']) {
     const file = path.join(root, relative);
     const content = fs.readFileSync(file, 'utf8');
     for (const [, target] of content.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {

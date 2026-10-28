@@ -5,7 +5,7 @@ Resolve one stable target, run two independent assessments, synthesize a design 
 ### Hard Invariants
 
 - Assessment A (design review) and Assessment B (detector/browser evidence) are both required.
-- Assessment A and B MUST run as two isolated sub-agents whenever a sub-agent/Task tool is exposed. Running them inline in this context is "possible" but is NOT permitted; it is a degraded run. Inline is allowed ONLY when no sub-agent tool exists (or the user declined, on harnesses that ask).
+- Prefer two isolated sub-agents for Assessment A and B when the coding agent's tools and policy support them. The coding agent chooses the execution strategy; Phoenix adds no delegation approval gate. A single-context run follows the sequential fallback below.
 - If you degrade for any reason, the report's first line MUST be a banner: `⚠️ DEGRADED: single-context (<reason>)`. A silent degraded critique is a failed critique.
 - Assessment A must finish before detector findings enter the parent synthesis context. Detector output is deterministic, but it still anchors judgment.
 - A skipped detector is a failed critique run unless `phoenix-ui detect` is missing or crashes after a real attempt.
@@ -30,22 +30,14 @@ Resolve one stable target, run two independent assessments, synthesize a design 
 
 ### Assessment Orchestration
 
-Delegate Assessment A and Assessment B to separate sub-agents. They must not see each other's output. Do not show findings to the user until synthesis.
+Keep Assessment A independent of detector findings until its review is complete. When using separate sub-agents, they must not see each other's output. Do not show findings to the user until synthesis.
 
-Sub-agent gate (all harnesses):
-- Unless a harness-specific gate below overrides this, spawn A and B as two isolated, parallel sub-agents whenever a sub-agent/Task tool is exposed. This is the default and is mandatory; do not run them inline because it is faster.
-- "Unavailable" means exactly one thing: no sub-agent/Task tool is exposed in this session (or, on harnesses that ask, the user declined). It does not mean inconvenient.
-- If and only if sub-agents are unavailable, fall back sequentially: finish and record Assessment A, then run Assessment B, then synthesize, and emit the degraded banner.
+Execution strategy (all harnesses):
+- Use isolated, parallel sub-agents when available, permitted, and useful. Follow the coding agent's orchestration policy and explicit user constraints without adding a Phoenix-specific permission question or waiting step.
+- If sub-agent tools are unavailable, policy or user constraints prevent delegation, spawning fails, or the coding agent chooses single-context execution, finish and record Assessment A, then run Assessment B, then synthesize, and emit the degraded banner with the actual reason.
 - Whichever path you take, declare it in the report header (see Report header provenance). Skipping sub-agents without the banner is the most common failure of this command.
 
 <codex>
-Codex sub-agent gate (overrides the default above; Codex's permission model requires asking before spawning):
-- Asking is the normal path, not a degradation. Approving and spawning is the dual-agent path; do not emit the degraded banner just for asking.
-- If `spawn_agent` is exposed and the user explicitly allowed sub-agents, delegation, or parallel agent work, spawn A and B immediately.
-- If `spawn_agent` is exposed but the user did not explicitly allow sub-agents, ask exactly once: "Phoenix UI critique is designed to run two independent sub-agents for an unanchored assessment. May I use sub-agents for this critique?" Then stop until the user answers.
-- If allowed, spawn A and B. If declined, run sequentially and lead the report with `⚠️ DEGRADED: single-context (sub-agents declined by user)`.
-- If `spawn_agent` is not exposed, do not ask; run sequentially and lead with `⚠️ DEGRADED: single-context (spawn_agent unavailable in this session)`.
-- If spawning fails after permission, run sequentially and lead with `⚠️ DEGRADED: single-context (sub-agent spawn failed: <exact error>)`.
 Prefer `fork_context: false` with self-contained prompts containing cwd, target, live URL, references, product context, and output contract. If using `fork_context: true`, omit `agent_type`, `model`, and `reasoning_effort`.
 </codex>
 
@@ -74,7 +66,7 @@ CLI scan:
 ```
 
 - Pass markup files/directories as `[target]`; do not pass CSS-only files.
-- For URLs, skip CLI scan and use browser visualization.
+- For URLs, skip CLI scan and use browser visualization. The overlay and the browser extension run only the built-in rules, not the `xgent/` rule pack; when `xgent/` findings matter for a URL, run `{{scripts_path}}/phoenix-ui detect --json <url>` as well.
 - For very large trees (500+ scannable files), narrow scope or ask.
 - Exit code 0 = clean; 2 = findings.
 - If the detector entrypoint is missing or fails to load, report deterministic scan unavailable and continue with browser/manual review.

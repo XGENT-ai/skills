@@ -214,10 +214,10 @@ test('invalid flag exits remain historical and only four explicit missing catalo
   }
 });
 
-test('Darwin IP isolation is restricted to four static native invocations and preserves the original argv', async () => {
+test('Darwin IP isolation is restricted to five static native invocations and preserves the original argv', async () => {
   const { isolatedCases,nativeInvocation,offlineNetworkProfile,metadata,loadPhoenixCases }=await adapter;
   assert.deepEqual(isolatedCases,metadata.nativeNetworkPreconditions.ids);
-  assert.equal(isolatedCases.length,4);
+  assert.equal(isolatedCases.length,5);
   const {cases}=await loadPhoenixCases('/tmp/precise-native-engine');
   const argv=['/tmp/precise-native-engine','detect','fixture','--json'];
   for (const item of cases) {
@@ -331,10 +331,16 @@ test('the only stale Italic delta is proven by the unchanged single-file golden'
   const delta = metadata.italic, historical = readGolden(delta.id);
   const expected = phoenixExpected(delta.id, historical, 'linux');
   const oldFindings = JSON.parse(historical.stdout), findings = JSON.parse(expected.stdout);
+  // PHOENIX-HALLMARK registers three advisory xgent/transition-all findings on
+  // this directory case (DELTAS.md, 2026-10-23; the motion.html body-copy
+  // example was corrected out in code review R1, F-08); the single-file italic
+  // proof still separates those from the stale-directory finding.
+  const xgentAdded = findings.filter((f) => f.antipattern === 'xgent/transition-all');
+  assert.equal(xgentAdded.length, 3);
   assert.equal(oldFindings.length, 436);
-  assert.equal(findings.length, oldFindings.length + 1);
+  assert.equal(findings.length, oldFindings.length + 1 + xgentAdded.length);
   assert.deepEqual(findings.filter((f) => f.snippet === delta.finding.snippet), [delta.finding]);
-  assert.deepEqual(findings.filter((f) => f.snippet !== delta.finding.snippet), oldFindings);
+  assert.deepEqual(findings.filter((f) => f.snippet !== delta.finding.snippet && f.antipattern !== 'xgent/transition-all'), oldFindings);
   assert.deepEqual({ ...expected, stdout: '' }, { ...historical, stdout: '' });
   assert.deepEqual(diffResults(expected, expected), []);
   for (const mutate of [

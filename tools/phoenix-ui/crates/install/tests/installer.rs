@@ -91,6 +91,7 @@ fn request<'a>(
         providers: providers.iter().map(|p| p.to_string()).collect(),
         home: Some(sandbox.home()),
         scan_sources: false,
+        keep_impeccable: false,
         dry_run,
         transaction_id: id.into(),
     }

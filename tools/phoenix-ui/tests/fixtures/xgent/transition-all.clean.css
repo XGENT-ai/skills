@@ -1,0 +1,4 @@
+/* transition: all inside a comment stays silent. */
+.card { transition: opacity 0.2s ease; }
+.chip { transition: transform 200ms ease, color 100ms linear; }
+.panel { transition-property: opacity, transform; }

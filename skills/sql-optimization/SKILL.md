@@ -1,6 +1,7 @@
 ---
 name: sql-optimization
 description: 'Use when tuning SQL queries, indexes or database performance. Analyze execution plans, pagination and batch operations across SQL databases.'
+when_to_use: 'Requests like "this query is slow", "should I add an index", or "make this pagination cheaper".'
 ---
 
 # SQL Performance Optimization Assistant

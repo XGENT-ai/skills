@@ -159,9 +159,11 @@ agent 按 `prd` 的澄清规则提问，不问已经能从代码或 SPMS 查到�
 
 ### 5.5 评审和改稿
 
+`review-*` 与 `apply-*` 设了 `disable-model-invocation`，必须显式发起：Claude Code 用 `/名称`，Codex 用 `$名称`；在自然语言里提到名字不会触发。
+
 ```text
-使用 review-prd 评审 docs/PRD-<代号>.md。
-使用 apply-doc-review，根据 docs/PRD-<代号>.review.md 修订 docs/PRD-<代号>.md，并记录各条意见的处置。
+/review-prd docs/PRD-<代号>.md
+/apply-doc-review docs/PRD-<代号>.review.md docs/PRD-<代号>.md
 ```
 
 `review-prd` 默认把完整报告写到 PRD 同目录的 `<名>.review.md`（`skills/review-prd/references/report-contract.md:6`）。四个视角是现状、产品、体验、验收。报告先列问题，再给「通过 / 需修订 / 需补证」。
@@ -170,7 +172,7 @@ agent 按 `prd` 的澄清规则提问，不问已经能从代码或 SPMS 查到�
 
 退出：没有会挡住下游计划的未决项，或者这些项已经有人的决定。报告结论是「通过」之后，人再把需求从 `draft` 转到 `reviewing`，批准后再转 `approved`。agent 不按这两个状态。
 
-仍有 P1，或人要求再评时，重新调用 `review-prd`。不要把上一份报告的「已核实」当成这次的证据。
+仍有 P1，或人要求再评时，重新运行 `/review-prd docs/PRD-<代号>.md`。不要把上一份报告的「已核实」当成这次的证据。
 
 ### 5.6 给人读的报告，可选
 
@@ -218,8 +220,8 @@ agent 把这组 key 当作 `R1..Rn`，对照目标仓代码核实现状，再写
 ### 7.2 计划评审回路
 
 ```text
-使用 review-dev-plan 评审 docs/plan/<代号>.md。
-使用 apply-doc-review，根据 docs/plan/<代号>.review.md 修订该计划。
+/review-dev-plan docs/plan/<代号>.md
+/apply-doc-review docs/plan/<代号>.review.md docs/plan/<代号>.md
 ```
 
 `review-dev-plan` 看四件事：代码事实、技术路线、需求到 Milestone 的映射、交付是否真的能用。建议状态沿用 `Ready` / `Proposed` / `Blocked`（`skills/review-dev-plan/references/report-contract.md:55-L57`）。`Ready` 不是实现完成，也不是上线许可。
@@ -256,8 +258,8 @@ apply 之后计划仍是 `Blocked`，不要再跑一遍评审或 apply，改用�
 一个 Milestone 的代码准备交给下游，或本期准备做差异核查之前：
 
 ```text
-使用 review-code 审查当前未提交变更，参考 docs/plan/<代号>.md 的 M2。
-使用 apply-code-review，根据 docs/plan/<代号>.md 核实 docs/plan/<代号>.code-review.md，修复合理问题并更新对应实现记录。
+/review-code docs/plan/<代号>.md
+/apply-code-review docs/plan/<代号>.code-review.md docs/plan/<代号>.md
 ```
 
 `review-code` 默认不改代码、不改进度、不提交。审查对象没说清、工作树又是干净的，就问，不擅自拿最近一次 commit（`skills/review-code/SKILL.md` 第 1 节）。结论用 `patch is correct` / `patch is incorrect` / `inconclusive`（`skills/review-code/references/report-contract.md:52-L54`）。
@@ -273,7 +275,7 @@ apply 之后计划仍是 `Blocked`，不要再跑一遍评审或 apply，改用�
 本期计划的 Milestone 都有完成记录，或人明确要求对照已完成部分时：
 
 ```text
-使用 review-prd-dev-gaps，对照 docs/PRD-<代号>.md 和 docs/plan/<代号>.md，核对实际交付。
+/review-prd-dev-gaps docs/plan/<代号>.md docs/PRD-<代号>.md
 ```
 
 它从 PRD 往下追，不从「计划里已有的条目」往上猜。差异分三类（`skills/review-prd-dev-gaps/SKILL.md:41-L43`）：
@@ -321,7 +323,7 @@ agent 做的事：
 
 需要可复用的项目验证能力时，使用 [create-verification-skill](../skills/create-verification-skill/SKILL.md) 按应用或指定场景创建、维护 `verify-<app>`，由它驱动真实入口、保存场景配方与运行证据。已有验证能力直接复用。agi-mode 将验收项映射到场景和入口，只执行所选范围及必要依赖，再核对完整覆盖；生成器的单场景冒烟不代表整期通过，也不自动回填 SPMS。
 
-测试结果若要作为差异核查的证据，把命令、环境和结论写进 Milestone 记录，或在调用 `review-prd-dev-gaps` 时指出结果所在的位置。没有结果就如实标未运行，不把用例草稿当成已经测过。
+测试结果若要作为差异核查的证据，把命令、环境和结论写进 Milestone 记录，或在运行 `/review-prd-dev-gaps` 时指出结果所在的位置。没有结果就如实标未运行，不把用例草稿当成已经测过。
 
 ## 9. 产物怎么交接
 

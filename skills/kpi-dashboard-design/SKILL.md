@@ -1,6 +1,7 @@
 ---
 name: kpi-dashboard-design
 description: Use when designing KPI dashboards, analytics views or business metric displays. Select metrics and organize visual hierarchy and charts.
+when_to_use: 'Requests like "design a metrics dashboard" or "which KPIs should this view show and how should the charts be laid out".'
 license: MIT
 ---
 

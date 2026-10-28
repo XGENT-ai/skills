@@ -3,6 +3,7 @@ name: xgent-init
 metadata:
   internal: true
 description: 用于在 XGENT 出仓 App 仓库初始化或补齐 AGENTS.md、PRODUCT.md、DESIGN.md；已有文件不覆盖。保留 Portal 产品边界与设计规范。
+when_to_use: "用户会说「初始化这个 XGENT 仓库」「补上 PRODUCT.md 和 DESIGN.md」时。"
 ---
 
 # xgent-init · 出仓 App 的 Agent、产品与设计上下文

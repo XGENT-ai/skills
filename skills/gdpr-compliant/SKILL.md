@@ -1,6 +1,7 @@
 ---
 name: gdpr-compliant
 description: 'Use when handling personal data or designing/reviewing APIs, auth, logs or infrastructure for GDPR. Apply privacy practices for data rights, retention, deletion and security.'
+when_to_use: 'Questions like "can we store this email", "a user asked us to delete their data", or "is this log GDPR-safe".'
 ---
 
 # GDPR Engineering Skill

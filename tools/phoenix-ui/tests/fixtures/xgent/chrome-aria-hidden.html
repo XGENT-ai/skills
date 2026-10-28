@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Window chrome hidden from the accessibility tree</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: Arial, sans-serif; }
+  .window { width: 360px; border-radius: 8px; background: #1e1e1e; padding: 10px 12px; }
+  .bar { display: flex; align-items: center; gap: 8px; }
+  .dot { display: block; width: 12px; height: 12px; border-radius: 50%; }
+  .red { background: #ff5f57; }
+  .amber { background: #febc2e; }
+  .green { background: #28c840; }
+  .caption { margin: 10px 0 0; color: #eeeeee; font: inherit; }
+</style>
+</head>
+<body>
+  <div class="window">
+    <div class="bar" aria-hidden="true">
+      <span class="dot red"></span>
+      <span class="dot amber"></span>
+      <span class="dot green"></span>
+    </div>
+    <p class="caption">Window preview</p>
+  </div>
+</body>
+</html>

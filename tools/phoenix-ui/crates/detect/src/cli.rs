@@ -507,9 +507,7 @@ fn detect_cli(args_in: &[String], io: &mut Io, engines: &Engines) -> Result<i32,
         design_system: None,
         viewport,
         profile: None,
-        // The `impeccable` binary installs no rule pack; a library caller that
-        // does sets this before handing the options to an engine.
-        rule_pack: None,
+        rule_pack: engines.rule_pack,
     };
     let targets: Vec<String> = expand_joined_url_targets(
         args.iter()

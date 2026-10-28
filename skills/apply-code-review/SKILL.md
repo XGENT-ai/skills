@@ -2,6 +2,7 @@
 name: apply-code-review
 argument-hint: "<代码评审报告> [开发计划] [上轮报告/处置记录] [修复/仅复核] [问题ID/里程碑]"
 description: 用于按代码评审报告及其开发计划落实修复或复核修复效果；不用于初次评审、仅改计划或无评审输入的计划实施。逐条核实修复，按计划约定提交，回写处置与证据。
+disable-model-invocation: true
 ---
 
 # apply-code-review · 核实并落实代码评审

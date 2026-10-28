@@ -1,6 +1,7 @@
 ---
 name: xgent-app-release
 description: '用于从 App 仓库发布或排查 XGENT 门户版本：前端 dist、后端镜像、manifest 或首次接入。通过 release-cli 与发布令牌提交提案，处理 CI、待审及发布后故障。'
+when_to_use: "用户会说「发个版」「提案卡在待审」「发布后出故障」时。"
 ---
 
 # xgent-app-release · App 版本自助发布
@@ -39,7 +40,7 @@ SERVICE_ONLY scope（如 `seats.read`）写进 `serviceScopes` 都会**提交即
 reason 会原文展示给审批人，写清楚用途能少一轮往返。上报自己的用量指标，先在
 `usageMetrics` 里声明（key 必须以你的 listingKey. 开头；同样治理档）——没声明的
 metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我需要哪些环境变量」
-用 `requiredEnv`（只交键名），值由平台注入、自动供给或管理员配置 —— 见下面「镜像要环境变量」。
+用 `requiredEnv`（键名与可选生成规格），值由平台注入、自动供给、声明生成或管理员配置 —— 见下面「镜像要环境变量」。
 
 ### 文案字段：哪些支持多语，哪些不支持
 
@@ -156,14 +157,25 @@ MANIFEST_STORE_TOKEN=xrel_…         # 目录那台签给你的发布令牌；�
   别把套件令牌当单应用令牌随手分发。成员被移出套件 ⇒ 令牌对它即刻 404；维护者离场 ⇒
   套件令牌连同吊销。
 - **批次**：`POST /api/market/release/bundle/<bundleKey>`（bundle 令牌），一次给全体成员
-  各建一条提案，共享同一批号与同一镜像/版本。JSON 体：`version` / `image` 共享，
-  每成员可选 `dist__<key>`（文件）与 `manifest__<key>`。任一成员的确定性校验不过 ⇒
+  各建一条提案，共享同一批号与同一镜像/版本。字段：`version` / `image` 共享，
+  每成员可选 `dist__<key>`（文件）与 `manifest__<key>`。**带任何 `dist__<key>` 就必须发
+  `multipart/form-data`**（它只认文件字段，JSON 体里塞不进文件）；只有 `version` / `image` /
+  `manifest__<key>` 的纯元数据批次才可以发 JSON。单个包 ≤200 MiB，**整个请求 ≤256 MiB** ——
+  各成员的包加起来也受这一条限制，不能按「成员数 × 200 MiB」估。任一成员的确定性校验不过 ⇒
   整批不落库；成员镜像已漂移而批次没带镜像 ⇒ `BUNDLE_IMAGE_DIVERGED`（带上镜像即可收敛）。
   状态轮询：`GET /api/market/release/bundle/<bundleKey>/status`（每成员一条）。
+- **批次的后端只收敛一次**：门户在提交时冻结本批的预期后端成员；它们**全部生效且无 applyError**
+  后共享后端才按新目标收敛一次。之前清单 / 前端可逐个生效，发布状态显示「后端等待成员 x、y」；
+  有成员被拒 / 撤回 ⇒ 原批不再执行：先撤清其余待审，再提交**新的完整批次**（取代旧批）；
+  `applyError` 按既有重试修好即可。前端先于后端生效，**新前端必须兼容旧后端**。批次回执里每个
+  成员的 `warnings` 会写明「自动档被转待审」的原因（缺键、等生成者等）。
 - **共享后端的 manifest**：成员各自的 `deployDescriptor.image` 的**仓库段可以等于 bundleKey**
-  （治理闸对套件镜像放行）；端口/环境变量以最早加入的成员为准。成员的对外地址不变：
-  各自 `/svc/<成员key>`，容器只是同一个（`<bundleKey>-server`）。共享 ⇒ 故障域合一：
-  容器挂了，全部成员一起不可用，各自的告警各自到。
+  （治理闸对套件镜像放行）。**端口、资源、迁移与健康路径取宿主**（最早加入的有后端成员）；
+  **环境变量由全体后端成员共同提供**——各成员的 SA、交换密钥、库连接、生成密钥都会进同一个容器；
+  **同名表示共享**：同值合并，**异值拒绝**（要么统一取值，要么改用带各自前缀的键）。成员的受管
+  envFile 每行必须是 `KEY=value`，不能写裸 `KEY`。成员的对外地址不变：各自 `/svc/<成员key>`，
+  容器只是同一个（`<bundleKey>-server`）。共享 ⇒ **成员能读到彼此的密钥、故障域合一**：容器挂了，
+  全部成员一起不可用，各自的告警各自到；需要进程级保密的成员继续独立部署。
 - **加不进去的两种真原因**：报 `BUNDLE_BUILTIN_MEMBER` ⇒ 那是仓内内置 App，先出仓再进套件；
   报 `BUNDLE_MEMBER_ALREADY_DEPLOYED` ⇒ 它已有独立容器在跑，先让平台管理员在
   「服务部署」里停止，再加入。
@@ -269,7 +281,8 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
   每次都传完整 dist。
 - **tar 根必须直接是 `index.html`。** CLI 传目录会生成临时包并在命令收尾删除；本流程先留存
   完整 `.tgz` 再用 `--dist` 上传该文件，保证留存的是实际上传的字节。套一层 `dist/` 的包会被拒收。
-- **上限 64MB**，且门户只按顶层条目数报数。真超了先查有没有把 source map / 未压缩素材打进去。
+- **单个包 ≤200 MiB**（`dist` / 每个 `dist__<key>` 各算各的），**整个上传请求 ≤256 MiB**（套件批次所有
+  成员的包合计也在内）；门户只按顶层条目数报数。真超了先查有没有把 source map / 未压缩素材打进去。
 - **本机配了代理就用 `@xgent/release-cli` ≥0.6.0。** Node 内置的 `fetch` **不读** `HTTPS_PROXY`
   —— curl / git / npm / docker 全都读，唯独发版这一步不读，于是它绕开本机代理直连门户：跨境
   直连上行实测约 10 KB/s，2MB 产物必然超时，而报出来的是一句没有线索的 `fetch failed`。
@@ -292,20 +305,58 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 
 ## 镜像要环境变量：**键名归你，值归平台**
 
-manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。唯一的表达
-方式是 **`requiredEnv`（只交键名）**。值从哪来分三档 —— 照这张表命名，绝大多数键**零手填**：
+manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥进你的 git 历史）。使用
+**`requiredEnv` 声明键名与可选的生成规格**。值从哪来按下表区分：
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET` | 平台换版时自己算并注入，没有人需要动手 |
-| **自动供给** | 库连接串 · Redis 地址 | 批准时平台按登记的服务替你建库 / 取地址并注入（见下面「服务怎么绑到键」） |
-| **自定** | 其余**环境依赖**（第三方服务地址、第三方 API key…）—— **不含上面两档列出的键** | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键 | 批准时平台按登记的服务代建资源 / 取地址并注入（见下面「服务怎么绑到键」） |
+| **随机生成** | App 独立密钥，声明 `generate` | 批准时生成、加密保管，后续换版复用，值永不回显 |
+| **自定** | 其余**环境依赖**（第三方服务地址、第三方已有 API key…） | 平台管理员手填：非密钥进控制台的 `deployDescriptor.env`，密钥进宿主机上一个 600 的 `envFile` |
 
 业务参数（超时、阈值、默认文案、功能开关…）**不在这张表里**：先看下面「业务参数」一节。
 
 `<PREFIX>` = 你的 `listingKey` 全大写、连字符换下划线（`wish-list` ⇒ `WISH_LIST`）。
 `PORTAL_BASE_URL` 是**浏览器可达的门户公开地址**，也是你调别的 App `/svc/<key>/…` 的基址；
 `API_BASE_URL` 是内部 portal-api，**不代理 `/svc`** —— 两个别互相顶替。
+
+### 独立密钥：只声明生成规格
+
+```jsonc
+"requiredEnv": [
+  {
+    "key": "WORKER_DATA_KEY",
+    "renamedFrom": "WORKER_LEGACY_DATA_KEY",
+    "generate": { "bytes": 32, "encoding": "base64" }
+  }
+],
+"requiredEnvNotes": { "WORKER_DATA_KEY": "保护应用持久化数据；应用兼容消费旧键名" }
+```
+
+`generate` 只收 `bytes`（16–64 整数）与 `encoding`（标准带填充 `base64` / 小写 `hex`）。
+新增、撤回或改变规格都需审批；首供在批准时完成，生产按 App、按 brand 各自生成，
+加密保管并只向所属独立 descriptor 部署注入。重发、重试、重部署与重启复用原值，
+不覆盖存量值；没有读取值或轮换入口，丢失应从备份恢复，不能重生成修复原密文。
+
+有主键沿用主键；descriptor 旧名可以同值搬到新键。可读 `envFile` 只有旧名时，
+`generate` + `renamedFrom` 表示 App 仍能消费旧名，门户原样注入文件、不创建新主键，
+审批屏显示沿用旧名。不要引导运维改文件或手填 NEW。普通无 `generate` 的改名规则不变。
+不可读 envFile、来源冲突、已保管规格冲突均硬拦；旧键已由平台保管时拒绝改名。
+平台派生键和服务自动供给目标不能声明 `generate`。
+
+**套件里的共享生成密钥**：带自己前缀的键各自 `generate`；**同名共享键只由一个成员声明 `generate`**，
+其他成员只在 `requiredEnv` 写字符串键名消费（两名生成者会被拒）。先批生成者——消费者先到时提案
+保持待审、审批屏点名生成者；批次发布自动把生成者排在消费者前面。生成者退出套件前，先让消费者去掉
+对这个键的依赖。
+
+旧门户 / 旧一盒镜像会拒收 `generate`（`VALIDATION_FAILED`），须先升级平台，不能用手填绕过。
+最低门户提交 / `APP_VERSION`、一盒 runtime / proxy tag、公开 skill 提交与脚本 SHA-256
+目前均**未发布**，发布后按完整组合核对。一盒宿主脚本不随镜像更新：先执行
+`npx skills add XGENT-ai/skills` 更新 `portal-dev-setup`，从实际安装目录用
+`shasum -a 256 <脚本路径>` 核对后再 pull / upgrade / up / add，步骤见该 skill §6。
+新版 `add` 把生成值写进共享的 `<一盒目录>/compose.env`，沿用已有主键或旧别名；同名键共享值，
+主 App 和其他 App 均可能读取，限可信团队调试，不能作为生产 App 隔离证据。
 
 ### 业务参数：能不进清单就不进；进了就写 `requiredEnvNotes`
 
@@ -414,7 +465,53 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   `envKey` 只对 postgres / redis 这类单键服务有效（kafka / 对象存储 / http 不支持）。不绑定的话，
   平台管理员要在审批屏上手选一条服务取值，每次发版多等一轮；预检会对这类键给你一条 warn。
 
-另外：**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
+### 对象存储：应用池直供 S3 五键
+
+这条路径用于 App 自管的底层对象，后端用 S3 SDK 直连，不经过 Files。需要用户/团队文件空间、
+文件权限、配额、预览或清理时走 Files；两条路径的选型见 `portal-external-app` skill 的
+「文件与对象存储」。**Files 的「应用空间」不等于这里的应用专属 bucket。**
+
+以 `listingKey=wish-list` 为例，下面是合并进现有 manifest 的存储声明片段，其他必需键照常保留：
+
+```jsonc
+"requiredServices": [
+  { "kind": "objectStorage", "name": "main" }
+],
+"requiredEnv": [
+  "WISH_LIST_S3_ENDPOINT",
+  "WISH_LIST_S3_REGION",
+  "WISH_LIST_S3_BUCKET",
+  "WISH_LIST_S3_ACCESS_KEY_ID",
+  "WISH_LIST_S3_SECRET_ACCESS_KEY"
+]
+```
+
+- `main` 换成目标环境已登记的对象存储服务名，用于服务可用性闸；它**不是桶名或池 ID**。
+  首次开通按实际落点 VM 的地域选择应用池，未命中用兜底池；只使用 `role=app`，不回退租户池。
+- 发布提案批准时平台按 `listingKey` 建桶并加密保管整组连接参数，部署时注入。**每应用一个桶，
+  该应用的所有租户共用**；不会为每个租户或安装实例另建桶，也不会自动添加租户目录。
+  App 须自行实现租户隔离、权限、计量和对象清理；它们不自动进入 Files 的配额、计量与退出清理。
+- 五键固定为 `<PREFIX>_S3_ENDPOINT` / `_S3_REGION` / `_S3_BUCKET` / `_S3_ACCESS_KEY_ID` /
+  `_S3_SECRET_ACCESS_KEY`（每项均带 `<PREFIX>`）。`objectStorage` **不支持 `envKey`**，带上即拒；
+  约定名是 `_S3_BUCKET`，镜像若只读 `_S3_BUCKET_NAME` 等其他名字，需在应用配置层适配。
+  只声明该 `requiredServices` 也会整组供给；显式列出五键便于启动校验与交付检查，只交键名、不交值。
+  仅用 `requiredEnv` 的兼容路径以 `<PREFIX>_S3_ACCESS_KEY_ID` 为触发键，仍供给整组；
+  只写 endpoint / region / bucket 不会触发自动供给。
+- **管理员不必逐键取值**：已匹配应用池时，审批页显示「批准时自动供给」，直接批准即可。
+  需要手动选池或提前供给时，在五键任意一行选择 `objectStorage` 应用池并点击「取值」，
+  一次写入全部五键，刷新后整组显示「已取值」。只切换下拉选项、不点「取值」不会保存选择；
+  不要为五个键分别选池。没有可用应用池时先由平台管理员配置，不能拿租户池替代。
+- 注入的是应用池**共用的数据面凭据**，不含管理凭据，也不是 per-App / per-tenant 子凭据；
+  独立桶不等于独立云权限。凭据只留后端，不回显、不写日志、不交给前端。
+- 重发、重试与重部署沿用已登记的桶和存储池；改变落点地域不会自动搬桶或迁移对象。
+  租户卸载也不自动删除这个共用桶。需要迁移、清理或轮换池凭据时由平台与 App 协调。
+
+以上自动供给发生在**发布提案批准链路**。一盒 `onebox.sh add` 的直接注册路径仍须按
+`portal-dev-setup` 配好 RustFS 连接参数和桶名；不能只写这条声明就认为五键已到位。
+
+### 通用环境变量约束
+
+**平台级能力（例如日志写入）会直接出现在你的服务令牌里，不用申请、不用写进 manifest** ——
 拿到令牌就能用，你那侧只管调。
 
 **六条别踩：**
@@ -441,8 +538,8 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   ```
 
   批准时门户把旧键在 **`descriptor.env`** 里的值搬到新键，审批屏如实显示「将沿用旧键的现有值」。
-  ⚠️ **值在 envFile 里的搬不了**（那是主机上的文件，门户连写都不写它）—— 那种情况审批屏会把这一条
-  判成「缺」，并告诉运维去把那一行改名。仍然只带键名，不带值。
+  ⚠️ **值在 envFile 里的搬不了**（门户不写主机文件）。普通条目仍判缺；带 `generate` 的条目
+  可兼容沿用文件旧名，由 App 消费，不改文件、不复制值、不生成 NEW。旧键已由平台保管则拒绝改名。
   两条写法约束：`renamedFrom` 不能等于 `key`；旧键**不能**同时还留在清单里（那等于说「它既被改掉
   又仍然必需」，提交即拒）。改名生效之后 **`renamedFrom` 留着就行** —— 它是幂等的（新键已有值就不再搬），
   而摘掉它本身是一次清单变更，会平白再进一次人工审。

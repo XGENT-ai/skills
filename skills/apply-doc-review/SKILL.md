@@ -2,6 +2,7 @@
 name: apply-doc-review
 argument-hint: "<文档评审报告> [原文路径] [上轮报告/处置记录] [修复/仅复核] [问题ID/范围]"
 description: 用于按评审报告修订 PRD、开发计划或复核修订效果；不用于代码修复、计划实施或从零写文档。核实 review-prd、review-dev-plan 意见，按模式改稿或仅复核并回写处置。
+disable-model-invocation: true
 ---
 
 # apply-doc-review · 核实并落实文档评审

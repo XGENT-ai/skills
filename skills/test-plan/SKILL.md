@@ -2,6 +2,7 @@
 name: test-plan
 argument-hint: "<需求key或PRD> [验收范围] [仅文档/写入SPMS]"
 description: 用于从需求验收标准编写、补齐或检查测试用例及测试计划；产品目标与 UAT 状态定义归 prd。覆盖正常、边界、权限和并发场景，生成标准映射与 SPMS TC 草稿，写入前查重。
+when_to_use: "用户会说「写测试用例」「补一下边界和权限场景」「测试计划怎么排」时。"
 ---
 
 # test-plan · 由验收标准产出成套用例

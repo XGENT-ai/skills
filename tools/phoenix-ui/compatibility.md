@@ -460,6 +460,16 @@ CI18/run38042768765（HEAD `36885072`）的Windows完整重放为839通过（630
 
 已读取主实施者的 [Chrome capture 证据](../../local/phoenix-ui/browser-network-acceptance-pre-final/result.json)：2026-10-09T07:59:51.726Z，binary SHA `f529ab7d6337ebe64ba263fa142d2bb3a4d15c8c94eeedd23cd3863034d802a4`。它用原生 live script 与 vendored screenshot 在 M1 Web fixture 加本地跨源控制上执行真实 Chrome capture，记录外部字体/媒体舍弃提示及无 console error；证据 scope 明确不含 provider、IME 或其他平台。本账本全范围 runtime/browser/provider 状态仍为未验证，不能由该单场景关闭 A 门。
 
+## XGENT 自有规则包
+
+PHOENIX-HALLMARK 计划在承接上游 61 条内置规则之外增加 XGENT 自有检测规则；内置 `ANTIPATTERNS` 与既有输出保持逐字节不变（C-1、NFR-2），新规则不进入上游表。
+
+- 形态与接线：新 crate `crates/rules`（包名 `phoenix-ui-rules`）实现已有 `RulePack`；`phoenix-ui` 二进制 `run()` 首行 `install(&PACK)`，并把 `Some(&PACK)` 传给 `detect` 的 `Engines.rule_pack` 与 hook 三个动词。规则发现与内置发现走同一套过滤/豁免；WASM 页内检测（live 叠层、浏览器扩展）不加载该包（ADR-1），需要页面规则时用 `detect <url>`。
+- 规则：`xgent/transition-all`（advisory，源码文本）、`xgent/focus-outline-removed`（warning，源码文本；Cursor before-edit 会拒绝、Claude Stop 深检提醒）、`xgent/wrapped-control-label`（warning，页面）、`xgent/control-height-mismatch`（advisory，页面）、`xgent/unlabeled-inline-svg`（warning，页面）、`xgent/redrawn-window-chrome`（advisory，页面）、`xgent/emoji-icon`（advisory，页面）、`xgent/font-family-count`（advisory，页面）。
+- 关闭方式：`detector.ignoreRules`、`hooks ignore-rule <id>`/`ignore-value`、inline 豁免（`impeccable-disable*` 与 `phoenix-ui-disable*` 双前缀，R-7）、`detect --no-advisory`（仅 advisory）。
+- 证据：V-1/V-2/V-3 已在本机通过，见 [M1 记录](../../docs/plan/phoenix-ui-hallmark.records/M1.md) 与 [M2 记录](../../docs/plan/phoenix-ui-hallmark.records/M2.md)；全量 oracle 中原 860 case 仍全部通过，13 个 detect case 只新增上述 advisory 发现，已按逐 case 精确字段 patch 登记在 `tests/oracle/adapters/phoenix.json` 与 [DELTAS.md](tests/oracle/DELTAS.md#recorded-2026-10-23-xgent-rule-pack-findings)，固定 golden 未重录。V-4/V-7/V-9 在 M5 收口执行并另记。
+- 用户文档：`docs/phoenix-ui.md` 的「XGENT 自有检测规则」小节。`capabilities.json` 的当前源码/行号账本已按 M1 的接线改动重绑；skill 生成物与 `generatedBundle` 按计划在 M5 开发构建后重建。
+
 ## 仍待执行的承接检查
 
 下表保留固定基线的缺口。当前source承接进展在 `current` 独立登记；源码合同通过只能关闭所列接口差异，不能关闭平台或provider会话检查。

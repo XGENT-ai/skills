@@ -1,6 +1,7 @@
 ---
 name: use-workflow-service
 description: '用于判断工作流与 Agent + Skill 的分工，或其他 App／服务经 Portal 接入 workflow；不用于 workflow 自身开发发布或仅接 Task Gateway 执行器。提供选型、编排与调用指引。'
+when_to_use: "用户会说「这个流程该用 workflow 还是 agent + skill」「怎么经门户接 workflow」时。"
 ---
 
 # use-workflow-service

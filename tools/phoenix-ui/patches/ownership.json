@@ -533,6 +533,13 @@
       "change": "modified"
     },
     {
+      "upstreamPath": "crates/foundation/src/inline_ignores.rs",
+      "upstreamSha256": "80d9fd059f5e872ec080a178855b095ce0725ad7aee7cb307036d6d2706ea5d5",
+      "currentPath": "tools/phoenix-ui/crates/foundation/src/inline_ignores.rs",
+      "currentSha256": "40735af938445287767807534655362dc8c46f7af4da09cb82b7957b42d2e704",
+      "change": "modified"
+    },
+    {
       "upstreamPath": "crates/foundation/src/js.rs",
       "upstreamSha256": "f686e0ff3d6d4448ceae5d5f9d6f47e084e80b847bd6133b999522eb2dd1a6a2",
       "currentPath": "tools/phoenix-ui/crates/foundation/src/js.rs",
@@ -907,7 +914,7 @@
       "upstreamPath": "crates/skills/src/commands.rs",
       "upstreamSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
       "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
-      "currentSha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948",
+      "currentSha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843",
       "change": "modified"
     },
     {

@@ -67,7 +67,7 @@ function run(f, args, input = '') {
     child.once('error', reject);
     child.stdin.on('error', error => { if (error.code !== 'EPIPE') reject(error); });
     child.once('close', code => resolve({ code, stdout, stderr }));
-    child.stdin.end(input);
+    child.stdin.end(input || undefined);
   });
 }
 
@@ -92,6 +92,29 @@ test('offline explicit install verifies and runs the pinned executable with spac
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout).argv, ['context', '--target', 'a b.tsx']);
   assert.equal(fs.existsSync(path.join(f.project, '.phoenix-ui')), false, 'engine-only install must not write a project receipt');
+});
+
+test('different engine builds coexist without replacing a pinned project or the legacy cache', async t => {
+  const f = fixture(t);
+  const legacy = path.join(f.cache, 'bin/0.1.0', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
+  fs.mkdirSync(path.dirname(legacy), { recursive: true });
+  fs.writeFileSync(legacy, 'existing pinned engine\n');
+  const first = await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
+  const release = path.join(f.root, 'second release');
+  fs.cpSync(f.release, release, { recursive: true });
+  const bytes = Buffer.concat([f.bytes, Buffer.from('\n// second build\n')]);
+  const manifest = { ...f.manifest, npmPackageVersion: '0.7.0-rc.1', engines: {
+    [f.target]: { asset: f.asset, sha256: sha256(bytes), size: bytes.length },
+  } };
+  fs.writeFileSync(path.join(release, 'VERSION.json'), JSON.stringify(manifest));
+  fs.writeFileSync(path.join(release, f.asset), bytes);
+  const second = await installEngine(manifestAt(path.join(release, 'VERSION.json')), f.target, f.project, release, f.env);
+  assert.notEqual(first, second);
+  assert.equal(fs.readFileSync(legacy, 'utf8'), 'existing pinned engine\n');
+  assert.deepEqual(fs.readFileSync(first), f.bytes);
+  assert.deepEqual(fs.readFileSync(second), bytes);
+  const result = await run(f, ['context', '--json']);
+  assert.equal(result.code, 0, result.stderr);
 });
 
 test('explicit install retries transient locks on its staged executable before publishing', async t => {
@@ -166,7 +189,7 @@ test('explicit install does not retry other staging rename failures', async t =>
 
 test('corrupt and mismatched binary fails before executing ordinary verbs', async t => {
   const f = fixture(t);
-  const dest = path.join(f.cache, 'bin/0.1.0', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
+  const dest = enginePath(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.env);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.writeFileSync(dest, Buffer.concat([f.bytes, Buffer.from('tampered')]), { mode: 0o700 });
   const result = await run(f, ['detect', '--json']);
@@ -181,7 +204,7 @@ test('failed engine probes report subprocess diagnostics without installing the 
   assert.equal(result.code, 4);
   assert.match(result.stderr, /Phoenix engine identity or version differs/);
   for (const field of ['error', 'status', 'signal', 'stdout', 'stderr']) assert.ok(result.stderr.includes(`"${field}":`), result.stderr);
-  assert.equal(fs.existsSync(path.join(f.cache, 'bin/0.2.0', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui')), false);
+  assert.equal(fs.existsSync(enginePath(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.env)), false);
 });
 
 test('missing-engine hooks fail open once per provider session and install resets the reminder', async t => {

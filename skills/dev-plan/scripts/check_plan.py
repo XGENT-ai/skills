@@ -165,7 +165,7 @@ def check(text):
             report("ERROR", number, f"计划状态无效：{value}")
     number, value = fields.get("需求来源", (0, ""))
     if value in EMPTY:
-        report("WARN", number, "缺少或未填：需求来源（PRD 派生写 PRD 与期次，否则写无 PRD）")
+        report("WARN", number, "缺少或未填：需求来源（PRD 写期次，CR 写来源及请求；仅直接需求无文档时写无 PRD）")
     return findings
 
 

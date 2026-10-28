@@ -2,3 +2,5 @@ interface:
   display_name: "UI/UX 验收评审"
   short_description: "只认运行中界面的实拍截图，由独立评审打分并列出可执行差距，判定 UI 验收是否通过"
   default_prompt: "使用 $review-ui 对指定界面做 UI/UX 验收。先识别循环：新无历史且真实能力匹配时可 begin managed；已有人工历史须显式 import。已有 managed 索引时核对固定 engine 与实际协议，不匹配就只读并说明恢复方法，不猜 JSON 字段。按目标矩阵实拍真实界面，派全新上下文独立评审，保留原文并按合同确认、合并和裁定；managed 操作由 engine 登记与投影，人工流程照常落盘。回读后汇报实际判定、分数、差距和下一步命令。"
+policy:
+  allow_implicit_invocation: false

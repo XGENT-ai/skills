@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "9dd7f3ffc10f792f63d56b6afcf5f0bed82e1985af17b9b32dffd3e295043876",
+  "inputSha256": "89c82361f35ae6080174b02194874958c7f787912385a82be090424c15c018c6",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
       "size": 49
     },
     "Cargo.lock": {
-      "sha256": "a515381d79151ed168cbaf3f9d9164c10b8266099d252c3a4a96f990322e4925",
-      "size": 49518
+      "sha256": "e4ada7cd2350a2d4a4c30d44a8c017a9a2442ed467e75a638ab4793b257be817",
+      "size": 49702
     },
     "Cargo.toml": {
-      "sha256": "9dcf6508707d3d4a74bcab970df3c55b8efd021f6af9dac98baa6df67a809a14",
-      "size": 1192
+      "sha256": "4b003df09bcd50d28aa001da3e79cebb726321dc70816143cd5a1ddc0c3b555a",
+      "size": 1237
     },
     "browser-bundle/00-header.js": {
       "sha256": "583a177c24f71606cd6f043b306723d94f55136faa2bf8520fd2450a921de137",
@@ -207,8 +207,8 @@
       "size": 3697
     },
     "crates/foundation/src/inline_ignores.rs": {
-      "sha256": "80d9fd059f5e872ec080a178855b095ce0725ad7aee7cb307036d6d2706ea5d5",
-      "size": 6827
+      "sha256": "40735af938445287767807534655362dc8c46f7af4da09cb82b7957b42d2e704",
+      "size": 8973
     },
     "crates/foundation/src/js.rs": {
       "sha256": "73be58b25457470055db9896cf28efc1481fb7bee1c63243fa7505208d3fd9b8",
@@ -359,8 +359,8 @@
       "size": 21779
     },
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "eecc6bd09d7327312ab03e533b9f5d4dfca4cf8236fa8bffbdf38fbc50c676a8",
-      "size": 2236770
+      "sha256": "c82a88999a698be2efd66a07fcb378c7cb0ae64536c9300da943baae14e2ac0a",
+      "size": 2237070
     }
   }
 }

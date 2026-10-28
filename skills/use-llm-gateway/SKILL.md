@@ -1,6 +1,7 @@
 ---
 name: use-llm-gateway
 description: '用于其他 App、SDK 或编码工具接入 XGENT LLM Gateway 的统一 /v1 调用面，或迁移旧调用、排查凭证、幂等及媒体任务恢复。不用于网关自身开发发布或通用提示词优化。'
+when_to_use: "用户会说「接一下大模型网关」「换掉旧的模型调用」「媒体任务丢了怎么恢复」时。"
 ---
 
 # use-llm-gateway

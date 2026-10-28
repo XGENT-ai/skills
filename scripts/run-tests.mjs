@@ -32,6 +32,6 @@ if (process.platform === 'win32') {
   if (!fs.existsSync(path.join(bashDir, 'bash.exe'))) throw new Error(`Git Bash is missing from ${bashDir}.`);
   pythonEnv.PATH = [bashDir, pythonEnv.PATH].join(path.delimiter);
 }
-for (const dir of ['test/codex', 'test/dev-plan', 'test/skills', 'skills/agi-mode/evals']) {
+for (const dir of ['test/dev-plan', 'test/skills', 'skills/agi-mode/evals']) {
   run('python3', ['-m', 'unittest', 'discover', '-s', dir, '-p', 'test_*.py'], pythonEnv);
 }

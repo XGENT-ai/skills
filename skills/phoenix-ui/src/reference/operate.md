@@ -36,6 +36,21 @@ Every interactive component has: default, hover, focus, active, disabled, loadin
 - Consistent affordances across the surface. Same button shape. Same form-control vocabulary. Same icon style. <!-- rule:product-components-consistent-affordances -->
 - Overlays escape their container. An absolutely positioned dropdown inside an `overflow: hidden` or `overflow: auto` ancestor gets clipped; reach for `<dialog>`, the popover API, `position: fixed`, or a portal. <!-- rule:skill-interaction-dropdown-clipping -->
 
+### Controls and forms
+
+The seven states above still apply. These are the mechanics that make a form feel engineered rather than assembled.
+
+- **States never move the geometry.** Border widths stay equal across default, hover, focus, active, disabled, loading, and error. Draw focus with an outline or `box-shadow`, and reserve the focus ring's space at rest with a transparent outline so nothing shifts when focus lands.
+- **Focus appears immediately.** Never fade a focus indicator in. Don't remove the outline unless `:focus-visible` supplies another visible marker — a ring, a border, or a background change.
+- **Fields and the buttons beside them share one control height.** An input and its adjacent button in the same row match; neither towers over nor crouches under the other.
+- **The label lives outside the field; a placeholder is not a label.** Help text and error text share one reserved line, so showing a validation message doesn't move the form.
+- **Errors carry text and `aria-invalid`, not just color.** Disabled uses the native `disabled` attribute or `aria-disabled`, not merely reduced opacity.
+- **Hover styles sit inside `@media (hover: hover)`, and no function depends on hover alone.** adapt.md owns input-method detection and the hover split; for form controls the extra rule is that `:focus-visible` must offer the same affordance the hover state gives a mouse user.
+- **Numbers line up.** Numeric columns and counters that change get `font-variant-numeric: tabular-nums`.
+- **Finish in place when the result is visible; keep toasts for failures and for results the user cannot see.** Prefer undo over a confirmation dialog for reversible actions. Silence does not hide the undo entry: place it where the risk deserves — toast, inline, or menu inside the surface — and never let the quiet default make undo unfindable.
+- **Button, tab, and navigation labels stay one readable unit at every supported width.** Reflow the row or move the control so the label fits; don't let the label itself wrap onto a second line and don't force it back onto one with `nowrap` or truncation — the first trips the wrapped-control-label check, the second the built-in text-overflow check. When the project or a localization requirement makes a longer label unavoidable, follow that rule and give the control the room it needs.
+- **Inspect hover, focus-visible, and active with forced pseudo-classes** in DevTools or CDP. Don't add preview-only classes to product styles.
+
 ## Motion
 
 - 150–250 ms on most transitions. Users are in flow; don't make them wait for choreography. <!-- rule:product-motion-quick-transitions -->

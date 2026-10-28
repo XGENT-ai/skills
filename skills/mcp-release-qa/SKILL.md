@@ -1,6 +1,7 @@
 ---
 name: mcp-release-qa
-description: 'Verify an MCP server before release by exercising a real protocol session, comparing runtime capabilities with source and documentation, testing failure paths, and recording reproducible evidence. Use when shipping or reviewing an MCP server, tool, resource, prompt, catalog, or install path.'
+description: "Use when shipping or reviewing an MCP server, tool, resource, prompt, catalog or install path. Verify with a real protocol session, compare runtime capabilities against source and docs, test failure paths, record reproducible evidence."
+when_to_use: 'Questions like "is this MCP server ready to release", "why does this tool disappear in the client", or "did the install path break".'
 ---
 
 # MCP Release QA

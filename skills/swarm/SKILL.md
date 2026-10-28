@@ -1,6 +1,7 @@
 ---
 name: swarm
 description: '用于 /swarm、要求多 agent 协作、判断是否开团队，或明显需多人分工的复杂任务。先选单人、subagent、workflow 或团队机制，再编排角色、执行与验收。'
+when_to_use: "用户会说「开几个 agent 一起做」「这活要不要分工」「怎么组队推进」时。"
 ---
 
 # 蜂群 Swarm

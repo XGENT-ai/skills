@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-12T04:38:05.743Z",
+  "checkedAt": "2026-10-22T17:45:21.223Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -15,20 +15,20 @@
     "tree": "7310ad041f7925accfc258bec7fb4f76fb7ff4a9",
     "commitAt": "2026-10-07T16:40:27+02:00",
     "treeListingSha256": "9eb1e1d1ede75a4b63bfa044736876f695d1c0b643ed6e5748dc05a4a252bcc2",
-    "preparedAt": "2026-10-09T11:25:56.705Z"
+    "preparedAt": "2026-10-22T17:41:29.158Z"
   },
   "inputs": {
-    "cargoLockSha256": "a515381d79151ed168cbaf3f9d9164c10b8266099d252c3a4a96f990322e4925",
+    "cargoLockSha256": "e4ada7cd2350a2d4a4c30d44a8c017a9a2442ed467e75a638ab4793b257be817",
     "bunLockSha256": "a270544054db793212391f3b409111fd56ffd71eaca913038168585e7ace95f9",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "806b2e325b8b8b4832e7827581061ee50bf56879f4ab275de1139e3760c933f3",
-    "buildToolsSha256": "83b46ef0236b05779c680aabeaee3984c500082d38a25fd0d7603d25b8a42ce6"
+    "buildToolsSha256": "a58ae8b0b7b973fd68d611b5f613807b6658a8917fc70729ea8f6ac0a74f7bf1"
   },
   "npm": {
     "packages": 54,
     "additionalBundledPackages": 1,
     "findings": 0,
-    "queriedAt": "2026-10-09T11:26:00.406Z",
+    "queriedAt": "2026-10-22T17:41:31.174Z",
     "endpoint": "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
     "requestSha256": "d95f0419d7f681e981d17611bf7d584677c2505b8769baaee842fe731ed1e7f6",
     "responseSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
@@ -45,7 +45,7 @@
       },
       "licenses": {
         "errors": 0,
-        "helps": 213,
+        "helps": 214,
         "notes": 2,
         "warnings": 0
       }
@@ -53,7 +53,7 @@
     "findings": []
   },
   "inventory": {
-    "rustPackages": 214,
+    "rustPackages": 215,
     "nodePackages": 54,
     "bundledPackages": 1,
     "resources": 42,

@@ -1,6 +1,7 @@
 ---
 name: react
 description: Use when writing, reviewing, debugging or optimizing React code, or migrating to React 19. Covers hooks, effects, state, rendering, data fetching, Suspense and Actions.
+when_to_use: 'Requests like "why does this component re-render", "fix this useEffect", or "migrate this app to React 19".'
 license: MIT
 compatibility: React 18+ (React 19 for `use`, Actions, `Activity`, ref-as-prop)
 allowed-tools: Read Write Edit Glob Grep

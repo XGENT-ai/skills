@@ -37,39 +37,20 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | --- | --- |
 | `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings;不删除已装版本 |
 | `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
+| `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
+| `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram 候选,不删除已装版本 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
-| `--context-goal-guard` | 显式安装 Codex goal 上下文收尾提醒(默认不安装);需要 Python 3.9+ |
-| `--no-context-goal-guard` | 跳过 Codex goal guard(默认行为);已有 guard 保留 |
-| `--context-goal-guard-threshold=N` | Codex guard 的触发阈值百分比(1–99 整数,默认 65),同时表示安装;重装不给则沿用已装的值 |
-| `--claude-context-goal-guard` | 显式安装 Claude Code goal 上下文收尾提醒(默认不安装) |
-| `--no-claude-context-goal-guard` | 跳过 Claude Code goal guard(默认行为);已有 guard 保留 |
-| `--claude-context-goal-guard-threshold=N` | Claude Code guard 的触发阈值百分比(1–99 整数,默认 70),同时表示安装;重装不给则沿用已装的值 |
 | `--providers=a,b` | 指定两个 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
-| `--force` | 允许覆盖非法 JSON 的 guard 配置(先存 `.bak`);不覆盖已有 `AGENTS.md`,不放宽两个 Phoenix 工具的冲突保护 |
 
 安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI、Phoenix Diagram 顺序写项目,两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[包内说明](docs/phoenix-diagram.md)。
 
-`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文,包括使用 `--force` 时。
+`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文。
 
 非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
-
-`install` 默认不安装 Codex goal 上下文收尾提醒,也不询问;仅在显式传入 `--context-goal-guard` 或 `--context-goal-guard-threshold=N` 时安装。此选项不受 `--providers` 或 `--no-phoenix-ui` 影响。请安装到 Git 仓库根目录;Codex 运行环境需要 git 和 Python 3.9+。显式安装时先检查含 SQLite 标准库的 Python 3.9+,复制脚本到 `.codex/hooks/context-goal-guard.py`,合并 `.codex/hooks.json` 的同步 `PreToolUse` / `Stop` handler（3 秒超时）,运行时从 Git 根目录定位脚本,配置不包含本机项目绝对路径,保留其他 hooks 与配置;重复安装只更新 guard,不重复添加。
-
-安装后会显示用户必须完成的步骤:从目标项目启动 Codex、信任项目 `.codex/` 层,在 `/hooks` 中审阅、信任并启用两个 handler,对**当前 goal** 明确超过阈值(默认 65%)时先保存进度和交接、再暂停的策略。安装输出提供可复制的指令;安装和信任本身不构成暂停授权。恢复 goal 或新开对话后需重新明确策略。当前仅验证 Codex 0.160.0、macOS arm64,完整限制与停用方法见 [启用说明](docs/codex-context-goal-guard.md)。
-
-Codex guard 已接入源码与 npm 打包清单,尚未发布到 npm;发布后可用 `npx @xgent-ai/skills install --context-goal-guard`。当前可从本仓库源码为目标项目安装:
-
-```bash
-node bin/xgent-skills.js install /absolute/path/to/project --context-goal-guard
-```
-
-`install` 默认不安装 Claude Code goal 上下文收尾提醒,也不询问;仅在显式传入 `--claude-context-goal-guard` 或 `--claude-context-goal-guard-threshold=N` 时安装,不受 `--providers` 或 `--no-phoenix-ui` 影响。显式安装时复制脚本到 `.claude/hooks/context-goal-guard.js`,在个人的 `.claude/settings.local.json` 合并 `PostToolBatch` / `Stop` 两个 handler(5 秒超时),保留其他 hooks 与设置;重复安装只更新 guard。guard 只读当前会话记录:本会话 `/goal` 仍 active 且估算上下文严格超过阈值(默认 70%)时提醒 agent 按既有约定更新进度并交接,回合结束时由 Stop hook 结束回合,Claude Code 原生把 goal 置为 Goal paused,再由你在同一项目目录新开对话或 `/clear` 后重新设置 goal。hook 不写任何文件,也不清除或转移 goal。
-
-安装后需重启会话、信任工作区,并在 `/hooks` 中确认两个 handler 来源为 local settings。当前仅验证 Claude Code 2.1.288 交互式 CLI、macOS arm64 与 Opus 5.5 / Sonnet 5.5 / Haiku 4.5,完整限制、接续与停用方法见 [启用说明](docs/claude-context-goal-guard.md)。从源码安装:`node bin/xgent-skills.js install /absolute/path/to/project --claude-context-goal-guard`。
 
 Portal 的产品和设计规范仍保留在 [PRODUCT 模板](skills/xgent-init/references/external-app-PRODUCT.template.md) 与 [DESIGN 模板](skills/xgent-init/references/external-app-DESIGN.template.md) 中。需要生成项目上下文时,显式安装并在 Agent 对话中使用 [xgent-init](skills/xgent-init/SKILL.md),它读取清单与代码事实,补齐 PRODUCT.md / DESIGN.md (无前端的 service 型不新生成 DESIGN.md),已有文件保留:
 
@@ -81,8 +62,10 @@ npx skills add XGENT-ai/skills --skill xgent-init
 
 Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
-- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/`(`PHOENIX_UI_HOME` 可改),本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
-- **旧 impeccable 项目**:安装时只认领本包已发布版本(0.3.0–0.6.0)写入且未改动的文件与 hook,备份后移除,并在原位置留一个只指向新命令的提示入口;用户改过的文件、未知 wrapper、个人级旧入口或运行中的 live 残留会阻止激活并列出处理步骤。`AGENTS.md`、`CLAUDE.md` 等文档里的旧入口只报告行号,不自动改写。
+Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
+
+- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
+- **已有工具**:安装时发现 impeccable 会询问是否替换。选择替换则直接删除所选 provider 的项目级及个人级旧入口和旧 hooks,不备份、不留转跳入口;选择保留则共存,不阻止 Phoenix 安装,无交互环境默认保留。没有安装事务状态的 Phoenix 源码副本直接删除后重装。业务源码、旧工具的数据和文档不改动;共享配置中的其他 hooks 保留。
 - **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。
 
 安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除,需要时从 git 历史查看。
@@ -93,14 +76,16 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 
 以下按用途分组列出 `skills/` 中的 skill。点击名称查看使用条件与完整流程。
 
+`review-*`、`apply-*`，以及 `agi-mode`、`arena`、`reflect` 等入口设了 `disable-model-invocation`，只能由你显式调用：Claude Code 用 `/名称`，Codex 用 `$名称`；模型不会自行发起。其余 skill 仍按 `description` 自动匹配。
+
 ### 需求、计划与评审
 
 | Skill | 说明 |
 | --- | --- |
 | [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
 | [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复、答复反问并维护需求与 Q&A 当前视图 |
-| [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方使用：基于最新工作树评估需求与长期方案，在原文末答复或续接澄清；需改本方代码时调用 dev-plan，不实施。仅原样追加/收录不重评或生成计划 |
-| [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行计划，明确开发对象、排除与外部前置，支持跨对话续做 |
+| [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方评估、答复 CRD 或回告实现结果；需改码时生成带来源 CR 与完成回写约定的计划，不实施。仅原样追加/收录不重评或生成计划 |
+| [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行计划，明确开发对象、排除与外部前置；CR 来源可追溯，对应请求完成后回写答复，支持跨对话续做 |
 | [spec-human-decision](skills/spec-human-decision/SKILL.md) | 逐项讲清 PRD 或开发计划的功能与价值，计划另述做法；交互选择确认、驳回、修改并打磨文档，修改须附说明 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
 | [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
@@ -112,7 +97,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过 |
 | [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告对照截图与目标核实并修复界面差距、自检；停滞预警时重构思路，提交登记后交回复审 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
-| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 逐项查证开发计划阻塞，需拍板的交互确认，外部依赖通过 CRD 提出 CR；存 decisions 文档并回改计划，给出 agent 可执行的下一步 |
+| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 查证与交互推进计划解阻，外部依赖通过 CRD 交接，存 decisions 并回改计划；最终集中列全剩余阻塞、各方交付和用户具体动作 |
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
 
@@ -121,15 +106,15 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 需要逐项确定功能取舍时，可在 PRD 或开发计划成稿后使用 `spec-human-decision <文档>`：每项简述功能与价值，开发计划另述做法；选择确认、驳回或附说明修改，修订版再确认，并同步文档与决定记录。这是可选的用户决策环节，技术评审与开工条件仍按下述回路核对。
 
 1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
-2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证或交互确认，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
-3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。
+2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证、交互补齐前置，收到答复后继续处理，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；最终开头列全剩余阻塞、各方需提供什么、用户具体动作和解除条件，不只给重跑命令。先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
+3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。来自 CR 的计划按顶部合同，在对应请求或明确子范围实现且约定检查通过后追加实现结果答复，保留历史、余项及回告链接；不等同发布或对方验收，未能回写时保留恢复动作。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
 
    UI 循环可沿用人工 Markdown，或通过匹配的 Phoenix engine 管理证据与轮次。已有 managed 索引时从原轮与 revision 续接；engine 缺失、版本不匹配或状态损坏时保持只读，恢复固定版本后再继续。人工历史只经明确的 `review import` 接管，不能清零未知次数；CLI 操作成功不代表 UI 通过，真实取证和独立评审仍是判定依据。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
-**跨项目入口按角色固定**：提出方始终用 `crd` 起草/修订需求、整合接收方返回稿、答复反问；接收方始终用 `crd-respond <CRD>` 评估/答复需求或续接提出方澄清。双方收到文件或追加消息都不切换角色，归属不明先核实。接收方默认在原文末追加有证据的评估答复，需改本方代码时实际调用 `dev-plan`（未决契约按就绪门标 `Blocked`），生成计划从第 2 步继续；仅原样追加/收录不重新评估或生成计划，仅评估不落盘，仅答复不生成计划，不自动发送或实施。
+**跨项目入口按角色固定**：提出方始终用 `crd` 起草/修订需求、整合接收方返回稿、答复反问；接收方始终用 `crd-respond <CRD>` 评估/答复需求、续接提出方澄清或回告实现结果。双方收到文件或追加消息都不切换角色，归属不明先核实。接收方默认在原文末追加有证据的评估答复，需改本方代码时实际调用 `dev-plan`（未决契约按就绪门标 `Blocked`），计划记录来源 CR、承接请求/子范围、回写文件与顶部完成回写约定，生成计划从第 2 步继续；完成回告核对适用证据后追加 RESP，不重开规划或改写历史。仅原样追加/收录不重新评估或生成计划，仅评估不落盘，仅答复不生成计划，不自动发送或实施。
 
 在任意阶段通过 `$agi-mode sdlc <问题>` 或自然语言获取 [SDLC 指引](skills/agi-mode/playbooks/sdlc.md)：解释 PRD、CRD、计划与测试的分工，判断交接条件，选择下一步。手册随 agi-mode 分发；咨询默认只读，涉及项目现状时复用 what-next 核对证据，实际能力以当前项目和已安装技能为准。
 
@@ -180,6 +165,8 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只有项目明确要求不可变审计，或并发/纠错事实无法由原产物及可取回版本保留时，才按协议新增 `events/<类型>/<对象UUID>/<事件UUID>.md`；事件模板和目录索引在首次需要时创建。旧事件保留原路径，状态页只链接历史入口和已核对末端，不抄全量 ID；未解冲突、待决和授权依据必须保留。
 
+开发过程直接复用原计划的恢复快照/完成记录、里程碑实现与验收记录、评审及处置章节；台账保存当前判断和来源链接。里程碑推进、最终提交和整份计划完成均不另生成 event 总结。新建事件前先核对原记录，写明审计要求出处或无法由来源及当前页保留的具体事实，已有过程只引用。
+
 每个实际创建的状态目录都有 `index.md`，非开发任务的 `tasks/` 及任务子目录也一样；不预建空目录。索引只列本层身份与入口，数量增多后可按领域/年份分片。已有对象只改正文时无需改索引，工作项快捷链接仅随对象选择或入口变化维护，不复制进度、证据、阻塞、下一步或事件计数。写入者按[索引维护规范](skills/agi-mode/assets/sdlc/protocol.md#目录索引维护)同步受影响入口，多机合并保留双方事实并核对来源，不能按机器时间覆盖；查询只报告缺项。
 
 状态按对象拆分、页内按维度分段、历史按需读取。各段独立保存核查时间、来源版本、基线与适用范围，只更新本次触及的段落；页头只留共同身份，不写跨维度摘要。PRD 与计划保持多对多关系，每轮评审有独立状态 ID，原报告文件名不必改变；同轮评审结论与处置在同页分段，不再分别建事件。计划的里程碑完成数只在实施维度按原计划保留，事件总数与历史覆盖条数不手工维护。
@@ -194,7 +181,9 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | --- | --- |
 | [architect](skills/architect/SKILL.md) | 实现前先设计类型、签名与模块结构，并在开发过程中持续校准 |
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
+| [tdd](skills/tdd/SKILL.md) | 先用失败测试复现缺陷再改实现，适用于有明确廉价测试路径的 TDD 与回归测试 |
 | [create-verification-skill](skills/create-verification-skill/SKILL.md) | 按应用或场景创建、维护 verify-*，复用现有测试并验证真实入口与交接；不依赖编辑器，可供 agi-mode 复用 |
+| [mcp-release-qa](skills/mcp-release-qa/SKILL.md) | 发布前验证 MCP server：用真实协议会话对照源码与文档核能力，测失败路径并留下可复现证据 |
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |
 | [rust](skills/rust/SKILL.md) | 编写和评审 Rust 代码，处理所有权、错误、性能、测试及 Tokio 异步模式 |
 | [sql-optimization](skills/sql-optimization/SKILL.md) | 分析 SQL 执行计划，优化查询、索引、分页与批量操作 |
@@ -208,10 +197,13 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | Skill | 说明 |
 | --- | --- |
 | [agi-mode](skills/agi-mode/SKILL.md) | 通用问题助手，不知道如何推进时从这里开始；核心是自进化 loop，SDLC 与项目状态为按需能力 |
-| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 诊断、精简或优化仓库 AGENTS.md；保留原则与授权，使用同仓任务远端评测，确认后按 CAS 采用 |
+| [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 精简所在代码仓库 AGENTS.md；用 use-prompt-dsl 形式化原则并补齐缺项，保留项目事实与作用域，缺 DSL skill 时停止并建议完整安装 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
+| [figure-it-out](skills/figure-it-out/SKILL.md) | 任务没有匹配的既有 playbook 时设计可审计的工作流：阶段、实验与决策记录 |
+| [automate-me](skills/automate-me/SKILL.md) | 把个人偏好和工作习惯固化成专属 `-mode` skill，按引导生成并试跑 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
+| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 编写、改写、解释或按明确要求执行 Prompt DSL；POLICY 精炼常驻原则，任务程序表达目标、检查与循环，普通开发不自动套用 |
 | [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
 | [experience-capture](skills/experience-capture/SKILL.md) | 开发中轻量收集踩坑、纠正及自动化线索，供用户随后发起复盘 |
 
@@ -219,13 +211,22 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
-明确要求优化仓库指令时，可使用 `$optimize-agents-md <repo 路径> [目标、文件范围、仅诊断或已授权任务包]`。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读，缺本仓可重放任务或远端配置时交付未验证候选。远端评价依赖已安装 agi-mode 的可选 [执行工具](skills/agi-mode/references/remote-evolution.md)、Python/uv 和运行者配置；agi-mode 仍保持显式调用，普通流程指导没有新增运行依赖。
+明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 将原则压缩为精炼 POLICY，按语义去重并补齐 Think Before Coding 与八项 Coding Principles，保留项目事实、授权和作用域。缺少 DSL skill 或安装版不支持 POLICY 时停止，建议完整安装或更新本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
 
-工具提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；不自动提交、发布或安装全局配置。已在指定 SSH/Docker 组合完成真实隔离、任务对照/搜索、自然请求/CAS 与故障恢复验收；本次独立确认样本不足，未证明候选优于基线。
+独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
+
+自然发现验收可用 `source.fixed_skill_roots` 显式提供完整固定背景目录，目标缺席/候选切换保持其他技能字节；实际目录、读取与任务行为分别记录，单独的目标技能执行不代表完整目录发现已通过。
+
+v2运行质量项可显式声明`verifier/`公开观测文件，按白名单接收固定grader的实际运行事实；验收分与运行证据分开，缺证据保持unknown，独立观测不替代新增回归测试。
+新百分表保留其他已知分项，不因单项unknown全表清空；已知硬失败控制可显式声明不可观察的非gate项并要求双评一致未知，成功控制、底线、排序及辅助资格保持严格。
+新百分rubric还可显式让程序从已校验逐项判断派生评审状态，避免把产物失败误作测量无效；旧协议默认保持，新格式需重新校准。
+固定预算项可显式要求双评数值及校准固定参考完全相同，分歧保持unknown及原分；缺省程度容差保持，同分仍须核对依据，详见远端手册。
+
+v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜像；默认及v1/Pro V2仍amd64。平台改变后重新校准，不能迁移旧分或资格；详见[远端手册](skills/agi-mode/references/remote-evolution.md)。
 
 安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
 
-`experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具，并回写处置。
+`experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议并回写已审条目的处置，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具。
 
 整体方法见 [agi-mode 自进化方法论](docs/agi-mode-evolution-methodology.md)，说明样本沉淀、重放、进化实践和能力评估，以及通用方法与业务实践案例的边界。
 
@@ -241,11 +242,15 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |
 | [meeting-minutes](skills/meeting-minutes/SKILL.md) | 整理会议议题、决定、负责人、截止日期与后续行动，生成会议纪要 |
 | [pardon](skills/pardon/SKILL.md) | 补充必要上下文，用当前会话语言把上一条回答重新讲清楚 |
+| [how](skills/how/SKILL.md) | 用代码证据讲清模块如何工作、分层与归属；设计理由用 `why` |
+| [why](skills/why/SKILL.md) | 追查设计取舍、回归或事故背后的原因；运行时行为用 `how` |
+| [teach](skills/teach/SKILL.md) | 由一个具体改动或子系统切入，讲清是什么、怎么运转、为什么这样设计 |
 
 ### 设计与转化
 
 | Skill | 说明 |
 | --- | --- |
+| [ui-loop](skills/ui-loop/SKILL.md) | 按获奖级视觉标准设计或打磨页面，逐项自检、对标、修补并循环复验，直到所有检查维度无可见改进 |
 | [design-reference](skills/design-reference/SKILL.md) | 寻找视觉参考并形成有来源的 brief；可读 Phoenix context，已接受方向按授权保存原文和路径/hash 映射供恢复 |
 | [design-md](skills/design-md/SKILL.md) | 提炼和维护 DESIGN.md，保留规范并报告偏差；可读 Phoenix 原文/解析覆盖，写入仍按用户决定与证据 |
 | [ui-pattern-research](skills/ui-pattern-research/SKILL.md) | 比较交互方案并交付状态与验收条件；可读 Phoenix 产品/已接受方向，业务能力仍核实实际接口 |
@@ -264,12 +269,17 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [portal-logging](skills/portal-logging/SKILL.md) | 将应用日志与遥测接入门户，配置采集器、写入身份、日志流和字段口径 |
 | [xgent-image-push](skills/xgent-image-push/SKILL.md) | 构建并推送 App 镜像到私有 Harbor，预检链路、镜像架构、tag 与保留策略 |
 | [xgent-app-release](skills/xgent-app-release/SKILL.md) | 使用发布令牌提交前端产物、镜像和 manifest 变更，处理发布提案与发布故障 |
+| [use-llm-gateway](skills/use-llm-gateway/SKILL.md) | 为 App 接入 LLM Gateway 统一 `/v1` 调用面，迁移旧调用并排查凭证、幂等与媒体任务 |
+| [use-task-gateway](skills/use-task-gateway/SKILL.md) | App 接入 Task Gateway 跑异步任务，处理鉴权、幂等、进度与结果回收 |
+| [use-workflow-service](skills/use-workflow-service/SKILL.md) | 判断 workflow 与 Agent + Skill 的分工，并按 Portal 接入与编排 |
 
 ## 目录结构
 
 每个 skill 位于 `skills/<name>/` 目录下,包含一个带 `name` 与 `description` frontmatter 的 `SKILL.md`:
 
-`description` 用于加载前的技能选择,按「触发条件与关键排除条件 → 核心产出」组织。整条建议不超过 200 字符,中文尽量在 100 字符左右;前 100 字符应能独立表达适用边界。这是本仓库的编辑目标,不是所有 coding agent 的统一截断上限。
+`description` 用于加载前的技能选择,按「触发条件与关键排除条件 → 核心产出」组织。整条建议不超过 250 字符,中文不超过 200 字符并尽量在 100 字符左右;前 100 字符应能独立表达适用边界。这是本仓库的编辑目标,不是所有 coding agent 的统一截断上限。
+
+`when_to_use` 补充 `description` 没覆盖的同义说法、触发短语或示例请求,不重复正文条件;客户端把它拼在描述后参与选择,不读取该字段的客户端仍按 `description` 触发。
 
 容易混淆的限制要紧跟触发条件,例如「仅写/评审计划,不用于按计划实施」,不能放在长段落末尾或只留在正文。操作步骤、完整错误码清单、工具细节和重复的双语说明放入正文或 references;精简后检查前缀是否仍表达原意,不要直接机械截字。
 
