@@ -47,22 +47,22 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-28T20:40:00+08:00
-- 当前进度：3/4 个里程碑完成
-- 当前状态：v6同包（5585a5f）V-4/V-5/V-8/V-9、V-7本机与CI四平台/Node18通过。D27两轮重跑后：Codex 31/31与ERD反例passed、provider聚合pass；Claude 27/31，stalled-repair、browser-unavailable、visual-pending、repo-verified及ERD反例两轮仍失败（宿主协议/语义），已停止。最终聚合incomplete，M4未完成。
-- 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：由用户决定5个Claude失败的处置（维持未完成、验收变更，或为workflow图例类别补作者指引/产品默认后新同包整组重取），见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“D27 第二轮”
-- 当前阻塞：5个Claude角色经D27两轮重跑仍失败，待用户决定处置
-- 代码基线：产品最后提交5585a5f6aeb8682074bedce2fd1fbefb76652a5c（已push，候选来源）；开发SourceInput b5506db7、bundle d4a10828（skill未变）；用户原有dirty未动。
+- 最近更新：2026-10-28T21:00:00+08:00
+- 当前进度：4/4 个里程碑完成
+- 当前状态：全部里程碑完成。M4按D28收口：v6同包（5585a5f）V-4/V-5/V-7（四平台、Node18、本机、Codex provider）/V-8/V-9通过；64角色均有真实结果，59 passed，5个Claude宿主行为失败照记不阻断，claude-code provider聚合incomplete如实保留。
+- 最近完成：M4 · 新同包P2增量终验与回归收口
+- 下一步：代码评审——由用户发起 review-code，以 `docs/plan/PHOENIX-DIAGRAM-P2-gaps.md` 为参数
+- 当前阻塞：无
+- 代码基线：产品最后提交5585a5f6aeb8682074bedce2fd1fbefb76652a5c（已push，候选来源）；SourceInput b5506db7、bundle d4a10828；M4收口为随后的记录提交；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 阻塞 | 2026-10-28T20:40:00+08:00 | D27两轮重跑后Codex 31/31+反例passed、provider聚合pass；Claude 27/31、反例failed；最终聚合incomplete，待用户决定 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
+| M4 | 已完成 | 2026-10-28T21:00:00+08:00 | 按D28收口：V-4/V-5/V-7（四平台、Node18、本机、Codex provider）/V-8/V-9通过；64角色59 passed，5个Claude宿主行为失败照记不阻断 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -116,6 +116,7 @@
 | D25 | v3实测暴露的既有Reader/旧渲染缺陷 | 本期最小修复四类：A 探索护照面板不遮挡聚焦节点；B 390窄屏底部工具栏完整可用；C 护照不把配色槽kind冒充作者类型；D 旧数据流路由末段沿目标边框导致箭头不入节点。均先红后绿，真实浏览器实看验证；E 聚焦缩放裁图例仍记已知限制 | 用户2026-10-27选择“本期修复（推荐）”；扩大§1.2对Reader与旧数据流渲染的排除，仅限上述四处及直接回归。原v3 cohort（候选61b621e8、64角色执行中途停止的3份draft/2份中断）全部作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7；事实/质量/停止/题面/D12模型不变 | v3 V-5扩展审阅B1/B2/C对core-12已验收同字节原图的新判定，Root亲看确认；见M4-v3记录 |
 | D26 | v5终验暴露的自动边标签压箭头 | “压箭头”指标签板覆盖箭头尖或箭体形心。showcase下未经作者固定（无labelAt/labelDx/labelDy/labelSegment）的workflow标签由路由后一次性调整：路线与路由搜索不变，仅压箭头的标签沿本路线改选不压任何箭头、且不新增任何收尾诊断的位置；dataflow showcase自动竖向标签在朝箭头一侧压箭头时镜像到中点另一侧。standard保持参考编译器几何，不压箭头的标签输出不变；无解时由新增`composition/label-arrowhead`在showcase报错（与label-route-clearance同级），workflow走廊反馈对其容忍。作者固定标签与architecture参考几何不在其内。先用case-037/case-004原candidate复现红再绿 | 用户2026-10-28选择"本期修复（推荐）"；扩大§1.2对workflow/dataflow渲染的排除，仅限自动标签放置、该判定及直接回归。v5 cohort（候选8067ac9，作者执行中停止）作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7/V-8；事实/质量/停止/题面/D12模型不变 | v5独审codex/mermaid-flowchart视觉失败，Root亲看E→D箭头被自身标签完全盖住；695个交付扫描：169个workflow-v2-auto交付中7个箭头≥90%被遮、16个部分遮挡，dataflow同类部分遮挡；现校验跳过标签自身路线且无标签—箭头判定。见M4-v4记录 |
 | D27 | v6失败与未完成角色的换路线重跑 | Claude 9个failed、locale-zh-tw（外部中断）与erd-missing-facts（未运行）共11角色改用DeepSeek直连Anthropic兼容端点`deepseek-flash`（支持图像输入）；Codex legacy-lifecycle、repo-verified沿原gpt-6.1-sol/max。每角色在全新项目、同包/同collector/同题面只运行一次，再失败即停该角色。首轮项目根带场景名（Root脚本缺陷）后，用户再授权对仍失败的5个Claude角色在随机中性项目根同`deepseek-flash`各再跑一次（第二轮），再失败即停 | 用户明确授权换路线，替代D12对这些角色的路线；原failed会话与独审保留不改判。重跑逐角色单列（独立执行目录、授权与路线），最终归档按归档器既有附加原始根声明引用，不冒称原cohort会话；采集器只改Claude端点与模型，题面/包/collector/事实/质量/视觉/停止2/身份不变 | 用户2026-10-28选择“授权换更强路线重跑失败角色”、Claude模型“deepseek-flash（推荐）”、Codex“同路线各重跑一次（推荐）”；TokenHub 403001；`deepseek-v4-pro`仅文本输入不能实际看图 |
+| D28 | 宿主行为失败的验收处置 | Claude（D27两轮deepseek-flash后）stalled-repair、browser-unavailable、visual-pending、repo-verified与ERD缺事实反例共5个失败照记、不改判，不阻断M4；其余V-4–V-9、Codex 31/31与反例、四平台/Node18/本机及Codex provider聚合均已真实通过 | 用户明确的验收变更：仅适用于每题已独审并经Root复核归因为宿主协议/语义、且未发现产品或skill缺陷的角色；不接受这些产物为通过，claude-code provider聚合保持incomplete并如实记录。产品、schema、质量/视觉/停止门与其他需求不变；workflow人员步骤图例类别的作者指引缺口留作后续改进，不在本期 | 用户2026-10-28选择“这5项不阻断M4（推荐）”；每角色原v6一次加D27两轮共3次真实会话，见M4-v4记录“D27 第二轮” |
 | D24 | 新同包终验与内部实施自主推进 | 授权一次新同包、原题原D12模型的62正式+2反例；本任务内冻结、重打包、接线与重验等内部选择自行推进，只有外部依赖确实无法解决才问用户 | 仍先明确实际失效覆盖与新冻结身份；事实/质量/视觉/来源/身份/停止2及限次规则保持，不拼回旧cohort，不无具体修复抽签。按真实candidate载体严格适配，不伪装development | 用户2026-10-27明确“授权，以后这种问题别问我，外部依赖搞不定才问我”；新执行见M4-v3记录 |
 
 D21选择移除重复调度前置并改进测试证据传输。继续增加预检/措辞或轮换模型不能解释既有规则已明确而宿主仍出错的原因，且会使新包重验成本反复扩大；只把语义错误降为警告则违反原事实要求。因此保留最终强制门，用定界题面、无损读取、独立调度和限次复验收尾。若真正产品行为或外部合同改变，再按影响面重核该决策。
@@ -365,7 +366,7 @@ D22的成功读取范围沿现行交付合同：核实际各门状态、`automat
 3. **复用按真实合同。** 产品sourceInput/合同未变且覆盖仍适用的V-4/V-5/V-8证据保留；只重跑修复实际影响的项。旧Source21两个Workflow仍是已通过风险诊断，但旧collector与新formal的collector/package载体合同不同，不填新版正式31行；不为省两个会话放松归档deep equality或伪造新身份。旧bundle、失败会话、旧宽题均不能填当前清单。
    冻结后的产品/题面/collector修复必须先列失效字段：仅派生视图可从原capture无Native重跑恢复；Native sourceInput、bundle、tgz、认证collector或实际题面改变时，按严格cohort合同处理，不能把不同身份的定向复验拼回原正式记录。定向复验在这种情况下只记修复诊断，M4仍未完成；新正式冻结清单及实际失效覆盖先明确，不计作原64角色的一次局部恢复；D24授权下由实施者自主完成必要的新同包重验，不再为此逐项询问用户，不作无具体修复的相同输入/包/后端抽签。
 4. **分别完成独立工作。** 一个模型的语义错误只阻塞对应V-6角色，不阻止其他题、本机消费或CI。最终可汇总的同cohort已冻结后再按预算取五个必需ZIP；不重复下载退役cohort、不为无产品缺口的宿主错误新建bundle。
-5. **结束判据明确。** M4仍须V-4–V-9全部通过、62正式及2反例全部有可追溯的通过结果、原聚合通过，才能记完成。限次后仍失败则完成其余独立检查，输出准确到角色的未通过清单、原失败及依赖模型，M4保持未完成；下一动作是处理已定位缺口；D24授权内的候选冻结、重打包与重验等内部选择自行推进，只有外部依赖经核实无法解决时再问用户，不进入无具体修复的加规则/换模型/重打包循环。未获明确需求变更时，不能接受错误产物或延期原需求。
+5. **结束判据明确。** M4仍须V-4–V-9全部通过、62正式及2反例全部有可追溯的通过结果、原聚合通过，才能记完成。限次后仍失败则完成其余独立检查，输出准确到角色的未通过清单、原失败及依赖模型，M4保持未完成；下一动作是处理已定位缺口；D24授权内的候选冻结、重打包与重验等内部选择自行推进，只有外部依赖经核实无法解决时再问用户，不进入无具体修复的加规则/换模型/重打包循环。未获明确需求变更时，不能接受错误产物或延期原需求。 用户按D28对5个已独审归因为宿主行为、无产品/skill缺陷的Claude失败作出验收变更：它们照记失败、不阻断M4，claude-code provider聚合保持incomplete并如实记录。
 
 
 ## 10. 里程碑与验收安排
@@ -393,7 +394,7 @@ D22的成功读取范围沿现行交付合同：核实际各门状态、`automat
 | 公开联合发行未授权 | 无法宣称公开可安装 | C-2持续排除，保留guard | 任何公开写入前 | 不阻塞候选 |
 
 - 最终状态：**Ready**。
-- 定级理由：四项follow-up均有PRD或已实现行为依据；六区路线已与固定Node实测，目录/诊断根因和最小接口已追通，ERD规则只具体化现有原则，Reader只补验证。没有产品、权限、数据归属或关键NFR待决。M1–M3已完成，M4仍进行中；验收设计可实施，Ready不表示缺口已关闭。
+- 定级理由：四项follow-up均有PRD或已实现行为依据；六区路线已与固定Node实测，目录/诊断根因和最小接口已追通，ERD规则只具体化现有原则，Reader只补验证。没有产品、权限、数据归属或关键NFR待决。M1–M4均已完成（M4按D28收口，5个Claude宿主行为失败照记）；Ready仅指计划可执行。
 
 ## 12. 已知坑与历史教训
 
