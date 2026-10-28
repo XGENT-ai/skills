@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-28T02:40:00+08:00
+- 最近更新：2026-10-28T12:10:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：v5终验暴露自动边标签压箭头（codex/mermaid-flowchart视觉失败），用户选D26本期修复；v5 cohort停止并作废只作诊断。D26修复提交5585a5f并push，同包CI run40560828981已锁定运行中；本机V-4/V-5在D26开发引擎（SourceInput b5506db7）上运行中，V-8（test:diagram、npm test）已在最终源码通过。M4未完成。
+- 当前状态：v6同包（5585a5f）V-4/V-5/V-8/V-9、V-7本机与CI四平台/Node18通过；64角色：Codex正式29/2、反例passed，Claude正式21/9、locale-zh-tw因TokenHub套餐包被禁用中断、ERD反例未运行。11个宿主失败均为协议/语义、无产品缺陷，按§9.5不复验；provider归档需每宿主31行全过，最终聚合无法通过。M4未完成。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“D26”节：V-4/V-5看图登记；CI候选取回校验后用`local/phoenix-diagram/make-provider-v6.py`建v6 provider（index采用修正版index-r1）初装冻结64角色、分批独审；V-7本机消费；取五ZIP聚合
-- 当前阻塞：无
+- 下一步：用户恢复TokenHub套餐包（或另给路线）后，对claude/locale-zh-tw按v5中断角色先例在全新项目做一次技术恢复、运行claude/erd-missing-facts并独审；11个宿主失败的处置由用户决定，见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“当前汇总与阻塞”
+- 当前阻塞：TokenHub套餐包被禁用（外部依赖，403001）；11个宿主失败待用户决定处置；数据卷近满（可用1.7–8.8GiB）
 - 代码基线：产品最后提交5585a5f6aeb8682074bedce2fd1fbefb76652a5c（已push，候选来源）；开发SourceInput b5506db7、bundle d4a10828（skill未变）；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 进行中 | 2026-10-28T02:40:00+08:00 | D26自动标签压箭头修复5585a5f，v5 cohort作废；新同包CI与本机V-4/V-5运行中，64角色/V-7/聚合待做 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
+| M4 | 阻塞 | 2026-10-28T12:10:00+08:00 | v6同包除provider外各检查通过；Codex正式29/2，Claude正式21/9+1外部中断（TokenHub套餐禁用），ERD反例Claude未跑；阻塞待用户 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
