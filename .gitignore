@@ -29,6 +29,7 @@
 skills/swarm/evals/evals.json
 skills-lock.json
 .env.cf
+.env.local
 
 /local
 /.codex/app-server-control

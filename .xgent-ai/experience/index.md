@@ -40,4 +40,6 @@
 
 - 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)
 
+- d44fc342-9869-497e-80a0-021d3e0c3711 · [Phoenix Diagram P2 收口（钥匙串修复候选）](d44fc342-9869-497e-80a0-021d3e0c3711.md)
+
 - b63a54df-d1f0-48c9-b624-3fc5174201fd · [Phoenix Diagram P2 gaps 实施](b63a54df-d1f0-48c9-b624-3fc5174201fd.md)
