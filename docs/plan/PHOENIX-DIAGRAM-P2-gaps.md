@@ -47,19 +47,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-28T17:30:00+08:00
+- 最近更新：2026-10-28T20:40:00+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：v6同包（5585a5f）V-4/V-5/V-8/V-9、V-7本机与CI四平台/Node18通过。按D27重跑失败与未完成角色后：Codex 31/31与ERD反例passed，provider聚合pass；Claude 27/31（stalled-repair、browser-unavailable、visual-pending、repo-verified重跑仍失败）、ERD反例failed，均为宿主协议/语义，无产品或skill缺陷。最终聚合incomplete，M4未完成。
+- 当前状态：v6同包（5585a5f）V-4/V-5/V-8/V-9、V-7本机与CI四平台/Node18通过。D27两轮重跑后：Codex 31/31与ERD反例passed、provider聚合pass；Claude 27/31，stalled-repair、browser-unavailable、visual-pending、repo-verified及ERD反例两轮仍失败（宿主协议/语义），已停止。最终聚合incomplete，M4未完成。
 - 最近完成：M2 · 准确浏览器失败状态与回执
-- 下一步：由用户决定5个Claude剩余失败的处置（维持M4未完成、需求/验收变更或另行授权），见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“最终汇总”；D27每角色一次已用尽，不自行再跑
-- 当前阻塞：5个Claude角色（4正式+ERD反例）经D27重跑仍失败，待用户决定处置
+- 下一步：由用户决定5个Claude失败的处置（维持未完成、验收变更，或为workflow图例类别补作者指引/产品默认后新同包整组重取），见[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md)“D27 第二轮”
+- 当前阻塞：5个Claude角色经D27两轮重跑仍失败，待用户决定处置
 - 代码基线：产品最后提交5585a5f6aeb8682074bedce2fd1fbefb76652a5c（已push，候选来源）；开发SourceInput b5506db7、bundle d4a10828（skill未变）；用户原有dirty未动。
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M4 | 阻塞 | 2026-10-28T17:30:00+08:00 | D27重跑后Codex 31/31+反例passed、provider聚合pass；Claude 27/31、反例failed；最终聚合incomplete，待用户决定 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
+| M4 | 阻塞 | 2026-10-28T20:40:00+08:00 | D27两轮重跑后Codex 31/31+反例passed、provider聚合pass；Claude 27/31、反例failed；最终聚合incomplete，待用户决定 | [M4 记录](PHOENIX-DIAGRAM-P2-gaps.records/M4.md)；[修复诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-default-legend-fix.md)；[读取支撑](PHOENIX-DIAGRAM-P2-gaps.records/M4-current-progress-reader.md)；[本机诊断](PHOENIX-DIAGRAM-P2-gaps.records/M4-consumer-diagnostics.md)；[v3记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v3.md)；[v4记录](PHOENIX-DIAGRAM-P2-gaps.records/M4-v4.md) | 修复b64ad55；读取063129a；点击298638d；同候选ec2d651；D25修复e7eb4a5、8067ac9；D26修复5585a5f；终验待完成 |
 | M3 | 已完成 | 2026-10-23T13:51:25+08:00 | ERD事实边界、六区说明与Reader维护接线完成；V-3修前红、修后14/14通过 | [M3 记录](PHOENIX-DIAGRAM-P2-gaps.records/M3.md) | fd0be93；修复8b5c66b、f04d4c9、9abb063、63f076b、6571b83、c1fd765；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M1 | 已完成 | 2026-10-23T13:57:00+08:00 | 六区原生规则、固定来源/许可与oracle完成；V-1原生13/13及来源、派生物检查通过 | [M1 记录](PHOENIX-DIAGRAM-P2-gaps.records/M1.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
 | M2 | 已完成 | 2026-10-23T14:00:00+08:00 | 回执目录先准备、summary先保留浏览器首因；V-2协议19、CLI10、delivery10项通过 | [M2 记录](PHOENIX-DIAGRAM-P2-gaps.records/M2.md) | fd0be93；冻结5279779、1752533、21eb0b3、3263cf6、abcefee |
@@ -115,7 +115,7 @@
 | D23 | 项目内辅助读取的路径写法 | 相对读取若实际解析到同一授权项目内的同一原件，且必要字段与身份闭合，只记非阻断路径偏离；保留实际指令和调用，不冒称遵守了绝对路径写法 | 用户明确调整此项阻断级别；固定Native调用字面量、访问边界、原件身份及事实/质量/视觉/来源/计数/停止门保持。不改冻结输入或重跑作者/Native；原failed保留并另行复核 | 用户2026-10-26选择“同项目同原件的相对读取记为非阻断项”；Claude Mermaid sequence五维通过，唯一原失败为先cd再相对读取同项目正确回执，原证据见M4记录 |
 | D25 | v3实测暴露的既有Reader/旧渲染缺陷 | 本期最小修复四类：A 探索护照面板不遮挡聚焦节点；B 390窄屏底部工具栏完整可用；C 护照不把配色槽kind冒充作者类型；D 旧数据流路由末段沿目标边框导致箭头不入节点。均先红后绿，真实浏览器实看验证；E 聚焦缩放裁图例仍记已知限制 | 用户2026-10-27选择“本期修复（推荐）”；扩大§1.2对Reader与旧数据流渲染的排除，仅限上述四处及直接回归。原v3 cohort（候选61b621e8、64角色执行中途停止的3份draft/2份中断）全部作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7；事实/质量/停止/题面/D12模型不变 | v3 V-5扩展审阅B1/B2/C对core-12已验收同字节原图的新判定，Root亲看确认；见M4-v3记录 |
 | D26 | v5终验暴露的自动边标签压箭头 | “压箭头”指标签板覆盖箭头尖或箭体形心。showcase下未经作者固定（无labelAt/labelDx/labelDy/labelSegment）的workflow标签由路由后一次性调整：路线与路由搜索不变，仅压箭头的标签沿本路线改选不压任何箭头、且不新增任何收尾诊断的位置；dataflow showcase自动竖向标签在朝箭头一侧压箭头时镜像到中点另一侧。standard保持参考编译器几何，不压箭头的标签输出不变；无解时由新增`composition/label-arrowhead`在showcase报错（与label-route-clearance同级），workflow走廊反馈对其容忍。作者固定标签与architecture参考几何不在其内。先用case-037/case-004原candidate复现红再绿 | 用户2026-10-28选择"本期修复（推荐）"；扩大§1.2对workflow/dataflow渲染的排除，仅限自动标签放置、该判定及直接回归。v5 cohort（候选8067ac9，作者执行中停止）作废只作诊断，新包按D24重做同包CI/本机/64角色/V-4/V-5/V-7/V-8；事实/质量/停止/题面/D12模型不变 | v5独审codex/mermaid-flowchart视觉失败，Root亲看E→D箭头被自身标签完全盖住；695个交付扫描：169个workflow-v2-auto交付中7个箭头≥90%被遮、16个部分遮挡，dataflow同类部分遮挡；现校验跳过标签自身路线且无标签—箭头判定。见M4-v4记录 |
-| D27 | v6失败与未完成角色的换路线重跑 | Claude 9个failed、locale-zh-tw（外部中断）与erd-missing-facts（未运行）共11角色改用DeepSeek直连Anthropic兼容端点`deepseek-flash`（支持图像输入）；Codex legacy-lifecycle、repo-verified沿原gpt-6.1-sol/max。每角色在全新项目、同包/同collector/同题面只运行一次，再失败即停该角色 | 用户明确授权换路线，替代D12对这些角色的路线；原failed会话与独审保留不改判。重跑逐角色单列（独立执行目录、授权与路线），最终归档按归档器既有附加原始根声明引用，不冒称原cohort会话；采集器只改Claude端点与模型，题面/包/collector/事实/质量/视觉/停止2/身份不变 | 用户2026-10-28选择“授权换更强路线重跑失败角色”、Claude模型“deepseek-flash（推荐）”、Codex“同路线各重跑一次（推荐）”；TokenHub 403001；`deepseek-v4-pro`仅文本输入不能实际看图 |
+| D27 | v6失败与未完成角色的换路线重跑 | Claude 9个failed、locale-zh-tw（外部中断）与erd-missing-facts（未运行）共11角色改用DeepSeek直连Anthropic兼容端点`deepseek-flash`（支持图像输入）；Codex legacy-lifecycle、repo-verified沿原gpt-6.1-sol/max。每角色在全新项目、同包/同collector/同题面只运行一次，再失败即停该角色。首轮项目根带场景名（Root脚本缺陷）后，用户再授权对仍失败的5个Claude角色在随机中性项目根同`deepseek-flash`各再跑一次（第二轮），再失败即停 | 用户明确授权换路线，替代D12对这些角色的路线；原failed会话与独审保留不改判。重跑逐角色单列（独立执行目录、授权与路线），最终归档按归档器既有附加原始根声明引用，不冒称原cohort会话；采集器只改Claude端点与模型，题面/包/collector/事实/质量/视觉/停止2/身份不变 | 用户2026-10-28选择“授权换更强路线重跑失败角色”、Claude模型“deepseek-flash（推荐）”、Codex“同路线各重跑一次（推荐）”；TokenHub 403001；`deepseek-v4-pro`仅文本输入不能实际看图 |
 | D24 | 新同包终验与内部实施自主推进 | 授权一次新同包、原题原D12模型的62正式+2反例；本任务内冻结、重打包、接线与重验等内部选择自行推进，只有外部依赖确实无法解决才问用户 | 仍先明确实际失效覆盖与新冻结身份；事实/质量/视觉/来源/身份/停止2及限次规则保持，不拼回旧cohort，不无具体修复抽签。按真实candidate载体严格适配，不伪装development | 用户2026-10-27明确“授权，以后这种问题别问我，外部依赖搞不定才问我”；新执行见M4-v3记录 |
 
 D21选择移除重复调度前置并改进测试证据传输。继续增加预检/措辞或轮换模型不能解释既有规则已明确而宿主仍出错的原因，且会使新包重验成本反复扩大；只把语义错误降为警告则违反原事实要求。因此保留最终强制门，用定界题面、无损读取、独立调度和限次复验收尾。若真正产品行为或外部合同改变，再按影响面重核该决策。
