@@ -14,6 +14,7 @@ import { DEFAULT_TIMEOUTS, ownedProfile, discoverBrowser, browserArguments, Pipe
 import * as probes from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, sendReaderKey, verifyReaderInteractions } from './support/export-reader.mjs';
 import * as acceptance from './export-acceptance.mjs';
+import { exploreSnapshot, verifyExplore, REQUIRED_EXPLORATION } from './support/explore-reader.mjs';
 import { bootReader, bundledCatalogs, dispatch, plain } from './viewer/fixtures/reader.mjs';
 import * as diagrams from './viewer/fixtures/diagrams.mjs';
 
@@ -144,6 +145,257 @@ test('failed page receipts preserve safe CDP, function and download metadata wit
     assert(!JSON.stringify(record).includes('private-'));
     assert.equal(artifactIdentity(artifactPath).sha256, report.artifact.sha256);
   }
+});
+
+function exploreFailureCdp(fault) {
+  // Synthetic CDP receipts exercise the maintenance controller, not a browser,
+  // hit testing, native trusted input or actual Reader acceptance.
+  const listeners = new Set(), calls = [], points = new Map(), inputs = [], metadata = {
+    diagramType: 'architecture', graph: { nodes: ['a', 'b', 'c'].map(id => ({ id })), relations: [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }] } },
+  state = { hash: '', focus: null, reach: null, present: null, route: { mode: null, startId: null, result: null, status: '', noOutgoing: 'none', distinct: 'distinct' },
+    lens: { open: false, active: null, kinds: [{ id: 'backend' }], matches: 0 }, nodes: 3,
+    reachButtons: { upstream: { disabled: true, label: 'unit no upstream' } }, radar: { open: false, count: 3 }, details: { hidden: true } };
+  let selector, none = false, failedTarget = false, failureSnapshots = 0, navigationIncomplete = false, camera = { x: 0, y: 0 };
+  const target = () => none && fault === 'source-missed' && selector.includes('data-node-id="b"') ? { id: 'route-probe', nodeId: null } :
+    none && fault === 'source-wrong' && selector.includes('data-node-id="b"') ? { id: '', nodeId: 'c' } :
+    none && ['target-panel', 'target-svg'].includes(fault) && selector.includes('data-node-id="a"') ? { id: fault === 'target-panel' ? 'route-probe-status' : '', nodeId: null } :
+      ({ id: selector?.startsWith('#') ? selector.slice(1) : '', nodeId: /data-node-id="([^"]+)"/.exec(selector || '')?.[1] || null });
+  const click = () => {
+    if (selector === '#btn-semantic-lens') state.lens.open = true;
+    else if (selector.includes('semantic-lens-kinds')) { state.lens.active = ['backend']; state.lens.matches = 1; state.hash = '#lens=backend'; }
+    else if (selector === '#semantic-lens-clear') { state.lens.active = null; state.lens.matches = 0; state.hash = ''; }
+    else if (selector === '#btn-route-probe') state.route.mode = 'source';
+    else if (selector === '#route-probe-clear') { Object.assign(state.route, { mode: 'source', startId: null, result: null }); state.hash = ''; none = true; }
+    else if (selector === '#btn-reach-downstream') state.hash = '#focus=' + state.focus + '&reach=downstream';
+    else if (selector === '#btn-overview-map') state.radar.open = true;
+    else if (selector.includes('data-radar-node-id')) camera = { x: 1, y: 0 };
+    else if (selector === '#overview-map-close') state.radar.open = false;
+    else if (selector.includes('data-view="reset"')) camera = { x: 0, y: 0 };
+    else {
+      const id = /data-node-id="([^"]+)"/.exec(selector || '')?.[1] || null;
+      if (none && id === 'b' && fault === 'source-missed') return;
+      if (none && id === 'b' && fault === 'source-wrong') { Object.assign(state.route, { mode: 'target', startId: 'c' }); return; }
+      if (state.route.mode === 'source') Object.assign(state.route, { mode: 'target', startId: id });
+      else if (state.route.mode === 'target') {
+        if (none) { failedTarget = true; if (!['valid', 'source-wrong', 'document-changed', 'navigation-incomplete', 'target-panel', 'target-svg'].includes(fault)) Object.assign(state.route, { mode: 'result', result: { source: 'b', target: 'a', hops: 1 } }); }
+        else { Object.assign(state.route, { mode: 'result', result: { source: 'a', target: 'c', hops: 2 } }); state.hash = '#route=a~c'; }
+      } else { state.focus = id; state.details.hidden = false; }
+    }
+  };
+  const cdp = {
+    calls, inputs, subscribe(callback) { listeners.add(callback); return () => listeners.delete(callback); },
+    async send(method, params = {}, sessionId) {
+      calls.push({ method, params });
+      if (method === 'Browser.getVersion') return { product: 'Chrome/unit-preflight' };
+      if (method === 'Target.createBrowserContext') return { browserContextId: 'unit-context' };
+      if (method === 'Target.createTarget') return { targetId: 'unit-target' };
+      if (method === 'Target.attachToTarget') return { sessionId: 'unit-session' };
+      if (method === 'Page.addScriptToEvaluateOnNewDocument') return { identifier: 'unit-script' };
+      if (method === 'Page.navigate') {
+        inputs.length = 0; state.present = new URL(params.url).searchParams.has('present') ? 'true' : null;
+        if (fault === 'navigation-incomplete' && params.url === 'about:blank') {
+          navigationIncomplete = true;
+          await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape' }, sessionId);
+          await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape' }, sessionId);
+          return { frameId: 'unit-frame' }; // New probe exists, but loadEventFired never arrives.
+        }
+        for (const listener of listeners) listener({ method: 'Page.loadEventFired', sessionId }); return { frameId: 'unit-frame' };
+      }
+      if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'unit-frame' } } };
+      if (method === 'Input.dispatchMouseEvent') {
+        if (params.type === 'mousePressed') inputs.push({ type: 'pointerdown', trusted: true, target: target() });
+        else {
+          if (none && fault === 'source-dispatch-failed' && selector.includes('data-node-id="b"')) throw Object.assign(new Error('unit source release failed'), { code: 'unit/input' });
+          inputs.push({ type: 'pointerup', trusted: true, target: target() }, { type: 'click', trusted: true, target: target() }); click();
+        }
+      }
+      if (method === 'Input.dispatchKeyEvent' && params.type === 'keyDown') {
+        inputs.push({ type: 'keydown', trusted: true, key: params.key, target: { id: '' } });
+        if (params.key === 'Escape') { state.lens.open = false; state.focus = null; state.details.hidden = true; Object.assign(state.route, { mode: null, startId: null, result: null }); }
+      }
+      if (method === 'Runtime.evaluate') {
+        const expression = params.expression, argument = expression.slice(expression.lastIndexOf(')(') + 2, -1);
+        let value;
+        if (expression.includes('function awaitReader')) value = true;
+        else if (expression.includes('function snapshotReader')) value = { mode: 'still' };
+        else if (expression.includes('function exploreSnapshot')) {
+          if (navigationIncomplete) throw Object.assign(new Error('unit new document Reader is not ready'), { code: 'unit/reader-unavailable' });
+          if (failedTarget && ++failureSnapshots > 1 && fault === 'diagnostic-failed') throw Object.assign(new Error('unit after sampling failed'), { code: 'unit/after-sample' });
+          value = argument === 'true' ? { state: structuredClone(state), inputStart: inputs.length } : structuredClone(state);
+          if (argument && JSON.parse(argument)?.targetInput) value.route.targetInput = structuredClone(inputs.filter(input => input.type === 'click' && input.trusted === true).at(-1) || null);
+        } else if (expression.includes('phoenix-diagram-metadata')) value = metadata;
+        else if (expression.includes('readerInputs.length')) value = inputs.length;
+        else if (expression.includes('readerInputs.slice(start)')) {
+          if (fault === 'input-sample-failed') throw Object.assign(new Error('unit input sampling failed'), { code: 'unit/input-sample' });
+          value = inputs.slice(JSON.parse(argument));
+        }
+        else if (expression.includes('getComputedStyle(document.getElementById(\'btn-overview-map\'))')) value = true;
+        else if (expression.includes('PhoenixDiagram.view.state()')) value = { ...camera };
+        else if (expression.includes('data-tree-hidden')) value = [];
+        else if (expression.includes('function readerClickPoint')) { selector = JSON.parse(argument); if (!points.has(selector)) points.set(selector, { x: 100 + points.size, y: 200 + points.size }); value = points.get(selector); }
+        else throw new Error('Unexpected unit evaluation');
+        return { result: { value } };
+      }
+      return {};
+    },
+  };
+  return cdp;
+}
+
+test('failed exploration keeps its plan observations actual input receipts and failed route sample', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert exploration receipt fixture</p>');
+  const cdp = exploreFailureCdp('accepted-unreachable'), report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp });
+  assert.equal(report.status, 'failed'); assert.equal(report.errors[0].message, 'Exploration: an unreachable target was accepted');
+  assert.deepEqual(report.explore?.plan.noPathPair, ['b', 'a']);
+  const sample = report.explore.observations.at(-1);
+  assert.equal(sample.name, 'route-none'); assert.equal(sample.status, 'failed');
+  assert.equal(sample.before.route.mode, 'result'); assert.equal(sample.after.route.mode, 'result');
+  assert.equal(sample.error.message, report.errors[0].message);assert.equal(sample.error.code, report.errors[0].code);
+  assert(sample.inputs.some(input => input.type === 'click' && input.trusted && input.target.nodeId === 'a'));
+  assert(sample.clicks.some(click => click.selector.includes('data-node-id="b"') && click.point.x > 0));
+  assert.deepEqual(JSON.parse(fs.readFileSync(report.receiptPath)).explore, report.explore);
+  assert(!report.explore.observations.some(sample => sample.name === 'reach'));
+});
+
+test('route-none refuses a missed source before clicking the planned target', async t => {
+  for (const fault of ['source-missed', 'source-wrong']) await t.test(fault, async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert route source fixture</p>');
+  const cdp = exploreFailureCdp(fault), progress = [], report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp,
+    onProgress({ name }) { progress.push(name); if (name === 'reach') throw Object.assign(new Error('unit stop before reach'), { code: 'unit/stop' }); } });
+  assert.equal(report.status, 'failed');assert.equal(report.errors[0].code, 'exploration/route-source');
+  assert.deepEqual(progress, ['lens', 'route-path', 'route-none']);
+  const sample = report.explore.observations.at(-1);
+  assert.deepEqual(report.explore.plan.noPathPair, ['b', 'a']);assert.equal(sample.after.route.mode, fault === 'source-missed' ? 'source' : 'target');assert.equal(sample.after.route.startId, fault === 'source-missed' ? null : 'c');
+  assert(sample.inputs.some(input => input.type === 'click' && input.trusted && (fault === 'source-missed' ? input.target.id === 'route-probe' : input.target.nodeId === 'c')));
+  assert(!sample.inputs.some(input => input.type === 'click' && input.target.nodeId === 'a'));
+  assert.equal(sample.clicks.filter(click => click.selector.includes('data-node-id="b"')).length, 1);
+  assert(!sample.clicks.some(click => click.selector.includes('data-node-id="a"')));
+  });
+});
+
+test('route-none requires the last trusted click to belong to the planned target', async t => {
+  for (const fault of ['target-panel', 'target-svg']) await t.test(fault, async t => {
+    const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html');fs.writeFileSync(artifactPath, '<p>Inert target-owner fixture</p>');
+    const cdp = exploreFailureCdp(fault), progress = [], report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp,
+      onProgress({ name }) { progress.push(name);if (name === 'reach') throw Object.assign(new Error('unit stop before reach'), { code: 'unit/stop' }); } });
+    assert.equal(report.status, 'failed');assert.equal(report.errors[0].code, 'exploration/route-target-input');
+    const sample = report.explore.observations.at(-1), last = sample.inputs.filter(input => input.type === 'click' && input.trusted).at(-1);
+    assert.equal(sample.name, 'route-none');assert.equal(sample.after.route.mode, 'target');assert.equal(sample.after.route.startId, 'b');assert.equal(sample.after.route.result, null);
+    assert.deepEqual(sample.error.targetInput, last);assert.equal(last.target.nodeId, null);
+    assert.equal(last.target.id, fault === 'target-panel' ? 'route-probe-status' : '');
+    assert.equal(sample.clicks.filter(click => click.selector.includes('data-node-id="a"')).length, 1);
+    assert(!progress.includes('reach'));assert(!sample.inputs.some(input => input.type === 'keydown' && input.key === 'Escape'));
+  });
+});
+
+test('failed exploration diagnostics cannot replace the original assertion or invent an after snapshot', async t => {
+  for (const fault of ['diagnostic-failed', 'input-sample-failed']) await t.test(fault, async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert failed diagnostics fixture</p>');
+  const cdp = exploreFailureCdp(fault), report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp }),
+    sample = report.explore.observations.at(-1);
+  assert.equal(report.status, 'failed');assert.equal(report.errors.length, 1);
+  assert.equal(report.errors[0].message, 'Exploration: an unreachable target was accepted');
+  assert.equal(sample.error.message, report.errors[0].message);
+  if (fault === 'diagnostic-failed') {
+    assert.equal(Object.hasOwn(sample, 'after'), false);
+    assert.deepEqual(sample.diagnostics, [{ stage: 'after', code: 'unit/after-sample', message: 'unit after sampling failed' }]);
+    assert(sample.inputs.some(input => input.type === 'click' && input.trusted && input.target.nodeId === 'a'));
+    assert(!sample.inputs.some(input => input.type === 'keydown' && input.key === 'Escape'));
+  } else {
+    assert.equal(Object.hasOwn(sample, 'inputs'), false);assert.equal(sample.after.route.mode, 'result');
+    assert.deepEqual(sample.diagnostics, [{ stage: 'inputs', code: 'unit/input-sample', message: 'unit input sampling failed' }]);
+    assert(sample.clicks.at(-1).selector.includes('data-node-id="a"'));
+  }
+  assert(!report.explore.observations.some(sample => sample.name === 'reach'));
+  });
+});
+
+test('exploration preserves completed host dispatches without inventing a rejected click', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert input failure fixture</p>');
+  const cdp = exploreFailureCdp('source-dispatch-failed'), report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp }),
+    sample = report.explore.observations.at(-1), click = sample.clicks.at(-1);
+  assert.equal(report.status, 'failed');assert.equal(report.errors[0].code, 'unit/input');assert.equal(sample.name, 'route-none');
+  assert.equal(sample.error.code, 'unit/input');assert.equal(sample.error.message, report.errors[0].message);
+  assert(click.selector.includes('data-node-id="b"'));assert.deepEqual(click.completedDispatches, ['mousePressed']);
+  const attempted = cdp.calls.filter(call => call.method === 'Input.dispatchMouseEvent').at(-1).params;
+  assert.deepEqual(click.point, { x: attempted.x, y: attempted.y });
+  assert(sample.inputs.some(input => input.type === 'pointerdown' && input.trusted && input.target.nodeId === 'b'));
+  assert(!sample.inputs.some(input => input.type === 'click' && input.target.nodeId === 'b'));
+  assert(!sample.clicks.some(click => click.selector.includes('data-node-id="a"')));
+});
+
+test('a valid route-none prefix keeps the original rejection and Escape semantics', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert valid route prefix fixture</p>');
+  const cdp = exploreFailureCdp('valid'), report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp,
+    onProgress({ name }) { if (name === 'reach') throw Object.assign(new Error('unit stop before reach'), { code: 'unit/stop' }); } });
+  assert.equal(report.status, 'failed');assert.equal(report.errors[0].code, 'unit/stop', 'the deliberate unit stop is not a complete acceptance pass');
+  const sample = report.explore.observations.at(-1);
+  assert.equal(sample.name, 'route-none');assert.equal(sample.status, 'pass');assert.deepEqual(sample.result.pair, ['b', 'a']);
+  assert.equal(sample.after.route.mode, null);assert.equal(sample.after.route.startId, null);assert.equal(sample.after.route.result, null);
+  assert.deepEqual(sample.result.targetInput, cdp.inputs.filter(input => input.type === 'click' && input.trusted).at(-1));
+  assert.equal(sample.result.targetInput.target.nodeId, 'a');
+  assert.equal(cdp.calls.filter(call => call.method === 'Input.dispatchKeyEvent').at(-1).params.key, 'Escape');
+  assert.equal(Object.hasOwn(sample, 'inputs'), false);assert.equal(Object.hasOwn(sample, 'clicks'), false);
+  assert(!cdp.calls.some(call => call.method === 'Runtime.evaluate' && /readerInputs\.slice\(start\)|\(\(\) => __phoenixDiagramExportProbe\.readerInputs\.length\)/.test(call.params.expression)), 'passed steps add no normal input-sampling requests');
+  assert.throws(() => verifyExplore(report.explore), /did not pass/);
+  // An inert verifier-contract fixture; unrelated step names are not browser evidence.
+  const complete = structuredClone(report.explore);complete.status = 'pass';
+  for (const name of REQUIRED_EXPLORATION) if (!complete.observations.some(sample => sample.name === name)) complete.observations.push({ name, status: 'pass' });
+  assert.equal(verifyExplore(complete), true);
+  for (const input of [undefined, { ...sample.result.targetInput, trusted: false }, { ...sample.result.targetInput, type: 'pointerdown' },
+    { ...sample.result.targetInput, target: { nodeId: 'c' } }]) {
+    const altered = structuredClone(complete);altered.observations.find(sample => sample.name === 'route-none').result.targetInput = input;
+    assert.throws(() => verifyExplore(altered), /actual trusted click/);
+  }
+});
+
+test('failed exploration never slices a new document probe with the previous document offset', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert document provenance fixture</p>');
+  const cdp = exploreFailureCdp('document-changed'), progress = [], report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp,
+    onProgress({ name }) { progress.push(name); } }), sample = report.explore.observations.at(-1);
+  assert.equal(report.status, 'failed');assert.equal(report.errors[0].message, 'Exploration: presentation did not exit');
+  assert.equal(sample.name, 'presentation');assert.equal(sample.error.message, report.errors[0].message);
+  assert(cdp.inputs.some(input => input.type === 'keydown' && input.key === 'Escape' && input.trusted), 'the new document really recorded Escape in this synthetic adapter');
+  assert.equal(Object.hasOwn(sample, 'inputs'), false, 'cross-document step input history is unavailable, not an empty sample');
+  assert.equal(sample.diagnostics[0].code, 'exploration/document-changed');assert.equal(sample.diagnostics[0].stage, 'inputs');
+  assert(sample.diagnostics[0].afterEpoch > sample.diagnostics[0].beforeEpoch);
+  assert.deepEqual(sample.clicks, []);assert(!progress.includes('deep-link'));
+  assert.deepEqual(JSON.parse(fs.readFileSync(report.receiptPath)).explore, report.explore);
+});
+
+test('a navigation timeout invalidates old document input offsets before any load event', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Inert incomplete navigation fixture</p>');
+  const cdp = exploreFailureCdp('navigation-incomplete'), report = await acceptance.runExploreAcceptance({ artifactPath, evidenceDir: directory, cdp, timeouts: { commandMs: 50 } }),
+    sample = report.explore.observations.at(-1);
+  assert.equal(report.status, 'failed');assert.equal(report.errors[0].code, 'acceptance/timeout');
+  assert.equal(report.errors[0].message, 'Blank page load timed out after 50ms');assert.equal(sample.name, 'presentation');
+  assert.equal(sample.error.code, report.errors[0].code);assert.equal(sample.error.message, report.errors[0].message);
+  assert(cdp.inputs.some(input => input.type === 'keydown' && input.key === 'Escape' && input.trusted));
+  assert.equal(Object.hasOwn(sample, 'inputs'), false);assert.equal(Object.hasOwn(sample, 'after'), false);
+  const diagnostic = sample.diagnostics.find(value => value.stage === 'inputs');
+  assert.equal(diagnostic.code, 'exploration/document-changed');assert(diagnostic.afterEpoch > diagnostic.beforeEpoch);
+  assert.match(diagnostic.message, /may have changed/);assert.deepEqual(sample.clicks, []);
+  assert.equal(cdp.calls.filter(call => call.method === 'Page.navigate' && call.params.url === 'about:blank').length, 1);
+  assert(!report.explore.observations.some(sample => sample.name === 'deep-link'));
+});
+
+test('exploration route start comes from the assembled Reader DOM marker, including its empty value', async () => {
+  const env = await bootDiagram(diagrams.graph(), 'architecture');
+  for (const source of ['b', 'd']) {
+    env.click('#btn-route-probe');env.click(env.node(source).querySelector('[data-graph-role="node-body"]'));
+    assert.equal(env.node(source).getAttribute('data-route-start'), '');
+    const snapshot = vm.runInNewContext('(' + exploreSnapshot.toString() + ')()', env.window);
+    assert.equal(snapshot.route.mode, 'target');assert.equal(snapshot.route.startId, source);
+    env.api.routeProbe.clear();
+    assert.equal(vm.runInNewContext('(' + exploreSnapshot.toString() + ')()', env.window).route.startId, null);
+  }
+  const targetInput = { type: 'click', trusted: true, key: '', target: { id: '', nodeId: 'a' } };
+  env.window.__phoenixDiagramExportProbe = { readerInputs: [{ type: 'click', trusted: true, target: { nodeId: 'b' } }, targetInput,
+    { type: 'click', trusted: false, target: { nodeId: 'c' } }, { type: 'pointerdown', trusted: true, target: { nodeId: 'c' } }] };
+  const targeted = vm.runInNewContext('(' + exploreSnapshot.toString() + ')({targetInput:true})', env.window);
+  assert.deepEqual(plain(targeted.route.targetInput), targetInput);
+  assert.equal(Object.hasOwn(vm.runInNewContext('(' + exploreSnapshot.toString() + ')()', env.window).route, 'targetInput'), false);
+  assert.equal(Object.hasOwn(vm.runInNewContext('(' + exploreSnapshot.toString() + ')(true)', env.window).state.route, 'targetInput'), false);
 });
 
 test('fixed browser probes parse without evaluating any authored literal', () => {
