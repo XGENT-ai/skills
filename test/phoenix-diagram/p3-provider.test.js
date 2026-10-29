@@ -241,7 +241,7 @@ async function sessionFixture(id = 'fallback-elintp') {
         };
   if (id === 'erd-missing-facts')
     session.installedReceipt = mem.put('/fixture/original-active.json', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       tool: 'phoenix-diagram',
       project: {device: physical.device, inode: physical.inode},
       bundleManifestSha256: cohort.bundleSha256,
@@ -311,6 +311,17 @@ test('caller bytes cannot masquerade as PD ownership and must match authenticate
   assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /authenticated tgz/);
 });
 
+test('current installed Active v2 is required by the P3 session verifier', async () => {
+  const f = await sessionFixture('erd-missing-facts'), file = f.session.installedReceipt.path,
+        active = JSON.parse(f.mem.bytesFor(f.session.installedReceipt));
+  active.schemaVersion = 2; f.session.installedReceipt = f.mem.put(file, active);
+  assert.doesNotThrow(() => f.module.checkP3Session(f.session, f.row, f.context));
+  for (const schemaVersion of [1, 3]) {
+    f.session.installedReceipt = f.mem.put(file, {...active, schemaVersion});
+    assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /Installed PD/);
+  }
+});
+
 test('observed model must be a real native metadata line, requested model is separate', async () => {
   const f = await sessionFixture();
   assert.notEqual(f.dto.runtime.requestedModel, f.dto.observedModels[0].value);
@@ -346,6 +357,75 @@ test('same-case confirmation may continue but history and other cases cannot see
   assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /fresh origin/);
 });
 
+test('P3 session routes terminal skill reads through current capture facts and excludes continuation history', async () => {
+  const f = await sessionFixture(), read = f.session.loadedReads[0], turn = 'fixture-turn',
+        timestamp = '2026-10-29T00:00:01.000Z',
+        execution = {timestamp, type: 'event_msg', payload: {
+          type: 'item_completed', thread_id: f.session.id, turn_id: turn,
+          started_at_ms: Date.parse(timestamp), completed_at_ms: Date.parse(timestamp), item: {
+            type: 'CommandExecution', id: 'exec-read', process_id: '20926', source: 'unified_exec_startup',
+            command: ['/bin/zsh', '-c', 'cat .claude/skills/elintp/SKILL.md'], cwd: 'file://' + f.session.cwd,
+            status: 'completed', exit_code: 0, aggregated_output: f.mem.bytesFor(read.file).toString(),
+            duration: {secs: 0, nanos: 1}
+          }
+        }},
+        outer = (type, time, id) => ({timestamp: time, type: 'response_item', payload: {
+          type, call_id: id, ...(type === 'custom_tool_call' ? {name: 'exec', input: 'opaque original JS'} :
+              {output: [{type: 'input_text', text: 'actual outer result'}]})
+        }}),
+        rows = [
+          {type: 'session_meta', payload: {id: f.session.id, cwd: f.session.cwd, model: 'fixture-observed-model'}},
+          {type: 'event_msg', payload: {type: 'task_started', turn_id: turn}},
+          outer('custom_tool_call', '2026-10-29T00:00:00.500Z', 'outer-read'), execution,
+          outer('custom_tool_call_output', '2026-10-29T00:00:01.100Z', 'outer-read'),
+          {type: 'response_item', payload: {type: 'function_call', name: 'exec_command', call_id: 'discovery',
+            arguments: JSON.stringify({cmd: f.rows[3].message.content[0].input.command})}},
+          {type: 'response_item', payload: {type: 'function_call_output', call_id: 'discovery',
+            output: JSON.stringify({output: 'No such file or directory', exit_code: 1})}},
+          {type: 'event_msg', payload: {type: 'task_complete', turn_id: turn}}
+        ], native = events(f.mem, '/fixture/codex/origin.jsonl', rows);
+  f.context.provider = f.session.provider = f.dto.provider = 'codex';
+  f.dto.program = {...f.dto.program, path: '/fixture/bin/codex'};
+  f.dto.entryPath = f.dto.program.path;
+  f.dto.argv = f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd,
+    endpointPolicy: 'inherit-config', model: f.dto.runtime.requestedModel});
+  f.dto.version = f.mem.put('/fixture/codex/version.json', {program: f.dto.program,
+    argv: ['--version'], exitCode: 0, signal: null, stdout: 'codex-cli fixture'});
+  Object.assign(f.dto, {transcript: native.ref, nativeSessionFile: native.ref.path, transcriptSource: native.ref,
+    format: 'codex-session-json', lineIndex: f.mem.put('/fixture/codex/index.json', f.provider.lineIndex(native.raw)),
+    observedModels: [{value: 'fixture-observed-model', anchor: native.anchors[0]}], finishedAt: '2026-10-29T00:00:02.000Z'});
+  const {call, ...readFields} = read;
+  f.session.loadedReads = [{...readFields, kind: 'codex-command-execution', result: native.anchors[3], toolUseId: 'exec-read'}];
+  f.row.evidence.discovery = [{captureIndex: 0, call: native.anchors[5], result: native.anchors[6], toolUseId: 'discovery'}];
+  f.reseal();
+  f.session.captures[0] = {...f.session.captures[0], transcript: native.ref, version: f.dto.version};
+  assert.equal(f.module.checkP3Session(f.session, f.row, f.context).parts[0].profile, 'p3');
+  const nextExecution = structuredClone(execution), nextTime = '2026-10-29T00:00:04.000Z';
+  nextExecution.timestamp = nextTime;
+  Object.assign(nextExecution.payload, {turn_id: 'next-turn', started_at_ms: Date.parse(nextTime), completed_at_ms: Date.parse(nextTime)});
+  nextExecution.payload.item.id = 'exec-next-read';
+  const continuedRows = [...rows, {type: 'turn_context', payload: {model: 'fixture-observed-model'}},
+    {type: 'event_msg', payload: {type: 'task_started', turn_id: 'next-turn'}},
+    outer('custom_tool_call', '2026-10-29T00:00:03.500Z', 'next-outer'), nextExecution,
+    outer('custom_tool_call_output', '2026-10-29T00:00:04.100Z', 'next-outer'),
+    {type: 'event_msg', payload: {type: 'task_complete', turn_id: 'next-turn'}}],
+        next = events(f.mem, '/fixture/codex/continued.jsonl', continuedRows),
+        dto = {...f.dto, origin: false, previousCapture: f.session.captures[0].capture,
+          argv: f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd, endpointPolicy: 'inherit-config',
+            model: f.dto.runtime.requestedModel}, {previousId: f.session.id}),
+          startedAt: '2026-10-29T00:00:03.000Z', finishedAt: '2026-10-29T00:00:05.000Z',
+          transcript: next.ref, nativeSessionFile: next.ref.path, transcriptSource: next.ref,
+          lineIndex: f.mem.put('/fixture/codex/continued-index.json', f.provider.lineIndex(next.raw)),
+          observedModels: [{value: 'fixture-observed-model', anchor: next.anchors[rows.length]}]};
+  f.session.captures.push({capture: f.mem.put('/fixture/codex/continued-capture.json', dto), transcript: next.ref, version: dto.version});
+  f.session.loadedReads.push({...f.session.loadedReads[0], captureIndex: 1, result: next.anchors[rows.length + 3], toolUseId: 'exec-next-read'});
+  const captured = f.module.checkP3Session(f.session, f.row, f.context);
+  assert.equal(captured.parts[1].minimumOffset, native.raw.length);
+  assert.equal(captured.parts[1].events.length, continuedRows.length - rows.length);
+  f.session.loadedReads[1] = {...f.session.loadedReads[0], captureIndex: 1};
+  assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /current original event/);
+});
+
 test('ERD clarification stops without candidate writes, including write-then-delete tool calls', async () => {
   const f = await sessionFixture('erd-missing-facts'),
         captured = f.module.checkP3Session(f.session, f.row, f.context),
@@ -375,7 +455,7 @@ test('ERD clarification stops without candidate writes, including write-then-del
 });
 
 async function commandFixture(
-    {name = 'brands', previewEvents, mode = 'installed', reply, argvOverride, textStdout, exitCode = 0} =
+    {name = 'brands', previewEvents, mode = 'installed', reply, argvOverride, textStdout, exitCode = 0, activeSchemaVersion = 2} =
         {}) {
   const f = await sessionFixture(), {stdio} = await helpers(), mem = f.mem, context = f.context,
         cwd = f.session.cwd,
@@ -399,7 +479,7 @@ async function commandFixture(
         candidateVersion = mem.put('/fixture/stdio/version.json', candidate);
   context.cohort.versionSha256 = candidateVersion.identity.sha256;
   const engine = Object.values(context.cohort.engines)[0], activeValue = {
-    schemaVersion: 1,
+    schemaVersion: activeSchemaVersion,
     tool: 'phoenix-diagram',
     engineManifestSha256: context.cohort.versionSha256,
     bundleManifestSha256: context.cohort.bundleSha256,
@@ -515,6 +595,15 @@ async function commandFixture(
         };
   return {...f, dto, captured, command, context};
 }
+
+test('current Active v2 is required by the installed command verifier', async () => {
+  const valid = await commandFixture({activeSchemaVersion: 2});
+  assert.doesNotThrow(() => valid.module.checkP3Command(valid.captured, valid.command, valid.context));
+  for (const activeSchemaVersion of [1, 3]) {
+    const invalid = await commandFixture({activeSchemaVersion});
+    assert.throws(() => invalid.module.checkP3Command(invalid.captured, invalid.command, invalid.context), /Executed launcher/);
+  }
+});
 
 test('brands capture binds the two-word command to actual argv and original collector bytes', async () => {
   const f = await commandFixture();
@@ -675,6 +764,37 @@ test('P3 migration collector seals before bytes before the child changes active/
         /new project-local capture slots/);
   } finally {
     fs.rmSync(base, {recursive: true, force: true});
+  }
+});
+
+test('installed stdio accepts current Active v2 and rejects old schema, physical substitution and wrong candidate', async t => {
+  const {stdio} = await helpers(), base = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'p3-stdio-active-v2-')));
+  t.after(() => fs.rmSync(base, {recursive: true, force: true}));
+  // Synthetic launcher process tests capture guards only, never native delivery.
+  for (const variant of ['v2', 'v1', 'v3', 'physical', 'candidate']) {
+    const project = path.join(base, variant), out = path.join(project, 'stdio'),
+          relative = '.agents/skills/phoenix-diagram/scripts/phoenix-diagram', launcher = path.join(project, relative);
+    fs.mkdirSync(project, {mode: 0o700}); fs.mkdirSync(out, {mode: 0o700});
+    fs.mkdirSync(path.dirname(launcher), {recursive: true, mode: 0o700});
+    fs.mkdirSync(path.join(project, '.phoenix-diagram/install'), {recursive: true, mode: 0o700});
+    const script = Buffer.from('#!/bin/sh\nprintf \'unit stdio\\n\'\n'); fs.writeFileSync(launcher, script, {mode: 0o755});
+    const stat = fs.statSync(launcher), projectStat = fs.statSync(project), engine = {sha256: 'a'.repeat(64), size: 10},
+          candidate = {sourceInputSha256: 'c'.repeat(64), bundleSha256: 'd'.repeat(64), engines: {fixture: engine}},
+          active = {schemaVersion: variant === 'v1' ? 1 : variant === 'v3' ? 3 : 2, tool: 'phoenix-diagram',
+            project: {device: String(projectStat.dev), inode: String(projectStat.ino)}, bundleManifestSha256: candidate.bundleSha256,
+            engine: {sourceInputSha256: candidate.sourceInputSha256, binary: {sha256: engine.sha256, bytes: engine.size}},
+            ownership: [{path: relative, identity: {device: String(stat.dev), inode: String(stat.ino), links: stat.nlink, mode: stat.mode & 0o7777, uid: stat.uid, ...identity(script)}}]};
+    fs.writeFileSync(path.join(project, '.phoenix-diagram/install/active.json'), plain(active), {mode: 0o600});
+    const version = path.join(project, 'VERSION.json');
+    fs.writeFileSync(version, plain({...candidate, ...(variant === 'candidate' ? {bundleSha256: '0'.repeat(64)} : {})}));
+    if (variant === 'physical') { fs.renameSync(launcher, launcher + '.original'); fs.writeFileSync(launcher, script, {mode: 0o755}); }
+    const options = {mode: 'installed', program: launcher, cwd: project, candidateVersion: version,
+      stdout: path.join(out, 'stdout'), stderr: path.join(out, 'stderr'), evidenceDir: path.join(out, 'evidence'), argv: ['brands', '--json']};
+    if (variant === 'v2') {
+      const dto = await stdio.captureStdio(options); assert.equal(dto.exitCode, 0); assert.equal(dto.schemaVersion, 1);
+      assert.equal(JSON.parse(fs.readFileSync(dto.installationBefore.active.snapshot.path)).schemaVersion, 2);
+      assert.equal(fs.readFileSync(dto.stdout.path, 'utf8'), 'unit stdio\n');
+    } else await assert.rejects(() => stdio.captureStdio(options), variant === 'candidate' ? /installed candidate differs/ : /installed launcher ownership differs/);
   }
 });
 
@@ -881,6 +1001,50 @@ test(
       assert.throws(() => f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), /unsealed/);
     });
 
+test('P3 terminal Codex executions still require sealed captures and reject direct PD commands', async () => {
+  const f = await commandFixture(), session = {...f.session, provider: 'codex'},
+        old = f.captured.parts[0].events, turn = 'fixture-codex-turn', timestamp = '2026-10-29T01:00:01.000Z',
+        execution = {timestamp, type: 'event_msg', payload: {
+          type: 'item_completed', thread_id: session.id, turn_id: turn,
+          started_at_ms: Date.parse(timestamp), completed_at_ms: Date.parse(timestamp), item: {
+            type: 'CommandExecution', id: 'exec-pd', process_id: '20926', source: 'unified_exec_startup',
+            command: ['/bin/zsh', '-c', old[0].message.content[0].input.command],
+            cwd: 'file://' + session.cwd, status: 'completed', exit_code: 0,
+            aggregated_output: old[1].message.content[0].content, duration: {secs: 0, nanos: 1}
+          }
+        }},
+        rows = [
+          {type: 'session_meta', payload: {id: session.id, cwd: session.cwd}},
+          {type: 'event_msg', payload: {type: 'task_started', turn_id: turn}},
+          {timestamp: '2026-10-29T01:00:00.500Z', type: 'response_item', payload: {
+            type: 'custom_tool_call', call_id: 'outer-exec', name: 'exec', input: 'opaque original JS'
+          }}, execution,
+          {timestamp: '2026-10-29T01:00:01.100Z', type: 'response_item', payload: {
+            type: 'custom_tool_call_output', call_id: 'outer-exec', output: [{type: 'input_text', text: 'outer script completed'}]
+          }},
+          {type: 'event_msg', payload: {type: 'task_complete', turn_id: turn}}
+        ];
+  const reseal = () => {
+    const native = events(f.mem, '/fixture/codex-proof.jsonl', rows);
+    f.captured.provider = 'codex';
+    f.captured.parts = [{profile: 'p3', session, provider: 'codex', raw: native.raw, events: rows,
+      minimumOffset: 0, capture: {provider: 'codex', sessionId: session.id, cwd: session.cwd,
+        startedAt: '2026-10-29T01:00:00.000Z', finishedAt: '2026-10-29T01:00:02.000Z'}}];
+    f.command.proof = {kind: 'codex-command-execution', result: native.anchors[3], toolUseId: 'exec-pd'};
+  };
+  reseal();
+  assert.equal(f.module.checkP3Command(f.captured, f.command, f.context).receipt.command, 'brands capture');
+  assert.equal(f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), true);
+  assert.throws(() => f.module.checkP3RecordedCommands(f.captured, [], f.context), /unsealed|absent/);
+  execution.payload.item.aggregated_output = 'P3 stdio capture: installed launcher ownership differs\n';
+  execution.payload.item.status = 'failed'; execution.payload.item.exit_code = 4;
+  reseal();
+  assert.throws(() => f.module.checkP3Command(f.captured, f.command, f.context), /sealed PD capture/);
+  execution.payload.item.command = ['/bin/zsh', '-c', 'phoenix-diagram preview architecture input.json output.html'];
+  reseal();
+  assert.throws(() => f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), /unsealed/);
+});
+
 test(
     'ordinary tasks cannot authorize preview, capture or comparison through their evidence record',
     async () => {
@@ -920,6 +1084,30 @@ test('ERD clarification cannot hide write-then-delete inside an unknown JavaScri
   assert.throws(
       () => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context),
       /verifiable read-only/);
+  captured.parts[0].events.at(-1).payload = {
+    type: 'custom_tool_call', call_id: 'opaque-exec', name: 'exec',
+    input: 'const fd=fs.openSync(candidate,"w");fs.closeSync(fd);fs.unlinkSync(candidate);'
+  };
+  assert.throws(
+      () => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context),
+      /verifiable read-only/);
+});
+
+test('ERD shell read-only checks inspect native execution argv without allowing opaque orchestration', async () => {
+  const f = await sessionFixture('erd-missing-facts'),
+        captured = f.module.checkP3Session(f.session, f.row, f.context),
+        row = {...f.row, evidence: {kind: f.row.id, questions: ['participation'], stoppedQuote: 'stop here'}};
+  for (const command of ['pwd', 'cat .agents/skills/phoenix-diagram/SKILL.md', 'cat facts.txt > candidate.json',
+                         'rg --pre write-helper facts.txt', 'python3 write-then-delete.py']) {
+    captured.parts[0].events = [{type: 'event_msg', payload: {type: 'item_completed',
+      item: {type: 'CommandExecution', id: 'exec-readonly', command: ['/bin/zsh', '-c', command]}}}];
+    const check = () => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context);
+    if (command === 'pwd' || command.startsWith('cat .agents/')) assert.doesNotThrow(check);
+    else assert.throws(check);
+  }
+  captured.parts[0].events = [{type: 'response_item', payload: {type: 'custom_tool_call',
+    call_id: 'opaque-read', name: 'exec', input: 'const r=await tools.exec_command({cmd:"pwd"});text(r.output);'}}];
+  assert.throws(() => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context), /read-only/);
 });
 
 test('migration text help seals stdout without counting as installation or recovery', async () => {

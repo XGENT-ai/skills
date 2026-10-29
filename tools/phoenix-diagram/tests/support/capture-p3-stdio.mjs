@@ -183,7 +183,7 @@ export async function captureStdio(options) {
           owner = active.ownership?.find(row => row.path === relative);
     need(
         /^\.(?:agents|claude)\/skills\/phoenix-diagram\/scripts\/phoenix-diagram$/.test(relative) &&
-            active.schemaVersion === 1 && active.tool === 'phoenix-diagram' &&
+            active.schemaVersion === 2 && active.tool === 'phoenix-diagram' &&
             active.project?.device === project.device && active.project.inode === project.inode && owner &&
             Object.entries({...program.binding, ...program.identity})
                 .every(([key, value]) => owner.identity[key] === value),

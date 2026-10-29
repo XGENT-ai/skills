@@ -60,6 +60,43 @@ test('candidate profile is explicit and install-only contexts cannot stand in fo
   assert.throws(()=>api.readConsumerContext({resume:file,target,profile:'p2'},{}),/profile/i);
 });
 
+function workflowOutputs(file) {
+  const lines=fs.readFileSync(file,'utf8').split('\n'),values={};
+  for(let at=0;at<lines.length;at++){const match=/^([a-z_]+)<<(.+)$/.exec(lines[at]);if(match){values[match[1]]=lines[++at];assert.equal(lines[++at],match[2]);}}
+  return values;
+}
+function outputState(directory,{profile='p3',kind='phoenix-diagram-candidate-consumer',phase='pending-review'}={}) {
+  // Metadata-only persistence fixtures; these never stand in for a real
+  // installation, native consumption, browser receipt or image observation.
+  fs.mkdirSync(directory,{mode:0o700});
+  return{schemaVersion:1,kind,...(profile?{profile}:{}),runRoot:directory,phase,status:kind==='phoenix-diagram-candidate-consumer'?'automated-pass':'pass',automatedStatus:kind==='phoenix-diagram-candidate-consumer'?'pass':'not-run',target:`${process.platform}-${process.arch}`,repository:null,runId:null,nonce:'a'.repeat(32),source:{commit:'b'.repeat(40)},candidate:{tarball:{identity:{sha256:'c'.repeat(64)}}},cases:[]};
+}
+
+test('historical and provider installation contexts cannot replace the current consumer workflow selection',async t=>{
+  const {persistState}=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),directory=temporary(t),outputFile=path.join(directory,'github-output');
+  fs.writeFileSync(outputFile,'p3_state_path=/all/state.json\n');
+  const current=outputState(path.join(directory,'current-consumer')),published=persistState(current,{initial:true,outputFile}),before=fs.readFileSync(outputFile,'utf8');
+  assert.equal(workflowOutputs(outputFile).state_path,published.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,current.runRoot);
+  for(const [role,profile] of [['legacy-v1','p2'],['provider-install-context','p3']]){
+    const state=outputState(path.join(directory,role),{profile,kind:'phoenix-diagram-candidate-install-context',phase:'installed'});state.scope='installation-only';
+    const result=persistState(state,{initial:true,outputFile});
+    assert.equal(result.stateFile.path,path.join(state.runRoot,'consumer-state.json'));assert.equal(JSON.parse(fs.readFileSync(result.stateFile.path)).kind,'phoenix-diagram-candidate-install-context');
+    assert.equal(fs.existsSync(path.join(state.runRoot,'review-request.json')),false);
+    assert.equal(workflowOutputs(outputFile).state_path,published.stateFile.path,role+' must not select an installation-only state for review');
+    assert.equal(workflowOutputs(outputFile).evidence_dir,current.runRoot);assert.equal(fs.readFileSync(outputFile,'utf8'),before);
+  }
+});
+
+test('ordinary default P1 and P2 consumers retain initial and review-resume workflow outputs',async t=>{
+  const {persistState}=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),directory=temporary(t);
+  for(const profile of [undefined,'p1','p2']){
+    const label=profile||'default',state=outputState(path.join(directory,label),{profile:profile||null}),outputFile=path.join(directory,label+'.outputs');
+    const first=persistState(state,{initial:true,outputFile}),requestFile=path.join(state.runRoot,'review-request.json'),requestBytes=fs.readFileSync(requestFile),request=JSON.parse(requestBytes);
+    assert.deepEqual(request.state,first.stateFile);assert.equal(workflowOutputs(outputFile).state_path,first.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,state.runRoot);
+    const next=persistState({...state,phase:'complete',status:'pass'},{outputFile});assert.notEqual(next.stateFile.path,first.stateFile.path);assert.equal(workflowOutputs(outputFile).state_path,next.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,state.runRoot);assert.deepEqual(fs.readFileSync(requestFile),requestBytes);
+  }
+});
+
 test('consumer browser temporary sockets bind below deeply nested evidence roots', async t => {
   const api = await import('../../scripts/check-phoenix-diagram-candidate.mjs');
   const runRoot = path.join(temporary(t), 'long-evidence-'.repeat(10));

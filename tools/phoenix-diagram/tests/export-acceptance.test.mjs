@@ -8,6 +8,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { PassThrough } from 'node:stream';
 import { EventEmitter } from 'node:events';
+import { createHash } from 'node:crypto';
 import { artifactIdentity, validateInput, verifyFileSignature, verifyCanonicalFacts, verifyPrintSample, configureNetwork, runExportAcceptance, runContentAcceptance, REQUIRED_EXPORT_SCOPE } from './export-acceptance.mjs';
 import { DEFAULT_TIMEOUTS, ownedProfile, discoverBrowser, browserArguments, PipeCdp } from './support/export-browser.mjs';
 import * as probes from './support/export-page.mjs';
@@ -81,6 +82,68 @@ test('Pipe CDP framing/event subscription is local transport evidence only', asy
   assert.equal(events.length, 1); assert.equal(events[0].params.state, 'completed');
   const rejected = cdp.send('Page.navigate'); cdp.failAll(new Error('owned transport ended')); await assert.rejects(rejected, /owned transport ended/);
   for (const stream of child.stdio.filter(Boolean)) stream.destroy();
+});
+
+test('CDP deadlines identify the actual request and hash expressions without exposing JS', async () => {
+  const child = new EventEmitter(); child.stdio = [null, null, new PassThrough(), new PassThrough(), new PassThrough()];
+  const cdp = new PipeCdp(child, { commandMs: 10 }), expression = 'Promise.resolve("private-expression-sentinel")';
+  const results = await Promise.allSettled([
+    cdp.send('Runtime.evaluate', { expression, awaitPromise: true }, 'own-session'),
+    cdp.send('Page.getFrameTree', {}, 'own-session'),
+  ]);
+  const error = results[0].reason;
+  assert.equal(error.code, 'browser/command-timeout');
+  assert.equal(error.message, 'Export Chrome deadline: Runtime.evaluate timed out after 10ms\n');
+  assert.deepEqual(error.cdp, { method: 'Runtime.evaluate', id: 1, sessionId: 'own-session', timeoutMs: 10,
+    expressionSha256: createHash('sha256').update(expression).digest('hex') });
+  assert.deepEqual(results[1].reason.cdp, { method: 'Page.getFrameTree', id: 2, sessionId: 'own-session', timeoutMs: 10 });
+  assert(!JSON.stringify({ ...error, message: error.message }).includes('private-expression-sentinel'));
+  assert.equal(cdp.pending.size, 0); assert.equal(DEFAULT_TIMEOUTS.commandMs, 15000);
+  for (const stream of child.stdio.filter(Boolean)) stream.destroy();
+});
+
+test('canceled downloads retain only the original progress identity and byte counts', () => {
+  const entry = { guid: 'owned-guid', state: 'canceled', receivedBytes: 17, totalBytes: 29,
+    url: 'private-download-sentinel', suggestedFilename: 'private-file-sentinel' };
+  const error = acceptance.canceledDownloadError('Chrome canceled webm download', entry);
+  assert.equal(error.message, 'Chrome canceled webm download'); assert.equal(error.code, undefined);
+  assert.deepEqual(error.download, { guid: entry.guid, state: entry.state, receivedBytes: 17, totalBytes: 29 });
+  assert(!JSON.stringify(error).includes('private-'));
+});
+
+test('failed page receipts preserve safe CDP, function and download metadata without retrying', async t => {
+  const directory = temporary(t), artifactPath = path.join(directory, 'fixture.html'); fs.writeFileSync(artifactPath, '<p>Failure propagation preflight only</p>');
+  for (const kind of ['timeout', 'canceled']) {
+    const listeners = new Set(), calls = [], cdp = {
+      subscribe(callback) { listeners.add(callback); return () => listeners.delete(callback); },
+      async send(method, params = {}, sessionId, timeoutMs) {
+        calls.push({ method, params });
+        if (method === 'Browser.getVersion') return { product: 'Chrome/unit-preflight' };
+        if (method === 'Target.createBrowserContext') return { browserContextId: 'own-context' };
+        if (method === 'Target.createTarget') return { targetId: 'own-target' };
+        if (method === 'Target.attachToTarget') return { sessionId: 'own-session' };
+        if (method === 'Page.addScriptToEvaluateOnNewDocument') return { identifier: 'own-script' };
+        if (method === 'Page.navigate') { for (const listener of listeners) listener({ method: 'Page.loadEventFired', sessionId }); return { frameId: 'own-frame' }; }
+        if (method === 'Runtime.evaluate') {
+          const error = kind === 'timeout' ? new Error('Export Chrome deadline: Runtime.evaluate timed out after 15000ms\n') : acceptance.canceledDownloadError('Chrome canceled webm download', { guid: 'own-guid', state: 'canceled', receivedBytes: 17, totalBytes: 29 });
+          if (kind === 'timeout') { error.code = 'browser/command-timeout'; error.cdp = { method, id: calls.length, sessionId, timeoutMs, expressionSha256: createHash('sha256').update(params.expression).digest('hex'), expression: 'private-expression-sentinel' }; }
+          else Object.assign(error.download || (error.download = {}), { url: 'private-download-sentinel', suggestedFilename: 'private-file-sentinel' });
+          throw error;
+        }
+        return {};
+      },
+    };
+    // A rejecting synthetic adapter exercises failure serialization only.
+    const report = await runContentAcceptance({ artifactPath, evidenceDir: path.join(directory, kind), expectedLiteral: 'Failure propagation preflight only', cdp });
+    const record = report.errors[0];
+    assert.equal(report.status, 'failed'); assert.equal(record.code, kind === 'timeout' ? 'browser/command-timeout' : 'acceptance/failed');
+    assert.deepEqual(record.evaluation, { fnName: 'awaitReader', sourceSha256: createHash('sha256').update(probes.awaitReader.toString()).digest('hex') });
+    if (kind === 'timeout') assert.deepEqual(record.cdp, { method: 'Runtime.evaluate', id: calls.findIndex(call => call.method === 'Runtime.evaluate') + 1, sessionId: 'own-session', timeoutMs: 15000, expressionSha256: createHash('sha256').update(calls.find(call => call.method === 'Runtime.evaluate').params.expression).digest('hex') });
+    else assert.deepEqual(record.download, { guid: 'own-guid', state: 'canceled', receivedBytes: 17, totalBytes: 29 });
+    assert.equal(calls.filter(call => call.method === 'Runtime.evaluate').length, 1);
+    assert(!JSON.stringify(record).includes('private-'));
+    assert.equal(artifactIdentity(artifactPath).sha256, report.artifact.sha256);
+  }
 });
 
 test('fixed browser probes parse without evaluating any authored literal', () => {

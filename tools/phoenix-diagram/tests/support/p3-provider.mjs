@@ -397,11 +397,14 @@ export function checkP3Session(session, row, context) {
     }
     const before = projectObservation(dto.projectBefore, dto, context, 'Project before'),
           after = projectObservation(dto.projectAfter, dto, context, 'Project after');
+    const minimumOffset = index > 0 && provider === 'codex' ? parts.at(-1).raw.length : 0;
     parts.push({
+      profile: 'p3',
       session,
       provider,
       raw,
-      events,
+      events: minimumOffset ? raw.subarray(minimumOffset).toString('utf8').split('\n').filter(Boolean).map(JSON.parse) : events,
+      minimumOffset,
       capture: dto,
       version,
       before,
@@ -432,8 +435,8 @@ export function checkP3Session(session, row, context) {
   const captured =
       {...session, parts, parameters: row.parameters || {}, preambleParameters: row.preambleParameters || {}};
   for (const part of parts)
-    for (const event of part.events.filter(context.nativeProof.toolEvent)) {
-      const text = context.nativeProof.toolCallText(event);
+    for (const event of part.events.filter(event => context.nativeProof.toolEvent(event, {profile: 'p3'}))) {
+      const text = context.nativeProof.toolCallText(event, {profile: 'p3'});
       need(
           !/\/(?:renderers|tools\/phoenix-diagram\/src)\/|p3-scenarios\.json|(?:\/tests\/provider\/.*facts|\.xgent-ai\/|\/memories\/)/
                .test(text),
@@ -497,7 +500,7 @@ export function checkP3Session(session, row, context) {
   } else if (!MIGRATION.has(row.id)) {
     const installed = json(session.installedReceipt, context, 'Original installed receipt');
     need(
-        installed.schemaVersion === 1 && installed.tool === 'phoenix-diagram' &&
+        installed.schemaVersion === 2 && installed.tool === 'phoenix-diagram' &&
             installed.project?.device === session.project.device &&
             installed.project?.inode === session.project.inode &&
             installed.bundleManifestSha256 === context.cohort.bundleSha256 &&
@@ -680,7 +683,8 @@ export function checkP3Command(captured, command, context) {
           relative = path.posix.relative(dto.cwd, dto.program.path),
           owner = installed.ownership?.find(value => value.path === relative);
     need(
-        /^\.(?:agents|claude)\/skills\/phoenix-diagram\/scripts\/phoenix-diagram$/.test(relative) && owner &&
+        installed.schemaVersion === 2 &&
+            /^\.(?:agents|claude)\/skills\/phoenix-diagram\/scripts\/phoenix-diagram$/.test(relative) && owner &&
             Object.entries({...dto.program.binding, ...dto.program.identity})
                 .every(([key, value]) => owner.identity[key] === value) &&
             installed.bundleManifestSha256 === context.cohort.bundleSha256 &&
@@ -744,7 +748,7 @@ export function checkP3RecordedCommands(captured, entries, context) {
   need(claims.size === entries.length, 'A native producer is claimed more than once');
   for (const [index, part] of captured.parts.entries()) {
     for (const event of part.events)
-      for (const call of context.nativeProof.calls(event)) {
+      for (const call of context.nativeProof.calls(event, {profile: 'p3'})) {
         const command = context.nativeProof.commandOf(call);
         if (!command) continue;
         let words;
@@ -941,7 +945,7 @@ export function checkP3ScenarioOutcome(row, captured, results, response, context
     for (const part of captured.parts) {
       need(same(part.before.entries, part.after.entries), 'Clarification wrote project files');
       for (const event of part.events)
-        for (const call of context.nativeProof.calls(event)) {
+        for (const call of context.nativeProof.calls(event, {profile: 'p3'})) {
           need(
               !/^(?:Write|Edit|write_file|apply_patch|functions\.apply_patch)$/i.test(call.name),
               'Clarification wrote a candidate');
@@ -953,12 +957,16 @@ export function checkP3ScenarioOutcome(row, captured, results, response, context
           need(
               !/apply_patch|writeFile|write_file|(?:^|\W)(?:touch|mkdir|cp|mv|rm|tee)(?:\s|$)/.test(callText),
               'Clarification includes a candidate-writing operation');
-          if (/^(?:Bash|bash|exec_command|functions\.exec_command)$/.test(call.name))
+          if (/^(?:Bash|bash|exec_command|functions\.exec_command)$/.test(call.name)) {
+            const command = context.nativeProof.commandOf(call),
+                  words = context.nativeProof.executedWords(command),
+                  literal = Array.isArray(command) ? command.join(' ') : command;
             need(
-                /^\s*(?:pwd|ls|rg|cat|head|test)\b/.test(context.nativeProof.commandOf(call) || '') &&
-                    !/[;|&<>`$\n]/.test(context.nativeProof.commandOf(call) || '') &&
+                ['pwd', 'ls', 'rg', 'cat', 'head', 'test'].includes(words[0]) &&
+                    !/[;|&<>`$\n]/.test(literal) &&
                     !/--pre(?:=|\s)/.test(callText),
                 'Clarification shell command is not observably read-only');
+          }
         }
     }
     return;

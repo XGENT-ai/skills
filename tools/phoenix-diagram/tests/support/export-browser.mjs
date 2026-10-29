@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 export const DEFAULT_TIMEOUTS = Object.freeze({ startupMs: 90000, commandMs: 15000, shutdownMs: 1500, actionMs: 15000, decodeMs: 12000 });
@@ -103,7 +104,12 @@ export class PipeCdp {
   send(method, params = {}, sessionId, timeoutMs = this.commandMs) {
     const id = this.nextId++, message = { id, method, params }; if (sessionId) message.sessionId = sessionId;
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { this.pending.delete(id); const error = new Error(`${method} timed out after ${timeoutMs}ms`); error.code = 'browser/command-timeout'; reject(this.failure('deadline', error)); }, timeoutMs);
+      const timer = setTimeout(() => {
+        this.pending.delete(id); const error = new Error(`${method} timed out after ${timeoutMs}ms`); error.code = 'browser/command-timeout';
+        const failure = this.failure('deadline', error); failure.cdp = { method, id, sessionId, timeoutMs };
+        if (method === 'Runtime.evaluate' && typeof params.expression === 'string') failure.cdp.expressionSha256 = createHash('sha256').update(params.expression).digest('hex');
+        reject(failure);
+      }, timeoutMs);
       this.pending.set(id, { method, resolve, reject, timer });
       try { this.writePipe.write(JSON.stringify(message) + '\0', error => { if (error) this.failAll(this.failure('write pipe', error)); }); }
       catch (error) { this.failAll(this.failure('write pipe', error)); }
