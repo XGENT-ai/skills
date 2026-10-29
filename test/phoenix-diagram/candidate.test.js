@@ -90,6 +90,29 @@ test('consumer browser temporary sockets bind below deeply nested evidence roots
   assert.equal(received, 'ready');
 });
 
+test('historical candidate cohort uses its fixed descriptor while current workflow bindings remain strict', () => {
+  // Cohort checks only: these metadata objects do not authenticate a package or
+  // represent native execution. The real historical package is checked separately.
+  const script = `
+    import fs from 'node:fs';
+    import assert from 'node:assert/strict';
+    import {verifyCandidateCohort} from ${JSON.stringify(pathToFileURL(path.join(root, 'scripts/check-phoenix-diagram-candidate.mjs')).href)};
+    const bytes=fs.readFileSync(${JSON.stringify(path.join(root, 'tools/phoenix-diagram/tests/fixtures/migration/legacy-candidate.v1.json'))}),descriptor=JSON.parse(bytes);
+    const historical={source:descriptor.source,tgz:{identity:descriptor.tarball},sourceInputs:{entries:descriptor.writerSources}};
+    verifyCandidateCohort(historical,{legacyDescriptor:bytes});
+    const current={...historical,source:{...historical.source,commit:process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT},tgz:{identity:{...historical.tgz.identity,sha256:process.env.PHOENIX_DIAGRAM_TGZ_SHA256}}};
+    verifyCandidateCohort(current);
+    assert.throws(()=>verifyCandidateCohort(historical),/Workflow tgz SHA differs/);
+    assert.throws(()=>verifyCandidateCohort({...current,source:historical.source}),/Workflow source commit differs/);
+    assert.throws(()=>verifyCandidateCohort(historical,{legacyDescriptor:Buffer.concat([bytes,Buffer.from('\\n')])}),/Historical v1 descriptor bytes differ/);
+    assert.throws(()=>verifyCandidateCohort({...historical,tgz:current.tgz},{legacyDescriptor:bytes}),/Historical package tgz differs/);
+    assert.throws(()=>verifyCandidateCohort({...historical,source:current.source},{legacyDescriptor:bytes}),/Historical package source differs/);
+    assert.throws(()=>verifyCandidateCohort({...historical,sourceInputs:{entries:[]}},{legacyDescriptor:bytes}),/Historical writer source tuple differs/);
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, PHOENIX_DIAGRAM_TGZ_SHA256: 'a'.repeat(64), PHOENIX_DIAGRAM_SOURCE_COMMIT: 'b'.repeat(40) } });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('candidate metadata rejects a missing or duplicate platform and dirty or mismatched source identities', async () => {
   const api = await moduleReady;
   assert.throws(() => api.assertArtifactAgreement(records().slice(0, 3)), /four|platform/i);

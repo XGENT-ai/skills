@@ -187,6 +187,35 @@ test('all preserves a failed child consumer and does not start author-tools or p
   assert.equal(consumeCalls,1);assert.equal(authorCalls,0);assert.equal(result.exitCode,1);assert.equal(result.packageConsumer.status,'failed');assert.equal(result.finalCandidate.status,'incomplete');assert.equal(result.consumerStateFile.path,path.join(result.runRoot,'consumer/consumer-state.json'));model.readBound(result.consumerStateFile);
 });
 
+test('all routes historical load installation and resume through its descriptor and current harness owner',async t=>{
+  // Injected protocol fixtures only; no native, browser or package acceptance.
+  const candidate=await inertCandidate(t),old=await inertCandidate(t),model=await import(statePath),{runAll}=await import(modulePath),inputs=(await import('../../scripts/build-phoenix-diagram.mjs')).sourceInputs();
+  candidate.sourceInputs=inputs;fs.writeFileSync(candidate.files.get('source-inputs.json').path,inputs.bytes);candidate.files.set('source-inputs.json',model.readSnapshot(candidate.files.get('source-inputs.json').path));
+  for(const [item,commit,text] of [[candidate,'a'.repeat(40),'inert current package'],[old,'b'.repeat(40),'inert historical package']]){
+    item.source={...item.source,commit,...(item===candidate?{inputSha256:inputs.sha256}:{})};fs.writeFileSync(item.tgz.path,text);item.tgz=model.readSnapshot(item.tgz.path);
+    item.version={...item.version,sourceCommit:commit,sourceInputSha256:item.source.inputSha256};fs.writeFileSync(item.files.get('release-dir/VERSION.json').path,JSON.stringify(item.version));item.files.set('release-dir/VERSION.json',model.readSnapshot(item.files.get('release-dir/VERSION.json').path));
+    fs.writeFileSync(item.snapshot.path,JSON.stringify({source:item.source,tarball:{path:'package.tgz',size:item.tgz.identity.bytes,sha256:item.tgz.identity.sha256}}));item.snapshot=model.readSnapshot(item.snapshot.path);
+  }
+  const outputDir=path.join(temp(t),'all'),engine=model.writeNew(path.join(candidate.directory,'engine'),'inert current engine'),oldEngine=model.writeNew(path.join(old.directory,'engine'),'inert historical engine'),engineIdentity={sourceInputSha256:candidate.source.inputSha256};
+  const publicNpm={schemaVersion:1,kind:'npm-public-bin',bin:'phoenix-diagram',nodePath:'/node',npmCliPath:'/npm-cli.js',tarball:candidate.tgz.path,cwd:outputDir,env:{PATH:'/isolated'},enginePath:engine.path};
+  const consumer={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',profile:'p3',status:'automated-pass',automatedStatus:'pass',phase:'pending-review',scopes:['explore','locale'],source:candidate.source,candidate:{tarball:model.bound(candidate.tgz)},engine:{...engine,engineIdentity},publicNpm};
+  const release={distribution:'candidate',sourceCommit:candidate.source.commit,sourceInputSha256:candidate.source.inputSha256,files:{engine,version:model.bound(candidate.files.get('release-dir/VERSION.json'))},candidate:{record:model.bound(candidate.snapshot),tarball:model.bound(candidate.tgz)},engineIdentity,publicNpm};
+  const oldState={schemaVersion:1,kind:'phoenix-diagram-candidate-install-context',profile:'p2',scope:'installation-only',status:'pass',automatedStatus:'not-run',phase:'installed',source:old.source,candidate:{tarball:model.bound(old.tgz),ownedTarball:model.bound(old.tgz)},engine:oldEngine,publicNpm:{...publicNpm,tarball:old.tgz.path,enginePath:oldEngine.path}};
+  let phase='initial';const calls=[];
+  const routed=options=>{assert.equal(options.profile,'p2');assert.equal(options.harnessCandidateDir,candidate.directory);assert.equal(model.readBound(options.legacyDescriptor).identity.sha256,'193f11ed47b7eecc72662c3d8c594ac768bdcd7565692b9901efb0ce22fb6a95');};
+  const dependencies={
+    candidateLoader:(directory,_target,options)=>{if(directory===candidate.directory){assert.equal(options.profile,'p3');assert.equal(options.legacyDescriptor,undefined);return candidate;}assert.equal(directory,old.directory);routed(options);calls.push([phase,'load']);return old;},
+    consume:async options=>{model.privateDirectory(options.evidenceDir);return{state:consumer,stateFile:model.writeNew(path.join(options.evidenceDir,'consumer-state.json'),consumer)};},consumerContext:()=>({state:consumer}),releaseLoader:()=>release,
+    authorTools:async options=>{if(options.resume)return{stateFile:model.bound(model.readSnapshot(options.resume))};model.privateDirectory(options.outputDir);const state=model.recompute({schemaVersion:1,kind:model.KIND,profile:'p3',stage:'author-tools',runId:'e'.repeat(32),runRoot:options.outputDir,release,cases:{},steps:{},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'}});return{stateFile:model.persistState(state)};},
+    prepareLegacy:async options=>{routed(options);assert.equal(options.candidateDir,old.directory);calls.push([phase,'prepare']);model.privateDirectory(options.evidenceDir);return{state:oldState,stateFile:model.writeNew(path.join(options.evidenceDir,'consumer-state.json'),oldState)};},
+    legacyContext:options=>{routed(options);assert.equal(options.candidateDir,old.directory);assert.equal(options.resume,path.join(outputDir,'legacy-v1/consumer-state.json'));calls.push([phase,'context']);return{state:oldState};},
+    runMigration:async()=>({status:'incomplete',record:model.writeNew(path.join(outputDir,'migration.json'),{scope:'Inert routing fixture; no migrations ran'})}),verifyMigration:()=>{calls.push([phase,'verify']);}
+  };
+  const options={stage:'all',candidateDir:candidate.directory,legacyCandidateDir:old.directory,migrationFixture:path.resolve(__dirname,'../../tools/phoenix-diagram/tests/fixtures/migration/legacy-sources.v1.json.gz'),outputDir};
+  const initial=await runAll(options,dependencies);assert.equal(initial.failure,undefined);assert.equal(initial.exitCode,3);for(const kind of ['load','prepare','context'])assert(calls.some(row=>row[0]==='initial'&&row[1]===kind));
+  phase='resume';const resumeOptions={...options,resume:initial.stateFile.path};delete resumeOptions.outputDir;const resumed=await runAll(resumeOptions,dependencies);assert.equal(resumed.failure,undefined);assert.equal(resumed.exitCode,3);for(const kind of ['load','context','verify'])assert(calls.some(row=>row[0]==='resume'&&row[1]===kind));assert(!calls.some(row=>row[0]==='resume'&&row[1]==='prepare'));
+});
+
 test('wrapper automatic gates, local image review and provider evidence stay separate',async()=>{
   const {recomputeAcceptance}=await import(statePath);
   const state={packageConsumer:{status:'automated-pass',automatedStatus:'pass',phase:'pending-review',scopes:['explore','evidence','locale']},authorTools:{status:'incomplete',automatedStatus:'pass'},migration:{status:'not-run'},providers:{status:'not-run'}};
