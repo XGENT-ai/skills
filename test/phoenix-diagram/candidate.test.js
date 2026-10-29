@@ -8,6 +8,7 @@ const { createHash } = require('node:crypto');
 const { pathToFileURL } = require('node:url');
 const { gzipSync } = require('node:zlib');
 const { spawnSync } = require('node:child_process');
+const net = require('node:net');
 const root = path.resolve(__dirname, '../..');
 const moduleReady = import(pathToFileURL(path.join(root, 'scripts/pack-phoenix-diagram-candidate.mjs')));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -57,6 +58,36 @@ test('candidate profile is explicit and install-only contexts cannot stand in fo
   fs.writeFileSync(file,JSON.stringify({schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',target,profile:'p3',phase:'pending-review',status:'automated-pass',automatedStatus:'pass'}));
   assert.throws(()=>api.readCandidateTransport({resume:file,target,profile:'p3'},{}),/scope|consumption|installation/i);
   assert.throws(()=>api.readConsumerContext({resume:file,target,profile:'p2'},{}),/profile/i);
+});
+
+test('consumer browser temporary sockets bind below deeply nested evidence roots', async t => {
+  const api = await import('../../scripts/check-phoenix-diagram-candidate.mjs');
+  const runRoot = path.join(temporary(t), 'long-evidence-'.repeat(10));
+  fs.mkdirSync(runRoot, { mode: 0o700 });
+  const { env } = api.makeEnvironment(runRoot);
+  const socketDirectory = fs.mkdtempSync(path.join(env.TMPDIR, 'com.google.Chrome.'));
+  const socketPath = path.join(socketDirectory, 'SingletonSocket');
+  const server = net.createServer(socket => socket.end('ready'));
+  let client;
+  t.after(async () => {
+    client?.destroy();
+    if (server.listening) await new Promise(resolve => server.close(resolve));
+    fs.rmSync(socketDirectory, { recursive: true, force: true });
+  });
+  assert.equal(fs.statSync(socketDirectory).mode & 0o777, 0o700);
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(socketPath, resolve);
+  });
+  client = net.createConnection(socketPath);
+  client.setEncoding('utf8');
+  let received = '';
+  await new Promise((resolve, reject) => {
+    client.on('data', chunk => { received += chunk; });
+    client.once('end', resolve);
+    client.once('error', reject);
+  });
+  assert.equal(received, 'ready');
 });
 
 test('candidate metadata rejects a missing or duplicate platform and dirty or mismatched source identities', async () => {
