@@ -347,12 +347,25 @@ fn protocol_evidence_drives_an_independent_summary_and_sealed_twelve_image_revie
 
 #[test]
 fn public_cli_compares_checks_and_reports_its_custom_receipt_without_finalizing() {
-    use std::process::Command;
+    use std::{
+        os::unix::fs::{MetadataExt, PermissionsExt},
+        process::Command,
+    };
     let root = Workspace::new();
+    let executable = root.path("phoenix-diagram");
+    // Copy in a child to avoid inheritable write descriptors in parallel tests.
+    assert!(Command::new("/bin/cp")
+        .arg(env!("CARGO_BIN_EXE_phoenix-diagram"))
+        .arg(&executable)
+        .status()
+        .unwrap()
+        .success());
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(fs::symlink_metadata(&executable).unwrap().nlink(), 1);
     let (base, head) = sources(&root);
     let output = root.path("cli-comparison.html");
     let receipt = root.path("cli-receipt.json");
-    let compared = Command::new(env!("CARGO_BIN_EXE_phoenix-diagram"))
+    let compared = Command::new(&executable)
         .arg("compare")
         .arg("architecture")
         .arg(&base)
@@ -379,7 +392,7 @@ fn public_cli_compares_checks_and_reports_its_custom_receipt_without_finalizing(
     assert_eq!(json["deliveryStatus"], "incomplete");
     assert_eq!(json["browserStatus"], "not-run");
     assert!(receipt.is_file());
-    let checked = Command::new(env!("CARGO_BIN_EXE_phoenix-diagram"))
+    let checked = Command::new(&executable)
         .arg("check")
         .arg(&output)
         .args(["--strict-provenance", "--json"])

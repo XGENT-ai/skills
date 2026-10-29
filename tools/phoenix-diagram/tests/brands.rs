@@ -177,9 +177,33 @@ fn five_title_rails_keep_brand_label_and_semantic_role() {
 
 #[test]
 fn explicit_cli_catalog_and_capture_return_distinct_structured_receipts() {
-    use std::process::Command;
-    let bin = env!("CARGO_BIN_EXE_phoenix-diagram");
-    let output = Command::new(bin)
+    use std::{
+        fs,
+        os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt},
+        process::Command,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+    let root = std::env::temp_dir().join(format!(
+        "phoenix-brand-cli-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    fs::DirBuilder::new().mode(0o700).create(&root).unwrap();
+    let bin = root.join("phoenix-diagram");
+    // Cargo may hardlink its artifact. A child copies the bytes so parallel
+    // test forks cannot inherit a write descriptor for the executable.
+    assert!(Command::new("/bin/cp")
+        .arg(env!("CARGO_BIN_EXE_phoenix-diagram"))
+        .arg(&bin)
+        .status()
+        .unwrap()
+        .success());
+    fs::set_permissions(&bin, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(fs::symlink_metadata(&bin).unwrap().nlink(), 1);
+    let output = Command::new(&bin)
         .args(["brands", "postgresql", "--json"])
         .output()
         .unwrap();
@@ -191,7 +215,7 @@ fn explicit_cli_catalog_and_capture_return_distinct_structured_receipts() {
     let receipt: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(receipt["command"], "brands");
     assert_eq!(receipt["matches"][0]["id"], "postgresql");
-    let output = Command::new(bin)
+    let output = Command::new(&bin)
         .args([
             "brands",
             "capture",
@@ -206,6 +230,7 @@ fn explicit_cli_catalog_and_capture_return_distinct_structured_receipts() {
     assert_eq!(receipt["diagnostics"][0]["code"], "brand/blocked");
     assert!(!String::from_utf8_lossy(&output.stdout).contains("secret"));
     assert!(receipt["resource"].is_null());
+    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
