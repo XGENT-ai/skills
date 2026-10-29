@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Stage-A development-artifact acceptance. Human observations are supplied only
+// Author-tools and final-candidate acceptance. Human observations are supplied only
 // through the original run's native review-record protocol.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,13 +11,33 @@ import {validateDevelopmentArtifact} from '../../../scripts/build-phoenix-diagra
 import {invokeNative,verifyReaderReport} from '../../../scripts/test-phoenix-diagram-runtime.mjs';
 import {runExportAcceptance} from './export-acceptance.mjs';
 import {discoverBrowser} from './support/export-browser.mjs';
-import {KIND,CASE_IDS,OFFICIAL_RESOURCE,privateDirectory,writeNew,jsonBound,bindOfficialResource,readReviewMap,comparisonDraft,singleDraft,rememberCase,refreshCase,verifyComparisonReview,recompute,persistState,verifySavedState,bound,readSnapshot,readBound,identity} from './support/p3-state.mjs';
+import {validateCandidate,initialConsume,resumeConsume,readConsumerContext,prepareCandidateTransport,readCandidateTransport,targetForHost,publicNpmCommand} from '../../../scripts/check-phoenix-diagram-candidate.mjs';
+import {KIND,ACCEPTANCE_KIND,CASE_IDS,OFFICIAL_RESOURCE,privateDirectory,writeNew,jsonBound,bindOfficialResource,readReviewMap,comparisonDraft,singleDraft,rememberCase,refreshCase,verifyComparisonReview,recompute,persistState,verifySavedState,verifyActualTransport,verifyAuthorToolsState,authorToolsAnchor,verifyAuthorToolsAnchor,verifyAcceptanceState,recomputeAcceptance,bound,readSnapshot,readBound,identity} from './support/p3-state.mjs';
 import {runCompareFaults,runPreviewAcceptance} from './support/p3-processes.mjs';
 
 export function parseOptions(argv){
-  const names={'--stage':'stage','--release-dir':'releaseDir','--output-dir':'outputDir','--resume':'resume','--review-file':'reviewFile','--official-resource':'officialResource'},result={};
+  const names={'--stage':'stage','--release-dir':'releaseDir','--candidate-dir':'candidateDir','--legacy-candidate-dir':'legacyCandidateDir','--provider-manifest':'providerManifest','--migration-fixture':'migrationFixture','--evidence-repo':'evidenceRepository','--npm-cli':'npmCliPath','--output-dir':'outputDir','--resume':'resume','--review-file':'reviewFile','--official-resource':'officialResource'},result={};
   for(let at=0;at<argv.length;at+=2){const key=names[argv[at]],value=argv[at+1];assert(key&&!Object.hasOwn(result,key),'Unknown or duplicate option '+argv[at]);assert(value&&!value.startsWith('--'),'Option requires a value');result[key]=key==='stage'?value:path.resolve(value);}
-  assert.equal(result.stage,'author-tools','Only --stage author-tools is implemented');assert(result.releaseDir,'Provide --release-dir');assert(Boolean(result.outputDir)!==Boolean(result.resume),'Provide one new --output-dir or the original --resume state.json');assert(!result.reviewFile||result.resume,'--review-file requires --resume');return result;
+  assert(['author-tools','all','providers'].includes(result.stage),'Unknown acceptance stage');
+  if(result.stage==='author-tools'){assert(result.releaseDir,'Provide --release-dir');assert(!result.candidateDir&&!result.legacyCandidateDir&&!result.providerManifest&&!result.migrationFixture&&!result.evidenceRepository&&!result.npmCliPath,'Candidate options require all/providers');}
+  else {assert(result.candidateDir&&!result.releaseDir,'Final acceptance requires --candidate-dir, not a development release');if(result.stage==='providers')assert(result.providerManifest&&!result.reviewFile&&!result.resume,'providers requires its manifest and a new output directory');}
+  assert(Boolean(result.outputDir)!==Boolean(result.resume),'Provide one new --output-dir or the original --resume state.json');assert(!result.reviewFile||result.resume,'--review-file requires --resume');return result;
+}
+
+export function createPublicInvoke(consumer,{invoke=invokeNative}={}){
+  const {publicNpm,engine}=consumer;assert(publicNpm?.enginePath===engine.path,'Public transport engine differs');
+  return async(actual,args,settings={})=>{
+    assert(actual.path===engine.path&&same(actual.identity,engine.identity),'Public transport cannot select another engine');readBound(engine,'same installed public engine');
+    if(consumer.candidate?.ownedTarball)readBound(consumer.candidate.ownedTarball,'same public npm package');
+    assert(!settings.options?.publicNpm||same(settings.options.publicNpm,publicNpm),'Public transport cannot be replaced');
+    const command=publicNpmCommand(publicNpm,args),prefix=settings.prefix||[];let actualTransport;
+    const configuration={...settings,options:{...settings.options,publicNpm},onSpawn:async child=>{
+      actualTransport={schemaVersion:1,kind:'p3-public-npm-process',program:command.program,argv:command.args,cwd:command.cwd,prefix:[...prefix],spawnedProgram:child.spawnfile,spawnedArgv:[...child.spawnargs],pid:child.pid,startedAt:new Date().toISOString()};
+      verifyActualTransport(actualTransport,publicNpm,args,prefix,{complete:false});await settings.onSpawn?.(child);
+    }};
+    try{const result=await invoke(actual,args,configuration);assert(actualTransport,'Public npm invocation has no actual spawn evidence');actualTransport.closedAt=new Date().toISOString();return{...result,actualTransport};}
+    catch(error){if(error.processResult&&actualTransport){actualTransport.closedAt=new Date().toISOString();Object.defineProperty(error,'processResult',{value:{...error.processResult,actualTransport},configurable:true});}throw error;}
+  };
 }
 export function loadRelease(directory){
   const artifact=validateDevelopmentArtifact(directory),target=`${process.platform}-${process.arch}`;
@@ -27,8 +47,10 @@ export function loadRelease(directory){
   return{root:artifact.directory,target,sourceCommit:artifact.version.sourceCommit,sourceState:artifact.receipt.sourceState,sourceInputSha256:artifact.version.sourceInputSha256,bundleSha256:artifact.version.bundleSha256,files,engineIdentity};
 }
 export function offlinePrefix({browser=false}={}){
-  if(process.platform==='darwin'){fs.accessSync('/usr/bin/sandbox-exec',fs.constants.X_OK);return['/usr/bin/sandbox-exec','-p',browser?'(version 1) (allow default) (deny network-outbound (remote ip)) (allow network-outbound (remote ip "localhost:*")) (deny network-inbound (local ip)) (allow network-inbound (local ip "localhost:*"))':'(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))'];}
-  if(browser)return[]; // Browser receipts and export CDP prove this separate scope.
+  // Chrome must initialize its own macOS sandbox. Browser receipts prove
+  // CDP offline mode and resource requests separately from native OS denial.
+  if(browser)return[];
+  if(process.platform==='darwin'){fs.accessSync('/usr/bin/sandbox-exec',fs.constants.X_OK);return['/usr/bin/sandbox-exec','-p','(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))'];}
   assert.equal(process.platform,'linux','No verified OS deny-network launcher for this host');fs.accessSync('/usr/bin/unshare',fs.constants.X_OK);return['/usr/bin/unshare','--user','--map-current-user','--net','--'];
 }
 function currentCase(state,id){const entry=state.cases[id];if(entry?.summary)refreshCase(entry,state.release);return entry;}
@@ -40,18 +62,18 @@ function processResult(file,args,engine){
 function processEvidence(directory,args,engine,result,startedAt,pid){
   const raw=result.processResult||result;
   return writeNew(path.join(directory,'process.json'),{schemaVersion:1,kind:'p3-owned-native-process',engine,nativeArgv:args,startedAt,closedAt:new Date().toISOString(),pid:pid??raw.pid??null,exitCode:raw.exitCode??null,signal:raw.signal??null,
-    stdout:writeNew(path.join(directory,'stdout.txt'),raw.stdout||''),stderr:writeNew(path.join(directory,'stderr.txt'),raw.stderr||'')});
+    stdout:writeNew(path.join(directory,'stdout.txt'),raw.stdout||''),stderr:writeNew(path.join(directory,'stderr.txt'),raw.stderr||''),...(raw.actualTransport?{actualTransport:raw.actualTransport}:{})});
 }
 
 export async function invokeRecordedStep(state,id,args,{invoke=invokeNative,save=()=>{},browserPath,offline=false,role='automatic'}={}){
   const release=state.release;
     let step=state.steps[id];
     if(step?.status==='running'&&!step.process){const file=path.join(state.runRoot,'commands',id,'process.json');if(fs.existsSync(file)){step.process=bound(readSnapshot(file));save();}}
-    if(step?.process){const original=processResult(step.process,args,release.files.engine);if(['pass','running'].includes(step.status)){assert.equal(original.exitCode,0,'Original process did not pass');assert.equal(original.signal,null);assert.equal(original.receipt?.status,'pass');if(step.status==='running'){step.status='pass';save();}return original;}return null;}
+    if(step?.process){const original=processResult(step.process,args,release.files.engine);if(release.publicNpm)verifyActualTransport(original.actualTransport,release.publicNpm,args,step.prefix);if(['pass','running'].includes(step.status)){assert.equal(original.exitCode,0,'Original process did not pass');assert.equal(original.signal,null);assert.equal(original.receipt?.status,'pass');if(step.status==='running'){step.status='pass';save();}return original;}return null;}
     if(step?.status==='running'){state.diagnostics.push({stage:id,message:'The original process has no complete captured receipt; preserve outputs and use its explicit recovery path. It was not rerun.'});save();return null;}
     if(step?.status==='failed')return null;
     const prefix=offline?offlinePrefix({browser:['finalize','visual-check'].includes(args[0])}):[];
-    const directory=privateDirectory(path.join(state.runRoot,'commands',id));step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP; browser commands retain only verified loopback traffic':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
+    const directory=privateDirectory(path.join(state.runRoot,'commands',id));step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
     let result,pid;const startedAt=new Date().toISOString();
     try{
       result=await invoke(release.files.engine,args,{options:{browserPath},prefix,onSpawn:child=>{pid=child.pid;}});
@@ -96,7 +118,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   }else{
     const runRoot=privateDirectory(options.outputDir);privateDirectory(path.join(runRoot,'commands'));
     const stat=fs.statSync(runRoot);
-    state={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',kind:KIND,profile:'p3',stage:'author-tools',runId:randomBytes(16).toString('hex'),runRoot,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},release,startedAt:new Date().toISOString(),status:'incomplete',automatedStatus:'not-run',visualReview:'required-pending',deliveryStatus:'incomplete',cases:{},steps:{},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'},packageConsumer:{status:'not-applicable',reason:'Stage A does not consume a certified npm candidate'},providers:{status:'not-applicable',reason:'Provider sessions belong to final candidate acceptance'},finalCandidate:{status:'not-applicable',reason:'No final candidate certification was run'},diagnostics:[]};
+    state={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',kind:KIND,profile:'p3',stage:'author-tools',runId:randomBytes(16).toString('hex'),runRoot,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},release,startedAt:new Date().toISOString(),status:'incomplete',automatedStatus:'not-run',visualReview:'required-pending',deliveryStatus:'incomplete',cases:{},steps:{},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'},packageConsumer:{status:'not-applicable',reason:release.distribution==='candidate'?'Public package consumption is recorded by the owning all wrapper':'Stage A does not consume a certified npm candidate'},providers:{status:'not-applicable',reason:'Provider sessions belong to final candidate acceptance'},finalCandidate:{status:'not-applicable',reason:'No final candidate certification was run'},diagnostics:[]};
   }
   bindOfficialResource(state,options.officialResource);
   const save=()=>{previous=persistState(recompute(state),previous);};save();
@@ -144,7 +166,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   }
   let comparison=state.cases.comparison;
   if(!comparison){
-    const root=privateDirectory(path.join(state.runRoot,'comparison')),head=structuredClone(document);head.components[1].label='Worker service';head.connections[0].label='Dispatch';
+    const root=privateDirectory(path.join(state.runRoot,'comparison')),head=structuredClone(document);head.components[1].label='Worker service';head.components[1].row=1;head.connections[0].label='Dispatch';
     comparison=state.cases.comparison={id:'comparison',root,status:'not-run',base:writeNew(path.join(root,'base.architecture.json'),document),head:writeNew(path.join(root,'head.architecture.json'),head)};save();
   }
   const output=path.join(comparison.root,'comparison.html');
@@ -156,18 +178,128 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   if(state.cases['brand-capture']?.summary&&browserPath)await stage('brandExports',async()=>{
     const entry=state.cases['brand-capture'],result=await exports({artifactPath:entry.artifact.path,evidenceDir:entry.root,browserPath,offline:true});verifyReaderReport(result,entry.artifact,{offline:true});return{status:'pass',record:bound(readSnapshot(result.receiptPath)),scope:'Actual captured-brand Reader exports with CDP network emulation; no image-review verdict inferred'};
   });
-  if(comparison.receipt)await stage('compareFaults',()=>faults({engine:release.files.engine,runRoot:state.runRoot,base:comparison.base,head:comparison.head,invoke}));
-  await stage('preview',()=>preview({engine:release.files.engine,runRoot:state.runRoot,document,invoke}));
+  if(comparison.receipt)await stage('compareFaults',()=>faults({engine:release.files.engine,runRoot:state.runRoot,base:comparison.base,head:comparison.head,invoke,publicNpm:release.publicNpm}));
+  await stage('preview',()=>preview({engine:release.files.engine,runRoot:state.runRoot,document,invoke,publicNpm:release.publicNpm}));
   if(options.reviewFile){const map=readReviewMap(options.reviewFile,state);state.reviewMap=map.file;save();await resumeReviews(state,map,{invoke,save});}
-  state.networkScopes={native:'Built-in query, both brand validates, comparison generation and strict comparison check use OS deny-IP; these are distinct from the browser commands.',browser:process.platform==='darwin'?'Darwin finalize/visual-check OS profile denies external IP and allows only localhost CDP; native browser receipts record offline-resources.':'Linux finalize/visual-check rely on native browser offline-resources receipts; no unverified OS loopback isolation is claimed.',exports:'Actual export browser CDP offline emulation and its recorded resource requests; distinct from OS network isolation.'};
-  state.scopeLimitations=['Preview shell visual walkthrough remains a separate actual-browser/image observation; HTTP/process assertions do not supply that verdict.','No final npm-candidate, four-platform certification or provider-session acceptance is performed by this Stage-A controller.'];
+  state.networkScopes={native:'Built-in query, both brand validates, comparison generation and strict comparison check use OS deny-IP; these are distinct from the browser commands.',browser:'Finalize/visual-check retain the browser sandbox and use CDP offline mode plus native offline-resources measurements; no OS network isolation claim.',exports:'Actual export browser CDP offline emulation and its recorded resource requests; distinct from OS network isolation.'};
+  state.scopeLimitations=['Preview shell visual walkthrough remains a separate actual-browser/image observation; HTTP/process assertions do not supply that verdict.',release.distribution==='candidate'?'This child records author-tools only; the all wrapper retains separate consumer, migration and provider scopes, and final certification belongs to the aggregate.':'No final npm-candidate, four-platform certification or provider-session acceptance is performed by this Stage-A controller.'];
   state.reviewInstructions={runId:state.runId,records:Object.fromEntries(Object.values(state.cases).filter(entry=>entry.reviewDraft).map(entry=>[entry.id,entry.reviewDraft.path])),next:'Open each original screenshot, fill the existing observation drafts, then supply --resume <this state.json> --review-file <map with this runId>. No new finalize/compare/visual-check is needed.'};
   if(!state.officialResource&&!state.diagnostics.some(diagnostic=>diagnostic.code==='acceptance/official-resource-not-ready'))state.diagnostics.push({stage:'brand-capture',code:'acceptance/official-resource-not-ready',message:'No explicit fixed-commit official resource descriptor was supplied; HTTPS capture and captured-brand delivery remain not-run.'});
   save();return{...state,stateFile:previous,exitCode:state.status==='pass'?0:state.status==='failed'?1:3};
 }
 
-export async function main(argv=process.argv.slice(2)){
-  try{const result=await runAuthorTools(parseOptions(argv));process.stdout.write(JSON.stringify(result,null,2)+'\n');process.exitCode=result.exitCode;return result;}
-  catch(error){const result={schemaVersion:1,tool:'phoenix-diagram',kind:KIND,profile:'p3',stage:'author-tools',status:'incomplete',deliveryStatus:'incomplete',diagnostics:[{code:error.code||'acceptance/incomplete',message:error.message}]};process.stdout.write(JSON.stringify(result,null,2)+'\n');process.exitCode=1;return result;}
+export function loadCandidateRelease(candidate,consumer){
+  assert.equal(consumer.profile,'p3');assert.equal(consumer.automatedStatus,'pass');assert(same(consumer.source,candidate.source)&&same(consumer.candidate.tarball.identity,candidate.tgz.identity),'Consumed candidate differs');
+  const root=path.join(consumer.packageRoot,'dist/phoenix-diagram'),owned=path.dirname(consumer.candidate.ownedRecord.path),target=consumer.target;
+  const receipt=candidate.record.buildReceipts.find(row=>row.target===target);assert(receipt,'Candidate lacks this native build receipt');
+  const files={version:bound(readSnapshot(path.join(root,'VERSION.json'))),buildReceipt:bound(readSnapshot(path.join(owned,receipt.path))),sourceInputs:bound(readSnapshot(path.join(owned,'source-inputs.json'))),bundle:bound(readSnapshot(path.join(root,'bundle/manifest.json'))),engine:bound(readSnapshot(consumer.engine.path))};
+  assert(same(files.version.identity,candidate.files.get('release-dir/VERSION.json').identity)&&same(files.bundle.identity,candidate.files.get('release-dir/bundle/manifest.json').identity)&&same(files.engine.identity,candidate.engine.identity),'Installed public package differs from the candidate');
+  const engineIdentity=consumer.engine.engineIdentity;assert(engineIdentity&&same(engineIdentity.binary,files.engine.identity)&&engineIdentity.sourceInputSha256===candidate.source.inputSha256,'Installed engine identity differs');
+  const release={distribution:'candidate',root,target,sourceCommit:candidate.source.commit,sourceInputSha256:candidate.source.inputSha256,bundleSha256:candidate.version.bundleSha256,files,engineIdentity,publicNpm:consumer.publicNpm,candidate:{record:consumer.candidate.ownedRecord,tarball:consumer.candidate.ownedTarball}};
+  const build=jsonBound(files.buildReceipt,'candidate native receipt');if(build.sourceState!==undefined)release.sourceState=build.sourceState;return release;
 }
+
+function candidateBinding(candidate){return{record:bound(candidate.snapshot),tarball:bound(candidate.tgz),version:bound(candidate.files.get('release-dir/VERSION.json')),sourceInputs:bound(candidate.files.get('source-inputs.json'))};}
+function ownedInput(state,key,file,name){
+  if(state[key]){readBound(state[key],'original owned '+key);if(file){const source=bound(readSnapshot(file));assert(same(source.identity,state[key].identity),'Resume cannot replace '+key);readBound(source,'unchanged explicit '+key);}return state[key];}
+  if(!file)return null;const source=bound(readSnapshot(file)),owned=writeNew(path.join(state.runRoot,name),readBound(source,'explicit '+key).content);readBound(source,'unchanged source '+key);state[key]=owned;return owned;
+}
+function newAcceptance(options,candidate){
+  const destination=path.join(fs.realpathSync(path.dirname(options.outputDir)),path.basename(options.outputDir)),relative=path.relative(candidate.directory,destination);assert(relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative),'Acceptance output must not alter the candidate inventory');
+  const runRoot=privateDirectory(options.outputDir),stat=fs.statSync(runRoot);
+  return{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',kind:ACCEPTANCE_KIND,profile:'p3',stage:options.stage,runId:randomBytes(16).toString('hex'),runRoot,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},target:targetForHost(),candidate:candidateBinding(candidate),source:candidate.source,startedAt:new Date().toISOString(),status:'incomplete',automatedStatus:'not-run',localStatus:'incomplete',visualReview:'required-pending',deliveryStatus:'incomplete',packageConsumer:{status:'not-run',automatedStatus:'not-run'},authorTools:{status:'not-run',automatedStatus:'not-run'},migration:{status:'not-run'},providers:{status:'not-run'},finalCandidate:{status:'incomplete',handoff:'pending-aggregate'},diagnostics:[]};
+}
+function wrapperReview(file,state){
+  if(!file)return{};const ref=bound(readSnapshot(file)),value=jsonBound(ref,'same-run wrapper review map');assert(value.schemaVersion===1&&value.runId===state.runId,'Review map belongs to another acceptance run');assert(Object.keys(value).every(key=>['schemaVersion','runId','consumer','authorTools'].includes(key)),'Unknown wrapper review scope');
+  for(const key of ['consumer','authorTools'])if(value[key])assert(typeof value[key]==='string'&&path.isAbsolute(value[key]),'Child review maps require explicit paths');return{...value,file:ref};
+}
+const missingProviders=async()=>({schemaVersion:1,kind:'phoenix-diagram-p3-provider-report',profile:'p3',status:'incomplete',providers:[],diagnostics:[{code:'acceptance/provider-verifier-not-ready',message:'No authenticated P3 provider verifier/context was supplied; no sessions were started.'}]});
+async function providerScope(options,state,candidate,validateProviders){
+  const manifest=ownedInput(state,'providerManifestInput',options.providerManifest,'provider-manifest.json');if(!manifest)return;
+  if(state.providers.manifest)assert(same(state.providers.manifest,manifest),'Provider manifest changed across this run');
+  state.providers={...state.providers,manifest};const report=await validateProviders({...options,profile:'p3',candidate,manifest:jsonBound(manifest,'provider manifest'),manifestFile:manifest});
+  readBound(manifest,'unchanged provider originals manifest');assert(report?.schemaVersion===1&&report.kind==='phoenix-diagram-p3-provider-report'&&report.profile==='p3'&&['pass','incomplete'].includes(report.status),'Unsupported provider report');
+  const record=writeNew(path.join(state.runRoot,`providers-${randomBytes(8).toString('hex')}.json`),report);state.providers={status:report.status,manifest,record,providers:report.providers,diagnostics:report.diagnostics};
+}
+
+export async function runProviders(options,{candidateLoader=validateCandidate,validateProviders=missingProviders}={}){
+  const candidate=candidateLoader(options.candidateDir,targetForHost(),{profile:'p3'}),state=newAcceptance(options,candidate);let previous=persistState(state);
+  try{await providerScope(options,state,candidate,validateProviders);state.status=state.providers.status==='pass'?'pass':'incomplete';state.automatedStatus=state.status==='pass'?'pass':'not-run';}
+  catch(error){state.status='failed';state.diagnostics.push({code:error.code||'acceptance/providers',message:error.message});}
+  previous=persistState(state,previous);return{...state,stateFile:previous,exitCode:state.status==='pass'?0:state.status==='failed'?1:3};
+}
+
+export async function runAll(options,{candidateLoader=validateCandidate,consume=initialConsume,resumeConsumer=resumeConsume,consumerContext=readConsumerContext,prepareLegacy=prepareCandidateTransport,legacyContext=readCandidateTransport,authorTools=runAuthorTools,releaseLoader=loadCandidateRelease,invoke=invokeNative,runMigration,verifyMigration,validateProviders=missingProviders,verifyProviders}={}){
+  const target=targetForHost(),candidate=candidateLoader(options.candidateDir,target,{profile:'p3'}),consumerOptions={candidateDir:options.candidateDir,target,profile:'p3',...(options.npmCliPath?{npmCliPath:options.npmCliPath}:{})};let state,previous;
+  const verifyConsumer=(consumer)=>{const original=consumerContext({...consumerOptions,resume:state.packageConsumer.state.path},candidate).state;assert(same(original,consumer),'Consumer state differs from its original live context');};
+  const migrationVerifier=verifyMigration?(scope,context)=>{const consumer=consumerContext({...consumerOptions,resume:state.packageConsumer.state.path},candidate).state;let legacyV1;if(state.legacyV1){const old=candidateLoader(options.legacyCandidateDir||state.legacyV1.directory,target,{profile:'p2'});assert(same(state.legacyV1.candidate,candidateBinding(old)),'Legacy precondition candidate changed');const installed=legacyContext({candidateDir:old.directory,target,profile:'p2',resume:state.legacyV1.state.path,...(options.npmCliPath?{npmCliPath:options.npmCliPath}:{})},old).state;legacyV1={candidate:old,consumer:installed};}return verifyMigration(scope,{...context,candidate,consumer,legacyV1});}:undefined;
+  const adoptAuthor=ref=>{const child=jsonBound(ref,'original child author-tools state');verifyAuthorToolsAnchor(child,state.authorTools.anchor);verifyAuthorToolsState(child,{requirePublic:true});assert(same(child.release.candidate.tarball.identity,state.candidate.tarball.identity),'Child author-tools belongs to another candidate');state.authorTools={status:child.status,automatedStatus:child.automatedStatus,visualReview:child.visualReview,deliveryStatus:child.deliveryStatus,state:ref,anchor:authorToolsAnchor(child)};};
+  if(options.resume){previous=bound(readSnapshot(options.resume));state=jsonBound(previous,'original all state');assert.equal(state.stage,'all');assert.equal(previous.path,path.join(state.runRoot,'state.json'));privateDirectory(state.runRoot,{existing:true});const stat=fs.statSync(state.runRoot);assert(same(state.runDirectory,{device:String(stat.dev),inode:String(stat.ino)}),'Original wrapper directory was replaced');assert(same(state.candidate,candidateBinding(candidate))&&same(state.source,candidate.source),'Resume must retain its same candidate bytes and physical bindings');if(state.authorTools.status==='running'){const file=path.join(state.runRoot,'author-tools/state.json');if(fs.existsSync(file))adoptAuthor(bound(readSnapshot(file)));recomputeAcceptance(state);}verifyAcceptanceState(state,{verifyConsumer,verifyMigration:migrationVerifier,verifyProviders});}
+  else {state=newAcceptance(options,candidate);previous=persistState(state);}
+  const save=()=>{previous=persistState(recomputeAcceptance(state),previous);};
+  try{
+    delete state.failure;
+    const review=wrapperReview(options.reviewFile,state);if(review.file){state.reviewMap=review.file;save();}
+    const official=ownedInput(state,'officialResourceInput',options.officialResource,'official-resource.json');save();
+    if(state.packageConsumer.status==='running'&&!state.packageConsumer.state){const file=path.join(state.runRoot,'consumer/consumer-state.json');if(fs.existsSync(file)){const ref=bound(readSnapshot(file)),original=jsonBound(ref,'interrupted consumer state');state.packageConsumer={status:original.status,automatedStatus:original.automatedStatus,phase:original.phase,scopes:original.scopes||[],state:ref,initialState:ref};save();}else {state.diagnostics.push({code:'acceptance/interrupted-consumer',message:'The original consumer has no complete captured state; it was not rerun.'});save();return{...state,stateFile:previous,exitCode:3};}}
+    if(!state.packageConsumer.state){
+      state.packageConsumer.status='running';save();const result=await consume({...consumerOptions,evidenceDir:path.join(state.runRoot,'consumer'),explore:true,locale:true,...(options.evidenceRepository?{evidence:true,evidenceRepository:options.evidenceRepository}:{})});
+      state.packageConsumer={status:result.state.status,automatedStatus:result.state.automatedStatus,phase:result.state.phase,scopes:result.state.scopes||[],state:result.stateFile,initialState:result.stateFile};save();
+    }
+    if(state.packageConsumer.automatedStatus!=='pass')return{...state,stateFile:previous,consumerStateFile:state.packageConsumer.state,exitCode:state.status==='failed'?1:3};
+    if(review.consumer&&state.packageConsumer.phase!=='complete'){
+      const result=await resumeConsumer({...consumerOptions,resume:state.packageConsumer.state.path,reviewFile:review.consumer});state.packageConsumer={...state.packageConsumer,status:result.state.status,automatedStatus:result.state.automatedStatus,phase:result.state.phase,state:result.stateFile};save();
+    }
+    const consumer=consumerContext({...consumerOptions,resume:state.packageConsumer.state.path},candidate).state,release=releaseLoader(candidate,consumer),publicInvoke=createPublicInvoke(consumer,{invoke});
+    if(!state.authorTools.state||state.authorTools.status!=='pass'){
+      const childOptions={stage:'author-tools',releaseDir:release.root,...(state.authorTools.state?{resume:state.authorTools.state.path}:{outputDir:path.join(state.runRoot,'author-tools')}),...(official?{officialResource:official.path}:{}),...(review.authorTools?{reviewFile:review.authorTools}:{})};
+      state.authorTools.status='running';save();
+      try{const result=await authorTools(childOptions,{releaseLoader:()=>release,invoke:publicInvoke});adoptAuthor(result.stateFile);save();}
+      catch(error){const file=path.join(state.runRoot,'author-tools/state.json');if(fs.existsSync(file)){adoptAuthor(bound(readSnapshot(file)));save();}throw error;}
+    }
+    const fixture=ownedInput(state,'migrationFixtureInput',options.migrationFixture,'migration-fixture.json.gz');
+    if(state.migration.record){assert(migrationVerifier,'Original migration scope needs its shared verifier');migrationVerifier(state.migration,{state});}
+    else if(state.migration.status!=='pass'&&fixture){
+      if(state.migration.fixture)assert(same(state.migration.fixture,fixture),'Migration fixture changed across this run');
+      const {readMigrationFixture}=await import('./support/p3-migration.mjs');readMigrationFixture(readBound(fixture,'fixed migration target data').content,{sourceInputs:candidate.sourceInputs.entries});
+      state.migration={status:'not-run',fixture,diagnostics:[]};save();
+      if(runMigration){
+        assert(verifyMigration,'Migration pass requires its shared original-evidence verifier');let legacyV1;
+        if(options.legacyCandidateDir){const old=candidateLoader(options.legacyCandidateDir,target,{profile:'p2'}),oldOptions={candidateDir:options.legacyCandidateDir,target,profile:'p2',...(options.npmCliPath?{npmCliPath:options.npmCliPath}:{})};
+          if(state.legacyV1){assert(same(state.legacyV1.candidate,candidateBinding(old)),'Legacy precondition candidate changed');}
+          else {const installed=await prepareLegacy({...oldOptions,evidenceDir:path.join(state.runRoot,'legacy-v1')});assert.equal(installed.state.status,'pass','Legacy precondition public installation did not pass');state.legacyV1={directory:old.directory,candidate:candidateBinding(old),state:installed.stateFile,status:'installed'};save();}
+          const installed=legacyContext({...oldOptions,resume:state.legacyV1.state.path},old).state;legacyV1={candidate:old,consumer:installed,invoke:createPublicInvoke(installed,{invoke})};
+        }
+        const result=await runMigration({candidate,consumer,runRoot:state.runRoot,outputDir:path.join(state.runRoot,'migration'),invoke:publicInvoke,fixture,...(legacyV1?{legacyV1}:{})});assert(['pass','failed','not-run','incomplete'].includes(result?.status),'Unsupported migration scope');state.migration={...result,fixture};if(result.status==='pass')verifyMigration(state.migration,{state,candidate,consumer,legacyV1});save();
+      }
+    }
+    if((options.providerManifest||state.providerManifestInput)&&state.providers.status!=='pass'){await providerScope(options,state,candidate,validateProviders);save();}
+    if(!state.packageConsumer.scopes?.includes('evidence')&&!state.diagnostics.some(row=>row.code==='acceptance/local-evidence-not-run'))state.diagnostics.push({code:'acceptance/local-evidence-not-run',message:'Full local completion requires the existing evidence scope and an explicit --evidence-repo checkout; no worktree fallback was used.'});
+    save();
+  }catch(error){state.failure={code:error.code||'acceptance/all',message:error.message};state.diagnostics.push(state.failure);save();}
+  return{...state,stateFile:previous,consumerStateFile:state.packageConsumer.state,authorToolsStateFile:state.authorTools.state,exitCode:state.status==='pass'?0:state.status==='failed'?1:3};
+}
+
+export function writeWorkflowOutputs(result,outputFile=process.env.GITHUB_OUTPUT){
+  if(!outputFile||!result.stateFile)return;
+  const rows=[['p3_state_path',result.stateFile.path],['p3_evidence_dir',result.runRoot]];
+  for(const [,value] of rows)assert(typeof value==='string'&&path.isAbsolute(value)&&!/[\r\n\0]/.test(value),'Workflow output requires a single absolute path');
+  fs.appendFileSync(outputFile,rows.map(([key,value])=>`${key}=${value}\n`).join(''));
+}
+export async function main(argv=process.argv.slice(2)){
+  let options;
+  try{
+    options=parseOptions(argv);let dependencies={};
+    if(options.stage==='all'){
+      options.officialResource??=fileURLToPath(new URL('./fixtures/brands/official-resource.json',import.meta.url));
+      options.migrationFixture??=fileURLToPath(new URL('./fixtures/migration/legacy-sources.v1.json.gz',import.meta.url));
+    }
+    if(options.stage!=='author-tools'){const {createP3ProviderDependencies}=await import('../../../scripts/aggregate-phoenix-diagram-candidate.mjs');dependencies=createP3ProviderDependencies({candidateDir:options.candidateDir});}
+    if(options.stage==='all'){const {runMigrationAcceptance,verifyMigrationAcceptance}=await import('./support/p3-migration-run.mjs');Object.assign(dependencies,{runMigration:runMigrationAcceptance,verifyMigration:verifyMigrationAcceptance});}
+    const result=await(options.stage==='all'?runAll(options,dependencies):options.stage==='providers'?runProviders(options,dependencies):runAuthorTools(options));
+    if(options.stage!=='author-tools')writeWorkflowOutputs(result);
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');process.exitCode=result.exitCode;return result;
+  }catch(error){const result={schemaVersion:1,tool:'phoenix-diagram',kind:options?.stage==='author-tools'||!options?KIND:ACCEPTANCE_KIND,profile:'p3',stage:options?.stage||'author-tools',status:'incomplete',deliveryStatus:'incomplete',diagnostics:[{code:error.code||'acceptance/incomplete',message:error.message}]};process.stdout.write(JSON.stringify(result,null,2)+'\n');process.exitCode=1;return result;}
+}
+
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();

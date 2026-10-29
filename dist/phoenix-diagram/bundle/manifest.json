@@ -5,8 +5,38 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 17814,
-      "sha256": "c371d725468bede08a769809e40b734c21446a928a88c64d894fa2227cebc5c9",
+      "size": 19148,
+      "sha256": "9e7849bd8799b231fa2428f5b311e5294006b1e5f6a7a91160b97fd711fb028f",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.agent-tool-call.workflow.json",
+      "size": 5687,
+      "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.async-job-roundtrip.sequence.json",
+      "size": 4370,
+      "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.deployment-release.lifecycle.json",
+      "size": 4274,
+      "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.product-analytics.dataflow.json",
+      "size": 5618,
+      "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.web-app.architecture.json",
+      "size": 3793,
+      "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
       "mode": 420
     },
     {
@@ -77,14 +107,44 @@
     },
     {
       "path": "references/authoring-defaults.md",
-      "size": 12632,
-      "sha256": "c713068cb53f24f3e2971276d9091cf52b5fca059ce9b2b8857a1b238a8b34ad",
+      "size": 12726,
+      "sha256": "45f4c685ca6937b5645a31c4d43a145c758d67933e57b72e36e5c6844414a998",
+      "mode": 420
+    },
+    {
+      "path": "references/brand-marks.md",
+      "size": 5056,
+      "sha256": "fd05816d87871454f72b51e6c911b6cb9c7909d7c29f02e66807a871333b4b7a",
+      "mode": 420
+    },
+    {
+      "path": "references/compatibility.md",
+      "size": 1819,
+      "sha256": "806e3314078dbd991ad3410a0caf271527d7d7bf41308d49fbc1cc0fde409f4b",
       "mode": 420
     },
     {
       "path": "references/delivery-contract.md",
       "size": 10406,
       "sha256": "1b78c76b6347b5845d97f1375962d959ae3a35e42212e55763c960d40e357ec6",
+      "mode": 420
+    },
+    {
+      "path": "references/extending-types.md",
+      "size": 2023,
+      "sha256": "3180cbc6803f8f5fe3662ce4a1af43e308a5744965107eeac65d22111d513652",
+      "mode": 420
+    },
+    {
+      "path": "references/migration.md",
+      "size": 6211,
+      "sha256": "9aad9f2d99eb2f2da9d2f2d656a7a7f01179862a815a6b07f3bf450fe565453a",
+      "mode": 420
+    },
+    {
+      "path": "references/preview.md",
+      "size": 4577,
+      "sha256": "ac8c4ecc1f90d366e980ecd8fb234049ecfcdc587247638ca642dc26a2b5d2e4",
       "mode": 420
     },
     {
@@ -101,8 +161,8 @@
     },
     {
       "path": "schemas/README.md",
-      "size": 2878,
-      "sha256": "02e573edb47d987efd0f6894a23741b4600cf71679b701ad00eb3d5fdbab931e",
+      "size": 3109,
+      "sha256": "4109c6b16e7bafa84bb5a23b94765da7823e18a2b78cf8f0eed271a37b7197bc",
       "mode": 420
     },
     {
@@ -173,8 +233,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 41604,
-      "sha256": "a4e40bf448c706b6645ee1620e3d57212aad6b0adc229e2964d32b5626468a59",
+      "size": 45211,
+      "sha256": "35fe87eb4e534470bc3bb2e6cc05e5483796694a8dd58f01c7702f3129132b71",
       "mode": 420
     },
     {

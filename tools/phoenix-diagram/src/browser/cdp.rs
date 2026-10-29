@@ -342,7 +342,17 @@ fn comparison_probe(view: &str) -> String {
     }
     function styleFact(element) {
       var style = child.getComputedStyle(element);
-      return {hidden:Boolean(element.hidden),display:style.display,visibility:style.visibility,opacity:Number(style.opacity),clipPath:style.clipPath || style.webkitClipPath || 'none',maskImage:style.maskImage || style.webkitMaskImage || 'none'};
+      var cameraClip = false;
+      if (element === paintSvg && !element.hasAttribute('clip-path')) {
+        var camera = paintView.state(), width = element.clientWidth, height = element.clientHeight;
+        if ([camera.scale,camera.x,camera.y,width,height].every(Number.isFinite) && camera.scale > 1 && width > 0 && height > 0) {
+          var inset = [Math.max(0,Math.min(height,-camera.y/camera.scale)),Math.max(0,Math.min(width,width-(width-camera.x)/camera.scale)),Math.max(0,Math.min(height,height-(height-camera.y)/camera.scale)),Math.max(0,Math.min(width,-camera.x/camera.scale))];
+          var normalized = frame.contentDocument.createElement('span').style;
+          normalized.clipPath = 'inset(' + inset.map(function (value) {return Math.round(value * 1000) / 1000 + 'px';}).join(' ') + ')';
+          cameraClip = style.clipPath === normalized.clipPath && element.style.clipPath === normalized.clipPath;
+        }
+      }
+      return {hidden:Boolean(element.hidden),display:style.display,visibility:style.visibility,opacity:Number(style.opacity),clipPath:style.clipPath || style.webkitClipPath || 'none',maskImage:style.maskImage || style.webkitMaskImage || 'none',readerCameraClip:cameraClip};
     }
     function primitive(element, role) {
       var style = child.getComputedStyle(element), ancestors = [];
@@ -364,7 +374,10 @@ fn comparison_probe(view: &str) -> String {
       await childRuntime.layoutStability.whenStable();
       await new Promise(function (resolve) {child.requestAnimationFrame(function () {child.requestAnimationFrame(resolve);});});
       inspectionDetailLevel = frame.contentDocument.querySelector('.diagram-container').getAttribute('data-detail-level');
-      markers = Array.from(paintSvg.querySelectorAll('[data-delta-key]')).map(function (element) {
+      markers = Array.from(paintSvg.querySelectorAll('[data-delta-key]')).filter(function (element) {
+        // Reader hit/pulse paths are runtime copies without authored edge IDs.
+        return element.tagName.toLowerCase() !== 'path' || element.hasAttribute('data-edge-id') || element.hasAttribute('data-delta-edge-id');
+      }).map(function (element) {
         var kind = element.getAttribute('data-delta-kind'), role = 'unknown', primitives = [], tag = element.tagName.toLowerCase();
         var declaredLabel = element.getAttribute('data-edge-label') || element.getAttribute('data-delta-edge-label') || element.getAttribute('data-node-label') || '';
         if (kind === 'component' && tag === 'g' && (element.hasAttribute('data-node-id') || element.hasAttribute('data-delta-node-id'))) {

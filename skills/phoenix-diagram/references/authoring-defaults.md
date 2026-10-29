@@ -16,7 +16,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 
 新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余八类为 1。ER、类、树、时间线、耗时瀑布只有 `phoenix-v1`，未标记时也按它读取。已有未标记 JSON 保留原字节，按 `legacy-2.17` 验证；不要仅为套用新默认值迁移合同。CLI 的显式 `--input-contract` 覆盖必须与用户已授权的导入意图一致。
 
-读取 `compatibility.coreCompatibility` 与 `compatibility.deferredFields`。品牌、旧 guided views 与旧播放偏好等延期字段逐项报告处理结果及期次，并保留原 JSON；不能将有延期字段的整份输入称为全量兼容，也不能借延期删除核心事实。不执行品牌查询/采集或旧安装认领。`sources` 与 `meta.repository` 不再延期，交付时按[仓库来源创作](repository-authoring.md)核对。
+读取 `compatibility.coreCompatibility` 与 `compatibility.dispositions`，按[兼容约定](compatibility.md)逐项报告非 `supported` 字段的实际处理与原因，并保留原 JSON；不能将核心兼容通过说成旧展示能力全部复刻，也不能借展示限制删除核心事实。品牌仅在明确请求时按[品牌资源](brand-marks.md)处理，普通编译不联网采集；旧安装移除另需明确迁移授权和确认。`sources` 与 `meta.repository` 交付时按[仓库来源创作](repository-authoring.md)核对。
 
 ## 布局
 

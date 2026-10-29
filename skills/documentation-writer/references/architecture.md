@@ -108,9 +108,9 @@
 
 ## 图怎么画
 
-按 SKILL.md 的「出图」一节先探测 archify。架构文档里常用的图和对应的 archify 类型：
+按 SKILL.md 的「出图」一节先探测 phoenix-diagram。架构文档里常用的图和对应的 phoenix-diagram 类型：
 
-| 图 | archify 类型 | Mermaid 兜底 |
+| 图 | phoenix-diagram 类型 | Mermaid 兜底 |
 |---|---|---|
 | 系统上下文图 | `architecture` | `flowchart LR` |
 | 容器图 / 部署拓扑 | `architecture` | `flowchart` 加 `subgraph` 表示边界 |
@@ -118,6 +118,10 @@
 | 子系统状态机 | `lifecycle` | `stateDiagram-v2` |
 | 数据管道、事件流 | `dataflow` | `flowchart LR` |
 | 业务流程、发布流程 | `workflow` | `flowchart TD` |
+| 数据模型、类与接口 | `erd` / `class` | `erDiagram` / `classDiagram` |
+| 仓库或模块包含层级 | `tree` | `flowchart` |
+| 发布或事故时间线 | `timeline` | `flowchart` 保留已给时点与事件 |
+| 已提供计时的请求跨度 | `waterfall` | 按事实用流程与时长标注 |
 
 一份全仓架构文档一般三到五张图：上下文图、容器图、一条请求链路，再加深挖子系统里各一张。图里出现的每个组件，正文里都要有对应的文字说明。
 

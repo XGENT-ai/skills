@@ -7,11 +7,15 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual as same } from 'node:util';
 import { TARGETS,readTarballInventory } from './pack-phoenix-diagram-candidate.mjs';
-import { validateCandidate,targetForHost } from './check-phoenix-diagram-candidate.mjs';
+import { validateCandidate,targetForHost,P3_HARNESS_MEMBERS } from './check-phoenix-diagram-candidate.mjs';
 import { TYPES,LEGACY_TYPES,contractsFor,requiredArtifactChecks,BROWSER_CHECKS,VIEWPORTS,identity,readSnapshot,readBound,requireThat,assertXssArtifact } from './test-phoenix-diagram-core.mjs';
 import { verifyFileSignature,verifyPrintSample,verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
 import { COLLECTOR_MEMBER,parseCaptureArgs } from '../tools/phoenix-diagram/tests/support/capture-stdio.mjs';
+import { checkP3ProviderManifest,checkP3ScenarioManifest,STDIO_MEMBER,PROVIDER_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-provider.mjs';
+import { verifyAcceptanceState } from '../tools/phoenix-diagram/tests/support/p3-state.mjs';
+import { verifyMigrationAcceptance,LEGACY_V1_DESCRIPTOR_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-migration-run.mjs';
+import { readMigrationFixture,MIGRATION_FIXTURE_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-migration.mjs';
 export { verifyReaderInteractions as checkReaderInteractionEvidence };
 export { verifyMotionSuppression as checkMotionSuppressionEvidence };
 
@@ -19,7 +23,7 @@ const HASH=/^[a-f0-9]{64}$/;
 const KINDS=['diagram','labels','cards','relationship-occlusion','hierarchy','controls'];
 // Case coverage per profile: P1 pairs the five original types with both input
 // contracts; P2 adds the five new types, which only have phoenix-v1.
-export const PROFILE_CASES={p1:LEGACY_TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].map(contract=>`${type}:${contract}`)),p2:TYPES.flatMap(type=>contractsFor(type).map(contract=>`${type}:${contract}`))};
+export const PROFILE_CASES={p1:LEGACY_TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].map(contract=>`${type}:${contract}`)),p2:TYPES.flatMap(type=>contractsFor(type).map(contract=>`${type}:${contract}`)),p3:TYPES.flatMap(type=>contractsFor(type).map(contract=>`${type}:${contract}`))};
 // The local full-review consumption adds these scopes; the corpus stays a source-checkout acceptance.
 export const LOCAL_SCOPES=['explore','evidence','locale'];
 const sorted=value=>[...value].sort();
@@ -59,6 +63,7 @@ export function checkInputSlots(input,profile='p1') {
   need(Array.isArray(input.platforms) && same(sorted(input.platforms.map(row=>row.target)),sorted(TARGETS)),'Four distinct native platform target records are required');
   need(input.node18?.target==='linux-x64','Node18 floor requires its separate linux-x64 consumer record');need(Array.isArray(input.providers) && same(sorted(input.providers.map(row=>row.provider)),['claude-code','codex']),'Both distinct real provider records are required');
   if(profile==='p2')need(input.local?.target==='darwin-arm64' && typeof input.local.runRoot==='string' && input.local.state?.path,'P2 requires the local darwin-arm64 full-review consumption record');
+  if(profile==='p3')need(input.local?.target==='darwin-arm64' && typeof input.local.runRoot==='string' && input.local.state?.path,'P3 requires its local all-state record');
 }
 export function checkStateCohort(state,cohort) {
   need(state?.schemaVersion===1 && state.kind==='phoenix-diagram-candidate-consumer','Unsupported consumer state');
@@ -150,13 +155,16 @@ function platformEvidence(entry,cohort,api,{node18=false,reviewed=!node18,cases=
   return{target:entry.target,status:'pass',runtimeNode:state.runtimeNode,jobId:entry.jobId,artifactId:entry.artifact.id,stateMember:entry.stateMember,scope:'Original live-job validation plus unchanged archived bytes; copied filesystem inodes are not re-certified'};
 }
 // Checks shared by workflow and local consumers once their run binding is established.
-function consumerEvidence(state,store,target,cohort,{node18=false,reviewed=!node18,cases=PROFILE_CASES.p1,scopes=[]}={}) {
-  need(state.automatedStatus==='pass' && state.status===(reviewed?'pass':'automated-pass') && state.phase===(reviewed?'complete':'pending-review') && (!reviewed || state.platformHandoff==='passed'),'Consumer state did not complete its required scope');if(node18)need(state.runtimeNode==='v18.20.8','Consumer did not run the exact Node18 floor');
+function consumerTransportEvidence(state,store,target,cohort,{node18=false}={}) {
   need(state.environment?.proof?.rustc==='unresolvable' && state.environment.proof.cargo==='unresolvable' && state.environment.npmChildProof.rustc==='unresolvable' && state.environment.npmChildProof.cargo==='unresolvable','Rust-free public npm environment proof is missing');const npmProof=processReceipt(store,state.npmEnvironment);const proof=JSON.parse(npmProof.stdout);need(proof.rustc==='unresolvable' && proof.cargo==='unresolvable' && (!node18 || proof.node==='v18.20.8'),'Actual npm child environment/floor differs');
   need(state.publicNpm?.kind==='npm-public-bin' && state.publicNpm.bin==='phoenix-diagram' && state.publicNpm.enginePath===state.engine.path && state.publicNpm.tarball===state.candidate.ownedTarball.path && state.publicNpm.cwd===state.project,'Public npm transport/native identity differs');need(state.engine.engineIdentity.sourceInputSha256===cohort.source.inputSha256 && state.engine.identity.sha256===cohort.engines[target].sha256,'Installed native source/target differs');store.bytes(state.engine);need(sha(store.bytes(state.candidate.ownedTarball))===cohort.tgzSha256,'Owned npm tarball differs');
   need(state.online?.status==='pass' && state.online.serverClosed===true && state.online.httpRequests.some(row=>row.target===target && !row.fault && row.sha256===state.engine.identity.sha256 && row.bytes===state.engine.identity.bytes),'Real fixed-port HTTP transfer is missing');processReceipt(store,state.online.receipt);need(state.offlineInstall?.status==='pass' && ['sandbox-exec','network-namespace'].includes(state.offlineInstall.network?.method),'OS offline installation is missing');processReceipt(store,state.offlineInstall.receipt);need(state.rejections?.status==='pass' && state.rejections.checks.length>=4,'Bad-resource rejection scope is missing');for(const check of state.rejections.checks){need(check.status==='pass','A bad-resource scope did not pass');processReceipt(store,check.receipt,{success:check.name==='unsupported-platform'});}
-  const doctor=processReceipt(store,state.doctor),architecture=target.endsWith('arm64')?'aarch64':'x86_64';need(doctor.receipt?.engine && same(doctor.receipt.engine,state.engine.engineIdentity) && doctor.receipt.platform?.os===(target.startsWith('darwin')?'macos':'linux') && doctor.receipt.platform.architecture===architecture,'Actual npm doctor engine/native host differs');const core=store.json(state.coreIndex);need(same(core.engine.engineIdentity,state.engine.engineIdentity),'Core engine differs');coreEvidence(core,store,state.engine.engineIdentity,{reviewed,cases,scopes});
+  const doctor=processReceipt(store,state.doctor),architecture=target.endsWith('arm64')?'aarch64':'x86_64';need(doctor.receipt?.engine && same(doctor.receipt.engine,state.engine.engineIdentity) && doctor.receipt.platform?.os===(target.startsWith('darwin')?'macos':'linux') && doctor.receipt.platform.architecture===architecture,'Actual npm doctor engine/native host differs');
   return proof;
+}
+function consumerEvidence(state,store,target,cohort,{node18=false,reviewed=!node18,cases=PROFILE_CASES.p1,scopes=[]}={}) {
+  need(state.automatedStatus==='pass' && state.status===(reviewed?'pass':'automated-pass') && state.phase===(reviewed?'complete':'pending-review') && (!reviewed || state.platformHandoff==='passed'),'Consumer state did not complete its required scope');if(node18)need(state.runtimeNode==='v18.20.8','Consumer did not run the exact Node18 floor');
+  const proof=consumerTransportEvidence(state,store,target,cohort,{node18}),core=store.json(state.coreIndex);need(same(core.engine.engineIdentity,state.engine.engineIdentity),'Core engine differs');coreEvidence(core,store,state.engine.engineIdentity,{reviewed,cases,scopes});return proof;
 }
 // The darwin-arm64 full-review consumption runs outside a workflow; its original
 // filesystem remains, so its final state and every reference are reread in place.
@@ -358,6 +366,28 @@ export function checkProviderReply(capture,proof,reference,bytesFor,{outcome='su
 }
 function actualReply(capture,proof,reference,store,outcome='success') {return checkProviderReply(capture,proof,reference,value=>store.bytes(value),{outcome});}
 function assistantText(event,provider) {const payload=eventPayload(event);need(provider==='claude-code'?event.type==='assistant' && event.message?.role==='assistant':payload?.type==='agent_message' || payload?.type==='message' && payload.role==='assistant' || event.type==='event_msg' && payload.type==='task_complete','Scenario response is not a native assistant message');return text(event);}
+export const P3_NATIVE_PROOF=Object.freeze({anchor,proofPair,assistantText,literalWords,executedWords,commandOf,calls,toolEvent,toolCallText,eventPayload,text,injectedSkillBody,checkProviderReply});
+const P3_SCENARIOS_MEMBER='tools/phoenix-diagram/tests/provider/p3-scenarios.json';
+function p3ProviderContext(candidate,{bytesFor,harnessRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),collectorIdentity,scenarioManifest}={}) {
+  const member=name=>readSnapshot(path.join(harnessRoot,name)).content;
+  return {cohort:{source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,bundleSha256:candidate.version.bundleSha256,
+    npmPackageVersion:candidate.pkg.version,engines:candidate.version.engines,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)},
+    tarInventory:readTarballInventory(candidate.tgz.content),bytesFor,nativeProof:P3_NATIVE_PROOF,
+    collectorIdentity:collectorIdentity ?? {stdio:identity(member(STDIO_MEMBER)),provider:identity(member(PROVIDER_MEMBER))},
+    scenarioManifest:checkP3ScenarioManifest(scenarioManifest ?? JSON.parse(member(P3_SCENARIOS_MEMBER)))};
+}
+// The controller checks its supplied originals locally. API authentication of
+// this same harness and candidate remains the final aggregate's separate gate.
+export function createP3ProviderDependencies({candidateDir,harnessRoot}={}) {
+  const candidate=validateCandidate(candidateDir,targetForHost(),{profile:'p3'});
+  return {
+    validateProviders:async({manifest})=>checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{harnessRoot,bytesFor:reference=>readBound(reference,'original P3 provider input').content})),
+    verifyProviders:(report,{bytesFor,state})=>{
+      const manifest=JSON.parse(bytesFor(state.providers.manifest)),actual=checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{harnessRoot,bytesFor}));
+      need(actual.status==='pass' && same(report,actual),'P3 provider report does not match its complete original inputs');return actual;
+    },
+  };
+}
 function receiptErrors(receipt) {const errors=receipt.composition?.summary?.errors;return Number.isSafeInteger(errors)?errors:(receipt.diagnostics || []).filter(row=>row.severity==='error').length;}
 // P2 host sessions run on the authenticated final candidate itself, or on a development
 // package that counts only when its bundle and engine source are the same (bundle
@@ -476,27 +506,127 @@ function candidateArtifact(entry,cohort,api,name) {
   need(entry.archive.identity.sha256===entry.digest,'Actions input archive digest differs');const metadata=api(`/repos/${cohort.repository}/actions/artifacts/${entry.id}`);need(metadata.id===entry.id && metadata.name===name && metadata.digest===`sha256:${entry.digest}` && metadata.expired===false && String(metadata.workflow_run?.id)===String(cohort.runId) && metadata.workflow_run.head_sha===cohort.source.commit,'Actual candidate/harness artifact provenance differs');
   return new ArchiveEvidence(entry.archive,'unused','/unused');
 }
-export function collectorIdentityFromHarness(bytes) {
+export function collectorIdentityFromHarness(bytes,{profile='p1'}={}) {
   const names=processBytes('tar',['-tf','-'],bytes).toString('utf8').split('\n').filter(Boolean);for(const name of names)relative(name.replace(/\/$/,''));
+  if(profile==='p3') {
+    need(same(sorted(names),sorted(P3_HARNESS_MEMBERS)),'Authenticated P3 harness has unknown, duplicate or missing members');
+    return Object.fromEntries([['stdio',STDIO_MEMBER],['provider',PROVIDER_MEMBER]].map(([key,name])=>[key,identity(processBytes('tar',['-xOf','-',name],bytes))]));
+  }
   need(names.filter(name=>name===COLLECTOR_MEMBER).length===1,'Authenticated harness has a missing or duplicate collector member');
   const source=processBytes('tar',['-xOf','-',COLLECTOR_MEMBER],bytes);need(source.length>0,'Authenticated collector template is empty');return identity(source);
 }
+function p3HarnessContext(bytes,candidate) {
+  const member=name=>processBytes('tar',['-xOf','-',name],bytes),fixture=member(MIGRATION_FIXTURE_MEMBER);
+  readMigrationFixture(fixture,{sourceInputs:candidate.sourceInputs.entries});
+  return {collectorIdentity:collectorIdentityFromHarness(bytes,{profile:'p3'}),scenarioManifest:checkP3ScenarioManifest(JSON.parse(member(P3_SCENARIOS_MEMBER))),
+    migrationFixture:identity(fixture),legacyDescriptor:JSON.parse(member(LEGACY_V1_DESCRIPTOR_MEMBER)),
+    officialResource:member('tools/phoenix-diagram/tests/fixtures/brands/official-resource.json')};
+}
+function candidateForTarget(candidate,target) {need(TARGETS.includes(target),'Unknown evidence target');return{...candidate,engine:candidate.files.get(`release-dir/phoenix-diagram-${target}`)};}
+function historicalCandidate(entry,descriptor,api) {
+  need(entry?.directory && entry.artifact?.archive && entry.tar,'P3 needs its explicit authenticated historical v1 installation input');
+  need(descriptor.schemaVersion===1 && descriptor.kind==='phoenix-diagram-v1-candidate-fixture','Historical v1 descriptor differs');
+  const candidate=validateCandidate(entry.directory,targetForHost(),{profile:'p2'});
+  need(same(candidate.source,descriptor.source) && same(candidate.tgz.identity,descriptor.tarball),'Historical v1 candidate differs from its frozen source/package');
+  need(entry.artifact.id===descriptor.artifact.id && entry.artifact.digest===descriptor.artifact.digest.replace(/^sha256:/,''),'Historical v1 artifact differs from the fixed input');
+  const cohort={repository:descriptor.repository,runId:descriptor.runId,runAttempt:descriptor.runAttempt,source:descriptor.source};
+  const run=api(`/repos/${cohort.repository}/actions/runs/${cohort.runId}`);
+  need(String(run.id)===String(cohort.runId) && run.run_attempt===cohort.runAttempt && run.head_sha===cohort.source.commit && run.repository?.full_name===cohort.repository && run.status==='completed' && run.conclusion==='success','Historical v1 workflow/source/attempt is not authenticated');
+  const artifact=candidateArtifact(entry.artifact,cohort,api,descriptor.artifact.name),tar=readBound(entry.tar,'original historical candidate tar').content;
+  need(entry.artifact.archive.identity.bytes===descriptor.artifact.bytes && same(identity(tar),descriptor.candidateArchive) && artifact.member('phoenix-diagram-candidate.tar').equals(tar),'Historical v1 archive bytes differ');
+  for(const[name,snapshot]of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf','-',`candidate/${relative(name)}`],tar).equals(snapshot.content),'Historical v1 candidate differs from its authenticated archive');
+  for(const tuple of descriptor.writerSources)need(candidate.sourceInputs.entries.some(row=>same(row,tuple)),'Historical v1 writer source tuple differs');
+  return candidate;
+}
+export function createP3EvidenceReader(state,store,candidate,legacy,providerStores=[]) {
+  const roles=[[state.candidate,candidate],...(state.legacyV1?[[state.legacyV1.candidate,legacy]]:[])];
+  const fixed=[];
+  for(const[bindings,source]of roles) {
+    need(source,'A historical input was not authenticated');
+    const snapshots={record:source.snapshot,tarball:source.tgz,version:source.files.get('release-dir/VERSION.json'),sourceInputs:source.files.get('source-inputs.json')};
+    for(const[key,snapshot]of Object.entries(snapshots)){need(bindings?.[key]?.path && same(bindings[key].identity,snapshot.identity),'Wrapper fixed candidate role/digest differs');fixed.push({reference:bindings[key],bytes:snapshot.content});}
+  }
+  return reference=>{
+    const match=fixed.find(row=>row.reference.path===reference?.path);
+    if(match){need(same(match.reference.identity,reference.identity),'Fixed candidate reference digest differs');return digest(match.bytes,reference.identity,'Fixed candidate role');}
+    const provider=providerStores.filter(value=>reference?.path?.startsWith(value.originalRoot+'/')).sort((a,b)=>b.originalRoot.length-a.originalRoot.length)[0];
+    return(provider||store).bytes(reference);
+  };
+}
+function p3AllEvidence(state,store,cohort,candidate,legacy,harness,{local=false,providerStores=[]}={}) {
+  need(state.stage==='all' && state.profile==='p3' && same(state.source,cohort.source) && state.candidate?.tarball?.identity?.sha256===cohort.tgzSha256,'P3 wrapper is not the final same-candidate all run');
+  const target=state.target,nativeCandidate=candidateForTarget(candidate,target),old=candidateForTarget(legacy,target),bytesFor=createP3EvidenceReader(state,store,candidate,legacy,providerStores);
+  const consumer=JSON.parse(bytesFor(state.packageConsumer.state));
+  const oldConsumer=state.legacyV1?JSON.parse(bytesFor(state.legacyV1.state)):null;
+  need(oldConsumer?.kind==='phoenix-diagram-candidate-install-context' && oldConsumer.scope==='installation-only' && oldConsumer.status==='pass' && oldConsumer.automatedStatus==='not-run','P3 is missing its actual historical install-only precondition');
+  need(same(oldConsumer.source,legacy.source),'Historical install context source differs');
+  consumerTransportEvidence(oldConsumer,{bytes:bytesFor,json:ref=>JSON.parse(bytesFor(ref))},target,{source:legacy.source,engines:legacy.version.engines,tgzSha256:legacy.tgz.identity.sha256});
+  need(same(identity(bytesFor(state.migrationFixtureInput)),harness.migrationFixture),'P3 migration target input is not the authenticated harness data');
+  need(bytesFor(state.officialResourceInput).equals(harness.officialResource),'P3 capture did not use the fixed authenticated official resource descriptor');
+  const providerContext=p3ProviderContext(candidate,{bytesFor,collectorIdentity:harness.collectorIdentity,scenarioManifest:harness.scenarioManifest});
+  verifyAcceptanceState(state,{bytesFor,
+    verifyConsumer:child=>{
+      if(local)need(child.repository===null && child.runId===null,'Local P3 consumer is not an independent original local run');else checkStateCohort(child,cohort);
+      need(child.target===target && same(child.source,cohort.source) && child.candidate.tarball.identity.sha256===cohort.tgzSha256,'P3 child consumer source/target differs');
+      const scopes=local?LOCAL_SCOPES:['explore','locale'];need(same(sorted(child.scopes||[]),sorted(scopes)),'P3 child consumer scope differs');
+      consumerEvidence(child,{bytes:bytesFor,json:ref=>JSON.parse(bytesFor(ref))},target,cohort,{reviewed:local,cases:PROFILE_CASES.p3,scopes});
+    },
+    verifyMigration:scope=>{const result=verifyMigrationAcceptance(scope,{bytesFor,candidate:nativeCandidate,consumer,legacyV1:{candidate:old,consumer:oldConsumer}});need(result.status==='pass','P3 migration automatic cases are incomplete');},
+    verifyProviders:(report)=>{const manifest=JSON.parse(bytesFor(state.providers.manifest)),actual=checkP3ProviderManifest(manifest,providerContext);need(actual.status==='pass' && same(report,actual),'P3 providers do not match their original 36-session manifest');},
+  });
+  need(state.automatedStatus==='pass','P3 automatic gates did not complete');
+  if(local)need(state.status==='pass' && state.localStatus==='complete' && state.visualReview==='passed' && state.deliveryStatus==='complete','Local P3 actual review/providers did not complete');
+  else need(state.providers.status==='not-run' && state.status==='incomplete' && state.visualReview==='required-pending','Workflow automatic gates cannot certify missing provider/image review');
+  return{target,status:'pass',runtimeNode:consumer.runtimeNode,stateKind:state.kind,scope:local?'Same local all run: full core/author image review, migration faults and original provider records':'Authenticated job automatic core/author/migration evidence; image/provider verdicts remain pending'};
+}
+function p3PlatformEvidence(entry,cohort,api,candidate,legacy,harness) {
+  need(entry.artifact.archive.identity.sha256===entry.artifact.digest,'P3 evidence archive differs from its Actions digest');
+  const outer=new ArchiveEvidence(entry.artifact.archive,'','/pending'),state=outer.relativeJson(entry.p3StateMember);
+  need(state.target===entry.target && entry.p3StateMember===`${entry.p3EvidencePrefix}/state.json`,'Explicit P3 state member/root differs');
+  const store=new ArchiveEvidence(entry.artifact.archive,entry.p3EvidencePrefix,state.runRoot),phase=outer.relativeJson(entry.phaseMember);
+  checkJobProof(api(`/repos/${cohort.repository}/actions/jobs/${entry.jobId}`),api(`/repos/${cohort.repository}/actions/artifacts/${entry.artifact.id}`),entry,cohort,{reviewed:false});phaseEvidence(phase,entry,cohort,{reviewed:false});
+  need(phase.profile==='p3','Actual workflow did not request P3');checkStateSelection(store,phase.p3,entry.p3StateMember);
+  need(store.bytes(state.packageConsumer.state).equals(outer.member(entry.stateMember)) && same(phase.state.identity,state.packageConsumer.state.identity) && phase.state.path===state.packageConsumer.state.path,'Workflow selected another core consumer state');
+  const process=JSON.parse(digest(outer.member(entry.p3ProcessMember),phase.p3.process.identity,'Actual P3 CLI result'));
+  need(phase.p3.exitCode===3 && process.exitCode===3 && same(process.stateFile.identity,phase.p3.state.identity) && process.stateFile.path===phase.p3.state.path,'P3 workflow lost its real pending exit/state binding');
+  for(const[key,value]of Object.entries(state))need(same(process[key],value),'P3 CLI output differs from its saved state');
+  return{...p3AllEvidence(state,store,cohort,candidate,legacy,harness),jobId:entry.jobId,artifactId:entry.artifact.id,stateMember:entry.p3StateMember};
+}
 export function aggregateCandidate(input,{api=liveApi,profile='p1'}={}) {
-  const result={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'aggregate-candidate',kind:'phoenix-diagram-candidate-aggregate',profile,status:'incomplete',handoff:'incomplete',publication:'not-requested',platforms:[],node18:{status:'not-run'},...(profile==='p2'?{local:{status:'not-run'}}:{}),providers:[],diagnostics:[]};
+  const result={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'aggregate-candidate',kind:'phoenix-diagram-candidate-aggregate',profile,status:'incomplete',handoff:'incomplete',publication:'not-requested',platforms:[],node18:{status:'not-run'},...(['p2','p3'].includes(profile)?{local:{status:'not-run'}}:{}),providers:[],diagnostics:[]};
   const check=(scope,operation)=>{try{return operation();}catch(error){result.diagnostics.push({scope,code:error.code || 'aggregate/incomplete',message:error.message});return null;}};
-  const setup=check('input',()=>{need(input?.schemaVersion===1 && input.kind==='phoenix-diagram-candidate-aggregate-input' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(input.repository) && /^\d+$/.test(String(input.runId)) && Number.isSafeInteger(input.runAttempt) && input.runAttempt>0,'Aggregate input cohort is malformed');need(PROFILE_CASES[profile] && (input.profile ?? 'p1')===profile,'Aggregate input profile differs from the requested profile');checkInputSlots(input,profile);const candidate=validateCandidate(input.candidate.directory,targetForHost()),cohort={repository:input.repository,runId:String(input.runId),runAttempt:input.runAttempt,source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,candidateArchiveSha256:input.candidate.candidateArchiveSha256,harnessSha256:input.harness.harnessSha256,engines:candidate.version.engines,npmPackageVersion:candidate.pkg.version,bundleSha256:candidate.version.bundleSha256,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)};need(HASH.test(cohort.candidateArchiveSha256) && HASH.test(cohort.harnessSha256),'Candidate/harness transfer SHA is missing');return{candidate,cohort};});if(!setup)return result;
+  const setup=check('input',()=>{need(input?.schemaVersion===1 && input.kind==='phoenix-diagram-candidate-aggregate-input' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(input.repository) && /^\d+$/.test(String(input.runId)) && Number.isSafeInteger(input.runAttempt) && input.runAttempt>0,'Aggregate input cohort is malformed');need(PROFILE_CASES[profile] && (input.profile ?? 'p1')===profile,'Aggregate input profile differs from the requested profile');checkInputSlots(input,profile);const candidate=validateCandidate(input.candidate.directory,targetForHost(),{profile}),cohort={repository:input.repository,runId:String(input.runId),runAttempt:input.runAttempt,source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,candidateArchiveSha256:input.candidate.candidateArchiveSha256,harnessSha256:input.harness.harnessSha256,engines:candidate.version.engines,npmPackageVersion:candidate.pkg.version,bundleSha256:candidate.version.bundleSha256,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)};need(HASH.test(cohort.candidateArchiveSha256) && HASH.test(cohort.harnessSha256),'Candidate/harness transfer SHA is missing');return{candidate,cohort};});if(!setup)return result;
   const {candidate,cohort}=setup;Object.assign(cohort,{candidateArtifactId:input.candidate.artifact.id,candidateArtifactDigest:input.candidate.artifact.digest,harnessArtifactId:input.harness.artifact.id,harnessArtifactDigest:input.harness.artifact.digest});result.cohort=cohort;
   const authenticated=check('workflow-source',()=>{const run=api(`/repos/${cohort.repository}/actions/runs/${cohort.runId}`);need(String(run.id)===cohort.runId && run.run_attempt===cohort.runAttempt && run.head_sha===cohort.source.commit && run.repository?.full_name===cohort.repository,'Actual workflow run/source/latest attempt differs');const source=candidateArtifact(input.candidate.artifact,cohort,api,'phoenix-diagram-candidate'),tar=readBound(input.candidate.tar,'candidate transfer tar');need(sha(source.member('phoenix-diagram-candidate.tar'))===cohort.candidateArchiveSha256 && sha(tar.content)===cohort.candidateArchiveSha256,'Candidate transfer tar differs');
-    for(const [name,snapshot] of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf',tar.path,`candidate/${relative(name)}`]).equals(snapshot.content),'Extracted candidate bytes differ from authenticated transfer tar');const harness=candidateArtifact(input.harness.artifact,cohort,api,'phoenix-diagram-harness'),harnessBytes=harness.member('phoenix-diagram-harness.tar');need(sha(harnessBytes)===cohort.harnessSha256,'Harness transfer bytes differ');cohort.collectorIdentity=collectorIdentityFromHarness(harnessBytes);return true;});if(!authenticated)return result;
+    for(const [name,snapshot] of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf',tar.path,`candidate/${relative(name)}`]).equals(snapshot.content),'Extracted candidate bytes differ from authenticated transfer tar');const harness=candidateArtifact(input.harness.artifact,cohort,api,'phoenix-diagram-harness'),harnessBytes=harness.member('phoenix-diagram-harness.tar');need(sha(harnessBytes)===cohort.harnessSha256,'Harness transfer bytes differ');
+    if(profile==='p3'){need(run.status==='completed' && run.conclusion==='success','P3 workflow has not completed successfully');const context=p3HarnessContext(harnessBytes,candidate);cohort.collectorIdentity=context.collectorIdentity;return context;}
+    cohort.collectorIdentity=collectorIdentityFromHarness(harnessBytes);return true;});if(!authenticated)return result;
+  const legacy=profile==='p3'?check('historical-v1-input',()=>historicalCandidate(input.legacyCandidate,authenticated.legacyDescriptor,api)):null;
+  if(profile==='p3'&&!legacy)return result;
   // P2 platforms are automatic-only (ADR-2); the full review loop is the local darwin-arm64 consumption.
   const cases=PROFILE_CASES[profile],reviewed=profile==='p1';
-  for(const entry of input.platforms){const checked=check(`platform:${entry.target}`,()=>platformEvidence(entry,cohort,api,{reviewed,cases}));result.platforms.push(checked || {target:entry.target,status:'incomplete'});}
-  result.node18=check('node18',()=>platformEvidence(input.node18,cohort,api,{node18:true,cases})) || {status:'incomplete'};
+  for(const entry of input.platforms){const checked=check(`platform:${entry.target}`,()=>profile==='p3'?p3PlatformEvidence(entry,cohort,api,candidate,legacy,authenticated):platformEvidence(entry,cohort,api,{reviewed,cases}));result.platforms.push(checked || {target:entry.target,status:'incomplete'});}
+  result.node18=check('node18',()=>{const checked=platformEvidence(input.node18,cohort,api,{node18:true,cases});if(profile==='p3'){const store=new ArchiveEvidence(input.node18.artifact.archive,'','/pending');need(store.relativeJson(input.node18.stateMember).profile==='p3' && store.relativeJson(input.node18.phaseMember).profile==='p3','Node18 did not consume the P3 profile');}return checked;}) || {status:'incomplete'};
   if(profile==='p2')result.local=check('local',()=>localEvidence(input.local,cohort,{cases})) || {status:'incomplete'};
-  const inventory=readTarballInventory(candidate.tgz.content);for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory,{profile,candidate}));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
-  if(result.diagnostics.length===0 && result.platforms.length===4 && result.platforms.every(row=>row.status==='pass') && result.node18.status==='pass' && (profile!=='p2' || result.local.status==='pass') && result.providers.length===2 && result.providers.every(row=>row.status==='pass')){result.status='pass';result.handoff='passed';}return result;
+  const inventory=readTarballInventory(candidate.tgz.content);
+  if(profile==='p3') {
+    const providerStores=[];
+    const providers=check('providers',()=>{
+      const manifest={schemaVersion:1,kind:'phoenix-diagram-p3-provider-manifest',providers:input.providers.map(entry=>{
+        need(!entry.reuse && entry.record,'P3 requires distinct original records; historical sampling/reuse is not accepted');
+        const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot);need(store.bytes(entry.record).equals(store.member(entry.recordMember)),'P3 selected provider record differs from its original reference');providerStores.push(store);return{provider:entry.provider,record:entry.record};
+      })};
+      const bytesFor=reference=>{const store=providerStores.find(store=>reference?.path?.startsWith(store.originalRoot+'/'));need(store,'P3 provider reference leaves its explicit original archives');return store.bytes(reference);};
+      return checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{bytesFor,collectorIdentity:authenticated.collectorIdentity,scenarioManifest:authenticated.scenarioManifest}));
+    });
+    result.providers=providers?.providers || input.providers.map(entry=>({provider:entry.provider,status:'incomplete'}));
+    if(providers?.status!=='pass')for(const diagnostic of providers?.diagnostics || [])result.diagnostics.push({scope:'providers',...diagnostic});
+    result.local=check('local',()=>{const store=new DirectoryEvidence(input.local.runRoot),state=store.json(input.local.state);need(state.runRoot===input.local.runRoot && state.target===input.local.target,'Local P3 all-state/root/target differs');return p3AllEvidence(state,store,cohort,candidate,legacy,authenticated,{local:true,providerStores});}) || {status:'incomplete'};
+    result.legacyInput={status:'authenticated',source:legacy.source,tgzSha256:legacy.tgz.identity.sha256,scope:'Historical v1 installation precondition only'};
+  }else for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory,{profile,candidate}));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
+  if(result.diagnostics.length===0 && result.platforms.length===4 && result.platforms.every(row=>row.status==='pass') && result.node18.status==='pass' && (profile==='p1' || result.local.status==='pass') && result.providers.length===2 && result.providers.every(row=>row.status==='pass')){result.status='pass';result.handoff='passed';}return result;
 }
-export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs [--profile p1|p2] --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. p2 checks the four platforms as automatic-only, adds the local darwin-arm64 full-review consumption and binds host sessions to the identical authenticated candidate tgz/VERSION or a development package with the same bundle and engine source; a provider entry may keep rows from an earlier engine of the same bundle (reuse) when a final-engine replay reproduces the diagram and failed validations of each kept row. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
+export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs [--profile p1|p2|p3] --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. p2 checks the four platforms as automatic-only, adds the local darwin-arm64 full-review consumption and binds host sessions to the identical authenticated candidate tgz/VERSION or a development package with the same bundle and engine source; a provider entry may keep rows from an earlier engine of the same bundle (reuse) when a final-engine replay reproduces the diagram and failed validations of each kept row. p3 requires the authenticated final harness, four automatic all-runs, the local fully reviewed all-state, 31 original migration cases with a separately authenticated historical v1 installation input, and 36 fresh same-candidate host sessions; it accepts neither sampling nor historical provider reuse. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
 export async function main(argv=process.argv.slice(2)) {
   if(argv.length===1 && argv[0]==='--help'){process.stdout.write(HELP);return 0;}let output;
   try{const options={};for(let at=0;at<argv.length;at++){const key=argv[at];need(['--input','--output','--profile'].includes(key) && !options[key] && argv[at+1] && !argv[at+1].startsWith('--'),'Expected unique --input/--output/--profile values');options[key]=argv[++at];}need(!options['--profile'] || Object.hasOwn(PROFILE_CASES,options['--profile']),'Unknown aggregate profile');need(options['--input'] && options['--output'],'--input and --output are required');output=path.resolve(options['--output']);need(!fs.existsSync(output),'Aggregate output already exists; preserve it');const input=JSON.parse(readSnapshot(options['--input']).content.toString('utf8')),result=aggregateCandidate(input,{profile:options['--profile'] || 'p1'});fs.writeFileSync(output,`${JSON.stringify(result,null,2)}\n`,{flag:'wx',mode:0o600});process.stdout.write(`${JSON.stringify(result)}\n`);return result.handoff==='passed'?0:1;}

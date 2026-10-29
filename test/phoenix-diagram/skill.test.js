@@ -10,7 +10,8 @@ const { createHash } = require('node:crypto');
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
 const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'];
-const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring'];
+const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring',
+  'brand-marks', 'preview', 'architecture-compare', 'migration', 'compatibility', 'extending-types'];
 const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
 
 test('the skill has a bounded ten-type description with its exclusions up front and normal automatic discovery', () => {
@@ -72,6 +73,22 @@ test('all ten guide examples are new-contract complete semantic inputs with auto
     if (document.mainPath) for (let i = 1; i < document.mainPath.length; i += 1) {
       assert.ok(relationships.some(relation => relation.from === document.mainPath[i - 1] && relation.to === document.mainPath[i]), type);
     }
+  }
+});
+
+test('all five compatibility samples are fixed original bytes inside the sole active skill', () => {
+  const samples = {
+    'web-app.architecture.json': '483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf',
+    'agent-tool-call.workflow.json': '4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c',
+    'async-job-roundtrip.sequence.json': '545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9',
+    'product-analytics.dataflow.json': '91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f',
+    'deployment-release.lifecycle.json': '735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71',
+  };
+  assert.equal(fs.existsSync(path.join(root, 'skills/archify')), false);
+  for (const [name, sha256] of Object.entries(samples)) {
+    const bytes = fs.readFileSync(path.join(skill, 'examples', `legacy.${name}`));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), sha256, name);
+    assert.deepEqual(bytes, fs.readFileSync(path.join(root, 'tools/phoenix-diagram/upstream/legacy-2.17/examples', name)), name);
   }
 });
 

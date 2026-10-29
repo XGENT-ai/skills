@@ -162,6 +162,243 @@
           "originalLocation": "rust@1.99.0/share/doc/rust/licenses/Unicode-3.0.txt"
         }
       ]
+    },
+    {
+      "name": "Brand marks catalog",
+      "version": "archify-3.1.0",
+      "license": "CC0-1.0 collection; recorded individual terms in the preserved source manifest",
+      "source": {
+        "archive": "upstream/archify-3.1.0-source.tar.gz",
+        "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
+        "path": "archify/renderers/shared/generated-brand-marks.mjs",
+        "sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
+        "noticePath": "assets/licenses/brand-marks-NOTICE.md",
+        "noticeSourcePath": "archify/THIRD_PARTY_NOTICES.md",
+        "noticeSha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14"
+      },
+      "catalog": {
+        "path": "THIRD-PARTY-LICENSES/9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33.txt",
+        "size": 168010,
+        "sha256": "9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33",
+        "originalLocation": "tools/phoenix-diagram/assets/brand-marks.json"
+      },
+      "licenseManifest": {
+        "path": "THIRD-PARTY-LICENSES/375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927.txt",
+        "size": 4946,
+        "sha256": "375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927",
+        "originalLocation": "tools/phoenix-diagram/assets/brand-license-sources.json"
+      },
+      "licenses": [
+        {
+          "path": "THIRD-PARTY-LICENSES/9046848b63a5c92bff14e4accca80bd987e0623b74adf9226ce5198d312b79d5.txt",
+          "size": 6569,
+          "sha256": "9046848b63a5c92bff14e4accca80bd987e0623b74adf9226ce5198d312b79d5",
+          "originalLocation": "https://raw.githubusercontent.com/simple-icons/simple-icons/fc91ef03ec113d06627b2d47c1f9644ca202b6f9/LICENSE.md",
+          "source": {
+            "path": "licenses/brand-simple-icons-16.28.0-LICENSE.md",
+            "size": 6569,
+            "sha256": "9046848b63a5c92bff14e4accca80bd987e0623b74adf9226ce5198d312b79d5",
+            "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/fc91ef03ec113d06627b2d47c1f9644ca202b6f9/LICENSE.md",
+            "repository": "https://github.com/simple-icons/simple-icons",
+            "revision": "fc91ef03ec113d06627b2d47c1f9644ca202b6f9",
+            "tag": "16.28.0",
+            "license": "CC0-1.0",
+            "scope": "collection-only",
+            "marks": []
+          },
+          "license": "CC0-1.0",
+          "scope": "collection-only",
+          "marks": []
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/0d3f7c086c6b6cf3ea4aac714e9aa3e1fb02e355ce35bd21c56acf8d04390885.txt",
+          "size": 1116,
+          "sha256": "0d3f7c086c6b6cf3ea4aac714e9aa3e1fb02e355ce35bd21c56acf8d04390885",
+          "originalLocation": "https://raw.githubusercontent.com/voodootikigod/logo.js/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/LICENSE",
+          "source": {
+            "path": "licenses/brand-javascript-MIT.txt",
+            "size": 1116,
+            "sha256": "0d3f7c086c6b6cf3ea4aac714e9aa3e1fb02e355ce35bd21c56acf8d04390885",
+            "url": "https://raw.githubusercontent.com/voodootikigod/logo.js/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/LICENSE",
+            "license": "MIT",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "javascript"
+            ]
+          },
+          "license": "MIT",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "javascript"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499.txt",
+          "size": 7048,
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+          "originalLocation": "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt",
+          "source": {
+            "path": "licenses/brand-CC0-1.0.txt",
+            "size": 7048,
+            "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+            "url": "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt",
+            "license": "CC0-1.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "dotnet"
+            ]
+          },
+          "license": "CC0-1.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "dotnet"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411.txt",
+          "size": 18657,
+          "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+          "originalLocation": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+          "source": {
+            "path": "licenses/brand-CC-BY-4.0.txt",
+            "size": 18657,
+            "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+            "url": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+            "license": "CC-BY-4.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "angular"
+            ]
+          },
+          "license": "CC-BY-4.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "angular"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f.txt",
+          "size": 22240,
+          "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+          "originalLocation": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+          "source": {
+            "path": "licenses/brand-CC-BY-SA-3.0.txt",
+            "size": 22240,
+            "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+            "url": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+            "license": "CC-BY-SA-3.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "jenkins"
+            ]
+          },
+          "license": "CC-BY-SA-3.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "jenkins"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5.txt",
+          "size": 20138,
+          "sha256": "28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5",
+          "originalLocation": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt",
+          "source": {
+            "path": "licenses/brand-CC-BY-SA-4.0.txt",
+            "size": 20138,
+            "sha256": "28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5",
+            "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt",
+            "license": "CC-BY-SA-4.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "rust"
+            ]
+          },
+          "license": "CC-BY-SA-4.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "rust"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd.txt",
+          "size": 20850,
+          "sha256": "e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd",
+          "originalLocation": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+          "source": {
+            "path": "licenses/brand-CC-BY-NC-SA-4.0.txt",
+            "size": 20850,
+            "sha256": "e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd",
+            "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+            "license": "CC-BY-NC-SA-4.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "vue"
+            ]
+          },
+          "license": "CC-BY-NC-SA-4.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "vue"
+          ]
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt",
+          "size": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "originalLocation": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+          "source": {
+            "path": "licenses/brand-Apache-2.0.txt",
+            "size": 11358,
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            "license": "Apache-2.0",
+            "scope": "recorded-individual-license",
+            "marks": [
+              "apache-airflow",
+              "apache-kafka"
+            ]
+          },
+          "license": "Apache-2.0",
+          "scope": "recorded-individual-license",
+          "marks": [
+            "apache-airflow",
+            "apache-kafka"
+          ]
+        }
+      ],
+      "notices": [
+        {
+          "path": "THIRD-PARTY-LICENSES/0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14.txt",
+          "size": 5248,
+          "sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
+          "originalLocation": "upstream/archify-3.1.0-source.tar.gz#archify/THIRD_PARTY_NOTICES.md",
+          "source": {
+            "path": "licenses/brand-marks-NOTICE.md",
+            "size": 5248,
+            "sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
+            "archive": "upstream/archify-3.1.0-source.tar.gz",
+            "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
+            "sourcePath": "archify/THIRD_PARTY_NOTICES.md"
+          }
+        },
+        {
+          "path": "THIRD-PARTY-LICENSES/5757a1f28eff735a8b5e7425478f367812d71e974530f5bedd01219480965f4a.txt",
+          "size": 4604,
+          "sha256": "5757a1f28eff735a8b5e7425478f367812d71e974530f5bedd01219480965f4a",
+          "originalLocation": "https://raw.githubusercontent.com/simple-icons/simple-icons/fc91ef03ec113d06627b2d47c1f9644ca202b6f9/DISCLAIMER.md",
+          "source": {
+            "path": "licenses/brand-simple-icons-16.28.0-DISCLAIMER.md",
+            "size": 4604,
+            "sha256": "5757a1f28eff735a8b5e7425478f367812d71e974530f5bedd01219480965f4a",
+            "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/fc91ef03ec113d06627b2d47c1f9644ca202b6f9/DISCLAIMER.md",
+            "repository": "https://github.com/simple-icons/simple-icons",
+            "revision": "fc91ef03ec113d06627b2d47c1f9644ca202b6f9",
+            "tag": "16.28.0"
+          }
+        }
+      ],
+      "policy": "Preserve recorded collection/individual terms and provenance; no inference that unrecorded individual marks are CC0 or cleared for any particular use."
     }
   ],
   "rust": [

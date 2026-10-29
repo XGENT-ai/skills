@@ -222,9 +222,38 @@ async function prepareDiagram(targetDir, options) {
   }
 }
 
+async function migrateDiagram(project, options, confirmed) {
+  const ready = await diagramBootstrap.preflight({
+    project, exactProject: true, manifestPath: path.join(DIAGRAM_DIR, 'VERSION.json'),
+    bundleRoot: path.join(DIAGRAM_DIR, 'bundle'), packageJsonPath: path.join(PKG_ROOT, 'package.json'),
+    releaseDir: options.diagramReleaseDir, env: process.env, allowInstall: false, checkReceipt: false,
+  });
+  const args = ['migrate', '--from-archify', '--project', ready.project, '--bundle-root', ready.bundleRoot, '--json'];
+  if (options.providers) args.push('--providers', options.providers);
+  const planned = runDiagram(ready.enginePath, [...args, '--dry-run']);
+  printDiagram(planned.report, ready.manifest);
+  if (planned.code !== 0) { process.exitCode = planned.code || 3; return; }
+  console.log('  Archify 仅移除上述所选项目/provider 的完整已知来源;不备份,回滚不重建旧入口,需要时按原来源重装。');
+  let answer = confirmed;
+  if (!answer && !process.stdin.isTTY) throw phoenixFailure(3, '非交互迁移需要显式 --confirm-remove-archify;未开始删除或新入口写入。');
+  if (!answer) {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    try { answer = await confirm('确认直接移除上述 Archify 并安装 Phoenix Diagram? [y/N] ', '', rl[Symbol.asyncIterator]()); }
+    finally { rl.close(); }
+  }
+  if (!answer) { console.log('  取消迁移;未开始删除或新入口写入。'); return; }
+  const applied = runDiagram(ready.enginePath, [...args, '--confirm-remove-archify']);
+  printDiagram(applied.report, ready.manifest);
+  process.exitCode = applied.code || 0;
+}
+
 function printDiagram(report, manifest) {
   const { toolVersion, npmPackageVersion } = manifest.data;
   console.log(`Phoenix Diagram ${toolVersion} (@xgent-ai/skills@${npmPackageVersion}): ${PHOENIX_STATUS[report.status] || report.status}`);
+  for (const item of report.removals || []) console.log(`  ${item.status}  ${item.path} (${item.source})`);
+  for (const item of report.preserved || []) console.log(`  保留  ${item}`);
+  if (report.rollbackCommand) console.log(`  新入口回滚  ${report.rollbackCommand}`);
+  for (const item of report.reinstallInstructions || []) console.log(`  旧入口  ${item}`);
   for (const item of report.writes || []) console.log(`  写入  ${item.path}`);
   for (const item of report.conflicts || []) console.log(`  冲突  ${item.path}: ${item.message}`);
   for (const item of report.diagnostics || []) console.log(`  诊断  ${item.code}: ${item.message}`);
@@ -312,7 +341,7 @@ function usage() {
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill、hooks 与五个辅助 skill;engine 校验后
                   放入用户 cache;旧 impeccable 可选择替换或共存),
-                  以及 Phoenix Diagram(五类图解 skill 与独立原生 engine),
+                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine),
                   并询问是否创建通用的 AGENTS.md
   help            显示本帮助
 
@@ -322,6 +351,10 @@ install 选项:
   --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
   --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
   --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
+  --migrate-archify     仅执行 Diagram 预检/确认/迁移,跳过 hooks/settings/AGENTS/UI;
+                        使用已存在且匹配包内固定版本的引擎,不自动获取
+  --confirm-remove-archify  仅配 --migrate-archify,确认移除所选项目/provider 旧入口;
+                        不备份 Archify,回滚不重建旧入口,需要时按原来源重装
   --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
   --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网
   --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
@@ -334,13 +367,14 @@ install 选项:
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init'].includes(f)
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init', '--migrate-archify', '--confirm-remove-archify'].includes(f)
     && !['--providers=', '--release-dir=', '--diagram-release-dir='].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
     process.exit(1);
   }
+  if (flags.includes('--confirm-remove-archify') && !flags.includes('--migrate-archify')) throw phoenixFailure(2, '--confirm-remove-archify 需要 --migrate-archify');
   if (flags.includes('--xgent-init') && flags.includes('--no-xgent-init')) {
     console.error('错误: --xgent-init 与 --no-xgent-init 不能同时使用');
     process.exit(1);
@@ -361,6 +395,13 @@ async function install(args) {
     if (diagramReleaseDir !== undefined) diagramBootstrap.platformTarget();
     options.diagram = false;
     console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的四个 macOS/Linux 平台内。`);
+  }
+
+  if (flags.includes('--migrate-archify')) {
+    const target = path.resolve(dirArg || process.cwd());
+    if (!options.diagram) { console.log('  跳过 Phoenix Diagram 迁移;保留 Archify。'); return; }
+    await migrateDiagram(target, options, flags.includes('--confirm-remove-archify'));
+    return;
   }
 
   // 跳过 Phoenix 时仍按包内 bundle 校验 --providers,保持旧参数语义;启用时由执行器校验。

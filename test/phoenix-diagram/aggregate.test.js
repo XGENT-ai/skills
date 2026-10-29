@@ -16,6 +16,29 @@ test('aggregation requires four distinct targets, the exact Node18 floor and bot
   const {checkInputSlots}=await api();const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'];const input={platforms:targets.map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};assert.equal(checkInputSlots(input),undefined);
   assert.throws(()=>checkInputSlots({...input,platforms:input.platforms.slice(1)}),/platform|target/i);assert.throws(()=>checkInputSlots({...input,platforms:[...input.platforms.slice(0,3),input.platforms[0]]}),/platform|target/i);assert.throws(()=>checkInputSlots({...input,providers:[{provider:'codex'},{provider:'codex'}]}),/provider/i);assert.throws(()=>checkInputSlots({...input,node18:{target:'darwin-arm64'}}),/Node18|floor|target/i);
 });
+test('P3 keeps all fifteen core contracts and requires its distinct local all-state slot',async()=>{
+  const {PROFILE_CASES,checkInputSlots}=await api();
+  assert.deepEqual(PROFILE_CASES.p3,PROFILE_CASES.p2);
+  assert.equal(PROFILE_CASES.p3.length,15);
+  const input={platforms:['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};
+  assert.throws(()=>checkInputSlots(input,'p3'),/P3.*local|all.state/i);
+  assert.equal(checkInputSlots({...input,local:{target:'darwin-arm64',runRoot:'/original/p3-all',state:{path:'/original/p3-all/state.json'}}},'p3'),undefined);
+});
+test('P3 resolves only authenticated candidate roles and explicit original evidence roots',async()=>{
+  const {createP3EvidenceReader}=await api(),snapshot=name=>{const content=Buffer.from(name+' byte fixture');return{content,identity:identity(content)};};
+  const candidate={snapshot:snapshot('candidate record'),tgz:snapshot('candidate tgz'),files:new Map([['release-dir/VERSION.json',snapshot('version')],['source-inputs.json',snapshot('source inputs')]])};
+  const records={record:candidate.snapshot,tarball:candidate.tgz,version:candidate.files.get('release-dir/VERSION.json'),sourceInputs:candidate.files.get('source-inputs.json')};
+  const state={candidate:Object.fromEntries(Object.entries(records).map(([key,value])=>[key,{path:'/original/candidate/'+key,identity:value.identity,binding:{inode:'original; never re-certified'}}]))};
+  const original=Buffer.from('original all-run bytes'),provider=Buffer.from('explicit provider archive bytes');
+  const store={bytes:ref=>{assert.equal(ref.path,'/original/all/report.json');return original;}};
+  const providers=[{originalRoot:'/original/provider',bytes:ref=>{assert.equal(ref.path,'/original/provider/native.jsonl');return provider;}}];
+  const read=createP3EvidenceReader(state,store,candidate,null,providers);
+  for(const[key,value]of Object.entries(records))assert.deepEqual(read(state.candidate[key]),value.content);
+  assert.deepEqual(read({path:'/original/all/report.json'}),original);assert.deepEqual(read({path:'/original/provider/native.jsonl'}),provider);
+  assert.throws(()=>read({...state.candidate.tarball,identity:{...state.candidate.tarball.identity,sha256:'0'.repeat(64)}}),/digest/);
+  assert.throws(()=>read({path:'/some/current/worktree/report.json'}));
+  const wrong=structuredClone(state);wrong.candidate.tarball.identity.sha256='0'.repeat(64);assert.throws(()=>createP3EvidenceReader(wrong,store,candidate,null),/role|digest/);
+});
 test('current cohort rejects another tgz, source, run attempt or harness despite success flags',async()=>{
   const {checkStateCohort}=await api(),expected=cohort(),state={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',repository:expected.repository,runId:expected.runId,runAttempt:'2',source:expected.source,candidate:{tarball:{identity:{sha256:expected.tgzSha256}},candidateArchiveSha256:expected.candidateArchiveSha256},harnessArchiveSha256:expected.harnessSha256};assert.equal(checkStateCohort(state,expected),undefined);
   for(const change of [{runAttempt:'1'},{runId:'999'},{source:{...expected.source,commit:'0'.repeat(40)}},{candidate:{...state.candidate,tarball:{identity:{sha256:'0'.repeat(64)}}}},{harnessArchiveSha256:'0'.repeat(64)}])assert.throws(()=>checkStateCohort({...state,...change},expected),/cohort|candidate|source|run|harness/i);

@@ -116,3 +116,108 @@ test('passing compare alone stays incomplete and a later state claimant is not o
   assert.equal(recompute(state).status,'incomplete');assert.equal(state.visualReview,'required-pending');assert.equal(state.deliveryStatus,'incomplete');
   const initial=persistState(state);const replacement=path.join(directory,'replacement');fs.writeFileSync(replacement,'later claimant');fs.renameSync(replacement,initial.path);assert.throws(()=>persistState(state,initial),/identity|binding/);assert.equal(fs.readFileSync(initial.path,'utf8'),'later claimant');privateDirectory(directory,{existing:true});
 });
+
+test('final candidate stages require candidate identity and retain pending review semantics',async()=>{
+  const {parseOptions}=await import(modulePath);
+  assert.equal(parseOptions(['--stage','all','--candidate-dir','/candidate','--output-dir','/new']).candidateDir,'/candidate');
+  assert.equal(parseOptions(['--stage','providers','--candidate-dir','/candidate','--provider-manifest','/sessions.json','--output-dir','/new']).providerManifest,'/sessions.json');
+  for(const args of [
+    ['--stage','all','--release-dir','/development','--output-dir','/new'],
+    ['--stage','providers','--candidate-dir','/candidate','--output-dir','/new'],
+    ['--stage','author-tools','--candidate-dir','/candidate','--output-dir','/new'],
+  ])assert.throws(()=>parseOptions(args));
+});
+
+test('public author-tools transport captures actual npm argv and preserves review/checkpoint settings',async t=>{
+  const {createPublicInvoke}=await import(modulePath),{publicNpmCommand}=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),model=await import(statePath),root=temp(t);
+  const engine=model.writeNew(path.join(root,'engine'),'inert fixture, never executed'),tarball=model.writeNew(path.join(root,'package.tgz'),'inert package'),calls=[];
+  const publicNpm={schemaVersion:1,kind:'npm-public-bin',bin:'phoenix-diagram',nodePath:'/node',npmCliPath:'/npm-cli.js',tarball:tarball.path,cwd:root,env:{PATH:'/isolated'},enginePath:engine.path};
+  const invoke=createPublicInvoke({engine,publicNpm},{invoke:async(actual,args,settings)=>{
+    calls.push({actual,args,settings});const command=publicNpmCommand(publicNpm,args),prefix=settings.prefix||[];
+    await settings.onSpawn({pid:1234,spawnfile:prefix[0]||command.program,spawnargs:prefix.length?[...prefix,command.program,...command.args]:[command.program,...command.args]});
+    return{exitCode:0,signal:null,stdout:'{}',stderr:'',receipt:{}};
+  }});
+  let observed;const result=await invoke(engine,['review-record','/artifact','--json'],{json:false,env:{PHOENIX_DIAGRAM_ACCEPTANCE:'1'},prefix:['/sandbox','rule'],onSpawn:child=>{observed=child.pid;}});
+  assert.equal(observed,1234);assert.equal(calls[0].settings.options.publicNpm,publicNpm);assert.equal(calls[0].settings.json,false);assert.equal(calls[0].settings.env.PHOENIX_DIAGRAM_ACCEPTANCE,'1');
+  assert.equal(result.actualTransport.pid,1234);assert.deepEqual(result.actualTransport.argv,publicNpmCommand(publicNpm,calls[0].args).args);
+  await assert.rejects(invoke({...engine,path:'/different-engine'},['doctor','--json']),/engine|transport/i);
+  const missing=createPublicInvoke({engine,publicNpm},{invoke:async()=>({exitCode:0,signal:null})});await assert.rejects(missing(engine,['doctor','--json']),/spawn|transport/i);
+});
+
+test('comparison byte verifier shares strict checks with archived originals without recertifying inodes',async t=>{
+  const f=await comparisonFixture(t),snapshots=new Map();
+  for(const file of [f.entry.summary,f.entry.base,f.entry.head,f.entry.artifact,f.entry.receipt,f.entry.evidence.browserReceipt,...f.entry.evidence.screenshots])snapshots.set(file.path,f.core.readBound(file).content);
+  fs.rmSync(f.entry.artifact.path);
+  const context={base:f.entry.base,head:f.entry.head,artifact:f.entry.artifact,receipt:f.entry.receipt,engine:f.release.engineIdentity,bytesFor:reference=>snapshots.get(reference.path)};
+  assert.equal(f.model.inspectComparison(f.entry.summary,context).automatedStatus,'pass');
+  assert.throws(()=>f.model.inspectComparison(f.entry.summary,{...context,bytesFor:reference=>reference.path===f.entry.artifact.path?Buffer.from('forged'):snapshots.get(reference.path)}),/identity|bytes|digest/i);
+  assert.throws(()=>f.model.inspectComparison(f.entry.summary,{...context,bytesFor:undefined}),/ENOENT|identity|binding/);
+});
+
+test('public process ownership proves the real controller and refuses an unrelated marker PID',async()=>{
+  const {proveControllerOwnership}=await import('../../tools/phoenix-diagram/tests/support/p3-processes.mjs');
+  const engine={path:'/owned/engine'},child={pid:100},rows=[{pid:100,ppid:1,pgid:100,command:'/node npm-cli exec'},{pid:101,ppid:100,pgid:100,command:'/node public-bin'},{pid:102,ppid:101,pgid:100,command:'/owned/engine preview architecture /input /output --json'},{pid:103,ppid:102,pgid:103,command:'/owned/engine __preview-worker'}];
+  const proof=proveControllerOwnership(child,engine,rows,{controllerPid:102,workerPid:103});assert.equal(proof.controllerPid,102);assert.deepEqual(proof.chain.map(row=>row.pid),[102,101,100]);
+  assert.throws(()=>proveControllerOwnership(child,engine,[...rows,{pid:999,ppid:1,pgid:999,command:'/owned/engine preview'}],{controllerPid:999}),/owned|ancestor|group/i);
+  assert.throws(()=>proveControllerOwnership(child,engine,rows,{controllerPid:101}),/engine|controller/i);
+  assert.throws(()=>proveControllerOwnership(child,engine,rows,{controllerPid:102,workerPid:101}),/worker|parent/i);
+});
+
+async function inertCandidate(t){
+  // Protocol/controller fixture only: no candidate authentication or native
+  // acceptance is claimed by these injected dependencies.
+  const model=await import(statePath),directory=temp(t),put=(name,bytes)=>{const file=path.join(directory,name);fs.writeFileSync(file,bytes);return model.readSnapshot(file);};
+  const inputs=put('source-inputs.json','[["inert",0,"'+ '0'.repeat(64)+'"]]'),tgz=put('package.tgz','inert npm package, never installed'),source={commit:'a'.repeat(40),inputSha256:inputs.identity.sha256};
+  const version={distribution:'candidate',sourceCommit:source.commit,sourceInputSha256:source.inputSha256},versionFile=put('VERSION.json',JSON.stringify(version)),snapshot=put('candidate.json',JSON.stringify({source,tarball:{path:'package.tgz',size:tgz.identity.bytes,sha256:tgz.identity.sha256}}));
+  return{directory,tgz,snapshot,source,version,files:new Map([['source-inputs.json',inputs],['release-dir/VERSION.json',versionFile]])};
+}
+
+test('provider scope archives the supplied manifest and never claims final candidate certification',async t=>{
+  const candidate=await inertCandidate(t),{runProviders}=await import(modulePath),model=await import(statePath),outputDir=path.join(temp(t),'providers'),manifest=path.join(temp(t),'sessions.json');fs.writeFileSync(manifest,'{"schemaVersion":1,"kind":"phoenix-diagram-p3-provider-manifest","providers":[]}');
+  let called=0;const result=await runProviders({stage:'providers',candidateDir:candidate.directory,providerManifest:manifest,outputDir},{candidateLoader:(_directory,_target,options)=>{assert.equal(options.profile,'p3');return candidate;},validateProviders:async options=>{called++;assert.equal(options.profile,'p3');assert.equal(options.manifest.providers.length,0);return{schemaVersion:1,kind:'phoenix-diagram-p3-provider-report',profile:'p3',status:'incomplete',providers:[],diagnostics:[{message:'No actual sessions in this unit fixture'}]};}});
+  assert.equal(called,1);assert.equal(result.exitCode,3);assert.equal(result.providers.status,'incomplete');assert.equal(result.finalCandidate.handoff,'pending-aggregate');assert.equal(path.dirname(result.providers.manifest.path),result.runRoot);model.readBound(result.providers.manifest);
+  assert.equal(fs.readFileSync(manifest,'utf8'),'{"schemaVersion":1,"kind":"phoenix-diagram-p3-provider-manifest","providers":[]}');
+  const alias=path.join(temp(t),'candidate-alias');fs.symlinkSync(candidate.directory,alias);
+  await assert.rejects(runProviders({stage:'providers',candidateDir:candidate.directory,providerManifest:manifest,outputDir:path.join(alias,'must-not-create')},{candidateLoader:()=>candidate}),/candidate inventory/);assert(!fs.existsSync(path.join(candidate.directory,'must-not-create')));
+});
+
+test('all preserves a failed child consumer and does not start author-tools or promote the candidate',async t=>{
+  const candidate=await inertCandidate(t),{runAll}=await import(modulePath),model=await import(statePath),outputDir=path.join(temp(t),'all');let consumeCalls=0,authorCalls=0;
+  const result=await runAll({stage:'all',candidateDir:candidate.directory,outputDir},{candidateLoader:()=>candidate,consume:async options=>{consumeCalls++;assert.equal(options.profile,'p3');assert.equal(options.explore,true);assert.equal(options.locale,true);assert.equal(options.evidence,undefined);model.privateDirectory(options.evidenceDir);const state={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',profile:'p3',status:'failed',automatedStatus:'not-run',phase:'failed',scopes:['explore','locale']};return{state,stateFile:model.writeNew(path.join(options.evidenceDir,'consumer-state.json'),state)};},authorTools:async()=>{authorCalls++;throw new Error('Failed consumption cannot launch author tools');}});
+  assert.equal(consumeCalls,1);assert.equal(authorCalls,0);assert.equal(result.exitCode,1);assert.equal(result.packageConsumer.status,'failed');assert.equal(result.finalCandidate.status,'incomplete');assert.equal(result.consumerStateFile.path,path.join(result.runRoot,'consumer/consumer-state.json'));model.readBound(result.consumerStateFile);
+});
+
+test('wrapper automatic gates, local image review and provider evidence stay separate',async()=>{
+  const {recomputeAcceptance}=await import(statePath);
+  const state={packageConsumer:{status:'automated-pass',automatedStatus:'pass',phase:'pending-review',scopes:['explore','evidence','locale']},authorTools:{status:'incomplete',automatedStatus:'pass'},migration:{status:'not-run'},providers:{status:'not-run'}};
+  assert.equal(recomputeAcceptance(state).automatedStatus,'not-run');state.migration.status='pass';assert.equal(recomputeAcceptance(state).automatedStatus,'pass');assert.equal(state.status,'incomplete');assert.equal(state.localStatus,'incomplete');
+  Object.assign(state.packageConsumer,{status:'pass',phase:'complete'});state.authorTools.status='pass';assert.equal(recomputeAcceptance(state).localStatus,'complete');assert.equal(state.status,'incomplete');state.providers.status='pass';assert.equal(recomputeAcceptance(state).status,'pass');assert.equal(state.finalCandidate.handoff,'pending-aggregate');
+  state.packageConsumer.scopes=['explore','locale'];assert.equal(recomputeAcceptance(state).localStatus,'incomplete');assert.equal(state.status,'incomplete');
+});
+
+test('workflow outputs preserve child state keys and reject multiline paths without partial output',async t=>{
+  const {writeWorkflowOutputs}=await import(modulePath),file=path.join(temp(t),'github-output');fs.writeFileSync(file,'state_path=/consumer/original.json\nevidence_dir=/consumer\n');
+  writeWorkflowOutputs({stateFile:{path:'/all/state.json'},runRoot:'/all'},file);const before=fs.readFileSync(file,'utf8');assert.equal(before,'state_path=/consumer/original.json\nevidence_dir=/consumer\np3_state_path=/all/state.json\np3_evidence_dir=/all\n');
+  assert.throws(()=>writeWorkflowOutputs({stateFile:{path:'/all/state.json'},runRoot:'/all\nforged=value'},file),/single absolute path/);assert.equal(fs.readFileSync(file,'utf8'),before);writeWorkflowOutputs({},file);assert.equal(fs.readFileSync(file,'utf8'),before);
+});
+
+test('all resume retains its child states and shared archive verification cannot promote an unrun author scope',async t=>{
+  const candidate=await inertCandidate(t),api=await import(modulePath),model=await import(statePath),outputDir=path.join(temp(t),'all');let consumes=0,authors=0;
+  const deps={candidateLoader:()=>candidate,consume:async options=>{
+    consumes++;const root=model.privateDirectory(options.evidenceDir),engine=model.writeNew(path.join(root,'engine'),'inert engine, not executable'),engineIdentity={sourceInputSha256:candidate.source.inputSha256,binary:engine.identity};
+    const publicNpm={schemaVersion:1,kind:'npm-public-bin',bin:'phoenix-diagram',nodePath:'/node',npmCliPath:'/npm-cli.js',cwd:root,env:{PATH:'/isolated'},tarball:candidate.tgz.path,enginePath:engine.path};
+    const state={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',profile:'p3',target:'fixture',status:'automated-pass',automatedStatus:'pass',phase:'pending-review',scopes:['explore','locale'],source:candidate.source,candidate:{tarball:model.bound(candidate.tgz),ownedTarball:model.bound(candidate.tgz)},engine:{...engine,engineIdentity},publicNpm};
+    return{state,stateFile:model.writeNew(path.join(root,'consumer-state.json'),state)};
+  },consumerContext:options=>({state:model.jsonBound(model.bound(model.readSnapshot(options.resume)),'synthetic child state')}),releaseLoader:(_candidate,consumer)=>({distribution:'candidate',sourceInputSha256:candidate.source.inputSha256,sourceCommit:candidate.source.commit,files:{version:model.bound(candidate.files.get('release-dir/VERSION.json')),engine:model.bound(model.readSnapshot(consumer.engine.path))},engineIdentity:consumer.engine.engineIdentity,publicNpm:consumer.publicNpm,candidate:{record:model.bound(candidate.snapshot),tarball:model.bound(candidate.tgz)}}),authorTools:async(options,settings)=>{
+    authors++;if(options.resume){const ref=model.bound(model.readSnapshot(options.resume));return{...model.jsonBound(ref,'synthetic original author state'),stateFile:ref};}
+    const root=model.privateDirectory(options.outputDir),state={schemaVersion:1,kind:model.KIND,profile:'p3',stage:'author-tools',runId:'b'.repeat(32),runRoot:root,release:settings.releaseLoader(),cases:{},steps:{},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'},packageConsumer:{status:'not-applicable'},providers:{status:'not-applicable'},finalCandidate:{status:'not-applicable'}};model.recompute(state);return{...state,stateFile:model.writeNew(path.join(root,'state.json'),state)};
+  }};
+  const first=await api.runAll({stage:'all',candidateDir:candidate.directory,outputDir},deps);assert.equal(first.exitCode,3);assert.equal(first.automatedStatus,'not-run');assert.equal(first.authorTools.status,'incomplete');
+  const next=await api.runAll({stage:'all',candidateDir:candidate.directory,resume:first.stateFile.path},deps);assert.equal(next.exitCode,3);assert.equal(consumes,1);assert.equal(authors,2);assert.deepEqual(next.consumerStateFile,first.consumerStateFile);assert.deepEqual(next.authorToolsStateFile,first.authorToolsStateFile);
+  const state=model.jsonBound(next.stateFile,'unit wrapper state'),archive=new Map();
+  const capture=directory=>{for(const name of fs.readdirSync(directory)){const file=path.join(directory,name);if(fs.statSync(file).isDirectory())capture(file);else archive.set(file,fs.readFileSync(file));}};capture(candidate.directory);capture(outputDir);
+  const bytesFor=ref=>archive.get(ref.path),verifyConsumer=consumer=>assert.equal(consumer.automatedStatus,'pass');fs.unlinkSync(state.authorTools.anchor.release.files.engine.path);
+  assert.equal(model.verifyAcceptanceState(state,{bytesFor,verifyConsumer}).automatedStatus,'not-run');assert.throws(()=>model.verifyAcceptanceState(state,{verifyConsumer}),/ENOENT/);
+  const forged=structuredClone(state);forged.automatedStatus='pass';assert.throws(()=>model.verifyAcceptanceState(forged,{bytesFor,verifyConsumer}),/promoted/);
+  assert.throws(()=>model.verifyAcceptanceState(state,{bytesFor:ref=>ref.path===state.authorTools.state.path?Buffer.from('changed original state'):bytesFor(ref),verifyConsumer}),/bytes|identity/i);
+});

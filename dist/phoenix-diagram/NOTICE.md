@@ -25,6 +25,10 @@ ICU 适配及数据的 Unicode-3.0 许可和完整第三方 notices 保存在 [a
 
 `selectors` 0.38.0 的适用性来自 Stylo 提交 `572ecba2d1600e7c3d490586692a209faf703baa` 的 Cargo 声明及 `selectors/lib.rs` 原始 MPL-2.0 文件头；该提交未携带 MPL 全文。清单分别保留该源码文件和文件头的 SHA-256，并从其明确指向的 Mozilla 官方 MPL 2.0 取得全文：字节来自 [Mozilla Bedrock 固定提交中的版本 2.0 文本](https://github.com/mozilla/bedrock/blob/a15178c3c7c976c67b3641af77cae0b66093a175/media/MPL/2.0/index.txt)。这份通用许可正文独立于 Stylo 源码提交，不借用其他项目的 MIT/Apache 版权或宣称 Stylo 仓库自带该全文。
 
-完整快照和 legacy oracle 的导入闭包包含历史第三方品牌数据及对应原始 notices，供开发期参考。冻结源码独立于消费者运行资源，来源归档不进入 npm 包。P1 的运行资源不携带 Simple Icons 或官方品牌数据。
+完整快照和 legacy oracle 的导入闭包包含历史第三方品牌数据及对应原始 notices，供开发期参考。冻结源码独立于消费者运行资源，来源归档不进入 npm 包。历史 P1 的运行资源不携带 Simple Icons 或官方品牌数据。
+
+P3 的原生固定品牌目录原字节派生自该 3.1.0 快照的 `generated-brand-marks.mjs`，保留 107 项的图形和原始 provenance。Simple Icons 16.28.0 集合的 CC0 许可不替代各品牌记录的单独条款、商标或其他权利。目录及完整许可来源清单见 [assets/brand-license-sources.json](assets/brand-license-sources.json)，其固定身份登记在 `upstream/SOURCE.json` 的 `nativeBrands` 条目。八份全文保留集合 CC0、JavaScript MIT 及原目录已记载的 CC0、CC-BY-4.0、CC-BY-SA-3.0、CC-BY-SA-4.0、CC-BY-NC-SA-4.0 和 Apache-2.0；原始 Archify notices 与 Simple Icons DISCLAIMER 同时保留。未记录单独许可的品牌不据此推定为 CC0，也不宣称已获特定使用授权。
+
+构建与 P3 候选逐项核品牌目录、许可清单、全文和 notices 的来源元组及摘要。发行法律资源离线保存原目录 provenance、原始清单、全部全文与 notices；普通作图不联网补材料。完整迁移来源仍只用于开发期识别及测试，既不是用户目标备份，也不进入 npm 包。
 
 时间线 IANA 命名时区由 `chrono-tz` 0.10.4 编译期内置的 tzdata 2025b 计算，上述六个 ICU 专属 SystemV 时区使用独立原生规则；`chrono` 0.4.45 负责日期与固定偏移。两者的 MIT/Apache-2.0 全文随 Cargo.lock 从各自 crate 收集。tz 代码与数据按其 `tz/LICENSE` 属于公有领域，`chrono-tz` 的 LICENSE 同样声明其许可不适用于 tzdb 文件。

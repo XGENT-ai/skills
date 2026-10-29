@@ -3,7 +3,7 @@
 //! Provider selection and journal ordering are adapted from
 //! tools/phoenix-ui/crates/install/src/{cli,transaction,disk}.rs (Apache-2.0).
 //! Phoenix changes: diagram-only file allowlist, independent state, no hooks,
-//! settings, migration, personal installation, cache, or public rollback command.
+//! settings, personal installation, or cache management.
 
 use crate::diagnostic::Diagnostics;
 use serde::{Deserialize, Serialize};
@@ -13,6 +13,8 @@ use std::path::{Path, PathBuf};
 mod bundle;
 #[path = "install/disk.rs"]
 mod disk;
+#[path = "install/migration.rs"]
+mod migration;
 #[path = "install/plan.rs"]
 mod plan;
 #[path = "install/state.rs"]
@@ -34,6 +36,34 @@ pub struct InstallRequest {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
+pub enum MigrationMode {
+    FromArchify,
+    Recover,
+    Rollback,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationRequest {
+    pub mode: MigrationMode,
+    pub project: PathBuf,
+    pub providers: Option<Vec<String>>,
+    pub bundle_root: Option<PathBuf>,
+    pub transaction_id: Option<String>,
+    pub dry_run: bool,
+    pub confirm_remove_archify: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LegacyRemoval {
+    pub path: String,
+    pub source: String,
+    pub status: String,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum InstallStatus {
     Planned,
     Installed,
@@ -41,6 +71,8 @@ pub enum InstallStatus {
     Conflict,
     RecoveryRequired,
     Recovered,
+    RolledBack,
+    Cancelled,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -101,6 +133,14 @@ pub struct InstallReceipt {
     pub reload_steps: Vec<String>,
     pub recovery_command: Option<String>,
     pub local_ignore: Vec<String>,
+    pub transaction_schema_version: u32,
+    pub migration_sources: Vec<String>,
+    pub removals: Vec<LegacyRemoval>,
+    pub preserved: Vec<String>,
+    pub rollback_command: Option<String>,
+    pub legacy_backup_policy: String,
+    pub legacy_restoration: String,
+    pub reinstall_instructions: Vec<String>,
 }
 impl InstallReceipt {
     pub fn exit_code(&self) -> u8 {
@@ -160,6 +200,16 @@ pub fn recover_install(project: &Path) -> InstallResult<InstallReceipt> {
     transaction::recover(project, &mut |_, _| Ok(()))
 }
 
+pub fn migrate(request: &MigrationRequest) -> InstallResult<InstallReceipt> {
+    migration::migrate(request, &mut |_, _| Ok(()))
+}
+pub fn recover_migration(project: &Path, id: &str) -> InstallResult<InstallReceipt> {
+    migration::recover(project, id, &mut |_, _| Ok(()))
+}
+pub fn rollback(project: &Path, id: &str, dry_run: bool) -> InstallResult<InstallReceipt> {
+    migration::rollback(project, id, dry_run, &mut |_, _| Ok(()))
+}
+
 fn invalid(code: &str, message: impl Into<String>) -> InstallError {
     InstallError {
         kind: InstallErrorKind::Invalid,
@@ -176,6 +226,9 @@ fn receipt(command: &str, project: &Path) -> InstallReceipt {
         diagnostics: vec![], engine: None, npm_package_version: None, project: project.into(), providers: vec![],
         bundle_manifest_sha256: None, version_manifest_sha256: None, writes: vec![], unchanged: vec![], conflicts: vec![], transaction_id: None,
         journal: None, backup: None, recovered: vec![], reload_steps: vec!["Reload the project in a new provider session and verify the loaded phoenix-diagram skill path.".into()],
+        transaction_schema_version: 2, migration_sources: vec![], removals: vec![], preserved: vec![], rollback_command: None,
+        legacy_backup_policy: "none".into(), legacy_restoration: "not-supported".into(),
+        reinstall_instructions: vec![],
         recovery_command: None, local_ignore: vec!["Keep .phoenix-diagram/install/ machine-local in your local ignore configuration; the installer does not edit shared ignore files.".into()],
     }
 }
@@ -212,6 +265,14 @@ pub(crate) enum Checkpoint {
     BeforeActive,
     AfterActive,
     Committed,
+    BeforeLegacyRemove(String),
+    AfterLegacyRemove(String),
+    BeforeRollback(String),
+    AfterRollback(String),
+    AfterRollbackJournalRetire,
+    AfterRollbackJournalPublish,
+    RollbackAuditArchived,
+    RollbackCompatibilityPublished,
     BeforeRecover(String),
     AfterRecoverRetire(String),
     AfterRecoverLink(String),
@@ -236,6 +297,32 @@ pub(crate) mod test_support {
         observer: super::Observer<'_>,
     ) -> super::InstallResult<super::InstallReceipt> {
         super::transaction::recover(project, observer)
+    }
+    pub(crate) fn migrate(
+        request: &super::InstallRequest,
+        confirm: bool,
+        dry_run: bool,
+        observer: super::Observer<'_>,
+    ) -> super::InstallResult<super::InstallReceipt> {
+        super::migration::from_install(request, confirm, dry_run, observer)
+    }
+    pub(crate) fn recover_migration(
+        project: &std::path::Path,
+        id: &str,
+        observer: super::Observer<'_>,
+    ) -> super::InstallResult<super::InstallReceipt> {
+        super::migration::recover(project, id, observer)
+    }
+    pub(crate) fn rollback(
+        project: &std::path::Path,
+        id: &str,
+        dry_run: bool,
+        observer: super::Observer<'_>,
+    ) -> super::InstallResult<super::InstallReceipt> {
+        super::migration::rollback(project, id, dry_run, observer)
+    }
+    pub(crate) fn v1_fixture(project: &std::path::Path) {
+        super::migration::v1_fixture(project).unwrap();
     }
     pub(crate) fn hold_lock(
         project: &std::path::Path,

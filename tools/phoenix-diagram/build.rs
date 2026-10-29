@@ -4,8 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// Of the skill, only the embedded schemas define engine behavior; its text,
-// examples and derived ENGINE.json do not.
+// Embedded schemas and the five frozen legacy samples bind the native source
+// identity. Skill text, other examples and derived ENGINE.json do not.
 const INPUTS: &[&str] = &[
     "package.json",
     "tools/phoenix-diagram/Cargo.toml",
@@ -13,10 +13,16 @@ const INPUTS: &[&str] = &[
     "tools/phoenix-diagram/build.rs",
     "tools/phoenix-diagram/src",
     "tools/phoenix-diagram/assets",
+    "tools/phoenix-diagram/migration-sources/archify-v1.json",
     "tools/phoenix-diagram/viewer",
     "tools/phoenix-diagram/upstream/SOURCE.json",
     "tools/phoenix-diagram/upstream/legacy-2.17/schemas",
     "skills/phoenix-diagram/schemas",
+    "skills/phoenix-diagram/examples/legacy.web-app.architecture.json",
+    "skills/phoenix-diagram/examples/legacy.agent-tool-call.workflow.json",
+    "skills/phoenix-diagram/examples/legacy.async-job-roundtrip.sequence.json",
+    "skills/phoenix-diagram/examples/legacy.product-analytics.dataflow.json",
+    "skills/phoenix-diagram/examples/legacy.deployment-release.lifecycle.json",
 ];
 
 fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {

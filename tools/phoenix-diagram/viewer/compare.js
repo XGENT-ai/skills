@@ -28,7 +28,7 @@
 
   function syncTheme(frame) {
     const doc = frame.contentDocument;
-    if (!doc) return;
+    if (!doc?.documentElement) return;
     if (doc.documentElement.dataset.theme !== theme) {
       const control = frame.contentWindow.PhoenixDiagram?.theme;
       if (control?.toggle) control.toggle();
@@ -94,7 +94,15 @@
     loaded.set(frame, ready);
     const onLoad = () => {
       const doc = frame.contentDocument;
-      if (!doc?.querySelector('#phoenix-diagram-metadata')) return;
+      if (!doc?.head || !doc.querySelector('#phoenix-diagram-metadata')) return;
+      // The parent expands to include the Reader index. A viewport-sized
+      // diagram stage would grow again after each iframe height adjustment.
+      if (!doc.getElementById('phoenix-comparison-layout')) {
+        const style = doc.createElement('style');
+        style.id = 'phoenix-comparison-layout';
+        style.textContent = '.diagram-container{min-height:0!important}';
+        doc.head.appendChild(style);
+      }
       syncTheme(frame);
       resolve();
       if (typeof ResizeObserver === 'function') {

@@ -1,6 +1,6 @@
 # Phoenix Diagram 候选
 
-Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。它与 archify 并存。数值图表、仪表盘及其他 infographic 不在范围内。
+Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。仓库以 phoenix-diagram 为唯一活跃图解入口；其他项目及个人旧安装须分别处理。数值图表、仪表盘及其他 infographic 不在范围内。
 
 目前实现与验收仍在进行，四平台、真实 provider 和最终包的完整交接尚未完成。candidate 的 loopback 下载地址仅用于隔离验收；本次没有公开 npm/R2 发布。
 
@@ -19,6 +19,16 @@ node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
 默认按项目已有 provider 目录选择，空项目用 `.claude`。`codex` 识别 `.agents` 或 `.codex`，diagram skill 仅进入 `$PROJECT/.agents/skills/phoenix-diagram`；本工具不新增 hooks、settings、AGENTS 或个人级 skill。新开 Claude Code/Codex 项目会话后核对实际加载的 skill 路径。安装状态位于 `$PROJECT/.phoenix-diagram/install/`，请按输出提示在本地忽略；不要删除整个目录作为恢复手段。
 
 引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。用户或已提供材料尚未明确给出该路径时，先询问并停止安装，等待答复；安装授权不代替资源路径，不搜索项目外目录、猜路径、省略 `--release-dir` 试装或执行占位符。该目录按当前 VERSION/ENGINE 的原字节、引擎摘要和许可校验；遗失候选包或配套目录时须重新取得同一 tgz 和资源。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。candidate/release 离线目录必须含四平台；development 只校验清单声明的全部平台资源，单平台开发制品不计四平台验收。目录缺少声明的资源、清单或许可证时直接失败，不回退在线下载。
+
+## 旧入口迁移与安装恢复
+
+普通安装保留旧 Archify。只有明确请求迁移时，按[包内迁移合同](../skills/phoenix-diagram/references/migration.md)先 dry-run 查看精确项目/provider/来源及逐项路径，再以覆盖该范围的明确确认执行 `migrate --from-archify --confirm-remove-archify`。仅完整匹配固定来源的项目副本可移除；自定义、额外/缺失文件、链接、外部管理与个人安装保留。旧 skill 不备份，回滚不重建，恢复旧入口须按回执指引显式重装；原 JSON 和已有 HTML 保持。
+
+联合入口为 `node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" --migrate-archify --diagram-release-dir="$RELEASE_DIR"`，使用已存在的匹配引擎，先展示目标和后果。TTY 肯定答复后才移除；拒绝/EOF 不迁移。非交互须另加 `--confirm-remove-archify`；单独确认标志无效。此分支跳过 XGENT hooks/settings/AGENTS 和 UI，`--no-phoenix-diagram` 仍跳过并保留，普通联合安装继续原流程。
+
+中断后读取真实 `transactionId`、已删/剩余旧项与 `recoveryCommand`，只恢复指定事务。`rollbackCommand` 仅逆向恢复当前 committed 事务的 Diagram 受管写入，支持 v1/v2；预检发现后来修改先保持零变更，同一 ID 幂等，不跨过后来安装。恢复旧 Diagram active 时原生重新绑定实际文件身份，不手工复制回执。若部分回滚已恢复旧 launcher，优先原样执行回执给出的已验证新原生引擎命令，不从 PATH 选择旧引擎。普通命令仍核 active，恢复入口不要求损坏/pending active 先完整提交；不自动下载或重装。
+
+回执的 `legacyBackupPolicy: "none"`、`legacyRestoration: "not-supported"` 与 `reinstallInstructions` 必须交接；`backup` 只指 Diagram 受管文件。重开 provider 会话核实际加载的新 skill 路径，未处理的外部/个人入口不计全机唯一入口已生效。迁移成功也不代表图像已重新验收。
 
 ## 从候选到 HTML
 
@@ -65,7 +75,7 @@ recover-output <private-recovery-directory> --json
 install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json
 ```
 
-显式 quality/input-contract 与 candidate 已声明值冲突会失败。保留旧合同默认值、固定节点、方向、标签与 route pins；延期到 P3 的品牌、guided views 与旧播放偏好在兼容回执中逐项列出，不代表完整兼容已通过。普通 stdout 为一个 JSON；不要仅用退出码判断完整交付。
+显式 quality/input-contract 与 candidate 已声明值冲突会失败。保留旧合同默认值、固定节点、方向、标签与 route pins。品牌由固定目录或摘要固定的本地资源支持；旧 guided views 为 `unsupported-display`，旧播放偏好为 `ignored-display`，首次仍是 Still。这些终局处理列在 `compatibility.dispositions`，不再称为延期，核心兼容通过不能代替完整展示兼容。见[兼容约定](../skills/phoenix-diagram/references/compatibility.md)。普通 stdout 为一个 JSON，显式 preview 为 NDJSON 事件流；不要仅用退出码判断完整交付。
 
 主要元素带 `sources`、`meta.repository` 固定 40 位提交时，用 `--repo-root` 指向该仓库顶层目录。核对只读、不联网：origin 一致、提交存在、文件与行在该提交中存在，并逐段比较工作树文件（不跟随符号链接）。凭据 URL、路径逃逸、非法行区间、provider 与主机不符或网页链接用了不支持的主机会在输入阶段失败。其他不能核对的情形（缺 `--repo-root`、git 不可用或超时、缺提交或对象、文件缺失、行越界、工作树不同、旧版 git 遇部分克隆）只把对应来源记为待核实并附原因，HTML 照常生成；回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，与四门结论分开报告。时间线的日期型记录用 `precision: "day"`，没有记录的耗时瀑布用 `meta.evidence: "illustrative"`。
 
@@ -81,7 +91,15 @@ install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] -
 "$PD" review-record diagram.html --record review-01.json --json
 ```
 
-随后读取返回的 `evidence.summaryReceipt.path`。四门 pass、视觉 passed、`deliveryStatus: complete` 才是完整交付；原 `deliveryReceiptId`、`browserReceiptIdentity`、输入/HTML/config/engine/四图绑定必须保持。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize。封存记录已成功但 summary 写失败时，以同一记录字节重试 review-record；修改 candidate 则生成新交付、新截图与新审核。不能拿旧图或旧回执补证。 另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.deferredFields`；有延期字段时，在这次答复中逐项说明字段、当前处理结果与延期阶段。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+随后读取返回的 `evidence.summaryReceipt.path`。四门 pass、视觉 passed、`deliveryStatus: complete` 才是完整交付；原 `deliveryReceiptId`、`browserReceiptIdentity`、输入/HTML/config/engine/四图绑定必须保持。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize。封存记录已成功但 summary 写失败时，以同一记录字节重试 review-record；修改 candidate 则生成新交付、新截图与新审核。不能拿旧图或旧回执补证。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`，逐项交接非 `supported` 字段及实际原因。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+
+## 按请求启用的作者工具
+
+- [品牌资源](../skills/phoenix-diagram/references/brand-marks.md)：明确要求品牌标识时查询固定目录，只有明确采集请求才访问用户提供的公共 URL。普通编译只读本地固定资源，不因节点名称猜品牌或联网。
+- [本地预览](../skills/phoenix-diagram/references/preview.md)：明确请求才启动，`--open` 才打开系统浏览器；保留 last-good 并报告新尝试错误。服务停止和页面可用不等于正式交付通过。
+- [架构比较](../skills/phoenix-diagram/references/architecture-compare.md)：明确请求比较两份 architecture 时执行，提供 Before/Delta/After，走专用严格检查、12 张截图实际审核及两门 summary，不推断原因、风险或可合并性。
+
+普通作图继续使用单图 finalize 与四图审核，不自动附带上述操作。维护者增加类型时遵守[扩展约定](../skills/phoenix-diagram/references/extending-types.md)。
 
 ## 中断后的文件恢复
 
@@ -128,13 +146,24 @@ HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风�
 
 ## 验证结果与发行边界
 
-阶段A在本机 macOS arm64 开发引擎上，十类共15例（原五类的新/旧合同各一例、新五类各一例）通过四道自动门和确定性检查，实际查看60张暗亮截图后经原身份 `review-record` 达到完整交付。15例的Reader操作、20项导出、打印与剪贴板检查，离线生成/检查/阅读导出和8个公开中断恢复场景均已通过。十类探索（筛选、Route、Reach、树折叠、概览、展示、深链接、键盘与详情）通过，有已著关系的八类各导出一张Route与Reach范围卡片。冻结3.1.0参考包的25份JSON核心事实可被消费，原样交付均通过四道自动门并经实际看图，原JSON与15份参考HTML字节不变。本仓固定提交的来源核对覆盖已核对（含GitHub链接存在性）、工作树改动、仅本地和未提供来源四种显示，示意耗时与日精度时间线已核对。五种界面语言与fr英文回退均实际看图。这些开发结果不代替最终 npm tgz 的消费验收。
+此前P2在本机 macOS arm64 开发引擎上，十类共15例（原五类的新/旧合同各一例、新五类各一例）通过四道自动门和确定性检查，实际查看60张暗亮截图后经原身份 `review-record` 达到完整交付。15例的Reader操作、20项导出、打印与剪贴板检查，离线生成/检查/阅读导出和8个公开中断恢复场景均已通过。十类探索（筛选、Route、Reach、树折叠、概览、展示、深链接、键盘与详情）通过，有已著关系的八类各导出一张Route与Reach范围卡片。冻结3.1.0参考包的25份JSON核心事实可被消费，原样交付均通过四道自动门并经实际看图，原JSON与15份参考HTML字节不变。本仓固定提交的来源核对覆盖已核对（含GitHub链接存在性）、工作树改动、仅本地和未提供来源四种显示，示意耗时与日精度时间线已核对。五种界面语言与fr英文回退均实际看图。这些历史开发结果不代替P3最终 npm tgz 的消费验收。
 
-最终候选须另附 `kind: phoenix-diagram-candidate-aggregate`、`profile: "p2"` 的聚合回执。先核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取以下三类实际结果：
+P3最终候选须另附 `kind: phoenix-diagram-candidate-aggregate`、`profile: "p3"` 的聚合回执。先核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取以下实际结果：
+
 - 四个平台与精确Node18.20.8对同一tgz的自动消费：15例四门全过，视觉保持待审。
-- darwin-arm64本机对同一tgz的完整消费：15例实际看图后 `review-record`，以及探索与范围卡片、来源与界面语言范围。
-- Claude Code、Codex真实会话：它们在bundle与引擎来源都相同的development包上取得。
+- 四个平台另核品牌/比较/显式预览、真实public npm进程与迁移故障；本机darwin-arm64对同一tgz完成15例及品牌/比较的实际看图、`review-record`、探索/范围卡片、来源、界面语言与文档最终页检查。
+- Claude Code、Codex各18个全新中性项目/原生会话：同一候选、冻结题面/材料、真实模型/端点类别、实际加载文件、命令原件和独立语义/图像观察。P3不沿用P2的抽样或旧development会话复用。
+- 完整品牌来源/全文、三份完整旧来源与五份legacy原例的同字节链；旧v1兼容另用明确、独立认证的历史候选作安装前置，不能充当第二个最终候选。
 
 完整Reader范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
 
 本说明在最终封包前固定，封包后的验收结果保存在绑定原tgz摘要的独立聚合回执中。补写结果或修复包内文件会改变tgz身份，需要重新装配并取得适用的新证据。当前尚未取得最终同包四平台及真实provider的完整通过结果，也没有公开npm/R2发行；development清单和候选loopback地址不能用于宣称公开在线安装已可用。
+
+维护者从已认证、独立转移的harness目录执行最终检查，显式给出候选、历史v1前置和来源验收仓库：
+
+```sh
+node tools/phoenix-diagram/tests/p3-acceptance.mjs --stage all --candidate-dir "$CANDIDATE" --legacy-candidate-dir "$LEGACY_V1" --evidence-repo "$EVIDENCE_REPO" --output-dir "$NEW_RUN"
+node tools/phoenix-diagram/tests/p3-acceptance.mjs --stage providers --candidate-dir "$CANDIDATE" --provider-manifest "$PROVIDERS" --output-dir "$NEW_PROVIDER_RUN"
+```
+
+all默认只使用该harness中固定的官方测试资源描述符与惰性旧目标数据；后者从不执行，不进入产品。providers仅验证原始会话清单，不启动宿主或合成结果。all的consumer、author-tools、migration、providers各保存独立原件；缺图片审核、来源scope、旧v1前置或真实provider时保持incomplete。实际看图后用原all状态的`--resume`与同run的`--review-file`登记两个child审核映射，可同时给`--provider-manifest`；不重生成已审核图。已有迁移record保留并重核，不隐式重跑已通过case。CI的P3自动门可通过而CLI仍exit3，最终完成必须以本机完整审核及API认证的聚合结果为准。
