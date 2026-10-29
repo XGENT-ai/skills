@@ -193,15 +193,53 @@ function originalCopy(value, tree, entry, read, label) {
   assert(same(physical(observed), physical(value.original.binding)) && observed.mode === value.original.binding.mode && observed.sha256 === value.original.identity.sha256 && observed.bytes === value.original.identity.bytes, label + ' original binding differs from tree observation');
   return bytes;
 }
-function verifyNoLegacyBackup(tree, journal) {
+function verifyCleanupOwner(tree, parentPath, read) {
+  const cleanup = parentPath + '/.phoenix-diagram-output-cleanup', ownerPath = cleanup + '/owner-v1.json';
+  const parent = fileAt(tree, parentPath), directory = fileAt(tree, cleanup), row = fileAt(tree, ownerPath);
+  for (const value of [parent, directory]) assert(value?.type === 'directory' && value.mode === 0o700 && value.uid === tree.physical.uid, 'Cleanup owner has an unowned directory');
+  assert(row?.type === 'file' && row.mode === 0o600 && row.uid === tree.physical.uid && row.links === 1, 'Cleanup owner is not an original private file');
+  assert.deepEqual(tree.entries.filter(value => value.path.startsWith(cleanup + '/')).map(value => value.path), [ownerPath], 'Cleanup directory contains unknown members');
+  const bytes = read({ path: path.join(tree.root, ownerPath), identity: { bytes: row.bytes, sha256: row.sha256 }, binding: { ...physical(row), mode: row.mode, uid: row.uid, links: row.links } }, 'original cleanup owner');
+  assert(same(identity(bytes), { bytes: row.bytes, sha256: row.sha256 }), 'Cleanup owner bytes differ from the observed tree');
+  const owner = JSON.parse(bytes);
+  assert.deepEqual(Object.keys(owner), ['schemaVersion', 'tool', 'kind', 'parentPath', 'parent', 'directory', 'recordIdentity', 'checksum'], 'Cleanup owner fields differ');
+  for (const value of [owner.parent, owner.directory, owner.recordIdentity]) assert.deepEqual(Object.keys(value), ['device', 'inode'], 'Cleanup owner physical fields differ');
+  assert(owner.schemaVersion === 1 && owner.tool === 'phoenix-diagram' && owner.kind === 'output-cleanup-directory', 'Unknown cleanup owner');
+  assert.equal(owner.parentPath, path.join(tree.root, parentPath), 'Cleanup owner names another parent');
+  assert(same(owner.parent, physical(parent)) && same(owner.directory, physical(directory)) && same(owner.recordIdentity, physical(row)), 'Cleanup owner physical binding differs');
+  assert.equal(owner.checksum, identity(Buffer.from(JSON.stringify({ ...owner, checksum: '' }))).sha256, 'Cleanup owner checksum differs');
+  assert(bytes.equals(Buffer.from(JSON.stringify(owner) + '\n')), 'Cleanup owner encoding is not canonical');
+}
+export function verifyNoLegacyBackup(tree, journal, read) {
   assert(journal.operations.every(op => op.path === ACTIVE || /^\.(?:agents|claude|aider|continue|cursor|gemini|github|kiro|opencode|roo|trae|windsurf)\/skills\/phoenix-diagram\//.test(op.path)), 'Journal adopted a legacy skill write');
+  let cleanupVerified = false;
   for (const row of tree.entries.filter(row => row.path.startsWith(STATE + '/'))) {
     assert(!row.path.includes('/archify/') && !row.path.endsWith('/archify') && !/\.(?:tar|tgz|gz)$/.test(row.path), 'Private installation state contains a legacy target backup');
     const match = new RegExp('^' + STATE.replaceAll('.', '\\.') + '/transactions/' + journal.transactionId + '/before/(.+)$').exec(row.path);
-    if (!match || row.type !== 'file') continue;
+    if (!match) continue;
+    if (['.phoenix-diagram-output-cleanup', '.phoenix-diagram-output-cleanup/owner-v1.json'].includes(match[1])) {
+      if (!cleanupVerified) { verifyCleanupOwner(tree, STATE + '/transactions/' + journal.transactionId + '/before', read); cleanupVerified = true; }
+      continue;
+    }
+    assert.equal(row.type, 'file', 'Unknown target backup member');
     if (/^\.phoenix-diagram-lock-[a-f0-9]{64}\.lock$/.test(match[1])) continue;
     assert(/^\d+$/.test(match[1]), 'Unknown target backup member'); const op = journal.operations[Number(match[1])]; assert(op?.backup && op.backupPath === 'before/' + match[1], 'Backup does not belong to a new Diagram write'); contentAndPhysical(row, op.backup, 1);
   }
+}
+export function verifyMigrationReceiptEngine(receipt, selected, { definition, role, journal, originalV1, legacyV1 } = {}) {
+  if (definition?.id === 'rollback-compat-published' && definition.requiresLegacyV1 === true && ['recover', 'rollback', 'repeat'].includes(role)) {
+    // Rust decorate() describes the installation selected by its durable
+    // journal. Actual execution remains bound separately by verifyActualTransport.
+    assert(originalV1?.schemaVersion === 1 && originalV1.active?.schemaVersion === 1 && journal?.schemaVersion === 2 && legacyV1, 'Historical recovery lacks its original v1 journal');
+    assert(same(journal.active, originalV1.active) && same(originalV1.active.engine, legacyV1.engine.engineIdentity), 'Historical recovery names another installation');
+    assert.equal(journal.transactionId, originalV1.transactionId); assert.equal(journal.active.transactionId, originalV1.transactionId);
+    assert.equal(receipt?.command, 'migrate'); assert.equal(receipt.status, 'rolled-back');
+    assert.equal(receipt.transactionId, journal.transactionId); assert.equal(receipt.transactionSchemaVersion, journal.schemaVersion);
+    assert(same(receipt.engine, journal.active.engine), 'Receipt belongs to another historical installation');
+    for (const [field, activeField] of [['npmPackageVersion', 'npmPackageVersion'], ['bundleManifestSha256', 'bundleManifestSha256'], ['versionManifestSha256', 'engineManifestSha256']]) assert.equal(receipt[field], journal.active[activeField], 'Historical receipt installation metadata differs');
+    return;
+  }
+  if (receipt?.engine) assert(same(receipt.engine, selected.engine.engineIdentity), 'Receipt belongs to another native engine');
 }
 function verifyActive(tree, active, selected, candidate) {
   sealed(active); assert(same(active.engine, selected.engine.engineIdentity), 'Installed active names another engine');
@@ -276,15 +314,15 @@ function verifyCase(entry, definition, report, context, fixture) {
     const stdout = read(original.stdout, 'original migration stdout').toString('utf8'); read(original.stderr, 'original migration stderr');
     original.receipt = saved.role === 'interrupted' ? null : JSON.parse(stdout);
     if (!['interrupted', 'refusal'].includes(saved.role)) assert(same(original.environmentOverrides, {}), 'Unexpected process environment override');
-    if (original.receipt?.engine) assert(same(original.receipt.engine, selected.engine.engineIdentity), 'Receipt belongs to another native engine');
     processes.set(saved.role, original);
   }
   const journals = new Map();
   for (const saved of entry.journals) {
     assert(!journals.has(saved.role)); const name = { 'v1-original': 'before', committed: 'applied', checkpoint: 'checkpoint', recovered: 'recovered', 'rolled-back': 'rolled-back', protected: 'after' }[saved.role]; assert(name && trees[name]);
     const value = sealed(JSON.parse(originalCopy(saved, trees[name], entry, read, 'original durable migration journal'))); assert.equal(value.transactionId, entry.transactionId); assert.equal(value.tool, 'phoenix-diagram'); assert(same(value.project, physical(trees.before.physical)));
-    assert(value.operations?.length && value.active.transactionId === entry.transactionId); if (saved.role !== 'protected') verifyNoLegacyBackup(trees[name], value); journals.set(saved.role, value);
+    assert(value.operations?.length && value.active.transactionId === entry.transactionId); if (saved.role !== 'protected') verifyNoLegacyBackup(trees[name], value, read); journals.set(saved.role, value);
   }
+  for (const saved of entry.processes) verifyMigrationReceiptEngine(processes.get(saved.role).receipt, saved.old ? report.legacyV1 : report.binding, { definition, role: saved.role, journal: journals.get(saved.role === 'recover' ? 'recovered' : 'rolled-back'), originalV1: journals.get('v1-original'), legacyV1: report.legacyV1 });
   if (definition.kind === 'refusal') {
     const process = processes.get('refusal'); assert(process); let expected = argsFor(entry.project);
     if (definition.id === 'dry-run') expected = [...expected, '--dry-run']; if (definition.id === 'unconfirmed') expected = expected.filter(arg => arg !== '--confirm-remove-archify');
