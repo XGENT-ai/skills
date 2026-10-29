@@ -97,7 +97,9 @@ function packTar(members) {
     chunks.push(header, entry.bytes, Buffer.alloc((512 - entry.bytes.length % 512) % 512));
   }
   chunks.push(Buffer.alloc(1024));
-  return gzipSync(Buffer.concat(chunks), { level: 9 });
+  const compressed = gzipSync(Buffer.concat(chunks), { level: 9 });
+  compressed[9] = 19; // Preserve the frozen archive's macOS OS byte on every producer host.
+  return compressed;
 }
 
 function subTree(members, prefix) {
