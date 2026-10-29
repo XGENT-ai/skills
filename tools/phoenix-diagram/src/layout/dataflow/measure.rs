@@ -94,11 +94,16 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
                 }
             })
             .fold(0.0, f64::max);
+        let title_width = if raw.get("brand").is_some() {
+            units(input, string(raw, "label")) * 10.0 * 0.6 + 8.0 + 48.0
+        } else {
+            0.0
+        };
         let automatic_width = 112.0_f64.max(
             168.0_f64
                 .min((cx - 24.0) * 2.0)
                 .min((view.x - 24.0 - cx) * 2.0)
-                .min(context_width.ceil()),
+                .min(context_width.max(title_width).ceil()),
         );
         let width = number(
             raw,
@@ -598,7 +603,11 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
             let raw = &node.raw;
             let label = string(raw, "label");
             let has_sub = !string(raw, "sublabel").is_empty();
-            let label_font = fitted(input, label, node.bounds.width, 10.0, 8.0);
+            let label_font = if raw.get("brand").is_some() {
+                10.0
+            } else {
+                fitted(input, label, node.bounds.width, 10.0, 8.0)
+            };
             let sub_font = fitted(
                 input,
                 string(raw, "sublabel"),
@@ -666,6 +675,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                 string(raw, "icon")
             };
             Node {
+                brand: None,
                 authored: authored(
                     raw,
                     "nodes",

@@ -31,6 +31,7 @@ fn text(value: &str, x: f64, y: f64) -> Text {
 fn scene() -> CompiledDiagram {
     let nodes = vec![
         Node {
+            brand: None,
             authored: authored(
                 "a",
                 "frontend",
@@ -48,6 +49,7 @@ fn scene() -> CompiledDiagram {
             detail_rows: Vec::new(),
         },
         Node {
+            brand: None,
             authored: authored(
                 "b",
                 "backend",
@@ -500,6 +502,7 @@ fn a_crossover_requires_both_real_bound_underlays_not_only_flags() {
         ("d", 350.0, 450.0),
     ] {
         scene.nodes.push(Node {
+            brand: None,
             authored: authored(
                 id,
                 "frontend",

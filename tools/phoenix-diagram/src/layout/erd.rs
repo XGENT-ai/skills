@@ -1335,6 +1335,7 @@ fn entity_node(entity: &Entity<'_>, metrics: &Grid, hue_of: impl Fn(&str) -> &'s
         entity.tag().map_or("database", &hue_of)
     ));
     Node {
+        brand: None,
         authored: Authored {
             id: entity.id.clone(),
             source_path: path.clone(),

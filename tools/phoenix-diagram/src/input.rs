@@ -119,10 +119,20 @@ pub struct DeferredField {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FieldDisposition {
+    pub path: String,
+    pub disposition: String,
+    pub reason: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Compatibility {
     pub status: String,
     pub core_compatibility: String,
     pub deferred_fields: Vec<DeferredField>,
+    #[serde(default)]
+    pub dispositions: Vec<FieldDisposition>,
 }
 
 #[derive(Clone, Debug)]
@@ -136,6 +146,8 @@ pub struct DiagramInput {
     pub config_sha256: String,
     pub document: Value,
     pub compatibility: Compatibility,
+    pub brands: crate::brands::ResolvedBrands,
+    evidence_sha256: Option<String>,
 }
 
 pub fn parse_input(
@@ -270,6 +282,8 @@ pub fn parse_input(
         config_sha256: String::new(),
         document,
         compatibility,
+        brands: Default::default(),
+        evidence_sha256: None,
     };
     input.bind_evidence(None);
     Ok(input)
@@ -279,10 +293,25 @@ impl DiagramInput {
     /// The configuration digest also binds the source evidence observed at
     /// delivery (null when nothing was cited), never the repository path.
     pub fn bind_evidence(&mut self, evidence_sha256: Option<&str>) {
-        let config = serde_json::json!({
+        self.evidence_sha256 = evidence_sha256.map(str::to_owned);
+        self.update_config();
+    }
+    pub fn bind_brands(&mut self, brands: crate::brands::ResolvedBrands) {
+        self.brands = brands;
+        self.update_config();
+    }
+    fn update_config(&mut self) {
+        let mut config = serde_json::json!({
             "diagramType":self.diagram_type, "inputContract":self.input_contract, "quality":self.quality,
-            "viewerRevision":self.viewer_revision, "evidenceSha256":evidence_sha256,
+            "viewerRevision":self.viewer_revision, "evidenceSha256":self.evidence_sha256,
         });
+        if !self.brands.is_empty() {
+            config["brandResources"] = serde_json::json!(self
+                .brands
+                .iter()
+                .map(|(path, brand)| (path, &brand.resource))
+                .collect::<std::collections::BTreeMap<_, _>>());
+        }
         self.config_sha256 =
             sha256(&serde_json::to_vec(&config).expect("serializable compile options"));
     }
@@ -367,21 +396,26 @@ pub fn sha256(bytes: &[u8]) -> String {
 }
 
 fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
-    fn walk(value: &Value, path: &str, contract: InputContract, fields: &mut Vec<DeferredField>) {
+    fn walk(
+        value: &Value,
+        path: &str,
+        contract: InputContract,
+        fields: &mut Vec<FieldDisposition>,
+    ) {
         match value {
             Value::Object(object) => {
                 for (key, value) in object {
                     let pointer = format!("{path}/{}", key.replace('~', "~0").replace('/', "~1"));
-                    let phase = match (path, key.as_str()) {
-                        (_, "brand") => Some(("P3", "Brand resources are outside this delivery phase")),
-                        ("/meta", "views") => Some(("P3", "Guided views are retained for the later reader acceptance scope")),
-                        ("/meta", "animation") if contract == InputContract::Legacy217 => Some(("P3", "Legacy playback preferences do not override the reader's initial Still state")),
-                        _ => None,
-                    };
-                    if let Some((phase, reason)) = phase {
-                        fields.push(DeferredField {
+                    let disposition = match (path,key.as_str()) {
+                    (_,"brand") => Some(("supported","Brand identity is resolved from the fixed catalog or a digest-pinned local resource")),
+                    ("/meta","views") => Some(("unsupported-display","Legacy Guided Views are not rebuilt; the Reader provides navigation")),
+                    ("/meta","animation") if contract == InputContract::Legacy217 => Some(("ignored-display","Legacy playback preferences do not override the Reader's initial Still state")),
+                    _ => None,
+                };
+                    if let Some((disposition, reason)) = disposition {
+                        fields.push(FieldDisposition {
                             path: pointer,
-                            phase: phase.into(),
+                            disposition: disposition.into(),
                             reason: reason.into(),
                         });
                     } else {
@@ -397,16 +431,17 @@ fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
             _ => {}
         }
     }
-    let mut deferred_fields = Vec::new();
-    walk(document, "", contract, &mut deferred_fields);
+    let mut dispositions = vec![];
+    walk(document, "", contract, &mut dispositions);
     Compatibility {
-        status: if deferred_fields.is_empty() {
-            "complete"
-        } else {
+        status: if dispositions.iter().any(|d| d.disposition != "supported") {
             "partial"
+        } else {
+            "complete"
         }
         .into(),
         core_compatibility: "pass".into(),
-        deferred_fields,
+        deferred_fields: vec![],
+        dispositions,
     }
 }

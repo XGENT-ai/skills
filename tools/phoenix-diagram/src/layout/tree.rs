@@ -745,6 +745,7 @@ fn scene_node(raw: &Value, index: usize, node: &Measured) -> Node {
         ));
     }
     Node {
+        brand: None,
         authored: Authored {
             id: node.id.clone(),
             source_path: format!("/nodes/{index}"),

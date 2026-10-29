@@ -176,13 +176,24 @@ impl<'a> Layout<'a> {
             let mut card = nominal;
             if automatic
                 && list(&document["participants"]).iter().any(|participant| {
-                    layout.units(string(participant, "label")) * 6.8 > nominal + 6.0
+                    layout.units(string(participant, "label")) * 6.8
+                        + if participant.get("brand").is_some() {
+                            48.0
+                        } else {
+                            0.0
+                        }
+                        > nominal + 6.0
                 })
             {
                 let required = list(&document["participants"])
                     .iter()
                     .map(|participant| {
-                        let primary = layout.units(string(participant, "label")) * 6.8 - 6.0;
+                        let primary = layout.units(string(participant, "label")) * 6.8 - 6.0
+                            + if participant.get("brand").is_some() {
+                                48.0
+                            } else {
+                                0.0
+                            };
                         let sub = if string(participant, "sublabel").is_empty() {
                             0.0
                         } else {
@@ -342,7 +353,13 @@ impl<'a> Layout<'a> {
         let count = participants.len().max(1);
         let fits = |width: f64| {
             participants.iter().all(|participant| {
-                self.units(string(participant, "label")) * 6.8 <= width + 6.0
+                self.units(string(participant, "label")) * 6.8
+                    + if participant.get("brand").is_some() {
+                        48.0
+                    } else {
+                        0.0
+                    }
+                    <= width + 6.0
                     && (string(participant, "sublabel").is_empty()
                         || self.units(string(participant, "sublabel")) * 6.0 * 0.6 <= width - 8.0)
             })
@@ -363,13 +380,17 @@ impl<'a> Layout<'a> {
         let needed = participants
             .iter()
             .map(|participant| {
-                (self.units(string(participant, "label")) * 6.8 - 6.0).max(
-                    if string(participant, "sublabel").is_empty() {
-                        0.0
+                (self.units(string(participant, "label")) * 6.8 - 6.0
+                    + if participant.get("brand").is_some() {
+                        48.0
                     } else {
-                        self.units(string(participant, "sublabel")) * 7.0 * 0.6 + 8.0
-                    },
-                )
+                        0.0
+                    })
+                .max(if string(participant, "sublabel").is_empty() {
+                    0.0
+                } else {
+                    self.units(string(participant, "sublabel")) * 7.0 * 0.6 + 8.0
+                })
             })
             .fold(f64::NEG_INFINITY, f64::max);
         1085.0_f64
@@ -452,13 +473,17 @@ pub fn compile(
             label,
             center,
             72.0 + if layout.legacy { 22.0 } else { 36.0 },
-            fitted_node_font_size_for_contract(
-                label,
-                layout.participant_width,
-                11.0,
-                8.0,
-                input.input_contract,
-            ),
+            if participant.get("brand").is_some() {
+                11.0
+            } else {
+                fitted_node_font_size_for_contract(
+                    label,
+                    layout.participant_width,
+                    11.0,
+                    8.0,
+                    input.input_contract,
+                )
+            },
             "middle",
         )];
         let sub = string(participant, "sublabel");
@@ -486,6 +511,7 @@ pub fn compile(
                 .unwrap_or(string(participant, "type"))
         };
         nodes.push(Node {
+            brand: None,
             authored: authored(
                 participant,
                 path.clone(),

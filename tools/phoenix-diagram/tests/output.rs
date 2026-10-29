@@ -1,5 +1,10 @@
 // Real temporary filesystems and real child-process SIGKILL; no in-memory FS.
 #[path = "../src/output.rs"]
+#[expect(
+    dead_code,
+    unused_imports,
+    reason = "Pair-only internals are unused in this standalone output test copy"
+)]
 mod output;
 use output::test_support::{self, Phase};
 use output::*;
@@ -48,6 +53,22 @@ fn old_output(root: &Workspace) -> PathBuf {
 }
 fn observer_error() -> std::io::Error {
     std::io::Error::other("injected interruption")
+}
+
+#[test]
+fn preview_refresh_keeps_its_lock_and_rejects_replacement_of_its_last_publication() {
+    let root = Workspace::new();
+    let target = old_output(&root);
+    let slot = capture_slot(&target, &[]).unwrap();
+    publish_bound(&slot, b"preview one", &[]).unwrap();
+    let first = FileBinding::capture(&target).unwrap();
+    let next = slot.refresh(&first, &[]).unwrap();
+    publish_bound(&next, b"preview two", &[]).unwrap();
+    let second = FileBinding::capture(&target).unwrap();
+    fs::remove_file(&target).unwrap();
+    fs::write(&target, b"later claimant").unwrap();
+    assert!(next.refresh(&second, &[]).is_err());
+    assert_eq!(fs::read(&target).unwrap(), b"later claimant");
 }
 fn recovery_in(root: &Workspace) -> PathBuf {
     let names: Vec<_> = fs::read_dir(&root.0)

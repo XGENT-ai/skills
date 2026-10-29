@@ -1163,6 +1163,7 @@ fn type_node(item: &Type<'_>, header_floor: f64) -> Node {
         "measured-member-width".into()
     });
     Node {
+        brand: None,
         authored: Authored {
             id: item.id.clone(),
             source_path: path,

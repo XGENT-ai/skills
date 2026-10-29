@@ -55,7 +55,12 @@ fn automatic_width(input: &DiagramInput, node: &Value) -> f64 {
             width = width.max(((units(input, content) * preferred * 0.6 + 8.0) / 4.0).ceil() * 4.0);
         }
     }
-    width.min(200.0).max(label_width)
+    let width = width.min(200.0).max(label_width);
+    if node.get("brand").is_some() {
+        width.max(units(input, string(node, "label")) * 11.0 * 0.6 + 8.0) + 48.0
+    } else {
+        width
+    }
 }
 fn group_span(
     input: &DiagramInput,
@@ -495,13 +500,17 @@ pub(super) fn measure(
             if content.is_empty() {
                 continue;
             }
-            let font = fitted_node_font_size_for_contract(
-                content,
-                width,
-                preferred,
-                minimum,
-                input.input_contract,
-            );
+            let font = if field == "label" && value.get("brand").is_some() {
+                preferred
+            } else {
+                fitted_node_font_size_for_contract(
+                    content,
+                    width,
+                    preferred,
+                    minimum,
+                    input.input_contract,
+                )
+            };
             node_text.push(text(
                 format!("{}/{field}", author.source_path),
                 content,
@@ -567,6 +576,7 @@ pub(super) fn measure(
             }
         }
         nodes.push(Node {
+            brand: None,
             sigil: if string(value, "icon") == "none" {
                 None
             } else {

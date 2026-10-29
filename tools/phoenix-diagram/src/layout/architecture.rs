@@ -152,7 +152,16 @@ pub fn compile(
             ));
             continue;
         };
-        let size = point(&raw["size"]).unwrap_or(Point { x: 120.0, y: 60.0 });
+        let size = point(&raw["size"]).unwrap_or_else(|| Point {
+            x: if raw.get("brand").is_some() {
+                120.0_f64.max(
+                    text_units_for_contract(&string(raw, "label"), contract) * 11.0 * 0.6 + 8.0,
+                ) + 48.0
+            } else {
+                120.0
+            },
+            y: 60.0,
+        });
         let bounds = Rect {
             x: position.x,
             y: position.y,
@@ -171,7 +180,11 @@ pub fn compile(
             &label,
             center,
             bounds.y + bounds.height / 2.0 + if sub.is_empty() { 4.0 } else { -2.0 },
-            font(&label, 11.0, 8.0),
+            if raw.get("brand").is_some() {
+                11.0
+            } else {
+                font(&label, 11.0, 8.0)
+            },
             "middle",
         )];
         if !sub.is_empty() {
@@ -206,9 +219,10 @@ pub fn compile(
         provenance.push(if raw.get("size").is_some() {
             format!("{path}/size")
         } else {
-            "default-size:120x60".into()
+            format!("default-size:{}x60", size.x)
         });
         nodes.push(Node {
+            brand: None,
             authored: authored(raw, path, id, string(raw, "type"), provenance),
             bounds,
             label,

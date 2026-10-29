@@ -1050,6 +1050,7 @@ pub fn compile(
                 ));
             }
             Node {
+                brand: None,
                 authored: Authored {
                     id: event.id.into(),
                     source_path: format!("/events/{}", event.index),

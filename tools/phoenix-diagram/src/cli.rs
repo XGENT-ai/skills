@@ -1,11 +1,13 @@
 use phoenix_diagram::{
     browser::{self, BrowserOptions},
     check::FileIdentity,
+    compare,
     delivery::{self, CompileRequest, EngineIdentity},
     diagnostic::Diagnostic,
     input::{CompileOptions, DiagramType, InputContract, Quality},
     install::{self, InstallRequest},
     output,
+    preview::{self, PreviewRequest},
     render::EmbeddedAssets,
 };
 use serde::Serialize;
@@ -18,7 +20,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\nrecover-compare <private-recovery-directory> --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 const RECOVERY_HELP: &str = "recover-output <private-recovery-directory> --json\n\nAfter an interrupted publication, locate its durable record in the original output parent:\n  ls -la \"<original output parent>\"\nRead .phoenix-diagram-recovery-<id>/publication-recovery-v1.json and identify its target.\nCleanup can retain the same record at .phoenix-diagram-recovery-<id>.cleanup.json or .phoenix-diagram-output-cleanup/<id>.json.\nAlways pass the original .phoenix-diagram-recovery-<id> directory, even if it is now absent.\nThe fixed cleanup directory retains its bound owner-v1.json. Unknown entries or ambiguous records are preserved and rejected.\nMultiple records require an explicit choice. The command preserves later claimants and changed bindings.\nRecovery restores file bytes; delivery checks and image review remain separate.\n";
 
 struct Arguments {
@@ -53,14 +55,15 @@ impl Arguments {
                     .map_or((raw, None), |(k, v)| (k, Some(OsString::from(v))));
                 let value = match key {
                     "json" | "help" | "version" | "strict-provenance" | "layout-json"
-                    | "dry-run" => {
+                    | "dry-run" | "open" => {
                         if inline.is_some() {
                             return Err(format!("--{key} has no value"));
                         }
                         None
                     }
                     "quality" | "input-contract" | "out-dir" | "record" | "project"
-                    | "bundle-root" | "providers" | "repo-root" => Some(
+                    | "bundle-root" | "providers" | "repo-root" | "brand-cache" | "receipt"
+                    | "base-contract" | "head-contract" | "port" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -266,6 +269,55 @@ fn guide(scenario: &str) -> Value {
     json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"guide","status":"pass","diagnostics":[],"scenario":scenario,"resourceRoot":std::env::var_os("PHOENIX_DIAGRAM_BUNDLE_ROOT").map(PathBuf::from),"relativeTo":"phoenix-diagram skill root","matches":matches.iter().map(|kind|json!({"type":kind,"schema":format!("schemas/{}.schema.json",kind.as_str()),"commonSchema":"schemas/common.schema.json","example":format!("examples/minimal.{}.json",kind.as_str())})).collect::<Vec<_>>()})
 }
 
+fn preview_command(args: &Arguments, engine: &EngineIdentity) -> Result<u8, String> {
+    args.allow(&[
+        "quality",
+        "input-contract",
+        "repo-root",
+        "brand-cache",
+        "port",
+        "open",
+    ])?;
+    if args.positional.len() != 4 {
+        return Err("preview requires a type, candidate and output".into());
+    }
+    let kind = args.positional[1]
+        .to_str()
+        .ok_or("Diagram type must be UTF-8")?
+        .parse()
+        .map_err(|_| "Unsupported diagram type")?;
+    let port = args
+        .value("port")
+        .map(|value| {
+            value
+                .to_str()
+                .and_then(|value| value.parse::<u16>().ok())
+                .ok_or("--port must be an integer from 0 to 65535")
+        })
+        .transpose()?
+        .unwrap_or(0);
+    let repo_root = args.value("repo-root").map(Path::new);
+    if repo_root.is_some_and(|root| !root.is_dir()) {
+        return Err("--repo-root must be an existing directory".into());
+    }
+    let options = args.compile_options()?;
+    let assets = EmbeddedAssets::builtin();
+    Ok(preview::run(&PreviewRequest {
+        compile: CompileRequest {
+            kind,
+            candidate: Path::new(&args.positional[2]),
+            options: &options,
+            engine,
+            assets: &assets,
+            repo_root,
+            brand_cache: args.value("brand-cache").map(Path::new),
+        },
+        output: Path::new(&args.positional[3]),
+        port,
+        open: args.has("open"),
+    }))
+}
+
 fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     let command = args
         .positional
@@ -346,9 +398,22 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             code,
         ));
     }
+    if command == "recover-compare" {
+        args.allow(&[])?;
+        if positional.len() != 1 {
+            return Err("recover-compare requires one private recovery directory".into());
+        }
+        let receipt = compare::transaction::recover(Path::new(&positional[0]));
+        let (mut value, exit) = encoded(&receipt, receipt.exit_code());
+        value["recoveryStatus"] = value["status"].take();
+        value["status"] = json!(if exit == 0 { "pass" } else { "failed" });
+        return Ok((value, exit));
+    }
     if !matches!(
         command,
         "doctor"
+            | "brands"
+            | "compare"
             | "validate"
             | "deliver"
             | "finalize"
@@ -381,13 +446,113 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             if ready { 0 } else { 4 },
         ));
     }
+    if command == "brands" {
+        args.allow(&["brand-cache"])?;
+        if positional.first().and_then(|s| s.to_str()) == Some("capture") {
+            if positional.len() != 2 {
+                return Err("brands capture requires one HTTP(S) URL".into());
+            }
+            let cache = args
+                .value("brand-cache")
+                .map(PathBuf::from)
+                .unwrap_or_else(phoenix_diagram::brands::default_cache);
+            let receipt =
+                phoenix_diagram::brands::capture(&phoenix_diagram::brands::CaptureRequest {
+                    url: positional[1].to_str().ok_or("Brand URL must be UTF-8")?,
+                    brand_cache: &cache,
+                });
+            return Ok(encoded(&receipt, receipt.exit));
+        }
+        if positional.len() > 1 || args.has("brand-cache") {
+            return Err("brands accepts at most one query; --brand-cache is for capture".into());
+        }
+        return Ok(encoded(
+            &phoenix_diagram::brands::list(
+                positional
+                    .first()
+                    .map(|s| s.to_str().ok_or("Brand query must be UTF-8"))
+                    .transpose()?
+                    .unwrap_or(""),
+            ),
+            0,
+        ));
+    }
+    if command == "compare" {
+        args.allow(&[
+            "receipt",
+            "base-contract",
+            "head-contract",
+            "quality",
+            "repo-root",
+            "brand-cache",
+        ])?;
+        if positional.len() != 4 || positional[0].to_str() != Some("architecture") {
+            return Err("compare requires architecture BASE HEAD OUTPUT".into());
+        }
+        let mut base_options = args.compile_options()?;
+        let mut head_options = base_options.clone();
+        for (name, options) in [
+            ("base-contract", &mut base_options),
+            ("head-contract", &mut head_options),
+        ] {
+            options.input_contract = args
+                .value(name)
+                .map(|value| match value.to_str() {
+                    Some("legacy-2.17") => Ok(InputContract::Legacy217),
+                    Some("phoenix-v1") => Ok(InputContract::PhoenixV1),
+                    _ => Err(format!("--{name} must be legacy-2.17 or phoenix-v1")),
+                })
+                .transpose()?;
+        }
+        let repo_root = args.value("repo-root").map(Path::new);
+        if repo_root.is_some_and(|p| !p.is_dir()) {
+            return Err("--repo-root must be an existing directory".into());
+        }
+        let assets = EmbeddedAssets::builtin();
+        let brand_cache = args.value("brand-cache").map(Path::new);
+        let receipt = compare::run(&compare::CompareRequest {
+            base: CompileRequest {
+                kind: DiagramType::Architecture,
+                candidate: Path::new(&positional[1]),
+                options: &base_options,
+                engine: &engine,
+                assets: &assets,
+                repo_root,
+                brand_cache,
+            },
+            head: CompileRequest {
+                kind: DiagramType::Architecture,
+                candidate: Path::new(&positional[2]),
+                options: &head_options,
+                engine: &engine,
+                assets: &assets,
+                repo_root,
+                brand_cache,
+            },
+            output: Path::new(&positional[3]),
+            receipt: args.value("receipt").map(Path::new),
+        });
+        return Ok(encoded(&receipt, receipt.exit_code()));
+    }
     if matches!(command, "validate" | "deliver" | "finalize") {
         args.allow(if command == "validate" {
-            &["quality", "input-contract", "layout-json", "repo-root"][..]
+            &[
+                "quality",
+                "input-contract",
+                "layout-json",
+                "repo-root",
+                "brand-cache",
+            ][..]
         } else if command == "finalize" {
-            &["quality", "input-contract", "out-dir", "repo-root"][..]
+            &[
+                "quality",
+                "input-contract",
+                "out-dir",
+                "repo-root",
+                "brand-cache",
+            ][..]
         } else {
-            &["quality", "input-contract", "repo-root"][..]
+            &["quality", "input-contract", "repo-root", "brand-cache"][..]
         })?;
         let repo_root = args.value("repo-root").map(Path::new);
         if repo_root.is_some_and(|root| !root.is_dir()) {
@@ -414,6 +579,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             engine: &engine,
             assets: &assets,
             repo_root,
+            brand_cache: args.value("brand-cache").map(Path::new),
         };
         return Ok(match command {
             "validate" => {
@@ -444,6 +610,33 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         return Err(format!("{command} requires one output HTML path"));
     }
     let output = Path::new(&positional[0]);
+    if compare::is_comparison(output) {
+        return Ok(match command {
+            "check" => {
+                args.allow(&["strict-provenance"])?;
+                let receipt = compare::check(output, args.has("strict-provenance"), &engine);
+                encoded(&receipt, receipt.exit_code())
+            }
+            "browser-check" | "visual-check" => {
+                args.allow(&["out-dir"])?;
+                compare::browser_check(
+                    output,
+                    &engine,
+                    &browser_options(args, command == "visual-check"),
+                    command == "visual-check",
+                )
+            }
+            "review-record" => {
+                args.allow(&["record"])?;
+                let record = args
+                    .value("record")
+                    .ok_or("review-record requires --record PATH")?;
+                let receipt = compare::record_review(output, Path::new(record), &engine);
+                encoded(&receipt, receipt.exit_code())
+            }
+            _ => return Err(format!("{command} does not accept a comparison artifact")),
+        });
+    }
     Ok(match command {
         "check" => {
             args.allow(&["strict-provenance"])?;
@@ -516,6 +709,27 @@ pub fn run(raw: Vec<OsString>) -> ExitCode {
             phoenix_diagram::VIEWER_REVISION
         );
         return ExitCode::SUCCESS;
+    }
+    if matches!(command, "preview" | "__preview-worker") {
+        let current = match engine() {
+            Ok(engine) => engine,
+            Err(message) => return print(error(command, "engine/identity", message, 4)),
+        };
+        if command == "__preview-worker" {
+            if args.positional.len() != 1 || !args.options.is_empty() {
+                return print(error(
+                    command,
+                    "arguments/invalid",
+                    "Private worker takes only its stdin envelope",
+                    2,
+                ));
+            }
+            return ExitCode::from(preview::worker::serve(&current));
+        }
+        return match preview_command(&args, &current) {
+            Ok(exit) => ExitCode::from(exit),
+            Err(message) => print(error(command, "arguments/invalid", message, 2)),
+        };
     }
     print(dispatch(&args).unwrap_or_else(|e| error(command, "arguments/invalid", e, 2)))
 }

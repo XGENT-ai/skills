@@ -497,7 +497,7 @@ function help(options, args = []) {
   let version;
   try { version = packageVersion(options); } catch { /* Help is available even when package metadata is damaged. */ }
   return `phoenix-diagram ${TOOL_VERSION}${version ? ` (@xgent-ai/skills ${version})` : ''}\n`
-    + 'Native diagrams: guide, validate, deliver, check, browser-check, visual-check, finalize, review-record, recover-output, doctor, install.\n'
+    + 'Native diagrams: guide, brands, validate, deliver, compare, preview, check, browser-check, visual-check, finalize, review-record, recover-output, recover-compare, doctor, install.\n'
     + 'Usage: phoenix-diagram engine install --project DIR [--release-dir DIR] [--json]\n'
     + 'Engine acquisition is explicit. Ordinary commands only verify an existing engine and never download or use a Node renderer.\n'
     + (args[0] === 'recover-output' ? 'Recovery: recover-output <original-private-recovery-directory> --json\nIn the original output parent P, records move from P/.phoenix-diagram-recovery-<id>/publication-recovery-v1.json to sibling P/.phoenix-diagram-recovery-<id>.cleanup.json, then P/.phoenix-diagram-output-cleanup/<id>.json. The fixed cleanup directory includes its owned owner-v1.json. Always pass the original recovery directory explicitly, even if it has disappeared. Unknown or ambiguous multiple record locations are preserved and refused; recovery does not scan to choose a transaction. Native recovery preserves later claimants; it does not replace delivery checks or image review.\n' : '')

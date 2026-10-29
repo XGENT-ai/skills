@@ -236,6 +236,23 @@ impl Evidence {
             done: false,
         })
     }
+    pub fn reserve_comparison(
+        artifact: &Path,
+        out_dir: Option<&Path>,
+        view: &str,
+    ) -> Result<Self, Error> {
+        if !matches!(view, "before" | "delta" | "after") {
+            return Err(Error::new(
+                "browser/options",
+                "evidence",
+                "Unknown comparison view",
+            ));
+        }
+        // This path only namespaces evidence; no intermediate view HTML is written.
+        let basename = artifact.file_name().unwrap_or_default().to_string_lossy();
+        let named = artifact.with_file_name(format!("{basename}.comparison-{view}.html"));
+        Self::reserve(&named, out_dir)
+    }
     fn verify_directory(&self) -> Result<(), Error> {
         let stat = fs::symlink_metadata(&self.directory)
             .map_err(|e| Error::new("browser/evidence-changed", "evidence", e.to_string()))?;
