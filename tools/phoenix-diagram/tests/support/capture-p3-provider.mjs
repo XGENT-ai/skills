@@ -186,14 +186,34 @@ export function observeRuntime(provider, env = process.env, requestedModel, cwd 
         'existing client authentication and inherited process environment; secret values not captured'
   };
 }
-export function buildArguments(request, {sessionId, previousId} = {}) {
+const TOOL_ENVIRONMENT_KEYS = ['PHOENIX_DIAGRAM_HOME', 'PHOENIX_DIAGRAM_BROWSER'];
+function checkedToolEnvironment(value) {
+  need(value && typeof value === 'object' && !Array.isArray(value) &&
+      Object.keys(value).every(key => TOOL_ENVIRONMENT_KEYS.includes(key)),
+      'tool environment permits only the two fixed Phoenix path keys');
+  for (const valuePath of Object.values(value))
+    need(typeof valuePath === 'string' && path.isAbsolute(valuePath) &&
+        path.normalize(valuePath) === valuePath && !/[\u0000-\u001f\u007f\ud800-\udfff]/u.test(valuePath),
+        'tool environment requires ordinary absolute paths');
+  return value;
+}
+export function toolEnvironmentFor(provider, env = process.env) {
+  need(['codex', 'claude-code'].includes(provider), 'unsupported tool environment provider');
+  return provider === 'codex' ? checkedToolEnvironment(Object.fromEntries(
+      TOOL_ENVIRONMENT_KEYS.filter(key => env[key] !== undefined).map(key => [key, env[key]]))) : {};
+}
+export function buildArguments(request, {sessionId, previousId, toolEnvironment = {}} = {}) {
   need(
       ['codex', 'claude-code'].includes(request.provider) && request.endpointPolicy === 'inherit-config',
       'explicit provider and inherit-config policy required');
+  need(!['argv', 'environment', 'toolEnvironment'].some(key => Object.hasOwn(request, key)),
+      'request cannot supply arbitrary argv or environment');
   need(
       !request.model || typeof request.model === 'string' && request.model && !/[\0\r\n]/.test(request.model),
       'invalid model');
-  const model = request.model ? ['--model', request.model] : [];
+  const model = request.model ? ['--model', request.model] : [], scope = checkedToolEnvironment(toolEnvironment);
+  need(request.provider === 'codex' || Object.keys(scope).length === 0,
+      'tool environment overrides apply only to Codex');
   if (request.provider === 'claude-code')
     return [
       '--print', '--verbose', '--output-format', 'stream-json', '--setting-sources', 'user,project,local',
@@ -202,7 +222,9 @@ export function buildArguments(request, {sessionId, previousId} = {}) {
       ...(previousId ? ['--resume', previousId] : ['--session-id', sessionId])
     ];
   const common =
-      ['--json', '--ignore-rules', '--skip-git-repo-check', '--config', 'allow_login_shell=false', ...model];
+      ['--json', '--ignore-rules', '--skip-git-repo-check', '--config', 'allow_login_shell=false', ...model,
+        ...TOOL_ENVIRONMENT_KEYS.filter(key => Object.hasOwn(scope, key)).flatMap(key =>
+          ['--config', `shell_environment_policy.set.${key}=${JSON.stringify(scope[key])}`])];
   return previousId ? ['exec', 'resume', ...common, previousId, '-'] : [
     'exec', ...common, '--color', 'never', '--sandbox', 'danger-full-access', '--config',
     'project_doc_max_bytes=0', '--config', 'features.memories=false', '--config',
@@ -283,7 +305,7 @@ export async function captureProvider(request, {env = process.env} = {}) {
           typeof request.scenarioId === 'string',
       'invalid P3 capture request');
   need(
-      !Object.hasOwn(request, 'argv') && !Object.hasOwn(request, 'environment'),
+      !Object.hasOwn(request, 'argv') && !Object.hasOwn(request, 'environment') && !Object.hasOwn(request, 'toolEnvironment'),
       'request cannot supply arbitrary argv or persist environment');
   const project = directory(request.cwd);
   need(
@@ -297,7 +319,8 @@ export async function captureProvider(request, {env = process.env} = {}) {
       'select an explicit native codex/claude entry');
   const program = snapshot(fs.realpathSync(request.program)), self = snapshot(fileURLToPath(import.meta.url)),
         prompt = readBound(request.prompt),
-        runtime = observeRuntime(request.provider, env, request.model, request.cwd);
+        runtime = observeRuntime(request.provider, env, request.model, request.cwd),
+        toolEnvironment = toolEnvironmentFor(request.provider, env);
   let previous = null;
   if (request.previousCapture) {
     previous = JSON.parse(readBound(request.previousCapture).content);
@@ -307,9 +330,11 @@ export async function captureProvider(request, {env = process.env} = {}) {
             same(previous.project, project) && same(previous.collector?.identity, self.identity) &&
             previous.sessionId && previous.exitCode === 0,
         'continuation is not this successful case/session/project');
+    need(request.provider !== 'codex' || same(previous.toolEnvironment, toolEnvironment),
+        'continuation tool environment changed');
   }
   const sessionId = previous?.sessionId || randomUUID(),
-        argv = buildArguments(request, {sessionId, previousId: previous?.sessionId});
+        argv = buildArguments(request, {sessionId, previousId: previous?.sessionId, toolEnvironment});
   fs.mkdirSync(request.outputDir, {mode: 0o700});
   const outputBinding = directory(request.outputDir),
         stdin = write(path.join(request.outputDir, 'stdin.txt'), prompt.content),
@@ -406,6 +431,7 @@ export async function captureProvider(request, {env = process.env} = {}) {
     stderr,
     version,
     runtime,
+    ...(request.provider === 'codex' ? {toolEnvironment} : {}),
     startedAt: new Date(startedAt).toISOString(),
     finishedAt: new Date().toISOString(),
     ...result,
@@ -465,12 +491,14 @@ export async function main(argv = process.argv.slice(2)) {
         'use --plan or --execute with one request');
     const request = JSON.parse(snapshot(path.resolve(argv[1])).content);
     if (argv[0] === '--plan') {
-      const args = buildArguments(request, {sessionId: '00000000-0000-4000-8000-000000000000'});
+      const toolEnvironment = toolEnvironmentFor(request.provider),
+            args = buildArguments(request, {sessionId: '00000000-0000-4000-8000-000000000000', toolEnvironment});
       process.stdout.write(JSON.stringify({
         status: 'prepared-only',
         providerStarted: false,
         provider: request.provider,
         argv: args,
+        ...(request.provider === 'codex' ? {toolEnvironment} : {}),
         runtime: observeRuntime(request.provider, process.env, request.model, request.cwd)
       }) + '\n');
       return 0;

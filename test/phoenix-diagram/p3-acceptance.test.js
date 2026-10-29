@@ -19,6 +19,16 @@ test('author-tools options reject unsupported stages and ambiguous resume/review
     ['--stage','author-tools','--release-dir','/r','--output-dir','/new','--release-dir','/other'],
   ])assert.throws(()=>parseOptions(args));
 });
+test('brand capture retry flag is boolean and limited to the owning all resume',async()=>{
+  const {parseOptions}=await import(modulePath);
+  assert.equal(parseOptions(['--stage','all','--candidate-dir','/candidate','--resume','/run/state.json','--retry-brand-capture']).retryBrandCapture,true);
+  for(const args of [
+    ['--stage','all','--candidate-dir','/candidate','--output-dir','/new'],
+    ['--stage','author-tools','--release-dir','/release','--resume','/run/state.json'],
+    ['--stage','providers','--candidate-dir','/candidate','--provider-manifest','/manifest','--output-dir','/new'],
+    ['--stage','all','--candidate-dir','/candidate','--resume','/run/state.json','--retry-brand-capture']
+  ])assert.throws(()=>parseOptions([...args,'--retry-brand-capture']));
+});
 
 test('official resource descriptor requires the fixed commit URL and exact supplied PNG identity',async t=>{
   const {readOfficialResource,OFFICIAL_RESOURCE}=await import(statePath),root=temp(t),file=path.join(root,'official.json');
@@ -171,6 +181,139 @@ async function inertCandidate(t){
   const version={distribution:'candidate',sourceCommit:source.commit,sourceInputSha256:source.inputSha256},versionFile=put('VERSION.json',JSON.stringify(version)),snapshot=put('candidate.json',JSON.stringify({source,tarball:{path:'package.tgz',size:tgz.identity.bytes,sha256:tgz.identity.sha256}}));
   return{directory,tgz,snapshot,source,version,files:new Map([['source-inputs.json',inputs],['release-dir/VERSION.json',versionFile]])};
 }
+
+async function brandRetryFixture(t){
+  // Inert public-transport receipts exercise recovery; no native/network ran.
+  const model=await import(statePath),api=await import(modulePath),candidate=await inertCandidate(t),root=temp(t);
+  fs.chmodSync(root,0o700);model.privateDirectory(path.join(root,'commands'));const directory=model.privateDirectory(path.join(root,'commands','brands-capture'));
+  const engine=model.writeNew(path.join(root,'engine'),'inert, never executed'),bundleSha256='b'.repeat(64),version={...candidate.version,bundleSha256};
+  fs.writeFileSync(candidate.files.get('release-dir/VERSION.json').path,JSON.stringify(version));candidate.files.set('release-dir/VERSION.json',model.readSnapshot(candidate.files.get('release-dir/VERSION.json').path));candidate.version=version;
+  const publicNpm={schemaVersion:1,kind:'npm-public-bin',bin:'phoenix-diagram',nodePath:'/node',npmCliPath:'/npm-cli.js',tarball:candidate.tgz.path,cwd:root,env:{PATH:'/isolated'},enginePath:engine.path};
+  const release={distribution:'candidate',root:candidate.directory,sourceCommit:candidate.source.commit,sourceInputSha256:candidate.source.inputSha256,bundleSha256,
+    files:{engine,version:model.bound(model.readSnapshot(candidate.files.get('release-dir/VERSION.json').path))},publicNpm,candidate:{record:model.bound(candidate.snapshot),tarball:model.bound(candidate.tgz)}};
+  const commit='c'.repeat(40),official=model.writeNew(path.join(root,'official.json'),{schemaVersion:1,sourceCommit:commit,url:`https://raw.githubusercontent.com/XGENT-ai/skills/${commit}/tools/phoenix-diagram/tests/fixtures/brands/official-test.png`,...model.OFFICIAL_RESOURCE}),officialResource=model.readOfficialResource(official.path),
+    args=['brands','capture',officialResource.descriptor.url,'--brand-cache',path.join(root,'brand-cache'),'--json'],command=(await import('../../scripts/check-phoenix-diagram-candidate.mjs')).publicNpmCommand(publicNpm,args),
+    transport={schemaVersion:1,kind:'p3-public-npm-process',program:command.program,argv:command.args,cwd:command.cwd,prefix:[],spawnedProgram:command.program,spawnedArgv:[command.program,...command.args],pid:1234,startedAt:'2026-10-29T00:00:00.000Z',closedAt:'2026-10-29T00:00:01.000Z'},
+    receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'brands capture',status:'failed',brand:null,resource:null,cachePath:null,diagnostics:[{stage:'brands',code:'brand/capture-unavailable',severity:'error'}]},
+    process=model.writeNew(path.join(directory,'process.json'),{schemaVersion:1,kind:'p3-owned-native-process',engine,nativeArgv:args,exitCode:5,signal:null,actualTransport:transport,
+      stdout:model.writeNew(path.join(directory,'stdout.txt'),JSON.stringify(receipt)),stderr:model.writeNew(path.join(directory,'stderr.txt'),'original fetch failure')}),
+    error={message:'original capture deadline failure',code:'ERR_ASSERTION'},stat=fs.statSync(root),state={schemaVersion:1,kind:model.KIND,profile:'p3',stage:'author-tools',runId:'d'.repeat(32),runRoot:root,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},release,officialResource,
+      cases:{},steps:{'brands-capture':{status:'failed',role:'automatic',argv:args,prefix:[],process,error}},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'},packageConsumer:{status:'not-applicable'},providers:{status:'not-applicable'},finalCandidate:{status:'not-applicable'},diagnostics:[{stage:'brands-capture',...error}]};
+  model.recompute(state);
+  return{model,api,candidate,state,args,process,error,transport,receipt,root,invoke:async()=>({exitCode:0,signal:null,stdout:JSON.stringify({command:'brands capture',status:'pass'}),stderr:'',receipt:{command:'brands capture',status:'pass'},actualTransport:transport})};
+}
+test('explicit brand capture retry preserves its eligible failure and executes at most once',async t=>{
+  const f=await brandRetryFixture(t);let calls=0;const invoke=async()=>{calls++;return f.invoke();};
+  assert.equal(await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{invoke}),null);assert.equal(calls,0);
+  const result=await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{invoke,retryBrandCapture:true});
+  assert.equal(calls,1);assert.equal(result.receipt.status,'pass');
+  const step=f.state.steps['brands-capture'];assert(step.retryOf);assert.notDeepEqual(step.process,f.process);
+  f.model.readBound(f.process,'original failure preserved');assert.deepEqual(f.state.diagnostics,[{stage:'brands-capture',...f.error}]);
+  await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{invoke,retryBrandCapture:true});assert.equal(calls,1);
+  f.model.recompute(f.state);assert.equal(f.model.verifyAuthorToolsState(f.state).status,'incomplete');
+  assert.deepEqual(f.model.jsonBound(step.retryOf,'failure history').step.error,f.error);
+  assert.equal(f.model.jsonBound(f.process,'old failure remains failed').exitCode,5);
+});
+
+test('brand capture retry refuses ineligible failures before starting any attempt',async t=>{
+  for(const fault of ['no-step','passed','other-command','exit','signal','diagnostic','status','transport','engine','argv','url','candidate','development'])await t.test(fault,async t=>{
+    const f=await brandRetryFixture(t),step=f.state.steps['brands-capture'],record=f.model.jsonBound(step.process,'unit original');let calls=0;
+    if(fault==='no-step')delete f.state.steps['brands-capture'];
+    else if(fault==='passed')step.status='pass';
+    else if(fault==='exit')record.exitCode=4;
+    else if(fault==='signal')record.signal='SIGTERM';
+    else if(fault==='diagnostic'||fault==='status'){const receipt={...f.receipt,...(fault==='status'?{status:'pass'}:{diagnostics:[{stage:'brands',severity:'error',code:'brand/unsupported'}]})};fs.writeFileSync(record.stdout.path,JSON.stringify(receipt));record.stdout=f.model.bound(f.model.readSnapshot(record.stdout.path));}
+    else if(fault==='transport')record.actualTransport.pid=0;
+    else if(fault==='engine')record.engine={...record.engine,path:'/other-engine'};
+    else if(fault==='argv')step.argv=['brands','capture','https://other.invalid','--json'];
+    else if(fault==='url')f.state.officialResource.descriptor.url='https://other.invalid';
+    else if(fault==='candidate')f.state.release.sourceCommit='f'.repeat(40);
+    else if(fault==='development')delete f.state.release.publicNpm;
+    fs.writeFileSync(f.process.path,JSON.stringify(record));if(step)step.process=f.model.bound(f.model.readSnapshot(f.process.path));
+    await assert.rejects(f.api.invokeRecordedStep(f.state,fault==='other-command'?'finalize-brand-capture':'brands-capture',f.args,{retryBrandCapture:true,invoke:async()=>{calls++;return f.invoke();}}));
+    assert.equal(calls,0);assert.equal(fs.existsSync(path.join(f.root,'commands/brands-capture/failed-attempt.json')),false);
+    assert.equal(fs.existsSync(path.join(f.root,'commands/brands-capture/retry-1')),false);
+  });
+});
+
+test('a failed explicit capture retry remains failed and cannot loop on repeated flags',async t=>{
+  const f=await brandRetryFixture(t);let calls=0;
+  const invoke=async()=>{calls++;return{exitCode:5,signal:null,stdout:JSON.stringify(f.receipt),stderr:'second failed fetch',receipt:f.receipt,actualTransport:f.transport};};
+  assert.equal(await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{retryBrandCapture:true,invoke}),null);
+  assert.equal(await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{retryBrandCapture:true,invoke}),null);
+  assert.equal(calls,1);assert.equal(f.state.steps['brands-capture'].status,'failed');f.model.recompute(f.state);
+  assert.equal(f.model.verifyAuthorToolsState(f.state).status,'failed');assert.equal(f.state.diagnostics.length,2);
+});
+
+test('capture retry history is mandatory, byte-bound and checked in live and archive verification',async t=>{
+  const f=await brandRetryFixture(t);
+  await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{retryBrandCapture:true,invoke:f.invoke});f.model.recompute(f.state);
+  const step=f.state.steps['brands-capture'],retryOf=step.retryOf,history=fs.readFileSync(retryOf.path),old=fs.readFileSync(f.process.path),snapshot=structuredClone(f.state),archive=new Map();
+  const capture=directory=>{for(const name of fs.readdirSync(directory)){const file=path.join(directory,name);if(fs.statSync(file).isDirectory())capture(file);else archive.set(file,fs.readFileSync(file));}};capture(f.root);capture(f.state.release.root);
+  assert.equal(f.model.verifyAuthorToolsState(f.state,{bytesFor:ref=>archive.get(ref.path)}).status,'incomplete');
+  delete step.retryOf;assert.throws(()=>f.model.verifyAuthorToolsState(f.state));step.retryOf=retryOf;
+  step.retryOf=f.model.writeNew(path.join(f.root,'replacement-history.json'),history);assert.throws(()=>f.model.verifyAuthorToolsState(f.state),/history moved/);step.retryOf=retryOf;
+  fs.writeFileSync(retryOf.path,Buffer.concat([history,Buffer.from('\n')]));assert.throws(()=>f.model.verifyAuthorToolsState(f.state),/identity|bytes|binding/);fs.writeFileSync(retryOf.path,history);
+  const omitted=JSON.parse(history);delete omitted.step.error;fs.writeFileSync(retryOf.path,JSON.stringify(omitted));step.retryOf=f.model.bound(f.model.readSnapshot(retryOf.path));assert.throws(()=>f.model.verifyAuthorToolsState(f.state),/original failed/);fs.writeFileSync(retryOf.path,history);step.retryOf=retryOf;
+  fs.writeFileSync(f.process.path,'changed original failure');assert.throws(()=>f.model.verifyAuthorToolsState(f.state));fs.writeFileSync(f.process.path,old);
+  const original=f.model.jsonBound(f.process,'original failure'),stdout=fs.readFileSync(original.stdout.path),stderr=fs.readFileSync(original.stderr.path);fs.writeFileSync(original.stdout.path,'changed original stdout');assert.throws(()=>f.model.verifyAuthorToolsState(f.state));fs.writeFileSync(original.stdout.path,stdout);fs.unlinkSync(original.stderr.path);assert.throws(()=>f.model.verifyAuthorToolsState(f.state));
+  assert.throws(()=>f.model.verifyAuthorToolsState(snapshot,{bytesFor:ref=>ref.path===retryOf.path?Buffer.from('changed history'):archive.get(ref.path)}),/bytes|identity/);
+  assert.throws(()=>f.model.verifyAuthorToolsState(snapshot,{bytesFor:ref=>ref.path===original.stderr.path?undefined:archive.get(ref.path)}));
+  // Restore fixture only for cleanup; the original FileRef remains deliberately invalid.
+  fs.writeFileSync(original.stderr.path,stderr);
+});
+
+test('retry anchors preserve passed processes cases scopes and the complete failed attempt',async t=>{
+  const f=await brandRetryFixture(t),put=(name,value)=>f.model.writeNew(path.join(f.root,name),value);
+  const original=structuredClone(f.state.steps['brands-capture']);
+  f.state.steps['brands-list']={status:'pass',process:put('passed-process.json','inert passed reference')};
+  f.state.cases.comparison={id:'comparison',base:put('base.json','inert base'),head:put('head.json','inert head')};
+  f.state.preview={status:'pass',record:put('preview.json',{status:'pass'})};
+  f.state.compareFaults={status:'pass',record:put('faults.json',{status:'pass'})};
+  const before=structuredClone(f.model.authorToolsAnchor(f.state));
+  await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{retryBrandCapture:true,invoke:f.invoke});
+  f.model.verifyAuthorToolsAnchor(f.state,before);
+  assert.deepEqual(f.model.jsonBound(f.state.steps['brands-capture'].retryOf,'retained failure').step,original);
+  const after=structuredClone(f.model.authorToolsAnchor(f.state));
+  for(const fault of ['omit-history','replace-history','drop-step','drop-diagnostic','passed-process','case','preview','faults']){
+    const state=structuredClone(f.state);
+    if(fault==='omit-history')delete state.steps['brands-capture'].retryOf;
+    else if(fault==='replace-history')state.steps['brands-capture'].retryOf={...state.steps['brands-capture'].retryOf,path:'/other-history'};
+    else if(fault==='drop-step')delete state.steps['brands-capture'];
+    else if(fault==='drop-diagnostic')state.diagnostics=[];
+    else if(fault==='passed-process')state.steps['brands-list'].process=state.steps['brands-capture'].process;
+    else if(fault==='case')state.cases.comparison.base=state.cases.comparison.head;
+    else if(fault==='preview')state.preview.record=state.compareFaults.record;
+    else state.compareFaults.record=state.preview.record;
+    assert.throws(()=>f.model.verifyAuthorToolsAnchor(state,after),undefined,fault);
+  }
+});
+
+test('all resume forwards one capture retry while retaining its consumer migration and author anchors',async t=>{
+  const f=await brandRetryFixture(t),candidate=f.candidate,wrapper=temp(t);fs.chmodSync(wrapper,0o700);
+  const engineIdentity={sourceInputSha256:candidate.source.inputSha256,binary:f.state.release.files.engine.identity};f.state.release.engineIdentity=engineIdentity;
+  const consumer={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',profile:'p3',status:'automated-pass',automatedStatus:'pass',phase:'pending-review',scopes:['explore','locale'],source:candidate.source,candidate:{tarball:f.model.bound(candidate.tgz)},engine:{...f.state.release.files.engine,engineIdentity},publicNpm:f.state.release.publicNpm},
+    consumerRef=f.model.writeNew(path.join(wrapper,'consumer.json'),consumer),child=f.model.persistState(f.state),migration={status:'pass',record:f.model.writeNew(path.join(wrapper,'migration.json'),{status:'pass',scope:'inert verifier routing fixture'})},stat=fs.statSync(wrapper),
+    state={schemaVersion:1,kind:f.model.ACCEPTANCE_KIND,profile:'p3',stage:'all',runId:'e'.repeat(32),runRoot:wrapper,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},target:process.platform+'-'+process.arch,
+      candidate:{record:f.model.bound(candidate.snapshot),tarball:f.model.bound(candidate.tgz),version:f.model.bound(candidate.files.get('release-dir/VERSION.json')),sourceInputs:f.model.bound(candidate.files.get('source-inputs.json'))},source:candidate.source,
+      packageConsumer:{status:consumer.status,automatedStatus:consumer.automatedStatus,phase:consumer.phase,scopes:consumer.scopes,state:consumerRef,initialState:consumerRef},
+      authorTools:{status:f.state.status,automatedStatus:f.state.automatedStatus,visualReview:f.state.visualReview,deliveryStatus:f.state.deliveryStatus,state:child,anchor:f.model.authorToolsAnchor(f.state)},migration,providers:{status:'not-run'},diagnostics:[]};
+  const saved=f.model.persistState(f.model.recomputeAcceptance(state));let calls=0,authors=0,verifications=0;
+  const dependencies={candidateLoader:()=>candidate,consume:async()=>{assert.fail('core must not rerun');},consumerContext:()=>({state:consumer}),releaseLoader:()=>f.state.release,
+    verifyMigration:scope=>{verifications++;assert.deepEqual(scope,migration);},
+    authorTools:async options=>{
+      authors++;assert.equal(options.retryBrandCapture,true);assert.equal(options.resume,child.path);
+      const previous=f.model.bound(f.model.readSnapshot(child.path));
+      await f.api.invokeRecordedStep(f.state,'brands-capture',f.args,{retryBrandCapture:options.retryBrandCapture,invoke:async()=>{calls++;return f.invoke();}});
+      f.model.recompute(f.state);return{stateFile:f.model.persistState(f.state,previous)};
+    }};
+  const first=await f.api.runAll({stage:'all',candidateDir:candidate.directory,resume:saved.path,retryBrandCapture:true},dependencies);
+  assert.equal(first.failure,undefined);assert.equal(first.exitCode,3);assert.equal(calls,1);assert.deepEqual(first.packageConsumer,state.packageConsumer);assert.deepEqual(first.migration,migration);
+  const second=await f.api.runAll({stage:'all',candidateDir:candidate.directory,resume:first.stateFile.path,retryBrandCapture:true},dependencies);
+  assert.equal(second.failure,undefined);assert.equal(calls,1);assert.equal(authors,2);assert(verifications>=4);
+  assert.deepEqual(second.packageConsumer,state.packageConsumer);assert.deepEqual(second.migration,migration);
+  f.model.verifyAuthorToolsAnchor(f.state,first.authorTools.anchor);assert(second.authorTools.anchor.brandCaptureRetry);
+});
 
 test('provider scope archives the supplied manifest and never claims final candidate certification',async t=>{
   const candidate=await inertCandidate(t),{runProviders}=await import(modulePath),model=await import(statePath),outputDir=path.join(temp(t),'providers'),manifest=path.join(temp(t),'sessions.json');fs.writeFileSync(manifest,'{"schemaVersion":1,"kind":"phoenix-diagram-p3-provider-manifest","providers":[]}');

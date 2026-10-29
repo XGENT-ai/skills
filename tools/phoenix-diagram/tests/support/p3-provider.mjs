@@ -343,12 +343,17 @@ export function checkP3Session(session, row, context) {
         'Session is not a fresh origin or exact same-case continuation');
     const modelAt = dto.argv.indexOf('--model'),
           actualModel = modelAt < 0 ? undefined : dto.argv[modelAt + 1];
+    need(provider === 'codex' ? Object.hasOwn(dto, 'toolEnvironment') : !Object.hasOwn(dto, 'toolEnvironment'),
+        'Native tool environment metadata is missing or not applicable');
+    if (provider === 'codex' && index > 0)
+      need(same(dto.toolEnvironment, parts[0].capture.toolEnvironment), 'Continuation tool environment differs');
     need(
         same(
             dto.argv,
             buildArguments(
                 {provider, cwd: dto.cwd, endpointPolicy: 'inherit-config', model: actualModel},
-                {sessionId: session.id, previousId: index ? session.id : undefined})),
+                {sessionId: session.id, previousId: index ? session.id : undefined,
+                  toolEnvironment: provider === 'codex' ? dto.toolEnvironment : {}})),
         'Native client argv was not constructed by the fixed launcher');
     const version = json(dto.version, context, 'Actual CLI version');
     need(
