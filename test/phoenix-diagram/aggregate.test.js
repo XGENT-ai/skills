@@ -147,6 +147,82 @@ function asyncStdioProviderFixture({pollCount=1,exitCode=0,namespaced=false,omit
     b.session.capture=f.put(b.session.capture.path,JSON.stringify(capture));return b;
   }};
 }
+function p3CommandExecutionFixture() {
+  // Inert examples of native client facts, never provider acceptance evidence.
+  const session={id:'fixture-native-session',cwd:'/fixture/project'},turn='fixture-turn',timestamp='2026-10-29T00:00:01.000Z';
+  const execution={timestamp,type:'event_msg',payload:{type:'item_completed',thread_id:session.id,turn_id:turn,started_at_ms:Date.parse(timestamp),completed_at_ms:Date.parse(timestamp),item:{type:'CommandExecution',id:'exec-fixture',process_id:'20926',command:['/bin/zsh','-c','cat .agents/skills/phoenix-diagram/SKILL.md'],cwd:'file:///fixture/project',source:'unified_exec_startup',status:'completed',aggregated_output:'Actual installed skill bytes',exit_code:0,duration:{secs:0,nanos:29166}}}};
+  const rows=[{type:'session_meta',payload:{id:session.id,cwd:session.cwd}},{type:'event_msg',payload:{type:'task_started',turn_id:turn}},
+    {timestamp:'2026-10-29T00:00:00.500Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-fixture',input:'const result = await tools.exec_command({cmd:"cat .agents/skills/phoenix-diagram/SKILL.md"}); text(result.output);'}},execution,
+    {timestamp:'2026-10-29T00:00:01.100Z',type:'response_item',payload:{type:'custom_tool_call_output',call_id:'call-fixture',output:[{type:'input_text',text:'Actual installed skill bytes'}]}},
+    {type:'event_msg',payload:{type:'task_complete',turn_id:turn}}];
+  return{rows,execution,build(){
+    const lines=rows.map(row=>Buffer.from(JSON.stringify(row)+'\n')),raw=Buffer.concat(lines),index=rows.indexOf(execution),result={offset:lines.slice(0,index).reduce((sum,line)=>sum+line.length,0),length:lines[index].length,sha256:identity(lines[index]).sha256};
+    return{part:{profile:'p3',provider:'codex',session,capture:{provider:'codex',sessionId:session.id,cwd:session.cwd,startedAt:'2026-10-29T00:00:00.000Z',finishedAt:'2026-10-29T00:00:02.000Z'},minimumOffset:0,raw,events:rows},proof:{kind:'codex-command-execution',result,toolUseId:execution.payload.item.id}};
+  }};
+}
+test('P3 binds one terminal CommandExecution anchor to its native session and outer exec window',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture(),b=f.build(),pair=proof.proofPair(b.part,b.proof);
+  assert.deepEqual(proof.calls(f.execution),[]);
+  assert.equal(proof.calls(f.execution,{profile:'p3'})[0].kind,b.proof.kind);
+  assert.equal(pair.id,'exec-fixture');assert.equal(pair.name,'exec_command');
+  assert.deepEqual(pair.input,{cmd:f.execution.payload.item.command,workdir:'/fixture/project'});
+  assert.equal(pair.output,'Actual installed skill bytes');assert.equal(pair.exitCode,0);assert.equal(pair.error,false);
+  f.execution.payload.item.exit_code=4;f.execution.payload.item.status='failed';
+  const failed=f.build(),actual=proof.proofPair(failed.part,failed.proof);assert.equal(actual.exitCode,4);assert.equal(actual.error,true);
+});
+test('P3 terminal execution proof rejects foreign, ambiguous, nonterminal and earlier-capture facts',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['profile','provider','capture-session','session-meta','thread','turn','missing-turn-end','duplicate-turn','duplicate-terminal','wrong-tool-id','anchor-bytes','partial-anchor','cwd','cwd-host','cwd-query','plain-cwd','command','output','source','nonterminal','completed-nonzero','failed-zero','missing-exit','process-handle','duration','early','late','reversed-time','event-time','continuation-prefix','continued-without-prefix','outer-missing','outer-duplicate-call','outer-duplicate-result','outer-name','outer-output','outer-time'])await t.test(fault,()=>{
+    const f=p3CommandExecutionFixture(),item=f.execution.payload.item,payload=f.execution.payload;
+    if(fault==='session-meta')f.rows[0].payload.id='other-session';
+    else if(fault==='thread')payload.thread_id='other-session';
+    else if(fault==='turn')payload.turn_id='other-turn';
+    else if(fault==='missing-turn-end')f.rows.pop();
+    else if(fault==='duplicate-turn')f.rows.splice(2,0,structuredClone(f.rows[1]));
+    else if(fault==='duplicate-terminal')f.rows.splice(4,0,structuredClone(f.execution));
+    else if(fault==='cwd')item.cwd='file:///other-project';
+    else if(fault==='cwd-host')item.cwd='file://other-host/fixture/project';
+    else if(fault==='cwd-query')item.cwd+='?other-project';
+    else if(fault==='plain-cwd')item.cwd='/fixture/project';
+    else if(fault==='command')item.command='cat SKILL.md';
+    else if(fault==='output')item.aggregated_output={text:'invented'};
+    else if(fault==='source')item.source='unknown';
+    else if(fault==='nonterminal')item.status='in_progress';
+    else if(fault==='completed-nonzero')item.exit_code=4;
+    else if(fault==='failed-zero')item.status='failed';
+    else if(fault==='missing-exit')delete item.exit_code;
+    else if(fault==='process-handle')delete item.process_id;
+    else if(fault==='duration')item.duration.nanos=1e9;
+    else if(fault==='early')payload.started_at_ms-=2000;
+    else if(fault==='late')payload.completed_at_ms+=2000;
+    else if(fault==='reversed-time')payload.started_at_ms++;
+    else if(fault==='event-time')f.execution.timestamp='2026-10-29T00:00:03.000Z';
+    else if(fault==='outer-missing')f.rows.splice(2,1);
+    else if(fault==='outer-duplicate-call')f.rows.splice(2,0,structuredClone(f.rows[2]));
+    else if(fault==='outer-duplicate-result')f.rows.splice(5,0,structuredClone(f.rows[4]));
+    else if(fault==='outer-name')f.rows[2].payload.name='unrelated-tool';
+    else if(fault==='outer-output')f.rows[4].payload.output='not native content blocks';
+    else if(fault==='outer-time')f.rows[2].timestamp='2026-10-29T00:00:01.500Z';
+    const b=f.build();
+    if(fault==='profile')b.part.profile='p2';
+    else if(fault==='provider')b.part.provider='claude-code';
+    else if(fault==='capture-session')b.part.capture.sessionId='other-session';
+    else if(fault==='wrong-tool-id')b.proof.toolUseId='other-exec';
+    else if(fault==='anchor-bytes')b.proof.result.sha256='0'.repeat(64);
+    else if(fault==='partial-anchor'){b.proof.result.length--;b.proof.result.sha256=identity(b.part.raw.subarray(b.proof.result.offset,b.proof.result.offset+b.proof.result.length)).sha256;}
+    else if(fault==='continuation-prefix')b.part.minimumOffset=b.proof.result.offset+b.proof.result.length;
+    else if(fault==='continued-without-prefix')b.part.capture.origin=false;
+    assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution|anchor/i);
+  });
+});
+test('P3 opaque custom exec remains audit text and cannot supply an old-style execution pair',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture(),b=f.build(),outer=f.rows[2];
+  assert.equal(proof.calls(outer).length,0);assert.equal(proof.calls(outer,{profile:'p3'})[0].name,'exec');
+  assert.equal(proof.toolCallText(outer,{profile:'p3'}),outer.payload.input);
+  assert.equal(proof.commandOf(proof.calls(outer,{profile:'p3'})[0]),undefined);
+  delete b.proof.kind;
+  assert.throws(()=>proof.proofPair(b.part,b.proof),/call\/result ID pair/);
+});
 function skillInjectionFixture(provider='claude-code') {
   const f=stdioProviderFixture({provider,command:'doctor'}),read=f.build().session.loadedReads[0],body='# Phoenix Diagram\n\n'+read.quote+'\n',source='---\nname: phoenix-diagram\n---\n\n'+body;
   Object.assign(read.file,f.put(read.file.path.replace('/.agents/','/.claude/'),source));

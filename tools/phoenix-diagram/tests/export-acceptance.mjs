@@ -108,7 +108,18 @@ export function verifyFileSignature(bytes, format, mime) {
   return signature;
 }
 
-function errorRecord(error, stage) { return { stage, code: error.code || 'acceptance/failed', message: error.message || String(error) }; }
+function errorRecord(error, stage) {
+  const record = { stage, code: error.code || 'acceptance/failed', message: error.message || String(error) };
+  for (const [name, fields] of Object.entries({ cdp: ['method', 'id', 'sessionId', 'timeoutMs', 'expressionSha256'], evaluation: ['fnName', 'sourceSha256'], download: ['guid', 'state', 'receivedBytes', 'totalBytes'] })) {
+    if (error[name]) record[name] = Object.fromEntries(fields.filter(field => error[name][field] !== undefined).map(field => [field, error[name][field]]));
+  }
+  return record;
+}
+export function canceledDownloadError(message, entry) {
+  const error = new Error(message);
+  error.download = { guid: entry.guid, state: entry.state, receivedBytes: entry.receivedBytes, totalBytes: entry.totalBytes };
+  return error;
+}
 async function waitFor(predicate, timeoutMs, label) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) { const result = await predicate(); if (result) return result; await delay(25); }
@@ -179,9 +190,13 @@ async function withBrowserPage(options, kind, run) {
     await send('Browser.setDownloadBehavior', { behavior: 'allowAndName', downloadPath: downloadDirectory, eventsEnabled: true, browserContextId: contextId }, undefined);
     const evaluate = async (fn, argument) => {
       const expression = '(' + fn.toString() + ')(' + (argument === undefined ? '' : JSON.stringify(argument)) + ')';
-      const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true, userGesture: false });
-      if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Export page evaluation failed');
-      return response.result?.value;
+      try {
+        const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true, userGesture: false });
+        if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Export page evaluation failed');
+        return response.result?.value;
+      } catch (error) {
+        error.evaluation = { fnName: fn.name || '<anonymous>', sourceSha256: sha256(fn.toString()) }; throw error;
+      }
     };
     let startup;
     const page = {
@@ -223,7 +238,7 @@ async function withBrowserPage(options, kind, run) {
         }, beforeCount), timeouts.actionMs, format + ' download');
         const completed = await waitFor(() => {
           const entry = [...downloads.values()].find(value => value.url === captured.url);
-          if (entry?.state === 'canceled') throw new Error('Chrome canceled ' + format + ' download');
+          if (entry?.state === 'canceled') throw canceledDownloadError('Chrome canceled ' + format + ' download', entry);
           return entry?.state === 'completed' ? entry : null;
         }, timeouts.actionMs, format + ' download completion');
         if (!/^[a-zA-Z0-9-]+$/.test(completed.guid)) throw new Error('Unsafe Chrome download identifier');
@@ -251,7 +266,7 @@ async function withBrowserPage(options, kind, run) {
         }, beforeCount), timeouts.actionMs, action + ' download');
         const completed = await waitFor(() => {
           const entry = [...downloads.values()].find(value => value.url === captured.url);
-          if (entry?.state === 'canceled') throw new Error('Chrome canceled ' + action);
+          if (entry?.state === 'canceled') throw canceledDownloadError('Chrome canceled ' + action, entry);
           return entry?.state === 'completed' ? entry : null;
         }, timeouts.actionMs, action + ' download completion');
         if (!/^[a-zA-Z0-9-]+$/.test(completed.guid)) throw new Error('Unsafe Chrome download identifier');

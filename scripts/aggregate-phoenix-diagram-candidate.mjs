@@ -192,14 +192,16 @@ export function p2ProviderScenarios(provider,rows) {
 export function checkProviderCoverage(rows,scenarios=PROVIDER_SCENARIOS) {need(Array.isArray(rows) && new Set(rows.map(row=>row.id)).size===rows.length && scenarios.every(required=>rows.some(row=>row.id===required.id)) && rows.every(row=>scenarios.some(required=>required.id===row.id)),'Provider scenario outcome coverage is incomplete or generic');}
 function text(value) {if(typeof value==='string')return value;if(Array.isArray(value))return value.map(text).join('\n');return object(value)?Object.values(value).map(text).join('\n'):'';}
 function eventPayload(event) {return event.type==='response_item'?event.payload:event.item || event;}
-function calls(event) {
+function calls(event,{profile}={}) {
   if(event.type==='assistant')return(event.message?.content || []).filter(row=>row.type==='tool_use').map(row=>({id:row.id,name:row.name,input:row.input}));
   const payload=eventPayload(event);if(payload?.type==='function_call'){let input;try{input=JSON.parse(payload.arguments);}catch{return[];}return[{id:payload.call_id,name:payload.name || '<missing>',input}];}
+  if(profile==='p3' && event.type==='event_msg' && event.payload?.type==='item_completed' && event.payload.item?.type==='CommandExecution')return[{kind:'codex-command-execution',id:event.payload.item.id,name:'exec_command',input:{cmd:event.payload.item.command}}];
+  if(profile==='p3' && event.type==='response_item' && payload?.type==='custom_tool_call')return[{id:payload.call_id,name:payload.name,input:payload.input}];
   return event.type==='item.started' && ['command_execution','mcp_tool_call'].includes(payload?.type)?[{id:payload.id,input:{command:payload.command}}]:[];
 }
 function commandOf(call) {return call.name!==undefined && !['Bash','bash','exec_command','functions.exec_command'].includes(call.name)?undefined:call.input?.cmd ?? call.input?.command;}
-function toolEvent(event) {return calls(event).length>0;}
-function toolCallText(event) {return calls(event).map(call=>text(commandOf(call) ?? call.input)).join('\n');}
+function toolEvent(event,options) {return calls(event,options).length>0;}
+function toolCallText(event,options) {return calls(event,options).map(call=>text(commandOf(call) ?? call.input)).join('\n');}
 function pairPayload(call,result,toolUseId) {
   const candidates=calls(call).filter(value=>toolUseId===undefined || value.id===toolUseId);if(candidates.length!==1)return null;const selected=candidates[0];if(typeof selected.id!=='string' || !selected.id)return null;
   if(call.type==='assistant') {
@@ -244,11 +246,48 @@ function directPd(pair,session,raw) {
   need(program==='phoenix-diagram' || /\/(?:scripts\/phoenix-diagram|bin\/phoenix-diagram\.js)$/.test(program || ''),'Actual execution is not the PD entry');need(PD_COMMANDS.includes(words[0]),'Wrong PD command');return{program,argv:words};
 }
 function proofPair(capture,proof) {
+  if(proof.kind==='codex-command-execution')return commandExecutionProof(capture,proof);
   if(Object.hasOwn(proof,'polls'))return asyncCollectorPair(capture,proof);
   const resultRef=proof.result || proof,result=anchor(capture.raw,resultRef);let choices;
   if(proof.call){need(proof.call.offset<resultRef.offset,'Tool result precedes its call');choices=[{event:anchor(capture.raw,proof.call),ref:proof.call}];}
   else choices=capture.events.filter(toolEvent).filter(event=>capture.events.indexOf(event)<capture.events.indexOf(capture.events.find(value=>same(value,result)))).map(event=>({event}));
   const pairs=choices.map(({event})=>pairPayload(event,result,proof.toolUseId)).filter(Boolean);need(pairs.length===1,'Actual tool call/result ID pair is missing or ambiguous');return pairs[0];
+}
+// The native session records execution facts inside an opaque custom exec call.
+// Bind those facts to original bytes and their owning turn/window; never run or
+// interpret the custom tool's JavaScript or infer batched Promise results.
+function commandExecutionProof(part,proof) {
+  need(part.profile==='p3' && part.provider==='codex' && !proof.call && !Object.hasOwn(proof,'polls'),'CommandExecution requires a P3 Codex terminal anchor');
+  const {session,capture}=part,minimumOffset=part.minimumOffset ?? 0,start=Date.parse(capture?.startedAt),finish=Date.parse(capture?.finishedAt);
+  need(session?.id && path.isAbsolute(session.cwd || '') && path.normalize(session.cwd)===session.cwd && capture?.provider==='codex' && capture.sessionId===session.id && capture.cwd===session.cwd && Number.isSafeInteger(start) && Number.isSafeInteger(finish) && start<=finish && Number.isSafeInteger(minimumOffset) && minimumOffset>=0 && minimumOffset<=part.raw.length && (capture.origin!==false || minimumOffset>0),'CommandExecution session/capture window differs');
+  const selected=anchor(part.raw,proof.result),rows=[];
+  for(let offset=0;offset<part.raw.length;) {
+    const end=part.raw.indexOf(10,offset),length=(end<0?part.raw.length:end+1)-offset;
+    rows.push({offset,length,event:JSON.parse(part.raw.subarray(offset,offset+length).toString('utf8'))});offset+=length;
+  }
+  const at=rows.findIndex(row=>row.offset===proof.result.offset && row.length===proof.result.length);
+  need(at>=0 && rows[at].offset>=minimumOffset && same(rows[at].event,selected),'CommandExecution anchor is not one current original event');
+  const payload=selected.payload,item=payload?.item,meta=rows.filter(row=>row.event.type==='session_meta');
+  need(selected.type==='event_msg' && payload?.type==='item_completed' && item?.type==='CommandExecution' && typeof item.id==='string' && item.id && item.id===proof.toolUseId && rows.filter(row=>row.event.type==='event_msg' && row.event.payload?.type==='item_completed' && row.event.payload.item?.id===item.id).length===1,'CommandExecution terminal ID is missing or duplicated');
+  need(meta.length===1 && meta[0].event.payload?.id===session.id && meta[0].event.payload.cwd===session.cwd && payload.thread_id===session.id && typeof payload.turn_id==='string' && payload.turn_id,'CommandExecution native session/thread differs');
+  const turnRows=type=>rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='event_msg' && row.event.payload?.type===type && row.event.payload.turn_id===payload.turn_id),begins=turnRows('task_started'),ends=turnRows('task_complete');
+  need(begins.length===1 && ends.length===1 && begins[0].row.offset>=minimumOffset && begins[0].index<at && ends[0].index>at,'CommandExecution native turn is missing, duplicated or outside this capture');
+  let cwd;try{const url=new URL(item.cwd);need(url.protocol==='file:' && !url.hostname && !url.search && !url.hash,'CommandExecution cwd is not a local file URL');cwd=fileURLToPath(url);}catch{need(false,'CommandExecution cwd is not a local file URL');}
+  need(cwd===session.cwd && Array.isArray(item.command) && item.command.length>0 && item.command.every(word=>typeof word==='string' && !word.includes('\0')) && typeof item.aggregated_output==='string' && item.source==='unified_exec_startup','CommandExecution cwd/argv/output/source differs');
+  need(Number.isSafeInteger(payload.started_at_ms) && Number.isSafeInteger(payload.completed_at_ms) && start<=payload.started_at_ms && payload.started_at_ms<=payload.completed_at_ms && payload.completed_at_ms<=finish && Date.parse(selected.timestamp)>=payload.completed_at_ms && Date.parse(selected.timestamp)<=finish,'CommandExecution execution time is outside its capture');
+  need(Number.isInteger(item.exit_code) && item.exit_code>=0 && item.exit_code<=255 && (item.status==='completed' && item.exit_code===0 || item.status==='failed' && item.exit_code!==0) && typeof item.process_id==='string' && item.process_id && Number.isSafeInteger(item.duration?.secs) && item.duration.secs>=0 && Number.isInteger(item.duration.nanos) && item.duration.nanos>=0 && item.duration.nanos<1e9,'CommandExecution terminal status/exit/process metadata differs');
+  const windows=[];
+  for(const [index,{event,offset}] of rows.entries())if(event.type==='response_item' && event.payload?.type==='custom_tool_call' && index<at) {
+    const call=event.payload,id=call.call_id,results=rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call_output' && row.event.payload.call_id===id);
+    if(results.some(result=>result.index>at)) {
+      need(typeof id==='string' && id && rows.filter(row=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call' && row.event.payload.call_id===id).length===1 && results.length===1,'CommandExecution outer exec ID is missing or duplicated');
+      const result=results[0].row.event;
+      need(offset>=minimumOffset && call.name==='exec' && typeof call.input==='string' && Array.isArray(result.payload.output) && result.payload.output.every(block=>block.type==='input_text' && typeof block.text==='string') && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=payload.started_at_ms && Date.parse(result.timestamp)>=payload.completed_at_ms && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
+      windows.push(id);
+    }
+  }
+  need(windows.length===1,'CommandExecution has no unique owning custom exec window');
+  return{id:item.id,name:'exec_command',input:{cmd:item.command,workdir:cwd},output:item.aggregated_output,exitCode:item.exit_code,error:item.status==='failed' || item.exit_code!==0,execution:{processHandle:item.process_id,startedAtMs:payload.started_at_ms,completedAtMs:payload.completed_at_ms,turnId:payload.turn_id,threadId:payload.thread_id,source:item.source}};
 }
 function asyncCollectorPair(capture,proof) {
   need(capture.provider==='codex' && Array.isArray(proof.polls) && proof.polls.length>0,'Async collector requires explicit Codex process polls');

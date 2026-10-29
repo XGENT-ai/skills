@@ -313,12 +313,16 @@ function reviewRequest(state,stateFile) {
   const records=Object.fromEntries(state.cases.map(entry=>[entry.id,{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'review-record',status:'pass',diagnostics:[],artifact:{path:entry.state.artifact.path,identity:entry.state.artifact.identity},candidate:{path:entry.state.candidate.path,identity:entry.state.candidate.identity},configSha256:entry.state.configSha256,engine:entry.state.engine,deliveryReceiptId:entry.state.deliveryReceiptId,browserReceiptIdentity:entry.state.browserReceiptIdentity,screenshotIdentities:entry.state.screenshots.map(file=>({file:{path:file.path,identity:file.identity},viewport:file.viewport,theme:file.theme,observed:false,observations:''})),reviewer:'',scope:['diagram','labels','cards','relationship-occlusion','hierarchy','controls'],verdict:'unavailable',findings:['Actual image review has not been performed.']}]))
   return{schemaVersion:1,kind:'phoenix-diagram-review-request',state:stateFile,reviewRef:state.runId?`phoenix-diagram-review/${state.runId}`:null,reviewPath:`reviews/${state.target}.json`,instructions:'Read every actual current screenshot. Fill reviewer/observed/observations/verdict/findings; retain all identities and paths. This template is not an accepted visual review.',envelope:{schemaVersion:1,kind:REVIEW_KIND,repository:state.repository,runId:state.runId,target:state.target,nonce:state.nonce,stateSha256:stateFile.identity.sha256,candidateSha256:state.candidate.tarball.identity.sha256,sourceCommit:state.source.commit,records}};
 }
-function githubOutputs(stateFile,runRoot) {
-  if(!process.env.GITHUB_OUTPUT)return;for(const [key,value] of [['evidence_dir',runRoot],['state_path',stateFile.path]]){const delimiter=`PHOENIX_${randomBytes(12).toString('hex')}`;fs.appendFileSync(process.env.GITHUB_OUTPUT,`${key}<<${delimiter}\n${value}\n${delimiter}\n`);}
+function githubOutputs(stateFile,runRoot,outputFile=process.env.GITHUB_OUTPUT) {
+  if(!outputFile)return;for(const [key,value] of [['evidence_dir',runRoot],['state_path',stateFile.path]]){const delimiter=`PHOENIX_${randomBytes(12).toString('hex')}`;fs.appendFileSync(outputFile,`${key}<<${delimiter}\n${value}\n${delimiter}\n`);}
 }
-function persistState(state,{initial=false}={}) {
+export function persistState(state,{initial=false,outputFile=process.env.GITHUB_OUTPUT}={}) {
   const stateFile=writeNew(path.join(state.runRoot,initial?'consumer-state.json':`consumer-state-${randomBytes(8).toString('hex')}.json`),state);
-  if(initial && state.phase==='pending-review')writeNew(path.join(state.runRoot,'review-request.json'),reviewRequest(state,stateFile));githubOutputs(stateFile,state.runRoot);return{state,stateFile};
+  if(state.kind===KIND){
+    if(initial && state.phase==='pending-review')writeNew(path.join(state.runRoot,'review-request.json'),reviewRequest(state,stateFile));
+    githubOutputs(stateFile,state.runRoot,outputFile);
+  }
+  return{state,stateFile};
 }
 export async function initialConsume(options) {return consumeCandidate(options);}
 // Explicit old-package precondition: installation evidence only, never a core pass.
