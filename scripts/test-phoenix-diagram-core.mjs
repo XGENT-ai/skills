@@ -92,13 +92,18 @@ export function publicNpmCommand(adapter,args) {
   requireThat(Array.isArray(args) && args.every(value=>typeof value==='string') && adapter.env && typeof adapter.env.PATH==='string','Public npm argv or isolated environment is missing');
   return{program:adapter.nodePath,args:[adapter.npmCliPath,'exec','--offline','--yes',`--package=${adapter.tarball}`,'--',adapter.bin,...args],cwd:adapter.cwd,env:adapter.env};
 }
-function assertReference(actual,expected,label) {
-  requireThat(actual && actual.path===expected.path && same(actual.identity,expected.identity),`${label} identity does not match the current run`,'core/stale-evidence');readBound(expected,label);
+export function readEvidenceBytes(reference,{bytesFor,label='evidence'}={}) {
+  if(!bytesFor)return readBound(reference,label).content;
+  requireThat(reference && typeof reference.path==='string' && path.isAbsolute(reference.path),'Evidence requires its original absolute path','core/stale-evidence');
+  const bytes=bytesFor(reference);requireThat(Buffer.isBuffer(bytes) && same(identity(bytes),reference.identity),`${label} archive bytes differ from the original identity`,'core/stale-evidence');return bytes;
+}
+function assertReference(actual,expected,label,reader=readBound) {
+  requireThat(actual && actual.path===expected.path && same(actual.identity,expected.identity),`${label} identity does not match the current run`,'core/stale-evidence');reader(expected,label);
   if(expected.binding && actual.originalBinding) {
     requireThat(Object.entries(expected.binding).every(([key,value])=>actual.originalBinding[key]===value),`${label} original physical binding changed`,'core/stale-evidence');
   }
 }
-function parsed(reference,label) {return JSON.parse(readBound(reference,label).content.toString('utf8'));}
+function parsed(reference,label,reader=readBound) {return JSON.parse(reader(reference,label).content.toString('utf8'));}
 function checks(entries,required,label) {
   requireThat(Array.isArray(entries) && entries.length>0,`${label} checks were not executed`);const names=new Set();
   for(const entry of entries) {requireThat(typeof entry.name==='string' && !names.has(entry.name) && entry.status==='pass' && ordinary(entry.scope),`${label} named checks or actual scope are missing`);names.add(entry.name);}
@@ -108,6 +113,10 @@ function composition(value,quality) {requireThat(value?.schemaVersion===1 && val
 function withoutSelfReference(receipt) {const result=structuredClone(receipt);if(result.evidence)delete result.evidence.summaryReceipt;return result;}
 
 export function inspectFinalize(receipt,context) {
+  // An archive reader proves only original bytes. The default still requires
+  // the original live filesystem bindings; copied inodes are never certified.
+  const read=(reference,label)=>({content:readEvidenceBytes(reference,{bytesFor:context.bytesFor,label})});
+  const parse=(reference,label)=>parsed(reference,label,read),referenceCheck=(actual,expected,label)=>assertReference(actual,expected,label,read);
   requireThat(validHeader(receipt,'finalize'),'Unsupported finalize receipt');
   const names=['validate','deliver','check','browser-check'];requireThat(receipt.stages?.length===4 && receipt.stages.every((stage,index)=>stage.name===names[index]),'Finalize stage order or scope is incomplete');
   let stopped=false;
@@ -118,29 +127,29 @@ export function inspectFinalize(receipt,context) {
   if(context.allowReviewed)requireThat(['required-pending','passed','failed','unavailable'].includes(receipt.visualReview?.status) && receipt.deliveryStatus===(receipt.visualReview.status==='passed'?'complete':'incomplete'),'Saved visual/delivery status is inconsistent');
   else requireThat(receipt.visualReview?.status==='required-pending' && receipt.deliveryStatus==='incomplete','A new finalize must start with an independent pending visual review');
   requireThat(RECEIPT_ID.test(receipt.deliveryReceiptId),'Invalid delivery receipt identity');
-  assertReference(receipt.candidate,context.candidate,'candidate');assertReference(receipt.artifact,context.artifact || receipt.artifact,'artifact');requireThat(same(receipt.engine,context.engine),'Current engine identity mismatch');
+  referenceCheck(receipt.candidate,context.candidate,'candidate');referenceCheck(receipt.artifact,context.artifact || receipt.artifact,'artifact');requireThat(same(receipt.engine,context.engine),'Current engine identity mismatch');
   const [validation,delivery,strict,browser]=receipt.stages.map(stage=>stage.receipt);
-  const contract=delivery.inputContract,required=requiredArtifactChecks(contract),document=parsed(context.candidate,'selected input candidate');
+  const contract=delivery.inputContract,required=requiredArtifactChecks(contract),document=parse(context.candidate,'selected input candidate');
   requireThat((context.contract===undefined || context.contract===contract) && (document.meta?.input_contract===undefined || document.meta.input_contract===contract) && validation.config?.inputContract===contract && delivery.config?.inputContract===contract && same(validation.config,delivery.config),'Selected input contract differs between the candidate, context and native configuration');
   requireThat((context.type===undefined || context.type===delivery.config.diagramType) && (document.diagram_type===undefined || document.diagram_type===delivery.config.diagramType),'Selected diagram type differs from its candidate or native configuration');
   const quality=delivery.quality || delivery.config?.quality || validation.composition?.profile;
   for(const [entry,command] of [[validation,'validate'],[delivery,'deliver'],[strict,'check'],[browser,'browser-check']]) {
-    requireThat(validHeader(entry,command) && entry.status==='pass',`Invalid ${command} stage receipt`);assertReference(entry.candidate,context.candidate,`${command} candidate`);requireThat(same(entry.engine,context.engine) && entry.configSha256===receipt.configSha256,`${command} configuration or engine binding changed`);
+    requireThat(validHeader(entry,command) && entry.status==='pass',`Invalid ${command} stage receipt`);referenceCheck(entry.candidate,context.candidate,`${command} candidate`);requireThat(same(entry.engine,context.engine) && entry.configSha256===receipt.configSha256,`${command} configuration or engine binding changed`);
   }
   requireThat(same(validation.artifact,receipt.artifact.identity) && same(browser.artifact,receipt.artifact.identity) && browser.artifactPath===receipt.artifact.path,'Artifact digest differs between native stage receipts');
   for(const entry of [validation,delivery,strict]) {checks(entry.checks,required,entry.command);requireThat(entry.checks.length===required.length,`${entry.command} named check scope does not match its selected input contract`);composition(entry.composition,quality);}
   requireThat(same(validation.checks,delivery.checks) && same(strict.checks,delivery.checks),'Native stages disagree about executed named checks or scope');
-  assertReference(delivery.artifact,receipt.artifact,'delivery artifact');assertReference(strict.artifact,receipt.artifact,'strict artifact');
+  referenceCheck(delivery.artifact,receipt.artifact,'delivery artifact');referenceCheck(strict.artifact,receipt.artifact,'strict artifact');
   requireThat(delivery.receiptId===receipt.deliveryReceiptId && delivery.commitState==='committed' && strict.scope==='strict-provenance' && strict.provenance==='current' && strict.deliveryReceiptId===receipt.deliveryReceiptId && browser.deliveryReceiptId===receipt.deliveryReceiptId,'Strict/delivery/browser receipt identity or strict scope is stale');
-  const originalDelivery=parsed(strict.deliveryReceipt,'delivery receipt');requireThat(same(originalDelivery,delivery),'Original delivery stage does not match the current delivery sidecar');
+  const originalDelivery=parse(strict.deliveryReceipt,'delivery receipt');requireThat(same(originalDelivery,delivery),'Original delivery stage does not match the current delivery sidecar');
   checks(browser.checks,[...BROWSER_CHECKS,'browser-cleanup','artifact-current','screenshot-capture'],'browser');
   requireThat(browser.browserVersion && typeof browser.browserVersion.product==='string' && browser.browserVersion.product.length>0,'Browser version facts are missing');
   const coverage=new Set();requireThat(browser.coverage?.length===10,'Browser viewport/theme coverage is incomplete');
   for(const entry of browser.coverage) {const key=`${entry.viewport?.width}x${entry.viewport?.height}:${entry.theme}`;requireThat(!coverage.has(key) && entry.status==='pass' && VIEWPORTS.some(([w,h])=>w===entry.viewport.width && h===entry.viewport.height) && THEMES.includes(entry.theme),'Duplicate or unexpected browser coverage');coverage.add(key);checks(entry.checks,BROWSER_CHECKS,'viewport browser');}
   requireThat(browser.screenshots?.length===4,'Four current dark/light screenshots are required');const shots=new Set(),shotPaths=new Set();
-  for(const screenshot of browser.screenshots) {const key=`${screenshot.viewport?.width}x${screenshot.viewport?.height}:${screenshot.theme}`;requireThat(['1440x900:light','1440x900:dark','2048x1320:light','2048x1320:dark'].includes(key) && !shots.has(key) && !shotPaths.has(screenshot.path),'Screenshot viewport/theme scope is incomplete or duplicated');shots.add(key);shotPaths.add(screenshot.path);readBound(screenshot,'screenshot');}
-  requireThat(same(receipt.browserReceiptIdentity,receipt.evidence?.browserReceipt?.identity),'Browser receipt identity mismatch');const originalBrowser=parsed(receipt.evidence.browserReceipt,'browser receipt');requireThat(same(originalBrowser,browser),'Browser stage scope differs from its sealed receipt');
-  const summary=parsed(receipt.evidence?.summaryReceipt,'finalize summary');requireThat(same(summary,withoutSelfReference(receipt)),'Finalize stage evidence differs from its saved current summary');
+  for(const screenshot of browser.screenshots) {const key=`${screenshot.viewport?.width}x${screenshot.viewport?.height}:${screenshot.theme}`;requireThat(['1440x900:light','1440x900:dark','2048x1320:light','2048x1320:dark'].includes(key) && !shots.has(key) && !shotPaths.has(screenshot.path),'Screenshot viewport/theme scope is incomplete or duplicated');shots.add(key);shotPaths.add(screenshot.path);read(screenshot,'screenshot');}
+  requireThat(same(receipt.browserReceiptIdentity,receipt.evidence?.browserReceipt?.identity),'Browser receipt identity mismatch');const originalBrowser=parse(receipt.evidence.browserReceipt,'browser receipt');requireThat(same(originalBrowser,browser),'Browser stage scope differs from its sealed receipt');
+  const summary=parse(receipt.evidence?.summaryReceipt,'finalize summary');requireThat(same(summary,withoutSelfReference(receipt)),'Finalize stage evidence differs from its saved current summary');
   return{...state,artifact:receipt.artifact,candidate:receipt.candidate,configSha256:receipt.configSha256,engine:receipt.engine,summary:receipt.evidence.summaryReceipt,deliveryReceipt:strict.deliveryReceipt,browserReceipt:receipt.evidence.browserReceipt,screenshots:browser.screenshots};
 }
 

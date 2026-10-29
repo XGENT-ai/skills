@@ -6,7 +6,7 @@
 // Its Apache-2.0 Impeccable provenance is retained in tools/phoenix-ui/NOTICE.md.
 // Phoenix changes: diagram-only identities/resources/cache, Unix targets,
 // explicit acquisition, complete offline validation and installed ownership.
-// No hooks, renderer, UI installer, migration or update lookup is included.
+// No hooks, renderer, UI installer or update lookup is included.
 
 const fs = require('node:fs');
 const os = require('node:os');
@@ -410,7 +410,7 @@ function verifyReceipt(project, manifest, options = {}) {
   const snapshot = sealed(childFile(project, receiptPath));
   const active = snapshot.data; const version = manifest.data;
   const transaction = active.transactionId;
-  if (active.schemaVersion !== 1 || active.tool !== TOOL || active.toolVersion !== TOOL_VERSION || !/^[a-f0-9]{32}$/.test(transaction || '') || !same(active.project, physical(fs.statSync(project, { bigint: true })))
+  if (![1, 2].includes(active.schemaVersion) || active.tool !== TOOL || active.toolVersion !== TOOL_VERSION || !/^[a-f0-9]{32}$/.test(transaction || '') || !same(active.project, physical(fs.statSync(project, { bigint: true })))
     || active.npmPackageVersion !== version.npmPackageVersion || active.bundleManifestSha256 !== version.bundleSha256 || active.engineManifestSha256 !== manifest.hash
     || active.engine?.sourceInputSha256 !== version.sourceInputSha256 || active.engine?.inputContractSchema !== 1 || active.engine?.receiptSchema !== 1 || active.engine?.viewerRevision !== 'phoenix-v2'
     || !Object.values(version.engines).some(meta => meta.sha256 === active.engine?.binary?.sha256 && meta.size === active.engine?.binary?.bytes)
@@ -419,10 +419,11 @@ function verifyReceipt(project, manifest, options = {}) {
     || !Array.isArray(active.ownership) || !active.ownership.length || active.ownership.length > 200000
     || active.planSha256 !== sha256(encoded([active.bundleManifestSha256, active.engineManifestSha256, active.providers, active.ownership]))) throw failure('Project ownership requires a different or invalid Phoenix Diagram package/contract identity.');
   const journal = sealed(childFile(project, active.journal)).data;
-  if (journal.schemaVersion !== 1 || journal.tool !== TOOL || journal.transactionId !== transaction || journal.phase !== 'committed' || journal.pending !== null || !Array.isArray(journal.operations) || !journal.operations.length || journal.completed !== journal.operations.length
+  if (![1, 2].includes(journal.schemaVersion) || journal.tool !== TOOL || journal.transactionId !== transaction || journal.phase !== 'committed' || journal.pending !== null || !Array.isArray(journal.operations) || !journal.operations.length || journal.completed !== journal.operations.length
     || !same(journal.project, active.project) || !same(journal.active, active)
     || !same(journal.transaction, physical(fs.statSync(path.dirname(path.join(project, active.backup)), { bigint: true })))
     || journal.operations[journal.operations.length - 1].path !== receiptPath || !same(journal.operations[journal.operations.length - 1].after, identity(snapshot))) throw failure('Installed ownership is not bound to a completed native journal.');
+  if (journal.migration && (journal.schemaVersion !== 2 || journal.migration.confirmed !== true || !Array.isArray(journal.migration.roots) || journal.migration.roots.some(root => root.kind !== 'legacy-root-remove' || !active.providers.some(provider => root.path === `${provider}/skills/archify`) || !['legacy-2.17', 'legacy-2.17-when-to-use', 'reference-3.1.0'].includes(root.source) || root.pending !== null || !Array.isArray(root.entries) || !root.entries.length || root.entries.some(entry => entry.removed !== true)))) throw failure('Legacy removal journal has not committed its confirmed scope.');
   let previous; const owned = new Map();
   for (const entry of active.ownership) {
     if (!managed(entry.path) || !active.providers.includes(entry.path.split('/')[0]) || previous && Buffer.compare(Buffer.from(previous), Buffer.from(entry.path)) >= 0 || ![0o644, 0o755].includes(entry.identity?.mode)) throw failure(`Unsafe managed ownership path: ${entry.path}`);
@@ -431,6 +432,7 @@ function verifyReceipt(project, manifest, options = {}) {
     owned.set(entry.path, entry.identity); previous = entry.path;
   }
   for (const [index, operation] of journal.operations.entries()) {
+    if ((journal.schemaVersion === 2 ? operation.kind !== 'file-write' : operation.kind !== undefined)) throw failure('Unknown native journal operation kind.');
     if (operation.stagePath !== `after/${index}` || operation.retiredPath !== `retired/${index}` || operation.undoPath !== `undo/${index}` || operation.backupPath !== (operation.before ? `before/${index}` : null)) throw failure('Journal staging/backup paths differ from native ownership.');
     if (index + 1 < journal.operations.length && (!managed(operation.path) || !same(owned.get(operation.path), operation.after))) throw failure(`Journal operation differs from managed ownership: ${operation.path}`);
   }
@@ -439,7 +441,7 @@ function verifyReceipt(project, manifest, options = {}) {
     if (verifiedJournalPublicationEntry(journals, name)) continue;
     if (!/^[a-f0-9]{32}\.json$/.test(name)) throw failure(`Unknown installation journal entry: ${name}`);
     const other = sealed(childFile(journals, name)).data;
-    if (!['committed', 'recovered'].includes(other.phase)) throw failure('Diagram installation requires explicit native recovery before ordinary use.');
+    if (![1, 2].includes(other.schemaVersion) || other.tool !== TOOL || !same(other.project, active.project) || !['committed', 'recovered'].includes(other.phase)) throw failure('Diagram installation requires explicit native recovery before ordinary use.');
   }
   if (options.installedSkillRoot) {
     const relativeRoot = path.relative(project, options.installedSkillRoot).split(path.sep).join('/');
@@ -460,7 +462,12 @@ async function preflight(options = {}) {
   const versionManifestPath = path.resolve(options.manifestPath || path.join(skillDir, 'ENGINE.json'));
   const manifest = manifestAt(versionManifestPath, options);
   const target = platformTarget();
-  let project = projectRoot(options.project || process.cwd());
+  let project = options.exactProject ? path.resolve(options.project) : projectRoot(options.project || process.cwd());
+  if (options.exactProject) {
+    const stat = fs.lstatSync(project);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) throw failure('Migration project must be an explicit regular project directory.', 2);
+    project = fs.realpathSync(project);
+  }
   let bundleRoot;
   if (options.bundleRoot) {
     bundleRoot = path.resolve(options.bundleRoot);
@@ -472,7 +479,7 @@ async function preflight(options = {}) {
     if (options.checkReceipt !== false) verifyReceipt(project, manifest);
   } else {
     if (!options.project && !exists(path.join(project, '.phoenix-diagram/install/active.json'))) project = projectRoot(skillDir);
-    verifyReceipt(project, manifest, { installedSkillRoot: skillDir });
+    if (options.checkReceipt !== false) verifyReceipt(project, manifest, { installedSkillRoot: skillDir });
     bundleRoot = skillDir;
     if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, null);
   }
@@ -497,12 +504,32 @@ function help(options, args = []) {
   let version;
   try { version = packageVersion(options); } catch { /* Help is available even when package metadata is damaged. */ }
   return `phoenix-diagram ${TOOL_VERSION}${version ? ` (@xgent-ai/skills ${version})` : ''}\n`
-    + 'Native diagrams: guide, brands, validate, deliver, compare, preview, check, browser-check, visual-check, finalize, review-record, recover-output, recover-compare, doctor, install.\n'
+    + 'Native diagrams: guide, brands, validate, deliver, compare, preview, check, browser-check, visual-check, finalize, review-record, recover-output, recover-compare, doctor, install, migrate.\n'
     + 'Usage: phoenix-diagram engine install --project DIR [--release-dir DIR] [--json]\n'
     + 'Engine acquisition is explicit. Ordinary commands only verify an existing engine and never download or use a Node renderer.\n'
     + (args[0] === 'recover-output' ? 'Recovery: recover-output <original-private-recovery-directory> --json\nIn the original output parent P, records move from P/.phoenix-diagram-recovery-<id>/publication-recovery-v1.json to sibling P/.phoenix-diagram-recovery-<id>.cleanup.json, then P/.phoenix-diagram-output-cleanup/<id>.json. The fixed cleanup directory includes its owned owner-v1.json. Always pass the original recovery directory explicitly, even if it has disappeared. Unknown or ambiguous multiple record locations are preserved and refused; recovery does not scan to choose a transaction. Native recovery preserves later claimants; it does not replace delivery checks or image review.\n' : '')
+    + (args[0] === 'migrate' ? 'migrate --from-archify --project DIR [--providers claude,codex] [--confirm-remove-archify] [--dry-run] --json\nmigrate --recover ID --project DIR --json\nmigrate --rollback ID --project DIR [--dry-run] --json\nOnly the explicitly selected project/providers are eligible. Apply requires confirmed removal; the old skill has no backup and is not rebuilt by rollback. Recovery uses an already verified engine and the specified local transaction; no implicit download or old-skill reinstall.\n' : '')
     + `${setupCommand(null, options.project || process.cwd(), options)}\n`;
 }
+function migrationOptions(args) {
+  if (args[0] !== 'migrate') return null;
+  const values = new Map();
+  const switches = new Set(['from-archify', 'confirm-remove-archify', 'dry-run', 'json']);
+  for (let i = 1; i < args.length; i++) {
+    const match = /^--([a-z-]+)(?:=(.*))?$/.exec(args[i]);
+    if (!match || !['from-archify', 'confirm-remove-archify', 'dry-run', 'json', 'recover', 'rollback', 'project', 'bundle-root', 'providers'].includes(match[1]) || values.has(match[1])) throw failure('Invalid or duplicate migration option.', 2);
+    let value = match[2];
+    if (switches.has(match[1])) { if (value !== undefined) throw failure(`--${match[1]} has no value.`, 2); value = true; }
+    else { value ??= args[++i]; if (!value || value.startsWith('--')) throw failure(`--${match[1]} requires a value.`, 2); }
+    values.set(match[1], value);
+  }
+  if (['from-archify', 'recover', 'rollback'].filter(key => values.has(key)).length !== 1 || !values.has('project')) throw failure('Migration requires exactly one mode and an explicit --project DIR.', 2);
+  const from = values.has('from-archify');
+  if (!from && ['bundle-root', 'providers', 'confirm-remove-archify'].some(key => values.has(key)) || values.has('recover') && values.has('dry-run')) throw failure('Invalid migration mode options.', 2);
+  for (const key of ['recover', 'rollback']) if (values.has(key) && !/^[a-f0-9]{32}$/.test(values.get(key))) throw failure('Invalid migration transaction ID.', 2);
+  return { project: path.resolve(values.get('project')), from, bundleRoot: values.get('bundle-root') };
+}
+
 async function main(args, options = {}) {
   if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) throw failure('CLI arguments must be a string array.', 2);
   const wantsHelp = args.includes('--help') || args.includes('-h');
@@ -530,10 +557,11 @@ async function main(args, options = {}) {
       process.stdout.write(json ? encoded(result) : `Phoenix Diagram engine ${TOOL_VERSION} ready: ${ready.enginePath}\n`);
       return 0;
     }
-    const ready = await preflight({ ...options, env, allowInstall: false, checkReceipt: args[0] === 'install' ? false : true });
+    const migration = migrationOptions(args);
+    const ready = await preflight({ ...options, ...(migration ? { project: migration.project, exactProject: true, ...(migration.from && migration.bundleRoot ? { bundleRoot: path.resolve(migration.bundleRoot) } : {}) } : {}), env, allowInstall: false, checkReceipt: !['install', 'migrate'].includes(args[0]) });
     manifest = ready.manifest; target = ready.target; project = ready.project;
     const childArgs = [...args];
-    if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);
+    if ((args[0] === 'install' || migration?.from) && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);
     const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot, PHOENIX_DIAGRAM_SETUP_COMMAND: setupCommand(manifest, project, options) };
     const code = await new Promise((resolve, reject) => {
       const child = spawn(ready.enginePath, childArgs, { env: childEnv, stdio: 'inherit', windowsHide: true });
@@ -557,5 +585,5 @@ async function main(args, options = {}) {
   }
 }
 
-module.exports = { TARGETS, platformTarget, manifestAt, verifyBundle, verifyReceipt, verifyEngine, enginePath, installEngine, preflight, setupCommand, shellQuote, proxyFor, checkedUrl, sha256, main };
+module.exports = { TARGETS, platformTarget, manifestAt, verifyBundle, verifyReceipt, verifyEngine, enginePath, installEngine, preflight, setupCommand, shellQuote, proxyFor, checkedUrl, sha256, migrationOptions, main };
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; }).catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\n`); process.exitCode = 4; });

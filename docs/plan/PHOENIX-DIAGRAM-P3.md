@@ -186,11 +186,11 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-29T11:32:40+08:00（Asia/Shanghai）
-- 当前进度：4/8 个里程碑完成
-- 当前状态：M1–M4 已完成；M5 完整来源已准备，待实施迁移与回滚
-- 最近完成：M4 · 阶段 A 核心收口（当前 run 实际审核后 complete）
-- 下一步：M5 安装 v2、确认移除、新入口恢复/回滚；M4 阶段提交已完成
+- 最近更新：2026-10-29T16:39:56+08:00（Asia/Shanghai）
+- 当前进度：7/8 个里程碑完成
+- 当前状态：M1–M7 已完成；按M7提交点冻结并准备M8
+- 最近完成：M7 · 最终候选接线、完整来源许可及V-7通过
+- 下一步：完成M7提交/SHA回填与限定分支同步，进入M8最终同包终验
 - 当前阻塞：无
 - 代码基线：dce8662270f993cae3521b59ceff8ac6f22e1b63
 
@@ -198,11 +198,13 @@
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M5 | 进行中 | 2026-10-29T00:00:18+08:00 | 已提前冻结完整旧来源与确定变体；安装/迁移/回滚尚未实现。 | [M5 记录](PHOENIX-DIAGRAM-P3.records/M5.md) | 待提交 |
 | M1 | 已完成 | 2026-10-29T00:02:52+08:00 | 品牌/安全采集/缓存/五类标题轨及终局兼容已交付，V-1 定向退出通过。 | [M1 记录](PHOENIX-DIAGRAM-P3.records/M1.md) | d60efaf |
 | M2 | 已完成 | 2026-10-29T01:41:16+08:00 | 比较/三视图/成对恢复/独立审核及公开链路交付，V-2 与静态、轻量门通过。 | [M2 记录](PHOENIX-DIAGRAM-P3.records/M2.md) | d60efaf |
 | M3 | 已完成 | 2026-10-29T10:27:10+08:00 | V-3/正式引擎故障支撑、准备提交/限定分支推送及固定 PNG 匿名 HTTPS 就绪通过。 | [M3 记录](PHOENIX-DIAGRAM-P3.records/M3.md) | d60efaf / 859db51 |
 | M4 | 已完成 | 2026-10-29T11:32:40+08:00 | 当前作者 run 的真实采集、导出、比较12图与两品牌8图实际审核后 complete；故障/preview视觉与维护证据闭合，保留已知 Reader 轻微限制。 | [M4 记录](PHOENIX-DIAGRAM-P3.records/M4.md) | 8f6547a |
+| M5 | 已完成 | 2026-10-29T14:58:03+08:00 | v1/v2迁移与回滚、真实旧包桥接、CLI故障门及V-5整组/受影响复验组合通过；首次失败和证据边界保留。 | [M5 记录](PHOENIX-DIAGRAM-P3.records/M5.md) | 待提交 |
+| M6 | 已完成 | 2026-10-29T15:14:00+08:00 | 唯一入口/两调用方/兼容与扩展文档、五份原例及认证布局齐备；V-6为19/19，重建分发后npm测试退出0。 | [M6 记录](PHOENIX-DIAGRAM-P3.records/M6.md) | 待提交 |
+| M7 | 已完成 | 2026-10-29T16:39:56+08:00 | all/providers/31迁移场景、两宿主18题/认证CI与聚合、完整来源许可和同字节分发齐备；V-7及必需npm门通过，真实同包终验留M8。 | [M7 记录](PHOENIX-DIAGRAM-P3.records/M7.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -271,7 +273,8 @@
 | phoenix-diagram/SKILL.md 描述/路由 | 十类、排除数值图表/仪表盘/未知 infographic | PRD C1；冻结 SKILL Type router/Mermaid input；现行选择图型 | 保留十类与排除，补精确品牌/预览/比较入口 | 不改事实、语言、停止阈值；完整描述/前 100 字 V-6 |
 | 品牌参考 ★ | brand 标为 P3 deferred | 冻结 brand-marks.md；findBrandMark/captureBrandReference/prepareDiagramBrandMarks | 采用固定目录/安全/来源，调整为显式采集+本地消费，拒绝生成中联网 | 不猜品牌/URL，不替代 type；V-1、V-9 |
 | 预览参考 ★ | 不自动启动服务/窗口 | 冻结 preview.mjs generation/last-good/stop | 采用版本与恢复；原生轮询；--open 才开窗口 | 仅明确请求启动，不充当视觉验收；V-3、V-4 |
-| 比较参考 ★、delivery-contract | 无 compare | 冻结 canonicalArchitecture/compareArchitecture/buildDeltaSvg/renderArchitectureDeltaHtml | 采用稳定身份/字段分类/三视图，调整检查与成对事务 | 无因果/风险/可合并性推断；保留默认实际审核，V-2、V-4 |
+| 迁移帮助/条件参考 ★ | 普通安装/作图不移除旧入口，尚无公开迁移路由 | 现行 install/bootstrap 与 §3.2/§5.4 的原生 migrate 合同 | 补 migration.md 与显式维护请求路由，优先使用真实回执给出的固定引擎恢复命令 | 沿用 C-6 确认、不备份/不恢复旧 skill、精确项目/provider 及后来修改保护，不新增自动迁移或安装授权；V-5、V-6、V-9 |
+| 比较参考 ★、delivery-contract | M2 已提供比较命令及专用审核参考，主 skill 尚无条件路由 | 冻结 canonicalArchitecture/compareArchitecture/buildDeltaSvg/renderArchitectureDeltaHtml；M2 现行 architecture-compare/delivery-contract | 保留已实现的稳定身份/字段分类/三视图及成对事务，M6 补明确请求路由 | 无因果/风险/可合并性推断；保留默认实际审核，V-2、V-4、V-6 |
 | 兼容回执/交付答复 | brand/views/旧 animation 均 deferred phase=P3 | `tools/phoenix-diagram/src/input.rs`::compatibility；PRD C5/NG5；冻结 Reader | 品牌实现，来源沿 P2，废弃展示改终局 dispositions | 不声称复刻移除展示，不改原 JSON；V-1、V-8 |
 | elintp/SKILL.md 出图/嵌入 | archify 可用则调用，缺失用内联 SVG/HTML/CSS，最终离线 srcdoc 检查 | 现行出图/自检；PRD C7 | 仅换入口、能力映射和回执 | 原触发/不自动安装/语言/fallback/最终嵌入检查保留；V-6、V-9、V-10 |
 | documentation-writer 及 architecture/user-manual 参考 | archify/Mermaid fallback，三类成果，旧截图命名与证据清理 | 现行出图/交付；现行 delivery-contract | finalize→实际看图→review-record→同交付 summary，从真实回执取截图 | 原 fallback/语言/成果数量保留；额外证据置本机 out-dir 至交接，不删身份链冒充通过；V-6、V-10 |
@@ -300,7 +303,7 @@
 | 安装迁移 | `tools/phoenix-diagram/src/install.rs`、`tools/phoenix-diagram/src/install/plan.rs`、`tools/phoenix-diagram/src/install/state.rs`、`tools/phoenix-diagram/src/install/transaction.rs`、`tools/phoenix-diagram/src/install/disk.rs`、`tools/phoenix-diagram/src/install/bundle.rs`、`tools/phoenix-diagram/src/install/migration.rs` ★；`tools/phoenix-diagram/migration-sources/archify-v1.json` ★、`tools/phoenix-diagram/upstream/archify-2.17-full-source.tar.gz` ★；`scripts/collect-phoenix-diagram-migration-sources.mjs` ★；照项目锁、active-last、条件补偿 |
 | 身份/分发 | `skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs`、`bin/phoenix-diagram.js`、`bin/xgent-skills.js`；现有 `scripts/build-phoenix-diagram.mjs`、`scripts/check-phoenix-diagram-source.mjs`、`scripts/pack-phoenix-diagram-candidate.mjs`、`scripts/check-phoenix-diagram-candidate.mjs`、`scripts/aggregate-phoenix-diagram-candidate.mjs`、`scripts/test-phoenix-diagram-native.mjs`；`.github/workflows/phoenix-diagram.yml`；ENGINE、dist、来源/许可清单 |
 | 兼容消费样本 | `skills/phoenix-diagram/examples/legacy.web-app.architecture.json` ★、`skills/phoenix-diagram/examples/legacy.agent-tool-call.workflow.json` ★、`skills/phoenix-diagram/examples/legacy.async-job-roundtrip.sequence.json` ★、`skills/phoenix-diagram/examples/legacy.product-analytics.dataflow.json` ★、`skills/phoenix-diagram/examples/legacy.deployment-release.lifecycle.json` ★；M6 从固定 legacy-2.17 原例逐字节复制，M7 核 sourceInputs/bundle/tgz 与消费路径，详见 §5.5 |
-| 唯一 skill/调用方 | `skills/phoenix-diagram/SKILL.md` 及现行四份参考；`skills/phoenix-diagram/references/brand-marks.md`、`skills/phoenix-diagram/references/preview.md`、`skills/phoenix-diagram/references/architecture-compare.md`、`skills/phoenix-diagram/references/compatibility.md`、`skills/phoenix-diagram/references/extending-types.md` ★；删除 `skills/archify/`；README.md、`docs/phoenix-diagram.md`、`skills/elintp/SKILL.md`、`skills/documentation-writer/SKILL.md` 及 `skills/documentation-writer/references/architecture.md`、`skills/documentation-writer/references/user-manual.md` |
+| 唯一 skill/调用方 | `skills/phoenix-diagram/SKILL.md` 及现行四份参考；`skills/phoenix-diagram/references/brand-marks.md`、`skills/phoenix-diagram/references/preview.md`、`skills/phoenix-diagram/references/architecture-compare.md`、`skills/phoenix-diagram/references/migration.md`、`skills/phoenix-diagram/references/compatibility.md`、`skills/phoenix-diagram/references/extending-types.md` ★；删除 `skills/archify/`；README.md、`docs/phoenix-diagram.md`、`skills/elintp/SKILL.md`、`skills/documentation-writer/SKILL.md` 及 `skills/documentation-writer/references/architecture.md`、`skills/documentation-writer/references/user-manual.md` |
 | 测试 | `tools/phoenix-diagram/tests/brands.rs`、`tools/phoenix-diagram/tests/compare.rs`、`tools/phoenix-diagram/tests/preview.rs`、`tools/phoenix-diagram/tests/migration.rs` ★、现行 input_contract/render_check/install/cli/delivery/output；`tools/phoenix-diagram/tests/p3-acceptance.mjs` ★、`tools/phoenix-diagram/tests/provider/p3-scenarios.json` ★、`tools/phoenix-diagram/tests/fixtures/brands/official-test.png` ★；`test/phoenix-diagram/migration.test.js`、`test/phoenix-diagram/p3-acceptance.test.js` ★ 及现行 bootstrap/install/candidate/aggregate/provider-acceptance/skill |
 
 ## 2. 模块、接口与依赖
@@ -428,7 +431,7 @@ bootstrap 的 migrate 分支先严格解析操作互斥、--project 和标志，
 
 InstallReceipt 保留现有字段，增 transactionSchemaVersion/migrationSources/removals/preserved/rollbackCommand、legacyBackupPolicy=none、legacyRestoration=not-supported、reinstallInstructions；removals 逐项区分 planned/removed/preserved/remaining，rollbackCommand 只表示新入口回滚。现有 backup 字段仅指 diagram 受管文件，不充当旧 skill 备份。状态增 rolled-back、cancelled（仅真实取消），recovery-required 保留。dry-run 遇 pending 只报告，不恢复；首次写后取消不能说零变更，必须列真实事务、已删/剩余项和重装指引。
 
-联合 --migrate-archify 先展示同一原生 dry-run 的精确目标及不备份后果；TTY 用户肯定答复后透传 --confirm-remove-archify，拒绝/EOF 时保留旧目录且不启动迁移。非交互调用须显式提供该确认标志，不能以超时或默认值代替。单独确认标志没有迁移请求时为参数错误；--no-phoenix-diagram 继续跳过并保留，不因确认标志删除旧入口。普通 install 不迁移；无论何种入口都不写 UI、共享配置、其他 provider 或个人目录。
+联合 --migrate-archify 使用独立的 Diagram 迁移分支，跳过 XGENT hooks/settings/AGENTS 和 Phoenix UI 阶段，以满足迁移入口的共享配置零变化边界；普通联合 install 保持原有职责。该分支先展示同一原生 dry-run 的精确目标及不备份后果；TTY 用户肯定答复后透传 --confirm-remove-archify，拒绝/EOF 时保留旧目录且不启动迁移。非交互调用须显式提供该确认标志，不能以超时或默认值代替。单独确认标志没有迁移请求时为参数错误；--no-phoenix-diagram 继续跳过并保留，不因确认标志删除旧入口。普通 install 不迁移；任何 Diagram 迁移入口都不写 UI、共享配置、其他 provider 或个人目录。
 
 ### 5.5 唯一入口和扩展约定
 
@@ -504,14 +507,14 @@ Node 命令在仓根通过 mise exec --no-deps -- 执行，固定 Node 25.2.1；
 | V-5 | WORK-F11/AC-3 按 C-6 替代口径、AC-4、WORK-N4/AC-3：所选 provider、完整原版识别、无历史回执可确认后移除；未确认/拒绝/非交互无标志零迁移，旧 skill 不备份/回滚不重建且给重装指引；外部管理/修改/额外文件/链接/个人保护、v1 升级、新入口回滚/取消/中断、共享配置零变化 | mbx test --locked --offline --test migration --test install；node --test `test/phoenix-diagram/migration.test.js` `test/phoenix-diagram/install.test.js` `test/phoenix-diagram/bootstrap.test.js` `test/phoenix-diagram/joint-install.test.js`；临时项目，按 C-6 核真实删除/余项/journal，不能以原备份条款宣称通过 | M5：v2/确认移除/新入口恢复回滚/启动链整批交付齐备后；来源识别/显式确认/路径安全门在任何删除前 |
 | V-6 | WORK-F10 三 AC、WORK-N3/AC-4：旧活跃目录/命令/调用消失，语义/授权/fallback/嵌入约定及描述前 100 字/许可保留；扩展合同完整，五份 legacy 样本及新旧布局消费分派已迁移 | node --test `test/phoenix-diagram/skill.test.js` `test/phoenix-diagram/candidate.test.js`；rg -n 'archify' README.md `skills/elintp` `skills/documentation-writer` `skills/phoenix-diagram`；人工逐条对 §0.6/§5.5 和活跃接口清单 | M6：唯一入口、样本/必需成员/caseManifest、全部调用方/参考、兼容/扩展文档和测试齐备后；历史/许可命中须逐项分类 |
 | V-7 | WORK-F10/AC-3、WORK-N2/AC-3：源→bundle→dist/tgz 的五份 legacy 样本同字节，包无旧活跃入口、完整迁移来源/许可、P3 profile/必需场景与拒绝假证据；历史候选原布局/身份及 p1/p2 默认合同不变 | node --test `test/phoenix-diagram/build.test.js` `test/phoenix-diagram/candidate.test.js` `test/phoenix-diagram/aggregate.test.js` `test/phoenix-diagram/provider-acceptance.test.js` `test/phoenix-diagram/p3-acceptance.test.js`；node `scripts/assemble-phoenix-diagram-reader.mjs` --check；核 §5.5 样本 sourceInputs/manifest/tgz 与 caseManifest、拒绝混合/缺失/篡改 | M7：all/providers 扩展/题面/profile/CI 接线及最终来源/分发资源齐备后，冻结前只做该批定向检查；不再首次交付 author-tools 或 PNG |
-| V-8 | 阶段 B 最终同包收口：P3 全部核心 AC，以及 P1/P2 十类、双合同、来源、五语言/导出/兼容的受影响回归；四平台/Node18 真实包消费；品牌/预览/比较/迁移的故障、离线和安全边界 | M7 源码提交后推送本任务候选分支；gh workflow run phoenix-diagram.yml --ref BRANCH -f profile=p3 -f await_review=false；按 run ID 下载并认证现有 candidate/harness 制品；node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage all --candidate-dir DIR --output-dir NEW；本机同一 tgz 完整消费并实际看图；node `scripts/aggregate-phoenix-diagram-candidate.mjs` --profile p3 --input INPUT --output NEW.json | M8：M5–M7 完成、唯一候选可认证后；四平台各跑一次本阶段完整消费，本机统一视觉/故障收口 |
-| V-9 | WORK-F7–F11、WORK-N3/N5：§9.3 两宿主各 18 个真实新会话，实际加载路径/工具/原始材料/语义/审核和授权正确；非支持资源不伪通过 | 用现有 authenticated harness/capture-stdio 原生 JSONL 与 p3-scenarios.json；原始 transcript/调用结果、candidate/回执/截图由独立审核者核对；node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage providers --candidate-dir DIR --provider-manifest FILE --output-dir NEW 只验证/归档真实原件，不合成会话 | M8：最终 tgz/VERSION/题面/collector 冻结并安装完成后；先记录实际模型/端点类别，无额外重复预检阶段 |
+| V-8 | 阶段 B 最终同包收口：P3 全部核心 AC，以及 P1/P2 十类、双合同、来源、五语言/导出/兼容的受影响回归；四平台/Node18 真实包消费；品牌/预览/比较/迁移的故障、离线和安全边界 | M7 源码提交后推送本任务候选分支；gh workflow run phoenix-diagram.yml --ref BRANCH -f profile=p3 -f await_review=false；按 run ID 下载并认证现有 candidate/harness 制品；从认证harness运行node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage all --candidate-dir DIR --legacy-candidate-dir LEGACY --evidence-repo REPO --output-dir NEW；本机同一 tgz 完整消费并实际看图；node `scripts/aggregate-phoenix-diagram-candidate.mjs` --profile p3 --input INPUT --output NEW.json | M8：M5–M7 完成、唯一候选可认证后；四平台各跑一次本阶段完整消费，本机统一视觉/故障收口 |
+| V-9 | WORK-F7–F11、WORK-N3/N5：§9.3 两宿主各 18 个真实新会话，实际加载路径/工具/原始材料/语义/审核和授权正确；非支持资源不伪通过 | 用 authenticated harness中的capture-p3-provider/capture-p3-stdio原生 JSONL 与 p3-scenarios.json；原始 transcript/调用结果、candidate/回执/截图由独立审核者核对；node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage providers --candidate-dir DIR --provider-manifest FILE --output-dir NEW 只验证/归档真实原件，不合成会话 | M8：最终 tgz/VERSION/题面/collector 冻结并安装完成后；先记录实际模型/端点类别，无额外重复预检阶段 |
 | V-10 | WORK-F10/AC-2：两个文档调用方已装/缺失路径，Markdown 正文截图/链接和离线 srcdoc 最终页面都完整；独立图通过不冒充最终页通过 | 复用 V-9 的 elintp/documentation-writer 四类会话产物；Agent 仅凭调用方文档、授权材料、公开说明操作，不读实现或口头补步骤；HTML 直接真实浏览器打开；Markdown 在文档目录运行 pandoc DOCUMENT.md --standalone --embed-resources --resource-path=. --output=PREVIEW.html（本机已安装 pandoc），再用真实浏览器断网检查嵌入/截图和全部标签 | M8：对应调用方会话产物就绪后，与同一环境的 V-8/V-9 合并走查，不再启动第二轮作者 |
 | V-11 | 阶段 B 全量与跨期退出：WORK-F11/N2/N3/N4/N5 的 P1/P2 已交付部分仍成立；包/引擎身份、原生/Node18、恢复和导出回归；Phoenix UI 隔离 | mise exec --no-deps -- npm test；mise exec --no-deps -- npm run test:diagram；准备 UI 固定工具后 mise exec --no-deps -- npm run test:phoenix；git diff --check；各门复用 V-8–V-10 已通过且未失效的证据 | M8：本阶段所有实现、候选及验收辅助修改结束后的最终收口；不因回写/提交再跑 |
 
 local/phoenix-diagram/p3-stage-a 与 local/phoenix-diagram/p3-stage-a-acceptance 为 M4 新建的验收输出（★），不是现有复用锚点。
 
-BRANCH/DIR/NEW/INPUT/FILE 是运行时参数：源码分支、已认证候选目录、新证据位置、按 §9.2 生成的清单。开始验收时在 M8 记录一次实际值，后续命令原样引用，不猜包目录、不拼接旧版本证据。所有输出父目录须符合现有维护脚本的自有普通目录要求。
+BRANCH/DIR/LEGACY/REPO/NEW/INPUT/FILE 是运行时参数：源码分支、已认证候选目录、独立认证的历史v1前置、明确的来源验收仓库、新证据位置、按 §9.2 生成的清单。开始验收时在 M8 记录一次实际值，后续命令原样引用，不猜包目录、不拼接旧版本证据。所有输出父目录须符合现有维护脚本的自有普通目录要求。
 
 **成本和最小反馈**：调查中的未优化原生回归含大型引擎身份散列、安装及 kill 矩阵，耗时已超过十分钟，UI 回归更长；不得当每次编辑反馈。维护测试可设 CARGO_PROFILE_DEV_OPT_LEVEL=2、CARGO_PROFILE_TEST_OPT_LEVEL=2，并显式保持两 profile 的 DEBUG_ASSERTIONS=true、OVERFLOW_CHECKS=true；这些测试设置不改变发行 release profile。批内仅运行具体失败用例（如 mbx test --test brands CASE_NAME）或 mbx check --locked --offline；未知耗时如实记录。M4/M8 构建保留增量缓存，不无故 clean。
 
@@ -533,7 +536,11 @@ UI 本机已存在 `local/phoenix-ui/build-tools/darwin-arm64/binaryen-version_1
 3. 资源 URL 必须含该完整提交 SHA，而非 main/latest：`https://raw.githubusercontent.com/XGENT-ai/skills/<准备提交完整SHA>/tools/phoenix-diagram/tests/fixtures/brands/official-test.png`。准备者在 M4 前匿名 HTTPS GET，核每跳安全、最终 URL、MIME/PNG 签名、125 bytes 和固定 SHA，并保存就绪证据；本地 commit/文件存在、gh 登录或 URL 字符串均不算资源可取回。未获推送授权或 URL 不可达时，先请求用户提供该测试资源的授权发布位置，不扩大可见性或悄换图片；记录未就绪，不进入依赖真实采集的 V-4。
 4. M4 的 author-tools 以该已核 URL/提交/内容身份作为题面明确提供的单个测试资源完成真实 HTTPS capture；M8/V-8 复用同一资源并重核，不依赖 M7 首次提交 PNG。上述 Base64 的本地解码或 HTTP/TLS fixture 不能替代真实采集。DNS/redirect/压缩/畸形响应攻击矩阵仍用本地接缝，生产代码没有私网旁路；普通生成监测零外联。
 
-M7 只补 --stage all|providers、--candidate-dir、--provider-manifest、最终候选 state/认证与 profile/题面/CI/aggregate 接线，复用已有 author-tools/review/resume。默认 p1/p2 和历史输入继续原行为。p3 固定需要：四个平台同源码/同 bundle 引擎、唯一同包及认证 run/job/artifact、精确 Node 18.20.8 消费、本机完整视觉记录、两宿主各 18 题与各自真实模型/collector。按 §5.5 的认证 tgz 布局选择 legacy 路径，不从 tools/upstream 或当前工作树补消费输入；新布局五份同字节样本必须随包，历史包按旧布局核验。扩展 artifact-kind 和新命令结果的身份核对；文件存在不算能力通过，p3 不冒充 p2 的旧 64 角色聚合。
+M7 只补 --stage all|providers、--candidate-dir、--provider-manifest、必要的显式 --legacy-candidate-dir/--evidence-repo 前置、最终候选 state/认证与 profile/题面/CI/aggregate 接线，复用已有 author-tools/review/resume。默认 p1/p2 和历史输入继续原行为。p3 固定需要：四个平台同源码/同 bundle 引擎、唯一同包及认证 run/job/artifact、精确 Node 18.20.8 消费、本机完整视觉记录、两宿主各 18 题与各自真实模型/collector。按 §5.5 的认证 tgz 布局选择 legacy 路径，不从 tools/upstream 或当前工作树补消费输入；新布局五份同字节样本必须随包，历史包按旧布局核验。扩展 artifact-kind 和新命令结果的身份核对；文件存在不算能力通过，p3 不冒充 p2 的旧 64 角色聚合。
+
+完整迁移消费另需旧 skill 文件字节，不能由仅含摘要的运行期 manifest 重建。M7 在装配端从已核固定归档生成一份完整、固定摘要的旧迁移测试数据，随认证维护 harness 转移；其中 manifest 原字节须匹配同候选 sourceInputs，三来源的完整文件集合/bytes/mode/SHA 均逐项核对。它只作为新建隔离项目的旧目标输入，不执行其中 Node、renderer 或命令；不进入 npm tgz、生产 bundle 或引擎依赖。source-less 检查仅为这一份精确路径/身份的数据开放例外，其他源码归档、Rust/Cargo、活跃 renderer 和未知文件继续拒绝，并如实说明这一测试数据边界。消费者不得从当前工作树或网络补旧文件；缺失/篡改时迁移范围保持未运行或失败，不缩减 V-8。
+
+旧 v1 journal 的兼容终态发布只会由真实 v1 fresh install 后的新引擎直接回滚触发。它另用固定、已认证的历史 P2 候选作为安装前置，通过 `--legacy-candidate-dir DIR` 显式给出；这不是第二个最终候选，不进入新 tgz 或 harness，不执行惰性 Archify 测试数据中的旧程序，也不手造 v1 journal。M7 冻结其来源/run/artifact/原包摘要描述符；CI 从该历史制品独立取回并核摘要，本机重用已认证原字节。缺失、过期或不符时该兼容检查保持未运行/失败，不能以其他 12 个 checkpoint 通过代替。所有 P3 产品结论仍绑定唯一最终候选，聚合分别核历史前置与本期来源。
 
 ### 9.3 两宿主冻结角色题面
 

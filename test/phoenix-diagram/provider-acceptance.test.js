@@ -103,7 +103,11 @@ test('frozen materials and browser setup retain complete bytes and identities', 
     actual.push(key);
     const [bytes, sha256] = expected[key];
     assert.deepEqual(material.identity, { bytes, sha256 }, key);
-    const content = material.packageMember ? fs.readFileSync(path.join(root, material.packageMember)) : material.content;
+    // Keep the historical P2 package member unchanged; this source-checkout
+    // byte check uses the same frozen sample at its current maintained path.
+    const sourceMember = material.packageMember === 'skills/archify/examples/deployment-release.lifecycle.json'
+      ? 'skills/phoenix-diagram/examples/legacy.deployment-release.lifecycle.json' : material.packageMember;
+    const content = sourceMember ? fs.readFileSync(path.join(root, sourceMember)) : material.content;
     assert.deepEqual(identity(content), material.identity, key);
     assert.ok(material.packageMember || material.source.startsWith('local/phoenix-diagram/'));
   }

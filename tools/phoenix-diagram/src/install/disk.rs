@@ -788,3 +788,58 @@ pub(super) fn remove_known(
     }
     Ok(())
 }
+
+/// Only for an already-empty, journal-bound legacy directory. Both names are
+/// persisted by migration before entering this conditional removal primitive.
+pub(super) fn remove_empty_known(
+    dir: &Arc<Directory>,
+    name: &str,
+    temporary: &str,
+    physical: &Physical,
+    mode: u32,
+) -> InstallResult<()> {
+    let verify = |name: &str| -> InstallResult<()> {
+        let entry = dir
+            .entry(name)?
+            .ok_or_else(|| conflict("install/legacy-directory-absent", name))?;
+        if entry.kind != libc::S_IFDIR
+            || entry.physical != *physical
+            || entry.uid != uid()
+            || entry.mode != mode
+        {
+            return Err(conflict(
+                "install/legacy-directory-changed",
+                dir.path.join(name).display().to_string(),
+            ));
+        }
+        let child = dir
+            .child(name)?
+            .ok_or_else(|| conflict("install/legacy-directory-absent", name))?;
+        if !child.list()?.is_empty() {
+            return Err(conflict(
+                "install/legacy-directory-not-empty",
+                child.path.display().to_string(),
+            ));
+        }
+        Ok(())
+    };
+    if dir.entry(name)?.is_some() {
+        verify(name)?;
+        rename(dir, name, dir, temporary)?;
+        if let Err(error) = verify(temporary) {
+            let _ = rename(dir, temporary, dir, name);
+            return Err(error);
+        }
+    }
+    if dir.entry(temporary)?.is_some() {
+        verify(temporary)?;
+        let temporary = component(temporary)?;
+        if unsafe { libc::unlinkat(dir.file.as_raw_fd(), temporary.as_ptr(), libc::AT_REMOVEDIR) }
+            != 0
+        {
+            return Err(io("install/legacy-rmdir", std::io::Error::last_os_error()));
+        }
+        dir.sync()?;
+    }
+    Ok(())
+}

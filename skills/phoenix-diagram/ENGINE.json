@@ -4,17 +4,17 @@
   "tool": "phoenix-diagram",
   "toolVersion": "0.2.0",
   "npmPackageVersion": "0.7.4",
-  "sourceCommit": "568c9352d09d55eabe854eaeaa54bb568e8a7f40",
-  "sourceInputSha256": "5b263a99a7ec3e7d9469765cfb0914ec7aedff90d24e2c19087aaf4e50f8d4aa",
+  "sourceCommit": "67f72373e181f6e586a53b03a140aa8747cd4cc5",
+  "sourceInputSha256": "e69485c69da709f026ed573fdfef5a637ca4e2745cf699023b0f422db578cf3f",
   "inputContractSchema": 1,
   "receiptSchema": 1,
   "viewerRevision": "phoenix-v2",
-  "bundleSha256": "384a661592aa2b7449a4f3ab4547b8405aa1a2242248ca43f44fbbebdd5d1d36",
+  "bundleSha256": "07cb825ea820545344168d1f5a0cc1d02ba6aa3ee5cfd9c2846030c4c3f9bbcb",
   "engines": {
     "darwin-arm64": {
       "asset": "phoenix-diagram-darwin-arm64",
-      "size": 17252384,
-      "sha256": "175d7b10e4b29a9bf3c38e17c79d8decfe3be2edd886e9d36b38cba2d301bca1"
+      "size": 17616064,
+      "sha256": "efd4a524e36b73b16aaed3e3b9355e06907e40912b838c7d35d91b2c99cd9f17"
     }
   }
 }

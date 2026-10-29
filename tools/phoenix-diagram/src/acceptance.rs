@@ -6,6 +6,61 @@ use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::Path;
 
+pub(crate) const INSTALL_PHASES: &[&str] = &[
+    "install-journal-ready",
+    "install-after-retire",
+    "install-after-link",
+    "install-before-active",
+    "install-after-active",
+    "install-committed",
+    "migrate-before-legacy-remove",
+    "migrate-after-legacy-remove",
+    "rollback-after-file",
+    "rollback-old-journal-retired",
+    "rollback-old-journal-published",
+    "rollback-audit-archived",
+    "rollback-compat-published",
+];
+
+fn requested_phase<'a>(
+    acceptance: Option<&OsStr>,
+    directory: Option<&'a OsStr>,
+    requested: Option<&'a OsStr>,
+) -> io::Result<Option<(&'a Path, &'a str)>> {
+    if acceptance != Some(OsStr::new("1")) {
+        return Ok(None);
+    }
+    let (Some(directory), Some(requested)) = (
+        directory.filter(|v| !v.is_empty()),
+        requested.filter(|v| !v.is_empty()),
+    ) else {
+        return Ok(None);
+    };
+    let requested = requested
+        .to_str()
+        .filter(|value| {
+            INSTALL_PHASES.contains(value)
+                || matches!(
+                    *value,
+                    "after-retire"
+                        | "after-recovery-link"
+                        | "after-witness-quarantine"
+                        | "compare-before-second-member"
+                        | "compare-before-committed"
+                        | "compare-committed"
+                        | "preview-worker-ready"
+                        | "preview-worker-ignore-term"
+                )
+        })
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Unknown acceptance checkpoint phase",
+            )
+        })?;
+    Ok(Some((Path::new(directory), requested)))
+}
+
 pub(crate) fn checkpoint(phase: &str, target: &Path, recovery_dir: &Path) -> io::Result<()> {
     let acceptance = std::env::var_os("PHOENIX_DIAGRAM_ACCEPTANCE");
     let directory = std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_DIR");
@@ -84,37 +139,9 @@ fn checkpoint_with(
     requested: Option<&OsStr>,
     ready: impl FnOnce() -> io::Result<()>,
 ) -> io::Result<()> {
-    if acceptance != Some(OsStr::new("1")) {
-        return Ok(());
-    }
-    let (Some(directory), Some(requested)) = (
-        directory.filter(|value| !value.is_empty()),
-        requested.filter(|value| !value.is_empty()),
-    ) else {
+    let Some((directory, requested)) = requested_phase(acceptance, directory, requested)? else {
         return Ok(());
     };
-    let requested = requested
-        .to_str()
-        .filter(|value| {
-            matches!(
-                *value,
-                "after-retire"
-                    | "after-recovery-link"
-                    | "after-witness-quarantine"
-                    | "compare-before-second-member"
-                    | "compare-before-committed"
-                    | "compare-committed"
-                    | "preview-worker-ready"
-                    | "preview-worker-ignore-term"
-            )
-        })
-        .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Unknown acceptance checkpoint phase",
-            )
-        })?;
-    let directory = Path::new(directory);
     let (handle, identity) = checkpoint_directory(directory)?;
     let phase = match phase {
         "AfterRetire" | "after-retire" => "after-retire",
@@ -123,6 +150,7 @@ fn checkpoint_with(
         "compare-before-second-member" => "compare-before-second-member",
         "compare-before-committed" => "compare-before-committed",
         "compare-committed" => "compare-committed",
+        phase if INSTALL_PHASES.contains(&phase) => phase,
         _ => return Ok(()),
     };
     if phase != requested {
@@ -445,5 +473,65 @@ mod tests {
             io::ErrorKind::AlreadyExists
         );
         assert_eq!(fs::read(file).unwrap(), before);
+    }
+    #[test]
+    fn installation_phases_keep_exact_target_and_transaction_marker_bindings() {
+        for phase in INSTALL_PHASES {
+            let root = Temp::new();
+            let target = root.0.join("project/.agents/skills/archify/LICENSE");
+            let transaction = root.0.join(
+                "project/.phoenix-diagram/install/transactions/0123456789abcdef0123456789abcdef",
+            );
+            let mut paused = false;
+            checkpoint_with(
+                phase,
+                &target,
+                &transaction,
+                Some(OsStr::new("1")),
+                Some(root.0.as_os_str()),
+                Some(OsStr::new(phase)),
+                || {
+                    paused = true;
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert!(paused);
+            let marker: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.0.join("checkpoint.json")).unwrap()).unwrap();
+            assert_eq!(marker["phase"], *phase);
+            assert_eq!(marker["target"], target.to_str().unwrap());
+            assert_eq!(marker["recoveryDirectory"], transaction.to_str().unwrap());
+            assert_eq!(marker["pid"], std::process::id());
+        }
+    }
+    #[test]
+    fn phase_selection_needs_the_complete_gate_and_rejects_unknown_names_without_io() {
+        let root = Temp::new();
+        let missing = root.0.join("not-created");
+        for (acceptance, directory, phase) in [
+            (
+                None,
+                Some(missing.as_os_str()),
+                Some(OsStr::new("install-journal-ready")),
+            ),
+            (Some(OsStr::new("1")), None, Some(OsStr::new("unknown"))),
+            (Some(OsStr::new("1")), Some(missing.as_os_str()), None),
+        ] {
+            assert!(requested_phase(acceptance, directory, phase)
+                .unwrap()
+                .is_none());
+        }
+        assert_eq!(
+            requested_phase(
+                Some(OsStr::new("1")),
+                Some(missing.as_os_str()),
+                Some(OsStr::new("unknown"))
+            )
+            .unwrap_err()
+            .kind(),
+            io::ErrorKind::InvalidInput
+        );
+        assert!(!missing.exists());
     }
 }

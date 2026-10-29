@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-p3-provider-scenarios",
+  "version": "p3-v1",
+  "providers": {
+    "codex": [
+      "brand-builtin",
+      "brand-no-url",
+      "brand-capture",
+      "brand-missing",
+      "preview-explicit",
+      "normal-no-preview",
+      "compare-valid",
+      "compare-invalid",
+      "migrate-known",
+      "migrate-conflict",
+      "migrate-recover",
+      "legacy-dispositions",
+      "caller-elintp",
+      "caller-documentation",
+      "fallback-elintp",
+      "fallback-documentation",
+      "workflow-facts",
+      "erd-missing-facts"
+    ],
+    "claude-code": [
+      "brand-builtin",
+      "brand-no-url",
+      "brand-capture",
+      "brand-missing",
+      "preview-explicit",
+      "normal-no-preview",
+      "compare-valid",
+      "compare-invalid",
+      "migrate-known",
+      "migrate-conflict",
+      "migrate-recover",
+      "legacy-dispositions",
+      "caller-elintp",
+      "caller-documentation",
+      "fallback-elintp",
+      "fallback-documentation",
+      "workflow-facts",
+      "erd-missing-facts"
+    ]
+  },
+  "rows": [
+    {
+      "id": "brand-builtin",
+      "version": "p3-v1",
+      "prompt": "请画一张架构图：Customer portal 向 Order API 提交订单；Order API 把订单写入 PostgreSQL。请给 PostgreSQL 加上该品牌标识。组件职责、连接标签和来源说明保留，交付可交互 HTML 和当前审核结果。来源：本题给出的系统描述。\n",
+      "promptIdentity": {
+        "sha256": "898ffb7267eda18457a98120b2877b276fd58a59211dbf30cab06798f2fa0f97",
+        "bytes": 286
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "brand-no-url",
+      "version": "p3-v1",
+      "prompt": "请画一张架构图：Customer portal 向 Nimbus Ledger 服务提交订单。请尝试为我方虚构产品 Nimbus Ledger 加品牌标识；我没有官方网站 URL，也没有图片。保留该组件名称和处理订单的职责，并交付图。\n",
+      "promptIdentity": {
+        "sha256": "3bd1db3a090126fb7d3c966b81ef5aba61f273d758cc35863411299f05ff2c6a",
+        "bytes": 252
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "brand-capture",
+      "version": "p3-v1",
+      "prompt": "请画 Customer portal 向 Order API 提交订单的架构图，为 Order API 使用我提供的测试标识。我明确授权只采集这个固定公共测试资源：https://raw.githubusercontent.com/XGENT-ai/skills/859db512350ad7db9d7166809cfb7c86331f0b91/tools/phoenix-diagram/tests/fixtures/brands/official-test.png 。采集后固定返回的资源身份；交付 HTML、导出的图片，并检查离线阅读。\n",
+      "promptIdentity": {
+        "sha256": "b68e92025fca418a48ae77360072a53e7a46d3709fd615fd4dffac4aa6a3b4f4",
+        "bytes": 420
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "brand-missing",
+      "version": "p3-v1",
+      "prompt": "材料 input.json 的 Order API 已固定品牌资源身份，但本项目没有对应缓存。请按原输入生成图，并如实说明实际结果。\n",
+      "promptIdentity": {
+        "sha256": "a00fea82c05b2edf76e2b98f6ec03065427151fd2f82b7b8e9f4ceeebed7fb56",
+        "bytes": 153
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "input.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1,\n      \"brand\": {\n        \"url\": \"https://raw.githubusercontent.com/XGENT-ai/skills/859db512350ad7db9d7166809cfb7c86331f0b91/tools/phoenix-diagram/tests/fixtures/brands/official-test.png\",\n        \"sha256\": \"8a1035d9172bf23b4444d8409418141e7bb39271deb17786c3860ef1defd494e\"\n      }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "24a73151c89545c2feb7244246e76d0132126217da1a99d4852db06dc1e41225",
+            "bytes": 971
+          }
+        }
+      ]
+    },
+    {
+      "id": "preview-explicit",
+      "version": "p3-v1",
+      "prompt": "请明确启动材料 input.json 的本地预览，端口由系统分配，保持系统浏览器关闭。启动后把标题改为 Order service revised；再模拟编辑半写 JSON 和一份非法 JSON，观察预览；然后恢复合法输入并停止本次服务。请报告实际更新、保留图和停止情况。\n",
+      "promptIdentity": {
+        "sha256": "255d8cd7ec192925759ab01bb921ad2bb7ee5849bcd44618959ae5a7f660d7f0",
+        "bytes": 319
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "input.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "e9490092c338305b90a6a501ea55285dcf8cc454e801d57327f54b30c6332de4",
+            "bytes": 689
+          }
+        }
+      ]
+    },
+    {
+      "id": "normal-no-preview",
+      "version": "p3-v1",
+      "prompt": "请画 Customer portal 向 Order API 提交订单的静态架构图，交付可交互 HTML 和实际审核情况。来源为本题系统描述。\n",
+      "promptIdentity": {
+        "sha256": "d7e9c156fb50c8b9a01d1332dcc1554bae886a97df53d6e235ca84ce1ddc340c",
+        "bytes": 146
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "compare-valid",
+      "version": "p3-v1",
+      "prompt": "请比较材料 base.json 与 head.json 两版架构，交付可交互比较页面与当前回执，检查变化定位和三个视图，按默认交付流程审核。\n",
+      "promptIdentity": {
+        "sha256": "c2e297135e8b03746e4208d80c71a16f941751088979ef31c017e8bb16e6cd62",
+        "bytes": 167
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "base.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "e9490092c338305b90a6a501ea55285dcf8cc454e801d57327f54b30c6332de4",
+            "bytes": 689
+          }
+        },
+        {
+          "name": "head.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 3\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    },\n    {\n      \"id\": \"database\",\n      \"type\": \"database\",\n      \"label\": \"Order store\",\n      \"row\": 0,\n      \"col\": 2\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    },\n    {\n      \"id\": \"persist\",\n      \"from\": \"service\",\n      \"to\": \"database\",\n      \"label\": \"Persist order\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "5bf20795773b01d6dd201ab98ccff488e95a8efa7a0413d21f8a5f56d8bfafd7",
+            "bytes": 929
+          }
+        }
+      ]
+    },
+    {
+      "id": "compare-invalid",
+      "version": "p3-v1",
+      "prompt": "材料 base.json 是基线；head.json 是我尚未写完的修改。请先为合法基线准备已有比较输出，再尝试使用这份 head.json 更新同一输出，报告真实结果和需要我处理的位置。\n",
+      "promptIdentity": {
+        "sha256": "adc04f38a8cca7a4333b7dc5f55b15a8f9e2946bc69b67497fc16523434de442",
+        "bytes": 219
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "base.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "e9490092c338305b90a6a501ea55285dcf8cc454e801d57327f54b30c6332de4",
+            "bytes": 689
+          }
+        },
+        {
+          "name": "head.json",
+          "content": "{\"schema_version\":1,\"diagram_type\":\"architecture\",\"components\": [\n",
+          "identity": {
+            "sha256": "fdf984621e05fddb2e9df932d1fc9f8af7a9f1158bf890029ec32acb6d59c77b",
+            "bytes": 66
+          }
+        }
+      ]
+    },
+    {
+      "id": "migrate-known",
+      "version": "p3-v1",
+      "prompt": "项目 {{PROJECT}} 的 {{PROVIDER}} 项目级 Archify 来自随题准备的固定原版副本，没有历史安装回执。请先展示精确迁移范围、新入口与删除后果，等我确认后再处理。候选 release-dir 是 {{RELEASE_DIR}}，固定引擎是 {{ENGINE}}。仅授权本项目所选 provider，不授权个人目录或共享配置。\n",
+      "promptIdentity": {
+        "sha256": "4de265a28dc966c164d90c50160809a40558209c768ce555e3479adb0184f983",
+        "bytes": 356
+      },
+      "parameters": [
+        "PROJECT",
+        "PROVIDER",
+        "RELEASE_DIR",
+        "ENGINE"
+      ],
+      "materials": []
+    },
+    {
+      "id": "migrate-conflict",
+      "version": "p3-v1",
+      "prompt": "请检查项目 {{PROJECT}} 的旧 Archify 迁移范围：这里同时准备了自定义副本、外部管理标记及只供范围核对的个人入口。候选 release-dir 为 {{RELEASE_DIR}}，固定引擎为 {{ENGINE}}。请保留这些内容，说明需要怎样由我处理；不要把来源不明的副本当原版处理。\n",
+      "promptIdentity": {
+        "sha256": "cb61b58fd0e818ebccfd08c92d631d08a7b0557c5595526937a814232ea64f18",
+        "bytes": 330
+      },
+      "parameters": [
+        "PROJECT",
+        "RELEASE_DIR",
+        "ENGINE"
+      ],
+      "materials": []
+    },
+    {
+      "id": "migrate-recover",
+      "version": "p3-v1",
+      "prompt": "我已经确认迁移项目 {{PROJECT}} 的 {{PROVIDER}} 原版 Archify，授权在这个隔离项目执行迁移并演示一次中断后的恢复及新入口回滚。release-dir 为 {{RELEASE_DIR}}，固定引擎为 {{ENGINE}}。请先展示精确范围和后果；只处理这次确认事务，并在操作过程中保护我后来修改的文件。报告旧项实际删除/剩余、新入口状态和我恢复旧入口所需的步骤。\n",
+      "promptIdentity": {
+        "sha256": "af4714d6327cf8433fe3e7a66bc224668d4f01f2cb29c18b7d9ff38edfc66aa1",
+        "bytes": 439
+      },
+      "parameters": [
+        "PROJECT",
+        "PROVIDER",
+        "RELEASE_DIR",
+        "ENGINE"
+      ],
+      "materials": []
+    },
+    {
+      "id": "legacy-dispositions",
+      "version": "p3-v1",
+      "prompt": "请按现有材料 legacy.json 生成图，保留业务事实及原 JSON 文件。仓库 URL、提交和行号只是给定声明，没有提供检出仓库，也没有完成行级核对。说明品牌、仓库来源和旧 views/animation 在当前工具里的实际处置与交付状态，不把声明本身当成已完成检查。\n",
+      "promptIdentity": {
+        "sha256": "0a4507508730d32be47f340f946c1b75935735603b6c2a7cd7faa9aaedf143f1",
+        "bytes": 332
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "legacy.json",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Sample Web App\",\n    \"output\": \"web-app-rendered.html\",\n    \"quality_profile\": \"showcase\",\n    \"views\": [\n      {\n        \"id\": \"request-path\",\n        \"label\": \"Primary request path\",\n        \"focus\": [\n          \"users\",\n          \"cdn\",\n          \"lb\",\n          \"api\",\n          \"db\"\n        ],\n        \"note\": \"Follow the primary customer request from the edge to durable state.\"\n      },\n      {\n        \"id\": \"identity-and-cache\",\n        \"label\": \"Identity and cache\",\n        \"focus\": [\n          \"auth\",\n          \"api\",\n          \"cache\"\n        ],\n        \"note\": \"Isolate authentication and the read-through cache beside the request path.\"\n      },\n      {\n        \"id\": \"async-work\",\n        \"label\": \"Static and async work\",\n        \"focus\": [\n          \"cdn\",\n          \"s3\",\n          \"api\",\n          \"queue\",\n          \"worker\"\n        ],\n        \"note\": \"See the two secondary paths without adding noise to the main request.\"\n      }\n    ],\n    \"animation\": \"trace\",\n    \"repository\": {\n      \"url\": \"https://github.com/example/legacy-orders.git\",\n      \"revision\": \"0000000000000000000000000000000000000000\",\n      \"provider\": \"github\",\n      \"link_mode\": \"web\"\n    }\n  },\n  \"components\": [\n    {\n      \"id\": \"users\",\n      \"type\": \"external\",\n      \"label\": \"Users\",\n      \"sublabel\": \"Browser / Mobile\",\n      \"pos\": [\n        40,\n        300\n      ],\n      \"size\": [\n        120,\n        60\n      ]\n    },\n    {\n      \"id\": \"auth\",\n      \"type\": \"security\",\n      \"label\": \"Auth Provider\",\n      \"sublabel\": \"OAuth 2.0\",\n      \"pos\": [\n        40,\n        110\n      ],\n      \"size\": [\n        120,\n        64\n      ],\n      \"tag\": \"JWT + PKCE\"\n    },\n    {\n      \"id\": \"cdn\",\n      \"type\": \"cloud\",\n      \"label\": \"CloudFront\",\n      \"sublabel\": \"CDN\",\n      \"pos\": [\n        250,\n        300\n      ],\n      \"size\": [\n        130,\n        60\n      ]\n    },\n    {\n      \"id\": \"lb\",\n      \"type\": \"cloud\",\n      \"label\": \"Load Balancer\",\n      \"sublabel\": \"HTTPS :443\",\n      \"pos\": [\n        460,\n        300\n      ],\n      \"size\": [\n        130,\n        60\n      ]\n    },\n    {\n      \"id\": \"api\",\n      \"type\": \"backend\",\n      \"label\": \"API Server\",\n      \"sublabel\": \"FastAPI :8000\",\n      \"pos\": [\n        670,\n        300\n      ],\n      \"size\": [\n        130,\n        60\n      ],\n      \"sources\": [\n        {\n          \"path\": \"src/order-service.rs\",\n          \"line\": 12,\n          \"end_line\": 18,\n          \"label\": \"给定的未核来源\"\n        }\n      ]\n    },\n    {\n      \"id\": \"cache\",\n      \"type\": \"database\",\n      \"label\": \"Redis\",\n      \"sublabel\": \"cache :6379\",\n      \"pos\": [\n        670,\n        150\n      ],\n      \"size\": [\n        130,\n        60\n      ]\n    },\n    {\n      \"id\": \"db\",\n      \"type\": \"database\",\n      \"label\": \"PostgreSQL\",\n      \"sublabel\": \"primary :5432\",\n      \"pos\": [\n        880,\n        300\n      ],\n      \"size\": [\n        130,\n        60\n      ],\n      \"brand\": \"postgresql\"\n    },\n    {\n      \"id\": \"s3\",\n      \"type\": \"cloud\",\n      \"label\": \"S3\",\n      \"sublabel\": \"static assets\",\n      \"pos\": [\n        250,\n        440\n      ],\n      \"size\": [\n        130,\n        60\n      ],\n      \"tag\": \"OAI protected\"\n    },\n    {\n      \"id\": \"queue\",\n      \"type\": \"messagebus\",\n      \"label\": \"SQS\",\n      \"sublabel\": \"job queue\",\n      \"pos\": [\n        670,\n        440\n      ],\n      \"size\": [\n        130,\n        60\n      ]\n    },\n    {\n      \"id\": \"worker\",\n      \"type\": \"backend\",\n      \"label\": \"Worker\",\n      \"sublabel\": \"async jobs\",\n      \"pos\": [\n        880,\n        440\n      ],\n      \"size\": [\n        130,\n        60\n      ]\n    }\n  ],\n  \"boundaries\": [\n    {\n      \"kind\": \"region\",\n      \"label\": \"AWS Region: us-west-2\",\n      \"wraps\": [\n        \"cdn\",\n        \"lb\",\n        \"api\",\n        \"cache\",\n        \"db\",\n        \"s3\",\n        \"queue\",\n        \"worker\"\n      ]\n    },\n    {\n      \"kind\": \"security-group\",\n      \"label\": \"sg-api :443/:8000\",\n      \"wraps\": [\n        \"lb\",\n        \"api\"\n      ]\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"users-to-cdn\",\n      \"from\": \"users\",\n      \"to\": \"cdn\",\n      \"label\": \"HTTPS\",\n      \"variant\": \"emphasis\"\n    },\n    {\n      \"id\": \"jwt-verification\",\n      \"from\": \"auth\",\n      \"to\": \"api\",\n      \"label\": \"verify JWT\",\n      \"variant\": \"security\",\n      \"fromSide\": \"right\",\n      \"toSide\": \"top\",\n      \"via\": [\n        [\n          620,\n          142\n        ],\n        [\n          620,\n          246\n        ],\n        [\n          735,\n          246\n        ]\n      ]\n    },\n    {\n      \"id\": \"cdn-to-lb\",\n      \"from\": \"cdn\",\n      \"to\": \"lb\"\n    },\n    {\n      \"id\": \"static-assets\",\n      \"from\": \"cdn\",\n      \"to\": \"s3\",\n      \"label\": \"static\",\n      \"variant\": \"dashed\",\n      \"fromSide\": \"bottom\",\n      \"toSide\": \"top\",\n      \"labelDy\": 58\n    },\n    {\n      \"id\": \"lb-to-api\",\n      \"from\": \"lb\",\n      \"to\": \"api\"\n    },\n    {\n      \"id\": \"cache-read-through\",\n      \"from\": \"api\",\n      \"to\": \"cache\",\n      \"label\": \"read-through\",\n      \"fromSide\": \"top\",\n      \"toSide\": \"bottom\",\n      \"labelDy\": -68\n    },\n    {\n      \"id\": \"api-sql\",\n      \"from\": \"api\",\n      \"to\": \"db\",\n      \"label\": \"SQL\"\n    },\n    {\n      \"id\": \"enqueue-job\",\n      \"from\": \"api\",\n      \"to\": \"queue\",\n      \"label\": \"enqueue\",\n      \"variant\": \"dashed\",\n      \"fromSide\": \"bottom\",\n      \"toSide\": \"top\",\n      \"labelDy\": 58\n    },\n    {\n      \"id\": \"queue-to-worker\",\n      \"from\": \"queue\",\n      \"to\": \"worker\"\n    }\n  ],\n  \"cards\": [\n    {\n      \"dot\": \"cyan\",\n      \"title\": \"Edge\",\n      \"items\": [\n        \"CloudFront CDN fronts all traffic\",\n        \"S3 serves static assets via OAI\"\n      ]\n    },\n    {\n      \"dot\": \"emerald\",\n      \"title\": \"Application\",\n      \"items\": [\n        \"FastAPI behind an HTTPS load balancer\",\n        \"Redis read-through cache\",\n        \"Async work drained from SQS by a worker\"\n      ]\n    },\n    {\n      \"dot\": \"rose\",\n      \"title\": \"Security\",\n      \"items\": [\n        \"OAuth 2.0 with JWT + PKCE\",\n        \"API + LB isolated in a security group\"\n      ]\n    }\n  ]\n}\n",
+          "identity": {
+            "sha256": "fb2cd0dd879de98a5b52585f390c5f9079b27390cd7eaf6248c23b1d2433ccab",
+            "bytes": 6136
+          }
+        }
+      ]
+    },
+    {
+      "id": "caller-elintp",
+      "version": "p3-v1",
+      "prompt": "请用 elintp 把这个系统解释成一个离线 HTML：Customer portal 向 Order API 提交订单，Order API 写入 Order store。请在文档中放入可交互架构图和必要过程截图，检查最后合并出来的页面。\n",
+      "promptIdentity": {
+        "sha256": "86fffd15044684c2b3c2409841f21e874b4881415953b3f31e2ecc4191c0fd05",
+        "bytes": 234
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "caller-documentation",
+      "version": "p3-v1",
+      "prompt": "请用 documentation-writer 写一个简短 Markdown 使用说明，解释 Customer portal 向 Order API 提交订单、Order API 写入 Order store 的过程。正文包含架构图截图、交互图链接，并交付实际来源文件、文档和图形成果；说明真实审核状态。\n",
+      "promptIdentity": {
+        "sha256": "3dc3550713e6035422d0d0e0996ee4842c7e620b805d2d563b1d40bf6bfc15cb",
+        "bytes": 291
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "fallback-elintp",
+      "version": "p3-v1",
+      "prompt": "请用 elintp 把 Customer portal 向 Order API 提交订单的过程解释成一个离线 HTML，带一张图。本环境是否有图解工具请按可用 skill 和约定目录实际检查；没有也请完成这份文档，不要替我安装工具。\n",
+      "promptIdentity": {
+        "sha256": "bd667f94464140bcbcc885fe91b5d7eb1e4f5347265ba5af9654611246a78bef",
+        "bytes": 253
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "fallback-documentation",
+      "version": "p3-v1",
+      "prompt": "请用 documentation-writer 写一个简短 Markdown 使用说明，解释 Customer portal 向 Order API 提交订单的过程，正文带图。本环境是否有图解工具请实际检查；没有也请完成文档，不要替我安装工具。\n",
+      "promptIdentity": {
+        "sha256": "16b5ab0c99771dc4c77ef0465fc814712df9ff8ba313e1c3452c05ed221b3f5b",
+        "bytes": 247
+      },
+      "parameters": [],
+      "materials": []
+    },
+    {
+      "id": "workflow-facts",
+      "version": "p3-v1",
+      "prompt": "请把材料 workflow.txt 画成供操作人员阅读的工作流图，保留材料中的条件、执行者、分支和关系，交付可交互 HTML 与实际审核结果。\n",
+      "promptIdentity": {
+        "sha256": "a605a42782b2ec30b688317792f6d68095545a97ec05869d3381372eb2f383c6",
+        "bytes": 174
+      },
+      "parameters": [],
+      "materials": [
+        {
+          "name": "workflow.txt",
+          "content": "客户提交申请。审核员检查资料。资料不完整时，审核员要求客户补充；客户补充后回到检查资料。资料完整时，财务检查预算。预算不足时，财务向主管申请预算；获批后回到检查预算。预算足够时，由审核员批准申请，然后通知客户。材料没有给出各步骤耗时或额外先后关系。\n",
+          "identity": {
+            "sha256": "a276ce85f969ce04b3e554be6cebb5b703db528d954e208bf3212ec4dec40383",
+            "bytes": 373
+          }
+        }
+      ]
+    },
+    {
+      "id": "erd-missing-facts",
+      "version": "p3-v1",
+      "prompt": "请画订单系统 ER 图。目前只确认 Customer(id)、Order(id)、Payment(id) 三个实体及各自主键，以及 Customer 与 Order、Order 与 Payment 有关联。我没有给出任何一端的最小/最大参与数，也没有给出外键的可空性。请先问我必须补充的事实，再继续。\n",
+      "promptIdentity": {
+        "sha256": "9c6d7943df0ae29bd942da7eda3c27c7088001c47b7bf28e50cd058a753335aa",
+        "bytes": 311
+      },
+      "parameters": [],
+      "materials": []
+    }
+  ],
+  "sessionPreamble": {
+    "version": "p3-v1",
+    "content": "工作目录为 {{PROJECT}}。可用资料限于本项目安装 skill 的必要公开 schema、示例、参考，本题材料和固定命令的原始回执。不得读取工具实现、其他题目、隐藏验收或个人缓存。安装题另以题面授权的 release-dir 和固定引擎为准。\n如果任务需要执行 Phoenix Diagram 原生命令，请照实际已加载 skill 解析入口，并使用本次维护收集器保存每条命令原件：以 {{NODE}} 运行 {{COLLECTOR}}，参数为 --mode installed --program 真实入口绝对路径 --cwd {{PROJECT}} --candidate-version {{VERSION}} --stdout 本次新文件 --stderr 本次新文件 --evidence-dir 本次新目录 -- 原命令参数。迁移题运行题面固定引擎时将 mode 设为 migration。每次 stdout、stderr 和 evidence-dir 都在 {{STDIO}} 下选择未占用位置，父目录为自有0700目录；调用参数用实际字面绝对路径，不用重定向或变量扩展替代收集。可先看该收集器 --help；不读其实现。\n收集器不会安装工具，不代表 Phoenix Diagram 已安装，也不替代实际语义或看图审核。按任务本身决定是否调用工具；原始失败和未完成状态如实保留。\n\n",
+    "identity": {
+      "sha256": "46a08315186dc2a199b09ff8c30fabacd78460f227978d17eb0dc97a3e5c0891",
+      "bytes": 1219
+    },
+    "parameters": [
+      "PROJECT",
+      "NODE",
+      "COLLECTOR",
+      "VERSION",
+      "STDIO"
+    ]
+  }
+}

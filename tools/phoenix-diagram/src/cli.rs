@@ -20,7 +20,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\nrecover-compare <private-recovery-directory> --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\nmigrate --from-archify --project DIR --bundle-root DIR [--providers claude,codex] [--confirm-remove-archify] [--dry-run] --json\nmigrate --recover ID --project DIR --json\nmigrate --rollback ID --project DIR [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\nrecover-compare <private-recovery-directory> --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 const RECOVERY_HELP: &str = "recover-output <private-recovery-directory> --json\n\nAfter an interrupted publication, locate its durable record in the original output parent:\n  ls -la \"<original output parent>\"\nRead .phoenix-diagram-recovery-<id>/publication-recovery-v1.json and identify its target.\nCleanup can retain the same record at .phoenix-diagram-recovery-<id>.cleanup.json or .phoenix-diagram-output-cleanup/<id>.json.\nAlways pass the original .phoenix-diagram-recovery-<id> directory, even if it is now absent.\nThe fixed cleanup directory retains its bound owner-v1.json. Unknown entries or ambiguous records are preserved and rejected.\nMultiple records require an explicit choice. The command preserves later claimants and changed bindings.\nRecovery restores file bytes; delivery checks and image review remain separate.\n";
 
 struct Arguments {
@@ -54,8 +54,15 @@ impl Arguments {
                     .split_once('=')
                     .map_or((raw, None), |(k, v)| (k, Some(OsString::from(v))));
                 let value = match key {
-                    "json" | "help" | "version" | "strict-provenance" | "layout-json"
-                    | "dry-run" | "open" => {
+                    "json"
+                    | "help"
+                    | "version"
+                    | "strict-provenance"
+                    | "layout-json"
+                    | "dry-run"
+                    | "open"
+                    | "from-archify"
+                    | "confirm-remove-archify" => {
                         if inline.is_some() {
                             return Err(format!("--{key} has no value"));
                         }
@@ -63,7 +70,7 @@ impl Arguments {
                     }
                     "quality" | "input-contract" | "out-dir" | "record" | "project"
                     | "bundle-root" | "providers" | "repo-root" | "brand-cache" | "receipt"
-                    | "base-contract" | "head-contract" | "port" => Some(
+                    | "base-contract" | "head-contract" | "port" | "recover" | "rollback" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -325,6 +332,87 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         .and_then(|v| v.to_str())
         .ok_or("A command is required")?;
     let positional = &args.positional[1..];
+    if command == "migrate" {
+        args.allow(&[
+            "from-archify",
+            "recover",
+            "rollback",
+            "project",
+            "bundle-root",
+            "providers",
+            "confirm-remove-archify",
+            "dry-run",
+        ])?;
+        if !positional.is_empty()
+            || [
+                args.has("from-archify"),
+                args.has("recover"),
+                args.has("rollback"),
+            ]
+            .iter()
+            .filter(|v| **v)
+            .count()
+                != 1
+        {
+            return Err(
+                "migrate requires exactly one of --from-archify, --recover ID, --rollback ID"
+                    .into(),
+            );
+        }
+        let mode = if args.has("from-archify") {
+            install::MigrationMode::FromArchify
+        } else if args.has("recover") {
+            install::MigrationMode::Recover
+        } else {
+            install::MigrationMode::Rollback
+        };
+        if mode != install::MigrationMode::FromArchify
+            && (args.has("bundle-root")
+                || args.has("providers")
+                || args.has("confirm-remove-archify")
+                || (mode == install::MigrationMode::Recover && args.has("dry-run")))
+        {
+            return Err(
+                "recover/rollback only accept --project, --json and rollback --dry-run".into(),
+            );
+        }
+        let request = install::MigrationRequest {
+            mode,
+            project: args
+                .value("project")
+                .ok_or("migrate requires --project DIR")?
+                .into(),
+            providers: args
+                .value("providers")
+                .map(|v| {
+                    v.to_str()
+                        .ok_or("Provider names must be UTF-8")
+                        .map(|v| v.split(',').map(str::to_owned).collect::<Vec<_>>())
+                })
+                .transpose()?,
+            bundle_root: args.value("bundle-root").map(PathBuf::from),
+            transaction_id: args
+                .value("recover")
+                .or_else(|| args.value("rollback"))
+                .map(|v| {
+                    v.to_str()
+                        .ok_or("Transaction ID must be UTF-8")
+                        .map(str::to_owned)
+                })
+                .transpose()?,
+            dry_run: args.has("dry-run"),
+            confirm_remove_archify: args.has("confirm-remove-archify"),
+        };
+        return Ok(match install::migrate(&request) {
+            Ok(receipt) => encoded(&receipt, receipt.exit_code()),
+            Err(failure) => error(
+                "migrate",
+                &failure.code,
+                &failure.message,
+                failure.exit_code(),
+            ),
+        });
+    }
     if command == "install" {
         args.allow(&["project", "bundle-root", "providers", "dry-run"])?;
         if !positional.is_empty() {

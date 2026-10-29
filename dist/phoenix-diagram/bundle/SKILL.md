@@ -1,6 +1,6 @@
 ---
 name: phoenix-diagram
-description: "用于架构、工作流、时序、数据流、状态、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。普通作图缺必需事实时仅提必要问题；事实齐备后生成经 Rust 与浏览器检查并实际看图的独立交互 HTML。"
+description: "用于架构、工作流、时序、数据流、状态、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML。品牌采集、本地预览和架构比较仅在明确请求时启用。"
 license: MIT
 metadata:
   version: "0.2.0"
@@ -39,6 +39,14 @@ metadata:
 不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。数值图表、仪表盘和其他 infographic 不在范围内，不能改称上述图型来绕过。
 
 Mermaid 作为语义材料处理：`flowchart` / `graph` 转为 workflow，组件连接图可选 architecture；`sequenceDiagram` 保留参与者、消息方向、同步/异步与 return；`stateDiagram` 保留主路径、waiting、终止及真实 recovery 边；`erDiagram` 转为 erd，保留实体、字段、键与两端基数；`classDiagram` 转为 class，保留类型种类、所选成员与关系种类。由宿主写新的 JSON，不运行 Mermaid 或 Node 图解 renderer，不照搬 Mermaid 样式。
+
+以下能力按用户请求分别启用，不因普通作图自动执行：
+
+- 明确要求品牌标识时读[品牌资源](references/brand-marks.md)。固定目录可离线查询；只有明确采集请求才访问用户给出的公共站点，普通生成只消费已固定的本地资源。不从组件名称猜品牌或 URL。
+- 明确要求本地预览时读[预览会话](references/preview.md)。服务与正式成果分离，只有 `--open` 才打开系统浏览器；停止服务后仍按正式交付流程验收。
+- 明确要求比较两份架构输入时读[架构比较](references/architecture-compare.md)，使用 Before/Delta/After 及比较专用审核合同。不能用下方单图 finalize 流程替代比较交付，也不推断风险、原因或可合并性。
+- 明确要求项目级旧入口迁移或安装事务恢复/回滚时读[迁移与安装恢复](references/migration.md)。普通作图和 install 不移除旧入口，旧 skill 无目标备份；只处理已确认的精确项目/provider，不扩到个人或共享配置。
+- 导入旧输入或解释兼容回执时读[兼容约定](references/compatibility.md)；维护者增加图型时读[扩展约定](references/extending-types.md)。
 
 ## 最短创作路径
 
@@ -95,6 +103,6 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
 ## 交付答复
 
-简短返回 HTML 和 candidate 路径、图型、原 `deliveryReceiptId`、当前四门结果、图像审核结果及 summary 路径。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。有失败时说明真实阶段、保留文件和具体缺口。退出码非零、旧输出存在或自动检查通过都不能单独描述为完整成功。 另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.deferredFields`；有延期字段时，在这次答复中逐项说明字段、当前处理结果与延期阶段。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+简短返回 HTML 和 candidate 路径、图型、原 `deliveryReceiptId`、当前四门结果、图像审核结果及 summary 路径。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。有失败时说明真实阶段、保留文件和具体缺口。退出码非零、旧输出存在或自动检查通过都不能单独描述为完整成功。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`；逐项交接非 `supported` 字段的实际处理及原因，按[兼容约定](references/compatibility.md)说明未重建的展示能力，不再称为延期。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
 
 带来源的图还要说明 `evidence.status`：不是 `verified` 时，列出待核实元素及原因（如工作树改动的路径、缺少 `--repo-root`）和未提供来源的元素，不称其已核对。时间线或耗时瀑布标为示意（`illustrative`）或日精度时，说明这些时间不是实测或只精确到日。回执 `locale.fallback` 为 true 时，说明界面语言已回退英文。

@@ -163,6 +163,18 @@ async function finalizeFixture(t,{contract='phoenix-v1',directory=temp(t),marked
   return{summary,context:{candidate,artifact,engine,contract,type:'architecture'},screenshots,browserFile,summaryFile};
 }
 
+test('finalize archive byte reader retains the live checks and rejects changed bytes or original bindings',async t=>{
+  const {inspectFinalize,readSnapshot}=await import(modulePath),f=await finalizeFixture(t),directory=path.dirname(f.summaryFile.path),archive=new Map(fs.readdirSync(directory).map(name=>{const file=path.join(directory,name);return[file,fs.readFileSync(file)];}));
+  const before=inspectFinalize(f.summary,f.context),bytesFor=reference=>archive.get(reference.path);
+  fs.unlinkSync(f.context.artifact.path);
+  assert.throws(()=>inspectFinalize(f.summary,f.context),/ENOENT|identity|binding/);
+  assert.deepEqual(inspectFinalize(f.summary,{...f.context,bytesFor}),before);
+  for(const file of archive.keys())assert.throws(()=>inspectFinalize(f.summary,{...f.context,bytesFor:reference=>reference.path===file?Buffer.from('changed original bytes'):bytesFor(reference)}),/bytes|identity|JSON|digest|unexpected/i,file);
+  assert.throws(()=>inspectFinalize(f.summary,{...f.context,candidate:{...f.context.candidate,path:'/another-original'},bytesFor}),/identity|candidate/);
+  const original=readSnapshot(f.context.candidate.path),changed=structuredClone(f.summary);changed.candidate.originalBinding={...original.binding,inode:'different-original-inode'};
+  assert.throws(()=>inspectFinalize(changed,{...f.context,candidate:{...f.context.candidate,binding:original.binding},bytesFor}),/binding/i);
+});
+
 test('declared legacy native scope accepts its 20 checks while phoenix-v1 requires 22',async t=>{
   const {inspectFinalize,requiredArtifactChecks}=await import(modulePath),legacy=await finalizeFixture(t,{contract:'legacy-2.17'});
   assert.equal(inspectFinalize(legacy.summary,legacy.context).automatedStatus,'pass');
@@ -373,6 +385,10 @@ test('reader evidence rejects legacy reports and status-only claims without actu
   for(const readerInteractions of [undefined,{status:'not-run',observations:[]},{status:'pass',observations:['camera','search-empty','search-label','search-id','search-no-match','details','keyboard','style'].map(name=>({name,status:'pass',before:{},after:{},result:{}}))}]){
     report.readerInteractions=readerInteractions;assert.throws(()=>verifyReaderReport(report,artifact),/Reader interaction/i);
   }
+  const original=fs.readFileSync(file);fs.unlinkSync(file);let reads=0;
+  assert.throws(()=>verifyReaderReport(report,artifact),/ENOENT/);
+  assert.throws(()=>verifyReaderReport(report,artifact,{bytesFor:()=>{reads++;return original;}}),/Reader interaction/i);assert(reads>=26,'Archive bytes must reach every original export, clipboard and PDF gate');
+  assert.throws(()=>verifyReaderReport(report,artifact,{bytesFor:()=>Buffer.from('forged export')}),/bytes|identity/i);
 });
 
 test('binding rejection rehearsal restores only its own mutation and preserves a later claimant',async t=>{

@@ -14,6 +14,22 @@ const referenceSha256 = '4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346
 const archiveSha256 = '6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4';
 const legacySha256 = '9b02b58082c1872f611fff050b225026e108ca53efa738da429965db9966d273';
 const legacyRevision = '4a65a1525f9ed03c775a0e18935901e1edbb773f';
+const migrationSourceIdentity = {
+  manifest: 'migration-sources/archify-v1.json', manifestSize: 127920,
+  manifestSha256: '9539830848515e15c246313058433926afe89fb3e8b2d01549284bfb6585053f',
+  archive: 'upstream/archify-2.17-full-source.tar.gz', archiveSize: 3871723,
+  archiveSha256: '50c67278595f1aedadfa1e6c8f0977e14678753d90c177b8a437bec40342785a',
+  sourceFileCounts: [219, 219, 157],
+};
+export const brandSourceIdentity = {
+  manifest: 'assets/brand-license-sources.json',
+  manifestSize: 4946,
+  manifestSha256: '375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927',
+  catalog: { path: 'assets/brand-marks.json', size: 168010,
+    sha256: '9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33', count: 107 },
+  licenseCount: 8,
+  noticeCount: 2,
+};
 const nativeTextIdentity = {
   repository: 'https://github.com/unicode-org/icu',
   release: 'release-77-1',
@@ -295,6 +311,42 @@ export function verifyRustLicenseSources({ project = workspace, identity } = {})
   return { manifest: identity.manifest, manifestSha256: identity.manifestSha256, crateCount: crates.size, fileCount: files.size };
 }
 
+export function readBrandLicenseSources({ project = workspace } = {}) {
+  const pinned = (name, size, digest, label) => {
+    const bytes = readFile(path.join(project, name), label);
+    if (bytes.length !== size || sha256(bytes) !== digest) throw new Error(`Pinned brand ${label} bytes differ: ${name}`);
+    return bytes;
+  };
+  const manifestBytes = pinned(brandSourceIdentity.manifest, brandSourceIdentity.manifestSize, brandSourceIdentity.manifestSha256, 'license manifest');
+  const manifest = JSON.parse(manifestBytes), catalog = brandSourceIdentity.catalog;
+  const catalogBytes = pinned(catalog.path, catalog.size, catalog.sha256, 'catalog');
+  const files = new Map([[brandSourceIdentity.manifest, manifestBytes], [catalog.path, catalogBytes]]);
+  for (const resource of [...manifest.licenses, ...manifest.notices]) {
+    const name = `assets/${safeRelative(resource.path)}`;
+    files.set(name, pinned(name, resource.size, resource.sha256, 'license resource'));
+  }
+  return { manifest, manifestBytes, catalog: JSON.parse(catalogBytes), files };
+}
+
+export function verifyBrandLicenseSources({ project = workspace, identity, referenceMembers } = {}) {
+  if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'brand source identity')).nativeBrands;
+  if (JSON.stringify(identity) !== JSON.stringify(brandSourceIdentity)) throw new Error('Frozen brand source identity differs from the pinned baseline');
+  const { manifest, catalog } = readBrandLicenseSources({ project });
+  if (!referenceMembers) {
+    const archive = readFile(path.join(project, 'upstream/archify-3.1.0-source.tar.gz'), 'brand reference archive');
+    if (sha256(archive) !== archiveSha256) throw new Error('Brand reference archive differs');
+    referenceMembers = archiveManifest(archive).members;
+  }
+  const original = referenceMembers.get(manifest.reference.path);
+  if (!original || sha256(original) !== manifest.reference.sha256) throw new Error('Original brand catalog source differs');
+  const array = /export const BRAND_MARKS = Object\.freeze\(([\s\S]*)\);\s*$/.exec(original.toString('utf8'))?.[1];
+  if (!array || !canonical(JSON.parse(array)).equals(canonical(catalog.marks)) || catalog.marks.length !== identity.catalog.count
+      || !canonical(catalog.source).equals(canonical(manifest.reference))) throw new Error('Native brand catalog differs from the frozen original');
+  const notice = readFile(path.join(project, 'assets', manifest.notices[0].path), 'original brand notice');
+  if (!notice.equals(referenceMembers.get(manifest.reference.noticeSourcePath))) throw new Error('Original brand notice differs from the frozen archive');
+  return structuredClone(brandSourceIdentity);
+}
+
 export function verifyFrozenSources({ upstream = upstreamRoot, localReference = path.join(root, 'local/archify-main') } = {}) {
   const source = JSON.parse(readFile(path.join(upstream, 'SOURCE.json'), 'source identity'));
   if (source.schemaVersion !== 1 || source.reference?.contentSha256 !== referenceSha256
@@ -317,6 +369,23 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
   const nativeText = verifyNativeTextSources(upstream, source.nativeText);
   const nativeTime = verifyNativeTimeSources(upstream, source.nativeTime);
   const rustLicenses = verifyRustLicenseSources({ project: path.resolve(upstream, '..'), identity: source.rustLicenses });
+  const nativeBrands = verifyBrandLicenseSources({ project: path.resolve(upstream, '..'), identity: source.nativeBrands, referenceMembers: recovered.members });
+  if (!canonical(source.nativeMigration).equals(canonical(migrationSourceIdentity))) throw new Error('Frozen migration source identity differs from the pinned baseline');
+  const migrationProject = path.resolve(upstream, '..');
+  for (const [name, size, digest] of [[migrationSourceIdentity.manifest, migrationSourceIdentity.manifestSize, migrationSourceIdentity.manifestSha256],
+    [migrationSourceIdentity.archive, migrationSourceIdentity.archiveSize, migrationSourceIdentity.archiveSha256]]) {
+    const bytes = readFile(path.join(migrationProject, name), 'complete migration source');
+    if (bytes.length !== size || sha256(bytes) !== digest) throw new Error(`Pinned complete migration source differs: ${name}`);
+  }
+  // Producer code is needed only in native/assembly jobs. Importing this module
+  // in a source-less consumer does not import it or reconstruct old sources.
+  const migrationCheck = spawnSync(process.execPath, ['--input-type=module', '-e',
+    'const {verifyMigrationSourceFiles}=await import(process.argv[1]);console.log(JSON.stringify(verifyMigrationSourceFiles({project:process.argv[2]})));',
+    new URL('./collect-phoenix-diagram-migration-sources.mjs', import.meta.url).href, migrationProject], { encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024 });
+  if (migrationCheck.error || migrationCheck.status !== 0) throw new Error(`Complete migration source verification failed: ${migrationCheck.error?.message || migrationCheck.stderr}`);
+  const migration = JSON.parse(migrationCheck.stdout);
+  if (migration.status !== 'pass' || migration.manifestSha256 !== migrationSourceIdentity.manifestSha256
+      || migration.archiveSha256 !== migrationSourceIdentity.archiveSha256 || !canonical(migration.sources.map(row => row.fileCount)).equals(canonical(migrationSourceIdentity.sourceFileCounts))) throw new Error('Complete migration source verification scope differs');
   let localStatus = 'absent; archive is authoritative';
   if (localReference && fs.existsSync(localReference)) {
     try {
@@ -330,6 +399,8 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     nativeText,
     nativeTime,
     rustLicenses,
+    nativeBrands,
+    nativeMigration: { ...migrationSourceIdentity, sources: migration.sources },
   };
 }
 

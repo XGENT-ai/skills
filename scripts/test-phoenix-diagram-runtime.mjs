@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { REQUIRED_EXPORT_SCOPE, verifyPrintSample, verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
-import { root,TYPES,contractsFor,XSS_LITERAL,CoreError,identity,requiredCoverage,readSnapshot,readBound,bound,requireThat,inspectFinalize,verifyReviewTransition,assertXssArtifact,publicNpmCommand } from './test-phoenix-diagram-core.mjs';
+import { root,TYPES,contractsFor,XSS_LITERAL,CoreError,identity,requiredCoverage,readSnapshot,readBound,bound,requireThat,inspectFinalize,verifyReviewTransition,assertXssArtifact,publicNpmCommand,readEvidenceBytes } from './test-phoenix-diagram-core.mjs';
 
 const INDEX_KIND='phoenix-diagram-core-acceptance';
 const LEGACY={architecture:'web-app',workflow:'agent-tool-call',sequence:'async-job-roundtrip',dataflow:'product-analytics',lifecycle:'deployment-release'};
@@ -300,24 +300,25 @@ export async function resumeReviews(index,options,{invoke=invokeNative}={}) {
   return index;
 }
 
-export function verifyReaderReport(report,artifact,{offline=false,content=false}={}) {
+export function verifyReaderReport(report,artifact,{offline=false,content=false,bytesFor}={}) {
+  const read=(reference,label)=>({content:readEvidenceBytes(reference,{bytesFor,label})});
   requireThat(report?.schemaVersion===1 && report.kind===(content?'real-browser-content':'real-browser-export') && report.status==='pass' && report.artifact?.path===artifact.path && same({sha256:report.artifact.sha256,bytes:report.artifact.bytes},artifact.identity),'Reader receipt is stale or belongs to another artifact');
   requireThat(/(?:Chrome|Chromium)\//.test(report.actualBrowserVersion || '') && report.resources?.status==='pass' && report.resources.requests?.every(item=>!/^(?:https?|wss?):/i.test(item.url)) && report.resources.loadingFailed?.length===0 && report.errors?.length===0,'Actual browser or complete network/resource scope is missing');
   if(offline)requireThat(report.offline?.requested===true && report.offline.status==='pass' && report.offline.configured===true && report.offline.method==='cdp-network-emulation' && report.offline.remoteRequests.length===0,'Offline browser scope is missing');
   if(content) {requireThat(report.content?.status==='pass' && report.content.literalPresent===true && report.content.sentinelDefined===false,'Actual malicious content was omitted or executed');return;}
   const seen=new Set();requireThat(report.exports?.length===20,'Required export scope is incomplete');
   for(const file of report.exports) {
-    const key=`${file.theme}:${file.mode}:${file.format}`;requireThat(['light','dark'].includes(file.theme) && ['still','live'].includes(file.mode) && ['svg','png','jpeg','webp','webm'].includes(file.format) && !seen.has(key) && file.status==='pass','Required export scope is duplicated or not passing');seen.add(key);readBound(file,'actual export file');
+    const key=`${file.theme}:${file.mode}:${file.format}`;requireThat(['light','dark'].includes(file.theme) && ['still','live'].includes(file.mode) && ['svg','png','jpeg','webp','webm'].includes(file.format) && !seen.has(key) && file.status==='pass','Required export scope is duplicated or not passing');seen.add(key);read(file,'actual export file');
   }
   requireThat(report.stateRestoration?.status==='pass' && ['success','permissionDenied','capabilityUnavailable'].every(key=>report.clipboard?.[key]?.status==='pass'),'Reader state or clipboard success/permission/capability scope is missing');
-  const clipboard=report.clipboard.success;readBound({path:clipboard.path,identity:{sha256:clipboard.sha256,bytes:clipboard.bytes}},'actual clipboard PNG');readBound(report.clipboard.capabilityUnavailable.fallback,'clipboard capability fallback');
+  const clipboard=report.clipboard.success;read({path:clipboard.path,identity:{sha256:clipboard.sha256,bytes:clipboard.bytes}},'actual clipboard PNG');read(report.clipboard.capabilityUnavailable.fallback,'clipboard capability fallback');
   const print=report.stateRestoration.print,printed=new Set();
   requireThat(print?.status==='pass' && print.method===REQUIRED_EXPORT_SCOPE.print.method && Array.isArray(print.observations) && print.observations.length===4,'Required print scope is incomplete');
   for(const sample of print.observations) {
     const key=`${sample.theme}:${sample.mode}`;
     requireThat(sample.status==='pass' && REQUIRED_EXPORT_SCOPE.print.themes.includes(sample.theme) && REQUIRED_EXPORT_SCOPE.print.modes.includes(sample.mode) && !printed.has(key),'Required print scope is duplicated or not passing');printed.add(key);
     verifyPrintSample(sample);
-    const pdf=readBound(sample.nativePrint.pdf,'actual native print PDF').content;
+    const pdf=read(sample.nativePrint.pdf,'actual native print PDF').content;
     requireThat(pdf.subarray(0,5).toString()==='%PDF-' && pdf.subarray(-64).includes(Buffer.from('%%EOF')) && (pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length===sample.nativePrint.pdf.pages,'Native print PDF bytes differ from the reported scope');
   }
   verifyMotionSuppression(report.motionSuppression);

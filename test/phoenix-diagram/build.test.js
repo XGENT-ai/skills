@@ -26,6 +26,8 @@ function sourceFixture(t) {
   for (const name of ['package.json', 'tools/phoenix-diagram/Cargo.toml', 'tools/phoenix-diagram/Cargo.lock', 'tools/phoenix-diagram/build.rs',
     'tools/phoenix-diagram/src/check.rs', 'tools/phoenix-diagram/src/check/path.rs', 'tools/phoenix-diagram/assets/svg-definitions.svg',
     'tools/phoenix-diagram/viewer/viewer.css', 'tools/phoenix-diagram/upstream/SOURCE.json', 'tools/phoenix-diagram/upstream/legacy-2.17/schemas/common.schema.json',
+    'tools/phoenix-diagram/migration-sources/archify-v1.json',
+    ...['web-app.architecture', 'agent-tool-call.workflow', 'async-job-roundtrip.sequence', 'product-analytics.dataflow', 'deployment-release.lifecycle'].map(name => `skills/phoenix-diagram/examples/legacy.${name}.json`),
     'skills/phoenix-diagram/schemas/common.schema.json']) {
     write(directory, name, fs.readFileSync(path.join(root, name)));
   }
@@ -141,6 +143,7 @@ test('source tuples follow native roots: embedded schemas count, skill text and 
   assert.ok(inputs.entries.some(row => row[0] === 'package.json'));
   assert.ok(inputs.entries.some(row => row[0] === 'tools/phoenix-diagram/build.rs'));
   assert.ok(inputs.entries.some(row => row[0] === 'skills/phoenix-diagram/schemas/common.schema.json'));
+  assert.equal(inputs.entries.filter(row => row[0].startsWith('skills/phoenix-diagram/examples/legacy.')).length, 5);
   assert.ok(!inputs.entries.some(row => row[0].endsWith('/ENGINE.json') || row[0].endsWith('/SKILL.md')));
   assert.deepEqual(inputs.bytes, Buffer.from(JSON.stringify(inputs.entries)));
   assert.equal(inputs.sha256, sha(inputs.bytes));
@@ -249,6 +252,7 @@ test('legal-resource codec binds complete terms, preserves relative standard-lib
   const api = await moduleReady, fixture = legalResourceFixture(t), { directory, locked, catalog, files, save } = fixture;
   const read = () => api.readLicenseResources(directory, locked);
   const result = read();
+  assert.throws(() => api.readLicenseResources(directory, locked, { requireBrands: true }), /P3.*brand/i);
   for (const [name, bytes] of files) assert.deepEqual(result.files.get(name), bytes, name);
   assert.ok(result.files.has('THIRD-PARTY-LICENSES/rust-std-1.99.0/COPYRIGHT-library.html'));
   const original = catalog.runtime[0].licenses, term = path.join(directory, original[0].path), bytes = fs.readFileSync(term);

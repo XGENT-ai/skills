@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { validateDevelopmentArtifact, gitIdentity, sourceInputs, readSourceInputManifest } from './build-phoenix-diagram.mjs';
+import { validateDevelopmentArtifact, gitIdentity, sourceInputs, readSourceInputManifest, assertBrandLegalResources } from './build-phoenix-diagram.mjs';
 
 export const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
 export const DEFAULT_PORT = 48765;
@@ -75,6 +75,7 @@ export function assertArtifactAgreement(artifacts, expected = {}) {
     equalMaps(bundle.files, first.bundle.files, 'Bundle');
     assert(licenses instanceof Map && licenses.size > 0 && artifact.licenseSha256 === legalDigest(licenses) && receipt.legal?.sha256 === artifact.licenseSha256, `License byte inventory digest differs: ${target}`);
     equalMaps(licenses, first.licenses, 'License');
+    if (expected.requireBrands) assertBrandLegalResources(licenses, { sourceInputs: inputs });
     assert.deepEqual(receipt.viewer, firstReceipt.viewer, `Viewer identity differs: ${target}`);
     assert(receipt.viewer?.revision === version.viewerRevision, `Viewer contract differs: ${target}`);
     const tools = receipt.tools;
@@ -115,7 +116,7 @@ export function validateCandidateInputs({ repoRoot = root, artifactsDir, port = 
   const pkg = JSON.parse(read(path.join(repoRoot, 'package.json')));
   assert.equal(pkg.name, '@xgent-ai/skills', 'Unexpected owning npm package');
   const git = gitIdentity(repoRoot), inputs = sourceInputs(repoRoot);
-  const agreement = assertArtifactAgreement(artifacts, { git, sourceInputs: inputs, npmPackageVersion: pkg.version });
+  const agreement = assertArtifactAgreement(artifacts, { git, sourceInputs: inputs, npmPackageVersion: pkg.version, requireBrands: true });
   assert.equal(process.version, `v${artifacts[0].receipt.tools.pins.node}`, 'Pack with the pinned maintenance Node');
   return { ...agreement, repoRoot, artifactsDir, port, pkg, git, inputs };
 }

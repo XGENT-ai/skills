@@ -8,7 +8,7 @@
 
 Rust registry 内嵌且离线，两份合同分别构造。新 common 的 `portableOutputPath/allOf/2/not/pattern` 在内存中改成永不匹配的正则；Rust 字符串不能含未配对 surrogate，其他路径限制保持生效。本目录与冻结源码均不修改该原 pattern。
 
-品牌、guided views 和旧播放偏好按字段返回 P3 延期处置，原文与原始字节保留。仓库依据（`meta.repository` 与 `sources`）不再延期：交付时按 `--repo-root` 核对，结构错误以 `repository/*` 在输入阶段失败。
+品牌由固定目录或摘要固定的本地资源支持，普通编译不联网；旧 guided views 返回 `unsupported-display`，legacy 播放偏好返回 `ignored-display`，不覆盖首次 Still。这些终局处理列在 `compatibility.dispositions`，`deferredFields` 为空不表示旧展示能力全部复刻；原文与原始字节保留。仓库依据（`meta.repository` 与 `sources`）交付时按 `--repo-root` 核对，结构错误以 `repository/*` 在输入阶段失败。
 
 从仓库根执行输入回归：
 
