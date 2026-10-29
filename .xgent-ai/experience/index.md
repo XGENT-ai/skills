@@ -58,3 +58,5 @@
 - 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
 
 - [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)
+- 752d0b72-4bd7-4d3f-b131-c0daea48945e · [review-ui 产物忽略规则验证](752d0b72-4bd7-4d3f-b131-c0daea48945e.md)
+- cb681af1-a163-4524-8acc-dc104f5d8629 · [clean-artifacts 创建与 Git 命令验证](cb681af1-a163-4524-8acc-dc104f5d8629.md)

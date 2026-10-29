@@ -1,0 +1,4 @@
+interface:
+  display_name: "清理过程文件"
+  short_description: "核实并清理日志、截图及误入 Git 的过程文件，保留必要记录，按授权处理历史瘦身"
+  default_prompt: "使用 $clean-artifacts 清理指定仓库的过程文件，核实用途和跟踪状态，补齐忽略规则并验证结果；历史瘦身先备份并核对具体授权。"

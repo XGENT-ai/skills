@@ -23,6 +23,15 @@ disable-model-invocation: true
 - 不适用于：代码缺陷评审用 `review-code`；修复差距用 `apply-ui-review`；找视觉方向用 `design-reference`；交互方案选型用 `ui-pattern-research`；维护 DESIGN.md 用 `design-md`。
 - 拿不到真实效果时（没有可用的渲染或截图工具、应用起不来、状态到达不了），按上面的规则判需补证，说明缺什么、怎么补。
 
+## 本地产物与 Git 忽略
+
+确定前缀后，在启动临时服务、记录被测版本或 `review begin` 之前检查目标仓的忽略规则；人工与 managed 循环都适用。
+
+- 截图仍放在 `<前缀>.ui-captures/r<n>/`；控制台、失败请求、临时服务及 review 命令的日志集中放到该轮的 `logs/` 子目录。历史产物保留原位置，不搬迁、删除或覆盖。
+- 在目标 Git 仓库读取现有 `.gitignore`，为尚未忽略的截图和日志最小追加规则，不存在时创建。规则限定本循环的产物路径，例如前缀为 `docs/reviews/orders` 时，使用 `/docs/reviews/orders.ui-captures/**/*.png`、`/docs/reviews/orders.ui-captures/**/*.log` 和 `/docs/reviews/orders.ui-captures/**/logs/`；已有规则能覆盖则复用，其他位置的本轮日志只补实际路径。不使用全仓 `*.png`、`*.log` 或忽略整个 `.ui-captures/` 的规则。
+- 默认忽略截图和运行日志；仓库明确要求提交某类证据时遵从约定。目标图、目标包、报告、修复记录、`capture.md`、`judge.md` 和 managed 状态文件不加入忽略规则。用户要求只读、不落盘或禁止改配置时，不写 `.gitignore`；没有 Git 仓库时也不创建，交付时说明。
+- 用 `git check-ignore -v -- <实际产物路径>` 验证规则命中；结束前结合 `git status --short --untracked-files=all` 检查新增截图和日志是否遗漏。已被 Git 跟踪的产物不会因 `.gitignore` 自动消失，说明这些路径，不自行移出索引。
+
 ## 循环模式与能力探测
 
 先确定本循环的前缀，检查 `<前缀>.ui-review.json`、已有报告和安装回执。已有纯 Markdown 历史而无 managed 索引时继续人工流程，必须显式 import 才接管。全新无索引、无旧循环历史且用户已要求 UI 验收时，先按下述协议探测；真实 engine 与 review verbs 匹配后可 `review begin` 建立 managed 循环，缺 CLI 或能力不匹配时走人工流程。没有 CLI 不妨碍读取原文、采集真实界面和人工落盘；没有机器索引就不能假称已接管。
