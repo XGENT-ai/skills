@@ -12,16 +12,16 @@ import {invokeNative,verifyReaderReport} from '../../../scripts/test-phoenix-dia
 import {runExportAcceptance} from './export-acceptance.mjs';
 import {discoverBrowser} from './support/export-browser.mjs';
 import {validateCandidate,initialConsume,resumeConsume,readConsumerContext,prepareCandidateTransport,readCandidateTransport,targetForHost,publicNpmCommand} from '../../../scripts/check-phoenix-diagram-candidate.mjs';
-import {KIND,ACCEPTANCE_KIND,CASE_IDS,OFFICIAL_RESOURCE,privateDirectory,writeNew,jsonBound,bindOfficialResource,readReviewMap,comparisonDraft,singleDraft,rememberCase,refreshCase,verifyComparisonReview,recompute,persistState,verifySavedState,verifyActualTransport,verifyAuthorToolsState,authorToolsAnchor,verifyAuthorToolsAnchor,verifyAcceptanceState,recomputeAcceptance,bound,readSnapshot,readBound,identity} from './support/p3-state.mjs';
+import {KIND,ACCEPTANCE_KIND,CASE_IDS,OFFICIAL_RESOURCE,privateDirectory,writeNew,jsonBound,bindOfficialResource,readReviewMap,comparisonDraft,singleDraft,rememberCase,refreshCase,verifyComparisonReview,recompute,persistState,verifySavedState,verifyActualTransport,verifyBrandCaptureFailure,verifyBrandCaptureRetry,verifyAuthorToolsState,authorToolsAnchor,verifyAuthorToolsAnchor,verifyAcceptanceState,recomputeAcceptance,bound,readSnapshot,readBound,identity} from './support/p3-state.mjs';
 import {runCompareFaults,runPreviewAcceptance} from './support/p3-processes.mjs';
 
 export function parseOptions(argv){
   const names={'--stage':'stage','--release-dir':'releaseDir','--candidate-dir':'candidateDir','--legacy-candidate-dir':'legacyCandidateDir','--provider-manifest':'providerManifest','--migration-fixture':'migrationFixture','--evidence-repo':'evidenceRepository','--npm-cli':'npmCliPath','--output-dir':'outputDir','--resume':'resume','--review-file':'reviewFile','--official-resource':'officialResource'},result={};
-  for(let at=0;at<argv.length;at+=2){const key=names[argv[at]],value=argv[at+1];assert(key&&!Object.hasOwn(result,key),'Unknown or duplicate option '+argv[at]);assert(value&&!value.startsWith('--'),'Option requires a value');result[key]=key==='stage'?value:path.resolve(value);}
+  for(let at=0;at<argv.length;at++){if(argv[at]==='--retry-brand-capture'){assert(!result.retryBrandCapture,'Duplicate retry flag');result.retryBrandCapture=true;continue;}const key=names[argv[at]],value=argv[++at];assert(key&&!Object.hasOwn(result,key),'Unknown or duplicate option '+argv[at-1]);assert(value&&!value.startsWith('--'),'Option requires a value');result[key]=key==='stage'?value:path.resolve(value);}
   assert(['author-tools','all','providers'].includes(result.stage),'Unknown acceptance stage');
   if(result.stage==='author-tools'){assert(result.releaseDir,'Provide --release-dir');assert(!result.candidateDir&&!result.legacyCandidateDir&&!result.providerManifest&&!result.migrationFixture&&!result.evidenceRepository&&!result.npmCliPath,'Candidate options require all/providers');}
   else {assert(result.candidateDir&&!result.releaseDir,'Final acceptance requires --candidate-dir, not a development release');if(result.stage==='providers')assert(result.providerManifest&&!result.reviewFile&&!result.resume,'providers requires its manifest and a new output directory');}
-  assert(Boolean(result.outputDir)!==Boolean(result.resume),'Provide one new --output-dir or the original --resume state.json');assert(!result.reviewFile||result.resume,'--review-file requires --resume');return result;
+  assert(Boolean(result.outputDir)!==Boolean(result.resume),'Provide one new --output-dir or the original --resume state.json');assert(!result.reviewFile||result.resume,'--review-file requires --resume');assert(!result.retryBrandCapture||result.stage==='all'&&result.resume,'--retry-brand-capture requires all --resume');return result;
 }
 
 export function createPublicInvoke(consumer,{invoke=invokeNative}={}){
@@ -65,15 +65,19 @@ function processEvidence(directory,args,engine,result,startedAt,pid){
     stdout:writeNew(path.join(directory,'stdout.txt'),raw.stdout||''),stderr:writeNew(path.join(directory,'stderr.txt'),raw.stderr||''),...(raw.actualTransport?{actualTransport:raw.actualTransport}:{})});
 }
 
-export async function invokeRecordedStep(state,id,args,{invoke=invokeNative,save=()=>{},browserPath,offline=false,role='automatic'}={}){
+export async function invokeRecordedStep(state,id,args,{invoke=invokeNative,save=()=>{},browserPath,offline=false,role='automatic',retryBrandCapture=false}={}){
   const release=state.release;
-    let step=state.steps[id];
-    if(step?.status==='running'&&!step.process){const file=path.join(state.runRoot,'commands',id,'process.json');if(fs.existsSync(file)){step.process=bound(readSnapshot(file));save();}}
+    let step=state.steps[id],retry=false;
+    if(step?.retryOf)verifyBrandCaptureRetry(state);
+    if(retryBrandCapture){assert(id==='brands-capture','Only brands-capture has an explicit retry');if(!step?.retryOf){verifyBrandCaptureFailure(state,step);assert(same(args,step.argv),'Retry argv changed');privateDirectory(path.join(state.runRoot,'commands',id),{existing:true});const retryOf=writeNew(path.join(state.runRoot,'commands',id,'failed-attempt.json'),{schemaVersion:1,kind:'p3-brand-capture-failed-attempt',runId:state.runId,runRoot:state.runRoot,release,officialResource:state.officialResource,step,diagnostics:state.diagnostics});step=state.steps[id]={...step,status:'running',retryOf};delete step.process;delete step.error;retry=true;save();}}
+    if(!retry){
+    if(step?.status==='running'&&!step.process){const file=path.join(state.runRoot,'commands',id,...(step.retryOf?['retry-1']:[]),'process.json');if(fs.existsSync(file)){step.process=bound(readSnapshot(file));save();}}
     if(step?.process){const original=processResult(step.process,args,release.files.engine);if(release.publicNpm)verifyActualTransport(original.actualTransport,release.publicNpm,args,step.prefix);if(['pass','running'].includes(step.status)){assert.equal(original.exitCode,0,'Original process did not pass');assert.equal(original.signal,null);assert.equal(original.receipt?.status,'pass');if(step.status==='running'){step.status='pass';save();}return original;}return null;}
     if(step?.status==='running'){state.diagnostics.push({stage:id,message:'The original process has no complete captured receipt; preserve outputs and use its explicit recovery path. It was not rerun.'});save();return null;}
     if(step?.status==='failed')return null;
-    const prefix=offline?offlinePrefix({browser:['finalize','visual-check'].includes(args[0])}):[];
-    const directory=privateDirectory(path.join(state.runRoot,'commands',id));step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
+    }
+    const prefix=retry?step.prefix:offline?offlinePrefix({browser:['finalize','visual-check'].includes(args[0])}):[];
+    const directory=privateDirectory(path.join(state.runRoot,'commands',id,...(retry?['retry-1']:[])));if(!retry)step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
     let result,pid;const startedAt=new Date().toISOString();
     try{
       result=await invoke(release.files.engine,args,{options:{browserPath},prefix,onSpawn:child=>{pid=child.pid;}});
@@ -120,6 +124,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
     const stat=fs.statSync(runRoot);
     state={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',kind:KIND,profile:'p3',stage:'author-tools',runId:randomBytes(16).toString('hex'),runRoot,runDirectory:{device:String(stat.dev),inode:String(stat.ino)},release,startedAt:new Date().toISOString(),status:'incomplete',automatedStatus:'not-run',visualReview:'required-pending',deliveryStatus:'incomplete',cases:{},steps:{},preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'},packageConsumer:{status:'not-applicable',reason:release.distribution==='candidate'?'Public package consumption is recorded by the owning all wrapper':'Stage A does not consume a certified npm candidate'},providers:{status:'not-applicable',reason:'Provider sessions belong to final candidate acceptance'},finalCandidate:{status:'not-applicable',reason:'No final candidate certification was run'},diagnostics:[]};
   }
+  if(options.retryBrandCapture){assert(options.resume,'Brand capture retry requires its original child state');const step=state.steps['brands-capture'];if(step?.retryOf)verifyBrandCaptureRetry(state);else verifyBrandCaptureFailure(state,step);}
   bindOfficialResource(state,options.officialResource);
   const save=()=>{previous=persistState(recompute(state),previous);};save();
   let browserPath;try{browserPath=browser();}catch(error){state.diagnostics.push({stage:'browser',message:error.message});save();}
@@ -155,7 +160,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   await finalize(prepareCase('brand-builtin',builtin));
   if(state.officialResource){
     const cache=path.join(state.runRoot,'brand-cache');if(!fs.existsSync(cache))privateDirectory(cache);
-    const captured=await call('brands-capture',['brands','capture',state.officialResource.descriptor.url,'--brand-cache',cache,'--json']);
+    const captured=await call('brands-capture',['brands','capture',state.officialResource.descriptor.url,'--brand-cache',cache,'--json'],{retryBrandCapture:options.retryBrandCapture===true});
     if(captured){
       for(const [key,value] of Object.entries(OFFICIAL_RESOURCE))assert.equal(captured.receipt.resource?.[key],value,'Captured official PNG '+key+' differs');
       assert(captured.receipt.brand?.url===state.officialResource.descriptor.url&&captured.receipt.brand.sha256===OFFICIAL_RESOURCE.sha256,'Capture did not return the explicit digest-pinned URL');assert.equal(path.dirname(captured.receipt.cachePath),cache,'Capture cache escaped this run');
@@ -230,6 +235,7 @@ export async function runProviders(options,{candidateLoader=validateCandidate,va
 }
 
 export async function runAll(options,{candidateLoader=validateCandidate,consume=initialConsume,resumeConsumer=resumeConsume,consumerContext=readConsumerContext,prepareLegacy=prepareCandidateTransport,legacyContext=readCandidateTransport,authorTools=runAuthorTools,releaseLoader=loadCandidateRelease,invoke=invokeNative,runMigration,verifyMigration,validateProviders=missingProviders,verifyProviders}={}){
+  assert(!options.retryBrandCapture||options.stage==='all'&&options.resume,'--retry-brand-capture requires all --resume');
   const target=targetForHost(),candidate=candidateLoader(options.candidateDir,target,{profile:'p3'}),consumerOptions={candidateDir:options.candidateDir,target,profile:'p3',...(options.npmCliPath?{npmCliPath:options.npmCliPath}:{})};let state,previous;
   const legacyOptions={target,profile:'p2',legacyDescriptor:bound(readSnapshot(fileURLToPath(new URL('./fixtures/migration/legacy-candidate.v1.json',import.meta.url)))),harnessCandidateDir:options.candidateDir,...(options.npmCliPath?{npmCliPath:options.npmCliPath}:{})};
   const verifyConsumer=(consumer)=>{const original=consumerContext({...consumerOptions,resume:state.packageConsumer.state.path},candidate).state;assert(same(original,consumer),'Consumer state differs from its original live context');};
@@ -237,6 +243,7 @@ export async function runAll(options,{candidateLoader=validateCandidate,consume=
   const adoptAuthor=ref=>{const child=jsonBound(ref,'original child author-tools state');verifyAuthorToolsAnchor(child,state.authorTools.anchor);verifyAuthorToolsState(child,{requirePublic:true});assert(same(child.release.candidate.tarball.identity,state.candidate.tarball.identity),'Child author-tools belongs to another candidate');state.authorTools={status:child.status,automatedStatus:child.automatedStatus,visualReview:child.visualReview,deliveryStatus:child.deliveryStatus,state:ref,anchor:authorToolsAnchor(child)};};
   if(options.resume){previous=bound(readSnapshot(options.resume));state=jsonBound(previous,'original all state');assert.equal(state.stage,'all');assert.equal(previous.path,path.join(state.runRoot,'state.json'));privateDirectory(state.runRoot,{existing:true});const stat=fs.statSync(state.runRoot);assert(same(state.runDirectory,{device:String(stat.dev),inode:String(stat.ino)}),'Original wrapper directory was replaced');assert(same(state.candidate,candidateBinding(candidate))&&same(state.source,candidate.source),'Resume must retain its same candidate bytes and physical bindings');if(state.authorTools.status==='running'){const file=path.join(state.runRoot,'author-tools/state.json');if(fs.existsSync(file))adoptAuthor(bound(readSnapshot(file)));recomputeAcceptance(state);}verifyAcceptanceState(state,{verifyConsumer,verifyMigration:migrationVerifier,verifyProviders});}
   else {state=newAcceptance(options,candidate);previous=persistState(state);}
+  if(options.retryBrandCapture){assert(state.authorTools.state,'Retry requires the original author-tools state');const child=jsonBound(state.authorTools.state,'retry original author-tools state');if(child.steps['brands-capture']?.retryOf)verifyBrandCaptureRetry(child);else verifyBrandCaptureFailure(child,child.steps['brands-capture']);}
   const save=()=>{previous=persistState(recomputeAcceptance(state),previous);};
   try{
     delete state.failure;
@@ -253,7 +260,7 @@ export async function runAll(options,{candidateLoader=validateCandidate,consume=
     }
     const consumer=consumerContext({...consumerOptions,resume:state.packageConsumer.state.path},candidate).state,release=releaseLoader(candidate,consumer),publicInvoke=createPublicInvoke(consumer,{invoke});
     if(!state.authorTools.state||state.authorTools.status!=='pass'){
-      const childOptions={stage:'author-tools',releaseDir:release.root,...(state.authorTools.state?{resume:state.authorTools.state.path}:{outputDir:path.join(state.runRoot,'author-tools')}),...(official?{officialResource:official.path}:{}),...(review.authorTools?{reviewFile:review.authorTools}:{})};
+      const childOptions={stage:'author-tools',releaseDir:release.root,...(state.authorTools.state?{resume:state.authorTools.state.path}:{outputDir:path.join(state.runRoot,'author-tools')}),...(official?{officialResource:official.path}:{}),...(review.authorTools?{reviewFile:review.authorTools}:{}),...(options.retryBrandCapture?{retryBrandCapture:true}:{})};
       state.authorTools.status='running';save();
       try{const result=await authorTools(childOptions,{releaseLoader:()=>release,invoke:publicInvoke});adoptAuthor(result.stateFile);save();}
       catch(error){const file=path.join(state.runRoot,'author-tools/state.json');if(fs.existsSync(file)){adoptAuthor(bound(readSnapshot(file)));save();}throw error;}

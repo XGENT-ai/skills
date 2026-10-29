@@ -385,10 +385,11 @@ test('P3 session routes terminal skill reads through current capture facts and e
           {type: 'event_msg', payload: {type: 'task_complete', turn_id: turn}}
         ], native = events(f.mem, '/fixture/codex/origin.jsonl', rows);
   f.context.provider = f.session.provider = f.dto.provider = 'codex';
+  f.dto.toolEnvironment = {PHOENIX_DIAGRAM_HOME: '/fixture/cache', PHOENIX_DIAGRAM_BROWSER: '/fixture/browser "quoted"/chrome'};
   f.dto.program = {...f.dto.program, path: '/fixture/bin/codex'};
   f.dto.entryPath = f.dto.program.path;
   f.dto.argv = f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd,
-    endpointPolicy: 'inherit-config', model: f.dto.runtime.requestedModel});
+    endpointPolicy: 'inherit-config', model: f.dto.runtime.requestedModel}, {toolEnvironment: f.dto.toolEnvironment});
   f.dto.version = f.mem.put('/fixture/codex/version.json', {program: f.dto.program,
     argv: ['--version'], exitCode: 0, signal: null, stdout: 'codex-cli fixture'});
   Object.assign(f.dto, {transcript: native.ref, nativeSessionFile: native.ref.path, transcriptSource: native.ref,
@@ -400,6 +401,15 @@ test('P3 session routes terminal skill reads through current capture facts and e
   f.reseal();
   f.session.captures[0] = {...f.session.captures[0], transcript: native.ref, version: f.dto.version};
   assert.equal(f.module.checkP3Session(f.session, f.row, f.context).parts[0].profile, 'p3');
+  const originalToolEnvironment = f.dto.toolEnvironment;
+  for (const toolEnvironment of [undefined, null, {...originalToolEnvironment, PHOENIX_DIAGRAM_HOME: '/other-cache'},
+                                {...originalToolEnvironment, OPENAI_API_KEY: 'fixture-secret'}, {PHOENIX_DIAGRAM_HOME: 'relative-cache'}]) {
+    if (toolEnvironment === undefined) delete f.dto.toolEnvironment;
+    else f.dto.toolEnvironment = toolEnvironment;
+    f.reseal();
+    assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /environment|argv|absolute paths/);
+  }
+  f.dto.toolEnvironment = originalToolEnvironment; f.reseal();
   const nextExecution = structuredClone(execution), nextTime = '2026-10-29T00:00:04.000Z';
   nextExecution.timestamp = nextTime;
   Object.assign(nextExecution.payload, {turn_id: 'next-turn', started_at_ms: Date.parse(nextTime), completed_at_ms: Date.parse(nextTime)});
@@ -412,7 +422,7 @@ test('P3 session routes terminal skill reads through current capture facts and e
         next = events(f.mem, '/fixture/codex/continued.jsonl', continuedRows),
         dto = {...f.dto, origin: false, previousCapture: f.session.captures[0].capture,
           argv: f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd, endpointPolicy: 'inherit-config',
-            model: f.dto.runtime.requestedModel}, {previousId: f.session.id}),
+            model: f.dto.runtime.requestedModel}, {previousId: f.session.id, toolEnvironment: f.dto.toolEnvironment}),
           startedAt: '2026-10-29T00:00:03.000Z', finishedAt: '2026-10-29T00:00:05.000Z',
           transcript: next.ref, nativeSessionFile: next.ref.path, transcriptSource: next.ref,
           lineIndex: f.mem.put('/fixture/codex/continued-index.json', f.provider.lineIndex(next.raw)),
@@ -422,6 +432,18 @@ test('P3 session routes terminal skill reads through current capture facts and e
   const captured = f.module.checkP3Session(f.session, f.row, f.context);
   assert.equal(captured.parts[1].minimumOffset, native.raw.length);
   assert.equal(captured.parts[1].events.length, continuedRows.length - rows.length);
+  const continued = f.session.captures[1].capture;
+  dto.toolEnvironment = {...originalToolEnvironment, PHOENIX_DIAGRAM_HOME: '/other-cache'};
+  dto.argv = f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd, endpointPolicy: 'inherit-config',
+    model: f.dto.runtime.requestedModel}, {previousId: f.session.id, toolEnvironment: dto.toolEnvironment});
+  f.session.captures[1].capture = f.mem.put(continued.path, dto);
+  assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /Continuation tool environment differs/);
+  f.session.captures[1].capture = continued;
+  // Restore the inert original bytes, rather than replacing this capture's identity.
+  dto.toolEnvironment = originalToolEnvironment;
+  dto.argv = f.provider.buildArguments({provider: 'codex', cwd: f.session.cwd, endpointPolicy: 'inherit-config',
+    model: f.dto.runtime.requestedModel}, {previousId: f.session.id, toolEnvironment: originalToolEnvironment});
+  f.mem.put(continued.path, dto);
   f.session.loadedReads[1] = {...f.session.loadedReads[0], captureIndex: 1};
   assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /current original event/);
 });
@@ -814,6 +836,90 @@ test('P3 native provider launcher plan constructs client commands without starti
   assert.deepEqual(continued.slice(0, 2), ['exec', 'resume']);
   assert(continued.includes('same-session'));
   assert(!continued.includes('--last'));
+});
+
+test('Codex tool environment is forwarded with two fixed per-key set overrides', async () => {
+  const {provider} = await helpers(), toolEnvironment = {
+    PHOENIX_DIAGRAM_HOME: '/fixture/isolated cache',
+    PHOENIX_DIAGRAM_BROWSER: '/fixture/browser "quoted"/chrome'
+  }, request = {provider: 'codex', cwd: '/fixture/project', endpointPolicy: 'inherit-config'},
+        expected = [
+          'shell_environment_policy.set.PHOENIX_DIAGRAM_HOME="/fixture/isolated cache"',
+          'shell_environment_policy.set.PHOENIX_DIAGRAM_BROWSER="/fixture/browser \\"quoted\\"/chrome"'
+        ];
+  for (const options of [{}, {previousId: 'same-session'}]) {
+    const argv = provider.buildArguments(request, {...options, toolEnvironment});
+    assert.deepEqual(argv.filter(value => value.startsWith('shell_environment_policy.')), expected);
+    for (const value of expected) assert.equal(argv[argv.indexOf(value) - 1], '--config');
+    assert(!argv.some(value => /shell_environment_policy\.(?:inherit|filters|exclude|include_only)=/.test(value)));
+  }
+});
+
+test('Codex tool environment uses only safe parent path values and keeps default and Claude argv', async () => {
+  const {provider} = await helpers(), parent = {PHOENIX_DIAGRAM_HOME: '/fixture/cache\\disk with spaces',
+    PHOENIX_DIAGRAM_BROWSER: '/fixture/browser "quoted"/chrome', OPENAI_API_KEY: 'fixture-secret',
+    OPENAI_MODEL: 'unrelated-model', OPENAI_BASE_URL: 'https://unrelated.invalid', UNRELATED: '/ignored'};
+  assert.deepEqual(provider.toolEnvironmentFor('codex', parent), {
+    PHOENIX_DIAGRAM_HOME: parent.PHOENIX_DIAGRAM_HOME, PHOENIX_DIAGRAM_BROWSER: parent.PHOENIX_DIAGRAM_BROWSER
+  });
+  assert.deepEqual(provider.toolEnvironmentFor('claude-code', parent), {});
+  assert.deepEqual(provider.toolEnvironmentFor('codex', {PHOENIX_DIAGRAM_HOME: '/fixture/cache', OPENAI_API_KEY: 'fixture-secret'}), {PHOENIX_DIAGRAM_HOME: '/fixture/cache'});
+  assert.deepEqual(provider.toolEnvironmentFor('codex', {OPENAI_API_KEY: 'fixture-secret'}), {});
+  const request = {provider: 'codex', cwd: '/fixture/project', endpointPolicy: 'inherit-config'},
+        argv = provider.buildArguments(request, {toolEnvironment: provider.toolEnvironmentFor('codex', parent)});
+  assert(argv.includes('shell_environment_policy.set.PHOENIX_DIAGRAM_HOME="/fixture/cache\\\\disk with spaces"'));
+  assert(!JSON.stringify(argv).includes('fixture-secret'));assert(!JSON.stringify(argv).includes('unrelated'));
+  assert.deepEqual(provider.buildArguments(request), ['exec', '--json', '--ignore-rules', '--skip-git-repo-check',
+    '--config', 'allow_login_shell=false', '--color', 'never', '--sandbox', 'danger-full-access', '--config',
+    'project_doc_max_bytes=0', '--config', 'features.memories=false', '--config', 'features.memory_tool=false', '--cd', request.cwd, '-']);
+  const claude = {...request, provider: 'claude-code'};
+  assert.deepEqual(provider.buildArguments(claude, {sessionId: 'fresh', toolEnvironment: provider.toolEnvironmentFor('claude-code', parent)}),
+      provider.buildArguments(claude, {sessionId: 'fresh'}));
+  for (const value of ['', 'relative', '/fixture/../cache', '/fixture/cache\n', '/fixture/\0cache', '/fixture/\ud800', 4, null])
+    assert.throws(() => provider.toolEnvironmentFor('codex', {PHOENIX_DIAGRAM_HOME: value}), /absolute paths/);
+  for (const toolEnvironment of [{OPENAI_API_KEY: 'fixture-secret'}, {HOME: '/other-home'}, {PHOENIX_DIAGRAM_HOME: '/safe', model: '/not-a-path-key'}, [], null])
+    assert.throws(() => provider.buildArguments(request, {toolEnvironment}), /two fixed/);
+  assert.throws(() => provider.buildArguments(claude, {toolEnvironment: {PHOENIX_DIAGRAM_HOME: '/safe'}}), /only to Codex/);
+  assert.throws(() => provider.buildArguments({...request, toolEnvironment: {PHOENIX_DIAGRAM_HOME: '/injected'}}), /request cannot supply/);
+});
+
+test('Codex prepared-only plan forwards the core-policy parent scope without starting any client', async t => {
+  const {provider} = await helpers(), {spawnSync} = require('node:child_process'), directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'p3-codex-env-plan-')));
+  t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
+  const configuration = '[shell_environment_policy]\ninherit="core"\nset={UNRELATED_TIMEOUT="1000"}\n',
+        file = path.join(directory, 'config.toml'), requestFile = path.join(directory, 'request.json'),
+        toolEnvironment = {PHOENIX_DIAGRAM_HOME: '/fixture/isolated cache', PHOENIX_DIAGRAM_BROWSER: '/fixture/"browser"/chrome'};
+  fs.writeFileSync(file, configuration);fs.writeFileSync(requestFile, plain({provider: 'codex', cwd: '/fixture/project', endpointPolicy: 'inherit-config'}));
+  const result = spawnSync(process.execPath, [path.join(root, provider.COLLECTOR_MEMBER), '--plan', requestFile],
+      {encoding: 'utf8', env: {PATH: process.env.PATH, HOME: directory, CODEX_HOME: directory, ...toolEnvironment,
+        OPENAI_API_KEY: 'fixture-secret', UNRELATED: 'not-captured'}});
+  assert.equal(result.status, 0, result.stderr);const plan = JSON.parse(result.stdout);
+  assert.equal(plan.providerStarted, false);assert.equal(plan.status, 'prepared-only');assert.deepEqual(plan.toolEnvironment, toolEnvironment);
+  assert.deepEqual(plan.argv.filter(value => value.startsWith('shell_environment_policy.')), [
+    'shell_environment_policy.set.PHOENIX_DIAGRAM_HOME="/fixture/isolated cache"',
+    'shell_environment_policy.set.PHOENIX_DIAGRAM_BROWSER="/fixture/\\"browser\\"/chrome"']);
+  assert(!result.stdout.includes('fixture-secret'));assert(!result.stdout.includes('not-captured'));
+  assert.equal(fs.readFileSync(file, 'utf8'), configuration);
+});
+
+test('Codex continuation rejects a changed parent tool environment before any client or version process', async t => {
+  const {provider} = await helpers(), directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'p3-codex-env-continuation-')));
+  t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
+  const cwd = path.join(directory, 'project'), home = path.join(directory, 'codex-home');
+  fs.mkdirSync(cwd, {mode: 0o700});fs.mkdirSync(home, {mode: 0o700});
+  const put = (name, value) => {
+    const filename = path.join(directory, name), content = Buffer.isBuffer(value) ? value : plain(value);
+    fs.writeFileSync(filename, content, {flag: 'wx', mode: 0o600});const stat = fs.statSync(filename);
+    return {path: filename, identity: identity(content), binding: {device: String(stat.dev), inode: String(stat.ino), links: stat.nlink, mode: stat.mode & 0o7777, uid: stat.uid}};
+  }, program = put('codex', Buffer.from('inert nonexecutable fixture; must never spawn')),
+        stat = fs.statSync(cwd), project = {device: String(stat.dev), inode: String(stat.ino), mode: stat.mode & 0o7777, uid: stat.uid},
+        previousCapture = put('previous.json', {kind: provider.KIND, provider: 'codex', scenarioId: 'fixture-case', cwd, project,
+          collector: {identity: identity(fs.readFileSync(path.join(root, provider.COLLECTOR_MEMBER)))},
+          sessionId: '11111111-1111-4111-8111-111111111111', exitCode: 0, toolEnvironment: {PHOENIX_DIAGRAM_HOME: '/fixture/original-cache'}}),
+        request = {schemaVersion: 1, kind: 'phoenix-diagram-p3-provider-request', provider: 'codex', scenarioId: 'fixture-case',
+          endpointPolicy: 'inherit-config', cwd, program: program.path, outputDir: path.join(directory, 'output'), prompt: put('prompt.txt', Buffer.from('inert prompt')), previousCapture};
+  await assert.rejects(provider.captureProvider(request, {env: {HOME: directory, CODEX_HOME: home, PHOENIX_DIAGRAM_HOME: '/fixture/changed-cache'}}), /continuation tool environment changed/);
+  assert.equal(fs.existsSync(request.outputDir), false);
 });
 
 test('origin prompt is the complete frozen neutral protocol plus topic without an extra prefix', async () => {
