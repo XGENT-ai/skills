@@ -164,6 +164,8 @@ jobs:
         env:
           CARGO_PROFILE_DEV_OPT_LEVEL: '2'
           CARGO_PROFILE_TEST_OPT_LEVEL: '2'
+          CARGO_PROFILE_DEV_DEBUG: '0'
+          CARGO_PROFILE_TEST_DEBUG: '0'
           CARGO_PROFILE_DEV_DEBUG_ASSERTIONS: 'true'
           CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'
           CARGO_PROFILE_DEV_OVERFLOW_CHECKS: 'true'
@@ -201,6 +203,9 @@ jobs:
           const archive = `${process.env.RUNNER_TEMP}/phoenix-diagram-native-${process.env.PHOENIX_TARGET}.tar`;
           const bytes = fs.existsSync(archive) ? fs.readFileSync(archive) : null;
           const record = {schemaVersion:1, tool:'phoenix-diagram', workflowRun:process.env.GITHUB_RUN_ID, sourceCommit:process.env.GITHUB_SHA, target:process.env.PHOENIX_TARGET, phases, archive:bytes ? {bytes:bytes.length, sha256:crypto.createHash('sha256').update(bytes).digest('hex')} : null, upload:{id:process.env.PHOENIX_ARTIFACT_ID,url:process.env.PHOENIX_ARTIFACT_URL,digest:process.env.PHOENIX_ARTIFACT_DIGEST}, browserAcceptance:'not-run', visualReview: 'required-pending', providerSessionAcceptance: 'not-run', publication:'not-requested'};
+          const testEnginePath = 'tools/phoenix-diagram/target/debug/phoenix-diagram';
+          const testEngineStat = fs.existsSync(testEnginePath) ? fs.statSync(testEnginePath) : null;
+          record.nativeTestEngine = testEngineStat ? {path:testEnginePath, bytes:testEngineStat.size, links:testEngineStat.nlink, scope:'Compiler output size diagnostic only'} : null;
           fs.mkdirSync('local/phoenix-diagram/ci-prepare', {recursive:true});
           fs.writeFileSync(`local/phoenix-diagram/ci-prepare/${record.target}-ci-results.json`, JSON.stringify(record,null,2)+'\n');
           NODE
