@@ -370,17 +370,40 @@ mod tests {
             "brand/blocked"
         );
         assert!(validate_addresses(&[]).is_err());
-        let start = Instant::now();
+        let (release, lookup_gate) = mpsc::channel::<()>();
+        let (result_tx, result_rx) = mpsc::channel();
+        let caller = std::thread::spawn(move || {
+            let result = resolve_deadline(
+                move || {
+                    let _ = lookup_gate.recv();
+                    Ok(vec!["8.8.8.8:443".parse().unwrap()])
+                },
+                Instant::now() + Duration::from_millis(20),
+            );
+            let _ = result_tx.send(result);
+        });
+        // The lookup stays blocked until after the caller returns. The outer
+        // timeout only prevents a broken deadline from hanging this test.
+        let result = result_rx.recv_timeout(Duration::from_secs(5));
+        drop(release);
+        caller.join().unwrap();
+        let error = result
+            .expect("DNS deadline waited for lookup completion")
+            .unwrap_err();
+        assert_eq!(error.code, "brand/capture-unavailable");
+
+        let (started_tx, started_rx) = mpsc::channel();
+        let expired = Instant::now();
         let error = resolve_deadline(
-            || {
-                std::thread::sleep(Duration::from_millis(150));
+            move || {
+                let _ = started_tx.send(());
                 Ok(vec!["8.8.8.8:443".parse().unwrap()])
             },
-            start + Duration::from_millis(20),
+            expired,
         )
         .unwrap_err();
         assert_eq!(error.code, "brand/capture-unavailable");
-        assert!(start.elapsed() < Duration::from_millis(120));
+        assert_eq!(started_rx.try_recv(), Err(mpsc::TryRecvError::Disconnected));
     }
 
     #[test]
