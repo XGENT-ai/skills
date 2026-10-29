@@ -6,6 +6,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { createHash } = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+const { pathToFileURL } = require('node:url');
 const { gunzipSync, gzipSync } = require('node:zlib');
 const helper = '../../tools/phoenix-diagram/tests/support/p3-migration.mjs';
 const producer = '../../scripts/collect-phoenix-diagram-migration-sources.mjs';
@@ -25,6 +27,19 @@ test('fixed complete migration fixture reproduces canonical gzip and candidate m
   assert.deepEqual(fixture.sources.map(source => [source.id, source.files.length]), [['legacy-2.17', 219], ['legacy-2.17-when-to-use', 219], ['reference-3.1.0', 157]]);
   assert(Buffer.from(fixture.manifest.base64, 'base64').equals(fs.readFileSync(path.join(root, manifestPath))));
   for (const source of fixture.sources) for (const file of source.files) { const bytes = Buffer.from(file.base64, 'base64'); assert.equal(bytes.length, file.bytes); assert.equal(sha(bytes), file.sha256); assert([0o644, 0o755].includes(file.mode)); }
+});
+
+test('fixed migration archives and inert fixture retain their bytes with Linux or unknown gzip OS headers', () => {
+  for (const operatingSystem of [3, 255]) {
+    const script = `const zlib = require('node:zlib'), gzip = zlib.gzipSync;
+      zlib.gzipSync = (...args) => { const bytes = gzip(...args); bytes[9] = ${operatingSystem}; return bytes; };
+      require('node:module').syncBuiltinESMExports();
+      import(${JSON.stringify(pathToFileURL(path.resolve(__dirname, producer)).href)})
+        .then(api => console.log(JSON.stringify(api.collectMigrationFixture())));`;
+    const result = spawnSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 30000 });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(JSON.parse(result.stdout).status, 'pass');
+  }
 });
 
 test('consumer rejects changed fixture bytes, another candidate manifest, duplicate or missing binding', async () => {
@@ -67,6 +82,9 @@ test('assembly verifier reads complete fixed archives from an explicit workspace
     const target = path.join(project, name); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(path.join(root, 'tools/phoenix-diagram', name), target);
   }
   const result = verifyMigrationSourceFiles({ project }); assert.equal(result.status, 'pass'); assert.deepEqual(result.sources.map(source => source.fileCount), [219, 219, 157]);
-  const archive = path.join(project, 'upstream/archify-2.17-full-source.tar.gz'); const bytes = fs.readFileSync(archive); bytes[bytes.length - 8] ^= 1; fs.writeFileSync(archive, bytes);
+  const archive = path.join(project, 'upstream/archify-2.17-full-source.tar.gz'); const bytes = fs.readFileSync(archive);
+  const changedHeader = Buffer.from(bytes); changedHeader[9] = 3; fs.writeFileSync(archive, changedHeader);
+  assert.throws(() => verifyMigrationSourceFiles({ project }));
+  bytes[bytes.length - 8] ^= 1; fs.writeFileSync(archive, bytes);
   assert.throws(() => verifyMigrationSourceFiles({ project }));
 });
