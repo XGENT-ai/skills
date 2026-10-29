@@ -161,6 +161,13 @@ jobs:
         run: mise exec --no-deps -- node scripts/build-phoenix-diagram.mjs --development --output-dir local/phoenix-diagram/ci-release/${{ matrix.platform }}
       - name: Run native Diagram tests offline
         id: native
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: '2'
+          CARGO_PROFILE_TEST_OPT_LEVEL: '2'
+          CARGO_PROFILE_DEV_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_DEV_OVERFLOW_CHECKS: 'true'
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: 'true'
         run: mise exec --no-deps -- mbx test --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline
       - name: Preserve native file modes in the artifact
         id: archive
