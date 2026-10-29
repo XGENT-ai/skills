@@ -4238,7 +4238,7 @@
                 },
                 {
                   "file": "crates/cli/src/main.rs",
-                  "line": 55
+                  "line": 59
                 }
               ]
             }
@@ -4269,7 +4269,7 @@
                 },
                 {
                   "file": "crates/cli/src/main.rs",
-                  "line": 123
+                  "line": 136
                 }
               ]
             }
@@ -10192,7 +10192,7 @@
               "source": [
                 {
                   "file": "crates/detect/src/cli.rs",
-                  "line": 724
+                  "line": 722
                 }
               ]
             }
@@ -10266,7 +10266,7 @@
               "source": [
                 {
                   "file": "crates/detect/src/cli.rs",
-                  "line": 724
+                  "line": 722
                 }
               ]
             }
@@ -10330,17 +10330,29 @@
             "stderr"
           ],
           "beforeSha256": "830dc38c3728d46bd06cfb5b2dd3d376fc1851f9935738e3e70ff3f13f39e153",
-          "afterSha256": "495d5b65da21d9f90ba7decc2cfffb7deaffb1dce13facacd01d099012025348",
+          "afterSha256": "643d1053c6434faec4e5d4751a644a2828a575bd04a9caf4e5f5080dd26c946c",
           "edits": [
             {
               "offset": 101,
-              "before": "  npx impeccable detect ",
-              "after": "  phoenix-ui detect ",
+              "before": "  npx impeccable detect http://localhost:3000\n",
+              "after": "  phoenix-ui detect http://localhost:3000\n",
               "reason": "source-defined-Phoenix-CLI-command",
               "source": [
                 {
                   "file": "crates/detect/src/cli.rs",
-                  "line": 724
+                  "line": 722
+                }
+              ]
+            },
+            {
+              "offset": 3289,
+              "before": "",
+              "after": "\n── Advisory (not counted as failures) ──\n\n<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx (imported by page.tsx)\n  line 9: [xgent/transition-all] <div className=\"group border-l-4 border-blue-500 rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all\">\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx (imported by page.tsx)\n  line 30: [xgent/transition-all] <button className=\"mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold t\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n2 advisory notes. Suppress with --no-advisory.\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
                 }
               ]
             }
@@ -10353,8 +10365,8 @@
             "stderr"
           ],
           "platform": "win32",
-          "beforeSha256": "495d5b65da21d9f90ba7decc2cfffb7deaffb1dce13facacd01d099012025348",
-          "afterSha256": "a4a772b098073b21ee6cec2c537cc38eb041682828ab04543f1851e0aa22c556",
+          "beforeSha256": "643d1053c6434faec4e5d4751a644a2828a575bd04a9caf4e5f5080dd26c946c",
+          "afterSha256": "92e94c7bef02bb34e2f2c0ba46dfe5362520b3c35cba1cb26d5c72a8db10747e",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -10372,24 +10384,34 @@
           ],
           "edits": [
             {
-              "offset": 151,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\app\\"
+              "offset": 145,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/globals.css (imported by layout.tsx)\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\app\\globals.css (imported by layout.tsx)\n"
             },
             {
-              "offset": 560,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\app\\"
+              "offset": 554,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\app\\page.tsx\n"
             },
             {
-              "offset": 1487,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\"
+              "offset": 1481,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx (imported by page.tsx)\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\FeatureCard.tsx (imported by page.tsx)\n"
             },
             {
-              "offset": 2305,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\"
+              "offset": 2299,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx (imported by page.tsx)\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\PricingCard.tsx (imported by page.tsx)\n"
+            },
+            {
+              "offset": 3328,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx (imported by page.tsx)\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\FeatureCard.tsx (imported by page.tsx)\n"
+            },
+            {
+              "offset": 3818,
+              "before": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx (imported by page.tsx)\n",
+              "after": "<REPO>\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\PricingCard.tsx (imported by page.tsx)\n"
             }
           ]
         }
@@ -10414,7 +10436,7 @@
               "source": [
                 {
                   "file": "crates/detect/src/cli.rs",
-                  "line": 724
+                  "line": 722
                 }
               ]
             }
@@ -10473,7 +10495,7 @@
               "source": [
                 {
                   "file": "crates/detect/src/cli.rs",
-                  "line": 724
+                  "line": 722
                 }
               ]
             }
@@ -17823,7 +17845,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -17835,7 +17857,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -17906,7 +17928,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -17918,7 +17940,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -17930,7 +17952,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -17942,7 +17964,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -17989,7 +18011,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18001,7 +18023,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18013,7 +18035,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18025,7 +18047,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18072,7 +18094,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18084,7 +18106,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18096,7 +18118,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18108,7 +18130,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18155,7 +18177,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18167,7 +18189,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18179,7 +18201,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18191,7 +18213,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18238,7 +18260,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18250,7 +18272,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18262,7 +18284,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18274,7 +18296,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18321,7 +18343,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18333,7 +18355,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18345,7 +18367,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18357,7 +18379,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18428,7 +18450,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18440,7 +18462,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18452,7 +18474,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18464,7 +18486,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             },
@@ -18575,7 +18597,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18587,7 +18609,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18698,7 +18720,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18710,7 +18732,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18821,7 +18843,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18833,7 +18855,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18944,7 +18966,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -18956,7 +18978,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19067,7 +19089,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19079,7 +19101,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19190,7 +19212,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19249,7 +19271,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19261,7 +19283,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 132
+                  "line": 133
                 }
               ]
             }
@@ -19292,7 +19314,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19316,7 +19338,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 973
+                  "line": 980
                 }
               ]
             }
@@ -19347,7 +19369,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19453,7 +19475,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19465,7 +19487,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 132
+                  "line": 133
                 }
               ]
             }
@@ -19492,7 +19514,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19534,7 +19556,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19576,7 +19598,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19651,7 +19673,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19726,7 +19748,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19801,7 +19823,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19876,7 +19898,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -19951,7 +19973,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20026,7 +20048,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20068,7 +20090,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20143,7 +20165,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20220,7 +20242,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20255,7 +20277,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20267,7 +20289,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20279,7 +20301,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             }
@@ -20311,7 +20333,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20346,7 +20368,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20369,7 +20391,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20381,7 +20403,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 132
+                  "line": 133
                 }
               ]
             }
@@ -20404,7 +20426,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20416,7 +20438,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20428,7 +20450,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             }
@@ -20460,7 +20482,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20495,7 +20517,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20507,7 +20529,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20519,7 +20541,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             }
@@ -20551,7 +20573,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20595,7 +20617,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20630,7 +20652,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20653,7 +20675,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20676,7 +20698,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20699,7 +20721,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20722,7 +20744,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             }
@@ -20745,7 +20767,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20757,7 +20779,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 973
+                  "line": 980
                 }
               ]
             }
@@ -20789,7 +20811,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20824,7 +20846,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20859,7 +20881,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20871,7 +20893,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20883,7 +20905,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 1299
+                  "line": 1306
                 }
               ]
             }
@@ -20923,7 +20945,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -20935,7 +20957,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 132
+                  "line": 133
                 }
               ]
             }
@@ -20958,7 +20980,7 @@
               "source": [
                 {
                   "file": "crates/hook/src/hook_lib.rs",
-                  "line": 31
+                  "line": 32
                 }
               ]
             },
@@ -56833,12 +56855,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -56860,12 +56882,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -56941,12 +56963,12 @@
             "stdout"
           ],
           "beforeSha256": "df3fd35ce1a2a813864c695e4551a99b1a0b5be65e7f7a8113a5b61c8a46ee8b",
-          "afterSha256": "608dae0ef0ece1c02d230c11826cbfba2f9ec43e47bb8abf633995dea8d12333",
+          "afterSha256": "972e9dfbb97e75a427b42b7c1561c09408e924e7cd199040b1bebbed28cb7d56",
           "edits": [
             {
               "offset": 0,
               "before": "Usage: impeccable install [options]\n\nInstall compiled Impeccable skills into project or user-level harness folders.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project or global\n  --project              Install into the current project\n  --user, --global       Install at the user level\n  --no-hooks             Install skills without provider hook manifests\n  --force                Replace an existing installation\n  -h, --help             Show this help message\n",
-              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
+              "after": "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --auxiliary-root=<path>  Project: also install the five UI design and review skills\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message\n",
               "reason": "source-defined-Phoenix-local-bundle-help",
               "source": [
                 {
@@ -60157,15 +60179,49 @@
     {
       "id": "detect-fixture-json-framework-next-tailwind",
       "goldenSha256": "66969ed5a0a4aebcf45d76fa859262efc16ec01e884e1e17826af26c85703074",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "e9a081c8591a30d42cc138bc4088a28f8b6d507ca78c350a814b9c2ae7258ca9",
+          "afterSha256": "d46913a778c8b540eb683f3efd94eec5b26358c3dd4edce3bca6fb344aff466e",
+          "edits": [
+            {
+              "offset": 3766,
+              "before": "",
+              "after": "    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n    \"line\": 9,\n    \"snippet\": \"<div className=\\\"group border-l-4 border-blue-500 rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all\\\">\",\n    \"advisory\": true,\n    \"importedBy\": [\n      \"page.tsx\"\n    ]\n  },\n  {\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            },
+            {
+              "offset": 5491,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n    \"line\": 30,\n    \"snippet\": \"<button className=\\\"mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold t\",\n    \"advisory\": true,\n    \"importedBy\": [\n      \"page.tsx\"\n    ]\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "e9a081c8591a30d42cc138bc4088a28f8b6d507ca78c350a814b9c2ae7258ca9",
-          "afterSha256": "70c7ef32edbd6d7ea1bdab47e97f2efac431dfcd41284d72c03199200b143ca9",
+          "beforeSha256": "d46913a778c8b540eb683f3efd94eec5b26358c3dd4edce3bca6fb344aff466e",
+          "afterSha256": "8083320787aa51c7d0db48ec12feaf23e50951b2a270fbcd2d23acf20f0a6638",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -60183,54 +60239,64 @@
           ],
           "edits": [
             {
-              "offset": 418,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 399,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/globals.css\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\globals.css\",\n"
             },
             {
-              "offset": 888,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 869,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 1456,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 1437,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 2024,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 2005,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 2457,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 2438,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 3066,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 3047,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 3572,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 3553,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 4057,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 4155,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 4683,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 4753,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
             },
             {
-              "offset": 5307,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 5379,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
+            },
+            {
+              "offset": 6003,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
+            },
+            {
+              "offset": 6604,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
             }
           ]
         }
@@ -61930,15 +61996,37 @@
     {
       "id": "detect-fixture-json-motion-html",
       "goldenSha256": "8d9dbc8400c345fab075a95d73c655f8f1be7c98c14b7c09814d9b53ba8becb2",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "2a9f0d4a9ba5b82f73b392b8daedbde6be0a4b57f7a668668c044a77dc688bf8",
+          "afterSha256": "b80f56f438450c19db0941cb344cb937c3f863b3b6ca8e538d9a2c145a3e58ab",
+          "edits": [
+            {
+              "offset": 4936,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/motion.html\",\n    \"line\": 54,\n    \"snippet\": \".all-transition { transition: all 0.3s ease; }\",\n    \"advisory\": true\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "2a9f0d4a9ba5b82f73b392b8daedbde6be0a4b57f7a668668c044a77dc688bf8",
-          "afterSha256": "e104fa4507401039dd6d5320dd89292de2f60a7b6e1213cd5aed665782fec4b7",
+          "beforeSha256": "b80f56f438450c19db0941cb344cb937c3f863b3b6ca8e538d9a2c145a3e58ab",
+          "afterSha256": "76e4e74c10e0c4ada9c51972a91aacbac3d62e7fdd8de7646f27a4d2be0267cb",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -62009,6 +62097,11 @@
               "offset": 4766,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
+            },
+            {
+              "offset": 5353,
+              "before": "/tests/fixtures/antipatterns/",
+              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             }
           ]
         }
@@ -62017,15 +62110,37 @@
     {
       "id": "detect-fixture-text-motion-html",
       "goldenSha256": "7142a5a92a821535d5fb9665a17e6249c07ec88a577339770ba3808afa9f2369",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stderr"
+          ],
+          "beforeSha256": "02856c9a76ccbf527439426beb010f7eaa03bf8047034caadf87141171fff323",
+          "afterSha256": "0a90e372565ef5cc3ab40a4b4d0774543eeeca8091a30c3eec8df2893631bbf9",
+          "edits": [
+            {
+              "offset": 2477,
+              "before": "",
+              "after": "\n── Advisory (not counted as failures) ──\n\n<REPO>/tests/fixtures/antipatterns/motion.html\n  line 54: [xgent/transition-all] .all-transition { transition: all 0.3s ease; }\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n1 advisory note. Suppress with --no-advisory.\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stderr"
           ],
           "platform": "win32",
-          "beforeSha256": "02856c9a76ccbf527439426beb010f7eaa03bf8047034caadf87141171fff323",
-          "afterSha256": "57a96a8371b758f1196688406339e360578b8cd202615f643f1434beaae3873c",
+          "beforeSha256": "0a90e372565ef5cc3ab40a4b4d0774543eeeca8091a30c3eec8df2893631bbf9",
+          "afterSha256": "1124d56a378c80bcf35e9da88af2d682db34e41fd8dbe40bf12a3c7d0caebd63",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -62044,6 +62159,11 @@
           "edits": [
             {
               "offset": 7,
+              "before": "/tests/fixtures/antipatterns/",
+              "after": "\\tests\\fixtures\\antipatterns\\"
+            },
+            {
+              "offset": 2526,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             }
@@ -65088,15 +65208,61 @@
     {
       "id": "detect-dir-json-all-fixtures",
       "goldenSha256": "431c5ee2777d178c66ed6cb331c691a9d64406d09454b88a307c9c8e19de2fb7",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "640cfb52604895b946177ce24b7b6a84d3035d947207aff6afc32fcbc0f9ebfd",
+          "afterSha256": "cadd66bf695bf410b6e5cf210f977a4600c9d1e4a0a05eb13bb0fa401a63c2a4",
+          "edits": [
+            {
+              "offset": 71041,
+              "before": "",
+              "after": "    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n    \"line\": 9,\n    \"snippet\": \"<div className=\\\"group border-l-4 border-blue-500 rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all\\\">\",\n    \"advisory\": true,\n    \"importedBy\": [\n      \"page.tsx\"\n    ]\n  },\n  {\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            },
+            {
+              "offset": 72723,
+              "before": "",
+              "after": "    \"importedBy\": [\n      \"page.tsx\"\n    ]\n  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n    \"line\": 30,\n    \"snippet\": \"<button className=\\\"mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold t\",\n    \"advisory\": true,\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            },
+            {
+              "offset": 135370,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/motion.html\",\n    \"line\": 54,\n    \"snippet\": \".all-transition { transition: all 0.3s ease; }\",\n    \"advisory\": true\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "640cfb52604895b946177ce24b7b6a84d3035d947207aff6afc32fcbc0f9ebfd",
-          "afterSha256": "a03d747cfde3200b3435817125955299ba781470421467261a16958990bad62c",
+          "beforeSha256": "cadd66bf695bf410b6e5cf210f977a4600c9d1e4a0a05eb13bb0fa401a63c2a4",
+          "afterSha256": "4f07cf68ceb659a3c371355393ac94d5ac1c1d7d6ae8171f45bac875cd2dcb1d",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -65809,1492 +65975,1507 @@
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
             },
             {
-              "offset": 71332,
+              "offset": 71449,
               "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
             },
             {
-              "offset": 71958,
+              "offset": 72047,
               "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
             },
             {
-              "offset": 72582,
+              "offset": 72673,
               "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
             },
             {
-              "offset": 73073,
+              "offset": 73297,
+              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
+              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+            },
+            {
+              "offset": 73898,
+              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
+              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+            },
+            {
+              "offset": 74508,
               "before": "/tests/fixtures/antipatterns/framework-vite/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-vite\\\\"
             },
             {
-              "offset": 73496,
+              "offset": 74931,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 73953,
+              "offset": 75388,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 74529,
+              "offset": 75964,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 75079,
+              "offset": 76514,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 75629,
+              "offset": 77064,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 76179,
+              "offset": 77614,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 76729,
+              "offset": 78164,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 77279,
+              "offset": 78714,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 77829,
+              "offset": 79264,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 78379,
+              "offset": 79814,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 78929,
+              "offset": 80364,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 79479,
+              "offset": 80914,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 80030,
+              "offset": 81465,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 80580,
+              "offset": 82015,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 81019,
+              "offset": 82454,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 81701,
+              "offset": 83136,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 82338,
+              "offset": 83773,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 82820,
+              "offset": 84255,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 83296,
+              "offset": 84731,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 83914,
+              "offset": 85349,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 84352,
+              "offset": 85787,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 85078,
+              "offset": 86513,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 85543,
+              "offset": 86978,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 86128,
+              "offset": 87563,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 86752,
+              "offset": 88187,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 87373,
+              "offset": 88808,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 87988,
+              "offset": 89423,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 88600,
+              "offset": 90035,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 89155,
+              "offset": 90590,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 89713,
+              "offset": 91148,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 90330,
+              "offset": 91765,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 90909,
+              "offset": 92344,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 91435,
+              "offset": 92870,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 91983,
+              "offset": 93418,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 92531,
+              "offset": 93966,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 93075,
+              "offset": 94510,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 93627,
+              "offset": 95062,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 94200,
+              "offset": 95635,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 94722,
+              "offset": 96157,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 95291,
+              "offset": 96726,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 95904,
+              "offset": 97339,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 96556,
+              "offset": 97991,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 97208,
+              "offset": 98643,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 97868,
+              "offset": 99303,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 98522,
+              "offset": 99957,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 99109,
+              "offset": 100544,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 99642,
+              "offset": 101077,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 100175,
+              "offset": 101610,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 100591,
+              "offset": 102026,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 100992,
+              "offset": 102427,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 101399,
+              "offset": 102834,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 101950,
+              "offset": 103385,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 102501,
+              "offset": 103936,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 102930,
+              "offset": 104365,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 103393,
+              "offset": 104828,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 103949,
+              "offset": 105384,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 104469,
+              "offset": 105904,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 105015,
+              "offset": 106450,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 105635,
+              "offset": 107070,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 106307,
+              "offset": 107742,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 106969,
+              "offset": 108404,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 107629,
+              "offset": 109064,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 108286,
+              "offset": 109721,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 108942,
+              "offset": 110377,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 109603,
+              "offset": 111038,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 110121,
+              "offset": 111556,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 110595,
+              "offset": 112030,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 111098,
+              "offset": 112533,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 111592,
+              "offset": 113027,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 112007,
+              "offset": 113442,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 112422,
+              "offset": 113857,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 112837,
+              "offset": 114272,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 113242,
+              "offset": 114677,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 113688,
+              "offset": 115123,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 114119,
+              "offset": 115554,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 114521,
+              "offset": 115956,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 114963,
+              "offset": 116398,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 115403,
+              "offset": 116838,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 115878,
+              "offset": 117313,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 116465,
+              "offset": 117900,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 116923,
+              "offset": 118358,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 117366,
+              "offset": 118801,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 117809,
+              "offset": 119244,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 118242,
+              "offset": 119677,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 118729,
+              "offset": 120164,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 119485,
+              "offset": 120920,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 120004,
+              "offset": 121439,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 120532,
+              "offset": 121967,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 121080,
+              "offset": 122515,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 121622,
+              "offset": 123057,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 122343,
+              "offset": 123778,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 123005,
+              "offset": 124440,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 123497,
+              "offset": 124932,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 124125,
+              "offset": 125560,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 124581,
+              "offset": 126016,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 125015,
+              "offset": 126450,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 125449,
+              "offset": 126884,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 125883,
+              "offset": 127318,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 126317,
+              "offset": 127752,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 126751,
+              "offset": 128186,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 127185,
+              "offset": 128620,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 127619,
+              "offset": 129054,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 128053,
+              "offset": 129488,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 128487,
+              "offset": 129922,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 128921,
+              "offset": 130356,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 129356,
+              "offset": 130791,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 129793,
+              "offset": 131228,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 130256,
+              "offset": 131691,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 130751,
+              "offset": 132186,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 131173,
+              "offset": 132608,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 131640,
+              "offset": 133075,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 132086,
+              "offset": 133521,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 132533,
+              "offset": 133968,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 132981,
+              "offset": 134416,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 133428,
+              "offset": 134863,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 133879,
+              "offset": 135314,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 134333,
+              "offset": 135768,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 134779,
+              "offset": 136214,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 135200,
+              "offset": 136635,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 135677,
+              "offset": 137222,
+              "before": "/tests/fixtures/antipatterns/",
+              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
+            },
+            {
+              "offset": 137674,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 136254,
+              "offset": 138251,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 136828,
+              "offset": 138825,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 137295,
+              "offset": 139292,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 137747,
+              "offset": 139744,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 138170,
+              "offset": 140167,
               "before": "/tests/fixtures/antipatterns/multifile/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\multifile\\\\"
             },
             {
-              "offset": 138593,
+              "offset": 140590,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 139026,
+              "offset": 141023,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 139459,
+              "offset": 141456,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 139870,
+              "offset": 141867,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 140282,
+              "offset": 142279,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 140715,
+              "offset": 142712,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 141130,
+              "offset": 143127,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 141591,
+              "offset": 143588,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 142075,
+              "offset": 144072,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 142520,
+              "offset": 144517,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 142965,
+              "offset": 144962,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 143410,
+              "offset": 145407,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 143855,
+              "offset": 145852,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 144300,
+              "offset": 146297,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 144745,
+              "offset": 146742,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 145190,
+              "offset": 147187,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 145612,
+              "offset": 147609,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 146695,
+              "offset": 148692,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 147275,
+              "offset": 149272,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 147894,
+              "offset": 149891,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 148512,
+              "offset": 150509,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 149134,
+              "offset": 151131,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 149661,
+              "offset": 151658,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 150150,
+              "offset": 152147,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 150589,
+              "offset": 152586,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 151030,
+              "offset": 153027,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 151471,
+              "offset": 153468,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 151912,
+              "offset": 153909,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 152633,
+              "offset": 154630,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 153380,
+              "offset": 155377,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 154127,
+              "offset": 156124,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 154843,
+              "offset": 156840,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 155307,
+              "offset": 157304,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 155722,
+              "offset": 157719,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 156142,
+              "offset": 158139,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 156532,
+              "offset": 158529,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 156922,
+              "offset": 158919,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 157312,
+              "offset": 159309,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 157763,
+              "offset": 159760,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 158189,
+              "offset": 160186,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 158640,
+              "offset": 160637,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 159066,
+              "offset": 161063,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 159517,
+              "offset": 161514,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 159943,
+              "offset": 161940,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 160394,
+              "offset": 162391,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 160820,
+              "offset": 162817,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 161271,
+              "offset": 163268,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 161697,
+              "offset": 163694,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 162148,
+              "offset": 164145,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 162574,
+              "offset": 164571,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 163025,
+              "offset": 165022,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 163451,
+              "offset": 165448,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 163902,
+              "offset": 165899,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 164328,
+              "offset": 166325,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 164779,
+              "offset": 166776,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 165205,
+              "offset": 167202,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 165656,
+              "offset": 167653,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 166402,
+              "offset": 168399,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 166857,
+              "offset": 168854,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 167247,
+              "offset": 169244,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 167957,
+              "offset": 169954,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 168405,
+              "offset": 170402,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 169115,
+              "offset": 171112,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 169563,
+              "offset": 171560,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 169953,
+              "offset": 171950,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 170343,
+              "offset": 172340,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 170733,
+              "offset": 172730,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 171184,
+              "offset": 173181,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 171610,
+              "offset": 173607,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 172061,
+              "offset": 174058,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 172487,
+              "offset": 174484,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 172938,
+              "offset": 174935,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 173364,
+              "offset": 175361,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 173815,
+              "offset": 175812,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 174241,
+              "offset": 176238,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 174692,
+              "offset": 176689,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 175118,
+              "offset": 177115,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 175569,
+              "offset": 177566,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 176145,
+              "offset": 178142,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 176702,
+              "offset": 178699,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 177288,
+              "offset": 179285,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 177922,
+              "offset": 179919,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 178536,
+              "offset": 180533,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 179161,
+              "offset": 181158,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 179746,
+              "offset": 181743,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 180269,
+              "offset": 182266,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 180792,
+              "offset": 182789,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 181320,
+              "offset": 183317,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 181728,
+              "offset": 183725,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 182162,
+              "offset": 184159,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 182654,
+              "offset": 184651,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 183149,
+              "offset": 185146,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 183648,
+              "offset": 185645,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 184139,
+              "offset": 186136,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 184630,
+              "offset": 186627,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 185114,
+              "offset": 187111,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 185592,
+              "offset": 187589,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 186081,
+              "offset": 188078,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 186538,
+              "offset": 188535,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 186994,
+              "offset": 188991,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 187538,
+              "offset": 189535,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 188040,
+              "offset": 190037,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 188546,
+              "offset": 190543,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 189046,
+              "offset": 191043,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 189564,
+              "offset": 191561,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 189992,
+              "offset": 191989,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 190386,
+              "offset": 192383,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 190815,
+              "offset": 192812,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 191281,
+              "offset": 193278,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 191749,
+              "offset": 193746,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 192199,
+              "offset": 194196,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 192885,
+              "offset": 194882,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 193613,
+              "offset": 195610,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 194341,
+              "offset": 196338,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 195067,
+              "offset": 197064,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 195794,
+              "offset": 197791,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 196445,
+              "offset": 198442,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 197047,
+              "offset": 199044,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 197653,
+              "offset": 199650,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 198121,
+              "offset": 200118,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 198527,
+              "offset": 200524,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 198933,
+              "offset": 200930,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 199340,
+              "offset": 201337,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 199860,
+              "offset": 201857,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 200332,
+              "offset": 202329,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 200941,
+              "offset": 202938,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 201558,
+              "offset": 203555,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 202051,
+              "offset": 204048,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 202480,
+              "offset": 204477,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 202910,
+              "offset": 204907,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 203339,
+              "offset": 205336,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 203783,
+              "offset": 205780,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 204222,
+              "offset": 206219,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 204650,
+              "offset": 206647,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 205076,
+              "offset": 207073,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 205483,
+              "offset": 207480,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 206026,
+              "offset": 208023,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 206577,
+              "offset": 208574,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 207013,
+              "offset": 209010,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 207449,
+              "offset": 209446,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 207911,
+              "offset": 209908,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 208320,
+              "offset": 210317,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 208753,
+              "offset": 210750,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 209227,
+              "offset": 211224,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 209872,
+              "offset": 211869,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 210458,
+              "offset": 212455,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 210897,
+              "offset": 212894,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 211389,
+              "offset": 213386,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 211786,
+              "offset": 213783,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 212228,
+              "offset": 214225,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 212699,
+              "offset": 214696,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 213152,
+              "offset": 215149,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 213694,
+              "offset": 215691,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 214776,
+              "offset": 216773,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 215903,
+              "offset": 217900,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 217030,
+              "offset": 219027,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 218157,
+              "offset": 220154,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 219283,
+              "offset": 221280,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 220412,
+              "offset": 222409,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 221542,
+              "offset": 223539,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 222059,
+              "offset": 224056,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 222497,
+              "offset": 224494,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 222898,
+              "offset": 224895,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 223434,
+              "offset": 225431,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 223978,
+              "offset": 225975,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 224408,
+              "offset": 226405,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 224837,
+              "offset": 226834,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 225292,
+              "offset": 227289,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             },
             {
-              "offset": 225694,
+              "offset": 227691,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\"
             }
@@ -67305,15 +67486,61 @@
     {
       "id": "detect-dir-text-all-fixtures",
       "goldenSha256": "cc27da2d8a62c327d9cda31cbe3472cac5fb872537e48acdc74618a15278bf81",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stderr"
+          ],
+          "beforeSha256": "df51edafb2ae7c177d6023163ccc43eda1209de3d4f774c38b0c7bc11fa7ec21",
+          "afterSha256": "fd1e03bd487d4193f79aafad485c4b7c2a147bb02cb4143ed786e756a42769d7",
+          "edits": [
+            {
+              "offset": 121661,
+              "before": "",
+              "after": "<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx (imported by page.tsx)\n  line 9: [xgent/transition-all] <div className=\"group border-l-4 border-blue-500 rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all\">\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx (imported by page.tsx)\n  line 30: [xgent/transition-all] <button className=\"mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold t\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            },
+            {
+              "offset": 124239,
+              "before": "",
+              "after": "<REPO>/tests/fixtures/antipatterns/motion.html\n  line 54: [xgent/transition-all] .all-transition { transition: all 0.3s ease; }\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n\n",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            },
+            {
+              "offset": 126558,
+              "before": "17",
+              "after": "20",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stderr"
           ],
           "platform": "win32",
-          "beforeSha256": "df51edafb2ae7c177d6023163ccc43eda1209de3d4f774c38b0c7bc11fa7ec21",
-          "afterSha256": "0f87e998854773b85d807104ab79f9c0fc04f2cd91c40dc1e0aea0a5860d7c07",
+          "beforeSha256": "fd1e03bd487d4193f79aafad485c4b7c2a147bb02cb4143ed786e756a42769d7",
+          "afterSha256": "f690fb103338f3a1f6eb37db0079a9f68b9c22c7e095f04307aa80f584b347c2",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -67737,36 +67964,51 @@
             },
             {
               "offset": 121667,
+              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
+              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\"
+            },
+            {
+              "offset": 122157,
+              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
+              "after": "\\tests\\fixtures\\antipatterns\\framework-next-tailwind\\components\\"
+            },
+            {
+              "offset": 122653,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 122132,
+              "offset": 123118,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 123172,
+              "offset": 124158,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 123598,
+              "offset": 124584,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 124245,
+              "offset": 125231,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 125698,
+              "offset": 125591,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             },
             {
-              "offset": 126111,
+              "offset": 127044,
+              "before": "/tests/fixtures/antipatterns/",
+              "after": "\\tests\\fixtures\\antipatterns\\"
+            },
+            {
+              "offset": 127457,
               "before": "/tests/fixtures/antipatterns/",
               "after": "\\tests\\fixtures\\antipatterns\\"
             }
@@ -72098,15 +72340,49 @@
     {
       "id": "detect-framework-next-tailwind-json",
       "goldenSha256": "66969ed5a0a4aebcf45d76fa859262efc16ec01e884e1e17826af26c85703074",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "e9a081c8591a30d42cc138bc4088a28f8b6d507ca78c350a814b9c2ae7258ca9",
+          "afterSha256": "d46913a778c8b540eb683f3efd94eec5b26358c3dd4edce3bca6fb344aff466e",
+          "edits": [
+            {
+              "offset": 3766,
+              "before": "",
+              "after": "    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n    \"line\": 9,\n    \"snippet\": \"<div className=\\\"group border-l-4 border-blue-500 rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all\\\">\",\n    \"advisory\": true,\n    \"importedBy\": [\n      \"page.tsx\"\n    ]\n  },\n  {\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            },
+            {
+              "offset": 5491,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n    \"line\": 30,\n    \"snippet\": \"<button className=\\\"mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold t\",\n    \"advisory\": true,\n    \"importedBy\": [\n      \"page.tsx\"\n    ]\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "e9a081c8591a30d42cc138bc4088a28f8b6d507ca78c350a814b9c2ae7258ca9",
-          "afterSha256": "70c7ef32edbd6d7ea1bdab47e97f2efac431dfcd41284d72c03199200b143ca9",
+          "beforeSha256": "d46913a778c8b540eb683f3efd94eec5b26358c3dd4edce3bca6fb344aff466e",
+          "afterSha256": "8083320787aa51c7d0db48ec12feaf23e50951b2a270fbcd2d23acf20f0a6638",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72124,54 +72400,64 @@
           ],
           "edits": [
             {
-              "offset": 418,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 399,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/globals.css\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\globals.css\",\n"
             },
             {
-              "offset": 888,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 869,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 1456,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 1437,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 2024,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/app/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\"
+              "offset": 2005,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/app/page.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\app\\\\page.tsx\",\n"
             },
             {
-              "offset": 2457,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 2438,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 3066,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 3047,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 3572,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 3553,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 4057,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 4155,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/FeatureCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\FeatureCard.tsx\",\n"
             },
             {
-              "offset": 4683,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 4753,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
             },
             {
-              "offset": 5307,
-              "before": "/tests/fixtures/antipatterns/framework-next-tailwind/components/",
-              "after": "\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\"
+              "offset": 5379,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
+            },
+            {
+              "offset": 6003,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
+            },
+            {
+              "offset": 6604,
+              "before": "    \"file\": \"<REPO>/tests/fixtures/antipatterns/framework-next-tailwind/components/PricingCard.tsx\",\n",
+              "after": "    \"file\": \"<REPO>\\\\tests\\\\fixtures\\\\antipatterns\\\\framework-next-tailwind\\\\components\\\\PricingCard.tsx\",\n"
             }
           ]
         }
@@ -72566,15 +72852,37 @@
     {
       "id": "detect-config-dir-json",
       "goldenSha256": "cc1146409d829c082d37275ac53f2def500cbc1479a44c1e616f03e75a734f5d",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "5fb2d4c82fd242981b0f656ff6c996d62b11ab862f390ed74db2ec6a2934e858",
+          "afterSha256": "3143453761bedb1c61643fb8ebe3fdd0648f990e91d20d9ba2f2987020a772df",
+          "edits": [
+            {
+              "offset": 4442,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<WS>/src/styles.css\",\n    \"line\": 1,\n    \"snippet\": \".hero { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }\",\n    \"advisory\": true\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "5fb2d4c82fd242981b0f656ff6c996d62b11ab862f390ed74db2ec6a2934e858",
-          "afterSha256": "d4c485b0a2f6ba5052f741896031d7b50dc0c149dc01b95fd27b0f79be669244",
+          "beforeSha256": "3143453761bedb1c61643fb8ebe3fdd0648f990e91d20d9ba2f2987020a772df",
+          "afterSha256": "847bdc0cfbe2f9aebbf39f94b3cfc6b54a24c53b6d702d6bde13738f184aa0a1",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72592,49 +72900,54 @@
           ],
           "edits": [
             {
-              "offset": 353,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 336,
+              "before": "    \"file\": \"<WS>/src/inline.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\inline.html\",\n"
             },
             {
-              "offset": 897,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 880,
+              "before": "    \"file\": \"<WS>/src/inline.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\inline.html\",\n"
             },
             {
-              "offset": 1376,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 1359,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 1805,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 1788,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 2302,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 2285,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 2809,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 2792,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 3303,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 3286,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 3808,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 3791,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             },
             {
-              "offset": 4253,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 4236,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
+            },
+            {
+              "offset": 4840,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             }
           ]
         }
@@ -72643,15 +72956,49 @@
     {
       "id": "detect-config-dir-text",
       "goldenSha256": "2eeb8887f8ae2895b3e93a4f2a6689320fc1cb146be5b13f78747bc00817940c",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stderr"
+          ],
+          "beforeSha256": "ceb9244e02d0c3c5692a9a1e61514439150964ae67bbef05e723ab27879dc2b4",
+          "afterSha256": "e10bc9ae4fc2dc6920976d64bd819938857ce07c00a6751268b658d7610d2c9d",
+          "edits": [
+            {
+              "offset": 2470,
+              "before": "",
+              "after": "  line 1: [xgent/transition-all] .hero { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            },
+            {
+              "offset": 2471,
+              "before": "5 advisory notes. Suppress with --no-advisory.\n",
+              "after": "6 advisory notes. Suppress with --no-advisory.\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stderr"
           ],
           "platform": "win32",
-          "beforeSha256": "ceb9244e02d0c3c5692a9a1e61514439150964ae67bbef05e723ab27879dc2b4",
-          "afterSha256": "08e7360da1d98d9a0ea67f1e981cedabd53ae5456a2a39c71e376e11656cd15e",
+          "beforeSha256": "e10bc9ae4fc2dc6920976d64bd819938857ce07c00a6751268b658d7610d2c9d",
+          "afterSha256": "952dd572c3b69fb8958555c47f399c4bf1ecc5c8f22ada75a53e223b793a3c4a",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72669,29 +73016,29 @@
           ],
           "edits": [
             {
-              "offset": 5,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 1,
+              "before": "<WS>/src/page.html\n",
+              "after": "<WS>\\src\\page.html\n"
             },
             {
-              "offset": 732,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 728,
+              "before": "<WS>/src/styles.css\n",
+              "after": "<WS>\\src\\styles.css\n"
             },
             {
-              "offset": 1033,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 1029,
+              "before": "<WS>/src/inline.html\n",
+              "after": "<WS>\\src\\inline.html\n"
             },
             {
-              "offset": 1602,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 1598,
+              "before": "<WS>/src/page.html\n",
+              "after": "<WS>\\src\\page.html\n"
             },
             {
-              "offset": 2173,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 2169,
+              "before": "<WS>/src/styles.css\n",
+              "after": "<WS>\\src\\styles.css\n"
             }
           ]
         }
@@ -72700,15 +73047,37 @@
     {
       "id": "detect-config-dir-dot",
       "goldenSha256": "cc1146409d829c082d37275ac53f2def500cbc1479a44c1e616f03e75a734f5d",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "5fb2d4c82fd242981b0f656ff6c996d62b11ab862f390ed74db2ec6a2934e858",
+          "afterSha256": "3143453761bedb1c61643fb8ebe3fdd0648f990e91d20d9ba2f2987020a772df",
+          "edits": [
+            {
+              "offset": 4442,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<WS>/src/styles.css\",\n    \"line\": 1,\n    \"snippet\": \".hero { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }\",\n    \"advisory\": true\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "5fb2d4c82fd242981b0f656ff6c996d62b11ab862f390ed74db2ec6a2934e858",
-          "afterSha256": "d4c485b0a2f6ba5052f741896031d7b50dc0c149dc01b95fd27b0f79be669244",
+          "beforeSha256": "3143453761bedb1c61643fb8ebe3fdd0648f990e91d20d9ba2f2987020a772df",
+          "afterSha256": "847bdc0cfbe2f9aebbf39f94b3cfc6b54a24c53b6d702d6bde13738f184aa0a1",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72726,49 +73095,54 @@
           ],
           "edits": [
             {
-              "offset": 353,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 336,
+              "before": "    \"file\": \"<WS>/src/inline.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\inline.html\",\n"
             },
             {
-              "offset": 897,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 880,
+              "before": "    \"file\": \"<WS>/src/inline.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\inline.html\",\n"
             },
             {
-              "offset": 1376,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 1359,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 1805,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 1788,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 2302,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 2285,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 2809,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 2792,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 3303,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 3286,
+              "before": "    \"file\": \"<WS>/src/page.html\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\page.html\",\n"
             },
             {
-              "offset": 3808,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 3791,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             },
             {
-              "offset": 4253,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 4236,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
+            },
+            {
+              "offset": 4840,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             }
           ]
         }
@@ -72871,15 +73245,37 @@
     {
       "id": "detect-config-css-json",
       "goldenSha256": "fc71d261d14632840229c91b353e05adb6745a4335451f56cdc814ba1e2e06bb",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stdout"
+          ],
+          "beforeSha256": "9e27f91990428a478936b7752d4502aee1743bc520b0260e0f18b85bbe6d15a5",
+          "afterSha256": "22a57eb1ac38663700f31f4286e159df92772136f8f9656eb4654a152eb13135",
+          "edits": [
+            {
+              "offset": 949,
+              "before": "",
+              "after": "  },\n  {\n    \"antipattern\": \"xgent/transition-all\",\n    \"name\": \"Transition on all properties\",\n    \"description\": \"transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<WS>/src/styles.css\",\n    \"line\": 1,\n    \"snippet\": \".hero { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }\",\n    \"advisory\": true\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stdout"
           ],
           "platform": "win32",
-          "beforeSha256": "9e27f91990428a478936b7752d4502aee1743bc520b0260e0f18b85bbe6d15a5",
-          "afterSha256": "f0695fe9e8ade980c30f0fc71b15e40e2d86d052114d0443b9e8cda6dbcef050",
+          "beforeSha256": "22a57eb1ac38663700f31f4286e159df92772136f8f9656eb4654a152eb13135",
+          "afterSha256": "d8b460ef97cb3c47564d91fcf1cfcec50a8a9f5c6ae29cff5b8b300a16478ed8",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72897,14 +73293,19 @@
           ],
           "edits": [
             {
-              "offset": 315,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 298,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             },
             {
-              "offset": 760,
-              "before": "/src/",
-              "after": "\\\\src\\\\"
+              "offset": 743,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
+            },
+            {
+              "offset": 1347,
+              "before": "    \"file\": \"<WS>/src/styles.css\",\n",
+              "after": "    \"file\": \"<WS>\\\\src\\\\styles.css\",\n"
             }
           ]
         }
@@ -72913,15 +73314,49 @@
     {
       "id": "detect-config-css-text",
       "goldenSha256": "6b7a170e75d6ddeafba42701943c48578d413704d2363690fdbc6456610720c8",
-      "fields": [],
+      "fields": [
+        {
+          "path": [
+            "stderr"
+          ],
+          "beforeSha256": "3e93afedbe492cab705e4efeb0e5a455e87429d3ed5e24bf1148fd2199484f2a",
+          "afterSha256": "9bdf6af92793152c468921260072bb3971ff80d0fadbe3b1ff9a9ba9fdbc1f17",
+          "edits": [
+            {
+              "offset": 602,
+              "before": "",
+              "after": "  line 1: [xgent/transition-all] .hero { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }\n    → transition: all (or Tailwind transition-all) animates every property that changes, including layout and colors nobody meant to animate, and makes later style changes animate by accident. List the properties that should move.\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            },
+            {
+              "offset": 603,
+              "before": "1 advisory note. Suppress with --no-advisory.\n",
+              "after": "2 advisory notes. Suppress with --no-advisory.\n",
+              "reason": "xgent/transition-all is a new advisory rule in the XGENT rule pack; the native binary now appends its findings (declarations and Tailwind class strings) to this fixed output.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 77
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "platformFields": [
         {
           "path": [
             "stderr"
           ],
           "platform": "win32",
-          "beforeSha256": "3e93afedbe492cab705e4efeb0e5a455e87429d3ed5e24bf1148fd2199484f2a",
-          "afterSha256": "dcf2359e430895dc6c24a78bf3e5490cbbdbd50e4dcedccfb3a166fc3c0d9714",
+          "beforeSha256": "9bdf6af92793152c468921260072bb3971ff80d0fadbe3b1ff9a9ba9fdbc1f17",
+          "afterSha256": "33af7115f7d0249bfc24a0dec6bb2b15e3cd3df53d92b99ff34641db82bbfe3d",
           "reason": "windows-native-path-separator",
           "source": [
             {
@@ -72939,14 +73374,14 @@
           ],
           "edits": [
             {
-              "offset": 5,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 1,
+              "before": "<WS>/src/styles.css\n",
+              "after": "<WS>\\src\\styles.css\n"
             },
             {
-              "offset": 305,
-              "before": "/src/",
-              "after": "\\src\\"
+              "offset": 301,
+              "before": "<WS>/src/styles.css\n",
+              "after": "<WS>\\src\\styles.css\n"
             }
           ]
         }
@@ -73265,6 +73700,33 @@
           ]
         }
       ]
+    },
+    {
+      "id": "detect-dir-quiet-all-fixtures",
+      "goldenSha256": "31086cdf8fcf73df07f587da15fc3a4228a05e13602b89b6899adafe4b4df79a",
+      "fields": [
+        {
+          "path": [
+            "stderr"
+          ],
+          "beforeSha256": "52c0f46975d6f7d1c9aced769aae1b5f1055ffe1c262574f05f1ffa64483e9a6",
+          "afterSha256": "8ddb0df492138dd0282f87592da5270922a6b2e13abfafad9d44df3b452c4264",
+          "edits": [
+            {
+              "offset": 25,
+              "before": "17",
+              "after": "20",
+              "reason": "F-08 correction: the XGENT transition rule now reads CSS declarations only in <style> blocks and style attributes of markup files, so the body-copy example motion.html:149 is no longer a finding while the real transition: all at line 54 stays. The fixed expectation is patched exactly; the golden is not re-recorded.",
+              "source": [
+                {
+                  "file": "crates/rules/src/text.rs",
+                  "line": 296
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "italic": {
@@ -73394,12 +73856,13 @@
       "detect-fixture-text-framework-next-cssinjs",
       "detect-fixture-text-framework-next-modules",
       "detect-fixture-text-framework-next-tailwind",
-      "detect-framework-next-modules-text"
+      "detect-framework-next-modules-text",
+      "detect-fixture-text-framework-vite"
     ],
     "platform": "darwin",
     "profile": "(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))",
     "scope": "native synchronous runStep only; no daemon or other cases",
-    "reason": "static Next.js source fixtures must not discover an unrelated application listener on port 3000",
+    "reason": "static Next.js and Vite source fixtures must not discover an unrelated application listener on ports 3000 or 8080",
     "expected": "unchanged original output bytes, except separately registered public CLI wording",
     "source": [
       {
@@ -73411,7 +73874,7 @@
         "line": 11
       }
     ],
-    "validation": "Exact four-ID allowlist and retained argv are unit-tested; actual nested sandbox replay is separately recorded, never inferred."
+    "validation": "Exact five-ID allowlist and retained argv are unit-tested; actual nested sandbox replay is separately recorded, never inferred."
   },
   "platformPreconditions": {
     "policy": "Each entry establishes a POSIX fixture fact on another platform or reports a listed platform skip; outputs and goldens are not rewritten.",
@@ -73643,7 +74106,7 @@
     },
     {
       "file": "crates/cli/src/main.rs",
-      "sha256": "7425571cd348c66c47862c41e6a44e2fbed6be991d45ee5079d93d05128a5f5a"
+      "sha256": "e85d7bf12bb949d196daaadb157a6e15c3ab5a2863013ab1535c8081a7bff76a"
     },
     {
       "file": "crates/common/src/jsp.rs",
@@ -73723,7 +74186,7 @@
     },
     {
       "file": "crates/detect/src/cli.rs",
-      "sha256": "b9a0cb4da9b39bc551d2dceb90fcb3b4c4755a803514b71e4a8a9b9d53627831"
+      "sha256": "41172f1804f7365b1d7f18337b09423db18a207a1ba5c8b0a48926bf4b15d7fd"
     },
     {
       "file": "crates/detect/src/design_system.rs",
@@ -73747,7 +74210,7 @@
     },
     {
       "file": "crates/hook/src/hook_lib.rs",
-      "sha256": "4788fbd7b325033274f751af6ce4d9ba38de02e24ff8c3663550db9c7285cd80"
+      "sha256": "8ea3e491ee59d6f8894f177996be3a01642f11986d7a4d933966d6640f59de91"
     },
     {
       "file": "crates/live/src/copy_edit_agent.rs",
@@ -73791,7 +74254,7 @@
     },
     {
       "file": "crates/skills/src/commands.rs",
-      "sha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948"
+      "sha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843"
     },
     {
       "file": "tests/oracle/adapters/critique-clock.mjs",

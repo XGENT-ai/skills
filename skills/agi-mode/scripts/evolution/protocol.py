@@ -1,7 +1,7 @@
 """Validate and freeze experiment inputs without importing a remote runtime."""
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 import errno
 import hashlib
@@ -40,7 +40,11 @@ def sha256(content):
     return hashlib.sha256(content).hexdigest()
 
 
-def load_json(path):
+def task_contract(case):
+    return ("\n\n".join(case["observable_requirements"]) + "\n").encode("utf-8")
+
+
+def parse_json(content):
     def pairs(items):
         result = {}
         for key, value in items:
@@ -53,10 +57,14 @@ def load_json(path):
         raise ProtocolError(f"nonfinite JSON number: {value}")
 
     return json.loads(
-        Path(path).read_text(encoding="utf-8"),
+        content.decode("utf-8") if isinstance(content, bytes) else content,
         object_pairs_hook=pairs,
         parse_constant=invalid_constant,
     )
+
+
+def load_json(path):
+    return parse_json(Path(path).read_text(encoding="utf-8"))
 
 
 def fields(value, label, required, optional=()):
@@ -366,6 +374,7 @@ def validate_target(spec, base):
             "allow_apply",
             "allow_unverified",
         },
+        {"evaluation_root", "allow_typesafe_auxiliary"} if spec["schema_version"] == 2 else (),
     )
     authority["repo"] = str(directory(authority["repo"], base))
     if authority["repo"] != target["repo"]:
@@ -376,11 +385,15 @@ def validate_target(spec, base):
         raise ProtocolError("write authority must enumerate target files exactly")
     for name in ["allow_remote", "allow_apply", "allow_unverified"]:
         boolean(authority[name], "authority." + name)
+    if "allow_typesafe_auxiliary" in authority:
+        boolean(authority["allow_typesafe_auxiliary"], "authority.allow_typesafe_auxiliary")
     if not authority["allow_remote"]:
         raise ProtocolError("remote export and execution have not been authorized")
-    source = fields(spec["source"], "source", {"paths", "new_paths"})
+    source = fields(spec["source"], "source", {"paths", "new_paths"}, {"fixed_skill_roots"})
     path_list(source["paths"], "source.paths")
     path_list(source["new_paths"], "source.new_paths", empty=True)
+    if "fixed_skill_roots" in source:
+        path_list(source["fixed_skill_roots"], "source.fixed_skill_roots", empty=True)
     if any(
         not covered(name, authority["export_paths"])
         for name in source["paths"] + source["new_paths"]
@@ -491,12 +504,13 @@ def validate_measurement(spec):
             "recovery_window_sec",
             "max_retries",
         },
+        {"max_auxiliary_calls"} if spec["schema_version"] == 2 else (),
     )
     for key, value in budget.items():
         number(
             value,
             "budget." + key,
-            minimum=0 if key == "max_retries" else 1,
+            minimum=0 if key in {"max_retries", "max_auxiliary_calls"} else 1,
             integer=key.startswith("max_"),
         )
     if budget["max_parallel_trials"] > budget["max_trials"]:
@@ -521,7 +535,8 @@ def validate_measurement(spec):
             "confirmation",
             "weights",
         },
-        {"quality_loss_limit", "minimum_cost_effect"},
+        {"quality_loss_limit", "minimum_cost_effect"}
+        | ({"minimum_effect_reason", "search_policy"} if spec["schema_version"] == 2 else set()),
     )
     choice(
         measurement["objective"],
@@ -529,8 +544,24 @@ def validate_measurement(spec):
         "measurement.objective",
     )
     choice(
-        measurement["primary_metric"], {"task_success"}, "measurement.primary_metric"
+        measurement["primary_metric"],
+        {"task_quality"} if spec["schema_version"] == 2 else {"task_success"},
+        "measurement.primary_metric",
     )
+    if spec["schema_version"] == 2:
+        if measurement["objective"] != "quality":
+            raise ProtocolError("v2 supports the frozen quality objective only")
+        text(measurement.get("minimum_effect_reason"), "minimum_effect_reason")
+        if spec["runtime"]["model"] != "gpt-6.1-sol" or spec["runtime"]["effort"] != "high":
+            raise ProtocolError("v2 quality experiments require gpt-6.1-sol/high")
+        if "search_policy" in measurement:
+            text(measurement["search_policy"], "measurement.search_policy")
+            choice(measurement["search_policy"], {"strict", "bounded_exploration_v1"}, "measurement.search_policy")
+        if measurement.get("search_policy") == "bounded_exploration_v1":
+            if spec["mode"] != "search" or budget["max_candidates"] != 1:
+                raise ProtocolError("bounded exploration requires search with exactly one candidate limit")
+            if spec["authority"]["allow_apply"] is not False or spec["authority"]["write_paths"]:
+                raise ProtocolError("bounded exploration cannot have apply or write authority")
     number(measurement["minimum_effect"], "minimum_effect", maximum=1)
     number(
         measurement["confidence_level"], "confidence_level", minimum=0.5, maximum=0.999
@@ -656,7 +687,10 @@ def task_files(spec, base):
         ):
             raise ProtocolError("task image must be pinned by digest")
         case.setdefault("platform", "linux/amd64")
-        choice(case["platform"], {"linux/amd64"}, "case.platform")
+        platforms = {"linux/amd64"}
+        if spec["schema_version"] == 2 and source["kind"] == "repo":
+            platforms.add("linux/arm64")
+        choice(case["platform"], platforms, "case.platform")
         for item in rows(case["observable_requirements"], "observable_requirements"):
             text(item, "observable requirement")
         try:
@@ -738,12 +772,16 @@ def task_files(spec, base):
             mapping[key] = case["split"]
         case_files[case["case_id"]] = views
     splits = {case["split"] for case in spec["cases"]}
+    bounded_exploration = (spec["schema_version"] == 2 and spec["mode"] == "search"
+        and spec["measurement"].get("search_policy") == "bounded_exploration_v1")
     if "search" not in splits or (
-        spec["mode"] != "smoke" and "confirmation" not in splits
+        spec["mode"] not in {"smoke", "calibrate"} and not bounded_exploration and "confirmation" not in splits
     ):
         raise ProtocolError(
             "mode requires search and, for comparisons, heldout confirmation tasks"
         )
+    if spec["mode"] == "calibrate" and splits != {"search"}:
+        raise ProtocolError("calibrate does not expose confirmation or validation tasks")
     weights = spec["measurement"]["weights"]
     if not isinstance(weights, dict) or set(weights) != ids:
         raise ProtocolError("measurement.weights must name every case exactly once")
@@ -875,7 +913,7 @@ def condition_bundles(spec, baseline):
         raise ProtocolError(
             "baseline_condition must reproduce the actual initial bytes"
         )
-    if spec["mode"] != "smoke":
+    if spec["mode"] not in {"smoke", "calibrate"}:
         selected = spec.get("candidate_condition")
         if selected is not None:
             text(selected, "candidate_condition")
@@ -890,7 +928,7 @@ def condition_bundles(spec, baseline):
     return bundles, differences
 
 
-def candidate_from_patch(job, parent, proposal, patch):
+def candidate_from_patch(job, parent, proposal, patch, *, search_records=None):
     fields(
         proposal,
         "proposal",
@@ -900,12 +938,47 @@ def candidate_from_patch(job, parent, proposal, patch):
             "expected_effect",
             "counterexample",
             "changed_paths",
-        },
+        } | ({"mechanism"} if job.spec["schema_version"] == 2 else set()),
     )
     if proposal["parent_hash"] != bundle_hash(parent):
         raise ProtocolError("proposal does not name the frozen parent")
     for key in ["hypothesis", "expected_effect", "counterexample"]:
         text(proposal[key], "proposal." + key)
+    if job.spec["schema_version"] == 2:
+        from quality import continuous_item
+
+        mechanism = fields(proposal["mechanism"], "one mechanism", {
+            "criterion_id", "patch_sha256", "cause", "expected_criteria", "regression_risk"})
+        for key in ("criterion_id", "cause", "regression_risk"):
+            text(mechanism[key], "mechanism." + key)
+        fingerprint(mechanism["patch_sha256"], "mechanism artifact")
+        rubrics = {c["case_id"]: parse_json(job.evaluation_files[job.spec["evaluation"]["rubrics"][c["case_id"]]]["content"])
+                   for c in job.spec["cases"] if c["split"] == "search"}
+        known = {c["criterion_id"] for r in rubrics.values() for c in r["criteria"]}
+        expected = rows(mechanism["expected_criteria"], "expected quality criteria")
+        if any(not isinstance(name, str) or name not in known for name in expected) or len(set(expected)) != len(expected) or mechanism["criterion_id"] not in expected:
+            raise ProtocolError("mechanism must target the observed public quality criterion")
+        supported = False
+        for record in search_records or []:
+            if not (record.get("schema_version") == 2 and record.get("purpose") == "task"
+                    and record.get("split") == "search" and record.get("status") in {"ok", "behavior_failure"}
+                    and record.get("candidate_hash") == proposal["parent_hash"]
+                    and record.get("patch_sha256") == mechanism["patch_sha256"]
+                    and type(record.get("task_success")) is int and record["task_success"] in (0, 1)
+                    and record.get("quality_status") == "valid"):
+                continue
+            criterion = next((c for c in rubrics.get(record.get("case_id"), {}).get("criteria", [])
+                              if c["criterion_id"] == mechanism["criterion_id"]), None)
+            component = record.get("quality_components", {}).get(mechanism["criterion_id"], {})
+            if (criterion is not None
+                    and (not criterion["gate"] or mechanism["criterion_id"] in record.get("failed_gates", []))
+                    and component.get("status") == "valid" and type(component.get("level")) in (int, float)
+                    and (0 <= component["level"] < 1 if continuous_item(rubrics[record["case_id"]], criterion)
+                         else component["level"] in (0, 0.5))):
+                supported = True
+                break
+        if not supported:
+            raise ProtocolError("mechanism lacks a measured current-parent search weakness")
     declared = path_list(proposal["changed_paths"], "proposal.changed_paths")
     allowed = job.spec["target"]["allowed_paths"]
     if any(name not in allowed for name in declared):
@@ -993,13 +1066,16 @@ class PreparedJob:
     differences: dict
     minimum_calls: int
     confirmation_reserve: int
+    evaluation_files: dict = field(default_factory=dict)
+    worker_files: dict = field(default_factory=dict)
+    call_plan: dict = field(default_factory=dict)
 
     @property
     def bundle_hashes(self):
         return {name: bundle_hash(files) for name, files in self.bundles.items()}
 
     def inputs(self):
-        return {
+        result = {
             "bundles": {name: manifest(files) for name, files in self.bundles.items()},
             "cases": {
                 name: {view: manifest(files) for view, files in views.items()}
@@ -1008,6 +1084,9 @@ class PreparedJob:
             "method": manifest(self.method_files),
             "deleted_paths": self.deleted_paths,
         }
+        if self.spec["schema_version"] == 2:
+            result.update(evaluation=manifest(self.evaluation_files), workers=manifest(self.worker_files))
+        return result
 
     @property
     def protocol_hash(self):
@@ -1015,7 +1094,7 @@ class PreparedJob:
 
     def summary(self):
         return {
-            "schema_version": 1,
+            "schema_version": self.spec["schema_version"],
             "protocol_id": self.spec["protocol_id"],
             "protocol_hash": self.protocol_hash,
             "mode": self.spec["mode"],
@@ -1031,7 +1110,8 @@ class PreparedJob:
             )
             if self.spec["mode"] == "smoke"
             else self.spec["budget"]["max_trials"],
-            "effect_eligible": self.spec["mode"] != "smoke",
+            "effect_eligible": self.spec["mode"] not in {"smoke", "calibrate"},
+            **({"call_plan": self.call_plan} if self.spec["schema_version"] == 2 else {}),
         }
 
     def optimizer_view(self):
@@ -1056,6 +1136,135 @@ class PreparedJob:
         return {"schema_version": 1, "cases": cases}
 
 
+def evaluation_files(spec, base):
+    from quality import CONTINUOUS_SCORING, validate_calibration, validate_rubric, validate_auxiliary_rubric
+
+    evaluation = fields(spec.get("evaluation"), "evaluation", {
+        "root", "paths", "rubrics", "calibration",
+    }, {"auxiliary", "scoring"})
+    if "scoring" in evaluation:
+        choice(evaluation["scoring"], {CONTINUOUS_SCORING}, "evaluation.scoring")
+    root = directory(evaluation["root"], base)
+    authority_root = directory(spec["authority"].get("evaluation_root"), base)
+    if root != authority_root:
+        raise ProtocolError("evaluation root is outside explicit authority")
+    evaluation["root"] = spec["authority"]["evaluation_root"] = str(root)
+    files = {name: read_file(root, name) for name in path_list(evaluation["paths"], "evaluation.paths")}
+
+    def document(name):
+        relative_path(name)
+        if name not in files:
+            raise ProtocolError("evaluation file is outside its allowlist")
+        return parse_json(files[name]["content"])
+
+    ids = {case["case_id"] for case in spec["cases"]}
+    if not isinstance(evaluation["rubrics"], dict) or evaluation["rubrics"].keys() != ids:
+        raise ProtocolError("evaluation.rubrics must name every case exactly once")
+    rubrics = {case_id: validate_rubric(document(name), case_id=case_id)
+               for case_id, name in evaluation["rubrics"].items()}
+    scoring = {r.get("scoring") for r in rubrics.values()}
+    if len(scoring) != 1 or ("scoring" in evaluation and evaluation["scoring"] not in scoring):
+        raise ProtocolError("quality rubrics use different scoring contracts")
+    status_formats = {r.get("derive_assessment_status", False) for r in rubrics.values()
+                      if any(c["checker_kind"] == "judge" for c in r["criteria"])}
+    if len(status_formats) > 1:
+        raise ProtocolError("quality rubrics use different assessment status formats")
+    if next(iter(scoring)) is not None:
+        evaluation["scoring"] = next(iter(scoring))
+    for case in spec["cases"]:
+        public = {name: read_file(Path(case["task_path"]), name)["content"].decode("utf-8")
+                  for name in case["public_paths"]}
+        if evaluation.get("scoring") == CONTINUOUS_SCORING:
+            if "task-contract.md" in public:
+                raise ProtocolError("task-contract.md is reserved for declared observable requirements")
+            public["task-contract.md"] = task_contract(case).decode("utf-8")
+        for criterion in rubrics[case["case_id"]]["criteria"]:
+            name, separator, quote = criterion["public_requirement_ref"].partition(": ")
+            if not separator or name not in public or not quote or quote not in public[name]:
+                raise ProtocolError("quality criterion must reference an actual public requirement")
+    calibration = validate_calibration(document(evaluation["calibration"]), files, rubrics)
+    if any(next(c for c in spec["cases"] if c["case_id"] == a["case_id"])["split"] != "search"
+           for a in calibration["artifacts"]):
+        raise ProtocolError("calibration cannot consume heldout tasks")
+    workers = {name: read_file(Path(__file__).parent, name) for name in ("quality.py", "remote.py")}
+    if evaluation.get("scoring") == CONTINUOUS_SCORING:
+        workers.update({name: read_file(Path(__file__).parent, name) for name in ("protocol.py", "evolution.py", "compare.py")})
+    auxiliary = evaluation.get("auxiliary")
+    if auxiliary is not None:
+        fields(auxiliary, "evaluation.auxiliary", {
+            "provider", "model", "criterion_ids", "rubric_path", "calibration_path", "authentication",
+        }, {"long_context"})
+        if "long_context" in auxiliary:
+            boolean(auxiliary["long_context"], "auxiliary.long_context")
+        choice(auxiliary["provider"], {"typesafe"}, "auxiliary provider")
+        choice(auxiliary["model"], {"jev-1.14.0"}, "auxiliary model")
+        authentication = fields(auxiliary["authentication"], "auxiliary authentication", {"source", "name"})
+        if authentication != {"source": "controller_env", "name": "TYPESAFE_API_KEY"}:
+            raise ProtocolError("auxiliary credential must come from TYPESAFE_API_KEY in the controller environment")
+        if spec["authority"].get("allow_typesafe_auxiliary") is not True:
+            raise ProtocolError("TypeSafe evidence export is not explicitly authorized")
+        if "max_auxiliary_calls" not in spec["budget"]:
+            raise ProtocolError("auxiliary scoring requires a finite sub-budget")
+        if spec["budget"]["max_auxiliary_calls"] > spec["budget"]["max_trials"]:
+            raise ProtocolError("auxiliary sub-budget exceeds the total call budget")
+        validate_auxiliary_rubric(document(auxiliary["rubric_path"]), rubrics, auxiliary["criterion_ids"])
+        auxiliary_calibration = validate_calibration(document(auxiliary["calibration_path"]), files, rubrics,
+                                                     auxiliary=True, criterion_ids=auxiliary["criterion_ids"])
+        artifacts = {a["artifact_id"]: a for a in calibration["artifacts"]}
+        for artifact in auxiliary_calibration["artifacts"]:
+            if next(c for c in spec["cases"] if c["case_id"] == artifact["case_id"])["split"] != "search":
+                raise ProtocolError("auxiliary calibration cannot consume heldout tasks")
+            prior = artifacts.get(artifact["artifact_id"])
+            if prior is not None and prior != artifact:
+                raise ProtocolError("calibration artifact id aliases different frozen inputs")
+            if any(artifact["expected_levels"][name] not in (0, 0.5, 1)
+                   for name in auxiliary["criterion_ids"] if name in artifact["expected_levels"]):
+                raise ProtocolError("auxiliary calibration requires its own three semantic reference levels")
+        workers["typesafe_worker.py"] = read_file(Path(__file__).parent, "typesafe_worker.py")
+    elif spec["budget"].get("max_auxiliary_calls", 0):
+        raise ProtocolError("auxiliary budget requires auxiliary configuration")
+    return files, workers, rubrics, calibration
+
+
+def quality_case_calls(criteria):
+    return 2 + sum(c["checker_kind"] == "regression_replay" for c in criteria) + 2 * any(
+        c["checker_kind"] == "judge" for c in criteria)
+
+
+def quality_call_plan(spec, files, rubrics, calibration, bundles):
+    def per_case(case):
+        criteria = rubrics[case["case_id"]]["criteria"]
+        return quality_case_calls(criteria)
+
+    repeats = spec["measurement"]["repeats"]
+    search = sum(per_case(c) for c in spec["cases"] if c["split"] == "search") * repeats
+    validation = sum(per_case(c) for c in spec["cases"] if c["split"] == "validation") * repeats
+    confirmation = 2 * sum(per_case(c) for c in spec["cases"] if c["split"] == "confirmation") * repeats
+    calibration_calls = 1 + 2 * len(spec["cases"])
+    for artifact in calibration["artifacts"]:
+        calibration_calls += per_case({"case_id": artifact["case_id"]}) - 1
+    auxiliary = spec["evaluation"].get("auxiliary")
+    if auxiliary is not None:
+        primary_ids = {a["artifact_id"] for a in calibration["artifacts"]}
+        auxiliary_calibration = parse_json(files[auxiliary["calibration_path"]]["content"])
+        for artifact in auxiliary_calibration["artifacts"]:
+            if artifact["artifact_id"] not in primary_ids:
+                criteria = rubrics[artifact["case_id"]]["criteria"]
+                calibration_calls += 1 + sum(c["checker_kind"] == "regression_replay" for c in criteria)
+    plan = {"runtime_and_quality_calibration": calibration_calls, "baseline_aa": 2 * search,
+            "initial_conditions": 0 if spec["mode"] == "calibrate" else len(bundles) * (search + validation),
+            "optimizer_and_policy": 2 * spec["budget"]["max_candidates"] if spec["mode"] == "search" else 1 if spec["mode"] == "compare" else 0,
+            "candidate_pairs": 2 * (search + validation) * spec["budget"]["max_candidates"] if spec["mode"] == "search" else 0,
+            "confirmation_reserve": confirmation,
+            "auxiliary_maximum": spec["budget"].get("max_auxiliary_calls", 0)}
+    planned = sum(plan.values())
+    optional_rounds = max(0, spec["budget"]["max_candidates"] - 1) if spec["mode"] == "search" else 0
+    plan["minimum_calls"] = planned - optional_rounds * (2 + 2 * (search + validation))
+    plan["finite_retry_allowance"] = (planned - plan["auxiliary_maximum"]) * spec["budget"]["max_retries"]
+    plan["maximum_planned_calls"] = planned + plan["finite_retry_allowance"]
+    return plan
+
+
 def prepare(path):
     path = Path(path).resolve(strict=True)
     spec = load_json(path)
@@ -1078,18 +1287,23 @@ def prepare(path):
             "conditions",
             "baseline_condition",
         },
-        {"optimizer", "candidate_condition", "attribution"},
+        {"optimizer", "candidate_condition", "attribution", "evaluation"},
     )
-    if type(spec["schema_version"]) is not int or spec["schema_version"] != 1:
+    if type(spec["schema_version"]) is not int or spec["schema_version"] not in {1, 2}:
         raise ProtocolError("unsupported schema_version")
     text(spec["protocol_id"], "protocol_id")
     text(spec["question"], "question")
-    choice(spec["mode"], {"smoke", "compare", "search"}, "mode")
+    choice(spec["mode"], {"calibrate", "compare", "search"} if spec["schema_version"] == 2 else {"smoke", "compare", "search"}, "mode")
+    if spec["schema_version"] == 1 and "evaluation" in spec:
+        raise ProtocolError("quality evaluation requires schema_version=2")
     validate_target(spec, path.parent)
     validate_runtime(spec)
     validate_measurement(spec)
     baseline, deleted = repository_files(spec)
     cases = task_files(spec, path.parent)
+    evaluation, workers, rubrics, calibration = {}, {}, {}, None
+    if spec["schema_version"] == 2:
+        evaluation, workers, rubrics, calibration = evaluation_files(spec, path.parent)
     private_files = set()
     for case in spec["cases"]:
         root = Path(case["task_path"])
@@ -1102,6 +1316,23 @@ def prepare(path):
             raise ProtocolError(
                 "repository export contains private grading or oracle material"
             )
+    fixed_roots = spec["source"].get("fixed_skill_roots", [])
+    target_roots = {str(PurePosixPath(path).parent) for path in spec["target"]["surfaces"]["skill"]
+                    if PurePosixPath(path).name == "SKILL.md"}
+    skill_names = {skill_name(baseline[path]["content"]) for path in spec["target"]["surfaces"]["skill"]
+                   if PurePosixPath(path).name == "SKILL.md" and path in baseline}
+    for root in fixed_roots:
+        descriptor = root + "/SKILL.md"
+        if descriptor not in baseline:
+            raise ProtocolError("fixed skill descriptor must be in the source export")
+        if any(covered(root, [target]) or covered(target, [root]) for target in target_roots) or any(
+            covered(path, [root]) for path in spec["target"]["allowed_paths"]
+        ):
+            raise ProtocolError("fixed skill cannot overlap a candidate surface")
+        name = skill_name(baseline[descriptor]["content"])
+        if name is None or name in skill_names:
+            raise ProtocolError("fixed skill identity is missing or duplicated")
+        skill_names.add(name)
     bundles, differences = condition_bundles(spec, baseline)
     method = {}
     if spec["mode"] == "search":
@@ -1130,6 +1361,8 @@ def prepare(path):
         optimizer["method_path"] = str(method_path.absolute())
         if method["method.md"]["sha256"] != optimizer["method_sha256"]:
             raise ProtocolError("optimizer method hash mismatch")
+        if spec["schema_version"] == 2 and (optimizer["model"], optimizer["effort"]) != ("gpt-6.1-sol", "high"):
+            raise ProtocolError("v2 optimizer requires gpt-6.1-sol/high")
     elif "optimizer" in spec:
         raise ProtocolError("optimizer is only valid in search mode")
     if "attribution" in spec:
@@ -1171,12 +1404,17 @@ def prepare(path):
             minimum += 2 + 4 * (search_count + validation_count) * repeats
         else:
             minimum += 1
+    call_plan = {}
+    if spec["schema_version"] == 2:
+        call_plan = quality_call_plan(spec, evaluation, rubrics, calibration, bundles)
+        minimum, reserve = call_plan["minimum_calls"], call_plan["confirmation_reserve"]
     if minimum > spec["budget"]["max_trials"]:
         raise ProtocolError(
             f"budget cannot fund calibration, baseline and final confirmation: requires {minimum}"
         )
     return PreparedJob(
-        spec, bundles, cases, method, deleted, differences, minimum, reserve
+        spec, bundles, cases, method, deleted, differences, minimum, reserve,
+        evaluation, workers, call_plan,
     )
 
 

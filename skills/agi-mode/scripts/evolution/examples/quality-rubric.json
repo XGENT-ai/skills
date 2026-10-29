@@ -1,0 +1,133 @@
+{
+  "rubric_id": "task-specific-continuous-quality",
+  "version": "1",
+  "case_id": "replay-case",
+  "scoring": "continuous_100_v1",
+  "derive_assessment_status": true,
+  "criteria": [
+    {
+      "criterion_id": "coverage",
+      "dimension": "requirement_coverage",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "judge",
+      "weight": 0.3,
+      "gate": false,
+      "context_paths": [
+        "instruction.md",
+        "patch.diff",
+        "repo/<RELEVANT_IMPLEMENTATION_FILE>",
+        "repo/<RELEVANT_TEST_FILE>"
+      ],
+      "anchors": {
+        "0": "The obligation is absent or contradicted. Map the public requirements and applicable scenarios to the delivered implementation; extra features do not compensate for omissions.",
+        "25": "Only isolated portions are met; the main obligation is missing. Map the public requirements and applicable scenarios to the delivered implementation; extra features do not compensate for omissions.",
+        "50": "The obligation is partly met with an important remaining gap. Map the public requirements and applicable scenarios to the delivered implementation; extra features do not compensate for omissions.",
+        "75": "The main obligation is met with localized remaining gaps. Map the public requirements and applicable scenarios to the delivered implementation; extra features do not compensate for omissions.",
+        "100": "All declared conditions are met with positive evidence and no deductions. Map the public requirements and applicable scenarios to the delivered implementation; extra features do not compensate for omissions."
+      }
+    },
+    {
+      "criterion_id": "behavior",
+      "dimension": "boundary_completeness",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "judge",
+      "weight": 0.3,
+      "gate": false,
+      "context_paths": [
+        "instruction.md",
+        "patch.diff",
+        "repo/<RELEVANT_IMPLEMENTATION_FILE>",
+        "repo/<RELEVANT_TEST_FILE>"
+      ],
+      "anchors": {
+        "0": "The obligation is absent or contradicted. Check normal, boundary, error and state behavior using complete source and available execution evidence; do not claim unperformed checks.",
+        "25": "Only isolated portions are met; the main obligation is missing. Check normal, boundary, error and state behavior using complete source and available execution evidence; do not claim unperformed checks.",
+        "50": "The obligation is partly met with an important remaining gap. Check normal, boundary, error and state behavior using complete source and available execution evidence; do not claim unperformed checks.",
+        "75": "The main obligation is met with localized remaining gaps. Check normal, boundary, error and state behavior using complete source and available execution evidence; do not claim unperformed checks.",
+        "100": "All declared conditions are met with positive evidence and no deductions. Check normal, boundary, error and state behavior using complete source and available execution evidence; do not claim unperformed checks."
+      }
+    },
+    {
+      "criterion_id": "protection",
+      "dimension": "regression_protection",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "judge",
+      "weight": 0.2,
+      "gate": false,
+      "context_paths": [
+        "instruction.md",
+        "patch.diff",
+        "repo/<RELEVANT_IMPLEMENTATION_FILE>",
+        "repo/<RELEVANT_TEST_FILE>"
+      ],
+      "anchors": {
+        "0": "The obligation is absent or contradicted. Check whether changed assertions protect the defect and meaningful adjacent behavior. Separate source reasoning from observed counterfactual execution; do not reward test counts.",
+        "25": "Only isolated portions are met; the main obligation is missing. Check whether changed assertions protect the defect and meaningful adjacent behavior. Separate source reasoning from observed counterfactual execution; do not reward test counts.",
+        "50": "The obligation is partly met with an important remaining gap. Check whether changed assertions protect the defect and meaningful adjacent behavior. Separate source reasoning from observed counterfactual execution; do not reward test counts.",
+        "75": "The main obligation is met with localized remaining gaps. Check whether changed assertions protect the defect and meaningful adjacent behavior. Separate source reasoning from observed counterfactual execution; do not reward test counts.",
+        "100": "All declared conditions are met with positive evidence and no deductions. Check whether changed assertions protect the defect and meaningful adjacent behavior. Separate source reasoning from observed counterfactual execution; do not reward test counts."
+      }
+    },
+    {
+      "criterion_id": "scope",
+      "dimension": "change_scope",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "judge",
+      "weight": 0.1,
+      "gate": false,
+      "context_paths": [
+        "instruction.md",
+        "patch.diff",
+        "repo/<RELEVANT_IMPLEMENTATION_FILE>",
+        "repo/<RELEVANT_TEST_FILE>"
+      ],
+      "anchors": {
+        "0": "The obligation is absent or contradicted. Check whether production edits serve the request and preserve applicable interfaces and compatibility; do not score by line count.",
+        "25": "Only isolated portions are met; the main obligation is missing. Check whether production edits serve the request and preserve applicable interfaces and compatibility; do not score by line count.",
+        "50": "The obligation is partly met with an important remaining gap. Check whether production edits serve the request and preserve applicable interfaces and compatibility; do not score by line count.",
+        "75": "The main obligation is met with localized remaining gaps. Check whether production edits serve the request and preserve applicable interfaces and compatibility; do not score by line count.",
+        "100": "All declared conditions are met with positive evidence and no deductions. Check whether production edits serve the request and preserve applicable interfaces and compatibility; do not score by line count."
+      }
+    },
+    {
+      "criterion_id": "maintenance",
+      "dimension": "maintainability",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "judge",
+      "weight": 0.1,
+      "gate": false,
+      "context_paths": [
+        "instruction.md",
+        "patch.diff",
+        "repo/<RELEVANT_IMPLEMENTATION_FILE>",
+        "repo/<RELEVANT_TEST_FILE>"
+      ],
+      "anchors": {
+        "0": "The obligation is absent or contradicted. Identify concrete unnecessary duplication, coupling or hidden invariants and their consequences; do not reward personal style or new frameworks.",
+        "25": "Only isolated portions are met; the main obligation is missing. Identify concrete unnecessary duplication, coupling or hidden invariants and their consequences; do not reward personal style or new frameworks.",
+        "50": "The obligation is partly met with an important remaining gap. Identify concrete unnecessary duplication, coupling or hidden invariants and their consequences; do not reward personal style or new frameworks.",
+        "75": "The main obligation is met with localized remaining gaps. Identify concrete unnecessary duplication, coupling or hidden invariants and their consequences; do not reward personal style or new frameworks.",
+        "100": "All declared conditions are met with positive evidence and no deductions. Identify concrete unnecessary duplication, coupling or hidden invariants and their consequences; do not reward personal style or new frameworks."
+      }
+    },
+    {
+      "criterion_id": "correctness",
+      "dimension": "correctness",
+      "public_requirement_ref": "instruction.md: <EXACT_PUBLIC_REQUIREMENT_FRAGMENT>",
+      "checker_kind": "existing_verifier",
+      "checker": {
+        "name": "task_contract"
+      },
+      "weight": 0,
+      "gate": true,
+      "minimum": 1,
+      "context_paths": [
+        "verifier.txt"
+      ],
+      "anchors": {
+        "0": "The original fixed verifier fails.",
+        "1": "The original fixed verifier passes."
+      }
+    }
+  ]
+}

@@ -6,7 +6,7 @@
     "engineCommit": "86be0f02dcdaaeb3f9b6780711dbdc03a14ce222",
     "skillVersion": "4.5.0",
     "engineVersion": "0.1.11",
-    "importManifestSha256": "3a0343c5b9ee14270fbc9cf33cf2d0d83661b9da9b8c033538e139fdfafe95d0",
+    "importManifestSha256": "733c18bfcd220fc7cfe21238598fd28cd2da74c2245fcedfd2aae80af6a1a5c6",
     "importedFileCount": 2091,
     "sourceCheckout": "local/phoenix-ui/upstream",
     "e12Checkout": "local/phoenix-ui/engine-0.1.12"
@@ -124,7 +124,7 @@
     "tests/fixtures/concept-catalog/composition-reviews.json": "f054a3feddfb459bf10fcca0245d459e8f8c09559d418dad8bb0fc454a7aa3dd",
     "tests/fixtures/concept-catalog/concept-ingredients.json": "ca1b0d092fa9c19005a16e7d2c6c53fd50cf83aebded6d19bc0d1b63968de1bb",
     "tests/fixtures/concept-catalog/concept-reviews.json": "2e44f86e0584cb50ccc4d001f8e20a44db2cca23883c9038e268fb5100ecc39d",
-    "tests/oracle/DELTAS.md": "d40482976c5a753cd246c02b864a2b487910d0256aae8226d80d546a701c76cd",
+    "tests/oracle/DELTAS.md": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f",
     "tests/oracle/run.mjs": "0be2ec5de3f07b78870ebe318b826b55be0ff5dcb898c6d81070e9dba699d97e"
   },
   "cli": {
@@ -144,7 +144,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:35"
+        "currentSource": "crates/cli/src/main.rs:39"
       },
       {
         "names": [
@@ -161,7 +161,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:39"
+        "currentSource": "crates/cli/src/main.rs:43"
       },
       {
         "names": [
@@ -177,7 +177,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:48"
+        "currentSource": "crates/cli/src/main.rs:52"
       },
       {
         "names": [
@@ -193,7 +193,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:52"
+        "currentSource": "crates/cli/src/main.rs:56"
       },
       {
         "names": [
@@ -210,7 +210,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:53"
+        "currentSource": "crates/cli/src/main.rs:57"
       },
       {
         "names": [
@@ -226,7 +226,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:55"
+        "currentSource": "crates/cli/src/main.rs:59"
       },
       {
         "names": [
@@ -242,7 +242,7 @@
           "status": "未验证",
           "method": "review crate与CLI回归；B集成runtime、真实UI评审循环及CI另行验收"
         },
-        "currentSource": "crates/cli/src/main.rs:64"
+        "currentSource": "crates/cli/src/main.rs:68"
       },
       {
         "names": [
@@ -258,7 +258,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:73"
+        "currentSource": "crates/cli/src/main.rs:77"
       },
       {
         "names": [
@@ -274,7 +274,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:69"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -290,7 +290,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:73"
+        "currentSource": "crates/cli/src/main.rs:77"
       },
       {
         "names": [
@@ -306,7 +306,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:69"
+        "currentSource": "crates/cli/src/main.rs:73"
       },
       {
         "names": [
@@ -322,7 +322,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:73"
+        "currentSource": "crates/cli/src/main.rs:77"
       },
       {
         "names": [
@@ -338,7 +338,7 @@
           "status": "未验证",
           "method": "install crate迁移/回滚用例 + Node两阶段tarball安装 + 真实旧包项目迁移/回滚"
         },
-        "currentSource": "crates/cli/src/main.rs:72"
+        "currentSource": "crates/cli/src/main.rs:76"
       },
       {
         "names": [
@@ -354,7 +354,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:75"
+        "currentSource": "crates/cli/src/main.rs:79"
       },
       {
         "names": [
@@ -370,7 +370,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:76"
+        "currentSource": "crates/cli/src/main.rs:80"
       },
       {
         "names": [
@@ -386,7 +386,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:77"
+        "currentSource": "crates/cli/src/main.rs:81"
       },
       {
         "names": [
@@ -402,7 +402,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:78"
+        "currentSource": "crates/cli/src/main.rs:82"
       },
       {
         "names": [
@@ -418,7 +418,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:79"
+        "currentSource": "crates/cli/src/main.rs:83"
       },
       {
         "names": [
@@ -434,7 +434,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:80"
+        "currentSource": "crates/cli/src/main.rs:84"
       },
       {
         "names": [
@@ -450,7 +450,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:81"
+        "currentSource": "crates/cli/src/main.rs:85"
       },
       {
         "names": [
@@ -467,7 +467,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:82"
+        "currentSource": "crates/cli/src/main.rs:86"
       },
       {
         "names": [
@@ -483,7 +483,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:83"
+        "currentSource": "crates/cli/src/main.rs:87"
       },
       {
         "names": [
@@ -499,7 +499,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:84"
+        "currentSource": "crates/cli/src/main.rs:88"
       },
       {
         "names": [
@@ -515,7 +515,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:85"
+        "currentSource": "crates/cli/src/main.rs:89"
       },
       {
         "names": [
@@ -531,7 +531,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:86"
+        "currentSource": "crates/cli/src/main.rs:90"
       },
       {
         "names": [
@@ -547,7 +547,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:87"
+        "currentSource": "crates/cli/src/main.rs:91"
       },
       {
         "names": [
@@ -563,7 +563,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:89"
+        "currentSource": "crates/cli/src/main.rs:93"
       },
       {
         "names": [
@@ -579,7 +579,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:90"
+        "currentSource": "crates/cli/src/main.rs:94"
       },
       {
         "names": [
@@ -595,7 +595,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:91"
+        "currentSource": "crates/cli/src/main.rs:95"
       },
       {
         "names": [
@@ -611,7 +611,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:95"
+        "currentSource": "crates/cli/src/main.rs:99"
       },
       {
         "names": [
@@ -627,7 +627,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:98"
+        "currentSource": "crates/cli/src/main.rs:102"
       },
       {
         "names": [
@@ -643,7 +643,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:113"
+        "currentSource": "crates/cli/src/main.rs:117"
       },
       {
         "names": [
@@ -659,7 +659,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:114"
+        "currentSource": "crates/cli/src/main.rs:120"
       },
       {
         "names": [
@@ -676,7 +676,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:115"
+        "currentSource": "crates/cli/src/main.rs:126"
       },
       {
         "names": [
@@ -692,7 +692,7 @@
           "status": "未验证",
           "method": "原 oracle + native verb 输入/输出/退出码回归"
         },
-        "currentSource": "crates/cli/src/main.rs:122"
+        "currentSource": "crates/cli/src/main.rs:135"
       }
     ],
     "dynamicRoutes": [
@@ -4650,8 +4650,8 @@
       "ENGINE_VERSION:1",
       "Cargo.toml:10",
       "crates/cli/Cargo.toml:2",
-      "crates/cli/src/main.rs:49",
-      "crates/cli/src/main.rs:126"
+      "crates/cli/src/main.rs:53",
+      "crates/cli/src/main.rs:139"
     ],
     "environment": [
       {
@@ -4748,7 +4748,7 @@
           "crates/browser/src/discovery.rs:73",
           "crates/context/src/util.rs:267",
           "crates/context/src/util.rs:278",
-          "crates/hook/src/hook_lib.rs:171"
+          "crates/hook/src/hook_lib.rs:172"
         ],
         "discovery": "rust-literal",
         "classification": "host-platform",
@@ -4873,7 +4873,7 @@
       {
         "name": "PHOENIX_UI_CACHE_ROOT",
         "sources": [
-          "crates/hook/src/hook_lib.rs:164"
+          "crates/hook/src/hook_lib.rs:165"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -5104,7 +5104,7 @@
       {
         "name": "PHOENIX_UI_HOOK_HARNESS",
         "sources": [
-          "crates/hook/src/hook_lib.rs:1885"
+          "crates/hook/src/hook_lib.rs:1899"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -5116,7 +5116,7 @@
       {
         "name": "PHOENIX_UI_HOOK_LOG",
         "sources": [
-          "crates/hook/src/hook_lib.rs:2412"
+          "crates/hook/src/hook_lib.rs:2426"
         ],
         "discovery": "rust-literal",
         "classification": "phoenix-runtime",
@@ -5530,7 +5530,7 @@
           "crates/context/src/util.rs:260",
           "crates/context/src/util.rs:265",
           "crates/context/src/util.rs:272",
-          "crates/hook/src/hook_lib.rs:169"
+          "crates/hook/src/hook_lib.rs:170"
         ],
         "discovery": "rust-literal",
         "classification": "host-platform",
@@ -5667,7 +5667,7 @@
         "importedPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "currentPath": "tools/phoenix-ui/crates/cli/src/main.rs",
         "baselineSha256": "00b20a738560363eb3ab4daa78fb56f35654d3bfcb9d1144548cc6cba954e497",
-        "currentSha256": "7425571cd348c66c47862c41e6a44e2fbed6be991d45ee5079d93d05128a5f5a"
+        "currentSha256": "e85d7bf12bb949d196daaadb157a6e15c3ab5a2863013ab1535c8081a7bff76a"
       },
       "crates/common/src/proc.rs": {
         "importedPath": "tools/phoenix-ui/crates/common/src/proc.rs",
@@ -5853,7 +5853,7 @@
         "importedPath": "tools/phoenix-ui/crates/hook/src/hook_lib.rs",
         "currentPath": "tools/phoenix-ui/crates/hook/src/hook_lib.rs",
         "baselineSha256": "25f014206474a183bf9bea201a28d633ac73754cfe7eb2a2e6babb53a8c2d6fe",
-        "currentSha256": "4788fbd7b325033274f751af6ce4d9ba38de02e24ff8c3663550db9c7285cd80"
+        "currentSha256": "8ea3e491ee59d6f8894f177996be3a01642f11986d7a4d933966d6640f59de91"
       },
       "crates/live/src/browser_open.rs": {
         "importedPath": "tools/phoenix-ui/crates/live/src/browser_open.rs",
@@ -5961,7 +5961,7 @@
         "importedPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "baselineSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
-        "currentSha256": "ba77bc8e0d881b469308374ff3810e3c17aa836f277774b60dd675a075d3b948"
+        "currentSha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843"
       },
       "crates/skills/src/engine_binary.rs": {
         "importedPath": "tools/phoenix-ui/crates/skills/src/engine_binary.rs",
@@ -6009,7 +6009,7 @@
         "importedPath": "tools/phoenix-ui/skill/SKILL.src.md",
         "currentPath": "skills/phoenix-ui/src/SKILL.src.md",
         "baselineSha256": "0333d85ba408d29c7748838762b6d1e0a211dec22cd7e78ed6db987d983e91d4",
-        "currentSha256": "2a4f4c914fee15903c7ac54b0caa6a281e298e7ae848c16344c947cb7d14003f"
+        "currentSha256": "36f719d38f9162f36ebb7233124cd336a566e18b72e5bc8dcaa5c63e44b478a5"
       },
       "skill/reference/adapt.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/adapt.md",
@@ -6057,7 +6057,7 @@
         "importedPath": "tools/phoenix-ui/skill/reference/critique.md",
         "currentPath": "skills/phoenix-ui/src/reference/critique.md",
         "baselineSha256": "8d2cdf4f583a0caf7685620069069354b4fb81582fb63c349783298454140a0e",
-        "currentSha256": "92187ae069bc14b5f3f5bc215465d02a7854474e2eebb7e049f6f13d09eb5da0"
+        "currentSha256": "5380c989591f6747df153354d83f43fa4b6847a7a0ad917ec8d005c2668d8f48"
       },
       "skill/reference/delight.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/delight.md",
@@ -6099,7 +6099,7 @@
         "importedPath": "tools/phoenix-ui/skill/reference/init.md",
         "currentPath": "skills/phoenix-ui/src/reference/init.md",
         "baselineSha256": "085d1ab47655961c7494f6503added189b821b38cfec8e0fd31f44d9f9a8a8e5",
-        "currentSha256": "c8f4f98cef8d8c78944d236037a007f5d571590043d96ac1b05396b9c7bfecf0"
+        "currentSha256": "3ae151e527dbdca9bc3b39ecb4a1f3462202e54c46cef8136af96ab21a61f306"
       },
       "skill/reference/layout.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/layout.md",
@@ -6111,7 +6111,7 @@
         "importedPath": "tools/phoenix-ui/skill/reference/live.md",
         "currentPath": "skills/phoenix-ui/src/reference/live.md",
         "baselineSha256": "a294fee3d7ad24ace99017e616cf37c6a87f0e5ba2fd7c5dcbd8930188ced0dd",
-        "currentSha256": "6052b7189e19b124092885c970db2a0be4699e57003229e38c11a0f8921e5f70"
+        "currentSha256": "e618ebc6068b3e8d314c5b1de2ed7edfb7eec774e24d17c97338debcce2c5583"
       },
       "skill/reference/onboard.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/onboard.md",
@@ -6206,8 +6206,8 @@
       "tests/oracle/DELTAS.md": {
         "importedPath": "tools/phoenix-ui/tests/oracle/DELTAS.md",
         "currentPath": "tools/phoenix-ui/tests/oracle/DELTAS.md",
-        "baselineSha256": "d40482976c5a753cd246c02b864a2b487910d0256aae8226d80d546a701c76cd",
-        "currentSha256": "d40482976c5a753cd246c02b864a2b487910d0256aae8226d80d546a701c76cd"
+        "baselineSha256": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f",
+        "currentSha256": "29da2f60fcfeeef8efe319432c1753401ac92bdba47e9078ce6570865c8df83f"
       },
       "tests/oracle/run.mjs": {
         "importedPath": "tools/phoenix-ui/tests/oracle/run.mjs",
@@ -7186,7 +7186,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "8b1723fb51e6aad9bfc0bc5ba8e09b5a373b0e33c251331f6ca14ff6b1c261ef",
+        "sha256": "547e3c89d5b8feeddd67e43131fd84b95253eb42bf7d730b4e471dba011f6e51",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7247,19 +7247,19 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "dist/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "06b9643cdab897c282a521cf5cb1af50a903b7d75210856caecaa5b358b799ec",
+      "manifestSha256": "a35570d9538bfc3cf1d088d367e987dbd15edc9c47e2ae55c713745ec651ee95",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "c2c6088c1effc3f27c29d2e9ceafb61c98876ef6f52e23bf75b71e3555e8263e",
+      "generationManifestSha256": "9553014ef8016a1d4b0c94ceba5ed4ca7f7195819794ebdbb54a5cedd17eca37",
       "generator": "Bun 1.3.14",
-      "inputSha256": "750b2f7015712fd0c1d99fa84efb3b579dca20a86fc856f735d52c4670187da0",
+      "inputSha256": "0373592bd1816746801e33d048c42075dca27b752f2c16d5567921f65870069a",
       "engineManifest": "verified",
-      "outputsCount": 1736,
+      "outputsCount": 1751,
       "providers": 19,
       "bundledSkillPayloads": 18,
       "bundledCatalogCopies": 72,
       "status": "source-payload-hashes-verified",
       "runtimeStatus": "未验证",
-      "limitation": "Integrated B development render with M4 context/profile, M5 review route and M6 producer sources. Generation/build source hashes and the listed local darwin-arm64 engine are bound here; B full runtime, CI, installed-provider and UI review-loop acceptance remain separately unverified.",
+      "limitation": "PHOENIX-HALLMARK code review R3 repair: the corrected XGENT rule pack (complete nested class expressions resolved in one linear structure pass, attribute- and raw-text-scoped markup styles) is part of this build. Generation/build source hashes and the listed local darwin-arm64 engine are bound here; full runtime, browser, provider session, CI and release acceptance are recorded separately.",
       "historicalRenders": [
         {
           "scope": "M2 earlier ordinary render before the development ENGINE manifest",
@@ -7391,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "dist/phoenix-ui/VERSION.json",
-        "sha256": "7ad89bbdd892fe13048d5aeb6900ab588f88affb434482432933f5d9314cfc39",
+        "sha256": "f252ecb314df5ff3294ce192e44562e89a4037f7ba7ff150c86ffc111dd6ea34",
         "distribution": "development",
-        "sourceInputSha256": "80daa8c22cf9e725b4a55b8dcf4a5c415b87a8d5c862767350e9abb71a360730",
+        "sourceInputSha256": "ad81b77b2f61b61ad39688e57f7bfcee12a15f0af17adc290207d5a057add2b6",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "c18277dc756e067ea4c4ae159b5014f23c7d7ffccbb263f1287335708a03eff6",
-            "size": 18284080
+            "sha256": "84b67a03d7b4821a0d124d36644d6c96b4a93b81209fa36df5cfbe46681edd57",
+            "size": 18399936
           }
         },
-        "limitation": "Development darwin-arm64 rebuilt with pinned mbx 1.24.0; sourceState dirty. Release engines come from the full CI run, not from this local build."
+        "limitation": "Development darwin-arm64 rebuilt in PHOENIX-HALLMARK code review R3 from the current worktree; only this platform and engine bytes are bound. Five-platform CI, provider sessions and release publication are recorded separately."
       }
     },
     "directionLibrary": {

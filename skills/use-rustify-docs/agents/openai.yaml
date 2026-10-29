@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use Rustify Docs"
+  short_description: "用 Rustify Docs 创建文档站与 Landing Page，并通过 ui-loop 打磨首屏吸引力"
+  default_prompt: "使用 $use-rustify-docs 创建文档站或 Landing Page；落地页执行 ui-loop，重点打磨首屏价值表达、视觉吸引力和主要 CTA。"

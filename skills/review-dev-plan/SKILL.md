@@ -2,6 +2,7 @@
 name: review-dev-plan
 argument-hint: "<计划路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]"
 description: 用于评审既有开发计划、技术方案或开工条件；不用于从零写计划、实施功能或仅审代码 diff。多 agent 核查事实、方案、需求映射、依赖与交付可用性，默认落盘报告。
+disable-model-invocation: true
 ---
 
 # review-dev-plan · 多视角开发计划评审

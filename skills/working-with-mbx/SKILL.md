@@ -1,6 +1,7 @@
 ---
 name: working-with-mbx
 description: Use when installing, activating or troubleshooting mbx, the shared Cargo compiler cache. Verify Cargo integration, diagnose cache misses and manage disk usage.
+when_to_use: 'Requests like "mbx cache misses", "mbx will not install", or "the Cargo cache is eating disk".'
 ---
 
 # Working with mbx

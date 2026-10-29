@@ -87,6 +87,7 @@ fn rt(cwd: &str) -> Runtime<'static> {
         "/phoenix-ui".to_string(),
         "/opt/bin/phoenix-ui",
         &HTML,
+        None,
     )
 }
 

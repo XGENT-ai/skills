@@ -1,6 +1,7 @@
 ---
 name: working-with-mise
 description: Use when adding, configuring or troubleshooting mise-managed tools. Detect existing configuration and diagnose PATH or shell activation problems.
+when_to_use: 'Requests like "install Node with mise", "command not found after installing", or "the version switch does not apply".'
 ---
 
 # Working with mise

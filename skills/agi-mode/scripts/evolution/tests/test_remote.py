@@ -10,9 +10,11 @@ import sys
 import threading
 import tarfile
 import time
+import unittest
 from unittest.mock import patch
 
 from support import JobFixture
+from test_quality import QualityFixture
 from evolution import write_json
 from protocol import canonical, new_execution, prepare, sha256
 from remote import (
@@ -28,7 +30,146 @@ from remote import (
 )
 
 
+class CodexFilesystemProfileTests(unittest.TestCase):
+    def test_v2_private_globs_are_directory_anchored_and_survive_cli_toml(self):
+        import toml, tomllib
+        from remote import codex_arguments, codex_configuration
+        configuration = codex_configuration(schema_version=2)
+        filesystem = configuration["permissions"]["evolution"]["filesystem"]
+        root = "/home/evolution/"
+        for suffix in ("auth*", "*.json*", "config*.toml", "*.sqlite*", ".tmp*"):
+            self.assertEqual(filesystem[root + "[.]codex/" + suffix], "deny")
+            self.assertNotIn(root + ".codex/" + suffix, filesystem)
+        for path in (".env", "sessions", "archived_sessions", "log"):
+            self.assertEqual(filesystem[root + ".codex/" + path], "deny")
+        self.assertEqual(filesystem[root + ".codex/proxy/**"], "read")
+        self.assertNotIn(root + ".codex", filesystem)
+        args = codex_arguments(configuration, "/work", probe="pass")
+        encoded = next(arg for arg in args if arg.startswith("permissions="))
+        self.assertEqual(tomllib.loads(encoded)["permissions"]["evolution"]["filesystem"], filesystem)
+        self.assertEqual(tomllib.loads(toml.dumps(configuration)), configuration)
+        legacy = codex_configuration(schema_version=1)
+        self.assertEqual(legacy, codex_configuration())
+        self.assertEqual(legacy["permissions"]["evolution"]["filesystem"][root + ".codex"], "deny")
+
+
+class FixedSkillCatalogTests(QualityFixture):
+    def setUp(self):
+        super().setUp()
+        self.quality_spec()
+        self.put("skills/fixed-helper/SKILL.md", "---\nname: fixed-helper\ndescription: Fixed context helper\n---\nRead reference.md.\n")
+        self.put("skills/fixed-helper/reference.md", "Fixed public reference.\n")
+        self.spec["source"]["new_paths"] = ["skills/fixed-helper/SKILL.md", "skills/fixed-helper/reference.md"]
+        self.spec["source"]["fixed_skill_roots"] = ["skills/fixed-helper"]
+        self.spec["target"].update(kind="skill", allowed_paths=["skills/debugging/SKILL.md"],
+                                   surfaces={"skill": ["skills/debugging/SKILL.md"], "agents": []})
+        self.spec["target"]["protected_rules"] = [{"path": "skills/debugging/SKILL.md",
+            "text": "Find the root cause.", "kind": "principle", "verification": "exact"}]
+        self.spec["authority"]["write_paths"] = []
+        self.spec["conditions"] = [
+            {"condition_id": "baseline", "skill": "baseline", "agents": "fixed", "overrides": {}},
+            {"condition_id": "absent", "skill": "absent", "agents": "fixed",
+             "overrides": {"skills/debugging/SKILL.md": None}},
+        ]
+
+    def test_fixed_catalog_is_loaded_and_preserved_when_target_is_absent_or_changed(self):
+        from remote import smoke_payload
+        job = prepare(self.write())
+        case = job.spec["cases"][0]
+        probe = smoke_payload(job, case, "probe")
+        original = trial_payload(job, case, job.bundles["baseline"])
+        absent = trial_payload(job, case, job.bundles["absent"])
+        candidate = deepcopy(job.bundles["baseline"])
+        candidate["skills/debugging/SKILL.md"]["content"] += b"Check the documented boundaries.\n"
+        changed = trial_payload(job, case, candidate)
+        prefix = "/home/evolution/.agents/skills/fixed-helper/"
+        expected = {key: value for key, value in probe["files"].items() if key.startswith(prefix)}
+        self.assertEqual(set(expected), {prefix + "SKILL.md", prefix + "reference.md"})
+        for payload in [original, absent, changed]:
+            self.assertEqual({key: value for key, value in payload["files"].items() if key.startswith(prefix)}, expected)
+        target = "/home/evolution/.agents/skills/debugging/SKILL.md"
+        self.assertIn(target, original["files"])
+        self.assertNotIn(target, absent["files"])
+        self.assertIn("/app/skills/debugging/SKILL.md", absent["remove_paths"])
+        self.assertNotEqual(changed["files"][target], original["files"][target])
+
+    def test_fixed_catalog_requires_exported_disjoint_unique_skill_roots(self):
+        from protocol import ProtocolError
+        for roots in [["skills/not-exported"], ["skills/debugging"], ["../outside"], True]:
+            self.spec["source"]["fixed_skill_roots"] = roots
+            with self.subTest(roots=roots), self.assertRaises(ProtocolError):
+                prepare(self.write())
+        self.spec["source"]["fixed_skill_roots"] = ["skills/fixed-helper"]
+        self.put("skills/fixed-helper/SKILL.md", "---\nname: debugging\ndescription: Duplicate fixed identity\n---\nFixed helper.\n")
+        with self.assertRaises(ProtocolError):
+            prepare(self.write())
+
+    def test_fixed_catalog_is_explicit_and_also_available_to_unscored_material_runs(self):
+        from remote import smoke_payload
+        self.spec["schema_version"] = 1
+        self.spec["mode"] = "smoke"
+        self.spec.pop("evaluation")
+        self.spec["authority"].pop("evaluation_root")
+        self.spec["measurement"].update(primary_metric="task_success")
+        self.spec["measurement"].pop("minimum_effect_reason")
+        job = prepare(self.write())
+        path = "/home/evolution/.agents/skills/fixed-helper/SKILL.md"
+        self.assertIn(path, smoke_payload(job, job.spec["cases"][0], "probe")["files"])
+        self.spec["source"].pop("fixed_skill_roots")
+        original = prepare(self.write())
+        self.assertNotIn(path, smoke_payload(original, original.spec["cases"][0], "probe")["files"])
+
+
 class PayloadTests(JobFixture):
+    def test_v2_probe_rejects_unhealthy_installed_npm_and_allows_other_images(self):
+        from contextlib import redirect_stdout
+        import shutil
+        import socket
+        from remote import isolation_script
+
+        executable = self.root / "npm"
+        read_bytes, write_text, exists = Path.read_bytes, Path.write_text, Path.exists
+        connect = socket.create_connection
+
+        def protected_read(path):
+            if str(path) in {"/home/evolution/.codex/auth.json", "/evolution-control/receipt.json"}:
+                raise PermissionError(path)
+            return read_bytes(path)
+
+        def protected_write(path, *args, **kwargs):
+            if str(path) == "/evolution-control/receipt.json":
+                raise PermissionError(path)
+            return write_text(path, *args, **kwargs)
+
+        def visible(path):
+            if str(path) in {"/tests/test.sh", "/solution/gold_patch.diff"}:
+                return False
+            return exists(path)
+
+        def isolated_connect(address, *args, **kwargs):
+            if address == ("github.com", 443):
+                raise OSError("blocked by the fixture")
+            return connect(address, *args, **kwargs)
+
+        for status, version, expected in [(None, "", True), (0, "11.6.2", True),
+                                           (243, "", False), (0, "", False)]:
+            executable.write_text(f"#!/bin/sh\nprintf '%s' '{version}'\nexit {status or 0}\n")
+            executable.chmod(0o755)
+            output = io.StringIO()
+            with self.subTest(status=status, version=version), patch.dict(os.environ, {"PATH": os.defpath}, clear=True), \
+                    patch("os.getuid", return_value=10000), \
+                    patch.object(Path, "read_bytes", protected_read), \
+                    patch.object(Path, "write_text", protected_write), \
+                    patch.object(Path, "exists", visible), \
+                    patch.object(socket, "create_connection", isolated_connect), \
+                    patch.object(shutil, "which", return_value=None if status is None else str(executable)), \
+                    redirect_stdout(output), self.assertRaises(SystemExit) as stopped:
+                exec(isolation_script({"repo_path": str(self.repo), "base_commit": self.base}, schema_version=2), {})
+            observation = json.loads(output.getvalue())
+            self.assertEqual(observation["checks"]["installed_npm_ready"], expected)
+            self.assertEqual(observation["isolation_passed"], expected)
+            self.assertEqual(stopped.exception.code, 0 if expected else 1)
+
     def test_missing_node_installs_the_verified_native_archive(self):
         import toml
         from remote import smoke_payload
@@ -194,6 +335,27 @@ class PayloadTests(JobFixture):
         self.put("nested/AGENTS.md", "Untracked instruction")
         receipt = instruction_inventory(self.repo, home, expected)
         self.assertEqual(len(receipt["gaps"]), 2)
+
+    def test_tracked_background_is_verified_across_runtime_ownership(self):
+        home = self.root / "fresh-home"
+        with patch.dict(os.environ, {"GIT_TEST_ASSUME_DIFFERENT_OWNER": "1",
+                                     "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}):
+            ordinary = subprocess.run(["git", "-C", str(self.repo), "show", "HEAD:AGENTS.md"],
+                                      capture_output=True)
+            self.assertNotEqual(ordinary.returncode, 0)
+            self.assertIn(b"dubious ownership", ordinary.stderr)
+            receipt = instruction_inventory(self.repo, home, {})
+            self.assertFalse(receipt["gaps"])
+            background = next(row for row in receipt["sources"]
+                              if row["path"] == str(self.repo / "AGENTS.md"))
+            self.assertEqual(background["origin"], "repository_background")
+            self.put("AGENTS.md", "Changed after the frozen commit")
+            self.put("nested/AGENTS.md", "Untracked instruction")
+            receipt = instruction_inventory(self.repo, home, {})
+            self.assertEqual(set(receipt["gaps"]), {
+                "undeclared_instruction:" + str(self.repo / "AGENTS.md"),
+                "undeclared_instruction:" + str(self.repo / "nested/AGENTS.md"),
+            })
 
     def test_inventory_rejects_another_readable_copy_of_the_target_skill(self):
         home = self.root / "fresh-home"

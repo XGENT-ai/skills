@@ -4,6 +4,7 @@
 
 | 任务 ID | 名称 | 入口 |
 | --- | --- | --- |
+| 01a17618-767f-7291-94b9-51b1abaa2c8d | PRD 最终答复漏掉下一步 | [记录](01a17618-767f-7291-94b9-51b1abaa2c8d.md) |
 | 5dd62493-7017-4e84-82e7-fbd5cab75cd9 | context-goal-guard 默认不安装 | [记录](5dd62493-7017-4e84-82e7-fbd5cab75cd9.md) |
 | dbef8d1b-fa3c-4014-85cc-2e39025bcf3f | 验证 skill 生成器增强 | [记录](dbef8d1b-fa3c-4014-85cc-2e39025bcf3f.md) |
 | b5f442b4-5534-487e-bc60-be03aad3022f | dev-plan 融合计划结构校验 | [记录](b5f442b4-5534-487e-bc60-be03aad3022f.md) |
@@ -38,6 +39,23 @@
 
 - 2d9914fc-8f95-405c-83ed-59a229072efe · [resolve-blocked 外部依赖请求](2d9914fc-8f95-405c-83ed-59a229072efe.md)
 
+- `49a107bf-abd1-462b-9910-ff664d6be67d` · 指令质量评测与自进化 v2 · [记录](49a107bf-abd1-462b-9910-ff664d6be67d.md)
 - 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)
 
 - b63a54df-d1f0-48c9-b624-3fc5174201fd · [Phoenix Diagram P2 gaps 实施](b63a54df-d1f0-48c9-b624-3fc5174201fd.md)
+- 074c0f0e-40db-4006-aa7a-bb0a2d1b68a2 · [合并 origin/main 的本机测试环境](074c0f0e-40db-4006-aa7a-bb0a2d1b68a2.md)
+
+- 837a3f59-702b-4195-8e5c-39a07ca47966 · [Phoenix 安装冲突修复](837a3f59-702b-4195-8e5c-39a07ca47966.md)
+
+- b74bc53b-7244-4bb9-b8e6-0b19aadedddc · [Phoenix UI 初始化与 subagent 门槛纠正](b74bc53b-7244-4bb9-b8e6-0b19aadedddc.md)
+
+- 78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f · [SDLC 长任务收敛与真实交付](78bd4f81-d9d3-4d66-bbe1-f1b2007f1f0f.md)
+- 3e3db19e-9909-4216-aa61-15b7d0104cb7 · [PHOENIX-HALLMARK R3 代码评审处置](3e3db19e-9909-4216-aa61-15b7d0104cb7.md)
+
+- b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d · [use-prompt-dsl 语言规范编写](b0ec93f8-8e7e-4d4e-bea6-8d7b59f49b8d.md)
+
+- 4d3ffe78-c28e-46e0-82e0-e711996b68fa · [dev-plan 连续实施与验证节奏](4d3ffe78-c28e-46e0-82e0-e711996b68fa.md)
+
+- 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
+
+- [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)

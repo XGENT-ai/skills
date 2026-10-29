@@ -1,4 +1,4 @@
-/** These static Next.js fixtures must not discover another project's port 3000. */
+/** Static framework fixtures must not discover another project's development server. */
 import { offlineNetworkProfile } from '../../../../../scripts/phoenix-build-tools.mjs';
 
 export const isolatedCases = [
@@ -6,6 +6,7 @@ export const isolatedCases = [
   'detect-fixture-text-framework-next-modules',
   'detect-fixture-text-framework-next-tailwind',
   'detect-framework-next-modules-text',
+  'detect-fixture-text-framework-vite',
 ];
 
 export function nativeInvocation(id, argv, platform = process.platform) {

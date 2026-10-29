@@ -2,6 +2,7 @@
 name: apply-ui-review
 argument-hint: "<UI验收报告> [开发计划] [问题ID/单元] [修复方向/用户决定]"
 description: 用于按 UI 验收评审报告修复界面差距；不用于初次 UI 评审、代码评审处置或无报告的界面开发。逐条对照截图与目标核实后修复并自检，停滞预警时重构思路，提交登记后交回复审。
+disable-model-invocation: true
 ---
 
 # apply-ui-review · 落实 UI 验收评审

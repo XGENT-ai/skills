@@ -128,12 +128,17 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
 | 字段 | 必填 | 说明 |
 | --- | --- | --- |
 | `version` | （或 manifest.version） | 字母/数字/`. _ + -`，≤64 字符。**每次都要 bump** |
-| `dist` | | multipart 文件，`.tar.gz`，根下 `index.html`，≤64MB。省掉 = 这次不换产物 |
+| `dist` | | multipart 文件，`.tar.gz`，根下 `index.html`，≤200 MiB。省掉 = 这次不换产物 |
 | `image` | | 镜像引用。省掉 = 不换镜像 |
 | `manifest` | | `app.manifest.json` 全文（文件或 JSON 字符串）。省掉 = 只发三件（全自动档） |
 
 **这四个之外的散字段仍然直接拒**（`200 + VALIDATION_FAILED`，拒在写库之前）——
 治理变更只能经 manifest 整份提交，没有「往表单里塞一个 scopes」这条路。
+
+**请求格式与上限**：带文件（`dist`，套件批次的 `dist__<key>`）的请求必须是 `multipart/form-data`，
+产物只认文件字段；不带文件的纯元数据请求（只有 `version` / `image` / `manifest`）也可以发 JSON。
+单个包 ≤200 MiB；**整个请求 ≤256 MiB**，这是门户 HTTP 层的上限，套件批次里各成员的包是合计的，
+不能按「成员数 × 200 MiB」估。
 
 **定级唯一判据：这次提交有没有改变权限面。** manifest 里与当前 listing 相比有治理差异
 （scopes / aclManifest / dependencies / exchangeTargets / serviceScopes /

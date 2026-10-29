@@ -1,6 +1,7 @@
 ---
 name: portal-micro-app
 description: '用于开发、修改或排查 XGENT Portal 的 iframe 微应用前端。覆盖页面、导航、Widget、portal-sdk 握手、令牌、consent、主题与路由等 UI 问题。'
+when_to_use: "用户会说「微应用里拿不到当前用户」「iframe 和门户通信不通」「门户主题不生效」时。"
 ---
 
 # portal-micro-app · 嵌入式微应用（iframe + SDK）开发

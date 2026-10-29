@@ -198,6 +198,31 @@ require_home() {
   [ -f "$ENV_FILE" ] || die "$HOME_DIR 里没有 compose.env。跑 $0 init 生成，或手工按 compose.env.example 拼。"
 }
 
+# 同一目录的配置写入必须串行，不能让两个 add 同时把同一密钥判成缺失。
+ENV_LOCK_DIR=""; ENV_LOCK_OWNER=""
+_env_unlock() {
+  [ -n "$ENV_LOCK_DIR" ] && [ -f "$ENV_LOCK_DIR/owner" ] || return 0
+  [ "$(sed -n '1p' "$ENV_LOCK_DIR/owner")" = "owner=$ENV_LOCK_OWNER" ] || return 0
+  rm -f "$ENV_LOCK_DIR/owner"
+  rmdir "$ENV_LOCK_DIR" 2>/dev/null || true
+}
+_env_lock() {
+  HOME_DIR="$(cd "$HOME_DIR" && pwd -P)"
+  ENV_FILE="$HOME_DIR/compose.env"
+  local lock="$HOME_DIR/.onebox-env.lock" started
+  if ! mkdir "$lock" 2>/dev/null; then
+    die "一盒目录已有配置写锁：${lock}。本次未写入 compose.env，请稍后重试。若上次异常终止，先核对 ${lock}/owner 的 pid、started 与实际进程身份；确认原进程已结束后才手工清理锁目录。不会自动抢锁或重生成密钥。"
+  fi
+  ENV_LOCK_DIR="$lock"; ENV_LOCK_OWNER="$$:$(date +%s):$RANDOM"
+  trap '_env_unlock' EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  started="$(ps -p "$$" -o lstart=)"
+  printf 'owner=%s\npid=%s\nstarted=%s\nscript=%s\n' "$ENV_LOCK_OWNER" "$$" "$started" "$0" > "$lock/owner" \
+    || die "无法记录配置写锁的进程身份，操作中止；请核查 ${lock}。"
+}
+
 # --- env-file 解析（docker compose 是「后定义者胜」，这份文件是拼装出来的）--------
 _assignments() {
   awk '/^[A-Za-z_][A-Za-z0-9_]*=/ {
@@ -382,6 +407,10 @@ cmd_init() {
   # 1) 备齐镜像 —— 没有 puller 凭证就在这里停下，而不是让人跑到一半才发现
   pull_images "$image" "$proxy"
   mkdir -p "$home"
+  HOME_DIR="$home"; _env_lock
+  # 首次检查后可能已有另一个 init 完成；持锁后再检查，不能覆盖它刚写的密钥。
+  [ ! -f "$envf" ] || [ "$force" = 1 ] \
+    || die "$envf 已存在（里面是这台机器的密钥）。已有一盒请用 upgrade。"
 
   # 门户的 /health 报的 version 取自 APP_VERSION 环境变量，compose 缺省填 "dev" ——
   # 于是一盒对使用者【完全不自报版本】。而「照文档做但行为不符」十有八九就是镜像比文档旧
@@ -1084,13 +1113,23 @@ cmd_add() {
     console.log(`M_HEALTH=${q(d.healthPath ?? "/health")}`);
     console.log(`M_SA=${q((m.serviceAccount ?? {}).clientId)}`);
     console.log(`M_ENV=${(m.requiredEnv ?? []).map((e) => (typeof e === "string" ? e : e.key)).join(" ")}`);
+    const generated = (m.requiredEnv ?? []).filter((e) => typeof e === "object" && e !== null && e.generate !== undefined);
+    for (const e of generated) {
+      const g = e.generate;
+      if (!/^[A-Z][A-Z0-9_]*$/.test(e.key) || (e.renamedFrom != null && !/^[A-Z][A-Z0-9_]*$/.test(e.renamedFrom)) ||
+          !g || typeof g !== "object" || Array.isArray(g) || Object.keys(g).some((k) => k !== "bytes" && k !== "encoding") ||
+          !Number.isInteger(g.bytes) || g.bytes < 16 || g.bytes > 64 || !["base64", "hex"].includes(g.encoding)) {
+        throw new Error(`requiredEnv ${e.key}: invalid generate declaration`);
+      }
+    }
+    console.log(`M_GEN=${generated.map((e) => `${e.key}:${e.generate.encoding}:${e.generate.bytes}:${e.renamedFrom ?? ""}`).join(" ")}`);
     console.log(`M_KAFKA=${(m.requiredServices ?? []).some((s) => s.kind === "kafka") ? "1" : "0"}`);
     // 非空 ⇒ 它是跨应用交换的【发起方】，需要一把 App Secret（下面与 SA 密钥同源生成注入）。
     console.log(`M_XTARGETS=${(m.exchangeTargets ?? []).join(" ")}`);
     console.log(`M_MIGRATE=${(d.migrateArgs ?? []).join(" ")}`);
     console.log(`M_DEPS=${(m.dependencies ?? []).join(" ")}`);
   ' 2>/dev/null)" || die "解析清单失败 —— 它可能不是一份合法的 app.manifest.json。"
-  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_KAFKA="" M_XTARGETS="" M_MIGRATE="" M_DEPS=""
+  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_GEN="" M_KAFKA="" M_XTARGETS="" M_MIGRATE="" M_DEPS=""
   eval "$(printf '%s' "$fields" | sed 's/^\([A-Z_]*\)=\(.*\)$/\1="\2"/')"
   [ "$M_KEY" = "$key" ] || die "清单里的 listingKey 是「${M_KEY}」，与你要加的「${key}」对不上。"
   info "   ${M_KEY}  type=${M_TYPE}  port=${M_PORT}  sa=${M_SA}"
@@ -1159,6 +1198,21 @@ cmd_add() {
   if [ -n "$M_XTARGETS" ]; then
     asec="$(_eff "$avar")"; [ -n "$asec" ] || { asec="$(rand_hex | cut -c1-32)"; _env_append_secret "$avar" "$asec"; }
   fi
+  local spec gkey encoding bytes old value
+  for spec in $M_GEN; do
+    IFS=: read -r gkey encoding bytes old <<< "$spec"
+    [ -n "$(_eff "$gkey")" ] && continue
+    if [ -n "$old" ] && [ -n "$(_eff "$old")" ]; then
+      warn "${gkey} 沿用 compose.env 中的旧键 ${old}；不生成新主键，应用须兼容消费旧名。"
+      continue
+    fi
+    case "$encoding" in
+      base64) value="$(openssl rand -base64 "$bytes" | tr -d '\n')" || die "无法生成 ${gkey}，操作中止。" ;;
+      hex) value="$(openssl rand -hex "$bytes")" || die "无法生成 ${gkey}，操作中止。" ;;
+    esac
+    [ -n "$value" ] || die "生成 ${gkey} 得到空值，操作中止。"
+    _env_append_secret "$gkey" "$value"
+  done
 
   info "④ 注册清单（非破坏性、幂等）"
   # register-app 不带 --prod 是 dev 模式，而 dev 模式【强制要求】serviceAccount.secret；
@@ -1232,6 +1286,15 @@ cmd_add() {
     for ek in $M_ENV; do
       case " $gen_keys " in *" $ek "*) continue ;; esac
       [ -n "$(_eff "$ek")" ] && continue
+      old=""
+      for spec in $M_GEN; do
+        IFS=: read -r gkey encoding bytes value <<< "$spec"
+        [ "$gkey" != "$ek" ] || { old="$value"; break; }
+      done
+      if [ -n "$old" ] && [ -n "$(_eff "$old")" ]; then
+        _note "${ek} 由旧键 ${old} 兼容满足；沿用原值，应用继续消费旧名。"
+        continue
+      fi
       missing="${missing:+$missing }$ek"
     done
     if [ -n "$missing" ]; then
@@ -1404,15 +1467,15 @@ cmd_doctor() {
 
 case "${1-status}" in
   init)   shift; cmd_init "$@" ;;
-  upgrade) require_home; load_env; shift; cmd_upgrade "$@" ;;
+  upgrade) require_home; _env_lock; load_env; shift; cmd_upgrade "$@" ;;
   pull)   shift; cmd_pull "$@" ;;
   env)    require_home; load_env; cmd_env ;;
   smoke)  require_home; load_env; cmd_smoke ;;
   status) require_home; load_env; cmd_status ;;
   chain)  require_home; load_env; { while IFS= read -r -d '' x; do printf '%s ' "$x"; done < <(compose_args); echo; } ;;
-  up)     require_home; load_env; cmd_up ;;
+  up)     require_home; _env_lock; load_env; cmd_up ;;
   doctor) require_home; load_env; cmd_doctor ;;
-  add)    require_home; load_env; shift; cmd_add "$@" ;;
+  add)    require_home; _env_lock; load_env; shift; cmd_add "$@" ;;
   dc)     require_home; load_env; shift; dc "$@" ;;
   # 打印开头那段注释直到第一条非注释行 —— 别写死行号，加一条子命令就会截断（踩过）。
   -h|--help|help) awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "${BASH_SOURCE[0]}" ;;

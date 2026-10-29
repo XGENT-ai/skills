@@ -10,11 +10,12 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parents[2]
 SKILLS = ROOT / "skills"
-# 通用校验器（如 Codex 的 quick_validate.py）不认 argument-hint 等本仓有意使用的字段。
+# 通用校验器（如 Codex 的 quick_validate.py）不认 argument-hint、when_to_use 等本仓有意使用的字段。
 FRONTMATTER_KEYS = {
     "name",
     "description",
     "argument-hint",
+    "when_to_use",
     "disable-model-invocation",
     "license",
     "metadata",

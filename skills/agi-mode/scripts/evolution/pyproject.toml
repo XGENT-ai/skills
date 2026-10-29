@@ -13,4 +13,4 @@ dependencies = ["harbor==0.24.0"]
 xgent-evolve = "evolution:main"
 
 [tool.setuptools]
-py-modules = ["evolution", "protocol", "compare", "remote"]
+py-modules = ["evolution", "protocol", "compare", "remote", "quality", "typesafe_worker"]

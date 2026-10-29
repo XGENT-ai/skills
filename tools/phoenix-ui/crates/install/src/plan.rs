@@ -428,6 +428,7 @@ pub fn build_install_plan(
         manifest,
         transaction_id,
         false,
+        false,
     )
 }
 
@@ -440,6 +441,7 @@ pub fn build_install_plan_with(
     mut manifest: Manifest,
     transaction_id: &str,
     keep_complete: bool,
+    keep_impeccable: bool,
 ) -> Result<PreparedInstall> {
     if transaction_id.is_empty()
         || transaction_id.len() > 80
@@ -481,7 +483,11 @@ pub fn build_install_plan_with(
             .collect(),
         _ => BTreeMap::new(),
     };
-    let inventory = classify::classify_project_with(project.root(), providers, &owned)?;
+    let inventory = if keep_impeccable {
+        Inventory::default()
+    } else {
+        classify::classify_project_with(project.root(), providers, &owned)?
+    };
     let mut prepared = PreparedInstall {
         conflicts: inventory.conflicts.clone(),
         preserved: inventory.preserved.clone(),

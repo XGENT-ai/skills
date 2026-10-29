@@ -161,6 +161,8 @@ class RemoteClient:
             save(execution)
             if payload.get("needs_codex"):
                 self.prepare_codex(execution, payload)
+            if payload.get("needs_typesafe"):
+                self.prepare_typesafe(execution, payload)
             if time.time() >= execution["command_deadline"]:
                 raise UnresolvedError(
                     "command deadline reached during setup; original command was not launched"
@@ -438,8 +440,21 @@ class RemoteClient:
                 "native Codex configuration bytes differ from the declared configuration"
             )
 
+    def prepare_typesafe(self, execution, payload):
+        key = os.environ.get("TYPESAFE_API_KEY")
+        if not key:
+            raise RemoteError("TypeSafe controller credential is unavailable")
+        result = self._rpc("prepare_typesafe", execution, {"key": key})
+        if result != {"prepared": True}:
+            raise UnresolvedError("TypeSafe credential preparation is unresolved")
 
-def isolation_script(case):
+    def destroy_typesafe(self, execution):
+        result = self._rpc("destroy_typesafe", execution)
+        if result != {"destroyed": True}:
+            raise UnresolvedError("TypeSafe credential destruction is unresolved")
+
+
+def isolation_script(case, *, schema_version=1):
     settings = {"repo": case["repo_path"], "base_commit": case["base_commit"]}
     return (
         "settings="
@@ -448,7 +463,18 @@ def isolation_script(case):
         + """
 import json, os, pathlib, socket, subprocess
 checks = {'unprivileged_user': os.getuid() == 10000}
-for name, path in [('auth_hidden', '/home/evolution/.codex/auth.json'), ('control_hidden', '/evolution-control/receipt.json')]:
+"""
+        + ("""import shutil
+npm = shutil.which('npm')
+checks['installed_npm_ready'] = True
+if npm:
+    try:
+        started = subprocess.run([npm, '--version'], text=True, capture_output=True, timeout=30)
+        checks['installed_npm_ready'] = started.returncode == 0 and bool(started.stdout.strip())
+    except (OSError, subprocess.TimeoutExpired):
+        checks['installed_npm_ready'] = False
+""" if schema_version == 2 else "")
+        + """for name, path in [('auth_hidden', '/home/evolution/.codex/auth.json'), ('control_hidden', '/evolution-control/receipt.json')]:
     try:
         pathlib.Path(path).read_bytes()
         checks[name] = False
@@ -494,9 +520,27 @@ raise SystemExit(0 if all(checks.values()) else 1)
     )
 
 
-def smoke_payload(job, case, purpose):
+def native_skill_files(job, bundle):
     from protocol import skill_name
 
+    baseline = job.bundles[job.spec["baseline_condition"]]
+    descriptors = [path for path in job.spec["target"]["surfaces"]["skill"]
+                   if Path(path).name == "SKILL.md"]
+    descriptors.extend(root + "/SKILL.md" for root in job.spec["source"].get("fixed_skill_roots", []))
+    files = {}
+    for path in descriptors:
+        if path not in bundle:
+            continue
+        root = Path(path).parent.as_posix()
+        name = skill_name(baseline[path]["content"])
+        for item, row in bundle.items():
+            if item.startswith(root + "/"):
+                destination = "/home/evolution/.agents/skills/" + name + "/" + item[len(root) + 1:]
+                files[destination] = encoded_file(row["content"], row["mode"])
+    return files
+
+
+def smoke_payload(job, case, purpose):
     runtime = job.spec["runtime"]
     repo = case["repo_path"]
     views = job.case_files[case["case_id"]]
@@ -519,29 +563,18 @@ def smoke_payload(job, case, purpose):
             else:
                 files[repo + "/" + name] = encoded_file(row["content"], row["mode"])
     configuration = codex_configuration(
-        runtime.get("model", "gpt-6.1-sol"), runtime.get("effort", "high")
+        runtime.get("model", "gpt-6.1-sol"), runtime.get("effort", "high"),
+        schema_version=job.spec["schema_version"],
     )
     if native:
-        for path in job.spec["target"]["surfaces"]["skill"]:
-            if Path(path).name != "SKILL.md" or path not in baseline:
-                continue
-            root = Path(path).parent.as_posix()
-            name = skill_name(baseline[path]["content"])
-            for item, row in baseline.items():
-                if item.startswith(root + "/"):
-                    destination = (
-                        "/home/evolution/.agents/skills/"
-                        + name
-                        + "/"
-                        + item[len(root) + 1 :]
-                    )
-                    files[destination] = encoded_file(row["content"], row["mode"])
+        files.update(native_skill_files(job, baseline))
         if "model" not in runtime:
             files["/home/evolution/.codex/auth.json"] = encoded_file(
                 encoded({"OPENAI_API_KEY": "isolation-sentinel-not-a-credential"}),
                 0o600,
             )
-        args = codex_arguments(configuration, repo, probe=isolation_script(case))
+        args = codex_arguments(configuration, repo,
+            probe=isolation_script(case, schema_version=job.spec["schema_version"]))
         if "model" in runtime:
             startup = codex_arguments(
                 configuration,
@@ -625,22 +658,9 @@ def trial_payload(job, case, bundle):
     for name in list(files):
         if name.startswith("/home/evolution/.agents/skills/"):
             del files[name]
-    from protocol import skill_name
+    from protocol import task_contract
 
-    baseline = job.bundles[job.spec["baseline_condition"]]
-    for path in job.spec["target"]["surfaces"]["skill"]:
-        if Path(path).name != "SKILL.md":
-            continue
-        root = Path(path).parent.as_posix()
-        name = skill_name(baseline[path]["content"])
-        for item, row in bundle.items():
-            if item.startswith(root + "/"):
-                files[
-                    "/home/evolution/.agents/skills/"
-                    + name
-                    + "/"
-                    + item[len(root) + 1 :]
-                ] = encoded_file(row["content"], row["mode"])
+    files.update(native_skill_files(job, bundle))
     for path in job.spec["target"]["surfaces"]["agents"]:
         destination = case["repo_path"] + "/" + path
         files.pop(destination, None)
@@ -653,6 +673,10 @@ def trial_payload(job, case, bundle):
     instruction = job.case_files[case["case_id"]]["public_paths"]["instruction.md"][
         "content"
     ].decode("utf-8")
+    if job.spec.get("evaluation", {}).get("scoring") == "continuous_100_v1":
+        contract = task_contract(case)
+        files["/evolution-input/task-contract.md"] = encoded_file(contract, 0o444)
+        instruction += "\n\nAdditional frozen observable task requirements:\n" + contract.decode("utf-8")
     payload["command"]["args"] = codex_arguments(
         payload["codex_config"], case["repo_path"], prompt=instruction
     )
@@ -672,6 +696,95 @@ def grading_payload(job, case, patch):
     payload["command"]["capture"]["optional_files"]["checks.json"] = (
         "/logs/verifier/checks.json"
     )
+    if job.spec["schema_version"] == 2:
+        rubric = json.loads(job.evaluation_files[job.spec["evaluation"]["rubrics"][case["case_id"]]]["content"])
+        names = sorted({name for c in rubric["criteria"] for name in c["context_paths"] if name.startswith("repo/")})
+        source = """
+import json, pathlib, sys
+root = pathlib.Path.cwd()
+result = {'files': {}, 'omissions': []}
+for name in json.loads(sys.argv[1]):
+    path = root / name.removeprefix('repo/')
+    try:
+        if '..' in path.relative_to(root).parts or any(p.is_symlink() for p in [path, *path.parents] if p != root):
+            raise ValueError('unsafe path')
+        result['files'][name] = path.read_text(encoding='utf-8')
+    except (OSError, ValueError, UnicodeError):
+        result['omissions'].append(name)
+pathlib.Path('/logs/verifier/quality-context.json').write_text(json.dumps(result))
+"""
+        collect = shlex.join(["python3", "-c", source, encoded(names).decode()])
+        verify = "bash /tests/test.sh"
+        observations = sorted({name for c in rubric["criteria"] for name in c["context_paths"]
+                               if name.startswith("verifier/")})
+        if observations:
+            observe_source = """
+import json, pathlib, sys
+root = pathlib.Path('/logs/verifier/public')
+result = {'files': {}, 'omissions': []}
+for name in json.loads(sys.argv[1]):
+    path = root / name.removeprefix('verifier/')
+    try:
+        if '..' in path.relative_to(root).parts or any(p.is_symlink() for p in [path, *path.parents]):
+            raise ValueError('unsafe observation path')
+        result['files'][name] = path.read_bytes().decode('utf-8')
+    except (OSError, ValueError, UnicodeError):
+        result['omissions'].append(name)
+pathlib.Path('/logs/verifier/public-context.json').write_text(json.dumps(result))
+"""
+            observe = shlex.join(["python3", "-c", observe_source, encoded(observations).decode()])
+            verify = '{ bash /tests/test.sh; xgent_verifier_status=$?; ' + observe + '; exit "$xgent_verifier_status"; }'
+            payload["command"]["capture"]["files"]["public-context.json"] = "/logs/verifier/public-context.json"
+        payload["command"]["args"] = ["bash", "-c",
+            ("git apply --binary /evolution-input/model.patch && " if patch else "") + collect + " && " + verify]
+        payload["command"]["capture"]["files"]["quality-context.json"] = "/logs/verifier/quality-context.json"
+    return payload
+
+
+def regression_payload(job, case, patch, checker):
+    payload = grading_payload(job, case, b"")
+    payload["files"]["/evolution-input/model.patch"] = encoded_file(patch)
+    payload["files"]["/evolution-input/checker.json"] = encoded_file(encoded(checker))
+    script = """
+import json, pathlib, subprocess
+checker = json.loads(pathlib.Path('/evolution-input/checker.json').read_text())
+patch = '/evolution-input/model.patch'
+base_tree = subprocess.check_output(['git','write-tree'],text=True).strip()
+def run(argv):
+    p = subprocess.run(argv, capture_output=True, text=True, errors='replace')
+    return {'exit_code': p.returncode, 'stdout': p.stdout, 'stderr': p.stderr}
+def reset():
+    subprocess.run(['git','read-tree','--reset','-u',base_tree],check=True)
+    subprocess.run(['git','clean','-fd'],check=True,capture_output=True)
+result = {'status': 'unknown', 'level': None, 'reason': 'replay_setup_failed', 'base_tree': base_tree}
+selection = [arg for path in checker['test_paths'] for arg in ['--include',path]]
+selected = run(['git','apply','--numstat','--allow-empty',*selection,patch])
+test_patch = run(['git','apply','--binary','--allow-empty',*selection,patch])
+if test_patch['exit_code'] == 0 and selected['exit_code'] == 0:
+    if not selected['stdout'].strip():
+        result.update(status='valid',level=0,reason='no_changed_regression_test')
+    else:
+        old = run(checker['argv'])
+        reset()
+        applied = run(['git','apply','--binary',patch])
+        if applied['exit_code'] == 0:
+            fixed = run(checker['argv'])
+            old_text = old['stdout'] + old['stderr']
+            environment = ['ModuleNotFoundError:', 'ImportError while importing test module', 'command not found', 'collected 0 items']
+            attributed = old['exit_code'] == checker['expected_failure']['exit_code'] and checker['expected_failure']['contains'] in old_text
+            if not any(marker in old_text + fixed['stdout'] + fixed['stderr'] for marker in environment):
+                result.update(status='valid',level=int(attributed and fixed['exit_code']==0),reason='counterfactual_replay')
+            else:
+                result['reason'] = 'replay_environment_failure'
+            result.update(original=old,fixed=fixed,defect_attributed=attributed)
+pathlib.Path('/logs/verifier/regression-replay.json').write_text(json.dumps(result))
+"""
+    payload["command"]["args"] = ["python3", "-c", script]
+    payload["command"]["capture"]["files"] = {
+        "regression-replay.json": "/logs/verifier/regression-replay.json",
+        "instruction-receipt.json": "/evolution-control/instruction-receipt.json",
+    }
+    payload["command"]["capture"]["optional_files"] = {}
     return payload
 
 
@@ -679,7 +792,8 @@ def generation_payload(job, source, instruction, outputs, *, optimizer=False):
     case = job.spec["cases"][0]
     payload = smoke_payload(job, case, "probe")
     runtime = job.spec["optimizer"] if optimizer else job.spec["runtime"]
-    configuration = codex_configuration(runtime["model"], runtime["effort"])
+    configuration = codex_configuration(runtime["model"], runtime["effort"],
+        schema_version=job.spec["schema_version"])
     payload.update(
         repo_path="/work",
         base_commit=None,
@@ -706,6 +820,80 @@ def generation_payload(job, source, instruction, outputs, *, optimizer=False):
         },
     }
     return payload
+
+
+def typesafe_payload(job, request, *, long_context=False):
+    from typesafe_worker import validate_request
+
+    validate_request(request)
+    if type(long_context) is not bool:
+        raise RemoteError("invalid TypeSafe long-context setting")
+    payload = generation_payload(job, {}, "", [])
+    credential = "/home/evolution/.typesafe/api-key"
+    payload.update(needs_codex=False, needs_typesafe=True, codex_config=None)
+    payload["files"] = {
+        "/work/request.json": encoded_file(encoded(request)),
+        "/work/typesafe_worker.py": encoded_file(job.worker_files["typesafe_worker.py"]["content"]),
+    }
+    payload["command"].update(
+        args=["python3", "/work/typesafe_worker.py", "--request", "/work/request.json",
+              "--credential", credential, "--output", "/work/auxiliary-response.json",
+              "--timeout", str(max(1, job.spec["budget"]["per_trial_timeout_sec"] - 10))],
+        typesafe_credential=credential,
+    )
+    if long_context:
+        payload["command"]["args"].append("--long-context")
+    payload["command"]["capture"] = {
+        "repo": None, "excluded_paths": [], "session_dir": None,
+        "files": {"auxiliary-response.json": "/work/auxiliary-response.json",
+                  "instruction-receipt.json": "/evolution-control/instruction-receipt.json"},
+    }
+    return payload
+
+
+def prepare_typesafe_credential(runtime, execution, payload):
+    control = host_control(execution)
+    packet = read_json(control / "payload.json")
+    if execution["role"] != "grader" or not packet.get("needs_typesafe") or packet.get("needs_codex"):
+        raise RemoteError("credential preparation requires the registered API worker")
+    if packet["command"].get("typesafe_credential") != "/home/evolution/.typesafe/api-key":
+        raise RemoteError("API credential path differs")
+    if set(payload) != {"key"} or not isinstance(payload["key"], str) or not payload["key"] or any(
+        character.isspace() for character in payload["key"]
+    ):
+        raise RemoteError("API credential is unavailable")
+    if (control / "typesafe-credential.json").exists():
+        raise UnresolvedError("API credential preparation was already attempted; query the original execution")
+    save_json(control / "typesafe-credential.json", {"prepared": False, "destroyed": False})
+    # The secret uses its own stdin operation, never create_resource's persisted payload.
+    key_path = control / "typesafe.key"
+    save_bytes(key_path, payload["key"].encode())
+    key_path.chmod(0o600)
+    container_exec(runtime, execution, ["python3", "-c",
+        "import os,pathlib; p=pathlib.Path('/home/evolution/.typesafe'); "
+        "p.mkdir(mode=0o700,exist_ok=True); os.chown(p,10000,10000); os.chmod(p,0o700)"])
+    container_files(runtime, execution, {
+        "/home/evolution/.typesafe/api-key": encoded_file(key_path.read_bytes(), 0o600),
+        "/evolution-control/redaction.json": encoded_file(encoded([payload["key"]]), 0o600),
+    })
+    container_exec(runtime, execution, ["chown", "10000:10000", "/home/evolution/.typesafe/api-key"])
+    key_path.unlink()
+    save_json(control / "typesafe-credential.json", {"prepared": True, "destroyed": False})
+    return {"prepared": True}
+
+
+def destroy_typesafe_credential(runtime, execution, resource):
+    control = host_control(execution)
+    receipt = control / "typesafe-credential.json"
+    if not receipt.exists():
+        return True
+    (control / "typesafe.key").unlink(missing_ok=True)
+    if resource is not None:
+        container_exec(runtime, execution, ["python3", "-c",
+            "import pathlib; pathlib.Path('/home/evolution/.typesafe/api-key').unlink(missing_ok=True); "
+            "pathlib.Path('/evolution-control/redaction.json').unlink(missing_ok=True)"])
+    save_json(receipt, {"prepared": read_json(receipt)["prepared"], "destroyed": True})
+    return True
 
 
 def host_environment(runtime):
@@ -954,6 +1142,8 @@ def instruction_inventory(repo, home, expected):
             original = subprocess.run(
                 [
                     "git",
+                    "-c",
+                    "safe.directory=" + str(repo),
                     "-C",
                     str(repo),
                     "show",
@@ -1021,8 +1211,8 @@ def tooling_manifest(directory):
     return result
 
 
-def codex_configuration(model="gpt-6.1-sol", effort="high"):
-    return {
+def codex_configuration(model="gpt-6.1-sol", effort="high", *, schema_version=1):
+    configuration = {
         "model": model,
         "model_reasoning_effort": effort,
         "approval_policy": "never",
@@ -1076,6 +1266,26 @@ def codex_configuration(model="gpt-6.1-sol", effort="high"):
             }
         },
     }
+    if schema_version == 2:
+        filesystem = configuration["permissions"]["evolution"]["filesystem"]
+        # The managed proxy writes public CA bundles beside private Codex state.
+        # A parent deny also hides the injected public CA from child tools.
+        del filesystem["/home/evolution/.codex"]
+        # A directory component keeps rg's filename globs from recursing into
+        # hidden state directories and layering a second mask over their files.
+        filesystem.update({path: "deny" for path in (
+            "/home/evolution/[.]codex/auth*",
+            "/home/evolution/[.]codex/*.json*",
+            "/home/evolution/[.]codex/config*.toml",
+            "/home/evolution/.codex/.env",
+            "/home/evolution/.codex/sessions",
+            "/home/evolution/.codex/archived_sessions",
+            "/home/evolution/.codex/log",
+            "/home/evolution/[.]codex/*.sqlite*",
+            "/home/evolution/[.]codex/.tmp*",
+        )})
+        filesystem["/home/evolution/.codex/proxy/**"] = "read"
+    return configuration
 
 
 def toml_value(value):
@@ -1353,6 +1563,8 @@ def mirror_capture(runtime, execution, receipt):
                 raise UnresolvedError("captured artifact hash differs")
             copy_artifact(source, control / "artifacts" / name)
     save_json(control / "receipt.json", receipt)
+    if (control / "typesafe-credential.json").exists():
+        destroy_typesafe_credential(runtime, execution, owned_resource(runtime, execution))
 
 
 def host_supervise(control):
@@ -1428,8 +1640,15 @@ def dispatch_request(request):
             ).decode("ascii")
         }
     resource = owned_resource(runtime, original)
+    if operation == "destroy_typesafe":
+        return {"destroyed": destroy_typesafe_credential(runtime, original, resource)}
+    if operation == "prepare_typesafe":
+        if resource is None or original["submission_status"] != "resource_created":
+            raise UnresolvedError("credential preparation requires the original prepared resource")
+        return prepare_typesafe_credential(runtime, original, payload)
     if operation == "query":
         if original["phase"] == "captured" and (control / "artifacts").is_dir():
+            destroy_typesafe_credential(runtime, original, resource)
             return {
                 "receipt": original,
                 "resource_state": "missing"
@@ -1449,10 +1668,11 @@ def dispatch_request(request):
     if operation == "cleanup":
         if original["phase"] != "captured" and not payload.get("force_reason"):
             raise UnresolvedError("cleanup would discard uncaptured evidence")
+        credentials_destroyed = destroy_typesafe_credential(runtime, original, resource)
         if resource is not None:
             docker(runtime, ["stop", "--time", "2", resource["Id"]])
             docker(runtime, ["rm", "--volumes", resource["Id"]])
-        return {"terminated": owned_resource(runtime, original) is None}
+        return {"terminated": owned_resource(runtime, original) is None and credentials_destroyed}
     if resource is None:
         raise UnresolvedError("registered container is unavailable")
     if operation == "cancel":
@@ -1889,6 +2109,10 @@ def capture_artifacts(control, command):
     if auth_path is not None and auth_path.exists():
         auth_path.unlink()
     (control / "redaction.json").unlink(missing_ok=True)
+    if command.get("typesafe_credential"):
+        credential = Path(command["typesafe_credential"])
+        credential.unlink(missing_ok=True)
+        save_json(artifacts / "credential-receipt.json", {"provider": "typesafe", "destroyed": not credential.exists()})
     if capture.get("runtime_skills"):
         save_json(
             artifacts / "runtime-skills.json",

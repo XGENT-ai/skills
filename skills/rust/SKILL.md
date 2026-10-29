@@ -1,6 +1,7 @@
 ---
 name: rust
 description: Use when writing, reviewing, refactoring, testing or debugging Rust code. Covers ownership, errors, performance and Tokio async patterns.
+when_to_use: 'Requests like "why does the borrow checker reject this", "should this be Arc or a reference", or "write this Tokio task".'
 license: MIT
 compatibility: Rust 1.70+ (1.75+ for async fn in traits), Cargo
 allowed-tools: Bash(cargo:*) Bash(rustc:*) Bash(rustfmt:*) Bash(clippy:*) Read Write Edit Glob Grep

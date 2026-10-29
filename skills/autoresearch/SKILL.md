@@ -1,6 +1,7 @@
 ---
 name: autoresearch
 description: 'Use for measured, iterative optimization; skip one-shot edits and review-only tasks. Routes to agi-mode Hillclimb for experiments on code, skills, prompts or agent workflows.'
+when_to_use: 'Requests like "try a few variants and keep the best", "run experiments until the metric improves", or "tune this prompt over several rounds".'
 license: MIT
 compatibility: Requires agi-mode to be installed alongside this entry and a runnable measurement path.
 ---

@@ -1,6 +1,7 @@
 ---
 name: debugging
 description: Use for bugs, test failures or unexpected behavior. Investigate and verify the root cause before proposing or implementing fixes.
+when_to_use: 'Reports like "this test fails", "the app crashes on save", or "it only breaks sometimes".'
 license: MIT
 ---
 

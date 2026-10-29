@@ -2,6 +2,7 @@
 name: spec-human-decision
 argument-hint: "<PRD/Dev-plan路径/链接/内容> [功能ID/期次/范围] [输出路径] [仅讨论]"
 description: 用于用户要求逐项确认 PRD 或开发计划中的功能取舍；不用于质量评审、从零写文档或执行开发。简述功能、价值及计划中的做法，经确认、驳回、修改后修订文档。
+when_to_use: "用户会说「一条条过一遍功能」「哪些要做哪些不做」「先跟我确认取舍」时。"
 ---
 
 # spec-human-decision · 功能逐项确认

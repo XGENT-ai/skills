@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { loadMigrationSource, materializeMigrationFixture, verifyPublishedPackage } from '../test/phoenix-ui/fixtures/migration/materialize.mjs';
 
 // Install the packed release tarball like a consumer: fresh install with the engine downloaded from its
-// public URL, and 0.3.0/0.6.0 migrations with rollback, on Node 18 and the maintenance Node.
+// public URL, 0.3.0/0.6.0 coexistence/replacement, unowned Phoenix copies and rollback,
+// on Node 18 and the maintenance Node.
 // Usage: node scripts/check-phoenix-ui-release.mjs --tarball TGZ --tarball-sha256 HEX --manifest VERSION.json
 //   --manifest-sha256 HEX --node18 NODE --node25 NODE --output-dir DIR [--legacy-dir DIR]
 const here = path.dirname(fileURLToPath(import.meta.url)), root = path.resolve(here, '..');
@@ -107,9 +108,9 @@ function npmInstall(node, archive, destination, env, name) {
   assert.equal(fs.realpathSync(runtime.stdout.trim()), fs.realpathSync(node), 'npx used a different Node runtime');
   return pkg;
 }
-function install(node, project, env, name, release) {
+function install(node, project, env, name, flags = []) {
   const npx = path.resolve(path.dirname(node), '../lib/node_modules/npm/bin/npx-cli.js');
-  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...(release ? [`--release-dir=${release}`] : [])], project,
+  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...(pkg.bin?.['phoenix-diagram'] ? ['--no-phoenix-diagram'] : []), ...flags], project,
     { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
 function rollback(node, pkg, project, env, output, name) {
@@ -131,33 +132,56 @@ for (const major of [18, 25]) {
   const pkg = npmInstall(node, path.join(raw, 'B.tgz'), path.join(base, 'B consumer'), setupEnv, `node${major}-B`);
   assert(fs.readFileSync(path.join(pkg, 'dist/phoenix-ui/VERSION.json')).equals(B.bytes));
   const bBin = path.join(pkg, 'bin/phoenix-ui.js');
-  for (const kind of ['fresh', 'legacy-0.3.0', 'legacy-0.6.0']) {
+  for (const kind of ['fresh', 'legacy-0.3.0', 'legacy-0.6.0', 'replace-0.3.0', 'replace-0.6.0', 'source-copy']) {
     const groupBase = path.join(base, kind); fs.mkdirSync(groupBase);
     const group = { node: info, kind, status: 'running', BtarballSha256: options['--tarball-sha256'] }; record.groups.push(group); save();
     try {
       let project, env;
-      if (kind.startsWith('legacy-')) {
-        const fixture = materializeMigrationFixture({ fixtureRoot: path.join(groupBase, 'fixture'), packageVersion: kind.slice(7), packagesDir: packages, providers: ['.claude', '.agents'], channel: 'xgent-installer', scenarios: ['claude-shared-and-local', 'custom-allow', 'unrelated-entry'] });
+      const legacy = kind.startsWith('legacy-') || kind.startsWith('replace-');
+      const replace = kind.startsWith('replace-');
+      if (legacy) {
+        const fixture = materializeMigrationFixture({ fixtureRoot: path.join(groupBase, 'fixture'), packageVersion: kind.split('-')[1], packagesDir: packages, providers: ['.claude', '.agents'], channel: 'xgent-installer', scenarios: ['claude-shared-and-local', 'custom-allow', 'unrelated-entry', 'personal-shadow', 'live-residue'] });
         project = fixture.projectRoot; env = environment(groupBase, fixture.homeRoot); fs.writeFileSync(path.join(groupBase, 'fixture.json'), json(fixture));
       } else {
         project = path.join(groupBase, 'project with spaces'); fs.mkdirSync(project); env = environment(groupBase);
         fs.writeFileSync(path.join(project, 'package.json'), '{"private":true}\n'); fs.writeFileSync(path.join(project, 'index.html'), '<html><body>Consumer input</body></html>\n');
+        if (kind === 'source-copy') for (const provider of ['.claude', '.agents']) {
+          const destination = path.join(project, provider, 'skills/phoenix-ui');
+          fs.cpSync(path.join(pkg, 'skills/phoenix-ui'), destination, { recursive: true });
+          fs.writeFileSync(path.join(destination, 'source-only-marker'), 'old source copy\n');
+        }
       }
       const original = snapshot(groupBase, 'before', project);
+      const originalHome = tree(env.HOME);
       if (kind === 'fresh') {
         run(`node${major}-missing-engine`, node, [bBin, 'context', '--json'], project, env, 4);
         const engine = JSON.parse(run(`node${major}-HTTP-engine-install`, node, [bBin, 'engine', 'install', '--project', project, '--json'], project, env).stdout);
         assert.equal(engine.status, 'installed'); assert.equal(sha(fs.readFileSync(engine.binary)), B.data.engines[info.target].sha256);
       }
-      const first = install(node, project, env, `node${major}-${kind}-install`);
+      const first = install(node, project, env, `node${major}-${kind}-install`, replace ? ['--replace-impeccable'] : []);
       assert.match(first.stdout, new RegExp(`Phoenix UI ${B.data.toolVersion.replaceAll('.', '\\.')} \\(@xgent-ai/skills@[^)]+\\): 已安装`));
       assert.match(first.stdout, /完成: /); assert.match(first.stdout, /回滚  npm exec --package=@xgent-ai\/skills@\S+ -- phoenix-ui migrate --rollback phoenix-\S+ --project /);
-      if (kind.startsWith('legacy-')) {
-        assert.match(first.stdout, /迁移  认领 impeccable 旧版安装/);
-        assert.match(first.stdout, /命令  \.agents: \$impeccable → \$phoenix-ui;\.claude: \/impeccable → \/phoenix-ui/);
-        assert.match(first.stdout, /说明  AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);
-        assert.match(first.stdout, /重载  \.agents\/\.codex: 在 Codex 中运行 \/hooks/);
-        assert.match(fs.readFileSync(path.join(project, '.claude/skills/impeccable/SKILL.md'), 'utf8'), /\/phoenix-ui/);
+      if (legacy) {
+        assert.doesNotMatch(first.stdout, /迁移  认领|impeccable →/);
+        if (replace) {
+          assert.match(first.stdout, /删除.*impeccable/);
+          for (const directory of [project, env.HOME]) for (const provider of ['.claude', '.agents']) {
+            assert(!fs.existsSync(path.join(directory, provider, 'skills/impeccable')));
+          }
+          for (const file of ['.claude/settings.json', '.claude/settings.local.json', '.codex/hooks.json']) {
+            const settings = path.join(project, file);
+            if (fs.existsSync(settings)) assert.doesNotMatch(JSON.stringify(JSON.parse(fs.readFileSync(settings)).hooks), /skills[\\/]impeccable[\\/]scripts/);
+          }
+        } else {
+          assert.match(first.stdout, /保留.*impeccable/);
+          for (const [file, digest] of Object.entries(original).filter(([file]) => file.includes('/skills/impeccable/'))) {
+            assert.equal(tree(project)[file], digest, `Old tool changed ${file}`);
+          }
+          assert.deepEqual(tree(env.HOME), originalHome);
+        }
+      } else if (kind === 'source-copy') {
+        assert.match(first.stdout, /重新安装.*phoenix-ui/);
+        for (const provider of ['.claude', '.agents']) assert(!fs.existsSync(path.join(project, provider, 'skills/phoenix-ui/source-only-marker')));
       } else if (kind === 'fresh') {
         assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/); assert.doesNotMatch(first.stdout, /impeccable →/); assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
         assert(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf(`Phoenix UI ${B.data.toolVersion}`));
@@ -170,22 +194,25 @@ for (const major of [18, 25]) {
       for (const file of ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']) assert.equal(installed[file], original[file], `Installer changed ${file}`);
       assert.deepEqual(Object.fromEntries(Object.entries(installed).filter(([file]) => file.startsWith('node_modules/'))),
         Object.fromEntries(Object.entries(original).filter(([file]) => file.startsWith('node_modules/'))), 'Installer changed node_modules');
-      const second = install(node, project, env, `node${major}-${kind}-rerun`);
+      const second = install(node, project, env, `node${major}-${kind}-rerun`, replace ? ['--replace-impeccable'] : []);
       assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project, outsideHistory), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));
       run(`node${major}-${kind}-bundle-check`, node, [bBin, 'skills', 'check', '--bundle-root', path.join(pkg, 'dist/phoenix-ui/bundle'), '--json'], project, env);
       group.transaction = rollback(node, pkg, project, env, first, `node${major}-${kind}-rollback`);
       const restored = snapshot(groupBase, 'rolled-back', project);
-      if (kind === 'fresh') { for (const [file, digest] of Object.entries(original)) assert.equal(restored[file], digest); assert(!fs.existsSync(path.join(project, '.claude/skills/phoenix-ui'))); }
-      else assert.deepEqual(restored, original);
+      if (kind === 'fresh' || replace || kind === 'source-copy') {
+        for (const file of ['package.json', 'index.html', 'AGENTS.md', 'CLAUDE.md']) assert.equal(restored[file], original[file]);
+        assert(!fs.existsSync(path.join(project, '.claude/skills/phoenix-ui')));
+        if (replace) assert(!fs.existsSync(path.join(project, '.claude/skills/impeccable')));
+      } else assert.deepEqual(restored, original);
       group.status = 'expected-consumer-outcomes-observed';
     } catch (error) { group.status = 'failed'; group.error = error.message; process.exitCode = 1; }
     save();
   }
 }
 } catch (error) { record.error = error.message; process.exitCode = 1; }
-record.status = !record.error && record.groups.length === 6 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
+record.status = !record.error && record.groups.length === 12 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
 record.finishedAt = new Date().toISOString(); save();
 if (record.status !== 'release-check-passed') process.exitCode = 1;
 console.log(json({ out, status: record.status, tarballSha256: options['--tarball-sha256'], manifestSha256: B.hash, groups: record.groups }));

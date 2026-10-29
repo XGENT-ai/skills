@@ -89,6 +89,8 @@ pub trait SharedBrowser {
 pub struct Engines<'a> {
     pub html: &'a dyn HtmlEngine,
     pub url: Option<&'a dyn UrlEngine>,
+    /// The XGENT rule pack the binary links in; `None` keeps built-ins only.
+    pub rule_pack: Option<&'static dyn RulePack>,
 }
 
 /// Fallback for a build that does not link crates/html (the `cli` binary

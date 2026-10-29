@@ -1,6 +1,7 @@
 ---
 name: portal-external-app
 description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖 manifest、注册、鉴权、成员客户端与终端用户身份、/svc 路由、健康检查与一盒联调。'
+when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填」「/svc 路由不通」时。"
 ---
 
 # portal-external-app · 外部镜像服务类应用接入
@@ -48,7 +49,7 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 3. env 契约表：**镜像实际读取的变量名**（镜像自有前缀与门户契约别名的映射必须写清；有的镜像不读裸 `PORT`）；
 4. **迁移入口**：迁移文件在镜像里、二进制上有一个迁移 argv（见下节）。「迁移脚本留在自己 repo 里」= 不合格；
 5. 运维口径：是否需每租户 bootstrap（需要则 `tenants.id` 必须 = 门户租户 UUID）；**`/health` 必须通过 [健康契约验收](references/health-contract.md)**，按平台同一判据验证正常与依赖故障；信封响应不能只检查 HTTP 200；
-6. **有没有重复造平台已有的能力**：自己存文件 / 自己发通知 / 自己记审计 / 自己排定时任务 / 自己算配额 —— 逐项对照下面两张表，命中就要求改走平台面；
+6. **是否复用平台能力**：文件按下文「文件与对象存储」选择 Files 或平台 `objectStorage`，后者须明确 App 自管的租户隔离、计量与清理；通知、审计、定时任务、配额仍按下面两张表复用平台面；
 7. **租户自助凭证**：这个服务有没有「租户拿自己的程序直接调你」的场景（日志/指标摄取、批量导入、CI 回写）？有就检查那条 scope 在不在 manifest 的 **`scopes`** 里 —— 不在的话租户面开不出凭证，只能退回「找平台管理员代建」（见 [integration-contract.md §3.1](references/integration-contract.md)）；
 8. **配额诉求**：有没有「每租户能建多少」这类上限？有就走平台套餐（见 [references/quota-and-seats.md](references/quota-and-seats.md)），**不接受对方自建**；
    角色本身该由对方在自己的 `app.manifest.json` 里声明 `seatRoles`；`serviceScopes` 里出现 `seats.read` 仍是当场打回的信号，但对方可以在 `privilegedServiceScopes` 里**申请**它（带 reason，进「发布审核」逐条确认批准后授予）；
@@ -73,6 +74,10 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
 
 ## 一盒初始化与升级
 
+宿主 skill 与镜像分别更新：先 `npx skills add XGENT-ai/skills` 更新 `portal-dev-setup`，
+从实际安装目录核对 `onebox.sh` 的 SHA-256，再按发布说明的匹配镜像操作。
+`requiredEnv[].generate` 的最低门户提交 / `APP_VERSION`、一盒 tag、公开 skill 提交和脚本摘要
+目前均**未发布**；完整证据状态见 `portal-dev-setup` §6，不能默认当前 `latest` 已支持。
 首次联调用 `portal-dev-setup` 的 `onebox.sh init` → `up`；已有一盒换版本用
 `upgrade [--image <ref>]` → `up`；沿用 latest 先 `pull` 更新缓存，已加载的本地新镜像可离线升级。
 不使用 `init --force` 代替升级。升级保留配置、generated/、backup/、
@@ -88,7 +93,8 @@ description: '用于把独立仓库、以 Docker 镜像交付的外部服务接�
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
   （无行先建 draft 占位），对方 `publish --manifest … --dist … --image …` ⇒ 首次必进
   「发布审核」队列 ⇒ 批准后更新清单、服务账号与已装租户，后端和网关分别交付。
-  密钥一次性回显给审批人；平台运行配置由管理员维护，App 团队无需修改门户代码。
+  SA / 交换密钥一次性回显给审批人；`requiredEnv[].generate` 声明的独立密钥永不回显。
+  平台运行配置由管理员维护，App 团队无需修改门户代码。
   特权服务态 scope 经 manifest 的 `privilegedServiceScopes` 申请、逐项审批后授予；
   用量指标经 manifest `usageMetrics` 声明（治理档）。批准不等于部署与网关已经生效，
   交付判据见 [公开入口](references/public-entrypoints.md)。
@@ -141,8 +147,9 @@ job(deploy|redeploy)
 「知会门户」变成流程内动作的那道门。**CR-3 之后它还是一道真闸**：批准前门户拿这张清单比对
 `descriptor.env ∪ envFile` 的键集合（只看键在不在，不读值），缺了就拒绝生效
 （`REQUIRED_ENV_MISSING`，提案留 pending）；审批屏逐键标状态，非密钥可当场填。改名要写成
-`{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去（**envFile 里的搬不了**，
-门户不写那个文件，那一条会判「缺」并提示运维改名）。仍有一件它管不到：对方
+`{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去。普通条目在
+`envFile` 中的旧名仍判缺；带 `generate` 的条目可沿用可读文件中的旧名，App 必须兼容消费，
+不改文件、不复制值、不生成新主键。旧键已由平台保管时拒绝改名。仍有一件它管不到：对方
 **不写进 `requiredEnv`** 的静默改名依旧无门可拦 —— 症状是服务
 换版后 `refusing to start`，而发布方那侧只看到成功。2026-08-19 知识库把 `XGENT_OPENAI_*`
 整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
@@ -153,13 +160,22 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 里写清填什么、不确定时填什么，审批屏会贴在键名旁。放哪一层的完整判断见下文「配置放哪一层」。发布面本身
 （令牌、tag 不可变、`--wait` / `--wait-review` / `status`）见 `xgent-app-release` skill。
 
-### 值从哪来：三档键名约定（照这张表命名，绝大多数键零手填）
+### 值从哪来：键名约定与独立密钥生成
 
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET`（声明了 `exchangeTargets` 时） | 平台换版时自己算并注入，没有人手填 |
-| **自动供给** | 库连接串 · Redis 地址 · 对象存储桶 · Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
-| **自定** | 其余**环境依赖**（第三方地址、第三方密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键（每应用一桶）· Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
+| **随机生成** | App 独立密钥，声明 `{ key, generate: { bytes: 32, encoding: "base64" } }` | 批准时生成、加密保管；换版复用，值永不回显 |
+| **自定** | 其余**环境依赖**（第三方地址、第三方已有密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
+
+`generate` 仅收 `bytes`（16–64 整数）与 `encoding`（标准带填充 `base64` / 小写 `hex`）。
+不可用于平台派生键或服务供给目标。套件共享后端里同名共享键只由一个成员 `generate`，其余成员以
+字符串 `requiredEnv` 消费（先批生成者；两名生成者拒绝）。
+已有主键或匹配保管值保留；规格冲突、来源冲突、不可读 `envFile` 均硬拦，不能填新值绕过。
+`generate` 的增加、撤回、规格变化都需审批；已生成值不覆盖、不提供读取或轮换入口，丢失应恢复备份。
+一盒新版 `add` 在共享的 `<一盒目录>/compose.env` 中首供并稳定复用，同名键共享同一值；主 App 与其他 App
+均可能读到，适用于可信团队调试。生产则按 App、按 brand 隔离，不以一盒结果证明生产隔离。
 
 业务参数不在这张表里：先给代码缺省值；要进清单就配 `requiredEnvNotes`（见上一节末尾与「配置放哪一层」）。
 
@@ -290,8 +306,24 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 ⚠️ **连字符 listingKey ↔ 下划线 scope**：`omni-parser` 的 scope 是 `omni_parser.*`，
 `llm-gateway` 的是 `llm_gateway.*`。两个命名空间，写混了是 `VALIDATION_FAILED`。
 
-**文件这条尤其别自己来**：字节一律落 files，别自己挂卷、别自己接 S3 —— 否则租户的配额、
-审计、预览、清理全都绕过了平台。落进去用哪种姿态，按**这份字节归谁**二选一：
+### 文件与对象存储：两条接入路径
+
+| | Files 文件服务 | `objectStorage` 基础设施 |
+| --- | --- | --- |
+| 接入 | 调 `/svc/files`，使用获准的用户态或服务态令牌 | 清单声明 `requiredServices: [{"kind":"objectStorage","name":"main"}]`，后端用 S3 SDK 直连；`main` 换成目标环境已登记的服务名 |
+| 桶与租户 | 托管模式使用租户池 `role=tenant`：多租户共用 bucket，默认按 `t/<tenantId>/` 前缀隔离 | 使用应用池 `role=app`：按 `listingKey` 每应用一个 bucket，该应用所有租户共用；租户安装时不另建桶 |
+| 隔离与治理 | Files 按租户、空间与权限收口，提供文件配额、计量、预览和清理能力 | 平台不自动加租户前缀；App 自行校验租户、组织对象 key，并负责权限、计量和生命周期；不自动纳入 Files 治理 |
+| 适用 | 用户/团队文件、需要平台文件治理的应用文件 | 自带 S3 存储引擎、索引快照或缓存等由 App 自管的底层对象 |
+
+**Files 的「应用空间」是某个租户内的逻辑空间，不是应用专属 bucket。** 租户在 Files 中自配的
+bucket 与凭据优先于托管池；存储位置由 Files 解析，调用 App 不取得租户池的 S3 凭据。
+
+应用池当前注入的是**池级共用的数据面凭据**，不发 per-App / per-tenant 子凭据；每应用独立桶
+不代表云侧已做跨 App 权限隔离。声明与五项 S3 环境变量见 `xgent-app-release` skill 的
+「对象存储：应用池直供 S3 五键」。五键按整组供给，不需要管理员逐键取值。
+
+应受平台文件治理的字节走 Files；App 自管底层对象可使用平台 `objectStorage`。以下用户态、
+服务态与空间选择**仅适用于 Files**，按**这份字节归谁**选择：
 
 | 这份字节归谁 | 姿态 | 落在哪 | 用户在文件管理里 |
 | --- | --- | --- | --- |

@@ -4,7 +4,7 @@
 
 ## Step 1: Load current state
 
-When the request initializes a Portal child app, first use the installed xgent-init skill. If it is unavailable, give its explicit internal-skill installation command, `npx skills add XGENT-ai/skills --skill xgent-init`, and stop Portal-specific initialization until it is installed. Read-only exploration may continue. Do not substitute a generic standalone page, infer Portal defaults from a disabled profile, or overwrite an existing PRODUCT.md or DESIGN.md.
+Run this flow directly; no other initialization skill is a prerequisite. Read the project's own instructions, product/design documents, configuration, and code to establish its users, purpose, capabilities, platform, and constraints. Preserve confirmed product truth and accepted design decisions. Ask only about material facts these sources leave unresolved. Do not substitute a different product or deployment model, infer defaults from a disabled profile, or overwrite an existing PRODUCT.md or DESIGN.md.
 
 Use the PRODUCT.md path resolved by `phoenix-ui context`. Update it instead of creating a competing authority. In a child app inheriting root context, confirm shared versus app-specific scope before writing.
 

@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 import os
 from pathlib import Path
 import shutil
@@ -8,6 +9,7 @@ from unittest.mock import patch
 from support import JobFixture
 from protocol import ProtocolError, prepare, candidate_from_patch, bundle_hash
 from evolution import ConflictError, freeze, load_run
+from test_quality import QualityFixture
 
 
 class CandidateTests(JobFixture):
@@ -78,6 +80,94 @@ class CandidateTests(JobFixture):
             path,
             "---\nname: renamed\ndescription: Diagnose bugs\n---\nFind the root cause.\n",
         )
+        with self.assertRaises(ProtocolError):
+            candidate_from_patch(job, parent, proposal, patch)
+
+
+class QualityCandidateTests(QualityFixture):
+    def candidate(self, *, continuous=False):
+        evaluation = self.quality_spec()
+        if continuous:
+            from protocol import canonical
+            from test_quality import continuous_rubric, continuous_calibration
+            (evaluation / "rubric.json").write_bytes(canonical(continuous_rubric()))
+            path = evaluation / "calibration.json"
+            path.write_bytes(canonical(continuous_calibration(json.loads(path.read_bytes()))))
+        job = prepare(self.write())
+        parent, proposal, patch = CandidateTests.proposal(
+            self, job, "AGENTS.md", "Preserve authorization.\nRun tests before delivery.\n")
+        proposal["mechanism"] = {"criterion_id": "regression", "patch_sha256": "a" * 64,
+            "cause": "The observed repair has no effective regression assertion.",
+            "expected_criteria": ["regression"], "regression_risk": "A narrow test could miss the boundary."}
+        record = {"schema_version": 2, "purpose": "task", "split": "search", "case_id": "search-case",
+            "candidate_hash": bundle_hash(parent), "patch_sha256": "a" * 64, "status": "ok",
+            "task_success": 1, "quality_status": "valid", "failed_gates": [], "unknown_criteria": [],
+            "quality_components": {"regression": {"status": "valid", "level": 0, "gate": False}}}
+        return job, parent, proposal, patch, record
+
+    def test_one_mechanism_is_tied_to_an_observed_parent_search_weakness(self):
+        job, parent, proposal, patch, record = self.candidate()
+        result = candidate_from_patch(job, parent, proposal, patch, search_records=[record])
+        self.assertIn(b"before delivery", result["AGENTS.md"]["content"])
+        self.assertEqual(parent, job.bundles["baseline"])
+
+    def test_measured_correctness_failure_can_support_a_hypothesis(self):
+        job, parent, proposal, patch, record = self.candidate()
+        proposal["mechanism"].update(criterion_id="correctness", expected_criteria=["correctness"],
+                                      cause="The measured artifact fails the frozen correctness gate.")
+        record.update(task_success=0, failed_gates=["correctness"])
+        record["quality_components"]["correctness"] = {"status": "valid", "level": 0, "gate": True}
+        candidate_from_patch(job, parent, proposal, patch, search_records=[record])
+
+    def test_continuous_partial_scores_support_only_current_measured_unsaturated_weaknesses(self):
+        job, parent, proposal, patch, record = self.candidate(continuous=True)
+        for level in (0, 0.5, 0.8342, 0.9999):
+            observed = deepcopy(record)
+            observed["quality_components"]["regression"]["level"] = level
+            with self.subTest(supported=level):
+                candidate = candidate_from_patch(job, parent, proposal, patch, search_records=[observed])
+                self.assertIn(b"before delivery", candidate["AGENTS.md"]["content"])
+        for level in (1, -0.01, 1.01, 83.42, True, None, float("nan")):
+            observed = deepcopy(record)
+            observed["quality_components"]["regression"]["level"] = level
+            with self.subTest(rejected=level), self.assertRaises(ProtocolError):
+                candidate_from_patch(job, parent, proposal, patch, search_records=[observed])
+        for change in ({"split": "confirmation"}, {"candidate_hash": "f" * 64},
+                       {"patch_sha256": "f" * 64}, {"quality_status": "unknown"}):
+            observed = deepcopy(record)
+            observed["quality_components"]["regression"]["level"] = 0.8342
+            observed.update(change)
+            with self.subTest(change=change), self.assertRaises(ProtocolError):
+                candidate_from_patch(job, parent, proposal, patch, search_records=[observed])
+
+    def test_legacy_anchor_protocol_does_not_accept_an_undeclared_continuous_level(self):
+        job, parent, proposal, patch, record = self.candidate()
+        record["quality_components"]["regression"]["level"] = 0.8342
+        with self.assertRaises(ProtocolError):
+            candidate_from_patch(job, parent, proposal, patch, search_records=[record])
+
+    def test_multiple_mechanisms_missing_risk_and_unknown_targets_are_rejected(self):
+        job, parent, proposal, patch, record = self.candidate()
+        for mutate in [lambda p: p.update(mechanism=[p["mechanism"], p["mechanism"]]),
+                       lambda p: p["mechanism"].pop("regression_risk"),
+                       lambda p: p["mechanism"].update(criterion_id="private-heldout", expected_criteria=["private-heldout"]),
+                       lambda p: p["mechanism"].update(expected_criteria=["boundary"]),
+                       lambda p: p["mechanism"].update(cause="")]:
+            changed = deepcopy(proposal)
+            mutate(changed)
+            with self.assertRaises(ProtocolError):
+                candidate_from_patch(job, parent, changed, patch, search_records=[record])
+
+    def test_confirmation_other_parent_and_unknown_or_saturated_quality_are_not_support(self):
+        job, parent, proposal, patch, record = self.candidate()
+        for mutate in [lambda r: r.update(split="confirmation"),
+                       lambda r: r.update(candidate_hash="f" * 64),
+                       lambda r: r.update(quality_status="unknown"),
+                       lambda r: r["quality_components"]["regression"].update(level=1)]:
+            changed = deepcopy(record)
+            mutate(changed)
+            with self.assertRaises(ProtocolError):
+                candidate_from_patch(job, parent, proposal, patch, search_records=[changed])
         with self.assertRaises(ProtocolError):
             candidate_from_patch(job, parent, proposal, patch)
 

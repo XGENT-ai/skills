@@ -2,3 +2,5 @@ interface:
   display_name: "落实 UI 验收评审"
   short_description: "按 UI 验收报告在运行中的界面上核实并修复差距，实拍自检，停滞预警时重构思路，交回复审"
   default_prompt: "使用 $apply-ui-review 按指定 UI 验收报告修复。先识别人工或 Phoenix managed 循环，已有人工历史须显式 import；已有 managed 索引而固定 engine 不匹配时只读并说明恢复方法。可执行时在真实界面上核实差距，按预警范围重构，实拍自检并运行相关检查；只把实际改过的记为已修改待评审，不自评分。按约定提交登记；managed 处置用实际协议与 applied revision 更新原记录区块，不改历史评审。回读处置与证据，交回 review-ui 复审。"
+policy:
+  allow_implicit_invocation: false

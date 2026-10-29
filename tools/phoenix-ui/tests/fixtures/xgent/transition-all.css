@@ -1,0 +1,16 @@
+/* transition-all is the anti-pattern; comments are not scanned. */
+.card {
+  transition: all 0.2s ease;
+}
+
+.grid {
+  transition-property: all;
+}
+
+* {
+  transition: all 0.2s;
+}
+
+.chip {
+  transition: opacity 0.2s ease;
+}

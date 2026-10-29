@@ -208,5 +208,170 @@ class CompareTests(unittest.TestCase):
         self.assertNotIn("verdict", report)
 
 
+class QualityCompareTests(unittest.TestCase):
+    calibration = "e" * 64
+
+    def experiment(self):
+        spec, results, hashes = CompareTests().experiment()
+        spec.update(schema_version=2, protocol_id="statistics-quality-v2")
+        spec["measurement"]["primary_metric"] = "task_quality"
+        for row in results:
+            level = int(row["candidate_id"] == "b")
+            quality = (1 + level) / 2
+            row.update(schema_version=2, protocol_id=spec["protocol_id"], score=quality,
+                       task_success=1, task_quality=quality, grader_score=1,
+                       quality_status="valid", failed_gates=[], unknown_criteria=[],
+                       quality_calibration_sha256=self.calibration,
+                       quality_evidence_ref="assessments/" + row["trial_id"] + "/quality.json",
+                       quality_components={
+                           "scope": {"status": "valid", "level": 1, "weight": 0.5,
+                                     "dimension": "change_scope", "gate": False},
+                           "regression": {"status": "valid", "level": level, "weight": 0.5,
+                                          "dimension": "regression_protection", "gate": False},
+                           "correctness": {"status": "valid", "level": 1, "weight": 0,
+                                           "dimension": "correctness", "gate": True},
+                       })
+        return spec, results, hashes
+
+    def compare(self, spec, results, hashes):
+        return compare_results(spec, results, "a", "b", hashes, split="search",
+                               calibration_sha256=self.calibration)
+
+    def test_continuous_quality_preserves_degree_scores_and_rejects_mixed_contracts(self):
+        from quality import points
+        spec, results, hashes = self.experiment()
+        spec["evaluation"] = {"scoring": "continuous_100_v1"}
+        for row in results:
+            level = 0.7342 if row["candidate_id"] == "a" else 0.8543
+            row["quality_components"]["regression"]["level"] = level
+            row.update(score=(1 + level) / 2, task_quality=(1 + level) / 2,
+                       quality_scoring="continuous_100_v1", quality_score=points(50 + 50 * level))
+            for component in row["quality_components"].values():
+                component["quality_score"] = points(100 * component["level"])
+        report = self.compare(spec, results, hashes)
+        self.assertFalse(report["invalid_reasons"])
+        self.assertAlmostEqual(report["quality_difference_points"], 6.01, places=2)
+        self.assertEqual(report["conditions"]["a"]["quality_score"], 86.71)
+        results[0].pop("quality_scoring")
+        self.assertTrue(self.compare(spec, results, hashes)["invalid_reasons"])
+
+    def test_continuous_zero_score_cannot_be_a_boolean_or_missing(self):
+        from compare import quality_trial_errors
+        _, results, _ = self.experiment()
+        row = results[0]
+        row.update(task_success=0, task_quality=0, score=0, quality_score=False,
+                   quality_scoring="continuous_100_v1", failed_gates=["correctness"])
+        row["quality_components"]["correctness"]["level"] = 0
+        for component in row["quality_components"].values():
+            component["quality_score"] = 100 * component["level"]
+        self.assertTrue(quality_trial_errors(row, self.calibration, scoring="continuous_100_v1"))
+        row.pop("quality_score")
+        self.assertTrue(quality_trial_errors(row, self.calibration, scoring="continuous_100_v1"))
+
+    def test_same_success_quality_difference_and_criterion_evidence_are_separate(self):
+        spec, results, hashes = self.experiment()
+        original = deepcopy(results)
+        report = self.compare(spec, results, hashes)
+        self.assertEqual(report["verdict"], "keep")
+        self.assertEqual(report["quality_difference"], 0.5)
+        self.assertEqual(report["task_success_difference"], 0)
+        self.assertEqual(report["conditions"]["a"]["task_quality"], 0.5)
+        self.assertEqual(report["conditions"]["b"]["task_successes"], 40)
+        regression = next(r for r in report["criterion_differences"]
+                          if r["case_id"] == "case-0" and r["criterion_id"] == "regression")
+        self.assertEqual(regression["difference"], 1)
+        self.assertEqual(results, original)
+
+    def test_measurement_gap_keeps_agent_denominator_and_does_not_raise_the_mean(self):
+        spec, results, hashes = self.experiment()
+        results[1].update(score=None, task_quality=None, quality_status="unknown",
+                          unknown_criteria=["regression"])
+        results[1]["quality_components"]["regression"].update(status="unknown", level=None)
+        report = self.compare(spec, results, hashes)
+        self.assertEqual(report["verdict"], "inconclusive")
+        self.assertEqual(report["valid_runs"], 80)
+        self.assertEqual(report["behavior_failures"], 0)
+        self.assertEqual(report["conditions"]["b"]["task_successes"], 40)
+        self.assertEqual(report["conditions"]["b"]["quality_measured"], 39)
+        self.assertIsNone(report["quality_difference"])
+        self.assertIsNone(report["conditions"]["b"]["task_quality"])
+        self.assertEqual(report["missing_quality"][0]["trial_id"], results[1]["trial_id"])
+
+    def test_version_calibration_and_score_alias_drift_cannot_promote(self):
+        spec, results, hashes = self.experiment()
+        for mutate in (
+            lambda r: r.pop("schema_version"),
+            lambda r: r.update(quality_calibration_sha256="f" * 64),
+            lambda r: r.update(score=0.5),
+            lambda r: r.update(task_success=True),
+            lambda r: r["quality_components"]["regression"].update(status="unknown", level=None),
+        ):
+            rows = deepcopy(results)
+            mutate(rows[1])
+            self.assertEqual(self.compare(spec, rows, hashes)["verdict"], "invalid")
+        self.assertEqual(compare_results(spec, results, "a", "b", hashes,
+                                         split="search")["verdict"], "invalid")
+        legacy = deepcopy(spec)
+        legacy["schema_version"] = 1
+        self.assertEqual(compare_results(legacy, results, "a", "b", hashes,
+                                         split="search")["verdict"], "invalid")
+
+    def test_no_agent_results_still_report_the_frozen_denominators(self):
+        spec, _, hashes = self.experiment()
+        report = self.compare(spec, [], hashes)
+        self.assertEqual(report["verdict"], "inconclusive")
+        self.assertEqual(report["conditions"]["a"]["expected_runs"], 40)
+        self.assertEqual(report["conditions"]["a"]["agent_runs"], 0)
+        self.assertIsNone(report["conditions"]["a"]["task_success"])
+
+    def test_verifier_measurement_failure_preserves_the_agent_without_inventing_success(self):
+        spec, results, hashes = self.experiment()
+        results[1].update(score=None, task_quality=None, task_success=None, grader_score=None,
+                          quality_status="unknown", unknown_criteria=["correctness"])
+        results[1]["quality_components"]["correctness"].update(status="unknown", level=None)
+        report = self.compare(spec, results, hashes)
+        self.assertEqual(report["verdict"], "inconclusive")
+        self.assertEqual(report["valid_runs"], 80)
+        self.assertEqual(report["conditions"]["b"]["task_success_unknown"], 1)
+        self.assertEqual(report["conditions"]["b"]["task_successes"], 39)
+        self.assertEqual(report["conditions"]["b"]["task_failures"], 0)
+        self.assertIsNone(report["conditions"]["b"]["task_success"])
+
+    def test_infra_retry_does_not_allow_resampling_a_valid_agent_after_a_judge_gap(self):
+        spec, results, hashes = self.experiment()
+        original = deepcopy(results[1])
+        original.update(trial_id="first-infra", status="infra_invalid", score=None,
+                        task_success=None, task_quality=None, quality_status="unknown")
+        results[1]["retry_of"] = original["trial_id"]
+        rows = [original] + results
+        self.assertEqual(self.compare(spec, rows, hashes)["verdict"], "keep")
+        invalid = deepcopy(rows)
+        invalid[0]["task_quality"] = 1
+        self.assertEqual(self.compare(spec, invalid, hashes)["verdict"], "invalid")
+        measurement_gap = deepcopy(rows)
+        measurement_gap[0].update(status="ok", task_success=1, unknown_criteria=["regression"])
+        measurement_gap[0]["quality_components"]["regression"].update(status="unknown", level=None)
+        self.assertEqual(self.compare(spec, measurement_gap, hashes)["verdict"], "invalid")
+
+    def test_one_failed_hard_gate_cannot_be_offset_by_other_quality_gains(self):
+        spec, results, hashes = self.experiment()
+        results[1].update(score=0, task_quality=0, task_success=0, grader_score=0,
+                          status="behavior_failure", failed_gates=["correctness"])
+        results[1]["quality_components"]["correctness"]["level"] = 0
+        report = self.compare(spec, results, hashes)
+        self.assertEqual(report["verdict"], "discard")
+        self.assertGreater(report["quality_difference"], 0)
+        self.assertEqual(report["conditions"]["b"]["task_failures"], 1)
+        self.assertIn("correctness", str(report["guardrail_regressions"]))
+
+    def test_auxiliary_values_cannot_change_primary_comparison(self):
+        spec, results, hashes = self.experiment()
+        before = self.compare(spec, results, hashes)
+        for row in results:
+            row["auxiliary_ref"] = "auxiliary/scores.json"
+            row["auxiliary_scores"] = {"normalized_score": -1000 if row["candidate_id"] == "b" else 1000}
+        self.assertEqual(self.compare(spec, results, hashes), before)
+
+
 if __name__ == "__main__":
     unittest.main()
