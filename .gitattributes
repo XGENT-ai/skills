@@ -1,0 +1,7 @@
+# Preserve the exact upstream bytes of these Creative Commons full terms.
+tools/phoenix-diagram/assets/licenses/brand-CC-BY-4.0.txt whitespace=-blank-at-eof
+tools/phoenix-diagram/assets/licenses/brand-CC-BY-SA-4.0.txt whitespace=-blank-at-eof
+tools/phoenix-diagram/assets/licenses/brand-CC-BY-NC-SA-4.0.txt whitespace=-blank-at-eof
+dist/phoenix-diagram/THIRD-PARTY-LICENSES/9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411.txt whitespace=-blank-at-eof
+dist/phoenix-diagram/THIRD-PARTY-LICENSES/28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5.txt whitespace=-blank-at-eof
+dist/phoenix-diagram/THIRD-PARTY-LICENSES/e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd.txt whitespace=-blank-at-eof
