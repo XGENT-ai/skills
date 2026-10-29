@@ -9,13 +9,13 @@ import { isDeepStrictEqual as same } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { privateDirectory, writeNew, bound, readSnapshot, readBound, identity, verifyActualTransport } from './p3-state.mjs';
 import { readEvidenceBytes } from '../../../../scripts/test-phoenix-diagram-core.mjs';
+import { verifyCandidateCohort } from '../../../../scripts/check-phoenix-diagram-candidate.mjs';
 import { proveControllerOwnership } from './p3-processes.mjs';
 import { readMigrationFixture, materializeKnownSource, MIGRATION_FIXTURE_IDENTITY } from './p3-migration.mjs';
 
 const STATE = '.phoenix-diagram/install', ACTIVE = STATE + '/active.json', LEGACY = '.agents/skills/archify';
 const KIND = 'p3-public-migration-acceptance', ID = /^[a-f0-9]{32}$/;
 export const LEGACY_V1_DESCRIPTOR_MEMBER = 'tools/phoenix-diagram/tests/fixtures/migration/legacy-candidate.v1.json';
-const LEGACY_DESCRIPTOR_IDENTITY = { bytes: 1468, sha256: '193f11ed47b7eecc72662c3d8c594ac768bdcd7565692b9901efb0ce22fb6a95' };
 const CLAIMANT = Buffer.from('Later authored claimant must survive migration recovery.\n');
 const PROTECTED = ['business.json', 'AGENTS.md', '.claude/settings.json', '.claude/skills/archify/custom.txt', '.phoenix-ui/keep.txt'];
 const PHASES = ['install-journal-ready', 'install-after-retire', 'install-after-link', 'install-before-active', 'install-after-active', 'install-committed', 'migrate-before-legacy-remove', 'migrate-after-legacy-remove', 'rollback-after-file', 'rollback-old-journal-retired', 'rollback-old-journal-published', 'rollback-audit-archived', 'rollback-compat-published'];
@@ -76,12 +76,7 @@ async function groupGone(pid) { const end = Date.now() + 10000; while (Date.now(
 function processFile(directory, role, args, env, result) { const raw = result.processResult || result; return writeNew(path.join(directory, role + '.process.json'), { schemaVersion: 1, kind: 'p3-migration-public-process', args, environmentOverrides: env, exitCode: raw.exitCode, signal: raw.signal ?? null, actualTransport: result.actualTransport || raw.actualTransport || null, stdout: writeNew(path.join(directory, role + '.stdout'), raw.stdout || ''), stderr: writeNew(path.join(directory, role + '.stderr'), raw.stderr || '') }); }
 function binding(candidate, consumer) { assert(candidate?.source && candidate?.version && consumer?.engine?.identity && consumer?.publicNpm && consumer?.candidate?.ownedTarball, 'Authenticated candidate and public npm consumer are required'); assert(same(candidate.engine.identity, consumer.engine.identity)); assert(same(candidate.tgz.identity, consumer.candidate.ownedTarball.identity), 'Consumer uses another candidate tgz'); assert.equal(consumer.publicNpm.bin, 'phoenix-diagram'); assert.equal(consumer.publicNpm.enginePath, consumer.engine.path); assert.equal(consumer.publicNpm.tarball, consumer.candidate.ownedTarball.path); assert.equal(consumer.engine.engineIdentity?.sourceInputSha256, candidate.source.inputSha256); return { source: candidate.source, bundleSha256: candidate.version.bundleSha256, tarball: consumer.candidate.ownedTarball, engine: consumer.engine, publicNpm: consumer.publicNpm }; }
 function historicalDescriptor(bytes, legacyV1) {
-  assert(same(identity(bytes), LEGACY_DESCRIPTOR_IDENTITY), 'Historical v1 descriptor bytes differ');
-  const descriptor = JSON.parse(bytes); assert.equal(descriptor.schemaVersion, 1); assert.equal(descriptor.kind, 'phoenix-diagram-v1-candidate-fixture');
-  assert(same(descriptor.source, legacyV1.candidate.source), 'Historical package source differs from authenticated v1 input');
-  assert(same(descriptor.tarball, legacyV1.candidate.tgz.identity), 'Historical package tgz differs');
-  for (const tuple of descriptor.writerSources) assert(legacyV1.candidate.sourceInputs.entries.some(row => same(row, tuple)), 'Historical writer source tuple differs');
-  return descriptor;
+  return verifyCandidateCohort(legacyV1.candidate, { legacyDescriptor: bytes });
 }
 function terminalStatus(cases) { return cases.some(row => row.status === 'failed') ? 'failed' : cases.every(row => row.status === 'pass') ? 'pass' : 'incomplete'; }
 

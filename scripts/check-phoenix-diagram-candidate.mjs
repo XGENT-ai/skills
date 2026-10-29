@@ -23,6 +23,7 @@ export { publicNpmCommand };
 const KIND='phoenix-diagram-candidate-consumer';
 const REVIEW_KIND='phoenix-diagram-candidate-review';
 const HASH=/^[a-f0-9]{64}$/;
+const LEGACY_DESCRIPTOR_IDENTITY={bytes:1468,sha256:'193f11ed47b7eecc72662c3d8c594ac768bdcd7565692b9901efb0ce22fb6a95'};
 const MAX_REVIEW=2*1024*1024;
 const WAIT_MS=90*60*1000;
 const POLL_BUDGET_MS=85*60*1000; // Leave the 90-minute step time for review-record.
@@ -133,8 +134,20 @@ export function selectLegacySamples(members,sourceInputs,{profile}={}) {
   }
   return{layout,paths};
 }
-export function validateCandidate(directory,target,{profile}={}) {
+export function verifyCandidateCohort(candidate,{legacyDescriptor}={}) {
+  if(legacyDescriptor){
+    requireThat(same(identity(legacyDescriptor),LEGACY_DESCRIPTOR_IDENTITY),'Historical v1 descriptor bytes differ');
+    const descriptor=JSON.parse(legacyDescriptor);requireThat(descriptor.schemaVersion===1 && descriptor.kind==='phoenix-diagram-v1-candidate-fixture','Historical v1 descriptor contract differs');
+    requireThat(same(descriptor.source,candidate.source),'Historical package source differs from authenticated v1 input');
+    requireThat(same(descriptor.tarball,candidate.tgz.identity),'Historical package tgz differs');
+    for(const tuple of descriptor.writerSources)requireThat(candidate.sourceInputs.entries.some(row=>same(row,tuple)),'Historical writer source tuple differs');
+    return descriptor;
+  }
+  if(process.env.PHOENIX_DIAGRAM_TGZ_SHA256)requireThat(candidate.tgz.identity.sha256===process.env.PHOENIX_DIAGRAM_TGZ_SHA256,'Workflow tgz SHA differs');if(process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT)requireThat(candidate.source.commit===process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT,'Workflow source commit differs');
+}
+export function validateCandidate(directory,target,{profile,legacyDescriptor}={}) {
   requireThat(target===targetForHost(),'Candidate target must be the current native host');
+  requireThat(!legacyDescriptor || profile==='p2','Historical v1 validation requires its original P2 contract');
   const candidate=verifyCandidateInventory(directory),record=candidate.record;
   requireThat(record.port===DEFAULT_PORT && same(record.targets,TARGETS) && record.toolVersion==='0.2.0' && HASH.test(record.source?.inputSha256),'Candidate target/port/source contracts differ');
   const tgz=checkedFile(candidate,record.tarball?.path);requireThat(record.tarball.path.endsWith('.tgz') && same(descriptor(record.tarball.path,tgz.content),record.tarball),'Candidate tarball digest differs');
@@ -162,7 +175,7 @@ export function validateCandidate(directory,target,{profile}={}) {
   expected.push(...TARGETS.map(name=>`release-dir/phoenix-diagram-${name}`));requireThat(same(sorted(candidate.files.keys()),sorted(expected)),'Candidate contains extra or missing release/receipt resources');
   const legacySamples=selectLegacySamples(members,inputs,{profile});
   for(const name of ['docs/phoenix-diagram.md','bin/phoenix-diagram.js','bin/xgent-skills.js',...TYPES.map(type=>`skills/phoenix-diagram/examples/minimal.${type}.json`)])requireThat(members.has(name),`Consumption package is missing ${name}`);
-  if(process.env.PHOENIX_DIAGRAM_TGZ_SHA256)requireThat(tgz.identity.sha256===process.env.PHOENIX_DIAGRAM_TGZ_SHA256,'Workflow tgz SHA differs');if(process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT)requireThat(record.source.commit===process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT,'Workflow source commit differs');
+  verifyCandidateCohort({tgz,source:record.source,sourceInputs:inputs},{legacyDescriptor:legacyDescriptor?readBound(legacyDescriptor,'fixed historical v1 descriptor').content:undefined});
   return{...candidate,tgz,version,pkg,members,sourceInputs:inputs,legacySamples,source:record.source,engine:checkedFile(candidate,`release-dir/phoenix-diagram-${target}`),frozenSources:artifacts[0].receipt.frozenSources,sourceVerification:{scope:'Actual canonical tuples and four checksum-bound native/assembly attestations; full source/archive reconstruction belongs to native and assemble jobs',status:'pass'}};
 }
 
@@ -290,11 +303,11 @@ async function negativeResources(state,candidate,environment,adapter,server) {
   requireThat(!unsupported.error && unsupported.status===0 && /unsupported|support/i.test(unsupported.stdout),'Packaged unsupported-platform guard did not reject');checks.push({name:'unsupported-platform',status:'pass',scope:'Actual packaged pure bootstrap guard; no unsupported-host native execution is claimed',receipt:processEvidence(directory,'unsupported-platform',{exitCode:unsupported.status,stdout:unsupported.stdout,stderr:unsupported.stderr})});
   return{status:'pass',checks};
 }
-function context(candidate,target,profile) {
+function context(candidate,target,profile,historical) {
   const repository=process.env.GITHUB_REPOSITORY || null,runId=process.env.GITHUB_RUN_ID || null;
   if(repository)requireThat(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository),'Invalid workflow repository');if(runId)requireThat(/^\d+$/.test(runId),'Invalid workflow run ID');
   if(process.env.GITHUB_ACTIONS==='true')requireThat(HASH.test(process.env.PHOENIX_DIAGRAM_TGZ_SHA256 || '') && HASH.test(process.env.PHOENIX_DIAGRAM_CANDIDATE_SHA256 || '') && /^[a-f0-9]{40}$/.test(process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT || '') && HASH.test(process.env.PHOENIX_DIAGRAM_HARNESS_SHA256 || ''),'Workflow transfer identities are required');
-  return{...hostHeader(),...(profile?{profile}:{}),target,repository,runId,runAttempt:process.env.GITHUB_RUN_ATTEMPT || '1',job:process.env.GITHUB_JOB || null,nonce:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),source:candidate.source,candidate:{record:bound(candidate.snapshot),tarball:bound(candidate.tgz),candidateArchiveSha256:process.env.PHOENIX_DIAGRAM_CANDIDATE_SHA256 || null,artifactId:process.env.PHOENIX_DIAGRAM_ARTIFACT_ID || null,artifactDigest:process.env.PHOENIX_DIAGRAM_ARTIFACT_DIGEST || null},harnessArchiveSha256:process.env.PHOENIX_DIAGRAM_HARNESS_SHA256 || null,sourceVerification:candidate.sourceVerification,runtimeNode:process.version,phase:'starting',automatedStatus:'not-run',platformHandoff:'incomplete',handoff:'pending-review',candidateHandoff:'pending-all-platforms-and-provider',diagnostics:[]};
+  return{...hostHeader(),...(profile?{profile}:{}),target,repository,runId,runAttempt:process.env.GITHUB_RUN_ATTEMPT || '1',job:process.env.GITHUB_JOB || null,nonce:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),source:candidate.source,candidate:{record:bound(candidate.snapshot),tarball:bound(candidate.tgz),candidateArchiveSha256:historical?historical.candidateArchive.sha256:process.env.PHOENIX_DIAGRAM_CANDIDATE_SHA256 || null,artifactId:historical?String(historical.artifact.id):process.env.PHOENIX_DIAGRAM_ARTIFACT_ID || null,artifactDigest:historical?historical.artifact.digest.slice('sha256:'.length):process.env.PHOENIX_DIAGRAM_ARTIFACT_DIGEST || null},harnessArchiveSha256:process.env.PHOENIX_DIAGRAM_HARNESS_SHA256 || null,sourceVerification:candidate.sourceVerification,runtimeNode:process.version,phase:'starting',automatedStatus:'not-run',platformHandoff:'incomplete',handoff:'pending-review',candidateHandoff:'pending-all-platforms-and-provider',diagnostics:[]};
 }
 function reviewRequest(state,stateFile) {
   const records=Object.fromEntries(state.cases.map(entry=>[entry.id,{schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'review-record',status:'pass',diagnostics:[],artifact:{path:entry.state.artifact.path,identity:entry.state.artifact.identity},candidate:{path:entry.state.candidate.path,identity:entry.state.candidate.identity},configSha256:entry.state.configSha256,engine:entry.state.engine,deliveryReceiptId:entry.state.deliveryReceiptId,browserReceiptIdentity:entry.state.browserReceiptIdentity,screenshotIdentities:entry.state.screenshots.map(file=>({file:{path:file.path,identity:file.identity},viewport:file.viewport,theme:file.theme,observed:false,observations:''})),reviewer:'',scope:['diagram','labels','cards','relationship-occlusion','hierarchy','controls'],verdict:'unavailable',findings:['Actual image review has not been performed.']}]))
@@ -311,7 +324,12 @@ export async function initialConsume(options) {return consumeCandidate(options);
 // Explicit old-package precondition: installation evidence only, never a core pass.
 export async function prepareCandidateTransport(options) {return consumeCandidate(options,{installationOnly:true});}
 async function consumeCandidate(options,{installationOnly=false}={}) {
-  const candidate=validateCandidate(options.candidateDir,options.target,{profile:options.profile}),harness=verifySourceLessHarness(root,{profile:options.profile,sourceInputs:candidate.sourceInputs.entries}),state=context(candidate,options.target,options.profile);
+  requireThat(!options.legacyDescriptor && !options.harnessCandidateDir || installationOnly && options.legacyDescriptor && options.harnessCandidateDir,'Historical installation needs its descriptor and the current P3 harness owner');
+  const candidate=validateCandidate(options.candidateDir,options.target,{profile:options.profile,legacyDescriptor:options.legacyDescriptor});
+  const harnessCandidate=options.harnessCandidateDir?validateCandidate(options.harnessCandidateDir,options.target,{profile:'p3'}):candidate;
+  const harness=verifySourceLessHarness(root,{profile:options.harnessCandidateDir?'p3':options.profile,sourceInputs:harnessCandidate.sourceInputs.entries});
+  const historical=options.legacyDescriptor?verifyCandidateCohort(candidate,{legacyDescriptor:readBound(options.legacyDescriptor,'fixed historical v1 descriptor').content}):undefined,state=context(candidate,options.target,options.profile,historical);
+  if(options.harnessCandidateDir)state.harnessSource=harnessCandidate.source;
   if(installationOnly){state.kind='phoenix-diagram-candidate-install-context';state.scope='installation-only';}
   const directory=options.evidenceDir?mkdir(path.resolve(options.evidenceDir)):fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'phoenix-diagram-consumer-')));fs.chmodSync(directory,0o700);state.runRoot=directory;const directoryStat=fs.statSync(directory);state.directoryBinding={device:String(directoryStat.dev),inode:String(directoryStat.ino),uid:directoryStat.uid};state.harness=harness;let server;
   try {
@@ -355,6 +373,12 @@ export function readCandidateTransport(options,candidate) {return readConsumerCo
 export function readConsumerContext(options,candidate,{installationOnly=false}={}) {
   const file=readSnapshot(options.resume),state=JSON.parse(file.content.toString('utf8'));requireThat(state.schemaVersion===1 && state.target===options.target && (installationOnly?state.kind==='phoenix-diagram-candidate-install-context' && state.scope==='installation-only' && state.phase==='installed' && state.status==='pass' && state.automatedStatus==='not-run':state.kind===KIND && state.automatedStatus==='pass' && ['pending-review','complete','failed-review'].includes(state.phase)),'State does not prove the required consumption/installation scope for this native target');
   requireThat((state.profile??null)===(options.profile??null),'Resume profile differs from the original consumption');
+  if(options.legacyDescriptor){
+    requireThat(installationOnly && options.harnessCandidateDir,'Historical resume needs its current P3 harness owner');
+    const historical=verifyCandidateCohort(candidate,{legacyDescriptor:readBound(options.legacyDescriptor,'fixed historical v1 descriptor').content}),owner=validateCandidate(options.harnessCandidateDir,options.target,{profile:'p3'});
+    requireThat(same(state.harnessSource,owner.source) && state.harness.migrationFixture?.manifestBound===true,'Historical transport harness belongs to another current candidate');
+    requireThat(state.candidate.candidateArchiveSha256===historical.candidateArchive.sha256 && String(state.candidate.artifactId)===String(historical.artifact.id) && state.candidate.artifactDigest===historical.artifact.digest.slice('sha256:'.length),'Historical transport archive provenance differs');
+  }
   const directory=ordinaryDirectory(state.runRoot),stat=fs.statSync(directory);requireThat(path.dirname(file.path)===directory && stat.uid===process.getuid() && (stat.mode&0o7777)===0o700 && same(state.directoryBinding,{device:String(stat.dev),inode:String(stat.ino),uid:stat.uid}),'Resume requires its original owned 0700 live-job directory');
   requireThat(state.source.commit===candidate.source.commit && same(state.source,candidate.source) && same(state.candidate.tarball.identity,candidate.tgz.identity) && same(state.candidate.record.identity,candidate.snapshot.identity),'Resume candidate/source bytes differ');
   checkedEnvironment(state.environment.env);requireThat(state.runtimeNode===process.version && same(state.publicNpm.env,state.environment.env) && state.publicNpm.bin==='phoenix-diagram' && state.publicNpm.nodePath===state.environment.nodePath && state.publicNpm.npmCliPath===state.environment.npmCliPath && state.publicNpm.tarball===state.candidate.ownedTarball.path && state.publicNpm.cwd===state.project && state.publicNpm.enginePath===state.engine.path && state.engine.path===engineCachePath(state.environment,candidate.version,state.target),'Public npm resume transport changed');
