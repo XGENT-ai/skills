@@ -1,6 +1,6 @@
 # 比较与改进仓库指令
 
-`optimize-agents-md` 现专注于仓库 AGENTS.md 瘦身：依赖 `use-prompt-dsl` 的 POLICY 精炼原则、去重补缺，保留项目事实与作用域；仅诊断只读，缺 DSL skill 停止并建议完整安装，优化流程不写入目标文件。它不依赖本文的远端评测链路。skill 或指令的行为比较仍沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。v1 保留二元 task_success；v2 独立测 task_quality，以任务成功作底线，并先校准辨别力、诊断基线余量/噪声/精度预算，再决定是否搜索。TypeSafe 独立校准后只辅助 search，主质量及采用仍由原链负责。[v2 实施进度](plan/agent-instruction-evolution-v2.md)区分本地接线与真实闭环，不沿用首期验收结论宣称新版已验收。
+`optimize-agents-md` 现专注于仓库 AGENTS.md 瘦身：依赖 `use-prompt-dsl` 的 Odyssey RULE 精炼原则、去重补缺，保留项目事实与作用域；仅诊断只读，缺 DSL skill 停止并建议完整安装，优化流程不写入目标文件。它不依赖本文的远端评测链路。skill 或指令的行为比较仍沿用 agi-mode 的 Eval/Hillclimb。远端执行工具是可选能力，普通编码和初始化无需它。v1 保留二元 task_success；v2 独立测 task_quality，以任务成功作底线，并先校准辨别力、诊断基线余量/噪声/精度预算，再决定是否搜索。TypeSafe 独立校准后只辅助 search，主质量及采用仍由原链负责。[v2 实施进度](plan/agent-instruction-evolution-v2.md)区分本地接线与真实闭环，不沿用首期验收结论宣称新版已验收。
 
 2026-10-22按现有结果阶段交付，计划仍为3/4，后续测评暂停。工程测试及已测真实子范围保留；完整skill三条件、已校准TypeSafe反馈进入真实optimizer和指令质量收益尚未完成验收。资源到位后换更稳定真实任务，以3.00分为最小实际收益重新资格和A/A；当前原probe回收缺口及恢复步骤见[M4阶段交付](plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
 

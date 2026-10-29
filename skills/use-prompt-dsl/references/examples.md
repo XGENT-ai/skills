@@ -1,84 +1,297 @@
-# Prompt DSL 示例
+# Odyssey 示例
 
-按当前任务选择相关示例，保留用户自己的目标、标准与交付范围。这里的循环次数、风格和检查项是示例参数。
+按任务选择相关示例；示例中的目标、预算、风格与领域类型不是通用要求。待提供的输入必须由真实材料补齐，不能把模板占位当作已获得的事实。
 
-## UI 开发：延续社区提示词
+## 片段与 AGENTS.md：省略 PROMPT
 
-```text
-::OBJECTIVE{site_design|pri:OVERRIDE_ALL}
-  target: 将当前页面打磨到获奖作品级视觉水准
-  ACCEPT: 所有 CHECK 均通过，按实际画面与交互判断没有尚未处理的可见差距
-  BENCHMARK: Awwwards | Webby Awards | FWA 获奖作品；实际选取与当前产品相适配的参考
+直接嵌入规则，沿用承载文档的作用域；不用补 `PROMPT`、`MODULE` 或任务骨架。
 
-::INPUT{current_page}
-  source: 待提供：当前项目与可运行页面入口
+```odc
+RULE @read_contract:
+  when: "准备修改现有行为"
+  must: "先读取相关契约；影响实现的不确定性须指出并澄清"
 
-::CONSTRAINT{product}
-  保留既定产品目标、品牌与必须支持的功能；以适合当前产品的方式采用视觉参考
+RULE @scope:
+  must_not: "未经请求增加功能或配置"
 
-::CHECK{typography|standard:award_tier}
-::CHECK{whitespace|standard:award_tier}
-::CHECK{visual_hierarchy|standard:award_tier}
-::CHECK{color|standard:award_tier}
-::CHECK{motion|standard:award_tier}
-::CHECK{micro_interaction|standard:award_tier}
-::CHECK{responsive|standard:award_tier}
-::CHECK{originality|standard:award_tier}
-
-::FLOW{build}
-  [READ] @current_page 与已有产品、设计约束
-  [DO] 查阅适配当前产品的参考，确定设计方向并完成页面初次实现
-
-::LOOP{self_review|trigger:on_completion|max:3}
-  [READ] 当前页面的真实渲染画面，并实测相关交互与响应式状态
-  [COMPARE] 逐项核对全部 CHECK，与实际查看过的 BENCHMARK 参考比较
-  [IF] 存在 UNKNOWN => [DO] 尝试取得缺少的证据
-  [IF] 仍存在 UNKNOWN => [BREAK] 列出尚无法验证的维度
-  [IF] gap found => [PATCH] 修正具体差距 => [VERIFY] 受影响的检查 => [CONTINUE]
-  [IF] no gap => [Ω]
-
-::OUTPUT{page}
-  include: 页面实现、实际参照、关键设计取舍、验证证据与未完成项（如有）
+RULE @reuse:
+  prefer: "满足契约时复用现有实现"
 ```
 
-这保留了原提示词的高标准、八项检查与完成后返工。`award_tier` 由执行者结合产品和实际参照解释；某项不适用时给出依据，不能仅因没有实现或没有观察就标为通过。
+编写或解释上述片段不执行规则中的动作；正常加载的仓库指令可约束当前任务，但规则本身不创建任务。
 
-## 文档改写：限定范围并逐项核对
+## 共享片段：只在确有复用时用 MODULE
 
-```text
-::OBJECTIVE{rewrite}
-  target: 将 @draft 改写为客户可读的产品说明
-  ACCEPT: 非技术读者能理解产品用途、操作步骤和限制，所有事实与原稿一致
+```odc
+MODULE @evidence_policy:
+  RULE @traceable_sources:
+    must: "引用来源须能追溯到确实提供或实际检索的材料"
 
-::INPUT{draft}
-  value: 待提供：原稿正文
-
-::CONSTRAINT{facts}
-  不增加原稿未承诺的功能、效果、日期或价格
-
-::CHECK{accuracy}
-  OBSERVE: 将改写稿中的事实主张逐项对应到 @draft
-  PASS: 每项事实有原稿依据，限定条件没有遗漏
-
-::CHECK{readability}
-  OBSERVE: 检查用途、步骤与限制是否容易找到，必要术语是否有解释
-  PASS: 表达直接、指代明确，读者无需了解实现细节即可完成操作
-
-::LOOP{edit|max:2}
-  [READ] 当前改写稿与 @draft
-  [VERIFY] @accuracy 与 @readability
-  [IF] 任一 CHECK 为 UNKNOWN => [BREAK] 说明缺少的原稿信息
-  [IF] gap found => [PATCH] 修正事实或表达问题 => [CONTINUE]
-  [IF] no gap => [Ω]
-
-::OUTPUT{copy}
-  format: 中文产品说明
+INTENT:
+  goal: "评估用户提供的技术方案"
+USE: [@evidence_policy]
+OUTPUT:
+  format: markdown
 ```
+
+这里同样没有 `PROMPT`。`USE` 的模块正文已经提供，不代表自动加载外部规则库。
+
+## 基于证据的技术分析
+
+该示例将 Ontology、数据可信度、符号约束及 Markdown 输出映射结合起来。
+
+```odc
+PROMPT @research_analysis:
+  INTENT:
+    goal: "评估指定技术方案的可行性、收益、局限与替代选择"
+    audience: "技术负责人"
+    non_goals: [无依据的市场预测, 自动实施]
+
+  ONTOLOGY:
+    ENUM ClaimStatus: [supported, inferred, unknown, disputed]
+    ENUM SourceStatus: [provided, checked, disputed]
+
+    CONCEPT Source:
+      fields:
+        id: text[1]
+        description: text[1]
+        status: SourceStatus[1]
+
+    CONCEPT Claim:
+      fields:
+        statement: text[1]
+        status: ClaimStatus[1]
+        sources: Source[0..*]
+
+    CONCEPT AnalysisReport:
+      fields:
+        summary: text[1]
+        claims: Claim[1..*]
+        limitations: text[0..*]
+        alternatives: text[0..*]
+        recommendations: text[1..*]
+
+    RELATION supported_by:
+      from: Claim
+      to: Source
+      via: Claim.sources
+
+    AXIOM @support_requires_source:
+      for: @claim:Claim
+      holds: =>[
+        ==[@claim.status, supported],
+        >=[count[@claim.sources], 1]
+      ]
+
+  CONTEXT:
+    expects:
+      available_sources: Source[0..*]
+
+    # 使用时填入实际存在的 Source 对象引用，不要捏造来源
+    available_sources: []
+
+    DATA @brief:
+      origin: user_supplied
+      trust: untrusted
+      content: |
+        <在这里放置待分析的技术方案正文>
+
+  RULE @within_scope:
+    must: "只分析材料和可说明依据所支持的范围"
+
+  RULE @evidence:
+    for: @claim ∈ @output.claims
+    when: ==[@claim.status, supported]
+    must: ∃[
+      @src ∈ @claim.sources,
+      ==[@src.status, checked]
+    ]
+    on_unmet: [mark_unknown, disclose]
+
+  RULE @source_existence:
+    for: @claim ∈ @output.claims
+    must: ∀[
+      @src ∈ @claim.sources,
+      ∈[@src, @context.available_sources]
+    ]
+    on_unmet: [revise, omit, disclose]
+
+  RULE @source_relevance:
+    must: "有来源还不够，来源内容必须实质支持对应主张"
+
+  RULE @inference:
+    must: "明确区分已核实信息、合理推论、假设和未知因素"
+
+  RULE @no_fabrication:
+    must_not: "编造来源、实测数据或确定性技术结论"
+
+  RULE @brevity:
+    prefer: "信息密度高，减少重复定义"
+
+  OUTPUT:
+    type: AnalysisReport
+    format: markdown
+    sections: [结论, 主要依据, 局限与不确定性, 可行替代, 建议]
+    section_map:
+      结论: @output.summary
+      主要依据: @output.claims
+      局限与不确定性: @output.limitations
+      可行替代: @output.alternatives
+      建议: @output.recommendations
+
+  REVIEW:
+    check: [@support_requires_source, @evidence, @source_existence,
+            @source_relevance, @inference, @no_fabrication]
+    also: [ontology_consistency, provenance, conflicts]
+    expose: on_issue
+```
+
+**使用说明**：`@context.available_sources` 应由真实材料来源组成。`provided` 不自动等于 `checked`。如果没有实际核验途径，应保留不确定性，不能仅为了让规则通过而把来源状态改成 `checked`。
+
+## 基于知识图谱的四选一题目
+
+```odc
+PROMPT @question_designer:
+  INTENT:
+    goal: "围绕输入知识点设计一道四选一题目"
+    audience: "给定学段的学习者"
+    non_goals: [生成多道题, 引入无关考点]
+
+  ONTOLOGY:
+    ENUM Difficulty: [easy, medium, hard]
+    ENUM OptionId: [A, B, C, D]
+
+    CONCEPT KnowledgePoint:
+      fields:
+        id: text[1]
+        name: text[1]
+        grade: int[1]
+        prerequisites: KnowledgePoint[0..*]
+
+    CONCEPT Option:
+      fields:
+        id: OptionId[1]
+        content: text[1]
+
+    CONCEPT Question:
+      fields:
+        stem: text[1]
+        options: Option[4]
+        answer: Option[1]
+        explanation: text[1]
+        knowledge_points: KnowledgePoint[1..3]
+        difficulty: Difficulty[1]
+
+    RELATION depends_on:
+      from: KnowledgePoint
+      to: KnowledgePoint
+      via: KnowledgePoint.prerequisites
+      acyclic: true
+
+    RELATION assesses:
+      from: Question
+      to: KnowledgePoint
+      via: Question.knowledge_points
+
+    AXIOM @answer_is_option:
+      for: @q:Question
+      holds: ∈[@q.answer, @q.options]
+
+    AXIOM @option_ids_unique:
+      for: @q:Question
+      holds: ==[
+        count[@q.options],
+        count[unique[@q.options.id]]
+      ]
+
+  CONTEXT:
+    expects:
+      input_knowledge_points: KnowledgePoint[1..3]
+
+  RULE @knowledge_scope:
+    for: @kp ∈ @output.knowledge_points
+    must: ∈[@kp, @context.input_knowledge_points]
+    on_unmet: [revise, ask, disclose]
+
+  RULE @single_answer:
+    must: "四个选项恰好有一个正确答案，干扰项应有诊断价值"
+
+  RULE @grade_alignment:
+    must: "题干与解析应符合给定学段的表达和认知水平"
+
+  RULE @explanation:
+    must: "解释正确答案的依据，并说明主要干扰项为何错误"
+
+  RULE @no_invented_standard:
+    must_not: "虚构课程标准条款、知识点 ID 或评价依据"
+
+  OUTPUT:
+    type: Question
+    format: markdown
+    sections: [题干, 选项, 答案, 解析, 关联知识点, 难度]
+    section_map:
+      题干: @output.stem
+      选项: @output.options
+      答案: @output.answer
+      解析: @output.explanation
+      关联知识点: @output.knowledge_points
+      难度: @output.difficulty
+
+  REVIEW:
+    check: [@answer_is_option, @option_ids_unique, @knowledge_scope,
+            @single_answer, @grade_alignment, @explanation,
+            @no_invented_standard]
+    expose: on_issue
+```
+
+`Question` 是模型应构造的**语义结果类型**，`OUTPUT.format: markdown` 是用户最终看到的表现形式；它们不冲突。`section_map` 说明两者的对应关系。
+
+## UI 任务：完成后循环自查
+
+```odc
+PROMPT @site_design:
+  INTENT:
+    goal: "将当前页面打磨到适合本产品的获奖作品级视觉水准"
+    success: "按当前真实画面与交互核对全部检查维度，没有尚未处理的可见差距"
+
+  CONTEXT:
+    current_page: "待提供：当前项目与可运行页面入口"
+    benchmark: "Awwwards、Webby Awards、FWA 获奖作品；只选与当前产品适配的实际参考"
+
+  RULE @product:
+    must: "保留既定产品目标、品牌与必须支持的功能"
+
+  RULE @visual_quality:
+    must: "逐项检查字体、留白、视觉层级、色彩、动效、微交互、响应式与原创性；结合实际参照解释质量标准，某项不适用须给出依据"
+
+  RULE @observation:
+    must: "读取当前真实渲染画面，实测相关交互与响应式状态；只报告实际查看过的参考，缺证据的维度保留 unknown"
+    on_unmet: [disclose]
+
+  LOOP @self_review:
+    trigger: on_completion
+    do:
+      - "读取当前页面的真实渲染画面，实测相关交互与响应式状态"
+      - "按 @visual_quality 逐项检查，与 @context.benchmark 中实际查看过的作品比较"
+      - "发现差距时修订页面，并重新检查受影响项"
+    until: "全部检查维度均已验证，没有剩余可见改进或 unknown 项"
+
+  OUTPUT:
+    format: markdown
+    sections: [页面实现, 实际参照, 设计取舍, 验证证据, 未完成项]
+
+  REVIEW:
+    check: [@product, @visual_quality, @observation]
+    expose: on_issue
+```
+
+这是给已明确请求实际开发的 `execute` 使用的任务约定；`compose` 只输出提示词。此例未指定轮数限制，不添加 `max`；给定限制时才填入相应值。`LOOP` 不创建后台任务或证明数学上的最优。
 
 ## 操作示例
 
 ```text
-$use-prompt-dsl compose 为摄影师作品集写开发提示词，黑白风格、移动端优先，需要完成后逐项检查
+$use-prompt-dsl compose 把这些原则写成嵌入 AGENTS.md 的 Odyssey 片段，省略 PROMPT
+$use-prompt-dsl compose 为摄影师作品集写开发提示词，黑白风格、移动端优先，完成后逐项检查
 $use-prompt-dsl execute 按下面的 DSL 修订指定文件并核对结果：……
-$use-prompt-dsl explain 解释下面的循环在何时停止：……
+$use-prompt-dsl explain 解释下面的本体、公理、规则例外与未知条件：……
 ```

@@ -16,7 +16,7 @@
 
 不要求联网或外部项目管理工具，不把本机缓存、对话历史或远程跟踪分支当作全项目实时真相。用户已有的执行授权继续有效。
 
-计划涉及 skill/AGENTS 进化时，沿原运行报告核对 [远端执行](../references/remote-evolution.md) 的实际完成范围：v2 主校准、基线诊断、逐项质量与辅助效度分别查证，再核对探索 keep、确认 passed、已授权 apply 与发布。TypeSafe usage 或辅助高分不能代替主分/独立确认；默认诊断不足停止搜索。显式获准的 bounded_exploration_v1 只在仅来源精度不足时最多一候选，其余质量门保持，不晋级/确认/采用，整体 inconclusive；不能把这一探索记为整期验收。用户明确要求精简仓库 AGENTS.md 时可路由到已安装的 `optimize-agents-md`，用 `use-prompt-dsl` 的 POLICY 精炼原则、去重补缺并保留项目事实与作用域；缺 DSL skill 时停止并建议完整安装，优化流程不写入目标文件。此流程不要求远端评测；状态查询与仅诊断仍保持只读，不以文件变短宣称行为收益。
+计划涉及 skill/AGENTS 进化时，沿原运行报告核对 [远端执行](../references/remote-evolution.md) 的实际完成范围：v2 主校准、基线诊断、逐项质量与辅助效度分别查证，再核对探索 keep、确认 passed、已授权 apply 与发布。TypeSafe usage 或辅助高分不能代替主分/独立确认；默认诊断不足停止搜索。显式获准的 bounded_exploration_v1 只在仅来源精度不足时最多一候选，其余质量门保持，不晋级/确认/采用，整体 inconclusive；不能把这一探索记为整期验收。用户明确要求精简仓库 AGENTS.md 时可路由到已安装的 `optimize-agents-md`，用 `use-prompt-dsl` 的 Odyssey RULE 精炼原则、去重补缺并保留项目事实与作用域；缺 DSL skill 时停止并建议完整安装，优化流程不写入目标文件。此流程不要求远端评测；状态查询与仅诊断仍保持只读，不以文件变短宣称行为收益。
 
 ## 1. 定位项目与记录
 

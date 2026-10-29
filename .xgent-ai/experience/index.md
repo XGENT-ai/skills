@@ -62,3 +62,5 @@
 - cb681af1-a163-4524-8acc-dc104f5d8629 · [clean-artifacts 创建与 Git 命令验证](cb681af1-a163-4524-8acc-dc104f5d8629.md)
 
 - f8d9b609-0721-4d16-b950-3218860439bc — [Rust skill 最佳实践融合](f8d9b609-0721-4d16-b950-3218860439bc.md)
+
+- 477807a0-a54e-4f96-938f-f9f127c4897f · [Odyssey skill 重写](477807a0-a54e-4f96-938f-f9f127c4897f.md)
