@@ -31,6 +31,7 @@ const VISUAL = new Set([
   'workflow-facts'
 ]);
 const hash = bytes => ({sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length});
+const MANAGER_MARKER = hash(Buffer.from('{"skills":{"archify":{}}}\n'));
 function need(value, message) {
   if (!value) {
     const error = new Error(message);
@@ -409,8 +410,11 @@ export function checkP3Session(session, row, context) {
     });
     previous = segment.capture;
   }
-  const materialPaths =
-      new Set((row.materials || []).map(value => path.posix.relative(session.cwd, value.file.path)));
+  const materialPaths = new Map(required.materials.map(value => [value.name, value.identity]));
+  for (const [name, expected] of materialPaths)
+    need(parts[0].before.entries.some(entry => entry.path === name && entry.kind === 'file' &&
+            entry.mode === 0o644 && same(entry.identity, expected)),
+        'Initial project material differs from its frozen original');
   const callers = ['caller-elintp', 'fallback-elintp'].includes(row.id)   ? 'elintp' :
       ['caller-documentation', 'fallback-documentation'].includes(row.id) ? 'documentation-writer' :
                                                                             null;
@@ -420,7 +424,9 @@ export function checkP3Session(session, row, context) {
         materialPaths.has(entry.path) || /^\.phoenix-diagram\/(?:install|brands)\//.test(entry.path) ||
             /^\.claude\/settings(?:\.local)?\.json$/.test(entry.path) ||
             entry.path === '.codex/config.toml' || skill === 'phoenix-diagram' || skill === callers ||
-            MIGRATION.has(row.id) && skill === 'archify',
+            MIGRATION.has(row.id) && skill === 'archify' ||
+            row.id === 'migrate-conflict' && entry.path === 'skills-lock.json' &&
+                entry.kind === 'file' && entry.mode === 0o644 && same(entry.identity, MANAGER_MARKER),
         'P3 origin is not a neutral project with only authorized setup/materials');
   }
   const captured =
@@ -962,11 +968,14 @@ export function checkP3ScenarioOutcome(row, captured, results, response, context
     need(previews.length === 1, 'Explicit preview original NDJSON missing');
     const events = previews[0].events, first = events.findIndex(value => value.event === 'updated'),
           bad = events.findIndex((value, at) => at > first && value.event === 'failed'),
+          latest = events.findLastIndex((value, at) => at < bad && value.event === 'updated'),
           fixed = events.findIndex((value, at) => at > bad && value.event === 'updated');
     need(
-        first >= 0 && bad > first && fixed > bad &&
-            events[bad].lastSuccessfulGeneration === events[first].lastSuccessfulGeneration &&
-            events[fixed].lastSuccessfulGeneration > events[first].lastSuccessfulGeneration,
+        first >= 0 && latest > first && bad > latest && fixed > bad &&
+            events[latest].lastSuccessfulGeneration > events[first].lastSuccessfulGeneration &&
+            events.slice(bad, fixed).filter(value => value.event === 'failed').every(value =>
+                value.lastSuccessfulGeneration === events[latest].lastSuccessfulGeneration) &&
+            events[fixed].lastSuccessfulGeneration > events[latest].lastSuccessfulGeneration,
         'Preview did not demonstrate last-good failure/recovery');
     need(!previews[0].argv.includes('--open'), 'Preview opened a browser contrary to the request');
     need(reference(evidence.lifecycle), 'Actual preview HTTP/artifact/port observation missing');

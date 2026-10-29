@@ -719,6 +719,53 @@ test('origin prompt is the complete frozen neutral protocol plus topic without a
       /parameters differ/);
 });
 
+test('mutable prompt materials keep immutable originals and bind the initial project bytes', async () => {
+  const f = await sessionFixture('erd-missing-facts');
+  f.row.id = f.session.scenarioId = f.dto.scenarioId = 'preview-explicit';
+  const material = scenarioManifest().rows.find(row => row.id === f.row.id).materials[0];
+  const original = f.mem.put('/fixture/control/input.original.json', material.content);
+  f.row.materials = [{name: material.name, file: original}];
+  const entry = {path: material.name, kind: 'file', mode: 0o644, identity: original.identity};
+  const before = {...f.observation, entries: [...f.observation.entries, entry]};
+  f.dto.projectBefore = f.mem.put('/fixture/capture/before.json', before);
+  f.dto.projectAfter = f.mem.put('/fixture/capture/after.json', {
+    ...before, entries: [...f.observation.entries, {...entry, identity: identity(Buffer.from('revised input'))}]
+  });
+  f.reseal();
+  assert.equal(f.module.checkP3Session(f.session, f.row, f.context).parts.length, 1);
+  assert.equal(f.mem.bytesFor(original).toString(), material.content);
+  for (const entries of [f.observation.entries, [...f.observation.entries, {...entry, identity: identity(Buffer.from('wrong initial input'))}],
+    [...f.observation.entries, {...entry, kind: 'symlink'}]]) {
+    f.dto.projectBefore = f.mem.put('/fixture/capture/before.json', {...before, entries});
+    f.reseal();
+    assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /material|neutral project/);
+  }
+});
+
+test('preview failure retains the most recent legal update and recovery advances it', async () => {
+  const f = await sessionFixture(), artifact = f.mem.put('/fixture/control/preview.html', '<html>actual-byte fixture</html>');
+  const lifecycle = f.mem.put('/fixture/control/lifecycle.json', {
+    kind: 'phoenix-diagram-p3-preview-observation', sessionId: 'preview-session', portClosed: true,
+    servedArtifact: artifact, publishedArtifact: artifact
+  });
+  const row = {id: 'preview-explicit', evidence: {kind: 'preview-explicit', lifecycle}};
+  const events = [
+    {event: 'started', sessionId: 'preview-session', generation: 0, lastSuccessfulGeneration: 0},
+    {event: 'updated', generation: 1, lastSuccessfulGeneration: 1},
+    {event: 'updated', generation: 2, lastSuccessfulGeneration: 2},
+    {event: 'failed', generation: 3, lastSuccessfulGeneration: 2},
+    {event: 'failed', generation: 4, lastSuccessfulGeneration: 2},
+    {event: 'updated', generation: 5, lastSuccessfulGeneration: 5}
+  ];
+  const check = () => f.module.checkP3ScenarioOutcome(row, {}, [{argv: ['preview'], events}], 'fixture response', f.context);
+  assert.doesNotThrow(check);
+  events[3].lastSuccessfulGeneration = 1;
+  assert.throws(check, /last-good/);
+  events[3].lastSuccessfulGeneration = 2;
+  events[5].lastSuccessfulGeneration = 2;
+  assert.throws(check, /last-good/);
+});
+
 test(
     'Claude caller Skill injection binds the complete caller body instead of PD-only ownership', async () => {
       const f = await sessionFixture(), read = f.session.loadedReads[0],
@@ -781,7 +828,7 @@ test(
           () => f.module.checkP3Session(f.session, f.row, f.context), /complete authenticated source/);
     });
 
-test('migration can truthfully use fixed receipts without inventing installed PD reads', async () => {
+test('migration conflict accepts only its fixed external manager marker without invented PD reads', async () => {
   const f = await sessionFixture('migrate-conflict'), rows = [f.rows[0], f.rows[5], f.rows[6]],
         transcript = events(f.mem, '/fixture/capture/stdout.jsonl', rows);
   f.dto.stdout = transcript.ref;
@@ -790,12 +837,26 @@ test('migration can truthfully use fixed receipts without inventing installed PD
   f.dto.observedModels[0].anchor = transcript.anchors[0];
   f.session.captures[0].transcript = transcript.ref;
   f.session.loadedReads = [];
-  const observation = {...f.observation, entries: []};
+  const marker = {path: 'skills-lock.json', kind: 'file', mode: 0o644,
+    identity: identity(Buffer.from('{"skills":{"archify":{}}}\n'))};
+  const observation = {...f.observation, entries: [marker]};
   f.dto.projectBefore = f.mem.put('/fixture/capture/before.json', observation);
   f.dto.projectAfter = f.mem.put('/fixture/capture/after.json', observation);
   f.reseal();
   assert.equal(f.module.checkP3Session(f.session, f.row, f.context).parts.length, 1);
   assert.equal(f.session.installedReceipt, undefined);
+  for (const changed of [
+    {...marker, path: 'other-lock.json'}, {...marker, kind: 'symlink'}, {...marker, mode: 0o755},
+    {...marker, identity: identity(Buffer.from('{"skills":{"other":{}}}\n'))}
+  ]) {
+    f.dto.projectBefore = f.mem.put('/fixture/capture/before.json', {...observation, entries: [changed]});
+    f.reseal();
+    assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /neutral project/);
+  }
+  f.dto.projectBefore = f.mem.put('/fixture/capture/before.json', observation);
+  f.row.id = f.session.scenarioId = f.dto.scenarioId = 'migrate-known';
+  f.reseal();
+  assert.throws(() => f.module.checkP3Session(f.session, f.row, f.context), /neutral project/);
 });
 
 test(
