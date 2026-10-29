@@ -149,7 +149,7 @@ async function withBrowserPage(options, kind, run) {
     offline: { requested: options.offline === true, status: 'not-run', method: 'cdp-network-emulation', configured: false, remoteRequests: [] }, errors: [], receiptPath: path.join(directory, 'index.json') };
   let browser, cdp = options.cdp, contextId, targetId, sessionId, unsubscribe, stage = 'browser/discovery';
   const requests = [], loadingFailed = [], downloads = new Map(), dialogs = [];
-  let loads = 0, frameId;
+  let loads = 0, documentEpoch = 0, frameId;
   try {
     if (!cdp) {
       const browserPath = discoverBrowser(options); browser = new ExportBrowser(browserPath, { timeouts });
@@ -169,7 +169,7 @@ async function withBrowserPage(options, kind, run) {
     unsubscribe = cdp.subscribe(message => {
       const params = message.params || {};
       if (message.sessionId === sessionId) {
-        if (message.method === 'Page.loadEventFired') loads++;
+        if (message.method === 'Page.loadEventFired') { loads++; documentEpoch++; }
         if (message.method === 'Network.requestWillBeSent') requests.push({ url: params.request?.url || '', type: params.type, requestId: params.requestId });
         if (message.method === 'Network.loadingFailed') loadingFailed.push(params);
         if (message.method === 'Page.javascriptDialogOpening') {
@@ -200,8 +200,10 @@ async function withBrowserPage(options, kind, run) {
     };
     let startup;
     const page = {
-      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts,
+      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts, clicks: [],
+      get documentEpoch() { return documentEpoch; },
       async load(theme = 'dark', suppressClipboard = false, { query = {}, hash = '' } = {}) {
+        documentEpoch++; // Navigation may replace the probe even if its load event never arrives.
         if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
         startup = (await send('Page.addScriptToEvaluateOnNewDocument', { source: '(' + installExportProbe.toString() + ')(' + JSON.stringify({ suppressClipboard }) + ');' })).identifier;
         const url = new URL(pathToFileURL(artifact.path)); url.searchParams.set('theme', theme);
@@ -221,9 +223,15 @@ async function withBrowserPage(options, kind, run) {
         return evaluate(snapshotReader);
       },
       async click(selector) {
+        // Host requests/acknowledgments complement the page's actual readerInputs.
+        const click = kind === 'explore' ? { selector, completedDispatches: [] } : null;
+        if (click) page.clicks.push(click);
         const point = await evaluate(readerClickPoint, selector);
+        if (click) click.point = point;
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
+        if (click) click.completedDispatches.push('mousePressed');
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
+        if (click) click.completedDispatches.push('mouseReleased');
       },
       async download(format, basename, expected) {
         const capability = await evaluate(format => { const item = document.querySelector('button[data-format="' + format + '"]'); return { available: !!item && !item.disabled, reason: item?.title || '' }; }, format);

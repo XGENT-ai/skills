@@ -30,13 +30,13 @@ export function explorationPlan(metadata, hidden = []) {
 }
 
 // Page-side state probe; it reads Reader state, never authored geometry.
-export function exploreSnapshot() {
+export function exploreSnapshot(options = false) {
   const api = PhoenixDiagram, svg = document.querySelector('.diagram-container > svg');
   const button = id => { const element = document.getElementById(id); return element ? { disabled: !!element.disabled, hidden: !!element.hidden, label: element.getAttribute('aria-label') || '' } : null; };
-  return {
+  const state = {
     hash: location.hash, present: document.documentElement.getAttribute('data-present'),
     focus: api.focus.active(), reach: api.focus.reachabilitySnapshot ? api.focus.reachabilitySnapshot() : null,
-    route: { mode: api.routeProbe.active(), result: api.routeProbe.result(), status: (document.getElementById('route-probe-status') || {}).textContent || '',
+    route: { mode: api.routeProbe.active(), result: api.routeProbe.result(), startId: svg.querySelector('g[data-node-id][data-route-start]')?.getAttribute('data-node-id') ?? null, status: (document.getElementById('route-probe-status') || {}).textContent || '',
       noOutgoing: typeof phoenixDiagramI18nData === 'object' ? phoenixDiagramI18nData.messages['viewer.route.noOutgoing'] : null,
       distinct: typeof phoenixDiagramI18nData === 'object' ? phoenixDiagramI18nData.messages['viewer.route.distinct'] : null },
     lens: { open: api.semanticLens.isOpen(), active: api.semanticLens.active(), kinds: api.semanticLens.kinds(), matches: svg.querySelectorAll('[data-lens-match]').length },
@@ -47,27 +47,56 @@ export function exploreSnapshot() {
     active: { id: document.activeElement?.id || '', nodeId: document.activeElement?.getAttribute?.('data-node-id') ?? null },
     nodes: svg.querySelectorAll('g[data-node-id]').length,
   };
+  if (options?.targetInput) state.route.targetInput = __phoenixDiagramExportProbe.readerInputs.filter(input => input.type === 'click' && input.trusted === true).at(-1) || null;
+  return options === true ? { state, inputStart: __phoenixDiagramExportProbe.readerInputs.length } : state;
 }
 
 export async function runExplore(page, metadata, onProgress) {
-  const observations = [], snapshot = () => page.evaluate(exploreSnapshot);
+  const report = page.report.explore = { status: 'failed', plan: null, observations: [] },
+    observations = report.observations, snapshot = () => page.evaluate(exploreSnapshot);
   const key = (name, code) => sendReaderKey(page.send, name, code);
   const body = id => `.diagram-container svg g[data-node-id="${id}"] [data-graph-role="node-body"]`;
   async function observe(name, action) {
     onProgress?.({ stage: 'explore', name });
     const sample = { name, status: 'failed' };
     observations.push(sample);
-    sample.before = await snapshot();
-    sample.result = await action();
-    sample.after = await snapshot();
-    sample.status = 'pass';
+    const clickStart = page.clicks.length, inputEpoch = page.documentEpoch;
+    let inputStart, afterAttempted = false;
+    const inputs = () => page.evaluate(start => __phoenixDiagramExportProbe.readerInputs.slice(start), inputStart);
+    const errorRecord = error => ({ code: error.code || 'acceptance/failed', message: error.message || String(error),
+      ...(error.code === 'exploration/route-target-input' ? { targetInput: error.targetInput } : {}) });
+    try {
+      const initial = await page.evaluate(exploreSnapshot, true);
+      sample.before = initial.state; inputStart = initial.inputStart;
+      sample.result = await action();
+      afterAttempted = true; sample.after = await snapshot();
+      sample.status = 'pass';
+    } catch (error) {
+      sample.error = errorRecord(error);
+      sample.clicks = page.clicks.slice(clickStart);
+      const diagnostic = async (stage, collect) => {
+        try { await collect(); } catch (failure) { (sample.diagnostics ||= []).push({ stage, ...errorRecord(failure) }); }
+      };
+      const documentChanged = () => {
+        const afterEpoch = page.documentEpoch;
+        if (afterEpoch === inputEpoch) return false;
+        (sample.diagnostics ||= []).push({ stage: 'inputs', code: 'exploration/document-changed',
+          message: 'Exploration: navigation may have changed the Reader document; step inputs unavailable', beforeEpoch: inputEpoch, afterEpoch });
+        return true;
+      };
+      if (!afterAttempted) await diagnostic('after', async () => { sample.after = await snapshot(); });
+      if (inputStart !== undefined && !documentChanged()) await diagnostic('inputs', async () => {
+        const collected = await inputs(); if (!documentChanged()) sample.inputs = collected;
+      });
+      throw error;
+    }
   }
   const settle = () => delay(250);
   // Polls for a Reader state that a loaded machine may paint late.
   const until = async (check, ms = 3000) => { let state = await snapshot(); for (const end = Date.now() + ms; !check(state) && Date.now() < end; state = await snapshot()) await delay(100); return state; };
   await page.load('dark');
   const full = await snapshot();
-  const plan = explorationPlan(metadata, await page.evaluate(() => Array.from(document.querySelectorAll('.diagram-container > svg g[data-node-id][data-tree-hidden]'), node => node.getAttribute('data-node-id'))));
+  const plan = report.plan = explorationPlan(metadata, await page.evaluate(() => Array.from(document.querySelectorAll('.diagram-container > svg g[data-node-id][data-tree-hidden]'), node => node.getAttribute('data-node-id'))));
   await observe('lens', async () => {
     await page.click('#btn-semantic-lens'); await settle();
     const opened = await snapshot(), kind = opened.lens.kinds[0]?.id;
@@ -107,6 +136,10 @@ export async function runExplore(page, metadata, onProgress) {
     }) || ids[0], plan.nodes);
     await page.click(body(source)); await settle();
     const after = await snapshot();
+    if (after.route.mode !== 'target' || after.route.startId !== source) {
+      const error = new Error('Exploration: route-none did not select its planned source');
+      error.code = 'exploration/route-source'; throw error;
+    }
     if (!plan.noPathPair && !plan.noOutgoing) {
       await page.click(body(source)); await settle();
       const same = await snapshot();
@@ -116,11 +149,15 @@ export async function runExplore(page, metadata, onProgress) {
     }
     if (plan.noPathPair) {
       await page.click(body(plan.noPathPair[1])); await settle();
-      const blocked = await snapshot();
+      const blocked = await page.evaluate(exploreSnapshot, { targetInput: true });
+      if (blocked.route.targetInput?.target?.nodeId !== plan.noPathPair[1]) {
+        const error = new Error('Exploration: route-none click did not hit its planned target');
+        error.code = 'exploration/route-target-input'; error.targetInput = blocked.route.targetInput; throw error;
+      }
       requireThat(blocked.route.result === null && blocked.route.mode === 'target', 'an unreachable target was accepted');
       requireThat(blocked.nodes === full.nodes, 'the route state changed authored nodes');
       await key('Escape', 'Escape'); await settle();
-      return { pair: plan.noPathPair, status: blocked.route.status };
+      return { pair: plan.noPathPair, status: blocked.route.status, targetInput: blocked.route.targetInput };
     }
     requireThat(after.route.result === null && after.route.status === after.route.noOutgoing && after.route.noOutgoing, 'a node without outgoing arrows did not report it');
     await key('Escape', 'Escape'); await settle();
@@ -216,7 +253,7 @@ export async function runExplore(page, metadata, onProgress) {
     requireThat(closed.details.hidden && closed.focus === null, 'details did not close');
     return { node: plan.nodes[0] };
   });
-  return { status: 'pass', plan, observations };
+  report.status = 'pass'; return report;
 }
 
 export function verifyExplore(value) {
@@ -224,5 +261,9 @@ export function verifyExplore(value) {
   const names = value.observations.map(sample => sample.name);
   for (const name of REQUIRED_EXPLORATION.filter(name => name !== 'route-path' || value.plan.pathPair)) requireThat(names.includes(name), 'missing ' + name);
   requireThat(value.observations.every(sample => sample.status === 'pass'), 'an exploration step failed');
+  if (value.plan.noPathPair) {
+    const input = value.observations.find(sample => sample.name === 'route-none')?.result?.targetInput;
+    requireThat(input?.type === 'click' && input.trusted === true && input.target?.nodeId === value.plan.noPathPair[1], 'unreachable target lacks its actual trusted click');
+  }
   return true;
 }
