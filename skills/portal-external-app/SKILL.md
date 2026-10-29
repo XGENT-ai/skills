@@ -28,7 +28,7 @@ when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填
 | 用户以 CLI、MCP、个人自动化调用 App，或接入门户多服务用户密钥与服务发现 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录；不改门户业务代码 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
-| 一个配置项该放哪（环境变量 / 平台级或租户级管理页 / 应用内设置 / 用户偏好），`requiredEnvNotes` 与 `adminPages` 怎么写 | [references/config-placement.md](references/config-placement.md) |
+| 一个配置项该放哪（环境变量 / 平台级或租户级管理页 / 应用内设置 / 用户偏好），`requiredEnvNotes`、`adminPages` 与 service `tenantConfig` 怎么写 | [references/config-placement.md](references/config-placement.md) |
 
 ## 先判形态（决定后面走哪条线）
 
@@ -250,13 +250,15 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 收交付物时逐项问「这个配置是哪一类」，完整判断表见 [references/config-placement.md](references/config-placement.md)。要点：
 
 - **环境依赖**进 `requiredEnv`；**业务参数**先给代码缺省值，确需覆盖才进清单并配 `requiredEnvNotes`——审批人只懂环境。
-- **全平台一份、要随时改** ⇒ 平台级管理页 `adminPages.platform`；**每租户不同** ⇒ 租户级管理页 `adminPages.tenant`。
-  页面由 App 自己做，门户嵌进应用市场编辑页 / 租户应用配置，**门户零改码**（治理档，需审批）。
+- **全平台一份、要随时改** ⇒ 平台级管理页 `adminPages.platform`；**每租户不同** ⇒ 有前端的 App 用 `adminPages.tenant`，
+  无前端的 service 用 `tenantConfig` 声明受限 schema。门户分别嵌入 App 页面或渲染动态表单，**都零业务改码**（治理档，需审批）。
 - **应用内业务设置** ⇒ 应用内设置页 + `aclManifest` 授权；**用户偏好** ⇒ App 自己按用户存。
 
-**无前端的服务型 App** 没有页面可嵌：它的租户管理员配置仍要**门户按 App 补三件**（不是零改码）——
-`<key>-token` 铸造端点 + `<key>-config-api.ts` + `AppForm` 配置 Section，参照 files / llm-gateway，
-步骤见 portal-backend-app skill；接入时把这三件列入门户侧工作量。有前端的 App 一律走 `adminPages`。
+**无前端的服务型 App**：普通数字、静态选项和开关配置在 manifest 写 `tenantConfig: { label, path, scopes, schema }`。
+门户通用签票 + 动态表单复用 App 的 GET/PUT policy 接口，不再按 App 增加 token 端点、config-api 或 Section。
+配置 GET 返回 `{ policy, effective }`，保存时 Portal 重新 GET 最新 policy、只合并编辑字段后整份 PUT；App 仍负责最终校验。
+复杂动态选项和跨字段交互可保留存量手写页，新 micro App 一律走 `adminPages`。完整契约见 references/config-placement.md；
+其中「OmniParser：六项 `foreground` 后端接入清单」给出逐字段默认值、DTO 示例和后端验收项，供 OmniParser 直接按单实现。
 
 ## 先看平台有没有，别自建一套
 
@@ -348,7 +350,7 @@ bucket 与凭据优先于托管池；存储位置由 Files 解析，调用 App �
 - **审计**：不自建审计表/页，推 `POST /api/v1/audit`，租户在「设置 › 审计」一处看全。
 - **通讯录**：不做「同步通讯录」到自己库，按需用选人组件挑。
 - **配额/套餐**：见下一节。**计费**：平台级 Credit 服务，同样不自建。
-- **租户级配置**：放门户的 App 配置页（AppForm Section），不是 App 内的设置页。
+- **租户级配置**：micro 用 `adminPages.tenant`，service 普通配置用 `tenantConfig`；都在租户 › 应用管理 › 配置，不再按 App 手写 AppForm Section。
 - **AI 功能**：终端用户面**不出现模型选择器**，服务端按场景解析模型。
 
 ## 有配额需求？用平台的套餐管理，不许自建

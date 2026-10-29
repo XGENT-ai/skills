@@ -1,9 +1,25 @@
-# Chapter 5 - Automated Testing
+# Automated Testing
 
 > Tests are not just for correctness. They are the first place people look to understand how your code works.
 
 * Tests in rust are declared with the attribute macro `#[test]`. Most code editors can compile and run the functions declared under the macro individually or blocks of them.
 * Test can have special compilation flags with `#[cfg(test)]`. Also executable in code editors if it contained `#[test]`, it is a good way to mock complicated functions or override traits.
+
+Test observable behavior and properties rather than duplicating constants or branches.
+For a bug, reproduce the failure before fixing it; before a behavior-preserving refactor,
+pin the affected behavior when coverage is missing. Useful properties include round-trips,
+idempotence, ordering and agreement between equality and hashing.
+
+Use unit tests for private logic and integration tests in `tests/` for public contracts.
+Keep domain/protocol logic separate from I/O, and make affected time, randomness,
+filesystem and network behavior controllable. Reuse existing interfaces/fakes; a pure
+function needs no mock framework. A `test-util` feature can expose useful helpers, but
+must never enable safety bypasses that make a safe API unsound.
+
+Check relevant supported feature sets and target paths through the project's
+[compatibility matrix](crates-and-dependencies.md#compatibility-and-validation).
+For untrusted parsers consider fuzzing; unsafe changes need the applicable Miri and
+native tests described in [Unsafe and FFI](unsafe-and-ffi.md#verification).
 
 ## 5.1 Tests as Living Documentation
 
@@ -174,7 +190,7 @@ fn the_function_accepts_all_strings_with_a(#[case] input: &str) {
 > * It's harder for both IDEs and humans to run/locate specific tests.
 > * Expectation vs condition naming is now visually inverted (expectation first).
 
-> ❗ Share **setup**, not the test itself: keep each test's action and assertion inline, even when repetitive. Tests tolerate duplication better than production code -- see [Chapter 1, §1.8](./chapter_01.md#-test-code-readability-beats-dry).
+> ❗ Share **setup**, not the test itself: keep each test's action and assertion inline, even when repetitive. Tests tolerate duplication better than production code -- see [Coding Idioms, §1.8](./coding-idioms.md#-test-code-readability-beats-dry).
 
 ## 5.2 Add Test Examples to your Docs
 

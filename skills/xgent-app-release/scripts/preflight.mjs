@@ -345,6 +345,45 @@ if (!manifestPath) {
             err(`manifest.adminPages.${level}.label 必须是非空字符串，或带 "zh-CN" 的多语对象`);
         }
     }
+    /* ③d tenantConfig：service 的受限动态配置 schema。门户提交面会做完整校验，这里先挡住常见形状错误。 */
+    if (mf.tenantConfig !== undefined && mf.tenantConfig !== null) {
+      const tc = mf.tenantConfig;
+      const textOk = (value) => typeof value === "string" ? !!value.trim() : isObj(value) && typeof value["zh-CN"] === "string" && !!value["zh-CN"].trim();
+      if (!isObj(tc) || Array.isArray(tc)) err(`manifest.tenantConfig 必须是 { label, path, scopes, schema }`);
+      else {
+        if (mf.type !== "service") err(`manifest.tenantConfig 只能由 type=service 声明`);
+        if (!textOk(tc.label)) err(`manifest.tenantConfig.label 必须是非空字符串或带 zh-CN 的多语对象`);
+        if (typeof tc.path !== "string" || !tc.path.startsWith("/") || tc.path.startsWith("//") || /[?#]/.test(tc.path) || /(^|\/)\.\.(\/|$)/.test(tc.path))
+          err(`manifest.tenantConfig.path 必须是不带 query / fragment 的同源绝对路径`);
+        if (!Array.isArray(tc.scopes) || !tc.scopes.length || tc.scopes.some((scope) => typeof scope !== "string" || !scope.trim()))
+          err(`manifest.tenantConfig.scopes 必须是非空字符串数组`);
+        else if (Array.isArray(mf.scopes)) for (const scope of tc.scopes) if (!mf.scopes.includes(scope)) err(`manifest.tenantConfig.scopes 的「${scope}」未声明在 listing scopes 中`);
+        const walk = (node, where, depth) => {
+          if (!isObj(node) || Array.isArray(node)) { err(`${where} 必须是对象`); return; }
+          if (depth > 4) { err(`${where} 嵌套超过 4 层`); return; }
+          if (node.type === "object") {
+            if (!isObj(node.properties) || Array.isArray(node.properties) || !Object.keys(node.properties).length) { err(`${where}.properties 必须是非空对象`); return; }
+            for (const [key, child] of Object.entries(node.properties)) {
+              if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(key) || ["__proto__", "prototype", "constructor"].includes(key)) err(`${where}.properties 的键「${key}」非法`);
+              walk(child, `${where}.properties.${key}`, depth + 1);
+            }
+            return;
+          }
+          if (!["integer", "number", "select", "boolean"].includes(node.type)) { err(`${where}.type 只支持 integer / number / select / boolean / object`); return; }
+          if (!textOk(node.title)) err(`${where}.title 必须是非空字符串或带 zh-CN 的多语对象`);
+          if (node.description !== undefined && !textOk(node.description)) err(`${where}.description 形状非法`);
+          if (["integer", "number"].includes(node.type)) {
+            for (const field of ["default", "scale", "minimum", "maximum"]) if (node[field] !== undefined && (typeof node[field] !== "number" || !Number.isFinite(node[field]))) err(`${where}.${field} 必须是有限数字`);
+            if (node.scale !== undefined && node.scale <= 0) err(`${where}.scale 必须是正数`);
+            if (node.unit !== undefined && !textOk(node.unit)) err(`${where}.unit 形状非法`);
+          } else if (node.type === "select") {
+            if (!Array.isArray(node.options) || !node.options.length) err(`${where}.options 不能为空`);
+            else for (const option of node.options) if (!isObj(option) || typeof option.value !== "string" || !option.value.trim() || !textOk(option.label)) err(`${where}.options 每项必须是 { value, label }`);
+          } else if (node.default !== undefined && typeof node.default !== "boolean") err(`${where}.default 必须是布尔值`);
+        };
+        walk(tc.schema, "manifest.tenantConfig.schema", 0);
+      }
+    }
     /* ③b requiredEnvNotes：只能给 requiredEnv 里的键写说明，非空、≤200 字（与门户同口径）。 */
     if (mf.requiredEnvNotes !== undefined) {
       const declaredEnv = new Set((Array.isArray(mf.requiredEnv) ? mf.requiredEnv : [])

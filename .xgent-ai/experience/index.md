@@ -60,3 +60,5 @@
 - [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)
 - 752d0b72-4bd7-4d3f-b131-c0daea48945e · [review-ui 产物忽略规则验证](752d0b72-4bd7-4d3f-b131-c0daea48945e.md)
 - cb681af1-a163-4524-8acc-dc104f5d8629 · [clean-artifacts 创建与 Git 命令验证](cb681af1-a163-4524-8acc-dc104f5d8629.md)
+
+- f8d9b609-0721-4d16-b950-3218860439bc — [Rust skill 最佳实践融合](f8d9b609-0721-4d16-b950-3218860439bc.md)

@@ -1,4 +1,4 @@
-# Chapter 6 - Generics, Dynamic Dispatch and Static Dispatch
+# Generics, Dynamic Dispatch and Static Dispatch
 
 > Static where you can, dynamic where you must
 
@@ -12,7 +12,7 @@ Understanding the trade-offs lets you write faster, smaller and more flexible co
 
 Every programming language has tools for effectively handling the duplication of concepts. In Rust, one such tool is generics: abstract stand-ins for concrete types or other properties. We can express the behavior of generics or how they relate to other generics without knowing what will be in their place when compiling and running the code. 
 
-We use generics to create definitions for items like function signatures or structs, which we can then use with many different concrete data types. Let's first look at how to define functions, structs, enums, and methods using generics. Generics can also be used to implement Type State Pattern and constrain a struct functionality to certain expected types, more on type state on [Chapter 7](./chapter_07.md).
+We use generics to create definitions for items like function signatures or structs, which we can then use with many different concrete data types. Let's first look at how to define functions, structs, enums, and methods using generics. Generics can also be used to implement Type State Pattern and constrain a struct functionality to certain expected types, more on type state on [Type State](./type-state.md).
 
 [Generics by Examples](https://doc.rust-lang.org/rust-by-example/generics.html).
 
@@ -107,9 +107,9 @@ fn all_animals_greeting(animals: Vec<Box<dyn Animal>>) {
 
 ## 6.5 🚨 Trait Objects Ergonomics
 
-* Prefer `&dyn Trait` over `Box<dyn Trait>` when you don't need ownership.
+* Borrow `&dyn Trait` without allocating when ownership is unnecessary; use
+  `Box<dyn Trait>` at a boundary that needs ownership.
 * Use `Arc<dyn Trait>` for shared access across threads.
-* Don't use `dyn Trait` if the trait has methods that return `Self`.
 * **Avoid boxing too early**. Don't box inside structs unless you are sure it'll be beneficial or is required (recursive).
 ```rust
 // ✅ Use generics when possible
@@ -122,12 +122,16 @@ struct Renderer {
     backend: Box<dyn Backend> // Boxing too early
 }
 ```
-* If you must expose a `dyn trait` in a public API, `Box` at the boundary, not internally.
-* **Dyn compatibility**: you can only build `dyn Trait` from a *dyn-compatible* trait. This property used to be called **object safety**; the term was renamed, and current compilers report *"error[E0038]: the trait `Factory` is not dyn compatible"*. A trait qualifies when:
-    * It has **no generic methods**.
-    * It doesn't require `Self: Sized`.
-    * No method returns or takes `Self` by value.
-    * Every method's receiver is one Rust can build a vtable for - `&self`, `&mut self`, `self`, or `self: Box<Self>` / `Rc<Self>` / `Arc<Self>` / `Pin<..>`.
+* **Dyn compatibility** (formerly object safety) applies to the whole trait:
+    * Its supertraits are dyn compatible, it does not require `Self: Sized`, and it has
+      no associated constants or generic associated types.
+    * Dispatchable methods have no type parameters, use `Self` only in their receiver,
+      and have neither `async fn` nor return-position `impl Trait` return types.
+      Supported receivers include references, `Box`, `Rc`, `Arc` and their allowed
+      `Pin` forms; plain by-value `self` is not dispatchable.
+    * Methods outside that contract can require `where Self: Sized`, excluding them
+      from object dispatch while allowing the remaining trait to be dyn compatible.
+      Test the intended `dyn Trait` usage, auto traits and lifetimes.
     ```rust
     // ✅ Dyn compatible
     trait Runnable {
@@ -136,7 +140,20 @@ struct Renderer {
 
     // ❌ Not dyn compatible
     trait Factory {
-        fn create<T>() -> T; // generic methods are not allowed
+        fn create<T>() -> T; // no Self: Sized exemption for this generic function
     }
     ```
     > See the reference on [dyn compatibility](https://doc.rust-lang.org/reference/items/traits.html#dyn-compatibility) for the full rules.
+
+## 6.6 Trait and closure contracts
+
+- Define traits for polymorphism or useful extension methods, not merely to organize
+  functions. Extension traits conventionally use an `Ext` suffix. Keep parameter and
+  lifetime names descriptive when their role is otherwise unclear.
+- Require the calling contract you need: `FnOnce` accepts the widest set of closures
+  when called once; use `FnMut` for repeated mutable calls and `Fn` for shared calls.
+- Keep required trait methods minimal and provide defaults for derivable behavior.
+  Even adding a default method can create downstream method ambiguity; review compatibility.
+- Avoid reflection-shaped designs when an enum or trait expresses the boundary.
+  `type_name` is diagnostic text, not a stable identifier; `Any`/downcasting is an
+  intentional type-erasure boundary with a `'static` requirement.

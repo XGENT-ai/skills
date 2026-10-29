@@ -1,4 +1,4 @@
-# Chapter 4 - Errors Handling
+# Errors Handling
 
 Rust enforces a strict error handling approach, but *how* you handle them defines where your code feels ergonomic, consistent and safe - as opposing cryptic and painful. This chapter dives into best practices for modeling and managing fallible operations across libraries and binaries.
 
@@ -27,10 +27,10 @@ fn divide(x: f64, y: f64) -> Result<f64, DivisionError> {
 
 ## 4.2 Avoid `unwrap`/`expect` in Production
 
-Although `expect` is preferred to `unwrap`, as it can have context, they should be avoided in production code as there are smarter alternatives to them. Considering that, they should be used in the following scenarios:
-- In tests, assertions or test helper functions.
-- When failure is impossible.
-- When the smarter options can't handle the specific case.
+This skill reserves `unwrap()` and `expect()` for tests and test helpers. Outside tests,
+propagate failures with `?`, pattern-match explicitly or encode the invariant in a type.
+An assumed-impossible failure is not an exception to this rule. Do not replace an unwrap
+with a panic on ordinary invalid input, I/O failures or lock poisoning.
 
 ### 🚨 Alternative ways of handling `unwrap`/`expect`:
 
@@ -50,7 +50,7 @@ if let Ok(json) = serde_json::from_str(&input) {
     recover_from(&input)
 }
 ```
-* Functions that can have to handle `Option::None` values are recommended to return `Result<T, E>`, where `E` is a crate or module level error, like the examples above.
+* Keep `Option` when absence is normal. Convert `None` to `Result` with `ok_or_else` when the caller needs a reason the operation failed.
 * Lastly `unwrap_or`, `unwrap_or_else` or `unwrap_or_default`, these functions help you create alternative exits to unwrap that manage the uninitialized values.
 
 ## 4.3 `thiserror` for Crate level errors
@@ -75,6 +75,18 @@ pub enum MyError {
 ```
 
 ### Error Hierarchies and Wrapping
+
+Public errors implement `std::error::Error` (`Debug` + `Display`) and preserve wrapped
+causes through `source()`; `thiserror` can generate this alongside `From` conversions.
+Expose categories callers can act on, not a single enum of every internal failure.
+A situation-specific struct with private details and public accessors is also valid.
+Keep messages concise (normally lowercase without trailing punctuation), and add
+`Send + Sync + 'static` when required by the API or task boundary. Capture backtraces
+when useful, without forcing the full cause chain/backtrace into `Display`. Use
+`map_err` when a conversion needs context that a meaningful `From` cannot supply.
+
+If a fallible operation consumes input that callers may need to retry, consider returning
+that input in the error. Avoid making callers clone large inputs merely for recovery.
 
 For layered systems the best practice is to use nested `enum/struct` errors with `#[from]`:
 
@@ -181,3 +193,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 ```
 
 > Avoid `Box<dyn std::error::Error>` in libraries unless it is really needed
+
+### Cleanup and panic boundaries
+
+Bind RAII guards to a local name (`let _guard = ...`); `let _ = ...` drops the value
+immediately. Offer an explicit `close(self) -> Result<...>` or `finish` for fallible
+cleanup, and keep `Drop` best-effort and non-panicking. Move slow or asynchronous
+teardown into an explicit operation instead of starting detached work from `Drop`.
+Fields already owning resources usually need no redundant custom `Drop`. Cleanup runs
+on ordinary scope exit and unwinding, but cannot guarantee essential work after abort,
+process termination or deliberate forgetting.
+
+Do not use `catch_unwind` to handle ordinary errors; aborting panics cannot be caught.
+For FFI-specific boundaries see [Unsafe and FFI](unsafe-and-ffi.md). Document errors,
+reachable panics and unsafe preconditions in the public API.

@@ -1,4 +1,4 @@
-# Chapter 8 - Comments vs Documentation
+# Comments vs Documentation
 
 > Clear code beats clear comments. However, when the why isn't obvious, comment it plainly - or link to where you can read more context.
 
@@ -24,7 +24,8 @@ Use `//` comments (double slashed) when something can't be expressed clearly in 
 
 ### ✅ Good comment:
 ```rust
-// SAFETY: `ptr` is guaranteed to be non-null and aligned by caller
+// SAFETY: the caller guarantees src is readable and initialized for len elements,
+// dst is writable for len elements, both are aligned, and the regions do not overlap.
 unsafe { std::ptr::copy_nonoverlapping(src, dst, len); }
 ```
 
@@ -103,7 +104,7 @@ fn save_auth_user(&self) -> Result<PathBuf, MyError> {
 }
 ```
 
-> ❗ Extract when the **name adds meaning** -- not to deduplicate a couple of similar-looking lines. See [Chapter 1, §1.8](./chapter_01.md#18-when-to-extract-a-function-and-when-not-to) for when duplication is the better trade-off.
+> ❗ Extract when the **name adds meaning** -- not to deduplicate a couple of similar-looking lines. See [Coding Idioms, §1.8](./coding-idioms.md#18-when-to-extract-a-function-and-when-not-to) for when duplication is the better trade-off.
 
 ## 8.6 `TODO` should become issues
 
@@ -200,6 +201,32 @@ pub fn add(a: i32, b: i32) -> i32 {
 ```
 * ✅ Use `# Panics`, `# Errors` and `# Safety` sections when relevant.
 * Add relevant context to the type.
+
+Document what the signature cannot express: ownership transfer, preconditions, side
+effects and failure modes. Use a concise first-sentence summary and intra-doc links
+such as `` [`Type`] ``. Describe the resulting API, not a journal of the editing process.
+Explain abort behavior when part of the contract. Panic/assertion diagnostics should
+identify the violated invariant without exposing secrets.
+For fallible examples, show `?` rather than `unwrap()` with hidden result scaffolding:
+
+```rust
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let port: u16 = "8080".parse()?;
+/// assert_eq!(port, 8080);
+/// # Ok(())
+/// # }
+/// ```
+```
+
+Run doc tests and `cargo doc --no-deps` for public API changes. New unsafe boundaries
+also need the contract checks in [Unsafe and FFI](unsafe-and-ffi.md).
+Hidden setup can keep examples concise, but assertions in a helper that is never called
+are only compiled, not executed. Ensure behavior demonstrations actually run.
+
+For crate-internal re-exports, consider `#[doc(inline)]` when it improves navigation.
+Do not present foreign implementation details as owned API. `#[doc(hidden)]` hides
+documentation, not access: privacy requires visibility controls.
 
 ### `//!` Module/Crate level Documentation
 

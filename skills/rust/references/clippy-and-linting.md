@@ -1,6 +1,8 @@
-# Chapter 2 - Clippy and Linting Discipline
+# Clippy and Linting Discipline
 
-Be sure to have `cargo clippy` installed with your rust compiler, run `cargo clippy -V` in your terminal for a rust project and you should get a line like `clippy 0.1.xx (<hash> <date>)`, whose minor version tracks your `rustc`. If terminal fails to show a clippy version, please run the following code `rustup update && rustup component add clippy`.
+Check `cargo clippy -V` using the project's pinned toolchain. If the component is missing,
+report it or use the project's authorized setup procedure; do not update the toolchain
+as a side effect of linting.
 
 Clippy documentation can be found [here](https://doc.rust-lang.org/clippy/usage.html).
 
@@ -22,8 +24,8 @@ $ cargo clippy --all-targets --all-features --locked -- -D warnings
 ```
 
 * `--all-targets`: checks library, tests, benches and examples.
-* `--all-features`: checks code for all features enabled, auto solves conflicting features.
-* `--locked`: Requires `Cargo.lock` to be up-to-date, can be solved with `$ cargo update`.
+* `--all-features`: enables every feature; it does not solve conflicts. Run the supported feature sets separately if they cannot coexist.
+* `--locked`: requires the existing lockfile to remain unchanged. Investigate failures instead of running a broad `cargo update`.
 * `-D warnings`: treats warnings as errors
 
 Potential additions elements to add:
@@ -55,7 +57,12 @@ Potential additions elements to add:
 
 * You **truly understand** why the warning happens and you have a reason why it is better that way.
 * You **document** why it is being ignored.
-* ❗ Don't use `allow`, but `expect`, it will give a warning in case the lint is not true anymore, `#[expect(clippy::lint_something)]`.
+* Prefer `#[expect(clippy::lint_something, reason = "...")]` on Rust 1.81+, which warns when the lint no longer fires. Older MSRVs require a narrow `#[allow(...)]` with a reason in a comment.
+
+The `expect` examples below require Rust 1.81+. See the
+[Rust 1.81 release notes](https://blog.rust-lang.org/2024/09/05/Rust-1.81.0/).
+Enforce `-D warnings` in CI rather than introducing blanket `#![deny(warnings)]` in
+source, which can break downstream builds when a new compiler adds warnings.
 
 ### Example:
 
@@ -83,12 +90,14 @@ enum Message {
 
 Sometimes Clippy complains even when your code is correct, in those cases there are two solutions:
 1. Try to refactor the code, so it improves the warning.
-2. **Locally** override the lint with `#[expect(clippy::lint_name)]` and a comment with the reason.
+2. **Locally** override the lint with `#[expect(clippy::lint_name)]` and a reason, or a justified `#[allow]` when the MSRV predates 1.81.
 3. Avoid global overrides, unless it is core crate issue, a good example of this is the Bevy Engine that has a set of lints that should be allowed by default.
 
 ## 2.5 Configure workspace/package lints
 
-In your `Cargo.toml` file it is possible to determine which lints and their priorities over each other. In case of 2 or more conflicting lints, the higher priority one will be chosen. Example configuration for a package:
+Cargo lint tables require 1.74+; see the [Cargo manifest reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-lints-section).
+Preserve compatible crate attributes on older toolchains. In `Cargo.toml`, give broad
+groups lower priorities so specific lints can override them. Example for a package:
 
 ```toml
 [lints.rust]
@@ -96,10 +105,10 @@ future-incompatible = "warn"
 nonstandard_style = "deny"
 
 [lints.clippy]
-all = { level = "deny", priority = 10 }
-redundant_clone = { level = "deny", priority = 9 }
-manual_while_let_some = { level = "deny", priority = 4 }
-pedantic = { level = "warn", priority = 3 }
+all = { level = "deny", priority = -1 }
+redundant_clone = "deny"
+manual_while_let_some = "deny"
+pedantic = { level = "warn", priority = -1 }
 ```
 
 And for a workspace:
@@ -110,8 +119,10 @@ future-incompatible = "warn"
 nonstandard_style = "deny"
 
 [workspace.lints.clippy]
-all = { level = "deny", priority = 10 }
-redundant_clone = { level = "deny", priority = 9 }
-manual_while_let_some = { level = "deny", priority = 4 }
-pedantic = { level = "warn", priority = 3 }
+all = { level = "deny", priority = -1 }
+redundant_clone = "deny"
+manual_while_let_some = "deny"
+pedantic = { level = "warn", priority = -1 }
 ```
+
+Each member opts into workspace lint settings with `[lints]` and `workspace = true`.

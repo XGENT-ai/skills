@@ -1,4 +1,8 @@
-# Chapter 1 - Coding Styles and Idioms
+# Coding Styles and Idioms
+
+Read for everyday ownership, control flow, imports and extraction decisions. Public
+signature conventions belong in [API design](api-design.md); queued actions and tree
+traversal belong in [behavioral patterns](behavioral-patterns.md).
 
 ## 1.1 Borrowing Over Cloning
 
@@ -44,6 +48,27 @@ let user = String::from("foo");
 process(&user);
 ```
 
+### Resolve borrowing friction before copying
+
+First bind a temporary to a named local or shorten the borrow with a block. Split a
+complex expression into intermediate values so the conflicting borrow is visible.
+To move a field out of `&mut self`, consider `mem::take`, `mem::replace` or `Option::take`
+instead of cloning it. Restructure ownership only when it improves the design; a
+deliberate independent copy can be clearer than a large refactor.
+
+Take owned `T` when storing or consuming an input, `&T` when reading it, and `&mut T`
+when mutating it in place. Prefer `Option<&T>` to `&Option<T>` when only the inner value
+matters. Use `AsRef<Path>` or `IntoIterator` for library APIs when that flexibility helps
+callers; a concrete slice is often enough for application code.
+
+Use `Rc`/`Arc` for actual shared ownership, and interior mutability only when mutation
+must happen through shared access. Prefer owned fields when borrowing would unnecessarily
+spread lifetimes through containers; retain borrowed views when they express the design.
+
+Split disjoint state when it clarifies ownership rather than adding wrappers solely to
+silence a borrow error. For mixed closure captures, bind selected clones/borrows in a
+block and then use a `move` closure; borrowed captures must still outlive their use.
+
 ### ❌ Avoid redundant cloning:
 ```rust
 fn process_string(name: String) {
@@ -78,7 +103,7 @@ let new_num = increment(num); // `num` still usable after this point
 * The struct **represents a "plain data object"**, without resourcing to ownership (no heap allocations. Example: `Vec` and `Strings`).
 * ❗**The type does not also implement `Iterator`.** Even if every field is `Copy`, never put `Copy` and `Iterator` on the same type (see [§1.5](#15-iterator-iter-vs-for)).
 
-❗**Rust Arrays are stack allocated.** Which means they can be copied if their underlying type is `Copy`, but this will be allocated in the program stack which can easily become a stack overflow. More on [Chapter 3 - Stack vs Heap](./chapter_03.md#33-stack-vs-heap-be-size-smart)
+❗**Rust Arrays are stack allocated.** Which means they can be copied if their underlying type is `Copy`, but this will be allocated in the program stack which can easily become a stack overflow. More on [Stack vs Heap](./performance.md#33-stack-vs-heap-be-size-smart)
 
 For reference, each primitive type size in bytes:
 
@@ -280,6 +305,10 @@ x
 
 ## 1.5 Iterator, `.iter` vs `for`
 
+Use short pipelines for transformations and explicit loops for substantial side effects
+or branching. `Option` supplies zero/one items to `chain` or `extend`; use `if let` for a
+plain branch. Collect fallible items into `Result` to stop at the first error.
+
 First we need to understand a basic loop with each one of them. Let's consider the following problem, we need to sum all even numbers between 0 and 10 incremented by 1:
 
 * `for`:
@@ -361,7 +390,7 @@ for value in vec.iter().enumerate()
 
 Well-written Rust code, with expressive types and good naming, often speaks for itself. Many high-quality codebases thrive on **few or no comments** - and that is a good thing. Where code alone isn't enough (performance quirks, external constraints, non-obvious tradeoffs), a concise comment prevents hours of head-scratching.
 
-The idiom that belongs in *this* chapter is the structural one: **when a comment wants to narrate a function, split the function instead**. For everything else about comments - what makes one good or bad, `SAFETY:`/`CONTEXT:` prefixes, why "living documentation" in comments is a myth, and turning `TODO`s into issues - see [Chapter 8](./chapter_08.md), which owns that topic end to end.
+The idiom that belongs in *this* chapter is the structural one: **when a comment wants to narrate a function, split the function instead**. For everything else about comments - what makes one good or bad, `SAFETY:`/`CONTEXT:` prefixes, why "living documentation" in comments is a myth, and turning `TODO`s into issues - see [Documentation](./documentation.md), which owns that topic end to end.
 
 ### ✅ Breaking up long functions over commenting them
 
@@ -409,9 +438,16 @@ Let **structure** and **naming** replace commentary, and enhance its documentati
 
 > ❗ Splitting is about **naming and clarity**, not deduplication. Before extracting a helper to remove *duplicated* lines, check [§1.8](#18-when-to-extract-a-function-and-when-not-to).
 
-> Doc-comments and doc-testing, `///` and `//!`, are covered in [Chapter 8 - Comments vs Documentation](./chapter_08.md).
+> Doc-comments and doc-testing, `///` and `//!`, are covered in [Comments vs Documentation](./documentation.md).
 
 ## 1.7 Use Declarations - "imports"
+
+Prefer explicit imports and re-exports; tests, enum variants and established framework
+preludes are legitimate exceptions. Avoid adding a catch-all prelude. Scope rarely used
+trait imports locally when clearer, qualify free functions when it reveals meaning
+(`mem::take`, `fs::read`), and retain qualifiers/aliases for ambiguous names (`io::Error`).
+Follow the project's pinned formatter/config; keep skips narrow and justified rather
+than introducing unrelated regrouping or requiring nightly formatting.
 
 Different languages have different ways of sorting their imports, in the Rust ecosystem the [standard way](https://github.com/rust-lang/rustfmt/issues/4107) is:
 
@@ -472,9 +508,24 @@ group_imports = "StdExternalCrate"
 
 > ❗ `group_imports` and `imports_granularity` are **nightly-only** rustfmt options - still unstable as of 1.96. On stable they are ignored with the warning *"can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel"*, so the grouping only applies when you run `cargo +nightly fmt`.
 
+### Module and implementation clarity
+
+- Group modules by responsibility or use case. Name leaf modules after their primary
+  concept; parent modules usually organize and re-export. Preserve established layout
+  and public paths during unrelated edits.
+- Name significant constants and explain their origin/effect. Add type annotations when
+  `into`, `parse` or `collect` obscures intent; bind long expressions to meaningful locals.
+  For non-exhaustive enums, handle known relevant variants explicitly and include a fallback.
+- After mutable setup, a binding can be rebound without `mut` to make its read-only
+  phase explicit. Use `format!` for readable interpolation and `write!`/`push_str` for
+  appending to an existing string.
+- Use the project's structured telemetry with named fields and redacted sensitive data.
+  Preserve a CLI's intended stdout/stderr protocol; diagnostics should not corrupt it.
+  Measure hot logging costs through [performance](performance.md).
+
 ## 1.8 When to Extract a Function (and When Not To)
 
-This chapter ([§1.6](#-breaking-up-long-functions-over-commenting-them)) and [Chapter 8](./chapter_08.md#85-replace-comments-with-code) recommend splitting long functions and replacing narrative comments with named helpers. That advice is about **naming and clarity** -- it is *not* a license to hunt down every repeated line. Extraction has a cost: every helper adds indirection, and a **wrong abstraction is much harder to remove than a little duplication**.
+This chapter ([§1.6](#-breaking-up-long-functions-over-commenting-them)) and [Documentation](./documentation.md#85-replace-comments-with-code) recommend splitting long functions and replacing narrative comments with named helpers. That advice is about **naming and clarity** -- it is *not* a license to hunt down every repeated line. Extraction has a cost: every helper adds indirection, and a **wrong abstraction is much harder to remove than a little duplication**.
 
 > "Duplication is far cheaper than the wrong abstraction." -- [Sandi Metz, The Wrong Abstraction](https://sandimetz.com/blog/2016/1/20/the-wrong-abstraction)
 
@@ -546,7 +597,7 @@ If you find yourself maintaining an abstraction like `write_entry`, [Sandi Metz'
 ### ❌ Don't extract when:
 * It is **1-2 lines used in fewer than 3 places** -- the helper is pure indirection.
 * The call sites are only *almost* identical, and unifying them requires **flag parameters** or extra branches.
-* The only motivation is **line count**. A single-caller helper pays off when its *name* clarifies intent ([§1.6](#-breaking-up-long-functions-over-commenting-them), [§8.5](./chapter_08.md#85-replace-comments-with-code)) -- not when it merely relocates code.
+* The only motivation is **line count**. A single-caller helper pays off when its *name* clarifies intent ([§1.6](#-breaking-up-long-functions-over-commenting-them), [§8.5](./documentation.md#85-replace-comments-with-code)) -- not when it merely relocates code.
 * You are **guessing** at a future abstraction. Wait for the third usage to reveal its real shape.
 
 ### 🧫 Test code: readability beats DRY
@@ -558,7 +609,7 @@ In tests, be **even more tolerant of duplication**. The Google Testing Blog call
 * **Shared test helpers couple unrelated tests.** Change one behavior and dozens of tests fail at once -- for the helper's sake, not the behavior's.
 
 Where to draw the line:
-* ✅ Share **setup and fixtures** -- a shared setup function or `rstest` cases, as [Chapter 5](./chapter_05.md#51-tests-as-living-documentation) recommends. Constructing a test server twice is boilerplate, not knowledge.
+* ✅ Share **setup and fixtures** -- a shared setup function or `rstest` cases, as [Testing](./testing.md#51-tests-as-living-documentation) recommends. Constructing a test server twice is boilerplate, not knowledge.
 * ❌ Keep each test's **action and assertion inline**, even when they look repetitive across tests.
 
 > 🚨 When in doubt, **prefer duplication**. A duplicated line is trivially fixed later; a wrong abstraction accretes parameters and conditionals, because each maintainer keeps patching it instead of undoing it.

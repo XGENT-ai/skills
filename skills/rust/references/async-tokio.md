@@ -1,12 +1,15 @@
-# Chapter 10 - Async Patterns with Tokio
+# Async Patterns with Tokio
 
-> Not part of the original Apollo handbook. Added to cover async Rust, which the other chapters only touch in passing (see [Chapter 4](chapter_04.md) for error traits across `.await`, and [Chapter 9](chapter_09.md) for `Send`/`Sync`).
+> Not part of the original Apollo handbook. Added to cover async Rust, which the other chapters only touch in passing (see [Error Handling](error-handling.md) for error traits across `.await`, and [Pointers and Ownership](pointers-and-ownership.md) for `Send`/`Sync`).
 
 Async Rust is not a separate language, but it does change which idioms are correct. Ownership, borrowing and error handling rules from the previous chapters still apply - what is new is that your code can be *suspended* at every `.await`, and everything held across that point must survive the suspension.
 
 ## 10.1 The Execution Model
 
 A `Future` is **lazy**: nothing runs until something polls it. That is why an un-awaited future is a bug, not a background task.
+
+Prefer readable `async fn` declarations. Explicit returned futures remain useful for
+precise trait bounds or setup that must run before polling; document that timing distinction.
 
 ```
 Future (lazy) → poll() → Ready(value) | Pending
@@ -27,6 +30,12 @@ The practical consequences, each expanded later in this chapter:
 * **Blocking a thread blocks every task on it.** Never call `std::thread::sleep`, blocking file I/O or CPU-bound loops inside `async fn` - see [10.9](#109-shared-state-and-resource-limits).
 * **State held across `.await` must be `Send`** when the future is spawned on a multi-threaded runtime.
 * **Cancellation is silent.** Dropping a future stops it wherever it was suspended, so cleanup belongs in `Drop`, not after the `.await` - see [10.6](#106-graceful-shutdown).
+
+Check `Send`/`Sync` on public types and returned futures when crossing threads is part
+of their contract; local executors and thread-local APIs can intentionally be `!Send`.
+Prefer caller-owned runtime/I/O resources in libraries and document any Tokio dependency.
+Keep related shared-state invariants under one lock, shorten guard lifetimes, and avoid
+calling arbitrary user callbacks while holding a lock.
 
 ## 10.2 Project Setup
 
@@ -151,31 +160,32 @@ async fn mpsc_example() {
 }
 
 // broadcast: every live receiver gets every message; slow ones get Lagged
-async fn broadcast_example() {
+async fn broadcast_example() -> Result<(), broadcast::error::SendError<String>> {
     let (tx, _) = broadcast::channel::<String>(100);
 
     let mut rx1 = tx.subscribe();
     let mut rx2 = tx.subscribe();
 
-    tx.send("Event".to_string()).unwrap();
+    tx.send("Event".to_string())?;
 
     let _ = rx1.recv().await;
     let _ = rx2.recv().await;
+    Ok(())
 }
 
 // oneshot: a single value, consumed by awaiting the receiver
-async fn oneshot_example() -> String {
+async fn oneshot_example() -> Result<String, oneshot::error::RecvError> {
     let (tx, rx) = oneshot::channel::<String>();
 
     tokio::spawn(async move {
         let _ = tx.send("Result".to_string());
     });
 
-    rx.await.expect("sender dropped without sending")
+    rx.await
 }
 
 // watch: receivers see only the latest value, never a backlog
-async fn watch_example() {
+async fn watch_example() -> Result<(), watch::error::SendError<String>> {
     let (tx, mut rx) = watch::channel("initial".to_string());
 
     tokio::spawn(async move {
@@ -184,7 +194,8 @@ async fn watch_example() {
         }
     });
 
-    tx.send("updated".to_string()).unwrap();
+    tx.send("updated".to_string())?;
+    Ok(())
 }
 ```
 
@@ -192,7 +203,7 @@ async fn watch_example() {
 
 ## 10.5 Async Error Handling
 
-The rules from [Chapter 4](chapter_04.md) hold: `thiserror` for libraries, `anyhow` for binaries, `?` over match chains. Async adds one requirement - errors that cross a spawn or an `.await` boundary generally need `Send + Sync + 'static`.
+The rules from [Error Handling](error-handling.md) hold: `thiserror` for libraries, `anyhow` for binaries, `?` over match chains. Async adds one requirement - errors that cross a spawn or an `.await` boundary generally need `Send + Sync + 'static`.
 
 ```rust
 use anyhow::{Context, Result};
@@ -332,7 +343,7 @@ The catch is that such a trait is **not dyn-compatible** and its returned future
 | `Send` bound for spawning | `fn get(..) -> impl Future<Output = ..> + Send` |
 | `dyn Repository` / heterogeneous storage | `#[async_trait]` (boxes each future) |
 
-This follows the rule from [Chapter 6](chapter_06.md): static where you can, dynamic where you must. `#[async_trait]` is not deprecated - it is the tool for the `dyn` case, at the cost of one `Box` allocation per call.
+This follows the rule from [Generics and Dispatch](generics-and-dispatch.md): static where you can, dynamic where you must. `#[async_trait]` is not deprecated - it is the tool for the `dyn` case, at the cost of one `Box` allocation per call.
 
 ```rust
 use async_trait::async_trait;
@@ -420,7 +431,7 @@ async fn merge_streams() {
 }
 ```
 
-> The same advice as [Chapter 1](chapter_01.md) applies: avoid an intermediate `.collect()` when the next stage can consume the stream directly.
+> The same advice as [Coding Idioms](coding-idioms.md) applies: avoid an intermediate `.collect()` when the next stage can consume the stream directly.
 
 ## 10.9 Shared State and Resource Limits
 
@@ -466,11 +477,13 @@ impl Pool {
         }
     }
 
-    async fn acquire(&self) -> PooledConnection<'_> {
-        // The permit guarantees a connection is available
-        let permit = self.semaphore.acquire().await.expect("semaphore never closed");
-        let conn = self.connections.lock().unwrap().pop().expect("permit implies a free conn");
-        PooledConnection { pool: self, conn: Some(conn), _permit: permit }
+    async fn acquire(&self) -> anyhow::Result<PooledConnection<'_>> {
+        let permit = self.semaphore.acquire().await?;
+        let conn = self.connections.lock()
+            .map_err(|_| anyhow::anyhow!("connection pool lock poisoned"))?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("connection pool has no free connection"))?;
+        Ok(PooledConnection { pool: self, conn: Some(conn), _permit: permit })
     }
 }
 
@@ -483,13 +496,24 @@ struct PooledConnection<'a> {
 impl Drop for PooledConnection<'_> {
     fn drop(&mut self) {
         if let Some(conn) = self.conn.take() {
-            self.pool.connections.lock().unwrap().push(conn);
+            match self.pool.connections.lock() {
+                Ok(mut connections) => connections.push(conn),
+                Err(_) => {
+                    self.pool.semaphore.close();
+                    tracing::error!("connection pool lock poisoned; closing pool");
+                }
+            }
         }
     }
 }
 ```
 
 > Spawning from `Drop` to run async cleanup does not work here: `tokio::spawn` requires `'static`, and `self.pool` is a borrow. Either make the cleanup synchronous as above, or hold an `Arc<Pool>` instead of a reference.
+
+This application-level example uses `anyhow`; a library pool exposes a typed error.
+Keep the free-list critical section short. On poisoning, discard the returned connection
+and close the semaphore instead of panicking during `Drop` or reusing unchecked state.
+Connections requiring slow or fallible shutdown need an explicit cleanup operation.
 
 CPU-bound or blocking work must leave the async threads:
 
@@ -550,5 +574,5 @@ tokio-console
 * **Don't hold a lock across `.await`** - narrow the critical section or clone the value out first.
 * **Don't use `tokio::sync::Mutex` by default** - `std::sync::Mutex` is cheaper unless the guard crosses an `.await`.
 * **Don't ignore `JoinError`** - it is how a panicked task reports itself.
-* **Don't forget `Send`** on futures you spawn, or on errors that cross task boundaries ([Chapter 9](chapter_09.md)).
+* **Don't forget `Send`** on futures you spawn, or on errors that cross task boundaries ([Pointers and Ownership](pointers-and-ownership.md)).
 * **Don't create a future you never await** - it does nothing at all.

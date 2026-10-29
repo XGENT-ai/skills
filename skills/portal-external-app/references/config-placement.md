@@ -11,7 +11,7 @@
 | **环境依赖**：地址、连接串、证书、第三方密钥；全平台一份 | 清单 `requiredEnv`（键名，值归平台）。连接类键用约定名或 `requiredServices[].envKey` 绑定，平台自动供给 | 平台管理员 | 要 |
 | **业务参数**：超时、阈值、默认文案、开关；全平台一份、部署后不变 | **先在代码里给缺省值，不进清单**。确实要部署时可覆盖，才进 `requiredEnv`，并且**必须**在 `requiredEnvNotes` 里写清填什么 | 平台管理员（照你的说明填） | 要 |
 | **全平台一份、要随时改、不换版** | **平台级管理页**：你自己的页面，清单 `adminPages.platform` 声明，门户嵌进 控制台 › 应用市场 › 编辑你的应用 | 平台管理员 | 不要 |
-| **每个租户不同** | **租户级管理页**：清单 `adminPages.tenant` 声明，门户嵌进 租户 › 应用管理 › 配置 | 租户管理员 | 不要 |
+| **每个租户不同** | micro：清单 `adminPages.tenant` 嵌入 App 页面；service：清单 `tenantConfig` 声明受限 schema，门户渲染动态表单。都进 租户 › 应用管理 › 配置 | 租户管理员 | 不要 |
 | **应用内的业务设置**：模板、字典、流程规则… | 你应用里的设置页，用 `aclManifest` 声明权限（不给 `defaultForMember` ⇒ 默认只有租户管理员能进） | 被授权的角色 | 不要 |
 | **每个用户的偏好** | 你自己的库，按 `userId` 存 | 用户本人 | 不要 |
 | **每租户的密钥**（租户自己的第三方 API key） | 租户级管理页里录入，你的后端加密存库，**只写不回显** | 租户管理员 | 不要 |
@@ -41,6 +41,91 @@
   ```
 
 - 说明会原样给审批人看：**别写任何值或密钥**。
+
+## Service 动态配置（`tenantConfig`）
+
+无前端 service 的普通租户配置不再向平台申请手写页面。在 manifest 声明一个 Tab、同源 GET/PUT 路径、所需 scopes 和受限 schema：
+
+```jsonc
+"tenantConfig": {
+  "label": { "zh-CN": "解析预算", "en": "Parsing budget" },
+  "path": "/v2/policy",
+  "scopes": ["omni_parser.read", "omni_parser.govern"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "foreground": {
+        "type": "object",
+        "title": { "zh-CN": "前程预算", "en": "Foreground budget" },
+        "properties": {
+          "wall_time_ms": {
+            "type": "integer", "title": { "zh-CN": "最多等待", "en": "Wait limit" },
+            "default": 10, "unit": { "zh-CN": "秒", "en": "s" }, "scale": 1000
+          },
+          "mode": {
+            "type": "select", "title": "模式", "default": "auto",
+            "options": [{ "value": "auto", "label": "自动" }, { "value": "fast", "label": "快速" }]
+          },
+          "strict": { "type": "boolean", "title": "严格模式", "default": false }
+        }
+      }
+    }
+  }
+}
+```
+
+- 支持 `integer` / `number`、`select` 静态 options、`boolean` 和 object 嵌套分组；标签、说明与单位支持多语。
+  `scale` 表示「界面值 × scale = wire 值」，例如秒→1000 毫秒、MiB→1048576 字节；integer 缩放后必须是安全整数。
+- 配置 GET 返回 `{ "policy": {…}, "effective": {…} }`。Portal 展示 effective 与继承/覆盖状态；保存前重新 GET 最新
+  policy，只合并本次编辑或清除的 schema 路径，再整份 PUT，保留未展示字段。PUT 接收合并后的完整 policy 并返回同一形状。
+- 字段缺省时 effective 必须已有应用默认值；旧后端没有返回 schema 所需 effective 字段时，Portal 显示版本不支持并禁止写入。
+  App 必须在每次读写时重新校验租户管理员和 scopes，不能只信 Portal 签票或浏览器校验。
+- `tenantConfig` 只能由 `type:"service"` 声明，scopes 必须已在 listing `scopes` 中。字段新增、修改和撤回都是治理档；
+  批准后按 listing 现值对所有租户生效，不进安装快照。首版不支持动态选项、远程 `$ref`、脚本或密钥录入。
+
+### OmniParser：六项 `foreground` 后端接入清单
+
+OmniParser 的 manifest 已按上面的 `tenantConfig` 形状声明。后端要实现的是**现有 `/v2/policy` 的增量契约**，不要另建配置 API，也不要把 `foreground_limits`（单次请求字段）写成 policy 字段。
+
+| `policy.foreground` / `effective.foreground` 键 | wire 类型与单位 | 无覆盖时的应用默认 | Portal 展示 |
+| --- | --- | --- | --- |
+| `wall_time_ms` | 整数毫秒 | `10000` | 10 秒（`scale=1000`） |
+| `max_input_bytes` | 整数字节 | `16777216` | 16 MiB（`scale=1048576`） |
+| `max_result_bytes` | 整数字节 | `4194304` | 4 MiB（`scale=1048576`） |
+| `max_nodes` | 整数项 | `100000` | 100000 个节点 |
+| `max_container_depth` | 整数层 | `8` | 8 层 |
+| `max_embedded_items` | 整数项 | `10000` | 10000 个资源项 |
+
+DTO 规则：
+
+- `policy.foreground` 是**可选、可部分覆盖**的对象；缺整个对象或缺某一键都表示继承。已有 policy 的其他键必须原样保留。
+- `effective.foreground` 必须**始终包含全部六键**，值是应用默认、租户覆盖和平台安全界共同决定的当前有效值；不能只回显 raw 覆盖值。它不包含单次请求 `foreground_limits` 的临时收紧。
+- 例如，raw 只覆盖等待时间时，GET 仍返回完整 effective：
+
+  ```json
+  {
+    "policy": { "foreground": { "wall_time_ms": 12000 } },
+    "effective": {
+      "foreground": {
+        "wall_time_ms": 12000,
+        "max_input_bytes": 16777216,
+        "max_result_bytes": 4194304,
+        "max_nodes": 100000,
+        "max_container_depth": 8,
+        "max_embedded_items": 10000
+      }
+    }
+  }
+  ```
+
+后端行为与验收：
+
+1. 沿用现有租户管理员 + `omni_parser.read` / `omni_parser.govern` 双闸和租户隔离，不新增 scope。每次读写都重新判权，不能信任浏览器或 Portal 的预检。
+2. PUT 接受合并后的完整 policy，校验六键的类型和实际安全范围；非法或超界时**整份拒绝、原 policy 不变**。成功 PUT 后返回与 GET 同形的最新 `{ policy, effective }`。
+3. 清除某个 raw 覆盖键后，该键在 effective 中回到继承值；编辑一个键不得重置其他覆盖键，也不得改变已有 Jobs 的冻结策略、预算或 fragment topology。
+4. `budget: EnhancementBudget` 继续独立表示模型调用/费用预算，不能用 `foreground` 替代。实际 Probe / Inspect / FastParse 必须把应用默认、租户 policy、请求 `foreground_limits` 和平台硬界按既定规则取交集；**只把六键加入 DTO 而不接入实际执行路径不算完成**。
+5. 旧后端没有 `effective.foreground` 时，Portal 会显示「当前服务版本不支持」且不会 PUT。不要为了制造“支持”假象而在旧版本补一个空对象或静态默认值，然后让实际执行绕开这些限制。
+6. 至少验证：完整/部分 raw 的 GET、六键逐一保存与刷新读回、清除覆盖、非法值原样拒绝、未编辑旧键保留、普通成员/无 govern/跨租户拒绝，以及真实执行确实遵守六项限制。
 
 ## 管理页嵌入（`adminPages`）
 
@@ -73,4 +158,4 @@
 ## 已有的门户手写配置页
 
 文件管理、大模型网关、知识库等早期应用的租户配置页是门户代码里按应用手写的（签票端点 + 配置 API +
-配置区块）。那是过渡做法：**新应用一律用 `adminPages`**，不要再向平台申请这类按应用写的门户代码。
+配置区块）。那是过渡做法：新 micro App 用 `adminPages`，新 service 的普通配置用 `tenantConfig`；不要再向平台申请这类按应用写的门户代码。
