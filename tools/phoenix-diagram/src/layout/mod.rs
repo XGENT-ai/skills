@@ -47,6 +47,7 @@ pub fn compile(
         DiagramType::Waterfall => waterfall::compile(input, options),
     }?;
     clear_sigil_labels(&mut diagram.nodes, input.input_contract);
+    attach_brands(&mut diagram, input)?;
     Ok(diagram)
 }
 
@@ -98,5 +99,102 @@ fn clear_sigil_labels(nodes: &mut [Node], contract: InputContract) {
         } else {
             node.sigil = None;
         }
+    }
+}
+
+fn attach_brands(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Result<(), Diagnostics> {
+    let mut errors = vec![];
+    for node in &mut diagram.nodes {
+        let path = format!("{}/brand", node.authored.source_path);
+        let Some(brand) = input.brands.get(&path) else {
+            continue;
+        };
+        let Some(label) = node
+            .text
+            .iter_mut()
+            .find(|text| text.source_path.ends_with("/label"))
+        else {
+            continue;
+        };
+        let required =
+            crate::geometry::text_units_for_contract(&label.content, input.input_contract)
+                * label.font_size
+                * 0.6;
+        if required > node.bounds.width - 48.0 || node.bounds.height < 28.0 {
+            errors.push(Diagnostic::error(Some(input.diagram_type.as_str()),"brand/title-capacity",&path,"The brand title rail cannot fit the complete label at its current font size; widen the node without changing its pin"));
+            continue;
+        }
+        label.position.x = node.bounds.x + node.bounds.width / 2.0 - 8.0;
+        label.anchor = "middle".into();
+        let rect = crate::scene::Rect {
+            x: node.bounds.x + node.bounds.width - 24.0,
+            y: label.position.y - label.font_size * 0.8 - 2.0,
+            width: 16.0,
+            height: 16.0,
+        };
+        if rect.y < node.bounds.y + 2.0
+            || rect.y + rect.height > node.bounds.y + node.bounds.height - 2.0
+        {
+            errors.push(Diagnostic::error(
+                Some(input.diagram_type.as_str()),
+                "brand/title-capacity",
+                &path,
+                "The fixed title rail has insufficient height for a brand mark",
+            ));
+            continue;
+        }
+        if let Some(sigil) = node.sigil.as_mut() {
+            let overlaps = |x: f64, y: f64| {
+                let mark = crate::scene::Rect {
+                    x,
+                    y,
+                    width: sigil.size,
+                    height: sigil.size,
+                };
+                rects_overlap(&mark, &rect, 1.0)
+                    || node.text.iter().any(|t| {
+                        rects_overlap(
+                            &mark,
+                            &text_glyph_box(
+                                &t.content,
+                                t.position.x,
+                                t.position.y,
+                                t.font_size,
+                                &t.anchor,
+                                input.input_contract,
+                            ),
+                            1.0,
+                        )
+                    })
+            };
+            if overlaps(sigil.position.x, sigil.position.y) {
+                let positions = [
+                    (node.bounds.x + 4.0, node.bounds.y + 4.0),
+                    (
+                        node.bounds.x + 4.0,
+                        node.bounds.y + node.bounds.height - sigil.size - 4.0,
+                    ),
+                    (
+                        node.bounds.x + node.bounds.width - sigil.size - 4.0,
+                        node.bounds.y + node.bounds.height - sigil.size - 4.0,
+                    ),
+                ];
+                if let Some((x, y)) = positions.into_iter().find(|(x, y)| !overlaps(*x, *y)) {
+                    sigil.position = crate::scene::Point { x, y };
+                } else {
+                    errors.push(Diagnostic::error(Some(input.diagram_type.as_str()),"brand/title-capacity",&path,"The fixed card cannot retain both brand and semantic mark without covering text"));
+                    continue;
+                }
+            }
+        }
+        node.brand = Some(crate::scene::BrandPlacement {
+            bounds: rect,
+            resource: brand.clone(),
+        });
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
     }
 }

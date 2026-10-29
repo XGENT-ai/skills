@@ -58,6 +58,7 @@ impl Fixture {
             engine: &self.engine,
             assets: &ASSETS,
             repo_root: None,
+            brand_cache: None,
         }
     }
     pub fn finalize(&self) -> (FinalizeReceipt, ProtocolFixture) {

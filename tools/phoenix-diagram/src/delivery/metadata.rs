@@ -35,7 +35,7 @@ fn dom_text(value: &str) -> String {
 }
 
 /// The single embedded metadata object of an artifact.
-pub(super) fn embedded(document: &Html) -> Option<Value> {
+pub(crate) fn embedded(document: &Html) -> Option<Value> {
     let selector = Selector::parse("script#phoenix-diagram-metadata[type='application/json']")
         .expect("static selector");
     let mut scripts = document.select(&selector);
@@ -47,7 +47,7 @@ pub(super) fn embedded(document: &Html) -> Option<Value> {
 }
 
 /// Bind authored facts without running layout or serializing another artifact.
-pub(super) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
+pub(crate) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
     let Ok(source) = std::str::from_utf8(bytes) else {
         return false;
     };

@@ -1,5 +1,7 @@
+pub mod brands;
 pub mod browser;
 pub mod check;
+pub mod compare;
 pub mod delivery;
 pub mod diagnostic;
 pub mod evidence;
@@ -10,6 +12,7 @@ pub mod input;
 pub mod install;
 pub mod layout;
 pub mod output;
+pub mod preview;
 pub mod render;
 pub mod scene;
 mod schema;

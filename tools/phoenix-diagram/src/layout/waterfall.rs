@@ -639,6 +639,7 @@ pub fn compile(
             text: vec![],
         });
         nodes.push(Node {
+            brand: None,
             authored: authored(
                 span.id,
                 format!("/spans/{}", span.index),

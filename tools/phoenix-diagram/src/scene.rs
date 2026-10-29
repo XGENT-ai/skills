@@ -37,7 +37,16 @@ pub struct Sigil {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct BrandPlacement {
+    pub bounds: Rect,
+    pub resource: crate::brands::ResolvedBrand,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Node {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub brand: Option<BrandPlacement>,
     pub authored: Authored,
     pub bounds: Rect,
     pub sigil: Option<Sigil>,

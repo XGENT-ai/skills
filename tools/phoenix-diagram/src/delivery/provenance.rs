@@ -140,6 +140,31 @@ pub(super) fn current_locked(
                 serde_json::to_value(diagnostics).expect("diagnostics serialize");
             error
         })?;
+    let resources = std::str::from_utf8(artifact.bytes())
+        .ok()
+        .and_then(|s| super::metadata::embedded(&scraper::Html::parse_document(s)))
+        .and_then(|m| m.get("brandResources").cloned())
+        .map(serde_json::from_value::<crate::brands::ResolvedBrands>)
+        .transpose()
+        .map_err(|_| {
+            fail(
+                "check",
+                "brand/digest-mismatch",
+                "Invalid embedded brand resources",
+                1,
+            )
+        })?
+        .unwrap_or_default();
+    let brands = crate::brands::bound(&parsed, &resources).map_err(|_| {
+        fail(
+            "check",
+            "brand/digest-mismatch",
+            "Embedded brand resources disagree with the input",
+            1,
+        )
+    })?;
+    parsed.bind_brands(brands);
+    crate::brands::sanitize_document(&mut parsed.document, parsed.diagram_type);
     // Git is not consulted again: the artifact's evidence must be the one the
     // receipt digested, and it must cite exactly the candidate's sources.
     let evidence = std::str::from_utf8(artifact.bytes())

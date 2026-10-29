@@ -3,6 +3,37 @@ use crate::check::FileIdentity;
 use crate::input::sha256;
 use std::fs;
 
+#[test]
+fn private_snapshot_preparation_uses_bound_bytes_without_reopening_the_candidate() {
+    let fixture = super::test_support::Fixture::new();
+    let bytes = fs::read(&fixture.candidate).unwrap();
+    let original = super::prepare::prepare(&fixture.request());
+    assert_eq!(
+        original.receipt.status,
+        Status::Pass,
+        "{:?}",
+        original.receipt.diagnostics
+    );
+    fs::remove_file(&fixture.candidate).unwrap();
+    let snapshot = super::prepare::prepare_bytes(&fixture.request(), &bytes);
+    assert_eq!(
+        snapshot.receipt.status,
+        Status::Pass,
+        "{:?}",
+        snapshot.receipt.diagnostics
+    );
+    assert!(snapshot.source.is_none());
+    assert!(snapshot.receipt.candidate.is_none());
+    assert_eq!(
+        snapshot.receipt.config_sha256,
+        original.receipt.config_sha256
+    );
+    assert_eq!(
+        snapshot.compiled.unwrap().html,
+        original.compiled.unwrap().html
+    );
+}
+
 struct Cleanup(std::path::PathBuf);
 impl Drop for Cleanup {
     fn drop(&mut self) {
@@ -115,6 +146,7 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
             engine: &engine,
             assets: &assets,
             repo_root: None,
+            brand_cache: None,
         },
         &output,
     );

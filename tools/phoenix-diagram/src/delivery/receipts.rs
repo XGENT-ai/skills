@@ -19,6 +19,8 @@ pub struct EngineIdentity {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EffectiveConfig {
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub brand_resources: std::collections::BTreeMap<String, crate::brands::ResourceIdentity>,
     pub diagram_type: DiagramType,
     pub input_contract: InputContract,
     pub quality: Quality,

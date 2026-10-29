@@ -8,11 +8,14 @@ use std::sync::Arc;
 
 #[path = "acceptance.rs"]
 mod acceptance;
+pub(crate) use acceptance::checkpoint as acceptance_checkpoint;
+pub(crate) use acceptance::preview_worker_checkpoint;
 #[path = "output/transaction.rs"]
 mod transaction;
 #[path = "output/unix.rs"]
 mod unix;
-use unix::{Directory, SlotLock};
+pub(crate) use unix::{public_state, rename_no_clobber, transaction_id, uid};
+pub(crate) use unix::{Directory, SlotLock};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -64,7 +67,7 @@ impl OutputError {
             ErrorKind::Io => 4,
         }
     }
-    fn new(kind: ErrorKind, code: &str, message: impl Into<String>) -> Self {
+    pub(crate) fn new(kind: ErrorKind, code: &str, message: impl Into<String>) -> Self {
         Self {
             kind,
             code: code.into(),
@@ -77,10 +80,10 @@ impl OutputError {
             committed: false,
         }
     }
-    fn io(code: &str, error: std::io::Error) -> Self {
+    pub(crate) fn io(code: &str, error: std::io::Error) -> Self {
         Self::new(ErrorKind::Io, code, error.to_string())
     }
-    fn conflict(code: &str) -> Self {
+    pub(crate) fn conflict(code: &str) -> Self {
         Self::new(ErrorKind::Conflict, code, code)
     }
 }
@@ -115,11 +118,16 @@ impl FileBinding {
         self.parent.verify()?;
         self.verify_at(&self.parent, &self.name, 1)
     }
-    fn at(parent: Arc<Directory>, name: &str, links: u64, owner: bool) -> OutputResult<Self> {
+    pub(crate) fn at(
+        parent: Arc<Directory>,
+        name: &str,
+        links: u64,
+        owner: bool,
+    ) -> OutputResult<Self> {
         let file = parent.open_regular(name, false)?;
         Self::from_file(file, parent, name, links, owner)
     }
-    fn from_file(
+    pub(crate) fn from_file(
         file: File,
         parent: Arc<Directory>,
         name: &str,
@@ -139,7 +147,7 @@ impl FileBinding {
             content,
         })
     }
-    fn verify_at(&self, parent: &Directory, name: &str, links: u64) -> OutputResult<()> {
+    pub(crate) fn verify_at(&self, parent: &Directory, name: &str, links: u64) -> OutputResult<()> {
         let (current, _) = unix::snapshot(&self.file, parent, name, links)?;
         if !same_identity(&current, &self.identity) {
             return Err(OutputError::conflict("output/binding-changed"));
@@ -147,7 +155,7 @@ impl FileBinding {
         Ok(())
     }
 }
-fn same_identity(a: &FileIdentity, b: &FileIdentity) -> bool {
+pub(crate) fn same_identity(a: &FileIdentity, b: &FileIdentity) -> bool {
     a.device == b.device
         && a.inode == b.inode
         && a.mode == b.mode
@@ -182,6 +190,9 @@ impl OutputSlot {
     pub fn path(&self) -> PathBuf {
         self.parent.real.join(&self.name)
     }
+    pub(crate) fn requested_path(&self) -> &Path {
+        &self.requested_path
+    }
     pub fn previous(&self) -> Option<&FileBinding> {
         self.target.as_ref()
     }
@@ -193,6 +204,29 @@ impl OutputSlot {
             return Err(OutputError::conflict("output/slot-alias"));
         }
         capture(parent, name, path, protected, self.lock.clone())
+    }
+    /// Continue a preview's locked output only from its own last publication.
+    pub(crate) fn refresh(
+        &self,
+        published: &FileBinding,
+        protected: &[&FileBinding],
+    ) -> OutputResult<Self> {
+        self.verify_guard()?;
+        if published.path() != self.path() {
+            return Err(OutputError::conflict("output/target-changed"));
+        }
+        published.verify()?;
+        let next = capture(
+            self.parent.clone(),
+            self.name.clone(),
+            &self.requested_path,
+            protected,
+            self.lock.clone(),
+        )?;
+        if next.previous().map(FileBinding::identity) != Some(published.identity()) {
+            return Err(OutputError::conflict("output/target-changed"));
+        }
+        Ok(next)
     }
     fn verify(&self, protected: &[&FileBinding]) -> OutputResult<()> {
         self.lock.verify()?;
@@ -319,6 +353,16 @@ pub fn publish_bound(
     transaction::publish(slot, bytes, protected, &mut |_, _| Ok(()))
 }
 
+pub(crate) fn publish_observed(
+    slot: &OutputSlot,
+    bytes: &[u8],
+    mode: u32,
+    protected: &[&FileBinding],
+    observer: Observer<'_>,
+) -> OutputResult<Publication> {
+    transaction::publish_with_mode(slot, bytes, mode, protected, observer)
+}
+
 /// Publish with the requested permissions already applied to the private
 /// candidate, before any public link is created.
 pub fn publish_bound_with_mode(
@@ -396,7 +440,7 @@ pub(crate) struct Observation {
     pub(crate) stage: PathBuf,
     pub(crate) backup: PathBuf,
 }
-type Observer<'a> = &'a mut dyn FnMut(Phase, &Observation) -> std::io::Result<()>;
+pub(crate) type Observer<'a> = &'a mut dyn FnMut(Phase, &Observation) -> std::io::Result<()>;
 
 #[cfg(test)]
 #[allow(dead_code, unused_imports)] // Hooks are used by the integration module copy.

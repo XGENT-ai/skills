@@ -1,6 +1,7 @@
 //! Read-only browser evidence for one already bound delivery.
 
 mod cdp;
+pub mod comparison;
 mod discovery;
 mod evidence;
 mod observation;

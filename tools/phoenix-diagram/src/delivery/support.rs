@@ -190,6 +190,11 @@ pub(super) fn evidence_summary(validation: &Value) -> Value {
 
 pub(super) fn config(input: &crate::input::DiagramInput) -> EffectiveConfig {
     EffectiveConfig {
+        brand_resources: input
+            .brands
+            .iter()
+            .map(|(path, brand)| (path.clone(), brand.resource.clone()))
+            .collect(),
         diagram_type: input.diagram_type,
         input_contract: input.input_contract,
         quality: input.quality,

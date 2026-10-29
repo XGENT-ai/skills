@@ -27,6 +27,54 @@ pub(crate) fn checkpoint(phase: &str, target: &Path, recovery_dir: &Path) -> io:
     )
 }
 
+pub(crate) fn preview_worker_checkpoint(generation: u64, input_sha256: &str) -> io::Result<()> {
+    let requested = std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_PHASE");
+    if std::env::var_os("PHOENIX_DIAGRAM_ACCEPTANCE").as_deref() != Some(OsStr::new("1"))
+        || !matches!(
+            requested.as_deref().and_then(OsStr::to_str),
+            Some("preview-worker-ready" | "preview-worker-ignore-term")
+        )
+    {
+        return Ok(());
+    }
+    let Some(directory) =
+        std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_DIR").filter(|value| !value.is_empty())
+    else {
+        return Ok(());
+    };
+    let directory = Path::new(&directory);
+    let (handle, identity) = checkpoint_directory(directory)?;
+    let ignore_term = requested.as_deref() == Some(OsStr::new("preview-worker-ignore-term"));
+    let previous = if ignore_term {
+        let handler = unsafe { libc::signal(libc::SIGTERM, libc::SIG_IGN) };
+        if handler == libc::SIG_ERR {
+            return Err(io::Error::last_os_error());
+        }
+        Some(handler)
+    } else {
+        None
+    };
+    let result = write_marker(
+        directory,
+        &handle,
+        &identity,
+        serde_json::json!({"schemaVersion":1,"kind":"preview-worker-checkpoint","pid":std::process::id(),"phase":if ignore_term {"preview-worker-ignore-term"} else {"preview-worker-ready"},"generation":generation,"inputSha256":input_sha256,"ignoreSigterm":ignore_term}),
+        || {
+            std::thread::sleep(std::time::Duration::from_secs(30));
+            Err(io::Error::new(
+                io::ErrorKind::TimedOut,
+                "Preview worker checkpoint was not interrupted within 30 seconds",
+            ))
+        },
+    );
+    if let Some(handler) = previous {
+        unsafe {
+            libc::signal(libc::SIGTERM, handler);
+        }
+    }
+    result
+}
+
 fn checkpoint_with(
     phase: &str,
     target: &Path,
@@ -50,7 +98,14 @@ fn checkpoint_with(
         .filter(|value| {
             matches!(
                 *value,
-                "after-retire" | "after-recovery-link" | "after-witness-quarantine"
+                "after-retire"
+                    | "after-recovery-link"
+                    | "after-witness-quarantine"
+                    | "compare-before-second-member"
+                    | "compare-before-committed"
+                    | "compare-committed"
+                    | "preview-worker-ready"
+                    | "preview-worker-ignore-term"
             )
         })
         .ok_or_else(|| {
@@ -60,6 +115,29 @@ fn checkpoint_with(
             )
         })?;
     let directory = Path::new(directory);
+    let (handle, identity) = checkpoint_directory(directory)?;
+    let phase = match phase {
+        "AfterRetire" | "after-retire" => "after-retire",
+        "AfterRecoveryLink" | "after-recovery-link" => "after-recovery-link",
+        "AfterWitnessQuarantine" | "after-witness-quarantine" => "after-witness-quarantine",
+        "compare-before-second-member" => "compare-before-second-member",
+        "compare-before-committed" => "compare-before-committed",
+        "compare-committed" => "compare-committed",
+        _ => return Ok(()),
+    };
+    if phase != requested {
+        return Ok(());
+    }
+    write_marker(
+        directory,
+        &handle,
+        &identity,
+        serde_json::json!({"schemaVersion":1,"pid":std::process::id(),"phase":phase,"target":target,"recoveryDirectory":recovery_dir}),
+        ready,
+    )
+}
+
+fn checkpoint_directory(directory: &Path) -> io::Result<(File, Metadata)> {
     let identity = fs::symlink_metadata(directory)?;
     private_metadata(&identity)?;
     let handle = OpenOptions::new()
@@ -67,15 +145,16 @@ fn checkpoint_with(
         .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
         .open(directory)?;
     verify_directory(directory, &handle, &identity)?;
-    let phase = match phase {
-        "AfterRetire" | "after-retire" => "after-retire",
-        "AfterRecoveryLink" | "after-recovery-link" => "after-recovery-link",
-        "AfterWitnessQuarantine" | "after-witness-quarantine" => "after-witness-quarantine",
-        _ => return Ok(()),
-    };
-    if phase != requested {
-        return Ok(());
-    }
+    Ok((handle, identity))
+}
+
+fn write_marker(
+    directory: &Path,
+    handle: &File,
+    identity: &Metadata,
+    payload: serde_json::Value,
+    ready: impl FnOnce() -> io::Result<()>,
+) -> io::Result<()> {
     let name = c"checkpoint.json";
     let fd = unsafe {
         libc::openat(
@@ -90,9 +169,9 @@ fn checkpoint_with(
     }
     let mut marker = unsafe { File::from_raw_fd(fd) };
     let created = marker.metadata()?;
-    verify_directory(directory, &handle, &identity)?;
-    let mut bytes=serde_json::to_vec(&serde_json::json!({"schemaVersion":1,"pid":std::process::id(),"phase":phase,"target":target,"recoveryDirectory":recovery_dir}))
-        .map_err(|error|io::Error::new(io::ErrorKind::InvalidData,error.to_string()))?;
+    verify_directory(directory, handle, identity)?;
+    let mut bytes = serde_json::to_vec(&payload)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error.to_string()))?;
     bytes.push(b'\n');
     marker.write_all(&bytes)?;
     marker.flush()?;
@@ -133,7 +212,7 @@ fn checkpoint_with(
             "Acceptance checkpoint marker binding changed",
         ));
     }
-    verify_directory(directory, &handle, &identity)?;
+    verify_directory(directory, handle, identity)?;
     ready()
 }
 
@@ -290,6 +369,39 @@ mod tests {
         )
         .is_err());
         assert!(!root.0.join("checkpoint.json").exists());
+    }
+
+    #[test]
+    fn comparison_phases_select_exact_durable_pair_boundaries() {
+        for phase in [
+            "compare-before-second-member",
+            "compare-before-committed",
+            "compare-committed",
+        ] {
+            let root = Temp::new();
+            let mut paused = false;
+            checkpoint_with(
+                phase,
+                &root.0.join("comparison.html"),
+                &root.0.join("pair-journal"),
+                Some(OsStr::new("1")),
+                Some(root.0.as_os_str()),
+                Some(OsStr::new(phase)),
+                || {
+                    paused = true;
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert!(paused);
+            let marker: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.0.join("checkpoint.json")).unwrap()).unwrap();
+            assert_eq!(marker["phase"], phase);
+            assert_eq!(
+                marker["recoveryDirectory"],
+                root.0.join("pair-journal").to_str().unwrap()
+            );
+        }
     }
 
     #[test]

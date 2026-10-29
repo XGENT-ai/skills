@@ -70,6 +70,12 @@
       "mode": 420
     },
     {
+      "path": "references/architecture-compare.md",
+      "size": 8445,
+      "sha256": "c760ed03277e8dfb5abad06ba64d56ef6932019c622cb92eb8b4691de466e658",
+      "mode": 420
+    },
+    {
       "path": "references/authoring-defaults.md",
       "size": 12632,
       "sha256": "c713068cb53f24f3e2971276d9091cf52b5fca059ce9b2b8857a1b238a8b34ad",
@@ -77,8 +83,8 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 9089,
-      "sha256": "d068e1f5275c2f60d423039746f0159317fe17ade002793c3d554eba8734e94a",
+      "size": 10406,
+      "sha256": "1b78c76b6347b5845d97f1375962d959ae3a35e42212e55763c960d40e357ec6",
       "mode": 420
     },
     {
@@ -167,8 +173,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 41561,
-      "sha256": "4f220d795fc72806d9e76969f8038ccdee61747bb91b143c89c67fac86364d30",
+      "size": 41604,
+      "sha256": "a4e40bf448c706b6645ee1620e3d57212aad6b0adc229e2964d32b5626468a59",
       "mode": 420
     },
     {

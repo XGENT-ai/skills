@@ -1060,7 +1060,7 @@ fn waterfall_spans_need_recorded_consistent_timing_and_acyclic_parents() {
 }
 
 #[test]
-fn deferred_fields_move_to_p3_and_repository_evidence_is_no_longer_deferred() {
+fn final_dispositions_keep_repository_evidence_supported() {
     let mut document = minimal(DiagramType::Architecture, "phoenix-v1");
     document["meta"]["input_contract"] = json!("phoenix-v1");
     document["components"][0]["brand"] = json!("example");
@@ -1076,13 +1076,16 @@ fn deferred_fields_move_to_p3_and_repository_evidence_is_no_longer_deferred() {
     .unwrap();
     let paths: Vec<_> = input
         .compatibility
-        .deferred_fields
+        .dispositions
         .iter()
-        .map(|field| (field.path.as_str(), field.phase.as_str()))
+        .map(|field| (field.path.as_str(), field.disposition.as_str()))
         .collect();
     assert_eq!(
         paths,
-        [("/meta/views", "P3"), ("/components/0/brand", "P3")]
+        [
+            ("/meta/views", "unsupported-display"),
+            ("/components/0/brand", "supported")
+        ]
     );
     let mut legacy = minimal(DiagramType::Sequence, "legacy-2.17");
     legacy["meta"]["animation"] = json!("trace");
@@ -1092,9 +1095,10 @@ fn deferred_fields_move_to_p3_and_repository_evidence_is_no_longer_deferred() {
         &CompileOptions::default(),
     )
     .unwrap();
+    assert_eq!(input.compatibility.dispositions[0].path, "/meta/animation");
     assert_eq!(
-        input.compatibility.deferred_fields[0].path,
-        "/meta/animation"
+        input.compatibility.dispositions[0].disposition,
+        "ignored-display"
     );
-    assert_eq!(input.compatibility.deferred_fields[0].phase, "P3");
+    assert!(input.compatibility.deferred_fields.is_empty());
 }

@@ -62,6 +62,7 @@ fn request<'a>(
         engine,
         assets,
         repo_root: None,
+        brand_cache: None,
     }
 }
 

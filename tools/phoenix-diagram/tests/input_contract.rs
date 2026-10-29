@@ -258,7 +258,7 @@ fn duplicate_ids_endpoints_and_numeric_ranges_fail_before_layout() {
 }
 
 #[test]
-fn deferred_fields_are_reported_individually_without_removing_facts() {
+fn final_dispositions_are_reported_individually_without_removing_facts() {
     let mut document = sequence();
     document["meta"]["input_contract"] = json!("phoenix-v1");
     document["participants"][0]["brand"] = json!("example-brand");
@@ -274,9 +274,9 @@ fn deferred_fields_are_reported_individually_without_removing_facts() {
     assert_eq!(input.compatibility.core_compatibility, "pass");
     assert!(input
         .compatibility
-        .deferred_fields
+        .dispositions
         .iter()
-        .any(|field| field.path == "/participants/0/brand" && field.phase == "P3"));
+        .any(|field| field.path == "/participants/0/brand" && field.disposition == "supported"));
     assert!(!input
         .compatibility
         .deferred_fields

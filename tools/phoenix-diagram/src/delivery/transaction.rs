@@ -40,8 +40,13 @@ pub(super) fn deliver(request: &CompileRequest<'_>, output: &Path) -> DeliveryRe
     };
     let source = prepared.source.as_ref().expect("compiled source");
     let run: Result<()> = (|| {
-        let slot =
-            output::capture_slot(output, &[source]).map_err(|e| output_error("deliver", e))?;
+        let slot = output::capture_slot(
+            output,
+            &std::iter::once(source)
+                .chain(&compiled.resources)
+                .collect::<Vec<_>>(),
+        )
+        .map_err(|e| output_error("deliver", e))?;
         publish(&slot, source, compiled, &mut receipt)?;
         Ok(())
     })();
@@ -126,15 +131,19 @@ fn publish(
     compiled: &Compiled,
     receipt: &mut DeliveryReceipt,
 ) -> Result<FileBinding> {
+    let protected = std::iter::once(source)
+        .chain(&compiled.resources)
+        .collect::<Vec<_>>();
+    verify(&protected, "deliver")?;
     settled(slot, "deliver")?;
     let sidecars = paths(&slot.path(), None);
     let receipt_slot = slot
-        .capture_related(&sidecars.delivery, &[source])
+        .capture_related(&sidecars.delivery, &protected)
         .map_err(|e| output_error("deliver", e))?;
     settled(&receipt_slot, "deliver")?;
     own_delivery(&receipt_slot)?;
     receipt.receipt_id = unique_id()?;
-    let publication = match output::publish_bound(slot, &compiled.html, &[source]) {
+    let publication = match output::publish_bound(slot, &compiled.html, &protected) {
         Ok(publication) => publication,
         Err(error) => {
             receipt.evidence["htmlCommitted"] = json!(error.committed);
@@ -171,7 +180,7 @@ fn publish(
             3,
         ));
     }
-    source.verify().map_err(|e| output_error("deliver", e))?;
+    verify(&protected, "deliver")?;
     receipt.status = Status::Pass;
     receipt.commit_state = CommitState::Committed;
     receipt.exit = 0;
@@ -185,6 +194,7 @@ fn publish(
             return Err(failure);
         }
     };
+    verify(&protected, "deliver")?;
     verify(&[source, &artifact, &written], "deliver")?;
     settled(slot, "deliver")?;
     settled(&receipt_slot, "deliver")?;
@@ -252,6 +262,9 @@ pub(super) fn finalize(
     let mut protected = Vec::new();
     if let Some(source) = prepared.source.as_ref() {
         protected.push(source);
+    }
+    if let Some(compiled) = prepared.compiled.as_ref() {
+        protected.extend(&compiled.resources);
     }
     let run: Result<()> = (|| {
         let slot =

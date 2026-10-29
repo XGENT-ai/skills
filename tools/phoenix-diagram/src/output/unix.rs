@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::fs::{FileExt, MetadataExt, OpenOptionsExt};
 
-pub(super) fn uid() -> u32 {
+pub(crate) fn uid() -> u32 {
     unsafe { libc::geteuid() }
 }
 fn c_name(name: &str) -> OutputResult<CString> {
@@ -43,7 +43,7 @@ pub(super) fn absolute(path: &Path) -> OutputResult<PathBuf> {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct Entry {
+pub(crate) struct Entry {
     pub device: u64,
     pub inode: u64,
     pub links: u64,
@@ -53,7 +53,7 @@ pub(super) struct Entry {
     pub bytes: u64,
 }
 #[derive(Debug)]
-pub(super) struct Directory {
+pub(crate) struct Directory {
     pub requested: PathBuf,
     pub real: PathBuf,
     pub file: File,
@@ -397,7 +397,7 @@ pub(super) fn link(
     target.sync()?;
     source.sync()
 }
-pub(super) fn rename_no_clobber(
+pub(crate) fn rename_no_clobber(
     source: &Directory,
     source_name: &str,
     target: &Directory,
@@ -438,14 +438,14 @@ pub(super) fn rename_no_clobber(
     source.sync()?;
     target.sync()
 }
-pub(super) fn transaction_id() -> OutputResult<String> {
+pub(crate) fn transaction_id() -> OutputResult<String> {
     let mut bytes = [0_u8; 16];
     File::open("/dev/urandom")
         .and_then(|mut f| f.read_exact(&mut bytes))
         .map_err(|e| OutputError::io("output/random-source", e))?;
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
-pub(super) fn public_state(parent: &Directory, name: &str) -> PublicState {
+pub(crate) fn public_state(parent: &Directory, name: &str) -> PublicState {
     match parent.entry(name) {
         Ok(None) => PublicState::Absent,
         Ok(Some(entry)) if entry.kind == "file" => match parent
@@ -463,7 +463,7 @@ pub(super) fn public_state(parent: &Directory, name: &str) -> PublicState {
 }
 
 #[derive(Debug)]
-pub(super) struct SlotLock {
+pub(crate) struct SlotLock {
     pub parent: Arc<Directory>,
     pub target_name: String,
     binding: FileBinding,

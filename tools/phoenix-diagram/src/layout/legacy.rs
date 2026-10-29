@@ -214,6 +214,7 @@ pub(super) fn compile(
             );
         }
         nodes.push(Node {
+            brand: None,
             authored: authored(
                 raw,
                 "states",

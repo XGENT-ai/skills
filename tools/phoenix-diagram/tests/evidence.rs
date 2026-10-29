@@ -776,6 +776,7 @@ fn delivery_binds_evidence_and_strict_currency_rejects_tampering() {
         engine: &engine,
         assets: &assets,
         repo_root,
+        brand_cache: None,
     };
     let output = temp.join("report.html");
     let delivered = delivery::deliver(&request(Some(&root)), &output);
