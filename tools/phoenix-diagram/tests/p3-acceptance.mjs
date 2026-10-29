@@ -27,8 +27,10 @@ export function loadRelease(directory){
   return{root:artifact.directory,target,sourceCommit:artifact.version.sourceCommit,sourceState:artifact.receipt.sourceState,sourceInputSha256:artifact.version.sourceInputSha256,bundleSha256:artifact.version.bundleSha256,files,engineIdentity};
 }
 export function offlinePrefix({browser=false}={}){
-  if(process.platform==='darwin'){fs.accessSync('/usr/bin/sandbox-exec',fs.constants.X_OK);return['/usr/bin/sandbox-exec','-p',browser?'(version 1) (allow default) (deny network-outbound (remote ip)) (allow network-outbound (remote ip "localhost:*")) (deny network-inbound (local ip)) (allow network-inbound (local ip "localhost:*"))':'(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))'];}
-  if(browser)return[]; // Browser receipts and export CDP prove this separate scope.
+  // Chrome must initialize its own macOS sandbox. Browser receipts prove
+  // CDP offline mode and resource requests separately from native OS denial.
+  if(browser)return[];
+  if(process.platform==='darwin'){fs.accessSync('/usr/bin/sandbox-exec',fs.constants.X_OK);return['/usr/bin/sandbox-exec','-p','(version 1) (allow default) (deny network-outbound (remote ip)) (deny network-inbound (local ip))'];}
   assert.equal(process.platform,'linux','No verified OS deny-network launcher for this host');fs.accessSync('/usr/bin/unshare',fs.constants.X_OK);return['/usr/bin/unshare','--user','--map-current-user','--net','--'];
 }
 function currentCase(state,id){const entry=state.cases[id];if(entry?.summary)refreshCase(entry,state.release);return entry;}
@@ -51,7 +53,7 @@ export async function invokeRecordedStep(state,id,args,{invoke=invokeNative,save
     if(step?.status==='running'){state.diagnostics.push({stage:id,message:'The original process has no complete captured receipt; preserve outputs and use its explicit recovery path. It was not rerun.'});save();return null;}
     if(step?.status==='failed')return null;
     const prefix=offline?offlinePrefix({browser:['finalize','visual-check'].includes(args[0])}):[];
-    const directory=privateDirectory(path.join(state.runRoot,'commands',id));step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP; browser commands retain only verified loopback traffic':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
+    const directory=privateDirectory(path.join(state.runRoot,'commands',id));step=state.steps[id]={status:'running',role,argv:args,prefix,networkScope:offline?(prefix.length?'OS denies external IP':'Native browser offline-resources measurements; no OS network isolation claim'):'Explicit operation; no offline claim'};save();
     let result,pid;const startedAt=new Date().toISOString();
     try{
       result=await invoke(release.files.engine,args,{options:{browserPath},prefix,onSpawn:child=>{pid=child.pid;}});
@@ -144,7 +146,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   }
   let comparison=state.cases.comparison;
   if(!comparison){
-    const root=privateDirectory(path.join(state.runRoot,'comparison')),head=structuredClone(document);head.components[1].label='Worker service';head.connections[0].label='Dispatch';
+    const root=privateDirectory(path.join(state.runRoot,'comparison')),head=structuredClone(document);head.components[1].label='Worker service';head.components[1].row=1;head.connections[0].label='Dispatch';
     comparison=state.cases.comparison={id:'comparison',root,status:'not-run',base:writeNew(path.join(root,'base.architecture.json'),document),head:writeNew(path.join(root,'head.architecture.json'),head)};save();
   }
   const output=path.join(comparison.root,'comparison.html');
@@ -159,7 +161,7 @@ export async function runAuthorTools(options,{releaseLoader=loadRelease,invoke=i
   if(comparison.receipt)await stage('compareFaults',()=>faults({engine:release.files.engine,runRoot:state.runRoot,base:comparison.base,head:comparison.head,invoke}));
   await stage('preview',()=>preview({engine:release.files.engine,runRoot:state.runRoot,document,invoke}));
   if(options.reviewFile){const map=readReviewMap(options.reviewFile,state);state.reviewMap=map.file;save();await resumeReviews(state,map,{invoke,save});}
-  state.networkScopes={native:'Built-in query, both brand validates, comparison generation and strict comparison check use OS deny-IP; these are distinct from the browser commands.',browser:process.platform==='darwin'?'Darwin finalize/visual-check OS profile denies external IP and allows only localhost CDP; native browser receipts record offline-resources.':'Linux finalize/visual-check rely on native browser offline-resources receipts; no unverified OS loopback isolation is claimed.',exports:'Actual export browser CDP offline emulation and its recorded resource requests; distinct from OS network isolation.'};
+  state.networkScopes={native:'Built-in query, both brand validates, comparison generation and strict comparison check use OS deny-IP; these are distinct from the browser commands.',browser:'Finalize/visual-check retain the browser sandbox and use CDP offline mode plus native offline-resources measurements; no OS network isolation claim.',exports:'Actual export browser CDP offline emulation and its recorded resource requests; distinct from OS network isolation.'};
   state.scopeLimitations=['Preview shell visual walkthrough remains a separate actual-browser/image observation; HTTP/process assertions do not supply that verdict.','No final npm-candidate, four-platform certification or provider-session acceptance is performed by this Stage-A controller.'];
   state.reviewInstructions={runId:state.runId,records:Object.fromEntries(Object.values(state.cases).filter(entry=>entry.reviewDraft).map(entry=>[entry.id,entry.reviewDraft.path])),next:'Open each original screenshot, fill the existing observation drafts, then supply --resume <this state.json> --review-file <map with this runId>. No new finalize/compare/visual-check is needed.'};
   if(!state.officialResource&&!state.diagnostics.some(diagnostic=>diagnostic.code==='acceptance/official-resource-not-ready'))state.diagnostics.push({stage:'brand-capture',code:'acceptance/official-resource-not-ready',message:'No explicit fixed-commit official resource descriptor was supplied; HTTPS capture and captured-brand delivery remain not-run.'});

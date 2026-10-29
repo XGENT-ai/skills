@@ -315,14 +315,19 @@ fn color_visible(value: &Value) -> bool {
             .is_ok_and(|alpha| alpha.is_finite() && alpha > 0.0)
     })
 }
-fn visible_style(value: &Value) -> bool {
+fn visible_style(value: &Value, reader_camera: bool) -> bool {
     value["hidden"] != true
         && value["display"]
             .as_str()
             .is_some_and(|s| !s.is_empty() && s != "none")
         && value["visibility"] == "visible"
         && number(value, "opacity").is_some_and(|n| n > 0.0 && n <= 1.0)
-        && value["clipPath"] == "none"
+        && (value["clipPath"] == "none"
+            || reader_camera
+                && value["readerCameraClip"] == true
+                && value["clipPath"]
+                    .as_str()
+                    .is_some_and(|clip| clip.starts_with("inset(") && clip.ends_with(')')))
         && value["maskImage"] == "none"
 }
 fn painted_primitive(value: &Value, svg: &Value) -> bool {
@@ -334,11 +339,11 @@ fn painted_primitive(value: &Value, svg: &Value) -> bool {
         color_visible(&value["fill"]) && number(value, "fillOpacity").is_some_and(|n| n > 0.0);
     paint_bounds(&value["bounds"], edge)
         && in_svg(&value["logicalBounds"], svg, true)
-        && visible_style(value)
+        && visible_style(value, false)
         && value["clientRects"].as_u64().is_some_and(|n| n > 0)
-        && value["ancestors"]
-            .as_array()
-            .is_some_and(|ancestors| !ancestors.is_empty() && ancestors.iter().all(visible_style))
+        && value["ancestors"].as_array().is_some_and(|ancestors| {
+            !ancestors.is_empty() && ancestors.iter().all(|style| visible_style(style, true))
+        })
         && if edge {
             stroke && number(value, "pathLength").is_some_and(|n| n > 0.0)
         } else {
@@ -1375,6 +1380,45 @@ mod tests {
         data["comparisonParent"]["locationChecks"] = json!([{"key":"relationship:old-route","ariaCurrent":"step","selectedView":"delta","highlightedKeys":["relationship:old-route"],"painted":true}]);
         data
     }
+    #[test]
+    fn delta_paint_accepts_only_verified_reader_camera_clipping_on_ancestors() {
+        let viewport = DESKTOP_VIEWPORTS[0];
+        let mut baseline = delta_paint_metrics(viewport);
+        let ir_identity =
+            FileIdentity::of(&serde_json::to_vec(&baseline["comparisonDeltaPaint"]["ir"]).unwrap());
+        for marker in baseline["comparisonDeltaPaint"]["markers"]
+            .as_array_mut()
+            .unwrap()
+        {
+            for primitive in marker["primitives"].as_array_mut().unwrap() {
+                primitive["ancestors"].as_array_mut().unwrap().push(json!({
+                    "hidden":false,"display":"block","visibility":"visible","opacity":1,
+                    "clipPath":"inset(20px 40px)","maskImage":"none","readerCameraClip":true
+                }));
+            }
+        }
+        assert!(delta_paint_ok(&baseline, &ir_identity));
+        for failure in ["unverified", "foreign-clip", "masked", "primitive-clip"] {
+            let mut data = baseline.clone();
+            let primitive = &mut data["comparisonDeltaPaint"]["markers"][0]["primitives"][0];
+            let ancestor = primitive["ancestors"]
+                .as_array_mut()
+                .unwrap()
+                .last_mut()
+                .unwrap();
+            match failure {
+                "unverified" => ancestor["readerCameraClip"] = json!(false),
+                "foreign-clip" => ancestor["clipPath"] = json!("url(#hidden)"),
+                "masked" => ancestor["maskImage"] = json!("url(#mask)"),
+                _ => {
+                    primitive["clipPath"] = json!("inset(20px 40px)");
+                    primitive["readerCameraClip"] = json!(true);
+                }
+            }
+            assert!(!delta_paint_ok(&data, &ir_identity), "{failure}");
+        }
+    }
+
     #[test]
     fn delta_marker_paint_cannot_be_proved_by_dom_presence_alone() {
         let viewport = DESKTOP_VIEWPORTS[0];
