@@ -140,7 +140,7 @@ export function bundleFiles(repoRoot = root) {
   const directory = path.join(repoRoot, 'skills/phoenix-diagram'), files = new Map(), descriptors = [];
   const folded = new Set();
   for (const name of walk(directory)) {
-    if (name === 'ENGINE.json') continue;
+    if (name === 'ENGINE.json' || path.posix.basename(name) === '.DS_Store') continue;
     assert(bundleAllowed(name) && !folded.has(name.toLowerCase()), `Unsupported or duplicate skill allowlist entry: ${name}`);
     folded.add(name.toLowerCase());
     const { bytes, stat } = regular(path.join(directory, name));

@@ -159,6 +159,11 @@ descriptor 旧名按同值改名。带 `generate` + `renamedFrom` 时，可读 e
 `APP_FRONTEND_DIST` **绝对路径**）③你的后端镜像（+ micro 的前端 dist）。
 **不 clone 门户、不改门户代码、不重建门户镜像。**
 
+**本地调试的基础设施边界**：PostgreSQL、Redis、RustFS（S3）、Kafka 一律使用共享 `xgent-onebox`，
+不要在 App repo 另起独立实例，也不要连接 portal 仓自己的独立开发环境（那套只服务门户仓自身开发）。
+无论后端跑在容器还是宿主热重载进程都遵守：容器用一盒网络地址，宿主用 §4.2 的发布端口；Kafka 的
+宿主地址与 App 用户见 §4.4。
+
 ```
 <registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE       (~310MB)
 <registry>/<项目>/proxy:latest     # caddy proxy    → XGENT_PROXY_IMAGE (~68MB)

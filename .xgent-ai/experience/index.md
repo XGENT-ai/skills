@@ -65,3 +65,10 @@
 - f1ab0791-df3f-4265-ae5d-b37c89cd87e4 · [合并 main 与 P3 计划：外层 Node 版本](f1ab0791-df3f-4265-ae5d-b37c89cd87e4.md)
 
 - 147aadc5-6d72-4ba3-ba23-72c107039d30 · [Phoenix Diagram P3 实施](147aadc5-6d72-4ba3-ba23-72c107039d30.md)
+
+- 752d0b72-4bd7-4d3f-b131-c0daea48945e · [review-ui 产物忽略规则验证](752d0b72-4bd7-4d3f-b131-c0daea48945e.md)
+- cb681af1-a163-4524-8acc-dc104f5d8629 · [clean-artifacts 创建与 Git 命令验证](cb681af1-a163-4524-8acc-dc104f5d8629.md)
+
+- f8d9b609-0721-4d16-b950-3218860439bc — [Rust skill 最佳实践融合](f8d9b609-0721-4d16-b950-3218860439bc.md)
+
+- 477807a0-a54e-4f96-938f-f9f127c4897f · [Odyssey skill 重写](477807a0-a54e-4f96-938f-f9f127c4897f.md)

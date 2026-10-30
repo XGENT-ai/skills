@@ -16,7 +16,7 @@ when_to_use: "用户会说「发个版」「提案卡在待审」「发布后出
   自动通过并应用清单/产物；后端与网关需分别确认，且每次留档（时间 + diff + 令牌前缀）。
 - **审核档**：其余一切（scopes / ACL 清单 / 依赖 / 跨应用授权 / 服务地址 / 席位 /
   授权文案 scopeLabels / iframe 指向 embedUrl / 部署形态 / 部署前置 env 键清单
-  requiredEnv / 服务账号身份 serviceAccount.clientId / 嵌进门户管理面的管理页 adminPages / 首次接入）都会改变权限面，
+  requiredEnv / 服务账号身份 serviceAccount.clientId / 嵌进门户管理面的管理页 adminPages / service 租户配置 tenantConfig / 首次接入）都会改变权限面，
   ⇒ 提交成功但进入平台管理员的「发布审核」队列，**批准前库里一字不动**。
   被拒绝时 `status` 与 `--wait` 都能看到原因。
 - **`helpEntry`（版头那枚帮助按钮）按【值】分档**，同一个字段两种命运：写 App 内路由
@@ -369,7 +369,8 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
    进了 `requiredEnv` 的键批准前**必须有值**（缺了就是 `REQUIRED_ENV_MISSING`），审批人照你这句话填。
 3. **全平台一份、要能随时改、不想换版** ⇒ 这不是环境变量。做成你自己的「平台设置」页，由门户嵌进
    应用市场的编辑页（见 portal-external-app skill「配置放哪一层」）。
-4. **每个租户不同** ⇒ 租户管理员的应用配置页（同上）。
+4. **每个租户不同** ⇒ 有前端的 App 用 `adminPages.tenant` 嵌入自己的配置页；无前端 service 用 `tenantConfig`
+   声明数字、静态选项和开关 schema，由门户渲染动态表单（同上）。
 5. **应用内的业务设置** ⇒ 你应用里的设置页，按 ACL 授权（租户管理员默认可改）。
 
 ```jsonc

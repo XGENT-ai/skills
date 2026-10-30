@@ -1,4 +1,4 @@
-# Chapter 9 - Understanding Pointers
+# Understanding Pointers
 
 Many higher level languages hide memory management, typically **passing by value** (copy data) or **passing by reference** (reference to shared data) without worrying about allocation, heap, stack, ownership and lifetimes, it is all delegated to the garbage collector or VM. Here is a comparison on this topic between a few languages:
 
@@ -67,7 +67,7 @@ fn print_bytes(s: &str) {
 }
 ```
 
-> `print_capacity` is the narrow exception to the "parameters take `&str`, not `&String`" rule from [Chapter 1](./chapter_01.md#11-borrowing-over-cloning): reach for `&String` only when the body needs a method that `str` does not have.
+> `print_capacity` is the narrow exception to the "parameters take `&str`, not `&String`" rule from [Coding Idioms](./coding-idioms.md#11-borrowing-over-cloning): reach for `&String` only when the body needs a method that `str` does not have.
 ### `&mut T` - Exclusive Borrow:
 
 Probably the most common *mutable* type in a Rust code base, it is **Safe, but only allows one mutable borrow at a time**.
@@ -219,24 +219,24 @@ Useful when you need a `static` value.
 ```rust
 use std::sync::OnceLock;
 
-static CELL: OnceLock<u32> = OnceLock::new();
+#[test]
+fn once_lock_initializes_across_threads() {
+    static CELL: OnceLock<u32> = OnceLock::new();
 
-// `OnceLock` has not been written to yet.
-assert!(CELL.get().is_none());
+    // `OnceLock` has not been written to yet.
+    assert!(CELL.get().is_none());
 
-// Spawn a thread and write to `OnceLock`.
-std::thread::spawn(|| {
-    let value = CELL.get_or_init(|| 12345);
-    assert_eq!(value, &12345);
-})
-.join()
-.unwrap();
+    // Spawn a thread and write to `OnceLock`.
+    std::thread::spawn(|| {
+        let value = CELL.get_or_init(|| 12345);
+        assert_eq!(value, &12345);
+    })
+    .join()
+    .unwrap();
 
-// `OnceLock` now contains the value.
-assert_eq!(
-    CELL.get(),
-    Some(&12345),
-);
+    // `OnceLock` now contains the value.
+    assert_eq!(CELL.get(), Some(&12345));
+}
 ```
 
 ### [`LazyLock`](https://doc.rust-lang.org/std/sync/struct.LazyLock.html) - thread-safe `LazyCell`
@@ -255,6 +255,26 @@ static CONFIG: LazyLock<HashMap<&str, T>> = LazyLock::new(|| {
 
 let _ = &*CONFIG;
 ```
+
+## 9.3 Lifetime and sharing contracts
+
+- Name lifetime relationships when elision is insufficient. `&'static T` is a reference
+  valid for the program's lifetime; `T: 'static` can be an owned value that is dropped
+  normally. Do not leak memory to fix a routine borrow error.
+- Use `Weak` for non-owning links that would otherwise create `Rc`/`Arc` ownership cycles.
+  A cheap service handle backed by `Arc<Inner>` shares state when cloned; document that
+  it does not create an independent service.
+- Give smart-pointer operations associated-function names when methods would collide
+  with the pointee. `Deref` supplies view/method access, not inheritance or automatic
+  implementation of the pointee's traits; explicit `AsRef`/`Borrow` bounds may be needed.
+- Data-race freedom does not prevent deadlocks or bad ordering. Keep related invariants
+  together, lock briefly and avoid user callbacks while locked. On mutex poisoning,
+  follow the error/recovery contract and establish invariants before reusing state.
+- Document library-owned thread startup, shutdown and joining; accept caller resources
+  where practical rather than silently spawning a thread per operation. For runtime
+  and task lifecycles, read [async with Tokio](async-tokio.md).
+- Separate versions of a crate do not share singleton state. Pass an explicit context
+  when shared identity matters instead of assuming a global is unique across versions.
 
 ## References
 - [Mara Bos - Rust Atomics and Locks](https://marabos.nl/atomics/)

@@ -1,4 +1,4 @@
-# Chapter 3 - Performance Mindset
+# Performance Mindset
 
 The **golden rule** of performance work:
 
@@ -69,7 +69,7 @@ The result will look like a flame graph where:
 
 > Cloning is cheap... **until it isn't**
 
-In sections [Borrowing over Cloning](./chapter_01.md#11-borrowing-over-cloning) and [Important Clippy lints to respect](./chapter_02.md#23-important-clippy-lints-to-respect) we mentioned the impacts of cloning and the relevant clippy lint [`redundant_clone`](https://rust-lang.github.io/rust-clippy/master/#redundant_clone), so in this section we will explore a bit "when to pass ownership".
+In sections [Borrowing over Cloning](./coding-idioms.md#11-borrowing-over-cloning) and [Important Clippy lints to respect](./clippy-and-linting.md#23-important-clippy-lints-to-respect) we mentioned the impacts of cloning and the relevant clippy lint [`redundant_clone`](https://rust-lang.github.io/rust-clippy/master/#redundant_clone), so in this section we will explore a bit "when to pass ownership".
 
 * 🚨 If you really need to clone, leave it to the last moment.
 
@@ -207,3 +207,26 @@ process(doubled);
 let doubled_iter = items.iter().map(|x| x * 2);
 process(doubled_iter);
 ```
+
+## 3.5 Allocation and throughput after measurement
+
+Measure hot paths with release builds before adding complexity. Reserve capacity when
+the expected size is known, reuse caller-owned buffers where repeated allocation is a
+bottleneck, and batch work to reduce per-item locking. `Box<[T]>`, `Box<str>` or `Arc<str>`
+can suit long-lived immutable data; benchmark conversion and sharing costs too.
+Reusable-buffer APIs must specify clearing versus appending and what remains on failure.
+
+Keep `format!` out of hot logging loops when structured fields suffice; use `write!`
+when appending to an existing buffer. Faster hashers are a workload-specific choice for
+trusted keys, not a default for untrusted input. Allocator changes and `shrink_to_fit`
+need workload evidence rather than automatic application to every collection.
+
+Measure indirection and disabled-event logging costs too; avoid doing formatting or
+allocation work for telemetry that will not be emitted. An alternative global allocator
+is an application decision, not something a library should impose. CPU-specific tuning
+requires a guaranteed deployment baseline; preserve portability of general-purpose builds.
+
+For large or frequently created futures, inspect values held across suspension. Reduce
+retained state or perform immediate setup outside the future only when the change in
+execution timing preserves the contract. Keep CPU work off async workers or split it
+into measured bounded chunks; there is no universal yield interval for every workload.

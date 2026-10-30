@@ -72,6 +72,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       ["admin page escape", {adminPages:{platform:{route:"//evil.example",label:"x"}}}, false],
       ["admin page no zh-CN", {adminPages:{tenant:{route:"/s",label:{en:"S"}}}}, false],
       ["admin page unknown level", {adminPages:{console:{route:"/s",label:"x"}}}, false],
+      ["tenant config ok", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.read"],schema:{type:"object",properties:{limits:{type:"object",properties:{wait:{type:"integer",title:"等待",default:10,unit:"秒",scale:1000},mode:{type:"select",title:"模式",options:[{value:"auto",label:"自动"}]},strict:{type:"boolean",title:"严格",default:false}}}}}}}, true],
+      ["tenant config bad scope", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.write"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
+      ["tenant config escape", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"//evil.example",scopes:["demo.read"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
     ]) {
       writeFileSync(join(root,"app.manifest.json"),JSON.stringify({listingKey:"demo",name:"Demo",version:"1",...extra}));
       const result = spawnSync(process.execPath,[preflight,"--offline","--config","fixture.env","--key","demo","--dist","dist","--version","1","--manifest","app.manifest.json"],{cwd:root,env:{PATH:process.env.PATH},encoding:"utf8",timeout:15000});

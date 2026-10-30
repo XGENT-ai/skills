@@ -218,7 +218,7 @@ test('maintained distribution bundle matches the source skill before native buil
   }
 });
 
-test('bundle copies only the independent skill allowlist and leaves ENGINE out of manifest files', async t => {
+test('bundle excludes derived ENGINE and Finder metadata without weakening its allowlist', async t => {
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');
   for (const name of ['phoenix-diagram', 'phoenix-launcher.cjs', 'phoenix-bootstrap.cjs']) write(directory, `${skill}/scripts/${name}`, fs.readFileSync(path.join(root, skill, 'scripts', name)), name === 'phoenix-bootstrap.cjs' ? 0o644 : 0o755);
@@ -228,6 +228,23 @@ test('bundle copies only the independent skill allowlist and leaves ENGINE out o
   assert.ok(bundle.files.has('SKILL.md')); assert.ok(!bundle.files.has('ENGINE.json'));
   assert.ok(!bundle.manifest.files.some(file => file.path === 'ENGINE.json'));
   assert.equal(bundle.sha256, sha(bundle.bytes));
+  for (const name of ['.DS_Store', 'references/.DS_Store']) {
+    write(directory, `${skill}/${name}`, 'Finder metadata');
+    const withMetadata = api.bundleFiles(directory);
+    assert.deepEqual(withMetadata.files, bundle.files);
+    assert.deepEqual(withMetadata.bytes, bundle.bytes);
+    assert.equal(withMetadata.sha256, bundle.sha256);
+  }
+  const lookalike = write(directory, `${skill}/.DS_Store.bak`, 'not Finder metadata');
+  assert.throws(() => api.bundleFiles(directory), /allowlist|Unsupported|unsafe/i);
+  fs.unlinkSync(lookalike);
+  if (process.platform !== 'win32') {
+    const metadata = path.join(directory, skill, '.DS_Store');
+    fs.unlinkSync(metadata);
+    fs.symlinkSync(path.join(root, 'LICENSE'), metadata);
+    assert.throws(() => api.bundleFiles(directory), /nonregular|symbolic/i);
+    fs.unlinkSync(metadata);
+  }
   write(directory, `${skill}/hooks/settings.json`, '{}');
   assert.throws(() => api.bundleFiles(directory), /allowlist|Unsupported|unsafe/i);
 });

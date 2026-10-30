@@ -1,4 +1,8 @@
-# Chapter 7 - Type State Pattern
+# Type State Pattern
+
+Compare construction-only [builders](api-design.md#domain-types-and-construction) and
+[behavioral strategies](behavioral-patterns.md#select-an-algorithm-strategy) before
+introducing type-state machinery.
 
 Models state at compile time, preventing bugs by making illegal states unrepresentable. It takes advantage of the Rust generics and type system to create sub-types that can only be reached if a certain condition is achieved, making some operations illegal at compile time. 
 

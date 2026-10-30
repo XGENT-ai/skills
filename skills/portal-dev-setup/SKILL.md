@@ -41,9 +41,9 @@ S="$SKILL_DIR/scripts/onebox.sh"
 
 - 要拉平台侧的别的 App 进来陪调：`onebox.sh add <key>`（§2.1），它进的就是这套。
 - 要调你自己的**另一个** App（在另一个 repo）：`XGENT_ONEBOX_HOME=<已有 portal-onebox/ 的路径>`
-  复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/RustFS（§5）。
-- 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/RustFS 落位永远避开
-  你本地 dev 栈的 5432/6379/9000-9001（见 §5 的直连表）。
+  复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/RustFS/Kafka（§5）。
+- 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/RustFS/Kafka 落位永远避开
+  你本地 dev 栈的 5432/6379/9000-9001/9092（见 §5 的直连表）。
 
 ## 0. 先备齐三样
 
@@ -120,7 +120,7 @@ npm install
 2. **挑空闲端口**。HTTP/HTTPS、pg、redis、RustFS 的 6 个宿主端口逐个探测并退让；
    Kafka HOST 另按 9092/19092/29092 挑选，结果写进 `KAFKA_PORT`。Kafka EXTERNAL 独立默认
    发布回环 9095，若已占用，在 `compose.env` 末尾另设 `KAFKA_EXTERNAL_PORT`；它不参与自动挑选。
-   挑出来的 pg/redis/RustFS 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
+   挑出来的 pg/redis/RustFS/Kafka 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
 3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag）。
    Kafka 的 `KAFKA_CLUSTER_ID` 与 `KAFKA_ADMIN_PASSWORD` 每个新盒随机生成，密码不回显；文件权限为 600。
    覆盖块**放在文件最末尾**，因为 docker compose 读 env-file 是**后定义者胜**——以后要改配置也往那下面加，别回上面改。
@@ -551,20 +551,24 @@ services:
 然后 `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/host-backend.yml up -d app-backend`。
 此时 `APP_IMAGE` 不再被用到（compose 仍要求它有值，随便填一个）；`APP_KEY` 照旧——别名还是靠它。
 
-**宿主进程的 DB / 缓存 / 对象存储也用一盒的，别再单起。** postgres / redis / RustFS 都发布了
-宿主端口，而 init 挑端口时避开了本机已占用的口——所以它们和你本地 dev 栈的
-5432 / 6379 / 9000-9001 不冲突（典型落位 15432 / 16379 / 19000-19001；以 `compose.env` 末尾的
-`POSTGRES_PORT` / `REDIS_PORT` / `MINIO_PORT` / `MINIO_CONSOLE_PORT` 为准，`"$S" env` 也回显）。
-调试你自己的 App 时——宿主上的 dev server、另一个 repo 的服务、临时排查脚本——直接指过来：
+**外部 App 本地调试必须复用共享一盒的 PostgreSQL、Redis、RustFS（S3）和 Kafka，不要另起独立实例，也不要连接 portal 仓自己的独立开发环境。** 后者只用于门户仓自身开发；这条同时适用于宿主上的 dev server、另一个 repo 的服务和临时排查脚本。
+
+postgres / redis / RustFS / Kafka 都发布了宿主端口，init 挑选时会避开本机已占用的口。以
+`compose.env` 末尾的 `POSTGRES_PORT` / `REDIS_PORT` / `MINIO_PORT` / `MINIO_CONSOLE_PORT` /
+`KAFKA_PORT` 为准（`"$S" env` 也回显；前三类典型落位 15432 / 16379 / 19000-19001）。按下表直连共享
+`xgent-onebox`：
 
 | 服务 | 宿主侧地址 | 凭据 / 说明 |
 | --- | --- | --- |
 | Postgres | `postgres://postgres:postgres@localhost:<POSTGRES_PORT>/xgent-<你的key>` | 库不存在先建（§2 3b 那条 CREATE DATABASE） |
 | Redis | `localhost:<REDIS_PORT>` | 无密码 |
 | RustFS (S3) | `http://localhost:<MINIO_PORT>` | `minioadmin` / `minioadmin`；控制台在 `http://localhost:<MINIO_CONSOLE_PORT>/rustfs/console/`，桶自己建（建议 `xgent-<你的key>`） |
+| Kafka | `127.0.0.1:<KAFKA_PORT>` | `SASL_PLAINTEXT` + `SCRAM-SHA-512`；沿用 `add` 创建的 App 用户与密码，不用管理密码 |
 
-这样宿主进程和容器里的 App 看到的是同一份库、同一个桶。注意上面是**宿主侧**地址——
-容器网里地址不变（`postgres:5432` / `redis:6379` / `minio:9000`）；`minio` 是 RustFS 的兼容别名，`MINIO_*` 配置继续使用。
+宿主进程沿用 `add` 写入的 Kafka 五键，只把 `<PREFIX>_KAFKA_BROKERS` 改为上表地址；不要把这个宿主地址
+写回容器配置。这样宿主进程和容器里的 App 看到的是同一份库、缓存、对象存储和消息集群。注意上面是
+**宿主侧**地址——容器网里地址不变（`postgres:5432` / `redis:6379` / `minio:9000` / `kafka:9092`）；
+`minio` 是 RustFS 的兼容别名，`MINIO_*` 配置继续使用。
 
 ## 6. 初始化、升级与重置
 
