@@ -61,3 +61,7 @@
 - 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
 
 - [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)
+
+- f1ab0791-df3f-4265-ae5d-b37c89cd87e4 · [合并 main 与 P3 计划：外层 Node 版本](f1ab0791-df3f-4265-ae5d-b37c89cd87e4.md)
+
+- 147aadc5-6d72-4ba3-ba23-72c107039d30 · [Phoenix Diagram P3 实施](147aadc5-6d72-4ba3-ba23-72c107039d30.md)

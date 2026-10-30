@@ -7,6 +7,7 @@
 | 对象 ID | 标题 / 来源 | 状态页 | 活动 / 归档 |
 | --- | --- | --- | --- |
 | 1012ce80-e25c-4d14-9f91-60e2342882b1 | [Phoenix UI 借鉴 hallmark R2代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r2.md) | [状态](1012ce80-e25c-4d14-9f91-60e2342882b1.md) | 活动 |
+| 152a12f9-044f-4063-91bc-0dbb63c482ad | [Phoenix Diagram P3 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P3.review.md) | [状态](152a12f9-044f-4063-91bc-0dbb63c482ad.md) | 活动 |
 | 1e32f818-3bfe-4e1b-9bc3-18cc065b47cc | [Phoenix Diagram P2 R3代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r3.md) | [状态](1e32f818-3bfe-4e1b-9bc3-18cc065b47cc.md) | 活动 |
 | 1e55e17d-4399-4289-bd1c-131954c5208e | [Phoenix UI 借鉴 hallmark R1代码评审](../../../../docs/plan/phoenix-ui-hallmark.code-review.md) | [状态](1e55e17d-4399-4289-bd1c-131954c5208e.md) | 活动 |
 | 207ec261-6cff-436e-b8eb-ba88c49df34c | [Phoenix UI R3代码复审](../../../../docs/plan/phoenix-ui.code-review.r3.md) | [状态](207ec261-6cff-436e-b8eb-ba88c49df34c.md) | 活动 |
