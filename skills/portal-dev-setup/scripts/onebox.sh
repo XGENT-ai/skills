@@ -36,7 +36,7 @@
 #
 # 【一套就够】一台机器只跑一套一盒，compose 项目名固定 xgent-onebox —— 它不属于某个 App，
 # 本机要联调的 App 都接进这同一套（add 拉平台侧 App / XGENT_ONEBOX_HOME 复用栈 /
-# 宿主进程直连它的 pg/redis/minio，见 SKILL.md §5）。init 发现本机已有别的一盒会停下。
+# 宿主进程直连它的 pg/redis/minio/kafka，见 SKILL.md §5）。init 发现本机已有别的一盒会停下。
 #
 # 【一盒目录】放 docker-compose.yml 与 compose.env 的那个，按序查找：
 #   $XGENT_ONEBOX_HOME → ./portal-onebox → ./deploy → <git 根>/portal-onebox → <git 根>/deploy
@@ -399,7 +399,7 @@ cmd_init() {
   if [ -n "$other" ]; then
     [ "$force" = 1 ] || die "本机已有一套一盒（compose 项目 ${other}）—— 一台机器只共用一套，别再铺第二套。
 要调你的 App：XGENT_ONEBOX_HOME=<那套 portal-onebox/ 的路径> 复用它的栈跑 register-app / dc；
-宿主上的 dev 后端直连它的 pg/redis/minio（SKILL.md §5）。那套的路径查看：docker compose ls。
+宿主上的 dev 后端直连它的 pg/redis/minio/kafka（SKILL.md §5）。那套的路径查看：docker compose ls。
 确需整份重来（--force 会连 compose.env 一起重建）：$0 init --force …"
     warn "本机已有另一套一盒（${other}）—— --force 放行，但请确认那套已 down 掉，别长期并存。"
   fi

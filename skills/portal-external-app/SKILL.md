@@ -382,3 +382,5 @@ bucket 与凭据优先于托管池；存储位置由 Files 解析，调用 App �
 ## 一盒联调与冒烟
 
 外部团队不用克隆本 repo：平台给两个门户镜像 + `deploy/` 目录，对方出 manifest + `compose.env` + 自己的镜像。步骤、冒烟命令与排查速查表见 [references/registration-and-onebox.md](references/registration-and-onebox.md) §4–§6。
+
+本地调试的 PostgreSQL、Redis、RustFS（S3）、Kafka 必须复用共享 `xgent-onebox`，不另起独立实例，也不连接 portal 仓自己的独立开发环境。宿主热重载与容器的接线边界见该参考 §4、§4.2 与 §4.4。
