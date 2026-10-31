@@ -3,6 +3,17 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const load = () => import('../../tools/phoenix-diagram/tests/support/p3-provider.mjs');
 
+test('P3 accepts a single terminal interrupt echo only on a sealed preview capture', async () => {
+  const {stdioCaptureOutputs} = await load(), preview={kind:'phoenix-diagram-p3-stdio-capture',argv:['preview','architecture'],captureFile:{path:'/fixture/capture.json'}};
+  const line=JSON.stringify(preview);
+  assert.deepEqual(stdioCaptureOutputs(line+'\n'),[preview]);
+  assert.deepEqual(stdioCaptureOutputs('^C'+line+'\r\n'),[preview]);
+  assert.deepEqual(stdioCaptureOutputs('^C^C'+line+'\n'),[]);
+  assert.deepEqual(stdioCaptureOutputs('untrusted-prefix'+line+'\n'),[]);
+  assert.deepEqual(stdioCaptureOutputs('^C'+JSON.stringify({...preview,argv:['finalize']})+'\n'),[]);
+  assert.equal(stdioCaptureOutputs(line+'\n'+line+'\n').length,2);
+});
+
 test('P3 cannot pass an empty two-host manifest', async () => {
   const {checkP3ProviderManifest} = await load();
   const report = checkP3ProviderManifest(

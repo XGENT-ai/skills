@@ -388,7 +388,7 @@ jobs:
     name: Consume the same tgz on ${{ matrix.platform }}
     needs: assemble
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ inputs.profile == 'p3' && 240 || 120 }}
     strategy:
       fail-fast: false
       matrix:

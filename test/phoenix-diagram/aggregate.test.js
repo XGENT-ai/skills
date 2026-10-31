@@ -170,6 +170,44 @@ test('P3 binds one terminal CommandExecution anchor to its native session and ou
   f.execution.payload.item.exit_code=4;f.execution.payload.item.status='failed';
   const failed=f.build(),actual=proof.proofPair(failed.part,failed.proof);assert.equal(actual.exitCode,4);assert.equal(actual.error,true);
 });
+test('P3 ignores later control calls when selecting the owning exec window',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture();
+  f.rows.splice(3,0,
+    {timestamp:'2026-10-29T00:00:01.400Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-stop',input:'text(await tools.write_stdin({session_id:20926,chars:"\\u0003"}));'}});
+  f.rows.splice(5,0,
+    {timestamp:'2026-10-29T00:00:01.500Z',type:'response_item',payload:{type:'custom_tool_call_output',call_id:'call-stop',output:[{type:'input_text',text:'Script completed'}]}});
+  const b=f.build(),pair=proof.proofPair(b.part,b.proof);
+  assert.equal(pair.id,'exec-fixture');assert.equal(pair.output,'Actual installed skill bytes');
+});
+function p3YieldedExecutionFixture() {
+  const f=p3CommandExecutionFixture(),call=f.rows[2],result=f.rows[4];
+  f.execution.timestamp='2026-10-29T00:00:01.500Z';
+  f.execution.payload.completed_at_ms=Date.parse(f.execution.timestamp);
+  const yielded=structuredClone(result);yielded.payload.output=[{type:'input_text',text:'{"session_id":20926,"output":""}'}];
+  const stop={timestamp:'2026-10-29T00:00:01.400Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-stop',input:'text(await tools.write_stdin({session_id:20926,chars:"\\u0003"}));'}};
+  const stopped=structuredClone(result);stopped.timestamp='2026-10-29T00:00:01.600Z';stopped.payload.call_id=stop.payload.call_id;
+  f.rows.splice(2,3,call,yielded,stop,f.execution,stopped);
+  return{...f,yielded,stop,stopped};
+}
+test('P3 binds a yielded native execution to distinct start and terminal custom windows',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3YieldedExecutionFixture(),b=f.build();
+  assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+});
+test('P3 yielded execution still requires unique current start and terminal windows',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['missing-start','duplicate-start','early-yield','bad-yield','missing-stop','duplicate-stop','early-stop-result','foreign-stop'])await t.test(fault,()=>{
+    const f=p3YieldedExecutionFixture();
+    if(fault==='missing-start')f.rows.splice(2,1);
+    else if(fault==='duplicate-start')f.rows.splice(2,0,structuredClone(f.rows[2]));
+    else if(fault==='early-yield')f.yielded.timestamp='2026-10-29T00:00:00.900Z';
+    else if(fault==='bad-yield')f.yielded.payload.output='not native content blocks';
+    else if(fault==='missing-stop')f.rows.splice(f.rows.indexOf(f.stop),1);
+    else if(fault==='duplicate-stop')f.rows.splice(f.rows.indexOf(f.stopped),0,structuredClone(f.stopped));
+    else if(fault==='early-stop-result')f.stopped.timestamp='2026-10-29T00:00:01.450Z';
+    else if(fault==='foreign-stop')f.stop.payload.name='unrelated-tool';
+    const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
 test('P3 terminal execution proof rejects foreign, ambiguous, nonterminal and earlier-capture facts',async t=>{
   const {P3_NATIVE_PROOF:proof}=await api();
   for(const fault of ['profile','provider','capture-session','session-meta','thread','turn','missing-turn-end','duplicate-turn','duplicate-terminal','wrong-tool-id','anchor-bytes','partial-anchor','cwd','cwd-host','cwd-query','plain-cwd','command','output','source','nonterminal','completed-nonzero','failed-zero','missing-exit','process-handle','duration','early','late','reversed-time','event-time','continuation-prefix','continued-without-prefix','outer-missing','outer-duplicate-call','outer-duplicate-result','outer-name','outer-output','outer-time'])await t.test(fault,()=>{

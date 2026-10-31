@@ -276,17 +276,21 @@ function commandExecutionProof(part,proof) {
   need(cwd===session.cwd && Array.isArray(item.command) && item.command.length>0 && item.command.every(word=>typeof word==='string' && !word.includes('\0')) && typeof item.aggregated_output==='string' && item.source==='unified_exec_startup','CommandExecution cwd/argv/output/source differs');
   need(Number.isSafeInteger(payload.started_at_ms) && Number.isSafeInteger(payload.completed_at_ms) && start<=payload.started_at_ms && payload.started_at_ms<=payload.completed_at_ms && payload.completed_at_ms<=finish && Date.parse(selected.timestamp)>=payload.completed_at_ms && Date.parse(selected.timestamp)<=finish,'CommandExecution execution time is outside its capture');
   need(Number.isInteger(item.exit_code) && item.exit_code>=0 && item.exit_code<=255 && (item.status==='completed' && item.exit_code===0 || item.status==='failed' && item.exit_code!==0) && typeof item.process_id==='string' && item.process_id && Number.isSafeInteger(item.duration?.secs) && item.duration.secs>=0 && Number.isInteger(item.duration.nanos) && item.duration.nanos>=0 && item.duration.nanos<1e9,'CommandExecution terminal status/exit/process metadata differs');
-  const windows=[];
+  // A yielded exec closes its starting custom call before the native terminal
+  // fact arrives in a later poll or stop call. Bind both windows independently.
+  const starts=[],terminals=[];
   for(const [index,{event,offset}] of rows.entries())if(event.type==='response_item' && event.payload?.type==='custom_tool_call' && index<at) {
     const call=event.payload,id=call.call_id,results=rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call_output' && row.event.payload.call_id===id);
-    if(results.some(result=>result.index>at)) {
+    const startsHere=Date.parse(event.timestamp)<=payload.started_at_ms && results.some(result=>result.index>index && Date.parse(result.row.event.timestamp)>=payload.started_at_ms),endsHere=Date.parse(event.timestamp)<=payload.completed_at_ms && results.some(result=>result.index>at);
+    if(startsHere || endsHere) {
       need(typeof id==='string' && id && rows.filter(row=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call' && row.event.payload.call_id===id).length===1 && results.length===1,'CommandExecution outer exec ID is missing or duplicated');
       const result=results[0].row.event;
-      need(offset>=minimumOffset && call.name==='exec' && typeof call.input==='string' && Array.isArray(result.payload.output) && result.payload.output.every(block=>block.type==='input_text' && typeof block.text==='string') && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=payload.started_at_ms && Date.parse(result.timestamp)>=payload.completed_at_ms && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
-      windows.push(id);
+      need(offset>=minimumOffset && index>begins[0].index && results[0].index<ends[0].index && call.name==='exec' && typeof call.input==='string' && Array.isArray(result.payload.output) && result.payload.output.every(block=>block.type==='input_text' && typeof block.text==='string') && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=Date.parse(result.timestamp) && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
+      if(startsHere)starts.push(id);
+      if(endsHere){need(Date.parse(event.timestamp)<=payload.completed_at_ms && Date.parse(result.timestamp)>=payload.completed_at_ms,'CommandExecution terminal exec window differs');terminals.push(id);}
     }
   }
-  need(windows.length===1,'CommandExecution has no unique owning custom exec window');
+  need(starts.length===1 && terminals.length===1,'CommandExecution has no unique starting/terminal custom exec windows');
   return{id:item.id,name:'exec_command',input:{cmd:item.command,workdir:cwd},output:item.aggregated_output,exitCode:item.exit_code,error:item.status==='failed' || item.exit_code!==0,execution:{processHandle:item.process_id,startedAtMs:payload.started_at_ms,completedAtMs:payload.completed_at_ms,turnId:payload.turn_id,threadId:payload.thread_id,source:item.source}};
 }
 function asyncCollectorPair(capture,proof) {

@@ -199,7 +199,9 @@ test('visual review resumes the original consumer state in the same running job 
   assert.equal(runInNewContext(condition, { github: { event_name: 'workflow_dispatch' }, inputs: { await_review: true }, env: { PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE: 'p3' }, steps }), false);
   assert.match(consume, /steps\.consume\.outputs\.state_path/);
   assert.match(consume, /--resume "\$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review\/\$GITHUB_RUN_ID"/);
-  assert.match(consume, /timeout-minutes: 90/); assert.match(consume, /timeout-minutes: 120/);
+  assert.match(consume, /timeout-minutes: 90/);
+  const budget=/timeout-minutes: \$\{\{ (.+) \}\}/.exec(consume)?.[1];assert.ok(budget);
+  for(const profile of ['p3','p2',undefined])assert.equal(runInNewContext(budget,{inputs:{profile}}),profile==='p3'?240:120);
   const finalUpload = /name: phoenix-diagram-consume-\$\{\{ matrix\.platform \}\}-evidence([\s\S]*)/.exec(consume)?.[1];
   assert.match(finalUpload, /steps\.consume\.outputs\.evidence_dir/);
   assert.match(finalUpload, /include-hidden-files: true/);

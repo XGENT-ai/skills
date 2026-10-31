@@ -570,6 +570,18 @@ function commandHeader(receipt, command) {
           receipt.command === command && Array.isArray(receipt.diagnostics),
       'Original command receipt header differs');
 }
+export function stdioCaptureOutputs(output) {
+  return output.split('\n').flatMap(line => {
+    // A PTY may echo Ctrl-C immediately before the graceful preview receipt.
+    // Keep the original output intact; only this exact preview prefix is parsed.
+    const interrupted=line.startsWith('^C');
+    try {
+      const value=JSON.parse(interrupted?line.slice(2):line);
+      return value?.kind===STDIO_KIND && (!interrupted || value.argv?.[0]==='preview')?[value]:[];
+    } catch {return [];}
+  });
+}
+
 export function checkP3Command(captured, command, context) {
   const part = proofContext(captured, command, context),
         pair = context.nativeProof.proofPair(part, command.proof),
@@ -599,16 +611,7 @@ export function checkP3Command(captured, command, context) {
               command.capture,
               {path: path.join(options.evidenceDir, 'capture.json'), identity: command.capture.identity}),
       'PD argv/capture slots differ');
-  const lines = pair.output.split('\n')
-                    .filter(Boolean)
-                    .flatMap(line => {
-                      try {
-                        return [JSON.parse(line)];
-                      } catch {
-                        return [];
-                      }
-                    })
-                    .filter(value => value.kind === STDIO_KIND);
+  const lines = stdioCaptureOutputs(pair.output);
   need(
       lines.length === 1 && same(lines[0], {...dto, captureFile: command.capture}),
       'Original tool output does not contain this sealed PD capture');
