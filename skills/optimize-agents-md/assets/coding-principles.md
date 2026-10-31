@@ -4,29 +4,71 @@ Odyssey 片段：`RULE` 声明本文作用域内的常驻规则；`MUST` 必须�
 
 ```formal
 RULE @think_before_coding:
-  MUST: 动手前明确说出假设；不确定或困惑时停下、指出问题并询问；存在多种解释时全部列出并说明取舍，不默选、不隐瞒；指出更简单的做法，必要时反驳。
+  MUST: [state_assumptions_explicitly_before_implementation,
+         when_uncertain_or_confused_stop_identify_and_ask,
+         when_multiple_interpretations_exist_present_all_and_explain_tradeoffs,
+         surface_simpler_approaches, push_back_when_warranted]
+  MUST_NOT: silently_choose_or_hide_alternative_interpretations
 
 RULE @simplicity:
-  MUST: 写最简单的正确解，避免推测性抽象、不必要的回退、过量防护和不可能场景的防御代码；在用户输入、外部 API、文件等信任边界验证，内部信任已建立的契约和不变量，不沿调用链重复校验；只处理真实且可行动的失败，不用层层捕获或静默恢复掩盖编程错误。
+  MUST: [simplest_correct_solution,
+         validate_user_input_external_api_and_file_trust_boundaries,
+         trust_established_internal_contracts_and_invariants,
+         handle_only_real_actionable_failures]
+  MUST_NOT: [speculative_abstractions, unnecessary_fallbacks,
+             excessive_defenses, impossible_scenario_guards,
+             repeated_validation_along_internal_call_chains,
+             layered_catches_or_silent_recovery_masking_programming_errors]
 
 RULE @scope:
-  MUST: 只实现所请求的内容，不擅加功能、配置、兼容层、UI 或架构变更；优先小改并保持既有模式，引入抽象前先复用或简化。
+  MUST: [implement_requested_scope_only, preserve_existing_patterns,
+         reuse_or_simplify_before_abstracting]
+  PREFER: small_changes
+  MUST_NOT: unrequested_features_configuration_compatibility_layers_ui_or_architecture_changes
+
+RULE @legacy_compatibility:
+  UNLESS: user_explicitly_requests_legacy_compatibility
+  MUST_NOT: [add_legacy_compatibility_requirements,
+             add_legacy_mode_branches_or_compatibility_layers]
 
 RULE @user_experience:
-  MUST: 围绕用户预期设计；UI 文案服务用户，不作多余的工程概念、内部状态或显然交互语义解释，不展示开发备注、实现注释或内部指令；仅在帮助用户作出有意义的决定或避免重大错误时添加提示和警告。
+  MUST: [design_around_user_expectations, user_facing_copy_serves_users]
+  MUST_NOT: [unnecessary_engineering_internal_state_or_obvious_interaction_explanations_in_ui,
+             developer_notes_implementation_comments_or_internal_instructions_in_ui,
+             prompts_or_warnings_unless_helping_meaningful_decisions_or_preventing_major_errors]
 
 RULE @current_documentation:
-  MUST: 注释解释为什么，不复述代码或记录开发历史；行为变化时更新或删除过时注释和文档，不累积历史批注或在陈旧说明后追加更正；事实源保持当前、精炼、易搜索，避免重复文档。
+  MUST: [comments_explain_why,
+         update_or_remove_stale_comments_and_docs_when_behavior_changes,
+         current_concise_searchable_sources_of_truth]
+  MUST_NOT: [comments_paraphrasing_code_or_recording_development_history,
+             accumulated_historical_annotations_or_corrections_appended_to_stale_text,
+             duplicate_documentation]
 
 RULE @evidence:
-  MUST: 结论前完整读取相关源码、规格或文档段落，长文覆盖所有相关章节及末尾；不推断未读内容，明确未验证项；修改前调查现有行为和契约，不编造需求或约束。
+  MUST: [read_relevant_source_specs_and_doc_passages_fully_before_conclusions,
+         cover_all_relevant_sections_and_tail_in_long_documents,
+         disclose_unverified_items,
+         investigate_existing_behavior_and_contracts_before_changes]
+  MUST_NOT: [infer_unread_content, invent_requirements_or_constraints]
 
 RULE @meaningful_tests:
-  MUST: 测试保护有意义的行为、重要边界和真实回归；避免重复测试、平凡断言、绑定实现细节的测试，不为覆盖率逐函数或穷举假想失败。
+  MUST: protect_meaningful_behavior_key_boundaries_and_real_regressions
+  MUST_NOT: [redundant_tests, trivial_assertions, implementation_coupled_tests,
+             per_function_coverage_chasing, exhaustive_imaginary_failures]
 
 RULE @complete_milestones:
-  MUST: 长任务先理解完整范围与验收标准，再完成连贯、完整的里程碑，不在零碎修改后反复停下；开发中用定向检查，有意义的里程碑和交付前做广泛回归，不在每次微改后全量测试；以完整可用的交付衡量进展，不以测试频率代替进展。
+  MUST: [understand_full_scope_and_acceptance_before_long_tasks,
+         deliver_coherent_complete_milestones,
+         targeted_checks_during_development,
+         broad_regression_at_meaningful_milestones_and_before_delivery,
+         measure_progress_by_complete_usable_deliverables]
+  MUST_NOT: [repeated_stops_after_fragmentary_changes,
+             full_suite_after_every_micro_edit, test_frequency_as_progress]
 
 RULE @complexity_budget:
-  MUST: 每个新增校验、抽象、依赖、错误分支、测试或 UI 元素都须值得其维护成本；复杂度失衡时重新考虑方案，不继续叠层；默认少做，但把必要工作完整、正确地做完。
+  MUST: [each_added_check_abstraction_dependency_error_branch_test_or_ui_element_justifies_maintenance_cost,
+         rethink_overcomplicated_design, complete_necessary_work_correctly]
+  MUST_NOT: add_layers_to_an_overcomplicated_design
+  PREFER: fewer_additions
 ```
