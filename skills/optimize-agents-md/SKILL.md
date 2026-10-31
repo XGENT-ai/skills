@@ -84,9 +84,9 @@ RULE @principle_expression:
 
 RULE @principle_completion:
   MUST: [read_principle_material,
-         semantically_check_think_before_coding_and_nine_coding_principles,
+         semantically_check_think_before_coding_and_twelve_coding_principles,
          fill_only_missing_coverage, integrate_in_original_language_and_structure]
-  MUST_NOT: [duplicate_covered_principles, require_original_numbering_or_ten_separate_sections,
+  MUST_NOT: [duplicate_covered_principles, require_original_numbering_or_thirteen_separate_sections,
              drop_trust_boundary_validation_under_internal_contract_trust,
              omit_necessary_work_under_do_less,
              skip_required_acceptance_under_milestone_execution]
