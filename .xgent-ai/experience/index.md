@@ -72,3 +72,5 @@
 - f8d9b609-0721-4d16-b950-3218860439bc — [Rust skill 最佳实践融合](f8d9b609-0721-4d16-b950-3218860439bc.md)
 
 - 477807a0-a54e-4f96-938f-f9f127c4897f · [Odyssey skill 重写](477807a0-a54e-4f96-938f-f9f127c4897f.md)
+
+- a2c406d0-ca1c-4581-970d-20c4fa2c6b88 · [dev-plan 模板 ODC 改写](a2c406d0-ca1c-4581-970d-20c4fa2c6b88.md)
