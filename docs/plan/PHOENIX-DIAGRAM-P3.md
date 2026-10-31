@@ -186,19 +186,19 @@
 
 ### 恢复快照
 
-- 最近更新：2026-10-31T12:05:34+08:00（Asia/Shanghai）
+- 最近更新：2026-10-31T12:08:36+08:00（Asia/Shanghai）
 - 当前进度：7/8 个里程碑完成
-- 当前状态：M1–M7已完成；M8阻塞。本地修复7c89d08及原件已保留，原候选分支不存在且用户暂不创建，新候选认证未启动；完整终验仍待执行
+- 当前状态：M1–M7已完成；M8终验未完成。本地修复7c89d08已保留；此前将旧候选分支删除列为阻塞是错误判断，CI可沿当前main认证，不需要新建分支
 - 最近完成：M7 · 最终候选接线、完整来源许可及V-7通过
-- 下一步：保留本地7c89d08及全部原件；用户允许候选分支或提供已有认证来源后，再做四平台/Node18、新同包all与36会话、补充视觉/V-10/全量门/聚合；Claude及固定HTTPS资源分别待恢复
-- 当前阻塞：原候选分支已不存在，用户选择暂不创建，新候选认证未启动；Claude尚未恢复（预计数日），固定raw.githubusercontent.com资源HTTPS超时
+- 下一步：当前按用户要求保留本地；后续远端验证沿main执行并绑定实际提交SHA，再完成四平台/Node18、同包all与36会话、补充视觉/V-10/全量门/聚合。Claude及固定HTTPS资源分别待恢复
+- 当前阻塞：Claude尚未恢复，阻塞其18题；固定HTTPS测试资源最后采集超时，品牌采集未验收。7c89d08尚未运行远端认证属于待验证，不以缺少新分支归因
 - 代码基线：dce8662270f993cae3521b59ceff8ac6f22e1b63
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M8 | 阻塞 | 2026-10-31T12:05:34+08:00 | a2 core/31迁移及品牌内置/比较视觉已闭合；C5异步证明/PTY回显修复与npm轻量门通过，已提交7c89d08并按用户选择保留本地。候选认证缺口连续三轮未解除，Claude/HTTPS资源待就绪，终验范围保持。 | [M8 记录](PHOENIX-DIAGRAM-P3.records/M8.md) | 待终验收口；ec6ec88 / 321a322 / 77e3006 / 926cb18 / 9d9fe10 / 114da76 / 41ad54c / 1ed79b3 / 52e3dee / adc3d4b / c72133d / 7c89d08 |
+| M8 | 阻塞 | 2026-10-31T12:08:36+08:00 | a2 core/31迁移及品牌内置/比较视觉已闭合；C5异步证明/PTY回显修复与npm轻量门通过，已提交7c89d08并按用户选择保留本地。已撤销分支阻塞判断，后续CI沿main；Claude/HTTPS资源待就绪，终验范围保持。 | [M8 记录](PHOENIX-DIAGRAM-P3.records/M8.md) | 待终验收口；ec6ec88 / 321a322 / 77e3006 / 926cb18 / 9d9fe10 / 114da76 / 41ad54c / 1ed79b3 / 52e3dee / adc3d4b / c72133d / 7c89d08 |
 | M1 | 已完成 | 2026-10-29T00:02:52+08:00 | 品牌/安全采集/缓存/五类标题轨及终局兼容已交付，V-1 定向退出通过。 | [M1 记录](PHOENIX-DIAGRAM-P3.records/M1.md) | d60efaf |
 | M2 | 已完成 | 2026-10-29T01:41:16+08:00 | 比较/三视图/成对恢复/独立审核及公开链路交付，V-2 与静态、轻量门通过。 | [M2 记录](PHOENIX-DIAGRAM-P3.records/M2.md) | d60efaf |
 | M3 | 已完成 | 2026-10-29T10:27:10+08:00 | V-3/正式引擎故障支撑、准备提交/限定分支推送及固定 PNG 匿名 HTTPS 就绪通过。 | [M3 记录](PHOENIX-DIAGRAM-P3.records/M3.md) | d60efaf / 859db51 |
@@ -228,7 +228,7 @@
 | C-2 | 验证约束 | AGENTS.md「Working in This Repository」 | skills/ 为真值，源码同步 bundle/dist；轻量、原生、真实平台/provider 验证分开 | §9–§10；V-7、V-8、V-11 | 已确认 |
 | C-3 | 接口约束 | AGENTS.md §6/§7；PRD §5.3 | 描述边界前置并查前 100 字；借鉴先列清单；同步接口复述，保留历史与许可 | §0.6、§5.5；V-6、V-7 | 已确认 |
 | C-4 | 前置约束 | [P2 覆盖复审](PHOENIX-DIAGRAM-P2.prd-dev-gaps.2026-10-28.md) §1、G-07/G-08；[gaps 快照](PHOENIX-DIAGRAM-P2-gaps.md#恢复快照) | 十类核心、兼容、四平台已有候选证据；Claude 5 项失败的处置仅限 P2 M4，人员图例指引延期 | §0.5、§4、§9.3；V-8、V-9 | 按已确认限制可用 |
-| C-5 | 范围约束 | PRD §2.2、§7；用户 2026-10-28 先合并 main | 基于合并后 main；只在临时验收项目/候选分支操作，不改活跃/个人安装、不发布、不接管外部管理入口 | §0.4、§3.2、§10；V-5、V-8 | 已确认 |
+| C-5 | 范围约束 | PRD §2.2、§7；用户 2026-10-28 先合并 main | 基于合并后 main，默认沿当前分支开发和构建，仅在临时项目验收；不要求新建分支，不改活跃/个人安装、不发布、不接管外部管理入口 | §0.4、§3.2、§10；V-5、V-8 | 已确认 |
 | C-6 | 迁移政策约束 | 用户 2026-10-28 确认；替代 PRD WORK-F11/AC-3 的旧入口备份要求 | 展示所选项目/provider 的旧 skill，用户明确确认后直接移除，不备份、不承诺自动恢复旧 skill；恢复旧入口须重装。自定义/未知来源/外部管理冲突、个人范围及后来修改保护不变 | ADR-2、§3.2、§5.4；V-5、V-8、V-9；通过仅代表替代口径，不声称满足原备份条款 | 已确认 |
 | A-1 | 归属假设 | PRD F11/AC-3；`tools/phoenix-diagram/src/install/plan.rs`；`bin/xgent-skills.js` | 无历史回执的旧入口不转成受管归属；改为按 C-6 识别、确认后直接移除 | ADR-2、§3.2；V-5 | 已解除，转入 C-6 |
 
@@ -384,7 +384,7 @@ M2 同步 `skills/phoenix-diagram/references/delivery-contract.md` 与 architect
 | 官方网站 | 已核实缺口 | 字节可变，固定摘要是本方合同，无需外部新增 API；未把本地 commit 或文件存在当作公网可取回 | 仅题面/用户给 URL 才采集；§9.2 的确定字节 official-test.png 在 M1–M3 准备、M3 准备提交并在授权范围推送，匿名 HTTPS 核 URL/提交/SHA 后才可进入 M4；M8 复用同一固定资源，不等 M7 | 未获远端发布授权、不可达/不安全/变更均不换图或泄凭据；先补资源就绪，阻塞相应 V-4/V-8 真实采集验收 |
 | 四平台/Chrome | 已核实足够 | 当前 workflow 的四 runner、Node 25.2.1、浏览器准备和候选认证；P2 四平台真实证据 | 扩 P3 scope；最终四平台真实消费，本机 darwin-arm64 实际看图 | 缺环境/证据保持 incomplete，跨编译不替消费 |
 | 两宿主 | 已核实足够（入口） | 本机 codex/claude 已安装，auth status 均 exit 0；原生 JSONL/capture-stdio 和归档器存在 | M7 记录届时实际模型/端点类别/版本和审核资源后冻结题面；M8 全新项目会话 | 登录不等于通过；套餐/配额问题单列，失败角色不改判 |
-| GitHub 制品 | 已核实足够（入口） | gh auth status exit 0；现有 workflow/pack/aggregate 核 SHA、job/artifact 来源 | M7 源码提交，M8 候选分支 CI，不发 release；执行时核实际 API 可用性 | 令牌/runner 不可用阻塞相应终验，不代建平台 |
+| GitHub 制品 | 已核实足够（入口） | gh auth status exit 0；现有 workflow/pack/aggregate 核 SHA、job/artifact 来源 | M7 源码提交，M8 沿当前分支（当前为 main）运行候选 CI，不发 release；执行时核实际 API 可用性 | 令牌/runner 不可用阻塞相应终验，不代建平台 |
 | 文档调用方 | 已核实缺口 | 两 skill 和两参考仍用 archify、旧截图路径 | 按 §0.6 同步，保留原触发/授权/fallback | 缺工具走原 fallback，不自动安装，不借独立图检查替最终文档 |
 
 ## 5. 核心机制与命令
@@ -508,7 +508,7 @@ Node 命令在仓根通过 mise exec --no-deps -- 执行，固定 Node 25.2.1；
 | V-5 | WORK-F11/AC-3 按 C-6 替代口径、AC-4、WORK-N4/AC-3：所选 provider、完整原版识别、无历史回执可确认后移除；未确认/拒绝/非交互无标志零迁移，旧 skill 不备份/回滚不重建且给重装指引；外部管理/修改/额外文件/链接/个人保护、v1 升级、新入口回滚/取消/中断、共享配置零变化 | mbx test --locked --offline --test migration --test install；node --test `test/phoenix-diagram/migration.test.js` `test/phoenix-diagram/install.test.js` `test/phoenix-diagram/bootstrap.test.js` `test/phoenix-diagram/joint-install.test.js`；临时项目，按 C-6 核真实删除/余项/journal，不能以原备份条款宣称通过 | M5：v2/确认移除/新入口恢复回滚/启动链整批交付齐备后；来源识别/显式确认/路径安全门在任何删除前 |
 | V-6 | WORK-F10 三 AC、WORK-N3/AC-4：旧活跃目录/命令/调用消失，语义/授权/fallback/嵌入约定及描述前 100 字/许可保留；扩展合同完整，五份 legacy 样本及新旧布局消费分派已迁移 | node --test `test/phoenix-diagram/skill.test.js` `test/phoenix-diagram/candidate.test.js`；rg -n 'archify' README.md `skills/elintp` `skills/documentation-writer` `skills/phoenix-diagram`；人工逐条对 §0.6/§5.5 和活跃接口清单 | M6：唯一入口、样本/必需成员/caseManifest、全部调用方/参考、兼容/扩展文档和测试齐备后；历史/许可命中须逐项分类 |
 | V-7 | WORK-F10/AC-3、WORK-N2/AC-3：源→bundle→dist/tgz 的五份 legacy 样本同字节，包无旧活跃入口、完整迁移来源/许可、P3 profile/必需场景与拒绝假证据；历史候选原布局/身份及 p1/p2 默认合同不变 | node --test `test/phoenix-diagram/build.test.js` `test/phoenix-diagram/candidate.test.js` `test/phoenix-diagram/aggregate.test.js` `test/phoenix-diagram/provider-acceptance.test.js` `test/phoenix-diagram/p3-acceptance.test.js`；node `scripts/assemble-phoenix-diagram-reader.mjs` --check；核 §5.5 样本 sourceInputs/manifest/tgz 与 caseManifest、拒绝混合/缺失/篡改 | M7：all/providers 扩展/题面/profile/CI 接线及最终来源/分发资源齐备后，冻结前只做该批定向检查；不再首次交付 author-tools 或 PNG |
-| V-8 | 阶段 B 最终同包收口：P3 全部核心 AC，以及 P1/P2 十类、双合同、来源、五语言/导出/兼容的受影响回归；四平台/Node18 真实包消费；品牌/预览/比较/迁移的故障、离线和安全边界 | M7 源码提交后推送本任务候选分支；gh workflow run phoenix-diagram.yml --ref BRANCH -f profile=p3 -f await_review=false；按 run ID 下载并认证现有 candidate/harness 制品；从认证harness运行node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage all --candidate-dir DIR --legacy-candidate-dir LEGACY --evidence-repo REPO --output-dir NEW；本机同一 tgz 完整消费并实际看图；node `scripts/aggregate-phoenix-diagram-candidate.mjs` --profile p3 --input INPUT --output NEW.json | M8：M5–M7 完成、唯一候选可认证后；四平台各跑一次本阶段完整消费，本机统一视觉/故障收口 |
+| V-8 | 阶段 B 最终同包收口：P3 全部核心 AC，以及 P1/P2 十类、双合同、来源、五语言/导出/兼容的受影响回归；四平台/Node18 真实包消费；品牌/预览/比较/迁移的故障、离线和安全边界 | M7 源码提交在当前分支可取回后，不要求新建分支；当前用 gh workflow run phoenix-diagram.yml --ref main -f profile=p3 -f await_review=false；按 run ID 下载并认证现有 candidate/harness 制品；从认证harness运行node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage all --candidate-dir DIR --legacy-candidate-dir LEGACY --evidence-repo REPO --output-dir NEW；本机同一 tgz 完整消费并实际看图；node `scripts/aggregate-phoenix-diagram-candidate.mjs` --profile p3 --input INPUT --output NEW.json | M8：M5–M7 完成、唯一候选可认证后；四平台各跑一次本阶段完整消费，本机统一视觉/故障收口 |
 | V-9 | WORK-F7–F11、WORK-N3/N5：§9.3 两宿主各 18 个真实新会话，实际加载路径/工具/原始材料/语义/审核和授权正确；非支持资源不伪通过 | 用 authenticated harness中的capture-p3-provider/capture-p3-stdio原生 JSONL 与 p3-scenarios.json；原始 transcript/调用结果、candidate/回执/截图由独立审核者核对；node `tools/phoenix-diagram/tests/p3-acceptance.mjs` --stage providers --candidate-dir DIR --provider-manifest FILE --output-dir NEW 只验证/归档真实原件，不合成会话 | M8：最终 tgz/VERSION/题面/collector 冻结并安装完成后；先记录实际模型/端点类别，无额外重复预检阶段 |
 | V-10 | WORK-F10/AC-2：两个文档调用方已装/缺失路径，Markdown 正文截图/链接和离线 srcdoc 最终页面都完整；独立图通过不冒充最终页通过 | 复用 V-9 的 elintp/documentation-writer 四类会话产物；Agent 仅凭调用方文档、授权材料、公开说明操作，不读实现或口头补步骤；HTML 直接真实浏览器打开；Markdown 在文档目录运行 pandoc DOCUMENT.md --standalone --embed-resources --resource-path=. --output=PREVIEW.html（本机已安装 pandoc），再用真实浏览器断网检查嵌入/截图和全部标签 | M8：对应调用方会话产物就绪后，与同一环境的 V-8/V-9 合并走查，不再启动第二轮作者 |
 | V-11 | 阶段 B 全量与跨期退出：WORK-F11/N2/N3/N4/N5 的 P1/P2 已交付部分仍成立；包/引擎身份、原生/Node18、恢复和导出回归；Phoenix UI 隔离 | mise exec --no-deps -- npm test；mise exec --no-deps -- npm run test:diagram；准备 UI 固定工具后 mise exec --no-deps -- npm run test:phoenix；git diff --check；各门复用 V-8–V-10 已通过且未失效的证据 | M8：本阶段所有实现、候选及验收辅助修改结束后的最终收口；不因回写/提交再跑 |
@@ -591,7 +591,7 @@ V-4/V-8 包含 compare 在双发布前后 SIGKILL、预览 worker 停止/强杀�
 | M5 | 确认移除旧 skill、新入口恢复与回滚 | C-6 已确认；既有安装 v1 合同及固定来源可核；M4 仅为阶段顺序，不是来源调查前置 | 整批完成完整旧来源识别、安装 v2、确认后直接删除/进度恢复、新入口回滚、bootstrap/联合确认标志及测试，按 §3.2/§5.4；旧 skill 不备份。固定来源先于旧目录删除；install/CLI/bootstrap 单人写入，临时项目隔离 | 交付齐备后 V-5 通过；无范围外写入；回写「实施进度」 |
 | M6 | 唯一入口与文档调用闭环 | 命令/回执合同稳定，V-5 和完整迁移来源可用 | 按 §0.6/§5.5 整批更新新 skill/参考、README/两调用方/两参考、兼容/扩展约定；先复制五份 legacy 原例并同步必需成员/caseManifest/新旧布局测试，再删旧活跃目录。主实现者单写共享文档，旧记录/许可不替换 | 交付齐备后 V-6 通过；五份样本不依赖已删除目录；回写「实施进度」 |
 | M7 | 最终候选接线和源码冻结 | V-5/V-6 通过；author-tools 已在 M3 交付、M4 验收，本阶段产品修改齐备 | 只扩展 acceptance 的 all/providers 及最终候选/profile/18 题/CI/身份/来源/许可接线；核五份样本 sourceInputs/bundle/tgz 路径与固定字节，核两 CLI/浏览器/GitHub 入口和届时实际资源。主实现者拥有 CI/构建/聚合/台账 | V-7 通过；源码可提交并作为唯一候选来源；不首次提供 M4 前置；回写「实施进度」 |
-| M8 | 阶段 B 同包与跨期终验 | M7 源码提交、候选分支可构建；四平台/浏览器/provider 资源到位 | 主实现者统一认证候选、四平台/Node18/本机消费、两宿主 36 会话、文档最终页和全量/故障收口；独立平台/会话可在隔离资源上调度，所有结论/记录/计划仅主实现者写回 | V-8、V-9、V-10、V-11 通过；16 条 P3 AC 按 §0.1/C-6 的替代口径及本期五条跨期需求终验均有证据，不宣称原旧入口备份条款通过；回写「实施进度」 |
+| M8 | 阶段 B 同包与跨期终验 | M7 源码提交、当前分支可构建（无需新建分支）；四平台/浏览器/provider 资源到位 | 主实现者统一认证候选、四平台/Node18/本机消费、两宿主 36 会话、文档最终页和全量/故障收口；独立平台/会话可在隔离资源上调度，所有结论/记录/计划仅主实现者写回 | V-8、V-9、V-10、V-11 通过；16 条 P3 AC 按 §0.1/C-6 的替代口径及本期五条跨期需求终验均有证据，不宣称原旧入口备份条款通过；回写「实施进度」 |
 
 提交点：M3（M1–M3/author-tools 与固定 PNG 准备提交，先于 M4，按 §9.2 授权推送并核匿名 HTTPS 身份；不等于阶段 A 收口）；M4（阶段 A 收口）；M7（M5–M7 源码冻结，四平台 CI 需要可取回提交）；M8（阶段 B 全部完成后的最终提交）。各次按顶部协议回填已覆盖里程碑 SHA 并单独提交只改计划的 SHA 回填；M7 不是阶段 B 终验。完成 M8 之前不宣称整期验收。
 
