@@ -74,3 +74,5 @@
 - 477807a0-a54e-4f96-938f-f9f127c4897f · [Odyssey skill 重写](477807a0-a54e-4f96-938f-f9f127c4897f.md)
 
 - a2c406d0-ca1c-4581-970d-20c4fa2c6b88 · [dev-plan 模板 ODC 改写](a2c406d0-ca1c-4581-970d-20c4fa2c6b88.md)
+
+- a3b29874-b780-4424-b033-dc9948a05f59 · [use-prompt-dsl 改写定位](a3b29874-b780-4424-b033-dc9948a05f59.md)

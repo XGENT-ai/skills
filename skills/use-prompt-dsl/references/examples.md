@@ -696,14 +696,15 @@ REVIEW:
 
 ### 14. 任务入口示例
 
-以下是**原附件所使用的 `$use-prompt-dsl` 操作形式示意**；仅在具备对应 Skill／命令的环境中适用，不是 ODC 语言自带的可执行命令。
+`$use-prompt-dsl` 默认使用 `compose` 改写或编写提示词；明确要求解释或检查时使用 `explain`。指定修改文件时直接改写该文件，不执行提示词内的任务。以下调用形式仅适用于具备对应 Skill／命令的环境，不是 ODC 语言自带的可执行命令。
 
 ```text
+$use-prompt-dsl 用 ODC 改写 skills/use-prompt-dsl/SKILL.md
 $use-prompt-dsl compose 将这些工程约束写成适合嵌入 AGENTS.md 的 Odyssey 片段，不加根节点
 $use-prompt-dsl compose 定义一个包含 SOUL、ROLE、VOICE 的代码审查 Agent
 $use-prompt-dsl compose 为文档保存功能写 REQUIREMENT 和可验证的 ACCEPTANCE
 $use-prompt-dsl compose 为多 Agent 题目生成设计含 DAG、质检和返修 LOOP 的 WORKFLOW
-$use-prompt-dsl execute 按给定规范修改用户指定文件，并报告实际验证证据
+$use-prompt-dsl compose 将指定文件中的提示词改写为 ODC，直接修改该文件并保留原意
 $use-prompt-dsl explain 解释给定 Ontology、Requirements、Rules 和 Workflow 的语义与冲突
 ```
 
