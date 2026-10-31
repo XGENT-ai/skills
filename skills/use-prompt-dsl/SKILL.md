@@ -7,6 +7,8 @@ argument-hint: "[compose|execute|explain] <需求或 DSL>"
 
 # Use Prompt DSL
 
+**总原则：** Self-descriptive Literal First, Natural Language When Necessary。
+
 使用 **Odyssey（ODC，Ontology-Driven Constraint）**：面向 LLM 的本体驱动约束提示规范。按需表达身份与职责、任务目标、产物需求、领域对象、信息来源、行为约束和工作流程。优先使用自描述 Literal，必要时补自然语言；它组织语义，不要求解析器、执行引擎或形式化证明，强约束也不是技术上的执行保证。
 
 ## 选择操作
