@@ -18,13 +18,29 @@ RULE @think_before_coding:
 
 ```formal
 RULE @simplicity:
-  MUST: [simplest_correct_solution, simplify_if_overcomplicated]
+  MUST: [simplest_correct_solution, simplify_if_overcomplicated,
+         each_added_check_abstraction_dependency_error_branch_test_or_ui_worth_its_upkeep,
+         complete_necessary_work_correctly,
+         remove_existing_redundant_complexity_before_adding_abstractions_or_dependencies]
   MUST_NOT: [unrequested_features_flexibility_config_compatibility_ui_or_architecture,
-             speculative_design, single_use_abstractions, impossible_scenario_defenses]
+             speculative_design, single_use_abstractions, impossible_scenario_defenses,
+             add_layers_to_overcomplicated_design, silently_expand_scope_for_theoretical_robustness]
+  PREFER: fewer_moving_parts
+
+RULE @speculative_complexity:
+  WHEN: adding_complexity_for_speculative_or_vanishingly_unlikely_race_or_security_edge_cases
+  MUST: [explain_concrete_failure_mode_likelihood_and_complexity_cost_to_user,
+         obtain_user_buy_in_after_explanation_and_before_adding_complexity]
+
+RULE @requirement_confirmation:
+  WHEN: non_brainstorming
+  MUST: [propose_unrequested_requirements_only_when_necessary,
+         obtain_user_confirmation_before_adopting_suggested_requirements]
 
 RULE @failure_handling:
-  MUST: [validate_user_input_external_api_and_file_trust_boundaries,
-         trust_established_internal_contracts, handle_only_real_actionable_failures]
+  MUST: [validate_only_at_system_boundaries_including_user_input_external_apis_and_files,
+         trust_established_internal_contracts_invariants_and_framework_guarantees,
+         handle_only_real_actionable_failures]
   MUST_NOT: [redundant_internal_checks, unnecessary_fallbacks_or_excess_defenses,
              catches_or_silent_recovery_masking_programming_errors]
 
@@ -33,11 +49,6 @@ RULE @user_experience:
   MUST_NOT: [developer_notes_implementation_comments_or_internal_instructions_in_ui,
              unnecessary_engineering_or_obvious_interaction_explanations,
              prompts_or_warnings_unless_helping_meaningful_decisions_or_preventing_major_errors]
-
-RULE @complexity:
-  MUST: [each_added_check_abstraction_dependency_error_branch_test_or_ui_worth_its_upkeep,
-         rethink_overcomplex_design, complete_necessary_work_correctly]
-  PREFER: fewer_moving_parts
 ```
 
 ## 3. Surgical Changes
@@ -49,13 +60,17 @@ RULE @surgical_changes:
          remove_own_newly_unused_imports_variables_and_functions,
          report_unrelated_dead_code]
   MUST_NOT: [unrelated_code_comment_or_formatting_improvements, refactoring_unbroken_code,
-             delete_preexisting_dead_code_unless_requested]
+             delete_preexisting_dead_code_unless_requested,
+             feature_flags_or_compatibility_shims_when_direct_changes_suffice,
+             compatibility_hacks_using_unused_variable_underscore_renames_or_type_reexports]
 
 RULE @documentation:
   MUST: [comments_explain_why, concise_current_searchable_docs,
+         add_comments_only_for_nonobvious_logic_or_non_self_descriptive_code,
          update_or_remove_stale_comments_and_docs_on_behavior_change]
   MUST_NOT: [code_paraphrases_in_comments, development_history_annotations,
-             stale_text_with_appended_corrections, duplicate_docs]
+             stale_text_with_appended_corrections, duplicate_docs,
+             add_docstrings_comments_or_type_annotations_to_otherwise_unchanged_code]
 ```
 
 ## 4. Goal-Driven Execution
@@ -65,12 +80,30 @@ RULE @goal_driven_execution:
   MUST: [verifiable_success_criteria, brief_multistep_plan_with_checks,
          test_invalid_inputs_then_implement_validation,
          reproduce_bug_in_test_before_fix, tests_pass_before_and_after_refactor,
-         iterate_until_verified]
+         iterate_until_verified, prioritize_quality_and_completeness_over_token_savings,
+         full_effort_in_required_reasoning_investigation_implementation_and_verification,
+         concise_communication, respect_agreed_scope_and_stopping_rules,
+         autonomously_finish_remaining_in_scope_work,
+         fix_related_in_scope_defects_found_during_verification]
+  MUST_NOT: [stop_at_findings_while_actionable_in_scope_work_remains,
+             open_ended_hunts_for_hypothetical_or_unrelated_problems]
 
 RULE @meaningful_tests:
-  MUST: test_meaningful_behavior_key_boundaries_and_real_regressions
+  MUST: [test_meaningful_behavior_key_boundaries_and_real_regressions,
+         exercise_interfaces_as_external_callers_and_assert_caller_observable_outcomes,
+         remove_requested_obsolete_or_redundant_tests,
+         delete_requested_tests_that_pass_when_all_tested_functions_are_empty_and_return_no_data,
+         run_smallest_relevant_check,
+         reuse_valid_verification_when_relevant_code_configuration_and_conditions_unchanged,
+         retest_only_after_meaningful_change_new_failure_or_concrete_acceptance_evidence_gap]
   MUST_NOT: [redundant_or_trivial_tests, implementation_coupled_tests,
-             per_function_coverage_chasing, exhaustive_imaginary_failures]
+             per_function_coverage_chasing, exhaustive_imaginary_failures,
+             unnecessary_regression_burden,
+             whole_suite_repetition_for_reassurance_or_report_challenge_alone]
+
+RULE @automated_test_scope:
+  MUST: automated_tests_assert_outcomes_produced_by_deterministic_code
+  MUST_NOT: [write_automated_tests_for_llm_output, write_automated_tests_for_static_source_text]
 
 RULE @complete_milestones:
   WHEN: long_task
@@ -78,6 +111,12 @@ RULE @complete_milestones:
          targeted_development_checks, broad_regression_at_milestones_and_before_delivery]
   MUST_NOT: [repeated_stops_after_fragments, full_suite_after_each_micro_edit,
              test_frequency_as_progress]
+
+RULE @temporary_resource_cleanup:
+  WHEN: code_and_test_reviews_completed
+  MUST: [inspect_task_related_temporary_directories_git_worktrees_branches_and_docker_containers,
+         identify_resources_safe_to_remove, verify_no_background_task_dependencies_before_cleanup,
+         promptly_remove_safe_temporary_resources_to_reclaim_disk_space]
 ```
 
 ## 5. Evidence & Quotation

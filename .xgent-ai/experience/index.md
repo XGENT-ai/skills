@@ -78,3 +78,5 @@
 - a3b29874-b780-4424-b033-dc9948a05f59 · [use-prompt-dsl 改写定位](a3b29874-b780-4424-b033-dc9948a05f59.md)
 
 - adde76e0-97d3-47e7-887d-295ef6f5ecb8 · [review-code 与 review-ui ODC 改写](adde76e0-97d3-47e7-887d-295ef6f5ecb8.md)
+
+- `8bb1f7e5-ef61-44e7-a432-832aa7446bcf` — [AGENTS.md 优化验证](8bb1f7e5-ef61-44e7-a432-832aa7446bcf.md)
