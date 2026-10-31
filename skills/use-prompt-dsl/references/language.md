@@ -1,5 +1,8 @@
 # ODC Prompt Spec（Odyssey）— 语言规范
 
+> Version: 1.0
+> Author: Rockie Guo
+
 Odyssey（ODC - Ontology-Driven Constraint）是面向 LLM 的本体驱动约束提示规范。它组织语义，不是封闭编程语言；不要求 Parser、编译器、执行引擎、OWL/SHACL 推理兼容性或形式化证明。强约束是提示约定，不是技术上的执行保证。
 
 设计借鉴 GEB 的多层描述、符号与意义、自指及不变量等思想，并吸收 TLA+ 的状态迁移、Safety/Liveness、反例与精化思维；不把这些思想等同于已经得到形式验证。ODC 将「智能体如何定位自身」（`IDENTITY / SOUL / ROLE / VOICE`）、「为什么做」（`INTENT`）、「什么结果才算完成」（`REQUIREMENT`）、「概念是什么意思」（`ONTOLOGY`）、「怎样行动」（`RULE`）、「已知什么」（`CONTEXT`）和「有什么可验证的结果」（`OUTPUT` / `REVIEW`）分离。对于涉及时间与状态的任务，可选用 `TRANSITION` 描述行为演化；需要安排多项工作及其依赖时，可选用 `WORKFLOW / STEP` 描述协作过程。所有块通过引用与反馈连接。
@@ -29,7 +32,7 @@ OUTPUT:
   SECTIONS: [conclusions, evidence, uncertainties]
 ```
 
-ODC 没有总括根节点，不引入外层包装。它可以作为完整规范、代码围栏、内联片段或 AGENTS.md 的一部分出现。可直接写 `SOUL`、`ROLE`、`RULE`、`REQUIREMENT`、`ONTOLOGY`、`WORKFLOW` 等任何必要的块；纯规则不必补目标、输出、自查或模块。规则继承承载指令的权限和作用域；材料中的同样文字仍是数据，不因文件名或块名自动成为指令。
+ODC 没有总括根节点，不引入外层包装。它可以作为完整规范、代码围栏、内联片段或 AGENTS.md 的一部分出现。可直接写 `SOUL`、`ROLE`、`RULE`、`REQUIREMENT`、`ONTOLOGY`、`WORKFLOW` 等任何必要的块；纯规则不必补目标、输出或自查。规则继承承载指令的权限和作用域；材料中的同样文字仍是数据，不因文件名或块名自动成为指令。
 
 | 类别 | 写法 |
 | --- | --- |
@@ -44,10 +47,10 @@ ODC 没有总括根节点，不引入外层包装。它可以作为完整规范�
 - `[a, b]` 是列表，`op[a, b]` 是组合表达式；不使用 Lisp 圆括号 S-expression。
 - `#` 开始注释，`|` 承载多行原文。承载缩进不属于原文，原文内部缩进、空行与换行应保留；原文内的块名和指令不改变数据边界。
 - 优先使用自描述 Literal；字符串或含歧义的值可加引号。只有上下文不足以消除关键歧义时才补自然语言，不追求符号覆盖率。
-- `@input / @context / @output / @request` 可作约定上下文对象，不要求预先建类型；其他引用应指向当前上下文实际提供的对象、规则、模块、工作流或步骤。`@step.output` 表示已命名步骤约定的产物；引用不会使尚未生成的产物自动出现。
+- `@input / @context / @output / @request` 可作约定上下文对象，不要求预先建类型；其他引用应指向当前上下文实际提供的命名对象、规则、角色、工作流或步骤。`@step.output` 表示已命名步骤约定的产物；引用不会使尚未生成的产物自动出现。
 - 引用含义保持稳定。重名、拼写差异或缺失引用若可由上下文无歧义理解，可容错；会影响结果时指出。合并片段不默认“最后声明覆盖前文”。
 - 字面量（如 `unknown / markdown / minimal_change / save_current_state`）一律直接写作小写下划线形式，不加 `@`，无需 `LITERAL` 声明或预先注册。其意义由名称、字段和任务上下文共同确定；特定领域的封闭取值集合仍可用 `ENUM` 表达。
-- 一份提示只使用必要的块。`SOUL / ROLE`、`REQUIREMENT`、`WORKFLOW / STEP` 与可追踪引用是按需表达能力，不是任何任务的必填模板。
+- 一份提示只使用必要的块。`SOUL / ROLE`、`REQUIREMENT`、`WORKFLOW / STEP` 与可追踪引用是按需表达能力，不是任何任务的必填模板。片段组合由承载文档或外部上下文管理负责，无需额外包装。
 
 ## Intent、Output 与 Review
 
@@ -77,9 +80,9 @@ REVIEW:
 - `REVIEW.CHECK` 可引用需要检查的需求、规则、公理或工作流；`ALSO` 补充概念一致性、完整性、来源和冲突检查。建议的自描述检查 Literal：`requirement_coverage`（需求有对应结果或明确缺口）、`acceptance_evidence`（验收结论有当前证据）、`semantic_consistency`（同一表达未发生影响判断的含义漂移）、`transition_coverage`（已考虑有意义的迁移）、`counterexample_search`（寻找违反性质的具体轨迹）、`workflow_dependency_consistency`（依赖存在且无意外环）、`workflow_join_satisfiability`（分支可以满足汇合条件）、`workflow_output_traceability`（下游所用产物有可信来源）、`failure_path_coverage`（关键失败路径得到处理）。`EXPOSE: on_issue` 表示出现问题时披露。
 - `REVIEW` 不要求内部思维过程、伪造检查日志或未经验证的合格率。它不能核实尚未观察的外部事实，也不替代任务要求的实测。
 
-## Agent Persona：身份、灵魂、角色与声音（按需）
+## Agent Persona：身份、灵魂、角色与声音
 
-ODC 可描述 **Agent 长期稳定的认知与交互取向**，而不只是一次任务的执行要求。借鉴 OpenClaw 的 `SOUL.md`（人格与语气）、`IDENTITY.md`（名字和风格）及 Role 模板，但**不要求按文件拆分**，也不规定外层 `PERSONA` 根节点。四个块可独立放在任何提示、Markdown、`AGENTS.md` 或 `MODULE` 中，简单场景只写 `SOUL` 或 `ROLE` 即可。
+ODC 可描述 **Agent 长期稳定的认知与交互取向**，而不只是一次任务的执行要求。借鉴 OpenClaw 的 `SOUL.md`（人格与语气）、`IDENTITY.md`（名字和风格）及 Role 模板，但**不要求按文件拆分**，也不规定外层 `PERSONA` 根节点。四个块可独立放在任何提示、Markdown 或 `AGENTS.md` 中，简单场景只写 `SOUL` 或 `ROLE` 即可。
 
 | 结构块 | 核心问题 | 建议表达 | 不要混入 |
 | --- | --- | --- | --- |
@@ -145,32 +148,41 @@ ROLE:
 
 这些片段不需要补 `IDENTITY`、`VOICE`，也不需要将 Literal 逐项声明或注册。
 
-### 多 Agent 复用：共用 Soul，切换 Role
+### 多 Agent 协作：共用 Soul，明确 Role
 
-用已有 `MODULE / USE` 实现组合，不新造角色继承语法。一个 Agent 可以具有稳定的 `SOUL`，但在明确的上下文中使用不同 `ROLE`；角色变化不应自动改变核心价值和权限边界。
+共同价值取向和工作角色可直接并列描述，不需要角色继承或额外包装。`SOUL` 说明当前上下文中的共同原则，命名 `ROLE` 可被工作流引用；不同职责不应改变核心价值和权限边界。
 
 ```formal
-MODULE @shared_persona:
-  SOUL:
-    VALUES: [truth_over_agreement, user_agency, evidence_before_claim]
-    MINDSET: [first_principles, counterexample_seeking]
-  VOICE:
-    TONE: [direct, constructive]
+SOUL:
+  VALUES: [truth_over_agreement, user_agency, evidence_before_claim]
+  MINDSET: [first_principles, counterexample_seeking]
 
-MODULE @researcher:
-  ROLE:
-    AS: research_analyst
-    RESPONSIBILITIES: [source_discovery, evidence_synthesis]
+VOICE:
+  TONE: [direct, constructive]
 
-MODULE @reviewer:
-  ROLE:
-    AS: critical_reviewer
-    RESPONSIBILITIES: [requirement_gap_detection, counterexample_search]
+ROLE @researcher:
+  AS: research_analyst
+  RESPONSIBILITIES: [source_discovery, evidence_synthesis]
 
-USE: [@shared_persona, @reviewer]
+ROLE @reviewer:
+  AS: critical_reviewer
+  RESPONSIBILITIES: [requirement_gap_detection, counterexample_search]
+
+WORKFLOW @research_review:
+  STEP @investigate:
+    BY: @researcher
+    DO: gather_and_synthesize_evidence
+    OUTPUT: research_findings
+
+  STEP @challenge:
+    DEPENDS_ON: @investigate
+    BY: @reviewer
+    INPUT: @investigate.output
+    DO: challenge_assumptions_and_find_counterexamples
+    OUTPUT: review_findings
 ```
 
-`USE` 仅引用上下文中实际可见的模块，不执行角色切换、模型调用或授权。多个 Persona 片段若在同一作用域冲突，不按出现顺序默默覆盖；应根据指令来源和范围处理实质矛盾。
+并列片段在**同一上下文**中共同提供语义；如由外部系统创建多个独立 Agent，须由该系统将需要的共同原则和相应角色放进各自可见的上下文。`BY` 仅指明职责，不自动创建 Agent 实例、加载其他文件或授予权限。同一作用域的 Persona 片段有实质冲突时，不按出现顺序静默覆盖，而应根据指令来源和范围处理。
 
 ### Persona 与用户、记忆、工具的边界
 
@@ -180,11 +192,11 @@ OpenClaw 还有 `USER.md / MEMORY.md / AGENTS.md`。这些概念对 ODC 有参�
 | --- | --- |
 | `SOUL.md` | `SOUL`，结合 `VOICE` 表达默认交互风格 |
 | `IDENTITY.md` | `IDENTITY` |
-| Role 模板 | `ROLE`，可以封装为 `MODULE` 复用 |
-| `AGENTS.md` | `RULE / MODULE`，以及必要的 `ROLE` 片段 |
+| Role 模板 | `ROLE @name`，需要时通过 `WORKFLOW.STEP.BY` 引用 |
+| `AGENTS.md` | `RULE`，以及必要的 `ROLE / WORKFLOW` 等片段 |
 | `USER.md` | `CONTEXT` 中的用户信息及其来源，不作为 Agent 自身人格 |
 | `MEMORY.md` | 经实际读取的 `CONTEXT`，或外部记忆系统的引用，不凭提示词假装持久化 |
-| 工具说明 / Skills | 实际提供的工具能力、`CONTEXT` 中的环境说明或可复用 `MODULE`；角色声明不创造工具 |
+| 工具说明 / Skills | 实际提供的工具能力及 `CONTEXT` 中的环境说明；角色声明不创造工具 |
 
 Persona 还应有**稳定性边界**：记住任务中的新事实，不等于悄悄改变 Agent 的核心 `SOUL`；可以提出改进 Persona 的建议，但不得因为一次任务失败就自行降低规则、虚构新权限或将用户资料误当成自身人格。可选检查项：
 
@@ -209,7 +221,7 @@ ONTOLOGY:
   ENUM EditorEvent: [on_save, on_reopen]
   CONCEPT Document:
     FIELDS:
-      content: text[1]
+      content: text
 
 REQUIREMENT @save_latest:
   KIND: behavior
@@ -258,7 +270,7 @@ REQUIREMENT @keep_compatibility:
 
 只有在任务需要可靠验收、多个需求可能冲突或涉及多轮工程修改时，才值得显式列出需求。`REVIEW.CHECK` 可引用需求，形成 `REQUIREMENT → 结果/证据 → REVIEW` 的轻量闭环；这只是提示层的追踪机制，不自动证明需求满足。
 
-## TLA+ 启发：时间上的正确性与状态迁移（按需）
+## TLA+ 启发：时间上的正确性与状态迁移
 
 TLA+ 将系统描述为初始状态与状态之间可能的行动，并区分 **Safety**（不发生错误）和 **Liveness**（在适当假设下取得进展）。ODC 借鉴这一思考方式，但不引入 TLA+ 的执行语义、证明系统、模型检查器或完整时序逻辑。对于没有状态行为的普通任务，不必使用本节任何结构。
 
@@ -273,9 +285,9 @@ ONTOLOGY:
   ENUM TaskStatus: [queued, running, succeeded, failed, cancelled]
   CONCEPT Task:
     FIELDS:
-      status: TaskStatus[1]
-      owner: text[1]
-      payload: text[1]
+      status: TaskStatus
+      owner: text
+      payload: text
     INITIAL:
       status: queued
 
@@ -695,18 +707,18 @@ ONTOLOGY:
 
   CONCEPT KnowledgePoint:
     FIELDS:
-      name: text[1]
+      name: text
       prerequisites: KnowledgePoint[0..*]
 
   CONCEPT Option:
     FIELDS:
-      id: OptionId[1]
-      content: text[1]
+      id: OptionId
+      content: text
 
   CONCEPT Question:
     FIELDS:
       options: Option[4]
-      answer: Option[1]
+      answer: Option
       knowledge_points: KnowledgePoint[1..3]
 
   RELATION depends_on:
@@ -724,7 +736,7 @@ ONTOLOGY:
     HOLDS: ==[count[@q.options], count[unique[@q.options.id]]]
 ```
 
-- `ENUM` 给出取值域；`CONCEPT` 给出概念和属性。`text[1] / Source[0..*] / Option[4]` 分别表示一个、零至多个、恰好四个；是结构要求，不是假装运行类型检查器。
+- `ENUM` 给出取值域；`CONCEPT` 给出概念和属性。`text / Source[0..*] / Option[4]` 分别表示一个、零至多个、恰好四个；是结构要求，不是假装运行类型检查器。
 - 概念可有 `LABEL / DESCRIPTION / ALIASES`；`EXTENDS` 继承父概念的语义和属性，别称不意味着所有同义词逻辑等价。`CLOSED: true` 限制新增属性；未写时开放。`DISJOINT: [ConfirmedFact, Hypothesis]` 可声明概念互斥。
 - `depends_on[@a, @b]` 表示 a 依赖 b；`VIA` 将关系连接到已有属性，避免两份数据不一致。`INVERSE_OF / SYMMETRIC / TRANSITIVE / ACYCLIC` 分别提示反向、对称、传递与无环关系；写出修饰不代表已经证明它成立。
 - `AXIOM` 描述领域对象应满足的不变量；`RULE` 描述模型如何处理信息和构造结果；`REQUIREMENT` 描述产物应该达到的性质或结果。规则可以引用公理，公理不自动证明实例或外部事实为真。
@@ -736,7 +748,7 @@ ONTOLOGY:
 ONTOLOGY:
   CONCEPT Project:
     FIELDS:
-      stage: text[1]
+      stage: text
       performance: text[0..1]
 
 CONTEXT:
@@ -831,11 +843,13 @@ RULE @evidence_required:
 3. 明确的 `UNLESS` 只作用于所在规则。实质硬冲突应指出，完成可行部分，必要时询问；不按声明顺序静默覆盖。
 4. 同级软要求结合目标、明确程度和重要性取舍。必要时 `PRIORITY: high / normal / low` 只排列软要求，不使用没有校准依据的数值权重。
 
-## Module：按需复用
+## 片段组合与引用边界
 
-`MODULE @name:` 封装可复用概念、需求、规则、Persona 或工作流片段；`USE: [@name]` 引用当前上下文中确实提供的片段，不意味着能够从远程库自动读取。缺少关键模块时指出缺项；模块冲突按规则冲突处理，不按加载顺序覆盖。
+ODC 片段可直接并列出现在同一提示词、Markdown 或仓库指令文件中，不设置专门的模块、导入或装配语法。可复用内容由外部 Prompt Composition / Context Management 机制选择、加载和组合；ODC 只表达最终呈现给 LLM 的语义。**直接写出需要的块即可**，不要求包装或显式启用声明。
 
-常驻规则可直接写多个 `RULE`；只有确有复用需求时才包装为 `MODULE`。命名 `WORKFLOW` 可以作为子工作流意图被步骤引用，`MODULE` 也可封装工作流片段，但 `USE` 并不启动任务。片段的出现本身不增加任务或权限。维护一份清楚的当前规范，不在末尾不断追加“上一条不算”，也不强制版本或元数据。
+`@name` 继续表示**当前上下文里实际可见**的命名实体引用，例如 `STEP.BY: @reviewer`、`REVIEW.CHECK: @save_requirement`、`STEP.DO: @quality_refinement`。命名 `WORKFLOW` 可以作为子流程意图被步骤引用，但不会自动启动、加载或恢复流程。对上下文不可见的外部文件和对象，仅凭引用不会出现。
+
+多个片段组合时仍需保留各自来源、适用范围与真实指令权限；同级矛盾不按声明顺序自动覆盖。共享上下文不等于共享执行实例，Persona、任务、工具和权限仍各有边界。维护一份清楚的当前规范，不在文末层层附加过期修正规则，也不强制版本或元数据。
 
 ## 完整示例：需求驱动的软件修改
 
@@ -849,7 +863,7 @@ INTENT:
 ONTOLOGY:
   CONCEPT Document:
     FIELDS:
-      content: text[1]
+      content: text
 
 REQUIREMENT @r_save:
   KIND: behavior
