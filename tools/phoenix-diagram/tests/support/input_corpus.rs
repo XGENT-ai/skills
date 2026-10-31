@@ -124,8 +124,8 @@ fn frozen_examples_preserve_original_documents_and_bytes_in_both_contracts() {
         );
     }
     assert_eq!(counts["legacy-2.17"], 14);
-    assert_eq!(counts["phoenix-v1"], 15);
-    assert_eq!(kinds.len(), 10);
+    assert_eq!(counts["phoenix-v1"], 25);
+    assert_eq!(kinds.len(), 15);
 }
 
 #[test]
@@ -163,7 +163,15 @@ fn field_omission_enum_and_boundary_behavior_matches_frozen_node_schema_oracles(
                         | "input/main-path"
                         | "input/range"
                         | "input/semantic-contract"
-                )),
+                ) || [
+                    "erd/",
+                    "class/",
+                    "tree/",
+                    "timeline/",
+                    "waterfall/"
+                ]
+                .iter()
+                .any(|prefix| diagnostic.code.starts_with(prefix))),
                 "{} {}: Node accepted; Rust: {diagnostics:?}",
                 specimen.id,
                 case.name
@@ -199,6 +207,20 @@ fn field_omission_enum_and_boundary_behavior_matches_frozen_node_schema_oracles(
             );
         }
     }
+}
+
+// The types each contract defines; erd..waterfall exist only in phoenix-v1.
+fn kinds(contract: &str) -> impl Iterator<Item = DiagramType> + '_ {
+    DiagramType::ALL
+        .into_iter()
+        .filter(move |kind| contract == "phoenix-v1" || kind.has_legacy_contract())
+}
+
+// Types whose explicit entity and relation ids share one identity domain.
+fn relational(contract: &str) -> impl Iterator<Item = DiagramType> + '_ {
+    kinds(contract).filter(|kind| {
+        kind.has_legacy_contract() || matches!(kind, DiagramType::Erd | DiagramType::Class)
+    })
 }
 
 fn minimal(kind: DiagramType, contract: &str) -> Value {
@@ -243,6 +265,33 @@ fn minimal(kind: DiagramType, contract: &str) -> Value {
                 "transitions": [{"from":"a","to":"b","label":"request"}],
             })
         }
+        DiagramType::Erd => json!({
+            "entities": [
+                {"id":"a","label":"A","row":0,"col":0,"attributes":[{"name":"id","type":"uuid","key":"pk"}]},
+                {"id":"b","label":"B","row":0,"col":1,"attributes":[{"name":"a_id","type":"uuid","key":["fk"],"references":"a.id"}]},
+            ],
+            "relationships": [{"from":"a","to":"b","fromCardinality":"one","toCardinality":"many","label":"has"}],
+        }),
+        DiagramType::Class => json!({
+            "types": [{"id":"a","label":"A","kind":"interface","row":0,"col":0},{"id":"b","label":"B","kind":"class","row":1,"col":0.5,"attributes":[{"name":"id"}]}],
+            "relationships": [{"from":"b","to":"a","kind":"realization"}],
+        }),
+        DiagramType::Tree => json!({
+            "nodes": [{"id":"a","label":"A"},{"id":"b","label":"B","parent":"a"}],
+        }),
+        DiagramType::Timeline => {
+            document["meta"]["evidence"] = json!("observed");
+            json!({
+                "lanes": [{"id":"ops","label":"Ops"}],
+                "events": [{"id":"a","at":"2026-01-01T10:00Z","title":"A","lane":"ops"},{"id":"b","at":"2026-01-01T11:00:30.5+08:00","title":"B","lane":"ops"}],
+            })
+        }
+        DiagramType::Waterfall => {
+            document["meta"]["evidence"] = json!("measured");
+            json!({
+                "spans": [{"id":"a","name":"A","start":0,"end":10},{"id":"b","name":"B","start":2,"duration":3,"parent":"a"},{"id":"c","name":"C","start":4,"status":"incomplete","parent":"a"}],
+            })
+        }
     };
     document
         .as_object_mut()
@@ -258,6 +307,11 @@ fn collections(kind: DiagramType) -> (&'static str, &'static str) {
         DiagramType::Sequence => ("participants", "messages"),
         DiagramType::Dataflow => ("nodes", "flows"),
         DiagramType::Lifecycle => ("states", "transitions"),
+        DiagramType::Erd => ("entities", "relationships"),
+        DiagramType::Class => ("types", "relationships"),
+        DiagramType::Tree => ("nodes", "relationships"),
+        DiagramType::Timeline => ("events", "relationships"),
+        DiagramType::Waterfall => ("spans", "relationships"),
     }
 }
 
@@ -287,7 +341,7 @@ fn expect_error(document: &Value, kind: DiagramType, contract: &str, code: &str,
 #[test]
 fn minimal_documents_and_legacy_column_fit_omission_are_accepted_unchanged() {
     for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in DiagramType::ALL {
+        for kind in kinds(contract) {
             let document = minimal(kind, contract);
             let bytes = serde_json::to_vec(&document).unwrap();
             let parsed = parse_input(&bytes, kind, &options(contract))
@@ -330,7 +384,7 @@ fn container_namespaces_may_share_ids_with_entities_and_each_other() {
 #[test]
 fn duplicate_entity_relation_and_cross_collection_identities_are_rejected() {
     for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in DiagramType::ALL {
+        for kind in relational(contract) {
             let (entities, relations) = collections(kind);
             let mut document = minimal(kind, contract);
             document[entities][1]["id"] = json!("a");
@@ -383,7 +437,7 @@ fn duplicate_entity_relation_and_cross_collection_identities_are_rejected() {
 #[test]
 fn relation_endpoints_and_guided_view_focus_require_existing_entities() {
     for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in DiagramType::ALL {
+        for kind in relational(contract) {
             let (_, relations) = collections(kind);
             for endpoint in ["from", "to"] {
                 let mut document = minimal(kind, contract);
@@ -646,4 +700,405 @@ fn sequence_activation_participants_and_nonempty_ranges_are_validated() {
             );
         }
     }
+}
+
+fn expect_at(document: &Value, kind: DiagramType, code: &str, path: &str) {
+    let diagnostics = parse_input(
+        &serde_json::to_vec(document).unwrap(),
+        kind,
+        &CompileOptions::default(),
+    )
+    .unwrap_err();
+    assert!(
+        diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == code && diagnostic.subject.path == path),
+        "{}: expected {code} at {path}, got {diagnostics:?}",
+        kind.as_str()
+    );
+}
+
+fn accepts(document: &Value, kind: DiagramType) {
+    parse_input(
+        &serde_json::to_vec(document).unwrap(),
+        kind,
+        &CompileOptions::default(),
+    )
+    .unwrap_or_else(|errors| panic!("{}: {errors:?}", kind.as_str()));
+}
+
+#[test]
+fn new_types_default_to_phoenix_v1_and_have_no_legacy_contract() {
+    for kind in kinds("phoenix-v1").filter(|kind| !kind.has_legacy_contract()) {
+        let document = minimal(kind, "phoenix-v1");
+        let parsed = parse_input(
+            &serde_json::to_vec(&document).unwrap(),
+            kind,
+            &CompileOptions::default(),
+        )
+        .unwrap();
+        assert_eq!(parsed.input_contract, InputContract::PhoenixV1);
+        let mut marked = document.clone();
+        marked["meta"]["input_contract"] = json!("legacy-2.17");
+        expect_at(
+            &marked,
+            kind,
+            "input/contract-unsupported",
+            "/meta/input_contract",
+        );
+        let diagnostics = parse_input(
+            &serde_json::to_vec(&document).unwrap(),
+            kind,
+            &CompileOptions {
+                input_contract: Some(InputContract::Legacy217),
+                ..Default::default()
+            },
+        )
+        .unwrap_err();
+        assert_eq!(diagnostics[0].code, "input/contract-unsupported");
+    }
+    // The original five keep their unmarked legacy reading.
+    let parsed = parse_input(
+        &serde_json::to_vec(&minimal(DiagramType::Sequence, "legacy-2.17")).unwrap(),
+        DiagramType::Sequence,
+        &CompileOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(parsed.input_contract, InputContract::Legacy217);
+}
+
+#[test]
+fn erd_attributes_references_relationships_and_grid_cells_are_checked() {
+    let kind = DiagramType::Erd;
+    let mut document = minimal(kind, "phoenix-v1");
+    document["entities"][0]["attributes"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"name":"id"}));
+    expect_at(
+        &document,
+        kind,
+        "erd/duplicate-attribute",
+        "/entities/0/attributes/1/name",
+    );
+    for references in ["missing.id", "a.missing"] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["entities"][1]["attributes"][0]["references"] = json!(references);
+        let path = "/entities/1/attributes/0/references";
+        expect_at(&document, kind, "input/unknown-reference", path);
+    }
+    let mut document = minimal(kind, "phoenix-v1");
+    document["relationships"][0]["to"] = json!("a");
+    expect_at(&document, kind, "erd/self-relationship", "/relationships/0");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["entities"][1]["col"] = json!(0);
+    expect_at(&document, kind, "erd/grid-cell-conflict", "/entities/1");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["entities"][1]
+        .as_object_mut()
+        .unwrap()
+        .remove("row");
+    expect_at(&document, kind, "erd/grid-placement", "/entities/1");
+    let mut document = minimal(kind, "phoenix-v1");
+    for entity in document["entities"].as_array_mut().unwrap() {
+        entity.as_object_mut().unwrap().remove("row");
+        entity.as_object_mut().unwrap().remove("col");
+    }
+    expect_at(&document, kind, "erd/grid-placement", "/entities/0");
+    document["entities"][0]["pos"] = json!([40, 40]);
+    document["entities"][1]["pos"] = json!([400, 40]);
+    accepts(&document, kind);
+    let mut document = minimal(kind, "phoenix-v1");
+    document["entities"][1]["attributes"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("references");
+    expect_at(&document, kind, "input/schema", "/entities/1/attributes/0");
+}
+
+#[test]
+fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
+    let kind = DiagramType::Class;
+    let mut document = minimal(kind, "phoenix-v1");
+    document["types"][1]["attributes"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"name":"id"}));
+    expect_at(
+        &document,
+        kind,
+        "class/duplicate-attribute",
+        "/types/1/attributes/1/name",
+    );
+    let mut document = minimal(kind, "phoenix-v1");
+    document["types"][0]["kind"] = json!("class");
+    expect_at(
+        &document,
+        kind,
+        "class/realization-target",
+        "/relationships/0",
+    );
+    let mut document = minimal(kind, "phoenix-v1");
+    document["relationships"][0]["kind"] = json!("inheritance");
+    expect_at(
+        &document,
+        kind,
+        "class/inheritance-kind",
+        "/relationships/0",
+    );
+    let mut document = minimal(kind, "phoenix-v1");
+    document["types"][0]["kind"] = json!("class");
+    document["relationships"] = json!([
+        {"from":"b","to":"a","kind":"inheritance"},
+        {"from":"a","to":"b","kind":"inheritance"},
+    ]);
+    expect_at(&document, kind, "class/inheritance-cycle", "/relationships");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["types"][1]["row"] = json!(0);
+    expect_at(&document, kind, "class/grid-cell-conflict", "/types/1");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["types"][1].as_object_mut().unwrap().remove("row");
+    expect_at(&document, kind, "class/grid-placement", "/types/1");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["relationships"][0]["to"] = json!("b");
+    expect_at(
+        &document,
+        kind,
+        "class/self-relationship",
+        "/relationships/0",
+    );
+}
+
+#[test]
+fn tree_hierarchy_has_one_root_declared_parents_and_no_cycle() {
+    let kind = DiagramType::Tree;
+    let mut document = minimal(kind, "phoenix-v1");
+    document["nodes"][1]["id"] = json!("a");
+    expect_at(&document, kind, "tree/duplicate-id", "/nodes/1/id");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["nodes"][1]["parent"] = json!("missing");
+    expect_at(&document, kind, "tree/missing-parent", "/nodes/1/parent");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["nodes"][1]
+        .as_object_mut()
+        .unwrap()
+        .remove("parent");
+    expect_at(&document, kind, "tree/root-count", "/nodes");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["nodes"][0]["parent"] = json!("b");
+    expect_at(&document, kind, "tree/root-count", "/nodes");
+    expect_at(&document, kind, "tree/cycle", "/nodes/0/parent");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
+    expect_at(
+        &document,
+        kind,
+        "input/unknown-reference",
+        "/meta/views/0/focus/0",
+    );
+}
+
+#[test]
+fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
+    let kind = DiagramType::Timeline;
+    for zone in [
+        "UTC",
+        "asia/calcutta",
+        "Asia/Shanghai",
+        "IST",
+        "+05:30",
+        "+0530",
+        "+01",
+        "-2359",
+        "\u{2212}05:00",
+        "-00:00",
+        "SystemV/AST4ADT",
+        "SystemV/CST6CDT",
+        "SystemV/EST5EDT",
+        "SystemV/MST7MDT",
+        "SystemV/PST8PDT",
+        "SystemV/YST9YDT",
+    ] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["meta"]["timezone"] = json!(zone);
+        accepts(&document, kind);
+    }
+    for zone in [
+        "Mars/Base",
+        "+24:00",
+        "+05:60",
+        "+5:30",
+        "+05:30:00",
+        "Z",
+        "UTC+05:30",
+        " UTC",
+        "SystemV/AST4EDT",
+    ] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["meta"]["timezone"] = json!(zone);
+        expect_at(
+            &document,
+            kind,
+            "timeline/invalid-timezone",
+            "/meta/timezone",
+        );
+    }
+    for at in [
+        "2026-02-30T10:00Z",
+        "2026-01-01T24:01Z",
+        "2026-01-01T23:60Z",
+        "2026-01-01T10:00+24:00",
+        "2026-13-01T10:00Z",
+    ] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["events"][0]["at"] = json!(at);
+        expect_at(
+            &document,
+            kind,
+            "timeline/invalid-timestamp",
+            "/events/0/at",
+        );
+    }
+    for at in [
+        "2026-01-01T24:00Z",
+        "2024-02-29T00:00Z",
+        "0000-01-01T00:00Z",
+        "2026-01-01T10:00+23:59",
+    ] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["events"][0]["at"] = json!(at);
+        accepts(&document, kind);
+    }
+    let mut document = minimal(kind, "phoenix-v1");
+    document["lanes"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"id":"ops","label":"Again"}));
+    expect_at(&document, kind, "timeline/duplicate-lane-id", "/lanes/1/id");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["events"][1]["id"] = json!("a");
+    expect_at(&document, kind, "timeline/duplicate-id", "/events/1/id");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["events"][1]
+        .as_object_mut()
+        .unwrap()
+        .remove("lane");
+    expect_at(&document, kind, "timeline/unknown-lane", "/events/1/lane");
+    for (at, valid) in [
+        ("2026-01-01T12:00Z", true),
+        ("2026-01-01T12:00:00.000+08:00", true),
+        ("2026-01-01T12:00:01Z", false),
+        ("2026-01-01T10:00Z", false),
+    ] {
+        let mut document = minimal(kind, "phoenix-v1");
+        document["events"][0]["at"] = json!(at);
+        document["events"][0]["precision"] = json!("day");
+        if valid {
+            accepts(&document, kind);
+        } else {
+            expect_at(
+                &document,
+                kind,
+                "timeline/day-precision-time",
+                "/events/0/precision",
+            );
+        }
+    }
+    let mut document = minimal(kind, "phoenix-v1");
+    document["events"][0]["precision"] = json!("hour");
+    expect_at(&document, kind, "input/schema", "/events/0/precision");
+}
+
+#[test]
+fn waterfall_spans_need_recorded_consistent_timing_and_acyclic_parents() {
+    let kind = DiagramType::Waterfall;
+    let mutations: [(&str, Value, &str, &str); 6] = [
+        (
+            "/spans/1/id",
+            json!("a"),
+            "waterfall/duplicate-id",
+            "/spans/1/id",
+        ),
+        ("/spans/0/end", json!(-1), "input/schema", "/spans/0/end"),
+        (
+            "/spans/1/parent",
+            json!("missing"),
+            "waterfall/missing-parent",
+            "/spans/1/parent",
+        ),
+        (
+            "/spans/2/status",
+            json!("ok"),
+            "waterfall/invalid-timing",
+            "/spans/2",
+        ),
+        (
+            "/spans/0/parent",
+            json!("b"),
+            "waterfall/cycle",
+            "/spans/0/parent",
+        ),
+        (
+            "/spans/1/end",
+            json!(9),
+            "waterfall/invalid-timing",
+            "/spans/1",
+        ),
+    ];
+    for (pointer, value, code, path) in mutations {
+        let mut document = minimal(kind, "phoenix-v1");
+        let (parent, key) = pointer.rsplit_once('/').unwrap();
+        document.pointer_mut(parent).unwrap()[key] = value;
+        expect_at(&document, kind, code, path);
+    }
+    let mut document = minimal(kind, "phoenix-v1");
+    document["spans"][0]["start"] = json!(20);
+    expect_at(&document, kind, "waterfall/invalid-timing", "/spans/0");
+    let mut document = minimal(kind, "phoenix-v1");
+    document["spans"][1]["end"] = json!(5);
+    accepts(&document, kind);
+}
+
+#[test]
+fn final_dispositions_keep_repository_evidence_supported() {
+    let mut document = minimal(DiagramType::Architecture, "phoenix-v1");
+    document["meta"]["input_contract"] = json!("phoenix-v1");
+    document["components"][0]["brand"] = json!("example");
+    document["components"][0]["sources"] = json!([{"path":"src/main.rs","line":1}]);
+    document["meta"]["repository"] =
+        json!({"url":"https://github.com/example/repo","revision":"a".repeat(40)});
+    document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["a"]}]);
+    let input = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Architecture,
+        &CompileOptions::default(),
+    )
+    .unwrap();
+    let paths: Vec<_> = input
+        .compatibility
+        .dispositions
+        .iter()
+        .map(|field| (field.path.as_str(), field.disposition.as_str()))
+        .collect();
+    assert_eq!(
+        paths,
+        [
+            ("/meta/views", "unsupported-display"),
+            ("/components/0/brand", "supported")
+        ]
+    );
+    let mut legacy = minimal(DiagramType::Sequence, "legacy-2.17");
+    legacy["meta"]["animation"] = json!("trace");
+    let input = parse_input(
+        &serde_json::to_vec(&legacy).unwrap(),
+        DiagramType::Sequence,
+        &CompileOptions::default(),
+    )
+    .unwrap();
+    assert_eq!(input.compatibility.dispositions[0].path, "/meta/animation");
+    assert_eq!(
+        input.compatibility.dispositions[0].disposition,
+        "ignored-display"
+    );
+    assert!(input.compatibility.deferred_fields.is_empty());
 }

@@ -19,6 +19,8 @@ pub struct EngineIdentity {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EffectiveConfig {
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub brand_resources: std::collections::BTreeMap<String, crate::brands::ResourceIdentity>,
     pub diagram_type: DiagramType,
     pub input_contract: InputContract,
     pub quality: Quality,
@@ -77,6 +79,7 @@ pub struct ValidationReceipt {
     pub compatibility: Option<Compatibility>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
+    pub evidence: Value,
     #[serde(skip)]
     pub layout: Option<Value>,
     #[serde(skip)]
@@ -192,6 +195,7 @@ pub struct FinalizeReceipt {
     pub delivery_status: String,
     pub produced_by_this_run: bool,
     pub evidence: Value,
+    pub locale: Value,
     #[serde(skip)]
     pub(super) exit: u8,
 }

@@ -8,6 +8,7 @@ const { createHash } = require('node:crypto');
 const { pathToFileURL } = require('node:url');
 const { gzipSync } = require('node:zlib');
 const { spawnSync } = require('node:child_process');
+const net = require('node:net');
 const root = path.resolve(__dirname, '../..');
 const moduleReady = import(pathToFileURL(path.join(root, 'scripts/pack-phoenix-diagram-candidate.mjs')));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -19,15 +20,15 @@ const triples = ['aarch64-apple-darwin', 'x86_64-apple-darwin', 'x86_64-unknown-
 // never passed to packCandidate and do not represent native-platform evidence.
 function records() {
   const inputBytes = Buffer.from(JSON.stringify([['package.json', 10, 'a'.repeat(64)]]));
-  const bundleBytes = Buffer.from('{"schemaVersion":1,"tool":"phoenix-diagram","version":"0.1.0","files":[]}\n');
+  const bundleBytes = Buffer.from('{"schemaVersion":1,"tool":"phoenix-diagram","version":"0.2.0","files":[]}\n');
   const license = fs.readFileSync(path.join(root, 'LICENSE'));
   const licenses = new Map([['LICENSE', license]]);
   const licenseSha256 = sha(Buffer.from(JSON.stringify([['LICENSE', license.length, sha(license)]])));
   return targets.map((target, index) => {
     const bytes = Buffer.from(`Inert metadata-only artifact for ${target}; not executable.`);
     const binary = { asset: `phoenix-diagram-${target}`, size: bytes.length, sha256: sha(bytes) };
-    const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.1.0', npmPackageVersion, sourceCommit: 'b'.repeat(40), sourceInputSha256: sha(inputBytes), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v1', bundleSha256: sha(bundleBytes), engines: { [target]: binary } };
-    const receipt = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.1.0', npmPackageVersion, distribution: 'development', target, host: triples[index], sourceCommit: version.sourceCommit, sourceTree: 'c'.repeat(40), sourceState: 'clean', sourceReference: version.sourceCommit, sourceInputSha256: version.sourceInputSha256, binary, bundle: { path: 'bundle/manifest.json', size: bundleBytes.length, sha256: version.bundleSha256 }, viewer: { revision: 'phoenix-v1', template: { path: 'viewer/viewer.html', size: 1, sha256: 'd'.repeat(64) }, sourceManifest: { path: 'viewer/source-manifest.json', size: 1, sha256: 'e'.repeat(64) } }, tools: { pins: { node: '25.2.1', rust: '1.99.0', mrBoxington: '1.21.1' }, observed: { node: '25.2.1', rust: '1.99.0', cargo: '1.99.0', mrBoxington: '1.21.1' }, sources: [] }, legal: { sha256: licenseSha256 }, native: { status: 'pass', host: triples[index], target: triples[index], engineProbe: { status: 'pass', stdout: 'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\n' }, engineDoctor: { status: 'pass', toolVersion: '0.1.0', engine: { sourceInputSha256: version.sourceInputSha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v1', binary: { sha256: binary.sha256, bytes: binary.size } } }, sourceInputsMatch: 'pass' }, checks: { lockedOffline: 'pass', sourceStable: 'pass', engineProbe: 'pass', sourceInputs: 'pass', fullRuntimeTests: 'not-run-by-build-script' } };
+    const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion, sourceCommit: 'b'.repeat(40), sourceInputSha256: sha(inputBytes), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: sha(bundleBytes), engines: { [target]: binary } };
+    const receipt = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion, distribution: 'development', target, host: triples[index], sourceCommit: version.sourceCommit, sourceTree: 'c'.repeat(40), sourceState: 'clean', sourceReference: version.sourceCommit, sourceInputSha256: version.sourceInputSha256, binary, bundle: { path: 'bundle/manifest.json', size: bundleBytes.length, sha256: version.bundleSha256 }, viewer: { revision: 'phoenix-v2', template: { path: 'viewer/viewer.html', size: 1, sha256: 'd'.repeat(64) }, sourceManifest: { path: 'viewer/source-manifest.json', size: 1, sha256: 'e'.repeat(64) } }, tools: { pins: { node: '25.2.1', rust: '1.99.0', mrBoxington: '1.21.1' }, observed: { node: '25.2.1', rust: '1.99.0', cargo: '1.99.0', mrBoxington: '1.21.1' }, sources: [] }, legal: { sha256: licenseSha256 }, native: { status: 'pass', host: triples[index], target: triples[index], engineProbe: { status: 'pass', stdout: 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n' }, engineDoctor: { status: 'pass', toolVersion: '0.2.0', engine: { sourceInputSha256: version.sourceInputSha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', binary: { sha256: binary.sha256, bytes: binary.size } } }, sourceInputsMatch: 'pass' }, checks: { lockedOffline: 'pass', sourceStable: 'pass', engineProbe: 'pass', sourceInputs: 'pass', fullRuntimeTests: 'not-run-by-build-script' } };
     return { directory: `/metadata-only/${target}`, target, version, versionBytes: Buffer.from(JSON.stringify(version) + '\n'), receipt, sourceInputs: { entries: JSON.parse(inputBytes), bytes: inputBytes, sha256: sha(inputBytes) }, bundle: { manifest: JSON.parse(bundleBytes), bytes: bundleBytes, sha256: sha(bundleBytes), files: new Map([['SKILL.md', Buffer.from('metadata only')]]) }, licenses, licenseSha256, binary: { ...binary, bytes, path: `/metadata-only/${binary.asset}` } };
   });
 }
@@ -48,6 +49,106 @@ function archive(rows) {
   }
   return gzipSync(Buffer.concat([...blocks,Buffer.alloc(1024)]));
 }
+
+test('candidate profile is explicit and install-only contexts cannot stand in for full consumption',async t=>{
+  const api=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),target=api.targetForHost(),directory=temporary(t);
+  const base=['--candidate-dir','/candidate','--target',target];assert.equal(api.parseOptions(base).profile,undefined);assert.equal(api.parseOptions([...base,'--profile','p3']).profile,'p3');assert.throws(()=>api.parseOptions([...base,'--profile','unknown']),/profile/i);
+  const file=path.join(directory,'install-context.json');fs.writeFileSync(file,JSON.stringify({schemaVersion:1,kind:'phoenix-diagram-candidate-install-context',scope:'installation-only',target,profile:'p2',phase:'installed',status:'pass',automatedStatus:'not-run'}));
+  assert.throws(()=>api.readConsumerContext({resume:file,target,profile:'p2'},{}),/scope|consumption|automatic/i);
+  fs.writeFileSync(file,JSON.stringify({schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',target,profile:'p3',phase:'pending-review',status:'automated-pass',automatedStatus:'pass'}));
+  assert.throws(()=>api.readCandidateTransport({resume:file,target,profile:'p3'},{}),/scope|consumption|installation/i);
+  assert.throws(()=>api.readConsumerContext({resume:file,target,profile:'p2'},{}),/profile/i);
+});
+
+function workflowOutputs(file) {
+  const lines=fs.readFileSync(file,'utf8').split('\n'),values={};
+  for(let at=0;at<lines.length;at++){const match=/^([a-z_]+)<<(.+)$/.exec(lines[at]);if(match){values[match[1]]=lines[++at];assert.equal(lines[++at],match[2]);}}
+  return values;
+}
+function outputState(directory,{profile='p3',kind='phoenix-diagram-candidate-consumer',phase='pending-review'}={}) {
+  // Metadata-only persistence fixtures; these never stand in for a real
+  // installation, native consumption, browser receipt or image observation.
+  fs.mkdirSync(directory,{mode:0o700});
+  return{schemaVersion:1,kind,...(profile?{profile}:{}),runRoot:directory,phase,status:kind==='phoenix-diagram-candidate-consumer'?'automated-pass':'pass',automatedStatus:kind==='phoenix-diagram-candidate-consumer'?'pass':'not-run',target:`${process.platform}-${process.arch}`,repository:null,runId:null,nonce:'a'.repeat(32),source:{commit:'b'.repeat(40)},candidate:{tarball:{identity:{sha256:'c'.repeat(64)}}},cases:[]};
+}
+
+test('historical and provider installation contexts cannot replace the current consumer workflow selection',async t=>{
+  const {persistState}=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),directory=temporary(t),outputFile=path.join(directory,'github-output');
+  fs.writeFileSync(outputFile,'p3_state_path=/all/state.json\n');
+  const current=outputState(path.join(directory,'current-consumer')),published=persistState(current,{initial:true,outputFile}),before=fs.readFileSync(outputFile,'utf8');
+  assert.equal(workflowOutputs(outputFile).state_path,published.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,current.runRoot);
+  for(const [role,profile] of [['legacy-v1','p2'],['provider-install-context','p3']]){
+    const state=outputState(path.join(directory,role),{profile,kind:'phoenix-diagram-candidate-install-context',phase:'installed'});state.scope='installation-only';
+    const result=persistState(state,{initial:true,outputFile});
+    assert.equal(result.stateFile.path,path.join(state.runRoot,'consumer-state.json'));assert.equal(JSON.parse(fs.readFileSync(result.stateFile.path)).kind,'phoenix-diagram-candidate-install-context');
+    assert.equal(fs.existsSync(path.join(state.runRoot,'review-request.json')),false);
+    assert.equal(workflowOutputs(outputFile).state_path,published.stateFile.path,role+' must not select an installation-only state for review');
+    assert.equal(workflowOutputs(outputFile).evidence_dir,current.runRoot);assert.equal(fs.readFileSync(outputFile,'utf8'),before);
+  }
+});
+
+test('ordinary default P1 and P2 consumers retain initial and review-resume workflow outputs',async t=>{
+  const {persistState}=await import('../../scripts/check-phoenix-diagram-candidate.mjs'),directory=temporary(t);
+  for(const profile of [undefined,'p1','p2']){
+    const label=profile||'default',state=outputState(path.join(directory,label),{profile:profile||null}),outputFile=path.join(directory,label+'.outputs');
+    const first=persistState(state,{initial:true,outputFile}),requestFile=path.join(state.runRoot,'review-request.json'),requestBytes=fs.readFileSync(requestFile),request=JSON.parse(requestBytes);
+    assert.deepEqual(request.state,first.stateFile);assert.equal(workflowOutputs(outputFile).state_path,first.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,state.runRoot);
+    const next=persistState({...state,phase:'complete',status:'pass'},{outputFile});assert.notEqual(next.stateFile.path,first.stateFile.path);assert.equal(workflowOutputs(outputFile).state_path,next.stateFile.path);assert.equal(workflowOutputs(outputFile).evidence_dir,state.runRoot);assert.deepEqual(fs.readFileSync(requestFile),requestBytes);
+  }
+});
+
+test('consumer browser temporary sockets bind below deeply nested evidence roots', async t => {
+  const api = await import('../../scripts/check-phoenix-diagram-candidate.mjs');
+  const runRoot = path.join(temporary(t), 'long-evidence-'.repeat(10));
+  fs.mkdirSync(runRoot, { mode: 0o700 });
+  const { env } = api.makeEnvironment(runRoot);
+  const socketDirectory = fs.mkdtempSync(path.join(env.TMPDIR, 'com.google.Chrome.'));
+  const socketPath = path.join(socketDirectory, 'SingletonSocket');
+  const server = net.createServer(socket => socket.end('ready'));
+  let client;
+  t.after(async () => {
+    client?.destroy();
+    if (server.listening) await new Promise(resolve => server.close(resolve));
+    fs.rmSync(socketDirectory, { recursive: true, force: true });
+  });
+  assert.equal(fs.statSync(socketDirectory).mode & 0o777, 0o700);
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(socketPath, resolve);
+  });
+  client = net.createConnection(socketPath);
+  client.setEncoding('utf8');
+  let received = '';
+  await new Promise((resolve, reject) => {
+    client.on('data', chunk => { received += chunk; });
+    client.once('end', resolve);
+    client.once('error', reject);
+  });
+  assert.equal(received, 'ready');
+});
+
+test('historical candidate cohort uses its fixed descriptor while current workflow bindings remain strict', () => {
+  // Cohort checks only: these metadata objects do not authenticate a package or
+  // represent native execution. The real historical package is checked separately.
+  const script = `
+    import fs from 'node:fs';
+    import assert from 'node:assert/strict';
+    import {verifyCandidateCohort} from ${JSON.stringify(pathToFileURL(path.join(root, 'scripts/check-phoenix-diagram-candidate.mjs')).href)};
+    const bytes=fs.readFileSync(${JSON.stringify(path.join(root, 'tools/phoenix-diagram/tests/fixtures/migration/legacy-candidate.v1.json'))}),descriptor=JSON.parse(bytes);
+    const historical={source:descriptor.source,tgz:{identity:descriptor.tarball},sourceInputs:{entries:descriptor.writerSources}};
+    verifyCandidateCohort(historical,{legacyDescriptor:bytes});
+    const current={...historical,source:{...historical.source,commit:process.env.PHOENIX_DIAGRAM_SOURCE_COMMIT},tgz:{identity:{...historical.tgz.identity,sha256:process.env.PHOENIX_DIAGRAM_TGZ_SHA256}}};
+    verifyCandidateCohort(current);
+    assert.throws(()=>verifyCandidateCohort(historical),/Workflow tgz SHA differs/);
+    assert.throws(()=>verifyCandidateCohort({...current,source:historical.source}),/Workflow source commit differs/);
+    assert.throws(()=>verifyCandidateCohort(historical,{legacyDescriptor:Buffer.concat([bytes,Buffer.from('\\n')])}),/Historical v1 descriptor bytes differ/);
+    assert.throws(()=>verifyCandidateCohort({...historical,tgz:current.tgz},{legacyDescriptor:bytes}),/Historical package tgz differs/);
+    assert.throws(()=>verifyCandidateCohort({...historical,source:current.source},{legacyDescriptor:bytes}),/Historical package source differs/);
+    assert.throws(()=>verifyCandidateCohort({...historical,sourceInputs:{entries:[]}},{legacyDescriptor:bytes}),/Historical writer source tuple differs/);
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', env: { ...process.env, PHOENIX_DIAGRAM_TGZ_SHA256: 'a'.repeat(64), PHOENIX_DIAGRAM_SOURCE_COMMIT: 'b'.repeat(40) } });
+  assert.equal(result.status, 0, result.stderr);
+});
 
 test('candidate metadata rejects a missing or duplicate platform and dirty or mismatched source identities', async () => {
   const api = await moduleReady;
@@ -165,4 +266,98 @@ test('candidate CLI help is read-only and malformed or duplicate options cannot 
     assert.notEqual(result.status,0);assert.match(result.stderr,/usage|port/i,JSON.stringify(args));
   }
   assert.deepEqual(fs.readdirSync(directory),[]);
+});
+
+const consumerReady = import(pathToFileURL(path.join(root, 'scripts/check-phoenix-diagram-candidate.mjs')));
+const legacySampleNames = {
+  architecture: 'web-app.architecture.json',
+  workflow: 'agent-tool-call.workflow.json',
+  sequence: 'async-job-roundtrip.sequence.json',
+  dataflow: 'product-analytics.dataflow.json',
+  lifecycle: 'deployment-release.lifecycle.json',
+};
+function legacyLayoutFixture(layout, { tuples = layout === 'phoenix-flat' } = {}) {
+  // Fixed real sample bytes; inert tar-member/source-tuple records only.
+  // This fixture does not certify a native build or a candidate cohort.
+  const members = new Map(), entries = [['package.json', 2, sha(Buffer.from('{}'))]];
+  for (const name of Object.values(legacySampleNames)) {
+    const bytes = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/upstream/legacy-2.17/examples', name));
+    const member = layout === 'phoenix-flat' ? 'skills/phoenix-diagram/examples/legacy.' + name : 'skills/archify/examples/' + name;
+    members.set(member, { bytes, size: bytes.length, sha256: sha(bytes), mode: 0o644 });
+    if (tuples) entries.push([member, bytes.length, sha(bytes)]);
+  }
+  entries.sort((left, right) => Buffer.compare(Buffer.from(left[0]), Buffer.from(right[0])));
+  return { members, sourceInputs: { entries } };
+}
+
+test('legacy sample layout selects authenticated old or flat bytes independently of profile', async () => {
+  const api = await consumerReady;
+  assert.equal(typeof api.selectLegacySamples, 'function');
+  for (const layout of ['archify', 'phoenix-flat']) {
+    const fixture = legacyLayoutFixture(layout);
+    const selected = api.selectLegacySamples(fixture.members, fixture.sourceInputs);
+    assert.equal(selected.layout, layout);
+    for (const [type, name] of Object.entries(legacySampleNames)) {
+      assert.equal(selected.paths[type], layout === 'archify' ? 'skills/archify/examples/' + name : 'skills/phoenix-diagram/examples/legacy.' + name);
+    }
+    for (const profile of ['p1', 'p2']) assert.deepEqual(api.selectLegacySamples(fixture.members, fixture.sourceInputs, { profile }), selected);
+    if (layout === 'archify') {
+      assert.throws(() => api.selectLegacySamples(fixture.members, fixture.sourceInputs, { profile: 'p3' }), /P3|new|flat|legacy.*layout/i);
+      const bound = legacyLayoutFixture(layout, { tuples: true });
+      assert.deepEqual(api.selectLegacySamples(bound.members, bound.sourceInputs), selected);
+    } else assert.deepEqual(api.selectLegacySamples(fixture.members, fixture.sourceInputs, { profile: 'p3' }), selected);
+  }
+});
+
+test('legacy sample layout rejects mixed missing unknown changed or source-unbound sets', async () => {
+  const api = await consumerReady;
+  for (const layout of ['archify', 'phoenix-flat']) {
+    const other = legacyLayoutFixture(layout === 'archify' ? 'phoenix-flat' : 'archify');
+    for (const fault of ['missing', 'mixed-one', 'mixed-all', 'unknown', 'changed-bytes', 'changed-digest', 'changed-size', 'opposite-tuples', 'partial-tuples', 'changed-tuple']) {
+      const fixture = legacyLayoutFixture(layout, { tuples: true });
+      const [name, file] = fixture.members.entries().next().value;
+      if (fault === 'missing') fixture.members.delete(name);
+      else if (fault === 'mixed-one') { const [key, value] = other.members.entries().next().value; fixture.members.set(key, value); }
+      else if (fault === 'mixed-all') for (const [key, value] of other.members) fixture.members.set(key, value);
+      else if (fault === 'unknown') fixture.members = new Map([...fixture.members].map(([key, value]) => ['unrecognized/' + key, value]));
+      else if (fault === 'changed-bytes') { file.bytes = Buffer.concat([file.bytes, Buffer.from('\n')]); file.size = file.bytes.length; file.sha256 = sha(file.bytes); fixture.sourceInputs.entries.find(row => row[0] === name).splice(1, 2, file.size, file.sha256); }
+      else if (fault === 'changed-digest') file.sha256 = 'f'.repeat(64);
+      else if (fault === 'changed-size') file.size++;
+      else if (fault === 'opposite-tuples') fixture.sourceInputs = legacyLayoutFixture(layout === 'archify' ? 'phoenix-flat' : 'archify', { tuples: true }).sourceInputs;
+      else if (fault === 'partial-tuples') fixture.sourceInputs.entries = fixture.sourceInputs.entries.filter(row => row[0] !== name);
+      else fixture.sourceInputs.entries.find(row => row[0] === name)[2] = 'f'.repeat(64);
+      assert.throws(() => api.selectLegacySamples(fixture.members, fixture.sourceInputs), /legacy|sample|layout|source|digest|bytes|tuple/i, layout + ': ' + fault);
+    }
+  }
+  const unbound = legacyLayoutFixture('phoenix-flat', { tuples: false });
+  assert.throws(() => api.selectLegacySamples(unbound.members, unbound.sourceInputs), /source|tuple|identity/i);
+  for (const active of ['skills/archify/SKILL.md', 'skills/archify/bin/archify.mjs', 'skills/archify/scripts/render.mjs', 'skills/Archify/SKILL.md']) {
+    const fixture = legacyLayoutFixture('phoenix-flat');
+    fixture.members.set(active, { bytes: Buffer.from('old active entry'), size: 16, sha256: sha(Buffer.from('old active entry')), mode: 0o644 });
+    assert.throws(() => api.selectLegacySamples(fixture.members, fixture.sourceInputs), /archify|active|layout/i, active);
+  }
+});
+
+test('legacy sample case manifest shares byte and source checks without filesystem fallback', async t => {
+  const api = await consumerReady, directory = temporary(t), packageRoot = path.join(directory, 'not-installed');
+  for (const layout of ['archify', 'phoenix-flat']) {
+    const fixture = legacyLayoutFixture(layout);
+    const manifest = api.caseManifest(packageRoot, fixture);
+    if (layout === 'archify') assert.throws(() => api.caseManifest(packageRoot, fixture, { profile: 'p3' }), /P3|flat|layout/i);
+    else assert.deepEqual(api.caseManifest(packageRoot, fixture, { profile: 'p3' }), manifest);
+    assert.equal(manifest.cases.length, 15);
+    for (const [type, name] of Object.entries(legacySampleNames)) {
+      const old = manifest.cases.find(row => row.id === 'legacy-' + type);
+      assert.equal(old.source, path.join(packageRoot, layout === 'archify' ? 'skills/archify/examples/' + name : 'skills/phoenix-diagram/examples/legacy.' + name));
+      assert.equal(old.contract, 'legacy-2.17');
+      assert.equal(manifest.cases.find(row => row.id === 'new-' + type).source, path.join(packageRoot, 'skills/phoenix-diagram/examples/minimal.' + type + '.json'));
+    }
+    assert.equal(fs.existsSync(packageRoot), false);
+    const [missing, file] = fixture.members.entries().next().value, fallbackRoot = path.join(directory, 'fallback-' + layout);
+    fs.mkdirSync(path.dirname(path.join(fallbackRoot, missing)), { recursive: true });
+    fs.writeFileSync(path.join(fallbackRoot, missing), file.bytes);
+    fixture.members.delete(missing);
+    // Even an exact physical copy cannot fill an absent authenticated member.
+    assert.throws(() => api.caseManifest(fallbackRoot, fixture), /legacy|sample|layout/i);
+  }
 });

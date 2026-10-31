@@ -25,7 +25,10 @@ function sourceFixture(t) {
   const directory = temporary(t);
   for (const name of ['package.json', 'tools/phoenix-diagram/Cargo.toml', 'tools/phoenix-diagram/Cargo.lock', 'tools/phoenix-diagram/build.rs',
     'tools/phoenix-diagram/src/check.rs', 'tools/phoenix-diagram/src/check/path.rs', 'tools/phoenix-diagram/assets/svg-definitions.svg',
-    'tools/phoenix-diagram/viewer/viewer.css', 'tools/phoenix-diagram/upstream/SOURCE.json', 'tools/phoenix-diagram/upstream/legacy-2.17/schemas/common.schema.json']) {
+    'tools/phoenix-diagram/viewer/viewer.css', 'tools/phoenix-diagram/upstream/SOURCE.json', 'tools/phoenix-diagram/upstream/legacy-2.17/schemas/common.schema.json',
+    'tools/phoenix-diagram/migration-sources/archify-v1.json',
+    ...['web-app.architecture', 'agent-tool-call.workflow', 'async-job-roundtrip.sequence', 'product-analytics.dataflow', 'deployment-release.lifecycle'].map(name => `skills/phoenix-diagram/examples/legacy.${name}.json`),
+    'skills/phoenix-diagram/schemas/common.schema.json']) {
     write(directory, name, fs.readFileSync(path.join(root, name)));
   }
   fs.mkdirSync(path.join(directory, 'skills/phoenix-diagram'), { recursive: true });
@@ -55,7 +58,7 @@ function legalResourceFixture(t) {
     { name: 'Archify', license: 'MIT', licenses: [resource('tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt')] },
     { name: 'JetBrains Mono', license: 'OFL-1.1', licenses: [resource('tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt')] },
     { name: 'Phoenix UI CDP/install adaptations', license: 'Apache-2.0', licenses: [apache] },
-    { name: 'ICU 77.1 native text adaptation', license: 'Unicode-3.0', licenses: [resource('tools/phoenix-diagram/assets/icu77-LICENSE.txt')] },
+    { name: 'ICU 77.1 native text and SystemV time adaptations', license: 'Unicode-3.0', licenses: [resource('tools/phoenix-diagram/assets/icu77-LICENSE.txt')] },
     { name: 'Rust standard library', version: '1.99.0', license: 'MIT OR Apache-2.0', licenses: [
       ...['Apache-2.0.txt', 'BSD-2-Clause.txt', 'CC-BY-SA-4.0.txt', 'GCC-exception-3.1.txt', 'GPL-2.0-only.txt', 'GPL-3.0-or-later.txt',
         'ISC.txt', 'LLVM-exception.txt', 'MIT.txt', 'NCSA.txt', 'OFL-1.1.txt', 'Unicode-3.0.txt'].map(name =>
@@ -63,7 +66,7 @@ function legalResourceFixture(t) {
       resource('tools/phoenix-diagram/NOTICE.md', 'THIRD-PARTY-LICENSES/rust-std-1.99.0/COPYRIGHT-library.html'),
     ] },
   ];
-  const locked = [{ name: 'phoenix-diagram', version: '0.1.0' }];
+  const locked = [{ name: 'phoenix-diagram', version: '0.2.0' }];
   const catalog = { schemaVersion: 1, tool: 'phoenix-diagram', runtime, rust: [{ ...locked[0], source: 'local', license: 'MIT', licenses: [mit] }] };
   for (const name of ['LICENSE', 'NOTICE.md']) files.set(name, fs.readFileSync(path.join(root, name === 'LICENSE' ? name : 'tools/phoenix-diagram/NOTICE.md')));
   files.set('THIRD-PARTY-NOTICES.md', Buffer.from('File-codec fixture; no built artifact or native-platform claim.\n'));
@@ -128,17 +131,20 @@ test('failed doctor diagnostics remain visible instead of a combined identity as
   const api = await moduleReady, directory = temporary(t);
   // Refusal-only protocol fixture. Every successful native probe is tested
   // above using a real supplied engine, never this script.
-  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1');else{console.log(JSON.stringify({toolVersion:'0.1.0',diagnostics:[{code:'engine/current-binary',message:'output/file-identity-or-links-changed'}]}));process.exitCode=4;}\n`, 0o700);
+  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2');else{console.log(JSON.stringify({toolVersion:'0.2.0',diagnostics:[{code:'engine/current-binary',message:'output/file-identity-or-links-changed'}]}));process.exitCode=4;}\n`, 0o700);
   assert.throws(() => api.probeNativeArtifact(executable, { binaryBytes: fs.readFileSync(executable), sourceSha: 'a'.repeat(64), target: `${process.platform}-${process.arch}` }), error => /engine identity is missing/.test(error.message) && /"exitCode":4/.test(error.message) && /engine\/current-binary/.test(error.message) && /output\/file-identity-or-links-changed/.test(error.message));
 });
 
-test('source tuples follow native roots, include package identity and exclude only derived ENGINE', async t => {
+test('source tuples follow native roots: embedded schemas count, skill text and derived ENGINE do not', async t => {
   const api = await moduleReady, directory = sourceFixture(t);
   write(directory, 'skills/phoenix-diagram/ENGINE.json', '{"derived":true}\n');
+  write(directory, 'skills/phoenix-diagram/SKILL.md', '---\nname: phoenix-diagram\n---\n');
   const inputs = api.sourceInputs(directory);
   assert.ok(inputs.entries.some(row => row[0] === 'package.json'));
   assert.ok(inputs.entries.some(row => row[0] === 'tools/phoenix-diagram/build.rs'));
-  assert.ok(!inputs.entries.some(row => row[0].endsWith('/ENGINE.json')));
+  assert.ok(inputs.entries.some(row => row[0] === 'skills/phoenix-diagram/schemas/common.schema.json'));
+  assert.equal(inputs.entries.filter(row => row[0].startsWith('skills/phoenix-diagram/examples/legacy.')).length, 5);
+  assert.ok(!inputs.entries.some(row => row[0].endsWith('/ENGINE.json') || row[0].endsWith('/SKILL.md')));
   assert.deepEqual(inputs.bytes, Buffer.from(JSON.stringify(inputs.entries)));
   assert.equal(inputs.sha256, sha(inputs.bytes));
   for (const [name, size, digest] of inputs.entries) {
@@ -146,7 +152,10 @@ test('source tuples follow native roots, include package identity and exclude on
     assert.equal(size, bytes.length); assert.equal(digest, sha(bytes));
   }
   write(directory, 'skills/phoenix-diagram/ENGINE.json', '{"derived":"changed"}\n');
+  write(directory, 'skills/phoenix-diagram/SKILL.md', '---\nname: phoenix-diagram\ndescription: revised\n---\n');
   assert.equal(api.sourceInputs(directory).sha256, inputs.sha256);
+  fs.appendFileSync(path.join(directory, 'skills/phoenix-diagram/schemas/common.schema.json'), '\n');
+  assert.notEqual(api.sourceInputs(directory).sha256, inputs.sha256);
 });
 
 test('source paths use full UTF-8 byte order for module siblings and Unicode, never component or UTF-16 sorting', async t => {
@@ -180,7 +189,7 @@ test('source manifest reader rejects noncanonical, duplicate, unsorted and forge
 
 test('Cargo JSON selects exactly the reported native diagram binary and its own build-script output', async t => {
   const api = await moduleReady, directory = temporary(t), workspace = path.join(root, 'tools/phoenix-diagram');
-  const packageId = `path+file://${workspace}#0.1.0`;
+  const packageId = `path+file://${workspace}#0.2.0`;
   const executable = path.join(workspace, 'target/debug/phoenix-diagram');
   const artifact = { reason: 'compiler-artifact', package_id: packageId, manifest_path: path.join(workspace, 'Cargo.toml'), target: { name: 'phoenix-diagram', kind: ['bin'] }, profile: { test: false }, executable };
   const buildScript = { reason: 'build-script-executed', package_id: packageId, out_dir: directory };
@@ -213,7 +222,7 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');
   for (const name of ['phoenix-diagram', 'phoenix-launcher.cjs', 'phoenix-bootstrap.cjs']) write(directory, `${skill}/scripts/${name}`, fs.readFileSync(path.join(root, skill, 'scripts', name)), name === 'phoenix-bootstrap.cjs' ? 0o644 : 0o755);
-  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
+  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
   write(directory, `${skill}/ENGINE.json`, '{"derived":true}\n');
   const bundle = api.bundleFiles(directory);
   assert.ok(bundle.files.has('SKILL.md')); assert.ok(!bundle.files.has('ENGINE.json'));
@@ -243,13 +252,13 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
 test('locked Rust inventory is complete and license metadata cannot replace full matching materials', async () => {
   const api = await moduleReady, lock = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/Cargo.lock'), 'utf8');
   const packages = api.parseCargoLock(lock);
-  assert.ok(packages.length > 100); assert.ok(packages.some(p => p.name === 'phoenix-diagram' && p.version === '0.1.0'));
+  assert.ok(packages.length > 100); assert.ok(packages.some(p => p.name === 'phoenix-diagram' && p.version === '0.2.0'));
   assert.throws(() => api.collectLicenses({ repoRoot: root, metadata: { packages: [] }, locked: packages }), /lock|metadata|package/i);
   assert.throws(() => api.parseCargoLock('version = 4\n'), /Cargo.lock|inventory/);
 });
 
 test('license collection requires actual prepared Rust standard-library resources', async t => {
-  const api = await moduleReady, directory = legalSourceFixture(t), locked = [{ name: 'phoenix-diagram', version: '0.1.0' }];
+  const api = await moduleReady, directory = legalSourceFixture(t), locked = [{ name: 'phoenix-diagram', version: '0.2.0' }];
   const metadata = { packages: [{ ...locked[0], license: 'MIT', source: null, manifest_path: path.join(directory, 'tools/phoenix-diagram/Cargo.toml') }] };
   assert.throws(() => api.collectLicenses({ repoRoot: directory, metadata, locked }), /Rust.*sysroot|standard.library.*resource/i);
   const rustSysroot = path.join(directory, 'empty sysroot'); fs.mkdirSync(rustSysroot);
@@ -260,6 +269,7 @@ test('legal-resource codec binds complete terms, preserves relative standard-lib
   const api = await moduleReady, fixture = legalResourceFixture(t), { directory, locked, catalog, files, save } = fixture;
   const read = () => api.readLicenseResources(directory, locked);
   const result = read();
+  assert.throws(() => api.readLicenseResources(directory, locked, { requireBrands: true }), /P3.*brand/i);
   for (const [name, bytes] of files) assert.deepEqual(result.files.get(name), bytes, name);
   assert.ok(result.files.has('THIRD-PARTY-LICENSES/rust-std-1.99.0/COPYRIGHT-library.html'));
   const original = catalog.runtime[0].licenses, term = path.join(directory, original[0].path), bytes = fs.readFileSync(term);

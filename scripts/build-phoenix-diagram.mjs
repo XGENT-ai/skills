@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import bootstrap from '../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs';
-import { root, workspace, preflight, miseEnvironment, verifyFrozenSources } from './check-phoenix-diagram-source.mjs';
+import { root, workspace, preflight, miseEnvironment, verifyFrozenSources, readBrandLicenseSources, brandSourceIdentity } from './check-phoenix-diagram-source.mjs';
 
 export const TARGETS = Object.freeze({
   'darwin-arm64': 'aarch64-apple-darwin',
@@ -21,9 +21,8 @@ export const TARGETS = Object.freeze({
   'linux-arm64': 'aarch64-unknown-linux-gnu',
 });
 const TOOL = 'phoenix-diagram';
-const TOOL_VERSION = '0.1.0';
-const VIEWER_REVISION = 'phoenix-v1';
-const DERIVED_ENGINE = 'skills/phoenix-diagram/ENGINE.json';
+const TOOL_VERSION = '0.2.0';
+const VIEWER_REVISION = 'phoenix-v2';
 const HASH = /^[a-f0-9]{64}$/;
 const COMMIT = /^[a-f0-9]{40}$/;
 const CRATES = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -84,7 +83,6 @@ function nativeInputRoots(repoRoot) {
   assert(body, 'Native build.rs input roots are unavailable');
   const strings = [...body.matchAll(/"([^"\\]*)"/g)];
   assert(strings.length && /^[\s,]*$/.test(body.replace(/"[^"\\]*"/g, '')), 'Unsupported native build.rs input-root declaration');
-  assert(source.includes(`Path::new("${DERIVED_ENGINE}")`), 'Native derived ENGINE exclusion differs');
   return strings.map(match => relative(match[1]));
 }
 
@@ -96,7 +94,6 @@ export function sourceInputs(repoRoot = root) {
     if (stat.isDirectory()) for (const child of walk(file)) names.add(`${name}/${child}`);
     else { assert(stat.isFile(), `Nonregular native source root: ${name}`); names.add(name); }
   }
-  names.delete(DERIVED_ENGINE);
   const entries = [...names].sort(compare).map(name => { const bytes = regular(path.join(repoRoot, name)).bytes; return [name, bytes.length, sha(bytes)]; });
   const bytes = encode(entries);
   return { roots, entries, bytes, sha256: sha(bytes) };
@@ -152,7 +149,7 @@ export function bundleFiles(repoRoot = root) {
     files.set(name, bytes); descriptors.push({ path: name, ...identity(bytes), mode });
   }
   for (const name of ['SKILL.md', 'scripts/phoenix-diagram', 'scripts/phoenix-launcher.cjs', 'scripts/phoenix-bootstrap.cjs',
-    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map(kind => `schemas/${kind}.schema.json`)]) {
+    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'].map(kind => `schemas/${kind}.schema.json`)]) {
     assert(files.has(name), `Missing required diagram bundle source: ${name}`);
   }
   const manifest = { schemaVersion: 1, tool: TOOL, version: TOOL_VERSION, files: descriptors }, bytes = pretty(manifest);
@@ -270,6 +267,45 @@ function pinnedLicenses(repoRoot, pkg, locked, archive, pin) {
   });
 }
 
+const BRAND_RUNTIME = 'Brand marks catalog';
+function brandRuntime(resources, preserve) {
+  const { manifest, catalog, files } = resources;
+  const resource = row => ({ ...preserve(files.get(`assets/${row.path}`), row.url ?? `${row.archive}#${row.sourcePath}`),
+    source: row, ...(row.license ? { license: row.license, scope: row.scope, marks: row.marks } : {}) });
+  return { name: BRAND_RUNTIME, version: catalog.catalogVersion,
+    license: 'CC0-1.0 collection; recorded individual terms in the preserved source manifest', source: catalog.source,
+    catalog: preserve(files.get(brandSourceIdentity.catalog.path), `tools/phoenix-diagram/${brandSourceIdentity.catalog.path}`),
+    licenseManifest: preserve(files.get(brandSourceIdentity.manifest), `tools/phoenix-diagram/${brandSourceIdentity.manifest}`),
+    licenses: manifest.licenses.map(resource), notices: manifest.notices.map(resource), policy: manifest.policy };
+}
+
+// This pure byte check also runs in the source-less candidate harness. The
+// frozen manifest contains all individual scopes; collection CC0 is not a
+// substitute for an individual mark's recorded terms.
+export function assertBrandLegalResources(files, { sourceInputs } = {}) {
+  const checked = (name, size, digest) => {
+    const bytes = files.get(name);
+    assert(Buffer.isBuffer(bytes) && bytes.length === size && sha(bytes) === digest, `Full brand legal resource differs: ${name}`);
+    return bytes;
+  };
+  const material = (name, size, digest) => {
+    const bytes = checked(`THIRD-PARTY-LICENSES/${digest}.txt`, size, digest);
+    if (sourceInputs) assert(sourceInputs.entries.some(row => row[0] === `tools/phoenix-diagram/${name}` && row[1] === size && row[2] === digest), `Brand source tuple differs: ${name}`);
+    return bytes;
+  };
+  const pin = brandSourceIdentity, catalogPin = pin.catalog;
+  const manifestBytes = material(pin.manifest, pin.manifestSize, pin.manifestSha256), manifest = JSON.parse(manifestBytes);
+  const catalogBytes = material(catalogPin.path, catalogPin.size, catalogPin.sha256), catalog = JSON.parse(catalogBytes);
+  const sourceFiles = new Map([[pin.manifest, manifestBytes], [catalogPin.path, catalogBytes]]);
+  for (const row of [...manifest.licenses, ...manifest.notices]) sourceFiles.set(`assets/${row.path}`, material(`assets/${row.path}`, row.size, row.sha256));
+  const preserve = (bytes, originalLocation) => ({ path: `THIRD-PARTY-LICENSES/${sha(bytes)}.txt`, ...identity(bytes), originalLocation });
+  const expected = brandRuntime({ manifest, catalog, files: sourceFiles }, preserve);
+  const entries = JSON.parse(files.get('THIRD-PARTY.json')).runtime.filter(row => row.name === BRAND_RUNTIME);
+  assert.equal(entries.length, 1, 'Full brand runtime catalog is missing or duplicated');
+  assert.deepEqual(entries[0], expected, 'Brand provenance, full terms or individual scopes differ');
+  return expected;
+}
+
 export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot }) {
   const packages = new Map((metadata?.packages || []).map(pkg => [`${pkg.name}@${pkg.version}`, pkg]));
   assert(packages.size === locked.length && metadata.packages.length === packages.size, 'Cargo metadata does not cover the complete locked package inventory');
@@ -294,7 +330,7 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
     ['Archify', 'MIT', 'tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt'],
     ['JetBrains Mono', 'OFL-1.1', 'tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt'],
     ['Phoenix UI CDP/install adaptations', 'Apache-2.0', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0'],
-    ['ICU 77.1 native text adaptation', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
+    ['ICU 77.1 native text and SystemV time adaptations', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
   ]) runtime.push({ name, license, licenses: [preserve(regular(path.join(repoRoot, source)).bytes, source)] });
   const uiSource = JSON.parse(regular(path.join(repoRoot, 'tools/phoenix-ui/UPSTREAM.json')).bytes);
   assert(uiSource.license === 'Apache-2.0' && COMMIT.test(uiSource.engineCommit), 'Apache adaptation source identity is unavailable');
@@ -307,6 +343,7 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
     notices: [preserve(regular(path.join(repoRoot, 'tools/phoenix-ui/NOTICE.md')).bytes, 'tools/phoenix-ui/NOTICE.md')],
   });
   runtime.push(stdlib);
+  runtime.push(brandRuntime(readBrandLicenseSources({ project: path.join(repoRoot, 'tools/phoenix-diagram') }), preserve));
   const pinsFile = path.join(repoRoot, 'tools/phoenix-diagram/assets/license-sources.json');
   const pins = JSON.parse(regular(pinsFile).bytes); assert(pins.schemaVersion === 1 && Array.isArray(pins.rust), 'Invalid pinned full-license source manifest');
   const pinByName = new Map(pins.rust.map(pin => [`${pin.name}@${pin.version}`, pin]));
@@ -340,14 +377,14 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
   files.set('NOTICE.md', regular(path.join(repoRoot, 'tools/phoenix-diagram/NOTICE.md')).bytes);
   files.set('THIRD-PARTY.json', pretty(catalog));
   const notices = ['# Phoenix Diagram third-party materials', '', 'Full texts below are preserved offline; SPDX declarations alone are not substituted for missing terms.', '',
-    ...runtime.map(item => `- ${item.name}${item.version ? `@${item.version}` : ''}: ${item.license}; ${item.licenses.map(file => file.path).join(', ')}${item.modification ? `\n  Source: ${item.source.repository} engine ${item.source.engineCommit}; Phoenix source ${item.source.localRevision}.\n  Modifications: ${item.modification}\n  Original notices: ${item.notices.map(file => file.path).join(', ')}` : ''}`), '',
+    ...runtime.map(item => `- ${item.name}${item.version ? `@${item.version}` : ''}: ${item.license}; ${item.licenses.map(file => file.path).join(', ')}${item.modification ? `\n  Source: ${item.source.repository} engine ${item.source.engineCommit}; Phoenix source ${item.source.localRevision}.\n  Modifications: ${item.modification}\n  Original notices: ${item.notices.map(file => file.path).join(', ')}` : ''}${item.name === BRAND_RUNTIME ? `\n  Catalog provenance: ${item.catalog.path}; full source manifest: ${item.licenseManifest.path}.\n  Original notices: ${item.notices.map(file => file.path).join(', ')}\n  ${item.policy}` : ''}`), '',
     ...rust.map(pkg => `- ${pkg.name}@${pkg.version}: declared ${pkg.license}${pkg.selectedLicense ? `; selected ${pkg.selectedLicense}` : ''}; ${pkg.licenses.map(file => file.path).join(', ')}${pkg.selection ? `\n  ${pkg.selection}` : ''}`), ''];
   files.set('THIRD-PARTY-NOTICES.md', Buffer.from(notices.join('\n')));
   for (const [name, bytes] of [...texts].sort(([a], [b]) => compare(a, b))) files.set(name, bytes);
   return { catalog, files, sha256: sha(encode(rowsFor(files))) };
 }
 
-export function readLicenseResources(directory, locked, { repoRoot = root } = {}) {
+export function readLicenseResources(directory, locked, { repoRoot = root, requireBrands = false, sourceInputs } = {}) {
   const files = new Map();
   for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md']) {
     const bytes = regular(path.join(directory, name), { links: 1, mode: 0o644 }).bytes;
@@ -363,7 +400,10 @@ export function readLicenseResources(directory, locked, { repoRoot = root } = {}
     found.add(key);
   }
   assert.equal(found.size, expected.size, 'Full license catalog does not cover every locked Rust package');
-  const requiredRuntime = ['Archify', 'JetBrains Mono', 'Phoenix UI CDP/install adaptations', 'ICU 77.1 native text adaptation', 'Rust standard library'];
+  const requiredRuntime = ['Archify', 'JetBrains Mono', 'Phoenix UI CDP/install adaptations', 'ICU 77.1 native text and SystemV time adaptations', 'Rust standard library'];
+  const hasBrands = catalog.runtime.some(item => item.name === BRAND_RUNTIME);
+  assert(!requireBrands || hasBrands, 'P3 requires complete brand runtime licenses');
+  if (hasBrands) requiredRuntime.push(BRAND_RUNTIME);
   assert.deepEqual(catalog.runtime.map(item => item.name).sort(compare), requiredRuntime.sort(compare), 'Full runtime license catalog differs');
   for (const item of [...catalog.runtime, ...catalog.rust]) {
     assert(typeof item.license === 'string' && item.license && Array.isArray(item.licenses) && item.licenses.length, `Missing complete terms: ${item.name}`);
@@ -386,6 +426,7 @@ export function readLicenseResources(directory, locked, { repoRoot = root } = {}
     for (const child of Object.values(value)) visit(child);
   }
   visit(catalog);
+  if (hasBrands) assertBrandLegalResources(files, { sourceInputs });
   assert(files.size > 4, 'Full-license catalog has no complete terms');
   const actual = walk(path.join(directory, 'THIRD-PARTY-LICENSES')).map(name => `THIRD-PARTY-LICENSES/${name}`);
   assert.deepEqual(actual, [...files.keys()].filter(name => name.startsWith('THIRD-PARTY-LICENSES/')).sort(compare), 'Extra or missing full-license resources');
@@ -494,7 +535,7 @@ export function validateDevelopmentArtifact(directory, { repoRoot = root, requir
   assert(bundleBytes.equals(expectedBundle.bytes), 'Bundle bytes differ from the source skill');
   assert.deepEqual(receipt.bundle, recordFor('bundle/manifest.json', bundleBytes), 'Bundle receipt identity differs');
   const bundleMap = new Map(bundleManifest.files.map(file => [file.path, regular(path.join(bundleRoot, relative(file.path)), { links: 1, mode: file.mode }).bytes]));
-  const legal = readLicenseResources(directory, parseCargoLock(regular(path.join(repoRoot, 'tools/phoenix-diagram/Cargo.lock')).bytes.toString('utf8')), { repoRoot });
+  const legal = readLicenseResources(directory, parseCargoLock(regular(path.join(repoRoot, 'tools/phoenix-diagram/Cargo.lock')).bytes.toString('utf8')), { repoRoot, requireBrands: true, sourceInputs: inputs });
   assert.deepEqual(receipt.legal, { sha256: legal.sha256, files: rowsFor(legal.files).map(([name, size, sha256]) => ({ path: name, size, sha256 })) }, 'License inventory differs from build receipt');
   const expectedFiles = ['VERSION.json', 'source-inputs.json', 'build-receipt.json', engine.asset, 'bundle/manifest.json', 'bundle/ENGINE.json',
     ...[...bundleMap.keys()].map(name => `bundle/${name}`), ...legal.files.keys()].sort(compare);
@@ -624,18 +665,42 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
     binarySha256: binary.sha256, bundleSha256: bundle.sha256, licenseSha256: legal.sha256, fullRuntimeTests: 'not-run-by-build-script' };
 }
 
+// The maintained distribution is the built artifact without its engine binary
+// and build-only records; skills/phoenix-diagram/ENGINE.json repeats VERSION.
+export function syncDist(builtDirectory, repoRoot = root) {
+  const version = JSON.parse(regular(path.join(builtDirectory, 'VERSION.json')).bytes);
+  const excluded = new Set(['source-inputs.json', 'build-receipt.json', ...Object.values(version.engines).map(engine => engine.asset)]);
+  const files = walk(builtDirectory).filter(name => !excluded.has(name)).map(name => {
+    const { bytes, stat } = regular(path.join(builtDirectory, name));
+    return [name, bytes, stat.mode & 0o111n ? 0o755 : 0o644];
+  });
+  const target = path.join(repoRoot, 'dist/phoenix-diagram');
+  fs.rmSync(target, { recursive: true, force: true });
+  for (const [name, bytes, mode] of files) {
+    const file = path.join(target, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, bytes, { mode }); fs.chmodSync(file, mode);
+  }
+  const engine = path.join(repoRoot, 'skills/phoenix-diagram/ENGINE.json');
+  fs.writeFileSync(engine, files.find(([name]) => name === 'VERSION.json')[1]);
+  return { directory: path.relative(repoRoot, target), files: files.length, engine: path.relative(repoRoot, engine) };
+}
+
 export function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') {
-    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --development --output-dir DIR\nBuilds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n'); return 0;
+    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --development --output-dir DIR [--sync-dist]\nBuilds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n--sync-dist then copies its VERSION, bundle and legal files to dist/phoenix-diagram and VERSION to skills/phoenix-diagram/ENGINE.json.\n'); return 0;
   }
-  let development = false, outputDir;
+  let development = false, outputDir, sync = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--development' && !development) development = true;
+    else if (args[i] === '--sync-dist' && !sync) sync = true;
     else if (args[i] === '--output-dir' && !outputDir && args[i + 1] && !args[i + 1].startsWith('--')) outputDir = path.resolve(args[++i]);
-    else throw new Error('Usage: --development --output-dir DIR; unknown, duplicate or incomplete build argument');
+    else throw new Error('Usage: --development --output-dir DIR [--sync-dist]; unknown, duplicate or incomplete build argument');
   }
   assert(development && outputDir, 'A native one-platform build requires --development --output-dir DIR');
-  process.stdout.write(pretty(buildDevelopment({ outputDir }))); return 0;
+  const result = buildDevelopment({ outputDir });
+  if (sync) result.synced = syncDist(result.directory);
+  process.stdout.write(pretty(result)); return 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

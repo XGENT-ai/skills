@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phoenix Diagram Preview</title>
+<style>
+:root{color-scheme:dark;--bg:#0b111b;--surface:#152033;--ink:#e8edf5;--muted:#a9b9d0;--line:#33435d;--ok:#45d6a8;--error:#ff9ca7;--pending:#f3c06b}html[data-theme="light"]{color-scheme:light;--bg:#f2f5fa;--surface:#fff;--ink:#172c43;--muted:#526a83;--line:#bdccdc;--ok:#08774e;--error:#b32944;--pending:#805900}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,sans-serif}header{position:relative;z-index:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}strong{font-size:13px}#status{margin-left:auto;color:var(--muted);font-size:12px}#status::before{content:'●';margin-right:7px;color:var(--pending)}body[data-state="ready"] #status::before{color:var(--ok)}body[data-state="error"] #status::before{color:var(--error)}details{max-width:70vw}summary{cursor:pointer;color:var(--error);font-size:12px}summary:focus-visible,button:focus-visible{outline:2px solid var(--pending);outline-offset:3px}#diagnostic-panel{position:absolute;right:12px;top:calc(100% + 8px);width:min(760px,calc(100vw - 24px));max-height:45vh;overflow:auto;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 40px #0004}pre{margin:0 0 12px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,monospace}button{min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}main{position:relative;min-height:0}iframe{width:100%;height:100%;border:0;background:var(--bg);display:none}body[data-has-artifact="true"] iframe{display:block}#empty{position:absolute;inset:0;display:grid;place-items:center;padding:28px;text-align:center;color:var(--muted)}body[data-has-artifact="true"] #empty{display:none}@media(max-width:600px){header{padding:9px 12px;gap:7px 12px}#status{flex-basis:100%;margin:0}details{max-width:100%}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body data-state="waiting" data-has-artifact="false"><header><strong id="brand">Phoenix Diagram Preview</strong><details id="failure" hidden><summary id="failure-label" aria-controls="diagnostic-panel">View diagnostic</summary><div id="diagnostic-panel"><pre id="diagnostic"></pre><button id="copy" type="button">Copy diagnostic</button></div></details><span id="status" role="status" aria-live="polite">Waiting for the first successful diagram</span></header><main><div id="empty">Waiting for the first successful diagram</div><iframe id="artifact" title="Last successful diagram" referrerpolicy="no-referrer"></iframe></main>
+<script>
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  const body = document.body;
+  const status = document.getElementById('status');
+  const empty = document.getElementById('empty');
+  const failure = document.getElementById('failure');
+  const diagnostic = document.getElementById('diagnostic');
+  const artifact = document.getElementById('artifact');
+  const base = new URL('.', location.href);
+  const theme = new URLSearchParams(location.search).get('theme');
+  root.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  const messages = {
+    en: {brand:'Phoenix Diagram Preview',waiting:'Waiting for the first successful diagram',checking:'Checking version',ready:'Showing successful version',error:'The latest attempt failed',last:'Still showing successful version',details:'View diagnostic',copy:'Copy diagnostic',title:'Last successful diagram',disconnected:'Preview disconnected; no new updates are available'},
+    'zh-CN':{brand:'Phoenix Diagram 预览',waiting:'等待首个成功生成的图',checking:'正在检查版本',ready:'显示成功版本',error:'最新一次生成失败',last:'仍显示成功版本',details:'查看诊断',copy:'复制诊断',title:'最后成功生成的图',disconnected:'预览连接已断开，无法获取后续更新'},
+    'zh-TW':{brand:'Phoenix Diagram 預覽',waiting:'等待首個成功產生的圖',checking:'正在檢查版本',ready:'顯示成功版本',error:'最新一次產生失敗',last:'仍顯示成功版本',details:'檢視診斷',copy:'複製診斷',title:'最後成功產生的圖',disconnected:'預覽連線已中斷，無法取得後續更新'},
+    es:{brand:'Vista previa de Phoenix Diagram',waiting:'Esperando el primer diagrama correcto',checking:'Comprobando versión',ready:'Mostrando versión correcta',error:'El último intento falló',last:'Se mantiene la versión correcta',details:'Ver diagnóstico',copy:'Copiar diagnóstico',title:'Último diagrama correcto',disconnected:'Vista previa desconectada; no hay nuevas actualizaciones'},
+    ko:{brand:'Phoenix Diagram 미리보기',waiting:'첫 번째 성공한 다이어그램 대기 중',checking:'버전 확인 중',ready:'성공한 버전 표시 중',error:'최근 생성 시도가 실패했습니다',last:'이전 성공 버전 표시 중',details:'진단 보기',copy:'진단 복사',title:'마지막으로 성공한 다이어그램',disconnected:'미리보기 연결이 끊겨 새 업데이트를 받을 수 없습니다'}
+  };
+  let locale = 'en';
+  let lastGeneration = 0;
+  function render(state) {
+    locale = Object.prototype.hasOwnProperty.call(messages, state.locale) ? state.locale : 'en';
+    const text = messages[locale];
+    root.lang = locale;
+    document.getElementById('brand').textContent = text.brand;
+    document.getElementById('failure-label').textContent = text.details;
+    document.getElementById('copy').textContent = text.copy;
+    artifact.title = text.title;
+    body.dataset.state = state.status;
+    const available = state.artifactAvailable === true && state.artifact && state.lastSuccessfulGeneration > 0;
+    body.dataset.hasArtifact = String(Boolean(available));
+    if (available && state.artifact.generation !== lastGeneration) {
+      lastGeneration = state.artifact.generation;
+      const url = new URL('artifact', base);
+      url.searchParams.set('generation', String(lastGeneration));
+      url.searchParams.set('sha256', state.artifact.sha256);
+      if (theme === 'dark' || theme === 'light') url.searchParams.set('theme', theme);
+      artifact.src = url.href;
+    } else if (!available && artifact.hasAttribute('src')) { artifact.removeAttribute('src'); lastGeneration = 0; }
+    const suffix = available && state.status !== 'ready' ? ` · ${text.last} ${state.lastSuccessfulGeneration}` : '';
+    status.textContent = (state.status === 'ready' ? `${text.ready} ${state.lastSuccessfulGeneration}` : state.status === 'checking' ? `${text.checking} ${state.generation}` : state.status === 'error' ? text.error : text.waiting) + suffix;
+    empty.textContent = state.status === 'error' ? text.error : text.waiting;
+    failure.hidden = !Array.isArray(state.diagnostics) || state.diagnostics.length === 0;
+    if (!failure.hidden) diagnostic.textContent = state.diagnostics.map(item => `${item.stage} · ${item.code}\n${item.message}`).join('\n\n');
+    else { failure.open = false; diagnostic.textContent = ''; }
+  }
+  document.getElementById('copy').addEventListener('click', () => { navigator.clipboard?.writeText(diagnostic.textContent).catch(() => {}); });
+  async function poll() {
+    try {
+      const response = await fetch(new URL('status', base), {cache:'no-store',credentials:'same-origin'});
+      if (!response.ok) throw new Error('Preview status unavailable');
+      render(await response.json());
+    } catch (_) { status.textContent = messages[locale].disconnected; body.dataset.state = 'error'; }
+    setTimeout(poll, 800);
+  }
+  poll();
+})();
+</script></body></html>

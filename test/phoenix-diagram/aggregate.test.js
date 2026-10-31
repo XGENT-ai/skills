@@ -16,6 +16,29 @@ test('aggregation requires four distinct targets, the exact Node18 floor and bot
   const {checkInputSlots}=await api();const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'];const input={platforms:targets.map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};assert.equal(checkInputSlots(input),undefined);
   assert.throws(()=>checkInputSlots({...input,platforms:input.platforms.slice(1)}),/platform|target/i);assert.throws(()=>checkInputSlots({...input,platforms:[...input.platforms.slice(0,3),input.platforms[0]]}),/platform|target/i);assert.throws(()=>checkInputSlots({...input,providers:[{provider:'codex'},{provider:'codex'}]}),/provider/i);assert.throws(()=>checkInputSlots({...input,node18:{target:'darwin-arm64'}}),/Node18|floor|target/i);
 });
+test('P3 keeps all fifteen core contracts and requires its distinct local all-state slot',async()=>{
+  const {PROFILE_CASES,checkInputSlots}=await api();
+  assert.deepEqual(PROFILE_CASES.p3,PROFILE_CASES.p2);
+  assert.equal(PROFILE_CASES.p3.length,15);
+  const input={platforms:['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};
+  assert.throws(()=>checkInputSlots(input,'p3'),/P3.*local|all.state/i);
+  assert.equal(checkInputSlots({...input,local:{target:'darwin-arm64',runRoot:'/original/p3-all',state:{path:'/original/p3-all/state.json'}}},'p3'),undefined);
+});
+test('P3 resolves only authenticated candidate roles and explicit original evidence roots',async()=>{
+  const {createP3EvidenceReader}=await api(),snapshot=name=>{const content=Buffer.from(name+' byte fixture');return{content,identity:identity(content)};};
+  const candidate={snapshot:snapshot('candidate record'),tgz:snapshot('candidate tgz'),files:new Map([['release-dir/VERSION.json',snapshot('version')],['source-inputs.json',snapshot('source inputs')]])};
+  const records={record:candidate.snapshot,tarball:candidate.tgz,version:candidate.files.get('release-dir/VERSION.json'),sourceInputs:candidate.files.get('source-inputs.json')};
+  const state={candidate:Object.fromEntries(Object.entries(records).map(([key,value])=>[key,{path:'/original/candidate/'+key,identity:value.identity,binding:{inode:'original; never re-certified'}}]))};
+  const original=Buffer.from('original all-run bytes'),provider=Buffer.from('explicit provider archive bytes');
+  const store={bytes:ref=>{assert.equal(ref.path,'/original/all/report.json');return original;}};
+  const providers=[{originalRoot:'/original/provider',bytes:ref=>{assert.equal(ref.path,'/original/provider/native.jsonl');return provider;}}];
+  const read=createP3EvidenceReader(state,store,candidate,null,providers);
+  for(const[key,value]of Object.entries(records))assert.deepEqual(read(state.candidate[key]),value.content);
+  assert.deepEqual(read({path:'/original/all/report.json'}),original);assert.deepEqual(read({path:'/original/provider/native.jsonl'}),provider);
+  assert.throws(()=>read({...state.candidate.tarball,identity:{...state.candidate.tarball.identity,sha256:'0'.repeat(64)}}),/digest/);
+  assert.throws(()=>read({path:'/some/current/worktree/report.json'}));
+  const wrong=structuredClone(state);wrong.candidate.tarball.identity.sha256='0'.repeat(64);assert.throws(()=>createP3EvidenceReader(wrong,store,candidate,null),/role|digest/);
+});
 test('current cohort rejects another tgz, source, run attempt or harness despite success flags',async()=>{
   const {checkStateCohort}=await api(),expected=cohort(),state={schemaVersion:1,kind:'phoenix-diagram-candidate-consumer',repository:expected.repository,runId:expected.runId,runAttempt:'2',source:expected.source,candidate:{tarball:{identity:{sha256:expected.tgzSha256}},candidateArchiveSha256:expected.candidateArchiveSha256},harnessArchiveSha256:expected.harnessSha256};assert.equal(checkStateCohort(state,expected),undefined);
   for(const change of [{runAttempt:'1'},{runId:'999'},{source:{...expected.source,commit:'0'.repeat(40)}},{candidate:{...state.candidate,tarball:{identity:{sha256:'0'.repeat(64)}}}},{harnessArchiveSha256:'0'.repeat(64)}])assert.throws(()=>checkStateCohort({...state,...change},expected),/cohort|candidate|source|run|harness/i);
@@ -85,12 +108,14 @@ function stdioProviderFixture({provider='codex',shape='function-cmd',exitCode=0,
   const directory='/fixture/provider',project=directory+'/project',program=project+'/.agents/skills/phoenix-diagram/scripts/phoenix-diagram',script=directory+'/capture-stdio.mjs',nodePath=fs.realpathSync(process.execPath),quote='An installed skill excerpt long enough for the native read binding fixture.';
   const files=new Map(),put=(name,bytes)=>{bytes=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);files.set(name,bytes);return{path:name,identity:identity(bytes)};};
   const template=fs.readFileSync(path.join(__dirname,'../../tools/phoenix-diagram/tests/support/capture-stdio.mjs')),collector=put(script,template),launcher=put(program,fs.readFileSync(path.join(__dirname,'../../skills/phoenix-diagram/scripts/phoenix-diagram'))),installedReceipt=put(project+'/.phoenix-diagram/install/active.json',JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',ownership:[{path:'.agents/skills/phoenix-diagram/scripts/phoenix-diagram',identity:launcher.identity}]}));
-  const candidate={path:project+'/candidate.json',identity:identity(Buffer.from('{}'))},artifact={path:project+'/diagram.html',identity:identity(Buffer.from('inert'))},receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command,status,diagnostics:[],candidate,artifact,payload:'x'.repeat(227144)};
+  const candidate={path:project+'/candidate.json',identity:identity(Buffer.from('{}'))},artifact={path:project+'/diagram.html',identity:identity(Buffer.from('inert'))},receipt={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command,status,diagnostics:[],candidate,artifact,payload:'x'.repeat(227144)};
   const reply=put(directory+'/stdout.json',JSON.stringify(receipt)+'\n'),stderr=put(directory+'/stderr.txt',''),argv=command==='finalize'?['finalize','workflow',candidate.path,artifact.path,'--json']:['validate','workflow',candidate.path,'--json'];
   const dto={schemaVersion:1,kind:'phoenix-diagram-stdio-capture',tool:'phoenix-diagram',collector,node:{path:nodePath,version:process.version},program,argv,cwd:project,installedReceipt,launcher,exitCode,signal:null,stdout:reply,stderr};
   const commandFor=argv=>[nodePath,script,'--program',program,'--cwd',dto.cwd,'--stdout',reply.path,'--stderr',stderr.path,'--',...argv].map(value=>`'${value}'`).join(' '),cmd=commandFor(argv);
-  const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command}};
-  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:cmd,aggregated_output:output,exit_code:exit,status:'completed'}};
+  // Codex unified exec records each command as `/bin/zsh -c "<literal>"`.
+  const shell=command=>shape==='command-execution-shell'?`/bin/zsh -c "${command}"`:command;
+  const call=(id,command)=>provider==='claude-code'?{type:'assistant',message:{role:'assistant',content:[{type:'tool_use',id,name:'Bash',input:{command}}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call',name:'exec_command',call_id:id,arguments:JSON.stringify({[shape==='function-command'?'command':'cmd']:command})}}:{type:'item.started',item:{id,type:'command_execution',command:shell(command)}};
+  const result=(id,output,exit=0)=>provider==='claude-code'?{type:'user',message:{content:[{type:'tool_result',tool_use_id:id,content:output,is_error:exit!==0}]}}:shape.startsWith('function')?{type:'response_item',payload:{type:'function_call_output',call_id:id,output:shape==='function-native-output'?`Chunk ID: a7723f\nWall time: 0.7479 seconds\nProcess exited with code ${exit}\nOriginal token count: 604\nOutput:\n${output}\n`:JSON.stringify({output,exit_code:exit})}}:{type:'item.completed',item:{id,type:'command_execution',command:shell(cmd),aggregated_output:output,exit_code:exit,status:'completed'}};
   const skill=put(project+'/.agents/skills/phoenix-diagram/SKILL.md',quote),reference=put(project+'/.agents/skills/phoenix-diagram/references/delivery-contract.md',quote),rows=[provider==='claude-code'?{type:'system',subtype:'init',session_id:'fixture-session'}:{type:'thread.started',thread_id:'fixture-session'},call('read-skill',`cat '${skill.path}'`),result('read-skill',quote),call('read-ref',`cat '${reference.path}'`),result('read-ref',quote),call('pd',cmd),result('pd',JSON.stringify(dto),exitCode),provider==='claude-code'?{type:'result',session_id:'fixture-session',is_error:false}:{type:'turn.completed'}];
   function build({skillOnly=false,withoutPd=false,skillInjection,beforeSkillInjection}={}) {
     const selected=rows.filter((_,index)=>!(skillOnly && [3,4].includes(index)) && !(withoutPd && [5,6].includes(index)));
@@ -122,6 +147,120 @@ function asyncStdioProviderFixture({pollCount=1,exitCode=0,namespaced=false,omit
     b.session.capture=f.put(b.session.capture.path,JSON.stringify(capture));return b;
   }};
 }
+function p3CommandExecutionFixture() {
+  // Inert examples of native client facts, never provider acceptance evidence.
+  const session={id:'fixture-native-session',cwd:'/fixture/project'},turn='fixture-turn',timestamp='2026-10-29T00:00:01.000Z';
+  const execution={timestamp,type:'event_msg',payload:{type:'item_completed',thread_id:session.id,turn_id:turn,started_at_ms:Date.parse(timestamp),completed_at_ms:Date.parse(timestamp),item:{type:'CommandExecution',id:'exec-fixture',process_id:'20926',command:['/bin/zsh','-c','cat .agents/skills/phoenix-diagram/SKILL.md'],cwd:'file:///fixture/project',source:'unified_exec_startup',status:'completed',aggregated_output:'Actual installed skill bytes',exit_code:0,duration:{secs:0,nanos:29166}}}};
+  const rows=[{type:'session_meta',payload:{id:session.id,cwd:session.cwd}},{type:'event_msg',payload:{type:'task_started',turn_id:turn}},
+    {timestamp:'2026-10-29T00:00:00.500Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-fixture',input:'const result = await tools.exec_command({cmd:"cat .agents/skills/phoenix-diagram/SKILL.md"}); text(result.output);'}},execution,
+    {timestamp:'2026-10-29T00:00:01.100Z',type:'response_item',payload:{type:'custom_tool_call_output',call_id:'call-fixture',output:[{type:'input_text',text:'Actual installed skill bytes'}]}},
+    {type:'event_msg',payload:{type:'task_complete',turn_id:turn}}];
+  return{rows,execution,build(){
+    const lines=rows.map(row=>Buffer.from(JSON.stringify(row)+'\n')),raw=Buffer.concat(lines),index=rows.indexOf(execution),result={offset:lines.slice(0,index).reduce((sum,line)=>sum+line.length,0),length:lines[index].length,sha256:identity(lines[index]).sha256};
+    return{part:{profile:'p3',provider:'codex',session,capture:{provider:'codex',sessionId:session.id,cwd:session.cwd,startedAt:'2026-10-29T00:00:00.000Z',finishedAt:'2026-10-29T00:00:02.000Z'},minimumOffset:0,raw,events:rows},proof:{kind:'codex-command-execution',result,toolUseId:execution.payload.item.id}};
+  }};
+}
+test('P3 binds one terminal CommandExecution anchor to its native session and outer exec window',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture(),b=f.build(),pair=proof.proofPair(b.part,b.proof);
+  assert.deepEqual(proof.calls(f.execution),[]);
+  assert.equal(proof.calls(f.execution,{profile:'p3'})[0].kind,b.proof.kind);
+  assert.equal(pair.id,'exec-fixture');assert.equal(pair.name,'exec_command');
+  assert.deepEqual(pair.input,{cmd:f.execution.payload.item.command,workdir:'/fixture/project'});
+  assert.equal(pair.output,'Actual installed skill bytes');assert.equal(pair.exitCode,0);assert.equal(pair.error,false);
+  f.execution.payload.item.exit_code=4;f.execution.payload.item.status='failed';
+  const failed=f.build(),actual=proof.proofPair(failed.part,failed.proof);assert.equal(actual.exitCode,4);assert.equal(actual.error,true);
+});
+test('P3 ignores later control calls when selecting the owning exec window',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture();
+  f.rows.splice(3,0,
+    {timestamp:'2026-10-29T00:00:01.400Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-stop',input:'text(await tools.write_stdin({session_id:20926,chars:"\\u0003"}));'}});
+  f.rows.splice(5,0,
+    {timestamp:'2026-10-29T00:00:01.500Z',type:'response_item',payload:{type:'custom_tool_call_output',call_id:'call-stop',output:[{type:'input_text',text:'Script completed'}]}});
+  const b=f.build(),pair=proof.proofPair(b.part,b.proof);
+  assert.equal(pair.id,'exec-fixture');assert.equal(pair.output,'Actual installed skill bytes');
+});
+function p3YieldedExecutionFixture() {
+  const f=p3CommandExecutionFixture(),call=f.rows[2],result=f.rows[4];
+  f.execution.timestamp='2026-10-29T00:00:01.500Z';
+  f.execution.payload.completed_at_ms=Date.parse(f.execution.timestamp);
+  const yielded=structuredClone(result);yielded.payload.output=[{type:'input_text',text:'{"session_id":20926,"output":""}'}];
+  const stop={timestamp:'2026-10-29T00:00:01.400Z',type:'response_item',payload:{type:'custom_tool_call',name:'exec',call_id:'call-stop',input:'text(await tools.write_stdin({session_id:20926,chars:"\\u0003"}));'}};
+  const stopped=structuredClone(result);stopped.timestamp='2026-10-29T00:00:01.600Z';stopped.payload.call_id=stop.payload.call_id;
+  f.rows.splice(2,3,call,yielded,stop,f.execution,stopped);
+  return{...f,yielded,stop,stopped};
+}
+test('P3 binds a yielded native execution to distinct start and terminal custom windows',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3YieldedExecutionFixture(),b=f.build();
+  assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+});
+test('P3 yielded execution still requires unique current start and terminal windows',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['missing-start','duplicate-start','early-yield','bad-yield','missing-stop','duplicate-stop','early-stop-result','foreign-stop'])await t.test(fault,()=>{
+    const f=p3YieldedExecutionFixture();
+    if(fault==='missing-start')f.rows.splice(2,1);
+    else if(fault==='duplicate-start')f.rows.splice(2,0,structuredClone(f.rows[2]));
+    else if(fault==='early-yield')f.yielded.timestamp='2026-10-29T00:00:00.900Z';
+    else if(fault==='bad-yield')f.yielded.payload.output='not native content blocks';
+    else if(fault==='missing-stop')f.rows.splice(f.rows.indexOf(f.stop),1);
+    else if(fault==='duplicate-stop')f.rows.splice(f.rows.indexOf(f.stopped),0,structuredClone(f.stopped));
+    else if(fault==='early-stop-result')f.stopped.timestamp='2026-10-29T00:00:01.450Z';
+    else if(fault==='foreign-stop')f.stop.payload.name='unrelated-tool';
+    const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
+test('P3 terminal execution proof rejects foreign, ambiguous, nonterminal and earlier-capture facts',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['profile','provider','capture-session','session-meta','thread','turn','missing-turn-end','duplicate-turn','duplicate-terminal','wrong-tool-id','anchor-bytes','partial-anchor','cwd','cwd-host','cwd-query','plain-cwd','command','output','source','nonterminal','completed-nonzero','failed-zero','missing-exit','process-handle','duration','early','late','reversed-time','event-time','continuation-prefix','continued-without-prefix','outer-missing','outer-duplicate-call','outer-duplicate-result','outer-name','outer-output','outer-time'])await t.test(fault,()=>{
+    const f=p3CommandExecutionFixture(),item=f.execution.payload.item,payload=f.execution.payload;
+    if(fault==='session-meta')f.rows[0].payload.id='other-session';
+    else if(fault==='thread')payload.thread_id='other-session';
+    else if(fault==='turn')payload.turn_id='other-turn';
+    else if(fault==='missing-turn-end')f.rows.pop();
+    else if(fault==='duplicate-turn')f.rows.splice(2,0,structuredClone(f.rows[1]));
+    else if(fault==='duplicate-terminal')f.rows.splice(4,0,structuredClone(f.execution));
+    else if(fault==='cwd')item.cwd='file:///other-project';
+    else if(fault==='cwd-host')item.cwd='file://other-host/fixture/project';
+    else if(fault==='cwd-query')item.cwd+='?other-project';
+    else if(fault==='plain-cwd')item.cwd='/fixture/project';
+    else if(fault==='command')item.command='cat SKILL.md';
+    else if(fault==='output')item.aggregated_output={text:'invented'};
+    else if(fault==='source')item.source='unknown';
+    else if(fault==='nonterminal')item.status='in_progress';
+    else if(fault==='completed-nonzero')item.exit_code=4;
+    else if(fault==='failed-zero')item.status='failed';
+    else if(fault==='missing-exit')delete item.exit_code;
+    else if(fault==='process-handle')delete item.process_id;
+    else if(fault==='duration')item.duration.nanos=1e9;
+    else if(fault==='early')payload.started_at_ms-=2000;
+    else if(fault==='late')payload.completed_at_ms+=2000;
+    else if(fault==='reversed-time')payload.started_at_ms++;
+    else if(fault==='event-time')f.execution.timestamp='2026-10-29T00:00:03.000Z';
+    else if(fault==='outer-missing')f.rows.splice(2,1);
+    else if(fault==='outer-duplicate-call')f.rows.splice(2,0,structuredClone(f.rows[2]));
+    else if(fault==='outer-duplicate-result')f.rows.splice(5,0,structuredClone(f.rows[4]));
+    else if(fault==='outer-name')f.rows[2].payload.name='unrelated-tool';
+    else if(fault==='outer-output')f.rows[4].payload.output='not native content blocks';
+    else if(fault==='outer-time')f.rows[2].timestamp='2026-10-29T00:00:01.500Z';
+    const b=f.build();
+    if(fault==='profile')b.part.profile='p2';
+    else if(fault==='provider')b.part.provider='claude-code';
+    else if(fault==='capture-session')b.part.capture.sessionId='other-session';
+    else if(fault==='wrong-tool-id')b.proof.toolUseId='other-exec';
+    else if(fault==='anchor-bytes')b.proof.result.sha256='0'.repeat(64);
+    else if(fault==='partial-anchor'){b.proof.result.length--;b.proof.result.sha256=identity(b.part.raw.subarray(b.proof.result.offset,b.proof.result.offset+b.proof.result.length)).sha256;}
+    else if(fault==='continuation-prefix')b.part.minimumOffset=b.proof.result.offset+b.proof.result.length;
+    else if(fault==='continued-without-prefix')b.part.capture.origin=false;
+    assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution|anchor/i);
+  });
+});
+test('P3 opaque custom exec remains audit text and cannot supply an old-style execution pair',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture(),b=f.build(),outer=f.rows[2];
+  assert.equal(proof.calls(outer).length,0);assert.equal(proof.calls(outer,{profile:'p3'})[0].name,'exec');
+  assert.equal(proof.toolCallText(outer,{profile:'p3'}),outer.payload.input);
+  assert.equal(proof.commandOf(proof.calls(outer,{profile:'p3'})[0]),undefined);
+  delete b.proof.kind;
+  assert.throws(()=>proof.proofPair(b.part,b.proof),/call\/result ID pair/);
+});
 function skillInjectionFixture(provider='claude-code') {
   const f=stdioProviderFixture({provider,command:'doctor'}),read=f.build().session.loadedReads[0],body='# Phoenix Diagram\n\n'+read.quote+'\n',source='---\nname: phoenix-diagram\n---\n\n'+body;
   Object.assign(read.file,f.put(read.file.path.replace('/.agents/','/.claude/'),source));
@@ -205,6 +344,20 @@ test('native Skill loading preserves nonclarification reference and PD requireme
   for(const id of ['intent-workflow','repairable-diagnostic','stalled-repair','browser-unavailable','visual-pending']){
     const f=skillInjectionFixture(),b=f.build();
     assert.throws(()=>checkProviderCapture(b.session,b.read,'claude-code',{collectorIdentity:f.templateIdentity,scenarioRows:[{id,sessionId:b.session.id}]}),/capture|evidence|reference|PD/i,id);
+  }
+});
+test('P2 repair and stall sessions need only the real SKILL read but keep their PD call',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const provider of ['claude-code','codex'])for(const ids of [['stalled-repair'],['repairable-diagnostic'],['missing-date','stalled-repair']]){
+    const f=stdioProviderFixture({provider}),b=f.build({skillOnly:true}),scenarioRows=ids.map(id=>({id,sessionId:b.session.id}));
+    assert.equal(checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows,profile:'p2'}).capture.exitCode,0,ids.join());
+    assert.throws(()=>checkProviderCapture(b.session,b.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows}),/evidence|reference/i,'p1 '+ids.join());
+    const noPd=f.build({skillOnly:true,withoutPd:true});delete noPd.session.collector;
+    assert.throws(()=>checkProviderCapture(noPd.session,noPd.read,provider,{collectorIdentity:f.templateIdentity,scenarioRows:ids.map(id=>({id,sessionId:noPd.session.id})),profile:'p2'}),/capture|evidence/i,'no PD '+ids.join());
+  }
+  for(const id of ['intent-workflow','browser-failed','visual-pending']){
+    const f=stdioProviderFixture(),b=f.build({skillOnly:true});
+    assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity,scenarioRows:[{id:'stalled-repair',sessionId:b.session.id},{id,sessionId:b.session.id}],profile:'p2'}),/evidence|reference/i,id);
   }
 });
 test('clarification-only session scope permits real SKILL reads with a doctor or no PD call',async()=>{
@@ -317,9 +470,16 @@ test('Codex native process wrappers reject missing, duplicated or foreign exit p
 });
 test('large native stdout is accepted through authenticated collector files for Claude and Codex event forms',async()=>{
   const {checkProviderCapture,checkProviderReply}=await api();assert.equal(typeof checkProviderReply,'function');
-  for(const config of [{provider:'claude-code'},{shape:'function-cmd'},{shape:'function-command'},{shape:'command-execution'}]){
+  for(const config of [{provider:'claude-code'},{shape:'function-cmd'},{shape:'function-command'},{shape:'command-execution'},{shape:'command-execution-shell'}]){
     const f=stdioProviderFixture(config),b=f.build(),capture=checkProviderCapture(b.session,b.read,b.session.provider,{collectorIdentity:f.templateIdentity});
     assert.deepEqual(checkProviderReply(capture,b.proof,f.reply,b.read),f.receipt);assert.ok(f.files.get(f.reply.path).length>227144);assert.ok(Buffer.byteLength(JSON.stringify(f.rows[6]))<6000);
+  }
+});
+test('a shell-wrapped Codex command counts only when its one literal argument is the collector call',async()=>{
+  const {checkProviderCapture}=await api();
+  for(const wrap of [cmd=>`/bin/zsh -c "${cmd}; rm -f x"`,cmd=>`/bin/zsh -c "${cmd}" extra`,cmd=>`/bin/zsh -lc "${cmd}"`,cmd=>`/usr/bin/env -c "${cmd}"`]){
+    const f=stdioProviderFixture({shape:'command-execution-shell'});f.rows[5].item.command=wrap(f.cmd);f.rows[6].item.command=wrap(f.cmd);
+    const b=f.build();assert.throws(()=>checkProviderCapture(b.session,b.read,'codex',{collectorIdentity:f.templateIdentity}),/collector|PD|shell|execution/i,wrap('x'));
   }
 });
 test('collector proof rejects modified bytes, producer/template/argv claims, wrong IDs and foreign result payloads',async()=>{
@@ -367,4 +527,155 @@ test('inline replies still require complete bytes from the exact direct PD tool 
     const b=f.build();delete b.session.collector;const verify=()=>checkProviderReply(checkProviderCapture(b.session,b.read,b.session.provider),b.proof,f.reply,b.read);
     if(fault)assert.throws(verify,/PD|tool|execution|reply|command|shell/i,fault);else assert.deepEqual(verify(),f.receipt);
   }
+});
+test('P2 profile covers fifteen cases and per-provider host rows instead of the P1 matrix',async()=>{
+  const {PROFILE_CASES,PROVIDER_SCENARIOS,P2_PROVIDER_SCENARIOS,checkProviderCoverage,checkInputSlots}=await api();
+  assert.equal(PROFILE_CASES.p1.length,10);assert.equal(PROFILE_CASES.p2.length,15);assert.ok(PROFILE_CASES.p2.includes('erd:phoenix-v1'));assert.ok(!PROFILE_CASES.p2.includes('erd:legacy-2.17'));
+  assert.equal(PROVIDER_SCENARIOS.length,22);assert.ok(!PROVIDER_SCENARIOS.some(row=>row.id==='intent-erd'));
+  const claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex;assert.equal(claude.length,31);assert.equal(codex.length,16);
+  assert.deepEqual(claude.filter(row=>row.id.startsWith('legacy-')).map(row=>row.id),['legacy-lifecycle']);
+  for(const id of ['intent-workflow','mermaid-sequence','stalled-repair','repo-dirty','locale-zh-tw','reference-31-json'])assert.ok(codex.some(row=>row.id===id),id);assert.ok(!codex.some(row=>row.id==='missing-date'));
+  assert.equal(checkProviderCoverage(codex.map(row=>({id:row.id})),codex),undefined);assert.throws(()=>checkProviderCoverage(PROVIDER_SCENARIOS.map(row=>({id:row.id})),codex),/coverage/);assert.throws(()=>checkProviderCoverage(codex.slice(1).map(row=>({id:row.id})),codex),/coverage/);
+  const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'],input={platforms:targets.map(target=>({target})),node18:{target:'linux-x64'},providers:[{provider:'claude-code'},{provider:'codex'}]};
+  assert.throws(()=>checkInputSlots(input,'p2'),/local darwin-arm64/);assert.equal(checkInputSlots({...input,local:{target:'darwin-arm64',runRoot:'/run',state:{path:'/run/consumer-state.json'}}},'p2'),undefined);
+});
+test('D10: Codex covers either its sampled rows or, after a divergence, every Claude Code row',async()=>{
+  const {P2_PROVIDER_SCENARIOS,p2ProviderScenarios,checkProviderCoverage}=await api(),claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex,ids=rows=>rows.map(row=>({id:row.id}));
+  assert.equal(p2ProviderScenarios('codex',ids(codex)),codex);assert.equal(checkProviderCoverage(ids(codex),p2ProviderScenarios('codex',ids(codex))),undefined);
+  assert.equal(p2ProviderScenarios('codex',ids(claude)),claude);assert.equal(checkProviderCoverage(ids(claude),p2ProviderScenarios('codex',ids(claude))),undefined);
+  // A partial expansion is neither set: it must still fail coverage.
+  const partial=ids([...codex,claude.find(row=>row.id==='intent-architecture')]);assert.throws(()=>checkProviderCoverage(partial,p2ProviderScenarios('codex',partial)),/coverage/);
+  assert.equal(p2ProviderScenarios('claude-code',ids(codex)),claude);
+});
+test('automatic-only platform jobs need the consume step but not the review step',async()=>{
+  const {checkJobProof}=await api(),expected=cohort(),entry={target:'linux-x64',jobId:45,artifact:{id:67,name:'phoenix-diagram-consume-linux-x64-evidence',digest:'1'.repeat(64)}};
+  const job={id:45,run_id:123,run_attempt:2,status:'completed',conclusion:'success',name:'Consume the same tgz on linux-x64',head_sha:expected.source.commit,started_at:'2026-10-16T00:00:00Z',completed_at:'2026-10-16T01:00:00Z',steps:[{name:'Consume the unchanged tgz through its package entry points',conclusion:'success'},{name:'Resume the same delivery after actual image review',conclusion:'skipped'}]},artifact={id:67,name:entry.artifact.name,digest:`sha256:${entry.artifact.digest}`,expired:false,created_at:'2026-10-16T00:59:00Z',workflow_run:{id:123,head_sha:expected.source.commit}};
+  assert.equal(checkJobProof(job,artifact,entry,expected,{reviewed:false}),undefined);assert.throws(()=>checkJobProof(job,artifact,entry,expected),/step|review/i);
+  assert.throws(()=>checkJobProof({...job,steps:[{...job.steps[0],conclusion:'failure'}]},artifact,entry,expected,{reviewed:false}),/step/i);
+});
+test('local directory evidence rehashes original files in place and rejects foreign, changed or linked paths',async t=>{
+  const {DirectoryEvidence}=await api(),directory=temp(t),bytes=Buffer.from('{"scope":"inert local bytes only"}\n'),file=path.join(directory,'state.json');fs.writeFileSync(file,bytes);
+  const store=new DirectoryEvidence(directory),reference={path:file,identity:identity(bytes)};assert.deepEqual(store.json(reference),{scope:'inert local bytes only'});
+  assert.throws(()=>store.bytes({...reference,identity:{...reference.identity,sha256:'0'.repeat(64)}}),/digest|bytes/i);assert.throws(()=>store.bytes({path:'/etc/hosts',identity:reference.identity}),/root|path/i);
+  fs.symlinkSync(file,path.join(directory,'alias.json'));assert.throws(()=>store.bytes({path:path.join(directory,'alias.json'),identity:reference.identity}),/root|path|symlink/i);
+  assert.throws(()=>new DirectoryEvidence('relative/run'),/canonical|ENOENT/i);
+});
+test('host sessions on a development package count only with the final bundle and engine source',async()=>{
+  const {checkDevelopmentPackage}=await api(),expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const version={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:'0.7.4',sourceInputSha256:expected.source.inputSha256,bundleSha256:expected.bundleSha256,engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:1,sha256:'8'.repeat(64)}}};
+  assert.equal(checkDevelopmentPackage(version,expected),version);
+  for(const change of [{bundleSha256:'0'.repeat(64)},{sourceInputSha256:'0'.repeat(64)},{distribution:'release'},{toolVersion:'0.1.0'},{engines:{}}])assert.throws(()=>checkDevelopmentPackage({...version,...change},expected),/bundle|engine source/,JSON.stringify(change));
+});
+function sameCandidatePackageFixture() {
+  const expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const engines=Object.fromEntries(
+    ['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].map((target,index)=>[target,{asset:`phoenix-diagram-${target}`,size:index+1,sha256:String(index+1).repeat(64),url:`http://127.0.0.1:48765/phoenix-diagram-${target}`}])
+  );
+  const version={schemaVersion:1,distribution:'candidate',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:expected.npmPackageVersion,sourceCommit:expected.source.commit,sourceInputSha256:expected.source.inputSha256,bundleSha256:expected.bundleSha256,inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',engines};
+  const versionBytes=Buffer.from(JSON.stringify(version,null,2)+'\n'),tgzBytes=Buffer.from('Inert unit archive bytes; this fixture is not native/candidate acceptance evidence.');
+  Object.assign(expected,{engines,tgzSha256:identity(tgzBytes).sha256,versionSha256:identity(versionBytes).sha256});
+  const files=new Map(),put=(name,bytes)=>{files.set(name,bytes);return{path:name,identity:identity(bytes)};};
+  const record={source:structuredClone(expected.source),candidateSha256:expected.tgzSha256,package:{version:put('/archive/VERSION.json',versionBytes),tarball:put('/archive/package.tgz',tgzBytes)}};
+  // The aggregate supplies this view only from its successful validateCandidate,
+  // never from fields of the provider record. Here it is an inert boundary fixture.
+  const candidate={source:structuredClone(expected.source),version:structuredClone(version),tgz:{identity:identity(tgzBytes),content:tgzBytes},files:new Map([['release-dir/VERSION.json',{identity:identity(versionBytes),content:versionBytes}]])};
+  const context={record,candidate,bytesFor:reference=>{const bytes=files.get(reference.path);assert.ok(bytes);assert.deepEqual(identity(bytes),reference.identity);return bytes;}};
+  return{expected,version,context,files,put};
+}
+test('same-candidate provider packages retain their actual candidate VERSION and exact authenticated tgz',async()=>{
+  const {checkDevelopmentPackage}=await api(),f=sameCandidatePackageFixture();
+  assert.equal(checkDevelopmentPackage(f.version,f.expected,f.context),f.version);
+  assert.equal(f.version.distribution,'candidate');
+  assert.throws(()=>checkDevelopmentPackage(f.version,f.expected),/candidate|authenticated/i,'source/bundle claims without the authenticated candidate are insufficient');
+});
+test('same-candidate provider packages reject side archives, relabeling and altered VERSION bytes',async()=>{
+  const {checkDevelopmentPackage}=await api();
+  for(const fault of ['other-tgz','other-tgz-and-claim','missing-tgz','changed-version','reformatted-version','development-label','foreign-source','foreign-record-sha']) {
+    const f=sameCandidatePackageFixture(),{record}=f.context;
+    if(fault==='other-tgz' || fault==='other-tgz-and-claim') {
+      record.package.tarball=f.put('/archive/other.tgz',Buffer.from('Another archive with the same source, bundle and VERSION claims.'));
+      if(fault==='other-tgz-and-claim')record.candidateSha256=record.package.tarball.identity.sha256;
+    } else if(fault==='missing-tgz')delete record.package.tarball;
+    else if(fault==='changed-version') {f.version.extra='Unbound VERSION field';record.package.version=f.put('/archive/changed-VERSION.json',Buffer.from(JSON.stringify(f.version)));}
+    else if(fault==='reformatted-version')record.package.version=f.put('/archive/reformatted-VERSION.json',Buffer.from(JSON.stringify(f.version)));
+    else if(fault==='development-label') {f.version.distribution='development';record.package.version=f.put('/archive/relabeled-VERSION.json',Buffer.from(JSON.stringify(f.version)));}
+    else if(fault==='foreign-source')record.source.tree='0'.repeat(40);
+    else record.candidateSha256='0'.repeat(64);
+    assert.throws(()=>checkDevelopmentPackage(f.version,f.expected,f.context),/candidate|VERSION|tgz|source/i,fault);
+  }
+});
+test('same-candidate provider packages bind all four engines and the validated cohort snapshots',async()=>{
+  const {checkDevelopmentPackage}=await api();
+  for(const fault of ['non-host-engine','missing-engine','extra-engine','cohort-engine','cohort-version','cohort-source','changed-candidate-tgz']) {
+    const f=sameCandidatePackageFixture();
+    if(fault==='non-host-engine')f.version.engines['linux-arm64'].sha256='0'.repeat(64);
+    else if(fault==='missing-engine')delete f.version.engines['linux-arm64'];
+    else if(fault==='extra-engine')f.version.engines['win32-x64']={...f.version.engines['linux-x64']};
+    else if(fault==='cohort-engine') {f.expected.engines=structuredClone(f.expected.engines);f.expected.engines['linux-arm64'].size++;}
+    else if(fault==='cohort-version')f.expected.versionSha256='0'.repeat(64);
+    else if(fault==='cohort-source')f.context.candidate.source.commit='0'.repeat(40);
+    else f.context.candidate.tgz.content=Buffer.from('Changed after the validated candidate view was formed.');
+    assert.throws(()=>checkDevelopmentPackage(f.version,f.expected,f.context),/candidate|VERSION|engine|cohort|tgz/i,fault);
+  }
+});
+test('P2 delivery rows require their evidence, timing, language and unchanged-reference facts',async()=>{
+  const {p2Outcome}=await api(),files=new Map(),ref=(name,bytes)=>{files.set(name,bytes);return{path:name,identity:identity(bytes)};},store={bytes:reference=>files.get(reference.path)};
+  const make=({candidate,html='<svg></svg>',evidence={status:'none'},delivery={status:'none'},locale={requested:'en',resolved:'en',fallback:false}})=>({evidence,locale,candidate:ref(`/c-${files.size}`,Buffer.from(JSON.stringify(candidate))),artifact:ref(`/a-${files.size}`,Buffer.from(html)),stages:[{},{receipt:{evidence:delivery}}]});
+  const verified=make({candidate:{meta:{}},evidence:{status:'verified'},delivery:{status:'verified',counts:{verified:2},repository:{url:'https://github.com/o/r'}}});
+  assert.equal(p2Outcome({evidence:'verified'},verified,{},store,''),undefined);assert.throws(()=>p2Outcome({evidence:'verified'},make({candidate:{meta:{}},evidence:{status:'partial'}}),{},store,''),/verified/);
+  const dirty=make({candidate:{meta:{}},evidence:{status:'partial'},delivery:{status:'partial',unverified:[{pointer:'/components/0/sources/0',nodeId:'gate',reason:'worktree-differs'}]}});
+  assert.equal(p2Outcome({evidence:'worktree-differs'},dirty,{quote:'src/input.rs 有未提交改动'},store,'注意：src/input.rs 有未提交改动，来源待核实。'),undefined);assert.throws(()=>p2Outcome({evidence:'worktree-differs'},dirty,{quote:'src/input.rs 有未提交改动'},store,'已全部核对。'),/reply/);
+  const day=make({candidate:{events:[{precision:'day'}]},html:'<svg data-timeline-evidence="observed"></svg>'});assert.equal(p2Outcome({timing:'day'},day,{},store,''),undefined);assert.throws(()=>p2Outcome({timing:'day'},make({candidate:{events:[{}]},html:'<svg data-timeline-evidence="observed"></svg>'}),{},store,''),/day-precision/);
+  const sketch=make({candidate:{},html:'<svg data-waterfall-evidence="illustrative"></svg>'});assert.equal(p2Outcome({timing:'illustrative'},sketch,{quote:'示意'},store,'耗时为示意'),undefined);assert.throws(()=>p2Outcome({timing:'illustrative'},sketch,{quote:'示意'},store,'实测耗时'),/Illustrative/);
+  const zh=make({candidate:{meta:{locale:'zh-TW'}},locale:{requested:'zh-TW',resolved:'zh-TW',fallback:false}});assert.equal(p2Outcome({locale:'zh-TW'},zh,{},store,''),undefined);assert.throws(()=>p2Outcome({locale:'zh-TW'},make({candidate:{meta:{locale:'zh-TW'}},locale:{requested:'zh-TW',resolved:'en',fallback:true}}),{},store,''),/language/);
+  const original={schema_version:1,diagram_type:'workflow',meta:{title:'Reference'}},reference=make({candidate:original}),kept={original:ref('/original.json',Buffer.from(JSON.stringify(original)))};
+  assert.equal(p2Outcome({unchangedOriginal:true},reference,kept,store,''),undefined);assert.throws(()=>p2Outcome({unchangedOriginal:true},make({candidate:{...original,meta:{...original.meta,input_contract:'phoenix-v1'}}}),kept,store,''),/rewritten/);
+});
+test('a host record on an earlier engine of the same bundle is only a reuse source, never a strict binding',async()=>{
+  const {checkReusedPackage}=await api(),expected={...cohort(),npmPackageVersion:'0.7.4',bundleSha256:'9'.repeat(64)};
+  const version={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:'0.7.4',sourceInputSha256:'7'.repeat(64),bundleSha256:expected.bundleSha256,engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:1,sha256:'8'.repeat(64)}}};
+  assert.equal(checkReusedPackage(version,expected),version);
+  for(const change of [{sourceInputSha256:expected.source.inputSha256},{sourceInputSha256:'x'},{bundleSha256:'0'.repeat(64)},{npmPackageVersion:'0.7.5'},{distribution:'release'},{toolVersion:'0.1.0'},{engines:{}}])assert.throws(()=>checkReusedPackage({...version,...change},expected),/Reused development package/,JSON.stringify(change));
+});
+test('rerun host rows replace only themselves; every other planned row comes from the complete earlier record',async()=>{
+  const {P2_PROVIDER_SCENARIOS,p2ReuseRows}=await api(),claude=P2_PROVIDER_SCENARIOS['claude-code'],codex=P2_PROVIDER_SCENARIOS.codex,ids=rows=>rows.map(row=>({id:row.id}));
+  const rerun=['intent-erd','mermaid-er','intent-timeline','repo-timeline'].map(id=>({id}));
+  const result=p2ReuseRows('claude-code',rerun,ids(claude));
+  assert.equal(result.scenarios,claude);assert.deepEqual(result.reused,claude.map(row=>row.id).filter(id=>!rerun.some(row=>row.id===id)));
+  // D10: an earlier Codex record that already covers every Claude Code row keeps that scope.
+  assert.equal(p2ReuseRows('codex',rerun,ids(claude)).scenarios,claude);assert.equal(p2ReuseRows('codex',rerun,ids(codex)).reused.length,codex.length-4);
+  assert.throws(()=>p2ReuseRows('claude-code',[],ids(claude)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('claude-code',[...rerun,{id:'intent-erd'}],ids(claude)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('codex',[{id:'intent-architecture'}],ids(codex)),/Rerun host rows/);
+  assert.throws(()=>p2ReuseRows('claude-code',rerun,ids(claude.slice(1))),/coverage/);
+});
+test('the diagram SVG is the single svg element of a delivered page',async()=>{
+  const {diagramSvg}=await api();
+  assert.equal(diagramSvg('<style>svg{}</style><div><svg viewBox="0 0 1 1"><g/></svg></div><script>{}</script>'),'<svg viewBox="0 0 1 1"><g/></svg>');
+  for(const html of ['<div></div>','<svg></svg><svg></svg>','<svg>'])assert.throws(()=>diagramSvg(html),/single diagram SVG/,html);
+});
+test('a reused host row needs the final engine to reproduce its diagram and failed validations',async()=>{
+  const {checkReplay}=await api(),files=new Map(),ref=(name,value)=>{const bytes=Buffer.from(typeof value==='string'?value:JSON.stringify(value));files.set(name,bytes);return{path:name,identity:identity(bytes)};},store={bytes:reference=>{const bytes=files.get(reference.path);assert.ok(bytes && identity(bytes).sha256===reference.identity.sha256,'store digest');return bytes;},json(reference){return JSON.parse(this.bytes(reference).toString('utf8'));}};
+  const final={...cohort(),engines:{'darwin-arm64':{asset:'phoenix-diagram-darwin-arm64',size:9,sha256:'8'.repeat(64)}}},engine={sourceInputSha256:final.source.inputSha256,binary:{sha256:'8'.repeat(64),bytes:9}};
+  const config={diagramType:'architecture',inputContract:'phoenix-v1',quality:'showcase',viewerRevision:'phoenix-v2'},candidate=identity(Buffer.from('candidate')),snapshot=identity(Buffer.from('snapshot'));
+  const original=ref('original.html','<style>.a{}</style><svg id="d"><g/></svg><script>{"engine":"old"}</script>');
+  const receipt=(command,fields)=>({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command,diagnostics:[],engine,config,...fields});
+  const replayed=ref('replay.html','<style>.b{}</style><svg id="d"><g/></svg><script>{"engine":"new"}</script>');
+  const deliver=fields=>({command:'deliver',original,artifact:replayed,receipt:ref(`deliver-${files.size}.json`,receipt('deliver',{status:'pass',candidate:{path:'/c',identity:candidate},artifact:{path:'/o',identity:replayed.identity},...fields}))});
+  const validate=fields=>({command:'validate',receipt:ref(`validate-${files.size}.json`,receipt('validate',{status:'failed',candidate:{path:'/s',identity:snapshot},diagnostics:[{code:'architecture/grid-cell',severity:'error'},{code:'layout/x',severity:'warning'}],...fields}))});
+  const expected=[{command:'deliver',candidate,artifact:original.identity,config},{command:'validate',candidate:snapshot,codes:['architecture/grid-cell'],config}];
+  assert.equal(checkReplay(expected,{id:'repairable-diagnostic',replays:[deliver(),validate()]},final,store),undefined);
+  const rejects=(replays,pattern,label)=>assert.throws(()=>checkReplay(expected,{id:'repairable-diagnostic',replays},final,store),pattern,label);
+  const changed=ref('changed.html','<svg id="d"><g transform="x"/></svg>');
+  rejects([{...deliver({artifact:{path:'/o',identity:changed.identity}}),artifact:changed},validate()],/diagram differs/,'svg');
+  rejects([deliver({engine:{...engine,sourceInputSha256:'7'.repeat(64)}}),validate()],/final engine/,'old engine');
+  rejects([deliver({engine:{...engine,binary:{sha256:'0'.repeat(64),bytes:9}}}),validate()],/final engine/,'foreign binary');
+  rejects([deliver({candidate:{path:'/c',identity:snapshot}}),validate()],/final engine from the original input/,'other input');
+  rejects([deliver({config:{...config,quality:'standard'}}),validate()],/configuration/,'config');
+  rejects([deliver({status:'failed'}),validate()],/replay/i,'failed delivery');
+  rejects([deliver(),validate({diagnostics:[{code:'layout/other',severity:'error'}]})],/diagnostics differ/,'codes');
+  rejects([deliver(),validate({status:'pass'})],/replay/i,'validation passes now');
+  rejects([deliver()],/replay/i,'missing validation');
+  rejects([deliver(),validate(),validate()],/replay/i,'extra replay');
+  rejects([{...deliver(),original:ref('other.html','<svg></svg>')},validate()],/replay/i,'other original');
 });

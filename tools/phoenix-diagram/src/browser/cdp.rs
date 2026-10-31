@@ -189,6 +189,9 @@ pub(super) fn chrome_args(profile: &Path) -> Vec<String> {
         "--metrics-recording-only",
         "--no-first-run",
         "--no-default-browser-check",
+        // A browser launched without the user's keychain (an isolated HOME)
+        // would otherwise prompt for one; captures never need stored secrets.
+        "--use-mock-keychain",
         "--disable-background-timer-throttling",
         "--disable-backgrounding-occluded-windows",
         "--disable-renderer-backgrounding",
@@ -279,6 +282,222 @@ impl Drop for Process {
     fn drop(&mut self) {
         let _ = self.finish();
     }
+}
+
+fn comparison_probe(view: &str) -> String {
+    const PROBE: &str = r####"(async function () {
+  'use strict';
+  var viewId = __PHOENIX_COMPARISON_VIEW__;
+  var runtime = window.PhoenixComparison;
+  if (!runtime || typeof runtime.whenStable !== 'function') throw new Error('Comparison reader stability interface is missing');
+  var tab = document.querySelector('[data-comparison-select="' + viewId + '"]');
+  if (!tab) throw new Error('Comparison view tab is missing');
+  tab.click();
+  await runtime.whenStable();
+  var frame = document.querySelector('iframe[data-comparison-view="' + viewId + '"]');
+  if (!frame || !frame.contentWindow || !frame.contentDocument) throw new Error('Comparison view frame is inaccessible');
+  var locationChecks = [];
+  var changeElements = Array.from(document.querySelectorAll('[data-comparison-change]'));
+  if (changeElements.length) {
+    runtime.select('delta');
+    await runtime.whenStable();
+    var indices = changeElements.length === 1 ? [0] : [0,changeElements.length - 1];
+    for (var index of indices) {
+      var row = changeElements[index], key = row.getAttribute('data-comparison-change');
+      row.click();
+      await Promise.resolve();
+      await runtime.whenStable();
+      var delta = document.querySelector('iframe[data-comparison-view="delta"]');
+      var highlighted = Array.from(delta.contentDocument.querySelectorAll('[data-delta-review-current]'));
+      locationChecks.push({key:key,ariaCurrent:row.getAttribute('aria-current'),selectedView:document.querySelector('[data-comparison-select][aria-selected="true"]')?.getAttribute('data-comparison-select'),highlightedKeys:highlighted.map(function (element) {return element.getAttribute('data-delta-key');}),painted:highlighted.some(function (element) {var bounds=element.getBoundingClientRect(),style=delta.contentWindow.getComputedStyle(element);return (bounds.width > 0 || bounds.height > 0) && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0;})});
+    }
+    document.querySelector('[data-comparison-overview]').click();
+    await Promise.resolve();
+    await runtime.whenStable();
+    runtime.select(viewId);
+    await runtime.whenStable();
+    frame = document.querySelector('iframe[data-comparison-view="' + viewId + '"]');
+  }
+  var child = frame.contentWindow;
+  var deltaPaint = null;
+  if (viewId === 'delta') {
+    var childRuntime = child.PhoenixDiagram;
+    var paintView = childRuntime && childRuntime.view;
+    var paintSvg = frame.contentDocument.querySelector('.diagram-container svg');
+    var sourceMetadata = JSON.parse(document.querySelector('script#phoenix-diagram-comparison[type="application/json"]').textContent);
+    var headGraph = childRuntime && childRuntime.metadata && childRuntime.metadata.graph;
+    var headBoundaries = childRuntime && childRuntime.metadata && childRuntime.metadata.facts && childRuntime.metadata.facts.boundaries;
+    function logical(element) {
+      try {
+        var box = element.getBBox();
+        var matrix = paintSvg.getScreenCTM().inverse().multiply(element.getScreenCTM());
+        var corners = [[box.x,box.y],[box.x + box.width,box.y],[box.x,box.y + box.height],[box.x + box.width,box.y + box.height]].map(function (point) {return {x:matrix.a * point[0] + matrix.c * point[1] + matrix.e,y:matrix.b * point[0] + matrix.d * point[1] + matrix.f};});
+        var xs = corners.map(function (p) {return p.x;}), ys = corners.map(function (p) {return p.y;});
+        return {x:Math.min.apply(null,xs),y:Math.min.apply(null,ys),width:Math.max.apply(null,xs) - Math.min.apply(null,xs),height:Math.max.apply(null,ys) - Math.min.apply(null,ys)};
+      } catch (_) {return null;}
+    }
+    function paintRect(element) {
+      var r = element.getBoundingClientRect();
+      return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
+    }
+    function styleFact(element) {
+      var style = child.getComputedStyle(element);
+      var cameraClip = false;
+      if (element === paintSvg && !element.hasAttribute('clip-path')) {
+        var camera = paintView.state(), width = element.clientWidth, height = element.clientHeight;
+        if ([camera.scale,camera.x,camera.y,width,height].every(Number.isFinite) && camera.scale > 1 && width > 0 && height > 0) {
+          var inset = [Math.max(0,Math.min(height,-camera.y/camera.scale)),Math.max(0,Math.min(width,width-(width-camera.x)/camera.scale)),Math.max(0,Math.min(height,height-(height-camera.y)/camera.scale)),Math.max(0,Math.min(width,-camera.x/camera.scale))];
+          var normalized = frame.contentDocument.createElement('span').style;
+          normalized.clipPath = 'inset(' + inset.map(function (value) {return Math.round(value * 1000) / 1000 + 'px';}).join(' ') + ')';
+          cameraClip = style.clipPath === normalized.clipPath && element.style.clipPath === normalized.clipPath;
+        }
+      }
+      return {hidden:Boolean(element.hidden),display:style.display,visibility:style.visibility,opacity:Number(style.opacity),clipPath:style.clipPath || style.webkitClipPath || 'none',maskImage:style.maskImage || style.webkitMaskImage || 'none',readerCameraClip:cameraClip};
+    }
+    function primitive(element, role) {
+      var style = child.getComputedStyle(element), ancestors = [];
+      for (var ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) ancestors.push(styleFact(ancestor));
+      var length = null;
+      if (role === 'edge') {try {length = element.getTotalLength();} catch (_) {}}
+      return Object.assign(styleFact(element),{role:role,text:element.tagName.toLowerCase() === 'text' ? (element.textContent || '').trim() : null,bounds:paintRect(element),logicalBounds:logical(element),fill:style.fill,stroke:style.stroke,fillOpacity:Number(style.fillOpacity),strokeOpacity:Number(style.strokeOpacity),strokeWidth:parseFloat(style.strokeWidth),clientRects:element.getClientRects().length,pathLength:length,ancestors:ancestors});
+    }
+    var originalViewBox = paintSvg && paintSvg.viewBox && paintSvg.viewBox.baseVal;
+    var svgBounds = originalViewBox && {x:originalViewBox.x,y:originalViewBox.y,width:originalViewBox.width,height:originalViewBox.height};
+    if (!paintView || !paintSvg || !headGraph || !Array.isArray(headGraph.nodes) || !Array.isArray(headGraph.relations) || !Array.isArray(headBoundaries)) throw new Error('Delta paint source model is missing');
+    var markers = [];
+    var inspectionDetailLevel = null;
+    var restoration = null;
+    try {
+      paintView.reset({automatic:true});
+      await childRuntime.layoutStability.whenStable();
+      paintView.zoomIn();paintView.zoomIn();paintView.zoomIn();
+      await childRuntime.layoutStability.whenStable();
+      await new Promise(function (resolve) {child.requestAnimationFrame(function () {child.requestAnimationFrame(resolve);});});
+      inspectionDetailLevel = frame.contentDocument.querySelector('.diagram-container').getAttribute('data-detail-level');
+      markers = Array.from(paintSvg.querySelectorAll('[data-delta-key]')).filter(function (element) {
+        // Reader hit/pulse paths are runtime copies without authored edge IDs.
+        return element.tagName.toLowerCase() !== 'path' || element.hasAttribute('data-edge-id') || element.hasAttribute('data-delta-edge-id');
+      }).map(function (element) {
+        var kind = element.getAttribute('data-delta-kind'), role = 'unknown', primitives = [], tag = element.tagName.toLowerCase();
+        var declaredLabel = element.getAttribute('data-edge-label') || element.getAttribute('data-delta-edge-label') || element.getAttribute('data-node-label') || '';
+        if (kind === 'component' && tag === 'g' && (element.hasAttribute('data-node-id') || element.hasAttribute('data-delta-node-id'))) {
+          role = 'node';
+          primitives = Array.from(element.querySelectorAll(':scope > [data-graph-role="node-body"]')).map(function (body) {return primitive(body,'body');}).concat(Array.from(element.querySelectorAll('text[data-node-label]')).map(function (text) {return primitive(text,'label');}));
+        } else if (kind === 'relationship' && tag === 'path' && element.getAttribute('data-graph-role') === 'edge') {
+          role = 'edge';primitives = [primitive(element,'edge')];
+        } else if (kind === 'boundary' && tag === 'rect' && element.getAttribute('data-graph-role') === 'structural-frame') {
+          role = 'frame';primitives = [primitive(element,'body')];
+        } else if (tag === 'g' && (kind === 'relationship' && element.hasAttribute('data-detail') || kind === 'boundary' && element.getAttribute('data-graph-role') === 'structural-frame-label')) {
+          role = 'label';
+          primitives = Array.from(element.querySelectorAll('rect')).map(function (shape) {return primitive(shape,'body');}).concat(Array.from(element.querySelectorAll('text')).filter(function (text) {return (text.textContent || '').trim();}).map(function (text) {return primitive(text,'label');}));
+          if (kind === 'boundary') {
+            var boundaryId = element.getAttribute('data-delta-key').slice('boundary:'.length);
+            var boundary = headBoundaries.find(function (entry) {return entry.kind + ':' + entry.label === boundaryId;}) || sourceMetadata.comparisonIr.changes.boundaries.find(function (entry) {return entry.key === boundaryId;});
+            declaredLabel = boundary && boundary.label || '';
+          }
+        } else if (tag === 'text' && (element.classList.contains('delta-edge-marker') || element.classList.contains('delta-boundary-marker'))) {
+          role = 'symbol';primitives = [primitive(element,'symbol')];
+        }
+        return {key:element.getAttribute('data-delta-key'),kind:kind,role:role,state:element.getAttribute('data-delta-state'),ghost:element.getAttribute('data-delta-ghost') === 'true',origin:element.getAttribute('data-delta-origin-state'),declaredLabel:declaredLabel,logicalBounds:logical(element),primitives:primitives};
+      });
+    } finally {
+      paintView.reset({automatic:true});
+      await childRuntime.layoutStability.whenStable();
+      await runtime.whenStable();
+      var state = paintView.state();
+      restoration = {mode:state.mode,scale:state.scale,x:state.x,y:state.y};
+    }
+    deltaPaint = {ir:sourceMetadata.comparisonIr,headKeys:{components:headGraph.nodes.map(function (node) {return node.id;}),connections:headGraph.relations.map(function (edge) {return edge.id;}),boundaries:headBoundaries.map(function (boundary) {return boundary.kind + ':' + boundary.label;})},svgBounds:svgBounds,inspectionDetailLevel:inspectionDetailLevel,restoration:restoration,markers:markers};
+  }
+
+  var measured;
+  for (var pass = 0; pass < 3; pass += 1) {
+    measured = await (function (window, document, requestAnimationFrame, getComputedStyle, performance, navigator, MediaRecorder, ClipboardItem) {
+    return (
+__PHOENIX_CHILD_PROBE__
+    );
+  })(child, frame.contentDocument, child.requestAnimationFrame.bind(child), child.getComputedStyle.bind(child), child.performance, child.navigator, child.MediaRecorder, child.ClipboardItem);
+    await runtime.whenStable();
+    if (measured.innerWidth === child.innerWidth && measured.innerHeight === child.innerHeight) break;
+    if (pass === 2) throw new Error('Comparison frame dimensions did not stabilize during measurement');
+  }
+  var savedScroll = {x: window.scrollX, y: window.scrollY};
+  function rect(element) {
+    if (!element) return null;
+    var r = element.getBoundingClientRect();
+    return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
+  }
+  function visible(element) {
+    if (!element) return false;
+    var style = getComputedStyle(element), r = rect(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0 && r && r.width > 0 && r.height > 0;
+  }
+  async function control(element) {
+    if (!element) return {present:false,visible:false};
+    element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+    var bounds = rect(element), hit = bounds && document.elementFromPoint(bounds.left + bounds.width / 2,bounds.top + bounds.height / 2);
+    if (!element.disabled) element.focus({preventScroll:true});
+    return {present:true,visible:visible(element),disabled:Boolean(element.disabled),bounds:bounds,hit:Boolean(hit && (hit === element || element.contains(hit))),focusable:element.tabIndex >= 0,tabIndex:element.tabIndex,focused:document.activeElement === element,accessibleName:element.getAttribute('aria-label') || element.getAttribute('title') || (element.textContent || '').trim()};
+  }
+  var tabs = [];
+  for (var element of document.querySelectorAll('[data-comparison-select]')) {
+    var fact = await control(element);
+    fact.viewId = element.getAttribute('data-comparison-select');
+    fact.selected = element.getAttribute('aria-selected') === 'true';
+    tabs.push(fact);
+  }
+  var changes = [];
+  for (var element of document.querySelectorAll('[data-comparison-change]')) {var fact = await control(element);fact.key = element.getAttribute('data-comparison-change');changes.push(fact);}
+  var navigation = [];
+  for (var action of ['overview','previous','next']) {
+    var fact = await control(document.querySelector('[data-comparison-' + action + ']'));
+    fact.action = action;
+    navigation.push(fact);
+  }
+  window.scrollTo(savedScroll.x,savedScroll.y);
+  tab.focus({preventScroll:true});
+  await runtime.whenStable();
+  var html = document.documentElement;
+  var frames = Array.from(document.querySelectorAll('iframe[data-comparison-view]'));
+  var metadata = null;
+  try {metadata = JSON.parse(document.querySelector('script#phoenix-diagram-comparison[type="application/json"]').textContent);} catch (_) {}
+  var metadataValid = Boolean(metadata && metadata.schemaVersion === 1 && metadata.artifactKind === 'architecture-comparison' && metadata.comparisonIr && metadata.comparisonIr.changes && ['components','connections','boundaries'].every(function (key) {return Array.isArray(metadata.comparisonIr.changes[key]);}));
+  var expectedChanges = metadataValid ? ['components','connections','boundaries'].reduce(function (count,key) {return count + metadata.comparisonIr.changes[key].length;},0) : -1;
+  var fullHeight = Math.max(window.innerHeight,html.scrollHeight,document.body.scrollHeight);
+  var childHeight = Math.max(child.innerHeight,child.document.documentElement.scrollHeight,child.document.body.scrollHeight);
+  var bounds = rect(frame);
+  var unclipped = frame.clientHeight >= childHeight - 1;
+  for (var ancestor = frame.parentElement; ancestor; ancestor = ancestor.parentElement) {
+    var style = getComputedStyle(ancestor), parentBounds = rect(ancestor);
+    if (['hidden','clip'].includes(style.overflowX) && (bounds.left < parentBounds.left - 1 || bounds.right > parentBounds.right + 1)) unclipped = false;
+    if (['hidden','clip'].includes(style.overflowY) && (bounds.top < parentBounds.top - 1 || bounds.bottom > parentBounds.bottom + 1)) unclipped = false;
+  }
+  if (fullHeight > window.innerHeight + 1 && [html,document.body].some(function (element) {return ['hidden','clip'].includes(getComputedStyle(element).overflowY);})) unclipped = false;
+  if (deltaPaint) measured.comparisonDeltaPaint = deltaPaint;
+  measured.comparisonFrameScrollHeight = measured.fullScrollHeight;
+  measured.frameViewport = {width:child.innerWidth,height:child.innerHeight};
+  measured.fullScrollHeight = fullHeight;
+  measured.comparisonParent = {
+    viewId:viewId,metadataValid:metadataValid,ready:html.getAttribute('data-comparison-ready') === 'true',
+    frameViewIds:frames.map(function (f) {return f.getAttribute('data-comparison-view');}),activeFrameCount:frames.filter(visible).length,
+    documentUrl:window.location.href,innerWidth:window.innerWidth,innerHeight:window.innerHeight,scrollWidth:Math.max(html.scrollWidth,document.body.scrollWidth),fullScrollHeight:fullHeight,scrollY:window.scrollY,
+    resolvedTheme:html.getAttribute('data-theme') || html.getAttribute('data-resolved-theme'),
+    frame:{viewId:frame.getAttribute('data-comparison-view'),ready:frame.getAttribute('data-comparison-ready') === 'true',bounds:bounds,clientWidth:frame.clientWidth,clientHeight:frame.clientHeight,contentUnclipped:unclipped},
+    tabs:tabs,changes:changes,navigation:navigation,locationChecks:locationChecks,expectedChanges:expectedChanges,emptyState:Boolean(visible(document.querySelector('[data-comparison-empty]')) && document.querySelector('[data-comparison-empty]').textContent.trim()),
+    resources:performance.getEntriesByType('resource').map(function (entry) {return {name:entry.name,initiatorType:entry.initiatorType};})
+  };
+  return measured;
+})()
+"####;
+    PROBE
+        .replace(
+            "__PHOENIX_COMPARISON_VIEW__",
+            &serde_json::to_string(view).expect("fixed view id"),
+        )
+        .replace(
+            "__PHOENIX_CHILD_PROBE__",
+            include_str!("probe.js").trim().trim_end_matches(';'),
+        )
 }
 
 pub(super) struct Browser {
@@ -469,12 +688,7 @@ impl Browser {
         Ok(())
     }
 
-    pub fn inspect(
-        &mut self,
-        artifact: &Path,
-        viewport: Viewport,
-        theme: Theme,
-    ) -> Result<(Value, Vec<Value>)> {
+    fn navigate(&mut self, artifact: &Path, viewport: Viewport, theme: Theme) -> Result<url::Url> {
         self.conn.events.retain(|event| {
             event["method"].as_str().is_some_and(|method| {
                 method.starts_with("Network.")
@@ -500,20 +714,55 @@ impl Browser {
             "Page.loadEventFired",
             self.command_timeout,
         )?;
-        let metrics = self.evaluate(include_str!("probe.js"))?;
+        Ok(url)
+    }
+
+    fn verify_navigation(&mut self, url: &url::Url) -> Result<()> {
         let frame = self.send_page("Page.getFrameTree", json!({}))?;
-        let actual_url = frame
+        if frame
             .pointer("/frameTree/frame/url")
-            .and_then(Value::as_str);
-        if actual_url != Some(url.as_str()) {
+            .and_then(Value::as_str)
+            != Some(url.as_str())
+        {
             return Err(Error::new(
                 "browser/navigation",
                 "probe",
                 "The page no longer displays the bound artifact file URL",
             ));
         }
-        let events = self.conn.events.drain(..).collect();
-        Ok((metrics, events))
+        Ok(())
+    }
+
+    pub fn inspect(
+        &mut self,
+        artifact: &Path,
+        viewport: Viewport,
+        theme: Theme,
+    ) -> Result<(Value, Vec<Value>)> {
+        let url = self.navigate(artifact, viewport, theme)?;
+        let metrics = self.evaluate(include_str!("probe.js"))?;
+        self.verify_navigation(&url)?;
+        Ok((metrics, self.conn.events.drain(..).collect()))
+    }
+
+    pub fn inspect_comparison(
+        &mut self,
+        artifact: &Path,
+        view: &str,
+        viewport: Viewport,
+        theme: Theme,
+    ) -> Result<(Value, Vec<Value>)> {
+        if !matches!(view, "before" | "delta" | "after") {
+            return Err(Error::new(
+                "browser/options",
+                "probe",
+                "Unknown comparison view",
+            ));
+        }
+        let url = self.navigate(artifact, viewport, theme)?;
+        let metrics = self.evaluate(&comparison_probe(view))?;
+        self.verify_navigation(&url)?;
+        Ok((metrics, self.conn.events.drain(..).collect()))
     }
 
     pub fn evaluate(&mut self, expression: &str) -> Result<Value> {
@@ -550,9 +799,28 @@ impl Browser {
           });
           return true;
         })()"#;
+        self.screenshot_with_layout(viewport, full_page, STABLE_LAYOUT)
+    }
+
+    pub fn screenshot_comparison(&mut self, viewport: Viewport, full_page: bool) -> Result<String> {
+        const STABLE: &str = r#"(async function () {
+          if (!window.PhoenixComparison || typeof window.PhoenixComparison.whenStable !== 'function') throw new Error('Comparison stability interface is missing');
+          await window.PhoenixComparison.whenStable();
+          await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+          return true;
+        })()"#;
+        self.screenshot_with_layout(viewport, full_page, STABLE)
+    }
+
+    fn screenshot_with_layout(
+        &mut self,
+        viewport: Viewport,
+        full_page: bool,
+        stable_layout: &str,
+    ) -> Result<String> {
         let mut params = json!({"format":"png","fromSurface":true,"captureBeyondViewport":false});
         if full_page {
-            self.evaluate(STABLE_LAYOUT)?;
+            self.evaluate(stable_layout)?;
             let layout = self.send_page("Page.getLayoutMetrics", json!({}))?;
             let height = layout
                 .pointer("/cssContentSize/height")
@@ -587,7 +855,7 @@ impl Browser {
                     "Emulation.setScriptExecutionDisabled",
                     json!({"value":false}),
                 )
-                .and_then(|_| self.evaluate(STABLE_LAYOUT));
+                .and_then(|_| self.evaluate(stable_layout));
             match (captured, restored) {
                 (Ok(image), Ok(_)) => Ok(image),
                 (Err(error), Ok(_)) | (Ok(_), Err(error)) => Err(error),
@@ -865,5 +1133,18 @@ impl Connection {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn chrome_keeps_its_secrets_out_of_the_user_keychain() {
+        let args = chrome_args(Path::new("/tmp/profile"));
+        assert!(
+            args.iter().any(|arg| arg == "--use-mock-keychain"),
+            "{args:?}"
+        );
     }
 }

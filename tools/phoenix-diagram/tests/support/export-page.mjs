@@ -69,6 +69,20 @@ export function snapshotReader() {
   };
 }
 
+export async function readerClickPoint(selector) {
+  const node = document.querySelector(selector);
+  if (!node || node.disabled || node.hidden) throw new Error('Unavailable control: ' + selector);
+  node.scrollIntoView({ block: 'center', inline: 'center' });
+  // Focus can animate the camera after the control appears. Scrolling also
+  // queues Passport placement; measure after both have painted.
+  const stage = document.querySelector('.diagram-container');
+  while (stage?.hasAttribute('data-camera-transaction')) await new Promise(resolve => requestAnimationFrame(resolve));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const rect = node.getBoundingClientRect();
+  if (!(rect.width > 0 && rect.height > 0)) throw new Error('Control is not painted: ' + selector);
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 export async function awaitReader() {
   await document.fonts.ready;
   if (!window.PhoenixDiagram) throw new Error('Missing window.PhoenixDiagram');
@@ -82,7 +96,9 @@ export function printMotionSnapshot() {
   const svg = document.querySelector('.diagram-container > svg');
   if (!svg || typeof svg.getAnimations !== 'function') throw new Error('Print motion observation is unavailable');
   const runtime = '[data-ambient-flow-overlay], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-semantic-lens-overlay], [data-relationship-pulse-overlay], [data-relationship-hit-overlay], [data-legend-bridge-runtime]';
-  const meaning = Array.from(svg.querySelectorAll('[data-node-id], path[data-edge-from], line[data-edge-from], polyline[data-edge-from], text')).filter(element => !element.closest(runtime));
+  // Tree toggles are Reader controls; their child-count badges stay hidden while a branch is open.
+  const controls = '[data-tree-toggle], [data-tree-expand-all]';
+  const meaning = Array.from(svg.querySelectorAll('[data-node-id], path[data-edge-from], line[data-edge-from], polyline[data-edge-from], text')).filter(element => !element.closest(runtime) && !element.closest(controls));
   const hidden = element => {
     for (let current = element; current; current = current.parentElement) {
       const style = getComputedStyle(current);

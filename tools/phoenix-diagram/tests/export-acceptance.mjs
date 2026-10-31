@@ -7,7 +7,8 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_TIMEOUTS, discoverBrowser, ExportBrowser } from './support/export-browser.mjs';
-import { installExportProbe, awaitReader, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
+import { runExplore, verifyExplore } from './support/explore-reader.mjs';
+import { installExportProbe, awaitReader, readerClickPoint, snapshotReader, printMotionSnapshot, motionSuppressionSnapshot, inspectBlob, readResources, contentObservation } from './support/export-page.mjs';
 import { REQUIRED_READER_INTERACTIONS, runReaderInteractions } from './support/export-reader.mjs';
 
 export const REQUIRED_EXPORT_SCOPE = Object.freeze({ themes: ['dark', 'light'], modes: ['still', 'live'], formats: ['svg', 'png', 'jpeg', 'webp', 'webm'], clipboard: ['success', 'permission-denied', 'capability-unavailable'], print: { themes: ['dark', 'light'], modes: ['still', 'live'], method: 'cdp-print-media-and-native-print-to-pdf' }, readerInteractions: REQUIRED_READER_INTERACTIONS,
@@ -107,7 +108,18 @@ export function verifyFileSignature(bytes, format, mime) {
   return signature;
 }
 
-function errorRecord(error, stage) { return { stage, code: error.code || 'acceptance/failed', message: error.message || String(error) }; }
+function errorRecord(error, stage) {
+  const record = { stage, code: error.code || 'acceptance/failed', message: error.message || String(error) };
+  for (const [name, fields] of Object.entries({ cdp: ['method', 'id', 'sessionId', 'timeoutMs', 'expressionSha256'], evaluation: ['fnName', 'sourceSha256'], download: ['guid', 'state', 'receivedBytes', 'totalBytes'] })) {
+    if (error[name]) record[name] = Object.fromEntries(fields.filter(field => error[name][field] !== undefined).map(field => [field, error[name][field]]));
+  }
+  return record;
+}
+export function canceledDownloadError(message, entry) {
+  const error = new Error(message);
+  error.download = { guid: entry.guid, state: entry.state, receivedBytes: entry.receivedBytes, totalBytes: entry.totalBytes };
+  return error;
+}
 async function waitFor(predicate, timeoutMs, label) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) { const result = await predicate(); if (result) return result; await delay(25); }
@@ -126,8 +138,8 @@ function resourceClean(resources) { return resources.anchorsAttached === 0 && re
 
 async function withBrowserPage(options, kind, run) {
   const timeouts = validateInput(options), artifact = artifactIdentity(options.artifactPath);
-  const directory = makeDirectory(options.evidenceDir, kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : 'content');
-  const report = { schemaVersion: 1, tool: 'phoenix-diagram', kind: kind === 'exports' ? 'real-browser-export' : kind === 'interactions' ? 'real-browser-reader-interactions' : 'real-browser-content', status: 'not-run', artifact, browser: null, actualBrowserVersion: null, timeouts,
+  const directory = makeDirectory(options.evidenceDir, kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : kind === 'explore' ? 'explore' : 'content');
+  const report = { schemaVersion: 1, tool: 'phoenix-diagram', kind: kind === 'exports' ? 'real-browser-export' : kind === 'interactions' ? 'real-browser-reader-interactions' : kind === 'explore' ? 'real-browser-explore' : 'real-browser-content', status: 'not-run', artifact, browser: null, actualBrowserVersion: null, timeouts,
     scope: kind === 'exports' ? REQUIRED_EXPORT_SCOPE : kind === 'interactions' ? { readerInteractions: REQUIRED_READER_INTERACTIONS } : { content: true },
     exports: kind === 'exports' ? REQUIRED_EXPORT_SCOPE.themes.flatMap(theme => REQUIRED_EXPORT_SCOPE.modes.flatMap(mode => REQUIRED_EXPORT_SCOPE.formats.map(format => ({ theme, mode, format, status: 'not-run' })))) : [],
     clipboard: kind === 'exports' ? { success: { status: 'not-run' }, permissionDenied: { status: 'not-run' }, capabilityUnavailable: { status: 'not-run' } } : {},
@@ -137,7 +149,7 @@ async function withBrowserPage(options, kind, run) {
     offline: { requested: options.offline === true, status: 'not-run', method: 'cdp-network-emulation', configured: false, remoteRequests: [] }, errors: [], receiptPath: path.join(directory, 'index.json') };
   let browser, cdp = options.cdp, contextId, targetId, sessionId, unsubscribe, stage = 'browser/discovery';
   const requests = [], loadingFailed = [], downloads = new Map(), dialogs = [];
-  let loads = 0, frameId;
+  let loads = 0, documentEpoch = 0, frameId;
   try {
     if (!cdp) {
       const browserPath = discoverBrowser(options); browser = new ExportBrowser(browserPath, { timeouts });
@@ -157,7 +169,7 @@ async function withBrowserPage(options, kind, run) {
     unsubscribe = cdp.subscribe(message => {
       const params = message.params || {};
       if (message.sessionId === sessionId) {
-        if (message.method === 'Page.loadEventFired') loads++;
+        if (message.method === 'Page.loadEventFired') { loads++; documentEpoch++; }
         if (message.method === 'Network.requestWillBeSent') requests.push({ url: params.request?.url || '', type: params.type, requestId: params.requestId });
         if (message.method === 'Network.loadingFailed') loadingFailed.push(params);
         if (message.method === 'Page.javascriptDialogOpening') {
@@ -178,17 +190,30 @@ async function withBrowserPage(options, kind, run) {
     await send('Browser.setDownloadBehavior', { behavior: 'allowAndName', downloadPath: downloadDirectory, eventsEnabled: true, browserContextId: contextId }, undefined);
     const evaluate = async (fn, argument) => {
       const expression = '(' + fn.toString() + ')(' + (argument === undefined ? '' : JSON.stringify(argument)) + ')';
-      const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true, userGesture: false });
-      if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Export page evaluation failed');
-      return response.result?.value;
+      try {
+        const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true, userGesture: false });
+        if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Export page evaluation failed');
+        return response.result?.value;
+      } catch (error) {
+        error.evaluation = { fnName: fn.name || '<anonymous>', sourceSha256: sha256(fn.toString()) }; throw error;
+      }
     };
     let startup;
     const page = {
-      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts,
-      async load(theme = 'dark', suppressClipboard = false) {
+      report, directory, artifact, evaluate, send, dialogs, downloads, contextId, targetId, timeouts, clicks: [],
+      get documentEpoch() { return documentEpoch; },
+      async load(theme = 'dark', suppressClipboard = false, { query = {}, hash = '' } = {}) {
+        documentEpoch++; // Navigation may replace the probe even if its load event never arrives.
         if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
         startup = (await send('Page.addScriptToEvaluateOnNewDocument', { source: '(' + installExportProbe.toString() + ')(' + JSON.stringify({ suppressClipboard }) + ');' })).identifier;
         const url = new URL(pathToFileURL(artifact.path)); url.searchParams.set('theme', theme);
+        for (const [name, value] of Object.entries(query)) url.searchParams.set(name, value);
+        url.hash = hash;
+        if (hash || Object.keys(query).length) {
+          // A hash-only change is a same-document navigation without a load event.
+          const blank = loads; await send('Page.navigate', { url: 'about:blank' });
+          await waitFor(() => loads > blank, timeouts.commandMs, 'Blank page load');
+        }
         const before = loads, navigation = await send('Page.navigate', { url: url.href });
         if (navigation.errorText) throw new Error('Export page navigation: ' + navigation.errorText);
         frameId = navigation.frameId;
@@ -198,16 +223,15 @@ async function withBrowserPage(options, kind, run) {
         return evaluate(snapshotReader);
       },
       async click(selector) {
-        const point = await evaluate(selector => {
-          const node = document.querySelector(selector);
-          if (!node || node.disabled || node.hidden) throw new Error('Unavailable control: ' + selector);
-          node.scrollIntoView({ block: 'center', inline: 'center' });
-          const rect = node.getBoundingClientRect();
-          if (!(rect.width > 0 && rect.height > 0)) throw new Error('Control is not painted: ' + selector);
-          return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        }, selector);
+        // Host requests/acknowledgments complement the page's actual readerInputs.
+        const click = kind === 'explore' ? { selector, completedDispatches: [] } : null;
+        if (click) page.clicks.push(click);
+        const point = await evaluate(readerClickPoint, selector);
+        if (click) click.point = point;
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
+        if (click) click.completedDispatches.push('mousePressed');
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
+        if (click) click.completedDispatches.push('mouseReleased');
       },
       async download(format, basename, expected) {
         const capability = await evaluate(format => { const item = document.querySelector('button[data-format="' + format + '"]'); return { available: !!item && !item.disabled, reason: item?.title || '' }; }, format);
@@ -222,7 +246,7 @@ async function withBrowserPage(options, kind, run) {
         }, beforeCount), timeouts.actionMs, format + ' download');
         const completed = await waitFor(() => {
           const entry = [...downloads.values()].find(value => value.url === captured.url);
-          if (entry?.state === 'canceled') throw new Error('Chrome canceled ' + format + ' download');
+          if (entry?.state === 'canceled') throw canceledDownloadError('Chrome canceled ' + format + ' download', entry);
           return entry?.state === 'completed' ? entry : null;
         }, timeouts.actionMs, format + ' download completion');
         if (!/^[a-zA-Z0-9-]+$/.test(completed.guid)) throw new Error('Unsafe Chrome download identifier');
@@ -238,6 +262,31 @@ async function withBrowserPage(options, kind, run) {
         if (receipt['data-last-export-format'] !== format || receipt['data-last-export-canonical'] !== 'true') throw new Error('Reader did not report a canonical actual export');
         return { format, status: 'pass', path: output, identity: { sha256: sha256(bytes), bytes: bytes.length }, signature, download: { guid: completed.guid, name: captured.name }, ...decoded, receipt };
       },
+      // A Route/Reach share card: a scoped, non-canonical PNG from the export menu.
+      async card(action, basename) {
+        const beforeCount = await evaluate(() => __phoenixDiagramExportProbe.downloads.length);
+        await evaluate(() => PhoenixDiagram.exportMenu.open()); await page.click('button[data-action="' + action + '"]');
+        const captured = await waitFor(() => evaluate(before => {
+          const state = __phoenixDiagramExportProbe, download = state.downloads[before];
+          if (download) return { url: download.url, name: download.name, bytes: download.blob?.size, mime: download.blob?.type };
+          const error = document.documentElement.getAttribute('data-last-export-error');
+          if (error) throw new Error(error); return null;
+        }, beforeCount), timeouts.actionMs, action + ' download');
+        const completed = await waitFor(() => {
+          const entry = [...downloads.values()].find(value => value.url === captured.url);
+          if (entry?.state === 'canceled') throw canceledDownloadError('Chrome canceled ' + action, entry);
+          return entry?.state === 'completed' ? entry : null;
+        }, timeouts.actionMs, action + ' download completion');
+        if (!/^[a-zA-Z0-9-]+$/.test(completed.guid)) throw new Error('Unsafe Chrome download identifier');
+        const file = path.join(downloadDirectory, completed.guid);
+        await waitFor(() => fs.existsSync(file), timeouts.commandMs, 'Downloaded card');
+        const bytes = fs.readFileSync(file), signature = verifyFileSignature(bytes, 'png', captured.mime);
+        const decoded = await evaluate(inspectBlob, { url: captured.url, kind: 'png', expected: {}, decodeMs: timeouts.decodeMs });
+        if (decoded.sha256 !== sha256(bytes) || decoded.bytes !== bytes.length) throw new Error('Actual downloaded card differs from the encoded Blob');
+        const output = path.join(directory, basename + '.png'); fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o600 });
+        const receipt = await evaluate(() => Object.fromEntries(Array.from(document.documentElement.attributes).filter(attribute => attribute.name.startsWith('data-last-export-')).map(attribute => [attribute.name, attribute.value])));
+        return { action, status: 'pass', path: output, identity: { sha256: sha256(bytes), bytes: bytes.length }, signature, download: { guid: completed.guid, name: captured.name }, ...decoded, receipt };
+      },
       async resources(label) {
         let last;
         try {
@@ -245,7 +294,7 @@ async function withBrowserPage(options, kind, run) {
         } finally { if (last) report.resources.observations.push({ label, clean: resourceClean(last), ...last }); }
       },
     };
-    stage = kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : 'content';
+    stage = kind === 'exports' ? 'exports' : kind === 'interactions' ? 'reader-interactions' : kind === 'explore' ? 'explore' : 'content';
     await run(page);
     report.resources.requests = requests;
     report.resources.loadingFailed = loadingFailed;
@@ -458,6 +507,116 @@ export async function runExportAcceptance(options) {
 export async function runReaderInteractionAcceptance(options) {
   return withBrowserPage(options, 'interactions', async page => {
     await runReaderInteractions(page, options.onProgress);
+    page.report.stateRestoration = { status: 'not-applicable', observations: [] };
+  });
+}
+
+// Exploration plus, for diagrams with authored relations, one Route and one Reach card.
+export async function runExploreAcceptance(options) {
+  return withBrowserPage(options, 'explore', async page => {
+    await page.load('dark');
+    const metadata = await page.evaluate(() => JSON.parse(document.getElementById('phoenix-diagram-metadata').textContent));
+    const exploration = await runExplore(page, metadata, options.onProgress);
+    verifyExplore(exploration);
+    page.report.explore = exploration;
+    page.report.cards = [];
+    const plan = exploration.plan;
+    if (plan.pathPair && plan.reachNode) {
+      await page.load('dark', false, { hash: 'route=' + plan.pathPair.join('~') });
+      page.report.cards.push(await page.card('route-share-card', 'route-share-card'));
+      await page.load('dark', false, { hash: 'focus=' + plan.reachNode + '&reach=downstream' });
+      page.report.cards.push(await page.card('reach-share-card', 'downstream-reach-share-card'));
+      for (const [card, variant, suffix] of [[page.report.cards[0], 'route', '-route-share-card.png'], [page.report.cards[1], 'reach', '-downstream-reach-share-card.png']]) {
+        if (card.receipt['data-last-export-canonical'] !== 'false' || card.receipt['data-last-export-variant'] !== variant || !card.download.name.endsWith(suffix)) throw new Error('Share card is not a scoped non-canonical ' + variant + ' export');
+      }
+    }
+    page.report.stateRestoration = { status: 'not-applicable', observations: [] };
+  });
+}
+
+// The first enabled Reach control of the open details takes a trusted tap on a
+// touch screen, or a click. A panel taller than its room is first scrolled by a
+// real gesture; the control's center must hit the control, not the navigation.
+export async function operateReach(page, id, touch) {
+  const locate = () => page.evaluate(() => {
+    const section = document.getElementById('focus-reach'), button = ['downstream', 'upstream'].map(direction => document.getElementById('btn-reach-' + direction)).find(button => !button.disabled);
+    if (section.hidden || !button) return null;
+    const box = button.getBoundingClientRect(), panel = document.getElementById('focus-chip').getBoundingClientRect();
+    const x = box.left + box.width / 2, y = box.top + box.height / 2, hit = document.elementFromPoint(x, y);
+    return { direction: button.id.slice('btn-reach-'.length), x, y, inPanel: y > panel.top && y < panel.bottom, onControl: Boolean(hit && button.contains(hit)), hit: hit ? hit.id || hit.localName : null, from: { x: Math.round(panel.left + panel.width / 2), y: Math.round(panel.top + 24) } };
+  });
+  let control = await locate(), scrolled = false;
+  if (!control) return { status: 'not-applicable' };
+  if (!control.inPanel) {
+    await page.send('Input.synthesizeScrollGesture', { ...control.from, yDistance: -Math.ceil(control.y - control.from.y), gestureSourceType: touch ? 'touch' : 'mouse', speed: 1200 });
+    control = await locate(); scrolled = true;
+  }
+  if (!control.inPanel || !control.onControl) throw new Error('Reach ' + control.direction + ' of ' + id + ' cannot be operated; its center hits ' + control.hit);
+  const point = { x: control.x, y: control.y };
+  if (touch) {
+    await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...point, radiusX: 1, radiusY: 1, force: 1, id: 1 }] });
+    await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } else {
+    await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1 });
+    await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1 });
+  }
+  const reach = await waitFor(() => page.evaluate(direction => { const reach = PhoenixDiagram.focus.reachability(); return reach && reach.direction === direction ? reach : null; }, control.direction), 2000, 'Trusted ' + (touch ? 'tap' : 'click') + ' on Reach ' + control.direction + ' of ' + id);
+  if (reach.originId !== id) throw new Error('Reach ' + control.direction + ' started from ' + reach.originId + ' instead of ' + id);
+  return { status: 'pass', direction: control.direction, input: touch ? 'touch' : 'mouse', scrolled, nodeIds: reach.nodeIds };
+}
+
+// Focus each requested node and capture its details panel for actual viewing,
+// with the source evidence state the Reader displays, then operate its Reach.
+// `evidence: false` accepts details without source evidence; a node may name
+// its own viewport, and a narrow one (720px or less) is a touch screen.
+export async function runPassportAcceptance(options) {
+  return withBrowserPage(options, 'explore', async page => {
+    page.report.passports = [];
+    let current = '1440x900';
+    for (const { id, theme = 'dark', viewport = { width: 1440, height: 900 } } of options.nodes) {
+      const size = viewport.width + 'x' + viewport.height, touch = viewport.width <= 720;
+      if (size !== current) {
+        await page.send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: touch });
+        await page.send('Emulation.setTouchEmulationEnabled', touch ? { enabled: true, maxTouchPoints: 1 } : { enabled: false });
+        current = size;
+      }
+      await page.load(theme, false, { hash: 'focus=' + id });
+      await delay(400);
+      const state = await page.evaluate(async id => {
+        // Measure once the focus camera and the Passport placement have painted.
+        const stage = document.querySelector('.diagram-container'), frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+        while (stage.hasAttribute('data-camera-transaction')) await frame();
+        await frame(); await frame();
+        const evidence = document.getElementById('focus-evidence'), rows = Array.from(document.querySelectorAll('#focus-evidence-links > *'));
+        const rect = element => { const box = element.getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }; };
+        const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+        const outside = (inner, outer) => inner.left < outer.left - 0.5 || inner.right > outer.right + 0.5 || inner.top < outer.top - 0.5 || inner.bottom > outer.bottom + 0.5;
+        const focused = document.querySelector('[data-node-id="' + id + '"]'), body = rect(focused.querySelector('[data-graph-role="node-body"]') || focused);
+        const passport = rect(document.getElementById('focus-chip')), area = rect(stage), dock = stage.querySelector('.diagram-nav'), dockArea = rect(dock);
+        return { focus: PhoenixDiagram.focus.active(),
+          // The focused node stays on the stage and out from under its Passport.
+          node: { rect: body, passport, onStage: meets(body, area), covered: meets(body, passport) },
+          // Every shown dock control, the zoom readout and + included, lies inside the dock and the stage.
+          dockOverflow: Array.from(dock.querySelectorAll('button')).filter(button => getComputedStyle(button).display !== 'none')
+            .filter(button => outside(rect(button), area) || outside(rect(button), dockArea)).map(button => button.id || button.getAttribute('data-view')), detailsHidden: document.getElementById('focus-chip').hidden, hidden: evidence.hidden,
+          state: evidence.getAttribute('data-evidence-state'), status: evidence.querySelector('.semantic-passport-evidence-status').textContent,
+          repository: document.getElementById('focus-repository').textContent, repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
+          rows: rows.map(row => ({ tag: row.localName, state: row.getAttribute('data-evidence-state'), href: row.getAttribute('href'), text: row.textContent })), label: document.querySelector('[data-node-id="' + id + '"]').getAttribute('aria-label'),
+          context: document.getElementById('focus-context').textContent,
+          // Title, detail, metadata, status, repository, path and pending reason must be readable in full, not ellipsized.
+          clipped: Array.from(document.querySelectorAll('#relationship-lens-title, #focus-detail, #focus-passport-meta > *, #focus-evidence .semantic-passport-evidence-status, #focus-evidence .semantic-passport-repository, #focus-evidence .semantic-passport-source strong, #focus-evidence .semantic-passport-source small')).filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent) };
+      }, id);
+      if (state.focus !== id || state.detailsHidden || (state.hidden && options.evidence !== false)) throw new Error('Details did not show' + (options.evidence === false ? '' : ' source evidence') + ' for ' + id);
+      if (state.clipped.length) throw new Error('Details text is clipped for ' + id + ': ' + state.clipped.join(' | '));
+      const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
+      const bytes = Buffer.from(data, 'base64'), file = path.join(page.directory, `passport-${id}-${theme}${size === '1440x900' ? '' : '-' + size}.png`);
+      fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
+      // Checked after the capture so a failing view is still kept for viewing.
+      if (!state.node.onStage || state.node.covered) throw new Error('Details at ' + size + ' ' + (state.node.covered ? 'cover' : 'leave off the stage') + ' the focused node ' + id + ': ' + JSON.stringify(state.node));
+      if (state.dockOverflow.length) throw new Error('Dock controls fall outside the stage at ' + size + ': ' + state.dockOverflow.join(', '));
+      const reach = await operateReach(page, id, touch);
+      page.report.passports.push({ id, theme, viewport, ...state, reach, screenshot: { path: file, identity: { sha256: sha256(bytes), bytes: bytes.length } } });
+    }
     page.report.stateRestoration = { status: 'not-applicable', observations: [] };
   });
 }

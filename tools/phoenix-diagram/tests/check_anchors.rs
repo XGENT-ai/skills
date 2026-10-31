@@ -60,7 +60,14 @@ fn inspect(html: &str, kind: DiagramType) -> diagnostic::Diagnostics {
     let mut routes = Vec::new();
     for (index, edge) in svg.select(&select("path[data-edge-from]")).enumerate() {
         let relation = json!({"from":edge.value().attr("data-edge-from"),"to":edge.value().attr("data-edge-to")});
-        let analysis = check::path::analyze_svg_path(edge.value().attr("d").unwrap()).unwrap();
+        let mut analysis = check::path::analyze_svg_path(edge.value().attr("d").unwrap()).unwrap();
+        // A class hierarchy bus is drawn from its supertype outward.
+        if edge.value().attr("data-class-bus").is_some() {
+            analysis.subpaths.reverse();
+            for part in &mut analysis.subpaths {
+                part.points.reverse();
+            }
+        }
         for (part_index, part) in analysis.subpaths.iter().enumerate() {
             let mut route = RoutedRelation::new(index, relation.clone(), part.points.clone());
             route.source_endpoint = part_index == 0;
@@ -115,6 +122,21 @@ fn example(kind: DiagramType) -> CompiledDiagram {
         DiagramType::Lifecycle => {
             include_str!("../../../skills/phoenix-diagram/examples/minimal.lifecycle.json")
         }
+        DiagramType::Erd => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.erd.json")
+        }
+        DiagramType::Class => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.class.json")
+        }
+        DiagramType::Tree => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.tree.json")
+        }
+        DiagramType::Timeline => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.timeline.json")
+        }
+        DiagramType::Waterfall => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.waterfall.json")
+        }
     };
     compile(
         serde_json::from_str(raw).unwrap(),
@@ -155,11 +177,20 @@ fn assert_code(scene: &CompiledDiagram, code: &str) {
 }
 
 #[test]
-fn actual_renderer_endpoints_accept_all_five_diagram_types() {
+fn actual_renderer_endpoints_accept_every_diagram_type() {
     for kind in DiagramType::ALL {
         let errors = inspect(&html(&example(kind)), kind);
         assert!(errors.is_empty(), "{kind:?}: {errors:?}");
     }
+}
+
+#[test]
+fn tree_links_must_leave_the_parent_body_and_enter_the_child_body() {
+    let mut scene = example(DiagramType::Tree);
+    let relation = &mut scene.relations[0];
+    relation.points.first_mut().unwrap().y -= 10.0;
+    relation.points.last_mut().unwrap().y += 10.0;
+    assert_code(&scene, "artifact/endpoint-binding");
 }
 
 #[test]
@@ -168,10 +199,23 @@ fn jointly_tampered_d_and_route_declarations_cannot_float_from_known_nodes() {
         DiagramType::Architecture,
         DiagramType::Workflow,
         DiagramType::Dataflow,
+        DiagramType::Erd,
+        DiagramType::Class,
     ] {
         let mut scene = example(kind);
-        scene.relations[0].points.first_mut().unwrap().x += 10.0;
-        scene.relations[0].points.last_mut().unwrap().x -= 10.0;
+        // Move both ends off their bodies; the class example's first relationship
+        // runs vertically, so a horizontal shift would slide along its sides.
+        let (dx, dy) = if kind == DiagramType::Class {
+            (0.0, 10.0)
+        } else {
+            (10.0, 0.0)
+        };
+        let first = scene.relations[0].points.first_mut().unwrap();
+        first.x += dx;
+        first.y -= dy;
+        let last = scene.relations[0].points.last_mut().unwrap();
+        last.x -= dx;
+        last.y += dy;
         let rendered = html(&scene);
         let edges = Html::parse_document(&rendered);
         let edge = edges

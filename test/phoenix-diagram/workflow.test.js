@@ -106,6 +106,17 @@ test('all consumers use one digest-bound candidate, with a separate Node 18 floo
   assert.match(job(text, 'node18-consumer'), /node-version: '18\.20\.8'/);
   for (const output of ['candidate-sha256', 'tgz-sha256', 'source-commit', 'artifact-id', 'artifact-digest', 'harness-sha256', 'harness-artifact-id', 'harness-artifact-digest']) assert.ok(assemble.includes(output), output);
 });
+test('P3 workflow accepts real pending exits only after all automatic gates pass',t=>{
+  const text=job(workflow(),'consume'),step=/- name: Consume the unchanged tgz through its package entry points\n([\s\S]*?)(?=\n      - name:)/.exec(text)[1];
+  const script=/<<'NODE'\n([\s\S]*?)\n          NODE/.exec(step)[1],directory=temporary(t),folder=path.join(directory,'local/phoenix-diagram/ci-prepare');fs.mkdirSync(folder,{recursive:true});
+  const output=path.join(directory,'github-output'),run=(value,exit='3')=>{fs.writeFileSync(path.join(folder,'p3-process-result.json'),JSON.stringify(value));return spawnSync(process.execPath,['--input-type=module'],{input:script,cwd:directory,encoding:'utf8',env:{...process.env,PHOENIX_P3_EXIT:exit,GITHUB_OUTPUT:output}});};
+  assert.equal(run({exitCode:3,automatedStatus:'pass',profile:'p3',status:'incomplete'}).status,0);
+  assert.equal(fs.readFileSync(output,'utf8'),'p3_exit_code=3\n');
+  for(const value of [{exitCode:3,automatedStatus:'not-run',profile:'p3'},{exitCode:0,automatedStatus:'pass',profile:'p3'},{exitCode:3,automatedStatus:'pass',profile:'p2'}])assert.notEqual(run(value).status,0);
+  assert.notEqual(run({exitCode:1,automatedStatus:'pass',profile:'p3'},'1').status,0);
+  const shell=/        run: \|\n([\s\S]*)/.exec(step)[1].replace(/^ {10}/gm,'').replace(/\$\{\{[^}]+\}\}/g,'prepared-npm');
+  const syntax=spawnSync('/bin/bash',['-n'],{input:shell,encoding:'utf8'});assert.equal(syntax.status,0,syntax.stderr);
+});
 
 function npmToolFixture(extra=[]) {
   // Archive/transport mechanism only: this tiny package is not real npm proof.
@@ -178,16 +189,19 @@ test('visual review resumes the original consumer state in the same running job 
   const steps = { consume: { outcome: 'success' }, review_request: { outcome: 'success' } };
   for (const event of ['push', 'pull_request', 'workflow_dispatch']) {
     for (const awaitReview of [false, true]) {
-      assert.equal(runInNewContext(condition, { github: { event_name: event }, inputs: { await_review: awaitReview }, steps }), event === 'workflow_dispatch' && awaitReview);
+      assert.equal(runInNewContext(condition, { github: { event_name: event }, inputs: { await_review: awaitReview }, env: { PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE: 'p2' }, steps }), event === 'workflow_dispatch' && awaitReview);
     }
   }
   for (const failed of ['consume', 'review_request']) {
-    assert.equal(runInNewContext(condition, { github: { event_name: 'workflow_dispatch' }, inputs: { await_review: true }, steps: { ...steps, [failed]: { outcome: 'failure' } } }), false);
+    assert.equal(runInNewContext(condition, { github: { event_name: 'workflow_dispatch' }, inputs: { await_review: true }, env: { PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE: 'p2' }, steps: { ...steps, [failed]: { outcome: 'failure' } } }), false);
   }
   assert.match(workflow(), /await_review:\n\s+description: [^\n]+\n\s+type: boolean\n\s+default: false/);
+  assert.equal(runInNewContext(condition, { github: { event_name: 'workflow_dispatch' }, inputs: { await_review: true }, env: { PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE: 'p3' }, steps }), false);
   assert.match(consume, /steps\.consume\.outputs\.state_path/);
   assert.match(consume, /--resume "\$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review\/\$GITHUB_RUN_ID"/);
-  assert.match(consume, /timeout-minutes: 90/); assert.match(consume, /timeout-minutes: 120/);
+  assert.match(consume, /timeout-minutes: 90/);
+  const budget=/timeout-minutes: \$\{\{ (.+) \}\}/.exec(consume)?.[1];assert.ok(budget);
+  for(const profile of ['p3','p2',undefined])assert.equal(runInNewContext(budget,{inputs:{profile}}),profile==='p3'?240:120);
   const finalUpload = /name: phoenix-diagram-consume-\$\{\{ matrix\.platform \}\}-evidence([\s\S]*)/.exec(consume)?.[1];
   assert.match(finalUpload, /steps\.consume\.outputs\.evidence_dir/);
   assert.match(finalUpload, /include-hidden-files: true/);
@@ -210,12 +224,12 @@ async function reviewMaterialFixture(t) {
   const directory = temporary(t), runRoot = path.join(directory, 'original evidence'), harness = path.join(directory, 'local/phoenix-diagram/harness/scripts');
   fs.mkdirSync(runRoot, { mode: 0o700 }); fs.mkdirSync(harness, { recursive: true });
   fs.copyFileSync(path.join(root, 'scripts/test-phoenix-diagram-core.mjs'), path.join(harness, 'test-phoenix-diagram-core.mjs'));
-  const { readSnapshot, bound } = await import('../../scripts/test-phoenix-diagram-core.mjs');
+  const { readSnapshot, bound, TYPES, contractsFor } = await import('../../scripts/test-phoenix-diagram-core.mjs');
   const write = (file, value) => { fs.writeFileSync(file, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value), { mode: 0o600 }); return bound(readSnapshot(file)); };
   // File-selection mechanism fixture only, never native or visual acceptance.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6vWQAAAAASUVORK5CYII=', 'base64');
-  const cases = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].flatMap(type => ['new', 'legacy'].map(contract => {
-    const id = `${contract}-${type}`, folder = path.join(runRoot, id); fs.mkdirSync(folder);
+  const cases = TYPES.flatMap(type => contractsFor(type).map(contract => {
+    const id = `${contract === 'phoenix-v1' ? 'new' : 'legacy'}-${type}`, folder = path.join(runRoot, id); fs.mkdirSync(folder);
     return { id, state: { screenshots: [1440, 2048].flatMap(width => ['light', 'dark'].map(theme => ({ ...write(path.join(folder, `${width}-${theme}.png`), png), viewport: { width, height: width === 1440 ? 900 : 1320 }, theme }))) } };
   }));
   const stat = fs.statSync(runRoot), sourceCommit = 'a'.repeat(40), tgzSha = 'b'.repeat(64);
@@ -231,10 +245,10 @@ async function reviewMaterialFixture(t) {
   return { run, files, request, requestFile, state, output, env, write, readSnapshot, bound };
 }
 
-test('review upload selects exactly the 42 original bound files without caches, exports or rewrites', async t => {
+test('review upload selects exactly the 62 original bound files without caches, exports or rewrites', async t => {
   const fixture = await reviewMaterialFixture(t), result = fixture.run(); assert.equal(result.status, 0, result.stderr);
   const output = fs.readFileSync(fixture.output, 'utf8'), match = /^review_paths<<([^\n]+)\n([\s\S]*)\n\1\n$/.exec(output); assert.ok(match, output);
-  const selected = match[2].split('\n'); assert.equal(selected.length, 42); assert.equal(new Set(selected).size, 42);
+  const selected = match[2].split('\n'); assert.equal(selected.length, 62); assert.equal(new Set(selected).size, 62);
   assert.deepEqual(selected, fixture.files.map(file => file.path));
   assert.equal(path.dirname(selected[0]), fixture.state.runRoot); assert.equal(path.dirname(selected[1]), fixture.state.runRoot);
   assert.ok(selected.every(file => !path.relative(fixture.state.runRoot, file).startsWith('..')));
@@ -311,7 +325,7 @@ test('isolated harness imports and browser-only preparation require neither sour
   const step = /- name: Archive the isolated maintenance harness([\s\S]*?)(?=\n      - name:)/.exec(assemble)?.[1];
   assert.ok(step, 'Explicit harness allowlist archive');
   const files = [...step.matchAll(/^\s+((?:scripts|skills|tools)\/[a-zA-Z0-9/_.-]+|LICENSE)(?: \\)?$/gm)].map(match => match[1]);
-  assert.equal(files.length, 21); assert.equal(new Set(files).size, files.length);
+  assert.equal(files.length, 36); assert.equal(new Set(files).size, files.length);
   assert.ok(files.includes('tools/phoenix-diagram/tests/support/capture-stdio.mjs'));
   assert.doesNotMatch(files.join('\n'), /(?:^|\/)(?:src|target|node_modules|upstream|renderers)(?:\/|$)|\.rs$|Cargo\.(?:lock|toml)|\.tar/mi);
   const archive = path.join(temporary(t), 'harness.tar');
@@ -322,6 +336,17 @@ test('isolated harness imports and browser-only preparation require neither sour
   assert.ok(!fs.existsSync(path.join(directory, '.git'))); assert.ok(!fs.existsSync(path.join(directory, 'package.json')));
   const help = spawnSync(process.execPath, [path.join(directory, 'scripts/check-phoenix-diagram-candidate.mjs'), '--help'], { cwd: directory, env: { ...process.env, PATH: '' }, encoding: 'utf8' });
   assert.equal(help.status, 0, help.stderr); assert.match(help.stdout, /--candidate-dir/);
+  const manifest = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/migration-sources/archify-v1.json'));
+  const sourceInputs = [['tools/phoenix-diagram/migration-sources/archify-v1.json', manifest.length, createHash('sha256').update(manifest).digest('hex')]];
+  const verify = () => spawnSync(process.execPath, ['--input-type=module', '-e',
+    'const m=await import(process.argv[1]);const r=m.verifySourceLessHarness(process.cwd(),{profile:"p3",sourceInputs:JSON.parse(process.argv[2])});console.log(JSON.stringify({fixture:r.migrationFixture,files:r.files.length,allowed:m.P3_HARNESS_MEMBERS.length}));',
+    require('node:url').pathToFileURL(path.join(directory, 'scripts/check-phoenix-diagram-candidate.mjs')).href, JSON.stringify(sourceInputs)], { cwd: directory, env: { ...process.env, PATH: '' }, encoding: 'utf8' });
+  const verified = verify(); assert.equal(verified.status, 0, verified.stderr);
+  assert.equal(JSON.parse(verified.stdout).fixture.manifestBound, true);
+  assert.equal(JSON.parse(verified.stdout).files, files.length);
+  assert.equal(JSON.parse(verified.stdout).allowed, files.length);
+  const unknown = path.join(directory, 'unknown-controller.mjs'); fs.writeFileSync(unknown, '// Unknown driver is not in the authenticated harness contract.\n');
+  const rejected = verify(); assert.notEqual(rejected.status, 0); assert.match(rejected.stderr, /unknown|allowlist/i); fs.unlinkSync(unknown);
   const captureHelp = spawnSync(process.execPath, [path.join(directory, 'tools/phoenix-diagram/tests/support/capture-stdio.mjs'), '--help'], { cwd: directory, env: { ...process.env, PATH: '' }, encoding: 'utf8' });
   assert.equal(captureHelp.status, 0, captureHelp.stderr); assert.match(captureHelp.stdout, /--program.*--stdout.*--stderr/);
   const script = path.join(directory, 'scripts/prepare-phoenix-diagram.mjs');

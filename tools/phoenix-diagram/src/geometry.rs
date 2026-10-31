@@ -67,6 +67,30 @@ pub fn fitted_node_font_size_for_contract(
     minimum.max((fitted * 10.0).floor() / 10.0)
 }
 
+/// Conservative glyph box of one text line: 0.62em per unit, cap height above
+/// the baseline and descenders below it.
+pub fn text_glyph_box(
+    content: &str,
+    x: f64,
+    baseline: f64,
+    font_size: f64,
+    anchor: &str,
+    contract: InputContract,
+) -> Rect {
+    let width = text_units_for_contract(content, contract) * font_size * 0.62;
+    let left = match anchor {
+        "middle" => x - width / 2.0,
+        "end" => x - width,
+        _ => x,
+    };
+    Rect {
+        x: left,
+        y: baseline - font_size * 0.74,
+        width,
+        height: font_size * 0.96,
+    }
+}
+
 pub fn minimum_node_text_width(text: &str, minimum: f64) -> f64 {
     text_units(text) * minimum * 0.6
 }

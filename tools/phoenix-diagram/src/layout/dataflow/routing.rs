@@ -15,6 +15,41 @@ pub(super) fn default_sides(
         ("top", "bottom")
     }
 }
+/// Row of an authored horizontal channel; `via` points take precedence.
+fn channel_y(raw: &Value, from: &MeasuredNode, to: &MeasuredNode) -> Option<f64> {
+    if raw["via"].is_array() {
+        return None;
+    }
+    match string(raw, "route") {
+        "bottom-channel" => Some(number(
+            raw,
+            "channelY",
+            (from.bounds.y + from.bounds.height).max(to.bounds.y + to.bounds.height) + 26.0,
+        )),
+        "top-channel" => Some(number(
+            raw,
+            "channelY",
+            from.bounds.y.min(to.bounds.y) - 24.0,
+        )),
+        _ => None,
+    }
+}
+/// Sides used where the author left fromSide/toSide open. A horizontal
+/// channel is reached through the face toward it; a lateral face would put
+/// the channel riser on the node border and the arrowhead along it.
+pub(super) fn inferred_sides(
+    raw: &Value,
+    from: &MeasuredNode,
+    to: &MeasuredNode,
+) -> (&'static str, &'static str) {
+    match channel_y(raw, from, to) {
+        Some(y) => {
+            let face = |node: &MeasuredNode| if y < node.cy { "top" } else { "bottom" };
+            (face(from), face(to))
+        }
+        None => default_sides(from, to),
+    }
+}
 pub(super) fn stroke_width(raw: &Value) -> f64 {
     number(
         raw,
@@ -368,10 +403,11 @@ pub(super) fn bridges(
 fn route_via(context: &Context<'_>, index: usize, start: Point, end: Point) -> Vec<Point> {
     let flow = &context.flows[index];
     let raw = &flow.raw;
-    let from = &context.nodes[flow.from];
-    let to = &context.nodes[flow.to];
     if raw["via"].is_array() {
         return list(&raw["via"]).iter().map(point).collect();
+    }
+    if let Some(y) = channel_y(raw, &context.nodes[flow.from], &context.nodes[flow.to]) {
+        return vec![p(start.x, y), p(end.x, y)];
     }
     match string(raw, "route") {
         "straight" => Vec::new(),
@@ -382,18 +418,6 @@ fn route_via(context: &Context<'_>, index: usize, start: Point, end: Point) -> V
                 start.x + if end.x > start.x { 44.0 } else { -44.0 },
             );
             vec![p(x, start.y), p(x, end.y)]
-        }
-        "bottom-channel" => {
-            let y = number(
-                raw,
-                "channelY",
-                (from.bounds.y + from.bounds.height).max(to.bounds.y + to.bounds.height) + 26.0,
-            );
-            vec![p(start.x, y), p(end.x, y)]
-        }
-        "top-channel" => {
-            let y = number(raw, "channelY", from.bounds.y.min(to.bounds.y) - 24.0);
-            vec![p(start.x, y), p(end.x, y)]
         }
         _ => {
             if !context.legacy() {

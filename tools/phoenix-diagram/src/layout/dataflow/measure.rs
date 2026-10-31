@@ -94,11 +94,16 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
                 }
             })
             .fold(0.0, f64::max);
+        let title_width = if raw.get("brand").is_some() {
+            units(input, string(raw, "label")) * 10.0 * 0.6 + 8.0 + 48.0
+        } else {
+            0.0
+        };
         let automatic_width = 112.0_f64.max(
             168.0_f64
                 .min((cx - 24.0) * 2.0)
                 .min((view.x - 24.0 - cx) * 2.0)
-                .min(context_width.ceil()),
+                .min(context_width.max(title_width).ceil()),
         );
         let width = number(
             raw,
@@ -139,7 +144,7 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
                 Value::Null,
             )]);
         };
-        let inferred = routing::default_sides(&nodes[from], &nodes[to]);
+        let inferred = routing::inferred_sides(raw, &nodes[from], &nodes[to]);
         let side = |key, fallback: &str| {
             let value = string(raw, key);
             if value.is_empty() || value == "auto" {
@@ -598,7 +603,11 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
             let raw = &node.raw;
             let label = string(raw, "label");
             let has_sub = !string(raw, "sublabel").is_empty();
-            let label_font = fitted(input, label, node.bounds.width, 10.0, 8.0);
+            let label_font = if raw.get("brand").is_some() {
+                10.0
+            } else {
+                fitted(input, label, node.bounds.width, 10.0, 8.0)
+            };
             let sub_font = fitted(
                 input,
                 string(raw, "sublabel"),
@@ -666,6 +675,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                 string(raw, "icon")
             };
             Node {
+                brand: None,
                 authored: authored(
                     raw,
                     "nodes",
@@ -681,6 +691,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                     size: sigil_size,
                 }),
                 text: texts,
+                detail_rows: Vec::new(),
             }
         })
         .collect();
@@ -758,6 +769,8 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                 points: flow.points.clone(),
                 label_plate: Some(plate.label.bounds),
                 text: texts,
+                marker_start: None,
+                marker_end: None,
             }
         })
         .collect();

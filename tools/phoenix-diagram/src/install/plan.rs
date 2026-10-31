@@ -352,7 +352,7 @@ pub(super) fn active(
         &ownership,
     ))?);
     let mut active = Active {
-        schema_version: 1,
+        schema_version: 2,
         tool: "phoenix-diagram".into(),
         tool_version: crate::TOOL_VERSION.into(),
         npm_package_version: prepared.bundle.version.npm_package_version.clone(),

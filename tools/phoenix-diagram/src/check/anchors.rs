@@ -256,7 +256,9 @@ fn sampled_path(
     points: &[Point],
 ) -> Option<crate::check::path::PathAnalysis> {
     let path = match kind {
-        DiagramType::Architecture => geometry::rounded_path(points, 8.0),
+        DiagramType::Architecture | DiagramType::Erd | DiagramType::Class => {
+            geometry::rounded_path(points, 8.0)
+        }
         DiagramType::Workflow if version == 2 => {
             let mut radius: f64 = 8.0;
             for (index, pair) in points.windows(2).enumerate() {
@@ -271,6 +273,7 @@ fn sampled_path(
             }
             geometry::rounded_path(points, radius)
         }
+        DiagramType::Tree => geometry::rounded_path(points, 10.0),
         DiagramType::Lifecycle => geometry::rounded_path(
             points,
             if version == 1 {
@@ -516,7 +519,11 @@ pub fn check_anchors(
             }
             continue;
         }
-        let has_route_geometry = raw["via"].is_array()
+        // The class source reads an empty via as an omitted one.
+        let via_pins = raw["via"]
+            .as_array()
+            .filter(|via| kind != DiagramType::Class || !via.is_empty());
+        let has_route_geometry = via_pins.is_some()
             || raw["route"]
                 .as_str()
                 .is_some_and(|route| !matches!(route, "" | "auto"));
@@ -564,7 +571,7 @@ pub fn check_anchors(
                 }
             }
         }
-        if let Some(via) = raw["via"].as_array() {
+        if let Some(via) = via_pins {
             let via: Option<Vec<_>> = via.iter().map(point).collect();
             if via.is_none_or(|via| {
                 !matches_pins(

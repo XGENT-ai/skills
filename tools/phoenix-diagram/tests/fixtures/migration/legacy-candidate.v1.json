@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-v1-candidate-fixture",
+  "repository": "XGENT-ai/skills",
+  "runId": "40015155073",
+  "runAttempt": 1,
+  "source": {
+    "commit": "c6b1b5bdb9c6729c7ebe07514875b0d2615ca751",
+    "tree": "7d5458c408ac24f08a450b19ee9cf1227215b07c",
+    "inputSha256": "086b5a2fbdab35f31be43eff866ead81180565f046c37ba549401c2f4cefb5f3"
+  },
+  "artifact": {
+    "id": 12530825726,
+    "name": "phoenix-diagram-candidate",
+    "digest": "sha256:c49aba693e9c883da938222c09ae070b36e162111d3014338d69ea38667dce35",
+    "bytes": 37159511
+  },
+  "candidateArchive": {
+    "bytes": 76810240,
+    "sha256": "d79c90305225dc2af3991b4a4c3d232c83703b47be45b6436e6b4c1a3e31bd38"
+  },
+  "tarball": {
+    "bytes": 7479189,
+    "sha256": "d879b90b9aae03df6755dc21348dfdec03ea69c02cdd662486e48a1e912796fc"
+  },
+  "writerSources": [
+    [
+      "tools/phoenix-diagram/src/install/plan.rs",
+      14269,
+      "4fb32ce19d6351668732638ee5098e18358acb13191bf2bac4705d3aae5171f0"
+    ],
+    [
+      "tools/phoenix-diagram/src/install/transaction.rs",
+      26502,
+      "0ebe21cd61f6722c508da36bfc9b51d683d5b7e5098e769ebe403a9bcef3667e"
+    ],
+    [
+      "tools/phoenix-diagram/src/install/state.rs",
+      22115,
+      "16630dd2badce6cc0ff9a4c43a07771511615048e1877c3bde7e99c1bf95e764"
+    ]
+  ],
+  "purpose": "Explicit historical v1 installation precondition only; never a second final candidate, product dependency or execution of inert Archify files."
+}

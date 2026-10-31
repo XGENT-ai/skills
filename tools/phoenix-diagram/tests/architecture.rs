@@ -34,6 +34,255 @@ fn near(actual: f64, expected: &Value, context: &str) {
 }
 
 #[test]
+fn production_wal_route_clears_nested_boundary_title_masks() {
+    use sha2::Digest;
+    let bytes = include_bytes!("fixtures/input/phoenix-v1/production-deployment.architecture.json");
+    assert_eq!(
+        format!("{:x}", sha2::Sha256::digest(bytes)),
+        "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda"
+    );
+    let document: Value = serde_json::from_slice(bytes).unwrap();
+    let compiled = compile(&document, InputContract::PhoenixV1).unwrap();
+    let wal = compiled
+        .relations
+        .iter()
+        .find(|edge| edge.from == "postgres" && edge.to == "replica")
+        .unwrap();
+    assert_eq!(wal.authored.facts, document["connections"][9]);
+    assert_eq!(wal.label, "cross-region WAL");
+    assert_eq!(wal.variant, "security");
+    assert_eq!(
+        wal.text[0].position,
+        scene::Point {
+            x: 1003.0,
+            y: 529.0
+        }
+    );
+    assert_eq!(
+        wal.points,
+        [
+            (903.0, 467.0),
+            (903.0, 553.5),
+            (1103.0, 553.5),
+            (1103.0, 640.0)
+        ]
+        .map(|(x, y)| scene::Point { x, y })
+    );
+    assert_eq!(compiled.meta, document["meta"]);
+    for (node, raw) in compiled
+        .nodes
+        .iter()
+        .zip(document["components"].as_array().unwrap())
+    {
+        assert_eq!(node.authored.facts, *raw);
+        near(node.bounds.x, &raw["pos"][0], &node.authored.id);
+        near(node.bounds.y, &raw["pos"][1], &node.authored.id);
+        near(node.bounds.width, &raw["size"][0], &node.authored.id);
+        near(node.bounds.height, &raw["size"][1], &node.authored.id);
+    }
+    for (index, edge) in compiled.relations.iter().enumerate() {
+        assert_eq!(edge.authored.facts, document["connections"][index]);
+    }
+    for (index, boundary) in compiled.containers.iter().enumerate() {
+        assert_eq!(boundary.authored.facts, document["boundaries"][index]);
+    }
+    assert_wal_title_visibility(&compiled);
+}
+
+fn assert_wal_title_visibility(compiled: &scene::CompiledDiagram) {
+    let index = compiled
+        .relations
+        .iter()
+        .position(|edge| edge.from == "postgres" && edge.to == "replica")
+        .unwrap();
+    let wal = &compiled.relations[index];
+    let html = direction_cue_svg(compiled);
+    let path = html
+        .select(&Selector::parse(&format!("path[data-edge-key='{index}']")).unwrap())
+        .next()
+        .unwrap();
+    assert_eq!(
+        path.value().attr("marker-end"),
+        Some("url(#arrowhead-security)")
+    );
+    let stroke: f64 = path.value().attr("stroke-width").unwrap().parse().unwrap();
+    let marker = html
+        .select(&Selector::parse("#arrowhead-security").unwrap())
+        .next()
+        .unwrap();
+    assert_eq!(marker.value().attr("orient"), Some("auto"));
+    assert_eq!(marker.value().attr("markerunits"), None);
+    let number = |key| marker.value().attr(key).unwrap().parse::<f64>().unwrap();
+    assert_eq!(number("markerWidth"), 10.0);
+    assert_eq!(number("markerHeight"), 7.0);
+    let polygon = marker
+        .select(&Selector::parse("polygon").unwrap())
+        .next()
+        .unwrap();
+    let coordinates: Vec<f64> = polygon
+        .value()
+        .attr("points")
+        .unwrap()
+        .split(|c: char| c.is_whitespace() || c == ',')
+        .filter(|v| !v.is_empty())
+        .map(|v| v.parse().unwrap())
+        .collect();
+    let terminal = &wal.points[wal.points.len() - 2..];
+    let end = terminal[1];
+    let length = (end.x - terminal[0].x).hypot(end.y - terminal[0].y);
+    let (dx, dy) = (
+        (end.x - terminal[0].x) / length,
+        (end.y - terminal[0].y) / length,
+    );
+    let arrow: Vec<_> = coordinates
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|p| scene::Point {
+            x: end.x + (dx * (p[0] - number("refX")) - dy * (p[1] - number("refY"))) * stroke,
+            y: end.y + (dy * (p[0] - number("refX")) + dx * (p[1] - number("refY"))) * stroke,
+        })
+        .collect();
+    let x = arrow.iter().map(|p| p.x).fold(f64::INFINITY, f64::min);
+    let y = arrow.iter().map(|p| p.y).fold(f64::INFINITY, f64::min);
+    let marker_bounds = scene::Rect {
+        x,
+        y,
+        width: arrow.iter().map(|p| p.x).fold(f64::NEG_INFINITY, f64::max) - x,
+        height: arrow.iter().map(|p| p.y).fold(f64::NEG_INFINITY, f64::max) - y,
+    };
+    let contains = |outer: scene::Rect, inner: scene::Rect| {
+        inner.x >= outer.x
+            && inner.y >= outer.y
+            && inner.x + inner.width <= outer.x + outer.width
+            && inner.y + inner.height <= outer.y + outer.height
+    };
+    let mut occlusions = vec![];
+    for boundary in compiled
+        .containers
+        .iter()
+        .filter(|boundary| boundary.members.iter().any(|member| member == "replica"))
+    {
+        let mask = boundary.label_plate.unwrap();
+        let path_hidden = wal
+            .points
+            .windows(2)
+            .any(|pair| geometry::segment_intersects_rect(pair[0], pair[1], &mask, 0.0));
+        let marker_hidden = geometry::rects_overlap(&mask, &marker_bounds, 0.0);
+        if path_hidden || marker_hidden {
+            occlusions.push((&boundary.authored.id, mask, path_hidden, marker_hidden));
+        }
+        assert!(compiled.nodes.iter().all(|node| !geometry::rects_overlap(
+            &mask,
+            &node.bounds,
+            0.0
+        )));
+        assert!(compiled
+            .containers
+            .iter()
+            .filter(|other| other.authored.id != boundary.authored.id)
+            .all(|other| !geometry::rects_overlap(&mask, &other.label_plate.unwrap(), 0.0)));
+        for other in compiled
+            .containers
+            .iter()
+            .filter(|other| other.authored.id != boundary.authored.id)
+        {
+            let b = other.bounds;
+            let corners = [
+                (b.x, b.y),
+                (b.x + b.width, b.y),
+                (b.x + b.width, b.y + b.height),
+                (b.x, b.y + b.height),
+                (b.x, b.y),
+            ]
+            .map(|(x, y)| scene::Point { x, y });
+            assert!(
+                corners
+                    .windows(2)
+                    .all(|pair| !geometry::segment_intersects_rect(pair[0], pair[1], &mask, 0.0)),
+                "title {} {mask:?} masks frame {} {b:?}",
+                boundary.authored.id,
+                other.authored.id
+            );
+        }
+        assert!(contains(boundary.bounds, mask));
+        assert!(contains(compiled.view_box, boundary.bounds));
+    }
+    assert!(
+        occlusions.is_empty(),
+        "WAL path/actual SVG marker hidden by title masks (id, mask, path, marker): {occlusions:?}"
+    );
+}
+
+#[test]
+fn nested_wrap_title_fallback_is_generic_and_preserves_explicit_route_and_ports() {
+    let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Nested wrap","output":"diagram.html","quality_profile":"showcase","legend":{"mode":"hidden"}},"components":[{"id":"origin","type":"backend","label":"Source","pos":[100,100],"size":[120,60]},{"id":"destination","type":"database","label":"Target","pos":[100,300],"size":[120,60]}],"boundaries":[{"kind":"region","label":"Independent region boundary","wraps":["destination"],"pad":30},{"kind":"security-group","label":"Private scope","wraps":["destination"],"pad":14}],"connections":[{"from":"origin","to":"destination","label":"R","route":"orthogonal-v","fromSide":"bottom","toSide":"top"}]});
+    let compiled = compile(&document, InputContract::PhoenixV1).unwrap();
+    assert_eq!(
+        compiled.relations[0].points,
+        [
+            (160.0, 160.0),
+            (160.0, 230.0),
+            (160.0, 230.0),
+            (160.0, 300.0)
+        ]
+        .map(|(x, y)| scene::Point { x, y })
+    );
+    assert_eq!(
+        compiled.relations[0].authored.facts,
+        document["connections"][0]
+    );
+    for boundary in &compiled.containers {
+        let title = boundary.label_plate.unwrap();
+        assert!(compiled.relations[0]
+            .points
+            .windows(2)
+            .all(|pair| !geometry::segment_intersects_rect(pair[0], pair[1], &title, 0.0)));
+        assert!(compiled.nodes.iter().all(|node| !geometry::rects_overlap(
+            &title,
+            &node.bounds,
+            0.0
+        )));
+    }
+}
+
+#[test]
+fn title_fallback_preserves_an_authored_canvas_and_rejects_insufficient_space() {
+    let base: Value = serde_json::from_slice(include_bytes!(
+        "fixtures/input/phoenix-v1/production-deployment.architecture.json"
+    ))
+    .unwrap();
+    for height in [900.0, 730.0] {
+        let mut document = base.clone();
+        document["meta"]["legend"] = json!({"mode":"hidden"});
+        document["meta"]["viewBox"] = json!([1400.0, height]);
+        if height == 900.0 {
+            let compiled = compile(&document, InputContract::PhoenixV1).unwrap();
+            assert_eq!(compiled.meta, document["meta"]);
+            assert_eq!(
+                compiled.view_box,
+                scene::Rect {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 1400.0,
+                    height
+                }
+            );
+            assert_wal_title_visibility(&compiled);
+        } else {
+            let errors = compile(&document, InputContract::PhoenixV1).unwrap_err();
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.code == "layout/boundary-out-of-bounds"),
+                "{errors:?}"
+            );
+            assert_eq!(document["meta"]["viewBox"], json!([1400.0, height]));
+        }
+    }
+}
+
+#[test]
 fn frozen_legacy_and_reference_geometry_oracles() {
     let corpus: Value =
         serde_json::from_slice(include_bytes!("fixtures/architecture/oracle.json")).unwrap();
@@ -56,6 +305,11 @@ fn frozen_legacy_and_reference_geometry_oracles() {
             let label = format!("{name}/{}", case["name"]);
             let actual = compile(&case["input"], contract)
                 .unwrap_or_else(|errors| panic!("{label}: {errors:?}"));
+            let repaired_title = contract == InputContract::PhoenixV1
+                && case["name"] == "production-deployment.architecture";
+            if repaired_title {
+                assert_wal_title_visibility(&actual);
+            }
             assert_eq!(
                 actual.schema_version,
                 case["input"]["schema_version"].as_u64().unwrap() as u32
@@ -87,7 +341,14 @@ fn frozen_legacy_and_reference_geometry_oracles() {
                 assert!(!edge.authored.geometry_provenance.is_empty());
             }
             near(actual.view_box.width, &expected["viewBox"][0], &label);
-            near(actual.view_box.height, &expected["viewBox"][1], &label);
+            // Only the repaired production footer adds a 16px title, a 2px
+            // child-frame gap and a 2px inset to the derived height.
+            let footer_growth = if repaired_title { 20.0 } else { 0.0 };
+            near(
+                actual.view_box.height,
+                &json!(expected["viewBox"][1].as_f64().unwrap() + footer_growth),
+                &label,
+            );
             assert_eq!(
                 actual.nodes.len(),
                 expected["components"].as_array().unwrap().len(),
@@ -124,7 +385,11 @@ fn frozen_legacy_and_reference_geometry_oracles() {
                     (boundary.bounds.width, "width"),
                     (boundary.bounds.height, "height"),
                 ] {
-                    near(a, &oracle[field], &label);
+                    let mut expected = oracle[field].clone();
+                    if repaired_title && boundary.authored.id == "boundary-2" && field == "height" {
+                        expected = json!(expected.as_f64().unwrap() + footer_growth);
+                    }
+                    near(a, &expected, &label);
                 }
                 let plate = boundary
                     .label_plate
@@ -135,9 +400,16 @@ fn frozen_legacy_and_reference_geometry_oracles() {
                     (plate.width, "width"),
                     (plate.height, "height"),
                 ] {
+                    let mut expected_coordinate = oracle["titlePlate"][field].clone();
+                    if repaired_title && boundary.authored.id == "boundary-2" && field == "y" {
+                        let child = &expected["boundaries"][3];
+                        expected_coordinate = json!(
+                            child["y"].as_f64().unwrap() + child["height"].as_f64().unwrap() + 2.0
+                        );
+                    }
                     near(
                         a,
-                        &oracle["titlePlate"][field],
+                        &expected_coordinate,
                         &format!("{label}/boundary-title/{field}"),
                     );
                 }

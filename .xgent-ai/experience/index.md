@@ -42,6 +42,9 @@
 - `49a107bf-abd1-462b-9910-ff664d6be67d` · 指令质量评测与自进化 v2 · [记录](49a107bf-abd1-462b-9910-ff664d6be67d.md)
 - 3897ca89-a9bf-40d6-a0ad-91c58040eef2 · [Phoenix Diagram 分支合并 main](3897ca89-a9bf-40d6-a0ad-91c58040eef2.md)
 
+- d44fc342-9869-497e-80a0-021d3e0c3711 · [Phoenix Diagram P2 收口（钥匙串修复候选）](d44fc342-9869-497e-80a0-021d3e0c3711.md)
+
+- b63a54df-d1f0-48c9-b624-3fc5174201fd · [Phoenix Diagram P2 gaps 实施](b63a54df-d1f0-48c9-b624-3fc5174201fd.md)
 - 074c0f0e-40db-4006-aa7a-bb0a2d1b68a2 · [合并 origin/main 的本机测试环境](074c0f0e-40db-4006-aa7a-bb0a2d1b68a2.md)
 
 - 837a3f59-702b-4195-8e5c-39a07ca47966 · [Phoenix 安装冲突修复](837a3f59-702b-4195-8e5c-39a07ca47966.md)
@@ -58,6 +61,11 @@
 - 33882781-4697-4a23-a6b2-3c964ad41b34 · [resolve-blocked 收口与用户动作](33882781-4697-4a23-a6b2-3c964ad41b34.md)
 
 - [fb13c2c1-9010-4cf3-880f-c74f5a0551f5 — 重建 optimize-agents-md](fb13c2c1-9010-4cf3-880f-c74f5a0551f5.md)
+
+- f1ab0791-df3f-4265-ae5d-b37c89cd87e4 · [合并 main 与 P3 计划：外层 Node 版本](f1ab0791-df3f-4265-ae5d-b37c89cd87e4.md)
+
+- 147aadc5-6d72-4ba3-ba23-72c107039d30 · [Phoenix Diagram P3 实施](147aadc5-6d72-4ba3-ba23-72c107039d30.md)
+
 - 752d0b72-4bd7-4d3f-b131-c0daea48945e · [review-ui 产物忽略规则验证](752d0b72-4bd7-4d3f-b131-c0daea48945e.md)
 - cb681af1-a163-4524-8acc-dc104f5d8629 · [clean-artifacts 创建与 Git 命令验证](cb681af1-a163-4524-8acc-dc104f5d8629.md)
 

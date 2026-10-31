@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "申请审批流程",
+    "output": "diagram.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "legend": {
+      "entries": {
+        "backend": { "label": "流程步骤" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "main", "label": "审批主流程" },
+    { "id": "retry", "label": "补充与重试" }
+  ],
+  "nodes": [
+    { "id": "A", "lane": "main", "col": 0, "type": "backend", "label": "接收申请", "icon": "start" },
+    { "id": "B", "lane": "main", "col": 1, "type": "backend", "label": "资料齐全?", "icon": "decision" },
+    { "id": "C", "lane": "retry", "col": 1, "type": "backend", "label": "补充资料", "icon": "active" },
+    { "id": "D", "lane": "main", "col": 3, "type": "backend", "label": "预算已批准?", "icon": "decision" },
+    { "id": "E", "lane": "retry", "col": 3, "type": "backend", "label": "申请预算", "icon": "active" },
+    { "id": "F", "lane": "main", "col": 5, "type": "backend", "label": "完成审批", "icon": "success" }
+  ],
+  "edges": [
+    { "id": "A-B", "from": "A", "to": "B", "role": "main" },
+    { "id": "B-C", "from": "B", "to": "C", "label": "否", "role": "branch" },
+    { "id": "C-A", "from": "C", "to": "A", "label": "返回接收", "role": "return" },
+    { "id": "B-D", "from": "B", "to": "D", "label": "是", "role": "main" },
+    { "id": "D-E", "from": "D", "to": "E", "label": "否", "role": "branch" },
+    { "id": "E-D", "from": "E", "to": "D", "label": "重试判断", "role": "return" },
+    { "id": "D-F", "from": "D", "to": "F", "label": "是", "role": "main" }
+  ],
+  "mainPath": ["A", "B", "D", "F"],
+  "semanticChecks": {
+    "requiredEdges": [
+      { "from": "A", "to": "B" },
+      { "from": "B", "to": "C" },
+      { "from": "C", "to": "A" },
+      { "from": "B", "to": "D" },
+      { "from": "D", "to": "E" },
+      { "from": "E", "to": "D" },
+      { "from": "D", "to": "F" }
+    ]
+  }
+}

@@ -34,22 +34,25 @@ fn dom_text(value: &str) -> String {
         .replace('\0', "\u{fffd}")
 }
 
+/// The single embedded metadata object of an artifact.
+pub(crate) fn embedded(document: &Html) -> Option<Value> {
+    let selector = Selector::parse("script#phoenix-diagram-metadata[type='application/json']")
+        .expect("static selector");
+    let mut scripts = document.select(&selector);
+    let script = scripts.next()?;
+    if scripts.next().is_some() {
+        return None;
+    }
+    serde_json::from_str::<Value>(&script.text().collect::<String>()).ok()
+}
+
 /// Bind authored facts without running layout or serializing another artifact.
-pub(super) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
+pub(crate) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
     let Ok(source) = std::str::from_utf8(bytes) else {
         return false;
     };
     let document = Html::parse_document(source);
-    let selector = Selector::parse("script#phoenix-diagram-metadata[type='application/json']")
-        .expect("static selector");
-    let mut scripts = document.select(&selector);
-    let Some(script) = scripts.next() else {
-        return false;
-    };
-    if scripts.next().is_some() {
-        return false;
-    }
-    let Ok(metadata) = serde_json::from_str::<Value>(&script.text().collect::<String>()) else {
+    let Some(metadata) = embedded(&document) else {
         return false;
     };
     if metadata["tool"] != "phoenix-diagram"
@@ -97,12 +100,30 @@ pub(super) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
         DiagramType::Sequence => ("participants", "messages"),
         DiagramType::Dataflow => ("nodes", "flows"),
         DiagramType::Lifecycle => ("states", "transitions"),
+        DiagramType::Erd | DiagramType::Class => (
+            if input.diagram_type == DiagramType::Erd {
+                "entities"
+            } else {
+                "types"
+            },
+            "relationships",
+        ),
+        DiagramType::Tree => ("nodes", ""),
+        DiagramType::Timeline => ("events", ""),
+        DiagramType::Waterfall => ("spans", ""),
+    };
+    // Tree edges are derived from each node's declared parent.
+    let relation_facts: Vec<Value> = if input.diagram_type == DiagramType::Tree {
+        array(&input.document, "nodes")
+            .iter()
+            .filter(|node| node.get("parent").is_some())
+            .map(|node| json!({"from":node["parent"],"to":node["id"]}))
+            .collect()
+    } else {
+        array(&input.document, relations).to_vec()
     };
     if !same_members(&metadata["graph"]["nodes"], array(&input.document, nodes))
-        || !same_members(
-            &metadata["graph"]["relations"],
-            array(&input.document, relations),
-        )
+        || !same_members(&metadata["graph"]["relations"], &relation_facts)
     {
         return false;
     }
@@ -178,6 +199,82 @@ pub(super) fn matches(bytes: &[u8], input: &DiagramInput) -> bool {
                         .get("mainPath")
                         .cloned()
                         .unwrap_or_else(|| json!([]))
+        }
+        DiagramFacts::Erd {
+            entities,
+            relationships,
+        } => {
+            input.diagram_type == DiagramType::Erd
+                && entities == array(&input.document, "entities")
+                && relationships == array(&input.document, "relationships")
+        }
+        DiagramFacts::Class {
+            types,
+            relationships,
+        } => {
+            input.diagram_type == DiagramType::Class
+                && types == array(&input.document, "types")
+                && relationships == array(&input.document, "relationships")
+        }
+        DiagramFacts::Tree {
+            root,
+            nodes,
+            direction,
+        } => {
+            input.diagram_type == DiagramType::Tree
+                && nodes == array(&input.document, "nodes")
+                && nodes
+                    .iter()
+                    .filter(|node| node.get("parent").is_none())
+                    .map(|node| &node["id"])
+                    .eq([&json!(root)])
+                && direction
+                    == input.document["layout"]["direction"]
+                        .as_str()
+                        .unwrap_or("down")
+        }
+        DiagramFacts::Timeline {
+            timezone,
+            evidence,
+            lanes,
+            events,
+            ..
+        } => {
+            let expected: Vec<Value> = array(&input.document, "events")
+                .iter()
+                .map(|event| {
+                    json!({"id":event["id"],"lane":event["lane"],
+                        "atMs":event["at"].as_str().and_then(crate::format::time::parse_timestamp),
+                        "precision":event["precision"].as_str().unwrap_or("time"),
+                        "kind":event["kind"].as_str().unwrap_or("default")})
+                })
+                .collect();
+            input.diagram_type == DiagramType::Timeline
+                && timezone == input.document["meta"]["timezone"].as_str().unwrap_or("UTC")
+                && json!(evidence) == input.document["meta"]["evidence"]
+                && lanes == array(&input.document, "lanes")
+                && same_members(&json!(events), &expected)
+        }
+        DiagramFacts::Waterfall {
+            unit,
+            evidence,
+            spans,
+        } => {
+            let expected: Vec<Value> = array(&input.document, "spans")
+                .iter()
+                .map(|span| {
+                    let start = span["start"].as_f64();
+                    let end = span["end"]
+                        .as_f64()
+                        .or_else(|| Some(start? + span["duration"].as_f64()?));
+                    json!({"id":span["id"],"parent":span["parent"],"start":start,"end":end,
+                        "status":span["status"].as_str().unwrap_or("ok"),"service":span["service"]})
+                })
+                .collect();
+            input.diagram_type == DiagramType::Waterfall
+                && unit == input.document["meta"]["unit"].as_str().unwrap_or("ms")
+                && json!(evidence) == input.document["meta"]["evidence"]
+                && same_members(&json!(spans), &expected)
         }
     };
     if !facts_match {

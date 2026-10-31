@@ -36,12 +36,49 @@ pub struct Sigil {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrandPlacement {
+    pub bounds: Rect,
+    pub resource: crate::brands::ResolvedBrand,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Node {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub brand: Option<BrandPlacement>,
     pub authored: Authored,
     pub bounds: Rect,
     pub sigil: Option<Sigil>,
     pub label: String,
     pub text: Vec<Text>,
+    /// ERD columns and class members: context rows inside the node body.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub detail_rows: Vec<DetailRow>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DetailRow {
+    pub source_path: String,
+    pub bounds: Rect,
+    pub text: Vec<Text>,
+    pub role: String,
+}
+
+/// Relationship end symbols. ERD ends are crow's-foot cardinalities; class ends
+/// are UML notation. The end a marker sits on fixes its SVG orientation.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Marker {
+    ErOne,
+    ErOneOptional,
+    ErMany,
+    ErManyOptional,
+    Open,
+    Triangle,
+    DiamondFilled,
+    DiamondHollow,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -62,6 +99,11 @@ pub struct Relation {
     pub points: Vec<Point>,
     pub label_plate: Option<Rect>,
     pub text: Vec<Text>,
+    // Absent for the original five types, which keep their variant arrowheads.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub marker_start: Option<Marker>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub marker_end: Option<Marker>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -132,6 +174,54 @@ pub enum DiagramFacts {
         lanes: Vec<Value>,
         main_path: Vec<String>,
     },
+    Erd {
+        entities: Vec<Value>,
+        relationships: Vec<Value>,
+    },
+    Class {
+        types: Vec<Value>,
+        relationships: Vec<Value>,
+    },
+    Tree {
+        root: String,
+        nodes: Vec<Value>,
+        direction: String,
+    },
+    Timeline {
+        timezone: String,
+        evidence: String,
+        lanes: Vec<Value>,
+        events: Vec<TimelineEvent>,
+        /// Compressed quiet periods as [from, to] instants in milliseconds.
+        breaks: Vec<[i64; 2]>,
+    },
+    Waterfall {
+        unit: String,
+        evidence: String,
+        spans: Vec<WaterfallSpan>,
+    },
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineEvent {
+    pub id: String,
+    pub lane: Option<String>,
+    pub at_ms: i64,
+    pub precision: String,
+    pub kind: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WaterfallSpan {
+    pub id: String,
+    pub parent: Option<String>,
+    pub start: f64,
+    /// The recorded end; an incomplete span without one is open.
+    pub end: Option<f64>,
+    pub status: String,
+    pub service: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

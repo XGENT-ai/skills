@@ -5,8 +5,13 @@ name: Phoenix Diagram
 on:
   workflow_dispatch:
     inputs:
+      profile:
+        description: Candidate acceptance contract
+        type: choice
+        options: [p2, p3]
+        default: p2
       await_review:
-        description: Wait for actual image review in the original consumer jobs
+        description: Wait for P2 image review in the original jobs; P3 full review runs locally
         type: boolean
         default: false
   push:
@@ -40,6 +45,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE: ${{ inputs.profile || 'p2' }}
   MISE_AUTO_INSTALL: 'false'
   MISE_EXEC_AUTO_INSTALL: 'false'
   CARGO_NET_OFFLINE: 'true'
@@ -155,6 +161,15 @@ jobs:
         run: mise exec --no-deps -- node scripts/build-phoenix-diagram.mjs --development --output-dir local/phoenix-diagram/ci-release/${{ matrix.platform }}
       - name: Run native Diagram tests offline
         id: native
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: '2'
+          CARGO_PROFILE_TEST_OPT_LEVEL: '2'
+          CARGO_PROFILE_DEV_DEBUG: '0'
+          CARGO_PROFILE_TEST_DEBUG: '0'
+          CARGO_PROFILE_DEV_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_DEV_OVERFLOW_CHECKS: 'true'
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: 'true'
         run: mise exec --no-deps -- mbx test --manifest-path tools/phoenix-diagram/Cargo.toml --locked --offline
       - name: Preserve native file modes in the artifact
         id: archive
@@ -188,6 +203,9 @@ jobs:
           const archive = `${process.env.RUNNER_TEMP}/phoenix-diagram-native-${process.env.PHOENIX_TARGET}.tar`;
           const bytes = fs.existsSync(archive) ? fs.readFileSync(archive) : null;
           const record = {schemaVersion:1, tool:'phoenix-diagram', workflowRun:process.env.GITHUB_RUN_ID, sourceCommit:process.env.GITHUB_SHA, target:process.env.PHOENIX_TARGET, phases, archive:bytes ? {bytes:bytes.length, sha256:crypto.createHash('sha256').update(bytes).digest('hex')} : null, upload:{id:process.env.PHOENIX_ARTIFACT_ID,url:process.env.PHOENIX_ARTIFACT_URL,digest:process.env.PHOENIX_ARTIFACT_DIGEST}, browserAcceptance:'not-run', visualReview: 'required-pending', providerSessionAcceptance: 'not-run', publication:'not-requested'};
+          const testEnginePath = 'tools/phoenix-diagram/target/debug/phoenix-diagram';
+          const testEngineStat = fs.existsSync(testEnginePath) ? fs.statSync(testEnginePath) : null;
+          record.nativeTestEngine = testEngineStat ? {path:testEnginePath, bytes:testEngineStat.size, links:testEngineStat.nlink, scope:'Compiler output size diagnostic only'} : null;
           fs.mkdirSync('local/phoenix-diagram/ci-prepare', {recursive:true});
           fs.writeFileSync(`local/phoenix-diagram/ci-prepare/${record.target}-ci-results.json`, JSON.stringify(record,null,2)+'\n');
           NODE
@@ -263,11 +281,14 @@ jobs:
       - name: Archive the isolated maintenance harness
         id: harness_archive
         run: |
+          node scripts/collect-phoenix-diagram-migration-sources.mjs --check-fixture
           tar -cpf "$RUNNER_TEMP/phoenix-diagram-harness.tar" \
+            scripts/aggregate-phoenix-diagram-candidate.mjs \
             scripts/check-phoenix-diagram-candidate.mjs \
             scripts/test-phoenix-diagram.mjs \
             scripts/test-phoenix-diagram-core.mjs \
             scripts/test-phoenix-diagram-runtime.mjs \
+            scripts/test-phoenix-diagram-scopes.mjs \
             scripts/test-phoenix-diagram-recovery.mjs \
             scripts/pack-phoenix-diagram-candidate.mjs \
             scripts/build-phoenix-diagram.mjs \
@@ -278,7 +299,20 @@ jobs:
             tools/phoenix-diagram/tests/support/export-browser.mjs \
             tools/phoenix-diagram/tests/support/export-page.mjs \
             tools/phoenix-diagram/tests/support/export-reader.mjs \
+            tools/phoenix-diagram/tests/support/explore-reader.mjs \
             tools/phoenix-diagram/tests/support/capture-stdio.mjs \
+            tools/phoenix-diagram/tests/p3-acceptance.mjs \
+            tools/phoenix-diagram/tests/support/p3-state.mjs \
+            tools/phoenix-diagram/tests/support/p3-processes.mjs \
+            tools/phoenix-diagram/tests/support/p3-migration.mjs \
+            tools/phoenix-diagram/tests/support/p3-migration-run.mjs \
+            tools/phoenix-diagram/tests/support/p3-provider.mjs \
+            tools/phoenix-diagram/tests/support/capture-p3-stdio.mjs \
+            tools/phoenix-diagram/tests/support/capture-p3-provider.mjs \
+            tools/phoenix-diagram/tests/provider/p3-scenarios.json \
+            tools/phoenix-diagram/tests/fixtures/brands/official-resource.json \
+            tools/phoenix-diagram/tests/fixtures/migration/legacy-sources.v1.json.gz \
+            tools/phoenix-diagram/tests/fixtures/migration/legacy-candidate.v1.json \
             tools/phoenix-ui/build-tool-assets.json \
             tools/phoenix-diagram/build-tools.lock.json \
             LICENSE \
@@ -354,7 +388,7 @@ jobs:
     name: Consume the same tgz on ${{ matrix.platform }}
     needs: assemble
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ inputs.profile == 'p3' && 240 || 120 }}
     strategy:
       fail-fast: false
       matrix:
@@ -433,9 +467,46 @@ jobs:
           sudo apparmor_parser --replace "$profile"
       # This runner has the transferred Node harness and candidate only. Every
       # product bin, installer, native engine and Reader operation uses the tgz.
+      - name: Fetch the fixed historical v1 installation precondition
+        if: env.PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE == 'p3'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: phoenix-diagram-candidate
+          repository: XGENT-ai/skills
+          run-id: '40015155073'
+          github-token: ${{ github.token }}
+          path: local/phoenix-diagram/legacy-download
+      - name: Verify the historical precondition before extraction
+        if: env.PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE == 'p3'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import crypto from 'node:crypto'; import assert from 'node:assert/strict';
+          const fixed=JSON.parse(fs.readFileSync('local/phoenix-diagram/harness/tools/phoenix-diagram/tests/fixtures/migration/legacy-candidate.v1.json'));
+          assert.equal(fixed.repository,'XGENT-ai/skills'); assert.equal(fixed.runId,'40015155073');
+          const bytes=fs.readFileSync('local/phoenix-diagram/legacy-download/phoenix-diagram-candidate.tar');
+          assert.equal(bytes.length,fixed.candidateArchive.bytes); assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),fixed.candidateArchive.sha256);
+          NODE
+          tar -C local/phoenix-diagram/legacy-download -xpf local/phoenix-diagram/legacy-download/phoenix-diagram-candidate.tar
       - name: Consume the unchanged tgz through its package entry points
         id: consume
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}"
+        run: |
+          if [ "$PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE" = p3 ]; then
+            mkdir -p local/phoenix-diagram/ci-prepare
+            set +e
+            node local/phoenix-diagram/harness/tools/phoenix-diagram/tests/p3-acceptance.mjs --stage all --candidate-dir local/phoenix-diagram/download/candidate --legacy-candidate-dir local/phoenix-diagram/legacy-download/candidate --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --output-dir local/phoenix-diagram/all-consumer > local/phoenix-diagram/ci-prepare/p3-process-result.json
+            p3_exit=$?
+            set -e
+            PHOENIX_P3_EXIT="$p3_exit" node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import assert from 'node:assert/strict';
+          const result=JSON.parse(fs.readFileSync('local/phoenix-diagram/ci-prepare/p3-process-result.json'));
+          const exitCode=Number(process.env.PHOENIX_P3_EXIT);
+          assert([0,3].includes(exitCode),'P3 process failed'); assert.equal(result.automatedStatus,'pass','P3 automatic gates are incomplete');
+          assert.equal(result.exitCode,exitCode); assert.equal(result.profile,'p3');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`p3_exit_code=${exitCode}\n`);
+          NODE
+          else
+            node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --profile "$PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE"
+          fi
       - name: Select the original files for actual image review
         id: review_material
         if: steps.consume.outcome == 'success'
@@ -446,7 +517,7 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs'; import path from 'node:path'; import assert from 'node:assert/strict'; import {randomBytes} from 'node:crypto';
-          import {readSnapshot,readBound,bound} from './local/phoenix-diagram/harness/scripts/test-phoenix-diagram-core.mjs';
+          import {readSnapshot,readBound,bound,TYPES,contractsFor} from './local/phoenix-diagram/harness/scripts/test-phoenix-diagram-core.mjs';
           const root=process.env.PHOENIX_REVIEW_ROOT,stat=fs.lstatSync(root),file=readSnapshot(process.env.PHOENIX_REVIEW_STATE),state=JSON.parse(file.content);
           assert(path.isAbsolute(root) && fs.realpathSync(root)===root && stat.isDirectory() && !stat.isSymbolicLink() && stat.uid===process.getuid() && (stat.mode&0o7777)===0o700);
           assert.equal(file.path,path.join(root,'consumer-state.json')); assert.equal(state.runRoot,root);
@@ -461,7 +532,7 @@ jobs:
           assert.equal(request.schemaVersion,1); assert.equal(request.kind,'phoenix-diagram-review-request'); assert.deepEqual(request.state,bound(file)); readBound(request.state,'original consumer state');
           assert.equal(envelope.schemaVersion,1); assert.equal(envelope.kind,'phoenix-diagram-candidate-review');
           for(const [name,expected] of Object.entries({repository:state.repository,runId:state.runId,target:state.target,nonce:state.nonce,stateSha256:file.identity.sha256,candidateSha256:state.candidate.tarball.identity.sha256,sourceCommit:state.source.commit}))assert.equal(envelope[name],expected);
-          const ids=['architecture','workflow','sequence','dataflow','lifecycle'].flatMap(type=>[`new-${type}`,`legacy-${type}`]);
+          const ids=TYPES.flatMap(type=>contractsFor(type).map(contract=>`${contract==='phoenix-v1'?'new':'legacy'}-${type}`));
           assert.deepEqual(state.cases.map(entry=>entry.id).sort(),ids.slice().sort()); assert.deepEqual(Object.keys(envelope.records).sort(),ids.slice().sort());
           const files=[bound(file),bound(requestFile)],scopes=['1440x900:light','1440x900:dark','2048x1320:light','2048x1320:dark'];
           for(const entry of state.cases) {
@@ -474,7 +545,7 @@ jobs:
               assert.equal(current.content.subarray(0,8).toString('hex'),'89504e470d0a1a0a'); files.push(bound(current));
             }
           }
-          assert.equal(files.length,42); assert.equal(new Set(files.map(entry=>entry.path)).size,42);
+          assert.equal(files.length,62); assert.equal(new Set(files.map(entry=>entry.path)).size,62);
           for(const entry of files) {assert(!/[\x00-\x1f\x7f*?\[\]{}!]/.test(entry.path));readBound(entry,'unchanged original review material');}
           const delimiter=`PHOENIX_REVIEW_${randomBytes(12).toString('hex')}`;
           fs.appendFileSync(process.env.GITHUB_OUTPUT,`review_paths<<${delimiter}\n${files.map(entry=>entry.path).join('\n')}\n${delimiter}\n`);
@@ -494,12 +565,12 @@ jobs:
       # read-only polling step never pushes a ref or starts another finalize.
       - name: Resume the same delivery after actual image review
         id: review
-        if: github.event_name == 'workflow_dispatch' && inputs.await_review == true && steps.consume.outcome == 'success' && steps.review_request.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && inputs.await_review == true && env.PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE != 'p3' && steps.consume.outcome == 'success' && steps.review_request.outcome == 'success'
         timeout-minutes: 90
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PHOENIX_DIAGRAM_RESUME_STATE: ${{ steps.consume.outputs.state_path }}
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --resume "$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review/$GITHUB_RUN_ID"
+        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target ${{ matrix.platform }} --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --resume "$PHOENIX_DIAGRAM_RESUME_STATE" --review-ref "phoenix-diagram-review/$GITHUB_RUN_ID" --profile "$PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE"
       - name: Record actual consumer phases
         if: always()
         env:
@@ -510,15 +581,23 @@ jobs:
           PHOENIX_REVIEW_ARTIFACT_ID: ${{ steps.review_request.outputs.artifact-id }}
           PHOENIX_REVIEW_ARTIFACT_DIGEST: ${{ steps.review_request.outputs.artifact-digest }}
           PHOENIX_STATE_PATH: ${{ steps.review.outputs.state_path || steps.consume.outputs.state_path }}
+          PHOENIX_P3_STATE_PATH: ${{ steps.consume.outputs.p3_state_path }}
+          PHOENIX_P3_EXIT_CODE: ${{ steps.consume.outputs.p3_exit_code }}
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import crypto from 'node:crypto';
+          import path from 'node:path';
           const statePath=process.env.PHOENIX_STATE_PATH;
           const stateBytes=statePath && fs.existsSync(statePath) && fs.lstatSync(statePath).isFile() && !fs.lstatSync(statePath).isSymbolicLink() ? fs.readFileSync(statePath) : null;
           const record={schemaVersion:1,tool:'phoenix-diagram',workflowRun:process.env.GITHUB_RUN_ID,sourceCommit:process.env.GITHUB_SHA,target:process.env.PHOENIX_TARGET,node:process.version,phases:{prepare:process.env.PHOENIX_PREPARE_RESULT||'not-run',consume:process.env.PHOENIX_CONSUME_RESULT||'not-run',review:process.env.PHOENIX_REVIEW_RESULT||'not-run'},candidate:{sha256:process.env.PHOENIX_DIAGRAM_CANDIDATE_SHA256,tgzSha256:process.env.PHOENIX_DIAGRAM_TGZ_SHA256,artifactId:process.env.PHOENIX_DIAGRAM_ARTIFACT_ID,artifactDigest:process.env.PHOENIX_DIAGRAM_ARTIFACT_DIGEST},harness:{sha256:process.env.PHOENIX_DIAGRAM_HARNESS_SHA256,artifactId:process.env.PHOENIX_DIAGRAM_HARNESS_ARTIFACT_ID,artifactDigest:process.env.PHOENIX_DIAGRAM_HARNESS_ARTIFACT_DIGEST},reviewRequest:{artifactId:process.env.PHOENIX_REVIEW_ARTIFACT_ID,artifactDigest:process.env.PHOENIX_REVIEW_ARTIFACT_DIGEST},visualReview:'see-bound-consumer-evidence',providerSessionAcceptance: 'not-run',publication:'not-requested'};
           fs.mkdirSync('local/phoenix-diagram/ci-prepare',{recursive:true});
           record.state=stateBytes ? {path:statePath,identity:{sha256:crypto.createHash('sha256').update(stateBytes).digest('hex'),bytes:stateBytes.length}} : null;
+          record.profile=process.env.PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE;
+          if(record.profile==='p3') {
+            const bind=file=>{if(!file||!fs.existsSync(file))return null;const stat=fs.lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink())return null;const bytes=fs.readFileSync(file);return{path:path.resolve(file),identity:{sha256:crypto.createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length}};};
+            record.p3={state:bind(process.env.PHOENIX_P3_STATE_PATH),process:bind('local/phoenix-diagram/ci-prepare/p3-process-result.json'),exitCode:process.env.PHOENIX_P3_EXIT_CODE?Number(process.env.PHOENIX_P3_EXIT_CODE):null};
+          }
           fs.writeFileSync(`local/phoenix-diagram/ci-prepare/${record.target}-consume-ci-results.json`,JSON.stringify(record,null,2)+'\n');
           NODE
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -530,6 +609,7 @@ jobs:
             ${{ steps.prepare.outputs.browser_evidence_dir }}
             ${{ steps.prepare.outputs.npm_evidence_dir }}
             ${{ steps.consume.outputs.evidence_dir }}
+            ${{ steps.consume.outputs.p3_evidence_dir }}
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
@@ -592,7 +672,7 @@ jobs:
         run: node local/phoenix-diagram/harness/scripts/prepare-phoenix-diagram.mjs --prepare-consumer
       - name: Consume only the same tgz on the declared Node floor
         id: consume
-        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target linux-x64 --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}"
+        run: node local/phoenix-diagram/harness/scripts/check-phoenix-diagram-candidate.mjs --candidate-dir local/phoenix-diagram/download/candidate --target linux-x64 --npm-cli "${{ steps.prepare.outputs.npm_cli_path }}" --profile "$PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE"
       - name: Record actual Node 18 consumer phases
         if: always()
         env:
@@ -608,6 +688,7 @@ jobs:
           const record={schemaVersion:1,tool:'phoenix-diagram',workflowRun:process.env.GITHUB_RUN_ID,sourceCommit:process.env.GITHUB_SHA,target:'linux-x64',node:process.version,phases:{prepare:process.env.PHOENIX_PREPARE_RESULT||'not-run',consume:process.env.PHOENIX_CONSUME_RESULT||'not-run'},candidate:{sha256:process.env.PHOENIX_DIAGRAM_CANDIDATE_SHA256,tgzSha256:process.env.PHOENIX_DIAGRAM_TGZ_SHA256,artifactId:process.env.PHOENIX_DIAGRAM_ARTIFACT_ID,artifactDigest:process.env.PHOENIX_DIAGRAM_ARTIFACT_DIGEST},harness:{sha256:process.env.PHOENIX_DIAGRAM_HARNESS_SHA256,artifactId:process.env.PHOENIX_DIAGRAM_HARNESS_ARTIFACT_ID,artifactDigest:process.env.PHOENIX_DIAGRAM_HARNESS_ARTIFACT_DIGEST},visualReview: 'required-pending',providerSessionAcceptance: 'not-run',publication:'not-requested'};
           fs.mkdirSync('local/phoenix-diagram/ci-prepare',{recursive:true});
           record.state=stateBytes ? {path:statePath,identity:{sha256:crypto.createHash('sha256').update(stateBytes).digest('hex'),bytes:stateBytes.length}} : null;
+          record.profile=process.env.PHOENIX_DIAGRAM_ACCEPTANCE_PROFILE;
           fs.writeFileSync('local/phoenix-diagram/ci-prepare/node18-consume-ci-results.json',JSON.stringify(record,null,2)+'\n');
           NODE
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

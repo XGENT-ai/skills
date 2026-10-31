@@ -1,16 +1,19 @@
 # 交付与实际审核
 
-读本文件处理 finalize、诊断、实际图像审核、review-record、环境失败或输出恢复。命令使用 `SKILL.md` 中已解析的 `PD`，从用户工作目录执行。
+读本文件处理 finalize、诊断、实际图像审核、review-record、环境失败或输出恢复。用户明确请求双输入架构比较时，使用[架构比较合同](architecture-compare.md)的三视图、独立两门 summary 和 12 图观察记录；本文件下方的单图四门与四图记录保持原合同。命令使用 `SKILL.md` 中已解析的 `PD`，从用户工作目录执行。
 
 ## 四门与身份
 
 ```sh
 "$PD" finalize <type> candidate.json diagram.html --json
+"$PD" finalize <type> candidate.json diagram.html --repo-root "<仓库根>" --json
 ```
+
+带 `sources` 或 `meta.repository` 的图用第二种，单图的 `--repo-root` 接受 `validate`、`deliver`、`finalize`；双输入架构比较另由 `compare --repo-root` 处理。来源核对独立于四门：回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，校验与交付回执另列 `evidence.unverified`（pointer、元素、原因）与 `evidence.unsourced`。结构错误（凭据 URL、路径逃逸、非法行区间、provider 与主机不符、网页链接用了不支持的主机）在 input 阶段失败且不生成 HTML。
 
 固定顺序为 `validate → deliver → check → browser-check`。首个非 pass 阶段后其余阶段保持 `not-run`。`validate` 做输入/布局与独立 artifact 检查；`deliver` 发布本次 HTML；`check` 严格绑定当前交付；`browser-check` 检查浏览器实测并采集当前截图。读取每个阶段真实 status，不能补造通过。
 
-stdout 是单一 JSON。保留首次成功自动验收的 `deliveryReceiptId`、`browserReceiptIdentity`、`candidate` / `artifact` 的 `path` 与 `identity:{sha256,bytes}`、`configSha256` 和完整 `engine`。HTML 已提交不等于整体完成；自动四门通过后，`visualReview.status` 仍为 `required-pending`，`deliveryStatus` 为 `incomplete`。
+stdout 是单一 JSON。保留首次成功自动验收的 `deliveryReceiptId`、`browserReceiptIdentity`、`candidate` / `artifact` 的 `path` 与 `identity:{sha256,bytes}`、`configSha256` 和完整 `engine`。HTML 已提交不等于整体完成；自动四门通过后，`visualReview.status` 仍为 `required-pending`，`deliveryStatus` 为 `incomplete`。finalize 回执的 `locale` 给出请求、解析后的界面语言与是否回退英文。
 
 从 `evidence.summaryReceipt.path` 或 `evidence.summaryPath` 定位本次 summary，从 `evidence.browserReceipt.path` 读取绑定的浏览器回执。summary 在输出旁，`--out-dir` 指定截图/浏览器证据目录；按回执给出的真实路径读取，勿猜测文件名或跨图混用。
 
@@ -108,3 +111,17 @@ NODE
 将 P/ID 换为已识别的真实值。多个记录必须明确选择，不扫描后自动挑事务，不按目录时间推断。未知 owner、额外条目、替换对象或多处记录歧义均保留拒绝；不得删除、移动或重写它们来强行通过。
 
 读取返回的 `publicState`、`preserved`、`recoveryStatus`、diagnostics 和退出码。原目录不存在但可信 witness/quarantine 记录仍在时须继续由命令验证，不能自行宣称 absent。恢复只处理文件事务，仍需适用的交付检查与实际图像审核；后来的 claimant 或绑定改变应被保留并如实报告。
+
+## 架构比较的独立收口
+
+仅明确的架构比较请求使用以下顺序，完整约束和可复制的审核草稿见[架构比较](architecture-compare.md#创建完整审核草稿)：
+
+```sh
+"$PD" compare architecture base.json head.json comparison.html --json
+"$PD" check comparison.html --strict-provenance --json
+"$PD" visual-check comparison.html --out-dir compare-evidence-01 --json
+# 从返回的 evidence.summaryReceipt / evidence.browserReceipt 读取原件，实际观察 12 张图并填写完整记录。
+"$PD" review-record comparison.html --record comparison-review-01.json --json
+```
+
+比较 summary 的 `comparison` 绑定原比较回执、双输入、配置/资源/引擎、IR 与 HTML；stages 仅为真实 `check`、`visual-check`。三个视图的 12 张当前图片均须观察。自动通过仍为 `required-pending` / `incomplete`，只有该 summary 的自动两门与实际审核通过才 `complete`。不要用单图记录、原 compare JSON 或重新生成成果代替这份可变收口摘要。

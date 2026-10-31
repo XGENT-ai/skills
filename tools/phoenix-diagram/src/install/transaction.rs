@@ -14,12 +14,72 @@ use std::collections::BTreeMap;
 use std::io::Read;
 use std::sync::Arc;
 
-fn emit(observer: Observer<'_>, checkpoint: Checkpoint, project: &Directory) -> InstallResult<()> {
-    observer(checkpoint, &project.path).map_err(|e| InstallError {
+fn checkpoint_error(error: std::io::Error) -> InstallError {
+    InstallError {
+        kind: if error.kind() == std::io::ErrorKind::InvalidInput {
+            InstallErrorKind::Invalid
+        } else {
+            InstallErrorKind::Io
+        },
+        code: "install/acceptance-checkpoint".into(),
+        message: error.to_string(),
+    }
+}
+fn observe(
+    observer: Observer<'_>,
+    checkpoint: Checkpoint,
+    project: &Directory,
+) -> InstallResult<()> {
+    observer(checkpoint, &project.path).map_err(|error| InstallError {
         kind: InstallErrorKind::Io,
         code: "install/observer-interruption".into(),
-        message: e.to_string(),
+        message: error.to_string(),
     })
+}
+pub(super) fn emit(
+    observer: Observer<'_>,
+    checkpoint: Checkpoint,
+    project: &Directory,
+) -> InstallResult<()> {
+    observe(observer, checkpoint, project)?;
+    output::acceptance_checkpoint("", &project.path, &project.path).map_err(checkpoint_error)
+}
+fn checkpoint_selected(phase: &str) -> bool {
+    use std::ffi::OsStr;
+    std::env::var_os("PHOENIX_DIAGRAM_ACCEPTANCE").as_deref() == Some(OsStr::new("1"))
+        && std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_DIR").is_some_and(|value| !value.is_empty())
+        && std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_PHASE").as_deref()
+            == Some(OsStr::new(phase))
+}
+pub(super) fn emit_transaction(
+    observer: Observer<'_>,
+    checkpoint: Checkpoint,
+    project: &Directory,
+    transaction: &Directory,
+    target: &std::path::Path,
+) -> InstallResult<()> {
+    let phase = match &checkpoint {
+        Checkpoint::JournalReady => Some("install-journal-ready"),
+        Checkpoint::AfterRetire(_) => Some("install-after-retire"),
+        Checkpoint::AfterLink(_) => Some("install-after-link"),
+        Checkpoint::BeforeActive => Some("install-before-active"),
+        Checkpoint::AfterActive => Some("install-after-active"),
+        Checkpoint::Committed => Some("install-committed"),
+        Checkpoint::BeforeLegacyRemove(_) => Some("migrate-before-legacy-remove"),
+        Checkpoint::AfterLegacyRemove(_) => Some("migrate-after-legacy-remove"),
+        Checkpoint::AfterRollback(_) => Some("rollback-after-file"),
+        Checkpoint::AfterRollbackJournalRetire => Some("rollback-old-journal-retired"),
+        Checkpoint::AfterRollbackJournalPublish => Some("rollback-old-journal-published"),
+        Checkpoint::RollbackAuditArchived => Some("rollback-audit-archived"),
+        Checkpoint::RollbackCompatibilityPublished => Some("rollback-compat-published"),
+        _ => None,
+    };
+    observe(observer, checkpoint, project)?;
+    if phase.is_some_and(checkpoint_selected) {
+        transaction.private()?;
+    }
+    output::acceptance_checkpoint(phase.unwrap_or(""), target, &transaction.path)
+        .map_err(checkpoint_error)
 }
 pub(super) fn from_output(error: output::OutputError) -> InstallError {
     InstallError {
@@ -34,7 +94,7 @@ pub(super) fn from_output(error: output::OutputError) -> InstallError {
         message: error.message,
     }
 }
-fn persist(
+pub(super) fn persist(
     directory: &Arc<Directory>,
     name: &str,
     bytes: &[u8],
@@ -76,7 +136,7 @@ fn persist(
     }
     Ok(actual.identity)
 }
-fn save(
+pub(super) fn save(
     project: &Arc<Directory>,
     journal: &mut Journal,
     expected: &mut Option<FileIdentity>,
@@ -94,7 +154,7 @@ fn save(
     )?);
     Ok(())
 }
-fn id() -> InstallResult<String> {
+pub(super) fn id() -> InstallResult<String> {
     let mut bytes = [0u8; 16];
     std::fs::File::open("/dev/urandom")
         .and_then(|mut file| file.read_exact(&mut bytes))
@@ -105,17 +165,20 @@ fn id() -> InstallResult<String> {
         })?;
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
-fn directory(project: &Arc<Directory>, id: &str) -> InstallResult<Arc<Directory>> {
+pub(super) fn directory(project: &Arc<Directory>, id: &str) -> InstallResult<Arc<Directory>> {
     project
         .descend(&format!("{}/{id}", state::TRANSACTIONS))?
         .ok_or_else(|| disk::conflict("install/missing-transaction", id))
 }
-fn subdirectory(transaction: &Arc<Directory>, name: &str) -> InstallResult<Arc<Directory>> {
+pub(super) fn subdirectory(
+    transaction: &Arc<Directory>,
+    name: &str,
+) -> InstallResult<Arc<Directory>> {
     transaction
         .descend(name)?
         .ok_or_else(|| disk::conflict("install/missing-transaction-directory", name))
 }
-fn verify_files(project: &Arc<Directory>, active: &Active) -> InstallResult<()> {
+pub(super) fn verify_files(project: &Arc<Directory>, active: &Active) -> InstallResult<()> {
     for owned in &active.ownership {
         let actual = project
             .read_path(&owned.path)?
@@ -126,7 +189,7 @@ fn verify_files(project: &Arc<Directory>, active: &Active) -> InstallResult<()> 
     }
     plan::verify_inventory(project, active)
 }
-fn retire(
+pub(super) fn retire(
     source: &Arc<Directory>,
     name: &str,
     target: &Arc<Directory>,
@@ -149,7 +212,7 @@ fn retire(
     }
     Ok(())
 }
-fn target_parent(
+pub(super) fn target_parent(
     project: &Arc<Directory>,
     path: &str,
     known: &mut BTreeMap<String, Arc<Directory>>,
@@ -172,7 +235,7 @@ fn target_parent(
     }
     Ok(parent)
 }
-fn publish(
+pub(super) fn publish(
     project: &Arc<Directory>,
     transaction: &Arc<Directory>,
     operation: &Operation,
@@ -201,18 +264,22 @@ fn publish(
         }
         None => {}
     }
-    emit(
+    emit_transaction(
         observer,
         Checkpoint::AfterRetire(operation.path.clone()),
         project,
+        transaction,
+        &project.path.join(&operation.path),
     )?;
     disk::expected(&after, &index, &operation.after, &[1])?;
     disk::link(&after, &index, &parent, name)?;
     disk::expected(&parent, name, &operation.after, &[2])?;
-    emit(
+    emit_transaction(
         observer,
         Checkpoint::AfterLink(operation.path.clone()),
         project,
+        transaction,
+        &project.path.join(&operation.path),
     )?;
     disk::remove_known(
         &after,
@@ -224,7 +291,7 @@ fn publish(
     disk::expected(&parent, name, &operation.after, &[1])?;
     Ok(())
 }
-fn stage(
+pub(super) fn stage(
     transaction: &Arc<Directory>,
     index: usize,
     path: String,
@@ -240,6 +307,7 @@ fn stage(
         .map(|snapshot| persist(&backups, &name, &snapshot.bytes, 0o600, None))
         .transpose()?;
     Ok(Operation {
+        kind: Some("file-write".into()),
         path,
         stage_path: format!("after/{index}"),
         backup_path: before.map(|_| format!("before/{index}")),
@@ -250,7 +318,12 @@ fn stage(
         backup,
     })
 }
-fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> InstallResult<()> {
+pub(super) fn run(
+    prepared: &mut Prepared,
+    lock: &disk::Lock,
+    mut migration: Option<super::migration::Migration>,
+    observer: Observer<'_>,
+) -> InstallResult<()> {
     lock.verify()?;
     prepared.bundle.verify()?;
     let id = id()?;
@@ -310,8 +383,11 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
         0o600,
         active_before,
     )?);
+    if let Some(migration) = &mut migration {
+        super::migration::bind_parents(prepared, migration, &operations)?;
+    }
     let mut journal = Journal {
-        schema_version: 1,
+        schema_version: 2,
         tool: "phoenix-diagram".into(),
         transaction_id: id,
         project: prepared.project.physical.clone(),
@@ -320,6 +396,8 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
         completed: 0,
         pending: None,
         operations,
+        migration,
+        rollback: None,
         active,
         checksum: String::new(),
     };
@@ -327,7 +405,23 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
     journal.validate(&prepared.project, &transaction)?;
     let mut journal_identity = None;
     save(&prepared.project, &mut journal, &mut journal_identity)?;
-    emit(observer, Checkpoint::JournalReady, &prepared.project)?;
+    emit_transaction(
+        observer,
+        Checkpoint::JournalReady,
+        &prepared.project,
+        &transaction,
+        &prepared.project.path.join(&journal.active.journal),
+    )?;
+    if journal.migration.is_some() {
+        super::migration::remove_legacy(
+            &prepared.project,
+            &transaction,
+            &mut journal,
+            &mut journal_identity,
+            lock,
+            observer,
+        )?;
+    }
     for index in 0..journal.operations.len() {
         lock.verify()?;
         journal.pending = Some(index);
@@ -339,7 +433,13 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
             &prepared.project,
         )?;
         if operation.path == state::ACTIVE {
-            emit(observer, Checkpoint::BeforeActive, &prepared.project)?;
+            emit_transaction(
+                observer,
+                Checkpoint::BeforeActive,
+                &prepared.project,
+                &transaction,
+                &prepared.project.path.join(state::ACTIVE),
+            )?;
         }
         publish(
             &prepared.project,
@@ -355,7 +455,13 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
             &prepared.project,
         )?;
         if operation.path == state::ACTIVE {
-            emit(observer, Checkpoint::AfterActive, &prepared.project)?;
+            emit_transaction(
+                observer,
+                Checkpoint::AfterActive,
+                &prepared.project,
+                &transaction,
+                &prepared.project.path.join(state::ACTIVE),
+            )?;
         }
         journal.completed = index + 1;
         journal.pending = None;
@@ -364,10 +470,17 @@ fn run(prepared: &mut Prepared, lock: &disk::Lock, observer: Observer<'_>) -> In
     lock.verify()?;
     prepared.bundle.verify()?;
     verify_files(&prepared.project, &journal.active)?;
+    super::migration::verify_removed(&prepared.project, &journal)?;
     journal.phase = Phase::Committed;
     save(&prepared.project, &mut journal, &mut journal_identity)?;
     prepared.receipt.status = InstallStatus::Installed;
-    emit(observer, Checkpoint::Committed, &prepared.project)?;
+    emit_transaction(
+        observer,
+        Checkpoint::Committed,
+        &prepared.project,
+        &transaction,
+        &prepared.project.path.join(state::ACTIVE),
+    )?;
     Ok(())
 }
 
@@ -402,7 +515,7 @@ pub(super) fn apply(
     if prepared.receipt.status != InstallStatus::Planned {
         return Ok(prepared.receipt);
     }
-    if let Err(error) = run(&mut prepared, &lock, observer) {
+    if let Err(error) = run(&mut prepared, &lock, None, observer) {
         prepared.receipt.status = InstallStatus::RecoveryRequired;
         prepared.receipt.conflicts.push(InstallConflict {
             path: prepared.receipt.journal.as_ref().map_or_else(
@@ -563,7 +676,10 @@ fn output_target_allowed(project: &Directory, value: &serde_json::Value) -> bool
         ["transactions", id, "preparing.json"] => state::valid_id(id),
         ["transactions", id, directory, index] => {
             state::valid_id(id)
-                && matches!(*directory, "before" | "after")
+                && (matches!(*directory, "before" | "after" | "undo")
+                    || directory
+                        .strip_prefix("rollback-")
+                        .is_some_and(state::valid_id))
                 && index
                     .parse::<usize>()
                     .is_ok_and(|n| n.to_string() == *index)
@@ -571,7 +687,7 @@ fn output_target_allowed(project: &Directory, value: &serde_json::Value) -> bool
         _ => false,
     }
 }
-fn recover_publications(
+pub(super) fn recover_publications(
     project: &Arc<Directory>,
     inventory: &state::Inventory,
     receipt: &mut InstallReceipt,
@@ -630,6 +746,19 @@ fn recover_locked(
     recover_publications(project, &initial, &mut receipt)?;
     let inventory = state::inspect(project)?;
     for mut journal in inventory.pending {
+        if journal.migration.is_some() || journal.phase == Phase::RollingBack {
+            receipt.status = InstallStatus::RecoveryRequired;
+            receipt.transaction_id = Some(journal.transaction_id.clone());
+            receipt.recovery_command = Some(format!(
+                "{} migrate --recover {} --project {} --json",
+                std::env::current_exe()
+                    .map(|p| super::quote(&p))
+                    .unwrap_or_else(|_| "phoenix-diagram".into()),
+                journal.transaction_id,
+                super::quote(&project.path)
+            ));
+            return Ok(receipt);
+        }
         lock.verify()?;
         let transaction = directory(project, &journal.transaction_id)?;
         journal.validate(project, &transaction)?;

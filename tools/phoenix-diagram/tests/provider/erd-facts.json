@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "reviewInstructions": [
+    "Give the host only the selected prompt string, never these review fields.",
+    "Before deciding semantic correctness, list each material fact and its supporting passage, then the candidate endpoint and card assertions it supports or contradicts.",
+    "Judge required facts independently of automated checks, visual review and deliveryStatus; complete never overrides a semantic failure.",
+    "For missing facts, require short open questions covering every expected gap, no repeat questions about supplied facts, and no candidate, HTML, draft cardinalities, suggested answers or fallback cards."
+  ],
+  "missingFacts": {
+    "id": "erd-missing-facts",
+    "prompt": "请把我们订单库的表结构画出来，给新同事看懂表之间怎么关联：\n- customer：id bigint 主键；email varchar(255) 唯一；created_at timestamptz。\n- orders：id bigint 主键；customer_id bigint，引用 customer.id；status varchar(32)；placed_at timestamptz。\n- order_item：order_id bigint，引用 orders.id；sku varchar(64)，引用 product.sku；两列共同作为主键；qty integer；unit_price numeric(12,2)。\n- product：sku varchar(64) 主键；title text。\n一个客户可以没有订单，也可以有多个订单；每个订单至少有一行明细；每行明细对应一个商品，一个商品可出现在多行明细里。\n",
+    "source": {
+      "report": "docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.md",
+      "archiveRun": "p2-v11h-20261022",
+      "scenarios": [
+        "claude-code/intent-erd",
+        "codex/intent-erd"
+      ],
+      "promptIdentity": {
+        "sha256": "3e8fe03b6b256f906b9a6490c23fa1587838fbb0a836c9115cba74f41df91fd7",
+        "bytes": 675
+      },
+      "section": "G-03 / E3"
+    },
+    "review": {
+      "expectedMissingFacts": [
+        {
+          "subject": "orders.customer_id",
+          "fact": "nullable",
+          "reason": "The foreign key fixes the target customer.id but no NOT NULL or explicit customer participation is supplied."
+        },
+        {
+          "subject": "product -> order_item",
+          "fact": "minimumParticipation",
+          "reason": "可出现在多行明细里 supplies the maximum many, not whether a product may have no order_item."
+        }
+      ],
+      "suppliedFacts": [
+        {
+          "material": "一个客户可以没有订单，也可以有多个订单",
+          "assertion": "customer -> orders has orders maximum many and minimum zero"
+        },
+        {
+          "material": "每个订单至少有一行明细",
+          "assertion": "orders -> order_item has order_item maximum many and minimum one"
+        },
+        {
+          "material": "order_item：order_id bigint，引用 orders.id；sku varchar(64)，引用 product.sku；两列共同作为主键",
+          "assertion": "Each order_item has exactly one orders and one product; both referencing columns are in the composite primary key"
+        },
+        {
+          "material": "每行明细对应一个商品",
+          "assertion": "order_item -> product has product maximum one and minimum one"
+        }
+      ],
+      "unsupportedAssertions": [
+        "orders.customer_id is NOT NULL",
+        "Each orders must have a customer",
+        "A product may have zero order_item rows"
+      ]
+    }
+  },
+  "complete": {
+    "id": "intent-erd",
+    "prompt": "请把我们订单库的表结构画出来，给新同事看懂表之间怎么关联：\n- customer：id bigint 主键；email varchar(255) 唯一；created_at timestamptz。\n- orders：id bigint 主键；customer_id bigint 非空，引用 customer.id；status varchar(32)；placed_at timestamptz。\n- order_item：order_id bigint，引用 orders.id；sku varchar(64)，引用 product.sku；两列共同作为主键；qty integer；unit_price numeric(12,2)。\n- product：sku varchar(64) 主键；title text。\n一个客户可以没有订单，也可以有多个订单；每个订单至少有一行明细；每行明细对应一个商品，一个商品可以没有明细，也可出现在多行明细里。\n",
+    "review": {
+      "expectedMissingFacts": [],
+      "expectedRelationships": [
+        {
+          "from": "customer",
+          "to": "orders",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": false,
+          "toOptional": true,
+          "materials": [
+            "customer_id bigint 非空，引用 customer.id",
+            "一个客户可以没有订单，也可以有多个订单"
+          ]
+        },
+        {
+          "from": "orders",
+          "to": "order_item",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": false,
+          "toOptional": false,
+          "materials": [
+            "order_id bigint，引用 orders.id",
+            "两列共同作为主键",
+            "每个订单至少有一行明细"
+          ]
+        },
+        {
+          "from": "product",
+          "to": "order_item",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": false,
+          "toOptional": true,
+          "materials": [
+            "sku varchar(64)，引用 product.sku",
+            "两列共同作为主键",
+            "每行明细对应一个商品，一个商品可以没有明细，也可出现在多行明细里"
+          ]
+        }
+      ],
+      "requiredContent": [
+        "All four entities and every physical column with the supplied SQL type",
+        "customer.id, orders.id and product.sku primary keys; customer.email unique",
+        "order_item composite primary key (order_id, sku), with both columns also foreign keys",
+        "All three foreign key references and only supported card assertions"
+      ]
+    }
+  },
+  "explicitMermaid": {
+    "id": "mermaid-er",
+    "prompt": "请把下面的 Mermaid 转成可交付的图解，保留全部实体、字段、键和关系两端的基数：\n```mermaid\nerDiagram\n  AUTHOR ||--o{ BOOK : writes\n  BOOK ||--|{ EDITION : \"published as\"\n  PUBLISHER |o--o{ EDITION : prints\n  AUTHOR {\n    bigint id PK\n    varchar name\n  }\n  BOOK {\n    bigint id PK\n    bigint author_id FK\n    varchar title\n  }\n  EDITION {\n    bigint id PK\n    bigint book_id FK\n    bigint publisher_id FK\n    date published_on\n  }\n  PUBLISHER {\n    bigint id PK\n    varchar name UK\n  }\n```\n",
+    "review": {
+      "expectedMissingFacts": [],
+      "expectedRelationships": [
+        {
+          "from": "AUTHOR",
+          "to": "BOOK",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": false,
+          "toOptional": true,
+          "materials": [
+            "AUTHOR ||--o{ BOOK : writes"
+          ]
+        },
+        {
+          "from": "BOOK",
+          "to": "EDITION",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": false,
+          "toOptional": false,
+          "materials": [
+            "BOOK ||--|{ EDITION : \"published as\""
+          ]
+        },
+        {
+          "from": "PUBLISHER",
+          "to": "EDITION",
+          "fromCardinality": "one",
+          "toCardinality": "many",
+          "fromOptional": true,
+          "toOptional": true,
+          "materials": [
+            "PUBLISHER |o--o{ EDITION : prints"
+          ]
+        }
+      ],
+      "requiredContent": [
+        "All entities, fields and key roles from the Mermaid",
+        "Explicit endpoint markers are sufficient facts; do not ask the user to choose cardinality or representation again"
+      ]
+    }
+  }
+}

@@ -1,7 +1,9 @@
 /*
 Derived from Archify 3.1.0 viewer/focus.js (MIT), frozen content SHA-256
 4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace only.
+Phoenix modifications: independent JavaScript/storage/CSS namespace; passport
+source evidence states, an authored-only type and focused-node clearance
+recorded in focus-adaptations.json.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -24,6 +26,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       var evidence = document.getElementById('focus-evidence');
       var repositoryLink = document.getElementById('focus-repository');
       var evidenceLinks = document.getElementById('focus-evidence-links');
+      var evidenceStatus = evidence.querySelector('.semantic-passport-evidence-status');
       var summary = document.getElementById('focus-summary');
       var reachSection = document.getElementById('focus-reach');
       var reachStatus = document.getElementById('focus-reach-status');
@@ -344,20 +347,30 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         repositoryLink.removeAttribute('href');
         repositoryLink.removeAttribute('aria-label');
         repositoryLink.textContent = '';
+        evidence.removeAttribute('title');
+        var state = PhoenixDiagram.sourceEvidence.state(id);
         var sources = PhoenixDiagram.sourceEvidence.node(id);
         var repository = PhoenixDiagram.sourceEvidence.repository();
-        if (!repository || !sources.length) {
+        if (!repository || !state) {
           evidence.hidden = true;
           return;
         }
-        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision;
-        if (repository.href) {
-          repositoryLink.href = repository.href;
+        evidence.setAttribute('data-evidence-state', state);
+        // Pending and absent evidence reuse the verified styling in amber and slate.
+        if (state === 'verified') evidence.style.removeProperty('--backend-stroke');
+        else evidence.style.setProperty('--backend-stroke', state === 'unverified' ? 'var(--cloud-stroke)' : 'var(--external-stroke)');
+        evidenceStatus.textContent = viewerText(state === 'verified' ? 'viewer.passport.verified' : 'viewer.passport.evidence.' + state);
+        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision +
+          (repository.linkMode === 'local-only' ? ' · ' + viewerText('viewer.passport.evidence.localOnly') : '');
+        if (repository.treeHref) {
+          repositoryLink.href = repository.treeHref;
           repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
         }
-        evidence.title = viewerText('viewer.passport.verificationScope');
+        if (state === 'verified') evidence.title = viewerText('viewer.passport.verificationScope');
         sources.forEach(function (source) {
-          var link = document.createElement(source.href ? 'a' : 'div');
+          var verified = source.state === 'verified';
+          var link = document.createElement(verified && source.href ? 'a' : 'div');
+          link.setAttribute('data-evidence-state', verified ? 'verified' : 'unverified');
           link.className = 'semantic-passport-source';
           if (source.href) {
             link.href = source.href;
@@ -373,7 +386,9 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
             ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + (source.href ? ' ↗' : '')
             : source.href ? viewerText('viewer.passport.source.openLink') : '';
           var sourcePath = document.createElement('small');
-          sourcePath.textContent = source.path;
+          sourcePath.textContent = verified ? source.path : source.path + ' · ' +
+            viewerText('viewer.passport.evidence.unverified') + ': ' +
+            viewerText('viewer.passport.evidence.reason.' + source.reason);
           link.appendChild(name);
           link.appendChild(location);
           link.appendChild(sourcePath);
@@ -383,7 +398,9 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
-        setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
+        // Only an authored type is shown; a colour slot the renderer derived is not one.
+        var authoredKind = svg.hasAttribute('data-node-kind-derived') ? '' : node.getAttribute('data-node-kind');
+        setPassportValue(kind, authoredKind ? viewerKindLabel(authoredKind) : '');
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
@@ -1159,6 +1176,19 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         });
       }
       var lensFrame = 0;
+      var passportReserve = 0;
+      function setPassportReserve(value) {
+        value = Math.max(0, Math.round(value));
+        if (value === passportReserve) return;
+        passportReserve = value;
+        if (value) {
+          container.style.setProperty('--phoenix-diagram-passport-reserve', value + 'px');
+          container.setAttribute('data-passport-reserve', '');
+        } else {
+          container.style.removeProperty('--phoenix-diagram-passport-reserve');
+          container.removeAttribute('data-passport-reserve');
+        }
+      }
       function placeRelationshipLens() {
         if (lensFrame) {
           cancelAnimationFrame(lensFrame);
@@ -1171,8 +1201,12 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         var nodeRect = node.getBoundingClientRect();
         if (containerRect.bottom <= 0 || containerRect.top >= window.innerHeight) return;
         var padding = window.innerWidth <= 720 ? 8 : 16;
+        // Measure the stage without the room reserved below the drawing, so
+        // that room is only kept while the Passport still needs it.
+        var reserve = passportReserve;
+        var stageHeight = containerRect.height - reserve;
         var visibleTop = Math.max(padding, -containerRect.top + padding);
-        var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);
+        var visibleBottom = Math.min(stageHeight - padding, window.innerHeight - containerRect.top - padding);
         var maxTop = Math.max(padding, visibleBottom - chip.offsetHeight);
         var minTop = Math.min(visibleTop, maxTop);
         var mobile = window.innerWidth <= 720;
@@ -1180,6 +1214,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
           chip.removeAttribute('data-manual-placement');
           chip.style.removeProperty('left');
         } else if (manualLensPosition) {
+          setPassportReserve(0);
           applyManualLensPosition(manualLensPosition);
           return;
         }
@@ -1207,43 +1242,68 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         }
         var top = Math.max(minTop, Math.min(maxTop, preferred));
         var chipRect = chip.getBoundingClientRect();
+        var chipHeight = chip.offsetHeight;
         var safeGap = 10;
         var protectViewerChrome = !mobile || compactOnMobile || previewingOnMobile;
-        var protectedRects = (protectViewerChrome
-          ? [svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]
-          : [])
-          .filter(function (element) {
-            if (!element || element.hidden) return false;
-            var style = window.getComputedStyle(element);
-            return style.display !== 'none' && style.visibility !== 'hidden';
-          })
-          .map(function (element) { return element.getBoundingClientRect(); })
-          .filter(function (rect) {
-            return rect.width > 0 && rect.height > 0 &&
-              chipRect.left < rect.right + safeGap && chipRect.right > rect.left - safeGap;
+        function visible(element) {
+          if (!element || element.hidden) return false;
+          var style = window.getComputedStyle(element);
+          return style.display !== 'none' && style.visibility !== 'hidden';
+        }
+        function band(rect, shift) {
+          return { rect: rect, top: rect.top - containerRect.top - shift, bottom: rect.bottom - containerRect.top - shift };
+        }
+        // Vertical bands the Passport must clear, relative to the container
+        // top: the legend and the dock (above any reserved room) when viewer
+        // chrome is protected, and always the focused node itself.
+        var legend = svg.querySelector('[data-legend]');
+        var dock = container.querySelector('.diagram-nav');
+        var bands = [band(nodeRect, 0)];
+        if (protectViewerChrome && visible(legend)) bands.push(band(legend.getBoundingClientRect(), 0));
+        if (protectViewerChrome && visible(dock)) bands.push(band(dock.getBoundingClientRect(), reserve));
+        bands = bands.filter(function (item) { return item.rect.width > 0 && item.rect.height > 0; });
+        function clearTop(left, right, low, high) {
+          var crossing = bands.filter(function (item) {
+            return left < item.rect.right + safeGap && right > item.rect.left - safeGap;
           });
-        if (protectedRects.length) {
-          var candidates = [top, minTop, maxTop];
-          protectedRects.forEach(function (rect) {
-            candidates.push(
-              rect.top - containerRect.top - chip.offsetHeight - safeGap,
-              rect.bottom - containerRect.top + safeGap
-            );
+          var candidates = [top, low, high];
+          crossing.forEach(function (item) {
+            candidates.push(item.top - chipHeight - safeGap, item.bottom + safeGap);
           });
           var valid = candidates.map(function (candidate) {
-            return Math.max(minTop, Math.min(maxTop, candidate));
+            return Math.max(low, Math.min(high, candidate));
           }).filter(function (candidate, index, all) {
-            if (all.indexOf(candidate) !== index) return false;
-            var candidateTop = containerRect.top + candidate;
-            var candidateBottom = candidateTop + chip.offsetHeight;
-            return protectedRects.every(function (rect) {
-              return candidateBottom <= rect.top - safeGap || candidateTop >= rect.bottom + safeGap;
+            return all.indexOf(candidate) === index && crossing.every(function (item) {
+              return candidate + chipHeight <= item.top - safeGap || candidate >= item.bottom + safeGap;
             });
           });
           valid.sort(function (first, second) {
             return Math.abs(first - preferred) - Math.abs(second - preferred);
           });
-          if (valid.length) top = valid[0];
+          return valid.length ? valid[0] : null;
+        }
+        var placed = clearTop(chipRect.left, chipRect.right, minTop, maxTop);
+        if (mobile && html.getAttribute('data-present') !== 'true') {
+          // The camera stays at 100% on a narrow screen. When no height of the
+          // stage clears the focused node, the stage grows below the drawing
+          // and the Passport sits there, above the dock. A presentation stage
+          // fills the screen and cannot grow.
+          var stageFits = clearTop(chipRect.left, chipRect.right, padding,
+            Math.max(padding, stageHeight - padding - chipHeight)) !== null;
+          if (stageFits) {
+            setPassportReserve(0);
+            if (placed !== null) top = placed;
+          } else {
+            var stageStyle = window.getComputedStyle(container);
+            top = containerRect.height - (parseFloat(stageStyle.paddingBottom) || 0) -
+              (parseFloat(stageStyle.borderBottomWidth) || 0) + safeGap;
+            setPassportReserve(chipHeight + safeGap);
+          }
+        } else {
+          // The Passport keeps its column on a wide stage, clear of the
+          // toolbar menus that open over the stage's other side.
+          setPassportReserve(0);
+          if (placed !== null) top = placed;
         }
         chip.style.top = Math.round(top) + 'px';
         if (PhoenixDiagram.radar && typeof PhoenixDiagram.radar.sync === 'function') PhoenixDiagram.radar.sync();
@@ -1279,6 +1339,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         });
         edges().forEach(function (edge) { edge.removeAttribute('data-focus-match'); });
         chip.hidden = true;
+        setPassportReserve(0);
         label.textContent = '';
         detail.textContent = '';
         detail.hidden = true;

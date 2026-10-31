@@ -76,9 +76,15 @@ pub(super) fn classify(
     let unclipped = metrics["documentScrollUnclipped"] == true;
     let authored_architecture =
         reader_fit == Some("authored-height") && metrics["diagramType"] == "architecture";
+    // Fixed authored canvases narrower than the wide ratio join the Reader's
+    // measured-height path; at its readable floor it declares the overflow.
+    let fixed_portrait = matches!(reader_fit, Some("contain" | "legacy" | ""))
+        && number(&metrics["viewBox"], "width")
+            .zip(number(&metrics["viewBox"], "height"))
+            .is_some_and(|(width, height)| height > 0.0 && width / height < 1.55);
     let automatic = metrics["readerLayout"] == "adaptive"
         && metrics["readerOverflow"] == "authored"
-        && matches!(reader_fit, Some("intrinsic-height" | "width-first"));
+        && (matches!(reader_fit, Some("intrinsic-height" | "width-first")) || fixed_portrait);
     let vertical_scroll_accepted = overflow_y
         && !overflow_x
         && readability_ok
@@ -88,7 +94,8 @@ pub(super) fn classify(
         && metrics["readerFlow"]["unclipped"] == true
         && !overflow_x
         && (!overflow_y || vertical_scroll_accepted)
-        && (!authored_architecture || unclipped);
+        // Narrow screens pan every wide diagram inside its panel.
+        && (!authored_architecture || viewport.width < 960 || unclipped);
     add(
         "viewport-containment",
         containment,
@@ -117,7 +124,7 @@ pub(super) fn classify(
     add(
         "rendered-dom",
         dom_ok,
-        json!({"mainSvgCount":1,"nodeCount":"nonempty","readerPanelCanvas":true,"semanticVisibility":"all authored node bodies, primary labels and paths; context/fine at Full; fitted overview restored"}),
+        json!({"mainSvgCount":1,"nodeCount":"nonempty","readerPanelCanvas":true,"semanticVisibility":"all authored node bodies, primary labels and paths; context/fine at Full; initial tree folds measured unfolded and restored; fitted overview restored"}),
         json!({"svgCount":metrics["svgCount"],"nodeCount":metrics["nodeCount"],"reader":metrics["readerRect"],"panel":metrics["panelRect"],"svg":metrics["svgRect"],"semanticVisibility":metrics["semanticVisibility"]}),
     );
     // The frozen 6px floor is a desktop contract. Narrow samples still report
@@ -362,6 +369,87 @@ mod tests {
                 "{key}"
             );
         }
+    }
+    #[test]
+    fn fixed_portrait_canvases_may_declare_readable_vertical_scroll() {
+        let viewport = Viewport {
+            width: 1440,
+            height: 900,
+        };
+        let fixed = |fit: &str, view_box: Value| {
+            let mut metrics = metrics();
+            metrics["readerFit"] = json!(fit);
+            metrics["viewBox"] = view_box;
+            metrics
+        };
+        for fit in ["contain", "legacy", ""] {
+            assert!(
+                classify(
+                    viewport,
+                    Theme::Light,
+                    fixed(fit, json!({"x":0,"y":0,"width":720,"height":900})),
+                    &[]
+                )
+                .vertical_scroll_accepted,
+                "{fit}"
+            );
+        }
+        // Wide fixed canvases never take the measured-height path, and the
+        // Reader must have reached its readable floor and declared overflow.
+        assert!(
+            !classify(
+                viewport,
+                Theme::Light,
+                fixed("contain", json!({"x":0,"y":0,"width":1200,"height":700})),
+                &[]
+            )
+            .vertical_scroll_accepted
+        );
+        let mut undeclared = fixed("contain", json!({"x":0,"y":0,"width":720,"height":900}));
+        undeclared["readerOverflow"] = Value::Null;
+        assert!(!classify(viewport, Theme::Light, undeclared, &[]).vertical_scroll_accepted);
+        assert!(
+            !classify(
+                viewport,
+                Theme::Light,
+                fixed("explicit", json!({"x":0,"y":0,"width":720,"height":900})),
+                &[]
+            )
+            .vertical_scroll_accepted
+        );
+    }
+    #[test]
+    fn authored_architecture_pans_like_other_wide_diagrams_on_narrow_screens() {
+        let containment = |viewport: Viewport| {
+            let mut metrics = metrics();
+            metrics["innerWidth"] = json!(viewport.width);
+            metrics["innerHeight"] = json!(viewport.height);
+            metrics["scrollWidth"] = json!(viewport.width);
+            metrics["scrollHeight"] = json!(viewport.height);
+            metrics["readerFit"] = json!("authored-height");
+            metrics["diagramType"] = json!("architecture");
+            metrics["documentScrollUnclipped"] = json!(false);
+            classify(viewport, Theme::Light, metrics, &[])
+                .checks
+                .into_iter()
+                .find(|entry| entry.name == "viewport-containment")
+                .unwrap()
+                .status
+        };
+        assert_eq!(
+            containment(Viewport {
+                width: 390,
+                height: 844
+            }),
+            CheckStatus::Pass
+        );
+        assert_eq!(
+            containment(Viewport {
+                width: 1440,
+                height: 900
+            }),
+            CheckStatus::Failed
+        );
     }
     #[test]
     fn explicit_height_is_only_an_architecture_exception() {

@@ -80,7 +80,7 @@ impl Active {
             &self.providers,
             &self.ownership,
         ))?);
-        if self.schema_version != 1
+        if ![1, 2].contains(&self.schema_version)
             || self.tool != "phoenix-diagram"
             || self.tool_version != crate::TOOL_VERSION
             || !valid_id(&self.transaction_id)
@@ -126,10 +126,14 @@ pub(super) enum Phase {
     Committed,
     Recovering,
     Recovered,
+    RollingBack,
+    RolledBack,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(super) struct Operation {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
     pub path: String,
     pub stage_path: String,
     pub backup_path: Option<String>,
@@ -152,9 +156,13 @@ pub(super) struct Journal {
     pub pending: Option<usize>,
     pub operations: Vec<Operation>,
     pub active: Active,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub migration: Option<super::migration::Migration>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rollback: Option<super::migration::Rollback>,
     pub checksum: String,
 }
-fn valid_identity(identity: &FileIdentity, private: bool) -> bool {
+pub(super) fn valid_identity(identity: &FileIdentity, private: bool) -> bool {
     let decimal = |v: &str| v.parse::<u64>().is_ok_and(|n| n.to_string() == v);
     decimal(&identity.device)
         && decimal(&identity.inode)
@@ -184,7 +192,7 @@ impl Journal {
         value.seal()?;
         let mut paths = BTreeSet::new();
         self.active.validate(project)?;
-        if self.schema_version != 1
+        if ![1, 2].contains(&self.schema_version)
             || self.tool != "phoenix-diagram"
             || !valid_id(&self.transaction_id)
             || self.project != project.physical
@@ -193,6 +201,10 @@ impl Journal {
             || self.checksum != value.checksum
             || self.operations.is_empty()
             || self.operations.len() > 200_001
+            || (matches!(
+                self.phase,
+                Phase::Committed | Phase::RollingBack | Phase::RolledBack
+            ) && (self.completed != self.operations.len() || self.pending.is_some()))
             || self.completed > self.operations.len()
             || self.pending.is_some_and(|i| i >= self.operations.len())
         {
@@ -201,9 +213,20 @@ impl Journal {
                 "Unknown diagram installation journal",
             ));
         }
+        if self.schema_version == 1 && (self.migration.is_some() || self.rollback.is_some()) {
+            return Err(disk::conflict("install/invalid-journal", "v1 extension"));
+        }
+        if let Some(migration) = &self.migration {
+            migration.validate(project, self)?;
+        }
+        if let Some(rollback) = &self.rollback {
+            rollback.validate(project, self)?;
+        }
         for (index, operation) in self.operations.iter().enumerate() {
             let active = index + 1 == self.operations.len();
-            if (active && operation.path != ACTIVE)
+            if (self.schema_version == 2 && operation.kind.as_deref() != Some("file-write"))
+                || (self.schema_version == 1 && operation.kind.is_some())
+                || (active && operation.path != ACTIVE)
                 || (!active && !managed(&operation.path))
                 || !paths.insert(&operation.path)
                 || operation.stage_path != format!("after/{index}")
@@ -268,6 +291,61 @@ pub(super) struct Inventory {
     pub pending: Vec<Journal>,
     pub publications: Vec<crate::output::PendingPublication>,
 }
+// A rolled-back last journal is archived for the actual v1 reader. Its
+// now-lockless cleanup directory may remain, but only the exact empty owner
+// namespace can be recognized without acquiring or creating an output lock.
+fn empty_cleanup(parent: &Arc<Directory>) -> InstallResult<()> {
+    #[derive(Clone, Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase", deny_unknown_fields)]
+    struct Owner {
+        schema_version: u32,
+        tool: String,
+        kind: String,
+        parent_path: std::path::PathBuf,
+        parent: Physical,
+        directory: Physical,
+        record_identity: Physical,
+        checksum: String,
+    }
+    let directory = parent
+        .child(".phoenix-diagram-output-cleanup")?
+        .ok_or_else(|| disk::conflict("install/unverified-output-namespace", "cleanup"))?;
+    directory.private()?;
+    if directory.list()? != vec!["owner-v1.json".to_owned()] {
+        return Err(disk::conflict(
+            "install/unverified-output-namespace",
+            directory.path.display().to_string(),
+        ));
+    }
+    let snapshot = directory
+        .read("owner-v1.json", &[1])?
+        .ok_or_else(|| disk::conflict("install/unverified-output-namespace", "cleanup owner"))?;
+    let owner: Owner = parse(&snapshot.bytes, "install/unverified-output-namespace")?;
+    let mut value = owner.clone();
+    value.checksum.clear();
+    let digest = bundle::hash(
+        &serde_json::to_vec(&value)
+            .map_err(|e| disk::conflict("install/unverified-output-namespace", e.to_string()))?,
+    );
+    if owner.schema_version != 1
+        || owner.tool != "phoenix-diagram"
+        || owner.kind != "output-cleanup-directory"
+        || owner.parent_path != parent.path
+        || owner.parent != parent.physical
+        || owner.directory != directory.physical
+        || owner.record_identity.device != snapshot.identity.device
+        || owner.record_identity.inode != snapshot.identity.inode
+        || owner.checksum != digest
+        || snapshot.identity.mode != 0o600
+        || encoded(&owner)? != snapshot.bytes
+    {
+        return Err(disk::conflict(
+            "install/unverified-output-namespace",
+            directory.path.display().to_string(),
+        ));
+    }
+    Ok(())
+}
 fn publications(
     directory: &Arc<Directory>,
     results: &mut Vec<crate::output::PendingPublication>,
@@ -319,10 +397,7 @@ fn publications(
     }
     if names.iter().any(|name| name == CLEANUP) {
         if !queried {
-            return Err(disk::conflict(
-                "install/unverified-output-namespace",
-                directory.path.join(CLEANUP).display().to_string(),
-            ));
+            empty_cleanup(directory)?;
         }
         // The shared query has verified the owner checksum, physical directory,
         // parent, and every record. This listing only checks complete coverage.
@@ -449,7 +524,10 @@ pub(super) fn inspect(project: &Arc<Directory>) -> InstallResult<Inventory> {
             if journal.transaction_id != id {
                 return Err(disk::conflict("install/journal-id-mismatch", id));
             }
-            if matches!(journal.phase, Phase::Applying | Phase::Recovering) {
+            if matches!(
+                journal.phase,
+                Phase::Applying | Phase::Recovering | Phase::RollingBack
+            ) {
                 result.pending.push(journal.clone());
             }
             journals.insert(id.to_owned(), journal);

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "sourceContentSha256": "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395",
+  "sourcePath": "viewer/focus.js",
+  "sourceSha256": "db03fcc25183ee27b281f7917f8a40849733680bebe1a2fdd0bbdc01cc0d05d0",
+  "normalizedSourceSha256": "05a3f6779be8b4f6eae22752ec3d21710e93970ab716f2bdf180e959b7fe1d7e",
+  "adaptedBodySha256": "b8e19768e788e58f3126e9df25aad01f4f4e6844f855e9a22d1fabbc4f2d7cc3",
+  "license": "MIT; see LICENSE.txt",
+  "hunks": [
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 20,
+      "sourceByteOffset": 1158,
+      "sourceText": "",
+      "replacementText": "      var evidenceStatus = evidence.querySelector('.semantic-passport-evidence-status');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 340,
+      "sourceByteOffset": 16671,
+      "sourceText": "",
+      "replacementText": "        evidence.removeAttribute('title');\n        var state = PhoenixDiagram.sourceEvidence.state(id);\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 342,
+      "sourceByteOffset": 16802,
+      "sourceText": "        if (!repository || !sources.length) {\n",
+      "replacementText": "        if (!repository || !state) {\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 346,
+      "sourceByteOffset": 16910,
+      "sourceText": "        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision;\n        if (repository.href) {\n          repositoryLink.href = repository.href;\n",
+      "replacementText": "        evidence.setAttribute('data-evidence-state', state);\n        // Pending and absent evidence reuse the verified styling in amber and slate.\n        if (state === 'verified') evidence.style.removeProperty('--backend-stroke');\n        else evidence.style.setProperty('--backend-stroke', state === 'unverified' ? 'var(--cloud-stroke)' : 'var(--external-stroke)');\n        evidenceStatus.textContent = viewerText(state === 'verified' ? 'viewer.passport.verified' : 'viewer.passport.evidence.' + state);\n        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision +\n          (repository.linkMode === 'local-only' ? ' · ' + viewerText('viewer.passport.evidence.localOnly') : '');\n        if (repository.treeHref) {\n          repositoryLink.href = repository.treeHref;\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 351,
+      "sourceByteOffset": 17225,
+      "sourceText": "        evidence.title = viewerText('viewer.passport.verificationScope');\n",
+      "replacementText": "        if (state === 'verified') evidence.title = viewerText('viewer.passport.verificationScope');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 353,
+      "sourceByteOffset": 17343,
+      "sourceText": "          var link = document.createElement(source.href ? 'a' : 'div');\n",
+      "replacementText": "          var verified = source.state === 'verified';\n          var link = document.createElement(verified && source.href ? 'a' : 'div');\n          link.setAttribute('data-evidence-state', verified ? 'verified' : 'unverified');\n"
+    },
+    {
+      "scope": "passport source evidence states",
+      "sourceLine": 369,
+      "sourceByteOffset": 18358,
+      "sourceText": "          sourcePath.textContent = source.path;\n",
+      "replacementText": "          sourcePath.textContent = verified ? source.path : source.path + ' · ' +\n            viewerText('viewer.passport.evidence.unverified') + ': ' +\n            viewerText('viewer.passport.evidence.reason.' + source.reason);\n"
+    },
+    {
+      "scope": "passport authored type",
+      "sourceLine": 379,
+      "sourceByteOffset": 18731,
+      "sourceText": "        setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));\n",
+      "replacementText": "        // Only an authored type is shown; a colour slot the renderer derived is not one.\n        var authoredKind = svg.hasAttribute('data-node-kind-derived') ? '' : node.getAttribute('data-node-kind');\n        setPassportValue(kind, authoredKind ? viewerKindLabel(authoredKind) : '');\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1155,
+      "sourceByteOffset": 58792,
+      "sourceText": "",
+      "replacementText": "      var passportReserve = 0;\n      function setPassportReserve(value) {\n        value = Math.max(0, Math.round(value));\n        if (value === passportReserve) return;\n        passportReserve = value;\n        if (value) {\n          container.style.setProperty('--phoenix-diagram-passport-reserve', value + 'px');\n          container.setAttribute('data-passport-reserve', '');\n        } else {\n          container.style.removeProperty('--phoenix-diagram-passport-reserve');\n          container.removeAttribute('data-passport-reserve');\n        }\n      }\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1167,
+      "sourceByteOffset": 59364,
+      "sourceText": "",
+      "replacementText": "        // Measure the stage without the room reserved below the drawing, so\n        // that room is only kept while the Passport still needs it.\n        var reserve = passportReserve;\n        var stageHeight = containerRect.height - reserve;\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1168,
+      "sourceByteOffset": 59438,
+      "sourceText": "        var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);\n",
+      "replacementText": "        var visibleBottom = Math.min(stageHeight - padding, window.innerHeight - containerRect.top - padding);\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1176,
+      "sourceByteOffset": 59921,
+      "sourceText": "",
+      "replacementText": "          setPassportReserve(0);\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1203,
+      "sourceByteOffset": 61360,
+      "sourceText": "",
+      "replacementText": "        var chipHeight = chip.offsetHeight;\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1205,
+      "sourceByteOffset": 61470,
+      "sourceText": "        var protectedRects = (protectViewerChrome\n          ? [svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]\n          : [])\n          .filter(function (element) {\n            if (!element || element.hidden) return false;\n            var style = window.getComputedStyle(element);\n            return style.display !== 'none' && style.visibility !== 'hidden';\n          })\n          .map(function (element) { return element.getBoundingClientRect(); })\n          .filter(function (rect) {\n            return rect.width > 0 && rect.height > 0 &&\n              chipRect.left < rect.right + safeGap && chipRect.right > rect.left - safeGap;\n",
+      "replacementText": "        function visible(element) {\n          if (!element || element.hidden) return false;\n          var style = window.getComputedStyle(element);\n          return style.display !== 'none' && style.visibility !== 'hidden';\n        }\n        function band(rect, shift) {\n          return { rect: rect, top: rect.top - containerRect.top - shift, bottom: rect.bottom - containerRect.top - shift };\n        }\n        // Vertical bands the Passport must clear, relative to the container\n        // top: the legend and the dock (above any reserved room) when viewer\n        // chrome is protected, and always the focused node itself.\n        var legend = svg.querySelector('[data-legend]');\n        var dock = container.querySelector('.diagram-nav');\n        var bands = [band(nodeRect, 0)];\n        if (protectViewerChrome && visible(legend)) bands.push(band(legend.getBoundingClientRect(), 0));\n        if (protectViewerChrome && visible(dock)) bands.push(band(dock.getBoundingClientRect(), reserve));\n        bands = bands.filter(function (item) { return item.rect.width > 0 && item.rect.height > 0; });\n        function clearTop(left, right, low, high) {\n          var crossing = bands.filter(function (item) {\n            return left < item.rect.right + safeGap && right > item.rect.left - safeGap;\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1218,
+      "sourceByteOffset": 62149,
+      "sourceText": "        if (protectedRects.length) {\n          var candidates = [top, minTop, maxTop];\n          protectedRects.forEach(function (rect) {\n            candidates.push(\n              rect.top - containerRect.top - chip.offsetHeight - safeGap,\n              rect.bottom - containerRect.top + safeGap\n            );\n",
+      "replacementText": "          var candidates = [top, low, high];\n          crossing.forEach(function (item) {\n            candidates.push(item.top - chipHeight - safeGap, item.bottom + safeGap);\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1227,
+      "sourceByteOffset": 62535,
+      "sourceText": "            return Math.max(minTop, Math.min(maxTop, candidate));\n",
+      "replacementText": "            return Math.max(low, Math.min(high, candidate));\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1229,
+      "sourceByteOffset": 62656,
+      "sourceText": "            if (all.indexOf(candidate) !== index) return false;\n            var candidateTop = containerRect.top + candidate;\n            var candidateBottom = candidateTop + chip.offsetHeight;\n            return protectedRects.every(function (rect) {\n              return candidateBottom <= rect.top - safeGap || candidateTop >= rect.bottom + safeGap;\n",
+      "replacementText": "            return all.indexOf(candidate) === index && crossing.every(function (item) {\n              return candidate + chipHeight <= item.top - safeGap || candidate >= item.bottom + safeGap;\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1239,
+      "sourceByteOffset": 63180,
+      "sourceText": "          if (valid.length) top = valid[0];\n",
+      "replacementText": "          return valid.length ? valid[0] : null;\n        }\n        var placed = clearTop(chipRect.left, chipRect.right, minTop, maxTop);\n        if (mobile && html.getAttribute('data-present') !== 'true') {\n          // The camera stays at 100% on a narrow screen. When no height of the\n          // stage clears the focused node, the stage grows below the drawing\n          // and the Passport sits there, above the dock. A presentation stage\n          // fills the screen and cannot grow.\n          var stageFits = clearTop(chipRect.left, chipRect.right, padding,\n            Math.max(padding, stageHeight - padding - chipHeight)) !== null;\n          if (stageFits) {\n            setPassportReserve(0);\n            if (placed !== null) top = placed;\n          } else {\n            var stageStyle = window.getComputedStyle(container);\n            top = containerRect.height - (parseFloat(stageStyle.paddingBottom) || 0) -\n              (parseFloat(stageStyle.borderBottomWidth) || 0) + safeGap;\n            setPassportReserve(chipHeight + safeGap);\n          }\n        } else {\n          // The Passport keeps its column on a wide stage, clear of the\n          // toolbar menus that open over the stage's other side.\n          setPassportReserve(0);\n          if (placed !== null) top = placed;\n"
+    },
+    {
+      "scope": "passport node clearance",
+      "sourceLine": 1275,
+      "sourceByteOffset": 64784,
+      "sourceText": "",
+      "replacementText": "        setPassportReserve(0);\n"
+    }
+  ]
+}

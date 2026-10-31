@@ -39,7 +39,7 @@ impl Fixture {
             source_input_sha256: sha256(b"transaction test source identity"),
             input_contract_schema: 1,
             receipt_schema: 1,
-            viewer_revision: "phoenix-v1".into(),
+            viewer_revision: "phoenix-v2".into(),
             binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
         };
         Self {
@@ -57,6 +57,8 @@ impl Fixture {
             options: &self.options,
             engine: &self.engine,
             assets: &ASSETS,
+            repo_root: None,
+            brand_cache: None,
         }
     }
     pub fn finalize(&self) -> (FinalizeReceipt, ProtocolFixture) {

@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// Embedded schemas and the five frozen legacy samples bind the native source
+// identity. Skill text, other examples and derived ENGINE.json do not.
 const INPUTS: &[&str] = &[
     "package.json",
     "tools/phoenix-diagram/Cargo.toml",
@@ -11,10 +13,16 @@ const INPUTS: &[&str] = &[
     "tools/phoenix-diagram/build.rs",
     "tools/phoenix-diagram/src",
     "tools/phoenix-diagram/assets",
+    "tools/phoenix-diagram/migration-sources/archify-v1.json",
     "tools/phoenix-diagram/viewer",
     "tools/phoenix-diagram/upstream/SOURCE.json",
     "tools/phoenix-diagram/upstream/legacy-2.17/schemas",
-    "skills/phoenix-diagram",
+    "skills/phoenix-diagram/schemas",
+    "skills/phoenix-diagram/examples/legacy.web-app.architecture.json",
+    "skills/phoenix-diagram/examples/legacy.agent-tool-call.workflow.json",
+    "skills/phoenix-diagram/examples/legacy.async-job-roundtrip.sequence.json",
+    "skills/phoenix-diagram/examples/legacy.product-analytics.dataflow.json",
+    "skills/phoenix-diagram/examples/legacy.deployment-release.lifecycle.json",
 ];
 
 fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {
@@ -34,10 +42,11 @@ fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {
             "non-regular build input: {}",
             path.display()
         );
-        let relative = path.strip_prefix(root).expect("input within source tree");
-        if relative != Path::new("skills/phoenix-diagram/ENGINE.json") {
-            files.push(relative.to_path_buf());
-        }
+        files.push(
+            path.strip_prefix(root)
+                .expect("input within source tree")
+                .to_path_buf(),
+        );
     }
 }
 

@@ -194,11 +194,18 @@ fn preferred_width(input: &DiagramInput, raw: &Value) -> f64 {
         26.0 + units(input, step) * 8.0 * 0.6
     });
     // Text units count string scalars; fixed coefficients keep widths finite.
-    (units(input, string(raw, "label")) * 12.0 * 0.6 + left + 8.0)
-        .max(need(string(raw, "sublabel"), 9.0))
-        .max(need(string(raw, "tag"), 8.0))
-        .clamp(140.0, 220.0)
-        .ceil()
+    (units(input, string(raw, "label")) * 12.0 * 0.6
+        + left
+        + 8.0
+        + if raw.get("brand").is_some() {
+            48.0
+        } else {
+            0.0
+        })
+    .max(need(string(raw, "sublabel"), 9.0))
+    .max(need(string(raw, "tag"), 8.0))
+    .clamp(140.0, 220.0)
+    .ceil()
 }
 
 impl Model {
@@ -1941,7 +1948,11 @@ pub(super) fn compile(
         let sub = string(raw, "sublabel");
         let tag = string(raw, "tag");
         let step = string(raw, "step");
-        let lf = font(input, label, r.width, 12.0, 10.0);
+        let lf = if raw.get("brand").is_some() {
+            12.0
+        } else {
+            font(input, label, r.width, 12.0, 10.0)
+        };
         let sf = font(input, sub, r.width, 9.0, 8.0);
         let tf = font(input, tag, r.width, 8.0, 7.0);
         let (label_y, sub_y, tag_y) = if !sub.is_empty() && !tag.is_empty() {
@@ -2016,6 +2027,7 @@ pub(super) fn compile(
                     kind
                 });
         nodes.push(Node {
+            brand: None,
             authored: authored(raw, "states", index, kind, &[]),
             bounds: r,
             sigil: (icon != "none").then(|| Sigil {
@@ -2025,6 +2037,7 @@ pub(super) fn compile(
             }),
             label: label.into(),
             text: texts,
+            detail_rows: Vec::new(),
         });
     }
     let entries = presentation::legend_entries(input, &nodes, !finals.is_empty());
@@ -2117,6 +2130,8 @@ pub(super) fn compile(
             note_backdrop: None,
             label_plate: plate,
             text: texts,
+            marker_start: None,
+            marker_end: None,
         });
     }
     let containers = geometry

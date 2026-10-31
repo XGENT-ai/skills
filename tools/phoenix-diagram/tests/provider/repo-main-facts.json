@@ -1,0 +1,407 @@
+{
+  "schemaVersion": 1,
+  "kind": "phoenix-diagram-repository-main-facts",
+  "author": {
+    "repo-verified": {
+      "version": "main-v2",
+      "prompt": "仓库`{{REPO}}`已检出在固定提交。请解释从已安装skill入口执行普通命令`doctor --json`时，如何找到、校验并启动原生引擎，画成一张供评审使用的图，主要步骤对应具体源码行。前提是cwd就是已有合法安装回执的项目根，缓存引擎已存在；只解释这条正常路径。帮助/版本、显式引擎安装、升级、目录回退和异常恢复另有专项，不要求展开。只看直接相关文件，答复简短；这里只作源码解释，不执行被解释仓库的命令。\n",
+      "promptIdentity": {
+        "sha256": "085762fbd65fe895f9f0f90914d327481590df49ffb7c395cf54960534ac59a8",
+        "bytes": 554
+      }
+    },
+    "repo-dirty": {
+      "version": "main-v2",
+      "prompt": "仓库`{{REPO}}`是本地工作副本。请解释`bin/phoenix-diagram.js`与`skills/phoenix-diagram/scripts/phoenix-launcher.cjs`分别接收普通命令`doctor --json`后如何交给已安装引擎，画成一张图，标出具体源码行。前提同上，只比较两入口的参数/配置、校验与交接正常路径；不展开帮助/版本、显式安装、升级或目录回退。另按实际来源核验说明未提交修改的影响，答复简短；不执行被解释仓库的命令。\n",
+      "promptIdentity": {
+        "sha256": "c9a8c26fb37f5070d736a27c89456de7db26c2759968c0651168a87aebbc08ca",
+        "bytes": 498
+      }
+    }
+  },
+  "review": {
+    "requireAllApplicable": true,
+    "dimensions": [
+      "automated",
+      "semantic",
+      "provenance",
+      "visual",
+      "protocol",
+      "identity"
+    ],
+    "instructions": [
+      "只给作者选定的author题面与该题授权资料；review字段、源码答案、历史失败和修订原因不得进入作者材料。",
+      "分别登记六个维度及每项事实的源码依据，失败注明所属维度；所有适用的强制项须通过。自动complete或视觉通过不能覆盖语义错误，语义失败也不抹去真实自动/视觉通过。",
+      "允许合并节点与不同措辞，不规定节点或引用数量；核实际可走路径及条件，而非命中特定术语。",
+      "诊断补读、停止阈值、访问授权与如实答复照常核验；审核者事后推算计数不冒写成作者已记录，登记草稿错误不混入布局停滞序列。"
+    ],
+    "optionalBranches": "题面排除的帮助/版本、显式引擎安装、升级、目录回退与异常恢复可以省略；若主动写出额外事实，仍必须有源码支持，错误断言仍判语义失败。",
+    "history": "旧宽题及GLM/Deepseek失败保持原件和原判定，不因main-v2的新结果改判旧会话。",
+    "scenarios": {
+      "repo-verified": {
+        "version": "main-v2",
+        "promptIdentity": {
+          "sha256": "085762fbd65fe895f9f0f90914d327481590df49ffb7c395cf54960534ac59a8",
+          "bytes": 554
+        },
+        "requiredAssertions": [
+          {
+            "fact": "已安装skill的shell入口定位自身目录，以exec node启动相邻phoenix-launcher.cjs并原样转交用户argv；launcher调用相邻bootstrap.main，传skillDir和该skill内的ENGINE.json。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-diagram",
+                "startLine": 4,
+                "endLine": 6,
+                "passage": "set -eu\ndir=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\nexec node \"$dir/phoenix-launcher.cjs\" \"$@\"\n",
+                "identity": {
+                  "sha256": "9e727d290cebbe139c89f68d3307a7792a18c8c857bc7e5c15ed6b5aaa44647f",
+                  "bytes": 100
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-launcher.cjs",
+                "startLine": 5,
+                "endLine": 10,
+                "passage": "const path = require('node:path');\nconst { main } = require('./phoenix-bootstrap.cjs');\nconst skillDir = path.resolve(__dirname, '..');\nmain(process.argv.slice(2), { skillDir, manifestPath: path.join(skillDir, 'ENGINE.json') })\n  .then(code => { process.exitCode = code; })\n  .catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\\n`); process.exitCode = 4; });\n",
+                "identity": {
+                  "sha256": "b124502f8b995c2fc3ce1136d1a4a18f2e21c02f45d311e92280712c234ac6c0",
+                  "bytes": 381
+                }
+              }
+            ]
+          },
+          {
+            "fact": "普通doctor --json经过main的普通命令分支，preflight收到allowInstall:false和checkReceipt:true；此路径不把argv中的--project解析成options.project，不下载或安装引擎。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 533,
+                "endLine": 536,
+                "passage": "    const ready = await preflight({ ...options, env, allowInstall: false, checkReceipt: args[0] === 'install' ? false : true });\n    manifest = ready.manifest; target = ready.target; project = ready.project;\n    const childArgs = [...args];\n    if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);\n",
+                "identity": {
+                  "sha256": "9edb392f6b6c1d81394f9822ccba9349dea425a2dec487153f7f0be35e100edc",
+                  "bytes": 405
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 481,
+                "endLine": 483,
+                "passage": "    : verifyEngine(enginePath(manifest, target, env), manifest, target, env);\n  return { enginePath: binary, bundleRoot, versionManifestPath, version: manifest.data, manifest, target, project, skillDir };\n}\n",
+                "identity": {
+                  "sha256": "4d0ff016c1db23ef73a707ab8e751710e498af67d545828cc13c8f477b43d4c5",
+                  "bytes": 207
+                }
+              }
+            ]
+          },
+          {
+            "fact": "preflight先确定skillDir与清单路径，核清单身份及目标平台，再由options.project或cwd选项目根；题设cwd已有合法active.json，因此使用当前项目，不展开skill目录回退。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 457,
+                "endLine": 464,
+                "passage": "async function preflight(options = {}) {\n  const env = { ...process.env, ...options.env };\n  const skillDir = path.resolve(options.skillDir || path.join(__dirname, '..'));\n  const versionManifestPath = path.resolve(options.manifestPath || path.join(skillDir, 'ENGINE.json'));\n  const manifest = manifestAt(versionManifestPath, options);\n  const target = platformTarget();\n  let project = projectRoot(options.project || process.cwd());\n  let bundleRoot;\n",
+                "identity": {
+                  "sha256": "fe9266dc27d933dc29cbc0b98a67838529cf489e34250170f90e9dedafcda46e",
+                  "bytes": 453
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 105,
+                "endLine": 122,
+                "passage": "function manifestAt(file, options = {}) {\n  file = path.resolve(file);\n  const { bytes } = readRegular(file, 1024 * 1024);\n  const data = JSON.parse(bytes);\n  const keys = ['schemaVersion', 'distribution', 'tool', 'toolVersion', 'npmPackageVersion', 'sourceCommit', 'sourceInputSha256', 'inputContractSchema', 'receiptSchema', 'viewerRevision', 'bundleSha256', 'engines'];\n  const npmVersion = options.packageJsonPath || path.basename(file) === 'VERSION.json' ? packageVersion(options) : undefined;\n  if (!object(data) || Object.keys(data).some(key => !keys.includes(key)) || data.schemaVersion !== 1 || data.tool !== TOOL || data.toolVersion !== TOOL_VERSION\n    || !['development', 'candidate', 'release'].includes(data.distribution) || !SEMVER.test(data.npmPackageVersion || '') || npmVersion && data.npmPackageVersion !== npmVersion\n    || !/^[a-f0-9]{40}$/.test(data.sourceCommit || '') || !SHA.test(data.sourceInputSha256 || '') || !SHA.test(data.bundleSha256 || '')\n    || data.inputContractSchema !== 1 || data.receiptSchema !== 1 || data.viewerRevision !== 'phoenix-v1' || !object(data.engines)) throw failure('Invalid Phoenix Diagram package manifest or fixed package/version/contract identity.');\n  const targets = Object.keys(data.engines);\n  if (!targets.length || targets.some(target => !TARGETS.includes(target)) || data.distribution !== 'development' && TARGETS.some(target => !targets.includes(target))) throw failure('Engine manifest is missing a supported platform or names an unknown target.');\n  for (const [target, engine] of Object.entries(data.engines)) {\n    if (!object(engine) || Object.keys(engine).some(key => !['asset', 'size', 'sha256', 'url'].includes(key)) || engine.asset !== `${TOOL}-${target}` || !SHA.test(engine.sha256 || '') || !Number.isSafeInteger(engine.size) || engine.size <= 0 || engine.size > MAX_ENGINE) throw failure(`Invalid engine metadata for ${target}.`);\n    if (data.distribution !== 'development' && !engine.url) throw failure(`Pinned engine URL is missing for ${target}.`);\n    if (engine.url) checkedUrl(engine.url, data.distribution);\n  }\n  return { data, bytes, hash: sha256(bytes), path: file };\n",
+                "identity": {
+                  "sha256": "4c48a65dcc138d7bb91b984f9dc734a55b16b53afedaebc73a10be5792bf1d80",
+                  "bytes": 2156
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 33,
+                "endLine": 37,
+                "passage": "function platformTarget(platform = process.platform, arch = process.arch) {\n  const target = `${platform}-${arch}`;\n  if (!TARGETS.includes(target)) throw failure(`Unsupported Phoenix Diagram platform ${platform}/${arch}; the engine supports the four declared macOS/Linux targets.`);\n  return target;\n}\n",
+                "identity": {
+                  "sha256": "19d14f7ffa7bd0b0e7496380f6ad6aa5c8c2410757bbd8824eef89343574b088",
+                  "bytes": 303
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 346,
+                "endLine": 360,
+                "passage": "function projectRoot(start) {\n  let initial;\n  try { initial = fs.realpathSync(path.resolve(start)); }\n  catch (error) {\n    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') throw failure(`Project is not an existing directory: ${start}`, 2);\n    throw error;\n  }\n  let directory = initial;\n  if (!fs.statSync(initial).isDirectory()) throw failure(`Project is not a directory: ${start}`, 2);\n  for (;;) {\n    if (exists(path.join(directory, '.phoenix-diagram/install/active.json')) || exists(path.join(directory, '.git'))) return directory;\n    const parent = path.dirname(directory);\n    if (parent === directory) return initial;\n    directory = parent;\n  }\n",
+                "identity": {
+                  "sha256": "1cd647105ea6c09db0e42422ee3058a62edb930574107770e8727aba1c64a399",
+                  "bytes": 666
+                }
+              }
+            ]
+          },
+          {
+            "fact": "已安装入口走无显式bundleRoot分支，verifyReceipt(project,manifest,{installedSkillRoot:skillDir})核active清单/引擎/项目绑定、完成journal、受管文件身份及该skill的ENGINE和目录清单，再将bundleRoot设为skillDir。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 473,
+                "endLine": 479,
+                "passage": "  } else {\n    if (!options.project && !exists(path.join(project, '.phoenix-diagram/install/active.json'))) project = projectRoot(skillDir);\n    verifyReceipt(project, manifest, { installedSkillRoot: skillDir });\n    bundleRoot = skillDir;\n    if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, null);\n  }\n  const binary = options.allowInstall === true\n",
+                "identity": {
+                  "sha256": "922634bfad821b8cc0dcc076d35862cbffb750c3f7d979780e4d25f1a6031f86",
+                  "bytes": 417
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 410,
+                "endLine": 436,
+                "passage": "  const snapshot = sealed(childFile(project, receiptPath));\n  const active = snapshot.data; const version = manifest.data;\n  const transaction = active.transactionId;\n  if (active.schemaVersion !== 1 || active.tool !== TOOL || active.toolVersion !== TOOL_VERSION || !/^[a-f0-9]{32}$/.test(transaction || '') || !same(active.project, physical(fs.statSync(project, { bigint: true })))\n    || active.npmPackageVersion !== version.npmPackageVersion || active.bundleManifestSha256 !== version.bundleSha256 || active.engineManifestSha256 !== manifest.hash\n    || active.engine?.sourceInputSha256 !== version.sourceInputSha256 || active.engine?.inputContractSchema !== 1 || active.engine?.receiptSchema !== 1 || active.engine?.viewerRevision !== 'phoenix-v1'\n    || !Object.values(version.engines).some(meta => meta.sha256 === active.engine?.binary?.sha256 && meta.size === active.engine?.binary?.bytes)\n    || !Array.isArray(active.providers) || !active.providers.length || new Set(active.providers).size !== active.providers.length || active.providers.some(provider => !PROVIDERS.includes(provider))\n    || active.journal !== `.phoenix-diagram/install/journals/${transaction}.json` || active.backup !== `.phoenix-diagram/install/transactions/${transaction}/before`\n    || !Array.isArray(active.ownership) || !active.ownership.length || active.ownership.length > 200000\n    || active.planSha256 !== sha256(encoded([active.bundleManifestSha256, active.engineManifestSha256, active.providers, active.ownership]))) throw failure('Project ownership requires a different or invalid Phoenix Diagram package/contract identity.');\n  const journal = sealed(childFile(project, active.journal)).data;\n  if (journal.schemaVersion !== 1 || journal.tool !== TOOL || journal.transactionId !== transaction || journal.phase !== 'committed' || journal.pending !== null || !Array.isArray(journal.operations) || !journal.operations.length || journal.completed !== journal.operations.length\n    || !same(journal.project, active.project) || !same(journal.active, active)\n    || !same(journal.transaction, physical(fs.statSync(path.dirname(path.join(project, active.backup)), { bigint: true })))\n    || journal.operations[journal.operations.length - 1].path !== receiptPath || !same(journal.operations[journal.operations.length - 1].after, identity(snapshot))) throw failure('Installed ownership is not bound to a completed native journal.');\n  let previous; const owned = new Map();\n  for (const entry of active.ownership) {\n    if (!managed(entry.path) || !active.providers.includes(entry.path.split('/')[0]) || previous && Buffer.compare(Buffer.from(previous), Buffer.from(entry.path)) >= 0 || ![0o644, 0o755].includes(entry.identity?.mode)) throw failure(`Unsafe managed ownership path: ${entry.path}`);\n    const actual = readRegular(childFile(project, entry.path), MAX_ENGINE, entry.identity.mode);\n    if (!same(identity(actual), entry.identity)) throw failure(`Managed ownership identity or digest changed: ${entry.path}`);\n    owned.set(entry.path, entry.identity); previous = entry.path;\n  }\n  for (const [index, operation] of journal.operations.entries()) {\n    if (operation.stagePath !== `after/${index}` || operation.retiredPath !== `retired/${index}` || operation.undoPath !== `undo/${index}` || operation.backupPath !== (operation.before ? `before/${index}` : null)) throw failure('Journal staging/backup paths differ from native ownership.');\n    if (index + 1 < journal.operations.length && (!managed(operation.path) || !same(owned.get(operation.path), operation.after))) throw failure(`Journal operation differs from managed ownership: ${operation.path}`);\n  }\n",
+                "identity": {
+                  "sha256": "331306f52f610df7fc282b46d09fcfb9523520728ab91399ceec7ba9ea3cd121",
+                  "bytes": 3651
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 438,
+                "endLine": 448,
+                "passage": "  for (const name of fs.readdirSync(journals)) {\n    if (verifiedJournalPublicationEntry(journals, name)) continue;\n    if (!/^[a-f0-9]{32}\\.json$/.test(name)) throw failure(`Unknown installation journal entry: ${name}`);\n    const other = sealed(childFile(journals, name)).data;\n    if (!['committed', 'recovered'].includes(other.phase)) throw failure('Diagram installation requires explicit native recovery before ordinary use.');\n  }\n  if (options.installedSkillRoot) {\n    const relativeRoot = path.relative(project, options.installedSkillRoot).split(path.sep).join('/');\n    if (!owned.has(`${relativeRoot}/ENGINE.json`) || !owned.has(`${relativeRoot}/SKILL.md`)) throw failure('Launcher skill root is not managed by this project ownership record.');\n    const engine = readRegular(childFile(options.installedSkillRoot, 'ENGINE.json'), 1024 * 1024).bytes;\n    if (!engine.equals(manifest.bytes)) throw failure('Installed ENGINE bytes differ from their native ownership identity.');\n",
+                "identity": {
+                  "sha256": "0781deb3fc3adc50f266332b8c696ac0fa8ab04a9dde18cc8c324c6278dd29cf",
+                  "bytes": 987
+                }
+              }
+            ]
+          },
+          {
+            "fact": "题设缓存引擎已存在，enginePath按引擎home、版本、平台与固定SHA选缓存文件；verifyEngine核普通文件/大小/摘要/可执行位，运行engine-probe核固定协议输出，并确认probe期间文件身份未变。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 198,
+                "endLine": 215,
+                "passage": "function cacheRoot(env = process.env) { return path.resolve(env.PHOENIX_DIAGRAM_HOME || path.join(os.homedir(), '.phoenix-diagram')); }\nfunction enginePath(manifest, target, env = process.env) {\n  const meta = manifest.data.engines[target];\n  if (!meta) throw failure(`This package has no verified engine for ${target}.`);\n  return path.join(cacheRoot(env), 'bin', manifest.data.toolVersion, target, meta.sha256, TOOL);\n}\nfunction verifyEngine(file, manifest, target, env = process.env) {\n  const meta = manifest.data.engines[target];\n  if (!meta) throw failure(`No pinned engine for ${target}.`);\n  const { size, digest, stat } = readRegular(file, MAX_ENGINE, undefined, true);\n  if (size !== meta.size || digest !== meta.sha256 || Number(stat.mode & 0o111n) === 0) throw failure('Phoenix Diagram binary digest, size or executable mode differs from VERSION.');\n  const probe = spawnSync(file, ['engine-probe'], { env, encoding: 'utf8', timeout: 3000, maxBuffer: 4096, windowsHide: true });\n  if (probe.error || probe.status !== 0 || probe.stdout !== `phoenix-diagram-engine ${TOOL_VERSION} input=1 receipt=1 viewer=phoenix-v1\\n`) throw failure(`Phoenix Diagram engine probe identity differs: ${JSON.stringify({ error: probe.error?.code || null, status: probe.status, signal: probe.signal, stdout: probe.stdout, stderr: probe.stderr })}`);\n  const after = fs.lstatSync(file, { bigint: true });\n  if (after.dev !== stat.dev || after.ino !== stat.ino || after.size !== stat.size || after.mtimeNs !== stat.mtimeNs || after.ctimeNs !== stat.ctimeNs) throw failure('Phoenix Diagram binary changed during its probe.');\n  return file;\n}\n\n",
+                "identity": {
+                  "sha256": "aa975edab1627837b087c0999167f0b42d2230b9779da27d0dc4ca90572af0ac",
+                  "bytes": 1631
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 52,
+                "endLine": 76,
+                "passage": "}\nfunction readRegular(file, limit, mode, digestOnly = false) {\n  const stat = fs.lstatSync(file, { bigint: true });\n  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1n) throw failure(`Expected a regular, singly linked file, not a symlink: ${file}`);\n  if (stat.size > BigInt(limit) || (mode !== undefined && Number(stat.mode & 0o777n) !== mode)) throw failure(`File size or mode differs from the pinned resource: ${file}`);\n  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);\n  try {\n    const opened = fs.fstatSync(fd, { bigint: true });\n    let bytes; let digest; let size;\n    if (digestOnly) {\n      const hash = crypto.createHash('sha256'); const chunk = Buffer.allocUnsafe(64 * 1024); size = 0;\n      for (;;) {\n        const length = fs.readSync(fd, chunk, 0, chunk.length, null);\n        if (!length) break;\n        if ((size += length) > limit) throw failure(`Resource exceeds its size bound: ${file}`);\n        hash.update(chunk.subarray(0, length));\n      }\n      digest = hash.digest('hex');\n    } else { bytes = fs.readFileSync(fd); size = bytes.length; }\n    const after = fs.fstatSync(fd, { bigint: true });\n    if (opened.dev !== stat.dev || opened.ino !== stat.ino || after.size !== stat.size || size > limit || BigInt(size) !== stat.size || opened.mtimeNs !== after.mtimeNs || opened.ctimeNs !== after.ctimeNs) throw failure(`Resource changed during verification: ${file}`);\n    return { bytes, stat, size, digest };\n  } finally { fs.closeSync(fd); }\n}\nfunction relative(value) {\n",
+                "identity": {
+                  "sha256": "66b2c784bb59fd56a04313914b1fd2ae73b886b7de17ac71b2bc50c7bc2d98e5",
+                  "bytes": 1543
+                }
+              }
+            ]
+          },
+          {
+            "fact": "main复制doctor --json为childArgs，只对install命令才补bundle-root；childEnv加入PHOENIX_DIAGRAM_BUNDLE_ROOT和SETUP_COMMAND，spawn已校验引擎且继承stdio，转发SIGINT/SIGTERM并返回子退出结果。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 533,
+                "endLine": 549,
+                "passage": "    const ready = await preflight({ ...options, env, allowInstall: false, checkReceipt: args[0] === 'install' ? false : true });\n    manifest = ready.manifest; target = ready.target; project = ready.project;\n    const childArgs = [...args];\n    if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);\n    const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot, PHOENIX_DIAGRAM_SETUP_COMMAND: setupCommand(manifest, project, options) };\n    const code = await new Promise((resolve, reject) => {\n      const child = spawn(ready.enginePath, childArgs, { env: childEnv, stdio: 'inherit', windowsHide: true });\n      const interrupt = () => child.kill('SIGINT'); const terminate = () => child.kill('SIGTERM');\n      process.on('SIGINT', interrupt); process.on('SIGTERM', terminate);\n      child.once('error', reject);\n      child.once('close', (code, signal) => {\n        process.removeListener('SIGINT', interrupt); process.removeListener('SIGTERM', terminate);\n        resolve(code ?? (signal === 'SIGINT' ? 130 : 143));\n      });\n    });\n    if (wantsHelp && args[0].startsWith('-') && code === 0) process.stdout.write(`\\nBootstrap: phoenix-diagram engine install --project DIR [--release-dir DIR] --json\\n${setupCommand(manifest, project, options)}\\n`);\n    return code;\n",
+                "identity": {
+                  "sha256": "aa7b29aa23a65542e85e38e765f1491b5349496b8d9119d8092e8a4269903bbb",
+                  "bytes": 1392
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "repo-dirty": {
+        "version": "main-v2",
+        "promptIdentity": {
+          "sha256": "c9a8c26fb37f5070d736a27c89456de7db26c2759968c0651168a87aebbc08ca",
+          "bytes": 498
+        },
+        "requiredAssertions": [
+          {
+            "fact": "bin/phoenix-diagram.js与skill launcher均把process.argv.slice(2)传给同一bootstrap.main；npm入口显式传dist VERSION、dist bundleRoot、包内skillDir和packageJsonPath，已安装入口只传skillDir及其ENGINE.json。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "bin/phoenix-diagram.js",
+                "startLine": 5,
+                "endLine": 14,
+                "passage": "const path = require('node:path');\nconst { main } = require('../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs');\nconst root = path.resolve(__dirname, '..');\nmain(process.argv.slice(2), {\n  manifestPath: path.join(root, 'dist/phoenix-diagram/VERSION.json'),\n  bundleRoot: path.join(root, 'dist/phoenix-diagram/bundle'),\n  skillDir: path.join(root, 'skills/phoenix-diagram'),\n  packageJsonPath: path.join(root, 'package.json'),\n}).then(code => { process.exitCode = code; })\n  .catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\\n`); process.exitCode = 4; });\n",
+                "identity": {
+                  "sha256": "bfc0046065de9bec97af2f993d9992648eb8af79a6b4618da0257b61d6f64f4f",
+                  "bytes": 586
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-launcher.cjs",
+                "startLine": 5,
+                "endLine": 10,
+                "passage": "const path = require('node:path');\nconst { main } = require('./phoenix-bootstrap.cjs');\nconst skillDir = path.resolve(__dirname, '..');\nmain(process.argv.slice(2), { skillDir, manifestPath: path.join(skillDir, 'ENGINE.json') })\n  .then(code => { process.exitCode = code; })\n  .catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\\n`); process.exitCode = 4; });\n",
+                "identity": {
+                  "sha256": "b124502f8b995c2fc3ce1136d1a4a18f2e21c02f45d311e92280712c234ac6c0",
+                  "bytes": 381
+                }
+              }
+            ]
+          },
+          {
+            "fact": "在普通doctor --json及题设合法项目根下，两入口都执行preflight的allowInstall:false/checkReceipt:true；npm入口走显式bundleRoot分支，核包bundle和许可后核当前回执，skill入口走installedSkillRoot分支，另核受管skill的ENGINE与清单。不是所有入口共享所有bundle校验调用。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 533,
+                "endLine": 539,
+                "passage": "    const ready = await preflight({ ...options, env, allowInstall: false, checkReceipt: args[0] === 'install' ? false : true });\n    manifest = ready.manifest; target = ready.target; project = ready.project;\n    const childArgs = [...args];\n    if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);\n    const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot, PHOENIX_DIAGRAM_SETUP_COMMAND: setupCommand(manifest, project, options) };\n    const code = await new Promise((resolve, reject) => {\n      const child = spawn(ready.enginePath, childArgs, { env: childEnv, stdio: 'inherit', windowsHide: true });\n",
+                "identity": {
+                  "sha256": "77f512007f14cee4cd847644c0561f7c57ea279d312d06ee2477fa9b8ff85e88",
+                  "bytes": 728
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 457,
+                "endLine": 483,
+                "passage": "async function preflight(options = {}) {\n  const env = { ...process.env, ...options.env };\n  const skillDir = path.resolve(options.skillDir || path.join(__dirname, '..'));\n  const versionManifestPath = path.resolve(options.manifestPath || path.join(skillDir, 'ENGINE.json'));\n  const manifest = manifestAt(versionManifestPath, options);\n  const target = platformTarget();\n  let project = projectRoot(options.project || process.cwd());\n  let bundleRoot;\n  if (options.bundleRoot) {\n    bundleRoot = path.resolve(options.bundleRoot);\n    verifyBundle(bundleRoot, manifest);\n    legalResources(path.dirname(versionManifestPath));\n    if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, verifyBundle(bundleRoot, manifest));\n    // An explicit package upgrade lets native --dry-run validate the prior\n    // ownership. Ordinary use never opts out of the current receipt binding.\n    if (options.checkReceipt !== false) verifyReceipt(project, manifest);\n  } else {\n    if (!options.project && !exists(path.join(project, '.phoenix-diagram/install/active.json'))) project = projectRoot(skillDir);\n    verifyReceipt(project, manifest, { installedSkillRoot: skillDir });\n    bundleRoot = skillDir;\n    if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, null);\n  }\n  const binary = options.allowInstall === true\n    ? await installEngine(manifest, target, project, options.releaseDir && path.resolve(options.releaseDir), env)\n    : verifyEngine(enginePath(manifest, target, env), manifest, target, env);\n  return { enginePath: binary, bundleRoot, versionManifestPath, version: manifest.data, manifest, target, project, skillDir };\n}\n",
+                "identity": {
+                  "sha256": "17aee63cd2396d6a5289412ec6a4550fa8cc36e95233c2ee45ff3dc532b8c21d",
+                  "bytes": 1749
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 442,
+                "endLine": 448,
+                "passage": "    if (!['committed', 'recovered'].includes(other.phase)) throw failure('Diagram installation requires explicit native recovery before ordinary use.');\n  }\n  if (options.installedSkillRoot) {\n    const relativeRoot = path.relative(project, options.installedSkillRoot).split(path.sep).join('/');\n    if (!owned.has(`${relativeRoot}/ENGINE.json`) || !owned.has(`${relativeRoot}/SKILL.md`)) throw failure('Launcher skill root is not managed by this project ownership record.');\n    const engine = readRegular(childFile(options.installedSkillRoot, 'ENGINE.json'), 1024 * 1024).bytes;\n    if (!engine.equals(manifest.bytes)) throw failure('Installed ENGINE bytes differ from their native ownership identity.');\n",
+                "identity": {
+                  "sha256": "dfe0c93183dfd57c325a42057dbb312e2aac5500b85f90f4abae6b98dd1296a4",
+                  "bytes": 707
+                }
+              }
+            ]
+          },
+          {
+            "fact": "两入口均从同一固定清单的目标平台/SHA定位并校验已有缓存引擎，然后以原doctor --json参数及各自bundleRoot/SETUP_COMMAND环境交接；两入口的配置路径差异必须保留，不能以无条件共同动作抹平。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 198,
+                "endLine": 215,
+                "passage": "function cacheRoot(env = process.env) { return path.resolve(env.PHOENIX_DIAGRAM_HOME || path.join(os.homedir(), '.phoenix-diagram')); }\nfunction enginePath(manifest, target, env = process.env) {\n  const meta = manifest.data.engines[target];\n  if (!meta) throw failure(`This package has no verified engine for ${target}.`);\n  return path.join(cacheRoot(env), 'bin', manifest.data.toolVersion, target, meta.sha256, TOOL);\n}\nfunction verifyEngine(file, manifest, target, env = process.env) {\n  const meta = manifest.data.engines[target];\n  if (!meta) throw failure(`No pinned engine for ${target}.`);\n  const { size, digest, stat } = readRegular(file, MAX_ENGINE, undefined, true);\n  if (size !== meta.size || digest !== meta.sha256 || Number(stat.mode & 0o111n) === 0) throw failure('Phoenix Diagram binary digest, size or executable mode differs from VERSION.');\n  const probe = spawnSync(file, ['engine-probe'], { env, encoding: 'utf8', timeout: 3000, maxBuffer: 4096, windowsHide: true });\n  if (probe.error || probe.status !== 0 || probe.stdout !== `phoenix-diagram-engine ${TOOL_VERSION} input=1 receipt=1 viewer=phoenix-v1\\n`) throw failure(`Phoenix Diagram engine probe identity differs: ${JSON.stringify({ error: probe.error?.code || null, status: probe.status, signal: probe.signal, stdout: probe.stdout, stderr: probe.stderr })}`);\n  const after = fs.lstatSync(file, { bigint: true });\n  if (after.dev !== stat.dev || after.ino !== stat.ino || after.size !== stat.size || after.mtimeNs !== stat.mtimeNs || after.ctimeNs !== stat.ctimeNs) throw failure('Phoenix Diagram binary changed during its probe.');\n  return file;\n}\n\n",
+                "identity": {
+                  "sha256": "aa975edab1627837b087c0999167f0b42d2230b9779da27d0dc4ca90572af0ac",
+                  "bytes": 1631
+                }
+              },
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs",
+                "startLine": 533,
+                "endLine": 549,
+                "passage": "    const ready = await preflight({ ...options, env, allowInstall: false, checkReceipt: args[0] === 'install' ? false : true });\n    manifest = ready.manifest; target = ready.target; project = ready.project;\n    const childArgs = [...args];\n    if (args[0] === 'install' && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);\n    const childEnv = { ...env, PHOENIX_DIAGRAM_BUNDLE_ROOT: ready.bundleRoot, PHOENIX_DIAGRAM_SETUP_COMMAND: setupCommand(manifest, project, options) };\n    const code = await new Promise((resolve, reject) => {\n      const child = spawn(ready.enginePath, childArgs, { env: childEnv, stdio: 'inherit', windowsHide: true });\n      const interrupt = () => child.kill('SIGINT'); const terminate = () => child.kill('SIGTERM');\n      process.on('SIGINT', interrupt); process.on('SIGTERM', terminate);\n      child.once('error', reject);\n      child.once('close', (code, signal) => {\n        process.removeListener('SIGINT', interrupt); process.removeListener('SIGTERM', terminate);\n        resolve(code ?? (signal === 'SIGINT' ? 130 : 143));\n      });\n    });\n    if (wantsHelp && args[0].startsWith('-') && code === 0) process.stdout.write(`\\nBootstrap: phoenix-diagram engine install --project DIR [--release-dir DIR] --json\\n${setupCommand(manifest, project, options)}\\n`);\n    return code;\n",
+                "identity": {
+                  "sha256": "aa7b29aa23a65542e85e38e765f1491b5349496b8d9119d8092e8a4269903bbb",
+                  "bytes": 1392
+                }
+              }
+            ]
+          },
+          {
+            "fact": "repo-dirty只给launcher追加未提交注释，不改变doctor --json代码执行路径；若图引用该文件，必须依据真实来源核验披露未提交修改及partial或unverified项，不能把脏引用概括为全部verified。最终核验状态以实际回执为准。",
+            "sources": [
+              {
+                "revision": "e29d4cafcada8809335e0a3dfaa939be95bb9643",
+                "path": "skills/phoenix-diagram/scripts/phoenix-launcher.cjs",
+                "startLine": 8,
+                "endLine": 12,
+                "dirty": true,
+                "passage": "main(process.argv.slice(2), { skillDir, manifestPath: path.join(skillDir, 'ENGINE.json') })\n  .then(code => { process.exitCode = code; })\n  .catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\\n`); process.exitCode = 4; });\n\n// Local experiment: not committed.\n",
+                "identity": {
+                  "sha256": "d06e9d288d8a13005fcef2ac81d0c6290438218ffb2cbe6afcd94c02f6a7b4eb",
+                  "bytes": 282
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "separateCoverage": {
+      "repairable-diagnostic": "实际诊断后的修复",
+      "stalled-repair": "历史最佳、停滞计数与达到2后停止",
+      "repo-dirty": "实际来源partial/未提交修改披露"
+    },
+    "deterministicBoundaryCoverage": [
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "help and pinned recovery instructions work without manifests, engines or network",
+        "scope": [
+          "--help",
+          "--version",
+          "recover-output --help"
+        ]
+      },
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "explicit acquisition rejects invalid project arguments without writing state",
+        "scope": [
+          "engine install missing/duplicate/invalid --project"
+        ]
+      },
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "a real native install yields a working installed launcher without an installed manifest.json",
+        "scope": [
+          "installed shell/Node launcher",
+          "ownership binding and protection"
+        ]
+      },
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "ordinary install delegates package changes while ordinary commands and engine install bind the current receipt",
+        "scope": [
+          "ordinary install checkReceipt:false",
+          "ordinary command and engine install receipt identity"
+        ]
+      },
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "ordinary argv project stays native while preflight uses its internal project option",
+        "scope": [
+          "options.project and original argv separation"
+        ]
+      },
+      {
+        "testFile": "test/phoenix-diagram/bootstrap.test.js",
+        "test": "installed launchers respect a valid cwd parent receipt before their own project fallback",
+        "scope": [
+          "cwd parent ownership receipt selection"
+        ]
+      }
+    ]
+  }
+}

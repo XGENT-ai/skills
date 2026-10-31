@@ -14,15 +14,25 @@ pub enum DiagramType {
     Sequence,
     Dataflow,
     Lifecycle,
+    Erd,
+    Class,
+    Tree,
+    Timeline,
+    Waterfall,
 }
 
 impl DiagramType {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 10] = [
         Self::Architecture,
         Self::Workflow,
         Self::Sequence,
         Self::Dataflow,
         Self::Lifecycle,
+        Self::Erd,
+        Self::Class,
+        Self::Tree,
+        Self::Timeline,
+        Self::Waterfall,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -32,7 +42,20 @@ impl DiagramType {
             Self::Sequence => "sequence",
             Self::Dataflow => "dataflow",
             Self::Lifecycle => "lifecycle",
+            Self::Erd => "erd",
+            Self::Class => "class",
+            Self::Tree => "tree",
+            Self::Timeline => "timeline",
+            Self::Waterfall => "waterfall",
         }
+    }
+
+    /// Only the types frozen in Archify 2.17 have a legacy input contract.
+    pub fn has_legacy_contract(self) -> bool {
+        matches!(
+            self,
+            Self::Architecture | Self::Workflow | Self::Sequence | Self::Dataflow | Self::Lifecycle
+        )
     }
 }
 
@@ -96,10 +119,20 @@ pub struct DeferredField {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FieldDisposition {
+    pub path: String,
+    pub disposition: String,
+    pub reason: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Compatibility {
     pub status: String,
     pub core_compatibility: String,
     pub deferred_fields: Vec<DeferredField>,
+    #[serde(default)]
+    pub dispositions: Vec<FieldDisposition>,
 }
 
 #[derive(Clone, Debug)]
@@ -113,6 +146,8 @@ pub struct DiagramInput {
     pub config_sha256: String,
     pub document: Value,
     pub compatibility: Compatibility,
+    pub brands: crate::brands::ResolvedBrands,
+    evidence_sha256: Option<String>,
 }
 
 pub fn parse_input(
@@ -145,10 +180,25 @@ pub fn parse_input(
             ));
         }
     }
-    let input_contract = options
-        .input_contract
-        .or(marker)
-        .unwrap_or(InputContract::Legacy217);
+    let input_contract =
+        options
+            .input_contract
+            .or(marker)
+            .unwrap_or(if kind.has_legacy_contract() {
+                InputContract::Legacy217
+            } else {
+                InputContract::PhoenixV1
+            });
+    if input_contract == InputContract::Legacy217 && !kind.has_legacy_contract() {
+        return Err(error(
+            "input/contract-unsupported",
+            "/meta/input_contract",
+            format!(
+                "{} has no legacy-2.17 input contract; use phoenix-v1",
+                kind.as_str()
+            ),
+        ));
+    }
     let authored_quality = document
         .pointer("/meta/quality_profile")
         .map(|value| serde_json::from_value::<Quality>(value.clone()))
@@ -208,23 +258,137 @@ pub fn parse_input(
     if !errors.is_empty() {
         return Err(errors);
     }
+    if input_contract == InputContract::PhoenixV1 {
+        if let Some(Err(reason)) = document["meta"]["output"].as_str().map(portable_output) {
+            let mut diagnostic = Diagnostic::error(
+                Some(kind.as_str()),
+                "input/schema",
+                "/meta/output",
+                format!("meta.output must satisfy the portable output path contract ({reason})"),
+            );
+            diagnostic.evidence = serde_json::json!({"keyword":"portablePath","reason":reason});
+            return Err(vec![diagnostic]);
+        }
+    }
     semantics::validate(&document, kind, input_contract)?;
     let compatibility = compatibility(&document, input_contract);
-    let config = serde_json::json!({
-        "diagramType":kind, "inputContract":input_contract, "quality":quality,
-        "viewerRevision":options.viewer_revision,
-    });
-    Ok(DiagramInput {
+    let mut input = DiagramInput {
         diagram_type: kind,
         input_contract,
         quality,
         viewer_revision: options.viewer_revision.clone(),
         source_bytes: bytes.to_vec(),
         source_sha256: sha256(bytes),
-        config_sha256: sha256(&serde_json::to_vec(&config).expect("serializable compile options")),
+        config_sha256: String::new(),
         document,
         compatibility,
-    })
+        brands: Default::default(),
+        evidence_sha256: None,
+    };
+    input.bind_evidence(None);
+    Ok(input)
+}
+
+impl DiagramInput {
+    /// The configuration digest also binds the source evidence observed at
+    /// delivery (null when nothing was cited), never the repository path.
+    pub fn bind_evidence(&mut self, evidence_sha256: Option<&str>) {
+        self.evidence_sha256 = evidence_sha256.map(str::to_owned);
+        self.update_config();
+    }
+    pub fn bind_brands(&mut self, brands: crate::brands::ResolvedBrands) {
+        self.brands = brands;
+        self.update_config();
+    }
+    fn update_config(&mut self) {
+        let mut config = serde_json::json!({
+            "diagramType":self.diagram_type, "inputContract":self.input_contract, "quality":self.quality,
+            "viewerRevision":self.viewer_revision, "evidenceSha256":self.evidence_sha256,
+        });
+        if !self.brands.is_empty() {
+            config["brandResources"] = serde_json::json!(self
+                .brands
+                .iter()
+                .map(|(path, brand)| (path, &brand.resource))
+                .collect::<std::collections::BTreeMap<_, _>>());
+        }
+        self.config_sha256 =
+            sha256(&serde_json::to_vec(&config).expect("serializable compile options"));
+    }
+}
+
+// The frozen 3.1.0 validators apply this check to meta.output of every type after
+// the schema (renderers/shared/portable-path.mjs, profile "output"); the schemas of
+// erd, class, tree, timeline and waterfall leave meta.output a plain string.
+fn portable_output(value: &str) -> Result<(), &'static str> {
+    let bytes = value.as_bytes();
+    let drive = bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':';
+    if value.is_empty() {
+        return Err("empty");
+    }
+    if value.starts_with(['/', '\\']) || (drive && matches!(bytes.get(2), Some(b'/' | b'\\'))) {
+        return Err("absolute");
+    }
+    if drive {
+        return Err("drive-relative");
+    }
+    let scheme = value.find(':').is_some_and(|end| {
+        end > 0
+            && bytes[0].is_ascii_alphabetic()
+            && bytes[1..end]
+                .iter()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
+    });
+    if scheme {
+        return Err("uri");
+    }
+    if value.contains('\\') {
+        return Err("backslash");
+    }
+    for segment in value.split('/') {
+        let lower = segment.to_ascii_lowercase();
+        let device = lower.split('.').next().unwrap_or_default();
+        let short_name = segment.match_indices('~').any(|(at, _)| {
+            let digits: String = segment[at + 1..]
+                .chars()
+                .take_while(char::is_ascii_digit)
+                .collect();
+            let rest = &segment[at + 1 + digits.len()..];
+            !digits.is_empty()
+                && !digits.starts_with('0')
+                && (rest.is_empty() || rest.starts_with('.'))
+        });
+        let reason = if segment.is_empty() {
+            "empty-segment"
+        } else if segment == "." || segment == ".." {
+            "dot-segment"
+        } else if segment.chars().any(char::is_control) {
+            "control"
+        } else if segment.contains(':') {
+            "windows-ads"
+        } else if segment.contains(['<', '>', '"', '|', '?', '*']) {
+            "windows-invalid-character"
+        } else if segment.ends_with(['.', ' ']) {
+            "windows-trailing-dot-space"
+        } else if matches!(device, "con" | "prn" | "aux" | "nul" | "conin$" | "conout$")
+            || ((device.starts_with("com") || device.starts_with("lpt"))
+                && device.chars().count() == 4
+                && device
+                    .chars()
+                    .nth(3)
+                    .is_some_and(|c| matches!(c, '1'..='9' | '¹' | '²' | '³')))
+        {
+            "windows-reserved-name"
+        } else if short_name {
+            "windows-short-name"
+        } else if segment.len() > 255 || segment.encode_utf16().count() > 255 {
+            "component-too-long"
+        } else {
+            continue;
+        };
+        return Err(reason);
+    }
+    Ok(())
 }
 
 pub fn sha256(bytes: &[u8]) -> String {
@@ -232,22 +396,26 @@ pub fn sha256(bytes: &[u8]) -> String {
 }
 
 fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
-    fn walk(value: &Value, path: &str, contract: InputContract, fields: &mut Vec<DeferredField>) {
+    fn walk(
+        value: &Value,
+        path: &str,
+        contract: InputContract,
+        fields: &mut Vec<FieldDisposition>,
+    ) {
         match value {
             Value::Object(object) => {
                 for (key, value) in object {
                     let pointer = format!("{path}/{}", key.replace('~', "~0").replace('/', "~1"));
-                    let phase = match (path, key.as_str()) {
-                        (_, "brand") => Some(("P3", "Brand resources are outside this delivery phase")),
-                        (_, "sources") | ("/meta", "repository") => Some(("P2", "Repository evidence is retained without fetching or verification")),
-                        ("/meta", "views") => Some(("P2", "Guided views are retained for the later reader acceptance scope")),
-                        ("/meta", "animation") if contract == InputContract::Legacy217 => Some(("P2", "Legacy playback preferences do not override the reader's initial Still state")),
-                        _ => None,
-                    };
-                    if let Some((phase, reason)) = phase {
-                        fields.push(DeferredField {
+                    let disposition = match (path,key.as_str()) {
+                    (_,"brand") => Some(("supported","Brand identity is resolved from the fixed catalog or a digest-pinned local resource")),
+                    ("/meta","views") => Some(("unsupported-display","Legacy Guided Views are not rebuilt; the Reader provides navigation")),
+                    ("/meta","animation") if contract == InputContract::Legacy217 => Some(("ignored-display","Legacy playback preferences do not override the Reader's initial Still state")),
+                    _ => None,
+                };
+                    if let Some((disposition, reason)) = disposition {
+                        fields.push(FieldDisposition {
                             path: pointer,
-                            phase: phase.into(),
+                            disposition: disposition.into(),
                             reason: reason.into(),
                         });
                     } else {
@@ -263,16 +431,17 @@ fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
             _ => {}
         }
     }
-    let mut deferred_fields = Vec::new();
-    walk(document, "", contract, &mut deferred_fields);
+    let mut dispositions = vec![];
+    walk(document, "", contract, &mut dispositions);
     Compatibility {
-        status: if deferred_fields.is_empty() {
-            "complete"
-        } else {
+        status: if dispositions.iter().any(|d| d.disposition != "supported") {
             "partial"
+        } else {
+            "complete"
         }
         .into(),
         core_compatibility: "pass".into(),
-        deferred_fields,
+        deferred_fields: vec![],
+        dispositions,
     }
 }

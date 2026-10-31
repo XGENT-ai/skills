@@ -38,7 +38,7 @@ export async function waitForCheckpoint(child,file,{phase,target,timeoutMs=12000
 
 export function verifyRecoveryOutcome(result,{mode,target,expected,publicAbsent=false}) {
   const receipt=result.receipt;
-  requireThat(receipt?.schemaVersion===1 && receipt.tool==='phoenix-diagram' && receipt.toolVersion==='0.1.0' && receipt.command==='recover-output' && Array.isArray(receipt.diagnostics),'Public recover-output did not return its typed receipt');
+  requireThat(receipt?.schemaVersion===1 && receipt.tool==='phoenix-diagram' && receipt.toolVersion==='0.2.0' && receipt.command==='recover-output' && Array.isArray(receipt.diagnostics),'Public recover-output did not return its typed receipt');
   requireThat(!['deliveryReceiptId','deliveryStatus','automatedStatus','visualReview'].some(key=>Object.hasOwn(receipt,key)),'Recovery must not invent delivery or visual evidence');
   if(mode==='recovered')requireThat(result.exitCode===0 && receipt.status==='pass' && receipt.recoveryStatus==='recovered' && receipt.target===target,'Public recovery did not report the original target as recovered');
   else if(mode==='absent')requireThat(result.exitCode===0 && receipt.status==='pass' && receipt.recoveryStatus==='absent','Repeated public recovery was not idempotent');

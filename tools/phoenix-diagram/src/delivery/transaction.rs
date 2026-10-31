@@ -27,7 +27,7 @@ fn delivery_receipt(validation: &ValidationReceipt) -> DeliveryReceipt {
         checks: validation.checks.clone(),
         composition: validation.composition.clone(),
         commit_state: CommitState::NotCommitted,
-        evidence: json!({}),
+        evidence: validation.evidence.clone(),
         exit: validation.exit_code(),
     }
 }
@@ -40,8 +40,13 @@ pub(super) fn deliver(request: &CompileRequest<'_>, output: &Path) -> DeliveryRe
     };
     let source = prepared.source.as_ref().expect("compiled source");
     let run: Result<()> = (|| {
-        let slot =
-            output::capture_slot(output, &[source]).map_err(|e| output_error("deliver", e))?;
+        let slot = output::capture_slot(
+            output,
+            &std::iter::once(source)
+                .chain(&compiled.resources)
+                .collect::<Vec<_>>(),
+        )
+        .map_err(|e| output_error("deliver", e))?;
         publish(&slot, source, compiled, &mut receipt)?;
         Ok(())
     })();
@@ -126,15 +131,19 @@ fn publish(
     compiled: &Compiled,
     receipt: &mut DeliveryReceipt,
 ) -> Result<FileBinding> {
+    let protected = std::iter::once(source)
+        .chain(&compiled.resources)
+        .collect::<Vec<_>>();
+    verify(&protected, "deliver")?;
     settled(slot, "deliver")?;
     let sidecars = paths(&slot.path(), None);
     let receipt_slot = slot
-        .capture_related(&sidecars.delivery, &[source])
+        .capture_related(&sidecars.delivery, &protected)
         .map_err(|e| output_error("deliver", e))?;
     settled(&receipt_slot, "deliver")?;
     own_delivery(&receipt_slot)?;
     receipt.receipt_id = unique_id()?;
-    let publication = match output::publish_bound(slot, &compiled.html, &[source]) {
+    let publication = match output::publish_bound(slot, &compiled.html, &protected) {
         Ok(publication) => publication,
         Err(error) => {
             receipt.evidence["htmlCommitted"] = json!(error.committed);
@@ -171,7 +180,7 @@ fn publish(
             3,
         ));
     }
-    source.verify().map_err(|e| output_error("deliver", e))?;
+    verify(&protected, "deliver")?;
     receipt.status = Status::Pass;
     receipt.commit_state = CommitState::Committed;
     receipt.exit = 0;
@@ -185,6 +194,7 @@ fn publish(
             return Err(failure);
         }
     };
+    verify(&protected, "deliver")?;
     verify(&[source, &artifact, &written], "deliver")?;
     settled(slot, "deliver")?;
     settled(&receipt_slot, "deliver")?;
@@ -244,13 +254,17 @@ pub(super) fn finalize(
         },
         delivery_status: "incomplete".into(),
         produced_by_this_run: false,
-        evidence: json!({}),
+        evidence: evidence_summary(&prepared.receipt.evidence),
+        locale: prepared.locale.clone(),
         exit: prepared.receipt.exit_code(),
     };
     stage(&mut summary, 0, prepared.receipt.status, &prepared.receipt);
     let mut protected = Vec::new();
     if let Some(source) = prepared.source.as_ref() {
         protected.push(source);
+    }
+    if let Some(compiled) = prepared.compiled.as_ref() {
+        protected.extend(&compiled.resources);
     }
     let run: Result<()> = (|| {
         let slot =
@@ -329,6 +343,7 @@ pub(super) fn finalize(
             options.capture = true;
             let browser = browser::check_browser(&current.bound_artifact(), &options);
             stage(&mut summary, 3, browser_status(browser.status), &browser);
+            summary.diagnostics.extend(browser.diagnostics.clone());
             let sealed = match seal_browser(&slot, current, &browser, &options, false) {
                 Ok(file) => file,
                 Err(failure) => {
@@ -341,7 +356,6 @@ pub(super) fn finalize(
             summary.evidence["reviewPath"] =
                 json!(paths(current.artifact.path(), sealed.path().parent()).review);
             browser_file = Some(sealed);
-            summary.diagnostics.extend(browser.diagnostics.clone());
             summary.exit = browser.exit_code();
             if browser.status != BrowserStatus::Pass {
                 return Ok(());

@@ -214,6 +214,7 @@ pub(super) fn compile(
             );
         }
         nodes.push(Node {
+            brand: None,
             authored: authored(
                 raw,
                 "states",
@@ -229,6 +230,7 @@ pub(super) fn compile(
             }),
             label: string(raw, "label").into(),
             text: texts,
+            detail_rows: Vec::new(),
         });
     }
     if view_box.height - 118.0 < 448.0 {
@@ -497,6 +499,8 @@ pub(super) fn compile(
             note_backdrop: None,
             label_plate: plate,
             text: texts,
+            marker_start: None,
+            marker_end: None,
         });
     }
     let obstacles: Vec<_> = nodes

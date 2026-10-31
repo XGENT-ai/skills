@@ -47,10 +47,25 @@ fn check_case(case: &Value) {
         }),
         ..Default::default()
     };
-    let bytes = serde_json::to_vec(&case["document"]).unwrap();
+    let mut document = case["document"].clone();
+    if let Some(backend) = case["legends"]
+        .as_array()
+        .and_then(|entries| entries.iter().find(|entry| entry["kind"] == "backend"))
+    {
+        // Pin the frozen presentation through the public explicit-label
+        // contract. Neutral defaults have their own rendered regression.
+        document["meta"]["legend"]["entries"]["backend"]["label"] = backend["label"].clone();
+    }
+    let bytes = serde_json::to_vec(&document).unwrap();
     let parsed = parse_input(&bytes, DiagramType::Workflow, &options)
         .unwrap_or_else(|errors| panic!("{name}: input errors {errors:?}"));
     let result = workflow::compile(&parsed, &options);
+    // A readable phoenix-v1 workflow that the source rejects only for
+    // composition hits may pass after the native repair passes.
+    if name == "phoenix-v1/optional-placement-advice" {
+        crossing_resolved_with_halos(case, &result.unwrap());
+        return;
+    }
     assert_eq!(
         result.is_ok(),
         case["ok"].as_bool().unwrap(),
@@ -76,7 +91,7 @@ fn check_case(case: &Value) {
     }
     if let Ok(scene) = result {
         assert_eq!(parsed.source_bytes, bytes, "{name}: original input");
-        assert_eq!(parsed.document, case["document"], "{name}: authored facts");
+        assert_eq!(parsed.document, document, "{name}: submitted facts");
         let expected = &case["receipt"];
         near(scene.view_box.width, &expected["viewBox"][0], &name);
         near(scene.view_box.height, &expected["viewBox"][1], &name);
@@ -529,15 +544,37 @@ fn finite_authored_numbers_cannot_overflow_into_non_finite_scene_geometry() {
         .all(|diagnostic| diagnostic.evidence.get("measuredScene").is_none()));
 }
 
+// The source's only error is one crossing between two automatic edges; the
+// native repair draws exactly that pair with crossover halos and keeps every
+// authored fact.
+fn crossing_resolved_with_halos(case: &Value, scene: &phoenix_diagram::scene::CompiledDiagram) {
+    let diagnostics = case["diagnostics"].as_array().unwrap();
+    assert!(diagnostics
+        .iter()
+        .all(|diagnostic| diagnostic["code"] == "composition/proper-crossing"));
+    let pair = [
+        diagnostics[0]["subject"]["index"].as_u64().unwrap(),
+        diagnostics[0]["evidence"]["otherRelationship"]["index"]
+            .as_u64()
+            .unwrap(),
+    ];
+    let edges = case["document"]["edges"].as_array().unwrap();
+    for relation in &scene.relations {
+        let index: u64 = relation.authored.source_path["/edges/".len()..]
+            .parse()
+            .unwrap();
+        assert_eq!(relation.authored.facts, edges[index as usize]);
+        assert_eq!(
+            relation.crossover_halo,
+            pair.contains(&index),
+            "edge {index}"
+        );
+    }
+}
+
 #[test]
 fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
     let document = fixture("optional-placement-advice", "phoenix-v1");
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
-    let repair = diagnostics
-        .iter()
-        .map(|diagnostic| &diagnostic.evidence["verifiedRepair"])
-        .find(|repair| repair["kind"] == "optional-node-placement")
-        .expect("A fully verified source placement proposal");
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/oracle.json")).unwrap();
     let source = oracle["cases"]
@@ -546,14 +583,19 @@ fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
         .iter()
         .find(|case| case["name"] == "optional-placement-advice")
         .unwrap();
-    let expected = source["diagnostics"]
+    // Natively the crossing is drawn with halos instead of failing; the
+    // source's optional placement still passes and keeps every fact.
+    crossing_resolved_with_halos(
+        source,
+        &compile_document(&document, InputContract::PhoenixV1).unwrap(),
+    );
+    let repair = source["diagnostics"]
         .as_array()
         .unwrap()
         .iter()
         .map(|diagnostic| &diagnostic["evidence"]["verifiedRepair"])
         .find(|repair| repair["kind"] == "optional-node-placement")
         .unwrap();
-    assert_eq!(repair["changes"], expected["changes"]);
     let mut candidate = document.clone();
     for change in repair["changes"].as_array().unwrap() {
         let (parent, key) = change["path"].as_str().unwrap().rsplit_once('/').unwrap();
@@ -855,9 +897,19 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
                     .collect(),
             );
             same_json_numbers(&changes, &case["repairs"], &name);
+            // Beside the source's minimal repairs, a readable phoenix-v1
+            // workflow without one may get a verified removal of every
+            // authored routing control.
+            let workflow_repair = diagnostics[0].evidence.get("verifiedWorkflowRepair");
+            if let Some(repair) = workflow_repair {
+                assert_eq!(case["contract"], "phoenix-v1", "{name}");
+                assert!(actual.is_empty(), "{name}");
+                compile_document(&apply_workflow_repair(&case["document"], repair), contract)
+                    .unwrap_or_else(|errors| panic!("{name}: unverified {repair}: {errors:?}"));
+            }
             assert_eq!(
                 diagnostics[0].supported_fixes.len(),
-                actual.len(),
+                actual.len() + usize::from(workflow_repair.is_some()),
                 "{name}: every advertised change must have proof"
             );
             for (repair_index, repair) in actual.into_iter().enumerate() {
@@ -1039,4 +1091,587 @@ fn preset_label_segment_repair_preserves_the_fixed_route_and_requires_a_complete
                 .iter()
                 .all(|change| !change["path"].as_str().unwrap().ends_with("/labelSegment"))));
     }
+}
+
+#[test]
+fn fixed_phoenix_group_titles_move_off_member_nodes_onto_a_clear_frame_border() {
+    use phoenix_diagram::geometry::{rects_overlap, segment_intersects_rect, text_glyph_box};
+    for name in [
+        "example:incident-response.workflow.json",
+        "example:release-delivery.workflow.json",
+    ] {
+        let document = fixture(name, "phoenix-v1");
+        let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
+        let groups = scene
+            .containers
+            .iter()
+            .filter(|container| container.authored.kind == "group")
+            .collect::<Vec<_>>();
+        assert_eq!(groups.len(), 2);
+        for group in groups {
+            let title = &group.text[0];
+            let glyph = text_glyph_box(
+                &title.content,
+                title.position.x,
+                title.position.y,
+                title.font_size,
+                &title.anchor,
+                InputContract::PhoenixV1,
+            );
+            // On the frame's top border, or in its lane-title row when tall
+            // members block the border.
+            assert!(
+                [group.bounds.y - 2.0, group.bounds.y - 16.0].contains(&title.position.y),
+                "{} at {}",
+                title.content,
+                title.position.y
+            );
+            assert!(
+                glyph.x >= group.bounds.x + 10.0
+                    && glyph.x + glyph.width <= group.bounds.x + group.bounds.width - 10.0,
+                "{} stays on its own frame border",
+                title.content
+            );
+            for node in &scene.nodes {
+                assert!(
+                    !rects_overlap(&glyph, &node.bounds, 0.0),
+                    "{} overlaps {}",
+                    title.content,
+                    node.authored.id
+                );
+            }
+            for relation in &scene.relations {
+                assert!(
+                    relation
+                        .points
+                        .windows(2)
+                        .all(|pair| !segment_intersects_rect(pair[0], pair[1], &glyph, 5.0)),
+                    "{} is crossed by {}->{}",
+                    title.content,
+                    relation.from,
+                    relation.to
+                );
+            }
+        }
+    }
+    // The 2.17 contract keeps its frozen in-frame title offset.
+    let legacy = compile_document(
+        &fixture("example:incident-response.workflow.json", "legacy-2.17"),
+        InputContract::Legacy217,
+    )
+    .unwrap();
+    for group in legacy
+        .containers
+        .iter()
+        .filter(|container| container.authored.kind == "group")
+    {
+        assert_eq!(group.text[0].position.y, group.bounds.y + 14.0);
+    }
+}
+
+// `document` with every text in `paths` cut to `limit` text units; at zero a
+// label keeps its first character and other texts are removed.
+fn cut_texts(document: &Value, paths: &[&str], limit: u64) -> Value {
+    use phoenix_diagram::geometry::text_units_for_contract;
+    let mut candidate = document.clone();
+    for path in paths {
+        let text = document.pointer(path).unwrap().as_str().unwrap();
+        let mut kept = String::new();
+        for character in text.chars() {
+            let next = format!("{kept}{character}");
+            if text_units_for_contract(&next, InputContract::PhoenixV1) > limit as f64 {
+                break;
+            }
+            kept = next;
+        }
+        if kept.is_empty() && path.ends_with("/label") {
+            kept = text.chars().take(1).collect();
+        }
+        if kept.is_empty() {
+            let (parent, field) = path.rsplit_once('/').unwrap();
+            candidate
+                .pointer_mut(parent)
+                .unwrap()
+                .as_object_mut()
+                .unwrap()
+                .remove(field);
+        } else {
+            *candidate.pointer_mut(path).unwrap() = kept.into();
+        }
+    }
+    candidate
+}
+
+// `document` after a whole-workflow repair: the removed edge fields, and any
+// texts within its verified limit.
+fn apply_workflow_repair(document: &Value, repair: &Value) -> Value {
+    let mut candidate = document.clone();
+    for change in repair["changes"].as_array().unwrap() {
+        assert_eq!(change["op"], "remove");
+        let (parent, field) = change["path"].as_str().unwrap().rsplit_once('/').unwrap();
+        assert!(parent.starts_with("/edges/"));
+        assert!(candidate
+            .pointer_mut(parent)
+            .unwrap()
+            .as_object_mut()
+            .unwrap()
+            .remove(field)
+            .is_some());
+    }
+    match repair.get("textCapacity") {
+        Some(capacity) => cut_texts(
+            &candidate,
+            &capacity["paths"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|path| path.as_str().unwrap())
+                .collect::<Vec<_>>(),
+            capacity["maximumUnits"].as_u64().unwrap(),
+        ),
+        None => candidate,
+    }
+}
+
+fn repair_fixture(name: &str) -> Value {
+    let text = match name {
+        "composition" => include_str!("fixtures/workflow/repair-composition.workflow.json"),
+        "preset-pins" => include_str!("fixtures/workflow/repair-preset-pins.workflow.json"),
+        _ => unreachable!(),
+    };
+    serde_json::from_str(text).unwrap()
+}
+
+#[test]
+fn first_draft_composition_hits_are_repaired_without_changing_authored_facts() {
+    let document = repair_fixture("composition");
+    let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let again = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    assert_eq!(
+        serde_json::to_value(&scene).unwrap(),
+        serde_json::to_value(&again).unwrap()
+    );
+    let edges = document["edges"].as_array().unwrap();
+    assert_eq!(scene.relations.len(), edges.len());
+    for relation in &scene.relations {
+        let index: usize = relation.authored.source_path["/edges/".len()..]
+            .parse()
+            .unwrap();
+        assert_eq!(relation.authored.facts, edges[index]);
+        assert!(relation.authored.geometry_provenance.is_empty());
+        assert_eq!(relation.from, edges[index]["from"].as_str().unwrap());
+        assert_eq!(relation.to, edges[index]["to"].as_str().unwrap());
+    }
+    // Crossings that the lanes cannot avoid are drawn with crossover halos.
+    assert!(scene
+        .relations
+        .iter()
+        .any(|relation| relation.crossover_halo));
+}
+
+#[test]
+fn pin_conflicts_without_their_own_repair_get_a_verified_whole_workflow_removal() {
+    let document = repair_fixture("preset-pins");
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let conflict = diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.code == "workflow/route-preset-conflict")
+        .unwrap();
+    assert!(conflict.evidence.get("verifiedRepairs").is_none());
+    let repair = &conflict.evidence["verifiedWorkflowRepair"];
+    assert_eq!(conflict.supported_fixes.len(), 1);
+    let edges = repair["changes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|change| change["path"].as_str().unwrap().split('/').nth(2).unwrap())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert!(edges.len() > 1, "{repair}");
+    let candidate = apply_workflow_repair(&document, repair);
+    assert!(candidate["edges"].as_array().unwrap().iter().all(|edge| {
+        ["via", "channelX", "channelY", "route", "fromSide", "toSide"]
+            .iter()
+            .all(|field| edge.get(*field).is_none())
+    }));
+    compile_document(&candidate, InputContract::PhoenixV1).unwrap();
+}
+
+#[test]
+fn text_capacity_diagnostics_give_the_largest_verified_common_limit() {
+    let mut document: Value = serde_json::from_str(include_str!(
+        "../../../skills/phoenix-diagram/examples/minimal.workflow.json"
+    ))
+    .unwrap();
+    for (index, sublabel) in [
+        "Checks the request owner, budget line and approval chain",
+        "Archives the signed request with its complete approval record",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        document["nodes"][index]["width"] = 120.into();
+        document["nodes"][index]["sublabel"] = sublabel.into();
+    }
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let named = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.evidence.get("verifiedTextCapacity").is_some())
+        .collect::<Vec<_>>();
+    assert_eq!(named.len(), 2);
+    let capacity = &named[0].evidence["verifiedTextCapacity"];
+    let limit = capacity["maximumUnits"].as_u64().unwrap();
+    assert!(limit > 0);
+    assert!(named[0].supported_fixes[0].contains(&format!("within {limit} text units")));
+    let paths = capacity["paths"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|path| path.as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(paths, ["/nodes/0/sublabel", "/nodes/1/sublabel"]);
+    let cut = |limit| cut_texts(&document, &paths, limit);
+    compile_document(&cut(limit), InputContract::PhoenixV1).unwrap();
+    assert!(compile_document(&cut(limit + 1), InputContract::PhoenixV1).is_err());
+}
+
+#[test]
+fn backward_main_path_steps_get_the_fewest_column_changes() {
+    let columns = [3, 1, 1, 2, 1, 0, 1, 2];
+    let nodes = columns
+        .iter()
+        .enumerate()
+        .map(|(index, col)| {
+            serde_json::json!({"id":format!("n{index}"),"lane":"work","col":col,"type":"backend","label":format!("Step {index}")})
+        })
+        .collect::<Vec<_>>();
+    let edges = (1..columns.len())
+        .map(|index| {
+            serde_json::json!({"id":format!("e{index}"),"from":format!("n{}", index - 1),"to":format!("n{index}"),"label":"Next","role":"main"})
+        })
+        .collect::<Vec<_>>();
+    let mut document = serde_json::json!({
+        "schema_version": 2,
+        "diagram_type": "workflow",
+        "meta": {"title":"Steps","output":"steps.html","input_contract":"phoenix-v1","quality_profile":"showcase","locale":"en"},
+        "lanes": [{"id":"work","label":"Work"}],
+        "nodes": nodes,
+        "edges": edges,
+        "mainPath": (0..columns.len()).map(|index| format!("n{index}")).collect::<Vec<_>>()
+    });
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        ..Default::default()
+    };
+    let parse = |document: &Value| {
+        parse_input(
+            &serde_json::to_vec(document).unwrap(),
+            DiagramType::Workflow,
+            &options,
+        )
+    };
+    let diagnostics = parse(&document).unwrap_err();
+    let backward = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.code == "input/main-path")
+        .collect::<Vec<_>>();
+    assert_eq!(backward.len(), 3);
+    let fix = &backward[0].supported_fixes[0];
+    // The longest non-decreasing run (1, 1, 1, 1, 2) stays.
+    assert!(
+        fix.starts_with("Set /nodes/0/col to 1, /nodes/3/col to 1, /nodes/5/col to 1 so"),
+        "{fix}"
+    );
+    for diagnostic in &backward {
+        assert_eq!(&diagnostic.supported_fixes[0], fix);
+    }
+    for (index, col) in [(0, 1), (3, 1), (5, 1)] {
+        document["nodes"][index]["col"] = col.into();
+    }
+    if let Err(diagnostics) = parse(&document) {
+        assert!(diagnostics
+            .iter()
+            .all(|diagnostic| diagnostic.code != "input/main-path"));
+    }
+}
+
+fn approval_fixture(legend_case: bool) -> Value {
+    // Sealed R9 workflow snapshot 2 and its independently measured placement
+    // with enough target-port capacity. Neither fixture is an expected layout.
+    serde_json::from_str(if legend_case {
+        include_str!("fixtures/workflow/approval-legend.workflow.json")
+    } else {
+        include_str!("fixtures/workflow/approval-capacity.workflow.json")
+    })
+    .unwrap()
+}
+
+fn apply_optional_placement(document: &Value, repair: &Value) -> Value {
+    assert_eq!(repair["scope"], "complete-workflow-compile");
+    let changes = repair["changes"].as_array().unwrap();
+    assert!(!changes.is_empty());
+    let mut candidate = document.clone();
+    for change in changes {
+        let path = change["path"].as_str().expect("Repair change needs a path");
+        let op = change["op"].as_str().expect("Repair change needs an op");
+        let (parent, field) = path.rsplit_once('/').expect("Node-field repair path");
+        assert!(parent.starts_with("/nodes/"), "{op} {path}");
+        assert!(
+            ["col", "yOffset", "height"].contains(&field),
+            "Unexpected optional geometry change: {op} {path}"
+        );
+        assert_eq!(
+            op,
+            if document.pointer(path).is_some() {
+                "replace"
+            } else {
+                "add"
+            },
+            "Repair op must match the existing placement interface: {op} {path}"
+        );
+        if field == "height" {
+            assert!(
+                document.pointer(path).is_none(),
+                "Do not overwrite height: {op} {path}"
+            );
+        }
+        candidate
+            .pointer_mut(parent)
+            .unwrap()
+            .as_object_mut()
+            .unwrap()
+            .insert(field.into(), change["value"].clone());
+    }
+    let mut facts = candidate.clone();
+    for change in changes {
+        let path = change["path"].as_str().unwrap();
+        let (parent, field) = path.rsplit_once('/').unwrap();
+        let node = facts.pointer_mut(parent).unwrap().as_object_mut().unwrap();
+        match document.pointer(path) {
+            Some(value) => {
+                node.insert(field.into(), value.clone());
+            }
+            None => {
+                node.remove(field);
+            }
+        }
+    }
+    assert_eq!(
+        facts, *document,
+        "Only advertised optional geometry changes"
+    );
+    candidate
+}
+
+fn assert_approval_facts(document: &Value, scene: &phoenix_diagram::scene::CompiledDiagram) {
+    assert_eq!(scene.quality, Quality::Showcase);
+    assert_eq!(scene.meta, document["meta"]);
+    assert_eq!(
+        scene.nodes.len(),
+        document["nodes"].as_array().unwrap().len()
+    );
+    assert_eq!(
+        scene.relations.len(),
+        document["edges"].as_array().unwrap().len()
+    );
+    for authored in scene
+        .nodes
+        .iter()
+        .map(|node| &node.authored)
+        .chain(scene.relations.iter().map(|edge| &edge.authored))
+        .chain(scene.containers.iter().map(|lane| &lane.authored))
+        .chain(scene.cards.iter().map(|card| &card.authored))
+    {
+        assert_eq!(
+            document.pointer(&authored.source_path),
+            Some(&authored.facts)
+        );
+    }
+    let facts = serde_json::to_value(&scene.facts).unwrap();
+    assert_eq!(facts["main_path"], document["mainPath"]);
+    assert_eq!(facts["semantic_checks"], document["semanticChecks"]);
+    // Observed in the original height64 DTO: reconfirm is 10px, the other
+    // primary labels are 11px, and sublabels are 8px. These are this fixture's
+    // unchanged text sizes, not a general minimum for workflow labels.
+    for node in &scene.nodes {
+        for text in &node.text {
+            if text.source_path.ends_with("/label") {
+                let expected = if node.authored.id == "reconfirm" {
+                    10.0
+                } else {
+                    11.0
+                };
+                assert_eq!(text.font_size, expected, "{}", text.source_path);
+            } else if text.source_path.ends_with("/sublabel") {
+                assert_eq!(text.font_size, 8.0, "{}", text.source_path);
+            }
+        }
+    }
+}
+
+#[test]
+fn optional_placement_advice_resolves_target_capacity_without_changing_approval_facts() {
+    let document = approval_fixture(false);
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let advice = diagnostics
+        .iter()
+        .find(|diagnostic| {
+            diagnostic.evidence["verifiedRepair"]["kind"] == "optional-node-placement"
+        })
+        .expect("The failed workflow needs an optional complete, compilable repair");
+    assert!(!advice.supported_fixes.is_empty());
+    let repair = &advice.evidence["verifiedRepair"];
+    let candidate = apply_optional_placement(&document, repair);
+    let scene = compile_document(&candidate, InputContract::PhoenixV1)
+        .expect("Apply every advertised change, then compile the complete workflow");
+    assert_approval_facts(&candidate, &scene);
+}
+
+#[test]
+fn automatic_approval_legend_clears_the_rendered_withdrawal_route() {
+    let document = approval_fixture(true);
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        quality: Some(Quality::Showcase),
+        ..Default::default()
+    };
+    let bytes = serde_json::to_vec(&document).unwrap();
+    let input = parse_input(&bytes, DiagramType::Workflow, &options).unwrap();
+    // Match delivery::prepare, including the shared sigil-label clearance.
+    let scene = phoenix_diagram::layout::compile(&input, &options).unwrap();
+    assert_eq!(input.document, document);
+    assert_eq!(input.source_bytes, bytes);
+    assert_approval_facts(&document, &scene);
+    assert_eq!(scene.reader_fit, "width-first");
+    let html = phoenix_diagram::render::render(
+        &scene,
+        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let checked = phoenix_diagram::check::check_html(&html, Quality::Showcase);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
+    assert_eq!(checked.composition["status"], "pass");
+    assert!(checked.checks.iter().all(|check| check.status == "pass"));
+}
+
+#[test]
+fn optional_capacity_advice_does_not_overwrite_an_explicit_target_height() {
+    let mut document = approval_fixture(false);
+    // State the old effective height explicitly: it is now an authored pin.
+    document["nodes"][8]["height"] = 52.into();
+    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic.severity == diagnostic::Severity::Error
+            && diagnostic.code.starts_with("composition/")
+    }));
+    for diagnostic in &diagnostics {
+        if let Some(changes) = diagnostic.evidence["verifiedRepair"]["changes"].as_array() {
+            for change in changes {
+                assert_ne!(
+                    change["path"], "/nodes/8/height",
+                    "An optional repair must retain the supplied target height: {change}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
+    for (name, contract, source_contract) in [
+        ("v2-simple", InputContract::PhoenixV1, "phoenix-v1"),
+        ("v2-simple", InputContract::Legacy217, "legacy-2.17"),
+        ("v1-simple", InputContract::PhoenixV1, "phoenix-v1"),
+    ] {
+        let document = fixture(name, source_contract);
+        let scene = compile_document(&document, contract).unwrap();
+        let html = phoenix_diagram::render::render(
+            &scene,
+            &phoenix_diagram::render::EmbeddedAssets::builtin(),
+        )
+        .unwrap();
+        let checked = phoenix_diagram::check::check_html(&html, scene.quality);
+        assert_eq!(
+            checked
+                .checks
+                .iter()
+                .find(|check| check.name == "legend_clearance")
+                .unwrap()
+                .status,
+            "pass",
+            "{source_contract}/{name}: {:?}",
+            checked.diagnostics
+        );
+
+        // An explicit version of the already selected side pair is a public
+        // fixed-route control. Compare the entire scene, removing only the
+        // pin metadata that differs between the two input documents.
+        let mut pinned = document.clone();
+        pinned["edges"][0]["fromSide"] = "right".into();
+        pinned["edges"][0]["toSide"] = "left".into();
+        let mut fixed = compile_document(&pinned, contract).unwrap();
+        assert_eq!(fixed.relations[0].authored.facts, pinned["edges"][0]);
+        fixed.relations[0].authored.facts = document["edges"][0].clone();
+        fixed.relations[0]
+            .authored
+            .geometry_provenance
+            .retain(|path| !["/edges/0/fromSide", "/edges/0/toSide"].contains(&path.as_str()));
+        assert_eq!(scene, fixed, "{source_contract}/{name}: clear full scene");
+
+        let mut framed = document.clone();
+        framed["meta"]["viewBox"] =
+            serde_json::json!([scene.view_box.width, scene.view_box.height]);
+        let mut fixed = compile_document(&framed, contract).unwrap();
+        assert_eq!(fixed.meta["viewBox"], framed["meta"]["viewBox"]);
+        fixed.meta.as_object_mut().unwrap().remove("viewBox");
+        let title = fixed
+            .legends
+            .iter_mut()
+            .find(|legend| legend.authored.source_path == "/meta")
+            .expect("The source fixture's legend title retains its meta facts");
+        assert_eq!(title.authored.facts["viewBox"], framed["meta"]["viewBox"]);
+        // The title copies its /meta source facts, including the same pin.
+        // Normalize only that duplicate; retain every geometry/text field.
+        title
+            .authored
+            .facts
+            .as_object_mut()
+            .unwrap()
+            .remove("viewBox");
+        assert_eq!(scene, fixed, "{source_contract}/{name}: fixed full scene");
+    }
+}
+
+#[test]
+fn a_wrapped_automatic_legend_can_grow_the_canvas_without_changing_contain_policy() {
+    let document = fixture("v2-simple", "phoenix-v1");
+    let baseline = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    // The frozen source case uses contain. Longer legend text exercises real
+    // automatic canvas growth, not an assignment to the readerFit field.
+    assert_eq!(baseline.reader_fit, "contain");
+    let mut wrapped = document.clone();
+    wrapped["meta"]["legend"] = serde_json::json!({
+        "mode": "auto",
+        "entries": {
+            "frontend": {"label": "前".repeat(50)},
+            "backend": {"label": "后".repeat(50)}
+        }
+    });
+    let expanded = compile_document(&wrapped, InputContract::PhoenixV1).unwrap();
+    assert!(expanded.view_box.height > baseline.view_box.height);
+    assert_eq!(expanded.reader_fit, baseline.reader_fit);
+    assert_eq!(
+        expanded.nodes, baseline.nodes,
+        "Node geometry and fonts stay intact"
+    );
+    assert_eq!(expanded.relations, baseline.relations);
+    assert_eq!(expanded.containers, baseline.containers);
+    assert_eq!(expanded.facts, baseline.facts);
+    assert_eq!(expanded.quality, baseline.quality);
+    let html = phoenix_diagram::render::render(
+        &expanded,
+        &phoenix_diagram::render::EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let checked = phoenix_diagram::check::check_html(&html, expanded.quality);
+    assert_eq!(checked.status, "pass", "{:?}", checked.diagnostics);
 }

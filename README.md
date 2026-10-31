@@ -40,6 +40,8 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
 | `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram 候选,不删除已装版本 |
+| `--migrate-archify` | 仅迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
+| `--confirm-remove-archify` | 与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
@@ -47,6 +49,8 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | `--providers=a,b` | 指定两个 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
 
 安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI、Phoenix Diagram 顺序写项目,两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[包内说明](docs/phoenix-diagram.md)。
+
+普通安装不移除 Archify。`--migrate-archify` 使用独立的 Diagram 迁移分支,仅处理精确项目/provider 的完整已知来源;自定义、链接、外部管理与个人入口保留。TTY 拒绝或 EOF 不迁移;`--no-phoenix-diagram` 仍跳过并保留。旧入口移除后需要时按原来源重装,新 Diagram 入口的恢复/回滚见[迁移说明](docs/phoenix-diagram.md#旧入口迁移与安装恢复)。仓库只保留新活跃入口,不代表其他项目或个人旧安装已被处理。
 
 `install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文。
 
@@ -236,8 +240,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 | Skill | 说明 |
 | --- | --- |
 | [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
-| [archify](skills/archify/SKILL.md) | 将架构、流程、时序、数据流与状态关系制作成交互式 HTML 图，支持 Mermaid 输入和多格式导出 |
-| [phoenix-diagram](skills/phoenix-diagram/SKILL.md) | 独立 npm 候选：五类 Rust 图解、离线阅读与实际图像审核；[安装与验收范围](docs/phoenix-diagram.md) |
+| [phoenix-diagram](skills/phoenix-diagram/SKILL.md) | 十类 Rust 图解、Mermaid 语义转换、仓库来源与五语言离线阅读；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[候选安装/迁移边界](docs/phoenix-diagram.md) |
 | [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
 | [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |

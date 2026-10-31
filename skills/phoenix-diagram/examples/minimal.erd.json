@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": { "title": "Order schema", "output": "minimal.erd.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "layout": { "mode": "grid" },
+  "entities": [
+    { "id": "customer", "label": "customer", "tag": "accounts", "row": 0, "col": 0, "attributes": [
+      { "name": "id", "type": "bigint", "key": "pk" },
+      { "name": "email", "type": "varchar(255)", "key": "uk" }
+    ] },
+    { "id": "order", "label": "order", "row": 0, "col": 1, "attributes": [
+      { "name": "id", "type": "bigint", "key": "pk" },
+      { "name": "customer_id", "type": "bigint", "key": "fk", "references": "customer.id" },
+      { "name": "placed_at", "type": "timestamptz" }
+    ] },
+    { "id": "payment", "label": "payment", "row": 1, "col": 1, "attributes": [
+      { "name": "id", "type": "bigint", "key": "pk" },
+      { "name": "order_id", "type": "bigint", "key": "fk", "references": "order.id" }
+    ] }
+  ],
+  "relationships": [
+    { "id": "order_customer", "from": "order", "to": "customer", "label": "placed by", "fromCardinality": "many", "toCardinality": "one" },
+    { "id": "payment_order", "from": "payment", "to": "order", "fromCardinality": "many", "fromOptional": true, "toCardinality": "one", "identifying": false }
+  ]
+}

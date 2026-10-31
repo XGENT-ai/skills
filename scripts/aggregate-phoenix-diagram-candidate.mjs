@@ -7,16 +7,25 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual as same } from 'node:util';
 import { TARGETS,readTarballInventory } from './pack-phoenix-diagram-candidate.mjs';
-import { validateCandidate,targetForHost } from './check-phoenix-diagram-candidate.mjs';
-import { TYPES,requiredArtifactChecks,BROWSER_CHECKS,VIEWPORTS,identity,readSnapshot,readBound,requireThat,assertXssArtifact } from './test-phoenix-diagram-core.mjs';
+import { validateCandidate,targetForHost,P3_HARNESS_MEMBERS } from './check-phoenix-diagram-candidate.mjs';
+import { TYPES,LEGACY_TYPES,contractsFor,requiredArtifactChecks,BROWSER_CHECKS,VIEWPORTS,identity,readSnapshot,readBound,requireThat,assertXssArtifact } from './test-phoenix-diagram-core.mjs';
 import { verifyFileSignature,verifyPrintSample,verifyMotionSuppression } from '../tools/phoenix-diagram/tests/export-acceptance.mjs';
 import { verifyReaderInteractions } from '../tools/phoenix-diagram/tests/support/export-reader.mjs';
 import { COLLECTOR_MEMBER,parseCaptureArgs } from '../tools/phoenix-diagram/tests/support/capture-stdio.mjs';
+import { checkP3ProviderManifest,checkP3ScenarioManifest,STDIO_MEMBER,PROVIDER_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-provider.mjs';
+import { verifyAcceptanceState } from '../tools/phoenix-diagram/tests/support/p3-state.mjs';
+import { verifyMigrationAcceptance,LEGACY_V1_DESCRIPTOR_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-migration-run.mjs';
+import { readMigrationFixture,MIGRATION_FIXTURE_MEMBER } from '../tools/phoenix-diagram/tests/support/p3-migration.mjs';
 export { verifyReaderInteractions as checkReaderInteractionEvidence };
 export { verifyMotionSuppression as checkMotionSuppressionEvidence };
 
 const HASH=/^[a-f0-9]{64}$/;
 const KINDS=['diagram','labels','cards','relationship-occlusion','hierarchy','controls'];
+// Case coverage per profile: P1 pairs the five original types with both input
+// contracts; P2 adds the five new types, which only have phoenix-v1.
+export const PROFILE_CASES={p1:LEGACY_TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].map(contract=>`${type}:${contract}`)),p2:TYPES.flatMap(type=>contractsFor(type).map(contract=>`${type}:${contract}`)),p3:TYPES.flatMap(type=>contractsFor(type).map(contract=>`${type}:${contract}`))};
+// The local full-review consumption adds these scopes; the corpus stays a source-checkout acceptance.
+export const LOCAL_SCOPES=['explore','evidence','locale'];
 const sorted=value=>[...value].sort();
 const sha=value=>identity(value).sha256;
 const object=value=>value && typeof value==='object' && !Array.isArray(value);
@@ -24,7 +33,7 @@ function need(value,message) {requireThat(value,message,'aggregate/incomplete');
 function relative(value) {need(typeof value==='string' && value && !value.startsWith('/') && !/[\\:\0-\x1f\x7f]/.test(value) && value.split('/').every(part=>part && part!=='.' && part!=='..'),'Unsafe archive member path');return value;}
 function processBytes(program,args,input) {const result=spawnSync(program,args,{input,encoding:null,maxBuffer:512*1024*1024,timeout:120000});need(!result.error && result.status===0,`Missing or invalid archive member (${program}): ${result.error?.message || result.stderr?.toString().trim()}`);return result.stdout;}
 function digest(bytes,expected,label) {need(expected && HASH.test(expected.sha256) && Number.isSafeInteger(expected.bytes) && same(identity(bytes),expected),`${label} archived bytes/digest differ`);return bytes;}
-function header(value,command) {need(value?.schemaVersion===1 && value.tool==='phoenix-diagram' && value.toolVersion==='0.1.0' && value.command===command && Array.isArray(value.diagnostics),`Missing actual ${command} receipt`);}
+function header(value,command) {need(value?.schemaVersion===1 && value.tool==='phoenix-diagram' && value.toolVersion==='0.2.0' && value.command===command && Array.isArray(value.diagnostics),`Missing actual ${command} receipt`);}
 
 export class ArchiveEvidence {
   constructor(archive,prefix,originalRoot) {
@@ -40,10 +49,21 @@ export class ArchiveEvidence {
   json(reference) {return JSON.parse(this.bytes(reference).toString('utf8'));}
   relativeJson(member) {return JSON.parse(this.member(relative(member)).toString('utf8'));}
 }
+// A local consumption keeps its original filesystem: references are reread and rehashed in place.
+export class DirectoryEvidence {
+  constructor(root) {const stat=fs.lstatSync(root);need(path.isAbsolute(root) && stat.isDirectory() && !stat.isSymbolicLink() && fs.realpathSync(root)===root,'Local evidence root must be a canonical ordinary directory');this.originalRoot=root;}
+  bytes(reference) {
+    need(reference && typeof reference.path==='string' && reference.path.startsWith(`${this.originalRoot}/`) && fs.realpathSync(reference.path)===reference.path,'Evidence reference leaves its original root/path');relative(reference.path.slice(this.originalRoot.length+1));
+    return digest(readSnapshot(reference.path,{allowMultipleLinks:true}).content,reference.identity,'Referenced evidence');
+  }
+  json(reference) {return JSON.parse(this.bytes(reference).toString('utf8'));}
+}
 export function checkStateSelection(store,phase,stateMember) {need(phase.state && store.bytes(phase.state).equals(store.member(stateMember)),'The explicit state member differs from the actual final workflow state reference');}
-export function checkInputSlots(input) {
+export function checkInputSlots(input,profile='p1') {
   need(Array.isArray(input.platforms) && same(sorted(input.platforms.map(row=>row.target)),sorted(TARGETS)),'Four distinct native platform target records are required');
   need(input.node18?.target==='linux-x64','Node18 floor requires its separate linux-x64 consumer record');need(Array.isArray(input.providers) && same(sorted(input.providers.map(row=>row.provider)),['claude-code','codex']),'Both distinct real provider records are required');
+  if(profile==='p2')need(input.local?.target==='darwin-arm64' && typeof input.local.runRoot==='string' && input.local.state?.path,'P2 requires the local darwin-arm64 full-review consumption record');
+  if(profile==='p3')need(input.local?.target==='darwin-arm64' && typeof input.local.runRoot==='string' && input.local.state?.path,'P3 requires its local all-state record');
 }
 export function checkStateCohort(state,cohort) {
   need(state?.schemaVersion===1 && state.kind==='phoenix-diagram-candidate-consumer','Unsupported consumer state');
@@ -51,10 +71,10 @@ export function checkStateCohort(state,cohort) {
   need(same(state.source,cohort.source) && state.candidate?.tarball?.identity?.sha256===cohort.tgzSha256 && state.candidate.candidateArchiveSha256===cohort.candidateArchiveSha256 && state.harnessArchiveSha256===cohort.harnessSha256,'Candidate/source/harness cohort differs');
   if(cohort.candidateArtifactId)need(Number(state.candidate.artifactId)===cohort.candidateArtifactId && state.candidate.artifactDigest===cohort.candidateArtifactDigest,'Consumer candidate artifact provenance differs');
 }
-export function checkJobProof(job,artifact,entry,cohort,{node18=false}={}) {
+export function checkJobProof(job,artifact,entry,cohort,{node18=false,reviewed=!node18}={}) {
   need(job?.id===entry.jobId && String(job.run_id)===String(cohort.runId) && job.run_attempt===cohort.runAttempt && job.head_sha===cohort.source.commit && job.status==='completed' && job.conclusion==='success','Actual job is not completed/success for this run attempt/source');
   need(job.name===(node18?'Consume the same tgz on Node 18':`Consume the same tgz on ${entry.target}`),'Actual native job target/name differs');
-  const required=node18?['Consume only the same tgz on the declared Node floor']:['Consume the unchanged tgz through its package entry points','Resume the same delivery after actual image review'];
+  const required=node18?['Consume only the same tgz on the declared Node floor']:['Consume the unchanged tgz through its package entry points',...(reviewed?['Resume the same delivery after actual image review']:[])];
   need(required.every(name=>job.steps?.some(step=>step.name===name && step.conclusion==='success')),'Actual consume/review job step is missing or not successful');
   need(artifact?.id===entry.artifact.id && artifact.name===entry.artifact.name && artifact.expired===false && artifact.digest===`sha256:${entry.artifact.digest}` && String(artifact.workflow_run?.id)===String(cohort.runId) && artifact.workflow_run.head_sha===cohort.source.commit,'Actual uploaded artifact identity/digest/source differs');
   need(entry.artifact.name===(node18?'phoenix-diagram-consume-node18-evidence':`phoenix-diagram-consume-${entry.target}-evidence`),'Unexpected consumer artifact name');
@@ -89,47 +109,99 @@ function caseEvidence(entry,store,engine,{reviewed=true,reader=true}={}) {
   if(reader)readerEvidence(store.json(entry.reader.receipt),store,summary.artifact);return summary;
 }
 function processReceipt(store,reference,{success=true}={}) {const value=store.json(reference);need(typeof value.stdout==='string' && typeof value.stderr==='string' && (success?value.exitCode===0:value.exitCode!==0),'Actual process outcome is missing or not expected');return value;}
-function coreEvidence(core,store,engine,{node18=false}={}) {
+function coreEvidence(core,store,engine,{reviewed=true,cases=PROFILE_CASES.p1,scopes=[]}={}) {
   for(const entry of core.cases || [])need(store.bytes(entry.source).equals(store.bytes(entry.candidate)) && entry.determinism?.distinctDeliveryReceiptId!==entry.state?.deliveryReceiptId,'Original packaged input changed or replay inherited its receipt');
-  need(core.kind==='phoenix-diagram-core-acceptance' && core.automatedStatus==='pass' && core.coverage?.complete===true && core.cases?.length===10,'Full old/new five-type core coverage is missing');
-  need(same(sorted(core.cases.map(row=>`${row.type}:${row.contract}`)),sorted(TYPES.flatMap(type=>['phoenix-v1','legacy-2.17'].map(contract=>`${type}:${contract}`)))),'Core type/input-contract coverage differs');
-  for(const entry of core.cases){need(entry.state?.automatedStatus==='pass' && entry.reader?.status==='pass' && entry.determinism?.status==='pass','Case has a failed/not-run native, Reader or deterministic scope');const summary=caseEvidence(entry,store,engine,{reviewed:!node18});need(same(identity(store.bytes(entry.determinism.artifact)),summary.artifact.identity),'Deterministic replay differs');}
+  need(core.kind==='phoenix-diagram-core-acceptance' && core.automatedStatus==='pass' && core.coverage?.complete===true && core.cases?.length===cases.length,'Full profile type/input-contract core coverage is missing');
+  need(same(sorted(core.cases.map(row=>`${row.type}:${row.contract}`)),sorted(cases)),'Core type/input-contract coverage differs');
+  for(const entry of core.cases){need(entry.state?.automatedStatus==='pass' && entry.reader?.status==='pass' && entry.determinism?.status==='pass','Case has a failed/not-run native, Reader or deterministic scope');const summary=caseEvidence(entry,store,engine,{reviewed});need(same(identity(store.bytes(entry.determinism.artifact)),summary.artifact.identity),'Deterministic replay differs');}
   need(['content','recovery','offline'].every(key=>core[key]?.status==='pass'),'XSS/recovery/offline scope is incomplete');assertXssArtifact(store.bytes(core.content.artifact));readerEvidence(store.json(core.content.browser.receipt),store,core.content.artifact,{content:true});
   const recoveryIds=['restore-and-repeat','later-claimant','record-tamper','backup-tamper','parent-replacement','kill-after-recovery-link','kill-after-witness-quarantine','kill-recovery-later-claimant'];need(same(sorted(core.recovery.scenarios.map(row=>row.id)),sorted(recoveryIds)),'Public recovery fault coverage is incomplete');
   for(const scenario of core.recovery.scenarios){need(scenario.status==='pass' && scenario.interruption?.phase==='after-retire' && scenario.interruption.signal==='SIGKILL' && scenario.interruption.terminalOutputDiscarded===true,'Actual publication interruption evidence is missing');const journal=store.json(scenario.journal);need(journal.kind==='output-publication' && journal.target?.commitPath===scenario.target,'Durably located target differs');const result=store.json(scenario.recovery.receipt);header(result,'recover-output');need(scenario.recovery.exitCode===(scenario.recovery.recoveryStatus==='recovered'?0:3) && result.recoveryStatus===scenario.recovery.recoveryStatus && !result.deliveryStatus && !result.deliveryReceiptId,'Recovery exit/state invented delivery evidence');if(scenario.repeat)need(store.json(scenario.repeat.receipt).recoveryStatus==='absent' && scenario.repeat.exitCode===0,'Recovery repeat was not idempotent');for(const file of scenario.retained || [])store.bytes(file);if(!scenario.finalPublic?.absent)store.bytes(scenario.finalPublic);if(scenario.recoveryInterruption)need(scenario.recoveryInterruption.signal==='SIGKILL' && ['after-recovery-link','after-witness-quarantine'].includes(scenario.recoveryInterruption.phase),'Recovery re-interruption is missing');}
-  need(core.offline.cases?.length===10 && core.offline.native?.status==='pass' && core.offline.browser?.status==='pass','OS-native/CDP-browser offline scope is incomplete');for(const row of core.offline.cases){const delivered=store.json(row.native.delivery),checked=store.json(row.native.check);header(delivered,'deliver');header(checked,'check');need(delivered.status==='pass' && checked.status==='pass' && checked.provenance==='current' && checked.scope==='strict-provenance','Offline native generate/strict failed');store.bytes(row.native.artifact);readerEvidence(store.json(row.browser.receipt),store,row.native.artifact);}
-  if(!node18){need(core.handoff==='passed' && core.status==='pass' && core.reviewBindings?.status==='pass' && core.reviewRecovery?.status==='pass' && core.reviewRecovery.retryStatus==='pass' && core.newDelivery?.status==='pass','Original review/retry/new-delivery scope is incomplete');for(const check of core.reviewBindings.checks)need(store.json(check.receipt).status==='failed' && check.exitCode!==0,'Changed review binding was not rejected');const failed=store.json(core.reviewRecovery.receipt);need(failed.status==='failed' && failed.automatedStatus==='pass' && failed.visualReview?.record && core.reviewRecovery.summaryUnchanged===true,'Sealed-record/summary-failure evidence is missing');store.bytes(core.reviewRecovery.record);need(store.json(core.newDelivery.oldReviewRejected.receipt).status==='failed','A new delivery inherited old review');}
+  need(core.offline.cases?.length===cases.length && core.offline.native?.status==='pass' && core.offline.browser?.status==='pass','OS-native/CDP-browser offline scope is incomplete');for(const row of core.offline.cases){const delivered=store.json(row.native.delivery),checked=store.json(row.native.check);header(delivered,'deliver');header(checked,'check');need(delivered.status==='pass' && checked.status==='pass' && checked.provenance==='current' && checked.scope==='strict-provenance','Offline native generate/strict failed');store.bytes(row.native.artifact);readerEvidence(store.json(row.browser.receipt),store,row.native.artifact);}
+  if(reviewed){need(core.handoff==='passed' && core.status==='pass' && core.reviewBindings?.status==='pass' && core.reviewRecovery?.status==='pass' && core.reviewRecovery.retryStatus==='pass' && core.newDelivery?.status==='pass','Original review/retry/new-delivery scope is incomplete');for(const check of core.reviewBindings.checks)need(store.json(check.receipt).status==='failed' && check.exitCode!==0,'Changed review binding was not rejected');const failed=store.json(core.reviewRecovery.receipt);need(failed.status==='failed' && failed.automatedStatus==='pass' && failed.visualReview?.record && core.reviewRecovery.summaryUnchanged===true,'Sealed-record/summary-failure evidence is missing');store.bytes(core.reviewRecovery.record);need(store.json(core.newDelivery.oldReviewRejected.receipt).status==='failed','A new delivery inherited old review');}
+  scopeEvidence(core,store,scopes);
 }
-function phaseEvidence(phase,entry,cohort,node18) {
-  need(phase.schemaVersion===1 && phase.tool==='phoenix-diagram' && String(phase.workflowRun)===String(cohort.runId) && phase.sourceCommit===cohort.source.commit && phase.target===entry.target && phase.candidate?.tgzSha256===cohort.tgzSha256 && phase.candidate.sha256===cohort.candidateArchiveSha256 && phase.harness?.sha256===cohort.harnessSha256,'Actual workflow phase receipt differs');need(phase.phases?.prepare==='success' && phase.phases.consume==='success' && (node18 || phase.phases.review==='success'),'An actual workflow phase is not successful');if(node18)need(phase.node==='v18.20.8','Node18 phase did not run the exact 18.20.8 floor');
+const RELATION_TYPES=new Set([...LEGACY_TYPES,'erd','class','tree']);
+function scopedDelivery(row,store) {const summary=store.json(row.summary);header(summary,'finalize');need(summary.automatedStatus==='pass' && same(summary.evidence?.status,row.evidence?.status) && same(summary.locale,row.locale),'Scoped finalize outcome differs from its recorded summary');store.bytes(row.candidate);store.bytes(row.artifact);store.bytes(row.receipt);for(const shot of row.screenshots || [])store.bytes(shot);return summary;}
+// Requested acceptance scopes keep their original receipts, artifacts and captured files.
+function scopeEvidence(core,store,scopes) {
+  for(const name of scopes)need(core[name]?.status==='pass',`Requested ${name} scope did not pass`);
+  if(scopes.includes('explore')) {
+    need(same(sorted(core.explore.cases.map(row=>row.id)),sorted(core.cases.map(row=>row.id))),'Exploration does not cover every case');
+    for(const row of core.explore.cases) {
+      const report=store.json(row.receipt);need(report.status==='pass' && report.offline?.remoteRequests?.length===0 && row.steps?.length>0 && row.steps.every(step=>step.status==='pass'),'Exploration receipt or step did not pass');
+      need(row.cards.length===(RELATION_TYPES.has(row.type)?2:0),'Share card scope differs');
+      for(const card of row.cards){verifyFileSignature(store.bytes(card),'png','image/png');need(card.canonical==='false' && ['route','reach'].includes(card.variant) && card.decode?.valid===true,'Share card is not a decoded non-canonical route/reach export');}
+    }
+  }
+  if(scopes.includes('evidence')) {
+    const evidence=core.evidence,cases=evidence.cases || {};for(const row of [...Object.values(cases),evidence.worktreeChange])scopedDelivery(row,store);
+    need(['architecture','timeline','tree'].every(type=>cases[type]?.evidence?.status==='verified') && cases.waterfall?.evidence?.status==='none' && evidence.worktreeChange?.evidence?.status==='partial' && evidence.links?.every(link=>link.status!=='failed'),'Repository evidence states differ from verified, local-only, illustrative and worktree-change outcomes');
+    need(evidence.passports?.length===3,'Source passport scope is incomplete');for(const passport of evidence.passports){need(store.json(passport.receipt).status==='pass','Passport capture failed');for(const shot of passport.screenshots)verifyFileSignature(store.bytes(shot),'png','image/png');}
+  }
+  if(scopes.includes('locale')) {
+    need(same(sorted(core.locale.cases.map(row=>row.tag)),sorted(['en','zh-CN','zh-TW','es','ko','fr'])),'Interface language scope is incomplete');
+    for(const row of core.locale.cases){scopedDelivery(row,store);need(same(row.locale,row.tag==='fr'?{requested:'fr',resolved:'en',fallback:true}:{requested:row.tag,resolved:row.tag,fallback:false}),'Resolved interface language differs');}
+  }
+}
+function phaseEvidence(phase,entry,cohort,{node18=false,reviewed=!node18}={}) {
+  need(phase.schemaVersion===1 && phase.tool==='phoenix-diagram' && String(phase.workflowRun)===String(cohort.runId) && phase.sourceCommit===cohort.source.commit && phase.target===entry.target && phase.candidate?.tgzSha256===cohort.tgzSha256 && phase.candidate.sha256===cohort.candidateArchiveSha256 && phase.harness?.sha256===cohort.harnessSha256,'Actual workflow phase receipt differs');need(phase.phases?.prepare==='success' && phase.phases.consume==='success' && (!reviewed || phase.phases.review==='success'),'An actual workflow phase is not successful');if(node18)need(phase.node==='v18.20.8','Node18 phase did not run the exact 18.20.8 floor');
   need(Number(phase.candidate.artifactId)===cohort.candidateArtifactId && phase.candidate.artifactDigest===cohort.candidateArtifactDigest && Number(phase.harness.artifactId)===cohort.harnessArtifactId && phase.harness.artifactDigest===cohort.harnessArtifactDigest,'Workflow candidate/harness artifact IDs or digests differ');
 }
-function platformEvidence(entry,cohort,api,{node18=false}={}) {
+function platformEvidence(entry,cohort,api,{node18=false,reviewed=!node18,cases=PROFILE_CASES.p1}={}) {
   need(entry.artifact.archive.identity.sha256===entry.artifact.digest,'Evidence archive SHA differs from its Actions artifact digest');const store=new ArchiveEvidence(entry.artifact.archive,entry.evidencePrefix,'/pending');const state=store.relativeJson(entry.stateMember);store.originalRoot=state.runRoot;checkStateCohort(state,cohort);
-  checkJobProof(api(`/repos/${cohort.repository}/actions/jobs/${entry.jobId}`),api(`/repos/${cohort.repository}/actions/artifacts/${entry.artifact.id}`),entry,cohort,{node18});const phase=store.relativeJson(entry.phaseMember);phaseEvidence(phase,entry,cohort,node18);checkStateSelection(store,phase,entry.stateMember);
-  need(state.automatedStatus==='pass' && state.status===(node18?'automated-pass':'pass') && state.phase===(node18?'pending-review':'complete') && (node18 || state.platformHandoff==='passed'),'Live-job consumer state did not complete its required scope');if(node18)need(state.runtimeNode==='v18.20.8','Consumer did not run the exact Node18 floor');
-  need(state.environment?.proof?.rustc==='unresolvable' && state.environment.proof.cargo==='unresolvable' && state.environment.npmChildProof.rustc==='unresolvable' && state.environment.npmChildProof.cargo==='unresolvable','Rust-free public npm environment proof is missing');const npmProof=processReceipt(store,state.npmEnvironment);const proof=JSON.parse(npmProof.stdout);need(proof.rustc==='unresolvable' && proof.cargo==='unresolvable' && (!node18 || proof.node==='v18.20.8'),'Actual npm child environment/floor differs');
-  if(node18)checkNode18Floor(state,phase,proof);
-  need(state.publicNpm?.kind==='npm-public-bin' && state.publicNpm.bin==='phoenix-diagram' && state.publicNpm.enginePath===state.engine.path && state.publicNpm.tarball===state.candidate.ownedTarball.path && state.publicNpm.cwd===state.project,'Public npm transport/native identity differs');need(state.engine.engineIdentity.sourceInputSha256===cohort.source.inputSha256 && state.engine.identity.sha256===cohort.engines[entry.target].sha256,'Installed native source/target differs');store.bytes(state.engine);need(sha(store.bytes(state.candidate.ownedTarball))===cohort.tgzSha256,'Owned npm tarball differs');
-  need(state.online?.status==='pass' && state.online.serverClosed===true && state.online.httpRequests.some(row=>row.target===entry.target && !row.fault && row.sha256===state.engine.identity.sha256 && row.bytes===state.engine.identity.bytes),'Real fixed-port HTTP transfer is missing');processReceipt(store,state.online.receipt);need(state.offlineInstall?.status==='pass' && ['sandbox-exec','network-namespace'].includes(state.offlineInstall.network?.method),'OS offline installation is missing');processReceipt(store,state.offlineInstall.receipt);need(state.rejections?.status==='pass' && state.rejections.checks.length>=4,'Bad-resource rejection scope is missing');for(const check of state.rejections.checks){need(check.status==='pass','A bad-resource scope did not pass');processReceipt(store,check.receipt,{success:check.name==='unsupported-platform'});}
-  const doctor=processReceipt(store,state.doctor),architecture=entry.target.endsWith('arm64')?'aarch64':'x86_64';need(doctor.receipt?.engine && same(doctor.receipt.engine,state.engine.engineIdentity) && doctor.receipt.platform?.os===(entry.target.startsWith('darwin')?'macos':'linux') && doctor.receipt.platform.architecture===architecture,'Actual npm doctor engine/native host differs');const core=store.json(state.coreIndex);need(same(core.engine.engineIdentity,state.engine.engineIdentity),'Core engine differs');coreEvidence(core,store,state.engine.engineIdentity,{node18});
+  checkJobProof(api(`/repos/${cohort.repository}/actions/jobs/${entry.jobId}`),api(`/repos/${cohort.repository}/actions/artifacts/${entry.artifact.id}`),entry,cohort,{node18,reviewed});const phase=store.relativeJson(entry.phaseMember);phaseEvidence(phase,entry,cohort,{node18,reviewed});checkStateSelection(store,phase,entry.stateMember);
+  const proof=consumerEvidence(state,store,entry.target,cohort,{node18,reviewed,cases});if(node18)checkNode18Floor(state,phase,proof);
   return{target:entry.target,status:'pass',runtimeNode:state.runtimeNode,jobId:entry.jobId,artifactId:entry.artifact.id,stateMember:entry.stateMember,scope:'Original live-job validation plus unchanged archived bytes; copied filesystem inodes are not re-certified'};
+}
+// Checks shared by workflow and local consumers once their run binding is established.
+function consumerTransportEvidence(state,store,target,cohort,{node18=false}={}) {
+  need(state.environment?.proof?.rustc==='unresolvable' && state.environment.proof.cargo==='unresolvable' && state.environment.npmChildProof.rustc==='unresolvable' && state.environment.npmChildProof.cargo==='unresolvable','Rust-free public npm environment proof is missing');const npmProof=processReceipt(store,state.npmEnvironment);const proof=JSON.parse(npmProof.stdout);need(proof.rustc==='unresolvable' && proof.cargo==='unresolvable' && (!node18 || proof.node==='v18.20.8'),'Actual npm child environment/floor differs');
+  need(state.publicNpm?.kind==='npm-public-bin' && state.publicNpm.bin==='phoenix-diagram' && state.publicNpm.enginePath===state.engine.path && state.publicNpm.tarball===state.candidate.ownedTarball.path && state.publicNpm.cwd===state.project,'Public npm transport/native identity differs');need(state.engine.engineIdentity.sourceInputSha256===cohort.source.inputSha256 && state.engine.identity.sha256===cohort.engines[target].sha256,'Installed native source/target differs');store.bytes(state.engine);need(sha(store.bytes(state.candidate.ownedTarball))===cohort.tgzSha256,'Owned npm tarball differs');
+  need(state.online?.status==='pass' && state.online.serverClosed===true && state.online.httpRequests.some(row=>row.target===target && !row.fault && row.sha256===state.engine.identity.sha256 && row.bytes===state.engine.identity.bytes),'Real fixed-port HTTP transfer is missing');processReceipt(store,state.online.receipt);need(state.offlineInstall?.status==='pass' && ['sandbox-exec','network-namespace'].includes(state.offlineInstall.network?.method),'OS offline installation is missing');processReceipt(store,state.offlineInstall.receipt);need(state.rejections?.status==='pass' && state.rejections.checks.length>=4,'Bad-resource rejection scope is missing');for(const check of state.rejections.checks){need(check.status==='pass','A bad-resource scope did not pass');processReceipt(store,check.receipt,{success:check.name==='unsupported-platform'});}
+  const doctor=processReceipt(store,state.doctor),architecture=target.endsWith('arm64')?'aarch64':'x86_64';need(doctor.receipt?.engine && same(doctor.receipt.engine,state.engine.engineIdentity) && doctor.receipt.platform?.os===(target.startsWith('darwin')?'macos':'linux') && doctor.receipt.platform.architecture===architecture,'Actual npm doctor engine/native host differs');
+  return proof;
+}
+function consumerEvidence(state,store,target,cohort,{node18=false,reviewed=!node18,cases=PROFILE_CASES.p1,scopes=[]}={}) {
+  need(state.automatedStatus==='pass' && state.status===(reviewed?'pass':'automated-pass') && state.phase===(reviewed?'complete':'pending-review') && (!reviewed || state.platformHandoff==='passed'),'Consumer state did not complete its required scope');if(node18)need(state.runtimeNode==='v18.20.8','Consumer did not run the exact Node18 floor');
+  const proof=consumerTransportEvidence(state,store,target,cohort,{node18}),core=store.json(state.coreIndex);need(same(core.engine.engineIdentity,state.engine.engineIdentity),'Core engine differs');coreEvidence(core,store,state.engine.engineIdentity,{reviewed,cases,scopes});return proof;
+}
+// The darwin-arm64 full-review consumption runs outside a workflow; its original
+// filesystem remains, so its final state and every reference are reread in place.
+function localEvidence(entry,cohort,{cases=PROFILE_CASES.p2,scopes=LOCAL_SCOPES}={}) {
+  const store=new DirectoryEvidence(entry.runRoot),state=store.json(entry.state);
+  need(state.schemaVersion===1 && state.kind==='phoenix-diagram-candidate-consumer' && state.runRoot===entry.runRoot && state.target===entry.target && state.repository===null && state.runId===null,'Local consumer state/run binding differs');
+  need(same(state.source,cohort.source) && state.candidate?.tarball?.identity?.sha256===cohort.tgzSha256,'Local consumer candidate/source differs');need(same(sorted(state.scopes || []),sorted(scopes)),'Local consumption did not request the full-review scopes');
+  consumerEvidence(state,store,entry.target,cohort,{reviewed:true,cases,scopes});
+  return{target:entry.target,status:'pass',runtimeNode:state.runtimeNode,state:entry.state,scopes,scope:'Local original filesystem reread in place: full actual-review loop with Reader exploration/share cards, repository evidence and interface languages'};
 }
 
 // These names are this implementation's mapping of §9.2 outcomes, not a new
 // prescribed session count. One real fresh session may cover several rows.
-export const PROVIDER_SCENARIOS=[...TYPES.map(type=>({id:`intent-${type}`,kind:'delivery',types:[type]})),{id:'mermaid-flowchart',kind:'delivery',types:['workflow','architecture']},{id:'mermaid-graph',kind:'delivery',types:['workflow','architecture']},{id:'mermaid-sequence',kind:'delivery',types:['sequence']},{id:'mermaid-state',kind:'delivery',types:['lifecycle']},...TYPES.map(type=>({id:`legacy-${type}`,kind:'delivery',types:[type],contract:'legacy-2.17'})),...['date','amount','condition'].map(field=>({id:`missing-${field}`,kind:'clarification',missing:field})),{id:'repairable-diagnostic',kind:'repair'},{id:'stalled-repair',kind:'stall'},{id:'browser-unavailable',kind:'browser-failure',expected:'unavailable'},{id:'browser-failed',kind:'browser-failure',expected:'failed'},{id:'visual-pending',kind:'visual-pending'}];
-export function checkProviderCoverage(rows) {need(Array.isArray(rows) && new Set(rows.map(row=>row.id)).size===rows.length && PROVIDER_SCENARIOS.every(required=>rows.some(row=>row.id===required.id)) && rows.every(row=>PROVIDER_SCENARIOS.some(required=>required.id===row.id)),'Provider scenario outcome coverage is incomplete or generic');}
+export const PROVIDER_SCENARIOS=[...LEGACY_TYPES.map(type=>({id:`intent-${type}`,kind:'delivery',types:[type]})),{id:'mermaid-flowchart',kind:'delivery',types:['workflow','architecture']},{id:'mermaid-graph',kind:'delivery',types:['workflow','architecture']},{id:'mermaid-sequence',kind:'delivery',types:['sequence']},{id:'mermaid-state',kind:'delivery',types:['lifecycle']},...LEGACY_TYPES.map(type=>({id:`legacy-${type}`,kind:'delivery',types:[type],contract:'legacy-2.17'})),...['date','amount','condition'].map(field=>({id:`missing-${field}`,kind:'clarification',missing:field})),{id:'repairable-diagnostic',kind:'repair'},{id:'stalled-repair',kind:'stall'},{id:'browser-unavailable',kind:'browser-failure',expected:'unavailable'},{id:'browser-failed',kind:'browser-failure',expected:'failed'},{id:'visual-pending',kind:'visual-pending'}];
+// P2 rows: Claude Code runs every row; Codex runs the new rows plus three regression samples.
+const P2_NEW_ROWS=[...['erd','class','tree','timeline','waterfall'].map(type=>({id:`intent-${type}`,kind:'delivery',types:[type]})),{id:'mermaid-er',kind:'delivery',types:['erd']},{id:'mermaid-class',kind:'delivery',types:['class']},{id:'repo-verified',kind:'delivery',evidence:'verified'},{id:'repo-dirty',kind:'delivery',evidence:'worktree-differs'},{id:'repo-timeline',kind:'delivery',types:['timeline'],evidence:'verified',timing:'day'},{id:'waterfall-illustrative',kind:'delivery',types:['waterfall'],timing:'illustrative'},{id:'reference-31-json',kind:'delivery',types:['workflow'],contract:'phoenix-v1',unchangedOriginal:true},{id:'locale-zh-tw',kind:'delivery',locale:'zh-TW'}];
+const P2_REGRESSION_ROWS=[...PROVIDER_SCENARIOS.filter(row=>!row.id.startsWith('legacy-')),PROVIDER_SCENARIOS.find(row=>row.id==='legacy-lifecycle')];
+export const P2_PROVIDER_SCENARIOS={'claude-code':[...P2_REGRESSION_ROWS,...P2_NEW_ROWS],codex:[...P2_REGRESSION_ROWS.filter(row=>['intent-workflow','mermaid-sequence','stalled-repair'].includes(row.id)),...P2_NEW_ROWS]};
+// D10: once any Codex row diverges from the same Claude Code row, Codex also runs
+// every regression row, so its record covers either the sample or all Claude Code rows.
+export function p2ProviderScenarios(provider,rows) {
+  if(provider!=='codex')return P2_PROVIDER_SCENARIOS[provider];
+  return Array.isArray(rows) && rows.length>P2_PROVIDER_SCENARIOS.codex.length?P2_PROVIDER_SCENARIOS['claude-code']:P2_PROVIDER_SCENARIOS.codex;
+}
+export function checkProviderCoverage(rows,scenarios=PROVIDER_SCENARIOS) {need(Array.isArray(rows) && new Set(rows.map(row=>row.id)).size===rows.length && scenarios.every(required=>rows.some(row=>row.id===required.id)) && rows.every(row=>scenarios.some(required=>required.id===row.id)),'Provider scenario outcome coverage is incomplete or generic');}
 function text(value) {if(typeof value==='string')return value;if(Array.isArray(value))return value.map(text).join('\n');return object(value)?Object.values(value).map(text).join('\n'):'';}
 function eventPayload(event) {return event.type==='response_item'?event.payload:event.item || event;}
-function calls(event) {
+function calls(event,{profile}={}) {
   if(event.type==='assistant')return(event.message?.content || []).filter(row=>row.type==='tool_use').map(row=>({id:row.id,name:row.name,input:row.input}));
   const payload=eventPayload(event);if(payload?.type==='function_call'){let input;try{input=JSON.parse(payload.arguments);}catch{return[];}return[{id:payload.call_id,name:payload.name || '<missing>',input}];}
+  if(profile==='p3' && event.type==='event_msg' && event.payload?.type==='item_completed' && event.payload.item?.type==='CommandExecution')return[{kind:'codex-command-execution',id:event.payload.item.id,name:'exec_command',input:{cmd:event.payload.item.command}}];
+  if(profile==='p3' && event.type==='response_item' && payload?.type==='custom_tool_call')return[{id:payload.call_id,name:payload.name,input:payload.input}];
   return event.type==='item.started' && ['command_execution','mcp_tool_call'].includes(payload?.type)?[{id:payload.id,input:{command:payload.command}}]:[];
 }
 function commandOf(call) {return call.name!==undefined && !['Bash','bash','exec_command','functions.exec_command'].includes(call.name)?undefined:call.input?.cmd ?? call.input?.command;}
-function toolEvent(event) {return calls(event).length>0;}
-function toolCallText(event) {return calls(event).map(call=>text(commandOf(call) ?? call.input)).join('\n');}
+function toolEvent(event,options) {return calls(event,options).length>0;}
+function toolCallText(event,options) {return calls(event,options).map(call=>text(commandOf(call) ?? call.input)).join('\n');}
 function pairPayload(call,result,toolUseId) {
   const candidates=calls(call).filter(value=>toolUseId===undefined || value.id===toolUseId);if(candidates.length!==1)return null;const selected=candidates[0];if(typeof selected.id!=='string' || !selected.id)return null;
   if(call.type==='assistant') {
@@ -161,21 +233,65 @@ function literalWords(command) {
   }
   need(!quote,'Unterminated execution quote');if(started)words.push(word);return words;
 }
+// Codex unified exec records `<shell> -c "<literal>"`; the literal under that one
+// layer must name the collector or PD entry. Anything else is checked as recorded.
+function executedWords(command) {const words=literalWords(command);return words.length===3 && /^\/bin\/(?:zsh|bash|sh)$/.test(words[0]) && words[1]==='-c'?literalWords(words[2]):words;}
 const PD_COMMANDS=['engine','doctor','guide','validate','deliver','check','browser-check','visual-check','finalize','review-record','recover-output'];
 function directPd(pair,session,raw) {
   let command=commandOf(pair);
   if(typeof command==='string' && /^\s*(?:"\$PD"|\$PD)(?=\s|$)/.test(command)) {
     const setup=session.pdSetup && toolCallText(anchor(raw,session.pdSetup)),match=/^(?:export\s+)?PD=(?:'([^']+)'|"([^"$`]+)"|(\/[^\s;$`]+))$/.exec(setup || '');need(match,'PD variable lacks a literal setup');const program=match[1]??match[2]??match[3];need(path.isAbsolute(program) && !program.includes("'"),'Unsupported PD setup');command=command.replace(/^\s*(?:"\$PD"|\$PD)/,`'${program}'`);
   }
-  const words=literalWords(command);let program=words.shift();if(program==='node' || /\/node$/.test(program || '')){need(/\/bin\/phoenix-diagram\.js$/.test(words[0] || ''),'Wrong PD Node entry');program=words.shift();}
+  const words=executedWords(command);let program=words.shift();if(program==='node' || /\/node$/.test(program || '')){need(/\/bin\/phoenix-diagram\.js$/.test(words[0] || ''),'Wrong PD Node entry');program=words.shift();}
   need(program==='phoenix-diagram' || /\/(?:scripts\/phoenix-diagram|bin\/phoenix-diagram\.js)$/.test(program || ''),'Actual execution is not the PD entry');need(PD_COMMANDS.includes(words[0]),'Wrong PD command');return{program,argv:words};
 }
 function proofPair(capture,proof) {
+  if(proof.kind==='codex-command-execution')return commandExecutionProof(capture,proof);
   if(Object.hasOwn(proof,'polls'))return asyncCollectorPair(capture,proof);
   const resultRef=proof.result || proof,result=anchor(capture.raw,resultRef);let choices;
   if(proof.call){need(proof.call.offset<resultRef.offset,'Tool result precedes its call');choices=[{event:anchor(capture.raw,proof.call),ref:proof.call}];}
   else choices=capture.events.filter(toolEvent).filter(event=>capture.events.indexOf(event)<capture.events.indexOf(capture.events.find(value=>same(value,result)))).map(event=>({event}));
   const pairs=choices.map(({event})=>pairPayload(event,result,proof.toolUseId)).filter(Boolean);need(pairs.length===1,'Actual tool call/result ID pair is missing or ambiguous');return pairs[0];
+}
+// The native session records execution facts inside an opaque custom exec call.
+// Bind those facts to original bytes and their owning turn/window; never run or
+// interpret the custom tool's JavaScript or infer batched Promise results.
+function commandExecutionProof(part,proof) {
+  need(part.profile==='p3' && part.provider==='codex' && !proof.call && !Object.hasOwn(proof,'polls'),'CommandExecution requires a P3 Codex terminal anchor');
+  const {session,capture}=part,minimumOffset=part.minimumOffset ?? 0,start=Date.parse(capture?.startedAt),finish=Date.parse(capture?.finishedAt);
+  need(session?.id && path.isAbsolute(session.cwd || '') && path.normalize(session.cwd)===session.cwd && capture?.provider==='codex' && capture.sessionId===session.id && capture.cwd===session.cwd && Number.isSafeInteger(start) && Number.isSafeInteger(finish) && start<=finish && Number.isSafeInteger(minimumOffset) && minimumOffset>=0 && minimumOffset<=part.raw.length && (capture.origin!==false || minimumOffset>0),'CommandExecution session/capture window differs');
+  const selected=anchor(part.raw,proof.result),rows=[];
+  for(let offset=0;offset<part.raw.length;) {
+    const end=part.raw.indexOf(10,offset),length=(end<0?part.raw.length:end+1)-offset;
+    rows.push({offset,length,event:JSON.parse(part.raw.subarray(offset,offset+length).toString('utf8'))});offset+=length;
+  }
+  const at=rows.findIndex(row=>row.offset===proof.result.offset && row.length===proof.result.length);
+  need(at>=0 && rows[at].offset>=minimumOffset && same(rows[at].event,selected),'CommandExecution anchor is not one current original event');
+  const payload=selected.payload,item=payload?.item,meta=rows.filter(row=>row.event.type==='session_meta');
+  need(selected.type==='event_msg' && payload?.type==='item_completed' && item?.type==='CommandExecution' && typeof item.id==='string' && item.id && item.id===proof.toolUseId && rows.filter(row=>row.event.type==='event_msg' && row.event.payload?.type==='item_completed' && row.event.payload.item?.id===item.id).length===1,'CommandExecution terminal ID is missing or duplicated');
+  need(meta.length===1 && meta[0].event.payload?.id===session.id && meta[0].event.payload.cwd===session.cwd && payload.thread_id===session.id && typeof payload.turn_id==='string' && payload.turn_id,'CommandExecution native session/thread differs');
+  const turnRows=type=>rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='event_msg' && row.event.payload?.type===type && row.event.payload.turn_id===payload.turn_id),begins=turnRows('task_started'),ends=turnRows('task_complete');
+  need(begins.length===1 && ends.length===1 && begins[0].row.offset>=minimumOffset && begins[0].index<at && ends[0].index>at,'CommandExecution native turn is missing, duplicated or outside this capture');
+  let cwd;try{const url=new URL(item.cwd);need(url.protocol==='file:' && !url.hostname && !url.search && !url.hash,'CommandExecution cwd is not a local file URL');cwd=fileURLToPath(url);}catch{need(false,'CommandExecution cwd is not a local file URL');}
+  need(cwd===session.cwd && Array.isArray(item.command) && item.command.length>0 && item.command.every(word=>typeof word==='string' && !word.includes('\0')) && typeof item.aggregated_output==='string' && item.source==='unified_exec_startup','CommandExecution cwd/argv/output/source differs');
+  need(Number.isSafeInteger(payload.started_at_ms) && Number.isSafeInteger(payload.completed_at_ms) && start<=payload.started_at_ms && payload.started_at_ms<=payload.completed_at_ms && payload.completed_at_ms<=finish && Date.parse(selected.timestamp)>=payload.completed_at_ms && Date.parse(selected.timestamp)<=finish,'CommandExecution execution time is outside its capture');
+  need(Number.isInteger(item.exit_code) && item.exit_code>=0 && item.exit_code<=255 && (item.status==='completed' && item.exit_code===0 || item.status==='failed' && item.exit_code!==0) && typeof item.process_id==='string' && item.process_id && Number.isSafeInteger(item.duration?.secs) && item.duration.secs>=0 && Number.isInteger(item.duration.nanos) && item.duration.nanos>=0 && item.duration.nanos<1e9,'CommandExecution terminal status/exit/process metadata differs');
+  // A yielded exec closes its starting custom call before the native terminal
+  // fact arrives in a later poll or stop call. Bind both windows independently.
+  const starts=[],terminals=[];
+  for(const [index,{event,offset}] of rows.entries())if(event.type==='response_item' && event.payload?.type==='custom_tool_call' && index<at) {
+    const call=event.payload,id=call.call_id,results=rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call_output' && row.event.payload.call_id===id);
+    const startsHere=Date.parse(event.timestamp)<=payload.started_at_ms && results.some(result=>result.index>index && Date.parse(result.row.event.timestamp)>=payload.started_at_ms),endsHere=Date.parse(event.timestamp)<=payload.completed_at_ms && results.some(result=>result.index>at);
+    if(startsHere || endsHere) {
+      need(typeof id==='string' && id && rows.filter(row=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call' && row.event.payload.call_id===id).length===1 && results.length===1,'CommandExecution outer exec ID is missing or duplicated');
+      const result=results[0].row.event;
+      need(offset>=minimumOffset && index>begins[0].index && results[0].index<ends[0].index && call.name==='exec' && typeof call.input==='string' && Array.isArray(result.payload.output) && result.payload.output.every(block=>block.type==='input_text' && typeof block.text==='string') && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=Date.parse(result.timestamp) && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
+      if(startsHere)starts.push(id);
+      if(endsHere){need(Date.parse(event.timestamp)<=payload.completed_at_ms && Date.parse(result.timestamp)>=payload.completed_at_ms,'CommandExecution terminal exec window differs');terminals.push(id);}
+    }
+  }
+  need(starts.length===1 && terminals.length===1,'CommandExecution has no unique starting/terminal custom exec windows');
+  return{id:item.id,name:'exec_command',input:{cmd:item.command,workdir:cwd},output:item.aggregated_output,exitCode:item.exit_code,error:item.status==='failed' || item.exit_code!==0,execution:{processHandle:item.process_id,startedAtMs:payload.started_at_ms,completedAtMs:payload.completed_at_ms,turnId:payload.turn_id,threadId:payload.thread_id,source:item.source}};
 }
 function asyncCollectorPair(capture,proof) {
   need(capture.provider==='codex' && Array.isArray(proof.polls) && proof.polls.length>0,'Async collector requires explicit Codex process polls');
@@ -233,7 +349,7 @@ function capturedReply(capture,proof,bytesFor) {
   const pair=proofPair(capture,proof),dto=metadataLine(pair.output),collector=capture.session.collector;
   need(proof.call && collector && capture.collectorIdentity,'Authenticated collector template and exact call are required');
   need(same(identity(bytesFor(collector.script)),capture.collectorIdentity) && same(collector.script.identity,capture.collectorIdentity),'Collector template differs from authenticated harness');
-  const words=literalWords(commandOf(pair));need(words[0]===collector.nodePath && words[1]===collector.script.path,'Wrong collector producer or Node entry');
+  const words=executedWords(commandOf(pair));need(words[0]===collector.nodePath && words[1]===collector.script.path,'Wrong collector producer or Node entry');
   const options=parseCaptureArgs(words.slice(2));need(dto.schemaVersion===1 && dto.tool==='phoenix-diagram' && same(dto.collector?.identity,capture.collectorIdentity) && dto.collector.path===collector.script.path && dto.node?.path===collector.nodePath && /^v\d+\./.test(dto.node.version || '') && dto.program===options.program && dto.cwd===options.cwd && same(dto.argv,options.argv) && dto.stdout?.path===options.stdout && dto.stderr?.path===options.stderr,'Collector command/argv/file binding differs');
   need(Number.isInteger(dto.exitCode) && dto.exitCode>=0 && dto.exitCode<=255 && dto.signal===null && (pair.exitCode===undefined?capture.provider==='claude-code':pair.exitCode===dto.exitCode) && (pair.errorFlag===undefined || pair.errorFlag===(dto.exitCode!==0)),'Native capture exit or signal is inconsistent');
   need(dto.cwd===capture.capture.cwd && dto.installedReceipt?.path===capture.session.installedReceipt.path && same(dto.installedReceipt.identity,capture.session.installedReceipt.identity),'Collector installation binding differs');
@@ -257,9 +373,12 @@ function injectedSkillBody(captured,read,source,pair) {
   need(call.type==='assistant' && call.message?.role==='assistant' && result.type==='user' && result.message?.role==='user' && result.message.content?.length===1 && result.tool_use_result?.success===true && result.tool_use_result.commandName==='phoenix-diagram' && !pair.error && pair.output==='Launching skill: phoenix-diagram' && [call,result,injection].every(event=>event.session_id===captured.session.id) && injection.type==='user' && injection.message?.role==='user' && injection.isSynthetic===true && injection.message.content?.length===1 && injection.message.content[0].type==='text' && injection.message.content[0].text===`Base directory for this skill: ${path.posix.dirname(read.file.path)}\n\n${body}${suffix}`,'Native Skill injection does not contain this complete owned SKILL body');
   return body;
 }
-export function checkProviderCapture(session,bytesFor,provider=session?.provider,{collectorIdentity,tarInventory,scenarioRows}={}) {
-  const clarificationOnly=Array.isArray(scenarioRows) && scenarioRows.length>0 && scenarioRows.every(row=>row.sessionId===session?.id && PROVIDER_SCENARIOS.some(required=>required.id===row.id && required.kind==='clarification'));
-  need(['claude-code','codex'].includes(provider) && session?.capture && session.transcript && session.version && session.installedReceipt && session.loadedReads?.length>=(clarificationOnly?1:2) && (clarificationOnly || session.pdCall),'Real provider capture/session/transcript evidence is missing');
+// P2 skill text sends repair and stall rounds through SKILL.md alone, so under p2 those
+// sessions, like clarification-only ones, need only the verified SKILL read.
+export function checkProviderCapture(session,bytesFor,provider=session?.provider,{collectorIdentity,tarInventory,scenarioRows,profile='p1'}={}) {
+  const scopedTo=kinds=>Array.isArray(scenarioRows) && scenarioRows.length>0 && scenarioRows.every(row=>row.sessionId===session?.id && PROVIDER_SCENARIOS.some(required=>required.id===row.id && kinds.includes(required.kind)));
+  const clarificationOnly=scopedTo(['clarification']),skillOnly=clarificationOnly || profile==='p2' && scopedTo(['clarification','stall','repair']);
+  need(['claude-code','codex'].includes(provider) && session?.capture && session.transcript && session.version && session.installedReceipt && session.loadedReads?.length>=(skillOnly?1:2) && (clarificationOnly || session.pdCall),'Real provider capture/session/transcript evidence is missing');
   const capture=JSON.parse(bytesFor(session.capture)),version=JSON.parse(bytesFor(session.version)),raw=bytesFor(session.transcript),events=raw.toString('utf8').split('\n').filter(Boolean).map(line=>JSON.parse(line));
   const formats=provider==='claude-code'?['claude-stream-json']:['codex-exec-json','codex-session-json'];need(formats.includes(session.format),'Unknown native provider transcript format');need(session.format==='codex-session-json'?capture.nativeSessionFile===session.transcript.path || capture.transcriptSource?.path===capture.nativeSessionFile && same(capture.transcriptSource.identity,session.transcript.identity):same(capture.stdout,session.transcript),'Provider transcript is not bound to the actual stdout/native session file');
   need(capture.exitCode===0 && version.exitCode===0 && typeof capture.program==='string' && capture.program.trim() && capture.program===version.program && Array.isArray(capture.argv) && capture.argv.every(value=>typeof value==='string') && !capture.argv.some(value=>value==='resume' || (provider==='claude-code'?/^(?:--resume|--continue|-r|-c)(?:=|$)/:/^(?:--resume|--continue)(?:=|$)/).test(value)) && version.argv?.includes('--version'),'Provider CLI/version capture is missing or resumed');need((provider==='codex'?/codex/i:/claude/i).test(version.stdout || ''),'Observed provider version does not identify the requested client');
@@ -269,7 +388,7 @@ export function checkProviderCapture(session,bytesFor,provider=session?.provider
   const captured={session,provider,raw,events,capture,version,collectorIdentity,tarInventory};
   if(session.collector)need(collectorIdentity && same(session.collector.script?.identity,collectorIdentity) && same(identity(bytesFor(session.collector.script)),collectorIdentity) && path.isAbsolute(session.collector.nodePath) && path.basename(session.collector.nodePath)==='node','Collector template lacks authenticated harness identity or an explicit Node entry');
   for(const read of session.loadedReads){const pair=proofPair(captured,read),source=bytesFor(read.file).toString('utf8'),injected=read.injection!==undefined || pair.name==='Skill',output=injected?injectedSkillBody(captured,read,source,pair):pair.output;need(!pair.error && (pair.exitCode===undefined || pair.exitCode===0) && (injected || text(pair.input).includes(read.file.path)) && typeof read.quote==='string' && read.quote.length>=40 && source.includes(read.quote) && output.includes(read.quote),'Installed skill/reference tool call/result pair did not actually read the owned file');}
-  need(session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/SKILL.md$/.test(read.file.path)) && (clarificationOnly || session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/references\/[^/]+\.md$/.test(read.file.path))),'Actual installed SKILL and required reference reads are missing');
+  need(session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/SKILL.md$/.test(read.file.path)) && (skillOnly || session.loadedReads.some(read=>/\/skills\/phoenix-diagram\/references\/[^/]+\.md$/.test(read.file.path))),'Actual installed SKILL and required reference reads are missing');
   if(session.pdCall) {
     const pair=proofPair(captured,session.pdCall);
     if(pair.output.includes('phoenix-diagram-stdio-capture')){const {dto}=capturedReply(captured,session.pdCall,bytesFor);need(JSON.parse(bytesFor(dto.stdout)).tool==='phoenix-diagram','Collector stdout is not a PD reply');}
@@ -290,39 +409,137 @@ export function checkProviderReply(capture,proof,reference,bytesFor,{outcome='su
 }
 function actualReply(capture,proof,reference,store,outcome='success') {return checkProviderReply(capture,proof,reference,value=>store.bytes(value),{outcome});}
 function assistantText(event,provider) {const payload=eventPayload(event);need(provider==='claude-code'?event.type==='assistant' && event.message?.role==='assistant':payload?.type==='agent_message' || payload?.type==='message' && payload.role==='assistant' || event.type==='event_msg' && payload.type==='task_complete','Scenario response is not a native assistant message');return text(event);}
+export const P3_NATIVE_PROOF=Object.freeze({anchor,proofPair,assistantText,literalWords,executedWords,commandOf,calls,toolEvent,toolCallText,eventPayload,text,injectedSkillBody,checkProviderReply});
+const P3_SCENARIOS_MEMBER='tools/phoenix-diagram/tests/provider/p3-scenarios.json';
+function p3ProviderContext(candidate,{bytesFor,harnessRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),collectorIdentity,scenarioManifest}={}) {
+  const member=name=>readSnapshot(path.join(harnessRoot,name)).content;
+  return {cohort:{source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,bundleSha256:candidate.version.bundleSha256,
+    npmPackageVersion:candidate.pkg.version,engines:candidate.version.engines,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)},
+    tarInventory:readTarballInventory(candidate.tgz.content),bytesFor,nativeProof:P3_NATIVE_PROOF,
+    collectorIdentity:collectorIdentity ?? {stdio:identity(member(STDIO_MEMBER)),provider:identity(member(PROVIDER_MEMBER))},
+    scenarioManifest:checkP3ScenarioManifest(scenarioManifest ?? JSON.parse(member(P3_SCENARIOS_MEMBER)))};
+}
+// The controller checks its supplied originals locally. API authentication of
+// this same harness and candidate remains the final aggregate's separate gate.
+export function createP3ProviderDependencies({candidateDir,harnessRoot}={}) {
+  const candidate=validateCandidate(candidateDir,targetForHost(),{profile:'p3'});
+  return {
+    validateProviders:async({manifest})=>checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{harnessRoot,bytesFor:reference=>readBound(reference,'original P3 provider input').content})),
+    verifyProviders:(report,{bytesFor,state})=>{
+      const manifest=JSON.parse(bytesFor(state.providers.manifest)),actual=checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{harnessRoot,bytesFor}));
+      need(actual.status==='pass' && same(report,actual),'P3 provider report does not match its complete original inputs');return actual;
+    },
+  };
+}
 function receiptErrors(receipt) {const errors=receipt.composition?.summary?.errors;return Number.isSafeInteger(errors)?errors:(receipt.diagnostics || []).filter(row=>row.severity==='error').length;}
-function providerEvidence(entry,cohort,tarInventory) {
-  const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot),record=store.relativeJson(entry.recordMember);
-  need(record.schemaVersion===1 && record.kind==='phoenix-diagram-provider-acceptance' && record.provider===entry.provider && record.repository===cohort.repository && String(record.runId)===String(cohort.runId) && Number(record.runAttempt)===cohort.runAttempt && record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source),'Provider candidate/source/run binding differs');checkProviderCoverage(record.scenarios);need(record.sessions?.length>0 && new Set(record.sessions.map(row=>row.id)).size===record.sessions.length,'Real fresh provider sessions are missing/duplicated');
+// P2 host sessions run on the authenticated final candidate itself, or on a development
+// package that counts only when its bundle and engine source are the same (bundle
+// manifest excludes ENGINE.json).
+export function checkDevelopmentPackage(version,cohort,{record,candidate,bytesFor}={}) {
+  const sameCandidate=version?.distribution==='candidate' || record && HASH.test(cohort.tgzSha256 || '') && (record.candidateSha256===cohort.tgzSha256 || record.package?.tarball?.identity?.sha256===cohort.tgzSha256);
+  if(sameCandidate) {
+    // Only aggregateCandidate's authenticated validateCandidate result supplies
+    // these snapshots; provider source/bundle assertions cannot substitute them.
+    const manifest=candidate?.files?.get('release-dir/VERSION.json'),tgz=candidate?.tgz;
+    need(record?.package?.version && record.package.tarball && manifest && tgz && typeof bytesFor==='function' && Buffer.isBuffer(manifest.content) && Buffer.isBuffer(tgz.content),'Same-candidate provider package lacks its authenticated candidate VERSION/tgz');
+    need(same(identity(manifest.content),manifest.identity) && same(identity(tgz.content),tgz.identity) && manifest.identity.sha256===cohort.versionSha256 && tgz.identity.sha256===cohort.tgzSha256,'Authenticated candidate VERSION/tgz cohort differs');
+    need(version.distribution==='candidate' && same(version,candidate.version) && same(version,JSON.parse(manifest.content.toString('utf8'))) && same(candidate.source,cohort.source) && version.sourceCommit===cohort.source.commit && version.sourceInputSha256===cohort.source.inputSha256 && version.bundleSha256===cohort.bundleSha256 && version.npmPackageVersion===cohort.npmPackageVersion && same(sorted(Object.keys(version.engines || {})),sorted(TARGETS)) && same(version.engines,cohort.engines),'Same-candidate provider VERSION/source/complete engines differ');
+    need(record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source) && same(record.package.version.identity,manifest.identity) && same(record.package.tarball.identity,tgz.identity),'Same-candidate provider source/VERSION/tgz identity differs');
+    need(bytesFor(record.package.version).equals(manifest.content) && bytesFor(record.package.tarball).equals(tgz.content),'Same-candidate provider VERSION/tgz bytes differ');
+    return version;
+  }
+  need(version?.schemaVersion===1 && version.distribution==='development' && version.tool==='phoenix-diagram' && version.toolVersion==='0.2.0' && version.npmPackageVersion===cohort.npmPackageVersion && version.sourceInputSha256===cohort.source.inputSha256 && version.bundleSha256===cohort.bundleSha256 && object(version.engines) && Object.keys(version.engines).length>0,'Development package bundle or engine source differs from the final candidate');
+  return version;
+}
+// §9.3 reuse: rows recorded on an earlier development package of the same bundle
+// still count once the final engine is shown to reproduce what that row's engine
+// produced: the same diagram SVG for each delivery and the same error codes for
+// each failed validation. Rows whose output changed must be rerun.
+export function checkReusedPackage(version,cohort) {
+  need(version?.schemaVersion===1 && version.distribution==='development' && version.tool==='phoenix-diagram' && version.toolVersion==='0.2.0' && version.npmPackageVersion===cohort.npmPackageVersion && version.bundleSha256===cohort.bundleSha256 && HASH.test(version.sourceInputSha256 || '') && version.sourceInputSha256!==cohort.source.inputSha256 && object(version.engines) && Object.keys(version.engines).length>0,'Reused development package differs from the final bundle or is not an earlier engine');
+  return version;
+}
+export function p2ReuseRows(provider,current,earlier) {
+  const scenarios=p2ProviderScenarios(provider,earlier);checkProviderCoverage(earlier,scenarios);
+  need(Array.isArray(current) && current.length>0 && new Set(current.map(row=>row.id)).size===current.length && current.every(row=>scenarios.some(required=>required.id===row.id)),'Rerun host rows are missing, duplicated or outside the planned scope');
+  return{scenarios,reused:scenarios.map(required=>required.id).filter(id=>!current.some(row=>row.id===id))};
+}
+export function diagramSvg(html) {const start=html.indexOf('<svg'),end=html.indexOf('</svg>');need(start>=0 && end>start && html.indexOf('<svg',start+1)<0 && html.indexOf('</svg>',end+1)<0,'Artifact has no single diagram SVG');return html.slice(start,end+6);}
+const errorCodes=receipt=>sorted((receipt.diagnostics || []).filter(row=>row.severity==='error').map(row=>row.code));
+function failedValidation(receipt) {const stage=receipt.command==='finalize'?receipt.stages?.find(value=>value.name==='validate')?.receipt:receipt;need(stage?.command==='validate' && stage.status!=='pass','Only a failed validation can be replayed; rerun this host row');return{command:'validate',candidate:stage.candidate?.identity,codes:errorCodes(stage),config:stage.config ?? null};}
+function delivered(receipt) {const stage=receipt.command==='finalize'?receipt.stages?.find(value=>value.name==='deliver')?.receipt:receipt;need(stage?.command==='deliver' && stage.status==='pass','Only a passed delivery can be replayed; rerun this host row');return{command:'deliver',candidate:stage.candidate?.identity,artifact:stage.artifact?.identity,config:stage.config};}
+export function checkReplay(expected,row,cohort,store) {
+  need(Array.isArray(row?.replays) && row.replays.length===expected.length,`Host row ${row?.id} lacks exactly one final-engine replay per original output`);
+  const unused=[...row.replays];
+  for(const item of expected) {
+    const at=unused.findIndex(replay=>replay.command===item.command && (item.command!=='deliver' || same(replay.original?.identity,item.artifact)));need(at>=0,`Host row ${row.id} lacks a final-engine replay of an original ${item.command}`);
+    const replay=unused.splice(at,1)[0],receipt=store.json(replay.receipt);header(receipt,item.command);
+    need(receipt.engine?.sourceInputSha256===cohort.source.inputSha256 && Object.values(cohort.engines).some(engine=>same(receipt.engine.binary,{sha256:engine.sha256,bytes:engine.size})) && same(receipt.candidate?.identity,item.candidate),'Replay was not produced by the final engine from the original input');
+    need(same(receipt.config ?? null,item.config ?? null),'Replay configuration differs from the original');
+    if(item.command==='deliver'){need(receipt.status==='pass' && same(replay.artifact?.identity,receipt.artifact?.identity),'Final-engine delivery replay did not pass');need(diagramSvg(store.bytes(replay.artifact).toString('utf8'))===diagramSvg(store.bytes(replay.original).toString('utf8')),`The final engine's diagram differs for host row ${row.id}; rerun it`);}
+    else{need(receipt.status!=='pass' && item.codes.length>0,'Final-engine validation replay no longer fails');need(same(errorCodes(receipt),item.codes),`The final engine's error diagnostics differ for host row ${row.id}; rerun it`);}
+  }
+}
+function providerEvidence(entry,cohort,tarInventory,{profile='p1',candidate}={}) {
+  if(profile!=='p2' || entry.reuse===undefined)return recordEvidence(entry,entry.provider,cohort,tarInventory,{profile,candidate});
+  const reuse=entry.reuse;need(object(reuse) && object(reuse.replay),'Reused host rows need their earlier record and a final-engine replay');
+  const current=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot).relativeJson(entry.recordMember),earlier=new ArchiveEvidence(reuse.archive,reuse.prefix,reuse.originalRoot).relativeJson(reuse.recordMember);
+  const {scenarios,reused}=p2ReuseRows(entry.provider,current.scenarios,earlier.scenarios),store=new ArchiveEvidence(reuse.replay.archive,reuse.replay.prefix,reuse.replay.originalRoot),replays=store.relativeJson(reuse.replay.member);
+  need(replays?.schemaVersion===1 && replays.kind==='phoenix-diagram-host-replay' && replays.provider===entry.provider && Array.isArray(replays.rows) && new Set(replays.rows.map(row=>row.id)).size===replays.rows.length,'Final-engine host replay record differs');
+  const rerun=recordEvidence(entry,entry.provider,cohort,tarInventory,{profile,candidate,scenarios,rows:current.scenarios.map(row=>row.id)}),kept=recordEvidence(reuse,entry.provider,cohort,tarInventory,{profile,candidate,scenarios,rows:reused,replay:{store,rows:replays.rows}});
+  return{provider:entry.provider,status:'pass',sessionIds:[...rerun.sessionIds,...kept.sessionIds],scenarioIds:scenarios.map(row=>row.id),rerunScenarioIds:rerun.scenarioIds,reused:{engineSource:kept.engineSource,scenarioIds:kept.scenarioIds},scope:`${rerun.scope}; rows kept from an earlier engine of the same bundle only where the final engine reproduces their diagrams and failed validations`};
+}
+function recordEvidence(entry,provider,cohort,tarInventory,{profile='p1',scenarios,rows,replay,candidate}={}) {
+  const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot),record=store.relativeJson(entry.recordMember);scenarios??=profile==='p2'?p2ProviderScenarios(provider,record.scenarios):PROVIDER_SCENARIOS;
+  need(record.schemaVersion===1 && record.kind==='phoenix-diagram-provider-acceptance' && record.provider===provider && scenarios,'Provider record kind/provider differs');
+  let development;
+  if(profile==='p2'){need(record.profile==='p2' && record.package?.version,'P2 provider record lacks its package VERSION');const version=store.json(record.package.version);development={version:replay?checkReusedPackage(version,cohort):checkDevelopmentPackage(version,cohort,{record,candidate,bytesFor:reference=>store.bytes(reference)}),sha256:record.package.version.identity.sha256};}
+  else need(record.repository===cohort.repository && String(record.runId)===String(cohort.runId) && Number(record.runAttempt)===cohort.runAttempt && record.candidateSha256===cohort.tgzSha256 && same(record.source,cohort.source),'Provider candidate/source/run binding differs');
+  const engines=Object.values(development?.version.engines || cohort.engines),manifestSha256=development?.sha256 || cohort.versionSha256,source=development?.version.sourceInputSha256 ?? cohort.source.inputSha256;
+  if(!rows)checkProviderCoverage(record.scenarios,scenarios);need(record.sessions?.length>0 && new Set(record.sessions.map(row=>row.id)).size===record.sessions.length,'Real fresh provider sessions are missing/duplicated');
   const sessions=new Map();for(const session of record.sessions) {
     const scenarioRows=record.scenarios.filter(row=>row.sessionId===session.id);
-    const captured=checkProviderCapture(session,reference=>store.bytes(reference),entry.provider,{collectorIdentity:cohort.collectorIdentity,tarInventory,scenarioRows}),installed=store.json(session.installedReceipt);
-    need(installed.schemaVersion===1 && installed.tool==='phoenix-diagram' && installed.npmPackageVersion===cohort.npmPackageVersion && installed.engine?.sourceInputSha256===cohort.source.inputSha256 && Object.values(cohort.engines).some(engine=>same(installed.engine.binary,{sha256:engine.sha256,bytes:engine.size})) && installed.bundleManifestSha256===cohort.bundleSha256 && installed.engineManifestSha256===cohort.versionSha256,'Actual project installation receipt differs from this npm candidate');
+    const captured=checkProviderCapture(session,reference=>store.bytes(reference),provider,{collectorIdentity:cohort.collectorIdentity,tarInventory,scenarioRows,profile}),installed=store.json(session.installedReceipt);
+    need(installed.schemaVersion===1 && installed.tool==='phoenix-diagram' && installed.npmPackageVersion===cohort.npmPackageVersion && installed.engine?.sourceInputSha256===source && engines.some(engine=>same(installed.engine.binary,{sha256:engine.sha256,bytes:engine.size})) && installed.bundleManifestSha256===cohort.bundleSha256 && installed.engineManifestSha256===manifestSha256,'Actual project installation receipt differs from this npm package');
     for(const read of session.loadedReads){const suffix=/\/skills\/phoenix-diagram\/(.+)$/.exec(read.file.path)?.[1],expected=tarInventory.get(`skills/phoenix-diagram/${suffix}`);need(expected && same(identity(store.bytes(read.file)),{sha256:expected.sha256,bytes:expected.size}) && installed.ownership?.some(owned=>read.file.path.endsWith(owned.path) && owned.identity.sha256===expected.sha256 && owned.identity.bytes===expected.size),'Loaded installed resource is not owned by this candidate');}
     sessions.set(session.id,{session,...captured,installedEngine:installed.engine});
   }
-  for(const row of record.scenarios) {
-    const required=PROVIDER_SCENARIOS.find(value=>value.id===row.id),capture=sessions.get(row.sessionId);need(capture,'Scenario has no actual fresh native session');const prompt=store.bytes(row.prompt).toString('utf8'),response=assistantText(anchor(capture.raw,row.response),entry.provider);
+  for(const row of record.scenarios.filter(value=>!rows || rows.includes(value.id))) {
+    const required=scenarios.find(value=>value.id===row.id),capture=sessions.get(row.sessionId),outputs=[];need(capture,'Scenario has no actual fresh native session');const prompt=store.bytes(row.prompt).toString('utf8'),response=assistantText(anchor(capture.raw,row.response),provider);
     need(prompt.trim() && (capture.capture.stdin && store.bytes(capture.capture.stdin).toString('utf8').includes(prompt) || capture.events.some(event=>(event.type==='user' || eventPayload(event)?.role==='user') && text(event).includes(prompt))),'Authored scenario prompt is absent from actual stdin/native user events');
     need(row.review?.verdict==='passed' && row.review.reviewer?.trim() && row.review.observations?.trim(),'Actual per-scenario semantic review is missing');const evidence=row.evidence;need(evidence?.kind===required.kind,'Scenario outcome does not match its declared plan scope');
     if(['delivery','repair'].includes(required.kind)) {
       const completed=caseEvidence(evidence.case,store,store.json(evidence.case.finalize).engine,{reader:false}),delivery=completed.stages[1].receipt;
-      need(completed.engine.sourceInputSha256===cohort.source.inputSha256 && same(completed.engine.binary,capture.installedEngine.binary) && (required.types || TYPES).includes(delivery.config?.diagramType) && (!required.contract || delivery.inputContract===required.contract),'Provider output type/source/input contract differs');const reply=actualReply(capture,evidence.pdResult,evidence.reply,store);header(reply,'finalize');need(reply.deliveryReceiptId===completed.deliveryReceiptId && same(reply.browserReceiptIdentity,completed.browserReceiptIdentity) && same(reply.stages,completed.stages),'Actual initial finalize reply changed identity at review');
-      if(required.kind==='repair'){const before=actualReply(capture,evidence.beforeResult,evidence.before,store,'failure');need(['validate','check','finalize'].includes(before.command) && before.status!=='pass' && receiptErrors(before)>0,'Repair lacks a real earlier diagnostic failure');}
+      need(completed.engine.sourceInputSha256===source && same(completed.engine.binary,capture.installedEngine.binary) && (required.types || TYPES).includes(delivery.config?.diagramType) && (!required.contract || delivery.inputContract===required.contract),'Provider output type/source/input contract differs');const reply=actualReply(capture,evidence.pdResult,evidence.reply,store);header(reply,'finalize');need(reply.deliveryReceiptId===completed.deliveryReceiptId && same(reply.browserReceiptIdentity,completed.browserReceiptIdentity) && same(reply.stages,completed.stages),'Actual initial finalize reply changed identity at review');
+      if(required.kind==='repair'){const before=actualReply(capture,evidence.beforeResult,evidence.before,store,'failure');need(['validate','check','finalize'].includes(before.command) && before.status!=='pass' && receiptErrors(before)>0,'Repair lacks a real earlier diagnostic failure');if(replay)outputs.push(failedValidation(before));}
+      if(profile==='p2')p2Outcome(required,completed,evidence,store,response);if(replay)outputs.push(delivered(delivery));
     } else if(required.kind==='clarification') {
       need(evidence.missing?.includes(required.missing) && evidence.question?.trim() && response.includes(evidence.question),'Missing facts were not actually clarified');
     } else if(required.kind==='stall') {
       need(evidence.rounds?.length>=3 && evidence.stoppedQuote?.trim() && response.includes(evidence.stoppedQuote),'Stall lacks actual rounds and stopping response');let best=Infinity,streak=0;
-      for(const round of evidence.rounds){const receipt=actualReply(capture,round.pdResult,round.receipt,store,'failure'),count=receiptErrors(receipt);need(['validate','check','finalize'].includes(receipt.command) && receipt.status!=='pass' && count>0 && same(identity(store.bytes(round.candidateSnapshot)),receipt.candidate?.identity),'Stall round lacks actual candidate/diagnostic bytes');if(count<best){best=count;streak=0;}else streak++;}need(streak>=2,'Two consecutive real diagnostic rounds did not stall');
+      for(const round of evidence.rounds){const receipt=actualReply(capture,round.pdResult,round.receipt,store,'failure'),count=receiptErrors(receipt);need(['validate','check','finalize'].includes(receipt.command) && receipt.status!=='pass' && count>0 && same(identity(store.bytes(round.candidateSnapshot)),receipt.candidate?.identity),'Stall round lacks actual candidate/diagnostic bytes');if(replay)outputs.push(failedValidation(receipt));if(count<best){best=count;streak=0;}else streak++;}need(streak>=2,'Two consecutive real diagnostic rounds did not stall');
     } else if(required.kind==='browser-failure') {
-      const receipt=actualReply(capture,evidence.pdResult,evidence.receipt,store,'failure'),browser=receipt.command==='finalize'?receipt.stages?.find(stage=>stage.name==='browser-check')?.receipt:receipt;need(browser?.status===required.expected && receipt.status!=='pass' && receipt.deliveryStatus!=='complete' && evidence.quote?.trim() && response.includes(evidence.quote),'Actual browser failure/unavailable outcome was hidden or omitted');
+      const receipt=actualReply(capture,evidence.pdResult,evidence.receipt,store,'failure'),browser=receipt.command==='finalize'?receipt.stages?.find(stage=>stage.name==='browser-check')?.receipt:receipt;need(browser?.status===required.expected && receipt.status!=='pass' && receipt.deliveryStatus!=='complete' && evidence.quote?.trim() && response.includes(evidence.quote),'Actual browser failure/unavailable outcome was hidden or omitted');if(replay)outputs.push(delivered(receipt));
     } else {
-      const summary=store.json(evidence.summary),reply=actualReply(capture,evidence.pdResult,evidence.reply,store);header(summary,'finalize');need(reply.deliveryReceiptId===summary.deliveryReceiptId && same(reply.stages,summary.stages) && summary.automatedStatus==='pass' && summary.visualReview?.status==='required-pending' && summary.deliveryStatus==='incomplete' && evidence.quote?.trim() && response.includes(evidence.quote),'Visual-pending case was incorrectly called complete');
+      const summary=store.json(evidence.summary),reply=actualReply(capture,evidence.pdResult,evidence.reply,store);header(summary,'finalize');need(reply.deliveryReceiptId===summary.deliveryReceiptId && same(reply.stages,summary.stages) && summary.automatedStatus==='pass' && summary.visualReview?.status==='required-pending' && summary.deliveryStatus==='incomplete' && evidence.quote?.trim() && response.includes(evidence.quote),'Visual-pending case was incorrectly called complete');if(replay)outputs.push(delivered(summary.stages[1].receipt));
     }
+    if(outputs.length)checkReplay(outputs,replay.rows.find(value=>value.id===row.id) || {id:row.id},cohort,replay.store);
   }
-  return{provider:entry.provider,status:'pass',sessionIds:[...sessions.keys()],scenarioIds:record.scenarios.map(row=>row.id),scope:'Actual native JSONL/tool reads and owned candidate artifacts, with explicit per-scenario recorded reviewer semantic observations'};
+  const checked=record.scenarios.filter(value=>!rows || rows.includes(value.id));
+  return{provider,status:'pass',sessionIds:rows?[...new Set(checked.map(row=>row.sessionId))]:[...sessions.keys()],scenarioIds:checked.map(row=>row.id),...(replay?{engineSource:source}:{}),scope:'Actual native JSONL/tool reads and owned candidate artifacts, with explicit per-scenario recorded reviewer semantic observations'};
 }
 
+// Facts the P2 rows add to an ordinary delivery: repository evidence, time basis,
+// interface language and a reference JSON selected without rewriting it.
+export function p2Outcome(required,summary,evidence,store,response) {
+  const delivery=summary.stages[1].receipt,candidate=JSON.parse(store.bytes(summary.candidate).toString('utf8')),html=()=>store.bytes(summary.artifact).toString('utf8'),quoted=()=>typeof evidence.quote==='string' && evidence.quote.trim() && response.includes(evidence.quote);
+  if(required.evidence==='verified')need(summary.evidence?.status==='verified' && delivery.evidence?.status==='verified' && delivery.evidence.counts?.verified>0 && delivery.evidence.repository,'Repository sources are not verified at the fixed commit');
+  if(required.evidence==='worktree-differs')need(['partial','unverified'].includes(summary.evidence?.status) && delivery.evidence?.unverified?.some(row=>row.reason==='worktree-differs') && quoted(),'A changed cited file was not reported as unverified in the reply');
+  if(required.timing==='day')need(/data-timeline-evidence="observed"/.test(html()) && candidate.events?.some(event=>event.precision==='day'),'Observed day-precision timing is not disclosed');
+  if(required.timing==='illustrative')need(/data-waterfall-evidence="illustrative"/.test(html()) && quoted(),'Illustrative timing is not disclosed in the diagram and reply');
+  if(required.locale)need(candidate.meta?.locale===required.locale && same(summary.locale,{requested:required.locale,resolved:required.locale,fallback:false}),'Interface language differs from the request');
+  if(required.unchangedOriginal)need(evidence.original && same(identity(store.bytes(evidence.original)),evidence.original.identity) && same(evidence.original.identity,summary.candidate.identity) && candidate.meta?.input_contract===undefined,'Reference JSON was rewritten instead of selected with an explicit input contract');
+}
 function liveApi(endpoint) {
   need(process.env.GITHUB_TOKEN,'A read-only GITHUB_TOKEN with actions:read is required');need(/^\/repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/actions\/(?:runs\/\d+|jobs\/\d+|artifacts\/\d+)$/.test(endpoint),'Unexpected read-only Actions API endpoint');
   const env={HOME:process.env.HOME,PATH:process.env.PATH,GH_TOKEN:process.env.GITHUB_TOKEN,GH_HOST:'github.com',GH_PROMPT_DISABLED:'1'};for(const name of ['HTTP_PROXY','HTTPS_PROXY','NO_PROXY'])if(process.env[name]!==undefined)env[name]=process.env[name];
@@ -332,28 +549,131 @@ function candidateArtifact(entry,cohort,api,name) {
   need(entry.archive.identity.sha256===entry.digest,'Actions input archive digest differs');const metadata=api(`/repos/${cohort.repository}/actions/artifacts/${entry.id}`);need(metadata.id===entry.id && metadata.name===name && metadata.digest===`sha256:${entry.digest}` && metadata.expired===false && String(metadata.workflow_run?.id)===String(cohort.runId) && metadata.workflow_run.head_sha===cohort.source.commit,'Actual candidate/harness artifact provenance differs');
   return new ArchiveEvidence(entry.archive,'unused','/unused');
 }
-export function collectorIdentityFromHarness(bytes) {
+export function collectorIdentityFromHarness(bytes,{profile='p1'}={}) {
   const names=processBytes('tar',['-tf','-'],bytes).toString('utf8').split('\n').filter(Boolean);for(const name of names)relative(name.replace(/\/$/,''));
+  if(profile==='p3') {
+    need(same(sorted(names),sorted(P3_HARNESS_MEMBERS)),'Authenticated P3 harness has unknown, duplicate or missing members');
+    return Object.fromEntries([['stdio',STDIO_MEMBER],['provider',PROVIDER_MEMBER]].map(([key,name])=>[key,identity(processBytes('tar',['-xOf','-',name],bytes))]));
+  }
   need(names.filter(name=>name===COLLECTOR_MEMBER).length===1,'Authenticated harness has a missing or duplicate collector member');
   const source=processBytes('tar',['-xOf','-',COLLECTOR_MEMBER],bytes);need(source.length>0,'Authenticated collector template is empty');return identity(source);
 }
-export function aggregateCandidate(input,{api=liveApi}={}) {
-  const result={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'aggregate-candidate',kind:'phoenix-diagram-candidate-aggregate',status:'incomplete',handoff:'incomplete',publication:'not-requested',platforms:[],node18:{status:'not-run'},providers:[],diagnostics:[]};
+function p3HarnessContext(bytes,candidate) {
+  const member=name=>processBytes('tar',['-xOf','-',name],bytes),fixture=member(MIGRATION_FIXTURE_MEMBER);
+  readMigrationFixture(fixture,{sourceInputs:candidate.sourceInputs.entries});
+  return {collectorIdentity:collectorIdentityFromHarness(bytes,{profile:'p3'}),scenarioManifest:checkP3ScenarioManifest(JSON.parse(member(P3_SCENARIOS_MEMBER))),
+    migrationFixture:identity(fixture),legacyDescriptor:JSON.parse(member(LEGACY_V1_DESCRIPTOR_MEMBER)),
+    officialResource:member('tools/phoenix-diagram/tests/fixtures/brands/official-resource.json')};
+}
+function candidateForTarget(candidate,target) {need(TARGETS.includes(target),'Unknown evidence target');return{...candidate,engine:candidate.files.get(`release-dir/phoenix-diagram-${target}`)};}
+function historicalCandidate(entry,descriptor,api) {
+  need(entry?.directory && entry.artifact?.archive && entry.tar,'P3 needs its explicit authenticated historical v1 installation input');
+  need(descriptor.schemaVersion===1 && descriptor.kind==='phoenix-diagram-v1-candidate-fixture','Historical v1 descriptor differs');
+  const candidate=validateCandidate(entry.directory,targetForHost(),{profile:'p2'});
+  need(same(candidate.source,descriptor.source) && same(candidate.tgz.identity,descriptor.tarball),'Historical v1 candidate differs from its frozen source/package');
+  need(entry.artifact.id===descriptor.artifact.id && entry.artifact.digest===descriptor.artifact.digest.replace(/^sha256:/,''),'Historical v1 artifact differs from the fixed input');
+  const cohort={repository:descriptor.repository,runId:descriptor.runId,runAttempt:descriptor.runAttempt,source:descriptor.source};
+  const run=api(`/repos/${cohort.repository}/actions/runs/${cohort.runId}`);
+  need(String(run.id)===String(cohort.runId) && run.run_attempt===cohort.runAttempt && run.head_sha===cohort.source.commit && run.repository?.full_name===cohort.repository && run.status==='completed' && run.conclusion==='success','Historical v1 workflow/source/attempt is not authenticated');
+  const artifact=candidateArtifact(entry.artifact,cohort,api,descriptor.artifact.name),tar=readBound(entry.tar,'original historical candidate tar').content;
+  need(entry.artifact.archive.identity.bytes===descriptor.artifact.bytes && same(identity(tar),descriptor.candidateArchive) && artifact.member('phoenix-diagram-candidate.tar').equals(tar),'Historical v1 archive bytes differ');
+  for(const[name,snapshot]of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf','-',`candidate/${relative(name)}`],tar).equals(snapshot.content),'Historical v1 candidate differs from its authenticated archive');
+  for(const tuple of descriptor.writerSources)need(candidate.sourceInputs.entries.some(row=>same(row,tuple)),'Historical v1 writer source tuple differs');
+  return candidate;
+}
+export function createP3EvidenceReader(state,store,candidate,legacy,providerStores=[]) {
+  const roles=[[state.candidate,candidate],...(state.legacyV1?[[state.legacyV1.candidate,legacy]]:[])];
+  const fixed=[];
+  for(const[bindings,source]of roles) {
+    need(source,'A historical input was not authenticated');
+    const snapshots={record:source.snapshot,tarball:source.tgz,version:source.files.get('release-dir/VERSION.json'),sourceInputs:source.files.get('source-inputs.json')};
+    for(const[key,snapshot]of Object.entries(snapshots)){need(bindings?.[key]?.path && same(bindings[key].identity,snapshot.identity),'Wrapper fixed candidate role/digest differs');fixed.push({reference:bindings[key],bytes:snapshot.content});}
+  }
+  return reference=>{
+    const match=fixed.find(row=>row.reference.path===reference?.path);
+    if(match){need(same(match.reference.identity,reference.identity),'Fixed candidate reference digest differs');return digest(match.bytes,reference.identity,'Fixed candidate role');}
+    const provider=providerStores.filter(value=>reference?.path?.startsWith(value.originalRoot+'/')).sort((a,b)=>b.originalRoot.length-a.originalRoot.length)[0];
+    return(provider||store).bytes(reference);
+  };
+}
+function p3AllEvidence(state,store,cohort,candidate,legacy,harness,{local=false,providerStores=[]}={}) {
+  need(state.stage==='all' && state.profile==='p3' && same(state.source,cohort.source) && state.candidate?.tarball?.identity?.sha256===cohort.tgzSha256,'P3 wrapper is not the final same-candidate all run');
+  const target=state.target,nativeCandidate=candidateForTarget(candidate,target),old=candidateForTarget(legacy,target),bytesFor=createP3EvidenceReader(state,store,candidate,legacy,providerStores);
+  const consumer=JSON.parse(bytesFor(state.packageConsumer.state));
+  const oldConsumer=state.legacyV1?JSON.parse(bytesFor(state.legacyV1.state)):null;
+  need(oldConsumer?.kind==='phoenix-diagram-candidate-install-context' && oldConsumer.scope==='installation-only' && oldConsumer.status==='pass' && oldConsumer.automatedStatus==='not-run','P3 is missing its actual historical install-only precondition');
+  need(same(oldConsumer.source,legacy.source),'Historical install context source differs');
+  consumerTransportEvidence(oldConsumer,{bytes:bytesFor,json:ref=>JSON.parse(bytesFor(ref))},target,{source:legacy.source,engines:legacy.version.engines,tgzSha256:legacy.tgz.identity.sha256});
+  need(same(identity(bytesFor(state.migrationFixtureInput)),harness.migrationFixture),'P3 migration target input is not the authenticated harness data');
+  need(bytesFor(state.officialResourceInput).equals(harness.officialResource),'P3 capture did not use the fixed authenticated official resource descriptor');
+  const providerContext=p3ProviderContext(candidate,{bytesFor,collectorIdentity:harness.collectorIdentity,scenarioManifest:harness.scenarioManifest});
+  verifyAcceptanceState(state,{bytesFor,
+    verifyConsumer:child=>{
+      if(local)need(child.repository===null && child.runId===null,'Local P3 consumer is not an independent original local run');else checkStateCohort(child,cohort);
+      need(child.target===target && same(child.source,cohort.source) && child.candidate.tarball.identity.sha256===cohort.tgzSha256,'P3 child consumer source/target differs');
+      const scopes=local?LOCAL_SCOPES:['explore','locale'];need(same(sorted(child.scopes||[]),sorted(scopes)),'P3 child consumer scope differs');
+      consumerEvidence(child,{bytes:bytesFor,json:ref=>JSON.parse(bytesFor(ref))},target,cohort,{reviewed:local,cases:PROFILE_CASES.p3,scopes});
+    },
+    verifyMigration:scope=>{const result=verifyMigrationAcceptance(scope,{bytesFor,candidate:nativeCandidate,consumer,legacyV1:{candidate:old,consumer:oldConsumer}});need(result.status==='pass','P3 migration automatic cases are incomplete');},
+    verifyProviders:(report)=>{const manifest=JSON.parse(bytesFor(state.providers.manifest)),actual=checkP3ProviderManifest(manifest,providerContext);need(actual.status==='pass' && same(report,actual),'P3 providers do not match their original 36-session manifest');},
+  });
+  need(state.automatedStatus==='pass','P3 automatic gates did not complete');
+  if(local)need(state.status==='pass' && state.localStatus==='complete' && state.visualReview==='passed' && state.deliveryStatus==='complete','Local P3 actual review/providers did not complete');
+  else need(state.providers.status==='not-run' && state.status==='incomplete' && state.visualReview==='required-pending','Workflow automatic gates cannot certify missing provider/image review');
+  return{target,status:'pass',runtimeNode:consumer.runtimeNode,stateKind:state.kind,scope:local?'Same local all run: full core/author image review, migration faults and original provider records':'Authenticated job automatic core/author/migration evidence; image/provider verdicts remain pending'};
+}
+function p3PlatformEvidence(entry,cohort,api,candidate,legacy,harness) {
+  need(entry.artifact.archive.identity.sha256===entry.artifact.digest,'P3 evidence archive differs from its Actions digest');
+  const outer=new ArchiveEvidence(entry.artifact.archive,'','/pending'),state=outer.relativeJson(entry.p3StateMember);
+  need(state.target===entry.target && entry.p3StateMember===`${entry.p3EvidencePrefix}/state.json`,'Explicit P3 state member/root differs');
+  const store=new ArchiveEvidence(entry.artifact.archive,entry.p3EvidencePrefix,state.runRoot),phase=outer.relativeJson(entry.phaseMember);
+  checkJobProof(api(`/repos/${cohort.repository}/actions/jobs/${entry.jobId}`),api(`/repos/${cohort.repository}/actions/artifacts/${entry.artifact.id}`),entry,cohort,{reviewed:false});phaseEvidence(phase,entry,cohort,{reviewed:false});
+  need(phase.profile==='p3','Actual workflow did not request P3');checkStateSelection(store,phase.p3,entry.p3StateMember);
+  need(store.bytes(state.packageConsumer.state).equals(outer.member(entry.stateMember)) && same(phase.state.identity,state.packageConsumer.state.identity) && phase.state.path===state.packageConsumer.state.path,'Workflow selected another core consumer state');
+  const process=JSON.parse(digest(outer.member(entry.p3ProcessMember),phase.p3.process.identity,'Actual P3 CLI result'));
+  need(phase.p3.exitCode===3 && process.exitCode===3 && same(process.stateFile.identity,phase.p3.state.identity) && process.stateFile.path===phase.p3.state.path,'P3 workflow lost its real pending exit/state binding');
+  for(const[key,value]of Object.entries(state))need(same(process[key],value),'P3 CLI output differs from its saved state');
+  return{...p3AllEvidence(state,store,cohort,candidate,legacy,harness),jobId:entry.jobId,artifactId:entry.artifact.id,stateMember:entry.p3StateMember};
+}
+export function aggregateCandidate(input,{api=liveApi,profile='p1'}={}) {
+  const result={schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'aggregate-candidate',kind:'phoenix-diagram-candidate-aggregate',profile,status:'incomplete',handoff:'incomplete',publication:'not-requested',platforms:[],node18:{status:'not-run'},...(['p2','p3'].includes(profile)?{local:{status:'not-run'}}:{}),providers:[],diagnostics:[]};
   const check=(scope,operation)=>{try{return operation();}catch(error){result.diagnostics.push({scope,code:error.code || 'aggregate/incomplete',message:error.message});return null;}};
-  const setup=check('input',()=>{need(input?.schemaVersion===1 && input.kind==='phoenix-diagram-candidate-aggregate-input' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(input.repository) && /^\d+$/.test(String(input.runId)) && Number.isSafeInteger(input.runAttempt) && input.runAttempt>0,'Aggregate input cohort is malformed');checkInputSlots(input);const candidate=validateCandidate(input.candidate.directory,targetForHost()),cohort={repository:input.repository,runId:String(input.runId),runAttempt:input.runAttempt,source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,candidateArchiveSha256:input.candidate.candidateArchiveSha256,harnessSha256:input.harness.harnessSha256,engines:candidate.version.engines,npmPackageVersion:candidate.pkg.version,bundleSha256:candidate.version.bundleSha256,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)};need(HASH.test(cohort.candidateArchiveSha256) && HASH.test(cohort.harnessSha256),'Candidate/harness transfer SHA is missing');return{candidate,cohort};});if(!setup)return result;
+  const setup=check('input',()=>{need(input?.schemaVersion===1 && input.kind==='phoenix-diagram-candidate-aggregate-input' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(input.repository) && /^\d+$/.test(String(input.runId)) && Number.isSafeInteger(input.runAttempt) && input.runAttempt>0,'Aggregate input cohort is malformed');need(PROFILE_CASES[profile] && (input.profile ?? 'p1')===profile,'Aggregate input profile differs from the requested profile');checkInputSlots(input,profile);const candidate=validateCandidate(input.candidate.directory,targetForHost(),{profile}),cohort={repository:input.repository,runId:String(input.runId),runAttempt:input.runAttempt,source:candidate.source,tgzSha256:candidate.tgz.identity.sha256,candidateArchiveSha256:input.candidate.candidateArchiveSha256,harnessSha256:input.harness.harnessSha256,engines:candidate.version.engines,npmPackageVersion:candidate.pkg.version,bundleSha256:candidate.version.bundleSha256,versionSha256:sha(candidate.files.get('release-dir/VERSION.json').content)};need(HASH.test(cohort.candidateArchiveSha256) && HASH.test(cohort.harnessSha256),'Candidate/harness transfer SHA is missing');return{candidate,cohort};});if(!setup)return result;
   const {candidate,cohort}=setup;Object.assign(cohort,{candidateArtifactId:input.candidate.artifact.id,candidateArtifactDigest:input.candidate.artifact.digest,harnessArtifactId:input.harness.artifact.id,harnessArtifactDigest:input.harness.artifact.digest});result.cohort=cohort;
   const authenticated=check('workflow-source',()=>{const run=api(`/repos/${cohort.repository}/actions/runs/${cohort.runId}`);need(String(run.id)===cohort.runId && run.run_attempt===cohort.runAttempt && run.head_sha===cohort.source.commit && run.repository?.full_name===cohort.repository,'Actual workflow run/source/latest attempt differs');const source=candidateArtifact(input.candidate.artifact,cohort,api,'phoenix-diagram-candidate'),tar=readBound(input.candidate.tar,'candidate transfer tar');need(sha(source.member('phoenix-diagram-candidate.tar'))===cohort.candidateArchiveSha256 && sha(tar.content)===cohort.candidateArchiveSha256,'Candidate transfer tar differs');
-    for(const [name,snapshot] of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf',tar.path,`candidate/${relative(name)}`]).equals(snapshot.content),'Extracted candidate bytes differ from authenticated transfer tar');const harness=candidateArtifact(input.harness.artifact,cohort,api,'phoenix-diagram-harness'),harnessBytes=harness.member('phoenix-diagram-harness.tar');need(sha(harnessBytes)===cohort.harnessSha256,'Harness transfer bytes differ');cohort.collectorIdentity=collectorIdentityFromHarness(harnessBytes);return true;});if(!authenticated)return result;
-  for(const entry of input.platforms){const checked=check(`platform:${entry.target}`,()=>platformEvidence(entry,cohort,api));result.platforms.push(checked || {target:entry.target,status:'incomplete'});}
-  result.node18=check('node18',()=>platformEvidence(input.node18,cohort,api,{node18:true})) || {status:'incomplete'};
-  const inventory=readTarballInventory(candidate.tgz.content);for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
-  if(result.diagnostics.length===0 && result.platforms.length===4 && result.platforms.every(row=>row.status==='pass') && result.node18.status==='pass' && result.providers.length===2 && result.providers.every(row=>row.status==='pass')){result.status='pass';result.handoff='passed';}return result;
+    for(const [name,snapshot] of [['candidate.json',candidate.snapshot],...candidate.files])need(processBytes('tar',['-xOf',tar.path,`candidate/${relative(name)}`]).equals(snapshot.content),'Extracted candidate bytes differ from authenticated transfer tar');const harness=candidateArtifact(input.harness.artifact,cohort,api,'phoenix-diagram-harness'),harnessBytes=harness.member('phoenix-diagram-harness.tar');need(sha(harnessBytes)===cohort.harnessSha256,'Harness transfer bytes differ');
+    if(profile==='p3'){need(run.status==='completed' && run.conclusion==='success','P3 workflow has not completed successfully');const context=p3HarnessContext(harnessBytes,candidate);cohort.collectorIdentity=context.collectorIdentity;return context;}
+    cohort.collectorIdentity=collectorIdentityFromHarness(harnessBytes);return true;});if(!authenticated)return result;
+  const legacy=profile==='p3'?check('historical-v1-input',()=>historicalCandidate(input.legacyCandidate,authenticated.legacyDescriptor,api)):null;
+  if(profile==='p3'&&!legacy)return result;
+  // P2 platforms are automatic-only (ADR-2); the full review loop is the local darwin-arm64 consumption.
+  const cases=PROFILE_CASES[profile],reviewed=profile==='p1';
+  for(const entry of input.platforms){const checked=check(`platform:${entry.target}`,()=>profile==='p3'?p3PlatformEvidence(entry,cohort,api,candidate,legacy,authenticated):platformEvidence(entry,cohort,api,{reviewed,cases}));result.platforms.push(checked || {target:entry.target,status:'incomplete'});}
+  result.node18=check('node18',()=>{const checked=platformEvidence(input.node18,cohort,api,{node18:true,cases});if(profile==='p3'){const store=new ArchiveEvidence(input.node18.artifact.archive,'','/pending');need(store.relativeJson(input.node18.stateMember).profile==='p3' && store.relativeJson(input.node18.phaseMember).profile==='p3','Node18 did not consume the P3 profile');}return checked;}) || {status:'incomplete'};
+  if(profile==='p2')result.local=check('local',()=>localEvidence(input.local,cohort,{cases})) || {status:'incomplete'};
+  const inventory=readTarballInventory(candidate.tgz.content);
+  if(profile==='p3') {
+    const providerStores=[];
+    const providers=check('providers',()=>{
+      const manifest={schemaVersion:1,kind:'phoenix-diagram-p3-provider-manifest',providers:input.providers.map(entry=>{
+        need(!entry.reuse && entry.record,'P3 requires distinct original records; historical sampling/reuse is not accepted');
+        const store=new ArchiveEvidence(entry.archive,entry.prefix,entry.originalRoot);need(store.bytes(entry.record).equals(store.member(entry.recordMember)),'P3 selected provider record differs from its original reference');providerStores.push(store);return{provider:entry.provider,record:entry.record};
+      })};
+      const bytesFor=reference=>{const store=providerStores.find(store=>reference?.path?.startsWith(store.originalRoot+'/'));need(store,'P3 provider reference leaves its explicit original archives');return store.bytes(reference);};
+      return checkP3ProviderManifest(manifest,p3ProviderContext(candidate,{bytesFor,collectorIdentity:authenticated.collectorIdentity,scenarioManifest:authenticated.scenarioManifest}));
+    });
+    result.providers=providers?.providers || input.providers.map(entry=>({provider:entry.provider,status:'incomplete'}));
+    if(providers?.status!=='pass')for(const diagnostic of providers?.diagnostics || [])result.diagnostics.push({scope:'providers',...diagnostic});
+    result.local=check('local',()=>{const store=new DirectoryEvidence(input.local.runRoot),state=store.json(input.local.state);need(state.runRoot===input.local.runRoot && state.target===input.local.target,'Local P3 all-state/root/target differs');return p3AllEvidence(state,store,cohort,candidate,legacy,authenticated,{local:true,providerStores});}) || {status:'incomplete'};
+    result.legacyInput={status:'authenticated',source:legacy.source,tgzSha256:legacy.tgz.identity.sha256,scope:'Historical v1 installation precondition only'};
+  }else for(const entry of input.providers){const checked=check(`provider:${entry.provider}`,()=>providerEvidence(entry,cohort,inventory,{profile,candidate}));result.providers.push(checked || {provider:entry.provider,status:'incomplete'});}
+  if(result.diagnostics.length===0 && result.platforms.length===4 && result.platforms.every(row=>row.status==='pass') && result.node18.status==='pass' && (profile==='p1' || result.local.status==='pass') && result.providers.length===2 && result.providers.every(row=>row.status==='pass')){result.status='pass';result.handoff='passed';}return result;
 }
-export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
+export const HELP='Usage: node scripts/aggregate-phoenix-diagram-candidate.mjs [--profile p1|p2|p3] --input INPUT.json --output NEW.json\nChecks authenticated current workflow/job/artifact outcomes, unchanged archived evidence, exact Node 18.20.8 and actual Claude/Codex session records. p2 checks the four platforms as automatic-only, adds the local darwin-arm64 full-review consumption and binds host sessions to the identical authenticated candidate tgz/VERSION or a development package with the same bundle and engine source; a provider entry may keep rows from an earlier engine of the same bundle (reuse) when a final-engine replay reproduces the diagram and failed validations of each kept row. p3 requires the authenticated final harness, four automatic all-runs, the local fully reviewed all-state, 31 original migration cases with a separately authenticated historical v1 installation input, and 36 fresh same-candidate host sessions; it accepts neither sampling nor historical provider reuse. Missing, pending, unavailable or inconsistent evidence stays incomplete. Never runs providers, Chrome, Cargo, renderers or publication.\n';
 export async function main(argv=process.argv.slice(2)) {
   if(argv.length===1 && argv[0]==='--help'){process.stdout.write(HELP);return 0;}let output;
-  try{const options={};for(let at=0;at<argv.length;at++){const key=argv[at];need(['--input','--output'].includes(key) && !options[key] && argv[at+1] && !argv[at+1].startsWith('--'),'Expected unique --input/--output paths');options[key]=argv[++at];}need(options['--input'] && options['--output'],'--input and --output are required');output=path.resolve(options['--output']);need(!fs.existsSync(output),'Aggregate output already exists; preserve it');const input=JSON.parse(readSnapshot(options['--input']).content.toString('utf8')),result=aggregateCandidate(input);fs.writeFileSync(output,`${JSON.stringify(result,null,2)}\n`,{flag:'wx',mode:0o600});process.stdout.write(`${JSON.stringify(result)}\n`);return result.handoff==='passed'?0:1;}
-  catch(error){process.stdout.write(`${JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.1.0',command:'aggregate-candidate',status:'incomplete',handoff:'incomplete',diagnostics:[{code:'aggregate/incomplete',message:error.message}]})}\n`);return 1;}
+  try{const options={};for(let at=0;at<argv.length;at++){const key=argv[at];need(['--input','--output','--profile'].includes(key) && !options[key] && argv[at+1] && !argv[at+1].startsWith('--'),'Expected unique --input/--output/--profile values');options[key]=argv[++at];}need(!options['--profile'] || Object.hasOwn(PROFILE_CASES,options['--profile']),'Unknown aggregate profile');need(options['--input'] && options['--output'],'--input and --output are required');output=path.resolve(options['--output']);need(!fs.existsSync(output),'Aggregate output already exists; preserve it');const input=JSON.parse(readSnapshot(options['--input']).content.toString('utf8')),result=aggregateCandidate(input,{profile:options['--profile'] || 'p1'});fs.writeFileSync(output,`${JSON.stringify(result,null,2)}\n`,{flag:'wx',mode:0o600});process.stdout.write(`${JSON.stringify(result)}\n`);return result.handoff==='passed'?0:1;}
+  catch(error){process.stdout.write(`${JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',toolVersion:'0.2.0',command:'aggregate-candidate',status:'incomplete',handoff:'incomplete',diagnostics:[{code:'aggregate/incomplete',message:error.message}]})}\n`);return 1;}
 }
 if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url))process.exitCode=await main();
 export function readerEvidence(report,store,artifact,{content=false}={}) {

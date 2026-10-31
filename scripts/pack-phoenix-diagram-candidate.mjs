@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { validateDevelopmentArtifact, gitIdentity, sourceInputs, readSourceInputManifest } from './build-phoenix-diagram.mjs';
+import { validateDevelopmentArtifact, gitIdentity, sourceInputs, readSourceInputManifest, assertBrandLegalResources } from './build-phoenix-diagram.mjs';
 
 export const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
 export const DEFAULT_PORT = 48765;
@@ -61,7 +61,7 @@ export function assertArtifactAgreement(artifacts, expected = {}) {
     assert.deepEqual([receipt.sourceCommit, receipt.sourceTree, receipt.sourceInputSha256], [firstReceipt.sourceCommit, firstReceipt.sourceTree, firstReceipt.sourceInputSha256], `Source commit/tree/input differs: ${target}`);
     assert(inputs && Buffer.isBuffer(inputs.bytes) && sha(inputs.bytes) === inputs.sha256 && inputs.sha256 === receipt.sourceInputSha256 && Buffer.from(JSON.stringify(inputs.entries)).equals(inputs.bytes), `Source input tuple bytes differ: ${target}`);
     assert(inputs.bytes.equals(first.sourceInputs.bytes), `Source input bytes differ across platforms: ${target}`);
-    assert(version?.schemaVersion === 1 && version.distribution === 'development' && version.tool === 'phoenix-diagram' && version.toolVersion === '0.1.0' && version.inputContractSchema === 1 && version.receiptSchema === 1 && version.viewerRevision === 'phoenix-v1', `Invalid development version/contracts: ${target}`);
+    assert(version?.schemaVersion === 1 && version.distribution === 'development' && version.tool === 'phoenix-diagram' && version.toolVersion === '0.2.0' && version.inputContractSchema === 1 && version.receiptSchema === 1 && version.viewerRevision === 'phoenix-v2', `Invalid development version/contracts: ${target}`);
     assert(version.sourceCommit === receipt.sourceCommit && version.sourceInputSha256 === receipt.sourceInputSha256 && receipt.toolVersion === version.toolVersion && receipt.npmPackageVersion === version.npmPackageVersion, `Package/version/source identity differs: ${target}`);
     const { engines, ...identity } = version, { engines: firstEngines, ...firstIdentity } = first.version;
     assert.deepEqual(identity, firstIdentity, `Package/version/bundle identity differs: ${target}`);
@@ -75,6 +75,7 @@ export function assertArtifactAgreement(artifacts, expected = {}) {
     equalMaps(bundle.files, first.bundle.files, 'Bundle');
     assert(licenses instanceof Map && licenses.size > 0 && artifact.licenseSha256 === legalDigest(licenses) && receipt.legal?.sha256 === artifact.licenseSha256, `License byte inventory digest differs: ${target}`);
     equalMaps(licenses, first.licenses, 'License');
+    if (expected.requireBrands) assertBrandLegalResources(licenses, { sourceInputs: inputs });
     assert.deepEqual(receipt.viewer, firstReceipt.viewer, `Viewer identity differs: ${target}`);
     assert(receipt.viewer?.revision === version.viewerRevision, `Viewer contract differs: ${target}`);
     const tools = receipt.tools;
@@ -83,9 +84,9 @@ export function assertArtifactAgreement(artifacts, expected = {}) {
     assert(tools.observed.rust === tools.pins.rust && tools.observed.cargo === tools.pins.rust && tools.observed.node === tools.pins.node && tools.observed.mrBoxington === tools.pins.mrBoxington, `Native observed tool versions differ from pins: ${target}`);
     const native = receipt.native, triple = triples[index];
     assert(receipt.host === triple && native?.host === triple && native.target === triple && native.status === 'pass' && native.sourceInputsMatch === 'pass', `Native host/target/source evidence differs: ${target}`);
-    assert(native.engineProbe?.status === 'pass' && native.engineProbe.stdout === 'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\n', `Native probe evidence differs: ${target}`);
+    assert(native.engineProbe?.status === 'pass' && native.engineProbe.stdout === 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n', `Native probe evidence differs: ${target}`);
     const engine = native.engineDoctor?.engine;
-    assert(native.engineDoctor?.status === 'pass' && native.engineDoctor.toolVersion === version.toolVersion && engine?.sourceInputSha256 === inputs.sha256 && engine.inputContractSchema === 1 && engine.receiptSchema === 1 && engine.viewerRevision === 'phoenix-v1', `Native doctor source/contract differs: ${target}`);
+    assert(native.engineDoctor?.status === 'pass' && native.engineDoctor.toolVersion === version.toolVersion && engine?.sourceInputSha256 === inputs.sha256 && engine.inputContractSchema === 1 && engine.receiptSchema === 1 && engine.viewerRevision === 'phoenix-v2', `Native doctor source/contract differs: ${target}`);
     assert.deepEqual(engine.binary, { sha256: binary.sha256, bytes: binary.size }, `Native doctor binary differs: ${target}`);
     for (const check of ['lockedOffline', 'sourceStable', 'engineProbe', 'sourceInputs']) assert(receipt.checks?.[check] === 'pass', `Native build check ${check} is not pass: ${target}`);
   }
@@ -115,7 +116,7 @@ export function validateCandidateInputs({ repoRoot = root, artifactsDir, port = 
   const pkg = JSON.parse(read(path.join(repoRoot, 'package.json')));
   assert.equal(pkg.name, '@xgent-ai/skills', 'Unexpected owning npm package');
   const git = gitIdentity(repoRoot), inputs = sourceInputs(repoRoot);
-  const agreement = assertArtifactAgreement(artifacts, { git, sourceInputs: inputs, npmPackageVersion: pkg.version });
+  const agreement = assertArtifactAgreement(artifacts, { git, sourceInputs: inputs, npmPackageVersion: pkg.version, requireBrands: true });
   assert.equal(process.version, `v${artifacts[0].receipt.tools.pins.node}`, 'Pack with the pinned maintenance Node');
   return { ...agreement, repoRoot, artifactsDir, port, pkg, git, inputs };
 }

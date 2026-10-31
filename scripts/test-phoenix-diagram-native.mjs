@@ -46,6 +46,10 @@ export function main(args = process.argv.slice(2)) {
       path.join(root, 'tools/phoenix-diagram/upstream/prepare.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/upstream/license-sources.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/tests/viewer/unit.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/viewer/explore.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/viewer/catalogs.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/viewer/evidence.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/tests/export-acceptance.test.mjs'),
     ], { env });
     console.log(JSON.stringify({ schemaVersion: 1, tool: 'phoenix-diagram', command: 'test-native', status: 'pass',

@@ -77,7 +77,9 @@ export function readerInteractionSnapshot() {
   return { geometry: { viewBox: svg.getAttribute('viewBox'),
     nodes: Array.from(svg.querySelectorAll('g[data-node-id]')).filter(element => !element.closest(runtime)).map(element => ({ id: element.getAttribute('data-node-id'), label: element.getAttribute('data-node-label'), body: attribute(element.querySelector('rect[data-graph-role="node-body"]:not(.c-mask)'), ['x', 'y', 'width', 'height', 'rx', 'ry']) })),
     edges: Array.from(svg.querySelectorAll('path[data-edge-from],line[data-edge-from],polyline[data-edge-from]')).filter(element => !element.closest(runtime)).map(element => attribute(element, ['data-edge-key', 'data-edge-id', 'data-edge-from', 'data-edge-to', 'd', 'points', 'x1', 'y1', 'x2', 'y2'])),
-    text: Array.from(svg.querySelectorAll('text')).filter(element => !element.closest(runtime)).map(element => ({ text: element.textContent, ...attribute(element, ['x', 'y', 'font-size', 'text-anchor']) })) },
+    // Tree and timeline labels place each line on a positioned tspan.
+    text: Array.from(svg.querySelectorAll('text')).filter(element => !element.closest(runtime)).map(element => ({ text: element.textContent, ...attribute(element, ['x', 'y', 'font-size', 'text-anchor']),
+      ...(element.hasAttribute('y') || !element.querySelector('tspan[y]') ? {} : attribute(element.querySelector('tspan[y]'), ['x', 'y'])) })) },
     camera: api.view.state(), paintedCamera: { scale: matrix.a, x: matrix.e, y: matrix.f }, focus: api.focus.active(),
     finder: { open: !document.getElementById('node-finder').hidden, query: document.getElementById('node-finder-input').value, results: Array.from(document.querySelectorAll('#node-finder-results .node-finder-result')).map(element => ({ id: element.getAttribute('data-node-id'), label: element.querySelector('strong')?.textContent || '' })), emptyHidden: document.getElementById('node-finder-empty').hidden, emptyText: document.getElementById('node-finder-empty').textContent, status: document.getElementById('node-finder-status').textContent },
     details: { hidden: chip.hidden, painted: !chip.hidden && box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 && box.left < innerWidth && box.top < innerHeight, id: document.getElementById('focus-id').textContent, label: document.getElementById('focus-label').textContent },
@@ -119,7 +121,10 @@ export async function runReaderInteractions(page, onProgress) {
   await observe('camera', async () => {
     await page.click('[data-view="in"]'); await stable(); await page.click('[data-view="in"]'); const zoomIn = await stable(), beforePan = zoomIn;
     const from = await page.evaluate(() => {
-      const container = document.querySelector('.diagram-container'), box = container.getBoundingClientRect();
+      const container = document.querySelector('.diagram-container'), outer = container.getBoundingClientRect();
+      // Both drag ends must be inside the viewport, where input is delivered.
+      const box = { left: Math.max(outer.left, 40), top: Math.max(outer.top, 24), right: Math.min(outer.right, innerWidth), bottom: Math.min(outer.bottom, innerHeight) };
+      box.width = box.right - box.left; box.height = box.bottom - box.top;
       for (const y of [0.12, 0.85, 0.5]) for (const x of [0.12, 0.85, 0.5]) {
         const point = { x: box.left + box.width * x, y: box.top + box.height * y }, target = document.elementFromPoint(point.x, point.y);
         if (target?.closest('.diagram-container') === container && !target.closest('.diagram-nav,.focus-chip,.node-finder,.diagram-guide,.overview-map,.route-probe,.semantic-lens,[data-node-id],[data-relationship-hit-key]')) return point;

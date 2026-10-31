@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "diagram_type": "timeline",
+  "meta": { "title": "Release day", "output": "minimal.timeline.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en", "evidence": "observed", "timezone": "Asia/Shanghai" },
+  "lanes": [
+    { "id": "release", "label": "Release" },
+    { "id": "operations", "label": "Operations" }
+  ],
+  "events": [
+    { "id": "tagged", "at": "2026-10-01T12:00:00+08:00", "title": "Release tagged", "lane": "release", "kind": "change", "precision": "day" },
+    { "id": "deployed", "at": "2026-10-01T14:20:00+08:00", "title": "Deployment finished", "lane": "release", "kind": "change" },
+    { "id": "alert", "at": "2026-10-01T14:35:00+08:00", "title": "Error rate alert", "lane": "operations", "kind": "alert" },
+    { "id": "recovered", "at": "2026-10-01T15:05:00+08:00", "title": "Error rate recovered", "lane": "operations", "kind": "recovery" }
+  ]
+}

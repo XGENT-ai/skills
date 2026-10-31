@@ -45,7 +45,7 @@ fn engine() -> EngineIdentity {
         source_input_sha256: sha256(b"delivery test fixture source identity"),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
     }
 }
@@ -61,6 +61,8 @@ fn request<'a>(
         options,
         engine,
         assets,
+        repo_root: None,
+        brand_cache: None,
     }
 }
 
@@ -267,6 +269,14 @@ fn browser_failure_keeps_the_new_html_and_review_cannot_invent_a_pass() {
     );
     assert_eq!(receipt.stages[3].status, Status::Failed);
     assert!(receipt.produced_by_this_run);
+    assert_eq!(
+        receipt.locale,
+        json!({"requested":null,"resolved":"en","fallback":false})
+    );
+    assert_eq!(
+        receipt.evidence["status"], "none",
+        "an uncited diagram reports no source evidence"
+    );
     assert_ne!(fs::read(&output).unwrap(), b"old artifact");
     assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
     let record = temp.join("review.json");
@@ -276,6 +286,99 @@ fn browser_failure_keeps_the_new_html_and_review_cannot_invent_a_pass() {
     assert_eq!(reviewed.delivery_status, "incomplete");
     assert_eq!(fs::read(&record).unwrap(), b"{}");
     assert!(!delivery::sidecar_paths(&output, None).review.exists());
+}
+
+#[test]
+fn finalize_seals_browser_failure_in_a_fresh_or_precreated_receipt_directory() {
+    for precreated in [false, true] {
+        let temp = Temp::new();
+        let candidate = temp.join("candidate.json");
+        let output = temp.join("report.html");
+        let out_dir = temp.join("evidence");
+        fs::write(&candidate, source()).unwrap();
+        if precreated {
+            fs::create_dir(&out_dir).unwrap();
+            fs::write(out_dir.join("unrelated"), b"preserve me").unwrap();
+        }
+        let options = CompileOptions::default();
+        let engine = engine();
+        let assets = EmbeddedAssets { template: TEMPLATE };
+        let receipt = delivery::finalize(
+            &request(&candidate, &options, &engine, &assets),
+            &output,
+            &BrowserOptions {
+                executable: Some(temp.join("missing-chrome")),
+                out_dir: Some(out_dir.clone()),
+                ..Default::default()
+            },
+        );
+        assert_eq!(receipt.exit_code(), 4, "{:?}", receipt.diagnostics);
+        assert!(receipt.stages[..3]
+            .iter()
+            .all(|stage| stage.status == Status::Pass));
+        assert_eq!(receipt.stages[3].status, Status::Failed);
+        assert!(receipt.produced_by_this_run);
+        assert_eq!(receipt.delivery_status, "incomplete");
+        assert!(receipt
+            .diagnostics
+            .iter()
+            .any(|entry| entry.code == "browser/configured-path"));
+        let browser_path = delivery::sidecar_paths(&output, Some(&out_dir)).browser;
+        let browser: Value = serde_json::from_slice(&fs::read(&browser_path).unwrap()).unwrap();
+        assert_eq!(browser["status"], "failed");
+        assert_eq!(browser["diagnostics"][0]["code"], "browser/configured-path");
+        assert_eq!(browser["screenshots"], json!([]));
+        assert_eq!(
+            receipt.evidence["browserReceipt"]["path"],
+            json!(fs::canonicalize(browser_path).unwrap())
+        );
+        assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
+        if precreated {
+            assert_eq!(fs::read(out_dir.join("unrelated")).unwrap(), b"preserve me");
+        }
+    }
+}
+
+#[test]
+fn finalize_retains_the_browser_diagnostic_when_its_receipt_cannot_be_sealed() {
+    let temp = Temp::new();
+    let candidate = temp.join("candidate.json");
+    let output = temp.join("report.html");
+    let out_dir = temp.join("evidence");
+    fs::write(&candidate, source()).unwrap();
+    fs::create_dir(&out_dir).unwrap();
+    let browser_path = delivery::sidecar_paths(&output, Some(&out_dir)).browser;
+    fs::write(&browser_path, b"prior browser evidence").unwrap();
+    let options = CompileOptions::default();
+    let engine = engine();
+    let assets = EmbeddedAssets { template: TEMPLATE };
+    let receipt = delivery::finalize(
+        &request(&candidate, &options, &engine, &assets),
+        &output,
+        &BrowserOptions {
+            executable: Some(temp.join("missing-chrome")),
+            out_dir: Some(out_dir),
+            ..Default::default()
+        },
+    );
+    assert!(receipt.stages[..3]
+        .iter()
+        .all(|stage| stage.status == Status::Pass));
+    assert_eq!(receipt.stages[3].status, Status::Failed);
+    assert_eq!(receipt.delivery_status, "incomplete");
+    assert_eq!(receipt.exit_code(), 3);
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/configured-path"));
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/evidence-conflict"));
+    assert!(receipt.browser_receipt_identity.is_none());
+    assert!(receipt.evidence.get("browserReceipt").is_none());
+    assert_eq!(fs::read(&browser_path).unwrap(), b"prior browser evidence");
+    assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
 }
 
 #[test]
@@ -349,4 +452,44 @@ fn strict_config_cannot_claim_another_input_contract_for_the_existing_html() {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.code == "provenance/config"));
+}
+
+#[test]
+fn resolved_interface_language_drives_lang_and_the_finalize_receipt() {
+    let temp = Temp::new();
+    let engine = engine();
+    let assets = EmbeddedAssets { template: TEMPLATE };
+    let browser = BrowserOptions {
+        executable: Some(temp.join("missing-chrome")),
+        ..BrowserOptions::default()
+    };
+    for (index, (authored, resolved, fallback)) in [
+        ("zh-cn", "zh-CN", false),
+        ("fr", "en", true),
+        ("zh-tw", "zh-TW", false),
+        ("es-MX", "en", true),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut document: Value = serde_json::from_slice(&source()).unwrap();
+        document["meta"]["locale"] = json!(authored);
+        let candidate = temp.join(&format!("candidate-{index}.json"));
+        fs::write(&candidate, serde_json::to_vec(&document).unwrap()).unwrap();
+        let output = temp.join(&format!("report-{index}.html"));
+        let options = CompileOptions::default();
+        let receipt = delivery::finalize(
+            &request(&candidate, &options, &engine, &assets),
+            &output,
+            &browser,
+        );
+        assert!(receipt.produced_by_this_run, "{:?}", receipt.diagnostics);
+        assert_eq!(
+            receipt.locale,
+            json!({"requested":authored,"resolved":resolved,"fallback":fallback})
+        );
+        let html = fs::read_to_string(&output).unwrap();
+        assert!(html.starts_with(&format!("<!doctype html><html lang=\"{resolved}\"")));
+        assert!(html.contains(&format!(" lang=\"{resolved}\" data-diagram-type=")));
+    }
 }

@@ -1,12 +1,42 @@
 {
   "schemaVersion": 1,
   "tool": "phoenix-diagram",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "files": [
     {
       "path": "SKILL.md",
-      "size": 9504,
-      "sha256": "5b21f4557134df860671648e850d2981c6d0ad471e585d6a81614c179890a91a",
+      "size": 19148,
+      "sha256": "9e7849bd8799b231fa2428f5b311e5294006b1e5f6a7a91160b97fd711fb028f",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.agent-tool-call.workflow.json",
+      "size": 5687,
+      "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.async-job-roundtrip.sequence.json",
+      "size": 4370,
+      "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.deployment-release.lifecycle.json",
+      "size": 4274,
+      "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.product-analytics.dataflow.json",
+      "size": 5618,
+      "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+      "mode": 420
+    },
+    {
+      "path": "examples/legacy.web-app.architecture.json",
+      "size": 3793,
+      "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
       "mode": 420
     },
     {
@@ -16,9 +46,21 @@
       "mode": 420
     },
     {
+      "path": "examples/minimal.class.json",
+      "size": 1189,
+      "sha256": "90be6447369379f288e71426c06a7f0e5d2ce588b9837d63b52c2c62167315f9",
+      "mode": 420
+    },
+    {
       "path": "examples/minimal.dataflow.json",
       "size": 558,
       "sha256": "f773be76cbb4618e8e1209c634209621f7db9707d5dcc9305555e4be46206865",
+      "mode": 420
+    },
+    {
+      "path": "examples/minimal.erd.json",
+      "size": 1317,
+      "sha256": "40675c35b4e46bc67e06d4f05f5d6de62c7a4690310c4f8a6b4f751eb0895d1b",
       "mode": 420
     },
     {
@@ -34,39 +76,105 @@
       "mode": 420
     },
     {
+      "path": "examples/minimal.timeline.json",
+      "size": 928,
+      "sha256": "fa7da309dcd87268784f76510cbe9162a8c53f1808376efe993dd37e89f4543f",
+      "mode": 420
+    },
+    {
+      "path": "examples/minimal.tree.json",
+      "size": 678,
+      "sha256": "feb42bc6f3b78b3832c2fa27f2170940fec6510283acdec0a50f17e9968bc113",
+      "mode": 420
+    },
+    {
+      "path": "examples/minimal.waterfall.json",
+      "size": 862,
+      "sha256": "67630b6716fea1b803e10256f11df1d5edced57b5c8ede13462e943160421bb9",
+      "mode": 420
+    },
+    {
       "path": "examples/minimal.workflow.json",
       "size": 608,
       "sha256": "e2421e77955c3b4e9bf225b9f1e50f1cf3d2304d85b2420f3c87b7c2448ccb87",
       "mode": 420
     },
     {
+      "path": "references/architecture-compare.md",
+      "size": 8445,
+      "sha256": "c760ed03277e8dfb5abad06ba64d56ef6932019c622cb92eb8b4691de466e658",
+      "mode": 420
+    },
+    {
       "path": "references/authoring-defaults.md",
-      "size": 5497,
-      "sha256": "162d0f02632ce51c22c694a03202ba40e141217a646498a7fdcc332da7d6f72d",
+      "size": 12726,
+      "sha256": "45f4c685ca6937b5645a31c4d43a145c758d67933e57b72e36e5c6844414a998",
+      "mode": 420
+    },
+    {
+      "path": "references/brand-marks.md",
+      "size": 5056,
+      "sha256": "fd05816d87871454f72b51e6c911b6cb9c7909d7c29f02e66807a871333b4b7a",
+      "mode": 420
+    },
+    {
+      "path": "references/compatibility.md",
+      "size": 1819,
+      "sha256": "806e3314078dbd991ad3410a0caf271527d7d7bf41308d49fbc1cc0fde409f4b",
       "mode": 420
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 8393,
-      "sha256": "0294645ee4f22c52d4d96292d7799a3947fd5c969947a714ea182d245f8fba9f",
+      "size": 10406,
+      "sha256": "1b78c76b6347b5845d97f1375962d959ae3a35e42212e55763c960d40e357ec6",
+      "mode": 420
+    },
+    {
+      "path": "references/extending-types.md",
+      "size": 2023,
+      "sha256": "3180cbc6803f8f5fe3662ce4a1af43e308a5744965107eeac65d22111d513652",
+      "mode": 420
+    },
+    {
+      "path": "references/migration.md",
+      "size": 6211,
+      "sha256": "9aad9f2d99eb2f2da9d2f2d656a7a7f01179862a815a6b07f3bf450fe565453a",
+      "mode": 420
+    },
+    {
+      "path": "references/preview.md",
+      "size": 4577,
+      "sha256": "ac8c4ecc1f90d366e980ecd8fb234049ecfcdc587247638ca642dc26a2b5d2e4",
+      "mode": 420
+    },
+    {
+      "path": "references/repository-authoring.md",
+      "size": 4980,
+      "sha256": "29e86cb5e4d629a28aee825c07300e386dd4a324f3e79d4c264f20971efa4f73",
       "mode": 420
     },
     {
       "path": "references/viewer-runtime.md",
-      "size": 2500,
-      "sha256": "3438accff4acc85a0f8bc681c76f3afad0d529c5c8eab81a1e249abeec448034",
+      "size": 3289,
+      "sha256": "ba92156c1e311f07374974fd11698e17414ed0807f2a7fe1f97e9cceacd2bbe7",
       "mode": 420
     },
     {
       "path": "schemas/README.md",
-      "size": 2034,
-      "sha256": "8bf5e7c232106de5d8192a08daefdcaf38745d73349494b37af8e1964dcf1e7c",
+      "size": 3109,
+      "sha256": "4109c6b16e7bafa84bb5a23b94765da7823e18a2b78cf8f0eed271a37b7197bc",
       "mode": 420
     },
     {
       "path": "schemas/architecture.schema.json",
       "size": 8003,
       "sha256": "cf6cbe9f33a19a4b219493b3bf33c4fa7bab8865f620cd917c82664a576a2fd7",
+      "mode": 420
+    },
+    {
+      "path": "schemas/class.schema.json",
+      "size": 8191,
+      "sha256": "2b1601fcf26a4e7cd20775da8a8f2affd7cc13133d774279be0c425ba9c4c0fa",
       "mode": 420
     },
     {
@@ -82,6 +190,12 @@
       "mode": 420
     },
     {
+      "path": "schemas/erd.schema.json",
+      "size": 9400,
+      "sha256": "d71cb4a394bc3604b56c0cadecf31470da3ef3781a8100a6ea19dbe9810e2e11",
+      "mode": 420
+    },
+    {
       "path": "schemas/lifecycle.schema.json",
       "size": 5733,
       "sha256": "60ef8990ed65e9b5aa506f6e100a979ee2e0570a2171b0b9065054518249e604",
@@ -94,6 +208,24 @@
       "mode": 420
     },
     {
+      "path": "schemas/timeline.schema.json",
+      "size": 4284,
+      "sha256": "6d87ee8cf0f2b2ff6aae0a7baf64d745d96f86e76417c6ed2a7820663670f613",
+      "mode": 420
+    },
+    {
+      "path": "schemas/tree.schema.json",
+      "size": 3243,
+      "sha256": "41889536e9a61a0b0670667d45e558439a0b71575800864934772e8531f67fd6",
+      "mode": 420
+    },
+    {
+      "path": "schemas/waterfall.schema.json",
+      "size": 3597,
+      "sha256": "8fc221fb04c0bf873441ce0962e8e5d4c68efdd37bb5dc5bf5e8286cde40fb7e",
+      "mode": 420
+    },
+    {
       "path": "schemas/workflow.schema.json",
       "size": 10522,
       "sha256": "cca36492e633e5c3ae68b9271dd88317b5552eacee402cd4822c9f04db6bbf7a",
@@ -101,8 +233,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 41561,
-      "sha256": "8ff854e45d868584dbf1b0b7591d32549749a48dc522f10a80149b1052946d4a",
+      "size": 45211,
+      "sha256": "35fe87eb4e534470bc3bb2e6cc05e5483796694a8dd58f01c7702f3129132b71",
       "mode": 420
     },
     {

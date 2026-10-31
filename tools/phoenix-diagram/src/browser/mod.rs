@@ -1,6 +1,7 @@
 //! Read-only browser evidence for one already bound delivery.
 
 mod cdp;
+pub mod comparison;
 mod discovery;
 mod evidence;
 mod observation;
@@ -273,6 +274,14 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
             return receipt;
         }
     };
+    if options.capture || options.out_dir.is_some() {
+        if let Err(error) =
+            evidence::prepare_receipt_directory(&artifact.path, options.out_dir.as_deref())
+        {
+            append_failure(&mut receipt, error);
+            return receipt;
+        }
+    }
     let executable = match discovery::find(options.executable.as_deref()) {
         Ok(path) => path,
         Err(error) => {

@@ -3,6 +3,37 @@ use crate::check::FileIdentity;
 use crate::input::sha256;
 use std::fs;
 
+#[test]
+fn private_snapshot_preparation_uses_bound_bytes_without_reopening_the_candidate() {
+    let fixture = super::test_support::Fixture::new();
+    let bytes = fs::read(&fixture.candidate).unwrap();
+    let original = super::prepare::prepare(&fixture.request());
+    assert_eq!(
+        original.receipt.status,
+        Status::Pass,
+        "{:?}",
+        original.receipt.diagnostics
+    );
+    fs::remove_file(&fixture.candidate).unwrap();
+    let snapshot = super::prepare::prepare_bytes(&fixture.request(), &bytes);
+    assert_eq!(
+        snapshot.receipt.status,
+        Status::Pass,
+        "{:?}",
+        snapshot.receipt.diagnostics
+    );
+    assert!(snapshot.source.is_none());
+    assert!(snapshot.receipt.candidate.is_none());
+    assert_eq!(
+        snapshot.receipt.config_sha256,
+        original.receipt.config_sha256
+    );
+    assert_eq!(
+        snapshot.compiled.unwrap().html,
+        original.compiled.unwrap().html
+    );
+}
+
 struct Cleanup(std::path::PathBuf);
 impl Drop for Cleanup {
     fn drop(&mut self) {
@@ -101,7 +132,7 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
         source_input_sha256: sha256(b"source test fixture"),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
     };
     let assets = EmbeddedAssets {
@@ -114,6 +145,8 @@ fn an_original_strict_failure_is_not_replaced_by_a_later_successful_reread() {
             options: &options,
             engine: &engine,
             assets: &assets,
+            repo_root: None,
+            brand_cache: None,
         },
         &output,
     );
@@ -153,7 +186,7 @@ fn small_failure_handles_preserve_the_failed_check_json_contract() {
         source_input_sha256: "a".repeat(64),
         input_contract_schema: 1,
         receipt_schema: 1,
-        viewer_revision: "phoenix-v1".into(),
+        viewer_revision: "phoenix-v2".into(),
         binary: FileIdentity {
             sha256: "b".repeat(64),
             bytes: 7,
@@ -177,7 +210,7 @@ fn small_failure_handles_preserve_the_failed_check_json_contract() {
             "candidate":null,"artifact":null,"configSha256":null,
             "engine":{
                 "sourceInputSha256":"a".repeat(64),"inputContractSchema":1,
-                "receiptSchema":1,"viewerRevision":"phoenix-v1",
+                "receiptSchema":1,"viewerRevision":"phoenix-v2",
                 "binary":{"sha256":"b".repeat(64),"bytes":7}
             },
             "deliveryReceiptId":null,"deliveryReceipt":null,"checks":[],"composition":null

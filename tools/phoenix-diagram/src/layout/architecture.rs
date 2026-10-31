@@ -12,8 +12,7 @@ use serde_json::{json, Value};
 
 #[path = "architecture/presentation.rs"]
 mod presentation;
-#[path = "architecture/router.rs"]
-mod router;
+use super::router;
 
 fn string(value: &Value, field: &str) -> String {
     value[field].as_str().unwrap_or("").to_owned()
@@ -153,7 +152,16 @@ pub fn compile(
             ));
             continue;
         };
-        let size = point(&raw["size"]).unwrap_or(Point { x: 120.0, y: 60.0 });
+        let size = point(&raw["size"]).unwrap_or_else(|| Point {
+            x: if raw.get("brand").is_some() {
+                120.0_f64.max(
+                    text_units_for_contract(&string(raw, "label"), contract) * 11.0 * 0.6 + 8.0,
+                ) + 48.0
+            } else {
+                120.0
+            },
+            y: 60.0,
+        });
         let bounds = Rect {
             x: position.x,
             y: position.y,
@@ -172,7 +180,11 @@ pub fn compile(
             &label,
             center,
             bounds.y + bounds.height / 2.0 + if sub.is_empty() { 4.0 } else { -2.0 },
-            font(&label, 11.0, 8.0),
+            if raw.get("brand").is_some() {
+                11.0
+            } else {
+                font(&label, 11.0, 8.0)
+            },
             "middle",
         )];
         if !sub.is_empty() {
@@ -207,9 +219,10 @@ pub fn compile(
         provenance.push(if raw.get("size").is_some() {
             format!("{path}/size")
         } else {
-            "default-size:120x60".into()
+            format!("default-size:{}x60", size.x)
         });
         nodes.push(Node {
+            brand: None,
             authored: authored(raw, path, id, string(raw, "type"), provenance),
             bounds,
             label,
@@ -230,6 +243,7 @@ pub fn compile(
                     size: 11.0,
                 })
             },
+            detail_rows: Vec::new(),
         });
     }
     if !errors.is_empty() {
@@ -237,10 +251,21 @@ pub fn compile(
     }
     let raw_boundaries = presentation::measure_boundaries(document, &nodes, contract);
     let edges = router::connections(document, &nodes);
+    let frames: Vec<_> = raw_boundaries
+        .iter()
+        .map(|boundary| router::Frame {
+            bounds: boundary.bounds,
+            radius: if boundary.raw["kind"] == "security-group" {
+                8.0
+            } else {
+                12.0
+            },
+        })
+        .collect();
     let routes = router::route(
         &nodes,
         &edges,
-        &raw_boundaries,
+        &frames,
         contract,
         meta.get("viewBox").is_none(),
     );
@@ -278,6 +303,7 @@ pub fn compile(
         &raw_boundaries,
         &nodes,
         &routes,
+        &edges,
         &labels,
         &extra,
         &entries,
@@ -398,6 +424,8 @@ pub fn compile(
                         )]
                     })
                     .unwrap_or_default(),
+                marker_start: None,
+                marker_end: None,
             }
         })
         .collect();

@@ -6,6 +6,61 @@ use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::Path;
 
+pub(crate) const INSTALL_PHASES: &[&str] = &[
+    "install-journal-ready",
+    "install-after-retire",
+    "install-after-link",
+    "install-before-active",
+    "install-after-active",
+    "install-committed",
+    "migrate-before-legacy-remove",
+    "migrate-after-legacy-remove",
+    "rollback-after-file",
+    "rollback-old-journal-retired",
+    "rollback-old-journal-published",
+    "rollback-audit-archived",
+    "rollback-compat-published",
+];
+
+fn requested_phase<'a>(
+    acceptance: Option<&OsStr>,
+    directory: Option<&'a OsStr>,
+    requested: Option<&'a OsStr>,
+) -> io::Result<Option<(&'a Path, &'a str)>> {
+    if acceptance != Some(OsStr::new("1")) {
+        return Ok(None);
+    }
+    let (Some(directory), Some(requested)) = (
+        directory.filter(|v| !v.is_empty()),
+        requested.filter(|v| !v.is_empty()),
+    ) else {
+        return Ok(None);
+    };
+    let requested = requested
+        .to_str()
+        .filter(|value| {
+            INSTALL_PHASES.contains(value)
+                || matches!(
+                    *value,
+                    "after-retire"
+                        | "after-recovery-link"
+                        | "after-witness-quarantine"
+                        | "compare-before-second-member"
+                        | "compare-before-committed"
+                        | "compare-committed"
+                        | "preview-worker-ready"
+                        | "preview-worker-ignore-term"
+                )
+        })
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Unknown acceptance checkpoint phase",
+            )
+        })?;
+    Ok(Some((Path::new(directory), requested)))
+}
+
 pub(crate) fn checkpoint(phase: &str, target: &Path, recovery_dir: &Path) -> io::Result<()> {
     let acceptance = std::env::var_os("PHOENIX_DIAGRAM_ACCEPTANCE");
     let directory = std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_DIR");
@@ -27,6 +82,54 @@ pub(crate) fn checkpoint(phase: &str, target: &Path, recovery_dir: &Path) -> io:
     )
 }
 
+pub(crate) fn preview_worker_checkpoint(generation: u64, input_sha256: &str) -> io::Result<()> {
+    let requested = std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_PHASE");
+    if std::env::var_os("PHOENIX_DIAGRAM_ACCEPTANCE").as_deref() != Some(OsStr::new("1"))
+        || !matches!(
+            requested.as_deref().and_then(OsStr::to_str),
+            Some("preview-worker-ready" | "preview-worker-ignore-term")
+        )
+    {
+        return Ok(());
+    }
+    let Some(directory) =
+        std::env::var_os("PHOENIX_DIAGRAM_CHECKPOINT_DIR").filter(|value| !value.is_empty())
+    else {
+        return Ok(());
+    };
+    let directory = Path::new(&directory);
+    let (handle, identity) = checkpoint_directory(directory)?;
+    let ignore_term = requested.as_deref() == Some(OsStr::new("preview-worker-ignore-term"));
+    let previous = if ignore_term {
+        let handler = unsafe { libc::signal(libc::SIGTERM, libc::SIG_IGN) };
+        if handler == libc::SIG_ERR {
+            return Err(io::Error::last_os_error());
+        }
+        Some(handler)
+    } else {
+        None
+    };
+    let result = write_marker(
+        directory,
+        &handle,
+        &identity,
+        serde_json::json!({"schemaVersion":1,"kind":"preview-worker-checkpoint","pid":std::process::id(),"phase":if ignore_term {"preview-worker-ignore-term"} else {"preview-worker-ready"},"generation":generation,"inputSha256":input_sha256,"ignoreSigterm":ignore_term}),
+        || {
+            std::thread::sleep(std::time::Duration::from_secs(30));
+            Err(io::Error::new(
+                io::ErrorKind::TimedOut,
+                "Preview worker checkpoint was not interrupted within 30 seconds",
+            ))
+        },
+    );
+    if let Some(handler) = previous {
+        unsafe {
+            libc::signal(libc::SIGTERM, handler);
+        }
+    }
+    result
+}
+
 fn checkpoint_with(
     phase: &str,
     target: &Path,
@@ -36,30 +139,33 @@ fn checkpoint_with(
     requested: Option<&OsStr>,
     ready: impl FnOnce() -> io::Result<()>,
 ) -> io::Result<()> {
-    if acceptance != Some(OsStr::new("1")) {
-        return Ok(());
-    }
-    let (Some(directory), Some(requested)) = (
-        directory.filter(|value| !value.is_empty()),
-        requested.filter(|value| !value.is_empty()),
-    ) else {
+    let Some((directory, requested)) = requested_phase(acceptance, directory, requested)? else {
         return Ok(());
     };
-    let requested = requested
-        .to_str()
-        .filter(|value| {
-            matches!(
-                *value,
-                "after-retire" | "after-recovery-link" | "after-witness-quarantine"
-            )
-        })
-        .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Unknown acceptance checkpoint phase",
-            )
-        })?;
-    let directory = Path::new(directory);
+    let (handle, identity) = checkpoint_directory(directory)?;
+    let phase = match phase {
+        "AfterRetire" | "after-retire" => "after-retire",
+        "AfterRecoveryLink" | "after-recovery-link" => "after-recovery-link",
+        "AfterWitnessQuarantine" | "after-witness-quarantine" => "after-witness-quarantine",
+        "compare-before-second-member" => "compare-before-second-member",
+        "compare-before-committed" => "compare-before-committed",
+        "compare-committed" => "compare-committed",
+        phase if INSTALL_PHASES.contains(&phase) => phase,
+        _ => return Ok(()),
+    };
+    if phase != requested {
+        return Ok(());
+    }
+    write_marker(
+        directory,
+        &handle,
+        &identity,
+        serde_json::json!({"schemaVersion":1,"pid":std::process::id(),"phase":phase,"target":target,"recoveryDirectory":recovery_dir}),
+        ready,
+    )
+}
+
+fn checkpoint_directory(directory: &Path) -> io::Result<(File, Metadata)> {
     let identity = fs::symlink_metadata(directory)?;
     private_metadata(&identity)?;
     let handle = OpenOptions::new()
@@ -67,15 +173,16 @@ fn checkpoint_with(
         .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
         .open(directory)?;
     verify_directory(directory, &handle, &identity)?;
-    let phase = match phase {
-        "AfterRetire" | "after-retire" => "after-retire",
-        "AfterRecoveryLink" | "after-recovery-link" => "after-recovery-link",
-        "AfterWitnessQuarantine" | "after-witness-quarantine" => "after-witness-quarantine",
-        _ => return Ok(()),
-    };
-    if phase != requested {
-        return Ok(());
-    }
+    Ok((handle, identity))
+}
+
+fn write_marker(
+    directory: &Path,
+    handle: &File,
+    identity: &Metadata,
+    payload: serde_json::Value,
+    ready: impl FnOnce() -> io::Result<()>,
+) -> io::Result<()> {
     let name = c"checkpoint.json";
     let fd = unsafe {
         libc::openat(
@@ -90,9 +197,9 @@ fn checkpoint_with(
     }
     let mut marker = unsafe { File::from_raw_fd(fd) };
     let created = marker.metadata()?;
-    verify_directory(directory, &handle, &identity)?;
-    let mut bytes=serde_json::to_vec(&serde_json::json!({"schemaVersion":1,"pid":std::process::id(),"phase":phase,"target":target,"recoveryDirectory":recovery_dir}))
-        .map_err(|error|io::Error::new(io::ErrorKind::InvalidData,error.to_string()))?;
+    verify_directory(directory, handle, identity)?;
+    let mut bytes = serde_json::to_vec(&payload)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error.to_string()))?;
     bytes.push(b'\n');
     marker.write_all(&bytes)?;
     marker.flush()?;
@@ -133,7 +240,7 @@ fn checkpoint_with(
             "Acceptance checkpoint marker binding changed",
         ));
     }
-    verify_directory(directory, &handle, &identity)?;
+    verify_directory(directory, handle, identity)?;
     ready()
 }
 
@@ -293,6 +400,39 @@ mod tests {
     }
 
     #[test]
+    fn comparison_phases_select_exact_durable_pair_boundaries() {
+        for phase in [
+            "compare-before-second-member",
+            "compare-before-committed",
+            "compare-committed",
+        ] {
+            let root = Temp::new();
+            let mut paused = false;
+            checkpoint_with(
+                phase,
+                &root.0.join("comparison.html"),
+                &root.0.join("pair-journal"),
+                Some(OsStr::new("1")),
+                Some(root.0.as_os_str()),
+                Some(OsStr::new(phase)),
+                || {
+                    paused = true;
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert!(paused);
+            let marker: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.0.join("checkpoint.json")).unwrap()).unwrap();
+            assert_eq!(marker["phase"], phase);
+            assert_eq!(
+                marker["recoveryDirectory"],
+                root.0.join("pair-journal").to_str().unwrap()
+            );
+        }
+    }
+
+    #[test]
     fn a_complete_selected_gate_writes_one_private_bound_marker_then_waits() {
         let root = Temp::new();
         let error = invoke(
@@ -333,5 +473,65 @@ mod tests {
             io::ErrorKind::AlreadyExists
         );
         assert_eq!(fs::read(file).unwrap(), before);
+    }
+    #[test]
+    fn installation_phases_keep_exact_target_and_transaction_marker_bindings() {
+        for phase in INSTALL_PHASES {
+            let root = Temp::new();
+            let target = root.0.join("project/.agents/skills/archify/LICENSE");
+            let transaction = root.0.join(
+                "project/.phoenix-diagram/install/transactions/0123456789abcdef0123456789abcdef",
+            );
+            let mut paused = false;
+            checkpoint_with(
+                phase,
+                &target,
+                &transaction,
+                Some(OsStr::new("1")),
+                Some(root.0.as_os_str()),
+                Some(OsStr::new(phase)),
+                || {
+                    paused = true;
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert!(paused);
+            let marker: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.0.join("checkpoint.json")).unwrap()).unwrap();
+            assert_eq!(marker["phase"], *phase);
+            assert_eq!(marker["target"], target.to_str().unwrap());
+            assert_eq!(marker["recoveryDirectory"], transaction.to_str().unwrap());
+            assert_eq!(marker["pid"], std::process::id());
+        }
+    }
+    #[test]
+    fn phase_selection_needs_the_complete_gate_and_rejects_unknown_names_without_io() {
+        let root = Temp::new();
+        let missing = root.0.join("not-created");
+        for (acceptance, directory, phase) in [
+            (
+                None,
+                Some(missing.as_os_str()),
+                Some(OsStr::new("install-journal-ready")),
+            ),
+            (Some(OsStr::new("1")), None, Some(OsStr::new("unknown"))),
+            (Some(OsStr::new("1")), Some(missing.as_os_str()), None),
+        ] {
+            assert!(requested_phase(acceptance, directory, phase)
+                .unwrap()
+                .is_none());
+        }
+        assert_eq!(
+            requested_phase(
+                Some(OsStr::new("1")),
+                Some(missing.as_os_str()),
+                Some(OsStr::new("unknown"))
+            )
+            .unwrap_err()
+            .kind(),
+            io::ErrorKind::InvalidInput
+        );
+        assert!(!missing.exists());
     }
 }

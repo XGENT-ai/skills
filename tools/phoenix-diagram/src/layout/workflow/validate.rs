@@ -47,11 +47,11 @@ pub(super) fn validate(
         .relations
         .iter()
         .map(|relation| {
-            RoutedRelation::new(
-                relation_index(relation),
-                relation.authored.facts.clone(),
-                relation.points.clone(),
-            )
+            let mut facts = relation.authored.facts.clone();
+            if relation.crossover_halo {
+                facts["verifiedHalo"] = Value::Bool(true);
+            }
+            RoutedRelation::new(relation_index(relation), facts, relation.points.clone())
         })
         .collect::<Vec<_>>();
     let labels = scene
@@ -198,7 +198,11 @@ pub(super) fn validate(
                 contract: input.input_contract,
                 merge_forward_collinear_waypoints: readable,
                 include_shared_endpoints: Some(&|_, _| phoenix && readable),
-                ..Default::default()
+                // Same rule as the artifact check: a crossing is drawn
+                // legibly when both routes carry a crossover halo.
+                crossing_resolved: Some(&|left, right, _| {
+                    left["verifiedHalo"] == true && right["verifiedHalo"] == true
+                }),
             },
         ) {
             let mut diagnostic = relation_diagnostic(
@@ -283,6 +287,45 @@ pub(super) fn validate(
                 "Relationship label is too close to another route",
                 serde_json::to_value(&hit).unwrap(),
             ));
+        }
+        if phoenix && readable {
+            // Author-pinned label positions are kept as authored.
+            let automatic = scene
+                .relations
+                .iter()
+                .filter(|relation| {
+                    !["labelAt", "labelDx", "labelDy", "labelSegment"]
+                        .iter()
+                        .any(|key| relation.authored.facts.get(*key).is_some())
+                })
+                .filter_map(|relation| {
+                    relation.label_plate.map(|plate| {
+                        LabelRect::new(
+                            relation_index(relation) as isize,
+                            relation.authored.facts.clone(),
+                            plate,
+                        )
+                    })
+                })
+                .collect::<Vec<_>>();
+            let arrows = scene
+                .relations
+                .iter()
+                .map(|relation| {
+                    let mut facts = relation.authored.facts.clone();
+                    facts["variant"] = Value::String(relation.variant.clone());
+                    RoutedRelation::new(relation_index(relation), facts, relation.points.clone())
+                })
+                .collect::<Vec<_>>();
+            for hit in collect_label_arrowhead_overlaps(&automatic, &arrows) {
+                diagnostics.push(relation_diagnostic(
+                    "composition/label-arrowhead",
+                    hit.label_relation_index as usize,
+                    scene,
+                    "Relationship label covers an arrowhead",
+                    serde_json::to_value(&hit).unwrap(),
+                ));
+            }
         }
         if phoenix && !readable {
             for hit in collect_label_canvas_overflow(

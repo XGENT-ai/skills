@@ -14,6 +14,22 @@ const referenceSha256 = '4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346
 const archiveSha256 = '6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4';
 const legacySha256 = '9b02b58082c1872f611fff050b225026e108ca53efa738da429965db9966d273';
 const legacyRevision = '4a65a1525f9ed03c775a0e18935901e1edbb773f';
+const migrationSourceIdentity = {
+  manifest: 'migration-sources/archify-v1.json', manifestSize: 127920,
+  manifestSha256: '9539830848515e15c246313058433926afe89fb3e8b2d01549284bfb6585053f',
+  archive: 'upstream/archify-2.17-full-source.tar.gz', archiveSize: 3871723,
+  archiveSha256: '50c67278595f1aedadfa1e6c8f0977e14678753d90c177b8a437bec40342785a',
+  sourceFileCounts: [219, 219, 157],
+};
+export const brandSourceIdentity = {
+  manifest: 'assets/brand-license-sources.json',
+  manifestSize: 4946,
+  manifestSha256: '375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927',
+  catalog: { path: 'assets/brand-marks.json', size: 168010,
+    sha256: '9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33', count: 107 },
+  licenseCount: 8,
+  noticeCount: 2,
+};
 const nativeTextIdentity = {
   repository: 'https://github.com/unicode-org/icu',
   release: 'release-77-1',
@@ -30,6 +46,21 @@ const nativeTextIdentity = {
   licenseSha256: '451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca',
   licenseSpdx: 'Unicode-3.0',
   modification: 'Rust ports of word rules, dictionary dispatch, CJK cost segmentation and Southeast Asian three-word lookahead; original source fixtures are unmodified.',
+};
+const nativeTimeIdentity = {
+  repository: 'https://github.com/unicode-org/icu',
+  release: 'release-77-1',
+  tzVersion: '2025a',
+  manifest: 'tests/fixtures/format/system-v-sources.json',
+  manifestSize: 1933,
+  manifestSha256: '5cca4def77aea4452b0877c10caee53d08ab0414e7a42706edffb9a6b6da0067',
+  fileCount: 1,
+  zoneCount: 6,
+  license: 'assets/icu77-LICENSE.txt',
+  licenseSize: 26487,
+  licenseSha256: '451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca',
+  licenseSpdx: 'Unicode-3.0',
+  modification: 'Rust adaptation of the six SystemV daylight-saving zones using normalized historical transitions and their final annual rule; the original ICU source fixture is unmodified.',
 };
 const rustLicenseIdentity = {
   manifest: 'assets/license-sources.json',
@@ -183,6 +214,39 @@ function verifyNativeTextSources(upstream, identity) {
     licenseSpdx: nativeTextIdentity.licenseSpdx, modification: manifest.modification };
 }
 
+function verifyNativeTimeSources(upstream, identity) {
+  if (!Object.entries(nativeTimeIdentity).every(([key, value]) => identity?.[key] === value)) {
+    throw new Error('Frozen native time identity differs from the pinned baseline');
+  }
+  const project = path.resolve(upstream, '..');
+  const manifestPath = path.join(project, nativeTimeIdentity.manifest);
+  const bytes = readFile(manifestPath, 'native time manifest');
+  if (bytes.length !== nativeTimeIdentity.manifestSize || sha256(bytes) !== nativeTimeIdentity.manifestSha256) {
+    throw new Error('Native time manifest differs from the pinned source bytes');
+  }
+  const manifest = JSON.parse(bytes);
+  if (manifest.format !== 1 || manifest.repository !== nativeTimeIdentity.repository
+      || manifest.release !== nativeTimeIdentity.release || manifest.tzVersion !== nativeTimeIdentity.tzVersion
+      || manifest.modification !== nativeTimeIdentity.modification || manifest.zones?.length !== nativeTimeIdentity.zoneCount
+      || manifest.license?.path !== nativeTimeIdentity.license || manifest.license.spdx !== nativeTimeIdentity.licenseSpdx
+      || manifest.license.size !== nativeTimeIdentity.licenseSize || manifest.license.sha256 !== nativeTimeIdentity.licenseSha256) {
+    throw new Error('Invalid pinned native time manifest');
+  }
+  const original = readFile(path.join(path.dirname(manifestPath), safeRelative(manifest.source.file)), 'native time source');
+  if (original.length !== manifest.source.size || sha256(original) !== manifest.source.sha256) {
+    throw new Error('Native time source size/SHA-256 differs from the pinned ICU77 bytes');
+  }
+  const license = readFile(path.join(project, nativeTimeIdentity.license), 'native time license');
+  if (license.length !== nativeTimeIdentity.licenseSize || sha256(license) !== nativeTimeIdentity.licenseSha256) {
+    throw new Error('Native time license differs from the pinned ICU77 source bytes');
+  }
+  return { manifest: nativeTimeIdentity.manifest, manifestSha256: nativeTimeIdentity.manifestSha256,
+    sourceSha256: manifest.source.sha256, fileCount: nativeTimeIdentity.fileCount, zoneCount: manifest.zones.length,
+    release: nativeTimeIdentity.release, tzVersion: nativeTimeIdentity.tzVersion,
+    license: nativeTimeIdentity.license, licenseSha256: nativeTimeIdentity.licenseSha256,
+    licenseSpdx: nativeTimeIdentity.licenseSpdx, modification: manifest.modification };
+}
+
 export function verifyRustLicenseSources({ project = workspace, identity } = {}) {
   if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'Rust license source identity')).rustLicenses;
   if (!identity || !canonical(identity).equals(canonical(rustLicenseIdentity))) {
@@ -247,6 +311,42 @@ export function verifyRustLicenseSources({ project = workspace, identity } = {})
   return { manifest: identity.manifest, manifestSha256: identity.manifestSha256, crateCount: crates.size, fileCount: files.size };
 }
 
+export function readBrandLicenseSources({ project = workspace } = {}) {
+  const pinned = (name, size, digest, label) => {
+    const bytes = readFile(path.join(project, name), label);
+    if (bytes.length !== size || sha256(bytes) !== digest) throw new Error(`Pinned brand ${label} bytes differ: ${name}`);
+    return bytes;
+  };
+  const manifestBytes = pinned(brandSourceIdentity.manifest, brandSourceIdentity.manifestSize, brandSourceIdentity.manifestSha256, 'license manifest');
+  const manifest = JSON.parse(manifestBytes), catalog = brandSourceIdentity.catalog;
+  const catalogBytes = pinned(catalog.path, catalog.size, catalog.sha256, 'catalog');
+  const files = new Map([[brandSourceIdentity.manifest, manifestBytes], [catalog.path, catalogBytes]]);
+  for (const resource of [...manifest.licenses, ...manifest.notices]) {
+    const name = `assets/${safeRelative(resource.path)}`;
+    files.set(name, pinned(name, resource.size, resource.sha256, 'license resource'));
+  }
+  return { manifest, manifestBytes, catalog: JSON.parse(catalogBytes), files };
+}
+
+export function verifyBrandLicenseSources({ project = workspace, identity, referenceMembers } = {}) {
+  if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'brand source identity')).nativeBrands;
+  if (JSON.stringify(identity) !== JSON.stringify(brandSourceIdentity)) throw new Error('Frozen brand source identity differs from the pinned baseline');
+  const { manifest, catalog } = readBrandLicenseSources({ project });
+  if (!referenceMembers) {
+    const archive = readFile(path.join(project, 'upstream/archify-3.1.0-source.tar.gz'), 'brand reference archive');
+    if (sha256(archive) !== archiveSha256) throw new Error('Brand reference archive differs');
+    referenceMembers = archiveManifest(archive).members;
+  }
+  const original = referenceMembers.get(manifest.reference.path);
+  if (!original || sha256(original) !== manifest.reference.sha256) throw new Error('Original brand catalog source differs');
+  const array = /export const BRAND_MARKS = Object\.freeze\(([\s\S]*)\);\s*$/.exec(original.toString('utf8'))?.[1];
+  if (!array || !canonical(JSON.parse(array)).equals(canonical(catalog.marks)) || catalog.marks.length !== identity.catalog.count
+      || !canonical(catalog.source).equals(canonical(manifest.reference))) throw new Error('Native brand catalog differs from the frozen original');
+  const notice = readFile(path.join(project, 'assets', manifest.notices[0].path), 'original brand notice');
+  if (!notice.equals(referenceMembers.get(manifest.reference.noticeSourcePath))) throw new Error('Original brand notice differs from the frozen archive');
+  return structuredClone(brandSourceIdentity);
+}
+
 export function verifyFrozenSources({ upstream = upstreamRoot, localReference = path.join(root, 'local/archify-main') } = {}) {
   const source = JSON.parse(readFile(path.join(upstream, 'SOURCE.json'), 'source identity'));
   if (source.schemaVersion !== 1 || source.reference?.contentSha256 !== referenceSha256
@@ -267,7 +367,25 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     if (!readFile(path.join(upstream, name), 'frozen license').equals(recovered.members.get(member))) throw new Error(`Frozen license differs: ${name}`);
   }
   const nativeText = verifyNativeTextSources(upstream, source.nativeText);
+  const nativeTime = verifyNativeTimeSources(upstream, source.nativeTime);
   const rustLicenses = verifyRustLicenseSources({ project: path.resolve(upstream, '..'), identity: source.rustLicenses });
+  const nativeBrands = verifyBrandLicenseSources({ project: path.resolve(upstream, '..'), identity: source.nativeBrands, referenceMembers: recovered.members });
+  if (!canonical(source.nativeMigration).equals(canonical(migrationSourceIdentity))) throw new Error('Frozen migration source identity differs from the pinned baseline');
+  const migrationProject = path.resolve(upstream, '..');
+  for (const [name, size, digest] of [[migrationSourceIdentity.manifest, migrationSourceIdentity.manifestSize, migrationSourceIdentity.manifestSha256],
+    [migrationSourceIdentity.archive, migrationSourceIdentity.archiveSize, migrationSourceIdentity.archiveSha256]]) {
+    const bytes = readFile(path.join(migrationProject, name), 'complete migration source');
+    if (bytes.length !== size || sha256(bytes) !== digest) throw new Error(`Pinned complete migration source differs: ${name}`);
+  }
+  // Producer code is needed only in native/assembly jobs. Importing this module
+  // in a source-less consumer does not import it or reconstruct old sources.
+  const migrationCheck = spawnSync(process.execPath, ['--input-type=module', '-e',
+    'const {verifyMigrationSourceFiles}=await import(process.argv[1]);console.log(JSON.stringify(verifyMigrationSourceFiles({project:process.argv[2]})));',
+    new URL('./collect-phoenix-diagram-migration-sources.mjs', import.meta.url).href, migrationProject], { encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024 });
+  if (migrationCheck.error || migrationCheck.status !== 0) throw new Error(`Complete migration source verification failed: ${migrationCheck.error?.message || migrationCheck.stderr}`);
+  const migration = JSON.parse(migrationCheck.stdout);
+  if (migration.status !== 'pass' || migration.manifestSha256 !== migrationSourceIdentity.manifestSha256
+      || migration.archiveSha256 !== migrationSourceIdentity.archiveSha256 || !canonical(migration.sources.map(row => row.fileCount)).equals(canonical(migrationSourceIdentity.sourceFileCounts))) throw new Error('Complete migration source verification scope differs');
   let localStatus = 'absent; archive is authoritative';
   if (localReference && fs.existsSync(localReference)) {
     try {
@@ -279,7 +397,10 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     reference: { contentSha256: referenceSha256, archiveSha256, fileCount: recovered.rows.length, localStatus },
     legacy: { revision: legacyRevision, contentSha256: legacySha256, fileCount: legacy.length },
     nativeText,
+    nativeTime,
     rustLicenses,
+    nativeBrands,
+    nativeMigration: { ...migrationSourceIdentity, sources: migration.sources },
   };
 }
 

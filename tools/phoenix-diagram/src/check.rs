@@ -8,7 +8,15 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
 pub mod anchors;
+mod class;
+mod erd;
 pub mod path;
+mod timeline;
+mod tree;
+mod waterfall;
+
+/// A type-specific semantic_content failure: code, source pointer, message, evidence.
+pub(crate) type ContentFinding = (&'static str, String, String, Value);
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FileIdentity {
@@ -152,6 +160,52 @@ fn rect(element: ElementRef<'_>) -> Rect {
     }
 }
 
+/// The 16-unit sigil square from its `translate(x y) scale(s)` transform.
+fn sigil_box(element: ElementRef<'_>) -> Option<Rect> {
+    let numbers: Vec<f64> = element
+        .value()
+        .attr("transform")?
+        .split(|character: char| !(character.is_ascii_digit() || matches!(character, '.' | '-')))
+        .filter(|part| !part.is_empty())
+        .map(str::parse)
+        .collect::<Result<_, _>>()
+        .ok()?;
+    let [x, y, scale] = numbers[..] else {
+        return None;
+    };
+    Some(Rect {
+        x,
+        y,
+        width: 16.0 * scale,
+        height: 16.0 * scale,
+    })
+}
+
+/// Glyph boxes of a label's lines; positioned tspans are separate lines.
+fn label_glyph_boxes(text: ElementRef<'_>, contract: InputContract) -> Vec<Rect> {
+    let font = number(text, "font-size", f64::NAN);
+    let anchor = text.value().attr("text-anchor").unwrap_or("start");
+    let spans: Vec<_> = text
+        .children()
+        .filter_map(ElementRef::wrap)
+        .filter(|span| span.value().name() == "tspan" && span.value().attr("y").is_some())
+        .collect();
+    let lines = if spans.is_empty() { vec![text] } else { spans };
+    lines
+        .into_iter()
+        .map(|line| {
+            geometry::text_glyph_box(
+                &line.text().collect::<String>(),
+                number(line, "x", number(text, "x", f64::NAN)),
+                number(line, "y", f64::NAN),
+                font,
+                anchor,
+                contract,
+            )
+        })
+        .collect()
+}
+
 fn has_transform(element: ElementRef<'_>) -> bool {
     std::iter::once(element)
         .chain(element.ancestors().filter_map(ElementRef::wrap))
@@ -181,15 +235,39 @@ fn same_point(left: Point, right: Point) -> bool {
     (left.x - right.x).abs() < 0.00001 && (left.y - right.y).abs() < 0.00001
 }
 
+// A class hierarchy bus is drawn from its supertype outward so the shared
+// stretches start at one point; read it in relationship order.
+fn reversed(mut analysis: path::PathAnalysis) -> path::PathAnalysis {
+    analysis.subpaths.reverse();
+    for part in &mut analysis.subpaths {
+        part.points.reverse();
+        for segments in [&mut part.segments, &mut part.straight_segments] {
+            segments.reverse();
+            for segment in segments.iter_mut() {
+                std::mem::swap(&mut segment.start, &mut segment.end);
+            }
+        }
+    }
+    analysis
+}
+
 fn path_matches_declaration(
     actual: &path::PathAnalysis,
     points: &[Point],
     kind: Option<DiagramType>,
     workflow_v2: bool,
     authored: Option<&Value>,
+    bundled: Option<Option<String>>,
 ) -> bool {
     let expected = match kind {
-        Some(DiagramType::Architecture) => geometry::rounded_path(points, 8.0),
+        Some(DiagramType::Architecture | DiagramType::Class) => geometry::rounded_path(points, 8.0),
+        // A bundled erd member draws its pieces around the shared trunk path.
+        Some(DiagramType::Erd) => match bundled {
+            Some(Some(pieces)) => pieces,
+            Some(None) => return false,
+            None => geometry::rounded_path(points, 8.0),
+        },
+        Some(DiagramType::Tree) => geometry::rounded_path(points, 10.0),
         Some(DiagramType::Workflow) if workflow_v2 => geometry::workflow_v2_path(points),
         Some(DiagramType::Lifecycle) if workflow_v2 => geometry::lifecycle_v3_path(points),
         Some(DiagramType::Lifecycle) => geometry::rounded_path(
@@ -517,6 +595,25 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             ));
         }
         nodes.push((id.clone(), bounds));
+        if let Some(mark) = node
+            .children()
+            .filter_map(ElementRef::wrap)
+            .find(|element| element.value().attr("data-semantic-sigil").is_some())
+            .and_then(sigil_box)
+        {
+            let touches = node
+                .select(&selector("text[data-node-label]"))
+                .flat_map(|text| label_glyph_boxes(text, contract))
+                .any(|label| geometry::rects_overlap(&mark, &label, 1.0));
+            if touches {
+                node_errors.push(inspection.diagnostic(
+                    "artifact/sigil-label-overlap",
+                    &format!("/svg/nodes/{index}"),
+                    "The node sigil touches its label",
+                    serde_json::json!({"id":id}),
+                ));
+            }
+        }
         let texts: Vec<_> = node.select(&selector("text")).collect();
         node_labels.insert(
             id,
@@ -606,10 +703,22 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
     let mut endpoint_errors = Vec::new();
     let mut edge_labels = HashMap::new();
     let mut edge_facts = Vec::new();
+    let trunks = erd::trunks(svg);
+    let mut marked_ends = Vec::new();
     for (index, edge) in svg
         .select(&selector("path[data-edge-from], line[data-edge-from]"))
         .enumerate()
     {
+        let marker = |name: &str| {
+            edge.value()
+                .attr(name)
+                .is_some_and(|value| !value.trim().is_empty() && value.trim() != "none")
+        };
+        marked_ends.push(if edge.value().attr("data-class-bus").is_some() {
+            (marker("marker-end"), marker("marker-start"))
+        } else {
+            (marker("marker-start"), marker("marker-end"))
+        });
         if has_transform(edge) {
             transform_errors.push(inspection.diagnostic(
                 "artifact/semantic-transform",
@@ -668,6 +777,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             path::analyze_svg_path(edge.value().attr("d").unwrap_or(""))
         };
         let analysis = match analysis {
+            Ok(analysis) if edge.value().attr("data-class-bus").is_some() => reversed(analysis),
             Ok(analysis) => analysis,
             Err(error) => {
                 path_errors.push(inspection.diagnostic(
@@ -710,6 +820,14 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
                     metadata
                         .as_ref()
                         .and_then(|m| m.pointer(&format!("/graph/relations/{index}"))),
+                    metadata
+                        .as_ref()
+                        .and_then(|m| {
+                            m.pointer(&format!("/presentation/relations/{index}/junction"))
+                        })
+                        .and_then(Value::as_str)
+                        .filter(|_| inspection.kind == Some(DiagramType::Erd))
+                        .map(|junction| erd::bundled_route(declared, junction, &trunks)),
                 )
             {
                 binding_errors.push(inspection.diagnostic(
@@ -851,10 +969,19 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
                 Value::Null,
             ));
         }
+        // An erd tag is drawn as its domain band and an erd/class sublabel as the
+        // node's details; their type checks verify those.
+        let fields: &[&str] =
+            if matches!(inspection.kind, Some(DiagramType::Erd | DiagramType::Class)) {
+                &["label"]
+            } else {
+                &["label", "sublabel", "tag"]
+            };
         if let Some(authored_nodes) = authored_nodes {
             for node in authored_nodes {
                 let id = node["id"].as_str().unwrap_or("");
-                for field in ["label", "sublabel", "tag"] {
+                for field in fields {
+                    let field = *field;
                     if let Some(text) = node[field].as_str().filter(|text| !text.is_empty()) {
                         if !node_labels.get(id).is_some_and(|texts| {
                             visible_text(&texts.join("")).contains(&visible_text(text))
@@ -918,6 +1045,19 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             "Native semantic metadata is missing or invalid",
             Value::Null,
         ));
+    }
+    if let Some(metadata) = metadata.as_ref() {
+        let findings = match inspection.kind {
+            Some(DiagramType::Erd) => erd::content(svg, metadata),
+            Some(DiagramType::Class) => class::content(svg, metadata),
+            Some(DiagramType::Tree) => tree::content(svg, metadata),
+            Some(DiagramType::Timeline) => timeline::content(svg, metadata),
+            Some(DiagramType::Waterfall) => waterfall::content(svg, metadata),
+            _ => Vec::new(),
+        };
+        for (code, path, message, evidence) in findings {
+            content_errors.push(inspection.diagnostic(code, &path, message, evidence));
+        }
     }
     inspection.record(
         "semantic_content",
@@ -1044,7 +1184,47 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         false,
     );
     if contract == InputContract::PhoenixV1 {
-        let arrows = geometry_checks::collect_arrowhead_collisions(&actual_routes, workflow_v2);
+        // The original five keep the frozen check's scope: workflow v2 routes,
+        // or relations with verified independent ports, at their target-ending
+        // parts; author-shared ports are deliberate joins there. The later
+        // types check only ends that carry a marker; a start symbol is checked
+        // as an incoming end at its own node.
+        let marked: Vec<geometry_checks::RoutedRelation>;
+        let arrow_routes = if inspection
+            .kind
+            .is_some_and(DiagramType::has_legacy_contract)
+        {
+            marked = actual_routes
+                .iter()
+                .filter(|route| {
+                    route.target_endpoint
+                        && (workflow_v2 || route.relation["independentPorts"] == true)
+                })
+                .cloned()
+                .collect();
+            &marked
+        } else {
+            marked = actual_routes
+                .iter()
+                .flat_map(|route| {
+                    let (start, end) = marked_ends
+                        .get(route.relation_index)
+                        .copied()
+                        .unwrap_or((false, false));
+                    let target = (end && route.target_endpoint).then(|| route.clone());
+                    let source = (start && route.source_endpoint).then(|| {
+                        let mut source = route.clone();
+                        source.points.reverse();
+                        source.relation["to"] = route.relation["from"].clone();
+                        source.relation["from"] = route.relation["to"].clone();
+                        source
+                    });
+                    target.into_iter().chain(source)
+                })
+                .collect();
+            &marked
+        };
+        let arrows = geometry_checks::collect_arrowhead_collisions(arrow_routes, workflow_v2);
         inspection.hits(
             "arrowhead_separation",
             "composition/arrowhead-collision",

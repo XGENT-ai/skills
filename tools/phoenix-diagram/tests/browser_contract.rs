@@ -43,7 +43,7 @@ impl TempDir {
             },
             artifact: FileIdentity::of(b"<!doctype html><title>Test</title>"),
             config_sha256: "a".repeat(64),
-            engine: json!({"sourceInputSha256":"b".repeat(64),"inputContractSchema":1,"viewerRevision":"phoenix-v1","receiptSchema":1}),
+            engine: json!({"sourceInputSha256":"b".repeat(64),"inputContractSchema":1,"viewerRevision":"phoenix-v2","receiptSchema":1}),
             delivery_receipt_id: "delivery-test".into(),
         }
     }
@@ -93,6 +93,252 @@ fn an_explicit_missing_browser_is_a_configuration_failure() {
         .any(|entry| entry.code == "browser/configured-path"));
     assert!(receipt.coverage.is_empty());
     assert!(receipt.screenshots.is_empty());
+}
+
+#[test]
+fn explicit_receipt_directories_survive_discovery_launch_and_protocol_failures() {
+    for capture in [false, true] {
+        for precreated in [false, true] {
+            for failure in ["configured", "launch", "protocol"] {
+                let temp = TempDir::new();
+                let artifact = temp.artifact();
+                let out_dir = temp.0.join("evidence");
+                if precreated {
+                    fs::create_dir(&out_dir).unwrap();
+                    fs::write(out_dir.join("unrelated"), b"preserve me").unwrap();
+                }
+                let fixture =
+                    (failure == "protocol").then(|| ProtocolFixture::new(Mode::ProtocolError));
+                let executable = match failure {
+                    "configured" => temp.0.join("no-browser"),
+                    "launch" => PathBuf::from("/usr/bin/false"),
+                    _ => launcher(&temp.0, Some(&fixture.as_ref().unwrap().endpoint)),
+                };
+                let receipt = check_browser(
+                    &artifact,
+                    &BrowserOptions {
+                        executable: Some(executable),
+                        capture,
+                        out_dir: Some(out_dir.clone()),
+                        ..Default::default()
+                    },
+                );
+                assert_eq!(receipt.status, BrowserStatus::Failed, "{failure}");
+                assert_eq!(
+                    receipt.exit_code(),
+                    4,
+                    "{failure}: {:?}",
+                    receipt.diagnostics
+                );
+                assert!(
+                    receipt.diagnostics.iter().any(|entry| entry.code
+                        == match failure {
+                            "configured" => "browser/configured-path",
+                            "launch" => "browser/launch",
+                            _ => "browser/protocol",
+                        }),
+                    "{failure}: {:?}",
+                    receipt.diagnostics
+                );
+                assert!(receipt.screenshots.is_empty());
+                assert!(
+                    out_dir.is_dir(),
+                    "{failure}, capture={capture}, precreated={precreated}"
+                );
+                assert_eq!(
+                    fs::read_dir(&out_dir).unwrap().count(),
+                    usize::from(precreated)
+                );
+                if precreated {
+                    assert_eq!(fs::read(out_dir.join("unrelated")).unwrap(), b"preserve me");
+                }
+                if fixture.is_some() {
+                    assert_owned_browser_cleaned(&temp.0);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn receipt_directory_preparation_requires_bound_inputs_and_an_ordinary_leaf() {
+    use std::os::unix::fs::symlink;
+    for capture in [false, true] {
+        for kind in ["file", "symlink", "missing-parent", "changed-input"] {
+            let temp = TempDir::new();
+            let artifact = temp.artifact();
+            let out_dir = temp.0.join("evidence");
+            let unrelated = temp.0.join("unrelated");
+            fs::create_dir(&unrelated).unwrap();
+            fs::write(unrelated.join("sentinel"), b"preserve me").unwrap();
+            let requested = match kind {
+                "file" => {
+                    fs::write(&out_dir, b"preserve me").unwrap();
+                    out_dir.clone()
+                }
+                "symlink" => {
+                    symlink(&unrelated, &out_dir).unwrap();
+                    out_dir.clone()
+                }
+                "missing-parent" => out_dir.join("leaf"),
+                _ => {
+                    fs::write(&artifact.candidate.path, b"changed candidate").unwrap();
+                    out_dir.clone()
+                }
+            };
+            let receipt = check_browser(
+                &artifact,
+                &BrowserOptions {
+                    executable: Some(temp.0.join("no-browser")),
+                    capture,
+                    out_dir: Some(requested),
+                    ..Default::default()
+                },
+            );
+            let code = match kind {
+                "file" | "symlink" => "browser/evidence-conflict",
+                "missing-parent" => "browser/evidence-path",
+                _ => "browser/candidate-changed",
+            };
+            assert!(
+                receipt.diagnostics.iter().any(|entry| entry.code == code),
+                "{kind}: {:?}",
+                receipt.diagnostics
+            );
+            assert!(!receipt
+                .diagnostics
+                .iter()
+                .any(|entry| entry.code == "browser/configured-path"));
+            assert_eq!(
+                fs::read(unrelated.join("sentinel")).unwrap(),
+                b"preserve me"
+            );
+            assert_eq!(fs::read_dir(&unrelated).unwrap().count(), 1);
+            if kind == "file" {
+                assert_eq!(fs::read(&out_dir).unwrap(), b"preserve me");
+            } else if kind == "symlink" {
+                assert!(fs::symlink_metadata(&out_dir)
+                    .unwrap()
+                    .file_type()
+                    .is_symlink());
+            } else {
+                assert!(!out_dir.exists());
+            }
+        }
+    }
+}
+
+#[test]
+fn measurement_without_an_out_dir_does_not_create_evidence() {
+    let temp = TempDir::new();
+    let artifact = temp.artifact();
+    let receipt = check_browser(
+        &artifact,
+        &BrowserOptions {
+            executable: Some(temp.0.join("no-browser")),
+            ..Default::default()
+        },
+    );
+    assert_eq!(receipt.exit_code(), 4);
+    assert_eq!(fs::read_dir(&temp.0).unwrap().count(), 2);
+}
+
+#[test]
+fn a_replaced_screenshot_directory_and_its_unrelated_entries_are_preserved() {
+    let temp = TempDir::new();
+    let artifact = temp.artifact();
+    let out_dir = temp.0.join("evidence");
+    let moved = temp.0.join("moved-evidence");
+    let fixture = ProtocolFixture::new(Mode::Complete {
+        remote: false,
+        change_artifact: None,
+        long: false,
+    });
+    let executable = launcher(&temp.0, Some(&fixture.endpoint));
+    let script = fs::read_to_string(&executable).unwrap();
+    // The owned child replaces the already-reserved directory before advertising
+    // DevTools, so capture must detect the new physical identity deterministically.
+    fs::write(
+        &executable,
+        script.replacen(
+            "#!/bin/sh\n",
+            &format!(
+                "#!/bin/sh\nmv '{}' '{}'\nmkdir '{}'\nprintf 'preserve me' > '{}/unrelated'\n",
+                out_dir.display(),
+                moved.display(),
+                out_dir.display(),
+                out_dir.display()
+            ),
+            1,
+        ),
+    )
+    .unwrap();
+    let receipt = check_browser(
+        &artifact,
+        &BrowserOptions {
+            executable: Some(executable),
+            capture: true,
+            out_dir: Some(out_dir.clone()),
+            ..Default::default()
+        },
+    );
+    assert_eq!(receipt.status, BrowserStatus::Failed);
+    assert!(receipt
+        .diagnostics
+        .iter()
+        .any(|entry| entry.code == "browser/evidence-changed"));
+    assert!(receipt.screenshots.is_empty());
+    assert_eq!(fs::read(out_dir.join("unrelated")).unwrap(), b"preserve me");
+    assert_eq!(fs::read_dir(&out_dir).unwrap().count(), 1);
+    assert!(moved.is_dir());
+    assert_owned_browser_cleaned(&temp.0);
+}
+
+#[test]
+fn a_failed_capture_can_be_retried_in_an_independent_new_directory() {
+    let temp = TempDir::new();
+    let artifact = temp.artifact();
+    let failed_dir = temp.0.join("failed-evidence");
+    fs::create_dir(&failed_dir).unwrap();
+    fs::write(failed_dir.join("unrelated"), b"preserve me").unwrap();
+    let rejected = ProtocolFixture::new(Mode::ProtocolError);
+    let failed = check_browser(
+        &artifact,
+        &BrowserOptions {
+            executable: Some(launcher(&temp.0, Some(&rejected.endpoint))),
+            capture: true,
+            out_dir: Some(failed_dir.clone()),
+            ..Default::default()
+        },
+    );
+    assert_eq!(failed.status, BrowserStatus::Failed);
+    assert!(failed.screenshots.is_empty());
+    assert_eq!(fs::read_dir(&failed_dir).unwrap().count(), 1);
+    assert_eq!(
+        fs::read(failed_dir.join("unrelated")).unwrap(),
+        b"preserve me"
+    );
+    assert_owned_browser_cleaned(&temp.0);
+    let complete = ProtocolFixture::new(Mode::Complete {
+        remote: false,
+        change_artifact: None,
+        long: false,
+    });
+    let retry_dir = temp.0.join("retry-evidence");
+    let retry = check_browser(
+        &artifact,
+        &BrowserOptions {
+            executable: Some(launcher(&temp.0, Some(&complete.endpoint))),
+            capture: true,
+            out_dir: Some(retry_dir.clone()),
+            ..Default::default()
+        },
+    );
+    assert_eq!(retry.status, BrowserStatus::Pass, "{:?}", retry.diagnostics);
+    assert_eq!(retry.screenshots.len(), 4);
+    assert_eq!(fs::read_dir(retry_dir).unwrap().count(), 4);
+    assert_eq!(fs::read_dir(failed_dir).unwrap().count(), 1);
+    assert_owned_browser_cleaned(&temp.0);
 }
 
 #[test]
@@ -582,7 +828,7 @@ fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
         "native fixture precondition: {:?}",
         check.diagnostics
     );
-    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
+    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
     let inspect = |name: &str, bytes: &[u8]| {
         let path = temp.0.join(format!("{name}.html"));
         fs::write(&path, bytes).unwrap();
@@ -786,7 +1032,7 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
         phoenix_diagram::check::check_html(&baseline, Quality::Standard).status,
         "pass"
     );
-    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
+    let engine = json!({"sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),"inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2","binary":FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap())});
     let inspect = |name: &str, bytes: &[u8]| {
         let path = temp.0.join(format!("{name}.html"));
         fs::write(&path, bytes).unwrap();

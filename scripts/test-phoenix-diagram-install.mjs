@@ -66,7 +66,7 @@ export function pinUiEngine(executable, { parent = os.tmpdir() } = {}) {
 export function childExitCode(result) { return !result?.error && Number.isInteger(result?.status) && result.status >= 0 && result.status <= 255 ? result.status : 4; }
 
 export async function runInstallStage() {
-  const record = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.1.0', command: 'test-phoenix-diagram', stage: 'install', status: 'failed',
+  const record = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.2.0', command: 'test-phoenix-diagram', stage: 'install', status: 'failed',
     scope: 'Phoenix UI installation integration only', phases: { preflight: 'not-run', build: 'not-run', snapshot: 'not-run', install: 'not-run', cleanup: 'not-run' }, exitCode: 4, diagnostics: [] };
   let pinned, phase = 'preflight';
   try {

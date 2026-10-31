@@ -55,7 +55,12 @@ fn automatic_width(input: &DiagramInput, node: &Value) -> f64 {
             width = width.max(((units(input, content) * preferred * 0.6 + 8.0) / 4.0).ceil() * 4.0);
         }
     }
-    width.min(200.0).max(label_width)
+    let width = width.min(200.0).max(label_width);
+    if node.get("brand").is_some() {
+        width.max(units(input, string(node, "label")) * 11.0 * 0.6 + 8.0) + 48.0
+    } else {
+        width
+    }
 }
 fn group_span(
     input: &DiagramInput,
@@ -495,13 +500,17 @@ pub(super) fn measure(
             if content.is_empty() {
                 continue;
             }
-            let font = fitted_node_font_size_for_contract(
-                content,
-                width,
-                preferred,
-                minimum,
-                input.input_contract,
-            );
+            let font = if field == "label" && value.get("brand").is_some() {
+                preferred
+            } else {
+                fitted_node_font_size_for_contract(
+                    content,
+                    width,
+                    preferred,
+                    minimum,
+                    input.input_contract,
+                )
+            };
             node_text.push(text(
                 format!("{}/{field}", author.source_path),
                 content,
@@ -567,6 +576,7 @@ pub(super) fn measure(
             }
         }
         nodes.push(Node {
+            brand: None,
             sigil: if string(value, "icon") == "none" {
                 None
             } else {
@@ -587,6 +597,7 @@ pub(super) fn measure(
             bounds,
             label: string(value, "label").into(),
             text: node_text,
+            detail_rows: Vec::new(),
         });
     }
     if !readable {
@@ -752,7 +763,7 @@ fn legend_message<'a>(input: &'a DiagramInput, kind: &str) -> &'a str {
     match (locale.as_str(), kind) {
         ("zh-cn", "title") => "图例",
         ("zh-cn", "frontend") => "用户界面",
-        ("zh-cn", "backend") => "Agent 逻辑",
+        ("zh-cn", "backend") => "处理逻辑",
         ("zh-cn", "security") => "策略",
         ("zh-cn", "messagebus") => "工具操作",
         ("zh-cn", "database") => "上下文 / 追踪",
@@ -760,7 +771,7 @@ fn legend_message<'a>(input: &'a DiagramInput, kind: &str) -> &'a str {
         ("zh-cn", "external") => "外部系统",
         ("zh-tw", "title") => "圖例",
         ("zh-tw", "frontend") => "使用者介面",
-        ("zh-tw", "backend") => "Agent 邏輯",
+        ("zh-tw", "backend") => "處理邏輯",
         ("zh-tw", "security") => "政策",
         ("zh-tw", "messagebus") => "工具操作",
         ("zh-tw", "database") => "脈絡 / 追蹤",
@@ -768,7 +779,7 @@ fn legend_message<'a>(input: &'a DiagramInput, kind: &str) -> &'a str {
         ("zh-tw", "external") => "外部系統",
         ("es", "title") => "Leyenda",
         ("es", "frontend") => "Interfaz de usuario",
-        ("es", "backend") => "Lógica del agente",
+        ("es", "backend") => "Lógica de procesamiento",
         ("es", "security") => "Política",
         ("es", "messagebus") => "Acción de herramienta",
         ("es", "database") => "Contexto / traza",
@@ -776,7 +787,7 @@ fn legend_message<'a>(input: &'a DiagramInput, kind: &str) -> &'a str {
         ("es", "external") => "Sistema externo",
         ("ko", "title") => "범례",
         ("ko", "frontend") => "사용자 UI",
-        ("ko", "backend") => "Agent 로직",
+        ("ko", "backend") => "처리 로직",
         ("ko", "security") => "정책",
         ("ko", "messagebus") => "도구 실행",
         ("ko", "database") => "컨텍스트 / 추적",
@@ -784,7 +795,7 @@ fn legend_message<'a>(input: &'a DiagramInput, kind: &str) -> &'a str {
         ("ko", "external") => "외부 시스템",
         (_, "title") => "Legend",
         (_, "frontend") => "User UI",
-        (_, "backend") => "Agent logic",
+        (_, "backend") => "Processing logic",
         (_, "security") => "Policy",
         (_, "messagebus") => "Tool action",
         (_, "database") => "Context / trace",
@@ -1185,6 +1196,118 @@ fn measure_containers(
     (containers, obstacles)
 }
 
+// Match the rendered-text envelope used by check.rs legend clearance. The
+// legend title's SVG text can start above its measured Card bounds.
+fn rendered_text_bounds(input: &DiagramInput, text: &Text) -> Rect {
+    let width = (units(input, &text.content) * text.font_size * 0.62).max(text.font_size);
+    let x = text.position.x
+        - match text.anchor.as_str() {
+            "middle" => width / 2.0,
+            "end" => width,
+            _ => 0.0,
+        };
+    Rect {
+        x,
+        y: text.position.y - text.font_size,
+        width,
+        height: text.font_size * 1.25,
+    }
+}
+
+// Only derived legends move. Authored geometry and already-clear layouts
+// remain unchanged; finalize() subsequently includes the new legend band.
+pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut CompiledDiagram) {
+    if input.input_contract != InputContract::PhoenixV1
+        || scene.schema_version != 2
+        || absolute(&input.document)
+        || !route_pin_removals(&input.document).is_empty()
+        || scene.legends.is_empty()
+    {
+        return;
+    }
+    let mut segments = Vec::new();
+    let mut labels = Vec::new();
+    for relation in &scene.relations {
+        let path = crate::geometry::workflow_v2_path(&relation.points);
+        let visible = crate::check::path::analyze_svg_path(&path)
+            .expect("Finite workflow geometry generates a supported SVG path");
+        for part in visible.subpaths {
+            segments.extend(part.points.windows(2).map(|pair| (pair[0], pair[1])));
+        }
+        if let Some(plate) = relation.label_plate {
+            labels.push(plate);
+        }
+        labels.extend(
+            relation
+                .text
+                .iter()
+                .map(|text| rendered_text_bounds(input, text)),
+        );
+    }
+    let reserved = scene
+        .legends
+        .iter()
+        .map(|legend| legend.bounds)
+        .collect::<Vec<_>>();
+    let mut boxes = Vec::new();
+    for legend in &scene.legends {
+        boxes.extend(
+            legend
+                .text
+                .iter()
+                .map(|text| rendered_text_bounds(input, text)),
+        );
+        if legend.authored.kind != "legend-title" {
+            // The Workflow glyph emitted by render::write_legends.
+            let baseline = legend
+                .text
+                .first()
+                .map_or(legend.bounds.y + 10.0, |text| text.position.y);
+            boxes.push(Rect {
+                x: legend.bounds.x,
+                y: baseline - 8.0,
+                width: 14.0,
+                height: 9.0,
+            });
+        }
+    }
+    let blocked = reserved.iter().any(|legend| {
+        segments
+            .iter()
+            .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 0.0))
+            || labels
+                .iter()
+                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+    }) || boxes.iter().any(|legend| {
+        segments
+            .iter()
+            .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 2.0))
+            || labels
+                .iter()
+                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+    });
+    if !blocked {
+        return;
+    }
+    let bottom = segments
+        .iter()
+        .flat_map(|(a, b)| [a.y, b.y])
+        .chain(labels.iter().map(|label| label.y + label.height))
+        .fold(f64::NEG_INFINITY, f64::max);
+    let top = boxes
+        .iter()
+        .chain(&reserved)
+        .map(|legend| legend.y)
+        .fold(f64::INFINITY, f64::min);
+    let shift = (bottom + 8.0 - top).max(0.0).ceil();
+    for legend in &mut scene.legends {
+        legend.bounds.y += shift;
+        for text in &mut legend.text {
+            text.position.y += shift;
+        }
+    }
+}
+
 pub(super) fn finalize(
     input: &DiagramInput,
     measured: &Measurement,
@@ -1260,6 +1383,111 @@ pub(super) fn finalize(
         scene.view_box.height = required[1];
     }
     Ok(())
+}
+
+// A fixed (schema 1) frame is only as tall as its nodes, so a group title at
+// its frozen in-frame offset can land on a member or a route. Under phoenix-v1
+// such a title moves to the frame's top border, the slot readable frames
+// reserve for it, or else to the lane-title row above, at the leftmost
+// position within the frame clear of nodes, routes and other text. Titles
+// already clear, and all 2.17 geometry, stay as authored.
+pub(super) fn clear_group_titles(
+    input: &DiagramInput,
+    measured: &Measurement,
+    scene: &mut CompiledDiagram,
+) {
+    if measured.readable || input.input_contract != InputContract::PhoenixV1 {
+        return;
+    }
+    let contract = input.input_contract;
+    let glyph = |text: &Text, x: f64, baseline: f64| {
+        crate::geometry::text_glyph_box(
+            &text.content,
+            x,
+            baseline,
+            text.font_size,
+            &text.anchor,
+            contract,
+        )
+    };
+    let mut blockers: Vec<Rect> = scene.nodes.iter().map(|node| node.bounds).collect();
+    for relation in &scene.relations {
+        blockers.extend(relation.label_plate);
+        blockers.extend(relation.note_bounds);
+    }
+    blockers.extend(scene.legends.iter().map(|legend| legend.bounds));
+    let mut texts = scene
+        .containers
+        .iter()
+        .flat_map(|container| container.text.iter())
+        .chain(scene.text.iter())
+        .map(|text| {
+            (
+                text.source_path.clone(),
+                glyph(text, text.position.x, text.position.y),
+            )
+        })
+        .collect::<Vec<_>>();
+    for index in 0..scene.containers.len() {
+        let container = &scene.containers[index];
+        if container.authored.kind != "group" || container.text.len() != 1 {
+            continue;
+        }
+        let title = &container.text[0];
+        let mut obstacles = blockers.clone();
+        obstacles.extend(
+            texts
+                .iter()
+                .filter(|(path, _)| *path != title.source_path)
+                .map(|(_, rect)| *rect),
+        );
+        // Routes keep room for an arrowhead's half width.
+        let clear = |rect: &Rect| {
+            obstacles
+                .iter()
+                .all(|other| !rects_overlap_for_contract(rect, other, 2.0, contract))
+                && scene.relations.iter().all(|relation| {
+                    relation.points.windows(2).all(|pair| {
+                        !crate::geometry::segment_intersects_rect(pair[0], pair[1], rect, 6.0)
+                    })
+                })
+        };
+        if clear(&glyph(title, title.position.x, title.position.y)) {
+            continue;
+        }
+        let frame = container.bounds;
+        // Candidates start at the frame inset and just past each blocker's
+        // right edge; route points stand in for the vertical runs they cross.
+        let mut starts = vec![frame.x + 10.0];
+        starts.extend(obstacles.iter().map(|rect| rect.x + rect.width + 2.5));
+        starts.extend(
+            scene
+                .relations
+                .iter()
+                .flat_map(|relation| relation.points.iter().map(|point| point.x + 6.5)),
+        );
+        starts.retain(|x| *x >= frame.x + 10.0);
+        starts.sort_by(f64::total_cmp);
+        let placed = [frame.y - 2.0, frame.y - 16.0]
+            .into_iter()
+            .find_map(|baseline| {
+                starts
+                    .iter()
+                    .map(|x| (Point { x: *x, y: baseline }, glyph(title, *x, baseline)))
+                    .find(|(_, rect)| {
+                        rect.x + rect.width <= frame.x + frame.width - 10.0
+                            && rect.y >= 0.0
+                            && clear(rect)
+                    })
+            });
+        if let Some((position, rect)) = placed {
+            let path = title.source_path.clone();
+            scene.containers[index].text[0].position = position;
+            if let Some(entry) = texts.iter_mut().find(|(source, _)| *source == path) {
+                entry.1 = rect;
+            }
+        }
+    }
 }
 
 pub(super) fn validate_readable_text(

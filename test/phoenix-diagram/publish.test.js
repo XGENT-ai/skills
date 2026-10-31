@@ -22,10 +22,10 @@ function fixture(t) {
   write(dir, 'dist/phoenix-ui/VERSION.json', JSON.stringify({ distribution:'release',engines:{'linux-x64':{url:'https://download.example.test/ui'}} }));
   const files = [['SKILL.md',Buffer.from('Fixture skill\n'),0o644], ...['phoenix-bootstrap.cjs','phoenix-launcher.cjs','phoenix-diagram'].map(name => [`scripts/${name}`,fs.readFileSync(path.join(root,'skills/phoenix-diagram/scripts',name)),name==='phoenix-bootstrap.cjs'?0o644:0o755])];
   for (const [name,bytes,mode] of files) write(dir,`dist/phoenix-diagram/bundle/${name}`,bytes,mode);
-  const manifest = Buffer.from(JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',version:'0.1.0',files:files.map(([name,bytes,mode])=>({path:name,size:bytes.length,sha256:digest(bytes),mode}))})+'\n');
+  const manifest = Buffer.from(JSON.stringify({schemaVersion:1,tool:'phoenix-diagram',version:'0.2.0',files:files.map(([name,bytes,mode])=>({path:name,size:bytes.length,sha256:digest(bytes),mode}))})+'\n');
   write(dir,'dist/phoenix-diagram/bundle/manifest.json',manifest);
   // Metadata fixtures exercise the guard, never native-platform execution.
-  const data={schemaVersion:1,distribution:'release',tool:'phoenix-diagram',toolVersion:'0.1.0',npmPackageVersion:version,sourceCommit:'a'.repeat(40),sourceInputSha256:'b'.repeat(64),inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v1',bundleSha256:digest(manifest),engines:Object.fromEntries(targets.map(target=>[target,{asset:`phoenix-diagram-${target}`,size:3,sha256:'c'.repeat(64),url:`https://download.example.test/phoenix-diagram-${target}`}]))};
+  const data={schemaVersion:1,distribution:'release',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion:version,sourceCommit:'a'.repeat(40),sourceInputSha256:'b'.repeat(64),inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:digest(manifest),engines:Object.fromEntries(targets.map(target=>[target,{asset:`phoenix-diagram-${target}`,size:3,sha256:'c'.repeat(64),url:`https://download.example.test/phoenix-diagram-${target}`}]))};
   const seal=()=>{const bytes=JSON.stringify(data)+'\n';write(dir,'dist/phoenix-diagram/VERSION.json',bytes);write(dir,'dist/phoenix-diagram/bundle/ENGINE.json',bytes);};
   seal();
   const license=fs.readFileSync(path.join(root,'LICENSE'));

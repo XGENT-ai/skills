@@ -1,12 +1,41 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
+use crate::evidence::SourceEvidence;
 use crate::geometry::{
     finite_point, finite_rect, format_number as number, lifecycle_v3_path, polyline_path,
     rounded_path, workflow_v2_path,
 };
 use crate::input::{DiagramType, InputContract};
-use crate::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
+use crate::scene::{Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
+
+mod class;
+mod erd;
+mod timeline;
+mod tree;
+mod waterfall;
+
+type LegendGlyph = fn(&CompiledDiagram, &Card, f64, &mut String);
+
+/// What a type outside the original five contributes to the shared SVG frame:
+/// root attributes, extra definitions, its body and its legend glyphs.
+struct TypeRenderer {
+    root_attributes: fn(&CompiledDiagram) -> String,
+    defs: fn(&CompiledDiagram) -> String,
+    body: fn(&CompiledDiagram, &mut String),
+    legend_glyph: LegendGlyph,
+}
+
+fn type_renderer(kind: DiagramType) -> Option<TypeRenderer> {
+    match kind {
+        DiagramType::Erd => Some(erd::RENDERER),
+        DiagramType::Class => Some(class::RENDERER),
+        DiagramType::Tree => Some(tree::RENDERER),
+        DiagramType::Timeline => Some(timeline::RENDERER),
+        DiagramType::Waterfall => Some(waterfall::RENDERER),
+        _ => None,
+    }
+}
 
 pub struct EmbeddedAssets<'a> {
     pub template: &'a str,
@@ -470,7 +499,350 @@ fn architecture_direction_cue_ref_x(
     })
 }
 
+#[derive(Clone)]
+struct DeltaMark {
+    state: String,
+    classifications: Vec<String>,
+    origin: Option<&'static str>,
+}
+struct DeltaLayer {
+    marks: std::collections::BTreeMap<String, DeltaMark>,
+    ghost: bool,
+}
+struct DeltaLayers {
+    head: DeltaLayer,
+    ghost: DeltaLayer,
+    ghost_scene: CompiledDiagram,
+}
+fn boundary_identity(container: &crate::scene::Container) -> String {
+    format!(
+        "{}:{}",
+        container.authored.kind,
+        container.authored.facts["label"]
+            .as_str()
+            .unwrap_or_default()
+    )
+}
+impl DeltaLayer {
+    fn mark(&self, kind: &str, id: &str) -> Option<&DeltaMark> {
+        self.marks.get(&format!("{kind}:{id}"))
+    }
+    fn attributes(&self, kind: &str, id: &str) -> String {
+        let mark = self.mark(kind, id);
+        let state = mark.map(|mark| mark.state.as_str()).unwrap_or("same");
+        let classifications = mark
+            .map(|mark| mark.classifications.join(" "))
+            .unwrap_or_default();
+        let mut attrs=format!(" data-delta-kind=\"{}\" data-delta-key=\"{}:{}\" data-delta-state=\"{}\" data-delta-classifications=\"{}\"",escape_text(kind),escape_text(kind),escape_text(id),escape_text(state),escape_text(&classifications));
+        if self.ghost {
+            attrs.push_str(" data-delta-ghost=\"true\"");
+        }
+        if let Some(origin) = mark.and_then(|mark| mark.origin) {
+            write!(attrs, " data-delta-origin-state=\"{origin}\"").unwrap();
+        }
+        attrs
+    }
+}
+impl DeltaLayers {
+    fn new(base: &CompiledDiagram, ir: &Value) -> Self {
+        let mut head = DeltaLayer {
+            marks: Default::default(),
+            ghost: false,
+        };
+        let mut ghost = DeltaLayer {
+            marks: Default::default(),
+            ghost: true,
+        };
+        for (collection, kind) in [
+            ("components", "component"),
+            ("connections", "relationship"),
+            ("boundaries", "boundary"),
+        ] {
+            for change in ir["changes"][collection].as_array().into_iter().flatten() {
+                let id = change[if kind == "boundary" { "key" } else { "id" }]
+                    .as_str()
+                    .unwrap_or_default();
+                let state = change["status"].as_str().unwrap_or("same");
+                let classifications: Vec<_> = change["classifications"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect();
+                let geometry = classifications.iter().any(|value| value == "geometry");
+                let topology = classifications.iter().any(|value| value == "topology");
+                let origin = if state == "removed" || (kind == "relationship" && topology) {
+                    Some("removed")
+                } else if (kind == "component" && geometry)
+                    || (kind == "relationship" && geometry)
+                    || (kind == "boundary" && matches!(state, "changed" | "geometry-changed"))
+                {
+                    Some("moved-from")
+                } else {
+                    None
+                };
+                let mark = DeltaMark {
+                    state: state.into(),
+                    classifications,
+                    origin: None,
+                };
+                head.marks.insert(format!("{kind}:{id}"), mark.clone());
+                if let Some(origin) = origin {
+                    ghost.marks.insert(
+                        format!("{kind}:{id}"),
+                        DeltaMark {
+                            origin: Some(origin),
+                            ..mark
+                        },
+                    );
+                }
+            }
+        }
+        let ghost_scene = base.clone();
+        Self {
+            head,
+            ghost,
+            ghost_scene,
+        }
+    }
+}
+fn comparison_edge_attributes(
+    relation: &crate::scene::Relation,
+    index: usize,
+    delta: Option<&DeltaLayer>,
+) -> String {
+    let mut attrs = if delta.is_some_and(|layer| layer.ghost) {
+        format!("data-delta-edge-from=\"{}\" data-delta-edge-to=\"{}\" data-delta-edge-label=\"{}\" data-delta-edge-key=\"{index}\" data-delta-edge-id=\"{}\"",escape_text(&relation.from),escape_text(&relation.to),escape_text(&relation.label),escape_text(&relation.authored.id))
+    } else {
+        edge_attributes(
+            &relation.from,
+            &relation.to,
+            &relation.label,
+            index,
+            &relation.authored.facts,
+        )
+    };
+    if let Some(delta) = delta {
+        attrs.push_str(&delta.attributes("relationship", &relation.authored.id));
+    }
+    attrs
+}
+fn delta_symbol(state: &str) -> &'static str {
+    match state {
+        "added" => "+",
+        "removed" => "−",
+        "changed" => "~",
+        "moved" | "moved-from" | "rerouted" | "geometry-changed" => "↔",
+        "evidence-changed" => "E",
+        _ => "",
+    }
+}
+fn delta_node_marker(node: &crate::scene::Node, delta: &DeltaLayer, svg: &mut String) {
+    let Some(mark) = delta.mark("component", &node.authored.id) else {
+        return;
+    };
+    let symbol = delta_symbol(mark.origin.unwrap_or(&mark.state));
+    if symbol.is_empty() {
+        return;
+    }
+    write!(svg,"<g class=\"delta-node-marker\" aria-hidden=\"true\" transform=\"translate({} {})\"><circle r=\"8\"/><text y=\"3\" text-anchor=\"middle\">{symbol}</text></g>",number(node.bounds.x+node.bounds.width-9.0),number(node.bounds.y+9.0)).unwrap();
+}
+fn write_delta_markers(scene: &CompiledDiagram, delta: &DeltaLayer, svg: &mut String) {
+    for relation in &scene.relations {
+        let Some(mark) = delta.mark("relationship", &relation.authored.id) else {
+            continue;
+        };
+        let Some(point) = relation.points.first() else {
+            continue;
+        };
+        let visual = mark.origin.unwrap_or(
+            if mark.state == "changed" && mark.classifications.iter().any(|v| v == "topology") {
+                "added"
+            } else {
+                &mark.state
+            },
+        );
+        write!(
+            svg,
+            "<text class=\"delta-edge-marker\"{} x=\"{}\" y=\"{}\" aria-hidden=\"true\">{}</text>",
+            delta.attributes("relationship", &relation.authored.id),
+            number(point.x + 9.0),
+            number(point.y - 7.0),
+            delta_symbol(visual)
+        )
+        .unwrap();
+    }
+    for container in &scene.containers {
+        let id = boundary_identity(container);
+        let Some(mark) = delta.mark("boundary", &id) else {
+            continue;
+        };
+        if delta.ghost && mark.origin != Some("removed") {
+            continue;
+        }
+        write!(svg,"<text class=\"delta-boundary-marker\"{} x=\"{}\" y=\"{}\" text-anchor=\"middle\" aria-hidden=\"true\">{}</text>",delta.attributes("boundary",&id),number(container.bounds.x+container.bounds.width-12.0),number(container.bounds.y+16.0),delta_symbol(mark.origin.unwrap_or(&mark.state))).unwrap();
+    }
+}
+
+// Change only generated SVG attribute values. Authored text may itself contain
+// strings such as `url(#grid)` and must remain literal.
+fn namespace_svg(svg: &str, prefix: &str) -> String {
+    let mut result = String::with_capacity(svg.len());
+    let mut rest = svg;
+    while let Some(start) = rest.find('<') {
+        result.push_str(&rest[..start]);
+        rest = &rest[start..];
+        if rest.starts_with("<!--") {
+            let end = rest.find("-->").map(|end| end + 3).unwrap_or(rest.len());
+            result.push_str(&rest[..end]);
+            rest = &rest[end..];
+            continue;
+        }
+        let mut quote = 0u8;
+        let mut end = rest.len();
+        for (index, byte) in rest.bytes().enumerate() {
+            if quote != 0 {
+                if byte == quote {
+                    quote = 0;
+                }
+            } else if matches!(byte, b'\'' | b'"') {
+                quote = byte;
+            } else if byte == b'>' {
+                end = index + 1;
+                break;
+            }
+        }
+        let tag = &rest[..end];
+        let bytes = tag.as_bytes();
+        let mut at = 1;
+        while at < bytes.len() && !bytes[at].is_ascii_whitespace() && bytes[at] != b'>' {
+            at += 1;
+        }
+        let mut cursor = 0;
+        while at < bytes.len() {
+            while at < bytes.len()
+                && (bytes[at].is_ascii_whitespace() || matches!(bytes[at], b'/' | b'>'))
+            {
+                at += 1;
+            }
+            let name_start = at;
+            while at < bytes.len()
+                && !bytes[at].is_ascii_whitespace()
+                && !matches!(bytes[at], b'=' | b'/' | b'>')
+            {
+                at += 1;
+            }
+            if at == name_start {
+                break;
+            }
+            let name = &tag[name_start..at];
+            while at < bytes.len() && bytes[at].is_ascii_whitespace() {
+                at += 1;
+            }
+            if bytes.get(at) != Some(&b'=') {
+                continue;
+            }
+            at += 1;
+            while at < bytes.len() && bytes[at].is_ascii_whitespace() {
+                at += 1;
+            }
+            let Some(&quote) = bytes
+                .get(at)
+                .filter(|quote| matches!(**quote, b'\'' | b'"'))
+            else {
+                break;
+            };
+            at += 1;
+            let value_start = at;
+            while at < bytes.len() && bytes[at] != quote {
+                at += 1;
+            }
+            let value = &tag[value_start..at];
+            let replacement = match name {
+                "id" => Some(format!("{prefix}-{value}")),
+                "href" | "xlink:href" if value.starts_with('#') => {
+                    Some(format!("#{prefix}-{}", &value[1..]))
+                }
+                "aria-labelledby" => Some(
+                    value
+                        .split_ascii_whitespace()
+                        .map(|id| format!("{prefix}-{id}"))
+                        .collect::<Vec<_>>()
+                        .join(" "),
+                ),
+                "fill" | "stroke" | "marker-start" | "marker-mid" | "marker-end" | "filter"
+                | "clip-path" | "mask" | "style" => {
+                    Some(value.replace("url(#", &format!("url(#{prefix}-")))
+                }
+                _ => None,
+            };
+            if let Some(replacement) = replacement {
+                result.push_str(&tag[cursor..value_start]);
+                result.push_str(&replacement);
+                cursor = at;
+            }
+            at += 1;
+        }
+        result.push_str(&tag[cursor..]);
+        rest = &rest[end..];
+    }
+    result.push_str(rest);
+    result
+}
+
+pub(crate) fn render_comparison_delta(
+    base: &CompiledDiagram,
+    head: &CompiledDiagram,
+    ir: &Value,
+    evidence: &SourceEvidence,
+) -> Result<Vec<u8>, Diagnostics> {
+    validate_geometry(base)?;
+    validate_geometry(head)?;
+    let mut scene = head.clone();
+    scene.view_box.x = base.view_box.x.min(head.view_box.x);
+    scene.view_box.y = base.view_box.y.min(head.view_box.y);
+    scene.view_box.width = (base.view_box.x + base.view_box.width)
+        .max(head.view_box.x + head.view_box.width)
+        - scene.view_box.x
+        + 24.0;
+    scene.view_box.height = (base.view_box.y + base.view_box.height)
+        .max(head.view_box.y + head.view_box.height)
+        - scene.view_box.y
+        + 24.0;
+    let layers = DeltaLayers::new(base, ir);
+    let template = EmbeddedAssets::builtin()
+        .template
+        .replace("</head>", &format!("<style>{DELTA_STYLE}</style></head>"));
+    render_with_layers(
+        &scene,
+        &EmbeddedAssets {
+            template: &template,
+        },
+        evidence,
+        Some(&layers),
+    )
+}
+
+const DELTA_STYLE: &str = r#"
+:root{--delta-add:#34d399;--delta-remove:#fb7185;--delta-change:#fbbf24;--delta-move:#7dd3fc}
+html[data-theme="light"]{--delta-add:#08784b;--delta-remove:#b82c49;--delta-change:#966000;--delta-move:#006c91}
+[data-delta-ghost="true"]{pointer-events:none;opacity:.55}
+[data-delta-kind="component"][data-delta-state="added"]>[data-graph-role="node-body"],path:is([data-edge-id],[data-delta-edge-id])[data-delta-state="added"],rect[data-delta-kind="boundary"][data-delta-state="added"]{stroke:var(--delta-add)!important;stroke-width:3!important}
+[data-delta-kind="component"][data-delta-state="changed"]>[data-graph-role="node-body"],path:is([data-edge-id],[data-delta-edge-id])[data-delta-state="changed"],rect[data-delta-kind="boundary"][data-delta-state="changed"]{stroke:var(--delta-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}
+[data-delta-kind="component"][data-delta-state="evidence-changed"]>[data-graph-role="node-body"]{stroke:var(--delta-change)!important;stroke-width:3!important}
+[data-delta-kind="component"][data-delta-state="moved"]>[data-graph-role="node-body"],path:is([data-edge-id],[data-delta-edge-id])[data-delta-state="rerouted"],rect[data-delta-kind="boundary"][data-delta-state="geometry-changed"]{stroke:var(--delta-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}
+[data-delta-kind="component"][data-delta-origin-state="removed"]>[data-graph-role="node-body"],path:is([data-edge-id],[data-delta-edge-id])[data-delta-origin-state="removed"],rect[data-delta-origin-state="removed"]{stroke:var(--delta-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}
+[data-delta-kind="component"][data-delta-origin-state="moved-from"]>[data-graph-role="node-body"],path:is([data-edge-id],[data-delta-edge-id])[data-delta-origin-state="moved-from"],rect[data-delta-origin-state="moved-from"]{stroke:var(--delta-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}
+.delta-node-marker circle{fill:var(--mask);stroke:var(--delta-move);stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:var(--text);font:800 9px ui-monospace,monospace;paint-order:stroke;stroke:var(--mask);stroke-width:2px}
+[data-delta-review-current]{filter:drop-shadow(0 0 4px var(--delta-move))}
+"#;
+
 fn render_svg(scene: &CompiledDiagram) -> String {
+    render_svg_layers(scene, None)
+}
+
+fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> String {
     let mut svg = String::new();
     let profile = match scene.quality {
         crate::input::Quality::Standard => "standard",
@@ -486,7 +858,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         crate::input::InputContract::PhoenixV1 => "phoenix-v1",
     };
     write!(svg,"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{} {} {} {}\" role=\"img\" aria-labelledby=\"phoenix-diagram-title phoenix-diagram-description\" lang=\"{}\" data-diagram-type=\"{}\" data-layout-contract=\"{contract}\" data-quality-profile=\"{profile}\" data-reader-fit=\"{}\" data-animation=\"trace\" data-preset=\"{}\">",
-        number(scene.view_box.x),number(scene.view_box.y),number(scene.view_box.width),number(scene.view_box.height),scene.meta["locale"].as_str().map(escape_text).unwrap_or_else(||"en".into()),scene.diagram_type.as_str(),escape_text(&scene.reader_fit),scene.meta["visual_preset"].as_str().map(escape_text).unwrap_or_else(||"classic".into())).unwrap();
+        number(scene.view_box.x),number(scene.view_box.y),number(scene.view_box.width),number(scene.view_box.height),escape_text(&crate::i18n::resolve(&scene.meta).resolved),scene.diagram_type.as_str(),escape_text(&scene.reader_fit),scene.meta["visual_preset"].as_str().map(escape_text).unwrap_or_else(||"classic".into())).unwrap();
     // Append metadata to the root tag before any authored content is inserted.
     svg.pop();
     write!(svg, " data-input-contract=\"{input_contract}\"").unwrap();
@@ -510,14 +882,82 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             _ => {}
         }
     }
+    let extended = type_renderer(scene.diagram_type);
+    if let Some(renderer) = &extended {
+        svg.push_str(&(renderer.root_attributes)(scene));
+    }
     svg.push('>');
     write!(svg,"<title id=\"phoenix-diagram-title\">{}</title><desc id=\"phoenix-diagram-description\">{}</desc>",attribute(&scene.meta,"title"),attribute(&scene.meta,"subtitle")).unwrap();
     svg.push_str(include_str!("../assets/svg-definitions.svg"));
     if node_ui {
         svg.push_str(include_str!("../assets/node-card-style.svg"));
     }
+    if let Some(renderer) = &extended {
+        svg.push_str(&(renderer.defs)(scene));
+    }
+    if layers.is_some() {
+        svg.push_str(&namespace_svg(
+            include_str!("../assets/svg-definitions.svg"),
+            "base",
+        ));
+    }
     svg.push_str("<rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\"/>");
+    if let Some(renderer) = &extended {
+        (renderer.body)(scene, &mut svg);
+        write_legends(scene, &mut svg, Some(renderer.legend_glyph));
+        return svg;
+    }
+    if let Some(layers) = layers {
+        let mut fragment = String::new();
+
+        write_container_frames(&layers.ghost_scene, &mut fragment, Some(&layers.ghost));
+        svg.push_str(&namespace_svg(&fragment, "base"));
+    }
+    write_container_frames(scene, &mut svg, layers.map(|layers| &layers.head));
+    if let Some(layers) = layers {
+        let mut fragment = String::new();
+        write_relation_labels(&layers.ghost_scene, &mut fragment, Some(&layers.ghost));
+        write_relation_paths(&layers.ghost_scene, &mut fragment, Some(&layers.ghost));
+        svg.push_str(&namespace_svg(&fragment, "base"));
+    }
+    write_relation_paths(scene, &mut svg, layers.map(|layers| &layers.head));
+    if let DiagramFacts::Lifecycle { presentation, .. } = &scene.facts {
+        for point in &presentation.junctions {
+            write!(svg,"<circle cx=\"{}\" cy=\"{}\" r=\"2.6\" data-lifecycle-junction=\"\" style=\"fill: var(--arrow)\" aria-hidden=\"true\"/>",number(point.x),number(point.y)).unwrap();
+        }
+    }
+    if let Some(layers) = layers {
+        let mut fragment = String::new();
+        write_container_labels(&layers.ghost_scene, &mut fragment, Some(&layers.ghost));
+        write_nodes(&layers.ghost_scene, &mut fragment, Some(&layers.ghost));
+        svg.push_str(&namespace_svg(&fragment, "base"));
+    }
+    write_nodes(scene, &mut svg, layers.map(|layers| &layers.head));
+    write_container_labels(scene, &mut svg, layers.map(|layers| &layers.head));
+    write_relation_labels(scene, &mut svg, layers.map(|layers| &layers.head));
+    for text in &scene.text {
+        svg.push_str(&text_markup(text, "t-muted", ""));
+    }
+    if let Some(layers) = layers {
+        let mut fragment = String::new();
+        write_delta_markers(&layers.ghost_scene, &layers.ghost, &mut fragment);
+        svg.push_str(&namespace_svg(&fragment, "base"));
+        write_delta_markers(scene, &layers.head, &mut svg);
+    }
+    write_legends(scene, &mut svg, None);
+    svg
+}
+
+fn write_container_frames(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLayer>) {
     for container in &scene.containers {
+        if delta
+            .is_some_and(|d| d.ghost && d.mark("boundary", &boundary_identity(container)).is_none())
+        {
+            continue;
+        }
+        let delta_attrs = delta
+            .map(|d| d.attributes("boundary", &boundary_identity(container)))
+            .unwrap_or_default();
         let kind = escape_text(&container.authored.kind);
         let class = match container.authored.kind.as_str() {
             "region" => "c-region",
@@ -562,12 +1002,24 @@ fn render_svg(scene: &CompiledDiagram) -> String {
                 "group" => 9.0,
                 _ => 8.0,
             };
-            write!(svg,"<rect data-graph-role=\"structural-frame\" data-composition-frame-id=\"{}\" data-composition-frame-kind=\"{kind}\" {} rx=\"{}\" class=\"{class}\" stroke-width=\"1\"/>",escape_text(&container.authored.id),rect_attributes(&container.bounds),number(radius)).unwrap();
+            write!(svg,"<rect data-graph-role=\"structural-frame\" data-composition-frame-id=\"{}\" data-composition-frame-kind=\"{kind}\" {} rx=\"{}\" class=\"{class}\" stroke-width=\"1\"{delta_attrs}/>",escape_text(&container.authored.id),rect_attributes(&container.bounds),number(radius)).unwrap();
         }
     }
+}
+
+fn write_relation_paths(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLayer>) {
     for (index, relation) in scene.relations.iter().enumerate() {
+        if delta.is_some_and(|d| d.ghost && d.mark("relationship", &relation.authored.id).is_none())
+        {
+            continue;
+        }
         let facts = &relation.authored.facts;
-        let attrs = edge_attributes(&relation.from, &relation.to, &relation.label, index, facts);
+        let attrs = comparison_edge_attributes(relation, index, delta);
+        let animation_attr = if delta.is_some_and(|d| d.ghost) {
+            "data-delta-animate"
+        } else {
+            "data-animate"
+        };
         let variant = match relation.variant.as_str() {
             "emphasis" => "emphasis",
             "security" => "security",
@@ -631,7 +1083,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         if relation.crossover_halo {
             write!(svg,"<g data-graph-role=\"automatic-crossover\"><path data-graph-role=\"automatic-crossover-underlay\" d=\"{route}\" fill=\"none\" stroke=\"var(--mask)\" stroke-width=\"{}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" pointer-events=\"none\"/>",number(width+4.0)).unwrap();
         }
-        write!(svg,"<path {attrs} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{route}\" class=\"a-{variant}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-end=\"url(#{marker})\"",index.min(12),number(width)).unwrap();
+        write!(svg,"<path {attrs} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{route}\" class=\"a-{variant}\" {animation_attr}=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-end=\"url(#{marker})\"",index.min(12),number(width)).unwrap();
         if direction_cue.is_some() {
             write!(svg, " marker-start=\"url(#phoenix-direction-cue-{index})\"").unwrap();
         }
@@ -678,16 +1130,32 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             svg.push_str("</g>");
         }
     }
-    if let DiagramFacts::Lifecycle { presentation, .. } = &scene.facts {
-        for point in &presentation.junctions {
-            write!(svg,"<circle cx=\"{}\" cy=\"{}\" r=\"2.6\" data-lifecycle-junction=\"\" style=\"fill: var(--arrow)\" aria-hidden=\"true\"/>",number(point.x),number(point.y)).unwrap();
-        }
-    }
+}
+
+fn write_nodes(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLayer>) {
     for (index, node) in scene.nodes.iter().enumerate() {
+        if delta.is_some_and(|d| d.ghost && d.mark("component", &node.authored.id).is_none()) {
+            continue;
+        }
         let kind = node.authored.facts["type"]
             .as_str()
             .unwrap_or(&node.authored.kind);
-        write!(svg,"<g id=\"node-{}\" data-node-id=\"{}\" data-node-label=\"{}\" data-node-kind=\"{}\" tabindex=\"0\" role=\"button\" aria-label=\"{}\" aria-pressed=\"false\" data-source-path=\"{}\"",escape_text(&node.authored.id),escape_text(&node.authored.id),escape_text(&node.label),escape_text(kind),escape_text(&node.label),escape_text(&node.authored.source_path)).unwrap();
+        let node_attr = if delta.is_some_and(|d| d.ghost) {
+            "data-delta-node-id"
+        } else {
+            "data-node-id"
+        };
+        let role = if delta.is_some_and(|d| d.ghost) {
+            "group"
+        } else {
+            "button"
+        };
+        let tab = if delta.is_some_and(|d| d.ghost) {
+            "-1"
+        } else {
+            "0"
+        };
+        write!(svg,"<g id=\"node-{}\" {node_attr}=\"{}\" data-node-label=\"{}\" data-node-kind=\"{}\" tabindex=\"{tab}\" role=\"{role}\" aria-label=\"{}\" aria-pressed=\"false\" data-source-path=\"{}\"",escape_text(&node.authored.id),escape_text(&node.authored.id),escape_text(&node.label),escape_text(kind),escape_text(&node.label),escape_text(&node.authored.source_path)).unwrap();
         for field in ["sublabel", "tag"] {
             if let Some(value) = node.authored.facts[field]
                 .as_str()
@@ -696,6 +1164,9 @@ fn render_svg(scene: &CompiledDiagram) -> String {
                 write!(svg, " data-node-{field}=\"{}\"", escape_text(value)).unwrap();
             }
         }
+        if let Some(delta) = delta {
+            svg.push_str(&delta.attributes("component", &node.authored.id));
+        }
         svg.push('>');
         let radius = match scene.diagram_type {
             DiagramType::Sequence | DiagramType::Dataflow => 6.0,
@@ -703,7 +1174,12 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             _ => 8.0,
         };
         let fill = node_tone(scene, kind);
-        write!(svg,"<title>{}</title><rect {} rx=\"{}\" class=\"c-mask\"/><rect data-graph-role=\"node-body\" {} rx=\"{}\" class=\"c-{fill}\" stroke-width=\"1.5\" data-animate=\"node\" style=\"--step:{}\"/>",escape_text(&node.label),rect_attributes(&node.bounds),number(radius),rect_attributes(&node.bounds),number(radius),index.min(12)).unwrap();
+        let animation_attr = if delta.is_some_and(|d| d.ghost) {
+            "data-delta-animate"
+        } else {
+            "data-animate"
+        };
+        write!(svg,"<title>{}</title><rect {} rx=\"{}\" class=\"c-mask\"/><rect data-graph-role=\"node-body\" {} rx=\"{}\" class=\"c-{fill}\" stroke-width=\"1.5\" {animation_attr}=\"node\" style=\"--step:{}\"/>",escape_text(&node.label),rect_attributes(&node.bounds),number(radius),rect_attributes(&node.bounds),number(radius),index.min(12)).unwrap();
         if let DiagramFacts::Lifecycle { presentation, .. } = &scene.facts {
             if presentation.final_states.contains(&node.authored.id) {
                 let inner = Rect {
@@ -717,7 +1193,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
             if presentation.initial_state.as_ref() == Some(&node.authored.id) {
                 svg.push_str("<g aria-hidden=\"true\" data-lifecycle-initial-marker=\"\">");
                 initial_marker(
-                    &mut svg,
+                    svg,
                     node.bounds.x - 26.0,
                     node.bounds.x - 1.0,
                     node.bounds.y + node.bounds.height / 2.0,
@@ -728,6 +1204,24 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         if let Some(sigil) = &node.sigil {
             let (selected, shape) = sigil_shape(&sigil.kind);
             write!(svg,"<g aria-hidden=\"true\" data-semantic-sigil=\"{selected}\" class=\"semantic-sigil s-{}\" transform=\"translate({} {}) scale({})\">{shape}</g>",tone(kind),number(sigil.position.x),number(sigil.position.y),number(sigil.size/16.0)).unwrap();
+        }
+        if let Some(brand) = &node.brand {
+            let r = &brand.resource;
+            write!(svg,"<g aria-hidden=\"true\" data-brand-mark=\"{}\" data-brand-title=\"{}\" data-brand-source=\"{}\" data-brand-sha256=\"{}\" transform=\"translate({} {})\"><rect width=\"16\" height=\"16\" rx=\"4\" fill=\"#fff\" stroke=\"#cbd5e1\"/>",escape_text(&r.resource.id),escape_text(&r.title),escape_text(&r.resource.source_url),escape_text(&r.resource.sha256),number(brand.bounds.x),number(brand.bounds.y)).unwrap();
+            if let Some(mark) = &r.mark {
+                write!(
+                    svg,
+                    "<path d=\"{}\" fill=\"#{}\" transform=\"translate(2 2) scale({})\"/>",
+                    escape_text(&mark.path),
+                    escape_text(&mark.hex),
+                    number(12.0 / mark.view_box)
+                )
+                .unwrap();
+            }
+            if let Some(data) = &r.data_base64 {
+                write!(svg,"<image href=\"data:{};base64,{}\" x=\"2\" y=\"2\" width=\"12\" height=\"12\" preserveAspectRatio=\"xMidYMid meet\"/>",escape_text(&r.resource.media_type),escape_text(data)).unwrap();
+            }
+            svg.push_str("</g>");
         }
         for text in &node.text {
             let primary = text.source_path.ends_with("/label");
@@ -753,10 +1247,21 @@ fn render_svg(scene: &CompiledDiagram) -> String {
                 attributes,
             ));
         }
+        if let Some(delta) = delta {
+            delta_node_marker(node, delta, svg);
+        }
         svg.push_str("</g>");
     }
+}
+
+fn write_container_labels(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLayer>) {
     for container in &scene.containers {
-        write!(svg,"<g data-graph-role=\"structural-frame-label\" data-composition-frame-id=\"{}\" data-composition-frame-kind=\"{}\">",escape_text(&container.authored.id),escape_text(&container.authored.kind)).unwrap();
+        if delta
+            .is_some_and(|d| d.ghost && d.mark("boundary", &boundary_identity(container)).is_none())
+        {
+            continue;
+        }
+        write!(svg,"<g data-graph-role=\"structural-frame-label\" data-composition-frame-id=\"{}\" data-composition-frame-kind=\"{}\"{}>",escape_text(&container.authored.id),escape_text(&container.authored.kind),delta.map(|d|d.attributes("boundary", &boundary_identity(container))).unwrap_or_default()).unwrap();
         if let Some(plate) = container.label_plate {
             let class = if container.rule.is_some() {
                 "c-mask phase-chip"
@@ -775,14 +1280,15 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         }
         svg.push_str("</g>");
     }
+}
+
+fn write_relation_labels(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLayer>) {
     for (index, relation) in scene.relations.iter().enumerate() {
-        let attrs = edge_attributes(
-            &relation.from,
-            &relation.to,
-            &relation.label,
-            index,
-            &relation.authored.facts,
-        );
+        if delta.is_some_and(|d| d.ghost && d.mark("relationship", &relation.authored.id).is_none())
+        {
+            continue;
+        }
+        let attrs = comparison_edge_attributes(relation, index, delta);
         write!(
             svg,
             "<g data-detail=\"{}\" {attrs}>",
@@ -830,9 +1336,9 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         }
         svg.push_str("</g>");
     }
-    for text in &scene.text {
-        svg.push_str(&text_markup(text, "t-muted", ""));
-    }
+}
+
+fn write_legends(scene: &CompiledDiagram, svg: &mut String, glyph: Option<LegendGlyph>) {
     svg.push_str("<!-- Legend -->");
     svg.push_str("<g data-legend=\"\" data-legend-bridge=\"\">");
     for legend in &scene.legends {
@@ -875,7 +1381,9 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         }
         svg.push('>');
         if kind != "legend-title" {
-            if arrow_legend {
+            if let Some(glyph) = glyph {
+                glyph(scene, legend, baseline, svg);
+            } else if arrow_legend {
                 let variant = if matches!(kind, "emphasis" | "security" | "dashed") {
                     kind
                 } else {
@@ -892,7 +1400,7 @@ fn render_svg(scene: &CompiledDiagram) -> String {
                 && kind == "start"
             {
                 initial_marker(
-                    &mut svg,
+                    svg,
                     legend.bounds.x + 4.5,
                     legend.bounds.x + 24.0,
                     baseline - 3.5,
@@ -931,12 +1439,29 @@ fn render_svg(scene: &CompiledDiagram) -> String {
         svg.push_str("</g>");
     }
     svg.push_str("</g></svg>");
-    svg
 }
 
 pub fn render(
     scene: &CompiledDiagram,
     assets: &EmbeddedAssets<'_>,
+) -> Result<Vec<u8>, Diagnostics> {
+    render_with_evidence(scene, assets, &SourceEvidence::none())
+}
+
+/// The artifact with the source evidence observed for its candidate.
+pub fn render_with_evidence(
+    scene: &CompiledDiagram,
+    assets: &EmbeddedAssets<'_>,
+    evidence: &SourceEvidence,
+) -> Result<Vec<u8>, Diagnostics> {
+    render_with_layers(scene, assets, evidence, None)
+}
+
+fn render_with_layers(
+    scene: &CompiledDiagram,
+    assets: &EmbeddedAssets<'_>,
+    evidence: &SourceEvidence,
+    layers: Option<&DeltaLayers>,
 ) -> Result<Vec<u8>, Diagnostics> {
     validate_geometry(scene)?;
     let mut cards = String::from("<div class=\"cards\">");
@@ -955,8 +1480,19 @@ pub fn render(
         cards.push_str("</ul></div>");
     }
     cards.push_str("</div>");
-    let metadata=serde_json::to_string(&json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"inputContract":scene.input_contract,"quality":scene.quality,"readerFit":scene.reader_fit,
-        "graph":{"nodes":scene.nodes.iter().map(|node|&node.authored.facts).collect::<Vec<_>>(),"relations":scene.relations.iter().map(|relation|&relation.authored.facts).collect::<Vec<_>>()},"cards":scene.cards.iter().map(|card|&card.authored.facts).collect::<Vec<_>>(),"presentation":{"relations":scene.relations.iter().map(|r|json!({"variant":r.variant,"labelOwner":r.label_owner,"junction":r.junction})).collect::<Vec<_>>()},"facts":scene.facts})).expect("serializable metadata").replace('<',"\\u003c").replace('>',"\\u003e").replace('&',"\\u0026");
+    let mut public_metadata = json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"inputContract":scene.input_contract,"quality":scene.quality,"readerFit":scene.reader_fit,
+        "graph":{"nodes":scene.nodes.iter().map(|node|&node.authored.facts).collect::<Vec<_>>(),"relations":scene.relations.iter().map(|relation|&relation.authored.facts).collect::<Vec<_>>()},"cards":scene.cards.iter().map(|card|&card.authored.facts).collect::<Vec<_>>(),"presentation":{"relations":scene.relations.iter().map(|r|json!({"variant":r.variant,"labelOwner":r.label_owner,"junction":r.junction})).collect::<Vec<_>>()},"facts":scene.facts,"sourceEvidence":evidence,"brandResources":scene.nodes.iter().filter_map(|n|n.brand.as_ref().map(|b|(format!("{}/brand",n.authored.source_path),&b.resource))).collect::<std::collections::BTreeMap<_,_>>()});
+    if scene.nodes.iter().all(|n| n.brand.is_none()) {
+        public_metadata
+            .as_object_mut()
+            .expect("metadata object")
+            .remove("brandResources");
+    }
+    let metadata = serde_json::to_string(&public_metadata)
+        .expect("serializable metadata")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('&', "\\u0026");
     let title = attribute(&scene.meta, "title");
     let subtitle = scene.meta["subtitle"]
         .as_str()
@@ -966,10 +1502,7 @@ pub fn render(
     let replacements = [
         (
             "LOCALE",
-            scene.meta["locale"]
-                .as_str()
-                .map(escape_text)
-                .unwrap_or_else(|| "en".into()),
+            escape_text(&crate::i18n::resolve(&scene.meta).resolved),
         ),
         (
             "PRESET",
@@ -981,7 +1514,14 @@ pub fn render(
         ("TITLE", title.clone()),
         ("HEADING", title),
         ("SUBTITLE", subtitle),
-        ("SVG", render_svg(scene)),
+        (
+            "SVG",
+            if layers.is_some() {
+                namespace_svg(&render_svg_layers(scene, layers), "delta")
+            } else {
+                render_svg(scene)
+            },
+        ),
         ("CARDS", cards),
         ("METADATA", metadata),
     ];

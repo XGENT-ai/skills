@@ -65,6 +65,7 @@ function run(f, args, input = '') {
     child.stdout.on('data', data => { stdout += data; });
     child.stderr.on('data', data => { stderr += data; });
     child.once('error', reject);
+    child.stdin.on('error', error => { if (error.code !== 'EPIPE') reject(error); });
     child.once('close', code => resolve({ code, stdout, stderr }));
     child.stdin.end(input || undefined);
   });
@@ -72,7 +73,8 @@ function run(f, args, input = '') {
 
 test('ordinary CLI missing engine returns unavailable 4 without creating a cache', async t => {
   const f = fixture(t);
-  const result = await run(f, ['context', '--json']);
+  // Keep a write pending while preflight rejects before reading stdin.
+  const result = await run(f, ['context', '--json'], 'x'.repeat(1024 * 1024));
   assert.equal(result.code, 4);
   const json = JSON.parse(result.stdout);
   assert.equal(json.status, 'unavailable');

@@ -29,7 +29,7 @@ SOFTWARE.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="phoenix-diagram 0.1.0">
+  <meta name="generator" content="phoenix-diagram 0.2.0">
   <meta name="phoenix-diagram-reader-contract" content="declared-wide-v1">
   <title>{{PHOENIX:TITLE}}</title>
   <script>
@@ -194,6 +194,66 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   </style>
   <style>
 /* PHOENIX:VIEWER_CSS */
+  </style>
+  <style id="phoenix-diagram-passport-evidence">
+    /* Source state, revision, local-only marker and pending reasons wrap instead of truncating. */
+    .semantic-passport-evidence-head { flex-wrap: wrap; }
+    .semantic-passport-repository,
+    .semantic-passport-source strong,
+    .semantic-passport-source small { white-space: normal; overflow-wrap: anywhere; }
+    /* A long context, such as every foreign key target of a table, wraps too. The
+       radius still rounds a one-line chip fully but keeps wrapped lines inside it. */
+    .semantic-passport-meta [data-passport="context"] { white-space: normal; overflow-wrap: anywhere; border-radius: 0.625rem; }
+    /* The title and the detail line, such as a span's timing and share of the
+       wall clock, wrap on a narrow panel. */
+    .relationship-lens-title,
+    .semantic-passport-detail { white-space: normal; overflow-wrap: anywhere; }
+    /* On a short narrow canvas the details can be taller than the room above the
+       navigation (0.5rem inset, 54px dock, 10px placement gap, 0.5rem top inset).
+       Capped there, the panel fits above the navigation and scrolls, so every
+       line and the Reach controls stay reachable. */
+    @media (max-width: 720px) {
+      .focus-chip { max-height: calc(100% - 5rem); overflow-y: auto; overscroll-behavior: contain; }
+    }
+  </style>
+  <style id="phoenix-diagram-narrow-stage">
+    @media (max-width: 720px) {
+      /* The whole dock stays inside a narrow stage. It may span the stage less
+         its 0.5rem insets; Route, Map and Lens show only their glyph (their
+         names stay the accessible label and title); buttons keep a 40px by
+         44px target; and a dock still too wide wraps instead of scrolling the
+         zoom readout and + out of sight. */
+      .diagram-nav { max-width: calc(100% - 1rem); flex-wrap: wrap; justify-content: flex-end; }
+      .diagram-nav button { min-width: 2.5rem; }
+      .diagram-nav #btn-route-probe,
+      .diagram-nav #btn-overview-map,
+      .diagram-nav #btn-semantic-lens { min-width: 2.5rem; padding-inline: 0; justify-content: center; }
+      .diagram-nav #btn-route-probe > [data-phoenix-i18n],
+      .diagram-nav #btn-overview-map > [data-phoenix-i18n],
+      .diagram-nav #btn-semantic-lens > [data-phoenix-i18n] { display: none; }
+      /* When no height of a short stage clears the focused node, focus.js
+         reserves this room below the drawing for the Passport; the dock
+         follows the stage bottom. */
+      html:not([data-embed="true"]):not([data-present="true"]) .diagram-container[data-passport-reserve] {
+        padding-bottom: calc(4.5rem + var(--phoenix-diagram-passport-reserve, 0px));
+      }
+      /* A zoomed-in stage adds Map; narrower targets keep that dock on one row. */
+      .diagram-container.is-pannable .diagram-nav button:not([data-view="reset"]),
+      .diagram-container.is-pannable .diagram-nav #btn-route-probe,
+      .diagram-container.is-pannable .diagram-nav #btn-overview-map,
+      .diagram-container.is-pannable .diagram-nav #btn-semantic-lens { min-width: 2.125rem; }
+      .diagram-container.is-pannable .diagram-nav #btn-node-finder,
+      .diagram-container.is-pannable .diagram-nav [data-view="out"] { margin-left: 0.25rem; }
+    }
+    @media (max-width: 385px) {
+      /* 360 to 385px phones keep the dock and its full readout on one row. */
+      .diagram-nav button,
+      .diagram-nav #btn-route-probe,
+      .diagram-nav #btn-overview-map,
+      .diagram-nav #btn-semantic-lens { min-width: 2.125rem; }
+      .diagram-nav #btn-node-finder,
+      .diagram-nav [data-view="out"] { margin-left: 0.25rem; }
+    }
   </style>
 </head>
 <body>
@@ -823,17 +883,35 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 /* PHOENIX:MOTION_GOVERNOR */
 
-    /* P1 retains raw source facts in native metadata without claiming verified
-       repository evidence. The existing interface stays inert unless a future
-       verified, separately-owned payload is implemented. */
+    /* Source evidence is the engine's observation in the native metadata. Only
+       references it checked against the pinned commit and the working tree
+       carry state "verified"; the others keep their reason. */
     PhoenixDiagram.sourceEvidence = (function () {
       var element = document.getElementById('phoenix-diagram-metadata');
       var payload = null;
       if (element) {
         try {
           var parsed = JSON.parse(element.textContent || 'null');
-          if (parsed && parsed.verified === true && parsed.repository && parsed.nodes) payload = parsed;
+          var observed = parsed && parsed.sourceEvidence;
+          if (observed && observed.status !== 'none' && observed.repository && Array.isArray(observed.references)) payload = observed;
         } catch (_) {}
+      }
+      var byNode = {};
+      var unsourced = {};
+      if (payload) {
+        payload.references.forEach(function (reference) {
+          if (!Object.prototype.hasOwnProperty.call(byNode, reference.nodeId)) byNode[reference.nodeId] = [];
+          byNode[reference.nodeId].push(reference);
+        });
+        (payload.unsourced || []).forEach(function (id) { unsourced[id] = true; });
+      }
+      function nodeSources(id) {
+        return Object.prototype.hasOwnProperty.call(byNode, id) ? byNode[id] : [];
+      }
+      function state(id) {
+        var sources = nodeSources(id);
+        if (!sources.length) return payload && unsourced[id] === true ? 'unsourced' : null;
+        return sources.every(function (source) { return source.state === 'verified'; }) ? 'verified' : 'unverified';
       }
       // Keep verified evidence discoverable to screen readers without adding
       // visual marks. Restore first so repeated initialization never appends
@@ -847,21 +925,24 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           node.removeAttribute('data-source-evidence-count');
           node.removeAttribute('data-source-evidence-original-label');
         }
-        var sources = payload && payload.nodes[node.getAttribute('data-node-id')];
-        if (!Array.isArray(sources) || !sources.length) return;
+        var id = node.getAttribute('data-node-id');
+        var nodeState = state(id);
+        if (!nodeState) return;
+        var sources = nodeSources(id);
+        var verified = sources.filter(function (source) { return source.state === 'verified'; }).length;
+        var parts = [];
+        if (verified) parts.push(viewerCount('viewer.passport.sourceCount', verified));
+        if (nodeState !== 'verified') parts.push(viewerText('viewer.passport.evidence.' + nodeState));
         var originalLabel = node.getAttribute('aria-label');
         node.setAttribute('data-source-evidence-count', String(sources.length));
         if (originalLabel != null) node.setAttribute('data-source-evidence-original-label', originalLabel);
-        node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') +
-          viewerCount('viewer.passport.sourceCount', sources.length));
+        node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + parts.join(', '));
       });
       return {
         available: function () { return Boolean(payload); },
         repository: function () { return payload ? payload.repository : null; },
-        node: function (id) {
-          var sources = payload && payload.nodes ? payload.nodes[id] : null;
-          return Array.isArray(sources) ? sources.slice() : [];
-        }
+        state: state,
+        node: function (id) { return nodeSources(id).slice(); }
       };
     })();
 

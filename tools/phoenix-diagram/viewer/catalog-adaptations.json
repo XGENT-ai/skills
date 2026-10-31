@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "note": "Phoenix additions to the frozen catalogs. Every entry adds a key that the locale lacks; existing messages are never replaced.",
+  "messages": {
+    "viewer.export.downloadPngInstead": {
+      "zh-TW": "也可以在匯出選單中下載 PNG。",
+      "es": "También puedes descargar PNG desde el menú Exportar.",
+      "ko": "대신 내보내기 메뉴에서 PNG를 내려받을 수 있습니다."
+    },
+    "timeline.precision.day": {
+      "en": "date only",
+      "zh-CN": "仅日期",
+      "zh-TW": "僅日期",
+      "es": "solo fecha",
+      "ko": "날짜만"
+    },
+    "timeline.precision.dayDisclosure": {
+      "en": "Date-only events sit at noon of their stated offset.",
+      "zh-CN": "仅有日期的事件按其偏移的中午定位。",
+      "zh-TW": "僅有日期的事件依其時差的正午定位。",
+      "es": "Los eventos con solo fecha se sitúan al mediodía de su desfase.",
+      "ko": "날짜만 있는 이벤트는 해당 오프셋의 정오에 배치됩니다."
+    },
+    "viewer.passport.evidence.unverified": {
+      "en": "Pending verification",
+      "zh-CN": "待核实",
+      "zh-TW": "待核實",
+      "es": "Pendiente de verificar",
+      "ko": "확인 대기"
+    },
+    "viewer.passport.evidence.unsourced": {
+      "en": "No source provided",
+      "zh-CN": "未提供来源",
+      "zh-TW": "未提供來源",
+      "es": "Sin fuente",
+      "ko": "소스 없음"
+    },
+    "viewer.passport.evidence.localOnly": {
+      "en": "Local only",
+      "zh-CN": "仅本地",
+      "zh-TW": "僅本機",
+      "es": "Solo local",
+      "ko": "로컬 전용"
+    },
+    "viewer.passport.evidence.reason.repo-root-not-provided": {
+      "en": "No repository root was given when the diagram was delivered.",
+      "zh-CN": "交付时未提供仓库根目录。",
+      "zh-TW": "交付時未提供儲存庫根目錄。",
+      "es": "No se indicó la raíz del repositorio al entregar el diagrama.",
+      "ko": "다이어그램을 전달할 때 저장소 루트를 지정하지 않았습니다."
+    },
+    "viewer.passport.evidence.reason.git-unavailable": {
+      "en": "Git was not available to check the source.",
+      "zh-CN": "无法使用 Git 核对来源。",
+      "zh-TW": "無法使用 Git 核對來源。",
+      "es": "Git no estaba disponible para comprobar la fuente.",
+      "ko": "소스를 확인할 Git을 사용할 수 없습니다."
+    },
+    "viewer.passport.evidence.reason.git-timeout": {
+      "en": "Git did not answer in time.",
+      "zh-CN": "Git 未在时限内响应。",
+      "zh-TW": "Git 未在時限內回應。",
+      "es": "Git no respondió a tiempo.",
+      "ko": "Git이 제한 시간 안에 응답하지 않았습니다."
+    },
+    "viewer.passport.evidence.reason.repository-unreadable": {
+      "en": "The repository could not be read.",
+      "zh-CN": "无法读取该仓库。",
+      "zh-TW": "無法讀取此儲存庫。",
+      "es": "No se pudo leer el repositorio.",
+      "ko": "저장소를 읽을 수 없습니다."
+    },
+    "viewer.passport.evidence.reason.root-not-top-level": {
+      "en": "The given folder is not the repository's top level.",
+      "zh-CN": "所给目录不是仓库的顶层目录。",
+      "zh-TW": "所給資料夾不是儲存庫的最上層目錄。",
+      "es": "La carpeta indicada no es la raíz del repositorio.",
+      "ko": "지정한 폴더가 저장소 최상위가 아닙니다."
+    },
+    "viewer.passport.evidence.reason.origin-mismatch": {
+      "en": "The repository origin differs from the declared URL.",
+      "zh-CN": "仓库 origin 与声明的地址不同。",
+      "zh-TW": "儲存庫 origin 與宣告的網址不同。",
+      "es": "El origin del repositorio no coincide con la URL declarada.",
+      "ko": "저장소 origin이 선언한 URL과 다릅니다."
+    },
+    "viewer.passport.evidence.reason.partial-clone-unsafe-git": {
+      "en": "This partial clone needs Git 2.45 or newer to be checked without fetching.",
+      "zh-CN": "该部分克隆需 Git 2.45 及以上版本才能在不拉取的情况下核对。",
+      "zh-TW": "此部分複製需 Git 2.45 以上版本才能在不擷取的情況下核對。",
+      "es": "Este clon parcial requiere Git 2.45 o posterior para comprobarse sin descargar.",
+      "ko": "이 부분 복제는 가져오기 없이 확인하려면 Git 2.45 이상이 필요합니다."
+    },
+    "viewer.passport.evidence.reason.revision-unavailable": {
+      "en": "The pinned revision is not in the local repository.",
+      "zh-CN": "本地仓库中没有固定的修订版本。",
+      "zh-TW": "本機儲存庫中沒有固定的版本。",
+      "es": "La revisión fijada no está en el repositorio local.",
+      "ko": "고정된 리비전이 로컬 저장소에 없습니다."
+    },
+    "viewer.passport.evidence.reason.object-unavailable": {
+      "en": "The file contents at the pinned revision are not stored locally.",
+      "zh-CN": "固定修订版本中的文件内容未保存在本地。",
+      "zh-TW": "固定版本中的檔案內容未儲存在本機。",
+      "es": "El contenido del archivo en la revisión fijada no está guardado localmente.",
+      "ko": "고정된 리비전의 파일 내용이 로컬에 저장되어 있지 않습니다."
+    },
+    "viewer.passport.evidence.reason.file-missing": {
+      "en": "The file does not exist at the pinned revision.",
+      "zh-CN": "固定修订版本中不存在该文件。",
+      "zh-TW": "固定版本中不存在此檔案。",
+      "es": "El archivo no existe en la revisión fijada.",
+      "ko": "고정된 리비전에 파일이 없습니다."
+    },
+    "viewer.passport.evidence.reason.line-out-of-range": {
+      "en": "The cited lines are beyond the end of the file at the pinned revision.",
+      "zh-CN": "所引行超出了固定修订版本中文件的末尾。",
+      "zh-TW": "引用的行超出固定版本中檔案的結尾。",
+      "es": "Las líneas citadas superan el final del archivo en la revisión fijada.",
+      "ko": "인용한 줄이 고정된 리비전의 파일 끝을 넘습니다."
+    },
+    "viewer.passport.evidence.reason.worktree-differs": {
+      "en": "The working copy differs from the pinned revision.",
+      "zh-CN": "工作副本与固定修订版本不同。",
+      "zh-TW": "工作副本與固定版本不同。",
+      "es": "La copia de trabajo difiere de la revisión fijada.",
+      "ko": "작업 사본이 고정된 리비전과 다릅니다."
+    }
+  }
+}

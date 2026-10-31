@@ -1,8 +1,15 @@
 // Installer acceptance uses real temporary filesystems and the actual Cargo
 // engine binary. Provider directory tests do not prove host loading (V-13).
 pub use phoenix_diagram::{
-    diagnostic, output, INPUT_CONTRACT_SCHEMA, RECEIPT_SCHEMA, TOOL_VERSION, VIEWER_REVISION,
+    diagnostic, INPUT_CONTRACT_SCHEMA, RECEIPT_SCHEMA, TOOL_VERSION, VIEWER_REVISION,
 };
+#[path = "../src/acceptance.rs"]
+#[allow(dead_code)] // The shared gate copy also contains the unused preview-worker companion.
+mod acceptance;
+mod output {
+    pub(crate) use super::acceptance::checkpoint as acceptance_checkpoint;
+    pub use phoenix_diagram::output::*;
+}
 #[path = "../src/install.rs"]
 mod install;
 use install::*;
@@ -124,18 +131,29 @@ fn fixture(root: &Workspace) -> InstallRequest {
         })
         .collect();
     let manifest = serde_json::to_vec(&json!({
-        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.1.0","files":files
+        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.2.0","files":files
     }))
     .unwrap();
     write(&bundle.join("manifest.json"), &manifest, 0o644);
-    let compiled = Path::new(env!("CARGO_BIN_EXE_phoenix-diagram"));
+    let compiled_path = std::env::var_os("PHOENIX_DIAGRAM_BIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_phoenix-diagram")));
+    let compiled = compiled_path.as_path();
     let (engine_size, engine_sha256) = ENGINE_DIGEST.get_or_init(|| {
         let bytes = fs::read(compiled).unwrap();
         (bytes.len() as u64, digest(&bytes))
     });
     // Cargo artifacts may have multiple links; probe only an owned byte copy.
+    // A child process writes it: a write descriptor held by this process could
+    // be inherited by a parallel test's fork and fail the exec with ETXTBSY.
     let engine = root.path("phoenix-diagram");
-    assert_eq!(fs::copy(compiled, &engine).unwrap(), *engine_size);
+    let copied = Command::new("/bin/cp")
+        .arg(compiled)
+        .arg(&engine)
+        .status()
+        .unwrap();
+    assert!(copied.success());
+    assert_eq!(fs::metadata(&engine).unwrap().len(), *engine_size);
     fs::set_permissions(&engine, fs::Permissions::from_mode(0o700)).unwrap();
     let metadata = fs::symlink_metadata(&engine).unwrap();
     assert!(metadata.is_file() && !metadata.is_symlink());
@@ -144,9 +162,9 @@ fn fixture(root: &Workspace) -> InstallRequest {
     assert_eq!(digest(&fs::read(&engine).unwrap()), *engine_sha256);
     let version = serde_json::to_vec(&json!({
         "schemaVersion":1,"distribution":"development","tool":"phoenix-diagram",
-        "toolVersion":"0.1.0","npmPackageVersion":env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"),"sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "toolVersion":"0.2.0","npmPackageVersion":env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION"),"sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),
-        "inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v1",
+        "inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2",
         "bundleSha256":digest(&manifest),
         "engines":{platform():{"asset":format!("phoenix-diagram-{}",platform()),"size":engine_size,"sha256":engine_sha256}}
     }))
@@ -206,6 +224,14 @@ fn checkpoint_name(checkpoint: &install::test_support::Checkpoint) -> &'static s
         }
         Checkpoint::AfterLink(_) => "link",
         Checkpoint::AfterPublish(_) => "publish",
+        Checkpoint::BeforeLegacyRemove(_) => "before-legacy",
+        Checkpoint::AfterLegacyRemove(_) => "legacy-remove",
+        Checkpoint::BeforeRollback(_) => "before-rollback",
+        Checkpoint::AfterRollbackJournalRetire => "rollback-journal-retire",
+        Checkpoint::AfterRollbackJournalPublish => "rollback-journal-publish",
+        Checkpoint::RollbackAuditArchived => "compat-audit",
+        Checkpoint::RollbackCompatibilityPublished => "compat-publish",
+        Checkpoint::AfterRollback(_) => "rollback",
         Checkpoint::BeforeActive => "before-active",
         Checkpoint::AfterActive => "active",
         Checkpoint::AfterRecover(_) => "recover",
@@ -295,6 +321,12 @@ fn install_child_process() {
     }
     let receipt = if action == "recover" {
         install::test_support::recover(&request.project, &mut observer)
+    } else if action == "migrate" {
+        install::test_support::migrate(&request, true, false, &mut observer)
+    } else if let Some(id) = action.strip_prefix("rollback:") {
+        install::test_support::rollback(&request.project, id, false, &mut observer)
+    } else if let Some(id) = action.strip_prefix("migration-recover:") {
+        install::test_support::recover_migration(&request.project, id, &mut observer)
     } else {
         install::test_support::apply(&request, &mut observer)
     }
@@ -520,7 +552,7 @@ fn install_rejects_bundle_tampering_before_any_project_write() {
             "engine" => write(&request.bundle_root.join("ENGINE.json"), b"{}", 0o644),
             "probe" => {
                 let fake = root.path("fake-engine");
-                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.1.0 input=1 receipt=1 viewer=phoenix-v1\\n'\n", 0o755);
+                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
                 request.engine = fake;
             }
             _ => unreachable!(),
@@ -1040,5 +1072,619 @@ fn install_unknown_or_tampered_output_cleanup_is_not_adopted() {
             "{problem}: {receipt:?}"
         );
         assert_eq!(snapshot(&request.project), before);
+    }
+}
+
+// Migration uses complete frozen trees in disposable project copies only.
+fn legacy_fixture(
+    root: &Workspace,
+    request: &InstallRequest,
+    source: &str,
+    provider: &str,
+) -> PathBuf {
+    let extraction = root.path(&format!("legacy-{provider}"));
+    fs::create_dir(&extraction).unwrap();
+    let upstream = Path::new(env!("CARGO_MANIFEST_DIR")).join("upstream");
+    let (archive, member) = if source == "reference-3.1.0" {
+        ("archify-3.1.0-source.tar.gz", "archify")
+    } else {
+        ("archify-2.17-full-source.tar.gz", source)
+    };
+    let extracted = Command::new("tar")
+        .arg("-xzf")
+        .arg(upstream.join(archive))
+        .arg("-C")
+        .arg(&extraction)
+        .arg(member)
+        .output()
+        .unwrap();
+    assert!(
+        extracted.status.success(),
+        "{}",
+        String::from_utf8_lossy(&extracted.stderr)
+    );
+    let target = request.project.join(format!("{provider}/skills/archify"));
+    fs::create_dir_all(target.parent().unwrap()).unwrap();
+    fs::rename(extraction.join(member), &target).unwrap();
+    target
+}
+fn migrate_fixture(request: &InstallRequest, confirm: bool, dry_run: bool) -> InstallReceipt {
+    install::test_support::migrate(request, confirm, dry_run, &mut |_, _| Ok(())).unwrap()
+}
+#[test]
+fn migration_complete_sources_confirmation_and_direct_removal() {
+    for (source, count) in [
+        ("legacy-2.17", 219),
+        ("legacy-2.17-when-to-use", 219),
+        ("reference-3.1.0", 157),
+    ] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let legacy = legacy_fixture(&root, &request, source, ".agents");
+        write(
+            &request.project.join(".claude/settings.json"),
+            b"shared settings\n",
+            0o644,
+        );
+        write(
+            &request.project.join(".phoenix-ui/untouched"),
+            b"ui\n",
+            0o644,
+        );
+        write(&request.project.join("AGENTS.md"), b"authored\n", 0o644);
+        let original = snapshot(&request.project);
+        let planned = migrate_fixture(&request, false, true);
+        assert_eq!(planned.status, InstallStatus::Planned, "{planned:?}");
+        assert_eq!(planned.migration_sources, vec![source]);
+        assert!(planned.removals.len() >= count);
+        assert_eq!(snapshot(&request.project), original);
+        let failure =
+            install::test_support::migrate(&request, false, false, &mut |_, _| Ok(())).unwrap_err();
+        assert_eq!(failure.code, "install/confirmation-required");
+        assert_eq!(snapshot(&request.project), original);
+        let applied = migrate_fixture(&request, true, false);
+        assert_eq!(applied.status, InstallStatus::Installed, "{applied:?}");
+        assert!(!legacy.exists());
+        assert!(applied.removals.iter().all(|r| r.status == "removed"));
+        assert_eq!(applied.legacy_backup_policy, "none");
+        assert_eq!(
+            load(&request.project.join(".phoenix-diagram/install/active.json"))["schemaVersion"],
+            2
+        );
+        let journal = load(applied.journal.as_ref().unwrap());
+        assert_eq!(journal["schemaVersion"], 2);
+        assert_eq!(
+            journal["migration"]["roots"][0]["kind"],
+            "legacy-root-remove"
+        );
+        assert!(journal["operations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|op| op["kind"] == "file-write"
+                && !op["path"].as_str().unwrap().contains("archify")));
+        assert_eq!(
+            fs::read(request.project.join(".claude/settings.json")).unwrap(),
+            b"shared settings\n"
+        );
+        assert_eq!(
+            fs::read(request.project.join(".phoenix-ui/untouched")).unwrap(),
+            b"ui\n"
+        );
+        assert_eq!(
+            fs::read(request.project.join("AGENTS.md")).unwrap(),
+            b"authored\n"
+        );
+        let id = applied.transaction_id.unwrap();
+        let before = snapshot(&request.project);
+        let dry = install::rollback(&request.project, &id, true).unwrap();
+        assert_eq!(dry.status, InstallStatus::Planned);
+        assert_eq!(snapshot(&request.project), before);
+        let rolled = install::rollback(&request.project, &id, false).unwrap();
+        assert_eq!(rolled.status, InstallStatus::RolledBack, "{rolled:?}");
+        assert!(!legacy.exists());
+        assert!(!request.project.join(format!("{SKILL}/SKILL.md")).exists());
+        assert!(rolled.journal.unwrap().ends_with("rolled-back-v2.json"));
+        let before = snapshot(&request.project);
+        assert_eq!(
+            install::rollback(&request.project, &id, false)
+                .unwrap()
+                .status,
+            InstallStatus::RolledBack
+        );
+        assert_eq!(snapshot(&request.project), before);
+    }
+}
+#[test]
+fn migration_preserves_unknown_modes_extra_links_and_manager_claims_without_writes() {
+    for fault in [
+        "mode",
+        "extra",
+        "missing",
+        "modified",
+        "symlink",
+        "hardlink",
+        "manager",
+        "empty-dir",
+    ] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let legacy = legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+        match fault {
+            "mode" => {
+                fs::set_permissions(legacy.join("SKILL.md"), fs::Permissions::from_mode(0o664))
+                    .unwrap()
+            }
+            "extra" => write(&legacy.join("authored.txt"), b"extra", 0o644),
+            "missing" => fs::remove_file(legacy.join("SKILL.md")).unwrap(),
+            "modified" => write(&legacy.join("SKILL.md"), b"custom", 0o644),
+            "symlink" => {
+                fs::remove_file(legacy.join("SKILL.md")).unwrap();
+                symlink(
+                    request.bundle_root.join("SKILL.md"),
+                    legacy.join("SKILL.md"),
+                )
+                .unwrap();
+            }
+            "hardlink" => fs::hard_link(legacy.join("SKILL.md"), root.path("linked")).unwrap(),
+            "manager" => write(
+                &request.project.join("skills-lock.json"),
+                br#"{"version":1,"skills":{"archify":{"source":"XGENT-ai/skills"}}}"#,
+                0o644,
+            ),
+            "empty-dir" => fs::create_dir(legacy.join("authored")).unwrap(),
+            _ => unreachable!(),
+        }
+        let before = snapshot(&request.project);
+        let receipt = migrate_fixture(&request, true, false);
+        assert_eq!(
+            receipt.status,
+            InstallStatus::Conflict,
+            "{fault}: {receipt:?}"
+        );
+        assert!(receipt.writes.is_empty());
+        assert_eq!(snapshot(&request.project), before, "{fault}");
+        assert!(!request.project.join(".phoenix-diagram").exists());
+    }
+}
+#[test]
+fn migration_resumes_deletion_cursor_and_retains_later_claimants() {
+    for fault in ["resume", "extra", "same-content-inode", "rebuilt-parent"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let legacy = legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+        let mut observed = false;
+        let applied =
+            install::test_support::migrate(&request, true, false, &mut |checkpoint, _| {
+                if matches!(
+                    checkpoint,
+                    install::test_support::Checkpoint::AfterLegacyRemove(_)
+                ) && !observed
+                {
+                    observed = true;
+                    return Err(std::io::Error::other(
+                        "interrupted after unlink before cursor",
+                    ));
+                }
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(
+            applied.status,
+            InstallStatus::RecoveryRequired,
+            "{applied:?}"
+        );
+        let id = applied.transaction_id.unwrap();
+        match fault {
+            "extra" => write(&legacy.join("claimant.txt"), b"later", 0o644),
+            "same-content-inode" => {
+                let path = legacy.join("SKILL.md");
+                let bytes = fs::read(&path).unwrap();
+                let mode = fs::metadata(&path).unwrap().mode() & 0o7777;
+                fs::rename(&path, root.path("original-skill")).unwrap();
+                write(&path, &bytes, mode);
+            }
+            "rebuilt-parent" => {
+                let parent = request.project.join(".agents/skills/phoenix-diagram");
+                fs::rename(&parent, root.path("original-diagram-parent")).unwrap();
+                fs::create_dir(&parent).unwrap();
+            }
+            _ => {}
+        }
+        let receipt = install::recover_migration(&request.project, &id).unwrap();
+        if fault == "resume" {
+            assert_eq!(receipt.status, InstallStatus::Recovered, "{receipt:?}");
+            assert!(!legacy.exists());
+            assert!(request.project.join(format!("{SKILL}/SKILL.md")).exists());
+            assert_eq!(
+                install::recover_migration(&request.project, &id)
+                    .unwrap()
+                    .status,
+                InstallStatus::Unchanged
+            );
+        } else {
+            assert_eq!(
+                receipt.status,
+                InstallStatus::RecoveryRequired,
+                "{fault}: {receipt:?}"
+            );
+            assert!(legacy.exists());
+            if fault == "same-content-inode" {
+                assert!(receipt
+                    .removals
+                    .iter()
+                    .any(|r| r.path.ends_with("/SKILL.md") && r.status == "preserved"));
+            }
+        }
+    }
+}
+#[test]
+fn migration_upgrade_rollback_rebinds_prior_ownership_and_survives_interruption() {
+    let root = Workspace::new();
+    let request = fixture(&root);
+    let first = apply_install(&request).unwrap();
+    assert_eq!(first.status, InstallStatus::Installed);
+    let before = fs::read(request.project.join(format!("{SKILL}/SKILL.md"))).unwrap();
+    let old_identity = fs::metadata(request.project.join(format!("{SKILL}/SKILL.md")))
+        .unwrap()
+        .ino();
+    legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+    update_skill(
+        &request,
+        b"---\nname: phoenix-diagram\ndescription: upgraded\n---\n",
+    );
+    let applied = migrate_fixture(&request, true, false);
+    assert_eq!(applied.status, InstallStatus::Installed, "{applied:?}");
+    let id = applied.transaction_id.unwrap();
+    let mut stopped = false;
+    let rolled =
+        install::test_support::rollback(&request.project, &id, false, &mut |checkpoint, _| {
+            if matches!(
+                checkpoint,
+                install::test_support::Checkpoint::AfterRollback(_)
+            ) && !stopped
+            {
+                stopped = true;
+                return Err(std::io::Error::other("interrupted reverse"));
+            }
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(rolled.status, InstallStatus::RecoveryRequired, "{rolled:?}");
+    let recovered = install::recover_migration(&request.project, &id).unwrap();
+    assert_eq!(recovered.status, InstallStatus::RolledBack, "{recovered:?}");
+    assert_eq!(
+        fs::read(request.project.join(format!("{SKILL}/SKILL.md"))).unwrap(),
+        before
+    );
+    assert_ne!(
+        fs::metadata(request.project.join(format!("{SKILL}/SKILL.md")))
+            .unwrap()
+            .ino(),
+        old_identity
+    );
+    let active = load(&request.project.join(".phoenix-diagram/install/active.json"));
+    assert_eq!(active["transactionId"], first.transaction_id.unwrap());
+    assert_eq!(
+        plan_install(&request).unwrap().status,
+        InstallStatus::Planned
+    );
+    let before_snapshot = snapshot(&request.project);
+    assert_eq!(
+        install::rollback(&request.project, &id, false)
+            .unwrap()
+            .status,
+        InstallStatus::RolledBack
+    );
+    assert_eq!(snapshot(&request.project), before_snapshot);
+}
+#[test]
+fn migration_rollback_preflight_preserves_later_edits_and_backup_tampering() {
+    for fault in ["later-edit", "backup"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        apply_install(&request).unwrap();
+        legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+        update_skill(&request, b"new skill\n");
+        let applied = migrate_fixture(&request, true, false);
+        let id = applied.transaction_id.unwrap();
+        if fault == "later-edit" {
+            write(
+                &request.project.join(format!("{SKILL}/SKILL.md")),
+                b"user edit",
+                0o644,
+            );
+        } else {
+            let journal = load(applied.journal.as_ref().unwrap());
+            let op = journal["operations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|op| op["backupPath"].is_string())
+                .unwrap();
+            let transaction = applied.backup.as_ref().unwrap().parent().unwrap();
+            write(
+                &transaction.join(op["backupPath"].as_str().unwrap()),
+                b"tampered",
+                0o600,
+            );
+        }
+        let before = snapshot(&request.project);
+        assert!(install::rollback(&request.project, &id, false).is_err());
+        assert_eq!(snapshot(&request.project), before, "{fault}");
+    }
+}
+
+#[test]
+fn migration_request_rejects_ambiguous_modes_without_state() {
+    let root = Workspace::new();
+    let request = fixture(&root);
+    assert!(plan_install(&request)
+        .unwrap()
+        .reinstall_instructions
+        .is_empty());
+    let before = snapshot(&request.project);
+    let failure = install::migrate(&MigrationRequest {
+        mode: MigrationMode::Recover,
+        project: request.project.clone(),
+        providers: None,
+        bundle_root: Some(request.bundle_root),
+        transaction_id: Some("a".repeat(32)),
+        dry_run: false,
+        confirm_remove_archify: false,
+    })
+    .unwrap_err();
+    assert_eq!(failure.code, "install/migration-arguments");
+    assert_eq!(snapshot(&request.project), before);
+}
+
+#[test]
+fn migration_real_kill_boundaries_recover_only_confirmed_transaction() {
+    for checkpoint in ["before-legacy", "legacy-remove", "link", "active"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+        crash(&request, &root, "migrate", checkpoint);
+        let journal_path = fs::read_dir(request.project.join(".phoenix-diagram/install/journals"))
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| {
+                p.file_name().unwrap().to_str().unwrap().len() == 37
+                    && p.extension().is_some_and(|e| e == "json")
+            })
+            .unwrap();
+        let journal = load(&journal_path);
+        let id = journal["transactionId"].as_str().unwrap();
+        let receipt = install::recover_migration(&request.project, id).unwrap();
+        assert_eq!(
+            receipt.status,
+            InstallStatus::Recovered,
+            "{checkpoint}: {receipt:?}"
+        );
+        assert!(!request.project.join(".agents/skills/archify").exists());
+        assert_eq!(load(&journal_path)["phase"], "committed");
+        assert!(receipt.removals.iter().all(|r| r.status == "removed"));
+        // A real kill after reverse publication is resolved from the same durable
+        // reverse identity, without reconstructing any removed legacy bytes.
+        crash(&request, &root, &format!("rollback:{id}"), "rollback");
+        let rolled = install::recover_migration(&request.project, id).unwrap();
+        assert_eq!(
+            rolled.status,
+            InstallStatus::RolledBack,
+            "{checkpoint}: {rolled:?}"
+        );
+        assert!(!request.project.join(".agents/skills/archify").exists());
+    }
+}
+
+#[test]
+fn migration_rebuilt_legacy_root_before_active_never_commits_or_cleans_claimant() {
+    let root = Workspace::new();
+    let request = fixture(&root);
+    let legacy = legacy_fixture(&root, &request, "legacy-2.17", ".agents");
+    let applied = install::test_support::migrate(&request, true, false, &mut |checkpoint, _| {
+        if checkpoint == install::test_support::Checkpoint::BeforeActive {
+            write(&legacy.join("later.txt"), b"later claimant", 0o644);
+        }
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(
+        applied.status,
+        InstallStatus::RecoveryRequired,
+        "{applied:?}"
+    );
+    assert_eq!(load(applied.journal.as_ref().unwrap())["phase"], "applying");
+    let recovered =
+        install::recover_migration(&request.project, applied.transaction_id.as_deref().unwrap())
+            .unwrap();
+    assert_eq!(recovered.status, InstallStatus::RecoveryRequired);
+    assert_eq!(
+        fs::read(legacy.join("later.txt")).unwrap(),
+        b"later claimant"
+    );
+}
+
+#[test]
+fn migration_fresh_rollback_is_idempotent_and_rejects_forged_empty_cleanup_owner() {
+    for tamper in [false, true] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let applied = migrate_fixture(&request, true, false);
+        assert_eq!(applied.status, InstallStatus::Installed, "{applied:?}");
+        let id = applied.transaction_id.unwrap();
+        assert_eq!(
+            install::rollback(&request.project, &id, false)
+                .unwrap()
+                .status,
+            InstallStatus::RolledBack
+        );
+        if tamper {
+            let path = request.project.join(
+                ".phoenix-diagram/install/journals/.phoenix-diagram-output-cleanup/owner-v1.json",
+            );
+            let mut owner = load(&path);
+            owner["checksum"] = json!("0".repeat(64));
+            let bytes = serde_json::to_vec(&owner).unwrap();
+            write(&path, &bytes, 0o600);
+            let before = snapshot(&request.project);
+            assert!(install::rollback(&request.project, &id, false).is_err());
+            assert_eq!(snapshot(&request.project), before);
+        } else {
+            let before = snapshot(&request.project);
+            assert_eq!(
+                install::rollback(&request.project, &id, false)
+                    .unwrap()
+                    .status,
+                InstallStatus::RolledBack
+            );
+            assert_eq!(snapshot(&request.project), before);
+            assert_eq!(
+                plan_install(&request).unwrap().status,
+                InstallStatus::Planned
+            );
+            assert_eq!(
+                apply_install(&request).unwrap().status,
+                InstallStatus::Installed
+            );
+            let before = snapshot(&request.project);
+            assert!(install::rollback(&request.project, &id, false).is_err());
+            assert_eq!(snapshot(&request.project), before);
+        }
+    }
+}
+
+#[test]
+fn migration_all_complete_frozen_sources_are_recognized_read_only() {
+    for source in ["legacy-2.17", "legacy-2.17-when-to-use", "reference-3.1.0"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        legacy_fixture(&root, &request, source, ".agents");
+        let before = snapshot(&request.project);
+        let planned = migrate_fixture(&request, false, true);
+        assert_eq!(
+            planned.status,
+            InstallStatus::Planned,
+            "{source}: {planned:?}"
+        );
+        assert_eq!(planned.migration_sources, vec![source]);
+        assert!(planned.removals.iter().all(|r| r.status == "planned"));
+        assert_eq!(snapshot(&request.project), before);
+    }
+}
+
+#[test]
+fn migration_rollback_preserves_same_content_replaced_previous_journal() {
+    let root = Workspace::new();
+    let request = fixture(&root);
+    let first = apply_install(&request).unwrap();
+    update_skill(&request, b"upgraded before journal claimant\n");
+    let applied = migrate_fixture(&request, true, false);
+    assert_eq!(applied.status, InstallStatus::Installed);
+    let original = first.journal.unwrap();
+    let moved = root.path("displaced-previous-journal");
+    let mut bytes = vec![];
+    let mut replacement_inode = 0;
+    let rolled = install::test_support::rollback(
+        &request.project,
+        applied.transaction_id.as_deref().unwrap(),
+        false,
+        &mut |checkpoint, _| {
+            if checkpoint
+                == install::test_support::Checkpoint::BeforeRollback(
+                    ".phoenix-diagram/install/active.json".into(),
+                )
+            {
+                bytes = fs::read(&original).unwrap();
+                fs::rename(&original, &moved).unwrap();
+                write(&original, &bytes, 0o600);
+                replacement_inode = fs::metadata(&original).unwrap().ino();
+                assert_ne!(replacement_inode, fs::metadata(&moved).unwrap().ino());
+            }
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(rolled.status, InstallStatus::RecoveryRequired, "{rolled:?}");
+    assert_eq!(fs::read(&original).unwrap(), bytes);
+    assert_eq!(fs::metadata(&original).unwrap().ino(), replacement_inode);
+}
+
+#[test]
+fn migration_rollback_journal_rebind_real_kill_is_resumable() {
+    for checkpoint in ["rollback-journal-retire", "rollback-journal-publish"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let first = apply_install(&request).unwrap();
+        update_skill(
+            &request,
+            b"upgrade for journal rebind kill
+",
+        );
+        let applied = migrate_fixture(&request, true, false);
+        let id = applied.transaction_id.unwrap();
+        crash(&request, &root, &format!("rollback:{id}"), checkpoint);
+        let recovered = install::recover_migration(&request.project, &id).unwrap();
+        assert_eq!(
+            recovered.status,
+            InstallStatus::RolledBack,
+            "{checkpoint}: {recovered:?}"
+        );
+        assert_eq!(
+            load(&request.project.join(".phoenix-diagram/install/active.json"))["transactionId"],
+            first.transaction_id.unwrap()
+        );
+        assert_eq!(
+            plan_install(&request).unwrap().status,
+            InstallStatus::Planned
+        );
+    }
+}
+
+#[test]
+fn direct_v1_rollback_expansion_real_kill_recovers_and_repeats() {
+    for checkpoint in ["rollback", "compat-audit", "compat-publish"] {
+        let root = Workspace::new();
+        let request = fixture(&root);
+        let initial = apply_install(&request).unwrap();
+        install::test_support::v1_fixture(&request.project);
+        let id = initial.transaction_id.unwrap();
+        assert_eq!(load(initial.journal.as_ref().unwrap())["schemaVersion"], 1);
+        crash(&request, &root, &format!("rollback:{id}"), checkpoint);
+        let result = install::recover_migration(&request.project, &id).unwrap();
+        assert_eq!(
+            result.status,
+            InstallStatus::RolledBack,
+            "{checkpoint}: {result:?}"
+        );
+        assert!(!request
+            .project
+            .join(".phoenix-diagram/install/active.json")
+            .exists());
+        let journal = load(result.journal.as_ref().unwrap());
+        assert_eq!(journal["schemaVersion"], 2);
+        assert_eq!(journal["phase"], "rolled-back");
+        assert!(journal["operations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|op| op["kind"] == "file-write"));
+        assert_eq!(
+            load(initial.journal.as_ref().unwrap())["phase"],
+            "recovered"
+        );
+        assert_eq!(load(initial.journal.as_ref().unwrap())["schemaVersion"], 1);
+        let before = snapshot(&request.project);
+        assert_eq!(
+            install::rollback(&request.project, &id, false)
+                .unwrap()
+                .status,
+            InstallStatus::RolledBack
+        );
+        assert_eq!(snapshot(&request.project), before);
+        assert_eq!(
+            plan_install(&request).unwrap().status,
+            InstallStatus::Planned
+        );
     }
 }

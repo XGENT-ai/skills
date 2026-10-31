@@ -4,15 +4,15 @@
   "sourcePath": "viewer/reader-layout.js",
   "sourceSha256": "9c32519bc9e0d06bd8e744cbbc81bad9d9f02287a73a5694b834413922133da4",
   "normalizedSourceSha256": "992355c7815b337887d58cd00a01d4e4c5680e64eec8fe1bca7879b95406e40a",
-  "adaptedBodySha256": "607b47a8b8f770e2996088ab9a7d6d48edcd41d0bbcb0df5440cba582934c135",
+  "adaptedBodySha256": "efa21277a98ce081cfc348b71927a966c67123825967094265cb2a0009e9fce8",
   "license": "MIT; see LICENSE.txt",
   "hunks": [
     {
-      "scope": "native legacy portrait height fitting",
+      "scope": "native fixed-canvas portrait height fitting",
       "sourceLine": 26,
       "sourceByteOffset": 1387,
       "sourceText": "      var WIDE_RATIO = 1.55;\n",
-      "replacementText": "      var WIDE_RATIO = 1.55;\n      // Native legacy geometry retains its authored canvas and routes; only\n      // the desktop reading scale joins the existing measured-height path.\n      if (svg && svg.getAttribute('data-input-contract') === 'legacy-2.17' && ratio < WIDE_RATIO) {\n        measuredHeightFit = true;\n      }\n"
+      "replacementText": "      var WIDE_RATIO = 1.55;\n      // Native fixed geometry (2.17 input, or a phoenix-v1 canvas kept as\n      // authored) retains its canvas and routes; only the desktop reading\n      // scale joins the existing measured-height path.\n      if (svg && ratio < WIDE_RATIO && (svg.getAttribute('data-input-contract') === 'legacy-2.17' ||\n          ['contain', 'legacy', ''].indexOf(readerFit || '') !== -1)) {\n        measuredHeightFit = true;\n      }\n"
     },
     {
       "scope": "reader legend viewport containment",
