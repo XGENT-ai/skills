@@ -98,8 +98,8 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | [review-code](skills/review-code/SKILL.md) | 评审未提交变更、commit 或分支差异，可对照开发计划，输出有证据的代码评审报告 |
 | [review-prd-dev-gaps](skills/review-prd-dev-gaps/SKILL.md) | 核对 PRD 与开发交付，将遗漏、合理变更和待拍板差异分流，交互 Triage 后按需调用 dev-plan 生成 gaps plan |
 | [apply-code-review](skills/apply-code-review/SKILL.md) | 核实代码评审意见，实施合理修复、验证结果并回写实现记录与必要进度 |
-| [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过 |
-| [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告对照截图与目标核实并修复界面差距、自检；停滞预警时重构思路，提交登记后交回复审 |
+| [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过；需补证时交 apply-ui-review 执行补证后独立复审 |
+| [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告执行修复、补证与解阻，对照截图与目标核实并自检；停滞预警时重构思路，提交登记后交回复审 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
 | [resolve-blocked](skills/resolve-blocked/SKILL.md) | 查证解阻；需用户拍板、补证或协调外部依赖时用工具阻断式问答，外部请求用 CRD 交接，存 decisions 并回改计划，最终列全剩余阻塞和用户动作 |
 
@@ -113,7 +113,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证，需用户处理的决定、前置和跨项目协调必须用 Ask User 类工具提出并等待明确答复，不能仅输出聊天消息；收到答复后继续处理，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；最终开头列全剩余阻塞、各方需提供什么、用户具体动作和解除条件，不只给重跑命令。先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。来自 CR 的计划按顶部合同，在对应请求或明确子范围实现且约定检查通过后追加实现结果答复，保留历史、余项及回告链接；不等同发布或对方验收，未能回写时保留恢复动作。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
-5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。
+5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。 需补证时同样交给 `apply-ui-review <报告>`，由执行 agent 补齐环境、数据与实测材料、处理差距后交回 `review-ui <计划或原范围>` 独立复审；只缺独立评审时续接 review-ui。仅无法自行取得的权限、资料或产品决定请求用户提供。
 
    UI 循环可沿用人工 Markdown，或通过匹配的 Phoenix engine 管理证据与轮次。已有 managed 索引时从原轮与 revision 续接；engine 缺失、版本不匹配或状态损坏时保持只读，恢复固定版本后再继续。人工历史只经明确的 `review import` 接管，不能清零未知次数；CLI 操作成功不代表 UI 通过，真实取证和独立评审仍是判定依据。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。

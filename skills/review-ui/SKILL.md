@@ -320,7 +320,7 @@ OUTPUT:
 REVIEW:
   CHECK: [@actual_effects_only, @managed_capability_failure, @target_freeze,
           @capture_coverage, @independent_judge, @judge_integrity,
-          @confirmation_judge, @round_report]
+          @confirmation_judge, @round_report, @next_step_commands, @needs_evidence_next]
   ALSO: [round_continuity, evidence_traceability, id_mapping_consistency,
          artifact_ignore_coverage]
   EXPOSE: on_issue
@@ -331,7 +331,8 @@ REVIEW:
 ```formal
 RULE @next_step_commands:
   MUST: [final_reply_starts_with_contract_acceptance_verdict,
-         commands_use_current_client_skill_syntax_and_actual_paths]
+         commands_use_current_client_skill_syntax_and_actual_paths,
+         final_reply_includes_applicable_commands_even_if_already_in_report]
   MUST_NOT: automatically_start_repairs_code_recheck_or_prd_gap_review
 
 RULE @first_target_confirmation:
@@ -365,9 +366,13 @@ RULE @needs_decision_next:
 RULE @needs_evidence_next:
   WHEN: "验收判定为「需补证」"
   MUST: |
-    列出缺少的环境、账号、数据、工具或目标及获取方式；
-    补齐后 review-ui <计划路径或原范围>。
-    已评单元的差距可以先 apply-ui-review <本报告路径>。
+    在报告及最终回复列出缺少的环境、账号、数据、工具、目标或交互证据，
+    给出执行动作和完成条件；已在本轮尝试的动作及失败原因一并保留。
+    下一步给 apply-ui-review <本报告路径>，由执行 agent 修复、补证并解除可处理的阻塞，
+    完成后再 review-ui <计划路径或原范围> 独立复审，不默认把补证交给用户。
+    若只缺独立评审/确认评审而材料与条件已齐，继续本技能，无需空跑 apply。
+    确需用户权限、资料或决定时明确所需输入；不把缺证视为缺陷，
+    不授权绕过待裁定或 managed 能力异常的只读边界。
 
 RULE @explicit_waiver:
   WHEN: user_explicitly_accepts_current_overall_ui

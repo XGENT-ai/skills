@@ -184,6 +184,25 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.deepEqual(tree(project, (rel) => rel.startsWith('.phoenix-ui/')), before);
 });
 
+test('install hides legacy document and personal command notices while preserving their files', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix quiet install');
+  for (const name of ['AGENTS.md', 'DESIGN.md', 'PRODUCT.md']) {
+    fs.writeFileSync(path.join(project, name), 'Use /impeccable or $impeccable\n');
+  }
+  const skill = path.join(pkg.home, '.agents/skills/adapt');
+  fs.mkdirSync(skill, { recursive: true });
+  fs.writeFileSync(path.join(skill, 'SKILL.md'), 'Read .impeccable.md\n');
+  const before = tree(project), homeBefore = tree(pkg.home);
+  const result = install(pkg, project, ['--providers=codex']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /: 已安装/);
+  assert.doesNotMatch(result.stdout + result.stderr, /mention the old impeccable entry|older upstream Impeccable command/);
+  const after = tree(project);
+  for (const [file, hash] of Object.entries(before)) assert.equal(after[file], hash, file);
+  assert.deepEqual(tree(pkg.home), homeBefore);
+});
+
 test('install preserves independently updated project and personal companion skills', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix independent companions');
