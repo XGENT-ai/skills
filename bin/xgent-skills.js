@@ -336,7 +336,10 @@ function printPhoenix(report, manifest) {
   }
   for (const entry of report.transitionEntries) console.log(`  提示  ${entry} 保留一个迁移主版本,只指向新命令`);
   for (const conflict of report.conflicts) console.log(`  冲突  ${conflict.path}: ${conflict.message}`);
-  for (const finding of report.findings) console.log(`  ${finding.blockingIntegration ? '待处理' : '说明'}  ${finding.path}: ${finding.message}`);
+  for (const finding of report.findings) {
+    if (!finding.blockingIntegration && ['document-old-entry', 'personal-old-command'].includes(finding.kind)) continue;
+    console.log(`  ${finding.blockingIntegration ? '待处理' : '说明'}  ${finding.path}: ${finding.message}`);
+  }
   for (const item of report.unconsumed) console.log(`  未迁移  ${item.path} ${item.field}: ${item.reason}`);
   if (report.transactionId && ['installed', 'integration-pending'].includes(report.status)) {
     console.log(`  事务  ${report.transactionId};备份 ${report.backups}`);
