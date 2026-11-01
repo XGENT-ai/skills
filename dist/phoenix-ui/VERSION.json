@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "distribution": "release",
   "toolVersion": "0.1.0",
-  "npmPackageVersion": "0.7.7",
+  "npmPackageVersion": "0.7.8",
   "sourceCommit": "6a01c326c1f3dd0390151882e6e03205ea1dc6b8",
   "sourceTree": "34fecf8ada60947a681e278760e30fd658211b91",
   "sourceState": "dirty",

@@ -3,7 +3,7 @@
   "distribution": "release",
   "tool": "phoenix-diagram",
   "toolVersion": "0.2.0",
-  "npmPackageVersion": "0.7.7",
+  "npmPackageVersion": "0.7.8",
   "sourceCommit": "f70b989d34ed067a556356501892e16229981faa",
   "sourceInputSha256": "1e4a4c134dbae12345002c9c1025ed955b112afa375f2ba2c323315777876ec6",
   "inputContractSchema": 1,
