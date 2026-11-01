@@ -82,3 +82,4 @@
 - `8bb1f7e5-ef61-44e7-a432-832aa7446bcf` — [AGENTS.md 优化验证](8bb1f7e5-ef61-44e7-a432-832aa7446bcf.md)
 
 - [Phoenix UI 分发排除修复 · b92316be-fe41-4169-b501-04b01cb22ae5](b92316be-fe41-4169-b501-04b01cb22ae5.md)
+- b248de26-51e1-470d-8c76-c9fc386da149 · [resolve-blocked 用户动作须工具阻断式交接](b248de26-51e1-470d-8c76-c9fc386da149.md)

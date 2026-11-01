@@ -1,154 +1,307 @@
 ---
 name: resolve-blocked
 argument-hint: "<计划路径/链接> [评审报告] [阻塞项/范围] [决策记录路径]"
-description: 用于解除开发计划中 Blocked/阻塞/待拍板事项；不用于从零写计划、整体评审或按计划实施。查证与交互推进，外部依赖用 CRD 交接，存决策并回改计划；最终列全剩余阻塞及用户具体动作。
+description: 用于解除开发计划中 Blocked/阻塞/待拍板事项；不用于从零写计划、整体评审或按计划实施。查证解阻，需用户处理时用工具阻断式问答，外部依赖用 CRD 交接，存决策并回改计划。
 when_to_use: "用户会说「把计划里的阻塞解掉」「这个依赖一直没给，怎么办」「这几项等我拍板」时。"
 ---
 
 # resolve-blocked · 逐项解除开发计划阻塞
 
-目标是让被阻塞的开发计划重新可实施：**列出全部阻塞事项；能用证据解除的自己查证，需要拍板的交互确认并附推荐，被依赖项目需修改或补齐契约/证据的通过 CRD 提出 CR。** 结论存为独立决策记录，解决方式改进计划正文，按修订后的真实前置重判就绪状态。
+```formal
+INTENT:
+  GOAL: restore_development_plan_readiness
+  SUCCESS: [all_in_scope_blockers_accounted_for, evidence_based_resolution,
+            user_actions_explicitly_presented_through_interaction_tool,
+            decisions_saved_and_plan_revised, readiness_matches_actual_prerequisites]
+  NON_GOALS: [implementation, whole_plan_review, nonblocking_review_fixes,
+              external_system_writes, automatic_crd_sending]
 
-**以解除阻塞为目标，不以分类、提问或生成 CRD 为完成。** 本轮可查证、可交互补齐的前置继续处理，收到答复后接着验证和回写；确实无法解除的，最终回复必须集中列全剩余项、各方所需动作及用户当前要做什么，不能只留在中途问答或文档里。
+RULE @scope_and_authorization:
+  MUST: [follow_user_language, resolve_references_relative_to_this_skill,
+         discover_target_repo_rules_stack_and_tools_at_runtime,
+         honor_chat_only_list_only_and_no_plan_edit_requests]
 
-调用本技能即授权：写入计划同目录的决策记录，修订计划中与阻塞相关的内容，并为外部依赖创建或续写本地 CRD。代码、PRD、评审报告和实施记录默认只读。用户明确要求仅聊天、只列清单或不改计划时遵循其要求。
+RULE @local_authorization:
+  MUST: |
+    调用即授权写入计划同目录的决策记录、修订计划中与阻塞相关的内容、创建或续写本地 CRD；
+    记录路径按 references/decisions-contract.md。代码、PRD、评审报告和实施记录默认只读。
+  MUST_NOT: [implement_features, run_migrations_deployments_or_side_effecting_commands,
+             write_external_systems, modify_dependency_projects, auto_send_crd,
+             add_sending_approval_steps, treat_saved_crd_as_resolved_dependency]
 
-`references/` 相对本文件解析。仓库规则、技术栈和工具能力在运行时读取，不硬编码目标仓的路径或业务约定。回复语言跟随用户。
+RULE @routing:
+  MUST: |
+    从零写或重写计划用 dev-plan，整体评审用 review-dev-plan，落实全部评审意见用 apply-doc-review；
+    本技能只处理阻塞实施的事项，非阻塞意见留给 apply-doc-review。
+    可用时读取 dev-plan/SKILL.md 的计划状态与红线部分及 references/plan-skeleton.md；
+    复杂架构取舍按需读其 references/architecture-quality.md。缺失时沿用计划自身结构，
+    不因用户模板或历史章节名不同而强行迁移。
 
-## 边界
+RULE @evidence_and_collaboration:
+  MUST: [treat_plan_assertions_as_claims_to_verify,
+         trace_verified_and_user_confirmed_claims_to_source_code_or_user_words,
+         describe_agent_actions_dependency_projects_and_deliverables,
+         specify_missing_environment_access_evidence_verification_entry_and_pass_criteria]
+  MUST_NOT: [invent_confirmation, invent_verification, assign_human_job_owner_fields,
+             substitute_find_owner_or_handoff_to_qa_for_concrete_actions]
 
-- 从零写或重写计划用 `dev-plan`；评审计划整体质量用 `review-dev-plan`；落实评审报告的全部意见用 `apply-doc-review`。本技能只处理**阻塞实施**的事项；评审报告里的非阻塞问题保留给 `apply-doc-review`，不顺手改。
-- 不实施功能、不跑迁移/部署或有副作用的命令、不写外部系统。CRD 在本地形成可交接的请求，不自动发送、不代改依赖项目，也不把生成 CRD 当作已解除。
-- 以 coding agent 协作为前提，用本方可执行动作、依赖项目与交付物描述推进路径，不设置“负责人/待指定”人岗字段，不以“找负责人/交给 QA”代替行动。缺环境、访问权限或实测证据时明确缺口、验证入口与通过判据；真正需要用户授权或取舍的仍交互确认。
-- 计划里的陈述是待核实主张。“已核实”“用户已确认”须能在原文、代码或用户原话中找到依据，否则当作未决。
-- 若能找到 `dev-plan`，读取其 `SKILL.md` 的计划状态与红线部分及 `references/plan-skeleton.md`，据此判断各类结论落在计划哪一节；复杂架构取舍按需读 `references/architecture-quality.md`。找不到时按计划自身结构落点。用户自定义模板或历史计划不因章节名不同而强行迁移。
+WORKFLOW @resolve_plan:
+  DO: [anchor_inputs_and_baseline, resume_existing_decisions,
+       collect_classify_and_show_blockers, @item_resolution,
+       save_decision_record, revise_plan, verify_and_deliver, update_existing_project_ledger]
 
-## 1. 锚定输入与基线
+RULE @input_baseline:
+  MUST: [locate_requested_plan, ask_if_no_unique_plan,
+         read_applicable_agents_and_claude_rules_full_plan_linked_prd_and_key_decisions,
+         finish_truncated_passages_before_quoting,
+         record_plan_path_content_hash_code_commit_dirty_state_and_date,
+         read_decisions_contract_and_existing_decision_record]
+  MUST_NOT: [choose_neighboring_plan_without_basis, search_review_reports_by_default]
 
-1. 定位计划。未指定且无法唯一确定时询问，不擅自挑一份相邻计划。读取适用的 `AGENTS.md`/`CLAUDE.md` 等规则、计划全文、计划关联的 PRD 与关键决策。只读到截断内容时补读后再引用。
-2. 计划是阻塞事项的事实源：评审意见通常已经 apply 进计划，不必默认查找评审报告。用户指定了报告时读取；否则只在需要时回读，例如某个阻塞项在计划中缺少来由或证据、顶部 `Blocked` 的理由在计划里找不到对应项、计划引用了某条评审结论。回读时用计划引用或同目录中「评审对象」指向本计划的报告，优先看其处置节里仍待决的项；多份候选无法确定时询问，不按文件时间猜选。报告中已处置的意见以计划当前内容为准，不重新当作阻塞。
-3. 记录基线：计划路径与内容 hash、代码 commit 与 dirty 状态、日期。
-4. 读取 [references/decisions-contract.md](references/decisions-contract.md) 确定决策记录路径。记录已存在说明不是第一轮，按下节「重复运行同一计划」续做：已确认的决定不重复提问，沿用已有 B-ID 续写。
+RULE @review_report_source:
+  MUST: |
+    计划是阻塞事实源。用户指定报告时读取；否则仅在来由/证据缺失、顶部 Blocked 无对应项、
+    或需核对计划引用的评审结论时回读。用计划引用或同目录中「评审对象」指向本计划的报告，
+    优先读处置节仍待决项；多候选不能唯一确定时询问，不按时间猜选。
+    已处置意见以当前计划为准，不重新当作阻塞。
 
-## 重复运行同一计划
+RULE @resume:
+  WHEN: decision_record_exists
+  MUST: [reuse_same_record_and_existing_b_ids, reuse_applicable_confirmed_decisions,
+         compare_current_plan_hash_with_previous_post_revision_hash,
+         inspect_changed_passages_and_preservation_of_resolved_plan_conclusions,
+         reopen_deleted_changed_or_overturned_conclusions_with_evidence,
+         recheck_remaining_blockers_against_latest_crd_delivery_accounts_quotas_access_spike_measurement_and_user_input,
+         assign_unused_b_ids_to_new_blockers, label_new_reopened_and_carried_items]
 
-同一计划可多次运行本技能，直到 `Ready`。每次运行是一轮，在同一份决策记录续写，不另建文件：
+RULE @resume_prerequisites:
+  WHEN: decision_record_exists
+  MUST: |
+    无可交接 CRD 的外部依赖补齐请求，旧记录的人岗分工不算已有请求。
+    用户已明确要等的事项不重复催问；上轮未答或留待之后决定的决策项，
+    本轮重新提供上下文并通过交互工具询问。
 
-- 先读决策记录的处理轮次与阻塞总览，比较计划当前 hash 与上轮处理后版本。有变化时找出改动段落（用户改稿、评审处置或实施回写），核对已解除项的计划落点是否仍在；被删改或推翻的项重新打开并写明依据。
-- 上轮仍阻塞的项逐项核对解除条件是否已满足：CRD 最新答复/交付、账号/配额、spike 或实测结果、用户补充的信息。外部依赖尚无可交接的 CRD 时，按第 3 节补齐，不把旧记录中的人岗分工当作已有请求。满足则按本流程解除；未满足保持仍阻塞，不重复追问用户已明确要等的事项。用户上轮未作答或选择稍后决定的决策项，本轮重新给出上下文再问。
-- 计划新增或新暴露的阻塞分配未占用的 B-ID，与遗留项一起列入本轮总览，并标出哪些是新增、重开或遗留。
-- 计划、遗留项的解除条件和外部情况都没有变化，且所需 CRD 与下一步行动已齐备时，不改写计划或记录、不新增轮次，也不重复记 SDLC 事件；仍按第 7 节完整交付剩余阻塞清单与用户动作，不能只回复“继续 Blocked”或让用户翻上轮对话。
+RULE @unchanged_rerun:
+  WHEN: plan_prerequisites_external_facts_and_user_response_state_unchanged_and_required_crd_and_next_actions_complete
+  MUST: [preserve_plan_and_record, deliver_full_remaining_blockers_and_user_actions]
+  MUST_NOT: [append_empty_round, duplicate_sdlc_event, repeat_ineffective_verification,
+             repeat_explicitly_acknowledged_waiting_requests]
+  # 文档无变化不豁免 @user_action_gate；本轮产生新答复或交接状态即不再属于无变化重跑。
 
-## 2. 收集并分类阻塞
+RULE @blocker_inventory:
+  MUST: |
+    收集顶部 Blocked 理由、§11「是否阻塞=是」、需求账本中阻塞的 NFR-*/A-* 与影响关键决策的未知数字、
+    [未核实·阻塞]、契约表「未核实阻塞」、决策表/ADR 的 Blocked、实施进度的当前阻塞及阻塞里程碑；
+    已读评审报告时补充其处置节仍待决且计划未体现的阻塞。其他模板取等价内容。
+    按根因去重并保留全部来源；未标注但涉及范围、安全、数据、外部契约或关键 NFR 的未决项，
+    先列为「疑似阻塞」，用户确认后才纳入。从 B-01 起编号，续做不占用已有 ID。
 
-从计划中收集（dev-plan 骨架的常见位置，其他模板找等价内容）：
+RULE @inventory_presentation:
+  MUST: [classify_by_resolution_method, revise_classification_after_investigation,
+         show_inventory_before_item_processing]
+  # 总览：B-ID、事项、来源、阻塞的里程碑/任务、类型、计划处理方式。
 
-- 顶部状态为 `Blocked` 时的定级理由，§11 风险/开放问题中「是否阻塞=是」的行；
-- 需求账本中状态为「阻塞」的 `NFR-*`/`A-*`，以及值为「未知」但会改变关键决策的数字；
-- 事实清单的 `[未核实·阻塞]` 与契约表的「未核实阻塞」，决策表/ADR 中状态为 `Blocked` 的项；
-- 「实施进度」的当前阻塞及状态为「阻塞」的里程碑；
-- 读取了评审报告时，其处置节中仍待决、且计划未体现的阻塞项。
+RULE @resolution_method:
+  MUST: |
+    事实可查：代码、配置、依赖、仓库或官方文档有答案时自行查证，不问用户。
+    需要决策：产品语义、范围/分期、权限与数据归属、外部契约、关键 NFR、难回退架构与成本，查证后附推荐确认。
+    本方验证/访问前置：只读边界内自行验证；用户能补齐的实测/spike/环境/账号/访问前置当轮通过工具获取；
+    其余写明缺口、agent 执行入口与判据，不越界执行。未实测不自动意味着依赖项目要改动。
+    外部依赖：被依赖项目需改能力/配置，或补契约、环境、交付证据时，实际使用 crd 创建/续写本地请求。
+    用户需提供信息、解决外部前置或协调交接时，执行 @user_action_gate。
 
-按根因去重，保留所有来源定位。另检查未标注却符合阻塞定义的事项（范围、安全、数据、外部契约或关键 NFR 未决），列为「疑似阻塞」，经用户确认后才纳入。
+RULE @item_context:
+  WHEN: preparing_item_resolution
+  MUST: [process_upstream_dependencies_first,
+         identify_affected_requirements_milestones_tasks_and_latest_blocking_step,
+         locate_plan_claim_and_missing_evidence_or_decision,
+         cite_checked_behavior_with_path_and_line_and_expose_refuted_premises,
+         gather_constraints_from_user_prd_c_ids_and_repo_rules]
 
-每项分配 `B-01` 起的编号，并按解除方式分类：
+RULE @item_resolution_criteria:
+  WHEN: preparing_item_resolution
+  MUST: |
+    需决策时给 2–3 个真正可行且实质不同的方案：做法、交付/风险/工作量/可回退性后果、计划改动位置。
+    推荐扎根于证据与约束；证据不足则说明缺口，不编推荐理由。
+    事实充分即可据证据解除；查证受阻时按归属转为本方验证/访问前置或外部依赖。
 
-| 类型 | 判据 | 处理 |
-| --- | --- | --- |
-| 事实可查 | 答案在代码、配置、依赖、仓库文档或官方文档中 | 自行查证，不问用户 |
-| 需要决策 | 产品语义、范围/分期、权限与数据归属、外部契约、关键 NFR 数字、难回退的架构取舍、成本 | 查证后交互确认，附推荐 |
-| 本方验证/访问前置 | 本方尚缺实测、spike、环境、账号或访问权限 | 在只读查证边界内能执行的自行验证；可由用户补齐的前置当轮交互获取后继续，其余明确缺失前置、agent 执行入口与通过判据，不越界实施或执行副作用 |
-| 外部依赖 | 被依赖项目需修改能力/配置，或补齐其契约、环境与交付证据 | 实际使用 `crd` 创建或续写本地 CRD，明确接收项目、请求和验收；缺少用户可提供的信息或决定时当轮交互补齐 |
+RULE @external_crd:
+  WHEN: dependency_project_gap_confirmed
+  MUST: [locate_and_read_available_crd_skill, actually_create_or_continue_local_crd,
+         reuse_same_topic_crd_and_stable_r_q_resp_history,
+         integrate_dependency_replies_as_requesting_party,
+         prepare_handoff_material_before_requesting_user_handoff]
+  MUST_NOT: [merely_recommend_later_crd_invocation, switch_to_crd_respond_for_incoming_reply,
+             duplicate_already_covered_requests, prescribe_dependency_internal_implementation,
+             convert_dependency_implementation_into_local_tasks,
+             invent_replies_schedules_or_commitments]
 
-查证后类型可能改变：例如查到既有接口不支持分页，原本的事实项就变成“补分页还是改方案”的决策项。
+RULE @external_handoff:
+  WHEN: dependency_project_gap_confirmed
+  MUST: |
+    交接包含本方/接收项目、受阻计划任务、缺口证据、可观察行为/交付物、必要契约与验收；本方验证单列。
+    只有接收项目无法确定且会影响请求对象时才问，不问人岗分配。
+    已有用户决定沿用；新的范围、权限、数据、契约、关键 NFR 取舍通过工具确认，未确认部分标提议。
+    计划阻塞处与决策记录链接真实 CRD 和条目，写明待答/待交付、解除证据和恢复入口；
+    未实际发送写「文档已保存，未发送」，需要用户交接/协调即执行 @user_action_gate。
+    找不到 crd 时查其他可用安装位置；仍缺失则交付上述 CR 要素并标「CRD 生成受阻」，不伪造调用或文件、不自行安装。
+    回复或接受不等于前置满足；纯契约澄清可由充分答复解除，真实准入/联调必须回收交付及本方验证证据。
+    本方须基于目标、职责和双方长期维护/演进成本形成明确技术立场；未发送或尚待对方接受，
+    不把本方结论一律标草案。已有有效结论与必要确认足以定案时关闭对应契约问题，转向真实交付验证。
+    往返仅重复原有理由、无新证据时，提炼最小剩余分歧与本方主张；权限内直接定论，
+    需用户裁定或跨项目协调时执行 @user_action_gate，不再把一轮草案当作进展。
 
-开始逐项处理前，先在聊天里给出阻塞总览：B-ID、事项、来源、阻塞的里程碑/任务、类型、计划处理方式。让用户一眼看清全貌和将要被问哪些问题。
+RULE @user_action_gate:
+  WHEN: user_decision_information_or_action_required
+  UNLESS: applicable_answer_or_handoff_acknowledgment_exists_or_user_explicitly_deferred_this_round
+  MUST: [prepare_available_evidence_options_and_handoff_artifacts_first,
+         invoke_available_ask_user_tool_under_current_mode_and_tool_constraints,
+         wait_for_explicit_user_response, keep_answer_dependent_steps_blocked]
+  MUST_NOT: [chat_only_request, final_checklist_as_tool_substitute,
+             file_only_request, treat_tool_invocation_as_user_response,
+             close_turn_as_handoff_complete_while_request_unanswered]
 
-## 3. 逐项建立上下文
+RULE @interaction_tools:
+  WHEN: user_action_gate_requires_new_interaction
+  MUST: |
+    必须用阻断式 Ask User Tool 或等效交互：如 AskUserQuestion、当前模式允许的 request_user_input。
+    这不仅适用于拍板，也适用于请用户解决外部依赖、协调其他项目、交接 CRD、补环境/访问或回传证据。
+    仅有 request_user_input_async 等异步工具时，实际调用并保持请求待答；等待期间只做独立工作，
+    独立工作做完仍等待明确答复，不能发完卡片就结束或让后续消息替代该请求。
+    工具不可用、调用失败或受当前模式限制且无等效工具时，报告「用户交互受阻」与具体原因，
+    暂停依赖该答复的工作；屏幕消息仅说明能力缺口，不算请求已送达、交接完成或用户已确认。
 
-对每一项（依赖链上游的先处理），在开口问之前把下面这些整理清楚：
+RULE @question_content:
+  MUST: [ask_minimum_missing_information, reuse_existing_authorization_and_answers,
+         make_each_tool_question_self_contained,
+         include_b_ids_blocked_work_requested_decision_or_action_and_consequences,
+         put_recommended_decision_first_with_reason_and_allow_free_text]
+  MUST_NOT: [require_reading_earlier_chat_to_answer, request_secret_pasting,
+             replace_concrete_action_with_follow_up_or_find_owner]
 
-- **阻塞了什么**：受影响的需求、里程碑、任务，以及不解决时最晚在哪一步卡住。
-- **为什么阻塞**：缺的是哪条证据或哪个决定，计划原文怎么写的（带定位）。
-- **已核实事实**：亲自读到的代码/配置/文档行为，带 `路径:行号`。查到的事实若推翻了计划的前提，明确指出。
-- **约束**：用户原话、PRD、`C-*`、仓库规则中与此相关的要求。
-- **可选方案**（需要决策时 2–3 个真正可行且有实质差异的）：做法、对交付/风险/工作量/可回退性的后果，以及它需要计划改动哪些部分。
-- **推荐与理由**：选哪个，为什么。理由要扎根于本项的证据和约束——例如满足哪条需求、复用哪个已验证范式、哪个更容易回退、哪个把未知留到能验证的时点——而不是泛泛的“更好”。证据不足以支持推荐时直说，并说明还缺什么。
+RULE @question_batching_and_handoff:
+  MUST: |
+    外部交接题写接收项目、真实文档链接/条目、用户要做的具体动作、需回传的答复/交付证据；
+    能在工具内回答的直接问；需离线协调的请用户明确答复完成情况、已接手等待或暂缓，
+    不把此交互变成申请 agent 自动发送的审批。
+    独立项在工具上限内合并，优先上游或可解多项的问题；其余保留待处理。
+    下游选项依赖前题时顺序询问，得到答复后重判选项。
 
-事实可查的项查完即可解除，记下证据；查证无法完成时，按缺口归属转为本方验证/访问前置或外部依赖，不因“未实测”直接要求外部项目改动。
+RULE @answer_semantics:
+  MUST: [only_explicit_answer_counts_as_confirmation,
+         record_follow_recommendation_as_user_authorized_recommendation,
+         clarify_ambiguous_free_text_once, honor_nonrecommended_choice,
+         explain_fact_conflict_or_new_blocker_once_and_record_final_user_decision]
+  MUST_NOT: [default_selection_as_confirmation, empty_answer_as_confirmation,
+             timeout_as_confirmation, coordination_acknowledgment_as_dependency_resolution]
 
-### 外部依赖：形成可交接的 CR
+RULE @answer_followthrough:
+  MUST: |
+    用户明确「已接手/等待对方」可完成本轮交接确认，但解除条件未满足仍为 Blocked。
+    拒绝或暂缓时保留未决，不在本轮重复催问；落实其他已确认项并完成独立查证。
+    用户要求停止即停止并交接已完成部分。未答、暂缓、未及处理项均进入最终完整清单。
 
-确认缺口属于被依赖项目后，实际定位并读取可用的 `crd/SKILL.md`，按提出方流程创建或续写本地 CRD，不只建议用户稍后调用。找不到时查可用安装位置；仍缺失则交付含下列要素的 CR 交接内容，明确“CRD 生成受阻”，不伪造调用或文件，也不擅自安装。
+LOOP @item_resolution:
+  TRIGGER: blocker_inventory_ready
+  DO: [investigate_next_actionable_item, prepare_context_and_crd_when_needed,
+       apply_user_action_gate_when_needed, process_received_answers,
+       verify_resolution_conditions, update_decisions_and_plan, recheck_related_blockers]
+  UNTIL: |
+    本轮范围内全部解除，或剩余项仅为用户明确拒绝/暂缓、已确认交接后的真实外部等待、
+    工具不可用等无法继续的缺口或超出授权边界；用户要求停止时立即退出。
+    已发送但未答的工具请求本身不满足退出条件；不因分类、提问或生成 CRD 就结束。
 
-- 先查同主题 CRD，沿用已有 R/Q/RESP 与历史；当前请求、验收和依赖已覆盖时引用，不重复新建。对方返回答复时仍以提出方 `crd` 整合，不切换为 `crd-respond`。
-- 交接带齐本方与接收项目、阻塞的计划任务、缺口证据、请求的可观察行为/交付物、必要契约与验收条件。本方验证任务单列，不把依赖系统的实现编成本方任务，也不替对方规定内部实施。只有接收项目无法确定且会改变请求对象时才问，不询问人岗分配。
-- 已有用户决定直接沿用；涉及新的范围、权限、数据、契约或关键 NFR 取舍时按第 4 节确认，未确认部分标为提议。写文档不代替本方决定或对方接受，不虚构答复、排期或承诺。
-- 在决策记录及计划阻塞处链接真实 CRD 与相关条目，记录当前待答/待交付项、解除所需证据和恢复入口。未实际发送就写“文档已保存，未发送”；不增加发送审批步骤，也不自动发送。
-- 对方已回复或接受不等于前置已满足。回收答复、交付与本方必要验证证据后，按该阻塞的解除条件核对；只是澄清契约的项可据充分答复解除，要求真实准入/联调的项不能仅凭答复关闭。
+RULE @decision_record:
+  MUST: [follow_decisions_contract, single_main_agent_writer,
+         append_current_round_and_item_conclusions_without_rewriting_history,
+         reread_saved_record]
+  # 对象、轮次、总览、逐项上下文/选项/推荐/原话或证据/计划落点、未解除阻塞、就绪结论。
 
-## 4. 交互确认
+RULE @plan_revision:
+  MUST: [reread_affected_passages_before_editing, preserve_concurrent_user_changes,
+         write_resolved_substantive_conclusions_into_plan,
+         limit_unresolved_edits_to_conditions_collaboration_sources_and_next_actions,
+         synchronize_premises_decisions_contracts_design_tasks_verification_then_status]
+  MUST_NOT: [edit_unrelated_sections, write_b_ids_qa_history_or_skill_names_into_plan,
+             insert_this_round_process_notes_into_plan, premark_new_work_complete,
+             rewrite_existing_completion_history, treat_unaccepted_external_contract_as_fact]
 
-按当前模式和工具约束使用实际可用的交互问答工具（如 `AskUserQuestion`、`request_user_input_async`）；没有时在聊天中直接提问并等待。
+RULE @plan_revision_locations:
+  MUST: |
+    需求账本：A-* 改已解除或转 C-*/R-*；未知 NFR 填确认值及「用户 YYYY-MM-DD 确认」或证据路径。
+    事实/契约：[未核实·阻塞] 改 [已核实·足够] 或 [已核实·缺口]，附证据与最小增量。
+    决策表/ADR：选择、理由、未选备选与重评条件，已确认决策为 Accepted。
+    同步受影响接口、失败语义、迁移、§9 验证、里程碑任务及依赖。
+    §11 已解除项删除或改不阻塞；其余保留解除条件、下一步、CRD 来源与最晚确认点。
+    按事实更新实施进度当前阻塞和基线；按 dev-plan 标准重判顶部状态：
+    范围、安全、数据、外部契约或关键 NFR 仍有未决则 Blocked，前置全部解决才 Ready。
 
-- 不只询问方案取舍：查证后仍缺用户可提供的访问前置、外部答复、证据入口或接收项目等，也在本轮主动询问最少必需信息，不直接把“缺外部协助”留给下一轮。已获授权或已提供的信息直接沿用，不重复索取；不要求在聊天中粘贴密钥。
-- 每批问题给出必要上下文；问题本身必须独立可答，写清 B-ID、卡住什么、需要用户提供或选择什么，以及选项后果。决策推荐项放第一位并注明“推荐”，附理由，允许自由回答。不能让用户必须翻前面的长篇说明才能作答。
-- 互不依赖的项可合并为一次提问（工具单次上限内）；阻塞多时优先询问能解除上游或多项阻塞的问题，其余保留在待处理清单。后续选项依赖前一答案的，按顺序问，拿到答案后重新判断下游项的选项。
-- 异步等待时继续不依赖答案的查证；收到回答后，继续完成对应验证、CRD 补齐和计划回写，并重新检查关联阻塞，不停在“已记录，后续再处理”。仍需决定或证据时继续交互；受答复影响的检查完成前不宣称解除。
-- 只有用户的明确回答才算确认。“按你推荐的来”是确认，记录为“用户授权按推荐”；默认值、空回答、超时都不算。自由回答含义不清时追问一次。
-- 用户选择了非推荐方案时照其执行；若该选择与已核实事实冲突或引入新的阻塞，说明一次后果，记录用户的最终决定。
-- 用户要求停止时即停止后续工作并交接已完成部分；仅拒绝或暂缓回答时，已确认的照常落地，其余保留为未决，不替用户默认决定。所有未答、暂缓或未及处理的项，最终按第 7 节集中重列具体问题和用户动作，不以“前面已问过”省略。
+RULE @verification:
+  MUST: [reread_plan_decisions_and_current_crd,
+         trace_each_resolved_item_to_plan_conclusion, search_and_remove_refuted_claims,
+         check_requirements_design_milestones_acceptance_links,
+         align_top_status_risks_and_progress,
+         check_real_cr_entries_or_explicit_generation_blockers_for_external_gaps,
+         check_local_verification_actions_and_pass_criteria,
+         exclude_job_owner_waiting_and_unauthorized_sending,
+         reconcile_all_remaining_b_ids_counts_actions_and_conditions_with_final_list,
+         verify_required_user_actions_were_tool_presented_and_answer_state_recorded,
+         record_post_revision_plan_hash_and_readiness_in_current_round]
 
-## 5. 写决策记录
+RULE @verification_execution:
+  MUST: |
+    采用 dev-plan 协议且脚本可用时，运行 check_paths.sh <计划> <仓库根> 与 check_progress.sh <计划> <仓库根>；
+    不适用或缺失时人工核对并说明。收口前完成当前授权与工具内所有查证、答复处理及本地交接材料；
+    仅缺信息、用户暂缓、真实外部等待或超出边界时如实交接，不因已提问或发现外部依赖就停。
 
-按 [references/decisions-contract.md](references/decisions-contract.md) 写入或续写 `<计划名>.decisions.md`：对象、处理轮次、阻塞总览、逐项记录（上下文、选项、推荐与理由、确认原话/证据、计划落点）、未解除阻塞、就绪结论。续写时追加本轮一行与各项的本轮结论，不改写前几轮的记录。由主 agent 单独写入，写后回读核对。
+OUTPUT:
+  FORMAT: markdown
+  SECTIONS: [status_and_counts, full_remaining_blocker_table, artifacts_and_next_actions]
+  STYLE: [self_contained, no_dependency_on_collapsed_messages_or_file_opening]
 
-## 6. 修订开发计划
+RULE @delivery:
+  MUST: |
+    开头给真实 Ready/Blocked 变化、本轮已解除/新增或重开/仍阻塞数量，以及「需你处理 N 项」
+    （按需用户动作的 B-ID 计数，无则明确 0）；仍阻塞说明在等什么。
+    Blocked 时紧接完整清单，一项一行：B-ID | 阻塞事项与影响 | 当前缺口/需哪一方补齐 |
+    你现在要做什么 | 解除判据与恢复入口。覆盖全部重开、未答、暂缓及未及处理项，不用「等 N 项」省略。
+    共用动作标全部 B-ID；无变化重跑、仅聊天、部分交付同样适用。清单是汇总，不能替代 @user_action_gate。
+    外部项写接收项目、已保存未发送/待答复/待交付等实际进展、待交付物、真实 CRD 链接与条目；
+    未生成写原因和已知交接内容。未发送且需用户交接时写交给哪个项目、哪份材料、需回传什么。
+    本方验证写环境/访问前置、执行入口与判据；哪一方仅区分本方 agent、用户和依赖项目，不设人岗负责人。
+    未知分工写待确认问题；无需用户操作写「无需你操作，等待……」。
+    再给计划、decisions、本轮 CRD 链接与关键已解除项；写入失败明确哪份未完成，不声称已保存。
 
-把**已解除**的实质结论写进计划；未解除项仅更新阻塞记录中的解除条件、协作来源与下一步行动。按“事实前提 → 决策/契约 → 设计与任务 → 验证 → 状态”的顺序同步：
+RULE @next_actions:
+  MUST: |
+    给当前客户端可复制调用及真实路径（Codex $resolve-blocked，Claude Code /resolve-blocked）：
+    Ready → /goal 按 <计划路径> 开发。
+    Blocked → 先推进清单中的交接/补证/决定；需修订请求或整合答复给 crd <实际 CRD 路径>；
+    明确哪些条件满足后再运行 resolve-blocked <计划路径> 回收证据和重判，不能只给重跑命令。
+    全部在等待且无可执行动作时，说明条件满足前重跑无效；有独立工作则一并列出。
+  MUST_NOT: start_implementation_from_suggested_next_command
 
-- 需求账本：`A-*` 改为已解除或转写为 `C-*`/`R-*`；未知的 NFR 数字填入确认值，来源写“用户 YYYY-MM-DD 确认”或证据路径。
-- 事实/契约：`[未核实·阻塞]` 改为 `[已核实·足够]` 或 `[已核实·缺口]`，附证据与最小增量。
-- 决策表/ADR：写入选择、必要理由、未选备选和重新评估条件，状态改为 Accepted。
-- 受决策影响的接口、失败语义、迁移、§9 验证、里程碑任务与依赖一并修改；新增工作不预填完成，不改已有完成记录。
-- §11：已解除的行删除或改为不阻塞；未解除的保留并更新解除条件、下一步动作、CRD 来源（适用时）与最晚确认点，不将待接受的外部契约写成既定事实。
-- 「实施进度」的当前阻塞与基线按事实更新；顶部状态按 dev-plan 标准重判：仍有影响范围、安全、数据、外部契约或关键 NFR 的未决项则保持 `Blocked`，前置都解决才是 `Ready`。
+RULE @project_ledger:
+  WHEN: repository_has_registered_ledger_or_existing_sdlc_protocol
+  MUST: |
+    交付原产物后读仓内台账规则；默认 .xgent-ai/sdlc/protocol.md，兼容已有 docs/project-status/protocol.md。
+    两套并存未登记切换时先核对，不双写。按协议更新受影响对象当前状态、来源与必要索引；
+    v4 日常直接更新当前页，事件条件或旧版事件要求依仓内协议。
+    登记修订后计划版本/就绪状态、决策记录及已解除/剩余阻塞；不把解阻记成实施完成。
+    只读/仅聊天/不保存优先；登记失败说明，不影响如实交付原产物。
+  MUST_NOT: [create_unrequested_ledger, require_extra_skill_installation]
 
-计划只写最终结论，不写 B-ID、问答经过、“本次处理”这类过程信息，也不提本技能——这些留在决策记录里，否则会随实施过期并误导实施者。改前重读受影响段落，保留用户的并发修改；不改与阻塞无关的章节。
+REVIEW:
+  CHECK: [@scope_and_authorization, @local_authorization, @user_action_gate,
+          @interaction_tools, @answer_semantics, @answer_followthrough,
+          @unchanged_rerun, @verification, @verification_execution, @delivery]
+  EXPOSE: on_issue
+```
 
-## 7. 复核与交付
-
-1. 回读计划、决策记录及本轮 CRD：每个已解除项都能在计划中找到落点；搜索被推翻的旧说法，确认没有残留矛盾；需求 → 设计 → 里程碑 → 验收没有因修订断链；状态、§11 与「实施进度」一致。每个外部缺口都有真实 CR 条目或明确生成受阻，本方验证有动作与判据，无人岗等待或越权发送。核对本轮范围内所有剩余项（含重开后未解除、未答和未及处理项）与最终清单逐项对应，数量一致。
-2. 计划采用 dev-plan 协议且脚本可用时，运行 `check_paths.sh <计划> <仓库根>` 与 `check_progress.sh <计划> <仓库根>`；不适用或缺失时人工核对并说明。
-3. 在决策记录的处理轮次中写入本轮计划修订后的 hash 和就绪结论。
-
-收口前确认：当前授权与工具范围内能完成的查证、已获答复后的处理及本地交接材料已完成。未完成是因为仍缺信息、用户暂缓、真实外部等待或超出本轮边界时，明确交接；不能仅因发现外部依赖或已经提过问题就结束。
-
-最终回复必须独立可用，按以下顺序交付，不依赖用户展开中间消息或打开文件才能知道要做什么：
-
-1. **开头给结论**：计划状态变化（修订后的真实状态为 `Ready` 或 `Blocked`）、本轮已解除/新增或重开/仍阻塞数量，以及“需你处理 N 项”（按需用户动作的 B-ID 计数）。无需用户操作时明确写“需你处理 0 项”；若仍阻塞，说明当前在等什么。
-2. **仍为 `Blocked` 时紧接完整清单**，每项一行；按类型分组可以，但不能只列重点、用“等 N 项”省略，或只给文档链接。多项共用一个动作时标明覆盖的全部 B-ID。无实质变化的重跑、仅聊天或部分交付也遵循此要求：
-
-   | B-ID | 阻塞事项与影响 | 当前缺口 / 需哪一方补齐 | 你现在要做什么 | 解除判据与恢复入口 |
-   | --- | --- | --- | --- | --- |
-   | <实际 ID> | <事项；卡住的里程碑/任务> | <缺失决定/证据；本方 agent、用户或接收项目需提供什么> | <可直接回答的问题、需提供的非敏感信息或可照做的交接动作；无则明确“无需你操作，等待……”> | <可观察的通过条件；具体文件/条目或执行入口> |
-
-   外部依赖写接收项目、当前进展（如“已保存，未发送”“待答复”“待交付”）和具体待交付物；有 CRD 时给真实链接与条目，未生成时说明原因并交付可确定的交接内容。未发送且需用户交接时，把交给哪个项目、交接哪份文档或内容、需回传什么写入用户动作，不能只写“跟进对方”。本方验证写环境/访问前置、执行入口和通过判据。这里的“哪一方”区分本方 agent、用户和依赖项目，不设人岗负责人；无法确定时列出需确认的问题，不虚构分工。
-3. **再给产物与后续入口**：决策记录、计划与本轮 CRD 链接（适用时），简述已解除的关键项。写入失败时说明哪份文件未完成，不声称已保存。给可直接复制的下一步命令，按当前客户端的技能调用写法（如 Codex `$resolve-blocked`、Claude Code `/resolve-blocked`），路径填实际文件：
-
-- **Ready**：`/goal 按 <计划路径> 开发`。
-- **Blocked**：先按清单推进当前可执行的交接、补证或用户决定；需修订请求或整合答复时给 `crd <实际 CRD 路径>`。明确满足哪些条件后再运行 `resolve-blocked <计划路径>` 回收证据、修订计划，不能只给重跑命令。剩余阻塞都在等待且当前无可执行动作时明说：条件满足前重跑不会改变结果。有不依赖阻塞的独立工作时一并列出。
-
-以上为交付后的建议命令，不自行开始实施。
+决策记录路径、模板、结果状态与续写规则见 [references/decisions-contract.md](references/decisions-contract.md)，锚定输入时读取。验收设计见 [evals/scenarios.md](evals/scenarios.md)，仅在验证本技能行为时读取。
 
 ```text
 $resolve-blocked goal/LOGIN.md
 $resolve-blocked goal/LOGIN.md，参考 goal/LOGIN.review.md，只处理与 M2 相关的阻塞。
 $resolve-blocked goal/LOGIN.md，B-03 的供应商答复已到：<答复要点>。
 ```
-
-## 项目状态回写
-
-若仓库已登记状态台账，或存在仓根 `.xgent-ai/sdlc/protocol.md`（兼容已有 `docs/project-status/protocol.md`；两套并存且未登记切换时先核对，不能双写），交付原产物后读取台账的回写规则（默认目录读上述协议），按仓内协议更新受影响对象的当前状态与来源链接，必要时维护索引；v4 日常直接更新当前页，事件留存条件或旧版事件要求以仓内协议为准；未启用时不自动建表，不依赖另装技能。只读/仅聊天/不保存要求优先，登记失败须说明，不影响如实交付已完成的原产物。
-
-登记计划修订后的版本与就绪状态、决策记录路径及已解除/剩余阻塞；不把阻塞解除记成计划已实施。

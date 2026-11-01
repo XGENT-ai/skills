@@ -89,8 +89,8 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | Skill | 说明 |
 | --- | --- |
 | [prd](skills/prd/SKILL.md) | 撰写或优化 PRD，明确产品目标、FR/NFR、UAT、分期与终验，可按授权录入 SPMS |
-| [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复、答复反问并维护需求与 Q&A 当前视图 |
-| [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方评估、答复 CRD 或回告实现结果；需改码时生成带来源 CR 与完成回写约定的计划，不实施。仅原样追加/收录不重评或生成计划 |
+| [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复；基于目标和长期成本明确本方立场，收敛契约及 Q&A，不将未发送等同草案 |
+| [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方独立评估长期方案、明确本方结论并收敛 CRD 答复，或回告实现结果；需改码时生成带来源 CR 与完成回写约定的计划，不实施。仅原样追加/收录不重评或生成计划 |
 | [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行计划，明确开发对象、排除与外部前置；CR 来源可追溯，对应请求完成后回写答复，支持跨对话续做 |
 | [spec-human-decision](skills/spec-human-decision/SKILL.md) | 逐项讲清 PRD 或开发计划的功能与价值，计划另述做法；交互选择确认、驳回、修改并打磨文档，修改须附说明 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
@@ -103,7 +103,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 | [review-ui](skills/review-ui/SKILL.md) | 代码评审后可选的 UI/UX 验收：只认运行中界面的实拍截图与实测，不凭代码推断效果；由全新上下文的独立评审按冻结的目标包打分并列出可执行差距，默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1 才通过 |
 | [apply-ui-review](skills/apply-ui-review/SKILL.md) | 按 UI 验收报告对照截图与目标核实并修复界面差距、自检；停滞预警时重构思路，提交登记后交回复审 |
 | [apply-doc-review](skills/apply-doc-review/SKILL.md) | 可只传评审报告，沿报告的原文档引用定位并修订 PRD 或开发计划，复核并记录逐条处置结果 |
-| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 查证与交互推进计划解阻，外部依赖通过 CRD 交接，存 decisions 并回改计划；最终集中列全剩余阻塞、各方交付和用户具体动作 |
+| [resolve-blocked](skills/resolve-blocked/SKILL.md) | 查证解阻；需用户拍板、补证或协调外部依赖时用工具阻断式问答，外部请求用 CRD 交接，存 decisions 并回改计划，最终列全剩余阻塞和用户动作 |
 
 把上述 skill 串成完整交付流水线（想法 → PRD → 分期 → 每期开发与并行测试 → 交付）的方法见 [AI Native SDLC](docs/ai-native-sdlc.md)，含各环节产物路径约定与测试线待补环节的现状核对。
 
@@ -112,7 +112,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 需要逐项确定功能取舍时，可在 PRD 或开发计划成稿后使用 `spec-human-decision <文档>`：每项简述功能与价值，开发计划另述做法；选择确认、驳回或附说明修改，修订版再确认，并同步文档与决定记录。这是可选的用户决策环节，技术评审与开工条件仍按下述回路核对。
 
 1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
-2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证、交互补齐前置，收到答复后继续处理，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；最终开头列全剩余阻塞、各方需提供什么、用户具体动作和解除条件，不只给重跑命令。先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
+2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证，需用户处理的决定、前置和跨项目协调必须用 Ask User 类工具提出并等待明确答复，不能仅输出聊天消息；收到答复后继续处理，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；最终开头列全剩余阻塞、各方需提供什么、用户具体动作和解除条件，不只给重跑命令。先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。
 3. `/goal` 开发：按计划的提交点分阶段提交，全部里程碑完成后最终提交，SHA 记入完成记录，结束时提示 `review-code <计划>`。来自 CR 的计划按顶部合同，在对应请求或明确子范围实现且约定检查通过后追加实现结果答复，保留历史、余项及回告链接；不等同发布或对方验收，未能回写时保留恢复动作。
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：每轮按目标包截图，由全新上下文的独立评审打分。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。

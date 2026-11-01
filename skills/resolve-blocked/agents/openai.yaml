@@ -1,4 +1,4 @@
 interface:
   display_name: "解除计划阻塞"
-  short_description: "查证与交互推进计划解阻，外部依赖用 CRD 交接，最终列全剩余阻塞和用户动作"
-  default_prompt: "使用 $resolve-blocked 查证并交互补齐计划阻塞，收到答复后继续验证和回写，外部缺口实际用 crd 创建/续写本地 CRD；保存 decisions 并回改计划，按真实证据判定 Ready/Blocked，最终开头集中列全剩余阻塞、所需交付、用户具体动作与解除条件，不只给重跑命令，不设人岗负责人、不自动发送或实施。"
+  short_description: "查证解阻，需用户处理时用工具阻断式问答，外部依赖用 CRD 交接并回改计划"
+  default_prompt: "使用 $resolve-blocked 查证计划阻塞；需用户拍板、补证、解决外部依赖或协调其他项目时，先备齐材料，再用 Ask User 类工具提出具体动作并等待明确答复，不能仅输出聊天消息；收到答复后继续验证和回写，外部缺口实际用 crd 创建/续写本地 CRD；保存 decisions 并回改计划，按真实证据判定 Ready/Blocked，最终开头集中列全剩余阻塞、所需交付、用户具体动作与解除条件，不只给重跑命令，不设人岗负责人、不自动发送或实施。"

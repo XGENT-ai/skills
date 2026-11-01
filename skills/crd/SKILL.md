@@ -1,6 +1,6 @@
 ---
 name: crd
-description: 跨项目 CRD 提出方使用：起草或修订需求、整合接收方回复并续接 Q&A；接收方评估与答复用 crd-respond，非 Kubernetes CRD、代码评审或直接实施。维护 CRD 与往返记录。
+description: 跨项目 CRD 提出方使用：起草或修订需求、整合接收方回复并续接 Q&A；接收方评估与答复用 crd-respond，非 Kubernetes CRD、代码评审或直接实施。明确本方立场并收敛契约，保留往返依据。
 when_to_use: "用户会说「给 XX 项目提个需求」「这条需求要改一版」「对方回了，接着问」这类提出方请求时。"
 ---
 
@@ -12,7 +12,7 @@ CR（Change Request）的文档称为 CRD，承载协作需求、**Q&A 问答澄
 INTENT:
   GOAL: independently_readable_and_answerable_crd
   SUCCESS: ["谁需要另一方提供什么、为什么、怎样算满足、哪些事项未达成一致均明确",
-            source_grounded_current_view, preserved_response_history]
+            source_grounded_current_view, explicit_requester_position, converged_decisions, preserved_response_history]
 
 RULE @role_routing:
   MUST: ["从上下文确定双方项目、协作目标、文档路径及当前代表的角色；角色不明且影响动作时询问，不直接把当前仓库认作提出方",
@@ -32,7 +32,7 @@ RULE @collaboration_scope:
 | 本次动作 | 读取与处理 |
 | --- | --- |
 | 发起或修订 | 读简报、相关代码/接口文档及已有 CR，形成可答复条目 |
-| 提出方补充或答复澄清 | 核对接收方反问、替代方案及条件，文末追加本方澄清、补充或有依据的确认；未授权表态标草案，不替接收方接受或承诺 |
+| 提出方补充或答复澄清 | 核对接收方反问、替代方案及条件，文末追加本方澄清、补充或有依据的确认；形成授权范围内的本方结论，超出授权的具体取舍单列，不替接收方接受或承诺 |
 | 整合返回 CRD | 读返回稿、发出基线、本地当前稿，按 §4 核对增量并同步摘要，不让用户另摘已有回复 |
 | 收录独立回复或续接 Q&A | 先读完整 CR 与最新往返，再对照来信/聊天/评审材料收录实际回复，保留发言归属并同步摘要 |
 
@@ -60,14 +60,39 @@ RULE @request_contract:
   MUST_NOT: [vague_acceptance, "把小请求扩成完整 PRD 或强制对方采用未达成一致的内部方案"]
 ```
 
-## 3. 维护 Q&A 与当前结论
+## 3. 明确本方立场，收敛 Q&A 与当前结论
 
 ```formal
+RULE @requester_position:
+  UNLESS: verbatim_append_only_or_receipt_only
+  MUST: ["代表提出方判断目标、核心验收与责任边界；区分必须保持的结果、可接受调整及拒绝条件，不只转述接收方方案",
+         "结合本方代码与产品约束，评估双方长期维护、运行、兼容迁移及全生命周期成本；不把复杂度转嫁给另一方当作更优，也不为假想扩展造平台",
+         "证据充分时明确选择继续原案、接受替代、缩减或撤回哪些请求，并说明依据、边界及下一步；方案已满足目标和可持续性要求时定论，不为措辞或无关细节重开"]
+
+RULE @own_conclusion:
+  MUST: ["受托评估、拟答复或续谈即应形成授权范围内的本方技术结论，不再索取一次仅用于把技术结论转正的确认；不因此取得新增产品范围、预算、排期或外部动作授权",
+         "本方技术立场、对方接受、用户保留的决定、发送、排期承诺、实现与验收分别记录；未发送或对方尚未接受不使本方技术结论成为草案",
+         "只有用户明确要草案或预审稿时，整份本方答复才标草案；证据或授权不足时仅将受影响事项列待澄清/待决，并给本方条件结论、缺口和解除条件",
+         "仅原样追加或收录时保留来源的草案/确认标识，不自行升级原文的立场或承诺"]
+  MUST_NOT: [blanket_draft_label_without_extra_user_confirmation,
+             use_draft_label_to_avoid_own_technical_judgment]
+
+RULE @negotiation_convergence:
+  UNLESS: verbatim_append_only_or_receipt_only
+  MUST: ["每轮先核对已定事项、剩余实质分歧及新证据，只处理受新信息影响的部分；不重复询问已有答案或再次要求确认已生效决定",
+         "待澄清必须指出缺哪个事实/决定、会改变什么结论、由哪方怎样补齐；非阻塞细节不拖住已能成立的契约",
+         "双方对同一范围的有效结论一致且必要确认齐备时，登记一致依据并关闭对应 Q，转入约定交付与验证；不再请求‘确认这次确认’",
+         "双方仅重复原有理由且无新证据时，停止同义反问；说明已达成部分、最小剩余分歧、本方主张、可接受边界与可行收敛路径，不靠继续生成草案推进",
+         "本方权限内能决定的当轮明确决定；确需用户取舍或跨项目协调时，用可用 Ask User 类工具给出具体裁定问题、选项、后果和推荐并等待明确答复；异步工具保持待答，不能仅把待办输出到聊天，工具不可用则如实报告交互受阻",
+         "用户明确暂缓或确需外部证据时保留具体阻塞与恢复条件，已定部分继续；无可接受交集时明确本方不接受的范围与理由，不伪造共识"]
+  MUST_NOT: [round_count_as_evidence_of_agreement, fabricated_acceptance,
+             reopen_settled_terms_without_material_change, indefinite_draft_ping_pong]
+
 RULE @current_view:
   UNLESS: verbatim_append_only
   MUST: ["Q&A 逐条保留问题、关联需求、提问方/待答方、是否阻塞及阻塞步骤、当前回答/待确认点、状态与答复链接；未知答案明确待答，建议标建议",
          "部分回答只更新对应项，未答项继续待答；已回答不等于已接受，已接受不等于已交付",
-         "单方新范围、替代方案、时间仍是待确认提议；一致结论须有有权限一方的明确确认，需要双方确认时保留双方依据",
+         "单方新范围、替代契约、时间对另一方仍是提议；本方须明确自己的选择，一致结论保留双方有效依据；真正超出已有授权的决定单列，不将已获授权的技术判断一律留待确认",
          "新旧答复冲突时列出影响，仅有明确撤回或替代依据才采用新结论，否则待澄清，不按时间覆盖承诺",
          "需求/问题/答复互引；问题关闭有实际回答及必要确认，CR 关闭有约定范围验收证据或明确拒绝/撤回理由",
          "正文写当前已确认需求与验收，未确认变更留提议/待决项；正文与历史差异可追到依据，历史保留当时原意"]
@@ -107,7 +132,7 @@ RULE @missing_versions:
 RULE @response_history:
   MUST: ["所有轮次按收录顺序追加到文末‘往返答复记录’，其他章节在前；双方发言用同一格式，收录不等于代答",
          "每轮有 RESP 编号、发言方/项目、原消息时间（未知注明）、整理时间、来源、关联 R/Q、内容、未答项及下一步",
-         "拟答复标‘草案，未发送/未确认’，收到答复标‘已收到’，不推定双方已认可",
+         "本方答复按 @own_conclusion 标识技术结论及具体待决项，发送事实另记；收到答复标‘已收到’，不推定双方已认可",
          "原文与已读材料一致；概括标整理摘要，保留条件、否定、例外与承诺边界；长原文可链接原件并保留关键答复",
          "更正以新记录引用旧编号、差异与依据，不改写或删除历史；可按 @current_view 同步正文",
          "追加前按来源标识及内容去重；有新增条件的相似消息另记并注明变化",
@@ -120,7 +145,8 @@ RULE @response_history:
 ```formal
 REVIEW:
   CHECK: [@role_routing, @collaboration_scope, @source_fidelity, @stable_identifiers,
-          @request_contract, @current_view, @handoff_version, @merge_return,
+          @request_contract, @requester_position, @own_conclusion, @negotiation_convergence,
+          @current_view, @handoff_version, @merge_return,
           @missing_versions, @response_history]
   ALSO: ["核对本次改动及关联位置，编号唯一、引用和相对链接可达，无未答项、部分接受、冲突或时间条件丢失",
          "草案、提议、已收到、已确认、验收完成不混用；修改仅涉及本次 CR，文档检查不冒充业务验收"]
@@ -128,9 +154,11 @@ REVIEW:
 
 OUTPUT:
   FORMAT: markdown
-  MUST: ["交付文档链接、本轮新增或变化结论、仍待谁回答的阻塞问题",
+  MUST: ["交付文档链接；评估/续谈给明确的本方立场、本轮已收敛结论及具体剩余事实/决定缺口，不只说仍是草案；仅追加/收录给实际记录及未答项，不制造新立场",
          "未实际发送则说明‘文档已保存，未发送’；只落盘不增设发送审批"]
 ```
+
+验证本技能的角色、立场与收敛行为时读取 [验收场景](evals/scenarios.md)；场景本身不代表验证通过。
 
 ## 调用示例
 
