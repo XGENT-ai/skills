@@ -290,6 +290,21 @@ test('frozen P3 manifest has the same 18 complete topics/materials for both host
   assert.throws(() => module.checkP3ScenarioManifest(sampled), /same 18/);
 });
 
+test('P3 brand capture retains a failed authorized attempt before a successful pinned retry', async () => {
+  const {module} = await helpers(), manifest=scenarioManifest(),url=manifest.rows.find(x=>x.id==='brand-capture').prompt.match(/https:\/\/raw\.githubusercontent\.com\/[^\s]+/)[0],
+        summary=Buffer.from('{}'),row={id:'brand-capture',evidence:{kind:'brand-capture',summary:{path:'/fixture/summary.json',identity:identity(summary)}}},
+        context={scenarioManifest:manifest,bytesFor:()=>summary},
+        failed={argv:['brands','capture',url],exitCode:4,receipt:{status:'failed',brand:null,resource:null}},
+        passed={argv:['brands','capture',url],exitCode:0,receipt:{status:'pass',brand:{sha256:'8a1035d9172bf23b4444d8409418141e7bb39271deb17786c3860ef1defd494e'},resource:{bytes:125,mediaType:'image/png'}}};
+  const check=results=>module.checkP3ScenarioOutcome(row,{},results,'',context);
+  // This gate accepts the pinned retry, then still requires independent delivery evidence.
+  assert.throws(()=>check([failed,passed]),/Mandatory visual review/);
+  assert.throws(()=>check([failed]),/Capture differs/);
+  assert.throws(()=>check([{...failed,argv:['brands','capture','https://example.invalid/other.png']},passed]),/Capture differs/);
+  assert.throws(()=>check([passed,{...failed,argv:['brands','capture','https://example.invalid/other.png']}]),/Capture differs/);
+  assert.throws(()=>check([failed,{...passed,receipt:{...passed.receipt,brand:{sha256:'0'.repeat(64)}}}]),/Capture differs/);
+});
+
 test('P3 coverage is a bijection of 18 fresh origins and physical projects', async () => {
   const {module} = await helpers(), record = {
     scenarios: module.P3_SCENARIO_IDS.map((id, i) => ({id, sessionId: 'session-' + i})),
@@ -849,6 +864,16 @@ test('P3 native provider launcher plan constructs client commands without starti
   assert(!continued.includes('--last'));
 });
 
+test('P3 Codex continuation retains the writable sandbox used for its origin', async () => {
+  const {provider} = await helpers(), argv = provider.buildArguments(
+      {provider: 'codex', cwd: '/fixture/new-case', endpointPolicy: 'inherit-config'},
+      {previousId: 'same-session'});
+  assert(argv.includes('sandbox_mode="danger-full-access"'), 'Resume must not fall back to read-only');
+  assert.equal(argv[argv.indexOf('sandbox_mode="danger-full-access"') - 1], '--config');
+  assert(!argv.includes('--sandbox'), 'exec resume does not accept the origin-only sandbox flag');
+  assert.deepEqual(argv.slice(-2), ['same-session', '-']);
+});
+
 test('Codex tool environment is forwarded with two fixed per-key set overrides', async () => {
   const {provider} = await helpers(), toolEnvironment = {
     PHOENIX_DIAGRAM_HOME: '/fixture/isolated cache',
@@ -1118,6 +1143,28 @@ test(
       assert.throws(() => f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), /unsealed/);
     });
 
+test('PD process-filter text does not become an unsealed native invocation', async () => {
+  const f = await commandFixture(),
+        filter = "python3 - <<'PY'\nfor line in rows:\n if 'phoenix-diagram-darwin-arm64 migrate' in line: print(line)\nPY",
+        event = {type: 'assistant', message: {role: 'assistant', content: [{
+          type: 'tool_use', id: 'process-filter', name: 'Bash', input: {command: filter}
+        }]}};
+  f.captured.parts[0].events.push(event);
+  for (const command of [filter, ['/bin/zsh', '-c', filter]]) {
+    event.message.content[0].input.command = command;
+    assert.equal(f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), true);
+  }
+  for (const command of [
+    filter + '\nphoenix-diagram migrate --project /fixture/project',
+    filter + '\npython3 -c "import os; os.system(\'phoenix-diagram migrate --project /fixture/project\')"',
+    filter.replace('print(line)', "os.system('phoenix-diagram migrate --project /fixture/project')")
+  ]) {
+    event.message.content[0].input.command = command;
+    assert.throws(
+        () => f.module.checkP3RecordedCommands(f.captured, [f.command], f.context), /bypassed|unsealed/);
+  }
+});
+
 test('P3 terminal Codex executions still require sealed captures and reject direct PD commands', async () => {
   const f = await commandFixture(), session = {...f.session, provider: 'codex'},
         old = f.captured.parts[0].events, turn = 'fixture-codex-turn', timestamp = '2026-10-29T01:00:01.000Z',
@@ -1225,6 +1272,46 @@ test('ERD shell read-only checks inspect native execution argv without allowing 
   captured.parts[0].events = [{type: 'response_item', payload: {type: 'custom_tool_call',
     call_id: 'opaque-read', name: 'exec', input: 'const r=await tools.exec_command({cmd:"pwd"});text(r.output);'}}];
   assert.throws(() => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context), /read-only/);
+});
+
+test('ERD accepts a literal read-only exec wrapper only with its matching native execution proof', async () => {
+  const f = await sessionFixture('erd-missing-facts'),
+        captured = f.module.checkP3Session(f.session, f.row, f.context),
+        row = {...f.row, evidence: {kind: f.row.id, questions: ['participation'], stoppedQuote: 'stop here'}},
+        session = {...f.session, provider: 'codex'}, turn = 'readonly-turn',
+        command = 'cat .agents/skills/phoenix-diagram/SKILL.md',
+        wrapper = `const r = await tools.exec_command({cmd:${JSON.stringify(command)},"max_output_tokens":20000});text(r.output);\n`;
+  function check({input = wrapper, executed = command, missing = false, corrupt = false} = {}) {
+    const rows = [
+      {type: 'session_meta', payload: {id: session.id, cwd: session.cwd}},
+      {type: 'event_msg', payload: {type: 'task_started', turn_id: turn}},
+      {timestamp: '2026-10-29T01:00:00.500Z', type: 'response_item',
+        payload: {type: 'custom_tool_call', call_id: 'read-outer', name: 'exec', input}},
+      ...(!missing ? [{timestamp: '2026-10-29T01:00:01.000Z', type: 'event_msg', payload: {
+        type: 'item_completed', thread_id: corrupt ? 'wrong-session' : session.id, turn_id: turn,
+        started_at_ms: Date.parse('2026-10-29T01:00:01.000Z'),
+        completed_at_ms: Date.parse('2026-10-29T01:00:01.000Z'), item: {
+          type: 'CommandExecution', id: 'read-native', process_id: '123', source: 'unified_exec_startup',
+          command: ['/bin/zsh', '-c', executed], cwd: 'file://' + session.cwd,
+          status: 'completed', exit_code: 0, aggregated_output: 'original read output', duration: {secs: 0, nanos: 1}
+        }}}] : []),
+      {timestamp: '2026-10-29T01:00:01.100Z', type: 'response_item', payload: {
+        type: 'custom_tool_call_output', call_id: 'read-outer', output: [{type: 'input_text', text: 'original read output'}]}},
+      {type: 'event_msg', payload: {type: 'task_complete', turn_id: turn}}
+    ], native = events(f.mem, '/fixture/readonly-wrapper.jsonl', rows);
+    captured.parts = [{...captured.parts[0], profile: 'p3', provider: 'codex', session,
+      raw: native.raw, events: rows, minimumOffset: 0, capture: {provider: 'codex',
+        sessionId: session.id, cwd: session.cwd, startedAt: '2026-10-29T01:00:00.000Z',
+        finishedAt: '2026-10-29T01:00:02.000Z'}}];
+    return () => f.module.checkP3ScenarioOutcome(row, captured, [], 'participation; stop here', f.context);
+  }
+  assert.doesNotThrow(check());
+  for (const options of [{missing: true}, {corrupt: true}, {executed: 'cat different.txt'},
+                         {input: wrapper + 'await tools.apply_patch("write then delete");'},
+                         {input: wrapper.replace('text(r.output);', 'fs.writeFileSync("candidate","x");')},
+                         {input: wrapper.replace(JSON.stringify(command), JSON.stringify('cat facts.txt > candidate.json')),
+                          executed: 'cat facts.txt > candidate.json'}])
+    assert.throws(check(options), /read-only/);
 });
 
 test('migration text help seals stdout without counting as installation or recovery', async () => {

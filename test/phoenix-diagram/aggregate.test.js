@@ -170,6 +170,42 @@ test('P3 binds one terminal CommandExecution anchor to its native session and ou
   f.execution.payload.item.exit_code=4;f.execution.payload.item.status='failed';
   const failed=f.build(),actual=proof.proofPair(failed.part,failed.proof);assert.equal(actual.exitCode,4);assert.equal(actual.error,true);
 });
+test('P3 keeps native execution facts separate from images in the same exec output',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),image={type:'input_image',image_url:'data:image/png;base64,iVBORw0KGgo=',detail:'high'};
+  for(const first of [false,true]){
+    const f=p3CommandExecutionFixture();f.rows[4].payload.output.splice(first?0:1,0,image);const b=f.build();
+    assert.equal(proof.proofPair(b.part,b.proof).output,'Actual installed skill bytes');
+  }
+  for(const invalid of [{...image,type:'unknown'}, {...image,image_url:'https://example.invalid/image.png'}, {...image,image_url:12}])await t.test(String(invalid.type)+'/'+String(invalid.image_url),()=>{
+    const f=p3CommandExecutionFixture();f.rows[4].payload.output.push(invalid);const b=f.build();
+    assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
+function p3RejectedMigrationHelpFixture(){
+  const f=p3CommandExecutionFixture(),preamble={NODE:'/fixture/node',COLLECTOR:'/fixture/tools/phoenix-diagram/tests/support/capture-p3-stdio.mjs',VERSION:'/fixture/release/VERSION.json',STDIO:'/fixture/project/stdio'},
+        words=[preamble.NODE,preamble.COLLECTOR,'--mode','migration','--program','/fixture/engine','--cwd','/fixture/project','--candidate-version',preamble.VERSION,'--stdout',preamble.STDIO+'/help.stdout','--stderr',preamble.STDIO+'/help.stderr','--evidence-dir',preamble.STDIO+'/help.evidence','--','help'];
+  f.execution.payload.item.command=['/bin/zsh','-c',words.join(' ')];f.execution.payload.item.aggregated_output='P3 stdio capture: migration capture only executes migrate\n';f.execution.payload.item.exit_code=4;f.execution.payload.item.status='failed';
+  const collectorBytes=Buffer.from('Fixed synthetic stdio collector'),collector={nodePath:preamble.NODE,script:{path:preamble.COLLECTOR,identity:identity(collectorBytes)}};
+  return{f,preamble,words,build(){f.execution.payload.item.command=['/bin/zsh','-c',words.join(' ')];const b=f.build();return{captured:{provider:'codex',scenarioId:'migrate-recover',cwd:'/fixture/project',parameters:{ENGINE:'/fixture/engine'},preambleParameters:preamble,collector:structuredClone(collector),parts:[b.part]},context:{collectorIdentity:{stdio:identity(collectorBytes)},bytesFor:()=>collectorBytes}};}};
+}
+test('P3 retains an authenticated migration help rejection without inventing a native capture',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),{checkP3RecordedCommands}=await import('../../tools/phoenix-diagram/tests/support/p3-provider.mjs'),fixture=p3RejectedMigrationHelpFixture(),b=fixture.build();
+  assert.equal(checkP3RecordedCommands(b.captured,[],{...b.context,nativeProof:proof}),true);
+  for(const fault of ['wrong-exit','wrong-error','wrong-engine','wrong-cwd','wrong-mode','wrong-version','escaped-slot','native-migrate','ordinary-case','unauthenticated-collector'])await t.test(fault,()=>{
+    const x=p3RejectedMigrationHelpFixture();
+    if(fault==='wrong-exit'){x.f.execution.payload.item.exit_code=0;x.f.execution.payload.item.status='completed';}
+    else if(fault==='wrong-error')x.f.execution.payload.item.aggregated_output='Different failure\n';
+    else if(fault==='wrong-engine')x.words[x.words.indexOf('--program')+1]='/fixture/other-engine';
+    else if(fault==='wrong-cwd')x.words[x.words.indexOf('--cwd')+1]='/fixture/other-project';
+    else if(fault==='wrong-mode')x.words[x.words.indexOf('--mode')+1]='installed';
+    else if(fault==='wrong-version')x.words[x.words.indexOf('--candidate-version')+1]='/fixture/other-version.json';
+    else if(fault==='escaped-slot')x.words[x.words.indexOf('--stdout')+1]=x.preamble.STDIO+'/../outside';
+    else if(fault==='native-migrate')x.words.splice(x.words.indexOf('--')+1,1,'migrate','--help');
+    const bad=x.build();if(fault==='ordinary-case')bad.captured.scenarioId='normal-no-preview';
+    if(fault==='unauthenticated-collector')bad.captured.collector.script.identity.sha256='0'.repeat(64);
+    assert.throws(()=>checkP3RecordedCommands(bad.captured,[],{...bad.context,nativeProof:proof}),/unsealed|absent/);
+  });
+});
 test('P3 ignores later control calls when selecting the owning exec window',async()=>{
   const {P3_NATIVE_PROOF:proof}=await api(),f=p3CommandExecutionFixture();
   f.rows.splice(3,0,
@@ -192,6 +228,144 @@ function p3YieldedExecutionFixture() {
 test('P3 binds a yielded native execution to distinct start and terminal custom windows',async()=>{
   const {P3_NATIVE_PROOF:proof}=await api(),f=p3YieldedExecutionFixture(),b=f.build();
   assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+});
+function p3CompletedBetweenPollsFixture(){
+  const f=p3YieldedExecutionFixture();
+  f.rows.splice(f.rows.indexOf(f.stop),1);f.rows.splice(f.rows.indexOf(f.execution)+1,0,f.stop);
+  f.stop.timestamp='2026-10-29T00:00:01.700Z';
+  f.stop.payload.input='const r=await tools.write_stdin({session_id:20926,chars:"",max_output_tokens:7000,yield_time_ms:1000});text(r);';
+  f.stopped.timestamp='2026-10-29T00:00:01.800Z';
+  f.stopped.payload.output=[{type:'input_text',text:'{"exit_code":0,"output":"Actual installed skill bytes"}'}];
+  return f;
+}
+test('P3 accepts a same-handle terminal poll after native completion between polls',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const output of ['{"exit_code":0,"output":"Actual installed skill bytes"}','{"exitCode":0,"nativeExitCode":0}'])for(const input of [
+    'text(await tools.write_stdin({session_id:20926,chars:"",max_output_tokens:7000,yield_time_ms:1000}));',
+    'const r=await tools.write_stdin({session_id:20926,chars:""});text(r);',
+    'const r=await tools.write_stdin({session_id:20926,chars:""});if(r.session_id)text({session_id:r.session_id,output:r.output});else{try{const c=JSON.parse(r.output);text({exitCode:r.exit_code,nativeExitCode:c.exitCode,stdout:c.stdout.path,stderr:c.stderr.path,captureFile:c.captureFile.path});}catch{text(r);}}'
+  ]){
+    const f=p3CompletedBetweenPollsFixture();f.stop.payload.input=input;f.stopped.payload.output[0].text=output;const b=f.build();
+    const pair=proof.proofPair(b.part,b.proof);assert.equal(pair.execution.processHandle,'20926');assert.equal(pair.exitCode,0);
+  }
+});
+function p3IndexedTerminalPollFixture(){
+  const f=p3CompletedBetweenPollsFixture();
+  f.stop.payload.input='const rs=await Promise.allSettled([tools.write_stdin({session_id:20926,chars:"",yield_time_ms:1000,max_output_tokens:1200}),tools.exec_command({cmd:"python3 -c \\\"import importlib.util\\\"",max_output_tokens:1000})]);rs.forEach((r,i)=>text({i,...r}));text(ALL_TOOLS.filter(x=>/mcp__chrome_devtools__(new_page|list_pages)|mcp__node_repl__js$/.test(x.name)));';
+  f.stopped.payload.output=[{type:'input_text',text:JSON.stringify({i:0,status:'fulfilled',value:{exit_code:0,output:'Actual installed skill bytes'}})},
+    {type:'input_text',text:JSON.stringify({i:1,status:'fulfilled',value:{exit_code:0,output:'True'}})}];
+  return f;
+}
+test('P3 binds a late terminal poll beside one literal read-only browser snapshot',async()=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3CompletedBetweenPollsFixture();
+  f.stop.payload.input='text(await tools.mcp__chrome_devtools__take_snapshot({pageId:2}));text(await tools.write_stdin({session_id:20926,chars:"",yield_time_ms:1000,max_output_tokens:1000}));';
+  f.stopped.payload.output.unshift({type:'input_text',text:JSON.stringify({content:[{type:'text',text:'Actual browser snapshot'}]})});
+  const b=f.build();assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+  f.stop.payload.input=f.stop.payload.input.replace('pageId:2','pageId:2,filePath:"unrequested.txt"');
+  const altered=f.build();assert.throws(()=>proof.proofPair(altered.part,altered.proof),/CommandExecution/);
+});
+function p3SequentialTerminalPollFixture(pollFirst=false){
+  const f=p3CompletedBetweenPollsFixture(),poll='text(await tools.write_stdin({session_id:20926,chars:"",yield_time_ms:1000,max_output_tokens:300}));',
+        side=pollFirst?'text(await tools.exec_command({cmd:"python3 -c \'print(1)\'",max_output_tokens:8000}));':
+          'text(await tools.mcp__chrome_devtools__evaluate_script({pageId:2,function:"() => ({title: document.title})",waitForStableDom:false}));',
+        output={type:'input_text',text:JSON.stringify(pollFirst?{exit_code:4,output:'Separate log read'}:{content:[{type:'text',text:'Actual DOM observation'}]})};
+  f.stop.payload.input=pollFirst?poll+side:side+poll;
+  if(pollFirst)f.stopped.payload.output.push(output);else f.stopped.payload.output.unshift(output);
+  return f;
+}
+test('P3 binds a late poll beside literal DOM or shell observations in output order',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const pollFirst of [false,true])await t.test(pollFirst?'poll then shell':'DOM then poll',()=>{
+    const f=p3SequentialTerminalPollFixture(pollFirst),b=f.build();
+    assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+  });
+});
+test('P3 sequential terminal polls reject ambiguous output or nonliteral code',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['wrong-handle','stdin-write','nonliteral','missing-output','extra-output','wrong-order','double-poll','extra-code','unknown-call'])await t.test(fault,()=>{
+    const f=p3SequentialTerminalPollFixture(true);
+    if(fault==='wrong-handle')f.stop.payload.input=f.stop.payload.input.replace('session_id:20926','session_id:20927');
+    else if(fault==='stdin-write')f.stop.payload.input=f.stop.payload.input.replace('chars:""','chars:"x"');
+    else if(fault==='nonliteral')f.stop.payload.input=f.stop.payload.input.replace('session_id:20926','session_id:20926+0');
+    else if(fault==='missing-output')f.stopped.payload.output.pop();
+    else if(fault==='extra-output')f.stopped.payload.output.push(structuredClone(f.stopped.payload.output[0]));
+    else if(fault==='wrong-order')f.stopped.payload.output.reverse();
+    else if(fault==='double-poll')f.stop.payload.input+=f.stop.payload.input.slice(0,f.stop.payload.input.indexOf('text(await tools.exec_command'));
+    else if(fault==='extra-code')f.stop.payload.input+='await tools.apply_patch("unrelated write");';
+    else if(fault==='unknown-call')f.stop.payload.input=f.stop.payload.input.replace('tools.exec_command','tools.unverified_observation');
+    const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
+function p3ProjectedCollectorPollFixture(interrupted=false){
+  const f=p3CompletedBetweenPollsFixture(),native={kind:'phoenix-diagram-p3-stdio-capture',exitCode:interrupted?null:0,signal:interrupted?'SIGKILL':null,captureFile:{path:'/fixture/capture.json'}};
+  f.execution.payload.item.aggregated_output=JSON.stringify(native);f.execution.payload.item.exit_code=interrupted?4:0;f.execution.payload.item.status=interrupted?'failed':'completed';
+  f.stop.payload.input='const r=await tools.write_stdin({session_id:20926,chars:"",yield_time_ms:1000,max_output_tokens:10000});let v;try{v=JSON.parse(r.output)}catch{};text(v?{collectorExit:r.exit_code,nativeExit:v.exitCode,signal:v.signal,capture:v.captureFile.path}:r);if(r.exit_code!==undefined)text(await tools.exec_command({cmd:"cat receipt.json",max_output_tokens:12000}));';
+  f.stopped.payload.output=[{type:'input_text',text:JSON.stringify({collectorExit:interrupted?4:0,nativeExit:native.exitCode,signal:native.signal,capture:native.captureFile.path})},{type:'input_text',text:JSON.stringify({exit_code:0,output:'Separate receipt observation'})}];
+  return f;
+}
+test('P3 projected terminal polls bind collector and interrupted child exits separately',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const interrupted of [false,true])await t.test(interrupted?'interrupted child':'normal child',()=>{
+    const f=p3ProjectedCollectorPollFixture(interrupted),b=f.build();assert.equal(proof.proofPair(b.part,b.proof).exitCode,interrupted?4:0);
+  });
+});
+test('P3 projected terminal polls reject mismatched DTO fields or opaque code',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['collector-exit','native-exit','signal','capture','extra-output','missing-output','wrong-handle','extra-code'])await t.test(fault,()=>{
+    const f=p3ProjectedCollectorPollFixture(true),output=JSON.parse(f.stopped.payload.output[0].text);
+    if(fault==='collector-exit')output.collectorExit=0;
+    else if(fault==='native-exit')output.nativeExit=0;
+    else if(fault==='signal')output.signal='SIGTERM';
+    else if(fault==='capture')output.capture='/fixture/other.json';
+    else if(fault==='extra-output')f.stopped.payload.output.push(structuredClone(f.stopped.payload.output[1]));
+    else if(fault==='missing-output')f.stopped.payload.output.pop();
+    else if(fault==='wrong-handle')f.stop.payload.input=f.stop.payload.input.replace('session_id:20926','session_id:20927');
+    else if(fault==='extra-code')f.stop.payload.input+='await tools.apply_patch("unrelated write");';
+    f.stopped.payload.output[0].text=JSON.stringify(output);const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
+test('P3 binds a late poll to its original literal settled-result index',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api(),f=p3IndexedTerminalPollFixture(),b=f.build();
+  assert.equal(proof.proofPair(b.part,b.proof).execution.processHandle,'20926');
+  for(const fault of ['wrong-handle','stdin-write','nonliteral','wrong-index','duplicate-index','missing-index','rejected','wrong-exit','active','double-poll','fake-call','extra-code','wrong-projection'])await t.test(fault,()=>{
+    const f=p3IndexedTerminalPollFixture(),input=f.stop.payload.input;
+    if(fault==='wrong-handle')f.stop.payload.input=input.replace('session_id:20926','session_id:20927');
+    else if(fault==='stdin-write')f.stop.payload.input=input.replace('chars:""','chars:"x"');
+    else if(fault==='nonliteral')f.stop.payload.input=input.replace('session_id:20926','session_id:20926+0');
+    else if(fault==='wrong-index')f.stopped.payload.output[0].text=JSON.stringify({i:2,status:'fulfilled',value:{exit_code:0}});
+    else if(fault==='duplicate-index')f.stopped.payload.output.push(structuredClone(f.stopped.payload.output[0]));
+    else if(fault==='missing-index')f.stopped.payload.output.pop();
+    else if(fault==='rejected')f.stopped.payload.output[0].text=JSON.stringify({i:0,status:'rejected',reason:{exit_code:0}});
+    else if(fault==='wrong-exit')f.stopped.payload.output[0].text=JSON.stringify({i:0,status:'fulfilled',value:{exit_code:4}});
+    else if(fault==='active')f.stopped.payload.output[0].text=JSON.stringify({i:0,status:'fulfilled',value:{session_id:20926,exit_code:0}});
+    else if(fault==='double-poll')f.stop.payload.input=input.replace('tools.exec_command({cmd:"python3 -c \\\"import importlib.util\\\"",max_output_tokens:1000})','tools.write_stdin({session_id:20926,chars:""})');
+    else if(fault==='fake-call')f.stop.payload.input='text('+JSON.stringify(input)+');';
+    else if(fault==='extra-code')f.stop.payload.input=input+'await tools.apply_patch("unrelated write");';
+    else if(fault==='wrong-projection')f.stop.payload.input=input.replace('text({i,...r})','text(r.value)');
+    const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
+});
+test('P3 late polls retain original handle, terminal status, turn and output constraints',async t=>{
+  const {P3_NATIVE_PROOF:proof}=await api();
+  for(const fault of ['wrong-handle','wrong-yield-handle','input-write','nonliteral-handle','unknown-option','active','wrong-exit','duplicate','after-turn','before-call','mixed-image','fake-call','extra-code'])await t.test(fault,()=>{
+    const f=p3CompletedBetweenPollsFixture();
+    if(fault==='wrong-handle')f.stop.payload.input=f.stop.payload.input.replace('20926','20927');
+    else if(fault==='wrong-yield-handle')f.yielded.payload.output[0].text='{"session_id":20927,"output":""}';
+    else if(fault==='input-write')f.stop.payload.input=f.stop.payload.input.replace('chars:""','chars:"x"');
+    else if(fault==='nonliteral-handle')f.stop.payload.input=f.stop.payload.input.replace('20926','20926+0');
+    else if(fault==='unknown-option')f.stop.payload.input=f.stop.payload.input.replace('chars:""','chars:"",cancel:true');
+    else if(fault==='active')f.stopped.payload.output[0].text='{"session_id":20926,"exit_code":0,"output":""}';
+    else if(fault==='wrong-exit')f.stopped.payload.output[0].text='{"exit_code":4,"output":""}';
+    else if(fault==='duplicate'){
+      const call=structuredClone(f.stop),result=structuredClone(f.stopped);call.payload.call_id='duplicate-poll';result.payload.call_id='duplicate-poll';
+      f.rows.splice(f.rows.length-1,0,call,result);
+    }else if(fault==='after-turn'){const end=f.rows.pop();f.rows.splice(f.rows.indexOf(f.stop),0,end);}
+    else if(fault==='before-call')f.stopped.timestamp='2026-10-29T00:00:01.600Z';
+    else if(fault==='mixed-image')f.stopped.payload.output.push({type:'input_image',image_url:'inert fixture'});
+    else if(fault==='fake-call')f.stop.payload.input='text("tools.write_stdin({session_id:20926,chars:\"\"})");';
+    else if(fault==='extra-code')f.stop.payload.input+='await tools.apply_patch("unrelated write");';
+    const b=f.build();assert.throws(()=>proof.proofPair(b.part,b.proof),/CommandExecution/);
+  });
 });
 test('P3 yielded execution still requires unique current start and terminal windows',async t=>{
   const {P3_NATIVE_PROOF:proof}=await api();

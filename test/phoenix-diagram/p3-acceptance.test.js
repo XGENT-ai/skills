@@ -42,7 +42,7 @@ test('official resource descriptor requires the fixed commit URL and exact suppl
 async function comparisonFixture(t){
   // Inert maintenance fixtures exercise controller contracts. These are not
   // native browser receipts, real screenshots, or an actual image review.
-  const core=await import('../../scripts/test-phoenix-diagram-core.mjs'),model=await import(statePath),root=temp(t);fs.chmodSync(root,0o700);
+  const core=await import('../../scripts/test-phoenix-diagram-core.mjs'),model=await import(statePath),runRoot=temp(t),root=model.privateDirectory(path.join(runRoot,'comparison'));
   const put=(name,value)=>model.writeNew(path.join(root,name),value);
   const base=put('base.json','{"base":true}'),head=put('head.json','{"head":true}'),artifact=put('comparison.html','fixture comparison only');
   const engineFile=put('engine','inert maintenance fixture'),engine={sourceInputSha256:'a'.repeat(64),binary:engineFile.identity};
@@ -56,7 +56,7 @@ async function comparisonFixture(t){
   const browserRef=put('browser.json',browser),summary={schemaVersion:1,tool:'phoenix-diagram',kind:'architecture-comparison-summary',command:'visual-check',status:'pass',automatedStatus:'pass',comparison,stages:[{name:'check',status:'pass',receipt:{status:'pass',strictProvenance:true,comparison}},{name:'visual-check',status:'pass',receipt:browser}],visualReview:{status:'required-pending',record:null},deliveryStatus:'incomplete',evidence:{browserReceipt:{path:browserRef.path,identity:browserRef.identity}}};
   const summaryRef=put('summary.json',summary),entry={id:'comparison',root,base,head,artifact,receipt,summary:summaryRef};
   const release={engineIdentity:engine,files:{engine:engineFile}};model.rememberCase(entry,release);
-  const state={runId:'f'.repeat(32),runRoot:root,cases:{comparison:entry},release};
+  const state={runId:'f'.repeat(32),runRoot,cases:{comparison:entry},release};
   return{root,put,core,model,entry,state,summary,browser,release};
 }
 function observedDraft(f){const draft=f.model.comparisonDraft(f.entry.evidence);draft.reviewer='Maintenance fixture, no actual image review';draft.verdict='passed';draft.findings=[];for(const shot of draft.screenshotIdentities){shot.observed=true;shot.observations='Inert fixture tests the observation binding only.';}return draft;}
@@ -152,6 +152,31 @@ test('public author-tools transport captures actual npm argv and preserves revie
   assert.equal(result.actualTransport.pid,1234);assert.deepEqual(result.actualTransport.argv,publicNpmCommand(publicNpm,calls[0].args).args);
   await assert.rejects(invoke({...engine,path:'/different-engine'},['doctor','--json']),/engine|transport/i);
   const missing=createPublicInvoke({engine,publicNpm},{invoke:async()=>({exitCode:0,signal:null})});await assert.rejects(missing(engine,['doctor','--json']),/spawn|transport/i);
+});
+
+test('author-tools archive verification accepts native comparison references and retains byte and live binding checks',async t=>{
+  const f=await comparisonFixture(t),browser=structuredClone(f.browser);
+  for(const shot of browser.screenshots)delete shot.binding;
+  const browserRef=f.put('native-browser.json',browser),summary={...f.summary,
+    stages:[f.summary.stages[0],{...f.summary.stages[1],receipt:browser}],
+    evidence:{browserReceipt:{path:browserRef.path,identity:browserRef.identity}}};
+  f.entry.summary=f.put('native-summary.json',summary);f.model.rememberCase(f.entry,f.release);
+  Object.assign(f.state,{schemaVersion:1,kind:f.model.KIND,profile:'p3',stage:'author-tools',steps:{},
+    preview:{status:'not-run'},compareFaults:{status:'not-run'},brandExports:{status:'not-run'}});
+  f.model.recompute(f.state);
+  assert.equal(f.model.verifyAuthorToolsState(f.state).status,'incomplete');
+  const originals=new Map(fs.readdirSync(f.root).map(name=>{const file=path.join(f.root,name);return[file,fs.readFileSync(file)];})),
+        bytesFor=ref=>originals.get(ref.path),before=structuredClone(f.state);
+  assert.equal(f.model.verifyAuthorToolsState(f.state,{bytesFor}).status,'incomplete');
+  assert.deepEqual(f.state,before,'Archive verification must not alter saved original bindings');
+  const forged=structuredClone(f.state);forged.cases.comparison.evidence.screenshots[0].viewport.width=390;
+  assert.throws(()=>f.model.verifyAuthorToolsState(forged,{bytesFor}),/evidence differs/);
+  const image=f.entry.evidence.screenshots[0];
+  assert.throws(()=>f.model.verifyAuthorToolsState(f.state,{bytesFor:ref=>ref.path===image.path?Buffer.from('changed archived image'):bytesFor(ref)}),/bytes|identity/);
+  fs.renameSync(image.path,image.path+'.original');fs.writeFileSync(image.path,originals.get(image.path),{mode:image.binding.mode});
+  assert.throws(()=>f.model.verifyAuthorToolsState(f.state),/binding/);
+  fs.rmSync(f.root,{recursive:true});
+  assert.equal(f.model.verifyAuthorToolsState(f.state,{bytesFor}).status,'incomplete');
 });
 
 test('comparison byte verifier shares strict checks with archived originals without recertifying inodes',async t=>{

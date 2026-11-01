@@ -7,7 +7,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 9a8b3b4b58792a4169f11a2597ff9bcba571fc23d45fb39dffad012808a65280
+  source_sha256: 91409c0e7e0eb2e3b013f79a49bc0e897da22cd1adef8fb3eed370a834a79fc9
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.

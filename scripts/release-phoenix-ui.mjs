@@ -4,7 +4,7 @@
 // install-check it from the public URLs, then `npm publish` that same tarball and verify the registry.
 // Every step keeps its output under local/phoenix-ui/releases/; rerunning resumes and re-verifies.
 //
-//   mise exec --no-deps -- npm run release:phoenix -- [--run-id N] [--node18 PATH] [--otp CODE] [--tag TAG] [--yes] [--prepare-only]
+//   mise exec --no-deps -- npm run release:phoenix -- [--run-id N] [--diagram-release-dir DIR] [--node18 PATH] [--otp CODE] [--tag TAG] [--yes] [--prepare-only]
 //
 // --prepare-only stops after the install check; running the same command again publishes.
 //
@@ -17,7 +17,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { assertUiOnlyRelease, uiReleasePackage } from './require-release-package.mjs';
+import { assertReleaseBranch, releasePackage } from './require-release-package.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = 'XGENT-ai/skills';
@@ -60,7 +60,7 @@ function parseArgs(argv) {
     const flag = argv[i];
     if (flag === '--yes') options.yes = true;
     else if (flag === '--prepare-only') options.prepareOnly = true;
-    else if (['--run-id', '--node18', '--otp', '--tag'].includes(flag) && argv[i + 1] && !options[flag]) options[flag] = argv[++i];
+    else if (['--run-id', '--diagram-release-dir', '--node18', '--otp', '--tag'].includes(flag) && argv[i + 1] && !options[flag]) options[flag] = argv[++i];
     else throw new Error(`Unknown or duplicate argument ${flag}`);
   }
   return options;
@@ -136,10 +136,11 @@ async function main() {
   const tools = readJson(path.join(root, 'tools/phoenix-ui/build-tools.lock.json'));
   assert.equal(process.version, `v${tools.node}`, `Run with the pinned maintenance Node ${tools.node}: mise exec --no-deps -- npm run release:phoenix`);
   step('Checkout');
+  assertReleaseBranch(command('git', ['branch', '--show-current']).stdout.trim());
   assert.equal(command('git', ['status', '--porcelain']).stdout, '', 'Commit or stash changes first; the release is built from HEAD only');
   const head = command('git', ['rev-parse', 'HEAD']).stdout.trim(), tree = command('git', ['rev-parse', 'HEAD^{tree}']).stdout.trim();
-  const pkg = uiReleasePackage(root);
-  assertUiOnlyRelease(root, pkg);
+  const diagramDirectory = options['--diagram-release-dir'] ? path.resolve(options['--diagram-release-dir']) : path.join(root, 'dist/phoenix-diagram');
+  const pkg = releasePackage(root, diagramDirectory);
   const prerelease = pkg.version.includes('-');
   assert(!prerelease || options['--tag'], `${pkg.version} is a prerelease; pass --tag (for example --tag next)`);
   const dir = path.join(root, 'local/phoenix-ui/releases', `v${pkg.version}-${head.slice(0, 12)}`);
@@ -190,7 +191,7 @@ async function main() {
 
   step('Pack');
   const packArgs = [path.join(root, 'scripts/pack-phoenix-ui-release.mjs'), '--release-dir', release, '--handoff', path.join(release, 'release-handoff.json'),
-    '--build-record', build, '--manifest-sha256', manifestSha256, '--run-id', runId, '--source-commit', head, '--source-tree', tree, '--output-dir', path.join(dir, 'pack'), '--execute'];
+    '--diagram-release-dir', diagramDirectory, '--build-record', build, '--manifest-sha256', manifestSha256, '--run-id', runId, '--source-commit', head, '--source-tree', tree, '--output-dir', path.join(dir, 'pack'), '--execute'];
   command(process.execPath, packArgs);
   const packed = readJson(packRecordFile).tarball, tarball = path.join(dir, 'pack/tarballs', packed.file), digests = tarballDigests(tarball);
   assert.equal(digests.sha256, packed.sha256);
@@ -212,7 +213,7 @@ async function main() {
   }
   console.log(readJson(passedFile).groups.join('\n'));
   if (options.prepareOnly && !registryVersion(pkg.name, pkg.version)) {
-    console.log(`\nPrepared ${pkg.name}@${pkg.version}. Publish with: mise exec --no-deps -- npm run release:phoenix`);
+    console.log(`\nPrepared ${pkg.name}@${pkg.version}. Publish with: mise exec --no-deps -- npm run release:phoenix -- --diagram-release-dir ${JSON.stringify(diagramDirectory)}`);
     return;
   }
 

@@ -79,18 +79,18 @@ test('Intel macOS bootstraps the exact mbx source before attempting its unavaila
   const { assets, preparationCommands } = await prepare;
   const commands = preparationCommands('darwin-x64');
   const bootstrap = commands.findIndex(([, args]) => args.includes('--git'));
-  assert(bootstrap >= 0, 'mbx 1.24.0 has no Intel macOS release asset');
-  assert(commands[0][1].includes('rust@1.99.0'));
-  assert(!commands[0][1].includes('mr-boxington@1.24.0'));
+  assert(bootstrap >= 0, 'mbx 1.28.0 has no Intel macOS release asset');
+  assert(commands[0][1].includes('rust@1.99.1'));
+  assert(!commands[0][1].includes('mr-boxington@1.28.0'));
   const args = commands[bootstrap][1];
-  assert.deepEqual(args.slice(0, 9), ['exec', '--no-deps', '--', 'rustup', 'run', '1.99.0', 'cargo', 'install', '--locked']);
+  assert.deepEqual(args.slice(0, 9), ['exec', '--no-deps', '--', 'rustup', 'run', '1.99.1', 'cargo', 'install', '--locked']);
   assert.equal(args[args.indexOf('--git') + 1], 'https://github.com/jdx/mr-boxington');
-  assert.equal(args[args.indexOf('--rev') + 1], '1b62dc2c795c93630d4ce28c4d9d2540d6e776ea');
+  assert.equal(args[args.indexOf('--rev') + 1], '44f50c329a83dedd012e1e49cf9f265f79226a83');
   assert.equal(args.at(-1), 'mbx');
-  assert.equal(assets.nativeBootstrap['darwin-x64'].version, '1.24.0');
+  assert.equal(assets.nativeBootstrap['darwin-x64'].version, '1.28.0');
   const link = commands.findIndex(([, args]) => args[0] === 'link');
   assert(link > bootstrap);
-  assert.equal(commands[link][1][1], 'mr-boxington@1.24.0');
+  assert.equal(commands[link][1][1], 'mr-boxington@1.28.0');
   assert(!commands[link][1].includes('--force'));
   assert(commands.findIndex(([, args]) => args.length === 1 && args[0] === 'install') > link);
   for (const platform of ['darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64']) {

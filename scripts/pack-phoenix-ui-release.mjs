@@ -5,11 +5,11 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { uiReleasePackage, assertUiOnlyRelease } from './require-release-package.mjs';
+import { releasePackage, assertReleaseBranch, assertPublishablePackage } from './require-release-package.mjs';
 
 // Pack the npm tarball exactly once from a frozen release produced by publish-phoenix-ui-r2.mjs.
 // Usage: node scripts/pack-phoenix-ui-release.mjs --release-dir DIR --handoff FILE --build-record FILE
-//   --manifest-sha256 HEX --run-id N --source-commit SHA --source-tree SHA --output-dir DIR [--execute]
+//   [--diagram-release-dir DIR] --manifest-sha256 HEX --run-id N --source-commit SHA --source-tree SHA --output-dir DIR [--execute]
 const here = path.dirname(fileURLToPath(import.meta.url)), root = path.resolve(here, '..');
 const bootstrap = createRequire(import.meta.url)(path.join(root, 'skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs'));
 const required = ['--release-dir', '--handoff', '--build-record', '--manifest-sha256', '--run-id', '--source-commit', '--source-tree', '--output-dir'];
@@ -17,7 +17,7 @@ const options = {};
 for (let i = 2; i < process.argv.length; i++) {
   const flag = process.argv[i];
   if (flag === '--execute') { assert(!options[flag], 'Duplicate --execute'); options[flag] = true; }
-  else { assert(required.includes(flag) && process.argv[i + 1] && !options[flag], `Invalid argument ${flag}`); options[flag] = process.argv[++i]; }
+  else { assert([...required, '--diagram-release-dir'].includes(flag) && process.argv[i + 1] && !options[flag], `Invalid argument ${flag}`); options[flag] = process.argv[++i]; }
 }
 for (const flag of required) assert(options[flag], `Required ${flag}; use the actual successful final CI handoff`);
 assert(/^[1-9]\d*$/.test(options['--run-id']));
@@ -47,6 +47,7 @@ function command(program, argv, extra = {}) {
   assert(!result.error && result.status === 0, `${program}: ${result.error?.message || result.stderr?.toString()}`); return result.stdout;
 }
 const git = argv => command('git', argv).toString().trim();
+assertReleaseBranch(git(['branch', '--show-current']));
 assert.equal(git(['rev-parse', 'HEAD']), options['--source-commit'], 'Checkout HEAD differs');
 assert.equal(git(['rev-parse', 'HEAD^{tree}']), options['--source-tree'], 'Checkout tree differs');
 const release = options['--release-dir'], handoffBytes = bytes(options['--handoff']), handoff = JSON.parse(handoffBytes);
@@ -94,8 +95,11 @@ for (const [relative, expected] of Object.entries(build.inputs)) {
 }
 assert.equal(sha(bytes(path.join(root, 'package.json'))), build.inputs['package.json']);
 assert.equal(sha(bytes(path.join(root, 'bin/phoenix-ui.js'))), build.inputs['bin/phoenix-ui.js']);
-const pkg = uiReleasePackage(root); assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, manifest.data.npmPackageVersion);
-assertUiOnlyRelease(root, pkg);
+const diagramDirectory = options['--diagram-release-dir'] ? path.resolve(options['--diagram-release-dir']) : path.join(root, 'dist/phoenix-diagram');
+const pkg = releasePackage(root, diagramDirectory); assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, manifest.data.npmPackageVersion);
+const diagramManifest = JSON.parse(bytes(path.join(diagramDirectory, 'VERSION.json')));
+assert.equal(diagramManifest.sourceCommit, handoff.sourceCommit, 'Diagram release must come from the same main commit');
+assert.equal(diagramManifest.bundleSha256, sha(bytes(path.join(root, 'dist/phoenix-diagram/bundle/manifest.json'))), 'Diagram release bundle differs from maintained sources');
 for (const hook of ['prepack', 'prepare', 'postpack']) assert(!pkg.scripts?.[hook], `Unexpected pack lifecycle ${hook}; do not run a build`);
 assert(Array.isArray(pkg.files) && pkg.files.every(name => safe(name) && !/[*?\[\]{}]/.test(name)), 'Unsupported package files selector');
 // Select the same maintained files as the existing package, including npm's root notices.
@@ -119,6 +123,12 @@ const packageBytes = Buffer.from(json(pkg));
 sources.set('package.json', { ...sources.get('package.json'), data: packageBytes, size: packageBytes.length, sha256: sha(packageBytes) });
 for (const bin of Object.values(pkg.bin)) assert(sources.has(bin), `Missing candidate bin ${bin}`);
 const runtime = Object.fromEntries(Object.entries(handoff.files).filter(([name]) => name.startsWith('runtime/')).map(([name, value]) => [name.slice(8), value]));
+const diagramInventory = inventory(diagramDirectory);
+for (const [name, value] of Object.entries(diagramInventory)) {
+  const relative = `dist/phoenix-diagram/${name}`;
+  if (pkg.files.some(entry => relative === entry || relative.startsWith(`${entry}/`))) runtime[relative] = value;
+}
+runtime['skills/phoenix-diagram/ENGINE.json'] = diagramInventory['VERSION.json'];
 for (const [relative, expected] of Object.entries(canonical.resources)) if (!derived.includes(relative)) assert.deepEqual(runtime[relative], expected, `Transported runtime differs ${relative}`);
 for (const relative of derived.slice(0, 2)) assert.equal(runtime[relative]?.sha256, manifest.hash);
 const generated = JSON.parse(bytes(path.join(release, 'runtime/skills/phoenix-ui/GENERATED.json')));
@@ -151,7 +161,7 @@ print(json.dumps(out))`, file]).toString());
     assert.deepEqual({ size: entry.size, sha256: entry.sha256 }, stageFiles[name], `Packed byte differs ${name}`);
     assert(!name.startsWith('tools/') && !name.startsWith('vendor/impeccable/') && !name.startsWith('skills/phoenix-ui/src/'), `Unexpected source/legacy payload ${name}`);
   }
-  for (const name of ['package.json', ...Object.values(pkg.bin), ...Object.keys(runtime).filter(name => path.basename(name) !== '.npmignore')]) assert(entries[name], `Required runtime/package byte absent ${name}`);
+  for (const name of ['package.json', ...Object.values(pkg.bin), ...Object.keys(runtime).filter(name => path.basename(name) !== '.npmignore'), ...[...sources.keys()].filter(name => name.startsWith('dist/phoenix-diagram/') || name.startsWith('skills/phoenix-diagram/'))]) assert(entries[name], `Required runtime/package byte absent ${name}`);
   const exec = [...Object.values(pkg.bin), ...handoff.transportPermissions.filter(item => item.target === handoff.canonicalTarget && item.path.startsWith('runtime/')).map(item => item.path.slice(8))];
   for (const name of exec) assert(entries[name]?.mode & 0o111, `Packed executable lost its declared role ${name}`);
   return entries;
@@ -179,9 +189,13 @@ try {
   assert(!fs.existsSync(stage), 'Stage already exists; inspect the previous attempt'); fs.mkdirSync(stage); fs.mkdirSync(tarballs);
   for (const source of sources.values()) { const dest = path.join(stage, source.name); fs.mkdirSync(path.dirname(dest), { recursive: true }); fs.writeFileSync(dest, source.data, { flag: 'wx', mode: source.mode }); }
   for (const relative of Object.keys(runtime)) {
-    const source = path.join(release, 'runtime', relative), dest = path.join(stage, relative); fs.mkdirSync(path.dirname(dest), { recursive: true });
+    const source = relative === 'skills/phoenix-diagram/ENGINE.json' ? path.join(diagramDirectory, 'VERSION.json')
+      : relative.startsWith('dist/phoenix-diagram/') ? path.join(diagramDirectory, relative.slice('dist/phoenix-diagram/'.length))
+      : path.join(release, 'runtime', relative);
+    const dest = path.join(stage, relative); fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(source, dest); fs.chmodSync(dest, fs.lstatSync(source).mode & 0o777); assert.deepEqual(digest(dest), runtime[relative]);
   }
+  assertPublishablePackage(stage);
   record.stageFiles = inventory(stage);
   assert.deepEqual(record.stageFiles, expectedStageFiles, 'Stage contains bytes outside the fixed candidate/runtime plan');
   fs.writeFileSync(path.join(out, 'release-handoff.input.json'), handoffBytes, { flag: 'wx' }); fs.writeFileSync(path.join(out, 'build-record.input.json'), buildBytes, { flag: 'wx' });

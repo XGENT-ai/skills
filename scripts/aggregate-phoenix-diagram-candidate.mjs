@@ -253,9 +253,116 @@ function proofPair(capture,proof) {
   else choices=capture.events.filter(toolEvent).filter(event=>capture.events.indexOf(event)<capture.events.indexOf(capture.events.find(value=>same(value,result)))).map(event=>({event}));
   const pairs=choices.map(({event})=>pairPayload(event,result,proof.toolUseId)).filter(Boolean);need(pairs.length===1,'Actual tool call/result ID pair is missing or ambiguous');return pairs[0];
 }
+function execOutputBlocks(output){
+  return Array.isArray(output)&&output.every(block=>object(block)&&(
+    block.type==='input_text'&&typeof block.text==='string'||
+    block.type==='input_image'&&typeof block.image_url==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(block.image_url)));
+}
+function execJsonResults(output){
+  if(!execOutputBlocks(output))return[];
+  return output.filter(block=>block.type==='input_text').flatMap(block=>{try{const value=JSON.parse(block.text);return object(value)?[value]:[];}catch{return[];}});
+}
+function completedProcessPoll(input,output,item){
+  if(typeof input!=='string')return false;
+  const direct=/^\s*text\(\s*await\s+tools\.write_stdin\(\s*(\{[^{}]*\})\s*\)\s*\)\s*;?\s*$/.exec(input),
+        assigned=/^\s*const\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+tools\.write_stdin\(\s*(\{[^{}]*\})\s*\)\s*;\s*([\s\S]*)$/.exec(input);
+  let literal=direct?.[1];
+  if(assigned){
+    const variable=assigned[1],tail=assigned[3].replace(/\s+/g,''),decoded=/try\{const([A-Za-z_$][\w$]*)=JSON\.parse\(/.exec(tail)?.[1];
+    const projected=decoded&&`if(${variable}.session_id)text({session_id:${variable}.session_id,output:${variable}.output});else{try{const${decoded}=JSON.parse(${variable}.output);text({exitCode:${variable}.exit_code,nativeExitCode:${decoded}.exitCode,stdout:${decoded}.stdout.path,stderr:${decoded}.stderr.path,captureFile:${decoded}.captureFile.path});}catch{text(${variable});}}`;
+    if(tail!==`text(${variable});`&&tail!==`text(${variable})`&&tail!==projected)return groupedProcessPoll(input,output,item);
+    literal=assigned[2];
+  }
+  if(!literal)return groupedProcessPoll(input,output,item);
+  try{
+    const normalized=literal.replace(/([{,]\s*)(session_id|chars|max_output_tokens|yield_time_ms)\s*:/g,'$1"$2":'),args=JSON.parse(normalized),keys=Object.keys(args);
+    if(!object(args)||keys.some(key=>!['session_id','chars','max_output_tokens','yield_time_ms'].includes(key))||
+       !Number.isSafeInteger(args.session_id)||args.session_id<=0||String(args.session_id)!==item.process_id||args.chars!==''||
+       keys.some(key=>key!=='chars'&&(!Number.isSafeInteger(args[key])||args[key]<0)))return false;
+    return execJsonResults(output).filter(value=>{
+      const exits=['exit_code','exitCode'].filter(key=>Object.hasOwn(value,key));
+      return !Object.hasOwn(value,'session_id')&&exits.length>0&&exits.every(key=>value[key]===item.exit_code)&&
+        (!Object.hasOwn(value,'nativeExitCode')||value.nativeExitCode===item.exit_code);
+    }).length===1;
+  }catch{return false;}
+}
+function groupedProcessPoll(input,output,item){
+  // Recognize only literal calls and indexed settled results; never execute JS.
+  if(input.includes('\u0001'))return false;
+  try{
+    const strings=[],code=input.replace(/"(?:\\.|[^"\\])*"/g,value=>{
+      strings.push(JSON.parse(value));return '\u0001'+(strings.length-1)+'\u0001';
+    }).replace(/\s+/g,''),value=token=>{
+      if(/^\u0001\d+\u0001$/.test(token))return strings[Number(token.slice(1,-1))];
+      if(/^(?:0|[1-9]\d*)$/.test(token))return Number(token);
+      if(token==='true'||token==='false')return token==='true';
+      throw new Error('Nonliteral value');
+    },args=literal=>{
+      const result={},entries=literal.slice(1,-1).split(',');
+      for(const entry of entries){
+        const match=/^([A-Za-z_$][\w$]*|\u0001\d+\u0001):(.+)$/.exec(entry);
+        if(!match)throw new Error('Nonliteral argument');
+        const key=match[1].startsWith('\u0001')?value(match[1]):match[1];
+        if(typeof key!=='string'||Object.hasOwn(result,key))throw new Error('Ambiguous argument');
+        Object.defineProperty(result,key,{value:value(match[2]),enumerable:true});
+      }
+      return result;
+    },verify=(literal,result)=>completedProcessPoll(
+        `text(await tools.write_stdin(${JSON.stringify(literal)}));`,result,item);
+    const projected=/^const([A-Za-z_$][\w$]*)=awaittools\.write_stdin\((\{[^{}]*\})\);let([A-Za-z_$][\w$]*);try\{\3=JSON\.parse\(\1\.output\)\}catch\{\};text\(\3\?\{collectorExit:\1\.exit_code,nativeExit:\3\.exitCode,signal:\3\.signal,capture:\3\.captureFile\.path\}:\1\);(?:if\(\1\.exit_code!==undefined\)text\(awaittools\.exec_command\((\{[^{}]*\})\)\);?)?$/.exec(code);
+    if(projected){
+      const observation=projected[4]&&args(projected[4]),results=execJsonResults(output),result=results[0],native=JSON.parse(item.aggregated_output);
+      if(observation&&(typeof observation.cmd!=='string'||Object.keys(observation).some(key=>!['cmd','workdir','max_output_tokens','yield_time_ms'].includes(key))))return false;
+      return results.length===(observation?2:1)&&object(result)&&Object.keys(result).length===4&&
+        Object.keys(result).every(key=>['collectorExit','nativeExit','signal','capture'].includes(key))&&
+        native?.kind==='phoenix-diagram-p3-stdio-capture'&&typeof native.captureFile?.path==='string'&&
+        result.nativeExit===native.exitCode&&result.signal===native.signal&&result.capture===native.captureFile.path&&
+        verify(args(projected[2]),[{type:'input_text',text:JSON.stringify({exit_code:result.collectorExit})}]);
+    }
+    const sequential=[];let remaining=code;
+    while(remaining){
+      const match=/^text\(awaittools\.(write_stdin|exec_command|mcp__chrome_devtools__take_snapshot|mcp__chrome_devtools__evaluate_script)\((\{[^{}]*\})\)\)(;|$)/.exec(remaining);
+      if(!match)break;
+      const literal=args(match[2]),name=match[1],keys=Object.keys(literal);
+      if(name==='exec_command'&&(typeof literal.cmd!=='string'||keys.some(key=>!['cmd','workdir','max_output_tokens','yield_time_ms'].includes(key))))return false;
+      if(name.startsWith('mcp__')){
+        const evaluation=name.endsWith('evaluate_script');
+        if(!Number.isSafeInteger(literal.pageId)||literal.pageId<=0||
+           keys.some(key=>!(evaluation?['pageId','function','waitForStableDom']:['pageId']).includes(key))||
+           evaluation&&(typeof literal.function!=='string'||Object.hasOwn(literal,'waitForStableDom')&&typeof literal.waitForStableDom!=='boolean'))return false;
+      }
+      sequential.push({name,args:literal});remaining=remaining.slice(match[0].length);
+    }
+    if(sequential.length){
+      const polls=sequential.flatMap((job,index)=>job.name==='write_stdin'?[index]:[]),results=execJsonResults(output);
+      return !remaining&&sequential.length>1&&polls.length===1&&results.length===sequential.length&&
+        verify(sequential[polls[0]].args,[{type:'input_text',text:JSON.stringify(results[polls[0]])}]);
+    }
+    const plain=code.replace(/text\(ALL_TOOLS\.filter\(([A-Za-z_$][\w$]*)=>\/[A-Za-z0-9_()|$]+\/\.test\(\1\.name\)\)\);?$/,''),
+          batch=/^const([A-Za-z_$][\w$]*)=awaitPromise\.allSettled\(\[([\s\S]*)\]\);\1\.forEach\(\(([A-Za-z_$][\w$]*),([A-Za-z_$][\w$]*)\)=>text\(\{\4,\.\.\.\3\}\)\);?$/.exec(plain);
+    if(!batch)return false;
+    const jobs=[];let rest=batch[2];
+    while(rest){
+      const match=/^tools\.(write_stdin|exec_command)\((\{[^{}]*\})\)(,|$)/.exec(rest);
+      if(!match)return false;
+      const literal=args(match[2]);
+      if(match[1]==='exec_command'&&(typeof literal.cmd!=='string'||Object.keys(literal).some(key=>!['cmd','workdir','max_output_tokens','yield_time_ms'].includes(key))))return false;
+      jobs.push({name:match[1],args:literal});rest=rest.slice(match[0].length);
+      if(match[3]&&!rest)return false;
+    }
+    const polls=jobs.flatMap((job,index)=>job.name==='write_stdin'?[index]:[]),key=batch[4],
+          results=execJsonResults(output).filter(result=>Object.hasOwn(result,key));
+    if(polls.length!==1||results.length!==jobs.length||new Set(results.map(result=>result[key])).size!==jobs.length||
+       results.some(result=>!Number.isSafeInteger(result[key])||result[key]<0||result[key]>=jobs.length||
+         !['fulfilled','rejected'].includes(result.status)||Object.keys(result).length!==3||
+         !Object.hasOwn(result,result.status==='fulfilled'?'value':'reason')))return false;
+    const result=results.find(result=>result[key]===polls[0]);
+    return result.status==='fulfilled'&&object(result.value)&&verify(jobs[polls[0]].args,[{type:'input_text',text:JSON.stringify(result.value)}]);
+  }catch{return false;}
+}
 // The native session records execution facts inside an opaque custom exec call.
 // Bind those facts to original bytes and their owning turn/window; never run or
-// interpret the custom tool's JavaScript or infer batched Promise results.
+// interpret the custom tool's JavaScript or infer unindexed batched results.
 function commandExecutionProof(part,proof) {
   need(part.profile==='p3' && part.provider==='codex' && !proof.call && !Object.hasOwn(proof,'polls'),'CommandExecution requires a P3 Codex terminal anchor');
   const {session,capture}=part,minimumOffset=part.minimumOffset ?? 0,start=Date.parse(capture?.startedAt),finish=Date.parse(capture?.finishedAt);
@@ -278,19 +385,22 @@ function commandExecutionProof(part,proof) {
   need(Number.isInteger(item.exit_code) && item.exit_code>=0 && item.exit_code<=255 && (item.status==='completed' && item.exit_code===0 || item.status==='failed' && item.exit_code!==0) && typeof item.process_id==='string' && item.process_id && Number.isSafeInteger(item.duration?.secs) && item.duration.secs>=0 && Number.isInteger(item.duration.nanos) && item.duration.nanos>=0 && item.duration.nanos<1e9,'CommandExecution terminal status/exit/process metadata differs');
   // A yielded exec closes its starting custom call before the native terminal
   // fact arrives in a later poll or stop call. Bind both windows independently.
-  const starts=[],terminals=[];
-  for(const [index,{event,offset}] of rows.entries())if(event.type==='response_item' && event.payload?.type==='custom_tool_call' && index<at) {
+  const starts=[],terminals=[],yieldedHandles=[];let delayedTerminal=false;
+  for(const [index,{event,offset}] of rows.entries())if(event.type==='response_item' && event.payload?.type==='custom_tool_call') {
     const call=event.payload,id=call.call_id,results=rows.map((row,index)=>({row,index})).filter(({row})=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call_output' && row.event.payload.call_id===id);
-    const startsHere=Date.parse(event.timestamp)<=payload.started_at_ms && results.some(result=>result.index>index && Date.parse(result.row.event.timestamp)>=payload.started_at_ms),endsHere=Date.parse(event.timestamp)<=payload.completed_at_ms && results.some(result=>result.index>at);
+    const startsHere=index<at&&Date.parse(event.timestamp)<=payload.started_at_ms && results.some(result=>result.index>index && Date.parse(result.row.event.timestamp)>=payload.started_at_ms),
+          latePoll=index>at&&Date.parse(event.timestamp)>=payload.completed_at_ms&&results.length===1&&completedProcessPoll(call.input,results[0].row.event.payload.output,item),
+          endsHere=latePoll||index<at&&Date.parse(event.timestamp)<=payload.completed_at_ms && results.some(result=>result.index>at);
     if(startsHere || endsHere) {
       need(typeof id==='string' && id && rows.filter(row=>row.event.type==='response_item' && row.event.payload?.type==='custom_tool_call' && row.event.payload.call_id===id).length===1 && results.length===1,'CommandExecution outer exec ID is missing or duplicated');
       const result=results[0].row.event;
-      need(offset>=minimumOffset && index>begins[0].index && results[0].index<ends[0].index && call.name==='exec' && typeof call.input==='string' && Array.isArray(result.payload.output) && result.payload.output.every(block=>block.type==='input_text' && typeof block.text==='string') && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=Date.parse(result.timestamp) && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
-      if(startsHere)starts.push(id);
-      if(endsHere){need(Date.parse(event.timestamp)<=payload.completed_at_ms && Date.parse(result.timestamp)>=payload.completed_at_ms,'CommandExecution terminal exec window differs');terminals.push(id);}
+      need(offset>=minimumOffset && index>begins[0].index && results[0].index<ends[0].index && call.name==='exec' && typeof call.input==='string' && execOutputBlocks(result.payload.output) && start<=Date.parse(event.timestamp) && Date.parse(event.timestamp)<=Date.parse(result.timestamp) && Date.parse(result.timestamp)<=finish,'CommandExecution outer exec window differs');
+      if(startsHere){starts.push(id);yieldedHandles.push(...execJsonResults(result.payload.output).filter(value=>Number.isSafeInteger(value.session_id)).map(value=>String(value.session_id)));}
+      if(endsHere){need((latePoll||Date.parse(event.timestamp)<=payload.completed_at_ms) && Date.parse(result.timestamp)>=payload.completed_at_ms,'CommandExecution terminal exec window differs');terminals.push(id);delayedTerminal ||= latePoll;}
     }
   }
   need(starts.length===1 && terminals.length===1,'CommandExecution has no unique starting/terminal custom exec windows');
+  need(!delayedTerminal||yieldedHandles.length===1&&yieldedHandles[0]===item.process_id,'CommandExecution late terminal poll differs from its original yielded handle');
   return{id:item.id,name:'exec_command',input:{cmd:item.command,workdir:cwd},output:item.aggregated_output,exitCode:item.exit_code,error:item.status==='failed' || item.exit_code!==0,execution:{processHandle:item.process_id,startedAtMs:payload.started_at_ms,completedAtMs:payload.completed_at_ms,turnId:payload.turn_id,threadId:payload.thread_id,source:item.source}};
 }
 function asyncCollectorPair(capture,proof) {

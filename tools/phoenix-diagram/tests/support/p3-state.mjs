@@ -203,7 +203,13 @@ export function verifyAuthorToolsState(state,{bytesFor,requirePublic=Boolean(sta
   for(const [id,entry] of Object.entries(state.cases)){
     assert(CASE_IDS.includes(id)&&entry.id===id&&entry.root===path.join(state.runRoot,id),'Author-tools case escaped its run');
     for(const ref of immutableCaseReferences(entry))read(ref,'author-tools immutable artifact');
-    if(entry.summary){const summary=json(entry.summary,'author-tools summary');assert(same(stableSummary(summary),entry.summaryAnchor),'Author-tools immutable automatic evidence changed');const actual=inspectCase(entry,state.release,{allowReviewed:true,bytesFor});assert(same(actual,entry.evidence),'Saved author-tools evidence differs from original bytes');
+    if(entry.summary){const summary=json(entry.summary,'author-tools summary');assert(same(stableSummary(summary),entry.summaryAnchor),'Author-tools immutable automatic evidence changed');const actual=inspectCase(entry,state.release,{allowReviewed:true,bytesFor}),expected=structuredClone(entry.evidence);
+      if(bytesFor&&id==='comparison'){
+        // Live inspection adds these bindings; archives prove their original
+        // path/digest bytes without certifying the copied filesystem's inodes.
+        for(const evidence of [actual,expected])for(const ref of [evidence.browserReceipt,...evidence.screenshots])delete ref.binding;
+      }
+      assert(same(actual,expected),'Saved author-tools evidence differs from original bytes');
       if(id!=='comparison'&&actual.visualReview!=='required-pending'){
         const record=json(summary.visualReview.record,'sealed single review');assert.equal(record.deliveryReceiptId,actual.deliveryReceiptId);assert(same(record.engine,actual.engine)&&same(record.browserReceiptIdentity,actual.browserReceiptIdentity),'Single review engine/browser differs');reference(record.artifact,actual.artifact,'review artifact',bytesFor);reference(record.candidate,actual.candidate,'review candidate',bytesFor);assert.equal(record.configSha256,actual.configSha256);
         const expected=new Map(actual.screenshots.map(shot=>[`${shot.viewport.width}x${shot.viewport.height}/${shot.theme}`,shot]));assert.equal(record.screenshotIdentities.length,4);

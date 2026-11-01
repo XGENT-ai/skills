@@ -3,6 +3,7 @@ name: phoenix-diagram
 description: "用于架构、工作流、时序、数据流、状态、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML。品牌采集、本地预览和架构比较仅在明确请求时启用。"
 license: MIT
 metadata:
+  internal: true
   version: "0.2.0"
   based_on: "tt-a1i/Archify; Cocoon-AI/architecture-diagram-generator (MIT)"
 ---

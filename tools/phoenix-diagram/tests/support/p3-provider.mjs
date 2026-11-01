@@ -751,6 +751,31 @@ export function checkP3Command(captured, command, context) {
       'Native command status contradicts its process exit');
   return {dto, argv: dto.argv, receipt, exitCode: dto.exitCode};
 }
+function verifiedMigrationHelpRejection(captured, part, event, call, words, context) {
+  try {
+    const protocol = captured.preambleParameters;
+    if (captured.provider !== 'codex' || !MIGRATION.has(captured.scenarioId) ||
+        call.kind !== 'codex-command-execution' || words[0] !== protocol?.NODE ||
+        words[1] !== protocol.COLLECTOR || captured.collector?.nodePath !== protocol.NODE ||
+        captured.collector.script?.path !== protocol.COLLECTOR) return false;
+    checkCollector(captured.collector.script, 'stdio', context);
+    const options = parseCaptureArgs(words.slice(2));
+    if (options.mode !== 'migration' || !same(options.argv, ['help']) ||
+        options.program !== captured.parameters?.ENGINE || options.cwd !== captured.cwd ||
+        options.candidateVersion !== protocol.VERSION ||
+        ![options.stdout, options.stderr, options.evidenceDir].every(value =>
+            path.isAbsolute(value) && path.normalize(value) === value && value.startsWith(protocol.STDIO + '/')))
+      return false;
+    const anchors = lineIndex(part.raw).filter(value => same(context.nativeProof.anchor(part.raw, value), event));
+    if (anchors.length !== 1) return false;
+    const proof = context.nativeProof.proofPair(part, {
+      kind: call.kind, toolUseId: call.id, result: anchors[0]
+    });
+    return proof.exitCode === 4 && proof.output === 'P3 stdio capture: migration capture only executes migrate\n';
+  } catch {
+    return false;
+  }
+}
 export function checkP3RecordedCommands(captured, entries, context) {
   const claims = new Set(entries.map(value => `${value.captureIndex}/${value.proof?.toolUseId}`));
   need(claims.size === entries.length, 'A native producer is claimed more than once');
@@ -763,14 +788,22 @@ export function checkP3RecordedCommands(captured, entries, context) {
         try {
           words = context.nativeProof.executedWords(command);
         } catch {
+          const source = Array.isArray(command) && command.length === 3 &&
+                  /^\/bin\/(?:zsh|bash|sh)$/.test(command[0]) && command[1] === '-c' ?
+              command[2] : String(command);
+          // A literal membership operand in a Python process filter is data.
+          const invocation = /^python3 - <<'([A-Za-z_]\w*)'\n[\s\S]*\n\1$/.test(source) ?
+              source.replace(/^([ \t]*if[ \t]+)(['"])[^'"\\\r\n]*\2(?=[ \t]+in[ \t]+[A-Za-z_]\w*\b)/gm, '$1""') : source;
           need(
               !/(?:\$PD|phoenix-diagram[^\s]*['"]?\s+(?:brands|preview|compare|migrate|finalize|deliver|validate))/
-                   .test(command),
+                   .test(invocation),
               'Native PD command bypassed the fixed collector');
           continue;
         }
         const collected = words[1]?.endsWith('/' + STDIO_MEMBER);
         if (collected && words.length === 3 && words[2] === '--help') continue;
+        if (collected && !claims.has(`${index}/${call.id}`) &&
+            verifiedMigrationHelpRejection(captured, part, event, call, words, context)) continue;
         const direct =
             /(?:^|\/)(?:phoenix-diagram(?:-(?:darwin|linux)-(?:arm64|x64))?|phoenix-diagram\.js)$/.test(
                 words[0] || '') ||
@@ -896,6 +929,37 @@ function checkCompletedDelivery(row, receipts, context, comparison) {
   const artifact = comparison ? summary.comparison.artifact : summary.artifact;
   bytes(artifact, context, 'Delivered original HTML');
 }
+function verifiedReadOnlyExec(part, event, call, context) {
+  // Recognize one literal shell read plus its text output; never evaluate JS.
+  // Opaque/batched executors still fail, even when their final project is unchanged.
+  if (part.provider !== 'codex' || event.type !== 'response_item' ||
+      event.payload?.type !== 'custom_tool_call' || call.name !== 'exec' || typeof call.input !== 'string')
+    return false;
+  const wrapper = /^\s*const\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+tools\.exec_command\((\{[\s\S]*\})\)\s*;\s*text\(\s*\1\.output\s*\)\s*;?\s*$/.exec(call.input),
+        argumentsMatch = wrapper && /^\{\s*(?:cmd|"cmd")\s*:\s*("(?:[^"\\]|\\.)*")\s*(?:,\s*(?:max_output_tokens|"max_output_tokens")\s*:\s*\d+\s*)?\}$/.exec(wrapper[2]);
+  if (!argumentsMatch) return false;
+  try {
+    const command = JSON.parse(argumentsMatch[1]), words = context.nativeProof.executedWords(command);
+    if (!['pwd', 'ls', 'rg', 'cat', 'head', 'test'].includes(words[0]) ||
+        /[;|&<>`$\n]/.test(command) || /--pre(?:=|\s)/.test(command) ||
+        /apply_patch|writeFile|write_file|(?:^|\W)(?:touch|mkdir|cp|mv|rm|tee)(?:\s|$)/.test(command)) return false;
+    const rows = lineIndex(part.raw).map(anchor => ({anchor, event: context.nativeProof.anchor(part.raw, anchor)})),
+          starts = rows.filter(row => same(row.event, event)),
+          ends = rows.filter(row => row.event.type === 'response_item' &&
+              row.event.payload?.type === 'custom_tool_call_output' && row.event.payload.call_id === call.id);
+    if (starts.length !== 1 || ends.length !== 1) return false;
+    const executions = rows.filter(row => row.event.type === 'event_msg' &&
+        row.event.payload?.type === 'item_completed' && row.event.payload.item?.type === 'CommandExecution' &&
+        row.anchor.offset > starts[0].anchor.offset && row.anchor.offset < ends[0].anchor.offset);
+    if (executions.length !== 1) return false;
+    const selected = executions[0], proof = context.nativeProof.proofPair(part, {
+      kind: 'codex-command-execution', result: selected.anchor, toolUseId: selected.event.payload.item.id
+    });
+    return proof.exitCode === 0 && same(context.nativeProof.executedWords(context.nativeProof.commandOf(proof)), words);
+  } catch {
+    return false;
+  }
+}
 export function checkP3ScenarioOutcome(row, captured, results, response, context) {
   // Public help is retained among all original captures/review bindings. It is
   // not an operation, a user confirmation, or evidence of a completed capability.
@@ -923,9 +987,10 @@ export function checkP3ScenarioOutcome(row, captured, results, response, context
             .match(
                 /https:\/\/raw\.githubusercontent\.com\/XGENT-ai\/skills\/[a-f0-9]{40}\/tools\/phoenix-diagram\/tests\/fixtures\/brands\/official-test\.png/)
             ?.[0];
-    const capture = results.find(value => value.argv[0] === 'brands' && value.argv[1] === 'capture');
+    const attempts = results.filter(value => value.argv[0] === 'brands' && value.argv[1] === 'capture'),
+          capture = attempts.find(value => value.exitCode === 0 && value.receipt?.status === 'pass');
     need(
-        authorized && capture?.argv[2] === authorized &&
+        authorized && attempts.every(value => value.argv[2] === authorized) && capture &&
             capture.receipt?.brand?.sha256 ===
                 '8a1035d9172bf23b4444d8409418141e7bb39271deb17786c3860ef1defd494e' &&
             capture.receipt.resource?.bytes === 125 && capture.receipt.resource?.mediaType === 'image/png',
@@ -957,6 +1022,11 @@ export function checkP3ScenarioOutcome(row, captured, results, response, context
           need(
               !/^(?:Write|Edit|write_file|apply_patch|functions\.apply_patch)$/i.test(call.name),
               'Clarification wrote a candidate');
+          if (call.name === 'exec') {
+            need(verifiedReadOnlyExec(part, event, call, context),
+                'Clarification used an executable tool without a verifiable read-only operation');
+            continue;
+          }
           need(
               /^(?:Read|Glob|Grep|Skill|Bash|bash|exec_command|functions\.exec_command|view_image|functions\.view_image)$/
                   .test(call.name),
