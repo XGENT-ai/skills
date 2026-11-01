@@ -2,6 +2,8 @@
 
 XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cursor、Codex 等支持 skill 的 Agent 中。
 
+版本变更与历史记录见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 安装
 
 列出并选择安装公开的 skills (`xgent-init` 是内部初始化 skill,不在默认列表中):
@@ -20,17 +22,11 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。npm 发布包与仓库的 `xgent-skills install` 统一默认安装 [Phoenix Diagram](docs/phoenix-diagram.md)。发布仅从 `main` 执行，不创建独立发布分支；Diagram 必须具备匹配版本的四平台 release 资源和公共下载地址，当前开发清单不能直接发布:
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。npm 发布包与仓库的 `xgent-skills install` 统一默认安装 [Phoenix Diagram](docs/phoenix-diagram.md):
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
 npx @xgent-ai/skills install
-```
-
-0.7.3 补齐了 npx 默认入口。旧版 0.7.2 会报 `could not determine executable to run`,使用该版本时请显式指定安装器:
-
-```bash
-npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 ```
 
 选项:
@@ -38,7 +34,7 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | 选项 | 说明 |
 | --- | --- |
 | `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings;不删除已装版本 |
-| `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
+| `--no-impeccable` | 已弃用,请改用 `--no-phoenix-ui` |
 | `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
 | `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram,不删除已装版本 |
@@ -72,11 +68,11 @@ Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github
 
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 
-- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,本期支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64,Windows 延期。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
+- **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
 - **已有工具**:安装时发现 impeccable 会询问是否替换。选择替换则直接删除所选 provider 的项目级及个人级旧入口和旧 hooks,不备份、不留转跳入口;选择保留则共存,不阻止 Phoenix 安装,无交互环境默认保留。没有安装事务状态的 Phoenix 源码副本直接删除后重装。业务源码、旧工具的数据和文档不改动;共享配置中的其他 hooks 保留。
 - **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。
 
-安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除,需要时从 git 历史查看。
+安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
 
 managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](skills/review-ui/references/phoenix-review.md)。
 
@@ -138,13 +134,13 @@ $review-ui [开发计划] [页面URL/路由] [设计稿/目标图] [上轮报告
 $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计划/范围] 或 what-next [查询/更新] [PRD/计划/范围]
 ```
 
-提示的展示取决于客户端：[Claude Code](https://code.claude.com/docs/en/skills#frontmatter-reference) 在 `/skill` 补全中支持 `argument-hint`；Codex 的 `$skill` 参数预览仍有[未关闭的功能请求](https://github.com/openai/codex/issues/31014)，不能仅凭新增字段保证弹出提示。未展示时可直接参考上述用法或各技能的 frontmatter。
+参数提示的展示取决于客户端对 `argument-hint` 的支持。未展示时可直接参考上述用法或各技能的 frontmatter。
 
 5 个 `review-*` 支持“对照上轮报告复审修复效果”：逐项保留来源 ID，区分已解决、仍存在、部分解决、回归、待核实、不再适用和本轮未复核；新增问题单列，默认另存报告。代码旧问题的复核不受本次修复 diff 限制。`review-prd-dev-gaps` 会先核对已有 gaps plan，支持“仅报告”，避免重复规划。
 
 `apply-doc-review` 与 `apply-code-review` 支持“继续修复”与“仅复核”：前者处理剩余问题，后者保留目标产物并保存必要处置记录；完全只读则仅聊天交付。重复执行先核对已有证据，无实质变化不改文件或时间；apply 的复核不自动成为新一轮独立 review。
 
-项目状态与下一步能力已合并到 `agi-mode` 的 [what-next 流程](skills/agi-mode/playbooks/what-next.md)，不再单独发布 `what-next` skill。查询默认只读；初始化/更新才保存，既有执行授权继续有效。
+项目状态与下一步查询使用 `agi-mode` 的 [what-next 流程](skills/agi-mode/playbooks/what-next.md)。查询默认只读；初始化/更新才保存，既有执行授权继续有效。
 
 ```text
 使用 $agi-mode sdlc，解释从需求、CRD 往返到开发、验收和发布的交接。
@@ -222,13 +218,13 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 的 `compose`（默认操作）将原则压缩为 Odyssey RULE 片段（直接嵌入 AGENTS.md，无外层包装），按语义去重并补齐 Think Before Coding 与十二项 Coding Principles，保留项目事实、授权和作用域。缺少 DSL skill 时停止，建议完整安装本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
 
-独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
+独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。验收范围与运行结果见 [CHANGELOG.md](CHANGELOG.md) 及其引用的阶段记录。
 
 自然发现验收可用 `source.fixed_skill_roots` 显式提供完整固定背景目录，目标缺席/候选切换保持其他技能字节；实际目录、读取与任务行为分别记录，单独的目标技能执行不代表完整目录发现已通过。
 
 v2运行质量项可显式声明`verifier/`公开观测文件，按白名单接收固定grader的实际运行事实；验收分与运行证据分开，缺证据保持unknown，独立观测不替代新增回归测试。
-新百分表保留其他已知分项，不因单项unknown全表清空；已知硬失败控制可显式声明不可观察的非gate项并要求双评一致未知，成功控制、底线、排序及辅助资格保持严格。
-新百分rubric还可显式让程序从已校验逐项判断派生评审状态，避免把产物失败误作测量无效；旧协议默认保持，新格式需重新校准。
+百分制评分表保留其他已知分项，不因单项unknown全表清空；已知硬失败控制可显式声明不可观察的非gate项并要求双评一致未知，成功控制、底线、排序及辅助资格保持严格。
+百分制 rubric 可显式让程序从已校验逐项判断派生评审状态，避免把产物失败误作测量无效；旧协议默认保持，新格式需重新校准。
 固定预算项可显式要求双评数值及校准固定参考完全相同，分歧保持unknown及原分；缺省程度容差保持，同分仍须核对依据，详见远端手册。
 
 v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜像；默认及v1/Pro V2仍amd64。平台改变后重新校准，不能迁移旧分或资格；详见[远端手册](skills/agi-mode/references/remote-evolution.md)。
