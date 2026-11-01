@@ -1,20 +1,39 @@
 {
   "schemaVersion": 1,
-  "distribution": "development",
+  "distribution": "release",
   "toolVersion": "0.1.0",
-  "npmPackageVersion": "0.7.6",
-  "sourceCommit": "0dee0030a6325596aa5c820b69cec75742ae0fc4",
-  "sourceTree": "f3b942b377a4cdae7be999fdd4d0f67ee857e0ef",
+  "npmPackageVersion": "0.7.7",
+  "sourceCommit": "6a01c326c1f3dd0390151882e6e03205ea1dc6b8",
+  "sourceTree": "34fecf8ada60947a681e278760e30fd658211b91",
   "sourceState": "dirty",
-  "sourceInputSha256": "c4fe578cbe9dfbb16ce8480f333621407d3213f655f75accc2c6eae7a6b8da31",
+  "sourceInputSha256": "466dc76c552ee4b79049cbe41852d84dc010c25f31ecf3062b79605f5d557e31",
   "bundleSchema": 1,
   "bundleSha256": "637ec2dbcaad98d0765bf0d73fd2fc5935004212288c69f3f5798a13fb584c78",
   "reviewSchema": 1,
   "engines": {
     "darwin-arm64": {
       "asset": "phoenix-ui-darwin-arm64",
-      "sha256": "ea62086202098d4feed6dcd5887eb052e0f0e25482f85d0cc2fab7234a18dab1",
-      "size": 18350304
+      "sha256": "b688b6d70b37270a451cfd8002c6139ade3197cc3458da54201d4764cf77fd95",
+      "size": 18350288,
+      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/darwin-arm64/phoenix-ui-darwin-arm64"
+    },
+    "darwin-x64": {
+      "asset": "phoenix-ui-darwin-x64",
+      "sha256": "f8b59faf9bda40347ce9fec8abd2001414aa22b705cddb01e6ed30df487bb15c",
+      "size": 20838208,
+      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/darwin-x64/phoenix-ui-darwin-x64"
+    },
+    "linux-x64": {
+      "asset": "phoenix-ui-linux-x64",
+      "sha256": "c233dd554bc033d339aa568704e136d6d0d949f8fc8e8ea0a3e3ab69d5cb329b",
+      "size": 22931072,
+      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/linux-x64/phoenix-ui-linux-x64"
+    },
+    "linux-arm64": {
+      "asset": "phoenix-ui-linux-arm64",
+      "sha256": "6f846f717e7403d419fcab253057ab35355fd00ee8b247235fe63c2fb2d65548",
+      "size": 19768520,
+      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/linux-arm64/phoenix-ui-linux-arm64"
     }
   }
 }
