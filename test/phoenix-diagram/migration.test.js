@@ -34,7 +34,7 @@ function fixture(t) {
   const binary = path.join(temp, 'engine'); write(binary, bytes, 0o700);
   const doctor = spawnSync(binary, ['doctor', '--json'], { encoding: 'utf8', env });
   const engine = JSON.parse(doctor.stdout).engine; assert.equal(sha(bytes), engine.binary.sha256);
-  const packageJsonPath = path.join(pkg, 'package.json'); write(packageJsonPath, encoded({ name: '@xgent-ai/skills', version: JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version }));
+  const packageJsonPath = path.join(pkg, 'package.json'); write(packageJsonPath, fs.readFileSync(path.join(root, 'package.json')));
   const files = [ ['SKILL.md', Buffer.from('---\nname: phoenix-diagram\ndescription: migration fixture\n---\n'), 0o644], ...['phoenix-bootstrap.cjs', 'phoenix-launcher.cjs', 'phoenix-diagram'].map(name => [`scripts/${name}`, fs.readFileSync(path.join(root, 'skills/phoenix-diagram/scripts', name)), name.endsWith('bootstrap.cjs') ? 0o644 : 0o755]) ];
   for (const [name, contents, mode] of files) write(path.join(bundleRoot, name), contents, mode);
   const manifest = encoded({ schemaVersion: 1, tool: 'phoenix-diagram', version: '0.2.0', files: files.map(([name, contents, mode]) => ({ path: name, size: contents.length, sha256: sha(contents), mode })) });

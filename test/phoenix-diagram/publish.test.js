@@ -59,11 +59,32 @@ test('diagram publish guard verifies the actual bundle and full license resource
   }
   const f=fixture(t);assert.equal(guard(f.dir).status,0,'This proves the static release contract only, not public hosting or a release authorization');
 });
-test('UI release blocks a package carrying diagram before any release state or uploads',async t=>{
-  const script=fs.readFileSync(path.join(root,'scripts/release-phoenix-ui.mjs'),'utf8');
-  const call=script.indexOf('assertUiOnlyRelease(root, pkg)');assert.ok(call>script.indexOf("step('Checkout')"));
-  assert.ok(call<script.indexOf('fs.mkdirSync(dir'),'gate must precede even local release state');
-  const {assertUiOnlyRelease}=await import(pathToFileURL(path.join(root,'scripts/require-release-package.mjs')));
-  assert.equal(typeof assertUiOnlyRelease,'function');
-  const f=fixture(t);assert.throws(()=>assertUiOnlyRelease(f.dir),/joint|联合/i);
+test('release packaging retains Diagram and requires its complete release resources', async t => {
+  const { releasePackage } = await import(pathToFileURL(path.join(root, 'scripts/require-release-package.mjs')));
+  const f = fixture(t);
+  const pkg = releasePackage(f.dir);
+  assert.equal(pkg.bin['phoenix-diagram'], 'bin/phoenix-diagram.js');
+  assert.deepEqual(pkg, JSON.parse(fs.readFileSync(path.join(f.dir, 'package.json'))));
+  f.data.distribution = 'development'; f.seal();
+  assert.throws(() => releasePackage(f.dir), /release manifest/);
+});
+
+test('releases require main and reject release branches and detached HEAD', async () => {
+  const { assertReleaseBranch } = await import(pathToFileURL(path.join(root, 'scripts/require-release-package.mjs')));
+  assert.doesNotThrow(() => assertReleaseBranch('main'));
+  for (const branch of ['release/0.7.6', 'feature/diagram', 'HEAD', '']) {
+    assert.throws(() => assertReleaseBranch(branch), /main/);
+  }
+});
+
+test('release packaging consumes an explicit Diagram release directory without changing checkout manifests', async t => {
+  const { releasePackage } = await import(pathToFileURL(path.join(root, 'scripts/require-release-package.mjs')));
+  const f = fixture(t), directory = path.join(f.dir, 'prepared-release');
+  fs.renameSync(path.join(f.dir, 'dist/phoenix-diagram'), directory);
+  assert.throws(() => releasePackage(f.dir));
+  const pkg = releasePackage(f.dir, directory);
+  assert.equal(pkg.bin['phoenix-diagram'], 'bin/phoenix-diagram.js');
+  assert.equal(fs.existsSync(path.join(f.dir, 'dist/phoenix-diagram')), false);
+  fs.appendFileSync(path.join(directory, 'bundle/SKILL.md'), 'changed');
+  assert.throws(() => releasePackage(f.dir, directory), /differs|digest/i);
 });

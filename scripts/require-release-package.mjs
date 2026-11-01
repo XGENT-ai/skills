@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Checkout prepublish guard. Publishing an existing tgz does not run this hook;
-// the UI-only release workflow must also stop before any release side effect.
+// the release workflow must also validate Diagram before any release side effect.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -21,20 +21,13 @@ export function includedPhoenixTools(root, pkg = readJson(path.join(root, 'packa
     || included(pkg, `dist/${tool}/VERSION.json`)
     || (included(pkg, `skills/${tool}/SKILL.md`) && fs.existsSync(path.join(root, `skills/${tool}/SKILL.md`))));
 }
-export function uiReleasePackage(root) {
-  const pkg = readJson(path.join(root, 'package.json'));
-  const bin = Object.fromEntries(Object.entries(pkg.bin).filter(([name]) => name !== 'phoenix-diagram'));
-  const files = pkg.files.flatMap(entry => {
-    if (entry === 'bin') return [...new Set(Object.values(bin))];
-    if (entry === 'skills') return fs.readdirSync(path.join(root, 'skills'), { withFileTypes: true })
-      .filter(item => item.isDirectory() && item.name !== 'phoenix-diagram').map(item => `skills/${item.name}`).sort();
-    return entry === 'docs/phoenix-diagram.md' || entry.startsWith('dist/phoenix-diagram/') ? [] : [entry];
-  });
-  return { ...pkg, description: 'XGENT skills 与项目辅助工具:安装 hooks、settings 与 Phoenix UI', bin, files };
+export function assertReleaseBranch(branch) {
+  if (branch !== 'main') throw new Error('Release only from main; release branches and detached HEAD are not supported.');
 }
-export function assertUiOnlyRelease(root, pkg) {
-  if (includedPhoenixTools(root, pkg).includes('phoenix-diagram')) throw new Error(
-    'Phoenix Diagram is included in this package. The UI-only release command cannot publish it: a joint release contract is required. Candidate assembly does not authorize public publication.');
+export function releasePackage(root, diagramDirectory = path.join(root, 'dist/phoenix-diagram')) {
+  const pkg = readJson(path.join(root, 'package.json'));
+  assertDiagramRelease(root, pkg, diagramDirectory);
+  return pkg;
 }
 function ordinary(file) {
   const stat = fs.lstatSync(file);
@@ -49,20 +42,20 @@ function publicHttps(value) {
     && !['localhost', '[::1]'].includes(url.hostname) && !/^127\./.test(url.hostname)
     && !url.hostname.endsWith('.localhost');
 }
-function checkDiagramLicenses(root, pkg) {
+function checkDiagramLicenses(pkg, directory) {
   for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md']) {
     const file = `dist/phoenix-diagram/${name}`;
     if (!included(pkg, file)) throw new Error(`Package files omit ${file}`);
-    ordinary(path.join(root, file));
+    ordinary(path.join(directory, name));
   }
-  const catalog = readJson(path.join(root, 'dist/phoenix-diagram/THIRD-PARTY.json'));
+  const catalog = readJson(path.join(directory, 'THIRD-PARTY.json'));
   let count = 0;
   function visit(value) {
     if (!value || typeof value !== 'object') return;
     if (typeof value.path === 'string' && value.path.startsWith('THIRD-PARTY-LICENSES/')) {
       if (value.path.includes('\\') || value.path.split('/').some(part => !part || part === '.' || part === '..') || !/^[a-f0-9]{64}$/.test(value.sha256 || '')) throw new Error('Unsafe license resource binding');
       const file = `dist/phoenix-diagram/${value.path}`;
-      if (!included(pkg, file) || sha(ordinary(path.join(root, file))) !== value.sha256) throw new Error(`Release license binding differs: ${file}`);
+      if (!included(pkg, file) || sha(ordinary(path.join(directory, value.path))) !== value.sha256) throw new Error(`Release license binding differs: ${file}`);
       count++;
     }
     for (const child of Object.values(value)) visit(child);
@@ -70,26 +63,29 @@ function checkDiagramLicenses(root, pkg) {
   visit(catalog);
   if (!count) throw new Error('Diagram release has no full license resources');
 }
+function assertDiagramRelease(root, pkg, directory = path.join(root, 'dist/phoenix-diagram')) {
+  if (pkg.bin?.['phoenix-diagram'] !== 'bin/phoenix-diagram.js' || !included(pkg, 'dist/phoenix-diagram/bundle/manifest.json')) throw new Error('Package bin/files omit the diagram consumer interface');
+  const manifest = diagram.manifestAt(path.join(directory, 'VERSION.json'), { packageJsonPath: path.join(root, 'package.json') });
+  if (manifest.data.distribution !== 'release' || Object.keys(manifest.data.engines).length !== 4
+    || !diagram.TARGETS.every(target => manifest.data.engines[target] && publicHttps(manifest.data.engines[target].url))) throw new Error('phoenix-diagram requires a complete release manifest with four public HTTPS URLs');
+  const bundle = diagram.verifyBundle(path.join(directory, 'bundle'), manifest);
+  for (const item of bundle.data.files) if (!included(pkg, `dist/phoenix-diagram/bundle/${item.path}`)) throw new Error(`Package files omit diagram bundle entry ${item.path}`);
+  if (!included(pkg, 'dist/phoenix-diagram/bundle/ENGINE.json')) throw new Error('Package files omit diagram ENGINE.json');
+  checkDiagramLicenses(pkg, directory);
+}
 export function assertPublishablePackage(root) {
   const pkg = readJson(path.join(root, 'package.json'));
   const tools = includedPhoenixTools(root, pkg);
   for (const tool of tools) {
     const file = path.join(root, `dist/${tool}/VERSION.json`);
     if (tool === 'phoenix-ui') {
-      // Preserve the UI-only gate; its release workflow validates the full
+      // The UI release workflow validates the full
       // platform/build/hosting contract separately.
       const manifest = readJson(file), engines = Object.values(manifest.engines || {});
       if (manifest.distribution !== 'release' || !engines.length || !engines.every(engine => /^https:\/\//.test(engine.url || ''))) throw new Error('dist/phoenix-ui/VERSION.json is a development manifest without public engine URLs');
       continue;
     }
-    if (pkg.bin?.[tool] !== 'bin/phoenix-diagram.js' || !included(pkg, 'dist/phoenix-diagram/bundle/manifest.json')) throw new Error('Package bin/files omit the diagram consumer interface');
-    const manifest = diagram.manifestAt(file, { packageJsonPath: path.join(root, 'package.json') });
-    if (manifest.data.distribution !== 'release' || Object.keys(manifest.data.engines).length !== 4
-      || !diagram.TARGETS.every(target => manifest.data.engines[target] && publicHttps(manifest.data.engines[target].url))) throw new Error('phoenix-diagram requires a complete release manifest with four public HTTPS URLs');
-    const bundle = diagram.verifyBundle(path.join(root, 'dist/phoenix-diagram/bundle'), manifest);
-    for (const item of bundle.data.files) if (!included(pkg, `dist/phoenix-diagram/bundle/${item.path}`)) throw new Error(`Package files omit diagram bundle entry ${item.path}`);
-    if (!included(pkg, 'dist/phoenix-diagram/bundle/ENGINE.json')) throw new Error('Package files omit diagram ENGINE.json');
-    checkDiagramLicenses(root, pkg);
+    assertDiagramRelease(root, pkg);
   }
   return { tools };
 }
@@ -97,7 +93,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   try {
     assertPublishablePackage(path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..')));
   } catch (error) {
-    console.error(`Refusing to publish: ${error.message}.\nUse npm run release:phoenix only for a UI-only package. Diagram candidates require a separate, explicitly authorized joint release workflow.`);
+    console.error(`Refusing to publish: ${error.message}.\nUse npm run release:phoenix from main with complete Phoenix Diagram release resources; development/candidate resources cannot be published.`);
     process.exitCode = 1;
   }
 }

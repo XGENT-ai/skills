@@ -59,11 +59,11 @@ function legalResourceFixture(t) {
     { name: 'JetBrains Mono', license: 'OFL-1.1', licenses: [resource('tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt')] },
     { name: 'Phoenix UI CDP/install adaptations', license: 'Apache-2.0', licenses: [apache] },
     { name: 'ICU 77.1 native text and SystemV time adaptations', license: 'Unicode-3.0', licenses: [resource('tools/phoenix-diagram/assets/icu77-LICENSE.txt')] },
-    { name: 'Rust standard library', version: '1.99.0', license: 'MIT OR Apache-2.0', licenses: [
+    { name: 'Rust standard library', version: '1.99.1', license: 'MIT OR Apache-2.0', licenses: [
       ...['Apache-2.0.txt', 'BSD-2-Clause.txt', 'CC-BY-SA-4.0.txt', 'GCC-exception-3.1.txt', 'GPL-2.0-only.txt', 'GPL-3.0-or-later.txt',
         'ISC.txt', 'LLVM-exception.txt', 'MIT.txt', 'NCSA.txt', 'OFL-1.1.txt', 'Unicode-3.0.txt'].map(name =>
-        resource('LICENSE', `THIRD-PARTY-LICENSES/rust-std-1.99.0/licenses/${name}`)),
-      resource('tools/phoenix-diagram/NOTICE.md', 'THIRD-PARTY-LICENSES/rust-std-1.99.0/COPYRIGHT-library.html'),
+        resource('LICENSE', `THIRD-PARTY-LICENSES/rust-std-1.99.1/licenses/${name}`)),
+      resource('tools/phoenix-diagram/NOTICE.md', 'THIRD-PARTY-LICENSES/rust-std-1.99.1/COPYRIGHT-library.html'),
     ] },
   ];
   const locked = [{ name: 'phoenix-diagram', version: '0.2.0' }];
@@ -271,7 +271,7 @@ test('legal-resource codec binds complete terms, preserves relative standard-lib
   const result = read();
   assert.throws(() => api.readLicenseResources(directory, locked, { requireBrands: true }), /P3.*brand/i);
   for (const [name, bytes] of files) assert.deepEqual(result.files.get(name), bytes, name);
-  assert.ok(result.files.has('THIRD-PARTY-LICENSES/rust-std-1.99.0/COPYRIGHT-library.html'));
+  assert.ok(result.files.has('THIRD-PARTY-LICENSES/rust-std-1.99.1/COPYRIGHT-library.html'));
   const original = catalog.runtime[0].licenses, term = path.join(directory, original[0].path), bytes = fs.readFileSync(term);
   catalog.runtime[0].licenses = [{ license: 'MIT' }]; fs.unlinkSync(term); save();
   assert.throws(read, /full|complete|terms|resource/i);

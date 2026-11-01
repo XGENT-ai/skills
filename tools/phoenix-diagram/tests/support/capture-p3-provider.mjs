@@ -225,7 +225,9 @@ export function buildArguments(request, {sessionId, previousId, toolEnvironment 
       ['--json', '--ignore-rules', '--skip-git-repo-check', '--config', 'allow_login_shell=false', ...model,
         ...TOOL_ENVIRONMENT_KEYS.filter(key => Object.hasOwn(scope, key)).flatMap(key =>
           ['--config', `shell_environment_policy.set.${key}=${JSON.stringify(scope[key])}`])];
-  return previousId ? ['exec', 'resume', ...common, previousId, '-'] : [
+  return previousId ? [
+    'exec', 'resume', ...common, '--config', 'sandbox_mode="danger-full-access"', previousId, '-'
+  ] : [
     'exec', ...common, '--color', 'never', '--sandbox', 'danger-full-access', '--config',
     'project_doc_max_bytes=0', '--config', 'features.memories=false', '--config',
     'features.memory_tool=false', '--cd', request.cwd, '-'

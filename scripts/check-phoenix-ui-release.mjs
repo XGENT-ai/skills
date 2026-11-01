@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { assertPublishablePackage } from './require-release-package.mjs';
 import { loadMigrationSource, materializeMigrationFixture, verifyPublishedPackage } from '../test/phoenix-ui/fixtures/migration/materialize.mjs';
 
 // Install the packed release tarball like a consumer: fresh install with the engine downloaded from its
@@ -93,7 +94,7 @@ function environment(base, sandboxHome = path.join(base, 'user home')) {
   const userConfig = path.join(base, 'empty-user.npmrc'); fs.writeFileSync(userConfig, '');
   const globalConfig = path.join(base, 'empty-global.npmrc'); fs.writeFileSync(globalConfig, '');
   // Real public URLs: keep the maintainer's proxy settings.
-  return { ...process.env, HOME: sandboxHome, USERPROFILE: sandboxHome, PHOENIX_UI_HOME: path.join(base, 'phoenix cache'), npm_config_cache: path.join(base, 'npm-cache'),
+  return { ...process.env, HOME: sandboxHome, USERPROFILE: sandboxHome, PHOENIX_UI_HOME: path.join(base, 'phoenix cache'), PHOENIX_DIAGRAM_HOME: path.join(base, 'diagram cache'), npm_config_cache: path.join(base, 'npm-cache'),
     npm_config_userconfig: userConfig, npm_config_globalconfig: globalConfig };
 }
 function npmInstall(node, archive, destination, env, name) {
@@ -110,7 +111,7 @@ function npmInstall(node, archive, destination, env, name) {
 }
 function install(node, project, env, name, flags = []) {
   const npx = path.resolve(path.dirname(node), '../lib/node_modules/npm/bin/npx-cli.js');
-  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...(pkg.bin?.['phoenix-diagram'] ? ['--no-phoenix-diagram'] : []), ...flags], project,
+  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...flags], project,
     { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
 function rollback(node, pkg, project, env, output, name) {
@@ -131,7 +132,28 @@ for (const major of [18, 25]) {
   assert(info.version.startsWith(`v${major}.`), 'Wrong supplied Node major'); assert(B.data.engines[info.target], 'Release does not support this Node host');
   const pkg = npmInstall(node, path.join(raw, 'B.tgz'), path.join(base, 'B consumer'), setupEnv, `node${major}-B`);
   assert(fs.readFileSync(path.join(pkg, 'dist/phoenix-ui/VERSION.json')).equals(B.bytes));
+  assertPublishablePackage(pkg);
   const bBin = path.join(pkg, 'bin/phoenix-ui.js');
+  const jointBase = path.join(base, 'joint-install'), jointEnv = environment(jointBase);
+  const jointProject = path.join(jointBase, 'project'); fs.mkdirSync(jointProject);
+  const joint = { node: info, kind: 'joint-install', status: 'running', BtarballSha256: options['--tarball-sha256'] };
+  record.groups.push(joint); save();
+  const firstJoint = install(node, jointProject, jointEnv, `node${major}-joint-install`, []);
+  assert.match(firstJoint.stdout, /Phoenix Diagram/);
+  for (const tool of ['phoenix-ui', 'phoenix-diagram']) {
+    assert(fs.existsSync(path.join(jointProject, `.claude/skills/${tool}/SKILL.md`)));
+    assert(fs.existsSync(path.join(jointProject, `.${tool}/install/active.json`)));
+  }
+  const diagram = createRequire(import.meta.url)(path.join(pkg, 'skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs'));
+  const ready = await diagram.preflight({ project: jointProject, manifestPath: path.join(pkg, 'dist/phoenix-diagram/VERSION.json'),
+    bundleRoot: path.join(pkg, 'dist/phoenix-diagram/bundle'), packageJsonPath: path.join(pkg, 'package.json'), env: jointEnv, allowInstall: false });
+  joint.diagramEngineSha256 = sha(fs.readFileSync(ready.enginePath));
+  assert.equal(joint.diagramEngineSha256, ready.manifest.data.engines[info.target].sha256);
+  run(`node${major}-joint-diagram-guide`, node, [path.join(pkg, 'bin/phoenix-diagram.js'), 'guide', 'workflow', '--json'], jointProject, jointEnv);
+  const jointBefore = tree(jointProject);
+  install(node, jointProject, jointEnv, `node${major}-joint-rerun`, []);
+  assert.deepEqual(tree(jointProject), jointBefore);
+  joint.status = 'expected-consumer-outcomes-observed'; save();
   for (const kind of ['fresh', 'legacy-0.3.0', 'legacy-0.6.0', 'replace-0.3.0', 'replace-0.6.0', 'source-copy']) {
     const groupBase = path.join(base, kind); fs.mkdirSync(groupBase);
     const group = { node: info, kind, status: 'running', BtarballSha256: options['--tarball-sha256'] }; record.groups.push(group); save();
@@ -158,7 +180,7 @@ for (const major of [18, 25]) {
         const engine = JSON.parse(run(`node${major}-HTTP-engine-install`, node, [bBin, 'engine', 'install', '--project', project, '--json'], project, env).stdout);
         assert.equal(engine.status, 'installed'); assert.equal(sha(fs.readFileSync(engine.binary)), B.data.engines[info.target].sha256);
       }
-      const first = install(node, project, env, `node${major}-${kind}-install`, replace ? ['--replace-impeccable'] : []);
+      const first = install(node, project, env, `node${major}-${kind}-install`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
       assert.match(first.stdout, new RegExp(`Phoenix UI ${B.data.toolVersion.replaceAll('.', '\\.')} \\(@xgent-ai/skills@[^)]+\\): 已安装`));
       assert.match(first.stdout, /完成: /); assert.match(first.stdout, /回滚  npm exec --package=@xgent-ai\/skills@\S+ -- phoenix-ui migrate --rollback phoenix-\S+ --project /);
       if (legacy) {
@@ -186,7 +208,7 @@ for (const major of [18, 25]) {
         assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/); assert.doesNotMatch(first.stdout, /impeccable →/); assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
         assert(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf(`Phoenix UI ${B.data.toolVersion}`));
       }
-      for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.claude/skills/review-ui/SKILL.md', '.phoenix-ui/install/active.json']) assert(fs.existsSync(path.join(project, file)), file);
+      for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.phoenix-ui/install/active.json']) assert(fs.existsSync(path.join(project, file)), file);
       assert(fs.readFileSync(path.join(project, '.claude/skills/phoenix-ui/scripts/ENGINE.json')).equals(B.bytes));
       group.installedBEngineSha256 = sha(fs.readFileSync(bootstrap.enginePath(B, info.target, env)));
       assert.equal(group.installedBEngineSha256, B.data.engines[info.target].sha256);
@@ -194,7 +216,7 @@ for (const major of [18, 25]) {
       for (const file of ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']) assert.equal(installed[file], original[file], `Installer changed ${file}`);
       assert.deepEqual(Object.fromEntries(Object.entries(installed).filter(([file]) => file.startsWith('node_modules/'))),
         Object.fromEntries(Object.entries(original).filter(([file]) => file.startsWith('node_modules/'))), 'Installer changed node_modules');
-      const second = install(node, project, env, `node${major}-${kind}-rerun`, replace ? ['--replace-impeccable'] : []);
+      const second = install(node, project, env, `node${major}-${kind}-rerun`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
       assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project, outsideHistory), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));
@@ -212,7 +234,7 @@ for (const major of [18, 25]) {
   }
 }
 } catch (error) { record.error = error.message; process.exitCode = 1; }
-record.status = !record.error && record.groups.length === 12 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
+record.status = !record.error && record.groups.length === 14 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
 record.finishedAt = new Date().toISOString(); save();
 if (record.status !== 'release-check-passed') process.exitCode = 1;
 console.log(json({ out, status: record.status, tarballSha256: options['--tarball-sha256'], manifestSha256: B.hash, groups: record.groups }));

@@ -141,18 +141,18 @@
       "materials": [
         {
           "name": "base.json",
-          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2,\n    \"gapX\": 120\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
           "identity": {
-            "sha256": "e9490092c338305b90a6a501ea55285dcf8cc454e801d57327f54b30c6332de4",
-            "bytes": 689
+            "sha256": "ea20591a8dd222687bcd0c320929925275b7b95a5a18c48825838bb47a709c51",
+            "bytes": 706
           }
         },
         {
           "name": "head.json",
-          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 3\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    },\n    {\n      \"id\": \"database\",\n      \"type\": \"database\",\n      \"label\": \"Order store\",\n      \"row\": 0,\n      \"col\": 2\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    },\n    {\n      \"id\": \"persist\",\n      \"from\": \"service\",\n      \"to\": \"database\",\n      \"label\": \"Persist order\"\n    }\n  ]\n}\n",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 3,\n    \"gapX\": 120\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    },\n    {\n      \"id\": \"database\",\n      \"type\": \"database\",\n      \"label\": \"Order store\",\n      \"row\": 0,\n      \"col\": 2\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    },\n    {\n      \"id\": \"persist\",\n      \"from\": \"service\",\n      \"to\": \"database\",\n      \"label\": \"Persist order\"\n    }\n  ]\n}\n",
           "identity": {
-            "sha256": "5bf20795773b01d6dd201ab98ccff488e95a8efa7a0413d21f8a5f56d8bfafd7",
-            "bytes": 929
+            "sha256": "fb0b1420b674e1e5034f65068c367138851742d286c9b35c538012b40d1b8286",
+            "bytes": 946
           }
         }
       ]
@@ -169,10 +169,10 @@
       "materials": [
         {
           "name": "base.json",
-          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
+          "content": "{\n  \"schema_version\": 1,\n  \"diagram_type\": \"architecture\",\n  \"meta\": {\n    \"title\": \"Order service\",\n    \"output\": \"architecture.html\",\n    \"input_contract\": \"phoenix-v1\",\n    \"quality_profile\": \"showcase\",\n    \"locale\": \"en\"\n  },\n  \"layout\": {\n    \"mode\": \"grid\",\n    \"cols\": 2,\n    \"gapX\": 120\n  },\n  \"components\": [\n    {\n      \"id\": \"client\",\n      \"type\": \"frontend\",\n      \"label\": \"Customer portal\",\n      \"row\": 0,\n      \"col\": 0\n    },\n    {\n      \"id\": \"service\",\n      \"type\": \"backend\",\n      \"label\": \"Order API\",\n      \"row\": 0,\n      \"col\": 1\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"request\",\n      \"from\": \"client\",\n      \"to\": \"service\",\n      \"label\": \"Submit order\"\n    }\n  ]\n}\n",
           "identity": {
-            "sha256": "e9490092c338305b90a6a501ea55285dcf8cc454e801d57327f54b30c6332de4",
-            "bytes": 689
+            "sha256": "ea20591a8dd222687bcd0c320929925275b7b95a5a18c48825838bb47a709c51",
+            "bytes": 706
           }
         },
         {
