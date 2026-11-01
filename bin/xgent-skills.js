@@ -176,7 +176,7 @@ async function preparePhoenix(targetDir, options) {
       + '  可用 --release-dir=DIR 指向已核验的离线 release 目录,或加 --no-phoenix-ui 先安装其余部分。');
   }
   const args = ['install', '--project', targetDir, '--bundle-root', path.join(PHOENIX_DIR, 'bundle'),
-    '--auxiliary-root', path.join(PKG_ROOT, 'skills'), '--keep-impeccable', '--json'];
+    '--keep-impeccable', '--json'];
   if (options.providers) args.push('--providers', options.providers);
   const plan = runPhoenix(binary, [...args, '--dry-run']).report;
   const tools = preparePhoenixTools(plan.project, plan.providers);
@@ -339,7 +339,7 @@ function usage() {
 命令:
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并安装
-                  Phoenix UI(设计 skill、hooks 与五个辅助 skill;engine 校验后
+                  Phoenix UI(设计 skill 与 hooks;engine 校验后
                   放入用户 cache;旧 impeccable 可选择替换或共存),
                   以及 Phoenix Diagram(十类图解 skill 与独立原生 engine),
                   并询问是否创建通用的 AGENTS.md

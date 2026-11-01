@@ -5,9 +5,10 @@ version: 0.1.0
 user-invocable: true
 license: Apache 2.0
 metadata:
+  internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 0373592bd1816746801e33d048c42075dca27b752f2c16d5567921f65870069a
+  source_sha256: 101db58ee131f91afb9f54e3cd7f59884780febb7b083747a19cbccb5dc794a3
 allowed-tools:
   - Bash(.vibe/skills/phoenix-ui/scripts/phoenix-ui *)
 ---

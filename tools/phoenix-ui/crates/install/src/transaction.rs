@@ -244,6 +244,13 @@ impl Project {
     /// Verify the active receipt against its journal and current ownership.
     /// Mutable retained state and unrelated shared JSON entries are not owned.
     pub fn verified_installation(&self) -> Result<Option<VerifiedInstallation>> {
+        self.verified_installation_with_unmanaged(|_| false)
+    }
+
+    pub(crate) fn verified_installation_with_unmanaged(
+        &self,
+        unmanaged: impl Fn(&str) -> bool,
+    ) -> Result<Option<VerifiedInstallation>> {
         if let Some(pending) = self.pending()? {
             return Err(Error::new(
                 ErrorKind::RecoveryRequired,
@@ -262,7 +269,7 @@ impl Project {
             return Err(Error::conflict("active receipt schema is unsupported"));
         }
         id(&receipt.transaction_id).map_err(|e| Error::conflict(e.to_string()))?;
-        let journal = self
+        let mut journal = self
             .read_journal(&receipt.transaction_id)?
             .ok_or_else(|| Error::conflict("active transaction journal is missing"))?;
         if journal.phase != Phase::Committed
@@ -273,6 +280,9 @@ impl Project {
                 "active receipt does not match its committed journal",
             ));
         }
+        journal
+            .operations
+            .retain(|op| op.patches.is_some() || !unmanaged(&op.path));
         self.installed(&journal, true)?;
         let json_patches = journal
             .operations

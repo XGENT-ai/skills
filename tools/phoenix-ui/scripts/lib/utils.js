@@ -263,6 +263,7 @@ export function readSourceFiles(rootDir, skillDir = path.resolve(rootDir, '../..
   skills.push({
     name: frontmatter.name || 'phoenix-ui',
     description: frontmatter.description || '',
+    whenToUse: frontmatter.when_to_use || '',
     license: frontmatter.license || '',
     compatibility: frontmatter.compatibility || '',
     metadata: frontmatter.metadata || null,

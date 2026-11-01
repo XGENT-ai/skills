@@ -472,7 +472,7 @@ pub fn build_install_plan_with(
     {
         return Err(invalid("unknown selected bundle provider"));
     }
-    let verified = project.verified_installation();
+    let verified = project.verified_installation_with_unmanaged(crate::installer::legacy_auxiliary);
     let owned: BTreeMap<String, String> = match &verified {
         Ok(Some(active)) => active
             .receipt

@@ -2,7 +2,8 @@ use impeccable_common::Io;
 use phoenix_ui_install::{
     cli,
     installer::{self, Request, Status},
-    sha256, Checkpoint,
+    sha256, Change, Checkpoint, ExpectedFile, Manifest, Payload, Permissions, Plan, Project,
+    RollbackPolicy,
 };
 use serde_json::{json, Value};
 use std::{
@@ -71,10 +72,6 @@ fn bundle() -> &'static Path {
     static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
     PATH.get_or_init(|| repository().join("dist/phoenix-ui/bundle"))
 }
-fn auxiliary() -> &'static Path {
-    static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
-    PATH.get_or_init(|| repository().join("skills"))
-}
 
 fn request<'a>(
     sandbox: &'a Sandbox,
@@ -87,7 +84,6 @@ fn request<'a>(
     Request {
         project,
         bundle_root: bundle(),
-        auxiliary_root: Some(auxiliary()),
         providers: providers.iter().map(|p| p.to_string()).collect(),
         home: Some(sandbox.home()),
         scan_sources: false,
@@ -163,10 +159,10 @@ fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
         .writes
         .iter()
         .any(|p| p == ".claude/skills/phoenix-ui/scripts/ENGINE.json"));
-    assert!(planned
+    assert!(!planned
         .writes
         .iter()
-        .any(|p| p == ".claude/skills/review-ui/SKILL.md"));
+        .any(|p| p.contains("/skills/review-ui/")));
     assert_eq!(entries(&project), before, "dry-run wrote project entries");
     assert!(!project.join(".phoenix-ui").exists());
 
@@ -182,10 +178,7 @@ fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
         engine,
         fs::read(bundle().parent().unwrap().join("VERSION.json")).unwrap()
     );
-    assert_eq!(
-        fs::read(project.join(".claude/skills/design-md/SKILL.md")).unwrap(),
-        fs::read(auxiliary().join("design-md/SKILL.md")).unwrap()
-    );
+    assert!(!project.join(".claude/skills/design-md").exists());
     let again =
         installer::install(&request(&sandbox, &project, &[".claude"], false, "fresh-2")).unwrap();
     assert_eq!(again.status, Status::Unchanged);
@@ -207,6 +200,84 @@ fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
         after, before,
         "rollback must remove Phoenix files and the directories it left empty"
     );
+}
+
+#[test]
+fn upgrade_releases_legacy_companion_ownership_without_touching_independent_updates() {
+    for edit_main in [false, true] {
+        let sandbox = Sandbox::new();
+        let project = sandbox.project();
+        let core = ".claude/skills/phoenix-ui/SKILL.md";
+        let companion = ".claude/skills/review-ui/SKILL.md";
+        let legacy = Plan {
+            transaction_id: "legacy-companions".into(),
+            manifest: Manifest {
+                version: "0.7.5".into(),
+                sha256: sha256(b"legacy bundle"),
+                providers: vec![".claude".into()],
+                migration_sources: vec![],
+            },
+            expected_receipt: ExpectedFile::Absent,
+            changes: [core, companion]
+                .into_iter()
+                .map(|path| Change::Exclusive {
+                    path: path.into(),
+                    expected: ExpectedFile::Absent,
+                    after: Some(Payload::new(
+                        b"legacy installed bytes".to_vec(),
+                        Permissions::file(0o644),
+                    )),
+                    rollback: RollbackPolicy::Restore,
+                })
+                .collect(),
+        };
+        Project::open(&project).unwrap().apply(&legacy).unwrap();
+        fs::write(
+            project.join(companion),
+            "updated independently by skills.sh",
+        )
+        .unwrap();
+        if edit_main {
+            fs::write(project.join(core), "user core edit").unwrap();
+        }
+        let next = request(
+            &sandbox,
+            &project,
+            &[".claude"],
+            false,
+            "independent-companions",
+        );
+        let result = installer::install(&next).unwrap();
+        assert_eq!(
+            result.status,
+            if edit_main {
+                Status::Conflict
+            } else {
+                Status::Installed
+            }
+        );
+        assert_eq!(
+            fs::read_to_string(project.join(companion)).unwrap(),
+            "updated independently by skills.sh"
+        );
+        if !edit_main {
+            let receipt = Project::open(&project)
+                .unwrap()
+                .active_receipt_verified()
+                .unwrap()
+                .unwrap();
+            assert!(receipt.ownership.iter().all(|item| item.path != companion));
+            let again = installer::install(&request(
+                &sandbox,
+                &project,
+                &[".claude"],
+                false,
+                "independent-repeat",
+            ))
+            .unwrap();
+            assert_eq!(again.status, Status::Unchanged);
+        }
+    }
 }
 
 #[test]
@@ -374,93 +445,6 @@ fn migration_retires_owned_old_entries_keeps_user_data_and_rolls_back_exactly() 
 }
 
 #[test]
-fn external_auxiliary_copies_are_kept_and_only_a_different_copy_keeps_integration_pending() {
-    let sandbox = Sandbox::new();
-    let project = sandbox.project();
-    let copy = |skill: &str| {
-        for entry in fs::read_dir(auxiliary().join(skill)).unwrap() {
-            let entry = entry.unwrap();
-            if entry.file_type().unwrap().is_file() {
-                let target = project
-                    .join(".claude/skills")
-                    .join(skill)
-                    .join(entry.file_name());
-                fs::create_dir_all(target.parent().unwrap()).unwrap();
-                fs::copy(entry.path(), target).unwrap();
-            }
-        }
-    };
-    copy("design-md");
-    fs::create_dir_all(project.join(".claude/skills/design-md/references")).unwrap();
-    fs::copy(
-        auxiliary().join("design-md/references/format.md"),
-        project.join(".claude/skills/design-md/references/format.md"),
-    )
-    .unwrap();
-    fs::create_dir_all(project.join(".claude/skills/design-md/evals")).unwrap();
-    fs::copy(
-        auxiliary().join("design-md/evals/scenarios.md"),
-        project.join(".claude/skills/design-md/evals/scenarios.md"),
-    )
-    .unwrap();
-    fs::copy(
-        auxiliary().join("design-md/evals/fresh-context.md"),
-        project.join(".claude/skills/design-md/evals/fresh-context.md"),
-    )
-    .unwrap();
-    let identical =
-        installer::install(&request(&sandbox, &project, &[".claude"], false, "aux-1")).unwrap();
-    assert_eq!(identical.status, Status::Installed);
-    assert!(identical
-        .findings
-        .iter()
-        .any(|f| f.path == ".claude/skills/design-md"
-            && f.kind == "external-copy-identical"
-            && !f.blocking_integration));
-    assert!(
-        !identical
-            .writes
-            .iter()
-            .any(|p| p.starts_with(".claude/skills/design-md/")),
-        "an external copy must not become Phoenix-owned"
-    );
-
-    fs::write(
-        project.join(".claude/skills/review-ui/SKILL.md"),
-        "user edit\n",
-    )
-    .unwrap();
-    let edited =
-        installer::install(&request(&sandbox, &project, &[".claude"], false, "aux-2")).unwrap();
-    assert_eq!(
-        edited.status,
-        Status::Conflict,
-        "a modified Phoenix-owned file must not be overwritten"
-    );
-
-    let other = Sandbox::new();
-    let project = other.project();
-    fs::create_dir_all(project.join(".claude/skills/review-ui")).unwrap();
-    fs::write(
-        project.join(".claude/skills/review-ui/SKILL.md"),
-        "external version\n",
-    )
-    .unwrap();
-    let pending =
-        installer::install(&request(&other, &project, &[".claude"], false, "aux-3")).unwrap();
-    assert_eq!(pending.status, Status::IntegrationPending);
-    assert_eq!(pending.status.exit_code(), 3);
-    assert!(
-        project.join(".claude/skills/phoenix-ui/SKILL.md").is_file(),
-        "Phoenix still activates"
-    );
-    assert_eq!(
-        fs::read_to_string(project.join(".claude/skills/review-ui/SKILL.md")).unwrap(),
-        "external version\n"
-    );
-}
-
-#[test]
 fn personal_old_entries_block_activation_without_writing() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
@@ -486,40 +470,17 @@ fn personal_old_entries_block_activation_without_writing() {
         .any(|c| c.path.ends_with(".claude/skills/impeccable")));
     assert_eq!(entries(&project), before);
     assert!(!project.join(".phoenix-ui/install/active.json").exists());
-
-    let shadow = Sandbox::new();
-    let project = shadow.project();
-    fs::create_dir_all(shadow.home().join(".claude/skills/review-ui")).unwrap();
-    fs::write(
-        shadow.home().join(".claude/skills/review-ui/SKILL.md"),
-        "personal\n",
-    )
-    .unwrap();
-    let report = installer::install(&request(
-        &shadow,
-        &project,
-        &[".claude"],
-        false,
-        "personal-2",
-    ))
-    .unwrap();
-    assert_eq!(report.status, Status::IntegrationPending);
-    assert!(report
-        .findings
-        .iter()
-        .any(|f| f.kind == "personal-copy-differs"
-            && f.message.contains("Claude loads this personal copy")));
 }
 
 #[test]
-fn recovering_an_interrupted_install_leaves_no_directories_that_hide_auxiliary_skills() {
+fn recovering_an_interrupted_install_restores_the_main_skill() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let interrupted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         installer::install_with(
             &request(&sandbox, &project, &[".claude"], false, "interrupted"),
             |point| {
-                if matches!(&point, Checkpoint::AfterReplace(path) if path.starts_with(".claude/skills/design-reference/"))
+                if matches!(&point, Checkpoint::AfterReplace(path) if path.starts_with(".claude/skills/phoenix-ui/reference/"))
                 {
                     panic!("fixture interruption");
                 }
@@ -527,7 +488,7 @@ fn recovering_an_interrupted_install_leaves_no_directories_that_hide_auxiliary_s
         )
     }));
     assert!(interrupted.is_err());
-    assert!(project.join(".claude/skills/apply-ui-review").exists());
+    assert!(project.join(".claude/skills/phoenix-ui/SKILL.md").exists());
     let report = installer::install(&request(
         &sandbox,
         &project,
@@ -538,16 +499,8 @@ fn recovering_an_interrupted_install_leaves_no_directories_that_hide_auxiliary_s
     .unwrap();
     assert_eq!(report.recovered.as_deref(), Some("rolled-back:interrupted"));
     assert_eq!(report.status, Status::Installed, "{:?}", report.findings);
-    for skill in ["apply-ui-review", "design-md", "design-reference"] {
-        assert!(
-            project
-                .join(".claude/skills")
-                .join(skill)
-                .join("SKILL.md")
-                .is_file(),
-            "{skill}"
-        );
-    }
+    assert!(project.join(".claude/skills/phoenix-ui/SKILL.md").is_file());
+    assert!(!project.join(".claude/skills/review-ui").exists());
 }
 
 #[test]
@@ -600,7 +553,6 @@ fn cli_writes_one_json_object_and_maps_exit_codes() {
     let project = sandbox.project();
     let project_arg = project.to_string_lossy().into_owned();
     let bundle_arg = bundle().to_string_lossy().into_owned();
-    let aux_arg = auxiliary().to_string_lossy().into_owned();
     let (code, stdout, stderr) = run_cli(
         &["install", "--project", &project_arg, "--json"],
         &project,
@@ -629,8 +581,6 @@ fn cli_writes_one_json_object_and_maps_exit_codes() {
             &project_arg,
             "--bundle-root",
             &bundle_arg,
-            "--auxiliary-root",
-            &aux_arg,
             "--providers=codex",
             "--dry-run",
             "--json",

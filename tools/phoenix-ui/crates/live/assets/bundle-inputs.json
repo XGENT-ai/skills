@@ -359,8 +359,8 @@
       "size": 21779
     },
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "c82a88999a698be2efd66a07fcb378c7cb0ae64536c9300da943baae14e2ac0a",
-      "size": 2237070
+      "sha256": "eecc6bd09d7327312ab03e533b9f5d4dfca4cf8236fa8bffbdf38fbc50c676a8",
+      "size": 2236770
     }
   }
 }

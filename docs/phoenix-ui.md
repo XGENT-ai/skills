@@ -14,7 +14,7 @@ npx @xgent-ai/skills install
 一次安装分两段，先完成全部只读预检再写项目：
 
 1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并。仅由待重装工具目录引起的冲突在清理后重新计算，其余预检失败不写项目。
-2. **写入**：按下节的选择删除待替换工具；再写 XGENT 部分（statusline hook、settings、可选 guard 与 AGENTS.md），最后由 Rust 安装执行器在项目锁内重读这些文件，事务化写入 Phoenix 的 skill、agents、hooks、五个辅助 skill 和安装回执 `.phoenix-ui/install/active.json`。清理的旧工具不备份、不参与回滚；清理后被打断时重跑安装。Phoenix 写入中途失败（如磁盘已满）时状态为「待恢复」，可能已部分写入；重跑同一命令会先按日志回滚或补完上次事务再安装。
+2. **写入**：按下节的选择删除待替换工具；再写 XGENT 部分（statusline hook、settings、可选 guard 与 AGENTS.md），最后由 Rust 安装执行器在项目锁内重读这些文件，事务化写入 Phoenix 的 skill、agents、hooks 和安装回执 `.phoenix-ui/install/active.json`。清理的旧工具不备份、不参与回滚；清理后被打断时重跑安装。Phoenix 写入中途失败（如磁盘已满）时状态为「待恢复」，可能已部分写入；重跑同一命令会先按日志回滚或补完上次事务再安装。
 
 安装输出逐项列出写入、合并与移除，状态为「已安装 / 未变 / 冲突,未激活 / 待恢复 / 已安装但融合未就绪」之一，并给出事务 ID、备份位置、完整回滚命令和各工具的重载步骤。只有状态为「已安装」或「未变」时才打印「完成」；冲突与融合未就绪以退出码 3 结束，engine 或文件环境失败以 4 结束，参数错误为 1（XGENT 部分）或 2（Phoenix 执行器）。
 
@@ -41,6 +41,8 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 
 无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。没有 `.phoenix-ui/install/` 事务状态的 Phoenix 副本属于待重装工具，直接删除对应 skill 目录后安装，不要求旧回执，也不备份。已有事务或受管安装仍按回执升级、恢复；早期显式迁移留下的 Phoenix 受管兼容入口也由回执维护，不当作旧工具删除。
 
+旧回执曾管理的五个辅助 skill 在本次升级时释放归属，现有文件原样保留；后续由 skills.sh 更新，不再阻止 Phoenix 安装。
+
 这些操作不改业务代码、文档和 `.impeccable/` 数据。个人级旧入口只在选择替换时删除。清理后若安装中断，直接重跑；需要旧工具时从 Git 或其安装渠道恢复。
 
 ## 显式迁移旧数据
@@ -57,14 +59,13 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 - `AGENTS.md`、`CLAUDE.md`、`DESIGN.md`、`PRODUCT.md` 中的旧入口只报告行号与替换建议，不自动改写。
 - 个人级目录里早期上游版本的分命令 skill（如 skills.sh 装到 `~/.agents/skills` 的 `polish`、`teach-impeccable`）没有 hook 或 engine，只报告位置与移除、重载步骤，不阻止激活。
 
-显式迁移时，以下情况会阻止激活（退出码 3，项目不被修改），按输出逐项处理后重跑。普通安装仍保留外部辅助 skill 的融合检查：
+显式迁移时，以下情况会阻止激活（退出码 3，项目不被修改），按输出逐项处理后重跑。辅助 skill 独立管理，不参与 Phoenix 安装检查：
 
 | 情况 | 处理 |
 | --- | --- |
 | 旧 skill 或旧 hook 被用户改过、被 shell 包装，或结构无法唯一确定 | 输出列出文件与条目；先备份/还原或移出活跃目录，再重跑 |
 | 固定旧状态路径或注入日志中记录的 live、注入或变体残留；显式迁移还检查源码中的孤立标记 | 用旧项目的 launcher 正常停止、`live-inject --remove`、接受或丢弃变体；不要按 PID 杀进程 |
 | 个人级（如 `~/.claude/skills/impeccable`）旧入口、旧 hook 或插件 | 安装器只读发现、不改个人配置；按输出在对应工具中禁用或移除后重载并重跑 |
-| 外部管理的辅助 skill 副本与本包不同（含 skills.sh 副本、符号链接） | Phoenix 仍激活，状态为「已安装但融合未就绪」；按输出用 `npx skills add XGENT-ai/skills --skill <名称>` 更新，或备份后移出活跃目录再重跑 |
 
 ## 回滚与恢复
 
@@ -107,7 +108,7 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 ## 渠道
 
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
-- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）继续公开，可单独安装；`phoenix-ui` skill 标为 internal，只通过 npm 安装器分发。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
+- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖，否则文件会与安装回执不匹配。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
 - 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；旧安装的迁移依据是 `tools/phoenix-ui/migration-sources/` 中按 npm 包核对过的固定记录。
 
 ## XGENT 自有检测规则

@@ -10,6 +10,8 @@ XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cu
 npx skills add XGENT-ai/skills
 ```
 
+`phoenix-ui` 不在此命令的默认列表中,由下方 npm 安装器统一安装和更新。
+
 只安装指定 skill:
 
 ```bash
@@ -18,7 +20,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具与 UI 验收 skills,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。当前开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。当前开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -64,7 +66,7 @@ npx skills add XGENT-ai/skills --skill xgent-init
 
 ## Phoenix UI
 
-Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
+Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 只装入 `phoenix-ui` skill、对应 hooks 与固定 engine。design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 由 `npx skills add XGENT-ai/skills` 独立安装和更新,Phoenix 不覆盖或比对它们的版本。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 

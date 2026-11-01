@@ -5961,7 +5961,7 @@
         "importedPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "currentPath": "tools/phoenix-ui/crates/skills/src/commands.rs",
         "baselineSha256": "3e9223125419394eb037047c8489f646cd3951cc7034e9ef05c103ac4211ad27",
-        "currentSha256": "6d6f6f0bcf943c3b428280a8d9d02eef0eb61b080f011790392dd35925c04843"
+        "currentSha256": "e59761865d90f8d98dcfc87987be629e36e27dd1984c3af83b07dff442874dec"
       },
       "crates/skills/src/engine_binary.rs": {
         "importedPath": "tools/phoenix-ui/crates/skills/src/engine_binary.rs",
@@ -6009,7 +6009,7 @@
         "importedPath": "tools/phoenix-ui/skill/SKILL.src.md",
         "currentPath": "skills/phoenix-ui/src/SKILL.src.md",
         "baselineSha256": "0333d85ba408d29c7748838762b6d1e0a211dec22cd7e78ed6db987d983e91d4",
-        "currentSha256": "36f719d38f9162f36ebb7233124cd336a566e18b72e5bc8dcaa5c63e44b478a5"
+        "currentSha256": "9e699b50dedab630f2a7d0444047fb2b5c1f6bcc195d6f001ab73304e54ddfce"
       },
       "skill/reference/adapt.md": {
         "importedPath": "tools/phoenix-ui/skill/reference/adapt.md",
@@ -7186,7 +7186,7 @@
     ],
     "additionalSourceFiles": {
       "skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs": {
-        "sha256": "547e3c89d5b8feeddd67e43131fd84b95253eb42bf7d730b4e471dba011f6e51",
+        "sha256": "00f4a6a630f31eb05fbdd5725e4a294233d24574bd70f4f32f4597d8256a7c1c",
         "sourceScope": "current-fork"
       },
       "skills/phoenix-ui/src/scripts/phoenix-launcher.cjs": {
@@ -7206,7 +7206,7 @@
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/scripts/lib/transformers/factory.js": {
-        "sha256": "93c039f284d5bd90de4e8c8b363275a11861230a85b07da31551c1f2061adc46",
+        "sha256": "7be43cef9cf47920bb4fe781befcb9faa6253c40db3c836e56de9f4a4191bb02",
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/live/src/live_poll.rs": {
@@ -7247,11 +7247,11 @@
     "generatedBundle": {
       "sourceScope": "current-generated",
       "manifest": "dist/phoenix-ui/bundle/manifest.json",
-      "manifestSha256": "a35570d9538bfc3cf1d088d367e987dbd15edc9c47e2ae55c713745ec651ee95",
+      "manifestSha256": "f856f3c836649d33a88875b28cb3e05ec00211b447fe279354ba5fe4a74ad058",
       "generationManifest": "skills/phoenix-ui/GENERATED.json",
-      "generationManifestSha256": "9553014ef8016a1d4b0c94ceba5ed4ca7f7195819794ebdbb54a5cedd17eca37",
+      "generationManifestSha256": "3ff01a981ee1a74c924f10ff6adac2ba1c340733e5e390d97233e9a9e836d249",
       "generator": "Bun 1.3.14",
-      "inputSha256": "0373592bd1816746801e33d048c42075dca27b752f2c16d5567921f65870069a",
+      "inputSha256": "101db58ee131f91afb9f54e3cd7f59884780febb7b083747a19cbccb5dc794a3",
       "engineManifest": "verified",
       "outputsCount": 1751,
       "providers": 19,
@@ -7259,7 +7259,7 @@
       "bundledCatalogCopies": 72,
       "status": "source-payload-hashes-verified",
       "runtimeStatus": "未验证",
-      "limitation": "PHOENIX-HALLMARK code review R3 repair: the corrected XGENT rule pack (complete nested class expressions resolved in one linear structure pass, attribute- and raw-text-scoped markup styles) is part of this build. Generation/build source hashes and the listed local darwin-arm64 engine are bound here; full runtime, browser, provider session, CI and release acceptance are recorded separately.",
+      "limitation": "Generated skills, provider bundles and the local darwin-arm64 development engine are bound to the current build inputs. Full runtime, browser, provider sessions, CI and release acceptance are recorded separately.",
       "historicalRenders": [
         {
           "scope": "M2 earlier ordinary render before the development ENGINE manifest",
@@ -7391,17 +7391,17 @@
       ],
       "engineManifestEvidence": {
         "path": "dist/phoenix-ui/VERSION.json",
-        "sha256": "f252ecb314df5ff3294ce192e44562e89a4037f7ba7ff150c86ffc111dd6ea34",
+        "sha256": "622957a9821c39384995acfb1676a201ba4d09623fc8808a6ebedaab3adb6305",
         "distribution": "development",
-        "sourceInputSha256": "ad81b77b2f61b61ad39688e57f7bfcee12a15f0af17adc290207d5a057add2b6",
+        "sourceInputSha256": "db082a9c9b48f90b3f320fbf73918ffea3c6df5a1e99ca211618641dd5b63fc0",
         "engines": {
           "darwin-arm64": {
             "asset": "phoenix-ui-darwin-arm64",
-            "sha256": "84b67a03d7b4821a0d124d36644d6c96b4a93b81209fa36df5cfbe46681edd57",
-            "size": 18399936
+            "sha256": "42f791697ee80ff795b499f34b35ca24a551201ab102afa7d666ecf8ec1e43bc",
+            "size": 18366928
           }
         },
-        "limitation": "Development darwin-arm64 rebuilt in PHOENIX-HALLMARK code review R3 from the current worktree; only this platform and engine bytes are bound. Five-platform CI, provider sessions and release publication are recorded separately."
+        "limitation": "Development envelope binds only the listed darwin-arm64 engine. It does not prove other native platforms, provider sessions or release publication."
       }
     },
     "directionLibrary": {
