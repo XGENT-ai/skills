@@ -158,6 +158,55 @@ test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
   assert.match(result.stdout, /保留.*impeccable/);
 });
 
+test('managed Phoenix overwritten by a source install is refreshed and can roll back', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix managed source refresh');
+  const flags = ['--keep-impeccable', '--providers=claude,codex,cursor'];
+  const first = install(pkg, project, flags);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  const installed = tree(project, rel => rel.startsWith('.phoenix-ui/'));
+  for (const provider of ['.agents', '.claude']) {
+    fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(project, provider, 'skills/phoenix-ui'), { recursive: true });
+    fs.writeFileSync(path.join(project, provider, 'skills/phoenix-ui/SKILL.md'), 'source-channel skill update\n');
+    fs.writeFileSync(path.join(project, provider, 'skills/phoenix-ui/scripts/ENGINE.json'), '{"npmPackageVersion":"0.7.4","distribution":"development"}\n');
+  }
+  const before = tree(project, rel => rel.startsWith('.phoenix-ui/'));
+  const receiptBefore = fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json'));
+  const result = install(pkg, project, flags);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /: 已安装/);
+  const after = tree(project, rel => rel.startsWith('.phoenix-ui/'));
+  for (const [file, hash] of Object.entries(installed)) assert.equal(after[file], hash, file);
+  const repeat = install(pkg, project, flags);
+  assert.equal(repeat.status, 0, repeat.stdout + repeat.stderr);
+  assert.match(repeat.stdout, /: 未变/);
+  const receipt = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
+  const rolled = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--rollback', receipt.transaction_id, '--project', project], {
+    encoding: 'utf8', env: { ...process.env, HOME: pkg.home, USERPROFILE: pkg.home, PHOENIX_UI_HOME: pkg.cache },
+  });
+  assert.equal(rolled.status, 0, rolled.stdout + rolled.stderr);
+  assert.deepEqual(tree(project, rel => rel.startsWith('.phoenix-ui/')), before);
+  assert.deepEqual(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')), receiptBefore);
+});
+
+test('managed source refresh still stops before any write when an owned hook changed', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix managed hook conflict');
+  const flags = ['--keep-impeccable', '--providers=codex'];
+  const first = install(pkg, project, flags);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  fs.writeFileSync(path.join(project, '.agents/skills/phoenix-ui/SKILL.md'), 'source-channel skill update\n');
+  const hook = path.join(project, '.codex/hooks.json');
+  const settings = JSON.parse(fs.readFileSync(hook, 'utf8'));
+  Object.values(settings.hooks)[0][0].hooks[0].command = 'custom-hook';
+  fs.writeFileSync(hook, JSON.stringify(settings));
+  const before = tree(project);
+  const result = install(pkg, project, flags);
+  assert.equal(result.status, 3, result.stdout + result.stderr);
+  assert.match(result.stderr, /Phoenix UI 预检发现冲突,未修改项目/);
+  assert.deepEqual(tree(project), before);
+});
+
 test('fresh install activates Phoenix after the XGENT part and a rerun changes nothing', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix fresh project');

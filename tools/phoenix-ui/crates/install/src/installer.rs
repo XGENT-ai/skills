@@ -675,7 +675,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
             Err(error) => return Err(error),
         }
     }
-    let active = match project.verified_installation_with_unmanaged(legacy_auxiliary) {
+    let active = match project.verified_installation_for_install() {
         Ok(active) => active,
         Err(error) if error.kind == ErrorKind::RecoveryRequired => {
             report.status = Status::RecoveryRequired;
@@ -844,7 +844,11 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
         let payload = Payload::new(version.bytes.clone(), Permissions::file(0o644));
         let expected = match current(&project, &path)? {
             None => ExpectedFile::Absent,
-            Some(snapshot) if owned_with(&path, &snapshot.state.hash) => {
+            Some(snapshot)
+                if owned.get(&path).is_some_and(|(sha, rollback)| {
+                    sha.is_some() && *rollback == RollbackPolicy::Restore
+                }) =>
+            {
                 ExpectedFile::Hash(snapshot.state.hash)
             }
             Some(_) => {

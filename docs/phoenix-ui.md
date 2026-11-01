@@ -39,7 +39,7 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 
 `npx @xgent-ai/skills install` 发现 impeccable 时询问是否替换。选择是，直接删除所选 provider 的旧 skill、固定 agents/commands 入口和旧 hooks，并关闭相应的 impeccable 插件启用项；项目级与个人级路径均在范围内，不创建工具备份，不留旧命令转跳入口。只移除引用旧 launcher 的 command handler，保留同组的其他 hooks、matcher 和未知配置。选择否则保留这些工具与配置，Phoenix 正常安装，不因旧入口、旧 live 状态或版本不同而阻止激活。
 
-无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。没有 `.phoenix-ui/install/` 事务状态的 Phoenix 副本属于待重装工具，直接删除对应 skill 目录后安装，不要求旧回执，也不备份。已有事务或受管安装仍按回执升级、恢复；早期显式迁移留下的 Phoenix 受管兼容入口也由回执维护，不当作旧工具删除。
+无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。没有 `.phoenix-ui/install/` 事务状态的 Phoenix 副本属于待重装工具，直接删除对应 skill 目录后安装，不要求旧回执，也不备份。已有受管安装仍校验回执与事务日志；显式安装会按当前包刷新回执已认领的 `skills/phoenix-ui/` 文件（含 `ENGINE.json`），即使它们被 skills.sh 或手动复制覆盖，也不会仅因旧摘要不符而阻止重装。新事务保存重装前内容供回滚；共享 hooks、目录链接、事务恢复和项目数据继续执行原有校验。早期显式迁移留下的 Phoenix 受管兼容入口也由回执维护，不当作旧工具删除。
 
 旧回执曾管理的五个辅助 skill 在本次升级时释放归属，现有文件原样保留；后续由 skills.sh 更新，不再阻止 Phoenix 安装。
 

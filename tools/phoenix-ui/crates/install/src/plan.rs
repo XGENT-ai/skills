@@ -472,7 +472,7 @@ pub fn build_install_plan_with(
     {
         return Err(invalid("unknown selected bundle provider"));
     }
-    let verified = project.verified_installation_with_unmanaged(crate::installer::legacy_auxiliary);
+    let verified = project.verified_installation_for_install();
     let owned: BTreeMap<String, String> = match &verified {
         Ok(Some(active)) => active
             .receipt
@@ -530,7 +530,7 @@ pub fn build_install_plan_with(
     manifest.providers = selected.iter().cloned().collect();
     let mut complete = active
         .as_ref()
-        .is_some_and(|r| r.receipt.manifest == manifest);
+        .is_some_and(|r| r.receipt.manifest == manifest && !r.needs_refresh);
     let mut changes = BTreeMap::new();
     for provider in &selected {
         let entry = &bundle.manifest.providers[provider];

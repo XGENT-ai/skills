@@ -248,35 +248,26 @@ fn upgrade_releases_legacy_companion_ownership_without_touching_independent_upda
             "independent-companions",
         );
         let result = installer::install(&next).unwrap();
-        assert_eq!(
-            result.status,
-            if edit_main {
-                Status::Conflict
-            } else {
-                Status::Installed
-            }
-        );
+        assert_eq!(result.status, Status::Installed, "{:?}", result.conflicts);
         assert_eq!(
             fs::read_to_string(project.join(companion)).unwrap(),
             "updated independently by skills.sh"
         );
-        if !edit_main {
-            let receipt = Project::open(&project)
-                .unwrap()
-                .active_receipt_verified()
-                .unwrap()
-                .unwrap();
-            assert!(receipt.ownership.iter().all(|item| item.path != companion));
-            let again = installer::install(&request(
-                &sandbox,
-                &project,
-                &[".claude"],
-                false,
-                "independent-repeat",
-            ))
+        let receipt = Project::open(&project)
+            .unwrap()
+            .active_receipt_verified()
+            .unwrap()
             .unwrap();
-            assert_eq!(again.status, Status::Unchanged);
-        }
+        assert!(receipt.ownership.iter().all(|item| item.path != companion));
+        let again = installer::install(&request(
+            &sandbox,
+            &project,
+            &[".claude"],
+            false,
+            "independent-repeat",
+        ))
+        .unwrap();
+        assert_eq!(again.status, Status::Unchanged);
     }
 }
 

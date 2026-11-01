@@ -38,6 +38,7 @@ pub struct VerifiedInstallation {
     pub receipt: Receipt,
     pub receipt_sha256: String,
     pub json_patches: BTreeMap<String, Vec<crate::JsonPatch>>,
+    pub(crate) needs_refresh: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -217,6 +218,11 @@ fn ownership_hash(
     Ok(sha256(&encoded(&(manifest, operations, receipt_before))?))
 }
 
+fn refreshable_tool(path: &str) -> bool {
+    path.split_once('/')
+        .is_some_and(|(_, relative)| relative.starts_with("skills/phoenix-ui/"))
+}
+
 impl Project {
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root
@@ -244,13 +250,14 @@ impl Project {
     /// Verify the active receipt against its journal and current ownership.
     /// Mutable retained state and unrelated shared JSON entries are not owned.
     pub fn verified_installation(&self) -> Result<Option<VerifiedInstallation>> {
-        self.verified_installation_with_unmanaged(|_| false)
+        self.verify_installation(false)
     }
 
-    pub(crate) fn verified_installation_with_unmanaged(
-        &self,
-        unmanaged: impl Fn(&str) -> bool,
-    ) -> Result<Option<VerifiedInstallation>> {
+    pub(crate) fn verified_installation_for_install(&self) -> Result<Option<VerifiedInstallation>> {
+        self.verify_installation(true)
+    }
+
+    fn verify_installation(&self, for_install: bool) -> Result<Option<VerifiedInstallation>> {
         if let Some(pending) = self.pending()? {
             return Err(Error::new(
                 ErrorKind::RecoveryRequired,
@@ -280,9 +287,21 @@ impl Project {
                 "active receipt does not match its committed journal",
             ));
         }
-        journal
-            .operations
-            .retain(|op| op.patches.is_some() || !unmanaged(&op.path));
+        let mut needs_refresh = false;
+        if for_install {
+            // Another skill installer can replace tool files without updating our
+            // receipt. The next transaction snapshots those bytes for rollback.
+            for op in &journal.operations {
+                if op.patches.is_none() && refreshable_tool(&op.path) {
+                    let current = disk::read(&self.root, &op.path)?;
+                    needs_refresh |= current.as_ref().map(|s| &s.state) != op.after.as_ref();
+                }
+            }
+            journal.operations.retain(|op| {
+                op.patches.is_some()
+                    || !(crate::installer::legacy_auxiliary(&op.path) || refreshable_tool(&op.path))
+            });
+        }
         self.installed(&journal, true)?;
         let json_patches = journal
             .operations
@@ -304,6 +323,7 @@ impl Project {
             receipt,
             receipt_sha256: snapshot.state.hash,
             json_patches,
+            needs_refresh,
         }))
     }
 

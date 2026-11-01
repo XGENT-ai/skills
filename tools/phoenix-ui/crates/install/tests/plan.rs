@@ -533,7 +533,7 @@ fn unknown_duplicate_or_mismatched_provider_selection_is_rejected_without_writes
 }
 
 #[test]
-fn verified_identical_install_is_idempotent_and_customized_owned_file_blocks_retry() {
+fn verified_identical_install_is_idempotent_and_changed_tool_is_refreshable() {
     let sandbox = Sandbox::new();
     let selected = select(&[".agent"]);
     let (project, _) = apply_fresh(&sandbox, &selected, "receipt-first");
@@ -552,8 +552,9 @@ fn verified_identical_install_is_idempotent_and_customized_owned_file_blocks_ret
     );
     let p = readonly(&project, &selected, manifest(&selected), "customized-retry");
     assert!(!p.already_installed);
-    assert!(p.plan.is_none());
-    assert!(!p.conflicts.is_empty());
+    assert!(p.conflicts.is_empty(), "{:?}", p.conflicts);
+    project.apply(&p.plan.unwrap()).unwrap();
+    assert!(project.active_receipt_verified().unwrap().is_some());
 }
 
 #[test]
@@ -726,6 +727,48 @@ fn verified_bundle_update_replaces_exact_owned_file_and_handler_and_rolls_back()
             .transaction_id,
         first.transaction_id
     );
+}
+
+#[test]
+fn source_update_matching_the_bundle_still_refreshes_the_old_receipt() {
+    let sandbox = Sandbox::new();
+    let project = Project::open(&sandbox.0).unwrap();
+    let selected = select(&[".claude"]);
+    let mut first = readonly(&project, &selected, manifest(&selected), "old-tool")
+        .plan
+        .unwrap();
+    let path = ".claude/skills/phoenix-ui/SKILL.md";
+    let mut desired = Vec::new();
+    for change in &mut first.changes {
+        if let Change::Exclusive {
+            path: target,
+            after: Some(payload),
+            ..
+        } = change
+        {
+            if target == path {
+                desired = payload.bytes.clone();
+                payload.bytes = b"old source version".to_vec();
+                payload.sha256 = sha256(&payload.bytes);
+            }
+        }
+    }
+    assert!(!desired.is_empty());
+    project.apply(&first).unwrap();
+    sandbox.write(path, &desired);
+    let next = readonly(&project, &selected, manifest(&selected), "refresh-tool");
+    assert!(!next.already_installed);
+    assert!(next.conflicts.is_empty(), "{:?}", next.conflicts);
+    project.apply(&next.plan.unwrap()).unwrap();
+    assert_eq!(
+        project
+            .active_receipt_verified()
+            .unwrap()
+            .unwrap()
+            .transaction_id,
+        "refresh-tool"
+    );
+    assert!(readonly(&project, &selected, manifest(&selected), "repeat").already_installed);
 }
 
 #[test]

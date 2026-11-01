@@ -89,3 +89,5 @@
 - f7eed0e7-034b-4fc2-9573-30971d7b9ed6 · [README 时效性内容整理](f7eed0e7-034b-4fc2-9573-30971d7b9ed6.md)
 
 - [e5e26f72-58db-4939-a55b-37eb1de184c4 · review-ui 收尾遗漏修复入口](e5e26f72-58db-4939-a55b-37eb1de184c4.md)
+
+- c123a1f0-90dc-44b9-8857-c51cb092ae87 — [Phoenix 受管安装被源码覆盖](c123a1f0-90dc-44b9-8857-c51cb092ae87.md)
