@@ -61,7 +61,7 @@ test('diagram publish guard verifies the actual bundle and full license resource
 });
 test('UI release blocks a package carrying diagram before any release state or uploads',async t=>{
   const script=fs.readFileSync(path.join(root,'scripts/release-phoenix-ui.mjs'),'utf8');
-  const call=script.indexOf('assertUiOnlyRelease(root)');assert.ok(call>script.indexOf("step('Checkout')"));
+  const call=script.indexOf('assertUiOnlyRelease(root, pkg)');assert.ok(call>script.indexOf("step('Checkout')"));
   assert.ok(call<script.indexOf('fs.mkdirSync(dir'),'gate must precede even local release state');
   const {assertUiOnlyRelease}=await import(pathToFileURL(path.join(root,'scripts/require-release-package.mjs')));
   assert.equal(typeof assertUiOnlyRelease,'function');

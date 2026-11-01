@@ -66,3 +66,35 @@ test('the release uses the newest successful CI run of exactly this commit', asy
   assert.equal(failed.success, undefined); assert.equal(failed.failed.databaseId, 4);
   assert.deepEqual(selectRun(runs, 'c'.repeat(40)), { success: undefined, pending: undefined, failed: undefined });
 });
+
+test('the UI release tarball excludes Diagram and its CLI installs without Diagram resources', async t => {
+  const { uiReleasePackage, assertUiOnlyRelease } = await import(guard);
+  const pkg = uiReleasePackage(checkout);
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix UI-only package '));
+  t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
+  const stage = path.join(temp, 'stage');
+  fs.mkdirSync(stage);
+  fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify(pkg));
+  for (const name of ['bin', '.claude/hooks', 'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs', 'dist/phoenix-ui/bundle/manifest.json']) {
+    fs.cpSync(path.join(checkout, name), path.join(stage, name), { recursive: true });
+  }
+  fs.mkdirSync(path.join(stage, 'skills/phoenix-diagram'), { recursive: true });
+  fs.writeFileSync(path.join(stage, 'skills/phoenix-diagram/SKILL.md'), 'Unreleased Diagram candidate');
+  assertUiOnlyRelease(stage);
+  const packed = spawnSync('npm', ['pack', '--offline', '--ignore-scripts', '--json', '--pack-destination', temp], { cwd: stage, encoding: 'utf8' });
+  assert.equal(packed.status, 0, packed.stderr);
+  const [record] = JSON.parse(packed.stdout);
+  assert.ok(record.files.some(item => item.path === 'bin/xgent-skills.js'));
+  assert.ok(record.files.every(item => !item.path.includes('phoenix-diagram')));
+  const extracted = spawnSync('tar', ['-xzf', path.join(temp, record.filename), '-C', temp], { encoding: 'utf8' });
+  assert.equal(extracted.status, 0, extracted.stderr);
+  const cli = path.join(temp, 'package/bin/xgent-skills.js');
+  const help = spawnSync(process.execPath, [cli, 'help'], { encoding: 'utf8' });
+  assert.equal(help.status, 0, help.stderr);
+  assert.doesNotMatch(help.stdout, /Diagram|diagram|archify/);
+  const project = path.join(temp, 'project'); fs.mkdirSync(project);
+  const installed = spawnSync(process.execPath, [cli, 'install', project, '--no-phoenix-ui', '--no-xgent-init'], { encoding: 'utf8' });
+  assert.equal(installed.status, 0, installed.stderr);
+  assert.ok(fs.existsSync(path.join(project, '.claude/hooks/xgent-statusline.js')));
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-diagram')), false);
+});

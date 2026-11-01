@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { uiReleasePackage, assertUiOnlyRelease } from './require-release-package.mjs';
 
 // Pack the npm tarball exactly once from a frozen release produced by publish-phoenix-ui-r2.mjs.
 // Usage: node scripts/pack-phoenix-ui-release.mjs --release-dir DIR --handoff FILE --build-record FILE
@@ -93,7 +94,8 @@ for (const [relative, expected] of Object.entries(build.inputs)) {
 }
 assert.equal(sha(bytes(path.join(root, 'package.json'))), build.inputs['package.json']);
 assert.equal(sha(bytes(path.join(root, 'bin/phoenix-ui.js'))), build.inputs['bin/phoenix-ui.js']);
-const pkg = JSON.parse(bytes(path.join(root, 'package.json'))); assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, manifest.data.npmPackageVersion);
+const pkg = uiReleasePackage(root); assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, manifest.data.npmPackageVersion);
+assertUiOnlyRelease(root, pkg);
 for (const hook of ['prepack', 'prepare', 'postpack']) assert(!pkg.scripts?.[hook], `Unexpected pack lifecycle ${hook}; do not run a build`);
 assert(Array.isArray(pkg.files) && pkg.files.every(name => safe(name) && !/[*?\[\]{}]/.test(name)), 'Unsupported package files selector');
 // Select the same maintained files as the existing package, including npm's root notices.
@@ -113,6 +115,8 @@ for (const entry of selected) {
   sources.set(entry.name, { ...entry, data, size, sha256: sha(data) });
 }
 assert.equal(cursor, blobBatch.length);
+const packageBytes = Buffer.from(json(pkg));
+sources.set('package.json', { ...sources.get('package.json'), data: packageBytes, size: packageBytes.length, sha256: sha(packageBytes) });
 for (const bin of Object.values(pkg.bin)) assert(sources.has(bin), `Missing candidate bin ${bin}`);
 const runtime = Object.fromEntries(Object.entries(handoff.files).filter(([name]) => name.startsWith('runtime/')).map(([name, value]) => [name.slice(8), value]));
 for (const [relative, expected] of Object.entries(canonical.resources)) if (!derived.includes(relative)) assert.deepEqual(runtime[relative], expected, `Transported runtime differs ${relative}`);
@@ -128,7 +132,7 @@ for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOT
 assert(Object.keys(runtime).some(name => name.startsWith('dist/phoenix-ui/THIRD-PARTY-LICENSES/')));
 const expectedStageFiles = { ...Object.fromEntries([...sources].map(([name, source]) => [name, { size: source.size, sha256: source.sha256 }])), ...runtime };
 const plan = { runId: handoff.runId, sourceCommit: handoff.sourceCommit, sourceTree: handoff.sourceTree, manifestSha256: manifest.hash, handoffSha256: sha(handoffBytes), buildRecordSha256: sha(buildBytes),
-  scriptSha256: sha(bytes(fileURLToPath(import.meta.url))), packageJsonSha256: sources.get('package.json').sha256, canonicalInputSha256: build.inputSha256, generatedInputDifferences,
+  scriptSha256: sha(bytes(fileURLToPath(import.meta.url))), packageProjectionSha256: sha(bytes(path.join(here, 'require-release-package.mjs'))), packageJsonSha256: sources.get('package.json').sha256, canonicalInputSha256: build.inputSha256, generatedInputDifferences,
   maintainedSources: Object.fromEntries([...sources].map(([name, source]) => [name, { size: source.size, sha256: source.sha256 }])), runtime, finalConsumerAcceptance: 'not-run', npmPublication: 'not-requested' };
 const requestSha256 = sha(JSON.stringify(plan)), out = options['--output-dir'], stage = path.join(out, 'package'), tarballs = path.join(out, 'tarballs');
 function verifyTarball(file, stageFiles) {

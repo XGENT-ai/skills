@@ -32,13 +32,13 @@ const npmEndpoint = 'https://registry.npmjs.org/-/npm/v1/security/advisories/bul
 const maxAgeDays = 30;
 const nodeLicenses = new Set(['MIT', 'Apache-2.0', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause']);
 const extraNodeLicenses = {
-  'puppeteer@25.1.0': {
-    gitHead: 'ede66693bc0a6d9a8029f66288d13e26966173ce',
-    url: 'https://raw.githubusercontent.com/puppeteer/puppeteer/ede66693bc0a6d9a8029f66288d13e26966173ce/LICENSE',
+  'puppeteer@25.13.0': {
+    gitHead: '6e95cc563dc57ad5535efb0067425065294c2ba6',
+    url: 'https://raw.githubusercontent.com/puppeteer/puppeteer/6e95cc563dc57ad5535efb0067425065294c2ba6/LICENSE',
     sha256: 'a27ca07269b3518550b2e83aed13eadd7d14d924b5864e14889b40cf227530ca',
   },
-  'puppeteer-core@25.1.0': { alias: 'puppeteer@25.1.0' },
-  '@puppeteer/browsers@3.0.4': { alias: 'puppeteer@25.1.0' },
+  'puppeteer-core@25.13.0': { alias: 'puppeteer@25.13.0' },
+  '@puppeteer/browsers@3.2.4': { alias: 'puppeteer@25.13.0' },
   // Both fixed source trees declare MIT in README/package.json, without a LICENSE file.
   'is-reference@3.0.3': {
     gitHead: '8bb053129bfabe2f6a7d7ed050159d67ebe82829',
@@ -361,7 +361,11 @@ export function readNodePackage(locked, nodeRoot = path.join(workspace, 'node_mo
     if (!fs.existsSync(filename)) throw new Error(`Missing cached npm archive for ${locked.name}; explicitly prepare it before checking`);
     return nodePackageFromArchive(locked, fs.readFileSync(filename));
   }
-  const directory = path.join(nodeRoot, locked.key);
+  const segments = locked.key.split('/'), packages = [];
+  for (let i = 0; i < segments.length; i++) {
+    packages.push(segments[i].startsWith('@') ? `${segments[i]}/${segments[++i]}` : segments[i]);
+  }
+  const directory = path.join(nodeRoot, packages.join('/node_modules/'));
   return nodePackageMaterials(locked, new Map(['package.json', ...licenseFiles(directory)].map(name => [name, fs.readFileSync(path.join(directory, name))])));
 }
 function walk(directory) {

@@ -21,8 +21,19 @@ export function includedPhoenixTools(root, pkg = readJson(path.join(root, 'packa
     || included(pkg, `dist/${tool}/VERSION.json`)
     || (included(pkg, `skills/${tool}/SKILL.md`) && fs.existsSync(path.join(root, `skills/${tool}/SKILL.md`))));
 }
-export function assertUiOnlyRelease(root) {
-  if (includedPhoenixTools(root).includes('phoenix-diagram')) throw new Error(
+export function uiReleasePackage(root) {
+  const pkg = readJson(path.join(root, 'package.json'));
+  const bin = Object.fromEntries(Object.entries(pkg.bin).filter(([name]) => name !== 'phoenix-diagram'));
+  const files = pkg.files.flatMap(entry => {
+    if (entry === 'bin') return [...new Set(Object.values(bin))];
+    if (entry === 'skills') return fs.readdirSync(path.join(root, 'skills'), { withFileTypes: true })
+      .filter(item => item.isDirectory() && item.name !== 'phoenix-diagram').map(item => `skills/${item.name}`).sort();
+    return entry === 'docs/phoenix-diagram.md' || entry.startsWith('dist/phoenix-diagram/') ? [] : [entry];
+  });
+  return { ...pkg, description: 'XGENT skills 与项目辅助工具:安装 hooks、settings 与 Phoenix UI', bin, files };
+}
+export function assertUiOnlyRelease(root, pkg) {
+  if (includedPhoenixTools(root, pkg).includes('phoenix-diagram')) throw new Error(
     'Phoenix Diagram is included in this package. The UI-only release command cannot publish it: a joint release contract is required. Candidate assembly does not authorize public publication.');
 }
 function ordinary(file) {

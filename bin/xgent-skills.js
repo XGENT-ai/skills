@@ -31,7 +31,8 @@ const MANAGED_SETTINGS = {
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
 const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
-const diagramBootstrap = require('../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs');
+const includesDiagram = Boolean(readJson(path.join(PKG_ROOT, 'package.json')).bin['phoenix-diagram']);
+const diagramBootstrap = includesDiagram ? require('../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs') : null;
 const DIAGRAM_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-diagram');
 const PHOENIX_STATUS = {
   planned: '计划', installed: '已安装', unchanged: '未变', conflict: '冲突,未激活',
@@ -341,8 +342,7 @@ function usage() {
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
                   放入用户 cache;旧 impeccable 可选择替换或共存),
-                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine),
-                  并询问是否创建通用的 AGENTS.md
+${includesDiagram ? '                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine),\n' : ''}                  并询问是否创建通用的 AGENTS.md
   help            显示本帮助
 
 install 选项:
@@ -350,16 +350,15 @@ install 选项:
   --no-impeccable       已弃用,等同 --no-phoenix-ui
   --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
   --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
-  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
+${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
   --migrate-archify     仅执行 Diagram 预检/确认/迁移,跳过 hooks/settings/AGENTS/UI;
                         使用已存在且匹配包内固定版本的引擎,不自动获取
   --confirm-remove-archify  仅配 --migrate-archify,确认移除所选项目/provider 旧入口;
                         不备份 Archify,回滚不重建旧入口,需要时按原来源重装
-  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
-  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网
-  --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
+` : ''}  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
+${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
   --no-xgent-init       跳过 AGENTS.md,不再询问
-  --providers=a,b       指定两个 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
+  --providers=a,b       指定 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
 `);
 }
@@ -367,8 +366,9 @@ install 选项:
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-phoenix-diagram', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init', '--migrate-archify', '--confirm-remove-archify'].includes(f)
-    && !['--providers=', '--release-dir=', '--diagram-release-dir='].some((p) => f.startsWith(p)));
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init',
+    ...(includesDiagram ? ['--no-phoenix-diagram', '--migrate-archify', '--confirm-remove-archify'] : [])].includes(f)
+    && !['--providers=', '--release-dir=', ...(includesDiagram ? ['--diagram-release-dir='] : [])].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
@@ -386,7 +386,7 @@ async function install(args) {
   const diagramReleaseDir = flags.find((f) => f.startsWith('--diagram-release-dir='))?.slice('--diagram-release-dir='.length);
   const options = {
     phoenix: !flags.includes('--no-phoenix-ui') && !flags.includes('--no-impeccable'),
-    diagram: !flags.includes('--no-phoenix-diagram'),
+    diagram: includesDiagram && !flags.includes('--no-phoenix-diagram'),
     providers: flags.find((f) => f.startsWith('--providers='))?.slice('--providers='.length),
     releaseDir: releaseDir ? path.resolve(releaseDir) : undefined,
     diagramReleaseDir: diagramReleaseDir ? path.resolve(diagramReleaseDir) : undefined,

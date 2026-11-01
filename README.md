@@ -20,7 +20,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。当前开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。UI 发布包不包含 Diagram。仓库开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -41,16 +41,16 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
 | `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
 | `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
-| `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram 候选,不删除已装版本 |
-| `--migrate-archify` | 仅迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
-| `--confirm-remove-archify` | 与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
+| `--no-phoenix-diagram` | 仅仓库候选入口:跳过独立 Phoenix Diagram,不删除已装版本 |
+| `--migrate-archify` | 仅仓库候选入口:迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
+| `--confirm-remove-archify` | 仅仓库候选入口:与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
-| `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
+| `--diagram-release-dir=DIR` | 仅仓库候选入口:为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
-| `--providers=a,b` | 指定两个 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
+| `--providers=a,b` | 指定 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,仓库候选的 diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
 
-安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI、Phoenix Diagram 顺序写项目,两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[包内说明](docs/phoenix-diagram.md)。
+安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI 顺序写项目;仓库候选入口再安装 Phoenix Diagram。两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[候选说明](docs/phoenix-diagram.md)。
 
 普通安装不移除 Archify。`--migrate-archify` 使用独立的 Diagram 迁移分支,仅处理精确项目/provider 的完整已知来源;自定义、链接、外部管理与个人入口保留。TTY 拒绝或 EOF 不迁移;`--no-phoenix-diagram` 仍跳过并保留。旧入口移除后需要时按原来源重装,新 Diagram 入口的恢复/回滚见[迁移说明](docs/phoenix-diagram.md#旧入口迁移与安装恢复)。仓库只保留新活跃入口,不代表其他项目或个人旧安装已被处理。
 

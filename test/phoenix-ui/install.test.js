@@ -32,6 +32,7 @@ function link(target, destination) {
  */
 function packageFor(t, executable) {
   const root = sandbox(t, 'phoenix package');
+  fs.copyFileSync(path.join(repository, 'package.json'), path.join(root, 'package.json'));
   const bin = path.join(root, 'bin');
   fs.mkdirSync(bin);
   for (const name of ['xgent-skills.js', 'phoenix-ui.js']) fs.copyFileSync(path.join(repository, 'bin', name), path.join(bin, name));

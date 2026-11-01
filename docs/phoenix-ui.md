@@ -206,7 +206,7 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 1. 核对工作树干净、npm 上还没有这个版本，找到该提交成功的 Phoenix CI run（也可用 `--run-id` 指定）。
 2. 下载 CI 的九个原始 ZIP，逐个核对 GitHub digest。
 3. 用 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 条件上传四个 engine（已存在即拒绝覆盖），公共 URL 回读通过后冻结 release manifest。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。
-4. 用 [pack-phoenix-ui-release.mjs](../scripts/pack-phoenix-ui-release.mjs) 只打一次 tarball。
+4. 用 [pack-phoenix-ui-release.mjs](../scripts/pack-phoenix-ui-release.mjs) 只打一次 UI tarball：从维护清单排除 Diagram 的 bin、skill、文档和发行资源，保留仓库里的候选源码与联合安装验收入口。发布包的安装命令只启用包内声明的工具。
 5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上新装（engine 从公共 URL 下载），检查 0.3.0/0.6.0 工具保留共存、直接删除替换、无回执 Phoenix 副本重装与受管安装回滚。删除的旧工具不会回滚恢复。
 6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
 
