@@ -16,7 +16,7 @@ when_to_use: "用户会说「发个版」「提案卡在待审」「发布后出
   自动通过并应用清单/产物；后端与网关需分别确认，且每次留档（时间 + diff + 令牌前缀）。
 - **审核档**：其余一切（scopes / ACL 清单 / 依赖 / 跨应用授权 / 服务地址 / 席位 /
   授权文案 scopeLabels / iframe 指向 embedUrl / 部署形态 / 部署前置 env 键清单
-  requiredEnv / 服务账号身份 serviceAccount.clientId / 嵌进门户管理面的管理页 adminPages / service 租户配置 tenantConfig / 首次接入）都会改变权限面，
+  requiredEnv / 服务账号身份 serviceAccount.clientId / 嵌进门户管理面的管理页 adminPages / service 租户配置 tenantConfig / OAuth 标准发现 oauthDiscovery / 首次接入）都会改变权限面，
   ⇒ 提交成功但进入平台管理员的「发布审核」队列，**批准前库里一字不动**。
   被拒绝时 `status` 与 `--wait` 都能看到原因。
 - **`helpEntry`（版头那枚帮助按钮）按【值】分档**，同一个字段两种命运：写 App 内路由
@@ -83,6 +83,10 @@ metricKey 会被上报接口拒收并计入 `rejected`。要声明「部署我�
 涉及匿名公开页、CDN 画布、CSP 阻断、改 App key 或“批准且 ready 但不可用”时，
 先读 [references/public-delivery.md](references/public-delivery.md)。现有标准入口是
 `/apps/<key>/…`、`/svc/<key>/…` 或 Sites；审核、部署、网关与业务验收分别核对。
+
+涉及 MCP/OAuth 标准发现配置、`/.well-known/…/svc/<key>` 返回 HTML/404 时，读同参考的
+[OAuth 标准发现发布](references/public-delivery.md#oauth-标准发现发布)。`oauthDiscovery` 只声明精确元数据路由，
+与 `cliAccess` 用户密钥目录、`publicClient` 登录客户端及 Sites 入口分别配置；不要用其中一个替代另一个。
 
 | 你需要 | 从哪来 | 放在哪 |
 | --- | --- | --- |
@@ -241,6 +245,8 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    `references/health-contract.md` 运行其 `scripts/verify-health.ts`，非零退出不得发布。
    平铺与 Envelope 都支持：非 2xx 不通过；2xx 顶层有 `ok` 时必须 `ok === true && data.db === true`；
    没有顶层 `ok` 时按 2xx 判健康。检查脚本与平台同源，不另加包装或字段命名限制。
+   本次有 `oauthDiscovery` 变更时，按 [OAuth 标准发现发布](references/public-delivery.md#oauth-标准发现发布)
+   核对声明与平台 v2 前置；本地 preflight 未校验此字段，零退出不代表元数据或网关已就绪。
 4. **发布。**
    带前端的应用先按 [前端归档与同步验收](references/frontend-archive.md) 生成并持久留存
    `DIST_ARCHIVE`（根下直接是 index.html 的 `.tgz`）与 SHA-256；下面上传的必须就是这份文件。
@@ -261,6 +267,8 @@ VER=1.4.2      # 地址、令牌、listingKey 都在 .xgent-registry.env 里，�
    （见下），第 4 步的返回体已经给了版本与 digest，浏览器那一眼照走不误。
    交付包含跨平台同步时，还须核验主平台条目和 `/dist` 的真实字节；没有读取权限时明示
    「前端已发布，主平台归档/可同步性未验证」，不能把发布或投目录成功当作同步验收通过。
+   OAuth 发现变更还须按本次 `proposalId` 确认 delivery，并匿名检查标准/旧地址、JSON 字段、HEAD
+   与 MCP challenge；撤销检查 404，客户端授权与回调另验。没有前端的服务按这些接口验收，不要求打开 App 卡片。
 
 `@xgent/release-cli` 不在公共 npm 上，**它就在第 0 步那个私有包仓里**。取不到包时先分诊，
 别急着换工具：`npm config get @xgent:registry` 是 `undefined` ⇒ 回第 0 步配 `.npmrc`，一条命令就好。
@@ -301,7 +309,7 @@ whoami `200` 而 `/status` `404`，就是这种情况：**令牌没问题，别�
 等待后端与网关回执；待审不会自动等待，需加 `--wait-review`。unknown 不能当成功，superseded 表示
 已被后续目标取代。旧门户无 delivery 时会明确提示无法核验网关，不能把兼容退出 0 当完整确认。
 版本与 strict/v2 启用前提见 [公开面与交付确认](references/public-delivery.md)，API 见
-[发布 API](references/publish-api.md)。上述新增能力尚待正式发布与受控启用。
+[发布 API](references/publish-api.md)。目标门户是否已启用，以实际部署与 delivery 回执为准。
 
 ## 镜像要环境变量：**键名归你，值归平台**
 
@@ -632,6 +640,7 @@ App 声明过的某个 `requiredEnv` 键在部署环境里还没有值，这次�
 | 产物形状（`base` 双态、tar 根、CSP 与外链、发前在真门户里试） | [references/build-and-package.md](references/build-and-package.md) |
 | 令牌语义、端点原始形状、字段白名单、返回体、`curl` 兜底、CI 范式 | [references/publish-api.md](references/publish-api.md) |
 | 症状 → 原因速查（发布报错 / 线上白屏 / 发了没换版） | [references/troubleshooting.md](references/troubleshooting.md) |
+| MCP/OAuth 发现的 manifest 声明、治理审批、HTTP 验收及撤销；公开页与 CSP | [references/public-delivery.md](references/public-delivery.md) |
 
 报告结果时如实说清：发了哪个 key、哪个版本、proposalId、digest、原始包持久留存位置、
 有没有在浏览器里实际打开过；涉及同步时另报主平台归档是否已验证。

@@ -143,11 +143,14 @@ curl -X POST "$XGENT_PORTAL_URL/api/market/release/<key>" \
 **定级唯一判据：这次提交有没有改变权限面。** manifest 里与当前 listing 相比有治理差异
 （scopes / aclManifest / dependencies / exchangeTargets / serviceScopes /
 privilegedServiceScopes / usageMetrics / serviceBaseUrl /
-seat* / scopeLabels / embedUrl / embedCsp / type / 部署形态…，以及**任何门户不认识的字段**）
+seat* / scopeLabels / embedUrl / embedCsp / oauthDiscovery / type / 部署形态…，以及**任何门户不认识的字段**）
 ⇒ 提案 `pending` 等平台审批；只有版本/产物/镜像/展示字段的差异 ⇒ `auto_approved` 自动通过并应用清单/产物。
 其中 `privilegedServiceScopes`（平台特权 scope 的申请，如 `seats.read`）是最高一档：
 审批人要**逐条勾选确认**才能批准 —— 每条都带上说清用途的 `reason`，等待会短很多；
 已持有的特权 scope 幂等重放不再进审。
+`oauthDiscovery` 的新增、修改、撤销按归一后的差异进审；省略保留，null/空对象清空，对象整体替换。
+它只能放在完整 manifest 内，不是第五个 multipart 字段。v2 前置、路径映射与发布后验收见
+[OAuth 标准发现发布](public-delivery.md#oauth-标准发现发布)；批准不等于标准发现地址已可用。
 **提交即拒**（连提案都不落）的只有四类：manifest 携带密钥值（SA secret / descriptor.env）、
 SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScopes`）、形状非法
 （含 `usageMetrics` 的 key 不在你的 listingKey 命名空间、或声明金额单位），
@@ -213,7 +216,7 @@ SERVICE_ONLY scope 写进 `serviceScopes`（申请要走 `privilegedServiceScope
 
 ## 6.1 按本次提案查询交付
 
-新增契约的版本与启用前提见 [公开面与交付确认](public-delivery.md)：这些能力尚待正式发包/上线；
+契约的客户端版本与目标平台启用前提见 [公开面与交付确认](public-delivery.md)；
 目标门户须提供 delivery，扩展 CSP 还须 strict 与受控 v2 网关。不得仅按包版本标签猜能力已开。
 
 ```bash

@@ -14,6 +14,7 @@
     `privilegedServiceScopes` 里的，租户面**一条也勾不到**（见 integration-contract.md §3.1）。
     `scopeLabels` 同时是那个勾选列表的正文——不写就只显示裸 scope 串。
 - 关系：`dependencies`、`exchangeTargets`、`serviceBaseUrl`（`/svc/<listingKey>`）
+- OAuth 标准发现：`oauthDiscovery`（`authorizationServer` 与 `protectedResources`），非空声明要求后端；新增、修改及撤销经治理审批。路径映射、省略/null 语义与真实 HTTP 验收见 [OAuth 发现](oauth-discovery.md)。
 - 终端身份：`endUserRealms:{"mode":"fixed","siteKeys":["customers"]}` 或 `{"mode":"dynamic"}`，
   声明本 App 的身份空间范围；不创建托管 profile/client、不授额度，也不是成员的 publicClient。
   顾客/学生认证与生命周期按 [终端用户接入](end-users.md) 配置；endusers.* 等服务权限经特权审批申请。
@@ -46,6 +47,8 @@
 越界 → `VALIDATION_FAILED`。App 命名空间 scope 随清单入库，**不用改门户代码**。
 
 CLI / MCP / 个人自动化使用用户访问密钥时，还须声明独立的 `cliAccess`，不能把整份 `scopes` 当作用户密钥上限。新增、修改和撤回经过发布审批；绑定与发现按 [CLI 用户密钥契约](cli-user-keys.md)，无需在门户登记 App 专属权限分支。先确认目标门户已部署此能力。
+
+MCP 客户端通过 App 自有 OAuth 授权服务器发现元数据时，使用独立的 `oauthDiscovery`；它只声明标准发现路由，不配置用户密钥、OAuth 身份或客户端回调。不能用 `cliAccess`、`publicEntrypoints` 或 `publicClient` 代替。
 
 ⚠️ 规则 3 **读写不分**：背书的是整个命名空间，`files.write` 与 `files.read` 同一条待遇，
 没有「写要额外批一次」这回事。别人的 App 只声明了读，那是它自己的业务选择（它的写面不

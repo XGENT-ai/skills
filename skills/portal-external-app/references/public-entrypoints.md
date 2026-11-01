@@ -9,11 +9,13 @@
 | 匿名 SPA、分享页面 | `/apps/<listingKey>/…` | 匿名页不先强制 SDK 登录；读取的数据仍需业务授权 |
 | 后端直接返回 HTML、公开回调 | `/svc/<listingKey>/…` | 平台去掉服务前缀；App 自己区分匿名与受保护路由，公开服务应常驻 |
 | 租户站点、独立域名 | `publicEntrypoints` + Sites 服务 | 入口声明、服务特权、平台站点配置、租户权益及路由就绪 |
+| MCP/OAuth 标准元数据发现 | `oauthDiscovery` → 门户 origin 的精确 `/.well-known/…/svc/<key>` | 已部署发现能力的 v2 网关、获批声明及匿名后端元数据；见 [OAuth 发现](oauth-discovery.md) |
 
 前两条已经是正式接入方式，不需要为了每个新 App 请求门户增加根级路径。
 `publicEntrypoints` 是**站点可以绑定的后端入口目录**，不是“在门户根路径新增一条代理”。
 仅声明它，不会让门户根级 `/v`、`/share` 等路径指向你的服务。
 历史根路径属于兼容契约，需要与平台约定数据迁移和切换，不可自行复用或覆盖。
+OAuth 发现只开放声明生成的精确 GET/HEAD 路径，不提供任意根路径代理，也不要求打开 `PUBLIC_SITES_ENABLED`。
 
 ## 2. 后端直出页必须认识外部路径
 

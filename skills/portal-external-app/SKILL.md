@@ -1,6 +1,6 @@
 ---
 name: portal-external-app
-description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖 manifest、注册、鉴权、成员客户端与终端用户身份、/svc 路由、健康检查与一盒联调。'
+description: '用于把独立仓库、以 Docker 镜像交付的外部服务接入 XGENT 门户或评审交付物。覆盖 manifest、注册、鉴权、MCP OAuth 发现、成员客户端与终端用户身份、/svc 路由、健康检查与一盒联调。'
 when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填」「/svc 路由不通」时。"
 ---
 
@@ -25,7 +25,8 @@ when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填
 | 服务账号写进应用空间的文件，要让作者本人在文件管理里看得到 | [references/files-member-docs.md](references/files-member-docs.md)：`onBehalfOf` 署名、成员只读可见、成员内容隐私开关 |
 | 门户成员的原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
 | 顾客/学生等终端用户的完整能力、租户用户中心、托管注册登录、账号与隐私治理 | [references/end-users.md](references/end-users.md)：先区分成员与终端身份，再按任务读认证协议或生命周期接口 |
-| 用户以 CLI、MCP、个人自动化调用 App，或接入门户多服务用户密钥与服务发现 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录；不改门户业务代码 |
+| CLI、MCP、个人自动化使用门户用户访问密钥，或接入多服务用户密钥目录 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录 |
+| MCP/OAuth 客户端发现元数据，或标准 `/.well-known/…/svc/<key>` 返回 HTML/404 | [references/oauth-discovery.md](references/oauth-discovery.md)：`oauthDiscovery` 声明、匿名元数据、审批、固定提案交付与撤销 |
 | 为外部服务写/审对接契约文档 | [references/contract-doc-template.md](references/contract-doc-template.md) |
 | 有「每租户最多几个 X」的配额诉求（选模型、数值谁配、已用怎么来） | [references/quota-and-seats.md](references/quota-and-seats.md) |
 | 一个配置项该放哪（环境变量 / 平台级或租户级管理页 / 应用内设置 / 用户偏好），`requiredEnvNotes`、`adminPages` 与 service `tenantConfig` 怎么写 | [references/config-placement.md](references/config-placement.md) |
