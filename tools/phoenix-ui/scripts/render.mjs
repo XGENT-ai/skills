@@ -21,6 +21,7 @@ function filesIn(root) {
   if (!fs.existsSync(root)) return files;
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : 1)) {
+      if (entry.name === '.DS_Store') continue;
       const file = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(file);
       else {

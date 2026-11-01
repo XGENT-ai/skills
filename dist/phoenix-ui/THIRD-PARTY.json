@@ -4,7 +4,7 @@
     "cargoLockSha256": "e4ada7cd2350a2d4a4c30d44a8c017a9a2442ed467e75a638ab4793b257be817",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
-    "checkerSha256": "1ed6c495cceb4da16edcf31381fd6708cfb750fd542c917ac058c73bcd3a0544",
+    "checkerSha256": "f2664ad1531b67c2e423fbd53dcb58c2630d66f4e0fef15c10b13eb1dfe7fd98",
     "buildToolsSha256": "a58ae8b0b7b973fd68d611b5f613807b6658a8917fc70729ea8f6ac0a74f7bf1"
   },
   "rust": [

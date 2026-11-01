@@ -51,6 +51,7 @@ function readSkillScripts(scriptsDir) {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     for (const entry of entries) {
+      if (entry.name === '.DS_Store') continue;
       const entryPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         if (dir === scriptsDir && entry.name === SKILL_BINARY_DIR) continue;

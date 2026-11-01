@@ -231,6 +231,8 @@ function deny(args, offline) {
   const existing = (process.env.PATH ?? '').split(path.delimiter).map(p => path.join(p, name)).find(p => fs.existsSync(p) && fs.statSync(p).isFile());
   const binary = process.env.PHOENIX_CARGO_DENY ?? (fs.existsSync(local) ? local : existing ?? name);
   return tool([binary, '--manifest-path', path.join(workspace, 'Cargo.toml'), '--config', path.join(workspace, 'deny.toml'), ...args], {
+    // Mise's progress shares stderr with cargo-deny's JSON diagnostics.
+    MISE_LOG_LEVEL: 'error',
     PHOENIX_ADVISORY_DB_ROOT: dbRoot,
     ...(offline ? { CARGO_NET_OFFLINE: 'true' } : {}),
   });
