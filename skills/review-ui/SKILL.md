@@ -1,7 +1,7 @@
 ---
 name: review-ui
 argument-hint: "[开发计划] [页面URL/路由] [设计稿/目标图] [上轮报告] [复审/重建基线] [单元/范围] [门槛分] [报告路径]"
-description: 用于界面实现后的 UI/UX 验收或修复复审；不用于代码 diff 评审、直接修复或从零设计。只认运行中界面的实拍截图与实测，不凭代码推断效果；由独立评审打分列差距，判定是否通过。
+description: 用于界面实现后的 UI/UX 验收或修复复审；不用于代码 diff 评审、直接修复或从零设计。以真实界面证据增量复审，同状态共用截图；独立评分并判定是否通过。
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,6 @@ disable-model-invocation: true
 - 定位循环、报告路径、计分、停滞和判定时读 [UI 验收报告合同](references/report-contract.md)。
 - 定位或建立目标包、计算指纹及采集真实界面时读 [目标包与采集](references/target-and-capture.md)。
 - 派发、复核、合并及确认评审时读 [独立评审](references/judge.md)。
-- 探测或续接 managed 循环时读 [Phoenix 评审协议](references/phoenix-review.md)。
 
 ```formal
 INTENT:
@@ -32,9 +31,10 @@ RULE @round_continuity:
 
 RULE @actual_effects_only:
   MUST: |
-    分数、差距的开立与关闭、验收判定，只依据本轮真实运行产品的实拍截图、
-    实际执行过的操作和页面实测结果。代码、diff、计划、设计意图及代码推断
-    只用于找入口或定位问题。拿不到真实效果的单元不打分，判「需补证」并说明怎么补。
+    分数、差距的开立与关闭、验收判定，依据真实运行产品的截图、操作和实测。
+    按采集合同复用仍有效的历史证据与已通过结论，明确来源，不冒充本轮采集。
+    代码与 diff 只用于定位入口、问题和影响范围，不能证明界面达标。
+    新增、受影响或未关闭的问题用当前有效证据复核；缺证单元不造分，判「需补证」。
   MUST_NOT: imagined_effects_as_evidence
 
 RULE @review_boundary:
@@ -50,19 +50,22 @@ RULE @applicability:
     代码缺陷用 review-code；修复差距用 apply-ui-review；视觉方向用 design-reference；
     交互方案选型用 ui-pattern-research；维护 DESIGN.md 用 design-md。
 
+RULE @tool_independence:
+  MUST: complete_review_using_target_package_real_evidence_and_markdown_reports
+  MUST_NOT: block_review_due_to_absent_or_incompatible_independent_tools
+
 WORKFLOW @review_ui:
   DO: [read_applicable_rules_and_goal_sources,
        resolve_prefix_round_and_existing_loop_history,
-       prepare_artifact_ignore_rules_before_services_version_record_or_review_begin,
-       probe_capabilities_and_select_permitted_loop_mode,
+       prepare_artifact_ignore_rules_before_services_and_version_record,
        locate_or_create_target_package_and_compute_fingerprint,
-       begin_or_resume_managed_round_when_matching_or_use_manual_round,
-       capture_current_real_product_matrix,
+       resume_unfinished_round_or_allocate_next_report_round,
+       plan_incremental_evidence_then_run_checks_and_capture_representative_states,
        conduct_independent_judgment_using_allowed_materials,
        save_raw_judgments_and_merged_judge_record,
-       run_page_checks_then_read_full_history_repairs_and_threshold,
+       merge_page_checks_then_read_full_history_repairs_and_threshold,
        adjudicate_with_required_confirmation_and_contract_rules,
-       save_or_finalize_and_reread_round_state_report_and_links,
+       save_and_reread_round_report_and_links,
        stop_owned_temporary_services_and_check_artifact_ignores,
        write_registered_project_status_after_primary_artifact_delivery_when_allowed,
        deliver_verdict_scores_gaps_captures_and_next_step_commands]
@@ -74,9 +77,9 @@ WORKFLOW @review_ui:
 ```formal
 RULE @artifact_locations:
   MUST: |
-    人工和 managed 循环都在确定前缀后、启动临时服务／记录被测版本／review begin 前，
+    确定前缀后、启动临时服务或记录被测版本前，
     检查目标仓忽略规则。截图放 <前缀>.ui-captures/r<n>/，控制台、失败请求、
-    临时服务及 review 命令日志集中放本轮 logs/ 子目录。
+    临时服务及检查日志集中放本轮 logs/ 子目录。
   MUST_NOT: [move_delete_or_overwrite_historical_artifacts]
 
 RULE @artifact_ignore_rules:
@@ -88,7 +91,7 @@ RULE @artifact_ignore_rules:
          default_ignore_captures_and_runtime_logs_unless_repository_requires_evidence_commits]
   MUST_NOT: |
     全仓 *.png、*.log 或忽略整个 .ui-captures/；
-    忽略目标图、目标包、报告、修复记录、capture.md、judge.md 或 managed 状态文件。
+    忽略目标图、目标包、报告、修复记录、capture.md或 judge.md。
   # 前缀 docs/reviews/orders 的规则示例：
   # /docs/reviews/orders.ui-captures/**/*.png
   # /docs/reviews/orders.ui-captures/**/*.log
@@ -104,40 +107,6 @@ RULE @artifact_ignore_verification:
 RULE @artifact_ignore_skip:
   WHEN: user_requires_read_only_no_persistence_or_no_configuration_changes_or_target_is_not_git_repository
   MUST: disclose_why_gitignore_was_not_written
-```
-
-## 循环模式与能力探测
-
-```formal
-RULE @loop_discovery:
-  MUST: |
-    先确定前缀，检查 <前缀>.ui-review.json、已有报告和安装回执。
-    已有纯 Markdown 历史但无 managed 索引时继续人工流程，只有显式 review import 才接管。
-    全新无索引、无旧历史且用户已要求 UI 验收时，先探测真实 engine 与 review verbs；
-    匹配后可 review begin，缺 CLI 或能力不匹配时走人工流程。
-  MUST_NOT: [missing_cli_blocks_manual_source_reading_real_capture_or_persistence,
-             claim_managed_takeover_without_machine_index,
-             unknown_historical_attempt_or_refactor_count_as_zero]
-
-RULE @existing_managed_identity:
-  WHEN: managed_index_exists
-  MUST: verify_pinned_engine_identity_and_actual_review_protocol_using_phoenix_reference
-
-RULE @managed_capability_failure:
-  WHEN: existing_managed_engine_missing_or_mismatched_or_future_schema_or_corrupt_index
-  MUST: [read_only_history, allow_unregistered_material_collection,
-         explain_how_to_restore_matching_engine_then_resume_original_round_and_revision]
-  MUST_NOT: [score, adjudicate, write_dispositions_counts_or_generated_report_sections,
-             create_new_cycle_to_bypass_existing_state]
-
-RULE @managed_operations:
-  WHEN: matching_managed_engine_and_protocol_available
-  MUST: |
-    review begin 分配或续接轮次，冻结目标与矩阵；之后依次登记采集、
-    读取白名单 packet、登记评审原文、裁定与回读。
-    JSON 依据实际 review --help 与 review schema --json 的 typed examples 构造；
-    身份、hash、revision 来自真实操作和材料。
-  MUST_NOT: [guess_json_fields, typed_examples_as_evidence, implicit_import_of_legacy_markdown]
 ```
 
 ## 1. 锚定对象与目标包
@@ -159,8 +128,8 @@ RULE @single_acceptance:
 
 RULE @round_identity:
   MUST: |
-    按报告合同命名。人工循环依据已有最大轮次确定本轮；managed 循环读索引，
-    未结束轮次续接原 round/revision，不自行加一。已有本循环报告即为复审。
+    按报告合同命名，依据已有最大轮次确定本轮；未结束轮次续接原记录，
+    不自行加一。已有本循环报告即为复审。
     每个单元的上一轮，是最近一次覆盖它且有评审结论的轮次；
     覆盖了但没有评审结论的轮次（如全部缺证封存）不算。
 
@@ -179,10 +148,11 @@ RULE @target_freeze:
   MUST_NOT: rewrite_established_expectations_during_review
 ```
 
-## 2. 采集本轮截图
+## 2. 增量取证与截图复用
 
 ```formal
 RULE @tested_environment:
+  WHEN: new_live_checks_or_captures_required
   MUST: [start_or_connect_environment_using_target_package,
          record_head_and_dirty_fingerprint_or_build_id_and_access_address,
          confirm_current_code_is_running_instead_of_stale_build,
@@ -192,13 +162,15 @@ RULE @tested_environment:
   MUST_NOT: [writes_to_real_business_data, destructive_operations]
 
 RULE @capture_coverage:
-  MUST: [capture_all_target_unit_state_viewport_theme_cells_each_round_unless_user_limits_scope,
-         recapture_under_same_conditions,
+  MUST: [cover_target_requirements_with_current_checks_representative_images_and_valid_history,
+         recapture_only_affected_states_under_same_conditions,
+         share_one_image_across_gaps_in_the_same_page_state,
+         map_each_requirement_to_evidence_or_explicit_missing_reason,
          honor_user_limited_scope_and_mark_other_cells_unreviewed]
   MUST_NOT: cherry_pick_flattering_angles_or_data
 
 RULE @capture_authenticity:
-  MUST: [current_round_real_product_capture_for_each_image,
+  MUST: [real_product_provenance_for_each_image_with_explicit_source_round,
          follow_target_and_capture_authenticity_contract,
          treat_nonconforming_images_as_missing]
   MUST_NOT: [design_image_as_capture, old_image_as_current_capture,
@@ -206,21 +178,21 @@ RULE @capture_authenticity:
 
 RULE @interaction_capture:
   MUST: [actually_execute_interaction_steps,
-         capture_keyframes_after_each_action_including_keyboard_focus,
+         capture_only_visually_distinct_key_transitions_including_required_focus_states,
          record_only_executed_actions_and_observed_results,
-         save_console_logs_and_failed_requests_during_capture_for_post_judgment_analysis]
+         save_console_logs_and_failed_requests_for_adjudication]
   MUST_NOT: expected_or_code_inferred_results_as_operation_records
 
 RULE @unreachable_state:
   WHEN: required_state_unreachable
-  MUST: [first_seek_existing_seed_mock_or_route_interception_methods,
-         record_reason_for_still_missing_cell]
+  MUST: [check_prerequisites_before_dependent_steps,
+         try_applicable_existing_seed_mock_or_route_interception_once_per_unchanged_blocker,
+         stop_blocked_capture_and_record_reason_action_and_resume_condition]
   MUST_NOT: similar_state_substituted_for_required_state
 
 RULE @capture_record:
   MUST: [save_tested_version_target_fingerprint_conditions_cell_mapping_provenance_and_missing_cells,
-         manual_round_writes_capture_md,
-         managed_round_uses_review_capture_add_and_rereads_generated_manifest,
+         write_and_reread_capture_md,
          supplementary_capture_appends_attempt]
   MUST_NOT: overwrite_original_images_or_old_records
 ```
@@ -231,22 +203,15 @@ RULE @capture_record:
 RULE @independent_judge:
   MUST: [fresh_context_read_only_nondelegating_subagent_each_round_unless_fallback_required,
          dispatch_and_recheck_using_judge_reference,
-         give_only_target_package_current_captures_capture_md_and_interaction_records,
-         give_each_unit_previous_captures_and_judge_md_containing_only_judge_scores_and_gaps,
+         give_only_target_package_affected_state_captures_capture_md_and_observed_interaction_records,
+         provide_relevant_previous_judgments_and_on_demand_comparison_images,
          judge_opens_only_listed_materials]
   MUST_NOT: |
     向评审提供代码、diff、提交说明、修复记录、修复者自述、完整报告、
     机器检查结果或门槛分。
 
-RULE @managed_judge_packet:
-  WHEN: managed_round
-  MUST: [dispatch_review_judge_pack_allowlisted_materials,
-         bind_and_verify_same_material_batch_with_packet_hash]
-  MUST_NOT: [follow_material_links_to_excluded_files,
-             claim_allowlist_is_host_filesystem_permission_sandbox]
-
 RULE @judge_grouping_and_supplement:
-  MUST: [group_many_cells_by_unit_for_parallel_dispatch,
+  MUST: [default_one_judge_for_changed_units_and_open_gaps,
          use_temporary_ids_for_new_gaps_then_main_agent_assigns_unified_ids,
          recapture_cells_reported_unreadable_then_fresh_judge_reassesses_affected_units,
          retain_lower_total_score_for_reassessed_unit]
@@ -266,11 +231,11 @@ RULE @judge_integrity:
              replace_judge_or_rejudge_due_to_disagreement]
 
 RULE @confirmation_judge:
-  WHEN: would_pass_and_lowest_unit_score_strictly_below_threshold_plus_0_5
+  WHEN: user_requests_confirmation_or_specific_material_fact_requires_independent_confirmation
   MUST: [dispatch_another_fresh_judge_with_same_material_batch,
          keep_lower_total_judge_entire_four_dimension_score_group_and_reasons_per_unit,
          union_gaps_from_all_judges]
-  MUST_NOT: [require_confirmation_at_exactly_threshold_plus_0_5,
+  MUST_NOT: [automatic_confirmation_due_only_to_score_margin,
              splice_dimension_scores_from_different_judges]
 ```
 
@@ -278,12 +243,11 @@ RULE @confirmation_judge:
 
 ```formal
 RULE @judgment_persistence:
-  MUST: [save_each_judge_raw_output_and_merged_judge_md_before_adjudication_stage,
-         managed_round_registers_raw_output_and_faithful_structured_results_via_review_judge_add_and_rereads]
+  MUST: [save_each_judge_raw_output_and_merged_judge_md_before_adjudication_stage]
 
-RULE @post_judgment_checks:
-  MUST: [run_machine_checks_only_after_judgments_saved,
-         analyze_saved_logs_measure_overflow_in_page_inject_accessibility_scan_and_use_real_keyboard,
+RULE @runtime_checks:
+  MUST: [run_deterministic_checks_before_capture_and_keep_results_out_of_visual_judge_materials,
+         check_only_affected_conditions_and_open_gaps_using_runtime_measurements_and_real_keyboard,
          read_previous_full_report_and_each_round_repair_records_after_judgment]
   MUST_NOT: code_or_stylesheet_inference_as_machine_check_result
   # 推断只提示去哪里补拍或实测。
@@ -294,21 +258,15 @@ RULE @threshold:
          determine_after_judgment_without_disclosing_to_judge]
 
 RULE @adjudication:
-  MUST: [main_agent_rechecks_previous_machine_and_main_agent_verified_gaps,
+  MUST: [main_agent_rechecks_open_or_affected_machine_and_main_agent_verified_gaps,
          compute_round_score_gate_items_pending_decisions_and_stagnation_using_report_contract,
          derive_acceptance_verdict_using_report_contract]
 
 RULE @round_report:
-  MUST: [manual_round_writes_report_using_contract,
-         managed_round_uses_review_finalize_with_current_revision,
-         reread_state_report_and_links_for_verdict_scores_and_id_mappings]
-  MUST_NOT: [hand_edit_managed_generated_sections,
-             operation_exit_zero_as_acceptance_pass]
+  MUST: [write_report_using_contract,
+         reread_report_and_links_for_verdict_scores_and_id_mappings]
+  MUST_NOT: [overwrite_historical_reports, operation_exit_zero_as_acceptance_pass]
   ON_UNMET: [state_report_not_saved, deliver_verified_content_in_chat]
-
-RULE @confirmation_required:
-  WHEN: review_finalize_returns_confirmation_required
-  MUST: [keep_round_draft, complete_confirmation_judgment_before_finalizing_again]
 
 OUTPUT:
   FORMAT: markdown
@@ -318,7 +276,7 @@ OUTPUT:
   verdict_source: references/report-contract.md
 
 REVIEW:
-  CHECK: [@actual_effects_only, @managed_capability_failure, @target_freeze,
+  CHECK: [@actual_effects_only, @tool_independence, @target_freeze,
           @capture_coverage, @independent_judge, @judge_integrity,
           @confirmation_judge, @round_report, @next_step_commands, @needs_evidence_next]
   ALSO: [round_continuity, evidence_traceability, id_mapping_consistency,
@@ -344,7 +302,7 @@ RULE @needs_changes_next:
   WHEN: "验收判定为「需要修改」"
   MUST: |
     给出 apply-ui-review <本报告路径>，修复后用本技能复审。
-    有「停滞预警」时写明全局重构或需重构的单元；
+    有「停滞预警」时要求诊断相应范围，不强制重构；
     有「待裁定」时列出事项请用户决定，修复方先处理其余差距。
 
 RULE @passed_next:
@@ -370,9 +328,11 @@ RULE @needs_evidence_next:
     给出执行动作和完成条件；已在本轮尝试的动作及失败原因一并保留。
     下一步给 apply-ui-review <本报告路径>，由执行 agent 修复、补证并解除可处理的阻塞，
     完成后再 review-ui <计划路径或原范围> 独立复审，不默认把补证交给用户。
-    若只缺独立评审/确认评审而材料与条件已齐，继续本技能，无需空跑 apply。
+    若只缺独立评审/用户要求的确认评审且材料已齐，继续本技能，无需空跑 apply。
+    若代码、证据和阻塞条件均未变化，续接已有记录，不新增轮次或建议原条件下重跑；
+    已有材料尚未完成独立评审的，仍完成当前轮评审。
     确需用户权限、资料或决定时明确所需输入；不把缺证视为缺陷，
-    不授权绕过待裁定或 managed 能力异常的只读边界。
+    不授权绕过待裁定事项。
 
 RULE @explicit_waiver:
   WHEN: user_explicitly_accepts_current_overall_ui
@@ -399,7 +359,7 @@ RULE @project_status:
     兼容已有 docs/project-status/protocol.md。两套并存且未登记切换时先核对，不双写。
     按协议更新受影响对象当前状态与来源链接，必要时维护索引；v4 日常直接更新当前页，
     事件留存条件或旧版事件要求以仓内协议为准。
-    只读／仅聊天／不保存及 managed 能力异常的只读边界优先；
+    只读／仅聊天／不保存约束优先；
     登记失败须说明，不影响如实交付已完成的原产物。
   MUST_NOT: [create_ledger_when_not_enabled, require_separately_installed_skill]
 

@@ -64,6 +64,16 @@ RULE @surgical_changes:
              feature_flags_or_compatibility_shims_when_direct_changes_suffice,
              compatibility_hacks_using_unused_variable_underscore_renames_or_type_reexports]
 
+RULE @skill_tool_independence:
+  MUST: |
+    按用户指定的对象确定修改范围。只有 phoenix-ui skill 随 Phoenix UI 工具附带，
+    phoenix-diagram skill 随 Phoenix Diagram 工具附带；其余所有 skill 均独立于
+    这两个工具，不以它们的安装、engine、协议或索引作为执行前提。
+  MUST_NOT: |
+    因名称相近、同仓存放、工具曾引用 skill 或存在历史耦合，就把 skill 修订
+    扩大为运行时、安装器、迁移、发布流程或协议升级。确有范围外依赖时先说明，
+    未获用户授权不实施；工具限制不能反向变成独立 skill 的执行前提。
+
 RULE @documentation:
   MUST: [comments_explain_why, concise_current_searchable_docs,
          add_comments_only_for_nonobvious_logic_or_non_self_descriptive_code,
@@ -105,10 +115,26 @@ RULE @automated_test_scope:
   MUST: automated_tests_assert_outcomes_produced_by_deterministic_code
   MUST_NOT: [write_automated_tests_for_llm_output, write_automated_tests_for_static_source_text]
 
+RULE @verification_scope_and_cost:
+  MUST: |
+    执行前将「本次改变的行为 → 能发现相关错误的检查 → 最小命令」对应起来，
+    按行为及直接依赖选择验证，不按仓库、语言或工具名称选择全套测试。
+    先读聚合命令实际包含的步骤；含无关安装、迁移、发布或其他模块检查时，
+    直接选相关子命令。skill、提示词和文档修改默认只核对相关元数据、引用与
+    指令一致性，必要时做有界行为演练，不自动测试关联运行时或安装器。
+    仅用户明确要求、改动影响共享基础设施或影响无法隔离时扩大回归范围，
+    运行前说明具体依据与成本；相关检查通过即结束，条件未变复用已有结果。
+    无关失败只报告，不扩大修复；发现已启动的检查与改动无关，及时终止自己的
+    测试进程，不因已经启动而继续等待。
+  MUST_NOT: [unmapped_checks, full_suite_by_default,
+             expand_scope_to_make_unrelated_checks_pass,
+             repeat_passed_checks_for_reassurance]
+
 RULE @complete_milestones:
   WHEN: long_task
   MUST: [understand_full_scope_and_acceptance_first, complete_coherent_usable_milestones,
-         targeted_development_checks, broad_regression_at_milestones_and_before_delivery]
+         targeted_development_checks,
+         milestone_regression_scoped_by_changed_behavior_and_direct_dependencies]
   MUST_NOT: [repeated_stops_after_fragments, full_suite_after_each_micro_edit,
              test_frequency_as_progress]
 
@@ -137,7 +163,7 @@ Read the exact passage before quoting wording, numbers, identifiers, statuses, c
 - `SKILL.md` descriptions: triggers and essential exclusions first, then outcome. Put misrouting exclusions beside triggers, never only at the end or in the body.
 - Target ≤250 characters (Chinese ≤200), preferably ~100; the first 100 should convey applicability independently. These are repo writing targets, not universal agent truncation limits.
 - Put procedures, exhaustive error lists, tool details and duplicate bilingual text in the body/references; descriptions select skills, not list workflows.
-- After editing, read the full description and its first 100 characters. Preserve intent, boundaries and unrelated frontmatter/instructions; no mechanical cuts. Validate YAML with `npm test`; generic `quick_validate.py` rejects this repo's intentional `argument-hint`, `when_to_use` and `disable-model-invocation` fields.
+- After editing, read the full description and its first 100 characters. Preserve intent, boundaries and unrelated frontmatter/instructions; no mechanical cuts. Validate only the edited skills' YAML with the repository's allowed fields; generic `quick_validate.py` rejects this repo's intentional `argument-hint`, `when_to_use` and `disable-model-invocation` fields. Metadata checks do not require `npm test`.
 
 ## 7. Reference Skill Integration Gate
 
@@ -154,8 +180,8 @@ During development, use [experience-capture](skills/experience-capture/SKILL.md)
 ## Working in This Repository
 
 - Stay on the current branch unless the user explicitly requests a new one; historical examples and skill/workflow conventions are not authorization.
-- Run Node/Python/metadata checks with `npm test`. Phoenix runtime changes also require `npm run test:phoenix`: mise, Rust 1.99.1 and pinned build tools are mandatory; missing tools fail, not skip. Run and record browser, native-platform and real provider-session acceptance separately; neither command proves those passed.
+- Choose Node/Python/metadata and runtime checks under `@verification_scope_and_cost`; direct file/module/package commands are allowed. `npm test` and `npm run test:phoenix` are aggregate entrypoints, not default requirements. Actual Phoenix runtime checks use mise, Rust 1.99.1 and pinned build tools; missing tools fail, not skip. Browser, native-platform and real provider-session acceptance apply only to relevant changes and must be recorded separately, never inferred from another check.
 - `skills/<name>/` is the source of truth. Gitignored `.claude/skills/`, `.agents/skills/` and `.codex/skills/` are local installs. skills.sh copies need push/reinstall for local edits; source symlinks reflect them immediately. When work depends on recent changes and a loaded skill is an installed copy, first run `diff -rq .claude/skills/<name> skills/<name>` and use source when different. Point behavior checks at `skills/<name>/...`.
 - When skill names, arguments, next-step commands, verdicts or status words change, update all interface restatements in the same change: README tables/loop; under `skills/agi-mode/`, `playbooks/sdlc.md`, `playbooks/what-next.md`, `evals/scenarios.md`, plus `assets/sdlc/state-model.md` and `assets/sdlc/protocol.md` for verdict/report-type changes; the skill's `agents/openai.yaml`; and copied rules like `skills/agi-mode/references/interface-design.md`. Find with `grep -rn '<skill-name>' skills README.md docs`. Each must fully describe the new behavior, not just avoid conflicts. Preserve historical records/snapshots; do not add absent `agents/openai.yaml`.
-- For review-ui contract/`rules.v1.json` changes, sync the four contract hashes, rule version, Rust review policy, shared counterexamples and both UI skills. JSON projects existing contracts, without separate verdicts/policy.
+- UI review workflow changes keep the two skills and their referenced Markdown contracts consistent. Tool-side rule snapshots, contract hashes and Rust policies do not define these independent skills and are not automatically changed or tested with them; tool adaptation requires its own authorized scope.
 - To create/revise skills, follow [Skill 编写与修订](skills/agi-mode/playbooks/authoring-a-skill.md); agi-mode is not auto-invoked (`disable-model-invocation`), so this playbook is not otherwise loaded.

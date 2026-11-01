@@ -1,6 +1,6 @@
 interface:
   display_name: "UI/UX 验收评审"
-  short_description: "只认运行中界面的实拍截图，由独立评审打分并列出可执行差距，判定 UI 验收是否通过"
-  default_prompt: "使用 $review-ui 对指定界面做 UI/UX 验收。先识别循环：新无历史且真实能力匹配时可 begin managed；已有人工历史须显式 import。已有 managed 索引时核对固定 engine 与实际协议，不匹配就只读并说明恢复方法，不猜 JSON 字段。按目标矩阵实拍真实界面，派全新上下文独立评审，保留原文并按合同确认、合并和裁定；managed 操作由 engine 登记与投影，人工流程照常落盘。回读后汇报实际判定、分数、差距和下一步命令；最终回复不省略报告已有的命令。需补证时给出 apply-ui-review 的实际报告路径，由执行 agent 补齐环境、数据与实测材料、处理差距后交回独立复审，不默认让用户补证；只缺独立评审时续接 review-ui。"
+  short_description: "真实界面增量取证，同状态共用截图，由独立评审判定验收并列出差距"
+  default_prompt: "使用 $review-ui 对指定界面做独立 UI/UX 验收。读取目标包、报告和修复历史，按影响范围先实测再采集必要代表帧；同状态多问题共用一图，复用有效历史及 apply 材料。默认一位全新上下文评审变化和未关闭项，继承未受影响的已通过结论，不按分差自动追加评审。保存并回读原文、证据清单和报告，给出判定及下一步命令；有可执行补证交 apply-ui-review，只缺独立评审则继续当前轮；条件未变不空跑新轮。"
 policy:
   allow_implicit_invocation: false
