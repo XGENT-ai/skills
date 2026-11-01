@@ -140,6 +140,26 @@ async function install(f,project,flags=[],onUiActive){
 const both=f=>[`--release-dir=${f.uiRelease}`,`--diagram-release-dir=${f.diagramRelease}`];
 function assertBoth(project,provider){for(const name of ['phoenix-ui','phoenix-diagram'])assert(fs.existsSync(path.join(project,provider,'skills',name,'SKILL.md')),`${provider}/${name}`);}
 
+for(const linked of [false,true])nativeTest(`existing diagram skill ${linked?'symlinks':'copies'} are reinstalled through the npm installer`,async t=>{
+  const f=await fixture(t),project=f.project('existing diagram project');
+  const source=path.join(f.temp,'old diagram skill');copy(path.join(f.pkg,'skills/phoenix-diagram'),source);
+  write(path.join(source,'old-source-marker'),'old channel\n');const sourceBefore=tree(source);
+  for(const provider of ['.agents','.claude']){
+    const dest=path.join(project,provider,'skills/phoenix-diagram');
+    fs.mkdirSync(path.dirname(dest),{recursive:true});
+    if(linked)fs.symlinkSync(source,dest);else copy(source,dest);
+  }
+  const result=await install(f,project,both(f));assert.equal(result.code,0,result.stdout+result.stderr);
+  for(const provider of ['.agents','.claude']){
+    assertBoth(project,provider);
+    const dest=path.join(project,provider,'skills/phoenix-diagram');
+    assert(!fs.lstatSync(dest).isSymbolicLink());assert(!fs.existsSync(path.join(dest,'old-source-marker')));
+  }
+  assert.deepEqual(tree(source),sourceBefore);
+  assert(fs.existsSync(path.join(project,'.phoenix-diagram/install/active.json')));
+  const before=tree(project),again=await install(f,project,both(f));assert.equal(again.code,0,again.stdout+again.stderr);assert.deepEqual(tree(project),before);
+});
+
 nativeTest('default installer really coinstalls both tools, is idempotent, and skip flags preserve both installations',async t=>{
   const f=await fixture(t),project=f.project('default project');
   const first=await install(f,project,both(f));assert.equal(first.code,0,first.stdout+first.stderr);
