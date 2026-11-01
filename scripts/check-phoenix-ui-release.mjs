@@ -227,7 +227,13 @@ for (const major of [18, 25]) {
         for (const file of ['package.json', 'index.html', 'AGENTS.md', 'CLAUDE.md']) assert.equal(restored[file], original[file]);
         assert(!fs.existsSync(path.join(project, '.claude/skills/phoenix-ui')));
         if (replace) assert(!fs.existsSync(path.join(project, '.claude/skills/impeccable')));
-      } else assert.deepEqual(restored, original);
+      } else {
+        // Phoenix rollback preserves the independently installed XGENT statusline.
+        const hook = '.claude/hooks/xgent-statusline.js';
+        const hookHash = sha(fs.readFileSync(path.join(pkg, hook)));
+        assert.equal(installed[hook], hookHash);
+        assert.deepEqual(restored, { ...original, [hook]: hookHash });
+      }
       group.status = 'expected-consumer-outcomes-observed';
     } catch (error) { group.status = 'failed'; group.error = error.message; process.exitCode = 1; }
     save();
