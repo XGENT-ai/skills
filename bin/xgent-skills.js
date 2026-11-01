@@ -199,6 +199,36 @@ function runDiagram(binary, args) {
   }
 }
 
+function prepareDiagramTools(project, providers) {
+  const refresh = [];
+  if (!fs.lstatSync(path.join(project, '.phoenix-diagram/install'), { throwIfNoEntry: false })) {
+    for (const provider of providers.filter(name => name !== '.codex')) {
+      const relative = `${provider}/skills/phoenix-diagram`;
+      const file = path.join(project, relative);
+      const stat = fs.lstatSync(file, { throwIfNoEntry: false });
+      if (!stat) continue;
+      for (let dir = path.dirname(file); dir !== project; dir = path.dirname(dir)) {
+        if (fs.lstatSync(dir).isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
+      }
+      refresh.push({ file, relative, linked: stat.isSymbolicLink() });
+    }
+  }
+  return {
+    covers(conflict) {
+      return refresh.some(item => (['install/unowned-file', 'install/extra-file'].includes(conflict.code)
+        && (conflict.path === item.relative || conflict.path.startsWith(`${item.relative}/`)))
+        || (item.linked && conflict.code === 'install/unsafe-parent' && conflict.message === item.file));
+    },
+    apply() {
+      for (const { file } of refresh) {
+        // Remove the installed entry itself; never traverse a skills-manager symlink.
+        fs.rmSync(file, { recursive: true, force: true });
+        console.log(`  重新安装  ${file}`);
+      }
+    },
+  };
+}
+
 async function prepareDiagram(targetDir, options) {
   try {
     const ready = await diagramBootstrap.preflight({
@@ -209,14 +239,17 @@ async function prepareDiagram(targetDir, options) {
     const args = ['install', '--project', targetDir, '--bundle-root', ready.bundleRoot, '--json'];
     if (options.providers) args.push('--providers', options.providers);
     const planned = runDiagram(ready.enginePath, [...args, '--dry-run']);
+    const tools = prepareDiagramTools(targetDir, planned.report.providers || []);
+    const reinstallable = planned.code === 3 && planned.report.status === 'conflict'
+      && planned.report.conflicts.length > 0 && planned.report.conflicts.every(conflict => tools.covers(conflict));
     // A known pending transaction is recovered only by the later explicit apply.
     const recoverable = planned.code === 3 && planned.report.status === 'recovery-required'
       && planned.report.conflicts?.length === 0;
-    if ((planned.code !== 0 && !recoverable) || !['planned', 'unchanged', 'recovery-required'].includes(planned.report.status)) {
+    if (!reinstallable && ((planned.code !== 0 && !recoverable) || !['planned', 'unchanged', 'recovery-required'].includes(planned.report.status))) {
       printDiagram(planned.report, ready.manifest);
       throw phoenixFailure(planned.code || 3, 'Phoenix Diagram 预检失败');
     }
-    return { manifest: ready.manifest, binary: ready.enginePath, args };
+    return { manifest: ready.manifest, binary: ready.enginePath, args, tools };
   } catch (error) {
     throw phoenixFailure(Number.isInteger(error.code) ? error.code : 4, `Phoenix Diagram 未就绪,未修改项目: ${error.message}\n`
       + '  可用 --diagram-release-dir=DIR 指向匹配的完整离线目录,或加 --no-phoenix-diagram 跳过本工具。');
@@ -462,6 +495,7 @@ async function install(args) {
     // Cleanup may change shared settings.
     if (fs.existsSync(settingsPath)) settings = readJson(settingsPath);
   }
+  diagram?.tools.apply();
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });

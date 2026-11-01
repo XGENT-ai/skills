@@ -6,7 +6,7 @@ Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lif
 
 ## npm 发布安装
 
-npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令保留 Diagram 的 bin、skill、文档与发行资源，在上传 UI 前要求 Diagram 已具备匹配 npm 版本的四平台 release 清单、bundle、完整许可证和公共 HTTPS 地址；开发或候选清单不能代替。可用 `--diagram-release-dir DIR` 提供同版本的完整正式资源目录，在打包阶段注入。Diagram 引擎的构建和托管须先完成，本命令不会自动将 candidate 转为 release。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
+npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令保留 Diagram 的 bin、skill、文档与发行资源，在上传 UI 前要求 Diagram 已具备匹配 npm 版本的四平台 release 清单、bundle、完整许可证和公共 HTTPS 地址；开发或候选清单不能代替。可用 `--diagram-release-dir DIR` 提供同版本的完整正式资源目录，在打包阶段注入。Diagram 引擎的构建和托管须先完成，本命令不会自动将 candidate 转为 release。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
 
 ## 候选安装
 

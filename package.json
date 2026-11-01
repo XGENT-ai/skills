@@ -1,6 +1,6 @@
 {
   "name": "@xgent-ai/skills",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "XGENT skills 与项目辅助工具:安装 hooks、settings、Phoenix UI 与独立 Phoenix Diagram 图解候选",
   "keywords": [
     "claude-code",
