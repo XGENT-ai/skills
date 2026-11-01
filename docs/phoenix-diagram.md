@@ -1,8 +1,8 @@
-# Phoenix Diagram 候选
+# Phoenix Diagram
 
 Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。仓库以 phoenix-diagram 为唯一活跃图解入口；其他项目及个人旧安装须分别处理。数值图表、仪表盘及其他 infographic 不在范围内。
 
-目前实现与验收仍在进行，四平台、真实 provider 和最终包的完整交接尚未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
+`@xgent-ai/skills@0.7.6` 已公开发布，配套四平台引擎已托管，最终 npm 包已通过 Node 18 与维护 Node 的联合安装验证。P3 的完整交接（含真实 provider 会话和视觉审核）仍未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
 
 ## npm 发布安装
 
@@ -161,7 +161,7 @@ P3最终候选须另附 `kind: phoenix-diagram-candidate-aggregate`、`profile: 
 
 完整Reader范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
 
-本说明在最终封包前固定，封包后的验收结果保存在绑定原tgz摘要的独立聚合回执中。补写结果或修复包内文件会改变tgz身份，需要重新装配并取得适用的新证据。当前尚未取得最终同包四平台及真实provider的完整通过结果，也没有公开npm/R2发行；development清单和候选loopback地址不能用于宣称公开在线安装已可用。
+候选包内说明在封包前固定，封包后的验收结果保存在绑定原tgz摘要的独立聚合回执中。补写结果或修复包内文件会改变tgz身份，需要重新装配并取得适用的新证据。四平台 CI 自动消费已通过，但真实 provider 和视觉审核的完整交接仍未完成；公开 npm 发行的安装验证不代替 P3 完整验收，development 清单和候选 loopback 地址也不能充当正式发行资源。
 
 维护者从已认证、独立转移的harness目录执行最终检查，显式给出候选、历史v1前置和来源验收仓库：
 
