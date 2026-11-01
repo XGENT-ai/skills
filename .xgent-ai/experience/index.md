@@ -85,3 +85,5 @@
 - b248de26-51e1-470d-8c76-c9fc386da149 · [resolve-blocked 用户动作须工具阻断式交接](b248de26-51e1-470d-8c76-c9fc386da149.md)
 - [99a460ef-4813-4320-84e9-68a3f4d28d2f — 0.7.6 联合发布检查](99a460ef-4813-4320-84e9-68a3f4d28d2f.md)
 - [d9ac4f94-a8e3-4540-952b-8501e344051a — 合并 origin/main：Phoenix 构建工具路径](d9ac4f94-a8e3-4540-952b-8501e344051a.md)
+
+- [e5e26f72-58db-4939-a55b-37eb1de184c4 · review-ui 收尾遗漏修复入口](e5e26f72-58db-4939-a55b-37eb1de184c4.md)
