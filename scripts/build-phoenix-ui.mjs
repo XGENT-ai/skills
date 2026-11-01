@@ -43,6 +43,7 @@ function sourceInputs() {
   const paths = ['Cargo.toml', 'Cargo.lock', 'build-tools.lock.json', '.cargo/config.toml'];
   const walk = dir => {
     for (const entry of fs.readdirSync(path.join(workspace, dir), { withFileTypes: true })) {
+      if (entry.name === '.DS_Store') continue;
       const file = `${dir}/${entry.name}`;
       if (entry.isDirectory()) walk(file);
       else if (entry.isFile()) paths.push(file);
@@ -57,6 +58,7 @@ function sourceInputs() {
   const entries = paths.map(file => [`tools/phoenix-ui/${file}`, sha(fs.readFileSync(path.join(workspace, file)))]);
   const external = directory => {
     for (const entry of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
+      if (entry.name === '.DS_Store') continue;
       const file = `${directory}/${entry.name}`;
       if (entry.isDirectory()) external(file);
       else {

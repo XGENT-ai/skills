@@ -234,3 +234,19 @@ test('distribution gate requires actual identical texts and corresponding MPL so
   catalog.rust[0].sourceUnmodified = true; fs.writeFileSync(path.join(directory, license.path), 'changed text');
   assert.throws(() => assertDistribution(directory, catalog, notice), /missing or changed/);
 });
+
+test('Bun nested dependencies resolve their own license materials across scoped package names', async t => {
+  const { readNodePackage } = await checker;
+  const nodeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix nested audit '));
+  t.after(() => fs.rmSync(nodeRoot, { recursive: true, force: true }));
+  for (const [key, name, relative] of [
+    ['cliui/string-width', 'string-width', 'cliui/node_modules/string-width'],
+    ['@scope/parent/@scope/child', '@scope/child', '@scope/parent/node_modules/@scope/child'],
+  ]) {
+    const directory = path.join(nodeRoot, relative); fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(path.join(directory, 'package.json'), JSON.stringify({ name, version: '1.0.0' }));
+    fs.writeFileSync(path.join(directory, 'LICENSE'), `License for ${name}`);
+    const result = readNodePackage({ key, name, version: '1.0.0' }, nodeRoot);
+    assert.equal(result.files.get('LICENSE').toString(), `License for ${name}`);
+  }
+});

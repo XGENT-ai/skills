@@ -32,14 +32,13 @@ const PROVIDERS: [&str; 19] = [
 ];
 const DEFAULT_PROVIDERS: [&str; 1] = [".claude"];
 
-pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--auxiliary-root DIR] [--providers a,b] [--keep-impeccable] [--dry-run] [--json] [--transaction-id ID]\n";
-pub const MIGRATE_USAGE: &str = "Usage: phoenix-ui migrate --from impeccable --project DIR --bundle-root DIR [--auxiliary-root DIR] [--providers a,b] [--dry-run] [--json]\n       phoenix-ui migrate --rollback TRANSACTION --project DIR [--json]\n       phoenix-ui migrate --recover --project DIR [--json]\n";
+pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--providers a,b] [--keep-impeccable] [--dry-run] [--json] [--transaction-id ID]\n";
+pub const MIGRATE_USAGE: &str = "Usage: phoenix-ui migrate --from impeccable --project DIR --bundle-root DIR [--providers a,b] [--dry-run] [--json]\n       phoenix-ui migrate --rollback TRANSACTION --project DIR [--json]\n       phoenix-ui migrate --recover --project DIR [--json]\n";
 
 #[derive(Default)]
 struct Args {
     project: Option<String>,
     bundle_root: Option<String>,
-    auxiliary_root: Option<String>,
     providers: Option<String>,
     transaction_id: Option<String>,
     from: Option<String>,
@@ -90,7 +89,6 @@ fn parse(args: &[String]) -> Result<Args, String> {
                 return Err(format!("{name} applies only to --user/--global installs; a project install keeps conflicts and user changes for you to resolve"))
             }
             "--bundle-root" => parsed.bundle_root = Some(value()?),
-            "--auxiliary-root" => parsed.auxiliary_root = Some(value()?),
             "--providers" => parsed.providers = Some(value()?),
             "--transaction-id" => parsed.transaction_id = Some(value()?),
             "--from" => parsed.from = Some(value()?),
@@ -402,11 +400,9 @@ fn run(args: &[String], io: &mut Io, migrate: bool) -> i32 {
             Ok(providers) => providers,
             Err(message) => return fail(io, ErrorKind::InvalidPlan, &message, usage),
         };
-        let auxiliary_root = parsed.auxiliary_root.as_deref().map(|p| resolve(io, p));
         let request = Request {
             project: &project,
             bundle_root: &bundle_root,
-            auxiliary_root: auxiliary_root.as_deref(),
             providers,
             home: io.home(),
             scan_sources: migrate,

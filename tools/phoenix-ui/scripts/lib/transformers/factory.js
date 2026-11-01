@@ -29,9 +29,9 @@ This harness has no subagent capability, so you are running this role inline. St
  * - value: if provided, use this instead of skill[sourceKey]
  */
 const FIELD_SPECS = {
-  internal: {
-    sourceKey: 'internal',
-    yamlKey: 'internal',
+  when_to_use: {
+    sourceKey: 'whenToUse',
+    yamlKey: 'when_to_use',
   },
   'user-invocable': {
     sourceKey: 'userInvocable',

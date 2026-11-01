@@ -32,6 +32,7 @@ function link(target, destination) {
  */
 function packageFor(t, executable) {
   const root = sandbox(t, 'phoenix package');
+  fs.copyFileSync(path.join(repository, 'package.json'), path.join(root, 'package.json'));
   const bin = path.join(root, 'bin');
   fs.mkdirSync(bin);
   for (const name of ['xgent-skills.js', 'phoenix-ui.js']) fs.copyFileSync(path.join(repository, 'bin', name), path.join(bin, name));
@@ -169,8 +170,11 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
   assert.ok(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf('Phoenix UI 0.1.0'));
   assert.match(first.stdout, /完成: /);
-  for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.claude/skills/review-ui/SKILL.md', '.phoenix-ui/install/active.json']) {
+  for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.phoenix-ui/install/active.json']) {
     assert.ok(fs.existsSync(path.join(project, file)), file);
+  }
+  for (const name of ['design-md', 'design-reference', 'ui-pattern-research', 'review-ui', 'apply-ui-review']) {
+    assert.equal(fs.existsSync(path.join(project, '.claude/skills', name)), false, name);
   }
   const before = tree(project, (rel) => rel.startsWith('.phoenix-ui/'));
   const second = install(pkg, project);
@@ -178,6 +182,29 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.match(second.stdout, /: 未变\n/);
   assert.doesNotMatch(second.stdout, /回滚|保留/);
   assert.deepEqual(tree(project, (rel) => rel.startsWith('.phoenix-ui/')), before);
+});
+
+test('install preserves independently updated project and personal companion skills', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix independent companions');
+  const names = ['design-md', 'design-reference', 'ui-pattern-research', 'review-ui', 'apply-ui-review'];
+  for (const root of [project, pkg.home]) {
+    for (const provider of ['.claude', '.agents']) {
+      for (const name of names) {
+        const file = path.join(root, provider, 'skills', name, 'SKILL.md');
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, `independently updated ${name}\n`);
+      }
+    }
+  }
+  const before = tree(project), homeBefore = tree(pkg.home);
+  const result = install(pkg, project, ['--providers=claude,codex']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const after = tree(project);
+  for (const [file, hash] of Object.entries(before)) assert.equal(after[file], hash, file);
+  assert.deepEqual(tree(pkg.home), homeBefore);
+  const active = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
+  assert.ok(active.ownership.every(item => !names.some(name => item.path.includes(`/skills/${name}/`))));
 });
 
 for (const shape of ['large', 'deep']) {
@@ -217,7 +244,7 @@ test('explicit legacy migration through the npm bin still rolls back byte-for-by
   const ready = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'engine', 'install', '--project', fixture.projectRoot, '--release-dir', pkg.release], { encoding: 'utf8', env });
   assert.equal(ready.status, 0, ready.stdout + ready.stderr);
   const result = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--from', 'impeccable', '--project', fixture.projectRoot,
-    '--bundle-root', path.join(pkg.root, 'dist/phoenix-ui/bundle'), '--auxiliary-root', path.join(pkg.root, 'skills')], { encoding: 'utf8', env });
+    '--bundle-root', path.join(pkg.root, 'dist/phoenix-ui/bundle')], { encoding: 'utf8', env });
   assert.equal(result.status, 0, result.stdout + result.stderr + (result.error?.message || ''));
   assert.match(result.stdout, /installed/);
   assert.match(result.stdout, /AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);

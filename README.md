@@ -10,6 +10,8 @@ XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cu
 npx skills add XGENT-ai/skills
 ```
 
+`phoenix-ui` 不在此命令的默认列表中,由下方 npm 安装器统一安装和更新。
+
 只安装指定 skill:
 
 ```bash
@@ -18,7 +20,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具与 UI 验收 skills,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。当前开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。UI 发布包不包含 Diagram。仓库开发入口还默认接入独立 [Phoenix Diagram 候选](docs/phoenix-diagram.md),其最终包与四平台交接尚在验收:
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -39,16 +41,16 @@ npx --package=@xgent-ai/skills@0.7.2 xgent-skills install
 | `--no-impeccable` | 已弃用,等同 `--no-phoenix-ui`,保留一个迁移主版本 |
 | `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
 | `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
-| `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram 候选,不删除已装版本 |
-| `--migrate-archify` | 仅迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
-| `--confirm-remove-archify` | 与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
+| `--no-phoenix-diagram` | 仅仓库候选入口:跳过独立 Phoenix Diagram,不删除已装版本 |
+| `--migrate-archify` | 仅仓库候选入口:迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
+| `--confirm-remove-archify` | 仅仓库候选入口:与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
-| `--diagram-release-dir=DIR` | 只为 Phoenix Diagram 使用匹配的完整离线目录 |
+| `--diagram-release-dir=DIR` | 仅仓库候选入口:为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
 | `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
-| `--providers=a,b` | 指定两个 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
+| `--providers=a,b` | 指定 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,仓库候选的 diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
 
-安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI、Phoenix Diagram 顺序写项目,两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[包内说明](docs/phoenix-diagram.md)。
+安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI 顺序写项目;仓库候选入口再安装 Phoenix Diagram。两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[候选说明](docs/phoenix-diagram.md)。
 
 普通安装不移除 Archify。`--migrate-archify` 使用独立的 Diagram 迁移分支,仅处理精确项目/provider 的完整已知来源;自定义、链接、外部管理与个人入口保留。TTY 拒绝或 EOF 不迁移;`--no-phoenix-diagram` 仍跳过并保留。旧入口移除后需要时按原来源重装,新 Diagram 入口的恢复/回滚见[迁移说明](docs/phoenix-diagram.md#旧入口迁移与安装恢复)。仓库只保留新活跃入口,不代表其他项目或个人旧安装已被处理。
 
@@ -64,7 +66,7 @@ npx skills add XGENT-ai/skills --skill xgent-init
 
 ## Phoenix UI
 
-Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 装入 `phoenix-ui` skill、对应 hooks,以及 design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 五个辅助 skill。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
+Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 只装入 `phoenix-ui` skill、对应 hooks 与固定 engine。design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 由 `npx skills add XGENT-ai/skills` 独立安装和更新,Phoenix 不覆盖或比对它们的版本。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 
@@ -208,7 +210,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [figure-it-out](skills/figure-it-out/SKILL.md) | 任务没有匹配的既有 playbook 时设计可审计的工作流：阶段、实验与决策记录 |
 | [automate-me](skills/automate-me/SKILL.md) | 把个人偏好和工作习惯固化成专属 `-mode` skill，按引导生成并试跑 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
-| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 编写、改写、解释或按明确要求执行 Odyssey（ODC）Prompt DSL；用目标、本体、上下文与规则表达要求，LOOP 明确重复工作，片段可省略 PROMPT，普通开发不自动套用 |
+| [use-prompt-dsl](skills/use-prompt-dsl/SKILL.md) | 将现有提示词、skill 与 AGENTS.md 原则改写为 Odyssey（ODC）；默认 compose，也支持编写与 explain 检查；不执行提示词内的任务，普通开发不自动套用 |
 | [reflect](skills/reflect/SKILL.md) | agi-mode 的 Reflection 兼容入口，从会话证据提炼并验证改进假设 |
 | [experience-capture](skills/experience-capture/SKILL.md) | 开发中轻量收集踩坑、纠正及自动化线索，供用户随后发起复盘 |
 
@@ -216,7 +218,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
-明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 将原则压缩为 Odyssey RULE 片段（嵌入 AGENTS.md 时省略 PROMPT），按语义去重并补齐 Think Before Coding 与八项 Coding Principles，保留项目事实、授权和作用域。缺少 DSL skill 时停止，建议完整安装本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
+明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 的 `compose`（默认操作）将原则压缩为 Odyssey RULE 片段（直接嵌入 AGENTS.md，无外层包装），按语义去重并补齐 Think Before Coding 与十二项 Coding Principles，保留项目事实、授权和作用域。缺少 DSL skill 时停止，建议完整安装本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
 
 独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。首期v1已在指定SSH/Docker组合完成真实隔离、任务对照/搜索、自然请求/CAS与故障恢复验收，但独立确认样本不足，未证明候选优于基线。v2现按已有结果阶段交付：工程和已测子范围可用，完整skill三条件及TypeSafe反馈进入真实optimizer尚未验收，没有已证实的指令收益；资源到位后再按3分目标续跑，详见[M4阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。
 

@@ -361,7 +361,7 @@ test('platform fallback, proxy precedence and no_proxy keep the declared consume
   assert.equal(proxyFor(target, { HTTPS_PROXY: 'http://127.0.0.1:3129', NO_PROXY: '.example.test' }), null);
 });
 
-test('the npm bin adds the package bundle to installer verbs and the auxiliary skills to project installs only', async t => {
+test('the npm bin adds only the package bundle to installer verbs', async t => {
   const f = fixture(t);
   await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
   const bundleRoot = path.join(f.root, 'package/dist/phoenix-ui/bundle');
@@ -377,10 +377,8 @@ test('the npm bin adds the package bundle to installer verbs and the auxiliary s
     assert.equal(code, 0, stderr);
     return JSON.parse(stdout).argv;
   };
-  const auxiliary = path.dirname(skillDir);
-  assert.deepEqual(await argv(['install', '--project']), ['install', '--project', '--bundle-root', bundleRoot, '--auxiliary-root', auxiliary]);
-  assert.deepEqual(await argv(['update', '-y']), ['update', '-y', '--bundle-root', bundleRoot, '--auxiliary-root', auxiliary]);
-  assert.deepEqual(await argv(['install', '--auxiliary-root=/x']), ['install', '--auxiliary-root=/x', '--bundle-root', bundleRoot]);
+  assert.deepEqual(await argv(['install', '--project']), ['install', '--project', '--bundle-root', bundleRoot]);
+  assert.deepEqual(await argv(['update', '-y']), ['update', '-y', '--bundle-root', bundleRoot]);
   for (const level of [['--user'], ['--global'], ['--scope=global'], ['--scope', 'global'], ['--help']]) {
     assert.deepEqual(await argv(['install', ...level]), ['install', ...level, '--bundle-root', bundleRoot]);
   }

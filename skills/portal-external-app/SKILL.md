@@ -100,6 +100,7 @@ when_to_use: "用户会说「把我们服务接进门户」「manifest 怎么填
   交付判据见 [公开入口](references/public-entrypoints.md)。
 - **后续版本**：对方 CI 自助（`xgent-app-release` skill）——无治理变更自动通过，
   治理变更进「发布审核」等平台批准。
+- **安装 scope 同步**：外部 listing 自动发布、重试、版本或品牌图同步保留现存安装 scopes，不自动增加新 scope；租户管理员须显式调用 `POST /api/admin/market/listings/:key/update` 取得当前获批 scopes（安装版本已相同也可调用）。新安装取得 listing scopes；门户内置定义同步仍 union。
 - **scope 三规则**：平台基础 scope ∪ 自己命名空间（含连字符→下划线变体）∪ 已声明 `exchangeTargets` 的目标命名空间；越界 `VALIDATION_FAILED`。
 - **secret 一致红线**：平台落库的服务账号 secret 与镜像 env 里的必须一致；漂移症状是自省 401 或「跨应用授权缺失」（实为 `SECRET_INVALID`），排查先 sha256 比对两侧。
 

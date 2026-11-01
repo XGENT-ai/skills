@@ -7,102 +7,373 @@ disable-model-invocation: true
 
 # review-ui · UI/UX 验收评审
 
-判断实现出来的界面是否达到预期，并给出一份清单：另一位 agent 照单修完，下一轮分数应明显提高。本技能与 `apply-ui-review` 组成验收循环：每次调用评一轮，修复后再评，直到通过、停滞后交用户裁定，或用户明确放过。
+按以下 ODC 声明完成 UI/UX 验收；列表逐项适用。引用路径相对本文件解析，按阶段读取：
 
-**每轮由全新上下文的独立评审对照目标打分。主 agent 只负责采集、复核和裁定，不给自己的修复打分。** 循环的状态都在落盘文件里：目标包、逐轮截图、评审原始结论、报告和修复记录。手动交替调用和用 goal 自动推进，都按同一规则续接。
+- 定位循环、报告路径、计分、停滞和判定时读 [UI 验收报告合同](references/report-contract.md)。
+- 定位或建立目标包、计算指纹及采集真实界面时读 [目标包与采集](references/target-and-capture.md)。
+- 派发、复核、合并及确认评审时读 [独立评审](references/judge.md)。
+- 探测或续接 managed 循环时读 [Phoenix 评审协议](references/phoenix-review.md)。
 
-**只认真实效果。** 分数、差距和判定只能来自三种证据：本轮在真实运行的产品上实拍的截图、实际执行过的操作、在页面上实测的结果。代码、diff、计划、设计意图，以及「按代码应该会这样」的推断，只能用来找入口、定位问题，不能用来打分、开差距、关差距或判通过。拿不到真实效果的单元不打分，判需补证：宁可不评，也不能想象。
+```formal
+INTENT:
+  GOAL: assess_implemented_ui_against_targets
+  SCOPE: one_acceptance_round_per_invocation
+  SUCCESS: [actual_effects_grounded_verdict,
+            complete_actionable_gap_list_enabling_clear_score_improvement_after_repairs,
+            round_artifacts_saved_and_reread]
+  NON_GOALS: [code_defect_review, ui_repairs, new_visual_direction,
+              interaction_pattern_selection, design_md_maintenance]
 
-**默认交付**：首轮建立目标包；每轮的截图、评审原始结论和完整报告落盘并回读。聊天先给验收判定，再给分数轨迹、关键差距、截图位置和下一步命令。产品代码、计划和历史报告只读，不修复、不提交、不改进度。
+RULE @round_continuity:
+  MUST: [continue_same_rules_for_manual_invocations_and_goal_driven_rounds,
+         resume_from_persisted_target_package_captures_raw_judgments_reports_and_repair_records,
+         review_ui_and_apply_ui_review_continue_until_pass_stagnation_for_user_decision_or_explicit_waiver]
+  MUST_NOT: main_agent_scores_own_ui_repairs
 
-`references/` 相对本文件解析。目标仓的启动方式、账号、设计规范和截图工具在运行时发现。语言跟随用户。
+RULE @actual_effects_only:
+  MUST: |
+    分数、差距的开立与关闭、验收判定，只依据本轮真实运行产品的实拍截图、
+    实际执行过的操作和页面实测结果。代码、diff、计划、设计意图及代码推断
+    只用于找入口或定位问题。拿不到真实效果的单元不打分，判「需补证」并说明怎么补。
+  MUST_NOT: imagined_effects_as_evidence
 
-## 适用边界
+RULE @review_boundary:
+  MUST: [product_code_plan_and_historical_reports_read_only,
+         discover_target_startup_accounts_design_rules_and_capture_tools_at_runtime,
+         follow_user_language]
+  MUST_NOT: [ui_repairs, commits, plan_progress_updates]
 
-- 适用于有可运行界面的验收：计划实施并通过代码评审后可选的 UI 验收、修复后的复审，以及用户给出页面与目标图或规范的单次验收。
-- 不适用于：代码缺陷评审用 `review-code`；修复差距用 `apply-ui-review`；找视觉方向用 `design-reference`；交互方案选型用 `ui-pattern-research`；维护 DESIGN.md 用 `design-md`。
-- 拿不到真实效果时（没有可用的渲染或截图工具、应用起不来、状态到达不了），按上面的规则判需补证，说明缺什么、怎么补。
+RULE @applicability:
+  MUST: |
+    用于可运行界面的验收：计划实施并通过代码评审后可选的 UI 验收、修复复审，
+    或用户给出页面与目标图／规范的单次验收。
+    代码缺陷用 review-code；修复差距用 apply-ui-review；视觉方向用 design-reference；
+    交互方案选型用 ui-pattern-research；维护 DESIGN.md 用 design-md。
+
+WORKFLOW @review_ui:
+  DO: [read_applicable_rules_and_goal_sources,
+       resolve_prefix_round_and_existing_loop_history,
+       prepare_artifact_ignore_rules_before_services_version_record_or_review_begin,
+       probe_capabilities_and_select_permitted_loop_mode,
+       locate_or_create_target_package_and_compute_fingerprint,
+       begin_or_resume_managed_round_when_matching_or_use_manual_round,
+       capture_current_real_product_matrix,
+       conduct_independent_judgment_using_allowed_materials,
+       save_raw_judgments_and_merged_judge_record,
+       run_page_checks_then_read_full_history_repairs_and_threshold,
+       adjudicate_with_required_confirmation_and_contract_rules,
+       save_or_finalize_and_reread_round_state_report_and_links,
+       stop_owned_temporary_services_and_check_artifact_ignores,
+       write_registered_project_status_after_primary_artifact_delivery_when_allowed,
+       deliver_verdict_scores_gaps_captures_and_next_step_commands]
+  OUTPUT: ui_acceptance_round_report
+```
 
 ## 本地产物与 Git 忽略
 
-确定前缀后，在启动临时服务、记录被测版本或 `review begin` 之前检查目标仓的忽略规则；人工与 managed 循环都适用。
+```formal
+RULE @artifact_locations:
+  MUST: |
+    人工和 managed 循环都在确定前缀后、启动临时服务／记录被测版本／review begin 前，
+    检查目标仓忽略规则。截图放 <前缀>.ui-captures/r<n>/，控制台、失败请求、
+    临时服务及 review 命令日志集中放本轮 logs/ 子目录。
+  MUST_NOT: [move_delete_or_overwrite_historical_artifacts]
 
-- 截图仍放在 `<前缀>.ui-captures/r<n>/`；控制台、失败请求、临时服务及 review 命令的日志集中放到该轮的 `logs/` 子目录。历史产物保留原位置，不搬迁、删除或覆盖。
-- 在目标 Git 仓库读取现有 `.gitignore`，为尚未忽略的截图和日志最小追加规则，不存在时创建。规则限定本循环的产物路径，例如前缀为 `docs/reviews/orders` 时，使用 `/docs/reviews/orders.ui-captures/**/*.png`、`/docs/reviews/orders.ui-captures/**/*.log` 和 `/docs/reviews/orders.ui-captures/**/logs/`；已有规则能覆盖则复用，其他位置的本轮日志只补实际路径。不使用全仓 `*.png`、`*.log` 或忽略整个 `.ui-captures/` 的规则。
-- 默认忽略截图和运行日志；仓库明确要求提交某类证据时遵从约定。目标图、目标包、报告、修复记录、`capture.md`、`judge.md` 和 managed 状态文件不加入忽略规则。用户要求只读、不落盘或禁止改配置时，不写 `.gitignore`；没有 Git 仓库时也不创建，交付时说明。
-- 用 `git check-ignore -v -- <实际产物路径>` 验证规则命中；结束前结合 `git status --short --untracked-files=all` 检查新增截图和日志是否遗漏。已被 Git 跟踪的产物不会因 `.gitignore` 自动消失，说明这些路径，不自行移出索引。
+RULE @artifact_ignore_rules:
+  UNLESS: user_requires_read_only_no_persistence_or_no_configuration_changes_or_target_is_not_git_repository
+  MUST: [read_existing_target_gitignore_or_create_when_absent,
+         minimally_append_only_uncovered_cycle_capture_and_log_paths,
+         reuse_existing_covering_rules,
+         add_other_current_round_log_paths_only_when_actually_used,
+         default_ignore_captures_and_runtime_logs_unless_repository_requires_evidence_commits]
+  MUST_NOT: |
+    全仓 *.png、*.log 或忽略整个 .ui-captures/；
+    忽略目标图、目标包、报告、修复记录、capture.md、judge.md 或 managed 状态文件。
+  # 前缀 docs/reviews/orders 的规则示例：
+  # /docs/reviews/orders.ui-captures/**/*.png
+  # /docs/reviews/orders.ui-captures/**/*.log
+  # /docs/reviews/orders.ui-captures/**/logs/
+
+RULE @artifact_ignore_verification:
+  WHEN: target_is_git_repository
+  MUST: |
+    用 git check-ignore -v -- <实际产物路径> 验证命中；
+    结束前用 git status --short --untracked-files=all 核对新增截图和日志。
+    已跟踪的产物只说明路径，不自行移出索引。
+
+RULE @artifact_ignore_skip:
+  WHEN: user_requires_read_only_no_persistence_or_no_configuration_changes_or_target_is_not_git_repository
+  MUST: disclose_why_gitignore_was_not_written
+```
 
 ## 循环模式与能力探测
 
-先确定本循环的前缀，检查 `<前缀>.ui-review.json`、已有报告和安装回执。已有纯 Markdown 历史而无 managed 索引时继续人工流程，必须显式 import 才接管。全新无索引、无旧循环历史且用户已要求 UI 验收时，先按下述协议探测；真实 engine 与 review verbs 匹配后可 `review begin` 建立 managed 循环，缺 CLI 或能力不匹配时走人工流程。没有 CLI 不妨碍读取原文、采集真实界面和人工落盘；没有机器索引就不能假称已接管。
+```formal
+RULE @loop_discovery:
+  MUST: |
+    先确定前缀，检查 <前缀>.ui-review.json、已有报告和安装回执。
+    已有纯 Markdown 历史但无 managed 索引时继续人工流程，只有显式 review import 才接管。
+    全新无索引、无旧历史且用户已要求 UI 验收时，先探测真实 engine 与 review verbs；
+    匹配后可 review begin，缺 CLI 或能力不匹配时走人工流程。
+  MUST_NOT: [missing_cli_blocks_manual_source_reading_real_capture_or_persistence,
+             claim_managed_takeover_without_machine_index,
+             unknown_historical_attempt_or_refactor_count_as_zero]
 
-已有 managed 索引时，先按 [Phoenix 评审协议](references/phoenix-review.md) 核对固定版本 engine 的身份与实际支持的 review 协议。缺失、不匹配、未来 schema 或索引损坏时只读历史，可收集未登记素材；不计分、不裁定、不写处置、计数或报告生成区，也不新建循环来绕过原状态。说明恢复匹配 engine 的方法，恢复后续接原轮次与 revision。
+RULE @existing_managed_identity:
+  WHEN: managed_index_exists
+  MUST: verify_pinned_engine_identity_and_actual_review_protocol_using_phoenix_reference
 
-匹配时由 `review begin` 分配轮次并冻结目标与矩阵，后续依次登记采集、读取白名单 packet、登记评审原文、裁定与回读。JSON 输入按实际 `review --help` 与 `review schema --json` 返回的 typed examples 构造，不猜字段；样例不是证据，身份、hash 和 revision 必须取真实操作与材料。旧 Markdown 只有经显式 `review import` 才进入 managed 循环；历史不明的尝试或重构次数不能当作零。
+RULE @managed_capability_failure:
+  WHEN: existing_managed_engine_missing_or_mismatched_or_future_schema_or_corrupt_index
+  MUST: [read_only_history, allow_unregistered_material_collection,
+         explain_how_to_restore_matching_engine_then_resume_original_round_and_revision]
+  MUST_NOT: [score, adjudicate, write_dispositions_counts_or_generated_report_sections,
+             create_new_cycle_to_bypass_existing_state]
+
+RULE @managed_operations:
+  WHEN: matching_managed_engine_and_protocol_available
+  MUST: |
+    review begin 分配或续接轮次，冻结目标与矩阵；之后依次登记采集、
+    读取白名单 packet、登记评审原文、裁定与回读。
+    JSON 依据实际 review --help 与 review schema --json 的 typed examples 构造；
+    身份、hash、revision 来自真实操作和材料。
+  MUST_NOT: [guess_json_fields, typed_examples_as_evidence, implicit_import_of_legacy_markdown]
+```
 
 ## 1. 锚定对象与目标包
 
-1. 读取适用的仓库规则。给了开发计划时，读计划的前端与交互、真实环境与 UI 验证、里程碑验收，再沿「需求来源」读 PRD 中的界面需求与 UAT。同时读项目 DESIGN.md 或主题规范，以及计划或 PRD 链接的设计稿。只给 URL 或路由加目标图时，按单次验收处理。
-2. 按 [报告合同](references/report-contract.md) 的命名规则确定前缀和轮次。人工循环取已有最大轮次；managed 循环读索引，未结束轮次续接原 round/revision，不自行加一。已有本循环的报告时，本轮为复审；每个单元的「上一轮」是最近一次覆盖它且有评审结论的轮次；覆盖了却没有任何评审结论（如全部缺证封存）的轮次不算。
-3. 按 [目标包与采集](references/target-and-capture.md) 定位或建立目标包，并计算目标指纹。指纹与上一轮 `capture.md` 记录的不同，说明期望或目标图变了，本轮就是**重建基线**：历史最佳分、停滞判定和重构记录都从本轮重新开始。只改「采集」节不影响指纹。
-4. 目标包建立后，本技能不改写其中的期望，只能修改「采集」节并记入变更记录。目标图与规范互相矛盾时，列为待裁定事项；某单元既没有目标图也没有规范时，该单元需补证。其他单元照常评审。
+```formal
+RULE @goal_sources:
+  MUST: [read_applicable_repository_rules,
+         read_project_design_md_or_theme_rules_and_linked_designs]
+
+RULE @plan_goal_sources:
+  WHEN: development_plan_provided
+  MUST: [read_frontend_interaction_real_environment_ui_verification_and_milestone_acceptance_sections,
+         follow_requirement_source_to_prd_ui_requirements_and_uat,
+         read_designs_linked_by_plan_or_prd]
+
+RULE @single_acceptance:
+  WHEN: only_url_or_route_and_target_image_provided
+  MUST: single_acceptance_review
+
+RULE @round_identity:
+  MUST: |
+    按报告合同命名。人工循环依据已有最大轮次确定本轮；managed 循环读索引，
+    未结束轮次续接原 round/revision，不自行加一。已有本循环报告即为复审。
+    每个单元的上一轮，是最近一次覆盖它且有评审结论的轮次；
+    覆盖了但没有评审结论的轮次（如全部缺证封存）不算。
+
+RULE @target_baseline:
+  MUST: [locate_or_create_target_package_using_target_and_capture_reference,
+         compute_target_fingerprint,
+         compare_with_previous_capture_md_fingerprint,
+         restart_historical_best_stagnation_and_refactor_tracking_on_changed_fingerprint]
+  # 期望或目标图改变即重建基线；只改「采集」节不影响指纹。
+
+RULE @target_freeze:
+  MUST: [after_target_established_change_only_capture_section_and_record_change,
+         target_image_and_spec_conflicts_as_pending_user_decisions,
+         unit_without_target_image_or_spec_as_needs_evidence,
+         continue_review_of_independent_units]
+  MUST_NOT: rewrite_established_expectations_during_review
+```
 
 ## 2. 采集本轮截图
 
-1. 按目标包启动或连接被测环境，记录被测版本（HEAD、未提交改动指纹或构建号）和访问地址，并确认运行的是当前代码而不是旧构建。为评审临时启动的服务放在后台运行，记下停止方式，结束前停掉。只用测试账号和种子数据，不对真实业务数据写入或做破坏性操作。
-2. 每轮采集目标包的**全部**格子（单元 × 状态 × 视口 × 主题），这样才能发现回归。用户限定范围时只采该范围，其余标「本轮未复核」。每轮在相同条件下重拍，不挑好看的角度或数据。
-3. 每张截图都必须本轮在真实产品上实拍，要求见 [目标包与采集](references/target-and-capture.md) 的「真实性」。设计稿、旧截图、为评审写的模拟页面等不合要求的图，一律当作没采到。
-4. 交互单元按步骤实际操作，每步动作之后拍关键帧，包括键盘走查时的焦点帧。操作记录只写实际执行的动作和截图里看到的结果，不写「应该会」「预期会」之类的推断。采集期间顺带保存控制台日志和失败请求，留到评审之后再分析。
-5. 状态到达不了时，先找项目已有的造数、mock 或路由拦截手段。仍采集不到的格子写明原因，不用相近状态冒充。
-6. 按报告合同保存被测版本、目标指纹、采集条件、每张图对应的格子和出处，以及没采到的格子。人工循环写 `capture.md`；managed 循环用 `review capture add` 登记并回读生成的清单，补采追加 attempt，不覆盖原图或旧记录。
+```formal
+RULE @tested_environment:
+  MUST: [start_or_connect_environment_using_target_package,
+         record_head_and_dirty_fingerprint_or_build_id_and_access_address,
+         confirm_current_code_is_running_instead_of_stale_build,
+         run_owned_temporary_services_in_background_and_record_stop_method,
+         stop_owned_temporary_services_before_finish,
+         use_only_test_accounts_and_seed_data]
+  MUST_NOT: [writes_to_real_business_data, destructive_operations]
+
+RULE @capture_coverage:
+  MUST: [capture_all_target_unit_state_viewport_theme_cells_each_round_unless_user_limits_scope,
+         recapture_under_same_conditions,
+         honor_user_limited_scope_and_mark_other_cells_unreviewed]
+  MUST_NOT: cherry_pick_flattering_angles_or_data
+
+RULE @capture_authenticity:
+  MUST: [current_round_real_product_capture_for_each_image,
+         follow_target_and_capture_authenticity_contract,
+         treat_nonconforming_images_as_missing]
+  MUST_NOT: [design_image_as_capture, old_image_as_current_capture,
+             review_only_mock_page_as_product_capture]
+
+RULE @interaction_capture:
+  MUST: [actually_execute_interaction_steps,
+         capture_keyframes_after_each_action_including_keyboard_focus,
+         record_only_executed_actions_and_observed_results,
+         save_console_logs_and_failed_requests_during_capture_for_post_judgment_analysis]
+  MUST_NOT: expected_or_code_inferred_results_as_operation_records
+
+RULE @unreachable_state:
+  WHEN: required_state_unreachable
+  MUST: [first_seek_existing_seed_mock_or_route_interception_methods,
+         record_reason_for_still_missing_cell]
+  MUST_NOT: similar_state_substituted_for_required_state
+
+RULE @capture_record:
+  MUST: [save_tested_version_target_fingerprint_conditions_cell_mapping_provenance_and_missing_cells,
+         manual_round_writes_capture_md,
+         managed_round_uses_review_capture_add_and_rereads_generated_manifest,
+         supplementary_capture_appends_attempt]
+  MUST_NOT: overwrite_original_images_or_old_records
+```
 
 ## 3. 独立评审
 
-按 [独立评审](references/judge.md) 派发和复核：
+```formal
+RULE @independent_judge:
+  MUST: [fresh_context_read_only_nondelegating_subagent_each_round_unless_fallback_required,
+         dispatch_and_recheck_using_judge_reference,
+         give_only_target_package_current_captures_capture_md_and_interaction_records,
+         give_each_unit_previous_captures_and_judge_md_containing_only_judge_scores_and_gaps,
+         judge_opens_only_listed_materials]
+  MUST_NOT: |
+    向评审提供代码、diff、提交说明、修复记录、修复者自述、完整报告、
+    机器检查结果或门槛分。
 
-- **每轮派一个全新上下文的 subagent 当评审**，只读，不再派生。评审只拿到三样东西：目标包；本轮截图、`capture.md` 与交互记录；每个单元上一轮的截图和 `judge.md`（只含评审自己给的分和差距）。
-- **不给评审的东西**：代码、diff、提交说明、修复记录、修复者自述、完整报告、机器检查结果和门槛分。并要求评审只打开所列材料，免得被「已经修了」带偏，也免得朝门槛凑分。
-- managed 循环用 `review judge-pack` 的白名单材料派发；不沿材料内链接打开被排除的文件。packet 的 hash 绑定本批材料，确认评审沿用同一批材料；白名单是信息边界，不冒充宿主的文件权限沙箱。
-- 格子多时按单元分组并行派发。新差距先用临时编号，由主 agent 合并后统一编号。评审报告看不出的格子，主 agent 补采后再派一位全新评审重评涉及的单元，取较低分。
-- 派不出 subagent，或评审打不开图片时：
-  - 当前对话没参与这个界面的实现或修复：主 agent 可以自己评审。评审前只读目标包、本轮和上一轮的截图、`capture.md` 和 `judge.md`；先评审并保存 `judge.md`，再做第 4 节的事；报告注明「单上下文评审」。
-  - 当前对话参与过：不在本对话打分，给出在新对话运行本技能的命令。
-- 主 agent 不改分、不删差距、不改门槛项，也不因争议换评审重评。认为评审看错时，只在该差距下附核对说明，交给修复方核实，下一轮由评审复核。
-- 本轮将判通过、但最低单元分严格低于「门槛 + 0.5」时，用同一批材料再派一位全新评审确认；恰好等于时不强制。每个单元选总分较低的那位评审的一整组四维分与理由，差距取全部评审的并集；不逐维拼成一个不存在的评分。
+RULE @managed_judge_packet:
+  WHEN: managed_round
+  MUST: [dispatch_review_judge_pack_allowlisted_materials,
+         bind_and_verify_same_material_batch_with_packet_hash]
+  MUST_NOT: [follow_material_links_to_excluded_files,
+             claim_allowlist_is_host_filesystem_permission_sandbox]
+
+RULE @judge_grouping_and_supplement:
+  MUST: [group_many_cells_by_unit_for_parallel_dispatch,
+         use_temporary_ids_for_new_gaps_then_main_agent_assigns_unified_ids,
+         recapture_cells_reported_unreadable_then_fresh_judge_reassesses_affected_units,
+         retain_lower_total_score_for_reassessed_unit]
+
+RULE @single_context_fallback:
+  WHEN: subagent_unavailable_or_judge_cannot_open_images
+  MUST: |
+    当前对话未参与此界面实现或修复时，主 agent 可以评审：评审前只读目标包、
+    本轮和上一轮截图、capture.md、judge.md，先保存 judge.md 再做裁定阶段工作，
+    报告注明「单上下文评审」。
+    当前对话参与过实现或修复时，不在本对话打分，给出新对话运行本技能的命令。
+
+RULE @judge_integrity:
+  MUST: [append_only_fact_check_note_under_disputed_gap,
+         leave_dispute_for_repairer_verification_and_next_round_judge_recheck]
+  MUST_NOT: [main_agent_changes_scores_deletes_gaps_or_changes_gate_items,
+             replace_judge_or_rejudge_due_to_disagreement]
+
+RULE @confirmation_judge:
+  WHEN: would_pass_and_lowest_unit_score_strictly_below_threshold_plus_0_5
+  MUST: [dispatch_another_fresh_judge_with_same_material_batch,
+         keep_lower_total_judge_entire_four_dimension_score_group_and_reasons_per_unit,
+         union_gaps_from_all_judges]
+  MUST_NOT: [require_confirmation_at_exactly_threshold_plus_0_5,
+             splice_dimension_scores_from_different_judges]
+```
 
 ## 4. 裁定与落盘
 
-1. 保存各位评审原文及本轮合并的 `judge.md`；managed 循环还须用 `review judge add` 登记原文与忠实的结构化结果并回读。此后再做以下几件事：
-   - 做机器检查，全部在运行中的页面上执行：分析采集时保存的日志，在页面里实测溢出，注入可访问性扫描，用真实按键做键盘走查。从代码或样式表推断出的问题不算检查结果，只能提示去哪里补拍或实测；
-   - 读上轮完整报告和各轮修复记录。修复记录在计划记录目录里含「UI 验收修复」节的那份；没有计划时，是 `<前缀>.ui-review.applied.md`；
-   - 确定门槛：用户本次指定的优先，其次沿用上轮报告记录的，都没有则默认 8/10。
-2. 按报告合同完成裁定：
-   - 由主 agent 重新检查上轮的机器检查差距和主 agent 核实的差距；
-   - 计算本轮分数、门槛项、待裁定事项和停滞状态；
-   - 得出验收判定。
-3. 人工循环按报告合同写报告；managed 循环用 `review finalize` 以当前 revision 提交裁定，不手写生成区。返回 `confirmation_required` 时本轮仍是草稿，先完成确认评审再裁定；操作退出 0 本身不表示验收通过。写完回读状态、报告和链接，核对判定、分数与编号映射。写入失败时如实说明未落盘，并在聊天中交付已核实的内容。
+```formal
+RULE @judgment_persistence:
+  MUST: [save_each_judge_raw_output_and_merged_judge_md_before_adjudication_stage,
+         managed_round_registers_raw_output_and_faithful_structured_results_via_review_judge_add_and_rereads]
+
+RULE @post_judgment_checks:
+  MUST: [run_machine_checks_only_after_judgments_saved,
+         analyze_saved_logs_measure_overflow_in_page_inject_accessibility_scan_and_use_real_keyboard,
+         read_previous_full_report_and_each_round_repair_records_after_judgment]
+  MUST_NOT: code_or_stylesheet_inference_as_machine_check_result
+  # 推断只提示去哪里补拍或实测。
+  repair_record_location: "计划记录目录中含「UI 验收修复」节的记录；无计划时 <前缀>.ui-review.applied.md"
+
+RULE @threshold:
+  MUST: [current_user_threshold_first_then_previous_report_threshold_then_default_8_of_10,
+         determine_after_judgment_without_disclosing_to_judge]
+
+RULE @adjudication:
+  MUST: [main_agent_rechecks_previous_machine_and_main_agent_verified_gaps,
+         compute_round_score_gate_items_pending_decisions_and_stagnation_using_report_contract,
+         derive_acceptance_verdict_using_report_contract]
+
+RULE @round_report:
+  MUST: [manual_round_writes_report_using_contract,
+         managed_round_uses_review_finalize_with_current_revision,
+         reread_state_report_and_links_for_verdict_scores_and_id_mappings]
+  MUST_NOT: [hand_edit_managed_generated_sections,
+             operation_exit_zero_as_acceptance_pass]
+  ON_UNMET: [state_report_not_saved, deliver_verified_content_in_chat]
+
+RULE @confirmation_required:
+  WHEN: review_finalize_returns_confirmation_required
+  MUST: [keep_round_draft, complete_confirmation_judgment_before_finalizing_again]
+
+OUTPUT:
+  FORMAT: markdown
+  STYLE: follow_user_language
+  SECTIONS: [acceptance_verdict, score_trajectory, lowest_scoring_unit_and_key_gaps,
+             latest_capture_locations, copyable_next_step_commands]
+  verdict_source: references/report-contract.md
+
+REVIEW:
+  CHECK: [@actual_effects_only, @managed_capability_failure, @target_freeze,
+          @capture_coverage, @independent_judge, @judge_integrity,
+          @confirmation_judge, @round_report]
+  ALSO: [round_continuity, evidence_traceability, id_mapping_consistency,
+         artifact_ignore_coverage]
+  EXPOSE: on_issue
+```
 
 ## 5. 验收判定与下一步
 
-最终回复先给一行验收判定（定义见报告合同），再给分数轨迹、最低分单元及主要差距、最新截图位置，最后给可直接复制的下一步命令。命令按当前客户端的技能调用写法（如 Codex `$apply-ui-review`、Claude Code `/apply-ui-review`），路径填实际文件。
+```formal
+RULE @next_step_commands:
+  MUST: [final_reply_starts_with_contract_acceptance_verdict,
+         commands_use_current_client_skill_syntax_and_actual_paths]
+  MUST_NOT: automatically_start_repairs_code_recheck_or_prd_gap_review
 
-首轮刚建立目标包时，列出期望的来源和假设，请用户确认；用户修改期望后，下一轮按重建基线评审。
+RULE @first_target_confirmation:
+  WHEN: first_round_just_created_target_package
+  MUST: [list_expectation_sources_and_assumptions_for_user_confirmation,
+         review_next_round_as_new_baseline_after_user_changes_expectations]
 
-| 验收判定 | 下一步 |
-| --- | --- |
-| 需要修改 | `apply-ui-review <本报告路径>`，修复后再用本技能复审。带「停滞预警」时，说明是全局重构，还是重构哪个单元。带「待裁定」时，同时列出这些事项请用户决定；修复方先处理其余差距 |
-| 通过验收 / 用户豁免通过 | 给出最新截图，问用户是否继续打磨：要打磨就 `apply-ui-review <本报告路径>` 处理剩余差距，再复审。不打磨时，如果本轮循环的 UI 修复改了代码（登记为「UI修复」的提交或未提交改动），先 `review-code <计划路径>` 复审这些改动；之后计划来自 PRD 的可选 `review-prd-dev-gaps <计划路径>` |
-| 需用户裁定 | 列出停滞或待裁定的事项、已经试过的做法，以及目标与当前截图的对照，请用户从下面三个选项中选择 |
-| 需补证 | 列出缺少的环境、账号、数据、工具或目标，以及获取方式；补齐后再 `review-ui <计划路径或原范围>`。已评单元的差距可以先 `apply-ui-review <本报告路径>` |
+RULE @needs_changes_next:
+  WHEN: "验收判定为「需要修改」"
+  MUST: |
+    给出 apply-ui-review <本报告路径>，修复后用本技能复审。
+    有「停滞预警」时写明全局重构或需重构的单元；
+    有「待裁定」时列出事项请用户决定，修复方先处理其余差距。
 
-需用户裁定时的三个选项：
+RULE @passed_next:
+  WHEN: "验收判定为「通过验收」或「用户豁免通过」"
+  MUST: |
+    给最新截图并询问是否继续打磨；要打磨则 apply-ui-review <本报告路径> 后复审。
+    不打磨时，如本轮循环 UI 修复改了代码（登记为「UI修复」的提交或未提交改动），
+    先 review-code <计划路径> 复审这些改动；之后计划来自 PRD 时可选
+    review-prd-dev-gaps <计划路径>。
 
-1. 接受整体现状，记为豁免通过；
-2. 接受某处偏差或修改期望，由用户确认后改目标包，下一轮重建基线；
-3. 提供素材或方向，然后执行 `apply-ui-review <本报告路径>`。
+RULE @needs_decision_next:
+  WHEN: "验收判定为「需用户裁定」"
+  MUST: |
+    列出停滞或待裁定事项、已尝试的做法、目标与当前截图对照，请用户选择：
+    1. 接受整体现状，记为豁免通过；
+    2. 接受某处偏差或修改期望，用户确认后改目标包，下一轮重建基线；
+    3. 提供素材或方向，然后执行 apply-ui-review <本报告路径>。
 
-- 用户明确表示接受当前的整体界面时，按报告合同追加豁免记录并回读。豁免不能写成已解决。
-- 只给建议命令，不自行启动修复、代码复审或差异核查。
+RULE @needs_evidence_next:
+  WHEN: "验收判定为「需补证」"
+  MUST: |
+    列出缺少的环境、账号、数据、工具或目标及获取方式；
+    补齐后 review-ui <计划路径或原范围>。
+    已评单元的差距可以先 apply-ui-review <本报告路径>。
+
+RULE @explicit_waiver:
+  WHEN: user_explicitly_accepts_current_overall_ui
+  MUST: append_contract_waiver_record_and_reread
+  MUST_NOT: waiver_described_as_resolved
+```
 
 调用示例：
 
@@ -115,6 +386,23 @@ disable-model-invocation: true
 
 ## 项目状态回写
 
-若仓库已登记状态台账，或存在仓根 `.xgent-ai/sdlc/protocol.md`（兼容已有 `docs/project-status/protocol.md`；两套并存且未登记切换时先核对，不能双写），交付原产物后读取台账的回写规则（默认目录读上述协议），按仓内协议更新受影响对象的当前状态与来源链接，必要时维护索引；v4 日常直接更新当前页，事件留存条件或旧版事件要求以仓内协议为准；未启用时不自动建表，不依赖另装技能。只读/仅聊天/不保存及 managed 能力异常时的只读边界优先，登记失败须说明，不影响如实交付已完成的原产物。
+```formal
+RULE @project_status:
+  WHEN: repository_has_registered_ledger_or_existing_sdlc_protocol
+  MUST: |
+    交付原产物后读取仓内回写规则；默认协议为仓根 .xgent-ai/sdlc/protocol.md，
+    兼容已有 docs/project-status/protocol.md。两套并存且未登记切换时先核对，不双写。
+    按协议更新受影响对象当前状态与来源链接，必要时维护索引；v4 日常直接更新当前页，
+    事件留存条件或旧版事件要求以仓内协议为准。
+    只读／仅聊天／不保存及 managed 能力异常的只读边界优先；
+    登记失败须说明，不影响如实交付已完成的原产物。
+  MUST_NOT: [create_ledger_when_not_enabled, require_separately_installed_skill]
 
-每轮实际评审都登记独立的评审 ID，写明被测版本、目标指纹、范围、判定、分数和报告路径；复审关联前轮。协议的 `review_type` 没有 UI 类型时，登记为 `other`，并在摘要注明「UI 验收评审」。通过验收不能登记为已合并、已发布或产品终验通过。
+RULE @review_status_record:
+  WHEN: project_status_writeback_allowed
+  MUST: [independent_id_for_each_actual_review,
+         record_tested_version_target_fingerprint_scope_verdict_score_and_report_path,
+         link_recheck_to_previous_round,
+         "协议 review_type 没有 UI 类型时用 other，摘要注明「UI 验收评审」"]
+  MUST_NOT: register_ui_acceptance_pass_as_merged_released_or_product_final_acceptance
+```

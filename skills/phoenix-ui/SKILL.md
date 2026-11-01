@@ -1,13 +1,13 @@
 ---
 name: phoenix-ui
 description: 用于前端设计、重设计、局部优化与 live 交互；不用于后端任务、仅维护设计规范或独立 UI 验收。结合项目上下文提供设计命令和本地检测，npm 安装后使用。
-when_to_use: "用户会说「这个页面重新设计一下」「调一下这个组件样式」「边看浏览器边改」时。"
-internal: true
+when_to_use: 用户会说「这个页面重新设计一下」「调一下这个组件样式」「边看浏览器边改」时。
 license: Apache 2.0
 metadata:
+  internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 0373592bd1816746801e33d048c42075dca27b752f2c16d5567921f65870069a
+  source_sha256: 9a8b3b4b58792a4169f11a2597ff9bcba571fc23d45fb39dffad012808a65280
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.

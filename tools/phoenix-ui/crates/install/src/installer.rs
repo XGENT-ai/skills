@@ -1,6 +1,6 @@
 //! Project installation over the verified bundle plan. This adds what the
 //! bundle plan leaves to its caller: first-install legacy data and pins, the
-//! derived runtime manifest, the five auxiliary skills, the transitional
+//! derived runtime manifest, the transitional
 //! `impeccable` entry, ownership carried forward from the active receipt and
 //! read-only discovery of personal entries. All writes go through the kernel.
 use crate::{
@@ -18,7 +18,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const AUXILIARY_SKILLS: [&str; 5] = [
+const LEGACY_AUXILIARY_SKILLS: [&str; 5] = [
     "apply-ui-review",
     "design-md",
     "design-reference",
@@ -28,14 +28,10 @@ pub const AUXILIARY_SKILLS: [&str; 5] = [
 const RUNTIME_MANIFEST: &str = "skills/phoenix-ui/scripts/ENGINE.json";
 const MAIN_SKILL: &str = "skills/phoenix-ui/SKILL.md";
 const TRANSITION: &str = include_str!("../templates/impeccable-transition.md");
-const AUXILIARY_FILE_LIMIT: u64 = 1024 * 1024;
-const AUXILIARY_FILES: usize = 200;
 
 pub struct Request<'a> {
     pub project: &'a Path,
     pub bundle_root: &'a Path,
-    /// Directory holding the five auxiliary skill directories, if installing them.
-    pub auxiliary_root: Option<&'a Path>,
     /// Bundle provider directories, e.g. `.agents`, `.claude`, `.codex`.
     pub providers: Vec<String>,
     /// Home directory for read-only personal discovery; `None` skips it.
@@ -56,7 +52,7 @@ pub enum Status {
     Unchanged,
     Conflict,
     RecoveryRequired,
-    /// Phoenix is active, but an external auxiliary or personal copy differs.
+    /// Phoenix is active, but an integration finding remains.
     IntegrationPending,
     RolledBack,
     Recovered,
@@ -255,103 +251,25 @@ fn is_noop(change: &Change) -> bool {
     }
 }
 
-/// Load the auxiliary skill trees as exact bytes. Symlinks and oversized trees
-/// are rejected; the package copy is the source of truth for every provider.
-fn load_auxiliary(root: &Path) -> Result<BTreeMap<String, BTreeMap<String, Payload>>> {
-    let mut skills = BTreeMap::new();
-    for skill in AUXILIARY_SKILLS {
-        let mut files = BTreeMap::new();
-        let mut stack = vec![(root.join(skill), String::new())];
-        while let Some((dir, prefix)) = stack.pop() {
-            let meta = fs::symlink_metadata(&dir).map_err(|e| Error::io(&dir, e))?;
-            if !meta.is_dir() || meta.is_symlink() {
-                return Err(invalid(format!(
-                    "auxiliary skill requires plain directories: {}",
-                    dir.display()
-                )));
-            }
-            for entry in fs::read_dir(&dir).map_err(|e| Error::io(&dir, e))? {
-                let entry = entry.map_err(|e| Error::io(&dir, e))?;
-                let name = entry
-                    .file_name()
-                    .into_string()
-                    .map_err(|_| invalid("auxiliary skill path is not UTF-8"))?;
-                let relative = if prefix.is_empty() {
-                    name.clone()
-                } else {
-                    format!("{prefix}/{name}")
-                };
-                let kind = entry.file_type().map_err(|e| Error::io(&entry.path(), e))?;
-                if kind.is_dir() {
-                    stack.push((entry.path(), relative));
-                } else {
-                    let bytes = read_bounded(&entry.path(), AUXILIARY_FILE_LIMIT)?;
-                    files.insert(relative, Payload::new(bytes, Permissions::file(0o644)));
-                    if files.len() > AUXILIARY_FILES {
-                        return Err(invalid(format!(
-                            "auxiliary skill has too many files: {skill}"
-                        )));
-                    }
-                }
-            }
-        }
-        if !files.contains_key("SKILL.md") {
-            return Err(invalid(format!("auxiliary skill has no SKILL.md: {skill}")));
-        }
-        skills.insert(skill.to_string(), files);
-    }
-    Ok(skills)
-}
-
-/// Every file below `full` (following a linked root) with its hash; `None`
-/// when absent. Oversized or excess entries hash as empty and never match.
-fn tree_hashes(full: &Path) -> Result<Option<BTreeMap<String, String>>> {
-    let full = full.to_path_buf();
-    match fs::symlink_metadata(&full) {
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(e) => return Err(Error::io(&full, e)),
-        Ok(_) => {}
-    }
-    let mut out = BTreeMap::new();
-    let mut stack = vec![(full, String::new())];
-    while let Some((dir, prefix)) = stack.pop() {
-        for entry in fs::read_dir(&dir).map_err(|e| Error::io(&dir, e))? {
-            let entry = entry.map_err(|e| Error::io(&dir, e))?;
-            let name = entry.file_name().to_string_lossy().into_owned();
-            let relative = if prefix.is_empty() {
-                name
-            } else {
-                format!("{prefix}/{name}")
-            };
-            let meta = fs::metadata(entry.path()).map_err(|e| Error::io(&entry.path(), e))?;
-            if meta.is_dir() {
-                stack.push((entry.path(), relative));
-            } else if out.len() < AUXILIARY_FILES * 2 && meta.len() <= AUXILIARY_FILE_LIMIT {
-                let bytes = fs::read(entry.path()).map_err(|e| Error::io(&entry.path(), e))?;
-                out.insert(relative, sha256(&bytes));
-            } else {
-                out.insert(relative, String::new());
-            }
-        }
-    }
-    Ok(Some(out))
-}
-
-fn package_hashes(files: &BTreeMap<String, Payload>) -> BTreeMap<String, String> {
-    files
-        .iter()
-        .map(|(path, payload)| (path.clone(), payload.sha256.clone()))
-        .collect()
+/// These files belonged to earlier npm installs; skills.sh now owns their lifecycle.
+pub(crate) fn legacy_auxiliary(path: &str) -> bool {
+    let mut parts = path.split('/');
+    parts
+        .next()
+        .is_some_and(|provider| provider.starts_with('.'))
+        && parts.next() == Some("skills")
+        && parts
+            .next()
+            .is_some_and(|skill| LEGACY_AUXILIARY_SKILLS.contains(&skill))
+        && parts.next().is_some()
 }
 
 /// Read-only personal discovery for the selected providers. Old main entries
-/// and design hooks there would run beside Phoenix, so they block activation;
-/// auxiliary copies only keep the integration from being complete.
+/// and design hooks there would run beside Phoenix, so they block activation.
 fn discover_personal(
     home: &Path,
     project: &Path,
     providers: &[String],
-    auxiliary: Option<&BTreeMap<String, BTreeMap<String, Payload>>>,
     conflicts: &mut Vec<Conflict>,
     findings: &mut Vec<Finding>,
     keep_impeccable: bool,
@@ -361,17 +279,17 @@ fn discover_personal(
     for provider in providers {
         match provider.as_str() {
             ".claude" => {
-                skill_roots.push((".claude/skills", true));
+                skill_roots.push(".claude/skills");
                 hook_files.push(".claude/settings.json");
                 hook_files.push(".claude/settings.local.json");
             }
             ".agents" | ".codex" => {
-                skill_roots.push((".agents/skills", false));
-                skill_roots.push((".codex/skills", false));
+                skill_roots.push(".agents/skills");
+                skill_roots.push(".codex/skills");
                 hook_files.push(".codex/hooks.json");
             }
             ".cursor" => {
-                skill_roots.push((".cursor/skills", false));
+                skill_roots.push(".cursor/skills");
                 hook_files.push(".cursor/hooks.json");
             }
             _ => {}
@@ -381,9 +299,8 @@ fn discover_personal(
     skill_roots.dedup();
     hook_files.sort();
     hook_files.dedup();
-    let display = |relative: &str| home.join(relative).display().to_string();
     let locked_upstream = skills_sh_upstream_skills(home);
-    for (root, overrides_project) in skill_roots {
+    for root in skill_roots {
         let old = home.join(root).join("impeccable");
         if !keep_impeccable && fs::symlink_metadata(&old).is_ok() {
             conflicts.push(Conflict {
@@ -393,34 +310,9 @@ fn discover_personal(
                 message: "personal Impeccable skill would run beside Phoenix; back it up and remove or disable it from the personal skills directory, reload the agent, then rerun the install".into(),
             });
         }
-        findings.extend(personal_old_commands(
-            home,
-            root,
-            auxiliary,
-            &locked_upstream,
-        ));
-        let Some(auxiliary) = auxiliary else { continue };
-        for (skill, files) in auxiliary {
-            let relative = format!("{root}/{skill}");
-            let Ok(Some(found)) = tree_hashes(&home.join(&relative)) else {
-                continue;
-            };
-            let same = found == package_hashes(files);
-            findings.push(Finding {
-                path: display(&relative),
-                kind: if same { "personal-copy-identical" } else { "personal-copy-differs" },
-                blocking_integration: !same,
-                sha256: Some(sha256(serde_json::to_string(&found).unwrap_or_default().as_bytes())),
-                message: if same {
-                    "identical personal copy; nothing to change".into()
-                } else if overrides_project {
-                    "Claude loads this personal copy instead of the project copy; update or remove it, then rerun the install".into()
-                } else {
-                    "personal copy differs and its precedence over the project copy is not established; verify the loaded path in a new session".into()
-                },
-            });
-        }
+        findings.extend(personal_old_commands(home, root, &locked_upstream));
     }
+
     for file in hook_files {
         let path = home.join(file);
         let Ok(bytes) = read_bounded(&path, 4 * 1024 * 1024) else {
@@ -571,12 +463,7 @@ fn skills_sh_upstream_skills(home: &Path) -> Vec<String> {
 /// Older upstream command sets (split skills such as `polish` next to
 /// `teach-impeccable`) carry no hooks or engine, so they do not block Phoenix;
 /// they stay visible beside it until the user removes them.
-fn personal_old_commands(
-    home: &Path,
-    root: &str,
-    auxiliary: Option<&BTreeMap<String, BTreeMap<String, Payload>>>,
-    locked_upstream: &[String],
-) -> Vec<Finding> {
+fn personal_old_commands(home: &Path, root: &str, locked_upstream: &[String]) -> Vec<Finding> {
     let Ok(entries) = fs::read_dir(home.join(root)) else {
         return Vec::new();
     };
@@ -586,7 +473,7 @@ fn personal_old_commands(
         .filter(|name| {
             name != "impeccable"
                 && name != "phoenix-ui"
-                && !auxiliary.is_some_and(|skills| skills.contains_key(name))
+                && !LEGACY_AUXILIARY_SKILLS.contains(&name.as_str())
         })
         .collect();
     names.sort();
@@ -788,7 +675,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
             Err(error) => return Err(error),
         }
     }
-    let active = match project.verified_installation() {
+    let active = match project.verified_installation_with_unmanaged(legacy_auxiliary) {
         Ok(active) => active,
         Err(error) if error.kind == ErrorKind::RecoveryRequired => {
             report.status = Status::RecoveryRequired;
@@ -839,15 +726,22 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
         Err(error) => return Err(error),
     };
     report.conflicts.extend(prepared.conflicts.iter().cloned());
-    report.preserved.extend(prepared.preserved.iter().cloned());
-    let auxiliary = request.auxiliary_root.map(load_auxiliary).transpose()?;
+    report
+        .preserved
+        .extend(prepared.preserved.iter().cloned().map(|mut item| {
+            if legacy_auxiliary(&item.path) {
+                item.reason =
+                "independently managed skill; Phoenix releases ownership without changing files"
+                    .into();
+            }
+            item
+        }));
     report.findings.extend(document_mentions(project.root()));
     if let Some(home) = &request.home {
         discover_personal(
             home,
             project.root(),
             &request.providers,
-            auxiliary.as_ref(),
             &mut report.conflicts,
             &mut report.findings,
             request.keep_impeccable,
@@ -930,7 +824,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
             a.receipt
                 .ownership
                 .iter()
-                .filter(|o| !o.shared_entries)
+                .filter(|o| !o.shared_entries && !legacy_auxiliary(&o.path))
                 .map(|o| (o.path.clone(), (o.sha256.clone(), o.rollback)))
                 .collect()
         })
@@ -991,75 +885,7 @@ pub fn install_with(request: &Request, observer: impl FnMut(Checkpoint)) -> Resu
         report.transition_entries.push(path.clone());
         add(&mut changes, write_change(path, expected, payload))?;
     }
-    if let Some(auxiliary) = &auxiliary {
-        for provider in request
-            .providers
-            .iter()
-            .filter(|p| version.providers_with_skill.contains(*p))
-        {
-            for (skill, files) in auxiliary {
-                let dir = format!("{provider}/skills/{skill}");
-                let full =
-                    disk::checked(project.root(), &format!("{provider}/skills"))?.join(skill);
-                let link = fs::symlink_metadata(&full).is_ok_and(|m| m.is_symlink());
-                let found = tree_hashes(&full)?;
-                let package = package_hashes(files);
-                let all_owned = found.as_ref().is_some_and(|found| {
-                    !found.is_empty()
-                        && found
-                            .iter()
-                            .all(|(file, hash)| owned_with(&format!("{dir}/{file}"), hash))
-                });
-                match found {
-                    Some(found) if link || !all_owned => {
-                        let same = found == package;
-                        report.findings.push(Finding {
-                            path: dir.clone(),
-                            kind: match (link, same) {
-                                (true, true) => "external-symlink-identical",
-                                (true, false) => "external-symlink-differs",
-                                (false, true) => "external-copy-identical",
-                                (false, false) => "external-copy-differs",
-                            },
-                            blocking_integration: !same,
-                            sha256: Some(sha256(serde_json::to_string(&found).unwrap_or_default().as_bytes())),
-                            message: if same {
-                                "externally managed identical copy left untouched; Phoenix does not take ownership".into()
-                            } else {
-                                format!("externally managed copy differs and is kept; update it (for example `npx skills add XGENT-ai/skills --skill {skill}`) or back it up and move it out of {dir}, then rerun the install")
-                            },
-                        });
-                    }
-                    found => {
-                        let found = found.unwrap_or_default();
-                        for (file, payload) in files {
-                            let path = format!("{dir}/{file}");
-                            let expected = match found.get(file) {
-                                Some(hash) => ExpectedFile::Hash(hash.clone()),
-                                None => ExpectedFile::Absent,
-                            };
-                            add(&mut changes, write_change(path, expected, payload.clone()))?;
-                        }
-                        for (file, hash) in
-                            found.iter().filter(|(file, _)| !files.contains_key(*file))
-                        {
-                            add(
-                                &mut changes,
-                                Change::Exclusive {
-                                    path: format!("{dir}/{file}"),
-                                    expected: ExpectedFile::Hash(hash.clone()),
-                                    after: None,
-                                    rollback: RollbackPolicy::Restore,
-                                },
-                            )?;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // Carry forward ownership the bundle plan does not cover (pins, migrated data,
-    // auxiliary files installed without --auxiliary-root this time).
+    // Carry forward pins and migrated data outside the bundle.
     for (path, (sha, rollback)) in &owned {
         if changes.contains_key(path) || sha.is_none() {
             continue;

@@ -80,8 +80,29 @@
   policy，只合并本次编辑或清除的 schema 路径，再整份 PUT，保留未展示字段。PUT 接收合并后的完整 policy 并返回同一形状。
 - 字段缺省时 effective 必须已有应用默认值；旧后端没有返回 schema 所需 effective 字段时，Portal 显示版本不支持并禁止写入。
   App 必须在每次读写时重新校验租户管理员和 scopes，不能只信 Portal 签票或浏览器校验。
-- `tenantConfig` 只能由 `type:"service"` 声明，scopes 必须已在 listing `scopes` 中。字段新增、修改和撤回都是治理档；
+- 无 `protocol` 的 schema 声明只支持 `type:"service"`，scopes 必须已在 listing `scopes` 中。字段新增、修改和撤回都是治理档；
   批准后按 listing 现值对所有租户生效，不进安装快照。首版不支持动态选项、远程 `$ref`、脚本或密钥录入。
+
+### 既有 revision/CAS 设置（`skills-settings-v1`）
+
+已有 Skills 设置线协议的 micro/service 可复用 `tenantConfig`，无需新增门户 key 分支。新 micro App 的默认接入仍是 `adminPages.tenant`；此协议只适配既有的设置格式。
+
+```jsonc
+"tenantConfig": {
+  "protocol": "skills-settings-v1",
+  "label": { "zh-CN": "Skills 设置", "en": "Skills settings", "zh-TW": "Skills 設定" },
+  "path": "/v1/settings",
+  "scopes": ["my-app.read", "my-app.admin"]
+}
+```
+
+- `path` 固定为 `/v1/settings`；不带 `schema` 或其他字段。必须恰含同一自有命名空间的 read/admin，命名空间为 listingKey 或其连字符转下划线形态；两项须在 manifest 自身 `scopes` 中显式声明。重复、混合命名空间、依赖或平台权限均拒绝。
+- GET/PUT 沿用 Skills 的 revision/CAS 合同；不会转换为上节的 policy/effective。PUT 使用 `expectedRevision` 和最小 patch，冲突读回再处理；丢响应后先 GET 确认，不自动重放 PUT。存储、业务校验、审计及严格自省仍由 App 负责。
+- 通用 `GET /api/admin/apps/:appKey/tenant-config-token` 必须由当前管理员会话携带 `expectedUserId` / `expectedTenantId`，返回 `{ token, expiresIn: 600, serviceBase }`。本安装 appKey/contentOwner/来源 listingKey 必须一致，且安装仍有两项 scope；只支持 canonical `/svc/<listingKey>`（可带单尾斜杠，返回归一地址）。App 请求只带 Bearer、不带 Portal cookie。
+- 旧 `skills-token` 入口仅对本协议适配为 `skillsBase` 响应，同样现读获批声明，无旧 key 兜底。声明省略保留、null 撤回、完整对象替换，均沿既有治理；null 立即停止新票，已出票沿现有 JTI/资格撤销及最长 600 秒边界，不承诺声明撤回本身即时吊销全部旧票。
+- 批准声明不补安装 scope、角色 grant 或 consent。全部外部 listing 的自动版本/品牌同步均保留安装 scopes；新增权限须租户管理员显式调用 `POST /api/admin/market/listings/:key/update`（版本已相同也可调用）。新安装取当前获批 scopes，内置定义同步仍 union。
+- 旧 null 不自动恢复；平台有权者须在支持新协议的 API 上明确治理恢复。先升级 Portal API，再提交并批准 bump 后的正式清单，最后升级宿主前端；声明样例不是已批准事实。
+- `@xgent/shared` 联合类型从 0.11.0 起提供（实际可安装状态以门户发布回执为准）：先用 `isSkillsSettingsConfig` 分派，再访问旧 `AppTenantConfig.schema`。所有 DTO 消费方均须加守卫。
 
 ### OmniParser：六项 `foreground` 后端接入清单
 

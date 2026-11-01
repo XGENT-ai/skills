@@ -429,3 +429,14 @@ if (process.env.PHOENIX_BUILD_TOOL_ARCHIVE) {
     }
   });
 }
+
+test('skill source loading excludes Finder metadata from nested script payloads', async t => {
+  const { readSourceFiles } = await import('../../tools/phoenix-ui/scripts/lib/utils.js');
+  const directory = sandbox(t), source = path.join(directory, 'source');
+  fs.mkdirSync(path.join(source, 'scripts/nested'), { recursive: true });
+  fs.writeFileSync(path.join(source, 'SKILL.src.md'), '---\nname: phoenix-ui\ndescription: fixture\n---\nFixture\n');
+  fs.writeFileSync(path.join(source, 'scripts/launcher.cjs'), 'real script');
+  fs.writeFileSync(path.join(source, 'scripts/.DS_Store'), 'Finder metadata');
+  fs.writeFileSync(path.join(source, 'scripts/nested/.DS_Store'), 'nested Finder metadata');
+  assert.deepEqual(readSourceFiles(directory, source).skills[0].scripts.map(item => item.name), ['launcher.cjs']);
+});

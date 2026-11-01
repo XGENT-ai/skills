@@ -21,6 +21,7 @@ function filesIn(root) {
   if (!fs.existsSync(root)) return files;
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : 1)) {
+      if (entry.name === '.DS_Store') continue;
       const file = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(file);
       else {
@@ -57,14 +58,14 @@ function render(stage, input) {
   assert.equal(skills.length, 1, 'Phoenix has exactly one source skill');
   assert.equal(skills[0].name, 'phoenix-ui');
   assert.equal(skills[0].internal, true);
-  skills[0].metadata = { version: fs.readFileSync(path.join(source, 'scripts/VERSION'), 'utf8').trim(),
+  skills[0].metadata = { internal: skills[0].internal, version: fs.readFileSync(path.join(source, 'scripts/VERSION'), 'utf8').trim(),
     source: 'skills/phoenix-ui/src', source_sha256: input.digest };
   const version = skills[0].metadata.version;
   const dist = path.join(stage, 'dist');
   for (const config of Object.values(PROVIDERS)) createTransformer(config)(skills, dist, { skillsVersion: version });
   createTransformer({ provider: 'generic', configDir: '', displayName: 'Generic',
     providerTags: ['codex'], placeholderProvider: 'codex', scriptsPath: '<skill-base-dir>/scripts',
-    frontmatterFields: ['internal', 'license', 'metadata'], versionInMetadata: true, writeOpenAIMetadata: true,
+    frontmatterFields: ['when_to_use', 'license', 'metadata'], versionInMetadata: true, writeOpenAIMetadata: true,
   })(skills, dist, { skillsVersion: version });
   const generic = path.join(stage, 'skill');
   fs.cpSync(path.join(dist, 'generic/skills/phoenix-ui'), generic, { recursive: true });

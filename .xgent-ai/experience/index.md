@@ -72,3 +72,13 @@
 - f8d9b609-0721-4d16-b950-3218860439bc — [Rust skill 最佳实践融合](f8d9b609-0721-4d16-b950-3218860439bc.md)
 
 - 477807a0-a54e-4f96-938f-f9f127c4897f · [Odyssey skill 重写](477807a0-a54e-4f96-938f-f9f127c4897f.md)
+
+- a2c406d0-ca1c-4581-970d-20c4fa2c6b88 · [dev-plan 模板 ODC 改写](a2c406d0-ca1c-4581-970d-20c4fa2c6b88.md)
+
+- a3b29874-b780-4424-b033-dc9948a05f59 · [use-prompt-dsl 改写定位](a3b29874-b780-4424-b033-dc9948a05f59.md)
+
+- adde76e0-97d3-47e7-887d-295ef6f5ecb8 · [review-code 与 review-ui ODC 改写](adde76e0-97d3-47e7-887d-295ef6f5ecb8.md)
+
+- `8bb1f7e5-ef61-44e7-a432-832aa7446bcf` — [AGENTS.md 优化验证](8bb1f7e5-ef61-44e7-a432-832aa7446bcf.md)
+
+- [Phoenix UI 分发排除修复 · b92316be-fe41-4169-b501-04b01cb22ae5](b92316be-fe41-4169-b501-04b01cb22ae5.md)
