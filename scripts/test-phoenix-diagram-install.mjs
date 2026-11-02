@@ -74,7 +74,7 @@ export async function runInstallStage() {
     const { preflight, buildEnvironment, offlineNetworkProfile } = await import('./phoenix-build-tools.mjs');
     const prepared = preflight(), env = buildEnvironment(prepared); record.phases.preflight = 'pass';
     phase = 'build';
-    const args = ['exec', '--no-deps', '--', 'mbx', 'build', '--manifest-path', path.join(uiWorkspace, 'Cargo.toml'), '-p', 'phoenix-ui', '--bin', 'phoenix-ui', '--locked', '--offline', '--message-format=json'];
+    const args = ['exec', '--no-deps', '--', 'mbx', 'build', '--manifest-path', path.join(uiWorkspace, 'Cargo.toml'), '-p', 'phoenix-ui', '--bin', 'phoenix-ui', '--release', '--locked', '--offline', '--message-format=json'];
     const result = process.platform === 'darwin'
       ? spawnSync('sandbox-exec', ['-p', offlineNetworkProfile, 'mise', ...args], { cwd: uiWorkspace, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024 })
       : spawnSync('mise', args, { cwd: uiWorkspace, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024 });

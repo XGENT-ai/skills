@@ -1,5 +1,5 @@
 //! `phoenix-ui skills install|update` is the compatibility spelling of the
-//! top-level verbs; its project branch must reach the transactional installer.
+//! top-level verbs; its project branch must overwrite without transaction state.
 use serde_json::Value;
 use std::{
     collections::BTreeMap,
@@ -83,7 +83,7 @@ fn tree(root: &Path) -> BTreeMap<PathBuf, Vec<u8>> {
 }
 
 #[test]
-fn skills_namespace_project_install_and_update_are_transactional() {
+fn skills_namespace_project_install_and_update_overwrite_without_transactions() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let bundle = bundle();
@@ -124,11 +124,9 @@ fn skills_namespace_project_install_and_update_are_transactional() {
         (0, Some("installed")),
         "{installed}"
     );
-    assert!(project.join(".phoenix-ui/install/active.json").is_file());
-    let id = installed["transactionId"].as_str().unwrap();
-    assert!(project
-        .join(format!(".phoenix-ui/install/journals/{id}.json"))
-        .is_file());
+    assert!(installed["transactionId"].is_null());
+    assert!(!project.join(".phoenix-ui/install").exists());
+    assert!(!project.join(".phoenix-ui/migrations").exists());
     let (code, again) = sandbox.run(&args("update", false));
     assert_eq!(
         (code, again["status"].as_str()),
@@ -136,16 +134,18 @@ fn skills_namespace_project_install_and_update_are_transactional() {
         "{again}"
     );
 
-    // A user change to an owned file is a conflict, never overwritten by an update.
     let skill = project.join(".claude/skills/phoenix-ui/SKILL.md");
-    let mut edited = fs::read(&skill).unwrap();
+    let original = fs::read(&skill).unwrap();
+    let mut edited = original.clone();
     edited.extend_from_slice(b"\nlocal note\n");
     fs::write(&skill, &edited).unwrap();
-    let (code, conflict) = sandbox.run(&args("update", false));
+    let (code, updated) = sandbox.run(&args("update", false));
     assert_eq!(
-        (code, conflict["status"].as_str()),
-        (3, Some("conflict")),
-        "{conflict}"
+        (code, updated["status"].as_str()),
+        (0, Some("installed")),
+        "{updated}"
     );
-    assert_eq!(fs::read(&skill).unwrap(), edited);
+    assert_eq!(fs::read(&skill).unwrap(), original);
+    assert!(!project.join(".phoenix-ui/install").exists());
+    assert!(!project.join(".phoenix-ui/migrations").exists());
 }
