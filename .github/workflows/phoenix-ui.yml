@@ -2,6 +2,11 @@ name: Phoenix UI
 
 on:
   workflow_dispatch:
+    inputs:
+      build_only:
+        description: Build and smoke only; skip regression suites
+        type: boolean
+        default: false
   push:
     paths: &phoenix_paths
       - '.github/workflows/phoenix-ui.yml'
@@ -104,6 +109,7 @@ jobs:
         run: mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write
       # Check committed evidence before platform builds replace VERSION/ENGINE.
       - name: Lightweight repository tests
+        if: ${{ !inputs.build_only }}
         id: light
         env:
           CARGO_NET_OFFLINE: 'true'
@@ -119,6 +125,7 @@ jobs:
           CARGO_NET_OFFLINE: 'true'
         run: mise exec --no-deps -- node ../../scripts/smoke-phoenix-ui.mjs --release-dir ../../local/phoenix-ui/ci-release/${{ matrix.platform }} --target ${{ matrix.platform }} --stage-runtime
       - name: Full Phoenix runtime tests offline
+        if: ${{ !inputs.build_only }}
         id: runtime
         env:
           CARGO_NET_OFFLINE: 'true'
