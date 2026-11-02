@@ -227,7 +227,7 @@ export function validateHandoff(options, staging) {
     const phase = readJson(path.join(staging, `phoenix-ui-${target}-evidence`, `${target}-ci-results.json`));
     assert(phase.schemaVersion === 1 && phase.target === target && phase.sourceCommit === options.sourceCommit && phase.workflowRun === options.runId, `${target} phase identity differs`);
     for (const name of Object.keys(phases)) assert.equal(phase.phases[name], 'success', `${target} phase ${name} did not succeed`);
-    const jobId = successfulJob(jobRecord.jobs, options, `Native ${target}`, Object.values(phases));
+    const jobId = successfulJob(jobRecord.jobs, options, `UI Native ${target}`, Object.values(phases));
     smoke(readJson(path.join(directory, 'runtime-smoke-node25.json')), manifest, target, 25);
     platforms[target] = { jobId, inputSha256: build.inputSha256, manifestSha256: manifest.hash,
       binary: build.binary, bundleSha256: m.bundleSha256, host: build.host, tools: build.tools,
@@ -242,7 +242,7 @@ export function validateHandoff(options, staging) {
     assert.deepEqual(resources[i], resources[0], 'Platform runtime resources differ');
     assert.deepEqual(generatedRecords[i], generatedRecords[0], 'Platform generation evidence differs beyond derived engine digest');
   }
-  const node18JobId = successfulJob(jobRecord.jobs, options, 'Node 18 portable consumer smoke', ['Run portable local installation and runtime on Node 18']);
+  const node18JobId = successfulJob(jobRecord.jobs, options, 'UI Node 18 portable consumer smoke', ['Run portable local installation and runtime on Node 18']);
   smoke(readJson(path.join(staging, 'phoenix-ui-node18-consumer-evidence/runtime-smoke-node18.json')), manifests[2], 'linux-x64', 18);
   // ZIP transport may discard execute bits. Roles come from the tested engine,
   // verified bundle exec declarations and the candidate-bound npm bin entry.

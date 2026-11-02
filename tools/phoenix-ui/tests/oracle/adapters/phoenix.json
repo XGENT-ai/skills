@@ -74106,7 +74106,7 @@
     },
     {
       "file": "crates/cli/src/main.rs",
-      "sha256": "e85d7bf12bb949d196daaadb157a6e15c3ab5a2863013ab1535c8081a7bff76a"
+      "sha256": "6f62f8a4c0a703d9d1dde5e8cf2aa447c731e808f381c8df54d8eaebcea841f4"
     },
     {
       "file": "crates/common/src/jsp.rs",

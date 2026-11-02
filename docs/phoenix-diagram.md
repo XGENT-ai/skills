@@ -4,6 +4,8 @@ Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lif
 
 `@xgent-ai/skills@0.7.8` 已公开发布，配套四平台引擎已托管，最终 npm 包已通过 Node 18 与维护 Node 的联合安装验证。P3 的完整交接（含真实 provider 会话和视觉审核）仍未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
 
+UI 与 Diagram 共用 [Phoenix CI](../.github/workflows/phoenix.yml)：同一次运行完成两个工具的检查，发布仍使用同一个 `@xgent-ai/skills` npm 包。
+
 ## npm 发布安装
 
 npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令保留 Diagram 的 bin、skill、文档与发行资源，在上传 UI 前要求 Diagram 已具备匹配 npm 版本的四平台 release 清单、bundle、完整许可证和公共 HTTPS 地址；开发或候选清单不能代替。可用 `--diagram-release-dir DIR` 提供同版本的完整正式资源目录，在打包阶段注入。Diagram 引擎的构建和托管须先完成，本命令不会自动将 candidate 转为 release。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。

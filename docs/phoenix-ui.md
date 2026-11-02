@@ -190,7 +190,7 @@ mise exec --no-deps -- npm --prefix ../.. run test:phoenix
 
 prepare 显式联网准备锁定依赖、工具、浏览器、迁移包和公告快照；随后 audit/build/runtime 使用已准备缓存与离线合同，`CARGO_NET_OFFLINE` 不单独证明全部网络已禁止。`--development` 仅是本机开发制品。`check-phoenix-deps.mjs --distribution-dir <目录>` 另核对分发许可，真实 browser/provider 会话仍分别取证。完整维护入口见 [prepare](../scripts/prepare-phoenix-ui.mjs)、[build](../scripts/build-phoenix-ui.mjs)、[audit](../scripts/check-phoenix-deps.mjs)、[runtime tests](../scripts/test-phoenix-ui.mjs)。
 
-[CI workflow](../.github/workflows/phoenix-ui.yml) 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，另有 Node18 consumer。固定成功 run 的四份 native、四份 phase evidence、一份 Node18 evidence 必须保留原始 ZIP/digest、HEAD/tree、工具链、输入/制品摘要、许可及全部真实 step/phase 结果。CI 不持 R2/npm 凭据；缺平台、失败 phase 或摘要不符不能交接。
+统一的 [Phoenix CI](../.github/workflows/phoenix.yml) 在同一次运行中检查 UI 和 Diagram，并给出共同结果。UI 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，另有 Node18 consumer。固定成功 run 的四份 native、四份 phase evidence、一份 Node18 evidence 必须保留原始 ZIP/digest、HEAD/tree、工具链、输入/制品摘要、许可及全部真实 step/phase 结果。CI 不持 R2/npm 凭据；缺平台、失败 phase 或摘要不符不能交接。
 
 发布只用一条命令，在 **main 分支上干净、已推送且 Phoenix CI 成功**的 HEAD 上执行，不创建独立发布分支，也不从 detached HEAD 发布。版本号先在 `package.json` 改好，并用上面的开发构建同步 `VERSION.json`/`ENGINE.json`/`GENERATED.json`：
 
@@ -202,7 +202,7 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 [release-phoenix-ui.mjs](../scripts/release-phoenix-ui.mjs) 依次执行，任一步失败即停：
 
 1. 核对当前分支为 `main`、工作树干净、Diagram 的四平台 release 清单、bundle、完整许可证与公共 HTTPS 下载地址齐备，npm 上还没有这个版本，找到该提交成功的 Phoenix CI run（也可用 `--run-id` 指定）。
-2. 下载 CI 的九个原始 ZIP，逐个核对 GitHub digest。
+2. 从统一 CI 下载 UI 的九个原始 ZIP，逐个核对 GitHub digest。
 3. 用 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 条件上传四个 engine（已存在即拒绝覆盖），公共 URL 回读通过后冻结 release manifest。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。
 4. 用 [pack-phoenix-ui-release.mjs](../scripts/pack-phoenix-ui-release.mjs) 只打一次联合 tarball：保留 `package.json` 声明的 UI 和 Diagram bin、skill、文档及发行资源，最终包再次通过发布校验。`xgent-skills install` 默认安装两者。Diagram 默认使用仓库中已准备好的 release 资源，也可用 `--diagram-release-dir DIR` 指定同版本的完整正式资源目录，在打包阶段注入；本脚本不构建或上传 Diagram 引擎，缺少资源时在上传 UI 前停止。
 5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 0.3.0/0.6.0 工具保留共存、直接删除替换、无回执 Phoenix 副本覆盖重装、旧安装目录清理和重复安装。

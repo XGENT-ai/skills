@@ -12,7 +12,7 @@ const root = path.resolve(__dirname, '../..');
 const prepare = import('../../scripts/prepare-phoenix-diagram.mjs');
 const source = import('../../scripts/check-phoenix-diagram-source.mjs');
 const assets = JSON.parse(fs.readFileSync(path.join(root, 'tools/phoenix-ui/build-tool-assets.json')));
-const workflow = () => fs.readFileSync(path.join(root, '.github/workflows/phoenix-diagram.yml'), 'utf8');
+const workflow = () => fs.readFileSync(path.join(root, '.github/workflows/phoenix.yml'), 'utf8');
 const job = (text, name) => new RegExp(`^  ${name}:\\n([\\s\\S]*?)(?=^  [a-z][a-z0-9-]*:|$(?![\\s\\S]))`, 'm').exec(text)?.[1] || '';
 function temporary(t) { const directory = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'diagram workflow ')); t.after(() => fs.rmSync(directory, { recursive: true, force: true })); return directory; }
 
@@ -38,7 +38,7 @@ test('native builds preserve clean source and native permissions before the sing
   assert.match(assemble, /verifyFrozenSources\(\)/);
   assert.equal((assemble.match(/pack-phoenix-diagram-candidate\.mjs --artifacts-dir/g) || []).length, 1);
   assert.match(assemble, /--output-dir local\/phoenix-diagram\/candidate/);
-  assert.doesNotMatch(text, /prepare-phoenix-ui|build-phoenix-ui|test:phoenix|npm pack/);
+  assert.doesNotMatch(native + assemble, /prepare-phoenix-ui|build-phoenix-ui|test:phoenix|npm pack/);
   assert.doesNotMatch(assemble, /writeFileSync\([^\n]*(?:ENGINE|VERSION|source-inputs)/);
 });
 

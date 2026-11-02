@@ -154,12 +154,12 @@ async function fixture(t, control = {}) {
     for (const name of ['LICENSE', 'NOTICE.md']) write(path.join(dir, 'runtime/dist/phoenix-ui', name), `Fixture ${name}\n`);
     const evidenceDir = path.join(extracted, `phoenix-ui-${target}-evidence`);
     write(path.join(evidenceDir, `${target}-ci-results.json`), json({ schemaVersion: 1, workflowRun: runId, sourceCommit: head, target, phases: Object.fromEntries(Object.keys(phases).map(name => [name, 'success'])) }));
-    jobs.push({ id: i + 10, run_id: Number(runId), head_sha: head, name: `Native ${target}`, status: 'completed', conclusion: 'success', steps: Object.values(phases).map(name => ({ name, status: 'completed', conclusion: 'success' })) });
+    jobs.push({ id: i + 10, run_id: Number(runId), head_sha: head, name: `UI Native ${target}`, status: 'completed', conclusion: 'success', steps: Object.values(phases).map(name => ({ name, status: 'completed', conclusion: 'success' })) });
     items.push(`phoenix-ui-${target}`, `phoenix-ui-${target}-evidence`);
     if (target === 'linux-x64') write(path.join(extracted, 'phoenix-ui-node18-consumer-evidence/runtime-smoke-node18.json'), json({ ...smoke, host: { ...smoke.host, node: 'v18.20.8' } }));
   }
   items.push('phoenix-ui-node18-consumer-evidence');
-  jobs.push({ id: 20, run_id: Number(runId), head_sha: head, name: 'Node 18 portable consumer smoke', status: 'completed', conclusion: 'success', steps: [{ name: 'Run portable local installation and runtime on Node 18', status: 'completed', conclusion: 'success' }] });
+  jobs.push({ id: 20, run_id: Number(runId), head_sha: head, name: 'UI Node 18 portable consumer smoke', status: 'completed', conclusion: 'success', steps: [{ name: 'Run portable local installation and runtime on Node 18', status: 'completed', conclusion: 'success' }] });
   const run = { id: Number(runId), head_sha: head, status: 'completed', conclusion: 'success', repository: { id: 1, full_name: 'XGENT-ai/skills' }, head_repository: { id: 1, full_name: 'XGENT-ai/skills' } };
   const artifacts = { total_count: items.length, artifacts: items.map((name, i) => ({ id: i + 100, name, expired: false, workflow_run: { id: Number(runId), repository_id: 1, head_repository_id: 1, head_sha: head } })) };
   function repack() {
@@ -412,7 +412,7 @@ const preflightCases = {
   'changed tested binary': f => { write(path.join(f.extracted, 'phoenix-ui-darwin-arm64/phoenix-ui-darwin-arm64'), 'tampered'); },
   'changed resource blob': f => { const p = path.join(f.extracted, 'phoenix-ui-darwin-arm64/runtime/dist/phoenix-ui/bundle/blobs'); write(path.join(p, fs.readdirSync(p)[0]), 'tampered'); },
   'changed preserved license': f => { const p = path.join(f.extracted, 'phoenix-ui-darwin-arm64/THIRD-PARTY-LICENSES'); write(path.join(p, fs.readdirSync(p)[0]), 'tampered'); },
-  'missing Node 18 acceptance': f => { f.jobs.find(j => j.name === 'Node 18 portable consumer smoke').conclusion = 'skipped'; },
+  'missing Node 18 acceptance': f => { f.jobs.find(j => j.name === 'UI Node 18 portable consumer smoke').conclusion = 'skipped'; },
 };
 const preflightErrors = {
   'missing platform': /Missing or duplicate platform artifact/, 'failed required job step': /Failed or missing CI step Full Phoenix/,
@@ -420,7 +420,7 @@ const preflightErrors = {
   'wrong source tree': /build record source tree differs/, 'wrong repository': /Run repository differs/,
   'wrong build input digest': /build input digest differs/, 'unknown cross-platform input difference': /Unknown cross-platform input difference/,
   'changed tested binary': /tested binary digest differs/, 'changed resource blob': /Bundle resource digest differs/,
-  'changed preserved license': /Preserved license digest differs/, 'missing Node 18 acceptance': /Node 18 portable consumer smoke did not succeed/,
+  'changed preserved license': /Preserved license digest differs/, 'missing Node 18 acceptance': /UI Node 18 portable consumer smoke did not succeed/,
 };
 for (const [name, change] of Object.entries(preflightCases)) test(`publication rejects ${name} before any upload`, async t => {
   const f = await fixture(t); change(f); f.repack();
