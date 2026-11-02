@@ -2,7 +2,7 @@
 
 Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。仓库以 phoenix-diagram 为唯一活跃图解入口；其他项目及个人旧安装须分别处理。数值图表、仪表盘及其他 infographic 不在范围内。
 
-`@xgent-ai/skills@0.7.6` 已公开发布，配套四平台引擎已托管，最终 npm 包已通过 Node 18 与维护 Node 的联合安装验证。P3 的完整交接（含真实 provider 会话和视觉审核）仍未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
+`@xgent-ai/skills@0.7.8` 已公开发布，配套四平台引擎已托管，最终 npm 包已通过 Node 18 与维护 Node 的联合安装验证。P3 的完整交接（含真实 provider 会话和视觉审核）仍未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
 
 ## npm 发布安装
 
