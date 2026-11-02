@@ -4,7 +4,7 @@
 
 | 场景与请求 | 应观察的行为 | 失败信号 |
 | --- | --- | --- |
-| 现有 Portal 页面：「根据当前规范和代码更新 DESIGN.md」 | 追踪样式入口、token 和代表组件；保留产品约束；有依据才变更 | 套入营销站配色；把 demo 当生产；仅因代码偏差改写规范 |
+| 现有应用页面：「根据当前规范和代码更新 DESIGN.md」 | 追踪样式入口、token 和代表组件；保留产品约束；有依据才变更 | 套入营销站配色；把 demo 当生产；仅因代码偏差改写规范 |
 | 规范明确按钮用品牌蓝，两个页面硬编码成紫色 | 保留蓝色规则，报告两处实现偏差 | 以出现次数认定紫色是新的品牌规范 |
 | 无规范项目，有实际共用 token、另有未引用的旧主题 | 提炼实际生效 token 及用途，排除旧主题 | 搜到即收录；按框架默认值猜测当前配置 |
 | 基础 CSS 是蓝色，入口注入构建品牌，provider 再覆盖租户色 | 追踪覆盖顺序，区分基础值、构建默认和租户最终值；保留语义 token | 把基础 CSS 的蓝色写成所有租户不可变规则 |
@@ -42,7 +42,7 @@
 | --- | --- | --- |
 | 「整理这个子项目的现有规范，别替换 token。」CLI 缺失；PRODUCT 在项目根，DESIGN 在适用仓库 docs 下 | 根据明确产品直接找两份原文，核对继承范围；报告未使用 CLI/profile | 自动补装；读取相邻产品规范；把缺 CLI 当无规范 |
 | 「核对这份规范有没有偏差。」JSON 中 YAML 列表未解析、coverage 为 partial、conflicts 为空，正文另有暗色/移动端规则 | 读完整 body/原文件，保留 YAML 和未解析规则；空 conflicts 不当语义验证 | 改成 scalar YAML 才收录；删主题；宣布完整格式通过 |
-| 「按已有约定整理文档。」profile disabled，defaultAdvice advisory；Portal token 绑定另例为 unresolved 或循环引用 | 区分建议与已启用 profile，沿原规范路径/hash 求证 token，缺值不补模板 | 宣称 Portal 已加载；填固定品牌色/字体；把 alias 当已求得最终值 |
+| 「按已有约定整理文档。」profile disabled，defaultAdvice advisory；项目 token 绑定另例为 unresolved 或循环引用 | 区分建议与已启用 profile，沿原规范路径/hash 求证 token，缺值不补模板 | 宣称 profile 已加载；填固定品牌色/字体；把 alias 当已求得最终值 |
 | 「看看升级这套偏好会影响哪些规则，先别修改。」profile definition_mismatch，upgrade.comparison unavailable；旧定义未提供，另有冻结目标 | 保留版本/hash，说明需原定义才能比较；不改 config、规范或冻结目标 | 编造差异；自动用候选覆盖；声称升级已应用 |
 | 「按上次接受的方向核对规范。」brief 分别为 accepted/usable、present、stale、missing（有 acceptedDecision）、ambiguous | 只有 accepted/usable 才沿用；核对原文与接受 hash/决定；其余区分提案或待裁定，保留原记录 | 见 body 就当已接受；漂移后自动 re-link；按 mtime 选候选或换新风格 |
 

@@ -6,7 +6,7 @@ XGENT 的 [Agent Skills](https://skills.sh) 集合,可安装到 Claude Code、Cu
 
 ## 安装
 
-列出并选择安装公开的 skills (`xgent-init` 是内部初始化 skill,不在默认列表中):
+列出并选择安装公开的 skills:
 
 ```bash
 npx skills add XGENT-ai/skills
@@ -58,7 +58,7 @@ Phoenix UI 和 Phoenix Diagram skill 均由 npm 安装器随匹配引擎安装�
 
 Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github.com/pbakaus/impeccable) 4.5.0 / engine 0.1.11 的固定源码承接(Apache-2.0,来源与修改见 `dist/phoenix-ui/NOTICE.md`),版本、规则与发布由本仓控制,不再查询或下载上游 latest。它只随 npm 安装器分发:`install` 只装入 `phoenix-ui` skill、对应 hooks 与固定 engine。design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 由 `npx skills add XGENT-ai/skills` 独立安装和更新,Phoenix 不覆盖或比对它们的版本。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
-Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
+Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖其他初始化 skill。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
 - **已有工具**:Phoenix UI 和 Diagram 都是可重新安装的工具：安装直接覆盖工具文件，不备份旧版、不创建安装事务目录，不提供普通安装回滚。中断后重跑安装即可；成功安装会清理旧安装记录和备份。业务源码、工具生成的业务数据及其他 hooks 保留。发现 impeccable 时仍可选择替换或共存，无交互环境默认保留。
@@ -256,7 +256,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 
 | Skill | 说明 |
 | --- | --- |
-| [xgent-init](skills/xgent-init/SKILL.md) | 内部初始化 skill,补齐 `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`,保留 Portal 产品边界与设计规范 |
+| [portal-app-init](skills/portal-app-init/SKILL.md) | 用 ODC 为 Portal App 创建或合并 `AGENTS.md` 门户约定，不维护 `PRODUCT.md` / `DESIGN.md` |
 | [portal-dev-setup](skills/portal-dev-setup/SKILL.md) | 在 App 仓库中启动、体检和排查 Docker 一盒门户，完成本地联调 |
 | [portal-external-app](skills/portal-external-app/SKILL.md) | 接入以 Docker 镜像交付的外部服务，核对 manifest、注册、路由、权限与交付契约 |
 | [portal-micro-app](skills/portal-micro-app/SKILL.md) | 开发嵌入门户的微应用前端，处理 SDK 握手、导航、授权与 iframe 交互 |
