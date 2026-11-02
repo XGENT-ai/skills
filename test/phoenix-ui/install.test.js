@@ -1,5 +1,5 @@
 'use strict';
-// Node installer → Rust transactional installer, with the engine under test.
+// Node installer → Rust tool installer, with the engine under test.
 // test:phoenix supplies PHOENIX_UI_BIN; the lightweight suite has no engine.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -104,7 +104,7 @@ test('--keep-impeccable installs Phoenix beside customized project and personal 
   const commands = JSON.stringify(JSON.parse(fs.readFileSync(path.join(project, '.codex/hooks.json'))).hooks);
   assert.match(commands, /impeccable/);
   assert.match(commands, /phoenix-ui/);
-  assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
 test('--replace-impeccable deletes old project and personal tools without a tool backup', { skip }, (t) => {
@@ -130,8 +130,7 @@ test('--replace-impeccable deletes old project and personal tools without a tool
     assert.doesNotMatch(JSON.stringify(config.hooks), /impeccable/);
   }
   assert.doesNotMatch(result.stdout, /迁移  认领|保留一个迁移主版本/);
-  const active = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
-  assert.ok(active.ownership.every(item => !item.path.includes('impeccable')));
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
 test('source-only Phoenix copies are reinstalled without a receipt conflict or an old-tool backup', { skip }, (t) => {
@@ -141,9 +140,8 @@ test('source-only Phoenix copies are reinstalled without a receipt conflict or a
   fs.writeFileSync(path.join(project, '.agents/skills/phoenix-ui/source-only-marker'), 'old source copy\n');
   const result = install(pkg, project, ['--keep-impeccable', '--providers=codex']);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(fs.existsSync(path.join(project, '.agents/skills/phoenix-ui/source-only-marker')), false);
-  assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
-  assert.match(result.stdout, /重新安装.*\.agents\/skills\/phoenix-ui/);
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
+  assert.ok(fs.existsSync(path.join(project, '.agents/skills/phoenix-ui/scripts/ENGINE.json')));
 });
 
 test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
@@ -158,7 +156,7 @@ test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
   assert.match(result.stdout, /保留.*impeccable/);
 });
 
-test('managed Phoenix overwritten by a source install is refreshed and can roll back', { skip }, (t) => {
+test('Phoenix overwritten by a source install is refreshed without receipts', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix managed source refresh');
   const flags = ['--keep-impeccable', '--providers=claude,codex,cursor'];
@@ -170,8 +168,7 @@ test('managed Phoenix overwritten by a source install is refreshed and can roll 
     fs.writeFileSync(path.join(project, provider, 'skills/phoenix-ui/SKILL.md'), 'source-channel skill update\n');
     fs.writeFileSync(path.join(project, provider, 'skills/phoenix-ui/scripts/ENGINE.json'), '{"npmPackageVersion":"0.7.4","distribution":"development"}\n');
   }
-  const before = tree(project, rel => rel.startsWith('.phoenix-ui/'));
-  const receiptBefore = fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json'));
+
   const result = install(pkg, project, flags);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /: 已安装/);
@@ -180,16 +177,10 @@ test('managed Phoenix overwritten by a source install is refreshed and can roll 
   const repeat = install(pkg, project, flags);
   assert.equal(repeat.status, 0, repeat.stdout + repeat.stderr);
   assert.match(repeat.stdout, /: 未变/);
-  const receipt = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
-  const rolled = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--rollback', receipt.transaction_id, '--project', project], {
-    encoding: 'utf8', env: { ...process.env, HOME: pkg.home, USERPROFILE: pkg.home, PHOENIX_UI_HOME: pkg.cache },
-  });
-  assert.equal(rolled.status, 0, rolled.stdout + rolled.stderr);
-  assert.deepEqual(tree(project, rel => rel.startsWith('.phoenix-ui/')), before);
-  assert.deepEqual(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')), receiptBefore);
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
-test('managed source refresh still stops before any write when an owned hook changed', { skip }, (t) => {
+test('source refresh preserves custom hooks while restoring Phoenix hooks', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix managed hook conflict');
   const flags = ['--keep-impeccable', '--providers=codex'];
@@ -198,13 +189,12 @@ test('managed source refresh still stops before any write when an owned hook cha
   fs.writeFileSync(path.join(project, '.agents/skills/phoenix-ui/SKILL.md'), 'source-channel skill update\n');
   const hook = path.join(project, '.codex/hooks.json');
   const settings = JSON.parse(fs.readFileSync(hook, 'utf8'));
-  Object.values(settings.hooks)[0][0].hooks[0].command = 'custom-hook';
+  Object.values(settings.hooks)[0][0].hooks.push({ type: 'command', command: 'custom-hook' });
   fs.writeFileSync(hook, JSON.stringify(settings));
-  const before = tree(project);
   const result = install(pkg, project, flags);
-  assert.equal(result.status, 3, result.stdout + result.stderr);
-  assert.match(result.stderr, /Phoenix UI 预检发现冲突,未修改项目/);
-  assert.deepEqual(tree(project), before);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(fs.readFileSync(hook, 'utf8'), /custom-hook/);
+  assert.notEqual(fs.readFileSync(path.join(project, '.agents/skills/phoenix-ui/SKILL.md'), 'utf8'), 'source-channel skill update\n');
 });
 
 test('fresh install activates Phoenix after the XGENT part and a rerun changes nothing', { skip }, (t) => {
@@ -215,11 +205,12 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.match(first.stdout, /Phoenix UI 0\.1\.0 \(@xgent-ai\/skills@[^)]+\): 已安装/);
   assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/);
   assert.doesNotMatch(first.stdout, /impeccable →/);
-  assert.match(first.stdout, /回滚  npm exec --package=@xgent-ai\/skills@\S+ -- phoenix-ui migrate --rollback phoenix-\S+ --project /);
+  assert.doesNotMatch(first.stdout, /回滚|事务|备份/);
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
   assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
   assert.ok(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf('Phoenix UI 0.1.0'));
   assert.match(first.stdout, /完成: /);
-  for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.phoenix-ui/install/active.json']) {
+  for (const file of ['.claude/skills/phoenix-ui/SKILL.md']) {
     assert.ok(fs.existsSync(path.join(project, file)), file);
   }
   for (const name of ['design-md', 'design-reference', 'ui-pattern-research', 'review-ui', 'apply-ui-review']) {
@@ -271,8 +262,7 @@ test('install preserves independently updated project and personal companion ski
   const after = tree(project);
   for (const [file, hash] of Object.entries(before)) assert.equal(after[file], hash, file);
   assert.deepEqual(tree(pkg.home), homeBefore);
-  const active = JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/install/active.json')));
-  assert.ok(active.ownership.every(item => !names.some(name => item.path.includes(`/skills/${name}/`))));
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
 for (const shape of ['large', 'deep']) {
@@ -293,7 +283,7 @@ for (const shape of ['large', 'deep']) {
     const first = install(pkg, project, [], fixture?.homeRoot || pkg.home);
     assert.equal(first.status, 0, first.stdout + first.stderr);
     assert.match(first.stdout, /: 已安装/);
-    assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+    assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
     if (fixture) assert.match(first.stdout, /保留.*impeccable/);
     const second = install(pkg, project, [], fixture?.homeRoot || pkg.home);
     assert.equal(second.status, 0, second.stdout + second.stderr);
@@ -302,34 +292,6 @@ for (const shape of ['large', 'deep']) {
   });
 }
 
-test('explicit legacy migration through the npm bin still rolls back byte-for-byte', { skip }, async (t) => {
-  const pkg = packageFor(t, engine);
-  const fixture = await oldProject(t, ['claude-shared-and-local', 'custom-allow', 'unrelated-entry']);
-  const xgent = install(pkg, fixture.projectRoot, ['--no-phoenix-ui'], fixture.homeRoot);
-  assert.equal(xgent.status, 0, xgent.stdout + xgent.stderr);
-  const original = tree(fixture.projectRoot);
-  const env = { ...process.env, HOME: fixture.homeRoot, USERPROFILE: fixture.homeRoot, PHOENIX_UI_HOME: pkg.cache };
-  const ready = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'engine', 'install', '--project', fixture.projectRoot, '--release-dir', pkg.release], { encoding: 'utf8', env });
-  assert.equal(ready.status, 0, ready.stdout + ready.stderr);
-  const result = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--from', 'impeccable', '--project', fixture.projectRoot,
-    '--bundle-root', path.join(pkg.root, 'dist/phoenix-ui/bundle')], { encoding: 'utf8', env });
-  assert.equal(result.status, 0, result.stdout + result.stderr + (result.error?.message || ''));
-  assert.match(result.stdout, /installed/);
-  assert.match(result.stdout, /AGENTS\.md: line\(s\) 3 mention the old impeccable entry/);
-  const transition = fs.readFileSync(path.join(fixture.projectRoot, '.claude/skills/impeccable/SKILL.md'), 'utf8');
-  assert.match(transition, /\/phoenix-ui/);
-  const again = install(pkg, fixture.projectRoot, ['--replace-impeccable'], fixture.homeRoot);
-  assert.equal(again.status, 0, again.stdout + again.stderr);
-  assert.match(again.stdout, /: 未变\n/);
-  const id = /--rollback (phoenix-\S+)/.exec(result.stdout)[1];
-  const rollback = spawnSync(process.execPath, [path.join(pkg.root, 'bin/phoenix-ui.js'), 'migrate', '--rollback', id, '--project', fixture.projectRoot], {
-    encoding: 'utf8', timeout: 600000,
-    env: { ...process.env, HOME: fixture.homeRoot, USERPROFILE: fixture.homeRoot, PHOENIX_UI_HOME: pkg.cache },
-  });
-  assert.equal(rollback.status, 0, rollback.stdout + rollback.stderr + (rollback.error?.message || ''));
-  assert.deepEqual(tree(fixture.projectRoot, (rel) => rel.startsWith('.phoenix-ui/')), original);
-});
-
 test('an unrelated hook conflict stops installation before deleting a source-only Phoenix copy', { skip }, async (t) => {
   const pkg = packageFor(t, engine);
   const fixture = await oldProject(t, ['modified-skill']);
@@ -337,10 +299,8 @@ test('an unrelated hook conflict stops installation before deleting a source-onl
   fs.writeFileSync(path.join(fixture.projectRoot, '.codex/hooks.json'), '[]\n');
   const original = tree(fixture.projectRoot);
   const result = install(pkg, fixture.projectRoot, [], fixture.homeRoot);
-  assert.equal(result.status, 3, result.stdout + result.stderr);
-  assert.match(result.stdout, /: 冲突,未激活/);
-  assert.match(result.stdout, /  冲突  /);
-  assert.match(result.stderr, /Phoenix UI 预检发现冲突,未修改项目/);
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr, /Phoenix UI|JSON|object/i);
   assert.deepEqual(tree(fixture.projectRoot), original);
 });
 
@@ -372,12 +332,12 @@ test('a Rust apply failure after the XGENT part leaves Phoenix inactive, reports
   const first = install(failing, project);
   assert.equal(first.status, 4, first.stdout + first.stderr);
   assert.match(first.stderr, /simulated apply failure/);
-  assert.match(first.stdout, /未完成: XGENT 部分已安装;Phoenix UI 待恢复\(安装被中断,可能已部分写入\)/);
+  assert.match(first.stdout, /未完成: XGENT 部分已安装;Phoenix UI 安装未完成,处理下方错误后重跑本命令覆盖安装。/);
   assert.doesNotMatch(first.stdout, /^完成: /m);
   assert.ok(fs.existsSync(path.join(project, '.claude/hooks/xgent-statusline.js')));
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')), false);
   const second = install(packageFor(t, engine), project);
   assert.equal(second.status, 0, second.stdout + second.stderr);
   assert.match(second.stdout, /: 已安装/);
-  assert.ok(fs.existsSync(path.join(project, '.phoenix-ui/install/active.json')));
+  assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });

@@ -9,7 +9,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 91409c0e7e0eb2e3b013f79a49bc0e897da22cd1adef8fb3eed370a834a79fc9
+  source_sha256: 3a90920fc0c5443a5a657a49d83dfc899503fe8f237b5f8272d4143195e62d63
 allowed-tools:
   - Bash(.rovodev/skills/phoenix-ui/scripts/phoenix-ui *)
 ---

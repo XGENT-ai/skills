@@ -68,8 +68,7 @@ fn run(args: &[String], io: &mut Io) -> i32 {
         "review" => {
             phoenix_ui_review::cli::run(rest, &io.cwd, io.stdout.as_mut(), io.stderr.as_mut())
         }
-        // Project installs are transactional; the inherited installer keeps
-        // the user level and the help text that documents both.
+        // Project installs overwrite tool files; the inherited installer handles user-level installs.
         "install" | "update" if !user_level_or_help(rest) => {
             phoenix_ui_install::cli::run_install(rest, io)
         }

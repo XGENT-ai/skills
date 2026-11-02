@@ -71,10 +71,9 @@ Phoenix UI 是 XGENT 自主维护的设计工具:从 [impeccable](https://github
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖 `xgent-init`。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
-- **已有工具**:安装时发现 impeccable 会询问是否替换。选择替换则直接删除所选 provider 的项目级及个人级旧入口和旧 hooks,不备份、不留转跳入口;选择保留则共存,不阻止 Phoenix 安装,无交互环境默认保留。没有安装事务状态的 Phoenix 源码副本直接删除后重装;已有回执的 Phoenix 工具文件被其他渠道覆盖时,显式安装会按当前包刷新,并保留重装前内容供回滚。业务源码、旧工具的数据和文档不改动;共享配置中的其他 hooks 保留。
-- **回滚**:安装输出给出事务 ID、备份位置与完整命令,例如 `npm exec --package=@xgent-ai/skills@<版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>`;回滚只撤销本次安装的条目,后来新增的配置保留。
+- **已有工具**:Phoenix UI 和 Diagram 都是可重新安装的工具：安装直接覆盖工具文件，不备份旧版、不创建安装事务目录，不提供普通安装回滚。中断后重跑安装即可；成功安装会清理旧安装记录和备份。业务源码、工具生成的业务数据及其他 hooks 保留。发现 impeccable 时仍可选择替换或共存，无交互环境默认保留。
 
-安装、迁移、回滚、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
+安装、迁移、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
 
 managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](skills/review-ui/references/phoenix-review.md)。
 

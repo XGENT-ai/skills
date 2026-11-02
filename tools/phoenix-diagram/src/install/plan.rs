@@ -371,3 +371,66 @@ pub(super) fn active(
     active.seal()?;
     Ok(active)
 }
+
+pub(super) fn install(request: &InstallRequest, apply: bool) -> InstallResult<InstallReceipt> {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    let io = |error: std::io::Error| super::InstallError {
+        kind: super::InstallErrorKind::Io,
+        code: "install/write".into(),
+        message: error.to_string(),
+    };
+    let project = Directory::open(&request.project)?;
+    let bundle = Bundle::load(request)?;
+    project.child(".phoenix-diagram")?;
+    let mut report = super::receipt("install", &request.project);
+    report.local_ignore.clear();
+    report.providers = providers(request.providers.as_deref(), &project)?;
+    report.engine = Some(bundle.engine.clone());
+    report.npm_package_version = Some(bundle.version.npm_package_version.clone());
+    report.bundle_manifest_sha256 = Some(bundle.manifest_sha256.clone());
+    report.version_manifest_sha256 = Some(bundle.version_sha256.clone());
+    for provider in &report.providers {
+        if provider == ".codex" {
+            continue;
+        }
+        for (name, source) in &bundle.files {
+            let path = format!("{provider}/skills/phoenix-diagram/{name}");
+            let current = project.read_path(&path)?;
+            if current.as_ref().is_some_and(|file| {
+                file.bytes == source.bytes && file.identity.mode == source.identity.mode
+            }) {
+                report.unchanged.push(path);
+            } else {
+                report.writes.push(InstallWrite {
+                    path,
+                    after: bundle::digest(&source.bytes),
+                    mode: source.identity.mode,
+                });
+            }
+        }
+    }
+    if report.writes.is_empty() {
+        report.status = InstallStatus::Unchanged;
+    }
+    if apply {
+        for write in &report.writes {
+            let path = request.project.join(&write.path);
+            let name = write.path.split_once("/skills/phoenix-diagram/").unwrap().1;
+            fs::create_dir_all(path.parent().unwrap()).map_err(&io)?;
+            fs::write(&path, &bundle.files[name].bytes).map_err(&io)?;
+            fs::set_permissions(&path, fs::Permissions::from_mode(write.mode)).map_err(&io)?;
+        }
+        let old_state = request.project.join(".phoenix-diagram/install");
+        match fs::symlink_metadata(&old_state) {
+            Ok(meta) if meta.is_dir() => fs::remove_dir_all(old_state).map_err(&io)?,
+            Ok(_) => fs::remove_file(old_state).map_err(&io)?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(io(error)),
+        }
+        if !report.writes.is_empty() {
+            report.status = InstallStatus::Installed;
+        }
+    }
+    Ok(report)
+}

@@ -1,5 +1,4 @@
-//! `phoenix-ui install --project` and `phoenix-ui migrate`: the transactional
-//! project installer. `--json` writes exactly one object to stdout; diagnostics
+//! Project tool installation and explicit legacy data migration. `--json` writes exactly one object to stdout; diagnostics
 //! go to stderr. Exit 0 = success or valid state, 2 = argument/path input,
 //! 3 = conflict or recovery required, 4 = file, dependency or environment failure.
 use crate::{
@@ -32,7 +31,7 @@ const PROVIDERS: [&str; 19] = [
 ];
 const DEFAULT_PROVIDERS: [&str; 1] = [".claude"];
 
-pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--providers a,b] [--keep-impeccable] [--dry-run] [--json] [--transaction-id ID]\n";
+pub const INSTALL_USAGE: &str = "Usage: phoenix-ui install [--project [DIR]] --bundle-root DIR [--providers a,b] [--keep-impeccable] [--dry-run] [--json]\n";
 pub const MIGRATE_USAGE: &str = "Usage: phoenix-ui migrate --from impeccable --project DIR --bundle-root DIR [--providers a,b] [--dry-run] [--json]\n       phoenix-ui migrate --rollback TRANSACTION --project DIR [--json]\n       phoenix-ui migrate --recover --project DIR [--json]\n";
 
 #[derive(Default)]
@@ -82,11 +81,11 @@ fn parse(args: &[String]) -> Result<Args, String> {
             }
             "--project" => parsed.project = Some(value()?),
             "--scope" if value()? != "project" => {
-                return Err("project installs are transactional; use --user or --global for the user level".into())
+                return Err("use --user or --global for the user level".into())
             }
             "--scope" => {}
             "--force" | "--no-hooks" if inline.is_none() => {
-                return Err(format!("{name} applies only to --user/--global installs; a project install keeps conflicts and user changes for you to resolve"))
+                return Err(format!("{name} applies only to --user/--global installs; a project install overwrites tool files and preserves unrelated hooks"))
             }
             "--bundle-root" => parsed.bundle_root = Some(value()?),
             "--providers" => parsed.providers = Some(value()?),

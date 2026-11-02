@@ -9,7 +9,7 @@ import { assertPublishablePackage } from './require-release-package.mjs';
 import { loadMigrationSource, materializeMigrationFixture, verifyPublishedPackage } from '../test/phoenix-ui/fixtures/migration/materialize.mjs';
 
 // Install the packed release tarball like a consumer: fresh install with the engine downloaded from its
-// public URL, 0.3.0/0.6.0 coexistence/replacement, unowned Phoenix copies and rollback,
+// public URL, 0.3.0/0.6.0 coexistence/replacement, overwritten Phoenix copies, old installer-state cleanup and repeat installs,
 // on Node 18 and the maintenance Node.
 // Usage: node scripts/check-phoenix-ui-release.mjs --tarball TGZ --tarball-sha256 HEX --manifest VERSION.json
 //   --manifest-sha256 HEX --node18 NODE --node25 NODE --output-dir DIR [--legacy-dir DIR]
@@ -74,7 +74,7 @@ function run(name, program, argv, cwd = out, env = process.env, expected = 0) {
     stdout: `${prefix}.stdout`, stderr: `${prefix}.stderr`, sourceTarballSha256: argv.map(argument => sourceBindings.get(argument)).find(Boolean) || null, environment: { PHOENIX_UI_HOME: env.PHOENIX_UI_HOME, sandboxHome: env.HOME, npmCache: env.npm_config_cache } }); save();
   assert.equal(result.status, expected, `${name}: ${result.stdout}\n${result.stderr}\n${result.error?.message || ''}`); return result;
 }
-// Same byte/link tree assertion as install.test.js; .phoenix-ui journal history is retained.
+// Compare consumer-visible files and links, including tool data.
 function tree(directory, exclude = () => false) {
   const entries = {};
   const walk = dir => { for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -83,11 +83,10 @@ function tree(directory, exclude = () => false) {
     if (entry.isDirectory()) walk(file); else entries[relative] = entry.isSymbolicLink() ? `link:${fs.readlinkSync(file)}` : sha(fs.readFileSync(file));
   } }; walk(directory); return entries;
 }
-const outsideHistory = relative => relative.startsWith('.phoenix-ui/');
 function snapshot(base, phase, project) {
   const destination = path.join(base, phase); fs.mkdirSync(destination);
   fs.cpSync(project, path.join(destination, 'project'), { recursive: true, verbatimSymlinks: true });
-  fs.writeFileSync(path.join(destination, 'tree.json'), json(tree(project))); return tree(project, outsideHistory);
+  fs.writeFileSync(path.join(destination, 'tree.json'), json(tree(project))); return tree(project);
 }
 function environment(base, sandboxHome = path.join(base, 'user home')) {
   for (const dir of [base, sandboxHome]) fs.mkdirSync(dir, { recursive: true });
@@ -114,10 +113,6 @@ function install(node, project, env, name, flags = []) {
   return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...flags], project,
     { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
-function rollback(node, pkg, project, env, output, name) {
-  const id = /--rollback (phoenix-\S+)/.exec(output.stdout)?.[1]; assert(id, 'Missing actual rollback transaction');
-  run(name, node, [path.join(pkg, 'bin/phoenix-ui.js'), 'migrate', '--rollback', id, '--project', project], project, env); return id;
-}
 try {
 const packages = path.join(out, 'old-packages'); fs.mkdirSync(packages);
 for (const source of oldSources) {
@@ -142,7 +137,8 @@ for (const major of [18, 25]) {
   assert.match(firstJoint.stdout, /Phoenix Diagram/);
   for (const tool of ['phoenix-ui', 'phoenix-diagram']) {
     assert(fs.existsSync(path.join(jointProject, `.claude/skills/${tool}/SKILL.md`)));
-    assert(fs.existsSync(path.join(jointProject, `.${tool}/install/active.json`)));
+    assert(!fs.existsSync(path.join(jointProject, `.${tool}/install`)));
+    assert(!fs.existsSync(path.join(jointProject, `.${tool}/migrations`)));
   }
   const diagram = createRequire(import.meta.url)(path.join(pkg, 'skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs'));
   const ready = await diagram.preflight({ project: jointProject, manifestPath: path.join(pkg, 'dist/phoenix-diagram/VERSION.json'),
@@ -170,8 +166,17 @@ for (const major of [18, 25]) {
         if (kind === 'source-copy') for (const provider of ['.claude', '.agents']) {
           const destination = path.join(project, provider, 'skills/phoenix-ui');
           fs.cpSync(path.join(pkg, 'skills/phoenix-ui'), destination, { recursive: true });
-          fs.writeFileSync(path.join(destination, 'source-only-marker'), 'old source copy\n');
+          fs.writeFileSync(path.join(destination, 'SKILL.md'), 'old source copy\n');
         }
+      }
+      if (kind === 'source-copy') {
+        for (const directory of ['install/transactions/old', 'migrations/old']) {
+          const destination = path.join(project, '.phoenix-ui', directory);
+          fs.mkdirSync(destination, { recursive: true });
+          fs.writeFileSync(path.join(destination, 'obsolete.json'), 'old installer state\n');
+        }
+        fs.writeFileSync(path.join(project, '.phoenix-ui/install/active.json'), '{obsolete receipt');
+        fs.writeFileSync(path.join(project, '.phoenix-ui/config.json'), '{"consumerSetting":true}\n');
       }
       const original = snapshot(groupBase, 'before', project);
       const originalHome = tree(env.HOME);
@@ -182,7 +187,7 @@ for (const major of [18, 25]) {
       }
       const first = install(node, project, env, `node${major}-${kind}-install`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
       assert.match(first.stdout, new RegExp(`Phoenix UI ${B.data.toolVersion.replaceAll('.', '\\.')} \\(@xgent-ai/skills@[^)]+\\): 已安装`));
-      assert.match(first.stdout, /完成: /); assert.match(first.stdout, /回滚  npm exec --package=@xgent-ai\/skills@\S+ -- phoenix-ui migrate --rollback phoenix-\S+ --project /);
+      assert.match(first.stdout, /完成: /); assert.doesNotMatch(first.stdout, /回滚|事务|备份/);
       if (legacy) {
         assert.doesNotMatch(first.stdout, /迁移  认领|impeccable →/);
         if (replace) {
@@ -202,13 +207,15 @@ for (const major of [18, 25]) {
           assert.deepEqual(tree(env.HOME), originalHome);
         }
       } else if (kind === 'source-copy') {
-        assert.match(first.stdout, /重新安装.*phoenix-ui/);
-        for (const provider of ['.claude', '.agents']) assert(!fs.existsSync(path.join(project, provider, 'skills/phoenix-ui/source-only-marker')));
+        for (const provider of ['.claude', '.agents']) assert.notEqual(fs.readFileSync(path.join(project, provider, 'skills/phoenix-ui/SKILL.md'), 'utf8'), 'old source copy\n');
+        assert.equal(tree(project)['.phoenix-ui/config.json'], original['.phoenix-ui/config.json']);
       } else if (kind === 'fresh') {
         assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/); assert.doesNotMatch(first.stdout, /impeccable →/); assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
         assert(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf(`Phoenix UI ${B.data.toolVersion}`));
       }
-      for (const file of ['.claude/skills/phoenix-ui/SKILL.md', '.phoenix-ui/install/active.json']) assert(fs.existsSync(path.join(project, file)), file);
+      assert(fs.existsSync(path.join(project, '.claude/skills/phoenix-ui/SKILL.md')));
+      assert(!fs.existsSync(path.join(project, '.phoenix-ui/install')));
+      assert(!fs.existsSync(path.join(project, '.phoenix-ui/migrations')));
       assert(fs.readFileSync(path.join(project, '.claude/skills/phoenix-ui/scripts/ENGINE.json')).equals(B.bytes));
       group.installedBEngineSha256 = sha(fs.readFileSync(bootstrap.enginePath(B, info.target, env)));
       assert.equal(group.installedBEngineSha256, B.data.engines[info.target].sha256);
@@ -217,23 +224,10 @@ for (const major of [18, 25]) {
       assert.deepEqual(Object.fromEntries(Object.entries(installed).filter(([file]) => file.startsWith('node_modules/'))),
         Object.fromEntries(Object.entries(original).filter(([file]) => file.startsWith('node_modules/'))), 'Installer changed node_modules');
       const second = install(node, project, env, `node${major}-${kind}-rerun`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
-      assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project, outsideHistory), installed);
+      assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));
       run(`node${major}-${kind}-bundle-check`, node, [bBin, 'skills', 'check', '--bundle-root', path.join(pkg, 'dist/phoenix-ui/bundle'), '--json'], project, env);
-      group.transaction = rollback(node, pkg, project, env, first, `node${major}-${kind}-rollback`);
-      const restored = snapshot(groupBase, 'rolled-back', project);
-      if (kind === 'fresh' || replace || kind === 'source-copy') {
-        for (const file of ['package.json', 'index.html', 'AGENTS.md', 'CLAUDE.md']) assert.equal(restored[file], original[file]);
-        assert(!fs.existsSync(path.join(project, '.claude/skills/phoenix-ui')));
-        if (replace) assert(!fs.existsSync(path.join(project, '.claude/skills/impeccable')));
-      } else {
-        // Phoenix rollback preserves the independently installed XGENT statusline.
-        const hook = '.claude/hooks/xgent-statusline.js';
-        const hookHash = sha(fs.readFileSync(path.join(pkg, hook)));
-        assert.equal(installed[hook], hookHash);
-        assert.deepEqual(restored, { ...original, [hook]: hookHash });
-      }
       group.status = 'expected-consumer-outcomes-observed';
     } catch (error) { group.status = 'failed'; group.error = error.message; process.exitCode = 1; }
     save();

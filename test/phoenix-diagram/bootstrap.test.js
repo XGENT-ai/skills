@@ -122,7 +122,7 @@ async function serve(t, handler) {
 
 test('bootstrap entry points exist and expose the isolated preflight API', () => {
   for (const file of [source, path.join(root, 'skills/phoenix-diagram/scripts/phoenix-launcher.cjs'), path.join(root, 'skills/phoenix-diagram/scripts/phoenix-diagram'), path.join(root, 'bin/phoenix-diagram.js')]) assert.ok(fs.existsSync(file), file);
-  for (const name of ['preflight', 'manifestAt', 'verifyBundle', 'verifyEngine', 'verifyReceipt', 'enginePath', 'installEngine', 'main']) assert.equal(typeof boot()[name], 'function', name);
+  for (const name of ['preflight', 'manifestAt', 'verifyBundle', 'verifyEngine', 'enginePath', 'installEngine', 'main']) assert.equal(typeof boot()[name], 'function', name);
 });
 test('only four declared Unix platforms are accepted; proxy precedence stays explicit', () => {
   const { TARGETS, platformTarget, proxyFor } = boot();
@@ -451,65 +451,11 @@ nativeTest('a real native install yields a working installed launcher without an
   const restored = await command('/bin/sh', ['-c', recovery.replace(boot().shellQuote('MATCHING_RELEASE_DIR'), boot().shellQuote(f.release))], { cwd: f.project, env: f.env });
   assert.equal(restored.code, 0, restored.stderr);
   assert.equal((await launch()).code, 0);
-  const activePath=path.join(f.project,'.phoenix-diagram/install/active.json');
-  const activeBytes=fs.readFileSync(activePath);
-  const active=JSON.parse(activeBytes);
-  assert.deepEqual(active.providers,['.agents','.codex']);
-  const journalPath=path.join(f.project,active.journal);
-  const journalBytes=fs.readFileSync(journalPath);
-  const cleanup=path.join(path.dirname(journalPath),'.phoenix-diagram-output-cleanup');
-  const ownerPath=path.join(cleanup,'owner-v1.json'),ownerBytes=fs.readFileSync(ownerPath);
-  fs.appendFileSync(ownerPath,' ');
-  const changedOwner=await launch();assert.equal(changedOwner.code,4);assert.match(changedOwner.stderr,/cleanup owner/i);
-  write(ownerPath,ownerBytes,0o600);
-  const foreignCleanup=path.join(cleanup,'unknown.json');write(foreignCleanup,'{}\n',0o600);
-  const pendingCleanup=await launch();assert.equal(pendingCleanup.code,4);assert.match(pendingCleanup.stderr,/cleanup.*recovery/i);
-  fs.unlinkSync(foreignCleanup);
-  const lockPath=path.join(path.dirname(journalPath),fs.readdirSync(path.dirname(journalPath)).find(name=>name.startsWith('.phoenix-diagram-lock-')));
-  const lockBytes=fs.readFileSync(lockPath);fs.appendFileSync(lockPath,'\n');
-  const changedLock=await launch();assert.equal(changedLock.code,4);assert.match(changedLock.stderr,/publication lock/i);
-  write(lockPath,lockBytes,0o600);
-  fs.appendFileSync(activePath,' ');
-  const corrupt=await launch();assert.equal(corrupt.code,4);assert.match(corrupt.stderr,/checksum|canonical/i);
-  write(activePath,activeBytes,0o600);
-  const journal=JSON.parse(journalBytes);journal.phase='applying';journal.checksum='';journal.checksum=hash(Buffer.from(JSON.stringify(journal)+'\n'));
-  write(journalPath,JSON.stringify(journal)+'\n',0o600);
-  const pending=await launch();assert.equal(pending.code,4);assert.match(pending.stderr,/completed native journal/i);
-  write(journalPath,journalBytes,0o600);
-  const unknownJournal=path.join(path.dirname(journalPath),'unknown.json');write(unknownJournal,'{}\n',0o600);
-  const unknown=await launch();assert.equal(unknown.code,4);assert.match(unknown.stderr,/unknown installation journal/i);
-  fs.unlinkSync(unknownJournal);
-  const extra=path.join(skill,'unmanaged-extra.md');write(extra,'unlisted file');
-  const unlisted=await launch();assert.equal(unlisted.code,4);assert.match(unlisted.stderr,/unlisted|extra/i);
-  fs.unlinkSync(extra);
-  assert.equal((await launch()).code,0,'Restoring the original bytes and removing extras restores the real native ownership proof');
+  assert.equal(fs.existsSync(path.join(f.project, '.phoenix-diagram/install')), false);
+  write(path.join(skill, 'unmanaged-extra.md'), 'unlisted file');
   fs.appendFileSync(path.join(skill, 'SKILL.md'), 'changed');
-  const refused = await command(process.execPath, [path.join(skill, 'scripts/phoenix-launcher.cjs'), 'guide', 'workflow', '--json'], { cwd: f.project, env: f.env });
-  assert.equal(refused.code, 4); assert.match(refused.stderr, /ownership|managed|digest/i);
-});
+  assert.equal((await launch()).code, 0, 'Tool startup does not depend on installation history or skill ownership');
 
-nativeTest('ordinary install delegates package changes while ordinary commands and engine install bind the current receipt', async t => {
-  const f = fixture(t); f.offline();
-  await boot().preflight({ ...f.options, allowInstall: true, releaseDir: f.release });
-  const launch = args => command(process.execPath, [path.join(f.pkg, 'bin/phoenix-diagram.js'), ...args], { cwd: f.project, env: f.env });
-  const installed = await launch(['install', '--project', f.project, '--providers', 'codex', '--json']);
-  assert.equal(installed.code, 0, installed.stderr);
-  const activePath = path.join(f.project, '.phoenix-diagram/install/active.json');
-  const active = fs.readFileSync(activePath);
-  f.version.sourceCommit = 'b'.repeat(40); f.seal();
-  for (const args of [['doctor', '--json'], ['engine', 'install', '--project', f.project, '--json']]) {
-    const result = await launch(args);
-    assert.equal(result.code, 4, result.stderr);
-    assert.equal(JSON.parse(result.stdout).status, 'unavailable');
-    assert.match(result.stderr, /ownership.*package\/contract identity/i);
-  }
-  const planned = await launch(['install', '--project', f.project, '--providers', 'codex', '--dry-run', '--json']);
-  assert.equal(planned.code, 0, planned.stderr);
-  const report = JSON.parse(planned.stdout);
-  assert.equal(report.command, 'install');
-  assert.equal(report.status, 'planned');
-  assert.equal(report.project, f.project);
-  assert.deepEqual(fs.readFileSync(activePath), active, 'Native dry-run preserves the earlier valid ownership');
 });
 
 nativeTest('ordinary argv project stays native while preflight uses its internal project option', async t => {
@@ -532,7 +478,7 @@ nativeTest('ordinary argv project stays native while preflight uses its internal
   assert.equal(fs.existsSync(path.join(target, '.phoenix-diagram/install/active.json')), false);
 });
 
-nativeTest('installed launchers respect a valid cwd parent receipt before their own project fallback', async t => {
+nativeTest('installed launchers use their resources from any working project', async t => {
   const f = fixture(t); f.offline();
   await boot().preflight({ ...f.options, allowInstall: true, releaseDir: f.release });
   const other = path.join(f.temp, 'other installed project');
@@ -550,7 +496,6 @@ nativeTest('installed launchers respect a valid cwd parent receipt before their 
     assert.equal(JSON.parse(result.stdout).resourceRoot, roots[i]);
   }
   const wrongProject = await command(process.execPath, [path.join(roots[0], 'scripts/phoenix-launcher.cjs'), 'guide', 'workflow', '--json'], { cwd: directories[1], env: f.env });
-  assert.equal(wrongProject.code, 4, wrongProject.stderr);
-  assert.equal(JSON.parse(wrongProject.stdout).status, 'unavailable');
-  assert.match(wrongProject.stderr, /Launcher skill root is not managed by this project ownership record/);
+  assert.equal(wrongProject.code, 0, wrongProject.stderr);
+  assert.equal(JSON.parse(wrongProject.stdout).resourceRoot, roots[0]);
 });

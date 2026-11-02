@@ -187,12 +187,12 @@ impl std::error::Error for InstallError {}
 
 /// Read-only: never creates the state directory, an OS lock, or a journal.
 pub fn plan_install(request: &InstallRequest) -> InstallResult<InstallReceipt> {
-    plan::prepare(request).map(|prepared| prepared.receipt)
+    plan::install(request, false)
 }
 
-/// An explicit installation recovers pending work, then replans under the lock.
+/// Install the verified tool files directly, without retaining installation history.
 pub fn apply_install(request: &InstallRequest) -> InstallResult<InstallReceipt> {
-    transaction::apply(request, &mut |_, _| Ok(()))
+    plan::install(request, true)
 }
 
 /// Conditional compensation only; this is not a user-selected rollback API.

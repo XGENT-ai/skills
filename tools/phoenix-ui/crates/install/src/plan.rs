@@ -848,3 +848,92 @@ fn prepare_shared(
     }
     Ok(patches)
 }
+
+pub(crate) fn overwrite_plan(
+    project: &Project,
+    bundle_root: &Path,
+    providers: &[String],
+    bundle_sha256: &str,
+) -> Result<Vec<Change>> {
+    let bundle = Bundle::load(bundle_root, bundle_sha256)?;
+    let mut changes = Vec::new();
+    for provider in providers {
+        let entry = bundle
+            .manifest
+            .providers
+            .get(provider)
+            .ok_or_else(|| invalid(format!("unknown provider: {provider}")))?;
+        for (relative, sha) in &entry.files {
+            let path = format!("{provider}/{relative}");
+            let current = snapshot(project, &path)?;
+            let bytes = &bundle.blobs[sha];
+            if shared_path(provider, relative) {
+                let before = current
+                    .as_ref()
+                    .map(|s| s.bytes.as_slice())
+                    .unwrap_or(b"{}");
+                let root = json::parse_value(before)?;
+                let desired = json::parse_value(bytes)?;
+                let old = root.get("hooks").cloned();
+                let mut hooks = old.clone().unwrap_or_else(|| serde_json::json!({}));
+                let events = hooks
+                    .as_object_mut()
+                    .ok_or_else(|| Error::conflict("shared hooks must be an object"))?;
+                for groups in events.values_mut() {
+                    let groups = groups
+                        .as_array_mut()
+                        .ok_or_else(|| Error::conflict("hook event must be an array"))?;
+                    groups.retain_mut(|group| {
+                        if phoenix_command(group) {
+                            return false;
+                        }
+                        if let Some(nested) = group.get_mut("hooks").and_then(Value::as_array_mut) {
+                            let had_handlers = !nested.is_empty();
+                            nested.retain(|handler| !phoenix_command(handler));
+                            return !had_handlers || !nested.is_empty();
+                        }
+                        true
+                    });
+                }
+                for handler in bundle_handlers(&desired)? {
+                    let JsonStep::Key(event) = &handler.parent[1] else {
+                        unreachable!()
+                    };
+                    events
+                        .entry(event.clone())
+                        .or_insert_with(|| serde_json::json!([]))
+                        .as_array_mut()
+                        .ok_or_else(|| Error::conflict("hook event must be an array"))?
+                        .push(handler.value);
+                }
+                if old.as_ref() != Some(&hooks) {
+                    changes.push(Change::SharedJson {
+                        path,
+                        expected: expected(current.as_ref()),
+                        patches: vec![JsonPatch {
+                            parent: vec![],
+                            slot: JsonSlot::Member("hooks".into()),
+                            before: old,
+                            after: Some(hooks),
+                        }],
+                    });
+                }
+            } else {
+                changes.push(Change::Exclusive {
+                    path,
+                    expected: expected(current.as_ref()),
+                    after: Some(Payload::new(
+                        bytes.clone(),
+                        Permissions::file(if entry.exec.contains(relative) {
+                            0o755
+                        } else {
+                            0o644
+                        }),
+                    )),
+                    rollback: RollbackPolicy::Restore,
+                });
+            }
+        }
+    }
+    Ok(changes)
+}

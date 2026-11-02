@@ -1,8 +1,4 @@
-//! Project installation over the verified bundle plan. This adds what the
-//! bundle plan leaves to its caller: first-install legacy data and pins, the
-//! derived runtime manifest, the transitional
-//! `impeccable` entry, ownership carried forward from the active receipt and
-//! read-only discovery of personal entries. All writes go through the kernel.
+//! Direct tool installation and explicit legacy data migration.
 use crate::{
     classify::{Conflict, ConflictKind, Preserved},
     data::{self, Unconsumed},
@@ -642,7 +638,102 @@ fn sorted_unique(values: impl IntoIterator<Item = String>) -> Vec<String> {
 
 /// Plan, and unless `dry_run`, apply the project installation.
 pub fn install(request: &Request) -> Result<Report> {
-    install_with(request, |_| {})
+    if request.scan_sources {
+        return install_with(request, |_| {});
+    }
+    let project = Project::open(request.project)?;
+    let version = read_version(request.bundle_root)?;
+    let mut report = Report::new(
+        if request.dry_run { "dry-run" } else { "apply" },
+        Status::Planned,
+        project.root(),
+    );
+    report.providers = request.providers.clone();
+    report.package_version = Some(version.package_version);
+    let mut changes = plan::overwrite_plan(
+        &project,
+        request.bundle_root,
+        &request.providers,
+        &version.bundle_sha256,
+    )?;
+    for provider in &request.providers {
+        if version.providers_with_skill.contains(provider) {
+            changes.push(write_change(
+                format!("{provider}/{RUNTIME_MANIFEST}"),
+                ExpectedFile::Absent,
+                Payload::new(version.bytes.clone(), Permissions::file(0o644)),
+            ));
+        }
+    }
+    let mut writes = Vec::new();
+    for change in changes {
+        let path = change.path().to_owned();
+        let current = disk::read(project.root(), &path)?;
+        let (bytes, permissions, shared) = match change {
+            Change::Exclusive {
+                after: Some(payload),
+                ..
+            } => (payload.bytes, payload.permissions, false),
+            Change::SharedJson { patches, .. } => {
+                let bytes = current
+                    .as_ref()
+                    .map(|s| s.bytes.as_slice())
+                    .unwrap_or(b"{}");
+                (
+                    crate::json::prepare(bytes, &patches)?.0,
+                    current
+                        .as_ref()
+                        .map(|s| s.state.permissions.clone())
+                        .unwrap_or_else(|| Permissions::file(0o644)),
+                    true,
+                )
+            }
+            _ => unreachable!(),
+        };
+        if current
+            .as_ref()
+            .is_some_and(|s| s.bytes == bytes && s.state.permissions == permissions)
+        {
+            continue;
+        }
+        let full = disk::checked(project.root(), &path)?;
+        disk::writable(project.root(), &path)?;
+        if shared {
+            report.shared_json.push(path);
+        } else {
+            report.writes.push(path);
+        }
+        writes.push((full, bytes, permissions));
+    }
+    let obsolete: Vec<_> = [".phoenix-ui/install", ".phoenix-ui/migrations"]
+        .into_iter()
+        .map(|path| disk::checked(project.root(), path))
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .filter(|path| path.exists())
+        .collect();
+    if writes.is_empty() && obsolete.is_empty() {
+        report.status = Status::Unchanged;
+        return Ok(report);
+    }
+    if request.dry_run {
+        return Ok(report);
+    }
+    for (path, bytes, permissions) in writes {
+        fs::create_dir_all(path.parent().expect("file parent")).map_err(|e| Error::io(&path, e))?;
+        fs::write(&path, bytes).map_err(|e| Error::io(&path, e))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&path, fs::Permissions::from_mode(permissions.unix_mode))
+                .map_err(|e| Error::io(&path, e))?;
+        }
+    }
+    for path in obsolete {
+        fs::remove_dir_all(&path).map_err(|e| Error::io(&path, e))?;
+    }
+    report.status = Status::Installed;
+    Ok(report)
 }
 
 /// `install` with an observer of the kernel's apply checkpoints.

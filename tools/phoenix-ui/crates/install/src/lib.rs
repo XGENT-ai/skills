@@ -1,14 +1,5 @@
-//! Read-only project migration classification and an installation transaction kernel.
-//! The kernel accepts an explicit classified plan; it never infers ownership from
-//! filenames or command substrings. `classify` reads fixed migration artifacts.
-//!
-//! `preflight` performs no writes. `apply` repeats it under an OS lock, records
-//! verified backups and a journal before replacing files, and activates the receipt
-//! last. `recover` compensates interrupted transactions; `rollback` restores entry
-//! points while retaining files explicitly marked as new-tool data. Callers must
-//! keep `.phoenix-ui/install` and `.phoenix-ui/migrations` locally ignored.
-//! Personal/provider discovery, process checks, downloads and the Node handoff
-//! remain caller responsibilities. The kernel writes only project-local paths.
+//! Tool installation overwrites payloads and merges Phoenix hooks without receipts.
+//! The transaction kernel below is retained only for explicit legacy data migration.
 
 pub mod classify;
 pub mod cli;

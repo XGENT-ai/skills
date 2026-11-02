@@ -1,39 +1,20 @@
 {
   "schemaVersion": 1,
-  "distribution": "release",
+  "distribution": "development",
   "toolVersion": "0.1.0",
   "npmPackageVersion": "0.7.7",
-  "sourceCommit": "6a01c326c1f3dd0390151882e6e03205ea1dc6b8",
-  "sourceTree": "34fecf8ada60947a681e278760e30fd658211b91",
+  "sourceCommit": "3a561fa0bb4d4a8a20a175dc35454420b76d2783",
+  "sourceTree": "a04c31bb03ddd1744534d1028a435b5d67c2c3b9",
   "sourceState": "dirty",
-  "sourceInputSha256": "466dc76c552ee4b79049cbe41852d84dc010c25f31ecf3062b79605f5d557e31",
+  "sourceInputSha256": "603ce769262dcd42df084778001b260d74caf8938f521a3cc7b41321db6835f3",
   "bundleSchema": 1,
-  "bundleSha256": "637ec2dbcaad98d0765bf0d73fd2fc5935004212288c69f3f5798a13fb584c78",
+  "bundleSha256": "edc5115dbdd52a5b834ae242ffd46c76d76e6c24ae10ec2dfc6a13cc0ac28921",
   "reviewSchema": 1,
   "engines": {
     "darwin-arm64": {
       "asset": "phoenix-ui-darwin-arm64",
-      "sha256": "b688b6d70b37270a451cfd8002c6139ade3197cc3458da54201d4764cf77fd95",
-      "size": 18350288,
-      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/darwin-arm64/phoenix-ui-darwin-arm64"
-    },
-    "darwin-x64": {
-      "asset": "phoenix-ui-darwin-x64",
-      "sha256": "f8b59faf9bda40347ce9fec8abd2001414aa22b705cddb01e6ed30df487bb15c",
-      "size": 20838208,
-      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/darwin-x64/phoenix-ui-darwin-x64"
-    },
-    "linux-x64": {
-      "asset": "phoenix-ui-linux-x64",
-      "sha256": "c233dd554bc033d339aa568704e136d6d0d949f8fc8e8ea0a3e3ab69d5cb329b",
-      "size": 22931072,
-      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/linux-x64/phoenix-ui-linux-x64"
-    },
-    "linux-arm64": {
-      "asset": "phoenix-ui-linux-arm64",
-      "sha256": "6f846f717e7403d419fcab253057ab35355fd00ee8b247235fe63c2fb2d65548",
-      "size": 19768520,
-      "url": "https://download.xgent.ai/vendor/phoenix-ui/v0.7.6/linux-arm64/phoenix-ui-linux-arm64"
+      "sha256": "abf95baf75c1203f2a94f9489306bae213403226d7c3131b90eb52cd58ccf43b",
+      "size": 18383488
     }
   }
 }

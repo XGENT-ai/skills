@@ -354,28 +354,11 @@ fn install_dry_run_has_no_project_writes_and_uses_real_engine() {
         .all(|write| !write.path.starts_with(".codex/")));
     assert_eq!(snapshot(&request.project), before);
     assert!(receipt.engine.is_some());
-    assert!(receipt
-        .recovery_command
-        .as_deref()
-        .is_some_and(|s| !s.contains("rollback")));
-    let recovery = receipt.recovery_command.as_ref().unwrap();
-    assert!(!recovery.contains("npm exec"), "{recovery}");
-    let retried = Command::new("/bin/sh")
-        .args(["-c", &format!("{recovery} --dry-run")])
-        .output()
-        .unwrap();
-    assert!(
-        retried.status.success(),
-        "{}",
-        String::from_utf8_lossy(&retried.stderr)
-    );
-    let report: Value = serde_json::from_slice(&retried.stdout).unwrap();
-    assert_eq!(report["status"], "planned");
-    assert_eq!(snapshot(&request.project), before);
+    assert!(receipt.recovery_command.is_none());
 }
 
 #[test]
-fn install_apply_is_owned_idempotent_and_isolated() {
+fn install_apply_overwrites_tool_files_without_history() {
     let root = Workspace::new();
     let request = fixture(&root);
     write(
@@ -426,11 +409,45 @@ fn install_apply_is_owned_idempotent_and_isolated() {
     );
     assert!(!request.project.join(".codex/skills").exists());
     assert!(!request.project.join(".codex/hooks.json").exists());
-    let active = load(&request.project.join(".phoenix-diagram/install/active.json"));
-    assert_eq!(active["tool"], "phoenix-diagram");
+    assert!(!request.project.join(".phoenix-diagram/install").exists());
+    write(
+        &request.project.join(format!("{SKILL}/SKILL.md")),
+        b"custom tool copy",
+        0o644,
+    );
+    write(
+        &request.project.join(format!("{SKILL}/extra.txt")),
+        b"extra",
+        0o644,
+    );
+    write(
+        &request
+            .project
+            .join(".phoenix-diagram/install/transactions/old/backup"),
+        b"old",
+        0o600,
+    );
+    write(
+        &request.project.join(".phoenix-diagram/output/user.json"),
+        b"business data",
+        0o644,
+    );
     assert_eq!(
-        active["engineManifestSha256"],
-        digest(&fs::read(&request.version_manifest).unwrap())
+        apply_install(&request).unwrap().status,
+        InstallStatus::Installed
+    );
+    assert_eq!(
+        fs::read(request.project.join(format!("{SKILL}/SKILL.md"))).unwrap(),
+        fs::read(request.bundle_root.join("SKILL.md")).unwrap()
+    );
+    assert!(!request.project.join(".phoenix-diagram/install").exists());
+    assert_eq!(
+        fs::read(request.project.join(".phoenix-diagram/output/user.json")).unwrap(),
+        b"business data"
+    );
+    assert_eq!(
+        fs::read(request.project.join(format!("{SKILL}/extra.txt"))).unwrap(),
+        b"extra"
     );
     let before = snapshot(&request.project);
     assert_eq!(
@@ -445,96 +462,15 @@ fn install_apply_is_owned_idempotent_and_isolated() {
 }
 
 #[test]
-fn install_never_adopts_unowned_identical_bytes() {
+fn install_rejects_symlink_parent_before_any_project_write() {
     let root = Workspace::new();
     let request = fixture(&root);
-    let bytes = fs::read(request.bundle_root.join("SKILL.md")).unwrap();
-    write(
-        &request.project.join(format!("{SKILL}/SKILL.md")),
-        &bytes,
-        0o644,
-    );
+    fs::create_dir(root.path("outside")).unwrap();
+    symlink(root.path("outside"), request.project.join(".agents")).unwrap();
     let before = snapshot(&request.project);
-    let receipt = apply_install(&request).unwrap();
-    assert_eq!(receipt.status, InstallStatus::Conflict);
-    assert_eq!(receipt.exit_code(), 3);
-    assert!(receipt
-        .conflicts
-        .iter()
-        .any(|c| c.code == "install/unowned-file"));
+    assert!(apply_install(&request).is_err());
     assert_eq!(snapshot(&request.project), before);
-}
-
-#[test]
-fn install_committed_identical_bytes_with_new_inode_preserve_conflict() {
-    use std::os::unix::fs::MetadataExt;
-    let root = Workspace::new();
-    let request = fixture(&root);
-    assert_eq!(
-        apply_install(&request).unwrap().status,
-        InstallStatus::Installed
-    );
-    let target = request.project.join(format!("{SKILL}/SKILL.md"));
-    let bytes = fs::read(&target).unwrap();
-    let original_inode = fs::metadata(&target).unwrap().ino();
-    fs::rename(&target, root.path("saved-original")).unwrap();
-    write(&target, &bytes, 0o644);
-    let replacement_inode = fs::metadata(&target).unwrap().ino();
-    assert_ne!(replacement_inode, original_inode);
-    let before = snapshot(&request.project);
-    let planned = plan_install(&request).unwrap();
-    assert_eq!(planned.status, InstallStatus::Conflict, "{planned:?}");
-    assert!(planned
-        .conflicts
-        .iter()
-        .any(|conflict| conflict.code == "install/managed-file-modified"));
-    assert_eq!(snapshot(&request.project), before);
-    let applied = apply_install(&request).unwrap();
-    assert_eq!(applied.status, InstallStatus::Conflict, "{applied:?}");
-    assert_eq!(snapshot(&request.project), before);
-    assert_eq!(fs::metadata(&target).unwrap().ino(), replacement_inode);
-    assert_eq!(fs::read(&target).unwrap(), bytes);
-    assert_eq!(fs::read(root.path("saved-original")).unwrap(), bytes);
-}
-
-#[test]
-fn install_preserves_user_modifications_extra_files_and_symlink_parents() {
-    for problem in ["modified", "extra", "symlink"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        if problem == "symlink" {
-            fs::create_dir(root.path("external")).unwrap();
-            symlink(root.path("external"), request.project.join(".agents")).unwrap();
-        } else {
-            assert_eq!(
-                apply_install(&request).unwrap().status,
-                InstallStatus::Installed
-            );
-            let path = request.project.join(format!(
-                "{SKILL}/{}",
-                if problem == "modified" {
-                    "SKILL.md"
-                } else {
-                    "notes.txt"
-                }
-            ));
-            write(&path, b"user-owned later bytes\n", 0o644);
-        }
-        let before = snapshot(&request.project);
-        let receipt = apply_install(&request).unwrap();
-        assert_eq!(
-            receipt.status,
-            InstallStatus::Conflict,
-            "{problem}: {receipt:?}"
-        );
-        assert_eq!(snapshot(&request.project), before, "{problem}");
-        assert!(
-            fs::read_dir(root.path("external"))
-                .map(|r| r.count())
-                .unwrap_or(0)
-                == 0
-        );
-    }
+    assert!(fs::read_dir(root.path("outside")).unwrap().next().is_none());
 }
 
 #[test]
@@ -761,321 +697,6 @@ fn install_all_nineteen_provider_names_have_only_eighteen_skill_roots() {
         .all(|write| !write.path.contains("hook") && !write.path.contains("settings")));
 }
 
-#[test]
-fn install_real_kill_recovers_each_publication_boundary_and_retries() {
-    for checkpoint in ["journal", "retire", "link", "publish", "before-active"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        crash(&request, &root, "apply", checkpoint);
-        let before = snapshot(&request.project);
-        let receipt = plan_install(&request).unwrap();
-        assert_eq!(
-            receipt.status,
-            InstallStatus::RecoveryRequired,
-            "{checkpoint}: {receipt:?}"
-        );
-        assert_eq!(snapshot(&request.project), before, "dryrun/{checkpoint}");
-        let recovery = recover_install(&request.project).unwrap();
-        assert_eq!(
-            recovery.status,
-            InstallStatus::Recovered,
-            "{checkpoint}: {recovery:?}"
-        );
-        assert!(!request
-            .project
-            .join(format!("{SKILL}/ENGINE.json"))
-            .exists());
-        assert!(!request
-            .project
-            .join(".phoenix-diagram/install/active.json")
-            .exists());
-        assert_eq!(
-            apply_install(&request).unwrap().status,
-            InstallStatus::Installed,
-            "retry/{checkpoint}"
-        );
-    }
-}
-
-#[test]
-fn install_explicit_retry_recovers_and_committed_active_finishes() {
-    for checkpoint in ["publish", "active-link", "active"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        crash(&request, &root, "apply", checkpoint);
-        let receipt = apply_install(&request).unwrap();
-        assert_eq!(
-            receipt.status,
-            if checkpoint == "active" || checkpoint == "active-link" {
-                InstallStatus::Unchanged
-            } else {
-                InstallStatus::Installed
-            },
-            "{checkpoint}: {receipt:?}"
-        );
-        assert!(!receipt.recovered.is_empty());
-        assert_eq!(
-            plan_install(&request).unwrap().status,
-            InstallStatus::Unchanged
-        );
-    }
-}
-
-#[test]
-fn install_recovery_preserves_later_modified_bytes_and_inode() {
-    use std::os::unix::fs::MetadataExt;
-    for problem in ["bytes", "identical-new-inode", "unknown-hardlink"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        crash(&request, &root, "apply", "publish");
-        let target = request.project.join(format!("{SKILL}/ENGINE.json"));
-        match problem {
-            "bytes" => write(&target, b"later user modification\n", 0o644),
-            "identical-new-inode" => {
-                let bytes = fs::read(&target).unwrap();
-                fs::rename(&target, root.path("user-retired")).unwrap();
-                write(&target, &bytes, 0o644);
-            }
-            "unknown-hardlink" => fs::hard_link(&target, root.path("user-link")).unwrap(),
-            _ => unreachable!(),
-        }
-        let before = fs::read(&target).unwrap();
-        let metadata = fs::metadata(&target).unwrap();
-        let receipt = recover_install(&request.project).unwrap();
-        assert_eq!(
-            receipt.status,
-            InstallStatus::Conflict,
-            "{problem}: {receipt:?}"
-        );
-        assert!(
-            receipt.conflicts.iter().any(|conflict| conflict.code
-                == if problem == "unknown-hardlink" {
-                    "install/recovery-unknown-hardlink"
-                } else {
-                    "install/recovery-later-modification"
-                }),
-            "{problem}: {receipt:?}"
-        );
-        assert_eq!(fs::read(&target).unwrap(), before);
-        assert_eq!(fs::metadata(&target).unwrap().ino(), metadata.ino());
-        assert_eq!(fs::metadata(&target).unwrap().nlink(), metadata.nlink());
-    }
-}
-
-#[test]
-fn install_upgrade_recovery_restores_original_before_inode_and_is_repeatable() {
-    use std::os::unix::fs::MetadataExt;
-    let root = Workspace::new();
-    let request = fixture(&root);
-    assert_eq!(
-        apply_install(&request).unwrap().status,
-        InstallStatus::Installed
-    );
-    let path = request.project.join(format!("{SKILL}/ENGINE.json"));
-    let before = fs::read(&path).unwrap();
-    let inode = fs::metadata(&path).unwrap().ino();
-    update_skill(&request, b"updated managed skill\n");
-    crash(&request, &root, "apply", "retire");
-    let pending = plan_install(&request).unwrap();
-    for entry in fs::read_dir(pending.backup.unwrap()).unwrap() {
-        let entry = entry.unwrap();
-        let kind = entry.file_type().unwrap();
-        if kind.is_dir() {
-            assert_eq!(entry.file_name(), ".phoenix-diagram-output-cleanup");
-            assert_eq!(
-                entry.metadata().unwrap().permissions().mode() & 0o7777,
-                0o700
-            );
-        } else {
-            assert!(kind.is_file());
-            assert_eq!(
-                entry.metadata().unwrap().permissions().mode() & 0o7777,
-                0o600
-            );
-        }
-    }
-    crash(&request, &root, "recover", "restore-link");
-    let receipt = recover_install(&request.project).unwrap();
-    assert_eq!(receipt.status, InstallStatus::Recovered, "{receipt:?}");
-    assert_eq!(fs::read(&path).unwrap(), before);
-    assert_eq!(fs::metadata(&path).unwrap().ino(), inode);
-    assert_eq!(
-        apply_install(&request).unwrap().status,
-        InstallStatus::Installed
-    );
-}
-
-#[test]
-fn install_os_lock_serializes_real_processes_and_releases_after_kill() {
-    let root = Workspace::new();
-    let request = fixture(&root);
-    let mut child = child(&request, &root, "hold", "lock");
-    let started = std::time::Instant::now();
-    while !root.path("ready").is_file() {
-        assert!(
-            started.elapsed() < std::time::Duration::from_secs(10),
-            "child did not acquire the real lock"
-        );
-        assert!(
-            child.try_wait().unwrap().is_none(),
-            "child exited before holding the lock"
-        );
-        std::thread::sleep(std::time::Duration::from_millis(10));
-    }
-    let error = apply_install(&request).unwrap_err();
-    assert_eq!(error.kind, InstallErrorKind::Busy);
-    assert_eq!(error.exit_code(), 3);
-    child.kill().unwrap();
-    assert_eq!(child.wait().unwrap().signal(), Some(libc::SIGKILL));
-    assert_eq!(
-        apply_install(&request).unwrap().status,
-        InstallStatus::Installed
-    );
-}
-
-#[test]
-fn install_unknown_parent_claimant_is_preserved_at_the_mutation_boundary() {
-    let root = Workspace::new();
-    let request = fixture(&root);
-    fs::create_dir_all(request.project.join(".agents/skills")).unwrap();
-    fs::create_dir(root.path("external")).unwrap();
-    let mut changed = false;
-    let receipt = install::test_support::apply(&request, &mut |checkpoint, _| {
-        if !changed
-            && matches!(
-                checkpoint,
-                install::test_support::Checkpoint::BeforePublish(_)
-            )
-        {
-            fs::rename(request.project.join(".agents"), root.path("retired-parent")).unwrap();
-            symlink(root.path("external"), request.project.join(".agents")).unwrap();
-            changed = true;
-        }
-        Ok(())
-    })
-    .unwrap();
-    assert!(changed);
-    assert_eq!(
-        receipt.status,
-        InstallStatus::RecoveryRequired,
-        "{receipt:?}"
-    );
-    assert!(receipt
-        .conflicts
-        .iter()
-        .any(|conflict| conflict.code == "install/parent-changed"));
-    assert!(fs::read_dir(root.path("external"))
-        .unwrap()
-        .next()
-        .is_none());
-    assert!(fs::symlink_metadata(request.project.join(".agents"))
-        .unwrap()
-        .is_symlink());
-}
-
-#[test]
-fn install_invalid_active_or_journal_never_grants_ownership() {
-    for problem in ["active", "journal", "forged"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        let active_path = request.project.join(".phoenix-diagram/install/active.json");
-        if problem == "forged" {
-            let source = fs::read(request.bundle_root.join("SKILL.md")).unwrap();
-            write(
-                &request.project.join(format!("{SKILL}/SKILL.md")),
-                &source,
-                0o644,
-            );
-            fs::DirBuilder::new()
-                .recursive(true)
-                .mode(0o700)
-                .create(active_path.parent().unwrap())
-                .unwrap();
-            write(
-                &active_path,
-                b"{\"schemaVersion\":1,\"tool\":\"phoenix-diagram\",\"ownership\":[]}",
-                0o600,
-            );
-        } else {
-            assert_eq!(
-                apply_install(&request).unwrap().status,
-                InstallStatus::Installed
-            );
-            let path = if problem == "active" {
-                active_path.clone()
-            } else {
-                request
-                    .project
-                    .join(load(&active_path)["journal"].as_str().unwrap())
-            };
-            let mut value = load(&path);
-            value["checksum"] = json!("0".repeat(64));
-            write(&path, &serde_json::to_vec(&value).unwrap(), 0o600);
-        }
-        let before = snapshot(&request.project);
-        let receipt = apply_install(&request).unwrap();
-        assert_eq!(
-            receipt.status,
-            InstallStatus::Conflict,
-            "{problem}: {receipt:?}"
-        );
-        assert!(receipt.conflicts.iter().any(|conflict| conflict.code
-            == if problem == "journal" {
-                "install/invalid-journal"
-            } else {
-                "install/invalid-active"
-            }));
-        assert_eq!(snapshot(&request.project), before, "{problem}");
-    }
-}
-
-#[test]
-fn install_unknown_or_tampered_output_cleanup_is_not_adopted() {
-    for problem in ["empty", "tampered-owner"] {
-        let root = Workspace::new();
-        let request = fixture(&root);
-        let namespace = request
-            .project
-            .join(".phoenix-diagram/install/journals/.phoenix-diagram-output-cleanup");
-        if problem == "empty" {
-            fs::DirBuilder::new()
-                .recursive(true)
-                .mode(0o700)
-                .create(&namespace)
-                .unwrap();
-        } else {
-            assert_eq!(
-                apply_install(&request).unwrap().status,
-                InstallStatus::Installed
-            );
-            let owner_path = namespace.join("owner-v1.json");
-            let mut owner = load(&owner_path);
-            owner["checksum"] = json!("0".repeat(64));
-            write(&owner_path, &serde_json::to_vec(&owner).unwrap(), 0o600);
-        }
-        let before = snapshot(&request.project);
-        let receipt = apply_install(&request).unwrap();
-        assert_eq!(
-            receipt.status,
-            InstallStatus::Conflict,
-            "{problem}: {receipt:?}"
-        );
-        assert!(
-            receipt
-                .conflicts
-                .iter()
-                .any(|conflict| if problem == "empty" {
-                    conflict.code == "install/unverified-output-namespace"
-                } else {
-                    conflict.code == "install/output/cleanup-owner-binding-mismatch"
-                }),
-            "{problem}: {receipt:?}"
-        );
-        assert_eq!(snapshot(&request.project), before);
-    }
-}
-
-// Migration uses complete frozen trees in disposable project copies only.
 fn legacy_fixture(
     root: &Workspace,
     request: &InstallRequest,
@@ -1322,7 +943,7 @@ fn migration_resumes_deletion_cursor_and_retains_later_claimants() {
 fn migration_upgrade_rollback_rebinds_prior_ownership_and_survives_interruption() {
     let root = Workspace::new();
     let request = fixture(&root);
-    let first = apply_install(&request).unwrap();
+    let first = install::test_support::apply(&request, &mut |_, _| Ok(())).unwrap();
     assert_eq!(first.status, InstallStatus::Installed);
     let before = fs::read(request.project.join(format!("{SKILL}/SKILL.md"))).unwrap();
     let old_identity = fs::metadata(request.project.join(format!("{SKILL}/SKILL.md")))
@@ -1383,7 +1004,7 @@ fn migration_rollback_preflight_preserves_later_edits_and_backup_tampering() {
     for fault in ["later-edit", "backup"] {
         let root = Workspace::new();
         let request = fixture(&root);
-        apply_install(&request).unwrap();
+        install::test_support::apply(&request, &mut |_, _| Ok(())).unwrap();
         legacy_fixture(&root, &request, "legacy-2.17", ".agents");
         update_skill(&request, b"new skill\n");
         let applied = migrate_fixture(&request, true, false);
@@ -1544,7 +1165,9 @@ fn migration_fresh_rollback_is_idempotent_and_rejects_forged_empty_cleanup_owner
                 InstallStatus::Planned
             );
             assert_eq!(
-                apply_install(&request).unwrap().status,
+                install::test_support::apply(&request, &mut |_, _| Ok(()))
+                    .unwrap()
+                    .status,
                 InstallStatus::Installed
             );
             let before = snapshot(&request.project);
@@ -1577,7 +1200,7 @@ fn migration_all_complete_frozen_sources_are_recognized_read_only() {
 fn migration_rollback_preserves_same_content_replaced_previous_journal() {
     let root = Workspace::new();
     let request = fixture(&root);
-    let first = apply_install(&request).unwrap();
+    let first = install::test_support::apply(&request, &mut |_, _| Ok(())).unwrap();
     update_skill(&request, b"upgraded before journal claimant\n");
     let applied = migrate_fixture(&request, true, false);
     assert_eq!(applied.status, InstallStatus::Installed);
@@ -1615,7 +1238,7 @@ fn migration_rollback_journal_rebind_real_kill_is_resumable() {
     for checkpoint in ["rollback-journal-retire", "rollback-journal-publish"] {
         let root = Workspace::new();
         let request = fixture(&root);
-        let first = apply_install(&request).unwrap();
+        let first = install::test_support::apply(&request, &mut |_, _| Ok(())).unwrap();
         update_skill(
             &request,
             b"upgrade for journal rebind kill
@@ -1646,7 +1269,7 @@ fn direct_v1_rollback_expansion_real_kill_recovers_and_repeats() {
     for checkpoint in ["rollback", "compat-audit", "compat-publish"] {
         let root = Workspace::new();
         let request = fixture(&root);
-        let initial = apply_install(&request).unwrap();
+        let initial = install::test_support::apply(&request, &mut |_, _| Ok(())).unwrap();
         install::test_support::v1_fixture(&request.project);
         let id = initial.transaction_id.unwrap();
         assert_eq!(load(initial.journal.as_ref().unwrap())["schemaVersion"], 1);

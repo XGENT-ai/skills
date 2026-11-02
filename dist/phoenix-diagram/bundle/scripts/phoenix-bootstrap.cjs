@@ -353,106 +353,12 @@ function projectRoot(start) {
   let directory = initial;
   if (!fs.statSync(initial).isDirectory()) throw failure(`Project is not a directory: ${start}`, 2);
   for (;;) {
-    if (exists(path.join(directory, '.phoenix-diagram/install/active.json')) || exists(path.join(directory, '.git'))) return directory;
+    if (exists(path.join(directory, '.git'))) return directory;
     const parent = path.dirname(directory);
     if (parent === directory) return initial;
     directory = parent;
   }
 }
-function physical(stat) { return { device: stat.dev.toString(), inode: stat.ino.toString() }; }
-function identity(snapshot) {
-  const { stat, bytes } = snapshot;
-  return { ...physical(stat), links: Number(stat.nlink), mode: Number(stat.mode & 0o777n), uid: Number(stat.uid), sha256: sha256(bytes), bytes: bytes.length };
-}
-function same(left, right) { return JSON.stringify(left) === JSON.stringify(right); }
-function sealed(file) {
-  const snapshot = readRegular(file, MAX_ENGINE, 0o600);
-  const data = JSON.parse(snapshot.bytes);
-  if (!object(data) || !SHA.test(data.checksum || '') || sha256(encoded({ ...data, checksum: '' })) !== data.checksum || !snapshot.bytes.equals(encoded(data))) throw failure(`Invalid canonical installation ownership/journal checksum: ${file}`);
-  if (snapshot.stat.uid !== BigInt(process.getuid())) throw failure(`Installation state belongs to a different owner: ${file}`);
-  return { ...snapshot, data };
-}
-function managed(name) {
-  if (!relative(name)) return false;
-  const [provider, skills, tool, ...rest] = name.split('/');
-  return PROVIDERS.includes(provider) && provider !== '.codex' && skills === 'skills' && tool === TOOL && allowed(rest.join('/'), true);
-}
-function verifiedJournalPublicationEntry(journals, name) {
-  const parent = fs.lstatSync(journals, { bigint: true });
-  if (!parent.isDirectory() || parent.isSymbolicLink() || parent.uid !== BigInt(process.getuid()) || (parent.mode & 0o7777n) !== 0o700n) throw failure('Installation journal directory is not private.');
-  if (name === '.phoenix-diagram-output-cleanup') {
-    const directory = childFile(journals, name), stat = fs.lstatSync(directory, { bigint: true });
-    if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== parent.uid || (stat.mode & 0o7777n) !== 0o700n) throw failure('Unknown journal publication cleanup directory.');
-    const marker = readRegular(childFile(directory, 'owner-v1.json'), 16 * 1024, 0o600);
-    const owner = JSON.parse(marker.bytes);
-    const expected = { schemaVersion: 1, tool: TOOL, kind: 'output-cleanup-directory', parentPath: journals, parent: physical(parent), directory: physical(stat), recordIdentity: physical(marker.stat), checksum: '' };
-    expected.checksum = sha256(Buffer.from(JSON.stringify(expected)));
-    if (marker.stat.uid !== parent.uid || !marker.bytes.equals(encoded(expected)) || !same(owner, expected)) throw failure('Journal publication cleanup owner binding or checksum differs.');
-    if (fs.readdirSync(directory).some(entry => entry !== 'owner-v1.json')) throw failure('Journal publication cleanup requires explicit native recovery; unknown records are preserved.');
-    return true;
-  }
-  if (name.startsWith('.phoenix-diagram-lock-')) {
-    const marker = readRegular(childFile(journals, name), 16 * 1024, 0o600), lock = JSON.parse(marker.bytes);
-    if (!/^[a-f0-9]{32}\.json$/.test(lock.name || '') || name !== `.phoenix-diagram-lock-${sha256(lock.name)}.lock` || !exists(childFile(journals, lock.name))) throw failure('Unknown journal publication lock target or filename.');
-    const expected = { schemaVersion: 1, tool: TOOL, kind: 'output-lock', name: lock.name, parentDevice: parent.dev.toString(), parentInode: parent.ino.toString() };
-    if (marker.stat.uid !== parent.uid || !marker.bytes.equals(Buffer.from(JSON.stringify(expected)))) throw failure('Journal publication lock identity or bytes differ.');
-    return true;
-  }
-  return false;
-}
-function verifyReceipt(project, manifest, options = {}) {
-  const receiptPath = '.phoenix-diagram/install/active.json';
-  const file = path.join(project, receiptPath);
-  if (!exists(file)) {
-    if (options.installedSkillRoot) throw failure('Installed skill has no diagram ownership receipt.');
-    return null;
-  }
-  const snapshot = sealed(childFile(project, receiptPath));
-  const active = snapshot.data; const version = manifest.data;
-  const transaction = active.transactionId;
-  if (![1, 2].includes(active.schemaVersion) || active.tool !== TOOL || active.toolVersion !== TOOL_VERSION || !/^[a-f0-9]{32}$/.test(transaction || '') || !same(active.project, physical(fs.statSync(project, { bigint: true })))
-    || active.npmPackageVersion !== version.npmPackageVersion || active.bundleManifestSha256 !== version.bundleSha256 || active.engineManifestSha256 !== manifest.hash
-    || active.engine?.sourceInputSha256 !== version.sourceInputSha256 || active.engine?.inputContractSchema !== 1 || active.engine?.receiptSchema !== 1 || active.engine?.viewerRevision !== 'phoenix-v2'
-    || !Object.values(version.engines).some(meta => meta.sha256 === active.engine?.binary?.sha256 && meta.size === active.engine?.binary?.bytes)
-    || !Array.isArray(active.providers) || !active.providers.length || new Set(active.providers).size !== active.providers.length || active.providers.some(provider => !PROVIDERS.includes(provider))
-    || active.journal !== `.phoenix-diagram/install/journals/${transaction}.json` || active.backup !== `.phoenix-diagram/install/transactions/${transaction}/before`
-    || !Array.isArray(active.ownership) || !active.ownership.length || active.ownership.length > 200000
-    || active.planSha256 !== sha256(encoded([active.bundleManifestSha256, active.engineManifestSha256, active.providers, active.ownership]))) throw failure('Project ownership requires a different or invalid Phoenix Diagram package/contract identity.');
-  const journal = sealed(childFile(project, active.journal)).data;
-  if (![1, 2].includes(journal.schemaVersion) || journal.tool !== TOOL || journal.transactionId !== transaction || journal.phase !== 'committed' || journal.pending !== null || !Array.isArray(journal.operations) || !journal.operations.length || journal.completed !== journal.operations.length
-    || !same(journal.project, active.project) || !same(journal.active, active)
-    || !same(journal.transaction, physical(fs.statSync(path.dirname(path.join(project, active.backup)), { bigint: true })))
-    || journal.operations[journal.operations.length - 1].path !== receiptPath || !same(journal.operations[journal.operations.length - 1].after, identity(snapshot))) throw failure('Installed ownership is not bound to a completed native journal.');
-  if (journal.migration && (journal.schemaVersion !== 2 || journal.migration.confirmed !== true || !Array.isArray(journal.migration.roots) || journal.migration.roots.some(root => root.kind !== 'legacy-root-remove' || !active.providers.some(provider => root.path === `${provider}/skills/archify`) || !['legacy-2.17', 'legacy-2.17-when-to-use', 'reference-3.1.0'].includes(root.source) || root.pending !== null || !Array.isArray(root.entries) || !root.entries.length || root.entries.some(entry => entry.removed !== true)))) throw failure('Legacy removal journal has not committed its confirmed scope.');
-  let previous; const owned = new Map();
-  for (const entry of active.ownership) {
-    if (!managed(entry.path) || !active.providers.includes(entry.path.split('/')[0]) || previous && Buffer.compare(Buffer.from(previous), Buffer.from(entry.path)) >= 0 || ![0o644, 0o755].includes(entry.identity?.mode)) throw failure(`Unsafe managed ownership path: ${entry.path}`);
-    const actual = readRegular(childFile(project, entry.path), MAX_ENGINE, entry.identity.mode);
-    if (!same(identity(actual), entry.identity)) throw failure(`Managed ownership identity or digest changed: ${entry.path}`);
-    owned.set(entry.path, entry.identity); previous = entry.path;
-  }
-  for (const [index, operation] of journal.operations.entries()) {
-    if ((journal.schemaVersion === 2 ? operation.kind !== 'file-write' : operation.kind !== undefined)) throw failure('Unknown native journal operation kind.');
-    if (operation.stagePath !== `after/${index}` || operation.retiredPath !== `retired/${index}` || operation.undoPath !== `undo/${index}` || operation.backupPath !== (operation.before ? `before/${index}` : null)) throw failure('Journal staging/backup paths differ from native ownership.');
-    if (index + 1 < journal.operations.length && (!managed(operation.path) || !same(owned.get(operation.path), operation.after))) throw failure(`Journal operation differs from managed ownership: ${operation.path}`);
-  }
-  const journals = path.join(project, '.phoenix-diagram/install/journals');
-  for (const name of fs.readdirSync(journals)) {
-    if (verifiedJournalPublicationEntry(journals, name)) continue;
-    if (!/^[a-f0-9]{32}\.json$/.test(name)) throw failure(`Unknown installation journal entry: ${name}`);
-    const other = sealed(childFile(journals, name)).data;
-    if (![1, 2].includes(other.schemaVersion) || other.tool !== TOOL || !same(other.project, active.project) || !['committed', 'recovered'].includes(other.phase)) throw failure('Diagram installation requires explicit native recovery before ordinary use.');
-  }
-  if (options.installedSkillRoot) {
-    const relativeRoot = path.relative(project, options.installedSkillRoot).split(path.sep).join('/');
-    if (!owned.has(`${relativeRoot}/ENGINE.json`) || !owned.has(`${relativeRoot}/SKILL.md`)) throw failure('Launcher skill root is not managed by this project ownership record.');
-    const engine = readRegular(childFile(options.installedSkillRoot, 'ENGINE.json'), 1024 * 1024).bytes;
-    if (!engine.equals(manifest.bytes)) throw failure('Installed ENGINE bytes differ from their native ownership identity.');
-    inventory(options.installedSkillRoot, new Set([...owned.keys()].filter(name => name.startsWith(`${relativeRoot}/`)).map(name => name.slice(relativeRoot.length + 1))));
-  }
-  return active;
-}
-
 function exists(file) {
   try { fs.lstatSync(file); return true; } catch (error) { if (error.code === 'ENOENT') return false; throw error; }
 }
@@ -474,12 +380,7 @@ async function preflight(options = {}) {
     verifyBundle(bundleRoot, manifest);
     legalResources(path.dirname(versionManifestPath));
     if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, verifyBundle(bundleRoot, manifest));
-    // An explicit package upgrade lets native --dry-run validate the prior
-    // ownership. Ordinary use never opts out of the current receipt binding.
-    if (options.checkReceipt !== false) verifyReceipt(project, manifest);
   } else {
-    if (!options.project && !exists(path.join(project, '.phoenix-diagram/install/active.json'))) project = projectRoot(skillDir);
-    if (options.checkReceipt !== false) verifyReceipt(project, manifest, { installedSkillRoot: skillDir });
     bundleRoot = skillDir;
     if (options.releaseDir && options.allowInstall !== true) verifyOffline(path.resolve(options.releaseDir), manifest, null);
   }
@@ -551,14 +452,14 @@ async function main(args, options = {}) {
       }
       if (!requested) throw failure('Engine installation requires an explicit --project DIR.', 2);
       project = projectRoot(requested);
-      const ready = await preflight({ ...options, project, releaseDir, env, allowInstall: true, checkReceipt: true });
+      const ready = await preflight({ ...options, project, releaseDir, env, allowInstall: true });
       manifest = ready.manifest; target = ready.target;
       const result = { schemaVersion: 1, tool: TOOL, toolVersion: TOOL_VERSION, command: 'engine install', status: 'installed', scope: 'engine-cache', diagnostics: [], npmPackageVersion: ready.version.npmPackageVersion, target, enginePath: ready.enginePath, project: ready.project };
       process.stdout.write(json ? encoded(result) : `Phoenix Diagram engine ${TOOL_VERSION} ready: ${ready.enginePath}\n`);
       return 0;
     }
     const migration = migrationOptions(args);
-    const ready = await preflight({ ...options, ...(migration ? { project: migration.project, exactProject: true, ...(migration.from && migration.bundleRoot ? { bundleRoot: path.resolve(migration.bundleRoot) } : {}) } : {}), env, allowInstall: false, checkReceipt: !['install', 'migrate'].includes(args[0]) });
+    const ready = await preflight({ ...options, ...(migration ? { project: migration.project, exactProject: true, ...(migration.from && migration.bundleRoot ? { bundleRoot: path.resolve(migration.bundleRoot) } : {}) } : {}), env, allowInstall: false });
     manifest = ready.manifest; target = ready.target; project = ready.project;
     const childArgs = [...args];
     if ((args[0] === 'install' || migration?.from) && !args.some(arg => arg === '--bundle-root' || arg.startsWith('--bundle-root='))) childArgs.push('--bundle-root', ready.bundleRoot);
@@ -585,5 +486,5 @@ async function main(args, options = {}) {
   }
 }
 
-module.exports = { TARGETS, platformTarget, manifestAt, verifyBundle, verifyReceipt, verifyEngine, enginePath, installEngine, preflight, setupCommand, shellQuote, proxyFor, checkedUrl, sha256, migrationOptions, main };
+module.exports = { TARGETS, platformTarget, manifestAt, verifyBundle, verifyEngine, enginePath, installEngine, preflight, setupCommand, shellQuote, proxyFor, checkedUrl, sha256, migrationOptions, main };
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; }).catch(error => { process.stderr.write(`Phoenix Diagram: ${error.message}\n`); process.exitCode = 4; });

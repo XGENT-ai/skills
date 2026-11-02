@@ -137,8 +137,8 @@
     },
     {
       "path": "references/migration.md",
-      "size": 6211,
-      "sha256": "9aad9f2d99eb2f2da9d2f2d656a7a7f01179862a815a6b07f3bf450fe565453a",
+      "size": 6209,
+      "sha256": "61f88625e1ffcb278db47ca1ddc7ba94ea9b1c459dfecd023125b05195c8a969",
       "mode": 420
     },
     {
@@ -233,8 +233,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 45211,
-      "sha256": "35fe87eb4e534470bc3bb2e6cc05e5483796694a8dd58f01c7702f3129132b71",
+      "size": 35018,
+      "sha256": "2b0e6f09be39d414d1d3928ed8ef8bd05f76504a03b039bca6200e5691ab0d31",
       "mode": 420
     },
     {

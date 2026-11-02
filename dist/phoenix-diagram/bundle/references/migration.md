@@ -36,7 +36,7 @@ dry-run只报告计划与冲突，零写入；遇pending只报告，不恢复。
 
 recover不接受dry-run；recover/rollback都不接受bundle-root、providers或confirm-remove-archify。它们核已存在的固定正确引擎与本地事务，不下载、不更新、不重装旧skill，不要求当前active安装已完整提交。
 
-普通 install 的 pending 恢复仍按其回执重跑原显式 install；`migrate --recover ID` 用于已确认的迁移或正在回滚的指定事务，不能代替普通安装恢复。优先执行对应回执的 `recoveryCommand`，不要只因有 journal ID 就改用迁移恢复命令。
+普通 install 直接覆盖工具文件，不建立事务；中断后重跑即可。成功安装会清理旧安装与迁移状态，不保留历史回滚入口。`migrate --recover ID` 仅用于仍存在的已确认迁移或回滚事务，优先执行该迁移回执的 `recoveryCommand`。
 
 - Recover继续指定已确认事务的安全剩余步骤；同一确认范围不重复索取确认。后来新增/改写、删除后重建或父目录身份变化保留并报告recovery-required；不凭stdout推断哪些文件已删。
 - Rollback仅回滚**当前committed事务**的新入口受管写入；包括仍为v1的当前事务经原生引擎验证并扩展后的回滚，不是跳过后来安装去回滚任意历史ID。后来修改在预检时冲突，先保持零变更；中途身份变化仍保留拒绝。成功rolled-back，同一ID可幂等重试。

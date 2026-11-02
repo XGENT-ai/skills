@@ -26,7 +26,7 @@ const MANAGED_SETTINGS = {
 };
 
 // ─── Phoenix UI ─────────────────────────────────────────────────────────────
-// Phoenix 的受管安装、hooks 与回执由 Rust 执行器事务化完成。
+// Phoenix 工具文件由 Rust 执行器直接覆盖,共享 hooks 只更新本工具条目。
 // 旧工具是否删除由 npm 安装入口询问,工具清理不备份、不迁移旧数据。
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
@@ -101,10 +101,8 @@ function preparePhoenixTools(project, providers) {
         }
       }
     }
-    if (!fs.existsSync(path.join(project, '.phoenix-ui/install'))) {
-      const file = checked(project, `${provider}/skills/phoenix-ui`);
-      if (present(file)) refresh.push(file);
-    }
+    const file = checked(project, `${provider}/skills/phoenix-ui`);
+    if (fs.lstatSync(file, { throwIfNoEntry: false })?.isSymbolicLink()) refresh.push(file);
   }
   const oldCommand = value => typeof value === 'string'
     && /(?:skills[\\/]impeccable[\\/]scripts[\\/](?:impeccable(?:\.cmd)?|hook(?:-(?:probe|before-edit|after-edit|stop))?\.mjs)|(?:^|[\s"'])impeccable\s+hook\b)/.test(value);
@@ -201,17 +199,15 @@ function runDiagram(binary, args) {
 
 function prepareDiagramTools(project, providers) {
   const refresh = [];
-  if (!fs.lstatSync(path.join(project, '.phoenix-diagram/install'), { throwIfNoEntry: false })) {
-    for (const provider of providers.filter(name => name !== '.codex')) {
-      const relative = `${provider}/skills/phoenix-diagram`;
-      const file = path.join(project, relative);
-      const stat = fs.lstatSync(file, { throwIfNoEntry: false });
-      if (!stat) continue;
-      for (let dir = path.dirname(file); dir !== project; dir = path.dirname(dir)) {
-        if (fs.lstatSync(dir).isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
-      }
-      refresh.push({ file, relative, linked: stat.isSymbolicLink() });
+  for (const provider of providers.filter(name => name !== '.codex')) {
+    const relative = `${provider}/skills/phoenix-diagram`;
+    const file = path.join(project, relative);
+    const stat = fs.lstatSync(file, { throwIfNoEntry: false });
+    if (!stat?.isSymbolicLink()) continue;
+    for (let dir = path.dirname(file); dir !== project; dir = path.dirname(dir)) {
+      if (fs.lstatSync(dir).isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
     }
+    refresh.push({ file, relative, linked: true });
   }
   return {
     covers(conflict) {
@@ -242,10 +238,7 @@ async function prepareDiagram(targetDir, options) {
     const tools = prepareDiagramTools(targetDir, planned.report.providers || []);
     const reinstallable = planned.code === 3 && planned.report.status === 'conflict'
       && planned.report.conflicts.length > 0 && planned.report.conflicts.every(conflict => tools.covers(conflict));
-    // A known pending transaction is recovered only by the later explicit apply.
-    const recoverable = planned.code === 3 && planned.report.status === 'recovery-required'
-      && planned.report.conflicts?.length === 0;
-    if (!reinstallable && ((planned.code !== 0 && !recoverable) || !['planned', 'unchanged', 'recovery-required'].includes(planned.report.status))) {
+    if (!reinstallable && (planned.code !== 0 || !['planned', 'unchanged'].includes(planned.report.status))) {
       printDiagram(planned.report, ready.manifest);
       throw phoenixFailure(planned.code || 3, 'Phoenix Diagram 预检失败');
     }
@@ -345,6 +338,8 @@ function printPhoenix(report, manifest) {
     console.log(`  事务  ${report.transactionId};备份 ${report.backups}`);
     const project = bootstrap.shellQuote(report.project);
     console.log(`  回滚  npm exec --package=@xgent-ai/skills@${npmPackageVersion} -- phoenix-ui migrate --rollback ${report.transactionId} --project ${project}`);
+  }
+  if (['installed', 'integration-pending'].includes(report.status)) {
     for (const provider of skillProviders) console.log(`  重载  ${reloadStep(provider)}`);
   }
 }
@@ -527,13 +522,13 @@ async function install(args) {
   if (agents) createAgents(targetDir);
   else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
 
-  // XGENT 部分已完成;Phoenix 在锁内重读这些文件后再应用,中断时可重试。
+  // XGENT 部分已完成;Phoenix 直接覆盖工具文件,中断后重跑。
   if (phoenix) {
     let applied;
     try {
       applied = runPhoenix(phoenix.binary, phoenix.args);
     } catch (error) {
-      console.log(`未完成: XGENT 部分已安装;Phoenix UI 待恢复(安装被中断,可能已部分写入),按下方错误处理后重跑本命令,会先按日志恢复(可重复执行)。${diagram ? 'Phoenix Diagram 未执行。' : ''}`);
+      console.log(`未完成: XGENT 部分已安装;Phoenix UI 安装未完成,处理下方错误后重跑本命令覆盖安装。${diagram ? 'Phoenix Diagram 未执行。' : ''}`);
       throw error;
     }
     printPhoenix(applied.report, phoenix.manifest);
@@ -551,7 +546,7 @@ async function install(args) {
     try {
       applied = runDiagram(diagram.binary, diagram.args);
     } catch (error) {
-      console.log(`未完成: ${completed};Phoenix Diagram 可能已部分写入,按错误和项目日志重跑恢复。`);
+      console.log(`未完成: ${completed};Phoenix Diagram 安装未完成,处理错误后重跑本命令覆盖安装。`);
       throw error;
     }
     printDiagram(applied.report, diagram.manifest);
