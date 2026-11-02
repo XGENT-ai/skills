@@ -93,6 +93,19 @@ fn request<'a>(
     }
 }
 
+fn migration_request<'a>(
+    sandbox: &'a Sandbox,
+    project: &'a Path,
+    providers: &[&str],
+    dry_run: bool,
+    id: &str,
+) -> Request<'a> {
+    Request {
+        scan_sources: true,
+        ..request(sandbox, project, providers, dry_run, id)
+    }
+}
+
 /// Every entry below `root` except Phoenix's own state directory.
 fn entries(root: &Path) -> BTreeMap<String, String> {
     fn walk(root: &Path, at: &Path, out: &mut BTreeMap<String, String>) {
@@ -141,7 +154,7 @@ fn run_cli(args: &[&str], cwd: &Path, home: &Path) -> (i32, String, String) {
 }
 
 #[test]
-fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
+fn fresh_install_is_idempotent_without_transaction_state() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     fs::write(project.join("package.json"), "{}\n").unwrap();
@@ -187,18 +200,13 @@ fn fresh_install_is_idempotent_and_rollback_leaves_the_original_tree() {
         "an unchanged run must not open a transaction"
     );
 
-    let rolled = installer::rollback(&project, "fresh-1").unwrap();
-    assert_eq!(rolled.status, Status::RolledBack);
-    let after: BTreeMap<_, _> = entries(&project)
-        .into_iter()
-        .filter(|(path, kind)| {
-            !(kind == "dir"
-                && [".claude", ".claude/skills", ".claude/agents"].contains(&path.as_str()))
-        })
-        .collect();
+    assert!(installed.transaction_id.is_none());
+    assert!(installed.backups.is_none());
+    assert!(!project.join(".phoenix-ui/install").exists());
+    assert!(!project.join(".phoenix-ui/migrations").exists());
     assert_eq!(
-        after, before,
-        "rollback must remove Phoenix files and the directories it left empty"
+        fs::read_to_string(project.join("package.json")).unwrap(),
+        "{}\n"
     );
 }
 
@@ -253,12 +261,8 @@ fn upgrade_releases_legacy_companion_ownership_without_touching_independent_upda
             fs::read_to_string(project.join(companion)).unwrap(),
             "updated independently by skills.sh"
         );
-        let receipt = Project::open(&project)
-            .unwrap()
-            .active_receipt_verified()
-            .unwrap()
-            .unwrap();
-        assert!(receipt.ownership.iter().all(|item| item.path != companion));
+        assert!(!project.join(".phoenix-ui/install").exists());
+        assert!(!project.join(".phoenix-ui/migrations").exists());
         let again = installer::install(&request(
             &sandbox,
             &project,
@@ -312,7 +316,7 @@ fn ordinary_install_leaves_source_scanning_to_explicit_migration() {
 }
 
 #[test]
-fn ordinary_install_still_blocks_live_residue_in_fixed_legacy_paths() {
+fn ordinary_install_preserves_live_residue_without_blocking() {
     for path in [
         ".impeccable/live/sessions/old.jsonl",
         ".impeccable-live.json",
@@ -332,12 +336,11 @@ fn ordinary_install_still_blocks_live_residue_in_fixed_legacy_paths() {
             "fixed-residue",
         ))
         .unwrap();
-        assert_eq!(report.status, Status::Conflict, "{path}: {report:?}");
-        assert_eq!(
-            entries(&project),
-            before,
-            "fixed legacy residue must block before writes"
-        );
+        assert_eq!(report.status, Status::Installed, "{path}: {report:?}");
+        let after = entries(&project);
+        for (file, hash) in before {
+            assert_eq!(after.get(&file), Some(&hash), "{file}");
+        }
     }
 }
 
@@ -356,8 +359,14 @@ fn migration_retires_owned_old_entries_keeps_user_data_and_rolls_back_exactly() 
     let project = sandbox.project();
     let before = entries(&project);
     let providers = [".agents", ".claude", ".codex"];
-    let report =
-        installer::install(&request(&sandbox, &project, &providers, false, "migrate-1")).unwrap();
+    let report = installer::install(&migration_request(
+        &sandbox,
+        &project,
+        &providers,
+        false,
+        "migrate-1",
+    ))
+    .unwrap();
     assert_eq!(report.status, Status::Installed, "{:?}", report.conflicts);
     assert_eq!(
         report.transition_entries,
@@ -414,8 +423,14 @@ fn migration_retires_owned_old_entries_keeps_user_data_and_rolls_back_exactly() 
             "{user} changed"
         );
     }
-    let again =
-        installer::install(&request(&sandbox, &project, &providers, false, "migrate-2")).unwrap();
+    let again = installer::install(&migration_request(
+        &sandbox,
+        &project,
+        &providers,
+        false,
+        "migrate-2",
+    ))
+    .unwrap();
     assert_eq!(again.status, Status::Unchanged, "{:?}", again.conflicts);
 
     let rolled = installer::rollback(&project, "migrate-1").unwrap();
@@ -436,7 +451,7 @@ fn migration_retires_owned_old_entries_keeps_user_data_and_rolls_back_exactly() 
 }
 
 #[test]
-fn personal_old_entries_block_activation_without_writing() {
+fn ordinary_install_preserves_personal_old_entries_without_blocking() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     fs::create_dir_all(sandbox.home().join(".claude/skills/impeccable")).unwrap();
@@ -445,7 +460,7 @@ fn personal_old_entries_block_activation_without_writing() {
         "old\n",
     )
     .unwrap();
-    let before = entries(&project);
+    let before = entries(&sandbox.home());
     let report = installer::install(&request(
         &sandbox,
         &project,
@@ -454,22 +469,18 @@ fn personal_old_entries_block_activation_without_writing() {
         "personal-1",
     ))
     .unwrap();
-    assert_eq!(report.status, Status::Conflict);
-    assert!(report
-        .conflicts
-        .iter()
-        .any(|c| c.path.ends_with(".claude/skills/impeccable")));
-    assert_eq!(entries(&project), before);
+    assert_eq!(report.status, Status::Installed);
+    assert_eq!(entries(&sandbox.home()), before);
     assert!(!project.join(".phoenix-ui/install/active.json").exists());
 }
 
 #[test]
-fn recovering_an_interrupted_install_restores_the_main_skill() {
+fn migration_recovering_an_interrupted_install_restores_the_main_skill() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let interrupted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         installer::install_with(
-            &request(&sandbox, &project, &[".claude"], false, "interrupted"),
+            &migration_request(&sandbox, &project, &[".claude"], false, "interrupted"),
             |point| {
                 if matches!(&point, Checkpoint::AfterReplace(path) if path.starts_with(".claude/skills/phoenix-ui/reference/"))
                 {
@@ -480,7 +491,7 @@ fn recovering_an_interrupted_install_restores_the_main_skill() {
     }));
     assert!(interrupted.is_err());
     assert!(project.join(".claude/skills/phoenix-ui/SKILL.md").exists());
-    let report = installer::install(&request(
+    let report = installer::install(&migration_request(
         &sandbox,
         &project,
         &[".claude"],
@@ -495,7 +506,7 @@ fn recovering_an_interrupted_install_restores_the_main_skill() {
 }
 
 #[test]
-fn personal_older_upstream_commands_are_reported_without_blocking() {
+fn ordinary_install_keeps_personal_commands_without_legacy_notices() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let skills = sandbox.home().join(".agents/skills");
@@ -513,6 +524,7 @@ fn personal_older_upstream_commands_are_reported_without_blocking() {
         r#"{"version":3,"skills":{"audit":{"source":"pbakaus/impeccable"},"my-notes":{"source":"me/notes"}}}"#,
     )
     .unwrap();
+    let before = entries(&sandbox.home());
     let report = installer::install(&request(
         &sandbox,
         &project,
@@ -522,20 +534,8 @@ fn personal_older_upstream_commands_are_reported_without_blocking() {
     ))
     .unwrap();
     assert_eq!(report.status, Status::Installed);
-    let old: Vec<&str> = report
-        .findings
-        .iter()
-        .filter(|f| f.kind == "personal-old-command")
-        .map(|f| f.path.as_str())
-        .collect();
-    assert_eq!(old.len(), 2, "{old:?}");
-    assert!(old.iter().any(|p| p.ends_with(".agents/skills/audit")));
-    assert!(old.iter().any(|p| p.ends_with(".agents/skills/polish")));
-    assert!(report
-        .findings
-        .iter()
-        .filter(|f| f.kind == "personal-old-command")
-        .all(|f| !f.blocking_integration && f.message.contains("reload")));
+    assert!(report.findings.is_empty());
+    assert_eq!(entries(&sandbox.home()), before);
 }
 
 #[test]
@@ -585,7 +585,9 @@ fn cli_writes_one_json_object_and_maps_exit_codes() {
     assert_eq!(value["status"], "planned");
     let (code, stdout, _) = run_cli(
         &[
-            "install",
+            "migrate",
+            "--from",
+            "impeccable",
             "--project",
             &project_arg,
             "--bundle-root",
@@ -631,7 +633,7 @@ fn cli_writes_one_json_object_and_maps_exit_codes() {
 /// the old impeccable group). Equal matcher identity must not block install,
 /// a guard rewrite that reorders the groups, migration or rollback.
 #[test]
-fn neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
+fn migration_neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
     let guard = json!({"hooks": [{"type": "command", "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/context-goal-guard.py\" --threshold 65", "timeout": 3}]});
     let write_guard = |project: &Path| {
         let file = project.join(".codex/hooks.json");
@@ -666,12 +668,16 @@ fn neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
     write_guard(&project);
     let original = entries(&project);
     let providers = [".agents", ".codex"];
-    let first =
-        installer::install(&request(&sandbox, &project, &providers, false, "groups-1")).unwrap();
+    let first = installer::install(&migration_request(
+        &sandbox, &project, &providers, false, "groups-1",
+    ))
+    .unwrap();
     assert_eq!(first.status, Status::Installed, "{:?}", first.conflicts);
     write_guard(&project);
-    let second =
-        installer::install(&request(&sandbox, &project, &providers, false, "groups-2")).unwrap();
+    let second = installer::install(&migration_request(
+        &sandbox, &project, &providers, false, "groups-2",
+    ))
+    .unwrap();
     assert_eq!(second.status, Status::Unchanged, "{:?}", second.conflicts);
     let rolled = installer::rollback(&project, "groups-1").unwrap();
     assert_eq!(rolled.status, Status::RolledBack);
@@ -697,7 +703,7 @@ fn neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
         serde_json::from_slice(&fs::read(project.join(".codex/hooks.json")).unwrap()).unwrap()
     };
     let codex_before = read_codex(&project);
-    let migrated = installer::install(&request(
+    let migrated = installer::install(&migration_request(
         &legacy,
         &project,
         &providers,
@@ -737,7 +743,7 @@ fn neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
         .iter()
         .any(|c| c.contains("skills/impeccable/scripts/")));
     write_guard(&project);
-    let again = installer::install(&request(
+    let again = installer::install(&migration_request(
         &legacy,
         &project,
         &providers,
@@ -782,7 +788,7 @@ fn neighboring_hook_groups_without_a_matcher_do_not_make_phoenix_ambiguous() {
 /// Backups and the install lock are machine-local: they go to the repository's
 /// `.git/info/exclude`, never to a committed ignore file.
 #[test]
-fn backups_and_lock_are_excluded_locally_once_without_touching_committed_files() {
+fn migration_backups_and_lock_are_excluded_locally_once_without_touching_committed_files() {
     let sandbox = Sandbox::new();
     let repo = sandbox.project();
     let project = repo.join("apps/web");
@@ -790,7 +796,7 @@ fn backups_and_lock_are_excluded_locally_once_without_touching_committed_files()
     fs::create_dir_all(&project).unwrap();
     fs::write(repo.join(".git/info/exclude"), "# user rule\n*.log").unwrap();
     fs::write(project.join("package.json"), "{}\n").unwrap();
-    let dry = installer::install(&request(
+    let dry = installer::install(&migration_request(
         &sandbox,
         &project,
         &[".claude"],
@@ -803,7 +809,7 @@ fn backups_and_lock_are_excluded_locally_once_without_touching_committed_files()
         fs::read_to_string(repo.join(".git/info/exclude")).unwrap(),
         "# user rule\n*.log"
     );
-    installer::install(&request(
+    installer::install(&migration_request(
         &sandbox,
         &project,
         &[".claude"],
@@ -820,7 +826,7 @@ fn backups_and_lock_are_excluded_locally_once_without_touching_committed_files()
     );
     assert!(!project.join(".gitignore").exists() && !repo.join(".gitignore").exists());
     fs::write(project.join("extra.txt"), "change\n").unwrap();
-    installer::install(&request(
+    installer::install(&migration_request(
         &sandbox,
         &project,
         &[".claude", ".cursor"],
@@ -888,8 +894,14 @@ fn migrated_local_config_is_ignored_and_a_reinstall_restores_the_protection() {
             "{\"browser\":\"/Users/me/Chrome\"}\n",
         )
         .unwrap();
-        let report =
-            installer::install(&request(&sandbox, &project, &[".claude"], false, id)).unwrap();
+        let report = installer::install(&migration_request(
+            &sandbox,
+            &project,
+            &[".claude"],
+            false,
+            id,
+        ))
+        .unwrap();
         assert_eq!(report.status, Status::Installed, "{:?}", report.conflicts);
         assert!(root.join(local).is_file());
         assert!(git(root, &["check-ignore", "-q", local]), "{id}");
@@ -903,7 +915,7 @@ fn migrated_local_config_is_ignored_and_a_reinstall_restores_the_protection() {
     )
     .unwrap();
     assert!(!git(&repo, &["check-ignore", "-q", local]));
-    let again = installer::install(&request(
+    let again = installer::install(&migration_request(
         &sandbox,
         &repo.join("apps/web"),
         &[".claude"],
@@ -919,7 +931,7 @@ fn migrated_local_config_is_ignored_and_a_reinstall_restores_the_protection() {
 /// Claude decides a plugin's state from `enabledPlugins` (local over project over
 /// user); the install registry only records that it was installed.
 #[test]
-fn only_an_effectively_enabled_old_plugin_blocks_activation() {
+fn migration_only_an_effectively_enabled_old_plugin_blocks_activation() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let home = sandbox.home();
@@ -961,9 +973,14 @@ fn only_an_effectively_enabled_old_plugin_blocks_activation() {
         set(project.join(".claude/settings.json"), shared);
         set(project.join(".claude/settings.local.json"), local);
         let case = format!("user {user:?}, project {shared:?}, local {local:?}");
-        let report =
-            installer::install(&request(&sandbox, &project, &[".claude"], true, "plugins"))
-                .unwrap();
+        let report = installer::install(&migration_request(
+            &sandbox,
+            &project,
+            &[".claude"],
+            true,
+            "plugins",
+        ))
+        .unwrap();
         let plugin: Vec<_> = report
             .conflicts
             .iter()
@@ -995,7 +1012,7 @@ fn only_an_effectively_enabled_old_plugin_blocks_activation() {
 /// checkout, and a repository rooted at the home directory, keep it in the
 /// starting directory. Expectations match `claude plugin list` 2.1.296.
 #[test]
-fn old_plugin_state_follows_the_local_settings_claude_reads_in_a_repository() {
+fn migration_old_plugin_state_follows_the_local_settings_claude_reads_in_a_repository() {
     let sandbox = Sandbox::new();
     let home = sandbox.home();
     let repo = sandbox.project();
@@ -1193,8 +1210,14 @@ fn old_plugin_state_follows_the_local_settings_claude_reads_in_a_repository() {
                 .map(|(file, state)| (file.strip_prefix(&sandbox.0).unwrap(), state))
                 .collect::<Vec<_>>()
         );
-        let report =
-            installer::install(&request(&sandbox, project, &[".claude"], true, "plugins")).unwrap();
+        let report = installer::install(&migration_request(
+            &sandbox,
+            project,
+            &[".claude"],
+            true,
+            "plugins",
+        ))
+        .unwrap();
         let plugin: Vec<_> = report
             .conflicts
             .iter()
