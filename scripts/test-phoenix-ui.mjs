@@ -25,7 +25,7 @@ function cargo(args, options = {}) {
 }
 try {
   cargo(['xtask', 'bundle', '--check']);
-  const engineBuild = cargo(['build', '-p', 'phoenix-ui', '--bin', 'phoenix-ui', '--locked', '--offline', '--message-format=json'],
+  const engineBuild = cargo(['build', '-p', 'phoenix-ui', '--bin', 'phoenix-ui', '--release', '--locked', '--offline', '--message-format=json'],
     { stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const builtEngine = engineBuild.stdout.trim().split('\n').map(line => JSON.parse(line))
     .find(record => record.reason === 'compiler-artifact' && record.target.name === 'phoenix-ui' && record.executable)?.executable;
