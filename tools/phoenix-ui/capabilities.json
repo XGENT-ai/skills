@@ -7232,7 +7232,7 @@
         "sourceScope": "current-fork"
       },
       "scripts/publish-phoenix-ui-r2.mjs": {
-        "sha256": "ce138910ad63c2f1179c75d8f246ead0f2ff21254eb68b3d9f63071071dfbe38",
+        "sha256": "56395684d67de527110727dc688536783c2a6c520b2780402702f4c24b575186",
         "sourceScope": "current-fork"
       },
       "tools/phoenix-ui/crates/review/src/cli/schema.rs": {
