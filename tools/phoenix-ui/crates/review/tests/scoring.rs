@@ -138,7 +138,7 @@ fn shared_rule_table_scoring_counterexamples() {
         expected: phoenix_ui_review::scoring::Summary,
     }
     let rules: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../../skills/review-ui/references/rules.v1.json"
+        "fixtures/rules.json"
     ))
     .unwrap();
     let cases: Vec<Case> = serde_json::from_value(rules["scoringCases"].clone()).unwrap();

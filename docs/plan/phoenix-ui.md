@@ -132,7 +132,7 @@
 - 可行备选 A：只写命令提示，保持全部 Markdown 手算。实现成本低，但轮次、指纹、历史最佳、确认评审、停滞及范围口径仍容易漂移。
 - 可行备选 B：Rust 管理结构化轮次事实，Markdown 渲染继续满足原合同；agent 提供证据和独立评审，工具计算已有规则。
 - 可行备选 C：Markdown 内嵌结构化块作为唯一事实，CLI 仅作无状态计算。人工编辑顺手，但封存、跨文件 CAS 与损坏恢复仍需结构化事务约定，块外文字和块内数据也会冲突。
-- 保留 B；新增一个 review 模块即可，不引数据库、常驻编排服务、LLM SDK 或新的总分模型。纯人工循环继续使用 Markdown；机器循环缺 CLI 时只读，显式 import 才从人工切入机器模式（§3.2）。规则仍由现有合同定义，机读表与合同 hash 绑定（§4.2），不另设业务规则源。
+- 保留 B；新增一个 review 模块即可，不引数据库、常驻编排服务、LLM SDK 或新的总分模型。纯人工循环继续使用 Markdown；缺 CLI 时保留机器状态，agent 继续 Markdown 工作流，显式 import 才从人工切入机器模式（§3.2）。规则仍由现有合同定义，工具测试用例与独立 skill 分开维护（§4.2），不另设业务规则源。
 - 代价：需要 schema、历史导入和人工更改冲突处理。JSON 校验只能证明结构与引用完整，不能证明截图真实或评审独立。
 - 重新评估：只有多机并发编辑同一个循环成为实际需求，才增加协作协议；本期同循环单写者、冲突显式拒绝。
 
@@ -201,7 +201,7 @@ M1 建立★ `tools/phoenix-ui/compatibility.md`，按可执行 verb、skill 命
 | ★ tools/phoenix-ui/UPSTREAM.json、compatibility.md、build-tools.lock.json | M1 固定来源、导入摘要、许可、行为与 fmt/clippy 基线、工具精确版本；M2 登记允许差异与补丁，不作为自动更新指令 |
 | ★ skills/phoenix-ui/ | M2 唯一可编辑设计源置于 src/（SKILL.src.md、reference 模板、scripts、素材、subagents）；根 SKILL.md 及 reference/scripts 等是提交的通用渲染，禁止手改，metadata 记录来源。M4/M5 同步融合入口 |
 | ★ tools/phoenix-ui/scripts/ | M2 承接上游 Bun/provider transformer，锁定其必要依赖；从 skills/phoenix-ui/src 单源生成通用 SKILL.md/配套文件与 19 份 provider 产物；子代理从 src/subagents 映射到 provider 的 agents/commands，不混入仅供元数据的 agents/openai.yaml |
-| ★ tools/phoenix-ui/crates/review/；★ skills/review-ui/references/rules.v1.json | M5 实现协议、规则投影与合同 hash 门；同步 review-ui / apply-ui-review 合同、两份现有 agents/openai.yaml |
+| ★ tools/phoenix-ui/crates/review/；★ tools/phoenix-ui/crates/review/tests/fixtures/rules.json | M5 实现工具协议与计分、裁定测试；独立 skill 不绑定工具版本或文档指纹 |
 | ★ tools/phoenix-ui/profiles/；方向库单源 skills/phoenix-ui/src/scripts/data/catalog/ | M2 本地候选最小闭环（目录随技能生成并由 context 内置读取）；M4 generic 与显式 Portal profile、真实自有条目及 context 适配 |
 | ★ vendor/phoenix-ui/ | M2 生成去重 bundle、VERSION.json、许可清单；M3 A 阶段候选，M6 最终候选；engine 不入 Git/npm |
 | ★ bin/phoenix-ui.js；bin/xgent-skills.js | M2 薄 launcher/engine 补装；M3 接入 Rust 事务、兼容 flag、安装提示；默认切换受 §8 发布门约束 |
@@ -362,7 +362,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 | capture.md / judge.md / 各轮 ui-review.md | 继续满足现有 Markdown 合同 | 新轮次由 round.json 投影；原始自由文本附证据。记录所生成节的 hash，检测手改冲突 | judge.md 只含允许传给下一轮评审的内容 |
 | ★ .ui-review.applied.json；既有 applied/Mn.md | roundId、issueId、核实/处置、代码版本、证据、restructureScopes、用户决定引用、revision | 修复 agent 提交结构化记录；独立于已封存 round；同轮 CAS 更新，生成原记录位置的 UI 修复节 | 同一循环固定 recordPath；不同轮次记录不覆盖 |
 
-原有纯 Markdown 循环是 manual 模式，仍按 skills 人工运行；没有机器索引就不能假称已接管。managed 循环的 engine 缺失/版本不符时只读，允许阅读旧报告与收集尚未登记的素材，不推进评分/处置/计数或手改生成节；提示 §2.3 的 engine install，恢复后按原 revision 续接。机器 → 无 CLI → 机器不得清零历史或重建基线。显式 `phoenix-ui review import --prefix ... --input ...` 才接管：主 agent 核对旧轮次/目标 hash/差距/修复/重构记录并提供结构化映射，工具校验文件和旧引用、保留输入 hash及 legacy 标记。无法确认的历史计数为 unknown，不能默认从零开始导致再次重构或伪造已解决；这种循环可以继续人工模式，或由用户确认重建基线。导入不覆盖旧报告，也不能把旧截图登记为当前轮次截图。managed 循环本期不提供降为 manual 的操作；手改生成节时先保存人工文本并按规范事实恢复生成节，人工改动只能经 `apply record` / `capture add` 以当前 revision 为前提显式提交，历史封存与原始评分仍不可改。
+原有纯 Markdown 循环是 manual 模式，仍按 skills 人工运行；没有机器索引就不能假称已接管。工具不可用或无法识别状态时保留机器索引和生成节，agent 依据目标、真实证据与 Markdown 历史继续评审、修复和补证；工具恢复后核对期间新增材料再登记，不把工具版本作为工作流前提。机器 → 无 CLI → 机器不得清零历史或重建基线。显式 `phoenix-ui review import --prefix ... --input ...` 才接管：主 agent 核对旧轮次/目标 hash/差距/修复/重构记录并提供结构化映射，工具校验文件和旧引用、保留输入 hash及 legacy 标记。无法确认的历史计数为 unknown，不能默认从零开始导致再次重构或伪造已解决；这种循环可以继续人工模式，或由用户确认重建基线。导入不覆盖旧报告，也不能把旧截图登记为当前轮次截图。managed 循环本期不提供降为 manual 的操作；手改生成节时先保存人工文本并按规范事实恢复生成节，人工改动只能经 `apply record` / `capture add` 以当前 revision 为前提显式提交，历史封存与原始评分仍不可改。
 
 无数据库：同循环使用 OS 文件锁，进程退出释放；CAS 比较 revision 与源文件 hash；同目录临时文件写完再 rename。报告发布用 journal + finalized 标志最后落盘；读者忽略未完成发布的轮次。不同循环可并行，同循环采集可按格子分工、最终写入串行。需要多机同时写同一循环时明确冲突，不能用本地锁冒充跨机事务。
 
@@ -394,7 +394,7 @@ fixture 包含两套 bundle × 适用 provider × 两代 hook 形态、安装器
 - 每单元上一轮为最近一次覆盖它且有评审结论的轮次（覆盖但无任何评审结论的缺证轮不算）；不同单元可能来自不同 rN。修复记录只能到“已修改待评审”，是否解决归下一轮独立评审。
 - 同一 packet 的多位评审对同一旧差距结论不一时取较严状态：回归 > 仍存在 > 部分解决 > 待核实 > 已解决 > 不再适用。同一轮的处置以该轮最后一次记录为准；自上次独立评审以来，任一轮最终处置为“已修改待评审”即计一次尝试，最近一轮最终处置为“不采纳”时保持待裁定，二者分别判断。处置只针对该轮报告差距清单中的未关闭差距。
 
-上述口径的完整文本保留在原合同；工具文档不另造同义判定词。M5 在 review-ui references 增加 rules.v1.json，记录参数、顺序、适用条件、反例及四份合同的 SHA-256；它是合同的机读投影，不是另一份政策。Rust 与人工模式的黄金用例共用此表；合同 hash 或规则版本变化时测试失败，必须同时核对规则表、review crate、技能及用例，并更新 AGENTS.md 的接口同步清单。若实现发现歧义，先用最小反例修订合同并补测试，不能默默选一种算法。
+上述清单描述工具实现的行为。工具测试数据位于 `tools/phoenix-ui/crates/review/tests/fixtures/rules.json`，记录参数、顺序、适用条件和反例，不保存 skill 文档指纹或规则版本。独立 skill 以其当前正文与 Markdown 合同为准，修改 skill 不要求同步工具；工具适配按明确授权的范围另行处理。
 
 ### 4.3 必须同时处理的上游行为冲突
 
@@ -560,7 +560,7 @@ viewportId绑定宽、高和DPR，不只存宽；原截图命名在没有冲突�
 | V-5 | R-2、R-6、NFR-3：实际设计/live 走通；迁移后设计 hook 单次、goal guard 保留、回滚旧工具可用；engine 缺失能继续编辑 | M1 固定 web fixture；新装与分别用 0.3.0/0.6.0 旧包装出的真实项目→候选迁移→provider 重载/信任→设计→回滚；Claude/Codex 全新会话列实际 skill 路径/hash、统计每事件设计 handler；§6 Chrome/Safari 走查；其余 provider 输入输出 fixture；A 阶段安装集合自然语言路由 | M3 A 终验；M6 受 B 影响的真实路径重跑，未有环境不得标已验 |
 | V-6 | R-3、R-5、R-8：规范优先；解析覆盖诚实；已接受 brief 跨对话读取不重抽；目录错误/不足不同；项目参考不外传 | context/design/catalog 公开接口；Markdown/YAML/Portal/monorepo；profile 切换、坏 token、非法/单 tier/无图/operate/Portal；固定 seed；前后原文 hash | M4；供 M5 context 集成，M6 变更后复验 |
 | V-7 | R-4、NFR-1、NFR-4、C-4：指纹附件/attempt 身份完整；材料齐全且无污染；模式恢复不丢历史；生成节外编辑不冲突 | review 公开 CLI：目标文件/hash/坏 schema、路径、并发/崩溃、同格补采/missing 后补采/幂等、变更记录/差分/suggestions；manual import、managed→无 CLI→恢复；里程碑记录的无关编辑保留 | M5 局部；M6 用最终包与真实取证复核 |
-| V-8 | R-4、NFR-1、C-4：精确十进制、判定顺序/停滞/豁免/处置与合同一致；规则/合同变更不能静默漂移 | CLI 表驱动序列和相邻反例见 §9.2；rules.v1.json 与合同 hash 同步门；不只测内部函数 | M5；M6 受影响部分重跑 |
+| V-8 | R-4、NFR-1、C-4：精确十进制、判定顺序/停滞/豁免/处置与合同一致；工具行为由实际输入输出用例验证 | CLI 表驱动序列和相邻反例见 §9.2；工具内 rules.json 计分与裁定用例；不只测内部函数 | M5；M6 受影响部分重跑 |
 | V-9 | R-3、R-4、R-5、C-2、C-4：请求路由正确、已接受方向可恢复；review→apply→review 提升或诚实暴露停滞 | 由 npm tarball 安装到 M1 web fixture 的隔离项目，全新上下文重放 §9.3；主 agent/评审分离；确认实际加载源路径/hash、回读产物与台账 | M4 用 M2 开发包安装器验证设计子集；M6 最终 tarball 完整闭环 |
 | V-10 | R-7、C-2、C-3、C-5：命名/接口/flag/路径/许可/说明与包一致；总回归和对应阶段演练完成 | npm test + npm run test:phoenix；npm pack 清单、安装、README 示例；逐项核对 §1.3 落点；description 完整/前100字；M6 §8 固定 run ID/摘要交接与三类拒绝用例 | M3 检查 A 包和已属 M3 的接口；M6 最终收口；真实发布另记证据 |
 
@@ -596,7 +596,7 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 
 原 oracle 使用 `IMPECCABLE_BIN` 指向此次构建产物是测试适配，不允许因此给生产 launcher 保留原版 fallback。上游 accepted deltas 逐项读取、确认适用后承接；Phoenix 新差异使用独立精确 case 清单及理由，不能用全局品牌替换或重录全部 golden 消除回归。没有 golden、平台跳过、浏览器不可用均单列，不能只报失败数为零。
 
-行为评测覆盖：只问设计建议、不要求实施；只要维护规范；普通实现任务；明确UI验收；按报告修复；缺截图工具；已参与修复的当前上下文；用户明确接受；限定单元；停滞；CLI不可用（manual 继续人工；managed 只读并提示补装，恢复不重置历史）；已有Portal规范；只找视觉参考→design-reference；交互选型→ui-pattern-research；已接受brief换新对话不重抽；Portal init缺xgent-init明确缺项/安装路径；个人级同名副本遮蔽时提示实际加载来源。用全新上下文原始请求观察实际路由与动作，记录实际加载的 skill 路径/hash；人工检查 Markdown 只能证明指令已写，不能宣称行为有效。
+行为评测覆盖：只问设计建议、不要求实施；只要维护规范；普通实现任务；明确UI验收；按报告修复；缺截图工具；已参与修复的当前上下文；用户明确接受；限定单元；停滞；CLI不可用（agent 继续 Markdown 工作流，保留机器状态和完整历史）；已有Portal规范；只找视觉参考→design-reference；交互选型→ui-pattern-research；已接受brief换新对话不重抽；Portal init缺xgent-init明确缺项/安装路径；个人级同名副本遮蔽时提示实际加载来源。用全新上下文原始请求观察实际路由与动作，记录实际加载的 skill 路径/hash；人工检查 Markdown 只能证明指令已写，不能宣称行为有效。
 
 性能与缓存证据只在同代码/输入/工具链/构建profile可比时复用。M1测旧版，M3比fork，M6比新增集成影响；不存在变化的检测组不为充数重复测。实际功能或运行配置变动才补相关检查。
 
@@ -637,7 +637,7 @@ V-8 至少覆盖下面这些能区分正确实现与“看起来差不多”的�
 | 0.1.11 已知 IME/Windows hook 缺陷 | 中文选词误提交、Windows hook 不触发 | M1 保留 E12 两项来源；M2 修复 IME 并按 §6 在 Chrome/Safari 验证；Windows 支持与实测延期 | M3切换门 | IME 必修已定；未验不能交付；Windows 不计本期退出门 |
 | provider shell/同名 skill优先级与 runner 可用性 | 文件层通过未必会话正常 | M2 验证 runner；M3 逐 provider 冻结支持矩阵；Claude/Codex 真会话，macOS/Linux 的缺engine放行/加载路径均留证，缺环境明确阻塞相应门；Windows 延期 | M2矩阵；M3设计冻结与V-5 | 不凭文档当实跑，不静默缩小支持范围 |
 | 旧安装用户比例、skills.sh获取源码体积 | 影响迁移优先级与同仓下载成本 | M1 无论用户比例都覆盖已发布旧版；导入前维护者测 skills.sh 隔离下载体积，记录范围；未知不改分发承诺 | M1导入前；M3前补用户反馈 | 非产品/安全决策阻塞 |
-| 持久化等级与双格式 | 掉电/手改可能损坏，模式不明会丢历史 | §3 明确进程崩溃一致性；managed缺CLI只读；生成节冲突与legacy import保留历史，掉电损坏人工恢复 | M3/V-4、M5/V-7/V-8 | 设计已定；不声称掉电零丢失 |
+| 持久化等级与双格式 | 掉电/手改可能损坏，模式不明会丢历史 | §3 明确进程崩溃一致性；缺CLI保留机器状态，agent继续工作流；生成节冲突与legacy import保留历史，掉电损坏人工恢复 | M3/V-4、M5/V-7/V-8 | 设计已定；不声称掉电零丢失 |
 | 漏洞/许可和补丁送达 | 不再自动获得上游修复 | §8 依赖公告/许可门、发布说明和显式升级；维护者定期复核，旧包不自动更新 | M2基础检查、M6发布准备及持续维护 | 已知维护责任 |
 | 真截图/独立评审与真实发布 | hash不证明真实性；演练不证明线上可用 | 主agent看图和来源核对；独立上下文；发布负责人获授权后验证真实URL和同一tarball | 每轮UI验收；实际发布前 | 不以文档/本地测试冒充通过 |
 

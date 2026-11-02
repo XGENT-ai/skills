@@ -157,20 +157,20 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link
 
 `link` 保存原文件路径、SHA-256 与接受记录，原 brief 留在选定仓库，不复制第二份可编辑正文。URL/route 是逻辑目标，`target.exists: null` 不表示文件缺失。设计流程详见包内 `design-reference`、`ui-pattern-research`、`design-md` 的实际指令。
 
-用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。先按固定包回执核对 `engine-probe` 身份，再查实际 `review` 帮助、输入形状和本循环状态，只有无旧历史的新循环才 begin：
+用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。这两个 skill 不依赖 Phoenix。选择 CLI 管理记录时，查询实际 `review` 帮助、输入形状和本循环状态，只有无旧历史的新循环才 begin：
 
 ```bash
-npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review --help
-npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review schema --json
-npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review status --prefix "docs/ui/orders" --json
-npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui review begin --prefix "docs/ui/orders" --target "docs/ui/orders.ui-target.md" --tested-version "docs/ui/orders.tested-version.json" --json
+npm exec --package=@xgent-ai/skills -- phoenix-ui review --help
+npm exec --package=@xgent-ai/skills -- phoenix-ui review schema --json
+npm exec --package=@xgent-ai/skills -- phoenix-ui review status --prefix "docs/ui/orders" --json
+npm exec --package=@xgent-ai/skills -- phoenix-ui review begin --prefix "docs/ui/orders" --target "docs/ui/orders.ui-target.md" --tested-version "docs/ui/orders.tested-version.json" --json
 ```
 
 `review schema --json` 返回 `reviewSchema: 1`、`discoveryVersion: 1` 的完整 typed examples 与枚举变体，可用 `--kind tested-version` 等选择一种输入。它描述当前 serde 字段形状，不是完整 JSON Schema；样例的文字、数字和布尔值均为占位，不证明执行成功或当前 UI 事实。真实身份、路径、hash、版本和 revision 取实际操作与取证。帮助和 schema 不读写循环；新前缀的父目录不存在时，`status` 可直接返回 `absent`，不创建目录或循环。
 
-`--tested-version` 的 JSON 由宿主提供真实 HEAD 加 clean/dirty 指纹，或可核对的 build ID，并与本轮应用/采集一致；省略时为 Unknown，不能判通过。context 提供目标和规范来源，不自动生产版本记录。后续 capture、judge-pack、judge add、finalize、apply record 使用返回的 round/current revision 和实际合同输入；**退出 0 不等于 UI 通过**，必须回读 verdict 与报告，`confirmation_required` 仍为草稿。参数与输入边界见 [Phoenix managed 评审协议](../skills/review-ui/references/phoenix-review.md)，目标、报告和处置沿 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md)。
+`--tested-version` 的 JSON 由宿主提供真实 HEAD 加 clean/dirty 指纹，或可核对的 build ID，并与本轮应用/采集一致；省略时为 Unknown，不能判通过。context 提供目标和规范来源，不自动生产版本记录。后续 capture、judge-pack、judge add、finalize、apply record 使用返回的 round/current revision 和实际合同输入；**退出 0 不等于 UI 通过**，必须回读 verdict 与报告，`confirmation_required` 仍为草稿。参数与输入边界见 [Phoenix managed 评审协议](phoenix-ui-review.md)，目标、报告和处置沿 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md)。
 
-已有 Markdown 历史无 managed 索引时继续 manual，只有显式 `review import --prefix <前缀> --input <映射.json> --json` 才接管；未知历史不能填零。`legacyMarkdown` 无法确定历史最佳时返回 3 并保持人工循环。managed 的 engine 缺失/不匹配、损坏或未知 schema 时只读历史，可收集未登记素材，不计分、裁定或修复产品代码；恢复匹配版本后续接原 round/revision，不删索引或换前缀绕过。生成区被手改时先另存原文与 hash，用 `projectionRebase` 显式核对副本、当前 hash 和 cycle revision 后恢复权威区块；要保留的采集/处置再以当前 revision 提交。封存报告与评审原文不覆盖。
+已有 Markdown 历史无 managed 索引时继续 manual，只有显式 `review import --prefix <前缀> --input <映射.json> --json` 才接管；未知历史不能填零。`legacyMarkdown` 无法确定历史最佳时返回 3 并保持人工循环。工具不可用或无法识别状态时保留原索引，agent 继续依据 Markdown 历史、真实证据和评审合同工作；恢复工具后核对并登记新增材料，不删索引或清空历史。生成区被手改时先另存原文与 hash，用 `projectionRebase` 显式核对副本、当前 hash 和 cycle revision 后恢复权威区块；要保留的采集/处置再以当前 revision 提交。封存报告与评审原文不覆盖。
 
 ## 维护者：统一候选与本地交接
 

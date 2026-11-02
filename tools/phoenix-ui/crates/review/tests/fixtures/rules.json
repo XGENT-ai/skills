@@ -1,12 +1,4 @@
 {
-  "schemaVersion": 1,
-  "ruleVersion": "1.0.0",
-  "contractHashes": {
-    "skills/review-ui/references/report-contract.md": "d68aebba065bc2a5357caa7d927e35e016d2d20fff74dd1c2fbfca39d25dd315",
-    "skills/review-ui/references/judge.md": "31d3a7a165478186542ce065d963e8fd4f488887ccd3921130ad80ea739d7797",
-    "skills/review-ui/references/target-and-capture.md": "184246de4a7722a84a08e353f3f078ad290bb7f333621ef3aee4b4f91dc9918e",
-    "skills/apply-ui-review/references/record-contract.md": "c73a0e6509aa3f7cd6cf4ae9b7c4cfc46ddc1f7219fc847c78fac67b88bf2bec"
-  },
   "parameters": {
     "dimensionMaxima": [
       "3",

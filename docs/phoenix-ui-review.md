@@ -1,21 +1,16 @@
 # Phoenix managed 评审协议
 
-仅在识别或接入 Phoenix managed 循环时读取。纯 Markdown 循环继续按技能正文和四份合同人工执行；本参考不新增评分或处置规则。规则投影的唯一事实源为 [rules.v1.json](rules.v1.json)，绑定 [报告](report-contract.md)、[独立评审](judge.md)、[目标与采集](target-and-capture.md) 和 [修复记录](../../apply-ui-review/references/record-contract.md) 合同。
+仅在明确使用 Phoenix CLI 管理评审记录时读取。本协议描述工具接口，不定义独立的 review-ui / apply-ui-review 工作流；工具不可用不阻止 agent 依据目标、真实证据和 Markdown 历史继续评审或修复。工具的计分与裁定测试数据位于 [rules.json](../tools/phoenix-ui/crates/review/tests/fixtures/rules.json)，不绑定 skill 文档指纹或规则版本。
 
-## 先发现身份与能力
+## 先发现可用能力
 
-1. 从本循环的安装回执或固定版本包清单读取期望的 package/runtime/review schema；不能拿 PATH 中任意同名命令、上游 `impeccable` 或旧 CLI 当成匹配 engine。
-2. 用实际 `phoenix-ui engine-probe` 核对身份，再执行 `phoenix-ui review --help` 与 `phoenix-ui review schema --json`；可用 `--kind <kind>` 只取该操作的输入形状。核对返回的 `reviewSchema` 与所需类型、变体后才构造机器输入。发现结果是当前 serde 类型校验的完整样例与枚举变体，`format: typed-examples`，不是完整 JSON Schema。样例不是证据：其中 `EXAMPLE_ONLY` 文本、数字和布尔值均须换成实际操作或取证值；cycle、round、cell、packet、revision 取实际返回，hash、被测版本和取证声明取真实材料。帮助/查询不读写循环，退出 0 只证明发现查询成功；入口不存在、身份/版本或协议不匹配时保持只读，不猜字段。
-3. 读已有索引与 `review status`，确认前缀、当前轮、baseline、revision、状态和原记录位置。未来 schema、损坏或不能识别的索引不能按「无索引」处理。
-4. 已有 managed 索引而 engine 缺失或不匹配：只读历史，可采集未登记素材；不计分、不裁定、不改代码、目标、处置、计数或生成区。给出按实际固定包版本恢复 engine 的命令，例如 `npm exec --package=@xgent-ai/skills@<packageVersion> -- phoenix-ui engine install --project <项目路径>`，替换为回执中的真实值并正确引用路径；没有期望版本时先说明所缺的回执，不能填一个猜测版本。恢复后续接原轮次，不重置、不静默降级、不自动下载或升级。
+1. 查询实际可用的 `phoenix-ui review --help` 与 `phoenix-ui review schema --json`，按返回的能力和输入形状构造调用，不把某个包版本或 engine 身份作为 agent 工作流的前置条件。typed examples 是占位样例，必须替换成真实材料。
+2. 若使用工具续接记录，读原索引和 `review status`，沿用实际 round、revision 与历史。无法识别或写入工具状态时保留原文件，继续以 Markdown 记录真实证据、评审和修复结果，不猜字段、不清空历史。
+3. 工具恢复可用后，核对已有记录和期间新增材料，再按实际支持的接口登记；不能把未登记的材料声称为已同步。已有人工历史只经显式 import 接管，全新无历史且已选择工具管理时才 begin。
 
-循环索引的实际路径是 `<前缀>.ui-review.json`；当前识别口径为 `schemaVersion: 1`、`mode: managed`。缺 CLI 时直接读原文件识别既有状态；字段缺失、未知 schema 或损坏时保持只读，不能视作不存在。固定包清单声明的 `reviewSchema` 与 engine 身份都须核对；仅收到文本身份 probe 不能推断支持 review verbs。
+## CLI 操作与调用时机
 
-没有索引时还要检查旧 Markdown 轮次和修复历史：已有人工历史就继续人工或显式 import，不能 begin 清零。全新无旧历史且用户已要求验收时，匹配 engine 与实际 verbs 后可 begin managed；能力不可用则按人工流程。不能把「无索引」等同「永远人工」，也不能把旧历史自动接管。
-
-## 固定 verbs 与调用时机
-
-以下是操作形状，不是可直接写入的 JSON schema。路径、round、revision 和输入字段取自本项目的真实材料及匹配 engine 返回；工作流操作和 schema 查询带 `--json`，帮助也可用 `--json`。执行时保存实际 argv、输入、输出与退出码。
+以下是操作形状，不是可直接写入的 JSON schema。路径、round、revision 和输入字段取自本项目的真实材料及实际 CLI 返回；工作流操作和 schema 查询带 `--json`，帮助也可用 `--json`。执行时保存实际 argv、输入、输出与退出码。
 
 | 操作 | 参数 | 用途与边界 |
 | --- | --- | --- |

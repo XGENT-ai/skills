@@ -1734,7 +1734,7 @@ fn a_later_record_in_the_same_round_replaces_the_earlier_disposition() {
 
 #[test]
 fn reviewers_of_one_packet_keep_the_more_serious_old_gap_status() {
-    // 回归 > 仍存在 > 部分解决 > 待核实 > 已解决 > 不再适用 (rules.v1.json).
+    // 回归 > 仍存在 > 部分解决 > 待核实 > 已解决 > 不再适用 (fixtures/rules.json).
     let p = Project::new(&["U1"]);
     let (r1, _) = reviewed(
         &p,

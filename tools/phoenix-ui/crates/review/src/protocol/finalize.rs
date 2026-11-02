@@ -1571,7 +1571,7 @@ mod tests {
     #[test]
     fn reviewer_status_precedence_is_the_shared_rule_table_order() {
         let rules: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../../../skills/review-ui/references/rules.v1.json"
+            "../../tests/fixtures/rules.json"
         ))
         .unwrap();
         let order: Vec<GapStatus> =

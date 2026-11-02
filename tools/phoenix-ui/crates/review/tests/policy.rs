@@ -10,7 +10,7 @@ fn shared_rule_table_adjudication_counterexamples() {
         error: Option<String>,
     }
     let rules: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../../skills/review-ui/references/rules.v1.json"
+        "fixtures/rules.json"
     ))
     .unwrap();
     let cases: Vec<Case> = serde_json::from_value(rules["adjudicationCases"].clone()).unwrap();

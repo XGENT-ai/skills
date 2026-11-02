@@ -52,7 +52,8 @@ RULE @applicability:
 
 RULE @tool_independence:
   MUST: complete_review_using_target_package_real_evidence_and_markdown_reports
-  MUST_NOT: block_review_due_to_absent_or_incompatible_independent_tools
+  MUST_NOT: [block_review_due_to_absent_or_incompatible_independent_tools,
+             bind_workflow_to_tool_versions_rule_versions_or_skill_document_hashes]
 
 WORKFLOW @review_ui:
   DO: [read_applicable_rules_and_goal_sources,

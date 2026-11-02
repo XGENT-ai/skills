@@ -65,7 +65,7 @@ Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoe
 
 安装、迁移、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
 
-managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](skills/review-ui/references/phoenix-review.md)。
+选择 Phoenix CLI 管理评审记录时，用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](docs/phoenix-ui-review.md)。
 
 ## Skills 列表
 
@@ -106,7 +106,7 @@ managed UI 循环先核对固定包 engine，再用 `phoenix-ui review --help` �
 4. `review-code <计划>` 从完成记录登记的提交与未提交改动确定范围：需要修改时 `apply-code-review <报告>`（按计划约定提交修复并登记 SHA），再回到 `review-code <计划>` 复审，直到通过验收或你明确本期放过。
 5. （可选）计划涉及界面时，`review-ui <计划>` 做 UI/UX 验收：按影响范围自动检查与采集代表帧，同页同状态共用截图；复用有效历史证据及已通过结论，默认一位全新上下文的独立评审，不按接近门槛自动增加评审。需要修改时 `apply-ui-review <报告>`（按计划约定提交并登记 `UI修复` SHA），再回到 `review-ui <计划>` 复审，直到通过（默认每个单元 ≥ 8/10 且没有未关闭的 P0/P1）、停滞后交你裁定，或你明确放过。UI 修复带来代码改动时，再用 `review-code <计划>` 复审这些改动。 需补证时同样交给 `apply-ui-review <报告>`，由执行 agent 补齐环境、数据与实测材料、处理差距后交回 `review-ui <计划或原范围>` 独立复审；只缺独立评审时续接 review-ui。仅无法自行取得的权限、资料或产品决定请求用户提供。没有代码、证据或阻塞条件变化时不新增轮次。
 
-   UI 循环可沿用人工 Markdown，或通过匹配的 Phoenix engine 管理证据与轮次。已有 managed 索引时从原轮与 revision 续接；engine 缺失、版本不匹配或状态损坏时保持只读，恢复固定版本后再继续。人工历史只经明确的 `review import` 接管，不能清零未知次数；CLI 操作成功不代表 UI 通过，真实取证和独立评审仍是判定依据。
+   UI 验收是独立的 agent 工作流，依据目标、真实证据和 Markdown 历史继续，不绑定工具、规则版本或文档指纹。可选用 Phoenix CLI 管理记录；不可用时保留其状态文件，继续记录评审与修复结果。CLI 操作成功不代表 UI 通过。
 6. 通过后，计划来自 PRD 时可选 `review-prd-dev-gaps <计划>`；生成 gaps plan 时从第 2 步的 `review-dev-plan <gaps 计划>` 继续。
 
 **跨项目入口按角色固定**：提出方始终用 `crd` 起草/修订需求、整合接收方返回稿、答复反问；接收方始终用 `crd-respond <CRD>` 评估/答复需求、续接提出方澄清或回告实现结果。双方收到文件或追加消息都不切换角色，归属不明先核实。接收方默认在原文末追加有证据的评估答复，需改本方代码时实际调用 `dev-plan`（未决契约按就绪门标 `Blocked`），计划记录来源 CR、承接请求/子范围、回写文件与顶部完成回写约定，生成计划从第 2 步继续；完成回告核对适用证据后追加 RESP，不重开规划或改写历史。仅原样追加/收录不重新评估或生成计划，仅评估不落盘，仅答复不生成计划，不自动发送或实施。
