@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Release @xgent-ai/skills from a clean checkout whose HEAD passed the Phoenix UI CI:
+// Release @xgent-ai/skills from a clean checkout whose HEAD passed the Phoenix CI:
 // download the tested CI artifacts, upload the four engines to R2, pack the npm tarball once,
 // install-check it from the public URLs, then `npm publish` that same tarball and verify the registry.
 // Every step keeps its output under local/phoenix-ui/releases/; rerunning resumes and re-verifies.
@@ -46,7 +46,7 @@ export function releaseEnv(env, fileText) {
   return merged;
 }
 
-// Newest successful Phoenix UI run for exactly this commit.
+// Newest successful Phoenix run for exactly this commit.
 export function selectRun(runs, head) {
   const matching = runs.filter(run => run.headSha === head);
   const success = matching.filter(run => run.status === 'completed' && run.conclusion === 'success')
@@ -107,11 +107,14 @@ function collectCi(runId, head, tree, dir) {
   assert.equal(String(run.id), String(runId)); assert.equal(run.head_sha, head, 'CI run is for a different commit');
   assert(run.status === 'completed' && run.conclusion === 'success', `CI run ${runId} did not succeed`);
   const jobs = record('jobs', `${api}/runs/${runId}/jobs?per_page=100`);
-  assert(jobs.total_count === 5 && jobs.jobs.every(job => job.conclusion === 'success'), 'Expected five successful CI jobs');
+  assert.equal(run.path, '.github/workflows/phoenix.yml', 'Release requires the unified Phoenix workflow');
+  assert(jobs.total_count === jobs.jobs.length && jobs.jobs.every(job => job.conclusion === 'success'), 'Expected all Phoenix CI jobs to succeed');
   const artifacts = record('artifacts', `${api}/runs/${runId}/artifacts?per_page=100`);
   const expected = new Set(['phoenix-ui-node18-consumer-evidence', ...targets.flatMap(target => [`phoenix-ui-${target}`, `phoenix-ui-${target}-evidence`])]);
-  assert.equal(artifacts.total_count, 9); assert.deepEqual(new Set(artifacts.artifacts.map(item => item.name)), expected);
-  for (const artifact of artifacts.artifacts) {
+  assert.equal(artifacts.total_count, artifacts.artifacts.length, 'Incomplete CI artifacts record');
+  const uiArtifacts = artifacts.artifacts.filter(item => expected.has(item.name));
+  assert.equal(uiArtifacts.length, expected.size); assert.deepEqual(new Set(uiArtifacts.map(item => item.name)), expected);
+  for (const artifact of uiArtifacts) {
     assert(!artifact.expired && artifact.workflow_run.head_sha === head, `Artifact ${artifact.name} expired or from another commit`);
     const file = path.join(dir, 'archives', `${artifact.name}.zip`), digest = artifact.digest.replace(/^sha256:/, '');
     if (!fs.existsSync(file) || sha(fs.readFileSync(file)) !== digest) fs.writeFileSync(file, bytesOf('gh', ['api', `${api}/artifacts/${artifact.id}/zip`]));
@@ -158,10 +161,10 @@ async function main() {
   step('CI run');
   let runId = options['--run-id'];
   if (!runId) {
-    const runs = JSON.parse(gh(['run', 'list', '--repo', repository, '--workflow', 'phoenix-ui.yml', '--limit', '50', '--json', 'databaseId,headSha,status,conclusion']));
+    const runs = JSON.parse(gh(['run', 'list', '--repo', repository, '--workflow', 'phoenix.yml', '--limit', '50', '--json', 'databaseId,headSha,status,conclusion']));
     const selected = selectRun(runs, head);
     assert(!(!selected.success && selected.pending), `CI run ${selected.pending?.databaseId} for this commit is still running; rerun when it succeeds`);
-    assert(selected.success, selected.failed ? `CI run ${selected.failed.databaseId} for this commit failed` : 'No Phoenix UI CI run for this commit; push it first');
+    assert(selected.success, selected.failed ? `CI run ${selected.failed.databaseId} for this commit failed` : 'No Phoenix CI run for this commit; push it first');
     runId = String(selected.success.databaseId);
   }
   console.log(`run ${runId}`);

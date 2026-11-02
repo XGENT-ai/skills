@@ -387,8 +387,8 @@ test('detector smoke validates the actual CLI Finding field and rejects unrelate
 });
 
 test('CI has exactly four macOS/Linux native runners, explicit prepare, locked offline gates, a Node consumer and read-only pinned actions', async () => {
-  const { assets } = await prepare, workflow = fs.readFileSync(path.join(root, '.github/workflows/phoenix-ui.yml'), 'utf8');
-  const native = workflow.slice(workflow.indexOf('  native:'), workflow.indexOf('  node18-consumer:'));
+  const { assets } = await prepare, workflow = fs.readFileSync(path.join(root, '.github/workflows/phoenix.yml'), 'utf8');
+  const native = workflow.slice(workflow.indexOf('  ui-native:'), workflow.indexOf('  ui-node18-consumer:'));
   const platforms = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
   assert.deepEqual([...native.matchAll(/- platform: (\S+)/g)].map(match => match[1]), platforms);
   for (const platform of platforms) {
