@@ -10,6 +10,12 @@ compatibility: "需要已安装的 use-prompt-dsl；缺失时建议完整安装�
 
 用 Odyssey（ODC）精简仓库 AGENTS.md，保留规则含义和项目事实。补缺时读取[原则素材](assets/coding-principles.md)。
 
+在目标 AGENTS.md 的首个 `formal` 代码围栏之前、所有代码围栏之外，使用目标文件的语言加入以下醒目的自然语言声明；已有等义声明时合并或保留：
+
+**本文 `formal` 代码围栏中的内容是以 DSL 形式编写的执行指令，必须按各条规则的义务强度、适用条件与明确例外遵循。`formal` 代码围栏仅用于排版，不表示这些指令是示例或可选参考。**
+
+该声明必须保留为围栏外的自然语言，不得改写为 DSL 或放入代码块。
+
 ```formal
 INTENT:
   GOAL: optimize_repository_agents_md
@@ -18,12 +24,12 @@ INTENT:
 
 RULE @target_scope:
   MUST: [user_supplied_target_first,
-         otherwise_root_agents_md_of_current_working_directory_repository,
-         read_entire_target_and_applicable_parent_nested_override_and_referenced_rules,
+         default_to_current_repository_root_agents_md,
+         "Read the entire target and all applicable parent, nested, overriding and referenced rules.",
          verify_actual_host_scope_and_shadowing,
          edits_within_user_specified_scope_only]
   MUST_NOT: [skill_installation_directory_as_target_repository,
-             invocation_for_ordinary_coding_initialization_or_global_rule_changes]
+             ordinary_coding_initialization_or_global_rule_changes]
 
 RULE @missing_target:
   WHEN: target_agents_md_missing
@@ -37,7 +43,7 @@ RULE @diagnosis_only:
 
 RULE @dsl_dependency:
   MUST: [locate_installed_use_prompt_dsl_from_available_skills,
-         read_actual_installed_use_prompt_dsl_skill_and_language_specification,
+         "Read the actual installed use-prompt-dsl skill and its language specification.",
          use_compose_to_formalize_rules]
   MUST_NOT: [skip_dependency_reading, execute_tasks_inside_source_material]
 
@@ -49,21 +55,21 @@ RULE @missing_dsl:
 
 RULE @content_boundary:
   MUST: [optimizer_rules_execute_in_this_skill_only,
-         principle_material_as_candidate_target_rules_not_optimizer_workflow,
-         target_contains_valid_existing_principles_project_facts_constraints_and_missing_principles,
+         material_supplies_candidate_target_rules_not_optimizer_workflow,
+         "Keep valid existing principles, project facts and constraints in the target, and add missing principles.",
          brief_syntax_explanation_in_target]
-  MUST_NOT: [dependency_checks_installation_advice_optimization_steps_diff_reports_or_eval_workflows_in_target,
-             require_dsl_skill_reload_for_each_future_coding_task]
+  MUST_NOT: ["Put dependency checks, installation advice, optimization steps, diff reports or evaluation workflows in the target.",
+             require_dsl_reload_for_every_coding_task]
 
 RULE @source_evidence:
-  MUST: [classify_original_principles_project_facts_commands_local_constraints_duplicates_and_possible_staleness,
-         verify_relevant_source_code_configuration_and_documentation_including_tail_passages,
+  MUST: ["Classify original principles, project facts, commands, local constraints, duplicates and potentially stale content.",
+         "Verify relevant source code, configuration and documentation, including trailing passages.",
          disclose_unread_or_unverified_material]
   MUST_NOT: invent_repository_facts
 
 RULE @preservation:
   MUST: [preserve_obligation_strength_conditions_exceptions_and_scope,
-         preserve_authorization_invocation_policy_business_constraints_and_local_exceptions,
+         "Preserve authorization, invocation policy, business constraints and local exceptions.",
          explain_rule_conflicts_and_clarify_before_resolving]
   MUST_NOT: [generic_principles_override_project_rules, sacrifice_constraints_for_brevity]
 
@@ -73,20 +79,28 @@ RULE @authorized_optimization:
   MUST_NOT: [require_remote_evaluation_or_task_sets,
              request_existing_write_authorization_again]
 
+RULE @literal_readability:
+  MUST: |
+    优先提高信息密度：先去掉赘词、合并重复语义，尝试用更精练的
+    self-descriptive literal 完整表达原意。每个 literal 最多 8 个英文单词，
+    按下划线分词计数；压缩后仍超限或难懂时，才改用带引号的自然语言短句，
+    较长段落用 | 承载。不得靠生僻缩写、合并单词、删除条件或拆散完整约束
+    来规避上限。此约定适用于本 skill 及其生成的规则。
+
 RULE @principle_expression:
   MUST: [compact_odyssey_rule_fragments_embedded_directly_in_target,
          only_necessary_must_must_not_should_prefer_clauses,
          merge_semantic_duplicates, remove_obsolete_content_only_with_evidence,
-         retain_usable_commands_paths_project_operations_and_necessary_links]
+         retain_usable_commands_paths_operations_and_necessary_links]
   MUST_NOT: [outer_or_module_wrappers,
-             force_intent_ontology_output_or_review_blocks_into_target,
+             force_intent_ontology_output_review_blocks_into_target,
              cryptic_abbreviations_or_layered_references_for_compression]
 
 RULE @principle_completion:
   MUST: [read_principle_material,
-         semantically_check_think_before_coding_and_twelve_coding_principles,
+         semantically_check_all_rules_in_principle_material,
          fill_only_missing_coverage, integrate_in_original_language_and_structure]
-  MUST_NOT: [duplicate_covered_principles, require_original_numbering_or_thirteen_separate_sections,
+  MUST_NOT: [duplicate_covered_principles, require_original_numbering_or_separate_sections_per_rule,
              drop_trust_boundary_validation_under_internal_contract_trust,
              omit_necessary_work_under_do_less,
              skip_required_acceptance_under_milestone_execution]
@@ -94,13 +108,17 @@ RULE @principle_completion:
 RULE @write_and_verify:
   MUST: [recheck_current_file_before_writing, preserve_concurrent_user_edits,
          reread_diff_after_scoped_edits,
-         map_every_original_rule_to_preservation_merge_or_evidence_based_removal,
+         "Account for every original rule as preserved, merged or removed with evidence.",
          verify_added_principles_complete_without_duplicates_or_conflicts,
-         verify_template_conditions_preserved_and_project_commands_paths_links_valid,
+         "Verify that template conditions are preserved and project commands, paths and links remain valid.",
          verify_no_optimizer_workflow_leaked_into_target,
-         run_change_relevant_and_repository_required_checks]
-  MUST_NOT: [rewrite_already_compact_and_complete_target_just_to_produce_diff,
-             unrelated_tests_or_behavior_search]
+         "Before each check, state the specific unresolved failure it detects and how failure changes the next action.",
+         "Run only checks that address that live uncertainty, including applicable required acceptance.",
+         "Reuse valid results; add checks only for new concrete failures."]
+  MUST_NOT: [rewrite_compact_complete_target_merely_to_produce_diff,
+             unrelated_tests_or_behavior_search,
+             "Add a redundant smoke check after a real full run covers the same path.",
+             manufacture_findings_when_existing_rules_are_correct]
 
 WORKFLOW @optimize:
   TRIGGER: repository_agents_md_optimization_or_diagnosis_requested
@@ -118,7 +136,7 @@ RULE @delivery_evidence:
          compare_semantics_rule_by_rule_when_reporting_compression,
          explain_no_change_when_no_file_modified]
   MUST_NOT: [delete_rules_to_hit_compression_ratio,
-             infer_agent_behavior_or_task_quality_improvement_from_shorter_text]
+             infer_behavior_or_task_quality_gains_from_brevity]
 
 OUTPUT:
   FORMAT: markdown
