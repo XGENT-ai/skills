@@ -22,7 +22,7 @@ npx skills add XGENT-ai/skills --skill dev-plan
 
 ## 项目辅助工具（Claude Code / Codex）
 
-本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选创建通用的 `AGENTS.md`、安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。npm 发布包与仓库的 `xgent-skills install` 统一默认安装 [Phoenix Diagram](docs/phoenix-diagram.md):
+本仓库同时以 [`@xgent-ai/skills`](https://www.npmjs.com/package/@xgent-ai/skills) 发布到 npm,自带 `xgent-skills` 命令,可为任意项目安装 XGENT 的 Claude Code hooks(当前包含 statusline)、在项目 `.claude/settings.json` 中启用对应配置,装上随包的 [Phoenix UI](#phoenix-ui) 设计工具,并可选安装 Codex 或 Claude Code 的 goal 上下文收尾提醒。npm 发布包与仓库的 `xgent-skills install` 统一默认安装 [Phoenix Diagram](docs/phoenix-diagram.md):
 
 ```bash
 # 在目标项目根目录执行(也可显式传目录:npx @xgent-ai/skills install <dir>)
@@ -42,8 +42,6 @@ npx @xgent-ai/skills install
 | `--confirm-remove-archify` | 与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--diagram-release-dir=DIR` | 为 Phoenix Diagram 使用匹配的完整离线目录 |
-| `--xgent-init` | 直接创建仓根 `AGENTS.md` (已有则跳过),不再询问 |
-| `--no-xgent-init` | 跳过创建 `AGENTS.md`,不再询问 |
 | `--providers=a,b` | 指定 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,Diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
 
 Phoenix UI 和 Phoenix Diagram skill 均由 npm 安装器随匹配引擎安装与更新，已通过 `metadata.internal: true` 从 `npx skills add XGENT-ai/skills` 的默认发现列表排除，避免独立更新 skill 后与引擎版本不一致。
@@ -52,15 +50,7 @@ Phoenix UI 和 Phoenix Diagram skill 均由 npm 安装器随匹配引擎安装�
 
 普通安装不移除 Archify。`--migrate-archify` 使用独立的 Diagram 迁移分支,仅处理精确项目/provider 的完整已知来源;自定义、链接、外部管理与个人入口保留。TTY 拒绝或 EOF 不迁移;`--no-phoenix-diagram` 仍跳过并保留。旧入口移除后需要时按原来源重装,新 Diagram 入口的恢复/回滚见[迁移说明](docs/phoenix-diagram.md#旧入口迁移与安装恢复)。仓库只保留新活跃入口,不代表其他项目或个人旧安装已被处理。
 
-`install` 会询问是否同时创建仓根 `AGENTS.md`,输入 `y` 或 `yes` 确认,回车默认跳过。确认后直接复制 [通用模板](skills/xgent-init/references/external-app-AGENTS.template.md),只创建 `AGENTS.md`,不安装 `xgent-init` skill,不生成 `CLAUDE.md` / `PRODUCT.md` / `DESIGN.md`。已有 `AGENTS.md` 时直接跳过并保留原文。
-
-非交互环境默认跳过,可用 `--xgent-init` 显式创建,或用 `--no-xgent-init` 跳过询问。文件位于仓根,不受 `--providers` 影响。模板没有待填占位,通用编码准则支持不同 coding agent;Portal App 的 onebox 联调与有前端改动时的真实浏览器验收分别按适用条件执行。
-
-Portal 的产品和设计规范仍保留在 [PRODUCT 模板](skills/xgent-init/references/external-app-PRODUCT.template.md) 与 [DESIGN 模板](skills/xgent-init/references/external-app-DESIGN.template.md) 中。需要生成项目上下文时,显式安装并在 Agent 对话中使用 [xgent-init](skills/xgent-init/SKILL.md),它读取清单与代码事实,补齐 PRODUCT.md / DESIGN.md (无前端的 service 型不新生成 DESIGN.md),已有文件保留:
-
-```bash
-npx skills add XGENT-ai/skills --skill xgent-init
-```
+`install` 不创建或修改 `AGENTS.md`,也不询问是否安装模板。安装完成后会提示:可在 agent 对话中使用 [optimize-agents-md](skills/optimize-agents-md/SKILL.md),以 opinionated DSL(Odyssey/ODC)改良已有的 `AGENTS.md`;不喜欢这套风格可以忽略。Claude Code 用 `/optimize-agents-md`,Codex 用 `$optimize-agents-md`,由用户自行选择是否使用。
 
 ## Phoenix UI
 
@@ -266,7 +256,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 
 | Skill | 说明 |
 | --- | --- |
-| [xgent-init](skills/xgent-init/SKILL.md) | 内部初始化 skill,补齐 `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`,保留 Portal 产品边界与设计规范;`install` 仅直接创建 AGENTS.md |
+| [xgent-init](skills/xgent-init/SKILL.md) | 内部初始化 skill,补齐 `AGENTS.md` / `PRODUCT.md` / `DESIGN.md`,保留 Portal 产品边界与设计规范 |
 | [portal-dev-setup](skills/portal-dev-setup/SKILL.md) | 在 App 仓库中启动、体检和排查 Docker 一盒门户，完成本地联调 |
 | [portal-external-app](skills/portal-external-app/SKILL.md) | 接入以 Docker 镜像交付的外部服务，核对 manifest、注册、路由、权限与交付契约 |
 | [portal-micro-app](skills/portal-micro-app/SKILL.md) | 开发嵌入门户的微应用前端，处理 SDK 握手、导航、授权与 iframe 交互 |

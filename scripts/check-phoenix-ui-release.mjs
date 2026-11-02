@@ -110,7 +110,7 @@ function npmInstall(node, archive, destination, env, name) {
 }
 function install(node, project, env, name, flags = []) {
   const npx = path.resolve(path.dirname(node), '../lib/node_modules/npm/bin/npx-cli.js');
-  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', '--no-xgent-init', ...flags], project,
+  return run(name, node, [npx, '--offline', '--yes', `file:${path.join(raw, 'B.tgz')}`, 'install', ...flags], project,
     { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
 try {

@@ -92,11 +92,11 @@ test('the npm tarball includes Diagram and install enables it unless explicitly 
   assert.match(help.stdout, /Phoenix Diagram/);
   assert.match(help.stdout, /--no-phoenix-diagram/);
   const project = path.join(temp, 'project'); fs.mkdirSync(project);
-  const missing = spawnSync(process.execPath, [cli, 'install', project, '--no-phoenix-ui', '--no-xgent-init', `--diagram-release-dir=${path.join(temp, 'missing')}`], { encoding: 'utf8' });
+  const missing = spawnSync(process.execPath, [cli, 'install', project, '--no-phoenix-ui', `--diagram-release-dir=${path.join(temp, 'missing')}`], { encoding: 'utf8' });
   assert.equal(missing.status, 4);
   assert.match(missing.stderr, /Phoenix Diagram/);
   assert.deepEqual(fs.readdirSync(project), []);
-  const installed = spawnSync(process.execPath, [cli, 'install', project, '--no-phoenix-ui', '--no-phoenix-diagram', '--no-xgent-init'], { encoding: 'utf8' });
+  const installed = spawnSync(process.execPath, [cli, 'install', project, '--no-phoenix-ui', '--no-phoenix-diagram'], { encoding: 'utf8' });
   assert.equal(installed.status, 0, installed.stderr);
   assert.ok(fs.existsSync(path.join(project, '.claude/hooks/xgent-statusline.js')));
   assert.equal(fs.existsSync(path.join(project, '.phoenix-diagram')), false);

@@ -108,7 +108,7 @@ function tree(directory,includeDirectories=false){
 }
 function physical(file){const stat=fs.statSync(file,{bigint:true});return {device:stat.dev.toString(),inode:stat.ino.toString()};}
 async function install(f,project,flags=[],onUiActive){
-  const args=[path.join(f.pkg,'bin/xgent-skills.js'),'install',project,'--no-xgent-init',...flags];
+  const args=[path.join(f.pkg,'bin/xgent-skills.js'),'install',project,...flags];
   const watchers=new Map();let child,running=false,barrier=false,failure,stdout='',stderr='';
   const kill=()=>{if(running&&child?.pid){try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}}};
   const fail=error=>{failure||=error;kill();};

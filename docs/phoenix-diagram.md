@@ -16,7 +16,7 @@ npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI �
 
 ```sh
 node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
-  --no-phoenix-ui --no-xgent-init --providers=claude,codex \
+  --no-phoenix-ui --providers=claude,codex \
   --diagram-release-dir="$RELEASE_DIR"
 ```
 
@@ -30,7 +30,7 @@ node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
 
 普通安装保留旧 Archify。只有明确请求迁移时，按[包内迁移合同](../skills/phoenix-diagram/references/migration.md)先 dry-run 查看精确项目/provider/来源及逐项路径，再以覆盖该范围的明确确认执行 `migrate --from-archify --confirm-remove-archify`。仅完整匹配固定来源的项目副本可移除；自定义、额外/缺失文件、链接、外部管理与个人安装保留。旧 skill 不备份，回滚不重建，恢复旧入口须按回执指引显式重装；原 JSON 和已有 HTML 保持。
 
-联合入口为 `node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" --migrate-archify --diagram-release-dir="$RELEASE_DIR"`，使用已存在的匹配引擎，先展示目标和后果。TTY 肯定答复后才移除；拒绝/EOF 不迁移。非交互须另加 `--confirm-remove-archify`；单独确认标志无效。此分支跳过 XGENT hooks/settings/AGENTS 和 UI，`--no-phoenix-diagram` 仍跳过并保留，普通联合安装继续原流程。
+联合入口为 `node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" --migrate-archify --diagram-release-dir="$RELEASE_DIR"`，使用已存在的匹配引擎，先展示目标和后果。TTY 肯定答复后才移除；拒绝/EOF 不迁移。非交互须另加 `--confirm-remove-archify`；单独确认标志无效。此分支跳过 XGENT hooks/settings 和 UI，`--no-phoenix-diagram` 仍跳过并保留，普通联合安装继续原流程。
 
 中断后读取真实 `transactionId`、已删/剩余旧项与 `recoveryCommand`，只恢复指定事务。`rollbackCommand` 仅逆向恢复当前 committed 事务的 Diagram 受管写入，支持 v1/v2；预检发现后来修改先保持零变更，同一 ID 幂等，不跨过后来安装。恢复旧 Diagram active 时原生重新绑定实际文件身份，不手工复制回执。若部分回滚已恢复旧 launcher，优先原样执行回执给出的已验证新原生引擎命令，不从 PATH 选择旧引擎。迁移恢复入口不要求损坏/pending active 先完整提交；不自动下载或重装。普通工具启动不依赖迁移回执。
 

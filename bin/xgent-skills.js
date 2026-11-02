@@ -13,7 +13,6 @@ const readline = require('node:readline');
 
 const PKG_ROOT = path.join(__dirname, '..');
 const HOOKS_SRC_DIR = path.join(PKG_ROOT, '.claude', 'hooks');
-const AGENTS_TEMPLATE = path.join(PKG_ROOT, 'skills', 'xgent-init', 'references', 'external-app-AGENTS.template.md');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -354,17 +353,6 @@ async function confirm(question, skipMessage, answers) {
   return /^(y|yes)$/i.test(value.trim());
 }
 
-function createAgents(targetDir) {
-  const dest = path.join(targetDir, 'AGENTS.md');
-  try {
-    fs.copyFileSync(AGENTS_TEMPLATE, dest, fs.constants.COPYFILE_EXCL);
-    console.log('  创建  AGENTS.md');
-  } catch (error) {
-    if (error.code !== 'EEXIST') throw error;
-    console.log('  跳过  AGENTS.md (已存在,保留原文)');
-  }
-}
-
 function usage() {
   console.log(`用法: npx @xgent-ai/skills <command>
 
@@ -372,8 +360,7 @@ function usage() {
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
-                  放入用户 cache;旧 impeccable 可选择替换或共存),
-${includesDiagram ? '                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine),\n' : ''}                  并询问是否创建通用的 AGENTS.md
+                  放入用户 cache;旧 impeccable 可选择替换或共存)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine)' : ''}
   help            显示本帮助
 
 install 选项:
@@ -382,14 +369,12 @@ install 选项:
   --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
   --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
 ${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
-  --migrate-archify     仅执行 Diagram 预检/确认/迁移,跳过 hooks/settings/AGENTS/UI;
+  --migrate-archify     仅执行 Diagram 预检/确认/迁移,跳过 hooks/settings/UI;
                         使用已存在且匹配包内固定版本的引擎,不自动获取
   --confirm-remove-archify  仅配 --migrate-archify,确认移除所选项目/provider 旧入口;
                         不备份 Archify,回滚不重建旧入口,需要时按原来源重装
 ` : ''}  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
-${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --xgent-init          创建 AGENTS.md (已有则跳过),不再询问
-  --no-xgent-init       跳过 AGENTS.md,不再询问
-  --providers=a,b       指定 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
+${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --providers=a,b       指定 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
 `);
 }
@@ -397,7 +382,7 @@ ${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:�
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable', '--xgent-init', '--no-xgent-init',
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable',
     ...(includesDiagram ? ['--no-phoenix-diagram', '--migrate-archify', '--confirm-remove-archify'] : [])].includes(f)
     && !['--providers=', '--release-dir=', ...(includesDiagram ? ['--diagram-release-dir='] : [])].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
@@ -406,10 +391,6 @@ async function install(args) {
     process.exit(1);
   }
   if (flags.includes('--confirm-remove-archify') && !flags.includes('--migrate-archify')) throw phoenixFailure(2, '--confirm-remove-archify 需要 --migrate-archify');
-  if (flags.includes('--xgent-init') && flags.includes('--no-xgent-init')) {
-    console.error('错误: --xgent-init 与 --no-xgent-init 不能同时使用');
-    process.exit(1);
-  }
   if (flags.includes('--replace-impeccable') && flags.includes('--keep-impeccable')) {
     throw phoenixFailure(1, '--replace-impeccable 与 --keep-impeccable 不能同时使用');
   }
@@ -467,24 +448,18 @@ async function install(args) {
       process.exit(1);
     }
   }
-  const agentsExists = fs.existsSync(path.join(targetDir, 'AGENTS.md'));
-  const askAgents = !flags.includes('--xgent-init') && !flags.includes('--no-xgent-init') && !agentsExists;
   const phoenix = options.phoenix ? await preparePhoenix(targetDir, options) : null;
   const diagram = options.diagram ? await prepareDiagram(targetDir, options) : null;
   const askReplace = phoenix?.tools.hasLegacy && !flags.includes('--replace-impeccable') && !flags.includes('--keep-impeccable');
-  const rl = process.stdin.isTTY && (askAgents || askReplace)
+  const rl = process.stdin.isTTY && askReplace
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
   rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
-  let agents;
   let replace = flags.includes('--replace-impeccable');
   try {
     if (askReplace) replace = await confirm(
       '发现旧 impeccable,是否删除并替换为 Phoenix UI(含个人级入口,不备份)? [y/N] ',
       '  保留  impeccable:无交互环境默认共存;可用 --replace-impeccable 替换', answers);
-    agents = flags.includes('--xgent-init') || (askAgents && await confirm(
-      '是否同时创建通用的 AGENTS.md (含 Portal 联调与前端验收约定)? [y/N] ',
-      '  跳过  AGENTS.md:非交互环境,可加 --xgent-init 创建', answers));
   } finally {
     rl?.close();
   }
@@ -518,9 +493,6 @@ async function install(args) {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
     console.log('  写入  .claude/settings.json (statusLine)');
   }
-
-  if (agents) createAgents(targetDir);
-  else if (agentsExists && !flags.includes('--no-xgent-init')) console.log('  跳过  AGENTS.md (已存在,保留原文)');
 
   // XGENT 部分已完成;Phoenix 直接覆盖工具文件,中断后重跑。
   if (phoenix) {
@@ -557,6 +529,7 @@ async function install(args) {
     }
   }
   console.log(`完成: ${targetDir}`);
+  console.log('  可选  在 agent 对话中用 /optimize-agents-md(Codex 用 $optimize-agents-md)以 opinionated DSL 改良已有 AGENTS.md;不喜欢这套风格可忽略。');
 }
 
 const [cmd, ...args] = process.argv.slice(2);

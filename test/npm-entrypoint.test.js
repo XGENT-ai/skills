@@ -30,10 +30,12 @@ test('npx infers the packed installer without changing project dependencies', (t
   const lock = '{"name":"consumer","version":"1.0.0","lockfileVersion":3,"packages":{}}\n';
   fs.writeFileSync(path.join(project, 'package.json'), packageJson);
   fs.writeFileSync(path.join(project, 'package-lock.json'), lock);
-  const installed = run(npx, ['--offline', '--yes', archive, 'install', '--no-phoenix-ui', '--no-phoenix-diagram', '--no-xgent-init'], project);
+  const installed = run(npx, ['--offline', '--yes', archive, 'install', '--no-phoenix-ui', '--no-phoenix-diagram'], project);
   assert.match(installed.stdout, /完成: /);
   assert.equal(fs.readFileSync(path.join(project, '.claude/hooks/xgent-statusline.js'), 'utf8'),
     fs.readFileSync(path.join(root, '.claude/hooks/xgent-statusline.js'), 'utf8'));
+  assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
+  assert.match(installed.stdout, /可选.*optimize-agents-md.*opinionated DSL/);
   const explicit = run(npx, ['--offline', '--yes', `--package=${archive}`, 'xgent-skills', '--help'], project);
   assert.match(explicit.stdout, /用法: npx @xgent-ai\/skills/);
   const runtime = run(npx, ['--offline', '--yes', `--package=${archive}`, 'node', '-p', 'process.execPath'], project);

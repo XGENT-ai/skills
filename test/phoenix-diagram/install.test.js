@@ -13,12 +13,12 @@ function project(t) {
   return temp;
 }
 function install(dir, flags) {
-  return spawnSync(process.execPath, [path.join(root, 'bin/xgent-skills.js'), 'install', dir, '--no-xgent-init', ...flags], { encoding: 'utf8', input: '', env: { ...process.env, PHOENIX_DIAGRAM_HOME: path.join(dir, 'cache') } });
+  return spawnSync(process.execPath, [path.join(root, 'bin/xgent-skills.js'), 'install', dir, ...flags], { encoding: 'utf8', input: '', env: { ...process.env, PHOENIX_DIAGRAM_HOME: path.join(dir, 'cache') } });
 }
 
 function installOnWindows(dir, flags) {
   const script = `Object.defineProperty(process, 'platform', { value: 'win32' }); process.argv = [process.execPath, ...process.argv.slice(1)]; require(process.argv[1]);`;
-  return spawnSync(process.execPath, ['-e', script, path.join(root, 'bin/xgent-skills.js'), 'install', dir, '--no-xgent-init', '--no-phoenix-ui', ...flags], { encoding: 'utf8', input: '' });
+  return spawnSync(process.execPath, ['-e', script, path.join(root, 'bin/xgent-skills.js'), 'install', dir, '--no-phoenix-ui', ...flags], { encoding: 'utf8', input: '' });
 }
 
 test('unsupported platforms skip the default diagram branch and preserve the XGENT installation', t => {

@@ -285,7 +285,7 @@ function adapterFor(environment,tarball,project) {return{schemaVersion:1,kind:'n
 function engineCachePath(environment,version,target) {return path.join(environment.env.PHOENIX_DIAGRAM_HOME,'bin',version.toolVersion,target,version.engines[target].sha256,'phoenix-diagram');}
 function processEvidence(directory,label,result) {return writeNew(path.join(directory,`${label}.json`),result);}
 async function installProject(adapter,project,releaseDir,prefix=[]) {
-  return await runPublic({...adapter,bin:'xgent-skills',cwd:project},['install',project,'--no-phoenix-ui','--no-xgent-init',...(releaseDir?[`--diagram-release-dir=${releaseDir}`]:[])],{prefix});
+  return await runPublic({...adapter,bin:'xgent-skills',cwd:project},['install',project,'--no-phoenix-ui',...(releaseDir?[`--diagram-release-dir=${releaseDir}`]:[])],{prefix});
 }
 async function negativeResources(state,candidate,environment,adapter,server) {
   const directory=mkdir(path.join(state.runRoot,'rejections')),checks=[];
