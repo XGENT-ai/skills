@@ -136,7 +136,8 @@ async function responseFor(url, env) {
     });
   }
   return new Promise((resolve, reject) => {
-    const options = connection ? { agent: false, createConnection: () => connection } : {};
+    // agent:false makes Node create a new agent and bypass the CONNECT socket.
+    const options = connection ? { createConnection: () => connection } : {};
     const destination = proxy && url.protocol === 'http:' ? proxy : url;
     const client = proxy && url.protocol === 'http:' ? (proxy.protocol === 'https:' ? https : http) : transport;
     if (proxy && url.protocol === 'http:') Object.assign(options, { path: url.href, headers: { Host: url.host, ...(authorization ? { 'Proxy-Authorization': authorization } : {}) } });

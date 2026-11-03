@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
+const https = require('node:https');
+const net = require('node:net');
 const { spawn } = require('node:child_process');
 const source = path.resolve(__dirname, '../../skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs');
 const { sha256, platformTarget, proxyFor, manifestAt, enginePath, installEngine } = require(source);
@@ -298,6 +300,62 @@ test('explicit HTTP substitute verifies the package digest; normal runs make zer
   assert.equal(requests, 2);
   assert.equal((await run(f, ['context'])).code, 0);
   assert.equal(requests, 2);
+});
+
+test('HTTPS engine downloads use the established proxy tunnel', async t => {
+  const f = fixture(t);
+  const certificate = path.join(__dirname, '../phoenix-diagram/fixtures/bootstrap/tls-cert.pem');
+  const key = path.join(__dirname, '../phoenix-diagram/fixtures/bootstrap/tls-key.pem');
+  const sockets = new Set();
+  const proxyPorts = new Set();
+  let connects = 0;
+  let tunneledRequests = 0;
+  const secure = https.createServer({ key: fs.readFileSync(key), cert: fs.readFileSync(certificate) }, (req, res) => {
+    if (!proxyPorts.has(req.socket.remotePort)) {
+      res.writeHead(403);
+      res.end('CONNECT tunnel was bypassed');
+      // Close the unused tunnel too, so a broken client exits promptly.
+      for (const socket of sockets) if (socket !== req.socket) socket.end();
+      return;
+    }
+    tunneledRequests++;
+    res.end(f.bytes);
+  });
+  secure.on('connection', socket => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+  });
+  await new Promise(resolve => secure.listen(0, '127.0.0.1', resolve));
+  const proxy = http.createServer();
+  proxy.on('connect', (req, client, head) => {
+    connects++;
+    assert.equal(req.url, `localhost:${secure.address().port}`);
+    const upstream = net.connect(secure.address().port, '127.0.0.1', () => {
+      proxyPorts.add(upstream.localPort);
+      client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      if (head.length) upstream.write(head);
+      client.pipe(upstream);
+      upstream.pipe(client);
+    });
+    for (const socket of [client, upstream]) {
+      sockets.add(socket);
+      socket.once('close', () => sockets.delete(socket));
+      socket.on('error', () => { client.destroy(); upstream.destroy(); });
+    }
+  });
+  await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve));
+  t.after(async () => {
+    for (const socket of sockets) socket.destroy();
+    await Promise.all([secure, proxy].map(server => new Promise(resolve => server.close(resolve))));
+  });
+  f.manifest.engines[f.target].url = `https://localhost:${secure.address().port}/engine`;
+  fs.writeFileSync(path.join(f.scripts, 'ENGINE.json'), JSON.stringify(f.manifest));
+  Object.assign(f.env, { NODE_EXTRA_CA_CERTS: certificate, HTTPS_PROXY: `http://127.0.0.1:${proxy.address().port}`, NO_PROXY: '', no_proxy: '' });
+  const result = await run(f, ['engine', 'install', '--json']);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(connects, 1);
+  assert.equal(tunneledRequests, 1);
+  assert.deepEqual(fs.readFileSync(JSON.parse(result.stdout).binary), f.bytes);
 });
 
 test('release manifests accept the four macOS/Linux assets and still require every one', t => {
