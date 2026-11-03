@@ -179,13 +179,27 @@ pub fn gate(store: &Path, project: &Path, s: &str) -> Result<(), String> {
 /// Whether the user accepted an assembled first viewport for this build journey,
 /// locally (`store`) or in the host's named `sessions`. Once one is accepted, the
 /// review store hands back that session, so no new first-viewport review can open.
-pub fn first_viewport_accepted(store: Option<&Path>, sessions: &[std::path::PathBuf], project: &Path) -> bool {
-    let Ok(project) = project.canonicalize() else { return false };
+pub fn first_viewport_accepted(
+    store: Option<&Path>,
+    sessions: &[std::path::PathBuf],
+    project: &Path,
+) -> bool {
+    let Ok(project) = project.canonicalize() else {
+        return false;
+    };
     if let Some(store) = store {
-        if matches!(super::lifecycle::final_session(store, &project), Ok(Some(_))) { return true; }
+        if matches!(
+            super::lifecycle::final_session(store, &project),
+            Ok(Some(_))
+        ) {
+            return true;
+        }
     }
-    sessions.iter().any(|dir| super::store::read(&dir.join("current.json"))
-        .is_ok_and(|state| state["packet"]["stage"] == "hero" && super::lifecycle::accepted_in(dir, &state)))
+    sessions.iter().any(|dir| {
+        super::store::read(&dir.join("current.json")).is_ok_and(|state| {
+            state["packet"]["stage"] == "hero" && super::lifecycle::accepted_in(&state)
+        })
+    })
 }
 
 /// A hosted review lives in the host's store and its captures use snapshots, so the
@@ -195,7 +209,7 @@ pub fn gate_hosted(sessions: &[std::path::PathBuf], project: &Path, s: &str, too
     let project = project.canonicalize().map_err(|e| e.to_string())?;
     for dir in sessions {
         let state = super::store::read(&dir.join("current.json")).map_err(|e| format!("hosted review session {}: {e}", dir.display()))?;
-        if state["packet"]["stage"] == "hero" && super::lifecycle::accepted_in(dir, &state) {
+        if state["packet"]["stage"] == "hero" && super::lifecycle::accepted_in(&state) {
             return Ok(());
         }
     }
@@ -216,7 +230,9 @@ fn decide(sessions: &[std::path::PathBuf], project: &Path, s: &str, steps: &str)
     for dir in sessions {
         let state = super::store::read(&dir.join("current.json"))?;
         if state["packet"]["schemaVersion"] == 3 && state["packet"]["stage"] == "components" {
-            if super::lifecycle::accepted_in(dir, &state) && state["packet"]["specSha256"] == sha.as_str() {
+            if super::lifecycle::accepted_in(&state)
+                && state["packet"]["specSha256"] == sha.as_str()
+            {
                 // The user judged these plate bytes; a plate replaced since is unreviewed.
                 match super::store::sources_current(&state) {
                     Ok(()) => return Ok(()),

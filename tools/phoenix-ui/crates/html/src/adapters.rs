@@ -11,7 +11,7 @@ use crate::background::{
 };
 use crate::cascade::StyleValues;
 use crate::dom::{StaticDocument, StaticElement};
-use crate::quality::{collapse_ws, pf0, resolve_font_size_px};
+use crate::quality::{pf0, resolve_font_size_px};
 use impeccable_core::checks::measures::{
     self, border_colors_from_style, border_widths_from_style, check_gpt_thin_border_wide_shadow,
     check_oversized_h1, check_radial_spotlight, positioned_style_implies_escape, resolve_length_px,
@@ -31,9 +31,10 @@ use impeccable_core::checks::text_rules::{
     POSITIONED_CHILD_INTERACTIVE_SELECTOR,
 };
 use impeccable_core::color::{composite_color_over, parse_any_color, parse_rgb};
+use impeccable_core::js::collapse_ws;
 use impeccable_core::js::{self, parse_float, parse_int};
 use impeccable_core::js_ext_a::num_truthy;
-use impeccable_core::js_ext_b::slice_utf16_prefix;
+use impeccable_core::js_ext_a::slice_utf16_prefix;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;

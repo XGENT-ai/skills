@@ -1,99 +1,44 @@
 #!/usr/bin/env node
-// Checkout prepublish guard. Publishing an existing tgz does not run this hook;
-// the release workflow must also validate Diagram before any release side effect.
+// prepublishOnly guard: a package is publishable only with both Phoenix tools' release manifests.
+// `npm publish <tgz>` skips this hook, so release:phoenix also runs it on the staged package.
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-const require = createRequire(import.meta.url);
-const diagram = require('../skills/phoenix-diagram/scripts/phoenix-bootstrap.cjs');
-const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const targets = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'];
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 
 function included(pkg, file) {
-  return Object.values(pkg.bin || {}).includes(file) || (pkg.files || []).some(entry =>
-    typeof entry === 'string' && (entry === file || file.startsWith(`${entry.replace(/\/$/, '')}/`)));
+  return (pkg.files || []).some(entry => entry === file || file.startsWith(`${entry.replace(/\/$/, '')}/`));
 }
-export function includedPhoenixTools(root, pkg = readJson(path.join(root, 'package.json'))) {
-  return ['phoenix-ui', 'phoenix-diagram'].filter(tool => pkg.bin?.[tool]
-    || included(pkg, `dist/${tool}/VERSION.json`)
-    || (included(pkg, `skills/${tool}/SKILL.md`) && fs.existsSync(path.join(root, `skills/${tool}/SKILL.md`))));
+function publicHttps(value) {
+  if (!/^https:\/\//.test(value || '')) return false;
+  const url = new URL(value);
+  return !url.username && !url.password
+    && !['localhost', '[::1]'].includes(url.hostname) && !/^127\./.test(url.hostname)
+    && !url.hostname.endsWith('.localhost');
 }
 export function assertReleaseBranch(branch) {
   if (branch !== 'main') throw new Error('Release only from main; release branches and detached HEAD are not supported.');
 }
-export function releasePackage(root, diagramDirectory = path.join(root, 'dist/phoenix-diagram')) {
-  const pkg = readJson(path.join(root, 'package.json'));
-  assertDiagramRelease(root, pkg, diagramDirectory);
-  return pkg;
-}
-function ordinary(file) {
-  const stat = fs.lstatSync(file);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) throw new Error(`Untrusted release resource: ${file}`);
-  const bytes = fs.readFileSync(file);
-  if (!bytes.length) throw new Error(`Empty release resource: ${file}`);
-  return bytes;
-}
-function publicHttps(value) {
-  const url = new URL(value);
-  return url.protocol === 'https:' && !url.username && !url.password
-    && !['localhost', '[::1]'].includes(url.hostname) && !/^127\./.test(url.hostname)
-    && !url.hostname.endsWith('.localhost');
-}
-function checkDiagramLicenses(pkg, directory) {
-  for (const name of ['LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md']) {
-    const file = `dist/phoenix-diagram/${name}`;
-    if (!included(pkg, file)) throw new Error(`Package files omit ${file}`);
-    ordinary(path.join(directory, name));
-  }
-  const catalog = readJson(path.join(directory, 'THIRD-PARTY.json'));
-  let count = 0;
-  function visit(value) {
-    if (!value || typeof value !== 'object') return;
-    if (typeof value.path === 'string' && value.path.startsWith('THIRD-PARTY-LICENSES/')) {
-      if (value.path.includes('\\') || value.path.split('/').some(part => !part || part === '.' || part === '..') || !/^[a-f0-9]{64}$/.test(value.sha256 || '')) throw new Error('Unsafe license resource binding');
-      const file = `dist/phoenix-diagram/${value.path}`;
-      if (!included(pkg, file) || sha(ordinary(path.join(directory, value.path))) !== value.sha256) throw new Error(`Release license binding differs: ${file}`);
-      count++;
-    }
-    for (const child of Object.values(value)) visit(child);
-  }
-  visit(catalog);
-  if (!count) throw new Error('Diagram release has no full license resources');
-}
-function assertDiagramRelease(root, pkg, directory = path.join(root, 'dist/phoenix-diagram')) {
-  if (pkg.bin?.['phoenix-diagram'] !== 'bin/phoenix-diagram.js' || !included(pkg, 'dist/phoenix-diagram/bundle/manifest.json')) throw new Error('Package bin/files omit the diagram consumer interface');
-  const manifest = diagram.manifestAt(path.join(directory, 'VERSION.json'), { packageJsonPath: path.join(root, 'package.json') });
-  if (manifest.data.distribution !== 'release' || Object.keys(manifest.data.engines).length !== 4
-    || !diagram.TARGETS.every(target => manifest.data.engines[target] && publicHttps(manifest.data.engines[target].url))) throw new Error('phoenix-diagram requires a complete release manifest with four public HTTPS URLs');
-  const bundle = diagram.verifyBundle(path.join(directory, 'bundle'), manifest);
-  for (const item of bundle.data.files) if (!included(pkg, `dist/phoenix-diagram/bundle/${item.path}`)) throw new Error(`Package files omit diagram bundle entry ${item.path}`);
-  if (!included(pkg, 'dist/phoenix-diagram/bundle/ENGINE.json')) throw new Error('Package files omit diagram ENGINE.json');
-  checkDiagramLicenses(pkg, directory);
-}
 export function assertPublishablePackage(root) {
   const pkg = readJson(path.join(root, 'package.json'));
-  const tools = includedPhoenixTools(root, pkg);
-  for (const tool of tools) {
-    const file = path.join(root, `dist/${tool}/VERSION.json`);
-    if (tool === 'phoenix-ui') {
-      // The UI release workflow validates the full
-      // platform/build/hosting contract separately.
-      const manifest = readJson(file), engines = Object.values(manifest.engines || {});
-      if (manifest.distribution !== 'release' || !engines.length || !engines.every(engine => /^https:\/\//.test(engine.url || ''))) throw new Error('dist/phoenix-ui/VERSION.json is a development manifest without public engine URLs');
-      continue;
+  for (const tool of ['phoenix-ui', 'phoenix-diagram']) {
+    const manifest = readJson(path.join(root, `dist/${tool}/VERSION.json`));
+    if (manifest.distribution !== 'release' || manifest.npmPackageVersion !== pkg.version || !targets.every(target => publicHttps(manifest.engines?.[target]?.url))) {
+      throw new Error(`dist/${tool}/VERSION.json is not a release manifest of ${pkg.version} with four public HTTPS engine URLs`);
     }
-    assertDiagramRelease(root, pkg);
+    // What bin/<tool>.js loads: its skill bootstrap, the manifest and the bundle.
+    for (const file of [pkg.bin?.[tool], `skills/${tool}/scripts/phoenix-bootstrap.cjs`, `dist/${tool}/VERSION.json`, `dist/${tool}/bundle/manifest.json`]) {
+      if (!file || !included(pkg, file) || !fs.existsSync(path.join(root, file))) throw new Error(`Package omits ${file || `the ${tool} bin`}`);
+    }
   }
-  return { tools };
 }
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     assertPublishablePackage(path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..')));
   } catch (error) {
-    console.error(`Refusing to publish: ${error.message}.\nUse npm run release:phoenix from main with complete Phoenix Diagram release resources; development/candidate resources cannot be published.`);
+    console.error(`Refusing to publish: ${error.message}.\nUse npm run release:phoenix from main; development manifests cannot be published.`);
     process.exitCode = 1;
   }
 }

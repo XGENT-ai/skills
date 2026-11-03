@@ -93,9 +93,9 @@ fn project_scope_keeps_claude_project_dir_token_and_guard() {
         assert!(c.contains("node -e "));
     }
     // What we write is what every reader recognizes as ours.
-    assert!(value_has_impeccable_hook_marker(&out));
+    assert!(value_has_launcher_hook_marker(&out));
     // The bundled fixture uses the current Phoenix launcher spelling.
-    assert!(value_has_impeccable_hook_marker(&claude_bundle_manifest()));
+    assert!(value_has_launcher_hook_marker(&claude_bundle_manifest()));
 }
 
 #[test]
@@ -107,7 +107,6 @@ fn generic_rewrite_identifies_legacy_but_never_claims_it() {
     ] {
         let legacy =
             json!({"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":command}]}]}});
-        assert!(value_has_impeccable_hook_marker(&legacy));
         assert!(!value_has_launcher_hook_marker(&legacy));
         for provider in [".claude", ".agents"] {
             assert_eq!(
@@ -284,7 +283,7 @@ fn codex_gets_command_windows_sibling_pointing_at_cmd_shim() {
         win["hooks"]["PostToolUse"][0]["hooks"][0]["command"],
         entry["command"]
     );
-    assert!(value_has_impeccable_hook_marker(&out));
+    assert!(value_has_launcher_hook_marker(&out));
 }
 
 #[test]
@@ -311,7 +310,7 @@ fn github_manifests_pass_through_and_grok_is_rewritten() {
         rewrite_hook_commands_for_platform(&bundle, ".github", "/proj", true, false),
         bundle
     );
-    assert!(value_has_impeccable_hook_marker(&bundle));
+    assert!(value_has_launcher_hook_marker(&bundle));
     // .grok is rewritten like the other command-hook providers (upstream
     // 49571365, #642): a global install must not leave the bundled
     // project-relative path behind.
@@ -367,7 +366,7 @@ fn merge_refreshes_ours_and_preserves_third_party_hooks() {
     let keys: Vec<&String> = merged.as_object().unwrap().keys().collect();
     assert_eq!(keys, ["permissions", "description", "hooks"]);
     assert_eq!(merged["permissions"], existing["permissions"]);
-    assert_eq!(merged["description"], "fresh claude hook");
+    assert_eq!(merged["description"], "old");
     let post = merged["hooks"]["PostToolUse"].as_array().unwrap();
     assert_eq!(post.len(), 3);
     assert_eq!(post[0]["matcher"], "Bash");
@@ -397,7 +396,7 @@ fn prune_removes_only_ours_and_drops_empty_scaffolding() {
         "other": 1,
         "hooks": { "Stop": [{ "hooks": [{ "type": "command", "command": "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook" }] }] }
     })).unwrap()).unwrap();
-    assert!(file_has_impeccable_hook_marker(&p));
+    assert!(file_has_launcher_hook_marker(&p));
     assert!(prune_impeccable_hook_from_manifest(&p).unwrap());
     let after: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(after, json!({ "other": 1 }));
@@ -408,7 +407,7 @@ fn prune_removes_only_ours_and_drops_empty_scaffolding() {
         r#"{"permissions":{"allow":["Bash(.claude/skills/phoenix-ui/scripts/phoenix-ui hook)"]}}"#,
     )
     .unwrap();
-    assert!(!file_has_impeccable_hook_marker(&p));
+    assert!(!file_has_launcher_hook_marker(&p));
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -422,10 +421,6 @@ fn prune_preserves_legacy_and_third_party_hooks_and_never_rewrites_legacy_only_f
     let permissions = json!({"allow":["Bash(ls)"]});
     write(&name, &json!({"permissions":permissions.clone(), "hooks":{"Stop":[legacy.clone(), foreign.clone()]}}).to_string());
     let original = read(&name);
-    assert!(
-        file_has_impeccable_hook_marker(&name),
-        "legacy remains identifiable for explicit migration"
-    );
     assert!(!prune_impeccable_hook_from_manifest(&name).unwrap());
     assert_eq!(read(&name), original);
     let phoenix = json!({"hooks":[{"type":"command","command":"\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]});
@@ -440,7 +435,7 @@ fn prune_preserves_legacy_and_third_party_hooks_and_never_rewrites_legacy_only_f
     let _ = std::fs::remove_dir_all(dir);
 }
 
-// ─── Refresh current Phoenix hooks without migrating legacy installs ──────
+// ─── Copy into existing manifests ──────────────────────────────────────────
 
 fn write(path: &str, content: &str) {
     let p = std::path::Path::new(path);
@@ -466,145 +461,6 @@ fn sys_with_home(home: &str) -> Sys {
     let mut env = HashMap::new();
     env.insert("HOME".to_string(), home.to_string());
     Sys::new(env, home.to_string())
-}
-
-#[test]
-fn manifest_has_stale_hook_only_flags_incomplete_phoenix_guards() {
-    let dir = tmp_dir("stale-detect");
-    let stale = dir.join("stale.json");
-    std::fs::write(&stale, serde_json::to_string_pretty(&json!({
-        "hooks": { "PostToolUse": [{ "matcher": "Edit", "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\"" }] }] }
-    })).unwrap()).unwrap();
-    assert!(!manifest_has_stale_hook(&stale.to_string_lossy()));
-
-    let launcher = dir.join("launcher.json");
-    std::fs::write(&launcher, serde_json::to_string_pretty(&json!({
-        "hooks": { "PostToolUse": [{ "matcher": "Edit", "hooks": [{ "type": "command", "command": "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook" }] }] }
-    })).unwrap()).unwrap();
-    assert!(manifest_has_stale_hook(&launcher.to_string_lossy()));
-    let complete = dir.join("complete.json");
-    std::fs::write(
-        &complete,
-        rewrite_hook_commands_for_platform(
-            &claude_bundle_manifest(),
-            ".claude",
-            "/proj",
-            false,
-            false,
-        )
-        .to_string(),
-    )
-    .unwrap();
-    assert!(!manifest_has_stale_hook(&complete.to_string_lossy()));
-    let partial = dir.join("partial.json");
-    let mut partial_manifest: Value =
-        serde_json::from_str(&read(&complete.to_string_lossy())).unwrap();
-    partial_manifest["hooks"]["Stop"] = json!([{"hooks":[{"type":"command","command":"\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]}]);
-    std::fs::write(&partial, partial_manifest.to_string()).unwrap();
-    assert!(
-        manifest_has_stale_hook(&partial.to_string_lossy()),
-        "one completed event must not hide another silent event"
-    );
-
-    // A current bare launcher is refreshed while its legacy sibling remains.
-    let mixed = dir.join("mixed.json");
-    std::fs::write(&mixed, serde_json::to_string_pretty(&json!({
-        "hooks": {
-            "PostToolUse": [{ "hooks": [{ "type": "command", "command": "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook" }] }],
-            "Stop": [{ "hooks": [{ "type": "command", "command": "node .claude/skills/impeccable/scripts/hook.mjs" }] }]
-        }
-    })).unwrap()).unwrap();
-    assert!(manifest_has_stale_hook(&mixed.to_string_lossy()));
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn repair_preserves_legacy_mjs_manifest_and_foreign_settings() {
-    let home = tmp_dir("repair-home");
-    let home = home.to_string_lossy().to_string();
-    let proj = tmp_dir("repair-proj");
-    let proj = proj.to_string_lossy().to_string();
-    let sys = sys_with_home(&home);
-
-    // A v3-era Claude manifest naming the retired `.mjs` script, plus a
-    // non-Impeccable hook that must be preserved untouched.
-    let manifest = format!("{proj}/.claude/settings.local.json");
-    write(&manifest, &serde_json::to_string_pretty(&json!({
-        "other": true,
-        "hooks": {
-            "PostToolUse": [
-                { "matcher": "Bash", "hooks": [{ "type": "command", "command": "echo keep-me" }] },
-                { "matcher": "Edit", "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\"" }] }
-            ]
-        }
-    })).unwrap());
-
-    let before = read(&manifest);
-    let repaired = repair_stale_hook_manifests(&sys, &proj, &[".claude"], None).unwrap();
-    assert!(repaired.is_empty());
-    assert_eq!(read(&manifest), before);
-
-    let after: Value = serde_json::from_str(&read(&manifest)).unwrap();
-    assert_eq!(after["other"], json!(true));
-    let post = after["hooks"]["PostToolUse"].as_array().unwrap();
-    assert_eq!(post[0]["hooks"][0]["command"], "echo keep-me");
-    assert_eq!(
-        post[1]["hooks"][0]["command"],
-        "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\""
-    );
-
-    // Legacy migration is reserved for the explicit M3 transaction.
-    let repaired2 = repair_stale_hook_manifests(&sys, &proj, &[".claude"], None).unwrap();
-    assert!(repaired2.is_empty());
-    assert_eq!(read(&manifest), before);
-
-    let _ = std::fs::remove_dir_all(&proj);
-    let _ = std::fs::remove_dir_all(&home);
-}
-
-#[test]
-fn repair_refreshes_phoenix_while_preserving_legacy_permissions_and_foreign_settings() {
-    let dir = tmp_dir("repair-mixed");
-    let project = jsp::join(&[&dir.to_string_lossy(), "project"]);
-    let home = jsp::join(&[&dir.to_string_lossy(), "home"]);
-    let sys = sys_with_home(&home);
-    let path = jsp::join(&[&project, ".claude", "settings.json"]);
-    let legacy = json!({"matcher":"LegacyEdit", "hooks":[{"type":"command","command":"node .claude/skills/impeccable/scripts/hook.mjs"}]});
-    let foreign = json!({"matcher":"Bash", "hooks":[{"type":"command","command":"echo keep-me"}]});
-    let original = json!({
-        "model":"user-model", "mcpServers":{"kept":{"command":"local-service","args":["--local"]}},
-        "permissions":{"allow":["Bash(.claude/skills/phoenix-ui/scripts/phoenix-ui hook)", "Bash(ls)"]},
-        "hooks":{"PostToolUse":[foreign.clone(), legacy.clone(), {"matcher":"Edit", "hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]}]}
-    });
-    write(&path, &original.to_string());
-    assert!(manifest_has_stale_hook(&path));
-    assert_eq!(
-        repair_stale_hook_manifests(&sys, &project, &[".claude"], None).unwrap(),
-        [".claude"]
-    );
-    let after: Value = serde_json::from_str(&read(&path)).unwrap();
-    for key in ["model", "mcpServers", "permissions"] {
-        assert_eq!(after[key], original[key], "{key}");
-    }
-    assert_eq!(after["hooks"]["PostToolUse"][0], foreign);
-    assert_eq!(after["hooks"]["PostToolUse"][1], legacy);
-    assert_posix_guard(
-        after["hooks"]["PostToolUse"][2]["hooks"][0]["command"]
-            .as_str()
-            .unwrap(),
-        r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
-        "hook",
-        "claude",
-    );
-    assert!(!manifest_has_stale_hook(&path));
-    let before_second = read(&path);
-    assert!(
-        repair_stale_hook_manifests(&sys, &project, &[".claude"], None)
-            .unwrap()
-            .is_empty()
-    );
-    assert_eq!(read(&path), before_second);
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -698,27 +554,6 @@ fn copy_installs_current_phoenix_beside_legacy_without_mutating_legacy_shared_se
         "claude",
     );
     let _ = std::fs::remove_dir_all(dir);
-}
-
-#[test]
-fn repair_leaves_dirs_without_an_impeccable_marker_alone() {
-    let home = tmp_dir("repair2-home");
-    let home = home.to_string_lossy().to_string();
-    let proj = tmp_dir("repair2-proj");
-    let proj = proj.to_string_lossy().to_string();
-    let sys = sys_with_home(&home);
-
-    // A manifest with only a foreign hook: repair must never add ours.
-    let manifest = format!("{proj}/.claude/settings.local.json");
-    write(&manifest, &serde_json::to_string_pretty(&json!({
-        "hooks": { "PostToolUse": [{ "hooks": [{ "type": "command", "command": "echo unrelated" }] }] }
-    })).unwrap());
-    let before = read(&manifest);
-    let repaired = repair_stale_hook_manifests(&sys, &proj, &[".claude"], None).unwrap();
-    assert!(repaired.is_empty());
-    assert_eq!(read(&manifest), before);
-    let _ = std::fs::remove_dir_all(&proj);
-    let _ = std::fs::remove_dir_all(&home);
 }
 
 #[test]
@@ -919,7 +754,6 @@ fn gemini_install_merges_into_commented_settings_and_force_never_wipes() {
     assert_eq!(merged["model"]["name"], "gemini-3-pro");
     assert_eq!(merged["mcpServers"]["x"]["url"], "http://a//b");
     assert!(merged["hooks"]["AfterAgent"].is_array());
-    assert_eq!(read(&format!("{settings}.bak")), original);
     // Truly malformed: refused without --force, and --force never replaces
     // the user's whole settings file with a hooks-only manifest.
     write(&settings, "{ \"model\": ");

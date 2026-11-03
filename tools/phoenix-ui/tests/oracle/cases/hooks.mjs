@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 
 const WS = '<WS>';
-const CACHE_FILES = ['.impeccable/**', '.claude/settings.local.json', '.codex/hooks.json', '.cursor/hooks.json', '.github/hooks/impeccable.json'];
+const CACHE_FILES = ['.phoenix-ui/**', '.claude/settings.local.json', '.codex/hooks.json', '.cursor/hooks.json', '.github/hooks/impeccable.json'];
 
 const claudeEdit = (file, extra = {}) => ({
   session_id: 's1', cwd: WS, hook_event_name: 'PostToolUse', tool_name: 'Edit',
@@ -67,15 +67,15 @@ export default [
   { id: 'hook-stdin-empty', verb: 'hook', workspace: 'hook-project', stdin: '', files: CACHE_FILES },
   { id: 'hook-stdin-malformed', verb: 'hook', workspace: 'hook-project', stdin: '{not json', files: CACHE_FILES },
   { id: 'hook-stdin-array', verb: 'hook', workspace: 'hook-project', stdin: '[1,2]', files: CACHE_FILES },
-  { id: 'hook-env-disabled', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { IMPECCABLE_HOOK_DISABLED: '1' }, files: CACHE_FILES },
-  { id: 'hook-env-reentrant', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { IMPECCABLE_HOOK_DEPTH: '1' }, files: CACHE_FILES },
-  { id: 'hook-env-quiet', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { IMPECCABLE_HOOK_QUIET: '1' }, files: CACHE_FILES },
+  { id: 'hook-env-disabled', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { PHOENIX_UI_HOOK_DISABLED: '1' }, files: CACHE_FILES },
+  { id: 'hook-env-reentrant', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { PHOENIX_UI_HOOK_DEPTH: '1' }, files: CACHE_FILES },
+  { id: 'hook-env-quiet', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.tsx'), env: { PHOENIX_UI_HOOK_QUIET: '1' }, files: CACHE_FILES },
   { id: 'hook-harness-github-edit', verb: 'hook', workspace: 'hook-project', stdin: { sessionId: 'g1', cwd: WS, toolName: 'edit', toolArgs: JSON.stringify({ path: 'src/components/Card.module.css', old_str: 'a', new_str: 'b' }) }, files: CACHE_FILES },
   { id: 'hook-harness-github-apply-patch', verb: 'hook', workspace: 'hook-project', stdin: { sessionId: 'g1', cwd: WS, toolName: 'apply_patch', toolArgs: '*** Begin Patch\n*** Update File: src/components/Card.module.css\n@@\n-x\n+y\n*** End Patch' }, files: CACHE_FILES },
   { id: 'hook-harness-codex-apply-patch', verb: 'hook', workspace: 'hook-project', stdin: { session_id: 'c1', cwd: WS, hook_event_name: 'PostToolUse', tool_name: 'apply_patch', tool_input: { command: '*** Begin Patch\n*** Update File: src/components/Card.module.css\n@@\n-x\n+y\n*** End Patch' } }, files: CACHE_FILES },
   { id: 'hook-harness-cursor-shaped', verb: 'hook', workspace: 'hook-project', stdin: { conversation_id: 'cv1', workspace_roots: [WS], tool_name: 'Write', tool_input: { path: 'src/components/Card.module.css' } }, files: CACHE_FILES },
-  { id: 'hook-harness-forced-github', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.module.css'), env: { IMPECCABLE_HOOK_HARNESS: 'github' }, files: CACHE_FILES },
-  { id: 'hook-audit-log', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.module.css'), env: { IMPECCABLE_HOOK_LOG: `${WS}/.impeccable/audit.ndjson` }, files: CACHE_FILES },
+  { id: 'hook-harness-forced-github', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.module.css'), env: { PHOENIX_UI_HOOK_HARNESS: 'github' }, files: CACHE_FILES },
+  { id: 'hook-audit-log', verb: 'hook', workspace: 'hook-project', stdin: claudeEdit('src/components/Card.module.css'), env: { PHOENIX_UI_HOOK_LOG: `${WS}/.phoenix-ui/audit.ndjson` }, files: CACHE_FILES },
   {
     id: 'hook-native-platform-skip', verb: 'hook', workspace: 'hook-project',
     setup: (ws) => fs.writeFileSync(`${ws}/PRODUCT.md`, '# P\n\n## Platform\nios\n'),
@@ -83,27 +83,27 @@ export default [
   },
   {
     id: 'hook-config-disabled', verb: 'hook', workspace: 'hook-project',
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'); },
     stdin: claudeEdit('src/components/Card.module.css'), files: CACHE_FILES,
   },
   {
     id: 'hook-config-ignore-rule', verb: 'hook', workspace: 'hook-project',
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ detector: { ignoreRules: ['gradient-text'] } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ detector: { ignoreRules: ['gradient-text'] } }, null, 2) + '\n'); },
     stdin: claudeEdit('src/components/Card.module.css'), files: CACHE_FILES,
   },
   {
     id: 'hook-config-ignore-file', verb: 'hook', workspace: 'hook-project',
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ detector: { ignoreFiles: ['src/components/**'] } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ detector: { ignoreFiles: ['src/components/**'] } }, null, 2) + '\n'); },
     stdin: claudeEdit('src/components/Card.module.css'), files: CACHE_FILES,
   },
   {
     id: 'hook-config-per-edit-all', verb: 'hook', workspace: 'hook-project',
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ hook: { perEditRules: 'all' } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ hook: { perEditRules: 'all' } }, null, 2) + '\n'); },
     stdin: claudeEdit('src/components/Card.tsx'), files: CACHE_FILES,
   },
   {
     id: 'hook-config-max-findings-1', verb: 'hook', workspace: 'hook-project',
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ hook: { perEditRules: 'all', limits: { maxFindings: 1, maxChars: 8000 } } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ hook: { perEditRules: 'all', limits: { maxFindings: 1, maxChars: 8000 } } }, null, 2) + '\n'); },
     stdin: claudeEdit('src/page.html'), files: CACHE_FILES,
   },
   // Session flows
@@ -173,7 +173,7 @@ export default [
   { id: 'hbe-no-file', verb: 'hook-before-edit', workspace: 'hook-project', stdin: { hook_event_name: 'preToolUse', conversation_id: 'cv1', workspace_roots: [WS], tool_name: 'Shell', tool_input: { command: 'ls' } }, files: CACHE_FILES },
   { id: 'hbe-stdin-empty', verb: 'hook-before-edit', workspace: 'hook-project', stdin: '', files: CACHE_FILES },
   { id: 'hbe-stdin-malformed', verb: 'hook-before-edit', workspace: 'hook-project', stdin: '{', files: CACHE_FILES },
-  { id: 'hbe-env-disabled', verb: 'hook-before-edit', workspace: 'hook-project', stdin: '{', env: { IMPECCABLE_HOOK_DISABLED: 'true' }, files: CACHE_FILES },
+  { id: 'hbe-env-disabled', verb: 'hook-before-edit', workspace: 'hook-project', stdin: '{', env: { PHOENIX_UI_HOOK_DISABLED: 'true' }, files: CACHE_FILES },
   { id: 'hbe-outside-project', verb: 'hook-before-edit', workspace: 'hook-project', stdin: { hook_event_name: 'preToolUse', conversation_id: 'cv1', workspace_roots: [WS], tool_name: 'Write', tool_input: { path: '<REPO>/tests/x.css', content: '.a{}' } }, files: CACHE_FILES },
   {
     id: 'hbe-denial-downgrade-after-6', verb: 'hook-before-edit', workspace: 'hook-project', files: CACHE_FILES,
@@ -224,12 +224,12 @@ export default [
   { id: 'hadmin-full-cycle', verb: 'hook-admin', workspace: 'hook-project', files: CACHE_FILES, steps: [{ args: ['ignore-rule', 'side-tab'] }, { args: ['ignore-file', 'x/**', '--local'] }, { args: ['ignore-value', 'overused-font', 'Inter'] }, { args: ['status'] }, { args: ['reset'] }, { args: ['status'] }] },
   {
     id: 'hadmin-legacy-migration', verb: 'hook-admin', workspace: 'hook-project', files: CACHE_FILES,
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, JSON.stringify({ hook: { enabled: true, quiet: true, ignoreRules: ['legacy-rule'], advisoryRules: 'include', consent: 'accepted' }, other: { keep: 1 } }, null, 2) + '\n'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, JSON.stringify({ hook: { enabled: true, quiet: true, ignoreRules: ['legacy-rule'], advisoryRules: 'include', consent: 'accepted' }, other: { keep: 1 } }, null, 2) + '\n'); },
     steps: [{ args: ['status'] }, { args: ['ignore-rule', 'side-tab'] }, { args: ['status'] }],
   },
   {
     id: 'hadmin-malformed-config', verb: 'hook-admin', workspace: 'hook-project', files: CACHE_FILES,
-    setup: (ws) => { fs.mkdirSync(`${ws}/.impeccable`, { recursive: true }); fs.writeFileSync(`${ws}/.impeccable/config.json`, '{ nope'); },
+    setup: (ws) => { fs.mkdirSync(`${ws}/.phoenix-ui`, { recursive: true }); fs.writeFileSync(`${ws}/.phoenix-ui/config.json`, '{ nope'); },
     steps: [{ args: ['status'] }, { args: ['off'] }],
   },
   {

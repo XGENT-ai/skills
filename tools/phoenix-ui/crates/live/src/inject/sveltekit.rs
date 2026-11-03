@@ -385,11 +385,3 @@ pub fn prune_empty_dir(dir: &str, stop_dir: &str) {
         }
     }
 }
-
-/// JS: sveltekit.inject.artifacts({ project })
-pub fn sveltekit_artifacts(project: &SvelteKitProject) -> Vec<Value> {
-    vec![
-        json!({ "kind": "created", "path": SVELTE_LIVE_ROOT_COMPONENT, "marker": "impeccable-live-root", "pruneTo": "src" }),
-        json!({ "kind": "patched", "path": project.layout_file, "patch": "sveltekit-layout", "markers": [SVELTE_LAYOUT_MARKER_OPEN] }),
-    ]
-}

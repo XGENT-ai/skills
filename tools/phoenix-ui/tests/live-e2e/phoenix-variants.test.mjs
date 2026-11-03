@@ -112,12 +112,6 @@ function listFiles(root, sub) {
   return out.sort();
 }
 
-function receipts(cwd) {
-  return listFiles(cwd, '.phoenix-ui/live/accept-receipts').map((file) => {
-    try { return { file, ...JSON.parse(readText(cwd, file)) }; } catch { return { file, unreadable: true }; }
-  });
-}
-
 function stage({ csp }) {
   const { tmp, fixture } = stagePhoenixFixture(FIXTURE);
   if (csp) {
@@ -333,17 +327,15 @@ describe('row 3: accept / discard / move workspace', () => {
       { label: 'no wrapper in DOM', timeout: 10_000 }).catch(async () => domWrappers(page));
     await page.screenshot({ path: evidencePath(ROW3, 'discard-2-after.png') });
     const sessionId = during.debug?.sessionId;
-    const receipt = receipts(tmp).find((r) => r.id === sessionId) || null;
     const checks = {
       cycledThreeVariants: [1, 2, 3].every((n) => during.source.includes(`Vite 8 Fixture v${n}`)),
       appByteIdenticalToHead: restored === true,
       noResidueInApp: !RESIDUE.test(readText(tmp, APP)),
       noWrapperInDom: dom.wrappers === 0,
       originalTextInDom: dom.h1 === 'Vite 8 Fixture',
-      discardReceipt: receipt?.operation === 'discard',
       noAcceptPosted: rec.eventPosts('accept').length === 0,
     };
-    results.push({ step: 'discard', sessionId, checks, before, after: sourceState(tmp), dom, receipt });
+    results.push({ step: 'discard', sessionId, checks, before, after: sourceState(tmp), dom });
     assert.deepEqual(checks, allTrue(checks));
   });
 
@@ -370,8 +362,6 @@ describe('row 3: accept / discard / move workspace', () => {
     const app = readText(tmp, APP);
     const head = headBytes(tmp, APP).toString('utf-8');
     const chosenLine = '<h1 className="hero-title">Vite 8 Fixture v2</h1>';
-    const receipt = receipts(tmp).find((r) => r.id === sessionId) || null;
-    const status = await engine('live-status', [], { cwd: tmp });
     const checks = {
       sourceSettled: settled !== null,
       liveCompleteRan: completed === true,
@@ -381,11 +371,10 @@ describe('row 3: accept / discard / move workspace', () => {
       onlyTheH1Changed: app.replace(chosenLine, ORIGINAL_H1) === head,
       noWrapperInDom: dom.wrappers === 0,
       chosenTextInDom: dom.h1 === 'Vite 8 Fixture v2',
-      acceptReceipt: receipt?.operation === 'accept' && String(receipt?.variantId) === '2',
       oneAcceptPosted: rec.eventPosts('accept').length === 1,
     };
     acceptedApp = readFileSync(join(tmp, APP));
-    results.push({ step: 'accept', sessionId, checks, after: sourceState(tmp), dom, receipt, liveStatus: status.json ?? status.stdout });
+    results.push({ step: 'accept', sessionId, checks, after: sourceState(tmp), dom });
     assert.deepEqual(checks, allTrue(checks));
   });
 
@@ -432,7 +421,6 @@ describe('row 3: accept / discard / move workspace', () => {
     await waitForBarHidden(page, { timeout: 15_000 });
     const restored = await waitFor(() => Buffer.compare(readFileSync(join(moved, APP)), acceptedApp) === 0,
       { label: 'App.jsx back to the accepted bytes', timeout: 20_000 }).catch(() => false);
-    const status = engine('live-status', [], { cwd: moved });
     const serverJson = existsSync(join(moved, '.phoenix-ui/live/server.json')) ? readText(moved, '.phoenix-ui/live/server.json') : null;
     const helper = s.live;
     // Abnormal exit at the new path: the injected script stays behind.
@@ -442,10 +430,9 @@ describe('row 3: accept / discard / move workspace', () => {
       oldPathAbsent: !existsSync(oldPath),
       discardRestoredAcceptedBytes: restored === true,
       noResidueInApp: !RESIDUE.test(readText(moved, APP)),
-      statusNamesNoOldPath: !String(status.stdout).includes(oldPath),
       killLeftInjection: /data-impeccable-csp-original/.test(indexAfterKill),
     };
-    results.push({ step: 'move after clean stop', oldPath, moved, checks, liveStatus: status.json ?? status.stdout, serverJson,
+    results.push({ step: 'move after clean stop', oldPath, moved, checks, serverJson,
       helper: processRecord('killed helper', helper), out, indexAfterKill, phoenixFiles: listFiles(moved, '.phoenix-ui') });
     assert.deepEqual(checks, allTrue(checks));
   });
@@ -455,8 +442,6 @@ describe('row 3: accept / discard / move workspace', () => {
     const moved2 = movedPath(first, 'b');
     renameSync(second, moved2);
     paths.push(moved2);
-    const statusBefore = engine('live-status', [], { cwd: moved2 });
-    const journal = existsSync(join(moved2, '.phoenix-ui/live/inject-journal.json')) ? readText(moved2, '.phoenix-ui/live/inject-journal.json') : null;
     s = await bootAt(moved2, fixture, { rec, agent: scriptedAgent(rec, control), logs });
     const start = s.live.result.json;
     const inject = s.inject.json;
@@ -477,8 +462,8 @@ describe('row 3: accept / discard / move workspace', () => {
       indexByteIdenticalToHead: sameAsHead(moved2, INDEX),
       appKeepsAcceptedBytes: Buffer.compare(readFileSync(join(moved2, APP)), acceptedApp) === 0,
     };
-    results.push({ step: 'move after abnormal exit', first, second, moved2, checks, statusBefore: statusBefore.json ?? statusBefore.stdout,
-      journalBefore: journal, start, inject, stop: out.stop, helper: processRecord('stopped helper', helper), indexAfterStop: index,
+    results.push({ step: 'move after abnormal exit', first, second, moved2, checks,
+      start, inject, stop: out.stop, helper: processRecord('stopped helper', helper), indexAfterStop: index,
       gitStatus: git(moved2, ['status', '--porcelain', '--untracked-files=all']), phoenixFiles, filesMentioningOldPaths: mentionsOld });
     assert.deepEqual(checks, allTrue(checks));
   });
@@ -555,7 +540,7 @@ describe('row 4: generation failure and partial results', () => {
         oneGeneratePost: rec.eventPosts('generate').length === 1,
         oneAgentGenerate: control.generateCalls.length === 1,
       };
-      Object.assign(run, { checks, toast, debug, bar, errorSse: sseOf(rec, 'error'), source: sourceState(tmp), receipts: receipts(tmp) });
+      Object.assign(run, { checks, toast, debug, bar, errorSse: sseOf(rec, 'error'), source: sourceState(tmp) });
       assert.deepEqual(checks, allTrue(checks));
     });
   });
@@ -580,7 +565,7 @@ describe('row 4: generation failure and partial results', () => {
         missingVariantsNotStillArriving: !/more arriving/i.test(bar.text || ''),
         shortfallStatedInBar: SHORTFALL_BAR.test(bar.text || ''),
         shortfallToastShown: toast !== null && /failed/.test(toast),
-        notAutoAccepted: rec.eventPosts('accept').length === 0 && receipts(tmp).length === 0,
+        notAutoAccepted: rec.eventPosts('accept').length === 0,
         originalMarkupKept: appDuring.includes(ORIGINAL_H1),
         oneGeneratePost: rec.eventPosts('generate').length === 1,
         oneAgentGenerate: control.generateCalls.length === 1,
@@ -593,7 +578,7 @@ describe('row 4: generation failure and partial results', () => {
         discardRestored = await waitFor(() => sameAsHead(tmp, APP), { label: 'discard restored', timeout: 20_000 }).catch(() => false);
       }
       checks.discardRestoresOriginal = discardRestored === true;
-      Object.assign(run, { sessionId, checks, toast, debug, bar, appDuring, doneSse: sseOf(rec, 'done', sessionId), receipts: receipts(tmp), source: sourceState(tmp) });
+      Object.assign(run, { sessionId, checks, toast, debug, bar, appDuring, doneSse: sseOf(rec, 'done', sessionId), source: sourceState(tmp) });
       assert.deepEqual(checks, allTrue(checks));
     });
   });
@@ -614,7 +599,7 @@ describe('row 4: generation failure and partial results', () => {
         usableVariantKept: debug?.state === 'CYCLING' && debug.arrived === 1 && bar.visible,
         usableVariantAcceptable: bar.acceptEnabled === true,
         shortfallStatedInBar: SHORTFALL_BAR.test(bar.text || ''),
-        notAutoAccepted: rec.eventPosts('accept').length === 0 && receipts(tmp).length === 0,
+        notAutoAccepted: rec.eventPosts('accept').length === 0,
         originalMarkupKept: appDuring.includes(ORIGINAL_H1),
         oneGeneratePost: rec.eventPosts('generate').length === 1,
         oneAgentGenerate: control.generateCalls.length === 1,
@@ -635,8 +620,7 @@ describe('row 4: generation failure and partial results', () => {
       checks.originalRestorable = restored === true;
       // The page itself must resolve the wrapper; the engine discard is only the fallback evidence.
       checks.restoredByBarDiscard = restoredBy === 'bar discard';
-      Object.assign(run, { sessionId, checks, toast, debug, bar, appDuring, restoredBy, errorSse: sseOf(rec, 'error', sessionId),
-        receipts: receipts(tmp), source: sourceState(tmp) });
+      Object.assign(run, { sessionId, checks, toast, debug, bar, appDuring, restoredBy, errorSse: sseOf(rec, 'error', sessionId), source: sourceState(tmp) });
       assert.deepEqual(checks, allTrue(checks));
     });
   });

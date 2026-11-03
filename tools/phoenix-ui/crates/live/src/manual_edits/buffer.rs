@@ -1,7 +1,6 @@
 //! JS: live/manual-edits-buffer.mjs. The pending-manual-edits buffer on disk
 //! (`.phoenix-ui/live/pending-manual-edits.json`).
 
-use crate::json_error::json_parse_error;
 use crate::paths::live_dir;
 use crate::util::{iso_now, jsp, Env};
 use serde_json::{json, Map, Value};
@@ -40,13 +39,11 @@ fn read_internal(cwd: &str, env: &Env, strict: bool) -> Result<Buffer, String> {
             return Ok(Buffer { entries: vec![] });
         }
     };
-    let parsed: Option<Value> = serde_json::from_str(&raw).ok();
-    let parsed = match parsed {
-        Some(v) => v,
-        None => {
+    let parsed: Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(e) => {
             if strict {
-                let msg = json_parse_error(&raw).unwrap_or_else(|| "Unexpected token".to_string());
-                return Err(format!("manual_edit_buffer_unreadable: {}", msg));
+                return Err(format!("manual_edit_buffer_unreadable: {}", e));
             }
             return Ok(Buffer { entries: vec![] });
         }

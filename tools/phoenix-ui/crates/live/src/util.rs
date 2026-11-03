@@ -270,25 +270,10 @@ pub fn inside_or_equal(candidate: &str, root: &str) -> bool {
     rel.is_empty() || (!rel.starts_with("..") && !jsp::is_absolute(&rel))
 }
 
-/// journal.mjs `insideProject`: strictly inside (not equal).
-pub fn inside_project(cwd: &str, abs: &str) -> bool {
-    let rel = jsp::relative("/", cwd, abs);
-    !rel.is_empty() && !rel.starts_with("..") && !jsp::is_absolute(&rel)
-}
-
-/// `path.posix.normalize`
-pub fn posix_normalize(p: &str) -> String {
-    jsp::posix::normalize(p)
-}
-
 pub fn write_file(path: &str, content: &str) -> std::io::Result<()> {
     if let Some(parent) = std::path::Path::new(path).parent() {
         let _ = std::fs::create_dir_all(parent);
     }
-    std::fs::write(path, content)
-}
-
-pub fn write_file_no_mkdir(path: &str, content: &str) -> std::io::Result<()> {
     std::fs::write(path, content)
 }
 

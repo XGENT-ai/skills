@@ -117,31 +117,6 @@ pub struct Browser {
     worker_owner: HashMap<String, String>,
 }
 
-// A timestamp is not a reservation: concurrent calls can observe the same tick.
-// Exclusive mkdir also avoids reusing a stale profile from a previous process.
-fn reserve_profile(parent: &std::path::Path, stamp: u128) -> CdpResult<PathBuf> {
-    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-    for _ in 0..128 {
-        let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let path = parent.join(format!(
-            "impeccable_dev_chrome_profile-{}-{stamp}-{serial}",
-            std::process::id()
-        ));
-        match std::fs::create_dir(&path) {
-            Ok(()) => return Ok(path),
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(e) => {
-                return Err(CdpError::new(format!(
-                    "Failed to create a temporary browser profile: {e}"
-                )));
-            }
-        }
-    }
-    Err(CdpError::new(
-        "Failed to reserve a unique temporary browser profile",
-    ))
-}
-
 impl Browser {
     /// Launch `executable` headless the way puppeteer does and connect to its
     /// DevTools websocket.
@@ -152,11 +127,15 @@ impl Browser {
     ) -> CdpResult<Browser> {
         let mut args = default_chrome_args(user_args, dangerous_no_sandbox);
         args.push("--remote-debugging-port=0".to_string());
-        let stamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0);
-        let user_data_dir = reserve_profile(&std::env::temp_dir(), stamp)?;
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let user_data_dir = std::env::temp_dir().join(format!(
+            "phoenix-ui-chrome-profile-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        std::fs::create_dir_all(&user_data_dir).map_err(|e| {
+            CdpError::new(format!("Failed to create a temporary browser profile: {e}"))
+        })?;
         args.push(format!("--user-data-dir={}", user_data_dir.display()));
 
         let mut child = match Command::new(executable)
@@ -261,8 +240,8 @@ impl Browser {
         })
     }
 
-    /// `browser.close()`: `Browser.close`, wait for exit, remove the temp
-    /// profile.
+    /// `browser.close()`: `Browser.close`, wait for exit; dropping removes
+    /// the temp profile.
     pub fn close(mut self) {
         let _ = self
             .conn
@@ -280,13 +259,6 @@ impl Browser {
                     break;
                 }
             }
-        }
-        for _ in 0..10 {
-            if std::fs::remove_dir_all(&self.user_data_dir).is_ok() || !self.user_data_dir.exists()
-            {
-                break;
-            }
-            std::thread::sleep(Duration::from_millis(100));
         }
     }
 
@@ -341,7 +313,6 @@ impl Browser {
 
 impl Drop for Browser {
     fn drop(&mut self) {
-        // Belt and braces for the error paths that skip `close()`.
         if let Ok(None) = self.child.try_wait() {
             let _ = self.child.kill();
             let _ = self.child.wait();
@@ -616,10 +587,7 @@ pub struct Page<'a> {
 /// the page world or a newly navigated document.
 pub struct IsolatedWorld {
     unique_id: String,
-    context_id: i64,
-    session_id: String,
     frame_id: String,
-    loader_id: String,
 }
 
 /// A raw `Runtime.evaluate` outcome.
@@ -682,7 +650,6 @@ impl<'a> Page<'a> {
             .get(&frame)
             .map(|f| f.loader_id.clone())
             .unwrap_or_default();
-        let revision = capture.revision;
         let pending = capture.pending(urls, &frame, &loader);
         for (index, request_id) in pending {
             let body = self
@@ -697,7 +664,7 @@ impl<'a> Page<'a> {
             .response_capture
             .as_ref()
             .unwrap()
-            .evidence(urls, &frame, &loader, revision))
+            .evidence(urls, &frame, &loader))
     }
 
     /// puppeteer's `CdpPage` + `FrameManager.initialize` for a new target.
@@ -709,8 +676,7 @@ impl<'a> Page<'a> {
         }
         self.send("Page.setLifecycleEventsEnabled", json!({ "enabled": true }))?;
         // URL mode injects only the snapshot producer (plain JS) and runs the
-        // rules natively in this process over `SnapshotDom` (triage D2; see
-        // WASM-BUNDLE.md in the detector repo): no WebAssembly is compiled next
+        // rules natively in this process over `SnapshotDom`: no WebAssembly is compiled next
         // to the page, so the page's Content-Security-Policy no longer gates
         // the scan and `Page.setBypassCSP` is not needed. Leaving CSP enforced keeps the
         // scan passive — a strict-CSP page's blocked inline scripts stay
@@ -1199,21 +1165,15 @@ impl<'a> Page<'a> {
             .ok_or_else(|| CdpError::new("isolated context identity unavailable"))?;
         let world = IsolatedWorld {
             unique_id,
-            context_id: id,
-            session_id: self.session_id.clone(),
             frame_id,
-            loader_id,
         };
-        self.validate_world(&world)?;
         Ok(world)
     }
 
     /// Inspect native DOM coverage, including authored closed shadow roots that
     /// page-world selectors cannot see. This never treats hidden trees as absent.
-    pub fn capture_dom_coverage(&mut self, world: &IsolatedWorld) -> CdpResult<Value> {
-        self.validate_world(world)?;
+    pub fn capture_dom_coverage(&mut self) -> CdpResult<Value> {
         let tree = self.send("DOM.getDocument", json!({"depth":-1,"pierce":true}))?;
-        self.validate_world(world)?;
         let root = tree
             .get("root")
             .ok_or_else(|| CdpError::new("native DOM coverage unavailable"))?;
@@ -1244,26 +1204,27 @@ impl<'a> Page<'a> {
 
     /// Inspector-owned stylesheet; never a page-authored style element.
     pub fn create_capture_stylesheet(&mut self, world: &IsolatedWorld) -> CdpResult<String> {
-        self.validate_world(world)?;
         self.send("DOM.enable", json!({}))?;
         self.send("CSS.enable", json!({}))?;
         let value = self.send("CSS.createStyleSheet", json!({"frameId":world.frame_id}))?;
-        self.validate_world(world)?;
         value["styleSheetId"].as_str().map(str::to_owned)
             .ok_or_else(|| CdpError::new("capture stylesheet unavailable"))
     }
 
-    pub fn set_capture_stylesheet(&mut self, world: &IsolatedWorld, sheet: &str, text: &str) -> CdpResult<()> {
-        self.validate_world(world)?;
-        if text.len() > 65536 { return Err(CdpError::new("capture stylesheet exceeds bound")); }
-        self.send("CSS.setStyleSheetText", json!({"styleSheetId":sheet,"text":text}))?;
-        self.validate_world(world)
+    pub fn set_capture_stylesheet(&mut self, sheet: &str, text: &str) -> CdpResult<()> {
+        if text.len() > 65536 {
+            return Err(CdpError::new("capture stylesheet exceeds bound"));
+        }
+        self.send(
+            "CSS.setStyleSheetText",
+            json!({"styleSheetId":sheet,"text":text}),
+        )?;
+        Ok(())
     }
 
     /// Main-document generated boxes from native layout, indexed in querySelectorAll order.
     /// Do not infer pseudo geometry from its owner's rectangle.
     pub fn capture_pseudo_geometry(&mut self, world: &IsolatedWorld, retained: &[Value]) -> CdpResult<Value> {
-        self.validate_world(world)?;
         // Text-only generated boxes need no image geometry. Query candidates in
         // the isolated world before the bounded native layout lookup.
         let candidates = self.evaluate_value_in_world(world,
@@ -1312,26 +1273,7 @@ impl<'a> Page<'a> {
                 }
             }
         }
-        self.validate_world(world)?;
         Ok(json!(pseudos))
-    }
-
-    fn validate_world(&mut self, world: &IsolatedWorld) -> CdpResult<()> {
-        self.pump_events();
-        if self.session_id != world.session_id
-            || self.main_frame_id != world.frame_id
-            || self
-                .frames
-                .get(&world.frame_id)
-                .map(|f| f.loader_id.as_str())
-                != Some(world.loader_id.as_str())
-            || self.execution_contexts.get(&world.context_id) != Some(&world.unique_id)
-        {
-            return Err(CdpError::new(
-                "isolated capture context was destroyed or document changed",
-            ));
-        }
-        Ok(())
     }
 
     pub fn evaluate_value_in_world(
@@ -1339,9 +1281,7 @@ impl<'a> Page<'a> {
         world: &IsolatedWorld,
         expression: &str,
     ) -> CdpResult<Value> {
-        self.validate_world(world)?;
         let result = self.evaluate_with_context(expression, Some(&world.unique_id))?;
-        self.validate_world(world)?;
         match result {
             EvalOutcome::Value(v) => Ok(v),
             EvalOutcome::Exception(message) => Err(CdpError::new(message)),
@@ -1603,29 +1543,6 @@ mod tests {
                 "description": "SyntaxError: Unexpected token '}'", "objectId": "2" }
         });
         assert_eq!(client_error_message(&syntax), "Unexpected token '}'");
-    }
-
-    #[test]
-    fn concurrent_launches_with_identical_clock_ticks_reserve_distinct_profiles() {
-        let profiles = std::thread::scope(|scope| {
-            let handles: Vec<_> = (0..32)
-                .map(|_| scope.spawn(|| reserve_profile(&std::env::temp_dir(), 7).unwrap()))
-                .collect();
-            handles
-                .into_iter()
-                .map(|h| h.join().unwrap())
-                .collect::<Vec<_>>()
-        });
-        assert_eq!(
-            profiles
-                .iter()
-                .collect::<std::collections::HashSet<_>>()
-                .len(),
-            32
-        );
-        for path in profiles {
-            std::fs::remove_dir(path).unwrap();
-        }
     }
 
     #[test]

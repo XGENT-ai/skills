@@ -121,10 +121,6 @@ impl Provider {
     pub fn reference_path(&self, name: &str) -> Option<String> {
         self.skill_dir.as_ref().map(|d| jsp::join(&[d, "reference", &format!("{}.md", name)]))
     }
-    /// `<skill>/SKILL.md`
-    pub fn skill_md_path(&self) -> Option<String> {
-        self.skill_dir.as_ref().map(|d| jsp::join(&[d, "SKILL.md"]))
-    }
     /// The command a directive should print for a sibling verb, in place of
     /// `node <scripts>/<verb>.mjs`.
     pub fn verb_cmd(&self, verb: &str) -> String {

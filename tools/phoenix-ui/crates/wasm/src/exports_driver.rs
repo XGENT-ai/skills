@@ -1,5 +1,4 @@
-//! wasm exports over `impeccable_core::browser::driver` (see
-//! docs/WASM-BUNDLE.md for the contract).
+//! wasm exports over `impeccable_core::browser::driver`.
 
 use crate::dom_source::with_dom;
 use impeccable_core::browser::driver;

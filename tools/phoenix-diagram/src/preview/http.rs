@@ -33,7 +33,6 @@ impl Reply {
             403 => "Forbidden",
             404 => "Not Found",
             405 => "Method Not Allowed",
-            409 => "Conflict",
             408 => "Request Timeout",
             431 => "Request Header Fields Too Large",
             _ => "Service Unavailable",
@@ -65,7 +64,6 @@ impl Reply {
                         403 => "Forbidden",
                         404 => "Not found",
                         405 => "Only GET and HEAD are supported",
-                        409 => "The public output no longer belongs to this preview",
                         408 => "Request timed out",
                         431 => "Request headers exceed 8 KiB",
                         _ => "Bad request",
@@ -133,12 +131,7 @@ impl Server {
     pub fn port(&self) -> u16 {
         self.address.port()
     }
-    pub fn poll(
-        &mut self,
-        status: &[u8],
-        artifact: Option<&Arc<[u8]>>,
-        conflict: bool,
-    ) -> PreviewResult<()> {
+    pub fn poll(&mut self, status: &[u8], artifact: Option<&Arc<[u8]>>) -> PreviewResult<()> {
         if let Some(listener) = &self.listener {
             for _ in 0..MAX_CONNECTIONS {
                 match listener.accept() {
@@ -209,7 +202,6 @@ impl Server {
                                     &self.shell,
                                     status,
                                     artifact,
-                                    conflict,
                                 ));
                                 break;
                             }
@@ -270,7 +262,6 @@ fn route(
     shell: &Arc<[u8]>,
     status: &[u8],
     artifact: Option<&Arc<[u8]>>,
-    conflict: bool,
 ) -> Reply {
     let Ok(header) = std::str::from_utf8(raw) else {
         return Reply::error(400, raw.starts_with(b"HEAD "));
@@ -349,7 +340,7 @@ fn route(
                 true,
                 false,
             ),
-            None => Reply::error(if conflict { 409 } else { 404 }, head_only),
+            None => Reply::error(404, head_only),
         };
     }
     Reply::error(404, head_only)
@@ -373,7 +364,6 @@ mod tests {
                 &shell,
                 b"{}",
                 Some(&artifact),
-                false,
             )
         };
         assert!(response(&request("GET /secret/artifact HTTP/1.1", ""))

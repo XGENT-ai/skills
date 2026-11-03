@@ -4,7 +4,7 @@
   "exit": 0,
   "signal": null,
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"src/app.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"src/app.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
     "src/app.html": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>SvelteKit Fixture</title>\n    %sveltekit.head%\n  </head>\n  <body data-sveltekit-preload-data=\"hover\">\n    <div style=\"display: contents\">%sveltekit.body%</div>\n  </body>\n</html>\n",
     "src/routes/+page.svelte": "<!-- impeccable-variants-start ab12cd34 -->\n<div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"3\" style=\"display: contents\">\n  <!-- Original -->\n  <div data-impeccable-variant=\"original\">\n    <main class=\"page\">\n      <script>let x = 1;</script>\n      <h1>Hi</h1>\n    </main>\n  </div>\n  <!-- Variants: insert below this line -->\n</div>\n<!-- impeccable-variants-end ab12cd34 -->\n"
   }

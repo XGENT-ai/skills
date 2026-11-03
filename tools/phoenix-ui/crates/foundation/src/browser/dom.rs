@@ -306,14 +306,7 @@ pub fn direct_text(dom: &dyn Dom, el: ElId) -> String {
 pub fn has_direct_text_longer_than(dom: &dyn Dom, el: ElId, min: usize) -> bool {
     dom.direct_text_nodes(el)
         .iter()
-        .any(|t| crate::js_ext_b::utf16_len(crate::js::trim(t)) > min)
-}
-
-/// `getComputedStyle(el).x || ''` — the trait already returns "" for
-/// null/undefined, so this is just [`Dom::style`]; kept for readability at
-/// call sites that mirror `style.x || ''`.
-pub fn style_or_empty(dom: &dyn Dom, el: ElId, prop: &str) -> String {
-    dom.style(el, prop)
+        .any(|t| crate::js_ext_a::utf16_len(crate::js::trim(t)) > min)
 }
 
 /// JS `parseFloat(style.x) || 0`.

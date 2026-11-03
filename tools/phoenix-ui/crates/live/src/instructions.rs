@@ -101,24 +101,10 @@ pub fn instructions_for_event(event: &Map<String, Value>, self_cmd: &str) -> Opt
             ))
         }
         "accept" => Some(accept_instructions(event, self_cmd)),
-        "discard" => {
-            let ack_ok = event
-                .get("_completionAck")
-                .and_then(|a| a.get("ok"))
-                == Some(&Value::Bool(true));
-            Some(if ack_ok {
-                "Original restored and durable completion acknowledged; nothing to do. Poll again.".to_string()
-            } else {
-                format!(
-                    "Completion was not acknowledged: run {} --id {} --discarded, then poll again.",
-                    script_cmd(self_cmd, "live-complete"),
-                    id
-                )
-            })
-        }
+        "discard" => Some("Original restored; nothing to do. Poll again.".to_string()),
         "manual_edit_apply" => {
             let repair = if truthy(event.get("repair")) {
-                "A `repair` payload is present: the previous Apply changed source but validation failed; fix the CURRENT source, never roll back yourself. "
+                "A `repair` payload is present: the previous Apply wrote source but the staged copy did not verify there; fix the CURRENT source, do not revert files. "
             } else {
                 ""
             };
@@ -331,77 +317,31 @@ fn accept_instructions(event: &Map<String, Value>, self_cmd: &str) -> String {
         Some(v) if truthy(Some(v)) => v,
         _ => &empty,
     };
-    let ack_ok = event.get("_completionAck").and_then(|a| a.get("ok")) == Some(&Value::Bool(true));
-    let prefix = if ack_ok {
-        String::new()
-    } else {
-        format!(
-            "Completion was NOT acknowledged: run {}, finish any cleanup, then {} --id {}. ",
-            script_cmd(self_cmd, "live-status"),
-            script_cmd(self_cmd, "live-complete"),
-            id
-        )
-    };
     let handled = result.get("handled") == Some(&Value::Bool(true));
     if handled && result.get("carbonize") == Some(&Value::Bool(true)) {
         return format!(
-            "{}Carbonize cleanup is REQUIRED now, before the next poll, in {}: (1) locate the impeccable-carbonize-start/end block and read the impeccable-param-values comment; (2) move the CSS rules into the stylesheet that owns this area; (3) bake params while rewriting selectors (@scope wrappers to semantic classes, keep only the chosen data-p branch, substitute range literals); (4) unwrap the accepted content and drop every data-impeccable-* / data-p-* attribute; (5) delete the inline <style>, the param-values comment, and both markers plus dead @scope rules. Then run {} --id {} and verify phase \"completed\"; it refuses with source_dirty while leftovers remain. Poll again only after that.",
-            prefix,
+            "Carbonize cleanup is REQUIRED now, before the next poll, in {}: (1) locate the impeccable-carbonize-start/end block and read the impeccable-param-values comment; (2) move the CSS rules into the stylesheet that owns this area; (3) bake params while rewriting selectors (@scope wrappers to semantic classes, keep only the chosen data-p branch, substitute range literals); (4) unwrap the accepted content and drop every data-impeccable-* / data-p-* attribute; (5) delete the inline <style>, the param-values comment, and both markers plus dead @scope rules. Then run {} --id {} and verify phase \"completed\"; it refuses with source_dirty while leftovers remain. Poll again only after that.",
             js_str(result.get("file")),
             script_cmd(self_cmd, "live-complete"),
             id
         );
     }
-    if handled && result.get("baked") == Some(&Value::Bool(true)) {
-        let css_file = match result.get("css").and_then(|c| c.get("file")) {
-            Some(v) if truthy(Some(v)) => format!("appended to {}", js_str(Some(v))),
-            _ => "kept in the page's own <style> block".to_string(),
-        };
-        return format!(
-            "{}Variant {} is baked into {}: its CSS was {} with real selectors and the wrapper is gone; the session is complete and there is nothing to clean up (no live-complete needed). Generate lane: stop the helper now with {} stop. Otherwise poll again.",
-            prefix,
-            js_str(result.get("variant")),
-            js_str(result.get("file")),
-            css_file,
-            script_cmd(self_cmd, "live-server")
-        );
-    }
     if handled {
-        return format!(
-            "{}Accept was merged into source mechanically; nothing to clean up. Poll again.",
-            prefix
-        );
+        return "Accept was merged into source mechanically; nothing to clean up. Poll again."
+            .to_string();
     }
     let mode = result.get("mode").and_then(|m| m.as_str());
     if mode == Some("fallback") {
-        return format!("{}The session lived in a generated file, so accept refused to persist there. Write the accepted variant into the true source you identified during Handle fallback, remove the temporary wrapper from the served file, then poll again.", prefix);
+        return "The session lived in a generated file, so accept refused to persist there. Write the accepted variant into the true source you identified during Handle fallback, remove the temporary wrapper from the served file, then poll again.".to_string();
     }
     if mode == Some("error") {
-        let err = result.get("error").and_then(|e| e.as_str());
-        if err == Some("source_locked") {
-            return format!("{}The source file is briefly locked by a publisher. Re-run the exact same live-accept command (idempotent); do NOT hand-edit the file, and do not poll past this.", prefix);
-        }
-        if err == Some("accept_receipt_conflict") {
-            let prior = match result.get("priorOperation") {
-                Some(v) if truthy(Some(v)) => js_str(Some(v)),
-                _ => "a prior operation".to_string(),
-            };
-            return format!(
-                "{}This session already resolved as {}; do not edit anything. Run {} and tell the user what the session resolved to.",
-                prefix,
-                prior,
-                script_cmd(self_cmd, "live-status")
-            );
-        }
         let e = match result.get("error") {
             Some(v) if truthy(Some(v)) => js_str(Some(v)),
             _ => "unknown error".to_string(),
         };
         return format!(
-            "{}Accept failed: {}. Source was not touched; do not hand-edit. Run {} before continuing.",
-            prefix,
-            e,
-            script_cmd(self_cmd, "live-status")
+            "Accept failed: {}. Source was not touched; do not hand-edit. Tell the user why, then poll again.",
+            e
         );
     }
     let file = match result.get("file") {
@@ -409,8 +349,8 @@ fn accept_instructions(event: &Map<String, Value>, self_cmd: &str) -> String {
         _ => "the session source file".to_string(),
     };
     format!(
-        "{}No mechanical accept result; read {}, find the impeccable markers, and finish the merge by hand. Poll again after.",
-        prefix, file
+        "No mechanical accept result; read {}, find the impeccable markers, and finish the merge by hand. Poll again after.",
+        file
     )
 }
 

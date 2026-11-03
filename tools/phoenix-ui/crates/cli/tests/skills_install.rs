@@ -1,5 +1,5 @@
 //! `phoenix-ui skills install|update` is the compatibility spelling of the
-//! top-level verbs; its project branch must overwrite without transaction state.
+//! top-level verbs; its project branch overwrites the tool files.
 use serde_json::Value;
 use std::{
     collections::BTreeMap,
@@ -83,7 +83,7 @@ fn tree(root: &Path) -> BTreeMap<PathBuf, Vec<u8>> {
 }
 
 #[test]
-fn skills_namespace_project_install_and_update_overwrite_without_transactions() {
+fn skills_namespace_project_install_and_update_overwrite_tool_files() {
     let sandbox = Sandbox::new();
     let project = sandbox.project();
     let bundle = bundle();
@@ -93,7 +93,6 @@ fn skills_namespace_project_install_and_update_overwrite_without_transactions() 
             verb,
             "--project",
             "--providers=claude",
-            "--yes",
             "--bundle-root",
             &bundle,
             "--json",
@@ -124,7 +123,6 @@ fn skills_namespace_project_install_and_update_overwrite_without_transactions() 
         (0, Some("installed")),
         "{installed}"
     );
-    assert!(installed["transactionId"].is_null());
     assert!(!project.join(".phoenix-ui/install").exists());
     assert!(!project.join(".phoenix-ui/migrations").exists());
     let (code, again) = sandbox.run(&args("update", false));

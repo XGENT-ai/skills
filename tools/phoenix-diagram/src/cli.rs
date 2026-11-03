@@ -1,12 +1,10 @@
 use phoenix_diagram::{
     browser::{self, BrowserOptions},
-    check::FileIdentity,
     compare,
     delivery::{self, CompileRequest, EngineIdentity},
     diagnostic::Diagnostic,
     input::{CompileOptions, DiagramType, InputContract, Quality},
     install::{self, InstallRequest},
-    output,
     preview::{self, PreviewRequest},
     render::EmbeddedAssets,
 };
@@ -20,8 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\nmigrate --from-archify --project DIR --bundle-root DIR [--providers claude,codex] [--confirm-remove-archify] [--dry-run] --json\nmigrate --recover ID --project DIR --json\nmigrate --rollback ID --project DIR [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> [--strict-provenance] --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\nrecover-output <private-recovery-directory> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\nrecover-compare <private-recovery-directory> --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
-const RECOVERY_HELP: &str = "recover-output <private-recovery-directory> --json\n\nAfter an interrupted publication, locate its durable record in the original output parent:\n  ls -la \"<original output parent>\"\nRead .phoenix-diagram-recovery-<id>/publication-recovery-v1.json and identify its target.\nCleanup can retain the same record at .phoenix-diagram-recovery-<id>.cleanup.json or .phoenix-diagram-output-cleanup/<id>.json.\nAlways pass the original .phoenix-diagram-recovery-<id> directory, even if it is now absent.\nThe fixed cleanup directory retains its bound owner-v1.json. Unknown entries or ambiguous records are preserved and rejected.\nMultiple records require an explicit choice. The command preserves later claimants and changed bindings.\nRecovery restores file bytes; delivery checks and image review remain separate.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 
 struct Arguments {
     positional: Vec<OsString>,
@@ -54,15 +51,7 @@ impl Arguments {
                     .split_once('=')
                     .map_or((raw, None), |(k, v)| (k, Some(OsString::from(v))));
                 let value = match key {
-                    "json"
-                    | "help"
-                    | "version"
-                    | "strict-provenance"
-                    | "layout-json"
-                    | "dry-run"
-                    | "open"
-                    | "from-archify"
-                    | "confirm-remove-archify" => {
+                    "json" | "help" | "version" | "layout-json" | "dry-run" | "open" => {
                         if inline.is_some() {
                             return Err(format!("--{key} has no value"));
                         }
@@ -70,7 +59,7 @@ impl Arguments {
                     }
                     "quality" | "input-contract" | "out-dir" | "record" | "project"
                     | "bundle-root" | "providers" | "repo-root" | "brand-cache" | "receipt"
-                    | "base-contract" | "head-contract" | "port" | "recover" | "rollback" => Some(
+                    | "base-contract" | "head-contract" | "port" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -137,17 +126,6 @@ fn encoded<T: Serialize>(value: &T, exit: u8) -> (Value, u8) {
     serde_json::to_value(value)
         .map(|v| (v, exit))
         .unwrap_or_else(|e| error("output", "output/json", e.to_string(), 4))
-}
-fn engine() -> Result<EngineIdentity, String> {
-    let path = std::env::current_exe().map_err(|e| e.to_string())?;
-    let binding = output::FileBinding::capture(&path).map_err(|e| e.message)?;
-    Ok(EngineIdentity {
-        source_input_sha256: env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256").into(),
-        input_contract_schema: phoenix_diagram::INPUT_CONTRACT_SCHEMA,
-        receipt_schema: phoenix_diagram::RECEIPT_SCHEMA,
-        viewer_revision: phoenix_diagram::VIEWER_REVISION.into(),
-        binary: FileIdentity::of(binding.bytes()),
-    })
 }
 fn browser_options(args: &Arguments, capture: bool) -> BrowserOptions {
     BrowserOptions {
@@ -276,7 +254,7 @@ fn guide(scenario: &str) -> Value {
     json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"guide","status":"pass","diagnostics":[],"scenario":scenario,"resourceRoot":std::env::var_os("PHOENIX_DIAGRAM_BUNDLE_ROOT").map(PathBuf::from),"relativeTo":"phoenix-diagram skill root","matches":matches.iter().map(|kind|json!({"type":kind,"schema":format!("schemas/{}.schema.json",kind.as_str()),"commonSchema":"schemas/common.schema.json","example":format!("examples/minimal.{}.json",kind.as_str())})).collect::<Vec<_>>()})
 }
 
-fn preview_command(args: &Arguments, engine: &EngineIdentity) -> Result<u8, String> {
+fn preview_command(args: &Arguments) -> Result<u8, String> {
     args.allow(&[
         "quality",
         "input-contract",
@@ -314,7 +292,6 @@ fn preview_command(args: &Arguments, engine: &EngineIdentity) -> Result<u8, Stri
             kind,
             candidate: Path::new(&args.positional[2]),
             options: &options,
-            engine,
             assets: &assets,
             repo_root,
             brand_cache: args.value("brand-cache").map(Path::new),
@@ -332,87 +309,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         .and_then(|v| v.to_str())
         .ok_or("A command is required")?;
     let positional = &args.positional[1..];
-    if command == "migrate" {
-        args.allow(&[
-            "from-archify",
-            "recover",
-            "rollback",
-            "project",
-            "bundle-root",
-            "providers",
-            "confirm-remove-archify",
-            "dry-run",
-        ])?;
-        if !positional.is_empty()
-            || [
-                args.has("from-archify"),
-                args.has("recover"),
-                args.has("rollback"),
-            ]
-            .iter()
-            .filter(|v| **v)
-            .count()
-                != 1
-        {
-            return Err(
-                "migrate requires exactly one of --from-archify, --recover ID, --rollback ID"
-                    .into(),
-            );
-        }
-        let mode = if args.has("from-archify") {
-            install::MigrationMode::FromArchify
-        } else if args.has("recover") {
-            install::MigrationMode::Recover
-        } else {
-            install::MigrationMode::Rollback
-        };
-        if mode != install::MigrationMode::FromArchify
-            && (args.has("bundle-root")
-                || args.has("providers")
-                || args.has("confirm-remove-archify")
-                || (mode == install::MigrationMode::Recover && args.has("dry-run")))
-        {
-            return Err(
-                "recover/rollback only accept --project, --json and rollback --dry-run".into(),
-            );
-        }
-        let request = install::MigrationRequest {
-            mode,
-            project: args
-                .value("project")
-                .ok_or("migrate requires --project DIR")?
-                .into(),
-            providers: args
-                .value("providers")
-                .map(|v| {
-                    v.to_str()
-                        .ok_or("Provider names must be UTF-8")
-                        .map(|v| v.split(',').map(str::to_owned).collect::<Vec<_>>())
-                })
-                .transpose()?,
-            bundle_root: args.value("bundle-root").map(PathBuf::from),
-            transaction_id: args
-                .value("recover")
-                .or_else(|| args.value("rollback"))
-                .map(|v| {
-                    v.to_str()
-                        .ok_or("Transaction ID must be UTF-8")
-                        .map(str::to_owned)
-                })
-                .transpose()?,
-            dry_run: args.has("dry-run"),
-            confirm_remove_archify: args.has("confirm-remove-archify"),
-        };
-        return Ok(match install::migrate(&request) {
-            Ok(receipt) => encoded(&receipt, receipt.exit_code()),
-            Err(failure) => error(
-                "migrate",
-                &failure.code,
-                &failure.message,
-                failure.exit_code(),
-            ),
-        });
-    }
     if command == "install" {
         args.allow(&["project", "bundle-root", "providers", "dry-run"])?;
         if !positional.is_empty() {
@@ -438,7 +334,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             .transpose()?;
         let request = InstallRequest {
             project: project.into(),
-            version_manifest: bundle_root.join("ENGINE.json"),
             bundle_root,
             engine: std::env::current_exe().map_err(|e| e.to_string())?,
             providers,
@@ -449,7 +344,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             } else {
                 install::apply_install(&request)
             } {
-                Ok(receipt) => encoded(&receipt, receipt.exit_code()),
+                Ok(receipt) => encoded(&receipt, 0),
                 Err(failure) => error(
                     "install",
                     &failure.code,
@@ -466,37 +361,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         }
         return Ok((guide(&positional[0].to_string_lossy()), 0));
     }
-    if command == "recover-output" {
-        args.allow(&[])?;
-        if positional.len() != 1 {
-            return Err("recover-output requires one private directory".into());
-        }
-        let receipt = output::recover_publication(Path::new(&positional[0]));
-        let code = receipt.exit_code();
-        let diagnostics = if code == 0 {
-            vec![]
-        } else {
-            let mut d = Diagnostic::error(None, &receipt.code, "", &receipt.message);
-            d.stage = "recover-output".into();
-            d.evidence = json!({"publicState":receipt.public_state,"preserved":receipt.preserved});
-            vec![d]
-        };
-        return Ok((
-            json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"recover-output","status":if code==0 {"pass"} else {"failed"},"recoveryStatus":receipt.status,"recoveryDirectory":receipt.recovery_directory,"target":receipt.target,"publicState":receipt.public_state,"preserved":receipt.preserved,"diagnostics":diagnostics}),
-            code,
-        ));
-    }
-    if command == "recover-compare" {
-        args.allow(&[])?;
-        if positional.len() != 1 {
-            return Err("recover-compare requires one private recovery directory".into());
-        }
-        let receipt = compare::transaction::recover(Path::new(&positional[0]));
-        let (mut value, exit) = encoded(&receipt, receipt.exit_code());
-        value["recoveryStatus"] = value["status"].take();
-        value["status"] = json!(if exit == 0 { "pass" } else { "failed" });
-        return Ok((value, exit));
-    }
     if !matches!(
         command,
         "doctor"
@@ -512,10 +376,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     ) {
         return Err(format!("Unknown command {command}"));
     }
-    let engine = match engine() {
-        Ok(e) => e,
-        Err(e) => return Ok(error(command, "engine/current-binary", e, 4)),
-    };
+    let engine = EngineIdentity::current();
     if command == "doctor" {
         args.allow(&[])?;
         if !positional.is_empty() {
@@ -524,10 +385,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         let browser = browser::doctor_browser();
         let ready = browser["status"] == "available";
         let recovery = std::env::var("PHOENIX_DIAGRAM_SETUP_COMMAND").unwrap_or_else(|_| {
-            format!(
-                "Use the matching local @xgent-ai/skills@{} package bootstrap: phoenix-diagram engine install --project . --release-dir MATCHING_RELEASE_DIR",
-                env!("PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION")
-            )
+            "Use the matching local @xgent-ai/skills package bootstrap: phoenix-diagram engine install --project . --release-dir MATCHING_RELEASE_DIR".into()
         });
         return Ok((
             json!({"schemaVersion":1,"tool":"phoenix-diagram","toolVersion":phoenix_diagram::TOOL_VERSION,"command":"doctor","status":if ready {"pass"} else {"failed"},"ready":ready,"engine":engine,"platform":{"os":std::env::consts::OS,"architecture":std::env::consts::ARCH},"resources":{"status":"available","readerBytes":EmbeddedAssets::builtin().template.len()},"browser":browser,"supportedTypes":DiagramType::ALL,"diagnostics":[],"recovery":{"engineInstall":recovery}}),
@@ -603,7 +461,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
                 kind: DiagramType::Architecture,
                 candidate: Path::new(&positional[1]),
                 options: &base_options,
-                engine: &engine,
                 assets: &assets,
                 repo_root,
                 brand_cache,
@@ -612,7 +469,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
                 kind: DiagramType::Architecture,
                 candidate: Path::new(&positional[2]),
                 options: &head_options,
-                engine: &engine,
                 assets: &assets,
                 repo_root,
                 brand_cache,
@@ -664,7 +520,6 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             kind,
             candidate: Path::new(&positional[1]),
             options: &options,
-            engine: &engine,
             assets: &assets,
             repo_root,
             brand_cache: args.value("brand-cache").map(Path::new),
@@ -701,15 +556,14 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     if compare::is_comparison(output) {
         return Ok(match command {
             "check" => {
-                args.allow(&["strict-provenance"])?;
-                let receipt = compare::check(output, args.has("strict-provenance"), &engine);
+                args.allow(&[])?;
+                let receipt = compare::check(output);
                 encoded(&receipt, receipt.exit_code())
             }
             "browser-check" | "visual-check" => {
                 args.allow(&["out-dir"])?;
                 compare::browser_check(
                     output,
-                    &engine,
                     &browser_options(args, command == "visual-check"),
                     command == "visual-check",
                 )
@@ -719,7 +573,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
                 let record = args
                     .value("record")
                     .ok_or("review-record requires --record PATH")?;
-                let receipt = compare::record_review(output, Path::new(record), &engine);
+                let receipt = compare::record_review(output, Path::new(record));
                 encoded(&receipt, receipt.exit_code())
             }
             _ => return Err(format!("{command} does not accept a comparison artifact")),
@@ -727,8 +581,8 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     }
     Ok(match command {
         "check" => {
-            args.allow(&["strict-provenance"])?;
-            let receipt = delivery::check(output, args.has("strict-provenance"), &engine);
+            args.allow(&[])?;
+            let receipt = delivery::check(output);
             encoded(&receipt, receipt.exit_code())
         }
         "review-record" => {
@@ -736,16 +590,14 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             let record = args
                 .value("record")
                 .ok_or("review-record requires --record FILE")?;
-            let receipt = delivery::record_review(output, Path::new(record), &engine);
+            let receipt = delivery::record_review(output, Path::new(record));
             encoded(&receipt, receipt.exit_code())
         }
         _ => {
             args.allow(&["out-dir"])?;
             let visual = command == "visual-check";
-            match delivery::browser_check(output, &engine, &browser_options(args, visual), visual) {
-                Ok(receipt) => encoded(&receipt, receipt.exit_code()),
-                Err(receipt) => encoded(&receipt, receipt.exit_code()),
-            }
+            let receipt = delivery::browser_check(output, &browser_options(args, visual), visual);
+            encoded(&receipt, receipt.exit_code())
         }
     })
 }
@@ -770,14 +622,7 @@ pub fn run(raw: Vec<OsString>) -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if args.has("help") || args.positional.is_empty() {
-        println!(
-            "{}",
-            if command == "recover-output" {
-                RECOVERY_HELP
-            } else {
-                HELP
-            }
-        );
+        println!("{HELP}");
         return ExitCode::SUCCESS;
     }
     if command == "engine-probe" {
@@ -798,23 +643,8 @@ pub fn run(raw: Vec<OsString>) -> ExitCode {
         );
         return ExitCode::SUCCESS;
     }
-    if matches!(command, "preview" | "__preview-worker") {
-        let current = match engine() {
-            Ok(engine) => engine,
-            Err(message) => return print(error(command, "engine/identity", message, 4)),
-        };
-        if command == "__preview-worker" {
-            if args.positional.len() != 1 || !args.options.is_empty() {
-                return print(error(
-                    command,
-                    "arguments/invalid",
-                    "Private worker takes only its stdin envelope",
-                    2,
-                ));
-            }
-            return ExitCode::from(preview::worker::serve(&current));
-        }
-        return match preview_command(&args, &current) {
+    if command == "preview" {
+        return match preview_command(&args) {
             Ok(exit) => ExitCode::from(exit),
             Err(message) => print(error(command, "arguments/invalid", message, 2)),
         };

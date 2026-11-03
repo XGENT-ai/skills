@@ -24,7 +24,6 @@ use crate::page::{
     check_cream_palette, check_page_layout, check_repeated_container_text_from_doc,
     check_static_page_typography,
 };
-use crate::profile::{self, Meta, ProfileSink};
 use crate::quality::{check_element_quality, check_page_quality_from_doc, pf0};
 use impeccable_core::checks::html_patterns::{check_html_patterns, HtmlPatternCorpora};
 use impeccable_core::checks::rules::RuleHit;
@@ -50,21 +49,6 @@ pub trait DesignSystemHook {
 /// engine: em-dash overuse, marketing buzzwords, aphoristic cadence.
 pub type TextContentAnalyzers<'a> = &'a dyn Fn(&str, &str) -> Vec<Finding>;
 
-/// The static engine's half of a rule pack (`impeccable_core::rule_pack`):
-/// rules written against the parsed page. The [`StaticDocument`] model is
-/// this crate's, so this hook cannot live on the engine-wide `RulePack`
-/// trait; a pack implements both and hands the same value to both fields of
-/// [`DetectHtmlOptions`].
-///
-/// Findings come back as full [`Finding`] values, built with
-/// `impeccable_core::findings::finding_for(row, file_path, snippet, line)` so
-/// they carry the pack's own registry metadata.
-pub trait StaticRulePack: Send + Sync + std::fmt::Debug {
-    /// Runs once per HTML file, after every built-in pass and before inline
-    /// ignores.
-    fn check_document(&self, doc: &StaticDocument, file_path: &str) -> Vec<Finding>;
-}
-
 /// The `options` object `detectHtml` reads.
 #[derive(Default, Clone, Copy)]
 pub struct DetectHtmlOptions<'a> {
@@ -75,18 +59,10 @@ pub struct DetectHtmlOptions<'a> {
     pub design_system: Option<&'a dyn DesignSystemHook>,
     /// The regex engine's text-content analyzers; `None` skips them.
     pub text_content_analyzers: Option<TextContentAnalyzers<'a>>,
-    /// JS `options.profile`.
-    pub profile: Option<&'a dyn ProfileSink>,
     /// Sink for the JS `process.stderr.write` notices (unreadable linked
     /// stylesheets); `None` drops them.
     pub warn: Option<&'a dyn Fn(&str)>,
-    /// A rule pack's static-document hook: rules over the parsed page.
-    pub static_rule_pack: Option<&'static dyn StaticRulePack>,
-    /// The same pack's engine-wide text hook. An HTML file gets **one** pack
-    /// pass: `static_rule_pack` when it is set, otherwise this one over the
-    /// raw HTML source (which is how a text-only pack still covers `.html`
-    /// files, the way the built-in text-content analyzers do). A pack that
-    /// implements both therefore never reports twice for the same file.
+    /// The rule pack's text hook, run over the raw HTML source.
     pub rule_pack: Option<&'static dyn impeccable_core::rule_pack::RulePack>,
 }
 
@@ -162,12 +138,7 @@ pub fn detect_html(
     file_path: &Path,
     options: &DetectHtmlOptions<'_>,
 ) -> Result<Vec<Finding>, HtmlEngineError> {
-    let file_str = file_path.to_string_lossy().into_owned();
-    let html = profile::step(
-        options.profile,
-        Meta::new("setup", "read-html", &file_str),
-        || read_source(file_path),
-    )?;
+    let html = read_source(file_path)?;
     Ok(detect_html_source(&html, file_path, options))
 }
 
@@ -178,17 +149,8 @@ pub fn detect_html_source(
     file_path: &Path,
     options: &DetectHtmlOptions<'_>,
 ) -> Vec<Finding> {
-    let profile = options.profile;
     let file_str = file_path.to_string_lossy().into_owned();
     let fp = file_str.as_str();
-    // JS loads htmlparser2 / css-select / css-tree / domutils here (and falls
-    // back to the regex engine with a DEGRADED notice when they are missing);
-    // the port links them in, so the step is only kept for the profile shape.
-    profile::step(
-        profile,
-        Meta::new("setup", "import-static-parser", fp),
-        || (),
-    );
     // JS `path.dirname(path.resolve(filePath))`.
     let resolved = if file_path.is_absolute() {
         file_path.to_path_buf()
@@ -202,13 +164,9 @@ pub fn detect_html_source(
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| resolved.clone());
 
-    let mut doc = profile::step(
-        profile,
-        Meta::new("parse-html", "parse-document", fp),
-        || StaticDocument::parse(html),
-    );
-    let css_text = collect_static_css_text(&doc, &file_dir, profile, fp, options.warn);
-    build_static_style_map(&mut doc, css_text.as_str(), profile, fp);
+    let mut doc = StaticDocument::parse(html);
+    let css_text = collect_static_css_text(&doc, &file_dir, options.warn);
+    build_static_style_map(&mut doc, css_text.as_str());
     let doc = doc;
 
     let mut findings: Vec<Finding> = Vec::new();
@@ -218,13 +176,7 @@ pub fn detect_html_source(
         let elements = doc.query_selector_all(selector);
         for el in &elements {
             let tag = el.tag_lower();
-            let hits = profile::findings(
-                profile,
-                Meta::new("element", rule_id, fp),
-                |h: &RuleHit| h.id.as_str(),
-                || run_rule(rule_id, el, &tag),
-            );
-            for h in hits {
+            for h in run_rule(rule_id, el, &tag) {
                 if scoped_ignore_active(el, &h.id) {
                     continue;
                 }
@@ -236,30 +188,12 @@ pub fn detect_html_source(
     }
 
     if let Some(ds) = options.design_system {
-        let source_design = profile::findings(
-            profile,
-            Meta::new("source", "design-system", fp),
-            |f: &Finding| f.antipattern.as_str(),
-            || ds.check_source(html, fp),
-        );
-        let static_design = profile::findings(
-            profile,
-            Meta::new("page", "design-system", fp),
-            |f: &Finding| f.antipattern.as_str(),
-            || ds.collect_static(&doc, fp),
-        );
+        let source_design = ds.check_source(html, fp);
+        let static_design = ds.collect_static(&doc, fp);
         findings.extend(ds.merge(static_design, source_design));
     }
 
     if is_full_page(html) {
-        let page = |rule_id: &str, f: &dyn Fn() -> Vec<RuleHit>| -> Vec<RuleHit> {
-            profile::findings(
-                profile,
-                Meta::new("page", rule_id, fp),
-                |h: &RuleHit| h.id.as_str(),
-                f,
-            )
-        };
         let mut push_hits = |hits: Vec<RuleHit>| {
             for h in hits {
                 if let Some(f) = mk(&h.id, &h.snippet) {
@@ -267,23 +201,13 @@ pub fn detect_html_source(
                 }
             }
         };
-        push_hits(page("typography-rules", &|| {
-            check_static_page_typography(&doc)
-        }));
-        push_hits(page("kicker-above-heading", &|| {
-            check_kicker_above_heading_from_doc(&doc)
-        }));
-        push_hits(page("numbered-section-labels", &|| {
-            check_numbered_section_labels_from_doc(&doc)
-        }));
-        push_hits(page("repeated-container-text", &|| {
-            check_repeated_container_text_from_doc(&doc)
-        }));
-        push_hits(page("layout-rules", &|| check_page_layout(&doc)));
-        push_hits(page("cream-palette", &|| check_cream_palette(&doc)));
-        push_hits(page("skipped-heading", &|| {
-            check_page_quality_from_doc(&doc)
-        }));
+        push_hits(check_static_page_typography(&doc));
+        push_hits(check_kicker_above_heading_from_doc(&doc));
+        push_hits(check_numbered_section_labels_from_doc(&doc));
+        push_hits(check_repeated_container_text_from_doc(&doc));
+        push_hits(check_page_layout(&doc));
+        push_hits(check_cream_palette(&doc));
+        push_hits(check_page_quality_from_doc(&doc));
 
         // Scoped corpora for the pattern checks: cssText already carries the
         // <style> blocks and linked local stylesheets; style/class attributes
@@ -304,17 +228,9 @@ pub fn detect_html_source(
             style_text: style_parts.join("\n"),
             class_text: class_attr_parts.join("\n"),
         };
-        let pattern_hits = profile::findings(
-            profile,
-            Meta::new("page", "html-patterns", fp),
-            |f: &impeccable_core::checks::css_scan::PatternFinding| f.id.as_str(),
-            || {
-                check_html_patterns(html, Some(&corpora))
-                    .into_iter()
-                    .filter(|item| item.id != "bounce-easing" && item.id != "layout-transition")
-                    .collect()
-            },
-        );
+        let pattern_hits = check_html_patterns(html, Some(&corpora))
+            .into_iter()
+            .filter(|item| item.id != "bounce-easing" && item.id != "layout-transition");
         for f in pattern_hits {
             if let Some(selector) = f.selector.as_deref() {
                 let stripped = PSEUDO_STRIP_RE.replace_all(selector, "");
@@ -341,13 +257,7 @@ pub fn detect_html_source(
         }
 
         if let Some(analyzers) = options.text_content_analyzers {
-            let text_findings = profile::findings(
-                profile,
-                Meta::new("page", "text-content", fp),
-                |f: &Finding| f.antipattern.as_str(),
-                || analyzers(html, fp),
-            );
-            for f in text_findings {
+            for f in analyzers(html, fp) {
                 if let Some(item) = mk(&f.antipattern, &f.snippet) {
                     findings.push(item);
                 }
@@ -355,27 +265,11 @@ pub fn detect_html_source(
         }
     }
 
-    // A rule pack sees the page after every built-in pass (element rules, the
-    // design-system merge, the page-level checks) and before inline ignores:
-    // appending keeps built-in output byte-identical when no pack is
-    // installed, and pack findings are waivable like built-in ones.
-    if let Some(pack) = options.static_rule_pack {
-        let pack_findings = profile::findings(
-            profile,
-            Meta::new("page", "rule-pack", fp),
-            |f: &Finding| f.antipattern.as_str(),
-            || pack.check_document(&doc, fp),
-        );
-        findings.extend(pack_findings);
-    } else if let Some(pack) = options.rule_pack {
+    // A rule pack sees the source after every built-in pass and before inline
+    // ignores, so pack findings are waivable like built-in ones.
+    if let Some(pack) = options.rule_pack {
         let ext = impeccable_detect::detect_text::ext_from_file_path(fp);
-        let pack_findings = profile::findings(
-            profile,
-            Meta::new("source", "rule-pack", fp),
-            |f: &Finding| f.antipattern.as_str(),
-            || pack.check_text(html, fp, &ext),
-        );
-        findings.extend(pack_findings);
+        findings.extend(pack.check_text(html, fp, &ext));
     }
 
     if options.inline_ignores_disabled {
@@ -383,18 +277,4 @@ pub fn detect_html_source(
     } else {
         apply_inline_ignores(findings, Some(html))
     }
-}
-
-/// The selectors css-select would refuse that a scan of `html` hits (for the
-/// parity report; not part of the JS API).
-pub fn unsupported_selectors(html: &str, file_path: &Path) -> Vec<String> {
-    let file_str = file_path.to_string_lossy().into_owned();
-    let file_dir = file_path
-        .parent()
-        .map(|p| p.to_path_buf())
-        .unwrap_or_default();
-    let mut doc = StaticDocument::parse(html);
-    let css_text = collect_static_css_text(&doc, &file_dir, None, &file_str, None);
-    build_static_style_map(&mut doc, &css_text, None, &file_str);
-    doc.unsupported_selectors()
 }

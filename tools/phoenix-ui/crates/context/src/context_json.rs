@@ -2,7 +2,7 @@ use crate::context::{
     is_context_surface_target, resolve_context_documents, resolve_context_selection,
     resolve_context_target,
 };
-use crate::design_parser::parse_design_md;
+use crate::design_parser::parse_design_outline;
 use crate::surface_briefs::{resolve_surface_brief, split_frontmatter};
 use crate::target_args::{parse_target_options, TargetOptions};
 use impeccable_common::Io;
@@ -125,7 +125,7 @@ fn coverage(artifact: &str, document: &mut Value, conflicts: &mut Vec<Value>) ->
     let body = document["body"].as_str()?.to_string();
     let frontmatter = split_frontmatter(&body);
     let unsupported = unsupported_yaml(&body);
-    let model = parse_design_md(&body);
+    let model = parse_design_outline(&body);
     if artifact == "design" && frontmatter.is_some() && unsupported.is_empty() {
         let tokens = model.frontmatter.map(Value::Object).unwrap_or(Value::Null);
         token_conflicts(&tokens, &tokens, "", &document["path"], conflicts);

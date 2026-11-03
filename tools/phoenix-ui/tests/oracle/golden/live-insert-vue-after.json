@@ -4,7 +4,7 @@
   "exit": 0,
   "signal": null,
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"app.vue\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"app.vue\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
     "pages/index.vue": "<template>\n  <main class=\"page\">\n    <h1 class=\"hero-title\">Nuxt Fixture</h1>\n    <p class=\"hero-hook\">Minimal Nuxt page for oracle live-mode goldens.</p>\n  <!-- impeccable-variants-start ab12cd34 -->\n  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-mode=\"insert\" data-impeccable-variant-count=\"3\" style=\"display: contents\">\n    <!-- Variants: insert below this line -->\n  </div>\n  <!-- impeccable-variants-end ab12cd34 -->\n  </main>\n</template>\n"
   }
 }

@@ -1,4 +1,3 @@
-use crate::browser::{BoundFile, Theme, Viewport};
 use crate::check::{ArtifactCheckEntry, FileIdentity};
 use crate::diagnostic::Diagnostics;
 use crate::input::{Compatibility, DiagramType, InputContract, Quality};
@@ -13,7 +12,16 @@ pub struct EngineIdentity {
     pub input_contract_schema: u32,
     pub receipt_schema: u32,
     pub viewer_revision: String,
-    pub binary: FileIdentity,
+}
+impl EngineIdentity {
+    pub fn current() -> Self {
+        Self {
+            source_input_sha256: env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256").into(),
+            input_contract_schema: crate::INPUT_CONTRACT_SCHEMA,
+            receipt_schema: crate::RECEIPT_SCHEMA,
+            viewer_revision: crate::VIEWER_REVISION.into(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -32,16 +40,6 @@ pub struct EffectiveConfig {
 pub struct FileReference {
     pub path: PathBuf,
     pub identity: FileIdentity,
-    pub original_binding: crate::output::FileIdentity,
-}
-
-impl FileReference {
-    pub fn bound_file(&self) -> BoundFile {
-        BoundFile {
-            path: self.path.clone(),
-            identity: self.identity.clone(),
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -51,15 +49,6 @@ pub enum Status {
     Failed,
     Unavailable,
     NotRun,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum CommitState {
-    NotCommitted,
-    Committed,
-    CommittedUnreceipted,
-    RecoveryRequired,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -83,7 +72,7 @@ pub struct ValidationReceipt {
     #[serde(skip)]
     pub layout: Option<Value>,
     #[serde(skip)]
-    pub(super) exit: u8,
+    pub(crate) exit: u8,
 }
 impl ValidationReceipt {
     pub fn exit_code(&self) -> u8 {
@@ -100,7 +89,6 @@ pub struct DeliveryReceipt {
     pub command: String,
     pub status: Status,
     pub diagnostics: Diagnostics,
-    pub receipt_id: String,
     pub candidate: Option<FileReference>,
     pub artifact: Option<FileReference>,
     pub config: Option<EffectiveConfig>,
@@ -111,7 +99,6 @@ pub struct DeliveryReceipt {
     pub compatibility: Option<Compatibility>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
-    pub commit_state: CommitState,
     pub evidence: Value,
     #[serde(skip)]
     pub(super) exit: u8,
@@ -131,14 +118,8 @@ pub struct CheckReceipt {
     pub command: String,
     pub status: Status,
     pub diagnostics: Diagnostics,
-    pub provenance: String,
-    pub scope: String,
-    pub candidate: Option<FileReference>,
     pub artifact: Option<FileReference>,
-    pub config_sha256: Option<String>,
     pub engine: EngineIdentity,
-    pub delivery_receipt_id: Option<String>,
-    pub delivery_receipt: Option<BoundFile>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
     #[serde(skip)]
@@ -167,13 +148,40 @@ pub enum VisualStatus {
     Unavailable,
 }
 
+/// What a reviewer saw in each listed screenshot, written by the reviewer.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ScreenshotReview {
+    pub path: PathBuf,
+    pub observations: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReviewRecord {
+    pub reviewer: String,
+    pub verdict: VisualStatus,
+    pub screenshots: Vec<ScreenshotReview>,
+    pub findings: Vec<String>,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct VisualReview {
     pub status: VisualStatus,
-    pub record: Option<BoundFile>,
+    pub record: Option<ReviewRecord>,
+}
+impl VisualReview {
+    pub fn pending() -> Self {
+        Self {
+            status: VisualStatus::RequiredPending,
+            record: None,
+        }
+    }
 }
 
+/// The single summary JSON finalize writes beside the HTML; review-record
+/// adds the visual review to it.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FinalizeReceipt {
@@ -188,12 +196,10 @@ pub struct FinalizeReceipt {
     pub artifact: Option<FileReference>,
     pub config_sha256: Option<String>,
     pub engine: EngineIdentity,
-    pub delivery_receipt_id: Option<String>,
-    pub browser_receipt_identity: Option<FileIdentity>,
     pub automated_status: Status,
+    pub screenshots: Vec<PathBuf>,
     pub visual_review: VisualReview,
     pub delivery_status: String,
-    pub produced_by_this_run: bool,
     pub evidence: Value,
     pub locale: Value,
     #[serde(skip)]
@@ -205,38 +211,6 @@ impl FinalizeReceipt {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ObservedScreenshot {
-    pub file: BoundFile,
-    pub viewport: Viewport,
-    pub theme: Theme,
-    pub observed: bool,
-    pub observations: String,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct VisualReviewRecord {
-    pub schema_version: u32,
-    pub tool: String,
-    pub tool_version: String,
-    pub command: String,
-    pub status: Status,
-    pub diagnostics: Diagnostics,
-    pub artifact: BoundFile,
-    pub candidate: BoundFile,
-    pub config_sha256: String,
-    pub engine: EngineIdentity,
-    pub delivery_receipt_id: String,
-    pub browser_receipt_identity: FileIdentity,
-    pub screenshot_identities: Vec<ObservedScreenshot>,
-    pub reviewer: String,
-    pub scope: Vec<String>,
-    pub verdict: VisualStatus,
-    pub findings: Vec<String>,
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewReceipt {
@@ -246,41 +220,15 @@ pub struct ReviewReceipt {
     pub command: String,
     pub status: Status,
     pub diagnostics: Diagnostics,
-    pub delivery_receipt_id: Option<String>,
-    pub browser_receipt_identity: Option<FileIdentity>,
+    pub summary: PathBuf,
     pub automated_status: Status,
     pub visual_review: VisualReview,
     pub delivery_status: String,
-    pub evidence: Value,
     #[serde(skip)]
-    pub(super) exit: u8,
+    pub(crate) exit: u8,
 }
 impl ReviewReceipt {
     pub fn exit_code(&self) -> u8 {
         self.exit
     }
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BrowserCommandReceipt {
-    #[serde(flatten)]
-    pub receipt: crate::browser::BrowserReceipt,
-    pub evidence: Value,
-    #[serde(skip)]
-    pub(super) exit: u8,
-}
-impl BrowserCommandReceipt {
-    pub fn exit_code(&self) -> u8 {
-        self.exit
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SidecarPaths {
-    pub delivery: PathBuf,
-    pub summary: PathBuf,
-    pub browser: PathBuf,
-    pub visual: PathBuf,
-    pub review: PathBuf,
 }

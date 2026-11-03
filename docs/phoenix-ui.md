@@ -13,15 +13,15 @@ npx @xgent-ai/skills install
 
 一次安装分两段，先完成全部只读预检再写项目：
 
-1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并。仅由待重装工具目录引起的冲突在清理后重新计算，其余预检失败不写项目。
-2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件。共享配置只替换 Phoenix hook，保留其他 handler 和配置。安装不创建回执、事务日志或旧版本备份；成功后删除旧 `.phoenix-ui/install/` 和 `.phoenix-ui/migrations/`，保留配置和业务数据。中断后重跑同一命令覆盖安装。
+1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并；共享 hook 配置不是合法 JSON 对象等预检失败不写项目。
+2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件；符号链接的 `skills/phoenix-ui` 目录换成副本，不改链接目标。共享配置只替换 Phoenix hook，保留其他 handler 和配置；重写后为标准 JSON，原有注释不保留。安装不创建回执、日志或备份；完成后删除早期版本留下的 `.phoenix-ui/install/` 和 `.phoenix-ui/migrations/`，保留配置和业务数据。中断后重跑同一命令覆盖安装。
 
 安装输出列出写入、合并与移除及重载步骤；相同内容重复安装显示「未变」。预检失败不写项目，写入失败显示未完成并提示处理错误后重跑。
 
 | 选项 | 作用 |
 | --- | --- |
 | `--no-phoenix-ui` | 跳过 Phoenix，仍安装 XGENT 部分；不删除已装版本 |
-| `--no-impeccable` | 已弃用，等同 `--no-phoenix-ui`，保留一个迁移主版本 |
+| `--no-impeccable` | 已弃用，等同 `--no-phoenix-ui` |
 | `--replace-impeccable` | 删除所选 provider 的项目级及个人级旧 impeccable 工具和 hooks，不备份、不再询问 |
 | `--keep-impeccable` | 保留 impeccable，与 Phoenix UI 共存，不再询问；无交互环境默认保留 |
 | `--release-dir=DIR` | 离线安装 engine：DIR 是发布者整理的完整 release 目录（`VERSION.json`、各平台 engine、许可与清单），必须与当前包的 manifest 完全一致，零网络 |
@@ -39,46 +39,9 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 
 `npx @xgent-ai/skills install` 发现 impeccable 时询问是否替换。选择是，直接删除所选 provider 的旧 skill、固定 agents/commands 入口和旧 hooks，并关闭相应的 impeccable 插件启用项；项目级与个人级路径均在范围内，不创建工具备份，不留旧命令转跳入口。只移除引用旧 launcher 的 command handler，保留同组的其他 hooks、matcher 和未知配置。选择否则保留这些工具与配置，Phoenix 正常安装，不因旧入口、旧 live 状态或版本不同而阻止激活。
 
-无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修改过的文件，不要求旧回执或摘要一致。运行只检查 ENGINE 和引擎，不依赖安装日志。独立辅助 skill 由各自安装渠道管理，现有文件保留。
+无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修改过的文件。运行只检查 ENGINE 和引擎。独立辅助 skill 由各自安装渠道管理，现有文件保留。
 
-这些操作不改业务代码、文档和 `.impeccable/` 数据。普通 npm 安装不显示文档中的旧入口引用和个人级旧分命令 skill 的迁移提示。个人级旧入口只在选择替换时删除。清理后若安装中断，直接重跑；需要旧工具时从 Git 或其安装渠道恢复。
-
-## 显式迁移旧数据
-
-下面的备份与严格来源核验仅适用于显式 `phoenix-ui migrate --from impeccable`，普通 npm 安装按上一节替换或共存。
-
-安装器只认领本包已发布版本（`@xgent-ai/skills` 0.3.0–0.6.0，对应 skill 4.3.1/4.5.0）写入且未被改动的文件和 hook：
-
-显式执行 `phoenix-ui migrate --from impeccable --project <项目> --bundle-root <bundle目录>` 时检查固定旧状态及源码中的孤立注入和变体标记；完整参数见 `phoenix-ui migrate --help`。
-
-- 未改动的旧 skill、agents、commands 移入 `.phoenix-ui/migrations/<事务ID>/` 备份；旧 hook 分组或嵌套 handler 按完整结构精确匹配后移除，邻近的用户 handler、matcher 与未知字段原样保留。
-- 每个旧 skill 位置留一个限期提示入口 `impeccable`，只在被显式调用时列出新命令，不挂 hook、不调用旧工具；下一个主版本移除。
-- `.impeccable/` 中可迁移的配置、设计 sidecar 与已核验的数据复制到 `.phoenix-ui/`，未知键原样保留并报告「未迁移」；固定快捷 pin 重新生成为 Phoenix 版本。
-- `AGENTS.md`、`CLAUDE.md`、`DESIGN.md`、`PRODUCT.md` 中的旧入口只报告行号与替换建议，不自动改写。
-- 个人级目录里早期上游版本的分命令 skill（如 skills.sh 装到 `~/.agents/skills` 的 `polish`、`teach-impeccable`）没有 hook 或 engine，只报告位置与移除、重载步骤，不阻止激活。
-
-显式迁移时，以下情况会阻止激活（退出码 3，项目不被修改），按输出逐项处理后重跑。辅助 skill 独立管理，不参与 Phoenix 安装检查：
-
-| 情况 | 处理 |
-| --- | --- |
-| 旧 skill 或旧 hook 被用户改过、被 shell 包装，或结构无法唯一确定 | 输出列出文件与条目；先备份/还原或移出活跃目录，再重跑 |
-| 固定旧状态路径或注入日志中记录的 live、注入或变体残留；显式迁移还检查源码中的孤立标记 | 用旧项目的 launcher 正常停止、`live-inject --remove`、接受或丢弃变体；不要按 PID 杀进程 |
-| 个人级（如 `~/.claude/skills/impeccable`）旧入口、旧 hook 或插件 | 安装器只读发现、不改个人配置；按输出在对应工具中禁用或移除后重载并重跑 |
-
-## 显式迁移的回滚与恢复
-
-仅显式旧数据迁移保留原有回滚接口；普通安装不提供旧版本回滚，且会清除旧迁移备份。迁移输出中的回滚命令只撤销该迁移写入的条目：
-
-```bash
-npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui migrate --rollback <事务ID> --project <项目>
-```
-
-- 独占文件按迁移后的摘要核对后还原；共享 JSON 只逆转本次加入或移除的条目，后来新增的 allow、guard 阈值和未知字段保留。受管条目被改过时返回 3 并列出冲突，不强制回退。
-- 回滚不撤销在 Phoenix 中做的产品代码修改，也不把新数据格式塞回旧工具；`.phoenix-ui/` 中的备份、日志与新数据保留，确认稳定后可手动删除。
-- 普通安装直接删除的 impeccable 工具和未受管 Phoenix 副本不在回滚范围内，不会从安装日志恢复。
-- 显式迁移中断后，下一次显式迁移会先读日志恢复；也可显式执行 `phoenix-ui migrate --recover --project <项目>`。遇到无法确认的新改动时停下并列出冲突，不覆盖。
-
-一致性保证覆盖进程崩溃或强制退出；不承诺突然掉电后零丢失，掉电损坏时从备份人工恢复。
+这些操作不改业务代码、文档和 `.impeccable/` 数据，也不迁移旧数据。个人级旧入口只在选择替换时删除。清理后若安装中断，直接重跑；需要旧工具时从 Git 或其安装渠道恢复。
 
 ## 支持矩阵
 
@@ -106,8 +69,8 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 ## 渠道
 
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
-- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖，否则文件会与安装回执不匹配。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
-- 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；旧安装的迁移依据是 `tools/phoenix-ui/migration-sources/` 中按 npm 包核对过的固定记录。
+- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
+- 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；发布检查重建旧版项目所用的 0.3.0/0.6.0 包摘要记录在 `tools/phoenix-ui/migration-sources/`。
 
 ## XGENT 自有检测规则
 
@@ -137,7 +100,7 @@ Phoenix UI 在承接上游的 61 条内置规则之外，另带一组 XGENT 自�
 
 ## 融合用法与 UI 验收
 
-本节适用于支持结构化 context 与 managed 评审协议的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 从实际回执/候选包读取；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。
+本节适用于支持结构化 context 的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 取实际安装的包版本（`ENGINE.json` 的 `npmPackageVersion`）或候选包；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。
 
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 直接依据目标项目的事实和已确认信息生成或补齐 PRODUCT.md，不依赖其他初始化 skill；产品边界、平台和设计约束均来自项目本身，不预设宿主平台或接入方式。subagent 与并行方式由 coding agent 结合自身能力、策略和用户约束选择，Phoenix 不另设授权询问或等待步骤；critique 的单上下文执行仍须先完成 A 再运行 B，并披露降级原因。
 
@@ -157,24 +120,11 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link
 
 `link` 保存原文件路径、SHA-256 与接受记录，原 brief 留在选定仓库，不复制第二份可编辑正文。URL/route 是逻辑目标，`target.exists: null` 不表示文件缺失。设计流程详见包内 `design-reference`、`ui-pattern-research`、`design-md` 的实际指令。
 
-用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。这两个 skill 不依赖 Phoenix。选择 CLI 管理记录时，查询实际 `review` 帮助、输入形状和本循环状态，只有无旧历史的新循环才 begin：
-
-```bash
-npm exec --package=@xgent-ai/skills -- phoenix-ui review --help
-npm exec --package=@xgent-ai/skills -- phoenix-ui review schema --json
-npm exec --package=@xgent-ai/skills -- phoenix-ui review status --prefix "docs/ui/orders" --json
-npm exec --package=@xgent-ai/skills -- phoenix-ui review begin --prefix "docs/ui/orders" --target "docs/ui/orders.ui-target.md" --tested-version "docs/ui/orders.tested-version.json" --json
-```
-
-`review schema --json` 返回 `reviewSchema: 1`、`discoveryVersion: 1` 的完整 typed examples 与枚举变体，可用 `--kind tested-version` 等选择一种输入。它描述当前 serde 字段形状，不是完整 JSON Schema；样例的文字、数字和布尔值均为占位，不证明执行成功或当前 UI 事实。真实身份、路径、hash、版本和 revision 取实际操作与取证。帮助和 schema 不读写循环；新前缀的父目录不存在时，`status` 可直接返回 `absent`，不创建目录或循环。
-
-`--tested-version` 的 JSON 由宿主提供真实 HEAD 加 clean/dirty 指纹，或可核对的 build ID，并与本轮应用/采集一致；省略时为 Unknown，不能判通过。context 提供目标和规范来源，不自动生产版本记录。后续 capture、judge-pack、judge add、finalize、apply record 使用返回的 round/current revision 和实际合同输入；**退出 0 不等于 UI 通过**，必须回读 verdict 与报告，`confirmation_required` 仍为草稿。参数与输入边界见 [Phoenix managed 评审协议](phoenix-ui-review.md)，目标、报告和处置沿 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md)。
-
-已有 Markdown 历史无 managed 索引时继续 manual，只有显式 `review import --prefix <前缀> --input <映射.json> --json` 才接管；未知历史不能填零。`legacyMarkdown` 无法确定历史最佳时返回 3 并保持人工循环。工具不可用或无法识别状态时保留原索引，agent 继续依据 Markdown 历史、真实证据和评审合同工作；恢复工具后核对并登记新增材料，不删索引或清空历史。生成区被手改时先另存原文与 hash，用 `projectionRebase` 显式核对副本、当前 hash 和 cycle revision 后恢复权威区块；要保留的采集/处置再以当前 revision 提交。封存报告与评审原文不覆盖。
+用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。这两个 skill 不依赖 Phoenix，评审记录按 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md) 以 Markdown 维护。
 
 ## 维护者：统一候选与本地交接
 
-A 阶段只内部验收，不单独发布。M6 先在专用统一候选树整合 A、M4/M5、发布工具与同步元数据，再从同一 HEAD/tree/构建输入生成最终 binary 和 bundle；隔离模块的旧制品或相近 SHA 不替代它。维护工具按 mise 与 build-tools.lock.json 固定，Node 18 是消费底线；工具缺失/版本不符在 prepare 阶段处理，不在 build/test 中隐式补装：
+最终 binary 和 bundle 从同一 HEAD/tree/构建输入生成；旧制品或相近 SHA 不替代它。维护工具按 mise 与 build-tools.lock.json 固定，Node 18 是消费底线；工具缺失/版本不符在 prepare 阶段处理，不在 build/test 中隐式补装：
 
 ```bash
 cd tools/phoenix-ui
@@ -188,28 +138,36 @@ mise exec --no-deps -- node ../../scripts/smoke-phoenix-ui.mjs --release-dir ../
 mise exec --no-deps -- npm --prefix ../.. run test:phoenix
 ```
 
-prepare 显式联网准备锁定依赖、工具、浏览器、迁移包和公告快照；随后 audit/build/runtime 使用已准备缓存与离线合同，`CARGO_NET_OFFLINE` 不单独证明全部网络已禁止。`--development` 仅是本机开发制品。`check-phoenix-deps.mjs --distribution-dir <目录>` 另核对分发许可，真实 browser/provider 会话仍分别取证。完整维护入口见 [prepare](../scripts/prepare-phoenix-ui.mjs)、[build](../scripts/build-phoenix-ui.mjs)、[audit](../scripts/check-phoenix-deps.mjs)、[runtime tests](../scripts/test-phoenix-ui.mjs)。
+prepare 显式联网准备锁定依赖、工具、浏览器和公告快照；随后 audit/build/runtime 使用已准备缓存与离线合同，`CARGO_NET_OFFLINE` 不单独证明全部网络已禁止。`--development` 仅是本机开发制品。`check-phoenix-deps.mjs --distribution-dir <目录>` 另核对分发许可，真实 browser/provider 会话仍分别取证。完整维护入口见 [prepare](../scripts/prepare-phoenix-ui.mjs)、[build](../scripts/build-phoenix-ui.mjs)、[audit](../scripts/check-phoenix-deps.mjs)、[runtime tests](../scripts/test-phoenix-ui.mjs)。
 
-统一的 [Phoenix CI](../.github/workflows/phoenix.yml) 在同一次运行中检查 UI 和 Diagram，并给出共同结果。UI 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，另有 Node18 consumer。固定成功 run 的四份 native、四份 phase evidence、一份 Node18 evidence 必须保留原始 ZIP/digest、HEAD/tree、工具链、输入/制品摘要、许可及全部真实 step/phase 结果。CI 不持 R2/npm 凭据；缺平台、失败 phase 或摘要不符不能交接。
+统一的 [Phoenix CI](../.github/workflows/phoenix.yml) 在同一次运行中检查 UI 和 Diagram，并给出共同结果。UI 与 Diagram 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，UI 另有 Node18 consumer。每个平台上传 `phoenix-ui-<平台>` 与 `phoenix-diagram-<平台>` 制品，发布只取这八份引擎制品；整次 run 成功即视为全部 job 通过。CI 不持 R2/npm 凭据。
 
 发布只用一条命令，在 **main 分支上干净、已推送且 Phoenix CI 成功**的 HEAD 上执行，不创建独立发布分支，也不从 detached HEAD 发布。版本号先在 `package.json` 改好，并用上面的开发构建同步 `VERSION.json`/`ENGINE.json`/`GENERATED.json`：
 
 ```bash
 mise exec --no-deps -- npm run release:phoenix                      # 上传 R2 与 npm 发布前各确认一次，npm 会要 OTP
-mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到安装检查；再次运行时仅去掉 --prepare-only，保留资源目录等参数
+mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到安装检查；再按脚本提示的命令（带 --run-id）运行即发布
 ```
 
 [release-phoenix-ui.mjs](../scripts/release-phoenix-ui.mjs) 依次执行，任一步失败即停：
 
-1. 核对当前分支为 `main`、工作树干净、Diagram 的四平台 release 清单、bundle、完整许可证与公共 HTTPS 下载地址齐备，npm 上还没有这个版本，找到该提交成功的 Phoenix CI run（也可用 `--run-id` 指定）。
-2. 从统一 CI 下载 UI 的九个原始 ZIP，逐个核对 GitHub digest。
-3. 用 [publish-phoenix-ui-r2.mjs](../scripts/publish-phoenix-ui-r2.mjs) 条件上传四个 engine（已存在即拒绝覆盖），公共 URL 回读通过后冻结 release manifest。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。
-4. 用 [pack-phoenix-ui-release.mjs](../scripts/pack-phoenix-ui-release.mjs) 只打一次联合 tarball：保留 `package.json` 声明的 UI 和 Diagram bin、skill、文档及发行资源，最终包再次通过发布校验。`xgent-skills install` 默认安装两者。Diagram 默认使用仓库中已准备好的 release 资源，也可用 `--diagram-release-dir DIR` 指定同版本的完整正式资源目录，在打包阶段注入；本脚本不构建或上传 Diagram 引擎，缺少资源时在上传 UI 前停止。
-5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 0.3.0/0.6.0 工具保留共存、直接删除替换、无回执 Phoenix 副本覆盖重装、旧安装目录清理和重复安装。
+1. 核对当前分支为 `main`、工作树干净、npm 上还没有这个版本，找到该提交最新一次成功的 Phoenix CI run（也可用 `--run-id` 指定）。
+2. 从这次 run 下载 UI 与 Diagram 各四个平台的 engine 制品（`phoenix-ui-<平台>`、`phoenix-diagram-<平台>`），逐个核对 GitHub digest，并确认 CI 构建所用的两个 bundle 与当前提交一致、提交的生成文件与源码一致。
+3. 用 `aws s3api put-object --if-none-match '*'` 把八个 engine 上传到 R2 的 `<前缀>/<工具>/v<版本>/ci-<run>/<平台>/<文件>`，从不覆盖：对象已存在时只接受字节相同的；随后从每个公共 URL 回读，核对大小与 SHA-256。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。已上传的对象有误时，为同一提交手动再触发一次 Phoenix CI（得到新 run ID；Actions 页面的 Re-run 沿用原 ID）后重新发布，不会撞上旧对象。
+4. 从 HEAD（`git archive`）只打一次联合 tarball：写入两个工具的 release 清单及其副本（UI 的 `skills/phoenix-ui/scripts/ENGINE.json` 与 `GENERATED.json` 中的摘要，Diagram 的 `bundle/ENGINE.json` 与 `skills/phoenix-diagram/ENGINE.json`），第三方许可取自 darwin-arm64 的 CI 制品，最终包再次通过发布校验。`xgent-skills install` 默认安装两者。
+5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 0.3.0/0.6.0 工具保留共存、直接删除替换、Phoenix 副本覆盖重装、旧安装目录清理和重复安装。
 6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
 
-每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/`，中断后重跑会复核已有产物再续接。预发布版本必须加 `--tag`。CI 测过的提交之后 main 又有新提交时，等待 main 当前 HEAD 的 CI 成功后再发布；不另建发布分支或检出旧提交发布。
+只改脚本、skill 或文档、引擎源码未变时，可用 `--reuse-engines <已发布版本>` 跳过 CI 和 R2（第 2、3 步），直接复用该 npm 版本的 UI 与 Diagram 引擎：
+
+```bash
+mise exec --no-deps -- npm run release:phoenix -- --reuse-engines 0.7.10 [--prepare-only]
+```
+
+脚本从 registry 下载该版本并核对 integrity，然后检查：自那次发布以来，编译进 UI 引擎的源码（`tools/phoenix-ui` 中除 `scripts/render.mjs`、`scripts/lib` 外的部分，以及 Rust `include_str!`/`include_bytes!` 引用的仓库文件）在 git 中没有改动；Diagram 的源码输入摘要与旧清单的 `sourceInputSha256` 一致；提交的 `GENERATED.json` 与 Diagram bundle 和当前源码一致。任一项不满足就停止，需要改为走 CI 构建。通过后按第 4 步从 HEAD 打包，只是引擎相关字段和第三方许可来自旧版本，`npmPackageVersion`、`sourceCommit` 和 bundle 摘要仍取当前提交。之后照常执行第 5、6 步。引擎只认 `toolVersion` 与清单内容，不绑定 npm 版本；能复用的最早版本是 Diagram 去掉版本绑定后首次构建发布的版本（0.7.9 及以前不行）。
+
+每步产物保存在 `local/phoenix-ui/releases/v<版本>-<短SHA>/ci-<run>/`（复用引擎时为 `reuse-<版本>/`），中断后重跑同一命令即可续接：已打包就直接从安装检查继续，否则重新核对 CI 制品，已上传的对象只做字节比对。预发布版本必须加 `--tag`。CI 测过的提交之后 main 又有新提交时，等待 main 当前 HEAD 的 CI 成功后再发布；不另建发布分支或检出旧提交发布。
 
 在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里的 `dist/phoenix-ui/VERSION.json` 是开发清单，没有 engine 下载地址。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
 
-M6 终验在日常发布检查之外，还用同一 tarball 做过 A→B 升级/回滚与真实融合验收（见计划 M6 记录）；替身、开发包和四平台 CI 都不能单独证明线上 URL 或最终包可用。
+替身、开发包和四平台 CI 都不能单独证明线上 URL 或最终包可用。

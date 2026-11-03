@@ -36,7 +36,7 @@ export default [
     // A running helper with no overlay attached answers at once instead of
     // holding the request.
     steps: [
-      { verb: 'live-server', daemon: true, readyFile: '.impeccable/live/server.json', readyTimeoutMs: 15000 },
+      { verb: 'live-server', daemon: true, readyFile: '.phoenix-ui/live/server.json', readyTimeoutMs: 15000 },
       { verb: 'live-generate', args: ['--selector', 'h1', '--action', 'bolder', '--count', '2', '--prompt', 'warmer'] },
       { verb: 'live-server', args: ['stop'] },
     ],

@@ -62,16 +62,10 @@ pub(crate) fn assert_owned_browser_cleaned(root: &Path) {
 pub(crate) enum Mode {
     ProtocolError,
     ProtocolTimeout,
-    CaptureFailure {
-        restore_fails: bool,
-    },
+    CaptureFailure { restore_fails: bool },
     ScriptRestoreFailure,
     RestoredLayoutFailure,
-    Complete {
-        remote: bool,
-        change_artifact: Option<PathBuf>,
-        long: bool,
-    },
+    Complete { remote: bool, long: bool },
 }
 
 // This fixture tests protocol/receipt branches. It does not render DOM or stand
@@ -126,7 +120,6 @@ impl ProtocolFixture {
             let (mut width, mut height) = (1440, 900);
             let mut theme = "light".to_owned();
             let mut document_url = String::new();
-            let mut changed = false;
             let mut capture_restored = false;
             while !worker_stop.load(Ordering::Relaxed) {
                 let message = match socket.read() {
@@ -222,16 +215,6 @@ impl ProtocolFixture {
                                     .into(),
                             ));
                             continue;
-                        }
-                        if !changed {
-                            if let Mode::Complete {
-                                change_artifact: Some(path),
-                                ..
-                            } = &mode
-                            {
-                                fs::write(path, b"changed during browser inspection").unwrap();
-                                changed = true;
-                            }
                         }
                         let mut metrics = fixture_metrics(
                             width,

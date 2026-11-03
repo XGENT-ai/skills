@@ -8,7 +8,7 @@ use crate::color;
 
 use crate::js::{self, ci, parse_float, parse_int, string_to_number, WS};
 
-use crate::js_ext_b::{num_truthy, same_value_zero, utf16_len};
+use crate::js_ext_a::{num_truthy, same_value_zero, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 

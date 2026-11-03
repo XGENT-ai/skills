@@ -1,13 +1,9 @@
-//! Phoenix local skill installation, update, link, help and consistency checks.
-//! Operational entry points accept only an explicitly selected, verified local
-//! distribution. They never resolve upstream/latest assets or fetch an engine.
-//! Imported archive/signature parsers remain tested with deterministic inputs.
+//! Phoenix user-level skill installation, update, link, help and consistency
+//! checks. Every entry point takes an explicit local bundle; nothing is
+//! downloaded.
 
 pub mod bundle;
-#[cfg(test)]
-mod bundle_signature;
 pub mod commands;
-pub mod engine_binary;
 pub mod hook_manifest;
 pub mod local_bundle;
 pub mod prompt;

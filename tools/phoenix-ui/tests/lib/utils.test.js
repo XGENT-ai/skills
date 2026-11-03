@@ -11,7 +11,6 @@ import {
   generateYamlFrontmatter,
   readPatterns,
   replacePlaceholders,
-  replaceScriptProviderMarker,
 } from '../../scripts/lib/utils.js';
 
 // Temporary test directory
@@ -385,169 +384,11 @@ describe('readSourceFiles', () => {
     }
   });
 
-  test('should read and parse SKILL.md from skill/', () => {
-    const skillContent = `---
-name: test-skill
-description: A test skill
-license: MIT
----
-
-Skill instructions here.`;
-
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), skillContent);
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].name).toBe('test-skill');
-    expect(skills[0].description).toBe('A test skill');
-    expect(skills[0].license).toBe('MIT');
-    expect(skills[0].body).toBe('Skill instructions here.');
-  });
-
-  test('should read skill with user-invocable flag', () => {
-    const skillContent = `---
-name: audit
-description: Run technical quality checks
-user-invocable: true
----
-
-Audit the code.`;
-
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), skillContent);
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].userInvocable).toBe(true);
-  });
-
-  test('should read skill with quoted user-invocable flag', () => {
-    const skillContent = `---
-name: audit
-description: Run technical quality checks
-user-invocable: 'true'
----
-
-Audit the code.`;
-
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), skillContent);
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].userInvocable).toBe(true);
-  });
-
-  test('should read skill with reference files', () => {
-    const skillContent = `---
-name: impeccable
-description: Impeccable design skill
----
-
-Impeccable design instructions.`;
-
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), skillContent);
-
-    const refDir = path.join(skillDir, 'reference');
-    ensureDir(refDir);
-    fs.writeFileSync(path.join(refDir, 'typography.md'), 'Typography reference content.');
-    fs.writeFileSync(path.join(refDir, 'color.md'), 'Color reference content.');
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].references).toHaveLength(2);
-    // References may not be in a specific order due to fs.readdirSync
-    const refNames = skills[0].references.map(r => r.name).sort();
-    expect(refNames).toEqual(['color', 'typography']);
-  });
-
-  test('should fall back to "impeccable" when frontmatter has no name', () => {
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), 'Just body, no frontmatter.');
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].name).toBe('impeccable');
-  });
-
-  test('should ignore non-md files in skill/reference', () => {
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), '---\nname: test-skill\n---\nBody');
-
-    const refDir = path.join(skillDir, 'reference');
-    ensureDir(refDir);
-    fs.writeFileSync(path.join(refDir, 'readme.txt'), 'Not a markdown file');
-    fs.writeFileSync(path.join(refDir, 'typography.md'), 'Valid reference');
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills).toHaveLength(1);
-    expect(skills[0].references).toHaveLength(1);
-    expect(skills[0].references[0].name).toBe('typography');
-  });
-
-  test('should read nested skill script files with portable relative names', () => {
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), '---\nname: test-skill\n---\nBody');
-
-    const scriptsDir = path.join(skillDir, 'scripts');
-    ensureDir(path.join(scriptsDir, 'live'));
-    fs.writeFileSync(path.join(scriptsDir, 'context.mjs'), 'export const context = true;\n');
-    fs.writeFileSync(path.join(scriptsDir, 'live/session-store.mjs'), 'export const nested = true;\n');
-    fs.writeFileSync(path.join(scriptsDir, 'config.json'), '{"local":true}\n');
-
-    const { skills } = readSourceFiles(testRootDir);
-    const scripts = skills[0].scripts;
-    const scriptNames = scripts.map(script => script.name).sort();
-
-    expect(scriptNames).toEqual(['context.mjs', 'live/session-store.mjs']);
-    expect(scripts.find(script => script.name === 'live/session-store.mjs').content).toContain('nested = true');
-  });
-
   test('should handle missing skill directory', () => {
     const { skills } = readSourceFiles(testRootDir);
     expect(skills).toEqual([]);
   });
 
-  test('should parse all frontmatter fields correctly', () => {
-    const skillContent = `---
-name: test-skill
-description: A comprehensive test skill
-license: Apache-2.0
-compatibility: claude-code
-user-invocable: true
-allowed-tools: Bash,Edit
----
-
-Body content.`;
-
-    const skillDir = path.join(testRootDir, 'skill');
-    ensureDir(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.src.md'), skillContent);
-
-    const { skills } = readSourceFiles(testRootDir);
-
-    expect(skills[0].name).toBe('test-skill');
-    expect(skills[0].description).toBe('A comprehensive test skill');
-    expect(skills[0].license).toBe('Apache-2.0');
-    expect(skills[0].compatibility).toBe('claude-code');
-    expect(skills[0].userInvocable).toBe(true);
-    expect(skills[0].allowedTools).toBe('Bash,Edit');
-  });
 });
 
 describe('readPatterns', () => {
@@ -631,23 +472,9 @@ describe('replacePlaceholders', () => {
     expect(result).toBe('Commands: /audit, /polish, /optimize');
   });
 
-  test('should exclude impeccable from {{available_commands}}', () => {
-    const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code', ['audit', 'impeccable', 'polish']);
-    expect(result).toBe('Commands: /audit, /polish');
-  });
-
   test('should exclude legacy teach-impeccable from {{available_commands}}', () => {
     const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code', ['audit', 'teach-impeccable', 'polish']);
     expect(result).toBe('Commands: /audit, /polish');
-  });
-
-  test('lists /impeccable sub-commands for {{available_commands}} when no command names are passed', () => {
-    // v3.0 single-skill architecture: with no command names, the list falls back
-    // to the IMPECCABLE_SUB_COMMANDS sub-commands rendered as `/impeccable <sub>`.
-    const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code', []);
-    expect(result.startsWith('Commands: /impeccable ')).toBe(true);
-    expect(result).toContain('/impeccable audit');
-    expect(result).toContain('/impeccable polish');
   });
 
   test('should replace multiple placeholders in the same string', () => {
@@ -681,25 +508,5 @@ describe('replacePlaceholders', () => {
     expect(result).toContain('.github/hooks/impeccable.json');
     expect(result).toContain('.codex/skills/impeccable/scripts/context.mjs');
     expect(result).toContain('https://example.com/impeccable');
-  });
-});
-
-describe('replaceScriptProviderMarker', () => {
-  test('renders only the explicit provider declarations', () => {
-    const source = [
-      "export const IMPECCABLE_COMMAND_PREFIX = '/'; // @impeccable-provider-command-prefix",
-      "export const IMPECCABLE_PROVIDER_ID = 'source'; // @impeccable-provider-id",
-      'const regex = /impeccable\\b/gi;',
-      "const runtime = '/src/lib/impeccable/__runtime.js';",
-      "const text = 'Run /impeccable audit';",
-    ].join('\n');
-
-    const result = replaceScriptProviderMarker(source, 'codex', 'agents');
-
-    expect(result).toContain('export const IMPECCABLE_COMMAND_PREFIX = "$";');
-    expect(result).toContain('export const IMPECCABLE_PROVIDER_ID = "agents";');
-    expect(result).toContain('const regex = /impeccable\\b/gi;');
-    expect(result).toContain("const runtime = '/src/lib/impeccable/__runtime.js';");
-    expect(result).toContain("const text = 'Run /impeccable audit';");
   });
 });

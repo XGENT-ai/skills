@@ -13,7 +13,6 @@ const repository = path.resolve(__dirname, '../..');
 const engine = process.env.PHOENIX_UI_BIN;
 const skip = engine ? false : 'explicit local Phoenix engine (PHOENIX_UI_BIN) needed; npm run test:phoenix supplies it';
 const sha256 = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
-const materializer = import('./fixtures/migration/materialize.mjs');
 
 function sandbox(t, name) {
   const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), `${name} `));
@@ -39,8 +38,7 @@ function packageFor(t, executable) {
   for (const dir of ['.claude', 'hooks', 'skills']) link(path.join(repository, dir), path.join(root, dir));
   const vendor = path.join(root, 'dist', 'phoenix-ui');
   fs.mkdirSync(vendor, { recursive: true });
-  // The installer refuses a symlinked bundle root.
-  fs.cpSync(path.join(repository, 'dist/phoenix-ui/bundle'), path.join(vendor, 'bundle'), { recursive: true });
+  link(path.join(repository, 'dist/phoenix-ui/bundle'), path.join(vendor, 'bundle'));
   const target = process.platform === 'win32' ? 'windows-x64' : `${process.platform}-${process.arch}`;
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const bytes = fs.readFileSync(executable);
@@ -78,13 +76,6 @@ function tree(root, exclude = () => false) {
   };
   walk(root);
   return out;
-}
-
-async function oldProject(t, scenarios = [], providers = ['.claude', '.agents']) {
-  const { materializeMigrationFixture } = await materializer;
-  const fixture = materializeMigrationFixture({ fixtureRoot: path.join(sandbox(t, 'phoenix migration'), 'fixture'),
-    packageVersion: '0.6.0', providers, channel: 'xgent-installer', scenarios });
-  return fixture;
 }
 
 test('--keep-impeccable installs Phoenix beside customized project and personal tools', { skip }, (t) => {
@@ -133,7 +124,7 @@ test('--replace-impeccable deletes old project and personal tools without a tool
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
-test('source-only Phoenix copies are reinstalled without a receipt conflict or an old-tool backup', { skip }, (t) => {
+test('source-only Phoenix copies are reinstalled', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix source project');
   fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(project, '.agents/skills/phoenix-ui'), { recursive: true });
@@ -156,7 +147,7 @@ test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
   assert.match(result.stdout, /保留.*impeccable/);
 });
 
-test('Phoenix overwritten by a source install is refreshed without receipts', { skip }, (t) => {
+test('Phoenix overwritten by a source install is refreshed', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix managed source refresh');
   const flags = ['--keep-impeccable', '--providers=claude,codex,cursor'];
@@ -224,7 +215,7 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   assert.deepEqual(tree(project, (rel) => rel.startsWith('.phoenix-ui/')), before);
 });
 
-test('install hides legacy document and personal command notices while preserving their files', { skip }, (t) => {
+test('install leaves project documents and personal skills untouched', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix quiet install');
   for (const name of ['AGENTS.md', 'DESIGN.md', 'PRODUCT.md']) {
@@ -237,7 +228,6 @@ test('install hides legacy document and personal command notices while preservin
   const result = install(pkg, project, ['--providers=codex']);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /: 已安装/);
-  assert.doesNotMatch(result.stdout + result.stderr, /mention the old impeccable entry|older upstream Impeccable command/);
   const after = tree(project);
   for (const [file, hash] of Object.entries(before)) assert.equal(after[file], hash, file);
   assert.deepEqual(tree(pkg.home), homeBefore);
@@ -265,43 +255,17 @@ test('install preserves independently updated project and personal companion ski
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
-for (const shape of ['large', 'deep']) {
-  test(`default install keeps Phoenix enabled without scanning a ${shape} business tree`, { skip }, async (t) => {
-    const pkg = packageFor(t, engine);
-    const fixture = shape === 'deep' ? await oldProject(t) : null;
-    const project = fixture?.projectRoot || sandbox(t, 'phoenix large project');
-    const source = path.join(project, 'src');
-    fs.mkdirSync(source);
-    if (shape === 'large') {
-      for (let i = 0; i <= 10000; i += 1) fs.writeFileSync(path.join(source, `${i}.js`), 'export default true;\n');
-    } else {
-      const nested = path.join(source, ...Array(33).fill('a'));
-      fs.mkdirSync(nested, { recursive: true });
-      fs.writeFileSync(path.join(nested, 'page.html'), '<!-- impeccable-live-start -->');
-    }
-    const before = tree(source);
-    const first = install(pkg, project, [], fixture?.homeRoot || pkg.home);
-    assert.equal(first.status, 0, first.stdout + first.stderr);
-    assert.match(first.stdout, /: 已安装/);
-    assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
-    if (fixture) assert.match(first.stdout, /保留.*impeccable/);
-    const second = install(pkg, project, [], fixture?.homeRoot || pkg.home);
-    assert.equal(second.status, 0, second.stdout + second.stderr);
-    assert.match(second.stdout, /: 未变\n/);
-    assert.deepEqual(tree(source), before, 'installation must preserve the business source tree');
-  });
-}
-
-test('an unrelated hook conflict stops installation before deleting a source-only Phoenix copy', { skip }, async (t) => {
+test('an invalid hook configuration stops installation before any project write', { skip }, (t) => {
   const pkg = packageFor(t, engine);
-  const fixture = await oldProject(t, ['modified-skill']);
-  fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(fixture.projectRoot, '.agents/skills/phoenix-ui'), { recursive: true });
-  fs.writeFileSync(path.join(fixture.projectRoot, '.codex/hooks.json'), '[]\n');
-  const original = tree(fixture.projectRoot);
-  const result = install(pkg, fixture.projectRoot, [], fixture.homeRoot);
+  const project = sandbox(t, 'phoenix invalid hooks');
+  fs.cpSync(path.join(repository, 'skills/phoenix-ui'), path.join(project, '.agents/skills/phoenix-ui'), { recursive: true });
+  fs.mkdirSync(path.join(project, '.codex'));
+  fs.writeFileSync(path.join(project, '.codex/hooks.json'), '[]\n');
+  const original = tree(project);
+  const result = install(pkg, project);
   assert.notEqual(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stderr, /Phoenix UI|JSON|object/i);
-  assert.deepEqual(tree(fixture.projectRoot), original);
+  assert.match(result.stderr, /hooks\.json.*JSON object/);
+  assert.deepEqual(tree(project), original);
 });
 
 test('repeated installs keep the Phoenix hooks and project state unchanged', { skip }, (t) => {

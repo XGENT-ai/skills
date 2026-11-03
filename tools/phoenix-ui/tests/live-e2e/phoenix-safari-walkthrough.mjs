@@ -602,9 +602,8 @@ async function row2(row) {
       const noticeAfterMs = Date.now() - started;
       await shot(row, 'disconnect-killed');
       await drain(wd, pageLog, rec);
-      const status = H.engine('live-status', [], { cwd: session.tmp });
       const { restarted, ok } = await restartAndReconnect();
-      Object.assign(e, { noticeAfterMs, notice, statusAfterKill: { code: status.code, json: status.json, stdout: status.stdout },
+      Object.assign(e, { noticeAfterMs, notice,
         restart: restarted.result.json, restarted: H.processRecord('restarted helper', restarted) });
       return {
         noticeShown: notice !== null,
@@ -666,12 +665,6 @@ function listFiles(root, sub) {
   };
   walk(dir);
   return out.sort();
-}
-
-function receipts(cwd) {
-  return listFiles(cwd, '.phoenix-ui/live/accept-receipts').map((file) => {
-    try { return { file, ...JSON.parse(readText(cwd, file)) }; } catch { return { file, unreadable: true }; }
-  });
 }
 
 /** The deterministic agent; variant N says " vN" in its text. */
@@ -780,16 +773,14 @@ async function row3(row) {
         { label: 'no wrapper in DOM', timeout: 10_000 }).catch(() => wd.exec(domWrappersInPage));
       await shot(row, 'discard-2-after');
       const sessionId = during.debug?.sessionId;
-      const receipt = receipts(tmp).find((r) => r.id === sessionId) || null;
       const accepts = await postsOf('accept');
-      Object.assign(e, { sessionId, before, after: H.sourceState(tmp), dom, receipt, debugDuring: during.debug });
+      Object.assign(e, { sessionId, before, after: H.sourceState(tmp), dom, debugDuring: during.debug });
       return {
         cycledThreeVariants: [1, 2, 3].every((n) => during.source.includes(`Vite 8 Fixture v${n}`)),
         appByteIdenticalToHead: restored === true,
         noResidueInApp: !RESIDUE.test(readText(tmp, APP)),
         noWrapperInDom: dom.wrappers === 0,
         originalTextInDom: dom.h1 === 'Vite 8 Fixture',
-        discardReceipt: receipt?.operation === 'discard',
         noAcceptPosted: accepts.length === 0,
       };
     });
@@ -817,11 +808,9 @@ async function row3(row) {
       const app = readText(tmp, APP);
       const head = headBytes(tmp, APP).toString('utf-8');
       const chosenLine = '<h1 className="hero-title">Vite 8 Fixture v2</h1>';
-      const receipt = receipts(tmp).find((r) => r.id === sessionId) || null;
-      const status = H.engine('live-status', [], { cwd: tmp });
       const accepts = await postsOf('accept');
       acceptedApp = readFileSync(join(tmp, APP));
-      Object.assign(e, { sessionId, after: H.sourceState(tmp), dom, receipt, liveStatus: status.json ?? status.stdout, acceptPosts: accepts });
+      Object.assign(e, { sessionId, after: H.sourceState(tmp), dom, acceptPosts: accepts });
       return {
         sourceSettled: settled !== null,
         liveCompleteRan: completed === true,
@@ -831,7 +820,6 @@ async function row3(row) {
         onlyTheH1Changed: app.replace(chosenLine, ORIGINAL_H1) === head,
         noWrapperInDom: dom.wrappers === 0,
         chosenTextInDom: dom.h1 === 'Vite 8 Fixture v2',
-        acceptReceipt: receipt?.operation === 'accept' && String(receipt?.variantId) === '2',
         oneAcceptPosted: accepts.length === 1,
       };
     });
@@ -876,18 +864,16 @@ async function row3(row) {
       await waitForBarHidden(ctx);
       const restored = await waitFor(() => Buffer.compare(readFileSync(join(moved, APP)), acceptedApp) === 0,
         { label: 'App.jsx back to the accepted bytes', timeout: 20_000 }).catch(() => false);
-      const status = H.engine('live-status', [], { cwd: moved });
       const serverJson = existsSync(join(moved, '.phoenix-ui/live/server.json')) ? readText(moved, '.phoenix-ui/live/server.json') : null;
       const helper = s.live;
       const out = await shutdown(s, { helper: 'kill' });
       const indexAfterKill = readText(moved, INDEX);
-      Object.assign(e, { oldPath, moved, liveStatus: status.json ?? status.stdout, serverJson, helper: H.processRecord('killed helper', helper),
+      Object.assign(e, { oldPath, moved, serverJson, helper: H.processRecord('killed helper', helper),
         out, indexAfterKill, phoenixFiles: listFiles(moved, '.phoenix-ui') });
       return {
         oldPathAbsent: !existsSync(oldPath),
         discardRestoredAcceptedBytes: restored === true,
         noResidueInApp: !RESIDUE.test(readText(moved, APP)),
-        statusNamesNoOldPath: !String(status.stdout).includes(oldPath),
         killLeftInjection: /data-impeccable-csp-original/.test(indexAfterKill),
       };
     });
@@ -897,8 +883,6 @@ async function row3(row) {
       const moved2 = movedPath(first, 'b');
       renameSync(second, moved2);
       paths.push(moved2);
-      const statusBefore = H.engine('live-status', [], { cwd: moved2 });
-      const journal = existsSync(join(moved2, '.phoenix-ui/live/inject-journal.json')) ? readText(moved2, '.phoenix-ui/live/inject-journal.json') : null;
       s = await bootAt(moved2);
       const start = s.live.result.json;
       const inject = s.inject.json;
@@ -911,7 +895,7 @@ async function row3(row) {
       const mentionsOld = phoenixFiles.filter((f) => {
         try { const t = readText(moved2, f); return oldForms.some((p) => t.includes(p)); } catch { return false; }
       });
-      Object.assign(e, { first, second, moved2, statusBefore: statusBefore.json ?? statusBefore.stdout, journalBefore: journal, start, inject,
+      Object.assign(e, { first, second, moved2, start, inject,
         stop: out.stop, helper: H.processRecord('stopped helper', helper), indexAfterStop: index,
         gitStatus: H.git(moved2, ['status', '--porcelain', '--untracked-files=all']), phoenixFiles, filesMentioningOldPaths: mentionsOld });
       return {

@@ -8,41 +8,36 @@ use crate::browser_assets::{
     MODERN_SCREENSHOT_JS,
 };
 use crate::event_validation::validate_event;
-use crate::json_error::json_parse_error;
 use crate::live_http::{
-    read_request_deadline, send_response, set_header_timeout, watch_close, Request, Response,
-    StreamResponse, Ticket, Turnstile, READ_REQUEST_DEADLINE,
+    read_request, send_response, watch_close, Request, Response, StreamResponse, Ticket, Turnstile,
+    READ_TIMEOUT,
 };
 use crate::manual_edits::apply as manual_apply;
 use crate::manual_edits::buffer as manual_buffer;
 use crate::paths::{
-    live_annotations_dir, live_dir, read_live_server_info, remove_live_server_info,
-    write_live_server_info,
+    live_annotations_dir, read_live_server_info, remove_live_server_info, write_live_server_info,
 };
 use crate::random::random_uuid;
 use crate::roots::enter_live_root;
 use crate::server_state::{
-    lease_event, lock, now_i64, resolve_project_context, truthy, ServerState, Shared,
+    deliver_event, lock, now_i64, resolve_project_context, truthy, ServerState, Shared,
     DEFAULT_POLL_TIMEOUT, SSE_HEARTBEAT_INTERVAL_MS,
 };
-use crate::session::create_live_session_store;
 use crate::svelte_component::{
     bump_svelte_component_preview_revision, compile_check_variants,
-    remove_all_svelte_component_sessions, sweep_inactive_svelte_component_sessions,
+    remove_all_svelte_component_sessions,
 };
-use crate::svelte_sessions::apply_deferred_svelte_component_accepts;
-use crate::util::{exists, jsp, println, read_dir_names_raw, safe_read, Env};
+use crate::util::{exists, jsp, println, safe_read, Env};
 use impeccable_common::Io;
 use serde_json::{json, Map, Value};
 use std::net::{TcpListener, TcpStream};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 const MAX_ANNOTATION_BYTES: usize = 10 * 1024 * 1024;
 const MAX_JSON_BODY: usize = 64 * 1024 * 1024;
-const ACCEPT_RECEIPT_MAX_AGE_MS: f64 = 14.0 * 24.0 * 60.0 * 60.0 * 1000.0;
 
 static SIGNALED: AtomicBool = AtomicBool::new(false);
 
@@ -78,7 +73,7 @@ Endpoints:
   /manual-edit-commit  Apply staged browser copy edits
   /manual-edit-discard Discard staged browser copy edits
   /source              Raw source file reader (no-HMR fallback)
-  /status              Durable recovery status (token-protected)
+  /status              Server and session status (token-protected)
   /health              Health check";
 
 pub fn run(args: &[String], io: &mut Io) -> i32 {
@@ -149,7 +144,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     }
 
     let token = random_uuid();
-    let store = create_live_session_store(&cwd, &env, None);
     let (log_tx, log_rx) = channel::<(bool, String)>();
     let debug_events = env
         .get("PHOENIX_UI_LIVE_DEBUG_EVENTS")
@@ -171,20 +165,14 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
             exit_timer_gen: 0,
             exit_timer_active: false,
             session_dir: None,
-            store,
-            lease_timer_gen: 0,
-            lease_timer_active: false,
+            store: Default::default(),
             manual_edit_activity: None,
             next_manual_edit_seq: 1,
             pending_apply_deferreds: Vec::new(),
             last_poll_at: 0,
-            timed_out_apply_ids: Vec::new(),
             next_poll_id: 1,
             next_client_id: 1,
-            next_apply_timer_gen: 0,
             pending_agent_targets: Vec::new(),
-            next_agent_target_timer_gen: 0,
-            resolved_agent_targets: Vec::new(),
             hide_live_bar: false,
             shutting_down: false,
             cleaned_up: false,
@@ -196,77 +184,9 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         })
     });
 
-    // Startup sweeps (JS order).
-    {
-        let mut st = lock(&shared);
-        manual_apply::rollback_transaction(
-            &mut st,
-            None,
-            "manual_edit_server_start_recovered_abandoned_transaction",
-        );
-        // applyLegacyDeferredAcceptsOnStartup
-        let deferred = apply_deferred_svelte_component_accepts(&cwd, &env);
-        let applied = deferred
-            .get("applied")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0);
-        let failed = deferred.get("failed").and_then(|v| v.as_u64()).unwrap_or(0);
-        if applied > 0 || failed > 0 {
-            io.out(&format!(
-                "[phoenix-ui] applied legacy deferred Svelte component accepts: {}\n",
-                serde_json::to_string(&deferred).unwrap_or_default()
-            ));
-        }
-        // sweepOrphanSvelteComponentSessionsOnStartup
-        let active_ids: Vec<String> = st
-            .store
-            .list_active_sessions()
-            .iter()
-            .filter_map(|s| s.get("id").and_then(|v| v.as_str()).map(String::from))
-            .filter(|s| !s.is_empty())
-            .collect();
-        let sweep = sweep_inactive_svelte_component_sessions(&active_ids, &cwd);
-        let removed_n = sweep
-            .get("removed")
-            .and_then(|v| v.as_array())
-            .map(|a| a.len())
-            .unwrap_or(0);
-        if removed_n > 0 || sweep.get("removedRoot") == Some(&Value::Bool(true)) {
-            io.out(&format!(
-                "[phoenix-ui] swept orphaned Svelte component sessions: {}\n",
-                serde_json::to_string(&sweep).unwrap_or_default()
-            ));
-        }
-        // sweepStaleAcceptReceiptsOnStartup
-        let receipts = jsp::join(&[&live_dir(&cwd, &env), "accept-receipts"]);
-        if exists(&receipts) {
-            let cutoff = crate::util::now_ms() - ACCEPT_RECEIPT_MAX_AGE_MS;
-            let mut removed = 0;
-            for name in read_dir_names_raw(&receipts).unwrap_or_default() {
-                if !name.ends_with(".json") && !name.ends_with(".tmp") {
-                    continue;
-                }
-                let file = jsp::join(&[&receipts, &name]);
-                let mtime = impeccable_context::util::mtime_ms(&file);
-                match mtime {
-                    Some(m) if m >= cutoff => continue,
-                    None => continue,
-                    _ => {}
-                }
-                if std::fs::remove_file(&file).is_ok() {
-                    removed += 1;
-                }
-            }
-            if removed > 0 {
-                io.out(&format!(
-                    "[phoenix-ui] removed {} accept receipt(s) older than 14 days\n",
-                    removed
-                ));
-            }
-        }
-        st.restore_pending_events_from_store();
-        manual_apply::prune_stale_evidence(&st);
-    }
+    // Sessions live in memory: Svelte previews a previous helper left behind
+    // (it crashed before its shutdown cleanup) belong to nobody.
+    remove_all_svelte_component_sessions(&cwd);
 
     // Port
     let port_arg = argv.iter().find(|a| a.starts_with("--port="));
@@ -333,12 +253,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     // Accept loop. Tickets are issued here, in accept order, so handlers can
     // observe each other in arrival order (see `Turnstile`).
     let turnstile = Arc::new(Turnstile::default());
-    // Defense in depth against a connection flood (slow-loris fan-out, fd/thread
-    // exhaustion): cap concurrent in-flight handlers. Over the cap, the socket
-    // is closed before a ticket is issued, so it never enters the lane. The cap
-    // is generous; legitimate local tooling never approaches it.
-    let active_connections = Arc::new(AtomicUsize::new(0));
-    const MAX_CONCURRENT_CONNECTIONS: usize = 512;
     loop {
         // Drain console output from worker threads.
         while let Ok((is_err, line)) = log_rx.try_recv() {
@@ -358,20 +272,9 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
                 // Accepted sockets may inherit the listener's non-blocking
                 // flag (BSD/macOS); connection threads block on reads.
                 let _ = stream.set_nonblocking(false);
-                if active_connections.load(Ordering::SeqCst) >= MAX_CONCURRENT_CONNECTIONS {
-                    // Over the cap: drop before issuing a ticket, so a flood of
-                    // stalled sockets cannot enter (or wedge) the lane.
-                    let _ = stream.shutdown(std::net::Shutdown::Both);
-                    continue;
-                }
-                active_connections.fetch_add(1, Ordering::SeqCst);
-                let active = active_connections.clone();
                 let shared = shared.clone();
                 let ticket = turnstile.issue();
-                std::thread::spawn(move || {
-                    handle_connection(shared, stream, ticket);
-                    active.fetch_sub(1, Ordering::SeqCst);
-                });
+                std::thread::spawn(move || handle_connection(shared, stream, ticket));
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 std::thread::sleep(Duration::from_millis(10));
@@ -511,8 +414,6 @@ fn shutdown(shared: &Shared) {
     st.cleaned_up = true;
     remove_all_svelte_component_sessions(&st.cwd);
     remove_live_server_info(&st.cwd, &st.env);
-    st.lease_timer_gen += 1;
-    st.lease_timer_active = false;
     if let Some(dir) = st.session_dir.take() {
         let _ = std::fs::remove_dir_all(dir);
     }
@@ -562,7 +463,7 @@ fn is_loopback_origin(origin: &str) -> bool {
 /// does the SSE stream: `handle_sse` releases its ticket two statements after
 /// it registers anyway, but taking a turn first means the registration waits
 /// behind every connection accepted before it, and a peer that stalls
-/// mid-request holds the lane for the whole `READ_REQUEST_DEADLINE` (10s).
+/// mid-request holds the lane for the whole `READ_TIMEOUT` (10s).
 /// A `done` broadcast that lands in that window reaches an empty client set
 /// and is gone for good, which is one way a reconnecting tab sits at the
 /// generating loader forever (issue #719). Registering early can only make a
@@ -607,16 +508,8 @@ fn text_res(status: u16, content_type: Option<&str>, body: &str) -> Response {
 }
 
 fn handle_connection(shared: Shared, mut stream: TcpStream, mut ticket: Ticket) {
-    set_header_timeout(&stream);
-    // Read the whole request under a total wall-clock deadline. Without it a
-    // slow-drip or silent peer accepted first would pin its ticket here and
-    // wedge every later mutation (Fable BLOCKER, triage D3); the deadline
-    // force-drops such a connection and releases its ticket within the bound.
-    let Some(req) = read_request_deadline(
-        &stream,
-        MAX_JSON_BODY.max(MAX_ANNOTATION_BYTES + 1),
-        READ_REQUEST_DEADLINE,
-    ) else {
+    let _ = stream.set_read_timeout(Some(READ_TIMEOUT));
+    let Some(req) = read_request(&stream, MAX_JSON_BODY.max(MAX_ANNOTATION_BYTES + 1)) else {
         return;
     };
     let _ = stream.set_read_timeout(None);
@@ -843,7 +736,7 @@ fn handle_connection(shared: Shared, mut stream: TcpStream, mut ticket: Ticket) 
             );
             if md_stat.is_some() {
                 let md = md_path.as_deref().and_then(safe_read).unwrap_or_default();
-                match crate::design_md::parse_design_md(&md) {
+                match impeccable_context::design_parser::parse_design_md(&md) {
                     Ok(v) => {
                         response.insert("parsed".into(), v);
                     }
@@ -858,12 +751,10 @@ fn handle_connection(shared: Shared, mut stream: TcpStream, mut ticket: Ticket) 
                     Ok(v) => {
                         response.insert("sidecar".into(), v);
                     }
-                    Err(_) => {
-                        let msg = json_parse_error(&raw)
-                            .unwrap_or_else(|| "Unexpected token".to_string());
+                    Err(e) => {
                         response.insert(
                             "sidecarError".into(),
-                            json!(format!("Failed to parse .phoenix-ui/design.json: {}", msg)),
+                            json!(format!("Failed to parse .phoenix-ui/design.json: {}", e)),
                         );
                     }
                 }
@@ -915,18 +806,10 @@ fn handle_connection(shared: Shared, mut stream: TcpStream, mut ticket: Ticket) 
                 text_res(200, Some("text/html; charset=utf-8"), &content),
             );
         }
-        ("/events", "GET") => handle_sse(
-            &shared,
-            stream,
-            &cors,
-            token_ok,
-            req.query_get("clientId").map(|s| s.to_string()),
-            &mut ticket,
-        ),
+        ("/events", "GET") => handle_sse(&shared, stream, &cors, token_ok, &mut ticket),
         ("/manual-edit-stash", "POST")
         | ("/manual-edit-stash", "GET")
         | ("/manual-edit-commit", "POST")
-        | ("/manual-edit-repair-decision", "POST")
         | ("/manual-edit-discard", "POST")
         | ("/manual-edit", "POST") => {
             handle_manual_edit_route(&shared, &mut stream, &cors, &req, &token_now, &mut ticket)
@@ -1054,7 +937,6 @@ fn handle_sse(
     stream: TcpStream,
     cors: &[(String, String)],
     token_ok: bool,
-    agent_client_id: Option<String>,
     ticket: &mut Ticket,
 ) {
     let mut stream = stream;
@@ -1078,7 +960,7 @@ fn handle_sse(
             }))
             .unwrap_or_default()
         );
-        let (id, rx, tx) = st.add_sse_client(agent_client_id);
+        let (id, rx, tx) = st.add_sse_client();
         (id, rx, tx, frame)
     };
     // Registered; the stream now parks, so let later requests through.
@@ -1188,25 +1070,16 @@ fn handle_events_post(
         respond(stream, cors, json_res(400, json!({ "error": error })));
         return;
     }
-    // A generate event may name the agent target it serves. The helper
-    // resolves that request from the event as well as from
-    // /agent-target-result, so a page that dies between Go and its result
-    // cannot leave the request pending for a second Go elsewhere. The
-    // envelope never reaches the journal or the poller.
+    // An agent-initiated Go (the generate command) names the agent target it
+    // serves. The envelope never reaches the session or the poller; the
+    // `origin` marker does, so the poll hands its handler the fast-path
+    // instructions instead of the interactive planning ceremony.
     let mut msg = msg;
     let mut msg_obj = msg_obj;
-    let agent_target = if ty == "generate" {
-        msg_obj.remove("agentTarget");
-        msg.as_object_mut().and_then(|o| o.remove("agentTarget"))
-    } else {
-        None
-    };
-    if agent_target.is_some() {
-        // An agent-initiated Go (the generate command): the poll hands its
-        // handler the fast-path instructions instead of the interactive
-        // planning ceremony. The marker rides in the journal and the queue.
+    if ty == "generate" && msg_obj.remove("agentTarget").is_some() {
         msg_obj.insert("origin".into(), json!("agent"));
         if let Some(o) = msg.as_object_mut() {
+            o.remove("agentTarget");
             o.insert("origin".into(), json!("agent"));
         }
     }
@@ -1252,25 +1125,6 @@ fn handle_events_post(
             return;
         }
     }
-    if let Some(envelope) = agent_target.as_ref().and_then(Value::as_object) {
-        if let Some(refusal) = st.agent_target_refusal(envelope, id_str.as_deref()) {
-            // A superseded Go: this page's lease lapsed while it was still
-            // capturing and another page served the request, or the
-            // request was already answered (a timeout or a failure the CLI
-            // has reported). Journal nothing, so one request never gets a
-            // second session, or a session nobody was told about.
-            drop(st);
-            let mut body = json!({
-                "error": "agent_target_already_served",
-                "targetId": envelope.get("targetId").cloned().unwrap_or(Value::Null),
-            });
-            if let Some(sid) = refusal.session_id {
-                body["sessionId"] = Value::String(sid);
-            }
-            respond(stream, cors, json_res(409, body));
-            return;
-        }
-    }
     let missed = st.detect_missed_generation_completion(&msg_obj);
     if id_truthy {
         if let Err(e) = st.store.append_event(&msg) {
@@ -1305,13 +1159,6 @@ fn handle_events_post(
     if ty != "checkpoint" && ty != "variant_mounted" && !orphaned_discard {
         st.enqueue_event(msg_obj);
     }
-    if let Some(Value::Object(envelope)) = agent_target {
-        if let (Some(Value::String(target_id)), Some(result @ Value::Object(_))) =
-            (envelope.get("targetId"), envelope.get("result"))
-        {
-            st.resolve_agent_target(target_id, result.clone());
-        }
-    }
     drop(st);
     respond(stream, cors, json_res(200, json!({ "ok": true })));
 }
@@ -1321,7 +1168,7 @@ fn parse_int_or(v: Option<&str>, default: i64) -> i64 {
         Some(s) if !s.is_empty() => {
             let n = impeccable_core::js::parse_int(s, 10);
             if n.is_nan() {
-                // JS: setTimeout(NaN) fires immediately; NaN lease means never leased.
+                // JS: setTimeout(NaN) fires immediately.
                 i64::MIN
             } else {
                 n as i64
@@ -1366,8 +1213,6 @@ fn handle_poll_get(
         return;
     }
     let timeout = parse_int_or(req.query_get("timeout"), DEFAULT_POLL_TIMEOUT);
-    let lease_raw = parse_int_or(req.query_get("leaseMs"), 30000);
-    let lease_ms = if lease_raw == i64::MIN { 0 } else { lease_raw };
     let types = parse_poll_types(req.query_get("types"));
     // `id=`: only that session's events (the generate verb collecting its
     // own generate event leaves every other session's queue alone).
@@ -1379,18 +1224,18 @@ fn handle_poll_get(
     let mut st = lock(shared);
     st.last_poll_at = now_i64();
     if let Some(idx) = st.find_available_pending_event(types.as_deref(), event_id.as_deref()) {
-        st.pending_events[idx].lease_until = now_i64() + lease_ms;
+        st.pending_events[idx].delivered = true;
         let seq = st.pending_events[idx].seq;
         let event = st.pending_events[idx].event.clone();
         drop(st);
-        // Leasing may run the generation preflight (a child process); the
+        // Delivery may run the generation preflight (a child process); the
         // arrival-order claim ends here.
         ticket.release();
-        let event = lease_event(shared, seq, event, lease_ms);
+        let event = deliver_event(shared, seq, event);
         respond(&mut stream, cors, json_res(200, Value::Object(event)));
         return;
     }
-    let (poll_id, rx) = st.park_poll(lease_ms, types, event_id);
+    let (poll_id, rx) = st.park_poll(types, event_id);
     drop(st);
     ticket.release();
     let done = Arc::new(AtomicBool::new(false));
@@ -1418,7 +1263,7 @@ fn handle_poll_get(
                 json!({ "type": "timeout" })
             } else {
                 drop(st);
-                // Taken by a flush: the lease thread will deliver.
+                // Taken by a flush: its delivery thread will send.
                 rx.recv().unwrap_or_else(|_| json!({ "type": "exit" }))
             }
         }
@@ -1448,11 +1293,7 @@ fn session_file_metadata_from_poll_reply(file: Option<&Value>, cwd: &str) -> Map
     if !normalized.ends_with("/manifest.json") && normalized != "manifest.json" {
         return base;
     }
-    if !normalized.contains(".phoenix-ui/live/previews/")
-        && !normalized.contains("node_modules/.phoenix-ui-live/")
-        && !normalized.contains("src/lib/impeccable/")
-        && !normalized.contains("/.phoenix-ui-live/")
-    {
+    if !normalized.contains("node_modules/.phoenix-ui-live/") {
         return base;
     }
     let full = jsp::resolve(cwd, &[&normalized]);
@@ -1519,19 +1360,16 @@ fn infer_source_event_type(st: &ServerState, msg: &Map<String, Value>) -> Option
                 Some("generate".into())
             }
         }
-        "error" => {
-            let now = now_i64();
-            entries
-                .iter()
-                .find(|e| e.lease_until != 0 && e.lease_until > now)
-                .and_then(|e| {
-                    e.event
-                        .get("type")
-                        .and_then(|v| v.as_str())
-                        .map(String::from)
-                })
-                .or_else(|| Some("generate".into()))
-        }
+        "error" => entries
+            .iter()
+            .find(|e| e.delivered)
+            .and_then(|e| {
+                e.event
+                    .get("type")
+                    .and_then(|v| v.as_str())
+                    .map(String::from)
+            })
+            .or_else(|| Some("generate".into())),
         _ => None,
     }
 }
@@ -1668,79 +1506,12 @@ fn handle_poll_post(
                 }
             }
         }
-        // 2. Timed-out apply id
-        if st.timed_out_apply_ids.iter().any(|(k, _)| k == id) {
-            let rollback = manual_apply::rollback_timed_out_reply(&mut st, &msg);
-            let mut details = Map::new();
-            details.insert("id".into(), msg_id_val.clone());
-            details.insert(
-                "rolledBackFileCount".into(),
-                json!(rollback
-                    .get("rolledBackFiles")
-                    .and_then(|a| a.as_array())
-                    .map(|a| a.len())
-                    .unwrap_or(0)),
-            );
-            details.insert(
-                "rollbackFailureCount".into(),
-                json!(rollback
-                    .get("rollbackFailures")
-                    .and_then(|a| a.as_array())
-                    .map(|a| a.len())
-                    .unwrap_or(0)),
-            );
-            st.record_manual_edit_activity("manual_edit_apply_stale_reply_rejected", details);
-            let mut body = Map::new();
-            body.insert("error".into(), json!("stale_manual_edit_apply_reply"));
-            if let Some(o) = rollback.as_object() {
-                for (k, v) in o {
-                    body.insert(k.clone(), v.clone());
-                }
-            }
-            drop(st);
-            respond(stream, cors, json_res(409, Value::Object(body)));
-            return;
-        }
     }
     // 3. sourceEventType
     let source_event_type: Option<String> = match msg.get("sourceEventType") {
         Some(v) if truthy(Some(v)) => Some(js_display(v)),
         _ => infer_source_event_type(&st, &msg),
     };
-    // 4. retry
-    if msg_type.as_deref() == Some("retry") {
-        let released = st.release_pending_event(msg_id.as_deref(), source_event_type.as_deref());
-        if released.is_none() {
-            let has_id = truthy(msg.get("id"));
-            let mut body = Map::new();
-            body.insert(
-                "error".into(),
-                json!(if has_id {
-                    "unknown_poll_retry_id"
-                } else {
-                    "missing_poll_retry_id"
-                }),
-            );
-            if let Some(v) = msg.get("id") {
-                body.insert("id".into(), v.clone());
-            }
-            drop(st);
-            respond(
-                stream,
-                cors,
-                json_res(if has_id { 404 } else { 400 }, Value::Object(body)),
-            );
-            return;
-        }
-        st.flush_pending_polls();
-        drop(st);
-        respond(
-            stream,
-            cors,
-            json_res(200, json!({ "ok": true, "released": true })),
-        );
-        return;
-    }
     // 5. steer_done needs file or message
     let pending_before = st
         .find_pending_event_by_id(msg_id.as_deref(), source_event_type.as_deref())
@@ -1771,20 +1542,17 @@ fn handle_poll_post(
     // 6. Acknowledge
     let acknowledged =
         st.acknowledge_pending_event(msg_id.as_deref(), source_event_type.as_deref());
-    let mut skip_journal_reply = false;
-    let mut existing_session: Option<Map<String, Value>> = None;
-    if acknowledged.is_none() {
-        if let Some(id) = msg_id.as_deref().filter(|s| !s.is_empty()) {
-            if let Ok(Some(snapshot)) = st.store.get_snapshot(id, true) {
-                if truthy(snapshot.get("updatedAt")) {
-                    let phase = snapshot.get("phase").and_then(|p| p.as_str()).unwrap_or("");
-                    skip_journal_reply = phase == "completed" || phase == "discarded";
-                    existing_session = Some(snapshot);
-                }
-            }
-        }
-    }
-    if acknowledged.is_none() && existing_session.is_none() {
+    // A reply without a queued event still counts when it names a known
+    // session (live-complete); a finished session takes no further events.
+    let known_phase = msg_id.as_deref().and_then(|id| st.store.get(id)).map(|s| {
+        s.get("phase")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string()
+    });
+    let skip_session_reply =
+        acknowledged.is_none() && matches!(known_phase.as_deref(), Some("completed" | "discarded"));
+    if acknowledged.is_none() && known_phase.is_none() {
         let mut details = Map::new();
         details.insert(
             "id".into(),
@@ -1855,8 +1623,8 @@ fn handle_poll_post(
         let _ = bump_svelte_component_preview_revision(&id, &cwd);
         st = lock(shared);
     }
-    // 9. Journal
-    if truthy(msg.get("id")) && !skip_journal_reply {
+    // 9. Session state
+    if truthy(msg.get("id")) && !skip_session_reply {
         let event_type = match msg_type.as_deref() {
             Some("steer_done") => "steer_done",
             Some("discard") | Some("discarded") => "discarded",
@@ -2112,77 +1880,6 @@ fn handle_manual_edit_route(
         ("/manual-edit-commit", "POST") => {
             handle_manual_edit_commit(shared, stream, cors, req, token_ok, &cwd, &env, ticket)
         }
-        ("/manual-edit-repair-decision", "POST") => {
-            let payload: Value = if req.body.is_empty() {
-                json!({})
-            } else {
-                match parse_json_body(req) {
-                    Some(v) => v,
-                    None => {
-                        respond(
-                            stream,
-                            cors,
-                            json_res(400, json!({ "error": "Invalid JSON" })),
-                        );
-                        return;
-                    }
-                }
-            };
-            let tok = payload
-                .get("token")
-                .and_then(|t| t.as_str())
-                .filter(|s| !s.is_empty())
-                .or_else(|| req.query_get("token"));
-            if tok != Some(token) {
-                respond(stream, cors, text_res(401, None, "Unauthorized"));
-                return;
-            }
-            let page_url: Value = match payload.get("pageUrl") {
-                Some(v) if truthy(Some(v)) => v.clone(),
-                _ => match req.query_get("pageUrl") {
-                    Some(s) if !s.is_empty() => json!(s),
-                    _ => Value::Null,
-                },
-            };
-            let action_raw = match payload.get("action") {
-                Some(v) if truthy(Some(v)) => js_display(v),
-                _ => req.query_get("action").unwrap_or("").to_string(),
-            };
-            let action = action_raw.trim().to_ascii_lowercase();
-            if action != "rollback" {
-                respond(
-                    stream,
-                    cors,
-                    json_res(
-                        400,
-                        json!({ "error": "unsupported_manual_edit_repair_decision", "action": action }),
-                    ),
-                );
-                return;
-            }
-            let mut st = lock(shared);
-            let page_url_str = page_url.as_str().map(String::from);
-            let rollback = manual_apply::rollback_transaction(
-                &mut st,
-                page_url_str.as_deref(),
-                "manual_edit_user_requested_rollback",
-            );
-            let (total, per_page) = manual_buffer::count_by_page(&cwd, &env);
-            let remaining = match page_url_str.as_deref() {
-                Some(pu) => per_page.get(pu).and_then(|v| v.as_u64()).unwrap_or(0) as usize,
-                None => total,
-            };
-            let mut response = Map::new();
-            response.insert("action".into(), json!(action));
-            response.insert("pageUrl".into(), page_url);
-            response.insert("rollback".into(), rollback.unwrap_or(Value::Null));
-            response.insert("remainingCount".into(), json!(remaining));
-            response.insert("totalCount".into(), json!(total));
-            response.insert("perPage".into(), Value::Object(per_page));
-            st.record_manual_edit_activity("manual_edit_repair_rollback_done", response.clone());
-            drop(st);
-            respond(stream, cors, json_res(200, Value::Object(response)));
-        }
         ("/manual-edit-discard", "POST") => {
             if !token_ok {
                 respond(stream, cors, text_res(401, None, "Unauthorized"));
@@ -2191,11 +1888,6 @@ fn handle_manual_edit_route(
             let page_url = req.query_get("pageUrl").map(String::from);
             let mut st = lock(shared);
             let buffer = manual_buffer::read_buffer(&cwd, &env);
-            let transaction_rollback = manual_apply::rollback_transaction(
-                &mut st,
-                page_url.as_deref(),
-                "manual_edit_discarded",
-            );
             let (discarded_entries, discarded): (Vec<Value>, usize) = match page_url.as_deref() {
                 Some(pu) => {
                     let entries: Vec<Value> = buffer
@@ -2257,23 +1949,6 @@ fn handle_manual_edit_route(
                         .collect(),
                 ),
             );
-            if let Some(tr) = &transaction_rollback {
-                let mut t = Map::new();
-                t.insert("id".into(), tr.get("id").cloned().unwrap_or(Value::Null));
-                t.insert(
-                    "rolledBackFiles".into(),
-                    Value::Array(files_summary(tr.get("rolledBackFiles"), usize::MAX, &cwd)),
-                );
-                if let Some(rf) =
-                    manual_apply::summarize_manual_diagnostics(tr.get("rollbackFailures"), &cwd)
-                {
-                    t.insert("rollbackFailures".into(), rf);
-                }
-                if let Some(s) = tr.get("skipped") {
-                    t.insert("skipped".into(), s.clone());
-                }
-                details.insert("transactionRollback".into(), Value::Object(t));
-            }
             details.insert("totalCount".into(), json!(total));
             st.record_manual_edit_activity("manual_edit_discarded", details);
             drop(st);
@@ -2318,28 +1993,7 @@ fn handle_manual_edit_commit(
     let page_url_val = page_url.as_deref().map(|s| json!(s)).unwrap_or(Value::Null);
     let async_mode = flag_truthy(req.query_get("async"));
     let repair_only = flag_truthy(req.query_get("repair"));
-    let existing_transaction = manual_apply::read_manual_apply_transaction(cwd, env);
-    if repair_only && existing_transaction.is_none() {
-        respond(
-            stream,
-            cors,
-            json_res(
-                409,
-                json!({ "error": "manual_edit_repair_transaction_missing" }),
-            ),
-        );
-        return;
-    }
     let mut st = lock(shared);
-    let recovered = if repair_only {
-        None
-    } else {
-        manual_apply::rollback_transaction(
-            &mut st,
-            page_url.as_deref(),
-            "manual_edit_commit_recovered_abandoned_transaction",
-        )
-    };
     let before = st.manual_edit_status();
     let before_total = before.get("totalCount").cloned().unwrap_or(json!(0));
     let before_per_page = before.get("perPage").cloned().unwrap_or(json!({}));
@@ -2355,32 +2009,6 @@ fn handle_manual_edit_commit(
     details.insert("repairOnly".into(), json!(repair_only));
     details.insert("pendingCount".into(), json!(pending_count));
     details.insert("totalCount".into(), before_total.clone());
-    details.insert(
-        "recoveredTransaction".into(),
-        match &recovered {
-            Some(r) => {
-                let mut m = Map::new();
-                m.insert("id".into(), r.get("id").cloned().unwrap_or(Value::Null));
-                m.insert(
-                    "reason".into(),
-                    r.get("reason").cloned().unwrap_or(Value::Null),
-                );
-                if let Some(s) = r.get("skipped") {
-                    m.insert("skipped".into(), s.clone());
-                }
-                if let Some(f) = r.get("rolledBackFiles") {
-                    m.insert("rolledBackFiles".into(), f.clone());
-                }
-                if let Some(rf) =
-                    manual_apply::summarize_manual_diagnostics(r.get("rollbackFailures"), cwd)
-                {
-                    m.insert("rollbackFailures".into(), rf);
-                }
-                Value::Object(m)
-            }
-            None => Value::Null,
-        },
-    );
     for (k, v) in summarize_pending_manual_edit_batch(cwd, env, page_url.as_deref()) {
         details.insert(k, v);
     }
@@ -2401,26 +2029,9 @@ fn handle_manual_edit_commit(
     }
     // The commit itself.
     let mut routed_provider = "subprocess";
-    let mut transaction: Option<Value> = None;
-    let mut commit_batch: Option<Value> = None;
-    if pending_count > 0 {
-        let transaction_batch = crate::manual_edits::evidence::build_manual_edit_evidence(
-            cwd,
-            env,
-            page_url.as_deref(),
-        );
-        if !repair_only && manual_apply::count_manual_apply_ops(&transaction_batch) > 0 {
-            transaction = Some(manual_apply::write_manual_apply_transaction(
-                cwd,
-                env,
-                &page_url_val,
-                &transaction_batch,
-            ));
-        } else if repair_only && existing_transaction.is_some() {
-            transaction = existing_transaction.clone();
-        }
-        commit_batch = Some(transaction_batch);
-    }
+    let commit_batch = (pending_count > 0).then(|| {
+        crate::manual_edits::evidence::build_manual_edit_evidence(cwd, env, page_url.as_deref())
+    });
     let requested_mode = env
         .get("PHOENIX_UI_LIVE_COPY_AGENT")
         .cloned()
@@ -2438,18 +2049,6 @@ fn handle_manual_edit_commit(
             None => 120000.0,
         }
     };
-    let transaction_id: Option<String> = transaction
-        .as_ref()
-        .and_then(|t| t.get("id"))
-        .and_then(|v| v.as_str())
-        .map(String::from)
-        .or_else(|| {
-            existing_transaction
-                .as_ref()
-                .and_then(|t| t.get("id"))
-                .and_then(|v| v.as_str())
-                .map(String::from)
-        });
     let result: Result<Value, String> = if use_chat {
         routed_provider = "chat";
         let shared_c = shared.clone();
@@ -2467,7 +2066,6 @@ fn handle_manual_edit_commit(
                 apply_batch_to_source: Some(&mut apply_cb),
                 chat_available: Some(&chat_active),
                 repair_only,
-                transaction_id: transaction_id.as_deref(),
                 batch: commit_batch.as_ref(),
             },
         )
@@ -2483,7 +2081,6 @@ fn handle_manual_edit_commit(
                 apply_batch_to_source: None,
                 chat_available: Some(&chat_active),
                 repair_only,
-                transaction_id: transaction_id.as_deref(),
                 batch: commit_batch.as_ref(),
             },
         )
@@ -2492,35 +2089,12 @@ fn handle_manual_edit_commit(
         Ok(r) => r,
         Err(message) => {
             let mut st = lock(shared);
-            if transaction.is_some() {
-                manual_apply::rollback_transaction(
-                    &mut st,
-                    page_url.as_deref(),
-                    "manual_edit_commit_exception",
-                );
-            }
             let mut details = Map::new();
             details.insert("pageUrl".into(), page_url_val.clone());
             details.insert("provider".into(), json!(routed_provider));
             details.insert("error".into(), json!("manual_edit_commit_failed"));
             details.insert("message".into(), json!(message));
-            details.insert(
-                "transactionId".into(),
-                transaction
-                    .as_ref()
-                    .and_then(|t| t.get("id"))
-                    .cloned()
-                    .unwrap_or(Value::Null),
-            );
             st.record_manual_edit_activity("manual_edit_commit_failed", details);
-            // finally: clear transaction (result undefined -> not kept)
-            if let Some(t) = &transaction {
-                manual_apply::clear_manual_apply_transaction(
-                    cwd,
-                    env,
-                    t.get("id").and_then(|v| v.as_str()),
-                );
-            }
             drop(st);
             if !async_mode {
                 respond(
@@ -2535,31 +2109,16 @@ fn handle_manual_edit_commit(
             return;
         }
     };
-    if let Some(t) = &transaction {
-        let keep = result.get("needsManualDecision") == Some(&Value::Bool(true));
-        if !keep {
-            manual_apply::clear_manual_apply_transaction(
-                cwd,
-                env,
-                t.get("id").and_then(|v| v.as_str()),
-            );
-        }
-    }
     let (total, per_page) = manual_buffer::count_by_page(cwd, env);
     let remaining = match page_url.as_deref() {
         Some(pu) => per_page.get(pu).and_then(|v| v.as_u64()).unwrap_or(0) as usize,
         None => total,
     };
-    let tid_val = transaction_id
-        .as_deref()
-        .map(|s| json!(s))
-        .unwrap_or(Value::Null);
     let mut st = lock(shared);
     if result.get("needsManualDecision") == Some(&Value::Bool(true)) {
         let mut details = Map::new();
         details.insert("pageUrl".into(), page_url_val.clone());
         details.insert("provider".into(), json!(routed_provider));
-        details.insert("transactionId".into(), tid_val);
         details.insert(
             "repair".into(),
             match result.get("repair") {
@@ -2622,21 +2181,6 @@ fn handle_manual_edit_commit(
         );
         if let Some(w) = manual_apply::summarize_manual_diagnostics(result.get("warnings"), cwd) {
             details.insert("warnings".into(), w);
-        }
-        details.insert(
-            "rolledBackFiles".into(),
-            Value::Array(files_summary(result.get("rolledBackFiles"), 20, cwd)),
-        );
-        if let Some(rf) =
-            manual_apply::summarize_manual_diagnostics(result.get("rollbackFailures"), cwd)
-        {
-            details.insert("rollbackFailures".into(), rf);
-        }
-        if let Some(Value::Array(_)) = result.get("unreportedFiles") {
-            details.insert(
-                "unreportedFiles".into(),
-                Value::Array(files_summary(result.get("unreportedFiles"), 20, cwd)),
-            );
         }
         details.insert(
             "noteCount".into(),
@@ -2955,9 +2499,8 @@ mod content_type_tests {
         assert!(!releases_ticket_up_front("/events", "OPTIONS"));
         assert!(!releases_ticket_up_front("/poll", "POST"));
         assert!(!releases_ticket_up_front("/stop", "GET"));
-        // The agent-target routes mutate the roll call and must keep arrival
-        // order too: a claim answered before the target it claims registers
-        // would deny a tab that should have been granted.
+        // The agent-target routes must keep arrival order too: a claim
+        // answered before the target it claims registers would be denied.
         assert!(!releases_ticket_up_front("/agent-target", "POST"));
         assert!(!releases_ticket_up_front("/agent-target-result", "POST"));
         assert!(!releases_ticket_up_front("/agent-target-claim", "POST"));

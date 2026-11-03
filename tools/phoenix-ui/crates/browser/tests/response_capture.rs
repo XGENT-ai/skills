@@ -95,7 +95,6 @@ fn response_capture_reads_original_bytes_and_preserves_repeated_url_ambiguity() 
         Some(&[99, 4, 0, 128][..])
     );
     assert_eq!(hits.load(Ordering::SeqCst), 2);
-    assert!(!repeated.changed_during_collection);
     assert!(!repeated.truncated);
     assert_eq!(repeated.responses[0].status, Some(200.0));
     assert_eq!(repeated.responses[0].mime_type, "application/octet-stream");

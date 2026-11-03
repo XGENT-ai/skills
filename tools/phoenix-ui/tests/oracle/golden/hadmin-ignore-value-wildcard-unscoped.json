@@ -1,6 +1,6 @@
 {
   "stdout": "",
-  "stderr": "Error: Wildcard value ignores must be scoped with --file <glob>, e.g. /impeccable hooks ignore-value design-system-font-size \"*\" --file \"src/widget.js\". To suppress the rule project-wide use /impeccable hooks ignore-rule design-system-font-size.\n",
+  "stderr": "Error: Wildcard value ignores must be scoped with --file <glob>, e.g. /phoenix-ui hooks ignore-value design-system-font-size \"*\" --file \"src/widget.js\". To suppress the rule project-wide use /phoenix-ui hooks ignore-rule design-system-font-size.\n",
   "exit": 1,
   "signal": null,
   "files": {}

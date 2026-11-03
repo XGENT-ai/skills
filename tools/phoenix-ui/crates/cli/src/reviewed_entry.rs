@@ -18,11 +18,8 @@ pub struct ReviewedEntryRenderer {
     pub session: Option<PathBuf>,
 }
 struct ReviewedEntry {
-    source: Box<dyn CapturedEntry>,
     evidence: EntryEvidence,
     approved: Option<ApprovedReference>,
-    session: Option<PathBuf>,
-    request: EntryRequest,
 }
 fn read(path: &Path) -> Result<Value, String> {
     serde_json::from_slice(&fs::read(path).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
@@ -169,17 +166,8 @@ impl EntryRenderer for ReviewedEntryRenderer {
             })
             .collect();
         Ok(Box::new(ReviewedEntry {
-            source,
             evidence: EntryEvidence { report, frames },
             approved,
-            session: self.session.clone(),
-            request: EntryRequest {
-                root: r.root.clone(),
-                artifact: r.artifact.clone(),
-                spec: r.spec.clone(),
-                reference: r.reference.clone(),
-                stage: r.stage,
-            },
         }))
     }
 }
@@ -189,16 +177,6 @@ impl CapturedEntry for ReviewedEntry {
     }
     fn approved_reference(&self) -> Option<&ApprovedReference> {
         self.approved.as_ref()
-    }
-    fn verify_current(&self) -> Result<(), String> {
-        self.source.verify_current()?;
-        if let Some(a) = &self.approved {
-            let current = reference(self.session.as_ref().unwrap(), &self.request)?;
-            if current.png != a.png || current.proof != a.proof {
-                return Err("human review changed during capture".into());
-            }
-        }
-        Ok(())
     }
 }
 impl ReviewedEntryRenderer {

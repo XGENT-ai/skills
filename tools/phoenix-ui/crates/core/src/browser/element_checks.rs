@@ -34,9 +34,10 @@ use crate::color::{
     Rgba,
 };
 use crate::constants::{BORDER_SAFE_TAGS, SAFE_TAGS};
+use crate::js::collapse_ws;
 use crate::js::{self, math_round, number_to_string, parse_float, parse_int, WS};
 use crate::js_ext_a::num_truthy;
-use crate::js_ext_b::utf16_len;
+use crate::js_ext_a::utf16_len;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -147,11 +148,6 @@ pub fn check_element_borders_dom(dom: &dyn Dom, el: ElId) -> Vec<RuleHit> {
 // ── shared helpers ────────────────────────────────────────────────────────
 
 re!(WS_RUN, format!("{}+", WS));
-
-/// JS `s.replace(/\s+/g, ' ')`.
-fn collapse_ws(s: &str) -> String {
-    WS_RUN.replace_all(s, " ").into_owned()
-}
 
 /// JS `Math.round(x)` rendered as `${...}`.
 fn round_str(x: f64) -> String {

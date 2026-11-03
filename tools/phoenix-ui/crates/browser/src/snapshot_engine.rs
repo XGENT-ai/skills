@@ -5,8 +5,7 @@
 //! not refuse `WebAssembly.Module`), URL mode now injects only the plain-JS
 //! snapshot producer (`browser-bundle/15-snapshot.js`), captures the page as
 //! JSON, and runs the exact same rule core natively in this process over
-//! [`SnapshotDom`] — the probe the Chrome extension already proved
-//! (WASM-BUNDLE.md in the detector repo, "The snapshot route"). No WebAssembly is compiled
+//! [`SnapshotDom`]. No WebAssembly is compiled
 //! next to the page, so a strict-CSP site is scanned without bypassing CSP and
 //! its blocked inline scripts stay blocked (the scan is passive again).
 //!

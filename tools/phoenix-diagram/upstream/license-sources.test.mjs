@@ -112,9 +112,9 @@ test('the production frozen-source gate includes the exact prepared license set'
   assert.equal(result.rustLicenses?.fileCount, 4);
 });
 
-test('production source verification refuses missing, changed or redirected license inputs without repair', t => {
+test('production source verification refuses missing or changed license inputs without repair', t => {
   const cases = ['missing-manifest', 'missing-identity', 'changed-manifest', 'missing-text', 'changed-text',
-    'self-rehashed', 'self-refreshed-source', 'changed-lock', 'symlink-file', 'symlink-directory'];
+    'self-rehashed', 'self-refreshed-source', 'changed-lock'];
   for (const kind of cases) {
     const directory = sourceFixture(t);
     const manifest = path.join(directory, 'assets/license-sources.json');
@@ -154,17 +154,6 @@ test('production source verification refuses missing, changed or redirected lice
       case 'changed-lock': {
         const lock = path.join(directory, 'Cargo.lock');
         fs.writeFileSync(lock, fs.readFileSync(lock, 'utf8').replace(pins[0][2], '0'.repeat(64)));
-        break;
-      }
-      case 'symlink-file': {
-        const target = path.join(directory, 'original-license');
-        fs.renameSync(license, target); fs.symlinkSync(target, license, 'file');
-        break;
-      }
-      case 'symlink-directory': {
-        const target = path.join(directory, 'original-licenses');
-        const folder = path.join(directory, 'assets/licenses');
-        fs.renameSync(folder, target); fs.symlinkSync(target, folder, process.platform === 'win32' ? 'junction' : 'dir');
         break;
       }
     }

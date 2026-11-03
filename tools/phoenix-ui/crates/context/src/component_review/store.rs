@@ -2,7 +2,6 @@ use super::manifest::{digest, freeze, relative, string, valid_box};
 use serde_json::{json, Value};
 use std::{
     fs,
-    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -12,46 +11,9 @@ pub fn read(path: &Path) -> Result<Value, String> {
 pub fn write(path: &Path, value: &Value) -> Result<(), String> {
     write_bytes(path, &serde_json::to_vec_pretty(value).unwrap())
 }
-/// Temp file plus rename, so a reader or a crash never sees a partial file.
-pub fn write_bytes(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-    let parent = path.parent().ok_or("missing parent")?;
-    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let name = path.file_name().ok_or("missing file name")?.to_string_lossy();
-    let temp = parent.join(format!(".{name}.tmp-{}-{n}", std::process::id()));
-    let result = (|| {
-        let mut f = fs::File::create(&temp)?;
-        f.write_all(bytes)?;
-        f.sync_all()?;
-        fs::rename(&temp, path)
-    })();
-    if result.is_err() {
-        let _ = fs::remove_file(&temp);
-    }
-    result.map_err(|e| e.to_string())
-}
-/// An OS lock on an open handle: the kernel releases it when the holder exits,
-/// so there is no stale-lock takeover and dropping never deletes another's lock.
-pub struct Lock(#[allow(dead_code)] fs::File);
-pub fn lock(dir: &Path) -> Result<Lock, String> {
-    fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(dir, fs::Permissions::from_mode(0o700)).map_err(|e| e.to_string())?;
-    }
-    // One writer across prepare, HTTP submission and restart.
-    let f = fs::OpenOptions::new().read(true).write(true).create(true).truncate(false)
-        .open(dir.join("review.lock")).map_err(|e| e.to_string())?;
-    for _ in 0..20 {
-        match f.try_lock() {
-            Ok(()) => return Ok(Lock(f)),
-            Err(fs::TryLockError::WouldBlock) => std::thread::sleep(std::time::Duration::from_millis(25)),
-            Err(fs::TryLockError::Error(e)) => return Err(e.to_string()),
-        }
-    }
-    Err("review is busy; retry shortly".into())
+fn write_bytes(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    fs::create_dir_all(path.parent().ok_or("missing parent")?).map_err(|e| e.to_string())?;
+    fs::write(path, bytes).map_err(|e| e.to_string())
 }
 pub fn session_dir(store: &Path, project: &Path, id: &str) -> PathBuf {
     store.join(digest(format!("{}\0{id}", project.display()).as_bytes()))
@@ -133,7 +95,12 @@ fn prepare_bound(
         return Err("review store must be outside the builder project".into());
     }
     let dir = session_dir(store, project, string(input, "id")?);
-    let _guard = lock(&dir)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).map_err(|e| e.to_string())?;
+    }
     let old = read(&dir.join("current.json")).ok();
     let journey = super::lifecycle::journey(project)?;
     let capture = if let Some(capturer) = capturer {
@@ -177,8 +144,6 @@ fn prepare_bound(
         }
         packet.as_object_mut().unwrap().remove("revision");
         packet["revision"] = json!(digest(&serde_json::to_vec(&packet).unwrap()));
-        // Detect source edits during rendering before committing a new review round.
-        sources_current(&json!({"project":project,"sources":sources}))?;
         captured.evidence
     } else {
         Value::Null
@@ -190,7 +155,6 @@ fn prepare_bound(
     } else {
         string(&packet, "revision")?.to_string()
     };
-    sources_current(&json!({"project":project,"sources":sources}))?;
     if old.as_ref().is_some_and(|o| {
         o["journey"] == journey && o["contentRevision"]
             .as_str()
@@ -248,7 +212,7 @@ fn prepare_bound(
     for (path, bytes) in files {
         let hash = digest(&bytes);
         let blob = blobs.join(&hash);
-        if fs::read(&blob).ok().is_none_or(|b| digest(&b) != hash) {
+        if !blob.exists() {
             write_bytes(&blob, &bytes)?;
         }
         hashes.insert(path, json!(hash));
@@ -305,7 +269,6 @@ pub fn sources_current(state: &Value) -> Result<(), String> {
     Ok(())
 }
 pub fn submit(dir: &Path, body: &Value) -> Result<Value, String> {
-    let _guard = lock(dir)?;
     let mut state = read(&dir.join("current.json"))?;
     if let Some(final_dir) = super::lifecycle::final_session(
         dir.parent().ok_or("missing review store")?,
@@ -440,7 +403,6 @@ pub fn submit(dir: &Path, body: &Value) -> Result<Value, String> {
 
 /// Update only an unsubmitted draft, retaining packet/source identity and old receipts.
 pub fn refresh_approvals(dir: &Path) -> Result<usize, String> {
-    let _guard = lock(dir)?;
     let mut state = read(&dir.join("current.json"))?;
     if !state["receipt"].is_null() {
         return Ok(0);

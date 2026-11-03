@@ -389,7 +389,13 @@ fn parse_ignore_color(value: &str) -> Option<IgnoreColor> {
             None => 1.0,
             Some(p) => parse_color_channel(p, ChannelFormat::Alpha)?,
         };
-        return Some(hsl_to_rgb(h, s, l, a));
+        let rgb = crate::design_system::hsl_to_rgb(h, s, l, a);
+        return Some(IgnoreColor {
+            r: rgb.r,
+            g: rgb.g,
+            b: rgb.b,
+            a,
+        });
     }
     None
 }
@@ -501,54 +507,6 @@ fn parse_color_channel(raw: &str, format: ChannelFormat) -> Option<f64> {
         return None;
     }
     Some(if round { math_round(value) } else { value })
-}
-
-fn hsl_to_rgb(hue: f64, saturation: f64, lightness: f64, alpha: f64) -> IgnoreColor {
-    let h = (((hue % 360.0) + 360.0) % 360.0) / 360.0;
-    if saturation == 0.0 {
-        let gray = clamp_byte(math_round(lightness * 255.0));
-        return IgnoreColor {
-            r: gray,
-            g: gray,
-            b: gray,
-            a: alpha,
-        };
-    }
-    let q = if lightness < 0.5 {
-        lightness * (1.0 + saturation)
-    } else {
-        lightness + saturation - lightness * saturation
-    };
-    let p = 2.0 * lightness - q;
-    let to_rgb = |t: f64| {
-        let mut channel = t;
-        if channel < 0.0 {
-            channel += 1.0;
-        }
-        if channel > 1.0 {
-            channel -= 1.0;
-        }
-        if channel < 1.0 / 6.0 {
-            return p + (q - p) * 6.0 * channel;
-        }
-        if channel < 1.0 / 2.0 {
-            return q;
-        }
-        if channel < 2.0 / 3.0 {
-            return p + (q - p) * (2.0 / 3.0 - channel) * 6.0;
-        }
-        p
-    };
-    IgnoreColor {
-        r: clamp_byte(math_round(to_rgb(h + 1.0 / 3.0) * 255.0)),
-        g: clamp_byte(math_round(to_rgb(h) * 255.0)),
-        b: clamp_byte(math_round(to_rgb(h - 1.0 / 3.0) * 255.0)),
-        a: alpha,
-    }
-}
-
-fn clamp_byte(value: f64) -> f64 {
-    js::math_min(255.0, js::math_max(0.0, value))
 }
 
 fn ignore_value_matches(rule: &str, entry_value: &str, finding_value: &str) -> bool {

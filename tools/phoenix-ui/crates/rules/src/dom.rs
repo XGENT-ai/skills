@@ -14,6 +14,7 @@ use impeccable_core::js;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+use crate::truncate_chars;
 use crate::{
     CONTROL_HEIGHT_MISMATCH, EMOJI_ICON, FONT_FAMILY_COUNT, REDRAWN_WINDOW_CHROME,
     UNLABELED_INLINE_SVG, WRAPPED_CONTROL_LABEL,
@@ -587,8 +588,4 @@ fn style_px(dom: &dyn Dom, el: ElId, property: &str) -> f64 {
     } else {
         value
     }
-}
-
-fn truncate_chars(value: &str, max: usize) -> String {
-    value.chars().take(max).collect()
 }

@@ -4,6 +4,6 @@
   "exit": 0,
   "signal": null,
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"index.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n"
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"index.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n"
   }
 }

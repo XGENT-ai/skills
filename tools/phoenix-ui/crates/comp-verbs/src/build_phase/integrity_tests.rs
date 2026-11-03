@@ -7,7 +7,7 @@ fn completion_is_scoped_and_detects_post_finish_edits() {
     ws.write("index.html", b"<main>First</main>");
     let mut io = ws.io();
     let argv = ["start", "--comp", "comp.png", "--artifact", "index.html", "--session-id", "owner"].map(String::from);
-    assert_eq!(run(&argv, &mut io, &no_organic_scan), 0);
+    assert_eq!(run(&argv, &mut io), 0);
     let mut state = load_state(&io).unwrap();
     assert_eq!(state["sessionId"], "owner");
     let status = crate::completion::report(&ws.path, Some(&state), Some("owner"));
@@ -18,12 +18,12 @@ fn completion_is_scoped_and_detects_post_finish_edits() {
     state["responsiveInputSha256"] = json!(crate::completion::input_hash(&ws.path));
     save_state(&io, &state);
     let finish = ["finish", "--disposition", "ship"].map(String::from);
-    assert_eq!(run(&finish, &mut io, &no_organic_scan), 0);
+    assert_eq!(run(&finish, &mut io), 0);
     let state = load_state(&io).unwrap();
     assert_eq!(crate::completion::report(&ws.path, Some(&state), Some("owner"))["status"], "complete");
     ws.write("styles.css", b"body{color:red}");
     assert_eq!(crate::completion::report(&ws.path, Some(&state), Some("owner"))["status"], "changed-after-finish");
-    assert_eq!(run(&finish, &mut io, &no_organic_scan), 2);
+    assert_eq!(run(&finish, &mut io), 2);
     assert_eq!(load_state(&io).unwrap()["phase"], "responsive");
     ws.write("index.html", b"<main>Changed after finish</main>");
     assert_eq!(crate::completion::report(&ws.path, Some(&state), Some("owner"))["status"], "changed-after-finish");
@@ -66,7 +66,13 @@ fn native_ship_rechecks_final_page_instead_of_signing_stale_phase_passes() {
     }
     save_state(&io, &state);
     // Even apparently successful saved gates cannot stand in for a native renderer.
-    assert_eq!(run(&["finish", "--disposition", "ship"].map(String::from), &mut io, &no_organic_scan), 2);
+    assert_eq!(
+        run(
+            &["finish", "--disposition", "ship"].map(String::from),
+            &mut io
+        ),
+        2
+    );
     let state = load_state(&io).unwrap();
     assert_eq!(state["phase"], "responsive");
     assert_eq!(state["phases"]["responsive"]["status"], "open");
@@ -81,7 +87,13 @@ fn ship_refuses_a_missing_required_phase() {
     let mut io = ws.io();
     let state = json!({"phase":"review","phases":{"review":{"status":"open"}},"finish":null});
     save_state(&io, &state);
-    assert_eq!(run(&["finish", "--disposition", "ship"].map(String::from), &mut io, &no_organic_scan), 2);
+    assert_eq!(
+        run(
+            &["finish", "--disposition", "ship"].map(String::from),
+            &mut io
+        ),
+        2
+    );
     assert!(load_state(&io).unwrap()["finish"].is_null());
 }
 
@@ -276,7 +288,7 @@ fn copied_comp_does_not_earn_an_ok_plate_receipt_or_advance() {
         artifact: None,
     };
     for _ in 0..5 {
-        let result = advance(&io, &mut state, false, None, &opts, &no_organic_scan, None);
+        let result = advance(&io, &mut state, false, None, &opts, None);
         assert!(!result.ok);
         assert_eq!(state["phase"], "plates");
         assert_eq!(state["plates"]["art"]["status"], "invalid");
@@ -350,7 +362,8 @@ fn accepted_file_hidden_in_render_still_blocks_hero() {
             HERO_MIN,
             "diff",
             Some("index.html"),
-            &no_organic_scan, None);
+            None,
+        );
         assert!(!g.ok);
         assert!(
             g.reasons.iter().any(|r| r.contains("missing")),
@@ -399,7 +412,8 @@ fn preflight_failure_replaces_stale_success_report() {
         HERO_MIN,
         "diff",
         None,
-        &no_organic_scan, None);
+        None,
+    );
     assert!(!gate.ok);
     let report: Value =
         serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
@@ -482,41 +496,40 @@ fn responsive_rejects_a_contradicted_control_even_above_the_overall_bar() {
 
 #[test]
 fn failed_evidence_writes_cannot_publish_success() {
-    for blocked_file in ["regions/button.png", "raw-report.json"] {
-        let (ws, mut state) = simple_hero_workspace();
-        let g = gate_hero(
-            &ws.io(),
-            &mut state,
-            "comp.png",
-            HERO_MIN,
-            "diff",
-            Some("index.html"),
-            &no_organic_scan, None);
-        assert!(g.ok, "fixture: {:?}", g.reasons);
-        let blocked = ws.path.join("diff").join(blocked_file);
-        std::fs::remove_file(&blocked).unwrap();
-        std::fs::create_dir(&blocked).unwrap();
-        let g = gate_hero(
-            &ws.io(),
-            &mut state,
-            "comp.png",
-            HERO_MIN,
-            "diff",
-            Some("index.html"),
-            &no_organic_scan, None);
-        assert!(!g.ok, "write failure must block: {blocked_file}");
-        assert_no_current_measurements(&ws);
-        let report: Value =
-            serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap())
-                .unwrap();
-        assert_eq!(report["gate"]["ok"], false);
-        assert_eq!(report["measurementsAvailable"], false);
-        assert!(report["gate"]["reasons"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|r| r.as_str().unwrap().contains("persist")));
-    }
+    let (ws, mut state) = simple_hero_workspace();
+    let g = gate_hero(
+        &ws.io(),
+        &mut state,
+        "comp.png",
+        HERO_MIN,
+        "diff",
+        Some("index.html"),
+        None,
+    );
+    assert!(g.ok, "fixture: {:?}", g.reasons);
+    let blocked = ws.path.join("diff/raw-report.json");
+    std::fs::remove_file(&blocked).unwrap();
+    std::fs::create_dir(&blocked).unwrap();
+    let g = gate_hero(
+        &ws.io(),
+        &mut state,
+        "comp.png",
+        HERO_MIN,
+        "diff",
+        Some("index.html"),
+        None,
+    );
+    assert!(!g.ok, "write failure must block");
+    assert_no_current_measurements(&ws);
+    let report: Value =
+        serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
+    assert_eq!(report["gate"]["ok"], false);
+    assert_eq!(report["measurementsAvailable"], false);
+    assert!(
+        g.reasons.iter().any(|r| r.contains("persist")),
+        "{:?}",
+        g.reasons
+    );
 }
 
 #[test]
@@ -588,37 +601,28 @@ fn folded_readings_keep_all_region_ids_without_becoming_unscoped() {
 }
 
 #[test]
-fn responsive_failures_replace_previous_success_evidence() {
-    for failure in ["missing-comp", "crop-write"] {
-        let (ws, mut state) = simple_hero_workspace();
-        let image = std::fs::read(ws.path.join("comp.png")).unwrap();
-        ws.write(".phoenix-ui/review/desktop.png", &image);
-        ws.write(".phoenix-ui/review/mobile.png", &image);
-        let good = gate_responsive(&ws.io(), &mut state, RESPONSIVE_MIN, "diff", None);
-        assert!(good.ok, "{:?}", good.reasons);
-        let report: Value =
-            serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap())
-                .unwrap();
-        assert_eq!(report["gate"]["ok"], true);
-        assert_eq!(report["interpretation"], "responsive-gate");
-        assert_eq!(report["regions"][0]["blocking"], false);
-        if failure == "missing-comp" {
-            std::fs::remove_file(ws.path.join("comp.png")).unwrap();
-        } else {
-            std::fs::remove_file(ws.path.join("diff/regions/button.png")).unwrap();
-            std::fs::create_dir(ws.path.join("diff/regions/button.png")).unwrap();
-        }
-        let bad = gate_responsive(&ws.io(), &mut state, RESPONSIVE_MIN, "diff", None);
-        assert!(!bad.ok);
-        assert_no_current_measurements(&ws);
-        let report: Value =
-            serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap())
-                .unwrap();
-        assert_eq!(report["gate"]["ok"], false, "{failure}");
-        assert_eq!(report["measurementsAvailable"], false);
-        assert_eq!(report["interpretation"], "responsive-gate");
-        assert_eq!(report["gate"]["reasons"], json!(bad.reasons));
-    }
+fn responsive_failure_replaces_previous_success_evidence() {
+    let (ws, mut state) = simple_hero_workspace();
+    let image = std::fs::read(ws.path.join("comp.png")).unwrap();
+    ws.write(".phoenix-ui/review/desktop.png", &image);
+    ws.write(".phoenix-ui/review/mobile.png", &image);
+    let good = gate_responsive(&ws.io(), &mut state, RESPONSIVE_MIN, "diff", None);
+    assert!(good.ok, "{:?}", good.reasons);
+    let report: Value =
+        serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
+    assert_eq!(report["gate"]["ok"], true);
+    assert_eq!(report["interpretation"], "responsive-gate");
+    assert_eq!(report["regions"][0]["blocking"], false);
+    std::fs::remove_file(ws.path.join("comp.png")).unwrap();
+    let bad = gate_responsive(&ws.io(), &mut state, RESPONSIVE_MIN, "diff", None);
+    assert!(!bad.ok);
+    assert_no_current_measurements(&ws);
+    let report: Value =
+        serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
+    assert_eq!(report["gate"]["ok"], false);
+    assert_eq!(report["measurementsAvailable"], false);
+    assert_eq!(report["interpretation"], "responsive-gate");
+    assert_eq!(report["gate"]["reasons"], json!(bad.reasons));
 }
 
 fn assert_no_current_measurements(ws: &Workspace) {
@@ -645,10 +649,20 @@ fn failed_preflight_clears_complete_evidence_for_both_gates() {
         let image = std::fs::read(ws.path.join("comp.png")).unwrap();
         ws.write(".phoenix-ui/review/desktop.png", &image);
         ws.write(".phoenix-ui/review/mobile.png", &image);
-        let run = |state: &mut Value| if responsive {
-            gate_responsive(&ws.io(), state, RESPONSIVE_MIN, "diff", None)
-        } else {
-            gate_hero(&ws.io(), state, "comp.png", HERO_MIN, "diff", Some("index.html"), &no_organic_scan, None)
+        let run = |state: &mut Value| {
+            if responsive {
+                gate_responsive(&ws.io(), state, RESPONSIVE_MIN, "diff", None)
+            } else {
+                gate_hero(
+                    &ws.io(),
+                    state,
+                    "comp.png",
+                    HERO_MIN,
+                    "diff",
+                    Some("index.html"),
+                    None,
+                )
+            }
         };
         assert!(run(&mut state).ok);
         ws.write("diff/regions/retired.png", &image);
@@ -665,81 +679,19 @@ fn failed_preflight_clears_complete_evidence_for_both_gates() {
 fn successful_repeat_removes_retired_region_crops() {
     let (ws, mut state) = simple_hero_workspace();
     ws.write("diff/regions/retired.png", b"old crop");
-    let gate = gate_hero(&ws.io(), &mut state, "comp.png", HERO_MIN, "diff", Some("index.html"), &no_organic_scan, None);
+    let gate = gate_hero(
+        &ws.io(),
+        &mut state,
+        "comp.png",
+        HERO_MIN,
+        "diff",
+        Some("index.html"),
+        None,
+    );
     assert!(gate.ok, "{:?}", gate.reasons);
     assert!(!ws.path.join("diff/regions/retired.png").exists());
     assert!(ws.path.join("diff/regions/button.png").is_file());
 }
-
-#[cfg(unix)]
-#[test]
-fn artifact_cleanup_does_not_follow_region_directory_symlinks() {
-    let (ws, mut state) = simple_hero_workspace();
-    ws.write("elsewhere/keep.png", b"unrelated image");
-    std::fs::create_dir_all(ws.path.join("diff")).unwrap();
-    std::os::unix::fs::symlink(ws.path.join("elsewhere"), ws.path.join("diff/regions")).unwrap();
-    let gate = gate_hero(&ws.io(), &mut state, "comp.png", HERO_MIN, "diff", Some("index.html"), &no_organic_scan, None);
-    assert!(gate.ok, "{:?}", gate.reasons);
-    assert_eq!(std::fs::read(ws.path.join("elsewhere/keep.png")).unwrap(), b"unrelated image");
-    assert!(!ws.path.join("elsewhere/button.png").exists());
-    assert!(ws.path.join("diff/regions/button.png").is_file());
-}
-
-#[cfg(unix)]
-#[test]
-fn artifact_cleanup_failure_blocks_the_gate() {
-    use std::os::unix::fs::PermissionsExt;
-    let (ws, mut state) = simple_hero_workspace();
-    ws.write("diff/regions/retired.png", b"stale crop");
-    let dir = ws.path.join("diff/regions");
-    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
-    let gate = gate_hero(&ws.io(), &mut state, "comp.png", HERO_MIN, "diff", Some("index.html"), &no_organic_scan, None);
-    if dir.exists() { std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap(); }
-    assert!(!gate.ok);
-    assert!(gate.reasons.iter().any(|r| r.contains("cannot clear comparison artifacts")), "{:?}", gate.reasons);
-    let report: Value = serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
-    assert_eq!(report["measurementsAvailable"], false);
-    assert_eq!(report["gate"]["ok"], false);
-    assert_no_current_measurements(&ws);
-    let quarantine = ws.path.join(report["artifactCleanup"]["quarantine"]["artifacts"]["regions"].as_str().expect("cleanup failure must identify quarantined evidence"));
-    assert!(quarantine.join("retired.png").is_file());
-    assert_eq!(
-        std::fs::metadata(&quarantine).unwrap().permissions().mode() & 0o777,
-        0o555
-    );
-    assert_eq!(report["artifactCleanup"]["quarantine"]["errors"], json!([]));
-    std::fs::set_permissions(quarantine, std::fs::Permissions::from_mode(0o755)).unwrap();
-}
-
-#[cfg(target_os = "macos")]
-#[test]
-fn read_only_comparison_directory_can_be_quarantined_without_changing_its_mode() {
-    use std::os::unix::fs::PermissionsExt;
-    let ws = Workspace::new();
-    ws.write("regions/retired.png", b"stale crop");
-    ws.write("notes.txt", b"keep unrelated files");
-    let source = ws.path.join("regions");
-    let parent = ws.path.join("quarantine");
-    std::fs::create_dir(&parent).unwrap();
-    let target = parent.join("regions");
-    std::fs::set_permissions(&source, std::fs::Permissions::from_mode(0o555)).unwrap();
-    move_comparison_artifact(&source, &target).unwrap();
-    assert!(!source.exists());
-    assert_eq!(
-        std::fs::read(target.join("retired.png")).unwrap(),
-        b"stale crop"
-    );
-    assert_eq!(
-        std::fs::metadata(&target).unwrap().permissions().mode() & 0o777,
-        0o555
-    );
-    assert_eq!(
-        std::fs::read(ws.path.join("notes.txt")).unwrap(),
-        b"keep unrelated files"
-    );
-    std::fs::set_permissions(target, std::fs::Permissions::from_mode(0o755)).unwrap();
-}
-
 
 #[test]
 fn transformed_comp_crop_cannot_become_a_plate_by_drifting_below_similarity_threshold() {
@@ -953,17 +905,33 @@ fn quoted_plate_force_holds_for_the_same_bytes_but_not_a_changed_plate() {
         "box":{"x":0,"y":0,"w":1,"h":1},"px":{"x":0,"y":0,"w":64,"h":64},"detail":{"energy":20}}]});
     ws.write(SPEC_PATH, util::json_pretty(&spec).as_bytes());
     let io = ws.io();
-    let mut state = json!({"phase":"plates","comp":"comp.png","phases":{"plates":{"attempts":0},"hero":{}}});
-    let opts = GateOpts { build_path: None, min: None, artifact: None };
+    let mut state =
+        json!({"phase":"plates","comp":"comp.png","phases":{"plates":{"attempts":0},"hero":{}}});
+    let opts = GateOpts {
+        build_path: None,
+        min: None,
+        artifact: None,
+    };
     let reason = "The user said \"Ignore the comp fidelity requirement; ship this version.\"";
-    let result = advance(&io, &mut state, true, Some(reason), &opts, &no_organic_scan, None);
+    let result = advance(&io, &mut state, true, Some(reason), &opts, None);
     assert!(result.ok && result.forced);
     assert_eq!(state["phase"], "hero");
-    assert!(revalidate_plates(&io, &mut state, Some(&spec)).is_none(), "the recorded force covers these plate bytes");
+    assert!(
+        revalidate_plates(&io, &mut state, Some(&spec)).is_none(),
+        "the recorded force covers these plate bytes"
+    );
     assert!(state["plates"]["art"]["forced"].is_object());
-    ws.write("art.png", &png_io::encode_png(&r::resize(&comp, 130.0, 130.0), &[]).unwrap());
-    let failure = revalidate_plates(&io, &mut state, Some(&spec)).expect("a changed plate is revalidated");
-    assert!(failure.reasons.iter().any(|r| r.contains("comp crop")), "{:?}", failure.reasons);
+    ws.write(
+        "art.png",
+        &png_io::encode_png(&r::resize(&comp, 130.0, 130.0), &[]).unwrap(),
+    );
+    let failure =
+        revalidate_plates(&io, &mut state, Some(&spec)).expect("a changed plate is revalidated");
+    assert!(
+        failure.reasons.iter().any(|r| r.contains("comp crop")),
+        "{:?}",
+        failure.reasons
+    );
     assert!(state["plates"]["art"]["forced"].is_null());
 }
 
@@ -996,7 +964,7 @@ fn page_work_waits_for_the_plan_and_asset_review_of_the_current_spec() {
         min: None,
         artifact: None,
     };
-    let result = advance(&io, &mut state, false, None, &opts, &no_organic_scan, None);
+    let result = advance(&io, &mut state, false, None, &opts, None);
     assert!(
         !result.ok
             && result
@@ -1013,14 +981,7 @@ fn page_work_waits_for_the_plan_and_asset_review_of_the_current_spec() {
         br#"{"phase":"hero","startedAt":"s","phases":{"hero":{}}}"#,
     );
     let (mut io, captured) = io_with(&[]);
-    assert_eq!(
-        run(
-            &["record", "hero"].map(String::from),
-            &mut io,
-            &no_organic_scan
-        ),
-        1
-    );
+    assert_eq!(run(&["record", "hero"].map(String::from), &mut io), 1);
     let err = String::from_utf8(captured.stderr.borrow().clone()).unwrap();
     assert!(
         err.contains("record hero refused")
@@ -1030,12 +991,12 @@ fn page_work_waits_for_the_plan_and_asset_review_of_the_current_spec() {
     );
     // advance from hero applies the same check, so a spec change after the plates closed cannot slip past it.
     let mut state = json!({"phase":"hero","comp":"comp.png","phases":{"plates":{"status":"closed"},"hero":{"attempts":0}}});
-    let result = advance(&io, &mut state, false, None, &opts, &no_organic_scan, None);
+    let result = advance(&io, &mut state, false, None, &opts, None);
     assert!(!result.ok && result.reasons.iter().any(|r| r.contains("plan and asset review")), "{:?}", result.reasons);
     // A plates advance forced with a quoted downgrade waived the review; the hero phase honours that.
     let mut forced = json!({"phase":"hero","comp":"comp.png","phases":{"plates":{"status":"closed","forced":{"reason":"quoted"}},"hero":{"attempts":0}}});
     assert!(hero_plan_review_refusal(&io, &forced).is_none());
-    let result = advance(&io, &mut forced, false, None, &opts, &no_organic_scan, None);
+    let result = advance(&io, &mut forced, false, None, &opts, None);
     assert!(!result.reasons.iter().any(|r| r.contains("plan and asset review")), "{:?}", result.reasons);
     // A hosted session fails closed: no named sessions, or sessions without an accepted review.
     let (hosted, _) = io_with(&[("PHOENIX_UI_COMPONENT_REVIEW_TOOL", "component_review")]);
@@ -1079,19 +1040,43 @@ fn page_work_waits_for_the_plan_and_asset_review_of_the_current_spec() {
     assert!(plan_review_refusal(&io_with(&[]).0).is_none());
 }
 
-struct ReviewedCapture(crate::entry_capture::EntryEvidence, Option<crate::entry_capture::ApprovedReference>);
+struct ReviewedCapture(
+    crate::entry_capture::EntryEvidence,
+    Option<crate::entry_capture::ApprovedReference>,
+);
 impl CapturedEntry for ReviewedCapture {
-    fn approved_reference(&self) -> Option<&crate::entry_capture::ApprovedReference> { self.1.as_ref() }
-    fn evidence(&self) -> &crate::entry_capture::EntryEvidence { &self.0 }
-    fn verify_current(&self) -> Result<(), String> { Ok(()) }
+    fn approved_reference(&self) -> Option<&crate::entry_capture::ApprovedReference> {
+        self.1.as_ref()
+    }
+    fn evidence(&self) -> &crate::entry_capture::EntryEvidence {
+        &self.0
+    }
 }
 /// Stands in for the reviewed native renderer: `approved` is what the user accepted.
-struct ReviewedRenderer { hero: Vec<u8>, approved: Option<Vec<u8>>, report: Value }
+struct ReviewedRenderer {
+    hero: Vec<u8>,
+    approved: Option<Vec<u8>>,
+    report: Value,
+}
 impl EntryRenderer for ReviewedRenderer {
     fn capture_entry(&self, _: &EntryRequest) -> Result<Box<dyn CapturedEntry>, String> {
-        let frame = crate::entry_capture::FrameEvidence { name: "hero".into(), png: self.hero.clone(), regions: vec![] };
-        Ok(Box::new(ReviewedCapture(crate::entry_capture::EntryEvidence { report: self.report.clone(), frames: vec![frame] },
-            self.approved.clone().map(|png| crate::entry_capture::ApprovedReference { png, proof: json!({"schema": "test-review"}) }))))
+        let frame = crate::entry_capture::FrameEvidence {
+            name: "hero".into(),
+            png: self.hero.clone(),
+            regions: vec![],
+        };
+        Ok(Box::new(ReviewedCapture(
+            crate::entry_capture::EntryEvidence {
+                report: self.report.clone(),
+                frames: vec![frame],
+            },
+            self.approved
+                .clone()
+                .map(|png| crate::entry_capture::ApprovedReference {
+                    png,
+                    proof: json!({"schema": "test-review"}),
+                }),
+        )))
     }
 }
 
@@ -1131,9 +1116,22 @@ fn run_reviewed_hero_min(capture: &Image, approved: Option<&Image>, html: &str, 
     let io = ws.io();
     let receipt = json!({"status":"ok","score":0.9,"file":"art.png","assetHash":sha256_file(&io,"art.png"),"compHash":sha256_file(&io,"comp.png"),"regionHash":sha256_bytes(util::json_pretty(&art).as_bytes()),"referenceHash":plate_reference_hash(&spec)});
     let mut state = json!({"comp":"comp.png","capturePolicy":"native-html-v1","plates":{"art":receipt},"phases":{"hero":{}}});
-    let renderer = ReviewedRenderer { hero: png(capture), approved: approved.map(png), report: json!({}) };
-    let gate = gate_hero(&io, &mut state, "unused.png", min, "diff", Some("index.html"), &no_organic_scan, Some(&renderer));
-    let report = serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
+    let renderer = ReviewedRenderer {
+        hero: png(capture),
+        approved: approved.map(png),
+        report: json!({}),
+    };
+    let gate = gate_hero(
+        &io,
+        &mut state,
+        "unused.png",
+        min,
+        "diff",
+        Some("index.html"),
+        Some(&renderer),
+    );
+    let report =
+        serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
     (gate, report)
 }
 
@@ -1304,10 +1302,24 @@ fn run_text_only_hero(capture: &Image, approved: Option<&Image>) -> (Gate, Value
          "box":{"x":0.6667,"y":0.725,"w":0.2667,"h":0.15},"px":{"x":160,"y":116,"w":64,"h":24}}]});
     ws.write(SPEC_PATH, util::json_pretty(&spec).as_bytes());
     let io = ws.io();
-    let mut state = json!({"comp":"comp.png","capturePolicy":"native-html-v1","phases":{"hero":{}}});
-    let renderer = ReviewedRenderer { hero: png(capture), approved: approved.map(png), report: json!({"captureMethod":"assembled-page-viewport"}) };
-    let gate = gate_hero(&io, &mut state, "unused.png", HERO_MIN, "diff", Some("index.html"), &no_organic_scan, Some(&renderer));
-    let report = serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
+    let mut state =
+        json!({"comp":"comp.png","capturePolicy":"native-html-v1","phases":{"hero":{}}});
+    let renderer = ReviewedRenderer {
+        hero: png(capture),
+        approved: approved.map(png),
+        report: json!({"captureMethod":"assembled-page-viewport"}),
+    };
+    let gate = gate_hero(
+        &io,
+        &mut state,
+        "unused.png",
+        HERO_MIN,
+        "diff",
+        Some("index.html"),
+        Some(&renderer),
+    );
+    let report =
+        serde_json::from_slice(&std::fs::read(ws.path.join("diff/report.json")).unwrap()).unwrap();
     (gate, report)
 }
 

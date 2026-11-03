@@ -7,8 +7,8 @@
 
 #![allow(unused_imports)]
 use super::dom::{
-    ancestors_inclusive, class_attr, closest_or_none, direct_text, has_direct_text_longer_than, pf0,
-    style_px, tag_lower, Dom, ElId, ElStyle, Rect,
+    ancestors_inclusive, class_attr, closest_or_none, direct_text, has_direct_text_longer_than,
+    pf0, style_px, tag_lower, Dom, ElId, ElStyle, Rect,
 };
 use super::element_checks::{class_selector, effective_opacity_dom, is_rendered_for_browser_rule};
 use super::{BrowserFinding, ElFinding};
@@ -22,9 +22,10 @@ use crate::checks::rules::{
 };
 use crate::color::parse_any_color;
 use crate::constants::{is_brand_font_on_own_domain, CSS_GENERIC_FONTS, OVERUSED_FONTS, SAFE_TAGS};
+use crate::js::collapse_ws;
 use crate::js::{self, math_max, math_min, math_round, number_to_string, parse_float, to_fixed};
 use crate::js_ext_a::num_truthy;
-use crate::js_ext_b::{slice_utf16_prefix, utf16_len};
+use crate::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -41,7 +42,6 @@ macro_rules! re {
 const B: &str = r"(?-u:\b)";
 const D: &str = "[0-9]";
 
-re!(WS_RE, format!("{}+", js::WS));
 re!(QUOTE_EDGE_START, r#"^['"]"#);
 re!(QUOTE_EDGE_END, r#"['"]$"#);
 re!(SHADOW_CLASS_RE, format!(r"{B}shadow(?:-sm|-md|-lg|-xl|-2xl)?{B}"));
@@ -75,11 +75,6 @@ re!(
 re!(MARQUEE_ANIM_RE, r"marquee|ticker|scroll");
 re!(GRADIENT_URL_RE, format!("({}|{})\\(", js::ci("gradient"), js::ci("url")));
 re!(MULTI_COL_RE, r"(^|inline-)(grid|flex)$");
-
-/// JS `s.replace(/\s+/g, ' ')`.
-fn collapse_ws(s: &str) -> String {
-    WS_RE.replace_all(s, " ").into_owned()
-}
 
 /// JS `f.trim().replace(/^['"]|['"]$/g, '')`: one leading and one trailing
 /// quote removed (the `g` flag on an anchored alternation).

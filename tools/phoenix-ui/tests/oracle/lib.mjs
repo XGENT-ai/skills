@@ -1,18 +1,19 @@
 /**
- * Oracle harness: records the observable behavior of every impeccable verb
- * (stdout, stderr, exit code, files written) against a fixed corpus, and
- * replays the same corpus against an alternate implementation to diff.
+ * Oracle harness: runs every case of the corpus against the phoenix-ui
+ * binary at $PHOENIX_UI_BIN (`<bin> <verb> ...args`) and captures the
+ * observable behavior (stdout, stderr, exit code, files written).
  *
- * Two implementations are addressable:
- *   - js  (default): the Node scripts in skill/scripts and cli/bin
- *   - bin: an executable at $IMPECCABLE_BIN invoked as `<bin> <verb> ...args`
- *
- * A case is { id, verb, args, cwd?, stdin?, env?, files?, workspace? }:
+ * A case is { id, verb, args, cwd?, stdin?, env?, files?, workspace?, offline? }:
  *   - workspace: name of a dir under tests/oracle/workspaces to copy into a
  *     temp dir and use as cwd (so writes never touch the repo)
  *   - cwd: subpath inside the staged workspace (default '.')
  *   - files: globs (relative to staged workspace) to snapshot after the run
  *   - args may contain <WS> and <REPO> placeholders
+ *   - setup(ws): stages extra state after the workspace copy
+ *   - isolateHome: false keeps the real $HOME (default: an empty one in <WS>)
+ *   - normalize, platforms: see applyCaseNormalizers() and caseRunsHere()
+ *   - offline: on macOS, run the verb without network access, so a static
+ *     fixture cannot discover a dev server another project left listening
  *   - steps: multi-step cases share one staged workspace; a step may carry
  *     its own setup(ws) (run right before that step) and may set
  *     `daemon: true` to spawn its verb detached (see runDaemonStep) so later
@@ -29,6 +30,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { armLiveServerReaper, trackServerChild } from '../lib/live-servers.mjs';
+import { offlineNetworkProfile } from '../../../../scripts/phoenix-build-tools.mjs';
 
 // Daemon steps spawn the engine's `live-server` detached, so it is orphaned to
 // pid 1 the moment this process dies and stopDaemon() is the only thing that
@@ -43,27 +45,26 @@ export const REPO_ROOT = path.resolve(ORACLE_DIR, '..', '..');
 export const GOLDEN_DIR = path.join(ORACLE_DIR, 'golden');
 export const CASES_DIR = path.join(ORACLE_DIR, 'cases');
 export const WORKSPACES_DIR = path.join(ORACLE_DIR, 'workspaces');
+export const SKILL_SOURCE = path.resolve(REPO_ROOT, '..', '..', 'skills', 'phoenix-ui', 'src');
 
-/** verb -> how the JS implementation is invoked */
-export const JS_VERBS = {
-  detect: ['node', path.join(REPO_ROOT, 'cli', 'bin', 'cli.js'), 'detect'],
-  'cli-help': ['node', path.join(REPO_ROOT, 'cli', 'bin', 'cli.js'), '--help'],
-  'cli-version': ['node', path.join(REPO_ROOT, 'cli', 'bin', 'cli.js'), '--version'],
-  ignores: ['node', path.join(REPO_ROOT, 'cli', 'bin', 'cli.js'), 'ignores'],
-};
-for (const script of [
-  'context', 'doctor', 'pin', 'surface-brief', 'critique-storage', 'palette',
-  'embed-prompt', 'context-signals', 'detect-csp', 'concept-seed',
-  'generate-image', 'serve-question',
-  'hook', 'hook-before-edit', 'hook-admin',
-  'live', 'live-server', 'live-poll', 'live-status', 'live-resume', 'live-complete',
-  'live-accept', 'live-wrap', 'live-insert', 'live-inject', 'live-target',
-  'live-commit-manual-edits', 'live-discard-manual-edits', 'live-manual-edit-evidence',
-]) {
-  JS_VERBS[script] = ['node', path.join(REPO_ROOT, 'skill', 'scripts', `${script}.mjs`)];
+/**
+ * `[--bin <path>] [prefix]`; the binary defaults to $PHOENIX_UI_BIN. Exports
+ * the resolved path as PHOENIX_UI_BIN, which normalize() masks as <PHOENIX_UI>.
+ */
+export function parseArgs(argv) {
+  let bin = process.env.PHOENIX_UI_BIN, prefix = '';
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--bin') bin = argv[++i];
+    else if (argv[i].startsWith('--bin=')) bin = argv[i].slice('--bin='.length);
+    else if (argv[i].startsWith('-')) throw new Error(`unknown argument: ${argv[i]}`);
+    else prefix = argv[i];
+  }
+  if (!bin) throw new Error('pass --bin <phoenix-ui> or set PHOENIX_UI_BIN');
+  process.env.PHOENIX_UI_BIN = fs.realpathSync(bin);
+  return { bin: process.env.PHOENIX_UI_BIN, prefix };
 }
 
-/** verb -> argv for the binary implementation (verb name is the subcommand) */
+/** verb -> argv (verb name is the subcommand) */
 export function binArgv(bin, verb) {
   if (verb === 'cli-help') return [bin, '--help'];
   if (verb === 'cli-version') return [bin, '--version'];
@@ -92,7 +93,7 @@ export function stageWorkspace(name) {
   // (/var -> /private/var); without this, goldens recorded there carried
   // symlink artifacts (`../../../../../../..<WS>/...` relative paths, lock
   // files that never matched their own file) that Linux does not reproduce.
-  const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'impeccable-oracle-')));
+  const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-ui-oracle-')));
   if (name) {
     const src = path.join(WORKSPACES_DIR, name);
     if (!fs.existsSync(src)) throw new Error(`oracle workspace not found: ${name}`);
@@ -105,8 +106,8 @@ export function stageWorkspace(name) {
 // or followed by anything but a name character (a separator, quote, dot,
 // whitespace, JSON punctuation).
 // A short home directory (`/root` in a container) is otherwise a substring of
-// ordinary words, and `.impeccable/live/roots.json` came out as
-// `.impeccable/live<HOME>s.json`.
+// ordinary words, and `.phoenix-ui/live/roots.json` came out as
+// `.phoenix-ui/live<HOME>s.json`.
 function maskPath(text, needle, tag) {
   let out = '';
   let i = 0;
@@ -125,30 +126,23 @@ function maskPath(text, needle, tag) {
 export function normalize(text, { ws, home = os.homedir() }) {
   if (typeof text !== 'string') return text;
   let out = text;
-  // The hook footer embeds the admin command: JS prints "node '<scripts>/hook-admin.mjs'",
-  // the binary prints "'<bin>' hooks". Both collapse to <HOOK_ADMIN_CMD>. This must run
-  // before the generic binary-path mask below.
-  out = out.replace(/node '[^']*\/hook-admin\.mjs'/g, '<HOOK_ADMIN_CMD>');
-  out = out.replace(/node "[^"]*\/hook-admin\.mjs"/g, '<HOOK_ADMIN_CMD>');
-  out = out.replace(/'[^']*\/impeccable(?:\.exe)?' hooks/g, '<HOOK_ADMIN_CMD>');
-  out = out.replace(/"[^"]*\\impeccable(?:\.exe)?" hooks/g, '<HOOK_ADMIN_CMD>');
-  // Audit entries record the rendered message length, which includes that command's path.
+  // Audit entries record the rendered message length, which includes the binary's path.
   out = out.replace(/"chars":\s*\d+/g, '"chars": <N>');
-  // The binary's own path: it may sit under $HOME or the repo.
-  if (process.env.IMPECCABLE_BIN) {
-    const bin = process.env.IMPECCABLE_BIN;
-    for (const form of [`'${bin}'`, `"${bin}"`, bin]) out = out.split(form).join('<IMPECCABLE>');
+  const bin = process.env.PHOENIX_UI_BIN;
+  if (bin) {
+    // The hook footer embeds the admin command "'<bin>' hooks". This must run
+    // before the generic binary-path mask below.
+    for (const form of [`'${bin}' hooks`, `"${bin}" hooks`, `${bin} hooks`]) out = out.split(form).join('<HOOK_ADMIN_CMD>');
+    // The binary's own path: it may sit under $HOME or the repo.
+    for (const form of [`'${bin}'`, `"${bin}"`, bin]) out = out.split(form).join('<PHOENIX_UI>');
   }
   let wsReal = null;
   try { wsReal = ws ? fs.realpathSync(ws) : null; } catch { /* staged dir already gone */ }
   for (const [needle, tag] of [
-    [wsReal, '<WS>'], [ws, '<WS>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],
+    [wsReal, '<WS>'], [ws, '<WS>'], [SKILL_SOURCE, '<PHOENIX_SKILL>'], [REPO_ROOT, '<REPO>'], [home, '<HOME>'],
   ]) {
     if (needle) out = maskPath(out, needle, tag);
   }
-  // Self-referential command lines: the JS prints "node <scripts>/<verb>.mjs", the
-  // binary prints "<bin> <verb>". Both collapse to "<IMPECCABLE> <verb>".
-  out = out.replace(/node ['"]?<REPO>\/skill\/scripts\/([a-z-]+)\.mjs['"]?/g, (m, v) => `<IMPECCABLE> ${v === 'context-signals' ? 'signals' : v === 'hook-admin' ? 'hooks' : v}`);
   // context.mjs probes `which cwebp/sips/magick/ffmpeg`; the set found is a
   // property of the recording machine, not of the implementation.
   out = out.replace(/IMAGE_TOOLS: available image converters on this machine: [^.]*\. Use the first suitable one; never probe again this session\./g, 'IMAGE_TOOLS: <IMAGE_TOOLS_PROBE>');
@@ -164,13 +158,13 @@ export function normalize(text, { ws, home = os.homedir() }) {
   // print the surface path relative to the root, which climbs as many levels
   // as the staged tmpdir is deep (7 on macOS, 2 on Linux). The climb is a
   // property of the machine, not of the verb.
-  out = out.replace(/(?:\.\.\/){2,}(?=\.impeccable\/)/g, '<UP_TO_ROOT>/');
+  out = out.replace(/(?:\.\.\/){2,}(?=\.phoenix-ui\/)/g, '<UP_TO_ROOT>/');
   // Hook audit entries carry wall-clock durations.
   out = out.replace(/"durationMs":\s*\d+(?:\.\d+)?/g, '"durationMs": <MS>');
   // ISO timestamps and epoch millis are run-dependent.
   out = out.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z/g, '<ISO>');
   out = out.replace(/"(updatedAt|createdAt|checkedAt|lastCheck|lastChecked|timestamp|ts|mtimeMs|mtime|startedAt|endedAt)":\s*\d{10,}/g, '"$1": <EPOCH>');
-  // The staleness notice cache (~/.impeccable/staleness-check.json) keys epoch
+  // The staleness notice cache (~/.phoenix-ui/staleness-check.json) keys epoch
   // stamps by finding id: { projects: { "<root>": { "<finding-id>": ms } } }.
   out = out.replace(/"([a-z][a-z0-9-]*)":\s*1[6-9]\d{11}(?=[,}\s])/g, '"$1": <EPOCH>');
   // Live mode: server.json, the inject journal, and source locks record the
@@ -224,7 +218,7 @@ export function snapshotFiles(ws, globs) {
         if (ent.name === 'node_modules') {
           // Only the live-mode preview tree is ours; never walk installed or
           // symlinked packages.
-          const preview = path.join(full, '.impeccable-live');
+          const preview = path.join(full, '.phoenix-ui-live');
           if (fs.existsSync(preview)) walk(preview);
           continue;
         }
@@ -246,10 +240,6 @@ function isProbablyText(buf) {
 }
 
 /**
- * Run one case with the given implementation ('js' | 'bin').
- * Returns { stdout, stderr, exit, signal, files } normalized.
- */
-/**
  * A case may declare `platforms: ['darwin', 'win32']` when its behavior is a
  * property of the host (case-insensitive file systems, for example) rather
  * than of the implementation. Such a case runs only on those platforms; the
@@ -259,7 +249,8 @@ export function caseRunsHere(c, platform = process.platform) {
   return !Array.isArray(c.platforms) || c.platforms.includes(platform);
 }
 
-export function runCase(c, { impl = 'js', bin = process.env.IMPECCABLE_BIN } = {}) {
+/** Run one case. Returns { stdout, stderr, exit, signal, files } normalized. */
+export function runCase(c, { bin = process.env.PHOENIX_UI_BIN } = {}) {
   const ws = stageWorkspace(c.workspace);
   try {
     const isolatedHome = path.join(ws, '.oracle-home');
@@ -275,11 +266,11 @@ export function runCase(c, { impl = 'js', bin = process.env.IMPECCABLE_BIN } = {
         // variant files between wrap and accept).
         if (c.steps && typeof step.setup === 'function') step.setup(ws);
         if (step.daemon) {
-          daemons.push(runDaemonStep(merged, { impl, bin, ws, isolatedHome }));
+          daemons.push(runDaemonStep(merged, { bin, ws, isolatedHome }));
           results.push({ stdout: '', stderr: '', status: null, signal: null, daemon: true });
           continue;
         }
-        results.push(runStep(merged, { impl, bin, ws, isolatedHome }));
+        results.push(runStep(merged, { bin, ws, isolatedHome }));
       }
     } finally {
       for (const d of daemons) stopDaemon(d);
@@ -305,29 +296,22 @@ export function runCase(c, { impl = 'js', bin = process.env.IMPECCABLE_BIN } = {
   }
 }
 
-function buildInvocation(c, { impl, bin, ws, isolatedHome }) {
+function buildInvocation(c, { bin, ws, isolatedHome }) {
   const cwd = path.join(ws, c.cwd || '.');
-  let argv;
-  if (impl === 'js') {
-    const base = JS_VERBS[c.verb];
-    if (!base) throw new Error(`no JS invocation for verb ${c.verb}`);
-    argv = [...base];
-  } else {
-    if (!bin) throw new Error('IMPECCABLE_BIN not set');
-    argv = binArgv(bin, c.verb);
-  }
+  if (!bin) throw new Error('PHOENIX_UI_BIN not set');
+  const argv = binArgv(bin, c.verb);
   const sub = (v) => String(v).replaceAll('<WS>', ws).replaceAll('<REPO>', REPO_ROOT);
   argv.push(...(c.args || []).map(sub));
   const env = {
     ...process.env,
     NO_COLOR: '1',
     FORCE_COLOR: '0',
-    IMPECCABLE_NO_UPDATE_CHECK: '1',
-    IMPECCABLE_NO_TELEMETRY: '1',
     DO_NOT_TRACK: '1',
     ...(c.isolateHome === false ? {} : { HOME: isolatedHome, USERPROFILE: isolatedHome }),
-    // What the launcher exports for the binary (see launcher/impeccable in the engine repo).
-    ...(impl === 'bin' ? { IMPECCABLE_SKILL_DIR: path.join(REPO_ROOT, 'skill'), IMPECCABLE_SELF: bin } : {}),
+    // What the installed launcher exports for the binary; a host API key must not leak in.
+    PHOENIX_UI_SKILL_DIR: SKILL_SOURCE,
+    PHOENIX_UI_SELF: bin,
+    OPENAI_API_KEY: null,
     ...Object.fromEntries(Object.entries(c.env || {}).map(([k, v]) => [k, v == null ? v : sub(v)])),
   };
   for (const [k, v] of Object.entries(env)) if (v == null) delete env[k];
@@ -391,7 +375,10 @@ function safeRead(p) {
 }
 
 function runStep(c, opts) {
-  const { argv, cwd, env, stdin } = buildInvocation(c, opts);
+  const { argv: base, cwd, env, stdin } = buildInvocation(c, opts);
+  const argv = c.offline && process.platform === 'darwin'
+    ? ['/usr/bin/sandbox-exec', '-p', offlineNetworkProfile, ...base]
+    : base;
   return spawnSync(argv[0], argv.slice(1), {
     cwd, env, input: stdin, encoding: 'utf8', timeout: c.timeoutMs || 60_000,
     windowsHide: true, maxBuffer: 64 * 1024 * 1024,

@@ -46,7 +46,6 @@ Mermaid 作为语义材料处理：`flowchart` / `graph` 转为 workflow，组�
 - 明确要求品牌标识时读[品牌资源](references/brand-marks.md)。固定目录可离线查询；只有明确采集请求才访问用户给出的公共站点，普通生成只消费已固定的本地资源。不从组件名称猜品牌或 URL。
 - 明确要求本地预览时读[预览会话](references/preview.md)。服务与正式成果分离，只有 `--open` 才打开系统浏览器；停止服务后仍按正式交付流程验收。
 - 明确要求比较两份架构输入时读[架构比较](references/architecture-compare.md)，使用 Before/Delta/After 及比较专用审核合同。不能用下方单图 finalize 流程替代比较交付，也不推断风险、原因或可合并性。
-- 明确要求项目级旧入口迁移或安装事务恢复/回滚时读[迁移与安装恢复](references/migration.md)。普通作图和 install 不移除旧入口，旧 skill 无目标备份；只处理已确认的精确项目/provider，不扩到个人或共享配置。
 - 导入旧输入或解释兼容回执时读[兼容约定](references/compatibility.md)；维护者增加图型时读[扩展约定](references/extending-types.md)。
 
 ## 最短创作路径
@@ -83,15 +82,15 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
    第二种用于带来源的仓库图。退出码 0 不代表来源已核对：读回执 `evidence.status`（`verified`、`partial`、`unverified` 或 `none`）及 `evidence.unverified`、`evidence.unsourced`。
 
 3. 每轮失败后，在可回读的进度或本次项目记录中写明实际失败门、诊断阶段、客观 error 数、历史最佳值和停滞计数；首次失败的停滞计数为0。同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。修改 candidate 或修复前先核对该门计数：达到2立即停止并列出未解决项；即使不再运行命令，也不能继续修改 candidate 或将它回退到历史较好版本。错误种类变化不能重置计数，也不允许再试一次。修复前实际读到失败 diagnostic 的 `subject`、`evidence`、`supportedFixes`；宿主返回截断或提取遗漏时先补齐，不能把原有实测或字符串修法筛掉、转成空对象后视为已读。只修相关邻域。修复后重新 finalize；必要时用 `validate <type> candidate.json --layout-json --json` 定向诊断。重建 candidate 或交付、调整布局或卡片、返回已记录门时，沿用该门历史，不因新回执重新初始化；对最小示例的只读对照或验证不计修复，也不重置历史。环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；同一 validate 门内诊断 `stage` 首次由 `input` 变为 `layout` 也算进入后门。`supportedFixes` 写明经整图验证时，选定的一项修法所列全部路径是同一整组方案，须一次完整应用，不挑单个路径先试；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。不能删语义、降低质量、缩字或隐藏溢出来换通过。
-4. 按[交付合同](references/delivery-contract.md)实际打开当前四张暗/亮截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后 `review-record` 登记，再回读**同一交付**的当前 summary。只为登记审核或取得完整状态不得再次 finalize。
+4. 按[交付合同](references/delivery-contract.md)实际打开 summary 列出的四张暗/亮截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后写审核记录并 `review-record` 登记，再回读同一 summary。只为登记审核或取得完整状态不得再次 finalize。
 
-自动四门通过后，视觉状态仍可能是 `required-pending`；只有四门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 且身份仍绑定当前输入/HTML/配置/引擎/截图时，才能报告完整交付。修改 candidate 会使旧证据失效，需要新交付及对应的新审核。
+自动三门（validate、deliver、browser-check）通过后，视觉状态仍是 `required-pending`；只有三门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 时，才能报告完整交付。修改 candidate 后须重新 finalize 并重新看图审核。
 
 ## 环境与停止
 
 普通 launcher 和安装脚本需要 Node.js 18+；图解核心为 Rust，消费环境不需要 Rust、Cargo 或检出源码。普通命令只验证已存在的引擎，不下载、不更新、不安装，不主动打开用户浏览器页面或启动 preview 服务。`finalize` 的隔离浏览器验收属于默认交付路径。
 
-工具或图像能力不可用时如实保留 `unavailable` / `not-run` / `required-pending` 和未完成门，交付可用 candidate 或已有文件。无 shell 时不能手写 SVG 冒充 Rust 校验通过。出现 `recovery-required` 时按交付合同识别确切事务，不自动选择恢复记录。
+工具或图像能力不可用时如实保留 `unavailable` / `not-run` / `required-pending` 和未完成门，交付可用 candidate 或已有文件。无 shell 时不能手写 SVG 冒充 Rust 校验通过。
 
 缺引擎时给出错误回执的 `setupCommand`；只有用户已明确请求引擎安装才执行，并按当前 `ENGINE.json` 的 `distribution` 处理：
 
@@ -104,6 +103,6 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
 ## 交付答复
 
-简短返回 HTML 和 candidate 路径、图型、原 `deliveryReceiptId`、当前四门结果、图像审核结果及 summary 路径。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。有失败时说明真实阶段、保留文件和具体缺口。退出码非零、旧输出存在或自动检查通过都不能单独描述为完整成功。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`；逐项交接非 `supported` 字段的实际处理及原因，按[兼容约定](references/compatibility.md)说明未重建的展示能力，不再称为延期。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+简短返回 HTML 和 candidate 路径、图型、当前三门结果、图像审核结果及 summary 路径。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。有失败时说明真实阶段、保留文件和具体缺口。退出码非零、旧输出存在或自动检查通过都不能单独描述为完整成功。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`；逐项交接非 `supported` 字段的实际处理及原因，按[兼容约定](references/compatibility.md)说明未重建的展示能力，不再称为延期。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
 
 带来源的图还要说明 `evidence.status`：不是 `verified` 时，列出待核实元素及原因（如工作树改动的路径、缺少 `--repo-root`）和未提供来源的元素，不称其已核对。时间线或耗时瀑布标为示意（`illustrative`）或日精度时，说明这些时间不是实测或只精确到日。回执 `locale.fallback` 为 true 时，说明界面语言已回退英文。

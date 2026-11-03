@@ -1,12 +1,10 @@
-//! Explicit foreground preview. Only the controller owns the public output.
+//! Explicit foreground preview: recompile on input edits and serve the result.
 mod controller;
 mod http;
-pub mod worker;
 
 use crate::{
     delivery::CompileRequest,
     diagnostic::{Diagnostic, Diagnostics},
-    output::OutputError,
 };
 use std::path::Path;
 
@@ -33,14 +31,6 @@ impl PreviewFailure {
     }
     pub(crate) fn io(code: &str, error: std::io::Error) -> Self {
         Self::new(code, error.to_string(), 4)
-    }
-}
-impl From<OutputError> for PreviewFailure {
-    fn from(error: OutputError) -> Self {
-        let mut failure = Self::new(&error.code, &error.message, error.exit_code());
-        failure.diagnostics[0].evidence =
-            serde_json::to_value(error).expect("output error serializes");
-        failure
     }
 }
 pub fn run(request: &PreviewRequest<'_>) -> u8 {

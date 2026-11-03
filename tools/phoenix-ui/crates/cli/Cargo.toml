@@ -22,7 +22,6 @@ impeccable-hook = { path = "../hook" }
 impeccable-live = { path = "../live" }
 impeccable-skills = { path = "../skills" }
 phoenix-ui-install = { path = "../install" }
-phoenix-ui-review = { path = "../review" }
 impeccable-core = { workspace = true }
 phoenix-ui-rules = { workspace = true }
 impeccable-comp = { workspace = true }

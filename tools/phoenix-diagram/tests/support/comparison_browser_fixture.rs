@@ -1,6 +1,6 @@
 // Protocol-only comparison fixture. It reports synthetic DOM facts and blank
 // PNGs; it never renders a browser and cannot prove real visual acceptance.
-use super::BrowserOptions;
+use phoenix_diagram::browser::BrowserOptions;
 use serde_json::{json, Value};
 use std::{
     fs,

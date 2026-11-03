@@ -38,17 +38,13 @@ npx @xgent-ai/skills install
 | `--replace-impeccable` | 删除所选工具目录中的项目级及个人级 impeccable 入口和 hooks,不备份 |
 | `--keep-impeccable` | 保留 impeccable,与 Phoenix UI 共存;无交互环境默认采用 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram,不删除已装版本 |
-| `--migrate-archify` | 迁移所选项目/provider 的已知原版 Archify;展示目标后确认删除,跳过 XGENT/UI 阶段,须已有匹配引擎 |
-| `--confirm-remove-archify` | 与迁移配用的显式确认;旧 skill 不备份,回滚不重建,非交互迁移必须提供 |
 | `--release-dir=DIR` | 离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网 |
 | `--diagram-release-dir=DIR` | 为 Phoenix Diagram 使用匹配的完整离线目录 |
 | `--providers=a,b` | 指定 Phoenix 工具的 harness 目录(如 `--providers=.claude,.cursor`);`codex` 识别 `.agents/.codex`,Diagram skill 只写 `.agents`;默认按已有目录选择,空项目用 `.claude` |
 
 Phoenix UI 和 Phoenix Diagram skill 均由 npm 安装器随匹配引擎安装与更新，已通过 `metadata.internal: true` 从 `npx skills add XGENT-ai/skills` 的默认发现列表排除，避免独立更新 skill 后与引擎版本不一致。
 
-安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI 顺序写项目;再安装 Phoenix Diagram。两个 Phoenix 工具分别由 Rust 在各自项目锁内重读并事务化提交。后段失败保留前段结果,按各自日志重跑恢复。Diagram 候选的独立安装与验收范围见[候选说明](docs/phoenix-diagram.md)。
-
-普通安装不移除 Archify。`--migrate-archify` 使用独立的 Diagram 迁移分支,仅处理精确项目/provider 的完整已知来源;自定义、链接、外部管理与个人入口保留。TTY 拒绝或 EOF 不迁移;`--no-phoenix-diagram` 仍跳过并保留。旧入口移除后需要时按原来源重装,新 Diagram 入口的恢复/回滚见[迁移说明](docs/phoenix-diagram.md#旧入口迁移与安装恢复)。仓库只保留新活跃入口,不代表其他项目或个人旧安装已被处理。
+安装是幂等的:hook 文件按内容比对,只在有变化时覆盖;`settings.json` 按顶层 key 合并。全部只读预检通过后才按 XGENT、Phoenix UI 顺序写项目;再安装 Phoenix Diagram。两个 Phoenix 工具由各自的 Rust 执行器直接覆盖写入。后段失败保留前段结果,重跑同一命令即可。Diagram 的离线安装与使用见 [docs/phoenix-diagram.md](docs/phoenix-diagram.md)。
 
 `install` 不创建或修改 `AGENTS.md`,也不询问是否安装模板。安装完成后会提示:可在 agent 对话中使用 [optimize-agents-md](skills/optimize-agents-md/SKILL.md),以 opinionated DSL(Odyssey/ODC)改良已有的 `AGENTS.md`;不喜欢这套风格可以忽略。Claude Code 用 `/optimize-agents-md`,Codex 用 `$optimize-agents-md`,由用户自行选择是否使用。
 
@@ -63,9 +59,7 @@ Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoe
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
 - **已有工具**:Phoenix UI 和 Diagram 都是可重新安装的工具：安装直接覆盖工具文件，不备份旧版、不创建安装事务目录，不提供普通安装回滚。中断后重跑安装即可；成功安装会清理旧安装记录和备份。业务源码、工具生成的业务数据及其他 hooks 保留。发现 impeccable 时仍可选择替换或共存，无交互环境默认保留。
 
-安装、迁移、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
-
-选择 Phoenix CLI 管理评审记录时，用 `phoenix-ui review --help` 和 `phoenix-ui review schema --json` 发现 verbs 与输入形状；后者是 typed examples，样例不是真实证据。具体调用与恢复边界见 [Phoenix 评审协议](docs/phoenix-ui-review.md)。
+安装、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
 
 ## Skills 列表
 
@@ -231,7 +225,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 | Skill | 说明 |
 | --- | --- |
 | [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
-| [phoenix-diagram](skills/phoenix-diagram/SKILL.md)（仅 npm 安装） | 十类 Rust 图解、Mermaid 语义转换、仓库来源与五语言离线阅读；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[候选安装/迁移边界](docs/phoenix-diagram.md) |
+| [phoenix-diagram](skills/phoenix-diagram/SKILL.md)（仅 npm 安装） | 十类 Rust 图解、Mermaid 语义转换、仓库来源与五语言离线阅读；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[安装说明](docs/phoenix-diagram.md) |
 | [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
 | [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |

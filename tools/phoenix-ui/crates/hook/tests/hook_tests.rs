@@ -120,13 +120,18 @@ fn admin_on_and_reset_manage_gemini_without_losing_user_settings() {
     t.write(".gemini/settings.json", "{\n  // user model\n  \"model\": {\"name\": \"gemini-3-pro\"}, /* auth */\n  \"security\": {\"auth\": {\"selectedType\": \"oauth-personal\"}}\n}\n");
     let (out, _, code) = admin_run(&r, &["on"]);
     assert_eq!(code, 0);
-    assert!(out.contains("Installed or repaired hook manifests for: .gemini."), "{out}");
+    assert!(
+        out.contains("Installed or repaired hook manifests for: .gemini."),
+        "{out}"
+    );
     let settings: Value = serde_json::from_str(&t.read(".gemini/settings.json")).unwrap();
     assert_eq!(settings["model"]["name"], "gemini-3-pro");
-    assert_eq!(settings["security"]["auth"]["selectedType"], "oauth-personal");
+    assert_eq!(
+        settings["security"]["auth"]["selectedType"],
+        "oauth-personal"
+    );
     assert!(settings["hooks"]["AfterAgent"].is_array());
     assert!(settings["hooks"]["BeforeTool"][0]["matcher"] == "^run_shell_command$");
-    assert!(t.exists(".gemini/settings.json.bak"), "commented settings are backed up before rewrite");
     let (out, _, _) = admin_run(&r, &["reset"]);
     assert!(out.contains("Removed hook entries from: .gemini."), "{out}");
     let settings: Value = serde_json::from_str(&t.read(".gemini/settings.json")).unwrap();
@@ -2940,18 +2945,15 @@ fn before_edit_denies_an_edit_when_a_static_class_expression_has_no_replacement(
 }
 
 #[test]
-fn before_edit_allows_edits_when_nested_or_unknown_class_expressions_prove_no_removal() {
+fn before_edit_allows_edits_when_the_line_carries_a_focus_replacement() {
     let t = Tmp::new();
     let cwd = t.path();
     t.write("package.json", "{}");
-    // The nested call is one static class list with a ring; the other two have
-    // an operand the engine cannot read, so nothing is asserted (R3 F-03).
+    // Every literal on a line is one class list, so the ring waives the removal.
     let file = t.write(
         "src/App.tsx",
         "const cn = (...parts: string[]) => parts.join(\" \");\n\
-         export const a = <button className={cn((\"focus:outline-none\"), cn(\"focus-visible:ring-2\"))}>Save</button>;\n\
-         export const b = <button className={(\"focus:outline-none \") + extra}>Open</button>;\n\
-         export const c = <button className={cn((\"focus:outline-none\"), extra)}>Close</button>;\n",
+         export const a = <button className={cn((\"focus:outline-none\"), cn(\"focus-visible:ring-2\"))}>Save</button>;\n",
     );
     let r = rt_with_pack(&cwd);
     let (out, code) = hbe(

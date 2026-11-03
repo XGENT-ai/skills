@@ -8,9 +8,6 @@ publish.workspace = true
 
 [features]
 default = []
-# Vector dispatcher used by tests/vectors.rs to replay the recorded JS call
-# vectors through the Rust port.
-vectors = ["impeccable-foundation/vectors"]
 # The table-driven fake DOM for browser-rule tests (crates/wasm tests use it).
 fake-dom = ["impeccable-foundation/fake-dom"]
 
@@ -22,4 +19,4 @@ regex = { workspace = true }
 once_cell = { workspace = true }
 
 [dev-dependencies]
-impeccable-core = { path = ".", features = ["fake-dom", "vectors"] }
+impeccable-core = { path = ".", features = ["fake-dom"] }

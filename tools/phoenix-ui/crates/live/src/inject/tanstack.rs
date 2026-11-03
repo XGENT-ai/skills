@@ -240,11 +240,3 @@ fn insert_after_last_import(content: &str, import_statement: &str) -> String {
         ),
     }
 }
-
-/// JS: tanstackStart.inject.artifacts({ project })
-pub fn tanstack_artifacts(project: &TanStackProject) -> Vec<Value> {
-    vec![
-        json!({ "kind": "created", "path": project.component_file, "marker": "impeccable-live-tanstack", "pruneTo": "src" }),
-        json!({ "kind": "patched", "path": project.root_route, "patch": "tanstack-root", "markers": [TANSTACK_MARKER_OPEN] }),
-    ]
-}

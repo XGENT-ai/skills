@@ -171,13 +171,3 @@ test('native time source changes fail without automatic repair', t => {
   assert.throws(() => verifyFrozenSources({ upstream: directory, localReference: null }), /Native time source size\/SHA-256 differs/);
   assert.deepEqual(snapshot(project), before, 'verification must preserve the mismatched native time source');
 });
-
-test('native time source symlinks cannot substitute the fixed ordinary file', t => {
-  const directory = fixture(t), project = path.dirname(directory), source = path.join(project, timeSource);
-  const replacement = path.join(project, 'zoneinfo-copy.txt');
-  fs.renameSync(source, replacement);
-  fs.symlinkSync(replacement, source);
-  const before = snapshot(project);
-  assert.throws(() => verifyFrozenSources({ upstream: directory, localReference: null }), /Expected regular native time source/);
-  assert.deepEqual(snapshot(project), before);
-});

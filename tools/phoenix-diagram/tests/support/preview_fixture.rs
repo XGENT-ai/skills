@@ -5,7 +5,7 @@ use std::{
     fs,
     io::{BufRead, BufReader, Read, Write},
     net::{SocketAddr, TcpStream},
-    os::unix::{fs::DirBuilderExt, fs::PermissionsExt, process::CommandExt},
+    os::unix::{fs::DirBuilderExt, process::CommandExt},
     path::{Path, PathBuf},
     process::{Child, Command, ExitStatus, Stdio},
     sync::{
@@ -59,22 +59,10 @@ pub struct Session {
     pub events: Vec<Value>,
     receiver: mpsc::Receiver<Result<Value, String>>,
     stderr: Arc<Mutex<String>>,
-    _engine: Workspace,
 }
 impl Session {
     pub fn start(root: &Workspace, input: &Path, output: &Path) -> Self {
-        let engine = Workspace::new();
-        let executable = engine.path("phoenix-diagram");
-        // A distinct, closed executable inode preserves the runtime's binding
-        // contract and avoids inheriting a writable descriptor during exec.
-        assert!(Command::new("/bin/cp")
-            .arg(env!("CARGO_BIN_EXE_phoenix-diagram"))
-            .arg(&executable)
-            .status()
-            .unwrap()
-            .success());
-        fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
-        let mut child = Command::new(executable)
+        let mut child = Command::new(env!("CARGO_BIN_EXE_phoenix-diagram"))
             .arg("preview")
             .arg("architecture")
             .arg(input)
@@ -113,7 +101,6 @@ impl Session {
             events: vec![],
             receiver,
             stderr,
-            _engine: engine,
         };
         let started = session.next("started", 0);
         session.url = url::Url::parse(started["url"].as_str().expect("started URL")).unwrap();

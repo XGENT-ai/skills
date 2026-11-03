@@ -144,17 +144,3 @@ pub fn remove_nuxt_live_adapter(cwd: &str, project: &NuxtProject) -> Value {
     }
     json!({ "file": project.plugin_file, "removed": true })
 }
-
-/// JS: nuxt.inject.artifacts({ project })
-pub fn nuxt_artifacts(project: &NuxtProject) -> Vec<Value> {
-    if project.plugin_file.is_empty() {
-        return vec![];
-    }
-    let prune_to = jsp::dirname(&jsp::dirname(&project.plugin_file));
-    vec![json!({
-        "kind": "created",
-        "path": project.plugin_file,
-        "marker": NUXT_PLUGIN_MARKER,
-        "pruneTo": prune_to,
-    })]
-}

@@ -1,13 +1,11 @@
-//! The static HTML engine's half of the rule-pack extension point: the
-//! document hook runs on the parsed page after every built-in pass, the
-//! engine-wide text hook covers HTML files when no document hook is set, and
-//! a run with no pack is identical to the built-in output.
+//! The static HTML engine runs the rule pack's text hook over HTML files after
+//! every built-in pass, and a run with no pack is identical to the built-in
+//! output.
 
 use impeccable_core::findings::{finding_for, Finding};
 use impeccable_core::registry::Antipattern;
 use impeccable_core::rule_pack::RulePack;
-use impeccable_html::dom::StaticDocument;
-use impeccable_html::{detect_html_source, DetectHtmlOptions, StaticRulePack};
+use impeccable_html::{detect_html_source, DetectHtmlOptions};
 use std::path::Path;
 
 const MARKER: &str = "TODO(pack)";
@@ -41,23 +39,6 @@ impl RulePack for TestPack {
     }
 }
 
-impl StaticRulePack for TestPack {
-    fn check_document(&self, doc: &StaticDocument, file_path: &str) -> Vec<Finding> {
-        doc.query_selector_all("*")
-            .into_iter()
-            .filter(|el| el.direct_text().contains(MARKER))
-            .map(|el| {
-                finding_for(
-                    &ROWS[0],
-                    file_path,
-                    &format!("<{}> {}", el.tag_lower(), el.direct_text().trim()),
-                    0.0,
-                )
-            })
-            .collect()
-    }
-}
-
 /// A full page with one built-in finding (the side-tab stripe) plus a line
 /// the pack is about.
 const PAGE: &str = r#"<!DOCTYPE html>
@@ -75,7 +56,7 @@ fn scan(options: &DetectHtmlOptions<'_>) -> Vec<Finding> {
 }
 
 #[test]
-fn document_hook_fires_and_no_pack_is_unchanged() {
+fn text_hook_appends_after_built_ins() {
     let built_in = scan(&DetectHtmlOptions::default());
     assert!(
         !built_in.is_empty(),
@@ -84,36 +65,14 @@ fn document_hook_fires_and_no_pack_is_unchanged() {
 
     impeccable_core::rule_pack::install(&PACK);
     let with_pack = scan(&DetectHtmlOptions {
-        static_rule_pack: Some(&PACK),
         rule_pack: Some(&PACK),
         ..Default::default()
     });
-
-    // Built-in findings come first, unchanged, in the same order.
     assert_eq!(&with_pack[..built_in.len()], &built_in[..]);
-
-    // Exactly one pack finding: the document hook wins over the text hook, so
-    // a pack that implements both does not report the same file twice.
-    let extra = &with_pack[built_in.len()..];
-    assert_eq!(extra.len(), 1);
-    assert_eq!(extra[0].antipattern, "testpack/todo-marker");
-    assert_eq!(extra[0].snippet, "<p> TODO(pack) write the real headline");
-    assert_eq!(extra[0].line, 0.0);
-}
-
-#[test]
-fn text_hook_covers_html_when_no_document_hook_is_set() {
-    impeccable_core::rule_pack::install(&PACK);
-    let with_text_only = scan(&DetectHtmlOptions {
-        rule_pack: Some(&PACK),
-        ..Default::default()
-    });
-    let pack_findings: Vec<&Finding> = with_text_only
-        .iter()
-        .filter(|f| f.antipattern.starts_with("testpack/"))
-        .collect();
+    let pack_findings = &with_pack[built_in.len()..];
     assert_eq!(pack_findings.len(), 1);
-    // The text hook reports the source line, not the element.
+    assert_eq!(pack_findings[0].antipattern, "testpack/todo-marker");
+    // The text hook reports the source line.
     assert_eq!(pack_findings[0].line, 7.0);
     assert_eq!(
         pack_findings[0].snippet,
@@ -132,7 +91,7 @@ fn pack_findings_are_waivable_inline() {
         &page,
         Path::new("/app/index.html"),
         &DetectHtmlOptions {
-            static_rule_pack: Some(&PACK),
+            rule_pack: Some(&PACK),
             ..Default::default()
         },
     );

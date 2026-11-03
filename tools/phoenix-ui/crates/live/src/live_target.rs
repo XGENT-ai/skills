@@ -1,8 +1,6 @@
-//! JS: live-target.mjs. Library only (`resolveLiveTarget`); running the
-//! script directly does nothing, so the verb prints nothing and exits 0.
+//! JS: live-target.mjs: `resolveLiveTarget` for the live boot.
 
 use crate::util::{jsp, Env};
-use impeccable_common::Io;
 use impeccable_context::context::resolve_project_root;
 use impeccable_context::target_args::{parse_target_path, TargetOptions};
 
@@ -40,9 +38,4 @@ pub fn resolve_live_target(cwd: &str, args: &[String], env: &Env) -> Result<Live
         absolute_target_path: absolute,
         target_options,
     })
-}
-
-/// `impeccable live-target`: no CLI entry in the JS module.
-pub fn run(_args: &[String], _io: &mut Io) -> i32 {
-    0
 }

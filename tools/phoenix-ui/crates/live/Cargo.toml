@@ -16,5 +16,4 @@ regex = { workspace = true }
 once_cell = { workspace = true }
 sha2 = "0.10"
 ureq = { version = "2", default-features = false, features = ["tls", "json"] }
-sha1 = "0.10"
 getrandom = "0.2"

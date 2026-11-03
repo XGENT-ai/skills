@@ -424,77 +424,10 @@ pub fn watch_close(
     });
 }
 
-/// Set a per-`read` timeout on the socket. This is `SO_RCVTIMEO`: it bounds a
-/// single blocked `read`, not the whole connection, and any byte received
-/// resets it. It is a coarse backstop only; the total lane-hold bound is
-/// [`read_request_deadline`], not this.
-pub fn set_header_timeout(stream: &TcpStream) {
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(60)));
-}
-
-/// Total wall-clock budget for reading one request (request line + headers +
-/// body) from an accepted connection while it may still hold a place in the
-/// turnstile lane.
-///
-/// [`set_header_timeout`] is per-`read` (`SO_RCVTIMEO`): any byte inside the
-/// window resets it, so a slow-drip or silent peer keeps each `read` returning
-/// `Ok(1)` (or blocking under the window) and `read_request` never returns,
-/// pinning the connection's ticket and wedging every later mutation behind it.
-/// This is one deadline across the whole read, enforced by a watchdog that
-/// shuts the socket down when it elapses, turning that pre-auth lane-hold DoS
-/// into a bounded, localhost-only stall (BLOCKER, triage D3). 10s is far more
-/// than any legitimate local upload needs (the race test's ~4 KB over ~500 ms
-/// finishes in a twentieth of it).
-pub const READ_REQUEST_DEADLINE: Duration = Duration::from_secs(10);
-
-/// Like [`read_request`] but bounded by a total wall-clock `deadline` across
-/// the entire head+body read. A watchdog thread shuts the socket down if the
-/// deadline elapses before the read finishes, so the blocked `read` returns and
-/// `read_request` gives up (`None`, or a truncated body); the caller returns
-/// and the ticket is released on `Drop`. A connection therefore cannot hold its
-/// place in the lane past `deadline`, no matter how slowly (or never) it feeds
-/// the socket.
-pub fn read_request_deadline(
-    stream: &TcpStream,
-    max_body: usize,
-    deadline: Duration,
-) -> Option<Request> {
-    // Bound the read at the socket as well as at the watchdog. Windows does
-    // not unblock a `recv` already parked in the kernel when another thread
-    // calls `shutdown` on the same socket, so there the watchdog alone cannot
-    // enforce the deadline and a silent connection held its ticket for the
-    // whole 60s header timeout. A read that makes no progress for the deadline
-    // now returns on every platform and the handler drops its ticket; the
-    // watchdog stays as the backstop for a connection that keeps trickling
-    // bytes without ever completing a request.
-    let prev_timeout = stream.read_timeout().ok().flatten();
-    let _ = stream.set_read_timeout(Some(deadline));
-    let done = Arc::new(AtomicBool::new(false));
-    let watch_stream = stream.try_clone().ok()?;
-    let watch_done = done.clone();
-    std::thread::spawn(move || {
-        // Poll the done flag so a fast, normal read frees the watchdog promptly
-        // instead of pinning a thread for the whole deadline.
-        let step = Duration::from_millis(50);
-        let mut waited = Duration::ZERO;
-        while waited < deadline {
-            if watch_done.load(Ordering::SeqCst) {
-                return;
-            }
-            std::thread::sleep(step);
-            waited += step;
-        }
-        if !watch_done.load(Ordering::SeqCst) {
-            // Unblock any in-progress read so `read_request` returns; the
-            // handler then drops its ticket and the connection closes.
-            let _ = watch_stream.shutdown(Shutdown::Both);
-        }
-    });
-    let req = read_request(stream, max_body);
-    done.store(true, Ordering::SeqCst);
-    let _ = stream.set_read_timeout(prev_timeout);
-    req
-}
+/// Per-`read` socket timeout for reading a request. A connection that opens
+/// and then sends nothing (a browser preconnect) would otherwise hold its
+/// turnstile ticket, and every later mutation, until the peer goes away.
+pub const READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Serializes state-mutating request handlers in body-completion order.
 ///
@@ -522,14 +455,8 @@ pub fn read_request_deadline(
 /// (`Drop`) without producing a request. So a handler only ever blocks on
 /// earlier connections that are alive and still working.
 ///
-/// The wait is unbounded on purpose (ordering must not give up), so on its own
-/// a slow-drip or silent connection accepted first would pin its ticket inside
-/// [`read_request`] and wedge every later mutation forever. That is prevented
-/// upstream, not here: a connection reads its request under a total wall-clock
-/// deadline ([`read_request_deadline`]), so a peer that never finishes its
-/// request is force-dropped and releases its ticket within that bound. A hung
-/// or abandoned upload can delay a later mutation by at most the deadline, and
-/// only from localhost.
+/// The wait is unbounded on purpose (ordering must not give up); a silent
+/// connection accepted first is bounded upstream by [`READ_TIMEOUT`].
 ///
 /// Read-only routes (`/status`, `/health`, `/design-system*`, `/source`,
 /// `/live.js`, `/detect.js`, `/`) and long-lived routes (SSE, parked polls)
@@ -661,7 +588,7 @@ mod tests {
             let _ = s.read_to_end(&mut sink);
         });
         let (stream, _) = listener.accept().expect("accept");
-        set_header_timeout(&stream);
+        let _ = stream.set_read_timeout(Some(READ_TIMEOUT));
         let req = read_request(&stream, max_body);
         drop(stream);
         let _ = client.join();
@@ -795,7 +722,7 @@ mod tests {
                         // Ticket lives for the whole handler; dropped at the
                         // end -> released, letting the next mutation proceed.
                         let ticket = ticket;
-                        set_header_timeout(&stream);
+                        let _ = stream.set_read_timeout(Some(READ_TIMEOUT));
                         let Some(req) = read_request(&stream, 1024 * 1024) else {
                             return;
                         };
@@ -894,24 +821,14 @@ mod tests {
         }
     }
 
-    /// The Fable BLOCKER, reproduced at the lane level: a connection accepted
-    /// first that takes a ticket and then goes silent must not wedge a later
-    /// state-mutating request beyond the read deadline.
-    ///
-    /// The silent connection sends a partial head and never finishes, so its
-    /// handler blocks inside `read_request`. Under the plain per-`read` timeout
-    /// it held its ticket for the whole (up to 60s) window and every later
-    /// mutation waited on it with `wait_turn`'s NO-timeout condvar. With
-    /// `read_request_deadline` the silent connection is force-dropped at the
-    /// total deadline and drops its ticket, so the later request takes its turn
-    /// within the bound. Reverting to a deadline-less read makes this hang and
-    /// the timed `recv` below fail, so it stays a distinguishing test.
+    /// A connection accepted first that takes a ticket and then goes silent
+    /// must not wedge a later state-mutating request beyond the read timeout.
     #[test]
-    fn silent_connection_holding_ticket_does_not_wedge_later_events_beyond_deadline() {
+    fn silent_connection_holding_ticket_does_not_wedge_later_events_beyond_timeout() {
         use std::sync::mpsc;
 
-        // Short in-test deadline keeps the test fast; production uses
-        // READ_REQUEST_DEADLINE (10s).
+        // Short in-test timeout keeps the test fast; production uses
+        // READ_TIMEOUT (10s).
         let deadline = Duration::from_millis(400);
 
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
@@ -937,11 +854,11 @@ mod tests {
                 let ran_tx = ran_tx.clone();
                 handlers.push(std::thread::spawn(move || {
                     let ticket = ticket;
-                    set_header_timeout(&stream);
+                    let _ = stream.set_read_timeout(Some(deadline));
                     // The silent connection (i == 0) reads nothing complete and
-                    // returns None at the deadline, dropping its ticket. The
+                    // returns None at the timeout, dropping its ticket. The
                     // later one reads a full request, then takes its turn.
-                    if read_request_deadline(&stream, 1024 * 1024, deadline).is_some() {
+                    if read_request(&stream, 1024 * 1024).is_some() {
                         ticket.wait_turn();
                         let _ = ran_tx.send(());
                     }
@@ -954,7 +871,7 @@ mod tests {
 
         // Connection A (accepted first, lower ticket): a partial head, then
         // silence. Kept open until the assertion so its ticket can only be
-        // released by the deadline, not by an early peer close.
+        // released by the read timeout, not by an early peer close.
         let mut silent = TcpStream::connect(addr).expect("connect silent");
         silent.set_nodelay(true).ok();
         silent
@@ -976,18 +893,16 @@ mod tests {
         later.write_all(raw.as_bytes()).expect("write later");
         later.flush().ok();
 
-        // Must run within a small multiple of the deadline. Before the fix the
-        // silent ticket was held for the whole read window and this never
-        // arrived; generous slack absorbs CI scheduling. The Windows runner
-        // schedules the watchdog's polling loop against a ~15.6ms system timer
-        // while the whole crate's tests run in parallel, so it gets a wider
-        // margin; the bound stays far under the 60s read timeout a
-        // deadline-less read would hold the ticket for, so the test still
-        // distinguishes the fix from the regression.
-        let slack = if cfg!(windows) { deadline * 12 } else { deadline * 6 };
-        ran_rx.recv_timeout(slack).expect(
-            "later /events was wedged behind a silent connection past the read deadline",
-        );
+        // Must run within a small multiple of the timeout; slack absorbs
+        // CI scheduling.
+        let slack = if cfg!(windows) {
+            deadline * 12
+        } else {
+            deadline * 6
+        };
+        ran_rx
+            .recv_timeout(slack)
+            .expect("later /events was wedged behind a silent connection past the read timeout");
 
         drop(silent);
         drop(later);

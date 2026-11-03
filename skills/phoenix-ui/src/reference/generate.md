@@ -85,7 +85,7 @@ Outside the replace path, read the matching live.md section before acting: `scaf
 
 ## Step 4: Accept and close
 
-The call from Step 3 returns the user's choice. **`discard`**: nothing to do. **`accept`**: `_acceptResult.carbonize: true` is the normal case, and the cleanup is live.md's **Required after accept**, unchanged: move the accepted variant's rules into the stylesheet that already owns the element with real selectors, bake the chosen knob values in, unwrap the element and drop every `data-impeccable-*` attribute, delete the inline `<style>` block and both `phoenix-ui-carbonize` markers, then `{{scripts_path}}/phoenix-ui live-complete --id SESSION_ID` and confirm `phase: "completed"`. (`baked: true` appears only when the accept was run with `--bake`; then the helper already made the variant permanent and no `live-complete` is owed.)
+The call from Step 3 returns the user's choice. **`discard`**: nothing to do. **`accept`**: `_acceptResult.carbonize: true` is the normal case, and the cleanup is live.md's **Required after accept**, unchanged: move the accepted variant's rules into the stylesheet that already owns the element with real selectors, bake the chosen knob values in, unwrap the element and drop every `data-impeccable-*` attribute, delete the inline `<style>` block and both `phoenix-ui-carbonize` markers, then `{{scripts_path}}/phoenix-ui live-complete --id SESSION_ID` and confirm `phase: "completed"`.
 
 Close without being asked, the moment the choice is handled:
 
@@ -96,6 +96,6 @@ Close without being asked, the moment the choice is handled:
 Stopping removes the injected script and reloads the page once: the user sees the accepted design with no overlay chrome, still served by their dev server. **Never kill or restart the dev server**, including one you started in Step 2.
 
 - **The user asks for more variants before you closed**: skip the close, run Step 2 again for the next element (the helper is reused), and close after the last choice.
-- **Interrupted or unsure of the state**: `{{scripts_path}}/phoenix-ui live-status`, then `live-resume`; the journal under `.phoenix-ui/live/sessions/` is canonical.
+- **The helper stopped mid-session**: sessions live only in the running helper; boot again and rerun Step 2 for the element.
 
 Done when the helper is stopped and the dev site still answers with the accepted design.

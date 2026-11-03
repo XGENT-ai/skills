@@ -9,8 +9,6 @@ use regex::{Regex, RegexBuilder};
 pub const MARKER_OPEN_TEXT: &str = "impeccable-live-start";
 pub const MARKER_CLOSE_TEXT: &str = "impeccable-live-end";
 pub const CSP_MARKER_ATTR: &str = "data-impeccable-csp-original";
-/// JS: TAG_PATCH_MARKERS
-pub const TAG_PATCH_MARKERS: [&str; 2] = [MARKER_OPEN_TEXT, CSP_MARKER_ATTR];
 
 /// JS: buildLiveScriptSrc(port, token)
 pub fn build_live_script_src(port: i64, token: Option<&str>) -> String {
@@ -387,11 +385,6 @@ pub fn revert_csp_meta(content: &str) -> String {
         result = format!("{}{}{}", &result[..tag.start], new_tag, &result[tag.end..]);
     }
     result
-}
-
-/// JS: unpatchTagFile(content)
-pub fn unpatch_tag_file(content: &str) -> String {
-    revert_csp_meta(&remove_tag(content))
 }
 
 #[cfg(test)]

@@ -1,11 +1,10 @@
-//! Authored architecture comparison; publication and review are separate gates.
+//! Authored architecture comparison; browser checks and review update its summary.
 pub mod canonical;
 pub mod receipts;
 pub use receipts::*;
 mod pipeline;
 pub mod render;
 mod review;
-pub mod transaction;
 mod verification;
 use crate::diagnostic::{Diagnostic, Diagnostics};
 pub use pipeline::{run, CompareRequest};
@@ -23,12 +22,12 @@ fn fail(code: &str, message: impl Into<String>, exit: u8) -> Failure {
         exit,
     }
 }
-fn from_output(error: crate::output::OutputError) -> Failure {
-    let exit = error.exit_code();
-    let mut failure = fail(&error.code, &error.message, exit);
-    failure.diagnostics[0].evidence = serde_json::to_value(error).expect("output diagnostic");
-    failure
+fn json_bytes(value: &impl serde::Serialize) -> Vec<u8> {
+    let mut bytes = serde_json::to_vec_pretty(value).expect("receipts serialize");
+    bytes.push(b'\n');
+    bytes
 }
-
-#[cfg(test)]
-mod review_tests;
+fn write(path: &std::path::Path, bytes: &[u8]) -> Result<(), Failure> {
+    crate::output::write(path, bytes)
+        .map_err(|e| fail("output/write", format!("{}: {e}", path.display()), 4))
+}

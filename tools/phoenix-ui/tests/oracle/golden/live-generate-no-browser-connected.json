@@ -21,11 +21,11 @@
     }
   ],
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n"
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n"
   },
   "daemon": [
     {
-      "stdout": "\nImpeccable live server running on http://localhost:<PORT>\nToken: <UUID>\n\nScript: http://localhost:<PORT>/live.js\nInject: managed by impeccable live-inject; Astro source tags use is:inline automatically.\nStop:   impeccable live-server stop\n",
+      "stdout": "\nPhoenix UI live server running on http://localhost:<PORT>\nToken: <UUID>\n\nScript: http://localhost:<PORT>/live.js\nInject: managed by phoenix-ui live-inject; Astro source tags use is:inline automatically.\nStop:   phoenix-ui live-server stop\n",
       "stderr": ""
     }
   ]

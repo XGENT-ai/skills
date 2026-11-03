@@ -1,16 +1,11 @@
 //! JS: live/manual-apply.mjs. The chat-routed Apply controller: mints
 //! `manual_edit_apply` events, waits for the agent's structured reply,
-//! validates it, keeps pre-apply file snapshots for rollback, and owns the
-//! commit transaction record.
+//! and validates it.
 
 use crate::paths::live_dir;
 use crate::random::random_id8;
-use crate::server_state::{
-    lock, now_i64, truthy, ApplyDeferred, FileSnapshot, Shared, TimedOutApply,
-};
-use crate::util::{
-    exists, iso_now, json_pretty, jsp, read_dir_names_raw, read_json, safe_read, Env,
-};
+use crate::server_state::{lock, truthy, ApplyDeferred, Shared};
+use crate::util::{json_pretty, jsp, Env};
 use serde_json::{json, Map, Value};
 use std::sync::mpsc::channel;
 use std::time::Duration;
@@ -474,7 +469,7 @@ pub fn build_manual_apply_agent_action(id: Option<&str>) -> Value {
         "kind": "manual_edit_apply",
         "required": "apply_source_edits_then_reply",
         "replyCommand": format!("phoenix-ui live-poll --reply {} done --data '<json>'", id),
-        "warning": "Polling only leases this work item; it does not commit source edits.",
+        "warning": "Polling only hands out this work item; it does not commit source edits.",
     })
 }
 
@@ -1087,257 +1082,9 @@ pub fn split_manual_apply_batch(batch: &Value, max_ops: usize) -> Vec<ApplyChunk
         .collect()
 }
 
-/// JS: snapshotApplyEventFiles(batch, cwd)
-pub fn snapshot_apply_event_files(batch: &Value, cwd: &str) -> Vec<(String, FileSnapshot)> {
-    let mut out = Vec::new();
-    for rel in collect_manual_apply_files(batch, &[], cwd) {
-        let abs = jsp::resolve(cwd, &[&rel]);
-        let ex = exists(&abs);
-        let content = if ex {
-            match std::fs::read(&abs) {
-                Ok(b) => String::from_utf8_lossy(&b).into_owned(),
-                Err(_) => continue,
-            }
-        } else {
-            String::new()
-        };
-        out.push((
-            rel,
-            FileSnapshot {
-                exists: ex,
-                content,
-            },
-        ));
-    }
-    out
-}
-
-/// JS: rollbackApplySnapshot(batch, rollbackSnapshot, extraFiles, reason, cwd)
-pub fn rollback_apply_snapshot(
-    batch: &Value,
-    snapshot: &[(String, FileSnapshot)],
-    extra_files: &[Value],
-    cwd: &str,
-) -> Value {
-    let scope = collect_manual_apply_files(batch, extra_files, cwd);
-    let mut rolled: Vec<String> = Vec::new();
-    let mut failures: Vec<Value> = Vec::new();
-    for rel in scope {
-        let Some((_, before)) = snapshot.iter().find(|(k, _)| *k == rel) else {
-            continue;
-        };
-        let abs = jsp::resolve(cwd, &[&rel]);
-        let res: Result<(), String> = (|| {
-            if before.exists {
-                if let Some(parent) = std::path::Path::new(&abs).parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-                std::fs::write(&abs, &before.content).map_err(|e| e.to_string())?;
-            } else if exists(&abs) {
-                std::fs::remove_file(&abs).map_err(|e| e.to_string())?;
-            }
-            Ok(())
-        })();
-        match res {
-            Ok(()) => rolled.push(rel),
-            Err(e) => {
-                failures.push(json!({ "file": rel, "reason": "restore_failed", "message": e }))
-            }
-        }
-    }
-    json!({ "rolledBackFiles": rolled, "rollbackFailures": failures })
-}
-
-/// JS: manualApplyTransactionPath(cwd)
-pub fn manual_apply_transaction_path(cwd: &str, env: &Env) -> String {
-    jsp::join(&[&live_dir(cwd, env), "manual-edit-apply-transaction.json"])
-}
-
-/// JS: readManualApplyTransaction(cwd)
-pub fn read_manual_apply_transaction(cwd: &str, env: &Env) -> Option<Value> {
-    let file = manual_apply_transaction_path(cwd, env);
-    if !exists(&file) {
-        return None;
-    }
-    read_json(&file)
-}
-
-/// JS: writeManualApplyTransaction({ cwd, pageUrl, batch })
-pub fn write_manual_apply_transaction(
-    cwd: &str,
-    env: &Env,
-    page_url: &Value,
-    batch: &Value,
-) -> Value {
-    let file = manual_apply_transaction_path(cwd, env);
-    let files = collect_manual_apply_files(batch, &[], cwd);
-    let file_entries: Vec<Value> = files
-        .iter()
-        .map(|rel| {
-            let abs = jsp::resolve(cwd, &[rel]);
-            let ex = exists(&abs);
-            json!({
-                "file": rel,
-                "exists": ex,
-                "content": if ex { safe_read(&abs).unwrap_or_default() } else { String::new() },
-            })
-        })
-        .collect();
-    let transaction = json!({
-        "version": 1,
-        "id": random_id8(),
-        "createdAt": iso_now(),
-        "pageUrl": page_url,
-        "entryIds": entries_of(batch).iter().filter_map(|e| e.get("id")).filter(|v| truthy(Some(v))).cloned().collect::<Vec<_>>(),
-        "files": file_entries,
-    });
-    if let Some(parent) = std::path::Path::new(&file).parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    let tmp = format!("{}.tmp", file);
-    let _ = std::fs::write(&tmp, format!("{}\n", json_pretty(&transaction)));
-    let _ = std::fs::rename(&tmp, &file);
-    transaction
-}
-
-/// JS: clearManualApplyTransaction(cwd, transactionId)
-pub fn clear_manual_apply_transaction(cwd: &str, env: &Env, transaction_id: Option<&str>) -> bool {
-    let file = manual_apply_transaction_path(cwd, env);
-    if !exists(&file) {
-        return false;
-    }
-    if let Some(tid) = transaction_id.filter(|s| !s.is_empty()) {
-        if let Some(existing) = read_manual_apply_transaction(cwd, env) {
-            if let Some(id) = existing
-                .get("id")
-                .and_then(|v| v.as_str())
-                .filter(|s| !s.is_empty())
-            {
-                if id != tid {
-                    return false;
-                }
-            }
-        }
-    }
-    std::fs::remove_file(&file).is_ok()
-}
-
-/// JS: rollbackManualApplyTransaction({ cwd, pageUrl, reason,
-/// recordManualEditActivity }). `activity` receives the rolled-back
-/// activity entry to record (the caller holds the state lock).
-pub fn rollback_manual_apply_transaction(
-    cwd: &str,
-    env: &Env,
-    page_url: Option<&str>,
-    reason: &str,
-) -> (Option<Value>, Option<Map<String, Value>>) {
-    let Some(transaction) = read_manual_apply_transaction(cwd, env) else {
-        return (None, None);
-    };
-    if let Some(pu) = page_url {
-        if let Some(tp) = transaction.get("pageUrl").filter(|v| truthy(Some(v))) {
-            if tp.as_str() != Some(pu) {
-                return (None, None);
-            }
-        }
-    }
-    let tid = transaction.get("id").cloned().unwrap_or(Value::Null);
-    let tid_str = tid.as_str().map(String::from);
-    let entry_ids: Vec<Value> = arr(transaction.get("entryIds")).to_vec();
-    let buffer = crate::manual_edits::buffer::read_buffer(cwd, env);
-    let pending_ids: Vec<Value> = buffer
-        .entries
-        .iter()
-        .filter_map(|e| e.get("id"))
-        .filter(|v| truthy(Some(v)))
-        .cloned()
-        .collect();
-    let should_rollback = entry_ids.iter().any(|id| pending_ids.contains(id));
-    if !should_rollback {
-        clear_manual_apply_transaction(cwd, env, tid_str.as_deref());
-        return (
-            Some(
-                json!({ "id": tid, "reason": reason, "rolledBackFiles": [], "rollbackFailures": [], "skipped": "entries_not_pending" }),
-            ),
-            None,
-        );
-    }
-    let mut rolled: Vec<String> = Vec::new();
-    let mut failures: Vec<Value> = Vec::new();
-    for item in arr(transaction.get("files")) {
-        let Some(rel) = normalize_project_file(item.get("file"), cwd) else {
-            continue;
-        };
-        let abs = jsp::resolve(cwd, &[&rel]);
-        let res: Result<(), String> = (|| {
-            if truthy(item.get("exists")) {
-                if let Some(parent) = std::path::Path::new(&abs).parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-                let content = item.get("content").and_then(|c| c.as_str()).unwrap_or("");
-                std::fs::write(&abs, content).map_err(|e| e.to_string())?;
-            } else if exists(&abs) {
-                std::fs::remove_file(&abs).map_err(|e| e.to_string())?;
-            }
-            Ok(())
-        })();
-        match res {
-            Ok(()) => rolled.push(rel),
-            Err(e) => {
-                failures.push(json!({ "file": rel, "reason": "restore_failed", "message": e }))
-            }
-        }
-    }
-    clear_manual_apply_transaction(cwd, env, tid_str.as_deref());
-    let mut activity = Map::new();
-    activity.insert("id".into(), tid.clone());
-    activity.insert(
-        "pageUrl".into(),
-        match transaction.get("pageUrl") {
-            Some(v) if truthy(Some(v)) => v.clone(),
-            _ => Value::Null,
-        },
-    );
-    activity.insert("reason".into(), json!(reason));
-    activity.insert("entryIds".into(), Value::Array(entry_ids));
-    activity.insert(
-        "rolledBackFiles".into(),
-        Value::Array(
-            rolled
-                .iter()
-                .filter_map(|f| summarize_manual_log_file(Some(&Value::String(f.clone())), cwd))
-                .map(Value::String)
-                .collect(),
-        ),
-    );
-    opt_insert(
-        &mut activity,
-        "rollbackFailures",
-        summarize_manual_diagnostics(Some(&Value::Array(failures.clone())), cwd),
-    );
-    (
-        Some(
-            json!({ "id": tid, "reason": reason, "rolledBackFiles": rolled, "rollbackFailures": failures }),
-        ),
-        Some(activity),
-    )
-}
-
 // ---------------------------------------------------------------------------
 // Controller operations on the shared server state
 // ---------------------------------------------------------------------------
-
-/// JS: tombstoneTimedOutApplyId(eventId, details)
-fn tombstone(st: &mut crate::server_state::ServerState, event_id: &str, details: TimedOutApply) {
-    if event_id.is_empty() {
-        return;
-    }
-    st.timed_out_apply_ids.retain(|(k, _)| k != event_id);
-    st.timed_out_apply_ids.push((event_id.to_string(), details));
-    if st.timed_out_apply_ids.len() > 200 {
-        st.timed_out_apply_ids.remove(0);
-    }
-}
 
 /// JS: pushApplyEventAndWait(batch, pageUrl, chunk, repair): mints the
 /// event, dispatches, and blocks until the agent replies (Ok(result)) or the
@@ -1373,7 +1120,6 @@ pub fn push_apply_event_and_wait(
         if let Some(r) = repair.filter(|r| truthy(Some(r))) {
             event.insert("repair".into(), r.clone());
         }
-        let rollback_snapshot = snapshot_apply_event_files(batch, &cwd);
         let mut details = Map::new();
         details.insert("id".into(), json!(event_id));
         details.insert("pageUrl".into(), page_url.clone());
@@ -1387,8 +1133,6 @@ pub fn push_apply_event_and_wait(
         );
         st.record_manual_edit_activity("manual_edit_apply_dispatched", details);
         let (tx, rx) = channel();
-        st.next_apply_timer_gen += 1;
-        let timer_gen = st.next_apply_timer_gen;
         st.pending_apply_deferreds.push((
             event_id.clone(),
             ApplyDeferred {
@@ -1396,9 +1140,6 @@ pub fn push_apply_event_and_wait(
                 event: event.clone(),
                 batch: batch.clone(),
                 page_url: page_url.clone(),
-                rollback_snapshot,
-                cwd: cwd.clone(),
-                timer_gen,
             },
         ));
         st.enqueue_event(event);
@@ -1433,15 +1174,6 @@ pub fn push_apply_event_and_wait(
                 return;
             };
             let (_, deferred) = st.pending_apply_deferreds.remove(pos);
-            tombstone(
-                &mut st,
-                &eid,
-                TimedOutApply {
-                    batch: deferred.batch.clone(),
-                    rollback_snapshot: deferred.rollback_snapshot.clone(),
-                    cwd: deferred.cwd.clone(),
-                },
-            );
             st.acknowledge_pending_event(Some(&eid), None);
             remove_manual_apply_evidence(deferred.event.get("evidencePath"), &cwd_c, &env_c);
             let mut details = Map::new();
@@ -1661,73 +1393,9 @@ pub fn resolve_deferred(
         return false;
     };
     let (_, deferred) = st.pending_apply_deferreds.remove(pos);
-    let env = st.env.clone();
-    remove_manual_apply_evidence(deferred.event.get("evidencePath"), &deferred.cwd, &env);
+    remove_manual_apply_evidence(deferred.event.get("evidencePath"), &st.cwd, &st.env);
     let _ = deferred.tx.send(Ok(body));
     true
-}
-
-/// JS: pruneStaleEvidence(cwd)
-pub fn prune_stale_evidence(st: &crate::server_state::ServerState) -> Vec<String> {
-    let cwd = st.cwd.clone();
-    let env = st.env.clone();
-    let dir = manual_apply_evidence_dir(&cwd, &env);
-    if !exists(&dir) {
-        return vec![];
-    }
-    let mut referenced: Vec<String> = Vec::new();
-    for entry in &st.pending_events {
-        if let Some(p) =
-            normalize_manual_apply_evidence_path(entry.event.get("evidencePath"), &cwd, &env)
-        {
-            referenced.push(p);
-        }
-    }
-    for (_, d) in &st.pending_apply_deferreds {
-        if let Some(p) =
-            normalize_manual_apply_evidence_path(d.event.get("evidencePath"), &cwd, &env)
-        {
-            referenced.push(p);
-        }
-    }
-    let mut removed = Vec::new();
-    for name in read_dir_names_raw(&dir).unwrap_or_default() {
-        if !name.ends_with(".json") {
-            continue;
-        }
-        let full = jsp::join(&[&dir, &name]);
-        if referenced.contains(&full) {
-            continue;
-        }
-        if std::fs::remove_file(&full).is_ok() {
-            removed.push(full);
-        }
-    }
-    removed
-}
-
-/// JS: rollbackTimedOutReply(msg)
-pub fn rollback_timed_out_reply(
-    st: &mut crate::server_state::ServerState,
-    msg: &Map<String, Value>,
-) -> Value {
-    let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
-    let Some(pos) = st.timed_out_apply_ids.iter().position(|(k, _)| k == id) else {
-        return json!({ "rolledBackFiles": [], "rollbackFailures": [] });
-    };
-    let (_, details) = st.timed_out_apply_ids.remove(pos);
-    let extra: Vec<Value> = msg
-        .get("data")
-        .and_then(|d| d.get("files"))
-        .and_then(|f| f.as_array())
-        .cloned()
-        .unwrap_or_default();
-    rollback_apply_snapshot(
-        &details.batch,
-        &details.rollback_snapshot,
-        &extra,
-        &details.cwd,
-    )
 }
 
 /// JS: cancelPendingEvents(pageUrl, reason)
@@ -1780,28 +1448,11 @@ pub fn cancel_pending_events(
             continue;
         };
         let (_, deferred) = st.pending_apply_deferreds.remove(pos);
-        let rollback = rollback_apply_snapshot(
-            &deferred.batch,
-            &deferred.rollback_snapshot,
-            &[],
-            &deferred.cwd,
-        );
-        tombstone(
-            st,
-            &eid,
-            TimedOutApply {
-                batch: deferred.batch.clone(),
-                rollback_snapshot: deferred.rollback_snapshot.clone(),
-                cwd: deferred.cwd.clone(),
-            },
-        );
-        remove_manual_apply_evidence(deferred.event.get("evidencePath"), &deferred.cwd, &env);
+        remove_manual_apply_evidence(deferred.event.get("evidencePath"), &cwd, &env);
         let rec = json!({
             "id": eid,
             "pageUrl": deferred.page_url,
             "entryCount": entries_of(&deferred.batch).len(),
-            "rolledBackFiles": rollback.get("rolledBackFiles").cloned().unwrap_or(json!([])),
-            "rollbackFailures": rollback.get("rollbackFailures").cloned().unwrap_or(json!([])),
         });
         canceled.retain(|(k, _)| *k != eid);
         canceled.push((eid.clone(), rec));
@@ -1811,24 +1462,4 @@ pub fn cancel_pending_events(
         st.flush_pending_polls();
     }
     canceled.into_iter().map(|(_, v)| v).collect()
-}
-
-/// Helper: `st.rollbackTransaction({ pageUrl, reason })` recording activity.
-pub fn rollback_transaction(
-    st: &mut crate::server_state::ServerState,
-    page_url: Option<&str>,
-    reason: &str,
-) -> Option<Value> {
-    let cwd = st.cwd.clone();
-    let env = st.env.clone();
-    let (result, activity) = rollback_manual_apply_transaction(&cwd, &env, page_url, reason);
-    if let Some(a) = activity {
-        st.record_manual_edit_activity("manual_edit_transaction_rolled_back", a);
-    }
-    result
-}
-
-/// `Date.now()`-stamped id helper re-export for the routes.
-pub fn now() -> i64 {
-    now_i64()
 }

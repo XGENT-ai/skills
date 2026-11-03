@@ -14,17 +14,12 @@ pub mod browser;
 pub mod color;
 pub mod constants;
 pub mod css;
-pub mod fdlibm_trig;
 pub mod findings;
 pub mod fonts;
 pub mod inline_ignores;
 pub mod js;
 pub mod js_ext_a;
-pub mod js_ext_b;
 pub mod page;
 pub mod registry;
 pub mod rule_pack;
 pub mod rules;
-
-#[cfg(any(test, feature = "vectors"))]
-pub mod vectors;

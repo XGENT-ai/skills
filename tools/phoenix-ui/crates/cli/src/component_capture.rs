@@ -87,17 +87,24 @@ pub(crate) fn render_page(
           if(document.getAnimations().some(a=>a.playState==='running'))throw Error('Component is animated; provide its static review state.');
           return {html:document.documentElement.outerHTML,svg:document.querySelectorAll('svg').length,images:document.images.length,controls:document.querySelectorAll('button,input,select,textarea,a[href]').length};
         })()"#.replace("ASSEMBLED", if assembled { "true" } else { "false" });
-        let dom=page.evaluate_value_in_world(&world,&inspect).map_err(|e|e.message)?;
+        let dom = page
+            .evaluate_value_in_world(&world, &inspect)
+            .map_err(|e| e.message)?;
         // Only the entry capture asks; review proofs keep their shape.
         let raster_coverage = if measure_raster {
-            Some(page.evaluate_value_in_world(&world, &format!("({})()", include_str!("raster_coverage.js"))).map_err(|e| e.message)?)
-        } else { None };
+            Some(
+                page.evaluate_value_in_world(
+                    &world,
+                    &format!("({})()", include_str!("raster_coverage.js")),
+                )
+                .map_err(|e| e.message)?,
+            )
+        } else {
+            None
+        };
         let urls = page.observed_response_urls().map_err(|e| e.message)?;
         let evidence = page.response_evidence(&urls).map_err(|e| e.message)?;
-        if evidence.truncated
-            || evidence.changed_during_collection
-            || !evidence.missing_urls.is_empty()
-        {
+        if evidence.truncated || !evidence.missing_urls.is_empty() {
             return Err("component network evidence is incomplete".into());
         }
         let mut responses = BTreeMap::new();
@@ -165,18 +172,22 @@ pub(crate) fn render_page(
                 return Err(format!("{}: review crop clips component content. Measured crop [{:.1}, {:.1}, {:.1}, {:.1}], visible content [{x:.1}, {y:.1}, {w:.1}, {h:.1}]. Check the reference region and component layout before asking the user to review it.", isolated["selector"].as_str().unwrap_or("component"), clip[0], clip[1], clip[2], clip[3]));
             }
         }
-        let first = page
-            .screenshot_viewport()
-            .map_err(|e| e.message)?;
-        let second = page
-            .screenshot_viewport()
-            .map_err(|e| e.message)?;
+        let first = page.screenshot_viewport().map_err(|e| e.message)?;
+        let second = page.screenshot_viewport().map_err(|e| e.message)?;
         let after_urls = page.observed_response_urls().map_err(|e| e.message)?;
         let after = page.response_evidence(&after_urls).map_err(|e| e.message)?;
-        if first != second || after_urls != urls || after.revision != evidence.revision || after.changed_during_collection
-            || after.truncated || !after.missing_urls.is_empty()
+        if first != second
+            || after_urls != urls
+            || after.revision != evidence.revision
+            || after.truncated
+            || !after.missing_urls.is_empty()
         {
-            return Err(format!("component changed during capture (pixels: {}, network revision: {} -> {}, response mutation: {})", first != second, evidence.revision, after.revision, after.changed_during_collection));
+            return Err(format!(
+                "component changed during capture (pixels: {}, network revision: {} -> {})",
+                first != second,
+                evidence.revision,
+                after.revision
+            ));
         }
         // Identity comes from the isolated document, never a producer-written receipt.
         let unchanged = page

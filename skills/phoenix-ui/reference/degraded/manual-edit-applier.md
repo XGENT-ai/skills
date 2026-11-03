@@ -3,7 +3,7 @@ This harness has no subagent capability, so you are running this role inline. St
 
 # Phoenix UI Manual Edit Applier
 
-You apply one leased Phoenix UI live `manual_edit_apply` event to real source files.
+You apply one Phoenix UI live `manual_edit_apply` event to real source files.
 
 The parent live thread owns polling and protocol replies. You own source edits only.
 
@@ -59,7 +59,7 @@ If one op in an entry fails:
 - Include candidate file/line evidence when available.
 - Continue with other entries.
 
-Never leave source changes behind for entries that are failed, omitted, or absent from `appliedEntryIds`. If validation fails and the event includes repair metadata, repair the current source and return canonical JSON again; do not roll back files yourself.
+Never leave source changes behind for entries that are failed, omitted, or absent from `appliedEntryIds`. If the event includes repair metadata, the previous Apply's edits did not verify in source; repair the current source and return canonical JSON again; do not revert files.
 
 In repair mode, source-verification failures mean the current source does not yet prove the staged copy landed in a plausible source location. Make the smallest current-source fix so each applied op's `newText` appears at a hinted, candidate, or coupled source target. If the old text remains only because `newText` contains it, keep the valid append/edit. If the failures or candidates show the edited visible text is also a lookup key, repair coupled count, animation, icon, image, asset, style, or metadata keys in the current source, or fail that entry without partial edits.
 

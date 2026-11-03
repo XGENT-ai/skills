@@ -187,28 +187,6 @@ unsafe extern "system" fn win_ctrl_handler(_ctrl_type: u32) -> i32 {
     1
 }
 
-/// `SIGINT`/`SIGTERM` names for a child's exit signal. Windows children have
-/// no signal; the JS saw `null` there and so does the caller.
-pub fn signal_name(sig: i32) -> String {
-    #[cfg(unix)]
-    {
-        match sig {
-            libc::SIGINT => "SIGINT".into(),
-            libc::SIGTERM => "SIGTERM".into(),
-            libc::SIGKILL => "SIGKILL".into(),
-            libc::SIGHUP => "SIGHUP".into(),
-            libc::SIGABRT => "SIGABRT".into(),
-            libc::SIGSEGV => "SIGSEGV".into(),
-            libc::SIGPIPE => "SIGPIPE".into(),
-            _ => format!("SIG{}", sig),
-        }
-    }
-    #[cfg(not(unix))]
-    {
-        format!("SIG{}", sig)
-    }
-}
-
 /// The name Node's `child_process` resolves for a bare command on this OS:
 /// `node` is `node.exe` on Windows, and a `spawn('sh')` there would fail, so
 /// [`shell`] hands back `cmd.exe /d /s /c` the way `spawn(..., { shell: true })`
@@ -244,19 +222,6 @@ pub fn shell(script: &str, comspec: Option<&str>) -> Command {
         c.arg("-c").arg(script);
         c
     }
-}
-
-/// `which <tool>` / `where <tool>` (Node scripts pick by platform): does the
-/// probe exit 0? Windows `where` is a console tool, so hide its window.
-pub fn tool_on_path(tool: &str) -> bool {
-    let probe = if cfg!(windows) { "where" } else { "which" };
-    let mut cmd = Command::new(probe);
-    cmd.arg(tool)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null());
-    hide_window(&mut cmd);
-    cmd.status().map(|s| s.success()).unwrap_or(false)
 }
 
 #[cfg(windows)]

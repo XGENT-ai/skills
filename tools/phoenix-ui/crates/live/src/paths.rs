@@ -1,7 +1,7 @@
 //! JS: lib/impeccable-paths.mjs (the live subset): `.phoenix-ui/live` paths,
 //! the live config path, server.json read/write, session ids.
 
-use crate::util::{exists, jsp, pid_reachable, read_json, Env};
+use crate::util::{jsp, pid_reachable, read_json, Env};
 use impeccable_context::context::resolve_project_root;
 use impeccable_context::target_args::TargetOptions;
 use serde_json::Value;
@@ -49,28 +49,6 @@ pub fn live_server_path(cwd: &str, env: &Env) -> String {
     jsp::join(&[&live_dir(cwd, env), "server.json"])
 }
 
-/// JS: getLegacyLiveServerPath(cwd)
-pub fn legacy_live_server_path(cwd: &str, env: &Env) -> String {
-    jsp::join(&[
-        &resolve_project_root(cwd, &TargetOptions::default(), env),
-        ".phoenix-ui-live.json",
-    ])
-}
-
-/// JS: getLiveSessionsDir(cwd)
-pub fn live_sessions_dir(cwd: &str, env: &Env) -> String {
-    jsp::join(&[&live_dir(cwd, env), "sessions"])
-}
-
-/// JS: getLegacyLiveSessionsDir(cwd)
-pub fn legacy_live_sessions_dir(cwd: &str, env: &Env) -> String {
-    jsp::join(&[
-        &resolve_project_root(cwd, &TargetOptions::default(), env),
-        ".phoenix-ui-live",
-        "sessions",
-    ])
-}
-
 /// JS: getLiveAnnotationsDir(cwd)
 pub fn live_annotations_dir(cwd: &str, env: &Env) -> String {
     jsp::join(&[&live_dir(cwd, env), "annotations"])
@@ -109,70 +87,28 @@ impl ServerInfo {
 /// JS: readLiveServerInfo(cwd): `{ info, path }` or None. A record whose pid
 /// is a number and no longer signalable is unlinked and skipped.
 pub fn read_live_server_info(cwd: &str, env: &Env) -> Option<(ServerInfo, String)> {
-    for file in [
-        live_server_path(cwd, env),
-        legacy_live_server_path(cwd, env),
-    ] {
-        let Some(v) = read_json(&file) else { continue };
-        let info = ServerInfo::from_value(&v);
-        if info.pid_is_number() {
-            let alive = info.pid.map(pid_reachable).unwrap_or(false);
-            if !alive {
-                let _ = std::fs::remove_file(&file);
-                continue;
-            }
-        }
-        // JS: `info && typeof info.pid === 'number'` guards the check; any
-        // parsed JSON (even a scalar) is returned as-is.
-        return Some((info, file));
+    let file = live_server_path(cwd, env);
+    let v = read_json(&file)?;
+    let info = ServerInfo::from_value(&v);
+    if info.pid_is_number() && !info.pid.map(pid_reachable).unwrap_or(false) {
+        let _ = std::fs::remove_file(&file);
+        return None;
     }
-    None
-}
-
-fn publish_server_info(file: &str, content: &str) -> std::io::Result<()> {
-    use std::io::Write;
-    use std::sync::atomic::{AtomicU64, Ordering};
-
-    static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
-    let path = std::path::Path::new(file);
-    let parent = path.parent().unwrap();
-    std::fs::create_dir_all(parent)?;
-    let temp = parent.join(format!(
-        ".server.json.tmp-{}-{}",
-        std::process::id(),
-        NEXT_TEMP.fetch_add(1, Ordering::Relaxed)
-    ));
-    let mut writer = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temp)?;
-    let written = writer
-        .write_all(content.as_bytes())
-        .and_then(|_| writer.sync_all());
-    // Close before replacement on Windows, where an open handle can deny rename.
-    drop(writer);
-    let result = written.and_then(|_| std::fs::rename(&temp, path));
-    if result.is_err() {
-        let _ = std::fs::remove_file(&temp);
-    }
-    result
+    // JS: `info && typeof info.pid === 'number'` guards the check; any
+    // parsed JSON (even a scalar) is returned as-is.
+    Some((info, file))
 }
 
 /// JS: writeLiveServerInfo(cwd, info)
 pub fn write_live_server_info(cwd: &str, env: &Env, info: &Value) -> String {
     let file = live_server_path(cwd, env);
-    let _ = publish_server_info(&file, &serde_json::to_string(info).unwrap_or_default());
+    let _ = crate::util::write_file(&file, &serde_json::to_string(info).unwrap_or_default());
     file
 }
 
 /// JS: removeLiveServerInfo(cwd)
 pub fn remove_live_server_info(cwd: &str, env: &Env) {
-    for file in [
-        live_server_path(cwd, env),
-        legacy_live_server_path(cwd, env),
-    ] {
-        let _ = std::fs::remove_file(&file);
-    }
+    let _ = std::fs::remove_file(live_server_path(cwd, env));
 }
 
 /// JS: safeSessionId(id): `/^[A-Za-z0-9_-]{1,128}$/` or an error message.
@@ -187,8 +123,4 @@ pub fn safe_session_id(id: &str) -> Result<&str, String> {
     } else {
         Err(format!("invalid session id: {}", id))
     }
-}
-
-pub fn file_exists(p: &str) -> bool {
-    exists(p)
 }

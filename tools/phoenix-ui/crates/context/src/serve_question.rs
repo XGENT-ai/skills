@@ -162,13 +162,13 @@ fn declared_comps(payload: &Value) -> Vec<String> {
     out
 }
 
-/// Provenance of a hand lives in `<key>.hand.json`, written atomically by
-/// `--start` and `--update` only, never by the server (whose heartbeat and
-/// claim writes rewrite `<key>.state.json` and would race a shared field).
-/// Shape: `{"digest": <hand_digest>, "comps": [<declared slots>], "pre":
-/// {<slot>: <sha256 of the file that sat there when the hand began>}}`.
-/// `--update` always starts a new hand; `--start` keeps the recorded hand when
-/// its digest matches (a restart) and starts a new one otherwise.
+/// Provenance of a hand lives in `<key>.hand.json`, written by `--start` and
+/// `--update` only, never by the server (whose heartbeat and claim writes
+/// rewrite `<key>.state.json`). Shape: `{"digest": <hand_digest>, "comps":
+/// [<declared slots>], "pre": {<slot>: <sha256 of the file that sat there
+/// when the hand began>}}`. `--update` always starts a new hand; `--start`
+/// keeps the recorded hand when its digest matches (a restart) and starts a
+/// new one otherwise.
 fn hand_file(qdir: &str, key: &str) -> String {
     jsp::join(&[qdir, &format!("{}.hand.json", key)])
 }
@@ -187,133 +187,18 @@ fn file_fingerprint(abs: &str) -> Option<String> {
     Some(Sha256::digest(&bytes).iter().map(|b| format!("{:02x}", b)).collect())
 }
 
-/// `<key>.generated/`: one marker per slot `impeccable generate-image` wrote
-/// during the hand, `<sha16 of slot>-<hand tag>.json` = `{"slot", "hand"}`.
-/// A marker file per slot rather than a list inside the hand file, because
-/// parallel generators (one subagent per card) would race a shared
-/// read-modify-write. The hand tag in the name keeps one hand's markers off
-/// every path another hand writes, so pruning decides from the name alone.
-fn generated_dir(qdir: &str, key: &str) -> String {
-    jsp::join(&[qdir, &format!("{}.generated", key)])
-}
-
-/// The hand id as it appears in a marker file name: the id itself when it is
-/// a short run of `[a-z0-9_]` (every id and digest this engine writes), else
-/// its hash, so a hand-edited id can never smuggle a separator or a dot, and
-/// two ids that differ only in case never share a path on a case-insensitive
-/// file system (Windows, default macOS).
-fn marker_tag(id: &str) -> String {
-    if !id.is_empty() && id.len() <= 64 && id.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_') {
-        id.to_string()
-    } else {
-        hand_digest(&Value::String(id.to_string()))
-    }
-}
-
-/// The marker file name for `slot` in the hand tagged `tag`.
-fn marker_name(slot: &str, tag: &str) -> String {
-    format!("{}-{}.json", hand_digest(&Value::String(slot.to_string())), tag)
-}
-
-/// The hand tag a marker file name carries: `Some(tag)` for
-/// `<16 hex>-<tag>.json` (or its `.json.tmp-<pid>` temp file), `None` for a
-/// legacy `<16 hex>.json` name, whose owner lives only in its content.
-fn marker_name_tag(name: &str) -> Option<&str> {
-    let stem = &name[..name.find(".json")?];
-    let (slot, tag) = (stem.get(..16)?, stem.get(16..)?);
-    let tag = tag.strip_prefix('-')?;
-    (slot.bytes().all(|b| b.is_ascii_hexdigit()) && !tag.is_empty()).then_some(tag)
-}
-
-/// The owner a legacy marker's content names (`hand`, else `digest`).
-fn legacy_marker_owner(path: &std::path::Path) -> Option<String> {
-    safe_read(&path.to_string_lossy())
-        .and_then(|t| serde_json::from_str::<Value>(&t).ok())
-        .and_then(|m| m.get("hand").or_else(|| m.get("digest")).and_then(Value::as_str).map(str::to_string))
-}
-
-/// The recorded hand, with the slots generated during it merged in as
-/// `generated` (markers from another digest are ignored).
 fn read_hand(qdir: &str, key: &str) -> Option<Map<String, Value>> {
-    let mut hand = safe_read(&hand_file(qdir, key)).and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|v| v.as_object().cloned())?;
-    let id = hand_marker_id(&hand);
-    let tag = marker_tag(&id);
-    let mut generated: Vec<String> = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(generated_dir(qdir, key)) {
-        for e in entries.flatten() {
-            let name = e.file_name().to_string_lossy().into_owned();
-            if !name.ends_with(".json") {
-                continue;
-            }
-            let Some(m) = safe_read(&e.path().to_string_lossy()).and_then(|t| serde_json::from_str::<Value>(&t).ok()) else { continue };
-            let ours = match marker_name_tag(&name) {
-                Some(t) => t == tag,
-                None => m.get("hand").or_else(|| m.get("digest")).and_then(Value::as_str) == Some(id.as_str()),
-            };
-            if ours {
-                if let Some(slot) = m.get("slot").and_then(Value::as_str) {
-                    generated.push(slot.to_string());
-                }
-            }
-        }
-    }
-    generated.sort();
-    generated.dedup();
-    if !generated.is_empty() {
-        hand.insert("generated".into(), json!(generated));
-    }
-    Some(hand)
+    safe_read(&hand_file(qdir, key))
+        .and_then(|t| serde_json::from_str::<Value>(&t).ok())
+        .and_then(|v| v.as_object().cloned())
 }
 
-/// Temp file beside the target, then rename: a reader never sees half a file.
+/// Temp file beside the target, then rename: a polling `--wait` never reads
+/// half an answer.
 fn write_atomic(target: &str, text: &str) -> std::io::Result<()> {
     let temp = format!("{}.tmp-{}", target, std::process::id());
     std::fs::write(&temp, text)?;
-    std::fs::rename(&temp, target).map_err(|e| {
-        let _ = std::fs::remove_file(&temp);
-        e
-    })
-}
-
-fn same_path(a: &str, b: &str) -> bool {
-    let norm = |p: &str| {
-        let p = p.replace('\\', "/");
-        if cfg!(windows) { p.to_lowercase() } else { p }
-    };
-    norm(a) == norm(b)
-}
-
-/// Called by `impeccable generate-image` after it writes `out`: when `out` is
-/// a declared slot of a recorded hand in this project, mark it generated
-/// during that hand. A deterministic generator returns the same bytes for
-/// the same prompt, which the fingerprint rule alone would read as stale.
-/// Returns the keys whose hand was marked, or the first write error.
-pub fn record_generated(cwd: &str, out: &str) -> Result<Vec<String>, String> {
-    let qdir = jsp::join(&[cwd, ".phoenix-ui", "questions"]);
-    let out_abs = jsp::resolve(cwd, &[out]);
-    let Ok(entries) = std::fs::read_dir(&qdir) else { return Ok(vec![]) };
-    let mut keys: Vec<String> = entries
-        .flatten()
-        .filter_map(|e| e.file_name().to_string_lossy().strip_suffix(".hand.json").map(str::to_string))
-        .collect();
-    keys.sort();
-    let mut marked = Vec::new();
-    for key in keys {
-        let Some(hand) = read_hand(&qdir, &key) else { continue };
-        let id = hand_marker_id(&hand);
-        for slot in round_comps(Some(&hand), None) {
-            if !same_path(&jsp::resolve(cwd, &[slot.as_str()]), &out_abs) {
-                continue;
-            }
-            let dir = generated_dir(&qdir, &key);
-            let marker = jsp::join(&[&dir, &marker_name(&slot, &marker_tag(&id))]);
-            std::fs::create_dir_all(&dir)
-                .and_then(|_| write_atomic(&marker, &json_compact(&json!({ "slot": slot, "hand": id }))))
-                .map_err(|e| format!("{}: {}", marker, e))?;
-            marked.push(key.clone());
-        }
-    }
-    Ok(marked)
+    std::fs::rename(&temp, target)
 }
 
 /// A new hand: its digest, its slots, and the fingerprint of every slot that
@@ -327,57 +212,32 @@ fn new_hand(cwd: &str, payload: &Value) -> Map<String, Value> {
         }
     }
     let mut m = Map::new();
-    // A per-hand id: an --update re-roll can repeat a payload, so the digest
-    // alone cannot tell one hand's generated markers from the next one's.
-    let nonce = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
-    m.insert("id".into(), Value::String(hand_digest(&json!([hand_digest(payload), nonce.to_string(), std::process::id()]))));
     m.insert("digest".into(), Value::String(hand_digest(payload)));
     m.insert("comps".into(), json!(comps));
     m.insert("pre".into(), Value::Object(pre));
     m
 }
 
-/// Records a new hand atomically (temp file then rename, so a reader never
-/// sees half a hand), then prunes generated markers that belong to another
-/// hand. Pruning waits for a successful write, so a failed write leaves the
-/// live hand and its markers intact. It decides from the file name alone and
-/// deletes only names tagged with another hand, so it never touches a path a
-/// parallel generate-image for this hand may be writing. A legacy untagged
-/// marker (written before names carried the hand) is judged by its content;
-/// this engine never writes that name again, so no new marker can land there.
 /// The error names the file.
 fn write_hand(qdir: &str, key: &str, hand: &Map<String, Value>) -> Result<(), String> {
     let target = hand_file(qdir, key);
-    write_atomic(&target, &json_compact(&Value::Object(hand.clone()))).map_err(|e| format!("{}: {}", target, e))?;
-    let id = hand_marker_id(hand);
-    let tag = marker_tag(&id);
-    if let Ok(entries) = std::fs::read_dir(generated_dir(qdir, key)) {
-        for e in entries.flatten() {
-            let name = e.file_name().to_string_lossy().into_owned();
-            let prune = match marker_name_tag(&name) {
-                Some(t) => t != tag,
-                None => legacy_marker_owner(&e.path()).as_deref() != Some(id.as_str()),
-            };
-            if prune {
-                let _ = std::fs::remove_file(e.path());
-            }
-        }
-    }
-    Ok(())
-}
-
-/// What a generated marker records as its hand: the hand's id, or its digest
-/// for a hand file written before ids existed.
-fn hand_marker_id(hand: &Map<String, Value>) -> String {
-    hand.get("id").or_else(|| hand.get("digest")).and_then(Value::as_str).unwrap_or("").to_string()
+    std::fs::write(&target, json_compact(&Value::Object(hand.clone())))
+        .map_err(|e| format!("{}: {}", target, e))
 }
 
 /// The hand a `--start` serves: the recorded one when the key's hand file
 /// carries this payload's digest (a restart keeps its fingerprints), else a
 /// new one, written before the server spawns.
-fn start_hand(qdir: &str, key: &str, cwd: &str, payload: &Value) -> Result<Map<String, Value>, String> {
+fn start_hand(
+    qdir: &str,
+    key: &str,
+    cwd: &str,
+    payload: &Value,
+) -> Result<Map<String, Value>, String> {
     let digest = hand_digest(payload);
-    if let Some(h) = read_hand(qdir, key).filter(|h| h.get("digest").and_then(Value::as_str) == Some(digest.as_str())) {
+    if let Some(h) = read_hand(qdir, key)
+        .filter(|h| h.get("digest").and_then(Value::as_str) == Some(digest.as_str()))
+    {
         return Ok(h);
     }
     let h = new_hand(cwd, payload);
@@ -385,13 +245,16 @@ fn start_hand(qdir: &str, key: &str, cwd: &str, payload: &Value) -> Result<Map<S
     Ok(h)
 }
 
-/// The comps a `--wait` judges: the hand's, else the state's (a round served
-/// before hands were recorded).
-fn round_comps(hand: Option<&Map<String, Value>>, state: Option<&Map<String, Value>>) -> Vec<String> {
-    match hand {
-        Some(h) => h.get("comps").and_then(Value::as_array).map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect()).unwrap_or_default(),
-        None => state.map(state_comps).unwrap_or_default(),
-    }
+/// The comps a `--wait` judges: the recorded hand's.
+fn round_comps(hand: Option<&Map<String, Value>>) -> Vec<String> {
+    hand.and_then(|h| h.get("comps"))
+        .and_then(Value::as_array)
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// A declared comp is this hand's when its file exists and differs from the
@@ -405,10 +268,6 @@ fn comp_is_this_hands(cwd: &str, comp: &str, hand: Option<&Map<String, Value>>) 
     }
     let Some(hand) = hand else { return true };
     if is_comp_round_comp(comp) {
-        return true;
-    }
-    let generated = hand.get("generated").and_then(Value::as_array).map(|g| g.iter().any(|v| v.as_str() == Some(comp))).unwrap_or(false);
-    if generated {
         return true;
     }
     match hand.get("pre").and_then(|p| p.get(comp)).and_then(Value::as_str) {
@@ -474,11 +333,6 @@ fn sidecar_missing_line(env: &Env, cwd: &str, missing: &[String]) -> String {
         missing.join(", "),
         visualize_ref(env, cwd)
     )
-}
-
-/// The comps recorded for the live round in `<key>.state.json`.
-fn state_comps(state: &Map<String, Value>) -> Vec<String> {
-    state.get("comps").and_then(Value::as_array).map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect()).unwrap_or_default()
 }
 
 fn js_str(v: &Value) -> String {
@@ -578,10 +432,9 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
             if exists(&flip_file(&qdir, &key)) {
                 let _ = std::fs::remove_file(flip_file(&qdir, &key));
                 io.out("BUILD PATH FLIPPED: comp (for this session only; never write it to settings). The table is still open and the page shows shimmer where the images will land: generate each open card’s comp into its declared path now, lead first, then collect the answer with --wait again. A card whose comp already exists needs nothing.\n");
-                // State without comps (a round from before comps were recorded)
-                // still gets the line; a round whose comps all landed does not.
+                // A round whose comps all landed does not get the line.
                 let hand = read_hand(&qdir, &key);
-                let comps = round_comps(hand.as_ref(), read_state(&qdir, &key).as_ref());
+                let comps = round_comps(hand.as_ref());
                 if comps.is_empty() || any_comp_pending(&cwd, &comps, hand.as_ref()) {
                     io.out(&visualize_next_line(&env, &cwd));
                 }
@@ -612,7 +465,7 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
         // Read before the answer path may delete the state file.
         let (missing, stale) = {
             let hand = read_hand(&qdir, &key);
-            let comps = round_comps(hand.as_ref(), read_state(&qdir, &key).as_ref());
+            let comps = round_comps(hand.as_ref());
             (comps_missing_sidecar(&cwd, &comps, hand.as_ref()), stale_comps(&cwd, &comps, hand.as_ref()))
         };
         if !answered() {
@@ -641,7 +494,6 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
         if !keeps_open {
             let _ = std::fs::remove_file(state_file(&qdir, &key));
             let _ = std::fs::remove_file(hand_file(&qdir, &key));
-            let _ = std::fs::remove_dir_all(generated_dir(&qdir, &key));
         }
         return 0;
     }
@@ -659,7 +511,6 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
         let _ = std::fs::remove_file(answer_file(&qdir, &key));
         let _ = std::fs::remove_file(state_file(&qdir, &key));
         let _ = std::fs::remove_file(hand_file(&qdir, &key));
-            let _ = std::fs::remove_dir_all(generated_dir(&qdir, &key));
         io.out("stopped\n");
         return 0;
     }
@@ -830,11 +681,7 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
     if a.has("detached-serve") {
         let _ = std::fs::create_dir_all(&qdir);
         let key = a.arg("key").unwrap_or_default();
-        let mut st = json!({ "pid": std::process::id(), "port": actual_port, "url": url });
-        let comps = declared_comps(&state.lock().unwrap().payload);
-        if !comps.is_empty() {
-            st["comps"] = json!(comps);
-        }
+        let st = json!({ "pid": std::process::id(), "port": actual_port, "url": url });
         let _ = std::fs::write(state_file(&qdir, &key), json_compact(&st));
     } else {
         io.out(&format!("QUESTION URL: {}\n", url));
@@ -906,12 +753,6 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
                     if let Some(k) = st.detached_key.clone() {
                         if let Some(mut s) = read_state(&st.qdir, &k) {
                             s.insert("claimedAt".into(), Value::from(st.last_claim_at as i64));
-                            let comps = declared_comps(&st.payload);
-                            if comps.is_empty() {
-                                s.remove("comps");
-                            } else {
-                                s.insert("comps".into(), json!(comps));
-                            }
                             let _ = std::fs::write(state_file(&st.qdir, &k), json_compact(&Value::Object(s)));
                         }
                     }
@@ -1857,7 +1698,7 @@ mod tests {
         assert!(out.contains("NEXT read "), "{out}");
         let hand = read_hand(&qdir, "k1").unwrap();
         assert_eq!(hand.get("digest").and_then(Value::as_str), Some(hand_digest(&reroll).as_str()));
-        assert_eq!(round_comps(Some(&hand), None), vec![slot.to_string()]);
+        assert_eq!(round_comps(Some(&hand)), vec![slot.to_string()]);
 
         // The server dies before the new comp lands; a restart of the re-roll
         // payload keeps the re-roll's hand, so the old file still does not count.
@@ -1868,77 +1709,10 @@ mod tests {
     }
 
     #[test]
-    fn server_state_writes_after_update_do_not_lose_the_hand() {
-        let dir = temp_project("hand-race");
-        let cwd = dir.to_string_lossy().into_owned();
-        let qdir = jsp::join(&[&cwd, ".phoenix-ui", "questions"]);
-        let slot = ".phoenix-ui/mocks/decision/a.png";
-        write_file(&dir.join(slot), b"first hand");
-        write_state(&dir, &json!({ "pid": std::process::id(), "port": 1, "url": "http://127.0.0.1:1/", "comps": [slot] }));
-        std::fs::write(dir.join("reroll.json"), json!({ "options": [{ "id": "a", "comp": slot }] }).to_string()).unwrap();
-        // The server read its state just before --update ran ...
-        let stale_read = read_state(&qdir, "k1").unwrap();
-        let (_, out) = run_captured(&dir, &["--update", "--key", "k1", "--payload", "reroll.json"]);
-        assert!(out.contains("NEXT read "), "{out}");
-        // ... and writes it back afterwards, as a heartbeat or claim does.
-        let mut s = stale_read.clone();
-        s.insert("lastBeat".into(), Value::from(now_ms() as i64));
-        std::fs::write(state_file(&qdir, "k1"), json_compact(&Value::Object(s.clone()))).unwrap();
-        s.insert("claimedAt".into(), Value::from(now_ms() as i64));
-        std::fs::write(state_file(&qdir, "k1"), json_compact(&Value::Object(s.clone()))).unwrap();
-        // The hand survives: the first hand's file is still named stale.
-        assert!(read_hand(&qdir, "k1").is_some());
-        let (_, out) = run_captured(&dir, &["--wait", "--key", "k1", "--poll", "0"]);
-        let out = out.replace('\\', "/");
-        assert!(out.contains("COMP STALE: ") && out.contains(slot), "{out}");
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn deterministic_regeneration_into_a_reused_slot_counts_via_generated() {
-        let dir = temp_project("regen");
-        let cwd = dir.to_string_lossy().into_owned();
-        let qdir = jsp::join(&[&cwd, ".phoenix-ui", "questions"]);
-        let slot = ".phoenix-ui/mocks/decision/a.png";
-        let gen = |out: &str| {
-            let env = Env::from([("PHOENIX_UI_IMAGE_GEN_FAKE".into(), "1".into())]);
-            let (mut io, cap) = Io::captured("", dir.clone(), env);
-            let args: Vec<String> = ["--prompt", "Same prompt, same bytes.", "--out", out, "--size", "64x40"].iter().map(|s| s.to_string()).collect();
-            let code = crate::generate_image::run(&args, &mut io);
-            assert_eq!(code, 0, "{}", String::from_utf8_lossy(&cap.stderr.borrow()));
-        };
-        // The previous hand generated into the slot.
-        gen(slot);
-        let before = std::fs::read(dir.join(slot)).unwrap();
-        write_state(&dir, &json!({ "pid": std::process::id(), "port": 1, "url": "http://127.0.0.1:1/" }));
-        std::fs::write(dir.join("reroll.json"), json!({ "options": [{ "id": "a", "comp": slot }] }).to_string()).unwrap();
-        let (_, out) = run_captured(&dir, &["--update", "--key", "k1", "--payload", "reroll.json"]);
-        assert!(out.contains("NEXT read "), "{out}");
-        let (_, out) = run_captured(&dir, &["--wait", "--key", "k1", "--poll", "0"]);
-        assert!(out.contains("COMP STALE: "), "{out}");
-        // The re-roll regenerates the same prompt: identical bytes, still this hand's.
-        gen(&format!("./{}", slot));
-        assert_eq!(std::fs::read(dir.join(slot)).unwrap(), before);
-        let hand = read_hand(&qdir, "k1").unwrap();
-        assert_eq!(hand.get("generated"), Some(&json!([slot])));
-        assert!(comp_is_this_hands(&cwd, slot, Some(&hand)));
-        let (_, out) = run_captured(&dir, &["--wait", "--key", "k1", "--poll", "0"]);
-        assert!(!out.contains("COMP STALE"), "{out}");
-        // Rewriting the prompt sidecar alone never counts: only generation or new bytes do.
-        std::fs::write(dir.join("again.json"), json!({ "title": "3", "options": [{ "id": "a", "comp": slot }] }).to_string()).unwrap();
-        run_captured(&dir, &["--update", "--key", "k1", "--payload", "again.json"]);
-        std::fs::write(dir.join(format!("{}.json", slot)), r#"{"prompt":"rewritten"}"#).unwrap();
-        let hand = read_hand(&qdir, "k1").unwrap();
-        assert!(hand.get("generated").is_none());
-        assert!(!comp_is_this_hands(&cwd, slot, Some(&hand)));
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
     fn a_failed_hand_write_fails_start_and_update() {
         let dir = temp_project("hand-fail");
         let qdir = jsp::join(&[&dir.to_string_lossy(), ".phoenix-ui", "questions"]);
-        // A directory where the hand file belongs: the rename cannot land, on
+        // A directory where the hand file belongs: the write cannot land, on
         // every platform.
         std::fs::create_dir_all(hand_file(&qdir, "k1")).unwrap();
         std::fs::write(
@@ -1968,152 +1742,6 @@ mod tests {
         assert!(out.is_empty(), "{out}");
         assert!(err.contains("nothing was delivered"), "{err}");
         assert!(!std::path::Path::new(&next_file(&qdir, "k1")).exists());
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn markers_survive_a_failed_hand_write_and_leave_with_the_question() {
-        let dir = temp_project("markers");
-        let cwd = dir.to_string_lossy().into_owned();
-        let qdir = jsp::join(&[&cwd, ".phoenix-ui", "questions"]);
-        let payload =
-            json!({ "options": [{ "id": "a", "comp": ".phoenix-ui/mocks/decision/a.png" }] });
-        let live = new_hand(&cwd, &payload);
-        write_hand(&qdir, "k1", &live).unwrap();
-        std::fs::create_dir_all(dir.join(".phoenix-ui/mocks/decision")).unwrap();
-        std::fs::write(dir.join(".phoenix-ui/mocks/decision/a.png"), b"png").unwrap();
-        assert_eq!(
-            record_generated(&cwd, ".phoenix-ui/mocks/decision/a.png").unwrap(),
-            vec!["k1".to_string()]
-        );
-
-        // A failed write of the next hand keeps the live hand's marker.
-        let hand_path = hand_file(&qdir, "k1");
-        std::fs::remove_file(&hand_path).unwrap();
-        std::fs::create_dir_all(&hand_path).unwrap();
-        assert!(write_hand(&qdir, "k1", &new_hand(&cwd, &payload)).is_err());
-        std::fs::remove_dir_all(&hand_path).unwrap();
-        write_atomic(&hand_path, &json_compact(&Value::Object(live.clone()))).unwrap();
-        assert_eq!(
-            read_hand(&qdir, "k1").unwrap().get("generated"),
-            Some(&json!([".phoenix-ui/mocks/decision/a.png"]))
-        );
-
-        // A new hand with the same payload does not inherit the old marker.
-        write_hand(&qdir, "k1", &new_hand(&cwd, &payload)).unwrap();
-        assert!(read_hand(&qdir, "k1").unwrap().get("generated").is_none());
-
-        // --stop takes the marker folder with the hand file.
-        record_generated(&cwd, ".phoenix-ui/mocks/decision/a.png").unwrap();
-        write_state(&dir, &json!({ "pid": 0, "port": 1, "url": "http://127.0.0.1:1/" }));
-        let _ = run_captured(&dir, &["--stop", "--key", "k1"]);
-        assert!(!std::path::Path::new(&hand_file(&qdir, "k1")).exists());
-        assert!(!std::path::Path::new(&generated_dir(&qdir, "k1")).exists());
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn marker_names_carry_the_hand_tag() {
-        let slot = ".phoenix-ui/mocks/decision/a.png";
-        let name = marker_name(slot, "abc123");
-        assert_eq!(name, format!("{}-abc123.json", hand_digest(&Value::String(slot.into()))));
-        assert_eq!(marker_name_tag(&name), Some("abc123"));
-        assert_eq!(marker_name_tag(&format!("{}.tmp-42", name)), Some("abc123"));
-        // A legacy name carries no tag; neither does a stray file.
-        assert_eq!(marker_name_tag(&format!("{}.json", hand_digest(&Value::String(slot.into())))), None);
-        assert_eq!(marker_name_tag("notes.txt"), None);
-        assert_eq!(marker_name_tag("zzzzzzzzzzzzzzzz-abc.json"), None);
-        // An id that could not sit in a file name safely is hashed.
-        assert_eq!(marker_tag("0123456789abcdef"), "0123456789abcdef");
-        let odd = marker_tag("..\\x/y.json");
-        assert_eq!(odd.len(), 16);
-        assert!(odd.bytes().all(|b| b.is_ascii_hexdigit()));
-        assert_eq!(marker_tag(""), hand_digest(&Value::String(String::new())));
-        // Ids that differ only in case get distinct, all-lowercase tags, so
-        // they never share a path on a case-insensitive file system.
-        let (lower, upper) = (marker_tag("abc"), marker_tag("ABC"));
-        assert_eq!(lower, "abc");
-        assert_ne!(lower.to_lowercase(), upper.to_lowercase());
-        assert_eq!(upper, upper.to_lowercase());
-    }
-
-    // Issue #886: the prune used to read a marker's owner and then delete the
-    // file, so a parallel generate-image for the new hand that replaced a
-    // reused slot's marker between the read and the delete lost its marker.
-    // Markers now carry the hand in their name: the new hand writes a path the
-    // old hand never used, and the prune decides from names alone.
-    #[test]
-    fn prune_spares_a_parallel_marker_for_the_new_hand_in_a_reused_slot() {
-        let dir = temp_project("marker-race");
-        let cwd = dir.to_string_lossy().into_owned();
-        let qdir = jsp::join(&[&cwd, ".phoenix-ui", "questions"]);
-        let slot = ".phoenix-ui/mocks/decision/a.png";
-        let payload = json!({ "options": [{ "id": "a", "comp": slot }] });
-        std::fs::create_dir_all(dir.join(".phoenix-ui/mocks/decision")).unwrap();
-        std::fs::write(dir.join(slot), b"png").unwrap();
-
-        // The old hand generated into the slot.
-        let old = new_hand(&cwd, &payload);
-        write_hand(&qdir, "k1", &old).unwrap();
-        record_generated(&cwd, slot).unwrap();
-        let old_marker = jsp::join(&[&generated_dir(&qdir, "k1"), &marker_name(slot, &marker_tag(&hand_marker_id(&old)))]);
-        assert!(std::path::Path::new(&old_marker).exists());
-
-        // --update: the new hand file lands, then (before its prune runs) a
-        // parallel generate-image regenerates the reused slot for it.
-        let mut new = new_hand(&cwd, &payload);
-        new.insert("id".into(), json!("feedfacecafebeef"));
-        let target = hand_file(&qdir, "k1");
-        write_atomic(&target, &json_compact(&Value::Object(new.clone()))).unwrap();
-        assert_eq!(record_generated(&cwd, slot).unwrap(), vec!["k1".to_string()]);
-        let new_marker = jsp::join(&[&generated_dir(&qdir, "k1"), &marker_name(slot, "feedfacecafebeef")]);
-        assert!(!same_path(&old_marker, &new_marker), "one hand's marker must never share a path with another's");
-        // The old hand's marker is still there when the prune starts.
-        assert!(std::path::Path::new(&old_marker).exists());
-
-        // The prune half of write_hand: it removes the old hand's marker and
-        // keeps the new one.
-        write_hand(&qdir, "k1", &new).unwrap();
-        assert!(!std::path::Path::new(&old_marker).exists());
-        assert!(std::path::Path::new(&new_marker).exists());
-        assert_eq!(read_hand(&qdir, "k1").unwrap().get("generated"), Some(&json!([slot])));
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn legacy_untagged_markers_are_judged_by_content() {
-        let dir = temp_project("marker-legacy");
-        let cwd = dir.to_string_lossy().into_owned();
-        let qdir = jsp::join(&[&cwd, ".phoenix-ui", "questions"]);
-        let (a, b) = (
-            ".phoenix-ui/mocks/decision/a.png",
-            ".phoenix-ui/mocks/decision/b.png",
-        );
-        let mut hand = new_hand(
-            &cwd,
-            &json!({ "options": [{ "id": "a", "comp": a }, { "id": "b", "comp": b }] }),
-        );
-        hand.insert("id".into(), json!("0011223344556677"));
-        write_hand(&qdir, "k1", &hand).unwrap();
-        let gdir = generated_dir(&qdir, "k1");
-        std::fs::create_dir_all(&gdir).unwrap();
-        let legacy = |slot: &str| jsp::join(&[&gdir, &format!("{}.json", hand_digest(&Value::String(slot.into())))]);
-        std::fs::write(legacy(a), json!({ "slot": a, "hand": "0011223344556677" }).to_string()).unwrap();
-        std::fs::write(legacy(b), json!({ "slot": b, "hand": "ffffffffffffffff" }).to_string()).unwrap();
-        // The legacy marker whose content names this hand counts; the other does not.
-        assert_eq!(read_hand(&qdir, "k1").unwrap().get("generated"), Some(&json!([a])));
-        // Rewriting the same hand keeps its legacy marker and prunes the other's.
-        write_hand(&qdir, "k1", &hand).unwrap();
-        assert!(std::path::Path::new(&legacy(a)).exists());
-        assert!(!std::path::Path::new(&legacy(b)).exists());
-        // A legacy hand file (no id) matches legacy markers on its digest.
-        let mut old = hand.clone();
-        old.remove("id");
-        let digest = old.get("digest").and_then(Value::as_str).unwrap().to_string();
-        write_hand(&qdir, "k1", &old).unwrap();
-        assert!(!std::path::Path::new(&legacy(a)).exists());
-        std::fs::write(legacy(b), json!({ "slot": b, "digest": digest }).to_string()).unwrap();
-        assert_eq!(read_hand(&qdir, "k1").unwrap().get("generated"), Some(&json!([b])));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -2179,12 +1807,17 @@ mod tests {
             ".phoenix-ui/mocks/decision/b.png",
             ".phoenix-ui/mocks/decision/c.png",
         ];
-        let state = json!({ "pid": std::process::id(), "port": 1, "url": "http://127.0.0.1:1/", "comps": comps });
-        std::fs::write(
-            dir.join(".phoenix-ui/questions/k1.state.json"),
-            state.to_string(),
-        )
-        .unwrap();
+        let qdir = jsp::join(&[&dir.to_string_lossy(), ".phoenix-ui", "questions"]);
+        let payload =
+            json!({ "options": comps.iter().map(|c| json!({ "comp": c })).collect::<Vec<_>>() });
+        let serve = || {
+            write_state(
+                &dir,
+                &json!({ "pid": std::process::id(), "port": 1, "url": "http://127.0.0.1:1/" }),
+            );
+            write_hand(&qdir, "k1", &new_hand(&dir.to_string_lossy(), &payload)).unwrap();
+        };
+        serve();
         // a landed without a sidecar, b landed with one, c has not landed yet.
         std::fs::write(dir.join(comps[0]), b"png").unwrap();
         std::fs::write(dir.join(comps[1]), b"png").unwrap();
@@ -2217,20 +1850,16 @@ mod tests {
 
         // Once every landed comp has its sidecar, the backstop stays quiet.
         std::fs::write(dir.join(format!("{}.json", comps[0])), r#"{"prompt":"p"}"#).unwrap();
-        std::fs::write(
-            dir.join(".phoenix-ui/questions/k1.state.json"),
-            state.to_string(),
-        )
-        .unwrap();
+        std::fs::remove_file(dir.join(comps[0])).unwrap();
+        serve();
+        std::fs::write(dir.join(comps[0]), b"png").unwrap();
         let (_, out) = run_captured(&dir, &["--wait", "--key", "k1", "--poll", "0"]);
         assert!(!out.contains("COMP SIDECAR MISSING"), "{out}");
 
         // A file an earlier round left at a slot is named stale while the user
         // decides, never as a missing sidecar, and not after the pick.
         std::fs::remove_file(dir.join(format!("{}.json", comps[0]))).unwrap();
-        let qdir = jsp::join(&[&dir.to_string_lossy(), ".phoenix-ui", "questions"]);
-        let payload = json!({ "options": comps.iter().map(|c| json!({ "comp": c })).collect::<Vec<_>>() });
-        write_hand(&qdir, "k1", &new_hand(&dir.to_string_lossy(), &payload)).unwrap();
+        serve();
         std::fs::remove_file(dir.join(format!("{}.json", comps[1]))).unwrap();
         std::fs::remove_file(dir.join(comps[1])).unwrap();
         let (_, out) = run_captured(&dir, &["--wait", "--key", "k1", "--poll", "0"]);
@@ -2326,13 +1955,11 @@ mod tests {
         assert!(lines[1].starts_with("NEXT read ") && lines[1].contains("/skill/reference/visualize.md now"), "{out}");
 
         // A flip whose recorded comps all landed owes no new prompt.
+        let qdir = jsp::join(&[&dir.to_string_lossy(), ".phoenix-ui", "questions"]);
+        let payload =
+            json!({ "options": [{ "id": "a", "comp": ".phoenix-ui/mocks/decision/a.png" }] });
+        write_hand(&qdir, "k1", &new_hand(&dir.to_string_lossy(), &payload)).unwrap();
         std::fs::write(dir.join(".phoenix-ui/mocks/decision/a.png"), b"png").unwrap();
-        let state = json!({ "pid": std::process::id(), "port": 1, "url": "http://127.0.0.1:1/", "comps": [".phoenix-ui/mocks/decision/a.png"] });
-        std::fs::write(
-            dir.join(".phoenix-ui/questions/k1.state.json"),
-            state.to_string(),
-        )
-        .unwrap();
         std::fs::write(
             dir.join(".phoenix-ui/questions/k1.flip.json"),
             r#"{"buildPath":"comp"}"#,
@@ -2346,9 +1973,6 @@ mod tests {
 
         // The file that sat at the slot when the hand began is not this hand's
         // comp: still owed.
-        let qdir = jsp::join(&[&dir.to_string_lossy(), ".phoenix-ui", "questions"]);
-        let payload =
-            json!({ "options": [{ "id": "a", "comp": ".phoenix-ui/mocks/decision/a.png" }] });
         write_hand(&qdir, "k1", &new_hand(&dir.to_string_lossy(), &payload)).unwrap();
         std::fs::write(
             dir.join(".phoenix-ui/questions/k1.flip.json"),

@@ -5,12 +5,10 @@
 //!
 //! The bundle and native writers embed the same missing-launcher reminder.
 //! Existing launchers receive the original stdin and preserve their exit code.
-//! Operational merge, prune and repair recognize only Phoenix launchers; old
-//! Impeccable entries remain available for explicit migration inspection.
+//! Merge and prune recognize only Phoenix launchers; other handlers, old
+//! Impeccable ones included, are kept as they are.
 
-use impeccable_context::hook_markers::{
-    is_impeccable_hook_command, is_launcher_hook_command, parse_manifest_jsonc,
-};
+use impeccable_context::hook_markers::{is_launcher_hook_command, parse_manifest_jsonc};
 use serde_json::{Map, Value};
 
 use crate::providers::Sys;
@@ -373,16 +371,6 @@ fn rewrite_value(value: &Value, provider: &str, quoted: &QuotedPath, win32: bool
     }
 }
 
-/// JS: valueHasImpeccableHookMarker(value).
-pub fn value_has_impeccable_hook_marker(value: &Value) -> bool {
-    match value {
-        Value::String(s) => is_impeccable_hook_command(s),
-        Value::Array(a) => a.iter().any(value_has_impeccable_hook_marker),
-        Value::Object(o) => o.values().any(value_has_impeccable_hook_marker),
-        _ => false,
-    }
-}
-
 /// True when `value` names a current Phoenix launcher hook.
 pub fn value_has_launcher_hook_marker(value: &Value) -> bool {
     match value {
@@ -393,67 +381,21 @@ pub fn value_has_launcher_hook_marker(value: &Value) -> bool {
     }
 }
 
-/// True when an existing Phoenix hook lacks the missing-launcher reminder.
-/// Legacy Impeccable hooks require an explicit migration transaction.
-pub fn manifest_has_stale_hook(file: &str) -> bool {
-    if !util::exists(file) {
-        return false;
-    }
-    let Ok(text) = util::read_text(file) else {
-        return false;
-    };
-    let Ok(Value::Object(map)) = serde_json::from_str::<Value>(&text) else {
-        return false;
-    };
-    fn stale(value: &Value) -> bool {
-        match value {
-            Value::String(command) => {
-                is_launcher_hook_command(command) && !command.contains("Phoenix UI unavailable:")
-            }
-            Value::Array(values) => values.iter().any(stale),
-            Value::Object(values) => values.values().any(stale),
-            _ => false,
-        }
-    }
-    map.get("hooks").is_some_and(stale)
-}
-
-fn file_has_launcher_hook_marker(file: &str) -> bool {
-    let Some((Value::Object(map), _)) = read_manifest(file) else {
+/// True when the manifest at `file` runs a Phoenix launcher hook.
+pub fn file_has_launcher_hook_marker(file: &str) -> bool {
+    let Some(Value::Object(map)) = read_manifest(file) else {
         return false;
     };
     map.get("hooks").is_some_and(value_has_launcher_hook_marker)
 }
 
-/// JS: fileHasImpeccableHookMarker(file): parse and scan only the `hooks`
-/// subtree.
-pub fn file_has_impeccable_hook_marker(file: &str) -> bool {
-    let Some((Value::Object(map), _)) = read_manifest(file) else {
-        return false;
-    };
-    match map.get("hooks") {
-        Some(h @ (Value::Object(_) | Value::Array(_))) => value_has_impeccable_hook_marker(h),
-        _ => false,
-    }
-}
-
 /// A manifest on disk, parsed with comments tolerated (Gemini's
-/// `settings.json` allows them). The flag says comments were dropped, so a
-/// rewrite must keep a `.bak` of the original.
-fn read_manifest(file: &str) -> Option<(Value, bool)> {
+/// `settings.json` allows them); a rewrite drops the comments.
+pub fn read_manifest(file: &str) -> Option<Value> {
     if !util::exists(file) {
         return None;
     }
-    parse_manifest_jsonc(&util::read_text(file).ok()?)
-}
-
-/// Before rewriting a manifest whose comments the JSON writer cannot keep,
-/// save the original beside it.
-fn backup_commented(path: &str, had_comments: bool) -> Result<(), String> {
-    if had_comments {
-        util::write_bytes(&format!("{path}.bak"), &util::read_bytes(path)?)?;
-    }
-    Ok(())
+    parse_manifest_jsonc(&util::read_text(file).ok()?).map(|(value, _)| value)
 }
 
 /// A provider whose hook manifest is the user's whole settings file (model,
@@ -485,7 +427,8 @@ fn marker_in(entry: &Map<String, Value>, key: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// JS: stripImpeccableHookEntry(entry)
+/// JS: stripImpeccableHookEntry(entry): `None` drops a Phoenix launcher
+/// handler, or a group left empty by dropping them.
 fn strip_impeccable_hook_entry(entry: &Value) -> Option<Value> {
     let Value::Object(e) = entry else {
         return Some(entry.clone());
@@ -527,7 +470,7 @@ pub fn prune_impeccable_hook_from_manifest(manifest_path: &str) -> Result<bool, 
     if !file_has_launcher_hook_marker(manifest_path) {
         return Ok(false);
     }
-    let Some((Value::Object(parsed), had_comments)) = read_manifest(manifest_path) else {
+    let Some(Value::Object(parsed)) = read_manifest(manifest_path) else {
         return Ok(false);
     };
     let existing_hooks: Map<String, Value> = match parsed.get("hooks") {
@@ -549,7 +492,6 @@ pub fn prune_impeccable_hook_from_manifest(manifest_path: &str) -> Result<bool, 
         next.shift_remove("description");
         next.shift_remove("version");
     }
-    backup_commented(manifest_path, had_comments)?;
     if next.is_empty() {
         util::rm_rf(manifest_path);
     } else {
@@ -568,7 +510,9 @@ fn as_object(v: Option<&Value>) -> Map<String, Value> {
     }
 }
 
-/// JS: mergeHookManifests(existing, fresh)
+/// Replace Phoenix launcher handlers in `existing` with those of `fresh`,
+/// keeping every other key and handler. The one merge for project installs,
+/// user-level installs and `phoenix-ui hooks on`.
 pub fn merge_hook_manifests(existing: &Value, fresh: &Value) -> Value {
     let existing_object = as_object(Some(existing));
     let fresh_object = as_object(Some(fresh));
@@ -577,11 +521,9 @@ pub fn merge_hook_manifests(existing: &Value, fresh: &Value) -> Value {
 
     let mut merged = existing_object.clone();
     merged.insert("hooks".to_string(), Value::Object(Map::new()));
+    // Cursor and Copilot read the schema version beside their hooks.
     if let Some(v) = fresh_object.get("version") {
         merged.insert("version".to_string(), v.clone());
-    }
-    if let Some(d) = fresh_object.get("description") {
-        merged.insert("description".to_string(), d.clone());
     }
 
     let mut events: Vec<String> = existing_hooks.keys().cloned().collect();
@@ -624,7 +566,7 @@ fn json_parse_message(e: &serde_json::Error) -> String {
 /// JS: copyProviderHooks(bundleDir, root, providers, {force, skillRoot}).
 /// Returns the providers whose manifest was written (deduplicated, in order).
 pub fn copy_provider_hooks(
-    sys: &crate::providers::Sys,
+    sys: &Sys,
     bundle_dir: &str,
     root: &str,
     providers: &[&'static str],
@@ -654,23 +596,14 @@ pub fn copy_provider_hooks(
             let mut next = fresh.clone();
             if util::exists(destination) {
                 match read_manifest(destination) {
-                    Some((existing, had_comments)) => {
-                        backup_commented(destination, had_comments)?;
-                        next = merge_hook_manifests(&existing, &fresh);
-                    }
+                    Some(existing) => next = merge_hook_manifests(&existing, &fresh),
                     None if manifest_is_user_settings(provider) => {
                         return Err(format!("Existing settings file is not valid JSON: {destination}. It holds your other settings too, so it is never replaced; fix it and re-run."));
                     }
-                    None => {
-                        if !force {
-                            return Err(format!("Existing hook manifest is not valid JSON: {destination}. Re-run with --force to replace it."));
-                        }
-                        util::write_bytes(
-                            &format!("{destination}.bak"),
-                            &util::read_bytes(destination)?,
-                        )?;
-                        next = fresh;
+                    None if !force => {
+                        return Err(format!("Existing hook manifest is not valid JSON: {destination}. Re-run with --force to replace it."));
                     }
+                    None => {}
                 }
             }
             let bytes = format!("{}\n", util::json_pretty(&next));
@@ -690,58 +623,6 @@ pub fn copy_provider_hooks(
         }
     }
     Ok(written)
-}
-
-/// Refresh availability guards on existing Phoenix hooks without installing
-/// new hooks or changing legacy Impeccable and unrelated settings. Portable
-/// GitHub commands are refreshed by the local bundle merge instead.
-pub fn repair_stale_hook_manifests(
-    sys: &Sys,
-    root: &str,
-    providers: &[&'static str],
-    skill_root: Option<&str>,
-) -> Result<Vec<&'static str>, String> {
-    let skill_root = skill_root.unwrap_or(root);
-    let absolute = skill_root != root || sys.is_home_dir(root);
-    let mut repaired: Vec<&'static str> = Vec::new();
-    for provider in providers {
-        if launcher_path(skill_root, provider).is_none() {
-            continue;
-        }
-        let mut changed = false;
-        for spec in provider_hook_artifacts(provider) {
-            let write_rel = spec.dest_rel.unwrap_or(spec.rel);
-            let mut rels: Vec<&str> = vec![write_rel];
-            if write_rel != spec.rel {
-                rels.push(spec.rel);
-            }
-            for rel in rels {
-                let path = jsp::join(&[root, spec.dest_provider, rel]);
-                if !manifest_has_stale_hook(&path) {
-                    continue;
-                }
-                let Ok(text) = util::read_text(&path) else {
-                    continue;
-                };
-                let Ok(parsed) = serde_json::from_str::<Value>(&text) else {
-                    continue;
-                };
-                let rewritten =
-                    rewrite_hook_commands_for_skill_root(&parsed, provider, skill_root, absolute);
-                if rewritten != parsed {
-                    util::write_bytes(
-                        &path,
-                        format!("{}\n", util::json_pretty(&rewritten)).as_bytes(),
-                    )?;
-                    changed = true;
-                }
-            }
-        }
-        if changed && !repaired.contains(provider) {
-            repaired.push(*provider);
-        }
-    }
-    Ok(repaired)
 }
 
 /// JS: HOOK_EXPLAINER

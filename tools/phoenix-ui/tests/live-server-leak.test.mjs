@@ -28,7 +28,7 @@ import {
   makeRunId,
   repoMarker,
 } from '../scripts/lib/live-server-processes.mjs';
-import { ENGINE_MISSING_MESSAGE, engineTarget, findEngineBinary } from './lib/engine-bin.mjs';
+import { ENGINE_MISSING_MESSAGE, findEngineBinary } from './lib/engine-bin.mjs';
 
 // The reaper is a POSIX mechanism (a detached process holding a pipe, killed by
 // signal). armLiveServerReaper() does not arm it on Windows, so the guarantee it
@@ -42,7 +42,7 @@ const STOP_PORT = 8592;
 // The server under test is the engine's `live-server` verb, not a script: this
 // guarantee has to hold for whatever binary the harness is pointed at.
 const ENGINE_BIN = findEngineBinary();
-const NO_ENGINE = ENGINE_BIN ? false : `${ENGINE_MISSING_MESSAGE} (target ${engineTarget()})`;
+const NO_ENGINE = ENGINE_BIN ? false : `${ENGINE_MISSING_MESSAGE}`;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

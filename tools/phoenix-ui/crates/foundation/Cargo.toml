@@ -8,9 +8,6 @@ publish.workspace = true
 
 [features]
 default = []
-# Vector dispatcher for this crate's arms of the recorded JS call vectors.
-# `impeccable-core`'s own `vectors` feature turns this on.
-vectors = []
 # The table-driven fake DOM for browser-rule tests.
 fake-dom = []
 

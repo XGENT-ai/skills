@@ -4,7 +4,6 @@ use crate::artifact_schema::*;
 use crate::context::{BriefSummary, Ctx, TargetCandidate};
 use crate::jsp;
 use crate::util::{exists, js_trim, mtime_ms, read_json};
-use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::{Map, Value};
 
@@ -524,5 +523,3 @@ pub fn collect_boot_findings(ctx: &Ctx, cwd: &str, extras: &BootExtras) -> Vec<F
     out.extend(groups.project_roots);
     out
 }
-
-pub static _UNUSED: Lazy<()> = Lazy::new(|| ());

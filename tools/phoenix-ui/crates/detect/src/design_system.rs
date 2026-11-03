@@ -626,7 +626,7 @@ fn colors_close(a: &Rgba, b: &Rgba) -> bool {
         <= COLOR_CHANNEL_TOLERANCE
 }
 
-fn hsl_to_rgb(hh: f64, ss: f64, ll: f64, alpha: f64) -> Rgba {
+pub(crate) fn hsl_to_rgb(hh: f64, ss: f64, ll: f64, alpha: f64) -> Rgba {
     let h = (((hh % 360.0) + 360.0) % 360.0) / 360.0;
     let s = js::math_max(0.0, js::math_min(1.0, ss));
     let l = js::math_max(0.0, js::math_min(1.0, ll));

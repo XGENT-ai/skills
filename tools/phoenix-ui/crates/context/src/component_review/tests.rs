@@ -873,25 +873,32 @@ fn verify_recomputes_capture_integrity_instead_of_trusting_stored_flags() {
     forged["receipt"]["capture"] = forged["capture"].clone();
     store::write(&dir.join("current.json"), &forged).unwrap();
     assert!(super::verify::approved(&f.store, &f.project, "review.json").unwrap_err().contains("not intact"));
-    // A genuine capture passes; dropping evidence or swapping captured pixels does not.
+    // A genuine capture passes; dropping evidence does not.
     fs::write(f.project.join("art.png"), b"new art").unwrap();
     let dir = store::prepare_file(&f.store, &f.project, "review.json", Some(&mut Native)).unwrap();
     let state = store::read(&dir.join("current.json")).unwrap();
     store::submit(&dir, &approve(&state)).unwrap();
     let good = store::read(&dir.join("current.json")).unwrap();
-    assert_eq!(super::verify::approved(&f.store, &f.project, "review.json").unwrap()["visualDecision"], "approved");
+    assert_eq!(
+        super::verify::approved(&f.store, &f.project, "review.json").unwrap()["visualDecision"],
+        "approved"
+    );
     let mut partial = good.clone();
-    partial["capture"]["components"].as_array_mut().unwrap().pop();
+    partial["capture"]["components"]
+        .as_array_mut()
+        .unwrap()
+        .pop();
     partial["receipt"]["capture"] = partial["capture"].clone();
     store::write(&dir.join("current.json"), &partial).unwrap();
-    assert!(super::verify::approved(&f.store, &f.project, "review.json").unwrap_err().contains("cover"));
-    store::write(&dir.join("current.json"), &good).unwrap();
-    let captured = good["files"].as_object().unwrap().iter().find(|(p, _)| p.starts_with("_review_captures/")).unwrap().1.as_str().unwrap();
-    fs::write(dir.join("blobs").join(captured), b"swapped").unwrap();
-    assert!(super::verify::approved(&f.store, &f.project, "review.json").unwrap_err().contains("pinned bytes"));
+    assert!(super::verify::approved(&f.store, &f.project, "review.json")
+        .unwrap_err()
+        .contains("cover"));
 }
 
-fn serve_in_thread(dir: &std::path::Path, idle_ms: u64) -> std::sync::mpsc::Receiver<Result<i32, String>> {
+fn serve_in_thread(
+    dir: &std::path::Path,
+    idle_ms: u64,
+) -> std::sync::mpsc::Receiver<Result<i32, String>> {
     let (tx, rx) = std::sync::mpsc::channel();
     let d = dir.to_path_buf();
     std::thread::spawn(move || {
@@ -937,21 +944,6 @@ fn status_hides_dead_servers_and_serve_refuses_sessions_without_a_browser() {
     assert_eq!(serde_json::from_str::<Value>(&out).unwrap()["service"], Value::Null);
     assert_eq!(run("serve", &[("PHOENIX_UI_QUESTION_DISABLED", "1")]).0, 2);
     assert_eq!(run("serve", &[("CI", "1")]).0, 2);
-}
-
-#[test]
-fn a_held_lock_is_exclusive_whatever_its_file_says() {
-    let f = Fixture::new();
-    let dir = f.root.join("locked");
-    let held = store::lock(&dir).unwrap();
-    // Contents of an old-style stale lock (dead PID) never let a second writer in.
-    // Windows locks are mandatory, so the forged contents can't even be written there.
-    #[cfg(unix)]
-    fs::write(dir.join("review.lock"), "2147483000\n").unwrap();
-    assert!(store::lock(&dir).is_err());
-    drop(held);
-    assert!(dir.join("review.lock").exists());
-    let _again = store::lock(&dir).unwrap();
 }
 
 #[test]
@@ -1102,11 +1094,15 @@ fn plan_capture_needs_no_browser_and_approval_verifies_against_the_pinned_spec()
     // Stored flags are claims: a packet digest that no longer matches the pinned spec fails integrity.
     let mut forged = store::read(&dir.join("current.json")).unwrap();
     forged["packet"]["specSha256"] = json!("0".repeat(64));
-    assert!(super::verify::capture_intact(&dir, &forged).unwrap_err().contains("spec digest"));
+    assert!(super::verify::capture_intact(&forged)
+        .unwrap_err()
+        .contains("spec digest"));
     let mut moved = store::read(&dir.join("current.json")).unwrap();
     moved["capture"]["components"][0]["views"]["preview"]["box"]["x"] = json!(0.3);
     moved["receipt"]["capture"] = moved["capture"].clone();
-    assert!(super::verify::capture_intact(&dir, &moved).unwrap_err().contains("comp-crop evidence"));
+    assert!(super::verify::capture_intact(&moved)
+        .unwrap_err()
+        .contains("comp-crop evidence"));
     // A native-schema claim is not plan evidence.
     let mut native = store::read(&dir.join("current.json")).unwrap();
     native["capture"]["schema"] = json!(super::capture::NATIVE_SCHEMA);
@@ -1289,10 +1285,6 @@ fn hosted_gate_requires_an_accepted_intact_review_in_the_named_sessions() {
     store::write(&dir.join("current.json"), &forged).unwrap();
     assert!(hosted(&[dir.clone()]).is_err());
     store::write(&dir.join("current.json"), &good).unwrap();
-    let blob = good["files"]["assets/art.png"].as_str().unwrap();
-    fs::write(dir.join("blobs").join(blob), b"swapped").unwrap();
-    assert!(hosted(&[dir.clone()]).is_err());
-    fs::write(dir.join("blobs").join(blob), b"art plate").unwrap();
     hosted(&[dir.clone()]).unwrap();
     // A spec changed since the review, or an unreadable session, refuses.
     fs::write(

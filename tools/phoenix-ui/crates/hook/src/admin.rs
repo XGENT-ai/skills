@@ -8,10 +8,14 @@
 //! `"<skill>/scripts/phoenix-ui" hook`: the launcher shipped next to the
 //! skill uses Node 18 to verify the fixed platform binary. An inline Node
 //! guard also reports a missing launcher without requiring any skill files.
-//! Only Phoenix launcher paths are owned by these manifest edits; legacy
-//! commands remain available to the separate migration workflow.
+//! Only Phoenix launcher handlers are owned by these manifest edits; the merge
+//! is the one installs use (impeccable-skills `hook_manifest`).
 
 use impeccable_core::js;
+use impeccable_skills::hook_manifest::{
+    file_has_launcher_hook_marker, merge_hook_manifests, prune_impeccable_hook_from_manifest,
+    read_manifest,
+};
 use serde_json::{Map, Value};
 
 use crate::hook_lib::*;
@@ -138,9 +142,6 @@ struct ManifestTarget {
     dest_rel: &'static str,
     shared_dest_rel: Option<&'static str>,
     manifest: fn() -> Value,
-    /// The manifest is the user's whole settings file (model, auth, MCP), so
-    /// an unreadable one is skipped instead of backed up and replaced.
-    user_settings: bool,
 }
 
 fn claude_manifest() -> Value {
@@ -303,7 +304,6 @@ const HOOK_MANIFEST_TARGETS: &[ManifestTarget] = &[
         dest_rel: ".claude/settings.local.json",
         shared_dest_rel: Some(".claude/settings.json"),
         manifest: claude_manifest,
-        user_settings: false,
     },
     ManifestTarget {
         provider: ".agents",
@@ -311,7 +311,6 @@ const HOOK_MANIFEST_TARGETS: &[ManifestTarget] = &[
         dest_rel: ".codex/hooks.json",
         shared_dest_rel: None,
         manifest: agents_manifest,
-        user_settings: false,
     },
     ManifestTarget {
         provider: ".cursor",
@@ -319,7 +318,6 @@ const HOOK_MANIFEST_TARGETS: &[ManifestTarget] = &[
         dest_rel: ".cursor/hooks.json",
         shared_dest_rel: None,
         manifest: cursor_manifest,
-        user_settings: false,
     },
     ManifestTarget {
         provider: ".github",
@@ -327,7 +325,6 @@ const HOOK_MANIFEST_TARGETS: &[ManifestTarget] = &[
         dest_rel: ".github/hooks/phoenix-ui.json",
         shared_dest_rel: None,
         manifest: github_manifest,
-        user_settings: false,
     },
     ManifestTarget {
         provider: ".gemini",
@@ -335,7 +332,6 @@ const HOOK_MANIFEST_TARGETS: &[ManifestTarget] = &[
         dest_rel: ".gemini/settings.json",
         shared_dest_rel: None,
         manifest: gemini_manifest,
-        user_settings: true,
     },
 ];
 
@@ -781,19 +777,8 @@ fn set_enabled(rt: &Runtime, cwd: &str, value: bool) -> Result<String, String> {
     }
     if !repaired.skipped.is_empty() {
         parts.push(format!(
-            "Skipped {}: not valid JSON, and it holds your other settings too; fix it and re-run.",
+            "Skipped {}: not valid JSON; fix it and re-run.",
             repaired.skipped.join(", ")
-        ));
-    }
-    if !repaired.backups.is_empty() {
-        let names: Vec<String> = repaired
-            .backups
-            .iter()
-            .map(|b| rel_or(rt, cwd, b))
-            .collect();
-        parts.push(format!(
-            "Backed up malformed manifest(s): {}.",
-            names.join(", ")
         ));
     }
     Ok(parts.join(" "))
@@ -802,7 +787,6 @@ fn set_enabled(rt: &Runtime, cwd: &str, value: bool) -> Result<String, String> {
 struct Repaired {
     written: Vec<String>,
     already: Vec<String>,
-    backups: Vec<String>,
     skipped: Vec<String>,
 }
 
@@ -811,7 +795,6 @@ fn repair_hook_manifests(cwd: &str) -> Result<Repaired, String> {
     let mut result = Repaired {
         written: vec![],
         already: vec![],
-        backups: vec![],
         skipped: vec![],
     };
     for target in HOOK_MANIFEST_TARGETS {
@@ -821,7 +804,7 @@ fn repair_hook_manifests(cwd: &str) -> Result<Repaired, String> {
         let mut dest = jsp::join(&[cwd, target.dest_rel]);
         let shared_dest = target.shared_dest_rel.map(|s| jsp::join(&[cwd, s]));
         if let Some(sd) = &shared_dest {
-            if file_has_impeccable_hook_marker(sd) {
+            if file_has_launcher_hook_marker(sd) {
                 prune_impeccable_hook_from_manifest(&dest)?;
                 // Refresh a Phoenix shared entry where it lives instead of
                 // leaving it active beside a newly installed local entry.
@@ -830,222 +813,26 @@ fn repair_hook_manifests(cwd: &str) -> Result<Repaired, String> {
         }
         let fresh = (target.manifest)();
         let mut next = fresh.clone();
-        let mut had_comments = false;
         if exists(&dest) {
             match read_manifest(&dest) {
-                Some((existing, commented)) => {
-                    had_comments = commented;
-                    next = merge_hook_manifests(&existing, &fresh);
-                }
-                // The user's whole settings file: never replace it.
-                None if target.user_settings => {
+                Some(existing) => next = merge_hook_manifests(&existing, &fresh),
+                // Unreadable configuration may hold other settings: never replace it.
+                None => {
                     result.skipped.push(target.dest_rel.to_string());
                     continue;
-                }
-                None => {
-                    let backup = format!("{dest}.bak");
-                    std::fs::copy(&dest, &backup).map_err(|e| e.to_string())?;
-                    result.backups.push(backup);
                 }
             }
         }
         let serialized = format!("{}\n", json_pretty(&next));
-        let current = if exists(&dest) {
-            safe_read(&dest)
-        } else {
-            None
-        };
-        if current.as_deref() == Some(serialized.as_str()) {
+        if safe_read(&dest).as_deref() == Some(serialized.as_str()) {
             result.already.push(target.provider.to_string());
             continue;
         }
-        backup_commented(&dest, had_comments)?;
         std::fs::create_dir_all(jsp::dirname(&dest)).map_err(|e| e.to_string())?;
         std::fs::write(&dest, serialized).map_err(|e| e.to_string())?;
         result.written.push(target.provider.to_string());
     }
     Ok(result)
-}
-
-fn as_object(v: &Value) -> Map<String, Value> {
-    match v {
-        Value::Object(o) => o.clone(),
-        _ => Map::new(),
-    }
-}
-
-/// JS: mergeHookManifests(existing, fresh)
-fn merge_hook_manifests(existing: &Value, fresh: &Value) -> Value {
-    let existing_object = as_object(existing);
-    let fresh_object = as_object(fresh);
-    let existing_hooks = obj_field(&existing_object, "hooks")
-        .cloned()
-        .unwrap_or_default();
-    let fresh_hooks = obj_field(&fresh_object, "hooks")
-        .cloned()
-        .unwrap_or_default();
-    let mut merged = existing_object.clone();
-    merged.insert("hooks".into(), Value::Object(Map::new()));
-    if let Some(v) = fresh_object.get("version") {
-        merged.insert("version".into(), v.clone());
-    }
-    if let Some(d) = fresh_object.get("description") {
-        merged.insert("description".into(), d.clone());
-    }
-    let mut events: Vec<String> = existing_hooks.keys().cloned().collect();
-    for k in fresh_hooks.keys() {
-        if !events.contains(k) {
-            events.push(k.clone());
-        }
-    }
-    let mut hooks = Map::new();
-    for event in events {
-        let preserved = strip_impeccable_hook_entries(existing_hooks.get(&event));
-        let added: Vec<Value> = match fresh_hooks.get(&event) {
-            Some(Value::Array(a)) => a.clone(),
-            _ => vec![],
-        };
-        let mut merged_entries = preserved;
-        merged_entries.extend(added);
-        if !merged_entries.is_empty() {
-            hooks.insert(event, Value::Array(merged_entries));
-        }
-    }
-    merged.insert("hooks".into(), Value::Object(hooks));
-    Value::Object(merged)
-}
-
-/// A manifest parsed with comments tolerated (Gemini's `settings.json`
-/// allows them); the flag says a rewrite would drop comments.
-fn read_manifest(path: &str) -> Option<(Value, bool)> {
-    impeccable_context::hook_markers::parse_manifest_jsonc(&safe_read(path)?)
-}
-
-/// Keep the original of a commented manifest before the JSON writer drops
-/// its comments.
-fn backup_commented(path: &str, had_comments: bool) -> Result<(), String> {
-    if had_comments {
-        std::fs::copy(path, format!("{path}.bak")).map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-/// JS: fileHasImpeccableHookMarker(filePath)
-fn file_has_impeccable_hook_marker(path: &str) -> bool {
-    if !exists(path) {
-        return false;
-    }
-    let Some((parsed, _)) = read_manifest(path) else {
-        return false;
-    };
-    let Value::Object(o) = parsed else {
-        return false;
-    };
-    match o.get("hooks") {
-        Some(h @ (Value::Object(_) | Value::Array(_))) => value_has_impeccable_hook_marker(h),
-        _ => false,
-    }
-}
-
-/// JS: valueHasImpeccableHookMarker(value)
-fn value_has_impeccable_hook_marker(value: &Value) -> bool {
-    match value {
-        Value::String(s) => impeccable_context::hook_markers::is_launcher_hook_command(s),
-        Value::Array(a) => a.iter().any(value_has_impeccable_hook_marker),
-        Value::Object(o) => o.values().any(value_has_impeccable_hook_marker),
-        _ => false,
-    }
-}
-
-fn marker_in(entry: &Map<String, Value>, key: &str) -> bool {
-    entry
-        .get(key)
-        .map(value_has_impeccable_hook_marker)
-        .unwrap_or(false)
-}
-
-/// JS: stripImpeccableHookEntry(entry) — `None` drops the entry.
-fn strip_impeccable_hook_entry(entry: &Value) -> Option<Value> {
-    let Value::Object(e) = entry else {
-        // JS: `!entry || typeof entry !== 'object'` returns the entry as-is
-        // (a null/primitive survives until `.filter(Boolean)`; an array is
-        // an object with none of the inspected keys and no `hooks` array).
-        return Some(entry.clone());
-    };
-    if marker_in(e, "command")
-        || marker_in(e, "commandWindows")
-        || marker_in(e, "args")
-        || marker_in(e, "bash")
-        || marker_in(e, "powershell")
-    {
-        return None;
-    }
-    let Some(Value::Array(hooks)) = e.get("hooks") else {
-        return Some(entry.clone());
-    };
-    let stripped: Vec<Value> = hooks
-        .iter()
-        .filter_map(strip_impeccable_hook_entry)
-        .filter(|v| truthy_json(v))
-        .collect();
-    if stripped.is_empty() && hooks.iter().any(value_has_impeccable_hook_marker) {
-        return None;
-    }
-    let mut out = e.clone();
-    out.insert("hooks".into(), Value::Array(stripped));
-    Some(Value::Object(out))
-}
-
-/// JS `.filter(Boolean)` on the mapped entries.
-fn truthy_json(v: &Value) -> bool {
-    crate::util::truthy_value(Some(v))
-}
-
-/// JS: stripImpeccableHookEntries(entries)
-fn strip_impeccable_hook_entries(entries: Option<&Value>) -> Vec<Value> {
-    match entries {
-        Some(Value::Array(a)) => a
-            .iter()
-            .filter_map(strip_impeccable_hook_entry)
-            .filter(|v| truthy_json(v))
-            .collect(),
-        _ => vec![],
-    }
-}
-
-/// JS: pruneImpeccableHookFromManifest(manifestPath)
-fn prune_impeccable_hook_from_manifest(path: &str) -> Result<bool, String> {
-    if !file_has_impeccable_hook_marker(path) {
-        return Ok(false);
-    }
-    let Some((parsed, had_comments)) = read_manifest(path) else {
-        return Ok(false);
-    };
-    backup_commented(path, had_comments)?;
-    let parsed = as_object(&parsed);
-    let existing_hooks = obj_field(&parsed, "hooks").cloned().unwrap_or_default();
-    let mut cleaned = Map::new();
-    for (event, entries) in &existing_hooks {
-        let kept = strip_impeccable_hook_entries(Some(entries));
-        if !kept.is_empty() {
-            cleaned.insert(event.clone(), Value::Array(kept));
-        }
-    }
-    let mut next = parsed.clone();
-    if !cleaned.is_empty() {
-        next.insert("hooks".into(), Value::Object(cleaned));
-    } else {
-        next.shift_remove("hooks");
-        next.shift_remove("description");
-        next.shift_remove("version");
-    }
-    if next.is_empty() {
-        let _ = std::fs::remove_file(path);
-    } else {
-        std::fs::write(path, format!("{}\n", json_pretty(&Value::Object(next))))
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(true)
 }
 
 fn normalize_rule(rule: &str) -> String {

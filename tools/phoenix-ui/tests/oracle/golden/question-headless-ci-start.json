@@ -1,5 +1,5 @@
 {
-  "stdout": "serve-question: no browser detected in this environment (CI/headless/remote); use the structured question tool instead. Set IMPECCABLE_QUESTION_FORCE=1 to serve anyway.\n",
+  "stdout": "serve-question: no browser detected in this environment (CI/headless/remote); use the structured question tool instead. Set PHOENIX_UI_QUESTION_FORCE=1 to serve anyway.\n",
   "stderr": "",
   "exit": 2,
   "signal": null,

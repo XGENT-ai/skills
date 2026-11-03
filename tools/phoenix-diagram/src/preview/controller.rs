@@ -1,15 +1,9 @@
-use super::{http::Server, worker, PreviewFailure, PreviewRequest, PreviewResult};
-use crate::{
-    check::FileIdentity,
-    delivery::Status,
-    diagnostic::Diagnostics,
-    input::sha256,
-    output::{self, Directory, FileBinding, OutputSlot},
-};
+use super::{http::Server, PreviewFailure, PreviewRequest, PreviewResult};
+use crate::{delivery::prepare, diagnostic::Diagnostics, input::sha256};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
-    io::{self, Write},
+    io::{self, Read, Write},
     path::Path,
     process::{Command, Stdio},
     sync::{
@@ -67,75 +61,34 @@ impl Drop for Signals {
     }
 }
 
-struct Pending<T> {
+/// Input edits settle for STABLE before one in-process compile; a newer edit
+/// replaces any compile still waiting.
+struct Pending {
     generation: u64,
     ready_at: Instant,
-    value: T,
-}
-struct Latest<T> {
-    generation: u64,
-    stamp: Option<String>,
-    pending: Option<Pending<T>>,
-    active: Option<u64>,
-}
-impl<T> Latest<T> {
-    fn new() -> Self {
-        Self {
-            generation: 0,
-            stamp: None,
-            pending: None,
-            active: None,
-        }
-    }
-    fn observe(&mut self, stamp: String, value: T, now: Instant) -> bool {
-        if self.stamp.as_ref() == Some(&stamp) {
-            return false;
-        }
-        self.generation += 1;
-        self.stamp = Some(stamp);
-        self.pending = Some(Pending {
-            generation: self.generation,
-            ready_at: now + STABLE,
-            value,
-        });
-        true
-    }
-    fn replace_pending(&mut self, value: T, now: Instant) {
-        self.pending = Some(Pending {
-            generation: self.generation,
-            ready_at: now + STABLE,
-            value,
-        });
-    }
-    fn start(&mut self, now: Instant) -> Option<Pending<T>> {
-        if self.active.is_some()
-            || self
-                .pending
-                .as_ref()
-                .is_none_or(|pending| pending.ready_at > now)
-        {
-            return None;
-        }
-        let pending = self.pending.take().unwrap();
-        self.active = Some(pending.generation);
-        Some(pending)
-    }
-    fn finish(&mut self, generation: u64) -> bool {
-        if self.active != Some(generation) {
-            return false;
-        }
-        self.active = None;
-        generation == self.generation
-    }
+    snapshot: Snapshot,
 }
 enum Snapshot {
-    Source(FileBinding),
+    Source(Vec<u8>),
     Unavailable(PreviewFailure),
 }
 impl Snapshot {
+    fn read(path: &Path) -> Self {
+        match std::fs::read(path) {
+            Ok(bytes) => Self::Source(bytes),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                Self::Unavailable(PreviewFailure::new(
+                    "input/missing",
+                    "The preview input is missing; the last successful file is unchanged",
+                    1,
+                ))
+            }
+            Err(error) => Self::Unavailable(PreviewFailure::io("input/read", error)),
+        }
+    }
     fn stamp(&self) -> String {
         match self {
-            Self::Source(binding) => format!("sha256:{}", binding.identity().sha256),
+            Self::Source(bytes) => format!("sha256:{}", sha256(bytes)),
             Self::Unavailable(failure) => format!(
                 "unavailable:{}",
                 failure
@@ -144,12 +97,6 @@ impl Snapshot {
                     .map(|d| d.code.as_str())
                     .unwrap_or("input/unavailable")
             ),
-        }
-    }
-    fn source(&self) -> Option<&FileBinding> {
-        match self {
-            Self::Source(source) => Some(source),
-            _ => None,
         }
     }
 }
@@ -222,53 +169,9 @@ impl State {
         self.status = "waiting";
         self.last_attempt_status = "not-run";
         self.diagnostics.clear();
-        if let Some(source) = snapshot.source() {
-            if let Ok(document) = serde_json::from_slice::<Value>(source.bytes()) {
+        if let Snapshot::Source(bytes) = snapshot {
+            if let Ok(document) = serde_json::from_slice::<Value>(bytes) {
                 self.locale = crate::i18n::resolve(&document["meta"]).resolved;
-            }
-        }
-    }
-}
-struct Active {
-    generation: u64,
-    source: FileBinding,
-    worker: worker::Worker,
-}
-struct Published {
-    binding: FileBinding,
-    bytes: Arc<[u8]>,
-}
-fn read_source(path: &Path, parent: &mut Option<Arc<Directory>>) -> Snapshot {
-    if parent.is_none() {
-        match Directory::for_path(path) {
-            Ok((directory, _)) => *parent = Some(directory),
-            Err(error) => return Snapshot::Unavailable(error.into()),
-        }
-    }
-    if let Err(error) = parent.as_ref().unwrap().verify() {
-        return Snapshot::Unavailable(error.into());
-    }
-    match FileBinding::capture(path) {
-        Ok(binding) => match parent
-            .as_ref()
-            .unwrap()
-            .verify()
-            .and_then(|_| binding.verify())
-        {
-            Ok(()) => Snapshot::Source(binding),
-            Err(error) => Snapshot::Unavailable(error.into()),
-        },
-        Err(error) => {
-            if std::fs::symlink_metadata(path)
-                .is_err_and(|error| error.kind() == io::ErrorKind::NotFound)
-            {
-                Snapshot::Unavailable(PreviewFailure::new(
-                    "input/missing",
-                    "The preview input is missing; the last successful file is unchanged",
-                    1,
-                ))
-            } else {
-                Snapshot::Unavailable(error.into())
             }
         }
     }
@@ -278,80 +181,31 @@ fn emit_failure(state: &mut State, failure: PreviewFailure) -> PreviewResult<()>
         .failed(failure)
         .map_err(|e| PreviewFailure::io("preview/events", e))
 }
-fn observe(
-    request: &PreviewRequest<'_>,
-    parent: &mut Option<Arc<Directory>>,
-    queue: &mut Latest<Snapshot>,
-    active: Option<(&FileBinding, u64)>,
-    state: &mut State,
-) -> Option<output::FileIdentity> {
-    let snapshot = read_source(request.compile.candidate, parent);
-    let identity = snapshot.source().map(|source| source.identity().clone());
-    let stamp = snapshot.stamp();
-    if queue.stamp.as_ref() != Some(&stamp) {
-        state.observe(&snapshot, queue.generation + 1);
-        queue.observe(stamp, snapshot, Instant::now());
-    } else if identity.is_some() {
-        let stale_pending = queue
-            .pending
-            .as_ref()
-            .and_then(|pending| pending.value.source())
-            .is_some_and(|source| source.verify().is_err());
-        let stale_active = active.is_some_and(|(source, generation)| {
-            generation == queue.generation && source.verify().is_err()
-        });
-        if stale_pending || stale_active {
-            queue.replace_pending(snapshot, Instant::now());
-        }
-    }
-    identity
-}
-
-fn validate_result(
-    result: &worker::WorkerResult,
-    active: &Active,
-    request: &PreviewRequest<'_>,
-) -> PreviewResult<()> {
-    if result.generation != active.generation
-        || result.input_sha256 != active.source.identity().sha256
-        || result.receipt.engine != *request.compile.engine
-    {
-        return Err(PreviewFailure::new(
-            "preview/worker-binding",
-            "The worker returned a different generation, input or engine identity",
-            3,
-        ));
-    }
-    if result.exit != 0 || result.receipt.status != Status::Pass {
+/// Compile one settled input and, when it passes, write the output file.
+fn compile(request: &PreviewRequest<'_>, bytes: &[u8]) -> PreviewResult<Vec<u8>> {
+    let prepared = prepare::prepare_bytes(&request.compile, bytes);
+    let Some(compiled) = prepared.compiled else {
+        let exit = prepared.receipt.exit_code().max(1);
         return Err(PreviewFailure {
-            diagnostics: if result.receipt.diagnostics.is_empty() {
-                PreviewFailure::new(
-                    "preview/compile",
-                    "Preview compilation did not pass",
-                    result.exit.max(1),
-                )
-                .diagnostics
+            diagnostics: if prepared.receipt.diagnostics.is_empty() {
+                PreviewFailure::new("preview/compile", "Preview compilation did not pass", exit)
+                    .diagnostics
             } else {
-                result.receipt.diagnostics.clone()
+                prepared.receipt.diagnostics
             },
-            exit: result.exit.max(1),
+            exit,
         });
-    }
-    let Some(html) = &result.html else {
-        return Err(PreviewFailure::new(
-            "preview/worker-binding",
-            "A successful worker did not return HTML",
-            3,
-        ));
     };
-    if result.receipt.artifact.as_ref() != Some(&FileIdentity::of(html)) {
-        return Err(PreviewFailure::new(
-            "preview/worker-binding",
-            "The worker HTML does not match its checked identity",
-            3,
-        ));
-    }
-    Ok(())
+    crate::output::write(request.output, &compiled.html)
+        .map_err(|e| PreviewFailure::io("output/write", e))?;
+    Ok(compiled.html)
+}
+fn session_token() -> PreviewResult<String> {
+    let mut random = [0_u8; 16];
+    std::fs::File::open("/dev/urandom")
+        .and_then(|mut file| file.read_exact(&mut random))
+        .map_err(|e| PreviewFailure::io("preview/session", e))?;
+    Ok(random.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 fn open_browser(url: &str) -> PreviewResult<()> {
     #[cfg(target_os = "macos")]
@@ -372,18 +226,12 @@ fn open_browser(url: &str) -> PreviewResult<()> {
 }
 
 pub(super) fn run(request: &PreviewRequest<'_>) -> u8 {
-    let session = match output::transaction_id() {
-        Ok(id) => id,
-        Err(error) => {
-            let mut state = State::new(String::new());
-            let failure: PreviewFailure = error.into();
-            let exit = failure.exit;
-            let _ = state.failed(failure);
-            return exit;
-        }
-    };
-    let mut state = State::new(session.clone());
-    match run_session(request, &session, &mut state) {
+    let mut state = State::new(String::new());
+    let result = session_token().and_then(|session| {
+        state.session_id = session.clone();
+        run_session(request, &session, &mut state)
+    });
+    match result {
         Ok(exit) => exit,
         Err(failure) => {
             let exit = failure.exit;
@@ -398,19 +246,11 @@ fn run_session(
     state: &mut State,
 ) -> PreviewResult<u8> {
     let _signals = Signals::install()?;
-    let mut source_parent = None;
-    let initial = read_source(request.compile.candidate, &mut source_parent);
-    let protected: Vec<_> = initial.source().into_iter().collect();
-    let mut slot = output::capture_slot(request.output, &protected)?;
-    drop(protected);
-    if let Some(parent) = &source_parent {
-        if parent
-            .real
-            .join(request.compile.candidate.file_name().ok_or_else(|| {
-                PreviewFailure::new("preview/input-output-alias", "Input must name a file", 2)
-            })?)
-            == slot.path()
-        {
+    if let (Ok(input), Ok(output)) = (
+        std::fs::canonicalize(request.compile.candidate),
+        std::fs::canonicalize(request.output),
+    ) {
+        if input == output {
             return Err(PreviewFailure::new(
                 "preview/input-output-alias",
                 "Preview input and output must be different files",
@@ -418,318 +258,79 @@ fn run_session(
             ));
         }
     }
-    let pending = slot.pending_publications()?;
-    if !pending.is_empty() {
-        let mut failure = PreviewFailure::new(
-            "output/recovery-required",
-            "Recover the existing output publication before starting preview",
-            3,
-        );
-        failure.diagnostics[0].evidence = json!({"pending":pending});
-        return Err(failure);
-    }
     let mut server = Server::bind(request.port, session)?;
     let started = state.event("started", json!({"url":server.url(),"port":server.port()}));
     if let Err(error) = started {
         server.stop();
         return Err(PreviewFailure::io("preview/events", error));
     }
-    let mut queue = Latest::new();
-    state.observe(&initial, 1);
-    queue.observe(initial.stamp(), initial, Instant::now());
-    let mut active: Option<Active> = None;
-    let mut published: Option<Published> = None;
-    let mut last_poll = Instant::now();
-    let mut blocked = false;
-    let mut exit = 0;
     if request.open {
         if let Err(failure) = open_browser(&server.url()) {
             emit_failure(state, failure)?;
         }
     }
+    let mut generation = 0;
+    let mut stamp = None;
+    let mut pending: Option<Pending> = None;
+    let mut published: Option<Arc<[u8]>> = None;
+    let mut last_poll: Option<Instant> = None;
+    let mut exit = 0;
     let work = (|| -> PreviewResult<()> {
         while !STOP.load(Ordering::Relaxed) {
-            if !blocked {
-                if let Err(error) = slot.verify_guard() {
-                    blocked = true;
-                    exit = 3;
-                    published = None;
-                    state.artifact = None;
-                    state.artifact_available = false;
-                    emit_failure(state, error.into())?;
+            if last_poll.is_none_or(|time| time.elapsed() >= POLL) {
+                let snapshot = Snapshot::read(request.compile.candidate);
+                let current = snapshot.stamp();
+                if stamp.as_ref() != Some(&current) {
+                    generation += 1;
+                    stamp = Some(current);
+                    state.observe(&snapshot, generation);
+                    pending = Some(Pending {
+                        generation,
+                        ready_at: Instant::now() + STABLE,
+                        snapshot,
+                    });
                 }
-                if let Some(current) = &published {
-                    if let Err(error) = current.binding.verify() {
-                        blocked = true;
-                        exit = 3;
-                        published = None;
-                        state.artifact = None;
-                        state.artifact_available = false;
-                        emit_failure(state, error.into())?;
-                    }
-                }
-                if source_parent
-                    .as_ref()
-                    .is_some_and(|parent| parent.verify().is_err())
-                {
-                    blocked = true;
-                    exit = 3;
-                    emit_failure(
-                        state,
-                        PreviewFailure::new(
-                            "input/parent-changed",
-                            "The input parent directory changed; publication is stopped",
-                            3,
-                        ),
-                    )?;
-                }
+                last_poll = Some(Instant::now());
             }
-            if blocked {
-                queue.pending = None;
-                if let Some(mut old) = active.take() {
-                    if let Err(failure) = old.worker.stop() {
-                        active = Some(old);
-                        return Err(failure);
-                    }
-                    queue.finish(old.generation);
-                }
-            }
-            if !blocked && last_poll.elapsed() >= POLL {
-                let _ = observe(
-                    request,
-                    &mut source_parent,
-                    &mut queue,
-                    active.as_ref().map(|job| (&job.source, job.generation)),
-                    state,
-                );
-                last_poll = Instant::now();
-            }
-            if STOP.load(Ordering::Relaxed) {
-                break;
-            }
-            let completed = if let Some(job) = active.as_mut() {
-                match job.worker.poll() {
-                    Ok(Some(result)) => Some(Ok(result)),
-                    Ok(None) => None,
-                    Err(failure) => Some(Err(failure)),
-                }
-            } else {
-                None
-            };
-            if let Some(result) = completed {
-                let mut job = active.take().unwrap();
-                // A poll error need not mean the child has exited. Retain the
-                // real owner until stop confirms it, including the error path.
-                if result.is_err() {
-                    if let Err(failure) = job.worker.stop() {
-                        active = Some(job);
-                        return Err(failure);
-                    }
-                }
-                let observed = observe(
-                    request,
-                    &mut source_parent,
-                    &mut queue,
-                    Some((&job.source, job.generation)),
-                    state,
-                );
-                // The worker has already exited. Its original descriptor must
-                // still name the current source before any bytes are published.
-                let current = queue.finish(job.generation);
-                if current
-                    && !STOP.load(Ordering::Relaxed)
-                    && !blocked
-                    && observed.as_ref() == Some(job.source.identity())
-                    && job.source.verify().is_ok()
-                {
-                    match result.and_then(|result| {
-                        validate_result(&result, &job, request)?;
-                        Ok(result)
-                    }) {
-                        Err(failure) => emit_failure(state, failure)?,
-                        Ok(result) => {
-                            let publication =
-                                (|| -> PreviewResult<Option<(Published, OutputSlot)>> {
-                                    let html = result.html.as_ref().unwrap();
-                                    let mut protected = vec![&job.source];
-                                    protected.extend(result.resources.iter());
-                                    let target = slot.path();
-                                    if protected.iter().any(|source| {
-                                        source.path() == target
-                                            || slot.previous().is_some_and(|previous| {
-                                                previous.identity().device
-                                                    == source.identity().device
-                                                    && previous.identity().inode
-                                                        == source.identity().inode
-                                            })
-                                    }) {
-                                        return Err(PreviewFailure::new(
-                                        "output/input-alias",
-                                        "Preview output cannot alias the input or a bound resource",
-                                        3,
-                                    ));
-                                    }
-                                    slot.verify_snapshot()?;
-                                    if STOP.load(Ordering::Relaxed) {
-                                        return Ok(None);
-                                    }
-                                    let receipt = output::publish_bound(&slot, html, &protected)?;
-                                    if !receipt.cleanup_complete {
-                                        let mut failure=PreviewFailure::new("output/recovery-required","Preview publication requires the existing output recovery command",3);
-                                        failure.diagnostics[0].evidence =
-                                            serde_json::to_value(&receipt).unwrap();
-                                        failure.diagnostics[0].evidence["committed"] = json!(true);
-                                        return Err(failure);
-                                    }
-                                    let binding = FileBinding::capture(&slot.path()).map_err(|error| {
-                                    let mut failure:PreviewFailure=error.into();
-                                    failure.diagnostics[0].evidence=json!({"committed":true,"publication":receipt,"inspection":failure.diagnostics[0].evidence});
-                                    failure
-                                })?;
-                                    if binding.identity() != &receipt.identity
-                                        || binding.bytes() != html.as_slice()
-                                    {
-                                        let mut failure=PreviewFailure::new("output/target-changed","Published output identity changed before preview could read it back",3);
-                                        failure.diagnostics[0].evidence = json!({"committed":true,"publication":receipt,"current":binding.identity()});
-                                        return Err(failure);
-                                    }
-                                    // Source/resource bindings were checked at publication.
-                                    // A later source edit cannot undo that commit; refresh
-                                    // only the exact descriptor the controller just wrote.
-                                    let refreshed = slot.refresh(&binding, &[]).map_err(|error| {
-                                    let mut failure:PreviewFailure=error.into();
-                                    failure.diagnostics[0].evidence=json!({"committed":true,"publication":receipt,"inspection":failure.diagnostics[0].evidence});
-                                    failure
-                                })?;
-                                    Ok(Some((
-                                        Published {
-                                            bytes: Arc::from(binding.bytes()),
-                                            binding,
-                                        },
-                                        refreshed,
-                                    )))
-                                })();
-                            let (current, refreshed) = match publication {
-                                Ok(Some(publication)) => publication,
-                                Ok(None) => break,
-                                Err(failure) => {
-                                    if !failure
-                                        .diagnostics
-                                        .iter()
-                                        .any(|d| d.evidence["committed"] == true)
-                                        && job.source.verify().is_err()
-                                        && published
-                                            .as_ref()
-                                            .is_none_or(|current| current.binding.verify().is_ok())
-                                    {
-                                        let _ = observe(
-                                            request,
-                                            &mut source_parent,
-                                            &mut queue,
-                                            Some((&job.source, job.generation)),
-                                            state,
-                                        );
-                                        if queue.generation == job.generation
-                                            && queue.pending.is_none()
-                                        {
-                                            emit_failure(state, failure)?;
-                                        }
-                                    } else if failure.exit == 3 {
-                                        blocked = true;
-                                        exit = 3;
-                                        published = None;
-                                        state.artifact = None;
-                                        state.artifact_available = false;
-                                        emit_failure(state, failure)?;
-                                    } else {
-                                        return Err(failure);
-                                    }
-                                    continue;
-                                }
-                            };
-                            let artifact = Artifact {
-                                generation: job.generation,
-                                input_sha256: job.source.identity().sha256.clone(),
-                                sha256: sha256(current.binding.bytes()),
-                                bytes: current.binding.bytes().len() as u64,
-                            };
-                            published = Some(current);
-                            slot = refreshed;
-                            state.status = "ready";
-                            state.last_attempt_status = "pass";
-                            state.last_successful_generation = job.generation;
-                            state.artifact = Some(artifact);
-                            state.artifact_available = true;
-                            state.diagnostics.clear();
-                            state
-                                .event("updated", json!({}))
-                                .map_err(|e| PreviewFailure::io("preview/events", e))?;
-                        }
-                    }
-                }
-            }
-            if !blocked && !STOP.load(Ordering::Relaxed) {
-                if let Some(pending) = queue.start(Instant::now()) {
-                    match pending.value {
-                        Snapshot::Unavailable(failure) => {
-                            queue.finish(pending.generation);
-                            emit_failure(state, failure)?;
-                        }
-                        Snapshot::Source(source) => {
-                            if let Err(error) = source.verify() {
-                                queue.finish(pending.generation);
-                                let _ = observe(
-                                    request,
-                                    &mut source_parent,
-                                    &mut queue,
-                                    Some((&source, pending.generation)),
-                                    state,
-                                );
-                                if queue.pending.is_none() {
-                                    emit_failure(state, error.into())?;
-                                }
-                            } else {
-                                if STOP.load(Ordering::Relaxed) {
-                                    break;
-                                }
-                                match worker::launch(&request.compile, pending.generation, &source)
-                                {
-                                    Ok(worker) => {
-                                        active = Some(Active {
-                                            generation: pending.generation,
-                                            source,
-                                            worker,
-                                        });
-                                        state.status = "checking";
-                                        state.last_attempt_status = "checking";
-                                        state.diagnostics.clear();
-                                        if STOP.load(Ordering::Relaxed) {
-                                            break;
-                                        }
-                                        state
-                                            .event("checking", json!({}))
-                                            .map_err(|e| PreviewFailure::io("preview/events", e))?;
-                                    }
-                                    Err(failure) => {
-                                        queue.finish(pending.generation);
-                                        emit_failure(state, failure)?;
-                                    }
-                                }
+            if pending
+                .as_ref()
+                .is_some_and(|pending| pending.ready_at <= Instant::now())
+            {
+                let job = pending.take().expect("ready pending input");
+                match job.snapshot {
+                    Snapshot::Unavailable(failure) => emit_failure(state, failure)?,
+                    Snapshot::Source(bytes) => {
+                        state.status = "checking";
+                        state.last_attempt_status = "checking";
+                        state
+                            .event("checking", json!({}))
+                            .map_err(|e| PreviewFailure::io("preview/events", e))?;
+                        match compile(request, &bytes) {
+                            Err(failure) => emit_failure(state, failure)?,
+                            Ok(html) => {
+                                state.artifact = Some(Artifact {
+                                    generation: job.generation,
+                                    input_sha256: sha256(&bytes),
+                                    sha256: sha256(&html),
+                                    bytes: html.len() as u64,
+                                });
+                                published = Some(Arc::from(html));
+                                state.status = "ready";
+                                state.last_attempt_status = "pass";
+                                state.last_successful_generation = job.generation;
+                                state.artifact_available = true;
+                                state.diagnostics.clear();
+                                state
+                                    .event("updated", json!({}))
+                                    .map_err(|e| PreviewFailure::io("preview/events", e))?;
                             }
                         }
                     }
                 }
             }
-            if STOP.load(Ordering::Relaxed) {
-                break;
-            }
             let status = serde_json::to_vec(state)
                 .map_err(|error| PreviewFailure::new("preview/status", error.to_string(), 4))?;
-            server.poll(
-                &status,
-                published.as_ref().map(|current| &current.bytes),
-                blocked,
-            )?;
+            server.poll(&status, published.as_ref())?;
             std::thread::sleep(Duration::from_millis(20));
         }
         Ok(())
@@ -738,22 +339,9 @@ fn run_session(
         exit = failure.exit;
         let _ = state.failed(failure);
     }
-    queue.pending = None;
-    let listener_closed = server.stop();
-    let mut worker_closed = true;
-    if let Some(mut job) = active.take() {
-        if let Err(failure) = job.worker.stop() {
-            worker_closed = false;
-            exit = failure.exit;
-            let _ = state.failed(failure);
-        }
-    }
-    let shutdown_complete = listener_closed && worker_closed;
+    let shutdown_complete = server.stop();
     if !shutdown_complete {
         exit = exit.max(4);
-    }
-    if state.last_attempt_status == "checking" {
-        state.last_attempt_status = "cancelled";
     }
     state.status = "stopped";
     state
@@ -763,28 +351,4 @@ fn run_session(
         )
         .map_err(|e| PreviewFailure::io("preview/events", e))?;
     Ok(exit)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn newest_pending_replaces_intermediate_work_and_old_completion_cannot_publish() {
-        let now = Instant::now();
-        let mut queue = Latest::new();
-        queue.observe("first".into(), "first", now);
-        let first = queue.start(now + STABLE).unwrap();
-        assert_eq!(first.generation, 1);
-        assert!(queue.start(now + STABLE).is_none());
-        queue.observe("second".into(), "second", now + STABLE);
-        queue.observe("latest".into(), "latest", now + STABLE);
-        assert!(queue.start(now + STABLE + STABLE).is_none());
-        assert!(!queue.finish(first.generation));
-        let latest = queue.start(now + STABLE + STABLE).unwrap();
-        assert_eq!(latest.generation, 3);
-        assert_eq!(latest.value, "latest");
-        assert!(queue.finish(latest.generation));
-        assert!(!queue.observe("latest".into(), "unchanged", now + STABLE));
-        assert!(queue.pending.is_none());
-    }
 }

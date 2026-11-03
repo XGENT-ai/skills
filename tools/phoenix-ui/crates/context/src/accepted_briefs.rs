@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
-use std::fs::{self, OpenOptions, TryLockError};
-use std::io::Write;
+use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 const INDEX: &str = ".phoenix-ui/briefs.json";
@@ -49,7 +48,6 @@ fn hash(bytes: &[u8]) -> String {
 }
 
 fn safe_path(root: &Path, relative: &str) -> Result<PathBuf, String> {
-    let mut path = root.to_path_buf();
     let components: Vec<_> = Path::new(relative).components().collect();
     if components.is_empty()
         || components
@@ -60,26 +58,11 @@ fn safe_path(root: &Path, relative: &str) -> Result<PathBuf, String> {
             "Brief paths must be relative to the selected project without parent traversal".into(),
         );
     }
-    for part in components {
-        path.push(part);
-        match fs::symlink_metadata(&path) {
-            Ok(metadata) if metadata.file_type().is_symlink() => {
-                return Err(format!(
-                    "Refusing a symlinked brief path: {}",
-                    path.display()
-                ))
-            }
-            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
-                return Err(error.to_string())
-            }
-            _ => (),
-        }
-    }
-    Ok(path)
+    Ok(root.join(relative))
 }
 
 fn index_bytes(root: &Path) -> Result<Option<Vec<u8>>, String> {
-    match fs::read(safe_path(root, INDEX)?) {
+    match fs::read(root.join(INDEX)) {
         Ok(bytes) => Ok(Some(bytes)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(format!("Cannot read {INDEX}: {error}")),
@@ -219,28 +202,10 @@ fn link(args: &[String], io: &Io) -> Result<Value, (i32, String)> {
             "Link the original project brief instead of an editable state copy".into(),
         ));
     }
-    let source = safe_path(source_base, &relative).map_err(|error| (2, error))?;
-    let body = fs::read(&source)
-        .map_err(|error| (4, format!("Cannot read {}: {error}", source.display())))?;
+    let body = fs::read(&requested)
+        .map_err(|error| (4, format!("Cannot read {}: {error}", requested.display())))?;
     std::str::from_utf8(&body).map_err(|_| (2, "Brief source must be UTF-8 text".into()))?;
     let digest = hash(&body);
-    let state = safe_path(project, ".phoenix-ui").map_err(|error| (2, error))?;
-    fs::create_dir_all(&state).map_err(|error| (4, error.to_string()))?;
-    let lock_path = safe_path(project, ".phoenix-ui/briefs.lock").map_err(|error| (2, error))?;
-    let _lock = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(false)
-        .open(lock_path)
-        .map_err(|error| (4, error.to_string()))?;
-    _lock.try_lock().map_err(|error| match error {
-        TryLockError::WouldBlock => (
-            3,
-            "Another writer holds the accepted brief index lock".into(),
-        ),
-        TryLockError::Error(error) => (4, error.to_string()),
-    })?;
     let before = index_bytes(project).map_err(|error| (4, error))?;
     let mut index =
         parse_index(project, repository, before.as_deref()).map_err(|error| (4, error))?;
@@ -251,41 +216,13 @@ fn link(args: &[String], io: &Io) -> Result<Value, (i32, String)> {
         target,
         path: relative,
         source_root,
-        sha256: digest.clone(),
+        sha256: digest,
         accepted_decision: args[4].clone(),
     });
     let bytes = serde_json::to_vec_pretty(&index).map_err(|error| (4, error.to_string()))?;
-    let destination = safe_path(project, INDEX).map_err(|error| (2, error))?;
-    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-    let temporary = state.join(format!(
-        ".briefs-{}-{}.tmp",
-        std::process::id(),
-        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-    ));
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temporary)
-        .map_err(|error| (4, error.to_string()))?;
-    let write = (|| {
-        file.write_all(&bytes)
-            .and_then(|_| file.sync_all())
-            .map_err(|error| (4, error.to_string()))?;
-        if hash(&fs::read(&source).map_err(|error| (4, error.to_string()))?) != digest
-            || index_bytes(project).map_err(|error| (4, error))? != before
-        {
-            return Err((
-                3,
-                "Brief or index changed during linking; read it again before accepting".into(),
-            ));
-        }
-        drop(file);
-        fs::rename(&temporary, &destination).map_err(|error| (4, error.to_string()))
-    })();
-    if write.is_err() {
-        let _ = fs::remove_file(&temporary);
-    }
-    write?;
+    let destination = project.join(INDEX);
+    fs::create_dir_all(project.join(".phoenix-ui")).map_err(|error| (4, error.to_string()))?;
+    fs::write(&destination, bytes).map_err(|error| (4, error.to_string()))?;
     Ok(
         json!({"schemaVersion":1, "status":"linked", "index":destination, "brief":index.briefs.last()}),
     )
@@ -299,7 +236,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         }
         Err((code, error)) => {
             io.err(&format!("{error}\n"));
-            io.out(&format!("{}\n", json!({"schemaVersion":1, "status":match code {2=>"invalid_input",3=>"conflict",_=>"unavailable"}, "error":error})));
+            io.out(&format!("{}\n", json!({"schemaVersion":1, "status":match code {2=>"invalid_input",_=>"unavailable"}, "error":error})));
             code
         }
     }

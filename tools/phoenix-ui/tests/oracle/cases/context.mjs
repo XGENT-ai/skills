@@ -1,6 +1,6 @@
 /**
  * Corpus for the context-and-helper verbs: `context`, `doctor`, `pin`,
- * `surface-brief`, `critique-storage`, `palette`, `embed-prompt`,
+ * `surface-brief`, `critique-storage`, `embed-prompt`,
  * `context-signals`, `detect-csp`, `concept-seed`, `generate-image`,
  * `serve-question`.
  *
@@ -16,7 +16,7 @@
  *   ctx-legacy         unstamped PRODUCT.md with ## Register, DESIGN.json sidecar v1, bad config, orphan brief
  *   ctx-csp-*          one per detect-csp shape (append-arrays, append-string, middleware, meta, none)
  *   ctx-signals        git-initialised in setup() with fixed author/committer dates
- *   ctx-pin            .claude/.agents/.cursor skills dirs with impeccable installed
+ *   ctx-pin            .claude/.agents/.cursor skills dirs with phoenix-ui installed
  *
  * Only offline, deterministic paths are exercised: no roll API, no OpenAI, no
  * browser, no listening server. Env vars that would change behaviour on the
@@ -43,31 +43,59 @@ const REPO = '<REPO>';
 // Env the recording machine may carry that would leak into output.
 const BASE_ENV = {
   OPENAI_API_KEY: null,
-  IMPECCABLE_CONTEXT_DIR: null,
-  IMPECCABLE_CATALOG_DIR: null,
+  PHOENIX_UI_CONTEXT_DIR: null,
   IMPECCABLE_API_URL: null,
-  IMPECCABLE_STALENESS_CACHE: null,
+  PHOENIX_UI_STALENESS_CACHE: null,
   IMPECCABLE_UPDATE_CACHE: null,
-  IMPECCABLE_NO_STALENESS_CHECK: null,
-  IMPECCABLE_HOOK_DISABLED: null,
-  IMPECCABLE_PROVIDER_ID: null,
+  PHOENIX_UI_NO_STALENESS_CHECK: null,
+  PHOENIX_UI_HOOK_DISABLED: null,
+  PHOENIX_UI_PROVIDER_ID: null,
   OPENCODE_CONFIG_DIR: null,
   XDG_CONFIG_HOME: null,
-  IMPECCABLE_PALETTE_SEED: null,
-  IMPECCABLE_CONCEPT_SEED: null,
-  IMPECCABLE_COMPOSITIONS: null,
-  IMPECCABLE_IMAGE_GEN_FAKE: null,
-  IMPECCABLE_QUESTION_DISABLED: null,
-  IMPECCABLE_QUESTION_FORCE: null,
-  IMPECCABLE_CRITIQUE_META: null,
+  PHOENIX_UI_PALETTE_SEED: null,
+  PHOENIX_UI_CONCEPT_SEED: null,
+  PHOENIX_UI_COMPOSITIONS: null,
+  PHOENIX_UI_IMAGE_GEN_FAKE: null,
+  PHOENIX_UI_QUESTION_DISABLED: null,
+  PHOENIX_UI_QUESTION_FORCE: null,
+  PHOENIX_UI_CRITIQUE_META: null,
   CI: null,
   SSH_CONNECTION: null,
 };
 const env = (extra = {}) => ({ ...BASE_ENV, ...extra });
 
-const IMPECCABLE_FILES = ['.impeccable/**', 'PRODUCT.md', 'DESIGN.md', 'DESIGN.json', '.impeccable-live.json'];
+const IMPECCABLE_FILES = ['.phoenix-ui/**', 'PRODUCT.md', 'DESIGN.md', 'DESIGN.json', '.impeccable-live.json'];
 
 // ---- setup helpers ---------------------------------------------------------
+
+// The second critique write must take the `~0001` collision suffix whatever
+// the clock says: reserve its file name for every UTC second the step can run
+// in (two 60s step timeouts plus the partial second), then check the writer
+// left every reservation intact and remove them before reading.
+const RESERVATION = 'oracle collision reservation\n';
+let reservations = [];
+function reserveCritiqueSeconds(ws) {
+  const dir = path.join(ws, '.phoenix-ui', 'critique');
+  fs.mkdirSync(dir, { recursive: true });
+  const start = Math.floor(Date.now() / 1000) * 1000;
+  reservations = [];
+  for (let second = 0; second <= 121; second++) {
+    const stamp = new Date(start + second * 1000).toISOString().replace(/:/g, '-').replace(/\.\d{3}Z$/, 'Z');
+    const file = path.join(dir, `${stamp}__src-app-tsx.md`);
+    try {
+      fs.writeFileSync(file, RESERVATION, { flag: 'wx' });
+      reservations.push(file);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
+  }
+}
+function releaseCritiqueSeconds() {
+  for (const file of reservations) {
+    if (fs.readFileSync(file, 'utf8') !== RESERVATION) throw new Error('critique writer overwrote a collision reservation');
+  }
+  for (const file of reservations) fs.unlinkSync(file);
+}
 
 const write = (ws, rel, body) => {
   const abs = path.join(ws, rel);
@@ -88,7 +116,7 @@ const claudeStopHook = (ws, rel) => write(
   ws,
   path.join(rel, '.claude/settings.local.json'),
   JSON.stringify({
-    hooks: { Stop: [{ hooks: [{ command: '.claude/skills/impeccable/scripts/impeccable hook' }] }] },
+    hooks: { Stop: [{ hooks: [{ command: '.claude/skills/phoenix-ui/scripts/phoenix-ui hook' }] }] },
   }) + '\n',
 );
 
@@ -97,8 +125,8 @@ const claudeStopHook = (ws, rel) => write(
 const T_OLD = new Date('2026-01-01T00:00:00Z');
 const T_NEW = new Date('2026-06-01T00:00:00Z');
 const touch = (abs, when) => { if (fs.existsSync(abs)) fs.utimesSync(abs, when, when); };
-const sidecarNewer = (ws) => { touch(path.join(ws, 'DESIGN.md'), T_OLD); touch(path.join(ws, '.impeccable/design.json'), T_NEW); };
-const sidecarOlder = (ws) => { touch(path.join(ws, 'DESIGN.md'), T_NEW); touch(path.join(ws, 'DESIGN.json'), T_OLD); touch(path.join(ws, '.impeccable/design.json'), T_OLD); };
+const sidecarNewer = (ws) => { touch(path.join(ws, 'DESIGN.md'), T_OLD); touch(path.join(ws, '.phoenix-ui/design.json'), T_NEW); };
+const sidecarOlder = (ws) => { touch(path.join(ws, 'DESIGN.md'), T_NEW); touch(path.join(ws, 'DESIGN.json'), T_OLD); touch(path.join(ws, '.phoenix-ui/design.json'), T_OLD); };
 
 // ctx-legacy carries `.impeccable-live.json` (gitignored in this repo, so it
 // is written at stage time) and a DESIGN.md newer than its legacy sidecar.
@@ -166,13 +194,11 @@ const imagesSetup = (ws) => {
   fs.writeFileSync(path.join(ws, 'prompt.txt'), 'A prompt read from a file.\nSecond line.\n');
 };
 
-const CATALOG = `${REPO}/tests/fixtures/concept-catalog`;
 // concept-seed prints the MODE RULES block from <skill>/reference/mode-*.md.
 // Seed cases point the skill dir at a fixture so goldens do not churn every
 // time the real mode prose in skill/reference/ changes.
 const MODE_RULES_SKILL = `${REPO}/tests/fixtures/mode-rules-skill`;
-const seedEnv = (extra = {}) => env({ IMPECCABLE_SKILL_DIR: MODE_RULES_SKILL, IMPECCABLE_CATALOG_DIR: CATALOG, IMPECCABLE_API_URL: 'http://127.0.0.1:9/api', IMPECCABLE_API_TIMEOUT: '300', ...extra });
-const degradedEnv = (extra = {}) => env({ IMPECCABLE_SKILL_DIR: MODE_RULES_SKILL, IMPECCABLE_CATALOG_DIR: `${WS}/no-such-catalog`, IMPECCABLE_API_URL: 'http://127.0.0.1:9/api', IMPECCABLE_API_TIMEOUT: '300', ...extra });
+const seedEnv = (extra = {}) => env({ PHOENIX_UI_SKILL_DIR: MODE_RULES_SKILL, ...extra });
 
 const QUESTION_PAYLOAD = { title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.' }, { id: 'b', label: 'B', thesis: 'Two.' }] };
 
@@ -215,7 +241,7 @@ const cases = [
   {
     id: 'context-hook-at-enclosing-git-root', verb: 'context', workspace: 'ctx-empty', cwd: 'web',
     setup: (ws) => { gitBoundary(ws, '.'); write(ws, 'web/PRODUCT.md', '# Nested web product\n'); claudeStopHook(ws, '.'); },
-    env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }),
+    env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   {
     id: 'context-hook-at-enclosing-git-root-disabled', verb: 'context', workspace: 'ctx-empty', cwd: 'web',
@@ -223,9 +249,9 @@ const cases = [
       gitBoundary(ws, '.');
       write(ws, 'web/PRODUCT.md', '# Nested web product\n');
       claudeStopHook(ws, '.');
-      write(ws, '.impeccable/config.local.json', JSON.stringify({ hook: { enabled: false } }) + '\n');
+      write(ws, '.phoenix-ui/config.local.json', JSON.stringify({ hook: { enabled: false } }) + '\n');
     },
-    env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }),
+    env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   {
     id: 'context-hook-not-borrowed-from-caller', verb: 'context', workspace: 'ctx-empty', cwd: 'apps/marketing',
@@ -240,7 +266,7 @@ const cases = [
       write(ws, 'apps/dashboard/src/App.jsx', 'export default function App() { return "dashboard"; }\n');
       claudeStopHook(ws, 'apps/marketing');
     },
-    env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }),
+    env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   {
     id: 'context-hook-not-borrowed-across-nested-git', verb: 'context', workspace: 'ctx-empty',
@@ -254,7 +280,7 @@ const cases = [
       write(ws, 'repos/standalone/PRODUCT.md', '# Standalone\n');
       write(ws, 'repos/standalone/src/App.jsx', 'export default function App() { return "standalone"; }\n');
     },
-    env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }),
+    env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   {
     id: 'context-markerless-nested-git-target', verb: 'context', workspace: 'ctx-empty',
@@ -267,20 +293,20 @@ const cases = [
       claudeStopHook(ws, '.');
       write(ws, 'repos/standalone/src/App.jsx', 'export default function App() { return "standalone"; }\n');
     },
-    env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }),
+    env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   { id: 'context-legacy', verb: 'context', workspace: 'ctx-legacy', setup: legacySetup, env: env(), files: IMPECCABLE_FILES },
-  { id: 'context-hook-disabled-env', verb: 'context', workspace: 'ctx-product-only', env: env({ IMPECCABLE_HOOK_DISABLED: 'yes' }), files: IMPECCABLE_FILES },
+  { id: 'context-hook-disabled-env', verb: 'context', workspace: 'ctx-product-only', env: env({ PHOENIX_UI_HOOK_DISABLED: 'yes' }), files: IMPECCABLE_FILES },
   {
     id: 'context-hook-disabled-config', verb: 'context', workspace: 'ctx-product-only',
-    setup: (ws) => write(ws, '.impeccable/config.json', JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'),
+    setup: (ws) => write(ws, '.phoenix-ui/config.json', JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'),
     env: env(), files: IMPECCABLE_FILES,
   },
   { id: 'context-openai-key', verb: 'context', workspace: 'ctx-product-only', env: env({ OPENAI_API_KEY: 'sk-oracle' }), files: IMPECCABLE_FILES },
-  { id: 'context-no-staleness-check-env', verb: 'context', workspace: 'ctx-legacy', setup: legacySetup, env: env({ IMPECCABLE_NO_STALENESS_CHECK: '1' }), files: IMPECCABLE_FILES },
+  { id: 'context-no-staleness-check-env', verb: 'context', workspace: 'ctx-legacy', setup: legacySetup, env: env({ PHOENIX_UI_NO_STALENESS_CHECK: '1' }), files: IMPECCABLE_FILES },
   {
     id: 'context-no-staleness-check-config', verb: 'context', workspace: 'ctx-legacy',
-    setup: (ws) => { legacySetup(ws); write(ws, '.impeccable/config.local.json', JSON.stringify({ stalenessCheck: false }, null, 2) + '\n'); },
+    setup: (ws) => { legacySetup(ws); write(ws, '.phoenix-ui/config.local.json', JSON.stringify({ stalenessCheck: false }, null, 2) + '\n'); },
     env: env(), files: IMPECCABLE_FILES,
   },
   {
@@ -292,25 +318,25 @@ const cases = [
   },
   {
     id: 'context-staleness-cache-env', verb: 'context', workspace: 'ctx-legacy', setup: legacySetup,
-    env: env({ IMPECCABLE_STALENESS_CACHE: `${WS}/.oracle-cache/notice.json` }), files: [...IMPECCABLE_FILES, '.oracle-cache/**'],
+    env: env({ PHOENIX_UI_STALENESS_CACHE: `${WS}/.oracle-cache/notice.json` }), files: [...IMPECCABLE_FILES, '.oracle-cache/**'],
     steps: [{}, {}],
   },
   {
     id: 'context-dir-override', verb: 'context', workspace: 'ctx-empty',
     setup: (ws) => { write(ws, 'elsewhere/PRODUCT.md', '# Elsewhere\n\n<!-- impeccable:product-schema 1 -->\n\n## Platform\n\nweb\n\n## Positioning\nFound through IMPECCABLE_CONTEXT_DIR.\n'); write(ws, 'elsewhere/DESIGN.md', '# Design: Elsewhere\n\n## Colors\n- **Ink** (#111): Text.\n'); },
-    env: env({ IMPECCABLE_CONTEXT_DIR: `${WS}/elsewhere` }), files: IMPECCABLE_FILES,
+    env: env({ PHOENIX_UI_CONTEXT_DIR: `${WS}/elsewhere` }), files: IMPECCABLE_FILES,
   },
-  { id: 'context-dir-override-relative', verb: 'context', workspace: 'ctx-empty', setup: (ws) => write(ws, 'ctx/PRODUCT.md', '# Rel\n\n<!-- impeccable:product-schema 1 -->\n\n## Positioning\nRelative override.\n'), env: env({ IMPECCABLE_CONTEXT_DIR: 'ctx' }), files: IMPECCABLE_FILES },
-  { id: 'context-dir-override-ignored-when-project-has-product', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, 'elsewhere/PRODUCT.md', '# Should not load\n'), env: env({ IMPECCABLE_CONTEXT_DIR: `${WS}/elsewhere` }), files: IMPECCABLE_FILES },
-  { id: 'context-dir-override-missing', verb: 'context', workspace: 'ctx-empty', env: env({ IMPECCABLE_CONTEXT_DIR: `${WS}/nowhere` }), files: IMPECCABLE_FILES },
+  { id: 'context-dir-override-relative', verb: 'context', workspace: 'ctx-empty', setup: (ws) => write(ws, 'ctx/PRODUCT.md', '# Rel\n\n<!-- impeccable:product-schema 1 -->\n\n## Positioning\nRelative override.\n'), env: env({ PHOENIX_UI_CONTEXT_DIR: 'ctx' }), files: IMPECCABLE_FILES },
+  { id: 'context-dir-override-ignored-when-project-has-product', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, 'elsewhere/PRODUCT.md', '# Should not load\n'), env: env({ PHOENIX_UI_CONTEXT_DIR: `${WS}/elsewhere` }), files: IMPECCABLE_FILES },
+  { id: 'context-dir-override-missing', verb: 'context', workspace: 'ctx-empty', env: env({ PHOENIX_UI_CONTEXT_DIR: `${WS}/nowhere` }), files: IMPECCABLE_FILES },
   {
     id: 'context-build-path-local-over-shared', verb: 'context', workspace: 'ctx-full',
-    setup: (ws) => { sidecarNewer(ws); write(ws, '.impeccable/config.local.json', JSON.stringify({ buildPath: 'code' }, null, 2) + '\n'); },
+    setup: (ws) => { sidecarNewer(ws); write(ws, '.phoenix-ui/config.local.json', JSON.stringify({ buildPath: 'code' }, null, 2) + '\n'); },
     env: env(), files: IMPECCABLE_FILES,
   },
   {
     id: 'context-build-path-invalid-ignored', verb: 'context', workspace: 'ctx-full',
-    setup: (ws) => { sidecarNewer(ws); write(ws, '.impeccable/config.local.json', JSON.stringify({ buildPath: 'fast' }, null, 2) + '\n'); },
+    setup: (ws) => { sidecarNewer(ws); write(ws, '.phoenix-ui/config.local.json', JSON.stringify({ buildPath: 'fast' }, null, 2) + '\n'); },
     env: env(), files: IMPECCABLE_FILES,
   },
   { id: 'context-fallback-dir-docs', verb: 'context', workspace: 'ctx-empty', setup: (ws) => write(ws, 'docs/PRODUCT.md', '# Docs product\n\n<!-- impeccable:product-schema 1 -->\n\n## Positioning\nLives under docs/.\n'), env: env(), files: IMPECCABLE_FILES },
@@ -325,17 +351,17 @@ const cases = [
   { id: 'context-android', verb: 'context', workspace: 'ctx-empty', setup: (ws) => write(ws, 'PRODUCT.md', '# P\n\n<!-- impeccable:product-schema 1 -->\n\n## Platform\n\nAndroid\n\n## Positioning\nNative android.\n'), env: env(), files: IMPECCABLE_FILES },
   { id: 'context-adaptive-word', verb: 'context', workspace: 'ctx-empty', setup: (ws) => write(ws, 'PRODUCT.md', '# P\n\n<!-- impeccable:product-schema 1 -->\n\n## Platform\n\nadaptive\n\n## Positioning\nAdaptive keyword.\n'), env: env(), files: IMPECCABLE_FILES },
   { id: 'context-native-evidence-web', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, 'ios/Podfile', "platform :ios, '15.0'\n"), env: env(), files: IMPECCABLE_FILES },
-  { id: 'context-build-path-unset-with-surfaces', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.impeccable/surfaces/src-app-tsx.md', '---\nversion: 1\nslug: "src-app-tsx"\nprimary_target: "src/App.tsx"\nrelated_targets: []\n---\n\n# Surface brief: App\n'), env: env(), files: IMPECCABLE_FILES },
-  { id: 'context-project-roots-match-nothing', verb: 'context', workspace: 'ctx-monorepo', setup: (ws) => write(ws, '.impeccable/config.json', JSON.stringify({ projectRoots: ['services/*'] }, null, 2) + '\n'), env: env(), files: IMPECCABLE_FILES },
+  { id: 'context-build-path-unset-with-surfaces', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.phoenix-ui/surfaces/src-app-tsx.md', '---\nversion: 1\nslug: "src-app-tsx"\nprimary_target: "src/App.tsx"\nrelated_targets: []\n---\n\n# Surface brief: App\n'), env: env(), files: IMPECCABLE_FILES },
+  { id: 'context-project-roots-match-nothing', verb: 'context', workspace: 'ctx-monorepo', setup: (ws) => write(ws, '.phoenix-ui/config.json', JSON.stringify({ projectRoots: ['services/*'] }, null, 2) + '\n'), env: env(), files: IMPECCABLE_FILES },
   { id: 'context-hook-manifest-source-provider', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ hooks: [{ type: 'command', command: 'node .claude/skills/impeccable/scripts/hook.mjs' }] }] } }, null, 2) + '\n'), env: env(), files: IMPECCABLE_FILES },
   // Upgrade path (triage E8): a v3 install left a `.claude/settings.local.json`
   // naming the retired `node .../hook.mjs` script. Under the real provider the
   // stale marker must NOT count as an active hook, so MANUAL_DETECTOR_REQUIRED
   // still fires (the launcher-era script no longer exists; the hook is dead).
-  { id: 'context-stale-hook-manifest', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [{ type: 'command', command: 'node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"' }] }] } }, null, 2) + '\n'), env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }), files: IMPECCABLE_FILES },
+  { id: 'context-stale-hook-manifest', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [{ type: 'command', command: 'node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"' }] }] } }, null, 2) + '\n'), env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }), files: IMPECCABLE_FILES },
   // Control: the launcher-era manifest still counts as an active hook, so
   // MANUAL_DETECTOR_REQUIRED is suppressed exactly as before.
-  { id: 'context-launcher-hook-active', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [{ type: 'command', command: '[ ! -f "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable" ] || "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable" hook' }] }] } }, null, 2) + '\n'), env: env({ IMPECCABLE_PROVIDER_ID: 'claude-code' }), files: IMPECCABLE_FILES },
+  { id: 'context-launcher-hook-active', verb: 'context', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ matcher: 'Edit', hooks: [{ type: 'command', command: '[ ! -f "${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui" ] || "${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui" hook' }] }] } }, null, 2) + '\n'), env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }), files: IMPECCABLE_FILES },
 
   // ======================================================================
   // doctor
@@ -357,12 +383,12 @@ const cases = [
     setup: (ws) => {
       write(ws, 'PRODUCT.md', '# Product\n\n## Register\n\nbrand\n\n## Users\nDesigners.\n');
       write(ws, 'DESIGN.md', '---\nname: Example\n---\n\n# Design System: Example\n');
-      write(ws, '.impeccable/design.json', JSON.stringify({ schemaVersion: 1 }));
-      write(ws, '.impeccable/config.json', JSON.stringify({ unknownSetting: true }));
+      write(ws, '.phoenix-ui/design.json', JSON.stringify({ schemaVersion: 1 }));
+      write(ws, '.phoenix-ui/config.json', JSON.stringify({ unknownSetting: true }));
     },
     args: ['--json'], env: env(),
   },
-  { id: 'doctor-full-sidecar-stale', verb: 'doctor', workspace: 'ctx-full', setup: (ws) => { touch(path.join(ws, 'DESIGN.md'), T_NEW); touch(path.join(ws, '.impeccable/design.json'), T_OLD); }, args: ['--json'], env: env() },
+  { id: 'doctor-full-sidecar-stale', verb: 'doctor', workspace: 'ctx-full', setup: (ws) => { touch(path.join(ws, 'DESIGN.md'), T_NEW); touch(path.join(ws, '.phoenix-ui/design.json'), T_OLD); }, args: ['--json'], env: env() },
   { id: 'doctor-native-ios-text', verb: 'doctor', workspace: 'ctx-native-ios', env: env() },
   { id: 'doctor-native-ios-json', verb: 'doctor', workspace: 'ctx-native-ios', args: ['--json'], env: env() },
   { id: 'doctor-adaptive-text', verb: 'doctor', workspace: 'ctx-adaptive', env: env() },
@@ -374,7 +400,7 @@ const cases = [
   { id: 'doctor-monorepo-target-a', verb: 'doctor', workspace: 'ctx-monorepo', args: ['--json', '--target', 'apps/a'], env: env() },
   { id: 'doctor-monorepo-target-b', verb: 'doctor', workspace: 'ctx-monorepo', args: ['--target', 'apps/b/src/App.tsx'], env: env() },
   { id: 'doctor-monorepo-child-cwd', verb: 'doctor', workspace: 'ctx-monorepo', cwd: 'apps/a', args: ['--json'], env: env() },
-  { id: 'doctor-monorepo-roots-match-nothing', verb: 'doctor', workspace: 'ctx-monorepo', setup: (ws) => write(ws, '.impeccable/config.json', JSON.stringify({ projectRoots: ['services/*'] }, null, 2) + '\n'), env: env() },
+  { id: 'doctor-monorepo-roots-match-nothing', verb: 'doctor', workspace: 'ctx-monorepo', setup: (ws) => write(ws, '.phoenix-ui/config.json', JSON.stringify({ projectRoots: ['services/*'] }, null, 2) + '\n'), env: env() },
   { id: 'doctor-legacy-text', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, env: env(), files: IMPECCABLE_FILES },
   { id: 'doctor-legacy-json', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--json'], env: env(), files: IMPECCABLE_FILES },
   { id: 'doctor-legacy-fix', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--fix'], env: env(), files: IMPECCABLE_FILES },
@@ -382,7 +408,7 @@ const cases = [
   { id: 'doctor-legacy-fix-twice', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--fix'], env: env(), files: IMPECCABLE_FILES, steps: [{}, {}, { args: ['--json'] }] },
   {
     id: 'doctor-legacy-fix-no-overwrite', verb: 'doctor', workspace: 'ctx-legacy',
-    setup: (ws) => { legacySetup(ws); write(ws, '.impeccable/design.json', JSON.stringify({ schemaVersion: 2 }) + '\n'); },
+    setup: (ws) => { legacySetup(ws); write(ws, '.phoenix-ui/design.json', JSON.stringify({ schemaVersion: 2 }) + '\n'); },
     args: ['--fix'], env: env(), files: IMPECCABLE_FILES,
   },
   {
@@ -395,14 +421,13 @@ const cases = [
   { id: 'doctor-target-missing-value', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--json', '--target'], env: env() },
   { id: 'doctor-target-eq-empty', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--target='], env: env() },
   { id: 'doctor-target-file', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--target=src/pages/index.astro'], env: env() },
-  { id: 'doctor-hook-conflict', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, '.impeccable/config.json', JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'); write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ hooks: [{ type: 'command', command: 'node .claude/skills/impeccable/scripts/hook.mjs' }] }] } }, null, 2) + '\n'); }, args: ['--json'], env: env() },
-  { id: 'doctor-legacy-live-dir', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.impeccable-live/sessions/s1.json', '{}\n'), args: ['--fix'], env: env() },
+  { id: 'doctor-hook-conflict', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, '.phoenix-ui/config.json', JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'); write(ws, '.claude/settings.local.json', JSON.stringify({ hooks: { PostToolUse: [{ hooks: [{ type: 'command', command: 'node .claude/skills/impeccable/scripts/hook.mjs' }] }] } }, null, 2) + '\n'); }, args: ['--json'], env: env() },
   { id: 'doctor-design-seed-marker', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, 'DESIGN.md', "<!-- SEED: established with the user before implementation; re-run /impeccable document once there's code to capture the actual tokens and components. -->\n# Seed\n\n## Colors\n- **Ink** (#111): Text.\n\n## Typography\n**Body Font:** Inter\n"), args: ['--json'], env: env() },
   { id: 'doctor-design-coverage-missing-all', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, 'DESIGN.md', '# Thin\n\nNo canonical sections at all.\n'), env: env() },
-  { id: 'doctor-sidecar-schema-missing', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, 'DESIGN.md', '# D\n\n## Colors\n- x\n\n## Typography\n- y\n\n## Components\n- z\n'); write(ws, '.impeccable/design.json', '{"title":"x"}\n'); sidecarNewer(ws); }, args: ['--json'], env: env() },
-  { id: 'doctor-config-local-and-shared', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, '.impeccable/config.json', '{"buildPath":"comp","detector":{"ignoreRules":["*","GRADIENT-TEXT"]}}\n'); write(ws, '.impeccable/config.local.json', '{"buildPath":"maybe","nope":1}\n'); }, env: env() },
-  { id: 'doctor-config-malformed', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.impeccable/config.json', '{not json'), env: env() },
-  { id: 'doctor-config-array', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.impeccable/config.json', '[1,2]\n'), env: env() },
+  { id: 'doctor-sidecar-schema-missing', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, 'DESIGN.md', '# D\n\n## Colors\n- x\n\n## Typography\n- y\n\n## Components\n- z\n'); write(ws, '.phoenix-ui/design.json', '{"title":"x"}\n'); sidecarNewer(ws); }, args: ['--json'], env: env() },
+  { id: 'doctor-config-local-and-shared', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, '.phoenix-ui/config.json', '{"buildPath":"comp","detector":{"ignoreRules":["*","GRADIENT-TEXT"]}}\n'); write(ws, '.phoenix-ui/config.local.json', '{"buildPath":"maybe","nope":1}\n'); }, env: env() },
+  { id: 'doctor-config-malformed', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.phoenix-ui/config.json', '{not json'), env: env() },
+  { id: 'doctor-config-array', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.phoenix-ui/config.json', '[1,2]\n'), env: env() },
   { id: 'doctor-hook-script-missing', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => write(ws, '.claude/settings.json', JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"' }] }] } }, null, 2) + '\n'), args: ['--json'], env: env() },
   { id: 'doctor-hook-script-present', verb: 'doctor', workspace: 'ctx-product-only', setup: (ws) => { write(ws, '.claude/settings.json', JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'node .claude/skills/impeccable/scripts/hook.mjs' }] }] } }, null, 2) + '\n'); write(ws, '.claude/skills/impeccable/scripts/hook.mjs', '// present\n'); }, args: ['--json'], env: env() },
   {
@@ -438,37 +463,37 @@ const cases = [
   { id: 'pin-then-unpin', verb: 'pin', workspace: 'ctx-pin', env: env(), files: ['.*/skills/**'], steps: [{ args: ['pin', 'critique'] }, { args: ['pin', 'critique'] }, { args: ['unpin', 'critique'] }, { args: ['unpin', 'critique'] }] },
   { id: 'pin-i-impeccable-alias', verb: 'pin', workspace: 'ctx-empty', setup: (ws) => write(ws, '.codex/skills/i-impeccable/SKILL.md', '---\nname: i-impeccable\n---\n'), args: ['pin', 'shape'], env: env(), files: ['.*/skills/**'] },
   // #483: OpenCode does not surface a pinned SKILL.md in its slash menu, so a
-  // pin there writes `commands/impeccable-<cmd>.md` instead, in the project
+  // pin there writes `commands/phoenix-ui-<cmd>.md` instead, in the project
   // scope and in the user config dir, and never a `.opencode/skills/<cmd>`.
   {
     id: 'pin-opencode-project', verb: 'pin', workspace: 'ctx-empty',
-    setup: (ws) => write(ws, '.opencode/skills/impeccable/SKILL.md', '---\nname: impeccable\n---\n'),
+    setup: (ws) => write(ws, '.opencode/skills/phoenix-ui/SKILL.md', '---\nname: phoenix-ui\n---\n'),
     args: ['pin', 'polish'], env: env(), files: ['.*/skills/**', '.*/commands/**'],
   },
   {
     id: 'pin-opencode-user-scope', verb: 'pin', workspace: 'ctx-empty',
     args: ['pin', 'polish'],
     env: env({ OPENCODE_CONFIG_DIR: `${WS}/oc-config` }),
-    setup: (ws) => write(ws, 'oc-config/skills/impeccable/SKILL.md', '---\nname: impeccable\n---\n'),
+    setup: (ws) => write(ws, 'oc-config/skills/phoenix-ui/SKILL.md', '---\nname: phoenix-ui\n---\n'),
     files: ['oc-config/**'],
   },
   {
     id: 'pin-opencode-skips-foreign-command', verb: 'pin', workspace: 'ctx-empty',
     setup: (ws) => {
-      write(ws, '.opencode/skills/impeccable/SKILL.md', '---\nname: impeccable\n---\n');
-      write(ws, '.opencode/commands/impeccable-polish.md', '---\ndescription: hand written\n---\n');
+      write(ws, '.opencode/skills/phoenix-ui/SKILL.md', '---\nname: phoenix-ui\n---\n');
+      write(ws, '.opencode/commands/phoenix-ui-polish.md', '---\ndescription: hand written\n---\n');
     },
     args: ['pin', 'polish'], env: env(), files: ['.*/skills/**', '.*/commands/**'],
   },
   {
     id: 'pin-opencode-then-unpin', verb: 'pin', workspace: 'ctx-empty',
-    setup: (ws) => write(ws, '.opencode/skills/impeccable/SKILL.md', '---\nname: impeccable\n---\n'),
+    setup: (ws) => write(ws, '.opencode/skills/phoenix-ui/SKILL.md', '---\nname: phoenix-ui\n---\n'),
     env: env(), files: ['.*/skills/**', '.*/commands/**'],
     steps: [{ args: ['pin', 'polish'] }, { args: ['unpin', 'polish'] }, { args: ['unpin', 'polish'] }],
   },
   {
     id: 'pin-opencode-unpin-skips-foreign', verb: 'pin', workspace: 'ctx-empty',
-    setup: (ws) => write(ws, '.opencode/commands/impeccable-polish.md', '---\ndescription: hand written\n---\n'),
+    setup: (ws) => write(ws, '.opencode/commands/phoenix-ui-polish.md', '---\ndescription: hand written\n---\n'),
     args: ['unpin', 'polish'], env: env(), files: ['.*/skills/**', '.*/commands/**'],
   },
 
@@ -492,15 +517,15 @@ const cases = [
   { id: 'surface-brief-read-route-prefixed', verb: 'surface-brief', workspace: 'ctx-full', args: ['read', 'route:/pricing/'], env: env() },
   { id: 'surface-brief-read-not-found', verb: 'surface-brief', workspace: 'ctx-full', args: ['read', 'src/pages/about.astro'], env: env() },
   { id: 'surface-brief-read-no-target-ambiguous', verb: 'surface-brief', workspace: 'ctx-full', args: ['read'], env: env() },
-  { id: 'surface-brief-read-no-target-only-brief', verb: 'surface-brief', workspace: 'ctx-full', setup: (ws) => fs.rmSync(path.join(ws, '.impeccable/surfaces/route-pricing.md')), args: ['read'], env: env() },
+  { id: 'surface-brief-read-no-target-only-brief', verb: 'surface-brief', workspace: 'ctx-full', setup: (ws) => fs.rmSync(path.join(ws, '.phoenix-ui/surfaces/route-pricing.md')), args: ['read'], env: env() },
   { id: 'surface-brief-read-none', verb: 'surface-brief', workspace: 'ctx-empty', args: ['read', 'src/x.tsx'], env: env() },
   { id: 'surface-brief-read-invalid-target', verb: 'surface-brief', workspace: 'ctx-full', args: ['read', 'route:../etc'], env: env() },
-  { id: 'surface-brief-read-monorepo-child', verb: 'surface-brief', workspace: 'ctx-monorepo', setup: (ws) => write(ws, 'apps/a/.impeccable/surfaces/src-app-tsx.md', '---\nversion: 1\nslug: "src-app-tsx"\nprimary_target: "src/App.tsx"\nrelated_targets: []\n---\n\n# Surface brief: A\n'), args: ['read', 'apps/a/src/App.tsx'], env: env() },
+  { id: 'surface-brief-read-monorepo-child', verb: 'surface-brief', workspace: 'ctx-monorepo', setup: (ws) => write(ws, 'apps/a/.phoenix-ui/surfaces/src-app-tsx.md', '---\nversion: 1\nslug: "src-app-tsx"\nprimary_target: "src/App.tsx"\nrelated_targets: []\n---\n\n# Surface brief: A\n'), args: ['read', 'apps/a/src/App.tsx'], env: env() },
   { id: 'surface-brief-write-usage', verb: 'surface-brief', workspace: 'ctx-full', args: ['write', 'src/pages/about.astro'], env: env() },
   {
     id: 'surface-brief-write-read-list', verb: 'surface-brief', workspace: 'ctx-full',
     setup: (ws) => write(ws, 'body.md', '# Surface brief: About\n\n## Mode\nRead\n\nTell the story.\n\n'),
-    env: env(), files: ['.impeccable/surfaces/**'],
+    env: env(), files: ['.phoenix-ui/surfaces/**'],
     steps: [
       { args: ['write', 'src/pages/about.astro', `${WS}/body.md`, 'src/components/Team.astro', 'src/pages/about.astro', 'src/components/Team.astro'] },
       { args: ['read', 'src/components/Team.astro'] },
@@ -509,11 +534,11 @@ const cases = [
       { args: ['read', 'src/components/Team.astro'] },
     ],
   },
-  { id: 'surface-brief-write-route', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'Root route brief.'), args: ['write', '/', `${WS}/body.md`, 'route:/home/'], env: env(), files: ['.impeccable/surfaces/**'] },
-  { id: 'surface-brief-write-url', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'URL brief.'), args: ['write', 'https://example.com/pricing/#plans', `${WS}/body.md`], env: env(), files: ['.impeccable/surfaces/**'] },
-  { id: 'surface-brief-write-invalid-target', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'x'), args: ['write', '../outside.astro', `${WS}/body.md`], env: env(), files: ['.impeccable/surfaces/**'] },
-  { id: 'surface-brief-write-missing-body', verb: 'surface-brief', workspace: 'ctx-empty', args: ['write', 'src/x.tsx', `${WS}/nope.md`], env: env(), files: ['.impeccable/surfaces/**'] },
-  { id: 'surface-brief-write-monorepo-child', verb: 'surface-brief', workspace: 'ctx-monorepo', setup: (ws) => write(ws, 'body.md', 'Child brief.'), args: ['write', 'apps/b/src/App.tsx', `${WS}/body.md`], env: env(), files: ['**/.impeccable/surfaces/**'] },
+  { id: 'surface-brief-write-route', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'Root route brief.'), args: ['write', '/', `${WS}/body.md`, 'route:/home/'], env: env(), files: ['.phoenix-ui/surfaces/**'] },
+  { id: 'surface-brief-write-url', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'URL brief.'), args: ['write', 'https://example.com/pricing/#plans', `${WS}/body.md`], env: env(), files: ['.phoenix-ui/surfaces/**'] },
+  { id: 'surface-brief-write-invalid-target', verb: 'surface-brief', workspace: 'ctx-empty', setup: (ws) => write(ws, 'body.md', 'x'), args: ['write', '../outside.astro', `${WS}/body.md`], env: env(), files: ['.phoenix-ui/surfaces/**'] },
+  { id: 'surface-brief-write-missing-body', verb: 'surface-brief', workspace: 'ctx-empty', args: ['write', 'src/x.tsx', `${WS}/nope.md`], env: env(), files: ['.phoenix-ui/surfaces/**'] },
+  { id: 'surface-brief-write-monorepo-child', verb: 'surface-brief', workspace: 'ctx-monorepo', setup: (ws) => write(ws, 'body.md', 'Child brief.'), args: ['write', 'apps/b/src/App.tsx', `${WS}/body.md`], env: env(), files: ['**/.phoenix-ui/surfaces/**'] },
 
   // ======================================================================
   // critique-storage
@@ -540,28 +565,17 @@ const cases = [
     // path is masked by normalize() (see lib.mjs, critique stamps).
     id: 'critique-write-then-read', verb: 'critique-storage', workspace: 'ctx-empty',
     setup: (ws) => { write(ws, 'body.md', '# Critique\n\nScore 81/100.\n\n'); write(ws, 'body2.md', 'Second pass.\n'); },
-    env: env({ IMPECCABLE_CRITIQUE_META: JSON.stringify({ total_score: 81, p0_count: 0, p1_count: 2, target: 'src/App.tsx', note: 'ratio 3:1 #hero', slug: 'ignored', timestamp: 'ignored' }) }),
+    env: env({ PHOENIX_UI_CRITIQUE_META: JSON.stringify({ total_score: 81, p0_count: 0, p1_count: 2, target: 'src/App.tsx', note: 'ratio 3:1 #hero', slug: 'ignored', timestamp: 'ignored' }) }),
     steps: [
       { args: ['write', 'src/App.tsx', `${WS}/body.md`] },
       { args: ['latest', 'src/App.tsx'] },
-      { args: ['write', 'src-app-tsx', `${WS}/body2.md`], env: env({ IMPECCABLE_CRITIQUE_META: '{not json' }) },
-      { args: ['latest', 'src-app-tsx'] },
+      { args: ['write', 'src-app-tsx', `${WS}/body2.md`], env: env({ PHOENIX_UI_CRITIQUE_META: '{not json' }), setup: reserveCritiqueSeconds },
+      { args: ['latest', 'src-app-tsx'], setup: releaseCritiqueSeconds },
       { args: ['trend', 'src/App.tsx'] },
       { args: ['trend', 'src/App.tsx', '1'] },
     ],
   },
   { id: 'critique-write-monorepo-child', verb: 'critique-storage', workspace: 'ctx-monorepo', cwd: 'apps/a', setup: (ws) => write(ws, 'body.md', 'Child critique.\n'), args: ['write', 'src/App.tsx', `${WS}/body.md`], env: env(), steps: [{}, { args: ['latest', 'src/App.tsx'] }, { args: ['latest', 'src/App.tsx'], cwd: 'apps/b' }] },
-
-  // ======================================================================
-  // palette
-  // ======================================================================
-  { id: 'palette-id-known', verb: 'palette', args: ['--id', 'seed-002'], env: env() },
-  { id: 'palette-id-unknown', verb: 'palette', args: ['--id', 'no-such-seed'], env: env() },
-  { id: 'palette-from-key', verb: 'palette', args: ['--from', 'oracle-fixture-key'], env: env() },
-  { id: 'palette-from-key-2', verb: 'palette', args: ['--from', 'another key with spaces'], env: env() },
-  { id: 'palette-env-seed', verb: 'palette', args: [], env: env({ IMPECCABLE_PALETTE_SEED: 'env-seed-key' }) },
-  { id: 'palette-from-overrides-env', verb: 'palette', args: ['--from', 'oracle-fixture-key'], env: env({ IMPECCABLE_PALETTE_SEED: 'env-seed-key' }) },
-  { id: 'palette-id-overrides-from', verb: 'palette', args: ['--from', 'oracle-fixture-key', '--id', 'no-such-seed'], env: env() },
 
   // ======================================================================
   // embed-prompt
@@ -612,8 +626,8 @@ const cases = [
   { id: 'signals-visual-only', verb: 'context-signals', workspace: 'ctx-visual-only', env: env() },
   { id: 'signals-full-with-critique', verb: 'context-signals', workspace: 'ctx-full', setup: sidecarNewer, env: env() },
   { id: 'signals-native-ios', verb: 'context-signals', workspace: 'ctx-native-ios', env: env() },
-  { id: 'signals-critique-legacy-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.impeccable/critique/2026-02-02T02-02-02Z__x.md', '---\nscore: "88"\np0: 0\np1: 2\ntimestamp: "2026-02-02T02:02:02.000Z"\nslug: x\n---\nbody\n'), env: env() },
-  { id: 'signals-critique-blank-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.impeccable/critique/2026-02-02T02-02-02Z__x.md', '---\ntotal_score: n/a\nslug: x\n---\nbody\n'), env: env() },
+  { id: 'signals-critique-legacy-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/critique/2026-02-02T02-02-02Z__x.md', '---\nscore: "88"\np0: 0\np1: 2\ntimestamp: "2026-02-02T02:02:02.000Z"\nslug: x\n---\nbody\n'), env: env() },
+  { id: 'signals-critique-blank-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/critique/2026-02-02T02-02-02Z__x.md', '---\ntotal_score: n/a\nslug: x\n---\nbody\n'), env: env() },
   { id: 'signals-git-clean-main', verb: 'context-signals', workspace: 'ctx-signals', setup: gitInit, env: env() },
   { id: 'signals-git-dirty-main', verb: 'context-signals', workspace: 'ctx-signals', setup: gitDirty, env: env() },
   { id: 'signals-git-feature-branch', verb: 'context-signals', workspace: 'ctx-signals', setup: gitFeature, env: env() },
@@ -669,41 +683,24 @@ const cases = [
   { id: 'seed-mode-rules-experience', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'experience', '--from', 'oracle-key-5'], env: seedEnv() },
   { id: 'seed-mode-rules-operate', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'operate', '--from', 'oracle-key-5'], env: seedEnv() },
   { id: 'seed-mode-rules-read', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'read', '--from', 'oracle-key-5'], env: seedEnv() },
-  { id: 'seed-mode-rules-missing-file', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'read', '--from', 'oracle-key-5'], env: seedEnv({ IMPECCABLE_SKILL_DIR: `${REPO}/tests/fixtures/mode-rules-skill-partial` }) },
-  { id: 'seed-mode-rules-missing-section', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'operate', '--from', 'oracle-key-5'], env: seedEnv({ IMPECCABLE_SKILL_DIR: `${REPO}/tests/fixtures/mode-rules-skill-partial` }) },
+  { id: 'seed-mode-rules-missing-file', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'read', '--from', 'oracle-key-5'], env: seedEnv({ PHOENIX_UI_SKILL_DIR: `${REPO}/tests/fixtures/mode-rules-skill-partial` }) },
+  { id: 'seed-mode-rules-missing-section', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'operate', '--from', 'oracle-key-5'], env: seedEnv({ PHOENIX_UI_SKILL_DIR: `${REPO}/tests/fixtures/mode-rules-skill-partial` }) },
   { id: 'seed-direction-local-count-5', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'operate', '--from', 'oracle-key-2', '--candidate-count', '5'], env: seedEnv() },
   // Operate draws five graphic worlds and one interaction world, never atmosphere
   // (TIER_QUOTAS in roll_selection.rs, in parity with the site's roll API).
   { id: 'seed-direction-local-operate', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'operate', '--from', 'oracle-key-1'], env: seedEnv() },
   { id: 'seed-direction-local-unscoped', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--from', 'oracle-key-3'], env: seedEnv() },
-  { id: 'seed-direction-env-key', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction'], env: seedEnv({ IMPECCABLE_CONCEPT_SEED: 'oracle-key-1' }) },
+  { id: 'seed-direction-env-key', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction'], env: seedEnv({ PHOENIX_UI_CONCEPT_SEED: 'oracle-key-1' }) },
   { id: 'seed-surface-local', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'operate', '--from', 'oracle-key-1'], env: seedEnv() },
   { id: 'seed-surface-local-default-scope', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--mode', 'operate', '--from', 'oracle-key-1'], env: seedEnv() },
   { id: 'seed-surface-local-grain-flow', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'read', '--from', 'oracle-key-2', '--grain', 'flow', '--platform', 'ios'], env: seedEnv() },
-  { id: 'seed-surface-local-compositions', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'persuade', '--from', 'oracle-key-1', '--platform', 'web'], env: seedEnv({ IMPECCABLE_COMPOSITIONS: '1' }) },
+  { id: 'seed-surface-local-compositions', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'persuade', '--from', 'oracle-key-1', '--platform', 'web'], env: seedEnv({ PHOENIX_UI_COMPOSITIONS: '1' }) },
   { id: 'seed-surface-local-card-base', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'experience', '--from', 'oracle-key-4', '--reroll', '1'], env: seedEnv({ IMPECCABLE_CARD_BASE: 'https://cards.example/base/' }) },
-  { id: 'seed-degraded-direction', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--mode', 'persuade', '--from', 'oracle-key-1'], env: degradedEnv() },
-  { id: 'seed-degraded-surface', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'surface', '--mode', 'operate', '--from', 'oracle-key-1'], env: degradedEnv() },
-  { id: 'seed-degraded-safer', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--from', 'oracle-key-1', '--reroll', '1', '--register', 'safer'], env: degradedEnv() },
-  { id: 'seed-degraded-bolder', verb: 'concept-seed', workspace: 'ctx-product-only', args: ['--scope', 'direction', '--from', 'oracle-key-1', '--reroll', '1', '--register', 'bolder'], env: degradedEnv() },
-  { id: 'seed-degraded-no-product-gate', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--scope', 'direction', '--from', 'k1'], env: degradedEnv() },
-  { id: 'seed-chosen-telemetry-off', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--chosen', 'some-id', '--kind', 'challenger', '--from', 'k1', '--scope', 'direction'], env: seedEnv() },
-  { id: 'seed-kind-assigned-telemetry-off', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--kind', 'assigned', '--from', 'k1', '--scope', 'direction'], env: seedEnv() },
-  { id: 'seed-chosen-bad-kind', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--chosen', 'x', '--kind', 'random', '--from', 'k1'], env: seedEnv({ IMPECCABLE_NO_TELEMETRY: null, DO_NOT_TRACK: null }) },
-  { id: 'seed-chosen-no-id-challenger', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--kind', 'challenger', '--from', 'k1'], env: seedEnv({ IMPECCABLE_NO_TELEMETRY: null, DO_NOT_TRACK: null }) },
-  { id: 'seed-chosen-api-unreachable', verb: 'concept-seed', workspace: 'ctx-empty', args: ['--chosen', 'x', '--kind', 'pick', '--from', 'k1', '--scope', 'surface'], env: seedEnv({ IMPECCABLE_NO_TELEMETRY: null, DO_NOT_TRACK: null }) },
 
   // ======================================================================
   // generate-image (fake mode + argument errors only)
   // ======================================================================
-  { id: 'genimg-fake-missing-args', verb: 'generate-image', workspace: 'ctx-empty', args: ['--prompt', 'x'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }) },
-  { id: 'genimg-fake-missing-prompt', verb: 'generate-image', workspace: 'ctx-empty', args: ['--out', 'out.png'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }) },
-  { id: 'genimg-fake-svg', verb: 'generate-image', workspace: 'ctx-empty', setup: (ws) => fs.mkdirSync(path.join(ws, 'comps')), args: ['--prompt', 'A warm editorial hero for a note-taking app, paper texture, ink type, one blue accent, wide composition.', '--out', 'comps/hero.svg', '--size', '800x500'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }), files: ['comps/**'] },
-  { id: 'genimg-fake-svg-default-size', verb: 'generate-image', workspace: 'ctx-empty', args: ['--prompt', 'Short.', '--out', 'hero.svg', '--size', 'huge'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }), files: ['hero.svg*'] },
-  { id: 'genimg-fake-png', verb: 'generate-image', workspace: 'ctx-empty', setup: (ws) => fs.mkdirSync(path.join(ws, 'comps')), args: ['--prompt', 'A dashboard comp.', '--out', 'comps/dash.png', '--size', '640x400'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }), files: ['comps/**'], steps: [{}, { verb: 'embed-prompt', args: ['comps/dash.png', '--read'] }] },
-  { id: 'genimg-fake-prompt-file', verb: 'generate-image', workspace: 'ctx-empty', setup: (ws) => write(ws, 'prompt.txt', 'Prompt from file wins.\n'), args: ['--prompt', 'inline loses', '--prompt-file', 'prompt.txt', '--out', 'x.svg', '--size', '400x300'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }), files: ['x.svg*'] },
   // generate-image writing a declared slot of a recorded hand marks it generated during that hand (one marker file per slot), so a deterministic regeneration with identical bytes still counts; a path no hand declares gets no marker.
-  { id: 'genimg-fake-marks-hand-slot', verb: 'generate-image', workspace: 'ctx-empty', setup: (ws) => { fs.mkdirSync(path.join(ws, '.impeccable/mocks/decision'), { recursive: true }); write(ws, '.impeccable/questions/k1.hand.json', JSON.stringify({ digest: '0123456789abcdef', comps: ['.impeccable/mocks/decision/a.png', '.impeccable/mocks/decision/b.png'], pre: {} })); }, args: ['--prompt', 'A decision comp.', '--out', '.impeccable/mocks/decision/a.png', '--size', '64x40'], env: env({ IMPECCABLE_IMAGE_GEN_FAKE: '1' }), files: ['.impeccable/questions/**'] },
   { id: 'genimg-real-no-key', verb: 'generate-image', workspace: 'ctx-empty', args: ['--prompt', 'x', '--out', 'x.png'], env: env() },
   { id: 'genimg-real-missing-args', verb: 'generate-image', workspace: 'ctx-empty', args: ['--out', 'x.png'], env: env({ OPENAI_API_KEY: 'sk-oracle' }) },
 
@@ -711,39 +708,39 @@ const cases = [
   // serve-question (no browser, no listening server)
   // ======================================================================
   { id: 'question-schema', verb: 'serve-question', workspace: 'ctx-empty', args: ['--schema'], env: env() },
-  { id: 'question-disabled', verb: 'serve-question', workspace: 'ctx-empty', args: ['--schema'], env: env({ IMPECCABLE_QUESTION_DISABLED: '1' }) },
+  { id: 'question-disabled', verb: 'serve-question', workspace: 'ctx-empty', args: ['--schema'], env: env({ PHOENIX_UI_QUESTION_DISABLED: '1' }) },
   { id: 'question-headless-ci', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify(QUESTION_PAYLOAD)), args: ['--payload', 'payload.json'], env: env({ CI: '1' }) },
   { id: 'question-headless-ci-start', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify(QUESTION_PAYLOAD)), args: ['--start', '--payload', 'payload.json'], env: env({ CI: '1' }) },
   { id: 'question-wait-no-key', verb: 'serve-question', workspace: 'ctx-empty', args: ['--wait'], env: env() },
-  { id: 'question-wait-no-server', verb: 'serve-question', workspace: 'ctx-empty', args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-answer-ready', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/questions/k1.answer.json', JSON.stringify({ optionId: 'a', steer: 'keep the type', hero: 'https://x/hero.webp', comp: '.impeccable/mocks/decision/a.webp', buildPath: 'comp', buildPathFlipped: false })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-answer-reroll', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/questions/k1.answer.json', JSON.stringify({ optionId: 'reroll', steer: '', register: 'bolder' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-answer-canon-followup', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/questions/k1.answer.json', JSON.stringify({ optionId: 'canon', steer: '', followup: true, buildPath: 'code', buildPathFlipped: true })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-answer-raw', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/questions/k1.answer.json', 'not-json'); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-flip', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/questions/k1.flip.json', JSON.stringify({ buildPath: 'comp' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-page-closed', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 })), args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-dead-pid', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 2147483000, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 })), args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-wait-no-server', verb: 'serve-question', workspace: 'ctx-empty', args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-answer-ready', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/questions/k1.answer.json', JSON.stringify({ optionId: 'a', steer: 'keep the type', hero: 'https://x/hero.webp', comp: '.phoenix-ui/mocks/decision/a.webp', buildPath: 'comp', buildPathFlipped: false })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-answer-reroll', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/questions/k1.answer.json', JSON.stringify({ optionId: 'reroll', steer: '', register: 'bolder' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-answer-canon-followup', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/questions/k1.answer.json', JSON.stringify({ optionId: 'canon', steer: '', followup: true, buildPath: 'code', buildPathFlipped: true })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-answer-raw', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/questions/k1.answer.json', 'not-json'); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-flip', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/questions/k1.flip.json', JSON.stringify({ buildPath: 'comp' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-page-closed', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 })), args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-dead-pid', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 2147483000, port: 1, url: 'http://127.0.0.1:1/', lastBeat: 1000 })), args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
   // The decision-comp backstop: comps the live round declared (state.comps) that landed without a <comp>.json sidecar are named on every --wait return; b has its sidecar and c has not landed, so only a is named.
-  { id: 'question-wait-comp-sidecar-missing', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.impeccable/mocks/decision/a.png', '.impeccable/mocks/decision/b.png', '.impeccable/mocks/decision/c.png'] })); write(ws, '.impeccable/mocks/decision/a.png', 'png'); write(ws, '.impeccable/mocks/decision/b.png', 'png'); write(ws, '.impeccable/mocks/decision/b.png.json', JSON.stringify({ prompt: 'b' })); }, args: ['--wait', '--key', 'k1', '--poll', '0'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-wait-answer-comp-sidecar-missing', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.impeccable/mocks/decision/a.png', '.impeccable/mocks/decision/b.png'] })); write(ws, '.impeccable/mocks/decision/a.png', 'png'); write(ws, '.impeccable/mocks/decision/b.png', 'png'); write(ws, '.impeccable/questions/k1.answer.json', JSON.stringify({ optionId: 'a', steer: '', comp: '.impeccable/mocks/decision/a.png', buildPath: 'comp', buildPathFlipped: false })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-wait-comp-sidecar-missing', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.phoenix-ui/mocks/decision/a.png', '.phoenix-ui/mocks/decision/b.png', '.phoenix-ui/mocks/decision/c.png'] })); write(ws, '.phoenix-ui/mocks/decision/a.png', 'png'); write(ws, '.phoenix-ui/mocks/decision/b.png', 'png'); write(ws, '.phoenix-ui/mocks/decision/b.png.json', JSON.stringify({ prompt: 'b' })); }, args: ['--wait', '--key', 'k1', '--poll', '0'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-wait-answer-comp-sidecar-missing', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.phoenix-ui/mocks/decision/a.png', '.phoenix-ui/mocks/decision/b.png'] })); write(ws, '.phoenix-ui/mocks/decision/a.png', 'png'); write(ws, '.phoenix-ui/mocks/decision/b.png', 'png'); write(ws, '.phoenix-ui/questions/k1.answer.json', JSON.stringify({ optionId: 'a', steer: '', comp: '.phoenix-ui/mocks/decision/a.png', buildPath: 'comp', buildPathFlipped: false })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
   // Provenance: a declared comp counts for the hand only when its bytes differ from the file that sat at the slot when the hand began (the hand file's `pre` fingerprints). a is still those bytes (sha256 of "png"), so it is named COMP STALE, not a missing sidecar; b never landed.
-  { id: 'question-wait-comp-stale', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.impeccable/mocks/decision/a.png', '.impeccable/mocks/decision/b.png'] })); write(ws, '.impeccable/questions/k1.hand.json', JSON.stringify({ digest: '0000000000000000', comps: ['.impeccable/mocks/decision/a.png', '.impeccable/mocks/decision/b.png'], pre: { '.impeccable/mocks/decision/a.png': '8f8cbb7dcf46e0bc7d53265749a6c17d116093a6ba95e442764060c76fd4a86c' } })); write(ws, '.impeccable/mocks/decision/a.png', 'png'); }, args: ['--wait', '--key', 'k1', '--poll', '0'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-wait-comp-stale', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.phoenix-ui/mocks/decision/a.png', '.phoenix-ui/mocks/decision/b.png'] })); write(ws, '.phoenix-ui/questions/k1.hand.json', JSON.stringify({ digest: '0000000000000000', comps: ['.phoenix-ui/mocks/decision/a.png', '.phoenix-ui/mocks/decision/b.png'], pre: { '.phoenix-ui/mocks/decision/a.png': '8f8cbb7dcf46e0bc7d53265749a6c17d116093a6ba95e442764060c76fd4a86c' } })); write(ws, '.phoenix-ui/mocks/decision/a.png', 'png'); }, args: ['--wait', '--key', 'k1', '--poll', '0'], env: env(), files: ['.phoenix-ui/questions/**'] },
   // --update with a round that declares comps prints the NEXT visualize.md line; a code-led round (comp slots as flip reserve) does not.
-  { id: 'question-update-comps-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.impeccable/mocks/decision/a.png' }, { id: 'b', label: 'B', thesis: 'Two.', comp: '.impeccable/mocks/decision/b.png' }], buildPath: { value: 'comp', toggle: true } })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.impeccable/questions/*.hand.json'],
+  { id: 'question-update-comps-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.phoenix-ui/mocks/decision/a.png' }, { id: 'b', label: 'B', thesis: 'Two.', comp: '.phoenix-ui/mocks/decision/b.png' }], buildPath: { value: 'comp', toggle: true } })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.phoenix-ui/questions/*.hand.json'],
     // The per-hand id mixes the clock and the pid, so it is masked.
     normalize: [['("id":")[0-9a-f]{16}', 'g', '$1<HAND_ID>']] },
-  { id: 'question-update-code-led-no-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.impeccable/mocks/decision/a.png' }], buildPath: { value: 'code', toggle: true } })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env() },
+  { id: 'question-update-code-led-no-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.phoenix-ui/mocks/decision/a.png' }], buildPath: { value: 'code', toggle: true } })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env() },
   // A comp-round payload serves comps that already exist, so --update prints no NEXT line.
-  { id: 'question-update-comps-landed-no-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.impeccable/mocks/comp-a.png', 'png'); write(ws, '.impeccable/mocks/comp-b.png', 'png'); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.impeccable/mocks/comp-a.png' }, { id: 'b', label: 'B', thesis: 'Two.', comp: '.impeccable/mocks/comp-b.png' }] })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env() },
-  // A comp-round pick (comp directly under .impeccable/mocks/) is the approved comp, not decision option one.
-  { id: 'question-wait-answer-comp-round', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.impeccable/mocks/comp-b-open-book.png'] })); write(ws, '.impeccable/mocks/comp-b-open-book.png', 'png'); write(ws, '.impeccable/mocks/comp-b-open-book.png.json', JSON.stringify({ prompt: 'b' })); write(ws, '.impeccable/questions/k1.answer.json', JSON.stringify({ optionId: 'b', steer: '', comp: '.impeccable/mocks/comp-b-open-book.png' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-update-comps-landed-no-next', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/' })); write(ws, '.phoenix-ui/mocks/comp-a.png', 'png'); write(ws, '.phoenix-ui/mocks/comp-b.png', 'png'); write(ws, 'payload.json', JSON.stringify({ title: 'Pick', options: [{ id: 'a', label: 'A', thesis: 'One.', comp: '.phoenix-ui/mocks/comp-a.png' }, { id: 'b', label: 'B', thesis: 'Two.', comp: '.phoenix-ui/mocks/comp-b.png' }] })); }, args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env() },
+  // A comp-round pick (comp directly under .phoenix-ui/mocks/) is the approved comp, not decision option one.
+  { id: 'question-wait-answer-comp-round', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 1, port: 1, url: 'http://127.0.0.1:1/', comps: ['.phoenix-ui/mocks/comp-b-open-book.png'] })); write(ws, '.phoenix-ui/mocks/comp-b-open-book.png', 'png'); write(ws, '.phoenix-ui/mocks/comp-b-open-book.png.json', JSON.stringify({ prompt: 'b' })); write(ws, '.phoenix-ui/questions/k1.answer.json', JSON.stringify({ optionId: 'b', steer: '', comp: '.phoenix-ui/mocks/comp-b-open-book.png' })); }, args: ['--wait', '--key', 'k1', '--poll', '2'], env: env(), files: ['.phoenix-ui/questions/**'] },
   { id: 'question-stop-no-key', verb: 'serve-question', workspace: 'ctx-empty', args: ['--stop'], env: env() },
-  { id: 'question-stop-nothing', verb: 'serve-question', workspace: 'ctx-empty', args: ['--stop', '--key', 'k1'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-stop-clears-files', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.impeccable/questions/k1.state.json', JSON.stringify({ pid: 2147483000, port: 1, url: 'x' })); write(ws, '.impeccable/questions/k1.answer.json', '{}'); write(ws, '.impeccable/questions/k1.log', 'log\n'); }, args: ['--stop', '--key', 'k1'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-stop-nothing', verb: 'serve-question', workspace: 'ctx-empty', args: ['--stop', '--key', 'k1'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-stop-clears-files', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => { write(ws, '.phoenix-ui/questions/k1.state.json', JSON.stringify({ pid: 2147483000, port: 1, url: 'x' })); write(ws, '.phoenix-ui/questions/k1.answer.json', '{}'); write(ws, '.phoenix-ui/questions/k1.log', 'log\n'); }, args: ['--stop', '--key', 'k1'], env: env(), files: ['.phoenix-ui/questions/**'] },
   { id: 'question-update-no-key', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify(QUESTION_PAYLOAD)), args: ['--update', '--payload', 'payload.json'], env: env() },
-  { id: 'question-update-empty-options', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify({ options: [] })), args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-update-no-server', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify(QUESTION_PAYLOAD)), args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.impeccable/questions/**'] },
-  { id: 'question-payload-no-options', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify({ title: 'no options' })), args: ['--payload', 'payload.json', '--no-open'], env: env(), files: ['.impeccable/questions/**'] },
+  { id: 'question-update-empty-options', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify({ options: [] })), args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-update-no-server', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify(QUESTION_PAYLOAD)), args: ['--update', '--key', 'k1', '--payload', 'payload.json'], env: env(), files: ['.phoenix-ui/questions/**'] },
+  { id: 'question-payload-no-options', verb: 'serve-question', workspace: 'ctx-empty', setup: (ws) => write(ws, 'payload.json', JSON.stringify({ title: 'no options' })), args: ['--payload', 'payload.json', '--no-open'], env: env(), files: ['.phoenix-ui/questions/**'] },
 ];
 
 export default cases;

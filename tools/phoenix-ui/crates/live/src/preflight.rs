@@ -1,5 +1,5 @@
 //! JS: live/generation-preflight.mjs, the pure half. The server (part 3)
-//! runs `live-wrap` / `live-insert --defer-source-write` when it leases a
+//! runs `live-wrap` / `live-insert --defer-source-write` when it delivers a
 //! generate event; the argv it builds, the target signature that keys the
 //! source-resolution cache, and the error compaction are shared model and
 //! live here so the wrap/insert verbs (part 2) and the server agree.

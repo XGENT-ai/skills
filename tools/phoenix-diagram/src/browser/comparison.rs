@@ -1,15 +1,13 @@
-//! Browser evidence for every view of one immutable architecture comparison.
+//! Browser evidence for every view of one architecture comparison.
 use super::{
     cdp, discovery, evidence, observation, BrowserCheck, BrowserCoverage, BrowserOptions,
     BrowserStatus, CheckStatus, Theme, Viewport, DESKTOP_VIEWPORTS, NARROW_VIEWPORT,
 };
 use crate::{
+    browser::BoundFile,
     check::FileIdentity,
-    compare::{
-        ComparisonBinding, ComparisonBrowserReceipt, ComparisonCoverage, ComparisonScreenshot,
-    },
+    compare::{ComparisonBrowserReceipt, ComparisonCoverage, ComparisonScreenshot},
     diagnostic::Diagnostic,
-    output::FileBinding,
 };
 use serde_json::{json, Value};
 use std::{collections::HashSet, path::Path, time::Duration};
@@ -17,57 +15,6 @@ use std::{collections::HashSet, path::Path, time::Duration};
 const VIEWS: [&str; 3] = ["before", "delta", "after"];
 const PARENT_CHECK: &str = "comparison-parent";
 
-struct Sources {
-    files: Vec<FileBinding>,
-}
-impl Sources {
-    fn capture(binding: &ComparisonBinding) -> Result<Self, cdp::Error> {
-        let mut files: Vec<FileBinding> = vec![];
-        for (bound, code) in [
-            (&binding.artifact, "browser/artifact-changed"),
-            (&binding.receipt, "browser/comparison-receipt-changed"),
-            (&binding.base.candidate, "browser/candidate-changed"),
-            (&binding.head.candidate, "browser/candidate-changed"),
-        ] {
-            let file = FileBinding::capture(&bound.path)
-                .map_err(|e| cdp::Error::new(code, "binding", e.message))?;
-            if FileIdentity::of(file.bytes()) != bound.identity
-                || files.iter().any(|old| {
-                    old.identity().device == file.identity().device
-                        && old.identity().inode == file.identity().inode
-                })
-            {
-                return Err(cdp::Error::new(
-                    code,
-                    "binding",
-                    "Comparison files must retain their distinct bound identities",
-                ));
-            }
-            files.push(file);
-        }
-        let result = Self { files };
-        result.verify()?;
-        Ok(result)
-    }
-    fn verify(&self) -> Result<(), cdp::Error> {
-        for (index, file) in self.files.iter().enumerate() {
-            file.verify().map_err(|e| {
-                cdp::Error::new(
-                    if index == 0 {
-                        "browser/artifact-changed"
-                    } else if index == 1 {
-                        "browser/comparison-receipt-changed"
-                    } else {
-                        "browser/candidate-changed"
-                    },
-                    "binding",
-                    e.message,
-                )
-            })?;
-        }
-        Ok(())
-    }
-}
 fn append(receipt: &mut ComparisonBrowserReceipt, error: cdp::Error) {
     let mut diagnostic = Diagnostic::error(None, error.code, "", error.message);
     diagnostic.stage = "browser".into();
@@ -714,36 +661,30 @@ fn summarize(coverage: &[ComparisonCoverage]) -> Vec<BrowserCheck> {
     });
     checks
 }
-fn terminal_checks(cleanup: bool, current: bool, capture: Option<usize>) -> Vec<BrowserCheck> {
-    let mut checks = vec![
-        BrowserCheck {
-            name: "browser-cleanup".into(),
-            status: if cleanup {
-                CheckStatus::Pass
-            } else {
-                CheckStatus::Failed
-            },
-            scope: json!({"ownedChild":true,"ownedProfile":true}),
-            evidence: Value::Null,
+fn terminal_checks(cleanup: bool, capture: Option<usize>) -> Vec<BrowserCheck> {
+    let mut checks = vec![BrowserCheck {
+        name: "browser-cleanup".into(),
+        status: if cleanup {
+            CheckStatus::Pass
+        } else {
+            CheckStatus::Failed
         },
-        BrowserCheck {
-            name: "comparison-current".into(),
-            status: if current {
-                CheckStatus::Pass
-            } else {
-                CheckStatus::Failed
-            },
-            scope: json!({"artifactCompareReceiptAndBothCandidates":true,"beforeAndAfter":true,"physicalFile":true}),
-            evidence: Value::Null,
-        },
-    ];
+        scope: json!({"ownedChild":true,"ownedProfile":true}),
+        evidence: Value::Null,
+    }];
     if let Some(count) = capture {
         checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if count==12 {CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":12,"views":VIEWS,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":count})});
     }
     checks
 }
 
-pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> ComparisonBrowserReceipt {
+/// `artifact` is the comparison HTML; `ir_identity` names the comparison IR
+/// the Delta view must paint.
+pub fn inspect(
+    artifact: &Path,
+    ir_identity: &FileIdentity,
+    options: &BrowserOptions,
+) -> ComparisonBrowserReceipt {
     let mut receipt = ComparisonBrowserReceipt {
         schema_version: 1,
         tool: "phoenix-diagram".into(),
@@ -757,12 +698,14 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
         kind: "architecture-comparison-browser".into(),
         status: BrowserStatus::Failed,
         diagnostics: vec![],
-        comparison: binding.clone(),
+        artifact: BoundFile {
+            path: artifact.to_owned(),
+            identity: FileIdentity::of(b""),
+        },
         browser_version: None,
         coverage: vec![],
         checks: summarize(&[]),
         screenshots: vec![],
-        evidence: json!({}),
     };
     if options.startup_timeout.is_zero()
         || options.startup_timeout > Duration::from_secs(90)
@@ -772,21 +715,29 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
         append(&mut receipt,cdp::Error::new("browser/options","options","Browser deadlines must be positive and bounded by startup=90 seconds and command=15 seconds"));
         return receipt;
     }
-    let sources = match Sources::capture(binding) {
-        Ok(sources) => sources,
+    let artifact = match std::fs::canonicalize(artifact).and_then(|path| {
+        let bytes = std::fs::read(&path)?;
+        Ok((path, bytes))
+    }) {
+        Ok((path, bytes)) => {
+            receipt.artifact = BoundFile {
+                path: path.clone(),
+                identity: FileIdentity::of(&bytes),
+            };
+            path
+        }
         Err(error) => {
-            append(&mut receipt, error);
+            append(
+                &mut receipt,
+                cdp::Error::new(
+                    "browser/artifact",
+                    "read",
+                    format!("{}: {error}", artifact.display()),
+                ),
+            );
             return receipt;
         }
     };
-    if options.capture || options.out_dir.is_some() {
-        if let Err(error) =
-            evidence::prepare_receipt_directory(&binding.artifact.path, options.out_dir.as_deref())
-        {
-            append(&mut receipt, error);
-            return receipt;
-        }
-    }
     let executable = match discovery::find(options.executable.as_deref()) {
         Ok(path) => path,
         Err(error) => {
@@ -800,15 +751,10 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
     let mut captures = Vec::new();
     if options.capture {
         for view in VIEWS {
-            match evidence::Evidence::reserve_comparison(
-                &binding.artifact.path,
-                options.out_dir.as_deref(),
-                view,
-            ) {
+            match evidence::Evidence::new(&artifact, options.out_dir.as_deref(), Some(view)) {
                 Ok(e) => captures.push((view, e)),
                 Err(error) => {
                     append(&mut receipt, error);
-                    cleanup(&mut receipt, &mut captures);
                     return receipt;
                 }
             }
@@ -822,7 +768,6 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
         Ok(browser) => browser,
         Err(error) => {
             append(&mut receipt, error);
-            cleanup(&mut receipt, &mut captures);
             return receipt;
         }
     };
@@ -832,21 +777,14 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
         for view in VIEWS {
             for viewport in DESKTOP_VIEWPORTS.into_iter().chain([NARROW_VIEWPORT]) {
                 for theme in [Theme::Light, Theme::Dark] {
-                    sources.verify()?;
-                    let (metrics, mut events) = browser.inspect_comparison(
-                        &binding.artifact.path,
-                        view,
-                        viewport,
-                        theme,
-                    )?;
-                    sources.verify()?;
+                    let (metrics, mut events) =
+                        browser.inspect_comparison(&artifact, view, viewport, theme)?;
                     let full_page = number(&metrics, "fullScrollHeight")
                         .is_some_and(|height| height > viewport.height as f64);
                     if let Some((_, capture)) = captures.iter_mut().find(|(id, _)| *id == view) {
-                        if capture.requires_capture(viewport, theme) {
+                        if evidence::requires_capture(viewport, theme) {
                             let png = browser.screenshot_comparison(viewport, full_page)?;
-                            capture.stage_png(viewport, theme, full_page, &png)?;
-                            sources.verify()?;
+                            capture.write_png(viewport, theme, full_page, &png)?;
                         }
                     }
                     events.extend(browser.take_events());
@@ -858,8 +796,8 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
                             theme,
                             metrics,
                             &events,
-                            &binding.artifact.path,
-                            &binding.comparison_ir,
+                            &artifact,
+                            ir_identity,
                         ),
                     });
                 }
@@ -876,8 +814,8 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
             last.coverage.theme,
             last.coverage.metrics.clone(),
             &trailing,
-            &binding.artifact.path,
-            &binding.comparison_ir,
+            &artifact,
+            ir_identity,
         );
         for check in observed
             .checks
@@ -905,39 +843,22 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
     if let Err(error) = closed {
         append(&mut receipt, error);
     }
-    let current = sources.verify();
-    let mut current_ok = current.is_ok();
-    if let Err(error) = current {
-        append(&mut receipt, error);
-    }
-    if inspected_ok && cleanup_ok && current_ok {
-        for (view, capture) in &mut captures {
-            match capture.publish() {
-                Ok(screenshots) => {
-                    receipt
-                        .screenshots
-                        .extend(
-                            screenshots
-                                .into_iter()
-                                .map(|screenshot| ComparisonScreenshot {
-                                    view_id: (*view).into(),
-                                    screenshot,
-                                }),
-                        )
-                }
-                Err(error) => append(&mut receipt, error),
-            }
-        }
-    }
-    cleanup(&mut receipt, &mut captures);
-    if let Err(error) = sources.verify() {
-        current_ok = false;
-        append(&mut receipt, error);
+    for (view, capture) in captures {
+        receipt
+            .screenshots
+            .extend(
+                capture
+                    .screenshots
+                    .into_iter()
+                    .map(|screenshot| ComparisonScreenshot {
+                        view_id: view.into(),
+                        screenshot,
+                    }),
+            );
     }
     receipt.checks = summarize(&receipt.coverage);
     receipt.checks.extend(terminal_checks(
         cleanup_ok,
-        current_ok,
         options.capture.then_some(receipt.screenshots.len()),
     ));
     for entry in &receipt.coverage {
@@ -963,7 +884,6 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
     }
     if inspected_ok
         && cleanup_ok
-        && current_ok
         && receipt.diagnostics.is_empty()
         && receipt.coverage.len() == 30
         && receipt
@@ -975,147 +895,10 @@ pub fn inspect(binding: &ComparisonBinding, options: &BrowserOptions) -> Compari
     }
     receipt
 }
-fn cleanup(receipt: &mut ComparisonBrowserReceipt, captures: &mut Vec<(&str, evidence::Evidence)>) {
-    for (_, capture) in captures {
-        for error in capture.cleanup() {
-            append(receipt, error);
-        }
-    }
-}
-
-/// Validate measured scope only; callers must also rebind every original file
-/// and screenshot. Parent-page evidence cannot stand in for any child view.
-pub fn validate_receipt_coverage(receipt: &ComparisonBrowserReceipt, capture: bool) -> bool {
-    if receipt.schema_version != 1
-        || receipt.tool != "phoenix-diagram"
-        || receipt.tool_version != crate::TOOL_VERSION
-        || receipt.kind != "architecture-comparison-browser"
-        || !matches!(receipt.command.as_str(), "browser-check" | "visual-check")
-        || receipt.status != BrowserStatus::Pass
-        || !receipt.diagnostics.is_empty()
-        || !receipt
-            .browser_version
-            .as_ref()
-            .and_then(|v| v["product"].as_str())
-            .is_some_and(|s| !s.trim().is_empty())
-        || receipt.coverage.len() != 30
-    {
-        return false;
-    }
-    let expected: HashSet<_> = VIEWS
-        .into_iter()
-        .flat_map(|view| {
-            DESKTOP_VIEWPORTS
-                .into_iter()
-                .chain([NARROW_VIEWPORT])
-                .flat_map(move |viewport| {
-                    [Theme::Light, Theme::Dark].map(move |theme| (view, viewport, theme))
-                })
-        })
-        .collect();
-    let actual: HashSet<_> = receipt
-        .coverage
-        .iter()
-        .map(|entry| {
-            (
-                entry.view_id.as_str(),
-                entry.coverage.viewport,
-                entry.coverage.theme,
-            )
-        })
-        .collect();
-    if actual != expected {
-        return false;
-    }
-    for entry in &receipt.coverage {
-        if entry.coverage.status != BrowserStatus::Pass
-            || entry.coverage
-                != classify(
-                    &entry.view_id,
-                    entry.coverage.viewport,
-                    entry.coverage.theme,
-                    entry.coverage.metrics.clone(),
-                    &[],
-                    &receipt.comparison.artifact.path,
-                    &receipt.comparison.comparison_ir,
-                )
-        {
-            return false;
-        }
-    }
-    let mut checks = summarize(&receipt.coverage);
-    checks.extend(terminal_checks(true, true, capture.then_some(12)));
-    if receipt.checks != checks {
-        return false;
-    }
-    if !capture {
-        return receipt.screenshots.is_empty();
-    }
-    if receipt.screenshots.len() != 12 {
-        return false;
-    }
-    let expected: HashSet<_> = VIEWS
-        .into_iter()
-        .flat_map(|view| {
-            [DESKTOP_VIEWPORTS[0], DESKTOP_VIEWPORTS[3]]
-                .into_iter()
-                .flat_map(move |viewport| {
-                    [Theme::Light, Theme::Dark].map(move |theme| (view, viewport, theme))
-                })
-        })
-        .collect();
-    let mut actual = HashSet::new();
-    let mut paths = HashSet::new();
-    let protected = [
-        &receipt.comparison.artifact.path,
-        &receipt.comparison.receipt.path,
-        &receipt.comparison.base.candidate.path,
-        &receipt.comparison.head.candidate.path,
-    ];
-    for entry in &receipt.screenshots {
-        let screenshot = &entry.screenshot;
-        let viewport = screenshot.viewport;
-        if protected.contains(&&screenshot.path)
-            || !actual.insert((entry.view_id.as_str(), viewport, screenshot.theme))
-            || !paths.insert(&screenshot.path)
-            || screenshot.identity.bytes == 0
-            || screenshot.identity.sha256.len() != 64
-            || !screenshot
-                .identity
-                .sha256
-                .bytes()
-                .all(|b| b.is_ascii_digit() || matches!(b, b'a'..=b'f'))
-        {
-            return false;
-        }
-        let Some(coverage) = receipt.coverage.iter().find(|c| {
-            c.view_id == entry.view_id
-                && c.coverage.viewport == viewport
-                && c.coverage.theme == screenshot.theme
-        }) else {
-            return false;
-        };
-        let Some(height) = number(&coverage.coverage.metrics, "fullScrollHeight") else {
-            return false;
-        };
-        if screenshot.full_page != (height > viewport.height as f64)
-            || screenshot.width != viewport.width
-            || !screenshot.full_page && screenshot.height != viewport.height
-            || screenshot.full_page
-                && (screenshot.height < viewport.height
-                    || (screenshot.height as f64) < height.ceil() - 1.0)
-        {
-            return false;
-        }
-    }
-    actual == expected
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{browser::BoundFile, compare::ComparisonSideBinding, delivery::EngineIdentity};
-    use std::collections::BTreeMap;
     fn fixture_metrics(width: u32, height: u32, theme: &str, long: bool) -> serde_json::Value {
         let bounds = json!({"x":10,"y":10,"left":10,"top":10,"right":210,"bottom":110,"width":200,"height":100});
         let controls:Vec<_>=(0..7).map(|index|json!({"selector":format!("fixture-control-{index}"),"present":true,"visible":true,"disabled":false,"hit":true,"focusable":true,"accessibleName":"Fixture control","bounds":bounds})).collect();
@@ -1127,38 +910,8 @@ mod tests {
     fn empty_ir() -> Value {
         json!({"schemaVersion":1,"changes":{"components":[],"connections":[],"boundaries":[]}})
     }
-    fn binding() -> ComparisonBinding {
-        let identity = FileIdentity::of(b"protocol fixture");
-        let side = |path: &str| ComparisonSideBinding {
-            candidate: BoundFile {
-                path: path.into(),
-                identity: identity.clone(),
-            },
-            semantic_sha256: "a".repeat(64),
-            config_sha256: "b".repeat(64),
-            engine: EngineIdentity {
-                source_input_sha256: "c".repeat(64),
-                input_contract_schema: 1,
-                receipt_schema: 1,
-                viewer_revision: "phoenix-v2".into(),
-                binary: identity.clone(),
-            },
-            resources: BTreeMap::new(),
-        };
-        ComparisonBinding {
-            receipt: BoundFile {
-                path: "/fixture/comparison.html.compare.json".into(),
-                identity: identity.clone(),
-            },
-            receipt_id: "protocol-fixture".into(),
-            base: side("/fixture/base.json"),
-            head: side("/fixture/head.json"),
-            comparison_ir: FileIdentity::of(&serde_json::to_vec(&empty_ir()).unwrap()),
-            artifact: BoundFile {
-                path: "/fixture/comparison.html".into(),
-                identity,
-            },
-        }
+    fn ir_identity() -> FileIdentity {
+        FileIdentity::of(&serde_json::to_vec(&empty_ir()).unwrap())
     }
     fn metrics(view: &str, viewport: Viewport, theme: Theme) -> Value {
         let height = viewport.height - 100;
@@ -1210,71 +963,6 @@ mod tests {
         }
         metrics
     }
-    fn receipt(capture: bool) -> ComparisonBrowserReceipt {
-        let binding = binding();
-        let mut coverage = vec![];
-        let mut screenshots = vec![];
-        for view in VIEWS {
-            for viewport in DESKTOP_VIEWPORTS.into_iter().chain([NARROW_VIEWPORT]) {
-                for theme in [Theme::Light, Theme::Dark] {
-                    coverage.push(ComparisonCoverage {
-                        view_id: view.into(),
-                        coverage: classify(
-                            view,
-                            viewport,
-                            theme,
-                            metrics(view, viewport, theme),
-                            &[],
-                            &binding.artifact.path,
-                            &binding.comparison_ir,
-                        ),
-                    });
-                    if capture && [DESKTOP_VIEWPORTS[0], DESKTOP_VIEWPORTS[3]].contains(&viewport) {
-                        screenshots.push(ComparisonScreenshot {
-                            view_id: view.into(),
-                            screenshot: super::super::Screenshot {
-                                path: format!(
-                                    "/fixture/{view}-{}-{}-{:?}.png",
-                                    viewport.width, viewport.height, theme
-                                )
-                                .into(),
-                                identity: FileIdentity::of(
-                                    b"protocol PNG binding only; not a rendered screenshot",
-                                ),
-                                viewport,
-                                width: viewport.width,
-                                height: viewport.height,
-                                theme,
-                                full_page: false,
-                            },
-                        });
-                    }
-                }
-            }
-        }
-        let mut checks = summarize(&coverage);
-        checks.extend(terminal_checks(true, true, capture.then_some(12)));
-        ComparisonBrowserReceipt {
-            schema_version: 1,
-            tool: "phoenix-diagram".into(),
-            tool_version: crate::TOOL_VERSION.into(),
-            command: if capture {
-                "visual-check"
-            } else {
-                "browser-check"
-            }
-            .into(),
-            kind: "architecture-comparison-browser".into(),
-            status: BrowserStatus::Pass,
-            diagnostics: vec![],
-            comparison: binding,
-            browser_version: Some(json!({"product":"Protocol fixture; not a real browser"})),
-            coverage,
-            checks,
-            screenshots,
-            evidence: json!({}),
-        }
-    }
     #[test]
     fn comparison_coverage_uses_real_frame_dimensions_and_keeps_outer_viewport() {
         let viewport = DESKTOP_VIEWPORTS[0];
@@ -1286,7 +974,7 @@ mod tests {
             data.clone(),
             &[],
             Path::new("/fixture/comparison.html"),
-            &binding().comparison_ir,
+            &ir_identity(),
         );
         assert_eq!(
             coverage.status,
@@ -1306,64 +994,12 @@ mod tests {
                 forged,
                 &[],
                 Path::new("/fixture/comparison.html"),
-                &binding().comparison_ir
+                &ir_identity()
             )
             .status,
             BrowserStatus::Failed
         );
     }
-    #[test]
-    fn complete_scope_roundtrips_and_missing_or_duplicated_views_are_rejected() {
-        for capture in [false, true] {
-            let original = receipt(capture);
-            assert!(
-                validate_receipt_coverage(&original, capture),
-                "{:?}",
-                original.coverage[0].coverage.checks
-            );
-            let encoded = serde_json::to_vec(&original).unwrap();
-            let decoded: ComparisonBrowserReceipt = serde_json::from_slice(&encoded).unwrap();
-            assert_eq!(original, decoded);
-            assert!(validate_receipt_coverage(&decoded, capture));
-            let mut partial = original.clone();
-            partial.coverage.pop();
-            assert!(!validate_receipt_coverage(&partial, capture));
-            let mut duplicate = original.clone();
-            duplicate.coverage[29] = duplicate.coverage[0].clone();
-            assert!(!validate_receipt_coverage(&duplicate, capture));
-            let mut forged = original.clone();
-            forged.coverage[0].coverage.metrics["comparisonParent"]["activeFrameCount"] = json!(0);
-            assert!(!validate_receipt_coverage(&forged, capture));
-            let mut forged = original;
-            forged.checks.pop();
-            assert!(!validate_receipt_coverage(&forged, capture));
-        }
-    }
-    #[test]
-    fn visual_scope_requires_twelve_distinct_current_view_images() {
-        let original = receipt(true);
-        assert!(validate_receipt_coverage(&original, true));
-        for field in ["missing", "view", "path", "height", "protected"] {
-            let mut forged = original.clone();
-            match field {
-                "missing" => {
-                    forged.screenshots.pop();
-                }
-                "view" => forged.screenshots[0].view_id = "after".into(),
-                "path" => {
-                    forged.screenshots[0].screenshot.path =
-                        forged.screenshots[1].screenshot.path.clone()
-                }
-                "height" => forged.screenshots[0].screenshot.height -= 1,
-                _ => {
-                    forged.screenshots[0].screenshot.path =
-                        forged.comparison.base.candidate.path.clone()
-                }
-            }
-            assert!(!validate_receipt_coverage(&forged, true), "{field}");
-        }
-    }
-
     fn primitive(role: &str, x: f64, y: f64, width: f64, height: f64) -> Value {
         json!({"role":role,"text":if matches!(role,"body"|"edge") {Value::Null}else{json!("Synthetic painted glyph")},"bounds":{"left":x,"top":y,"right":x+width,"bottom":y+height,"width":width,"height":height},"logicalBounds":{"x":x,"y":y,"width":width,"height":height},"display":"inline","visibility":"visible","opacity":0.35,"fill":if role=="edge" {"none"}else{"rgb(100,100,100)"},"stroke":if role=="edge" {"rgb(100,100,100)"}else{"none"},"fillOpacity":1,"strokeOpacity":1,"strokeWidth":1,"clientRects":1,"clipPath":"none","maskImage":"none","ancestors":[{"hidden":false,"display":"inline","visibility":"visible","opacity":0.42,"clipPath":"none","maskImage":"none"}],"pathLength":if role=="edge" {json!(100)}else{Value::Null}})
     }

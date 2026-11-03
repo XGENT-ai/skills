@@ -6,11 +6,8 @@ use crate::config::{resolve_files, validate_config, LiveConfig};
 use crate::gitignore::ensure_live_git_ignores;
 use crate::inject::tag_strategy::{insert_tag, patch_csp_meta, remove_tag, revert_csp_meta};
 use crate::inject::{
-    adapter_apply, adapter_remove, describe_inject_artifacts, framework_ignore_patterns,
-    resolve_framework, resolve_source_traits,
-};
-use crate::journal::{
-    clear_inject_journal, heal_inject_journal, healed_to_value, record_injection,
+    adapter_apply, adapter_remove, framework_ignore_patterns, resolve_framework,
+    resolve_source_traits,
 };
 use crate::paths::resolve_live_config_path;
 use crate::roots::enter_live_root;
@@ -64,13 +61,11 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
         let text = safe_read(&config_path).unwrap_or_default();
         let cfg: Value = match serde_json::from_str(&text) {
             Ok(v) => v,
-            Err(_) => {
-                let msg = crate::json_error::json_parse_error(&text)
-                    .unwrap_or_else(|| "Unexpected end of JSON input".to_string());
+            Err(e) => {
                 println(
                     io,
                     &json_compact(
-                        &json!({ "ok": false, "error": "config_invalid", "message": msg, "path": config_path }),
+                        &json!({ "ok": false, "error": "config_invalid", "message": e.to_string(), "path": config_path }),
                     ),
                 );
                 return 0;
@@ -102,11 +97,8 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
     let text = safe_read(&config_path).unwrap_or_default();
     let cfg: Value = match serde_json::from_str(&text) {
         Ok(v) => v,
-        Err(_) => {
-            // JS: JSON.parse throws out of injectCli (uncaught): stack on stderr, exit 1.
-            let msg = crate::json_error::json_parse_error(&text)
-                .unwrap_or_else(|| "Unexpected end of JSON input".to_string());
-            eprintln(io, &format!("SyntaxError: {}", msg));
+        Err(e) => {
+            eprintln(io, &format!("SyntaxError: {}", e));
             return 1;
         }
     };
@@ -126,15 +118,10 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
                 .get("error")
                 .map(crate::inject::detect_utils::truthy)
                 .unwrap_or(false));
-            let (healed, _) = heal_inject_journal(&cwd, &[]);
-            clear_inject_journal(&cwd);
             let mut out = Map::new();
             out.insert("ok".into(), json!(ok));
             out.insert("adapter".into(), json!(r.name.as_str()));
             out.insert("results".into(), json!([adapter_result]));
-            if !healed.is_empty() {
-                out.insert("healed".into(), healed_to_value(&healed));
-            }
             println(io, &json_compact(&Value::Object(out)));
             return if ok { 0 } else { 1 };
         }
@@ -155,14 +142,9 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
             let _ = write_file(&abs, &updated);
             results.push(json!({ "file": rel, "removed": detagged != content, "cspReverted": updated != detagged }));
         }
-        let (healed, _) = heal_inject_journal(&cwd, &[]);
-        clear_inject_journal(&cwd);
         let mut out = Map::new();
         out.insert("ok".into(), json!(true));
         out.insert("results".into(), Value::Array(results));
-        if !healed.is_empty() {
-            out.insert("healed".into(), healed_to_value(&healed));
-        }
         println(io, &json_compact(&Value::Object(out)));
         return 0;
     }
@@ -203,13 +185,6 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
         }
     }
 
-    let planned = describe_inject_artifacts(resolved.as_ref(), &resolved_files);
-    let keep: Vec<String> = planned
-        .iter()
-        .filter_map(|a| a.get("path").and_then(|p| p.as_str()).map(String::from))
-        .collect();
-    let (healed, _) = heal_inject_journal(&cwd, &keep);
-
     let git_ignore = ensure_live_git_ignores(&cwd, &framework_ignore_patterns(resolved.as_ref()));
     if let Some(m) = read_json(&jsp::join(&[&cwd, ".phoenix-ui", "live", "roots.json"])) {
         if let Some(repo_root) = m
@@ -229,30 +204,18 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
             .get("error")
             .map(crate::inject::detect_utils::truthy)
             .unwrap_or(false));
-        if ok {
-            record_injection(
-                &cwd,
-                Some(r.name.as_str()),
-                Some(port),
-                &planned,
-                std::process::id(),
-            );
-        }
         let mut out = Map::new();
         out.insert("ok".into(), json!(ok));
         out.insert("port".into(), json!(port));
         out.insert("adapter".into(), json!(r.name.as_str()));
         out.insert("gitIgnore".into(), git_ignore.to_value());
         out.insert("results".into(), json!([adapter_result]));
-        if !healed.is_empty() {
-            out.insert("healed".into(), healed_to_value(&healed));
-        }
         println(io, &json_compact(&Value::Object(out)));
         return if ok { 0 } else { 1 };
     }
 
     let mut results: Vec<Value> = Vec::new();
-    let mut written: Vec<String> = Vec::new();
+    let mut any_inserted = false;
     for rel in &resolved_files {
         let abs = jsp::resolve(&cwd, &[rel]);
         if !exists(&abs) {
@@ -283,34 +246,14 @@ pub fn inject_cli(args: &[String], io: &mut Io) -> i32 {
         }
         let updated = patch_csp_meta(&with_tag, port);
         let _ = write_file(&abs, &updated);
-        written.push(rel.clone());
+        any_inserted = true;
         results.push(json!({ "file": rel, "inserted": true, "cspPatched": updated != with_tag }));
     }
-    let any_inserted = !written.is_empty();
-    let artifacts: Vec<Value> = planned
-        .into_iter()
-        .filter(|a| {
-            a.get("path")
-                .and_then(|p| p.as_str())
-                .map(|p| written.iter().any(|w| w == p))
-                .unwrap_or(false)
-        })
-        .collect();
-    record_injection(
-        &cwd,
-        resolved.as_ref().map(|r| r.name.as_str()),
-        Some(port),
-        &artifacts,
-        std::process::id(),
-    );
     let mut out = Map::new();
     out.insert("ok".into(), json!(any_inserted));
     out.insert("port".into(), json!(port));
     out.insert("gitIgnore".into(), git_ignore.to_value());
     out.insert("results".into(), Value::Array(results));
-    if !healed.is_empty() {
-        out.insert("healed".into(), healed_to_value(&healed));
-    }
     println(io, &json_compact(&Value::Object(out)));
     if any_inserted {
         0

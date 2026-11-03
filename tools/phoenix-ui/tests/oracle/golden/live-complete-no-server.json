@@ -1,0 +1,9 @@
+{
+  "stdout": "",
+  "stderr": "Error: no running live server; the session lived in it.\n",
+  "exit": 1,
+  "signal": null,
+  "files": {
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n"
+  }
+}

@@ -198,10 +198,6 @@ impl FakeDom {
         self.el_mut(id).selectors.push(selector.to_string());
         self
     }
-    pub fn set_point(&mut self, x: f64, y: f64, stack: Vec<ElId>) -> &mut Self {
-        self.points.push(((x, y), stack));
-        self
-    }
 
     fn all_in_order(&self, root: Option<ElId>) -> Vec<ElId> {
         let mut out = Vec::new();

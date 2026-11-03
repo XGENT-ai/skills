@@ -5,6 +5,8 @@ use crate::event_validation::truthy;
 use crate::manual_edits::buffer::{buffer_path, read_buffer};
 use crate::manual_edits::is_generated_file;
 use crate::util::{exists, jsp, Env};
+use impeccable_core::js;
+pub(crate) use impeccable_core::js_ext_a::{slice_utf16_start as utf16_slice, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::{json, Map, Value};
@@ -120,50 +122,14 @@ pub(crate) fn as_string(v: Option<&Value>) -> Option<String> {
     }
 }
 
-/// `str.length` in UTF-16 code units.
-pub(crate) fn utf16_len(s: &str) -> usize {
-    s.chars().map(|c| c.len_utf16()).sum()
-}
-
-/// `str.slice(0, max)` counting UTF-16 code units.
-pub(crate) fn utf16_slice(s: &str, max: usize) -> String {
-    let mut out = String::new();
-    let mut n = 0usize;
-    for c in s.chars() {
-        let w = c.len_utf16();
-        if n + w > max {
-            break;
-        }
-        out.push(c);
-        n += w;
-    }
-    out
-}
-
-fn is_js_space(c: char) -> bool {
-    c.is_whitespace() || c == '\u{feff}'
-}
-
 /// JS: normalizeText(value)
 pub(crate) fn normalize_text(v: Option<&Value>) -> String {
     collapse_ws(&js_string_or_empty(v))
 }
 
+/// JS `s.replace(/\s+/g, ' ').trim()`.
 pub(crate) fn collapse_ws(s: &str) -> String {
-    let mut out = String::new();
-    let mut in_ws = false;
-    for c in s.chars() {
-        if is_js_space(c) {
-            in_ws = true;
-        } else {
-            if in_ws && !out.is_empty() {
-                out.push(' ');
-            }
-            in_ws = false;
-            out.push(c);
-        }
-    }
-    out
+    js::trim(&js::collapse_ws(s)).to_string()
 }
 
 /// JS: decodeBasicHtml(value)
@@ -423,7 +389,7 @@ fn is_weak_source_needle(text: &str) -> bool {
     !normalized.is_empty()
         && normalized
             .chars()
-            .all(|c| c.is_ascii_digit() || ".,+-%".contains(c) || is_js_space(c))
+            .all(|c| c.is_ascii_digit() || ".,+-%".contains(c) || js::is_js_whitespace(c))
 }
 
 /// JS: normalizeSourceHint(hint) -> { file, loc, line, column }

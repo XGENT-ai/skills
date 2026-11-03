@@ -1002,20 +1002,9 @@
         }
       } catch { /* cross-origin */ }
     }
-    // The selector a mechanical bake would anchor lasting rules on, and how
-    // many elements it matches right now: the bake refuses anything but one,
-    // since its rules would restyle every match, not just this element.
-    const cssIdent = (s) => /^[A-Za-z_-][\w-]*$/.test(s);
-    const anchorClasses = [...el.classList].filter(cssIdent);
-    const anchor = el.id && cssIdent(el.id)
-      ? '#' + el.id
-      : (anchorClasses.length ? el.tagName.toLowerCase() + '.' + anchorClasses.join('.') : null);
-    let anchorMatches = null;
-    if (anchor) { try { anchorMatches = document.querySelectorAll(anchor).length; } catch { anchorMatches = null; } }
     return {
       tagName: el.tagName.toLowerCase(), id: el.id || null,
       classes: [...el.classList],
-      anchor, anchorMatches,
       textContent: (el.textContent || '').slice(0, 500),
       outerHTML: sanitizedContextOuterHTML(el, 10000),
       computedStyles: {
@@ -2070,7 +2059,6 @@
     // Every arrival and restore path lands here, so an ended generation is
     // re-judged whenever its variants (or its restored session) show up.
     if (next === 'GENERATING' || next === 'CYCLING') scheduleGenerationEndSettle();
-    retryDeclinedAgentTargets();
     syncPageInteractionCursor();
     // Whether a queued steer is still behind a generation is a function of this
     // state, so the hint has to move with it, not only with the 5s poll.
@@ -4053,7 +4041,6 @@
 
   function hidePendingApplyDock() {
     pendingApplyInFlight = false;
-    retryDeclinedAgentTargets();
     clearStoredManualApplyState();
     if (pendingIntroAnimation) { pendingIntroAnimation.cancel(); pendingIntroAnimation = null; }
     if (pendingDockEl) pendingDockEl.style.display = 'none';
@@ -4080,14 +4067,12 @@
       pendingTrashBtn.style.opacity = '1';
     }
     if (pendingKeepFixingBtn) pendingKeepFixingBtn.style.display = 'none';
-    if (pendingRollbackBtn) pendingRollbackBtn.style.display = 'none';
     refreshLiveControlsForManualApply();
   }
 
   function setPendingApplyLoading(loading, count) {
     if (!pendingPillEl || !pendingPillLabelEl || !pendingPillCountEl || !pendingTrashBtn) return;
     pendingApplyInFlight = loading === true;
-    if (!pendingApplyInFlight) retryDeclinedAgentTargets();
     const currentCount = count || parseInt(pendingPillEl.dataset.count || '0', 10) || 0;
     if (pendingApplyInFlight) storeManualApplyState(currentCount);
     else clearStoredManualApplyState();
@@ -4106,7 +4091,6 @@
     pendingTrashBtn.style.opacity = pendingApplyInFlight ? '0.58' : '1';
     if (pendingApplyInFlight) {
       if (pendingKeepFixingBtn) pendingKeepFixingBtn.style.display = 'none';
-      if (pendingRollbackBtn) pendingRollbackBtn.style.display = 'none';
       pendingTrashBtn.style.display = 'inline-flex';
     }
     schedulePendingDockPosition();
@@ -4240,9 +4224,15 @@
       pendingPillEl.style.cursor = 'default';
       pendingPillEl.style.display = 'inline-flex';
     }
-    if (pendingTrashBtn) pendingTrashBtn.style.display = 'none';
+    // Source keeps whatever the agent wrote (git is the undo); the user
+    // either asks for another fix pass or discards the staged edits.
+    if (pendingTrashBtn) {
+      pendingTrashBtn.style.display = 'inline-flex';
+      pendingTrashBtn.disabled = false;
+      pendingTrashBtn.style.cursor = 'pointer';
+      pendingTrashBtn.style.opacity = '1';
+    }
     if (pendingKeepFixingBtn) pendingKeepFixingBtn.style.display = 'inline-flex';
-    if (pendingRollbackBtn) pendingRollbackBtn.style.display = 'inline-flex';
     if (pendingDockEl) pendingDockEl.style.display = 'inline-flex';
     schedulePendingDockPosition();
     refreshLiveControlsForManualApply();
@@ -4259,35 +4249,11 @@
       );
       if (!res.ok) throw new Error('HTTP ' + res.status);
       if (pendingKeepFixingBtn) pendingKeepFixingBtn.style.display = 'none';
-      if (pendingRollbackBtn) pendingRollbackBtn.style.display = 'none';
       if (pendingTrashBtn) pendingTrashBtn.style.display = 'inline-flex';
     } catch (err) {
       console.error('[Phoenix UI] repair retry failed:', err);
       showToast('Repair retry failed - see console', 4000);
       showManualApplyDecision({ remainingCount: count, repair: readStoredManualApplyState() });
-    }
-  }
-
-  async function onPendingRollbackClick() {
-    const ok = confirm('Rollback source files to before this Apply and keep the edits staged?');
-    if (!ok) return;
-    try {
-      const res = await fetch(
-        'http://localhost:' + PORT + '/manual-edit-repair-decision?token=' + encodeURIComponent(TOKEN) + '&pageUrl=' + encodeURIComponent(location.pathname),
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: TOKEN, pageUrl: location.pathname, action: 'rollback' }),
-        },
-      );
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const result = await res.json().catch(() => ({}));
-      clearStoredManualApplyState();
-      updatePendingCounter(numberOrNull(result.remainingCount) || 0);
-      showToast('Rolled back source; copy edits are still staged.', 3500);
-    } catch (err) {
-      console.error('[Phoenix UI] manual Apply rollback failed:', err);
-      showToast('Rollback failed - see console', 4000);
     }
   }
 
@@ -4341,12 +4307,6 @@
 
     if (msg.type === 'manual_edit_repair_needs_decision') {
       showManualApplyDecision(msg);
-      return;
-    }
-
-    if (msg.type === 'manual_edit_repair_rollback_done') {
-      clearStoredManualApplyState();
-      fetchPendingCount();
       return;
     }
 
@@ -5958,7 +5918,7 @@
     } catch (err) {
       console.error('[Phoenix UI] Failed to mount component-preview variants:', err);
       // Report the manifest PATH, never the fetch URL: that URL carries the
-      // live helper token and this string is journaled.
+      // live helper token and this string reaches the agent.
       reportVariantMountFailed(sessionId, visibleVariant || 1, manifestPath, err);
       abortSvelteComponentInjection(sessionId, {
         variant: visibleVariant || 0,
@@ -5991,8 +5951,8 @@
   //
   // The agent's `done` says it published files. Only the browser knows whether
   // the import resolved and the component reached the DOM. These two events
-  // carry that answer back, so the journal, `live-status`, and `live-resume`
-  // can tell "the user is comparing variants" from "nothing ever rendered".
+  // carry that answer back, so the helper's session state can tell "the user
+  // is comparing variants" from "nothing ever rendered".
 
   // Mirror of the caps in live/event-validation.mjs. Trimming here keeps a
   // stack-trace-sized error from being rejected outright and lost.
@@ -6017,8 +5977,7 @@
     const url = String(moduleUrl || 'unknown').slice(0, MOUNT_URL_MAX);
     const message = String(error?.message || error || 'Unknown mount error').slice(0, MOUNT_ERROR_MAX);
     // Progressive delivery and the Retry button both re-enter the same failure.
-    // Report each distinct one once so the agent's poll queue and the journal
-    // stay readable; a genuinely new failure (different variant, URL, or
+    // Report each distinct one once so the agent's poll queue stays readable; a genuinely new failure (different variant, URL, or
     // message) still gets through.
     const key = sessionId + '|' + variant + '|' + url + '|' + message;
     if (lastReportedMountFailure === key) return;
@@ -6164,7 +6123,7 @@
   // Tear down a component preview that could not mount, WITHOUT touching
   // session identity. The old version cleared localStorage, nulled
   // currentSessionId, and reset to PICKING, which orphaned a session the server
-  // still had in its journal and made every recovery path unreachable. The DOM
+  // still held and made every recovery path unreachable. The DOM
   // teardown and observer cleanup are still right; the state wipe never was.
   function abortSvelteComponentInjection(sessionId, details) {
     try {
@@ -7256,7 +7215,8 @@
   // scrolls the element into view, enters the same picked state a user
   // click produces, and fires the normal Go pipeline, so everything
   // downstream (generate event, variants, cycling, accept) is unchanged.
-  // The verdict goes back through POST /agent-target-result, which resolves
+  // The first page that resolves the element claims the target and acts;
+  // its verdict goes back through POST /agent-target-result, which resolves
   // the agent's held-open CLI call.
 
   function postAgentTargetResult(targetId, result) {
@@ -7341,8 +7301,8 @@
     el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
-  // One id per page load: the server keys claims and roll-call reports on
-  // it, and only the tab that holds the lease can renew it.
+  // One id per page load: the server grants a target to the first page that
+  // claims it and honors the result only from that page.
   const AGENT_TARGET_CLIENT_ID = id8();
 
   // The agent target an agent-initiated Go is serving: set by
@@ -7387,188 +7347,64 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: TOKEN, targetId, clientId: AGENT_TARGET_CLIENT_ID, ...report }),
     }).then((res) => res.json())
-      .then((j) => ({ granted: !!j && j.granted === true, pending: !!j && j.pending === true }))
-      .catch(() => ({ granted: false, pending: false }));
+      .then((j) => !!j && j.granted === true)
+      .catch(() => false);
   }
 
-  // `exceptTargetId` is the target this call is about: a tab acting on it
-  // is not busy for itself, but it is busy for every other target, or two
-  // held requests could both be claimed here and the second Go would
-  // overwrite the session the first one minted.
-  function agentTargetBusyReason(exceptTargetId) {
+  // The target this page won and is still acting on: a second target heard
+  // meanwhile is declined busy, or its Go would overwrite the session the
+  // first one minted.
+  let agentTargetActing = null;
+
+  function agentTargetBusyReason() {
     if (pendingApplyInFlight) return 'manual_apply_in_flight';
     if (state !== 'IDLE' && state !== 'PICKING' && state !== 'CONFIGURING') return 'session_active';
-    for (const [targetId, status] of agentTargetsSeen) {
-      if (status === 'acting' && targetId !== exceptTargetId) return 'agent_target_in_flight';
-    }
+    if (agentTargetActing) return 'agent_target_in_flight';
     return null;
   }
 
-  // Targets this tab declined as busy. A busy report is only this tab's word
-  // at that moment: the moment it is free again (setLiveState), it claims
-  // each of these as eligible, and the server drops the stale report, so a
-  // busy verdict is never built on a tab that has since gone idle. The
-  // server denies claims for resolved targets, so retries are harmless.
-  const busyDeclinedTargets = new Map();
-
-  function declineAgentTargetBusy(msg, busy) {
-    busyDeclinedTargets.set(msg.targetId, msg);
-    noteAgentTarget(msg.targetId, 'declined');
-    claimAgentTarget(msg.targetId, { eligible: false, state, reason: busy });
-  }
-
-  // A torn-down overlay, or one whose helper connection is gone, cannot
-  // serve a target and must not even claim one: it would hold the lease for
-  // a request it will never act on.
-  function agentTargetOverlayGone() {
-    return !evtSource;
-  }
-
-  // A denied claimant retries at this cadence, a little over the lease, so
-  // the first retry after a dead holder's lease lapses is granted.
-  const AGENT_TARGET_RESCUE_RETRY_MS = 3500;
-
-  // Claim the lease and act as the holder. A denied claim means another tab
-  // holds the lease. That holder can die before posting its result (reload,
-  // crash, even after renewing), and its lease lapses after ~3s, so this tab
-  // keeps retrying for as long as the server still holds the request: the
-  // answer's `pending` is the server's word that the request is alive, and
-  // it turns false the moment the request resolved or timed out, so no tab
-  // retries a request nobody awaits. A tab that turned busy meanwhile joins
-  // the roll call instead of taking a lease it cannot use. The first claim
-  // and the busy-to-idle re-claim share this.
-  function claimAndActOnAgentTarget(msg) {
-    if (agentTargetOverlayGone()) return;
-    const busy = agentTargetBusyReason(msg.targetId);
-    if (busy) { declineAgentTargetBusy(msg, busy); return; }
-    if (declineAgentTargetUnresolvable(msg)) return;
-    claimAgentTarget(msg.targetId, { eligible: true }).then((claim) => {
-      if (claim.granted) { noteAgentTarget(msg.targetId, 'acting'); actOnAgentTarget(msg); return; }
-      noteAgentTarget(msg.targetId, 'denied');
-      if (!claim.pending) return;
-      setTimeout(() => claimAndActOnAgentTarget(msg), AGENT_TARGET_RESCUE_RETRY_MS);
-    });
-  }
-
-  function retryDeclinedAgentTargets() {
-    if (busyDeclinedTargets.size === 0 || agentTargetBusyReason()) return;
-    for (const [targetId, msg] of busyDeclinedTargets) {
-      busyDeclinedTargets.delete(targetId);
-      claimAndActOnAgentTarget(msg);
-    }
-  }
-
-  // This page's participation in each target it heard: 'acting' once a
-  // claim was granted, 'done' once it replied (or stood down from a lapsed
-  // lease), else the word it last gave. The server replays pending targets
-  // to every connection that opens. After a reconnect that overlapped the
-  // old connection the server still holds this page's word; after one that
-  // did not, it dropped the word on the close, so a replayed target is
-  // handled again: a busy or unresolvable page re-declines (idempotent), an
-  // idle page claims.
-  const agentTargetsSeen = new Map();
-  function noteAgentTarget(targetId, status) {
-    agentTargetsSeen.set(targetId, status);
-    if (agentTargetsSeen.size > 100) agentTargetsSeen.delete(agentTargetsSeen.keys().next().value);
-  }
-
-  // A target this page took a lease on is off-limits for a replay: while
-  // acting (a second claim or Go), and once done, because its result may
-  // still be on the wire and this tab is GENERATING by then, so handling
-  // the replay would decline busy, hand the lease back mid-resolution, and
-  // let another tab fire a second Go.
-  function agentTargetTaken(targetId) {
-    const status = agentTargetsSeen.get(targetId);
-    return status === 'acting' || status === 'done';
-  }
-
-  // Only a page that can resolve the target claims it. A tab whose page
-  // lacks the element declines with its resolution verdict instead, so a
-  // first-wins claim never lets the wrong page answer for a target that
-  // another page has. The server prefers a busy report (a tab that could
-  // serve later) over these, and returns the resolution verdict only when
-  // no connected page can serve.
-  //
-  // An element can be momentarily absent (a route still rendering, an HMR
-  // commit mid-swap), so a failed resolution is not this page's final word:
-  // it is re-checked a few times over about two seconds, claiming the
-  // moment the element mounts, and only the last miss is reported. The
-  // server's timeout still bounds the whole exchange.
-  // The page reports the miss at once (so the other overlays' words can
-  // complete the roll call) and keeps re-checking at this cadence for as
-  // long as the server says the request is pending: the server holds an
-  // all-no_match roll call open for a short grace precisely so a late mount
-  // can still be claimed, drops the stale report on an eligible claim, and
-  // ends the watch by answering pending:false once the request resolved or
-  // timed out.
-  const AGENT_TARGET_RESOLVE_WATCH_MS = 500;
-
-  function declineAgentTargetUnresolvable(msg) {
-    const probe = resolveAgentTargetElement(msg);
-    if (!probe.error) return false;
-    reportAgentTargetUnresolvable(msg, probe.error);
-    return true;
-  }
-
-  function reportAgentTargetUnresolvable(msg, error) {
-    noteAgentTarget(msg.targetId, 'declined');
-    claimAgentTarget(msg.targetId, { eligible: false, state, reason: 'no_match', result: error }).then((answer) => {
-      if (!answer.pending) return;
-      setTimeout(() => watchAgentTargetResolution(msg, error), AGENT_TARGET_RESOLVE_WATCH_MS);
-    });
-  }
-
-  function watchAgentTargetResolution(msg, lastError) {
-    if (agentTargetOverlayGone() || agentTargetTaken(msg.targetId)) return;
-    const busy = agentTargetBusyReason(msg.targetId);
-    if (busy) { declineAgentTargetBusy(msg, busy); return; }
-    const probe = resolveAgentTargetElement(msg);
-    if (!probe.error) { claimAndActOnAgentTarget(msg); return; }
-    // Still unresolvable: re-report (idempotent); the answer says whether
-    // the server is still holding the request open.
-    reportAgentTargetUnresolvable(msg, probe.error || lastError);
-  }
-
+  // A page that cannot serve declines with its word (busy, or the
+  // resolution verdict) and never acts: the server answers the agent as soon
+  // as every connected page has declined, preferring busy so the agent
+  // retries. An idle page that resolves the element claims; the server
+  // grants only the first claim, and only that page acts.
   function handleAgentTarget(msg) {
-    if (!msg || typeof msg.targetId !== 'string') return;
-    if (agentTargetTaken(msg.targetId)) return;
-    noteAgentTarget(msg.targetId, 'heard');
-    const busy = agentTargetBusyReason(msg.targetId);
+    if (!msg || typeof msg.targetId !== 'string' || !evtSource) return;
+    const busy = agentTargetBusyReason();
     if (busy) {
-      // Roll call: a busy tab reports itself and never acts. The server
-      // answers `busy` the moment every connected overlay has reported, so
-      // an idle tab elsewhere is never raced by a timer.
-      declineAgentTargetBusy(msg, busy);
+      claimAgentTarget(msg.targetId, { eligible: false, state, reason: busy });
       return;
     }
-    if (declineAgentTargetUnresolvable(msg)) return;
-    // Eligible tabs race for the server's lease and only the holder acts. A
-    // hidden tab yields a short head start so a visible one wins when both
-    // exist, and still serves the request on its own: the user finds the
+    const probe = resolveAgentTargetElement(msg);
+    if (probe.error) {
+      claimAgentTarget(msg.targetId, { eligible: false, state, reason: 'no_match', result: probe.error });
+      return;
+    }
+    // A hidden tab yields a short head start so a visible one wins when both
+    // can serve, and still serves the request on its own: the user finds the
     // selection waiting when they return to it.
-    setTimeout(() => claimAndActOnAgentTarget(msg), document.hidden ? 150 : 0);
+    setTimeout(() => {
+      claimAgentTarget(msg.targetId, { eligible: true }).then((granted) => {
+        if (granted) actOnAgentTarget(msg);
+      });
+    }, document.hidden ? 150 : 0);
   }
 
   function actOnAgentTarget(msg) {
-    if (agentTargetOverlayGone()) return;
-    // Every exit ends this tab's acting state, so a later target is not
-    // refused for a Go that already happened or never will.
-    const reply = (result) => { noteAgentTarget(msg.targetId, 'done'); postAgentTargetResult(msg.targetId, result); };
-    const busy = agentTargetBusyReason(msg.targetId);
+    // Turned busy, or the element went away, between the claim and now: this
+    // page won, so its word is the answer.
+    const busy = agentTargetBusyReason();
     if (busy) {
-      // Turned busy between claim and act: report it, which also hands the
-      // lease back so the roll call can complete or a rescuer can claim.
-      declineAgentTargetBusy(msg, busy);
+      postAgentTargetResult(msg.targetId, { ok: false, error: 'busy', state, reason: busy });
       return;
     }
     const resolved = resolveAgentTargetElement(msg);
     if (resolved.error) {
-      // The element went away between claim and act. A result would end the
-      // request for every tab; a decline hands the lease back so another
-      // page or a remount can still serve it.
-      reportAgentTargetUnresolvable(msg, resolved.error);
+      postAgentTargetResult(msg.targetId, resolved.error);
       return;
     }
+    agentTargetActing = msg.targetId;
+    const reply = (result) => { agentTargetActing = null; postAgentTargetResult(msg.targetId, result); };
     const el = resolved.el;
     if (msg.dryRun) {
       reply({
@@ -7580,64 +7416,55 @@
       return;
     }
     scrollAgentTargetIntoView(el, () => {
-      // Torn down during the scroll settle: do not renew. The lease lapses
-      // for a rescuer instead of Go minting a session on a dismantled
-      // overlay.
-      if (agentTargetOverlayGone()) return;
-      // Renew the lease right before the irreversible part: a tab whose
-      // lease lapsed while it scrolled (a rescuer took over) stops here, so
-      // one request never gets two Go presses.
-      claimAgentTarget(msg.targetId, { eligible: true }).then((renewal) => {
-        if (!renewal.granted) { noteAgentTarget(msg.targetId, 'done'); return; }
-        // An insert placement left mid-configure gives way, exactly as a
-        // click outside it does in handleClick.
-        if (state === 'CONFIGURING' && configureKind === 'insert') cancelInsertConfigure();
-        // Mirror of the user-click pick entry in handleClick, minus the
-        // pick-mode gate (the agent's intent replaces the toggle); the entry
-        // goes through beginNewLiveConfiguration like every other pick so
-        // deferred recovery sees a fresh interaction revision.
-        selectedElement = el;
-        beginNewLiveConfiguration();
-        showHighlight(selectedElement);
-        clearAnnotations();
-        showAnnotOverlay(selectedElement);
-        showBar('configure');
-        editBadgeSuppressed = true;
-        renderEditBadge('hidden');
-        startScrollTracking();
-        maybePrefetchPage();
-        maybeWarnConditionalAncestor(selectedElement);
-        // Preset what the agent asked for, then fire the same Go a user press
-        // fires. handleGo reads exactly these inputs.
-        selectedAction = msg.action;
-        selectedCount = msg.count;
-        // updateBarContent rebuilds the configure row and replaces the input
-        // element, so the prompt must be written into the input it creates,
-        // never before (the action-chip click handler does the same dance).
-        updateBarContent('configure');
-        const input = uiGetById(PREFIX + '-input');
-        if (input) input.value = msg.prompt || '';
-        // The target rides on the generate event too: the helper resolves
-        // the request from whichever lands first, so a page that dies
-        // between Go and its result cannot leave the request pending for a
-        // second Go elsewhere.
-        const candidate = describeAgentTargetCandidate(el);
-        agentTargetForGo = { targetId: msg.targetId, matchCount: resolved.matchCount, action: msg.action, count: msg.count, element: candidate };
-        handleGo();
-        agentTargetForGo = null;
-        if (state === 'GENERATING' && currentSessionId) {
-          reply({
-            ok: true,
-            matchCount: resolved.matchCount,
-            sessionId: currentSessionId,
-            action: msg.action,
-            count: msg.count,
-            element: candidate,
-          });
-        } else {
-          reply({ ok: false, error: 'go_failed', state });
-        }
-      });
+      // Torn down during the scroll settle: no Go on a dismantled overlay;
+      // the request answers at its timeout.
+      if (!evtSource) { agentTargetActing = null; return; }
+      // An insert placement left mid-configure gives way, exactly as a
+      // click outside it does in handleClick.
+      if (state === 'CONFIGURING' && configureKind === 'insert') cancelInsertConfigure();
+      // Mirror of the user-click pick entry in handleClick, minus the
+      // pick-mode gate (the agent's intent replaces the toggle); the entry
+      // goes through beginNewLiveConfiguration like every other pick so
+      // deferred recovery sees a fresh interaction revision.
+      selectedElement = el;
+      beginNewLiveConfiguration();
+      showHighlight(selectedElement);
+      clearAnnotations();
+      showAnnotOverlay(selectedElement);
+      showBar('configure');
+      editBadgeSuppressed = true;
+      renderEditBadge('hidden');
+      startScrollTracking();
+      maybePrefetchPage();
+      maybeWarnConditionalAncestor(selectedElement);
+      // Preset what the agent asked for, then fire the same Go a user press
+      // fires. handleGo reads exactly these inputs.
+      selectedAction = msg.action;
+      selectedCount = msg.count;
+      // updateBarContent rebuilds the configure row and replaces the input
+      // element, so the prompt must be written into the input it creates,
+      // never before (the action-chip click handler does the same dance).
+      updateBarContent('configure');
+      const input = uiGetById(PREFIX + '-input');
+      if (input) input.value = msg.prompt || '';
+      // The target rides on the generate event, which marks the session
+      // as agent-initiated.
+      const candidate = describeAgentTargetCandidate(el);
+      agentTargetForGo = { targetId: msg.targetId };
+      handleGo();
+      agentTargetForGo = null;
+      if (state === 'GENERATING' && currentSessionId) {
+        reply({
+          ok: true,
+          matchCount: resolved.matchCount,
+          sessionId: currentSessionId,
+          action: msg.action,
+          count: msg.count,
+          element: candidate,
+        });
+      } else {
+        reply({ ok: false, error: 'go_failed', state });
+      }
     });
   }
 
@@ -7650,7 +7477,7 @@
   const SSE_MAX_RETRIES = 20;  // generous: heartbeats keep the connection alive, so retries mean real trouble
 
   function connectSSE() {
-    evtSource = new EventSource('http://localhost:' + PORT + '/events?token=' + TOKEN + '&clientId=' + AGENT_TARGET_CLIENT_ID);
+    evtSource = new EventSource('http://localhost:' + PORT + '/events?token=' + TOKEN);
 
     evtSource.onopen = () => {
       sseRetries = 0; // reset on successful (re)connect
@@ -7725,7 +7552,6 @@
         case 'manual_edit_apply_reply_received':
         case 'manual_edit_apply_dispatched':
         case 'manual_edit_repair_needs_decision':
-        case 'manual_edit_repair_rollback_done':
         case 'manual_edit_commit_done':
         case 'manual_edit_commit_failed':
           handleManualEditActivity(msg);
@@ -7891,10 +7717,10 @@
     stopScrollTracking();
     if (variantObserver) { variantObserver.disconnect(); variantObserver = null; }
     stopScrollLock();
-    // Preserve local session state on server loss. The durable journal is the
-    // source of truth, but localStorage plus the variant wrapper lets the UI
-    // resume after a helper restart or page reload instead of treating a
-    // transient disconnect as an explicit discard.
+    // Preserve local session state on server loss: localStorage plus the
+    // variant wrapper lets the UI resume after a page reload or a transient
+    // disconnect instead of treating it as an explicit discard. A restarted
+    // helper no longer knows the session and answers unknown_session below.
     selectedElement = null;
     selectedAction = 'impeccable';
     setLiveState(recoveryState);
@@ -7928,18 +7754,9 @@
     }).then(async res => {
       if (res.ok) return res;
       const body = await res.json().catch(() => ({}));
-      // The helper refused to open a session for an agent target it has
-      // already answered (another page served it after this page's lease
-      // lapsed mid-capture, or the request timed out): drop the local
-      // session and hand the surface back.
-      if (body.error === 'agent_target_already_served' && msg.type === 'generate'
-          && msg.id && msg.id === currentSessionId) {
-        abandonSupersededGo(msg.id);
-        return null;
-      }
-      // The server refused to journal progress for a session it has never
-      // seen: this browser is carrying state from another project or a
-      // wiped store (two apps sharing a localhost port). Continuing to
+      // The server refused progress for a session it has never seen: this
+      // browser is carrying state from another project or from a helper that
+      // has since restarted (sessions live in its memory). Continuing to
       // report it would freeze the picker behind a session that can never
       // complete, so drop the local state and hand the surface back.
       if (body.error === 'unknown_session' && msg.type === 'checkpoint'
@@ -7956,14 +7773,6 @@
       return creation;
     }
     return sessionCreationGate.then(doSend);
-  }
-
-  function abandonSupersededGo(sessionId) {
-    if (sessionId !== currentSessionId) return;
-    console.warn('[Phoenix UI] The helper already answered this agent target; clearing session ' + sessionId + '.');
-    markSessionHandled();
-    cleanup({ instantChrome: true });
-    showToast('The helper already answered this request, so this session was cleared. Pick an element to start fresh.', 6000);
   }
 
   let abandonedForeignSessionId = null;
@@ -8398,20 +8207,8 @@
     if (snapshot.strokes.length > 0) basePayload.strokes = snapshot.strokes;
     if (agentTargetForGo) {
       // An agent-initiated Go names the target it serves (see
-      // actOnAgentTarget): the helper resolves that request from this event
-      // as well as from the overlay's own result post.
-      basePayload.agentTarget = {
-        targetId: agentTargetForGo.targetId,
-        clientId: AGENT_TARGET_CLIENT_ID,
-        result: {
-          ok: true,
-          matchCount: agentTargetForGo.matchCount,
-          sessionId: currentSessionId,
-          action: agentTargetForGo.action,
-          count: agentTargetForGo.count,
-          element: agentTargetForGo.element,
-        },
-      };
+      // actOnAgentTarget); the helper marks the session agent-initiated.
+      basePayload.agentTarget = { targetId: agentTargetForGo.targetId };
       agentTargetForGo = null;
     }
 
@@ -10170,7 +9967,7 @@ void main() {
   }
 
   function resumeSession(recoveryRevision = liveInteractionRevision, opts = {}) {
-    // Which path resumed matters in the journal: an init resume is a fresh
+    // Which path resumed matters to the helper: an init resume is a fresh
     // page load, the deferred-wrapper scout is a mid-page-load arrival. Both
     // used to log the same `browser_resumed`, which made issue #719 take a
     // DOM reconstruction to diagnose.
@@ -10430,7 +10227,6 @@ void main() {
   let pendingPillCountEl = null;
   let pendingTrashBtn = null;
   let pendingKeepFixingBtn = null;
-  let pendingRollbackBtn = null;
   let pendingDockResizeObserver = null;
   let pendingIntroAnimation = null;
   let pendingApplyInFlight = false;
@@ -10472,7 +10268,7 @@ void main() {
   // wrong advice about a healthy session.
   const AGENT_BUSY_TIP = 'Agent is working - steering resumes when it finishes';
   // Same distinction, said where the steer request is waiting. A submitted
-  // steer that lands while a generate holds the poll lease is not stuck, it is
+  // steer that lands while the agent works on a generate is not stuck, it is
   // second in line, and the pulsing dots alone read as "nothing is happening".
   const STEER_QUEUED_HINT = 'Queued behind current generation';
   const GLOBAL_BAR_SECTION_GAP = 8;
@@ -10660,7 +10456,7 @@ void main() {
 
   /**
    * A submitted steer is queued, not ignored, whenever no poll is parked and
-   * the browser knows a generation is in flight: the agent holds the lease and
+   * the browser knows a generation is in flight: the agent is busy with it and
    * will not see the steer until it finishes. Saying so beats three dots that
    * look identical to a lost request.
    */
@@ -11363,7 +11159,7 @@ void main() {
     lockSteerChat();
     scheduleSteerAwaitTimeout(id);
     // Checkpoints follow the steer event, never precede it: the steer event
-    // is what creates the session journal server-side, and a checkpoint for
+    // is what creates the session server-side, and a checkpoint for
     // a not-yet-created session is rejected as unknown_session.
     sendEvent({
       type: 'steer',
@@ -12099,39 +11895,31 @@ void main() {
     pendingTrashBtn.addEventListener('blur', hideTrashTooltip);
     pendingTrashBtn.addEventListener('click', onPendingTrashClick);
 
-    const makePendingDecisionBtn = (label, accent) => {
-      const btn = el('button', {
-        display: 'none',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '30px',
-        padding: '0 12px',
-        borderRadius: '999px',
-        border: '1px solid ' + (accent ? P.accent : P.hairline),
-        background: accent ? P.accent : P.chatSurface,
-        color: accent ? C.ink : P.textDim,
-        fontFamily: FONT,
-        fontSize: '12px',
-        fontWeight: '600',
-        letterSpacing: '0',
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        boxShadow: '0 4px 16px oklch(0% 0 0 / 0.12), 0 1px 3px oklch(0% 0 0 / 0.08)',
-      });
-      btn.textContent = label;
-      return btn;
-    };
-    pendingKeepFixingBtn = makePendingDecisionBtn('Keep fixing', true);
+    pendingKeepFixingBtn = el('button', {
+      display: 'none',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '30px',
+      padding: '0 12px',
+      borderRadius: '999px',
+      border: '1px solid ' + P.accent,
+      background: P.accent,
+      color: C.ink,
+      fontFamily: FONT,
+      fontSize: '12px',
+      fontWeight: '600',
+      letterSpacing: '0',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      boxShadow: '0 4px 16px oklch(0% 0 0 / 0.12), 0 1px 3px oklch(0% 0 0 / 0.08)',
+    });
+    pendingKeepFixingBtn.textContent = 'Keep fixing';
     pendingKeepFixingBtn.setAttribute('aria-label', 'Ask the agent to keep fixing Apply errors');
     pendingKeepFixingBtn.addEventListener('click', onPendingKeepFixingClick);
-    pendingRollbackBtn = makePendingDecisionBtn('Rollback', false);
-    pendingRollbackBtn.setAttribute('aria-label', 'Rollback source and keep copy edits staged');
-    pendingRollbackBtn.addEventListener('click', onPendingRollbackClick);
 
     pendingDockEl.appendChild(pendingPillEl);
     pendingDockEl.appendChild(pendingTrashBtn);
     pendingDockEl.appendChild(pendingKeepFixingBtn);
-    pendingDockEl.appendChild(pendingRollbackBtn);
 
     // Thin divider before the exit button
     const divider = el('span', {
@@ -12405,12 +12193,9 @@ void main() {
 
   /** Full teardown: remove all UI, disconnect SSE, clean up. */
   function teardown() {
-    // Declined targets die with the overlay: the IDLE transition below must
-    // not re-claim a lease this page can no longer act on. So does the
-    // target ledger: an 'acting' entry from a Go that never happened must
-    // not refuse every target the next connection hears.
-    busyDeclinedTargets.clear();
-    agentTargetsSeen.clear();
+    // A Go that never happened must not refuse every target the next
+    // connection hears.
+    agentTargetActing = null;
     liveBarHiddenByHelper = false;
     stopAgentStatusPoll();
     hideAgentPollTooltip();
@@ -12438,7 +12223,6 @@ void main() {
       pendingPillCountEl = null;
       pendingTrashBtn = null;
       pendingKeepFixingBtn = null;
-      pendingRollbackBtn = null;
       pendingApplyInFlight = false;
     }
     if (globalBarEl) {

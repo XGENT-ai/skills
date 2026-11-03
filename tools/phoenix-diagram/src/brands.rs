@@ -239,38 +239,6 @@ fn resolve(
         Err(errors)
     }
 }
-/// Reconstruct resource bindings from immutable artifact data, without a cache or network.
-pub fn bound(
-    input: &DiagramInput,
-    supplied: &ResolvedBrands,
-) -> Result<ResolvedBrands, Diagnostics> {
-    let result = resolve(input, |value| {
-        let url = network::normalize_url(value["url"].as_str().unwrap_or_default())?;
-        let url_sha = sha256(url.as_str().as_bytes());
-        let item = supplied
-            .values()
-            .find(|b| {
-                b.resource.url_sha256.as_deref() == Some(&url_sha)
-                    && value["sha256"].as_str() == Some(&b.resource.sha256)
-            })
-            .ok_or_else(|| {
-                BrandError::new(
-                    "brand/digest-mismatch",
-                    "Artifact resource binding is missing",
-                )
-            })?;
-        cache::verify_resolved(item, &url, value["sha256"].as_str().unwrap_or_default())?;
-        Ok(item.clone())
-    })?;
-    if &result != supplied {
-        return Err(vec![BrandError::new(
-            "brand/digest-mismatch",
-            "Artifact brand resources differ from the input",
-        )
-        .diagnostic("")]);
-    }
-    Ok(result)
-}
 /// Public facts retain identity while dropping request query and fragment values.
 pub fn sanitize_document(document: &mut Value, kind: DiagramType) {
     if let Some(key) = collection(kind) {
@@ -350,11 +318,4 @@ pub fn capture(request: &CaptureRequest<'_>) -> CaptureReceipt {
         }
     }
     result
-}
-
-pub(crate) fn resource_bindings(
-    brands: &ResolvedBrands,
-    cache: &Path,
-) -> Result<Vec<crate::output::FileBinding>, BrandError> {
-    cache::bindings(brands, cache)
 }

@@ -1,27 +1,9 @@
-//! Phoenix active-hook recognition and legacy Impeccable inspection.
-//! Only Phoenix launchers count toward the current installation. Old script
-//! and binary forms stay recognizable for explicit migration and diagnostics;
-//! operational refreshes preserve them until migration is requested.
+//! Phoenix hook recognition: which manifest commands run the Phoenix
+//! launcher's hooks.
 
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-/// Legacy script markers for migration inspection.
-pub const LEGACY_HOOK_SCRIPT_MARKERS: &[&str] = &[
-    "skills/impeccable/scripts/hook-probe.mjs",
-    "skills/impeccable/scripts/hook.mjs",
-    "skills/impeccable/scripts/hook-before-edit.mjs",
-    "skills/impeccable/scripts/hook-after-edit.mjs",
-    "skills/impeccable/scripts/hook-stop.mjs",
-];
-
-/// Matches the launcher path (`.../skills/impeccable/scripts/impeccable` or
-/// `impeccable.cmd`), the closing quote if any, then the hook verb.
-static LAUNCHER_HOOK_MARKER: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"skills/impeccable/scripts/impeccable(?:\.cmd|\.exe)?["']?\s+hook(?:-before-edit|-probe|-after-edit|-stop)?(?:\s|$|["'&|;)])"#).unwrap()
-});
-
-// Only the Phoenix launcher counts as an active new installation.
 static PHOENIX_HOOK_MARKER: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"skills/phoenix-ui/scripts/phoenix-ui(?:\.cmd|\.exe)?["']?\s+hook(?:-before-edit|-probe|-after-edit|-stop)?(?:\s|$|["'&|;)])"#).unwrap()
 });
@@ -32,7 +14,7 @@ static PHOENIX_DESIGN_HOOK: Lazy<Regex> = Lazy::new(|| {
 
 /// User-scope Windows commands embed a JSON-quoted path whose backslashes are
 /// doubled in the command string (#784). #604's single `\`→`/` replace is not
-/// enough: `\\` becomes `//`, which breaks `skills/impeccable` matching.
+/// enough: `\\` becomes `//`, which breaks `skills/phoenix-ui` matching.
 /// A leading `//` after a quote (or at the start of the string) is a UNC
 /// prefix and stays two slashes, so doctor still probes `//server/share/...`.
 fn normalize_hook_separators(command: &str) -> String {
@@ -59,65 +41,38 @@ fn normalize_hook_separators(command: &str) -> String {
     out
 }
 
-/// True when `command` invokes an Impeccable hook in either generation's spelling.
-pub fn is_impeccable_hook_command(command: &str) -> bool {
-    let command = normalize_hook_separators(command);
-    LEGACY_HOOK_SCRIPT_MARKERS
-        .iter()
-        .any(|m| command.contains(m))
-        || LAUNCHER_HOOK_MARKER.is_match(&command)
-        || PHOENIX_HOOK_MARKER.is_match(&command)
-}
-
-/// True when `command` invokes a current Phoenix launcher with any hook verb.
+/// True when `command` invokes the Phoenix launcher with any hook verb.
 pub fn is_launcher_hook_command(command: &str) -> bool {
     PHOENIX_HOOK_MARKER.is_match(&normalize_hook_separators(command))
 }
 
-/// The launcher-era markers `context` and `doctor` treat as the design hook
-/// proper (the per-edit hook and Cursor's before-edit gate). Legacy siblings
-/// like `hook-probe` are admin-only and do not count as an installed hook.
-static LAUNCHER_DESIGN_HOOK: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"skills/impeccable/scripts/impeccable(?:\.cmd|\.exe)?["']?\s+hook(?:-before-edit)?(?:\s|$|["'&|;)])"#).unwrap()
-});
-
-/// True when `command` runs the design hook itself (`hook` or
-/// `hook-before-edit`) in either spelling; the JS `context.mjs` scan and
-/// `staleness-deep` HOOK_SCRIPT_MARKERS both meant exactly these two.
-pub fn is_design_hook_command(command: &str) -> bool {
-    let command = normalize_hook_separators(command);
-    command.contains("skills/impeccable/scripts/hook.mjs")
-        || command.contains("skills/impeccable/scripts/hook-before-edit.mjs")
-        || LAUNCHER_DESIGN_HOOK.is_match(&command)
-        || PHOENIX_DESIGN_HOOK.is_match(&command)
-}
-
-/// True when `command` runs the current Phoenix design hook. Legacy hooks
-/// do not satisfy Phoenix's automatic-hook check.
+/// True when `command` runs the Phoenix design hook itself (`hook` or
+/// Cursor's `hook-before-edit`); `hook-probe` and the other admin verbs do
+/// not count as an installed hook.
 pub fn is_launcher_design_hook_command(command: &str) -> bool {
     PHOENIX_DESIGN_HOOK.is_match(&normalize_hook_separators(command))
 }
 
-/// The shell token that names the hook program inside `command`, for
-/// existence checks: the `.mjs` script path in the JS form, the launcher
-/// path in the binary form. `None` when the command carries no marker or
-/// the token cannot be isolated (a `'\''` escape sequence, for instance).
+/// The launcher path inside a design-hook `command`, for existence checks.
+/// `None` when the command runs no design hook or the token cannot be
+/// isolated (a `'\''` escape sequence, for instance).
 pub fn hook_program_token(command: &str) -> Option<String> {
     if command.contains("'\\''") {
         return None;
     }
     let command = normalize_hook_separators(command);
-    if !is_design_hook_command(&command) {
+    if !is_launcher_design_hook_command(&command) {
         return None;
     }
     static QUOTED: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r#""([^"]*skills/(?:impeccable|phoenix-ui)/scripts/(?:hook(?:-before-edit)?\.mjs|(?:impeccable|phoenix-ui)(?:\.cmd|\.exe)?))""#).unwrap()
+        Regex::new(r#""([^"]*skills/phoenix-ui/scripts/phoenix-ui(?:\.cmd|\.exe)?)""#).unwrap()
     });
     static SINGLE: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"'([^']*skills/(?:impeccable|phoenix-ui)/scripts/(?:hook(?:-before-edit)?\.mjs|(?:impeccable|phoenix-ui)(?:\.cmd|\.exe)?))'").unwrap()
+        Regex::new(r"'([^']*skills/phoenix-ui/scripts/phoenix-ui(?:\.cmd|\.exe)?)'").unwrap()
     });
     static BARE: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r#"([^\s"'|&;()]*skills/(?:impeccable|phoenix-ui)/scripts/(?:hook(?:-before-edit)?\.mjs|(?:impeccable|phoenix-ui)(?:\.cmd|\.exe)?))"#).unwrap()
+        Regex::new(r#"([^\s"'|&;()]*skills/phoenix-ui/scripts/phoenix-ui(?:\.cmd|\.exe)?)"#)
+            .unwrap()
     });
     if let Some(m) = QUOTED.captures(&command) {
         return Some(m[1].to_string());
@@ -133,133 +88,96 @@ mod tests {
     use super::*;
 
     #[test]
-    fn recognizes_legacy_script_forms() {
-        assert!(is_impeccable_hook_command("node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\""));
-        assert!(is_impeccable_hook_command("[ ! -f '/x/.cursor/skills/impeccable/scripts/hook-before-edit.mjs' ] || node '/x/.cursor/skills/impeccable/scripts/hook-before-edit.mjs'"));
-        assert!(is_impeccable_hook_command("node .agents/skills/impeccable/scripts/hook-probe.mjs"));
-        assert!(is_design_hook_command("node \".agents/skills/impeccable/scripts/hook.mjs\""));
-        assert!(!is_design_hook_command("node .agents/skills/impeccable/scripts/hook-probe.mjs"));
-    }
-
-    #[test]
     fn recognizes_launcher_forms() {
         for cmd in [
-            "\"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
-            "\".agents/skills/impeccable/scripts/impeccable\" hook",
-            "\".agents/skills/impeccable/scripts/impeccable.cmd\" hook",
-            "\".cursor/skills/impeccable/scripts/impeccable\" hook-before-edit",
-            "\"$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts/impeccable\" hook",
-            "[ ! -f '/x/.claude/skills/impeccable/scripts/impeccable' ] || '/x/.claude/skills/impeccable/scripts/impeccable' hook",
-            "if exist \".agents/skills/impeccable/scripts/impeccable.cmd\" (\".agents/skills/impeccable/scripts/impeccable.cmd\" hook & exit /b)",
-        ] {
-            assert!(is_impeccable_hook_command(cmd), "{cmd}");
-            assert!(is_design_hook_command(cmd), "{cmd}");
-        }
-    }
-
-    #[test]
-    fn launcher_recognizers_reject_stale_mjs() {
-        // Legacy `.mjs` remains identifiable for an explicit migration and
-        // does not count as an active Phoenix hook.
-        for cmd in [
-            "node \".claude/skills/impeccable/scripts/hook.mjs\"",
-            "[ ! -f '/x/.cursor/skills/impeccable/scripts/hook-before-edit.mjs' ] || node '/x/.cursor/skills/impeccable/scripts/hook-before-edit.mjs'",
-        ] {
-            assert!(is_impeccable_hook_command(cmd), "{cmd}");
-            assert!(is_design_hook_command(cmd), "{cmd}");
-            assert!(!is_launcher_hook_command(cmd), "{cmd}");
-            assert!(!is_launcher_design_hook_command(cmd), "{cmd}");
-        }
-        // The launcher form counts as active exactly as before.
-        for cmd in [
-            "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook",
+            "\"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui\" hook",
+            "\".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd\" hook",
             "'/x/.cursor/skills/phoenix-ui/scripts/phoenix-ui' hook-before-edit",
+            "\"$(git rev-parse --show-toplevel)/.github/skills/phoenix-ui/scripts/phoenix-ui\" hook",
+            "if exist \".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd\" (\".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd\" hook & exit /b)",
         ] {
             assert!(is_launcher_hook_command(cmd), "{cmd}");
             assert!(is_launcher_design_hook_command(cmd), "{cmd}");
         }
+        let probe = "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" hook-probe";
+        assert!(is_launcher_hook_command(probe));
+        assert!(!is_launcher_design_hook_command(probe));
     }
 
     #[test]
     fn rejects_unrelated_commands() {
         for cmd in [
-            "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/other/scripts/hook.mjs\"",
-            "\".claude/skills/impeccable/scripts/impeccable\" context",
-            "impeccable hook",
-            "echo skills/impeccable/scripts/impeccable-hook",
+            "node \".claude/skills/impeccable/scripts/hook.mjs\"",
+            "\".claude/skills/impeccable/scripts/impeccable\" hook",
+            "\".claude/skills/phoenix-ui/scripts/phoenix-ui\" context",
+            "phoenix-ui hook",
+            "echo skills/phoenix-ui/scripts/phoenix-ui-hook",
         ] {
-            assert!(!is_impeccable_hook_command(cmd), "{cmd}");
+            assert!(!is_launcher_hook_command(cmd), "{cmd}");
         }
     }
 
     #[test]
     fn extracts_program_token() {
         assert_eq!(
-            hook_program_token("node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\"").as_deref(),
-            Some("${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs")
+            hook_program_token(
+                "\"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"
+            )
+            .as_deref(),
+            Some("${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui")
         );
         assert_eq!(
-            hook_program_token("\"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook").as_deref(),
-            Some("${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable")
+            hook_program_token(
+                "'/x/.cursor/skills/phoenix-ui/scripts/phoenix-ui' hook-before-edit"
+            )
+            .as_deref(),
+            Some("/x/.cursor/skills/phoenix-ui/scripts/phoenix-ui")
         );
         assert_eq!(
-            hook_program_token("'/x/.cursor/skills/impeccable/scripts/impeccable' hook-before-edit").as_deref(),
-            Some("/x/.cursor/skills/impeccable/scripts/impeccable")
+            hook_program_token(".agents/skills/phoenix-ui/scripts/phoenix-ui hook").as_deref(),
+            Some(".agents/skills/phoenix-ui/scripts/phoenix-ui")
         );
         assert_eq!(
-            hook_program_token(".agents/skills/impeccable/scripts/impeccable hook").as_deref(),
-            Some(".agents/skills/impeccable/scripts/impeccable")
+            hook_program_token("'/x/it'\\''s/.claude/skills/phoenix-ui/scripts/phoenix-ui' hook"),
+            None
         );
-        assert_eq!(hook_program_token("'/x/it'\\''s/.claude/skills/impeccable/scripts/impeccable' hook"), None);
         assert_eq!(hook_program_token("echo hi"), None);
     }
 
     #[test]
-    fn recognizes_json_escaped_windows_launcher_path() {
-        let launcher = r"C:\Users\alice\.claude\skills\impeccable\scripts\impeccable";
+    fn recognizes_windows_launcher_paths() {
+        let launcher = r"C:\Users\alice\.claude\skills\phoenix-ui\scripts\phoenix-ui";
         let quoted = serde_json::to_string(launcher).unwrap();
         let cmd = format!("[ ! -f {quoted} ] || {quoted} hook");
-        assert!(is_impeccable_hook_command(&cmd), "{cmd}");
-        assert!(!is_launcher_hook_command(&cmd), "{cmd}");
-        assert!(is_design_hook_command(&cmd), "{cmd}");
+        assert!(is_launcher_design_hook_command(&cmd), "{cmd}");
         assert_eq!(
             hook_program_token(&cmd).as_deref(),
-            Some("C:/Users/alice/.claude/skills/impeccable/scripts/impeccable")
+            Some("C:/Users/alice/.claude/skills/phoenix-ui/scripts/phoenix-ui")
         );
-    }
-
-    #[test]
-    fn recognizes_single_backslash_windows_path() {
-        let cmd = r#"[ ! -f "C:\Users\alice\.claude\skills\impeccable\scripts\impeccable" ] || "C:\Users\alice\.claude\skills\impeccable\scripts\impeccable" hook"#;
-        assert!(is_impeccable_hook_command(cmd), "{cmd}");
-        assert!(!is_launcher_hook_command(cmd), "{cmd}");
-        assert!(is_design_hook_command(cmd), "{cmd}");
+        let single = format!("\"{launcher}\" hook");
+        assert!(is_launcher_design_hook_command(&single), "{single}");
     }
 
     #[test]
     fn preserves_unc_prefix_in_program_token() {
-        let launcher = r"\\server\share\.claude\skills\impeccable\scripts\impeccable";
+        let launcher = r"\\server\share\.claude\skills\phoenix-ui\scripts\phoenix-ui";
         let quoted = serde_json::to_string(launcher).unwrap();
         let json_escaped = format!("[ ! -f {quoted} ] || {quoted} hook");
-        assert!(is_impeccable_hook_command(&json_escaped), "{json_escaped}");
         assert_eq!(
             hook_program_token(&json_escaped).as_deref(),
-            Some("//server/share/.claude/skills/impeccable/scripts/impeccable")
+            Some("//server/share/.claude/skills/phoenix-ui/scripts/phoenix-ui")
         );
-
-        let single = r#"[ ! -f "\\server\share\.claude\skills\impeccable\scripts\impeccable" ] || "\\server\share\.claude\skills\impeccable\scripts\impeccable" hook"#;
-        assert!(is_impeccable_hook_command(single), "{single}");
+        let single = format!("\"{launcher}\" hook");
         assert_eq!(
-            hook_program_token(single).as_deref(),
-            Some("//server/share/.claude/skills/impeccable/scripts/impeccable")
+            hook_program_token(&single).as_deref(),
+            Some("//server/share/.claude/skills/phoenix-ui/scripts/phoenix-ui")
         );
     }
 }
 
 /// Removes `//` and `/* */` comments outside JSON strings, the dialect
 /// Gemini CLI reads its `settings.json` in (`strip-json-comments`). Returns
-/// the stripped text and whether any comment was removed, so a writer that
-/// cannot preserve comments knows to keep a backup.
+/// the stripped text and whether any comment was removed.
 pub fn strip_json_comments(text: &str) -> (String, bool) {
     let mut out = String::with_capacity(text.len());
     let mut chars = text.chars().peekable();

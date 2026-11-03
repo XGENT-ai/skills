@@ -10,7 +10,7 @@
  *   regions.json   three regions (chrome / plate / text) with allowUncovered
  *   spec.json      a pre-measured spec of comp.png+regions.json (the fixture the
  *                  print / diff / measure cases read; the regions case rewrites
- *                  its own under .impeccable/build/)
+ *                  its own under .phoenix-ui/build/)
  *
  * ISO timestamps in stdout and in the written spec/state are masked by the
  * harness, so the createdAt/startedAt fields never make a golden run-dependent.
@@ -31,10 +31,9 @@ const write = (ws, rel, body) => {
 // skill-dir overrides so a recording machine's env never leaks a font-index
 // path or a native reference into the output.
 const BASE_ENV = {
-  IMPECCABLE_CATALOG_DIR: null,
-  IMPECCABLE_SKILL_DIR: null,
-  IMPECCABLE_SELF: null,
-  IMPECCABLE_BROWSER: null,
+  PHOENIX_UI_SKILL_DIR: null,
+  PHOENIX_UI_SELF: null,
+  PHOENIX_UI_BROWSER: null,
   PUPPETEER_EXECUTABLE_PATH: null,
   CHROME_PATH: null,
   CI: null,
@@ -47,7 +46,7 @@ const cases = [
   {
     id: 'comp-spec-regions', verb: 'comp-spec', workspace: WS,
     args: ['--comp', 'comp.png', '--regions', 'regions.json'],
-    files: ['.impeccable/build/spec.json'], env: env(),
+    files: ['.phoenix-ui/build/spec.json'], env: env(),
   },
   { id: 'comp-spec-print', verb: 'comp-spec', workspace: WS, args: ['--print', '--spec', 'spec.json'], env: env() },
   { id: 'comp-spec-plate-prompt', verb: 'comp-spec', workspace: WS, args: ['--plate-prompt', 'art', '--spec', 'spec.json'], env: env() },
@@ -82,7 +81,7 @@ const cases = [
   // build-phase: start (reads comp dims) then status, sharing one workspace.
   {
     id: 'build-phase-start-status', verb: 'build-phase', workspace: WS,
-    files: ['.impeccable/build/state.json'], env: { ...env(), IMPECCABLE_SESSION_ID: 'oracle-build' },
+    files: ['.phoenix-ui/build/state.json'], env: { ...env(), PHOENIX_UI_SESSION_ID: 'oracle-build' },
     steps: [{ args: ['start', '--comp', 'comp.png'] }, { args: ['status'] }],
   },
   { id: 'build-phase-usage', verb: 'build-phase', workspace: WS, args: [], env: env() },
@@ -93,16 +92,16 @@ const cases = [
   { id: 'component-review-usage', verb: 'component-review', workspace: WS, args: [], env: env() },
   {
     id: 'component-review-plan-missing-plates', verb: 'component-review', workspace: WS,
-    setup: (ws) => write(ws, '.impeccable/build/spec.json', fs.readFileSync(path.join(ws, 'spec.json'))),
+    setup: (ws) => write(ws, '.phoenix-ui/build/spec.json', fs.readFileSync(path.join(ws, 'spec.json'))),
     args: ['plan'], env: env(),
   },
   {
     id: 'component-review-plan', verb: 'component-review', workspace: WS,
     setup: (ws) => {
-      write(ws, '.impeccable/build/spec.json', fs.readFileSync(path.join(ws, 'spec.json')));
+      write(ws, '.phoenix-ui/build/spec.json', fs.readFileSync(path.join(ws, 'spec.json')));
       write(ws, 'assets/plates/art.png', fs.readFileSync(path.join(ws, 'comp.png')));
     },
-    args: ['plan'], files: ['.impeccable/review/components.json'], env: env(),
+    args: ['plan'], files: ['.phoenix-ui/review/components.json'], env: env(),
   },
   // Absolute paths inside the project and backslashed ones come back project-relative
   // with forward slashes (comp-spec may record either).
@@ -112,10 +111,10 @@ const cases = [
       const spec = JSON.parse(fs.readFileSync(path.join(ws, 'spec.json'), 'utf8'));
       spec.comp = path.join(fs.realpathSync(ws), 'comp.png');
       for (const r of spec.regions) if (r.id === 'art') r.plate = 'assets\\plates\\art.png';
-      write(ws, '.impeccable/build/spec.json', JSON.stringify(spec));
+      write(ws, '.phoenix-ui/build/spec.json', JSON.stringify(spec));
       write(ws, 'assets/plates/art.png', fs.readFileSync(path.join(ws, 'comp.png')));
     },
-    args: ['plan'], files: ['.impeccable/review/components.json'], env: env(),
+    args: ['plan'], files: ['.phoenix-ui/review/components.json'], env: env(),
     // The spec names the staged workspace, so its digest is run-dependent.
     normalize: [['("specSha256": ")[0-9a-f]{64}', 'g', '$1<SHA256>']],
   },

@@ -1,20 +1,20 @@
-//! Immutable static-HTML capture transport, extracted from the existing native capture adapter.
-//! Component previews use a passive CSP; scripts, frames and external resources are not executable.
-//! The native caller owns the selection; private bound inputs are never HTTP routes.
+//! Immutable, explicit static-HTML inputs for native capture, served from a
+//! loopback port. Not a framework server. The native caller owns the
+//! selection; private bound inputs are never HTTP routes.
 use sha2::{Digest, Sha256};
 fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs::{self, File},
+    fs,
     io::{Read, Write},
     net::{TcpListener, TcpStream},
     path::{Component, Path, PathBuf},
     sync::{
-        Arc,
         atomic::{AtomicBool, Ordering},
+        Arc,
     },
     thread::{self, JoinHandle},
     time::Duration,
@@ -33,7 +33,6 @@ pub struct SnapshotSelection {
     pub bound: Vec<String>,
 }
 pub struct HtmlSnapshot {
-    root: Option<PathBuf>,
     entry: String,
     served: BTreeSet<String>,
     files: BTreeMap<String, Vec<u8>>,
@@ -62,12 +61,21 @@ impl HtmlSnapshot {
                 return Err(format!("unsupported capture input: {name}"));
             }
         }
-        let manifest = json!({"schema":"native-html-input-snapshot-v1","entry":entry,"files":files.iter().map(|(name,bytes)|json!({"path":name,"sha256":hash(bytes),"bytes":bytes.len(),"served":true})).collect::<Vec<_>>()});
+        let served = files.keys().cloned().collect();
+        Self::new(entry, served, files)
+    }
+
+    fn new(
+        entry: String,
+        served: BTreeSet<String>,
+        files: BTreeMap<String, Vec<u8>>,
+    ) -> Result<Self, String> {
+        let manifest = json!({"schema":"native-html-input-snapshot-v1","entry":entry,
+            "files":files.iter().map(|(name,bytes)|json!({"path":name,"sha256":hash(bytes),"bytes":bytes.len(),"served":served.contains(name)})).collect::<Vec<_>>()});
         let digest = hash(&serde_json::to_vec(&manifest).map_err(|e| e.to_string())?);
         Ok(Self {
-            root: None,
             entry,
-            served: files.keys().cloned().collect(),
+            served,
             files,
             manifest,
             digest,
@@ -114,19 +122,7 @@ impl HtmlSnapshot {
             }
             files.insert(name, bytes);
         }
-        let manifest = json!({"schema":"native-html-input-snapshot-v1","entry":selection.entry,
-            "files":files.iter().map(|(name,bytes)|json!({"path":name,"sha256":hash(bytes),"bytes":bytes.len(),"served":served.contains(name)})).collect::<Vec<_>>()});
-        let digest = hash(&serde_json::to_vec(&manifest).map_err(|e| e.to_string())?);
-        let snapshot = Self {
-            root: Some(root),
-            entry: selection.entry,
-            served,
-            files,
-            manifest,
-            digest,
-        };
-        snapshot.verify_current()?;
-        Ok(snapshot)
+        Self::new(selection.entry, served, files)
     }
     pub fn digest(&self) -> &str {
         &self.digest
@@ -140,16 +136,8 @@ impl HtmlSnapshot {
     pub fn bytes(&self, name: &str) -> Option<&[u8]> {
         self.files.get(name).map(Vec::as_slice)
     }
-    pub fn verify_current(&self) -> Result<(), String> {
-        let Some(root) = &self.root else {
-            return Ok(());
-        };
-        for (name, bytes) in &self.files {
-            if read_input(root, name)? != *bytes {
-                return Err(format!("capture input changed: {name}"));
-            }
-        }
-        Ok(())
+    pub fn is_served(&self, name: &str) -> bool {
+        self.served.contains(name)
     }
     /// Strict origin-form routes. Decode percent-encoded UTF-8, but never separators.
     pub fn serve_path(&self, target: &str) -> Option<String> {
@@ -175,15 +163,26 @@ impl HtmlSnapshot {
         valid_relative(&name).ok()?;
         self.served.contains(&name).then_some(name)
     }
+    /// Component previews: a passive CSP; scripts, frames and external
+    /// resources are not executable.
     pub fn serve(self: &Arc<Self>) -> Result<SnapshotServer, String> {
-        self.serve_with_scripts(false)
+        self.serve_with(Some(""))
     }
     /// Assembled-page review executes only the pinned page's scripts. Network
     /// APIs, frames, workers and form submission remain disabled by CSP.
     pub fn serve_assembled(self: &Arc<Self>) -> Result<SnapshotServer, String> {
-        self.serve_with_scripts(true)
+        self.serve_with(Some(
+            "script-src 'self' 'unsafe-inline'; worker-src 'none'; ",
+        ))
     }
-    fn serve_with_scripts(self: &Arc<Self>, scripts: bool) -> Result<SnapshotServer, String> {
+    /// Raster asset capture renders the entry as the project ships it, without a CSP.
+    pub fn serve_open(self: &Arc<Self>) -> Result<SnapshotServer, String> {
+        self.serve_with(None)
+    }
+    fn serve_with(
+        self: &Arc<Self>,
+        script_policy: Option<&'static str>,
+    ) -> Result<SnapshotServer, String> {
         let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
         let addr = listener.local_addr().map_err(|e| e.to_string())?;
         listener.set_nonblocking(true).map_err(|e| e.to_string())?;
@@ -196,7 +195,7 @@ impl HtmlSnapshot {
             while !worker_stop.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
-                        let _ = respond(&mut stream, &worker_host, &snapshot, scripts);
+                        let _ = respond(&mut stream, &worker_host, &snapshot, script_policy);
                     }
                     Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                         thread::sleep(Duration::from_millis(5))
@@ -229,63 +228,12 @@ fn valid_relative(name: &str) -> Result<(), String> {
 }
 fn read_input(root: &Path, name: &str) -> Result<Vec<u8>, String> {
     valid_relative(name)?;
-    let inspect = || -> Result<fs::Metadata, String> {
-        if fs::symlink_metadata(root)
-            .map_err(|e| e.to_string())?
-            .file_type()
-            .is_symlink()
-        {
-            return Err("snapshot root replaced by symlink".into());
-        }
-        let mut path = root.to_path_buf();
-        for part in Path::new(name).components() {
-            path.push(part);
-            let m =
-                fs::symlink_metadata(&path).map_err(|e| format!("snapshot input {name}: {e}"))?;
-            if m.file_type().is_symlink() {
-                return Err(format!("symlink snapshot input: {name}"));
-            }
-        }
-        let m = fs::symlink_metadata(&path).map_err(|e| e.to_string())?;
-        if !m.is_file() || m.len() > MAX_FILE_BYTES {
-            return Err(format!("unsupported or oversized input: {name}"));
-        }
-        Ok(m)
-    };
-    let before = inspect()?;
-    let mut file = File::open(root.join(name)).map_err(|e| e.to_string())?;
-    let opened = file.metadata().map_err(|e| e.to_string())?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::MetadataExt;
-        if before.dev() != opened.dev() || before.ino() != opened.ino() {
-            return Err(format!("input replaced while opening: {name}"));
-        }
-    }
-    if !opened.is_file() || opened.len() > MAX_FILE_BYTES {
+    let path = root.join(name);
+    let meta = fs::metadata(&path).map_err(|e| format!("snapshot input {name}: {e}"))?;
+    if !meta.is_file() || meta.len() > MAX_FILE_BYTES {
         return Err(format!("unsupported or oversized input: {name}"));
     }
-    let mut bytes = Vec::new();
-    (&mut file)
-        .take(MAX_FILE_BYTES + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|e| e.to_string())?;
-    let after = inspect()?;
-    if bytes.len() as u64 > MAX_FILE_BYTES
-        || before.len() != after.len()
-        || before.modified().ok() != after.modified().ok()
-        || bytes.len() as u64 != after.len()
-    {
-        return Err(format!("input changed while reading: {name}"));
-    }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::MetadataExt;
-        if before.dev() != after.dev() || before.ino() != after.ino() {
-            return Err(format!("input replaced while reading: {name}"));
-        }
-    }
-    Ok(bytes)
+    fs::read(&path).map_err(|e| format!("snapshot input {name}: {e}"))
 }
 fn mime(name: &str) -> Option<&'static str> {
     Some(match Path::new(name).extension()?.to_str()? {
@@ -340,7 +288,7 @@ fn respond(
     stream: &mut TcpStream,
     host: &str,
     snapshot: &HtmlSnapshot,
-    scripts: bool,
+    script_policy: Option<&str>,
 ) -> Result<(), std::io::Error> {
     // BSD/macOS can inherit O_NONBLOCK from the listening socket. Explicitly
     // switch accepted streams back before write_all; otherwise large bodies
@@ -382,10 +330,10 @@ fn respond(
         Some(name) => ("200 OK", mime(name).unwrap(), snapshot.bytes(name).unwrap()),
         None => ("404 Not Found", "text/plain", b"Not found".as_slice()),
     };
-    let script_policy = if scripts { "script-src 'self' 'unsafe-inline'; worker-src 'none'; " } else { "" };
+    let csp = script_policy.map(|scripts| format!("Content-Security-Policy: default-src 'none'; {scripts}style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n")).unwrap_or_default();
     write!(
         stream,
-        "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nConnection: close\r\nCache-Control: private, max-age=3600, immutable\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; {script_policy}style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n\r\n",
+        "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nConnection: close\r\nCache-Control: private, max-age=3600, immutable\r\nX-Content-Type-Options: nosniff\r\n{csp}\r\n",
         body.len()
     )?;
     stream.write_all(body)

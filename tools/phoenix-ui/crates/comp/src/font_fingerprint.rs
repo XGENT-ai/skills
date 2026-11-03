@@ -1201,8 +1201,3 @@ pub fn distance(a: &dyn Fn(&str) -> Option<f64>, b: &dyn Fn(&str) -> Option<f64>
     }
     d / wsum
 }
-
-/// Convenience: distance where both sides are `FeatureVec`-like accessors.
-pub fn distance_fp(a: &Fingerprint, b: &FeatureVec) -> f64 {
-    distance(&|k| a.get(k), &|k| b.get(k))
-}

@@ -1,6 +1,6 @@
 {
   "stdout": "",
-  "stderr": "[\n  {\n    \"slug\": \"src-app-tsx\",\n    \"path\": \".impeccable/surfaces/src-app-tsx.md\",\n    \"primaryTarget\": \"src/App.tsx\",\n    \"relatedTargets\": []\n  }\n]\n",
+  "stderr": "[\n  {\n    \"slug\": \"src-app-tsx\",\n    \"path\": \".phoenix-ui/surfaces/src-app-tsx.md\",\n    \"primaryTarget\": \"src/App.tsx\",\n    \"relatedTargets\": []\n  }\n]\n",
   "exit": 2,
   "signal": null,
   "files": {}

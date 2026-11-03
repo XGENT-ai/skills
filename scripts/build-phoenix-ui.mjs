@@ -69,7 +69,7 @@ function sourceInputs() {
   };
   external('skills/phoenix-ui/src');
   for (const file of ['package.json', 'bin/phoenix-ui.js', 'mise.toml', 'rust-toolchain.toml', 'scripts/build-phoenix-ui.mjs',
-    'scripts/phoenix-build-tools.mjs', 'scripts/phoenix-wasm-pack.mjs']) {
+    'scripts/phoenix-build-tools.mjs']) {
     entries.push([file, sha(fs.readFileSync(path.join(root, file)))]);
   }
   return Object.fromEntries(entries.sort(([a], [b]) => a < b ? -1 : 1));

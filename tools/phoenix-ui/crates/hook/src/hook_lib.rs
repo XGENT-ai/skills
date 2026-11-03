@@ -1136,7 +1136,7 @@ re!(WS_RUN_RE, format!("{WS}+"));
 
 /// JS: `.replace(/\s+/g, ' ').trim()`
 fn collapse_ws(s: &str) -> String {
-    js::trim(&WS_RUN_RE.replace_all(s, " ")).to_string()
+    js::trim(&js::collapse_ws(s)).to_string()
 }
 
 /// JS: extractFindingIgnoreValueRaw(finding, rule) — the display (un-lowercased)
@@ -1641,7 +1641,6 @@ impl HookScanOptions {
             inline_ignores: true,
             design_system: self.design_system.clone(),
             viewport: None,
-            profile: None,
             rule_pack: self.rule_pack,
         }
     }
@@ -1697,7 +1696,6 @@ pub fn detector_detect_text(
     scan: &HookScanOptions,
 ) -> Vec<Finding> {
     let opts = TextOptions {
-        profile: None,
         design_system: scan.design_system.as_deref(),
         inline_ignores: true,
         rule_pack: scan.rule_pack,

@@ -5,15 +5,14 @@ use std::{
 };
 
 // Embedded schemas and the five frozen legacy samples bind the native source
-// identity. Skill text, other examples and derived ENGINE.json do not.
+// identity. Skill text, other examples, derived ENGINE.json and the npm package
+// version do not, so a script-only npm release can reuse an unchanged engine.
 const INPUTS: &[&str] = &[
-    "package.json",
     "tools/phoenix-diagram/Cargo.toml",
     "tools/phoenix-diagram/Cargo.lock",
     "tools/phoenix-diagram/build.rs",
     "tools/phoenix-diagram/src",
     "tools/phoenix-diagram/assets",
-    "tools/phoenix-diagram/migration-sources/archify-v1.json",
     "tools/phoenix-diagram/viewer",
     "tools/phoenix-diagram/upstream/SOURCE.json",
     "tools/phoenix-diagram/upstream/legacy-2.17/schemas",
@@ -56,14 +55,6 @@ fn main() {
         .canonicalize()
         .expect("source root");
     let mut files = Vec::new();
-    let package: serde_json::Value = serde_json::from_slice(
-        &fs::read(root.join("package.json")).expect("read npm package identity"),
-    )
-    .expect("npm package JSON");
-    println!(
-        "cargo:rustc-env=PHOENIX_DIAGRAM_NPM_PACKAGE_VERSION={}",
-        package["version"].as_str().expect("npm package version")
-    );
     for input in INPUTS {
         let path = root.join(input);
         println!("cargo:rerun-if-changed={}", path.display());

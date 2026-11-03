@@ -98,7 +98,6 @@ fn collect(cwd: &str, target: &TargetOptions, env: &Env, provider_id: &str) -> R
     findings.extend(check_detector_ignores(&project_root, known.as_deref()));
     findings.extend(boot.surface_briefs);
     findings.extend(check_hook_installation(&project_root, Some(&ctx.repo_root), provider_id));
-    findings.extend(check_legacy_live_state(&project_root));
     findings.extend(boot.project_roots);
     findings.extend(ws_findings);
 
@@ -148,14 +147,17 @@ fn apply_fixes(report: &Report) -> Fixes {
             }
             let _ = std::fs::create_dir_all(jsp::dirname(canonical));
             let _ = std::fs::rename(present, canonical);
-            applied.push(format!("Moved {} to {}.", rel(present, &report.project_root), rel(canonical, &report.project_root)));
+            applied.push(format!(
+                "Moved {} to {}.",
+                rel(present, &report.project_root),
+                rel(canonical, &report.project_root)
+            ));
             continue;
         }
-        if entry.id == "legacy-live-state" {
-            skipped.push((entry.id.clone(), "delete by hand once no live session is running".to_string()));
-            continue;
-        }
-        skipped.push((entry.id.clone(), "no automatic migration implemented".to_string()));
+        skipped.push((
+            entry.id.clone(),
+            "no automatic migration implemented".to_string(),
+        ));
     }
     if let (Some(pp), Some(product)) = (&report.abs_product_path, report.ctx.product.as_deref()) {
         if !product.is_empty()

@@ -262,21 +262,6 @@ test('offline wrong manifest or missing license refuses cache and project writes
   assert.equal(fs.existsSync(f.cache), false);
 });
 
-test('engine installation and ordinary runs ignore obsolete install receipts', async t => {
-  for (const receipt of [null, '{broken receipt', JSON.stringify({ manifest: { version: '0.6.0' } })]) {
-    const f = fixture(t);
-    if (receipt !== null) {
-      fs.mkdirSync(path.join(f.project, '.phoenix-ui/install'), { recursive: true });
-      fs.writeFileSync(path.join(f.project, '.phoenix-ui/install/active.json'), receipt);
-    }
-    const installed = await run(f, ['engine', 'install', '--project', f.project, '--release-dir', f.release]);
-    assert.equal(installed.code, 0, installed.stderr);
-    const result = await run(f, ['context', '--json']);
-    assert.equal(result.code, 0, result.stderr);
-    assert.equal(JSON.parse(result.stdout).argv[0], 'context');
-  }
-});
-
 test('explicit HTTP substitute verifies the package digest; normal runs make zero requests', async t => {
   const f = fixture(t);
   let requests = 0;

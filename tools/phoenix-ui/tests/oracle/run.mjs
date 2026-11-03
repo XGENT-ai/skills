@@ -1,43 +1,25 @@
 #!/usr/bin/env node
 /**
- * Replay the corpus against an implementation and diff against goldens.
- *   IMPECCABLE_BIN=/path/to/impeccable node tests/oracle/run.mjs [prefix]
- *   node tests/oracle/run.mjs --js [prefix]     # self-check: JS vs its own goldens
- * Exit 1 on any difference. Cases whose id appears in DELTAS.md as accepted
- * are reported but not counted as failures.
+ * Replay the corpus against a phoenix-ui binary and diff against the goldens.
+ *   node tools/phoenix-ui/tests/oracle/run.mjs --bin <phoenix-ui> [id-prefix]
+ * The binary defaults to $PHOENIX_UI_BIN. Exit 1 on any difference or
+ * missing golden.
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import { allCases, runCase, readGolden, diffResults, caseRunsHere, ORACLE_DIR } from './lib.mjs';
+import { allCases, runCase, readGolden, diffResults, caseRunsHere, parseArgs } from './lib.mjs';
 
-const argv = process.argv.slice(2);
-const impl = argv.includes('--js') ? 'js' : 'bin';
-const prefix = argv.find(a => !a.startsWith('--')) || '';
-const accepted = loadAcceptedDeltas();
-
+const { bin, prefix } = parseArgs(process.argv.slice(2));
 const cases = (await allCases()).filter(c => c.id.startsWith(prefix));
-let pass = 0, fail = 0, acceptedCount = 0, missing = 0, skipped = 0;
+if (!cases.length) throw new Error(`no oracle case id starts with: ${prefix}`);
+let pass = 0, fail = 0, missing = 0, skipped = 0;
 for (const c of cases) {
   if (!caseRunsHere(c)) { skipped++; process.stdout.write(`-- ${c.id}: skipped (platforms: ${c.platforms.join(', ')})\n`); continue; }
   const golden = readGolden(c.id);
   if (!golden) { missing++; process.stdout.write(`?? ${c.id}: no golden (run record.mjs)\n`); continue; }
-  const actual = runCase(c, { impl });
-  const diffs = diffResults(golden, actual);
+  let diffs;
+  try { diffs = diffResults(golden, runCase(c, { bin })); } catch (error) { diffs = [error.message]; }
   if (!diffs.length) { pass++; continue; }
-  if (accepted.has(c.id)) { acceptedCount++; process.stdout.write(`~~ ${c.id}: differs (accepted delta)\n`); continue; }
   fail++;
   process.stdout.write(`XX ${c.id}\n${diffs.map(d => '   ' + d.replace(/\n/g, '\n   ')).join('\n')}\n`);
 }
-process.stdout.write(`\n${pass} pass, ${fail} fail, ${acceptedCount} accepted deltas, ${missing} missing goldens${skipped ? `, ${skipped} skipped on ${process.platform}` : ''} (${impl})\n`);
-process.exit(fail || missing ? 1 : 0);
-
-function loadAcceptedDeltas() {
-  const p = path.join(ORACLE_DIR, 'DELTAS.md');
-  if (!fs.existsSync(p)) return new Set();
-  const ids = new Set();
-  for (const line of fs.readFileSync(p, 'utf8').split('\n')) {
-    const m = /^- `([^`]+)`/.exec(line);
-    if (m) ids.add(m[1]);
-  }
-  return ids;
-}
+process.stdout.write(`\n${pass} pass, ${fail} fail, ${missing} missing goldens${skipped ? `, ${skipped} skipped on ${process.platform}` : ''}\n`);
+process.exitCode = fail || missing ? 1 : 0;

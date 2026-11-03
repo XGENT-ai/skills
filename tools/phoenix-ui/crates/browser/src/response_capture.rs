@@ -34,8 +34,7 @@ pub struct ResponseEvidence {
     pub missing_urls: Vec<String>,
     /// Evidence is incomplete when the bounded event journal overflowed.
     pub truncated: bool,
-    /// Network changed while retrieving bodies; callers must capture again.
-    pub changed_during_collection: bool,
+    /// Network event count; callers compare two snapshots to see the page settle.
     pub revision: u64,
 }
 
@@ -220,13 +219,7 @@ impl ResponseCapture {
         }
     }
 
-    pub fn evidence(
-        &self,
-        urls: &[String],
-        frame: &str,
-        loader: &str,
-        before: u64,
-    ) -> ResponseEvidence {
+    pub fn evidence(&self, urls: &[String], frame: &str, loader: &str) -> ResponseEvidence {
         let mut responses: Vec<_> = self
             .records
             .iter()
@@ -263,7 +256,6 @@ impl ResponseCapture {
             responses,
             missing_urls,
             truncated: self.truncated,
-            changed_during_collection: before != self.revision,
             revision: self.revision,
         }
     }
@@ -291,7 +283,7 @@ mod tests {
             vec![(1, "1".into())]
         );
         t.store_body(1, Ok(json!({"body":"AP8=","base64Encoded":true})));
-        let e = t.evidence(&["asset".into()], "main", "current", t.revision);
+        let e = t.evidence(&["asset".into()], "main", "current");
         assert!(e.responses.iter().all(|r| r.ambiguous_url));
         assert!(e.responses[0].body.is_none());
         assert_eq!(e.responses[1].body, Some(vec![0, 255]));
@@ -306,21 +298,15 @@ mod tests {
             &json!({"requestId":"2","errorText":"blocked"}),
         );
         let urls = vec!["inflight".into(), "failed".into(), "absent".into()];
-        let e = t.evidence(&urls, "main", "current", 0);
-        assert!(e.changed_during_collection);
-        assert!(
-            e.responses
-                .iter()
-                .all(|r| r.body.is_none() && r.unavailable_reason.is_some())
-        );
+        let e = t.evidence(&urls, "main", "current");
+        assert!(e
+            .responses
+            .iter()
+            .all(|r| r.body.is_none() && r.unavailable_reason.is_some()));
         assert_eq!(e.missing_urls, vec!["absent"]);
-        assert!(
-            t.evidence(&urls, "iframe", "current", 0)
-                .responses
-                .is_empty()
-        );
-        assert!(t.evidence(&urls, "main", "old", 0).responses.is_empty());
-        assert!(t.evidence(&urls, "main", "", 0).responses.is_empty());
+        assert!(t.evidence(&urls, "iframe", "current").responses.is_empty());
+        assert!(t.evidence(&urls, "main", "old").responses.is_empty());
+        assert!(t.evidence(&urls, "main", "").responses.is_empty());
     }
     #[test]
     fn decoded_text_follows_bom_then_lossy_utf8() {

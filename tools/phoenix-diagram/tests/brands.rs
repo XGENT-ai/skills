@@ -68,7 +68,6 @@ fn builtin_resource_is_bound_embedded_and_retains_role_and_input_bytes() {
         String::from_utf8(render::render(&scene, &EmbeddedAssets::builtin()).unwrap()).unwrap();
     assert!(html.contains("data-brand-mark=\"postgresql\""));
     assert!(html.contains("Owns records"));
-    assert_eq!(brands::bound(&input, &resources).unwrap(), resources);
 }
 
 #[test]
@@ -234,12 +233,10 @@ fn explicit_cli_catalog_and_capture_return_distinct_structured_receipts() {
 }
 
 #[test]
-fn pinned_local_resource_delivers_offline_with_safe_facts_and_strict_identity() {
+fn pinned_local_resource_delivers_offline_with_safe_facts() {
     use base64::{engine::general_purpose::STANDARD, Engine};
     use phoenix_diagram::{
-        brands,
-        check::FileIdentity,
-        delivery::{self, CompileRequest, EngineIdentity, Status},
+        delivery::{self, CompileRequest, Status},
         input::sha256,
         render::EmbeddedAssets,
     };
@@ -259,18 +256,10 @@ fn pinned_local_resource_delivers_offline_with_safe_facts_and_strict_identity() 
     fs::write(&candidate, &original).unwrap();
     let options = CompileOptions::default();
     let assets = EmbeddedAssets::builtin();
-    let engine = EngineIdentity {
-        source_input_sha256: sha256(b"test engine"),
-        input_contract_schema: 1,
-        receipt_schema: 1,
-        viewer_revision: "phoenix-v2".into(),
-        binary: FileIdentity::of(b"test engine"),
-    };
     let request = CompileRequest {
         kind: DiagramType::Architecture,
         candidate: &candidate,
         options: &options,
-        engine: &engine,
         assets: &assets,
         repo_root: None,
         brand_cache: Some(&cache),
@@ -284,13 +273,8 @@ fn pinned_local_resource_delivers_offline_with_safe_facts_and_strict_identity() 
     assert!(!html.contains("#session"));
     assert!(!html.contains(cache.to_str().unwrap()));
     assert_eq!(fs::read(&candidate).unwrap(), original);
-    let checked = delivery::check(&output, true, &engine);
+    let checked = delivery::check(&output);
     assert_eq!(checked.status, Status::Pass, "{:?}", checked.diagnostics);
-    let input = parse_input(&original, DiagramType::Architecture, &options).unwrap();
-    let bindings = brands::prepare(&input, &cache).unwrap();
-    let mut tampered = bindings.clone();
-    tampered.values_mut().next().unwrap().resource.sha256 = "0".repeat(64);
-    assert!(brands::bound(&input, &tampered).is_err());
     fs::write(&cache_file, b"corrupted cache").unwrap();
     let failed = delivery::deliver(&request, &output);
     assert_eq!(failed.status, Status::Failed);

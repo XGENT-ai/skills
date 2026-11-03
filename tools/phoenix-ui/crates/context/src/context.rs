@@ -94,10 +94,6 @@ pub struct Ctx {
     pub is_monorepo: bool,
 }
 
-pub fn resolve_context_dir(cwd: &str, options: &TargetOptions, env: &Env) -> String {
-    resolve_context(cwd, options, env).context_dir
-}
-
 /// JS: loadContext(cwd, options)
 pub fn load_context(cwd: &str, options: &TargetOptions, env: &Env) -> Ctx {
     let resolved = resolve_context(cwd, options, env);

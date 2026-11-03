@@ -1,16 +1,15 @@
-//! JS: live-complete.mjs -> `impeccable live-complete`. The canonical durable
-//! completion acknowledgement, gated on the accepted source being clean.
+//! `phoenix-ui live-complete`: tell the live helper a session is finished,
+//! gated on the accepted source being clean.
 
 use crate::accept_verify::verify_accepted_file;
 use crate::paths::read_live_server_info;
 use crate::roots::enter_live_root;
-use crate::server::post_poll;
-use crate::session::create_live_session_store;
+use crate::server::{fetch_status, post_poll};
 use crate::util::{json_pretty, jsp, println};
 use impeccable_common::Io;
 use serde_json::{json, Value};
 
-const USAGE: &str = "Usage: phoenix-ui live-complete --id SESSION_ID [--discarded|--error MESSAGE] [--force]\n\nAppend the final durable session acknowledgement. Use after accept/discard cleanup is verified.\nCompletion is refused while the session's source file still carries live-mode leftovers\n(markers, data-p-* attributes, unbaked --p-* vars); fix the file or pass --force.";
+const USAGE: &str = "Usage: phoenix-ui live-complete --id SESSION_ID [--discarded|--error MESSAGE] [--force]\n\nMark a session finished in the running live server. Use after accept/discard cleanup is verified.\nCompletion is refused while the session's source file still carries live-mode leftovers\n(markers, data-p-* attributes, unbaked --p-* vars); fix the file or pass --force.";
 
 struct Args {
     id: Option<String>,
@@ -78,22 +77,30 @@ fn complete_cli(argv: &[String], io: &mut Io) -> i32 {
     let id = id.unwrap();
     let cwd = io.cwd.to_string_lossy().into_owned();
     let env = io.env.clone();
+    let server = read_live_server_info(&cwd, &env)
+        .map(|(info, _)| info)
+        .and_then(|info| Some((info.port?, info.token.unwrap_or_default())));
+    let Some((port, token)) = server else {
+        crate::util::eprintln(
+            io,
+            "Error: no running live server; the session lived in it.",
+        );
+        return 1;
+    };
 
     if args.status == "complete" && !args.force {
-        let store = create_live_session_store(&cwd, &env, Some(&id));
-        let snapshot = match store.get_snapshot(&id, true) {
-            Ok(s) => s,
-            Err(e) => {
-                crate::util::eprintln(io, &format!("Error: {}", e));
-                return 1;
-            }
-        };
-        let source_file = snapshot
-            .as_ref()
-            .and_then(|s| s.get("sourceFile"))
-            .and_then(|v| v.as_str())
-            .filter(|s| !s.is_empty())
-            .map(String::from);
+        let source_file = fetch_status(port, &token)
+            .and_then(|status| {
+                status
+                    .get("activeSessions")?
+                    .as_array()?
+                    .iter()
+                    .find(|s| s.get("id").and_then(Value::as_str) == Some(id.as_str()))?
+                    .get("sourceFile")?
+                    .as_str()
+                    .map(String::from)
+            })
+            .filter(|s| !s.is_empty());
         if let Some(sf) = &source_file {
             let abs = jsp::resolve(&cwd, &[sf]);
             let rel = jsp::relative("/", &cwd, &abs);
@@ -121,67 +128,35 @@ fn complete_cli(argv: &[String], io: &mut Io) -> i32 {
         }
     }
 
-    let server_info = read_live_server_info(&cwd, &env).map(|(i, _)| i);
-    let server_result: Option<Value> = server_info.as_ref().and_then(|info| {
-        let ty = match args.status {
-            "discarded" => "discarded",
-            "agent_error" => "error",
-            _ => "complete",
-        };
-        let mut body = json!({ "token": info.token.clone().map(Value::String).unwrap_or(Value::Null), "id": id, "type": ty });
-        if let Some(m) = &args.message {
-            body["message"] = json!(m);
-        }
-        if info.token.is_none() {
-            body.as_object_mut().map(|o| o.shift_remove("token"));
-        }
-        info.port.and_then(|p| post_poll(p, &body))
-    });
-    if server_result
-        .as_ref()
-        .and_then(|r| r.get("ok"))
-        .map(crate::inject::detect_utils::truthy)
-        .unwrap_or(false)
-    {
-        let store = create_live_session_store(&cwd, &env, Some(&id));
-        let snapshot = store.get_snapshot(&id, true).ok().flatten();
-        let phase = snapshot
-            .as_ref()
-            .and_then(|s| s.get("phase"))
-            .filter(|p| crate::inject::detect_utils::truthy(p))
-            .cloned()
-            .unwrap_or_else(|| json!(args.status));
-        println(
+    let ty = match args.status {
+        "discarded" => "discarded",
+        "agent_error" => "error",
+        _ => "complete",
+    };
+    let mut body = json!({ "token": token, "id": id, "type": ty });
+    if let Some(m) = &args.message {
+        body["message"] = json!(m);
+    }
+    let acknowledged = post_poll(port, &body)
+        .and_then(|r| r.get("ok").cloned())
+        .is_some_and(|ok| ok == Value::Bool(true));
+    if !acknowledged {
+        crate::util::eprintln(
             io,
-            &json_pretty(
-                &json!({ "ok": true, "id": id, "phase": phase, "snapshot": snapshot.map(Value::Object).unwrap_or(Value::Null) }),
+            &format!(
+                "Error: the live server did not accept the completion of {}",
+                id
             ),
         );
-        return 0;
+        return 1;
     }
-
-    let store = create_live_session_store(&cwd, &env, Some(&id));
-    let event = match args.status {
-        "discarded" => json!({ "type": "discarded", "id": id }),
-        "agent_error" => {
-            json!({ "type": "agent_error", "id": id, "message": args.message.clone().unwrap_or_else(|| "unknown error".to_string()) })
-        }
-        _ => json!({ "type": "complete", "id": id }),
+    let phase = match args.status {
+        "complete" => "completed",
+        other => other,
     };
-    match store.append_event(&event) {
-        Ok(snapshot) => {
-            let phase = snapshot.get("phase").cloned().unwrap_or(Value::Null);
-            println(
-                io,
-                &json_pretty(
-                    &json!({ "ok": true, "id": id, "phase": phase, "snapshot": Value::Object(snapshot) }),
-                ),
-            );
-            0
-        }
-        Err(e) => {
-            crate::util::eprintln(io, &format!("Error: {}", e));
-            1
-        }
-    }
+    println(
+        io,
+        &json_pretty(&json!({ "ok": true, "id": id, "phase": phase })),
+    );
+    0
 }

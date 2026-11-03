@@ -1,4 +1,21 @@
-use impeccable::capture_snapshot::{HtmlSnapshot, SnapshotSelection};
+use impeccable::capture_snapshot::{capture_regions, SnapshotSelection};
+use impeccable_browser::html_snapshot::HtmlSnapshot;
+use impeccable_comp_verbs::asset_capture::{AssetCapture, AssetRenderer};
+
+fn capture_region(
+    snapshot: &std::sync::Arc<HtmlSnapshot>,
+    renderer: &mut dyn AssetRenderer,
+    region_id: &str,
+) -> Result<AssetCapture, String> {
+    capture_regions(
+        snapshot,
+        renderer,
+        ".phoenix-ui/spec.json",
+        &[region_id],
+        true,
+    )
+    .map(|mut c| c.remove(0))
+}
 use std::{
     fs,
     path::PathBuf,
@@ -51,90 +68,7 @@ impl Drop for Fixture {
 }
 
 #[test]
-fn snapshot_freezes_bytes_and_detects_every_changed_input() {
-    let f = Fixture::new();
-    let original = HtmlSnapshot::freeze(f.selection()).unwrap();
-    let mut reordered = f.selection();
-    reordered.served.reverse();
-    reordered.bound.reverse();
-    assert_eq!(
-        original.digest(),
-        HtmlSnapshot::freeze(reordered).unwrap().digest()
-    );
-    for name in [
-        "index.html",
-        "assets/art.png",
-        ".phoenix-ui/spec.json",
-        ".phoenix-ui/comp.png",
-    ] {
-        let before = fs::read(f.0.join(name)).unwrap();
-        fs::write(f.0.join(name), b"changed").unwrap();
-        assert!(original.verify_current().is_err(), "{name}");
-        assert_eq!(original.bytes(name).unwrap(), before);
-        fs::write(f.0.join(name), before).unwrap();
-        original.verify_current().unwrap();
-    }
-}
-
-#[test]
-fn routes_are_explicit_and_never_expose_bound_private_files() {
-    let f = Fixture::new();
-    let s = HtmlSnapshot::freeze(f.selection()).unwrap();
-    assert_eq!(
-        s.serve_path("/index.html?cache=2"),
-        Some("index.html".into())
-    );
-    assert_eq!(
-        s.serve_path("/assets/art.png"),
-        Some("assets/art.png".into())
-    );
-    for route in [
-        "/",
-        "/other.html",
-        "/.env",
-        "/.phoenix-ui/comp.png",
-        "/../index.html",
-        "/assets/../index.html",
-        "/%2e%2e/index.html",
-        "/assets%2fart.png",
-        "/assets\\art.png",
-        "http://example.com/index.html",
-    ] {
-        assert!(s.serve_path(route).is_none(), "{route}");
-    }
-    let mut selection = f.selection();
-    selection.served.push(".env".into());
-    assert!(HtmlSnapshot::freeze(selection).is_err());
-}
-
-#[test]
-fn snapshot_rejects_traversal_symlinks_and_non_html_entries() {
-    let f = Fixture::new();
-    for bad in [
-        "../index.html",
-        "/index.html",
-        "assets/../index.html",
-        "assets/art.png",
-    ] {
-        let mut selection = f.selection();
-        selection.entry = bad.into();
-        assert!(HtmlSnapshot::freeze(selection).is_err(), "{bad}");
-    }
-    #[cfg(unix)]
-    {
-        std::os::unix::fs::symlink(f.0.join("assets"), f.0.join("linked")).unwrap();
-        let mut selection = f.selection();
-        selection.served.push("linked/art.png".into());
-        assert!(HtmlSnapshot::freeze(selection).is_err());
-        let s = HtmlSnapshot::freeze(f.selection()).unwrap();
-        fs::rename(f.0.join("assets"), f.0.join("original-assets")).unwrap();
-        std::os::unix::fs::symlink(f.0.join("original-assets"), f.0.join("assets")).unwrap();
-        assert!(s.verify_current().is_err());
-    }
-}
-
-#[test]
-fn fresh_capture_ignores_saved_receipts_and_rejects_stale_or_wrong_documents() {
+fn fresh_capture_ignores_saved_receipts_and_rejects_wrong_documents() {
     use impeccable_comp_verbs::asset_capture::{
         AssetCapture, AssetCaptureRequest, AssetRenderer, capture_sha256,
     };
@@ -144,7 +78,6 @@ fn fresh_capture_ignores_saved_receipts_and_rejects_stale_or_wrong_documents() {
     fs::write(f.0.join(".phoenix-ui/spec.json"),serde_json::to_vec(&json!({"comp":".phoenix-ui/comp.png","compSize":{"width":200,"height":200},"regions":[{"id":"art","plate":"assets/art.png","px":{"x":20,"y":20,"w":80,"h":80}}]})).unwrap()).unwrap();
     struct Fake {
         entry: Vec<u8>,
-        mutation: Option<PathBuf>,
         wrong: bool,
         partial: bool,
         calls: usize,
@@ -154,9 +87,6 @@ fn fresh_capture_ignores_saved_receipts_and_rejects_stale_or_wrong_documents() {
             self.calls += 1;
             assert!(r.url.starts_with("http://127.0.0.1:"));
             assert!(r.url.ends_with("/index.html"));
-            if let Some(path) = &self.mutation {
-                fs::write(path, b"changed").unwrap();
-            }
             Ok(AssetCapture {
                 receipt: json!({"status":if self.partial {"unavailable"} else {"captured"},"stableCapture":true,"resolvedUrl":if self.wrong {"http://other/page"} else {&r.url},"documentResponseSha256":capture_sha256(&self.entry),"assetSha256":capture_sha256(&r.asset_bytes),"referenceSha256":capture_sha256(&r.reference_bytes),"viewport":{"width":200,"height":200,"dpr":1},"expectedBox":r.expected_box,"reducedMotion":true}),
                 images: vec![],
@@ -166,7 +96,6 @@ fn fresh_capture_ignores_saved_receipts_and_rejects_stale_or_wrong_documents() {
     let s = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
     let mut renderer = Fake {
         entry: s.bytes("index.html").unwrap().to_vec(),
-        mutation: None,
         wrong: false,
         partial: false,
         calls: 0,
@@ -176,93 +105,21 @@ fn fresh_capture_ignores_saved_receipts_and_rejects_stale_or_wrong_documents() {
         br#"{"status":"captured","visible":true}"#,
     )
     .unwrap();
-    let capture = s
-        .capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-        .unwrap();
+    let capture = capture_region(&s, &mut renderer, "art").unwrap();
     assert_eq!(capture.receipt["inputSnapshot"]["digest"], s.digest());
     assert_eq!(renderer.calls, 1);
     renderer.wrong = true;
-    let error = s
-        .capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-        .err()
-        .unwrap();
+    let error = capture_region(&s, &mut renderer, "art").err().unwrap();
     assert!(error.contains("art: resolvedUrl"), "{error}");
     renderer.partial = true;
     assert!(
-        s.capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-            .is_err(),
+        capture_region(&s, &mut renderer, "art").is_err(),
         "partial stable evidence must also bind the document"
     );
     renderer.partial = false;
     renderer.wrong = false;
     renderer.entry = b"different entry".to_vec();
-    assert!(s
-        .capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-        .is_err());
-    renderer.entry = s.bytes("index.html").unwrap().to_vec();
-    renderer.mutation = Some(f.0.join("assets/art.png"));
-    assert!(s
-        .capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-        .is_err());
-    let calls = renderer.calls;
-    assert!(s
-        .capture_region(&mut renderer, ".phoenix-ui/spec.json", "art", true)
-        .is_err());
-    assert_eq!(
-        renderer.calls, calls,
-        "stale input must fail before renderer launch"
-    );
-}
-
-#[test]
-fn snapshot_server_serves_frozen_bytes_and_checks_host() {
-    use std::{
-        io::{Read, Write},
-        net::TcpStream,
-        sync::Arc,
-    };
-    let f = Fixture::new();
-    let snapshot = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
-    let server = snapshot.serve().unwrap();
-    let url = server.entry_url();
-    let host = url
-        .strip_prefix("http://")
-        .unwrap()
-        .split('/')
-        .next()
-        .unwrap();
-    let get = |path: &str, request_host: &str| {
-        let mut stream = TcpStream::connect(host).unwrap();
-        stream
-            .set_read_timeout(Some(std::time::Duration::from_secs(5)))
-            .unwrap();
-        write!(
-            stream,
-            "GET {path} HTTP/1.1\r\nHost: {request_host}\r\nConnection: close\r\n\r\n"
-        )
-        .unwrap();
-        let mut response = Vec::new();
-        stream.read_to_end(&mut response).unwrap();
-        response
-    };
-    fs::write(f.0.join("assets/art.png"), b"new bytes").unwrap();
-    let actual = get("/assets/art.png", host);
-    assert!(actual.ends_with(b"asset bytes"));
-    assert!(
-        String::from_utf8_lossy(&actual)
-            .contains("Cache-Control: private, max-age=3600, immutable")
-    );
-    assert!(String::from_utf8_lossy(&actual).starts_with("HTTP/1.1 200 OK"));
-    for (path, h) in [
-        ("/.env", host),
-        ("/.phoenix-ui/spec.json", host),
-        ("/other.html", host),
-        ("/index.html", "attacker.example"),
-        ("/assets/../index.html", host),
-    ] {
-        assert!(String::from_utf8_lossy(&get(path, h)).starts_with("HTTP/1.1 404"));
-    }
-    assert!(snapshot.verify_current().is_err());
+    assert!(capture_region(&s, &mut renderer, "art").is_err());
 }
 
 #[test]
@@ -282,14 +139,8 @@ fn native_browser_capture_is_bound_to_frozen_entry_spec_and_asset() {
     fs::write(f.0.join(".phoenix-ui/comp.png"), &image).unwrap();
     fs::write(f.0.join(".phoenix-ui/spec.json"),br#"{"comp":".phoenix-ui/comp.png","compSize":{"width":200,"height":200},"regions":[{"id":"art","plate":"assets/art.png","px":{"x":20,"y":20,"w":80,"h":80}}]}"#).unwrap();
     let snapshot = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
-    let capture = snapshot
-        .capture_region(
-            &mut CdpAssetRenderer::from_process_env(),
-            ".phoenix-ui/spec.json",
-            "art",
-            true,
-        )
-        .unwrap();
+    let capture =
+        capture_region(&snapshot, &mut CdpAssetRenderer::from_process_env(), "art").unwrap();
     assert_eq!(capture.receipt["status"], "captured", "{}", capture.receipt);
     assert_eq!(
         capture.receipt["combinedContribution"]["changedPixelsInRegion"],
@@ -318,14 +169,8 @@ fn native_capture_binds_bom_entry_to_its_frozen_bytes() {
     fs::write(f.0.join(".phoenix-ui/comp.png"), &image).unwrap();
     fs::write(f.0.join(".phoenix-ui/spec.json"),br#"{"comp":".phoenix-ui/comp.png","compSize":{"width":200,"height":200},"regions":[{"id":"art","plate":"assets/art.png","px":{"x":20,"y":20,"w":80,"h":80}}]}"#).unwrap();
     let snapshot = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
-    let capture = snapshot
-        .capture_region(
-            &mut CdpAssetRenderer::from_process_env(),
-            ".phoenix-ui/spec.json",
-            "art",
-            true,
-        )
-        .unwrap();
+    let capture =
+        capture_region(&snapshot, &mut CdpAssetRenderer::from_process_env(), "art").unwrap();
     assert_eq!(capture.receipt["status"], "captured", "{}", capture.receipt);
     assert_eq!(capture.receipt["documentResponseText"], true);
 }
@@ -349,7 +194,7 @@ fn batch_uses_one_document_and_rejects_mixed_inputs() {
     fs::write(f.0.join(".phoenix-ui/comp.png"), &image).unwrap();
     fs::write(f.0.join(".phoenix-ui/spec.json"),br#"{"comp":".phoenix-ui/comp.png","compSize":{"width":200,"height":200},"regions":[{"id":"first","plate":"assets/art.png","px":{"x":20,"y":20,"w":80,"h":80}},{"id":"second","plate":"assets/art.png","px":{"x":110,"y":110,"w":80,"h":80}}]}"#).unwrap();
     let snapshot = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
-    let server = snapshot.serve().unwrap();
+    let server = snapshot.serve_open().unwrap();
     let make = |x| AssetCaptureRequest {
         url: server.entry_url(),
         viewport: [200, 200],
@@ -364,14 +209,14 @@ fn batch_uses_one_document_and_rejects_mixed_inputs() {
         },
     };
     let mut renderer = CdpAssetRenderer::from_process_env();
-    let captures = snapshot
-        .capture_regions(
-            &mut renderer,
-            ".phoenix-ui/spec.json",
-            &["first", "second"],
-            true,
-        )
-        .unwrap();
+    let captures = capture_regions(
+        &snapshot,
+        &mut renderer,
+        ".phoenix-ui/spec.json",
+        &["first", "second"],
+        true,
+    )
+    .unwrap();
     assert_eq!(captures.len(), 2);
     for capture in &captures {
         assert_eq!(capture.receipt["status"], "captured", "{}", capture.receipt);
@@ -398,45 +243,6 @@ fn batch_uses_one_document_and_rejects_mixed_inputs() {
 }
 
 #[test]
-fn snapshot_server_delivers_large_binary_response_completely() {
-    use std::{
-        io::{Read, Write},
-        net::TcpStream,
-        sync::Arc,
-    };
-    let f = Fixture::new();
-    let payload: Vec<u8> = (0..3 * 1024 * 1024).map(|n| (n % 251) as u8).collect();
-    fs::write(f.0.join("assets/art.png"), &payload).unwrap();
-    let snapshot = Arc::new(HtmlSnapshot::freeze(f.selection()).unwrap());
-    let server = snapshot.serve().unwrap();
-    let url = server.entry_url();
-    let host = url
-        .strip_prefix("http://")
-        .unwrap()
-        .split('/')
-        .next()
-        .unwrap();
-    let mut stream = TcpStream::connect(host).unwrap();
-    stream
-        .set_read_timeout(Some(std::time::Duration::from_secs(5)))
-        .unwrap();
-    write!(
-        stream,
-        "GET /assets/art.png HTTP/1.1\r\nHost: {host}\r\n\r\n"
-    )
-    .unwrap();
-    let mut response = Vec::new();
-    stream.read_to_end(&mut response).unwrap();
-    let body = response.windows(4).position(|b| b == b"\r\n\r\n").unwrap() + 4;
-    assert_eq!(
-        response.len() - body,
-        payload.len(),
-        "large response was truncated"
-    );
-    assert_eq!(&response[body..], payload);
-}
-
-#[test]
 fn viewport_capture_does_not_switch_responsive_picture_sources() {
     use impeccable::asset_capture::CdpAssetRenderer;
     use impeccable_comp::{png_io, raster};
@@ -456,14 +262,14 @@ fn viewport_capture_does_not_switch_responsive_picture_sources() {
     let mut selection = f.selection();
     selection.served.push("assets/mobile.png".into());
     let snapshot = Arc::new(HtmlSnapshot::freeze(selection).unwrap());
-    let captures = snapshot
-        .capture_regions(
-            &mut CdpAssetRenderer::from_process_env(),
-            ".phoenix-ui/spec.json",
-            &["art"],
-            true,
-        )
-        .unwrap();
+    let captures = capture_regions(
+        &snapshot,
+        &mut CdpAssetRenderer::from_process_env(),
+        ".phoenix-ui/spec.json",
+        &["art"],
+        true,
+    )
+    .unwrap();
     for capture in &captures {
         assert_eq!(capture.receipt["status"], "captured", "{}", capture.receipt);
         assert_eq!(
