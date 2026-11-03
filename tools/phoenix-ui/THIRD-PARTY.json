@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "e4ada7cd2350a2d4a4c30d44a8c017a9a2442ed467e75a638ab4793b257be817",
+    "cargoLockSha256": "6774467b630f5e0c2928ccfc7abadde373df73e82cb44f00c955e58b3f53aa87",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "f2664ad1531b67c2e423fbd53dcb58c2630d66f4e0fef15c10b13eb1dfe7fd98",
-    "buildToolsSha256": "a58ae8b0b7b973fd68d611b5f613807b6658a8917fc70729ea8f6ac0a74f7bf1"
+    "buildToolsSha256": "64ca6f84fab7f68ef2524543fb3bad0b8028bd8a242b97ee79d2041c1ab6a65b"
   },
   "rust": [
     {
@@ -57,29 +57,6 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/aho-corasick/1.1.5/source/Cargo.toml.orig"
-      ]
-    },
-    {
-      "name": "arbitrary",
-      "version": "1.4.2",
-      "license": "MIT OR Apache-2.0",
-      "sourceUrl": "https://static.crates.io/crates/arbitrary/arbitrary-1.4.2.crate",
-      "checksum": "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "originalLocation": "https://docs.rs/crate/arbitrary/1.4.2/source/LICENSE-APACHE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/15656cc11a8331f28c0986b8ab97220d3e76f98e60ed388b5ffad37dfac4710c.txt",
-          "sha256": "15656cc11a8331f28c0986b8ab97220d3e76f98e60ed388b5ffad37dfac4710c",
-          "originalLocation": "https://docs.rs/crate/arbitrary/1.4.2/source/LICENSE-MIT"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/arbitrary/1.4.2/source/Cargo.toml.orig"
       ]
     },
     {
@@ -487,29 +464,6 @@
       ]
     },
     {
-      "name": "crossbeam-utils",
-      "version": "0.8.22",
-      "license": "MIT OR Apache-2.0",
-      "sourceUrl": "https://static.crates.io/crates/crossbeam-utils/crossbeam-utils-0.8.22.crate",
-      "checksum": "61803da095bee82a81bb1a452ecc25d3b2f1416d1897eb86430c6159ef717c17",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "originalLocation": "https://docs.rs/crate/crossbeam-utils/0.8.22/source/LICENSE-APACHE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab.txt",
-          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab",
-          "originalLocation": "https://docs.rs/crate/crossbeam-utils/0.8.22/source/LICENSE-MIT"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/crossbeam-utils/0.8.22/source/Cargo.toml.orig"
-      ]
-    },
-    {
       "name": "crypto-common",
       "version": "0.1.7",
       "license": "MIT OR Apache-2.0",
@@ -584,29 +538,6 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/data-encoding/2.11.1/source/Cargo.toml.orig"
-      ]
-    },
-    {
-      "name": "derive_arbitrary",
-      "version": "1.4.2",
-      "license": "MIT OR Apache-2.0",
-      "sourceUrl": "https://static.crates.io/crates/derive_arbitrary/derive_arbitrary-1.4.2.crate",
-      "checksum": "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "originalLocation": "https://docs.rs/crate/derive_arbitrary/1.4.2/source/LICENSE-APACHE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/15656cc11a8331f28c0986b8ab97220d3e76f98e60ed388b5ffad37dfac4710c.txt",
-          "sha256": "15656cc11a8331f28c0986b8ab97220d3e76f98e60ed388b5ffad37dfac4710c",
-          "originalLocation": "https://docs.rs/crate/derive_arbitrary/1.4.2/source/LICENSE-MIT"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/derive_arbitrary/1.4.2/source/Cargo.toml.orig"
       ]
     },
     {
@@ -1323,32 +1254,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
-          "originalLocation": "tools/phoenix-ui/NOTICE.md"
-        }
-      ],
-      "licenseLocations": [
-        "tools/phoenix-ui/LICENSE"
-      ]
-    },
-    {
-      "name": "impeccable-bundle",
-      "version": "0.1.0",
-      "license": "Apache-2.0",
-      "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/bundle",
-      "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
-      "localManifest": "tools/phoenix-ui/crates/bundle/Cargo.toml",
-      "manifestSha256": "52b83d54d2fa5f05d1400d83683823debecd8df0aa0094a5a4a497f6959c4863",
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
-          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
-          "originalLocation": "tools/phoenix-ui/LICENSE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1371,8 +1278,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1395,8 +1302,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1411,7 +1318,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/comp-verbs",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/comp-verbs/Cargo.toml",
-      "manifestSha256": "8967fc03408ba32c5c103a795285b63e0f2dc15b606d281583160e2631c9eddc",
+      "manifestSha256": "7e0e51b8178674a26a73eb0c0d35c6805bcdd33fc7e7d5d934139b102005ebd7",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1419,8 +1326,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1435,7 +1342,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/context",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/context/Cargo.toml",
-      "manifestSha256": "9a9cd680102f6a730caadfe929f9dbf60eb5cef5f2bf58ebedd048d5dea140e5",
+      "manifestSha256": "fa8a8b49e8152485343dd51dce3332a0aa6234f57be1cdc3e9fc322ae908374d",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1443,8 +1350,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1459,7 +1366,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/core",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/core/Cargo.toml",
-      "manifestSha256": "535bab0b66a80f3a73dc848561d59451097f9472649801d4756de6bab802dd35",
+      "manifestSha256": "87bc4be640efaefb4fa260ca76ef39862dd7c95dc39cecff679484044a181076",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1467,8 +1374,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1491,8 +1398,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1507,7 +1414,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/foundation",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/foundation/Cargo.toml",
-      "manifestSha256": "6dd3d613b817cea53fbc999bf70d2353d94f6f086e3a41177bd7e2f9101f303f",
+      "manifestSha256": "5e8bc187b1db535e200ca7a550134297e33eaee6b2bb95f525e34f921283e4a2",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1515,8 +1422,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1531,7 +1438,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/hook",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/hook/Cargo.toml",
-      "manifestSha256": "76f7f7951335b8c427b5ead05c240a43088550ba9168f866c1a14125668b56f8",
+      "manifestSha256": "a03b36e78586a8d5d111226864717cb153dfd4917373b8db232110533e2c404b",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1539,8 +1446,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1555,7 +1462,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/html",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/html/Cargo.toml",
-      "manifestSha256": "37eeda711cdf20f2a8bf9ab1daf628cb60a321b3606a77907d1b2978b0705b73",
+      "manifestSha256": "7815d9873857325a4939814fb92180554dd31f1b897c548118d560e74991f83c",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1563,8 +1470,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1579,7 +1486,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/live",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/live/Cargo.toml",
-      "manifestSha256": "c9e021f3f994dee90b9eb1c208eeab3925f81648a0510da3ca51d56df095689b",
+      "manifestSha256": "dd4f082bb0f330b70e7e2f2e9fe5a4c4ddb02680b400cae76016abbb5b7c66a4",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1587,8 +1494,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1603,7 +1510,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/skills",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/skills/Cargo.toml",
-      "manifestSha256": "c3fd0128abeef77390c4e3490bf8e405ec4471366ec3124345c46963fb4155b9",
+      "manifestSha256": "17c8e32c16da38c6ce80edc645b302a93c683cb4a63762e28734e6dc547ad991",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1611,8 +1518,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1627,7 +1534,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/wasm",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/wasm/Cargo.toml",
-      "manifestSha256": "f696ffc69afc463dcc25150231f3948bd0bbe8cb515946ef7c24dec3758b90ec",
+      "manifestSha256": "916a17e89f4efe01a0fff89310e46c6a0e7cd0b8da9dee667ca928d5963c5795",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -1635,8 +1542,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2183,7 +2090,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/cli",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/cli/Cargo.toml",
-      "manifestSha256": "1ea99f065b0ff8d914df0e5d1f21b5b1c3f853df7c291c14e0d08de65e593dd2",
+      "manifestSha256": "68e5c5ebd5050b96f052e0b5021c1bc3e83077cace07a7ee196483c76e355eed",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2191,8 +2098,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2206,7 +2113,7 @@
       "license": "Apache-2.0",
       "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
       "localManifest": "tools/phoenix-ui/crates/install/Cargo.toml",
-      "manifestSha256": "a6fbecc9cc00c96dbf6d419306f6db13fa492f946e20ae07da09b80ebab7da83",
+      "manifestSha256": "dc27d24be8b9da9873e3e9e25a6efaef24d0df36ddec739940d3c612a44e88ab",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -2214,31 +2121,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
-          "originalLocation": "tools/phoenix-ui/NOTICE.md"
-        }
-      ],
-      "licenseLocations": [
-        "tools/phoenix-ui/LICENSE"
-      ]
-    },
-    {
-      "name": "phoenix-ui-review",
-      "version": "0.1.0",
-      "license": "Apache-2.0",
-      "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
-      "localManifest": "tools/phoenix-ui/crates/review/Cargo.toml",
-      "manifestSha256": "f288929b2892f94980e67a9d579e1956c0a8e779d7ecdec270d431432aa1e1bb",
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
-          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
-          "originalLocation": "tools/phoenix-ui/LICENSE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2260,8 +2144,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2372,24 +2256,6 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/proc-macro2/1.0.107/source/Cargo.toml.orig"
-      ]
-    },
-    {
-      "name": "pulldown-cmark",
-      "version": "0.13.1",
-      "license": "MIT",
-      "sourceUrl": "https://static.crates.io/crates/pulldown-cmark/pulldown-cmark-0.13.1.crate",
-      "checksum": "83c41efbf8f90ac44de7f3a868f0867851d261b56291732d0cbf7cceaaeb55a6",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b.txt",
-          "sha256": "c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b",
-          "originalLocation": "https://docs.rs/crate/pulldown-cmark/0.13.1/source/LICENSE"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/pulldown-cmark/0.13.1/source/Cargo.toml.orig"
       ]
     },
     {
@@ -3632,29 +3498,6 @@
       ]
     },
     {
-      "name": "unicase",
-      "version": "2.9.0",
-      "license": "MIT OR Apache-2.0",
-      "sourceUrl": "https://static.crates.io/crates/unicase/unicase-2.9.0.crate",
-      "checksum": "dbc4bc3a9f746d862c45cb89d705aa10f187bb96c76001afab07a0d35ce60142",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "originalLocation": "https://docs.rs/crate/unicase/2.9.0/source/LICENSE-APACHE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/4f6bd11a0f17fe5b085ace1daaedb7b002a08316850dd9577c246c6a68a68e8c.txt",
-          "sha256": "4f6bd11a0f17fe5b085ace1daaedb7b002a08316850dd9577c246c6a68a68e8c",
-          "originalLocation": "https://docs.rs/crate/unicase/2.9.0/source/LICENSE-MIT"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/unicase/2.9.0/source/Cargo.toml.orig"
-      ]
-    },
-    {
       "name": "unicode-ident",
       "version": "1.0.24",
       "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
@@ -4456,7 +4299,7 @@
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/xtask",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
       "localManifest": "tools/phoenix-ui/crates/xtask/Cargo.toml",
-      "manifestSha256": "afc1ceff255cdd9aaab58d4e6f377f3c81c1bd9dc39484997b1e0fb5118e8914",
+      "manifestSha256": "deb6058b2e46b557b21af26b7d675b42918255238add15ab67cdac2eda6b7eab",
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
@@ -4464,8 +4307,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -4679,24 +4522,6 @@
       ]
     },
     {
-      "name": "zip",
-      "version": "2.4.2",
-      "license": "MIT",
-      "sourceUrl": "https://static.crates.io/crates/zip/zip-2.4.2.crate",
-      "checksum": "fabe6324e908f85a1c52063ce7aa26b68dcb7eb6dbc83a2d148403c9bc3eba50",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/04dc52136d82400b11df5f474949863a70a5d05d2278dec45b99c479494450a6.txt",
-          "sha256": "04dc52136d82400b11df5f474949863a70a5d05d2278dec45b99c479494450a6",
-          "originalLocation": "https://docs.rs/crate/zip/2.4.2/source/LICENSE"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/zip/2.4.2/source/Cargo.toml.orig"
-      ]
-    },
-    {
       "name": "zlib-rs",
       "version": "0.6.7",
       "license": "Zlib",
@@ -4730,24 +4555,6 @@
       ],
       "licenseLocations": [
         "https://docs.rs/crate/zmij/1.0.23/source/Cargo.toml.orig"
-      ]
-    },
-    {
-      "name": "zopfli",
-      "version": "0.8.3",
-      "license": "Apache-2.0",
-      "sourceUrl": "https://static.crates.io/crates/zopfli/zopfli-0.8.3.crate",
-      "checksum": "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249",
-      "sourceUnmodified": true,
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/018b1cb87efdf7a04c2fcc13d57ed63f62149113fb207b27ea13430d64f13513.txt",
-          "sha256": "018b1cb87efdf7a04c2fcc13d57ed63f62149113fb207b27ea13430d64f13513",
-          "originalLocation": "https://docs.rs/crate/zopfli/0.8.3/source/COPYING"
-        }
-      ],
-      "licenseLocations": [
-        "https://docs.rs/crate/zopfli/0.8.3/source/Cargo.toml.orig"
       ]
     },
     {
@@ -5770,8 +5577,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5791,8 +5598,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5812,8 +5619,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5824,7 +5631,7 @@
     {
       "path": "tools/phoenix-ui/browser-bundle/30-scan-common.js",
       "importedPath": "browser-bundle/30-scan-common.js",
-      "sha256": "f314efe050c3a20e980044e0c5703ad2f2c6293a821c9e83e3d63034e308ae85",
+      "sha256": "61b30ccf57dfbe7510324395af4b709a25a53738531a1f769a6e2639d01a94af",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -5833,8 +5640,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5845,7 +5652,7 @@
     {
       "path": "tools/phoenix-ui/browser-bundle/35-visual.js",
       "importedPath": "browser-bundle/35-visual.js",
-      "sha256": "a48facf0b4135b5a901e1e1672d7a372ccdb0338f8040282b89e1d8f6e9b6e78",
+      "sha256": "02417328efc048d46c6b44d6e3548a9a9944e09f4d6a6de10c1272cbbd4d7aff",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -5854,14 +5661,14 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
       "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/browser-bundle/35-visual.js",
       "upstreamSha256": "a48facf0b4135b5a901e1e1672d7a372ccdb0338f8040282b89e1d8f6e9b6e78",
-      "modifiedSinceImport": false
+      "modifiedSinceImport": true
     },
     {
       "path": "tools/phoenix-ui/browser-bundle/40-overlay.js",
@@ -5875,8 +5682,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5887,7 +5694,7 @@
     {
       "path": "tools/phoenix-ui/browser-bundle/50-scan.js",
       "importedPath": "browser-bundle/50-scan.js",
-      "sha256": "722a149258c41a8f48b95798a67c103f042b2228790bd0bc1451ce7fdfcb9791",
+      "sha256": "85a3f68cd24ff6f9ced35b2bfc0e115176197e7c6ace4fb1eecbcaf66ff9788a",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -5896,35 +5703,14 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
       "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/browser-bundle/50-scan.js",
       "upstreamSha256": "7d39ce05c0c94a2ee5a54a866360dc1c480e2af06390a11347d76079bd15c11f",
       "modifiedSinceImport": true
-    },
-    {
-      "path": "tools/phoenix-ui/browser-bundle/60-offscreen.js",
-      "importedPath": "browser-bundle/60-offscreen.js",
-      "sha256": "0fc26848e6d6e96517d937f8464415032b7f31627c663c6082dd10bfd30221d1",
-      "license": "Apache-2.0",
-      "licenses": [
-        {
-          "path": "THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt",
-          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
-          "originalLocation": "tools/phoenix-ui/LICENSE"
-        },
-        {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
-          "originalLocation": "tools/phoenix-ui/NOTICE.md"
-        }
-      ],
-      "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/browser-bundle/60-offscreen.js",
-      "upstreamSha256": "0fc26848e6d6e96517d937f8464415032b7f31627c663c6082dd10bfd30221d1",
-      "modifiedSinceImport": false
     },
     {
       "path": "tools/phoenix-ui/browser-bundle/99-footer.js",
@@ -5938,8 +5724,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5959,8 +5745,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5980,8 +5766,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6001,8 +5787,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6013,7 +5799,7 @@
     {
       "path": "skills/phoenix-ui/src/scripts/live-browser.js",
       "importedPath": "skill/scripts/live-browser.js",
-      "sha256": "14cfebc0c97e6284308678d4970714feb06528b872a5ffa39423523a669afced",
+      "sha256": "261755a57a3baf10828fb310029185ed82345217c03cc6823db64fa1ccf4ca39",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6022,8 +5808,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6072,8 +5858,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6093,8 +5879,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6162,8 +5948,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6183,8 +5969,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6204,8 +5990,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6225,8 +6011,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6246,8 +6032,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6267,8 +6053,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6288,8 +6074,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6309,8 +6095,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6330,8 +6116,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6351,8 +6137,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6373,8 +6159,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6395,8 +6181,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6417,8 +6203,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6439,8 +6225,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6461,8 +6247,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6482,8 +6268,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6503,8 +6289,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6524,8 +6310,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6545,8 +6331,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6566,8 +6352,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6587,8 +6373,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6608,8 +6394,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6621,7 +6407,7 @@
     {
       "path": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
       "importedPath": "crates/live/assets/detect-antipatterns-browser.js",
-      "sha256": "eecc6bd09d7327312ab03e533b9f5d4dfca4cf8236fa8bffbdf38fbc50c676a8",
+      "sha256": "c82536e19c2d5ba10ae9354fba2bc920fcef95d9151b67012912f33e01c74772",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6630,8 +6416,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],

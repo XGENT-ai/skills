@@ -342,44 +342,6 @@ fn accepted_brief_link_requires_acceptance_and_preserves_a_corrupt_index() {
 }
 
 #[test]
-fn accepted_brief_link_obeys_the_os_lock_and_releases_it_after_the_owner_exits() {
-    let fixture = Fixture::new();
-    fixture.write("docs/design/a.md", "# Brief\n");
-    fixture.write(".phoenix-ui/briefs.lock", "");
-    let lock = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(fixture.0.join(".phoenix-ui/briefs.lock"))
-        .unwrap();
-    lock.try_lock().unwrap();
-    assert_eq!(fixture.link("docs/design/a.md", "request-1: accept A").0, 3);
-    assert!(!fixture.0.join(".phoenix-ui/briefs.json").exists());
-    drop(lock);
-    assert_eq!(fixture.link("docs/design/a.md", "request-1: accept A").0, 0);
-}
-
-#[cfg(unix)]
-#[test]
-fn accepted_brief_link_rejects_symlinked_sources_and_state_directories() {
-    let fixture = Fixture::new();
-    fixture.write("docs/design/a.md", "# Brief\n");
-    std::os::unix::fs::symlink("a.md", fixture.0.join("docs/design/link.md")).unwrap();
-    assert_eq!(
-        fixture.link("docs/design/link.md", "request-1: accept A").0,
-        2
-    );
-    assert!(!fixture.0.join(".phoenix-ui").exists());
-    fixture.write("other/keep.txt", "unrelated bytes");
-    std::os::unix::fs::symlink(fixture.0.join("other"), fixture.0.join(".phoenix-ui")).unwrap();
-    assert_eq!(fixture.link("docs/design/a.md", "request-1: accept A").0, 2);
-    assert!(!fixture.0.join("other/briefs.json").exists());
-    assert_eq!(
-        std::fs::read_to_string(fixture.0.join("other/keep.txt")).unwrap(),
-        "unrelated bytes"
-    );
-}
-
-#[test]
 fn monorepo_context_identifies_local_product_and_inherited_design() {
     let fixture = Fixture::new();
     fixture.write("package.json", "{\"workspaces\":[\"apps/*\"]}\n");

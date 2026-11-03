@@ -84,14 +84,6 @@ impl Io {
         self.env.get(key).map(String::as_str)
     }
 
-    /// JS `truthy()` from hook-lib: `/^(1|true|yes|on)$/i` on a string.
-    pub fn env_truthy(&self, key: &str) -> bool {
-        matches!(
-            self.env(key).map(|v| v.to_ascii_lowercase()).as_deref(),
-            Some("1" | "true" | "yes" | "on")
-        )
-    }
-
     /// `os.homedir()`: `$HOME` on posix; on Windows Node reads `USERPROFILE`
     /// (a `HOME` left by an MSYS shell is only a fallback here).
     pub fn home(&self) -> Option<PathBuf> {
@@ -186,6 +178,48 @@ impl Io {
             env,
         )
     }
+}
+
+/// Milliseconds since the Unix epoch (`Date.now()`).
+pub fn now_ms() -> f64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as f64)
+        .unwrap_or(0.0)
+}
+
+/// `new Date().toISOString()`.
+pub fn iso_now() -> String {
+    iso_from_ms(now_ms())
+}
+
+/// `new Date(ms).toISOString()`.
+pub fn iso_from_ms(ms: f64) -> String {
+    let ms_i = ms.floor() as i64;
+    let secs = ms_i.div_euclid(1000);
+    let millis = ms_i.rem_euclid(1000);
+    let days = secs.div_euclid(86400);
+    let sod = secs.rem_euclid(86400);
+    let (y, m, d) = civil_from_days(days);
+    format!(
+        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}.{millis:03}Z",
+        sod / 3600,
+        (sod % 3600) / 60,
+        sod % 60
+    )
+}
+
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
 #[cfg(test)]

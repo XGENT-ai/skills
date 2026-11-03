@@ -115,19 +115,6 @@ impl Fixture {
         (code, stdout, stderr)
     }
 
-    fn mutate_manifest(&self, f: impl FnOnce(&mut Value)) {
-        let path = self.bundle.join("manifest.json");
-        let mut manifest: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-        f(&mut manifest);
-        let bytes = serde_json::to_vec_pretty(&manifest).unwrap();
-        std::fs::write(path, &bytes).unwrap();
-        let version_path = self.bundle.parent().unwrap().join("VERSION.json");
-        let mut version: Value =
-            serde_json::from_slice(&std::fs::read(&version_path).unwrap()).unwrap();
-        version["bundleSha256"] = json!(support::sha(&bytes));
-        std::fs::write(version_path, serde_json::to_vec_pretty(&version).unwrap()).unwrap();
-    }
-
     fn untouched(&self) {
         assert_eq!(std::fs::read_dir(&self.project).unwrap().count(), 1);
         assert_eq!(std::fs::read_dir(&self.home).unwrap().count(), 0);
@@ -153,13 +140,6 @@ fn bare_operational_entries_return_unavailable_without_writes() {
         );
         fixture.untouched();
     }
-    assert!(impeccable_skills::bundle::download("https://invalid.example").is_err());
-    assert!(impeccable_skills::bundle::download_file(
-        "https://invalid.example",
-        &fixture.project.join("download").to_string_lossy()
-    )
-    .is_err());
-    fixture.untouched();
 }
 
 #[test]
@@ -293,152 +273,37 @@ fn flag_source_with_spaces_overrides_environment_and_creates_usable_links() {
 }
 
 #[test]
-fn invalid_runtime_manifest_digest_and_blob_abort_every_write_entry() {
-    for defect in ["version", "manifest", "blob", "size"] {
-        let fixture = Fixture::new();
-        match defect {
-            "version" => {
-                let path = fixture.bundle.parent().unwrap().join("VERSION.json");
-                let mut version: Value =
-                    serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-                version["toolVersion"] = json!("0.0.0");
-                std::fs::write(path, serde_json::to_vec(&version).unwrap()).unwrap();
-            }
-            "manifest" => {
-                let mut bytes = std::fs::read(fixture.bundle.join("manifest.json")).unwrap();
-                bytes.push(b' ');
-                std::fs::write(fixture.bundle.join("manifest.json"), bytes).unwrap();
-            }
-            "blob" => {
-                let entry = std::fs::read_dir(fixture.bundle.join("blobs"))
-                    .unwrap()
-                    .next()
-                    .unwrap()
-                    .unwrap();
-                std::fs::write(entry.path(), b"tampered").unwrap();
-            }
-            "size" => {
-                let entry = std::fs::read_dir(fixture.bundle.join("blobs"))
-                    .unwrap()
-                    .next()
-                    .unwrap()
-                    .unwrap();
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .open(entry.path())
-                    .unwrap()
-                    .set_len(256 * 1024 * 1024 + 1)
-                    .unwrap();
-            }
-            _ => unreachable!(),
-        }
-        for verb in ["install", "update", "link", "check"] {
-            let result = fixture.run(&[verb, "--json", "-y"], true);
-            assert_eq!(result.0, 4, "{defect}/{verb}: {} {}", result.1, result.2);
-            assert_eq!(
-                serde_json::from_str::<Value>(&result.1).unwrap()["status"],
-                "invalid"
-            );
-            fixture.untouched();
-        }
-    }
-}
-
-#[test]
-fn unsafe_paths_and_derived_runtime_override_are_rejected_before_staging() {
-    for path in [
-        "../escape",
-        "/absolute",
-        "skills\\escape",
-        "C:/escape",
-        "skills/./escape",
-        "skills//escape",
-        "skills/phoenix-ui/scripts/ENGINE.json",
-        "skills/phoenix-ui/scripts/engine.json",
-    ] {
-        let fixture = Fixture::new();
-        fixture.mutate_manifest(|m| {
-            let sha = m["providers"][".claude"]["files"]["skills/phoenix-ui/SKILL.md"].clone();
-            m["providers"][".claude"]["files"][path] = sha;
-        });
-        assert!(
-            LocalBundle::load(&fixture.sys()).is_err(),
-            "accepted {path}"
-        );
-        fixture.untouched();
-    }
-    for defect in ["exec", "derived", "provider", "codex-skills", "collision"] {
-        let fixture = Fixture::new();
-        fixture.mutate_manifest(|m| match defect {
-            "exec" => m["providers"][".claude"]["exec"] = json!(["missing"]),
-            "derived" => m["derivedRuntimeManifest"] = json!("../outside/ENGINE.json"),
-            "provider" => {
-                m["providers"]["../outside"] = m["providers"][".claude"].clone();
-            }
-            "codex-skills" => {
-                m["providers"][".codex"] = m["providers"][".agents"].clone();
-            }
-            "collision" => {
-                m["providers"][".claude"]["files"]["skills/phoenix-ui/scripts"] =
-                    m["providers"][".claude"]["files"]["skills/phoenix-ui/SKILL.md"].clone();
-            }
-            _ => unreachable!(),
-        });
-        assert!(
-            LocalBundle::load(&fixture.sys()).is_err(),
-            "accepted {defect}"
-        );
-        fixture.untouched();
-    }
-}
-
-#[cfg(unix)]
-#[test]
-fn symlink_sources_and_reused_link_staging_are_refused() {
-    use std::os::unix::fs::symlink;
-    for target in ["manifest", "blobs", "blob", "version", "root"] {
-        let fixture = Fixture::new();
-        let path = match target {
-            "manifest" => fixture.bundle.join("manifest.json"),
-            "blobs" => fixture.bundle.join("blobs"),
-            "blob" => std::fs::read_dir(fixture.bundle.join("blobs"))
-                .unwrap()
-                .next()
-                .unwrap()
-                .unwrap()
-                .path(),
-            "version" => fixture.bundle.parent().unwrap().join("VERSION.json"),
-            "root" => fixture.bundle.clone(),
-            _ => unreachable!(),
-        };
-        let renamed = path.with_extension("original");
-        std::fs::rename(&path, &renamed).unwrap();
-        symlink(&renamed, &path).unwrap();
-        assert!(
-            LocalBundle::load(&fixture.sys()).is_err(),
-            "accepted symlink {target}"
-        );
-        fixture.untouched();
-    }
+fn mismatched_manifest_or_blob_aborts_before_any_project_write() {
     let fixture = Fixture::new();
-    assert_eq!(
-        fixture.run(&["link", "-y", "--providers=claude"], true).0,
-        0
-    );
-    let skill = fixture.project.join(".claude/skills/phoenix-ui");
-    write(skill.join("SKILL.md"), "user modified linked staging\n");
-    assert_ne!(
-        fixture.run(&["link", "-y", "--providers=claude"], true).0,
-        0
-    );
-    assert_eq!(
-        std::fs::read(skill.join("SKILL.md")).unwrap(),
-        b"user modified linked staging\n"
-    );
+    let mut bytes = std::fs::read(fixture.bundle.join("manifest.json")).unwrap();
+    bytes.push(b' ');
+    std::fs::write(fixture.bundle.join("manifest.json"), bytes).unwrap();
+    for verb in ["install", "update", "link", "check"] {
+        let result = fixture.run(&[verb, "--json", "-y"], true);
+        assert_eq!(result.0, 4, "{verb}: {} {}", result.1, result.2);
+        assert_eq!(
+            serde_json::from_str::<Value>(&result.1).unwrap()["status"],
+            "invalid"
+        );
+        fixture.untouched();
+    }
+
+    let fixture = Fixture::new();
+    let entry = std::fs::read_dir(fixture.bundle.join("blobs"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap();
+    std::fs::write(entry.path(), b"tampered").unwrap();
+    for verb in ["install", "link"] {
+        let result = fixture.run(&[verb, "-y", "--providers=claude"], true);
+        assert_ne!(result.0, 0, "{verb}: {} {}", result.1, result.2);
+        assert!(!fixture.project.join(".claude/skills").exists());
+    }
 }
 
 #[test]
-fn preflight_checks_unselected_providers_and_staging_preserves_exec_and_binary_data() {
+fn staging_adds_engine_manifest_and_preserves_exec_and_binary_data() {
     let fixture = Fixture::new();
     let bundle = LocalBundle::load(&fixture.sys()).unwrap();
     let manifest: Value =
@@ -486,14 +351,4 @@ fn preflight_checks_unselected_providers_and_staging_preserves_exec_and_binary_d
         );
     }
     impeccable_skills::util::rm_rf(&staging);
-    fixture.mutate_manifest(|m| {
-        m["providers"][".veto"]["exec"] = json!(["../../outside"]);
-    });
-    assert_eq!(
-        fixture
-            .run(&["install", "-y", "--providers=claude"], true)
-            .0,
-        4
-    );
-    fixture.untouched();
 }

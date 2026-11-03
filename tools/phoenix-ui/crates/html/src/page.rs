@@ -17,7 +17,7 @@ use impeccable_core::checks::text_rules::{
 };
 use impeccable_core::constants::{CSS_GENERIC_FONTS, OVERUSED_FONTS, SAFE_TAGS};
 use impeccable_core::js::{self, number_to_string, parse_float};
-use impeccable_core::js_ext_b::{slice_utf16_prefix, utf16_len};
+use impeccable_core::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;

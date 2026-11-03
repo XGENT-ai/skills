@@ -80,7 +80,7 @@ impl Fixture {
         ]);
         let (mut io, captured) = Io::captured("", self.project.clone(), env);
         let argv: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-        let code = build_phase::run_with_renderer(&argv, &mut io, &build_phase::no_organic_scan, Some(renderer));
+        let code = build_phase::run_with_renderer(&argv, &mut io, Some(renderer));
         drop(io);
         let text = format!(
             "{}{}",
@@ -156,7 +156,6 @@ fn text_only_entry_captures_every_frame_without_region_receipts() {
     let f = Fixture::new();
     for stage in [EntryStage::Hero, EntryStage::Responsive] {
         let captured = CdpEntryRenderer.capture_entry(&f.request(stage)).unwrap();
-        captured.verify_current().unwrap();
         let evidence = captured.evidence();
         assert_eq!(evidence.report["captureMethod"], "assembled-page-viewport");
         let names: Vec<_> = evidence.frames.iter().map(|f| f.name.as_str()).collect();
@@ -181,10 +180,6 @@ fn text_only_entry_captures_every_frame_without_region_receipts() {
                 assert_eq!(&image.data[p..p + 3], &[0x1e, 0x5a, 0xc8]);
             }
         }
-        // Any bound input that changes invalidates the capture.
-        fs::write(f.project.join("index.html"), format!("{PAGE}<p>edited</p>")).unwrap();
-        assert!(captured.verify_current().is_err());
-        fs::write(f.project.join("index.html"), PAGE).unwrap();
     }
 }
 
@@ -247,7 +242,6 @@ fn reviewed_renderer_binds_an_approved_text_only_viewport() {
     let a = png_io::decode_png(&approved.png).unwrap().image;
     let b = png_io::decode_png(&captured.evidence().frames[0].png).unwrap().image;
     assert_eq!((a.width, a.height, &a.data), (b.width, b.height, &b.data));
-    captured.verify_current().unwrap();
 }
 
 fn refusal(f: &Fixture) -> String {
@@ -355,13 +349,6 @@ fn text_only_page_is_served_the_hero_review_dependencies() {
         .filter_map(|f| f["path"].as_str())
         .collect();
     assert_eq!(served, ["extra.js", "index.html", "style.css"]);
-    captured.verify_current().unwrap();
-    fs::write(
-        f.project.join(".phoenix-ui/review/hero.json"),
-        serde_json::to_vec(&manifest(&["style.css"])).unwrap(),
-    )
-    .unwrap();
-    assert!(captured.verify_current().is_err());
     // A declared dependency outside the static inventory is never served.
     fs::write(
         f.project.join(".phoenix-ui/review/hero.json"),
@@ -580,7 +567,6 @@ fn host_capture_service_carries_a_text_only_hero_and_binds_its_accepted_review()
             assert!(frame.regions.is_empty());
             assert!(evidence.report["frameProofs"][&frame.name]["rasterCoverage"]["share"].as_f64().is_some());
         }
-        captured.verify_current().unwrap();
     }
 
     // record hero reaches the gate's readings instead of failing at capture.

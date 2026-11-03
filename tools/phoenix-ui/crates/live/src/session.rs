@@ -1,12 +1,10 @@
-//! JS: live/session-store.mjs. Append-only per-session journal
-//! (`<id>.jsonl`) with a derived snapshot (`<id>.snapshot.json`), replayed
-//! through the same reducer the server uses.
+//! Live variant sessions, held in the helper's memory for its lifetime:
+//! every browser or agent event for a session is folded into that session's
+//! snapshot by `apply_event`.
 
-use crate::paths::{legacy_live_sessions_dir, live_sessions_dir, safe_session_id};
-use crate::util::{
-    date_parse_ms, exists, iso_now, js_number, jsp, now_ms, read_dir_names_raw, safe_read, Env,
-};
+use crate::util::{date_parse_ms, iso_now, js_number, now_ms};
 use serde_json::{json, Map, Value};
+use std::collections::BTreeMap;
 
 pub const COMPLETED_SESSION_PHASES: [&str; 2] = ["completed", "discarded"];
 pub const GENERATION_FENCED_SESSION_PHASES: [&str; 5] = [
@@ -17,260 +15,61 @@ pub const GENERATION_FENCED_SESSION_PHASES: [&str; 5] = [
     "discarded",
 ];
 
-const META_JOURNAL_BYTES: &str = "__journalBytes";
-const META_NEXT_SEQ: &str = "__nextSeq";
 const MOUNT_FAILURE_HISTORY: usize = 5;
 
-pub struct SessionStore {
-    pub root_dir: String,
-    pub legacy_root_dir: String,
-    pub session_id: Option<String>,
+/// Every session this helper has seen, keyed (and listed) by id.
+#[derive(Default)]
+pub struct Sessions {
+    snapshots: BTreeMap<String, Map<String, Value>>,
 }
 
-pub struct DerivedState {
-    pub snapshot: Map<String, Value>,
-    pub next_seq: i64,
-    pub journal_path: String,
-    pub size: i64,
-}
-
-fn journal_path(root: &str, id: &str) -> Result<String, String> {
-    Ok(jsp::join(&[
-        root,
-        &format!("{}.jsonl", safe_session_id(id)?),
-    ]))
-}
-
-fn snapshot_path(root: &str, id: &str) -> Result<String, String> {
-    Ok(jsp::join(&[
-        root,
-        &format!("{}.snapshot.json", safe_session_id(id)?),
-    ]))
-}
-
-fn file_size(p: &str) -> Option<i64> {
-    std::fs::metadata(p).ok().map(|m| m.len() as i64)
-}
-
-/// JS: createLiveSessionStore({ cwd, sessionId })
-pub fn create_live_session_store(cwd: &str, env: &Env, session_id: Option<&str>) -> SessionStore {
-    let root_dir = live_sessions_dir(cwd, env);
-    let legacy_root_dir = legacy_live_sessions_dir(cwd, env);
-    let _ = std::fs::create_dir_all(&root_dir);
-    SessionStore {
-        root_dir,
-        legacy_root_dir,
-        session_id: session_id.map(String::from),
-    }
-}
-
-impl SessionStore {
-    fn readable_journal_path(&self, id: &str) -> Result<String, String> {
-        let primary = journal_path(&self.root_dir, id)?;
-        if exists(&primary) {
-            return Ok(primary);
-        }
-        let legacy = journal_path(&self.legacy_root_dir, id)?;
-        if exists(&legacy) {
-            return Ok(legacy);
-        }
-        Ok(primary)
-    }
-
-    /// JS: readState(id, { allowSnapshotFile })
-    pub fn read_state(&self, id: &str, allow_snapshot_file: bool) -> Result<DerivedState, String> {
-        let journal = self.readable_journal_path(id)?;
-        let size = file_size(&journal);
-        if allow_snapshot_file {
-            if let Some(sz) = size {
-                if let Some((snapshot, next_seq)) =
-                    read_snapshot_file(&snapshot_path(&self.root_dir, id)?, id, sz)
-                {
-                    return Ok(DerivedState {
-                        snapshot,
-                        next_seq,
-                        journal_path: journal,
-                        size: sz,
-                    });
-                }
-            }
-        }
-        let (snapshot, next_seq) = rebuild_snapshot_from_journal(&journal, id);
-        Ok(DerivedState {
-            snapshot,
-            next_seq,
-            journal_path: journal,
-            size: size.unwrap_or(-1),
-        })
-    }
-
-    fn persist(
-        &self,
-        id: &str,
-        snapshot: &Map<String, Value>,
-        next_seq: i64,
-    ) -> Result<(), String> {
-        let sp = snapshot_path(&self.root_dir, id)?;
-        let journal = self.readable_journal_path(id)?;
-        let size = file_size(&journal).unwrap_or(-1);
-        write_snapshot(&sp, snapshot, size, next_seq);
-        Ok(())
-    }
-
-    /// JS: appendEvent(event). Returns the new snapshot.
-    pub fn append_event(&self, event: &Value) -> Result<Map<String, Value>, String> {
-        let normalized = normalize_event(event, self.session_id.as_deref())?;
-        let id = normalized
+impl Sessions {
+    /// Fold one event (`{ id, type, ... }`) into its session; returns the
+    /// new snapshot.
+    pub fn append_event(&mut self, event: &Value) -> Result<Map<String, Value>, String> {
+        let Some(obj) = event.as_object() else {
+            return Err("event object required".to_string());
+        };
+        let Some(id) = obj
             .get("id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
-        let ty = normalized
+            .and_then(Value::as_str)
+            .filter(|s| !s.is_empty())
+        else {
+            return Err("event id required".to_string());
+        };
+        if !obj
             .get("type")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
-        let jp = journal_path(&self.root_dir, &id)?;
-        let legacy = journal_path(&self.legacy_root_dir, &id)?;
-        if !exists(&jp) && exists(&legacy) {
-            let _ = std::fs::create_dir_all(jsp::dirname(&jp));
-            let _ = std::fs::copy(&legacy, &jp);
-        }
-        let prior = self.read_state(&id, true)?;
-        let entry = json!({
-            "seq": prior.next_seq,
-            "id": id,
-            "type": ty,
-            "ts": iso_now(),
-            "event": Value::Object(normalized.clone()),
-        });
+            .and_then(Value::as_str)
+            .is_some_and(|t| !t.is_empty())
         {
-            use std::io::Write;
-            let _ = std::fs::create_dir_all(jsp::dirname(&jp));
-            let mut f = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&jp)
-                .map_err(|e| e.to_string())?;
-            let _ = f.write_all(
-                format!("{}\n", serde_json::to_string(&entry).unwrap_or_default()).as_bytes(),
-            );
+            return Err("event type required".to_string());
         }
-        let next = apply_event(&prior.snapshot, &entry);
-        self.persist(&id, &next, prior.next_seq + 1)?;
+        let prior = self
+            .snapshots
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| base_snapshot(id));
+        let next = apply_event(&prior, &json!({ "ts": iso_now(), "event": event }));
+        self.snapshots.insert(id.to_string(), next.clone());
         Ok(next)
     }
 
-    /// JS: has(id)
     pub fn has(&self, id: &str) -> bool {
-        if id.is_empty() {
-            return false;
-        }
-        match (
-            journal_path(&self.root_dir, id),
-            journal_path(&self.legacy_root_dir, id),
-        ) {
-            (Ok(a), Ok(b)) => exists(&a) || exists(&b),
-            _ => false,
-        }
+        self.snapshots.contains_key(id)
     }
 
-    /// JS: getSnapshot(id, { includeCompleted }); None for terminal sessions
-    /// unless `include_completed`.
-    pub fn get_snapshot(
-        &self,
-        id: &str,
-        include_completed: bool,
-    ) -> Result<Option<Map<String, Value>>, String> {
-        let state = self.read_state(id, true)?;
-        let phase = state
-            .snapshot
-            .get("phase")
-            .and_then(|p| p.as_str())
-            .unwrap_or("");
-        if !include_completed && COMPLETED_SESSION_PHASES.contains(&phase) {
-            return Ok(None);
-        }
-        Ok(Some(state.snapshot))
+    /// The session's snapshot, terminal or not.
+    pub fn get(&self, id: &str) -> Option<&Map<String, Value>> {
+        self.snapshots.get(id)
     }
 
-    /// JS: flush(id)
-    pub fn flush(&self, id: &str) -> Result<Map<String, Value>, String> {
-        let state = self.read_state(id, false)?;
-        self.persist(id, &state.snapshot, state.next_seq)?;
-        Ok(state.snapshot)
+    /// Non-terminal sessions, ordered by id.
+    pub fn active(&self) -> impl Iterator<Item = &Map<String, Value>> {
+        self.snapshots.values().filter(|s| {
+            let phase = s.get("phase").and_then(Value::as_str).unwrap_or("");
+            !COMPLETED_SESSION_PHASES.contains(&phase)
+        })
     }
-
-    /// JS: listActiveSessions(): all `*.jsonl` ids in legacy + primary,
-    /// sorted, non-terminal.
-    pub fn list_active_sessions(&self) -> Vec<Map<String, Value>> {
-        let mut ids: Vec<String> = Vec::new();
-        for dir in [&self.legacy_root_dir, &self.root_dir] {
-            if !exists(dir) {
-                continue;
-            }
-            for name in read_dir_names_raw(dir).unwrap_or_default() {
-                if let Some(id) = name.strip_suffix(".jsonl") {
-                    if !ids.iter().any(|x| x == id) {
-                        ids.push(id.to_string());
-                    }
-                }
-            }
-        }
-        ids.sort();
-        ids.iter()
-            .filter_map(|id| self.get_snapshot(id, false).ok().flatten())
-            .collect()
-    }
-}
-
-fn read_snapshot_file(
-    path: &str,
-    id: &str,
-    journal_bytes: i64,
-) -> Option<(Map<String, Value>, i64)> {
-    let text = safe_read(path)?;
-    let parsed: Value = serde_json::from_str(&text).ok()?;
-    let mut obj = parsed.as_object()?.clone();
-    if obj.get(META_JOURNAL_BYTES).and_then(|v| v.as_i64()) != Some(journal_bytes) {
-        return None;
-    }
-    let next_seq = obj.get(META_NEXT_SEQ).and_then(|v| v.as_i64())?;
-    obj.remove(META_JOURNAL_BYTES);
-    obj.remove(META_NEXT_SEQ);
-    if obj.get("id").and_then(|v| v.as_str()) != Some(id) {
-        return None;
-    }
-    let mut merged = base_snapshot(id);
-    for (k, v) in obj {
-        merged.insert(k, v);
-    }
-    Some((merged, next_seq))
-}
-
-fn normalize_event(event: &Value, fallback_id: Option<&str>) -> Result<Map<String, Value>, String> {
-    let Some(obj) = event.as_object() else {
-        return Err("event object required".to_string());
-    };
-    let id: Option<String> = match obj.get("id") {
-        Some(Value::String(s)) if !s.is_empty() => Some(s.clone()),
-        Some(v) if !matches!(v, Value::Null | Value::String(_)) && truthy(v) => {
-            // JS: `event.id || fallbackId` then `typeof id !== 'string'` throws
-            let _ = v;
-            return Err("event id required".to_string());
-        }
-        _ => fallback_id.map(String::from),
-    };
-    let Some(id) = id else {
-        return Err("event id required".to_string());
-    };
-    match obj.get("type") {
-        Some(Value::String(t)) if !t.is_empty() => {}
-        _ => return Err("event type required".to_string()),
-    }
-    let mut out = obj.clone();
-    out.insert("id".to_string(), Value::String(id));
-    Ok(out)
 }
 
 fn truthy(v: &Value) -> bool {
@@ -296,9 +95,6 @@ pub fn base_snapshot(id: &str) -> Map<String, Value> {
         "arrivedVariants": 0,
         "visibleVariant": null,
         "paramValues": {},
-        "pendingEventSeq": null,
-        "pendingEvent": null,
-        "deliveryLease": null,
         "checkpointRevision": 0,
         "browserCheckpointRevision": 0,
         "publicationCheckpointRevision": 0,
@@ -345,41 +141,6 @@ fn derive_render_state(s: &Map<String, Value>) -> Value {
     Value::Null
 }
 
-/// JS: rebuildSnapshotFromJournal(journalPath, id) -> (snapshot, nextSeq)
-pub fn rebuild_snapshot_from_journal(journal_path: &str, id: &str) -> (Map<String, Value>, i64) {
-    let mut snapshot = base_snapshot(id);
-    let mut diagnostics: Vec<Value> = Vec::new();
-    let mut next_seq: i64 = 1;
-    let Some(text) = safe_read(journal_path) else {
-        return (snapshot, next_seq);
-    };
-    for (i, line) in text.split('\n').enumerate() {
-        if impeccable_context::util::js_trim(line).is_empty() {
-            continue;
-        }
-        match serde_json::from_str::<Value>(line) {
-            Ok(entry) if entry.is_object() => {
-                if let Some(seq) = entry.get("seq").and_then(|s| s.as_i64()) {
-                    next_seq = next_seq.max(seq + 1);
-                }
-                snapshot = apply_event(&snapshot, &entry);
-            }
-            Ok(_) => diagnostics.push(json!({ "error": "journal_parse_failed", "line": i + 1, "message": "entry is not object" })),
-            Err(e) => diagnostics.push(json!({ "error": "journal_parse_failed", "line": i + 1, "message": e.to_string() })),
-        }
-    }
-    if !diagnostics.is_empty() {
-        let mut d = snapshot
-            .get("diagnostics")
-            .and_then(|v| v.as_array())
-            .cloned()
-            .unwrap_or_default();
-        d.extend(diagnostics);
-        snapshot.insert("diagnostics".to_string(), Value::Array(d));
-    }
-    (snapshot, next_seq)
-}
-
 fn is_nullish(v: Option<&Value>) -> bool {
     matches!(v, None | Some(Value::Null))
 }
@@ -392,20 +153,10 @@ fn coalesce<'a>(a: Option<&'a Value>, b: &'a Value) -> Value {
     }
 }
 
-fn get<'a>(m: &'a Map<String, Value>, k: &str) -> Option<&'a Value> {
-    m.get(k)
-}
-
 fn ts_ms(entry: &Value) -> Option<i64> {
     // JS: Date.parse(entry.ts || '') || null
     let ts = entry.get("ts").and_then(|t| t.as_str()).unwrap_or("");
     date_parse_ms(ts).filter(|v| *v != 0)
-}
-
-fn to_pending_event(event: &Map<String, Value>) -> Value {
-    let mut p = event.clone();
-    p.shift_remove("token");
-    Value::Object(p)
 }
 
 fn push_diag(next: &mut Map<String, Value>, d: Value) {
@@ -485,7 +236,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
         .to_string();
     let canceled = truthy(next.get("generationCanceled").unwrap_or(&Value::Null));
     let fenced = GENERATION_FENCED_SESSION_PHASES.contains(&phase_now.as_str());
-    let seq = entry.get("seq").cloned();
     let now_or_ts = |entry: &Value| -> Value {
         match ts_ms(entry) {
             Some(ms) => json!(ms),
@@ -516,8 +266,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
             }
             set_if!("pageUrl", ev("pageUrl"));
             set_if!("expectedVariants", ev("count"));
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
             set!("variantPlan", Value::Null);
             set!("mountedVariants", json!([]));
             set!("mountFailures", json!([]));
@@ -624,8 +372,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
                     }
                 };
                 set!("arrivedVariants", arrived);
-                set!("pendingEventSeq", Value::Null);
-                set!("pendingEvent", Value::Null);
                 if carbonize {
                     let file = match ev("file") {
                         Some(v) if truthy(v) => v.clone(),
@@ -695,9 +441,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
                     set!("mountFailures", Value::Array(failures));
                     let rs = derive_render_state(&next);
                     set!("renderState", rs);
-                    if !truthy(next.get("pendingEvent").unwrap_or(&Value::Null)) {
-                        set!("pendingEvent", to_pending_event(&event));
-                    }
                 }
                 _ => {
                     push_diag(
@@ -818,26 +561,18 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
                     .unwrap_or_else(|| json!({}));
                 set!("paramValues", copy);
             }
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
         }
         "manual_edit_apply" => {
             set!("phase", json!("manual_edit_apply_requested"));
             set_if!("pageUrl", ev("pageUrl"));
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
         }
         "steer" => {
             set!("phase", json!("steer_requested"));
             set_if!("pageUrl", ev("pageUrl"));
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
         }
         "carbonize_cleanup" => {
             set!("phase", json!("carbonize_cleanup_requested"));
             set_if!("sourceFile", ev("file"));
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
         }
         "steer_done" => {
             set!("phase", json!("steer_done"));
@@ -861,8 +596,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
                     }
                 }
             }
-            set!("pendingEventSeq", Value::Null);
-            set!("pendingEvent", Value::Null);
         }
         "discard" => {
             set!("phase", json!("discard_requested"));
@@ -873,13 +606,9 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
             };
             set!("generationCanceledAt", at);
             set!("cancelReason", json!("discard"));
-            set_if!("pendingEventSeq", seq.as_ref());
-            set!("pendingEvent", to_pending_event(&event));
         }
         "discarded" => {
             set!("phase", json!("discarded"));
-            set!("pendingEventSeq", Value::Null);
-            set!("pendingEvent", Value::Null);
             drop_diag(&mut next, "carbonize_cleanup_required");
         }
         "complete" => {
@@ -891,8 +620,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
             set!("sourceFile", sf);
             set_if!("previewFile", ev("previewFile"));
             set_if!("previewMode", ev("previewMode"));
-            set!("pendingEventSeq", Value::Null);
-            set!("pendingEvent", Value::Null);
             drop_diag(&mut next, "carbonize_cleanup_required");
         }
         "agent_error" => {
@@ -903,8 +630,6 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
                 );
             } else {
                 set!("phase", json!("agent_error"));
-                set!("pendingEventSeq", Value::Null);
-                set!("pendingEvent", Value::Null);
                 let msg = match ev("message") {
                     Some(v) if truthy(v) => v.clone(),
                     _ => json!("unknown agent error"),
@@ -929,28 +654,13 @@ pub fn apply_event(snapshot: &Map<String, Value>, entry: &Value) -> Map<String, 
     next
 }
 
-fn write_snapshot(path: &str, snapshot: &Map<String, Value>, journal_bytes: i64, next_seq: i64) {
-    let mut payload = snapshot.clone();
-    payload.insert(META_JOURNAL_BYTES.to_string(), json!(journal_bytes));
-    payload.insert(META_NEXT_SEQ.to_string(), json!(next_seq));
-    let _ = crate::util::write_file(
-        path,
-        &format!("{}\n", crate::util::json_pretty(&Value::Object(payload))),
-    );
-}
-
-/// The pending event's `id`/`type` as strings (helper for status/resume).
-pub fn get_str<'a>(m: &'a Map<String, Value>, k: &str) -> Option<&'a str> {
-    get(m, k).and_then(|v| v.as_str())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
 
-    fn journal_entry(seq: i64, event: Value) -> Value {
-        json!({ "seq": seq, "ts": "2026-01-01T00:00:00.000Z", "event": event })
+    fn entry(event: Value) -> Value {
+        json!({ "ts": "2026-01-01T00:00:00.000Z", "event": event })
     }
 
     fn has_diag(snapshot: &Map<String, Value>, error: &str) -> bool {
@@ -976,15 +686,11 @@ mod tests {
         replay(
             id,
             &[
-                journal_entry(
-                    1,
-                    json!({ "id": id, "type": "accept", "variantId": 2 }),
-                ),
-                journal_entry(
-                    2,
+                entry(json!({ "id": id, "type": "accept", "variantId": 2 })),
+                entry(
                     json!({ "id": id, "type": "agent_done", "carbonize": true, "file": "index.html" }),
                 ),
-                journal_entry(3, json!({ "id": id, "type": terminal })),
+                entry(json!({ "id": id, "type": terminal })),
             ],
         )
     }

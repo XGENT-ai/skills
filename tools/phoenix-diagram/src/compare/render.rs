@@ -15,7 +15,6 @@ use std::{collections::BTreeMap, fmt::Write};
 #[derive(Debug)]
 pub struct ParsedComparison {
     pub ir: Value,
-    pub receipt_id: String,
     pub receipt_filename: String,
     pub views: BTreeMap<String, Vec<u8>>,
 }
@@ -25,7 +24,6 @@ struct Metadata {
     schema_version: u32,
     artifact_kind: String,
     receipt_filename: String,
-    receipt_id: String,
     comparison_ir: Value,
     view_identities: BTreeMap<String, FileIdentity>,
 }
@@ -42,13 +40,6 @@ fn safe_filename(value: &str) -> bool {
         && !value
             .chars()
             .any(|c| c.is_control() || matches!(c, '/' | '\\' | ':' | '?' | '#'))
-}
-fn safe_id(value: &str) -> bool {
-    !value.is_empty()
-        && value.len() <= 128
-        && value
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_'))
 }
 fn selector(value: &str) -> Selector {
     Selector::parse(value).expect("fixed comparison selector")
@@ -69,7 +60,6 @@ pub fn parse(html: &[u8]) -> Result<ParsedComparison, Diagnostics> {
     if metadata.schema_version != 1
         || metadata.artifact_kind != "architecture-comparison"
         || !safe_filename(&metadata.receipt_filename)
-        || !safe_id(&metadata.receipt_id)
     {
         return Err(failure("Comparison identity is invalid"));
     }
@@ -126,7 +116,6 @@ pub fn parse(html: &[u8]) -> Result<ParsedComparison, Diagnostics> {
     }
     Ok(ParsedComparison {
         ir: metadata.comparison_ir,
-        receipt_id: metadata.receipt_id,
         receipt_filename: metadata.receipt_filename,
         views,
     })
@@ -318,16 +307,15 @@ pub(crate) fn render(
     head_html: &[u8],
     ir: &Value,
     receipt_filename: &str,
-    receipt_id: &str,
 ) -> Result<Vec<u8>, Diagnostics> {
     if base.diagram_type != DiagramType::Architecture
         || head.diagram_type != DiagramType::Architecture
     {
         return Err(failure("Comparison views require architecture scenes"));
     }
-    if !safe_filename(receipt_filename) || !safe_id(receipt_id) {
+    if !safe_filename(receipt_filename) {
         return Err(failure(
-            "Comparison receipt must have a safe relative filename and identity",
+            "Comparison receipt must have a safe relative filename",
         ));
     }
     let delta =
@@ -341,7 +329,6 @@ pub(crate) fn render(
         schema_version: 1,
         artifact_kind: "architecture-comparison".into(),
         receipt_filename: receipt_filename.into(),
-        receipt_id: receipt_id.into(),
         comparison_ir: ir.clone(),
         view_identities: child_views
             .iter()
@@ -481,7 +468,6 @@ mod tests {
             &head_html,
             &ir,
             "comparison.html.compare.json",
-            "receipt-test",
         )
         .unwrap();
         let parsed = parse(&html).unwrap();
@@ -525,7 +511,6 @@ mod tests {
             &head_html,
             &ir,
             "comparison.html.compare.json",
-            "receipt-test",
         )
         .unwrap();
         let parsed = parse(&html).unwrap();
@@ -622,7 +607,6 @@ mod tests {
                 &snapshot,
                 &ir,
                 "comparison.html.compare.json",
-                "receipt-test",
             )
             .unwrap();
             let doc = Html::parse_document(std::str::from_utf8(&html).unwrap());
@@ -665,16 +649,7 @@ mod tests {
             "compare.json#fragment",
             "compare\\private.json",
         ] {
-            assert!(super::render(
-                &scene,
-                &scene,
-                &snapshot,
-                &snapshot,
-                &ir,
-                filename,
-                "receipt-test"
-            )
-            .is_err());
+            assert!(super::render(&scene, &scene, &snapshot, &snapshot, &ir, filename).is_err());
         }
         let html = super::render(
             &scene,
@@ -683,7 +658,6 @@ mod tests {
             &snapshot,
             &ir,
             "comparison.html.compare.json",
-            "receipt-test",
         )
         .unwrap();
         let parsed = parse(&html).unwrap();
@@ -709,7 +683,6 @@ mod tests {
             &snapshot,
             &ir,
             "comparison.html.compare.json",
-            "receipt-test",
         )
         .unwrap();
         let parsed = parse(&html).unwrap();

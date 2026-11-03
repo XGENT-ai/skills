@@ -18,7 +18,7 @@ Fixtures can also opt into a **runtime E2E** pass that actually installs depende
 ```json
 {
   "name": "human-readable label",
-  "config": { ...contents for .impeccable/live/config.json ... },
+  "config": { ...contents for .phoenix-ui/live/config.json ... },
   "sourceFiles": ["paths that is-generated should classify as source (false)"],
   "generatedFiles": ["paths that is-generated should classify as generated (true)"],
   "wrapCases": [
@@ -114,7 +114,7 @@ The `runtime` block is optional. Fixtures without it only run the static checks 
 Optional, defaults to `.`. Set it when the served app is **not** the repo root, the shape live mode has to resolve on its own (a CLI package at the root with the site in `website/`, for example). With `appDir` set, the harness:
 
 - stages `files/` and runs `git init` at the tmp root, as always;
-- writes `.impeccable/live/config.json` under `<tmp>/<appDir>/`, and treats every fixture-relative path in `fixture.json` (`steer.sourceFile`, manual-edit `expectedSourceFile`, and so on) as relative to that app dir;
+- writes `.phoenix-ui/live/config.json` under `<tmp>/<appDir>/`, and treats every fixture-relative path in `fixture.json` (`steer.sourceFile`, manual-edit `expectedSourceFile`, and so on) as relative to that app dir;
 - runs `runtime.install` and `runtime.devCommand` with the app dir as cwd;
 - boots through `impeccable live` **from the tmp root** instead of calling `live-server` and `live-inject` directly, so the run exercises the engine's root resolution rather than assuming it. The parsed boot payload is exposed as `session.liveBoot`, and `tests/live-e2e.test.mjs` asserts on `roots.appRoot`, `roots.contextRoot`, the persisted `roots.json`, and the repo-root pointer.
 

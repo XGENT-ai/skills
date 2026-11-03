@@ -1,10 +1,8 @@
 //! `phoenix-ui-rules`: the XGENT rule pack for the Phoenix UI engine.
 //!
-//! The built-in rules are a byte-for-byte port of the upstream JS table and
-//! never change here (§0.1 C-1). XGENT's own findings live in this crate and
-//! run only on the engines that are handed [`PACK`]: the native `detect`
-//! binary (files and URLs) and the hook verbs. The in-page WASM detector and
-//! the browser extension do not run a pack (ADR-1).
+//! XGENT's own findings live in this crate and run only on the engines that
+//! are handed [`PACK`]: the native `detect` binary (files and URLs) and the
+//! hook verbs. The in-page WASM detector does not run a pack.
 //!
 //! Rule ids are namespaced `xgent/…` so [`impeccable_core::rule_pack::install`]
 //! can never collide with a built-in id, and every rule applies the engine's
@@ -18,6 +16,10 @@ use impeccable_core::rule_pack::RulePack;
 
 pub mod dom;
 pub mod text;
+
+fn truncate_chars(value: &str, max: usize) -> String {
+    value.chars().take(max).collect()
+}
 
 /// `xgent/transition-all` (§5.3).
 pub(crate) const TRANSITION_ALL: Antipattern = Antipattern {

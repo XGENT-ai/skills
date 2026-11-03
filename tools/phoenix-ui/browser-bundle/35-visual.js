@@ -6,13 +6,9 @@
 // and reason strings, percentiles, the result objects — is a call into the
 // WASM core (crates/core/src/browser/visual.rs via `IO.core('vc_*', ...)`).
 //
-// The same orchestration runs in two places, so the IO is an adapter:
-//   - in the page (50-scan.js): nodes are Elements, the core is called
-//     synchronously, images and canvases are right here;
-//   - in the extension's offscreen document (60-offscreen.js): nodes are
-//     snapshot ids, the core runs over the snapshot and its hit-test needs
-//     are answered by the content script between calls, images and pixels
-//     are read by the content script and travel back as facts.
+// The IO is an adapter (createInPageVisualIO, below): nodes
+// are Elements, the core is called synchronously, images and canvases are
+// right here.
 //
 // createVisualContrast(IO) -> { collectVisualContrastCandidates(options),
 //   analyzeVisualContrastCandidate(candidate), analyzeVisualContrast(options),
@@ -21,7 +17,7 @@
 // IO contract (N = the adapter's node representation):
 //   core(fn, ...args)          -> Promise<result>  wasm export by name
 //   coreSync(fn, ...args)      -> result           (only used by the sync
-//                                 candidate collector; offscreen may throw)
+//                                 candidate collector)
 //   node(handle) / handle(N)   handle <-> N
 //   parentOrBody(N)            -> N   (`node.parentElement || document.body`)
 //   intrinsicImg(N)            -> [w, h]  naturalWidth||videoWidth||width

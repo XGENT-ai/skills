@@ -17,8 +17,8 @@ Execute in order. No step skipped, no step reordered. Every tool output in live 
 3. Poll loop with the default long timeout (600000 ms). Run `phoenix-ui live-poll` again immediately after every event or `--reply`; Codex runs this one-shot poll in the foreground. Never pass a short `--timeout=`. The global bar's **Phoenix UI mark** dims with a pulsing amber dot when nothing is polling `/poll`; restart `phoenix-ui live-poll` to reconnect.
 4. On `generate`: reuse `event.scaffold` when present; read the screenshot if present; load the action's reference; deliver variants; `--reply done`; poll again. Generate in this thread: you already hold the project's tokens and layout. The overlay preview IS the verification channel; do not screenshot, re-render, or QA variants between generate and accept. Apply craft-floor's contrast, spacing, and type floors by construction as you write; full verification runs once at accept on the chosen variant.
 5. On `steer`: read the message and `pageUrl`; do the work; `--reply steer_done`; poll again. No pickup ack.
-6. On `accept` / `discard`: the poll script runs `phoenix-ui live-accept`, acknowledges delivery, and prints `_completionAck`. Plain accepts/discards are terminal immediately; carbonize accepts stay recoverable until `phoenix-ui live-complete --id EVENT_ID` runs. Finish that cleanup before polling again.
-7. If interrupted, run `phoenix-ui live-status` or `phoenix-ui live-resume` before guessing. The journal under `.phoenix-ui/live/sessions/` is canonical and replays unacknowledged work after a helper restart; the injected `live.js` re-attaches when the page reopens. Fall back to the direct-edit loop only when `phoenix-ui live-resume` reports no active session, never because disconnects felt frequent.
+6. On `accept` / `discard`: the poll script runs `phoenix-ui live-accept` and replies its outcome to the helper. Plain accepts/discards are terminal immediately; a carbonize accept stays open until `phoenix-ui live-complete --id EVENT_ID` runs. Finish that cleanup before polling again.
+7. Sessions live in the running helper only. If the helper stopped mid-session, boot again and ask the user to pick the element again; the injected `live.js` re-attaches when the page reopens.
 8. On `exit`: run the cleanup at the bottom.
 
 Harness policy:
@@ -64,18 +64,6 @@ Output JSON: `{ ok, serverPort, serverToken, pageFiles, roots, hasProduct, produ
 `serverPort`/`serverToken` belong to the small helper HTTP server (`/live.js`, SSE, `/poll`), not your dev server; the page URL is whatever origin serves a `pageFiles` entry.
 
 If output is `{ ok: false, error: "config_missing" | "config_invalid", path }`, this project needs one-time configuration: read [live-setup.md](live-setup.md) and follow it. If the output carries a non-null `configDrift`, tell the user once which HTML files are uncovered and suggest adding them or switching `files` to a glob; never auto-edit the config.
-
-## Recovery commands
-
-The append-only journal under `.phoenix-ui/live/sessions/` is canonical durable state (not project source). When the chat was interrupted, polling was missed, the helper restarted, or the browser reloaded:
-
-```bash
-<skill-base-dir>/scripts/phoenix-ui live-status      # helper state, active sessions, queued events; works with the helper down
-<skill-base-dir>/scripts/phoenix-ui live-resume --id SESSION_ID   # active snapshot, pending event, next safe action
-<skill-base-dir>/scripts/phoenix-ui live-complete --id SESSION_ID # canonical manual final acknowledgement after verified cleanup
-```
-
-Server restart rule: start `phoenix-ui live-server` again, then poll; startup requeues unacknowledged events, so never ask the user to click Go again unless `phoenix-ui live-resume` says no active session exists.
 
 ## Handle `generate`
 
@@ -264,14 +252,13 @@ When wrap returns `fallback: "agent-driven"`, you pick the source file yourself;
 
 ## Handle `accept`
 
-Event: `{id, variantId, _acceptResult, _completionAck}`. The poll script already ran `phoenix-ui live-accept` deterministically and acknowledged delivery; the browser DOM is already updated.
+Event: `{id, variantId, _acceptResult}`. The poll script already ran `phoenix-ui live-accept` deterministically and replied its outcome; the browser DOM is already updated.
 
 - The accept event includes `pageUrl`; the poll script must forward it to `phoenix-ui live-accept --page-url PAGE_URL` so accept-time cleanup only scrubs staged copy edits for the current page.
-- `_completionAck.ok !== true`: do not poll yet. Run `phoenix-ui live-status` / `phoenix-ui live-resume`, finish cleanup manually if needed, then `phoenix-ui live-complete --id EVENT_ID`.
 - `handled: true, carbonize: false`: nothing to do; poll again.
-- `handled: true, carbonize: true`: required cleanup below; `_acceptResult.todo`, `_completionAck.requiresComplete`, and the stderr banner all point at it.
+- `handled: true, carbonize: true`: required cleanup below; `_acceptResult.todo` and the stderr banner both point at it.
 - `handled: false, mode: "fallback"`: the session lived in a generated file; you already wrote true source in fallback Step 3; clean the temporary wrapper and poll.
-- `handled: false, mode: "error"`: **do not hand-edit the file.** `source_locked`: rerun the same `phoenix-ui live-accept` command (idempotent) until the publisher releases. `accept_receipt_conflict`: the session already resolved as `priorOperation`; run `phoenix-ui live-status` and tell the user. Anything else: report briefly, run `phoenix-ui live-status` first.
+- `handled: false, mode: "error"`: **do not hand-edit the file.** Report the error to the user briefly, then poll again.
 - `handled: false` without `mode`: manual cleanup: read file, find markers, edit.
 
 ### Required after accept (carbonize)
@@ -288,7 +275,7 @@ Then run `phoenix-ui live-complete --id SESSION_ID` and verify `phase: "complete
 
 ## Handle `discard`
 
-Event: `{id, _acceptResult, _completionAck}`. The poll script already restored the original and acknowledged `discarded`. Nothing to do unless `_completionAck.ok !== true`; then `phoenix-ui live-complete --id EVENT_ID --discarded` and poll again.
+Event: `{id, _acceptResult}`. The poll script already restored the original and replied `discarded`. Nothing to do; poll again.
 
 ## Handle `steer`
 
@@ -306,7 +293,7 @@ The user already clicked Apply. Do not ask what to do, discard, or redirect to G
 
 When native subagents are available, delegate source edits to `phoenix_ui_manual_edit_applier` / `phoenix-ui-manual-edit-applier`. Pass cwd, scripts path, event id, page URL, chunk/deadline, `batch`, `evidencePath`, and the canonical JSON result schema. The subagent must not poll or reply. If unavailable, apply inline with the same contract.
 
-If `repair` is present, the previous Apply changed source but final validation failed. Fix the current source and return the same canonical JSON result; do not roll files back yourself. The browser will ask the user before any rollback.
+If `repair` is present, the previous Apply wrote source but the staged copy did not verify there. Fix the current source and return the same canonical JSON result; do not revert files. Nothing is rolled back automatically; git is the undo.
 
 After source edits finish, reply exactly once with `<skill-base-dir>/scripts/phoenix-ui live-poll --reply EVENT_ID done --data '{"status":"done","appliedEntryIds":["8hexid"],"failed":[],"files":["src/page.html"],"notes":[]}'`. Use `status:"partial"` or `status:"error"` with `failed[]` when not every entry applied. Then poll again. Never reply without the event id; `--reply done --file ...` is invalid for manual Apply.
 

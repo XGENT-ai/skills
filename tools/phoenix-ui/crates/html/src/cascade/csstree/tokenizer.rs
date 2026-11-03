@@ -646,10 +646,6 @@ pub fn is_block_opener_token_type(ty: TokenType) -> bool {
     block_token(ty) == BLOCK_OPEN_TOKEN
 }
 
-pub fn is_block_closer_token_type(ty: TokenType) -> bool {
-    block_token(ty) == BLOCK_CLOSE_TOKEN
-}
-
 /// The tokenized source with css-tree's cursor and balance table.
 pub struct TokenStream {
     pub source: Vec<char>,
@@ -758,14 +754,6 @@ impl TokenStream {
         }
     }
 
-    fn raw_type(&self, index: usize) -> TokenType {
-        if index <= self.token_count {
-            self.types[index]
-        } else {
-            0
-        }
-    }
-
     pub fn lookup_type(&self, offset: isize) -> TokenType {
         let idx = self.token_index as isize + offset;
         if idx >= 0 && (idx as usize) < self.token_count {
@@ -828,20 +816,6 @@ impl TokenStream {
             };
         }
         self.first_char_offset
-    }
-
-    pub fn get_token_end(&self, token_index: usize) -> usize {
-        if token_index == self.token_index {
-            return self.token_end;
-        }
-        self.raw_end(std::cmp::min(token_index, self.token_count))
-    }
-
-    pub fn get_token_type(&self, token_index: usize) -> TokenType {
-        if token_index == self.token_index {
-            return self.token_type;
-        }
-        self.raw_type(std::cmp::min(token_index, self.token_count))
     }
 
     pub fn substr_to_cursor(&self, start: usize) -> String {

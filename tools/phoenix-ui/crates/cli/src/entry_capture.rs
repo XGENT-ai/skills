@@ -1,21 +1,16 @@
 //! Native static-entry adapter. One immutable snapshot; batches share a browser per viewport.
 use crate::{
     asset_capture::CdpAssetRenderer,
-    capture_snapshot::{HtmlSnapshot, SnapshotSelection},
+    capture_snapshot::{capture_regions_at_viewport, SnapshotSelection},
     component_capture::render_page,
 };
-use impeccable_browser::{cdp::Browser, discovery, html_snapshot::HtmlSnapshot as PageSnapshot};
+use impeccable_browser::{cdp::Browser, discovery, html_snapshot::HtmlSnapshot};
 use impeccable_comp_verbs::asset_capture::capture_sha256;
 use impeccable_comp_verbs::entry_capture::{
     CapturedEntry, EntryEvidence, EntryRenderer, EntryRequest, EntryStage, FrameEvidence,
 };
-use serde_json::{Value, json};
-use std::{
-    collections::BTreeMap,
-    fs,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use serde_json::{json, Value};
+use std::{collections::BTreeMap, fs, path::Path, sync::Arc};
 
 pub struct CdpEntryRenderer;
 /// Largest share of a frame that images may cover when the spec declares no
@@ -24,25 +19,12 @@ pub struct CdpEntryRenderer;
 /// chart, photo or copied comp that carries real weight in the comparison sits
 /// well over it.
 pub const TEXT_ONLY_RASTER_SHARE_MAX: f64 = 0.15;
-/// The frozen inputs a capture was drawn from. A text-only capture also binds
-/// the hero review manifest whose dependency list chose what the page may load.
 struct FrozenEntry {
-    snapshot: Arc<HtmlSnapshot>,
-    manifest: Option<(PathBuf, Vec<u8>)>,
     evidence: EntryEvidence,
 }
 impl CapturedEntry for FrozenEntry {
     fn evidence(&self) -> &EntryEvidence {
         &self.evidence
-    }
-    fn verify_current(&self) -> Result<(), String> {
-        self.snapshot.verify_current()?;
-        if let Some((path, bytes)) = &self.manifest {
-            if fs::read(path).ok().as_ref() != Some(bytes) {
-                return Err("capture input changed: .phoenix-ui/review/hero.json".into());
-            }
-        }
-        Ok(())
     }
 }
 impl EntryRenderer for CdpEntryRenderer {
@@ -116,7 +98,8 @@ impl CdpEntryRenderer {
             } else {
                 &ids[..]
             };
-            let regions = snapshot.capture_regions_at_viewport(
+            let regions = capture_regions_at_viewport(
+                &snapshot,
                 &mut CdpAssetRenderer::from_process_env(),
                 &request.spec,
                 selected,
@@ -162,12 +145,7 @@ impl CdpEntryRenderer {
                 regions,
             });
         }
-        snapshot.verify_current()?;
-        Ok(Box::new(FrozenEntry {
-            snapshot,
-            manifest: None,
-            evidence,
-        }))
+        Ok(Box::new(FrozenEntry { evidence }))
     }
 }
 
@@ -230,7 +208,7 @@ fn capture_text_only(
         // policy: a file that never reaches the page cannot show the reference.
         files.insert(name, bytes.to_vec());
     }
-    let page = Arc::new(PageSnapshot::from_pinned(request.artifact.clone(), files)?);
+    let page = Arc::new(HtmlSnapshot::from_pinned(request.artifact.clone(), files)?);
     let env = impeccable_common::process_env();
     let exe = discovery::find_browser(&env).map_err(|e| format!("browser unavailable: {e:?}"))?;
     let mut browser = Browser::launch(&exe, &[], false).map_err(|e| e.message)?;
@@ -291,12 +269,10 @@ fn capture_text_only(
     })();
     browser.close();
     let mut evidence = result?;
-    if let Some((_, bytes)) = &manifest {
+    if let Some(bytes) = &manifest {
         evidence.report["reviewManifestSha256"] = json!(capture_sha256(bytes));
     }
-    let entry = FrozenEntry { snapshot: raster, manifest, evidence };
-    entry.verify_current()?;
-    Ok(Box::new(entry))
+    Ok(Box::new(FrozenEntry { evidence }))
 }
 
 /// The dependency list the hero review manifest declares for this entry, when it
@@ -304,7 +280,7 @@ fn capture_text_only(
 fn declared_dependencies(
     root: &Path,
     artifact: &str,
-) -> Result<(Option<Vec<String>>, Option<(PathBuf, Vec<u8>)>), String> {
+) -> Result<(Option<Vec<String>>, Option<Vec<u8>>), String> {
     let path = root.join(".phoenix-ui").join("review").join("hero.json");
     let Ok(bytes) = fs::read(&path) else {
         return Ok((None, None));
@@ -327,7 +303,7 @@ fn declared_dependencies(
         .iter()
         .map(|d| d.as_str().map(|s| s.replace('\\', "/")).ok_or("hero review manifest: dependencies must be paths"))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok((Some(deps), Some((path, bytes))))
+    Ok((Some(deps), Some(bytes)))
 }
 
 /// Whether a served file is, or inlines as base64, one of the forbidden images.

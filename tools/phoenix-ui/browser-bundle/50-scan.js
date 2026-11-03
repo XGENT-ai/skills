@@ -84,7 +84,7 @@ if (IS_BROWSER && !__impeccable) {
   // shouldIgnoreDetectionFile in cli/lib/impeccable-config.mjs; the live
   // overlay resolves the globs per page (live-browser-ignores.js) and
   // forwards the verdict as config.skipScan. The core repeats this guard on
-  // the parsed config so the snapshot route answers empty too.
+  // the parsed config.
   function skipScanActive() {
     return EXTENSION_MODE && window.__PHOENIX_UI_CONFIG__?.skipScan === true;
   }
@@ -134,8 +134,8 @@ if (IS_BROWSER && !__impeccable) {
     };
   }
 
-  // Config plumbing shared with the extension's offscreen document lives in
-  // 30-scan-common.js; here the config is the page's __PHOENIX_UI_CONFIG__.
+  // Config plumbing lives in 30-scan-common.js; the config is the page's
+  // __PHOENIX_UI_CONFIG__.
   const pageConfig = () => window.__PHOENIX_UI_CONFIG__ || {};
   const visualContrastMode = (options = {}) => __visualContrastMode(options, pageConfig());
   const shouldRunVisualContrast = (options = {}) => visualContrastMode(options) !== false;
@@ -441,34 +441,4 @@ if (IS_BROWSER && !__impeccable) {
   window.impeccableCollectVisualContrastCandidates = collectVisualContrastCandidates;
   window.impeccableAnalyzeVisualContrast = analyzeVisualContrast;
   window.impeccableGetLastVisualContrastAnalyses = () => lastVisualContrastAnalyses.slice();
-
-  // The snapshot route (what the extension runs when the page's CSP keeps
-  // WebAssembly out of every world it can reach), exposed here so the two
-  // routes can be A/B'd on the same page: capture, run the same core over
-  // the snapshot (answering its hit-test needs from the live page), and
-  // serialize through it. Deterministic findings only; the visual-contrast
-  // pass over a snapshot is the extension's (see 60-offscreen.js).
-  window.impeccableSnapshotCapture = (options) => __impeccableSnapshot.capture(options);
-  window.impeccableDetectFromSnapshot = function (options = {}) {
-    const t0 = performance.now();
-    const cap = __impeccableSnapshot.capture(options);
-    if (cap.error) throw new Error(cap.error);
-    const t1 = performance.now();
-    let out = JSON.parse(__impeccable.collect_findings_from_snapshot(cap.json, collectConfigJson()));
-    let rounds = 1;
-    while (out.needs) {
-      __impeccable.snapshot_add_facts(JSON.stringify(__impeccableSnapshot.answer(out.needs, cap)));
-      out = JSON.parse(__impeccable.collect_browser_findings(collectConfigJson()));
-      if (__impeccable.snapshot_has_needs()) out = { needs: JSON.parse(__impeccable.snapshot_take_needs()) };
-      rounds++;
-    }
-    const serialized = JSON.parse(__impeccable.serialize_findings(JSON.stringify(out.groups)));
-    const unknownStyleProps = JSON.parse(__impeccable.snapshot_unknown_style_props());
-    __impeccable.snapshot_clear();
-    return {
-      findings: serialized,
-      pageLevel: out.pageLevel,
-      stats: { ...cap.stats, rounds, unknownStyleProps, captureMs: t1 - t0, coreMs: performance.now() - t1 },
-    };
-  };
 }

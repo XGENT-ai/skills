@@ -1,14 +1,12 @@
 //! The `impeccable detect` adapter for the static HTML engine: implements
 //! `impeccable_detect::engines::HtmlEngine` over [`crate::engine::detect_html`],
-//! wiring the three pieces `detectHtml` borrows from other JS modules:
+//! wiring the pieces `detectHtml` borrows from other JS modules:
 //!
 //! - the design-system trio (`checkSourceDesignSystem` and
 //!   `mergeDesignSystemFindings` from the `detect` crate, plus the DOM-backed
 //!   `collectStaticDesignSystemFindings` ported here, JS
 //!   `cli/engine/design-system.mjs`),
-//! - `runTextContentAnalyzers` (regex engine, `detect` crate),
-//! - the detector profile (`detect::profiler::DetectorProfile`) as a
-//!   [`ProfileSink`].
+//! - `runTextContentAnalyzers` (regex engine, `detect` crate).
 //!
 //! Dependency direction: html depends on detect, never the reverse; the
 //! `cli` binary registers [`StaticHtmlEngine`] in `Engines`.
@@ -17,7 +15,7 @@ use std::path::Path;
 
 use impeccable_core::findings::Finding;
 use impeccable_core::js;
-use impeccable_core::js_ext_b::slice_utf16_prefix;
+use impeccable_core::js_ext_a::slice_utf16_prefix;
 use impeccable_detect::design_system::{
     check_source_design_system, css_color_label, extract_radius_tokens, is_allowed_color_raw,
     is_allowed_font, is_allowed_radius_raw, is_transparent_css, make_design_finding,
@@ -25,26 +23,17 @@ use impeccable_detect::design_system::{
 };
 use impeccable_detect::detect_text::run_text_content_analyzers;
 use impeccable_detect::engines::{EngineError, HtmlEngine, ScanOptions};
-use impeccable_detect::profiler::{DetectorProfile, ProfileEvent as DetectProfileEvent};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::background::sv;
 use crate::dom::{StaticDocument, StaticElement};
 use crate::engine::{detect_html, DesignSystemHook, DetectHtmlOptions};
-use crate::profile::{ProfileEvent, ProfileSink};
 use crate::quality::pf0;
 
 /// The static HTML engine as `impeccable detect` sees it.
-///
-/// `static_rule_pack` is the rule pack's static-document hook, set by
-/// whichever binary builds `Engines`; the `impeccable` binary leaves it
-/// `None`. The pack's engine-wide hooks travel on `ScanOptions` instead,
-/// because `detect` owns those options and cannot name this crate's trait.
 #[derive(Debug, Default, Clone, Copy)]
-pub struct StaticHtmlEngine {
-    pub static_rule_pack: Option<&'static dyn crate::engine::StaticRulePack>,
-}
+pub struct StaticHtmlEngine;
 
 impl HtmlEngine for StaticHtmlEngine {
     fn detect_html(
@@ -60,14 +49,6 @@ impl HtmlEngine for StaticHtmlEngine {
         let warn = |msg: &str| {
             let _ = stderr_cell.borrow_mut().write_all(msg.as_bytes());
         };
-        let profile_sink = options
-            .profile
-            .as_deref()
-            .map(|p| DetectorProfileSink { profile: p });
-        let profile_ref: Option<&DetectorProfile> = options.profile.as_deref();
-        let analyzers = move |content: &str, file_path: &str| -> Vec<Finding> {
-            run_text_content_analyzers(content, file_path, profile_ref)
-        };
         let hook = options
             .design_system
             .as_deref()
@@ -75,10 +56,8 @@ impl HtmlEngine for StaticHtmlEngine {
         let html_options = DetectHtmlOptions {
             inline_ignores_disabled: !options.inline_ignores,
             design_system: hook.as_ref().map(|h| h as &dyn DesignSystemHook),
-            text_content_analyzers: Some(&analyzers),
-            profile: profile_sink.as_ref().map(|s| s as &dyn ProfileSink),
+            text_content_analyzers: Some(&run_text_content_analyzers),
             warn: Some(&warn),
-            static_rule_pack: self.static_rule_pack,
             rule_pack: options.rule_pack,
         };
         detect_html(Path::new(path), &html_options).map_err(|e| {
@@ -95,40 +74,6 @@ impl HtmlEngine for StaticHtmlEngine {
                 },
             })
         })
-    }
-}
-
-/// [`ProfileSink`] over the detect crate's `DetectorProfile`
-/// (`recordProfileEvent` on the `{ events: [] }` shape).
-pub struct DetectorProfileSink<'a> {
-    pub profile: &'a DetectorProfile,
-}
-
-impl ProfileSink for DetectorProfileSink<'_> {
-    fn record(&self, event: ProfileEvent) {
-        let normalized = DetectProfileEvent {
-            engine: or_unknown(event.engine),
-            phase: or_unknown(event.phase),
-            rule_id: or_unknown(event.rule_id),
-            target: event.target,
-            ms: if event.ms.is_finite() { event.ms } else { 0.0 },
-            findings: event.findings as f64,
-            detail: event.detail.filter(|d| !d.is_empty()),
-            finding_ids: if event.finding_ids.is_empty() {
-                None
-            } else {
-                Some(event.finding_ids)
-            },
-        };
-        self.profile.events.borrow_mut().push(normalized);
-    }
-}
-
-fn or_unknown(s: String) -> String {
-    if s.is_empty() {
-        "unknown".to_string()
-    } else {
-        s
     }
 }
 

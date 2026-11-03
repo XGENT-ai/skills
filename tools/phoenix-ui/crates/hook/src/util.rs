@@ -5,7 +5,7 @@
 use serde_json::{Map, Value};
 
 pub use impeccable_context::util::{iso_now, now_ms, safe_read};
-pub use impeccable_core::js_ext_b::utf16_len;
+pub use impeccable_core::js_ext_a::utf16_len;
 pub use impeccable_detect::jsp;
 
 /// JS `str.slice(start, end)` in UTF-16 code units (non-negative bounds only).

@@ -1,5 +1,5 @@
 {
-  "stdout": "Usage: impeccable check [options]\n\nCheck whether installed Impeccable skills are up to date.\n\nOptions:\n  -h, --help             Show this help message\n",
+  "stdout": "Usage: phoenix-ui check [options]\n\nCheck whether installed Phoenix UI skills are up to date.\n\nOptions:\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report unavailable/invalid input as JSON\n  -h, --help             Show this help message\n",
   "stderr": "",
   "exit": 0,
   "signal": null,

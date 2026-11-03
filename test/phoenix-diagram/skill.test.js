@@ -3,15 +3,13 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const os = require('node:os');
-const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
 const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'];
 const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring',
-  'brand-marks', 'preview', 'architecture-compare', 'migration', 'compatibility', 'extending-types'];
+  'brand-marks', 'preview', 'architecture-compare', 'compatibility', 'extending-types'];
 const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
 
 test('the skill has a bounded ten-type description with its exclusions up front and normal automatic discovery', () => {
@@ -100,7 +98,7 @@ test('documented commands use the flat native launcher without legacy renderer f
   assert.match(documents, /finalize <type> candidate\.json diagram\.html --repo-root/);
   assert.match(documents, /evidence\.status/);
   const cli = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/src/cli.rs'), 'utf8');
-  for (const command of ['guide', 'validate', 'deliver', 'check', 'browser-check', 'visual-check', 'finalize', 'review-record', 'recover-output', 'doctor']) {
+  for (const command of ['guide', 'validate', 'deliver', 'check', 'browser-check', 'visual-check', 'finalize', 'review-record', 'doctor']) {
     if (new RegExp(`"\\$PD" ${command}\\b`).test(documents)) assert.ok(cli.includes(command), command);
   }
 });
@@ -154,48 +152,4 @@ test('ERD acceptance material preserves the original bytes and separates prompts
     assert.doesNotMatch(material.prompt, /expectedMissingFacts|expectedRelationships|verdict|评分|判据/);
   }
   assert.ok(facts.reviewInstructions.length > 0);
-});
-
-test('the packaged review draft recipe preserves receipt bindings and leaves observation pending', t => {
-  const contract = read('references/delivery-contract.md');
-  const recipe = /<<'NODE'\n([\s\S]*?)\nNODE/.exec(contract)?.[1];
-  assert.ok(recipe, 'executable Node review draft recipe');
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-diagram-skill-'));
-  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
-  const identity = { sha256: 'a'.repeat(64), bytes: 100 };
-  const bound = name => ({ path: path.join(directory, name), identity });
-  const screenshots = [1440, 2048].flatMap(width => ['light', 'dark'].map(theme => ({ ...bound(`${width}-${theme}.png`),
-    viewport: { width, height: width === 1440 ? 900 : 1320 }, theme })));
-  const browser = { screenshots };
-  fs.writeFileSync(path.join(directory, 'browser.json'), JSON.stringify(browser));
-  const summary = { schemaVersion: 1, tool: 'phoenix-diagram', toolVersion: '0.2.0', automatedStatus: 'pass',
-    stages: ['validate', 'deliver', 'check', 'browser-check'].map(name => ({ name, status: 'pass' })),
-    candidate: { ...bound('candidate.json'), originalBinding: { protocolFixture: true } },
-    artifact: { ...bound('diagram.html'), originalBinding: { protocolFixture: true } },
-    configSha256: 'b'.repeat(64), engine: { sourceInputSha256: 'c'.repeat(64), inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', binary: identity },
-    deliveryReceiptId: 'protocol-fixture-no-visual-claim', browserReceiptIdentity: identity, evidence: { browserReceipt: bound('browser.json') } };
-  const summaryPath = path.join(directory, 'summary.json'), recordPath = path.join(directory, 'review.json');
-  fs.writeFileSync(summaryPath, JSON.stringify(summary));
-  const result = spawnSync(process.execPath, ['-', summaryPath, recordPath], { input: recipe, encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr);
-  const record = JSON.parse(fs.readFileSync(recordPath));
-  assert.deepEqual(Object.keys(record).sort(), ['schemaVersion', 'tool', 'toolVersion', 'command', 'status', 'diagnostics',
-    'artifact', 'candidate', 'configSha256', 'engine', 'deliveryReceiptId', 'browserReceiptIdentity', 'screenshotIdentities', 'reviewer', 'scope', 'verdict', 'findings'].sort());
-  assert.deepEqual(record.artifact, bound('diagram.html'));
-  assert.deepEqual(record.candidate, bound('candidate.json'));
-  assert.deepEqual(record.engine, summary.engine);
-  assert.equal(record.deliveryReceiptId, summary.deliveryReceiptId);
-  assert.deepEqual(record.browserReceiptIdentity, identity);
-  assert.equal(record.verdict, 'unavailable');
-  assert.equal(record.reviewer, '');
-  assert.ok(record.findings.length > 0);
-  assert.deepEqual(record.scope, ['diagram', 'labels', 'cards', 'relationship-occlusion', 'hierarchy', 'controls']);
-  assert.equal(record.screenshotIdentities.length, 4);
-  for (const [index, observation] of record.screenshotIdentities.entries()) {
-    assert.deepEqual(observation.file, { path: screenshots[index].path, identity });
-    assert.equal(observation.observed, false);
-    assert.equal(observation.observations, '');
-  }
-  const retry = spawnSync(process.execPath, ['-', summaryPath, recordPath], { input: recipe, encoding: 'utf8' });
-  assert.notEqual(retry.status, 0, 'draft creation must preserve an existing review');
 });

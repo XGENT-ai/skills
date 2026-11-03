@@ -66,12 +66,6 @@ pub fn is_html_path(file_path: &str) -> bool {
     HTML_EXTENSIONS.contains(&impeccable_core::js::to_lower_case(&jsp::extname(file_path)).as_str())
 }
 
-/// JS: file-system.mjs#walkDir. Files in `readdirSync` order (the OS order,
-/// which Node does not sort either), recursive; an unreadable dir yields [].
-pub fn walk_dir(dir: &str) -> Vec<String> {
-    walk_dir_reporting(dir, &[], &mut |_, _| {})
-}
-
 /// JS: file-system.mjs#walkDir(dir, onReadError). An unreadable directory is
 /// reported and skipped rather than silently yielding nothing (#711).
 pub fn walk_dir_reporting(
@@ -155,12 +149,6 @@ pub fn resolve_import(specifier: &str, from_dir: &str, file_set: &[String]) -> O
         }
     }
     None
-}
-
-/// JS: file-system.mjs#buildImportGraph. `(file, imports)` pairs in file
-/// order; each import list is insertion-ordered and deduplicated (JS `Set`).
-pub fn build_import_graph(files: &[String]) -> Vec<(String, Vec<String>)> {
-    build_import_graph_reporting(files, &mut |_, _| {})
 }
 
 /// JS: file-system.mjs#buildImportGraph(files, onReadError). A file that

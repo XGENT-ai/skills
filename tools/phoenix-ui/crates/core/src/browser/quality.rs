@@ -16,8 +16,9 @@ use crate::checks::rules::RuleHit;
 use crate::checks::text_rules::{
     NON_RENDERED_TAGS, QUALITY_TEXT_TAGS, SR_ONLY_SELECTOR, TEXT_EDGE_TAGS,
 };
+use crate::js::collapse_ws;
 use crate::js::{self, math_round, number_to_string, parse_float, to_fixed};
-use crate::js_ext_b::{slice_utf16_prefix, utf16_len};
+use crate::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -44,11 +45,6 @@ re!(
     OUTLINE_COLOR_RE,
     format!(r"(rgba?\([^)]+\)|#[0-9a-fA-F]{{3,8}}|[a-zA-Z]+){}*$", js::WS)
 );
-
-/// JS `s.replace(/\s+/g, ' ')`.
-pub fn collapse_ws(s: &str) -> String {
-    WS_RE.replace_all(s, " ").into_owned()
-}
 
 const FLUSH_SKIP_TAGS: &[&str] = &[
     "HTML", "BODY", "MAIN", "HEADER", "FOOTER", "NAV", "ARTICLE", "ASIDE", "BUTTON", "A", "LABEL",

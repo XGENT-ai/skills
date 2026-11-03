@@ -10,7 +10,6 @@ use serde_json::{json, Map, Value};
 use std::time::{Duration, Instant};
 
 pub const PER_REQUEST_TIMEOUT_MS: i64 = 270_000;
-pub const DEFAULT_EVENT_LEASE_MS: i64 = 600_000;
 const EVENT_TYPES_NEEDING_AGENT_REPLY: [&str; 5] = [
     "generate",
     "steer",
@@ -19,7 +18,7 @@ const EVENT_TYPES_NEEDING_AGENT_REPLY: [&str; 5] = [
     "variant_mount_failed",
 ];
 
-const HELP: &str = "Usage: phoenix-ui poll [options]
+const HELP: &str = "Usage: phoenix-ui live-poll [options]
 
 Wait for a browser event from the live variant server, or reply to one.
 
@@ -37,7 +36,7 @@ Modes:
 
 Options:
   --timeout=MS        One-shot poll timeout in ms (default: 600000). Ignored in --stream mode
-  --types=A,B         Lease only these event types
+  --types=A,B         Take only these event types
   --ack-timeout=MS    Stream mode: max wait for --reply after generate/steer (default: 600000)
   --file PATH         Attach a source file path to the reply (generate/steer flow)
   --data JSON         Attach a JSON result object to the reply (manual_edit_apply flow). Must be valid JSON
@@ -143,11 +142,7 @@ fn parse_reply_args(args: &[String], env: &Env, cwd: &str) -> Result<Option<Repl
         if let Some(raw) = args.get(i + 1) {
             match serde_json::from_str::<Value>(raw) {
                 Ok(v) => data = Some(v),
-                Err(_) => {
-                    let msg = crate::json_error::json_parse_error(raw)
-                        .unwrap_or_else(|| "Unexpected token".to_string());
-                    return Err(format!("--data must be valid JSON: {}", msg));
-                }
+                Err(e) => return Err(format!("--data must be valid JSON: {}", e)),
             }
         }
     }
@@ -380,12 +375,7 @@ fn fetch_next_event(
             None => PER_REQUEST_TIMEOUT_MS,
         };
         let slice = remaining.max(1000).min(PER_REQUEST_TIMEOUT_MS);
-        let mut query = format!(
-            "token={}&timeout={}&leaseMs={}",
-            form_encode(token),
-            slice,
-            DEFAULT_EVENT_LEASE_MS
-        );
+        let mut query = format!("token={}&timeout={}", form_encode(token), slice);
         if !types.is_empty() {
             query.push_str(&format!("&types={}", form_encode(&types.join(","))));
         }
@@ -478,40 +468,14 @@ fn completion_type_for_accept_result(event_type: &str, result: &Value) -> &'stat
     "agent_done"
 }
 
-/// JS: completionAckForAcceptResult(eventId, completionType, acceptResult)
-fn completion_ack_for_accept_result(
-    event_id: &str,
-    completion_type: &str,
-    result: &Value,
-    self_cmd: &str,
-) -> Value {
-    let mut ack = Map::new();
-    ack.insert("ok".into(), json!(true));
-    ack.insert("type".into(), json!(completion_type));
-    if result.get("handled") == Some(&Value::Bool(true))
-        && result.get("carbonize") == Some(&Value::Bool(true))
-    {
-        ack.insert("final".into(), json!(false));
-        ack.insert("requiresComplete".into(), json!(true));
-        ack.insert(
-            "nextCommand".into(),
-            json!(format!("{} live-complete --id {}", self_cmd, event_id)),
-        );
-        ack.insert(
-            "message".into(),
-            json!("Carbonize cleanup must be verified, then the session must be completed explicitly before polling again."),
-        );
-    }
-    Value::Object(ack)
-}
-
-/// JS: augmentEventWithAcceptHandling(event, base, token) +
-/// completeAcceptHandling
+/// Run the deterministic accept/discard for an accept or discard event and
+/// reply the outcome to the server; the result rides on the event as
+/// `_acceptResult`.
 fn augment_event_with_accept_handling(
     event: &mut Map<String, Value>,
     base: &str,
     token: &str,
-    io: &Io,
+    io: &mut Io,
 ) {
     let ty = event
         .get("type")
@@ -530,11 +494,7 @@ fn augment_event_with_accept_handling(
     } else {
         match serde_json::from_str::<Value>(out.trim()) {
             Ok(v) => v,
-            Err(_) => {
-                let msg = crate::json_error::json_parse_error(out.trim())
-                    .unwrap_or_else(|| "Unexpected token".to_string());
-                json!({ "handled": false, "mode": "error", "error": msg })
-            }
+            Err(e) => json!({ "handled": false, "mode": "error", "error": e.to_string() }),
         }
     };
     event.insert("_acceptResult".into(), accept_result.clone());
@@ -566,7 +526,6 @@ fn augment_event_with_accept_handling(
             None
         },
     };
-    let mut ack: Option<Value> = None;
     if let Err(e) = post_reply(base, token, &reply) {
         let msg = match e {
             PollError::Auth => {
@@ -575,17 +534,8 @@ fn augment_event_with_accept_handling(
             PollError::ConnRefused => "fetch failed".to_string(),
             PollError::AckTimeout(m) | PollError::Other(m) => m,
         };
-        ack = Some(json!({ "ok": false, "error": msg }));
+        io.err(&format!("Reply for {} failed: {}\n", id, msg));
     }
-    let ack = ack.unwrap_or_else(|| {
-        completion_ack_for_accept_result(
-            &id,
-            completion_type,
-            &accept_result,
-            &self_cmd(&io.env, &io.cwd.to_string_lossy()),
-        )
-    });
-    event.insert("_completionAck".into(), ack);
 }
 
 /// JS: manualApplyPollBanner(event)
@@ -595,7 +545,7 @@ fn manual_apply_poll_banner(event: &Map<String, Value>, self_cmd: &str) -> Strin
         _ => "EVENT_ID".to_string(),
     };
     format!(
-        "Manual Apply action required: edit source, then reply with `{} live-poll --reply {} done --data '<json>'`.\nThe JSON data must include status, appliedEntryIds, failed, files, and notes; summary counters are only a recovery fallback.\nDo not run {} live-commit-manual-edits for this leased event.\nDo not poll again before replying.\n",
+        "Manual Apply action required: edit source, then reply with `{} live-poll --reply {} done --data '<json>'`.\nThe JSON data must include status, appliedEntryIds, failed, files, and notes; summary counters are only a recovery fallback.\nDo not run {} live-commit-manual-edits for this event.\nDo not poll again before replying.\n",
         self_cmd, id, self_cmd
     )
 }

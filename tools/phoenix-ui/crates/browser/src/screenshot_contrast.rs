@@ -237,13 +237,10 @@ pub fn capture_visual_contrast_candidate(
         return Ok(None);
     };
     let before = page.screenshot_clip(clip.x, clip.y, clip.width, clip.height)?;
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let token = format!(
-        "impeccable-contrast-{}-{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0),
-        rand_token()
+        "impeccable-contrast-{}",
+        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     );
     let selector = candidate
         .get("selector")
@@ -362,24 +359,6 @@ fn truthy(v: &Value) -> bool {
         Value::String(s) => !s.is_empty(),
         _ => true,
     }
-}
-
-/// `Math.random().toString(36).slice(2)`-shaped token; only uniqueness matters.
-fn rand_token() -> String {
-    let nanos = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let mut x =
-        (nanos as u64) ^ (std::process::id() as u64).rotate_left(32) ^ 0x9E37_79B9_7F4A_7C15;
-    let mut out = String::new();
-    for _ in 0..10 {
-        x ^= x << 13;
-        x ^= x >> 7;
-        x ^= x << 17;
-        out.push(std::char::from_digit((x % 36) as u32, 36).unwrap_or('0'));
-    }
-    out
 }
 
 #[cfg(test)]

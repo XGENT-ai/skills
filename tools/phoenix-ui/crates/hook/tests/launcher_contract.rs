@@ -74,7 +74,7 @@ fn new_manifests_use_phoenix_launchers_and_codex_windows_guard() {
     let fixture = Fixture::new();
     for provider in [".claude", ".agents", ".cursor", ".github", ".gemini"] {
         fixture.skill(provider, "phoenix-ui");
-        // Both generations may coexist while migration is being prepared.
+        // An old Impeccable install may coexist with Phoenix.
         fixture.skill(provider, "impeccable");
     }
     fixture.on();

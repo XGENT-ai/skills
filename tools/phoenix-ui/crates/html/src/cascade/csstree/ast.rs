@@ -137,43 +137,4 @@ impl Node {
     pub fn is_raw(&self) -> bool {
         matches!(self, Node::Raw { .. })
     }
-    pub fn type_name(&self) -> &'static str {
-        match self {
-            Node::StyleSheet { .. } => "StyleSheet",
-            Node::Rule { .. } => "Rule",
-            Node::Atrule { .. } => "Atrule",
-            Node::Block { .. } => "Block",
-            Node::Declaration { .. } => "Declaration",
-            Node::Raw { .. } => "Raw",
-            Node::Comment { .. } => "Comment",
-            Node::Cdo => "CDO",
-            Node::Cdc => "CDC",
-            Node::Value { .. } => "Value",
-            Node::WhiteSpace { .. } => "WhiteSpace",
-            Node::Hash { .. } => "Hash",
-            Node::Operator { .. } => "Operator",
-            Node::Parentheses { .. } => "Parentheses",
-            Node::Brackets { .. } => "Brackets",
-            Node::Str { .. } => "String",
-            Node::Dimension { .. } => "Dimension",
-            Node::Percentage { .. } => "Percentage",
-            Node::Number { .. } => "Number",
-            Node::Function { .. } => "Function",
-            Node::Url { .. } => "Url",
-            Node::Identifier { .. } => "Identifier",
-            Node::UnicodeRange { .. } => "UnicodeRange",
-            Node::SelectorList { .. } => "SelectorList",
-            Node::Selector { .. } => "Selector",
-            Node::TypeSelector { .. } => "TypeSelector",
-            Node::ClassSelector { .. } => "ClassSelector",
-            Node::IdSelector { .. } => "IdSelector",
-            Node::AttributeSelector { .. } => "AttributeSelector",
-            Node::PseudoClassSelector { .. } => "PseudoClassSelector",
-            Node::PseudoElementSelector { .. } => "PseudoElementSelector",
-            Node::Combinator { .. } => "Combinator",
-            Node::NestingSelector => "NestingSelector",
-            Node::Nth { .. } => "Nth",
-            Node::AnPlusB { .. } => "AnPlusB",
-        }
-    }
 }

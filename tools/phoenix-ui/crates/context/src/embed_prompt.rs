@@ -8,22 +8,6 @@ use std::io::Read;
 
 const KEYWORD: &[u8] = b"impeccable:prompt";
 
-fn crc32(data: &[u8]) -> u32 {
-    let mut table = [0u32; 256];
-    for n in 0..256u32 {
-        let mut c = n;
-        for _ in 0..8 {
-            c = if c & 1 == 1 { 0xedb88320 ^ (c >> 1) } else { c >> 1 };
-        }
-        table[n as usize] = c;
-    }
-    let mut c = 0xffffffffu32;
-    for b in data {
-        c = table[((c ^ *b as u32) & 0xff) as usize] ^ (c >> 8);
-    }
-    c ^ 0xffffffff
-}
-
 fn png_chunk(ty: &[u8], data: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(12 + data.len());
     out.extend_from_slice(&(data.len() as u32).to_be_bytes());
@@ -31,7 +15,7 @@ fn png_chunk(ty: &[u8], data: &[u8]) -> Vec<u8> {
     out.extend_from_slice(data);
     let mut crc_in = ty.to_vec();
     crc_in.extend_from_slice(data);
-    out.extend_from_slice(&crc32(&crc_in).to_be_bytes());
+    out.extend_from_slice(&impeccable_comp::crc32(&crc_in).to_be_bytes());
     out
 }
 

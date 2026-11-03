@@ -18,7 +18,7 @@ Supported harnesses: Claude Code (`.claude/settings.local.json` in the project, 
 
 On **Cursor**, `preToolUse` checks proposed Write/Edit/Shell write content and denies only when the real detector finds an issue. The denial message is visible to the agent as the tool error, so the agent can reconsider before the bad write lands.
 
-Gemini installs session and completion hooks in `.gemini/settings.json`, merged into the settings already there (comments are tolerated; a commented file is backed up to `settings.json.bak` before the rewrite, and a file that is not valid JSON is left alone). It does not install a per-edit detector hook. The `BeforeTool` hook only rewrites shell commands that run `build-phase`, and only on macOS and Linux; on Windows (where Gemini runs hooks through PowerShell) no session id reaches the shell, so a comp build is not tied to the session and the completion reminder stays silent.
+Gemini installs session and completion hooks in `.gemini/settings.json`, merged into the settings already there (comments are tolerated but not kept in the rewritten file; a file that is not valid JSON is left alone). It does not install a per-edit detector hook. The `BeforeTool` hook only rewrites shell commands that run `build-phase`, and only on macOS and Linux; on Windows (where Gemini runs hooks through PowerShell) no session id reaches the shell, so a comp build is not tied to the session and the completion reminder stays silent.
 
 ## Routing
 

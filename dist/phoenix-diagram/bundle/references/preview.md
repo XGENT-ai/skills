@@ -20,7 +20,7 @@
 | --- | --- |
 | `started` | 会话/监听已建立；额外给 `url`、`port`，不表示已有成功图。 |
 | `checking` | 正在检查当前 generation。 |
-| `updated` | 当前结果已正式发布并回读，HTTP artifact与正式文件同字节。 |
+| `updated` | 当前结果已写入输出文件，HTTP artifact与该文件同字节。 |
 | `failed` | 本次尝试失败；可能继续等待修改，不能把该事件直接当进程已退出。 |
 | `stopped` | 停止结果；核 `shutdownComplete` 与 `exitCode`，不只看事件名。 |
 
@@ -30,16 +30,14 @@
 
 ## 修改、last-good与冲突
 
-输入按800ms轮询、400ms稳定窗口处理；内容摘要或不可用/删除状态变化产生新 generation，同字节不重复推进。单worker和最新待处理槽保证旧结果不能倒退覆盖新结果。
+输入按800ms轮询、400ms稳定窗口处理；内容摘要或不可用/删除状态变化产生新 generation，同字节不重复推进。稳定后在进程内编译；编译期间的新修改等下一轮处理，旧结果不会覆盖新结果。
 
-半写、非法或删除输入时保留最后成功文件。shell在画布外显示最新失败、诊断和仍显示的成功版本；首个成功之前为waiting/error，即使输出路径原本有文件，也不冒称本会话已有成功图。修复后只有最新且仍绑定原输入/资源的结果才发布。
-
-输出被后来替换时停止发布并报告冲突，不能拿内存旧图冒充正式路径的当前文件；不能覆盖外来文件来继续演示成功。需要输出恢复时按 diagnostics 指明的精确事务和现有 recover-output 合同处理，不自行选记录、删除锁或重建恢复材料。
+半写、非法或删除输入时保留最后成功文件。shell在画布外显示最新失败、诊断和仍显示的成功版本；首个成功之前为waiting/error，即使输出路径原本有文件，也不冒称本会话已有成功图。输入与输出不能是同一文件。
 
 服务仅提供该随机会话路径下 GET/HEAD 的shell、status、artifact；URL直接取started，不猜路径。Host/Origin受检查，无CORS或任意文件服务，响应no-store/no-referrer。正式HTML/导出不混入会话端口、token、输入绝对路径或错误栈；连接断开不等于视觉通过。
 
 ## 停止与正式交付
 
-用Ctrl+C或SIGTERM停止前台会话，只结束自己的监听、连接与worker；等停止事件并确认shutdownComplete=true。最后成功正式文件保留。SIGKILL没有正常收尾回执，不能补写stopped或关闭通过；留下的发布事务仍按原恢复入口检查，不杀未知PID。
+用Ctrl+C或SIGTERM停止前台会话，只结束自己的监听与连接；等停止事件并确认shutdownComplete=true。最后成功文件保留。SIGKILL没有正常收尾回执，不能补写stopped或关闭通过，不杀未知PID。
 
-停止后按普通 finalize、实际查看当前四张截图、review-record 和同一 summary 收口。已有HTML、HTTP可打开或updated都不能代替四门与 mandatory visual。预览期间的编辑不重置同一失败门的历史最佳和停滞计数；达到2后停止继续修 candidate，按主 SKILL 交接未解决项。服务不授权补造事实、删除语义或改语言原则。
+停止后按普通 finalize、实际查看当前四张截图、review-record 和同一 summary 收口。已有HTML、HTTP可打开或updated都不能代替自动三门与 mandatory visual。预览期间的编辑不重置同一失败门的历史最佳和停滞计数；达到2后停止继续修 candidate，按主 SKILL 交接未解决项。服务不授权补造事实、删除语义或改语言原则。

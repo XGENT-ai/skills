@@ -2,17 +2,15 @@
 
 Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall 十类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。新稿声明 `meta.input_contract: "phoenix-v1"`；原五类未标记的旧 JSON 按 `legacy-2.17` 解释，新五类只有 `phoenix-v1`，原 JSON/HTML 不被迁移。仓库以 phoenix-diagram 为唯一活跃图解入口；其他项目及个人旧安装须分别处理。数值图表、仪表盘及其他 infographic 不在范围内。
 
-`@xgent-ai/skills@0.7.8` 已公开发布，配套四平台引擎已托管，最终 npm 包已通过 Node 18 与维护 Node 的联合安装验证。P3 的完整交接（含真实 provider 会话和视觉审核）仍未完成。candidate 的 loopback 下载地址仅用于隔离验收，不能直接作为公开 npm/R2 发行资源。
-
 UI 与 Diagram 共用 [Phoenix CI](../.github/workflows/phoenix.yml)：同一次运行完成两个工具的检查，发布仍使用同一个 `@xgent-ai/skills` npm 包。
 
 ## npm 发布安装
 
-npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令保留 Diagram 的 bin、skill、文档与发行资源，在上传 UI 前要求 Diagram 已具备匹配 npm 版本的四平台 release 清单、bundle、完整许可证和公共 HTTPS 地址；开发或候选清单不能代替。可用 `--diagram-release-dir DIR` 提供同版本的完整正式资源目录，在打包阶段注入。Diagram 引擎的构建和托管须先完成，本命令不会自动将 candidate 转为 release。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
+npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令从同一次 Phoenix CI run 取 Diagram 与 UI 的四平台引擎（制品 `phoenix-diagram-<平台>`），用同一上传器传到 R2 并回读，再写入 Diagram 的 release 清单与 `ENGINE.json` 副本，和 UI 一起打包；开发清单不能发布。引擎不绑定 npm 版本：源码输入未变时，`--reuse-engines <已发布版本>` 直接复用该版本的 Diagram 与 UI 引擎，见 [Phoenix UI 发布](phoenix-ui.md)。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
 
-## 候选安装
+## 离线安装
 
-消费需要 Node.js 18+，无需 Rust、Cargo 或源码。候选交付包含同一个 npm tgz 与匹配的完整 release-dir；不要混用版本或自行改 VERSION/ENGINE。以下 `PACKAGE_DIR` 是该 tgz 的解包目录，`PROJECT` 和 `RELEASE_DIR` 换成实际绝对路径：
+消费需要 Node.js 18+，无需 Rust、Cargo 或源码。离线安装使用同一个 npm 包与匹配的完整 release-dir；不要混用版本或自行改 VERSION/ENGINE。以下 `PACKAGE_DIR` 是包目录，`PROJECT` 和 `RELEASE_DIR` 换成实际绝对路径：
 
 ```sh
 node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
@@ -20,21 +18,11 @@ node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" \
   --diagram-release-dir="$RELEASE_DIR"
 ```
 
-这里跳过 UI 是候选消费范围：包内 UI 原资源保持原样，不能把它当作 diagram 四平台发行的证据。总安装器默认启用两个 Phoenix 工具；不支持 diagram 的平台默认跳过 diagram 并说明，显式指定 `--diagram-release-dir` 时仍在写项目前失败。`--release-dir` 只控制 UI，`--diagram-release-dir` 只控制 diagram，`--no-phoenix-diagram` 跳过且保留已有 diagram 安装。所有选项、XGENT、UI、diagram 预检均先于项目写入。执行顺序为 XGENT → UI → diagram；后段失败会报告前段已完成项，不回滚另一个工具。
+总安装器默认启用两个 Phoenix 工具；不支持 diagram 的平台默认跳过 diagram 并说明，显式指定 `--diagram-release-dir` 时仍在写项目前失败。`--release-dir` 只控制 UI，`--diagram-release-dir` 只控制 diagram，`--no-phoenix-diagram` 跳过且保留已有 diagram 安装。所有选项、XGENT、UI、diagram 预检均先于项目写入。执行顺序为 XGENT → UI → diagram；后段失败会报告前段已完成项，不回滚另一个工具。
 
-默认按项目已有 provider 目录选择，空项目用 `.claude`。`codex` 识别 `.agents` 或 `.codex`，diagram skill 仅进入 `$PROJECT/.agents/skills/phoenix-diagram`；本工具不新增 hooks、settings、AGENTS 或个人级 skill。新开 Claude Code/Codex 项目会话后核对实际加载的 skill 路径。安装直接覆盖工具文件，不产生安装历史目录；成功后清理旧 `$PROJECT/.phoenix-diagram/install/`，保留图表输出等项目数据。
+默认按项目已有 provider 目录选择，空项目用 `.claude`。`codex` 识别 `.agents` 或 `.codex`，diagram skill 仅进入 `$PROJECT/.agents/skills/phoenix-diagram`；本工具不新增 hooks、settings、AGENTS 或个人级 skill。新开 Claude Code/Codex 项目会话后核对实际加载的 skill 路径。安装直接覆盖工具文件，不保留安装历史或备份；中断后重跑即可。成功后清理旧版本留下的 `$PROJECT/.phoenix-diagram/install/`，保留图表输出等项目数据。
 
-引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。用户或已提供材料尚未明确给出该路径时，先询问并停止安装，等待答复；安装授权不代替资源路径，不搜索项目外目录、猜路径、省略 `--release-dir` 试装或执行占位符。该目录按当前 VERSION/ENGINE 的原字节、引擎摘要和许可校验；遗失候选包或配套目录时须重新取得同一 tgz 和资源。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。candidate/release 离线目录必须含四平台；development 只校验清单声明的全部平台资源，单平台开发制品不计四平台验收。目录缺少声明的资源、清单或许可证时直接失败，不回退在线下载。
-
-## 旧入口迁移与安装恢复
-
-普通安装保留旧 Archify。只有明确请求迁移时，按[包内迁移合同](../skills/phoenix-diagram/references/migration.md)先 dry-run 查看精确项目/provider/来源及逐项路径，再以覆盖该范围的明确确认执行 `migrate --from-archify --confirm-remove-archify`。仅完整匹配固定来源的项目副本可移除；自定义、额外/缺失文件、链接、外部管理与个人安装保留。旧 skill 不备份，回滚不重建，恢复旧入口须按回执指引显式重装；原 JSON 和已有 HTML 保持。
-
-联合入口为 `node "$PACKAGE_DIR/bin/xgent-skills.js" install "$PROJECT" --migrate-archify --diagram-release-dir="$RELEASE_DIR"`，使用已存在的匹配引擎，先展示目标和后果。TTY 肯定答复后才移除；拒绝/EOF 不迁移。非交互须另加 `--confirm-remove-archify`；单独确认标志无效。此分支跳过 XGENT hooks/settings 和 UI，`--no-phoenix-diagram` 仍跳过并保留，普通联合安装继续原流程。
-
-中断后读取真实 `transactionId`、已删/剩余旧项与 `recoveryCommand`，只恢复指定事务。`rollbackCommand` 仅逆向恢复当前 committed 事务的 Diagram 受管写入，支持 v1/v2；预检发现后来修改先保持零变更，同一 ID 幂等，不跨过后来安装。恢复旧 Diagram active 时原生重新绑定实际文件身份，不手工复制回执。若部分回滚已恢复旧 launcher，优先原样执行回执给出的已验证新原生引擎命令，不从 PATH 选择旧引擎。迁移恢复入口不要求损坏/pending active 先完整提交；不自动下载或重装。普通工具启动不依赖迁移回执。
-
-回执的 `legacyBackupPolicy: "none"`、`legacyRestoration: "not-supported"` 与 `reinstallInstructions` 必须交接；`backup` 只指 Diagram 受管文件。重开 provider 会话核实际加载的新 skill 路径，未处理的外部/个人入口不计全机唯一入口已生效。迁移成功也不代表图像已重新验收。
+引擎按 VERSION 的大小、SHA-256 与 probe 校验，缓存位于 `~/.phoenix-diagram/bin/<toolVersion>/<platform>/<engineSha256>/phoenix-diagram`；`PHOENIX_DIAGRAM_HOME` 可隔离缓存。普通命令不联网补装。缺引擎时只在用户明确请求安装后执行回执的 `setupCommand`（doctor 的 `recovery.engineInstall` 使用同一指引）。candidate/development 指向当前本地包或已安装 skill 的入口，不按同名版本去 registry 取另一个包；将命令中的 `MATCHING_RELEASE_DIR` 替换为该候选配套完整 release-dir 的实际绝对路径。用户或已提供材料尚未明确给出该路径时，先询问并停止安装，等待答复；安装授权不代替资源路径，不搜索项目外目录、猜路径、省略 `--release-dir` 试装或执行占位符。该目录的 VERSION.json 须与包内清单逐字节相同，引擎按摘要校验；目录缺少本平台引擎或清单时直接失败，不回退在线下载。只有 distribution=release 才输出 `npm exec --package=@xgent-ai/skills@<固定版本>`。
 
 ## 从候选到 HTML
 
@@ -72,104 +60,42 @@ Workflow 发生共用通道或箭头拥挤时，按实测节点与整组相关�
 ```text
 validate <type> <candidate.json> [--layout-json] [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] --json
 deliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json
-check <output.html> [--strict-provenance] --json
+check <output.html> --json
 browser-check <output.html> [--out-dir DIR] --json
 visual-check <output.html> [--out-dir DIR] --json
 finalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json
 review-record <output.html> --record <review.json> --json
-recover-output <private-recovery-directory> --json
 install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json
 ```
 
 显式 quality/input-contract 与 candidate 已声明值冲突会失败。保留旧合同默认值、固定节点、方向、标签与 route pins。品牌由固定目录或摘要固定的本地资源支持；旧 guided views 为 `unsupported-display`，旧播放偏好为 `ignored-display`，首次仍是 Still。这些终局处理列在 `compatibility.dispositions`，不再称为延期，核心兼容通过不能代替完整展示兼容。见[兼容约定](../skills/phoenix-diagram/references/compatibility.md)。普通 stdout 为一个 JSON，显式 preview 为 NDJSON 事件流；不要仅用退出码判断完整交付。
 
-主要元素带 `sources`、`meta.repository` 固定 40 位提交时，用 `--repo-root` 指向该仓库顶层目录。核对只读、不联网：origin 一致、提交存在、文件与行在该提交中存在，并逐段比较工作树文件（不跟随符号链接）。凭据 URL、路径逃逸、非法行区间、provider 与主机不符或网页链接用了不支持的主机会在输入阶段失败。其他不能核对的情形（缺 `--repo-root`、git 不可用或超时、缺提交或对象、文件缺失、行越界、工作树不同、旧版 git 遇部分克隆）只把对应来源记为待核实并附原因，HTML 照常生成；回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，与四门结论分开报告。时间线的日期型记录用 `precision: "day"`，没有记录的耗时瀑布用 `meta.evidence: "illustrative"`。
+主要元素带 `sources`、`meta.repository` 固定 40 位提交时，用 `--repo-root` 指向该仓库顶层目录。核对只读、不联网：origin 一致、提交存在、文件与行在该提交中存在，并逐段比较工作树文件（不跟随符号链接）。凭据 URL、路径逃逸、非法行区间、provider 与主机不符或网页链接用了不支持的主机会在输入阶段失败。其他不能核对的情形（缺 `--repo-root`、git 不可用或超时、缺提交或对象、文件缺失、行越界、工作树不同、旧版 git 遇部分克隆）只把对应来源记为待核实并附原因，HTML 照常生成；回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，与自动门结论分开报告。时间线的日期型记录用 `precision: "day"`，没有记录的耗时瀑布用 `meta.evidence: "illustrative"`。
 
 每轮失败后，在可回读的进度或本次项目记录中写明实际失败门、诊断阶段、客观 error 数、历史最佳值和停滞计数；首次失败的停滞计数为0。同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。修改 candidate 或修复前先核对该门计数：达到2立即停止并列出未解决项；即使不再运行命令，也不能继续修改 candidate 或将它回退到历史较好版本。错误种类变化不能重置计数，也不允许再试一次。修复前实际读到失败 diagnostic 的 `subject`、`evidence`、`supportedFixes`；宿主返回截断或提取遗漏时先补齐，不能把原有实测或字符串修法筛掉、转成空对象后视为已读。只修相关邻域。重建 candidate 或交付、调整布局或卡片、返回已记录门时，沿用该门历史，不因新回执重新初始化；对最小示例的只读对照或验证不计修复，也不重置历史。环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；同一 validate 门内诊断 `stage` 首次由 `input` 变为 `layout` 也算进入后门。`supportedFixes` 写明经整图验证时，选定的一项修法所列全部路径是同一整组方案，须一次完整应用，不挑单个路径先试；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。
 
 ## 看图后收口
 
-`finalize` 顺序执行 validate、deliver、严格 check、browser-check。首个失败后其余 `not-run`。浏览器默认隔离验收并采图，不打开用户当前浏览器；工具缺失、执行失败、自动通过与视觉待审分别报告。HTML 已提交后浏览器失败会保留新 HTML，不替换回旧文件。
+`finalize` 顺序执行 validate、deliver、browser-check 三道自动门，首个失败后其余 `not-run`。它写出 HTML、截图（默认在 HTML 旁，`--out-dir` 可指定）和 HTML 旁唯一的 `<名称>.finalize-summary.json`；重跑会覆盖它们。浏览器默认隔离验收并采图，不打开用户当前浏览器；工具缺失、执行失败、自动通过与视觉待审分别报告。HTML 写出后浏览器失败会保留新 HTML。
 
-自动四门通过后仍为 `visualReview.status: required-pending`、`deliveryStatus: incomplete`。读取返回的 summary/browser receipt，实际查看 1440×900、2048×1320 的四张暗亮截图与必要长图，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件。按包内 [交付合同的完整草稿命令](../skills/phoenix-diagram/references/delivery-contract.md) 从当前回执复制身份，逐张填写实际观察；未看图不得设置 passed。
+自动三门通过后仍为 `visualReview.status: required-pending`、`deliveryStatus: incomplete`。实际查看 summary `screenshots` 列出的 1440×900、2048×1320 四张暗亮截图，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件，按[交付合同](../skills/phoenix-diagram/references/delivery-contract.md)写审核记录；未看图不得设置 passed。
 
 ```sh
 "$PD" review-record diagram.html --record review-01.json --json
 ```
 
-随后读取返回的 `evidence.summaryReceipt.path`。四门 pass、视觉 passed、`deliveryStatus: complete` 才是完整交付；原 `deliveryReceiptId`、`browserReceiptIdentity`、输入/HTML/config/engine/四图绑定必须保持。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize。封存记录已成功但 summary 写失败时，以同一记录字节重试 review-record；修改 candidate 则生成新交付、新截图与新审核。不能拿旧图或旧回执补证。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`，逐项交接非 `supported` 字段及实际原因。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+review-record 只接受自动三门已通过、且 HTML 仍与 summary 记录一致的交付，并把审核写回同一 summary。三门 pass、`visualReview.status: passed`、`deliveryStatus: complete` 才是完整交付。答复中的 HTML、candidate 和 summary 路径优先原样复制回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize；修改 candidate 则重新 finalize 并重新看图审核。另读取 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`，逐项交接非 `supported` 字段及实际原因。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
 
 ## 按请求启用的作者工具
 
 - [品牌资源](../skills/phoenix-diagram/references/brand-marks.md)：明确要求品牌标识时查询固定目录，只有明确采集请求才访问用户提供的公共 URL。普通编译只读本地固定资源，不因节点名称猜品牌或联网。
 - [本地预览](../skills/phoenix-diagram/references/preview.md)：明确请求才启动，`--open` 才打开系统浏览器；保留 last-good 并报告新尝试错误。服务停止和页面可用不等于正式交付通过。
-- [架构比较](../skills/phoenix-diagram/references/architecture-compare.md)：明确请求比较两份 architecture 时执行，提供 Before/Delta/After，走专用严格检查、12 张截图实际审核及两门 summary，不推断原因、风险或可合并性。
+- [架构比较](../skills/phoenix-diagram/references/architecture-compare.md)：明确请求比较两份 architecture 时执行，提供 Before/Delta/After，走 visual-check、12 张截图实际审核，结果记在比较 summary，不推断原因、风险或可合并性。
 
 普通作图继续使用单图 finalize 与四图审核，不自动附带上述操作。维护者增加类型时遵守[扩展约定](../skills/phoenix-diagram/references/extending-types.md)。
-
-## 中断后的文件恢复
-
-生成失败、竞争占位和提交后失败分别查看 diagnostics/commitState/publicState。若发布进程被 kill、终端输出丢失，先在**原输出父目录**只读定位持久记录：
-
-```sh
-ls -la "<原输出父目录>"
-```
-
-同一事务的记录按清理进度可能位于三处：
-
-1. `.phoenix-diagram-recovery-<id>/publication-recovery-v1.json`
-2. `.phoenix-diagram-recovery-<id>.cleanup.json`
-3. `.phoenix-diagram-output-cleanup/<id>.json`
-
-读取记录中的 target/requestedPath/commitPath，明确它绑定本次输出。固定 cleanup 目录还保留绑定的 `<原输出父目录>/.phoenix-diagram-output-cleanup/owner-v1.json`；空壳不是需要删除的垃圾。多个记录须明确选择，不能按时间自动挑选，不手改记录/备份/权限。
-
-**无论记录在哪一处，参数始终为原 `.phoenix-diagram-recovery-<id>` 目录，即便它已不存在：**
-
-```sh
-"$PD" recover-output "<原输出父目录>/.phoenix-diagram-recovery-<id>" --json
-```
-
-该入口只处理输出 publication，不接受项目 install journal。它核验原父目录、槽位、记录、备份及物理身份并取得同一 OS 锁；仅在缺失 public 时以 no-clobber link 恢复旧文件。后来的 claimant、改过的备份/记录、替换父目录、未知 owner/额外条目或多处记录歧义均保留并停止，不覆盖用户后来修改。恢复过程中再次被 kill，可重复显式恢复同一事务。
-
-| recoveryStatus | 含义 | 退出码 |
-| --- | --- | --- |
-| recovered | 原字节已恢复或核对一致，且本次清理完成 | 0 |
-| absent | 对应事务与残留不存在，无文件恢复 | 0 |
-| preserved | 新占位或已提交新图被保留，未恢复旧字节 | 3 |
-| recovery-required | 可信事务仍待恢复/清理 | 3 |
-| invalid | 参数或不支持的记录格式，读取 diagnostics | 2 |
-| failed | I/O 或运行失败，读取 diagnostics | 4 |
-
-返回的 `target` 只在可信记录核验后提供。文件恢复不生成 delivery/browser/visual 通过回执，后续交付仍需适用检查。项目安装中断时重跑 install 即可：安装直接覆盖工具文件，不保留旧版本、备份或事务日志。成功安装会清理旧 `.phoenix-diagram/install/`，保留图表输出等项目数据。普通启动只校验固定的 ENGINE 清单及引擎摘要，不依赖安装回执。
 
 ## 阅读与导出
 
 HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风格、平移缩放、标签/id/来源路径搜索及详情；首次为 Still，用户选择 Live 后才保存偏好。十类都可做语义筛选、概览定位、展示模式和深链接；有已著关系的八类可找 Route 与上/下游 Reach，并导出标明范围、非 canonical 的范围卡片；树可折叠分支，导出与打印始终为完整树。详情按已核对、待核实（附原因）、未提供来源三态显示来源。界面语言按 `meta.locale` 选择五种之一，其他标签回退英文，finalize 回执的 `locale` 记录结果。缩减动画、页面隐藏、打印和导出临时暂停，静态图仍保留含义。页面可按声明的可读纵向画布滚动，不能用水平裁切或内部滚动掩盖内容。
 
 支持 PNG/JPEG/WebP、主题 SVG、WebM 和 PNG 复制。能力/权限拒绝、空 Blob、编码/录制失败都应返回明确失败与可用替代动作；格式实际可用性以当前浏览器结果为准。字体许可随独立 HTML/SVG 保留。源码与第三方许可位于独立发行目录 LICENSE、NOTICE、THIRD-PARTY.json/NOTICES/LICENSES；参考归属与 Phoenix 修改单列。
-
-维护验收的三变量 checkpoint 仅用于隔离临时项目的确定性 SIGKILL 场景，不是普通恢复步骤；默认不启用、不联网、不延迟消费命令。当前里程碑和实际验收记录见仓库开发计划，缺失的真实平台/provider/图像结果不计通过。
-
-## 验证结果与发行边界
-
-此前P2在本机 macOS arm64 开发引擎上，十类共15例（原五类的新/旧合同各一例、新五类各一例）通过四道自动门和确定性检查，实际查看60张暗亮截图后经原身份 `review-record` 达到完整交付。15例的Reader操作、20项导出、打印与剪贴板检查，离线生成/检查/阅读导出和8个公开中断恢复场景均已通过。十类探索（筛选、Route、Reach、树折叠、概览、展示、深链接、键盘与详情）通过，有已著关系的八类各导出一张Route与Reach范围卡片。冻结3.1.0参考包的25份JSON核心事实可被消费，原样交付均通过四道自动门并经实际看图，原JSON与15份参考HTML字节不变。本仓固定提交的来源核对覆盖已核对（含GitHub链接存在性）、工作树改动、仅本地和未提供来源四种显示，示意耗时与日精度时间线已核对。五种界面语言与fr英文回退均实际看图。这些历史开发结果不代替P3最终 npm tgz 的消费验收。
-
-P3最终候选须另附 `kind: phoenix-diagram-candidate-aggregate`、`profile: "p3"` 的聚合回执。先核对其中 `cohort.tgzSha256`、source身份、runId/runAttempt与收到的候选一致，再读取以下实际结果：
-
-- 四个平台与精确Node18.20.8对同一tgz的自动消费：15例四门全过，视觉保持待审。
-- 四个平台另核品牌/比较/显式预览、真实public npm进程与迁移故障；本机darwin-arm64对同一tgz完成15例及品牌/比较的实际看图、`review-record`、探索/范围卡片、来源、界面语言与文档最终页检查。
-- Claude Code、Codex各18个全新中性项目/原生会话：同一候选、冻结题面/材料、真实模型/端点类别、实际加载文件、命令原件和独立语义/图像观察。P3不沿用P2的抽样或旧development会话复用。
-- 完整品牌来源/全文、三份完整旧来源与五份legacy原例的同字节链；旧v1兼容另用明确、独立认证的历史候选作安装前置，不能充当第二个最终候选。
-
-完整Reader范围包含相机、空搜索、按标签和id搜索、无匹配反馈、详情、键盘与样式八项实际交互，双主题及Still/Live下缩减动画、页面隐藏的八项真实暂停/恢复样本，以及20项导出、剪贴板和打印暂停/恢复的证据；截图存在或单项pass不能替代这些范围。任何缺项、not-run、unavailable或身份不一致都保持incomplete；最终 `status: pass` 且 `handoff: passed` 才表示该候选的规定验收已齐备。
-
-候选包内说明在封包前固定，封包后的验收结果保存在绑定原tgz摘要的独立聚合回执中。补写结果或修复包内文件会改变tgz身份，需要重新装配并取得适用的新证据。四平台 CI 自动消费已通过，但真实 provider 和视觉审核的完整交接仍未完成；公开 npm 发行的安装验证不代替 P3 完整验收，development 清单和候选 loopback 地址也不能充当正式发行资源。
-
-维护者从已认证、独立转移的harness目录执行最终检查，显式给出候选、历史v1前置和来源验收仓库：
-
-```sh
-node tools/phoenix-diagram/tests/p3-acceptance.mjs --stage all --candidate-dir "$CANDIDATE" --legacy-candidate-dir "$LEGACY_V1" --evidence-repo "$EVIDENCE_REPO" --output-dir "$NEW_RUN"
-node tools/phoenix-diagram/tests/p3-acceptance.mjs --stage providers --candidate-dir "$CANDIDATE" --provider-manifest "$PROVIDERS" --output-dir "$NEW_PROVIDER_RUN"
-```
-
-all默认只使用该harness中固定的官方测试资源描述符与惰性旧目标数据；后者从不执行，不进入产品。providers仅验证原始会话清单，不启动宿主或合成结果。all的consumer、author-tools、migration、providers各保存独立原件；缺图片审核、来源scope、旧v1前置或真实provider时保持incomplete。实际看图后用原all状态的`--resume`与同run的`--review-file`登记两个child审核映射，可同时给`--provider-manifest`；不重生成已审核图。已有迁移record保留并重核，不隐式重跑已通过case。CI的P3自动门可通过而CLI仍exit3，最终完成必须以本机完整审核及API认证的聚合结果为准。

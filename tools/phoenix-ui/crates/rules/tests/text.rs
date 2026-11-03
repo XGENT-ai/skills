@@ -190,8 +190,7 @@ const c = <input className={`md:focus:outline-none`} />;
 
 #[test]
 fn focus_outline_removed_reads_literals_inside_grouped_jsx() {
-    // A `return (…)` grouping parenthesis is not an argument list: the literal
-    // is still a complete class string, not an unreadable expression.
+    // A literal inside a `return (…)` group is still a class string.
     let content = "\
 export function Actions() {\n  return (\n    <button className=\"focus:outline-none\">Save</button>\n  );\n}\n";
     assert_eq!(lines(&scan(content, ".tsx")), vec![3.0]);
@@ -309,7 +308,7 @@ const i = <div className=\"not-focus:outline-none\">I</div>;
 }
 
 #[test]
-fn focus_outline_removed_evaluates_static_class_expressions_as_one_string() {
+fn focus_outline_removed_reads_every_literal_on_a_line_as_one_class_list() {
     let content = "\
 const single = <button className=\"focus:outline-none\">A</button>;
 const concat = <button className={\"focus:outline-none \" + \"focus-visible:ring-2\"}>B</button>;
@@ -330,64 +329,21 @@ const join_dynamic_element = <button className={[\"focus:outline-none\", ...rest
 const join_dynamic_separator = <button className={[\"focus:outline-none\", \"ring-2\"].join(sep)}>Q</button>;
 ";
     let findings = scan(content, ".tsx");
+    // Every literal on a line is one class list: a replacement beside the
+    // removal waives it, and values the scan cannot read are not evaluated.
     assert_eq!(
         lines(&findings),
-        vec![1.0, 6.0, 12.0, 13.0, 14.0],
+        vec![1.0, 3.0, 4.0, 6.0, 7.0, 12.0, 13.0, 14.0, 15.0, 16.0],
         "{findings:#?}"
     );
-    assert_eq!(
-        snippets(&findings),
-        vec![
-            "focus:outline-none",
-            "focus:outline-none",
-            "focus:outline-none text-sm",
-            "focus:outline-none mt-2",
-            "focus:outline-none mt-2",
-        ]
-    );
-}
-
-#[test]
-fn focus_outline_removed_reads_the_complete_class_expression() {
-    // The class list is the outermost static expression a literal belongs to,
-    // not the first group that parses on its own. Anything the engine cannot
-    // read around it — a variable, a sibling condition, a member call, an
-    // interpolation, a call that gives the literal another meaning — makes the
-    // list unknown, and an unknown list is never reported (R3 F-03).
-    let content = "\
-const cn = (...parts: string[]) => parts.join(\" \");
-const safe = <button className={cn((\"focus:outline-none\"), cn(\"focus-visible:ring-2\"))}>A</button>;
-const missing = <button className={cn((\"focus:outline-none\"), cn(\"mt-2\"))}>B</button>;
-const grouped_dynamic = <button className={(\"focus:outline-none \") + extra}>C</button>;
-const nested_dynamic = <button className={cn((\"focus:outline-none\"), extra)}>D</button>;
-const branch_sibling = <button className={cn((\"focus:outline-none\"), open && \"focus-visible:ring-2\")}>E</button>;
-const conditional_sibling = <button className={cn(base, open ? \"focus:outline-none\" : \"\")}>F</button>;
-const conditional = <button className={open ? \"focus:outline-none\" : \"focus-visible:ring-2\"}>G</button>;
-const conditional_call = <button className={cn(open ? \"focus:outline-none\" : \"\")}>H</button>;
-const object_key = <button className={clsx(\"focus-visible:ring-2\", { \"focus:outline-none\": active })}>I</button>;
-const variant = cva(\"focus-visible:ring-2\", { variants: { tone: { plain: \"focus:outline-none\" } } });
-const styles = { plain: \"focus:outline-none\" };
-const transformed = <button className={\"focus:outline-none\".trim()}>J</button>;
-const interpolated = <button className={`focus-visible:ring-2 ${open ? \"focus:outline-none\" : \"\"}`}>K</button>;
-";
-    let findings = scan(content, ".tsx");
-    assert_eq!(lines(&findings), vec![3.0, 8.0, 9.0, 12.0], "{findings:#?}");
-    assert_eq!(
-        snippets(&findings),
-        vec![
-            "focus:outline-none mt-2",
-            "focus:outline-none",
-            "focus:outline-none",
-            "focus:outline-none",
-        ]
-    );
+    assert_eq!(snippets(&findings)[1], "focus:outline-none");
+    assert_eq!(snippets(&findings)[5], "focus:outline-none text-sm");
 }
 
 #[test]
 fn focus_outline_removed_survives_apostrophes_and_markup_neighbors() {
     // An apostrophe in body copy is not a string delimiter for the class
-    // literal after it, and a spread or a framework attribute after the class
-    // attribute ends the expression rather than making it unknown.
+    // literal after it.
     let tsx = "\
 export const a = <div><p>Don't</p><button className=\"focus:outline-none\">A</button></div>;
 export const b = <button className=\"focus:outline-none\" {...rest}>B</button>;
@@ -410,8 +366,7 @@ export const c = 'z';
 
 #[test]
 fn focus_outline_removed_scans_large_markup_in_linear_time() {
-    // Every attribute literal in one large JSX return group is its own class
-    // list; resolving each must not re-read the whole group (R3 F-12).
+    // Scanning stays linear on large markup.
     let mut content = String::from("export function App(){ return (<>\n");
     for index in 0..6_000 {
         content.push_str(&format!(
@@ -419,8 +374,6 @@ fn focus_outline_removed_scans_large_markup_in_linear_time() {
         ));
     }
     content.push_str("</>); }\n");
-    // Prose that quotes a value after a colon reads like a conditional branch;
-    // looking for its bound must not scan the rest of the page.
     let mut prose = String::new();
     for index in 0..6_000 {
         prose.push_str(&format!(

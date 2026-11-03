@@ -61,14 +61,6 @@ pub fn file_exists(cwd: &str, rel: &str) -> bool {
     exists(&jsp::join(&[cwd, rel]))
 }
 
-/// JS: firstExistingFile(cwd, candidates)
-pub fn first_existing_file(cwd: &str, candidates: &[&str]) -> Option<String> {
-    candidates
-        .iter()
-        .find(|c| file_exists(cwd, c))
-        .map(|c| c.to_string())
-}
-
 /// JS: literalConfigFiles(cwd, config): non-glob `config.files` entries that
 /// exist on disk.
 pub fn literal_config_files(cwd: &str, config: Option<&LiveConfig>) -> Vec<String> {

@@ -13,9 +13,10 @@ use impeccable_core::checks::measures::{
 };
 use impeccable_core::checks::rules::RuleHit;
 use impeccable_core::checks::text_rules::{NON_RENDERED_TAGS, SR_ONLY_SELECTOR};
+use impeccable_core::js::collapse_ws;
 use impeccable_core::js::{self, number_to_string, parse_float, to_fixed};
 use impeccable_core::js_ext_a::num_truthy;
-use impeccable_core::js_ext_b::{slice_utf16_prefix, utf16_len};
+use impeccable_core::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -28,11 +29,6 @@ static CLIP_RECT_RE: Lazy<Regex> =
 static CLIP_INSET_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(&format!(r"inset\({}*(?:50%|99|100%)", js::WS)).expect("CLIP_INSET_RE")
 });
-
-/// JS `s.replace(/\s+/g, ' ')`.
-pub fn collapse_ws(s: &str) -> String {
-    WS_RE.replace_all(s, " ").into_owned()
-}
 
 /// JS `parseFloat(x) || 0`.
 pub fn pf0(s: &str) -> f64 {

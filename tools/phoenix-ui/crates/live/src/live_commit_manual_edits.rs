@@ -56,7 +56,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         apply_batch_to_source: None,
         chat_available: None,
         repair_only: false,
-        transaction_id: None,
         batch: None,
     };
     match commit_manual_edits_value(opts, page_url) {

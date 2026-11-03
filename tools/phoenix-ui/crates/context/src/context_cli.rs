@@ -8,10 +8,6 @@ use crate::staleness_notice::{build_staleness_directive, filter_fresh_findings, 
 use crate::target_args::{has_target_option, parse_target_options, TargetOptions};
 use crate::util::*;
 use impeccable_common::Io;
-#[cfg(test)]
-use once_cell::sync::Lazy;
-#[cfg(test)]
-use regex::Regex;
 use serde_json::{Map, Value};
 
 pub fn hook_manifests_for(provider_id: &str) -> &'static [&'static str] {
@@ -28,12 +24,8 @@ pub fn hook_manifests_for(provider_id: &str) -> &'static [&'static str] {
 
 const STOP_REVIEW_PROVIDERS: [&str; 4] = ["claude-code", "codex", "agents", "grok"];
 
-// Only the launcher-era design hook counts as an active automatic hook. A
-// manifest that still names the JS-era `.mjs` script (a pre-launcher install
-// that has since been updated) points at a file that no longer exists, so the
-// hook is dead; treating it as active would wrongly suppress the manual
-// detector fallback and leave the detector dark. Install/update repair such a
-// manifest; until then `MANUAL_DETECTOR_REQUIRED` fires.
+// Only the Phoenix launcher's design hook counts as an active automatic hook;
+// without one, `MANUAL_DETECTOR_REQUIRED` fires.
 fn value_has_hook_marker(v: &Value) -> bool {
     match v {
         Value::String(s) => crate::hook_markers::is_launcher_design_hook_command(s),
@@ -346,90 +338,6 @@ fn build_target_selection_directive(sel: &TargetSelection) -> String {
     )
 }
 
-// Historical frontmatter parsing regression fixtures (no update transport).
-
-#[cfg(test)]
-static FRONTMATTER_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?s)^---[ \t]*\r?\n(.*?)\r?\n---(?:[ \t]*\r?\n|[ \t]*$)").unwrap());
-#[cfg(test)]
-static METADATA_KEY_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^metadata:\s*(?:#.*)?$").unwrap());
-#[cfg(test)]
-static VERSION_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^version:\s*(.+?)\s*$").unwrap());
-
-/// JS: context.mjs#parseSkillFrontmatterVersion
-///
-/// Codex's validator rejects unknown top-level keys, so the Codex and
-/// `.agents` skills carry `version` under the spec-defined `metadata:` map
-/// (#703). A metadata version wins; a legacy top-level one still reads.
-#[cfg(test)]
-fn parse_skill_frontmatter_version(content: &str) -> Option<String> {
-    let caps = FRONTMATTER_RE.captures(content)?;
-    let body = caps.get(1)?.as_str();
-
-    let mut metadata_version: Option<String> = None;
-    let mut top_level_version: Option<String> = None;
-    let mut in_metadata = false;
-    let mut metadata_indent: Option<usize> = None;
-
-    for line in body.split('\n') {
-        let line = line.strip_suffix('\r').unwrap_or(line);
-        let trimmed_start = line.trim_start();
-        if trimmed_start.is_empty() || trimmed_start.starts_with('#') {
-            continue;
-        }
-        let indent_text: String = line.chars().take_while(|c| *c == ' ' || *c == '\t').collect();
-        // JS `indentText.replace(/\t/g, '  ').length`.
-        let indent = indent_text.replace('\t', "  ").chars().count();
-
-        if indent == 0 {
-            in_metadata = METADATA_KEY_RE.is_match(line);
-            metadata_indent = None;
-            if let Some(m) = VERSION_RE.captures(line) {
-                top_level_version = Some(m[1].to_string());
-            }
-            continue;
-        }
-        if !in_metadata {
-            continue;
-        }
-        if metadata_indent.is_none() {
-            metadata_indent = Some(indent);
-        }
-        if metadata_indent != Some(indent) {
-            continue;
-        }
-        if let Some(m) = VERSION_RE.captures(line.trim()) {
-            metadata_version = Some(m[1].to_string());
-        }
-    }
-
-    let value = metadata_version.or(top_level_version)?;
-    let v = js_trim(&value);
-    if v.is_empty() {
-        return None;
-    }
-    Some(strip_matched_quotes(v))
-}
-
-/// JS `.replace(/^(["'])(.*)\1$/, '$2')`: only a matched pair is stripped.
-#[cfg(test)]
-fn strip_matched_quotes(v: &str) -> String {
-    let chars: Vec<char> = v.chars().collect();
-    if chars.len() >= 2 {
-        let first = chars[0];
-        if (first == '"' || first == '\'') && chars[chars.len() - 1] == first {
-            return chars[1..chars.len() - 1].iter().collect();
-        }
-    }
-    v.to_string()
-}
-
-/// Phoenix has no background version lookup or upstream update cache.
-/// Keep the existing context entry point for callers of the imported crate.
-pub fn compute_update_directive(_cwd: &str, _env: &Env, _provider: &Provider) -> Option<String> {
-    None
-}
-
 // ─── native refs ───────────────────────────────────────────────────────────
 
 fn load_native_platform_references(platform: Option<&str>, provider: &Provider) -> Vec<(String, String)> {
@@ -494,7 +402,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         None => options.clone(),
     };
     let ctx = load_context(&cwd, &load_options, &env);
-    let update_directive = compute_update_directive(&cwd, &env, &provider);
     let cmd = &provider.command;
 
     if !ctx.has_product {
@@ -526,9 +433,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         }
         append_image_tools_directive(&mut parts, &env);
         append_staleness_directive(&mut parts, &ctx, &options, &cwd, &env);
-        if let Some(u) = update_directive {
-            parts.push(u);
-        }
         io.out(&format!("{}\n", parts.join("\n\n---\n\n")));
         return 0;
     }
@@ -570,44 +474,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
             }
         }
     }
-    if let Some(u) = update_directive {
-        parts.push(u);
-    }
     io.out(&format!("{}\n", parts.join("\n\n---\n\n")));
     0
-}
-
-#[cfg(test)]
-mod skill_version_tests {
-    use super::parse_skill_frontmatter_version as v;
-
-    /// Values recorded from origin/main's `parseSkillFrontmatterVersion` (#703).
-    #[test]
-    fn frontmatter_version_shapes() {
-        assert_eq!(v("---\nname: impeccable\nversion: 4.1.3\n---\n\nbody\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---\nname: impeccable\nversion: \"4.1.3\"\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---\nname: impeccable\nversion: '4.1.3'\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(
-            v("---\nname: impeccable\nmetadata:\n  version: 4.1.3\n  argument-hint: \"[t]\"\n---\n").as_deref(),
-            Some("4.1.3")
-        );
-        // A metadata version wins over a legacy top-level one, in either order.
-        assert_eq!(v("---\nversion: 1.0.0\nmetadata:\n  version: 4.1.3\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(
-            v("---\nmetadata:\n  version: 4.1.3\nname: x\nversion: 2.0.0\n---\n").as_deref(),
-            Some("4.1.3")
-        );
-        // Only the map's own indent level counts, so a deeper key is ignored.
-        assert_eq!(
-            v("---\nmetadata:\n  a:\n    version: 9.9.9\n  version: 4.1.3\n---\n").as_deref(),
-            Some("4.1.3")
-        );
-        assert_eq!(v("---\nmetadata:\n\tversion: 4.1.3\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---\nmetadata: # note\n  version: 4.1.3\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---\r\nmetadata:\r\n  version: 4.1.3\r\n---\r\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---\n# version: 9.9.9\nversion: 4.1.3\n---\n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("---  \nversion: 4.1.3\n---  \n").as_deref(), Some("4.1.3"));
-        assert_eq!(v("version: 4.1.3\n"), None);
-        assert_eq!(v("---\nversion:\n---\n"), None);
-    }
 }

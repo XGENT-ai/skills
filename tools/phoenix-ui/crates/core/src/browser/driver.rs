@@ -339,7 +339,7 @@ pub fn browser_sample_text(dom: &dyn Dom, el: ElId) -> String {
     if text.is_empty() {
         String::new()
     } else {
-        format!(" \"{}\"", crate::js_ext_b::slice_utf16_prefix(text, 40))
+        format!(" \"{}\"", crate::js_ext_a::slice_utf16_prefix(text, 40))
     }
 }
 

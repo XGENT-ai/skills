@@ -1,18 +1,17 @@
-//! JS-semantics helpers needed by the group-A checks port (`checks::rules`,
-//! `checks::css_scan`, `checks::html_patterns`) that `js.rs` does not carry.
-//! Kept in its own file so parallel porting work does not collide.
+//! JS-semantics helpers (UTF-16 lengths and slices, number truthiness,
+//! insertion-ordered maps) that `js.rs` does not carry.
 
 use crate::js;
 
 /// JS `String.prototype.length`: UTF-16 code units.
-pub fn utf16_length(s: &str) -> usize {
+pub fn utf16_len(s: &str) -> usize {
     s.chars().map(|c| c.len_utf16()).sum()
 }
 
 /// The UTF-16 code-unit index that JS would report for the char starting at
 /// byte offset `byte_idx` of `s` (what `RegExp#exec` puts in `.index`).
 pub fn utf16_index(s: &str, byte_idx: usize) -> usize {
-    utf16_length(&s[..byte_idx.min(s.len())])
+    utf16_len(&s[..byte_idx.min(s.len())])
 }
 
 /// JS `str.slice(0, end)` in UTF-16 code units. A cut through a surrogate
@@ -29,6 +28,22 @@ pub fn slice_utf16_start(s: &str, end: usize) -> String {
         out.push(c);
     }
     out
+}
+
+/// JS `str.slice(0, end)` in UTF-16 code units, for output that names the
+/// cut: a cut through a surrogate pair yields U+FFFD for the orphan half (what
+/// a lossy re-decode of the JS string would give).
+pub fn slice_utf16_prefix(s: &str, end: usize) -> String {
+    if utf16_len(s) <= end {
+        return s.to_string();
+    }
+    let units: Vec<u16> = s.encode_utf16().take(end).collect();
+    String::from_utf16_lossy(&units)
+}
+
+/// JS SameValueZero, the equality `Set` uses (NaN equals NaN, +0 equals -0).
+pub fn same_value_zero(a: f64, b: f64) -> bool {
+    (a.is_nan() && b.is_nan()) || a == b
 }
 
 /// Byte offset of the char boundary that is `units` UTF-16 code units after
@@ -207,7 +222,9 @@ mod tests {
 
     #[test]
     fn utf16_helpers() {
-        assert_eq!(utf16_length("a😀b"), 4);
+        assert_eq!(utf16_len("a😀b"), 4);
+        assert_eq!(slice_utf16_prefix("a😀b", 2), "a\u{FFFD}");
+        assert_eq!(slice_utf16_prefix("abc", 60), "abc");
         assert_eq!(utf16_index("a😀b", 5), 3);
         assert_eq!(slice_utf16_start("a😀b", 2), "a");
         assert_eq!(slice_utf16_start("a😀b", 3), "a😀");

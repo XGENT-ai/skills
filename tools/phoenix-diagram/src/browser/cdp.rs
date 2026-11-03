@@ -11,7 +11,7 @@ use std::collections::VecDeque;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::net::{SocketAddr, TcpStream};
-use std::os::unix::fs::{DirBuilderExt, MetadataExt};
+use std::os::unix::fs::DirBuilderExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{
@@ -46,99 +46,34 @@ impl Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct DirectoryIdentity {
-    path: PathBuf,
-    dev: u64,
-    ino: u64,
-}
-impl DirectoryIdentity {
-    fn capture(path: &Path) -> std::io::Result<Self> {
-        let stat = fs::symlink_metadata(path)?;
-        if !stat.is_dir() || stat.file_type().is_symlink() || stat.ino() == 0 {
-            return Err(std::io::Error::other("directory identity is unavailable"));
-        }
-        Ok(Self {
-            path: path.to_owned(),
-            dev: stat.dev(),
-            ino: stat.ino(),
-        })
-    }
-    fn verify(&self) -> std::io::Result<()> {
-        if Self::capture(&self.path)? != *self {
-            return Err(std::io::Error::other("directory identity changed"));
-        }
-        Ok(())
-    }
-}
-
-/// An exclusive creation supplies cleanup ownership, never a caller path.
+/// A fresh temporary browser profile, removed after the browser exits.
 pub(super) struct OwnedDirectory {
     pub path: PathBuf,
-    identity: DirectoryIdentity,
-    ancestors: Vec<DirectoryIdentity>,
 }
 impl OwnedDirectory {
     pub fn create(parent: &Path, prefix: &str) -> Result<Self> {
         static SERIAL: AtomicU64 = AtomicU64::new(0);
-        let parent = fs::canonicalize(parent)
-            .map_err(|e| Error::new("browser/profile", "profile", e.to_string()))?;
-        let mut ancestors = Vec::new();
-        let mut current = Some(parent.as_path());
-        while let Some(path) = current {
-            ancestors.push(
-                DirectoryIdentity::capture(path)
-                    .map_err(|e| Error::new("browser/profile", "profile", e.to_string()))?,
-            );
-            current = path.parent();
-        }
-        ancestors.reverse();
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos();
-        for _ in 0..128 {
-            for item in &ancestors {
-                item.verify()
-                    .map_err(|e| Error::new("browser/profile", "profile", e.to_string()))?;
-            }
-            let path = parent.join(format!(
-                "{prefix}{}-{stamp}-{}",
-                std::process::id(),
-                SERIAL.fetch_add(1, Ordering::Relaxed)
-            ));
-            match fs::DirBuilder::new().mode(0o700).create(&path) {
-                Ok(()) => {
-                    let identity = DirectoryIdentity::capture(&path)
-                        .map_err(|e| Error::new("browser/profile", "profile", e.to_string()))?;
-                    return Ok(Self {
-                        path,
-                        identity,
-                        ancestors,
-                    });
-                }
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
-                Err(e) => return Err(Error::new("browser/profile", "profile", e.to_string())),
-            }
-        }
-        Err(Error::new(
-            "browser/profile",
-            "profile",
-            "Could not reserve a unique browser profile",
-        ))
+        let path = parent.join(format!(
+            "{prefix}{}-{stamp}-{}",
+            std::process::id(),
+            SERIAL.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::DirBuilder::new()
+            .mode(0o700)
+            .create(&path)
+            .map_err(|e| Error::new("browser/profile", "profile", e.to_string()))?;
+        Ok(Self { path })
     }
     pub fn cleanup(&self) -> Result<()> {
+        // Chrome helpers can still be writing into the profile just after exit.
         for attempt in 0..4 {
-            for item in &self.ancestors {
-                item.verify().map_err(|e| self.cleanup_error(e))?;
-            }
-            match self.identity.verify() {
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-                Err(e) => return Err(self.cleanup_error(e)),
-                Ok(()) => {}
-            }
             match fs::remove_dir_all(&self.path) {
                 Ok(()) => return Ok(()),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
                 Err(e)
                     if attempt < 3
                         && matches!(
@@ -152,16 +87,6 @@ impl OwnedDirectory {
             }
         }
         unreachable!()
-    }
-    pub fn verify(&self) -> Result<()> {
-        for item in &self.ancestors {
-            item.verify().map_err(|e| self.cleanup_error(e))?;
-        }
-        self.identity.verify().map_err(|e| self.cleanup_error(e))
-    }
-    pub fn remove_empty(&self) -> Result<()> {
-        self.verify()?;
-        fs::remove_dir(&self.path).map_err(|e| self.cleanup_error(e))
     }
     fn cleanup_error(&self, cause: std::io::Error) -> Error {
         let mut error = Error::new(

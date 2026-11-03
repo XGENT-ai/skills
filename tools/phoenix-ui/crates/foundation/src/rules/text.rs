@@ -4,7 +4,7 @@
 //! themselves live in the detector.
 
 use crate::js::{self, parse_int, WS, WS_CHARS};
-use crate::js_ext_b::utf16_len;
+use crate::js_ext_a::utf16_len;
 use crate::rules::types::D;
 use once_cell::sync::Lazy;
 use regex::Regex;

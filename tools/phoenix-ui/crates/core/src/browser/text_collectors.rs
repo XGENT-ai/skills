@@ -14,22 +14,18 @@ use crate::checks::rules::{check_kicker_above_heading, KickerCandidate, RuleHit}
 use crate::checks::text_rules::{
     check_em_dash_overuse, check_numbered_section_labels, is_kicker_candidate,
     is_numbered_section_label_candidate, is_repeated_text_container, parse_numbered_label_text,
-    strip_edge_quotes, HEADING_TAGS, KICKER_CARD_CONTEXT_SELECTOR, KICKER_SKIP_SELECTOR,
-    KickerCandidateInput, NumberedLabelCandidate, NumberedLabelCandidateInput,
-    REPEATED_TEXT_CONTAINER_TAGS, REPEATED_TEXT_SKIP_SELECTOR,
+    strip_edge_quotes, KickerCandidateInput, NumberedLabelCandidate, NumberedLabelCandidateInput,
+    HEADING_TAGS, KICKER_CARD_CONTEXT_SELECTOR, KICKER_SKIP_SELECTOR, REPEATED_TEXT_CONTAINER_TAGS,
+    REPEATED_TEXT_SKIP_SELECTOR,
 };
+use crate::js::collapse_ws;
 use crate::js::{self, parse_float, parse_int};
 use crate::js_ext_a::num_truthy;
-use crate::js_ext_b::{slice_utf16_prefix, utf16_len};
+use crate::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 static WS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(&format!("{}+", js::WS)).expect("WS_RE"));
-
-/// JS `s.replace(/\s+/g, ' ')`.
-fn collapse_ws(s: &str) -> String {
-    WS_RE.replace_all(s, " ").into_owned()
-}
 
 /// JS: checks.mjs#cleanInlineText(el): direct text nodes joined with a
 /// space, whitespace collapsed, trimmed.

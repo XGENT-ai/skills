@@ -4,7 +4,7 @@
   "exit": 0,
   "signal": null,
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
     "src/cards.html": "<section class=\"cards\">\n  <div class=\"card\">\n    <h3 class=\"card-title\">Alpha card</h3>\n    <p class=\"card-body\">First card body copy.</p>\n  </div>\n  <!-- impeccable-variants-start ab12cd34 -->\n  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"3\" style=\"display: contents\">\n    <!-- Original -->\n    <div data-impeccable-variant=\"original\">\n      <div class=\"card\">\n        <h3 class=\"card-title\">Beta card</h3>\n        <p class=\"card-body\">Second card body copy.</p>\n      </div>\n    </div>\n    <!-- Variants: insert below this line -->\n  </div>\n  <!-- impeccable-variants-end ab12cd34 -->\n  <div class=\"card\">\n    <h3 class=\"card-title\">Gamma card</h3>\n    <p class=\"card-body\">Third card body copy.</p>\n  </div>\n</section>\n"
   }
 }

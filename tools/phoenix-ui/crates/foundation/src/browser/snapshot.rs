@@ -32,9 +32,7 @@
 //!   observes Chrome's parse and match surface.
 //!
 //! Unknown computed-style properties (a rule reading a property the capture
-//! did not record) answer `""` and are counted in
-//! [`SnapshotDom::unknown_style_props`], so a parity run can prove the
-//! property list complete.
+//! did not record) answer `""`.
 
 use super::dom::{Dom, ElId, KeyframeFrame, Rect, SelectorError};
 
@@ -548,7 +546,6 @@ pub struct SnapshotDom {
     selectors: RefCell<HashMap<String, Option<Selector>>>,
     closest_cache: RefCell<HashMap<(ElId, String), Result<Option<ElId>, SelectorError>>>,
     text_cache: RefCell<HashMap<ElId, String>>,
-    unknown_props: RefCell<Vec<String>>,
 }
 
 impl SnapshotDom {
@@ -561,7 +558,6 @@ impl SnapshotDom {
             selectors: RefCell::new(HashMap::new()),
             closest_cache: RefCell::new(HashMap::new()),
             text_cache: RefCell::new(HashMap::new()),
-            unknown_props: RefCell::new(Vec::new()),
         };
         let inline: Vec<HitTest> = dom.snap.hits.clone();
         dom.add_hits(&inline);
@@ -602,12 +598,6 @@ impl SnapshotDom {
     /// Whether anything is pending.
     pub fn has_needs(&self) -> bool {
         !self.misses.borrow().is_empty()
-    }
-
-    /// Computed-style properties a rule asked for that the capture did not
-    /// record (distinct, in first-read order).
-    pub fn unknown_style_props(&self) -> Vec<String> {
-        self.unknown_props.borrow().clone()
     }
 
     /// Forget per-run memo tables (selectors, closest, text) but keep facts.
@@ -832,16 +822,10 @@ impl Dom for SnapshotDom {
         self.snap.node(el).hidden
     }
     fn style(&self, el: ElId, prop: &str) -> String {
-        match self.snap.style_value(el, prop) {
-            Some(v) => v.to_string(),
-            None => {
-                let mut u = self.unknown_props.borrow_mut();
-                if !u.iter().any(|p| p == prop) {
-                    u.push(prop.to_string());
-                }
-                String::new()
-            }
-        }
+        self.snap
+            .style_value(el, prop)
+            .map(str::to_string)
+            .unwrap_or_default()
     }
     fn pseudo_style(&self, el: ElId, pseudo: &str, prop: &str) -> Option<String> {
         let n = self.snap.node(el);
@@ -868,23 +852,11 @@ impl Dom for SnapshotDom {
             }
             Some(vals) => {
                 let col = self.snap.pseudo_index.get(prop).copied();
-                match col.and_then(|c| vals.get(c)) {
-                    Some(idx) => Some(
-                        self.snap
-                            .strings
-                            .get(*idx as usize)
-                            .cloned()
-                            .unwrap_or_default(),
-                    ),
-                    None => {
-                        let mut u = self.unknown_props.borrow_mut();
-                        let key = format!("{pseudo}{prop}");
-                        if !u.iter().any(|p| *p == key) {
-                            u.push(key);
-                        }
-                        Some(String::new())
-                    }
-                }
+                Some(
+                    col.and_then(|c| vals.get(c))
+                        .and_then(|idx| self.snap.strings.get(*idx as usize).cloned())
+                        .unwrap_or_default(),
+                )
             }
         }
     }
@@ -1028,7 +1000,6 @@ mod tests {
         assert!(!d.contains(5, 3));
         assert_eq!(d.style(5, "display"), "inline");
         assert_eq!(d.style(5, "opacity"), "");
-        assert_eq!(d.unknown_style_props(), vec!["opacity".to_string()]);
         assert_eq!(
             d.pseudo_style(4, "::before", "content").as_deref(),
             Some("\"\"")

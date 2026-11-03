@@ -935,10 +935,6 @@ pub fn prepare_plate_reference(comp: &Image, spec: &Value, region: &Value) -> Pl
 }
 
 /// JS: platePrompt(spec, region).
-pub fn plate_prompt(spec: &Value, region: &Value) -> String {
-    plate_prompt_background(spec, region, false)
-}
-
 fn plate_prompt_background(spec: &Value, region: &Value, transparent: bool) -> String {
     let world = spec
         .get("palette")

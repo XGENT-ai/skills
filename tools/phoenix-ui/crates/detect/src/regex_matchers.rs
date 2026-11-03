@@ -12,7 +12,7 @@ use impeccable_core::fonts::extract_google_font_families;
 use impeccable_core::js::{
     self, ci, math_round, number_to_string, parse_float, string_to_number,
 };
-use impeccable_core::js_ext_a::{advance_utf16, slice_utf16_start, utf16_index, utf16_length};
+use impeccable_core::js_ext_a::{advance_utf16, slice_utf16_start, utf16_index, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -1207,7 +1207,7 @@ fn analyze_em_dash_overuse(content: &str, file_path: &str) -> Vec<Finding> {
     if count < EM_DASH_FLOOR {
         return vec![];
     }
-    if utf16_length(&text) > count * EM_DASH_CHARS_PER_DASH {
+    if utf16_len(&text) > count * EM_DASH_CHARS_PER_DASH {
         return vec![];
     }
     vec![finding(
@@ -1253,7 +1253,7 @@ const BUZZWORDS: &[&str] = &[
 fn analyze_marketing_buzzword(content: &str, file_path: &str) -> Vec<Finding> {
     let text = strip_html_to_text(content);
     let lower = js::to_lower_case(&text);
-    let text_len = utf16_length(&text);
+    let text_len = utf16_len(&text);
     let mut count = 0usize;
     let mut first_sample = String::new();
     for phrase in BUZZWORDS {
@@ -1266,12 +1266,12 @@ fn analyze_marketing_buzzword(content: &str, file_path: &str) -> Vec<Finding> {
             let idx = utf16_index(&lower, from_b + rel);
             count += 1;
             if first_sample.is_empty() {
-                let plen = utf16_length(phrase);
+                let plen = utf16_len(phrase);
                 let start = idx.saturating_sub(12);
                 let end = (idx + plen + 12).min(text_len);
                 first_sample = js::trim(&utf16_slice(&text, start, end)).to_string();
             }
-            from = idx + utf16_length(phrase);
+            from = idx + utf16_len(phrase);
         }
     }
     if count == 0 {
@@ -1367,27 +1367,6 @@ pub const REGEX_ANALYZERS: &[Analyzer] = &[
     analyze_radial_halo,
     analyze_marquee,
 ];
-
-/// JS `TEXT_CONTENT_ANALYZER_IDS`.
-pub const TEXT_CONTENT_ANALYZER_IDS: &[&str] = &[
-    "em-dash-overuse",
-    "marketing-buzzword",
-    "aphoristic-cadence",
-];
-
-/// The ruleIds the JS assigns to analyzers by index (`analyzerIds[i] || analyzer-${i+1}`).
-pub fn analyzer_rule_id(i: usize) -> String {
-    const IDS: &[&str] = &[
-        "monotonous-spacing",
-        "em-dash-overuse",
-        "marketing-buzzword",
-        "aphoristic-cadence",
-        "dark-glow",
-    ];
-    IDS.get(i)
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| format!("analyzer-{}", i + 1))
-}
 
 #[cfg(test)]
 mod tests {

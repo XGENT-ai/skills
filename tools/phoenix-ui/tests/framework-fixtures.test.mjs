@@ -5,7 +5,7 @@
  * Each fixture under tests/framework-fixtures/ is a small project tree with a
  * fixture.json that declares the inject config + expected CSP and wrap
  * outcomes. The harness copies the fixture into a tmp git repo, applies the
- * fixture's gitignore, and runs `impeccable live-inject`, `live-wrap`, and
+ * fixture's gitignore, and runs `phoenix-ui live-inject`, `live-wrap`, and
  * `detect-csp` against it. Skips when no engine binary is available (see
  * tests/lib/engine-bin.mjs).
  *
@@ -46,8 +46,8 @@ function stageFixture(name) {
   const tmp = mkdtempSync(join(tmpdir(), 'impeccable-fixture-'));
   cpSync(join(fixtureRoot, 'files'), tmp, { recursive: true });
   writeFileSync(join(tmp, '.gitignore'), gitignore);
-  mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
-  writeFileSync(join(tmp, '.impeccable', 'live', 'config.json'), JSON.stringify(fixture.config));
+  mkdirSync(join(tmp, '.phoenix-ui', 'live'), { recursive: true });
+  writeFileSync(join(tmp, '.phoenix-ui', 'live', 'config.json'), JSON.stringify(fixture.config));
 
   // The AST scaffolder resolves the app's svelte compiler from the staged
   // root; the runtime suite gets it from a real npm install, the static sweep
@@ -113,27 +113,17 @@ for (const name of listFixtures()) {
         assert.equal(result.gitIgnore?.mode, 'git-info-exclude', 'live runtime ignores are installed locally');
         const ignored = execFileSync('git', [
           'check-ignore',
-          '.impeccable/live/server.json',
-          '.impeccable/live/sessions/example.jsonl',
-          '.impeccable/live/previews/example/v1.html',
-          '.impeccable/live/artifacts/example-r1.jsx',
-          '.impeccable/live/accept-receipts/example.json',
-          '.impeccable/live/locks/example.lock',
-          '.impeccable/live/deferred-svelte-component-accepts.json',
+          '.phoenix-ui/live/server.json',
+          '.phoenix-ui/live/annotations/example.png',
+          '.phoenix-ui/live/pending-manual-edits.json',
+          'node_modules/.phoenix-ui-live/__runtime.js',
           'src/lib/impeccable/ImpeccableLiveRoot.svelte',
-          'src/lib/impeccable/__runtime.js',
-          'src/lib/impeccable/a4ac4e74/v3.svelte',
         ], { cwd: tmp, encoding: 'utf-8' });
-        assert.match(ignored, /\.impeccable\/live\/server\.json/);
-        assert.match(ignored, /\.impeccable\/live\/sessions\/example\.jsonl/);
-        assert.match(ignored, /\.impeccable\/live\/previews\/example\/v1\.html/);
-        assert.match(ignored, /\.impeccable\/live\/artifacts\/example-r1\.jsx/);
-        assert.match(ignored, /\.impeccable\/live\/accept-receipts\/example\.json/);
-        assert.match(ignored, /\.impeccable\/live\/locks\/example\.lock/);
-        assert.match(ignored, /\.impeccable\/live\/deferred-svelte-component-accepts\.json/);
+        assert.match(ignored, /\.phoenix-ui\/live\/server\.json/);
+        assert.match(ignored, /\.phoenix-ui\/live\/annotations\/example\.png/);
+        assert.match(ignored, /\.phoenix-ui\/live\/pending-manual-edits\.json/);
+        assert.match(ignored, /node_modules\/\.phoenix-ui-live\/__runtime\.js/);
         assert.match(ignored, /src\/lib\/impeccable\/ImpeccableLiveRoot\.svelte/);
-        assert.match(ignored, /src\/lib\/impeccable\/__runtime\.js/);
-        assert.match(ignored, /src\/lib\/impeccable\/a4ac4e74\/v3\.svelte/);
         if (result.adapter === 'sveltekit') {
           const layout = readFileSync(join(tmp, 'src/routes/+layout.svelte'), 'utf-8');
           const appHtml = readFileSync(join(tmp, 'src/app.html'), 'utf-8');

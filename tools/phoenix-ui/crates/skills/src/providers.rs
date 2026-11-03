@@ -5,8 +5,6 @@
 
 use crate::util::{self, jsp, Env};
 
-pub const API_BASE: &str = "https://impeccable.style";
-
 pub const PROVIDER_DIRS: &[&str] = &[
     ".claude",
     ".cursor",
@@ -267,7 +265,6 @@ impl Sys {
     }
 
     /// The first provider directory containing a canonical Phoenix skill.
-    /// Legacy ownership and migration are handled separately.
     pub fn is_already_installed(&self, root: &str, scope: Option<Scope>) -> Option<&'static str> {
         for d in PROVIDER_DIRS {
             for skills_dir in self.existing_skills_dirs(root, d, scope) {
@@ -282,35 +279,6 @@ impl Sys {
             }
         }
         None
-    }
-
-    /// JS: migrateUnprefixImpeccable(root, scope)
-    pub fn migrate_unprefix_impeccable(&self, root: &str, scope: Option<Scope>) -> usize {
-        let mut migrated = 0;
-        for d in PROVIDER_DIRS {
-            for skills_dir in self.existing_skills_dirs(root, d, scope) {
-                let Some(entries) = util::read_dir_names(&skills_dir) else {
-                    continue;
-                };
-                for name in entries {
-                    if name == "impeccable" || name == "teach-impeccable" {
-                        continue;
-                    }
-                    if !name.ends_with("-impeccable") {
-                        continue;
-                    }
-                    if !is_real_skill_dir(&skills_dir, &name) {
-                        continue;
-                    }
-                    let dest = jsp::join(&[&skills_dir, "impeccable"]);
-                    util::rm_rf(&dest);
-                    if util::rename(&jsp::join(&[&skills_dir, &name]), &dest).is_ok() {
-                        migrated += 1;
-                    }
-                }
-            }
-        }
-        migrated
     }
 
     /// JS: findInstalledProviders(root, scope)

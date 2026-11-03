@@ -7,7 +7,6 @@ use impeccable_common::Io;
 use serde_json::Value;
 
 use crate::bundle;
-use crate::engine_binary::install_engine_binaries;
 use crate::hook_manifest::{
     self, copy_provider_hooks, hook_installed_for_provider, HOOK_EXPLAINER,
 };
@@ -23,7 +22,7 @@ use crate::{Flow, R};
 const SUBCOMMAND_HELP: &[(&str, &str)] = &[
     (
         "install",
-        "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nProject installs are transactional: owned entries, backups, migration from\nimpeccable and `phoenix-ui migrate --rollback`.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --providers=<names>    Comma-separated harnesses to install\n  --scope=<scope>        Install scope: project (default) or global\n  --project [<dir>]      Install into the current or given project\n  --user, --global       Install at the user level\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --keep-impeccable     Project: keep Impeccable alongside Phoenix UI\n  --dry-run              Project: report the plan without writing\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message",
+        "Usage: phoenix-ui install [options]\n\nInstall compiled Phoenix UI skills into project or user-level harness folders.\nA project install overwrites the Phoenix tool files and replaces only the\nPhoenix entries in shared hook configuration; rerun it to repair.\n\nOptions:\n  --providers=<names>    Comma-separated harnesses to install\n  --project [<dir>]      Install into the current or given project (default)\n  --user, --global       Install at the user level (also --scope=global)\n  -y, --yes              User level: accept detected defaults without prompting\n  --no-hooks             User level: install skills without provider hook manifests\n  --force                User level: replace an existing installation\n  --dry-run              Project: report the plan without writing\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Project: report as one JSON object\n  -h, --help             Show this help message",
     ),
     (
         "link",
@@ -31,7 +30,7 @@ const SUBCOMMAND_HELP: &[(&str, &str)] = &[
     ),
     (
         "update",
-        "Usage: phoenix-ui update [options]\n\nUpdate an existing Phoenix UI skill installation.\nProject updates run the transactional project install with this bundle.\n\nOptions:\n  -y, --yes              Accept detected defaults without prompting\n  --scope=<scope>        Update scope: project (default) or global\n  --project [<dir>]      Update the current or given project installation\n  --user, --global       Update the user-level installation\n  --no-hooks             User level: update skills without changing hook manifests\n  --force                User level: replace installed skill files\n  --dry-run              Project: report the plan without writing\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Report as one JSON object\n  -h, --help             Show this help message",
+        "Usage: phoenix-ui update [options]\n\nUpdate an existing Phoenix UI skill installation.\nA project update reruns the project install with this bundle.\n\nOptions:\n  --project [<dir>]      Update the current or given project installation (default)\n  --user, --global       Update the user-level installation (also --scope=global)\n  -y, --yes              User level: accept detected defaults without prompting\n  --no-hooks             User level: update skills without changing hook manifests\n  --force                User level: replace installed skill files\n  --dry-run              Project: report the plan without writing\n  --bundle-root=<path>   Explicit local bundle; also PHOENIX_UI_BUNDLE_PATH\n  --json                 Project: report as one JSON object\n  -h, --help             Show this help message",
     ),
     (
         "check",
@@ -222,14 +221,10 @@ fn check_local_contract(sys: &Sys, flags: &[String], io: &mut Io) -> R<()> {
         for (_, skills) in sys.deduplicate_providers(&root, &providers, scope) {
             let skill = util::jsp::join(&[&skills, "phoenix-ui"]);
             let contract = util::jsp::join(&[&skill, "scripts", "ENGINE.json"]);
-            if util::is_symlink(&contract) {
-                return Err("Local runtime contract is a symlink".into());
-            }
             let version: Value = serde_json::from_slice(&util::read_bytes(&contract)?)
                 .map_err(|e| format!("Invalid local ENGINE.json: {e}"))?;
             if version.get("toolVersion").and_then(Value::as_str) != Some(env!("CARGO_PKG_VERSION"))
                 || version.get("bundleSchema").and_then(Value::as_u64) != Some(1)
-                || version.get("reviewSchema").and_then(Value::as_u64) != Some(1)
             {
                 return Err("Local ENGINE.json does not match this Phoenix runtime".into());
             }
@@ -830,18 +825,6 @@ fn link(flags: &[String], io: &mut Io, bundle: &LocalBundle) -> R<()> {
         }
         return Err(Flow::Exit(1));
     }
-    // Linked skill dirs resolve into the source checkout; repair the
-    // launcher/binary executable bit there too (through the symlink), so a
-    // checkout whose copier dropped modes still runs.
-    for provider in &targets {
-        let skills_dir = util::jsp::join(&[&root, provider, "skills"]);
-        for skill in util::read_dir_names(&skills_dir).unwrap_or_default() {
-            let dir = util::jsp::join(&[&skills_dir, &skill]);
-            if util::is_dir(&dir) {
-                crate::engine_binary::ensure_executable_scripts(&dir);
-            }
-        }
-    }
     let mut parts = Vec::new();
     if result.linked > 0 {
         parts.push(format!("{} linked", result.linked));
@@ -1032,7 +1015,6 @@ fn install(flags: &[String], io: &mut Io, bundle: &LocalBundle) -> R<()> {
                     io,
                     &format!("Updated {updated} skill(s){}.", to_version_suffix(&v)),
                 );
-                install_engine_binaries(&sys, io, &refreshed);
             }
 
             let mut fresh_written = 0usize;
@@ -1067,7 +1049,6 @@ fn install(flags: &[String], io: &mut Io, bundle: &LocalBundle) -> R<()> {
                         }
                     ),
                 );
-                install_engine_binaries(&sys, io, &written);
                 let agents = bundle::copy_provider_agents(
                     &sys,
                     &bdir,
@@ -1203,7 +1184,6 @@ fn install(flags: &[String], io: &mut Io, bundle: &LocalBundle) -> R<()> {
             }
         ),
     );
-    install_engine_binaries(&sys, io, &written);
     bundle::report_provider_agents(&sys, io, &agent_results);
     if !hook_targets.is_empty() {
         out(
@@ -1457,7 +1437,6 @@ fn update(flags: &[String], io: &mut Io, bundle: &LocalBundle) -> R<()> {
                 to_version_suffix(&v)
             ),
         );
-        install_engine_binaries(&sys, io, &refreshed);
         if !hook_targets.is_empty() {
             out(
                 io,

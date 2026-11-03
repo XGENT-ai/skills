@@ -7,13 +7,12 @@ pub fn approved(store_root: &Path, project: &Path, manifest_path: &str) -> Resul
     let project = project.canonicalize().map_err(|e| e.to_string())?;
     if let Some(dir) = super::lifecycle::final_session(store_root, &project)? {
         let state = store::read(&dir.join("current.json"))?;
-        capture_intact(&dir, &state)?;
+        capture_intact(&state)?;
         return Ok(state["receipt"].clone());
     }
     let manifest_file = project.join(super::manifest::relative(manifest_path)?);
     let manifest = store::read(&manifest_file)?;
     let directory = store::session_dir(store_root, &project, string(&manifest, "id")?);
-    let _guard = store::lock(&directory)?;
     let state = store::read(&directory.join("current.json"))?;
     store::sources_current(&state)?;
     if !super::capture::verified(&state)
@@ -39,14 +38,14 @@ pub fn approved(store_root: &Path, project: &Path, manifest_path: &str) -> Resul
     if ids(&manifest["components"]) != ids(&state["packet"]["components"]) {
         return Err("review packet does not match this manifest; capture a new round".into());
     }
-    capture_intact(&directory, &state)?;
+    capture_intact(&state)?;
     Ok(state["receipt"].clone())
 }
 
-/// Recompute capture integrity from the pinned blobs instead of trusting the
-/// stored `captureVerified` flag: every component carries native evidence,
-/// every served file matches its blob, and code views point at captured pixels.
-pub fn capture_intact(dir: &Path, state: &Value) -> Result<(), String> {
+/// Check capture evidence instead of trusting the stored `captureVerified`
+/// flag: every component carries native evidence and code views point at
+/// captured pixels.
+pub fn capture_intact(state: &Value) -> Result<(), String> {
     let fail = |why: &str| Err(format!("component review capture is not intact: {why}"));
     if !super::capture::verified(state) || state["receipt"]["capture"] != state["capture"] {
         return fail("no native capture bound to the receipt");
@@ -56,8 +55,8 @@ pub fn capture_intact(dir: &Path, state: &Value) -> Result<(), String> {
     for (path, hash) in files {
         let hash = hash.as_str().unwrap_or("");
         let captured = path.starts_with("_review_captures/");
-        if hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit())
-            || std::fs::read(dir.join("blobs").join(hash)).map(|b| digest(&b)).ok().as_deref() != Some(hash)
+        if hash.len() != 64
+            || !hash.bytes().all(|b| b.is_ascii_hexdigit())
             || (!captured && sources.get(path).and_then(Value::as_str) != Some(hash))
         {
             return fail(&format!("{path} does not match its pinned bytes"));

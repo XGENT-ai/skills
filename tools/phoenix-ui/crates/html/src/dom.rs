@@ -21,8 +21,7 @@
 //! never spelled out are unwrapped again (htmlparser2 never implies them, so
 //! a partial keeps its flat top-level shape and `:root` matches each
 //! top-level element). What stays different, none of which the fixture
-//! corpus exercises (see `tests/oracle_html.rs`; the JS repo's
-//! `tests/oracle/DELTAS.md` is where a reviewed delta would be listed):
+//! corpus exercises:
 //!
 //! - attribute names: htmlparser2 runs with `lowerCaseAttributeNames: false`,
 //!   so `<div CLASS="card" STYLE="...">` has no `class` / `style` for the JS
@@ -59,7 +58,6 @@ pub struct StaticDocument {
     accent_dash: HashSet<NodeId>,
     pseudo_surface: HashMap<NodeId, Rgba>,
     selector_cache: RefCell<HashMap<String, Result<Selector, SelectorError>>>,
-    unsupported_selectors: RefCell<Vec<String>>,
 }
 
 impl std::fmt::Debug for StaticDocument {
@@ -179,7 +177,6 @@ impl StaticDocument {
             accent_dash: HashSet::new(),
             pseudo_surface: HashMap::new(),
             selector_cache: RefCell::new(HashMap::new()),
-            unsupported_selectors: RefCell::new(Vec::new()),
         }
     }
 
@@ -204,27 +201,16 @@ impl StaticDocument {
         StaticElement { doc: self, node }
     }
 
-    /// Compile (and cache) a selector; `Err` where css-select throws. The
-    /// first failure of each selector text is recorded for the parity report.
+    /// Compile (and cache) a selector; `Err` where css-select throws.
     pub fn compile(&self, selector: &str) -> Result<Selector, SelectorError> {
         if let Some(r) = self.selector_cache.borrow().get(selector) {
             return r.clone();
         }
         let r = Selector::parse(selector);
-        if r.is_err() {
-            self.unsupported_selectors
-                .borrow_mut()
-                .push(selector.to_string());
-        }
         self.selector_cache
             .borrow_mut()
             .insert(selector.to_string(), r.clone());
         r
-    }
-
-    /// Selectors css-select would refuse that were seen during this scan.
-    pub fn unsupported_selectors(&self) -> Vec<String> {
-        self.unsupported_selectors.borrow().clone()
     }
 
     /// css-select `selectAll(selector, nodes)`: every element among `nodes`
@@ -496,7 +482,7 @@ impl<'a> StaticElement<'a> {
     pub fn has_direct_text_longer_than(&self, min_len: usize) -> bool {
         self.node.children().any(|c| match c.value() {
             Node::Text(t) => {
-                impeccable_core::js_ext_b::utf16_len(impeccable_core::js::trim(&t.text)) > min_len
+                impeccable_core::js_ext_a::utf16_len(impeccable_core::js::trim(&t.text)) > min_len
             }
             _ => false,
         })
@@ -587,7 +573,6 @@ mod tests {
         // No `<head>` in the source: the synthesized one is unwrapped.
         assert_eq!(doc.query_selector_all("*").len(), 8);
         assert!(doc.query_selector_all("p:focus").is_empty());
-        assert_eq!(doc.unsupported_selectors(), vec!["p:focus".to_string()]);
     }
 
     #[test]

@@ -11,7 +11,7 @@ use crate::color::{self, Rgba};
 
 use crate::js::{self, math_max, math_min3, math_round, number_to_string, to_fixed, WS, WS_CHARS};
 
-use crate::js_ext_b::{slice_utf16_prefix, utf16_len};
+use crate::js_ext_a::{slice_utf16_prefix, utf16_len};
 
 use once_cell::sync::Lazy;
 use regex::Regex;

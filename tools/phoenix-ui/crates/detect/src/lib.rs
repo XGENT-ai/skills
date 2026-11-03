@@ -2,7 +2,7 @@
 //! engines, ported from `cli/bin/cli.js`, `cli/engine/cli/main.mjs`,
 //! `cli/engine/node/file-system.mjs`, `cli/lib/impeccable-config.mjs`,
 //! `cli/engine/engines/regex/detect-text.mjs`, `cli/engine/design-system.mjs`,
-//! `cli/engine/profile/profiler.mjs`, and `cli/bin/commands/ignores.mjs`.
+//! and `cli/bin/commands/ignores.mjs`.
 //!
 //! Engine seams: [`engines::HtmlEngine`] (static HTML, crates/html) and
 //! [`engines::UrlEngine`] (browser, crates/browser). This crate never depends
@@ -18,9 +18,7 @@ pub mod engines;
 pub mod file_system;
 pub mod ignores;
 pub mod jsp;
-pub mod profiler;
 pub mod regex_matchers;
-pub mod skills;
 pub mod util;
 
 use impeccable_common::Io;
@@ -37,11 +35,6 @@ pub fn run_detect(args: &[String], io: &mut Io, engines: &Engines) -> i32 {
 /// `impeccable ignores [args]`.
 pub fn run_ignores(args: &[String], io: &mut Io) -> i32 {
     ignores::run(args, io)
-}
-
-/// `impeccable skills [args]` and the top-level `help|install|link|update|check`.
-pub fn run_skills(args: &[String], io: &mut Io) -> i32 {
-    skills::run(args, io)
 }
 
 /// JS: cli.js#looksLikeDetectTarget
@@ -67,7 +60,6 @@ Commands:
   link --bundle-root DIR           Link skills from an explicit local Phoenix bundle
   update --bundle-root DIR         Update skills from the specified local bundle
   check                            Check local installation contracts
-  review <command>                 Manage persistent UI review evidence and rounds
 
 Options:
   --help       Show this help message

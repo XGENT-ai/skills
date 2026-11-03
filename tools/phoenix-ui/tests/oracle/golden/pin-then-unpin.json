@@ -13,7 +13,7 @@
       "signal": null
     },
     {
-      "stdout": "  - <WS>/.claude/skills/critique\n  - <WS>/.cursor/skills/critique\n  - <WS>/.agents/skills/critique\n\nUnpinned 'critique' from 3 location(s).\nUse Impeccable's 'critique' workflow directly to access it.\n",
+      "stdout": "  - <WS>/.claude/skills/critique\n  - <WS>/.cursor/skills/critique\n  - <WS>/.agents/skills/critique\n\nUnpinned 'critique' from 3 location(s).\nUse Phoenix UI's 'critique' workflow directly to access it.\n",
       "stderr": "",
       "exit": 0,
       "signal": null
@@ -26,9 +26,9 @@
     }
   ],
   "files": {
-    ".agents/skills/impeccable/SKILL.md": "---\nname: impeccable\ndescription: fixture\n---\n",
+    ".agents/skills/phoenix-ui/SKILL.md": "---\nname: phoenix-ui\ndescription: fixture\n---\n",
     ".claude/skills/audit/SKILL.md": "---\nname: audit\ndescription: a user-authored audit skill\n---\nNot pinned.\n",
-    ".claude/skills/impeccable/SKILL.md": "---\nname: impeccable\ndescription: fixture\n---\n",
-    ".cursor/skills/impeccable/SKILL.md": "---\nname: impeccable\ndescription: fixture\n---\n"
+    ".claude/skills/phoenix-ui/SKILL.md": "---\nname: phoenix-ui\ndescription: fixture\n---\n",
+    ".cursor/skills/phoenix-ui/SKILL.md": "---\nname: phoenix-ui\ndescription: fixture\n---\n"
   }
 }

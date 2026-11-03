@@ -1,10 +1,10 @@
 {
   "stdout": "",
-  "stderr": "Live server not running. Start one with: <IMPECCABLE> live\n",
+  "stderr": "Live server not running. Start one with: <PHOENIX_UI> live\n",
   "exit": 1,
   "signal": null,
   "files": {
-    ".impeccable/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
-    ".impeccable/live/server.json": "{\"pid\":<PID>,\"port\":65531,\"token\":\"oracle-token\"}"
+    ".phoenix-ui/live/config.json": "{\n  \"files\": [\"index.html\", \"public/**/*.html\"],\n  \"insertBefore\": \"</body>\",\n  \"commentSyntax\": \"html\"\n}\n",
+    ".phoenix-ui/live/server.json": "{\"pid\":<PID>,\"port\":65531,\"token\":\"oracle-token\"}"
   }
 }

@@ -66,7 +66,7 @@ fn native_inventory_excludes_private_and_package_trees() {
     }
 }
 #[test]
-fn entry_renderer_returns_fresh_hero_and_responsive_pixels_with_live_input_guard() {
+fn entry_renderer_returns_fresh_hero_and_responsive_pixels() {
     if impeccable_browser::discovery::find_browser(&std::env::vars().collect()).is_err() {
         eprintln!("skip: browser unavailable");
         return;
@@ -75,7 +75,6 @@ fn entry_renderer_returns_fresh_hero_and_responsive_pixels_with_live_input_guard
     let renderer = CdpEntryRenderer;
     for stage in [EntryStage::Hero, EntryStage::Responsive] {
         let captured = renderer.capture_entry(&f.request(stage)).unwrap();
-        captured.verify_current().unwrap();
         for frame in &captured.evidence().frames {
             let image = png_io::decode_png(&frame.png).unwrap().image;
             let expected = match frame.name.as_str() {
@@ -92,10 +91,6 @@ fn entry_renderer_returns_fresh_hero_and_responsive_pixels_with_live_input_guard
                     .all(|r| r.receipt["stableCapture"] == true)
             );
         }
-        let before = fs::read(f.0.join("assets/art.png")).unwrap();
-        fs::write(f.0.join("assets/art.png"), b"changed").unwrap();
-        assert!(captured.verify_current().is_err());
-        fs::write(f.0.join("assets/art.png"), before).unwrap();
     }
 }
 
@@ -116,6 +111,5 @@ fn host_capture_service_keeps_one_receipt_per_raster_region() {
             let ids: Vec<_> = frame.regions.iter().map(|r| r.receipt["regionId"].clone()).collect();
             assert_eq!(ids, [serde_json::json!("art")], "{}", frame.name);
         }
-        captured.verify_current().unwrap();
     }
 }

@@ -1,8 +1,8 @@
 //! JS: live-commit-manual-edits.mjs. Applies pending live copy edits as one
 //! AI-owned batch, verifies the reported source changes, and clears only the
-//! entries that verified.
+//! entries that verified. Nothing is rolled back: git is the undo.
 
-use crate::copy_edit_agent::{run_copy_edit_batch_agent, run_copy_edit_post_apply_checks};
+use crate::copy_edit_agent::run_copy_edit_batch_agent;
 use crate::event_validation::truthy;
 use crate::manual_edits::buffer::{
     count_by_page_value, read_buffer, read_buffer_strict, write_buffer, Buffer,
@@ -16,24 +16,6 @@ use crate::util::{exists, jsp, Env};
 use serde_json::{json, Map, Value};
 use std::collections::{HashMap, HashSet};
 
-const ROLLBACK_EXTENSIONS: [&str; 23] = [
-    ".astro", ".cjs", ".css", ".eex", ".ex", ".heex", ".htm", ".html", ".js", ".json", ".jsx",
-    ".md", ".mdx", ".mjs", ".scss", ".svelte", ".svg", ".ts", ".tsx", ".txt", ".vue", ".yaml",
-    ".yml",
-];
-const ROLLBACK_SKIP_DIRS: [&str; 11] = [
-    ".astro",
-    ".git",
-    ".phoenix-ui",
-    ".next",
-    ".nuxt",
-    ".svelte-kit",
-    "build",
-    "coverage",
-    "dist",
-    "node_modules",
-    "out",
-];
 const DEFAULT_REPAIR_ATTEMPTS: f64 = 3.0;
 
 // ---------------------------------------------------------------------------
@@ -53,7 +35,6 @@ pub struct CommitOptions<'a> {
         Option<&'a mut dyn FnMut(&Value, Option<&Value>) -> Result<Value, String>>,
     pub chat_available: Option<&'a dyn Fn() -> bool>,
     pub repair_only: bool,
-    pub transaction_id: Option<&'a str>,
     pub batch: Option<&'a Value>,
 }
 
@@ -79,14 +60,12 @@ pub fn commit_manual_edits_value(opts: CommitOptions, page_url: Value) -> Result
         apply_batch_to_source: opts.apply_batch_to_source,
         chat_available: opts.chat_available,
     };
-    let transaction_id = opts.transaction_id.map(String::from);
     run_commit(
         &cwd,
         &env,
         page_url,
         &mut agent,
         opts.repair_only,
-        transaction_id.as_deref(),
         opts.batch,
     )
 }
@@ -461,10 +440,6 @@ fn normalize_project_source_path(
 
 fn normalize_relative_file(cwd: &str, file: Option<&Value>) -> Option<String> {
     normalize_project_source_path(cwd, file, true)
-}
-
-fn normalize_rollback_path(cwd: &str, file: &Value) -> Option<String> {
-    normalize_project_source_path(cwd, Some(file), false)
 }
 
 fn read_lines(path: &str) -> Option<Vec<String>> {
@@ -1099,63 +1074,6 @@ fn verify_applied_entry(
     failures
 }
 
-fn snapshot_target_passes(snapshot: &Map<String, Value>, target: &Target, op: &Value) -> bool {
-    let before = snapshot.get(&target.file).and_then(|s| s.get("content"));
-    let Some(Value::String(content)) = before else {
-        return false;
-    };
-    let lines: Vec<String> = content.split('\n').map(String::from).collect();
-    verification_target_passes_lines(&lines, target, op)
-}
-
-/// JS: findUnappliedEntrySourceChanges(...)
-fn find_unapplied_entry_source_changes(
-    batch: &Value,
-    entries: &[Value],
-    reported_files: &[String],
-    cwd: &str,
-    rollback_snapshot: &Map<String, Value>,
-) -> Vec<Value> {
-    let mut failures = Vec::new();
-    for entry in entries {
-        for raw_op in get_arr(entry, "ops") {
-            let mut op_map = raw_op.as_object().cloned().unwrap_or_default();
-            op_map.insert(
-                "entryId".into(),
-                entry.get("id").cloned().unwrap_or(Value::Null),
-            );
-            let op = Value::Object(op_map);
-            let new_text = match op.get("newText") {
-                Some(Value::String(s)) if !s.is_empty() => s.clone(),
-                _ => continue,
-            };
-            let targets = verification_targets_for_op(batch, &op, reported_files, cwd);
-            let leaked: Vec<&Target> = targets
-                .iter()
-                .filter(|t| {
-                    verification_target_passes(cwd, t, &op)
-                        && !snapshot_target_passes(rollback_snapshot, t, &op)
-                })
-                .collect();
-            if leaked.is_empty() {
-                continue;
-            }
-            let mut cands: Vec<Value> = leaked.iter().map(|t| t.as_candidate()).collect();
-            cands.extend(candidates_for_entry(batch, entry.get("id")));
-            cands.truncate(12);
-            let mut m = Map::new();
-            ins(&mut m, "id", entry.get("id").cloned());
-            m.insert("reason".into(), json!("failed_entry_source_changed"));
-            ins(&mut m, "ref", op.get("ref").cloned());
-            m.insert("newText".into(), json!(new_text));
-            m.insert("candidates".into(), Value::Array(cands));
-            failures.push(Value::Object(m));
-            break;
-        }
-    }
-    failures
-}
-
 /// JS: verificationFailuresForEntries(batch, entries, reason, extra)
 fn verification_failures_for_entries(
     batch: &Value,
@@ -1201,253 +1119,8 @@ fn clear_applied_entries(cwd: &str, env: &Env, applied_entry_ids: &[Value]) -> u
     cleared
 }
 
-/// JS: snapshotRollbackFiles(cwd, files)
-fn snapshot_rollback_files(cwd: &str, files: Option<&[String]>) -> Map<String, Value> {
-    let mut snapshot = Map::new();
-    let rollback_files: Vec<String> = match files {
-        Some(f) if !f.is_empty() => unique_str_list(f)
-            .iter()
-            .filter_map(|file| normalize_rollback_path(cwd, &json!(file)))
-            .collect(),
-        _ => collect_rollback_files(cwd),
-    };
-    for relative_file in rollback_files {
-        let absolute = jsp::resolve(cwd, &[&relative_file]);
-        match std::fs::read(&absolute) {
-            Ok(b) => {
-                snapshot.insert(
-                    relative_file,
-                    json!({ "existed": true, "content": String::from_utf8_lossy(&b) }),
-                );
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                snapshot.insert(relative_file, json!({ "existed": false }));
-            }
-            Err(_) => {}
-        }
-    }
-    snapshot
-}
-
-fn collect_rollback_files(cwd: &str) -> Vec<String> {
-    let mut out = Vec::new();
-    let mut seen_dirs: HashSet<String> = HashSet::new();
-    let mut seen_files: HashSet<String> = HashSet::new();
-    scan_rollback_dir(cwd, cwd, &mut out, &mut seen_dirs, &mut seen_files, 0);
-    out
-}
-
-fn scan_rollback_dir(
-    dir: &str,
-    cwd: &str,
-    out: &mut Vec<String>,
-    seen_dirs: &mut HashSet<String>,
-    seen_files: &mut HashSet<String>,
-    depth: usize,
-) {
-    if depth > 10 {
-        return;
-    }
-    let Ok(real_dir) = std::fs::canonicalize(dir) else {
-        return;
-    };
-    if !seen_dirs.insert(real_dir.to_string_lossy().into_owned()) {
-        return;
-    }
-    let Some(entries) = crate::util::read_dir_raw(dir) else {
-        return;
-    };
-    for entry in entries {
-        if entry.is_dir {
-            if ROLLBACK_SKIP_DIRS.contains(&entry.name.as_str()) {
-                continue;
-            }
-            scan_rollback_dir(
-                &jsp::join(&[dir, &entry.name]),
-                cwd,
-                out,
-                seen_dirs,
-                seen_files,
-                depth + 1,
-            );
-            continue;
-        }
-        if !entry.is_file {
-            continue;
-        }
-        let ext = jsp::extname(&entry.name).to_lowercase();
-        if !ROLLBACK_EXTENSIONS.contains(&ext.as_str()) {
-            continue;
-        }
-        let absolute = jsp::join(&[dir, &entry.name]);
-        if is_generated_file(&absolute, cwd) {
-            continue;
-        }
-        let Ok(real_file) = std::fs::canonicalize(&absolute) else {
-            continue;
-        };
-        if !seen_files.insert(real_file.to_string_lossy().into_owned()) {
-            continue;
-        }
-        let relative = jsp::relative("/", cwd, &absolute);
-        if relative.is_empty() || relative.starts_with("..") || jsp::is_absolute(&relative) {
-            continue;
-        }
-        out.push(relative);
-    }
-}
-
-/// JS: changedFilesSinceSnapshot(cwd, snapshot, scopeFiles)
-fn changed_files_since_snapshot(
-    cwd: &str,
-    snapshot: &Map<String, Value>,
-    scope_files: Option<&[String]>,
-) -> Vec<Value> {
-    let mut changed: Map<String, Value> = Map::new();
-    let scoped_files: Option<Vec<String>> = match scope_files {
-        Some(f) if !f.is_empty() => Some(
-            f.iter()
-                .filter_map(|file| normalize_rollback_path(cwd, &json!(file)))
-                .collect(),
-        ),
-        _ => None,
-    };
-    let current_files: Vec<String> = match &scoped_files {
-        Some(f) => f.clone(),
-        None => collect_rollback_files(cwd),
-    };
-    let current_set: HashSet<&String> = current_files.iter().collect();
-    for (relative_file, before) in snapshot.iter() {
-        if scoped_files.is_some() && !current_set.contains(relative_file) {
-            continue;
-        }
-        let absolute = jsp::resolve(cwd, &[relative_file]);
-        if before.get("existed") == Some(&Value::Bool(false)) {
-            if exists(&absolute) {
-                changed.insert(
-                    relative_file.clone(),
-                    json!({ "file": relative_file, "kind": "added" }),
-                );
-            }
-            continue;
-        }
-        if !exists(&absolute) {
-            changed.insert(
-                relative_file.clone(),
-                json!({ "file": relative_file, "kind": "deleted" }),
-            );
-            continue;
-        }
-        let Ok(bytes) = std::fs::read(&absolute) else {
-            continue;
-        };
-        let content = String::from_utf8_lossy(&bytes).into_owned();
-        if before.get("content") != Some(&Value::String(content)) {
-            changed.insert(
-                relative_file.clone(),
-                json!({ "file": relative_file, "kind": "modified" }),
-            );
-        }
-    }
-    let mut seen_current: HashSet<&String> = HashSet::new();
-    for relative_file in current_files.iter() {
-        if !seen_current.insert(relative_file) {
-            continue;
-        }
-        if !snapshot.contains_key(relative_file) {
-            changed.insert(
-                relative_file.clone(),
-                json!({ "file": relative_file, "kind": "unknown" }),
-            );
-        }
-    }
-    changed.values().cloned().collect()
-}
-
-/// JS: rollbackChangedFiles(cwd, snapshot, extraFiles, scopeFiles)
-fn rollback_changed_files(
-    cwd: &str,
-    snapshot: &Map<String, Value>,
-    extra_files: &[Value],
-    scope_files: &[String],
-) -> (Vec<String>, Vec<Value>) {
-    let mut scope: Vec<String> = Vec::new();
-    let mut scope_set: HashSet<String> = HashSet::new();
-    for file in scope_files
-        .iter()
-        .map(|s| json!(s))
-        .chain(extra_files.iter().cloned())
-    {
-        if let Some(rel) = normalize_rollback_path(cwd, &file) {
-            if scope_set.insert(rel.clone()) {
-                scope.push(rel);
-            }
-        }
-    }
-    let changed = changed_files_since_snapshot(cwd, snapshot, Some(&scope));
-    let mut by_file: Map<String, Value> = Map::new();
-    for item in changed {
-        let key = js_string_or_empty(item.get("file"));
-        by_file.insert(key, item);
-    }
-    for file in extra_files {
-        if let Some(relative) = normalize_rollback_path(cwd, file) {
-            if !by_file.contains_key(&relative) {
-                let kind = if snapshot.contains_key(&relative) {
-                    "reported"
-                } else {
-                    "unknown"
-                };
-                by_file.insert(relative.clone(), json!({ "file": relative, "kind": kind }));
-            }
-        }
-    }
-
-    let mut rolled_back_files = Vec::new();
-    let mut rollback_failures = Vec::new();
-    for item in by_file.values() {
-        let file = js_string_or_empty(item.get("file"));
-        if !scope_set.contains(&file) {
-            continue;
-        }
-        let absolute = jsp::resolve(cwd, &[&file]);
-        let before = snapshot.get(&file);
-        let existed_false = before.and_then(|b| b.get("existed")) == Some(&Value::Bool(false));
-        let content = before
-            .and_then(|b| b.get("content"))
-            .and_then(|c| c.as_str());
-        if !existed_false && content.is_some() {
-            let content = content.unwrap();
-            if let Some(parent) = std::path::Path::new(&absolute).parent() {
-                let _ = std::fs::create_dir_all(parent);
-            }
-            match std::fs::write(&absolute, content) {
-                Ok(()) => rolled_back_files.push(file),
-                Err(e) => rollback_failures.push(
-                    json!({ "file": file, "reason": "restore_failed", "message": e.to_string() }),
-                ),
-            }
-            continue;
-        }
-        if existed_false
-            && item.get("kind") == Some(&Value::String("added".into()))
-            && exists(&absolute)
-        {
-            match std::fs::remove_file(&absolute) {
-                Ok(()) => rolled_back_files.push(file),
-                Err(e) => rollback_failures.push(
-                    json!({ "file": file, "reason": "restore_failed", "message": e.to_string() }),
-                ),
-            }
-            continue;
-        }
-        rollback_failures.push(json!({ "file": file, "reason": "no_snapshot" }));
-    }
-    (rolled_back_files, rollback_failures)
-}
-
-/// JS: collectApplyOwnedFiles(batch, cwd, extraFiles)
-fn collect_apply_owned_files(batch: &Value, cwd: &str, extra_files: &[Value]) -> Vec<String> {
+/// JS: collectApplyOwnedFiles(batch, cwd)
+fn collect_apply_owned_files(batch: &Value, cwd: &str) -> Vec<String> {
     let mut files: Vec<Value> = Vec::new();
     for entry in get_arr(batch, "entries") {
         for op in get_arr(&entry, "ops") {
@@ -1477,53 +1150,24 @@ fn collect_apply_owned_files(batch: &Value, cwd: &str, extra_files: &[Value]) ->
             }
         }
     }
-    files.extend(extra_files.iter().cloned());
     unique_strings(&files)
         .iter()
-        .filter_map(|file| normalize_rollback_path(cwd, &json!(file)))
+        .filter_map(|file| normalize_project_source_path(cwd, Some(&json!(file)), false))
         .collect()
 }
 
-/// JS: unreportedChangedFiles(cwd, snapshot, reportedFiles, scopeFiles)
-fn unreported_changed_files(
-    cwd: &str,
-    snapshot: &Map<String, Value>,
-    reported_files: &[Value],
-    scope_files: &[String],
-) -> Vec<String> {
-    let reported: HashSet<String> = reported_files
-        .iter()
-        .filter_map(|f| normalize_rollback_path(cwd, f))
-        .collect();
-    let mut scope: Vec<String> = Vec::new();
-    let mut scope_set: HashSet<String> = HashSet::new();
-    for file in scope_files {
-        if let Some(rel) = normalize_rollback_path(cwd, &json!(file)) {
-            if scope_set.insert(rel.clone()) {
-                scope.push(rel);
-            }
-        }
-    }
-    changed_files_since_snapshot(cwd, snapshot, Some(&scope))
-        .iter()
-        .map(|item| js_string_or_empty(item.get("file")))
-        .filter(|file| scope_set.contains(file))
-        .filter(|file| !reported.contains(file))
-        .collect()
-}
-
-struct VerifyAfterRepair {
+struct Verified {
     verified_ids: Vec<Value>,
     failed: Vec<Value>,
 }
 
 /// JS: verifyEntriesAfterRepair({ batch, appliedEntryIds, files, cwd })
-fn verify_entries_after_repair(
+fn verify_applied_entries(
     batch: &Value,
     applied_entry_ids: &[String],
     files: &[String],
     cwd: &str,
-) -> VerifyAfterRepair {
+) -> Verified {
     let reported_files: Vec<String> = unique_str_list(files)
         .iter()
         .filter_map(|file| normalize_relative_file(cwd, Some(&json!(file))))
@@ -1556,7 +1200,7 @@ fn verify_entries_after_repair(
             failed.push(Value::Object(m));
         }
     }
-    VerifyAfterRepair {
+    Verified {
         verified_ids,
         failed,
     }
@@ -1566,14 +1210,12 @@ fn verify_entries_after_repair(
 // Repair loop
 // ---------------------------------------------------------------------------
 
-#[allow(clippy::too_many_arguments)]
 struct RepairArgs<'a> {
     batch: &'a Value,
     cwd: &'a str,
     env: &'a Env,
     page_url: &'a Value,
     count: usize,
-    transaction_id: Option<&'a str>,
     applied_entry_ids: Vec<String>,
     files: Vec<String>,
     failed: Vec<Value>,
@@ -1583,14 +1225,15 @@ struct RepairArgs<'a> {
     repair_failures: Vec<Value>,
 }
 
-fn repair_post_apply_validation(args: RepairArgs, agent: &mut Agent) -> Value {
+/// Asks the agent to fix entries whose source did not verify, up to the
+/// attempt limit; the source keeps whatever was written (git is the undo).
+fn repair_applied_entries(args: RepairArgs, agent: &mut Agent) -> Value {
     let RepairArgs {
         batch,
         cwd,
         env,
         page_url,
         count,
-        transaction_id,
         applied_entry_ids,
         files,
         failed,
@@ -1609,25 +1252,16 @@ fn repair_post_apply_validation(args: RepairArgs, agent: &mut Agent) -> Value {
 
     let mut attempt = 1.0f64;
     while attempt <= max_attempts {
-        let mut repair = Map::new();
-        repair.insert("attempt".into(), crate::util::js_num(attempt));
-        repair.insert("maxAttempts".into(), crate::util::js_num(max_attempts));
-        repair.insert(
-            "transactionId".into(),
-            match transaction_id {
-                Some(t) if !t.is_empty() => json!(t),
-                _ => Value::Null,
-            },
-        );
-        repair.insert("reason".into(), json!(repair_reason));
-        repair.insert(
-            "failures".into(),
-            Value::Array(summarize_repair_failures(&current_failures)),
-        );
-        repair.insert("files".into(), Value::Array(to_values(&current_files)));
-        repair.insert("pageUrl".into(), page_url.clone());
+        let repair = json!({
+            "attempt": crate::util::js_num(attempt),
+            "maxAttempts": crate::util::js_num(max_attempts),
+            "reason": repair_reason,
+            "failures": summarize_repair_failures(&current_failures),
+            "files": to_values(&current_files),
+            "pageUrl": page_url,
+        });
 
-        let repair_result = match agent.run(&build_repair_batch(batch, Value::Object(repair))) {
+        let repair_result = match agent.run(&build_repair_batch(batch, repair)) {
             Ok(v) => v,
             Err(message) => {
                 current_failures = vec![json!({
@@ -1650,47 +1284,31 @@ fn repair_post_apply_validation(args: RepairArgs, agent: &mut Agent) -> Value {
         let repair_failed = normalize_failed_entries(batch, &repair_result, "repair_failed");
         current_failed = merge_failed_entries(&[&current_failed, &repair_failed]);
 
-        let verified =
-            verify_entries_after_repair(batch, &current_applied_ids, &current_files, cwd);
+        let verified = verify_applied_entries(batch, &current_applied_ids, &current_files, cwd);
         if !verified.failed.is_empty() {
             current_failures = verified.failed;
             attempt += 1.0;
             continue;
         }
 
-        let repaired_checks = run_copy_edit_post_apply_checks(cwd, &current_files);
-        current_warnings.extend(arr(repaired_checks.get("warnings")));
-        if repaired_checks.get("ok") != Some(&Value::Bool(true)) {
-            current_failures = arr(repaired_checks.get("failures"));
-            attempt += 1.0;
-            continue;
-        }
-
         let cleared = clear_applied_entries(cwd, env, &verified.verified_ids);
-        let counts = count_by_page_value(cwd, env);
         let verified_id_set: HashSet<String> = verified
             .verified_ids
             .iter()
             .map(|v| key_of(Some(v)))
             .collect();
-        let merged = merge_failed_entries(&[&current_failed]);
-        let final_failed: Vec<Value> = merged
+        let final_failed: Vec<Value> = merge_failed_entries(&[&current_failed])
             .into_iter()
             .filter(|item| !verified_id_set.contains(&key_of(item.get("id"))))
             .collect();
-        let mut m = Map::new();
-        m.insert(
-            "applied".into(),
-            Value::Array(summarize_applied_entries(
-                &get_arr(batch, "entries"),
-                &verified.verified_ids,
-            )),
+        let mut m = base_result(
+            summarize_applied_entries(&get_arr(batch, "entries"), &verified.verified_ids),
+            final_failed,
+            to_values(&current_files),
+            cleared,
+            count,
+            page_url,
         );
-        m.insert("failed".into(), Value::Array(final_failed));
-        m.insert("files".into(), Value::Array(to_values(&current_files)));
-        m.insert("cleared".into(), json!(cleared));
-        m.insert("count".into(), json!(count));
-        m.insert("pageUrl".into(), page_url.clone());
         m.insert("warnings".into(), Value::Array(current_warnings));
         m.insert("notes".into(), Value::Array(current_notes));
         m.insert(
@@ -1699,10 +1317,9 @@ fn repair_post_apply_validation(args: RepairArgs, agent: &mut Agent) -> Value {
                 "status": "repaired",
                 "attempts": crate::util::js_num(attempt),
                 "maxAttempts": crate::util::js_num(max_attempts),
-                "transactionId": match transaction_id { Some(t) if !t.is_empty() => json!(t), _ => Value::Null },
             }),
         );
-        for (k, v) in counts {
+        for (k, v) in count_by_page_value(cwd, env) {
             m.insert(k, v);
         }
         return Value::Object(m);
@@ -1737,40 +1354,28 @@ fn repair_post_apply_validation(args: RepairArgs, agent: &mut Agent) -> Value {
         )
     };
 
-    let mut m = Map::new();
-    m.insert("applied".into(), json!([]));
-    m.insert(
-        "failed".into(),
-        Value::Array(merge_failed_entries(&[
-            &decision_failed_entries,
-            &current_failed,
-        ])),
+    let mut m = base_result(
+        vec![],
+        merge_failed_entries(&[&decision_failed_entries, &current_failed]),
+        to_values(&current_files),
+        0,
+        count,
+        page_url,
     );
-    m.insert("files".into(), Value::Array(to_values(&current_files)));
-    m.insert("cleared".into(), json!(0));
-    m.insert("count".into(), json!(count));
-    m.insert("pageUrl".into(), page_url.clone());
     m.insert("warnings".into(), Value::Array(current_warnings));
     m.insert("notes".into(), Value::Array(current_notes));
     m.insert("reason".into(), json!("manual_edit_repair_needs_decision"));
     m.insert("needsManualDecision".into(), Value::Bool(true));
-    let mut repair = Map::new();
-    repair.insert("status".into(), json!("needs_decision"));
-    repair.insert("attempts".into(), crate::util::js_num(max_attempts));
-    repair.insert("maxAttempts".into(), crate::util::js_num(max_attempts));
-    repair.insert(
-        "transactionId".into(),
-        match transaction_id {
-            Some(t) if !t.is_empty() => json!(t),
-            _ => Value::Null,
-        },
+    m.insert(
+        "repair".into(),
+        json!({
+            "status": "needs_decision",
+            "attempts": crate::util::js_num(max_attempts),
+            "maxAttempts": crate::util::js_num(max_attempts),
+            "failures": summarize_repair_failures(&current_failures),
+            "files": to_values(&current_files),
+        }),
     );
-    repair.insert(
-        "failures".into(),
-        Value::Array(summarize_repair_failures(&current_failures)),
-    );
-    repair.insert("files".into(), Value::Array(to_values(&current_files)));
-    m.insert("repair".into(), Value::Object(repair));
     for (k, v) in count_by_page_value(cwd, env) {
         m.insert(k, v);
     }
@@ -1799,13 +1404,32 @@ fn base_result(
     m
 }
 
+/// A result that cleared nothing: the staged edits stay for another try.
+fn failed_result(
+    failed: Vec<Value>,
+    files: Vec<Value>,
+    notes: Option<Vec<Value>>,
+    count: usize,
+    page_url: &Value,
+    cwd: &str,
+    env: &Env,
+) -> Value {
+    let mut m = base_result(vec![], failed, files, 0, count, page_url);
+    if let Some(notes) = notes {
+        m.insert("notes".into(), Value::Array(notes));
+    }
+    for (k, v) in count_by_page_value(cwd, env) {
+        m.insert(k, v);
+    }
+    Value::Object(m)
+}
+
 fn run_commit(
     cwd: &str,
     env: &Env,
     page_url: Value,
     agent: &mut Agent,
     repair_only: bool,
-    transaction_id: Option<&str>,
     provided_batch: Option<&Value>,
 ) -> Result<Value, String> {
     if let Err(message) = read_buffer_strict(cwd, env) {
@@ -1832,23 +1456,16 @@ fn run_commit(
         return Ok(Value::Object(m));
     }
 
-    let base_rollback_scope = collect_apply_owned_files(&batch, cwd, &[]);
-    let rollback_snapshot = snapshot_rollback_files(cwd, Some(&base_rollback_scope));
-
+    // "Keep fixing" after a repair decision: the previous Apply already wrote
+    // source, so verify what is there and repair from it.
     let result = if repair_only {
-        let mut m = Map::new();
-        m.insert("status".into(), json!("done"));
-        m.insert(
-            "appliedEntryIds".into(),
-            Value::Array(all_entry_ids(&batch)),
-        );
-        m.insert("failed".into(), json!([]));
-        m.insert(
-            "files".into(),
-            Value::Array(to_values(&collect_apply_owned_files(&batch, cwd, &[]))),
-        );
-        m.insert("notes".into(), json!(["repair-only validation pass"]));
-        Ok(Value::Object(m))
+        Ok(json!({
+            "status": "done",
+            "appliedEntryIds": all_entry_ids(&batch),
+            "failed": [],
+            "files": to_values(&collect_apply_owned_files(&batch, cwd)),
+            "notes": ["repair-only validation pass"],
+        }))
     } else {
         agent.run(&batch)
     };
@@ -1856,31 +1473,21 @@ fn run_commit(
     let result = match result {
         Ok(v) => v,
         Err(message) => {
-            let (rolled_back_files, rollback_failures) =
-                rollback_changed_files(cwd, &rollback_snapshot, &[], &base_rollback_scope);
-            let failed: Vec<Value> = get_arr(&batch, "entries")
-                .iter()
-                .map(|entry| {
-                    let mut m = Map::new();
-                    ins(&mut m, "id", entry.get("id").cloned());
-                    m.insert("reason".into(), json!(message));
-                    m.insert(
-                        "candidates".into(),
-                        Value::Array(candidates_for_entry(&batch, entry.get("id"))),
-                    );
-                    Value::Object(m)
-                })
-                .collect();
-            let mut m = base_result(vec![], failed, vec![], 0, count, &page_url);
-            m.insert(
-                "rolledBackFiles".into(),
-                Value::Array(to_values(&rolled_back_files)),
+            let failed = verification_failures_for_entries(
+                &batch,
+                &get_arr(&batch, "entries"),
+                &message,
+                &[],
             );
-            m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-            for (k, v) in count_by_page_value(cwd, env) {
-                m.insert(k, v);
-            }
-            return Ok(Value::Object(m));
+            return Ok(failed_result(
+                failed,
+                vec![],
+                None,
+                count,
+                &page_url,
+                cwd,
+                env,
+            ));
         }
     };
 
@@ -1890,9 +1497,6 @@ fn run_commit(
     let status = str_of(result.get("status")).unwrap_or_default();
 
     if status == "error" {
-        let rollback_scope = collect_apply_owned_files(&batch, cwd, &result_files);
-        let (rolled_back_files, rollback_failures) =
-            rollback_changed_files(cwd, &rollback_snapshot, &result_files, &rollback_scope);
         let message = if truthy(result.get("message")) {
             js_string_or_empty(result.get("message"))
         } else {
@@ -1904,129 +1508,31 @@ fn run_commit(
         } else {
             verification_failures_for_entries(&batch, &get_arr(&batch, "entries"), &message, &[])
         };
-        let mut m = base_result(vec![], failed, result_files.clone(), 0, count, &page_url);
-        m.insert("notes".into(), Value::Array(result_notes));
-        m.insert(
-            "rolledBackFiles".into(),
-            Value::Array(to_values(&rolled_back_files)),
-        );
-        m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-        for (k, v) in count_by_page_value(cwd, env) {
-            m.insert(k, v);
-        }
-        return Ok(Value::Object(m));
+        return Ok(failed_result(
+            failed,
+            result_files,
+            Some(result_notes),
+            count,
+            &page_url,
+            cwd,
+            env,
+        ));
     }
 
-    let reported_applied_ids = unique_strings(&arr(result.get("appliedEntryIds")));
+    let ai_failed = normalize_failed_entries(&batch, &result, "AI copy edit failed");
+    let failed_ids: HashSet<String> = ai_failed
+        .iter()
+        .filter_map(|item| str_of(item.get("id")))
+        .collect();
+    // An entry the reply lists as both applied and failed counts as failed.
+    let reported_applied_ids: Vec<String> = unique_strings(&arr(result.get("appliedEntryIds")))
+        .into_iter()
+        .filter(|id| !failed_ids.contains(id))
+        .collect();
     let reported_files: Vec<String> = unique_strings(&result_files)
         .iter()
         .filter_map(|file| normalize_relative_file(cwd, Some(&json!(file))))
         .collect();
-    let ai_failed = normalize_failed_entries(&batch, &result, "AI copy edit failed");
-    let rollback_scope = collect_apply_owned_files(&batch, cwd, &result_files);
-    let failed_ids: HashSet<String> = ai_failed
-        .iter()
-        .filter_map(|item| str_of(item.get("id")))
-        .filter(|s| !s.is_empty())
-        .collect();
-    let conflicting_applied_ids: Vec<String> = reported_applied_ids
-        .iter()
-        .filter(|id| failed_ids.contains(*id))
-        .cloned()
-        .collect();
-
-    if !conflicting_applied_ids.is_empty() {
-        let (rolled_back_files, rollback_failures) =
-            rollback_changed_files(cwd, &rollback_snapshot, &result_files, &rollback_scope);
-        let conflicting_entries: Vec<Value> = get_arr(&batch, "entries")
-            .into_iter()
-            .filter(|entry| match entry.get("id") {
-                Some(Value::String(s)) => conflicting_applied_ids.contains(s),
-                _ => false,
-            })
-            .collect();
-        let mut failed = verification_failures_for_entries(
-            &batch,
-            &conflicting_entries,
-            "conflicting_apply_result",
-            &[],
-        );
-        failed.extend(
-            ai_failed
-                .iter()
-                .filter(|item| match item.get("id") {
-                    Some(Value::String(s)) => !conflicting_applied_ids.contains(s),
-                    _ => true,
-                })
-                .cloned(),
-        );
-        let mut m = base_result(vec![], failed, result_files.clone(), 0, count, &page_url);
-        m.insert("notes".into(), Value::Array(result_notes));
-        m.insert(
-            "rolledBackFiles".into(),
-            Value::Array(to_values(&rolled_back_files)),
-        );
-        m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-        for (k, v) in count_by_page_value(cwd, env) {
-            m.insert(k, v);
-        }
-        return Ok(Value::Object(m));
-    }
-
-    let unreported_files =
-        unreported_changed_files(cwd, &rollback_snapshot, &result_files, &rollback_scope);
-    if !unreported_files.is_empty() {
-        let mut scope = rollback_scope.clone();
-        scope.extend(unreported_files.iter().cloned());
-        let (rolled_back_files, rollback_failures) =
-            rollback_changed_files(cwd, &rollback_snapshot, &result_files, &scope);
-        let failed = verification_failures_for_entries(
-            &batch,
-            &get_arr(&batch, "entries"),
-            "unreported_source_changes",
-            &[("files", Value::Array(to_values(&unreported_files)))],
-        );
-        let mut m = base_result(vec![], failed, result_files.clone(), 0, count, &page_url);
-        // JS (1f2c3f9d failWithRollback): the details spread — here
-        // `unreportedFiles` then `notes` — lands after `pageUrl`.
-        m.insert(
-            "unreportedFiles".into(),
-            Value::Array(to_values(&unreported_files)),
-        );
-        m.insert("notes".into(), Value::Array(result_notes));
-        m.insert(
-            "rolledBackFiles".into(),
-            Value::Array(to_values(&rolled_back_files)),
-        );
-        m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-        for (k, v) in count_by_page_value(cwd, env) {
-            m.insert(k, v);
-        }
-        return Ok(Value::Object(m));
-    }
-
-    if status == "done" && reported_applied_ids.is_empty() {
-        let (rolled_back_files, rollback_failures) =
-            rollback_changed_files(cwd, &rollback_snapshot, &result_files, &rollback_scope);
-        let failed = verification_failures_for_entries(
-            &batch,
-            &get_arr(&batch, "entries"),
-            "missing_applied_entry_ids",
-            &[],
-        );
-        let mut m = base_result(vec![], failed, result_files.clone(), 0, count, &page_url);
-        m.insert("notes".into(), Value::Array(result_notes));
-        m.insert(
-            "rolledBackFiles".into(),
-            Value::Array(to_values(&rolled_back_files)),
-        );
-        m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-        for (k, v) in count_by_page_value(cwd, env) {
-            m.insert(k, v);
-        }
-        return Ok(Value::Object(m));
-    }
-
     let reported_applied_entries: Vec<Value> = get_arr(&batch, "entries")
         .into_iter()
         .filter(|entry| match entry.get("id") {
@@ -2036,14 +1542,13 @@ fn run_commit(
         .collect();
 
     if !reported_applied_ids.is_empty() && reported_files.is_empty() {
-        return Ok(repair_post_apply_validation(
+        return Ok(repair_applied_entries(
             RepairArgs {
                 batch: &batch,
                 cwd,
                 env,
                 page_url: &page_url,
                 count,
-                transaction_id,
                 applied_entry_ids: reported_applied_ids.clone(),
                 files: unique_strings(&result_files),
                 failed: ai_failed.clone(),
@@ -2061,26 +1566,12 @@ fn run_commit(
         ));
     }
 
-    let mut verified_applied_ids: Vec<Value> = Vec::new();
-    let mut verification_failed: Vec<Value> = Vec::new();
-    for entry in &reported_applied_entries {
-        let failures = verify_applied_entry(&batch, entry, &reported_files, cwd);
-        if failures.is_empty() {
-            if let Some(id) = entry.get("id") {
-                verified_applied_ids.push(id.clone());
-            }
-        } else {
-            let mut m = Map::new();
-            ins(&mut m, "id", entry.get("id").cloned());
-            m.insert("reason".into(), json!("source_verification_failed"));
-            m.insert("failures".into(), Value::Array(failures));
-            m.insert(
-                "candidates".into(),
-                Value::Array(candidates_for_entry(&batch, entry.get("id"))),
-            );
-            verification_failed.push(Value::Object(m));
-        }
-    }
+    let verified = verify_applied_entries(
+        &batch,
+        &reported_applied_ids,
+        &unique_strings(&result_files),
+        cwd,
+    );
 
     let unreported_entries: Vec<Value> = if status == "done" || status == "partial" {
         get_arr(&batch, "entries")
@@ -2102,171 +1593,39 @@ fn run_commit(
     let mut non_repair_failed =
         verification_failures_for_entries(&batch, &unreported_entries, "not_reported_applied", &[]);
     non_repair_failed.extend(ai_failed.iter().cloned());
-    let mut failed = verification_failed.clone();
-    failed.extend(non_repair_failed.iter().cloned());
 
-    let unapplied_entries: Vec<Value> = get_arr(&batch, "entries")
-        .into_iter()
-        .filter(|entry| match entry.get("id") {
-            Some(Value::String(s)) => !reported_applied_ids.contains(s),
-            _ => true,
-        })
-        .collect();
-    let leaked_unapplied = find_unapplied_entry_source_changes(
-        &batch,
-        &unapplied_entries,
-        &reported_files,
-        cwd,
-        &rollback_snapshot,
-    );
-    if !leaked_unapplied.is_empty() {
-        let leaked_ids: HashSet<String> = leaked_unapplied
-            .iter()
-            .filter_map(|item| str_of(item.get("id")))
-            .filter(|s| !s.is_empty())
-            .collect();
-        let rolled_back_verified: Vec<Value> = reported_applied_entries
-            .iter()
-            .filter(|entry| {
-                verified_applied_ids
-                    .iter()
-                    .any(|id| key_of(Some(id)) == key_of(entry.get("id")))
-            })
-            .map(|entry| {
-                let mut m = Map::new();
-                ins(&mut m, "id", entry.get("id").cloned());
-                m.insert(
-                    "reason".into(),
-                    json!("rolled_back_due_to_failed_entry_source_changed"),
-                );
-                m.insert(
-                    "candidates".into(),
-                    Value::Array(candidates_for_entry(&batch, entry.get("id"))),
-                );
-                Value::Object(m)
-            })
-            .collect();
-        let (rolled_back_files, rollback_failures) =
-            rollback_changed_files(cwd, &rollback_snapshot, &result_files, &rollback_scope);
-        let mut all_failed = leaked_unapplied.clone();
-        all_failed.extend(
-            failed
-                .iter()
-                .filter(|item| match item.get("id") {
-                    Some(Value::String(s)) => !leaked_ids.contains(s),
-                    _ => true,
-                })
-                .cloned(),
-        );
-        all_failed.extend(rolled_back_verified);
-        let mut m = base_result(
-            vec![],
-            all_failed,
-            result_files.clone(),
-            0,
-            count,
-            &page_url,
-        );
-        // JS (1f2c3f9d failWithRollback): `notes` now precedes the
-        // rollback fields.
-        m.insert("notes".into(), Value::Array(result_notes));
-        m.insert(
-            "rolledBackFiles".into(),
-            Value::Array(to_values(&rolled_back_files)),
-        );
-        m.insert("rollbackFailures".into(), Value::Array(rollback_failures));
-        for (k, v) in count_by_page_value(cwd, env) {
-            m.insert(k, v);
-        }
-        return Ok(Value::Object(m));
-    }
-
-    if !verification_failed.is_empty() {
-        return Ok(repair_post_apply_validation(
+    if !verified.failed.is_empty() {
+        return Ok(repair_applied_entries(
             RepairArgs {
                 batch: &batch,
                 cwd,
                 env,
                 page_url: &page_url,
                 count,
-                transaction_id,
                 applied_entry_ids: reported_applied_ids.clone(),
                 files: unique_strings(&result_files),
-                failed: non_repair_failed.clone(),
-                notes: result_notes.clone(),
-                warnings: result_warnings.clone(),
+                failed: non_repair_failed,
+                notes: result_notes,
+                warnings: result_warnings,
                 repair_reason: "source_verification_failed",
-                repair_failures: verification_failed.clone(),
+                repair_failures: verified.failed,
             },
             agent,
         ));
     }
 
-    let post_check_files = unique_strings(&result_files);
-    let post_checks = run_copy_edit_post_apply_checks(cwd, &post_check_files);
-    if post_checks.get("ok") != Some(&Value::Bool(true)) {
-        let post_check_entries: Vec<Value> = if !verified_applied_ids.is_empty() {
-            reported_applied_entries
-                .iter()
-                .filter(|entry| {
-                    verified_applied_ids
-                        .iter()
-                        .any(|id| key_of(Some(id)) == key_of(entry.get("id")))
-                })
-                .cloned()
-                .collect()
-        } else {
-            get_arr(&batch, "entries")
-        };
-        let applied_ids: Vec<String> = if !verified_applied_ids.is_empty() {
-            verified_applied_ids
-                .iter()
-                .filter_map(|v| str_of(Some(v)))
-                .collect()
-        } else {
-            post_check_entries
-                .iter()
-                .filter_map(|entry| str_of(entry.get("id")))
-                .filter(|s| !s.is_empty())
-                .collect()
-        };
-        let mut warnings = result_warnings.clone();
-        warnings.extend(arr(post_checks.get("warnings")));
-        return Ok(repair_post_apply_validation(
-            RepairArgs {
-                batch: &batch,
-                cwd,
-                env,
-                page_url: &page_url,
-                count,
-                transaction_id,
-                applied_entry_ids: applied_ids,
-                files: unique_strings(&result_files),
-                failed: failed.clone(),
-                notes: result_notes.clone(),
-                warnings,
-                repair_reason: "post_apply_validation_failed",
-                repair_failures: arr(post_checks.get("failures")),
-            },
-            agent,
-        ));
-    }
-
-    let cleared = clear_applied_entries(cwd, env, &verified_applied_ids);
-    let counts = count_by_page_value(cwd, env);
+    let cleared = clear_applied_entries(cwd, env, &verified.verified_ids);
     let mut m = base_result(
-        summarize_applied_entries(&get_arr(&batch, "entries"), &verified_applied_ids),
-        failed,
-        result_files.clone(),
+        summarize_applied_entries(&get_arr(&batch, "entries"), &verified.verified_ids),
+        non_repair_failed,
+        result_files,
         cleared,
         count,
         &page_url,
     );
-    let mut warnings = result_warnings;
-    warnings.extend(arr(post_checks.get("warnings")));
-    m.insert("warnings".into(), Value::Array(warnings));
+    m.insert("warnings".into(), Value::Array(result_warnings));
     m.insert("notes".into(), Value::Array(result_notes));
-    for (k, v) in counts {
+    for (k, v) in count_by_page_value(cwd, env) {
         m.insert(k, v);
     }
     Ok(Value::Object(m))

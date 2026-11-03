@@ -204,15 +204,6 @@ pub fn serve(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                     captures.insert(handle, (Instant::now(), Box::new(captured)));
                     Ok(response)
                 }
-                "/verify" => {
-                    let handle = text("handle")?;
-                    if !active.contains(handle) {
-                        return Err("unknown or released capture".into());
-                    }
-                    let (_, capture) = captures.get(handle).ok_or("unknown capture")?;
-                    capture.verify_current()?;
-                    Ok(json!({"ok":true}))
-                }
                 "/release" => Ok(json!({"ok":active.remove(text("handle")?)})),
                 "/audit" => {
                     let stage = text("stage")?;
@@ -286,9 +277,6 @@ impl CapturedEntry for ServiceEntry {
     fn evidence(&self) -> &impeccable_comp_verbs::entry_capture::EntryEvidence {
         &self.evidence
     }
-    fn verify_current(&self) -> Result<(), String> {
-        self.source.verify_current()
-    }
 }
 
 fn saved(root: &std::path::Path, relative: &str) -> Result<Vec<u8>, String> {
@@ -324,7 +312,6 @@ fn audit_saved(
     stage: &str,
     capture: &dyn CapturedEntry,
 ) -> Result<Vec<Value>, String> {
-    capture.verify_current()?;
     let base = format!(".phoenix-ui/review/native/{stage}");
     let evidence = capture.evidence();
     let mut files = Vec::new();
@@ -351,7 +338,6 @@ fn audit_saved(
             return Err("saved observations differ from host capture".into());
         }
     }
-    capture.verify_current()?;
     Ok(files)
 }
 
@@ -438,11 +424,6 @@ impl CapturedEntry for RemoteEntry {
     fn approved_reference(&self)->Option<&impeccable_comp_verbs::entry_capture::ApprovedReference>{self.approved.as_ref()}
     fn evidence(&self) -> &impeccable_comp_verbs::entry_capture::EntryEvidence {
         &self.evidence
-    }
-    fn verify_current(&self) -> Result<(), String> {
-        self.renderer
-            .call("/verify", json!({"handle":self.id}))
-            .map(|_| ())
     }
 }
 impl Drop for RemoteEntry {

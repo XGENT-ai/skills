@@ -1,4 +1,4 @@
-//! Read-only browser evidence for one already bound delivery.
+//! Browser measurements and screenshots of one written HTML file.
 
 mod cdp;
 pub mod comparison;
@@ -10,7 +10,7 @@ use crate::check::FileIdentity;
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -18,19 +18,6 @@ use std::time::Duration;
 pub struct BoundFile {
     pub path: PathBuf,
     pub identity: FileIdentity,
-}
-
-/// Delivery constructs this only after the strict provenance gate succeeds.
-/// Paths name the resolved ordinary files; delivery retains any requested alias.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BoundArtifact {
-    pub path: PathBuf,
-    pub candidate: BoundFile,
-    pub artifact: FileIdentity,
-    pub config_sha256: String,
-    pub engine: Value,
-    pub delivery_receipt_id: String,
 }
 
 #[derive(Clone, Debug)]
@@ -171,10 +158,6 @@ pub struct BrowserReceipt {
     pub status: BrowserStatus,
     pub artifact_path: PathBuf,
     pub artifact: FileIdentity,
-    pub candidate: BoundFile,
-    pub config_sha256: String,
-    pub engine: Value,
-    pub delivery_receipt_id: String,
     pub browser_version: Option<Value>,
     pub coverage: Vec<BrowserCoverage>,
     pub checks: Vec<BrowserCheck>,
@@ -198,21 +181,8 @@ impl BrowserReceipt {
         {
             return 2;
         }
-        if self
-            .diagnostics
-            .iter()
-            .any(|entry| entry.code == "browser/evidence-conflict")
-        {
-            return 3;
-        }
         let assertions = |code: &str| {
-            matches!(
-                code,
-                "browser/artifact-changed"
-                    | "browser/candidate-changed"
-                    | "browser/evidence-changed"
-            ) || code
-                .strip_prefix("browser/")
+            code.strip_prefix("browser/")
                 .is_some_and(|name| BROWSER_MEASUREMENT_CHECKS.contains(&name))
         };
         if self
@@ -227,19 +197,15 @@ impl BrowserReceipt {
     }
 }
 
-pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> BrowserReceipt {
+pub fn check_browser(artifact: &Path, options: &BrowserOptions) -> BrowserReceipt {
     let mut receipt = BrowserReceipt {
         schema_version: 1,
         tool: "phoenix-diagram".into(),
         tool_version: crate::TOOL_VERSION.into(),
         command: "browser-check".into(),
         status: BrowserStatus::Failed,
-        artifact_path: artifact.path.clone(),
-        artifact: artifact.artifact.clone(),
-        candidate: artifact.candidate.clone(),
-        config_sha256: artifact.config_sha256.clone(),
-        engine: artifact.engine.clone(),
-        delivery_receipt_id: artifact.delivery_receipt_id.clone(),
+        artifact_path: artifact.to_owned(),
+        artifact: FileIdentity::of(b""),
         browser_version: None,
         coverage: Vec::new(),
         checks: observation::pending_checks(),
@@ -254,34 +220,28 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
         append_failure(&mut receipt, cdp::Error::new("browser/options", "options", "Browser deadlines must be positive and bounded by startup=90 seconds and command=15 seconds"));
         return receipt;
     }
-    let reads = (|| {
-        let html = evidence::BoundRead::capture(
-            &artifact.path,
-            &artifact.artifact,
-            "browser/artifact-changed",
-        )?;
-        let candidate = evidence::BoundRead::capture(
-            &artifact.candidate.path,
-            &artifact.candidate.identity,
-            "browser/candidate-changed",
-        )?;
-        Ok::<_, cdp::Error>((html, candidate))
-    })();
-    let (html, candidate) = match reads {
-        Ok(reads) => reads,
+    // Chrome loads a file URL, which must name the file absolutely.
+    let artifact = match std::fs::canonicalize(artifact).and_then(|path| {
+        let bytes = std::fs::read(&path)?;
+        Ok((path, bytes))
+    }) {
+        Ok((path, bytes)) => {
+            receipt.artifact_path = path.clone();
+            receipt.artifact = FileIdentity::of(&bytes);
+            path
+        }
         Err(error) => {
-            append_failure(&mut receipt, error);
+            append_failure(
+                &mut receipt,
+                cdp::Error::new(
+                    "browser/artifact",
+                    "read",
+                    format!("{}: {error}", artifact.display()),
+                ),
+            );
             return receipt;
         }
     };
-    if options.capture || options.out_dir.is_some() {
-        if let Err(error) =
-            evidence::prepare_receipt_directory(&artifact.path, options.out_dir.as_deref())
-        {
-            append_failure(&mut receipt, error);
-            return receipt;
-        }
-    }
     let executable = match discovery::find(options.executable.as_deref()) {
         Ok(path) => path,
         Err(error) => {
@@ -293,7 +253,7 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
         }
     };
     let mut evidence = if options.capture {
-        match evidence::Evidence::reserve(&artifact.path, options.out_dir.as_deref()) {
+        match evidence::Evidence::new(&artifact, options.out_dir.as_deref(), None) {
             Ok(evidence) => Some(evidence),
             Err(error) => {
                 append_failure(&mut receipt, error);
@@ -311,7 +271,6 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
         Ok(browser) => browser,
         Err(error) => {
             append_failure(&mut receipt, error);
-            cleanup_evidence(&mut receipt, &mut evidence);
             return receipt;
         }
     };
@@ -320,21 +279,15 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
         browser.open_page()?;
         for viewport in DESKTOP_VIEWPORTS.into_iter().chain([NARROW_VIEWPORT]) {
             for theme in [Theme::Light, Theme::Dark] {
-                html.verify()?;
-                candidate.verify()?;
-                let (metrics, mut events) = browser.inspect(&artifact.path, viewport, theme)?;
-                html.verify()?;
-                candidate.verify()?;
+                let (metrics, mut events) = browser.inspect(&artifact, viewport, theme)?;
                 let full_page = metrics
                     .get("fullScrollHeight")
                     .and_then(Value::as_f64)
                     .is_some_and(|height| height > f64::from(viewport.height));
                 if let Some(evidence) = evidence.as_mut() {
-                    if evidence.requires_capture(viewport, theme) {
+                    if evidence::requires_capture(viewport, theme) {
                         let png = browser.screenshot(viewport, full_page)?;
-                        evidence.stage_png(viewport, theme, full_page, &png)?;
-                        html.verify()?;
-                        candidate.verify()?;
+                        evidence.write_png(viewport, theme, full_page, &png)?;
                     }
                 }
                 events.extend(browser.take_events());
@@ -385,46 +338,10 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
         scope: json!({"ownedChild":true,"ownedProfile":true}),
         evidence: Value::Null,
     });
-    let current = html.verify().and_then(|_| candidate.verify());
-    let current_ok = current.is_ok();
-    if let Err(error) = current {
-        append_failure(&mut receipt, error);
-    }
-    receipt.checks.push(BrowserCheck {
-        name: "artifact-current".into(),
-        status: if current_ok {
-            CheckStatus::Pass
-        } else {
-            CheckStatus::Failed
-        },
-        scope: json!({"artifactAndCandidate":true,"beforeAndAfter":true,"physicalFile":true}),
-        evidence: Value::Null,
-    });
-    let mut captures_ok = !options.capture;
-    if inspected_ok && cleanup_ok && current_ok {
-        if let Some(evidence) = evidence.as_mut() {
-            match evidence.publish() {
-                Ok(screenshots) => {
-                    receipt.screenshots = screenshots;
-                    captures_ok = true;
-                }
-                Err(error) => append_failure(&mut receipt, error),
-            }
-        }
-    }
-    if options.capture {
-        receipt.checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if captures_ok{CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":4,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":receipt.screenshots.len()})});
-    }
-    cleanup_evidence(&mut receipt, &mut evidence);
-    if let Err(error) = html.verify().and_then(|_| candidate.verify()) {
-        if let Some(check) = receipt
-            .checks
-            .iter_mut()
-            .find(|check| check.name == "artifact-current")
-        {
-            check.status = CheckStatus::Failed;
-        }
-        append_failure(&mut receipt, error);
+    if let Some(evidence) = evidence {
+        receipt.screenshots = evidence.screenshots;
+        let captured = receipt.screenshots.len() == 4;
+        receipt.checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if captured{CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":4,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":receipt.screenshots.len()})});
     }
     for coverage in &receipt.coverage {
         for check in &coverage.checks {
@@ -449,8 +366,6 @@ pub fn check_browser(artifact: &BoundArtifact, options: &BrowserOptions) -> Brow
     }
     if inspected_ok
         && cleanup_ok
-        && current_ok
-        && captures_ok
         && receipt.coverage.len() == 10
         && receipt
             .checks
@@ -471,14 +386,6 @@ fn append_failure(receipt: &mut BrowserReceipt, error: cdp::Error) {
         diagnostic.evidence["resources"] = *resources;
     }
     receipt.diagnostics.push(diagnostic);
-}
-
-fn cleanup_evidence(receipt: &mut BrowserReceipt, evidence: &mut Option<evidence::Evidence>) {
-    if let Some(evidence) = evidence.as_mut() {
-        for error in evidence.cleanup() {
-            append_failure(receipt, error);
-        }
-    }
 }
 
 /// Read-only discovery for doctor; never downloads or opens a browser.
@@ -502,141 +409,14 @@ pub fn doctor_browser() -> Value {
     }
 }
 
-/// Validate the exact automatic scope before delivery accepts stored evidence.
-/// The caller must separately verify provenance and every screenshot's bytes.
-pub fn validate_receipt_coverage(receipt: &BrowserReceipt, capture: bool) -> bool {
-    use std::collections::HashSet;
-    if receipt.schema_version != 1
-        || receipt.tool != "phoenix-diagram"
-        || receipt.tool_version != crate::TOOL_VERSION
-        || !matches!(receipt.command.as_str(), "browser-check" | "visual-check")
-        || receipt.status != BrowserStatus::Pass
-        || !receipt
-            .browser_version
-            .as_ref()
-            .and_then(|version| version["product"].as_str())
-            .is_some_and(|product| !product.trim().is_empty())
-        || !receipt.diagnostics.is_empty()
-        || receipt.coverage.len() != 10
-    {
-        return false;
-    }
-    let expected: HashSet<_> = DESKTOP_VIEWPORTS
-        .into_iter()
-        .chain([NARROW_VIEWPORT])
-        .flat_map(|viewport| [Theme::Light, Theme::Dark].map(|theme| (viewport, theme)))
-        .collect();
-    let actual: HashSet<_> = receipt
-        .coverage
-        .iter()
-        .map(|entry| (entry.viewport, entry.theme))
-        .collect();
-    if actual != expected {
-        return false;
-    }
-    for entry in &receipt.coverage {
-        if entry.status != BrowserStatus::Pass
-            || *entry
-                != observation::classify(entry.viewport, entry.theme, entry.metrics.clone(), &[])
-        {
-            return false;
-        }
-    }
-    let mut expected_checks = observation::summarize(&receipt.coverage);
-    expected_checks.push(BrowserCheck {
-        name: "browser-cleanup".into(),
-        status: CheckStatus::Pass,
-        scope: json!({"ownedChild":true,"ownedProfile":true}),
-        evidence: Value::Null,
-    });
-    expected_checks.push(BrowserCheck {
-        name: "artifact-current".into(),
-        status: CheckStatus::Pass,
-        scope: json!({"artifactAndCandidate":true,"beforeAndAfter":true,"physicalFile":true}),
-        evidence: Value::Null,
-    });
-    if capture {
-        expected_checks.push(BrowserCheck{name:"screenshot-capture".into(),status:CheckStatus::Pass,scope:json!({"required":4,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":4})});
-    }
-    if receipt.checks != expected_checks {
-        return false;
-    }
-    if !capture {
-        return receipt.screenshots.is_empty();
-    }
-    if receipt.screenshots.len() != 4 {
-        return false;
-    }
-    let expected: HashSet<_> = [DESKTOP_VIEWPORTS[0], DESKTOP_VIEWPORTS[3]]
-        .into_iter()
-        .flat_map(|viewport| [Theme::Light, Theme::Dark].map(|theme| (viewport, theme)))
-        .collect();
-    let mut actual = HashSet::new();
-    let mut paths = HashSet::new();
-    for screenshot in &receipt.screenshots {
-        let viewport = screenshot.viewport;
-        if !actual.insert((viewport, screenshot.theme))
-            || !paths.insert(&screenshot.path)
-            || screenshot.identity.bytes == 0
-            || screenshot.identity.sha256.len() != 64
-            || !screenshot
-                .identity
-                .sha256
-                .bytes()
-                .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
-        {
-            return false;
-        }
-        let Some(coverage) = receipt
-            .coverage
-            .iter()
-            .find(|entry| entry.viewport == viewport && entry.theme == screenshot.theme)
-        else {
-            return false;
-        };
-        let Some(height) = coverage.metrics["fullScrollHeight"]
-            .as_f64()
-            .filter(|height| height.is_finite())
-        else {
-            return false;
-        };
-        if screenshot.full_page != (height > f64::from(viewport.height)) {
-            return false;
-        }
-        if screenshot.width != viewport.width
-            || (!screenshot.full_page && screenshot.height != viewport.height)
-            || screenshot.full_page && screenshot.height < viewport.height
-            || screenshot.full_page && f64::from(screenshot.height) < height.ceil() - 1.0
-        {
-            return false;
-        }
-    }
-    actual == expected
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn small_browser_error_preserves_public_cleanup_diagnostics() {
-        let identity = FileIdentity {
-            sha256: "0".repeat(64),
-            bytes: 0,
-        };
-        let artifact = BoundArtifact {
-            path: "/diagnostic-only/diagram.html".into(),
-            candidate: BoundFile {
-                path: "/diagnostic-only/candidate.json".into(),
-                identity: identity.clone(),
-            },
-            artifact: identity,
-            config_sha256: "1".repeat(64),
-            engine: Value::Null,
-            delivery_receipt_id: "diagnostic-only".into(),
-        };
         let mut receipt = check_browser(
-            &artifact,
+            Path::new("/diagnostic-only/diagram.html"),
             &BrowserOptions {
                 startup_timeout: Duration::ZERO,
                 ..BrowserOptions::default()

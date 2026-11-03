@@ -7,7 +7,7 @@ use serde_json::json;
 
 fn wrapper() -> (Vec<u8>, Vec<u8>) {
     let source = b"<!doctype html>\r\n<html><body>Original & exact\r\n</body></html>".to_vec();
-    let metadata = json!({"schemaVersion":1,"artifactKind":"architecture-comparison","receiptFilename":"result.html.compare.json","receiptId":"receipt-abc","comparisonIr":{"changes":{"components":[],"connections":[],"boundaries":[]}},"viewIdentities":{"before":FileIdentity::of(&source),"delta":FileIdentity::of(&source),"after":FileIdentity::of(&source)}});
+    let metadata = json!({"schemaVersion":1,"artifactKind":"architecture-comparison","receiptFilename":"result.html.compare.json","comparisonIr":{"changes":{"components":[],"connections":[],"boundaries":[]}},"viewIdentities":{"before":FileIdentity::of(&source),"delta":FileIdentity::of(&source),"after":FileIdentity::of(&source)}});
     let srcdoc = escape_text(std::str::from_utf8(&source).unwrap()).replace('\r', "&#13;");
     let mut html=format!("<!doctype html><html><head><meta charset=\"utf-8\"></head><body><script id=\"phoenix-diagram-comparison\" type=\"application/json\">{metadata}</script>");
     for id in ["before", "delta", "after"] {
@@ -23,7 +23,6 @@ fn views_preserve_bound_srcdoc_bytes_including_carriage_returns() {
     let (html, source) = wrapper();
     let parsed = parse(&html).unwrap();
     assert_eq!(parsed.receipt_filename, "result.html.compare.json");
-    assert_eq!(parsed.receipt_id, "receipt-abc");
     let views = views(&html).unwrap();
     assert_eq!(views.len(), 3);
     for id in ["before", "delta", "after"] {
@@ -47,7 +46,6 @@ fn comparison_parser_rejects_tampered_missing_duplicate_external_or_unsafe_bindi
             1,
         ),
         html.replace("result.html.compare.json", "../result.html.compare.json"),
-        html.replace("receipt-abc", "receipt/unsafe"),
         html.replace(
             "</body>",
             "<script src=\"https://example.com/control.js\"></script></body>",

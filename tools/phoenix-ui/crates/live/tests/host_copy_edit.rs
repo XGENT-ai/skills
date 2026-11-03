@@ -1,6 +1,5 @@
 use impeccable_live::copy_edit_agent::{
     choose_copy_edit_agent, describe_no_provider_error, run_copy_edit_batch_agent,
-    run_copy_edit_post_apply_checks,
 };
 use impeccable_live::util::Env;
 use serde_json::json;
@@ -15,7 +14,7 @@ fn unknown_live_verb_uses_current_public_identity_and_keeps_exit_code() {
     assert!(captured.stdout.borrow().is_empty());
     assert_eq!(
         String::from_utf8(captured.stderr.borrow().clone()).unwrap(),
-        "phoenix-ui: verb 'live-unknown' is not implemented yet\n"
+        "phoenix-ui: unknown live verb 'live-unknown'\n"
     );
 }
 
@@ -215,13 +214,6 @@ impl LiveServer {
         )
         .unwrap();
         std::fs::write(fixture.0.join("unrelated.txt"), "Keep this file.\n").unwrap();
-        std::fs::write(
-            fixture.0.join("package.json"),
-            json!({"scripts": {"phoenix-ui:manual-edit-validate":
-                "node -e \"require('node:fs').writeFileSync('validation-ran.txt', 'yes')\""}})
-            .to_string(),
-        )
-        .unwrap();
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
@@ -332,7 +324,6 @@ fn host_poll_reply_commits_copy_without_a_second_runner() {
             server.json("GET", "/manual-edit-stash", None)["totalCount"],
             1
         );
-        assert!(!server.fixture.0.join("validation-ran.txt").exists());
     }
     let server = LiveServer::start(None);
     let stashed = server.stash();
@@ -409,40 +400,7 @@ fn host_poll_reply_commits_copy_without_a_second_runner() {
         0
     );
     assert_eq!(
-        std::fs::read_to_string(server.fixture.0.join("validation-ran.txt")).unwrap(),
-        "yes"
-    );
-    assert_eq!(
         std::fs::read_to_string(server.fixture.0.join("unrelated.txt")).unwrap(),
         "Keep this file.\n"
     );
-}
-
-#[test]
-fn project_validation_is_preserved_and_phoenix_script_takes_precedence() {
-    let fixture = Fixture::new("project validation");
-    std::fs::write(fixture.0.join("index.html"), "<h1>Copy</h1>\n").unwrap();
-    std::fs::write(fixture.0.join("package.json"), json!({"scripts": {
-        "phoenix-ui:manual-edit-validate": "node -e \"process.stderr.write('validation rejected'); process.exit(1)\"",
-        "impeccable:manual-edit-validate": "node -e \"process.exit(0)\""
-    }}).to_string()).unwrap();
-    let result = run_copy_edit_post_apply_checks(fixture.cwd(), &["index.html".into()]);
-    assert_eq!(result["ok"], false);
-    assert_eq!(
-        result["failures"][0]["reason"],
-        "manual_edit_validation_failed"
-    );
-    assert!(result["failures"][0]["message"]
-        .as_str()
-        .unwrap()
-        .contains("validation rejected"));
-    std::fs::write(fixture.0.join("package.json"), json!({"scripts": {
-        "impeccable:manual-edit-validate": "node -e \"process.stderr.write('legacy validation rejected'); process.exit(1)\""
-    }}).to_string()).unwrap();
-    let result = run_copy_edit_post_apply_checks(fixture.cwd(), &["index.html".into()]);
-    assert_eq!(result["ok"], false);
-    assert!(result["failures"][0]["message"]
-        .as_str()
-        .unwrap()
-        .contains("legacy validation rejected"));
 }

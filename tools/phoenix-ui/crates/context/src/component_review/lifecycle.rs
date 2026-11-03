@@ -20,8 +20,8 @@ pub fn closed(state: &Value) -> bool {
 }
 
 /// Stored flags are claims; acceptance also needs the session's capture to be intact.
-pub(crate) fn accepted_in(dir: &Path, state: &Value) -> bool {
-    accepted(state) && super::verify::capture_intact(dir, state).is_ok()
+pub(crate) fn accepted_in(state: &Value) -> bool {
+    accepted(state) && super::verify::capture_intact(state).is_ok()
 }
 
 pub fn terminal(state: &Value) -> Value {
@@ -45,14 +45,16 @@ pub fn inspect(sessions: &[PathBuf], required: &[String]) -> Result<Value, Strin
         .iter()
         .map(|dir| store::read(&dir.join("current.json")))
         .collect::<Result<Vec<_>, _>>()?;
-    let states: Vec<(&PathBuf, Value)> = sessions.iter().zip(states).collect();
-    if let Some((_, state)) = states.iter().find(|(d, s)| s["packet"]["stage"] == "hero" && accepted_in(d, s)) {
+    if let Some(state) = states
+        .iter()
+        .find(|s| s["packet"]["stage"] == "hero" && accepted_in(s))
+    {
         return Ok(terminal(state));
     }
     for stage in required {
         if !states
             .iter()
-            .any(|(d, s)| s["packet"]["stage"] == *stage && accepted_in(d, s))
+            .any(|s| s["packet"]["stage"] == *stage && accepted_in(s))
         {
             return Ok(
                 json!({"schemaVersion":1,"status":"pending","reviewClosed":false,
@@ -101,7 +103,9 @@ pub fn journey(project: &Path) -> Result<Value, String> {
 pub fn final_session(root: &Path, project: &Path) -> Result<Option<PathBuf>, String> {
     for path in project_sessions(root, project)? {
         let state = store::read(&path.join("current.json"))?;
-        if state["packet"]["stage"] == "hero" && accepted_in(&path, &state) { return Ok(Some(path)); }
+        if state["packet"]["stage"] == "hero" && accepted_in(&state) {
+            return Ok(Some(path));
+        }
     }
     Ok(None)
 }

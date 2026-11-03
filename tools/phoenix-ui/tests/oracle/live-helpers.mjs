@@ -4,10 +4,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { REPO_ROOT } from './lib.mjs';
 
-export const LIVE_FILES = ['.impeccable/**', '.gitignore', '.gitfake/**', 'node_modules/.impeccable-live/**'];
+export const LIVE_FILES = ['.phoenix-ui/**', '.gitignore', '.gitfake/**', 'node_modules/.phoenix-ui-live/**'];
 
 /**
  * A `.git` FILE pointing at a non-repo gitdir. Marks the git boundary for
@@ -37,21 +36,8 @@ export function linkSvelte(ws) {
   fs.symlinkSync(path.join(REPO_ROOT, 'node_modules', 'svelte'), path.join(ws, 'node_modules', 'svelte'), 'dir');
 }
 
-/** Append fixed-timestamp journal entries for a session (session-store format). */
-export function writeJournal(ws, id, events) {
-  const lines = events.map((event, i) => JSON.stringify({
-    seq: i + 1, id, type: event.type, ts: `2026-08-01T10:0${i % 10}:00.000Z`, event: { id, ...event },
-  }));
-  write(ws, `.impeccable/live/sessions/${id}.jsonl`, lines.join('\n') + '\n');
-}
-
 export function writeBuffer(ws, entries) {
-  write(ws, '.impeccable/live/pending-manual-edits.json', JSON.stringify({ version: 1, entries }, null, 2) + '\n');
-}
-
-export function lockPathFor(ws, relFile) {
-  const hash = crypto.createHash('sha256').update(path.resolve(ws, relFile)).digest('hex').slice(0, 24);
-  return `.impeccable/live/locks/${hash}.lock`;
+  write(ws, '.phoenix-ui/live/pending-manual-edits.json', JSON.stringify({ version: 1, entries }, null, 2) + '\n');
 }
 
 /** Fake-agent params, one kind per variant. */

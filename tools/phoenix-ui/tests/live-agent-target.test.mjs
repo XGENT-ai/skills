@@ -1,8 +1,8 @@
 /**
  * Protocol tests for agent-initiated element targeting (the `generate`
  * command), driven against the engine binary: POST /agent-target held-open
- * pairing with POST /agent-target-result, validation, the roll call and its
- * leases, the no-browser and timeout verdicts, and the live-generate verb's
+ * pairing with POST /agent-target-result, validation, the first-wins claim
+ * and its declines, the no-browser and timeout verdicts, and the live-generate verb's
  * local failure modes. Skips cleanly without a binary (tests/lib/engine-bin.mjs).
  *
  * Run with: node --test tests/live-agent-target.test.mjs
@@ -10,7 +10,7 @@
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFile, execFileSync, spawn } from 'node:child_process';
@@ -37,7 +37,7 @@ function readVisualActions() {
 const VISUAL_ACTIONS = readVisualActions();
 
 function liveServerPath(cwd) {
-  return join(cwd, '.impeccable/live/server.json');
+  return join(cwd, '.phoenix-ui/live/server.json');
 }
 
 /** Run the live-generate verb; the JSON verdict is on stdout on every exit code. */
@@ -54,7 +54,7 @@ function startServer(port, { cwd, env = {} } = {}) {
     const proc = trackServerChild(spawn(ENGINE_BIN, ['live-server', '--port=' + port], {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: engineEnv(ENGINE_BIN, { IMPECCABLE_LIVE_COPY_AGENT: 'off', ...env }),
+      env: engineEnv(ENGINE_BIN, { PHOENIX_UI_LIVE_COPY_AGENT: 'off', ...env }),
     }));
     let output = '';
     proc.stdout.on('data', (d) => { output += d.toString(); });
@@ -99,10 +99,10 @@ function postJson(server, path, body) {
  * A minimal fake overlay: holds the SSE stream open and resolves pushed
  * messages so a test can await the next one matching a predicate.
  */
-async function openSseClient(server, { clientId } = {}) {
+async function openSseClient(server) {
   const controller = new AbortController();
   const res = await fetch(
-    `http://localhost:${server.port}/events?token=${server.token}` + (clientId ? `&clientId=${clientId}` : ''),
+    `http://localhost:${server.port}/events?token=${server.token}`,
     { signal: controller.signal },
   );
   const reader = res.body.getReader();
@@ -155,13 +155,13 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
 
   before(async () => {
     tmp = mkdtempSync(join(tmpdir(), 'impeccable-agent-target-'));
-    mkdirSync(join(tmp, '.impeccable/live'), { recursive: true });
+    mkdirSync(join(tmp, '.phoenix-ui/live'), { recursive: true });
     writeFileSync(join(tmp, 'index.html'), '<html><body><h1>t</h1></body></html>');
     // A short timeout keeps the browser_timeout case fast; the env override
     // exists exactly for this.
     server = await startServer(8497, {
       cwd: tmp,
-      env: { IMPECCABLE_AGENT_TARGET_TIMEOUT_MS: '400', IMPECCABLE_AGENT_TARGET_RESOLVE_GRACE_MS: '150' },
+      env: { PHOENIX_UI_AGENT_TARGET_TIMEOUT_MS: '400' },
     });
   });
 
@@ -269,7 +269,7 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
     }
   });
 
-  it('grants an agent-target claim exactly once, so one visible tab owns the request', async () => {
+  it('grants only the first agent-target claim, so one tab owns the request', async () => {
     const sse = await openSseClient(server);
     try {
       await sse.next((m) => m.type === 'connected');
@@ -283,12 +283,8 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
       const second = await (await postJson(server, '/agent-target-claim', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
       })).json();
-      const renew = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.deepEqual(first, { ok: true, granted: true, pending: true });
-      assert.deepEqual(second, { ok: true, granted: false, pending: true });
-      assert.deepEqual(renew, { ok: true, granted: true, pending: true }, 'the holder renews its own lease');
+      assert.deepEqual(first, { ok: true, granted: true });
+      assert.deepEqual(second, { ok: true, granted: false });
       // Settle the held request so the suite never waits out the timeout.
       await postJson(server, '/agent-target-result', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-a', ok: true, matchCount: 1, sessionId: 'aabbccdd',
@@ -299,63 +295,17 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
     }
   });
 
-  it('reopens the claim after the winner lease lapses, so a surviving tab can rescue', async () => {
-    // Own server: the shared one keeps the default 3s claim lease, which its
-    // 400ms target timeout would delete long before the lease could lapse.
-    const tmp2 = mkdtempSync(join(tmpdir(), 'impeccable-agent-lease-'));
-    mkdirSync(join(tmp2, '.impeccable/live'), { recursive: true });
-    writeFileSync(join(tmp2, 'index.html'), '<html><body><h1>t</h1></body></html>');
-    const leaseServer = await startServer(8495, {
-      cwd: tmp2,
-      env: { IMPECCABLE_AGENT_TARGET_TIMEOUT_MS: '2000', IMPECCABLE_AGENT_TARGET_CLAIM_LEASE_MS: '250' },
-    });
-    const sse = await openSseClient(leaseServer);
-    try {
-      await sse.next((m) => m.type === 'connected');
-      const held = postJson(leaseServer, '/agent-target', {
-        token: leaseServer.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await sse.next((m) => m.type === 'agent_target');
-      const win = await (await postJson(leaseServer, '/agent-target-claim', {
-        token: leaseServer.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      const deniedInsideLease = await (await postJson(leaseServer, '/agent-target-claim', {
-        token: leaseServer.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.equal(win.granted, true);
-      assert.equal(deniedInsideLease.granted, false);
-      await new Promise((r) => setTimeout(r, 350));
-      const rescue = await (await postJson(leaseServer, '/agent-target-claim', {
-        token: leaseServer.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.equal(rescue.granted, true, 'a lapsed lease reopens the claim');
-      const staleRenew = await (await postJson(leaseServer, '/agent-target-claim', {
-        token: leaseServer.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(staleRenew.granted, false, 'the lapsed holder cannot renew once a rescuer holds the lease');
-      await postJson(leaseServer, '/agent-target-result', {
-        token: leaseServer.token, targetId: pushed.targetId, clientId: 'tab-b', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.ok, true);
-    } finally {
-      sse.close();
-      await stopServer(leaseServer);
-      rmSync(tmp2, { recursive: true, force: true });
-    }
-  });
-
   it('denies a claim for an unknown or already-resolved targetId', async () => {
     const res = await postJson(server, '/agent-target-claim', {
       token: server.token, targetId: 'deadbeef', clientId: 'tab-x', eligible: true,
     });
-    assert.deepEqual(await res.json(), { ok: true, granted: false, pending: false }, 'and says the request is gone, which ends a rescue loop');
+    assert.deepEqual(await res.json(), { ok: true, granted: false });
   });
 
   it('answers busy as soon as every connected overlay has reported busy', async () => {
-    // Roll call: two tabs, both mid-session. Neither claims; each reports
-    // ineligible, and the second report completes the roll call, so the
-    // held request answers busy well inside the 400ms target timeout.
+    // Two tabs, both mid-session. Neither claims; each declines, and the
+    // second decline answers the held request busy well inside the 400ms
+    // target timeout.
     const tabA = await openSseClient(server);
     const tabB = await openSseClient(server);
     try {
@@ -366,11 +316,11 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
         token: server.token, selector: 'h1', action: 'bolder', count: 3,
       });
       const pushed = await tabA.next((m) => m.type === 'agent_target');
-      for (const [clientId, pending] of [['tab-a', true], ['tab-b', false]]) {
+      for (const clientId of ['tab-a', 'tab-b']) {
         const report = await (await postJson(server, '/agent-target-claim', {
           token: server.token, targetId: pushed.targetId, clientId, eligible: false, state: 'CYCLING', reason: 'session_active',
         })).json();
-        assert.deepEqual(report, { ok: true, granted: false, pending }, 'a decline says whether the request is still pending');
+        assert.deepEqual(report, { ok: true, granted: false });
       }
       const verdict = await (await held).json();
       assert.equal(verdict.error, 'busy');
@@ -399,7 +349,7 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
       const claim = await (await postJson(server, '/agent-target-claim', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
       })).json();
-      assert.deepEqual(claim, { ok: true, granted: true, pending: true }, 'one busy report does not close a roll call with an idle tab left');
+      assert.deepEqual(claim, { ok: true, granted: true }, 'one busy report does not answer while an idle tab is left');
       await postJson(server, '/agent-target-result', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-b', ok: true, matchCount: 1, sessionId: 'aabbccdd',
       });
@@ -412,43 +362,10 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
     }
   });
 
-  it('completes the roll call when the holder itself turns busy', async () => {
-    // The holder claimed, then went busy before acting. Its busy report must
-    // hand the lease back, so the other tab's report completes the roll call
-    // and the CLI gets busy now, not at the 15s timeout.
-    const tabA = await openSseClient(server);
-    const tabB = await openSseClient(server);
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const startedAt = Date.now();
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.deepEqual(claim, { ok: true, granted: true, pending: true });
-      await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: false, state: 'GENERATING', reason: 'session_active',
-      });
-      await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: false, state: 'CYCLING', reason: 'session_active',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.error, 'busy');
-      assert.ok(Date.now() - startedAt < 350, 'the holder handing the lease back let the roll call complete');
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('withdraws a stale busy report once that tab claims as eligible', async () => {
-    // Tab A reported busy, then freed up and claimed as eligible before tab B
-    // reported. B's late busy report must not resolve the request as busy on
-    // A's stale word; A holds the lease and serves it.
+  it('never answers busy once a tab has won the claim', async () => {
+    // Tab A reported busy, then freed up and claimed before tab B reported.
+    // Every tab has now declined at some point, but A won the claim, so B's
+    // busy report must not answer the request; A's result does.
     const tabA = await openSseClient(server);
     const tabB = await openSseClient(server);
     try {
@@ -464,12 +381,11 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
       const reclaim = await (await postJson(server, '/agent-target-claim', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
       })).json();
-      assert.deepEqual(reclaim, { ok: true, granted: true, pending: true }, 'the freed tab takes the lease');
+      assert.deepEqual(reclaim, { ok: true, granted: true }, 'the freed tab wins the claim');
       await postJson(server, '/agent-target-claim', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: false, state: 'CYCLING', reason: 'session_active',
       });
-      // Still pending: the stale report was withdrawn, so B's report alone
-      // does not complete the roll call. A's result resolves it.
+      // Still pending: A won, so the declines do not answer. A's result does.
       const resultRes = await postJson(server, '/agent-target-result', {
         token: server.token, targetId: pushed.targetId, clientId: 'tab-a', ok: true, matchCount: 1, sessionId: 'aabbccdd',
       });
@@ -483,177 +399,11 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
     }
   });
 
-  it('tells a denied claimant whether the request is still pending, so rescue retries stop once it is gone', async () => {
-    // The holder claims and never posts a result. The loser's denied claim
-    // says the request is still pending, so it keeps retrying; once the
-    // request times out, the answer says it is gone and the retry loop ends.
-    const tab = await openSseClient(server);
-    try {
-      await tab.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tab.next((m) => m.type === 'agent_target');
-      const holder = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.deepEqual(holder, { ok: true, granted: true, pending: true });
-      const denied = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.deepEqual(denied, { ok: true, granted: false, pending: true }, 'a live request keeps the loser retrying');
-      const verdict = await (await held).json();
-      assert.equal(verdict.error, 'browser_timeout');
-      const late = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.deepEqual(late, { ok: true, granted: false, pending: false }, 'a resolved request ends the retry loop');
-    } finally {
-      tab.close();
-    }
-  });
-
-  it('replays a pending target to an overlay that connects after the broadcast', async () => {
-    // Tab A hears the broadcast and stays silent. Tab B connects afterwards
-    // (a reload mid-request): it must receive the same target, so it can
-    // claim and serve instead of only widening the roll call's count.
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    let tabB = null;
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      tabB = await openSseClient(server, { clientId: 'tab-b' });
-      const replayed = await tabB.next((m) => m.type === 'agent_target');
-      assert.equal(replayed.targetId, pushed.targetId, 'the late overlay is told about the pending target');
-      assert.equal(replayed.selector, 'h1');
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.deepEqual(claim, { ok: true, granted: true, pending: true });
-      await postJson(server, '/agent-target-result', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.ok, true);
-      assert.equal(verdict.sessionId, 'aabbccdd');
-    } finally {
-      tabA.close();
-      if (tabB) tabB.close();
-    }
-  });
-
-  it('hands a disconnected holder\'s lease back at once', async () => {
-    // Tab A claims and then disconnects (reload, closed tab). Its lease must
-    // not have to lapse: tab B's next claim is granted right away.
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabB.next((m) => m.type === 'agent_target');
-      const holder = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(holder.granted, true);
-      tabA.close();
-      let claim = { granted: false };
-      for (let i = 0; i < 20 && !claim.granted; i += 1) {
-        await sleep(15);
-        claim = await (await postJson(server, '/agent-target-claim', {
-          token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-        })).json();
-      }
-      assert.equal(claim.granted, true, 'the disconnect released the lease well inside the 3s lease and the 400ms timeout');
-      await postJson(server, '/agent-target-result', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.ok, true);
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('retires a disconnected overlay\'s busy report instead of answering busy on its stale word', async () => {
-    // Tab A reports busy and leaves; tab B stays silent. The timeout must
-    // answer browser_timeout: the only busy word came from a tab that is gone.
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabB.next((m) => m.type === 'agent_target');
-      await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: false, state: 'CYCLING', reason: 'session_active',
-      });
-      tabA.close();
-      const verdict = await (await held).json();
-      assert.equal(verdict.error, 'browser_timeout');
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('keeps a reconnected overlay\'s lease and word when its old connection closes', async () => {
-    // An EventSource reconnect opens a replacement connection under the same
-    // page-level clientId before the old one is seen to close. The close
-    // must retire nothing while the overlay is still connected.
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    let tabA2 = null;
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const holder = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(holder.granted, true);
-      tabA2 = await openSseClient(server, { clientId: 'tab-a' });
-      await tabA2.next((m) => m.type === 'agent_target');
-      tabA.close();
-      await sleep(150);
-      const rival = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.equal(rival.granted, false, 'the lease survived the reconnect');
-      const renew = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(renew.granted, true, 'the reconnected overlay still holds it');
-      await postJson(server, '/agent-target-result', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.sessionId, 'aabbccdd');
-    } finally {
-      tabA.close();
-      tabB.close();
-      if (tabA2) tabA2.close();
-    }
-  });
-
   it('answers the resolution verdict when every idle page declined as unable to resolve', async () => {
     // Two idle tabs on pages that lack the element decline with their
     // resolution verdicts; the request resolves as no_match, not busy.
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
+    const tabA = await openSseClient(server);
+    const tabB = await openSseClient(server);
     try {
       await tabA.next((m) => m.type === 'connected');
       await tabB.next((m) => m.type === 'connected');
@@ -667,202 +417,21 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
           token: server.token, targetId: pushed.targetId, clientId, eligible: false, state: 'IDLE', reason: 'no_match',
           result: { ok: false, error: 'no_match', selector: 'h1', matchCount: 0, rawMatchCount: raw },
         })).json();
-        // Every page said no_match: the roll call stays open for the
-        // resolution grace (150ms here), so both declines are answered pending.
-        assert.deepEqual(report, { ok: true, granted: false, pending: true });
+        assert.deepEqual(report, { ok: true, granted: false });
       }
       const verdict = await (await held).json();
       assert.equal(verdict.error, 'no_match');
       assert.equal(verdict.ok, false);
       assert.equal(verdict.targetId, pushed.targetId);
-      const elapsed = Date.now() - startedAt;
-      assert.ok(elapsed >= 140 && elapsed < 380, `answered when the grace lapsed, not before and not by the timeout (${elapsed}ms)`);
+      assert.ok(Date.now() - startedAt < 350, 'the verdict did not wait for the timeout');
     } finally {
       tabA.close();
       tabB.close();
     }
-  });
-
-  it('lets a page that declined as unresolvable claim once its element mounts, within the grace', async () => {
-    const tab = await openSseClient(server, { clientId: 'tab-a' });
-    try {
-      await tab.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tab.next((m) => m.type === 'agent_target');
-      const declined = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: false, state: 'IDLE', reason: 'no_match',
-        result: { ok: false, error: 'no_match', matchCount: 0, rawMatchCount: 0 },
-      })).json();
-      assert.deepEqual(declined, { ok: true, granted: false, pending: true }, 'the only page declining leaves the request pending for the grace');
-      await new Promise((r) => setTimeout(r, 60));
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.deepEqual(claim, { ok: true, granted: true, pending: true }, 'the late mount is served');
-      await postJson(server, '/agent-target-result', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.ok, true);
-      assert.equal(verdict.sessionId, 'aabbccdd');
-    } finally {
-      tab.close();
-    }
-  });
-
-  it('extends the grace on a late overlay\'s first no_match word, so it still gets its watch', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const decline = (clientId) => postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId, eligible: false, state: 'IDLE', reason: 'no_match',
-        result: { ok: false, error: 'no_match', matchCount: 0, rawMatchCount: 0 },
-      });
-      assert.equal((await (await decline('tab-a')).json()).pending, true);
-      // Tab A's grace (150ms) lapses before tab B says its first word.
-      await new Promise((r) => setTimeout(r, 200));
-      const late = await (await decline('tab-b')).json();
-      assert.equal(late.pending, true, 'a late overlay\'s first no_match word extends the grace');
-      await new Promise((r) => setTimeout(r, 60));
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.equal(claim.granted, true, 'the late overlay\'s watcher claims within its grace');
-      await postJson(server, '/agent-target-result', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', ok: true, matchCount: 1, sessionId: 'aabbccdd',
-      });
-      const verdict = await (await held).json();
-      assert.equal(verdict.sessionId, 'aabbccdd');
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('resolves the request from the generate event that serves it, so a page that dies before its result cannot leave it pending', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(claim.granted, true);
-      const result = { ok: true, matchCount: 1, sessionId: 'aabbccdd', action: 'bolder', count: 3, element: { tag: 'h1' } };
-      const ack = await postJson(server, '/events', {
-        token: server.token, type: 'generate', id: 'aabbccdd', action: 'bolder', count: 3, pageUrl: '/',
-        element: { tagName: 'h1', outerHTML: '<h1>Hero</h1>' },
-        agentTarget: { targetId: pushed.targetId, clientId: 'tab-a', result },
-      });
-      assert.equal(ack.status, 200);
-      const verdict = await (await held).json();
-      assert.equal(verdict.ok, true);
-      assert.equal(verdict.sessionId, 'aabbccdd');
-      const late = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-b', eligible: true,
-      })).json();
-      assert.deepEqual(late, { ok: true, granted: false, pending: false }, 'nothing is left for a rescuer to serve twice');
-      const journal = readFileSync(join(tmp, '.impeccable/live/sessions/aabbccdd.jsonl'), 'utf-8');
-      assert.ok(!journal.includes('agentTarget'), 'the envelope never reaches the journal');
-      const journaled = JSON.parse(journal.split('\n').find((l) => l.includes('"generate"')));
-      assert.equal((journaled.event || journaled).origin, 'agent', 'an agent-initiated generate is marked so the poll hands out the fast path');
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('refuses a generate event for a target another session already answered, and welcomes that session\'s own', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(claim.granted, true);
-      await postJson(server, '/agent-target-result', { token: server.token, targetId: pushed.targetId, clientId: 'tab-a', ok: true, sessionId: 'cccccccc' });
-      assert.equal((await (await held).json()).sessionId, 'cccccccc');
-      const event = (id, clientId) => postJson(server, '/events', {
-        token: server.token, type: 'generate', id, action: 'bolder', count: 3, pageUrl: '/',
-        element: { tagName: 'h1', outerHTML: '<h1>Hero</h1>' },
-        agentTarget: { targetId: pushed.targetId, clientId, result: { ok: true, matchCount: 1, sessionId: id, action: 'bolder', count: 3 } },
-      });
-      // A superseded Go from another page: refused, naming the serving session, nothing journaled.
-      const refused = await event('dddddddd', 'tab-b');
-      assert.equal(refused.status, 409);
-      const body = await refused.json();
-      assert.equal(body.error, 'agent_target_already_served');
-      assert.equal(body.sessionId, 'cccccccc');
-      assert.ok(!existsSync(join(tmp, '.impeccable/live/sessions/dddddddd.jsonl')), 'a refused Go journals nothing');
-      // The answering session's own event is welcome.
-      assert.equal((await event('cccccccc', 'tab-a')).status, 200);
-    } finally {
-      tabA.close();
-    }
-  });
-
-  it('fences a generate event that lands after the request timed out, so no session the agent was never told about starts', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      const claim = await (await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: true,
-      })).json();
-      assert.equal(claim.granted, true);
-      const verdict = await (await held).json();
-      assert.equal(verdict.error, 'browser_timeout');
-      const late = await postJson(server, '/events', {
-        token: server.token, type: 'generate', id: 'eeeeeeee', action: 'bolder', count: 3, pageUrl: '/',
-        element: { tagName: 'h1', outerHTML: '<h1>Hero</h1>' },
-        agentTarget: { targetId: pushed.targetId, clientId: 'tab-a', result: { ok: true, matchCount: 1, sessionId: 'eeeeeeee', action: 'bolder', count: 3 } },
-      });
-      assert.equal(late.status, 409);
-      const body = await late.json();
-      assert.equal(body.error, 'agent_target_already_served');
-      assert.equal(body.sessionId, undefined);
-      assert.ok(!existsSync(join(tmp, '.impeccable/live/sessions/eeeeeeee.jsonl')), 'a fenced Go journals nothing');
-    } finally {
-      tabA.close();
-    }
-  });
-
-  it('refuses a generate event naming a target the helper never held, so eviction can never reopen a request', async () => {
-    const event = (agentTarget) => postJson(server, '/events', {
-      token: server.token, type: 'generate', id: 'ffffffff', action: 'bolder', count: 3, pageUrl: '/',
-      element: { tagName: 'h1', outerHTML: '<h1>Hero</h1>' },
-      ...(agentTarget ? { agentTarget } : {}),
-    });
-    const refused = await event({ targetId: '0badf00d', clientId: 'tab-a', result: { ok: true, sessionId: 'ffffffff' } });
-    assert.equal(refused.status, 409);
-    assert.equal((await refused.json()).error, 'agent_target_already_served');
-    assert.ok(!existsSync(join(tmp, '.impeccable/live/sessions/ffffffff.jsonl')), 'nothing journaled');
-    // Without an envelope the same event is an ordinary Go.
-    assert.equal((await event(null)).status, 200);
   });
 
   it('forwards the hidden-bar request to the overlay, and refuses a non-boolean', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
+    const tabA = await openSseClient(server);
     try {
       await tabA.next((m) => m.type === 'connected');
       const held = postJson(server, '/agent-target', {
@@ -871,7 +440,7 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
       assert.equal((await tabA.next((m) => m.type === 'live_bar')).hidden, true, 'every connected tab hears the helper-wide preference first');
       const pushed = await tabA.next((m) => m.type === 'agent_target');
       assert.equal(pushed.hideLiveBar, true, 'the overlay is told to keep the bottom bar out of the way');
-      const tabB = await openSseClient(server, { clientId: 'tab-b' });
+      const tabB = await openSseClient(server);
       try {
         assert.equal((await tabB.next((m) => m.type === 'connected')).hideLiveBar, true, 'a later connection learns it on connect');
       } finally { tabB.close(); }
@@ -889,8 +458,8 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
     }
   });
 
-  it('honors a result only from the lease holder', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
+  it('honors a result only from the claim winner', async () => {
+    const tabA = await openSseClient(server);
     try {
       await tabA.next((m) => m.type === 'connected');
       const held = postJson(server, '/agent-target', { token: server.token, selector: 'h1', action: 'bolder', count: 3 });
@@ -911,8 +480,8 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
   });
 
   it('prefers busy over no_match, so the agent retries when the right page is mid-session', async () => {
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
+    const tabA = await openSseClient(server);
+    const tabB = await openSseClient(server);
     try {
       await tabA.next((m) => m.type === 'connected');
       await tabB.next((m) => m.type === 'connected');
@@ -930,34 +499,6 @@ describe('POST /agent-target', { skip: ENGINE_BIN ? false : ENGINE_MISSING_MESSA
       const verdict = await (await held).json();
       assert.equal(verdict.error, 'busy');
       assert.equal(verdict.reason, 'session_active');
-    } finally {
-      tabA.close();
-      tabB.close();
-    }
-  });
-
-  it('completes the roll call when the last silent overlay disconnects', async () => {
-    // Tab A reported busy; tab B never answered and then left. Every overlay
-    // still connected has declined, so the verdict is busy now, not at the
-    // timeout.
-    const tabA = await openSseClient(server, { clientId: 'tab-a' });
-    const tabB = await openSseClient(server, { clientId: 'tab-b' });
-    try {
-      await tabA.next((m) => m.type === 'connected');
-      await tabB.next((m) => m.type === 'connected');
-      const startedAt = Date.now();
-      const held = postJson(server, '/agent-target', {
-        token: server.token, selector: 'h1', action: 'bolder', count: 3,
-      });
-      const pushed = await tabA.next((m) => m.type === 'agent_target');
-      await postJson(server, '/agent-target-claim', {
-        token: server.token, targetId: pushed.targetId, clientId: 'tab-a', eligible: false, state: 'CYCLING', reason: 'session_active',
-      });
-      tabB.close();
-      const verdict = await (await held).json();
-      assert.equal(verdict.error, 'busy');
-      assert.equal(verdict.reason, 'session_active');
-      assert.ok(Date.now() - startedAt < 350, 'the disconnect completed the roll call before the timeout');
     } finally {
       tabA.close();
       tabB.close();
@@ -1044,11 +585,11 @@ describe('live-generate CLI --wait-for-browser', { skip: ENGINE_BIN ? false : EN
 
   before(async () => {
     tmp = mkdtempSync(join(tmpdir(), 'impeccable-generate-wait-'));
-    mkdirSync(join(tmp, '.impeccable/live'), { recursive: true });
+    mkdirSync(join(tmp, '.phoenix-ui/live'), { recursive: true });
     writeFileSync(join(tmp, 'index.html'), '<html><body><h1>t</h1></body></html>');
     server = await startServer(8496, {
       cwd: tmp,
-      env: { IMPECCABLE_AGENT_TARGET_TIMEOUT_MS: '400' },
+      env: { PHOENIX_UI_AGENT_TARGET_TIMEOUT_MS: '400' },
     });
   });
 

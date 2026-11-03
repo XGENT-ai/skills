@@ -3,9 +3,8 @@
 //! Every skill script and CLI subcommand is a verb here. Verb crates expose
 //! `run(args: &[String], io: &mut Io) -> i32` (exit code) and never call
 //! `std::process::exit` themselves, so this file is the single place exit codes
-//! and stream flushing are decided (contract: docs/CLI-CONTRACT.md in the
-//! public repo). Verb names are the JS script basenames; a few carry aliases
-//! (`signals` for context-signals, `hooks` for hook-admin).
+//! and stream flushing are decided (behavior pinned by `tests/oracle/`). A few
+//! verbs carry aliases (`signals` for context-signals, `hooks` for hook-admin).
 
 use std::io::Write;
 
@@ -65,20 +64,15 @@ fn run(args: &[String], io: &mut Io) -> i32 {
             }
             _ => impeccable_skills::run(rest, io),
         },
-        "review" => {
-            phoenix_ui_review::cli::run(rest, &io.cwd, io.stdout.as_mut(), io.stderr.as_mut())
-        }
         // Project installs overwrite tool files; the inherited installer handles user-level installs.
         "install" | "update" if !user_level_or_help(rest) => {
             phoenix_ui_install::cli::run_install(rest, io)
         }
-        "migrate" => phoenix_ui_install::cli::run_migrate(rest, io),
         "help" | "install" | "link" | "update" | "check" => impeccable_skills::run(args, io),
         // skill scripts
         "context" => impeccable_context::run_context(rest, io),
         "pin" => impeccable_context::run_pin(rest, io),
         "detect-csp" => impeccable_context::run_detect_csp(rest, io),
-        "palette" => impeccable_context::run_palette(rest, io),
         "surface-brief" => impeccable_context::run_surface_brief(rest, io),
         "critique-storage" => impeccable_context::run_critique_storage(rest, io),
         "embed-prompt" => impeccable_context::run_embed_prompt(rest, io),
@@ -95,22 +89,29 @@ fn run(args: &[String], io: &mut Io) -> i32 {
             let mut renderer = font_render::CdpFontRenderer::from_process_env();
             impeccable_comp_verbs::run_font_match(rest, io, &mut renderer)
         }
-        "capture-server" => {
-            match impeccable::capture_service::serve(rest) { Ok(()) => 0, Err(e) => { io.err(&format!("Native capture service: {e}\n")); 1 } }
-        }
+        "capture-server" => match impeccable::capture_service::serve(rest) {
+            Ok(()) => 0,
+            Err(e) => {
+                io.err(&format!("Native capture service: {e}\n"));
+                1
+            }
+        },
         "build-phase" => {
-            // Inject the organic-clip-path CSS scanner (a rule that lives in the
-            // closed `core` crate) so comp-verbs stays core-free.
-            let organic = |html: &str| -> Vec<(Option<String>, String)> {
-                impeccable_core::checks::css_scan::scan_css_text_for_organic_clip_path(html)
-                    .into_iter()
-                    .map(|f| (f.selector, f.snippet))
-                    .collect()
-            };
             match impeccable::capture_service::RemoteEntryRenderer::from_env(&io.env) {
-                Ok(Some(renderer)) => impeccable_comp_verbs::build_phase::run_with_renderer(rest, io, &organic, Some(&renderer)),
-                Ok(None) => { let renderer=impeccable::reviewed_entry::ReviewedEntryRenderer::local(&io.cwd,io.home().as_deref()); impeccable_comp_verbs::build_phase::run_with_renderer(rest, io, &organic, Some(&renderer)) },
-                Err(e) => { io.err(&format!("Native capture service: {e}\n")); 1 }
+                Ok(Some(renderer)) => {
+                    impeccable_comp_verbs::build_phase::run_with_renderer(rest, io, Some(&renderer))
+                }
+                Ok(None) => {
+                    let renderer = impeccable::reviewed_entry::ReviewedEntryRenderer::local(
+                        &io.cwd,
+                        io.home().as_deref(),
+                    );
+                    impeccable_comp_verbs::build_phase::run_with_renderer(rest, io, Some(&renderer))
+                }
+                Err(e) => {
+                    io.err(&format!("Native capture service: {e}\n"));
+                    1
+                }
             }
         }
         "hook" => {
@@ -160,10 +161,7 @@ fn user_level_or_help(args: &[String]) -> bool {
 /// (crates/html). The browser engine (crates/browser) plugs in here once it
 /// lands; until then URL scans report the puppeteer message.
 fn engines() -> impeccable_detect::Engines<'static> {
-    static HTML: impeccable_html::StaticHtmlEngine = impeccable_html::StaticHtmlEngine {
-        // The shipped binary carries the built-in rules only.
-        static_rule_pack: None,
-    };
+    static HTML: impeccable_html::StaticHtmlEngine = impeccable_html::StaticHtmlEngine;
     impeccable_detect::Engines {
         html: &HTML,
         url: Some(url_engine()),

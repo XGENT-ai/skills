@@ -99,9 +99,8 @@ it('a killed helper shows the same notice and the next start recovers', async ()
   const text = await waitForNotice(page);
   const noticeAfterMs = Date.now() - started;
   await page.screenshot({ path: evidencePath('screenshots/disconnect-killed.png') });
-  const status = engine('live-status', [], { cwd: tmp });
   const restarted = await restartAndReconnect();
-  results.push({ case: 'SIGKILL', noticeAfterMs, text, statusAfterKill: { code: status.code, json: status.json, stdout: status.stdout },
+  results.push({ case: 'SIGKILL', noticeAfterMs, text,
     restart: restarted.result.json, restarted: processRecord('restarted helper', restarted) });
   assert.match(text, /\/phoenix-ui live/);
 });

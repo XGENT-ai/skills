@@ -54,9 +54,9 @@
       "modification": "Diagram-only CDP subset with bounded startup/commands, owned profiles and complete-height PNG capture; project-local installer with independent state, file allowlist and journal ordering. No UI runtime dependency.",
       "notices": [
         {
-          "path": "THIRD-PARTY-LICENSES/c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b.txt",
-          "size": 1147,
-          "sha256": "c394e3bda1f3b9378f30a7cab11242887eeeafc73c7bef36a0fe13e09691e18b",
+          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
+          "size": 1186,
+          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ]

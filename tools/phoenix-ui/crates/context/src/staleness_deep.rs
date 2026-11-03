@@ -1,7 +1,7 @@
 //! JS: lib/staleness-deep.mjs (Tier 2, doctor only)
 
 use crate::context::{extract_platform, TargetCandidate};
-use crate::design_parser::parse_design_md;
+use crate::design_parser::parse_design_outline;
 use crate::jsp;
 use crate::signals::git_run;
 use crate::staleness::{check_native_platform_evidence, finding, js_truthy, to_relative, unique_roots, Finding};
@@ -18,11 +18,6 @@ const VISUAL_SOURCE_DIRS: [&str; 7] = [
     "site",
     "styles",
     "public",
-];
-const LEGACY_LIVE_PATHS: [&str; 3] = [
-    ".impeccable-live.json",
-    ".impeccable-live",
-    ".impeccable/live",
 ];
 
 fn git(args: &[&str], cwd: &str) -> Option<String> {
@@ -100,7 +95,7 @@ const SEED_MARKER_TAIL: &str = "impeccable document once there's code to capture
 /// JS: checkDesignCoverage
 pub fn check_design_coverage(design: Option<&str>, design_path: Option<&str>) -> Vec<Finding> {
     let Some(design) = design.filter(|d| !d.is_empty()) else { return vec![] };
-    let model = parse_design_md(design);
+    let model = parse_design_outline(design);
     let is_seed = ["/", "$"].iter().any(|p| {
         design.contains(&format!("<!-- SEED: established with the user before implementation; re-run {}{}", p, SEED_MARKER_TAIL))
     });
@@ -207,7 +202,7 @@ fn js_string_or_empty(v: &Value) -> String {
 fn collect_hook_commands(v: &Value, out: &mut Vec<String>) {
     match v {
         Value::String(s) => {
-            if crate::hook_markers::is_design_hook_command(s) {
+            if crate::hook_markers::is_launcher_design_hook_command(s) {
                 out.push(s.clone());
             }
         }
@@ -226,12 +221,6 @@ fn collect_hook_commands(v: &Value, out: &mut Vec<String>) {
 }
 
 static PLACEHOLDER: Lazy<Regex> = Lazy::new(|| Regex::new(r"\$\{[^}]*\}|\$[A-Za-z_]").unwrap());
-
-/// The `.mjs` script (JS-era manifests) or the launcher (binary-era
-/// manifests) a hook command runs; see `hook_markers`.
-fn hook_script_token_from(command: &str) -> Option<String> {
-    crate::hook_markers::hook_program_token(command)
-}
 
 fn resolve_hook_script_path(token: &str, root: &str) -> Option<String> {
     if token.is_empty() {
@@ -274,8 +263,12 @@ pub fn check_hook_installation(project_root: &str, repo_root: Option<&str>, prov
             let broken: Vec<&String> = commands
                 .iter()
                 .filter(|c| {
-                    let Some(token) = hook_script_token_from(c) else { return false };
-                    let Some(abs) = resolve_hook_script_path(&token, root) else { return false };
+                    let Some(token) = crate::hook_markers::hook_program_token(c) else {
+                        return false;
+                    };
+                    let Some(abs) = resolve_hook_script_path(&token, root) else {
+                        return false;
+                    };
                     !exists(&abs)
                 })
                 .collect();
@@ -321,28 +314,6 @@ pub fn check_hook_installation(project_root: &str, repo_root: Option<&str>, prov
         }
     }
     out
-}
-
-/// JS: checkLegacyLiveState
-pub fn check_legacy_live_state(project_root: &str) -> Vec<Finding> {
-    if project_root.is_empty() {
-        return vec![];
-    }
-    let present: Vec<&str> = LEGACY_LIVE_PATHS.iter().copied().filter(|rel| exists(&jsp::join(&[project_root, rel]))).collect();
-    if present.is_empty() {
-        return vec![];
-    }
-    vec![finding(
-        "legacy-live-state",
-        "live state",
-        Some(present.join(", ")),
-        "mention",
-        format!(
-            "Original live-mode state is preserved at {}. Phoenix live mode uses `.phoenix-ui/live/`.",
-            present.iter().map(|r| format!("`{}`", r)).collect::<Vec<_>>().join(", ")
-        ),
-        "Keep the original state for migration or rollback. Phoenix does not read or delete original live sessions.".to_string(),
-    )]
 }
 
 pub struct WorkspaceRow {
@@ -476,37 +447,30 @@ mod tests {
     }
 
     #[test]
-    fn hook_script_missing_resolves_launcher_and_legacy_forms() {
+    fn hook_script_missing_resolves_the_launcher() {
         let root = tmp();
-        // Launcher form pointing at a launcher that exists: no finding.
-        write(&root, ".claude/skills/impeccable/scripts/impeccable", "#!/bin/sh\n");
+        // Launcher pointing at a launcher that exists: no finding.
+        write(
+            &root,
+            ".claude/skills/phoenix-ui/scripts/phoenix-ui",
+            "#!/bin/sh\n",
+        );
         write(
             &root,
             ".claude/settings.local.json",
-            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook"}]}]}}"#,
+            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]}]}}"#,
         );
         assert!(check_hook_installation(&root, None, "claude-code").is_empty());
 
-        // Launcher form pointing at a missing launcher: reported.
+        // Launcher pointing at a missing launcher: reported.
         write(
             &root,
             ".claude/settings.local.json",
-            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR}/.other/skills/impeccable/scripts/impeccable\" hook"}]}]}}"#,
+            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR}/.other/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]}]}}"#,
         );
         let f = check_hook_installation(&root, None, "claude-code");
         assert_eq!(f.len(), 1, "{f:?}");
         assert_eq!(f[0].id, "hook-script-missing");
-
-        // Legacy .mjs form is still resolved: reported when the script is gone.
-        write(
-            &root,
-            ".claude/settings.local.json",
-            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"node \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs\""}]}]}}"#,
-        );
-        let f = check_hook_installation(&root, None, "claude-code");
-        assert_eq!(f.len(), 1, "{f:?}");
-        write(&root, ".claude/skills/impeccable/scripts/hook.mjs", "");
-        assert!(check_hook_installation(&root, None, "claude-code").is_empty());
         let _ = std::fs::remove_dir_all(&root);
     }
 }

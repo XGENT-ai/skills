@@ -12,9 +12,12 @@ use super::dom::{
 use super::element_checks::parse_rgb_or_any;
 use crate::color::{contrast_ratio, parse_gradient_colors, parse_rgb, Rgba};
 use crate::constants::{SAFE_TAGS, WCAG_LARGE_BOLD_TEXT_PX, WCAG_LARGE_TEXT_PX};
-use crate::js::{self, math_max, math_min, math_round, number_to_string, parse_float, parse_int, to_fixed, WS};
+use crate::js::collapse_ws;
+use crate::js::{
+    self, math_max, math_min, math_round, number_to_string, parse_float, parse_int, to_fixed, WS,
+};
 use crate::js_ext_a::{num_truthy, split_ws};
-use crate::js_ext_b::{slice_utf16_prefix, utf16_len};
+use crate::js_ext_a::{slice_utf16_prefix, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -34,7 +37,6 @@ macro_rules! re {
 // `/taint|cross-origin|Security/i`: ASCII folding (`ci`), JS `\s` (`WS`).
 re!(URL_RE, format!("{}{}*\\(", js::ci("url"), WS));
 re!(GRADIENT_RE, js::ci("gradient"));
-re!(WS_RUN, format!("{}+", WS));
 re!(
     FIRST_CSS_URL_RE,
     format!(r#"{}\((?:"([^"]+)"|'([^']+)'|([^)]*))\)"#, js::ci("url"))
@@ -49,11 +51,6 @@ re!(
 pub const OVERLAY_SELECTOR: &str =
     ".impeccable-overlay, .impeccable-label, .impeccable-banner, .impeccable-tooltip";
 pub const LIVE_SELECTOR: &str = "[id^=\"impeccable-live-\"]";
-
-/// JS `s.replace(/\s+/g, ' ')`.
-fn collapse_ws(s: &str) -> String {
-    WS_RUN.replace_all(s, " ").into_owned()
-}
 
 /// JS `String(v || '')` on a JSON value.
 fn str_or_empty(v: Option<&Value>) -> String {

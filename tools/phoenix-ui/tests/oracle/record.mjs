@@ -1,45 +1,20 @@
 #!/usr/bin/env node
 /**
- * Record goldens.
- *   node tests/oracle/record.mjs --bin [prefix]     # from the engine binary ($IMPECCABLE_BIN,
- *                                                   # or --bin=/path/to/impeccable)
- *   node tests/oracle/record.mjs [prefix]           # from the JS scripts (historical; the
- *                                                   # scripts left the tree with the launcher swap)
- * A prefix limits recording to ids starting with it (e.g. detect-).
- *
- * The committed goldens are frozen JS behavior plus the reviewed deltas in
- * DELTAS.md. Re-recording from the binary overwrites that history for the
- * cases it touches, so record only the cases you added or whose delta a
- * review accepted, and say so in the commit.
+ * Record goldens from a phoenix-ui binary.
+ *   node tools/phoenix-ui/tests/oracle/record.mjs --bin <phoenix-ui> <id-prefix>
+ * The binary defaults to $PHOENIX_UI_BIN. Record only the cases you added or
+ * whose behavior changed on purpose, then review each golden diff by hand: the
+ * binary under test is also the recorder, so a bug would be frozen too.
  */
-import { allCases, runCase, writeGolden } from './lib.mjs';
+import { allCases, runCase, writeGolden, parseArgs } from './lib.mjs';
 
-const argv = process.argv.slice(2);
-const binFlag = argv.find(a => a === '--bin' || a.startsWith('--bin='));
-const impl = binFlag ? 'bin' : 'js';
-const bin = binFlag?.includes('=') ? binFlag.split('=').slice(1).join('=') : process.env.IMPECCABLE_BIN;
-if (impl === 'bin' && !bin) {
-  process.stderr.write('record.mjs --bin needs IMPECCABLE_BIN or --bin=/path/to/impeccable\n');
-  process.exit(2);
-}
-if (impl === 'bin') process.env.IMPECCABLE_BIN = bin;
-if (impl === 'js') {
-  const { existsSync } = await import('node:fs');
-  const { REPO_ROOT } = await import('./lib.mjs');
-  if (!existsSync(new URL('../../skill/scripts/context.mjs', import.meta.url))) {
-    process.stderr.write('record.mjs: the JS scripts are no longer in the tree; use --bin to record from the engine binary.\n');
-    process.exit(1);
-  }
-  void REPO_ROOT;
-}
-const prefix = argv.find(a => !a.startsWith('--')) || '';
+const { bin, prefix } = parseArgs(process.argv.slice(2));
 const cases = (await allCases()).filter(c => c.id.startsWith(prefix));
-let n = 0;
+if (!cases.length) throw new Error(`no oracle case id starts with: ${prefix}`);
 for (const c of cases) {
-  const res = runCase(c, { impl, bin });
+  const res = runCase(c, { bin });
   writeGolden(c.id, res);
-  n++;
   const head = res.steps ? `${res.steps.length} steps, exits ${res.steps.map(s => s.exit).join('/')}` : `exit ${res.exit}, ${res.stdout.length}b out`;
   process.stdout.write(`recorded ${c.id} (${head}, ${Object.keys(res.files).length} files)\n`);
 }
-process.stdout.write(`\n${n} goldens written (${impl})\n`);
+process.stdout.write(`\n${cases.length} goldens written\n`);

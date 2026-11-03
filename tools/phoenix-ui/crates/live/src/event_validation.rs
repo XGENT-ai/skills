@@ -2,15 +2,12 @@
 //! server; messages verbatim.
 
 use crate::vocabulary::{AGENT_PHASES, VISUAL_ACTIONS};
+use impeccable_core::js_ext_a::utf16_len;
 use serde_json::{Map, Value};
 
 pub const MOUNT_URL_MAX_LENGTH: usize = 2000;
 pub const MOUNT_ERROR_MAX_LENGTH: usize = 1000;
 const FORBIDDEN_MANUAL_EDIT_TEXT_CHARS: [char; 4] = ['<', '{', '}', '`'];
-
-fn utf16_len(s: &str) -> usize {
-    s.encode_utf16().count()
-}
 
 /// JS truthiness of a JSON value.
 pub fn truthy(v: Option<&Value>) -> bool {

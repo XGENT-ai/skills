@@ -54,10 +54,6 @@ impl BrowserFinding {
     pub fn from_hit(hit: &crate::rules::types::RuleHit) -> Self {
         BrowserFinding::new(hit.id.clone(), hit.snippet.clone())
     }
-    /// `{ type: f.id, detail: f.snippet }` from a measures Finding.
-    pub fn from_measure(f: &crate::css::measures::Finding) -> Self {
-        BrowserFinding::new(f.id.clone(), f.snippet.clone())
-    }
 }
 
 /// A finding attributed to an element (`{ el, type, detail }` from the

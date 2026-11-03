@@ -25,8 +25,8 @@ const MANAGED_SETTINGS = {
 };
 
 // ─── Phoenix UI ─────────────────────────────────────────────────────────────
-// Phoenix 工具文件由 Rust 执行器直接覆盖,共享 hooks 只更新本工具条目。
-// 旧工具是否删除由 npm 安装入口询问,工具清理不备份、不迁移旧数据。
+// Phoenix 工具文件由 Rust 执行器直接覆盖(符号链接的 skill 目录换成副本),
+// 共享 hooks 只更新本工具条目。旧工具是否删除由 npm 安装入口询问,不备份、不迁移旧数据。
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
 const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
@@ -46,35 +46,24 @@ function phoenixFailure(code, message) {
   return Object.assign(new Error(message), { code });
 }
 
-// 退出码沿用执行器:2 参数/路径,3 冲突/待恢复/融合未就绪,4 文件或运行环境。
+// 退出码沿用执行器:2 参数/路径,4 文件或运行环境。
 function runPhoenix(binary, args) {
   const result = spawnSync(binary, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true });
   if (result.error) throw phoenixFailure(4, `无法运行 Phoenix UI engine: ${result.error.message}`);
   try {
     return { code: result.status, report: JSON.parse(result.stdout) };
   } catch {
-    throw phoenixFailure([2, 3].includes(result.status) ? result.status : 4,
+    throw phoenixFailure(result.status === 2 ? 2 : 4,
       `Phoenix UI 安装执行器失败(exit ${result.status}): ${(result.stderr || '').trim()}`);
   }
 }
 
-// Tool directories are reinstallable. Shared settings retain unrelated entries.
+// Old Impeccable tools in the project and the user's home. Shared settings
+// keep every unrelated entry.
 function preparePhoenixTools(project, providers) {
-  const refresh = [];
   const legacy = new Set();
   const configs = new Set();
-  const parents = new Map();
-  let managed = [];
-  try {
-    managed = readJson(path.join(project, '.phoenix-ui/install/active.json')).ownership
-      .filter(item => item.sha256).map(item => item.path);
-  } catch { /* The engine reports an absent or invalid receipt during preflight. */ }
   const present = (file) => !!fs.lstatSync(file, { throwIfNoEntry: false });
-  const checked = (root, relative) => {
-    const file = path.join(root, relative);
-    parents.set(file, root);
-    return file;
-  };
   const home = fs.realpathSync(os.homedir());
   for (const provider of providers) {
     const roots = provider === '.agents' || provider === '.codex'
@@ -86,22 +75,18 @@ function preparePhoenixTools(project, providers) {
           ...['asset-producer', 'documenter', 'finish-reviewer', 'manual-edit-applier']
             .map(name => `${dir}/agents/impeccable-${name}.md`),
         ]) {
-          // An earlier explicit migration may own a Phoenix compatibility entry.
-          if (root === project && managed.some(file => file === relative || file.startsWith(`${relative}/`))) continue;
-          const file = checked(root, relative);
+          const file = path.join(root, relative);
           if (present(file)) legacy.add(file);
         }
         const shared = dir === '.claude' ? ['settings.json', 'settings.local.json']
           : dir === '.gemini' ? ['settings.json']
             : ['.github', '.grok'].includes(dir) ? ['hooks/impeccable.json', 'hooks/phoenix-ui.json'] : ['hooks.json'];
         for (const relative of shared) {
-          const file = checked(root, `${dir}/${relative}`);
+          const file = path.join(root, dir, relative);
           if (present(file)) configs.add(file);
         }
       }
     }
-    const file = checked(project, `${provider}/skills/phoenix-ui`);
-    if (fs.lstatSync(file, { throwIfNoEntry: false })?.isSymbolicLink()) refresh.push(file);
   }
   const oldCommand = value => typeof value === 'string'
     && /(?:skills[\\/]impeccable[\\/]scripts[\\/](?:impeccable(?:\.cmd)?|hook(?:-(?:probe|before-edit|after-edit|stop))?\.mjs)|(?:^|[\s"'])impeccable\s+hook\b)/.test(value);
@@ -110,12 +95,8 @@ function preparePhoenixTools(project, providers) {
   const originals = [...configs].map(file => ({ file, before: fs.readFileSync(file) }));
   const hasLegacy = legacy.size > 0 || originals.some(({ before }) =>
     /impeccable/.test(before.toString()) && (oldCommand(before.toString().replaceAll('\\"', '"')) || /"impeccable[^"\n]*"\s*:\s*true/.test(before.toString())));
-  const covers = relative => refresh.some(file => {
-    const target = path.relative(project, file).split(path.sep).join('/');
-    return relative === target || relative.startsWith(`${target}/`);
-  });
   return {
-    hasLegacy, covers,
+    hasLegacy,
     apply(replace) {
       const updates = [];
       if (replace) {
@@ -138,20 +119,10 @@ function preparePhoenixTools(project, providers) {
             .map(([key, value]) => [key, key.startsWith('impeccable') ? false : value]));
           if (JSON.stringify(data) !== JSON.stringify(next)) updates.push({ ...item, after: JSON.stringify(next, null, 2) + '\n' });
         }
-        for (const item of updates) {
-          if (!fs.readFileSync(item.file).equals(item.before)) throw phoenixFailure(3, `配置在预检后发生变化,请重跑: ${item.file}`);
+        for (const file of legacy) {
+          fs.rmSync(file, { recursive: true, force: true });
+          console.log(`  删除  ${file}`);
         }
-      }
-      const removals = [...refresh, ...(replace ? legacy : [])];
-      for (const file of [...removals, ...updates.map(item => item.file)]) {
-        for (let dir = path.dirname(file); dir !== parents.get(file); dir = path.dirname(dir)) {
-          if (fs.lstatSync(dir, { throwIfNoEntry: false })?.isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
-        }
-        if (updates.some(item => item.file === file) && fs.lstatSync(file).isSymbolicLink()) throw phoenixFailure(3, `共享配置是符号链接,未修改: ${file}`);
-      }
-      for (const file of removals) {
-        fs.rmSync(file, { recursive: true, force: true });
-        console.log(`  ${refresh.includes(file) ? '重新安装' : '删除'}  ${file}`);
       }
       for (const item of updates) {
         fs.writeFileSync(item.file, item.after);
@@ -162,7 +133,7 @@ function preparePhoenixTools(project, providers) {
   };
 }
 
-// 预检只写用户 cache 里的 engine;dry-run 不写项目。冲突时整个安装在写项目前停下。
+// 预检只写用户 cache 里的 engine;dry-run 不写项目。配置无效时整个安装在写项目前停下。
 async function preparePhoenix(targetDir, options) {
   const manifest = bootstrap.manifestAt(path.join(PHOENIX_DIR, 'VERSION.json'));
   const target = bootstrap.platformTarget();
@@ -173,16 +144,10 @@ async function preparePhoenix(targetDir, options) {
     throw phoenixFailure(error.code || 4, `Phoenix UI engine 未就绪,未修改项目: ${error.message}\n`
       + '  可用 --release-dir=DIR 指向已核验的离线 release 目录,或加 --no-phoenix-ui 先安装其余部分。');
   }
-  const args = ['install', '--project', targetDir, '--bundle-root', path.join(PHOENIX_DIR, 'bundle'),
-    '--keep-impeccable', '--json'];
+  const args = ['install', '--project', targetDir, '--bundle-root', path.join(PHOENIX_DIR, 'bundle'), '--json'];
   if (options.providers) args.push('--providers', options.providers);
   const plan = runPhoenix(binary, [...args, '--dry-run']).report;
-  const tools = preparePhoenixTools(plan.project, plan.providers);
-  if (plan.status === 'conflict' && plan.conflicts.some(conflict => !tools.covers(conflict.path))) {
-    printPhoenix(plan, manifest);
-    throw phoenixFailure(3, 'Phoenix UI 预检发现冲突,未修改项目。解决上列冲突后重跑;或加 --no-phoenix-ui 先安装其余部分。');
-  }
-  return { manifest, binary, args, tools };
+  return { manifest, binary, args, tools: preparePhoenixTools(plan.project, plan.providers) };
 }
 
 function runDiagram(binary, args) {
@@ -196,100 +161,35 @@ function runDiagram(binary, args) {
   }
 }
 
-function prepareDiagramTools(project, providers) {
-  const refresh = [];
-  for (const provider of providers.filter(name => name !== '.codex')) {
-    const relative = `${provider}/skills/phoenix-diagram`;
-    const file = path.join(project, relative);
-    const stat = fs.lstatSync(file, { throwIfNoEntry: false });
-    if (!stat?.isSymbolicLink()) continue;
-    for (let dir = path.dirname(file); dir !== project; dir = path.dirname(dir)) {
-      if (fs.lstatSync(dir).isSymbolicLink()) throw phoenixFailure(3, `工具目录的父路径是符号链接,未修改: ${dir}`);
-    }
-    refresh.push({ file, relative, linked: true });
-  }
-  return {
-    covers(conflict) {
-      return refresh.some(item => (['install/unowned-file', 'install/extra-file'].includes(conflict.code)
-        && (conflict.path === item.relative || conflict.path.startsWith(`${item.relative}/`)))
-        || (item.linked && conflict.code === 'install/unsafe-parent' && conflict.message === item.file));
-    },
-    apply() {
-      for (const { file } of refresh) {
-        // Remove the installed entry itself; never traverse a skills-manager symlink.
-        fs.rmSync(file, { recursive: true, force: true });
-        console.log(`  重新安装  ${file}`);
-      }
-    },
-  };
-}
-
 async function prepareDiagram(targetDir, options) {
   try {
     const ready = await diagramBootstrap.preflight({
       project: targetDir, manifestPath: path.join(DIAGRAM_DIR, 'VERSION.json'),
-      bundleRoot: path.join(DIAGRAM_DIR, 'bundle'), packageJsonPath: path.join(PKG_ROOT, 'package.json'),
-      releaseDir: options.diagramReleaseDir, env: process.env, allowInstall: true, checkReceipt: false,
+      bundleRoot: path.join(DIAGRAM_DIR, 'bundle'), releaseDir: options.diagramReleaseDir, env: process.env, allowInstall: true,
     });
     const args = ['install', '--project', targetDir, '--bundle-root', ready.bundleRoot, '--json'];
     if (options.providers) args.push('--providers', options.providers);
     const planned = runDiagram(ready.enginePath, [...args, '--dry-run']);
-    const tools = prepareDiagramTools(targetDir, planned.report.providers || []);
-    const reinstallable = planned.code === 3 && planned.report.status === 'conflict'
-      && planned.report.conflicts.length > 0 && planned.report.conflicts.every(conflict => tools.covers(conflict));
-    if (!reinstallable && (planned.code !== 0 || !['planned', 'unchanged'].includes(planned.report.status))) {
+    if (planned.code !== 0 || !['planned', 'unchanged'].includes(planned.report.status)) {
       printDiagram(planned.report, ready.manifest);
       throw phoenixFailure(planned.code || 3, 'Phoenix Diagram 预检失败');
     }
-    return { manifest: ready.manifest, binary: ready.enginePath, args, tools };
+    return { manifest: ready.manifest, binary: ready.enginePath, args };
   } catch (error) {
     throw phoenixFailure(Number.isInteger(error.code) ? error.code : 4, `Phoenix Diagram 未就绪,未修改项目: ${error.message}\n`
       + '  可用 --diagram-release-dir=DIR 指向匹配的完整离线目录,或加 --no-phoenix-diagram 跳过本工具。');
   }
 }
 
-async function migrateDiagram(project, options, confirmed) {
-  const ready = await diagramBootstrap.preflight({
-    project, exactProject: true, manifestPath: path.join(DIAGRAM_DIR, 'VERSION.json'),
-    bundleRoot: path.join(DIAGRAM_DIR, 'bundle'), packageJsonPath: path.join(PKG_ROOT, 'package.json'),
-    releaseDir: options.diagramReleaseDir, env: process.env, allowInstall: false, checkReceipt: false,
-  });
-  const args = ['migrate', '--from-archify', '--project', ready.project, '--bundle-root', ready.bundleRoot, '--json'];
-  if (options.providers) args.push('--providers', options.providers);
-  const planned = runDiagram(ready.enginePath, [...args, '--dry-run']);
-  printDiagram(planned.report, ready.manifest);
-  if (planned.code !== 0) { process.exitCode = planned.code || 3; return; }
-  console.log('  Archify 仅移除上述所选项目/provider 的完整已知来源;不备份,回滚不重建旧入口,需要时按原来源重装。');
-  let answer = confirmed;
-  if (!answer && !process.stdin.isTTY) throw phoenixFailure(3, '非交互迁移需要显式 --confirm-remove-archify;未开始删除或新入口写入。');
-  if (!answer) {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    try { answer = await confirm('确认直接移除上述 Archify 并安装 Phoenix Diagram? [y/N] ', '', rl[Symbol.asyncIterator]()); }
-    finally { rl.close(); }
-  }
-  if (!answer) { console.log('  取消迁移;未开始删除或新入口写入。'); return; }
-  const applied = runDiagram(ready.enginePath, [...args, '--confirm-remove-archify']);
-  printDiagram(applied.report, ready.manifest);
-  process.exitCode = applied.code || 0;
-}
-
 function printDiagram(report, manifest) {
   const { toolVersion, npmPackageVersion } = manifest.data;
   console.log(`Phoenix Diagram ${toolVersion} (@xgent-ai/skills@${npmPackageVersion}): ${PHOENIX_STATUS[report.status] || report.status}`);
-  for (const item of report.removals || []) console.log(`  ${item.status}  ${item.path} (${item.source})`);
-  for (const item of report.preserved || []) console.log(`  保留  ${item}`);
-  if (report.rollbackCommand) console.log(`  新入口回滚  ${report.rollbackCommand}`);
-  for (const item of report.reinstallInstructions || []) console.log(`  旧入口  ${item}`);
   for (const item of report.writes || []) console.log(`  写入  ${item.path}`);
-  for (const item of report.conflicts || []) console.log(`  冲突  ${item.path}: ${item.message}`);
+  for (const item of report.removals || []) console.log(`  移除  ${item}`);
   for (const item of report.diagnostics || []) console.log(`  诊断  ${item.code}: ${item.message}`);
-  if (report.recovered?.length) console.log(`  恢复  ${report.recovered.join(', ')}`);
-  if (report.transactionId) console.log(`  事务  ${report.transactionId};日志 ${report.journal};备份 ${report.backup}`);
   if (report.status === 'installed') {
     for (const provider of (report.providers || []).filter(p => p !== '.codex')) console.log(`  重载  ${provider}: 新开项目会话加载 ${provider === '.agents' ? '$' : '/'}phoenix-diagram`);
   }
-  if (report.recoveryCommand && report.status === 'recovery-required') console.log(`  恢复命令  ${report.recoveryCommand}`);
-  for (const item of report.localIgnore || []) console.log(`  本地说明  ${item}`);
 }
 
 function groupedPaths(paths) {
@@ -311,34 +211,14 @@ function reloadStep(provider) {
 function printPhoenix(report, manifest) {
   const { toolVersion, npmPackageVersion } = manifest.data;
   console.log(`Phoenix UI ${toolVersion} (@xgent-ai/skills@${npmPackageVersion}): ${PHOENIX_STATUS[report.status] || report.status}`);
-  if (report.recovered) console.log(`  恢复  上次中断的事务 ${report.recovered}`);
-  if (report.migrationSources.length) {
-    console.log(`  迁移  认领 impeccable 旧版安装(来源 @xgent-ai/skills ${report.migrationSources.join(', ')}),旧入口移入备份`);
-  }
   for (const [label, paths] of [['写入', report.writes], ['合并', report.sharedJson], ['移除', report.removals]]) {
     for (const entry of groupedPaths(paths)) console.log(`  ${label}  ${entry}`);
   }
   const skillProviders = report.providers.filter((provider) => provider !== '.codex');
-  const migrated = report.migrationSources.length > 0 || report.transitionEntries.length > 0;
   if (skillProviders.length) {
-    console.log(`  命令  ${skillProviders.map((provider) => {
-      const prefix = provider === '.agents' ? '$' : '/';
-      return `${provider}: ${migrated ? `${prefix}impeccable → ` : ''}${prefix}phoenix-ui`;
-    }).join(';')}`);
+    console.log(`  命令  ${skillProviders.map((provider) => `${provider}: ${provider === '.agents' ? '$' : '/'}phoenix-ui`).join(';')}`);
   }
-  for (const entry of report.transitionEntries) console.log(`  提示  ${entry} 保留一个迁移主版本,只指向新命令`);
-  for (const conflict of report.conflicts) console.log(`  冲突  ${conflict.path}: ${conflict.message}`);
-  for (const finding of report.findings) {
-    if (!finding.blockingIntegration && ['document-old-entry', 'personal-old-command'].includes(finding.kind)) continue;
-    console.log(`  ${finding.blockingIntegration ? '待处理' : '说明'}  ${finding.path}: ${finding.message}`);
-  }
-  for (const item of report.unconsumed) console.log(`  未迁移  ${item.path} ${item.field}: ${item.reason}`);
-  if (report.transactionId && ['installed', 'integration-pending'].includes(report.status)) {
-    console.log(`  事务  ${report.transactionId};备份 ${report.backups}`);
-    const project = bootstrap.shellQuote(report.project);
-    console.log(`  回滚  npm exec --package=@xgent-ai/skills@${npmPackageVersion} -- phoenix-ui migrate --rollback ${report.transactionId} --project ${project}`);
-  }
-  if (['installed', 'integration-pending'].includes(report.status)) {
+  if (report.status === 'installed') {
     for (const provider of skillProviders) console.log(`  重载  ${reloadStep(provider)}`);
   }
 }
@@ -369,10 +249,6 @@ install 选项:
   --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
   --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
 ${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
-  --migrate-archify     仅执行 Diagram 预检/确认/迁移,跳过 hooks/settings/UI;
-                        使用已存在且匹配包内固定版本的引擎,不自动获取
-  --confirm-remove-archify  仅配 --migrate-archify,确认移除所选项目/provider 旧入口;
-                        不备份 Archify,回滚不重建旧入口,需要时按原来源重装
 ` : ''}  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
 ${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --providers=a,b       指定 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
                         目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
@@ -383,14 +259,13 @@ async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
   const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable',
-    ...(includesDiagram ? ['--no-phoenix-diagram', '--migrate-archify', '--confirm-remove-archify'] : [])].includes(f)
+    ...(includesDiagram ? ['--no-phoenix-diagram'] : [])].includes(f)
     && !['--providers=', '--release-dir=', ...(includesDiagram ? ['--diagram-release-dir='] : [])].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
     process.exit(1);
   }
-  if (flags.includes('--confirm-remove-archify') && !flags.includes('--migrate-archify')) throw phoenixFailure(2, '--confirm-remove-archify 需要 --migrate-archify');
   if (flags.includes('--replace-impeccable') && flags.includes('--keep-impeccable')) {
     throw phoenixFailure(1, '--replace-impeccable 与 --keep-impeccable 不能同时使用');
   }
@@ -407,13 +282,6 @@ async function install(args) {
     if (diagramReleaseDir !== undefined) diagramBootstrap.platformTarget();
     options.diagram = false;
     console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的四个 macOS/Linux 平台内。`);
-  }
-
-  if (flags.includes('--migrate-archify')) {
-    const target = path.resolve(dirArg || process.cwd());
-    if (!options.diagram) { console.log('  跳过 Phoenix Diagram 迁移;保留 Archify。'); return; }
-    await migrateDiagram(target, options, flags.includes('--confirm-remove-archify'));
-    return;
   }
 
   // 跳过 Phoenix 时仍按包内 bundle 校验 --providers,保持旧参数语义;启用时由执行器校验。
@@ -468,7 +336,6 @@ async function install(args) {
     // Cleanup may change shared settings.
     if (fs.existsSync(settingsPath)) settings = readJson(settingsPath);
   }
-  diagram?.tools.apply();
 
   const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
   fs.mkdirSync(hooksDestDir, { recursive: true });
@@ -506,7 +373,7 @@ async function install(args) {
     printPhoenix(applied.report, phoenix.manifest);
     if (applied.code !== 0) {
       process.exitCode = applied.code;
-      console.log(`未完成: XGENT 部分已安装;Phoenix UI ${PHOENIX_STATUS[applied.report.status] || applied.report.status},按上方提示处理后重跑。`);
+      console.log(`未完成: XGENT 部分已安装;Phoenix UI ${PHOENIX_STATUS[applied.report.status] || applied.report.status},处理后重跑。`);
       if (diagram) console.log('  待执行  Phoenix Diagram');
       return;
     }

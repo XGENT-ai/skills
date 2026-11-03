@@ -1,6 +1,6 @@
 {
   "stdout": "",
-  "stderr": "Error: side-tab has no extractable ignore value. Use /impeccable hooks ignore-value side-tab \"*\" --file <glob> to suppress it in matching files.\n",
+  "stderr": "Error: side-tab has no extractable ignore value. Use /phoenix-ui hooks ignore-value side-tab \"*\" --file <glob> to suppress it in matching files.\n",
   "exit": 1,
   "signal": null,
   "files": {}

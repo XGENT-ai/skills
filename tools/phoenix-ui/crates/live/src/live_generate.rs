@@ -8,9 +8,8 @@
 //! own output, so the agent's next move is the edit. With `--boot` it runs
 //! the lane's boot itself first (reusing a running helper), and with
 //! `--open` it opens the dev URL in the browser when no page is connected:
-//! one command from a cold project to a leased generate event.
+//! one command from a cold project to a delivered generate event.
 
-use crate::live_resume::self_cmd;
 use crate::paths::read_live_server_info;
 use crate::roots::enter_live_root;
 use crate::util::println;
@@ -55,7 +54,7 @@ browser_navigate, Claude Code's Browser pane, Codex: --open or the user), so no
 second browser is ever launched behind a harness that has one.
 
 On success the output carries the session's generate event as `event` (already
-leased, with its _instructions), so the next command is the edit, then
+delivered, with its _instructions), so the next command is the edit, then
 `live-poll --reply <id> done --file <path> --then-poll` for the accept.
 ";
 
@@ -194,7 +193,7 @@ fn instructions_for(result: &Map<String, Value>, self_cmd: &str) -> Option<Strin
         let reply = format!("{} live-poll --reply {} done --file <project-root-relative path you wrote> --then-poll", self_cmd, s("sessionId"));
         if result.get("event").map(|e| e.is_object()).unwrap_or(false) {
             return Some(format!(
-                "Session {} started: the browser scrolled to the target and fired Go (action \"{}\", count {}). Its generate event is in this output as `event`, already leased: handle it exactly per live.md's Handle generate, as event._instructions say (the action's reference, section 4 planning, knobs per section 7, all variants in ONE edit at the scaffold's splice). When the edit is written, reply and wait for the user's choice in one call: {}. The accept it returns carbonizes like plain live's: finish live.md's Required after accept, run live-complete, then stop the helper.",
+                "Session {} started: the browser scrolled to the target and fired Go (action \"{}\", count {}). Its generate event is in this output as `event`, already delivered: handle it exactly per live.md's Handle generate, as event._instructions say (the action's reference, section 4 planning, knobs per section 7, all variants in ONE edit at the scaffold's splice). When the edit is written, reply and wait for the user's choice in one call: {}. The accept it returns carbonizes like plain live's: finish live.md's Required after accept, run live-complete, then stop the helper.",
                 s("sessionId"), s("action"), n("count"), reply
             ));
         }
@@ -215,7 +214,7 @@ fn instructions_for(result: &Map<String, Value>, self_cmd: &str) -> Option<Strin
         "no_browser_connected" if result.get("opened").map(|o| o.is_object()).unwrap_or(false) => format!("The page was opened in the browser but no overlay connected within {} ms. The dev server may still be compiling, or the page does not carry the injected tag (check pageFiles). Reload the page, then rerun this command.", n("waitedMs")),
         "no_browser_connected" if !s("devUrl").is_empty() => format!("{}No page with the live overlay connected within {} ms. {} Then rerun this exact command with --wait-for-browser 60000.", open_ignored_note(result), n("waitedMs"), open_in_harness_hint(&s("harness"), &s("devUrl"), self_cmd)),
         "no_browser_connected" => "No page with the live overlay is connected. Open the app URL that serves a pageFiles entry yourself with your harness browser tool, then rerun this command. Only when no browser tool exists: give the user the URL and rerun with --wait-for-browser 120000 so the command fires as soon as they open the page.".to_string(),
-        "browser_timeout" => "The overlay did not answer in time, and no session was started for this request (a Go that lands late is refused). The page may be mid-reload: reload the app page, then rerun this command.".to_string(),
+        "browser_timeout" => "The overlay did not answer in time. The page may be mid-reload: reload the app page, then rerun this command.".to_string(),
         "invalid_selector" => "The selector is not valid CSS. Fix the selector syntax and rerun.".to_string(),
         "no_match" => {
             if n("rawMatchCount") > 0 {
@@ -374,19 +373,18 @@ fn boot_summary(boot: &Map<String, Value>) -> Value {
 }
 
 /// Collect the session's own generate event (`GET /poll?types=generate&id=`)
-/// so the caller's next move is the edit. The event is leased exactly as a
-/// poll would lease it; nothing else in the queue is touched.
+/// so the caller's next move is the edit. The event is delivered exactly as
+/// a poll would deliver it; nothing else in the queue is touched.
 fn fetch_generate_event(port: i64, token: &str, session_id: &str, budget: Duration, self_cmd: &str) -> Option<Value> {
     let deadline = Instant::now() + budget;
     while Instant::now() < deadline {
         let remaining = deadline.saturating_duration_since(Instant::now()).as_millis() as u64;
         let slice = remaining.clamp(1_000, 5_000);
         let url = format!(
-            "http://127.0.0.1:{}/poll?token={}&timeout={}&leaseMs={}&types=generate&id={}",
+            "http://127.0.0.1:{}/poll?token={}&timeout={}&types=generate&id={}",
             port,
             crate::live_poll::form_encode(token),
             slice,
-            crate::live_poll::DEFAULT_EVENT_LEASE_MS,
             crate::live_poll::form_encode(session_id)
         );
         let agent = ureq::AgentBuilder::new()
@@ -446,7 +444,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     }
     let cwd = io.cwd.to_string_lossy().into_owned();
     let env = io.env.clone();
-    let me = self_cmd(io);
+    let me = impeccable_context::provider::detect(&io.env, &io.cwd.to_string_lossy()).self_cmd;
     let flags = match parse_flags(&argv) {
         Ok(f) => f,
         Err(v) => return fail(io, v),
@@ -872,15 +870,6 @@ mod tests {
         m.insert("harness".into(), json!("cursor"));
         let text = instructions_for(&m, "impeccable").unwrap();
         assert!(text.contains("background terminal") && text.contains("--dev-url"), "{text}");
-    }
-
-    #[test]
-    fn timeout_instructions_promise_no_stray_session() {
-        let mut m = Map::new();
-        m.insert("ok".into(), json!(false));
-        m.insert("error".into(), json!("browser_timeout"));
-        let text = instructions_for(&m, "impeccable").unwrap();
-        assert!(text.contains("no session was started"), "{text}");
     }
 
     #[test]

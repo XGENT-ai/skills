@@ -1,30 +1,27 @@
 //! Context and utility verbs: context, doctor, pin, surface-brief,
-//! critique-storage, palette, embed-prompt, signals, detect-csp, concept-seed,
+//! critique-storage, embed-prompt, signals, detect-csp, concept-seed,
 //! serve-question, generate-image. Each verb is `run(args, io) -> exit code`.
 
-pub mod jsp;
-pub mod util;
-pub mod url;
-pub mod http;
-pub mod provider;
-pub mod hook_markers;
-pub mod target_args;
-pub mod target_slug;
-pub mod surface_briefs;
 pub mod artifact_schema;
 pub mod context;
+pub mod context_cli;
+pub mod detect_csp;
+pub mod hook_markers;
+pub mod http;
+pub mod jsp;
+pub mod pin;
+pub mod provider;
 pub mod staleness;
 pub mod staleness_notice;
-pub mod context_cli;
-pub mod pin;
-pub mod detect_csp;
+pub mod surface_briefs;
+pub mod target_args;
+pub mod target_slug;
+pub mod url;
+pub mod util;
 
 pub use context_cli::run as run_context;
-pub use pin::run as run_pin;
 pub use detect_csp::run as run_detect_csp;
-pub mod palette_data;
-pub mod palette;
-pub use palette::run as run_palette;
+pub use pin::run as run_pin;
 pub mod critique_storage;
 pub mod surface_brief_cli;
 pub use critique_storage::run as run_critique_storage;

@@ -39,6 +39,24 @@ pub const WS_CHARS: &str = r"\t\n\x0B\x0C\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{20
 /// A regex class equal to JS `\s`.
 pub const WS: &str = r"[\t\n\x0B\x0C\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]";
 
+/// JS `s.replace(/\s+/g, ' ')`.
+pub fn collapse_ws(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut in_ws = false;
+    for c in s.chars() {
+        if is_js_whitespace(c) {
+            if !in_ws {
+                out.push(' ');
+            }
+            in_ws = true;
+        } else {
+            out.push(c);
+            in_ws = false;
+        }
+    }
+    out
+}
+
 /// JS `String.prototype.trim`.
 pub fn trim(s: &str) -> &str {
     s.trim_matches(is_js_whitespace)
@@ -630,15 +648,14 @@ pub fn math_hypot(values: &[f64]) -> f64 {
     sum.sqrt() * max
 }
 
-/// JS `Math.sin` as V8 computes it in Node: fdlibm `sin` (Node builds V8
-/// without `V8_USE_LIBM_TRIG_FUNCTIONS`, so `base::ieee754::sin` is fdlibm).
+/// JS `Math.sin`, through the pinned software `libm` so native and WASM agree.
 pub fn math_sin(x: f64) -> f64 {
-    crate::fdlibm_trig::fdlibm_sin(x)
+    libm::sin(x)
 }
 
-/// JS `Math.cos` as V8 computes it in Node (see [`math_sin`]).
+/// JS `Math.cos` (see [`math_sin`]).
 pub fn math_cos(x: f64) -> f64 {
-    crate::fdlibm_trig::fdlibm_cos(x)
+    libm::cos(x)
 }
 
 /// JS `Math.pow` / `**`: preserve the ECMAScript special cases, then use the

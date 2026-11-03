@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 19165,
-      "sha256": "1e4e57d3ea9f842f5f57f4278ded701ba495340ee5bd55e77fa5c76a2a42c1f8",
+      "size": 18740,
+      "sha256": "188a7c3a5f20e14c4fd219f9fb05461398206d4288cafd143ed9bedfe729fb68",
       "mode": 420
     },
     {
@@ -101,8 +101,8 @@
     },
     {
       "path": "references/architecture-compare.md",
-      "size": 8445,
-      "sha256": "c760ed03277e8dfb5abad06ba64d56ef6932019c622cb92eb8b4691de466e658",
+      "size": 4480,
+      "sha256": "a1c51dce5edbc81def0b4820885a440b1945364bccd995940b0321e3311a768a",
       "mode": 420
     },
     {
@@ -125,26 +125,20 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 10406,
-      "sha256": "1b78c76b6347b5845d97f1375962d959ae3a35e42212e55763c960d40e357ec6",
+      "size": 5938,
+      "sha256": "cb7d532049765463693ee90ea707b9e3562513b62eade6ecc7e158ace9993c5e",
       "mode": 420
     },
     {
       "path": "references/extending-types.md",
-      "size": 2023,
-      "sha256": "3180cbc6803f8f5fe3662ce4a1af43e308a5744965107eeac65d22111d513652",
-      "mode": 420
-    },
-    {
-      "path": "references/migration.md",
-      "size": 6209,
-      "sha256": "61f88625e1ffcb278db47ca1ddc7ba94ea9b1c459dfecd023125b05195c8a969",
+      "size": 2014,
+      "sha256": "26de28647c70be6abd4ed03b3718b3f363655dc6a90c5185f272f0f36494fcca",
       "mode": 420
     },
     {
       "path": "references/preview.md",
-      "size": 4577,
-      "sha256": "ac8c4ecc1f90d366e980ecd8fb234049ecfcdc587247638ca642dc26a2b5d2e4",
+      "size": 4200,
+      "sha256": "e1f7371b0d563e5448fa1f906eb1fc52c797d04afa34df109bdfa66f83c81850",
       "mode": 420
     },
     {
@@ -233,8 +227,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 35018,
-      "sha256": "2b0e6f09be39d414d1d3928ed8ef8bd05f76504a03b039bca6200e5691ab0d31",
+      "size": 15426,
+      "sha256": "78d11784b2c3a7c2e934a9cd797c9e92212acbadd11ce24a0ad58223532a8a86",
       "mode": 420
     },
     {

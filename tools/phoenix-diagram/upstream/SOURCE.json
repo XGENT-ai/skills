@@ -121,18 +121,5 @@
     },
     "licenseCount": 8,
     "noticeCount": 2
-  },
-  "nativeMigration": {
-    "manifest": "migration-sources/archify-v1.json",
-    "manifestSize": 127920,
-    "manifestSha256": "9539830848515e15c246313058433926afe89fb3e8b2d01549284bfb6585053f",
-    "archive": "upstream/archify-2.17-full-source.tar.gz",
-    "archiveSize": 3871723,
-    "archiveSha256": "50c67278595f1aedadfa1e6c8f0977e14678753d90c177b8a437bec40342785a",
-    "sourceFileCounts": [
-      219,
-      219,
-      157
-    ]
   }
 }

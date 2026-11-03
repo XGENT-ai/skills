@@ -1,5 +1,5 @@
 {
-  "stdout": "Impeccable doctor: <WS>\n\nNo drift found. Every artifact matches what this version reads.\n",
+  "stdout": "Phoenix UI doctor: <WS>\n\nNo drift found. Every artifact matches what this version reads.\n",
   "stderr": "",
   "exit": 0,
   "signal": null,

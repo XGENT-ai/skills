@@ -1,10 +1,8 @@
 // --- browser-bundle/30-scan-common.js ---
-// Scan-config plumbing shared by the in-page bundle (50-scan.js) and the
-// extension's offscreen document (60-offscreen.js): which visual-contrast
-// mode a scan runs in, the options it resolves to, which analyses the lazy
-// (scroll-into-view) pass re-tries, and the scanId echo. `config` is the
-// page's `window.__PHOENIX_UI_CONFIG__` in the page and the extension's scan
-// config offscreen.
+// Scan-config plumbing for the in-page bundle (50-scan.js): which
+// visual-contrast mode a scan runs in, the options it resolves to, which
+// analyses the lazy (scroll-into-view) pass re-tries, and the scanId echo.
+// `config` is the page's `window.__PHOENIX_UI_CONFIG__`.
 
 // Visual contrast has three modes. Explicit true runs the full sampled
 // pass; explicit false disables it entirely (the deterministic-only mode

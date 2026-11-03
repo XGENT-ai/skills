@@ -33,19 +33,9 @@
 //! Element/document adapters (`checkElement*`, `*DOM`, `*FromDoc`) are NOT in
 //! core: the static ones live in the `html` crate against its DOM model, the
 //! browser ones live in `crate::browser` against the probe trait.
-//!
-//! `vectors_a` (rules, css_scan, html_patterns) and `vectors_b` (measures,
-//! text_rules) hold this crate's vector-replay dispatch arms for
-//! `crate::vectors`; foundation's own arms are dispatched by
-//! `impeccable_foundation::vectors`.
 
 pub mod css_scan;
 pub mod html_patterns;
 pub mod measures;
 pub mod rules;
 pub mod text_rules;
-
-#[cfg(feature = "vectors")]
-pub mod vectors_a;
-#[cfg(feature = "vectors")]
-pub mod vectors_b;

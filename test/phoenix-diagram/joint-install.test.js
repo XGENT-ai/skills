@@ -30,7 +30,6 @@ function realEngines(){
   const doctor=spawnSync(diagram,['doctor','--json'],{encoding:'utf8'});
   const identity=JSON.parse(doctor.stdout).engine;
   const uiBytes=fs.readFileSync(ui),diagramBytes=fs.readFileSync(diagram);
-  assert.equal(sha(diagramBytes),identity.binary.sha256,'Provide immutable native snapshots');
   return engines={ui,diagram,uiBytes,diagramBytes,identity};
 }
 async function fixture(t,{warmUi=true}={}){
@@ -106,36 +105,23 @@ function tree(directory,includeDirectories=false){
   }}
   visit('');return result;
 }
-function physical(file){const stat=fs.statSync(file,{bigint:true});return {device:stat.dev.toString(),inode:stat.ino.toString()};}
-async function install(f,project,flags=[],onUiActive){
+async function install(f,project,flags=[]){
   const args=[path.join(f.pkg,'bin/xgent-skills.js'),'install',project,...flags];
-  const watchers=new Map();let child,running=false,barrier=false,failure,stdout='',stderr='';
+  let child,running=false,failure,stdout='',stderr='';
   const kill=()=>{if(running&&child?.pid){try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}}};
   const fail=error=>{failure||=error;kill();};
-  function inspect(){
-    if(barrier||failure)return;
-    const directories=process.platform==='darwin'?[project]:[project,path.join(project,'.phoenix-ui'),path.join(project,'.phoenix-ui/install')];
-    for(const directory of directories){
-      if(watchers.has(directory)||!fs.existsSync(directory))continue;
-      try{const watcher=fs.watch(directory,{recursive:process.platform==='darwin'},inspect);watcher.on('error',fail);watchers.set(directory,watcher);}catch(error){if(error.code!=='ENOENT')fail(error);}
-    }
-    const active=path.join(project,'.phoenix-ui/install/active.json');
-    if(!fs.existsSync(active))return;
-    try{const bytes=fs.readFileSync(active),receipt=JSON.parse(bytes);assert.equal(receipt.schema_version,1);assert.ok(receipt.transaction_id);barrier=true;onUiActive({path:active,bytes,identity:physical(active)});}catch(error){fail(error);}
-  }
-  if(onUiActive)inspect();
-  try{child=spawn(process.execPath,args,{cwd:project,env:f.env,stdio:['ignore','pipe','pipe'],detached:true});running=true;}catch(error){for(const watcher of watchers.values())watcher.close();throw error;}
+  child=spawn(process.execPath,args,{cwd:project,env:f.env,stdio:['ignore','pipe','pipe'],detached:true});running=true;
   const done=new Promise(resolve=>{
-    child.stdout.on('data',bytes=>{stdout+=bytes;if(stdout.length>16*1024*1024)fail(new Error('Installer stdout exceeded bound'));if(onUiActive)inspect();});
+    child.stdout.on('data',bytes=>{stdout+=bytes;if(stdout.length>16*1024*1024)fail(new Error('Installer stdout exceeded bound'));});
     child.stderr.on('data',bytes=>{stderr+=bytes;if(stderr.length>16*1024*1024)fail(new Error('Installer stderr exceeded bound'));});
     child.once('error',error=>{failure||=error;});
     child.once('close',(code,signal)=>{running=false;resolve({code,signal,stdout,stderr});});
   });
   const timeout=setTimeout(()=>fail(new Error('Real installer exceeded its ten-minute test deadline')),600000);
   const exitKill=()=>kill();process.once('exit',exitKill);
-  const cleanup=async()=>{clearTimeout(timeout);for(const watcher of watchers.values())watcher.close();kill();await done;process.removeListener('exit',exitKill);};
+  const cleanup=async()=>{clearTimeout(timeout);kill();await done;process.removeListener('exit',exitKill);};
   f.cleanups.add(cleanup);
-  try{const result=await done;if(failure)throw failure;if(onUiActive)assert(barrier,`The real UI active.json barrier must be observed (exit ${result.code}, signal ${result.signal})\n${stdout.slice(-4000)}\n${stderr.slice(-2000)}`);return result;}finally{await cleanup();f.cleanups.delete(cleanup);}
+  try{const result=await done;if(failure)throw failure;return result;}finally{await cleanup();f.cleanups.delete(cleanup);}
 }
 const both=f=>[`--release-dir=${f.uiRelease}`,`--diagram-release-dir=${f.diagramRelease}`];
 function assertBoth(project,provider){for(const name of ['phoenix-ui','phoenix-diagram'])assert(fs.existsSync(path.join(project,provider,'skills',name,'SKILL.md')),`${provider}/${name}`);}
@@ -156,7 +142,6 @@ for(const linked of [false,true])nativeTest(`existing diagram skill ${linked?'sy
     assert(!fs.lstatSync(dest).isSymbolicLink());assert(!fs.existsSync(path.join(dest,'old-source-marker')));
   }
   assert.deepEqual(tree(source),sourceBefore);
-  assert(fs.existsSync(path.join(project,'.phoenix-diagram/install/active.json')));
   const before=tree(project),again=await install(f,project,both(f));assert.equal(again.code,0,again.stdout+again.stderr);assert.deepEqual(tree(project),before);
 });
 
@@ -164,11 +149,10 @@ nativeTest('default installer really coinstalls both tools, is idempotent, and s
   const f=await fixture(t),project=f.project('default project');
   const first=await install(f,project,both(f));assert.equal(first.code,0,first.stdout+first.stderr);
   assertBoth(project,'.claude');assert.match(first.stdout,/Phoenix UI.*已安装/);assert.match(first.stdout,/Phoenix Diagram.*已安装/);
-  const before=tree(project),activeUi=path.join(project,'.phoenix-ui/install/active.json'),activeDiagram=path.join(project,'.phoenix-diagram/install/active.json');
-  const identities=[physical(activeUi),physical(activeDiagram)];
+  const before=tree(project);
   const second=await install(f,project,both(f));assert.equal(second.code,0,second.stdout+second.stderr);
   assert.match(second.stdout,/Phoenix UI.*未变/);assert.match(second.stdout,/Phoenix Diagram.*未变/);
-  assert.deepEqual(tree(project),before);assert.deepEqual([physical(activeUi),physical(activeDiagram)],identities);
+  assert.deepEqual(tree(project),before);
   const skipped=await install(f,project,['--no-phoenix-ui','--no-phoenix-diagram','--release-dir=/missing-ui','--diagram-release-dir=/missing-diagram']);
   assert.equal(skipped.code,0,skipped.stdout+skipped.stderr);assert.deepEqual(tree(project),before);
 });
@@ -179,7 +163,6 @@ nativeTest('selected Codex providers isolate both skill roots from unselected ha
   assertBoth(project,'.agents');
   for(const provider of ['.claude','.cursor','.codex'])for(const name of ['phoenix-ui','phoenix-diagram'])assert.equal(fs.existsSync(path.join(project,provider,'skills',name)),false,`${provider}/${name} must remain absent`);
   assert.equal(fs.readFileSync(path.join(project,'.cursor/settings.user.json'),'utf8'),'unselected provider bytes\n');
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(project,'.phoenix-diagram/install/active.json'))).providers,['.agents','.codex']);
 });
 nativeTest('a ready real UI engine plus missing diagram resources causes zero XGENT or project writes',async t=>{
   const f=await fixture(t),project=f.project('preflight failure project');
@@ -204,19 +187,4 @@ nativeTest('UI and diagram release directories are never borrowed for the other 
     const local={...f,env:{...f.env,PHOENIX_UI_HOME:path.join(f.temp,`ui-cache-${index}`),PHOENIX_DIAGRAM_HOME:path.join(f.temp,`diagram-cache-${index}`)}};
     const result=await install(local,project,scenario.flags);assert.equal(result.code,4,result.stdout+result.stderr);assert.match(result.stderr,scenario.tool);assert.doesNotMatch(result.stderr,/ETIMEDOUT|Probe:/);assert.deepEqual(tree(project,true),before);
   }
-});
-nativeTest('a claimant created after the real UI active barrier survives diagram apply failure and the completed prefix remains',async t=>{
-  const f=await fixture(t),project=f.project('later claimant project');let barrier,claim;
-  const claimant=path.join(project,'.claude/skills/phoenix-diagram/SKILL.md'),content='Later user claimant: preserve exact bytes.\n';
-  const result=await install(f,project,both(f),observed=>{
-    assert.equal(fs.existsSync(path.join(project,'.phoenix-diagram/install/active.json')),false);
-    assert.equal(fs.existsSync(claimant),false);
-    fs.mkdirSync(path.dirname(claimant),{recursive:true});fs.writeFileSync(claimant,content,{flag:'wx',mode:0o644});
-    barrier=observed;claim=physical(claimant);
-  });
-  assert.equal(result.code,3,result.stdout+result.stderr);assert.match(result.stdout,/XGENT 已安装,Phoenix UI 已完成/);assert.match(result.stdout,/保留前段结果/);
-  assert(fs.existsSync(path.join(project,'.claude/hooks/xgent-statusline.js')));assert(fs.existsSync(path.join(project,'.claude/skills/phoenix-ui/SKILL.md')));
-  assert.deepEqual(fs.readFileSync(barrier.path),barrier.bytes);assert.deepEqual(physical(barrier.path),barrier.identity);
-  assert.equal(fs.readFileSync(claimant,'utf8'),content);assert.deepEqual(physical(claimant),claim);
-  assert.equal(fs.existsSync(path.join(project,'.phoenix-diagram/install/active.json')),false);
 });

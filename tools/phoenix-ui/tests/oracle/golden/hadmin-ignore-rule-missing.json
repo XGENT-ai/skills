@@ -1,6 +1,6 @@
 {
   "stdout": "",
-  "stderr": "Error: Pass a rule id, e.g. /impeccable hooks ignore-rule side-tab\n",
+  "stderr": "Error: Pass a rule id, e.g. /phoenix-ui hooks ignore-rule side-tab\n",
   "exit": 1,
   "signal": null,
   "files": {}

@@ -28,8 +28,6 @@ pub struct ApprovedReference { pub png: Vec<u8>, pub proof: Value }
 pub trait CapturedEntry {
     fn approved_reference(&self) -> Option<&ApprovedReference> { None }
     fn evidence(&self) -> &EntryEvidence;
-    /// Recheck original bytes while this in-process capture still owns its snapshot.
-    fn verify_current(&self) -> Result<(), String>;
 }
 pub trait EntryRenderer {
     fn capture_entry(&self, request: &EntryRequest) -> Result<Box<dyn CapturedEntry>, String>;

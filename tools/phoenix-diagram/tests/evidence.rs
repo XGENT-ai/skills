@@ -1,8 +1,7 @@
 use phoenix_diagram::{
-    check::FileIdentity,
-    delivery::{self, CompileRequest, EngineIdentity, Status},
+    delivery::{self, CompileRequest, Status},
     evidence::{verify, verify_with, EvidenceStatus, GitRunner, SourceEvidence},
-    input::{parse_input, sha256, CompileOptions, DiagramInput, DiagramType},
+    input::{parse_input, CompileOptions, DiagramInput, DiagramType},
     render::EmbeddedAssets,
 };
 use serde_json::{json, Value};
@@ -741,18 +740,8 @@ fn status_counts_and_digest_follow_the_references_and_bind_the_config() {
     assert_ne!(first.config_sha256, second.config_sha256);
 }
 
-fn engine() -> EngineIdentity {
-    EngineIdentity {
-        source_input_sha256: sha256(b"evidence test engine"),
-        input_contract_schema: 1,
-        receipt_schema: 1,
-        viewer_revision: "phoenix-v2".into(),
-        binary: FileIdentity::of(&fs::read(std::env::current_exe().unwrap()).unwrap()),
-    }
-}
-
 #[test]
-fn delivery_binds_evidence_and_strict_currency_rejects_tampering() {
+fn delivery_binds_evidence_into_the_html_and_config() {
     let (temp, revision) = repository("https://github.com/example/repo.git");
     let root = temp.join("repo");
     let mut document = cited(
@@ -767,13 +756,12 @@ fn delivery_binds_evidence_and_strict_currency_rejects_tampering() {
     document["meta"]["output"] = json!("report.html");
     let candidate = temp.join("candidate.json");
     fs::write(&candidate, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
-    let (options, engine) = (CompileOptions::default(), engine());
+    let options = CompileOptions::default();
     let assets = EmbeddedAssets::builtin();
     let request = |repo_root| CompileRequest {
         kind: DiagramType::Architecture,
         candidate: &candidate,
         options: &options,
-        engine: &engine,
         assets: &assets,
         repo_root,
         brand_cache: None,
@@ -790,7 +778,7 @@ fn delivery_binds_evidence_and_strict_currency_rejects_tampering() {
     assert_eq!(delivered.evidence["counts"]["verified"], 1);
     let html = fs::read_to_string(&output).unwrap();
     assert!(html.contains("\"sourceEvidence\":{\"schemaVersion\":1,\"status\":\"partial\""));
-    assert_eq!(delivery::check(&output, true, &engine).status, Status::Pass);
+    assert_eq!(delivery::check(&output).status, Status::Pass);
     let unchecked = temp.join("unchecked.html");
     let without = delivery::deliver(&request(None), &unchecked);
     assert_eq!(without.status, Status::Pass);
@@ -799,55 +787,4 @@ fn delivery_binds_evidence_and_strict_currency_rejects_tampering() {
         without.config_sha256, delivered.config_sha256,
         "the evidence digest is part of the config"
     );
-    let sidecar = delivery::sidecar_paths(&output, None).delivery;
-    let mut receipt: Value = serde_json::from_slice(&fs::read(&sidecar).unwrap()).unwrap();
-    receipt["evidence"]["evidenceSha256"] = without.evidence["evidenceSha256"].clone();
-    fs::write(&sidecar, serde_json::to_vec(&receipt).unwrap()).unwrap();
-    let tampered = delivery::check(&output, true, &engine);
-    assert!(
-        tampered
-            .diagnostics
-            .iter()
-            .any(|d| d.code == "provenance/evidence-mismatch"),
-        "{:?}",
-        tampered.diagnostics
-    );
-}
-
-#[test]
-fn embedded_evidence_must_cite_exactly_the_candidate_sources() {
-    let (temp, revision) = repository("https://github.com/example/repo.git");
-    let root = temp.join("repo");
-    let document = cited(
-        DiagramType::Architecture,
-        &revision,
-        json!([{"path":"src/lib.rs","line":1}]),
-    );
-    let parsed = input(DiagramType::Architecture, &document);
-    let evidence = verify(&parsed, Some(&root)).unwrap();
-    let metadata = |evidence: &SourceEvidence| json!({"sourceEvidence":evidence});
-    assert_eq!(
-        phoenix_diagram::evidence::bound(&parsed, &metadata(&evidence)).unwrap(),
-        evidence
-    );
-    let mut moved = evidence.clone();
-    moved.references[0].line = Some(2);
-    let mut silent = evidence.clone();
-    silent.references[0].state = "unverified".into();
-    let mut promoted = evidence.clone();
-    promoted.status = EvidenceStatus::Verified;
-    let mut hidden = evidence.clone();
-    hidden.unsourced.clear();
-    for tampered in [moved, silent, promoted, hidden] {
-        assert!(
-            phoenix_diagram::evidence::bound(&parsed, &metadata(&tampered)).is_err(),
-            "{tampered:?}"
-        );
-    }
-    let plain = input(
-        DiagramType::Architecture,
-        &self::document(DiagramType::Architecture),
-    );
-    assert!(phoenix_diagram::evidence::bound(&plain, &metadata(&SourceEvidence::none())).is_ok());
-    assert!(phoenix_diagram::evidence::bound(&plain, &metadata(&evidence)).is_err());
 }

@@ -158,41 +158,6 @@ fn successive_real_source_replacements_eventually_publish_only_the_latest_stable
 }
 
 #[test]
-fn a_later_output_claimant_is_preserved_and_cannot_be_served_as_old_success() {
-    let root = Workspace::new();
-    let input = root.path("input.json");
-    let output = root.path("preview.html");
-    fs::write(&input, source("OwnedFirst")).unwrap();
-    let mut session = Session::start(&root, &input, &output);
-    let initial = session.next("updated", 0);
-    let original = published(&session, &initial, &output, "OwnedFirst");
-    let foreign = b"later claimant must survive\n";
-    root.replace(&output, foreign);
-    root.replace(&input, &source("MustNotOverwriteClaimant"));
-    let failed = session.next("failed", 0);
-    assert_eq!(
-        failed["lastSuccessfulGeneration"], initial["generation"],
-        "{failed}"
-    );
-    assert_eq!(fs::read(&output).unwrap(), foreign);
-    let artifact = session.artifact();
-    assert_eq!(
-        artifact.status, 409,
-        "Replaced output must invalidate HTTP artifact: {artifact:?}"
-    );
-    assert_ne!(artifact.body, original);
-    root.replace(&input, &source("StillMustNotOverwrite"));
-    let until = std::time::Instant::now() + Duration::from_millis(1600);
-    while std::time::Instant::now() < until {
-        assert_eq!(fs::read(&output).unwrap(), foreign);
-        assert_eq!(session.artifact().status, 409);
-        std::thread::sleep(Duration::from_millis(50));
-    }
-    session.stop(libc::SIGTERM, 3);
-    assert_eq!(fs::read(&output).unwrap(), foreign);
-}
-
-#[test]
 fn loopback_routes_reject_foreign_hosts_origins_paths_and_mutations() {
     let root = Workspace::new();
     let input = root.path("input.json");

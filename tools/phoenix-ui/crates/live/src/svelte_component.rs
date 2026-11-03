@@ -12,7 +12,7 @@ use crate::accept_css::{
 use crate::accept_verify::verify_accepted_source;
 use crate::svelte_ast::{analyze_svelte_markup, build_props_script_v2, restore_svelte_markup};
 use crate::svelte_bridge::{load_svelte_compiler, SharedBridge};
-use crate::util::{exists, is_dir, json_pretty, jsp, safe_read, write_file, Env};
+use crate::util::{exists, json_pretty, jsp, safe_read, write_file, Env};
 use crate::wrap_common::leading_ws;
 use impeccable_core::js::{trim, WS};
 use once_cell::sync::Lazy;
@@ -21,7 +21,6 @@ use serde_json::{json, Map, Value};
 use std::collections::BTreeSet;
 
 pub const SVELTE_COMPONENT_ROOT: &str = "node_modules/.phoenix-ui-live";
-pub const LEGACY_SVELTE_COMPONENT_ROOT: &str = ".phoenix-ui/live/previews";
 pub const SVELTE_RUNTIME_FILE: &str = "node_modules/.phoenix-ui-live/__runtime.js";
 pub const SVELTE_PROBE_FILE: &str = "node_modules/.phoenix-ui-live/__probe.js";
 
@@ -584,30 +583,21 @@ pub fn find_svelte_component_manifest(
     if exists(&direct) {
         return read_manifest(&direct).map(Some);
     }
-    let legacy = jsp::join(&[cwd, LEGACY_SVELTE_COMPONENT_ROOT, id, "manifest.json"]);
-    if exists(&legacy) {
-        return read_manifest(&legacy).map(Some);
-    }
-    for root_rel in [SVELTE_COMPONENT_ROOT, LEGACY_SVELTE_COMPONENT_ROOT] {
-        let root = jsp::join(&[cwd, root_rel]);
-        if !exists(&root) {
+    let root = jsp::join(&[cwd, SVELTE_COMPONENT_ROOT]);
+    let Some(entries) = crate::source_search::read_dir_sorted(&root) else {
+        return Ok(None);
+    };
+    for entry in entries {
+        if !entry.is_dir {
             continue;
         }
-        let Some(entries) = crate::source_search::read_dir_sorted(&root) else {
+        let candidate = jsp::join(&[&root, &entry.name, "manifest.json"]);
+        if !exists(&candidate) {
             continue;
-        };
-        for entry in entries {
-            if !entry.is_dir {
-                continue;
-            }
-            let candidate = jsp::join(&[&root, &entry.name, "manifest.json"]);
-            if !exists(&candidate) {
-                continue;
-            }
-            if let Ok(m) = read_manifest(&candidate) {
-                if m.get("id").and_then(|v| v.as_str()) == Some(id) {
-                    return Ok(Some(m));
-                }
+        }
+        if let Ok(m) = read_manifest(&candidate) {
+            if m.get("id").and_then(|v| v.as_str()) == Some(id) {
+                return Ok(Some(m));
             }
         }
     }
@@ -1811,50 +1801,10 @@ pub fn bump_svelte_component_preview_revision(id: &str, cwd: &str) -> Option<Val
 
 /// JS: removeAllSvelteComponentSessions(cwd)
 pub fn remove_all_svelte_component_sessions(cwd: &str) {
-    for root_rel in [SVELTE_COMPONENT_ROOT, LEGACY_SVELTE_COMPONENT_ROOT] {
-        let root = jsp::join(&[cwd, root_rel]);
-        if exists(&root) {
-            let _ = std::fs::remove_dir_all(&root);
-        }
+    let root = jsp::join(&[cwd, SVELTE_COMPONENT_ROOT]);
+    if exists(&root) {
+        let _ = std::fs::remove_dir_all(&root);
     }
-}
-
-/// JS: sweepInactiveSvelteComponentSessions(activeIds, cwd) → { removed, removedRoot, kept }
-pub fn sweep_inactive_svelte_component_sessions(active_ids: &[String], cwd: &str) -> Value {
-    let mut removed: Vec<String> = Vec::new();
-    let mut kept: Vec<String> = Vec::new();
-    let mut removed_root = false;
-    for root_rel in [SVELTE_COMPONENT_ROOT, LEGACY_SVELTE_COMPONENT_ROOT] {
-        let root = jsp::join(&[cwd, root_rel]);
-        if !exists(&root) {
-            continue;
-        }
-        let Some(entries) = crate::source_search::read_dir_sorted(&root) else {
-            continue;
-        };
-        let mut kept_here = 0;
-        for entry in entries {
-            if !entry.is_dir || entry.name.starts_with("__") {
-                continue;
-            }
-            if active_ids.iter().any(|a| !a.is_empty() && *a == entry.name) {
-                kept.push(entry.name.clone());
-                kept_here += 1;
-                continue;
-            }
-            let p = jsp::join(&[&root, &entry.name]);
-            if std::fs::remove_dir_all(&p).is_ok() || !is_dir(&p) {
-                removed.push(entry.name.clone());
-            } else {
-                kept.push(entry.name.clone());
-                kept_here += 1;
-            }
-        }
-        if kept_here == 0 && std::fs::remove_dir_all(&root).is_ok() {
-            removed_root = true;
-        }
-    }
-    json!({ "removed": removed, "removedRoot": removed_root, "kept": kept })
 }
 
 /// JS: buildSvelteComponentCssAuthoring(count)

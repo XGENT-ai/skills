@@ -1186,7 +1186,7 @@ pub fn scan_css_text_for_buried_raster(style_text: &str) -> Vec<PatternFinding> 
             id: "buried-raster".to_string(),
             snippet: format!(
                 "raster under a near-opaque gradient wash: {}",
-                crate::js_ext_b::slice_utf16_prefix(js::trim(value), 90)
+                crate::js_ext_a::slice_utf16_prefix(js::trim(value), 90)
             ),
             selector: enclosing_css_selector(style_text, decl_index),
             index: None,

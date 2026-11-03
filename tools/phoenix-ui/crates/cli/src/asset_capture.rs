@@ -224,7 +224,9 @@ impl<'p, 'b> std::ops::DerefMut for CapturePage<'p, 'b> {
 impl CapturePage<'_, '_> {
     fn set_stylesheet(&mut self, text: &str) -> Result<(), String> {
         self.check_budget()?;
-        self.page.set_capture_stylesheet(&self.world, &self.stylesheet, text).map_err(|e| e.message)
+        self.page
+            .set_capture_stylesheet(&self.stylesheet, text)
+            .map_err(|e| e.message)
     }
     fn check_budget(&self) -> Result<(), String> {
         if self.started.elapsed() > Duration::from_secs(60) {
@@ -235,9 +237,7 @@ impl CapturePage<'_, '_> {
     }
     fn coverage(&mut self) -> Result<Value, String> {
         self.check_budget()?;
-        self.page
-            .capture_dom_coverage(&self.world)
-            .map_err(|e| e.message)
+        self.page.capture_dom_coverage().map_err(|e| e.message)
     }
 }
 fn eval(page: &mut CapturePage<'_, '_>, js: &str) -> Result<Value, String> {
@@ -293,7 +293,7 @@ fn evidence(page: &mut CapturePage<'_, '_>, urls: &[String]) -> Result<ResponseE
     page.response_evidence(urls).map_err(|e| e.message)
 }
 fn stable_network(e: &ResponseEvidence, revision: u64) -> bool {
-    !e.truncated && !e.changed_during_collection && e.revision == revision
+    !e.truncated && e.revision == revision
 }
 fn state_reason(s: &Value, r: &AssetCaptureRequest) -> Option<String> {
     if s["sameNodes"] != true {
@@ -415,16 +415,14 @@ fn capture_page(
         let (changed_in_region, changed_in_viewport) = changed_pixels(&first, &second, r);
         settling_checks.push(json!({"attempt":attempt+1,"domBeforeAfterStable":s==middle && s==after,
             "pixelsStable":first.data==second.data,"changedPixelsInRegion":changed_in_region,"changedPixelsInViewport":changed_in_viewport,
-            "networkStable":stable_network(&end,e.revision),"networkRevisionBefore":e.revision,"networkRevisionAfter":end.revision,
-            "networkChangedDuringCollection":e.changed_during_collection}));
+            "networkStable":stable_network(&end,e.revision),"networkRevisionBefore":e.revision,"networkRevisionAfter":end.revision}));
         out.receipt["settlingChecks"] = json!(settling_checks);
         out.receipt["settlingResponses"] = json!(end.responses.iter().map(|e|json!({"url":e.url,"status":e.status,"bytes":e.body.as_ref().map(Vec::len),"unavailable":e.unavailable_reason,"fromDiskCache":e.from_disk_cache})).collect::<Vec<_>>());
         if attempt == 2
             && (s != middle
                 || s != after
                 || first.data != second.data
-                || !stable_network(&end, e.revision)
-                || e.changed_during_collection)
+                || !stable_network(&end, e.revision))
         {
             out.images.push(CaptureImage {
                 name: "unsettled-before.png".into(),
@@ -439,7 +437,6 @@ fn capture_page(
             && s == after
             && first.data == second.data
             && stable_network(&end, e.revision)
-            && !e.changed_during_collection
         {
             settled = Some((s, png, first, end, list));
             break;
@@ -731,13 +728,12 @@ fn intervene(
         return Err(InterventionFailure {
             raster_only: &restored_dom == baseline && stable_network(&restored_network, revision),
             reason: format!(
-                "intervention did not restore stable page and network (DOM {}, pixels {}, network revision {} -> {}, truncated {}, changed while reading {})",
+                "intervention did not restore stable page and network (DOM {}, pixels {}, network revision {} -> {}, truncated {})",
                 &restored_dom == baseline,
                 restored_pixels.data == pixels.data,
                 revision,
                 restored_network.revision,
-                restored_network.truncated,
-                restored_network.changed_during_collection
+                restored_network.truncated
             ),
         });
     }

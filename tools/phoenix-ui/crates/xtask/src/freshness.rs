@@ -6,10 +6,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
-pub const ASSETS: [&str; 2] = [
-    "crates/live/assets/detect-antipatterns-browser.js",
-    "crates/live/assets/antipatterns.json",
-];
+pub const ASSET: &str = "crates/live/assets/detect-antipatterns-browser.js";
 const MANIFEST: &str = "crates/live/assets/bundle-inputs.json";
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -66,7 +63,7 @@ fn inputs(root: &Path) -> Result<BTreeMap<String, FileHash>, String> {
     ] {
         inputs.insert(name.to_string(), hash(&root.join(name))?);
     }
-    for name in ["foundation", "core", "wasm", "bundle", "xtask"] {
+    for name in ["foundation", "core", "wasm", "xtask"] {
         let dir = format!("crates/{name}");
         let manifest = format!("{dir}/Cargo.toml");
         inputs.insert(manifest.clone(), hash(&root.join(manifest))?);
@@ -102,10 +99,7 @@ fn input_hash(inputs: &BTreeMap<String, FileHash>, options: &serde_json::Value) 
 pub fn record(root: &Path) -> Result<(), String> {
     let inputs = inputs(root)?;
     let options = options();
-    let outputs = ASSETS
-        .iter()
-        .map(|name| hash(&root.join(name)).map(|hash| (name.to_string(), hash)))
-        .collect::<Result<_, _>>()?;
+    let outputs = BTreeMap::from([(ASSET.to_string(), hash(&root.join(ASSET))?)]);
     let manifest = Manifest {
         schema_version: 1,
         input_sha256: input_hash(&inputs, &options),
@@ -118,7 +112,7 @@ pub fn record(root: &Path) -> Result<(), String> {
     fs::write(root.join(MANIFEST), bytes).map_err(|e| e.to_string())
 }
 
-pub fn check(root: &Path, registry: &str) -> Result<(), String> {
+pub fn check(root: &Path) -> Result<(), String> {
     let bytes =
         fs::read(root.join(MANIFEST)).map_err(|e| format!("Missing build manifest: {e}"))?;
     let manifest: Manifest =
@@ -134,18 +128,11 @@ pub fn check(root: &Path, registry: &str) -> Result<(), String> {
             "Browser bundle inputs changed; run the Phoenix build entry to regenerate".into(),
         );
     }
-    if manifest.outputs.len() != ASSETS.len() {
-        return Err("Browser bundle output manifest is incomplete".into());
-    }
-    for name in ASSETS {
-        if manifest.outputs.get(name) != Some(&hash(&root.join(name))?) {
-            return Err(format!(
-                "Generated artifact changed: {name}; regenerate the browser bundle"
-            ));
-        }
-    }
-    if fs::read(root.join(ASSETS[1])).map_err(|e| e.to_string())? != registry.as_bytes() {
-        return Err("Generated rule registry differs from the current Rust registry".into());
+    if manifest.outputs.len() != 1 || manifest.outputs.get(ASSET) != Some(&hash(&root.join(ASSET))?)
+    {
+        return Err(format!(
+            "Generated artifact changed: {ASSET}; regenerate the browser bundle"
+        ));
     }
     Ok(())
 }
@@ -159,7 +146,7 @@ mod tests {
         for dir in ["browser-bundle", "crates/live/assets", ".cargo"] {
             fs::create_dir_all(root.join(dir)).unwrap();
         }
-        for name in ["foundation", "core", "wasm", "bundle", "xtask"] {
+        for name in ["foundation", "core", "wasm", "xtask"] {
             let dir = root.join(format!("crates/{name}"));
             fs::create_dir_all(dir.join("src")).unwrap();
             fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
@@ -182,8 +169,7 @@ mod tests {
         ] {
             fs::write(base.join(name), name).unwrap();
         }
-        fs::write(root.join(ASSETS[0]), "generated wasm bundle").unwrap();
-        fs::write(root.join(ASSETS[1]), "{\"rules\":[]}").unwrap();
+        fs::write(root.join(ASSET), "generated wasm bundle").unwrap();
         root
     }
 
@@ -199,8 +185,8 @@ mod tests {
             fs::read(first.join(MANIFEST)).unwrap(),
             fs::read(second.join(MANIFEST)).unwrap()
         );
-        assert!(check(&first, "{\"rules\":[]}").is_ok());
-        assert!(check(&second, "{\"rules\":[]}").is_ok());
+        assert!(check(&first).is_ok());
+        assert!(check(&second).is_ok());
         fs::remove_dir_all(base).unwrap();
     }
 
@@ -213,12 +199,12 @@ mod tests {
             "crates/core/src/lib.rs",
             "build-tools.lock.json",
             "Cargo.lock",
-            ASSETS[0],
+            ASSET,
         ] {
             record(&root).unwrap();
             let original = fs::read(root.join(name)).unwrap();
             fs::write(root.join(name), "changed").unwrap();
-            assert!(check(&root, "{\"rules\":[]}").is_err(), "accepted {name}");
+            assert!(check(&root).is_err(), "accepted {name}");
             fs::write(root.join(name), original).unwrap();
         }
         fs::remove_dir_all(base).unwrap();

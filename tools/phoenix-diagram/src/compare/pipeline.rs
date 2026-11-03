@@ -1,10 +1,9 @@
 use super::*;
 use crate::{
     check::FileIdentity,
-    delivery::{self, CompileRequest, Status, VisualReview, VisualStatus},
+    delivery::{self, CompileRequest, Status, VisualReview},
     diagnostic::Diagnostic,
     input::{sha256, DiagramType},
-    output::FileBinding,
 };
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -32,14 +31,11 @@ fn empty() -> CompareReceipt {
         changes: json!({}),
         summary: json!({}),
         artifact: None,
-        receipt_id: String::new(),
-        transaction: json!({"status":"not-run"}),
         checks: vec![],
         browser_status: Status::NotRun,
-        visual_review: VisualReview {
-            status: VisualStatus::RequiredPending,
-            record: None,
-        },
+        browser: None,
+        screenshots: vec![],
+        visual_review: VisualReview::pending(),
         delivery_status: "incomplete".into(),
         limitations: vec![],
         exit: 1,
@@ -80,9 +76,11 @@ fn side(prepared: &delivery::prepare::Preparation) -> CompareSide {
         rendered: FileIdentity::of(&c.html),
     }
 }
+fn read(path: &Path) -> Result<Vec<u8>, Failure> {
+    std::fs::read(path).map_err(|e| fail("compare/input", format!("{}: {e}", path.display()), 1))
+}
 pub fn run(request: &CompareRequest<'_>) -> CompareReceipt {
     let mut receipt = empty();
-    let mut pending: Option<transaction::PairTransaction> = None;
     let attempt = (|| {
         if request.base.kind != DiagramType::Architecture
             || request.head.kind != DiagramType::Architecture
@@ -93,28 +91,20 @@ pub fn run(request: &CompareRequest<'_>) -> CompareReceipt {
                 2,
             ));
         }
-        let base = FileBinding::capture(request.base.candidate).map_err(from_output)?;
-        let head = FileBinding::capture(request.head.candidate).map_err(from_output)?;
-        if base.identity().device == head.identity().device
-            && base.identity().inode == head.identity().inode
-        {
-            return Err(fail(
-                "compare/input-alias",
-                "The two inputs must be distinct ordinary files",
-                3,
-            ));
-        }
         let html_path = path(request.output)?;
         let receipt_path =
             path(&request.receipt.map(Path::to_owned).unwrap_or_else(|| {
                 PathBuf::from(format!("{}.compare.json", html_path.display()))
             }))?;
-        let transaction =
-            transaction::begin(&html_path, &receipt_path, &[&base, &head]).map_err(from_output)?;
-        receipt.transaction = json!({"id":transaction.id(),"directory":transaction.recovery_directory(),"status":"not-committed"});
-        pending = Some(transaction);
-        let base = delivery::prepare::prepare_captured(&request.base, base);
-        let head = delivery::prepare::prepare_captured(&request.head, head);
+        if receipt_path.parent() != html_path.parent() {
+            return Err(fail(
+                "compare/output",
+                "The comparison receipt must sit beside the HTML",
+                2,
+            ));
+        }
+        let base = delivery::prepare::prepare_bytes(&request.base, &read(request.base.candidate)?);
+        let head = delivery::prepare::prepare_bytes(&request.head, &read(request.head.candidate)?);
         for (name, prepared) in [("base", &base), ("head", &head)] {
             if prepared.compiled.is_none() {
                 let mut diagnostic=Diagnostic::error(Some("architecture"),"compare/input",name,"Comparison requires both inputs to pass their complete compile and artifact checks");
@@ -142,7 +132,6 @@ pub fn run(request: &CompareRequest<'_>) -> CompareReceipt {
             .file_name()
             .and_then(|s| s.to_str())
             .ok_or_else(|| fail("compare/output", "The receipt needs a UTF-8 filename", 2))?;
-        receipt.receipt_id=sha256(&serde_json::to_vec(&json!({"base":{"raw":before.input.source_sha256,"semantic":receipt.base.as_ref().unwrap().semantic_sha256,"config":before.input.config_sha256,"engine":request.base.engine},"head":{"raw":after.input.source_sha256,"semantic":receipt.head.as_ref().unwrap().semantic_sha256,"config":after.input.config_sha256,"engine":request.head.engine},"ir":FileIdentity::of(&ir_bytes),"receiptFilename":receipt_filename})).expect("comparison identity"));
         let html = render::render(
             &before.scene,
             &after.scene,
@@ -150,7 +139,6 @@ pub fn run(request: &CompareRequest<'_>) -> CompareReceipt {
             &after.html,
             &ir,
             receipt_filename,
-            &receipt.receipt_id,
         )
         .map_err(|diagnostics| Failure {
             diagnostics,
@@ -170,74 +158,18 @@ pub fn run(request: &CompareRequest<'_>) -> CompareReceipt {
             document: ir,
         });
         receipt.artifact = Some(crate::browser::BoundFile {
-            path: html_path,
+            path: html_path.clone(),
             identity: FileIdentity::of(&html),
         });
-        let checked = verification::check_structure(&html, &receipt)?;
-        receipt.checks = checked;
-        let protected = base
-            .source
-            .iter()
-            .chain(head.source.iter())
-            .chain(&before.resources)
-            .chain(&after.resources)
-            .collect::<Vec<_>>();
-        for file in &protected {
-            file.verify().map_err(from_output)?;
-        }
+        receipt.checks = verification::check_structure(&html, &receipt)?;
         receipt.status = Status::Pass;
         receipt.exit = 0;
-        receipt.transaction["status"] = json!("committed");
-        let receipt_bytes = serde_json::to_vec_pretty(&receipt)
-            .map_err(|e| fail("compare/json", e.to_string(), 4))?;
-        match pending
-            .take()
-            .expect("captured pair")
-            .commit(&html, &receipt_bytes, &protected)
-        {
-            Ok(published) => {
-                if published.html.bytes() != html || published.receipt.bytes() != receipt_bytes {
-                    return Err(fail(
-                        "compare/pair-binding",
-                        "Published pair differs from prepared bytes",
-                        3,
-                    ));
-                }
-                transaction::verify_committed(
-                    &published.recovery_directory,
-                    &published.html,
-                    &published.receipt,
-                )
-                .map_err(from_output)?;
-            }
-            Err(e) => {
-                receipt.transaction["status"] =
-                    json!(if e.kind == crate::output::ErrorKind::RecoveryRequired {
-                        "recovery-required"
-                    } else {
-                        "recovered"
-                    });
-                return Err(from_output(e));
-            }
-        }
-        Ok::<_, Failure>(())
+        write(&html_path, &html)?;
+        write(&receipt_path, &json_bytes(&receipt))
     })();
-    let mut recovery_failed = false;
-    if let Some(transaction) = pending.take() {
-        let directory = transaction.recovery_directory().to_owned();
-        drop(transaction);
-        let recovered = transaction::recover(&directory);
-        receipt.transaction["status"] = json!(recovered.status);
-        if recovered.exit_code() != 0 {
-            recovery_failed = true;
-            receipt.status = Status::Failed;
-            receipt.exit = recovered.exit_code();
-            receipt.diagnostics.extend(recovered.diagnostics);
-        }
-    }
     if let Err(error) = attempt {
         receipt.status = Status::Failed;
-        receipt.exit = if recovery_failed { 3 } else { error.exit };
+        receipt.exit = error.exit;
         receipt.diagnostics.extend(error.diagnostics);
     }
     receipt

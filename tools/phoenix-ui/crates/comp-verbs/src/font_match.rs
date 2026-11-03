@@ -377,31 +377,19 @@ fn resolve(io: &Io, p: &str) -> PathBuf {
     }
 }
 
-/// Resolve the font-index catalog the way concept-seed resolves its catalog:
-/// `PHOENIX_UI_CATALOG_DIR/font-index.json` first (the private moat mount, evals
-/// and tests), then the skill's shipped copy at
-/// `PHOENIX_UI_SKILL_DIR/scripts/data/font-index.json`. None when neither
-/// exists: the built-in per-width shortlist stands in, exactly as the JS did
-/// when `data/font-index.json` was absent. The catalog file is never committed
-/// to the engine repo.
+/// The skill's shipped font-index catalog at
+/// `PHOENIX_UI_SKILL_DIR/scripts/data/font-index.json`. None when it is
+/// absent: the built-in per-width shortlist stands in.
 fn font_index_path(io: &Io) -> Option<PathBuf> {
-    if let Some(dir) = io
+    let dir = io
         .env
-        .get("PHOENIX_UI_CATALOG_DIR")
-        .filter(|v| !v.is_empty())
-    {
-        let p = Path::new(dir).join("font-index.json");
-        if p.exists() {
-            return Some(p);
-        }
-    }
-    if let Some(dir) = io.env.get("PHOENIX_UI_SKILL_DIR").filter(|v| !v.is_empty()) {
-        let p = Path::new(dir).join("scripts").join("data").join("font-index.json");
-        if p.exists() {
-            return Some(p);
-        }
-    }
-    None
+        .get("PHOENIX_UI_SKILL_DIR")
+        .filter(|v| !v.is_empty())?;
+    let p = Path::new(dir)
+        .join("scripts")
+        .join("data")
+        .join("font-index.json");
+    p.exists().then_some(p)
 }
 
 // ---- spec mutation helpers -------------------------------------------------

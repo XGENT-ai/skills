@@ -15,7 +15,7 @@ use crate::js::{
     self, ci, math_max, math_round, number_to_string, parse_float, parse_int, string_to_number,
     to_fixed, WS,
 };
-use crate::js_ext_a::{num_truthy, slice_utf16_start, split_commas_outside_parens, utf16_length};
+use crate::js_ext_a::{num_truthy, slice_utf16_start, split_commas_outside_parens, utf16_len};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -649,7 +649,7 @@ pub fn check_hero_eyebrow(opts: &HeroEyebrowOpts) -> Vec<RuleHit> {
         return Vec::new();
     }
     let text = js::trim(opts.sibling_text.as_deref().unwrap_or(""));
-    let text_len = utf16_length(text);
+    let text_len = utf16_len(text);
     if text_len < 2 || text_len > 60 {
         return Vec::new();
     }
@@ -895,7 +895,7 @@ fn dominant_type_role_size(samples: &[f64]) -> Option<f64> {
     for size in samples {
         match counts
             .iter_mut()
-            .find(|(k, _)| crate::js_ext_b::same_value_zero(*k, *size))
+            .find(|(k, _)| crate::js_ext_a::same_value_zero(*k, *size))
         {
             Some(slot) => slot.1 += 1.0,
             None => counts.push((*size, 1.0)),

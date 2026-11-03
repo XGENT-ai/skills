@@ -37,8 +37,7 @@ try {
   fs.copyFileSync(builtEngine, engine);
   fs.chmodSync(engine, 0o755);
   env.PHOENIX_UI_BIN = engine;
-  command(process.execPath, ['--test', '--test-name-pattern=critique collision inputs', path.join(root, 'test/phoenix-ui/oracle.test.js')]);
-  // Node installer → Rust installer with this engine; old packages come from preparation.
+  // Node installer → Rust installer with this engine.
   command(process.execPath, ['--test', path.join(root, 'test/phoenix-ui/install.test.js')]);
   // Serial execution avoids the upstream ephemeral-port test racing a new listener.
   cargo(['test', '--workspace', '--exclude', 'impeccable-browser', '--exclude', 'phoenix-ui', '--locked', '--offline', '--', '--test-threads=1']);
@@ -47,17 +46,7 @@ try {
   cargo(['test', '-p', 'impeccable-browser', '-p', 'phoenix-ui', '--locked', '--offline', '--', '--test-threads=1'],
     { browserAcceptance: true });
   command(process.execPath, [path.join(root, 'scripts/check-phoenix-lints.mjs')]);
-  cargo(['xtask', 'bundle', '--pure']);
-  const artifact = cargo(['build', '-p', 'impeccable-wasm', '--example', 'replay_vectors', '--locked', '--offline', '--message-format=json'],
-    { stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  const executable = artifact.stdout.trim().split('\n').map(line => JSON.parse(line))
-    .find(record => record.reason === 'compiler-artifact' && record.target.name === 'replay_vectors' && record.executable)?.executable;
-  if (!executable || !fs.existsSync(executable)) throw new Error('Cargo did not report the native vector replay artifact.');
-  command(process.execPath, [path.join(root, 'scripts/check-phoenix-wasm.mjs')],
-    { env: { ...env, PHOENIX_UI_VECTORS_BIN: executable } });
-  command(process.execPath, [path.join(root, 'scripts/check-phoenix-oracle.mjs'), '--bin', engine,
-    '--include-actual', '--output', path.join(root, 'local/phoenix-ui/ci-prepare',
-      `${prepared.target || `${process.platform}-${process.arch}`}-oracle.json`)]);
+  command(process.execPath, [path.join(root, 'tools/phoenix-ui/tests/oracle/run.mjs'), '--bin', engine]);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

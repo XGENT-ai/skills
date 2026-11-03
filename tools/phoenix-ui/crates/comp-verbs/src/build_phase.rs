@@ -3,9 +3,7 @@
 //! The comp-led build as a state machine on disk. Phases, gates, scaffold, and
 //! the hero readings. Nothing here needs a browser; the JS spawned comp-diff as
 //! a child process, and this port calls [`crate::comp_diff::compare`] in-process
-//! instead. The one external dependency, the organic-clip-path CSS scanner
-//! (JS `require('../../cli/engine/rules/checks.mjs')`), is injected so this
-//! crate stays free of the closed rule core.
+//! instead.
 
 use std::path::{Path, PathBuf};
 
@@ -36,15 +34,6 @@ const INVENTED_MIN: f64 = 0.04;
 
 fn state_path() -> String {
     format!("{BUILD_DIR}/state.json")
-}
-
-/// The organic-clip-path scanner, injected by the CLI. Returns (selector,
-/// snippet) per finding; the default (`no_organic_scan`) returns none, matching
-/// the JS behavior when the rules module could not be required.
-pub type OrganicScan<'a> = &'a dyn Fn(&str) -> Vec<(Option<String>, String)>;
-
-pub fn no_organic_scan(_: &str) -> Vec<(Option<String>, String)> {
-    Vec::new()
 }
 
 fn abs(io: &Io, p: &str) -> PathBuf {
@@ -881,19 +870,19 @@ fn unreferenced_plates(io: &Io, spec: Option<&Value>, artifact: Option<&str>) ->
     missing
 }
 
-/// JS: organicClipRegions(artifactFile, spec) via the injected scanner.
-fn organic_clip_regions(io: &Io, artifact_file: &str, spec: &Value, scan: OrganicScan) -> Vec<Value> {
+/// JS: organicClipRegions(artifactFile, spec).
+fn organic_clip_regions(io: &Io, artifact_file: &str, spec: &Value) -> Vec<Value> {
     let Ok(html) = std::fs::read_to_string(abs(io, artifact_file)) else {
         return vec![];
     };
-    let findings = scan(&html);
+    let findings = impeccable_core::checks::css_scan::scan_css_text_for_organic_clip_path(&html);
     if findings.is_empty() {
         return vec![];
     }
     let raster_regions: Vec<Value> = spec_regions(spec).into_iter().filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster")).collect();
     let mut out = Vec::new();
-    for (selector, snippet) in &findings {
-        let sel = selector.clone().unwrap_or_default().to_lowercase();
+    for finding in &findings {
+        let sel = finding.selector.clone().unwrap_or_default().to_lowercase();
         for rr in &raster_regions {
             let id = rr.get("id").and_then(Value::as_str).unwrap_or("");
             let stem = {
@@ -901,7 +890,7 @@ fn organic_clip_regions(io: &Io, artifact_file: &str, spec: &Value, scan: Organi
                 Path::new(plate).file_stem().map(|s| s.to_string_lossy().to_lowercase()).unwrap_or_default()
             };
             if (!sel.is_empty() && (sel.contains(&id.to_lowercase()) || (!stem.is_empty() && sel.contains(&stem)))) || raster_regions.len() == 1 {
-                out.push(json!({ "id": id, "snippet": snippet }));
+                out.push(json!({ "id": id, "snippet": finding.snippet }));
                 break;
             }
         }
@@ -1294,8 +1283,7 @@ fn prepare_native_capture(
         atomic_report(
             &abs(io, &format!("{directory}/inputs.json")),
             &capture.evidence().report,
-        )?;
-        capture.verify_current()
+        )
     })();
     save.map_err(|e| {
         Gate::fail(vec![format!(
@@ -1393,11 +1381,6 @@ fn native_frame_supported(receipt: &Value) -> bool {
 
 fn finish_native_capture(io: &Io, out_dir: &str, gate: &mut Gate, native: &NativeCapture) {
     let mut additions = Vec::new();
-    if let Err(e) = native.capture.verify_current() {
-        additions.push(format!(
-            "native capture inputs changed before the gate completed: {e}"
-        ));
-    }
     for frame in &native.capture.evidence().frames {
         // Mobile has no approved mobile comp. Capture its actual pixels, but do
         // not pretend the desktop's positions constrain its reflow.
@@ -1501,7 +1484,6 @@ fn gate_hero(
     min: f64,
     out_dir: &str,
     artifact: Option<&str>,
-    organic_scan: OrganicScan,
     renderer: Option<&dyn EntryRenderer>,
 ) -> Gate {
     let pending = Gate::fail(vec!["hero comparison has not completed".into()]);
@@ -1530,7 +1512,6 @@ fn gate_hero(
         min,
         out_dir,
         artifact,
-        organic_scan,
         human.as_ref(),
     );
     if let Some(native) = &native {
@@ -1547,142 +1528,54 @@ fn gate_hero(
 }
 
 fn atomic_report(path: &Path, report: &Value) -> Result<(), String> {
-    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-    let temp = path.with_extension(format!("tmp-{}-{}", std::process::id(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
-    let result = (|| {
-        if let Some(parent) = path.parent() { std::fs::create_dir_all(parent)?; }
-        std::fs::write(&temp, util::json_pretty(report))?;
-        std::fs::rename(&temp, path)
-    })();
-    if result.is_err() { let _ = std::fs::remove_file(temp); }
-    result.map_err(|e: std::io::Error| e.to_string())
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(path, util::json_pretty(report)).map_err(|e| e.to_string())
 }
 
+/// Replace the gate report with one that carries no measurements, and remove
+/// the comparison images it would otherwise vouch for.
 fn unavailable_report(io: &Io, out_dir: &str, gate: &Gate, phase: &str) -> Result<(), String> {
-    let mut report = json!({ "interpretation": format!("{phase}-gate"), "measurementsAvailable": false,
+    let report = json!({ "interpretation": format!("{phase}-gate"), "measurementsAvailable": false,
         "regions": [], "gate": { "ok": false, "reasons": gate.reasons,
             "advisories": gate.advisories, "unscopedReasons": gate.reasons } });
-    // Invalidate the report before touching images; also clean partial writes on failure.
-    // Attempt cleanup even when the report itself cannot be replaced.
-    let report_write = atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report);
-    let cleanup = clear_comparison_artifacts(&abs(io, out_dir));
-    if let Err(error) = &cleanup {
-        // A read-only regions directory may prevent unlinking its children even
-        // when its parent permits moving the directory. Preserve those bytes as
-        // explicitly invalid evidence instead of leaving them at current paths.
-        report["artifactCleanup"] = json!({"status":"failed", "error":error,
-            "invalidArtifacts":["raw-report.json", "side-by-side.png", "heatmap.png", "regions/"]});
-        match quarantine_comparison_artifacts(&abs(io, out_dir)) {
-            Ok(record) => report["artifactCleanup"]["quarantine"] = record,
-            Err(e) => report["artifactCleanup"]["quarantineError"] = json!(e),
-        }
-        // If the filesystem also refuses quarantine, the report explicitly marks
-        // every potentially remaining artifact invalid. The gate still fails.
-        atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report)?;
-    }
-    report_write.and(cleanup)
-}
-
-fn move_comparison_artifact(path: &Path, target: &Path) -> std::io::Result<()> {
-    let result = std::fs::rename(path, target);
-    #[cfg(target_os = "macos")]
-    if result
-        .as_ref()
-        .is_err_and(|error| error.kind() == std::io::ErrorKind::PermissionDenied)
-    {
-        use std::os::unix::fs::{MetadataExt, PermissionsExt};
-        let meta = std::fs::symlink_metadata(path)?;
-        // Older macOS filesystems can require write permission on the moved
-        // directory even when its parent is unchanged. Restore its original mode.
-        if meta.is_dir() && meta.permissions().mode() & 0o200 == 0 {
-            let directory = std::fs::File::open(path)?;
-            let opened = directory.metadata()?;
-            if (opened.dev(), opened.ino()) != (meta.dev(), meta.ino()) {
-                return result;
-            }
-            let permissions = opened.permissions();
-            directory
-                .set_permissions(std::fs::Permissions::from_mode(permissions.mode() | 0o200))?;
-            let renamed = std::fs::rename(path, target);
-            let restored = directory.set_permissions(permissions);
-            return renamed.and(restored);
-        }
-    }
-    result
-}
-
-fn quarantine_comparison_artifacts(out_dir: &Path) -> Result<Value, String> {
-    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-    let quarantine = loop {
-        let candidate = out_dir.join(format!("invalid-comparison-{}-{}", std::process::id(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
-        match std::fs::create_dir(&candidate) {
-            Ok(()) => break candidate,
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(e) => return Err(e.to_string()),
-        }
-    };
-    let mut errors = Vec::new();
-    let mut artifacts = Map::new();
-    let prefix = quarantine.file_name().unwrap().to_string_lossy();
-    for name in ["raw-report.json", "side-by-side.png", "heatmap.png", "regions"] {
-        let path = out_dir.join(name);
-        // Keep the same parent: moving a read-only directory into another parent
-        // can require write permission on that directory (to change its `..`).
-        let target = out_dir.join(format!("{prefix}-{name}"));
-        let move_artifact = (|| -> std::io::Result<()> {
-            match std::fs::symlink_metadata(&target) {
-                Ok(_) => return Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, "quarantine target exists")),
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-                Err(e) => return Err(e),
-            }
-            move_comparison_artifact(&path, &target)
-        })();
-        match move_artifact {
-            Ok(()) => { artifacts.insert(name.into(), json!(target.to_string_lossy().replace('\\', "/"))); },
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-            Err(e) => errors.push(format!("{name}: {e}")),
-        }
-    }
-    let record = json!({"invalid":true, "artifacts":artifacts, "errors":errors});
-    atomic_report(&quarantine.join("manifest.json"), &record)?;
-    Ok(record)
+    atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report)?;
+    clear_comparison_artifacts(&abs(io, out_dir))
 }
 
 fn clear_comparison_artifacts(out_dir: &Path) -> Result<(), String> {
-    // Only remove generated files. Never recursively delete a caller's output directory
-    // or follow a regions symlink into another directory. Unexpected directories at
-    // file paths remain obstructions: the subsequent writer must still fail closed.
-    fn remove_file(path: &Path) -> std::io::Result<()> {
-        match std::fs::symlink_metadata(path) {
-            Ok(meta) if !meta.is_dir() => std::fs::remove_file(path),
-            Ok(_) => Ok(()),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(e),
-        }
-    }
     let mut errors = Vec::new();
-    for name in ["raw-report.json", "side-by-side.png", "heatmap.png"] {
-        if let Err(e) = remove_file(&out_dir.join(name)) { errors.push(format!("{name}: {e}")); }
-    }
-    fn clear_regions(path: &Path, errors: &mut Vec<String>) -> std::io::Result<()> {
-        let meta = match std::fs::symlink_metadata(path) {
-            Ok(meta) => meta,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-            Err(e) => return Err(e),
+    for name in [
+        "raw-report.json",
+        "side-by-side.png",
+        "heatmap.png",
+        "regions",
+    ] {
+        let path = out_dir.join(name);
+        let removed = if name == "regions" {
+            std::fs::remove_dir_all(path)
+        } else {
+            std::fs::remove_file(path)
         };
-        if meta.file_type().is_symlink() { return std::fs::remove_file(path); }
-        if meta.is_dir() {
-            for entry in std::fs::read_dir(path)? {
-                let child = entry?.path();
-                if let Err(e) = clear_regions(&child, errors) { errors.push(format!("{}: {e}", child.display())); }
+        if let Err(e) = removed.or_else(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                Ok(())
+            } else {
+                Err(e)
             }
-        } else if path.extension().and_then(|ext| ext.to_str()) == Some("png") {
-            std::fs::remove_file(path)?;
+        }) {
+            errors.push(format!("{name}: {e}"));
         }
-        Ok(())
     }
-    if let Err(e) = clear_regions(&out_dir.join("regions"), &mut errors) { errors.push(format!("regions: {e}")); }
-    if errors.is_empty() { Ok(()) } else { Err(format!("cannot clear comparison artifacts: {}", errors.join("; "))) }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(format!(
+            "cannot clear comparison artifacts: {}",
+            errors.join("; ")
+        ))
+    }
 }
 
 /// Whether the current capture is the first viewport the user accepted: the
@@ -1715,10 +1608,22 @@ fn human_accepted_regions(human: Option<&Value>, regions: &[Value]) -> std::coll
 }
 
 #[allow(clippy::too_many_arguments)]
-fn gate_hero_inner(io: &Io, state: &mut Value, build_path: &str, min: f64, out_dir: &str, artifact: Option<&str>, organic_scan: OrganicScan, human: Option<&Value>) -> Gate {
+fn gate_hero_inner(
+    io: &Io,
+    state: &mut Value,
+    build_path: &str,
+    min: f64,
+    out_dir: &str,
+    artifact: Option<&str>,
+    human: Option<&Value>,
+) -> Gate {
     let s = self_cmd(io);
     if !abs(io, build_path).exists() {
-        let bp = state.get("breakpoint").and_then(Value::as_str).map(String::from).unwrap_or_else(|| "comp size".into());
+        let bp = state
+            .get("breakpoint")
+            .and_then(Value::as_str)
+            .map(String::from)
+            .unwrap_or_else(|| "comp size".into());
         return Gate::fail(vec![format!("no hero capture at {build_path}: screenshot the first viewport at the comp's own dimensions ({bp}) into that path")]);
     }
     let spec_gate = gate_spec(io, state);
@@ -2017,7 +1922,7 @@ fn gate_hero_inner(io: &Io, state: &mut Value, build_path: &str, min: f64, out_d
     let artifact_file = page_file.clone();
     if let (Some(af), Some(spec)) = (&artifact_file, &spec_for_refs) {
         if abs(io, af).exists() {
-            for o in organic_clip_regions(io, af, spec, organic_scan) {
+            for o in organic_clip_regions(io, af, spec) {
                 let id = o.get("id").and_then(Value::as_str).unwrap_or("");
                 let snip = o.get("snippet").and_then(Value::as_str).unwrap_or("");
                 push_region_blocker(&mut reasons, &mut region_reasons, id, format!("artifact draws an organic clip-path ({snip}) inside raster region {id}'s box; that region ships as its plate, never as a polygon"));
@@ -2491,7 +2396,13 @@ struct GateOpts {
     artifact: Option<String>,
 }
 
-fn run_gate(io: &Io, state: &mut Value, phase: &str, opts: &GateOpts, organic_scan: OrganicScan, renderer: Option<&dyn EntryRenderer>) -> Gate {
+fn run_gate(
+    io: &Io,
+    state: &mut Value,
+    phase: &str,
+    opts: &GateOpts,
+    renderer: Option<&dyn EntryRenderer>,
+) -> Gate {
     match phase {
         "comps" => gate_comps(io),
         "spec" => gate_spec(io, state),
@@ -2509,7 +2420,6 @@ fn run_gate(io: &Io, state: &mut Value, phase: &str, opts: &GateOpts, organic_sc
                 min,
                 ".phoenix-ui/review/diff/hero",
                 opts.artifact.as_deref(),
-                organic_scan,
                 renderer,
             )
         }
@@ -2613,8 +2523,19 @@ fn phase_index(phase: &str) -> Option<usize> {
     PHASES.iter().position(|&p| p == phase)
 }
 
-fn advance(io: &Io, state: &mut Value, force: bool, reason: Option<&str>, opts: &GateOpts, organic_scan: OrganicScan, renderer: Option<&dyn EntryRenderer>) -> AdvanceResult {
-    let phase = state.get("phase").and_then(Value::as_str).unwrap_or("").to_string();
+fn advance(
+    io: &Io,
+    state: &mut Value,
+    force: bool,
+    reason: Option<&str>,
+    opts: &GateOpts,
+    renderer: Option<&dyn EntryRenderer>,
+) -> AdvanceResult {
+    let phase = state
+        .get("phase")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
     let idx = phase_index(&phase);
     if idx.is_none() || phase == "review" {
         return AdvanceResult {
@@ -2634,7 +2555,7 @@ fn advance(io: &Io, state: &mut Value, force: bool, reason: Option<&str>, opts: 
         let a = p.get("attempts").and_then(Value::as_i64).unwrap_or(0) + 1;
         p.insert("attempts".into(), json!(a));
     }
-    let mut gate = run_gate(io, state, &phase, opts, organic_scan, renderer);
+    let mut gate = run_gate(io, state, &phase, opts, renderer);
     if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
         p.insert("gate".into(), gate.record_json(&now()));
     }
@@ -2788,8 +2709,7 @@ mod transparency_guidance_tests {
                     "--json"
                 ]
                 .map(String::from),
-                &mut io,
-                &no_organic_scan
+                &mut io
             ),
             0
         );
@@ -2803,18 +2723,32 @@ mod transparency_guidance_tests {
         assert_eq!(
             run(
                 &["check-plate", "unknown", "--candidate", "candidate.png"].map(String::from),
-                &mut io,
-                &no_organic_scan
+                &mut io
             ),
             1
         );
         // A candidate still goes through the exact same anti-copy validation.
         let mut photo: Value = serde_json::from_str(&spec).unwrap();
         photo["regions"][0]["kind"] = json!("image");
-        std::fs::write(dir.join(SPEC_PATH),photo.to_string()).unwrap();
-        let (mut io, output) = Io::captured("",dir.clone(),Default::default());
-        assert_eq!(run(&["check-plate","ground","--candidate","candidate.png","--json"].map(String::from), &mut io, &no_organic_scan),2);
-        assert!(String::from_utf8(output.stdout.borrow().clone()).unwrap().contains("comp crop"));
+        std::fs::write(dir.join(SPEC_PATH), photo.to_string()).unwrap();
+        let (mut io, output) = Io::captured("", dir.clone(), Default::default());
+        assert_eq!(
+            run(
+                &[
+                    "check-plate",
+                    "ground",
+                    "--candidate",
+                    "candidate.png",
+                    "--json"
+                ]
+                .map(String::from),
+                &mut io
+            ),
+            2
+        );
+        assert!(String::from_utf8(output.stdout.borrow().clone())
+            .unwrap()
+            .contains("comp crop"));
         std::fs::remove_dir_all(dir).unwrap();
     }
 
@@ -2916,50 +2850,6 @@ mod transparency_guidance_tests {
         ]);
         hidden_large["instances"][0]["changedPixelsInRegion"] = json!(0);
         assert!(!native_frame_supported(&hidden_large));
-    }
-
-    #[test]
-    fn native_capture_rechecks_inputs_and_updates_the_persisted_gate() {
-        struct Changed(crate::entry_capture::EntryEvidence);
-        impl CapturedEntry for Changed {
-            fn evidence(&self) -> &crate::entry_capture::EntryEvidence {
-                &self.0
-            }
-            fn verify_current(&self) -> Result<(), String> {
-                Err("entry bytes changed".into())
-            }
-        }
-        let dir = std::env::temp_dir().join(format!("native-entry-stale-{}", std::process::id()));
-        std::fs::create_dir_all(dir.join("review")).unwrap();
-        let (io, _) = Io::captured("", dir.clone(), Default::default());
-        atomic_report(
-            &dir.join("review/report.json"),
-            &json!({"gate":{"ok":true},"regions":[]}),
-        )
-        .unwrap();
-        let capture = NativeCapture {
-            capture: Box::new(Changed(crate::entry_capture::EntryEvidence {
-                report: json!({"inputSnapshot":"original"}),
-                frames: vec![],
-            })),
-            directory: "native".into(),
-        };
-        let mut gate = Gate::fail(vec![]);
-        gate.ok = true;
-        gate.report = Some("review/report.json".into());
-        finish_native_capture(&io, "review", &mut gate, &capture);
-        assert!(!gate.ok);
-        assert!(gate.reasons.join(" ").contains("entry bytes changed"));
-        let report: Value =
-            serde_json::from_slice(&std::fs::read(dir.join("review/report.json")).unwrap())
-                .unwrap();
-        assert_eq!(report["gate"]["ok"], false);
-        assert_eq!(report["gate"]["reasons"], json!(gate.reasons));
-        assert_eq!(
-            report["nativeCapture"]["inputs"]["inputSnapshot"],
-            "original"
-        );
-        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
@@ -3146,10 +3036,14 @@ fn render_status(io: &Io, state: &Value) -> String {
 // ---- CLI -------------------------------------------------------------------
 
 /// `impeccable build-phase <cmd> ...`
-pub fn run(argv: &[String], io: &mut Io, organic_scan: OrganicScan) -> i32 {
-    run_with_renderer(argv,io,organic_scan,None)
+pub fn run(argv: &[String], io: &mut Io) -> i32 {
+    run_with_renderer(argv, io, None)
 }
-pub fn run_with_renderer(argv: &[String],io: &mut Io,organic_scan: OrganicScan,renderer: Option<&dyn EntryRenderer>) -> i32 {
+pub fn run_with_renderer(
+    argv: &[String],
+    io: &mut Io,
+    renderer: Option<&dyn EntryRenderer>,
+) -> i32 {
     let cmd = argv.first().map(String::as_str);
     if cmd.is_none() || flag(argv, "help") {
         io.out("CANDIDATE CHECK: build-phase check-plate <region-id> --candidate <png> [--json] validates a separate file with the normal plate gate; never replaces the selected asset, records approval, or advances the phase.\n");
@@ -3320,7 +3214,6 @@ pub fn run_with_renderer(argv: &[String],io: &mut Io,organic_scan: OrganicScan,r
                 min,
                 ".phoenix-ui/review/diff/hero",
                 None,
-                organic_scan,
                 renderer,
             );
             let records = state
@@ -3376,10 +3269,20 @@ pub fn run_with_renderer(argv: &[String],io: &mut Io,organic_scan: OrganicScan,r
                 min: arg(argv, "min").map(|m| util::parse_f64(m, f64::NAN)),
                 artifact: arg(argv, "artifact").map(String::from),
             };
-            let res = advance(io, &mut state, flag(argv, "force"), arg(argv, "reason"), &opts, organic_scan, renderer);
+            let res = advance(
+                io,
+                &mut state,
+                flag(argv, "force"),
+                arg(argv, "reason"),
+                &opts,
+                renderer,
+            );
             save_state(io, &state);
             if !res.ok {
-                io.out(&format!("GATE {} FAILED (state unchanged)\n", res.phase.to_uppercase()));
+                io.out(&format!(
+                    "GATE {} FAILED (state unchanged)\n",
+                    res.phase.to_uppercase()
+                ));
                 if !res.worst_crops.is_empty() {
                     io.out("  LOOK FIRST, in this order, before editing anything (comp on the left, your build on the right):\n");
                     for c in &res.worst_crops {

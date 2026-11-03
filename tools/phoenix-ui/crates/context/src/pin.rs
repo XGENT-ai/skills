@@ -4,9 +4,9 @@ use crate::jsp;
 use crate::util::{exists, read_json, safe_read};
 use impeccable_common::Io;
 
-/// Bundled copy of `skill/scripts/command-metadata.json` (build-time copy;
-/// keep in sync with the public repo).
-pub const COMMAND_METADATA_JSON: &str = include_str!("command-metadata.json");
+/// The skill's own `scripts/command-metadata.json`, embedded.
+const COMMAND_METADATA_JSON: &str =
+    include_str!("../../../../../skills/phoenix-ui/src/scripts/command-metadata.json");
 
 const HARNESS_DIRS: [&str; 19] = [
     ".claude",
@@ -35,8 +35,7 @@ pub const VALID_COMMANDS: [&str; 24] = [
     "harden", "onboard", "live", "animate", "colorize", "typeset", "layout", "delight", "overdrive", "clarify",
     "adapt", "optimize", "generate",
 ];
-// Current pins have their own markers; legacy user shortcuts belong to the
-// explicit migration path and must not be overwritten or removed here.
+// Only files carrying these markers are pins; anything else is left alone.
 const PIN_MARKER: &str = "<!-- phoenix-ui-pinned-skill -->";
 const OPENCODE_PIN_MARKER: &str = "<!-- phoenix-ui-pinned-command -->";
 

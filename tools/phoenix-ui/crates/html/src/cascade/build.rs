@@ -12,11 +12,10 @@ use super::checks_shim::CustomProps;
 use super::{
     apply_static_declaration, collect_static_css_rules, compare_static_priority,
     is_static_inherited_prop, make_default_style, normalize_static_css_value,
-    parse_static_style_attribute, static_default_style, CssRule, DeclMeta, SpecifiedDecl,
-    SpecifiedStore, StyleValues, STATIC_DEFAULT_STYLE,
+    parse_static_style_attribute, CssRule, DeclMeta, SpecifiedDecl, SpecifiedStore, StyleValues,
+    STATIC_DEFAULT_STYLE,
 };
 use crate::dom::StaticDocument;
-use crate::profile::{self, Meta, ProfileSink};
 use ego_tree::NodeId;
 use impeccable_core::checks::css_scan::{collect_css_custom_props, css_length_to_px};
 use impeccable_core::checks::measures;
@@ -85,7 +84,7 @@ fn resolve_linked_css_path(file_dir: &str, href: &str) -> String {
     jsp::join(&[file_dir, &rel])
 }
 
-/// JS: css-cascade.mjs#collectStaticCssText(root, fileDir, profile, filePath, modules)
+/// JS: css-cascade.mjs#collectStaticCssText(root, fileDir, filePath, modules)
 /// The text of every `<style>` element plus every local `<link rel=stylesheet>`
 /// resolved relative to `file_dir` (query/hash stripped), joined with `\n`.
 /// `warn` receives the JS `process.stderr.write` notice for an unreadable
@@ -93,8 +92,6 @@ fn resolve_linked_css_path(file_dir: &str, href: &str) -> String {
 pub fn collect_static_css_text(
     doc: &StaticDocument,
     file_dir: &Path,
-    profile: Option<&dyn ProfileSink>,
-    file_path: &str,
     warn: Option<&dyn Fn(&str)>,
 ) -> String {
     let mut style_texts: Vec<String> = Vec::new();
@@ -111,12 +108,7 @@ pub fn collect_static_css_text(
             continue;
         }
         let css_path = resolve_linked_css_path(&file_dir_str, href);
-        let read = profile::step(
-            profile,
-            Meta::new("preprocess", "inline-linked-stylesheet", file_path).with_detail(href),
-            || std::fs::read(&css_path),
-        );
-        match read {
+        match std::fs::read(&css_path) {
             Ok(bytes) => style_texts.push(String::from_utf8_lossy(&bytes).into_owned()),
             Err(_) => {
                 if warned_missing_stylesheets.insert(css_path.clone()) {
@@ -268,122 +260,92 @@ fn mark_pseudo_rule(
     }
 }
 
-/// JS: css-cascade.mjs#buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePath)
-pub fn build_static_style_map(
-    doc: &mut StaticDocument,
-    css_text: &str,
-    profile: Option<&dyn ProfileSink>,
-    file_path: &str,
-) {
+/// JS: css-cascade.mjs#buildStaticStyleMap(root, staticDoc, cssText, modules)
+pub fn build_static_style_map(doc: &mut StaticDocument, css_text: &str) {
     let mut specified: SpecifiedStore<NodeId> = SpecifiedStore::new();
     let mut hover_specified: SpecifiedStore<NodeId> = SpecifiedStore::new();
     let mut placeholder_specified: SpecifiedStore<NodeId> = SpecifiedStore::new();
     let root_custom_props = collect_css_custom_props(css_text);
-    let rules = profile::step(
-        profile,
-        Meta::new("parse-css", "css-rules", file_path),
-        || collect_static_css_rules(css_text),
-    );
+    let rules = collect_static_css_rules(css_text);
 
-    profile::step(
-        profile,
-        Meta::new("selector-match", "css-selectors", file_path),
-        || {
-            for rule in &rules {
-                let placeholder_host = if rule.is_hover {
-                    None
-                } else {
-                    placeholder_host_selector(&rule.selector)
-                };
-                if !rule.is_hover && placeholder_host.is_none() {
-                    if let Some(pm) = PSEUDO_RULE_RE.captures(&rule.selector) {
-                        let base = pm.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
-                        mark_pseudo_rule(doc, rule, &base, &root_custom_props);
-                        continue;
-                    }
-                }
-                let match_selector: Option<&str> = if rule.is_hover {
-                    rule.match_selector.as_deref()
-                } else if let Some(ref host) = placeholder_host {
-                    Some(host.as_str())
-                } else {
-                    Some(rule.selector.as_str())
-                };
-                let Some(match_selector) = match_selector else {
-                    continue;
-                };
-                let matched: Vec<NodeId> = match doc.compile(match_selector) {
-                    Ok(_) => doc
-                        .query_selector_all(match_selector)
-                        .iter()
-                        .map(|e| e.id())
-                        .collect(),
-                    Err(_) => {
-                        profile::record(
-                            profile,
-                            Meta::new("selector-match", "unsupported-selector", file_path)
-                                .with_detail(match_selector),
-                        );
-                        continue;
-                    }
-                };
-                let store = if rule.is_hover {
-                    &mut hover_specified
-                } else if placeholder_host.is_some() {
-                    &mut placeholder_specified
-                } else {
-                    &mut specified
-                };
-                for node in matched {
-                    for decl in &rule.declarations {
-                        if placeholder_host.is_some()
-                            && js::to_lower_case(&decl.prop) != "color"
-                        {
-                            continue;
-                        }
-                        let meta = DeclMeta {
-                            important: decl.important,
-                            specificity: rule.specificity,
-                            order: rule.order,
-                            inline: false,
-                        };
-                        apply_static_declaration(store, node, &decl.prop, &decl.value, &meta);
-                    }
-                }
+    for rule in &rules {
+        let placeholder_host = if rule.is_hover {
+            None
+        } else {
+            placeholder_host_selector(&rule.selector)
+        };
+        if !rule.is_hover && placeholder_host.is_none() {
+            if let Some(pm) = PSEUDO_RULE_RE.captures(&rule.selector) {
+                let base = pm.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                mark_pseudo_rule(doc, rule, &base, &root_custom_props);
+                continue;
             }
-
-            let mut inline_order: i64 = rules.len() as i64 + 1;
-            let inline_nodes: Vec<(NodeId, String)> = doc
-                .all_elements()
+        }
+        let match_selector: Option<&str> = if rule.is_hover {
+            rule.match_selector.as_deref()
+        } else if let Some(ref host) = placeholder_host {
+            Some(host.as_str())
+        } else {
+            Some(rule.selector.as_str())
+        };
+        let Some(match_selector) = match_selector else {
+            continue;
+        };
+        let matched: Vec<NodeId> = match doc.compile(match_selector) {
+            Ok(_) => doc
+                .query_selector_all(match_selector)
                 .iter()
-                .filter_map(|el| {
-                    el.get_attribute("style")
-                        .filter(|s| !s.is_empty())
-                        .map(|s| (el.id(), s.to_string()))
-                })
-                .collect();
-            for (node, style_text) in inline_nodes {
-                for decl in parse_static_style_attribute(&style_text, inline_order) {
-                    let meta = DeclMeta {
-                        important: decl.important,
-                        specificity: [1, 0, 0],
-                        order: decl.order,
-                        inline: true,
-                    };
-                    apply_static_declaration(&mut specified, node, &decl.prop, &decl.value, &meta);
+                .map(|e| e.id())
+                .collect(),
+            Err(_) => continue,
+        };
+        let store = if rule.is_hover {
+            &mut hover_specified
+        } else if placeholder_host.is_some() {
+            &mut placeholder_specified
+        } else {
+            &mut specified
+        };
+        for node in matched {
+            for decl in &rule.declarations {
+                if placeholder_host.is_some() && js::to_lower_case(&decl.prop) != "color" {
+                    continue;
                 }
-                inline_order += 1000;
+                let meta = DeclMeta {
+                    important: decl.important,
+                    specificity: rule.specificity,
+                    order: rule.order,
+                    inline: false,
+                };
+                apply_static_declaration(store, node, &decl.prop, &decl.value, &meta);
             }
-        },
-    );
+        }
+    }
 
-    profile::step(
-        profile,
-        Meta::new("cascade", "compute-styles", file_path),
-        || {
-            compute_styles(doc, &specified, &hover_specified, &placeholder_specified);
-        },
-    );
+    let mut inline_order: i64 = rules.len() as i64 + 1;
+    let inline_nodes: Vec<(NodeId, String)> = doc
+        .all_elements()
+        .iter()
+        .filter_map(|el| {
+            el.get_attribute("style")
+                .filter(|s| !s.is_empty())
+                .map(|s| (el.id(), s.to_string()))
+        })
+        .collect();
+    for (node, style_text) in inline_nodes {
+        for decl in parse_static_style_attribute(&style_text, inline_order) {
+            let meta = DeclMeta {
+                important: decl.important,
+                specificity: [1, 0, 0],
+                order: decl.order,
+                inline: true,
+            };
+            apply_static_declaration(&mut specified, node, &decl.prop, &decl.value, &meta);
+        }
+        inline_order += 1000;
+    }
+
+    compute_styles(doc, &specified, &hover_specified, &placeholder_specified);
 }
 
 /// The `computeNode` walk over every `tag`-typed element, root children
@@ -525,9 +487,4 @@ fn compute_styles(
     for (node, style) in placeholder_out {
         doc.set_placeholder_style(node, style);
     }
-}
-
-/// `STATIC_DEFAULT_STYLE[prop]` lookup re-exported for the adapters.
-pub fn default_value(prop: &str) -> Option<&'static str> {
-    static_default_style(prop)
 }

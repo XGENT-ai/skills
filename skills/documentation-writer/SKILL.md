@@ -91,7 +91,7 @@ python3 "$SKILL_DIR/scripts/check_doc.py" <文档路径...> --repo-root <仓库�
 回复用户时说清：
 
 - 新建或改动了哪些文件（路径）
-- 图用了 phoenix-diagram 还是 Mermaid；用 phoenix-diagram 的，列出每张图的 HTML、当前 summary 路径及 finalize 四门、实际看图与 review-record 的真实结果，不把待审或未做的检查说成完整通过
+- 图用了 phoenix-diagram 还是 Mermaid；用 phoenix-diagram 的，列出每张图的 HTML、当前 summary 路径及 finalize 三门、实际看图与 review-record 的真实结果，不把待审或未做的检查说成完整通过
 - 所有 `[ASK USER]` 问题，编号列出
 - 文档和代码对不上的地方（README 说 A，代码是 B）
 - 写作时做的假设
@@ -148,7 +148,7 @@ python3 "$SKILL_DIR/scripts/check_doc.py" <文档路径...> --repo-root <仓库�
 
 **图里的文字**和文档同语言，中文文档设 `meta.locale: "zh-CN"`。节点名、接口路径、命令等标识符保持原样。
 
-**在 Markdown 里怎么放**：按 phoenix-diagram 流程执行 `finalize`（需要本机有 Chrome / Chromium），实际打开当前四张暗亮截图并填写审核，再用 `review-record` 登记，回读同一交付 summary。四门 pass、视觉 passed、delivery complete 才能说明完整交付；只为登记不得再次 finalize。从该 summary 的 `evidence.browserReceipt.path` 读取浏览器回执，按 `screenshots` 的 `theme: "light"` 与 `viewport` 选择实际正文图，使用其真实 `path`，不猜文件名。复制正文图为稳定的文档文件名，再给出交互版链接：
+**在 Markdown 里怎么放**：按 phoenix-diagram 流程执行 `finalize`（需要本机有 Chrome / Chromium），实际打开当前四张暗亮截图并填写审核，再用 `review-record` 登记，回读同一 summary。三门 pass、视觉 passed、delivery complete 才能说明完整交付；只为登记不得再次 finalize。从该 summary 中名为 `browser-check` 的阶段回执读取 `receipt.screenshots`，按其中的 `theme: "light"` 与 `viewport` 选择实际正文图，使用其真实 `path`，不猜文件名。复制正文图为稳定的文档文件名，再给出交互版链接：
 
 ```markdown
 ![系统上下文图](diagrams/system-context.light.png)

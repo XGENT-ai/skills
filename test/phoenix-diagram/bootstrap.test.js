@@ -30,13 +30,7 @@ function realEngine() {
   const doctor = spawnSync(file, ['doctor', '--json'], { encoding: 'utf8' });
   const engine = JSON.parse(doctor.stdout).engine;
   assert.equal(engine.inputContractSchema, 1);
-  const bytes=fs.readFileSync(file);
-  assert.equal(hash(bytes),engine.binary.sha256,'Native build changed during snapshot; provide a stable PHOENIX_DIAGRAM_BIN');
-  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'phoenix-diagram native snapshot '));
-  const snapshot=path.join(directory,'phoenix-diagram');
-  write(snapshot,bytes,0o700);
-  process.once('exit',()=>fs.rmSync(directory,{recursive:true,force:true}));
-  return native = { file:snapshot, bytes, engine };
+  return native = { file, bytes: fs.readFileSync(file), engine };
 }
 function write(file, bytes, mode = 0o644) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -84,17 +78,9 @@ function fixture(t, changes = {}) {
     write(manifestPath, encoded); write(path.join(bundleRoot, 'ENGINE.json'), encoded);
   };
   f.seal();
-  const license = fs.readFileSync(path.join(root, 'tools/phoenix-ui/LICENSE'));
-  write(path.join(dist, 'LICENSE'), fs.readFileSync(path.join(root, 'LICENSE')));
-  write(path.join(dist, 'NOTICE.md'), fs.readFileSync(path.join(root, 'tools/phoenix-diagram/NOTICE.md')));
-  write(path.join(dist, 'THIRD-PARTY-LICENSES/apache-2.0.txt'), license);
-  write(path.join(dist, 'THIRD-PARTY.json'), JSON.stringify({ schemaVersion: 1, rust: [{ name: 'bootstrap-license-fixture', licenses: [{ path: 'THIRD-PARTY-LICENSES/apache-2.0.txt', sha256: hash(license) }] }] }));
-  write(path.join(dist, 'THIRD-PARTY-NOTICES.md'), 'Fixture catalog exercises full local license bytes; this is not release license acceptance.\n');
   f.offline = () => {
     fs.rmSync(release, { recursive: true, force: true });
     fs.cpSync(dist, release, { recursive: true });
-    // Real host bytes are replicated only to test four-resource inventory.
-    // Other-platform native execution is a separate acceptance test.
     for (const meta of Object.values(version.engines)) fs.copyFileSync(realEngine().file, path.join(release, meta.asset), fs.constants.COPYFILE_FICLONE);
     return release;
   };
@@ -113,6 +99,16 @@ function command(file, args, options) {
     child.once('error', reject); child.once('close', code => resolve({ code, stdout, stderr }));
   });
 }
+const certificate = path.join(__dirname, 'fixtures/bootstrap/tls-cert.pem');
+const tlsKey = path.join(__dirname, 'fixtures/bootstrap/tls-key.pem');
+async function serveTls(t, handler) {
+  const server = https.createServer({ key: fs.readFileSync(tlsKey), cert: fs.readFileSync(certificate) }, handler), sockets = new Set();
+  server.on('connection', socket => { sockets.add(socket); socket.once('close', () => sockets.delete(socket)); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => { for (const socket of sockets) socket.destroy(); return new Promise(resolve => server.close(resolve)); });
+  return `https://127.0.0.1:${server.address().port}`;
+}
+const installEngine = f => run(f, ['engine', 'install', '--project', f.project, '--json'], { NODE_EXTRA_CA_CERTS: certificate });
 async function serve(t, handler) {
   const server = http.createServer(handler);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -122,7 +118,7 @@ async function serve(t, handler) {
 
 test('bootstrap entry points exist and expose the isolated preflight API', () => {
   for (const file of [source, path.join(root, 'skills/phoenix-diagram/scripts/phoenix-launcher.cjs'), path.join(root, 'skills/phoenix-diagram/scripts/phoenix-diagram'), path.join(root, 'bin/phoenix-diagram.js')]) assert.ok(fs.existsSync(file), file);
-  for (const name of ['preflight', 'manifestAt', 'verifyBundle', 'verifyEngine', 'enginePath', 'installEngine', 'main']) assert.equal(typeof boot()[name], 'function', name);
+  for (const name of ['preflight', 'manifestAt', 'enginePath', 'setupCommand', 'main']) assert.equal(typeof boot()[name], 'function', name);
 });
 test('only four declared Unix platforms are accepted; proxy precedence stays explicit', () => {
   const { TARGETS, platformTarget, proxyFor } = boot();
@@ -139,25 +135,16 @@ test('help and pinned recovery instructions work without manifests, engines or n
   const pkg = path.join(temp, 'package.json');
   write(pkg, JSON.stringify({ name: '@xgent-ai/skills', version: packageVersion() }));
   const env = { ...process.env, PHOENIX_DIAGRAM_HOME: path.join(temp, 'cache') };
-  for (const args of [['--help'], ['--version'], ['recover-output','--help']]) {
+  for (const args of [['--help'], ['--version']]) {
     const script = `require(${JSON.stringify(source)}).main(${JSON.stringify(args)},${JSON.stringify({ manifestPath: path.join(temp, 'missing'), packageJsonPath: pkg })}).then(c=>process.exitCode=c);`;
     const result = await command(process.execPath, ['-e', script], { cwd: temp, env });
     assert.equal(result.code, 0, result.stderr); assert.match(result.stdout, /phoenix-diagram/);
-    if(args[0]==='recover-output') {
-      assert.match(result.stdout,/P\/\.phoenix-diagram-recovery-<id>\/publication-recovery-v1\.json/);
-      assert.match(result.stdout,/P\/\.phoenix-diagram-recovery-<id>\.cleanup\.json/);
-      assert.match(result.stdout,/P\/\.phoenix-diagram-output-cleanup\/<id>\.json/);
-      assert.match(result.stdout,/owner-v1\.json/);
-      assert.match(result.stdout,/original recovery directory.*even if.*disappeared/i);
-      assert.match(result.stdout,/unknown.*ambiguous.*refus/i);
-    }
   }
   assert.equal(fs.existsSync(env.PHOENIX_DIAGRAM_HOME), false);
 });
 filesystemTest('ordinary missing engine performs no installation and names the current fixed package', async t => {
   const f = fixture(t); let requests = 0;
   const url = await serve(t, (_req, res) => { requests++; res.end(f.bytes); });
-  f.version.distribution = 'candidate';
   for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
   f.seal();
   const result = await run(f, ['guide', 'workflow', '--json']);
@@ -172,7 +159,7 @@ filesystemTest('ordinary missing engine performs no installation and names the c
 });
 filesystemTest('only release recovery points to the registry; nonrelease recovery keeps the local package or installed skill', t => {
   const f = fixture(t), { setupCommand, shellQuote, manifestAt } = boot();
-  for (const distribution of ['development', 'candidate', 'release']) {
+  for (const distribution of ['development', 'release']) {
     f.version.distribution = distribution;
     for (const meta of Object.values(f.version.engines)) meta.url = 'https://download.example.test/engine';
     f.seal();
@@ -191,33 +178,22 @@ filesystemTest('only release recovery points to the registry; nonrelease recover
   assert.doesNotMatch(setupCommand(null, f.project, { ...f.options, manifestPath: path.join(f.temp, 'missing') }), /npm exec|--package=@xgent-ai\/skills/);
 });
 nativeTest('nonrelease recovery instructions restore an empty cache from the matching offline resources', async t => {
-  for (const distribution of ['development', 'candidate']) {
-    const f = fixture(t, { distribution });
-    if (distribution === 'development') {
-      f.version.engines = { [f.target]: f.version.engines[f.target] };
-      f.seal();
-    }
-    if (distribution === 'candidate') {
-      for (const meta of Object.values(f.version.engines)) meta.url = 'http://127.0.0.1:1/unavailable';
-      f.seal();
-    }
-    f.offline();
-    const unavailable = await run(f, ['doctor', '--json']);
-    assert.equal(unavailable.code, 4);
-    assert.equal(fs.existsSync(f.home), false);
-    const instruction = JSON.parse(unavailable.stdout).setupCommand;
-    assert.doesNotMatch(instruction, /npm exec|--package=@xgent-ai\/skills/);
-    // The resource directory is supplied by the candidate recipient, as the
-    // package's recovery instructions require; no registry lookup is involved.
-    const recovery = instruction.replace(boot().shellQuote('MATCHING_RELEASE_DIR'), boot().shellQuote(f.release));
-    assert.notEqual(recovery, instruction);
-    const restored = await command('/bin/sh', ['-c', recovery], { cwd: f.project, env: f.env });
-    assert.equal(restored.code, 0, restored.stderr);
-    assert.equal(hash(fs.readFileSync(boot().enginePath(boot().manifestAt(f.manifestPath), f.target, f.env))), hash(f.bytes));
-    const doctor = await run(f, ['doctor', '--json']);
-    assert.equal(JSON.parse(doctor.stdout).recovery.engineInstall, instruction);
-    assert.deepEqual(fs.readdirSync(f.project), ['.git']);
-  }
+  const f = fixture(t);
+  f.version.engines = { [f.target]: f.version.engines[f.target] };
+  f.seal(); f.offline();
+  const unavailable = await run(f, ['doctor', '--json']);
+  assert.equal(unavailable.code, 4);
+  assert.equal(fs.existsSync(f.home), false);
+  const instruction = JSON.parse(unavailable.stdout).setupCommand;
+  assert.doesNotMatch(instruction, /npm exec|--package=@xgent-ai\/skills/);
+  const recovery = instruction.replace(boot().shellQuote('MATCHING_RELEASE_DIR'), boot().shellQuote(f.release));
+  assert.notEqual(recovery, instruction);
+  const restored = await command('/bin/sh', ['-c', recovery], { cwd: f.project, env: f.env });
+  assert.equal(restored.code, 0, restored.stderr);
+  assert.equal(hash(fs.readFileSync(boot().enginePath(boot().manifestAt(f.manifestPath), f.target, f.env))), hash(f.bytes));
+  const doctor = await run(f, ['doctor', '--json']);
+  assert.equal(JSON.parse(doctor.stdout).recovery.engineInstall, instruction);
+  assert.deepEqual(fs.readdirSync(f.project), ['.git']);
 });
 filesystemTest('explicit acquisition rejects invalid project arguments without writing state', async t => {
   const f = fixture(t);
@@ -244,7 +220,7 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
   const installed=await command(process.execPath,[path.join(f.pkg,'bin/phoenix-diagram.js'),'engine','install','--project',f.project,'--release-dir',f.release,'--json'],{cwd:f.project,env:f.env});
   assert.equal(installed.code,0,installed.stderr);assert.equal(JSON.parse(installed.stdout).scope,'engine-cache');
   const ready = await boot().preflight(f.options);
-  assert.equal(ready.bundleRoot, f.bundleRoot); assert.equal(ready.versionManifestPath, f.manifestPath);
+  assert.equal(ready.bundleRoot, f.bundleRoot);
   assert.equal(ready.version.npmPackageVersion, packageVersion());
   const expected = path.join(f.home, 'bin', '0.2.0', f.target, f.version.engines[f.target].sha256, 'phoenix-diagram');
   assert.equal(ready.enginePath, expected); assert.equal(hash(fs.readFileSync(expected)), hash(f.bytes));
@@ -254,132 +230,87 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
   const direct = await command(realEngine().file, ['guide', scenario, '--json'], { cwd: f.project, env: { ...f.env, PHOENIX_DIAGRAM_BUNDLE_ROOT: f.bundleRoot } });
   assert.equal(actual.code, direct.code, actual.stderr); assert.deepEqual(JSON.parse(actual.stdout), JSON.parse(direct.stdout));
   assert.equal(JSON.parse(actual.stdout).scenario, scenario);
-  const helpArgs=['recover-output','--help'];
+  const helpArgs=['guide','--help'];
   const nativeHelp=await command(realEngine().file,helpArgs,{cwd:f.project,env:f.env});
   const launchedHelp=await command(process.execPath,[path.join(f.pkg,'bin/phoenix-diagram.js'),...helpArgs],{cwd:f.project,env:f.env});
   assert.equal(launchedHelp.code,nativeHelp.code);assert.equal(launchedHelp.stdout,nativeHelp.stdout,'Verified native command help is forwarded intact');
   assert.equal(fs.existsSync(path.join(f.project, 'never-created')), false);
 });
-filesystemTest('package identity, bundle inventory, ENGINE bytes and file modes are verified before execution', t => {
+test('a manifest for another tool or version is refused', t => {
   const f = fixture(t);
-  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.1.0'], ['npmPackageVersion', '9.9.9'], ['inputContractSchema', 2], ['receiptSchema', 2], ['viewerRevision', 'foreign'], ['sourceCommit', 'bad'], ['sourceInputSha256', 'bad']]) {
+  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.1.0']]) {
     const original = f.version[field]; f.version[field] = value; f.seal();
-    assert.throws(() => boot().manifestAt(f.manifestPath, { packageJsonPath: f.packageJsonPath }), undefined, field);
+    assert.throws(() => boot().manifestAt(f.manifestPath), /another tool or version/, field);
     f.version[field] = original;
   }
-  f.seal();
-  const manifest = boot().manifestAt(f.manifestPath, { packageJsonPath: f.packageJsonPath });
-  assert.ok(boot().verifyBundle(f.bundleRoot, manifest));
-  fs.appendFileSync(path.join(f.bundleRoot, 'ENGINE.json'), ' ');
-  assert.throws(() => boot().verifyBundle(f.bundleRoot, manifest), /ENGINE/);
-  f.seal();
-  fs.chmodSync(path.join(f.bundleRoot, 'scripts/phoenix-launcher.cjs'), 0o644);
-  assert.throws(() => boot().verifyBundle(f.bundleRoot, manifest), /mode|bundle/i);
 });
-filesystemTest('bundle paths, symlinks, unlisted files and derived ENGINE entries are refused', t => {
-  const f = fixture(t);
-  const raw = fs.readFileSync(path.join(f.bundleRoot, 'manifest.json'));
-  for (const name of ['../outside', '/absolute', 'hooks/settings.json', 'scripts/phoenix-ui', 'ENGINE.json']) {
-    const altered = structuredClone(f.inventory); altered.files[0].path = name;
-    write(path.join(f.bundleRoot, 'manifest.json'), JSON.stringify(altered)); f.seal();
-    assert.throws(() => boot().verifyBundle(f.bundleRoot, boot().manifestAt(f.manifestPath)), undefined, name);
-  }
-  write(path.join(f.bundleRoot, 'manifest.json'), raw); f.seal();
-  write(path.join(f.bundleRoot, 'unlisted'), 'x');
-  assert.throws(() => boot().verifyBundle(f.bundleRoot, boot().manifestAt(f.manifestPath)), /extra|unlisted/i);
-  fs.unlinkSync(path.join(f.bundleRoot, 'unlisted'));
-  fs.renameSync(path.join(f.bundleRoot, 'SKILL.md'), path.join(f.temp, 'skill-backup'));
-  fs.symlinkSync(path.join(f.temp, 'skill-backup'), path.join(f.bundleRoot, 'SKILL.md'));
-  assert.throws(() => boot().verifyBundle(f.bundleRoot, boot().manifestAt(f.manifestPath)), /symlink|regular/i);
-});
-nativeTest('offline completeness and byte identity are rechecked even with a valid cache; no network fallback', async t => {
+nativeTest('offline installation requires the identical VERSION.json even with a valid cache', async t => {
   const f = fixture(t); let requests = 0;
   const url = await serve(t, (_req, res) => { requests++; res.end(f.bytes); });
-  f.version.distribution = 'candidate'; for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
+  for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
   f.seal(); f.offline();
   await boot().preflight({ ...f.options, releaseDir: f.release, allowInstall: true });
-  for (const file of ['VERSION.json', ...Object.values(f.version.engines).map(e => e.asset), 'LICENSE', 'NOTICE.md', 'THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES/apache-2.0.txt', 'bundle/manifest.json', 'bundle/ENGINE.json']) {
-    const full = path.join(f.release, file); fs.renameSync(full, `${full}.held`);
-    await assert.rejects(boot().preflight({ ...f.options, releaseDir: f.release, allowInstall: true }), undefined, file);
-    fs.renameSync(`${full}.held`, full);
-  }
-  fs.appendFileSync(path.join(f.release, 'VERSION.json'), ' ');
-  await assert.rejects(boot().preflight({ ...f.options, releaseDir: f.release, allowInstall: true }), /manifest|VERSION/i);
+  const version = path.join(f.release, 'VERSION.json');
+  fs.appendFileSync(version, ' ');
+  await assert.rejects(boot().preflight({ ...f.options, releaseDir: f.release, allowInstall: true }), /VERSION/);
+  fs.rmSync(version);
+  await assert.rejects(boot().preflight({ ...f.options, releaseDir: f.release, allowInstall: true }), /ENOENT/);
   assert.equal(requests, 0);
 });
-nativeTest('candidate loopback download is explicit, bounded and reverified on every cache hit', async t => {
+nativeTest('HTTPS download is digest-bound and reverified on every cache hit', async t => {
   const f = fixture(t); let requests = 0; let corrupt = true;
-  const url = await serve(t, (_req, res) => { requests++; res.end(corrupt ? Buffer.alloc(f.bytes.length, 0) : f.bytes); });
-  f.version.distribution = 'candidate'; for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
+  const url = await serveTls(t, (_req, res) => { requests++; res.end(corrupt ? Buffer.alloc(f.bytes.length, 0) : f.bytes); });
+  for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
   f.seal();
-  await assert.rejects(boot().preflight({ ...f.options, allowInstall: true }), /digest|size/);
+  const rejected = await installEngine(f);
+  assert.equal(rejected.code, 4); assert.match(rejected.stderr, /digest|size/);
   corrupt = false;
-  const ready = await boot().preflight({ ...f.options, allowInstall: true });
-  assert.equal(requests, 2);
-  await boot().preflight(f.options); assert.equal(requests, 2);
+  const installed = await installEngine(f);
+  assert.equal(installed.code, 0, installed.stderr); assert.equal(requests, 2);
+  const ready = await boot().preflight(f.options); assert.equal(requests, 2);
   fs.appendFileSync(ready.enginePath, 'tampered');
   const ordinary = await run(f, ['guide', 'workflow', '--json']);
   assert.equal(ordinary.code, 4); assert.equal(requests, 2);
   assert.match(ordinary.stderr, /digest|size/);
 });
-test('unsafe URLs and missing platform assets fail before acquisition', t => {
-  const f = fixture(t);
-  for (const [distribution, url] of [['release', 'http://127.0.0.1/engine'], ['candidate', 'http://example.test/engine'], ['candidate', 'https://user:secret@example.test/engine'], ['candidate', 'file:///tmp/engine']]) {
-    f.version.distribution = distribution; for (const meta of Object.values(f.version.engines)) meta.url = url;
-    f.seal(); assert.throws(() => boot().manifestAt(f.manifestPath));
-  }
-  f.version.distribution='candidate';for(const meta of Object.values(f.version.engines))meta.url='https://download.example.test/engine';
-  delete f.version.engines['linux-arm64']; f.seal(); assert.throws(() => boot().manifestAt(f.manifestPath), /platform|target/i);
+filesystemTest('engine downloads require HTTPS and a declared platform asset', async t => {
+  const f = fixture(t); let requests = 0;
+  const url = await serve(t, (_req, res) => { requests++; res.end(f.bytes); });
+  f.version.distribution = 'release'; for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
+  f.seal();
+  const insecure = await installEngine(f);
+  assert.equal(insecure.code, 4); assert.match(insecure.stderr, /requires HTTPS/); assert.equal(requests, 0);
+  delete f.version.engines[f.target]; f.seal();
+  const missing = await installEngine(f);
+  assert.equal(missing.code, 4); assert.match(missing.stderr, /no engine for/);
+  assert.equal(fs.existsSync(f.home), false);
 });
 filesystemTest('excessive redirects and oversized bodies fail closed without publishing an engine', async t => {
-  const f=fixture(t);f.version.distribution='candidate';
-  const url = await serve(t, (req, res) => { res.writeHead(302, { Location: req.url }); res.end(); });
-  for (const meta of Object.values(f.version.engines)) meta.url = `${url}/loop`; f.seal();
-  await assert.rejects(boot().preflight({ ...f.options, allowInstall: true }), /redirect/i);
-  assert.equal(fs.existsSync(f.home), false);
-  const oversized = await serve(t, (_req, res) => res.end('too many bytes'));
+  const f = fixture(t);
+  const loop = await serveTls(t, (req, res) => { res.writeHead(302, { Location: req.url }); res.end(); });
+  for (const meta of Object.values(f.version.engines)) meta.url = `${loop}/loop`;
+  f.seal();
+  const redirected = await installEngine(f);
+  assert.equal(redirected.code, 4); assert.match(redirected.stderr, /redirect/i);
+  const oversized = await serveTls(t, (_req, res) => res.end('too many bytes'));
   for (const meta of Object.values(f.version.engines)) meta.url = `${oversized}/engine`;
   f.version.engines[f.target] = { ...f.version.engines[f.target], size: 1, sha256: hash(Buffer.from('x')) }; f.seal();
-  await assert.rejects(boot().preflight({ ...f.options, allowInstall: true }), /exceeded.*size/i);
+  const large = await installEngine(f);
+  assert.equal(large.code, 4); assert.match(large.stderr, /exceeded.*size/i);
   assert.equal(fs.existsSync(f.home), false);
 });
 filesystemTest('a digest-matching foreign probe is rejected and never published to cache', async t => {
-  const f=fixture(t);
+  const f = fixture(t);
   // Fake executables are confined to rejection tests. Every success uses the
-  // immutable snapshot of the actual compiled native engine above.
-  const bytes=Buffer.from('#!/usr/bin/env node\nconsole.log("phoenix-ui-engine 0.1.0");\n');
-  const url=await serve(t,(_req,res)=>res.end(bytes));
-  f.version.distribution='candidate';for(const meta of Object.values(f.version.engines))meta.url=`${url}/engine`;
-  f.version.engines[f.target]={...f.version.engines[f.target],size:bytes.length,sha256:hash(bytes)};f.seal();
-  await assert.rejects(boot().preflight({...f.options,allowInstall:true}),/probe identity/);
-  const directory=path.dirname(boot().enginePath(boot().manifestAt(f.manifestPath),f.target,f.env));
-  assert.deepEqual(fs.readdirSync(directory),[]);
-});
-nativeTest('staged executable publication retries only bounded transient locks and cleans failures', async t => {
-  const f=fixture(t);f.offline();let attempts=0;const rename=fs.renameSync;
-  t.mock.method(fs,'renameSync',(from,to)=>{
-    attempts++;
-    if(attempts<=2)throw Object.assign(new Error('temporary executable lock'),{code:attempts===1?'EBUSY':'EPERM'});
-    return rename(from,to);
-  });
-  const ready=await boot().preflight({...f.options,releaseDir:f.release,allowInstall:true});
-  assert.equal(attempts,3);assert.ok(fs.existsSync(ready.enginePath));
-  assert.deepEqual(fs.readdirSync(path.dirname(ready.enginePath)),['phoenix-diagram']);
-});
-nativeTest('persistent staged rename failures stop after six attempts and preserve the original cause', async t => {
-  const f=fixture(t);f.offline();let attempts=0;
-  t.mock.method(fs,'renameSync',()=>{attempts++;throw Object.assign(new Error('persistent executable lock'),{code:'EBUSY'});});
-  await assert.rejects(boot().preflight({...f.options,releaseDir:f.release,allowInstall:true}),error=>error.code==='EBUSY'&&error.message==='persistent executable lock');
-  assert.equal(attempts,6);
-  const directory=path.dirname(boot().enginePath(boot().manifestAt(f.manifestPath),f.target,f.env));
-  assert.deepEqual(fs.readdirSync(directory),[]);
-});
-nativeTest('HTTP proxy actually transports the fixed candidate asset and arguments stay native', async t => {
-  const f = fixture(t); let requests = 0;
-  const proxy = await serve(t, (req, res) => { requests++; assert.equal(req.url, 'http://127.0.0.1:1/pinned'); assert.equal(req.headers['proxy-authorization'], `Basic ${Buffer.from('fixture:only').toString('base64')}`); res.end(f.bytes); });
-  f.version.distribution = 'candidate'; for (const meta of Object.values(f.version.engines)) meta.url = 'http://127.0.0.1:1/pinned'; f.seal();
-  await boot().preflight({ ...f.options, allowInstall: true, env: { ...f.env, HTTP_PROXY: proxy.replace('://', '://fixture:only@') } });
-  assert.equal(requests, 1);
+  // actual compiled native engine above.
+  const bytes = Buffer.from('#!/usr/bin/env node\nconsole.log("phoenix-ui-engine 0.1.0");\n');
+  const url = await serveTls(t, (_req, res) => res.end(bytes));
+  for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
+  f.version.engines[f.target] = { ...f.version.engines[f.target], size: bytes.length, sha256: hash(bytes) }; f.seal();
+  const result = await installEngine(f);
+  assert.equal(result.code, 4); assert.match(result.stderr, /probe identity/);
+  const directory = path.dirname(boot().enginePath(boot().manifestAt(f.manifestPath), f.target, f.env));
+  assert.deepEqual(fs.readdirSync(directory), []);
 });
 nativeTest('HTTPS validates certificates, uses the CONNECT tunnel, and refuses downgrade redirects', async t => {
   const certificate=path.join(__dirname,'fixtures/bootstrap/tls-cert.pem');
@@ -425,9 +356,9 @@ nativeTest('HTTPS validates certificates, uses the CONNECT tunnel, and refuses d
   const mismatch=await command(process.execPath,[path.join(wrongHost.pkg,'bin/phoenix-diagram.js'),'engine','install','--project',wrongHost.project,'--json'],{cwd:wrongHost.project,env:{...wrongHost.env,NODE_EXTRA_CA_CERTS:certificate,HTTPS_PROXY:`http://127.0.0.1:${proxy.address().port}`}});
   assert.equal(mismatch.code,4);assert.match(mismatch.stderr,/certificate.*(?:IP|altnames)|IP.*cert/i);assert.equal(connects,2);assert.equal(tlsRequests,2);
   requireProxy=false;
-  const h=fixture(t);h.version.distribution='candidate';for(const meta of Object.values(h.version.engines))meta.url=url.replace('/engine','/downgrade');h.seal();
+  const h=fixture(t);h.version.distribution='release';for(const meta of Object.values(h.version.engines))meta.url=url.replace('/engine','/downgrade');h.seal();
   const downgraded=await command(process.execPath,[path.join(h.pkg,'bin/phoenix-diagram.js'),'engine','install','--project',h.project,'--json'],{cwd:h.project,env:{...h.env,NODE_EXTRA_CA_CERTS:certificate}});
-  assert.equal(downgraded.code,4);assert.match(downgraded.stderr,/HTTPS downgrade/);assert.equal(trapRequests,0);
+  assert.equal(downgraded.code,4);assert.match(downgraded.stderr,/requires HTTPS/);assert.equal(trapRequests,0);
 });
 nativeTest('a real native install yields a working installed launcher without an installed manifest.json', async t => {
   const f = fixture(t); f.offline();

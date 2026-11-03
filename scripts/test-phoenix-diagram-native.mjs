@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Full maintenance regression. Real browser/export/provider acceptance has
-// separate evidence; protocol fixtures never stand in for those gates.
+// Full maintenance regression. Real browser/export acceptance has separate
+// evidence; protocol fixtures never stand in for that gate.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -17,7 +17,7 @@ function command(program, args, { cwd = root, env, ...options } = {}) {
 }
 export function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') {
-    console.log('npm run test:diagram\nFull locked/offline diagram Rust, Node and Reader regression.\nRun explicit prepare first; this command does not install tools or download dependencies.\nReal Chrome/export/provider and final-package acceptance remain separate.');
+    console.log('npm run test:diagram\nFull locked/offline diagram Rust, Node and Reader regression.\nRun explicit prepare first; this command does not install tools or download dependencies.\nReal Chrome/export acceptance remains separate.');
     return 0;
   }
   assert(args.length === 0, 'Usage: node scripts/test-phoenix-diagram-native.mjs [--help]');
@@ -53,7 +53,7 @@ export function main(args = process.argv.slice(2)) {
       path.join(root, 'tools/phoenix-diagram/tests/export-acceptance.test.mjs'),
     ], { env });
     console.log(JSON.stringify({ schemaVersion: 1, tool: 'phoenix-diagram', command: 'test-native', status: 'pass',
-      scope: 'maintenance Rust/Node/Reader regression', realBrowser: 'not-run', providerSessions: 'not-run', tools: prepared }));
+      scope: 'maintenance Rust/Node/Reader regression', realBrowser: 'not-run', tools: prepared }));
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

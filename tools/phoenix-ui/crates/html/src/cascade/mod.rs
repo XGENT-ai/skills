@@ -17,9 +17,6 @@ pub mod rules;
 pub mod shorthand;
 pub mod values;
 
-#[cfg(feature = "vectors")]
-pub mod vectors;
-
 pub use build::*;
 pub use defaults::*;
 pub use rules::*;

@@ -2,16 +2,31 @@
  * `impeccable detect` corpus.
  *
  * Every antipattern fixture is scanned individually in JSON and text mode with
- * --no-config (the repo's own .impeccable config ignores tests/fixtures), plus
+ * --no-config (no project config applies), plus
  * directory scans, project-config / DESIGN.md / inline-ignore behaviour from
  * the detect-config workspace, and the flag surface (help, scope, quiet,
  * no-advisory, errors).
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { REPO_ROOT } from '../lib.mjs';
+import { REPO_ROOT, ORACLE_DIR } from '../lib.mjs';
 
 const FIXTURES = path.join(REPO_ROOT, 'tests', 'fixtures', 'antipatterns');
+const TARGET = 'tests/fixtures/antipatterns/blinking-cursor.html';
+
+// A separate git project with its own DESIGN.md and .phoenix-ui config,
+// staged beside the workspace; its path is reported as <REPO>.
+const external = {
+  setup(ws) {
+    const dir = path.join(ws, '.oracle-external-project');
+    fs.cpSync(path.join(ORACLE_DIR, 'fixtures', 'external-project'), dir, { recursive: true });
+    fs.mkdirSync(path.join(dir, '.git'));
+    fs.mkdirSync(path.dirname(path.join(dir, TARGET)), { recursive: true });
+    fs.copyFileSync(path.join(REPO_ROOT, TARGET), path.join(dir, TARGET));
+  },
+  normalize: [[String.raw`<WS>/\.oracle-external-project`, 'g', '<REPO>']],
+};
+const externalTarget = `<WS>/.oracle-external-project/${TARGET}`;
 
 export default function cases() {
   const out = [];
@@ -31,6 +46,7 @@ export default function cases() {
       verb: 'detect',
       args: ['--no-config', `<REPO>/${rel}`],
       isolateHome: false,
+      offline: ent.name.startsWith('framework-'),
     });
   }
 
@@ -48,7 +64,7 @@ export default function cases() {
     { id: 'detect-multifile-text', verb: 'detect', args: ['--no-config', `<REPO>/tests/fixtures/antipatterns/multifile`], isolateHome: false },
     { id: 'detect-framework-vite-json', verb: 'detect', args: ['--no-config', '--json', `<REPO>/tests/fixtures/antipatterns/framework-vite`], isolateHome: false },
     { id: 'detect-framework-next-tailwind-json', verb: 'detect', args: ['--no-config', '--json', `<REPO>/tests/fixtures/antipatterns/framework-next-tailwind`], isolateHome: false },
-    { id: 'detect-framework-next-modules-text', verb: 'detect', args: ['--no-config', `<REPO>/tests/fixtures/antipatterns/framework-next-modules`], isolateHome: false },
+    { id: 'detect-framework-next-modules-text', verb: 'detect', args: ['--no-config', `<REPO>/tests/fixtures/antipatterns/framework-next-modules`], isolateHome: false, offline: true },
     { id: 'detect-framework-next-cssinjs-json', verb: 'detect', args: ['--no-config', '--json', `<REPO>/tests/fixtures/antipatterns/framework-next-cssinjs`], isolateHome: false },
     {
       id: 'detect-jsx-commented-img', verb: 'detect',
@@ -120,7 +136,7 @@ function Thumb({ url }: { url?: string }) {
       },
       args: ['--no-config', '--json', '.'],
     },
-    { id: 'detect-unknown-flag', verb: 'detect', args: ['--bogus', `<REPO>/tests/fixtures/antipatterns/blinking-cursor.html`], isolateHome: false },
+    { id: 'detect-unknown-flag', verb: 'detect', args: ['--bogus', externalTarget], isolateHome: false, ...external },
     { id: 'detect-bad-viewport', verb: 'detect', args: ['--viewport', 'wide', `<REPO>/tests/fixtures/antipatterns/blinking-cursor.html`], isolateHome: false },
     { id: 'cli-help', verb: 'cli-help', args: [] },
     { id: 'cli-version', verb: 'cli-version', args: [] },
@@ -143,7 +159,7 @@ function Thumb({ url }: { url?: string }) {
     { id: 'detect-config-extensions-dir-json', verb: 'detect', workspace: 'detect-extensions', args: ['--json', '--no-design-system', 'app/views'] },
     { id: 'detect-config-extensions-dir-no-config', verb: 'detect', workspace: 'detect-extensions', args: ['--no-config', '--json', 'app/views'] },
     // A file in one project must not pick up another project's DESIGN.md
-    { id: 'detect-config-cross-project', verb: 'detect', workspace: 'detect-config', args: ['--json', `<REPO>/tests/fixtures/antipatterns/blinking-cursor.html`], isolateHome: false },
+    { id: 'detect-config-cross-project', verb: 'detect', workspace: 'detect-config', args: ['--json', externalTarget], isolateHome: false, ...external },
   );
 
   return out;

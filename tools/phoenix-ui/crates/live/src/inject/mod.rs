@@ -13,10 +13,7 @@ pub mod tanstack;
 
 use crate::config::LiveConfig;
 use crate::util::jsp;
-use serde_json::{json, Value};
-
-/// The patch kind the generic tag strategy records in the journal.
-pub const TAG_PATCH_KIND: &str = "live-tag";
+use serde_json::Value;
 
 /// A registry entry's name (also the `adapter` value in inject JSON).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -178,45 +175,6 @@ pub fn framework_ignore_patterns(resolved: Option<&ResolvedFramework>) -> Vec<St
             vec![p.component_file.clone()]
         }
         _ => vec![],
-    }
-}
-
-/// JS: describeInjectArtifacts(resolved, { cwd, files })
-pub fn describe_inject_artifacts(
-    resolved: Option<&ResolvedFramework>,
-    files: &[String],
-) -> Vec<Value> {
-    let Some(resolved) = resolved else {
-        return vec![];
-    };
-    let list: Vec<Value> = match &resolved.project {
-        Project::SvelteKit(p) => sveltekit::sveltekit_artifacts(p),
-        Project::Nuxt(p) => nuxt::nuxt_artifacts(p),
-        Project::TanStack(p) => tanstack::tanstack_artifacts(p),
-        Project::Generic(_) => {
-            return files
-                .iter()
-                .map(|f| json!({ "kind": "patched", "path": f, "patch": TAG_PATCH_KIND, "markers": tag_strategy::TAG_PATCH_MARKERS }))
-                .collect()
-        }
-    };
-    list.into_iter()
-        .filter(|a| {
-            a.get("path")
-                .and_then(|p| p.as_str())
-                .map(|p| !p.is_empty())
-                .unwrap_or(false)
-        })
-        .collect()
-}
-
-/// JS: PATCH_UNDOERS[patch]
-pub fn undo_patch(patch: &str, content: &str) -> Option<String> {
-    match patch {
-        "live-tag" => Some(tag_strategy::unpatch_tag_file(content)),
-        "sveltekit-layout" => Some(sveltekit::unpatch_svelte_layout(content)),
-        "tanstack-root" => Some(tanstack::unpatch_tanstack_root(content)),
-        _ => None,
     }
 }
 

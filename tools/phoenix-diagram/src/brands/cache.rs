@@ -2,10 +2,7 @@ use super::{
     capture::{validate_image, Captured},
     network, BrandError, ResolvedBrand, ResourceIdentity,
 };
-use crate::{
-    input::sha256,
-    output::{self, FileBinding},
-};
+use crate::{input::sha256, output};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -106,19 +103,19 @@ pub(super) fn load(value: &Value, cache: &Path) -> Result<ResolvedBrand, BrandEr
             )
         })?;
     let file = path(cache, &sha256(url.as_str().as_bytes()), sha);
-    let binding = FileBinding::capture(&file).map_err(|_| {
+    let bytes = fs::read(&file).map_err(|_| {
         BrandError::new(
             "brand/cache-missing",
-            "Pinned brand cache is missing or unsafe; explicitly capture the official URL",
+            "Pinned brand cache is missing; explicitly capture the official URL",
         )
     })?;
-    if binding.bytes().len() > 1_500_000 {
+    if bytes.len() > 1_500_000 {
         return Err(BrandError::new(
             "brand/invalid-image",
             "Cached resource exceeds the image size limit",
         ));
     }
-    let e: Envelope = serde_json::from_slice(binding.bytes())
+    let e: Envelope = serde_json::from_slice(&bytes)
         .map_err(|_| BrandError::new("brand/digest-mismatch", "Invalid cache envelope"))?;
     if e.schema_version != 1 {
         return Err(BrandError::new(
@@ -128,27 +125,7 @@ pub(super) fn load(value: &Value, cache: &Path) -> Result<ResolvedBrand, BrandEr
     }
     let brand = resolved(e);
     verify_resolved(&brand, &url, sha)?;
-    binding.verify().map_err(io)?;
     Ok(brand)
-}
-fn private_directory(path: &Path) -> Result<(), BrandError> {
-    if path.is_dir() {
-        let meta = fs::symlink_metadata(path).map_err(io)?;
-        if meta.file_type().is_symlink() {
-            return Err(io("symbolic cache"));
-        }
-        return Ok(());
-    }
-    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
-        private_directory(parent)?;
-    }
-    let mut builder = fs::DirBuilder::new();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::DirBuilderExt;
-        builder.mode(0o700);
-    }
-    builder.create(path).map_err(io)
 }
 pub(super) fn store(
     url: &Url,
@@ -178,49 +155,22 @@ pub(super) fn store(
         data_base64: e.data_base64.clone(),
     });
     verify_resolved(&brand, url, &brand.resource.sha256)?;
-    private_directory(cache)?;
-    let slot = output::capture_slot(&target, &[]).map_err(io)?;
-    if target.exists() {
-        let old = FileBinding::capture(&target).map_err(io)?;
-        let existing: Envelope = serde_json::from_slice(old.bytes()).map_err(io)?;
+    if let Ok(bytes) = fs::read(&target) {
+        let existing: Envelope = serde_json::from_slice(&bytes).map_err(io)?;
         if existing.schema_version != 1 || resolved(existing) != brand {
             return Err(BrandError::new(
                 "brand/conflict",
                 "An existing cache identity differs; it was preserved",
             ));
         }
-        old.verify().map_err(io)?;
     } else {
-        output::publish_bound_with_mode(&slot, &serde_json::to_vec(&e).map_err(io)?, 0o600, &[])
+        let mut builder = fs::DirBuilder::new();
+        std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+        builder.recursive(true).create(cache).map_err(io)?;
+        output::write_with_mode(&target, &serde_json::to_vec(&e).map_err(io)?, 0o600)
             .map_err(io)?;
     }
     Ok((brand, target))
-}
-
-pub(super) fn bindings(
-    brands: &super::ResolvedBrands,
-    cache: &Path,
-) -> Result<Vec<FileBinding>, BrandError> {
-    let mut files = vec![];
-    for brand in brands.values().filter(|b| b.mark.is_none()) {
-        let r = &brand.resource;
-        let file = FileBinding::capture(&path(
-            cache,
-            r.url_sha256.as_deref().unwrap_or_default(),
-            &r.sha256,
-        ))
-        .map_err(io)?;
-        let e: Envelope = serde_json::from_slice(file.bytes()).map_err(io)?;
-        if e.schema_version != 1 || resolved(e) != *brand {
-            return Err(BrandError::new(
-                "brand/digest-mismatch",
-                "The cache changed while preparing the diagram",
-            ));
-        }
-        file.verify().map_err(io)?;
-        files.push(file);
-    }
-    Ok(files)
 }
 
 #[cfg(test)]
@@ -255,9 +205,9 @@ mod tests {
                 0o600
             );
         }
-        let original = FileBinding::capture(&file).unwrap();
+        let original = fs::read(&file).unwrap();
         store(&url, &captured, &temp).unwrap();
-        original.verify().unwrap();
+        assert_eq!(fs::read(&file).unwrap(), original);
         let mut other_url = url.clone();
         other_url.set_query(Some("token=other"));
         let other = serde_json::json!({"url":other_url.as_str(),"sha256":brand.resource.sha256});

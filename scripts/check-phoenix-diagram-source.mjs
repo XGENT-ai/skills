@@ -14,13 +14,6 @@ const referenceSha256 = '4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346
 const archiveSha256 = '6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4';
 const legacySha256 = '9b02b58082c1872f611fff050b225026e108ca53efa738da429965db9966d273';
 const legacyRevision = '4a65a1525f9ed03c775a0e18935901e1edbb773f';
-const migrationSourceIdentity = {
-  manifest: 'migration-sources/archify-v1.json', manifestSize: 127920,
-  manifestSha256: '9539830848515e15c246313058433926afe89fb3e8b2d01549284bfb6585053f',
-  archive: 'upstream/archify-2.17-full-source.tar.gz', archiveSize: 3871723,
-  archiveSha256: '50c67278595f1aedadfa1e6c8f0977e14678753d90c177b8a437bec40342785a',
-  sourceFileCounts: [219, 219, 157],
-};
 export const brandSourceIdentity = {
   manifest: 'assets/brand-license-sources.json',
   manifestSize: 4946,
@@ -89,14 +82,11 @@ const canonical = value => Buffer.from(JSON.stringify(value), 'utf8');
 const comparePaths = (a, b) => Buffer.compare(Buffer.from(a[0]), Buffer.from(b[0]));
 
 function readFile(file, description) {
-  let stat;
-  try { stat = fs.lstatSync(file); }
+  try { return fs.readFileSync(file); }
   catch (error) {
     if (error.code === 'ENOENT') throw new Error(`Missing ${description}: ${file}. Retrieve the pinned upstream bytes; do not replace the baseline.`);
     throw error;
   }
-  if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Expected regular ${description}: ${file}`);
-  return fs.readFileSync(file);
 }
 
 function safeRelative(name) {
@@ -106,17 +96,15 @@ function safeRelative(name) {
 }
 
 function treeManifest(directory, roots = fs.readdirSync(directory)) {
-  const stat = fs.lstatSync(directory);
-  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Source tree root must be a regular directory: ${directory}`);
   const rows = [];
   const visit = relative => {
-    const file = path.join(directory, ...safeRelative(relative).split('/')), stat = fs.lstatSync(file);
-    if (stat.isDirectory() && !stat.isSymbolicLink()) {
+    const file = path.join(directory, ...safeRelative(relative).split('/'));
+    if (fs.statSync(file).isDirectory()) {
       for (const child of fs.readdirSync(file)) visit(`${relative}/${child}`);
-    } else if (stat.isFile() && !stat.isSymbolicLink()) {
+    } else {
       const bytes = fs.readFileSync(file);
       rows.push([relative, bytes.length, sha256(bytes)]);
-    } else throw new Error(`Source tree contains a non-regular file: ${relative}`);
+    }
   };
   for (const relative of roots) visit(relative);
   return rows.sort(comparePaths);
@@ -252,16 +240,6 @@ export function verifyRustLicenseSources({ project = workspace, identity } = {})
   if (!identity || !canonical(identity).equals(canonical(rustLicenseIdentity))) {
     throw new Error('Frozen Rust license source identity differs from the pinned baseline');
   }
-  for (const relative of ['assets', 'assets/licenses']) {
-    const directory = path.join(project, relative);
-    let stat;
-    try { stat = fs.lstatSync(directory); }
-    catch (error) {
-      if (error.code === 'ENOENT') throw new Error(`Missing Rust license directory: ${directory}`);
-      throw error;
-    }
-    if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Expected regular Rust license directory: ${directory}`);
-  }
   const bytes = readFile(path.join(project, identity.manifest), 'Rust license source manifest');
   if (bytes.length !== identity.manifestSize || sha256(bytes) !== identity.manifestSha256) {
     throw new Error('Rust license source manifest differs from the pinned source bytes');
@@ -370,22 +348,6 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
   const nativeTime = verifyNativeTimeSources(upstream, source.nativeTime);
   const rustLicenses = verifyRustLicenseSources({ project: path.resolve(upstream, '..'), identity: source.rustLicenses });
   const nativeBrands = verifyBrandLicenseSources({ project: path.resolve(upstream, '..'), identity: source.nativeBrands, referenceMembers: recovered.members });
-  if (!canonical(source.nativeMigration).equals(canonical(migrationSourceIdentity))) throw new Error('Frozen migration source identity differs from the pinned baseline');
-  const migrationProject = path.resolve(upstream, '..');
-  for (const [name, size, digest] of [[migrationSourceIdentity.manifest, migrationSourceIdentity.manifestSize, migrationSourceIdentity.manifestSha256],
-    [migrationSourceIdentity.archive, migrationSourceIdentity.archiveSize, migrationSourceIdentity.archiveSha256]]) {
-    const bytes = readFile(path.join(migrationProject, name), 'complete migration source');
-    if (bytes.length !== size || sha256(bytes) !== digest) throw new Error(`Pinned complete migration source differs: ${name}`);
-  }
-  // Producer code is needed only in native/assembly jobs. Importing this module
-  // in a source-less consumer does not import it or reconstruct old sources.
-  const migrationCheck = spawnSync(process.execPath, ['--input-type=module', '-e',
-    'const {verifyMigrationSourceFiles}=await import(process.argv[1]);console.log(JSON.stringify(verifyMigrationSourceFiles({project:process.argv[2]})));',
-    new URL('./collect-phoenix-diagram-migration-sources.mjs', import.meta.url).href, migrationProject], { encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024 });
-  if (migrationCheck.error || migrationCheck.status !== 0) throw new Error(`Complete migration source verification failed: ${migrationCheck.error?.message || migrationCheck.stderr}`);
-  const migration = JSON.parse(migrationCheck.stdout);
-  if (migration.status !== 'pass' || migration.manifestSha256 !== migrationSourceIdentity.manifestSha256
-      || migration.archiveSha256 !== migrationSourceIdentity.archiveSha256 || !canonical(migration.sources.map(row => row.fileCount)).equals(canonical(migrationSourceIdentity.sourceFileCounts))) throw new Error('Complete migration source verification scope differs');
   let localStatus = 'absent; archive is authoritative';
   if (localReference && fs.existsSync(localReference)) {
     try {
@@ -400,7 +362,6 @@ export function verifyFrozenSources({ upstream = upstreamRoot, localReference = 
     nativeTime,
     rustLicenses,
     nativeBrands,
-    nativeMigration: { ...migrationSourceIdentity, sources: migration.sources },
   };
 }
 

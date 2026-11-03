@@ -9,20 +9,6 @@ const SLUG_HASH_LEN: usize = 8;
 
 /// JS: slugFromTarget(resolved, { cwd })
 pub fn slug_from_target(resolved: Option<&str>, cwd: &str) -> Option<String> {
-    slug_from_target_using(resolved, cwd, kebab)
-}
-
-/// Compatibility key used by releases that truncated normalized targets to
-/// their last 50 characters without a hash suffix.
-pub(crate) fn legacy_slug_from_target(resolved: Option<&str>, cwd: &str) -> Option<String> {
-    slug_from_target_using(resolved, cwd, legacy_kebab)
-}
-
-fn slug_from_target_using(
-    resolved: Option<&str>,
-    cwd: &str,
-    slugger: fn(&str) -> Option<String>,
-) -> Option<String> {
     let resolved = resolved?;
     let trimmed = js_trim(resolved);
     if trimmed.is_empty() {
@@ -31,7 +17,7 @@ fn slug_from_target_using(
     let lower = trimmed.to_ascii_lowercase();
     if lower.starts_with("http://") || lower.starts_with("https://") {
         let (host, pathname) = parse_url_host_path(trimmed)?;
-        return slugger(&format!("{}{}", host, pathname));
+        return kebab(&format!("{}{}", host, pathname));
     }
     let abs = if jsp::is_absolute(trimmed) { trimmed.to_string() } else { jsp::resolve(cwd, &[trimmed]) };
     let mut rel = jsp::relative(cwd, cwd, &abs);
@@ -41,7 +27,7 @@ fn slug_from_target_using(
     if rel.is_empty() || rel == "." {
         return None;
     }
-    slugger(&rel)
+    kebab(&rel)
 }
 
 /// Minimal WHATWG URL parse for http(s): returns (hostname lowercased, pathname).
@@ -66,16 +52,6 @@ pub fn kebab(value: &str) -> Option<String> {
     }
 }
 
-fn legacy_kebab(value: &str) -> Option<String> {
-    let u = normalized_kebab(value)?;
-    if u.len() <= SLUG_MAX {
-        Some(u)
-    } else {
-        let tail = &u[u.len() - SLUG_MAX..];
-        Some(tail.strip_prefix('-').unwrap_or(tail).to_string())
-    }
-}
-
 fn normalized_kebab(value: &str) -> Option<String> {
     let normalized = value
         .to_lowercase()
@@ -88,7 +64,7 @@ fn normalized_kebab(value: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{kebab, legacy_kebab, normalized_kebab, SLUG_MAX};
+    use super::{kebab, normalized_kebab, SLUG_MAX};
 
     #[test]
     fn normalization_preserves_ascii_runs_after_unicode_lowercasing() {
@@ -119,14 +95,5 @@ mod tests {
     fn non_truncated_slugs_are_unchanged() {
         assert_eq!(kebab("Button.Primary"), Some("button-primary".to_string()));
         assert_eq!(kebab(&"a".repeat(SLUG_MAX)), Some("a".repeat(SLUG_MAX)));
-    }
-
-    #[test]
-    fn legacy_kebab_preserves_the_previous_truncation_key() {
-        let value = "a-very-long-directory-structure-with-many-segments-component-name.tsx";
-        assert_eq!(
-            legacy_kebab(value),
-            Some("ry-structure-with-many-segments-component-name-tsx".to_string())
-        );
     }
 }

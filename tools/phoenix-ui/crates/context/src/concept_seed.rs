@@ -2,12 +2,12 @@
 
 use crate::catalog::*;
 use crate::context::load_context;
-use crate::jsp;
 use crate::roll_selection::*;
 use crate::seed_text as t;
 use crate::target_args::TargetOptions;
 use crate::util::Env;
 use impeccable_common::Io;
+use once_cell::sync::Lazy;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
@@ -139,70 +139,39 @@ fn render_composition(c: &Value, index: Option<usize>) -> String {
     )
 }
 
-struct Local {
+struct Catalog {
     catalog_version: String,
     concepts: Vec<Value>,
     compositions: Vec<Value>,
 }
 
-fn local_from_values(
+fn catalog_from_values(
     catalog: Value,
     reviews: Value,
     composition: Value,
     composition_reviews: Value,
-) -> Result<Local, String> {
-    let mut errors = validate_concept_catalog(&catalog, &reviews);
-    errors.extend(validate_composition_catalog(
-        &composition,
-        &composition_reviews,
-    ));
-    if catalog.get("catalogVersion") != composition.get("catalogVersion") {
-        errors.push("concept and composition catalogVersion must match".into());
-    }
-    if !errors.is_empty() {
-        return Err(format!(
-            "concept-seed: invalid local catalog: {}",
-            errors.join("; ")
-        ));
-    }
-    let cat = concept_catalog_from_values(catalog, reviews)
-        .ok_or("concept-seed: invalid concept catalog structure")?;
+) -> Catalog {
+    let cat = concept_catalog_from_values(catalog, reviews).expect("concept catalog");
     let comp = composition_catalog_from_values(composition, composition_reviews)
-        .ok_or("concept-seed: invalid composition catalog structure")?;
-    Ok(Local {
+        .expect("composition catalog");
+    Catalog {
         catalog_version: vs(&cat.catalog, "catalogVersion"),
         concepts: cat.concepts,
         compositions: comp.compositions,
-    })
+    }
 }
 
-fn load_local(catalog_dir: &str) -> Result<Local, String> {
-    let read = |name: &str| -> Result<Value, String> {
-        let file = jsp::join(&[catalog_dir, name]);
-        let text = crate::util::safe_read(&file)
-            .ok_or_else(|| format!("concept-seed: missing or unreadable catalog file {file}"))?;
-        serde_json::from_str(&text)
-            .map_err(|e| format!("concept-seed: invalid JSON in {file}: {e}"))
-    };
-    local_from_values(
-        read("concept-ingredients.json")?,
-        read("concept-reviews.json")?,
-        read("composition-ingredients.json")?,
-        read("composition-reviews.json")?,
-    )
-}
-
-fn builtin_catalog() -> Result<Local, String> {
-    let parse = |text| {
-        serde_json::from_str(text)
-            .map_err(|e| format!("concept-seed: invalid built-in catalog: {e}"))
-    };
-    local_from_values(
-        parse(include_str!("../../../../../skills/phoenix-ui/src/scripts/data/catalog/concept-ingredients.json"))?,
-        parse(include_str!("../../../../../skills/phoenix-ui/src/scripts/data/catalog/concept-reviews.json"))?,
-        parse(include_str!("../../../../../skills/phoenix-ui/src/scripts/data/catalog/composition-ingredients.json"))?,
-        parse(include_str!("../../../../../skills/phoenix-ui/src/scripts/data/catalog/composition-reviews.json"))?)
-}
+/// The catalog shipped with the skill; `catalog::validation` checks it.
+static BUILTIN: Lazy<Catalog> = Lazy::new(|| {
+    let [a, b, c, d] = [
+        CONCEPTS_JSON,
+        CONCEPT_REVIEWS_JSON,
+        COMPOSITIONS_JSON,
+        COMPOSITION_REVIEWS_JSON,
+    ]
+    .map(|text| serde_json::from_str(text).expect("shipped catalog JSON"));
+    catalog_from_values(a, b, c, d)
+});
 
 struct RollData {
     catalog_version: String,
@@ -232,7 +201,12 @@ fn unit(scope: &str, salt: &str, key: &str) -> f64 {
 }
 
 /// JS: renderConceptSeed
-fn render_concept_seed(env: &Env, cwd: &str, a: &SeedArgs) -> Result<String, (i32, String)> {
+fn render_concept_seed(
+    env: &Env,
+    cwd: &str,
+    a: &SeedArgs,
+    local: &Catalog,
+) -> Result<String, (i32, String)> {
     let scope = match a.scope.as_deref() {
         Some("surface") => "surface",
         Some("direction") => "direction",
@@ -342,12 +316,6 @@ fn render_concept_seed(env: &Env, cwd: &str, a: &SeedArgs) -> Result<String, (i3
         .collect::<Vec<_>>()
         .join(", ");
 
-    // Explicit local catalogs fail visibly. The default is the fixed own catalog.
-    let local = match env.get("PHOENIX_UI_CATALOG_DIR").filter(|v| !v.is_empty()) {
-        Some(dir) => load_local(dir),
-        None => builtin_catalog(),
-    }
-    .map_err(|message| (2, message))?;
     let sel = select_approved_challengers(scope, key, reroll, mode, &local.concepts)
         .map_err(|message| (1, message))?;
     let comps = select_approved_compositions(
@@ -361,7 +329,7 @@ fn render_concept_seed(env: &Env, cwd: &str, a: &SeedArgs) -> Result<String, (i3
         3,
     );
     let data = RollData {
-        catalog_version: local.catalog_version,
+        catalog_version: local.catalog_version.clone(),
         source: "local".into(),
         pool_revision: approved_pool_revision(&local.concepts),
         approved_count: sel.approved.len().to_string(),
@@ -532,12 +500,6 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     let idx = |name: &str| args.iter().position(|a| a == name);
     // args[idx+1] may be undefined -> None
     let val = |name: &str| -> Option<Option<String>> { idx(name).map(|i| args.get(i + 1).cloned()) };
-    let chosen = val("--chosen");
-    let kind = val("--kind");
-    if chosen.is_some() || kind.is_some() {
-        io.out("choice kept local; telemetry disabled\n");
-        return 0;
-    }
     let ctx = load_context(&cwd, &TargetOptions::default(), &env);
     if !ctx.has_product {
         io.out("NO_PRODUCT_MD: the dice stay in the cup until product truth exists. Complete the init ask round and write PRODUCT.md first (reference/init.md), then re-run this exact command. Challengers fuse their form with facts from PRODUCT.md; without it every direction is ungrounded.\n");
@@ -565,7 +527,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         platform: val("--platform"),
         candidate_count: num(val("--candidate-count")).unwrap_or(7.0),
     };
-    match render_concept_seed(&env, &cwd, &seed) {
+    match render_concept_seed(&env, &cwd, &seed, &BUILTIN) {
         Ok(text) => {
             io.out(&text);
             0
@@ -607,24 +569,12 @@ mod tests {
         (proj, skill)
     }
 
-    fn seed(proj: &std::path::Path, skill: &std::path::Path, catalog: bool, args: &[&str]) -> (i32, String) {
-        let catalog_dir = if catalog {
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/concept-catalog")
-        } else {
-            proj.join("no-such-catalog")
-        };
+    fn seed(proj: &std::path::Path, skill: &std::path::Path, args: &[&str]) -> (i32, String) {
         let env = Env::from([
             (
                 "PHOENIX_UI_SKILL_DIR".into(),
                 skill.to_string_lossy().into_owned(),
             ),
-            (
-                "PHOENIX_UI_CATALOG_DIR".into(),
-                catalog_dir.to_string_lossy().into_owned(),
-            ),
-            ("PHOENIX_UI_API_URL".into(), "http://127.0.0.1:9/api".into()),
-            ("PHOENIX_UI_API_TIMEOUT".into(), "300".into()),
-            ("PHOENIX_UI_NO_TELEMETRY".into(), "1".into()),
             ("PHOENIX_UI_NO_STALENESS_CHECK".into(), "1".into()),
         ]);
         let (mut io, cap) = Io::captured("", proj.to_path_buf(), env);
@@ -674,10 +624,19 @@ mod tests {
         for (mode, file, dir, comps) in [
             ("persuade", "mode-persuade", "P directions.", "P comps."),
             ("experience", "mode-persuade", "P directions.", "P comps."),
-            ("operate", "mode-operate", "- Keep standard navigation.\n\n  Indented continuation.", "- Show a working state.\n### Sub heading stays"),
+            (
+                "operate",
+                "mode-operate",
+                "- Keep standard navigation.\n\n  Indented continuation.",
+                "- Show a working state.\n### Sub heading stays",
+            ),
             ("read", "mode-read", "R directions.", "R comps."),
         ] {
-            let (code, out) = seed(&proj, &skill, true, &["--scope", "direction", "--mode", mode, "--from", "k1"]);
+            let (code, out) = seed(
+                &proj,
+                &skill,
+                &["--scope", "direction", "--mode", mode, "--from", "k1"],
+            );
             assert_eq!(code, 0, "{out}");
             let block = format!(
                 "\nMODE RULES ({}, from {}/reference/{}.md). They govern this surface's directions and every comp you write or judge for it, the decision comps included; where shared guidance conflicts, these win.\nDIRECTIONS\n{}\nCOMPS\n{}\nA user- or brief-pinned decision beats the roll, always.\n",
@@ -691,19 +650,32 @@ mod tests {
     #[test]
     fn no_mode_prints_no_block_and_richness_is_mode_neutral() {
         let (proj, skill) = fixture("no-mode", &[("mode-persuade", MODE_FILE)]);
-        let (code, out) = seed(&proj, &skill, true, &["--scope", "direction", "--from", "k1"]);
+        let (code, out) = seed(&proj, &skill, &["--scope", "direction", "--from", "k1"]);
         assert_eq!(code, 0, "{out}");
         assert!(!out.contains("MODE RULES"), "{out}");
-        assert!(!out.contains("Persuade") && !out.contains("Operate or Read"), "{out}");
-        assert!(out.contains("Keep a literal carrier only when it\nbecomes functional."), "{out}");
+        assert!(
+            !out.contains("Persuade") && !out.contains("Operate or Read"),
+            "{out}"
+        );
+        assert!(
+            out.contains("Keep a literal carrier only when it\nbecomes functional."),
+            "{out}"
+        );
     }
 
     #[test]
     fn missing_file_or_section_prints_the_fallback_and_still_rolls() {
-        let (proj, skill) = fixture("missing", &[("mode-operate", "# O\n\n## Directions\nonly directions\n")]);
+        let (proj, skill) = fixture(
+            "missing",
+            &[("mode-operate", "# O\n\n## Directions\nonly directions\n")],
+        );
         let skill_s = skill.to_string_lossy().replace('\\', "/");
         for (mode, file) in [("operate", "mode-operate"), ("read", "mode-read")] {
-            let (code, out) = seed(&proj, &skill, true, &["--scope", "surface", "--mode", mode, "--from", "k1"]);
+            let (code, out) = seed(
+                &proj,
+                &skill,
+                &["--scope", "surface", "--mode", mode, "--from", "k1"],
+            );
             assert_eq!(code, 0, "{out}");
             assert!(out.contains(&format!("\nMODE RULES unavailable: read {}/reference/{}.md before writing directions or comps.\n", skill_s, file)), "{out}");
             assert!(!out.contains("DIRECTIONS\n"), "{out}");
@@ -711,12 +683,11 @@ mod tests {
     }
 
     #[test]
-    fn rerolls_carry_the_block_and_missing_catalogs_fail() {
+    fn rerolls_carry_the_block() {
         let (proj, skill) = fixture("reroll", &[("mode-persuade", MODE_FILE)]);
         let (_, out) = seed(
             &proj,
             &skill,
-            true,
             &[
                 "--scope",
                 "direction",
@@ -731,22 +702,5 @@ mod tests {
             ],
         );
         assert!(out.contains("MODE RULES (persuade, from "), "{out}");
-        let (code, _) = seed(
-            &proj,
-            &skill,
-            false,
-            &[
-                "--scope",
-                "direction",
-                "--mode",
-                "experience",
-                "--from",
-                "k1",
-            ],
-        );
-        assert_eq!(
-            code, 2,
-            "missing catalog must not contact a remote roll service"
-        );
     }
 }
