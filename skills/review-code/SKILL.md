@@ -201,6 +201,13 @@ RULE @new_finding_admission:
              intentional_behavior_change_alone_as_bug]
   # 旧问题按复审表独立核对。
 
+RULE @fr_before_nfr:
+  MUST: [functional_correctness_and_promised_behavior_before_nfr,
+         "用户或计划未明确要求的性能、资源、可用性、可观测性、可维护性等 NFR 按常规工程判断：真实规模下有可证实后果、且有开销相近的更优写法时按一般缺陷定级",
+         "NFR 问题造成功能失败（如真实规模下超时、内存耗尽、泄漏致不可用）时按功能缺陷定级"]
+  MUST_NOT: [downgrade_security_authorization_tenant_isolation_or_data_correctness_defects_as_nfr,
+             "为这类 NFR 要求基准测试、性能基线、专项验证或系统性优化，或因缺少这些报问题"]
+
 RULE @existing_protection:
   MUST: check_existing_validation_types_upstream_filters_transactions_and_compensation
   MUST_NOT: infer_failure_only_from_missing_local_try_catch_null_check_or_cache
@@ -282,7 +289,7 @@ OUTPUT:
   verdict_source: references/report-contract.md
 
 REVIEW:
-  CHECK: [@new_finding_admission, @recheck_coverage, @snapshot_consistency,
+  CHECK: [@new_finding_admission, @fr_before_nfr, @recheck_coverage, @snapshot_consistency,
           @complete_report, @report_persistence]
   ALSO: [coverage_disclosure, evidence_traceability, actual_report_links]
   EXPOSE: on_issue

@@ -56,7 +56,7 @@ stateDiagram-v2
   核实改稿 --> 不改原文: 意见不成立
 ```
 
-这张图说的是文档回路，不是 SPMS 状态机。需求用它一次，计划再用它一次。`apply-doc-review` 改完不自动再评（`skills/apply-doc-review/SKILL.md:22`）。仍有会改变范围、安全、数据、外部契约或关键 NFR 的问题时，人决定要不要再跑对应的 review skill。计划 apply 后仍是 `Blocked`，用 `resolve-blocked` 逐项解除，见 7.2。
+这张图说的是文档回路，不是 SPMS 状态机。需求用它一次，计划再用它一次。`apply-doc-review` 改完不自动再评（`skills/apply-doc-review/SKILL.md:22`）。仍有会改变范围、安全、数据、外部契约或明确要求的 NFR 的问题时，人决定要不要再跑对应的 review skill。计划 apply 后仍是 `Blocked`，用 `resolve-blocked` 逐项解除，见 7.2。
 
 ### 2.3 人守终态，agent 守草稿和证据
 
@@ -209,7 +209,7 @@ agent 按 `prd` 的澄清规则提问，不问已经能从代码或 SPMS 查到�
 使用 dev-plan，为 <项目> 的这些需求写开发计划：FR-18, FR-19, NFR-3。排除 <范围>。
 ```
 
-agent 把这组 key 当作 `R1..Rn`，对照目标仓代码核实现状，再写计划。未证实的主张标成假设。影响范围、安全、数据、外部契约或关键 NFR 的问题未决时，状态必须是 `Blocked`，不能标 `Ready`（`skills/dev-plan/SKILL.md:44`，`:144`）。
+agent 把这组 key 当作 `R1..Rn`，对照目标仓代码核实现状，再写计划。未证实的主张标成假设。影响范围、安全、数据、外部契约或明确要求的 NFR 的问题未决时，状态必须是 `Blocked`，不能标 `Ready`（`skills/dev-plan/SKILL.md:74`，`:186`）。
 
 落盘顺序：用户指定路径，否则目标仓根目录已有 goal 目录时写 `goal/<代号>.md`，没有则写 `docs/plan/<代号>.md`。文件已存在先问再覆盖（`skills/dev-plan/SKILL.md:41`，`:70`）。
 
