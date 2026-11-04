@@ -34,6 +34,8 @@ test('npx infers the packed installer without changing project dependencies', (t
   assert.match(installed.stdout, /完成: /);
   assert.equal(fs.readFileSync(path.join(project, '.claude/hooks/xgent-statusline.js'), 'utf8'),
     fs.readFileSync(path.join(root, '.claude/hooks/xgent-statusline.js'), 'utf8'));
+  assert.equal(fs.readFileSync(path.join(project, '.claude/agents/agi-agent.md'), 'utf8'),
+    fs.readFileSync(path.join(root, 'agents/agi-agent.md'), 'utf8'));
   assert.equal(fs.existsSync(path.join(project, 'AGENTS.md')), false);
   assert.match(installed.stdout, /可选.*optimize-agents-md.*opinionated DSL/);
   const explicit = run(npx, ['--offline', '--yes', `--package=${archive}`, 'xgent-skills', '--help'], project);

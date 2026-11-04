@@ -35,7 +35,7 @@ function packageFor(t, executable) {
   const bin = path.join(root, 'bin');
   fs.mkdirSync(bin);
   for (const name of ['xgent-skills.js', 'phoenix-ui.js']) fs.copyFileSync(path.join(repository, 'bin', name), path.join(bin, name));
-  for (const dir of ['.claude', 'hooks', 'skills']) link(path.join(repository, dir), path.join(root, dir));
+  for (const dir of ['.claude', 'agents', 'hooks', 'skills']) link(path.join(repository, dir), path.join(root, dir));
   const vendor = path.join(root, 'dist', 'phoenix-ui');
   fs.mkdirSync(vendor, { recursive: true });
   link(path.join(repository, 'dist/phoenix-ui/bundle'), path.join(vendor, 'bundle'));

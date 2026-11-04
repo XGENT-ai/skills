@@ -138,7 +138,7 @@ test('the npm tarball includes Diagram and install enables it unless explicitly 
   const stage = path.join(temp, 'stage');
   fs.mkdirSync(stage);
   fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify(pkg));
-  for (const name of ['bin', '.claude/hooks', 'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs', 'dist/phoenix-ui/bundle/manifest.json', 'skills/phoenix-diagram', 'dist/phoenix-diagram']) {
+  for (const name of ['bin', '.claude/hooks', 'agents', 'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs', 'dist/phoenix-ui/bundle/manifest.json', 'skills/phoenix-diagram', 'dist/phoenix-diagram']) {
     fs.cpSync(path.join(checkout, name), path.join(stage, name), { recursive: true });
   }
   const packed = spawnSync('npm', ['pack', '--offline', '--ignore-scripts', '--json', '--pack-destination', temp], { cwd: stage, encoding: 'utf8' });

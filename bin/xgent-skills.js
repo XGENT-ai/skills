@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks、启用相关 settings,
+// xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks 与 agents、启用相关 settings,
 // 并安装 Phoenix UI:skills 与 hooks 随包,engine 按包内 manifest 校验后放入用户 cache。
 // 零依赖,Node >= 18。
 
@@ -13,6 +13,7 @@ const readline = require('node:readline');
 
 const PKG_ROOT = path.join(__dirname, '..');
 const HOOKS_SRC_DIR = path.join(PKG_ROOT, '.claude', 'hooks');
+const AGENTS_SRC_DIR = path.join(PKG_ROOT, 'agents');
 
 // 写入目标项目 .claude/settings.json 的配置,按顶层 key 合并:
 // 这里列出的 key 以本包为准覆盖,其余已有配置保持不动。
@@ -237,22 +238,40 @@ function usage() {
   console.log(`用法: npx @xgent-ai/skills <command>
 
 命令:
-  install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
-                  hook,在 .claude/settings.json 中启用对应配置,并安装
+  install [dir]   按选中的 provider 为目标项目(默认当前目录)安装:
+                  .claude 写入全部 hook、agent 并在 settings.json 中启用
+                  对应配置,.agents 写入全部 agent;并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
                   放入用户 cache;旧 impeccable 可选择替换或共存)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine)' : ''}
   help            显示本帮助
 
 install 选项:
-  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks 与 settings(不删除已装版本)
+  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings(不删除已装版本)
   --no-impeccable       已弃用,等同 --no-phoenix-ui
   --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
   --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
 ${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
 ` : ''}  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
-${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --providers=a,b       指定 Phoenix 工具装进哪些 harness 目录(默认按项目里已有的
-                        目录判断,都没有时装 .claude;codex 同时选 .agents 与 .codex)
+${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --providers=a,b       指定本次安装的 harness 目录(默认按项目里已有的目录判断,
+                        都没有时装 .claude;codex 同时选 .agents 与 .codex)
 `);
+}
+
+// install 统一选一次 provider,再显式传给两个执行器:写入 XGENT 部分后才探测目录,
+// 会把刚建的目录也算进去。Codex 的 skill 和 hook 分居 .agents 与 .codex,统一记为 .agents。
+function selectProviders(requested, targetDir) {
+  const known = Object.keys(readJson(path.join(PHOENIX_DIR, 'bundle', 'manifest.json')).providers);
+  const dirs = (requested || '').split(',').map((v) => v.trim()).filter(Boolean)
+    .map((v) => (v === 'codex' ? '.agents' : v.startsWith('.') ? v : `.${v}`));
+  const unknown = dirs.filter((dir) => !known.includes(dir));
+  if (unknown.length > 0) {
+    console.error(`错误: 未知的 harness 目录: ${unknown.join(', ')}`);
+    console.error(`可选: ${known.join(', ')}`);
+    process.exit(1);
+  }
+  const existing = known.filter((dir) => fs.statSync(path.join(targetDir, dir), { throwIfNoEntry: false })?.isDirectory());
+  const selected = dirs.length > 0 ? dirs : existing.length > 0 ? existing : ['.claude'];
+  return [...new Set(selected.map((dir) => (dir === '.codex' ? '.agents' : dir)))];
 }
 
 async function install(args) {
@@ -284,31 +303,20 @@ async function install(args) {
     console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的四个 macOS/Linux 平台内。`);
   }
 
-  // 跳过 Phoenix 时仍按包内 bundle 校验 --providers,保持旧参数语义;启用时由执行器校验。
-  if (!options.phoenix && options.providers) {
-    const available = Object.keys(readJson(path.join(PHOENIX_DIR, 'bundle', 'manifest.json')).providers)
-      .filter((name) => name !== '.codex');
-    const unknown = options.providers.split(',').map((v) => v.trim()).filter(Boolean)
-      .map((v) => (v === 'codex' ? '.agents' : v.startsWith('.') ? v : `.${v}`))
-      .filter((v) => !available.includes(v));
-    if (unknown.length > 0) {
-      console.error(`错误: 未知的 harness 目录: ${unknown.join(', ')}`);
-      console.error(`可选: ${available.join(', ')}`);
-      process.exit(1);
-    }
-  }
-
   const targetDir = path.resolve(dirArg || process.cwd());
   if (!fs.existsSync(targetDir) || !fs.statSync(targetDir).isDirectory()) {
     console.error(`错误: 目标目录不存在: ${targetDir}`);
     process.exit(1);
   }
+  const providers = selectProviders(options.providers, targetDir);
+  options.providers = providers.join(',');
+  const claudeSelected = providers.includes('.claude');
   if (flags.includes('--no-impeccable')) console.log('  提示  --no-impeccable 已弃用,等同 --no-phoenix-ui');
 
   // 只读预检:全部通过后才写项目文件。
   const settingsPath = path.join(targetDir, '.claude', 'settings.json');
   let settings = {};
-  if (fs.existsSync(settingsPath)) {
+  if (claudeSelected && fs.existsSync(settingsPath)) {
     try {
       settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     } catch {
@@ -334,31 +342,38 @@ async function install(args) {
   if (phoenix) {
     phoenix.tools.apply(replace);
     // Cleanup may change shared settings.
-    if (fs.existsSync(settingsPath)) settings = readJson(settingsPath);
+    if (claudeSelected && fs.existsSync(settingsPath)) settings = readJson(settingsPath);
   }
 
-  const hooksDestDir = path.join(targetDir, '.claude', 'hooks');
-  fs.mkdirSync(hooksDestDir, { recursive: true });
-  for (const name of fs.readdirSync(HOOKS_SRC_DIR)) {
-    const content = fs.readFileSync(path.join(HOOKS_SRC_DIR, name));
-    const dest = path.join(hooksDestDir, name);
-    let status = '安装';
-    if (fs.existsSync(dest)) {
-      status = content.equals(fs.readFileSync(dest)) ? '未变' : '更新';
+  for (const [srcDir, destRelative, mode] of [
+    ...(claudeSelected ? [[HOOKS_SRC_DIR, '.claude/hooks', 0o755], [AGENTS_SRC_DIR, '.claude/agents', 0o644]] : []),
+    ...(providers.includes('.agents') ? [[AGENTS_SRC_DIR, '.agents/agents', 0o644]] : []),
+  ]) {
+    const destDir = path.join(targetDir, destRelative);
+    fs.mkdirSync(destDir, { recursive: true });
+    for (const name of fs.readdirSync(srcDir)) {
+      const content = fs.readFileSync(path.join(srcDir, name));
+      const dest = path.join(destDir, name);
+      let status = '安装';
+      if (fs.existsSync(dest)) {
+        status = content.equals(fs.readFileSync(dest)) ? '未变' : '更新';
+      }
+      if (status !== '未变') {
+        fs.writeFileSync(dest, content, { mode });
+      }
+      console.log(`  ${status}  ${destRelative}/${name}`);
     }
-    if (status !== '未变') {
-      fs.writeFileSync(dest, content, { mode: 0o755 });
-    }
-    console.log(`  ${status}  .claude/hooks/${name}`);
   }
 
-  const before = JSON.stringify(settings);
-  Object.assign(settings, MANAGED_SETTINGS);
-  if (JSON.stringify(settings) === before) {
-    console.log('  未变  .claude/settings.json');
-  } else {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
-    console.log('  写入  .claude/settings.json (statusLine)');
+  if (claudeSelected) {
+    const before = JSON.stringify(settings);
+    Object.assign(settings, MANAGED_SETTINGS);
+    if (JSON.stringify(settings) === before) {
+      console.log('  未变  .claude/settings.json');
+    } else {
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+      console.log('  写入  .claude/settings.json (statusLine)');
+    }
   }
 
   // XGENT 部分已完成;Phoenix 直接覆盖工具文件,中断后重跑。

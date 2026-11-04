@@ -58,10 +58,62 @@ test('install preserves settings and is idempotent', (t) => {
   assert.deepEqual(JSON.parse(fs.readFileSync(settings)).env, { PROJECT_SETTING: 'preserve' });
 });
 
+test('install writes packaged agents and keeps project agents', (t) => {
+  const dir = project(t);
+  const agents = path.join(dir, '.claude', 'agents');
+  const installed = path.join(agents, 'agi-agent.md');
+  const packaged = fs.readFileSync(path.join(root, 'agents', 'agi-agent.md'), 'utf8');
+
+  const fresh = run(dir);
+  assert.equal(fresh.status, 0, fresh.stderr);
+  assert.match(fresh.stdout, /安装  \.claude\/agents\/agi-agent\.md/);
+  assert.equal(fs.readFileSync(installed, 'utf8'), packaged);
+
+  fs.writeFileSync(installed, 'stale');
+  fs.writeFileSync(path.join(agents, 'project-agent.md'), 'mine');
+  const updated = run(dir);
+  assert.equal(updated.status, 0, updated.stderr);
+  assert.match(updated.stdout, /更新  \.claude\/agents\/agi-agent\.md/);
+  assert.equal(fs.readFileSync(installed, 'utf8'), packaged);
+  assert.equal(fs.readFileSync(path.join(agents, 'project-agent.md'), 'utf8'), 'mine');
+
+  const repeated = run(dir);
+  assert.equal(repeated.status, 0, repeated.stderr);
+  assert.match(repeated.stdout, /未变  \.claude\/agents\/agi-agent\.md/);
+});
+
+for (const [label, dirs, flags, claude, agents] of [
+  ['an empty project', [], [], true, false],
+  ['a project with .claude and .agents', ['.claude', '.agents'], [], true, true],
+  ['a project with only .agents', ['.agents'], [], false, true],
+  ['a project with only .codex', ['.codex'], [], false, true],
+  ['a project with only .cursor', ['.cursor'], [], false, false],
+  ['--providers=codex on an empty project', [], ['--providers=codex'], false, true],
+  ['--providers=claude despite .agents', ['.agents'], ['--providers=claude'], true, false],
+]) {
+  test(`install selects providers once and stays stable for ${label}`, (t) => {
+    const dir = project(t);
+    for (const name of dirs) fs.mkdirSync(path.join(dir, name));
+    const packaged = fs.readFileSync(path.join(root, 'agents', 'agi-agent.md'), 'utf8');
+    // 第二次安装不能因第一次新建的目录而扩大范围。
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const result = run(dir, flags);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(fs.existsSync(path.join(dir, '.claude', 'hooks', 'xgent-statusline.js')), claude);
+      assert.equal(fs.existsSync(path.join(dir, '.claude', 'settings.json')), claude);
+      assert.equal(fs.existsSync(path.join(dir, '.claude', 'agents', 'agi-agent.md')), claude);
+      assert.equal(fs.existsSync(path.join(dir, '.agents', 'agents', 'agi-agent.md')), agents);
+      assert.equal(fs.existsSync(path.join(dir, '.claude')), claude || dirs.includes('.claude'));
+      assert.equal(fs.existsSync(path.join(dir, '.agents')), agents || dirs.includes('.agents'));
+    }
+    if (agents) assert.equal(fs.readFileSync(path.join(dir, '.agents', 'agents', 'agi-agent.md'), 'utf8'), packaged);
+  });
+}
+
 test('install succeeds without xgent-init or AGENTS templates in the package', (t) => {
   const pkg = project(t);
   const dir = project(t);
-  for (const relative of ['package.json', 'bin', '.claude/hooks',
+  for (const relative of ['package.json', 'bin', '.claude/hooks', 'agents', 'dist/phoenix-ui/bundle/manifest.json',
     'skills/phoenix-ui/scripts', 'skills/phoenix-diagram/scripts']) {
     fs.cpSync(path.join(root, relative), path.join(pkg, relative), { recursive: true });
   }

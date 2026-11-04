@@ -28,6 +28,7 @@
   "files": [
     "bin",
     ".claude/hooks",
+    "agents",
     "docs/phoenix-ui.md",
     "docs/phoenix-diagram.md",
     "skills",
