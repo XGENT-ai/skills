@@ -1,4 +1,4 @@
-// Maintenance-test adapter derived from the frozen Archify 3.1.0
+// Maintenance-test adapter derived from Archify 3.1.0
 // archify/bin/visual-check.mjs PipeCdp/ChromeVisualBrowser and
 // renderers/shared/owned-temp-directory.mjs. MIT: ../../viewer/LICENSE.txt.
 // Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.

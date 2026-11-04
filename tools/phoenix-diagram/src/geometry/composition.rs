@@ -1,10 +1,9 @@
-// Pure predicates ported from the two frozen geometry.mjs sources; see NOTICE.md.
+// Pure predicates derived from Archify geometry.mjs (MIT); see NOTICE.md.
 // These collectors report geometry. Callers own quality/profile gates and diagnostics.
 use crate::geometry::{
     cross_product, finite_point, finite_rect, normalize_route_points, proper_segment_intersection,
     segment_intersects_rect, segment_rect_clearance, Point, Rect, EPSILON,
 };
-use crate::input::InputContract;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashSet;
@@ -141,7 +140,6 @@ fn truthy(value: &Value) -> bool {
 pub type RelationPairPredicate<'a> = &'a dyn Fn(&Value, &Value) -> bool;
 
 pub struct CorridorOptions<'a> {
-    pub contract: InputContract,
     pub min_overlap_px: f64,
     pub include_shared_endpoints: Option<RelationPairPredicate<'a>>,
     pub include_shared_endpoint_counterflow: Option<RelationPairPredicate<'a>>,
@@ -151,7 +149,6 @@ pub struct CorridorOptions<'a> {
 impl Default for CorridorOptions<'_> {
     fn default() -> Self {
         Self {
-            contract: InputContract::PhoenixV1,
             min_overlap_px: 8.0,
             include_shared_endpoints: None,
             include_shared_endpoint_counterflow: None,
@@ -278,16 +275,11 @@ pub fn collect_ambiguous_corridors(
     for (left_index, (left, a)) in normalized.iter().enumerate() {
         for (right, b) in normalized.iter().skip(left_index + 1) {
             let shared = share_endpoint(&left.relation, &right.relation);
-            let legacy = options.contract == InputContract::Legacy217;
-            if legacy && shared {
-                continue;
-            }
             let counterflow_only = shared
                 && !options
                     .include_shared_endpoints
                     .is_some_and(|f| f(&left.relation, &right.relation));
-            if !legacy
-                && counterflow_only
+            if counterflow_only
                 && !options
                     .include_shared_endpoint_counterflow
                     .is_some_and(|f| f(&left.relation, &right.relation))
@@ -304,33 +296,31 @@ pub fn collect_ambiguous_corridors(
                     if overlap.length + EPSILON < options.min_overlap_px {
                         continue;
                     }
-                    if !legacy {
-                        if options.allow_short_workflow_trunks
-                            && short_workflow_trunk(left, right, a, b, i, j, overlap.length)
-                        {
-                            continue;
-                        }
-                        let shared_source_tick = left.source_endpoint
-                            && right.source_endpoint
-                            && left.relation["from"] == right.relation["from"]
-                            && i == 0
-                            && j == 0
-                            && (a[0].x - b[0].x).abs() < EPSILON
-                            && (a[0].y - b[0].y).abs() < EPSILON;
-                        if same_junction(&left.relation, &right.relation)
-                            && ((overlap.start.y - overlap.end.y).abs() < EPSILON
-                                || left.relation["to"] == right.relation["to"]
-                                || shared_source_tick)
-                        {
-                            continue;
-                        }
-                        if counterflow_only
-                            && (a[i + 1].x - a[i].x) * (b[j + 1].x - b[j].x)
-                                + (a[i + 1].y - a[i].y) * (b[j + 1].y - b[j].y)
-                                >= 0.0
-                        {
-                            continue;
-                        }
+                    if options.allow_short_workflow_trunks
+                        && short_workflow_trunk(left, right, a, b, i, j, overlap.length)
+                    {
+                        continue;
+                    }
+                    let shared_source_tick = left.source_endpoint
+                        && right.source_endpoint
+                        && left.relation["from"] == right.relation["from"]
+                        && i == 0
+                        && j == 0
+                        && (a[0].x - b[0].x).abs() < EPSILON
+                        && (a[0].y - b[0].y).abs() < EPSILON;
+                    if same_junction(&left.relation, &right.relation)
+                        && ((overlap.start.y - overlap.end.y).abs() < EPSILON
+                            || left.relation["to"] == right.relation["to"]
+                            || shared_source_tick)
+                    {
+                        continue;
+                    }
+                    if counterflow_only
+                        && (a[i + 1].x - a[i].x) * (b[j + 1].x - b[j].x)
+                            + (a[i + 1].y - a[i].y) * (b[j + 1].y - b[j].y)
+                            >= 0.0
+                    {
+                        continue;
                     }
                     if longest
                         .as_ref()
@@ -367,8 +357,6 @@ pub struct ArrowheadCollision {
     pub minimum: f64,
 }
 
-// This predicate exists only in the PhoenixV1 frozen source. It is an explicit
-// new-contract check, not evidence that legacy had an arrowhead collision rule.
 pub fn collect_arrowhead_collisions(
     routed: &[RoutedRelation],
     allow_short_workflow_trunks: bool,
@@ -1094,7 +1082,6 @@ pub struct LabelCanvasOverflow {
     pub tolerance: f64,
 }
 
-// Like arrowhead collisions, containment was added in the PhoenixV1 baseline.
 pub fn collect_label_canvas_overflow(
     labels: &[LabelRect],
     view_box: &[f64],
@@ -1317,21 +1304,11 @@ pub fn polyline_bend_contacts(left: &[Point], right: &[Point]) -> Vec<Point> {
 
 pub type CrossingPredicate<'a> = &'a dyn Fn(&Value, &Value, &ProperCrossing) -> bool;
 
+#[derive(Default)]
 pub struct CrossingOptions<'a> {
-    pub contract: InputContract,
     pub merge_forward_collinear_waypoints: bool,
     pub include_shared_endpoints: Option<RelationPairPredicate<'a>>,
     pub crossing_resolved: Option<CrossingPredicate<'a>>,
-}
-impl Default for CrossingOptions<'_> {
-    fn default() -> Self {
-        Self {
-            contract: InputContract::PhoenixV1,
-            merge_forward_collinear_waypoints: false,
-            include_shared_endpoints: None,
-            crossing_resolved: None,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -1370,10 +1347,9 @@ pub fn collect_proper_crossings(
     for (index, (left, a)) in routes.iter().enumerate() {
         for (right, b) in routes.iter().skip(index + 1) {
             if share_endpoint(&left.relation, &right.relation)
-                && (options.contract == InputContract::Legacy217
-                    || !options
-                        .include_shared_endpoints
-                        .is_some_and(|f| f(&left.relation, &right.relation)))
+                && !options
+                    .include_shared_endpoints
+                    .is_some_and(|f| f(&left.relation, &right.relation))
             {
                 continue;
             }
@@ -1394,10 +1370,9 @@ pub fn collect_proper_crossings(
                 }
             }
             if let Some(hit) = hit {
-                if options.contract != InputContract::Legacy217
-                    && options
-                        .crossing_resolved
-                        .is_some_and(|f| f(&left.relation, &right.relation, &hit))
+                if options
+                    .crossing_resolved
+                    .is_some_and(|f| f(&left.relation, &right.relation, &hit))
                 {
                     continue;
                 }

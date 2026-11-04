@@ -1,9 +1,7 @@
 /*
-Derived from Archify 3.1.0 viewer/reader-layout.js (MIT), frozen content SHA-256
-4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent namespace, native fixed-canvas portrait height fitting,
+Derived from Archify 3.1.0 viewer/reader-layout.js (MIT).
+Phoenix Diagram modifications: independent namespace, native fixed-canvas portrait height fitting,
 and viewport-contained legend corners.
-Exact narrow source adaptation: reader-layout-adaptations.json.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -33,11 +31,10 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       // resize lifts the cap.
       var settledCap = 0;
       var WIDE_RATIO = 1.55;
-      // Native fixed geometry (2.17 input, or a phoenix-v1 canvas kept as
-      // authored) retains its canvas and routes; only the desktop reading
-      // scale joins the existing measured-height path.
-      if (svg && ratio < WIDE_RATIO && (svg.getAttribute('data-input-contract') === 'legacy-2.17' ||
-          ['contain', 'legacy', ''].indexOf(readerFit || '') !== -1)) {
+      // Native fixed geometry (a canvas kept as authored) retains its canvas
+      // and routes; only the desktop reading scale joins the existing
+      // measured-height path.
+      if (svg && ratio < WIDE_RATIO && ['contain', 'legacy', ''].indexOf(readerFit || '') !== -1) {
         measuredHeightFit = true;
       }
       var MIN_DESKTOP_WIDTH = 1024;

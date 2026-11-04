@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/lifecycle.schema.json",
-  "title": "Archify Lifecycle Diagram",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/lifecycle.schema.json",
+  "title": "Phoenix Diagram Lifecycle Diagram",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -12,9 +12,7 @@ const KINDS: [&str; 8] = [
 ];
 
 fn translation(input: &DiagramInput, key: &str, fallback: &str) -> String {
-    if input.input_contract == InputContract::PhoenixV1
-        && !string(&input.document["meta"], "locale").is_empty()
-    {
+    if !string(&input.document["meta"], "locale").is_empty() {
         if let Some(value) = input.document["meta"]["translations"][key]
             .as_str()
             .filter(|s| {
@@ -42,32 +40,9 @@ pub(super) fn legend_entries(
     if mode == "hidden" {
         return vec![];
     }
-    let legacy = input.input_contract == InputContract::Legacy217;
     let locale = string(&input.document["meta"], "locale").to_lowercase();
-    let labels = match (legacy, locale.as_str()) {
-        (true, "zh-cn") => [
-            "开始",
-            "活动状态",
-            "等待",
-            "决策",
-            "成功",
-            "失败 / 退出",
-            "中性状态",
-            "外部状态",
-            "终态",
-        ],
-        (true, _) => [
-            "start",
-            "active state",
-            "waiting",
-            "decision",
-            "success",
-            "failure / exit",
-            "neutral",
-            "external",
-            "final state",
-        ],
-        (false, "zh-cn") => [
+    let labels = match locale.as_str() {
+        "zh-cn" => [
             "起点",
             "进行中",
             "等待",
@@ -78,7 +53,7 @@ pub(super) fn legend_entries(
             "外部状态",
             "终态",
         ],
-        (false, "zh-tw") => [
+        "zh-tw" => [
             "初始狀態",
             "進行中",
             "等待",
@@ -89,7 +64,7 @@ pub(super) fn legend_entries(
             "外部狀態",
             "最終狀態",
         ],
-        (false, "es") => [
+        "es" => [
             "estado inicial",
             "activo",
             "en espera",
@@ -100,7 +75,7 @@ pub(super) fn legend_entries(
             "externo",
             "estado final",
         ],
-        (false, "ko") => [
+        "ko" => [
             "초기 상태",
             "활성",
             "대기",
@@ -126,8 +101,7 @@ pub(super) fn legend_entries(
     let mut entries = Vec::new();
     for (index, kind) in KINDS.iter().enumerate() {
         let raw = &config["entries"][kind];
-        let present =
-            nodes.iter().any(|node| node.authored.kind == *kind) || (!legacy && *kind == "start");
+        let present = nodes.iter().any(|node| node.authored.kind == *kind) || *kind == "start";
         if raw["visible"] != true && (!(mode == "all" || present) || raw["visible"] == false) {
             continue;
         }
@@ -137,17 +111,9 @@ pub(super) fn legend_entries(
             .filter(|s| !s.is_empty())
             .unwrap_or(&translated)
             .to_owned();
-        let swatch = if !legacy && *kind == "start" {
-            26.0
-        } else {
-            14.0
-        };
-        let measured_font = if legacy { 8.0 } else { 10.0 };
-        let width = (swatch
-            + 8.0
-            + units(input, &label) * measured_font * 0.62
-            + if present { 21.0 } else { 0.0 })
-        .ceil();
+        let swatch = if *kind == "start" { 26.0 } else { 14.0 };
+        let width =
+            (swatch + 8.0 + units(&label) * 10.0 * 0.62 + if present { 21.0 } else { 0.0 }).ceil();
         entries.push(LegendEntry {
             kind: (*kind).into(),
             label,
@@ -155,11 +121,11 @@ pub(super) fn legend_entries(
             swatch,
         });
     }
-    if !legacy && !entries.is_empty() && has_final {
+    if !entries.is_empty() && has_final {
         let label = translation(input, "legend.lifecycle.final", labels[8]);
         entries.push(LegendEntry {
             kind: "final".into(),
-            width: (16.0 + 8.0 + units(input, &label) * 10.0 * 0.62).ceil(),
+            width: (16.0 + 8.0 + units(&label) * 10.0 * 0.62).ceil(),
             label,
             swatch: 16.0,
         });
@@ -282,15 +248,14 @@ pub(super) fn node_text_layout(
     height: f64,
     rows: &[(f64, f64)],
     step: &str,
-    input: &DiagramInput,
 ) -> (f64, Vec<f64>, f64, f64) {
     let mut x = width / 2.0;
     let mut ys: Vec<_> = rows.iter().map(|r| r.0).collect();
-    let label_width = units(input, label) * label_font * 0.6;
+    let label_width = units(label) * label_font * 0.6;
     let left = 19.0_f64.max(if step.is_empty() {
         0.0
     } else {
-        23.0 + units(input, step) * 8.0 * 0.6 + 3.0
+        23.0 + units(step) * 8.0 * 0.6 + 3.0
     });
     let right = width - 4.0;
     if x - label_width / 2.0 >= left && x + label_width / 2.0 <= right {

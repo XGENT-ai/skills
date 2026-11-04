@@ -1,8 +1,6 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
-use crate::geometry::{
-    fitted_node_font_size_for_contract, rects_overlap_for_contract, text_units_for_contract,
-};
-use crate::input::{CompileOptions, DiagramInput, DiagramType, InputContract, Quality};
+use crate::geometry::{fitted_node_font_size, rects_overlap, text_units};
+use crate::input::{CompileOptions, DiagramInput, DiagramType, Quality};
 use crate::scene::{
     Authored, Card, CompiledDiagram, Container, DiagramFacts, Node, Point, Rect, Relation, Sigil,
     Text,
@@ -80,9 +78,7 @@ struct MessageGeometry {
 
 struct Layout<'a> {
     document: &'a Value,
-    contract: InputContract,
     quality: Quality,
-    legacy: bool,
     automatic: bool,
     spread: bool,
     width: f64,
@@ -114,22 +110,15 @@ fn spread_columns(width: f64, count: usize, card: f64) -> (f64, f64) {
 }
 
 impl<'a> Layout<'a> {
-    fn new(document: &'a Value, contract: InputContract, quality: Quality) -> Self {
-        let legacy = contract == InputContract::Legacy217;
+    fn new(document: &'a Value, quality: Quality) -> Self {
         let meta = &document["meta"];
         let automatic = point(&meta["viewBox"]).is_none();
-        let spread = if legacy {
-            meta["column_fit"] == "spread"
-        } else {
-            meta["column_fit"] != "fixed"
-        };
+        let spread = meta["column_fit"] != "fixed";
         let count = list(&document["participants"]).len().max(1);
-        let readable = !legacy && quality == Quality::Showcase;
+        let readable = quality == Quality::Showcase;
         let mut layout = Self {
             document,
-            contract,
             quality,
-            legacy,
             automatic,
             spread,
             width: 920.0,
@@ -143,34 +132,15 @@ impl<'a> Layout<'a> {
             content_bottom: 0.0,
             legend_entries: vec![],
         };
-        layout.width = point(&meta["viewBox"]).map_or_else(
-            || {
-                if legacy {
-                    920.0
-                } else {
-                    layout.automatic_width()
-                }
-            },
-            |size| size.x,
-        );
-        if !legacy && readable && automatic && spread {
+        layout.width =
+            point(&meta["viewBox"]).map_or_else(|| layout.automatic_width(), |size| size.x);
+        if readable && automatic && spread {
             layout.sublabel_minimum =
                 6.0_f64.max((6.0 / (930.0 / layout.width).min(1.0) * 10.0).ceil() / 10.0);
             layout.sublabel_preferred = 7.0_f64.max(layout.sublabel_minimum);
         }
         let (width, margin, gap) = if !spread {
             (86.0, 62.0, 108.0)
-        } else if legacy {
-            let card = (((layout.width - 124.0) / count as f64).round() - 24.0).clamp(86.0, 190.0);
-            (
-                card,
-                62.0,
-                if count > 1 {
-                    108.0_f64.max((layout.width - 40.0 - 62.0 - card) / (count - 1) as f64)
-                } else {
-                    108.0
-                },
-            )
         } else {
             let nominal = spread_width(layout.width, count);
             let mut card = nominal;
@@ -243,24 +213,20 @@ impl<'a> Layout<'a> {
         layout.legend_entries = legend::entries(&layout);
         layout.height = point(&meta["viewBox"]).map_or_else(
             || {
-                if legacy {
-                    760.0
-                } else {
-                    let timeline = list(&document["messages"])
-                        .iter()
-                        .map(|message| number(message, "y") + 83.0)
-                        .fold(layout.content_bottom + 65.0, f64::max);
-                    327.0_f64
-                        .max(timeline)
-                        .max(legend::required_height(&layout, layout.width))
-                }
+                let timeline = list(&document["messages"])
+                    .iter()
+                    .map(|message| number(message, "y") + 83.0)
+                    .fold(layout.content_bottom + 65.0, f64::max);
+                327.0_f64
+                    .max(timeline)
+                    .max(legend::required_height(&layout, layout.width))
             },
             |size| size.y,
         );
         layout
     }
     fn units(&self, text: &str) -> f64 {
-        text_units_for_contract(text, self.contract)
+        text_units(text)
     }
     fn participant_index(&self, id: &str) -> Option<usize> {
         list(&self.document["participants"])
@@ -268,11 +234,7 @@ impl<'a> Layout<'a> {
             .position(|participant| string(participant, "id") == id)
     }
     fn header_height(&self) -> f64 {
-        if self.legacy {
-            54.0
-        } else {
-            60.0
-        }
+        60.0
     }
     fn participant_bounds(&self, index: usize) -> Rect {
         Rect {
@@ -320,7 +282,7 @@ impl<'a> Layout<'a> {
         })
     }
     fn overlaps(&self, a: &Rect, b: &Rect, gap: f64) -> bool {
-        rects_overlap_for_contract(a, b, gap, self.contract)
+        rects_overlap(a, b, gap)
     }
     fn timeline_labels_fit(&self, width: f64) -> bool {
         let count = list(&self.document["participants"]).len().max(1);
@@ -400,9 +362,6 @@ impl<'a> Layout<'a> {
         self.notes[index].as_ref().and_then(|note| note.rect_at(y))
     }
     fn note_backdrop(&self, index: usize) -> Option<Rect> {
-        if self.legacy {
-            return None;
-        }
         let note = self.notes[index].as_ref()?.rect()?;
         let bounds = Rect {
             x: note.x - 2.0,
@@ -449,7 +408,7 @@ pub fn compile(
             vec![],
         )]);
     }
-    let layout = Layout::new(&input.document, input.input_contract, input.quality);
+    let layout = Layout::new(&input.document, input.quality);
     let labels: Vec<_> = list(&input.document["segments"])
         .iter()
         .enumerate()
@@ -472,17 +431,11 @@ pub fn compile(
             format!("{path}/label"),
             label,
             center,
-            72.0 + if layout.legacy { 22.0 } else { 36.0 },
+            72.0 + 36.0,
             if participant.get("brand").is_some() {
                 11.0
             } else {
-                fitted_node_font_size_for_contract(
-                    label,
-                    layout.participant_width,
-                    11.0,
-                    8.0,
-                    input.input_contract,
-                )
+                fitted_node_font_size(label, layout.participant_width, 11.0, 8.0)
             },
             "middle",
         )];
@@ -492,24 +445,19 @@ pub fn compile(
                 format!("{path}/sublabel"),
                 sub,
                 center,
-                72.0 + if layout.legacy { 39.0 } else { 50.0 },
-                fitted_node_font_size_for_contract(
+                72.0 + 50.0,
+                fitted_node_font_size(
                     sub,
                     layout.participant_width,
                     layout.sublabel_preferred,
                     layout.sublabel_minimum,
-                    input.input_contract,
                 ),
                 "middle",
             ));
         }
-        let kind = if layout.legacy {
-            string(participant, "type")
-        } else {
-            participant["icon"]
-                .as_str()
-                .unwrap_or(string(participant, "type"))
-        };
+        let kind = participant["icon"]
+            .as_str()
+            .unwrap_or(string(participant, "type"));
         nodes.push(Node {
             brand: None,
             authored: authored(
@@ -526,8 +474,6 @@ pub fn compile(
                     },
                     if document["meta"].get("column_fit").is_some() {
                         "/meta/column_fit".into()
-                    } else if layout.legacy {
-                        "default-column-fit:fixed".into()
                     } else {
                         "default-column-fit:spread".into()
                     },
@@ -552,11 +498,7 @@ pub fn compile(
         .find(|item| item.authored.kind == "legend-title")
         .map(|item| item.text[0].position.y);
     let lifeline_bottom = layout.height - 65.0;
-    let lifeline_end = if layout.legacy {
-        lifeline_bottom
-    } else {
-        title_y.map_or(lifeline_bottom, |title| lifeline_bottom.min(title - 22.0))
-    };
+    let lifeline_end = title_y.map_or(lifeline_bottom, |title| lifeline_bottom.min(title - 22.0));
     let mut containers = vec![];
     for (index, participant) in list(&document["participants"]).iter().enumerate() {
         let x = layout.centers[index];
@@ -772,7 +714,7 @@ pub fn compile(
             width: layout.width,
             height: layout.height,
         },
-        reader_fit: if !layout.legacy && layout.automatic {
+        reader_fit: if layout.automatic {
             "width-first"
         } else {
             "legacy"

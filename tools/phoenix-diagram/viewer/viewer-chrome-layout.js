@@ -1,7 +1,6 @@
 /*
-Derived from Archify 3.1.0 viewer/viewer-chrome-layout.js (MIT), frozen content SHA-256
-4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent namespace, bounded dock lift and actual screen-coordinate receipts.
+Derived from Archify 3.1.0 viewer/viewer-chrome-layout.js (MIT).
+Phoenix Diagram modifications: independent namespace, bounded dock lift and actual screen-coordinate receipts.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */

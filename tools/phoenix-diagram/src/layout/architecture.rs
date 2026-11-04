@@ -1,9 +1,6 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
-use crate::geometry::{
-    fitted_node_font_size_for_contract, rects_overlap_for_contract, segment_intersects_rect,
-    text_units_for_contract,
-};
-use crate::input::{CompileOptions, DiagramInput, DiagramType, InputContract};
+use crate::geometry::{fitted_node_font_size, rects_overlap, segment_intersects_rect, text_units};
+use crate::input::{CompileOptions, DiagramInput, DiagramType};
 use crate::scene::{
     Authored, Card, CompiledDiagram, Container, DiagramFacts, Node, Point, Rect, Relation, Sigil,
     Text,
@@ -86,8 +83,6 @@ pub fn compile(
             Value::Null,
         )]);
     }
-    let contract = input.input_contract;
-    let legacy = contract == InputContract::Legacy217;
     let document = &input.document;
     let meta = &document["meta"];
     let mut geometry_meta = meta.clone();
@@ -154,9 +149,7 @@ pub fn compile(
         };
         let size = point(&raw["size"]).unwrap_or_else(|| Point {
             x: if raw.get("brand").is_some() {
-                120.0_f64.max(
-                    text_units_for_contract(&string(raw, "label"), contract) * 11.0 * 0.6 + 8.0,
-                ) + 48.0
+                120.0_f64.max(text_units(&string(raw, "label")) * 11.0 * 0.6 + 8.0) + 48.0
             } else {
                 120.0
             },
@@ -173,7 +166,7 @@ pub fn compile(
         let tag = string(raw, "tag");
         let center = bounds.x + bounds.width / 2.0;
         let font = |value: &str, preferred: f64, minimum: f64| {
-            fitted_node_font_size_for_contract(value, bounds.width, preferred, minimum, contract)
+            fitted_node_font_size(value, bounds.width, preferred, minimum)
         };
         let mut texts = vec![text(
             format!("{path}/label"),
@@ -228,12 +221,10 @@ pub fn compile(
             label,
             text: texts,
             sigil: {
-                let kind = if legacy {
-                    raw["type"].as_str()
-                } else {
-                    raw["icon"].as_str().or(raw["type"].as_str())
-                }
-                .unwrap_or("neutral");
+                let kind = raw["icon"]
+                    .as_str()
+                    .or(raw["type"].as_str())
+                    .unwrap_or("neutral");
                 (kind != "none").then(|| Sigil {
                     kind: kind.into(),
                     position: Point {
@@ -249,7 +240,7 @@ pub fn compile(
     if !errors.is_empty() {
         return Err(errors);
     }
-    let raw_boundaries = presentation::measure_boundaries(document, &nodes, contract);
+    let raw_boundaries = presentation::measure_boundaries(document, &nodes);
     let edges = router::connections(document, &nodes);
     let frames: Vec<_> = raw_boundaries
         .iter()
@@ -262,37 +253,25 @@ pub fn compile(
             },
         })
         .collect();
-    let routes = router::route(
-        &nodes,
-        &edges,
-        &frames,
-        contract,
-        meta.get("viewBox").is_none(),
-    );
+    let routes = router::route(&nodes, &edges, &frames, meta.get("viewBox").is_none());
     let mut labels: Vec<router::Label> = edges
         .iter()
         .enumerate()
-        .filter_map(|(index, edge)| {
-            router::Label::new(index, &edge.raw, &routes[index].points, contract)
-        })
+        .filter_map(|(index, edge)| router::Label::new(index, &edge.raw, &routes[index].points))
         .collect();
-    let extra: Vec<Rect> = if legacy {
-        vec![]
-    } else {
-        labels
-            .iter()
-            .map(|label| label.rect)
-            .chain(routes.iter().flat_map(|route| {
-                route.points.iter().map(|point| Rect {
-                    x: point.x,
-                    y: point.y,
-                    width: 0.0,
-                    height: 0.0,
-                })
-            }))
-            .collect()
-    };
-    let entries = presentation::legend_entries(meta, &nodes, contract);
+    let extra: Vec<Rect> = labels
+        .iter()
+        .map(|label| label.rect)
+        .chain(routes.iter().flat_map(|route| {
+            route.points.iter().map(|point| Rect {
+                x: point.x,
+                y: point.y,
+                width: 0.0,
+                height: 0.0,
+            })
+        }))
+        .collect();
+    let entries = presentation::legend_entries(meta, &nodes);
     let authored_canvas = point(&meta["viewBox"]).map(|size| Rect {
         x: 0.0,
         y: 0.0,
@@ -309,12 +288,11 @@ pub fn compile(
         &entries,
         authored_canvas,
         geometry_meta.get("quality_profile").is_some(),
-        contract,
         &mut errors,
     );
     let view_box = authored_canvas
         .unwrap_or_else(|| presentation::auto_canvas(&nodes, &boundaries, &extra, &entries));
-    if !legacy && input.quality == crate::input::Quality::Showcase {
+    if input.quality == crate::input::Quality::Showcase {
         let rows = presentation::legend_rows(&entries, view_box.width - 80.0);
         let bottom = if entries.is_empty() {
             view_box.height
@@ -341,7 +319,6 @@ pub fn compile(
         &labels,
         view_box,
         &geometry_meta,
-        contract,
         &mut errors,
     );
     let legends = presentation::legends(
@@ -352,7 +329,6 @@ pub fn compile(
         &labels,
         view_box,
         meta,
-        contract,
         &mut errors,
     );
     if !errors.is_empty() {
@@ -383,11 +359,7 @@ pub fn compile(
                 }
             }
             if !edge.explicit() {
-                provenance.push(if legacy {
-                    "legacy-automatic-routing".into()
-                } else {
-                    "obstacle-grid-and-readable-routing".into()
-                });
+                provenance.push("obstacle-grid-and-readable-routing".into());
             }
             Relation {
                 authored: authored(
@@ -409,8 +381,8 @@ pub fn compile(
                 junction: None,
                 label_owner: None,
                 points: routes[index].points.clone(),
-                crossover_halo: !legacy && !edge.explicit(),
-                independent_ports: !legacy && !edge.explicit() && edge.raw.get("labelAt").is_none(),
+                crossover_halo: !edge.explicit(),
+                independent_ports: !edge.explicit() && edge.raw.get("labelAt").is_none(),
                 label_plate: plate.map(|label| label.rect),
                 text: plate
                     .map(|plate| {
@@ -506,13 +478,11 @@ pub fn compile(
         schema_version: document["schema_version"]
             .as_f64()
             .expect("validated schema version") as u32,
-        input_contract: contract,
+        input_contract: input.input_contract,
         quality: input.quality,
         meta: meta.clone(),
         view_box,
-        reader_fit: if legacy {
-            "legacy"
-        } else if authored_canvas.is_some() {
+        reader_fit: if authored_canvas.is_some() {
             "authored-height"
         } else {
             "intrinsic-height"
@@ -663,7 +633,6 @@ fn validate(
     labels: &[router::Label],
     canvas: Rect,
     meta: &Value,
-    contract: InputContract,
     errors: &mut Diagnostics,
 ) {
     for (index, node) in nodes.iter().enumerate() {
@@ -699,19 +668,19 @@ fn validate(
                 json!({"bounds":bounds,"viewBox":canvas}),
             ));
         }
-        let estimate = text_units_for_contract(&node.label, contract) * 6.6;
+        let estimate = text_units(&node.label) * 6.6;
         if estimate > bounds.width + 8.0 {
             errors.push(diagnostic("architecture/component-label-overflow",&format!("{path}/label"),"Component label exceeds its fixed width",json!({"text":node.label,"estimatedWidthPx":estimate,"availableWidthPx":bounds.width})));
         }
         for field in ["sublabel", "tag"] {
             let value = string(raw, field);
-            let required = text_units_for_contract(&value, contract) * 6.0 * 0.6;
+            let required = text_units(&value) * 6.0 * 0.6;
             if required > bounds.width - 8.0 {
                 errors.push(diagnostic(&format!("architecture/component-{field}-overflow"),&format!("{path}/{field}"),"Text cannot fit at its legible font minimum",json!({"text":value,"requiredWidthPx":required,"availableWidthPx":bounds.width-8.0,"minimumFontPx":6})));
             }
         }
         for other in nodes.iter().take(index) {
-            if rects_overlap_for_contract(&bounds, &other.bounds, 8.0, contract) {
+            if rects_overlap(&bounds, &other.bounds, 8.0) {
                 errors.push(diagnostic("layout/component-overlap",&path,"Components must remain at least 8px apart",json!({"other":other.authored.id,"bounds":bounds,"otherBounds":other.bounds,"minimumGapPx":8})));
             }
         }
@@ -735,9 +704,10 @@ fn validate(
                     json!({"title":boundary.title,"bounds":boundary.bounds}),
                 ));
             }
-            if nodes.iter().any(|node| {
-                rects_overlap_for_contract(&boundary.title, &node.bounds, 0.0, contract)
-            }) {
+            if nodes
+                .iter()
+                .any(|node| rects_overlap(&boundary.title, &node.bounds, 0.0))
+            {
                 errors.push(diagnostic(
                     "layout/boundary-title-overlap",
                     &format!("{path}/label"),
@@ -746,7 +716,7 @@ fn validate(
                 ));
             }
         }
-        if contract == InputContract::PhoenixV1 && meta["quality_profile"] == "showcase" {
+        if meta["quality_profile"] == "showcase" {
             for node in nodes {
                 if !list(&boundary.raw["wraps"])
                     .iter()
@@ -768,7 +738,7 @@ fn validate(
             let left_ids = list(&left.raw["wraps"]);
             let right_ids = list(&right.raw["wraps"]);
             if meta.get("quality_profile").is_some()
-                && rects_overlap_for_contract(&left.title, &right.title, 0.0, contract)
+                && rects_overlap(&left.title, &right.title, 0.0)
             {
                 errors.push(diagnostic(
                     "layout/boundary-title-overlap",
@@ -783,7 +753,7 @@ fn validate(
             let shared = left_ids.iter().any(|id| right_ids.contains(id));
             let left_nested = left_ids.iter().all(|id| right_ids.contains(id));
             let right_nested = right_ids.iter().all(|id| left_ids.contains(id));
-            let overlap = rects_overlap_for_contract(&left.bounds, &right.bounds, 0.0, contract);
+            let overlap = rects_overlap(&left.bounds, &right.bounds, 0.0);
             let correct = (left_nested && contains(&right.bounds, &left.bounds))
                 || (right_nested && contains(&left.bounds, &right.bounds));
             if (shared && !left_nested && !right_nested) || (overlap && (!shared || !correct)) {
@@ -825,8 +795,7 @@ fn validate(
                 json!({"distancePx":distance,"minimumPx":24}),
             ));
         }
-        if contract == InputContract::PhoenixV1
-            && meta["quality_profile"] == "showcase"
+        if meta["quality_profile"] == "showcase"
             && route
                 .points
                 .iter()
@@ -843,7 +812,7 @@ fn validate(
     for label in labels {
         let path = format!("/connections/{}/label", edges[label.edge].index);
         for node in nodes {
-            if rects_overlap_for_contract(&label.rect, &node.bounds, -2.0, contract) {
+            if rects_overlap(&label.rect, &node.bounds, -2.0) {
                 errors.push(diagnostic(
                     "layout/label-component-overlap",
                     &path,
@@ -853,9 +822,9 @@ fn validate(
             }
         }
         if meta.get("quality_profile").is_some()
-            && boundaries.iter().any(|boundary| {
-                rects_overlap_for_contract(&label.rect, &boundary.title, 0.0, contract)
-            })
+            && boundaries
+                .iter()
+                .any(|boundary| rects_overlap(&label.rect, &boundary.title, 0.0))
         {
             errors.push(diagnostic(
                 "layout/label-title-overlap",

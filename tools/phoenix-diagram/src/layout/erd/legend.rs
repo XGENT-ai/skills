@@ -1,5 +1,5 @@
-// Legend selection, footprint and placement ported from the frozen
-// renderers/shared/legend.mjs; erd and class own their swatches.
+// Legend selection, footprint and placement derived from Archify
+// renderers/shared/legend.mjs (MIT); erd and class own their swatches.
 use crate::geometry::{rects_overlap, segment_intersects_rect, text_units};
 use crate::scene::{Point, Rect};
 use serde_json::Value;

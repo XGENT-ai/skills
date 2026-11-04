@@ -4,7 +4,7 @@ use crate::geometry::composition::{
     forward_collinear_analysis_segments, source_segment_index_at_point, CorridorOptions, LabelRect,
     LabelRouteClearance, RoutedRelation,
 };
-use crate::geometry::rects_overlap_for_contract;
+use crate::geometry::rects_overlap;
 use crate::scene::Relation;
 
 fn index(relation: &Relation) -> usize {
@@ -180,9 +180,10 @@ pub(super) fn failed_candidate(
 ) -> Option<Diagnostic> {
     if let Some(rect) = candidate.label_plate {
         for other in prior {
-            if other.label_plate.is_some_and(|other_rect| {
-                rects_overlap_for_contract(&rect, &other_rect, -2.0, input.input_contract)
-            }) {
+            if other
+                .label_plate
+                .is_some_and(|other_rect| rects_overlap(&rect, &other_rect, -2.0))
+            {
                 if let Some(diagnostic) = label_label(input, candidate, other) {
                     return Some(diagnostic);
                 }
@@ -264,9 +265,7 @@ pub(super) fn pairwise(input: &DiagramInput, relations: &[Relation]) -> Option<D
             if left
                 .label_plate
                 .zip(right.label_plate)
-                .is_some_and(|(a, b)| {
-                    rects_overlap_for_contract(&a, &b, -2.0, input.input_contract)
-                })
+                .is_some_and(|(a, b)| rects_overlap(&a, &b, -2.0))
             {
                 if let Some(diagnostic) = label_label(input, left, right) {
                     return Some(diagnostic);
@@ -309,7 +308,6 @@ pub(super) fn pairwise(input: &DiagramInput, relations: &[Relation]) -> Option<D
     for hit in collect_ambiguous_corridors(
         &routes(relations),
         &CorridorOptions {
-            contract: input.input_contract,
             ..Default::default()
         },
     ) {
@@ -479,9 +477,8 @@ pub(super) fn verify(
         causal = initial.clone();
     }
     let label_route = invariant == "explicit label-route clearance";
-    let phoenix_label_route = label_route && input.input_contract == InputContract::PhoenixV1;
     let label_pin = initial.iter().find(|pin| pin["field"] == "labelAt");
-    let label_nudges = if phoenix_label_route {
+    let label_nudges = if label_route {
         label_pin
             .map(|pin| nudges(input, options, pin))
             .unwrap_or_default()
@@ -497,7 +494,7 @@ pub(super) fn verify(
     let mut repairs = label_nudges.clone();
     for removal in minimal {
         if removal.len() == 1 && removal[0]["path"].as_str().unwrap().ends_with("/labelAt") {
-            if phoenix_label_route {
+            if label_route {
                 if !label_nudges.is_empty() {
                     continue;
                 }
@@ -576,8 +573,7 @@ pub(super) fn verify_preset(
     let edge = &input.document["edges"][edge_index];
     let path = format!("/edges/{edge_index}/route");
     let mut repairs = Vec::new();
-    if input.input_contract == InputContract::PhoenixV1
-        && string(&diagnostic.evidence, "invariant") == "edge-label node clearance"
+    if string(&diagnostic.evidence, "invariant") == "edge-label node clearance"
         && !string(edge, "label").is_empty()
         && ["labelAt", "labelDx", "labelDy", "labelSegment"]
             .iter()

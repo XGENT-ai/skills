@@ -10,7 +10,7 @@
           "path": "THIRD-PARTY-LICENSES/b799ab081703e7821ae5096d2c1abdf14bbdc75e8ea1c4045998c36ed6db9706.txt",
           "size": 1102,
           "sha256": "b799ab081703e7821ae5096d2c1abdf14bbdc75e8ea1c4045998c36ed6db9706",
-          "originalLocation": "tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt"
+          "originalLocation": "tools/phoenix-diagram/viewer/LICENSE.txt"
         }
       ]
     },
@@ -22,7 +22,7 @@
           "path": "THIRD-PARTY-LICENSES/c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90.txt",
           "size": 4398,
           "sha256": "c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90",
-          "originalLocation": "tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt"
+          "originalLocation": "tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt"
         }
       ]
     },
@@ -165,11 +165,9 @@
     },
     {
       "name": "Brand marks catalog",
-      "version": "archify-3.1.0",
+      "version": "phoenix-1",
       "license": "CC0-1.0 collection; recorded individual terms in the preserved source manifest",
       "source": {
-        "archive": "upstream/archify-3.1.0-source.tar.gz",
-        "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
         "path": "archify/renderers/shared/generated-brand-marks.mjs",
         "sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
         "noticePath": "assets/licenses/brand-marks-NOTICE.md",
@@ -177,15 +175,15 @@
         "noticeSha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14"
       },
       "catalog": {
-        "path": "THIRD-PARTY-LICENSES/9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33.txt",
-        "size": 168010,
-        "sha256": "9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33",
+        "path": "THIRD-PARTY-LICENSES/905be7402246ae3810ff349eabab78044d2dfe01f53402562819ef5177b555ed.txt",
+        "size": 167862,
+        "sha256": "905be7402246ae3810ff349eabab78044d2dfe01f53402562819ef5177b555ed",
         "originalLocation": "tools/phoenix-diagram/assets/brand-marks.json"
       },
       "licenseManifest": {
-        "path": "THIRD-PARTY-LICENSES/375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927.txt",
-        "size": 4946,
-        "sha256": "375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927",
+        "path": "THIRD-PARTY-LICENSES/b093424c16d2e0483e3156cb3ba762d5b8229b20dab3efaea3666418ac6a86ea.txt",
+        "size": 4654,
+        "sha256": "b093424c16d2e0483e3156cb3ba762d5b8229b20dab3efaea3666418ac6a86ea",
         "originalLocation": "tools/phoenix-diagram/assets/brand-license-sources.json"
       },
       "licenses": [
@@ -372,13 +370,11 @@
           "path": "THIRD-PARTY-LICENSES/0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14.txt",
           "size": 5248,
           "sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
-          "originalLocation": "upstream/archify-3.1.0-source.tar.gz#archify/THIRD_PARTY_NOTICES.md",
+          "originalLocation": "tools/phoenix-diagram/assets/licenses/brand-marks-NOTICE.md",
           "source": {
             "path": "licenses/brand-marks-NOTICE.md",
             "size": 5248,
             "sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
-            "archive": "upstream/archify-3.1.0-source.tar.gz",
-            "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
             "sourcePath": "archify/THIRD_PARTY_NOTICES.md"
           }
         },

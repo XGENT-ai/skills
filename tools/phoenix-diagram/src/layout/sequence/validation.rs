@@ -127,13 +127,9 @@ fn composition_errors(layout: &Layout<'_>) -> Diagnostics {
     if layout.quality != Quality::Showcase {
         return errors;
     }
-    for hit in composition::collect_proper_crossings(
-        &routed,
-        &composition::CrossingOptions {
-            contract: layout.contract,
-            ..Default::default()
-        },
-    ) {
+    for hit in
+        composition::collect_proper_crossings(&routed, &composition::CrossingOptions::default())
+    {
         errors.push(diagnostic(
             "composition/proper-crossing",
             &format!("/messages/{}/y", hit.left_relation_index),
@@ -142,13 +138,9 @@ fn composition_errors(layout: &Layout<'_>) -> Diagnostics {
             vec!["Separate the authored message y values".into()],
         ));
     }
-    for hit in composition::collect_ambiguous_corridors(
-        &routed,
-        &composition::CorridorOptions {
-            contract: layout.contract,
-            ..Default::default()
-        },
-    ) {
+    for hit in
+        composition::collect_ambiguous_corridors(&routed, &composition::CorridorOptions::default())
+    {
         errors.push(diagnostic(
             "composition/ambiguous-corridor",
             &format!("/messages/{}/y", hit.left_relation_index),
@@ -184,21 +176,16 @@ fn composition_errors(layout: &Layout<'_>) -> Diagnostics {
             vec!["Spread message y values or shorten the identified label".into()],
         ));
     }
-    if !layout.legacy {
-        for hit in
-            composition::collect_label_canvas_overflow(&labels, &[layout.width, layout.height], 0.5)
-        {
-            errors.push(diagnostic(
-                "composition/label-canvas-containment",
-                &format!("/messages/{}/label", hit.relation_index),
-                "Message label extends beyond the canvas",
-                json!(hit),
-                vec![
-                    "Shorten the label, reorder participants, or enlarge the authored canvas"
-                        .into(),
-                ],
-            ));
-        }
+    for hit in
+        composition::collect_label_canvas_overflow(&labels, &[layout.width, layout.height], 0.5)
+    {
+        errors.push(diagnostic(
+            "composition/label-canvas-containment",
+            &format!("/messages/{}/label", hit.relation_index),
+            "Message label extends beyond the canvas",
+            json!(hit),
+            vec!["Shorten the label, reorder participants, or enlarge the authored canvas".into()],
+        ));
     }
     errors
 }
@@ -332,7 +319,7 @@ pub(super) fn validate(layout: &Layout<'_>, labels: &[Rect], legend_visible: boo
             ));
         }
         if let Some((left, right)) = span(layout, message) {
-            if !layout.legacy && string(message, "from") == string(message, "to") {
+            if string(message, "from") == string(message, "to") {
                 errors.push(diagnostic("sequence/self-message-unsupported",&format!("/messages/{index}"),
                     "Self-message geometry is unsupported; preserve this step as a note on a real message or a card without inventing a participant",
                     json!({"participant":message["from"],"participantPath":format!("/participants/{}",layout.participant_index(string(message,"from")).unwrap()),"y":y,"supportedMessageGeometry":"horizontal-between-distinct-participants"}),vec![]));
@@ -412,9 +399,6 @@ pub(super) fn validate(layout: &Layout<'_>, labels: &[Rect], legend_visible: boo
         if bounds.x + bounds.width > layout.width - 48.0 {
             errors.push(diagnostic("sequence/segment-label-overflow",&format!("/segments/{index}/label"),
                 "Segment title exceeds its frame width",json!({"label":bounds,"availableWidth":(layout.width-48.0-bounds.x).max(0.0),"requiredViewBoxWidth":(bounds.x+bounds.width+48.0).ceil()}),vec!["Shorten the segment title or widen the canvas while preserving the phase meaning".into()]));
-        }
-        if layout.legacy {
-            continue;
         }
         for (other, other_bounds) in labels.iter().enumerate().skip(index + 1) {
             if layout.overlaps(&bounds, other_bounds, 0.0) {
@@ -496,11 +480,7 @@ pub(super) fn validate(layout: &Layout<'_>, labels: &[Rect], legend_visible: boo
                 "Participant row exceeds the canvas width",json!({"right":right,"viewBoxWidth":layout.width,"requiredViewBoxWidth":(right+40.0).ceil()}),vec![format!("set /meta/viewBox/0 to at least {}",(right+40.0).ceil())]));
         }
     }
-    if !layout.legacy
-        && layout.readable
-        && layout.document["meta"].get("legend").is_none()
-        && !legend_visible
-    {
+    if layout.readable && layout.document["meta"].get("legend").is_none() && !legend_visible {
         let required = legend::required_height(layout, layout.width);
         if required > layout.height {
             errors.push(diagnostic("sequence/legend-content-limit","/meta/viewBox/1",

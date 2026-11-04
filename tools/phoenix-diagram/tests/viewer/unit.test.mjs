@@ -1,4 +1,4 @@
-// Phoenix Reader boundary tests, adapted from the frozen Archify 3.1.0
+// Phoenix Reader boundary tests, adapted from Archify 3.1.0
 // export-browser, export-cleanup-browser and motion-governor-browser tests.
 // MIT notices remain in ../../viewer/LICENSE.txt. The DOM/media providers here
 // are deterministic fixtures: these tests do not certify Chrome or media bytes.
@@ -426,8 +426,9 @@ for (const [locale, hint] of [['en', 'You can download PNG from the Export menu 
     assert.equal(unavailable.menu.querySelector('button[data-format="png"]').disabled, false);
     if (locale === 'en') {
       for (const otherLocale of ['es', 'ko', 'zh-TW']) {
-        const fallback = runtime({ locale: otherLocale, clipboard: 'unsupported' }); fallback.exportModule();
-        assert.ok(fallback.menu.querySelector('button[data-action="copy"]').title.includes(hint), `${otherLocale} uses the explicit English fallback`);
+        const own = JSON.parse(fs.readFileSync(new URL(`../../viewer/locales/${otherLocale}.json`, import.meta.url), 'utf8'))['viewer.export.downloadPngInstead'];
+        const translated = runtime({ locale: otherLocale, clipboard: 'unsupported' }); translated.exportModule();
+        assert.ok(translated.menu.querySelector('button[data-action="copy"]').title.includes(own), `${otherLocale} shows its own catalog hint`);
       }
     }
     const denied = runtime({ locale, clipboard: 'denied' }); denied.exportModule();

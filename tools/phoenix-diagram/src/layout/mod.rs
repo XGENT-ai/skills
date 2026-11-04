@@ -12,7 +12,7 @@ pub mod workflow;
 
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::geometry::{rects_overlap, text_glyph_box};
-use crate::input::{CompileOptions, DiagramInput, DiagramType, InputContract};
+use crate::input::{CompileOptions, DiagramInput, DiagramType};
 use crate::scene::{CompiledDiagram, Node};
 
 pub fn compile(
@@ -46,16 +46,16 @@ pub fn compile(
         DiagramType::Timeline => timeline::compile(input, options),
         DiagramType::Waterfall => waterfall::compile(input, options),
     }?;
-    clear_sigil_labels(&mut diagram.nodes, input.input_contract);
+    clear_sigil_labels(&mut diagram.nodes);
     attach_brands(&mut diagram, input)?;
     Ok(diagram)
 }
 
-/// The corner sigil is decorative. Where frozen geometry lets it touch the
-/// primary label (legacy-2.17 sequence and narrow dataflow cards), it moves
+/// The corner sigil is decorative. Where the geometry lets it touch the
+/// primary label (narrow dataflow cards), it moves
 /// into the card's top rail and shrinks to clear the glyphs; without room for
 /// a 7px mark it is omitted. Card and text geometry are unchanged.
-fn clear_sigil_labels(nodes: &mut [Node], contract: InputContract) {
+fn clear_sigil_labels(nodes: &mut [Node]) {
     for node in nodes {
         let Some(sigil) = node.sigil.as_mut() else {
             continue;
@@ -71,7 +71,6 @@ fn clear_sigil_labels(nodes: &mut [Node], contract: InputContract) {
                     text.position.y,
                     text.font_size,
                     &text.anchor,
-                    contract,
                 )
             })
             .collect();
@@ -116,10 +115,7 @@ fn attach_brands(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Result<
         else {
             continue;
         };
-        let required =
-            crate::geometry::text_units_for_contract(&label.content, input.input_contract)
-                * label.font_size
-                * 0.6;
+        let required = crate::geometry::text_units(&label.content) * label.font_size * 0.6;
         if required > node.bounds.width - 48.0 || node.bounds.height < 28.0 {
             errors.push(Diagnostic::error(Some(input.diagram_type.as_str()),"brand/title-capacity",&path,"The brand title rail cannot fit the complete label at its current font size; widen the node without changing its pin"));
             continue;
@@ -161,7 +157,6 @@ fn attach_brands(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Result<
                                 t.position.y,
                                 t.font_size,
                                 &t.anchor,
-                                input.input_contract,
                             ),
                             1.0,
                         )

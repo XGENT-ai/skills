@@ -7,13 +7,9 @@ use phoenix_diagram::{
 use scraper::{ElementRef, Html, Selector};
 use serde_json::Value;
 
-fn html(document: &Value, kind: DiagramType, contract: &str, quality: &str) -> Html {
+fn html(document: &Value, kind: DiagramType, quality: &str) -> Html {
     let options = CompileOptions {
-        input_contract: Some(if contract == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        }),
+        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(if quality == "showcase" {
             Quality::Showcase
         } else {
@@ -65,7 +61,7 @@ fn lifecycle_legends_preserve_initial_final_and_state_type_symbols() {
         "../../../skills/phoenix-diagram/examples/minimal.lifecycle.json"
     ))
     .unwrap();
-    let actual = html(&document, DiagramType::Lifecycle, "phoenix-v1", "showcase");
+    let actual = html(&document, DiagramType::Lifecycle, "showcase");
     let entry = |kind: &str| {
         actual
             .select(&selector(&format!("[data-legend-semantic-kind='{kind}']")))
@@ -82,76 +78,6 @@ fn lifecycle_legends_preserve_initial_final_and_state_type_symbols() {
         entry("final").select(&selector("rect.c-external")).count(),
         2
     );
-
-    let oracle: Value =
-        serde_json::from_str(include_str!("fixtures/lifecycle/oracle.json")).unwrap();
-    let document = &oracle["cases"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|case| case["ok"] == true && case["contract"] == "legacy-2.17")
-        .unwrap()["document"];
-    let actual = html(
-        document,
-        DiagramType::Lifecycle,
-        "legacy-2.17",
-        document["meta"]["quality_profile"]
-            .as_str()
-            .unwrap_or("standard"),
-    );
-    for (kind, class) in [("active", "c-backend"), ("success", "c-database")] {
-        let entries: Vec<_> = actual
-            .select(&selector(&format!("[data-legend-semantic-kind='{kind}']")))
-            .collect();
-        assert_eq!(entries.len(), 1, "Missing legacy lifecycle legend: {kind}");
-        assert_eq!(
-            entries[0]
-                .select(&selector(&format!("rect.{class}")))
-                .count(),
-            1
-        );
-    }
-    assert!(actual.select(&selector("[data-legend-semantic-kind^='legend-']:not([data-legend-semantic-kind='legend-title'])")).next().is_none());
-}
-
-#[test]
-fn legacy_success_legend_does_not_claim_a_state_with_outgoing_transitions_is_terminal() {
-    let oracle: Value =
-        serde_json::from_str(include_str!("fixtures/lifecycle/oracle.json")).unwrap();
-    let original = &oracle["cases"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|case| case["name"] == "deployment-release")
-        .unwrap()["document"];
-    assert!(original["transitions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|edge| edge["from"] == "live" && edge["to"] == "paused"));
-    for (locale, expected) in [("en", "success"), ("zh-CN", "成功")] {
-        let mut document = original.clone();
-        document["meta"]["locale"] = locale.into();
-        let actual = html(&document, DiagramType::Lifecycle, "legacy-2.17", "showcase");
-        let entry = actual
-            .select(&selector("[data-legend-semantic-kind='success']"))
-            .next()
-            .unwrap();
-        let labels: Vec<_> = entry
-            .select(&selector("text"))
-            .map(|text| text.text().collect::<String>())
-            .collect();
-        assert!(
-            labels.iter().any(|label| label == expected),
-            "{locale}: {labels:?}"
-        );
-        document["meta"]["legend"]["entries"]["success"]["label"] =
-            "Authored success outcome".into();
-        let explicit = html(&document, DiagramType::Lifecycle, "legacy-2.17", "showcase");
-        assert!(explicit
-            .select(&selector("[data-legend-semantic-kind='success'] text"))
-            .any(|text| text.text().collect::<String>() == "Authored success outcome"));
-    }
 }
 
 #[test]
@@ -160,60 +86,49 @@ fn workflow_default_backend_legend_does_not_invent_an_agent_in_any_bundled_local
         "../../../skills/phoenix-diagram/examples/minimal.workflow.json"
     ))
     .unwrap();
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        for (locale, expected) in [
-            (None, "Processing logic"),
-            (Some("en"), "Processing logic"),
-            (Some("zh-CN"), "处理逻辑"),
-            (Some("zh-TW"), "處理邏輯"),
-            (Some("es"), "Lógica de procesamiento"),
-            (Some("ko"), "처리 로직"),
-        ] {
-            // The frozen legacy input contract only accepts these two locales.
-            if contract == "legacy-2.17" && !matches!(locale, None | Some("en" | "zh-CN")) {
-                continue;
-            }
-            let mut document = original.clone();
-            document["meta"]["input_contract"] = contract.into();
-            document["meta"].as_object_mut().unwrap().remove("locale");
-            if let Some(locale) = locale {
-                document["meta"]["locale"] = locale.into();
-            }
-            let actual = html(&document, DiagramType::Workflow, contract, "showcase");
-            let labels: Vec<_> = actual
-                .select(&selector("[data-legend-semantic-kind='backend'] text"))
-                .map(|text| text.text().collect::<String>())
-                .collect();
-            assert!(
-                labels.iter().any(|label| label == expected),
-                "{contract}/{locale:?}: {labels:?}"
-            );
-        }
+    for (locale, expected) in [
+        (None, "Processing logic"),
+        (Some("en"), "Processing logic"),
+        (Some("zh-CN"), "处理逻辑"),
+        (Some("zh-TW"), "處理邏輯"),
+        (Some("es"), "Lógica de procesamiento"),
+        (Some("ko"), "처리 로직"),
+    ] {
         let mut document = original.clone();
-        document["meta"]["input_contract"] = contract.into();
-        if contract == "phoenix-v1" {
-            document["meta"]["translations"]["legend.workflow.backend"] =
-                "Authored processing".into();
-            let actual = html(&document, DiagramType::Workflow, contract, "showcase");
-            assert!(actual
-                .select(&selector("[data-legend-semantic-kind='backend'] text"))
-                .any(|text| text.text().collect::<String>() == "Authored processing"));
+        document["meta"].as_object_mut().unwrap().remove("locale");
+        if let Some(locale) = locale {
+            document["meta"]["locale"] = locale.into();
         }
-        document["meta"]["legend"]["entries"]["backend"]["label"] = "Authored performer".into();
-        let actual = html(&document, DiagramType::Workflow, contract, "showcase");
-        assert!(actual
+        let actual = html(&document, DiagramType::Workflow, "showcase");
+        let labels: Vec<_> = actual
             .select(&selector("[data-legend-semantic-kind='backend'] text"))
-            .any(|text| text.text().collect::<String>() == "Authored performer"));
+            .map(|text| text.text().collect::<String>())
+            .collect();
+        assert!(
+            labels.iter().any(|label| label == expected),
+            "{locale:?}: {labels:?}"
+        );
     }
+    let mut document = original.clone();
+    document["meta"]["translations"]["legend.workflow.backend"] = "Authored processing".into();
+    let actual = html(&document, DiagramType::Workflow, "showcase");
+    assert!(actual
+        .select(&selector("[data-legend-semantic-kind='backend'] text"))
+        .any(|text| text.text().collect::<String>() == "Authored processing"));
+    document["meta"]["legend"]["entries"]["backend"]["label"] = "Authored performer".into();
+    let actual = html(&document, DiagramType::Workflow, "showcase");
+    assert!(actual
+        .select(&selector("[data-legend-semantic-kind='backend'] text"))
+        .any(|text| text.text().collect::<String>() == "Authored performer"));
 }
 
 #[test]
 fn dataflow_arrow_legends_remain_noninteractive_even_when_node_kinds_match() {
     let document: Value = serde_json::from_str(include_str!(
-        "../upstream/legacy-2.17/examples/product-analytics.dataflow.json"
+        "fixtures/input/phoenix-v1/product-analytics.dataflow.json"
     ))
     .unwrap();
-    let actual = html(&document, DiagramType::Dataflow, "legacy-2.17", "showcase");
+    let actual = html(&document, DiagramType::Dataflow, "showcase");
     assert_eq!(
         actual
             .select(&selector("[data-legend-semantic-kind='security']"))
@@ -250,7 +165,6 @@ fn lifecycle_rendering_preserves_frozen_paths_primary_labels_and_state_markers()
         let actual = html(
             &case["document"],
             DiagramType::Lifecycle,
-            contract,
             case["document"]["meta"]["quality_profile"]
                 .as_str()
                 .unwrap_or("standard"),
@@ -404,70 +318,68 @@ fn sequence_lifelines_activations_note_masks_and_legend_arrows_reach_svg() {
     let mut failures = vec![];
     let mut backdrops = 0;
     for case in oracle["cases"].as_array().unwrap() {
-        for contract in ["legacy-2.17", "phoenix-v1"] {
-            let source = &case["oracles"][contract];
-            if source["success"] != true {
-                continue;
+        let contract = "phoenix-v1";
+        let source = &case["oracles"][contract];
+        if source["success"] != true {
+            continue;
+        }
+        let key = format!("{contract}/{}", case["name"]);
+        let actual = html(
+            &case["input"],
+            DiagramType::Sequence,
+            case["effectiveQuality"].as_str().unwrap_or("standard"),
+        );
+        for points in source["lifelines"].as_array().unwrap() {
+            let found = actual
+                .select(&selector("line[data-graph-role='reading-guide']"))
+                .any(|line| {
+                    ["x1", "y1", "x2", "y2"]
+                        .into_iter()
+                        .zip([
+                            points[0][0].as_f64().unwrap(),
+                            points[0][1].as_f64().unwrap(),
+                            points[1][0].as_f64().unwrap(),
+                            points[1][1].as_f64().unwrap(),
+                        ])
+                        .all(|(k, v)| near(numeric(line, k), v))
+                        && line.value().attr("stroke-width") == Some("0.8")
+                        && line.value().attr("stroke-dasharray") == Some("3,7")
+                });
+            if !found {
+                failures.push(format!("{key}: lifeline {points}"));
             }
-            let key = format!("{contract}/{}", case["name"]);
-            let actual = html(
-                &case["input"],
-                DiagramType::Sequence,
-                contract,
-                case["effectiveQuality"].as_str().unwrap_or("standard"),
-            );
-            for points in source["lifelines"].as_array().unwrap() {
-                let found = actual
-                    .select(&selector("line[data-graph-role='reading-guide']"))
-                    .any(|line| {
-                        ["x1", "y1", "x2", "y2"]
-                            .into_iter()
-                            .zip([
-                                points[0][0].as_f64().unwrap(),
-                                points[0][1].as_f64().unwrap(),
-                                points[1][0].as_f64().unwrap(),
-                                points[1][1].as_f64().unwrap(),
-                            ])
-                            .all(|(k, v)| near(numeric(line, k), v))
-                            && line.value().attr("stroke-width") == Some("0.8")
-                            && line.value().attr("stroke-dasharray") == Some("3,7")
-                    });
-                if !found {
-                    failures.push(format!("{key}: lifeline {points}"));
-                }
+        }
+        for expected in source["activations"].as_array().unwrap() {
+            if !actual
+                .select(&selector("rect[data-graph-role='activation']"))
+                .any(|r| {
+                    same_box(r, expected)
+                        && r.value().attr("rx") == Some("3")
+                        && r.value().attr("stroke-width") == Some("1")
+                })
+            {
+                failures.push(format!("{key}: activation {expected}"));
             }
-            for expected in source["activations"].as_array().unwrap() {
+        }
+        for message in source["messages"].as_array().unwrap() {
+            if !message["backdrop"].is_null() {
+                backdrops += 1;
                 if !actual
-                    .select(&selector("rect[data-graph-role='activation']"))
-                    .any(|r| {
-                        same_box(r, expected)
-                            && r.value().attr("rx") == Some("3")
-                            && r.value().attr("stroke-width") == Some("1")
-                    })
+                    .select(&selector("rect[data-graph-role='message-note-background']"))
+                    .any(|r| same_box(r, &message["backdrop"]))
                 {
-                    failures.push(format!("{key}: activation {expected}"));
+                    failures.push(format!("{key}: note background"));
                 }
             }
-            for message in source["messages"].as_array().unwrap() {
-                if !message["backdrop"].is_null() {
-                    backdrops += 1;
-                    if !actual
-                        .select(&selector("rect[data-graph-role='message-note-background']"))
-                        .any(|r| same_box(r, &message["backdrop"]))
-                    {
-                        failures.push(format!("{key}: note background"));
-                    }
-                }
-            }
-            for legend in source["legends"].as_array().unwrap() {
-                let kind = legend["kind"].as_str().unwrap();
-                let entry = actual
-                    .select(&selector("g[data-graph-role='legend']"))
-                    .find(|e| e.value().attr("data-legend-semantic-kind") == Some(kind))
-                    .unwrap();
-                if entry.select(&selector("path[marker-end]")).count() != 1 {
-                    failures.push(format!("{key}: arrow swatch {kind}"));
-                }
+        }
+        for legend in source["legends"].as_array().unwrap() {
+            let kind = legend["kind"].as_str().unwrap();
+            let entry = actual
+                .select(&selector("g[data-graph-role='legend']"))
+                .find(|e| e.value().attr("data-legend-semantic-kind") == Some(kind))
+                .unwrap();
+            if entry.select(&selector("path[marker-end]")).count() != 1 {
+                failures.push(format!("{key}: arrow swatch {kind}"));
             }
         }
     }
@@ -503,7 +415,6 @@ fn dataflow_renders_stage_frames_nodes_and_flow_legend_shapes() {
         let actual = html(
             &case["document"],
             DiagramType::Dataflow,
-            case["contract"].as_str().unwrap(),
             case["effectiveQuality"].as_str().unwrap_or("standard"),
         );
         if actual

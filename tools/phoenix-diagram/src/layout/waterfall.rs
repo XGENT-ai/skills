@@ -1,4 +1,4 @@
-// Ported from the frozen Archify 3.1.0 renderers/waterfall/render-waterfall.mjs; see NOTICE.md.
+// Derived from Archify 3.1.0 renderers/waterfall/render-waterfall.mjs (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::format::number::{
     en_us_max_fraction, en_us_max_significant, js_round, js_to_precision, js_to_string,

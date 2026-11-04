@@ -1,6 +1,6 @@
 use crate::diagnostic::{Diagnostic, Diagnostics, Severity};
 use crate::geometry::{self, composition as geometry_checks};
-use crate::input::{sha256, DiagramType, InputContract, Quality};
+use crate::input::{sha256, DiagramType, Quality};
 use crate::scene::{Point, Rect};
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -182,7 +182,7 @@ fn sigil_box(element: ElementRef<'_>) -> Option<Rect> {
 }
 
 /// Glyph boxes of a label's lines; positioned tspans are separate lines.
-fn label_glyph_boxes(text: ElementRef<'_>, contract: InputContract) -> Vec<Rect> {
+fn label_glyph_boxes(text: ElementRef<'_>) -> Vec<Rect> {
     let font = number(text, "font-size", f64::NAN);
     let anchor = text.value().attr("text-anchor").unwrap_or("start");
     let spans: Vec<_> = text
@@ -200,7 +200,6 @@ fn label_glyph_boxes(text: ElementRef<'_>, contract: InputContract) -> Vec<Rect>
                 number(line, "y", f64::NAN),
                 font,
                 anchor,
-                contract,
             )
         })
         .collect()
@@ -393,10 +392,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         .value()
         .attr("data-diagram-type")
         .and_then(|kind| kind.parse().ok());
-    let contract = match svg.value().attr("data-input-contract") {
-        Some("phoenix-v1") => InputContract::PhoenixV1,
-        _ => InputContract::Legacy217,
-    };
+    let contract = svg.value().attr("data-input-contract");
     let mut contract_errors = Vec::new();
     if inspection.kind.is_none() {
         contract_errors.push(inspection.diagnostic(
@@ -406,10 +402,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             Value::Null,
         ));
     }
-    if !matches!(
-        svg.value().attr("data-input-contract"),
-        Some("phoenix-v1" | "legacy-2.17")
-    ) {
+    if contract != Some("phoenix-v1") {
         contract_errors.push(inspection.diagnostic(
             "artifact/input-contract",
             "/svg/data-input-contract",
@@ -603,7 +596,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         {
             let touches = node
                 .select(&selector("text[data-node-label]"))
-                .flat_map(|text| label_glyph_boxes(text, contract))
+                .flat_map(|text| label_glyph_boxes(text))
                 .any(|label| geometry::rects_overlap(&mark, &label, 1.0));
             if touches {
                 node_errors.push(inspection.diagnostic(
@@ -670,7 +663,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             ));
         }
         for (other_id, other) in &nodes[index + 1..] {
-            if geometry::rects_overlap_for_contract(bounds, other, gap, contract) {
+            if geometry::rects_overlap(bounds, other, gap) {
                 overlap.push(inspection.diagnostic(
                     "composition/node-overlap",
                     &format!("/svg/nodes/{index}"),
@@ -1141,7 +1134,6 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
     let all_crossings = geometry_checks::collect_proper_crossings(
         &actual_routes,
         &geometry_checks::CrossingOptions {
-            contract,
             merge_forward_collinear_waypoints: workflow_v2,
             include_shared_endpoints: Some(&shared_crossings),
             ..Default::default()
@@ -1153,7 +1145,6 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
     let crossings = geometry_checks::collect_proper_crossings(
         &actual_routes,
         &geometry_checks::CrossingOptions {
-            contract,
             merge_forward_collinear_waypoints: workflow_v2,
             include_shared_endpoints: Some(&shared_crossings),
             crossing_resolved: Some(&resolved),
@@ -1171,7 +1162,6 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
     let corridors = geometry_checks::collect_ambiguous_corridors(
         &straight_routes,
         &geometry_checks::CorridorOptions {
-            contract,
             allow_short_workflow_trunks: workflow_v2,
             ..Default::default()
         },
@@ -1183,56 +1173,50 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         serde_json::json!({"straightSubpaths":straight_routes.len(),"contract":contract}),
         false,
     );
-    if contract == InputContract::PhoenixV1 {
-        // The original five keep the frozen check's scope: workflow v2 routes,
-        // or relations with verified independent ports, at their target-ending
-        // parts; author-shared ports are deliberate joins there. The later
-        // types check only ends that carry a marker; a start symbol is checked
-        // as an incoming end at its own node.
-        let marked: Vec<geometry_checks::RoutedRelation>;
-        let arrow_routes = if inspection
-            .kind
-            .is_some_and(DiagramType::has_legacy_contract)
-        {
-            marked = actual_routes
-                .iter()
-                .filter(|route| {
-                    route.target_endpoint
-                        && (workflow_v2 || route.relation["independentPorts"] == true)
-                })
-                .cloned()
-                .collect();
-            &marked
-        } else {
-            marked = actual_routes
-                .iter()
-                .flat_map(|route| {
-                    let (start, end) = marked_ends
-                        .get(route.relation_index)
-                        .copied()
-                        .unwrap_or((false, false));
-                    let target = (end && route.target_endpoint).then(|| route.clone());
-                    let source = (start && route.source_endpoint).then(|| {
-                        let mut source = route.clone();
-                        source.points.reverse();
-                        source.relation["to"] = route.relation["from"].clone();
-                        source.relation["from"] = route.relation["to"].clone();
-                        source
-                    });
-                    target.into_iter().chain(source)
-                })
-                .collect();
-            &marked
-        };
-        let arrows = geometry_checks::collect_arrowhead_collisions(arrow_routes, workflow_v2);
-        inspection.hits(
-            "arrowhead_separation",
-            "composition/arrowhead-collision",
-            &arrows,
-            serde_json::json!({"relationships":edge_facts.len()}),
-            false,
-        );
-    }
+    // The original five keep the frozen check's scope: workflow v2 routes,
+    // or relations with verified independent ports, at their target-ending
+    // parts; author-shared ports are deliberate joins there. The later
+    // types check only ends that carry a marker; a start symbol is checked
+    // as an incoming end at its own node.
+    let marked: Vec<geometry_checks::RoutedRelation>;
+    let arrow_routes = if inspection.kind.is_some_and(DiagramType::is_original_five) {
+        marked = actual_routes
+            .iter()
+            .filter(|route| {
+                route.target_endpoint && (workflow_v2 || route.relation["independentPorts"] == true)
+            })
+            .cloned()
+            .collect();
+        &marked
+    } else {
+        marked = actual_routes
+            .iter()
+            .flat_map(|route| {
+                let (start, end) = marked_ends
+                    .get(route.relation_index)
+                    .copied()
+                    .unwrap_or((false, false));
+                let target = (end && route.target_endpoint).then(|| route.clone());
+                let source = (start && route.source_endpoint).then(|| {
+                    let mut source = route.clone();
+                    source.points.reverse();
+                    source.relation["to"] = route.relation["from"].clone();
+                    source.relation["from"] = route.relation["to"].clone();
+                    source
+                });
+                target.into_iter().chain(source)
+            })
+            .collect();
+        &marked
+    };
+    let arrows = geometry_checks::collect_arrowhead_collisions(arrow_routes, workflow_v2);
+    inspection.hits(
+        "arrowhead_separation",
+        "composition/arrowhead-collision",
+        &arrows,
+        serde_json::json!({"relationships":edge_facts.len()}),
+        false,
+    );
     let border_runs = geometry_checks::collect_border_runs(&straight_routes, &frames);
     inspection.hits(
         "container_border_runs",
@@ -1258,20 +1242,18 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         serde_json::json!({"labels":labels.len(),"minimumPx":4}),
         false,
     );
-    if contract == InputContract::PhoenixV1 {
-        let overflow = geometry_checks::collect_label_canvas_overflow(
-            &labels,
-            &[canvas.width, canvas.height],
-            0.5,
-        );
-        inspection.hits(
-            "label_canvas_containment",
-            "composition/label-canvas-containment",
-            &overflow,
-            serde_json::json!({"labels":labels.len()}),
-            false,
-        );
-    }
+    let overflow = geometry_checks::collect_label_canvas_overflow(
+        &labels,
+        &[canvas.width, canvas.height],
+        0.5,
+    );
+    inspection.hits(
+        "label_canvas_containment",
+        "composition/label-canvas-containment",
+        &overflow,
+        serde_json::json!({"labels":labels.len()}),
+        false,
+    );
     let obstacles: Vec<_> = nodes
         .iter()
         .map(|(id, bounds)| geometry_checks::Obstacle {
@@ -1299,12 +1281,9 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
                 "rect" => Some(rect(element)),
                 "text" => {
                     let font = number(element, "font-size", f64::NAN);
-                    let width = (geometry::text_units_for_contract(
-                        &element.text().collect::<String>(),
-                        contract,
-                    ) * font
-                        * 0.62)
-                        .max(font);
+                    let width =
+                        (geometry::text_units(&element.text().collect::<String>()) * font * 0.62)
+                            .max(font);
                     let x = number(element, "x", f64::NAN)
                         - match element.value().attr("text-anchor") {
                             Some("middle") => width / 2.0,

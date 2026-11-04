@@ -1,9 +1,7 @@
 /*
-Derived from Archify 3.1.0 viewer/focus.js (MIT), frozen content SHA-256
-4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace; passport
-source evidence states, an authored-only type and focused-node clearance
-recorded in focus-adaptations.json.
+Derived from Archify 3.1.0 viewer/focus.js (MIT).
+Phoenix Diagram modifications: independent JavaScript/storage/CSS namespace; passport
+source evidence states, an authored-only type and focused-node clearance.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */

@@ -1,4 +1,4 @@
-// Class and interface SVG body, ported from the frozen render-class.mjs markup.
+// Class and interface SVG body, derived from Archify render-class.mjs markup (MIT).
 use super::erd::{edge_attributes, node_attributes, node_title, points_value, steps, text_element};
 use super::{escape_text, TypeRenderer};
 use crate::geometry::format_number as number;

@@ -1,7 +1,6 @@
 /*
-Derived from Archify 3.1.0 viewer/semantic-lens.js (MIT), frozen content SHA-256
-4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent JavaScript/storage/CSS namespace; a click on the
+Derived from Archify 3.1.0 viewer/semantic-lens.js (MIT).
+Phoenix Diagram modifications: independent JavaScript/storage/CSS namespace; a click on the
 trigger's translated label counts as a launcher click.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.

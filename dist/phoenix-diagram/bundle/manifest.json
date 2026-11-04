@@ -5,38 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 18740,
-      "sha256": "188a7c3a5f20e14c4fd219f9fb05461398206d4288cafd143ed9bedfe729fb68",
-      "mode": 420
-    },
-    {
-      "path": "examples/legacy.agent-tool-call.workflow.json",
-      "size": 5687,
-      "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
-      "mode": 420
-    },
-    {
-      "path": "examples/legacy.async-job-roundtrip.sequence.json",
-      "size": 4370,
-      "sha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
-      "mode": 420
-    },
-    {
-      "path": "examples/legacy.deployment-release.lifecycle.json",
-      "size": 4274,
-      "sha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
-      "mode": 420
-    },
-    {
-      "path": "examples/legacy.product-analytics.dataflow.json",
-      "size": 5618,
-      "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
-      "mode": 420
-    },
-    {
-      "path": "examples/legacy.web-app.architecture.json",
-      "size": 3793,
-      "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+      "size": 18730,
+      "sha256": "918444d2947acd6e1d3eaeb39027ea2a0e0feb1d9ef9a03a44f6b53421b78ac5",
       "mode": 420
     },
     {
@@ -101,14 +71,14 @@
     },
     {
       "path": "references/architecture-compare.md",
-      "size": 4480,
-      "sha256": "a1c51dce5edbc81def0b4820885a440b1945364bccd995940b0321e3311a768a",
+      "size": 4554,
+      "sha256": "4c8cdb1adba32f74b6e49a89345502199e33c4037668fc360a3de9a559e6647b",
       "mode": 420
     },
     {
       "path": "references/authoring-defaults.md",
-      "size": 12726,
-      "sha256": "45f4c685ca6937b5645a31c4d43a145c758d67933e57b72e36e5c6844414a998",
+      "size": 12778,
+      "sha256": "4e79262148a734add1d84550676293eed9eddd190b157b65ac7ccca53b94d105",
       "mode": 420
     },
     {
@@ -119,8 +89,8 @@
     },
     {
       "path": "references/compatibility.md",
-      "size": 1819,
-      "sha256": "806e3314078dbd991ad3410a0caf271527d7d7bf41308d49fbc1cc0fde409f4b",
+      "size": 1774,
+      "sha256": "6f89abd9af6af7b917775628b6e1f954ac7c244e441d9c0956e6ea863716ffac",
       "mode": 420
     },
     {
@@ -131,14 +101,14 @@
     },
     {
       "path": "references/extending-types.md",
-      "size": 2014,
-      "sha256": "26de28647c70be6abd4ed03b3718b3f363655dc6a90c5185f272f0f36494fcca",
+      "size": 2025,
+      "sha256": "e7d68281ab7c1a6db96f58e8dbdf2ab20684e7e5510ba76403b2a0d7695b6822",
       "mode": 420
     },
     {
       "path": "references/preview.md",
-      "size": 4200,
-      "sha256": "e1f7371b0d563e5448fa1f906eb1fc52c797d04afa34df109bdfa66f83c81850",
+      "size": 4188,
+      "sha256": "ab31df8dee2ff8f135c286324a6010ec89f7bc61e231846a637e3ac4dd638491",
       "mode": 420
     },
     {
@@ -155,74 +125,74 @@
     },
     {
       "path": "schemas/README.md",
-      "size": 3109,
-      "sha256": "4109c6b16e7bafa84bb5a23b94765da7823e18a2b78cf8f0eed271a37b7197bc",
+      "size": 2708,
+      "sha256": "ed3710a39902a9f156329feab04725db2f62c6945f7b71c273acec17e2ff7316",
       "mode": 420
     },
     {
       "path": "schemas/architecture.schema.json",
-      "size": 8003,
-      "sha256": "cf6cbe9f33a19a4b219493b3bf33c4fa7bab8865f620cd917c82664a576a2fd7",
+      "size": 8028,
+      "sha256": "889fd730c685d0fcc95ed4308380780b60de33d764625602305206f21c03c968",
       "mode": 420
     },
     {
       "path": "schemas/class.schema.json",
-      "size": 8191,
-      "sha256": "2b1601fcf26a4e7cd20775da8a8f2affd7cc13133d774279be0c425ba9c4c0fa",
+      "size": 8216,
+      "sha256": "9a62144b2cfc7751feb7e94c16652147d1214edf72ac55d8838fc919a5e75a01",
       "mode": 420
     },
     {
       "path": "schemas/common.schema.json",
-      "size": 7551,
-      "sha256": "e288d7f35fee4ead02a96e7e091ecbf601d0aa74da41b2ecf31c9e664be09685",
+      "size": 7576,
+      "sha256": "096716ca5479e1cad2a4eb56d13719e091e836671c3dea88afd9cbff9e8e5a6e",
       "mode": 420
     },
     {
       "path": "schemas/dataflow.schema.json",
-      "size": 6609,
-      "sha256": "c5d4203fe2014f1d95214e3694cb7e5b0112beb562bbe26f0cccf29c797635c9",
+      "size": 6634,
+      "sha256": "0a4a866c1945e98ea3de48d9e04d657dcca8a128f0d70239553febc36368e3f2",
       "mode": 420
     },
     {
       "path": "schemas/erd.schema.json",
-      "size": 9400,
-      "sha256": "d71cb4a394bc3604b56c0cadecf31470da3ef3781a8100a6ea19dbe9810e2e11",
+      "size": 9425,
+      "sha256": "feb612bc2e3afc4cd59bcdacf8fbe779b493e0fae7114250333f8bfe8dfbc6b8",
       "mode": 420
     },
     {
       "path": "schemas/lifecycle.schema.json",
-      "size": 5733,
-      "sha256": "60ef8990ed65e9b5aa506f6e100a979ee2e0570a2171b0b9065054518249e604",
+      "size": 5758,
+      "sha256": "3325bb2a7eae7a48866eeae1c393f1247bc453beceff9e92aa809b1cd88f9eb6",
       "mode": 420
     },
     {
       "path": "schemas/sequence.schema.json",
-      "size": 6503,
-      "sha256": "11b9ce2bc6f495e4a854f2da4074600b707670d197cec3ef2c5c5584ed0a841b",
+      "size": 6528,
+      "sha256": "7ef7e110d3a6cab11712ba081ab12c99c6e8379ae9edd561f50268800a0752fb",
       "mode": 420
     },
     {
       "path": "schemas/timeline.schema.json",
-      "size": 4284,
-      "sha256": "6d87ee8cf0f2b2ff6aae0a7baf64d745d96f86e76417c6ed2a7820663670f613",
+      "size": 4309,
+      "sha256": "9da19bcc3ecb0042f152a9514fdf10c3daf9455d4e4faec69b98a7936ee329ea",
       "mode": 420
     },
     {
       "path": "schemas/tree.schema.json",
-      "size": 3243,
-      "sha256": "41889536e9a61a0b0670667d45e558439a0b71575800864934772e8531f67fd6",
+      "size": 3268,
+      "sha256": "3e6a84480c7d56629e04038dd739722016986e1cad10a0a1a36e4708d2b1a9ef",
       "mode": 420
     },
     {
       "path": "schemas/waterfall.schema.json",
-      "size": 3597,
-      "sha256": "8fc221fb04c0bf873441ce0962e8e5d4c68efdd37bb5dc5bf5e8286cde40fb7e",
+      "size": 3622,
+      "sha256": "9148c5c9a6989a174339e40b262a9c8958500742e3bf36121cdc896b4758c4b3",
       "mode": 420
     },
     {
       "path": "schemas/workflow.schema.json",
-      "size": 10522,
-      "sha256": "cca36492e633e5c3ae68b9271dd88317b5552eacee402cd4822c9f04db6bbf7a",
+      "size": 10547,
+      "sha256": "6e6795e2a010d4d4162f4cf361fc1536d8fc1268cbdc2c500202e592fb6e8bc9",
       "mode": 420
     },
     {

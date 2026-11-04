@@ -1,10 +1,8 @@
 // Maintenance oracle: run with `mise exec --no-deps -- node`, never system Node.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { verifyFrozenSources } from '../../../../../scripts/check-phoenix-diagram-source.mjs';
+import { readFile, writeFile } from 'node:fs/promises';
+import { verifySources } from '../../../../../scripts/check-phoenix-diagram-source.mjs';
 
 const source = {
   node: process.versions.node,
@@ -13,8 +11,7 @@ const source = {
   locale: new Intl.Segmenter().resolvedOptions().locale,
 };
 assert.deepEqual(source, { node: '25.2.1', icu: '77.1', unicode: '16.0', locale: 'en-US' });
-const root = fileURLToPath(new URL('../../../../../', import.meta.url));
-verifyFrozenSources({ localReference: path.join(root, 'local/phoenix-diagram/reference') });
+verifySources();
 const nativeSources = JSON.parse(await readFile(new URL('./sources.json', import.meta.url), 'utf8'));
 for (const entry of nativeSources.files) {
   const digest = createHash('sha256').update(await readFile(new URL(entry.file, import.meta.url))).digest('hex');
@@ -115,18 +112,6 @@ const dictionary = (await readFile(new URL('./icu77-cjdict.txt', import.meta.url
 const holdout = dictionary.filter((_, index) => index % 1250 === 0);
 for (const [index, word] of holdout.entries()) {
   inputs.push([`dictionary-holdout-${index}`, `${word}${holdout[(index + 1) % holdout.length]}`]);
-}
-const examples = path.join(root, 'local/phoenix-diagram/reference/archify/examples');
-for (const name of (await readdir(examples)).sort()) {
-  if (!/\.(sequence|dataflow)\.json$/.test(name)) continue;
-  const document = JSON.parse(await readFile(path.join(examples, name), 'utf8'));
-  for (const collection of ['messages', 'stages', 'flows']) {
-    for (const [index, item] of (document[collection] || []).entries()) {
-      for (const field of ['note', 'label', 'classification']) {
-        if (typeof item[field] === 'string') inputs.push([`${name}/${collection}/${index}/${field}`, item[field]]);
-      }
-    }
-  }
 }
 
 const grapheme = new Intl.Segmenter('en-US', { granularity: 'grapheme' });

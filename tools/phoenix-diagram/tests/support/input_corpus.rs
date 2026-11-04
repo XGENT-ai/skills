@@ -25,7 +25,6 @@ struct Example {
 #[derive(Deserialize)]
 struct Specimen {
     id: String,
-    contract: String,
     kind: String,
     document: Value,
     fields: Vec<String>,
@@ -51,13 +50,9 @@ fn oracle() -> Oracle {
     serde_json::from_str(include_str!("../fixtures/input/schema-oracle.json")).unwrap()
 }
 
-fn options(contract: &str) -> CompileOptions {
+fn options() -> CompileOptions {
     CompileOptions {
-        input_contract: match contract {
-            "legacy-2.17" => None,
-            "phoenix-v1" => Some(InputContract::PhoenixV1),
-            other => panic!("Unknown fixture contract: {other}"),
-        },
+        input_contract: Some(InputContract::PhoenixV1),
         ..Default::default()
     }
 }
@@ -85,15 +80,15 @@ fn patch(document: &mut Value, operation: &Operation) {
 }
 
 #[test]
-fn frozen_examples_preserve_original_documents_and_bytes_in_both_contracts() {
+fn frozen_examples_preserve_original_documents_and_bytes() {
     let oracle = oracle();
     assert_eq!(oracle.format, 1);
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/input");
-    let mut counts = BTreeMap::new();
+    let mut count = 0;
     let mut kinds = BTreeSet::new();
     for example in oracle.examples {
-        *counts.entry(example.contract.clone()).or_insert(0) += 1;
-        kinds.insert((example.contract.clone(), example.kind.clone()));
+        assert_eq!(example.contract, "phoenix-v1", "{}", example.file);
+        kinds.insert(example.kind.clone());
         let bytes = std::fs::read(root.join(&example.file)).unwrap();
         assert_eq!(
             format!("{:x}", Sha256::digest(&bytes)),
@@ -103,7 +98,8 @@ fn frozen_examples_preserve_original_documents_and_bytes_in_both_contracts() {
             example.source
         );
         let kind = example.kind.parse::<DiagramType>().unwrap();
-        let parsed = parse_input(&bytes, kind, &options(&example.contract))
+        count += 1;
+        let parsed = parse_input(&bytes, kind, &options())
             .unwrap_or_else(|errors| panic!("{}: {errors:?}", example.file));
         assert_eq!(parsed.source_bytes, bytes, "{}", example.file);
         assert_eq!(parsed.source_sha256, example.sha256, "{}", example.file);
@@ -114,18 +110,10 @@ fn frozen_examples_preserve_original_documents_and_bytes_in_both_contracts() {
             example.file
         );
         assert_eq!(parsed.diagram_type, kind);
-        assert_eq!(
-            parsed.input_contract,
-            if example.contract == "legacy-2.17" {
-                InputContract::Legacy217
-            } else {
-                InputContract::PhoenixV1
-            }
-        );
+        assert_eq!(parsed.input_contract, InputContract::PhoenixV1);
     }
-    assert_eq!(counts["legacy-2.17"], 14);
-    assert_eq!(counts["phoenix-v1"], 25);
-    assert_eq!(kinds.len(), 15);
+    assert_eq!(count, 25);
+    assert_eq!(kinds.len(), 10);
 }
 
 #[test]
@@ -147,7 +135,7 @@ fn field_omission_enum_and_boundary_behavior_matches_frozen_node_schema_oracles(
         let diagnostics = parse_input(
             &serde_json::to_vec(&document).unwrap(),
             specimen.kind.parse().unwrap(),
-            &options(&specimen.contract),
+            &options(),
         )
         .err()
         .unwrap_or_default();
@@ -209,21 +197,14 @@ fn field_omission_enum_and_boundary_behavior_matches_frozen_node_schema_oracles(
     }
 }
 
-// The types each contract defines; erd..waterfall exist only in phoenix-v1.
-fn kinds(contract: &str) -> impl Iterator<Item = DiagramType> + '_ {
-    DiagramType::ALL
-        .into_iter()
-        .filter(move |kind| contract == "phoenix-v1" || kind.has_legacy_contract())
-}
-
 // Types whose explicit entity and relation ids share one identity domain.
-fn relational(contract: &str) -> impl Iterator<Item = DiagramType> + '_ {
-    kinds(contract).filter(|kind| {
-        kind.has_legacy_contract() || matches!(kind, DiagramType::Erd | DiagramType::Class)
+fn relational() -> impl Iterator<Item = DiagramType> {
+    DiagramType::ALL.into_iter().filter(|kind| {
+        kind.is_original_five() || matches!(kind, DiagramType::Erd | DiagramType::Class)
     })
 }
 
-fn minimal(kind: DiagramType, contract: &str) -> Value {
+fn minimal(kind: DiagramType) -> Value {
     let mut document = json!({
         "schema_version": 1,
         "diagram_type": kind.as_str(),
@@ -251,11 +232,6 @@ fn minimal(kind: DiagramType, contract: &str) -> Value {
             "stages": [{"label":"Input"},{"label":"Output"}],
             "nodes": [{"id":"a","type":"frontend","label":"A","stage":0,"row":0},{"id":"b","type":"backend","label":"B","stage":1,"row":0}],
             "flows": [{"from":"a","to":"b","label":"request","classification":"public"}],
-        }),
-        DiagramType::Lifecycle if contract == "legacy-2.17" => json!({
-            "lanes": [{"id":"main","label":"Work"}],
-            "states": [{"id":"a","type":"start","label":"A","lane":"main","col":0},{"id":"b","type":"success","label":"B","lane":"main","col":1}],
-            "transitions": [{"from":"a","to":"b","label":"request"}],
         }),
         DiagramType::Lifecycle => {
             document["schema_version"] = json!(3);
@@ -315,16 +291,12 @@ fn collections(kind: DiagramType) -> (&'static str, &'static str) {
     }
 }
 
-fn expect_error(document: &Value, kind: DiagramType, contract: &str, code: &str, label: &str) {
-    let diagnostics = parse_input(
-        &serde_json::to_vec(document).unwrap(),
-        kind,
-        &options(contract),
-    )
-    .unwrap_err();
+fn expect_error(document: &Value, kind: DiagramType, code: &str, label: &str) {
+    let diagnostics =
+        parse_input(&serde_json::to_vec(document).unwrap(), kind, &options()).unwrap_err();
     assert!(
         diagnostics.iter().any(|diagnostic| diagnostic.code == code),
-        "{contract}/{} {label}: expected {code}, got {diagnostics:?}",
+        "{} {label}: expected {code}, got {diagnostics:?}",
         kind.as_str()
     );
     assert!(diagnostics
@@ -339,366 +311,266 @@ fn expect_error(document: &Value, kind: DiagramType, contract: &str, code: &str,
 }
 
 #[test]
-fn minimal_documents_and_legacy_column_fit_omission_are_accepted_unchanged() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in kinds(contract) {
-            let document = minimal(kind, contract);
-            let bytes = serde_json::to_vec(&document).unwrap();
-            let parsed = parse_input(&bytes, kind, &options(contract))
-                .unwrap_or_else(|errors| panic!("{contract}/{}: {errors:?}", kind.as_str()));
-            assert_eq!(parsed.document, document);
-            assert_eq!(parsed.source_bytes, bytes);
-            assert_eq!(document["meta"]["column_fit"], Value::Null);
-        }
-        let mut workflow_v1 = minimal(DiagramType::Workflow, contract);
-        workflow_v1["schema_version"] = json!(1);
-        parse_input(
-            &serde_json::to_vec(&workflow_v1).unwrap(),
-            DiagramType::Workflow,
-            &options(contract),
-        )
-        .unwrap();
+fn minimal_documents_and_column_fit_omission_are_accepted_unchanged() {
+    for kind in DiagramType::ALL {
+        let document = minimal(kind);
+        let bytes = serde_json::to_vec(&document).unwrap();
+        let parsed = parse_input(&bytes, kind, &options())
+            .unwrap_or_else(|errors| panic!("{}: {errors:?}", kind.as_str()));
+        assert_eq!(parsed.document, document);
+        assert_eq!(parsed.source_bytes, bytes);
+        assert_eq!(document["meta"]["column_fit"], Value::Null);
     }
+    let mut workflow_v1 = minimal(DiagramType::Workflow);
+    workflow_v1["schema_version"] = json!(1);
+    parse_input(
+        &serde_json::to_vec(&workflow_v1).unwrap(),
+        DiagramType::Workflow,
+        &options(),
+    )
+    .unwrap();
 }
 
 #[test]
 fn container_namespaces_may_share_ids_with_entities_and_each_other() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        let mut document = minimal(DiagramType::Workflow, contract);
-        document["lanes"][0]["id"] = json!("a");
-        document["nodes"][0]["lane"] = json!("a");
-        document["nodes"][1]["lane"] = json!("a");
-        document["phases"] = json!([{"id":"a","label":"Phase","fromCol":0,"toCol":1}]);
-        document["groups"] = json!([{"id":"a","label":"Group","lane":"a","fromCol":0,"toCol":1}]);
-        document["meta"]["views"] = json!([{"id":"a","label":"View","focus":["a"]}]);
-        let parsed = parse_input(
-            &serde_json::to_vec(&document).unwrap(),
-            DiagramType::Workflow,
-            &options(contract),
-        )
-        .unwrap();
-        assert_eq!(parsed.document, document);
-    }
+    let mut document = minimal(DiagramType::Workflow);
+    document["lanes"][0]["id"] = json!("a");
+    document["nodes"][0]["lane"] = json!("a");
+    document["nodes"][1]["lane"] = json!("a");
+    document["phases"] = json!([{"id":"a","label":"Phase","fromCol":0,"toCol":1}]);
+    document["groups"] = json!([{"id":"a","label":"Group","lane":"a","fromCol":0,"toCol":1}]);
+    document["meta"]["views"] = json!([{"id":"a","label":"View","focus":["a"]}]);
+    let parsed = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Workflow,
+        &options(),
+    )
+    .unwrap();
+    assert_eq!(parsed.document, document);
 }
 
 #[test]
 fn duplicate_entity_relation_and_cross_collection_identities_are_rejected() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in relational(contract) {
-            let (entities, relations) = collections(kind);
-            let mut document = minimal(kind, contract);
-            document[entities][1]["id"] = json!("a");
-            expect_error(
-                &document,
-                kind,
-                contract,
-                "input/duplicate-id",
-                "entity duplicate",
-            );
+    for kind in relational() {
+        let (entities, relations) = collections(kind);
+        let mut document = minimal(kind);
+        document[entities][1]["id"] = json!("a");
+        expect_error(&document, kind, "input/duplicate-id", "entity duplicate");
 
-            let mut document = minimal(kind, contract);
-            document[relations][0]["id"] = json!("relation");
-            let duplicate = document[relations][0].clone();
-            document[relations].as_array_mut().unwrap().push(duplicate);
-            expect_error(
-                &document,
-                kind,
-                contract,
-                "input/duplicate-id",
-                "relation duplicate",
-            );
+        let mut document = minimal(kind);
+        document[relations][0]["id"] = json!("relation");
+        let duplicate = document[relations][0].clone();
+        document[relations].as_array_mut().unwrap().push(duplicate);
+        expect_error(&document, kind, "input/duplicate-id", "relation duplicate");
 
-            let mut document = minimal(kind, contract);
-            document[relations][0]["id"] = json!("a");
-            expect_error(
-                &document,
-                kind,
-                contract,
-                "input/duplicate-id",
-                "entity/relation identity conflict",
-            );
+        let mut document = minimal(kind);
+        document[relations][0]["id"] = json!("a");
+        expect_error(
+            &document,
+            kind,
+            "input/duplicate-id",
+            "entity/relation identity conflict",
+        );
 
-            let mut document = minimal(kind, contract);
-            document["meta"]["views"] = json!([
-                {"id":"view","label":"View A","focus":["a"]},
-                {"id":"view","label":"View B","focus":["b"]},
-            ]);
-            expect_error(
-                &document,
-                kind,
-                contract,
-                "input/duplicate-id",
-                "view duplicate",
-            );
-        }
+        let mut document = minimal(kind);
+        document["meta"]["views"] = json!([
+            {"id":"view","label":"View A","focus":["a"]},
+            {"id":"view","label":"View B","focus":["b"]},
+        ]);
+        expect_error(&document, kind, "input/duplicate-id", "view duplicate");
     }
 }
 
 #[test]
 fn relation_endpoints_and_guided_view_focus_require_existing_entities() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        for kind in relational(contract) {
-            let (_, relations) = collections(kind);
-            for endpoint in ["from", "to"] {
-                let mut document = minimal(kind, contract);
-                document[relations][0][endpoint] = json!("missing");
-                expect_error(
-                    &document,
-                    kind,
-                    contract,
-                    "input/unknown-reference",
-                    endpoint,
-                );
-            }
-            let mut document = minimal(kind, contract);
-            document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
-            expect_error(
-                &document,
-                kind,
-                contract,
-                "input/unknown-reference",
-                "view focus",
-            );
+    for kind in relational() {
+        let (_, relations) = collections(kind);
+        for endpoint in ["from", "to"] {
+            let mut document = minimal(kind);
+            document[relations][0][endpoint] = json!("missing");
+            expect_error(&document, kind, "input/unknown-reference", endpoint);
         }
+        let mut document = minimal(kind);
+        document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
+        expect_error(&document, kind, "input/unknown-reference", "view focus");
     }
 }
 
 #[test]
 fn boundary_lane_group_and_stage_references_are_validated_in_their_own_collections() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        let mut document = minimal(DiagramType::Architecture, contract);
-        document["boundaries"] = json!([{"kind":"region","label":"Region","wraps":["missing"]}]);
-        expect_error(
-            &document,
-            DiagramType::Architecture,
-            contract,
-            "input/unknown-reference",
-            "boundary wraps",
-        );
+    let mut document = minimal(DiagramType::Architecture);
+    document["boundaries"] = json!([{"kind":"region","label":"Region","wraps":["missing"]}]);
+    expect_error(
+        &document,
+        DiagramType::Architecture,
+        "input/unknown-reference",
+        "boundary wraps",
+    );
 
-        let mut document = minimal(DiagramType::Workflow, contract);
-        document["nodes"][0]["lane"] = json!("missing");
+    let mut document = minimal(DiagramType::Workflow);
+    document["nodes"][0]["lane"] = json!("missing");
+    expect_error(
+        &document,
+        DiagramType::Workflow,
+        "input/unknown-reference",
+        "node lane",
+    );
+    let mut document = minimal(DiagramType::Workflow);
+    document["groups"] =
+        json!([{"id":"group","label":"Group","lane":"missing","fromCol":0,"toCol":1}]);
+    expect_error(
+        &document,
+        DiagramType::Workflow,
+        "input/unknown-reference",
+        "group lane",
+    );
+
+    for collection in ["lanes", "phases", "groups"] {
+        let mut document = minimal(DiagramType::Workflow);
+        document[collection] = match collection {
+            "lanes" => json!([{"id":"work","label":"Work"}]),
+            "phases" => json!([{"id":"phase","label":"Phase","fromCol":0,"toCol":1}]),
+            _ => json!([{"id":"group","label":"Group","lane":"work","fromCol":0,"toCol":1}]),
+        };
+        let duplicate = document[collection][0].clone();
+        document[collection].as_array_mut().unwrap().push(duplicate);
         expect_error(
             &document,
             DiagramType::Workflow,
-            contract,
-            "input/unknown-reference",
-            "node lane",
-        );
-        let mut document = minimal(DiagramType::Workflow, contract);
-        document["groups"] =
-            json!([{"id":"group","label":"Group","lane":"missing","fromCol":0,"toCol":1}]);
-        expect_error(
-            &document,
-            DiagramType::Workflow,
-            contract,
-            "input/unknown-reference",
-            "group lane",
-        );
-
-        for collection in ["lanes", "phases", "groups"] {
-            let mut document = minimal(DiagramType::Workflow, contract);
-            document[collection] = match collection {
-                "lanes" => json!([{"id":"work","label":"Work"}]),
-                "phases" => json!([{"id":"phase","label":"Phase","fromCol":0,"toCol":1}]),
-                _ => json!([{"id":"group","label":"Group","lane":"work","fromCol":0,"toCol":1}]),
-            };
-            let duplicate = document[collection][0].clone();
-            document[collection].as_array_mut().unwrap().push(duplicate);
-            expect_error(
-                &document,
-                DiagramType::Workflow,
-                contract,
-                "input/duplicate-id",
-                collection,
-            );
-        }
-
-        let mut document = minimal(DiagramType::Dataflow, contract);
-        document["nodes"][0]["stage"] = json!(2);
-        expect_error(
-            &document,
-            DiagramType::Dataflow,
-            contract,
-            "input/unknown-reference",
-            "out of bounds stage index",
+            "input/duplicate-id",
+            collection,
         );
     }
-    let mut document = minimal(DiagramType::Lifecycle, "legacy-2.17");
-    document["states"][0]["lane"] = json!("missing");
+
+    let mut document = minimal(DiagramType::Dataflow);
+    document["nodes"][0]["stage"] = json!(2);
     expect_error(
         &document,
-        DiagramType::Lifecycle,
-        "legacy-2.17",
+        DiagramType::Dataflow,
         "input/unknown-reference",
-        "legacy state lane",
-    );
-    let mut document = minimal(DiagramType::Lifecycle, "legacy-2.17");
-    document["lanes"]
-        .as_array_mut()
-        .unwrap()
-        .push(json!({"id":"main","label":"Duplicate lane"}));
-    expect_error(
-        &document,
-        DiagramType::Lifecycle,
-        "legacy-2.17",
-        "input/duplicate-id",
-        "legacy lane duplicate",
+        "out of bounds stage index",
     );
 }
 
 #[test]
 fn main_paths_require_existing_unique_entities_and_real_edges_in_authored_order() {
-    for (kind, contract) in [
-        (DiagramType::Workflow, "legacy-2.17"),
-        (DiagramType::Workflow, "phoenix-v1"),
-        (DiagramType::Lifecycle, "phoenix-v1"),
-    ] {
-        let mut document = minimal(kind, contract);
+    for kind in [DiagramType::Workflow, DiagramType::Lifecycle] {
+        let mut document = minimal(kind);
         document["mainPath"] = json!(["a", "missing"]);
         expect_error(
             &document,
             kind,
-            contract,
             "input/unknown-reference",
             "main path unknown entity",
         );
         for path in [json!(["a", "a"]), json!(["b", "a"])] {
-            let mut document = minimal(kind, contract);
+            let mut document = minimal(kind);
             document["mainPath"] = path;
             expect_error(
                 &document,
                 kind,
-                contract,
                 "input/main-path",
                 "duplicate or reversed main path",
             );
         }
-        let mut document = minimal(kind, contract);
+        let mut document = minimal(kind);
         document[collections(kind).1] = json!([]);
-        expect_error(
-            &document,
-            kind,
-            contract,
-            "input/main-path",
-            "main path missing edge",
-        );
+        expect_error(&document, kind, "input/main-path", "main path missing edge");
     }
 }
 
 #[test]
 fn workflow_semantic_assertions_reject_unknown_entities_before_layout() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        for assertions in [
-            json!({"allowedRoots":["missing"]}),
-            json!({"allowedTerminals":["missing"]}),
-            json!({"requiredEdges":[{"from":"missing","to":"b"}]}),
-            json!({"requiredEdges":[{"from":"a","to":"missing"}]}),
-            json!({"requiredPaths":[{"from":"missing","to":"b"}]}),
-            json!({"requiredPaths":[{"from":"a","to":"missing"}]}),
-        ] {
-            let mut document = minimal(DiagramType::Workflow, contract);
-            document["semanticChecks"] = assertions;
-            expect_error(
-                &document,
-                DiagramType::Workflow,
-                contract,
-                "input/unknown-reference",
-                "semantic assertion",
-            );
-        }
+    for assertions in [
+        json!({"allowedRoots":["missing"]}),
+        json!({"allowedTerminals":["missing"]}),
+        json!({"requiredEdges":[{"from":"missing","to":"b"}]}),
+        json!({"requiredEdges":[{"from":"a","to":"missing"}]}),
+        json!({"requiredPaths":[{"from":"missing","to":"b"}]}),
+        json!({"requiredPaths":[{"from":"a","to":"missing"}]}),
+    ] {
+        let mut document = minimal(DiagramType::Workflow);
+        document["semanticChecks"] = assertions;
+        expect_error(
+            &document,
+            DiagramType::Workflow,
+            "input/unknown-reference",
+            "semantic assertion",
+        );
     }
 }
 
 #[test]
 fn workflow_semantic_contracts_distinguish_direct_edges_reachable_paths_roots_and_terminals() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        let mut document = minimal(DiagramType::Workflow, contract);
-        document["nodes"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({"id":"c","lane":"work","col":2,"type":"database","label":"C"}));
-        document["edges"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({"from":"b","to":"c"}));
-        document["semanticChecks"] = json!({
-            "allowedRoots": ["a"],
-            "allowedTerminals": ["c"],
-            "requiredEdges": [{"from":"a","to":"b"}],
-            "requiredPaths": [{"from":"a","to":"c"}],
-        });
-        parse_input(
-            &serde_json::to_vec(&document).unwrap(),
+    let mut document = minimal(DiagramType::Workflow);
+    document["nodes"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"id":"c","lane":"work","col":2,"type":"database","label":"C"}));
+    document["edges"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"from":"b","to":"c"}));
+    document["semanticChecks"] = json!({
+        "allowedRoots": ["a"],
+        "allowedTerminals": ["c"],
+        "requiredEdges": [{"from":"a","to":"b"}],
+        "requiredPaths": [{"from":"a","to":"c"}],
+    });
+    parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Workflow,
+        &options(),
+    )
+    .unwrap();
+    for assertions in [
+        json!({"allowedRoots":[]}),
+        json!({"allowedRoots":["b"]}),
+        json!({"allowedTerminals":[]}),
+        json!({"allowedTerminals":["a"]}),
+        json!({"requiredEdges":[{"from":"a","to":"c"}]}),
+        json!({"requiredPaths":[{"from":"c","to":"a"}]}),
+    ] {
+        let mut invalid = document.clone();
+        invalid["semanticChecks"] = assertions;
+        expect_error(
+            &invalid,
             DiagramType::Workflow,
-            &options(contract),
-        )
-        .unwrap();
-        for assertions in [
-            json!({"allowedRoots":[]}),
-            json!({"allowedRoots":["b"]}),
-            json!({"allowedTerminals":[]}),
-            json!({"allowedTerminals":["a"]}),
-            json!({"requiredEdges":[{"from":"a","to":"c"}]}),
-            json!({"requiredPaths":[{"from":"c","to":"a"}]}),
-        ] {
-            let mut invalid = document.clone();
-            invalid["semanticChecks"] = assertions;
-            expect_error(
-                &invalid,
-                DiagramType::Workflow,
-                contract,
-                "input/semantic-contract",
-                "workflow semantic contract",
-            );
-        }
+            "input/semantic-contract",
+            "workflow semantic contract",
+        );
     }
 }
 
 #[test]
 fn sequence_activation_participants_and_nonempty_ranges_are_validated() {
-    for contract in ["legacy-2.17", "phoenix-v1"] {
-        let mut document = minimal(DiagramType::Sequence, contract);
-        document["activations"] = json!([{"participant":"missing","from":160,"to":200}]);
-        expect_error(
-            &document,
-            DiagramType::Sequence,
-            contract,
-            "input/unknown-reference",
-            "activation participant",
-        );
-        for end in [160, 159] {
-            for collection in ["activations", "segments"] {
-                let mut document = minimal(DiagramType::Sequence, contract);
-                document[collection] = if collection == "activations" {
-                    json!([{"participant":"a","from":160,"to":end}])
-                } else {
-                    json!([{"label":"Phase","from":160,"to":end}])
-                };
-                expect_error(
-                    &document,
-                    DiagramType::Sequence,
-                    contract,
-                    "input/range",
-                    collection,
-                );
-            }
-        }
-        for collection in ["phases", "groups"] {
-            let mut document = minimal(DiagramType::Workflow, contract);
-            document[collection] = if collection == "phases" {
-                json!([{"id":"phase","label":"Phase","fromCol":1,"toCol":0}])
+    let mut document = minimal(DiagramType::Sequence);
+    document["activations"] = json!([{"participant":"missing","from":160,"to":200}]);
+    expect_error(
+        &document,
+        DiagramType::Sequence,
+        "input/unknown-reference",
+        "activation participant",
+    );
+    for end in [160, 159] {
+        for collection in ["activations", "segments"] {
+            let mut document = minimal(DiagramType::Sequence);
+            document[collection] = if collection == "activations" {
+                json!([{"participant":"a","from":160,"to":end}])
             } else {
-                json!([{"id":"group","label":"Group","lane":"work","fromCol":1,"toCol":0}])
+                json!([{"label":"Phase","from":160,"to":end}])
             };
-            expect_error(
-                &document,
-                DiagramType::Workflow,
-                contract,
-                "input/range",
-                collection,
-            );
+            expect_error(&document, DiagramType::Sequence, "input/range", collection);
         }
+    }
+    for collection in ["phases", "groups"] {
+        let mut document = minimal(DiagramType::Workflow);
+        document[collection] = if collection == "phases" {
+            json!([{"id":"phase","label":"Phase","fromCol":1,"toCol":0}])
+        } else {
+            json!([{"id":"group","label":"Group","lane":"work","fromCol":1,"toCol":0}])
+        };
+        expect_error(&document, DiagramType::Workflow, "input/range", collection);
     }
 }
 
@@ -728,49 +600,9 @@ fn accepts(document: &Value, kind: DiagramType) {
 }
 
 #[test]
-fn new_types_default_to_phoenix_v1_and_have_no_legacy_contract() {
-    for kind in kinds("phoenix-v1").filter(|kind| !kind.has_legacy_contract()) {
-        let document = minimal(kind, "phoenix-v1");
-        let parsed = parse_input(
-            &serde_json::to_vec(&document).unwrap(),
-            kind,
-            &CompileOptions::default(),
-        )
-        .unwrap();
-        assert_eq!(parsed.input_contract, InputContract::PhoenixV1);
-        let mut marked = document.clone();
-        marked["meta"]["input_contract"] = json!("legacy-2.17");
-        expect_at(
-            &marked,
-            kind,
-            "input/contract-unsupported",
-            "/meta/input_contract",
-        );
-        let diagnostics = parse_input(
-            &serde_json::to_vec(&document).unwrap(),
-            kind,
-            &CompileOptions {
-                input_contract: Some(InputContract::Legacy217),
-                ..Default::default()
-            },
-        )
-        .unwrap_err();
-        assert_eq!(diagnostics[0].code, "input/contract-unsupported");
-    }
-    // The original five keep their unmarked legacy reading.
-    let parsed = parse_input(
-        &serde_json::to_vec(&minimal(DiagramType::Sequence, "legacy-2.17")).unwrap(),
-        DiagramType::Sequence,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    assert_eq!(parsed.input_contract, InputContract::Legacy217);
-}
-
-#[test]
 fn erd_attributes_references_relationships_and_grid_cells_are_checked() {
     let kind = DiagramType::Erd;
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["entities"][0]["attributes"]
         .as_array_mut()
         .unwrap()
@@ -782,24 +614,24 @@ fn erd_attributes_references_relationships_and_grid_cells_are_checked() {
         "/entities/0/attributes/1/name",
     );
     for references in ["missing.id", "a.missing"] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["entities"][1]["attributes"][0]["references"] = json!(references);
         let path = "/entities/1/attributes/0/references";
         expect_at(&document, kind, "input/unknown-reference", path);
     }
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["relationships"][0]["to"] = json!("a");
     expect_at(&document, kind, "erd/self-relationship", "/relationships/0");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["entities"][1]["col"] = json!(0);
     expect_at(&document, kind, "erd/grid-cell-conflict", "/entities/1");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["entities"][1]
         .as_object_mut()
         .unwrap()
         .remove("row");
     expect_at(&document, kind, "erd/grid-placement", "/entities/1");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     for entity in document["entities"].as_array_mut().unwrap() {
         entity.as_object_mut().unwrap().remove("row");
         entity.as_object_mut().unwrap().remove("col");
@@ -808,7 +640,7 @@ fn erd_attributes_references_relationships_and_grid_cells_are_checked() {
     document["entities"][0]["pos"] = json!([40, 40]);
     document["entities"][1]["pos"] = json!([400, 40]);
     accepts(&document, kind);
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["entities"][1]["attributes"][0]
         .as_object_mut()
         .unwrap()
@@ -819,7 +651,7 @@ fn erd_attributes_references_relationships_and_grid_cells_are_checked() {
 #[test]
 fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
     let kind = DiagramType::Class;
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["types"][1]["attributes"]
         .as_array_mut()
         .unwrap()
@@ -830,7 +662,7 @@ fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
         "class/duplicate-attribute",
         "/types/1/attributes/1/name",
     );
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["types"][0]["kind"] = json!("class");
     expect_at(
         &document,
@@ -838,7 +670,7 @@ fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
         "class/realization-target",
         "/relationships/0",
     );
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["relationships"][0]["kind"] = json!("inheritance");
     expect_at(
         &document,
@@ -846,20 +678,20 @@ fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
         "class/inheritance-kind",
         "/relationships/0",
     );
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["types"][0]["kind"] = json!("class");
     document["relationships"] = json!([
         {"from":"b","to":"a","kind":"inheritance"},
         {"from":"a","to":"b","kind":"inheritance"},
     ]);
     expect_at(&document, kind, "class/inheritance-cycle", "/relationships");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["types"][1]["row"] = json!(0);
     expect_at(&document, kind, "class/grid-cell-conflict", "/types/1");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["types"][1].as_object_mut().unwrap().remove("row");
     expect_at(&document, kind, "class/grid-placement", "/types/1");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["relationships"][0]["to"] = json!("b");
     expect_at(
         &document,
@@ -872,23 +704,23 @@ fn class_kinds_generalization_cycles_and_half_column_cells_are_checked() {
 #[test]
 fn tree_hierarchy_has_one_root_declared_parents_and_no_cycle() {
     let kind = DiagramType::Tree;
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["nodes"][1]["id"] = json!("a");
     expect_at(&document, kind, "tree/duplicate-id", "/nodes/1/id");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["nodes"][1]["parent"] = json!("missing");
     expect_at(&document, kind, "tree/missing-parent", "/nodes/1/parent");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["nodes"][1]
         .as_object_mut()
         .unwrap()
         .remove("parent");
     expect_at(&document, kind, "tree/root-count", "/nodes");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["nodes"][0]["parent"] = json!("b");
     expect_at(&document, kind, "tree/root-count", "/nodes");
     expect_at(&document, kind, "tree/cycle", "/nodes/0/parent");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
     expect_at(
         &document,
@@ -919,7 +751,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         "SystemV/PST8PDT",
         "SystemV/YST9YDT",
     ] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["meta"]["timezone"] = json!(zone);
         accepts(&document, kind);
     }
@@ -934,7 +766,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         " UTC",
         "SystemV/AST4EDT",
     ] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["meta"]["timezone"] = json!(zone);
         expect_at(
             &document,
@@ -950,7 +782,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         "2026-01-01T10:00+24:00",
         "2026-13-01T10:00Z",
     ] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["events"][0]["at"] = json!(at);
         expect_at(
             &document,
@@ -965,20 +797,20 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         "0000-01-01T00:00Z",
         "2026-01-01T10:00+23:59",
     ] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["events"][0]["at"] = json!(at);
         accepts(&document, kind);
     }
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["lanes"]
         .as_array_mut()
         .unwrap()
         .push(json!({"id":"ops","label":"Again"}));
     expect_at(&document, kind, "timeline/duplicate-lane-id", "/lanes/1/id");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["events"][1]["id"] = json!("a");
     expect_at(&document, kind, "timeline/duplicate-id", "/events/1/id");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["events"][1]
         .as_object_mut()
         .unwrap()
@@ -990,7 +822,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
         ("2026-01-01T12:00:01Z", false),
         ("2026-01-01T10:00Z", false),
     ] {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         document["events"][0]["at"] = json!(at);
         document["events"][0]["precision"] = json!("day");
         if valid {
@@ -1004,7 +836,7 @@ fn timeline_zones_timestamps_lanes_and_day_precision_follow_the_frozen_clock() {
             );
         }
     }
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["events"][0]["precision"] = json!("hour");
     expect_at(&document, kind, "input/schema", "/events/0/precision");
 }
@@ -1046,22 +878,22 @@ fn waterfall_spans_need_recorded_consistent_timing_and_acyclic_parents() {
         ),
     ];
     for (pointer, value, code, path) in mutations {
-        let mut document = minimal(kind, "phoenix-v1");
+        let mut document = minimal(kind);
         let (parent, key) = pointer.rsplit_once('/').unwrap();
         document.pointer_mut(parent).unwrap()[key] = value;
         expect_at(&document, kind, code, path);
     }
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["spans"][0]["start"] = json!(20);
     expect_at(&document, kind, "waterfall/invalid-timing", "/spans/0");
-    let mut document = minimal(kind, "phoenix-v1");
+    let mut document = minimal(kind);
     document["spans"][1]["end"] = json!(5);
     accepts(&document, kind);
 }
 
 #[test]
 fn final_dispositions_keep_repository_evidence_supported() {
-    let mut document = minimal(DiagramType::Architecture, "phoenix-v1");
+    let mut document = minimal(DiagramType::Architecture);
     document["meta"]["input_contract"] = json!("phoenix-v1");
     document["components"][0]["brand"] = json!("example");
     document["components"][0]["sources"] = json!([{"path":"src/main.rs","line":1}]);
@@ -1086,19 +918,6 @@ fn final_dispositions_keep_repository_evidence_supported() {
             ("/meta/views", "unsupported-display"),
             ("/components/0/brand", "supported")
         ]
-    );
-    let mut legacy = minimal(DiagramType::Sequence, "legacy-2.17");
-    legacy["meta"]["animation"] = json!("trace");
-    let input = parse_input(
-        &serde_json::to_vec(&legacy).unwrap(),
-        DiagramType::Sequence,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    assert_eq!(input.compatibility.dispositions[0].path, "/meta/animation");
-    assert_eq!(
-        input.compatibility.dispositions[0].disposition,
-        "ignored-display"
     );
     assert!(input.compatibility.deferred_fields.is_empty());
 }

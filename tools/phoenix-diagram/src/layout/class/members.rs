@@ -1,4 +1,4 @@
-// Member signatures and their wrapping, ported from the frozen render-class.mjs.
+// Member signatures and their wrapping, derived from Archify render-class.mjs (MIT).
 // A member longer than its box wraps instead of being cut.
 use crate::geometry::text::is_js_whitespace;
 use crate::geometry::text_units;

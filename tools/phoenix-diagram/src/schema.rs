@@ -1,31 +1,8 @@
-use crate::input::{DiagramType, InputContract};
+use crate::input::DiagramType;
 use jsonschema::{Registry, Validator};
 use serde_json::Value;
 use std::sync::OnceLock;
 
-const LEGACY_COMMON: &str = include_str!("../upstream/legacy-2.17/schemas/common.schema.json");
-const LEGACY: [(DiagramType, &str); 5] = [
-    (
-        DiagramType::Architecture,
-        include_str!("../upstream/legacy-2.17/schemas/architecture.schema.json"),
-    ),
-    (
-        DiagramType::Workflow,
-        include_str!("../upstream/legacy-2.17/schemas/workflow.schema.json"),
-    ),
-    (
-        DiagramType::Sequence,
-        include_str!("../upstream/legacy-2.17/schemas/sequence.schema.json"),
-    ),
-    (
-        DiagramType::Dataflow,
-        include_str!("../upstream/legacy-2.17/schemas/dataflow.schema.json"),
-    ),
-    (
-        DiagramType::Lifecycle,
-        include_str!("../upstream/legacy-2.17/schemas/lifecycle.schema.json"),
-    ),
-];
 const PHOENIX_COMMON: &str =
     include_str!("../../../skills/phoenix-diagram/schemas/common.schema.json");
 const PHOENIX: [(DiagramType, &str); 10] = [
@@ -71,36 +48,26 @@ const PHOENIX: [(DiagramType, &str); 10] = [
     ),
 ];
 
-fn sources(contract: InputContract) -> (&'static str, &'static [(DiagramType, &'static str)]) {
-    match contract {
-        InputContract::Legacy217 => (LEGACY_COMMON, &LEGACY),
-        InputContract::PhoenixV1 => (PHOENIX_COMMON, &PHOENIX),
-    }
-}
-
 // The common schema comes first; each type schema follows in table order.
-fn schemas(contract: InputContract) -> Result<Vec<Value>, String> {
-    let (common, types) = sources(contract);
-    let mut schemas: Vec<Value> = std::iter::once(common)
-        .chain(types.iter().map(|(_, bytes)| *bytes))
+fn schemas() -> Result<Vec<Value>, String> {
+    let mut schemas: Vec<Value> = std::iter::once(PHOENIX_COMMON)
+        .chain(PHOENIX.iter().map(|(_, bytes)| *bytes))
         .map(|bytes| serde_json::from_str(bytes).map_err(|error| error.to_string()))
         .collect::<Result<_, _>>()?;
-    if contract == InputContract::PhoenixV1 {
-        let pattern = schemas[0]
-            .pointer_mut("/$defs/portableOutputPath/allOf/2/not/pattern")
-            .ok_or("Missing the frozen portableOutputPath surrogate constraint")?;
-        if pattern != r"[\uD800-\uDFFF]" {
-            return Err("The frozen surrogate constraint changed".into());
-        }
-        // serde_json strings contain Unicode scalars: unpaired surrogates cannot
-        // reach schema validation. Preserve every other path constraint.
-        *pattern = Value::String("(?!)".into());
+    let pattern = schemas[0]
+        .pointer_mut("/$defs/portableOutputPath/allOf/2/not/pattern")
+        .ok_or("Missing the portableOutputPath surrogate constraint")?;
+    if pattern != r"[\uD800-\uDFFF]" {
+        return Err("The portableOutputPath surrogate constraint changed".into());
     }
+    // serde_json strings contain Unicode scalars: unpaired surrogates cannot
+    // reach schema validation. Preserve every other path constraint.
+    *pattern = Value::String("(?!)".into());
     Ok(schemas)
 }
 
-fn build(contract: InputContract) -> Result<Vec<Validator>, String> {
-    let schemas = schemas(contract)?;
+fn build() -> Result<Vec<Validator>, String> {
+    let schemas = schemas()?;
     let mut registry = Registry::new();
     for schema in &schemas {
         registry = registry
@@ -123,25 +90,16 @@ fn build(contract: InputContract) -> Result<Vec<Validator>, String> {
         .collect()
 }
 
-pub(crate) fn validator(
-    kind: DiagramType,
-    contract: InputContract,
-) -> Result<&'static Validator, &'static str> {
-    static LEGACY_VALIDATORS: OnceLock<Result<Vec<Validator>, String>> = OnceLock::new();
-    static PHOENIX_VALIDATORS: OnceLock<Result<Vec<Validator>, String>> = OnceLock::new();
-    let cache = match contract {
-        InputContract::Legacy217 => &LEGACY_VALIDATORS,
-        InputContract::PhoenixV1 => &PHOENIX_VALIDATORS,
-    };
-    let validators = cache
-        .get_or_init(|| build(contract))
+pub(crate) fn validator(kind: DiagramType) -> Result<&'static Validator, &'static str> {
+    static VALIDATORS: OnceLock<Result<Vec<Validator>, String>> = OnceLock::new();
+    let validators = VALIDATORS
+        .get_or_init(build)
         .as_ref()
         .map_err(String::as_str)?;
-    let index = sources(contract)
-        .1
+    let index = PHOENIX
         .iter()
         .position(|(value, _)| *value == kind)
-        .ok_or("The input contract has no schema for this diagram type")?;
+        .ok_or("No schema for this diagram type")?;
     Ok(&validators[index])
 }
 
@@ -163,7 +121,7 @@ mod tests {
     #[test]
     fn adaptation_changes_only_the_exact_surrogate_pattern() {
         let original: Value = serde_json::from_str(PHOENIX_COMMON).unwrap();
-        let mut adapted = schemas(InputContract::PhoenixV1).unwrap().remove(0);
+        let mut adapted = schemas().unwrap().remove(0);
         *adapted
             .pointer_mut("/$defs/portableOutputPath/allOf/2/not/pattern")
             .unwrap() = original

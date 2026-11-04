@@ -240,8 +240,7 @@ pub(super) fn spread_ports(context: &mut Context<'_>) {
         } else {
             node.bounds.width
         };
-        let spacing = (if context.legacy() { 14.0_f64 } else { 18.0_f64 })
-            .min((extent - 32.0).max(0.0) / (items.len() - 1) as f64);
+        let spacing = 18.0_f64.min((extent - 32.0).max(0.0) / (items.len() - 1) as f64);
         if spacing <= 0.0 {
             continue;
         }
@@ -420,93 +419,84 @@ fn route_via(context: &Context<'_>, index: usize, start: Point, end: Point) -> V
             vec![p(x, start.y), p(x, end.y)]
         }
         _ => {
-            if !context.legacy() {
-                let from_vertical = matches!(flow.sides.0.as_str(), "top" | "bottom");
-                let to_vertical = matches!(flow.sides.1.as_str(), "top" | "bottom");
-                let across = if from_vertical && to_vertical {
-                    (start.x - end.x).abs()
-                } else {
-                    (start.y - end.y).abs()
-                };
-                if context.automatic_showcase && across > geometry::EPSILON && across < 16.0 {
-                    if let Some(points) =
-                        bridges(start, end, &flow.sides, 24.0)
-                            .into_iter()
-                            .find(|points| {
-                                !context.nodes.iter().enumerate().any(|(node_index, node)| {
-                                    node_index != flow.from
-                                        && node_index != flow.to
-                                        && points.windows(2).any(|pair| {
-                                            geometry::segment_intersects_rect(
-                                                pair[0],
-                                                pair[1],
-                                                &node.bounds,
-                                                2.0,
-                                            )
-                                        })
-                                })
+            let from_vertical = matches!(flow.sides.0.as_str(), "top" | "bottom");
+            let to_vertical = matches!(flow.sides.1.as_str(), "top" | "bottom");
+            let across = if from_vertical && to_vertical {
+                (start.x - end.x).abs()
+            } else {
+                (start.y - end.y).abs()
+            };
+            if context.automatic_showcase && across > geometry::EPSILON && across < 16.0 {
+                if let Some(points) =
+                    bridges(start, end, &flow.sides, 24.0)
+                        .into_iter()
+                        .find(|points| {
+                            !context.nodes.iter().enumerate().any(|(node_index, node)| {
+                                node_index != flow.from
+                                    && node_index != flow.to
+                                    && points.windows(2).any(|pair| {
+                                        geometry::segment_intersects_rect(
+                                            pair[0],
+                                            pair[1],
+                                            &node.bounds,
+                                            2.0,
+                                        )
+                                    })
                             })
-                    {
-                        return points[1..points.len() - 1].to_vec();
+                        })
+                {
+                    return points[1..points.len() - 1].to_vec();
+                }
+            }
+            if from_vertical != to_vertical {
+                let a = outward(start, &flow.sides.0, 24.0);
+                let b = outward(end, &flow.sides.1, 24.0);
+                for via in [
+                    vec![if from_vertical {
+                        p(start.x, end.y)
+                    } else {
+                        p(end.x, start.y)
+                    }],
+                    vec![a, p(a.x, b.y), b],
+                    vec![a, p(b.x, a.y), b],
+                ] {
+                    let mut points = vec![start];
+                    points.extend_from_slice(&via);
+                    points.push(end);
+                    let points = geometry::normalize_route_points(&points);
+                    if sides_ok(&points, &flow.sides) && !context.intrudes(index, &points) {
+                        return via;
                     }
                 }
-                if from_vertical != to_vertical {
-                    let a = outward(start, &flow.sides.0, 24.0);
-                    let b = outward(end, &flow.sides.1, 24.0);
-                    for via in [
-                        vec![if from_vertical {
-                            p(start.x, end.y)
-                        } else {
-                            p(end.x, start.y)
-                        }],
-                        vec![a, p(a.x, b.y), b],
-                        vec![a, p(b.x, a.y), b],
-                    ] {
-                        let mut points = vec![start];
-                        points.extend_from_slice(&via);
-                        points.push(end);
-                        let points = geometry::normalize_route_points(&points);
-                        if sides_ok(&points, &flow.sides) && !context.intrudes(index, &points) {
-                            return via;
-                        }
-                    }
+            }
+            if context.automatic_showcase && from_vertical && to_vertical {
+                if (start.x - end.x).abs() < geometry::EPSILON {
+                    return Vec::new();
                 }
-                if context.automatic_showcase && from_vertical && to_vertical {
-                    if (start.x - end.x).abs() < geometry::EPSILON {
-                        return Vec::new();
-                    }
-                    let y = (start.y + end.y) / 2.0;
-                    return vec![p(start.x, y), p(end.x, y)];
-                }
+                let y = (start.y + end.y) / 2.0;
+                return vec![p(start.x, y), p(end.x, y)];
             }
             if (start.y - end.y).abs() < 4.0 {
                 return Vec::new();
             }
             let middle = start.x + (end.x - start.x) / 2.0;
             let mut turn = middle;
-            if !context.legacy() {
-                let mut gaps: Vec<_> = (0..list(&context.input.document["stages"]).len() - 1)
-                    .map(|index| (measure::stage_x(index) + measure::stage_x(index + 1)) / 2.0)
-                    .filter(|x| *x > start.x.min(end.x) && *x < start.x.max(end.x))
-                    .collect();
-                gaps.sort_by(|a, b| (a - middle).abs().total_cmp(&(b - middle).abs()));
-                for x in std::iter::once(middle).chain(gaps) {
-                    let points = [start, p(x, start.y), p(x, end.y), end];
-                    if !context.nodes.iter().enumerate().any(|(node_index, node)| {
-                        node_index != flow.from
-                            && node_index != flow.to
-                            && points.windows(2).any(|pair| {
-                                geometry::segment_intersects_rect(
-                                    pair[0],
-                                    pair[1],
-                                    &node.bounds,
-                                    2.0,
-                                )
-                            })
-                    }) {
-                        turn = x;
-                        break;
-                    }
+            let mut gaps: Vec<_> = (0..list(&context.input.document["stages"]).len() - 1)
+                .map(|index| (measure::stage_x(index) + measure::stage_x(index + 1)) / 2.0)
+                .filter(|x| *x > start.x.min(end.x) && *x < start.x.max(end.x))
+                .collect();
+            gaps.sort_by(|a, b| (a - middle).abs().total_cmp(&(b - middle).abs()));
+            for x in std::iter::once(middle).chain(gaps) {
+                let points = [start, p(x, start.y), p(x, end.y), end];
+                if !context.nodes.iter().enumerate().any(|(node_index, node)| {
+                    node_index != flow.from
+                        && node_index != flow.to
+                        && points.windows(2).any(|pair| {
+                            geometry::segment_intersects_rect(pair[0], pair[1], &node.bounds, 2.0)
+                        })
+                }) {
+                    turn = x;
+                    break;
                 }
             }
             vec![p(turn, start.y), p(turn, end.y)]

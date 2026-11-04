@@ -96,9 +96,9 @@ fn inspect(html: &str, kind: DiagramType) -> diagnostic::Diagnostics {
     anchors::check_anchors(kind, svg, &nodes, &routes, &frames, &metadata)
 }
 
-fn compile(document: Value, kind: DiagramType, contract: InputContract) -> CompiledDiagram {
+fn compile(document: Value, kind: DiagramType) -> CompiledDiagram {
     let options = CompileOptions {
-        input_contract: Some(contract),
+        input_contract: Some(InputContract::PhoenixV1),
         ..Default::default()
     };
     let input =
@@ -138,27 +138,18 @@ fn example(kind: DiagramType) -> CompiledDiagram {
             include_str!("../../../skills/phoenix-diagram/examples/minimal.waterfall.json")
         }
     };
-    compile(
-        serde_json::from_str(raw).unwrap(),
-        kind,
-        InputContract::PhoenixV1,
-    )
+    compile(serde_json::from_str(raw).unwrap(), kind)
 }
-fn lifecycle(name: &str, contract: InputContract) -> CompiledDiagram {
+fn lifecycle(name: &str) -> CompiledDiagram {
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/lifecycle/oracle.json")).unwrap();
-    let contract_name = if contract == InputContract::PhoenixV1 {
-        "phoenix-v1"
-    } else {
-        "legacy-2.17"
-    };
     let case = oracle["cases"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|case| case["name"] == name && case["contract"] == contract_name)
+        .find(|case| case["name"] == name && case["contract"] == "phoenix-v1")
         .unwrap();
-    compile(case["document"].clone(), DiagramType::Lifecycle, contract)
+    compile(case["document"].clone(), DiagramType::Lifecycle)
 }
 fn html(scene: &CompiledDiagram) -> String {
     String::from_utf8(render(scene, &EmbeddedAssets { template: TEMPLATE }).unwrap()).unwrap()
@@ -364,7 +355,7 @@ fn lifecycle_frames_shared_buses_and_distinct_signatures_keep_source_semantics()
         "partially-overlapping-brackets-use-bus",
         "distinct-notes-stay-separate",
     ] {
-        let scene = lifecycle(name, InputContract::PhoenixV1);
+        let scene = lifecycle(name);
         let errors = inspect(&html(&scene), DiagramType::Lifecycle);
         assert!(errors.is_empty(), "{name}: {errors:?}");
     }
@@ -372,7 +363,7 @@ fn lifecycle_frames_shared_buses_and_distinct_signatures_keep_source_semantics()
 
 #[test]
 fn lifecycle_frame_exit_requires_real_frame_bounds_and_matching_raw_sources() {
-    let original = lifecycle("composite-frame-exit", InputContract::PhoenixV1);
+    let original = lifecycle("composite-frame-exit");
     let index = original
         .relations
         .iter()
@@ -396,64 +387,6 @@ fn lifecycle_frame_exit_requires_real_frame_bounds_and_matching_raw_sources() {
     let mut changed_signature = original;
     changed_signature.relations[index].authored.facts["note"] = json!("A separate meaning");
     assert_code(&changed_signature, "artifact/endpoint-binding");
-}
-
-#[test]
-fn legacy_lifecycle_authoritative_via_preserves_its_direction_exception() {
-    let mut scene = lifecycle("explicit-pins-and-float-columns", InputContract::Legacy217);
-    // The legacy source deliberately exempts via routes from its direction gate.
-    let index = scene
-        .relations
-        .iter()
-        .position(|relation| relation.authored.facts["via"].is_array())
-        .unwrap();
-    let relation = &mut scene.relations[index];
-    let end = *relation.points.last().unwrap();
-    relation.authored.facts["fromSide"] = json!("right");
-    let from = scene
-        .nodes
-        .iter()
-        .find(|node| node.authored.id == relation.from)
-        .unwrap()
-        .bounds;
-    let start = Point {
-        x: from.x + from.width,
-        y: from.y + from.height / 2.0,
-    };
-    relation.points = vec![
-        Point {
-            x: from.x + from.width,
-            y: start.y,
-        },
-        Point {
-            x: from.x + from.width,
-            y: start.y + 20.0,
-        },
-        Point {
-            x: end.x,
-            y: start.y + 20.0,
-        },
-        end,
-    ];
-    relation.authored.facts["via"] = json!(relation.points[1..3]
-        .iter()
-        .map(|point| [point.x, point.y])
-        .collect::<Vec<_>>());
-    let errors = inspect(&html(&scene), DiagramType::Lifecycle);
-    assert!(errors.is_empty(), "{errors:?}");
-}
-
-#[test]
-fn legacy_automatic_routes_preserve_the_channel_their_axis_branch_consumes() {
-    let mut scene = lifecycle("explicit-pins-and-float-columns", InputContract::Legacy217);
-    let relation = &mut scene.relations[1];
-    // Both selected sides are vertical and the endpoints differ on both axes:
-    // the frozen auto branch consumes channelY just as the drop preset does.
-    relation.authored.facts["route"] = json!("auto");
-    assert!(inspect(&html(&scene), DiagramType::Lifecycle).is_empty());
-    scene.relations[1].points[1].y += 15.0;
-    scene.relations[1].points[2].y += 15.0;
-    assert_code(&scene, "artifact/route-pin");
 }
 
 #[test]

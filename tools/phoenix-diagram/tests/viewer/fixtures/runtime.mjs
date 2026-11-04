@@ -1,5 +1,5 @@
 // Small deterministic DOM/media boundary fixture for actual Phoenix Reader JS.
-// Test cases are adapted from the frozen Archify 3.1.0 MIT browser tests;
+// Test cases are adapted from Archify 3.1.0 MIT browser tests;
 // no fake media bytes from this fixture are evidence of a real encoded file.
 import fs from 'node:fs';
 import vm from 'node:vm';

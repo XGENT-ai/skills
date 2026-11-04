@@ -1,5 +1,5 @@
 use super::*;
-use crate::geometry::rects_overlap_for_contract;
+use crate::geometry::rects_overlap;
 use crate::scene::{Container, Node, Sigil};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -45,25 +45,23 @@ fn node_height(node: &Value) -> f64 {
     )
 }
 
-fn automatic_width(input: &DiagramInput, node: &Value) -> f64 {
-    let label_width =
-        92.0_f64.max(((units(input, string(node, "label")) * 6.8 - 6.0) / 4.0).ceil() * 4.0);
+fn automatic_width(node: &Value) -> f64 {
+    let label_width = 92.0_f64.max(((units(string(node, "label")) * 6.8 - 6.0) / 4.0).ceil() * 4.0);
     let mut width = label_width;
     for (field, preferred) in [("sublabel", 8.0), ("tag", 7.0)] {
         let content = string(node, field);
-        if !content.is_empty() && units(input, content) * 6.0 * 0.6 > label_width - 8.0 {
-            width = width.max(((units(input, content) * preferred * 0.6 + 8.0) / 4.0).ceil() * 4.0);
+        if !content.is_empty() && units(content) * 6.0 * 0.6 > label_width - 8.0 {
+            width = width.max(((units(content) * preferred * 0.6 + 8.0) / 4.0).ceil() * 4.0);
         }
     }
     let width = width.min(200.0).max(label_width);
     if node.get("brand").is_some() {
-        width.max(units(input, string(node, "label")) * 11.0 * 0.6 + 8.0) + 48.0
+        width.max(units(string(node, "label")) * 11.0 * 0.6 + 8.0) + 48.0
     } else {
         width
     }
 }
 fn group_span(
-    input: &DiagramInput,
     group: &Value,
     columns: &[f64],
     nodes: &[Entry],
@@ -77,7 +75,7 @@ fn group_span(
     if !readable {
         return (start, end - start);
     }
-    let width = (end - start).max(units(input, string(group, "label")) * 5.6 + 20.0);
+    let width = (end - start).max(units(string(group, "label")) * 5.6 + 20.0);
     let mut left = if from == to && width > end - start {
         start
     } else {
@@ -110,13 +108,12 @@ pub(super) fn measure(
 ) -> Result<Measurement, Diagnostics> {
     let document = &input.document;
     let readable = number(document, "schema_version", 1.0) == 2.0;
-    let phoenix = input.input_contract == InputContract::PhoenixV1;
     let preserves = absolute(document);
     let mut widths = BTreeMap::new();
     for node in entries {
         let mut width = number(&node.value, "width", 92.0);
-        if phoenix && readable && !preserves && node.value.get("width").is_none() {
-            width = automatic_width(input, &node.value);
+        if readable && !preserves && node.value.get("width").is_none() {
+            width = automatic_width(&node.value);
             width = width.max(
                 width_overrides
                     .get(string(&node.value, "id"))
@@ -155,7 +152,7 @@ pub(super) fn measure(
                 {
                     continue;
                 }
-                let gap = if phoenix && !preserves { 32.0 } else { 8.0 };
+                let gap = if !preserves { 32.0 } else { 8.0 };
                 constraints.push((
                     lc.min(rc),
                     lc.max(rc),
@@ -188,7 +185,7 @@ pub(super) fn measure(
             }
             let label = string(&edge.value, "label");
             let labeled = if !label.is_empty() && edge.value.get("labelAt").is_none() {
-                28.0_f64.max(30.0_f64.max(units(input, label) * 4.8 + 10.0) + 8.0)
+                28.0_f64.max(30.0_f64.max(units(label) * 4.8 + 10.0) + 8.0)
             } else {
                 28.0
             };
@@ -213,7 +210,7 @@ pub(super) fn measure(
             for entry in collection {
                 let from = number(&entry.value, "fromCol", 0.0) as usize;
                 let to = number(&entry.value, "toCol", 0.0) as usize;
-                let minimum = units(input, string(&entry.value, "label")) * 5.6
+                let minimum = units(string(&entry.value, "label")) * 5.6
                     + if offset == 92.0 { 8.0 } else { 20.0 };
                 if from == to {
                     if to < 5 {
@@ -269,10 +266,10 @@ pub(super) fn measure(
                     format!("{:02}", index + 1)
                 };
                 let right = 54.0
-                    + units(
-                        input,
-                        &format!("{prefix} / {}", string(&lanes[index].value, "label")),
-                    ) * 6.2;
+                    + units(&format!(
+                        "{prefix} / {}",
+                        string(&lanes[index].value, "label")
+                    )) * 6.2;
                 header_shift = header_shift
                     .max(right + 2.0 - columns[number(&node.value, "col", 0.0) as usize]);
             }
@@ -298,14 +295,14 @@ pub(super) fn measure(
                 / 2.0;
             shift = shift.max(
                 16.0 - center
-                    + 30.0_f64.max(units(input, string(&edge.value, "label")) * 4.8 + 10.0) / 2.0,
+                    + 30.0_f64.max(units(string(&edge.value, "label")) * 4.8 + 10.0) / 2.0,
             );
         }
         for phase in phases {
             let from = number(&phase.value, "fromCol", 0.0) as usize;
             let to = number(&phase.value, "toCol", 0.0) as usize;
             let width = (columns[to] - columns[from] + 92.0)
-                .max(units(input, string(&phase.value, "label")) * 5.6 + 8.0);
+                .max(units(string(&phase.value, "label")) * 5.6 + 8.0);
             let left = if from == to {
                 columns[from] - 46.0
             } else {
@@ -314,8 +311,7 @@ pub(super) fn measure(
             shift = shift.max(16.0 - left);
         }
         for group in groups {
-            shift = shift
-                .max(44.0 - group_span(input, &group.value, &columns, entries, &widths, true).0);
+            shift = shift.max(44.0 - group_span(&group.value, &columns, entries, &widths, true).0);
         }
         for column in &mut columns {
             *column += shift;
@@ -331,16 +327,17 @@ pub(super) fn measure(
             );
         }
         for group in groups {
-            let (left, width) = group_span(input, &group.value, &columns, entries, &widths, true);
+            let (left, width) = group_span(&group.value, &columns, entries, &widths, true);
             right = right.max(left + width);
         }
         lane_width = lane_width.max((right - 32.0).ceil());
         for (index, lane) in lanes.iter().enumerate() {
             lane_width = lane_width.max(
-                (units(
-                    input,
-                    &format!("{:02} / {}", index + 1, string(&lane.value, "label")),
-                ) * 6.2
+                (units(&format!(
+                    "{:02} / {}",
+                    index + 1,
+                    string(&lane.value, "label")
+                )) * 6.2
                     + 30.0)
                     .ceil(),
             );
@@ -361,8 +358,7 @@ pub(super) fn measure(
                 && number(&a.value, "yOffset", 0.0) != number(&b.value, "yOffset", 0.0)
         })
     });
-    let independent = phoenix
-        && stack
+    let independent = stack
         && document.pointer("/meta/viewBox").is_none()
         && !array(document, "edges").iter().any(|edge| {
             ["via", "labelAt", "channelX", "channelY"]
@@ -393,9 +389,9 @@ pub(super) fn measure(
                 .iter()
                 .filter(|group| group.value["lane"] == lane.value["id"])
             {
-                let (left, _) = group_span(input, &group.value, &columns, entries, &widths, true);
+                let (left, _) = group_span(&group.value, &columns, entries, &widths, true);
                 let label_left = left + 10.0;
-                let label_right = label_left + units(input, string(&group.value, "label")) * 5.6;
+                let label_right = label_left + units(string(&group.value, "label")) * 5.6;
                 for node in entries.iter().filter(|node| {
                     node.value["lane"] == group.value["lane"]
                         && number(&node.value, "col", 0.0) >= number(&group.value, "fromCol", 0.0)
@@ -503,13 +499,7 @@ pub(super) fn measure(
             let font = if field == "label" && value.get("brand").is_some() {
                 preferred
             } else {
-                fitted_node_font_size_for_contract(
-                    content,
-                    width,
-                    preferred,
-                    minimum,
-                    input.input_contract,
-                )
+                fitted_node_font_size(content, width, preferred, minimum)
             };
             node_text.push(text(
                 format!("{}/{field}", author.source_path),
@@ -519,8 +509,8 @@ pub(super) fn measure(
                 font,
                 "middle",
             ));
-            if (field == "label" && units(input, content) * 6.8 > width + 6.0)
-                || (field != "label" && units(input, content) * minimum * 0.6 > width - 8.0)
+            if (field == "label" && units(content) * 6.8 > width + 6.0)
+                || (field != "label" && units(content) * minimum * 0.6 > width - 8.0)
             {
                 diagnostics.push(failure(
                     "layout/constraint",
@@ -544,8 +534,8 @@ pub(super) fn measure(
         }
         let mut sigil_y = 6.0;
         let mut sigil_size = 11.0;
-        if phoenix && !node_text.is_empty() {
-            let label_width = units(input, &node_text[0].content) * node_text[0].font_size * 0.6;
+        if !node_text.is_empty() {
+            let label_width = units(&node_text[0].content) * node_text[0].font_size * 0.6;
             let left = 19.0;
             let right = width - 4.0;
             if width / 2.0 - label_width / 2.0 < left || width / 2.0 + label_width / 2.0 > right {
@@ -642,7 +632,7 @@ pub(super) fn measure(
     }
     for (index, node) in nodes.iter().enumerate() {
         for other in &nodes[..index] {
-            if rects_overlap_for_contract(&node.bounds, &other.bounds, 8.0, input.input_contract) {
+            if rects_overlap(&node.bounds, &other.bounds, 8.0) {
                 diagnostics.push(failure(
                     if readable {
                         "workflow/node-overlap"
@@ -657,8 +647,8 @@ pub(super) fn measure(
         }
     }
     let (containers, obstacles) = measure_containers(
-        input, lanes, phases, groups, entries, &nodes, &widths, &columns, &tops, &heights,
-        lane_width, readable,
+        lanes, phases, groups, entries, &nodes, &widths, &columns, &tops, &heights, lane_width,
+        readable,
     );
     for (index, phase) in phases.iter().enumerate() {
         let from = number(&phase.value, "fromCol", 0.0) as usize;
@@ -667,7 +657,7 @@ pub(super) fn measure(
             .iter()
             .find(|container| container.authored.source_path == format!("/phases/{}", phase.index))
             .unwrap();
-        if units(input, string(&phase.value, "label")) * 5.6 > span.bounds.width + 8.0 {
+        if units(string(&phase.value, "label")) * 5.6 > span.bounds.width + 8.0 {
             diagnostics.push(failure(
                 "layout/constraint",
                 &format!("/phases/{}/label", phase.index),
@@ -869,17 +859,8 @@ fn measure_legends(
                 } else {
                     string(override_value, "label")
                 };
-                // Legacy packed at 7px while drawing at 7.5px. Preserve its
-                // authored geometry; the newer contract measures the drawn size.
-                let measured_font = if input.input_contract == InputContract::Legacy217 {
-                    7.0
-                } else {
-                    7.5
-                };
-                let width = (22.0
-                    + units(input, label) * measured_font * 0.62
-                    + if present { 21.0 } else { 0.0 })
-                .ceil();
+                let width =
+                    (22.0 + units(label) * 7.5 * 0.62 + if present { 21.0 } else { 0.0 }).ceil();
                 items.push((kind.to_owned(), label.to_owned(), width));
             }
         }
@@ -1007,7 +988,6 @@ fn measure_legends(
 
 #[allow(clippy::too_many_arguments)]
 fn measure_containers(
-    input: &DiagramInput,
     lanes: &[Entry],
     phases: &[Entry],
     groups: &[Entry],
@@ -1046,7 +1026,7 @@ fn measure_containers(
         obstacles.push(Rect {
             x: 54.0,
             y: tops[index] + 12.0,
-            width: units(input, &label) * 6.2,
+            width: units(&label) * 6.2,
             height: 14.0,
         });
         containers.push(Container {
@@ -1084,7 +1064,7 @@ fn measure_containers(
         let to = number(&phase.value, "toCol", 0.0) as usize;
         let natural = columns[to] - columns[from] + 92.0;
         let width = if readable {
-            natural.max(units(input, string(&phase.value, "label")) * 5.6 + 8.0)
+            natural.max(units(string(&phase.value, "label")) * 5.6 + 8.0)
         } else {
             natural
         };
@@ -1116,13 +1096,11 @@ fn measure_containers(
             label_plate: Some(Rect {
                 x: x + width / 2.0
                     - (width - 12.0).min(
-                        30.0_f64.max(units(input, string(&phase.value, "label")) * 4.8 + 10.0)
-                            + 10.0,
+                        30.0_f64.max(units(string(&phase.value, "label")) * 4.8 + 10.0) + 10.0,
                     ) / 2.0,
                 y: 27.0,
-                width: (width - 12.0).min(
-                    30.0_f64.max(units(input, string(&phase.value, "label")) * 4.8 + 10.0) + 10.0,
-                ),
+                width: (width - 12.0)
+                    .min(30.0_f64.max(units(string(&phase.value, "label")) * 4.8 + 10.0) + 10.0),
                 height: 16.0,
             }),
             members: nodes
@@ -1148,7 +1126,7 @@ fn measure_containers(
             .iter()
             .position(|lane| lane.value["id"] == group.value["lane"])
             .unwrap();
-        let (x, width) = group_span(input, &group.value, columns, entries, widths, readable);
+        let (x, width) = group_span(&group.value, columns, entries, widths, readable);
         let y = tops[index] + 38.0;
         let bounds = Rect {
             x,
@@ -1164,7 +1142,7 @@ fn measure_containers(
         obstacles.push(Rect {
             x: x + 10.0,
             y: label_y - 10.0,
-            width: units(input, string(&group.value, "label")) * 5.6,
+            width: units(string(&group.value, "label")) * 5.6,
             height: 14.0,
         });
         containers.push(Container {
@@ -1198,8 +1176,8 @@ fn measure_containers(
 
 // Match the rendered-text envelope used by check.rs legend clearance. The
 // legend title's SVG text can start above its measured Card bounds.
-fn rendered_text_bounds(input: &DiagramInput, text: &Text) -> Rect {
-    let width = (units(input, &text.content) * text.font_size * 0.62).max(text.font_size);
+fn rendered_text_bounds(text: &Text) -> Rect {
+    let width = (units(&text.content) * text.font_size * 0.62).max(text.font_size);
     let x = text.position.x
         - match text.anchor.as_str() {
             "middle" => width / 2.0,
@@ -1217,8 +1195,7 @@ fn rendered_text_bounds(input: &DiagramInput, text: &Text) -> Rect {
 // Only derived legends move. Authored geometry and already-clear layouts
 // remain unchanged; finalize() subsequently includes the new legend band.
 pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut CompiledDiagram) {
-    if input.input_contract != InputContract::PhoenixV1
-        || scene.schema_version != 2
+    if scene.schema_version != 2
         || absolute(&input.document)
         || !route_pin_removals(&input.document).is_empty()
         || scene.legends.is_empty()
@@ -1237,12 +1214,7 @@ pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut Compiled
         if let Some(plate) = relation.label_plate {
             labels.push(plate);
         }
-        labels.extend(
-            relation
-                .text
-                .iter()
-                .map(|text| rendered_text_bounds(input, text)),
-        );
+        labels.extend(relation.text.iter().map(rendered_text_bounds));
     }
     let reserved = scene
         .legends
@@ -1251,12 +1223,7 @@ pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut Compiled
         .collect::<Vec<_>>();
     let mut boxes = Vec::new();
     for legend in &scene.legends {
-        boxes.extend(
-            legend
-                .text
-                .iter()
-                .map(|text| rendered_text_bounds(input, text)),
-        );
+        boxes.extend(legend.text.iter().map(rendered_text_bounds));
         if legend.authored.kind != "legend-title" {
             // The Workflow glyph emitted by render::write_legends.
             let baseline = legend
@@ -1275,16 +1242,12 @@ pub(super) fn clear_automatic_legends(input: &DiagramInput, scene: &mut Compiled
         segments
             .iter()
             .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 0.0))
-            || labels
-                .iter()
-                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+            || labels.iter().any(|label| rects_overlap(label, legend, 0.0))
     }) || boxes.iter().any(|legend| {
         segments
             .iter()
             .any(|(a, b)| crate::geometry::segment_intersects_rect(*a, *b, legend, 2.0))
-            || labels
-                .iter()
-                .any(|label| rects_overlap_for_contract(label, legend, 0.0, input.input_contract))
+            || labels.iter().any(|label| rects_overlap(label, legend, 0.0))
     });
     if !blocked {
         return;
@@ -1391,24 +1354,12 @@ pub(super) fn finalize(
 // reserve for it, or else to the lane-title row above, at the leftmost
 // position within the frame clear of nodes, routes and other text. Titles
 // already clear, and all 2.17 geometry, stay as authored.
-pub(super) fn clear_group_titles(
-    input: &DiagramInput,
-    measured: &Measurement,
-    scene: &mut CompiledDiagram,
-) {
-    if measured.readable || input.input_contract != InputContract::PhoenixV1 {
+pub(super) fn clear_group_titles(measured: &Measurement, scene: &mut CompiledDiagram) {
+    if measured.readable {
         return;
     }
-    let contract = input.input_contract;
     let glyph = |text: &Text, x: f64, baseline: f64| {
-        crate::geometry::text_glyph_box(
-            &text.content,
-            x,
-            baseline,
-            text.font_size,
-            &text.anchor,
-            contract,
-        )
+        crate::geometry::text_glyph_box(&text.content, x, baseline, text.font_size, &text.anchor)
     };
     let mut blockers: Vec<Rect> = scene.nodes.iter().map(|node| node.bounds).collect();
     for relation in &scene.relations {
@@ -1445,7 +1396,7 @@ pub(super) fn clear_group_titles(
         let clear = |rect: &Rect| {
             obstacles
                 .iter()
-                .all(|other| !rects_overlap_for_contract(rect, other, 2.0, contract))
+                .all(|other| !rects_overlap(rect, other, 2.0))
                 && scene.relations.iter().all(|relation| {
                     relation.points.windows(2).all(|pair| {
                         !crate::geometry::segment_intersects_rect(pair[0], pair[1], rect, 6.0)
@@ -1496,8 +1447,7 @@ pub(super) fn validate_readable_text(
 ) -> Result<(), Diagnostics> {
     let readable = scene.schema_version == 2;
     let implicit = input.document.pointer("/meta/viewBox").is_none();
-    let phoenix = input.input_contract == InputContract::PhoenixV1;
-    if phoenix && readable && implicit {
+    if readable && implicit {
         let stack = scene.nodes.iter().enumerate().any(|(index, a)| {
             scene.nodes[index + 1..].iter().any(|b| {
                 a.authored.facts["lane"] == b.authored.facts["lane"]
@@ -1516,7 +1466,7 @@ pub(super) fn validate_readable_text(
             scene.reader_fit = "width-first".into();
         }
     }
-    if !phoenix || !readable {
+    if !readable {
         return Ok(());
     }
     let minimum = if input.quality == crate::input::Quality::Showcase && implicit {
@@ -1530,7 +1480,7 @@ pub(super) fn validate_readable_text(
         if content.is_empty() {
             continue;
         }
-        let needed = units(input, content) * minimum * 0.6;
+        let needed = units(content) * minimum * 0.6;
         if minimum > 8.0 || needed > node.bounds.width - 8.0 {
             diagnostics.push(failure("workflow/sublabel-readability",&format!("{}/sublabel",node.authored.source_path),"Workflow sublabel does not fit the final desktop readability floor",json!({"requiredFontPx":minimum,"maximumSlotFontPx":8,"canvasWidthPx":scene.view_box.width,"maximumCanvasWidthPx":1240,"requiredTextWidthPx":needed,"availableTextWidthPx":node.bounds.width-8.0})));
         }
@@ -1539,13 +1489,8 @@ pub(super) fn validate_readable_text(
             .iter_mut()
             .find(|row| row.source_path.ends_with("/sublabel"))
         {
-            row.font_size = fitted_node_font_size_for_contract(
-                content,
-                node.bounds.width,
-                8.0,
-                minimum.min(8.0),
-                input.input_contract,
-            );
+            row.font_size =
+                fitted_node_font_size(content, node.bounds.width, 8.0, minimum.min(8.0));
         }
     }
     if diagnostics.is_empty() {
@@ -1562,10 +1507,7 @@ pub(super) fn absolute_sizing_warning(
     input: &DiagramInput,
     measured: &Measurement,
 ) -> Option<Diagnostic> {
-    if input.input_contract != InputContract::PhoenixV1
-        || !measured.readable
-        || !absolute(&input.document)
-    {
+    if !measured.readable || !absolute(&input.document) {
         return None;
     }
     let mut affected = Vec::new();
@@ -1573,14 +1515,14 @@ pub(super) fn absolute_sizing_warning(
         if node.authored.facts.get("width").is_some() {
             continue;
         }
-        let auto = automatic_width(input, &node.authored.facts);
+        let auto = automatic_width(&node.authored.facts);
         if auto <= node.bounds.width {
             continue;
         }
         let fits = |width: f64| {
-            units(input, string(&node.authored.facts, "label")) * 6.8 <= width + 6.0
+            units(string(&node.authored.facts, "label")) * 6.8 <= width + 6.0
                 && ["sublabel", "tag"].iter().all(|field| {
-                    units(input, string(&node.authored.facts, field)) * 6.0 * 0.6 <= width - 8.0
+                    units(string(&node.authored.facts, field)) * 6.0 * 0.6 <= width - 8.0
                 })
         };
         if fits(node.bounds.width) || !fits(auto) {

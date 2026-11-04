@@ -252,7 +252,6 @@ fn explicit_side<'a>(raw: &'a Value, field: &str) -> Option<&'a str> {
 fn sampled_path(
     kind: DiagramType,
     version: u64,
-    raw: &Value,
     points: &[Point],
 ) -> Option<crate::check::path::PathAnalysis> {
     let path = match kind {
@@ -274,14 +273,7 @@ fn sampled_path(
             geometry::rounded_path(points, radius)
         }
         DiagramType::Tree => geometry::rounded_path(points, 10.0),
-        DiagramType::Lifecycle => geometry::rounded_path(
-            points,
-            if version == 1 {
-                raw["cornerRadius"].as_f64().unwrap_or(10.0)
-            } else {
-                12.0
-            },
-        ),
+        DiagramType::Lifecycle => geometry::rounded_path(points, 12.0),
         _ => geometry::polyline_path(points),
     };
     crate::check::path::analyze_svg_path(&path).ok()
@@ -290,7 +282,6 @@ fn sampled_path(
 fn matches_pins(
     kind: DiagramType,
     version: u64,
-    raw: &Value,
     parts: &[&RoutedRelation],
     points: Vec<Point>,
 ) -> bool {
@@ -299,7 +290,7 @@ fn matches_pins(
     if kind == DiagramType::Dataflow {
         points.dedup_by(|a, b| same(*a, *b));
     }
-    let Some(expected) = sampled_path(kind, version, raw, &points) else {
+    let Some(expected) = sampled_path(kind, version, &points) else {
         return false;
     };
     parts.len() == expected.subpaths.len()
@@ -321,8 +312,6 @@ fn channel_points(
     raw: &Value,
     start: Point,
     end: Point,
-    from_side: Option<&str>,
-    to_side: Option<&str>,
 ) -> Option<Vec<Point>> {
     if raw["via"].is_array() {
         return None;
@@ -332,15 +321,11 @@ fn channel_points(
     let vertical = match kind {
         DiagramType::Workflow => matches!(route, "outside-right" | "return-left"),
         DiagramType::Dataflow => route == "vertical-channel",
-        DiagramType::Lifecycle if version == 1 => matches!(route, "right-channel" | "left-channel"),
         _ => false,
     };
     let horizontal = match kind {
         DiagramType::Workflow => matches!(route, "drop" | "bottom-channel" | "up-channel"),
         DiagramType::Dataflow => matches!(route, "bottom-channel" | "top-channel"),
-        DiagramType::Lifecycle if version == 1 => {
-            matches!(route, "drop" | "bottom-channel" | "top-channel")
-        }
         _ => false,
     };
     let via = if vertical {
@@ -359,24 +344,6 @@ fn channel_points(
             (Some(x), None) => vec![Point { x, y: start.y }, Point { x, y: end.y }],
             (None, Some(y)) => vec![Point { x: start.x, y }, Point { x: end.x, y }],
             _ => return None,
-        }
-    } else if kind == DiagramType::Lifecycle
-        && version == 1
-        && matches!(route, "" | "auto")
-        && start.x != end.x
-        && start.y != end.y
-    {
-        let from_vertical = matches!(from_side?, "top" | "bottom");
-        let to_vertical = matches!(to_side?, "top" | "bottom");
-        if from_vertical != to_vertical {
-            return None;
-        }
-        if from_vertical {
-            let y = y?;
-            vec![Point { x: start.x, y }, Point { x: end.x, y }]
-        } else {
-            let x = x?;
-            vec![Point { x, y: start.y }, Point { x, y: end.y }]
         }
     } else {
         return None;
@@ -527,7 +494,6 @@ pub fn check_anchors(
             || raw["route"]
                 .as_str()
                 .is_some_and(|route| !matches!(route, "" | "auto"));
-        let legacy_via = kind == DiagramType::Lifecycle && version == 1 && raw["via"].is_array();
         for (source_endpoint, id, node, part, at, field) in [
             (true, from, from_bounds, source, start, "fromSide"),
             (false, to, to_bounds, target, end, "toSide"),
@@ -557,9 +523,6 @@ pub fn check_anchors(
                 }
             }
             let checked_side = authored_side.or(if has_route_geometry { None } else { side });
-            if legacy_via {
-                continue;
-            }
             if let Some(side) = checked_side {
                 let issues = collect_endpoint_side_issues(
                     &part.points,
@@ -577,7 +540,6 @@ pub fn check_anchors(
                 !matches_pins(
                     kind,
                     version,
-                    raw,
                     &parts,
                     std::iter::once(start)
                         .chain(via)
@@ -594,24 +556,8 @@ pub fn check_anchors(
                     json!({"field":"via","via":raw["via"],"actualParts":parts}),
                 ));
             }
-        } else if let Some(points) = channel_points(
-            kind,
-            version,
-            raw,
-            start,
-            end,
-            explicit_side(raw, "fromSide").or_else(|| {
-                body_side(
-                    start,
-                    from_bounds,
-                    radii.get(from).copied().unwrap_or((0.0, 0.0)),
-                )
-            }),
-            explicit_side(raw, "toSide").or_else(|| {
-                body_side(end, to_bounds, radii.get(to).copied().unwrap_or((0.0, 0.0)))
-            }),
-        ) {
-            if !matches_pins(kind, version, raw, &parts, points) {
+        } else if let Some(points) = channel_points(kind, version, raw, start, end) {
+            if !matches_pins(kind, version, &parts, points) {
                 diagnostics.push(error(kind, index, raw, "artifact/route-pin", "Actual path differs from its authored channel coordinates", json!({"route":raw["route"],"channelX":raw["channelX"],"channelY":raw["channelY"],"actualParts":parts})));
             }
         }

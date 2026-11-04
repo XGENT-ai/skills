@@ -296,6 +296,14 @@ fn cli_usage_errors_and_removed_commands_are_json() {
             flag("."),
             flag("--json"),
         ],
+        vec![
+            flag("validate"),
+            flag("sequence"),
+            flag("unused.json"),
+            flag("--input-contract"),
+            flag("legacy-2.17"),
+            flag("--json"),
+        ],
         vec![flag("recover-output"), flag("unused"), flag("--json")],
         vec![flag("recover-compare"), flag("unused"), flag("--json")],
     ] {

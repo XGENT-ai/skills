@@ -2,7 +2,7 @@ use super::measure::Measurement;
 use super::*;
 use crate::diagnostic::Severity;
 use crate::geometry::composition::*;
-use crate::geometry::{anchor, rects_overlap_for_contract};
+use crate::geometry::{anchor, rects_overlap};
 
 fn relation_index(relation: &crate::scene::Relation) -> usize {
     relation
@@ -38,10 +38,8 @@ pub(super) fn validate(
     scene: &mut CompiledDiagram,
 ) -> Result<(), Diagnostics> {
     let showcase = input.quality == crate::input::Quality::Showcase;
-    let phoenix = input.input_contract == InputContract::PhoenixV1;
     let readable = scene.schema_version == 2;
-    let overlap =
-        |a: &Rect, b: &Rect, gap: f64| rects_overlap_for_contract(a, b, gap, input.input_contract);
+    let overlap = |a: &Rect, b: &Rect, gap: f64| rects_overlap(a, b, gap);
     let mut diagnostics = measured.layout_diagnostics.clone();
     let routed = scene
         .relations
@@ -191,13 +189,12 @@ pub(super) fn validate(
     for hit in collect_border_runs(&routed, &frames) {
         diagnostics.push(relation_diagnostic("composition/container-border-run",hit.relation_index,scene,"Relationship follows a structural frame border",json!({"frameIndex":hit.frame_index,"side":hit.side,"segmentIndex":hit.segment_index,"overlapLengthPx":hit.overlap_length})));
     }
-    if showcase || phoenix && readable {
+    if showcase || readable {
         for hit in collect_proper_crossings(
             &routed,
             &CrossingOptions {
-                contract: input.input_contract,
                 merge_forward_collinear_waypoints: readable,
-                include_shared_endpoints: Some(&|_, _| phoenix && readable),
+                include_shared_endpoints: Some(&|_, _| readable),
                 // Same rule as the artifact check: a crossing is drawn
                 // legibly when both routes carry a crossover halo.
                 crossing_resolved: Some(&|left, right, _| {
@@ -220,9 +217,8 @@ pub(super) fn validate(
         for hit in collect_ambiguous_corridors(
             &routed,
             &CorridorOptions {
-                contract: input.input_contract,
-                include_shared_endpoints: Some(&|_, _| phoenix && readable),
-                allow_short_workflow_trunks: phoenix && readable,
+                include_shared_endpoints: Some(&|_, _| readable),
+                allow_short_workflow_trunks: readable,
                 ..Default::default()
             },
         ) {
@@ -239,7 +235,7 @@ pub(super) fn validate(
             diagnostics.push(diagnostic);
         }
     }
-    if phoenix && readable {
+    if readable {
         let arrows = routed
             .iter()
             .map(|relation| {
@@ -288,7 +284,7 @@ pub(super) fn validate(
                 serde_json::to_value(&hit).unwrap(),
             ));
         }
-        if phoenix && readable {
+        if readable {
             // Author-pinned label positions are kept as authored.
             let automatic = scene
                 .relations
@@ -327,7 +323,7 @@ pub(super) fn validate(
                 ));
             }
         }
-        if phoenix && !readable {
+        if !readable {
             for hit in collect_label_canvas_overflow(
                 &labels,
                 &[scene.view_box.width, scene.view_box.height],

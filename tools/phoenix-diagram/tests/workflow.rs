@@ -12,7 +12,7 @@ fn near(actual: f64, expected: &Value, context: &str) {
 }
 
 #[test]
-fn reference_compiler_geometry_and_rejections_match_each_input_contract() {
+fn reference_compiler_geometry_and_rejections_match_the_input_contract() {
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/oracle.json")).unwrap();
     let mut failures = Vec::new();
@@ -35,11 +35,7 @@ fn check_case(case: &Value) {
         case["name"].as_str().unwrap()
     );
     let options = CompileOptions {
-        input_contract: Some(if case["contract"] == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        }),
+        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(if case["quality"] == "showcase" {
             Quality::Showcase
         } else {
@@ -250,24 +246,23 @@ fn check_case(case: &Value) {
     }
 }
 
-fn fixture(name: &str, contract: &str) -> Value {
+fn fixture(name: &str) -> Value {
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/oracle.json")).unwrap();
     oracle["cases"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|case| case["name"] == name && case["contract"] == contract)
+        .find(|case| case["name"] == name && case["contract"] == "phoenix-v1")
         .unwrap()["document"]
         .clone()
 }
 
 fn compile_document(
     document: &Value,
-    contract: InputContract,
 ) -> Result<phoenix_diagram::scene::CompiledDiagram, diagnostic::Diagnostics> {
     let options = CompileOptions {
-        input_contract: Some(contract),
+        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(
             if document.pointer("/meta/quality_profile") == Some(&Value::String("showcase".into()))
             {
@@ -296,8 +291,8 @@ fn automatic_primary_labels_can_exceed_the_auxiliary_text_width_limit() {
     document["nodes"][0]["label"] = label.into();
     for quality in ["standard", "showcase"] {
         document["meta"]["quality_profile"] = quality.into();
-        let compiled = compile_document(&document, InputContract::PhoenixV1)
-            .unwrap_or_else(|errors| panic!("{quality}: {errors:?}"));
+        let compiled =
+            compile_document(&document).unwrap_or_else(|errors| panic!("{quality}: {errors:?}"));
         let node = compiled
             .nodes
             .iter()
@@ -312,7 +307,7 @@ fn automatic_primary_labels_can_exceed_the_auxiliary_text_width_limit() {
         assert_eq!(compiled.relations[0].to, "complete");
     }
     document["nodes"][0]["width"] = 200.into();
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     assert!(diagnostics.iter().any(|diagnostic| {
         diagnostic.code == "layout/constraint"
             && diagnostic.subject.path == "/nodes/0/label"
@@ -326,7 +321,7 @@ fn automatic_workflow_routes_remain_separated_after_corner_rounding() {
         "fixtures/workflow/withdrawal-fanin.workflow.json"
     ))
     .unwrap();
-    let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let scene = compile_document(&document).unwrap();
     assert_eq!(
         scene.nodes.len(),
         document["nodes"].as_array().unwrap().len()
@@ -392,8 +387,8 @@ fn automatic_workflow_routes_remain_separated_after_corner_rounding() {
 
 #[test]
 fn pin_failures_propose_only_repairs_that_pass_the_complete_native_compiler() {
-    let document = fixture("v2-absolute-pins", "phoenix-v1");
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let document = fixture("v2-absolute-pins");
+    let diagnostics = compile_document(&document).unwrap_err();
     let mut count = 0;
     for diagnostic in diagnostics {
         for repair in diagnostic.evidence["verifiedRepairs"]
@@ -416,7 +411,7 @@ fn pin_failures_propose_only_repairs_that_pass_the_complete_native_compiler() {
                     *candidate.pointer_mut(path).unwrap() = change["value"].clone();
                 }
             }
-            compile_document(&candidate, InputContract::PhoenixV1).unwrap();
+            compile_document(&candidate).unwrap();
             count += 1;
         }
     }
@@ -425,8 +420,8 @@ fn pin_failures_propose_only_repairs_that_pass_the_complete_native_compiler() {
 
 #[test]
 fn measured_capacity_failure_preserves_facts_and_pins_in_its_receipt_evidence() {
-    let document = fixture("v2-insufficient-authored-canvas", "phoenix-v1");
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let document = fixture("v2-insufficient-authored-canvas");
+    let diagnostics = compile_document(&document).unwrap_err();
     let capacity = diagnostics
         .iter()
         .find(|diagnostic| diagnostic.code == "workflow/viewbox-capacity")
@@ -446,8 +441,8 @@ fn measured_capacity_failure_preserves_facts_and_pins_in_its_receipt_evidence() 
 
 #[test]
 fn compiled_nodes_edges_containers_and_cards_retain_authored_facts_and_geometry_provenance() {
-    let document = fixture("example:agent-tool-call.workflow.json", "phoenix-v1");
-    let compiled = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let document = fixture("example:agent-tool-call.workflow.json");
+    let compiled = compile_document(&document).unwrap();
     for authored in compiled
         .nodes
         .iter()
@@ -479,9 +474,9 @@ fn compiled_nodes_edges_containers_and_cards_retain_authored_facts_and_geometry_
 
 #[test]
 fn readable_geometry_is_stable_across_repeated_and_reordered_source_arrays() {
-    let document = fixture("fixture:workflow-shared-trunks.workflow.json", "phoenix-v1");
-    let first = compile_document(&document, InputContract::PhoenixV1).unwrap();
-    let second = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let document = fixture("fixture:workflow-shared-trunks.workflow.json");
+    let first = compile_document(&document).unwrap();
+    let second = compile_document(&document).unwrap();
     assert_eq!(first, second);
     let mut reversed = document.clone();
     for collection in ["nodes", "edges", "groups", "phases"] {
@@ -489,7 +484,7 @@ fn readable_geometry_is_stable_across_repeated_and_reordered_source_arrays() {
             array.reverse();
         }
     }
-    let reordered = compile_document(&reversed, InputContract::PhoenixV1).unwrap();
+    let reordered = compile_document(&reversed).unwrap();
     assert_eq!(first.view_box, reordered.view_box);
     assert_eq!(
         first
@@ -527,7 +522,7 @@ fn readable_geometry_is_stable_across_repeated_and_reordered_source_arrays() {
 
 #[test]
 fn finite_authored_numbers_cannot_overflow_into_non_finite_scene_geometry() {
-    let mut document = fixture("v2-simple", "phoenix-v1");
+    let mut document = fixture("v2-simple");
     document["lanes"] = serde_json::json!([{"id":"a","label":"A"},{"id":"b","label":"B"}]);
     document["nodes"] = serde_json::json!([
         {"id":"a","lane":"a","col":0,"type":"backend","label":"A","height":1e308},
@@ -535,7 +530,7 @@ fn finite_authored_numbers_cannot_overflow_into_non_finite_scene_geometry() {
     ]);
     document["edges"] = serde_json::json!([]);
     document.as_object_mut().unwrap().remove("mainPath");
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     assert!(diagnostics
         .iter()
         .any(|diagnostic| diagnostic.code == "layout/constraint"));
@@ -574,7 +569,7 @@ fn crossing_resolved_with_halos(case: &Value, scene: &phoenix_diagram::scene::Co
 
 #[test]
 fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
-    let document = fixture("optional-placement-advice", "phoenix-v1");
+    let document = fixture("optional-placement-advice");
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/oracle.json")).unwrap();
     let source = oracle["cases"]
@@ -585,10 +580,7 @@ fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
         .unwrap();
     // Natively the crossing is drawn with halos instead of failing; the
     // source's optional placement still passes and keeps every fact.
-    crossing_resolved_with_halos(
-        source,
-        &compile_document(&document, InputContract::PhoenixV1).unwrap(),
-    );
+    crossing_resolved_with_halos(source, &compile_document(&document).unwrap());
     let repair = source["diagnostics"]
         .as_array()
         .unwrap()
@@ -608,7 +600,7 @@ fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
             .unwrap()
             .insert(key.into(), change["value"].clone());
     }
-    compile_document(&candidate, InputContract::PhoenixV1).unwrap();
+    compile_document(&candidate).unwrap();
     let mut original = document.clone();
     for value in [&mut candidate, &mut original] {
         for node in value["nodes"].as_array_mut().unwrap() {
@@ -621,11 +613,8 @@ fn optional_placement_advice_matches_the_source_and_keeps_all_semantic_facts() {
 
 #[test]
 fn pinned_route_failure_keeps_its_cause_before_intrinsic_text_sizing() {
-    let document = fixture(
-        "pinned-route-failure-precedes-intrinsic-text-sizing",
-        "phoenix-v1",
-    );
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let document = fixture("pinned-route-failure-precedes-intrinsic-text-sizing");
+    let diagnostics = compile_document(&document).unwrap_err();
     assert_eq!(diagnostics[0].code, "workflow/explicit-pin-conflict");
     let warning = diagnostics
         .iter()
@@ -641,18 +630,16 @@ fn pinned_route_failure_keeps_its_cause_before_intrinsic_text_sizing() {
 
 #[test]
 fn canonical_edge_order_preserves_the_sources_utf16_comparison() {
-    let document = fixture("unicode-canonical-edge-order", "phoenix-v1");
-    for contract in [InputContract::Legacy217, InputContract::PhoenixV1] {
-        let compiled = compile_document(&document, contract).unwrap();
-        assert_eq!(
-            compiled
-                .relations
-                .iter()
-                .map(|relation| relation.label.as_str())
-                .collect::<Vec<_>>(),
-            ["🌳", "\u{e000}"]
-        );
-    }
+    let document = fixture("unicode-canonical-edge-order");
+    let compiled = compile_document(&document).unwrap();
+    assert_eq!(
+        compiled
+            .relations
+            .iter()
+            .map(|relation| relation.label.as_str())
+            .collect::<Vec<_>>(),
+        ["🌳", "\u{e000}"]
+    );
 }
 
 fn same_json_numbers(actual: &Value, expected: &Value, context: &str) {
@@ -743,20 +730,14 @@ fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compiler
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/pin-oracle.json")).unwrap();
     let mut failures = Vec::new();
-    let mut source_exceptions = 0;
     for case in oracle["cases"].as_array().unwrap() {
         let native = visible_curve_pin_case(case);
         let case = &native;
         let name = format!("{}/{}", case["contract"], case["name"]);
         if std::panic::catch_unwind(|| {
-            let contract = if case["contract"] == "legacy-2.17" {
-                InputContract::Legacy217
-            } else {
-                InputContract::PhoenixV1
-            };
             if case["sourceSchemaValid"] == false {
                 let options = CompileOptions {
-                    input_contract: Some(contract),
+                    input_contract: Some(InputContract::PhoenixV1),
                     ..Default::default()
                 };
                 let errors = parse_input(
@@ -771,15 +752,7 @@ fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compiler
                 );
                 return;
             }
-            let result = compile_document(&case["document"], contract);
-            if case.get("sourceException").is_some() {
-                // The frozen legacy classifier reads absent raw-candidate
-                // points. Native code must fail the real unsolved edge safely.
-                assert_eq!(case["sourceException"]["name"], "TypeError");
-                let errors = result.unwrap_err();
-                assert_eq!(errors[0].code, "workflow/solver-budget-exhausted");
-                return;
-            }
+            let result = compile_document(&case["document"]);
             assert_eq!(
                 result.is_ok(),
                 case["ok"].as_bool().unwrap(),
@@ -846,12 +819,7 @@ fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compiler
         {
             failures.push(name);
         }
-        source_exceptions += usize::from(case.get("sourceException").is_some());
     }
-    assert_eq!(
-        source_exceptions, 2,
-        "Keep source exceptions visible rather than inventing an oracle"
-    );
     assert!(
         failures.is_empty(),
         "Cross-edge pin mismatches: {}",
@@ -877,12 +845,7 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
         let case = &native;
         let name = format!("{}/{}", case["contract"], case["name"]);
         if std::panic::catch_unwind(|| {
-            let contract = if case["contract"] == "legacy-2.17" {
-                InputContract::Legacy217
-            } else {
-                InputContract::PhoenixV1
-            };
-            let diagnostics = compile_document(&case["document"], contract).unwrap_err();
+            let diagnostics = compile_document(&case["document"]).unwrap_err();
             let actual = diagnostics[0].evidence["verifiedRepairs"]
                 .as_array()
                 .cloned()
@@ -904,7 +867,7 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
             if let Some(repair) = workflow_repair {
                 assert_eq!(case["contract"], "phoenix-v1", "{name}");
                 assert!(actual.is_empty(), "{name}");
-                compile_document(&apply_workflow_repair(&case["document"], repair), contract)
+                compile_document(&apply_workflow_repair(&case["document"], repair))
                     .unwrap_or_else(|errors| panic!("{name}: unverified {repair}: {errors:?}"));
             }
             assert_eq!(
@@ -932,7 +895,7 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
                     }
                 }
                 let candidate = apply_pin_changes(&case["document"], changes);
-                let compiled = compile_document(&candidate, contract).unwrap_or_else(|errors| {
+                let compiled = compile_document(&candidate).unwrap_or_else(|errors| {
                     panic!("{name}: unverified repair {repair}: {errors:?}")
                 });
                 if case["contract"] == "phoenix-v1"
@@ -980,11 +943,8 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
                             .map(|(_, change)| change.clone())
                             .collect::<Vec<_>>();
                         assert!(
-                            compile_document(
-                                &apply_pin_changes(&case["document"], &subset),
-                                contract
-                            )
-                            .is_err(),
+                            compile_document(&apply_pin_changes(&case["document"], &subset),)
+                                .is_err(),
                             "{name}: advertised removal set was not minimal"
                         );
                     }
@@ -1003,10 +963,7 @@ fn cross_edge_pin_repairs_match_source_minimal_sets_and_recompile_without_semant
                 .any(|repair| repair.as_array().unwrap().len() > 1),
         );
     }
-    assert_eq!(
-        joint_cases, 4,
-        "Retain all four multi-assertion repair cases"
-    );
+    assert_eq!(joint_cases, 2, "Retain both multi-assertion repair cases");
     assert!(
         failures.is_empty(),
         "Cross-edge repair mismatches: {}",
@@ -1029,7 +986,7 @@ fn preset_label_segment_repair_preserves_the_fixed_route_and_requires_a_complete
             })
             .unwrap();
         let original = case["document"].clone();
-        let errors = compile_document(&original, InputContract::PhoenixV1).unwrap_err();
+        let errors = compile_document(&original).unwrap_err();
         let first = errors[0].evidence["verifiedRepairs"][0]["changes"]
             .as_array()
             .unwrap();
@@ -1038,13 +995,13 @@ fn preset_label_segment_repair_preserves_the_fixed_route_and_requires_a_complete
         assert_eq!(first[0]["path"], "/edges/0/labelSegment");
         assert!(errors[0].supported_fixes[0].starts_with("set labelSegment on edge \"follow-up\""));
         let candidate = apply_pin_changes(&original, first);
-        let actual = compile_document(&candidate, InputContract::PhoenixV1).unwrap();
+        let actual = compile_document(&candidate).unwrap();
         let mut baseline = original.clone();
         baseline["edges"][0]
             .as_object_mut()
             .unwrap()
             .remove("label");
-        let baseline = compile_document(&baseline, InputContract::PhoenixV1).unwrap();
+        let baseline = compile_document(&baseline).unwrap();
         assert_eq!(actual.nodes, baseline.nodes);
         assert_eq!(actual.relations[0].points, baseline.relations[0].points);
         assert_eq!(
@@ -1076,7 +1033,7 @@ fn preset_label_segment_repair_preserves_the_fixed_route_and_requires_a_complete
             && case["name"].as_str().unwrap().starts_with("preset-label-")
             && !case["name"].as_str().unwrap().contains("local-segment")
     }) {
-        let errors = compile_document(&case["document"], InputContract::PhoenixV1).unwrap_err();
+        let errors = compile_document(&case["document"]).unwrap_err();
         assert!(errors[0]
             .supported_fixes
             .iter()
@@ -1100,8 +1057,8 @@ fn fixed_phoenix_group_titles_move_off_member_nodes_onto_a_clear_frame_border() 
         "example:incident-response.workflow.json",
         "example:release-delivery.workflow.json",
     ] {
-        let document = fixture(name, "phoenix-v1");
-        let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
+        let document = fixture(name);
+        let scene = compile_document(&document).unwrap();
         let groups = scene
             .containers
             .iter()
@@ -1116,7 +1073,6 @@ fn fixed_phoenix_group_titles_move_off_member_nodes_onto_a_clear_frame_border() 
                 title.position.y,
                 title.font_size,
                 &title.anchor,
-                InputContract::PhoenixV1,
             );
             // On the frame's top border, or in its lane-title row when tall
             // members block the border.
@@ -1154,32 +1110,19 @@ fn fixed_phoenix_group_titles_move_off_member_nodes_onto_a_clear_frame_border() 
             }
         }
     }
-    // The 2.17 contract keeps its frozen in-frame title offset.
-    let legacy = compile_document(
-        &fixture("example:incident-response.workflow.json", "legacy-2.17"),
-        InputContract::Legacy217,
-    )
-    .unwrap();
-    for group in legacy
-        .containers
-        .iter()
-        .filter(|container| container.authored.kind == "group")
-    {
-        assert_eq!(group.text[0].position.y, group.bounds.y + 14.0);
-    }
 }
 
 // `document` with every text in `paths` cut to `limit` text units; at zero a
 // label keeps its first character and other texts are removed.
 fn cut_texts(document: &Value, paths: &[&str], limit: u64) -> Value {
-    use phoenix_diagram::geometry::text_units_for_contract;
+    use phoenix_diagram::geometry::text_units;
     let mut candidate = document.clone();
     for path in paths {
         let text = document.pointer(path).unwrap().as_str().unwrap();
         let mut kept = String::new();
         for character in text.chars() {
             let next = format!("{kept}{character}");
-            if text_units_for_contract(&next, InputContract::PhoenixV1) > limit as f64 {
+            if text_units(&next) > limit as f64 {
                 break;
             }
             kept = next;
@@ -1245,8 +1188,8 @@ fn repair_fixture(name: &str) -> Value {
 #[test]
 fn first_draft_composition_hits_are_repaired_without_changing_authored_facts() {
     let document = repair_fixture("composition");
-    let scene = compile_document(&document, InputContract::PhoenixV1).unwrap();
-    let again = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let scene = compile_document(&document).unwrap();
+    let again = compile_document(&document).unwrap();
     assert_eq!(
         serde_json::to_value(&scene).unwrap(),
         serde_json::to_value(&again).unwrap()
@@ -1272,7 +1215,7 @@ fn first_draft_composition_hits_are_repaired_without_changing_authored_facts() {
 #[test]
 fn pin_conflicts_without_their_own_repair_get_a_verified_whole_workflow_removal() {
     let document = repair_fixture("preset-pins");
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     let conflict = diagnostics
         .iter()
         .find(|diagnostic| diagnostic.code == "workflow/route-preset-conflict")
@@ -1293,7 +1236,7 @@ fn pin_conflicts_without_their_own_repair_get_a_verified_whole_workflow_removal(
             .iter()
             .all(|field| edge.get(*field).is_none())
     }));
-    compile_document(&candidate, InputContract::PhoenixV1).unwrap();
+    compile_document(&candidate).unwrap();
 }
 
 #[test]
@@ -1312,7 +1255,7 @@ fn text_capacity_diagnostics_give_the_largest_verified_common_limit() {
         document["nodes"][index]["width"] = 120.into();
         document["nodes"][index]["sublabel"] = sublabel.into();
     }
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     let named = diagnostics
         .iter()
         .filter(|diagnostic| diagnostic.evidence.get("verifiedTextCapacity").is_some())
@@ -1330,8 +1273,8 @@ fn text_capacity_diagnostics_give_the_largest_verified_common_limit() {
         .collect::<Vec<_>>();
     assert_eq!(paths, ["/nodes/0/sublabel", "/nodes/1/sublabel"]);
     let cut = |limit| cut_texts(&document, &paths, limit);
-    compile_document(&cut(limit), InputContract::PhoenixV1).unwrap();
-    assert!(compile_document(&cut(limit + 1), InputContract::PhoenixV1).is_err());
+    compile_document(&cut(limit)).unwrap();
+    assert!(compile_document(&cut(limit + 1)).is_err());
 }
 
 #[test]
@@ -1511,7 +1454,7 @@ fn assert_approval_facts(document: &Value, scene: &phoenix_diagram::scene::Compi
 #[test]
 fn optional_placement_advice_resolves_target_capacity_without_changing_approval_facts() {
     let document = approval_fixture(false);
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     let advice = diagnostics
         .iter()
         .find(|diagnostic| {
@@ -1521,7 +1464,7 @@ fn optional_placement_advice_resolves_target_capacity_without_changing_approval_
     assert!(!advice.supported_fixes.is_empty());
     let repair = &advice.evidence["verifiedRepair"];
     let candidate = apply_optional_placement(&document, repair);
-    let scene = compile_document(&candidate, InputContract::PhoenixV1)
+    let scene = compile_document(&candidate)
         .expect("Apply every advertised change, then compile the complete workflow");
     assert_approval_facts(&candidate, &scene);
 }
@@ -1558,7 +1501,7 @@ fn optional_capacity_advice_does_not_overwrite_an_explicit_target_height() {
     let mut document = approval_fixture(false);
     // State the old effective height explicitly: it is now an authored pin.
     document["nodes"][8]["height"] = 52.into();
-    let diagnostics = compile_document(&document, InputContract::PhoenixV1).unwrap_err();
+    let diagnostics = compile_document(&document).unwrap_err();
     assert!(diagnostics.iter().any(|diagnostic| {
         diagnostic.severity == diagnostic::Severity::Error
             && diagnostic.code.starts_with("composition/")
@@ -1577,13 +1520,9 @@ fn optional_capacity_advice_does_not_overwrite_an_explicit_target_height() {
 
 #[test]
 fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
-    for (name, contract, source_contract) in [
-        ("v2-simple", InputContract::PhoenixV1, "phoenix-v1"),
-        ("v2-simple", InputContract::Legacy217, "legacy-2.17"),
-        ("v1-simple", InputContract::PhoenixV1, "phoenix-v1"),
-    ] {
-        let document = fixture(name, source_contract);
-        let scene = compile_document(&document, contract).unwrap();
+    for name in ["v2-simple", "v1-simple"] {
+        let document = fixture(name);
+        let scene = compile_document(&document).unwrap();
         let html = phoenix_diagram::render::render(
             &scene,
             &phoenix_diagram::render::EmbeddedAssets::builtin(),
@@ -1598,7 +1537,7 @@ fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
                 .unwrap()
                 .status,
             "pass",
-            "{source_contract}/{name}: {:?}",
+            "{name}: {:?}",
             checked.diagnostics
         );
 
@@ -1608,19 +1547,19 @@ fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
         let mut pinned = document.clone();
         pinned["edges"][0]["fromSide"] = "right".into();
         pinned["edges"][0]["toSide"] = "left".into();
-        let mut fixed = compile_document(&pinned, contract).unwrap();
+        let mut fixed = compile_document(&pinned).unwrap();
         assert_eq!(fixed.relations[0].authored.facts, pinned["edges"][0]);
         fixed.relations[0].authored.facts = document["edges"][0].clone();
         fixed.relations[0]
             .authored
             .geometry_provenance
             .retain(|path| !["/edges/0/fromSide", "/edges/0/toSide"].contains(&path.as_str()));
-        assert_eq!(scene, fixed, "{source_contract}/{name}: clear full scene");
+        assert_eq!(scene, fixed, "{name}: clear full scene");
 
         let mut framed = document.clone();
         framed["meta"]["viewBox"] =
             serde_json::json!([scene.view_box.width, scene.view_box.height]);
-        let mut fixed = compile_document(&framed, contract).unwrap();
+        let mut fixed = compile_document(&framed).unwrap();
         assert_eq!(fixed.meta["viewBox"], framed["meta"]["viewBox"]);
         fixed.meta.as_object_mut().unwrap().remove("viewBox");
         let title = fixed
@@ -1637,14 +1576,14 @@ fn automatic_legend_keeps_clear_fixed_and_older_scenes_unchanged() {
             .as_object_mut()
             .unwrap()
             .remove("viewBox");
-        assert_eq!(scene, fixed, "{source_contract}/{name}: fixed full scene");
+        assert_eq!(scene, fixed, "{name}: fixed full scene");
     }
 }
 
 #[test]
 fn a_wrapped_automatic_legend_can_grow_the_canvas_without_changing_contain_policy() {
-    let document = fixture("v2-simple", "phoenix-v1");
-    let baseline = compile_document(&document, InputContract::PhoenixV1).unwrap();
+    let document = fixture("v2-simple");
+    let baseline = compile_document(&document).unwrap();
     // The frozen source case uses contain. Longer legend text exercises real
     // automatic canvas growth, not an assignment to the readerFit field.
     assert_eq!(baseline.reader_fit, "contain");
@@ -1656,7 +1595,7 @@ fn a_wrapped_automatic_legend_can_grow_the_canvas_without_changing_contain_polic
             "backend": {"label": "后".repeat(50)}
         }
     });
-    let expanded = compile_document(&wrapped, InputContract::PhoenixV1).unwrap();
+    let expanded = compile_document(&wrapped).unwrap();
     assert!(expanded.view_box.height > baseline.view_box.height);
     assert_eq!(expanded.reader_fit, baseline.reader_fit);
     assert_eq!(

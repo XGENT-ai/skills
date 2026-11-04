@@ -1,16 +1,13 @@
 // Source: resolvedLabelRects pipeline and dataflow/label-capacity.mjs.
 use super::*;
 
-pub(super) fn size(input: &DiagramInput, raw: &Value, lines: &[String]) -> Point {
+pub(super) fn size(raw: &Value, lines: &[String]) -> Point {
     let longest = if lines.is_empty() {
-        units(input, string(raw, "label"))
+        units(string(raw, "label"))
     } else {
-        lines
-            .iter()
-            .map(|line| units(input, line))
-            .fold(0.0, f64::max)
+        lines.iter().map(|line| units(line)).fold(0.0, f64::max)
     }
-    .max(units(input, string(raw, "classification")));
+    .max(units(string(raw, "classification")));
     p(
         (34.0_f64.max(longest * 4.9 + 12.0) * 10.0 + 0.5).floor() / 10.0,
         16.0 + 11.0
@@ -27,7 +24,7 @@ pub(super) fn label_point(context: &Context<'_>, index: usize, points: &[Point])
         && !label_pinned(raw)
     {
         let middle = (points[0].y + points[1].y) / 2.0;
-        let size = size(context.input, raw, &[]);
+        let size = size(raw, &[]);
         let plate = |at: Point| Rect {
             x: at.x - size.x / 2.0,
             y: at.y - 11.0,
@@ -177,7 +174,7 @@ pub(super) fn initial(context: &mut Context<'_>) {
         .enumerate()
         .map(|(index, flow)| {
             let position = label_point(context, index, &flow.points);
-            let size = size(context.input, &flow.raw, &[]);
+            let size = size(&flow.raw, &[]);
             Plate {
                 label: labels::Label {
                     relation_index: index as isize,
@@ -195,9 +192,6 @@ pub(super) fn initial(context: &mut Context<'_>) {
         })
         .collect();
     context.labels = initial.clone();
-    if context.legacy() {
-        return;
-    }
     let occlusions: Vec<_> = initial
         .iter()
         .filter(|plate| {
@@ -611,7 +605,7 @@ fn wrap(context: &mut Context<'_>) {
             {
                 continue;
             }
-            let size = size(context.input, raw, &lines);
+            let size = size(raw, &lines);
             if size.x < rect.width {
                 shapes.push((lines, size));
             }
@@ -727,9 +721,6 @@ fn wrap(context: &mut Context<'_>) {
 }
 
 pub(super) fn settle(context: &mut Context<'_>) {
-    if context.legacy() {
-        return;
-    }
     if context.automatic_showcase {
         move_corridors(context);
         align_settled_ports(context);

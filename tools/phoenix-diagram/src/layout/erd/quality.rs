@@ -1,4 +1,4 @@
-// The shared relationship gates the frozen erd and class renderers run after
+// The shared relationship gates the Archify erd and class renderers run after
 // layout (geometry.mjs clean*Problems), as compile diagnostics.
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::geometry::composition::{

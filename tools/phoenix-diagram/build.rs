@@ -4,9 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// Embedded schemas and the five frozen legacy samples bind the native source
-// identity. Skill text, other examples, derived ENGINE.json and the npm package
-// version do not, so a script-only npm release can reuse an unchanged engine.
+// Embedded schemas bind the native source identity. Skill text, examples,
+// derived ENGINE.json and the npm package version do not, so a script-only npm
+// release can reuse an unchanged engine.
 const INPUTS: &[&str] = &[
     "tools/phoenix-diagram/Cargo.toml",
     "tools/phoenix-diagram/Cargo.lock",
@@ -14,14 +14,7 @@ const INPUTS: &[&str] = &[
     "tools/phoenix-diagram/src",
     "tools/phoenix-diagram/assets",
     "tools/phoenix-diagram/viewer",
-    "tools/phoenix-diagram/upstream/SOURCE.json",
-    "tools/phoenix-diagram/upstream/legacy-2.17/schemas",
     "skills/phoenix-diagram/schemas",
-    "skills/phoenix-diagram/examples/legacy.web-app.architecture.json",
-    "skills/phoenix-diagram/examples/legacy.agent-tool-call.workflow.json",
-    "skills/phoenix-diagram/examples/legacy.async-job-roundtrip.sequence.json",
-    "skills/phoenix-diagram/examples/legacy.product-analytics.dataflow.json",
-    "skills/phoenix-diagram/examples/legacy.deployment-release.lifecycle.json",
 ];
 
 fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {

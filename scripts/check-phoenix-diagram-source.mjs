@@ -5,21 +5,17 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const workspace = path.join(root, 'tools/phoenix-diagram');
-const upstreamRoot = path.join(workspace, 'upstream');
-const referenceSha256 = '4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395';
-const archiveSha256 = '6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4';
-const legacySha256 = '9b02b58082c1872f611fff050b225026e108ca53efa738da429965db9966d273';
-const legacyRevision = '4a65a1525f9ed03c775a0e18935901e1edbb773f';
+// These four identities are the only pins; checking never refreshes them from the
+// files they describe.
 export const brandSourceIdentity = {
   manifest: 'assets/brand-license-sources.json',
-  manifestSize: 4946,
-  manifestSha256: '375bdbf54d6584debb4bcc5bce1c9dcfdd581f977c9a8469113dbdf208f4c927',
-  catalog: { path: 'assets/brand-marks.json', size: 168010,
-    sha256: '9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33', count: 107 },
+  manifestSize: 4654,
+  manifestSha256: 'b093424c16d2e0483e3156cb3ba762d5b8229b20dab3efaea3666418ac6a86ea',
+  catalog: { path: 'assets/brand-marks.json', size: 167862,
+    sha256: '905be7402246ae3810ff349eabab78044d2dfe01f53402562819ef5177b555ed', count: 107 },
   licenseCount: 8,
   noticeCount: 2,
 };
@@ -76,15 +72,13 @@ const rustLicenseIdentity = {
       url: 'https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE' },
   ],
 };
-const referenceRoots = ['archify', 'viewer', 'scripts', 'test', 'package.json', 'package-lock.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md'];
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const canonical = value => Buffer.from(JSON.stringify(value), 'utf8');
-const comparePaths = (a, b) => Buffer.compare(Buffer.from(a[0]), Buffer.from(b[0]));
 
 function readFile(file, description) {
   try { return fs.readFileSync(file); }
   catch (error) {
-    if (error.code === 'ENOENT') throw new Error(`Missing ${description}: ${file}. Retrieve the pinned upstream bytes; do not replace the baseline.`);
+    if (error.code === 'ENOENT') throw new Error(`Missing ${description}: ${file}. Retrieve the pinned bytes; do not replace the baseline.`);
     throw error;
   }
 }
@@ -95,79 +89,7 @@ function safeRelative(name) {
   return name;
 }
 
-function treeManifest(directory, roots = fs.readdirSync(directory)) {
-  const rows = [];
-  const visit = relative => {
-    const file = path.join(directory, ...safeRelative(relative).split('/'));
-    if (fs.statSync(file).isDirectory()) {
-      for (const child of fs.readdirSync(file)) visit(`${relative}/${child}`);
-    } else {
-      const bytes = fs.readFileSync(file);
-      rows.push([relative, bytes.length, sha256(bytes)]);
-    }
-  };
-  for (const relative of roots) visit(relative);
-  return rows.sort(comparePaths);
-}
-
-function readManifest(upstream, name, expected, label) {
-  const bytes = readFile(path.join(upstream, name), `${label.toLowerCase()} manifest`);
-  const rows = JSON.parse(bytes);
-  if (!Array.isArray(rows) || !canonical(rows).equals(bytes) || sha256(bytes) !== expected) {
-    throw new Error(`${label} manifest is not the pinned canonical JSON`);
-  }
-  let previous;
-  for (const row of rows) {
-    if (!Array.isArray(row) || row.length !== 3 || typeof row[0] !== 'string'
-        || !Number.isSafeInteger(row[1]) || row[1] < 0 || !/^[a-f0-9]{64}$/.test(row[2])) throw new Error(`Invalid ${label.toLowerCase()} manifest row`);
-    safeRelative(row[0]);
-    if (previous && comparePaths(previous, row) >= 0) throw new Error(`Unsorted or duplicate ${label.toLowerCase()} manifest member`);
-    previous = row;
-  }
-  return rows;
-}
-
-// Reconstruct the file set from validated tar headers and exact member bytes;
-// checking never extracts into, repairs, or refreshes the source checkout.
-function archiveManifest(bytes) {
-  if (bytes.readUInt32LE(4) !== 0) throw new Error('Frozen reference gzip mtime must be zero');
-  const tar = gunzipSync(bytes, { maxOutputLength: 64 * 1024 * 1024 });
-  const rows = [], members = new Map(); let ended = false;
-  const field = (header, offset, size) => header.subarray(offset, offset + size).toString('utf8').replace(/\0.*$/s, '');
-  const octal = text => {
-    if (!/^[0-7]+$/.test(text.trim())) throw new Error('Invalid frozen tar number');
-    return Number.parseInt(text.trim(), 8);
-  };
-  for (let offset = 0; offset + 512 <= tar.length;) {
-    const header = tar.subarray(offset, offset + 512);
-    if (header.every(byte => byte === 0)) {
-      if (offset + 1024 > tar.length || tar.subarray(offset).some(byte => byte !== 0)) throw new Error('Invalid frozen tar footer');
-      ended = true; break;
-    }
-    const checksum = header.reduce((sum, byte, index) => sum + (index >= 148 && index < 156 ? 32 : byte), 0);
-    if (checksum !== octal(field(header, 148, 8))) throw new Error('Frozen tar header checksum differs');
-    const prefix = field(header, 345, 155);
-    const name = safeRelative(`${prefix ? prefix + '/' : ''}${field(header, 0, 100)}`);
-    if (field(header, 156, 1) !== '0' || field(header, 157, 100)
-        || field(header, 257, 6) !== 'ustar' || field(header, 263, 2) !== '00'
-        || octal(field(header, 100, 8)) !== 0o644 || octal(field(header, 108, 8)) !== 0
-        || octal(field(header, 116, 8)) !== 0 || octal(field(header, 136, 12)) !== 0
-        || field(header, 265, 32) || field(header, 297, 32)) throw new Error(`Frozen tar metadata differs: ${name}`);
-    if (members.has(name)) throw new Error(`Duplicate frozen tar member: ${name}`);
-    const size = octal(field(header, 124, 12)), next = offset + 512 + Math.ceil(size / 512) * 512;
-    if (next > tar.length) throw new Error(`Truncated frozen tar member: ${name}`);
-    const content = tar.subarray(offset + 512, offset + 512 + size);
-    rows.push([name, size, sha256(content)]); members.set(name, content); offset = next;
-  }
-  if (!ended || !rows.length) throw new Error('Missing frozen tar footer or members');
-  return { rows: rows.sort(comparePaths), members };
-}
-
-function verifyNativeTextSources(upstream, identity) {
-  if (!Object.entries(nativeTextIdentity).every(([key, value]) => identity?.[key] === value)) {
-    throw new Error('Frozen native text identity differs from the pinned baseline');
-  }
-  const project = path.resolve(upstream, '..');
+function verifyNativeTextSources(project) {
   const manifestPath = path.join(project, nativeTextIdentity.manifest);
   const bytes = readFile(manifestPath, 'native text manifest');
   if (bytes.length !== nativeTextIdentity.manifestSize || sha256(bytes) !== nativeTextIdentity.manifestSha256) {
@@ -202,11 +124,7 @@ function verifyNativeTextSources(upstream, identity) {
     licenseSpdx: nativeTextIdentity.licenseSpdx, modification: manifest.modification };
 }
 
-function verifyNativeTimeSources(upstream, identity) {
-  if (!Object.entries(nativeTimeIdentity).every(([key, value]) => identity?.[key] === value)) {
-    throw new Error('Frozen native time identity differs from the pinned baseline');
-  }
-  const project = path.resolve(upstream, '..');
+function verifyNativeTimeSources(project) {
   const manifestPath = path.join(project, nativeTimeIdentity.manifest);
   const bytes = readFile(manifestPath, 'native time manifest');
   if (bytes.length !== nativeTimeIdentity.manifestSize || sha256(bytes) !== nativeTimeIdentity.manifestSha256) {
@@ -235,11 +153,8 @@ function verifyNativeTimeSources(upstream, identity) {
     licenseSpdx: nativeTimeIdentity.licenseSpdx, modification: manifest.modification };
 }
 
-export function verifyRustLicenseSources({ project = workspace, identity } = {}) {
-  if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'Rust license source identity')).rustLicenses;
-  if (!identity || !canonical(identity).equals(canonical(rustLicenseIdentity))) {
-    throw new Error('Frozen Rust license source identity differs from the pinned baseline');
-  }
+export function verifyRustLicenseSources({ project = workspace } = {}) {
+  const identity = rustLicenseIdentity;
   const bytes = readFile(path.join(project, identity.manifest), 'Rust license source manifest');
   if (bytes.length !== identity.manifestSize || sha256(bytes) !== identity.manifestSha256) {
     throw new Error('Rust license source manifest differs from the pinned source bytes');
@@ -306,62 +221,20 @@ export function readBrandLicenseSources({ project = workspace } = {}) {
   return { manifest, manifestBytes, catalog: JSON.parse(catalogBytes), files };
 }
 
-export function verifyBrandLicenseSources({ project = workspace, identity, referenceMembers } = {}) {
-  if (identity === undefined) identity = JSON.parse(readFile(path.join(project, 'upstream/SOURCE.json'), 'brand source identity')).nativeBrands;
-  if (JSON.stringify(identity) !== JSON.stringify(brandSourceIdentity)) throw new Error('Frozen brand source identity differs from the pinned baseline');
+export function verifyBrandLicenseSources({ project = workspace } = {}) {
   const { manifest, catalog } = readBrandLicenseSources({ project });
-  if (!referenceMembers) {
-    const archive = readFile(path.join(project, 'upstream/archify-3.1.0-source.tar.gz'), 'brand reference archive');
-    if (sha256(archive) !== archiveSha256) throw new Error('Brand reference archive differs');
-    referenceMembers = archiveManifest(archive).members;
+  if (catalog.marks.length !== brandSourceIdentity.catalog.count || !canonical(catalog.source).equals(canonical(manifest.reference))) {
+    throw new Error('Native brand catalog differs from its recorded source');
   }
-  const original = referenceMembers.get(manifest.reference.path);
-  if (!original || sha256(original) !== manifest.reference.sha256) throw new Error('Original brand catalog source differs');
-  const array = /export const BRAND_MARKS = Object\.freeze\(([\s\S]*)\);\s*$/.exec(original.toString('utf8'))?.[1];
-  if (!array || !canonical(JSON.parse(array)).equals(canonical(catalog.marks)) || catalog.marks.length !== identity.catalog.count
-      || !canonical(catalog.source).equals(canonical(manifest.reference))) throw new Error('Native brand catalog differs from the frozen original');
-  const notice = readFile(path.join(project, 'assets', manifest.notices[0].path), 'original brand notice');
-  if (!notice.equals(referenceMembers.get(manifest.reference.noticeSourcePath))) throw new Error('Original brand notice differs from the frozen archive');
   return structuredClone(brandSourceIdentity);
 }
 
-export function verifyFrozenSources({ upstream = upstreamRoot, localReference = path.join(root, 'local/archify-main') } = {}) {
-  const source = JSON.parse(readFile(path.join(upstream, 'SOURCE.json'), 'source identity'));
-  if (source.schemaVersion !== 1 || source.reference?.contentSha256 !== referenceSha256
-      || source.reference.archiveSha256 !== archiveSha256 || source.reference.archiveSize !== 5372910
-      || source.reference.archive !== 'archify-3.1.0-source.tar.gz' || source.reference.manifest !== 'archify-3.1.0-manifest.json'
-      || source.reference.fileCount !== 498 || JSON.stringify(source.reference.roots) !== JSON.stringify(referenceRoots)
-      || source.legacy?.revision !== legacyRevision || source.legacy.contentSha256 !== legacySha256
-      || source.legacy.directory !== 'legacy-2.17' || source.legacy.manifest !== 'legacy-2.17-manifest.json'
-      || source.legacy.fileCount !== 70) throw new Error('Frozen source identity differs from the pinned baseline');
-  const reference = readManifest(upstream, source.reference.manifest, referenceSha256, 'Reference');
-  const archive = readFile(path.join(upstream, source.reference.archive), 'frozen reference archive');
-  if (archive.length !== source.reference.archiveSize || sha256(archive) !== archiveSha256) throw new Error('Frozen reference archive size/SHA-256 differs');
-  const recovered = archiveManifest(archive);
-  if (!canonical(recovered.rows).equals(canonical(reference))) throw new Error('Restored reference differs from the frozen source manifest');
-  const legacy = readManifest(upstream, source.legacy.manifest, legacySha256, 'Legacy');
-  if (!canonical(treeManifest(path.join(upstream, source.legacy.directory))).equals(canonical(legacy))) throw new Error('Frozen legacy tree differs from its source manifest');
-  for (const [name, member] of [['LICENSE-archify-MIT.txt', 'LICENSE'], ['JetBrainsMono-OFL.txt', 'archify/assets/JetBrainsMono-OFL.txt']]) {
-    if (!readFile(path.join(upstream, name), 'frozen license').equals(recovered.members.get(member))) throw new Error(`Frozen license differs: ${name}`);
-  }
-  const nativeText = verifyNativeTextSources(upstream, source.nativeText);
-  const nativeTime = verifyNativeTimeSources(upstream, source.nativeTime);
-  const rustLicenses = verifyRustLicenseSources({ project: path.resolve(upstream, '..'), identity: source.rustLicenses });
-  const nativeBrands = verifyBrandLicenseSources({ project: path.resolve(upstream, '..'), identity: source.nativeBrands, referenceMembers: recovered.members });
-  let localStatus = 'absent; archive is authoritative';
-  if (localReference && fs.existsSync(localReference)) {
-    try {
-      if (!canonical(treeManifest(localReference, referenceRoots)).equals(canonical(reference))) throw new Error('Content differs');
-    } catch (error) { throw new Error(`Local reference differs from frozen source: ${error.message}`); }
-    localStatus = 'matches frozen archive';
-  }
+export function verifySources({ project = workspace } = {}) {
   return {
-    reference: { contentSha256: referenceSha256, archiveSha256, fileCount: recovered.rows.length, localStatus },
-    legacy: { revision: legacyRevision, contentSha256: legacySha256, fileCount: legacy.length },
-    nativeText,
-    nativeTime,
-    rustLicenses,
-    nativeBrands,
+    nativeText: verifyNativeTextSources(project),
+    nativeTime: verifyNativeTimeSources(project),
+    rustLicenses: verifyRustLicenseSources({ project }),
+    nativeBrands: verifyBrandLicenseSources({ project }),
   };
 }
 
@@ -476,7 +349,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error('Usage: node scripts/check-phoenix-diagram-source.mjs --check'); process.exitCode = 2;
   } else {
     try {
-      const sources = verifyFrozenSources(), prepared = preflight();
+      const sources = verifySources(), prepared = preflight();
       const tools = { versions: prepared.versions, host: prepared.host, cargo: prepared.cargo, dependencies: prepared.dependencies };
       console.log(JSON.stringify({ status: 'verified', sources, tools }, null, 2));
     } catch (error) { console.error(error.message); process.exitCode = 1; }

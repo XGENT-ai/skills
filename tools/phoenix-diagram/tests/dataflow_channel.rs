@@ -50,9 +50,9 @@ struct Rendered {
 }
 
 /// Compile, render and check the actual HTML, then read the drawn geometry.
-fn rendered(source: &[u8], contract: InputContract) -> Rendered {
+fn rendered(source: &[u8]) -> Rendered {
     let options = CompileOptions {
-        input_contract: Some(contract),
+        input_contract: Some(InputContract::PhoenixV1),
         ..Default::default()
     };
     let input = parse_input(source, DiagramType::Dataflow, &options).unwrap();
@@ -202,24 +202,9 @@ fn assert_channel_attached(rendered: &Rendered, label: &str, face: &str, context
 
 #[test]
 fn reference_bottom_channel_enters_the_target_through_its_bottom_face() {
-    for (contract, source) in [
-        (
-            InputContract::PhoenixV1,
-            include_str!("fixtures/input/phoenix-v1/event-stream.dataflow.json"),
-        ),
-        (
-            InputContract::Legacy217,
-            include_str!("fixtures/input/legacy-2.17/event-stream.dataflow.json"),
-        ),
-    ] {
-        let rendered = rendered(source.as_bytes(), contract);
-        assert_channel_attached(
-            &rendered,
-            "poison event",
-            "bottom",
-            &format!("{contract:?}/event-stream"),
-        );
-    }
+    let source = include_str!("fixtures/input/phoenix-v1/event-stream.dataflow.json");
+    let rendered = rendered(source.as_bytes());
+    assert_channel_attached(&rendered, "poison event", "bottom", "event-stream");
 }
 
 #[test]
@@ -246,19 +231,17 @@ fn inferred_channel_sides_face_the_authored_channel_row() {
                 ],
                 "flows": [flow]
             });
-            for contract in [InputContract::PhoenixV1, InputContract::Legacy217] {
-                let rendered = rendered(&serde_json::to_vec(&document).unwrap(), contract);
-                let context = format!("{contract:?}/{route}/channelY={channel_y:?}");
-                assert_channel_attached(&rendered, "payload", face, &context);
-                if let Some(y) = channel_y {
-                    let points = &rendered.edges[0].points;
-                    assert!(
-                        points[1..points.len() - 1]
-                            .iter()
-                            .all(|point| (point.y - y as f64).abs() < EPSILON),
-                        "{context}: authored channelY must stay the channel row: {points:?}"
-                    );
-                }
+            let rendered = rendered(&serde_json::to_vec(&document).unwrap());
+            let context = format!("{route}/channelY={channel_y:?}");
+            assert_channel_attached(&rendered, "payload", face, &context);
+            if let Some(y) = channel_y {
+                let points = &rendered.edges[0].points;
+                assert!(
+                    points[1..points.len() - 1]
+                        .iter()
+                        .all(|point| (point.y - y as f64).abs() < EPSILON),
+                    "{context}: authored channelY must stay the channel row: {points:?}"
+                );
             }
         }
     }

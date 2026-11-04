@@ -1,5 +1,4 @@
 use phoenix_diagram::geometry::*;
-use phoenix_diagram::input::InputContract;
 use serde_json::json;
 
 fn p(x: f64, y: f64) -> Point {
@@ -7,14 +6,10 @@ fn p(x: f64, y: f64) -> Point {
 }
 
 #[test]
-fn unicode_units_preserve_both_contracts_and_scalar_order() {
+fn unicode_units_preserve_scalar_order() {
     assert_eq!(text_units("A中🦀"), 5.0);
     assert_eq!(text_units("ｶﾀｶﾅ"), 4.0);
     assert_eq!(text_units("⌚\u{fe0e}"), 2.0);
-    assert_eq!(
-        text_units_for_contract("⌚\u{fe0e}", InputContract::Legacy217),
-        1.0
-    );
     assert_eq!(text_units("A\u{fe0f}"), 2.0);
     assert_eq!(text_units("\u{fe00}"), 0.0);
     assert_eq!(text_units("👨‍👩‍👧"), 8.0);
@@ -33,7 +28,7 @@ fn text_fitting_respects_readable_floor_and_tenth_pixel_quantization() {
 }
 
 #[test]
-fn overlap_keeps_exact_legacy_comparisons_and_reference_clearance_tolerance() {
+fn overlap_keeps_reference_clearance_tolerance() {
     let a = Rect {
         x: 793.6,
         y: 0.0,
@@ -46,12 +41,6 @@ fn overlap_keeps_exact_legacy_comparisons_and_reference_clearance_tolerance() {
         width: 160.0,
         height: 30.0,
     };
-    assert!(rects_overlap_for_contract(
-        &a,
-        &b,
-        8.0,
-        InputContract::Legacy217
-    ));
     assert!(!rects_overlap(&a, &b, 8.0));
     assert!(rects_overlap(&a, &Rect { x: 960.0, ..b }, 8.0));
     assert!(!rects_overlap(&a, &Rect { x: f64::NAN, ..b }, 8.0));

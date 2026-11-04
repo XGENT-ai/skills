@@ -1,4 +1,4 @@
-// Banded grid placement ported from the frozen renderers/erd/grid.mjs. It is not
+// Banded grid placement derived from Archify renderers/erd/grid.mjs (MIT). It is not
 // auto-layout: column widths and row band heights are measured from the boxes
 // the author declares, so the same document always produces the same coordinates.
 use crate::scene::Point;

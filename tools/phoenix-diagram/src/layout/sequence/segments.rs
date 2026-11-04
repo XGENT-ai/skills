@@ -16,11 +16,7 @@ pub(super) fn occupants(layout: &Layout<'_>) -> Vec<Occupant> {
             (
                 "note",
                 "note",
-                if layout.legacy {
-                    None
-                } else {
-                    layout.notes[index].as_ref().and_then(notes::Note::rect)
-                },
+                layout.notes[index].as_ref().and_then(notes::Note::rect),
             ),
         ] {
             if let Some(bounds) = bounds {
@@ -76,7 +72,7 @@ fn legacy_label(layout: &Layout<'_>, segment: &Value, identity: Option<usize>) -
         }
         bounds.y -= 22.0;
     }
-    if layout.legacy || !misplaced(layout, &bounds, segment, identity) {
+    if !misplaced(layout, &bounds, segment, identity) {
         return bounds;
     }
     let other_titles: Vec<_> = list(&layout.document["segments"])
@@ -115,9 +111,6 @@ fn legacy_label(layout: &Layout<'_>, segment: &Value, identity: Option<usize>) -
 // the original segment is then another phase, rather than the cloned value.
 pub(super) fn label(layout: &Layout<'_>, segment: &Value, identity: Option<usize>) -> Rect {
     let bounds = legacy_label(layout, segment, identity);
-    if layout.legacy {
-        return bounds;
-    }
     let headers: Vec<_> = (0..layout.centers.len())
         .map(|index| layout.participant_bounds(index))
         .collect();

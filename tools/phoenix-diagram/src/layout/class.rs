@@ -1,4 +1,4 @@
-// Class and interface layout ported from the frozen renderers/class/render-class.mjs:
+// Class and interface layout derived from Archify renderers/class/render-class.mjs (MIT):
 // measured types on the erd banded grid → hierarchy buses → routes → labels →
 // canvas and legend.
 use crate::diagnostic::Diagnostics;
@@ -9,7 +9,7 @@ use crate::geometry::{
     labels as shared_labels, proper_segment_intersection, rects_overlap, segment_intersects_rect,
     text_units,
 };
-use crate::input::{CompileOptions, DiagramInput, InputContract, Quality};
+use crate::input::{CompileOptions, DiagramInput, Quality};
 use crate::layout::erd::grid::{self, Cell, Grid};
 use crate::layout::erd::quality::{diagnostic, Gate, Routed};
 use crate::layout::erd::{self, js_round, legend, text};
@@ -559,14 +559,7 @@ pub fn compile(
             label_reservations: false,
             ..RouterOptions::default()
         };
-        let routes = router::route_with(
-            &nodes,
-            &edges,
-            &[],
-            InputContract::PhoenixV1,
-            false,
-            options,
-        );
+        let routes = router::route_with(&nodes, &edges, &[], false, options);
         if bus.is_empty() {
             break (edges, routes, options);
         }

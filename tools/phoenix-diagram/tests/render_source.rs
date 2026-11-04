@@ -9,13 +9,9 @@ use serde_json::Value;
 
 const TEMPLATE: &str = r#"<!doctype html><html lang="{{PHOENIX:LOCALE}}" data-preset="{{PHOENIX:PRESET}}"><head><meta charset="utf-8"><title>{{PHOENIX:TITLE}}</title></head><body><h1>{{PHOENIX:HEADING}}</h1>{{PHOENIX:SUBTITLE}}<div class="diagram-container">{{PHOENIX:SVG}}</div>{{PHOENIX:CARDS}}<script id="phoenix-diagram-metadata" type="application/json">{{PHOENIX:METADATA}}</script></body></html>"#;
 
-fn inspect(document: &Value, kind: DiagramType, contract: &str, quality: Quality) -> Vec<String> {
+fn inspect(document: &Value, kind: DiagramType, quality: Quality) -> Vec<String> {
     let options = CompileOptions {
-        input_contract: Some(if contract == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        }),
+        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(quality),
         ..Default::default()
     };
@@ -37,23 +33,17 @@ fn compiled_architecture_svgs_pass_the_independent_artifact_checks() {
         serde_json::from_str(include_str!("fixtures/architecture/oracle.json")).unwrap();
     let mut failures = Vec::new();
     for case in oracle["cases"].as_array().unwrap() {
-        for contract in ["legacy-2.17", "phoenix-v1"] {
-            if case["oracles"][contract]["success"] != true {
-                continue;
-            }
-            let quality = if case["input"]["meta"]["quality_profile"] == "showcase" {
-                Quality::Showcase
-            } else {
-                Quality::Standard
-            };
-            let errors = inspect(&case["input"], DiagramType::Architecture, contract, quality);
-            if !errors.is_empty() {
-                failures.push(format!(
-                    "{contract}/{}: {}",
-                    case["name"],
-                    errors.join("; ")
-                ));
-            }
+        if case["oracles"]["phoenix-v1"]["success"] != true {
+            continue;
+        }
+        let quality = if case["input"]["meta"]["quality_profile"] == "showcase" {
+            Quality::Showcase
+        } else {
+            Quality::Standard
+        };
+        let errors = inspect(&case["input"], DiagramType::Architecture, quality);
+        if !errors.is_empty() {
+            failures.push(format!("{}: {}", case["name"], errors.join("; ")));
         }
     }
     assert!(
@@ -78,12 +68,7 @@ fn compiled_workflow_svgs_pass_the_independent_artifact_checks() {
         } else {
             Quality::Standard
         };
-        let errors = inspect(
-            &case["document"],
-            DiagramType::Workflow,
-            case["contract"].as_str().unwrap(),
-            quality,
-        );
+        let errors = inspect(&case["document"], DiagramType::Workflow, quality);
         if !errors.is_empty() {
             failures.push(format!(
                 "{}/{}: {}",
@@ -119,18 +104,13 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
         .iter()
         .filter(|c| c["ok"] == true)
     {
-        let contract = if case["contract"] == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        };
         let quality = if case["quality"] == "showcase" {
             Quality::Showcase
         } else {
             Quality::Standard
         };
         let options = CompileOptions {
-            input_contract: Some(contract),
+            input_contract: Some(InputContract::PhoenixV1),
             quality: Some(quality),
             ..Default::default()
         };
@@ -144,8 +124,7 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
         let html = render(&scene, &EmbeddedAssets { template: TEMPLATE }).unwrap();
         let dom = Html::parse_document(std::str::from_utf8(&html).unwrap());
         let key = format!("{}/{}", case["contract"], case["name"]);
-        let repaired_footer = contract == InputContract::PhoenixV1
-            && case["name"] == "production-deployment.architecture";
+        let repaired_footer = case["name"] == "production-deployment.architecture";
         for expected in case["geometry"]["texts"].as_array().unwrap() {
             let is_legend_text = expected["content"] == "Legend"
                 || case["geometry"]["legends"]
@@ -273,31 +252,29 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
 #[test]
 fn architecture_default_showcase_enforces_the_same_geometry_as_persisted_showcase() {
     let document = serde_json::json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Ownership","output":"architecture.html","legend":{"mode":"hidden"}},"components":[{"id":"a","type":"backend","label":"A","pos":[80,120]},{"id":"b","type":"backend","label":"B","pos":[240,120]},{"id":"c","type":"database","label":"C","pos":[400,120]}],"connections":[],"boundaries":[{"kind":"region","label":"Owned","wraps":["a","c"]}]});
-    for contract in [InputContract::Legacy217, InputContract::PhoenixV1] {
-        let options = CompileOptions {
-            input_contract: Some(contract),
-            ..Default::default()
-        };
-        let parsed = parse_input(
-            &serde_json::to_vec(&document).unwrap(),
-            DiagramType::Architecture,
-            &options,
-        )
-        .unwrap();
-        let default = layout::compile(&parsed, &options);
-        let mut marked = document.clone();
-        marked["meta"]["quality_profile"] = serde_json::json!("showcase");
-        let parsed = parse_input(
-            &serde_json::to_vec(&marked).unwrap(),
-            DiagramType::Architecture,
-            &options,
-        )
-        .unwrap();
-        let persisted = layout::compile(&parsed, &options);
-        assert_eq!(
-            default.is_ok(),
-            persisted.is_ok(),
-            "{contract:?}: default bypassed showcase geometry gates"
-        );
-    }
+    let options = CompileOptions {
+        input_contract: Some(InputContract::PhoenixV1),
+        ..Default::default()
+    };
+    let parsed = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Architecture,
+        &options,
+    )
+    .unwrap();
+    let default = layout::compile(&parsed, &options);
+    let mut marked = document.clone();
+    marked["meta"]["quality_profile"] = serde_json::json!("showcase");
+    let parsed = parse_input(
+        &serde_json::to_vec(&marked).unwrap(),
+        DiagramType::Architecture,
+        &options,
+    )
+    .unwrap();
+    let persisted = layout::compile(&parsed, &options);
+    assert_eq!(
+        default.is_ok(),
+        persisted.is_ok(),
+        "default bypassed showcase geometry gates"
+    );
 }

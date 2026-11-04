@@ -1,5 +1,5 @@
-// Shared comparison of a rendered Phoenix SVG with an element list captured
-// from the frozen renderer (tests/fixtures/{erd,class}/generate.mjs).
+// Shared comparison of a rendered Phoenix SVG with a recorded element list
+// (tests/fixtures/{erd,class}/oracle.json, a fixed regression baseline).
 #![allow(dead_code)]
 
 use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};

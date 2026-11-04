@@ -1,5 +1,5 @@
 use super::*;
-use crate::geometry::{rects_overlap_for_contract, segment_rect_clearance};
+use crate::geometry::{rects_overlap, segment_rect_clearance};
 use std::cmp::Ordering;
 
 #[derive(Clone)]
@@ -157,11 +157,11 @@ fn cy(state: &State) -> f64 {
 fn has_label(edge: &Edge) -> bool {
     !string(&edge.raw, "label").is_empty() || !string(&edge.raw, "note").is_empty()
 }
-fn label_box(input: &DiagramInput, edge: &Edge) -> (f64, f64) {
+fn label_box(edge: &Edge) -> (f64, f64) {
     let label = string(&edge.raw, "label");
     let note = string(&edge.raw, "note");
     (
-        ((units(input, label) * 10.0 * 0.6).max(units(input, note) * 9.0 * 0.6) + 12.0).ceil(),
+        ((units(label) * 10.0 * 0.6).max(units(note) * 9.0 * 0.6) + 12.0).ceil(),
         if !label.is_empty() && !note.is_empty() {
             28.0
         } else {
@@ -179,22 +179,22 @@ fn variant(model: &Model, index: usize) -> &str {
             "default"
         })
 }
-fn preferred_width(input: &DiagramInput, raw: &Value) -> f64 {
+fn preferred_width(raw: &Value) -> f64 {
     let need = |value: &str, font: f64| {
         if value.is_empty() {
             0.0
         } else {
-            units(input, value) * font * 0.6 + 44.0
+            units(value) * font * 0.6 + 44.0
         }
     };
     let step = string(raw, "step");
     let left = 19.0_f64.max(if step.is_empty() {
         0.0
     } else {
-        26.0 + units(input, step) * 8.0 * 0.6
+        26.0 + units(step) * 8.0 * 0.6
     });
     // Text units count string scalars; fixed coefficients keep widths finite.
-    (units(input, string(raw, "label")) * 12.0 * 0.6
+    (units(string(raw, "label")) * 12.0 * 0.6
         + left
         + 8.0
         + if raw.get("brand").is_some() {
@@ -220,7 +220,7 @@ impl Model {
                 bounds: Rect {
                     x: 0.0,
                     y: 0.0,
-                    width: preferred_width(input, raw),
+                    width: preferred_width(raw),
                     height: 64.0,
                 },
             })
@@ -284,7 +284,7 @@ impl Model {
         }
         for (index, state) in states.iter().enumerate() {
             for (field, minimum) in [("label", 10.0), ("sublabel", 8.0), ("tag", 7.0)] {
-                let needed = (units(input, string(&state.raw, field)) * minimum * 0.6).ceil();
+                let needed = (units(string(&state.raw, field)) * minimum * 0.6).ceil();
                 if needed > 212.0 {
                     errors.push(failure(
                         "lifecycle/state-text-too-long",
@@ -317,7 +317,7 @@ impl Model {
             .map(|(index, _)| {
                 spine_edges[index].map_or(0.0, |edge| {
                     if has_label(&edges[edge]) {
-                        label_box(input, &edges[edge]).0
+                        label_box(&edges[edge]).0
                     } else {
                         0.0
                     }
@@ -548,13 +548,7 @@ fn assign_arcs(model: &Model) -> Vec<Arc> {
     arcs
 }
 
-fn gap_between(
-    model: &Model,
-    input: &DiagramInput,
-    left: usize,
-    right: usize,
-    row_gap: f64,
-) -> f64 {
+fn gap_between(model: &Model, left: usize, right: usize, row_gap: f64) -> f64 {
     model
         .edges
         .iter()
@@ -563,7 +557,7 @@ fn gap_between(
                 && ((edge.from == left && edge.to == right)
                     || (edge.from == right && edge.to == left))
         })
-        .map(|edge| label_box(input, edge).0 + 32.0)
+        .map(|edge| label_box(edge).0 + 32.0)
         .fold(row_gap, f64::max)
 }
 #[derive(Clone)]
@@ -573,12 +567,7 @@ struct Block {
     weight: f64,
     order: usize,
 }
-fn arrange(
-    model: &Model,
-    input: &DiagramInput,
-    blocks: &[Block],
-    gap: f64,
-) -> (f64, Vec<f64>, Vec<(usize, f64)>) {
+fn arrange(model: &Model, blocks: &[Block], gap: f64) -> (f64, Vec<f64>, Vec<(usize, f64)>) {
     let mut offsets = vec![];
     let mut positions = vec![];
     let mut x = 0.0;
@@ -587,7 +576,7 @@ fn arrange(
         let start = x;
         for &member in &block.members {
             if let Some(previous) = previous {
-                x += gap_between(model, input, previous, member, gap);
+                x += gap_between(model, previous, member, gap);
             }
             positions.push((member, x));
             x += model.states[member].bounds.width;
@@ -602,8 +591,8 @@ fn arrange(
         positions,
     )
 }
-fn centre(model: &Model, input: &DiagramInput, blocks: &[Block], gap: f64) -> (f64, f64) {
-    let (width, offsets, _) = arrange(model, input, blocks, gap);
+fn centre(model: &Model, blocks: &[Block], gap: f64) -> (f64, f64) {
+    let (width, offsets, _) = arrange(model, blocks, gap);
     let weight: f64 = blocks.iter().map(|b| b.weight).sum();
     (
         width,
@@ -615,7 +604,7 @@ fn centre(model: &Model, input: &DiagramInput, blocks: &[Block], gap: f64) -> (f
             / weight,
     )
 }
-fn place_row(model: &mut Model, input: &DiagramInput, row: usize, gap: f64) {
+fn place_row(model: &mut Model, row: usize, gap: f64) {
     let members = model.rows[row].clone();
     let mut ideals = vec![None; model.states.len()];
     for &state in &members {
@@ -695,13 +684,12 @@ fn place_row(model: &mut Model, input: &DiagramInput, row: usize, gap: f64) {
         while clusters.len() > 1 {
             let last = &clusters[clusters.len() - 1];
             let previous = &clusters[clusters.len() - 2];
-            let (aw, ax) = centre(model, input, previous, gap);
-            let (bw, bx) = centre(model, input, last, gap);
+            let (aw, ax) = centre(model, previous, gap);
+            let (bw, bx) = centre(model, last, gap);
             if ax
                 + aw / 2.0
                 + gap_between(
                     model,
-                    input,
                     *previous.last().unwrap().members.last().unwrap(),
                     last[0].members[0],
                     gap,
@@ -715,8 +703,8 @@ fn place_row(model: &mut Model, input: &DiagramInput, row: usize, gap: f64) {
         }
     }
     for cluster in clusters {
-        let (width, x) = centre(model, input, &cluster, gap);
-        let (_, _, positions) = arrange(model, input, &cluster, gap);
+        let (width, x) = centre(model, &cluster, gap);
+        let (_, _, positions) = arrange(model, &cluster, gap);
         for (state, offset) in positions {
             model.states[state].bounds.x = x - width / 2.0 + offset;
         }
@@ -1144,12 +1132,7 @@ fn route_cost(geometry: &Geometry) -> f64 {
     cost
 }
 
-fn layout(
-    model: &mut Model,
-    input: &DiagramInput,
-    spacing: Spacing,
-    even: bool,
-) -> Result<Geometry, Diagnostics> {
+fn layout(model: &mut Model, spacing: Spacing, even: bool) -> Result<Geometry, Diagnostics> {
     let mut cursor = 56.0;
     for (index, &state) in model.main.iter().enumerate() {
         model.states[state].bounds.x = cursor;
@@ -1159,7 +1142,7 @@ fn layout(
                 .max(model.minimum_gaps.get(index).copied().unwrap_or(26.0));
     }
     for row in 1..model.rows.len() {
-        place_row(model, input, row, spacing.row);
+        place_row(model, row, spacing.row);
     }
     let dx = 56.0
         - model
@@ -1316,7 +1299,7 @@ fn layout(
                 .iter()
                 .map(|&i| {
                     if has_label(&model.edges[i]) {
-                        label_box(input, &model.edges[i]).1
+                        label_box(&model.edges[i]).1
                     } else {
                         0.0
                     }
@@ -1702,7 +1685,7 @@ fn layout(
             );
         }
     }
-    place_labels(model, input, &mut geometry);
+    place_labels(model, &mut geometry);
     Ok(geometry)
 }
 
@@ -1719,7 +1702,7 @@ fn siblings(model: &Model, geometry: &Geometry, edge: usize) -> Vec<usize> {
         vec![edge]
     }
 }
-fn place_labels(model: &Model, input: &DiagramInput, geometry: &mut Geometry) {
+fn place_labels(model: &Model, geometry: &mut Geometry) {
     let state_right = model
         .states
         .iter()
@@ -1733,7 +1716,7 @@ fn place_labels(model: &Model, input: &DiagramInput, geometry: &mut Geometry) {
         if route.label_mode == LabelMode::None || !has_label(edge) {
             continue;
         }
-        let (width, height) = label_box(input, edge);
+        let (width, height) = label_box(edge);
         let start = route.points[route.segment];
         let end = route.points[route.segment + 1];
         let mut candidates = vec![];
@@ -1797,12 +1780,11 @@ fn place_labels(model: &Model, input: &DiagramInput, geometry: &mut Geometry) {
             rect.x >= 8.0
                 && rect.x + rect.width <= state_right + 48.0
                 && rect.y >= 4.0
-                && model.states.iter().all(|s| {
-                    !rects_overlap_for_contract(rect, &s.bounds, 4.0, input.input_contract)
-                })
-                && placed.iter().all(|other| {
-                    !rects_overlap_for_contract(rect, other, 4.0, input.input_contract)
-                })
+                && model
+                    .states
+                    .iter()
+                    .all(|s| !rects_overlap(rect, &s.bounds, 4.0))
+                && placed.iter().all(|other| !rects_overlap(rect, other, 4.0))
                 && model.edges.iter().enumerate().all(|(other, _)| {
                     siblings.contains(&other)
                         || geometry.routes[other]
@@ -1859,7 +1841,6 @@ pub(super) fn compile(
     let smallest = model.states.iter().fold(10.0_f64, |smallest, state| {
         smallest
             .min(font(
-                input,
                 string(&state.raw, "label"),
                 state.bounds.width,
                 12.0,
@@ -1868,13 +1849,7 @@ pub(super) fn compile(
             .min(if string(&state.raw, "sublabel").is_empty() {
                 f64::INFINITY
             } else {
-                font(
-                    input,
-                    string(&state.raw, "sublabel"),
-                    state.bounds.width,
-                    9.0,
-                    8.0,
-                )
+                font(string(&state.raw, "sublabel"), state.bounds.width, 9.0, 8.0)
             })
     });
     let budget = (930.0 * smallest / 6.0).floor();
@@ -1892,8 +1867,8 @@ pub(super) fn compile(
     let mut geometry = Geometry::default();
     let mut wideners = vec![];
     for round in 0..5 {
-        let partner = layout(&mut model, input, spacing, false)?;
-        let even = layout(&mut model, input, spacing, true)?;
+        let partner = layout(&mut model, spacing, false)?;
+        let even = layout(&mut model, spacing, true)?;
         let partner_placed = partner.unplaced.is_empty();
         let even_placed = even.unplaced.is_empty();
         let choose_even =
@@ -1901,7 +1876,7 @@ pub(super) fn compile(
         geometry = if choose_even {
             even.clone()
         } else {
-            layout(&mut model, input, spacing, false)?
+            layout(&mut model, spacing, false)?
         };
         if partner_placed || even_placed {
             break;
@@ -1951,10 +1926,10 @@ pub(super) fn compile(
         let lf = if raw.get("brand").is_some() {
             12.0
         } else {
-            font(input, label, r.width, 12.0, 10.0)
+            font(label, r.width, 12.0, 10.0)
         };
-        let sf = font(input, sub, r.width, 9.0, 8.0);
-        let tf = font(input, tag, r.width, 8.0, 7.0);
+        let sf = font(sub, r.width, 9.0, 8.0);
+        let tf = font(tag, r.width, 8.0, 7.0);
         let (label_y, sub_y, tag_y) = if !sub.is_empty() && !tag.is_empty() {
             (23.0, 40.0, 55.0)
         } else if !sub.is_empty() {
@@ -1973,7 +1948,7 @@ pub(super) fn compile(
             rows.push((tag_y + offset, tf));
         }
         let (x, ys, sigil_y, sigil_size) =
-            presentation::node_text_layout(label, lf, r.width, r.height, &rows, step, input);
+            presentation::node_text_layout(label, lf, r.width, r.height, &rows, step);
         let mut texts = vec![];
         if !step.is_empty() {
             texts.push(text(

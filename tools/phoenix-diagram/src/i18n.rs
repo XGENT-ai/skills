@@ -1,4 +1,4 @@
-// Catalog selection ported from the frozen Archify 3.1.0 renderers/shared/i18n.mjs.
+// Catalog selection derived from Archify 3.1.0 renderers/shared/i18n.mjs (MIT); see NOTICE.md.
 // The assembler writes the one normalized catalog file the Reader also embeds.
 use serde_json::{Map, Value};
 use std::collections::{BTreeSet, HashMap};

@@ -1,37 +1,7 @@
 use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract};
 use phoenix_diagram::layout::compile;
-use serde_json::json;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-
-#[test]
-fn lifecycle_legacy_keeps_the_three_bands_and_actual_transition_direction() {
-    let document = json!({"schema_version":1,"diagram_type":"lifecycle","meta":{"title":"Legacy bands","output":"lifecycle.html","quality_profile":"standard"},
-        "lanes":[{"id":"main","label":"Main"},{"id":"wait","label":"Wait"},{"id":"terminal","label":"End"}],
-        "states":[{"id":"a","type":"start","label":"A","lane":"main","col":0.0},
-            {"id":"b","type":"waiting","label":"B","lane":"wait","col":0.0,"yOffset":10},
-            {"id":"c","type":"success","label":"C","lane":"terminal","col":1.0}],
-        "transitions":[{"id":"ab","from":"a","to":"b","route":"straight","fromSide":"bottom","toSide":"top","via":[[94,240],[402,240]]}]});
-    let options = CompileOptions {
-        input_contract: Some(InputContract::Legacy217),
-        ..Default::default()
-    };
-    let input = parse_input(
-        &serde_json::to_vec(&document).unwrap(),
-        DiagramType::Lifecycle,
-        &options,
-    )
-    .unwrap();
-    let scene = compile(&input, &options).unwrap();
-    assert_eq!(scene.nodes[0].bounds.x, 35.0);
-    assert_eq!(scene.nodes[0].bounds.y, 126.0);
-    assert_eq!(scene.nodes[1].bounds.x, 339.0);
-    assert_eq!(scene.nodes[1].bounds.y, 288.0);
-    assert_eq!(scene.nodes[2].bounds.x, 497.0);
-    assert_eq!(scene.nodes[2].bounds.y, 450.0);
-    assert_eq!(scene.relations[0].from, "a");
-    assert_eq!(scene.relations[0].to, "b");
-}
 
 fn near(actual: f64, expected: f64, context: &str) {
     assert!(
@@ -79,22 +49,12 @@ fn compare_frozen_cases(only: Option<&str>) {
         if only.is_some_and(|name| case["name"] != name) {
             continue;
         }
-        let contract = if case["contract"] == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        };
         let context = format!("{}/{}", case["contract"], case["name"]);
         let options = CompileOptions {
-            input_contract: Some(contract),
+            input_contract: Some(InputContract::PhoenixV1),
             ..Default::default()
         };
-        let mut document = case["document"].clone();
-        if contract == InputContract::Legacy217 {
-            // Pin the immutable reference presentation with an explicit label;
-            // default success wording is covered by the rendered regression.
-            document["meta"]["legend"]["entries"]["success"]["label"] = "terminal success".into();
-        }
+        let document = case["document"].clone();
         let bytes = serde_json::to_vec(&document).unwrap();
         let parsed = parse_input(&bytes, DiagramType::Lifecycle, &options);
         if case["ok"] == false {
@@ -198,7 +158,7 @@ fn compare_frozen_cases(only: Option<&str>) {
                     );
                 }
                 (None, None) => {
-                    if !edge.label.is_empty() && contract == InputContract::PhoenixV1 {
+                    if !edge.label.is_empty() {
                         let owner = edge
                             .label_owner
                             .expect("a merged label must have a visible owner");
@@ -223,30 +183,28 @@ fn compare_frozen_cases(only: Option<&str>) {
         for (frame, expected) in frames.iter().zip(expected["frames"].as_array().unwrap()) {
             compare_rect(frame.bounds, expected, &context);
         }
-        if contract == InputContract::PhoenixV1 {
-            let phoenix_diagram::scene::DiagramFacts::Lifecycle { presentation, .. } = &scene.facts
-            else {
-                panic!("{context}: missing typed lifecycle presentation")
-            };
-            assert_eq!(
-                presentation.junctions.len(),
-                expected["junctions"].as_array().unwrap().len(),
-                "{context}"
+        let phoenix_diagram::scene::DiagramFacts::Lifecycle { presentation, .. } = &scene.facts
+        else {
+            panic!("{context}: missing typed lifecycle presentation")
+        };
+        assert_eq!(
+            presentation.junctions.len(),
+            expected["junctions"].as_array().unwrap().len(),
+            "{context}"
+        );
+        for (point, expected) in presentation
+            .junctions
+            .iter()
+            .zip(expected["junctions"].as_array().unwrap())
+        {
+            near(point.x, expected[0].as_f64().unwrap(), &context);
+            near(point.y, expected[1].as_f64().unwrap(), &context);
+        }
+        for final_state in &presentation.final_states {
+            assert!(
+                !scene.relations.iter().any(|edge| edge.from == *final_state),
+                "{context}: fabricated terminal state"
             );
-            for (point, expected) in presentation
-                .junctions
-                .iter()
-                .zip(expected["junctions"].as_array().unwrap())
-            {
-                near(point.x, expected[0].as_f64().unwrap(), &context);
-                near(point.y, expected[1].as_f64().unwrap(), &context);
-            }
-            for final_state in &presentation.final_states {
-                assert!(
-                    !scene.relations.iter().any(|edge| edge.from == *final_state),
-                    "{context}: fabricated terminal state"
-                );
-            }
         }
         let mut all_texts = vec![];
         all_texts.extend(scene.containers.iter().flat_map(|c| c.text.clone()));
@@ -260,15 +218,15 @@ fn compare_frozen_cases(only: Option<&str>) {
         );
     }
     if only.is_none() {
-        assert_eq!(accepted, 24);
-        assert_eq!(rejected, 7);
+        assert_eq!(accepted, 21);
+        assert_eq!(rejected, 5);
     } else {
         assert_eq!(accepted + rejected, 1);
     }
 }
 
 #[test]
-fn lifecycle_native_scene_matches_both_frozen_renderer_svgs_without_rounding() {
+fn lifecycle_native_scene_matches_the_frozen_renderer_svgs_without_rounding() {
     compare_frozen_cases(None);
 }
 #[test]
@@ -289,30 +247,10 @@ fn lifecycle_numeric_placeholders_preserve_the_bundled_fallback() {
 }
 
 #[test]
-fn lifecycle_oracle_matches_verified_sources_and_actual_svg_bytes() {
+fn lifecycle_oracle_svg_files_match_their_recorded_bytes() {
     let oracle: Value =
         serde_json::from_str(include_str!("../fixtures/lifecycle/oracle.json")).unwrap();
-    let legacy: Value =
-        serde_json::from_str(include_str!("../../upstream/legacy-2.17-manifest.json")).unwrap();
-    let reference: Value =
-        serde_json::from_str(include_str!("../../upstream/archify-3.1.0-manifest.json")).unwrap();
     for case in oracle["cases"].as_array().unwrap() {
-        let manifest = if case["contract"] == "legacy-2.17" {
-            &legacy
-        } else {
-            &reference
-        };
-        let source = manifest
-            .as_array()
-            .unwrap()
-            .iter()
-            .find(|r| {
-                r[0].as_str()
-                    .unwrap()
-                    .ends_with("renderers/lifecycle/render-lifecycle.mjs")
-            })
-            .unwrap();
-        assert_eq!(case["sourceSha256"], source[2]);
         if let Some(file) = case["svgFile"].as_str() {
             let bytes = std::fs::read(
                 std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

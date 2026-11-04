@@ -53,73 +53,59 @@ pub(super) fn check(context: &Context<'_>) -> Result<(), Diagnostics> {
             ));
         }
         let area_bottom = context.view_box.height - 74.0;
-        if context.legacy() {
-            if rect.y < 104.0 || rect.y + rect.height > area_bottom {
-                errors.push(problem(
-                    context,
-                    "nodes",
-                    index,
-                    "layout/constraint",
-                    "Node exceeds the readable diagram area",
-                    json!({"bounds":rect,"areaTop":104,"areaBottom":area_bottom}),
-                ));
-            }
-        } else {
-            if rect.y < 104.0 {
-                let mut diagnostic = problem(
-                    context,
-                    "nodes",
-                    index,
-                    "dataflow/node-above-area",
-                    "Node starts above the readable diagram area; keep y at or above 104",
-                    json!({"y":rect.y,"areaTop":104,"yOffset":number(raw,"yOffset",0.0)}),
-                );
-                diagnostic.supported_fixes.push(format!(
-                    "raise or remove the negative yOffset on node \"{}\"",
-                    string(raw, "id")
-                ));
-                errors.push(diagnostic);
-            }
-            if rect.y + rect.height > area_bottom {
-                let required = rect.y + rect.height + 74.0;
-                let room = area_bottom - 104.0;
-                let height_cap = room.min(area_bottom - rect.y);
-                let overflow = raised_canvas_page(context.view_box.width, required);
-                let mut maximum = (context.view_box.width / 1.55).floor();
-                while maximum > 1.0 && raised_canvas_page(context.view_box.width, maximum).is_some()
-                {
-                    maximum -= 1.0;
-                }
-                let mut evidence = json!({"y":rect.y,"height":rect.height,"areaBottom":area_bottom,"requiredViewBoxHeight":required,"requiredViewBoxFitsViewport":overflow.is_none(),"maximumViewBoxHeight":maximum,"viewBoxHeight":context.view_box.height});
-                if let Some(page) = overflow {
-                    evidence["requiredViewBoxPageHeightPx"] = json!(page);
-                }
-                let mut diagnostic=problem(context,"nodes",index,"dataflow/node-below-area","Node bottom exceeds the readable diagram area; preserve its authored geometry and adjust its height, yOffset, or canvas together",evidence);
-                if rect.height <= room {
-                    diagnostic
-                        .supported_fixes
-                        .push(format!("lower yOffset on node \"{}\"", string(raw, "id")));
-                }
-                if height_cap >= 36.0 {
-                    diagnostic.supported_fixes.push(format!(
-                        "reduce node \"{}\" height to at most {}",
-                        string(raw, "id"),
-                        geometry::format_number(height_cap)
-                    ));
-                }
-                if overflow.is_none() {
-                    diagnostic.supported_fixes.push(if maximum>required{format!("raise meta.viewBox[1] to at least {} and at most {}, then rerun deliver and visual-check",geometry::format_number(required),geometry::format_number(maximum))}else{format!("raise meta.viewBox[1] to {}, then rerun deliver and visual-check",geometry::format_number(required))});
-                }
-                errors.push(diagnostic);
-            }
+        if rect.y < 104.0 {
+            let mut diagnostic = problem(
+                context,
+                "nodes",
+                index,
+                "dataflow/node-above-area",
+                "Node starts above the readable diagram area; keep y at or above 104",
+                json!({"y":rect.y,"areaTop":104,"yOffset":number(raw,"yOffset",0.0)}),
+            );
+            diagnostic.supported_fixes.push(format!(
+                "raise or remove the negative yOffset on node \"{}\"",
+                string(raw, "id")
+            ));
+            errors.push(diagnostic);
         }
-        if units(context.input, string(raw, "label")) * 6.2 > rect.width + 6.0 {
-            errors.push(problem(context,"nodes",index,"layout/constraint","Node label is wider than its fixed component",json!({"label":string(raw,"label"),"estimatedWidth":units(context.input,string(raw,"label"))*6.2,"width":rect.width})));
+        if rect.y + rect.height > area_bottom {
+            let required = rect.y + rect.height + 74.0;
+            let room = area_bottom - 104.0;
+            let height_cap = room.min(area_bottom - rect.y);
+            let overflow = raised_canvas_page(context.view_box.width, required);
+            let mut maximum = (context.view_box.width / 1.55).floor();
+            while maximum > 1.0 && raised_canvas_page(context.view_box.width, maximum).is_some() {
+                maximum -= 1.0;
+            }
+            let mut evidence = json!({"y":rect.y,"height":rect.height,"areaBottom":area_bottom,"requiredViewBoxHeight":required,"requiredViewBoxFitsViewport":overflow.is_none(),"maximumViewBoxHeight":maximum,"viewBoxHeight":context.view_box.height});
+            if let Some(page) = overflow {
+                evidence["requiredViewBoxPageHeightPx"] = json!(page);
+            }
+            let mut diagnostic=problem(context,"nodes",index,"dataflow/node-below-area","Node bottom exceeds the readable diagram area; preserve its authored geometry and adjust its height, yOffset, or canvas together",evidence);
+            if rect.height <= room {
+                diagnostic
+                    .supported_fixes
+                    .push(format!("lower yOffset on node \"{}\"", string(raw, "id")));
+            }
+            if height_cap >= 36.0 {
+                diagnostic.supported_fixes.push(format!(
+                    "reduce node \"{}\" height to at most {}",
+                    string(raw, "id"),
+                    geometry::format_number(height_cap)
+                ));
+            }
+            if overflow.is_none() {
+                diagnostic.supported_fixes.push(if maximum>required{format!("raise meta.viewBox[1] to at least {} and at most {}, then rerun deliver and visual-check",geometry::format_number(required),geometry::format_number(maximum))}else{format!("raise meta.viewBox[1] to {}, then rerun deliver and visual-check",geometry::format_number(required))});
+            }
+            errors.push(diagnostic);
+        }
+        if units(string(raw, "label")) * 6.2 > rect.width + 6.0 {
+            errors.push(problem(context,"nodes",index,"layout/constraint","Node label is wider than its fixed component",json!({"label":string(raw,"label"),"estimatedWidth":units(string(raw,"label"))*6.2,"width":rect.width})));
         }
         for field in ["sublabel", "tag"] {
             let value = string(raw, field);
             let minimum = context.context_minimum;
-            let required = units(context.input, value) * minimum * 0.6;
+            let required = units(value) * minimum * 0.6;
             if required > rect.width - 8.0 {
                 errors.push(problem(context,"nodes",index,"layout/constraint",format!("Node {field} cannot fit at the legible minimum; preserve the complete text and widen the node"),json!({"field":field,"requiredWidth":required,"availableWidth":rect.width-8.0,"minimumFont":minimum})));
             }
@@ -228,7 +214,6 @@ pub(super) fn check(context: &Context<'_>) -> Result<(), Diagnostics> {
         for hit in composition::collect_proper_crossings(
             &routed,
             &composition::CrossingOptions {
-                contract: context.input.input_contract,
                 crossing_resolved: Some(&resolved),
                 ..Default::default()
             },
@@ -245,7 +230,6 @@ pub(super) fn check(context: &Context<'_>) -> Result<(), Diagnostics> {
         for hit in composition::collect_ambiguous_corridors(
             &routed,
             &composition::CorridorOptions {
-                contract: context.input.input_contract,
                 ..Default::default()
             },
         ) {
@@ -299,39 +283,35 @@ pub(super) fn check(context: &Context<'_>) -> Result<(), Diagnostics> {
                 serde_json::to_value(hit).unwrap(),
             ));
         }
-        if !context.legacy() {
-            // Author-pinned label positions are kept as authored.
-            let automatic: Vec<_> = labels
-                .iter()
-                .filter(|label| !label_pinned(&label.relation))
-                .cloned()
-                .collect();
-            for hit in composition::collect_label_arrowhead_overlaps(&automatic, &routed) {
-                errors.push(problem(
-                    context,
-                    "flows",
-                    hit.label_relation_index as usize,
-                    "composition/label-arrowhead",
-                    "Flow label covers an arrowhead",
-                    serde_json::to_value(hit).unwrap(),
-                ));
-            }
+        // Author-pinned label positions are kept as authored.
+        let automatic: Vec<_> = labels
+            .iter()
+            .filter(|label| !label_pinned(&label.relation))
+            .cloned()
+            .collect();
+        for hit in composition::collect_label_arrowhead_overlaps(&automatic, &routed) {
+            errors.push(problem(
+                context,
+                "flows",
+                hit.label_relation_index as usize,
+                "composition/label-arrowhead",
+                "Flow label covers an arrowhead",
+                serde_json::to_value(hit).unwrap(),
+            ));
         }
-        if !context.legacy() {
-            for hit in composition::collect_label_canvas_overflow(
-                &labels,
-                &[context.view_box.width, context.view_box.height],
-                0.5,
-            ) {
-                errors.push(problem(
-                    context,
-                    "flows",
-                    hit.relation_index as usize,
-                    "composition/label-canvas-containment",
-                    "Flow label is outside the canvas",
-                    serde_json::to_value(hit).unwrap(),
-                ));
-            }
+        for hit in composition::collect_label_canvas_overflow(
+            &labels,
+            &[context.view_box.width, context.view_box.height],
+            0.5,
+        ) {
+            errors.push(problem(
+                context,
+                "flows",
+                hit.relation_index as usize,
+                "composition/label-canvas-containment",
+                "Flow label is outside the canvas",
+                serde_json::to_value(hit).unwrap(),
+            ));
         }
     }
     let right = measure::stage_x(list(&context.input.document["stages"]).len() - 1) + 84.0;

@@ -1,4 +1,4 @@
-// Ported from the frozen Archify 3.1.0 renderers/timeline/render-timeline.mjs; see NOTICE.md.
+// Derived from Archify 3.1.0 renderers/timeline/render-timeline.mjs (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::format::number::js_round;
 use crate::format::time::{self, Zone};

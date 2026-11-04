@@ -1,4 +1,4 @@
-// Ported from the frozen Archify svg-path-analysis module; see NOTICE.md.
+// Derived from Archify svg-path-analysis (MIT); see NOTICE.md.
 use crate::geometry::{cross_product, finite_point, finite_rect};
 use crate::scene::{Point, Rect};
 use std::fmt;

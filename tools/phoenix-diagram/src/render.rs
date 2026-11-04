@@ -4,7 +4,7 @@ use crate::geometry::{
     finite_point, finite_rect, format_number as number, lifecycle_v3_path, polyline_path,
     rounded_path, workflow_v2_path,
 };
-use crate::input::{DiagramType, InputContract};
+use crate::input::DiagramType;
 use crate::scene::{Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
@@ -107,38 +107,16 @@ fn tone(kind: &str) -> &'static str {
     }
 }
 
-fn node_tone(scene: &CompiledDiagram, kind: &str) -> &'static str {
-    if scene.diagram_type == DiagramType::Lifecycle && scene.schema_version == 1 {
-        match kind {
-            "active" => "backend",
-            "decision" => "security",
-            "success" => "database",
-            _ => tone(kind),
-        }
-    } else {
-        tone(kind)
-    }
-}
-
 fn initial_marker(svg: &mut String, dot_x: f64, tip_x: f64, y: f64) {
     write!(svg,"<circle cx=\"{}\" cy=\"{}\" r=\"4.5\" style=\"fill: var(--arrow-emphasis)\"/><path d=\"M {} {} L {} {}\" class=\"a-emphasis\" stroke-width=\"1.4\"/><path d=\"M {} {} L {} {} L {} {} Z\" style=\"fill: var(--arrow-emphasis)\"/>",number(dot_x),number(y),number(dot_x+4.5),number(y),number(tip_x-6.0),number(y),number(tip_x-7.0),number(y-3.5),number(tip_x),number(y),number(tip_x-7.0),number(y+3.5)).unwrap();
 }
 
-fn edge_label_class(scene: &CompiledDiagram, variant: &str) -> &'static str {
-    if scene.input_contract == InputContract::Legacy217 {
-        match variant {
-            "security" => "t-security",
-            "emphasis" => "t-backend",
-            "dashed" => "t-messagebus",
-            _ => "t-muted",
-        }
-    } else {
-        match variant {
-            "security" => "t-edge-security",
-            "emphasis" => "t-edge-emphasis",
-            "dashed" => "t-edge-dashed",
-            _ => "t-muted",
-        }
+fn edge_label_class(variant: &str) -> &'static str {
+    match variant {
+        "security" => "t-edge-security",
+        "emphasis" => "t-edge-emphasis",
+        "dashed" => "t-edge-dashed",
+        _ => "t-muted",
     }
 }
 
@@ -854,7 +832,6 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
         "fixed-v1"
     };
     let input_contract = match scene.input_contract {
-        crate::input::InputContract::Legacy217 => "legacy-2.17",
         crate::input::InputContract::PhoenixV1 => "phoenix-v1",
     };
     write!(svg,"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{} {} {} {}\" role=\"img\" aria-labelledby=\"phoenix-diagram-title phoenix-diagram-description\" lang=\"{}\" data-diagram-type=\"{}\" data-layout-contract=\"{contract}\" data-quality-profile=\"{profile}\" data-reader-fit=\"{}\" data-animation=\"trace\" data-preset=\"{}\">",
@@ -862,25 +839,21 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     // Append metadata to the root tag before any authored content is inserted.
     svg.pop();
     write!(svg, " data-input-contract=\"{input_contract}\"").unwrap();
-    let node_ui = scene.input_contract == crate::input::InputContract::PhoenixV1
-        && matches!(
-            scene.diagram_type,
-            DiagramType::Architecture | DiagramType::Workflow
-        );
+    let node_ui = matches!(
+        scene.diagram_type,
+        DiagramType::Architecture | DiagramType::Workflow
+    );
     if node_ui {
         svg.push_str(" data-node-ui=\"\"");
     }
-    if scene.input_contract == crate::input::InputContract::PhoenixV1 {
-        match scene.diagram_type {
-            DiagramType::Architecture if scene.meta.get("viewBox").is_none() => {
-                svg.push_str(" data-reader-min-text=\"7.5\" data-reader-primary-text=\"14\"")
-            }
-            DiagramType::Sequence => svg.push_str(" data-motion-choreography=\"sequence\""),
-            DiagramType::Lifecycle => svg.push_str(
-                " data-motion-choreography=\"walk\" data-lifecycle-layout=\"main-path-v3\"",
-            ),
-            _ => {}
+    match scene.diagram_type {
+        DiagramType::Architecture if scene.meta.get("viewBox").is_none() => {
+            svg.push_str(" data-reader-min-text=\"7.5\" data-reader-primary-text=\"14\"")
         }
+        DiagramType::Sequence => svg.push_str(" data-motion-choreography=\"sequence\""),
+        DiagramType::Lifecycle => svg
+            .push_str(" data-motion-choreography=\"walk\" data-lifecycle-layout=\"main-path-v3\""),
+        _ => {}
     }
     let extended = type_renderer(scene.diagram_type);
     if let Some(renderer) = &extended {
@@ -1031,28 +1004,15 @@ fn write_relation_paths(scene: &CompiledDiagram, svg: &mut String, delta: Option
         } else {
             format!("arrowhead-{variant}")
         };
-        let legacy_lifecycle =
-            scene.diagram_type == DiagramType::Lifecycle && scene.schema_version == 1;
-        let width = facts["width"]
-            .as_f64()
-            .filter(|v| !legacy_lifecycle || *v != 0.0)
-            .unwrap_or(if variant == "emphasis" {
-                if legacy_lifecycle {
-                    2.0
-                } else {
-                    1.8
-                }
-            } else if scene.diagram_type == DiagramType::Lifecycle {
-                if legacy_lifecycle {
-                    1.1
-                } else {
-                    1.2
-                }
-            } else if scene.diagram_type == DiagramType::Architecture {
-                1.5
-            } else {
-                1.4
-            });
+        let width = facts["width"].as_f64().unwrap_or(if variant == "emphasis" {
+            1.8
+        } else if scene.diagram_type == DiagramType::Lifecycle {
+            1.2
+        } else if scene.diagram_type == DiagramType::Architecture {
+            1.5
+        } else {
+            1.4
+        });
         let direction_cue = architecture_direction_cue_ref_x(scene, index, width);
         if let Some(reference) = direction_cue {
             let stroke = number(width).parse::<f64>().expect("finite stroke width");
@@ -1063,14 +1023,7 @@ fn write_relation_paths(scene: &CompiledDiagram, svg: &mut String, delta: Option
         } else if scene.diagram_type == DiagramType::Architecture {
             rounded_path(&relation.points, 8.0)
         } else if scene.diagram_type == DiagramType::Lifecycle {
-            if legacy_lifecycle {
-                rounded_path(
-                    &relation.points,
-                    facts["cornerRadius"].as_f64().unwrap_or(10.0),
-                )
-            } else {
-                lifecycle_v3_path(&relation.points)
-            }
+            lifecycle_v3_path(&relation.points)
         } else {
             polyline_path(&relation.points)
         };
@@ -1170,10 +1123,9 @@ fn write_nodes(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLa
         svg.push('>');
         let radius = match scene.diagram_type {
             DiagramType::Sequence | DiagramType::Dataflow => 6.0,
-            DiagramType::Lifecycle if scene.schema_version == 1 => 7.0,
             _ => 8.0,
         };
-        let fill = node_tone(scene, kind);
+        let fill = tone(kind);
         let animation_attr = if delta.is_some_and(|d| d.ghost) {
             "data-delta-animate"
         } else {
@@ -1322,9 +1274,7 @@ fn write_relation_labels(scene: &CompiledDiagram, svg: &mut String, delta: Optio
             let fine =
                 scene.diagram_type == DiagramType::Lifecycle && text.source_path.ends_with("/note");
             let class = if text.source_path.ends_with("/label") {
-                edge_label_class(scene, &relation.variant)
-            } else if fine && scene.schema_version == 1 {
-                "t-dim"
+                edge_label_class(&relation.variant)
             } else {
                 "t-muted"
             };
@@ -1412,7 +1362,7 @@ fn write_legends(scene: &CompiledDiagram, svg: &mut String, glyph: Option<Legend
                     } else {
                         (14.0, 9.0, 2.0, 8.0)
                     };
-                write!(svg,"<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\" class=\"c-{}\" stroke-width=\"1\"/>",number(legend.bounds.x),number(baseline-offset),number(width),number(height),number(radius),node_tone(scene,kind)).unwrap();
+                write!(svg,"<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"{}\" class=\"c-{}\" stroke-width=\"1\"/>",number(legend.bounds.x),number(baseline-offset),number(width),number(height),number(radius),tone(kind)).unwrap();
                 if kind == "final"
                     && scene.diagram_type == DiagramType::Lifecycle
                     && scene.schema_version == 3

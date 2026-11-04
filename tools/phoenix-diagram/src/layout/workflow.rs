@@ -1,6 +1,6 @@
 use crate::diagnostic::{Diagnostic, Diagnostics};
-use crate::geometry::{fitted_node_font_size_for_contract, text_units_for_contract};
-use crate::input::{CompileOptions, DiagramInput, DiagramType, InputContract};
+use crate::geometry::{fitted_node_font_size, text_units};
+use crate::input::{CompileOptions, DiagramInput, DiagramType};
 use crate::scene::{Authored, Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::cmp::Ordering;
@@ -35,8 +35,8 @@ fn string<'a>(value: &'a Value, key: &str) -> &'a str {
 fn number(value: &Value, key: &str, default: f64) -> f64 {
     value.get(key).and_then(Value::as_f64).unwrap_or(default)
 }
-fn units(input: &DiagramInput, value: &str) -> f64 {
-    text_units_for_contract(value, input.input_contract)
+fn units(value: &str) -> f64 {
+    text_units(value)
 }
 fn entries(document: &Value, collection: &str) -> Vec<Entry> {
     array(document, collection)
@@ -149,8 +149,7 @@ fn compile_searching(
     let mut minimum_tick = 60;
     loop {
         let result = compile_attempt(input, options, &widths, side_search);
-        if input.input_contract != InputContract::PhoenixV1
-            || number(&input.document, "schema_version", 1.0) != 2.0
+        if number(&input.document, "schema_version", 1.0) != 2.0
             || input.quality != crate::input::Quality::Showcase
             || measure::absolute(&input.document)
         {
@@ -187,7 +186,7 @@ fn compile_searching(
             {
                 continue;
             }
-            let needed = units(input, string(&node.authored.facts, "sublabel")) * minimum * 0.6;
+            let needed = units(string(&node.authored.facts, "sublabel")) * minimum * 0.6;
             if needed <= node.bounds.width - 8.0 {
                 continue;
             }
@@ -211,9 +210,7 @@ fn compile_attempt(
 ) -> Result<CompiledDiagram, Diagnostics> {
     let mut feedback = routing::Feedback::default();
     let mut current = compile_plan(input, options, width_overrides, &feedback);
-    if input.input_contract != InputContract::PhoenixV1
-        || number(&input.document, "schema_version", 1.0) != 2.0
-    {
+    if number(&input.document, "schema_version", 1.0) != 2.0 {
         return current;
     }
     let mut best = current.clone();
@@ -798,7 +795,7 @@ fn compile_plan(
         },
         diagnostics: Vec::new(),
     };
-    measure::clear_group_titles(input, &measured, &mut scene);
+    measure::clear_group_titles(&measured, &mut scene);
     measure::clear_automatic_legends(input, &mut scene);
     clear_label_arrowheads(input, &measured, &mut scene);
     validation::validate(input, &measured, &mut scene)?;
@@ -952,9 +949,7 @@ fn verify_repairs(input: &DiagramInput, options: &CompileOptions, diagnostics: &
             diagnostic.evidence["verifiedRepairs"] = Value::Array(verified);
         }
     }
-    if input.input_contract == InputContract::PhoenixV1
-        && number(&input.document, "schema_version", 1.0) == 2.0
-    {
+    if number(&input.document, "schema_version", 1.0) == 2.0 {
         verify_workflow_repair(input, options, diagnostics);
     }
     verify_composition_advice(input, options, diagnostics);
@@ -1064,12 +1059,12 @@ fn text_capacity_path(diagnostic: &Diagnostic) -> Option<&str> {
 }
 
 // The longest prefix of `text` within `limit` text units.
-fn within_units(input: &DiagramInput, text: &str, limit: f64) -> String {
+fn within_units(text: &str, limit: f64) -> String {
     let mut result = String::new();
     for character in text.chars() {
         let mut next = result.clone();
         next.push(character);
-        if units(input, &next) > limit {
+        if units(&next) > limit {
             break;
         }
         result = next;
@@ -1079,16 +1074,11 @@ fn within_units(input: &DiagramInput, text: &str, limit: f64) -> String {
 
 // `document` with every text in `paths` cut to `limit` text units; a label
 // keeps its first character and other texts are removed at zero.
-fn cut_texts(
-    input: &DiagramInput,
-    document: &Value,
-    paths: &std::collections::BTreeSet<String>,
-    limit: usize,
-) -> Value {
+fn cut_texts(document: &Value, paths: &std::collections::BTreeSet<String>, limit: usize) -> Value {
     let mut candidate = document.clone();
     for path in paths {
         let text = string_at(document, path);
-        let mut cut = within_units(input, &text, limit as f64);
+        let mut cut = within_units(&text, limit as f64);
         if cut.is_empty() && path.ends_with("/label") {
             cut = text.chars().take(1).collect();
         }
@@ -1132,7 +1122,7 @@ fn text_capacity_limit(
         ..options.clone()
     };
     let probe = |paths: &std::collections::BTreeSet<String>, limit: usize| {
-        let candidate = cut_texts(input, document, paths, limit);
+        let candidate = cut_texts(document, paths, limit);
         let candidate_input = crate::input::parse_input(
             &serde_json::to_vec(&candidate).expect("JSON capacity probe"),
             DiagramType::Workflow,
@@ -1183,7 +1173,7 @@ fn text_capacity_limit(
         0,
         paths
             .iter()
-            .map(|path| units(input, &string_at(document, path)))
+            .map(|path| units(&string_at(document, path)))
             .fold(0.0_f64, f64::max) as usize,
     );
     while low + 1 < high {
@@ -1209,7 +1199,7 @@ fn text_capacity_advice(
     } else {
         format!(
             "Keep every text in [{listed}] within {limit} text units (a CJK character counts as 2; {path} is now {}), moving any detail beyond that into a card item; the complete workflow then passes its text-capacity checks",
-            units(input, &string_at(&input.document, path))
+            units(&string_at(&input.document, path))
         )
     }
 }
@@ -1219,9 +1209,7 @@ fn verify_text_capacity(
     options: &CompileOptions,
     diagnostics: &mut Diagnostics,
 ) {
-    if input.input_contract != InputContract::PhoenixV1
-        || number(&input.document, "schema_version", 1.0) != 2.0
-    {
+    if number(&input.document, "schema_version", 1.0) != 2.0 {
         return;
     }
     let mut paths = diagnostics
@@ -1385,10 +1373,7 @@ fn clear_label_arrowheads(
 ) {
     use crate::geometry::composition::{arrowhead, label_covers_arrowhead, RoutedRelation};
     // Standard quality keeps the reference compiler's label geometry.
-    if input.input_contract != InputContract::PhoenixV1
-        || scene.schema_version != 2
-        || input.quality != crate::input::Quality::Showcase
-    {
+    if scene.schema_version != 2 || input.quality != crate::input::Quality::Showcase {
         return;
     }
     let heads: Vec<_> = scene
@@ -1564,10 +1549,7 @@ fn verify_composition_advice(
     options: &CompileOptions,
     diagnostics: &mut Diagnostics,
 ) {
-    if input.input_contract != InputContract::PhoenixV1
-        || number(&input.document, "schema_version", 1.0) != 2.0
-        || measure::absolute(&input.document)
-    {
+    if number(&input.document, "schema_version", 1.0) != 2.0 || measure::absolute(&input.document) {
         return;
     }
     let error_indexes = diagnostics

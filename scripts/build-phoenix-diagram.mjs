@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
-import { root, workspace, preflight, miseEnvironment, verifyFrozenSources, readBrandLicenseSources, brandSourceIdentity } from './check-phoenix-diagram-source.mjs';
+import { root, workspace, preflight, miseEnvironment, verifySources, readBrandLicenseSources, brandSourceIdentity } from './check-phoenix-diagram-source.mjs';
 
 export const TARGETS = Object.freeze({
   'darwin-arm64': 'aarch64-apple-darwin',
@@ -224,7 +224,7 @@ function pinnedLicenses(repoRoot, pkg, locked, archive, pin) {
 const BRAND_RUNTIME = 'Brand marks catalog';
 function brandRuntime(resources, preserve) {
   const { manifest, catalog, files } = resources;
-  const resource = row => ({ ...preserve(files.get(`assets/${row.path}`), row.url ?? `${row.archive}#${row.sourcePath}`),
+  const resource = row => ({ ...preserve(files.get(`assets/${row.path}`), row.url ?? `tools/phoenix-diagram/assets/${row.path}`),
     source: row, ...(row.license ? { license: row.license, scope: row.scope, marks: row.marks } : {}) });
   return { name: BRAND_RUNTIME, version: catalog.catalogVersion,
     license: 'CC0-1.0 collection; recorded individual terms in the preserved source manifest', source: catalog.source,
@@ -254,8 +254,8 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
       preserve(fs.readFileSync(path.join(rustDocs, name)), `rust@${rustVersion}/share/doc/rust/${name}`, `${rustPrefix}/${name}`)) };
   const runtime = [];
   for (const [name, license, source] of [
-    ['Archify', 'MIT', 'tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt'],
-    ['JetBrains Mono', 'OFL-1.1', 'tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt'],
+    ['Archify', 'MIT', 'tools/phoenix-diagram/viewer/LICENSE.txt'],
+    ['JetBrains Mono', 'OFL-1.1', 'tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt'],
     ['Phoenix UI CDP/install adaptations', 'Apache-2.0', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0'],
     ['ICU 77.1 native text and SystemV time adaptations', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
   ]) runtime.push({ name, license, licenses: [preserve(fs.readFileSync(path.join(repoRoot, source)), source)] });
@@ -312,7 +312,7 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
 }
 
 function maintenanceSources(repoRoot) {
-  return ['tools/phoenix-diagram/build-tools.lock.json', 'tools/phoenix-diagram/upstream/SOURCE.json',
+  return ['tools/phoenix-diagram/build-tools.lock.json',
     'scripts/build-phoenix-diagram.mjs', 'scripts/check-phoenix-diagram-source.mjs', 'mise.toml', 'rust-toolchain.toml',
     'tools/phoenix-ui/build-tool-assets.json', 'tools/phoenix-ui/UPSTREAM.json', 'tools/phoenix-ui/NOTICE.md'].sort(compare).map(name => recordFor(name, fs.readFileSync(path.join(repoRoot, name))));
 }
@@ -329,8 +329,7 @@ function validateTools(tools, repoRoot) {
   assert.deepEqual(observedToolVersions(tools.details), tools.observed, 'Observed tool details differ from their parsed versions');
 }
 function viewerIdentity(repoRoot) {
-  return { revision: VIEWER_REVISION, template: recordFor('tools/phoenix-diagram/assets/template.html', fs.readFileSync(path.join(repoRoot, 'tools/phoenix-diagram/assets/template.html'))),
-    sourceManifest: recordFor('tools/phoenix-diagram/viewer/source-manifest.json', fs.readFileSync(path.join(repoRoot, 'tools/phoenix-diagram/viewer/source-manifest.json'))) };
+  return { revision: VIEWER_REVISION, template: recordFor('tools/phoenix-diagram/assets/template.html', fs.readFileSync(path.join(repoRoot, 'tools/phoenix-diagram/assets/template.html'))) };
 }
 function expectedProbe() { return `${TOOL}-engine ${TOOL_VERSION} input=1 receipt=1 viewer=${VIEWER_REVISION}\n`; }
 export function validateEngine(engine, sourceSha) {
@@ -411,7 +410,7 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
   assert.equal(prepared.host, TARGETS[target], 'Development builds must use the native platform host');
   assert.equal(process.versions.node, prepared.versions.node, 'Run the maintenance builder with the pinned mise Node version');
   const env = miseEnvironment({ CARGO_NET_OFFLINE: 'true' }), tools = observeTools(prepared, env, repoRoot);
-  const frozenSources = verifyFrozenSources(), inputs = sourceInputs(repoRoot), bundle = bundleFiles(repoRoot), source = gitIdentity(repoRoot), viewer = viewerIdentity(repoRoot);
+  const sources = verifySources(), inputs = sourceInputs(repoRoot), bundle = bundleFiles(repoRoot), source = gitIdentity(repoRoot), viewer = viewerIdentity(repoRoot);
   const locked = parseCargoLock(fs.readFileSync(path.join(workspace, 'Cargo.lock')).toString('utf8'));
   const metadata = JSON.parse(buildCommand(['metadata', '--manifest-path', path.join(workspace, 'Cargo.toml'), '--locked', '--offline', '--all-features', '--format-version', '1'], env).stdout);
   const rustSysroot = command('mise', ['exec', '--no-deps', '--', 'rustc', '--print', 'sysroot'], { cwd: workspace, env, timeout: 15000 }).stdout.trim();
@@ -429,7 +428,7 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
     bundleSha256: bundle.sha256, engines: { [target]: binary } }, versionBytes = pretty(version);
   const receipt = { schemaVersion: 1, distribution: 'development', tool: TOOL, toolVersion: TOOL_VERSION, npmPackageVersion, target, host: prepared.host,
     ...source, sourceInputSha256: inputs.sha256, sourceInputs: recordFor('source-inputs.json', inputs.bytes), binary,
-    bundle: recordFor('bundle/manifest.json', bundle.bytes), viewer, tools, browser, frozenSources,
+    bundle: recordFor('bundle/manifest.json', bundle.bytes), viewer, tools, browser, sources,
     legal: { sha256: legal.sha256, files: rowsFor(legal.files).map(([name, size, sha256]) => ({ path: name, size, sha256 })) },
     native: { status: 'pass', host: prepared.host, target: prepared.host, command: ['mbx', ...args], sourceInputsMatch: 'pass',
       engineProbe: { status: 'pass', stdout: probe.stdout }, engineDoctor: { status: 'pass', toolVersion: doctor.toolVersion, engine: doctor.engine }, environmentDoctorExitCode: doctorResult.status },

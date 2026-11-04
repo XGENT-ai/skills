@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/workflow.schema.json",
-  "title": "Archify Workflow Diagram",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/workflow.schema.json",
+  "title": "Phoenix Diagram Workflow Diagram",
   "type": "object",
   "additionalProperties": false,
   "required": [
