@@ -201,14 +201,14 @@ REVIEW @progress_consistency:
 - 最近完成：M2 · 删除 upstream 与 Archify 技术耦合，改用 Phoenix 标识（阶段 A 收口）
 - 下一步：M3 · statechart 合同、表达式与穷举；退出条件 V-4
 - 当前阻塞：无
-- 代码基线：`ca6ab799406f81acb9aed38e34e1a90a9be997fd`（M1、M2 待本次提交）
+- 代码基线：`b0d540f`
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-04T14:20+08:00 | 删除 legacy-2.17 合同、分支、fixture 与示例；未标记的原五类报 `input/contract-required`；V-1 通过，dist 一致性用例在 V-3 复验通过 | [M1 记录](PHOENIX-DIAGRAM-STATECHART.records/M1.md) | 待提交 |
-| M2 | 已完成 | 2026-11-04T15:30+08:00 | 删除 upstream 与归档耦合，组装器/来源检查改为自有来源，标识改为 Phoenix；V-2、V-3（构建同步、十类真实浏览器交付与看图）通过 | [M2 记录](PHOENIX-DIAGRAM-STATECHART.records/M2.md) | 待提交 |
+| M1 | 已完成 | 2026-11-04T14:20+08:00 | 删除 legacy-2.17 合同、分支、fixture 与示例；未标记的原五类报 `input/contract-required`；V-1 通过，dist 一致性用例在 V-3 复验通过 | [M1 记录](PHOENIX-DIAGRAM-STATECHART.records/M1.md) | b0d540f |
+| M2 | 已完成 | 2026-11-04T15:30+08:00 | 删除 upstream 与归档耦合，组装器/来源检查改为自有来源，标识改为 Phoenix；V-2、V-3（构建同步、十类真实浏览器交付与看图）通过 | [M2 记录](PHOENIX-DIAGRAM-STATECHART.records/M2.md) | b0d540f |
 
 ## 0. 需求、范围与决策
 
