@@ -201,7 +201,7 @@ REVIEW @progress_consistency:
 - 最近完成：M6 · skill、文档、分发与阶段 B 收口
 - 下一步：代码评审（用户用 review-code 以本计划路径发起）
 - 当前阻塞：无
-- 代码基线：M1–M2 `b0d540f`；M3–M6 `6bb21b6`
+- 代码基线：M1–M2 `b0d540f`；M3–M6 `6bb21b6`、`9cdaacf`
 
 ### 完成记录
 
@@ -212,7 +212,7 @@ REVIEW @progress_consistency:
 | M3 | 已完成 | 2026-11-04T16:10+08:00 | statechart 类型接入、schema、最小示例、表达式/模型/穷举、CLI HELP/guide；V-4 通过 | [M3 记录](PHOENIX-DIAGRAM-STATECHART.records/M3.md) | 6bb21b6 |
 | M4 | 已完成 | 2026-11-04T17:00+08:00 | `chart.rs`/`regions.rs` 实现 §5.4 投影（合并、去重、自环、隐藏、区域条件与说明、失真回退、提升、标记、上色、叙述）；F-2–F-5、F-8；V-5 通过 | [M4 记录](PHOENIX-DIAGRAM-STATECHART.records/M4.md) | 6bb21b6 |
 | M5 | 已完成 | 2026-11-04T18:40+08:00 | 复合分层摆放（横向，超宽改纵向）+ 共享 router 走线、自环、TypeRenderer、facts 比对检查、五语目录、报告卡片、回执 `model`、pstack 署名；F-1/F-7 改为规模门诊断；V-6 通过 | [M5 记录](PHOENIX-DIAGRAM-STATECHART.records/M5.md) | 6bb21b6 |
-| M6 | 已完成 | 2026-11-04T18:40+08:00 | skill/文档复述与 dist 同步；修角色模拟暴露的手机溢出、箭头歧义、标签遮挡与节点索引截断；V-7、V-8（最终代码全量、F-2–F-5 与最小示例交付看图、十类回归、角色模拟通过）完成 | [M6 记录](PHOENIX-DIAGRAM-STATECHART.records/M6.md) | 6bb21b6, 待提交 |
+| M6 | 已完成 | 2026-11-04T18:40+08:00 | skill/文档复述与 dist 同步；修角色模拟暴露的手机溢出、箭头歧义、标签遮挡与节点索引截断；V-7、V-8（最终代码全量、F-2–F-5 与最小示例交付看图、十类回归、角色模拟通过）完成 | [M6 记录](PHOENIX-DIAGRAM-STATECHART.records/M6.md) | 6bb21b6, 9cdaacf |
 
 ## 0. 需求、范围与决策
 
