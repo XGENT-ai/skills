@@ -195,13 +195,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-04T18:40+08:00
+- 最近更新：2026-11-04T20:32+08:00
 - 当前进度：6/6 个里程碑完成
 - 当前状态：已完成
 - 最近完成：M6 · skill、文档、分发与阶段 B 收口
-- 下一步：代码评审（用户用 review-code 以本计划路径发起）
+- 下一步：复审 R1 代码评审 F-01 的修复（用户用 review-code 以本计划路径发起）
 - 当前阻塞：无
-- 代码基线：M1–M2 `b0d540f`；M3–M6 `6bb21b6`、`9cdaacf`
+- 代码基线：M1–M2 `b0d540f`；M3–M6 `6bb21b6`、`9cdaacf`；R1 评审修复见 M3 行「修复」
 
 ### 完成记录
 
@@ -525,6 +525,7 @@ JSON 形状在 schema 的 `$defs/expr` 中递归定义；每个运算对象恰�
   - `statechart/next-outside-step`
   - `statechart/expression-type`：evidence 写期望类型与实际类型
   - `statechart/value-not-in-domain`：变量或参数与不在其域内的字面量比较、出现在 `in` 列表中，或被 `set` 赋为这样的字面量
+  - `statechart/integer-out-of-range`：`values`、`range`、`pick`、`init` 或表达式中的整数无法用 i64 精确表示（超出有符号 64 位，或以小数/指数形式写出且超过 9e15）；schema 只约束 `integer`，不限边界
   - `statechart/init-incomplete`、`statechart/reserved-rule-id`
   - `variables`/`actions`/`rules` 内重复 id 沿用 `input/duplicate-id`
 - **运行期**：值用 `enum Val { Bool(bool), Int(i64), Str(u32) }`，字符串全局驻留为 u32。

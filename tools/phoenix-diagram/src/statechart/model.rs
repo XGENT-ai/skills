@@ -121,18 +121,30 @@ impl Model {
             .iter()
             .enumerate()
             .filter_map(|(index, raw)| {
+                let at = format!("/model/variables/{index}");
                 let domain = if let Some(values) = raw["values"].as_array() {
                     let values: Vec<_> = values
                         .iter()
-                        .filter_map(|value| literal(value, &mut strings))
+                        .enumerate()
+                        .filter_map(|(item, value)| {
+                            let path = format!("{at}/values/{item}");
+                            literal(value, &path, &mut strings, &mut problems)
+                        })
                         .collect();
                     (!values.is_empty()).then_some(Domain::Values(values))?
                 } else {
-                    let (lo, hi) = (raw["range"][0].as_i64()?, raw["range"][1].as_i64()?);
+                    let [lo, hi] = [0, 1].map(|end| {
+                        let path = format!("{at}/range/{end}");
+                        match literal(&raw["range"][end], &path, &mut strings, &mut problems) {
+                            Some(Val::Int(value)) => Some(value),
+                            _ => None,
+                        }
+                    });
+                    let (lo, hi) = (lo?, hi?);
                     if lo > hi {
                         problems.push(
                             "input/range",
-                            &format!("/model/variables/{index}/range"),
+                            &format!("{at}/range"),
                             "range must list its lowest value first",
                             json!({"range":[lo,hi]}),
                         );
@@ -160,10 +172,11 @@ impl Model {
             let mut params = Vec::new();
             for (name, values) in raw["pick"].as_object().into_iter().flatten() {
                 let mut domain = Vec::new();
-                for value in list(values)
-                    .iter()
-                    .filter_map(|value| literal(value, &mut strings))
-                {
+                for (item, value) in list(values).iter().enumerate() {
+                    let at = format!("{path}/pick/{name}/{item}");
+                    let Some(value) = literal(value, &at, &mut strings, &mut problems) else {
+                        continue;
+                    };
                     if !domain.contains(&value) {
                         domain.push(value);
                     }
@@ -351,9 +364,10 @@ fn parse_init(
         };
         let mut values = Vec::new();
         for (path, item) in candidates {
-            match literal(item, strings).filter(|value| slot.domain.contains(*value)) {
-                Some(value) => values.push(value),
-                None => problems.push(
+            match literal(item, &path, strings, problems) {
+                Some(value) if slot.domain.contains(value) => values.push(value),
+                None => {}
+                Some(_) => problems.push(
                     "statechart/value-not-in-domain",
                     &path,
                     format!("{item} is not a value of {}", slot.name),

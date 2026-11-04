@@ -203,19 +203,34 @@ pub struct Scope<'a> {
     pub next: bool,
 }
 
-pub fn literal(value: &Value, strings: &mut Strings) -> Option<Val> {
+/// The schema admits any JSON integer, so a number no `i64` holds exactly is
+/// reported here; callers treat `None` for a number as already explained.
+pub(crate) fn literal(
+    value: &Value,
+    path: &str,
+    strings: &mut Strings,
+    problems: &mut Problems,
+) -> Option<Val> {
     match value {
         Value::Bool(value) => Some(Val::Bool(*value)),
         Value::String(value) => Some(Val::Str(strings.intern(value))),
-        Value::Number(number) => number
-            .as_i64()
-            .or_else(|| {
+        Value::Number(number) => {
+            let int = number.as_i64().or_else(|| {
                 number
                     .as_f64()
                     .filter(|f| f.fract() == 0.0 && f.abs() < 9.0e15)
                     .map(|f| f as i64)
-            })
-            .map(Val::Int),
+            });
+            if int.is_none() {
+                problems.push(
+                    "statechart/integer-out-of-range",
+                    path,
+                    format!("{number} cannot be held exactly as a signed 64-bit integer"),
+                    json!({"value":value}),
+                );
+            }
+            int.map(Val::Int)
+        }
         _ => None,
     }
 }
@@ -273,7 +288,7 @@ impl Compiler<'_, '_> {
     }
 
     pub fn compile(&mut self, value: &Value, path: &str) -> Option<(Expr, Ty)> {
-        if let Some(value) = literal(value, self.strings) {
+        if let Some(value) = literal(value, path, self.strings, self.problems) {
             return Some((Expr::Lit(value), value.ty()));
         }
         let (key, arg) = value.as_object()?.iter().next()?;
@@ -400,7 +415,7 @@ impl Compiler<'_, '_> {
                 let mut list = Vec::new();
                 for (index, value) in arg[1].as_array()?.iter().enumerate() {
                     let at = format!("{at}/1/{index}");
-                    let value = literal(value, self.strings)?;
+                    let value = literal(value, &at, self.strings, self.problems)?;
                     if !self.check(value.ty(), ty, &at) {
                         return None;
                     }

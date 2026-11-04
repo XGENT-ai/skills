@@ -277,6 +277,55 @@ fn static_checks_name_each_mistake_with_its_pointer() {
 }
 
 #[test]
+fn integers_a_model_cannot_hold_are_reported_where_written() {
+    let code = "statechart/integer-out-of-range";
+    let big = json!(10_000_000_000_000_000_000u64);
+    let base = fixture("deadlock");
+    let with_variable = |variable: Value| {
+        let mut document = base.clone();
+        document["model"]["variables"]
+            .as_array_mut()
+            .unwrap()
+            .push(variable);
+        document["model"]["init"]["n"] = json!(0);
+        document
+    };
+    let with = |pointer: &str, value: Value| {
+        let mut document = base.clone();
+        *document.pointer_mut(pointer).unwrap() = value;
+        document
+    };
+
+    let mut ruled = with_variable(json!({"id":"n","values":[0, big]}));
+    ruled["model"]["rules"] =
+        json!([{"id":"stays-small","text":"n 不会变大","holds":{"ne":[{"var":"n"}, big]}}]);
+    rejects(&ruled, code, "/model/variables/1/values/1");
+    rejects(&ruled, code, "/model/rules/0/holds/ne/1");
+    rejects(
+        &with_variable(json!({"id":"n","range":[0, big]})),
+        code,
+        "/model/variables/1/range/1",
+    );
+    let mut picked = base.clone();
+    picked["model"]["actions"][0]["pick"] = json!({"to":[1, big]});
+    rejects(&picked, code, "/model/actions/0/pick/to/1");
+    rejects(
+        &with(
+            "/model/actions/0/when",
+            json!({"in":[{"var":"phase"}, [big]]}),
+        ),
+        code,
+        "/model/actions/0/when/in/1/0",
+    );
+    rejects(
+        &with("/model/actions/0/set/phase", json!(1e20)),
+        code,
+        "/model/actions/0/set/phase",
+    );
+    rejects(&with("/model/init/phase", big), code, "/model/init/phase");
+}
+
+#[test]
 fn the_minimal_example_passes_schema_and_static_checks() {
     let path = format!(
         "{}/../../skills/phoenix-diagram/examples/minimal.statechart.json",

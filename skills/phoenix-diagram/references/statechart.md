@@ -59,6 +59,7 @@ statechart 没有 `sources`/`meta.repository`、品牌和架构比较；图面�
 | `statechart/next-outside-step` | `next` 用在了 `view.steps[].when` 之外 |
 | `statechart/expression-type` | 表达式类型不符，evidence 给期望与实际 |
 | `statechart/value-not-in-domain` | 字面量不在变量或参数的域内 |
+| `statechart/integer-out-of-range` | 整数超出有符号 64 位，或以小数/指数形式写出且超过 9e15，无法精确表示 |
 | `statechart/init-incomplete`、`reserved-rule-id`、`group-color` | 初值缺变量、规则用了 `deadlock`、group 没有颜色 |
 | `statechart/value-out-of-domain`、`arithmetic-overflow` | 运行中赋值越界或溢出，evidence 带动作、参数与到达路径 |
 | `statechart/unlabeled-state`、`empty-label`、`leaf-is-parent` | 没有命中的标签规则、标签为空、一个路径既是状态又是父状态 |
