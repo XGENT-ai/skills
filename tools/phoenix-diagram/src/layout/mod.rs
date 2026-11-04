@@ -5,6 +5,7 @@ pub mod erd;
 pub mod lifecycle;
 pub(crate) mod router;
 pub mod sequence;
+pub mod statechart;
 pub mod timeline;
 pub mod tree;
 pub mod waterfall;
@@ -45,6 +46,7 @@ pub fn compile(
         DiagramType::Tree => tree::compile(input, options),
         DiagramType::Timeline => timeline::compile(input, options),
         DiagramType::Waterfall => waterfall::compile(input, options),
+        DiagramType::Statechart => statechart::compile(input, options),
     }?;
     clear_sigil_labels(&mut diagram.nodes);
     attach_brands(&mut diagram, input)?;

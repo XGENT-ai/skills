@@ -195,20 +195,24 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-04T15:30+08:00
-- 当前进度：2/6 个里程碑完成
-- 当前状态：进行中
-- 最近完成：M2 · 删除 upstream 与 Archify 技术耦合，改用 Phoenix 标识（阶段 A 收口）
-- 下一步：M3 · statechart 合同、表达式与穷举；退出条件 V-4
+- 最近更新：2026-11-04T18:10+08:00
+- 当前进度：6/6 个里程碑完成
+- 当前状态：已完成
+- 最近完成：M6 · skill、文档、分发与阶段 B 收口
+- 下一步：代码评审（用户用 review-code 以本计划路径发起）
 - 当前阻塞：无
-- 代码基线：`b0d540f`
+- 代码基线：M1–M2 `b0d540f`；M3–M6 见完成记录
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-04T14:20+08:00 | 删除 legacy-2.17 合同、分支、fixture 与示例；未标记的原五类报 `input/contract-required`；V-1 通过，dist 一致性用例在 V-3 复验通过 | [M1 记录](PHOENIX-DIAGRAM-STATECHART.records/M1.md) | b0d540f |
-| M2 | 已完成 | 2026-11-04T15:30+08:00 | 删除 upstream 与归档耦合，组装器/来源检查改为自有来源，标识改为 Phoenix；V-2、V-3（构建同步、十类真实浏览器交付与看图）通过 | [M2 记录](PHOENIX-DIAGRAM-STATECHART.records/M2.md) | b0d540f |
+| M2 | 已完成 | 2026-11-04T15:00+08:00 | 删除 upstream 与归档耦合，组装器/来源检查改为自有来源，标识改为 Phoenix；V-2、V-3（构建同步、十类真实浏览器交付与看图）通过 | [M2 记录](PHOENIX-DIAGRAM-STATECHART.records/M2.md) | b0d540f |
+| M3 | 已完成 | 2026-11-04T16:10+08:00 | statechart 类型接入、schema、最小示例、表达式/模型/穷举、CLI HELP/guide；V-4 通过 | [M3 记录](PHOENIX-DIAGRAM-STATECHART.records/M3.md) | 待提交 |
+| M4 | 已完成 | 2026-11-04T17:00+08:00 | `chart.rs`/`regions.rs` 实现 §5.4 投影（合并、去重、自环、隐藏、区域条件与说明、失真回退、提升、标记、上色、叙述）；F-2–F-5、F-8；V-5 通过 | [M4 记录](PHOENIX-DIAGRAM-STATECHART.records/M4.md) | 待提交 |
+| M5 | 已完成 | 2026-11-04T18:40+08:00 | 复合分层摆放（横向，超宽改纵向）+ 共享 router 走线、自环、TypeRenderer、facts 比对检查、五语目录、报告卡片、回执 `model`、pstack 署名；F-1/F-7 改为规模门诊断；V-6 通过 | [M5 记录](PHOENIX-DIAGRAM-STATECHART.records/M5.md) | 待提交 |
+| M6 | 已完成 | 2026-11-04T18:10+08:00 | skill/文档复述与 dist 同步；修角色模拟暴露的手机溢出、箭头歧义、节点索引与标签遮挡；V-7、V-8（全量、F-2–F-5 与最小示例交付看图、十类回归、角色模拟）完成，索引截断作为共享 Reader 已知项报告 | [M6 记录](PHOENIX-DIAGRAM-STATECHART.records/M6.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -247,7 +251,7 @@ REVIEW @progress_consistency:
 | D2 | 路径模式 | 不移植参考实现「超过 500 个模型状态时只画出错路径」的规则 | 图面始终是完整投影；图过大时由布局门给出可操作的诊断（合并标签、隐藏步骤）。参考实现设这个上限，是因为要逐状态调用 JS view 且 Mermaid 文本体量大；声明式 view 在 Rust 内求值，没有这项成本 | 参考 `scripts/ir.ts:139`、`scripts/run.ts:412-477` |
 | D3 | 探索上限 | 最多 100,000 个不同模型状态，到达即停：未见违反的规则与死锁记为 `not-checked`，`complete:false`，并发 `statechart/state-limit` 警告；图面只画已到达的部分 | 防止无界模型挂死；数值沿用参考实现的复跑上限 | 参考 `scripts/ir.ts:137` RERUN_STATES |
 | D4 | 死锁 | 默认检查；用 `model.deadlock.ends` 声明可以停下的终态；规则 id `deadlock` 保留，作者规则不得使用 | 不需要参考实现的「Done 空动作」惯用法，也不需要 CHECK_DEADLOCK 改名逻辑 | 参考 `SKILL.md` 的「Write the spec」段；`scripts/ir.ts:529-547` |
-| D5 | 标记图例 | 图例固定四项（breaks、mayBreak、出错路径、起始），外加阶段颜色；每个被标记的状态在节点 `tag` 里写明它违反、可能违反的规则 id | 参考实现的 breaks 图例会把偶发违反的规则也混列进去；改后不再需要交接时口头补「哪个状态违反哪条规则」 | 参考 `passes/regions.ts:270-278`、`backends/mermaid.ts:141-151` |
+| D5 | 标记图例 | 图例最多四项（breaks、mayBreak、出错路径、起始），只列图中出现的项，外加用到的阶段颜色；每个被标记的状态在节点 `tag` 里写明它违反、可能违反的规则 id | 参考实现的 breaks 图例会把偶发违反的规则也混列进去；改后不再需要交接时口头补「哪个状态违反哪条规则」 | 参考 `passes/regions.ts:270-278`、`backends/mermaid.ts:141-151` |
 | D6 | 阶段颜色词表 | `cyan, emerald, violet, amber, orange, slate`，依次映射 tone `frontend, backend, database, cloud, messagebus, external`；`rose` 留给 breaks | 复用 common cards 的 `dot` 词表和现有 tone 变量，主题与暗色自动跟随 | `skills/phoenix-diagram/schemas/common.schema.json` `$defs/cards`；`src/render.rs:98-108`；`assets/template.html:231-284` |
 | D7 | 合同枚举 | `InputContract` 只保留 `PhoenixV1`，仍序列化为 `phoenix-v1`；只为 legacy 存在的 `contract` 参数随分支一起删除 | 回执、`data-input-contract`、`meta.input_contract` 的形状不变；clippy `-D warnings` 下不留未用参数 | `src/input.rs:79-86`；`scripts/test-phoenix-diagram-native.mjs:30` |
 | D8 | 显式合同 | 以下两者都视同标记：CLI `--input-contract phoenix-v1`（含 compare 的 `--base-contract`/`--head-contract`），以及 `CompileOptions.input_contract` | 25 份未标记的 phoenix-v1 fixture 继续可用，「Archify 3.1 稿加参数读取」的用法也继续可用 | `tests/support/input_corpus.rs:57`；`src/compare/render.rs:446`；`references/compatibility.md:9` |
@@ -372,7 +376,7 @@ REVIEW @progress_consistency:
 **引擎 `tools/phoenix-diagram/`**
 
 - `src/input.rs`、`src/schema.rs`、`src/input/semantics.rs`、`src/cli.rs`：M1 删除 legacy；M3 接入 `Statechart`。
-- `src/statechart/{mod,expr,model,explore}.rs` ★（M3）；`src/statechart/{chart,regions,report}.rs` ★（M4）。
+- `src/statechart/{mod,expr,model,explore}.rs` ★（M3）；`src/statechart/{chart,regions}.rs` ★（M4）；`src/statechart/report.rs` ★（M5 T-3）。
 - `src/layout/statechart.rs`、`src/layout/statechart/place.rs`、`src/render/statechart.rs`、`src/check/statechart.rs` ★（M5）。
 - M3/M5 修改：`src/scene.rs`（`DiagramFacts::Statechart`）、`src/render.rs`、`src/check.rs`、`src/check/anchors.rs`、`src/evidence.rs`、`src/brands.rs`、`src/layout/mod.rs`、`src/delivery/receipts.rs`、`src/delivery/prepare.rs`。
 - M1：删除 legacy 涉及的其余 src 文件（见 §5.6）；`src/layout/legacy.rs` ✕。
@@ -406,7 +410,7 @@ REVIEW @progress_consistency:
 
 | 模块 | 调用者 | 接口与不变量 | 接缝 | 隐藏复杂度 | 依赖分类/适配器 | 测试面 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `statechart` ★（`src/statechart/mod.rs`） | `input/semantics.rs`（静态检查）、`layout/statechart.rs`、测试 | 两个入口：<br>`pub fn check_static(document: &Value) -> Diagnostics`<br>`pub fn analyze(document: &Value, locale: &Locale) -> Result<Analysis, Diagnostics>`<br>`Analysis { model: ModelResult, chart: Chart, stories: Vec<Story>, cards: Vec<ReportCard> }`<br>同一输入的输出确定 | 无 | 表达式编译与类型检查、穷举、规则判定、投影、条件文字、失真回退、提升、标记、叙述 | 进程内 | `tests/statechart_model.rs`、`tests/statechart_chart.rs`：经 `parse_input` + `analyze` 观察判定、路径与图结构 |
+| `statechart` ★（`src/statechart/mod.rs`） | `input/semantics.rs`（静态检查）、`layout/statechart.rs`、测试 | 两个入口：<br>`pub fn check_static(document: &Value) -> Diagnostics`<br>`pub fn analyze(document: &Value) -> Result<Analysis, Diagnostics>`<br>`Analysis { model, exploration, outcomes, chart: Chart, warnings }`，图结构不依赖语言；卡片、回执与箭头文字由 `statechart::report` 按 locale 生成<br>同一输入的输出确定 | 无 | 表达式编译与类型检查、穷举、规则判定、投影、条件文字、失真回退、提升、标记、叙述 | 进程内 | `tests/statechart_model.rs`、`tests/statechart_chart.rs`：经 `parse_input` + `analyze` 观察判定、路径与图结构 |
 | `layout::statechart` ★ | `layout::compile` | `pub(super) fn compile(input, options) -> Result<CompiledDiagram, Diagnostics>`<br>输出节点不重叠、框正确嵌套、每条箭头两端落在节点边上 | 无 | 复合分层摆放、自环、起始标记、图例与报告卡片 | 进程内（复用 `layout::router`） | `tests/statechart.rs`：经 `compile` + `render` + `check_html` |
 | `render::statechart` ★ | `render::type_renderer` | 一个 `TypeRenderer`；标记写成 `data-statechart-mark`、`data-statechart-bug-path` 属性与 class | 无 | 标记 CSS、图例字形 | 进程内 | 同上，用 HTML/DOM 断言 |
 | `check::statechart` ★ | `check.rs:1049-1060` 分派 | 由 `facts` 重新推导标记、箭头与节点集合，并与 SVG 比较 | 无 | 防篡改 | 进程内 | 篡改 HTML 后 `check_html` 报错 |
@@ -622,7 +626,7 @@ JSON 形状在 schema 的 `$defs/expr` 中递归定义；每个运算对象恰�
 4. **未检查的规则**（dot `amber`）：列出 not-checked 的规则；没有则省略这张卡。
 
 **回执**（`src/delivery/receipts.rs`、`src/delivery/prepare.rs`）：
-- `ValidationReceipt` 新增字段 `model: Value`，标注 `#[serde(default, skip_serializing_if = "Value::is_null")]`。
+- `ValidationReceipt`、`DeliveryReceipt`、`FinalizeReceipt` 新增字段 `model: Value`，标注 `#[serde(default, skip_serializing_if = "Value::is_null")]`；finalize 摘要是宿主交接时读的回执。
 - 只有 statechart 会填写，值取自 `DiagramFacts::Statechart.model`。
 
 ```json
@@ -809,7 +813,7 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 5. **坐标**：
    - 列从左到右排；列宽 = 列内最宽的子项。
    - 列间距 = max(88, 相邻两列之间诱导边的最长标签宽 + 40)。
-   - 列内子项间距 40，垂直居中。
+   - 列内子项间距 88（容纳两到三条带标签的箭头，标签与状态保持 8px），垂直居中；有自环的叶子上下各留 40。
    - 容器尺寸 = 内容包围盒 + 内边距 20 + 顶部标题带 44；首列含起点叶子时，左内边距改为 44，以容纳起始标记。
    - 标题节点放在 (框.x+14, 框.y+8)。
 6. **区域**：
@@ -817,12 +821,14 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
    - 单区域时不画区域框。
 7. **自顶向下**：把相对坐标累加成绝对坐标；画布 = 全部框与节点的包围盒 + 外边距 24。
 
+**朝向与规模门**：每个容器默认从左到右；宽度超过 1376px（10px 文字在 930px Reader 中仍 ≥ 6px）时，改取更接近 1.6:1 的形状——非根容器在横向与自上而下（行间距 76）之间选，根容器另可把各列折成 2–3 行蛇形排列（奇数行反向，换行处的箭头最短），且根的高不得超过宽的 1.6 倍（手机按宽度缩放后放得下）。仍超宽报 `statechart/chart-too-wide`，过高报 `statechart/chart-too-tall`。图状态超过 60 个或箭头超过 40 条时，摆放前报 `statechart/chart-too-large`，修复建议为合并标签、隐藏步骤或缩小域（D2）。同一对状态之间有 n 条箭头时，叶子高度取 max(64, 26·(n+1))，使并行箭头的标签互不覆盖。
+
 **走线**（`src/layout/statechart.rs` ★）：
-- 调用 `router::route_with(&nodes, &edges, &frames, false, RouterOptions::default())`（M1 删除 legacy 后 router 不再接收合同参数）：
+- 调用 `router::route_with(&nodes, &edges, &frames, false, options)`，`options` 为 `component_gap_px: 10`、`max_port_spacing: 26`、`minimum_terminal_segment_px: 16`、`straighten_jog_below_px: 24`，其余默认（`crossing_free_grid_first` 会耗尽 router 的 64 次网格搜索预算，不开）。自动走线用 crossover halo，与 architecture 相同；自环及其标签作为 router 障碍物，并参与标签避让。router 可能把两条箭头挤在几像素内并行，或让一条箭头止于另一条的同一直线上，读者会看成一条：依次用四组选项（基础、`crossing_free_grid_first`、`component_gap_px: 18`、两者兼用）走线，以「穿过非端点状态 ×1000 + 拥挤对数」取最优；再对剩余拥挤对（并行间距 < 24px 且重叠 ≥ 40px，或同线间距 ≤ 6px 且间隙 < 100px）逐段侧移，端段沿节点边移动端口，侧移后须满足圆角后的节奏下限、箭头端点相距 ≥ 12px、不穿过其他状态，且拥挤对严格减少：
   - `nodes` = 叶子 + 标题节点；
   - `edges` = 非自环箭头，`raw` 合成为 `{"id","label","variant"}`；出错路径上的箭头用 `variant:"emphasis"`；
   - `frames` = 父状态框（radius 12）与区域框（radius 8）。
-- 标签用 `router::Label::new` 与 `place_labels` 放置。
+- 标签用 `router::Label::new` 与 `place_labels` 放置；状态外扩 8px、每条箭头末端 16px 作为标签障碍，标签不贴状态（否则像属于它，并盖住出错路径外环），也不遮箭头头部。
 - 自环（只出现在单区域图的出错路径上）不交给 router，作为带显式点的关系画出，`independent_ports: true`。路线：从叶子上边距右端 24 处出发，向上 20；向右越过右边 20；向下到上边以下 16；再回到右边。
 - 起始叶子左侧用 `render.rs::initial_marker` 画起始标记。
 
@@ -842,7 +848,7 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 - **`body`**，依次写入：
   1. `write_container_frames`：父状态框 `data-composition-frame-kind="statechart-parent"`，区域框 `statechart-region`；
   2. `write_relation_paths`；
-  3. 自写的 `write_node`（照 `render/tree.rs::write_node`）：节点的 `data-node-kind` 为 `state` 或 `parent`；`data-node-context` 用目录 `node.context.statechart.*` 生成，形如「{n} 个模型状态 · 违反 R1；可能违反 R2」；
+  3. 自写的 `write_node`（照 `render/tree.rs::write_node`）：节点的 `data-node-kind` 为 `state` 或 `parent`；`data-node-context` 写所在位置（区域名、父状态路径，以「›」连接），供节点索引分组；`data-node-sublabel` 用目录 `node.context.statechart.*` 生成，形如「{n} 个模型状态 · 违反 R1」；
   4. 起始标记；
   5. `write_container_labels`、`write_relation_labels`。
 
@@ -867,7 +873,7 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 
 - 不新增 Reader 模块。叶子与标题节点是普通节点，选择、搜索、详情、Route/Reach、导出都照常工作；框不可选，与 architecture 的 boundary 一致。
 - 新增目录键，写进 `viewer/locales/{en,zh-CN,zh-TW,es,ko}.json`。五种语言都写真实译文，占位符保持一致：
-  - 图例与节点：`legend.statechart.{breaks,may-break,bug-path,start}`、`node.context.statechart.{members,breaks,may-break}`
+  - 图例与节点：`legend.statechart.{breaks,may-break,bug-path,start}`、`node.context.statechart.{members,breaks,may-break}`、`statechart.join.regions`（状态文字中各区域的连接符）
   - 规则与卡片：`statechart.rule.deadlock`、`statechart.card.{summary,rule-breaks,rules-hold,rules-not-checked}`
   - 概况与回退：`statechart.summary.{counts,incomplete,inside,hidden,fallback}`、`statechart.fallback.{starts,condition,move-extra,move-missing}`
   - 区域说明与路径：`statechart.note.{one-at-a-time,together}`、`statechart.path.{length,start,step}`
@@ -913,6 +919,8 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 | F-6 `deadlock.json` | 一个未声明 `ends` 的停止状态；再加 `ends` 跑一次同一模型 | 不加 `ends` 时 `deadlock` breaks；加上后 holds |
 | F-7 `limit.json` | 三个 0..99 的整数变量自由加减 | `complete:false`；未见违反的规则为 not-checked；发出 `statechart/state-limit` 警告 |
 | F-8 `mixed-groups.json` | 合并后成员 group 混合的图状态 | 该图状态不上色；出现 `may-break` 标记 |
+| F-9 `retry.json`、F-10 `retry-merged.json` | V-8 角色模拟写出的订单重试模型（未合并 / 合并后） | 通过构图门；无拥挤箭头对；高不超过宽的 1.75 倍 |
+| F-11 `retry-split.json` | V-8 角色模拟复跑的第三版模型（拆分扣款状态、带条件的重试） | 同 F-9；箭头标签离状态 ≥ 6px，不遮任何箭头头部 |
 
 | 检查 ID | 需求/验收行与可观察结果 | 命令/入口与环境 | 执行时点 |
 | --- | --- | --- | --- |
@@ -921,7 +929,7 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 | V-3 | 阶段 A 收口（R-5、R-6、R-7）：<br>• 全量回归通过<br>• 开发构建完成并同步 dist<br>• 十类最小示例都能在真实浏览器中交付，并实际看图 | 1. `npm run test:diagram`：聚合，含 fmt、clippy 与全部 Rust/Node/Reader 测试，耗时未知<br>2. `mise exec --no-deps -- node scripts/build-phoenix-diagram.mjs --development --output-dir local/phoenix-diagram/statechart-a --sync-dist`<br>3. `E=local/phoenix-diagram/statechart-a/phoenix-diagram-<platform>-<arch>`（本机为 `darwin-arm64`）<br>4. 对每一类运行 `"$E" finalize <type> skills/phoenix-diagram/examples/minimal.<type>.json local/phoenix-diagram/statechart-a-out/<type>.html --json`<br>5. 打开回执列出的四张截图看图，写好审核记录后运行 `"$E" review-record <html> --record <审核记录> --json`<br>6. 确认 `dist/phoenix-diagram` 中没有 legacy 示例，`THIRD-PARTY.json` 中没有 `upstream/` 位置 | M2 收口（阶段 A）；先确认 A-1 |
 | V-4 | R-1：<br>• F-1 路径为 6 步；F-6 的死锁与 `ends`；F-7 的上限与 not-checked<br>• 打乱 `actions` 的声明顺序，结果逐字节相同<br>• §5.2 的每个编译期诊断各有一例（含拼错的字面量触发 `value-not-in-domain`）；运行期诊断 `value-out-of-domain` 带路径<br>• 初值数组与 `pick` 参数产生预期的状态数<br>• `minimal.statechart.json` 能通过 schema 与静态检查 | `$CARGO test $MF --test statechart_model`<br>`$CARGO test $MF --test input_contract --test cli`（覆盖新类型枚举、guide 与 HELP）<br>clippy | M3：schema、示例、静态检查、穷举与判定齐备后 |
 | V-5 | R-2：<br>• F-2：合并、去重、「或」合并；`inside`/`hidden` 计数；隐藏出错步骤时报错；单区域自环<br>• F-3：父状态归组与提升<br>• F-4：条件文字与区域说明<br>• F-5：失真回退的原因与叙述<br>• F-8：混合 group 不上色，以及 may-break<br>• `leaf-is-parent`、`unlabeled-state`、`group-color` 各有一例 | `$CARGO test $MF --test statechart_chart`<br>clippy | M4：投影的全部步骤齐备后 |
-| V-6 | R-3：<br>• F-1–F-8 经 `compile` + `render` + `check_html` 全部通过（showcase）<br>• 节点不重叠、框正确嵌套、标记属性与 facts 一致<br>• 篡改一个 `data-statechart-mark` 或删掉一条箭头后，`check_html` 报 `statechart/artifact-mismatch`<br>• 报告卡片的内容正确<br>• 用 `validate statechart` 检查最小示例，回执含 `model`<br>• 五种语言的目录键集一致 | `$CARGO test $MF --test statechart`<br>`$CARGO test $MF --test cli --test check_anchors --test evidence --test render_check`<br>`mise exec --no-deps -- node scripts/assemble-phoenix-diagram-reader.mjs --check`<br>`mise exec --no-deps -- node --test tools/phoenix-diagram/tests/viewer/catalogs.test.mjs tools/phoenix-diagram/tests/viewer/explore.test.mjs`<br>clippy | M5：T-1 结论已记录，T-2、T-3 交付齐备后 |
+| V-6 | R-3：<br>• F-2–F-6、F-8–F-11 与最小示例经 `compile` + `render` + `check_html` 全部通过（showcase），且没有读者会看成一条的箭头对、没有贴住状态或遮住箭头头部的标签；F-1（无 view，58 条箭头）与 F-7（10 万状态）报 `statechart/chart-too-large` 并给出修复建议<br>• 节点不重叠、框正确嵌套、标记属性与 facts 一致<br>• 篡改一个 `data-statechart-mark` 或删掉一条箭头后，`check_html` 报 `statechart/artifact-mismatch`<br>• 报告卡片的内容正确<br>• 用 `validate statechart` 检查最小示例，回执含 `model`<br>• 五种语言的目录键集一致 | `$CARGO test $MF --test statechart`<br>`$CARGO test $MF --test cli --test check_anchors --test evidence --test render_check`<br>`mise exec --no-deps -- node scripts/assemble-phoenix-diagram-reader.mjs --check`<br>`mise exec --no-deps -- node --test tools/phoenix-diagram/tests/viewer/catalogs.test.mjs tools/phoenix-diagram/tests/viewer/explore.test.mjs`<br>clippy | M5：T-1 结论已记录，T-2、T-3 交付齐备后 |
 | V-7 | R-4、C-4、C-5：<br>• skill 元数据与各处复述已同步<br>• 人工通读 description 全文与前 100 字<br>• 所改 SKILL.md 的 YAML 只用仓库允许的字段<br>• bundle 必备 schema 列表包含 statechart<br>• 下列 grep 没有过期的复述 | `mise exec --no-deps -- node --test test/phoenix-diagram/skill.test.js test/phoenix-diagram/build.test.js`<br>`git grep -n -e '十类' -e '十种' -e 'legacy-2.17' -- README.md docs/phoenix-diagram.md skills/phoenix-diagram bin tools/phoenix-diagram/src` | M6：§5.8 的文档与示例齐备后 |
 | V-8 | 阶段 B 收口（R-1–R-4）：<br>• 全量回归通过<br>• 开发构建完成并同步 dist<br>• statechart 在真实浏览器中交付并实际看图<br>• 十类回归通过<br>• 角色模拟完成 | 1. `npm run test:diagram`<br>2. `mise exec --no-deps -- node scripts/build-phoenix-diagram.mjs --development --output-dir local/phoenix-diagram/statechart-b --sync-dist`<br>3. 用新 engine 对 F-2、F-3、F-4、F-5 与 `minimal.statechart.json` 分别运行 `finalize statechart … --json`；查看四张暗/亮截图，核对标记、框、条件标签与卡片；用 `review-record` 登记<br>4. 对十类最小示例各 finalize 一次，作回归<br>5. 角色模拟：Agent 扮演首次使用者，只读安装后的 skill 目录（`SKILL.md`、`references/statechart.md`、`schemas/statechart.schema.json`、`schemas/common.schema.json`、最小示例），不看引擎源码，也不看本计划。为「订单支付：超时可以重试；规则：一笔订单最多扣一次款」建模，直到 finalize 完成交付，并在答复中按 SKILL 交接 breaks 的规则与路径。记录尝试轮次、遇到的诊断与卡点 | M6 收口（阶段 B） |
 
@@ -936,7 +944,7 @@ M3 负责 `cli.rs`、schema 与最小示例；其余在 M6 完成。
 | M1 | 删除 legacy-2.17 合同 | 无 | **内容**：§5.6 第 1–6、8、9 项<br>**同构**：各文件中既有的 `== PhoenixV1` 分支<br>**注意**：删文件与改引用放在同一批，批内用 `--no-run` 确认能编译 | V-1；回写「实施进度」 |
 | M2 | 删除 upstream 与 Archify 技术耦合，改用 Phoenix 标识（阶段 A 收口） | M1 的 V-1 | **内容**：§5.6 第 7 项与 §5.7 全部<br>**顺序**：先按 §5.7 第 4 项完成组装器的等价生成，再删除旧文件<br>**同构**：`catalogsAt` 中现有的校验、`verifyNativeTextSources` 的现有签名<br>V-2 通过后再跑 V-3 | V-2、V-3；回写「实施进度」 |
 | M3 | statechart 合同、表达式与穷举 | M2 的 V-2（schema `$id` 基址与 `input.rs` 已稳定） | **接入 `DiagramType::Statechart`**：<br>• `input.rs:9-59`：`ALL` 改为 11 项，补 `as_str`<br>• `schema.rs` 的 PHOENIX 表<br>• `semantics.rs:106,249`：调用 `statechart::check_static`<br>• `layout/mod.rs:37-48`：在 M5 之前返回 `statechart/layout-unavailable` 诊断<br>• `evidence.rs:132-142`：无来源集合<br>• `scene.rs`：增加 `DiagramFacts::Statechart`<br>**新增**：`src/statechart/{mod,expr,model,explore}.rs` ★；schema 与 `examples/minimal.statechart.json` ★<br>**CLI**：`cli.rs` 的 HELP 与 guide<br>**测试枚举**：`tests/support/input_corpus.rs:232,304`、`tests/check_anchors.rs:109`、`tests/evidence.rs:94`、`tests/cli.rs:123,139-155`（guide 的模糊用例由 10 改为 11）<br>**fixture**：F-1、F-6、F-7<br>**注意**：遍历 `ALL` 编译最小示例的测试（`check_anchors.rs:181`、`evidence.rs:194`）要到 M5 才会通过，所以 M3、M4 不跑整 crate 测试 | V-4；回写「实施进度」 |
-| M4 | 图投影 | M3 的 V-4 | **新增**：`src/statechart/{chart,regions,report}.rs` ★，实现 §5.4 与判定汇总；卡片文字在 M5 接入目录<br>**fixture**：F-2–F-5、F-8 | V-5；回写「实施进度」 |
+| M4 | 图投影 | M3 的 V-4 | **新增**：`src/statechart/{chart,regions}.rs` ★，实现 §5.4；图结构不依赖语言（条件、区域说明、回退原因、叙述均为结构化数据），措辞、卡片与回执在 M5 接入目录（`report.rs` 归 T-3）<br>**fixture**：F-2–F-5、F-8 | V-5；回写「实施进度」 |
 | M5 | 嵌套布局、渲染、检查、Reader、报告与回执 | M4 的 V-5 | **任务**：见 §10.1 的 T-1–T-3<br>**同构**：<br>• `layout/architecture.rs:252-271`：Frame + router<br>• `layout/erd.rs:746`：`route_with`<br>• `render/tree.rs`：TypeRenderer 与自写节点<br>• `check/tree.rs`：由 facts 推导后比对<br>• `layout/waterfall.rs:363-372`：由目录生成图例<br>**其余**：`layout/mod.rs` 去掉占位诊断；完成 §5.9 署名 | V-6；回写「实施进度」 |
 | M6 | skill、文档、分发与阶段 B 收口 | M5 的 V-6 | **内容**：§5.8 中 M6 的部分，以及 `build-phoenix-diagram.mjs:105-108`<br>V-7 通过后再跑 V-8 | V-7、V-8；回写「实施进度」 |
 

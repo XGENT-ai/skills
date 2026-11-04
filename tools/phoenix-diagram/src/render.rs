@@ -11,6 +11,7 @@ use std::fmt::Write;
 
 mod class;
 mod erd;
+mod statechart;
 mod timeline;
 mod tree;
 mod waterfall;
@@ -33,6 +34,7 @@ fn type_renderer(kind: DiagramType) -> Option<TypeRenderer> {
         DiagramType::Tree => Some(tree::RENDERER),
         DiagramType::Timeline => Some(timeline::RENDERER),
         DiagramType::Waterfall => Some(waterfall::RENDERER),
+        DiagramType::Statechart => Some(statechart::RENDERER),
         _ => None,
     }
 }

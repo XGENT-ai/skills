@@ -103,7 +103,7 @@ export function bundleFiles(repoRoot = root) {
     files.set(name, bytes); descriptors.push({ path: name, ...identity(bytes), mode });
   }
   for (const name of ['SKILL.md', 'scripts/phoenix-diagram', 'scripts/phoenix-launcher.cjs', 'scripts/phoenix-bootstrap.cjs',
-    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall'].map(kind => `schemas/${kind}.schema.json`)]) {
+    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart'].map(kind => `schemas/${kind}.schema.json`)]) {
     assert(files.has(name), `Missing required diagram bundle source: ${name}`);
   }
   const manifest = { schemaVersion: 1, tool: TOOL, version: TOOL_VERSION, files: descriptors }, bytes = pretty(manifest);
@@ -256,6 +256,7 @@ export function collectLicenses({ repoRoot = root, metadata, locked, rustSysroot
   for (const [name, license, source] of [
     ['Archify', 'MIT', 'tools/phoenix-diagram/viewer/LICENSE.txt'],
     ['JetBrains Mono', 'OFL-1.1', 'tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt'],
+    ['pstack statechart', 'MIT', 'tools/phoenix-diagram/assets/licenses/pstack-statechart-MIT.txt'],
     ['Phoenix UI CDP/install adaptations', 'Apache-2.0', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0'],
     ['ICU 77.1 native text and SystemV time adaptations', 'Unicode-3.0', 'tools/phoenix-diagram/assets/icu77-LICENSE.txt'],
   ]) runtime.push({ name, license, licenses: [preserve(fs.readFileSync(path.join(repoRoot, source)), source)] });

@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "Die Hard 量水",
+    "output": "diehard.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "big",
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "id": "small",
+        "range": [
+          0,
+          3
+        ]
+      }
+    ],
+    "init": {
+      "big": 0,
+      "small": 0
+    },
+    "actions": [
+      {
+        "id": "fillBig",
+        "set": {
+          "big": 5
+        }
+      },
+      {
+        "id": "fillSmall",
+        "set": {
+          "small": 3
+        }
+      },
+      {
+        "id": "emptyBig",
+        "set": {
+          "big": 0
+        }
+      },
+      {
+        "id": "emptySmall",
+        "set": {
+          "small": 0
+        }
+      },
+      {
+        "id": "pourBigToSmall",
+        "set": {
+          "small": {
+            "if": [
+              {
+                "le": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  3
+                ]
+              },
+              {
+                "add": [
+                  {
+                    "var": "big"
+                  },
+                  {
+                    "var": "small"
+                  }
+                ]
+              },
+              3
+            ]
+          },
+          "big": {
+            "if": [
+              {
+                "le": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  3
+                ]
+              },
+              0,
+              {
+                "sub": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  3
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "pourSmallToBig",
+        "set": {
+          "big": {
+            "if": [
+              {
+                "le": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  5
+                ]
+              },
+              {
+                "add": [
+                  {
+                    "var": "big"
+                  },
+                  {
+                    "var": "small"
+                  }
+                ]
+              },
+              5
+            ]
+          },
+          "small": {
+            "if": [
+              {
+                "le": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  5
+                ]
+              },
+              0,
+              {
+                "sub": [
+                  {
+                    "add": [
+                      {
+                        "var": "big"
+                      },
+                      {
+                        "var": "small"
+                      }
+                    ]
+                  },
+                  5
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "neverFour",
+        "text": "大桶不会正好装 4 升",
+        "holds": {
+          "ne": [
+            {
+              "var": "big"
+            },
+            4
+          ]
+        }
+      }
+    ]
+  }
+}

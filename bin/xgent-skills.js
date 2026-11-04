@@ -240,7 +240,7 @@ function usage() {
   install [dir]   为目标项目(默认当前目录)安装 .claude/hooks 下的全部
                   hook,在 .claude/settings.json 中启用对应配置,并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
-                  放入用户 cache;旧 impeccable 可选择替换或共存)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十类图解 skill 与独立原生 engine)' : ''}
+                  放入用户 cache;旧 impeccable 可选择替换或共存)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十一类图解 skill 与独立原生 engine)' : ''}
   help            显示本帮助
 
 install 选项:

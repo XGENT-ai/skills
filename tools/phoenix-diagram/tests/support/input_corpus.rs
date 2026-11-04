@@ -268,6 +268,14 @@ fn minimal(kind: DiagramType) -> Value {
                 "spans": [{"id":"a","name":"A","start":0,"end":10},{"id":"b","name":"B","start":2,"duration":3,"parent":"a"},{"id":"c","name":"C","start":4,"status":"incomplete","parent":"a"}],
             })
         }
+        DiagramType::Statechart => json!({
+            "model": {
+                "variables": [{"id":"phase","values":["a","b"]}],
+                "init": {"phase":"a"},
+                "actions": [{"id":"go","when":{"eq":[{"var":"phase"},"a"]},"set":{"phase":"b"}}],
+                "deadlock": {"ends":{"eq":[{"var":"phase"},"b"]}},
+            },
+        }),
     };
     document
         .as_object_mut()
@@ -288,6 +296,7 @@ fn collections(kind: DiagramType) -> (&'static str, &'static str) {
         DiagramType::Tree => ("nodes", "relationships"),
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
+        DiagramType::Statechart => ("variables", "actions"),
     }
 }
 

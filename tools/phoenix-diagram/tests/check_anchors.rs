@@ -137,6 +137,9 @@ fn example(kind: DiagramType) -> CompiledDiagram {
         DiagramType::Waterfall => {
             include_str!("../../../skills/phoenix-diagram/examples/minimal.waterfall.json")
         }
+        DiagramType::Statechart => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.statechart.json")
+        }
     };
     compile(serde_json::from_str(raw).unwrap(), kind)
 }

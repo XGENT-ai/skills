@@ -1,6 +1,6 @@
 ---
 name: phoenix-diagram
-description: "用于架构、工作流、时序、数据流、状态、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML。品牌采集、本地预览和架构比较仅在明确请求时启用。"
+description: "用于架构、工作流、时序、数据流、状态、状态机模型检查、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML。品牌采集、本地预览和架构比较仅在明确请求时启用。"
 license: MIT
 metadata:
   internal: true
@@ -35,8 +35,9 @@ metadata:
 | `tree` | 单父包含层级：仓库或模块目录、能力分解、组织式拆分 | [最小树](examples/minimal.tree.json) |
 | `timeline` | 何时发生：事故复盘、发布历史、带泳道的成比例时间轴 | [最小时间线](examples/minimal.timeline.json) |
 | `waterfall` | 时间花在哪：一次请求或运行的跨度时长、重叠与嵌套 | [最小耗时瀑布](examples/minimal.waterfall.json) |
+| `statechart` | 流程会不会违反规则或卡住：有限模型穷举，画出状态图与最短出错路径 | [最小状态机](examples/minimal.statechart.json) |
 
-不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。数值图表、仪表盘和其他 infographic 不在范围内，不能改称上述图型来绕过。
+要判断流程会不会违反规则、找出出错路径时用 statechart；只画出已知的状态流时用 lifecycle。不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。数值图表、仪表盘和其他 infographic 不在范围内，不能改称上述图型来绕过。
 
 Mermaid 作为语义材料处理：`flowchart` / `graph` 转为 workflow，组件连接图可选 architecture；`sequenceDiagram` 保留参与者、消息方向、同步/异步与 return；`stateDiagram` 保留主路径、waiting、终止及真实 recovery 边；`erDiagram` 转为 erd，保留实体、字段、键与两端基数；`classDiagram` 转为 class，保留类型种类、所选成员与关系种类。由宿主写新的 JSON，不运行 Mermaid 或 Node 图解 renderer，不照搬 Mermaid 样式。
 
@@ -63,6 +64,8 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 1. 新稿只读所选 `schemas/<type>.schema.json`、[common schema](schemas/common.schema.json)、一个匹配示例及[创作默认值](references/authoring-defaults.md)。必需资料的宿主读取返回若被截断，先分段补齐缺失内容，再写完整 candidate；子进程 stdout 完整不代表宿主返回完整。新稿设置 `meta.input_contract: "phoenix-v1"`、`meta.quality_profile: "showcase"`；从自动路线和自动标签开始。保留用户提供的固定几何，不在首稿预先添加 `via`、`channelX`、`channelY` 或 `labelAt`。ER 图列出每张表的全部物理列及其类型和键角色，外键写 `references`；时间线每个时刻带明确偏移；没有记录的计时只能标为示意。
 
    ER 图写 candidate 前，分别核对关系每端的最大基数、最小参与数与引用列可空性。外键只证明引用目标，不自动证明 `NOT NULL`；“可有多个”不单独证明最小数为零。`fromOptional`/`toOptional` 省略或写 `false` 仍表示该端最小值为1，写 `true` 表示0；两种取值都要有材料依据，省略字段不能表示未知。以已给 SQL 约束、联合主键、显式文字或 Mermaid 端点为依据，材料已明确就直接使用，不重复询问或要求另选表现形式。需要表示的最小数或可空性缺少依据时，按前述开放问题规则先问并停止；不先画 `0..N`/`1` 再标“待确认”，不用卡片兜底。用户明确授权拟定规则时仍走建议分支。
+
+   statechart 另读[状态机模型检查](references/statechart.md)：先写变量、动作与规则（规则写成读者认同的一句话，不为通过而放宽），再写 view；它没有 `sources`、品牌或架构比较。
 
    类图分别核对关系、生命周期和数量：保留“一个/多个”等已给数量，不能只保留组合或创建销毁而漏掉数量。没有依据的下界不补数字；按[创作默认值](references/authoring-defaults.md)的 Class 规则处理，只有无依据的可选数值标注可以省略。
 
@@ -103,5 +106,7 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 ## 交付答复
 
 简短返回 HTML 和 candidate 路径、图型、当前三门结果、图像审核结果及 summary 路径。答复中的 HTML、candidate 和 summary 路径优先原样复制同一交付回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。有失败时说明真实阶段、保留文件和具体缺口。退出码非零、旧输出存在或自动检查通过都不能单独描述为完整成功。另读取同一 summary 中名为 `deliver` 的阶段回执 `receipt.compatibility.coreCompatibility` 与 `receipt.compatibility.dispositions`；逐项交接非 `supported` 字段的实际处理及原因，按[兼容约定](references/compatibility.md)说明未重建的展示能力，不再称为延期。`deliveryStatus: complete` 仅表示交付流程完成，不能代替这些兼容限制的交接。
+
+statechart 读同一 summary 的 `model`：逐条列出 `outcome: breaks` 的规则、作者写的那句话与最短路径；说明 `not-checked` 的规则与 `complete: false`、隐藏了哪些步骤、模型省略了什么。模型描述的是代码时，按步复现每条出错路径，复现之前先假定模型有误。规则被违反不影响交付状态。
 
 带来源的图还要说明 `evidence.status`：不是 `verified` 时，列出待核实元素及原因（如工作树改动的路径、缺少 `--repo-root`）和未提供来源的元素，不称其已核对。时间线或耗时瀑布标为示意（`illustrative`）或日精度时，说明这些时间不是实测或只精确到日。回执 `locale.fallback` 为 true 时，说明界面语言已回退英文。

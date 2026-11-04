@@ -4,6 +4,7 @@ Full texts below are preserved offline; SPDX declarations alone are not substitu
 
 - Archify: MIT; THIRD-PARTY-LICENSES/b799ab081703e7821ae5096d2c1abdf14bbdc75e8ea1c4045998c36ed6db9706.txt
 - JetBrains Mono: OFL-1.1; THIRD-PARTY-LICENSES/c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90.txt
+- pstack statechart: MIT; THIRD-PARTY-LICENSES/bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e.txt
 - Phoenix UI CDP/install adaptations: Apache-2.0; THIRD-PARTY-LICENSES/02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812.txt
   Source: https://github.com/pbakaus/impeccable engine 86be0f02dcdaaeb3f9b6780711dbdc03a14ce222; Phoenix source 4a65a1525f9ed03c775a0e18935901e1edbb773f.
   Modifications: Diagram-only CDP subset with bounded startup/commands, owned profiles and complete-height PNG capture; project-local installer with independent state, file allowlist and journal ordering. No UI runtime dependency.

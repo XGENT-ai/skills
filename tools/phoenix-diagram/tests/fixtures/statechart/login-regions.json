@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "登录与锁定",
+    "output": "login-regions.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "session",
+        "values": [
+          "out",
+          "in"
+        ]
+      },
+      {
+        "id": "fails",
+        "range": [
+          0,
+          3
+        ]
+      }
+    ],
+    "init": {
+      "session": "out",
+      "fails": 0
+    },
+    "actions": [
+      {
+        "id": "signIn",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "session"
+                },
+                "out"
+              ]
+            },
+            {
+              "lt": [
+                {
+                  "var": "fails"
+                },
+                3
+              ]
+            }
+          ]
+        },
+        "set": {
+          "session": "in",
+          "fails": 0
+        }
+      },
+      {
+        "id": "wrongPassword",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "session"
+                },
+                "out"
+              ]
+            },
+            {
+              "lt": [
+                {
+                  "var": "fails"
+                },
+                3
+              ]
+            }
+          ]
+        },
+        "set": {
+          "fails": {
+            "add": [
+              {
+                "var": "fails"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "rememberedDevice",
+        "when": {
+          "eq": [
+            {
+              "var": "session"
+            },
+            "out"
+          ]
+        },
+        "set": {
+          "session": "in"
+        }
+      },
+      {
+        "id": "signOut",
+        "when": {
+          "eq": [
+            {
+              "var": "session"
+            },
+            "in"
+          ]
+        },
+        "set": {
+          "session": "out"
+        }
+      },
+      {
+        "id": "unlock",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "session"
+                },
+                "out"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "fails"
+                },
+                3
+              ]
+            }
+          ]
+        },
+        "set": {
+          "fails": 0
+        }
+      },
+      {
+        "id": "forceSignOut",
+        "when": {
+          "eq": [
+            {
+              "var": "session"
+            },
+            "in"
+          ]
+        },
+        "set": {
+          "session": "out"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "signedInWhileLocked",
+        "text": "锁定后不能登录",
+        "holds": {
+          "not": {
+            "and": [
+              {
+                "eq": [
+                  {
+                    "var": "session"
+                  },
+                  "in"
+                ]
+              },
+              {
+                "eq": [
+                  {
+                    "var": "fails"
+                  },
+                  3
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "view": {
+    "regions": [
+      {
+        "name": "会话",
+        "state": [
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "session"
+                },
+                "out"
+              ]
+            },
+            "label": "未登录"
+          },
+          {
+            "label": "已登录"
+          }
+        ]
+      },
+      {
+        "name": "错误次数",
+        "state": [
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "fails"
+                },
+                3
+              ]
+            },
+            "label": "已锁定"
+          },
+          {
+            "label": "{fails} 次"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "action": "signIn",
+        "label": "登录"
+      },
+      {
+        "action": "wrongPassword",
+        "label": "密码错误"
+      },
+      {
+        "action": "rememberedDevice",
+        "label": "记住的设备"
+      },
+      {
+        "action": "signOut",
+        "label": "退出"
+      },
+      {
+        "action": "unlock",
+        "label": "管理员处理"
+      },
+      {
+        "action": "forceSignOut",
+        "label": "管理员处理"
+      }
+    ]
+  }
+}

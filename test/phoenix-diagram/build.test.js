@@ -35,7 +35,7 @@ function sourceFixture(t) {
 function legalSourceFixture(t) {
   const directory = temporary(t);
   for (const name of ['LICENSE', 'tools/phoenix-diagram/NOTICE.md', 'tools/phoenix-diagram/viewer/LICENSE.txt',
-    'tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0',
+    'tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt', 'tools/phoenix-diagram/assets/licenses/pstack-statechart-MIT.txt', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0',
     'tools/phoenix-diagram/assets/icu77-LICENSE.txt', 'tools/phoenix-diagram/build-tools.lock.json', 'tools/phoenix-diagram/Cargo.toml']) {
     write(directory, name, fs.readFileSync(path.join(root, name)));
   }
@@ -128,7 +128,7 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');
   for (const name of ['phoenix-diagram', 'phoenix-launcher.cjs', 'phoenix-bootstrap.cjs']) write(directory, `${skill}/scripts/${name}`, fs.readFileSync(path.join(root, skill, 'scripts', name)), name === 'phoenix-bootstrap.cjs' ? 0o644 : 0o755);
-  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
+  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
   write(directory, `${skill}/ENGINE.json`, '{"derived":true}\n');
   const bundle = api.bundleFiles(directory);
   assert.ok(bundle.files.has('SKILL.md')); assert.ok(!bundle.files.has('ENGINE.json'));

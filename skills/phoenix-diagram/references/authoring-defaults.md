@@ -14,7 +14,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 
 ## 新旧合同
 
-新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余八类为 1。全部类型只有 `phoenix-v1`；ER、类、树、时间线、耗时瀑布未标记时也按它读取，原五类未标记时报 `input/contract-required`。已是 phoenix-v1 的未标记 JSON 用 `--input-contract phoenix-v1` 读取并保留原字节；`legacy-2.17` 已不受支持，须先人工转换。CLI 的显式 `--input-contract` 必须与用户已授权的导入意图一致。
+新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余九类为 1。全部类型只有 `phoenix-v1`；ER、类、树、时间线、耗时瀑布、状态机未标记时也按它读取，原五类未标记时报 `input/contract-required`。已是 phoenix-v1 的未标记 JSON 用 `--input-contract phoenix-v1` 读取并保留原字节；`legacy-2.17` 已不受支持，须先人工转换。CLI 的显式 `--input-contract` 必须与用户已授权的导入意图一致。
 
 读取 `compatibility.coreCompatibility` 与 `compatibility.dispositions`，按[兼容约定](compatibility.md)逐项报告非 `supported` 字段的实际处理与原因，并保留原 JSON；不能将核心兼容通过说成旧展示能力全部复刻，也不能借展示限制删除核心事实。品牌仅在明确请求时按[品牌资源](brand-marks.md)处理，普通编译不联网采集；旧安装移除另需明确迁移授权和确认。`sources` 与 `meta.repository` 交付时按[仓库来源创作](repository-authoring.md)核对。
 
@@ -30,6 +30,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 - Tree：恰一个根，其余节点各写一个 `parent`，链接只表示包含，不表达调用或数据流。浅而均衡的分解用 `layout.direction: "down"`，深或叶子多的（如仓库目录）用 `"right"`。`collapsed` 只决定阅读器的初始折叠，导出始终是完整树。
 - Timeline：每个 `at` 是带 `Z` 或 `±HH:MM` 的 ISO 时间；`meta.timezone` 是显示时钟，接受 IANA 名、固定偏移及 ICU 兼容别名，缺省 UTC。本期新增接受 `SystemV/AST4ADT`、`SystemV/CST6CDT`、`SystemV/EST5EDT`、`SystemV/MST7MDT`、`SystemV/PST8PDT`、`SystemV/YST9YDT`；曾因不支持而拒绝的这六区输入可直接重试，不改成近似城市时区。这些说明不是名称白名单，实际接受范围以原生输入门为准。`meta.evidence` 必填：记录到的事件用 `observed`，说明性的用 `illustrative`，不把推测或近似的时间标为 observed。只有日期的记录写在该偏移的 12:00 并设 `precision: "day"`，不在卡片里另作说明。声明 `lanes` 时每个事件都要写其中一个 lane；只按输入画事件，不补缺口。
 - Waterfall：跨度的 `start` 与 `end` 或 `duration` 用同一 `meta.unit`；两者同写时必须一致，没有记录结束的跨度必须 `status: "incomplete"`。`meta.evidence` 只有真实计时（trace、日志、性能剖析）才写 `measured`，否则写 `illustrative`；不从代码结构推断时长，也不为计时去运行项目。请求或父跨度的 `end` 只说明该跨度结束，不自动给出 trace 的精确采集截止时刻；仅由自动扩展或人为固定得到的窗口边界不能作为观测事实。未给精确截止时，不在名称、`detail`、卡片、提示或最终答复中补精确截止时刻或截至该时的精确已观测时长。有记录支持的区间可表达“至少/≥”时长下界：同一 trace 已记录的最晚时刻可给出采集截止下界，采集截止时仍开放的跨度可据其起点到该时刻的差给出时长下界，无须知道精确截止；不能由此补精确截止或最终耗时，缺少可省略的截止说明不追加问题。推导时长比较、极值或排序结论时，以材料已给事实、已知数值或上下界为依据，不能默认未结束跨度短于已完成跨度。材料直接给定的比较事实照用，不为证明它额外索要数值。上下界足以证明时，未知总时长也可参与比较；否则写清仅比较已知完成跨度或明确窗口内片段，不把该结论扩为全部跨度的最终耗时比较。判断无子跨度覆盖的区间时，必须核对相关未结束子跨度；缺少其结束依据就不作零覆盖断言。百分比是相对整体墙钟，父子时长不相加；输入没写依赖时不标关键路径。
+- Statechart：先写变量、初值、动作与规则，再写 view；域保持小，用 `deadlock.ends` 声明可以停下的终态。合并标签、隐藏步骤、区域与图规模的限制见[状态机模型检查](statechart.md)。
 
 只有实测缺陷或用户固定几何要求才添加 route/label pins。自动端口方向是离开/进入边界的方向合同；不得接受穿过无关不透明节点、含混共用通道或标签盖住其他关系的路线。
 

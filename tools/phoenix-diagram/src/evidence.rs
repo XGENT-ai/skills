@@ -128,8 +128,10 @@ impl SourceEvidence {
     }
 }
 
-fn collection(kind: DiagramType) -> &'static str {
-    match kind {
+/// The authored elements that may cite sources; a statechart derives its
+/// states, so it has none.
+fn collection(kind: DiagramType) -> Option<&'static str> {
+    Some(match kind {
         DiagramType::Architecture => "components",
         DiagramType::Workflow | DiagramType::Dataflow | DiagramType::Tree => "nodes",
         DiagramType::Sequence => "participants",
@@ -138,7 +140,8 @@ fn collection(kind: DiagramType) -> &'static str {
         DiagramType::Class => "types",
         DiagramType::Timeline => "events",
         DiagramType::Waterfall => "spans",
-    }
+        DiagramType::Statechart => return None,
+    })
 }
 
 struct Citation {
@@ -167,7 +170,9 @@ fn error(kind: DiagramType, code: &str, path: &str, message: impl Into<String>) 
 
 fn citations(input: &DiagramInput, errors: &mut Diagnostics) -> Vec<Citation> {
     let kind = input.diagram_type;
-    let collection = collection(kind);
+    let Some(collection) = collection(kind) else {
+        return Vec::new();
+    };
     let mut result = Vec::new();
     let nodes = input.document[collection]
         .as_array()
@@ -491,8 +496,8 @@ pub fn verify_with(
 
 /// Primary elements without a citation; computed only under a declared repository.
 fn unsourced(input: &DiagramInput) -> Vec<String> {
-    input.document[collection(input.diagram_type)]
-        .as_array()
+    collection(input.diagram_type)
+        .and_then(|collection| input.document[collection].as_array())
         .into_iter()
         .flatten()
         .filter(|node| node["sources"].as_array().is_none_or(Vec::is_empty))

@@ -200,6 +200,14 @@ pub enum DiagramFacts {
         evidence: String,
         spans: Vec<WaterfallSpan>,
     },
+    /// The drawn projection of an explored model: chart states (leaves and
+    /// parent titles), arrows, and the model verdict the receipt reports.
+    Statechart {
+        regions: Vec<String>,
+        states: Vec<Value>,
+        arrows: Vec<Value>,
+        model: Value,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

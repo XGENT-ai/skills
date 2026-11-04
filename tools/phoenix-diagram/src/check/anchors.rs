@@ -255,9 +255,10 @@ fn sampled_path(
     points: &[Point],
 ) -> Option<crate::check::path::PathAnalysis> {
     let path = match kind {
-        DiagramType::Architecture | DiagramType::Erd | DiagramType::Class => {
-            geometry::rounded_path(points, 8.0)
-        }
+        DiagramType::Architecture
+        | DiagramType::Erd
+        | DiagramType::Class
+        | DiagramType::Statechart => geometry::rounded_path(points, 8.0),
         DiagramType::Workflow if version == 2 => {
             let mut radius: f64 = 8.0;
             for (index, pair) in points.windows(2).enumerate() {

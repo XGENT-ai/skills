@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "任务执行",
+    "output": "deadlock.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "phase",
+        "values": [
+          "idle",
+          "running",
+          "done"
+        ]
+      }
+    ],
+    "init": {
+      "phase": "idle"
+    },
+    "actions": [
+      {
+        "id": "start",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "idle"
+          ]
+        },
+        "set": {
+          "phase": "running"
+        }
+      },
+      {
+        "id": "finish",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "running"
+          ]
+        },
+        "set": {
+          "phase": "done"
+        }
+      }
+    ]
+  }
+}

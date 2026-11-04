@@ -120,12 +120,12 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     }
     assert!(text.starts_with("phoenix-diagram 0.2.0\n"));
     assert!(text.contains(
-        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall."
+        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart."
     ));
 }
 
 #[test]
-fn cli_guide_routes_the_ten_types_and_lists_alternatives_when_ambiguous() {
+fn cli_guide_routes_the_eleven_types_and_lists_alternatives_when_ambiguous() {
     let guide = |scenario: &str| {
         let output = run(&[flag("guide"), flag(scenario), flag("--json")]);
         assert!(output.status.success());
@@ -142,6 +142,7 @@ fn cli_guide_routes_the_ten_types_and_lists_alternatives_when_ambiguous() {
         ("仓库目录结构", "tree"),
         ("事故复盘时间线", "timeline"),
         ("一次请求的耗时瀑布", "waterfall"),
+        ("检查结账流程会不会死锁、找出违规路径", "statechart"),
         ("convert this erDiagram", "erd"),
         ("convert this classDiagram", "class"),
     ] {
@@ -152,7 +153,7 @@ fn cli_guide_routes_the_ten_types_and_lists_alternatives_when_ambiguous() {
         parsed(&output)["matches"][0]["schema"],
         "schemas/class.schema.json"
     );
-    assert_eq!(guide("something vague").len(), 10);
+    assert_eq!(guide("something vague").len(), 11);
 }
 
 #[test]
@@ -438,4 +439,29 @@ fn cli_browser_command_failures_leave_screenshot_directories_alone() {
             }
         }
     }
+}
+
+#[test]
+fn cli_validate_reports_the_statechart_model_verdict() {
+    let example = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../skills/phoenix-diagram/examples/minimal.statechart.json");
+    let output = run(&[
+        flag("validate"),
+        flag("statechart"),
+        example.as_os_str(),
+        flag("--json"),
+    ]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let model = &parsed(&output)["model"];
+    assert_eq!(model["complete"], true);
+    assert_eq!(model["stateLimit"], 100_000);
+    let rules = model["rules"].as_array().unwrap();
+    assert_eq!(rules[0]["id"], "chargedOnce");
+    assert_eq!(rules[0]["outcome"], "breaks");
+    assert_eq!(rules[0]["path"][0], json!({"state":"购物车"}));
+    assert_eq!(rules[1]["outcome"], "holds");
 }

@@ -110,6 +110,16 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Tree => ("nodes", "relationships"),
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
+        // A statechart has no authored entity collections; its model rules
+        // are checked by the statechart module.
+        DiagramType::Statechart => {
+            let errors = crate::statechart::check_static(document);
+            return if errors.is_empty() {
+                Ok(())
+            } else {
+                Err(errors)
+            };
+        }
     };
     let nodes = array(document, node_collection);
     let relations = array(document, relation_collection);

@@ -11,6 +11,7 @@ pub mod anchors;
 mod class;
 mod erd;
 pub mod path;
+mod statechart;
 mod timeline;
 mod tree;
 mod waterfall;
@@ -259,7 +260,9 @@ fn path_matches_declaration(
     bundled: Option<Option<String>>,
 ) -> bool {
     let expected = match kind {
-        Some(DiagramType::Architecture | DiagramType::Class) => geometry::rounded_path(points, 8.0),
+        Some(DiagramType::Architecture | DiagramType::Class | DiagramType::Statechart) => {
+            geometry::rounded_path(points, 8.0)
+        }
         // A bundled erd member draws its pieces around the shared trunk path.
         Some(DiagramType::Erd) => match bundled {
             Some(Some(pieces)) => pieces,
@@ -1046,6 +1049,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             Some(DiagramType::Tree) => tree::content(svg, metadata),
             Some(DiagramType::Timeline) => timeline::content(svg, metadata),
             Some(DiagramType::Waterfall) => waterfall::content(svg, metadata),
+            Some(DiagramType::Statechart) => statechart::content(svg, metadata),
             _ => Vec::new(),
         };
         for (code, path, message, evidence) in findings {

@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "订单支付：超时重试与扣款次数",
+    "output": "retry-merged.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "phase",
+        "values": [
+          "ordered",
+          "paying",
+          "timedOut",
+          "paid"
+        ]
+      },
+      {
+        "id": "charges",
+        "range": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "attemptCharged",
+        "values": [
+          false,
+          true
+        ]
+      }
+    ],
+    "init": {
+      "phase": "ordered",
+      "charges": 0,
+      "attemptCharged": false
+    },
+    "actions": [
+      {
+        "id": "startPay",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "ordered"
+          ]
+        },
+        "set": {
+          "phase": "paying"
+        }
+      },
+      {
+        "id": "gatewayCharge",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "attemptCharged"
+                },
+                false
+              ]
+            },
+            {
+              "lt": [
+                {
+                  "var": "charges"
+                },
+                2
+              ]
+            }
+          ]
+        },
+        "set": {
+          "charges": {
+            "add": [
+              {
+                "var": "charges"
+              },
+              1
+            ]
+          },
+          "attemptCharged": true
+        }
+      },
+      {
+        "id": "gatewayTimeout",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "set": {
+          "phase": "timedOut"
+        }
+      },
+      {
+        "id": "retryPay",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "timedOut"
+          ]
+        },
+        "set": {
+          "phase": "paying",
+          "attemptCharged": false
+        }
+      },
+      {
+        "id": "gatewaySuccess",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "attemptCharged"
+                },
+                true
+              ]
+            }
+          ]
+        },
+        "set": {
+          "phase": "paid"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "chargedAtMostOnce",
+        "text": "一笔订单最多扣一次款",
+        "holds": {
+          "le": [
+            {
+              "var": "charges"
+            },
+            1
+          ]
+        }
+      }
+    ],
+    "deadlock": {
+      "ends": {
+        "eq": [
+          {
+            "var": "phase"
+          },
+          "paid"
+        ]
+      }
+    }
+  },
+  "view": {
+    "state": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "ordered"
+          ]
+        },
+        "label": "已下单"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "charges"
+            },
+            2
+          ]
+        },
+        "label": "重复扣款 · 已扣 2 次"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "label": "支付中 · 已扣 {charges} 次"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "timedOut"
+          ]
+        },
+        "label": "支付超时 · 已扣 {charges} 次"
+      },
+      {
+        "label": "已支付 · 已扣 {charges} 次"
+      }
+    ],
+    "steps": [
+      {
+        "action": "startPay",
+        "label": "进入支付"
+      },
+      {
+        "action": "gatewayCharge",
+        "label": "网关扣款"
+      },
+      {
+        "action": "gatewayTimeout",
+        "label": "网关超时"
+      },
+      {
+        "action": "retryPay",
+        "label": "重试支付"
+      },
+      {
+        "action": "gatewaySuccess",
+        "label": "网关返回成功"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "模型范围",
+      "items": [
+        "每次支付尝试网关最多扣一次款，超时可发生在扣款之前或之后",
+        "超时后重试不查询上一笔是否已扣款",
+        "扣款次数只探索到 2 次，足以判定“最多扣一次”",
+        "扣到第 2 次后仍可超时、重试或收到成功（支付中/超时/已支付），图中合并为「重复扣款」一个状态"
+      ]
+    }
+  ]
+}

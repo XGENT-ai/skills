@@ -12,7 +12,7 @@
 "$PD" preview <type> candidate.json diagram.html --port 0 --open --json
 ```
 
-支持现有十类。可加 `--quality standard|showcase`、`--input-contract phoenix-v1`、`--repo-root DIR`、`--brand-cache DIR`；合同适用类型和声明冲突规则沿普通编译。repo-root 须为现有目录，来源是否 verified 仍单独核对。preview 不接受 `--out-dir` 或 `--layout-json`。品牌只消费本地固定资源，服务不隐式联网补品牌。
+支持现有十一类。可加 `--quality standard|showcase`、`--input-contract phoenix-v1`、`--repo-root DIR`、`--brand-cache DIR`；合同适用类型和声明冲突规则沿普通编译。repo-root 须为现有目录，来源是否 verified 仍单独核对。preview 不接受 `--out-dir` 或 `--layout-json`。品牌只消费本地固定资源，服务不隐式联网补品牌。
 
 固定监听127.0.0.1，默认 port=0由系统分配；`--port` 范围0–65535。未加 `--open` 时从 started 读取 URL。stdout 是前台 NDJSON，每行一个事件，不能把多行整体当单个 JSON，也不能在第一条 updated 后把仍运行的进程当已停止。
 

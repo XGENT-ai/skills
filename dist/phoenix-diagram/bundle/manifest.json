@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 18730,
-      "sha256": "918444d2947acd6e1d3eaeb39027ea2a0e0feb1d9ef9a03a44f6b53421b78ac5",
+      "size": 19647,
+      "sha256": "db8eed2d90cf03194bf4c67ab06a5e0236f9b9fe3584e735c02a2aeca61d3732",
       "mode": 420
     },
     {
@@ -46,6 +46,12 @@
       "mode": 420
     },
     {
+      "path": "examples/minimal.statechart.json",
+      "size": 2821,
+      "sha256": "bf24965891de8a8c6b0952d416168d05dad97b255d409a3d7f3de31a30c00a5f",
+      "mode": 420
+    },
+    {
       "path": "examples/minimal.timeline.json",
       "size": 928,
       "sha256": "fa7da309dcd87268784f76510cbe9162a8c53f1808376efe993dd37e89f4543f",
@@ -77,20 +83,20 @@
     },
     {
       "path": "references/authoring-defaults.md",
-      "size": 12778,
-      "sha256": "4e79262148a734add1d84550676293eed9eddd190b157b65ac7ccca53b94d105",
+      "size": 13028,
+      "sha256": "32c0f7edcee6f493b1792f423e7173065fbcde0e4438e04f26f33acaea5b1809",
       "mode": 420
     },
     {
       "path": "references/brand-marks.md",
-      "size": 5056,
-      "sha256": "fd05816d87871454f72b51e6c911b6cb9c7909d7c29f02e66807a871333b4b7a",
+      "size": 5069,
+      "sha256": "0b8510b98991c694cda88d49bf4cbe9a2f964f7bdfc579c87c377b52e20e115c",
       "mode": 420
     },
     {
       "path": "references/compatibility.md",
-      "size": 1774,
-      "sha256": "6f89abd9af6af7b917775628b6e1f954ac7c244e441d9c0956e6ea863716ffac",
+      "size": 1790,
+      "sha256": "f5b81229dd40818b1e549c23e80a943ffc5dc9a1131851b0b35a3115bcf63852",
       "mode": 420
     },
     {
@@ -101,14 +107,14 @@
     },
     {
       "path": "references/extending-types.md",
-      "size": 2025,
-      "sha256": "e7d68281ab7c1a6db96f58e8dbdf2ab20684e7e5510ba76403b2a0d7695b6822",
+      "size": 2081,
+      "sha256": "7850316dac8a0a34f69fc2f32bfa37d9561df808ad86ec1b38015f2a16df076e",
       "mode": 420
     },
     {
       "path": "references/preview.md",
-      "size": 4188,
-      "sha256": "ab31df8dee2ff8f135c286324a6010ec89f7bc61e231846a637e3ac4dd638491",
+      "size": 4191,
+      "sha256": "3cedf45848ad67310fe0423feac969a30361def83ef7998643acaeee744d5fec",
       "mode": 420
     },
     {
@@ -118,15 +124,21 @@
       "mode": 420
     },
     {
+      "path": "references/statechart.md",
+      "size": 7408,
+      "sha256": "330f6dc0334fa0684a23e24262edc1d48bd87cfe892b286aec443a5434fae477",
+      "mode": 420
+    },
+    {
       "path": "references/viewer-runtime.md",
-      "size": 3289,
-      "sha256": "ba92156c1e311f07374974fd11698e17414ed0807f2a7fe1f97e9cceacd2bbe7",
+      "size": 3292,
+      "sha256": "c1d73833c66f12245adf1e11ed5413c424c320e069c636a1b5ce617e0aa3b068",
       "mode": 420
     },
     {
       "path": "schemas/README.md",
-      "size": 2708,
-      "sha256": "ed3710a39902a9f156329feab04725db2f62c6945f7b71c273acec17e2ff7316",
+      "size": 2903,
+      "sha256": "747b6b868e73db309c281d8ed274e86c9ec0afdf0cc03f7f538898e930025e06",
       "mode": 420
     },
     {
@@ -169,6 +181,12 @@
       "path": "schemas/sequence.schema.json",
       "size": 6528,
       "sha256": "7ef7e110d3a6cab11712ba081ab12c99c6e8379ae9edd561f50268800a0752fb",
+      "mode": 420
+    },
+    {
+      "path": "schemas/statechart.schema.json",
+      "size": 18284,
+      "sha256": "c0563e4af892fa0d3b0f0aaaeb3d357f05d8c8a4f5498f525806fcbf13b18755",
       "mode": 420
     },
     {

@@ -6,10 +6,10 @@
 
 | 输入 | 处理 |
 | --- | --- |
-| 新稿，全部十类 | 明确写 `meta.input_contract: "phoenix-v1"` |
+| 新稿，全部十一类 | 明确写 `meta.input_contract: "phoenix-v1"` |
 | 未标记的 architecture、workflow、sequence、dataflow、lifecycle 稿件 | 报 `input/contract-required`；已是 phoenix-v1 的 JSON（如来自 Archify 3.1）显式传 `--input-contract phoenix-v1`，不为导入改写原文件 |
 | 标记或参数为 `legacy-2.17` 的稿件 | 报 `input/unknown-contract`；该合同已不受支持，须先人工转换为 phoenix-v1 |
-| 未标记的 erd、class、tree、timeline、waterfall | 按 `phoenix-v1` 读取 |
+| 未标记的 erd、class、tree、timeline、waterfall、statechart | 按 `phoenix-v1` 读取 |
 
 质量参数与输入已有声明冲突时会拒绝；不能通过覆盖参数消除已声明的语义。
 

@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "订单支付",
+    "output": "checkout.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "phase",
+        "values": [
+          "cart",
+          "paying",
+          "paid",
+          "failed"
+        ]
+      },
+      {
+        "id": "charges",
+        "range": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "gatewayUp",
+        "values": [
+          true,
+          false
+        ]
+      }
+    ],
+    "init": {
+      "phase": "cart",
+      "charges": 0,
+      "gatewayUp": [
+        true,
+        false
+      ]
+    },
+    "actions": [
+      {
+        "id": "pay",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "cart"
+          ]
+        },
+        "set": {
+          "phase": "paying"
+        }
+      },
+      {
+        "id": "charge",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "var": "gatewayUp"
+            },
+            {
+              "lt": [
+                {
+                  "var": "charges"
+                },
+                2
+              ]
+            }
+          ]
+        },
+        "set": {
+          "charges": {
+            "add": [
+              {
+                "var": "charges"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "confirm",
+        "pick": {
+          "result": [
+            "paid",
+            "failed"
+          ]
+        },
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "set": {
+          "phase": {
+            "param": "result"
+          }
+        }
+      },
+      {
+        "id": "timeout",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "set": {
+          "phase": "failed"
+        }
+      },
+      {
+        "id": "outage",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "var": "gatewayUp"
+            }
+          ]
+        },
+        "set": {
+          "gatewayUp": false
+        }
+      },
+      {
+        "id": "recover",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "not": {
+                "var": "gatewayUp"
+              }
+            }
+          ]
+        },
+        "set": {
+          "gatewayUp": true
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "chargedOnce",
+        "text": "一笔订单最多扣一次款",
+        "holds": {
+          "le": [
+            {
+              "var": "charges"
+            },
+            1
+          ]
+        }
+      }
+    ],
+    "deadlock": {
+      "ends": {
+        "in": [
+          {
+            "var": "phase"
+          },
+          [
+            "paid",
+            "failed"
+          ]
+        ]
+      }
+    }
+  },
+  "view": {
+    "state": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "cart"
+          ]
+        },
+        "label": "购物车"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "label": "支付中"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paid"
+          ]
+        },
+        "label": "已支付"
+      },
+      {
+        "label": "支付失败"
+      }
+    ],
+    "steps": [
+      {
+        "action": "pay",
+        "label": "去结账"
+      },
+      {
+        "action": "charge",
+        "when": {
+          "eq": [
+            {
+              "next": "charges"
+            },
+            2
+          ]
+        },
+        "label": "网关又扣了一次"
+      },
+      {
+        "action": "charge",
+        "label": "网关扣款"
+      },
+      {
+        "action": "confirm",
+        "when": {
+          "eq": [
+            {
+              "param": "result"
+            },
+            "paid"
+          ]
+        },
+        "label": "支付成功"
+      },
+      {
+        "action": "confirm",
+        "label": "支付失败"
+      },
+      {
+        "action": "timeout",
+        "label": "超时"
+      },
+      {
+        "action": "outage",
+        "label": "网关故障"
+      },
+      {
+        "action": "recover",
+        "label": null
+      }
+    ],
+    "groups": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "cart"
+          ]
+        },
+        "group": "下单"
+      },
+      {
+        "group": "结账"
+      }
+    ],
+    "colors": {
+      "下单": "cyan",
+      "结账": "emerald"
+    }
+  }
+}

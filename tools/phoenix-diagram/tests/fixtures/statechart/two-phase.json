@@ -1,0 +1,392 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "两阶段提交",
+    "output": "two-phase.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "c",
+        "values": [
+          "init",
+          "committed",
+          "aborted"
+        ]
+      },
+      {
+        "id": "a",
+        "values": [
+          "working",
+          "prepared",
+          "committed",
+          "aborted"
+        ]
+      },
+      {
+        "id": "b",
+        "values": [
+          "working",
+          "prepared",
+          "committed",
+          "aborted"
+        ]
+      }
+    ],
+    "init": {
+      "c": "init",
+      "a": "working",
+      "b": "working"
+    },
+    "actions": [
+      {
+        "id": "prepareA",
+        "when": {
+          "eq": [
+            {
+              "var": "a"
+            },
+            "working"
+          ]
+        },
+        "set": {
+          "a": "prepared"
+        }
+      },
+      {
+        "id": "prepareB",
+        "when": {
+          "eq": [
+            {
+              "var": "b"
+            },
+            "working"
+          ]
+        },
+        "set": {
+          "b": "prepared"
+        }
+      },
+      {
+        "id": "quitB",
+        "when": {
+          "in": [
+            {
+              "var": "b"
+            },
+            [
+              "working",
+              "prepared"
+            ]
+          ]
+        },
+        "set": {
+          "b": "aborted"
+        }
+      },
+      {
+        "id": "decide",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "c"
+                },
+                "init"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "a"
+                },
+                "prepared"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "b"
+                },
+                "prepared"
+              ]
+            }
+          ]
+        },
+        "set": {
+          "c": "committed"
+        }
+      },
+      {
+        "id": "timeout",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "c"
+                },
+                "init"
+              ]
+            },
+            {
+              "in": [
+                {
+                  "var": "a"
+                },
+                [
+                  "working",
+                  "prepared"
+                ]
+              ]
+            },
+            {
+              "in": [
+                {
+                  "var": "b"
+                },
+                [
+                  "working",
+                  "prepared"
+                ]
+              ]
+            }
+          ]
+        },
+        "set": {
+          "c": "aborted",
+          "a": "aborted",
+          "b": "aborted"
+        }
+      },
+      {
+        "id": "finishA",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "c"
+                },
+                "committed"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "a"
+                },
+                "prepared"
+              ]
+            }
+          ]
+        },
+        "set": {
+          "a": "committed"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "agree",
+        "text": "参与者的结果一致",
+        "holds": {
+          "not": {
+            "or": [
+              {
+                "and": [
+                  {
+                    "eq": [
+                      {
+                        "var": "a"
+                      },
+                      "committed"
+                    ]
+                  },
+                  {
+                    "eq": [
+                      {
+                        "var": "b"
+                      },
+                      "aborted"
+                    ]
+                  }
+                ]
+              },
+              {
+                "and": [
+                  {
+                    "eq": [
+                      {
+                        "var": "a"
+                      },
+                      "aborted"
+                    ]
+                  },
+                  {
+                    "eq": [
+                      {
+                        "var": "b"
+                      },
+                      "committed"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "deadlock": {
+      "check": false
+    }
+  },
+  "view": {
+    "regions": [
+      {
+        "name": "协调者",
+        "state": [
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "c"
+                },
+                "init"
+              ]
+            },
+            "label": "进行中"
+          },
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "c"
+                },
+                "committed"
+              ]
+            },
+            "label": "已提交"
+          },
+          {
+            "label": "已放弃"
+          }
+        ]
+      },
+      {
+        "name": "参与者A",
+        "state": [
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "a"
+                },
+                "working"
+              ]
+            },
+            "label": "工作中"
+          },
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "a"
+                },
+                "prepared"
+              ]
+            },
+            "label": "已准备"
+          },
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "a"
+                },
+                "committed"
+              ]
+            },
+            "label": "已提交"
+          },
+          {
+            "label": "已放弃"
+          }
+        ]
+      },
+      {
+        "name": "参与者B",
+        "state": [
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "b"
+                },
+                "working"
+              ]
+            },
+            "label": "工作中"
+          },
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "b"
+                },
+                "prepared"
+              ]
+            },
+            "label": "已准备"
+          },
+          {
+            "when": {
+              "eq": [
+                {
+                  "var": "b"
+                },
+                "committed"
+              ]
+            },
+            "label": "已提交"
+          },
+          {
+            "label": "已放弃"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "action": "prepareA",
+        "label": "准备好"
+      },
+      {
+        "action": "prepareB",
+        "label": "准备好"
+      },
+      {
+        "action": "quitB",
+        "label": "放弃"
+      },
+      {
+        "action": "timeout",
+        "label": "放弃"
+      },
+      {
+        "action": "decide",
+        "label": "决定提交"
+      },
+      {
+        "action": "finishA",
+        "label": "执行提交"
+      }
+    ]
+  }
+}
