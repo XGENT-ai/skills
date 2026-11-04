@@ -2996,6 +2996,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .node-outline-item:hover small,
     .node-outline-item[data-previewing] small,
     .node-outline-item[aria-current="true"] small { color: var(--text-muted); }
+    /* A statechart state's detail names the rules it breaks; give it its own line
+       under the name and wrap it rather than cut the rule off. */
+    html:has(svg[data-diagram-type="statechart"]) .node-outline-item small {
+      grid-column: 2 / 4;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
 
     .card-header {
       display: flex;
