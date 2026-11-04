@@ -42,6 +42,7 @@ async function fixture(t,{warmUi=true}={}){
   copy(path.join(root,'package.json'),path.join(pkg,'package.json'));
   for(const name of ['xgent-skills.js','phoenix-ui.js','phoenix-diagram.js'])copy(path.join(root,'bin',name),path.join(pkg,'bin',name));
   copy(path.join(root,'.claude/hooks'),path.join(pkg,'.claude/hooks'));
+  copy(path.join(root,'agents'),path.join(pkg,'agents'));
   for(const name of ['apply-ui-review','design-md','design-reference','review-ui','ui-pattern-research'])copy(path.join(root,'skills',name),path.join(pkg,'skills',name));
   copy(path.join(root,'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs'),path.join(pkg,'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs'));
   const engine=realEngines();
@@ -163,6 +164,16 @@ nativeTest('selected Codex providers isolate both skill roots from unselected ha
   assertBoth(project,'.agents');
   for(const provider of ['.claude','.cursor','.codex'])for(const name of ['phoenix-ui','phoenix-diagram'])assert.equal(fs.existsSync(path.join(project,provider,'skills',name)),false,`${provider}/${name} must remain absent`);
   assert.equal(fs.readFileSync(path.join(project,'.cursor/settings.user.json'),'utf8'),'unselected provider bytes\n');
+});
+nativeTest('an existing Codex project keeps both tools out of harnesses it does not use across reinstalls',async t=>{
+  const f=await fixture(t),project=f.project('codex only project');
+  fs.mkdirSync(path.join(project,'.agents'));
+  for(let attempt=0;attempt<2;attempt+=1){
+    const result=await install(f,project,both(f));assert.equal(result.code,0,result.stdout+result.stderr);
+    assertBoth(project,'.agents');
+    assert.equal(fs.existsSync(path.join(project,'.agents/agents/agi-agent.md')),true);
+    assert.equal(fs.existsSync(path.join(project,'.claude')),false);
+  }
 });
 nativeTest('a ready real UI engine plus missing diagram resources causes zero XGENT or project writes',async t=>{
   const f=await fixture(t),project=f.project('preflight failure project');

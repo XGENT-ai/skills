@@ -100,3 +100,4 @@
 - e16266dc-20d8-4825-bd7c-629e9522f9fc — [Phoenix UI HTTPS 代理隧道被绕过](e16266dc-20d8-4825-bd7c-629e9522f9fc.md)
 
 - 3d52691a-626a-4bdd-8eb4-4407592ab0d5 — [Phoenix 发布复用已构建引擎](3d52691a-626a-4bdd-8eb4-4407592ab0d5.md)
+- 510b0cd2-6f70-4e01-b58a-8c45bfd1aefc — [xgent-skills install 支持安装 agents](510b0cd2-6f70-4e01-b58a-8c45bfd1aefc.md)

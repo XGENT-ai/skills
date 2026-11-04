@@ -56,7 +56,7 @@ test('skipping both tools preserves diagram files and still installs XGENT', t =
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /完成: /);
   assert.equal(fs.readFileSync(owned, 'utf8'), 'preserve installed diagram\n');
-  assert.ok(fs.existsSync(path.join(dir, '.claude/hooks/xgent-statusline.js')));
+  assert.ok(fs.existsSync(path.join(dir, '.agents/agents/agi-agent.md')));
 });
 
 test('provider names are checked even when both tools are skipped', t => {
