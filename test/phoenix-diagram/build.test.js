@@ -25,8 +25,7 @@ function sourceFixture(t) {
   const directory = temporary(t);
   for (const name of ['tools/phoenix-diagram/Cargo.toml', 'tools/phoenix-diagram/Cargo.lock', 'tools/phoenix-diagram/build.rs',
     'tools/phoenix-diagram/src/check.rs', 'tools/phoenix-diagram/src/check/path.rs', 'tools/phoenix-diagram/assets/svg-definitions.svg',
-    'tools/phoenix-diagram/viewer/viewer.css', 'tools/phoenix-diagram/upstream/SOURCE.json', 'tools/phoenix-diagram/upstream/legacy-2.17/schemas/common.schema.json',
-    ...['web-app.architecture', 'agent-tool-call.workflow', 'async-job-roundtrip.sequence', 'product-analytics.dataflow', 'deployment-release.lifecycle'].map(name => `skills/phoenix-diagram/examples/legacy.${name}.json`),
+    'tools/phoenix-diagram/viewer/viewer.css',
     'skills/phoenix-diagram/schemas/common.schema.json']) {
     write(directory, name, fs.readFileSync(path.join(root, name)));
   }
@@ -35,8 +34,8 @@ function sourceFixture(t) {
 }
 function legalSourceFixture(t) {
   const directory = temporary(t);
-  for (const name of ['LICENSE', 'tools/phoenix-diagram/NOTICE.md', 'tools/phoenix-diagram/upstream/LICENSE-archify-MIT.txt',
-    'tools/phoenix-diagram/upstream/JetBrainsMono-OFL.txt', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0',
+  for (const name of ['LICENSE', 'tools/phoenix-diagram/NOTICE.md', 'tools/phoenix-diagram/viewer/LICENSE.txt',
+    'tools/phoenix-diagram/viewer/JetBrainsMono-OFL.txt', 'tools/phoenix-diagram/assets/licenses/pstack-statechart-MIT.txt', 'tools/phoenix-diagram/src/browser/LICENSE-APACHE-2.0',
     'tools/phoenix-diagram/assets/icu77-LICENSE.txt', 'tools/phoenix-diagram/build-tools.lock.json', 'tools/phoenix-diagram/Cargo.toml']) {
     write(directory, name, fs.readFileSync(path.join(root, name)));
   }
@@ -69,7 +68,7 @@ test('source tuples follow native roots: embedded schemas count, package.json, s
   assert.ok(!inputs.entries.some(row => row[0] === 'package.json'));
   assert.ok(inputs.entries.some(row => row[0] === 'tools/phoenix-diagram/build.rs'));
   assert.ok(inputs.entries.some(row => row[0] === 'skills/phoenix-diagram/schemas/common.schema.json'));
-  assert.equal(inputs.entries.filter(row => row[0].startsWith('skills/phoenix-diagram/examples/legacy.')).length, 5);
+  assert.ok(!inputs.entries.some(row => row[0].startsWith('skills/phoenix-diagram/examples/')));
   assert.ok(!inputs.entries.some(row => row[0].endsWith('/ENGINE.json') || row[0].endsWith('/SKILL.md')));
   assert.deepEqual(inputs.bytes, Buffer.from(JSON.stringify(inputs.entries)));
   assert.equal(inputs.sha256, sha(inputs.bytes));
@@ -129,7 +128,7 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');
   for (const name of ['phoenix-diagram', 'phoenix-launcher.cjs', 'phoenix-bootstrap.cjs']) write(directory, `${skill}/scripts/${name}`, fs.readFileSync(path.join(root, skill, 'scripts', name)), name === 'phoenix-bootstrap.cjs' ? 0o644 : 0o755);
-  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
+  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
   write(directory, `${skill}/ENGINE.json`, '{"derived":true}\n');
   const bundle = api.bundleFiles(directory);
   assert.ok(bundle.files.has('SKILL.md')); assert.ok(!bundle.files.has('ENGINE.json'));

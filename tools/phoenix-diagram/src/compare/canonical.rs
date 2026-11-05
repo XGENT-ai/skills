@@ -623,7 +623,7 @@ pub fn compare_architecture(
         .keys()
         .any(|id| head_components.contains_key(id))
     {
-        return Err(fail("delta/no-shared-component-id","The snapshots share no component id, so Archify cannot prove that they describe the same system.".into(),json!({"supportedFixes":["preserve at least one authored component id across snapshots"]})));
+        return Err(fail("delta/no-shared-component-id","The snapshots share no component id, so Phoenix Diagram cannot prove that they describe the same system.".into(),json!({"supportedFixes":["preserve at least one authored component id across snapshots"]})));
     }
     let base_connections = stable_index(
         base,

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { root, workspace, loadVersions, miseEnvironment, preflight, verifyFrozenSources, browserPin, discoverBrowser } from './check-phoenix-diagram-source.mjs';
+import { root, workspace, loadVersions, miseEnvironment, preflight, verifySources, browserPin, discoverBrowser } from './check-phoenix-diagram-source.mjs';
 
 export function preparationCommands(versions, lockfileExists, { updateLock = false, platform, boxingtonAvailable = true } = {}) {
   const bootstrap = platform === 'darwin-x64' && !boxingtonAvailable
@@ -99,7 +99,7 @@ export function prepareBrowser({ platform = `${process.platform}-${process.arch}
 }
 
 export function prepare({ updateLock = false } = {}) {
-  const sources = verifyFrozenSources(), versions = loadVersions();
+  const sources = verifySources(), versions = loadVersions();
   const platform = `${process.platform === 'win32' ? 'windows' : process.platform}-${process.arch}`;
   const evidenceRoot = path.join(root, 'local/phoenix-diagram/ci-prepare');
   const record = { schemaVersion: 1, startedAt: new Date().toISOString(), platform, status: 'preparing', updateLock, tools: versions, sources, commands: [] };

@@ -6,7 +6,7 @@ use crate::geometry::composition::{
 };
 use crate::geometry::{
     anchor, label_point, normalize_route_points, polyline_length, proper_segment_intersection,
-    rects_overlap_for_contract, segment_intersects_rect, segment_rect_clearance,
+    rects_overlap, segment_intersects_rect, segment_rect_clearance,
 };
 use crate::scene::{Node, Relation};
 use std::collections::{BTreeMap, BTreeSet};
@@ -198,7 +198,7 @@ impl Router<'_> {
             .unwrap()
     }
     fn overlap(&self, a: &Rect, b: &Rect, gap: f64) -> bool {
-        rects_overlap_for_contract(a, b, gap, self.input.input_contract)
+        rects_overlap(a, b, gap)
     }
     fn gap_y(&self, from: &Node, to: &Node, bias: f64) -> f64 {
         let a = self.lane(from);
@@ -359,8 +359,7 @@ impl Router<'_> {
             }
             return result;
         }
-        if self.input.input_contract == InputContract::PhoenixV1
-            && !segment_explicit
+        if !segment_explicit
             && edge.get("labelDx").is_none()
             && edge.get("labelDy").is_none()
             && points.len() == 2
@@ -411,9 +410,6 @@ impl Router<'_> {
             position
         };
         let preferred = on(segments[0].0);
-        if self.input.input_contract == InputContract::Legacy217 {
-            return preferred;
-        }
         let width = self.label_width(edge);
         let clear = |position: Point| {
             !self.measured.nodes.iter().any(|node| {
@@ -459,7 +455,7 @@ impl Router<'_> {
         preferred
     }
     fn label_width(&self, edge: &Value) -> f64 {
-        30.0_f64.max(units(self.input, string(edge, "label")) * 4.8 + 10.0)
+        30.0_f64.max(units(string(edge, "label")) * 4.8 + 10.0)
     }
     fn plate(&self, edge: &Value, points: &[Point]) -> Option<Rect> {
         if string(edge, "label").is_empty() {
@@ -952,74 +948,63 @@ impl Router<'_> {
         let mut parallel = 0.0_f64;
         let mut label_deficit = 0.0;
         let plate = self.plate(edge, points);
-        let visible = (self.input.input_contract == InputContract::PhoenixV1
-            && self.measured.readable)
-            .then(|| visible_route(points));
+        let visible = self.measured.readable.then(|| visible_route(points));
         for other in &self.placed {
             let shared_endpoint = [string(edge, "from"), string(edge, "to")]
                 .iter()
                 .any(|id| *id == other.from || *id == other.to);
-            if !shared_endpoint || self.input.input_contract == InputContract::PhoenixV1 {
-                let previous_crossings = crossings;
-                for a in points.windows(2) {
-                    for b in other.points.windows(2) {
-                        if proper_segment_intersection(a[0], a[1], b[0], b[1]).is_some() {
-                            crossings += 1.0;
-                        }
-                        if self.input.input_contract == InputContract::Legacy217 {
-                            shared += axis_overlap(a[0], a[1], b[0], b[1]);
-                        }
+            let previous_crossings = crossings;
+            for a in points.windows(2) {
+                for b in other.points.windows(2) {
+                    if proper_segment_intersection(a[0], a[1], b[0], b[1]).is_some() {
+                        crossings += 1.0;
                     }
                 }
-                if crossings == previous_crossings {
-                    if let Some(visible) = &visible {
-                        let routed = [
-                            RoutedRelation::new(0, edge.clone(), visible.clone()),
-                            RoutedRelation::new(
-                                1,
-                                other.authored.facts.clone(),
-                                visible_route(&other.points),
-                            ),
-                        ];
-                        if !collect_proper_crossings(
-                            &routed,
-                            &CrossingOptions {
-                                contract: self.input.input_contract,
-                                merge_forward_collinear_waypoints: true,
-                                include_shared_endpoints: Some(&|_, _| true),
-                                ..Default::default()
-                            },
-                        )
-                        .is_empty()
-                        {
-                            crossings += 1.0;
-                        }
-                    }
-                }
-                if !shared_endpoint && automatic(edge) {
-                    bends += bend_contacts(points, &other.points) as f64;
-                }
-                let routed = [
-                    RoutedRelation::new(0, edge.clone(), points.to_vec()),
-                    RoutedRelation::new(1, other.authored.facts.clone(), other.points.clone()),
-                ];
-                if self.input.input_contract == InputContract::PhoenixV1 {
-                    shared += collect_ambiguous_corridors(
+            }
+            if crossings == previous_crossings {
+                if let Some(visible) = &visible {
+                    let routed = [
+                        RoutedRelation::new(0, edge.clone(), visible.clone()),
+                        RoutedRelation::new(
+                            1,
+                            other.authored.facts.clone(),
+                            visible_route(&other.points),
+                        ),
+                    ];
+                    if !collect_proper_crossings(
                         &routed,
-                        &CorridorOptions {
-                            contract: self.input.input_contract,
+                        &CrossingOptions {
+                            merge_forward_collinear_waypoints: true,
                             include_shared_endpoints: Some(&|_, _| true),
-                            allow_short_workflow_trunks: true,
                             ..Default::default()
                         },
                     )
-                    .iter()
-                    .map(|hit| hit.overlap_length)
-                    .sum::<f64>();
+                    .is_empty()
+                    {
+                        crossings += 1.0;
+                    }
                 }
-                if self.input.input_contract == InputContract::PhoenixV1 && automatic(edge) {
-                    parallel += counterflow_deficit(points, &other.points);
-                }
+            }
+            if !shared_endpoint && automatic(edge) {
+                bends += bend_contacts(points, &other.points) as f64;
+            }
+            let routed = [
+                RoutedRelation::new(0, edge.clone(), points.to_vec()),
+                RoutedRelation::new(1, other.authored.facts.clone(), other.points.clone()),
+            ];
+            shared += collect_ambiguous_corridors(
+                &routed,
+                &CorridorOptions {
+                    include_shared_endpoints: Some(&|_, _| true),
+                    allow_short_workflow_trunks: true,
+                    ..Default::default()
+                },
+            )
+            .iter()
+            .map(|hit| hit.overlap_length)
+            .sum::<f64>();
+            if automatic(edge) {
+                parallel += counterflow_deficit(points, &other.points);
             }
             if let Some(plate) = plate {
                 for pair in other.points.windows(2) {
@@ -1087,8 +1072,7 @@ impl Router<'_> {
             .abs()
             + (center(to).x - LEGACY_COLUMNS[number(&to.authored.facts, "col", 0.0) as usize])
                 .abs();
-        let common = vec![
-            interior,
+        let common = [
             points.len().saturating_sub(2) as f64,
             (if direct > 0.0 { length / direct } else { 1.0 } * 1000.0).round(),
             growth,
@@ -1096,33 +1080,29 @@ impl Router<'_> {
             legacy,
             ordinal,
         ];
-        if self.input.input_contract == InputContract::Legacy217 {
-            [vec![reverse, crossings, shared, label_deficit], common].concat()
+        let excessive = if independent(edge)
+            && from.authored.facts["col"] == to.authored.facts["col"]
+            && center(from).y != center(to).y
+        {
+            (length - 2.0 * (center(to).y - center(from).y).abs()).max(0.0)
         } else {
-            let excessive = if independent(edge)
-                && from.authored.facts["col"] == to.authored.facts["col"]
-                && center(from).y != center(to).y
-            {
-                (length - 2.0 * (center(to).y - center(from).y).abs()).max(0.0)
-            } else {
-                0.0
-            };
-            [
-                vec![
-                    crossings,
-                    bends,
-                    shared,
-                    reverse,
-                    label_deficit,
-                    self.later_arrival_blocks(edge, points),
-                    parallel,
-                    interior,
-                    excessive,
-                ],
-                common[1..].to_vec(),
-            ]
-            .concat()
-        }
+            0.0
+        };
+        [
+            vec![
+                crossings,
+                bends,
+                shared,
+                reverse,
+                label_deficit,
+                self.later_arrival_blocks(edge, points),
+                parallel,
+                interior,
+                excessive,
+            ],
+            common.to_vec(),
+        ]
+        .concat()
     }
     // Preserve the source router's explicit boxes, anchors and authored sides.
     #[allow(clippy::too_many_arguments)]
@@ -1213,19 +1193,6 @@ fn compare_cost(a: &[f64], b: &[f64]) -> Ordering {
         }
     }
     Ordering::Equal
-}
-
-fn axis_overlap(a: Point, b: Point, c: Point, d: Point) -> f64 {
-    if (a.y - b.y).abs() <= 0.0001 && (c.y - d.y).abs() <= 0.0001 && (a.y - c.y).abs() <= 0.0001 {
-        (a.x.max(b.x).min(c.x.max(d.x)) - a.x.min(b.x).max(c.x.min(d.x))).max(0.0)
-    } else if (a.x - b.x).abs() <= 0.0001
-        && (c.x - d.x).abs() <= 0.0001
-        && (a.x - c.x).abs() <= 0.0001
-    {
-        (a.y.max(b.y).min(c.y.max(d.y)) - a.y.min(b.y).max(c.y.min(d.y))).max(0.0)
-    } else {
-        0.0
-    }
 }
 
 fn bend_contacts(left: &[Point], right: &[Point]) -> usize {
@@ -1402,7 +1369,7 @@ impl Router<'_> {
         preferred: Point,
         counterpart: &Node,
     ) -> Vec<Point> {
-        if self.input.input_contract != InputContract::PhoenixV1 || !independent(edge) {
+        if !independent(edge) {
             return vec![preferred];
         }
         let vertical = ["left", "right"].contains(&side);
@@ -1626,8 +1593,7 @@ impl Router<'_> {
         // In a repair pass the edge's spread ports take precedence over the
         // centred straight shortcut.
         let spread = !self.feedback.sides.is_empty() && (ports.0.is_some() || ports.1.is_some());
-        if self.input.input_contract == InputContract::PhoenixV1
-            && value.get("fromSide").is_none()
+        if value.get("fromSide").is_none()
             && value.get("toSide").is_none()
             && value.get("labelAt").is_none()
             && !spread
@@ -1697,12 +1663,7 @@ impl Router<'_> {
         }
         // The source probes alternative ports before the preferred pair when
         // collecting failures; successful route costs retain their old order.
-        failed_attempts.sort_by_key(|(pair, preferred, _, _, _)| {
-            (
-                *pair,
-                self.input.input_contract == InputContract::PhoenixV1 && *preferred,
-            )
-        });
+        failed_attempts.sort_by_key(|(pair, preferred, _, _, _)| (*pair, *preferred));
         let relevant_pin = value.get("labelAt").is_some()
             || self.placed.iter().any(|relation| {
                 relation.authored.facts.get("labelAt").is_some()
@@ -1947,14 +1908,12 @@ impl Router<'_> {
         }
         if !absolute_route(value) {
             let mut evidence = json!({"attemptedCandidateFamily":value["route"],"points":fallback.points.iter().map(|p|[p.x,p.y]).collect::<Vec<_>>(),"fromSide":fallback.from_side,"toSide":fallback.to_side,"requiredEndpointStubPx":8,"requiredInteriorSegmentPx":16,"requiredDirectClearancePx":28});
-            if self.input.input_contract == InputContract::PhoenixV1 {
-                evidence.as_object_mut().unwrap().extend(
-                    self.preset_rejection(edge, &fallback, rejection)
-                        .as_object()
-                        .unwrap()
-                        .clone(),
-                );
-            }
+            evidence.as_object_mut().unwrap().extend(
+                self.preset_rejection(edge, &fallback, rejection)
+                    .as_object()
+                    .unwrap()
+                    .clone(),
+            );
             let mut diagnostic = failure(
                 "workflow/route-preset-conflict",
                 &format!("/edges/{}/route", edge.index),
@@ -2107,7 +2066,7 @@ pub(super) fn route(
     let ports = port_spread(&router, edges, &sides);
     let mut results: BTreeMap<usize, Relation> = BTreeMap::new();
     let order: Vec<usize> = (0..edges.len()).collect();
-    if measured.readable && input.input_contract == InputContract::PhoenixV1 {
+    if measured.readable {
         for (index, edge) in edges.iter().enumerate() {
             if !absolute_route(&edge.value)
                 || !edges.iter().any(|other| {
@@ -2159,7 +2118,7 @@ pub(super) fn route(
         }
     }
     let mut order = order;
-    if measured.readable && input.input_contract == InputContract::PhoenixV1 {
+    if measured.readable {
         for source_index in feedback.route_first.iter().rev() {
             if let Some(index) = edges
                 .iter()

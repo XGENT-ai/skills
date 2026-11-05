@@ -1,4 +1,4 @@
-// Fixed page probes adapted from frozen Archify 3.1.0 export browser tests.
+// Fixed page probes adapted from Archify 3.1.0 export browser tests.
 // MIT: ../../viewer/LICENSE.txt. Phoenix changes: actual download/clipboard
 // delegates, independent namespace, canonical facts and real decoder evidence.
 

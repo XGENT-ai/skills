@@ -1,29 +1,5 @@
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract};
 use serde_json::json;
-
-#[test]
-fn legacy_presentation_has_final_dispositions_without_a_fictitious_later_phase() {
-    let mut doc: serde_json::Value = serde_json::from_slice(include_bytes!(
-        "../upstream/legacy-2.17/examples/cache-miss-request.sequence.json"
-    ))
-    .unwrap();
-    doc["participants"][0]["brand"] = json!("postgresql");
-    doc["meta"]["animation"] = json!("trace");
-    let input = parse_input(
-        &serde_json::to_vec(&doc).unwrap(),
-        DiagramType::Sequence,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    let compatibility = serde_json::to_value(input.compatibility).unwrap();
-    assert_eq!(compatibility["deferredFields"], json!([]));
-    assert_eq!(compatibility["status"], "partial");
-    assert!(compatibility["dispositions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|item| item["path"] == "/participants/0/brand" && item["disposition"] == "supported"));
-}
 
 #[test]
 fn fixed_catalog_query_alias_and_domain_never_need_a_cache() {
@@ -286,7 +262,7 @@ fn pinned_local_resource_delivers_offline_with_safe_facts() {
 }
 
 #[test]
-fn legacy_five_types_resolve_brands_without_rewriting_authored_input() {
+fn original_five_types_resolve_brands_without_rewriting_authored_input() {
     use phoenix_diagram::{brands, layout};
     let cases = [
         (DiagramType::Architecture, "web-app.architecture.json"),
@@ -297,7 +273,7 @@ fn legacy_five_types_resolve_brands_without_rewriting_authored_input() {
     ];
     for (kind, name) in cases {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("upstream/legacy-2.17/examples")
+            .join("tests/fixtures/input/phoenix-v1")
             .join(name);
         let mut doc: serde_json::Value =
             serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
@@ -305,7 +281,10 @@ fn legacy_five_types_resolve_brands_without_rewriting_authored_input() {
         doc[key][0]["brand"] = json!("postgresql");
         doc[key][0]["label"] = json!("Store");
         let bytes = serde_json::to_vec(&doc).unwrap();
-        let options = CompileOptions::default();
+        let options = CompileOptions {
+            input_contract: Some(InputContract::PhoenixV1),
+            ..Default::default()
+        };
         let mut input = parse_input(&bytes, kind, &options).unwrap();
         input.bind_brands(
             brands::prepare(&input, std::path::Path::new("not-created-brand-cache")).unwrap(),

@@ -1,4 +1,4 @@
-// Compares a Phoenix SVG with the frozen renderer's SVG element by element.
+// Compares a Phoenix SVG with a recorded baseline SVG element by element.
 use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType};
 use phoenix_diagram::render::{render, EmbeddedAssets};
 use phoenix_diagram::{diagnostic, layout, scene};

@@ -1,8 +1,6 @@
 use phoenix_diagram::geometry::{self, composition::*, Point};
-use phoenix_diagram::input::InputContract;
 use serde_json::json;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 
 fn p(x: f64, y: f64) -> Point {
     Point { x, y }
@@ -81,15 +79,10 @@ fn labels(value: &Value) -> Vec<LabelRect> {
 fn result(test_case: &Value) -> Value {
     let input = &test_case["input"];
     let routes = routed(&input["routedRelations"]);
-    let contract = if test_case["contract"] == "legacy-2.17" {
-        InputContract::Legacy217
-    } else {
-        InputContract::PhoenixV1
-    };
     let include = |_: &Value, _: &Value| input["includeSharedEndpoints"] == true;
     let counterflow = |_: &Value, _: &Value| input["includeSharedEndpointCounterflow"] == true;
     match test_case["operation"].as_str().unwrap() {
-        "corridors" => json!(collect_ambiguous_corridors(&routes,&CorridorOptions {contract,
+        "corridors" => json!(collect_ambiguous_corridors(&routes,&CorridorOptions {
             min_overlap_px:numeric(input,"minOverlapPx",8.0),include_shared_endpoints:Some(&include),
             include_shared_endpoint_counterflow:Some(&counterflow),allow_short_workflow_trunks:input["allowShortWorkflowTrunks"]==true,
         }).iter().map(|h|json!({"left":h.left_relation_index,"right":h.right_relation_index,"leftSegment":h.left_segment,
@@ -119,7 +112,7 @@ fn result(test_case: &Value) -> Value {
         "bend-contacts" => json!(polyline_bend_contacts(&points(&input["left"]),&points(&input["right"])).into_iter().map(xy).collect::<Vec<_>>()),
         "crossings" => {
             let resolved=|_: &Value,_: &Value,_: &ProperCrossing|input["crossingResolved"]==true;
-            json!(collect_proper_crossings(&routes,&CrossingOptions {contract,merge_forward_collinear_waypoints:input["mergeForwardCollinearWaypoints"]==true,
+            json!(collect_proper_crossings(&routes,&CrossingOptions {merge_forward_collinear_waypoints:input["mergeForwardCollinearWaypoints"]==true,
                 include_shared_endpoints:Some(&include),crossing_resolved:Some(&resolved)}).iter().map(|h|json!({"left":h.left_relation_index,
                     "right":h.right_relation_index,"point":xy(h.point),"leftSegment":h.left_segment,"rightSegment":h.right_segment})).collect::<Vec<_>>())
         }
@@ -228,43 +221,6 @@ fn frozen_opaque_obstacle_oracle() {
 }
 
 #[test]
-fn oracle_source_hashes_match_both_pinned_manifests() {
-    let legacy_bytes = include_bytes!("../upstream/legacy-2.17-manifest.json");
-    let reference_bytes = include_bytes!("../upstream/archify-3.1.0-manifest.json");
-    assert_eq!(
-        format!("{:x}", Sha256::digest(legacy_bytes)),
-        "9b02b58082c1872f611fff050b225026e108ca53efa738da429965db9966d273"
-    );
-    assert_eq!(
-        format!("{:x}", Sha256::digest(reference_bytes)),
-        "4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395"
-    );
-    let legacy: Value = serde_json::from_slice(legacy_bytes).unwrap();
-    let reference: Value = serde_json::from_slice(reference_bytes).unwrap();
-    let oracle: Value =
-        serde_json::from_str(include_str!("fixtures/composition/oracle.json")).unwrap();
-    assert_eq!(oracle["format"], 1);
-    for case in oracle["cases"].as_array().unwrap() {
-        let manifest = if case["contract"] == "legacy-2.17" {
-            &legacy
-        } else {
-            &reference
-        };
-        let row = manifest
-            .as_array()
-            .unwrap()
-            .iter()
-            .find(|r| {
-                r[0].as_str()
-                    .unwrap()
-                    .ends_with("renderers/shared/geometry.mjs")
-            })
-            .unwrap();
-        assert_eq!(case["sourceSha256"], row[2], "{}", case["source"]);
-    }
-}
-
-#[test]
 fn malformed_geometry_is_unknown_and_does_not_report_composition_pass() {
     let frame = Frame::new(
         "boundary",
@@ -328,7 +284,7 @@ fn endpoint_and_crossing_indices_name_authored_or_normalized_geometry_explicitly
 }
 
 #[test]
-fn workflow_short_trunk_exemption_preserves_style_and_contract_boundaries() {
+fn workflow_short_trunk_exemption_preserves_style_boundaries() {
     let routed = vec![
         RoutedRelation::new(
             0,
@@ -352,6 +308,4 @@ fn workflow_short_trunk_exemption_preserves_style_and_contract_boundaries() {
     let mut mismatched = routed.clone();
     mismatched[1].relation["width"] = json!(3);
     assert_eq!(collect_ambiguous_corridors(&mismatched, &options).len(), 1);
-    options.contract = InputContract::Legacy217;
-    assert!(collect_ambiguous_corridors(&mismatched, &options).is_empty());
 }

@@ -1,6 +1,6 @@
-// Structural rules ported from the frozen Archify 2.17 / 3.1 renderers.
+// Structural rules derived from Archify (MIT); see NOTICE.md.
 // Geometry-dependent checks run after layout; these checks never reorder facts.
-use super::{DiagramType, InputContract};
+use super::DiagramType;
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -98,11 +98,7 @@ impl Checks {
     }
 }
 
-pub(super) fn validate(
-    document: &Value,
-    kind: DiagramType,
-    contract: InputContract,
-) -> Result<(), Diagnostics> {
+pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagnostics> {
     let (node_collection, relation_collection) = match kind {
         DiagramType::Architecture => ("components", "connections"),
         DiagramType::Workflow => ("nodes", "edges"),
@@ -114,6 +110,16 @@ pub(super) fn validate(
         DiagramType::Tree => ("nodes", "relationships"),
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
+        // A statechart has no authored entity collections; its model rules
+        // are checked by the statechart module.
+        DiagramType::Statechart => {
+            let errors = crate::statechart::check_static(document);
+            return if errors.is_empty() {
+                Ok(())
+            } else {
+                Err(errors)
+            };
+        }
     };
     let nodes = array(document, node_collection);
     let relations = array(document, relation_collection);
@@ -137,7 +143,7 @@ pub(super) fn validate(
             &mut identities,
         );
     }
-    if kind.has_legacy_contract() {
+    if kind.is_original_five() {
         for collection in ["lanes", "phases", "groups"] {
             checks.unique(
                 array(document, collection),
@@ -173,9 +179,7 @@ pub(super) fn validate(
     }
     for (index, node) in nodes.iter().enumerate() {
         let path = format!("/{node_collection}/{index}");
-        if kind == DiagramType::Workflow
-            || (kind == DiagramType::Lifecycle && contract == InputContract::Legacy217)
-        {
+        if kind == DiagramType::Workflow {
             checks.reference(&node["lane"], &format!("{path}/lane"), &lanes);
         }
         if kind == DiagramType::Dataflow
@@ -232,16 +236,6 @@ pub(super) fn validate(
             }
         }
         workflow_checks(document, nodes, relations, &known_nodes, &mut checks);
-    }
-    if kind == DiagramType::Lifecycle
-        && contract == InputContract::Legacy217
-        && !lanes.contains("main")
-    {
-        checks.error(
-            "input/unknown-reference",
-            "/lanes",
-            "Legacy lifecycle requires the main lane",
-        );
     }
     if kind == DiagramType::Workflow || kind == DiagramType::Lifecycle {
         main_path(document, nodes, relations, &known_nodes, &mut checks);

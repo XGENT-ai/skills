@@ -131,7 +131,6 @@ impl Router<'_> {
                 collect_ambiguous_corridors(
                     &routed,
                     &CorridorOptions {
-                        contract: self.input.input_contract,
                         include_shared_endpoints: Some(&|_, _| true),
                         allow_short_workflow_trunks: true,
                         ..Default::default()
@@ -486,7 +485,7 @@ impl Router<'_> {
         plans: &mut Vec<Candidate>,
         natural: (&str, &str),
     ) {
-        if self.input.input_contract != InputContract::PhoenixV1 || plans.is_empty() {
+        if plans.is_empty() {
             return;
         }
         let touching = plans

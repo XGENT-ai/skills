@@ -16,11 +16,7 @@ pub(super) struct LegendEntry {
     width: f64,
 }
 
-pub(super) fn measure_boundaries(
-    document: &Value,
-    nodes: &[Node],
-    contract: InputContract,
-) -> Vec<Boundary> {
+pub(super) fn measure_boundaries(document: &Value, nodes: &[Node]) -> Vec<Boundary> {
     let mut boundaries = vec![];
     let enforce = document["meta"].get("quality_profile").is_some();
     for (index, raw) in list(&document["boundaries"]).iter().enumerate() {
@@ -52,11 +48,7 @@ pub(super) fn measure_boundaries(
             .map(|node| node.bounds.y + node.bounds.height)
             .fold(f64::NEG_INFINITY, f64::max);
         let pad = number(raw, "pad", 30.0);
-        let top = pad.max(if contract == InputContract::PhoenixV1 && enforce {
-            24.0
-        } else {
-            22.0
-        });
+        let top = pad.max(if enforce { 24.0 } else { 22.0 });
         boundaries.push(Boundary {
             raw: raw.clone(),
             index,
@@ -74,11 +66,7 @@ pub(super) fn measure_boundaries(
     boundaries
 }
 
-pub(super) fn legend_entries(
-    meta: &Value,
-    nodes: &[Node],
-    contract: InputContract,
-) -> Vec<LegendEntry> {
+pub(super) fn legend_entries(meta: &Value, nodes: &[Node]) -> Vec<LegendEntry> {
     let config = &meta["legend"];
     let mode = config["mode"].as_str().unwrap_or("auto");
     if mode == "hidden" {
@@ -95,7 +83,7 @@ pub(super) fn legend_entries(
             "消息总线",
             "外部系统",
         ],
-        "zh-tw" if contract == InputContract::PhoenixV1 => [
+        "zh-tw" => [
             "前端",
             "後端",
             "資料庫",
@@ -104,7 +92,7 @@ pub(super) fn legend_entries(
             "訊息匯流排",
             "外部系統",
         ],
-        "es" if contract == InputContract::PhoenixV1 => [
+        "es" => [
             "Frontend",
             "Backend",
             "Base de datos",
@@ -113,7 +101,7 @@ pub(super) fn legend_entries(
             "Bus de mensajes",
             "Externo",
         ],
-        "ko" if contract == InputContract::PhoenixV1 => [
+        "ko" => [
             "프런트엔드",
             "백엔드",
             "데이터베이스",
@@ -150,22 +138,15 @@ pub(super) fn legend_entries(
             return None;
         }
         let key = format!("legend.architecture.{kind}");
-        let translated = translation(meta, &key, labels[index], contract);
+        let translated = translation(meta, &key, labels[index]);
         let label = raw["label"]
             .as_str()
             .filter(|label| !label.is_empty())
             .unwrap_or(&translated)
             .to_owned();
-        let measured_font = if contract == InputContract::Legacy217 {
-            8.0
-        } else {
-            10.0
-        };
-        let width = (14.0
-            + 8.0
-            + text_units_for_contract(&label, contract) * measured_font * 0.62
-            + if present { 21.0 } else { 0.0 })
-        .ceil();
+        let width =
+            (14.0 + 8.0 + text_units(&label) * 10.0 * 0.62 + if present { 21.0 } else { 0.0 })
+                .ceil();
         Some(LegendEntry {
             kind: (*kind).into(),
             label,
@@ -226,8 +207,8 @@ pub(super) fn auto_canvas(
     }
 }
 
-fn title_width(label: &str, font: f64, contract: InputContract) -> f64 {
-    (text_units_for_contract(label, contract) * font * 0.6 + 10.0).max(30.0)
+fn title_width(label: &str, font: f64) -> f64 {
+    (text_units(label) * font * 0.6 + 10.0).max(30.0)
 }
 
 fn marker_bounds(route: &router::Route, edge: &router::Edge) -> Option<Rect> {
@@ -285,7 +266,6 @@ fn titles(
     labels: &[router::Label],
     minimum: f64,
     enforce: bool,
-    contract: InputContract,
     markers: &[Rect],
 ) -> Vec<Boundary> {
     let mut order: Vec<usize> = (0..raw.len()).collect();
@@ -301,13 +281,12 @@ fn titles(
         let boundary = &mut measured[index];
         let label = string(&boundary.raw, "label");
         if enforce {
-            let extra =
-                (title_width(&label, minimum, contract) + 8.0 - boundary.bounds.width).max(0.0);
+            let extra = (title_width(&label, minimum) + 8.0 - boundary.bounds.width).max(0.0);
             boundary.bounds.x -= extra / 2.0;
             boundary.bounds.width += extra;
         }
         let available = (boundary.bounds.width - 8.0).max(0.0);
-        let units = text_units_for_contract(&label, contract);
+        let units = text_units(&label);
         let fitted = if units > 0.0 {
             (available - 10.0) / (units * 0.6)
         } else {
@@ -318,14 +297,14 @@ fn titles(
         let mut title = Rect {
             x: boundary.bounds.x + 4.0,
             y: boundary.member_top - 4.0 - height,
-            width: available.min(title_width(&label, font, contract)),
+            width: available.min(title_width(&label, font)),
             height,
         };
         for _ in 0..raw.len() + nodes.len() + 1 {
             let blockers: Vec<&Rect> = placed
                 .iter()
                 .chain(nodes.iter().map(|node| &node.bounds))
-                .filter(|rect| rects_overlap_for_contract(&title, rect, 0.0, contract))
+                .filter(|rect| rects_overlap(&title, rect, 0.0))
                 .collect();
             if blockers.is_empty() {
                 break;
@@ -335,7 +314,7 @@ fn titles(
                 .map(|rect| rect.y - 2.0 - title.height)
                 .fold(f64::INFINITY, f64::min);
         }
-        if enforce && contract == InputContract::PhoenixV1 {
+        if enforce {
             let clear = |candidate: Rect| {
                 !routes
                     .iter()
@@ -346,7 +325,7 @@ fn titles(
                         .chain(nodes.iter().map(|node| &node.bounds))
                         .chain(labels.iter().map(|label| &label.rect))
                         .chain(markers)
-                        .any(|other| rects_overlap_for_contract(&candidate, other, 0.0, contract))
+                        .any(|other| rects_overlap(&candidate, other, 0.0))
             };
             if !clear(title) {
                 let left = boundary.bounds.x + 4.0;
@@ -405,9 +384,9 @@ fn titles(
                         .map(|y| Rect { y, ..title })
                         .find(|candidate| {
                             clear(*candidate)
-                                && !placed_frames.iter().any(|frame| {
-                                    rects_overlap_for_contract(candidate, frame, 2.0, contract)
-                                })
+                                && !placed_frames
+                                    .iter()
+                                    .any(|frame| rects_overlap(candidate, frame, 2.0))
                         })
                     {
                         title = candidate;
@@ -442,7 +421,6 @@ pub(super) fn resolve_titles(
     entries: &[LegendEntry],
     canvas: Option<Rect>,
     enforce: bool,
-    contract: InputContract,
     errors: &mut Diagnostics,
 ) -> Vec<Boundary> {
     let markers: Vec<_> = routes
@@ -450,7 +428,7 @@ pub(super) fn resolve_titles(
         .zip(edges)
         .filter_map(|(route, edge)| marker_bounds(route, edge))
         .collect();
-    let mut boundaries = titles(raw, nodes, routes, labels, 6.0, enforce, contract, &markers);
+    let mut boundaries = titles(raw, nodes, routes, labels, 6.0, enforce, &markers);
     if !enforce || boundaries.is_empty() {
         return boundaries;
     }
@@ -459,9 +437,7 @@ pub(super) fn resolve_titles(
             .unwrap_or_else(|| auto_canvas(nodes, &boundaries, extra, entries))
             .width;
         let minimum = 6.0_f64.max(6.0 / (930.0 / width).min(1.0) + 1e-6);
-        boundaries = titles(
-            raw, nodes, routes, labels, minimum, enforce, contract, &markers,
-        );
+        boundaries = titles(raw, nodes, routes, labels, minimum, enforce, &markers);
         let final_width = canvas
             .unwrap_or_else(|| auto_canvas(nodes, &boundaries, extra, entries))
             .width;
@@ -488,7 +464,6 @@ pub(super) fn legends(
     labels: &[router::Label],
     canvas: Rect,
     meta: &Value,
-    contract: InputContract,
     errors: &mut Diagnostics,
 ) -> Vec<Card> {
     if entries.is_empty() {
@@ -532,12 +507,12 @@ pub(super) fn legends(
         .as_str()
     {
         "zh-cn" => "图例",
-        "zh-tw" if contract == InputContract::PhoenixV1 => "圖例",
-        "es" if contract == InputContract::PhoenixV1 => "Leyenda",
-        "ko" if contract == InputContract::PhoenixV1 => "범례",
+        "zh-tw" => "圖例",
+        "es" => "Leyenda",
+        "ko" => "범례",
         _ => "Legend",
     };
-    let title = translation(meta, "legend.title", title, contract);
+    let title = translation(meta, "legend.title", title);
     let (title_source, title_facts) = legend_source(meta, nodes, "title", &title);
     let mut cards = vec![Card {
         authored: authored(
@@ -598,7 +573,7 @@ pub(super) fn legends(
             .any(|segment| segment_intersects_rect(segment[0], segment[1], &card.bounds, 0.0))
             || labels
                 .iter()
-                .any(|label| rects_overlap_for_contract(&label.rect, &card.bounds, 0.0, contract))
+                .any(|label| rects_overlap(&label.rect, &card.bounds, 0.0))
     });
     if collision {
         if meta.get("legend").is_some() {
@@ -615,8 +590,8 @@ pub(super) fn legends(
     }
 }
 
-fn translation(meta: &Value, key: &str, fallback: &str, contract: InputContract) -> String {
-    if contract == InputContract::PhoenixV1 && meta["locale"].is_string() {
+fn translation(meta: &Value, key: &str, fallback: &str) -> String {
+    if meta["locale"].is_string() {
         if let Some(value) = meta["translations"][key]
             .as_str()
             .filter(|value| !value.is_empty())

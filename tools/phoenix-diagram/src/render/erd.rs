@@ -1,4 +1,4 @@
-// Entity-relationship SVG body, ported from the frozen render-erd.mjs markup.
+// Entity-relationship SVG body, derived from Archify render-erd.mjs markup (MIT).
 use super::{escape_text, sigil_shape, TypeRenderer};
 use crate::geometry::format_number as number;
 use crate::i18n::Locale;

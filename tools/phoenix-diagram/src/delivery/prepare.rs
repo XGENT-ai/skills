@@ -53,6 +53,7 @@ fn empty() -> Preparation {
             checks: vec![],
             composition: serde_json::Value::Null,
             evidence: serde_json::json!({}),
+            model: serde_json::Value::Null,
             layout: None,
             exit: 1,
         },
@@ -125,6 +126,9 @@ pub(crate) fn prepare_bytes(request: &CompileRequest<'_>, bytes: &[u8]) -> Prepa
         result.receipt.checks = checked.checks.clone();
         result.receipt.composition = checked.composition.clone();
         result.receipt.diagnostics = scene.diagnostics.clone();
+        if let crate::scene::DiagramFacts::Statechart { model, .. } = &scene.facts {
+            result.receipt.model = model.clone();
+        }
         result
             .receipt
             .diagnostics

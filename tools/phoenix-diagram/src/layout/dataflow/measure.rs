@@ -29,9 +29,7 @@ pub(super) fn frames(context: &Context<'_>) -> Vec<composition::Frame> {
 pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
     let raw_nodes = list(&input.document["nodes"]);
     let stages = list(&input.document["stages"]);
-    let legacy = input.input_contract == InputContract::Legacy217;
-    let automatic_showcase = !legacy
-        && input.quality == Quality::Showcase
+    let automatic_showcase = input.quality == Quality::Showcase
         && input.document.pointer("/meta/viewBox").is_none()
         && !raw_nodes.iter().any(|node| node.get("width").is_some());
     let authored_view = input
@@ -45,20 +43,12 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
     }
     for flow in list(&input.document["flows"]) {
         if flow["labelAt"].is_array() {
-            content_right = content_right
-                .max(point(&flow["labelAt"]).x + capacity::size(input, flow, &[]).x / 2.0);
+            content_right =
+                content_right.max(point(&flow["labelAt"]).x + capacity::size(flow, &[]).x / 2.0);
         }
     }
-    let view = authored_view.unwrap_or_else(|| {
-        p(
-            if legacy {
-                940.0
-            } else {
-                480.0_f64.max((content_right + 24.0).ceil())
-            },
-            720.0,
-        )
-    });
+    let view =
+        authored_view.unwrap_or_else(|| p(480.0_f64.max((content_right + 24.0).ceil()), 720.0));
     let context_minimum = if automatic_showcase {
         6.0_f64.max(((6.0 / (930.0 / view.x).min(1.0)) * 10.0).ceil() / 10.0)
     } else {
@@ -90,12 +80,12 @@ pub(super) fn create(input: &DiagramInput) -> Result<Context<'_>, Diagnostics> {
                 if value.is_empty() {
                     0.0
                 } else {
-                    units(input, value) * 7.0_f64.max(context_minimum) * 0.6 + 8.0
+                    units(value) * 7.0_f64.max(context_minimum) * 0.6 + 8.0
                 }
             })
             .fold(0.0, f64::max);
         let title_width = if raw.get("brand").is_some() {
-            units(input, string(raw, "label")) * 10.0 * 0.6 + 8.0 + 48.0
+            units(string(raw, "label")) * 10.0 * 0.6 + 8.0 + 48.0
         } else {
             0.0
         };
@@ -243,15 +233,10 @@ pub(super) fn expand_heights(context: &mut Context<'_>) {
     }
 }
 
-fn label_layout(
-    input: &DiagramInput,
-    width: f64,
-    height: f64,
-    rows: &[(String, f64, f64)],
-) -> (f64, Vec<f64>, f64, f64) {
+fn label_layout(width: f64, height: f64, rows: &[(String, f64, f64)]) -> (f64, Vec<f64>, f64, f64) {
     let mut x = width / 2.0;
     let mut ys: Vec<_> = rows.iter().map(|row| row.2).collect();
-    let label_width = units(input, &rows[0].0) * rows[0].1 * 0.6;
+    let label_width = units(&rows[0].0) * rows[0].1 * 0.6;
     let left = 19.0;
     let right = width - 4.0;
     if x - label_width / 2.0 >= left && x + label_width / 2.0 <= right {
@@ -289,11 +274,8 @@ fn stage_text(context: &Context<'_>, raw: &Value, index: usize) -> Vec<Text> {
     let content = format!("{:02} / {}", index + 1, string(raw, "label"));
     let x = stage_x(index);
     let path = format!("/stages/{index}/label");
-    if context.legacy() {
-        return vec![text(path, &content, p(x, 68.0), 9.0, "middle")];
-    }
-    let font = fitted(context.input, &content, 168.0, 9.0, 7.0);
-    if units(context.input, &content) * font * 0.6 <= 160.0 {
+    let font = fitted(&content, 168.0, 9.0, 7.0);
+    if units(&content) * font * 0.6 <= 160.0 {
         return vec![text(path, &content, p(x, 68.0), font, "middle")];
     }
     let mut words = Vec::new();
@@ -311,13 +293,11 @@ fn stage_text(context: &Context<'_>, raw: &Value, index: usize) -> Vec<Text> {
     let mut lines = Vec::new();
     let mut line = String::new();
     for word in words {
-        if !line.is_empty() && units(context.input, &format!("{line}{word}")) * font * 0.6 > 160.0 {
+        if !line.is_empty() && units(&format!("{line}{word}")) * font * 0.6 > 160.0 {
             lines.push(std::mem::take(&mut line));
         }
         for cluster in crate::geometry::text::graphemes(word) {
-            if !line.is_empty()
-                && units(context.input, &format!("{line}{cluster}")) * font * 0.6 > 160.0
-            {
+            if !line.is_empty() && units(&format!("{line}{cluster}")) * font * 0.6 > 160.0 {
                 lines.push(std::mem::take(&mut line));
             }
             line.push_str(cluster);
@@ -359,25 +339,23 @@ fn legend_label(input: &DiagramInput, index: usize) -> String {
     } else {
         format!("legend.dataflow.{}", kinds[index])
     };
-    if input.input_contract == InputContract::PhoenixV1 {
-        if let Some(value) = input
-            .document
-            .pointer("/meta/translations")
-            .and_then(|v| v.get(&key))
-            .and_then(Value::as_str)
-        {
-            if !value.is_empty()
-                && !value.split('{').skip(1).any(|suffix| {
-                    suffix.split_once('}').is_some_and(|(key, _)| {
-                        !key.is_empty()
-                            && key
-                                .bytes()
-                                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
-                    })
+    if let Some(value) = input
+        .document
+        .pointer("/meta/translations")
+        .and_then(|v| v.get(&key))
+        .and_then(Value::as_str)
+    {
+        if !value.is_empty()
+            && !value.split('{').skip(1).any(|suffix| {
+                suffix.split_once('}').is_some_and(|(key, _)| {
+                    !key.is_empty()
+                        && key
+                            .bytes()
+                            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
                 })
-            {
-                return value.into();
-            }
+            })
+        {
+            return value.into();
         }
     }
     let locale = string(&input.document["meta"], "locale").to_ascii_lowercase();
@@ -390,7 +368,7 @@ fn legend_label(input: &DiagramInput, index: usize) -> String {
             "数据存储",
             "数据流",
         ],
-        "zh-tw" if input.input_contract == InputContract::PhoenixV1 => [
+        "zh-tw" => [
             "圖例",
             "主要資料",
             "政策 / 個資",
@@ -398,7 +376,7 @@ fn legend_label(input: &DiagramInput, index: usize) -> String {
             "資料儲存",
             "資料流",
         ],
-        "es" if input.input_contract == InputContract::PhoenixV1 => [
+        "es" => [
             "Leyenda",
             "datos primarios",
             "política / PII",
@@ -406,7 +384,7 @@ fn legend_label(input: &DiagramInput, index: usize) -> String {
             "almacén de datos",
             "flujo de datos",
         ],
-        "ko" if input.input_contract == InputContract::PhoenixV1 => [
+        "ko" => [
             "범례",
             "주요 데이터",
             "정책 / PII",
@@ -471,9 +449,7 @@ fn legend_entries(context: &Context<'_>) -> Vec<LegendEntry> {
             } else {
                 0.0
             };
-            let measured_font = if context.legacy() { 8.0 } else { 10.0 };
-            let width =
-                (swatch + gap + units(context.input, &label) * measured_font * 0.62 + badge).ceil();
+            let width = (swatch + gap + units(&label) * 10.0 * 0.62 + badge).ceil();
             Some(LegendEntry {
                 kind,
                 label,
@@ -505,7 +481,7 @@ fn legend_rows(entries: &[LegendEntry], width: f64) -> Vec<Vec<usize>> {
 
 pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnostics> {
     let entries = legend_entries(&context);
-    if !context.legacy() && context.input.document.pointer("/meta/viewBox").is_none() {
+    if context.input.document.pointer("/meta/viewBox").is_none() {
         while context.view_box.width < 1600.0
             && legend_rows(&entries, (context.view_box.width - 80.0).max(1.0)).len() > 1
         {
@@ -606,17 +582,15 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
             let label_font = if raw.get("brand").is_some() {
                 10.0
             } else {
-                fitted(input, label, node.bounds.width, 10.0, 8.0)
+                fitted(label, node.bounds.width, 10.0, 8.0)
             };
             let sub_font = fitted(
-                input,
                 string(raw, "sublabel"),
                 node.bounds.width,
                 7.0_f64.max(context.context_minimum),
                 context.context_minimum,
             );
             let tag_font = fitted(
-                input,
                 string(raw, "tag"),
                 node.bounds.width,
                 7.0_f64.max(context.context_minimum),
@@ -633,16 +607,8 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                     node.bounds.height - 11.0 - node.inset,
                 ));
             }
-            let (label_x, ys, sigil_y, sigil_size) = if context.legacy() {
-                (
-                    node.bounds.width / 2.0,
-                    rows.iter().map(|row| row.2).collect(),
-                    6.0,
-                    11.0,
-                )
-            } else {
-                label_layout(input, node.bounds.width, node.bounds.height, &rows)
-            };
+            let (label_x, ys, sigil_y, sigil_size) =
+                label_layout(node.bounds.width, node.bounds.height, &rows);
             let path = format!("/nodes/{index}");
             let mut texts = vec![text(
                 format!("{path}/label"),
@@ -669,7 +635,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
                     "middle",
                 ));
             }
-            let kind = if context.legacy() || string(raw, "icon").is_empty() {
+            let kind = if string(raw, "icon").is_empty() {
                 string(raw, "type")
             } else {
                 string(raw, "icon")
@@ -826,7 +792,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
         quality: input.quality,
         meta: input.document["meta"].clone(),
         view_box: context.view_box,
-        reader_fit: if !context.legacy() && input.document.pointer("/meta/viewBox").is_none() {
+        reader_fit: if input.document.pointer("/meta/viewBox").is_none() {
             "intrinsic-height".into()
         } else {
             String::new()

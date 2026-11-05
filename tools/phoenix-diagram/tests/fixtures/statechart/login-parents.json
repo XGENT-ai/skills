@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "登录与页面",
+    "output": "login-parents.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "page",
+        "values": [
+          "login",
+          "home",
+          "settings",
+          "profile"
+        ]
+      }
+    ],
+    "init": {
+      "page": "login"
+    },
+    "actions": [
+      {
+        "id": "signIn",
+        "when": {
+          "eq": [
+            {
+              "var": "page"
+            },
+            "login"
+          ]
+        },
+        "set": {
+          "page": "home"
+        }
+      },
+      {
+        "id": "go",
+        "pick": {
+          "to": [
+            "home",
+            "settings",
+            "profile"
+          ]
+        },
+        "when": {
+          "and": [
+            {
+              "ne": [
+                {
+                  "var": "page"
+                },
+                "login"
+              ]
+            },
+            {
+              "ne": [
+                {
+                  "var": "page"
+                },
+                {
+                  "param": "to"
+                }
+              ]
+            }
+          ]
+        },
+        "set": {
+          "page": {
+            "param": "to"
+          }
+        }
+      },
+      {
+        "id": "signOut",
+        "when": {
+          "ne": [
+            {
+              "var": "page"
+            },
+            "login"
+          ]
+        },
+        "set": {
+          "page": "login"
+        }
+      }
+    ]
+  },
+  "view": {
+    "state": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "page"
+            },
+            "login"
+          ]
+        },
+        "label": "未登录"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "page"
+            },
+            "home"
+          ]
+        },
+        "label": [
+          "已登录",
+          "首页"
+        ]
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "page"
+            },
+            "settings"
+          ]
+        },
+        "label": [
+          "已登录",
+          "设置"
+        ]
+      },
+      {
+        "label": [
+          "已登录",
+          "个人资料"
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "action": "signIn",
+        "label": "登录"
+      },
+      {
+        "action": "go",
+        "when": {
+          "eq": [
+            {
+              "param": "to"
+            },
+            "home"
+          ]
+        },
+        "label": "回首页"
+      },
+      {
+        "action": "go",
+        "when": {
+          "eq": [
+            {
+              "param": "to"
+            },
+            "settings"
+          ]
+        },
+        "label": "打开设置"
+      },
+      {
+        "action": "go",
+        "label": "查看资料"
+      },
+      {
+        "action": "signOut",
+        "label": "退出"
+      }
+    ]
+  }
+}

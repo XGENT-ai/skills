@@ -9,11 +9,11 @@
 ```sh
 "$PD" compare architecture base.json head.json comparison.html --json
 "$PD" compare architecture base.json head.json comparison.html \
-  --base-contract legacy-2.17 --head-contract phoenix-v1 \
+  --base-contract phoenix-v1 --head-contract phoenix-v1 \
   --quality showcase --repo-root "<仓库根>" --brand-cache "<本地品牌缓存>" --json
 ```
 
-合同选择按每侧明确标记处理，不重写源文件。`--quality` 与输入已有质量标记冲突时会失败；不要为换取比较通过而降低质量。仓库来源和品牌继续使用已固定的本地身份，普通比较不联网采集资源。
+两侧都按 phoenix-v1 读取；未标记合同的一侧用 `--base-contract`/`--head-contract phoenix-v1` 声明，不重写源文件。`--quality` 与输入已有质量标记冲突时会失败；不要为换取比较通过而降低质量。仓库来源和品牌继续使用已固定的本地身份，普通比较不联网采集资源。
 
 compare 写出 HTML 和 HTML 旁的比较 summary，默认 `comparison.html.compare.json`；`--receipt PATH` 可在同一目录另取文件名。HTML、summary 与两份输入应是不同文件；失败时不写任何文件。
 

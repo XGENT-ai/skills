@@ -18,7 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall.\nUnmarked input of the first five types uses legacy-2.17; new input declares meta.input_contract=phoenix-v1.\nerd, class, tree, timeline and waterfall accept only phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\nEvery type uses the phoenix-v1 input contract; input of the first five types declares meta.input_contract=phoenix-v1 or passes --input-contract phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 
 struct Arguments {
     positional: Vec<OsString>,
@@ -101,9 +101,11 @@ impl Arguments {
         let input_contract = self
             .value("input-contract")
             .map(|v| match v.to_str() {
-                Some("legacy-2.17") => Ok(InputContract::Legacy217),
                 Some("phoenix-v1") => Ok(InputContract::PhoenixV1),
-                _ => Err("Input contract must be legacy-2.17 or phoenix-v1".to_owned()),
+                _ => Err(
+                    "Input contract must be phoenix-v1; legacy-2.17 is no longer supported"
+                        .to_owned(),
+                ),
             })
             .transpose()?;
         Ok(CompileOptions {
@@ -240,6 +242,23 @@ fn guide(scenario: &str) -> Value {
                 "链路",
                 "延迟",
                 "调用跨度",
+            ][..],
+        ),
+        (
+            DiagramType::Statechart,
+            &[
+                "statechart",
+                "state machine",
+                "model check",
+                "invariant",
+                "counterexample",
+                "deadlock",
+                "状态机",
+                "模型检查",
+                "不变量",
+                "违规路径",
+                "死锁",
+                "反例",
             ][..],
         ),
     ];
@@ -444,9 +463,10 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             options.input_contract = args
                 .value(name)
                 .map(|value| match value.to_str() {
-                    Some("legacy-2.17") => Ok(InputContract::Legacy217),
                     Some("phoenix-v1") => Ok(InputContract::PhoenixV1),
-                    _ => Err(format!("--{name} must be legacy-2.17 or phoenix-v1")),
+                    _ => Err(format!(
+                        "--{name} must be phoenix-v1; legacy-2.17 is no longer supported"
+                    )),
                 })
                 .transpose()?;
         }

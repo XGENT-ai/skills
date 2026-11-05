@@ -1,4 +1,4 @@
-// Ported from the frozen shared/automatic-labels.mjs and spatial-grid.mjs.
+// Derived from Archify shared/automatic-labels.mjs and spatial-grid.mjs (MIT); see NOTICE.md.
 use crate::geometry::{
     normalize_route_points, rects_overlap, segment_rect_clearance, Point, Rect, EPSILON,
 };

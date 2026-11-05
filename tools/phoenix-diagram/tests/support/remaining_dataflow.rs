@@ -142,18 +142,13 @@ fn channel_attachment(scene: &CompiledDiagram, index: usize, oracle: &Value, con
 }
 
 #[test]
-fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
+fn dataflow_matches_actual_unrounded_svg_oracles() {
     let mut accepted = 0;
     let mut rejected = 0;
     let mut repaired_channels = 0;
     for case in corpus()["cases"].as_array().unwrap() {
-        let contract = if case["contract"] == "legacy-2.17" {
-            InputContract::Legacy217
-        } else {
-            InputContract::PhoenixV1
-        };
         let options = CompileOptions {
-            input_contract: Some(contract),
+            input_contract: Some(InputContract::PhoenixV1),
             quality: case["qualityOption"].as_str().map(|quality| {
                 if quality == "standard" {
                     Quality::Standard
@@ -300,7 +295,6 @@ fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
                             text.position.y,
                             text.font_size,
                             &text.anchor,
-                            input.input_contract,
                         );
                         rects_overlap(&frozen, &label, 1.0)
                     });
@@ -442,10 +436,10 @@ fn dataflow_double_contract_matches_actual_unrounded_svg_oracles() {
             );
         }
     }
-    assert_eq!(accepted, 62);
-    assert_eq!(rejected, 22);
-    // The event-stream poison-event flow in both examples and contracts.
-    assert_eq!(repaired_channels, 4);
+    assert_eq!(accepted, 35);
+    assert_eq!(rejected, 7);
+    // The event-stream poison-event flow in both examples.
+    assert_eq!(repaired_channels, 2);
 }
 
 #[test]
@@ -455,9 +449,7 @@ fn dataflow_schema_integers_accept_float_lexemes_and_keep_explicit_geometry() {
         .as_array()
         .unwrap()
         .iter()
-        .find(|case| {
-            case["name"] == "row-dogleg-label-segment-zero" && case["contract"] == "legacy-2.17"
-        })
+        .find(|case| case["name"] == "row-dogleg-label-segment-zero")
         .unwrap();
     let mut document = case["document"].clone();
     document["schema_version"] = json!(1.0);
@@ -467,7 +459,7 @@ fn dataflow_schema_integers_accept_float_lexemes_and_keep_explicit_geometry() {
     document["nodes"][1]["row"] = json!(1.0);
     document["flows"][0]["labelSegment"] = json!(0.0);
     let options = CompileOptions {
-        input_contract: Some(InputContract::Legacy217),
+        input_contract: Some(InputContract::PhoenixV1),
         ..Default::default()
     };
     let input = parse_input(

@@ -1,4 +1,4 @@
-// Entity-relationship layout ported from the frozen renderers/erd/render-erd.mjs:
+// Entity-relationship layout derived from Archify renderers/erd/render-erd.mjs (MIT):
 // banded grid → measured tables → domain bands → routes with bundled trunks →
 // relationship labels → canvas and legend.
 use crate::diagnostic::{Diagnostic, Diagnostics};
@@ -7,7 +7,7 @@ use crate::geometry::{
     fitted_node_font_size, label_point, labels as shared_labels, rects_overlap,
     segment_intersects_rect, text_units,
 };
-use crate::input::{CompileOptions, DiagramInput, InputContract, Quality};
+use crate::input::{CompileOptions, DiagramInput, Quality};
 use crate::layout::router::{self, CandidateContext, Edge, Endpoint, RouterOptions, Side, Sides};
 use crate::scene::{
     Authored, Card, CompiledDiagram, Container, DetailRow, DiagramFacts, Marker, Node, Point, Rect,
@@ -747,7 +747,6 @@ pub fn compile(
         &nodes,
         &edges,
         &[],
-        InputContract::PhoenixV1,
         false,
         RouterOptions {
             preferred_candidates: Some(&preferred),

@@ -1,5 +1,5 @@
-// Corridor lanes and bundled fan-in/fan-out trunks, ported from the frozen
-// render-erd.mjs. Both are only preferred candidates: a candidate that breaks
+// Corridor lanes and bundled fan-in/fan-out trunks, derived from Archify
+// render-erd.mjs (MIT). Both are only preferred candidates: a candidate that breaks
 // the endpoint contract or meets an obstacle falls back to the shared families.
 use crate::geometry::{anchor, segment_intersects_rect};
 use crate::layout::router::{CandidateContext, Edge, Side, Sides};

@@ -1,5 +1,5 @@
-// Repository identity and forge links, ported from the frozen Archify 3.1.0
-// renderers/shared/repository-location.mjs. Nothing here contacts a remote.
+// Repository identity and forge links, derived from Archify 3.1.0
+// renderers/shared/repository-location.mjs (MIT); see NOTICE.md. Nothing here contacts a remote.
 use url::Url;
 
 #[derive(Clone, Debug, PartialEq)]

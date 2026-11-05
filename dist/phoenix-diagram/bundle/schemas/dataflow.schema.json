@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/dataflow.schema.json",
-  "title": "Archify Data Flow Diagram",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/dataflow.schema.json",
+  "title": "Phoenix Diagram Data Flow Diagram",
   "type": "object",
   "additionalProperties": false,
   "required": [

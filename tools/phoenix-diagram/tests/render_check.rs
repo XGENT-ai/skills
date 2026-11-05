@@ -213,6 +213,20 @@ fn actual_html_is_checked_and_tampering_fails_independently_of_scene() {
 }
 
 #[test]
+fn html_declaring_the_retired_legacy_contract_fails_check() {
+    let legacy = String::from_utf8(html(&scene())).unwrap().replace(
+        "data-input-contract=\"phoenix-v1\"",
+        "data-input-contract=\"legacy-2.17\"",
+    );
+    let result = check_html(legacy.as_bytes(), Quality::Showcase);
+    assert_eq!(result.status, "failed");
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.code == "artifact/input-contract"));
+}
+
+#[test]
 fn automatic_lifecycle_waiting_self_loop_passes_showcase_rhythm() {
     use phoenix_diagram::{
         input::{parse_input, CompileOptions},
@@ -577,25 +591,19 @@ fn a_crossover_requires_both_real_bound_underlays_not_only_flags() {
 }
 
 #[test]
-fn legacy_sigils_clear_their_labels_and_a_touching_sigil_fails() {
+fn sigils_clear_their_labels_and_a_touching_sigil_fails() {
     use phoenix_diagram::{
         geometry::{rects_overlap, text_glyph_box},
         input::{parse_input, CompileOptions},
         layout,
     };
 
-    for (kind, file) in [
-        (
-            DiagramType::Sequence,
-            include_str!("../upstream/legacy-2.17/examples/async-job-roundtrip.sequence.json"),
-        ),
-        (
-            DiagramType::Dataflow,
-            include_str!("../upstream/legacy-2.17/examples/product-analytics.dataflow.json"),
-        ),
-    ] {
+    for (kind, file) in [(
+        DiagramType::Dataflow,
+        include_str!("fixtures/input/phoenix-v1/product-analytics.dataflow.json"),
+    )] {
         let options = CompileOptions {
-            input_contract: Some(InputContract::Legacy217),
+            input_contract: Some(InputContract::PhoenixV1),
             ..Default::default()
         };
         let input = parse_input(file.as_bytes(), kind, &options).unwrap();
@@ -620,7 +628,6 @@ fn legacy_sigils_clear_their_labels_and_a_touching_sigil_fails() {
                     text.position.y,
                     text.font_size,
                     &text.anchor,
-                    InputContract::Legacy217,
                 );
                 assert!(!rects_overlap(&mark, &label, 1.0), "{}", node.authored.id);
             }

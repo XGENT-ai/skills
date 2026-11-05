@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "订单支付",
+    "output": "minimal.statechart.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "phase",
+        "values": [
+          "cart",
+          "paying",
+          "paid"
+        ]
+      },
+      {
+        "id": "charges",
+        "range": [
+          0,
+          2
+        ]
+      }
+    ],
+    "init": {
+      "phase": "cart",
+      "charges": 0
+    },
+    "actions": [
+      {
+        "id": "pay",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "cart"
+          ]
+        },
+        "set": {
+          "phase": "paying"
+        }
+      },
+      {
+        "id": "charge",
+        "when": {
+          "and": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "paying"
+              ]
+            },
+            {
+              "lt": [
+                {
+                  "var": "charges"
+                },
+                2
+              ]
+            }
+          ]
+        },
+        "set": {
+          "charges": {
+            "add": [
+              {
+                "var": "charges"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "confirm",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "set": {
+          "phase": "paid"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "chargedOnce",
+        "text": "一笔订单最多扣一次款",
+        "holds": {
+          "le": [
+            {
+              "var": "charges"
+            },
+            1
+          ]
+        }
+      }
+    ],
+    "deadlock": {
+      "ends": {
+        "eq": [
+          {
+            "var": "phase"
+          },
+          "paid"
+        ]
+      }
+    }
+  },
+  "view": {
+    "state": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "cart"
+          ]
+        },
+        "label": "购物车"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "paying"
+          ]
+        },
+        "label": [
+          "结账",
+          "支付中"
+        ]
+      },
+      {
+        "label": [
+          "结账",
+          "已支付"
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "action": "pay",
+        "label": "去结账"
+      },
+      {
+        "action": "charge",
+        "label": "网关扣款"
+      },
+      {
+        "action": "confirm",
+        "label": "确认支付"
+      }
+    ]
+  }
+}

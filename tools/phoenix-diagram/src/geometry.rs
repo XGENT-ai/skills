@@ -1,5 +1,4 @@
-// Ported from the frozen Archify geometry, utils and text-fit modules; see NOTICE.md.
-use crate::input::InputContract;
+// Derived from Archify geometry, utils and text-fit modules (MIT); see NOTICE.md.
 pub use crate::scene::{Point, Rect};
 use serde_json::Value;
 
@@ -11,21 +10,13 @@ pub mod text;
 pub const EPSILON: f64 = 0.0001;
 
 pub fn text_units(text: &str) -> f64 {
-    text_units_for_contract(text, InputContract::PhoenixV1)
-}
-
-pub fn text_units_for_contract(text: &str, contract: InputContract) -> f64 {
     let mut characters = text.chars().peekable();
     let mut units = 0.0;
     while let Some(character) = characters.next() {
         if ('\u{fe00}'..='\u{fe0f}').contains(&character) {
             continue;
         }
-        units += if characters.peek() == Some(&'\u{fe0f}') {
-            2.0
-        } else if contract == InputContract::Legacy217 && characters.peek() == Some(&'\u{fe0e}') {
-            1.0
-        } else if fullwidth(character) {
+        units += if characters.peek() == Some(&'\u{fe0f}') || fullwidth(character) {
             2.0
         } else {
             1.0
@@ -51,33 +42,15 @@ fn fullwidth(character: char) -> bool {
 }
 
 pub fn fitted_node_font_size(text: &str, width: f64, preferred: f64, minimum: f64) -> f64 {
-    fitted_node_font_size_for_contract(text, width, preferred, minimum, InputContract::PhoenixV1)
-}
-
-pub fn fitted_node_font_size_for_contract(
-    text: &str,
-    width: f64,
-    preferred: f64,
-    minimum: f64,
-    contract: InputContract,
-) -> f64 {
     let available = (width - 8.0).max(1.0);
-    let fitted =
-        preferred.min(available / (text_units_for_contract(text, contract).max(1.0) * 0.6));
+    let fitted = preferred.min(available / (text_units(text).max(1.0) * 0.6));
     minimum.max((fitted * 10.0).floor() / 10.0)
 }
 
 /// Conservative glyph box of one text line: 0.62em per unit, cap height above
 /// the baseline and descenders below it.
-pub fn text_glyph_box(
-    content: &str,
-    x: f64,
-    baseline: f64,
-    font_size: f64,
-    anchor: &str,
-    contract: InputContract,
-) -> Rect {
-    let width = text_units_for_contract(content, contract) * font_size * 0.62;
+pub fn text_glyph_box(content: &str, x: f64, baseline: f64, font_size: f64, anchor: &str) -> Rect {
+    let width = text_units(content) * font_size * 0.62;
     let left = match anchor {
         "middle" => x - width / 2.0,
         "end" => x - width,
@@ -106,22 +79,13 @@ pub fn finite_point(point: Point) -> bool {
 }
 
 pub fn rects_overlap(a: &Rect, b: &Rect, gap: f64) -> bool {
-    rects_overlap_for_contract(a, b, gap, InputContract::PhoenixV1)
-}
-
-pub fn rects_overlap_for_contract(a: &Rect, b: &Rect, gap: f64, contract: InputContract) -> bool {
     if !finite_rect(a) || !finite_rect(b) {
         return false;
     }
-    let tolerance = if contract == InputContract::Legacy217 {
-        0.0
-    } else {
-        EPSILON
-    };
-    !(a.x + a.width + gap <= b.x + tolerance
-        || b.x + b.width + gap <= a.x + tolerance
-        || a.y + a.height + gap <= b.y + tolerance
-        || b.y + b.height + gap <= a.y + tolerance)
+    !(a.x + a.width + gap <= b.x + EPSILON
+        || b.x + b.width + gap <= a.x + EPSILON
+        || a.y + a.height + gap <= b.y + EPSILON
+        || b.y + b.height + gap <= a.y + EPSILON)
 }
 
 pub fn point_in_rect(point: Point, rect: &Rect) -> bool {

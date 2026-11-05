@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/waterfall.schema.json",
-  "title": "Archify Execution Waterfall",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/waterfall.schema.json",
+  "title": "Phoenix Diagram Execution Waterfall",
   "type": "object",
   "additionalProperties": false,
   "required": [

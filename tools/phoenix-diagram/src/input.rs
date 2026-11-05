@@ -19,10 +19,11 @@ pub enum DiagramType {
     Tree,
     Timeline,
     Waterfall,
+    Statechart,
 }
 
 impl DiagramType {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 11] = [
         Self::Architecture,
         Self::Workflow,
         Self::Sequence,
@@ -33,6 +34,7 @@ impl DiagramType {
         Self::Tree,
         Self::Timeline,
         Self::Waterfall,
+        Self::Statechart,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -47,11 +49,13 @@ impl DiagramType {
             Self::Tree => "tree",
             Self::Timeline => "timeline",
             Self::Waterfall => "waterfall",
+            Self::Statechart => "statechart",
         }
     }
 
-    /// Only the types frozen in Archify 2.17 have a legacy input contract.
-    pub fn has_legacy_contract(self) -> bool {
+    /// The original five types, whose unmarked input once meant the retired
+    /// legacy-2.17 contract.
+    pub fn is_original_five(self) -> bool {
         matches!(
             self,
             Self::Architecture | Self::Workflow | Self::Sequence | Self::Dataflow | Self::Lifecycle
@@ -79,8 +83,6 @@ impl FromStr for DiagramType {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InputContract {
-    #[serde(rename = "legacy-2.17")]
-    Legacy217,
     #[serde(rename = "phoenix-v1")]
     PhoenixV1,
 }
@@ -171,34 +173,24 @@ pub fn parse_input(
                 cause.to_string(),
             )
         })?;
-    if let (Some(explicit), Some(persisted)) = (options.input_contract, marker) {
-        if explicit != persisted {
+    // Unmarked input of the original five types once meant legacy-2.17; reading
+    // it as phoenix-v1 could silently draw a different diagram from the same bytes.
+    let input_contract = match options.input_contract.or(marker) {
+        Some(contract) => contract,
+        None if kind.is_original_five() => {
             return Err(error(
-                "input/contract-conflict",
+                "input/contract-required",
                 "/meta/input_contract",
-                "Explicit and persisted input contracts differ".into(),
-            ));
+                format!(
+                    "Unmarked {} input is no longer read as legacy-2.17, which is not supported; \
+                     convert it to phoenix-v1 and set meta.input_contract, or pass \
+                     --input-contract phoenix-v1 if the JSON is already phoenix-v1",
+                    kind.as_str()
+                ),
+            ))
         }
-    }
-    let input_contract =
-        options
-            .input_contract
-            .or(marker)
-            .unwrap_or(if kind.has_legacy_contract() {
-                InputContract::Legacy217
-            } else {
-                InputContract::PhoenixV1
-            });
-    if input_contract == InputContract::Legacy217 && !kind.has_legacy_contract() {
-        return Err(error(
-            "input/contract-unsupported",
-            "/meta/input_contract",
-            format!(
-                "{} has no legacy-2.17 input contract; use phoenix-v1",
-                kind.as_str()
-            ),
-        ));
-    }
+        None => InputContract::PhoenixV1,
+    };
     let authored_quality = document
         .pointer("/meta/quality_profile")
         .map(|value| serde_json::from_value::<Quality>(value.clone()))
@@ -233,17 +225,10 @@ pub fn parse_input(
             format!("Expected diagram_type {}", kind.as_str()),
         ));
     }
-    let validator = crate::schema::validator(kind, input_contract)
+    let validator = crate::schema::validator(kind)
         .map_err(|cause| error("input/schema-resource", "", cause.into()))?;
-    let mut schema_input = document.clone();
-    // Phoenix's persisted selector is not a field in the frozen legacy schema.
-    if input_contract == InputContract::Legacy217 {
-        if let Some(meta) = schema_input.get_mut("meta").and_then(Value::as_object_mut) {
-            meta.remove("input_contract");
-        }
-    }
     let errors: Diagnostics = validator
-        .iter_errors(&schema_input)
+        .iter_errors(&document)
         .map(|cause| {
             let mut diagnostic = Diagnostic::error(
                 Some(kind.as_str()),
@@ -258,20 +243,18 @@ pub fn parse_input(
     if !errors.is_empty() {
         return Err(errors);
     }
-    if input_contract == InputContract::PhoenixV1 {
-        if let Some(Err(reason)) = document["meta"]["output"].as_str().map(portable_output) {
-            let mut diagnostic = Diagnostic::error(
-                Some(kind.as_str()),
-                "input/schema",
-                "/meta/output",
-                format!("meta.output must satisfy the portable output path contract ({reason})"),
-            );
-            diagnostic.evidence = serde_json::json!({"keyword":"portablePath","reason":reason});
-            return Err(vec![diagnostic]);
-        }
+    if let Some(Err(reason)) = document["meta"]["output"].as_str().map(portable_output) {
+        let mut diagnostic = Diagnostic::error(
+            Some(kind.as_str()),
+            "input/schema",
+            "/meta/output",
+            format!("meta.output must satisfy the portable output path contract ({reason})"),
+        );
+        diagnostic.evidence = serde_json::json!({"keyword":"portablePath","reason":reason});
+        return Err(vec![diagnostic]);
     }
-    semantics::validate(&document, kind, input_contract)?;
-    let compatibility = compatibility(&document, input_contract);
+    semantics::validate(&document, kind)?;
+    let compatibility = compatibility(&document);
     let mut input = DiagramInput {
         diagram_type: kind,
         input_contract,
@@ -317,9 +300,8 @@ impl DiagramInput {
     }
 }
 
-// The frozen 3.1.0 validators apply this check to meta.output of every type after
-// the schema (renderers/shared/portable-path.mjs, profile "output"); the schemas of
-// erd, class, tree, timeline and waterfall leave meta.output a plain string.
+// Applied to meta.output of every type after the schema; the schemas of erd,
+// class, tree, timeline and waterfall leave meta.output a plain string.
 fn portable_output(value: &str) -> Result<(), &'static str> {
     let bytes = value.as_bytes();
     let drive = bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':';
@@ -395,13 +377,8 @@ pub fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
-    fn walk(
-        value: &Value,
-        path: &str,
-        contract: InputContract,
-        fields: &mut Vec<FieldDisposition>,
-    ) {
+fn compatibility(document: &Value) -> Compatibility {
+    fn walk(value: &Value, path: &str, fields: &mut Vec<FieldDisposition>) {
         match value {
             Value::Object(object) => {
                 for (key, value) in object {
@@ -409,7 +386,6 @@ fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
                     let disposition = match (path,key.as_str()) {
                     (_,"brand") => Some(("supported","Brand identity is resolved from the fixed catalog or a digest-pinned local resource")),
                     ("/meta","views") => Some(("unsupported-display","Legacy Guided Views are not rebuilt; the Reader provides navigation")),
-                    ("/meta","animation") if contract == InputContract::Legacy217 => Some(("ignored-display","Legacy playback preferences do not override the Reader's initial Still state")),
                     _ => None,
                 };
                     if let Some((disposition, reason)) = disposition {
@@ -419,20 +395,20 @@ fn compatibility(document: &Value, contract: InputContract) -> Compatibility {
                             reason: reason.into(),
                         });
                     } else {
-                        walk(value, &pointer, contract, fields);
+                        walk(value, &pointer, fields);
                     }
                 }
             }
             Value::Array(array) => {
                 for (index, value) in array.iter().enumerate() {
-                    walk(value, &format!("{path}/{index}"), contract, fields);
+                    walk(value, &format!("{path}/{index}"), fields);
                 }
             }
             _ => {}
         }
     }
     let mut dispositions = vec![];
-    walk(document, "", contract, &mut dispositions);
+    walk(document, "", &mut dispositions);
     Compatibility {
         status: if dispositions.iter().any(|d| d.disposition != "supported") {
             "partial"

@@ -24,6 +24,7 @@ fn delivery_receipt(validation: &ValidationReceipt) -> DeliveryReceipt {
         checks: validation.checks.clone(),
         composition: validation.composition.clone(),
         evidence: validation.evidence.clone(),
+        model: validation.model.clone(),
         exit: validation.exit_code(),
     }
 }
@@ -107,6 +108,7 @@ pub(super) fn finalize(
         visual_review: VisualReview::pending(),
         delivery_status: "incomplete".into(),
         evidence: evidence_summary(&prepared.receipt.evidence),
+        model: prepared.receipt.model.clone(),
         locale: prepared.locale.clone(),
         exit: prepared.receipt.exit_code(),
     };

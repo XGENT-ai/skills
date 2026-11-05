@@ -1,4 +1,4 @@
-// Ported from the frozen Archify 3.1.0 renderers/tree/render-tree.mjs; see NOTICE.md.
+// Derived from Archify 3.1.0 renderers/tree/render-tree.mjs (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::format::number::js_round;
 use crate::geometry::text::is_js_whitespace;

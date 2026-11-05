@@ -1,7 +1,7 @@
-// Native port of the frozen legacy dataflow renderer and reference compiler; see NOTICE.md.
+// Derived from Archify dataflow renderer and reference compiler (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::geometry::{self, composition, labels, Point, Rect};
-use crate::input::{CompileOptions, DiagramInput, InputContract, Quality};
+use crate::input::{CompileOptions, DiagramInput, Quality};
 use crate::scene::{Authored, CompiledDiagram, Text};
 use serde_json::{json, Value};
 
@@ -104,17 +104,11 @@ fn text(path: String, content: &str, position: Point, font_size: f64, anchor: &s
         anchor: anchor.into(),
     }
 }
-fn units(input: &DiagramInput, value: &str) -> f64 {
-    geometry::text_units_for_contract(value, input.input_contract)
+fn units(value: &str) -> f64 {
+    geometry::text_units(value)
 }
-fn fitted(input: &DiagramInput, value: &str, width: f64, preferred: f64, minimum: f64) -> f64 {
-    geometry::fitted_node_font_size_for_contract(
-        value,
-        width,
-        preferred,
-        minimum,
-        input.input_contract,
-    )
+fn fitted(value: &str, width: f64, preferred: f64, minimum: f64) -> f64 {
+    geometry::fitted_node_font_size(value, width, preferred, minimum)
 }
 fn unique<T: PartialEq>(values: &mut Vec<T>, value: T) {
     if !values.contains(&value) {
@@ -228,11 +222,8 @@ struct Context<'a> {
     context_minimum: f64,
 }
 impl Context<'_> {
-    fn legacy(&self) -> bool {
-        self.input.input_contract == InputContract::Legacy217
-    }
     fn overlaps(&self, a: &Rect, b: &Rect, gap: f64) -> bool {
-        geometry::rects_overlap_for_contract(a, b, gap, self.input.input_contract)
+        geometry::rects_overlap(a, b, gap)
     }
     fn supports_crossover(&self, index: usize) -> bool {
         let raw = &self.flows[index].raw;
@@ -271,7 +262,6 @@ impl Context<'_> {
     ) -> bool {
         let include = |_: &Value, _: &Value| true;
         let options = composition::CorridorOptions {
-            contract: self.input.input_contract,
             include_shared_endpoints: shared
                 .then_some(&include as composition::RelationPairPredicate<'_>),
             ..Default::default()

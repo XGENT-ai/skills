@@ -1,4 +1,4 @@
-// Ported from the frozen shared/route-quality.mjs; see NOTICE.md.
+// Derived from Archify shared/route-quality.mjs (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Severity, Subject};
 use crate::geometry::{
     finite_rect, normalize_route_points, proper_segment_intersection, segment_intersects_rect,

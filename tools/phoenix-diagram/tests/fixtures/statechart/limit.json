@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "三个计数器",
+    "output": "limit.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "x",
+        "range": [
+          0,
+          99
+        ]
+      },
+      {
+        "id": "y",
+        "range": [
+          0,
+          99
+        ]
+      },
+      {
+        "id": "z",
+        "range": [
+          0,
+          99
+        ]
+      }
+    ],
+    "init": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "actions": [
+      {
+        "id": "incX",
+        "when": {
+          "lt": [
+            {
+              "var": "x"
+            },
+            99
+          ]
+        },
+        "set": {
+          "x": {
+            "add": [
+              {
+                "var": "x"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "decX",
+        "when": {
+          "gt": [
+            {
+              "var": "x"
+            },
+            0
+          ]
+        },
+        "set": {
+          "x": {
+            "sub": [
+              {
+                "var": "x"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "incY",
+        "when": {
+          "lt": [
+            {
+              "var": "y"
+            },
+            99
+          ]
+        },
+        "set": {
+          "y": {
+            "add": [
+              {
+                "var": "y"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "decY",
+        "when": {
+          "gt": [
+            {
+              "var": "y"
+            },
+            0
+          ]
+        },
+        "set": {
+          "y": {
+            "sub": [
+              {
+                "var": "y"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "incZ",
+        "when": {
+          "lt": [
+            {
+              "var": "z"
+            },
+            99
+          ]
+        },
+        "set": {
+          "z": {
+            "add": [
+              {
+                "var": "z"
+              },
+              1
+            ]
+          }
+        }
+      },
+      {
+        "id": "decZ",
+        "when": {
+          "gt": [
+            {
+              "var": "z"
+            },
+            0
+          ]
+        },
+        "set": {
+          "z": {
+            "sub": [
+              {
+                "var": "z"
+              },
+              1
+            ]
+          }
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "xBelowThree",
+        "text": "x 始终小于 3",
+        "holds": {
+          "lt": [
+            {
+              "var": "x"
+            },
+            3
+          ]
+        }
+      },
+      {
+        "id": "boundedSum",
+        "text": "三个计数之和不超过 297",
+        "holds": {
+          "le": [
+            {
+              "add": [
+                {
+                  "add": [
+                    {
+                      "var": "x"
+                    },
+                    {
+                      "var": "y"
+                    }
+                  ]
+                },
+                {
+                  "var": "z"
+                }
+              ]
+            },
+            297
+          ]
+        }
+      }
+    ]
+  }
+}

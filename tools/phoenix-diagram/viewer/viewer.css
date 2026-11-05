@@ -1,8 +1,6 @@
 /*
-Derived from Archify 3.1.0 viewer/viewer.css (MIT), frozen content SHA-256
-4f892b0c68fef5d21788264ba6a43fe9e1d377d3c2d5b558f6aa346784238395.
-Phoenix modifications: independent namespace; narrow dock and native legacy compact spacing.
-Exact narrow source adaptations: css-adaptations.json.
+Derived from Archify 3.1.0 viewer/viewer.css (MIT).
+Phoenix Diagram modifications: independent namespace; narrow dock spacing.
 Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
 Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
 */
@@ -2425,15 +2423,6 @@ html[data-preset="signal-flow"][data-theme="light"] .card {
   html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
 }
 
-/* Fixed legacy portraits retain the 6px text floor and 32px dock controls.
-   A short desktop spends less space on outer chrome, not authored geometry. */
-@media screen and (min-width: 1024px) and (max-height: 920px) {
-  html[data-reader-layout="adaptive"]:not([data-diagram-shape="wide"]):not([data-embed="true"]):not([data-present="true"]):has(.diagram-container svg[data-input-contract="legacy-2.17"]) body { padding-block: 2px; }
-  html[data-reader-layout="adaptive"]:not([data-diagram-shape="wide"]):not([data-embed="true"]):not([data-present="true"]):has(.diagram-container svg[data-input-contract="legacy-2.17"]) :is(.header, .header-row) { margin-bottom: 0; }
-  html[data-reader-layout="adaptive"]:not([data-diagram-shape="wide"]):not([data-embed="true"]):not([data-present="true"]):has(.diagram-container svg[data-input-contract="legacy-2.17"]) .diagram-container { padding-top: 2px; }
-  html[data-reader-layout="adaptive"]:not([data-diagram-shape="wide"]):not([data-embed="true"]):not([data-present="true"]):has(.diagram-container svg[data-input-contract="legacy-2.17"]) .diagram-nav { bottom: 4px; padding: 1px; }
-}
-
 html[data-preset="blueprint"] .card {
   position: relative;
   border-color: var(--panel-border);
@@ -2812,6 +2801,14 @@ html[data-reader-rail]:not([data-reader-rail="bottom"]) .header { min-height: 0;
 .node-outline-item:hover small,
 .node-outline-item[data-previewing] small,
 .node-outline-item[aria-current="true"] small { color: var(--text-muted); }
+/* A statechart state's detail names the rules it breaks; give it its own line
+   under the name and wrap it rather than cut the rule off. */
+html:has(svg[data-diagram-type="statechart"]) .node-outline-item small {
+  grid-column: 2 / 4;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 .card-header {
   display: flex;

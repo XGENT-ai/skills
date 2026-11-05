@@ -1,5 +1,5 @@
 // Real-browser maintenance controller. No renderer/consumer runtime dependency.
-// Browser probes derive from frozen Archify 3.1.0 export tests (MIT); see
+// Browser probes derive from Archify 3.1.0 export tests (MIT); see
 // ../viewer/LICENSE.txt and support/export-browser.mjs for the transport source.
 import fs from 'node:fs';
 import path from 'node:path';

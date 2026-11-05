@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "statechart",
+  "meta": {
+    "title": "文章发布",
+    "output": "mixed-groups.html",
+    "input_contract": "phoenix-v1",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "model": {
+    "variables": [
+      {
+        "id": "phase",
+        "values": [
+          "draft",
+          "review",
+          "published"
+        ]
+      },
+      {
+        "id": "edits",
+        "range": [
+          0,
+          2
+        ]
+      }
+    ],
+    "init": {
+      "phase": "draft",
+      "edits": 0
+    },
+    "actions": [
+      {
+        "id": "submit",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "draft"
+          ]
+        },
+        "set": {
+          "phase": "review"
+        }
+      },
+      {
+        "id": "publish",
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "review"
+          ]
+        },
+        "set": {
+          "phase": "published"
+        }
+      },
+      {
+        "id": "edit",
+        "when": {
+          "lt": [
+            {
+              "var": "edits"
+            },
+            2
+          ]
+        },
+        "set": {
+          "edits": {
+            "add": [
+              {
+                "var": "edits"
+              },
+              1
+            ]
+          }
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "publishedUntouched",
+        "text": "发布后不再被修改",
+        "holds": {
+          "implies": [
+            {
+              "eq": [
+                {
+                  "var": "phase"
+                },
+                "published"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "var": "edits"
+                },
+                0
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "deadlock": {
+      "ends": {
+        "eq": [
+          {
+            "var": "phase"
+          },
+          "published"
+        ]
+      }
+    }
+  },
+  "view": {
+    "state": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "draft"
+          ]
+        },
+        "label": "草稿"
+      },
+      {
+        "label": "处理中"
+      }
+    ],
+    "steps": [
+      {
+        "action": "submit",
+        "label": "提交审核"
+      },
+      {
+        "action": "publish",
+        "label": "发布"
+      },
+      {
+        "action": "edit",
+        "label": "修改"
+      }
+    ],
+    "groups": [
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "draft"
+          ]
+        },
+        "group": "编辑"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "var": "phase"
+            },
+            "review"
+          ]
+        },
+        "group": "审核"
+      },
+      {
+        "group": "发布"
+      }
+    ],
+    "colors": {
+      "编辑": "violet",
+      "审核": "amber",
+      "发布": "emerald"
+    }
+  }
+}

@@ -3,13 +3,11 @@
   "kind": "phoenix-diagram-brand-license-sources",
   "catalog": {
     "path": "brand-marks.json",
-    "size": 168010,
-    "sha256": "9f2ae19ef94ba82887729a4a1617ff25eede56611dd21a4b2c6f797df30fca33",
+    "size": 167862,
+    "sha256": "905be7402246ae3810ff349eabab78044d2dfe01f53402562819ef5177b555ed",
     "count": 107
   },
   "reference": {
-    "archive": "upstream/archify-3.1.0-source.tar.gz",
-    "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
     "path": "archify/renderers/shared/generated-brand-marks.mjs",
     "sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
     "noticePath": "assets/licenses/brand-marks-NOTICE.md",
@@ -113,8 +111,6 @@
       "path": "licenses/brand-marks-NOTICE.md",
       "size": 5248,
       "sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
-      "archive": "upstream/archify-3.1.0-source.tar.gz",
-      "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
       "sourcePath": "archify/THIRD_PARTY_NOTICES.md"
     },
     {

@@ -8,7 +8,7 @@ pub(super) struct Entry {
 }
 
 fn translated(layout: &Layout<'_>, key: &str, fallback: &str) -> String {
-    if !layout.legacy && !string(&layout.document["meta"], "locale").is_empty() {
+    if !string(&layout.document["meta"], "locale").is_empty() {
         if let Some(value) = layout.document["meta"]["translations"][key]
             .as_str()
             .filter(|value| !value.is_empty())
@@ -38,24 +38,16 @@ pub(super) fn entries(layout: &Layout<'_>) -> Vec<Entry> {
     }
     let locale = string(meta, "locale").to_lowercase();
     let labels = match locale.as_str() {
-        "zh-cn" if layout.legacy => ["请求", "返回", "安全", "异步追踪", "默认消息"],
         "zh-cn" => ["主路径请求", "返回", "安全", "异步追踪", "普通消息"],
-        "zh-tw" if !layout.legacy => ["主路徑請求", "回傳", "安全", "非同步追蹤", "一般訊息"],
-        "es" if !layout.legacy => [
+        "zh-tw" => ["主路徑請求", "回傳", "安全", "非同步追蹤", "一般訊息"],
+        "es" => [
             "solicitud principal",
             "respuesta",
             "seguridad",
             "traza asíncrona",
             "mensaje",
         ],
-        "ko" if !layout.legacy => ["주요 요청", "반환", "보안", "비동기 추적", "메시지"],
-        _ if layout.legacy => [
-            "request",
-            "return",
-            "security",
-            "async trace",
-            "default message",
-        ],
+        "ko" => ["주요 요청", "반환", "보안", "비동기 추적", "메시지"],
         _ => [
             "main request",
             "return",
@@ -81,8 +73,7 @@ pub(super) fn entries(layout: &Layout<'_>) -> Vec<Entry> {
                 .filter(|value| !value.is_empty())
                 .unwrap_or(&fallback)
                 .to_owned();
-            let measured_font = if layout.legacy { 8.0 } else { 10.0 };
-            let width = (34.0 + 9.0 + layout.units(&label) * measured_font * 0.62).ceil();
+            let width = (34.0 + 9.0 + layout.units(&label) * 10.0 * 0.62).ceil();
             Some(Entry {
                 kind: (*kind).into(),
                 label,
@@ -132,11 +123,7 @@ pub(super) fn measure(layout: &Layout<'_>) -> (Vec<Card>, Diagnostics) {
     let too_wide = entries
         .iter()
         .find(|entry| entry.width > layout.width - 80.0);
-    let min_top = if layout.legacy {
-        baseline - 30.0
-    } else {
-        142.0_f64.max(layout.content_bottom + 12.0)
-    };
+    let min_top = 142.0_f64.max(layout.content_bottom + 12.0);
     let too_high = title_y - 10.0 < min_top;
     if too_wide.is_some() || too_high {
         if layout.document["meta"].get("legend").is_none() {
@@ -164,9 +151,9 @@ pub(super) fn measure(layout: &Layout<'_>) -> (Vec<Card>, Diagnostics) {
         "legend.title",
         match locale.as_str() {
             "zh-cn" => "图例",
-            "zh-tw" if !layout.legacy => "圖例",
-            "es" if !layout.legacy => "Leyenda",
-            "ko" if !layout.legacy => "범례",
+            "zh-tw" => "圖例",
+            "es" => "Leyenda",
+            "ko" => "범례",
             _ => "Legend",
         },
     );

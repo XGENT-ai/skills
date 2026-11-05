@@ -1,15 +1,13 @@
-// Native ports of the two frozen lifecycle renderers; see NOTICE.md.
+// Derived from Archify lifecycle renderer (MIT); see NOTICE.md.
 use crate::diagnostic::{Diagnostic, Diagnostics};
-use crate::geometry::{fitted_node_font_size_for_contract, text_units_for_contract};
-use crate::input::{CompileOptions, DiagramInput, DiagramType, InputContract};
+use crate::geometry::{fitted_node_font_size, text_units};
+use crate::input::{CompileOptions, DiagramInput, DiagramType};
 use crate::scene::{
     Authored, Card, CompiledDiagram, Container, DiagramFacts, Node, Point, Rect, Relation, Sigil,
     Text,
 };
 use serde_json::{json, Value};
 
-#[path = "legacy.rs"]
-mod legacy;
 #[path = "lifecycle/presentation.rs"]
 mod presentation;
 #[path = "lifecycle/v3.rs"]
@@ -23,12 +21,6 @@ fn string<'a>(value: &'a Value, key: &str) -> &'a str {
 }
 fn number(value: &Value, key: &str, default: f64) -> f64 {
     value[key].as_f64().unwrap_or(default)
-}
-fn point(value: &Value) -> Option<Point> {
-    Some(Point {
-        x: value.get(0)?.as_f64()?,
-        y: value.get(1)?.as_f64()?,
-    })
 }
 fn p(x: f64, y: f64) -> Point {
     Point { x, y }
@@ -72,11 +64,11 @@ fn failure(code: &str, path: &str, message: impl Into<String>, evidence: Value) 
     diagnostic.supported_fixes=vec!["Preserve all lifecycle states, conditions and transitions while adjusting the identified layout constraint".into()];
     diagnostic
 }
-fn units(input: &DiagramInput, value: &str) -> f64 {
-    text_units_for_contract(value, input.input_contract)
+fn units(value: &str) -> f64 {
+    text_units(value)
 }
-fn font(input: &DiagramInput, value: &str, width: f64, preferred: f64, minimum: f64) -> f64 {
-    fitted_node_font_size_for_contract(value, width, preferred, minimum, input.input_contract)
+fn font(value: &str, width: f64, preferred: f64, minimum: f64) -> f64 {
+    fitted_node_font_size(value, width, preferred, minimum)
 }
 fn generated(kind: &str, id: String, path: &str) -> Authored {
     Authored {
@@ -175,8 +167,5 @@ pub fn compile(
             Value::Null,
         )]);
     }
-    match input.input_contract {
-        InputContract::Legacy217 => legacy::compile(input, options),
-        InputContract::PhoenixV1 => v3::compile(input, options),
-    }
+    v3::compile(input, options)
 }

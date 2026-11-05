@@ -14,7 +14,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 
 ## 新旧合同
 
-新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余八类为 1。ER、类、树、时间线、耗时瀑布只有 `phoenix-v1`，未标记时也按它读取。已有未标记 JSON 保留原字节，按 `legacy-2.17` 验证；不要仅为套用新默认值迁移合同。CLI 的显式 `--input-contract` 覆盖必须与用户已授权的导入意图一致。
+新稿明确写 `meta.input_contract: "phoenix-v1"`，默认 showcase。Workflow 新稿使用 `schema_version: 2`，Lifecycle 新稿使用 `schema_version: 3`；其余九类为 1。全部类型只有 `phoenix-v1`；ER、类、树、时间线、耗时瀑布、状态机未标记时也按它读取，原五类未标记时报 `input/contract-required`。已是 phoenix-v1 的未标记 JSON 用 `--input-contract phoenix-v1` 读取并保留原字节；`legacy-2.17` 已不受支持，须先人工转换。CLI 的显式 `--input-contract` 必须与用户已授权的导入意图一致。
 
 读取 `compatibility.coreCompatibility` 与 `compatibility.dispositions`，按[兼容约定](compatibility.md)逐项报告非 `supported` 字段的实际处理与原因，并保留原 JSON；不能将核心兼容通过说成旧展示能力全部复刻，也不能借展示限制删除核心事实。品牌仅在明确请求时按[品牌资源](brand-marks.md)处理，普通编译不联网采集；旧安装移除另需明确迁移授权和确认。`sources` 与 `meta.repository` 交付时按[仓库来源创作](repository-authoring.md)核对。
 
@@ -22,7 +22,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 
 - Architecture：先按真实连接组织主路径与子系统，支线靠近负责节点；保留真实边界及显式坐标。新稿可用 schema 的 grid 字段组织有意义的行，省略无依据的固定 viewBox，先用自动路线。
 - Workflow：保留泳道、条件、分支、回路及 mainPath。跨阶段许可按已加载 SKILL 的创作步骤逐状态核对，不能将先补交、重提等业务动作变为前提；保留等价表达，不要求逐节点直接边。新稿省略固定 viewBox 和手工宽度，让编译器测量标签；已有 v1 固定几何不切成 v2。出现共用通道或箭头拥挤时，按诊断的实测节点与整组相关路线，先给共用起点或终点周围留出独立通道；必要时调整未固定节点的 `col`、`row` 或间距，包括回路起点、多入边的汇合与撤回目标。端点可在图的边缘或内部，以所有相关路线的实测结果为准，不由 mainPath 顺序预定位置；不要为了保留拥挤布局而先叠加端口或通道 pin。自己添加的端口或路线 pins 发生冲突时，撤掉这些约束，让自动路线重新联排相关边，避免继续叠加单边 pins；剩余实测问题再按诊断选择端口或路线。
-- Sequence：保留参与者顺序、消息方向、`y`、同步/异步、return 与完整 notes。新稿省略 `meta.column_fit` 和 viewBox 使用新合同默认布局；旧合同缺省 fixed 保持原样。参与者内部动作放在其真实跨参与者消息的 note 中，不造 self-message。给 note 的实际换行高度留空间，28px 基础消息间距不代表 note 容量；修复时协调后续消息、segment 和 activation，不能删 note 含义。
+- Sequence：保留参与者顺序、消息方向、`y`、同步/异步、return 与完整 notes。新稿省略 `meta.column_fit` 和 viewBox 使用默认布局。参与者内部动作放在其真实跨参与者消息的 note 中，不造 self-message。给 note 的实际换行高度留空间，28px 基础消息间距不代表 note 容量；修复时协调后续消息、segment 和 activation，不能删 note 含义。
 - Dataflow：明确每个输入由哪个 producer 实际输出，组合转换应保留独立标注的各路输入。真实存储端使用 `database`，内存计算通过生成它的 `backend` 表达。以 stage/row 网格开始；普通数据用 default，主数据 emphasis，确有策略/PII 含义才用 security，异步批处理才用 dashed。
 - Lifecycle：`mainPath` 列出真实主路径，并显式写出每条 transition；保留退出边的 label、note、variant。等待用 waiting，可恢复失败必须存在真实返回边。不得把终止或无法恢复伪装成 recovery。
 - ERD：表优先，列出每张表的全部物理列，保留源 SQL 类型；字段注释写进类型串（如 `varchar(64)｜客户名`），卡片可解释约束但不能代替字段列表。`key` 写出该列承担的全部角色（如 `["pk", "fk"]`），外键必须带 `entity.attribute` 形式的 `references`。分别核对每端最大基数、最小参与数与引用列可空性：外键不自动证明 `NOT NULL`，“可有多个”不单独证明最小数为零。以已给 SQL 约束、联合主键、显式文字或 Mermaid 端点为依据；已明确的事实直接用，不重复询问或要求另选表现形式。需要表示而缺少依据的最小数/可空性，按 SKILL 的开放问题规则先问并停止，不先生成 candidate、画 `0..N`/`1` 再标“待确认”或用卡片兜底；明确授权拟定规则时仍走建议分支。关系两端各写最大基数；`fromOptional`/`toOptional` 省略或写 `false` 表示该端最小值为1，写 `true` 表示0。两种取值都要有材料依据，省略字段不能表示未知。按已核实的功能域写 `tag`，同域表占一块实心的行、列或矩形格子，不夹无关表；有 tag 的表必须用 `row`/`col`。自引用留作外键列，不画自连边。默认仍用 showcase；大型 schema 停滞时按上文停滞规则报告，可询问用户是否改用 standard，未经要求不先降级。
@@ -30,6 +30,7 @@ Workflow 修法写明整图验证通过时，按它列出的全部路径一并�
 - Tree：恰一个根，其余节点各写一个 `parent`，链接只表示包含，不表达调用或数据流。浅而均衡的分解用 `layout.direction: "down"`，深或叶子多的（如仓库目录）用 `"right"`。`collapsed` 只决定阅读器的初始折叠，导出始终是完整树。
 - Timeline：每个 `at` 是带 `Z` 或 `±HH:MM` 的 ISO 时间；`meta.timezone` 是显示时钟，接受 IANA 名、固定偏移及 ICU 兼容别名，缺省 UTC。本期新增接受 `SystemV/AST4ADT`、`SystemV/CST6CDT`、`SystemV/EST5EDT`、`SystemV/MST7MDT`、`SystemV/PST8PDT`、`SystemV/YST9YDT`；曾因不支持而拒绝的这六区输入可直接重试，不改成近似城市时区。这些说明不是名称白名单，实际接受范围以原生输入门为准。`meta.evidence` 必填：记录到的事件用 `observed`，说明性的用 `illustrative`，不把推测或近似的时间标为 observed。只有日期的记录写在该偏移的 12:00 并设 `precision: "day"`，不在卡片里另作说明。声明 `lanes` 时每个事件都要写其中一个 lane；只按输入画事件，不补缺口。
 - Waterfall：跨度的 `start` 与 `end` 或 `duration` 用同一 `meta.unit`；两者同写时必须一致，没有记录结束的跨度必须 `status: "incomplete"`。`meta.evidence` 只有真实计时（trace、日志、性能剖析）才写 `measured`，否则写 `illustrative`；不从代码结构推断时长，也不为计时去运行项目。请求或父跨度的 `end` 只说明该跨度结束，不自动给出 trace 的精确采集截止时刻；仅由自动扩展或人为固定得到的窗口边界不能作为观测事实。未给精确截止时，不在名称、`detail`、卡片、提示或最终答复中补精确截止时刻或截至该时的精确已观测时长。有记录支持的区间可表达“至少/≥”时长下界：同一 trace 已记录的最晚时刻可给出采集截止下界，采集截止时仍开放的跨度可据其起点到该时刻的差给出时长下界，无须知道精确截止；不能由此补精确截止或最终耗时，缺少可省略的截止说明不追加问题。推导时长比较、极值或排序结论时，以材料已给事实、已知数值或上下界为依据，不能默认未结束跨度短于已完成跨度。材料直接给定的比较事实照用，不为证明它额外索要数值。上下界足以证明时，未知总时长也可参与比较；否则写清仅比较已知完成跨度或明确窗口内片段，不把该结论扩为全部跨度的最终耗时比较。判断无子跨度覆盖的区间时，必须核对相关未结束子跨度；缺少其结束依据就不作零覆盖断言。百分比是相对整体墙钟，父子时长不相加；输入没写依赖时不标关键路径。
+- Statechart：先写变量、初值、动作与规则，再写 view；域保持小，用 `deadlock.ends` 声明可以停下的终态。合并标签、隐藏步骤、区域与图规模的限制见[状态机模型检查](statechart.md)。
 
 只有实测缺陷或用户固定几何要求才添加 route/label pins。自动端口方向是离开/进入边界的方向合同；不得接受穿过无关不透明节点、含混共用通道或标签盖住其他关系的路线。
 

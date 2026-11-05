@@ -122,6 +122,9 @@ fn document(kind: DiagramType) -> Value {
         DiagramType::Waterfall => {
             json!({"spans":[{"id":"a","name":"A","start":0,"end":10},{"id":"b","name":"B","start":1,"end":4,"parent":"a"}]})
         }
+        DiagramType::Statechart => {
+            json!({"model":{"variables":[{"id":"done","values":[false,true]}],"init":{"done":false},"actions":[{"id":"finish","set":{"done":true}}]}})
+        }
     };
     let mut document = json!({"schema_version":1,"diagram_type":kind.as_str(),"meta":{"title":"Evidence","output":"evidence.html","input_contract":"phoenix-v1"}});
     if kind == DiagramType::Workflow {
@@ -191,7 +194,11 @@ fn rejects(document: &Value, code: &str, path: &str) -> Value {
 fn every_type_binds_its_primary_elements_to_lines_of_the_pinned_commit() {
     let (temp, revision) = repository("https://github.com/example/repo.git");
     let root = temp.join("repo");
-    for kind in DiagramType::ALL {
+    // A statechart derives its states, so it has no elements to cite.
+    for kind in DiagramType::ALL
+        .into_iter()
+        .filter(|kind| *kind != DiagramType::Statechart)
+    {
         let source = json!([{"path":"src/lib.rs","line":1,"end_line":2,"label":"entry"}]);
         let mut document = cited(kind, &revision, source.clone());
         let evidence = verify(&input(kind, &document), Some(&root)).unwrap();
@@ -239,6 +246,21 @@ fn every_type_binds_its_primary_elements_to_lines_of_the_pinned_commit() {
             (Some(true), "compared")
         );
     }
+}
+
+#[test]
+fn a_statechart_has_no_source_evidence_and_rejects_a_repository() {
+    let document = document(DiagramType::Statechart);
+    let evidence = verify(&input(DiagramType::Statechart, &document), None).unwrap();
+    assert_eq!(evidence.status, EvidenceStatus::None);
+    let mut with_repository = document;
+    with_repository["meta"]["repository"] = json!({"url":REPOSITORY,"revision":"a".repeat(40)});
+    assert!(parse_input(
+        &serde_json::to_vec(&with_repository).unwrap(),
+        DiagramType::Statechart,
+        &CompileOptions::default()
+    )
+    .is_err());
 }
 
 #[test]

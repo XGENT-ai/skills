@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/tree.schema.json",
-  "title": "Archify Hierarchy and Tree Diagram",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/tree.schema.json",
+  "title": "Phoenix Diagram Hierarchy and Tree Diagram",
   "type": "object",
   "additionalProperties": false,
   "required": [

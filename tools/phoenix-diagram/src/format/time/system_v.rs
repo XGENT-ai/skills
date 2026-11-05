@@ -1,7 +1,8 @@
 use chrono::{DateTime, Datelike, NaiveDate};
 
-// ICU 77.1's six SystemV zones share these standard-wall-clock transitions.
-// Regenerate from the pinned zoneinfo64.txt with tests/fixtures/format/generate.mjs.
+// ICU 77.1's six SystemV zones share these standard-wall-clock transitions,
+// taken from tests/fixtures/format/icu77-zoneinfo64.txt (pinned by
+// system-v-sources.json); edit them only against that source.
 const TRANSITIONS: [i64; 150] = [
     -2135887200,
     -2120166000,

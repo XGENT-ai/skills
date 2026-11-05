@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { root, workspace, preflight, miseEnvironment, verifyFrozenSources } from './check-phoenix-diagram-source.mjs';
+import { root, workspace, preflight, miseEnvironment, verifySources } from './check-phoenix-diagram-source.mjs';
 import { selectCompilerArtifact } from './build-phoenix-diagram.mjs';
 
 function command(program, args, { cwd = root, env, ...options } = {}) {
@@ -22,7 +22,7 @@ export function main(args = process.argv.slice(2)) {
   }
   assert(args.length === 0, 'Usage: node scripts/test-phoenix-diagram-native.mjs [--help]');
   const prepared = preflight();
-  verifyFrozenSources();
+  verifySources();
   const env = { ...miseEnvironment({ CARGO_NET_OFFLINE: 'true' }), RUST_TEST_THREADS: '4' };
   const cargo = (args, options = {}) => command('mise', ['exec', '--no-deps', '--', 'mbx', ...args], { cwd: workspace, env, ...options });
   command(process.execPath, [path.join(root, 'scripts/assemble-phoenix-diagram-reader.mjs'), '--check'], { env });
@@ -42,9 +42,9 @@ export function main(args = process.argv.slice(2)) {
       .map(name => path.join(root, 'test/phoenix-diagram', name));
     command(process.execPath, ['--test', '--test-concurrency=1', ...tests], { env });
     command(process.execPath, ['--test',
-      path.join(root, 'tools/phoenix-diagram/upstream/source-check.test.mjs'),
-      path.join(root, 'tools/phoenix-diagram/upstream/prepare.test.mjs'),
-      path.join(root, 'tools/phoenix-diagram/upstream/license-sources.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/maintenance/source-check.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/maintenance/prepare.test.mjs'),
+      path.join(root, 'tools/phoenix-diagram/tests/maintenance/license-sources.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/tests/viewer/unit.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/tests/viewer/reader-layout.test.mjs'),
       path.join(root, 'tools/phoenix-diagram/tests/viewer/explore.test.mjs'),

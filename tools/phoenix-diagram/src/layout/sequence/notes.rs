@@ -36,16 +36,7 @@ pub(super) fn measure(layout: &Layout<'_>, message: &Value) -> Option<Note> {
         return None;
     }
     let y = number(message, "y");
-    let geometry = layout.geometry(message)?;
-    if layout.legacy {
-        return Some(Note {
-            x: geometry.start.min(geometry.end) + 12.0,
-            lines: vec![raw.into()],
-            width: layout.units(raw) * 7.0 * 0.6,
-            baseline: y + 18.0,
-            bottom: y + 22.0,
-        });
-    }
+    layout.geometry(message)?;
     let from = layout.participant_index(string(message, "from"))?;
     let to = layout.participant_index(string(message, "to"))?;
     if from == to {

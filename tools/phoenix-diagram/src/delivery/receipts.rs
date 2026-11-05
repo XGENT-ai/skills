@@ -69,6 +69,9 @@ pub struct ValidationReceipt {
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
     pub evidence: Value,
+    /// The statechart model verdict; absent for every other type.
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub model: Value,
     #[serde(skip)]
     pub layout: Option<Value>,
     #[serde(skip)]
@@ -100,6 +103,9 @@ pub struct DeliveryReceipt {
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
     pub evidence: Value,
+    /// The statechart model verdict; absent for every other type.
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub model: Value,
     #[serde(skip)]
     pub(super) exit: u8,
 }
@@ -201,6 +207,9 @@ pub struct FinalizeReceipt {
     pub visual_review: VisualReview,
     pub delivery_status: String,
     pub evidence: Value,
+    /// The statechart model verdict; absent for every other type.
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub model: Value,
     pub locale: Value,
     #[serde(skip)]
     pub(super) exit: u8,

@@ -1,8 +1,6 @@
 {
-  "catalogVersion": "archify-3.1.0",
+  "catalogVersion": "phoenix-1",
   "source": {
-    "archive": "upstream/archify-3.1.0-source.tar.gz",
-    "archiveSha256": "6831ba7f7d9d5c0fd473e317bd9b513f2581b9d4d63bd157d1de4680af3b32a4",
     "path": "archify/renderers/shared/generated-brand-marks.mjs",
     "sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
     "noticePath": "assets/licenses/brand-marks-NOTICE.md",

@@ -225,7 +225,7 @@ v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜
 | Skill | 说明 |
 | --- | --- |
 | [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
-| [phoenix-diagram](skills/phoenix-diagram/SKILL.md)（仅 npm 安装） | 十类 Rust 图解、Mermaid 语义转换、仓库来源与五语言离线阅读；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[安装说明](docs/phoenix-diagram.md) |
+| [phoenix-diagram](skills/phoenix-diagram/SKILL.md)（仅 npm 安装） | 十一类 Rust 图解（含状态机模型检查）、Mermaid 语义转换、仓库来源与五语言离线阅读；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[安装说明](docs/phoenix-diagram.md) |
 | [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
 | [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |
 | [humanize-writing](skills/humanize-writing/SKILL.md) | 改写机械、夸大或模板化的文字，使表达自然、直接 |

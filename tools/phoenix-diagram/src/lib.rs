@@ -16,6 +16,7 @@ pub mod preview;
 pub mod render;
 pub mod scene;
 mod schema;
+pub mod statechart;
 
 pub const TOOL_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const INPUT_CONTRACT_SCHEMA: u32 = 1;

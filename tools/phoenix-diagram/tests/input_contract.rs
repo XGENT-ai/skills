@@ -5,10 +5,12 @@ use serde_json::json;
 mod corpus;
 
 fn sequence() -> serde_json::Value {
-    serde_json::from_slice(include_bytes!(
-        "../upstream/legacy-2.17/examples/cache-miss-request.sequence.json"
+    let mut document: serde_json::Value = serde_json::from_slice(include_bytes!(
+        "fixtures/input/phoenix-v1/cache-miss-request.sequence.json"
     ))
-    .unwrap()
+    .unwrap();
+    document["meta"]["input_contract"] = json!("phoenix-v1");
+    document
 }
 
 fn rejects(bytes: &[u8], options: CompileOptions, code: &str, path: &str) {
@@ -47,22 +49,12 @@ fn invalid_utf8_and_unpaired_surrogates_are_rejected() {
 }
 
 #[test]
-fn explicit_contract_cannot_override_persisted_contract() {
-    rejects(
-        &serde_json::to_vec(&json!({"meta":{"input_contract":"phoenix-v1"}})).unwrap(),
-        CompileOptions {
-            input_contract: Some(InputContract::Legacy217),
-            ..Default::default()
-        },
-        "input/contract-conflict",
-        "/meta/input_contract",
-    );
-}
-
-#[test]
 fn explicit_quality_cannot_override_persisted_quality() {
     rejects(
-        &serde_json::to_vec(&json!({"meta":{"quality_profile":"showcase"}})).unwrap(),
+        &serde_json::to_vec(
+            &json!({"meta":{"input_contract":"phoenix-v1","quality_profile":"showcase"}}),
+        )
+        .unwrap(),
         CompileOptions {
             quality: Some(Quality::Standard),
             ..Default::default()
@@ -81,7 +73,7 @@ fn unknown_persisted_options_fail_before_schema_or_layout() {
         "/meta/input_contract",
     );
     rejects(
-        br#"{"meta":{"quality_profile":"fast"}}"#,
+        br#"{"meta":{"input_contract":"phoenix-v1","quality_profile":"fast"}}"#,
         CompileOptions::default(),
         "input/unknown-quality",
         "/meta/quality_profile",
@@ -100,13 +92,13 @@ fn source_bytes_and_text_are_preserved_and_options_are_bound() {
     let first = parse_input(&bytes, DiagramType::Sequence, &CompileOptions::default()).unwrap();
     assert_eq!(first.document, document);
     assert_eq!(first.source_bytes, bytes);
-    assert_eq!(first.input_contract, InputContract::Legacy217);
+    assert_eq!(first.input_contract, InputContract::PhoenixV1);
     assert_eq!(first.quality, Quality::Showcase);
     let explicit = parse_input(
         &bytes,
         DiagramType::Sequence,
         &CompileOptions {
-            input_contract: Some(InputContract::Legacy217),
+            input_contract: Some(InputContract::PhoenixV1),
             quality: Some(Quality::Showcase),
             ..Default::default()
         },
@@ -137,27 +129,61 @@ fn source_bytes_and_text_are_preserved_and_options_are_bound() {
     assert_eq!(first.config_sha256.len(), 64);
 }
 
+fn minimal(kind: DiagramType) -> serde_json::Value {
+    let path = format!(
+        "{}/../../skills/phoenix-diagram/examples/minimal.{}.json",
+        env!("CARGO_MANIFEST_DIR"),
+        kind.as_str()
+    );
+    serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
+}
+
 #[test]
-fn phoenix_marker_and_legacy_marker_do_not_leak_into_wrong_schema() {
-    let mut document = sequence();
-    document["meta"]["input_contract"] = json!("legacy-2.17");
-    let legacy = parse_input(
-        &serde_json::to_vec(&document).unwrap(),
-        DiagramType::Sequence,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    assert_eq!(legacy.input_contract, InputContract::Legacy217);
-    document["meta"]["input_contract"] = json!("phoenix-v1");
-    let current = parse_input(
-        &serde_json::to_vec(&document).unwrap(),
-        DiagramType::Sequence,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    assert_eq!(current.input_contract, InputContract::PhoenixV1);
-    assert_ne!(legacy.config_sha256, current.config_sha256);
-    assert_eq!(current.document, document);
+fn unmarked_original_five_and_the_retired_legacy_contract_are_rejected() {
+    for kind in DiagramType::ALL {
+        let marked = minimal(kind);
+        let bytes = serde_json::to_vec(&marked).unwrap();
+        let parsed = parse_input(&bytes, kind, &CompileOptions::default()).unwrap();
+        assert_eq!(parsed.input_contract, InputContract::PhoenixV1);
+
+        let mut unmarked = marked.clone();
+        unmarked["meta"]
+            .as_object_mut()
+            .unwrap()
+            .remove("input_contract");
+        let bytes = serde_json::to_vec(&unmarked).unwrap();
+        let result = parse_input(&bytes, kind, &CompileOptions::default());
+        if kind.is_original_five() {
+            let diagnostics = result.unwrap_err();
+            assert_eq!(diagnostics[0].code, "input/contract-required", "{kind:?}");
+            assert_eq!(diagnostics[0].subject.path, "/meta/input_contract");
+            assert!(diagnostics[0]
+                .message
+                .contains("--input-contract phoenix-v1"));
+            let explicit = parse_input(
+                &bytes,
+                kind,
+                &CompileOptions {
+                    input_contract: Some(InputContract::PhoenixV1),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+            assert_eq!(explicit.input_contract, InputContract::PhoenixV1);
+        } else {
+            assert_eq!(result.unwrap().input_contract, InputContract::PhoenixV1);
+        }
+
+        let mut legacy = marked;
+        legacy["meta"]["input_contract"] = json!("legacy-2.17");
+        let diagnostics = parse_input(
+            &serde_json::to_vec(&legacy).unwrap(),
+            kind,
+            &CompileOptions::default(),
+        )
+        .unwrap_err();
+        assert_eq!(diagnostics[0].code, "input/unknown-contract", "{kind:?}");
+    }
 }
 
 #[test]
@@ -262,6 +288,8 @@ fn final_dispositions_are_reported_individually_without_removing_facts() {
     let mut document = sequence();
     document["meta"]["input_contract"] = json!("phoenix-v1");
     document["participants"][0]["brand"] = json!("example-brand");
+    document["meta"]["views"] =
+        json!([{"id":"view","label":"View","focus":[document["participants"][0]["id"]]}]);
     document["meta"]["repository"] =
         json!({"url":"https://example.invalid/repo","revision":"a".repeat(40)});
     let input = parse_input(
@@ -288,9 +316,10 @@ fn final_dispositions_are_reported_individually_without_removing_facts() {
 #[test]
 fn stage_references_check_schema_integer_values_including_decimal_representation() {
     let mut document: serde_json::Value = serde_json::from_slice(include_bytes!(
-        "../upstream/legacy-2.17/examples/product-analytics.dataflow.json"
+        "fixtures/input/phoenix-v1/product-analytics.dataflow.json"
     ))
     .unwrap();
+    document["meta"]["input_contract"] = json!("phoenix-v1");
     document["schema_version"] = json!(1.0);
     document["nodes"][0]["stage"] = json!(0.0);
     parse_input(

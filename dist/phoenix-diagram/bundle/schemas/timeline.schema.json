@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/tt-a1i/archify/schemas/timeline.schema.json",
-  "title": "Archify Event Timeline",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/timeline.schema.json",
+  "title": "Phoenix Diagram Event Timeline",
   "type": "object",
   "additionalProperties": false,
   "required": [
