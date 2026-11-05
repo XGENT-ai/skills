@@ -4,7 +4,6 @@ use crate::artifact_schema::*;
 use crate::context::{BriefSummary, Ctx, TargetCandidate};
 use crate::jsp;
 use crate::util::{exists, js_trim, mtime_ms, read_json};
-use regex::Regex;
 use serde_json::{Map, Value};
 
 #[derive(Debug, Clone, serde::Serialize, PartialEq)]
@@ -57,21 +56,9 @@ const NATIVE_EVIDENCE_DEPENDENCIES: [(&str, &str, &str); 3] = [
     ("@react-native/metro-config", "adaptive", "a React Native metro config dependency"),
 ];
 
-/// JS: designSidecarCandidatesFor(projectRoot, contextDir)
-pub fn design_sidecar_candidates_for(project_root: &str, context_dir: Option<&str>) -> Vec<String> {
-    let mut c = vec![
-        jsp::join(&[project_root, ".phoenix-ui", "design.json"]),
-        jsp::join(&[project_root, "DESIGN.json"]),
-    ];
-    let ctx_legacy = jsp::join(&[context_dir.unwrap_or(project_root), "DESIGN.json"]);
-    if !c.contains(&ctx_legacy) {
-        c.push(ctx_legacy);
-    }
-    c
-}
-
-fn has_section(markdown: &str, heading: &str) -> bool {
-    Regex::new(&format!(r"(?im)^##\s+{}\s*$", regex::escape(heading))).map(|r| r.is_match(markdown)).unwrap_or(false)
+/// The design sidecar `document` writes.
+pub fn design_sidecar_path(project_root: &str) -> String {
+    jsp::join(&[project_root, ".phoenix-ui", "design.json"])
 }
 
 pub fn to_relative(file_path: Option<&str>, root: &str) -> Option<String> {
@@ -86,54 +73,6 @@ pub fn to_relative(file_path: Option<&str>, root: &str) -> Option<String> {
 
 fn wrap_ticks(items: &[String]) -> String {
     items.iter().map(|k| format!("`{}`", k)).collect::<Vec<_>>().join(", ")
-}
-
-/// JS: checkProduct
-pub fn check_product(product: Option<&str>, product_path: &str) -> Vec<Finding> {
-    let Some(product) = product.filter(|p| !p.is_empty()) else { return vec![] };
-    let mut out = Vec::new();
-    for (heading, reason) in PRODUCT_DEPRECATED_SECTIONS {
-        if !has_section(product, heading) {
-            continue;
-        }
-        out.push(finding(
-            &format!("product-deprecated-{}", heading.to_lowercase()),
-            "PRODUCT.md",
-            Some(product_path.to_string()),
-            "mention",
-            format!("PRODUCT.md still carries a `## {}` section. {}", heading, reason),
-            format!(
-                "Treat `## {}` as absent for every decision this session. Offer to delete the section; do not let its value influence the work either way.",
-                heading
-            ),
-        ));
-    }
-    let stamped = read_product_schema_version(product);
-    if stamped.is_none() && !PRODUCT_V4_SECTIONS.iter().any(|s| has_section(product, s)) {
-        out.push(finding(
-            "product-schema-legacy",
-            "PRODUCT.md",
-            Some(product_path.to_string()),
-            "route",
-            format!(
-                "PRODUCT.md has no schema stamp and none of the sections the current record adds ({}), so it predates this version of the product record.",
-                PRODUCT_V4_SECTIONS.join(", ")
-            ),
-            "Offer `init`, which preserves confirmed answers and fills the gaps by interview. Do not rewrite the file from inference.".to_string(),
-        ));
-    } else if let Some(v) = stamped {
-        if v < PRODUCT_SCHEMA_VERSION {
-            out.push(finding(
-                "product-schema-outdated",
-                "PRODUCT.md",
-                Some(product_path.to_string()),
-                "route",
-                format!("PRODUCT.md is stamped product-schema {}; the current record is {}.", v, PRODUCT_SCHEMA_VERSION),
-                "Offer `init` to bring the record current, preserving confirmed answers.".to_string(),
-            ));
-        }
-    }
-    out
 }
 
 /// JS: checkNativePlatformEvidence
@@ -229,26 +168,17 @@ pub fn js_truthy(v: &Value) -> bool {
 }
 
 /// JS: checkDesignSidecar
-pub fn check_design_sidecar(design_path: Option<&str>, sidecar_candidates: &[String], project_root: &str) -> Vec<Finding> {
+pub fn check_design_sidecar(
+    design_path: Option<&str>,
+    sidecar_path: &str,
+    project_root: &str,
+) -> Vec<Finding> {
     let mut out = Vec::new();
-    let canonical = sidecar_candidates.first();
-    let Some(present) = sidecar_candidates.iter().find(|c| exists(c)) else { return out };
-    let rel_present = to_relative(Some(present), project_root).unwrap();
-    if let Some(canon) = canonical {
-        if jsp::resolve(present, &[]) != jsp::resolve(canon, &[]) {
-            out.push(finding(
-                "design-sidecar-legacy-path",
-                "design.json",
-                Some(rel_present.clone()),
-                "auto",
-                format!("The design sidecar sits at {}, a location kept only for backward compatibility.", rel_present),
-                format!(
-                    "Move it to {} the next time the sidecar is written. No user decision is needed.",
-                    to_relative(Some(canon), project_root).unwrap()
-                ),
-            ));
-        }
+    if !exists(sidecar_path) {
+        return out;
     }
+    let present = sidecar_path;
+    let rel_present = to_relative(Some(present), project_root).unwrap();
     let sidecar = read_json(present);
     let schema_version = read_sidecar_schema_version(sidecar.as_ref());
     if let Some(sc) = &sidecar {
@@ -259,7 +189,7 @@ pub fn check_design_sidecar(design_path: Option<&str>, sidecar_candidates: &[Str
                 Some(rel_present.clone()),
                 "route",
                 format!(
-                    "{} is schemaVersion {}; the current sidecar is {}. Token primitives moved to the DESIGN.md frontmatter, so the old shape carries values that are now read from two places.",
+                    "{} is schemaVersion {}; the current sidecar is schemaVersion {}.",
                     rel_present,
                     schema_version.map(|v| v.to_string()).unwrap_or_else(|| "unset".to_string()),
                     DESIGN_SIDECAR_SCHEMA_VERSION
@@ -464,7 +394,7 @@ pub fn check_project_roots(patterns: &[String], candidates_len: usize) -> Vec<Fi
 
 pub struct BootExtras {
     pub abs_design_path: Option<String>,
-    pub sidecar_candidates: Vec<String>,
+    pub sidecar_path: String,
     pub project_root_patterns: Option<Vec<String>>,
     pub target_candidates: Vec<TargetCandidate>,
 }
@@ -473,7 +403,6 @@ pub struct BootExtras {
 /// grouped by artifact, so deeper reports (doctor) can interleave their own
 /// checks without rebuilding this policy (upstream 80997663).
 pub struct BootFindingGroups {
-    pub product: Vec<Finding>,
     pub native_platform: Vec<Finding>,
     pub design_sidecar: Vec<Finding>,
     pub config: Vec<Finding>,
@@ -483,9 +412,12 @@ pub struct BootFindingGroups {
 }
 
 pub fn collect_boot_finding_groups(ctx: &Ctx, cwd: &str, extras: &BootExtras) -> BootFindingGroups {
-    let project_root = if ctx.project_root.is_empty() { cwd.to_string() } else { ctx.project_root.clone() };
+    let project_root = if ctx.project_root.is_empty() {
+        cwd.to_string()
+    } else {
+        ctx.project_root.clone()
+    };
     BootFindingGroups {
-        product: check_product(ctx.product.as_deref(), ctx.product_path.as_deref().unwrap_or("PRODUCT.md")),
         // Only checked once a PRODUCT.md exists. Without one the boot already
         // emits NO_PRODUCT_MD and routes into init, which asks for the
         // platform directly; a second signal saying the same thing is noise.
@@ -499,9 +431,17 @@ pub fn collect_boot_finding_groups(ctx: &Ctx, cwd: &str, extras: &BootExtras) ->
         } else {
             Vec::new()
         },
-        design_sidecar: check_design_sidecar(extras.abs_design_path.as_deref(), &extras.sidecar_candidates, &project_root),
+        design_sidecar: check_design_sidecar(
+            extras.abs_design_path.as_deref(),
+            &extras.sidecar_path,
+            &project_root,
+        ),
         config: check_config(&project_root, Some(&ctx.repo_root)),
-        build_path: check_build_path_unset(&project_root, Some(&ctx.repo_root), ctx.product.as_deref()),
+        build_path: check_build_path_unset(
+            &project_root,
+            Some(&ctx.repo_root),
+            ctx.product.as_deref(),
+        ),
         surface_briefs: check_surface_briefs(&ctx.surface_brief_candidates, &project_root),
         project_roots: match &extras.project_root_patterns {
             Some(patterns) => check_project_roots(patterns, extras.target_candidates.len()),
@@ -514,7 +454,6 @@ pub fn collect_boot_finding_groups(ctx: &Ctx, cwd: &str, extras: &BootExtras) ->
 pub fn collect_boot_findings(ctx: &Ctx, cwd: &str, extras: &BootExtras) -> Vec<Finding> {
     let groups = collect_boot_finding_groups(ctx, cwd, extras);
     let mut out = Vec::new();
-    out.extend(groups.product);
     out.extend(groups.native_platform);
     out.extend(groups.design_sidecar);
     out.extend(groups.config);

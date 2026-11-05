@@ -143,7 +143,7 @@ fn print_answer(io: &mut Io, raw: &str) {
 }
 
 /// Local comp paths a round declares, in card order: every option's `comp`
-/// (or the legacy `sketch`) and the canon card's, as written in the payload.
+/// and the canon card's, as written in the payload.
 /// URLs are left out: they are rendered already, never generated here.
 fn declared_comps(payload: &Value) -> Vec<String> {
     let mut cards: Vec<&Value> = payload.get("options").and_then(Value::as_array).map(|o| o.iter().collect()).unwrap_or_default();
@@ -152,8 +152,10 @@ fn declared_comps(payload: &Value) -> Vec<String> {
     }
     let mut out: Vec<String> = Vec::new();
     for card in cards {
-        let comp = card.get("comp").filter(|v| !v.is_null()).or_else(|| card.get("sketch").filter(|v| !v.is_null()));
-        let Some(s) = comp.filter(|v| crate::staleness::js_truthy(v)).map(js_str) else { continue };
+        let comp = card.get("comp").filter(|v| !v.is_null());
+        let Some(s) = comp.filter(|v| crate::staleness::js_truthy(v)).map(js_str) else {
+            continue;
+        };
         if s.starts_with("http://") || s.starts_with("https://") || out.contains(&s) {
             continue;
         }
@@ -361,7 +363,7 @@ fn schema_json() -> Value {
     })
 }
 
-const SCHEMA_NOTE: &str = "\nOption ids return verbatim in ANSWER; \"reroll\" and \"canon\" are reserved. hero/board/comp accept URLs or local paths; comp slots may point at files that do not exist yet (serve first, generate after; the page polls until they land, so never block serving on generation). hero on a challenger is the inspiration it draws from and renders picture-in-picture beside the comp, never as the promise of the build. verdict routes rendering: \"wins\" and \"competitive\" challengers keep full cards, \"declined\" ones render demoted after them (narrow, quiet, art as a labeled thumb, \"Adopt anyway\"), with their kept line on the front; the page reorders declined cards to the end on its own. raised on the assigned card renders each donation as a named raise line. Salience parity: when the assigned card declares no comp (no image generation this round), catalog art on every card demotes to a labeled thumb, so what looks important is the verdict’s call, never rendering luck. canonCard renders the standing exit as a subordinate card with the same anatomy; without it, canon stays a quiet footer action. Include canon only for visual-direction rounds; never present it as your own recommendation. The pick card is a kicker convention, not a field: kicker \"PHOENIX’S PICK\" on your top-ranked grounded candidate, one at most, never in the lead slot. Every card gets the full anatomy, challengers, canon, and declined included: thesis, palette, materials, viewport, risk; the seed already hands you each challenger’s system rules, so a card with no palette chips is an authoring gap, not a data gap. Keep thesis and each fact to one short sentence: the card front shows thesis, identity, and a two-line risk, while first viewport and the case read on the card back behind the Details chip, so long facts cost the reader a flip, not the page its scanability. A card with no imagery at all has no back; its full read renders on the front, so a text-only round loses nothing. A card may instead declare \"wireframe\" ({\"cols\":12,\"rows\":10,\"regions\":[{\"label\":\"nav rail\",\"x\":0,\"y\":0,\"w\":3,\"h\":10,\"accent\":true}]}): the page draws it as a layout schematic in the media slot; surface-scope rounds use it on code-led builds, it never counts toward salience, and the card keeps its full read on the front. The comp slot carries the card’s full-fidelity direction comp (the legacy key \"sketch\" is accepted as an alias). Comp aspect follows the surface: portrait at device viewport for native or mobile-first surfaces, landscape otherwise; the page adapts its cards to either. reroll accepts true or { \"registers\": [\"safer\", \"bolder\"] }: the register buttons steer the next hand along the familiar-to-bold axis, the answer carries \"register\", and you re-run concept-seed with --register <value> for the next round; offer the registers on direction rounds, and never pre-select one. buildPath rides the payload as { \"value\": \"comp\"|\"code\", \"toggle\": true }: the value is the recorded default (.phoenix-ui/config.json buildPath, or .phoenix-ui/config.local.json where one machine differs) and the toggle renders a footer switch whose flip binds that session only; the ANSWER then carries buildPath plus buildPathFlipped. On a code-led round each card still declares its comp path as a flip reserve: wireframes render, and a flip to comp makes --wait return once with BUILD PATH FLIPPED so you generate the comps into the declared slots while the round stays open; a flip back to code is free, and a comp that already landed stays as the critique reference. The toggle may only be offered when image generation exists: a harness with no image tool and no API key never sets toggle: true, so the choice never renders where comps cannot be made, and code-led simply rides as the untoggleable value. followup: true keeps the table open after a pick for a second round via --update; send the next payload immediately, the page is waiting on it.";
+const SCHEMA_NOTE: &str = "\nOption ids return verbatim in ANSWER; \"reroll\" and \"canon\" are reserved. hero/board/comp accept URLs or local paths; comp slots may point at files that do not exist yet (serve first, generate after; the page polls until they land, so never block serving on generation). hero on a challenger is the inspiration it draws from and renders picture-in-picture beside the comp, never as the promise of the build. verdict routes rendering: \"wins\" and \"competitive\" challengers keep full cards, \"declined\" ones render demoted after them (narrow, quiet, art as a labeled thumb, \"Adopt anyway\"), with their kept line on the front; the page reorders declined cards to the end on its own. raised on the assigned card renders each donation as a named raise line. Salience parity: when the assigned card declares no comp (no image generation this round), catalog art on every card demotes to a labeled thumb, so what looks important is the verdict’s call, never rendering luck. canonCard renders the standing exit as a subordinate card with the same anatomy; without it, canon stays a quiet footer action. Include canon only for visual-direction rounds; never present it as your own recommendation. The pick card is a kicker convention, not a field: kicker \"PHOENIX’S PICK\" on your top-ranked grounded candidate, one at most, never in the lead slot. Every card gets the full anatomy, challengers, canon, and declined included: thesis, palette, materials, viewport, risk; the seed already hands you each challenger’s system rules, so a card with no palette chips is an authoring gap, not a data gap. Keep thesis and each fact to one short sentence: the card front shows thesis, identity, and a two-line risk, while first viewport and the case read on the card back behind the Details chip, so long facts cost the reader a flip, not the page its scanability. A card with no imagery at all has no back; its full read renders on the front, so a text-only round loses nothing. A card may instead declare \"wireframe\" ({\"cols\":12,\"rows\":10,\"regions\":[{\"label\":\"nav rail\",\"x\":0,\"y\":0,\"w\":3,\"h\":10,\"accent\":true}]}): the page draws it as a layout schematic in the media slot; surface-scope rounds use it on code-led builds, it never counts toward salience, and the card keeps its full read on the front. The comp slot carries the card’s full-fidelity direction comp. Comp aspect follows the surface: portrait at device viewport for native or mobile-first surfaces, landscape otherwise; the page adapts its cards to either. reroll accepts true or { \"registers\": [\"safer\", \"bolder\"] }: the register buttons steer the next hand along the familiar-to-bold axis, the answer carries \"register\", and you re-run concept-seed with --register <value> for the next round; offer the registers on direction rounds, and never pre-select one. buildPath rides the payload as { \"value\": \"comp\"|\"code\", \"toggle\": true }: the value is the recorded default (.phoenix-ui/config.json buildPath, or .phoenix-ui/config.local.json where one machine differs) and the toggle renders a footer switch whose flip binds that session only; the ANSWER then carries buildPath plus buildPathFlipped. On a code-led round each card still declares its comp path as a flip reserve: wireframes render, and a flip to comp makes --wait return once with BUILD PATH FLIPPED so you generate the comps into the declared slots while the round stays open; a flip back to code is free, and a comp that already landed stays as the critique reference. The toggle may only be offered when image generation exists: a harness with no image tool and no API key never sets toggle: true, so the choice never renders where comps cannot be made, and code-led simply rides as the untoggleable value. followup: true keeps the table open after a pick for a second round via --update; send the next payload immediately, the page is waiting on it.";
 
 /// JS: Number(arg('timeout','900')) etc.
 fn js_number_arg(a: &Args, name: &str, fallback: &str) -> f64 {
@@ -875,10 +877,22 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
                 let hero = c.get("hero").filter(|v| crate::staleness::js_truthy(v));
                 let board = c.get("board").filter(|v| crate::staleness::js_truthy(v));
                 if hero.is_some() || board.is_some() {
-                    ans.insert("hero".into(), c.get("hero").cloned().filter(|v| !v.is_null()).unwrap_or(Value::Null));
-                    ans.insert("board".into(), c.get("board").cloned().filter(|v| !v.is_null()).unwrap_or(Value::Null));
+                    ans.insert(
+                        "hero".into(),
+                        c.get("hero")
+                            .cloned()
+                            .filter(|v| !v.is_null())
+                            .unwrap_or(Value::Null),
+                    );
+                    ans.insert(
+                        "board".into(),
+                        c.get("board")
+                            .cloned()
+                            .filter(|v| !v.is_null())
+                            .unwrap_or(Value::Null),
+                    );
                 }
-                let comp = c.get("comp").filter(|v| !v.is_null()).or_else(|| c.get("sketch").filter(|v| !v.is_null()));
+                let comp = c.get("comp").filter(|v| !v.is_null());
                 if let Some(cv) = comp.filter(|v| crate::staleness::js_truthy(v)) {
                     ans.insert("comp".into(), cv.clone());
                 }
@@ -1164,7 +1178,7 @@ impl ServerState {
             let mut m = option.as_object().cloned().unwrap_or_default();
             let hero = image_src(&cwd, &mut local_images, option.get("hero"));
             let board = image_src(&cwd, &mut local_images, option.get("board"));
-            let comp_val = option.get("comp").filter(|v| !v.is_null()).or_else(|| option.get("sketch").filter(|v| !v.is_null()));
+            let comp_val = option.get("comp").filter(|v| !v.is_null());
             let comp = match comp_val.filter(|v| crate::staleness::js_truthy(v)) {
                 None => Value::Null,
                 Some(v) => {
@@ -1560,7 +1574,7 @@ mod tests {
     }
 
     #[test]
-    fn declared_comps_reads_options_sketch_alias_and_canon_in_card_order() {
+    fn declared_comps_reads_option_and_canon_comps_in_card_order() {
         let payload = json!({
             "options": [
                 { "id": "a", "comp": ".phoenix-ui/mocks/decision/a.png" },
@@ -1575,7 +1589,6 @@ mod tests {
             declared_comps(&payload),
             vec![
                 ".phoenix-ui/mocks/decision/a.png",
-                ".phoenix-ui/mocks/decision/b.png",
                 ".phoenix-ui/mocks/decision/canon.png"
             ]
         );

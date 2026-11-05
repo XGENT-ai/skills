@@ -336,7 +336,7 @@ fn gate_spec(io: &Io, state: &Value) -> Gate {
     if regions.is_empty() {
         return Gate::fail(vec!["spec has no regions".into()]);
     }
-    // Re-check what comp-spec now refuses, so an older or hand-edited spec cannot stand in for a measured element map.
+    // Re-check what comp-spec refuses, so a hand-edited spec cannot stand in for a measured element map.
     let malformed: Vec<String> = regions.iter().filter_map(|r| {
         let id = r["id"].as_str().unwrap_or("?");
         if !r["kind"].as_str().is_some_and(crate::comp_spec::is_kind) { return Some(format!("region {id} has no known kind")); }
@@ -643,7 +643,7 @@ fn sha256_file(io: &Io, file: &str) -> Option<String> {
 
 fn plate_reference_hash(spec: &Value) -> String {
     // Neighbouring regions change exclusions even when this plate is unchanged.
-    // Version the preparation policy so legacy approvals get revalidated once.
+    // The policy tag binds an approval to the preparation rules it was made under.
     sha256_bytes(util::json_pretty(&json!({"policy":"plate-reference-v2","regions":spec.get("regions")})).as_bytes())
 }
 

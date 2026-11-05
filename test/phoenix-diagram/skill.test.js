@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
 const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart'];
 const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring',
-  'brand-marks', 'preview', 'architecture-compare', 'compatibility', 'extending-types', 'statechart'];
+  'brand-marks', 'preview', 'architecture-compare', 'extending-types', 'statechart'];
 const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
 
 test('the skill has a bounded eleven-type description with its exclusions up front and normal automatic discovery', () => {
@@ -44,7 +44,7 @@ test('entry and conditional references resolve within the installed skill packag
   assert.ok(fs.statSync(path.join(skill, 'scripts/phoenix-diagram')).isFile());
 });
 
-test('all eleven guide examples are new-contract complete semantic inputs with automatic routes', () => {
+test('all eleven guide examples are complete semantic inputs with automatic routes', () => {
   const collections = { architecture: ['components', 'connections'], workflow: ['nodes', 'edges'],
     sequence: ['participants', 'messages'], dataflow: ['nodes', 'flows'], lifecycle: ['states', 'transitions'],
     erd: ['entities', 'relationships'], class: ['types', 'relationships'], tree: ['nodes'], timeline: ['events'], waterfall: ['spans'] };
@@ -54,7 +54,6 @@ test('all eleven guide examples are new-contract complete semantic inputs with a
     const document = JSON.parse(read(`examples/minimal.${type}.json`));
     assert.equal(document.diagram_type, type);
     assert.equal(document.schema_version, type === 'workflow' ? 2 : type === 'lifecycle' ? 3 : 1);
-    assert.equal(document.meta.input_contract, 'phoenix-v1');
     assert.equal(document.meta.quality_profile, 'showcase');
     assert.equal(document.meta.output, `minimal.${type}.html`);
     // A statechart authors a model, not nodes and relationships; its states derive from it.

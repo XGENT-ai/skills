@@ -152,22 +152,6 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
             );
         }
     }
-    let views = array(&document["meta"], "views");
-    checks.unique(views, "/meta/views", &mut HashMap::new());
-    let focus_ids: HashSet<&str> = if typed_identity {
-        known_nodes.clone()
-    } else {
-        identities.keys().copied().collect()
-    };
-    for (index, view) in views.iter().enumerate() {
-        for (focus_index, value) in array(view, "focus").iter().enumerate() {
-            checks.reference(
-                value,
-                &format!("/meta/views/{index}/focus/{focus_index}"),
-                &focus_ids,
-            );
-        }
-    }
     for (index, relation) in relations.iter().enumerate() {
         for endpoint in ["from", "to"] {
             checks.reference(

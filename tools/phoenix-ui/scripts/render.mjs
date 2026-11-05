@@ -47,7 +47,7 @@ function inputs() {
     'tools/phoenix-ui/scripts/lib/transformers/hooks.js',
     'tools/phoenix-ui/crates/hook/src/missing_launcher.cjs',
     'tools/phoenix-ui/LICENSE', 'tools/phoenix-ui/NOTICE.md',
-    'tools/phoenix-ui/build-tools.lock.json', 'tools/phoenix-ui/mise.toml',
+    'tools/phoenix-ui/build-tools.lock.json', 'mise.toml',
     'tools/phoenix-ui/package.json', 'tools/phoenix-ui/bun.lock');
   const hashes = Object.fromEntries(paths.sort().map(file => [file, sha(fs.readFileSync(path.join(repository, file)))]));
   return { hashes, digest: sha(JSON.stringify(hashes)) };
@@ -122,7 +122,7 @@ function verifyContent(output) {
 }
 
 function generatedRecord(output, input, withoutEngine) {
-  return { schemaVersion: 1, generator: 'Bun 1.3.14', inputSha256: input.digest, inputs: input.hashes,
+  return { schemaVersion: 1, generator: 'Bun 1.4.4', inputSha256: input.digest, inputs: input.hashes,
     bundleSha256: output.bundleSha256, engineManifest: withoutEngine ? 'not-generated' : 'verified',
     outputs: { skill: tree(output.generic), providers: tree(output.dist), bundle: tree(path.join(output.vendor, 'bundle')),
       notices: Object.fromEntries(['LICENSE', 'NOTICE.md'].map(file => [file, sha(fs.readFileSync(path.join(output.vendor, file)))])) } };
@@ -147,7 +147,7 @@ function publish(output, target) {
 }
 
 async function main() {
-  assert.equal(process.versions.bun, '1.3.14', 'Render with the pinned Bun 1.3.14');
+  assert.equal(process.versions.bun, '1.4.4', 'Render with the pinned Bun 1.4.4');
   const args = process.argv.slice(2);
   let check = false, withoutEngine = false, outputRoot;
   for (let i = 0; i < args.length; i++) {

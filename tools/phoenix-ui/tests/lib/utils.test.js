@@ -467,14 +467,10 @@ describe('replacePlaceholders', () => {
     expect(cursorResult).toBe('Ask the user directly to clarify what you cannot infer.');
   });
 
-  test('should replace {{available_commands}} with command list', () => {
-    const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code', ['audit', 'polish', 'optimize']);
-    expect(result).toBe('Commands: /audit, /polish, /optimize');
-  });
-
-  test('should exclude legacy teach-impeccable from {{available_commands}}', () => {
-    const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code', ['audit', 'teach-impeccable', 'polish']);
-    expect(result).toBe('Commands: /audit, /polish');
+  test('should replace {{available_commands}} with the phoenix-ui sub-commands', () => {
+    const result = replacePlaceholders('Commands: {{available_commands}}', 'claude-code');
+    expect(result).toStartWith('Commands: /phoenix-ui adapt, /phoenix-ui animate, /phoenix-ui audit,');
+    expect(result).toEndWith('/phoenix-ui shape, /phoenix-ui typeset');
   });
 
   test('should replace multiple placeholders in the same string', () => {
@@ -501,7 +497,7 @@ describe('replacePlaceholders', () => {
       'https://example.com/impeccable',
     ].join('\n');
 
-    const result = replacePlaceholders(source, 'codex', [], ['impeccable']);
+    const result = replacePlaceholders(source, 'codex', ['impeccable']);
 
     expect(result).toContain('Run $impeccable audit.');
     expect(result).toContain('Use `$impeccable polish` next.');

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "class",
-  "meta": { "title": "Payment types", "output": "minimal.class.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "meta": { "title": "Payment types", "output": "minimal.class.html", "quality_profile": "showcase", "locale": "en" },
   "layout": { "mode": "grid" },
   "types": [
     { "id": "gateway", "label": "PaymentGateway", "kind": "interface", "row": 0, "col": 0.5, "methods": [

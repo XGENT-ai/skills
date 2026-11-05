@@ -81,7 +81,6 @@ pub struct Ctx {
     pub design_path: Option<String>,
     pub context_dir: String,
     pub product_context_dir: Option<String>,
-    pub design_context_dir: Option<String>,
     pub has_surface_brief: bool,
     pub surface_brief: Option<String>,
     pub surface_brief_path: Option<String>,
@@ -111,7 +110,6 @@ pub fn load_context(cwd: &str, options: &TargetOptions, env: &Env) -> Ctx {
         design_path: resolved.design_path.as_deref().map(|p| jsp::relative(&abs_cwd, &abs_cwd, p)),
         context_dir: resolved.context_dir.clone(),
         product_context_dir: resolved.product_path.as_deref().map(jsp::dirname),
-        design_context_dir: resolved.design_path.as_deref().map(jsp::dirname),
         has_surface_brief: brief.is_some(),
         surface_brief: brief.as_ref().map(|b| b.text.clone()),
         surface_brief_path: brief.as_ref().and_then(|b| b.path.as_deref()).map(|p| jsp::relative(&abs_cwd, &abs_cwd, p)),
@@ -220,7 +218,7 @@ pub fn resolve_context_project(cwd: &str, options: &TargetOptions, env: &Env) ->
 }
 
 /// Resolve each document independently, so PRODUCT.md at the root cannot hide
-/// DESIGN.md in a supported fallback directory. This reads without migration.
+/// DESIGN.md in a fallback directory.
 pub fn resolve_context_documents(cwd: &str, options: &TargetOptions, env: &Env) -> Resolved {
     let project = resolve_context_project(cwd, options, env);
     let find = |root: &str, names: &[&str]| {

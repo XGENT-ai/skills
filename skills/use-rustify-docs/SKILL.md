@@ -11,8 +11,8 @@ description: "用于以 Rustify Docs 创建、改造文档站或 Landing Page；
 
 - 面向站点作者，在用户的目标项目工作；不要求克隆或修改 Rustify UI 仓库。默认采用静态 HTML/CSS 的 DOM 路径，纯内容站不编译站点 Rust、不加载 wasm，也不需要 Node、Tailwind CLI 或 Makepad。只有具体的交互组件或 demo 需求才选 components 模板与 DOM islands；不预建 GPU 路径。
 - 保留用户的产品事实、品牌、已有设计和技术选择。普通创建、局部修改不扩成框架开发、整站迁移、后端、统计服务或发布。仅咨询时只读。
-- **实际调用 impeccable 做设计**：从当前技能目录找到并读取其 `SKILL.md`，按其流程执行；文档面选择 Read，营销落地页选择 Persuade。Rustify 自身的 Theme Studio 外观不约束客户站点。
-- **Landing Page 必须实际调用 ui-loop**：读取当前可用的 `ui-loop/SKILL.md` 并执行其流程，不能用本文件的检查表代替调用。impeccable 负责设计方向与实现；落地页按用户要求接续 ui-loop，不以通用自检轮数上限跳过所需迭代。
+- **实际调用 phoenix-ui 做设计**：从当前技能目录找到并读取其 `SKILL.md`，按其流程执行；文档面选择 Read，营销落地页选择 Persuade。Rustify 自身的 Theme Studio 外观不约束客户站点。
+- **Landing Page 必须实际调用 ui-loop**：读取当前可用的 `ui-loop/SKILL.md` 并执行其流程，不能用本文件的检查表代替调用。phoenix-ui 负责设计方向与实现；落地页按用户要求接续 ui-loop，不以通用自检轮数上限跳过所需迭代。
 - 找不到上述依赖时先说明缺少哪个 skill、影响哪个阶段及如何补齐；继续可独立完成的内容与构建，不擅自安装、不声称已调用，缺少 ui-loop 时不能宣布 Landing Page 设计验收完成。
 
 ## 确定站点与入口

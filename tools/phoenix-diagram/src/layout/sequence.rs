@@ -705,7 +705,6 @@ pub fn compile(
         schema_version: document["schema_version"]
             .as_f64()
             .expect("validated schema version") as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: document["meta"].clone(),
         view_box: Rect {
@@ -717,7 +716,7 @@ pub fn compile(
         reader_fit: if layout.automatic {
             "width-first"
         } else {
-            "legacy"
+            "contain"
         }
         .into(),
         nodes,

@@ -1,6 +1,6 @@
 use crate::check::{ArtifactCheckEntry, FileIdentity};
 use crate::diagnostic::Diagnostics;
-use crate::input::{Compatibility, DiagramType, InputContract, Quality};
+use crate::input::{DiagramType, Quality};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -9,7 +9,6 @@ use std::path::PathBuf;
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EngineIdentity {
     pub source_input_sha256: String,
-    pub input_contract_schema: u32,
     pub receipt_schema: u32,
     pub viewer_revision: String,
 }
@@ -17,7 +16,6 @@ impl EngineIdentity {
     pub fn current() -> Self {
         Self {
             source_input_sha256: env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256").into(),
-            input_contract_schema: crate::INPUT_CONTRACT_SCHEMA,
             receipt_schema: crate::RECEIPT_SCHEMA,
             viewer_revision: crate::VIEWER_REVISION.into(),
         }
@@ -30,7 +28,6 @@ pub struct EffectiveConfig {
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub brand_resources: std::collections::BTreeMap<String, crate::brands::ResourceIdentity>,
     pub diagram_type: DiagramType,
-    pub input_contract: InputContract,
     pub quality: Quality,
     pub viewer_revision: String,
 }
@@ -65,7 +62,6 @@ pub struct ValidationReceipt {
     pub config: Option<EffectiveConfig>,
     pub config_sha256: Option<String>,
     pub engine: EngineIdentity,
-    pub compatibility: Option<Compatibility>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
     pub evidence: Value,
@@ -97,9 +93,7 @@ pub struct DeliveryReceipt {
     pub config: Option<EffectiveConfig>,
     pub config_sha256: Option<String>,
     pub engine: EngineIdentity,
-    pub input_contract: Option<InputContract>,
     pub quality: Option<Quality>,
-    pub compatibility: Option<Compatibility>,
     pub checks: Vec<ArtifactCheckEntry>,
     pub composition: Value,
     pub evidence: Value,

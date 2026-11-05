@@ -1,5 +1,5 @@
 use phoenix_diagram::geometry::{rects_overlap, segment_intersects_rect, text_glyph_box};
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, Quality};
 use phoenix_diagram::layout as dataflow;
 use phoenix_diagram::scene::{CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
@@ -148,7 +148,6 @@ fn dataflow_matches_actual_unrounded_svg_oracles() {
     let mut repaired_channels = 0;
     for case in corpus()["cases"].as_array().unwrap() {
         let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
             quality: case["qualityOption"].as_str().map(|quality| {
                 if quality == "standard" {
                     Quality::Standard
@@ -436,10 +435,10 @@ fn dataflow_matches_actual_unrounded_svg_oracles() {
             );
         }
     }
-    assert_eq!(accepted, 35);
+    assert_eq!(accepted, 33);
     assert_eq!(rejected, 7);
-    // The event-stream poison-event flow in both examples.
-    assert_eq!(repaired_channels, 2);
+    // The event-stream example's poison-event flow.
+    assert_eq!(repaired_channels, 1);
 }
 
 #[test]
@@ -458,10 +457,7 @@ fn dataflow_schema_integers_accept_float_lexemes_and_keep_explicit_geometry() {
     document["nodes"][1]["stage"] = json!(1.0);
     document["nodes"][1]["row"] = json!(1.0);
     document["flows"][0]["labelSegment"] = json!(0.0);
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let input = parse_input(
         &serde_json::to_vec(&document).unwrap(),
         DiagramType::Dataflow,

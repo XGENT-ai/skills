@@ -1,6 +1,6 @@
 //! The text engine's half of the rule-pack extension point: the pack's
 //! `check_text` hook runs on every scanned source file after the built-in
-//! matchers, its findings are waivable with `impeccable-disable`, and a run
+//! matchers, its findings are waivable with `phoenix-ui-disable`, and a run
 //! with no pack is identical to the built-in output.
 
 use impeccable_core::findings::{finding_for, Finding};
@@ -99,7 +99,7 @@ fn text_hook_fires_and_no_pack_is_unchanged() {
 fn pack_findings_are_waivable_inline() {
     impeccable_core::rule_pack::install(&PACK);
     let source = format!(
-        "// impeccable-disable-next-line testpack/todo-marker\nconst copy = \"{MARKER} later\";\n"
+        "// phoenix-ui-disable-next-line testpack/todo-marker\nconst copy = \"{MARKER} later\";\n"
     );
     let waived = detect_text(
         &source,

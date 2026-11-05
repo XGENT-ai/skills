@@ -44,7 +44,6 @@ pub struct FileDigest {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InstallEngine {
     pub source_input_sha256: String,
-    pub input_contract_schema: u32,
     pub receipt_schema: u32,
     pub viewer_revision: String,
     pub binary: FileDigest,

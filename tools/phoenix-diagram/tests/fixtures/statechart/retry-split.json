@@ -4,7 +4,6 @@
   "meta": {
     "title": "订单支付：超时重试与扣款次数",
     "output": "retry-split.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN"
   },

@@ -2,7 +2,7 @@
 
 仅在用户请求 Reader 交互、样式、motion、导出或需要实际排查页面时读本文件。日常写稿按主入口和交付合同进行。
 
-独立 HTML 包含主题与 classic 等已有风格、pan/zoom、按标签/稳定 id 搜索、焦点详情及阅读控件。切换颜色主题保留当前视觉风格，阅读交互不改作者坐标和关系。初次无保存偏好时为 Still，用户主动选 Live 才保存；reduced motion、hidden、print/export 暂停临时动作，完整静态含义持续可读。偏好属于 Phoenix 命名空间，不读取旧 Archify 偏好。
+独立 HTML 包含主题与 classic 等已有风格、pan/zoom、按标签/稳定 id 搜索、焦点详情及阅读控件。切换颜色主题保留当前视觉风格，阅读交互不改作者坐标和关系。初次无保存偏好时为 Still，用户主动选 Live 才保存；reduced motion、hidden、print/export 暂停临时动作，完整静态含义持续可读。
 
 界面语言支持 en、zh-CN、zh-TW、es、ko；其他标签使用英文界面与 `<html lang="en">`。作者文本不自动翻译。
 
@@ -24,4 +24,4 @@
 - Route/Reach 范围卡片是标明范围的非 canonical 导出（`data-last-export-canonical="false"`）；它不代替完整图导出。
 - 带来源的元素在详情中分三态：已核对（网页模式有链接，仅本地模式显示路径与行）、待核实（附原因，无链接）、未提供来源。
 
-浏览器公开命名空间为 `window.PhoenixDiagram`，不使用 Archify fallback。不要替用户自动扩展为上述探索或卡片工作。需要排查或导出时保持主体静态 SVG 和全部文字可读，不能以 runtime 失败为由删去语义。
+浏览器公开命名空间为 `window.PhoenixDiagram`。不要替用户自动扩展为上述探索或卡片工作。需要排查或导出时保持主体静态 SVG 和全部文字可读，不能以 runtime 失败为由删去语义。

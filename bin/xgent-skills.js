@@ -59,8 +59,26 @@ function runPhoenix(binary, args) {
   }
 }
 
-// Old Impeccable tools in the project and the user's home. Shared settings
-// keep every unrelated entry.
+// Skills-manager lock entries of a replaced tool; left behind, a lock
+// restore would reinstall it. A missing or unreadable lock has nothing to clean.
+function skillLockUpdates(project, name) {
+  const home = fs.realpathSync(os.homedir());
+  const owned = ([key, value]) => key === name
+    || (typeof value?.skillPath === 'string' && value.skillPath.split('/').includes(name));
+  const updates = [];
+  for (const file of new Set([path.join(project, 'skills-lock.json'), path.join(project, '.agents', '.skill-lock.json'),
+    path.join(home, '.agents', '.skill-lock.json')])) {
+    let data;
+    try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+    if (!data?.skills || typeof data.skills !== 'object' || !Object.entries(data.skills).some(owned)) continue;
+    updates.push({ file, after: JSON.stringify({ ...data, skills: Object.fromEntries(Object.entries(data.skills).filter(e => !owned(e))) }, null, 2) + '\n' });
+  }
+  return updates;
+}
+
+// Phoenix UI replaces Impeccable: its project and personal tools, hooks and
+// lock entries go unless the user keeps it. Shared settings keep every
+// unrelated entry.
 function preparePhoenixTools(project, providers) {
   const legacy = new Set();
   const configs = new Set();
@@ -94,7 +112,8 @@ function preparePhoenixTools(project, providers) {
   const oldHandler = value => value?.type === 'command'
     && [value.command, value.commandWindows].some(oldCommand);
   const originals = [...configs].map(file => ({ file, before: fs.readFileSync(file) }));
-  const hasLegacy = legacy.size > 0 || originals.some(({ before }) =>
+  const locks = skillLockUpdates(project, 'impeccable');
+  const hasLegacy = legacy.size > 0 || locks.length > 0 || originals.some(({ before }) =>
     /impeccable/.test(before.toString()) && (oldCommand(before.toString().replaceAll('\\"', '"')) || /"impeccable[^"\n]*"\s*:\s*true/.test(before.toString())));
   return {
     hasLegacy,
@@ -123,6 +142,10 @@ function preparePhoenixTools(project, providers) {
         for (const file of legacy) {
           fs.rmSync(file, { recursive: true, force: true });
           console.log(`  删除  ${file}`);
+        }
+        for (const { file, after } of locks) {
+          fs.writeFileSync(file, after);
+          console.log(`  更新  ${file} (移除 impeccable 记录)`);
         }
       }
       for (const item of updates) {
@@ -162,6 +185,40 @@ function runDiagram(binary, args) {
   }
 }
 
+// Phoenix Diagram replaces Archify: its project and personal skill copies and
+// lock entries go unless the user keeps it; diagrams it produced stay.
+function findArchify(project, providers) {
+  const home = fs.realpathSync(os.homedir());
+  const present = (file) => !!fs.lstatSync(file, { throwIfNoEntry: false });
+  const skills = new Set();
+  for (const provider of providers) {
+    for (const root of [project, home]) {
+      for (const dir of provider === '.agents' ? ['.agents', '.codex'] : [provider]) {
+        const file = path.join(root, dir, 'skills', 'archify');
+        if (present(file)) skills.add(file);
+      }
+    }
+  }
+  const locks = skillLockUpdates(project, 'archify');
+  return {
+    found: skills.size > 0 || locks.length > 0,
+    apply(remove) {
+      if (!remove) {
+        console.log('  保留  archify,与 Phoenix Diagram 共存');
+        return;
+      }
+      for (const file of skills) {
+        fs.rmSync(file, { recursive: true, force: true });
+        console.log(`  删除  ${file}`);
+      }
+      for (const { file, after } of locks) {
+        fs.writeFileSync(file, after);
+        console.log(`  更新  ${file} (移除 archify 记录)`);
+      }
+    },
+  };
+}
+
 async function prepareDiagram(targetDir, options) {
   try {
     const ready = await diagramBootstrap.preflight({
@@ -175,7 +232,7 @@ async function prepareDiagram(targetDir, options) {
       printDiagram(planned.report, ready.manifest);
       throw phoenixFailure(planned.code || 3, 'Phoenix Diagram 预检失败');
     }
-    return { manifest: ready.manifest, binary: ready.enginePath, args };
+    return { manifest: ready.manifest, binary: ready.enginePath, args, archify: findArchify(planned.report.project || targetDir, options.providers.split(',')) };
   } catch (error) {
     throw phoenixFailure(Number.isInteger(error.code) ? error.code : 4, `Phoenix Diagram 未就绪,未修改项目: ${error.message}\n`
       + '  可用 --diagram-release-dir=DIR 指向匹配的完整离线目录,或加 --no-phoenix-diagram 跳过本工具。');
@@ -224,14 +281,14 @@ function printPhoenix(report, manifest) {
   }
 }
 
-async function confirm(question, skipMessage, answers) {
+async function confirm(question, skipMessage, answers, fallback = false) {
   if (!process.stdin.isTTY) {
     console.log(skipMessage);
-    return false;
+    return fallback;
   }
   process.stdout.write(question);
   const { value = '' } = await answers.next();
-  return /^(y|yes)$/i.test(value.trim());
+  return value.trim() ? /^(y|yes)$/i.test(value.trim()) : fallback;
 }
 
 function usage() {
@@ -242,15 +299,16 @@ function usage() {
                   .claude 写入全部 hook、agent 并在 settings.json 中启用
                   对应配置,.agents 写入全部 agent;并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
-                  放入用户 cache;旧 impeccable 可选择替换或共存)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十一类图解 skill 与独立原生 engine)' : ''}
+                  放入用户 cache;默认删除旧 impeccable,可选择保留)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十一类图解 skill 与独立原生 engine;\n                  默认删除旧 archify,可选择保留)' : ''}
   help            显示本帮助
 
 install 选项:
-  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings(不删除已装版本)
-  --no-impeccable       已弃用,等同 --no-phoenix-ui
-  --replace-impeccable  删除项目及个人级旧 impeccable 工具和 hooks,不备份
-  --keep-impeccable     保留 impeccable,与 Phoenix UI 共存(无交互时默认)
-${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本)
+  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings(不删除已装版本,也不处理 impeccable)
+  --keep-impeccable     保留旧 impeccable,与 Phoenix UI 共存(默认删除项目及个人级
+                        impeccable 工具、hooks 和 skills 锁记录,不备份)
+${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本,也不处理 archify)
+  --keep-archify        保留旧 archify,与 Phoenix Diagram 共存(默认删除项目及个人级
+                        archify skill 和 skills 锁记录,不备份)
 ` : ''}  --release-dir=DIR     离线安装 Phoenix UI engine:使用已核验的 release 目录,不联网
 ${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:使用匹配的完整目录,不联网\n' : ''}  --providers=a,b       指定本次安装的 harness 目录(默认按项目里已有的目录判断,
                         都没有时装 .claude;codex 同时选 .agents 与 .codex)
@@ -277,21 +335,18 @@ function selectProviders(requested, targetDir) {
 async function install(args) {
   const flags = args.filter((a) => a.startsWith('--'));
   const dirArg = args.find((a) => !a.startsWith('--'));
-  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--no-impeccable', '--replace-impeccable', '--keep-impeccable',
-    ...(includesDiagram ? ['--no-phoenix-diagram'] : [])].includes(f)
+  const unknown = flags.filter((f) => !['--no-phoenix-ui', '--keep-impeccable',
+    ...(includesDiagram ? ['--no-phoenix-diagram', '--keep-archify'] : [])].includes(f)
     && !['--providers=', '--release-dir=', ...(includesDiagram ? ['--diagram-release-dir='] : [])].some((p) => f.startsWith(p)));
   if (unknown.length > 0) {
     console.error(`错误: 未知选项: ${unknown.join(', ')}\n`);
     usage();
     process.exit(1);
   }
-  if (flags.includes('--replace-impeccable') && flags.includes('--keep-impeccable')) {
-    throw phoenixFailure(1, '--replace-impeccable 与 --keep-impeccable 不能同时使用');
-  }
   const releaseDir = flags.find((f) => f.startsWith('--release-dir='))?.slice('--release-dir='.length);
   const diagramReleaseDir = flags.find((f) => f.startsWith('--diagram-release-dir='))?.slice('--diagram-release-dir='.length);
   const options = {
-    phoenix: !flags.includes('--no-phoenix-ui') && !flags.includes('--no-impeccable'),
+    phoenix: !flags.includes('--no-phoenix-ui'),
     diagram: includesDiagram && !flags.includes('--no-phoenix-diagram'),
     providers: flags.find((f) => f.startsWith('--providers='))?.slice('--providers='.length),
     releaseDir: releaseDir ? path.resolve(releaseDir) : undefined,
@@ -311,7 +366,6 @@ async function install(args) {
   const providers = selectProviders(options.providers, targetDir);
   options.providers = providers.join(',');
   const claudeSelected = providers.includes('.claude');
-  if (flags.includes('--no-impeccable')) console.log('  提示  --no-impeccable 已弃用,等同 --no-phoenix-ui');
 
   // 只读预检:全部通过后才写项目文件。
   const settingsPath = path.join(targetDir, '.claude', 'settings.json');
@@ -326,19 +380,25 @@ async function install(args) {
   }
   const phoenix = options.phoenix ? await preparePhoenix(targetDir, options) : null;
   const diagram = options.diagram ? await prepareDiagram(targetDir, options) : null;
-  const askReplace = phoenix?.tools.hasLegacy && !flags.includes('--replace-impeccable') && !flags.includes('--keep-impeccable');
-  const rl = process.stdin.isTTY && askReplace
+  const askReplace = phoenix?.tools.hasLegacy && !flags.includes('--keep-impeccable');
+  const askArchify = diagram?.archify.found && !flags.includes('--keep-archify');
+  const rl = process.stdin.isTTY && (askReplace || askArchify)
     ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   const answers = rl?.[Symbol.asyncIterator]();
   rl?.once('SIGINT', () => { rl.close(); process.exit(130); });
-  let replace = flags.includes('--replace-impeccable');
+  let replace = false;
+  let removeArchify = false;
   try {
     if (askReplace) replace = await confirm(
-      '发现旧 impeccable,是否删除并替换为 Phoenix UI(含个人级入口,不备份)? [y/N] ',
-      '  保留  impeccable:无交互环境默认共存;可用 --replace-impeccable 替换', answers);
+      '发现旧 impeccable,是否删除并由 Phoenix UI 替代(含个人级入口与 skills 锁记录,不备份)? [Y/n] ',
+      '  删除  impeccable:无交互环境默认删除;可用 --keep-impeccable 保留', answers, true);
+    if (askArchify) removeArchify = await confirm(
+      '发现旧 archify,是否删除并由 Phoenix Diagram 替代(含个人级入口与 skills 锁记录,不备份)? [Y/n] ',
+      '  删除  archify:无交互环境默认删除;可用 --keep-archify 保留', answers, true);
   } finally {
     rl?.close();
   }
+  if (diagram?.archify.found) diagram.archify.apply(removeArchify);
   if (phoenix) {
     phoenix.tools.apply(replace);
     // Cleanup may change shared settings.

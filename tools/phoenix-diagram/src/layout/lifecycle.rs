@@ -129,7 +129,6 @@ fn scene(
     CompiledDiagram {
         diagram_type: DiagramType::Lifecycle,
         schema_version: number(&input.document, "schema_version", 1.0) as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: input.document["meta"].clone(),
         view_box,

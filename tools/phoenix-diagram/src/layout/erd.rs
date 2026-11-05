@@ -1212,7 +1212,6 @@ pub fn compile(
         schema_version: document["schema_version"]
             .as_f64()
             .expect("validated schema version") as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: meta.clone(),
         view_box: canvas,

@@ -1,6 +1,6 @@
 use phoenix_diagram::{
     check::check_html,
-    input::{DiagramType, InputContract, Quality},
+    input::{DiagramType, Quality},
     render::{render, EmbeddedAssets},
     scene::*,
 };
@@ -70,7 +70,6 @@ fn scene() -> CompiledDiagram {
     CompiledDiagram {
         diagram_type: DiagramType::Architecture,
         schema_version: 1,
-        input_contract: InputContract::PhoenixV1,
         quality: Quality::Showcase,
         meta: json!({"title":"Example","subtitle":"Facts","locale":"en","output":"example.html"}),
         view_box: Rect {
@@ -213,20 +212,6 @@ fn actual_html_is_checked_and_tampering_fails_independently_of_scene() {
 }
 
 #[test]
-fn html_declaring_the_retired_legacy_contract_fails_check() {
-    let legacy = String::from_utf8(html(&scene())).unwrap().replace(
-        "data-input-contract=\"phoenix-v1\"",
-        "data-input-contract=\"legacy-2.17\"",
-    );
-    let result = check_html(legacy.as_bytes(), Quality::Showcase);
-    assert_eq!(result.status, "failed");
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.code == "artifact/input-contract"));
-}
-
-#[test]
 fn automatic_lifecycle_waiting_self_loop_passes_showcase_rhythm() {
     use phoenix_diagram::{
         input::{parse_input, CompileOptions},
@@ -239,7 +224,6 @@ fn automatic_lifecycle_waiting_self_loop_passes_showcase_rhythm() {
         "meta": {
             "title": "Waiting self-loop regression",
             "output": "minimal.html",
-            "input_contract": "phoenix-v1",
             "quality_profile": "showcase",
             "locale": "en"
         },
@@ -256,7 +240,6 @@ fn automatic_lifecycle_waiting_self_loop_passes_showcase_rhythm() {
         ]
     });
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(Quality::Showcase),
         ..Default::default()
     };
@@ -602,10 +585,7 @@ fn sigils_clear_their_labels_and_a_touching_sigil_fails() {
         DiagramType::Dataflow,
         include_str!("fixtures/input/phoenix-v1/product-analytics.dataflow.json"),
     )] {
-        let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
-            ..Default::default()
-        };
+        let options = CompileOptions::default();
         let input = parse_input(file.as_bytes(), kind, &options).unwrap();
         let scene = layout::compile(&input, &options).unwrap();
         let mut moved = 0;
@@ -687,10 +667,7 @@ fn reference_dataflow_joins_keep_the_frozen_arrowhead_scope() {
     // Both 3.1.0 examples converge two flows on one port: auto-routed in
     // event-stream, author-pinned in product-analytics. The frozen check
     // treats such shared ports as joins.
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     for file in [
         include_str!("fixtures/input/phoenix-v1/event-stream.dataflow.json"),
         include_str!("fixtures/input/phoenix-v1/product-analytics.dataflow.json"),

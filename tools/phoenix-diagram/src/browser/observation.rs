@@ -78,7 +78,7 @@ pub(super) fn classify(
         reader_fit == Some("authored-height") && metrics["diagramType"] == "architecture";
     // Fixed authored canvases narrower than the wide ratio join the Reader's
     // measured-height path; at its readable floor it declares the overflow.
-    let fixed_portrait = matches!(reader_fit, Some("contain" | "legacy" | ""))
+    let fixed_portrait = matches!(reader_fit, Some("contain" | ""))
         && number(&metrics["viewBox"], "width")
             .zip(number(&metrics["viewBox"], "height"))
             .is_some_and(|(width, height)| height > 0.0 && width / height < 1.55);
@@ -382,7 +382,7 @@ mod tests {
             metrics["viewBox"] = view_box;
             metrics
         };
-        for fit in ["contain", "legacy", ""] {
+        for fit in ["contain", ""] {
             assert!(
                 classify(
                     viewport,

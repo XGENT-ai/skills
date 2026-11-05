@@ -64,9 +64,6 @@ Commands:
 Options:
   --help       Show this help message
   --version    Show version number
-
-Compatibility:
-  phoenix-ui skills <command>       Legacy namespace; still supported.
 ";
 
 /// `init` is a skill instruction, not a terminal command.

@@ -38,14 +38,6 @@ fn detector_section(raw: Option<&Map<String, Value>>) -> Option<&Map<String, Val
     as_plain_object(raw?.get("detector"))
 }
 
-const DETECTOR_CONFIG_KEYS: &[&str] = &[
-    "ignoreRules",
-    "ignoreFiles",
-    "ignoreValues",
-    "designSystem",
-    "advisoryRules",
-];
-
 /// One normalized `ignoreValues` entry, in the JS key order
 /// `rule, value, files, createdAt, reason`.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -183,7 +175,6 @@ pub fn read_detection_config(root: &str) -> DetectionConfig {
     let mut config = DetectionConfig::with_defaults();
     for file_path in [get_config_path(root), get_local_config_path(root)] {
         let raw = safe_read_json(&file_path);
-        apply_detection_config_source(&mut config, hook_section(raw.as_ref()));
         apply_detection_config_source(&mut config, detector_section(raw.as_ref()));
     }
     config
@@ -197,7 +188,6 @@ pub fn read_raw_detection_config(root: &str, local: bool) -> DetectionConfig {
         get_config_path(root)
     });
     let mut config = DetectionConfig::raw();
-    apply_detection_config_source(&mut config, hook_section(raw.as_ref()));
     apply_detection_config_source(&mut config, detector_section(raw.as_ref()));
     config
 }
@@ -217,8 +207,6 @@ pub fn write_detection_config(
         ensure_config_git_exclude(root);
     }
     let existing = safe_read_json(&file_path).unwrap_or_default();
-    let existing_hook = hook_section(Some(&existing));
-    let next_hook = strip_detector_keys(existing_hook);
     let mut next_detector: Map<String, Value> = detector_section(Some(&existing))
         .cloned()
         .unwrap_or_default();
@@ -227,14 +215,6 @@ pub fn write_detection_config(
     }
     let mut next = existing.clone();
     next.insert("detector".into(), Value::Object(next_detector));
-    match next_hook {
-        Some(h) if !h.is_empty() => {
-            next.insert("hook".into(), Value::Object(h));
-        }
-        _ => {
-            next.shift_remove("hook");
-        }
-    }
     if let Some(dir) = std::path::Path::new(&file_path).parent() {
         std::fs::create_dir_all(dir)?;
     }
@@ -297,17 +277,6 @@ fn normalize_detection_config_for_write(config: &DetectionConfig) -> Map<String,
         out.insert("designSystem".into(), Value::Object(ds));
     }
     out
-}
-
-fn strip_detector_keys(raw: Option<&Map<String, Value>>) -> Option<Map<String, Value>> {
-    let raw = raw?;
-    let mut out = Map::new();
-    for (k, v) in raw {
-        if !DETECTOR_CONFIG_KEYS.contains(&k.as_str()) {
-            out.insert(k.clone(), v.clone());
-        }
-    }
-    Some(out)
 }
 
 re!(EDGE_QUOTE_RE, r#"^["']|["']$"#);

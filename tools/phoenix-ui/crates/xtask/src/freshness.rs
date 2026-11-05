@@ -58,7 +58,6 @@ fn inputs(root: &Path) -> Result<BTreeMap<String, FileHash>, String> {
         "Cargo.toml",
         "Cargo.lock",
         "build-tools.lock.json",
-        "mise.toml",
         ".cargo/config.toml",
     ] {
         inputs.insert(name.to_string(), hash(&root.join(name))?);
@@ -156,7 +155,6 @@ mod tests {
             "Cargo.toml",
             "Cargo.lock",
             "build-tools.lock.json",
-            "mise.toml",
             ".cargo/config.toml",
         ] {
             fs::write(root.join(name), name).unwrap();

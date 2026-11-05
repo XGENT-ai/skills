@@ -105,18 +105,10 @@ pub fn depth_is_set(value: Option<&str>) -> bool {
 /// same list without linking this native-only crate.
 pub use impeccable_core::registry::IMMEDIATE_TIER_RULES;
 
-/// A legacy id fallback that keeps older detector findings recognizable when
-/// they carry neither the runtime flag nor the canonical advisory severity.
-/// Current findings are classified by their serialized metadata (#709).
-pub const ADVISORY_RULES: &[&str] = &["em-dash-overuse"];
-
-/// JS: isAdvisoryFinding(finding)
+/// JS: isAdvisoryFinding(finding). Findings carry their advisory metadata (#709).
 pub fn is_advisory_finding(f: &Finding) -> bool {
-    let id = normalize_ignore_rule(&f.antipattern);
-    !id.is_empty()
-        && (ADVISORY_RULES.contains(&id.as_str())
-            || f.advisory == Some(true)
-            || f.severity == "advisory")
+    !normalize_ignore_rule(&f.antipattern).is_empty()
+        && (f.advisory == Some(true) || f.severity == "advisory")
 }
 
 pub const HOOK_LOCAL_IGNORE_PATTERNS: &[&str] = &[
@@ -513,7 +505,6 @@ fn apply_config_source(config: &mut HookConfig, raw: Option<&Map<String, Value>>
             config.audit_log = Some(js::trim(s).to_string());
         }
     }
-    apply_detector_config_source(config, Some(raw));
     // JS: `raw.limits && typeof raw.limits === 'object'` (arrays included).
     let limits: Option<&Map<String, Value>> = match raw.get("limits") {
         Some(Value::Object(o)) => Some(o),
@@ -1893,16 +1884,7 @@ fn str_field_any<'a>(map: &'a Map<String, Value>, key: &str) -> Option<&'a str> 
 }
 
 /// JS: resolveHarness(env, event)
-pub fn resolve_harness(rt: &Runtime, event: Option<&Map<String, Value>>) -> &'static str {
-    match rt.env("PHOENIX_UI_HOOK_HARNESS") {
-        Some("cursor") => return "cursor",
-        Some("github") => return "github",
-        Some("grok") => return "grok",
-        Some("claude") => return "claude",
-        Some("codex") => return "codex",
-        Some("gemini") => return "gemini",
-        _ => {}
-    }
+pub fn resolve_harness(event: Option<&Map<String, Value>>) -> &'static str {
     if let Some(ev) = event {
         if matches!(str_field(ev, "hook_event_name"), Some("BeforeTool" | "AfterAgent")) {
             return "gemini";
@@ -1928,9 +1910,6 @@ pub fn resolve_harness(rt: &Runtime, event: Option<&Map<String, Value>>) -> &'st
             return "cursor";
         }
         // Codex turn-scoped events carry `turn_id`. Claude Code does not.
-        // Detecting it here means an already-installed Codex hook emits the
-        // Codex Stop contract without rewriting the hook command to set
-        // PHOENIX_UI_HOOK_HARNESS (#603).
         if str_field(ev, "turn_id").is_some() {
             return "codex";
         }
@@ -2421,11 +2400,7 @@ pub fn expand_scan_targets(rt: &Runtime, primaries: &[String], project_cwd: &str
 /// JS: writeAuditLog(env, entry, cwd)
 pub fn write_audit_log(rt: &Runtime, entry: &Map<String, Value>, cwd: &str) -> bool {
     let base_cwd = str_field(entry, "cwd").unwrap_or(cwd).to_string();
-    let target = match rt.env("PHOENIX_UI_HOOK_LOG").filter(|v| !v.is_empty()) {
-        Some(t) => Some(t.to_string()),
-        None => read_config(&base_cwd).audit_log,
-    };
-    let Some(target) = target.filter(|t| !t.is_empty()) else {
+    let Some(target) = read_config(&base_cwd).audit_log.filter(|t| !t.is_empty()) else {
         return false;
     };
     let expanded = if let Some(rest) = target.strip_prefix("~/") {

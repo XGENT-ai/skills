@@ -4,7 +4,6 @@
   "meta": {
     "title": "两阶段提交",
     "output": "two-phase.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN"
   },

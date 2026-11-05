@@ -7,13 +7,14 @@
  * Workspaces (tests/oracle/workspaces/ctx-*):
  *   ctx-empty          package.json only
  *   ctx-visual-only    index.html + src/*.css, no PRODUCT.md
- *   ctx-product-only   stamped PRODUCT.md (web), visual code, no DESIGN.md
+ *   ctx-product-only   PRODUCT.md (web), visual code, no DESIGN.md
  *   ctx-full           PRODUCT.md + DESIGN.md + sidecar v2 + two briefs + critique + buildPath comp
  *   ctx-native-ios     PRODUCT.md `## Platform` ios, no visual code
  *   ctx-adaptive       PRODUCT.md `## Platform` "ios, android"
  *   ctx-bad-platform   PRODUCT.md `## Platform` flutter + pubspec.yaml
  *   ctx-monorepo       pnpm-workspace + apps/a (own PRODUCT/DESIGN) + apps/b (inherits) + projectRoots
- *   ctx-legacy         unstamped PRODUCT.md with ## Register, DESIGN.json sidecar v1, bad config, orphan brief
+ *   ctx-legacy         old-format artifacts current rules ignore (PRODUCT.md ## Register, root DESIGN.json),
+ *                      bad config, orphan brief
  *   ctx-csp-*          one per detect-csp shape (append-arrays, append-string, middleware, meta, none)
  *   ctx-signals        git-initialised in setup() with fixed author/committer dates
  *   ctx-pin            .claude/.agents/.cursor skills dirs with phoenix-ui installed
@@ -48,7 +49,6 @@ const BASE_ENV = {
   PHOENIX_UI_STALENESS_CACHE: null,
   IMPECCABLE_UPDATE_CACHE: null,
   PHOENIX_UI_NO_STALENESS_CHECK: null,
-  PHOENIX_UI_HOOK_DISABLED: null,
   PHOENIX_UI_PROVIDER_ID: null,
   OPENCODE_CONFIG_DIR: null,
   XDG_CONFIG_HOME: null,
@@ -296,7 +296,6 @@ const cases = [
     env: env({ PHOENIX_UI_PROVIDER_ID: 'claude-code' }),
   },
   { id: 'context-legacy', verb: 'context', workspace: 'ctx-legacy', setup: legacySetup, env: env(), files: IMPECCABLE_FILES },
-  { id: 'context-hook-disabled-env', verb: 'context', workspace: 'ctx-product-only', env: env({ PHOENIX_UI_HOOK_DISABLED: 'yes' }), files: IMPECCABLE_FILES },
   {
     id: 'context-hook-disabled-config', verb: 'context', workspace: 'ctx-product-only',
     setup: (ws) => write(ws, '.phoenix-ui/config.json', JSON.stringify({ hook: { enabled: false } }, null, 2) + '\n'),
@@ -403,21 +402,6 @@ const cases = [
   { id: 'doctor-monorepo-roots-match-nothing', verb: 'doctor', workspace: 'ctx-monorepo', setup: (ws) => write(ws, '.phoenix-ui/config.json', JSON.stringify({ projectRoots: ['services/*'] }, null, 2) + '\n'), env: env() },
   { id: 'doctor-legacy-text', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, env: env(), files: IMPECCABLE_FILES },
   { id: 'doctor-legacy-json', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--json'], env: env(), files: IMPECCABLE_FILES },
-  { id: 'doctor-legacy-fix', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--fix'], env: env(), files: IMPECCABLE_FILES },
-  { id: 'doctor-legacy-fix-json', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--fix', '--json'], env: env(), files: IMPECCABLE_FILES },
-  { id: 'doctor-legacy-fix-twice', verb: 'doctor', workspace: 'ctx-legacy', setup: legacySetup, args: ['--fix'], env: env(), files: IMPECCABLE_FILES, steps: [{}, {}, { args: ['--json'] }] },
-  {
-    id: 'doctor-legacy-fix-no-overwrite', verb: 'doctor', workspace: 'ctx-legacy',
-    setup: (ws) => { legacySetup(ws); write(ws, '.phoenix-ui/design.json', JSON.stringify({ schemaVersion: 2 }) + '\n'); },
-    args: ['--fix'], env: env(), files: IMPECCABLE_FILES,
-  },
-  {
-    // Unstamped PRODUCT.md that already has a v4 section: --fix stamps it.
-    id: 'doctor-fix-stamps-product', verb: 'doctor', workspace: 'ctx-product-only',
-    setup: (ws) => write(ws, 'PRODUCT.md', '# Unstamped\n\n## Platform\n\nweb\n\n## Positioning\nHas a v4 section but no stamp.\n'),
-    args: ['--fix'], env: env(), files: IMPECCABLE_FILES, steps: [{}, {}],
-  },
-  { id: 'doctor-fix-clean', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--fix'], env: env(), files: IMPECCABLE_FILES },
   { id: 'doctor-target-missing-value', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--json', '--target'], env: env() },
   { id: 'doctor-target-eq-empty', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--target='], env: env() },
   { id: 'doctor-target-file', verb: 'doctor', workspace: 'ctx-full', setup: sidecarNewer, args: ['--target=src/pages/index.astro'], env: env() },
@@ -626,7 +610,6 @@ const cases = [
   { id: 'signals-visual-only', verb: 'context-signals', workspace: 'ctx-visual-only', env: env() },
   { id: 'signals-full-with-critique', verb: 'context-signals', workspace: 'ctx-full', setup: sidecarNewer, env: env() },
   { id: 'signals-native-ios', verb: 'context-signals', workspace: 'ctx-native-ios', env: env() },
-  { id: 'signals-critique-legacy-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/critique/2026-02-02T02-02-02Z__x.md', '---\nscore: "88"\np0: 0\np1: 2\ntimestamp: "2026-02-02T02:02:02.000Z"\nslug: x\n---\nbody\n'), env: env() },
   { id: 'signals-critique-blank-keys', verb: 'context-signals', workspace: 'ctx-empty', setup: (ws) => write(ws, '.phoenix-ui/critique/2026-02-02T02-02-02Z__x.md', '---\ntotal_score: n/a\nslug: x\n---\nbody\n'), env: env() },
   { id: 'signals-git-clean-main', verb: 'context-signals', workspace: 'ctx-signals', setup: gitInit, env: env() },
   { id: 'signals-git-dirty-main', verb: 'context-signals', workspace: 'ctx-signals', setup: gitDirty, env: env() },

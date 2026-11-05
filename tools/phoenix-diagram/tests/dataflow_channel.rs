@@ -3,7 +3,7 @@
 //! perpendicular to the target face and the arrowhead points into the node.
 use phoenix_diagram::{
     check::{check_html, path::analyze_svg_path},
-    input::{parse_input, CompileOptions, DiagramType, InputContract},
+    input::{parse_input, CompileOptions, DiagramType},
     layout,
     render::{render, EmbeddedAssets},
     scene::{Point, Rect},
@@ -51,10 +51,7 @@ struct Rendered {
 
 /// Compile, render and check the actual HTML, then read the drawn geometry.
 fn rendered(source: &[u8]) -> Rendered {
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let input = parse_input(source, DiagramType::Dataflow, &options).unwrap();
     let scene = layout::compile(&input, &options).unwrap();
     let bytes = render(&scene, &EmbeddedAssets::builtin()).unwrap();

@@ -34,8 +34,7 @@ pub fn pack(flat: &str) -> String {
                     std::fs::metadata(&path).unwrap().permissions().mode() & 0o111 != 0
                 };
                 #[cfg(not(unix))]
-                let executable =
-                    relative.ends_with("scripts/phoenix-ui") || relative.contains("scripts/bin/");
+                let executable = relative.ends_with("scripts/phoenix-ui");
                 files.insert(relative, (std::fs::read(path).unwrap(), executable));
             }
         }

@@ -159,18 +159,14 @@ for (const flags of [['--xgent-init'], ['--no-xgent-init'], ['--providers=unknow
   });
 }
 
-test('deprecated --no-impeccable skips Phoenix UI like --no-phoenix-ui and says so', (t) => {
-  const dir = project(t);
-  const home = project(t);
-  const result = spawnSync(process.execPath, [cli, 'install', dir, '--no-phoenix-diagram', '--no-impeccable'], {
-    input: '', encoding: 'utf8', timeout: 10000, env: { ...process.env, PHOENIX_UI_HOME: home },
-  });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /--no-impeccable 已弃用,等同 --no-phoenix-ui/);
-  assert.doesNotMatch(result.stdout, /Phoenix UI \d/);
-  assert.ok(fs.existsSync(path.join(dir, '.claude', 'hooks')));
-  assert.equal(fs.existsSync(path.join(dir, '.phoenix-ui')), false);
-  assert.deepEqual(fs.readdirSync(home), []);
+test('retired Impeccable flags are unknown options and change nothing', (t) => {
+  for (const flag of ['--no-impeccable', '--replace-impeccable']) {
+    const dir = project(t);
+    const result = spawnSync(process.execPath, [cli, 'install', dir, flag], { input: '', encoding: 'utf8', timeout: 10000 });
+    assert.equal(result.status, 1, flag);
+    assert.match(result.stderr, new RegExp(`未知选项: ${flag}`));
+    assert.deepEqual(fs.readdirSync(dir), [], flag);
+  }
 });
 
 test('an unavailable Phoenix engine stops the whole install before any project write', (t) => {

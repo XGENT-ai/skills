@@ -247,7 +247,7 @@ fn plate_approval_is_bound_to_current_asset_region_and_comp() {
     state["plates"]["art"] = json!({"status":"ok", "score":1.0});
     assert!(
         !plate_receipt_current(&io, &state, &spec, &region),
-        "legacy scores must be revalidated"
+        "a receipt without a reference hash is not current"
     );
     std::fs::remove_file(ws.path.join("art.png")).unwrap();
     assert!(!plate_receipt_current(&io, &state, &spec, &region));
@@ -545,7 +545,7 @@ fn missing_comp_cannot_approve_plates() {
 }
 
 #[test]
-fn responsive_revalidates_legacy_or_changed_plate_receipts() {
+fn responsive_revalidates_unbound_or_changed_plate_receipts() {
     let (ws, mut state) = simple_hero_workspace();
     let bytes = std::fs::read(ws.path.join("comp.png")).unwrap();
     ws.write(".phoenix-ui/review/desktop.png", &bytes);
@@ -558,7 +558,7 @@ fn responsive_revalidates_legacy_or_changed_plate_receipts() {
     );
     state["plates"] = json!({"art":{"status":"ok","score":0.9}});
     let g = gate_responsive(&ws.io(), &mut state, RESPONSIVE_MIN, "diff", None);
-    assert!(!g.ok, "a missing asset cannot inherit legacy approval");
+    assert!(!g.ok, "a missing asset cannot inherit an unbound approval");
     assert!(
         g.reasons.iter().any(|r| r.contains("plate missing")),
         "{:?}",
@@ -846,7 +846,10 @@ fn degenerate_or_out_of_frame_boxes_are_refused() {
     let ws = Workspace::new();
     ws.write(SPEC_PATH, util::json_pretty(&json!({"comp":"comp.png","regions":[{"id":"nav","kind":"chrome",
         "note":"top navigation bar","box":{"x":0.5,"y":0.5,"w":0,"h":0},"px":{"x":50,"y":50,"w":0,"h":0}}]})).as_bytes());
-    assert!(!gate_spec(&ws.io(), &json!({"comp":"comp.png"})).ok, "an older degenerate spec cannot close the phase");
+    assert!(
+        !gate_spec(&ws.io(), &json!({"comp":"comp.png"})).ok,
+        "a degenerate spec cannot close the phase"
+    );
 }
 
 #[test]
@@ -872,10 +875,10 @@ fn undrafted_bands_and_unknown_kinds_are_not_an_element_map() {
     let args = ["--comp", "comp.png", "--regions", "regions.json"].map(String::from);
     assert_eq!(crate::comp_spec::run(&args, &mut io), 1, "deleting the draft flag does not name the elements");
     assert!(!gate_spec(&io, &json!({"comp":"comp.png"})).ok);
-    // A spec measured before bands needed notes still cannot close the phase.
-    let mut legacy = draft.clone();
-    legacy["comp"] = json!("comp.png");
-    ws.write(SPEC_PATH, util::json_pretty(&legacy).as_bytes());
+    // A spec whose bands carry no notes cannot close the phase.
+    let mut unnoted = draft.clone();
+    unnoted["comp"] = json!("comp.png");
+    ws.write(SPEC_PATH, util::json_pretty(&unnoted).as_bytes());
     assert!(!gate_spec(&io, &json!({"comp":"comp.png"})).ok);
     for kind in [json!("chrom"), Value::Null] {
         let input = json!({"allowUncovered":true,"regions":[{"id":"nav","kind":kind,"note":"top navigation bar","box":{"x":0,"y":0,"w":1,"h":0.1}}]});

@@ -1,5 +1,5 @@
 use crate::diagnostic::Diagnostics;
-use crate::input::{DiagramType, InputContract, Quality};
+use crate::input::{DiagramType, Quality};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -237,7 +237,6 @@ pub struct WaterfallSpan {
 pub struct CompiledDiagram {
     pub diagram_type: DiagramType,
     pub schema_version: u32,
-    pub input_contract: InputContract,
     pub quality: Quality,
     pub meta: Value,
     pub view_box: Rect,

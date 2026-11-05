@@ -596,14 +596,6 @@ fn compile_plan(
     width_overrides: &std::collections::BTreeMap<String, f64>,
     routing_feedback: &routing::Feedback,
 ) -> Result<CompiledDiagram, Diagnostics> {
-    if input.diagram_type != DiagramType::Workflow {
-        return Err(vec![failure(
-            "workflow/input-contract",
-            "/diagram_type",
-            "Workflow compiler requires workflow input",
-            json!({"actual":input.diagram_type}),
-        )]);
-    }
     let document = &input.document;
     let readable = number(document, "schema_version", 1.0) == 2.0;
     let lanes = entries(document, "lanes");
@@ -742,7 +734,6 @@ fn compile_plan(
     let mut scene = CompiledDiagram {
         diagram_type: DiagramType::Workflow,
         schema_version: number(document, "schema_version", 1.0) as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: document["meta"].clone(),
         view_box: measured.view_box,
@@ -917,7 +908,6 @@ fn verify_repairs(input: &DiagramInput, options: &CompileOptions, diagnostics: &
                 continue;
             }
             let candidate_options = CompileOptions {
-                input_contract: Some(input.input_contract),
                 quality: Some(input.quality),
                 ..options.clone()
             };
@@ -990,7 +980,6 @@ fn verify_workflow_repair(
             .remove(key);
     }
     let candidate_options = CompileOptions {
-        input_contract: Some(input.input_contract),
         quality: Some(input.quality),
         ..options.clone()
     };
@@ -1117,7 +1106,6 @@ fn text_capacity_limit(
     tolerated: &[(String, String)],
 ) -> Option<usize> {
     let candidate_options = CompileOptions {
-        input_contract: Some(input.input_contract),
         quality: Some(input.quality),
         ..options.clone()
     };
@@ -1430,7 +1418,6 @@ fn compile_candidate(
     candidate: &Value,
 ) -> Result<CompiledDiagram, Diagnostics> {
     let candidate_options = CompileOptions {
-        input_contract: Some(input.input_contract),
         quality: Some(input.quality),
         ..options.clone()
     };

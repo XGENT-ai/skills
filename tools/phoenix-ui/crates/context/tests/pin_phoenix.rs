@@ -236,7 +236,7 @@ fn mixed_install_preserves_legacy_shortcuts_and_handwritten_files() {
 }
 
 #[test]
-fn legacy_only_installs_are_left_for_explicit_migration() {
+fn impeccable_only_installs_are_left_untouched() {
     let fixture = Fixture::new();
     let legacy = "<!-- impeccable-pinned-skill -->\nInvoke $impeccable live.\n";
     for (harness, name) in [(".claude", "impeccable"), (".codex", "i-impeccable")] {
@@ -366,7 +366,7 @@ fn usage_and_missing_install_diagnostics_use_the_current_tool_name() {
         let (code, stdout, stderr) = fixture.run("", &args);
         assert_eq!(code, 1);
         assert!(stdout.starts_with("Usage: phoenix-ui pin <pin|unpin> <command>\n"));
-        assert!(stdout.contains("Available commands: craft, init"));
+        assert!(stdout.contains("Available commands: init, extract"));
         assert!(stderr.is_empty());
     }
     let (code, stdout, stderr) = fixture.run("", &["pin", "audit"]);

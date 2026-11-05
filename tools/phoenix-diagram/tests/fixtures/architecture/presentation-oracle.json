@@ -1496,43 +1496,7 @@
         "meta": {
           "title": "Sample Web App",
           "output": "web-app-rendered.html",
-          "quality_profile": "showcase",
-          "views": [
-            {
-              "id": "request-path",
-              "label": "Primary request path",
-              "focus": [
-                "users",
-                "cdn",
-                "lb",
-                "api",
-                "db"
-              ],
-              "note": "Follow the primary customer request from the edge to durable state."
-            },
-            {
-              "id": "identity-and-cache",
-              "label": "Identity and cache",
-              "focus": [
-                "auth",
-                "api",
-                "cache"
-              ],
-              "note": "Isolate authentication and the read-through cache beside the request path."
-            },
-            {
-              "id": "async-work",
-              "label": "Static and async work",
-              "focus": [
-                "cdn",
-                "s3",
-                "api",
-                "queue",
-                "worker"
-              ],
-              "note": "See the two secondary paths without adding noise to the main request."
-            }
-          ]
+          "quality_profile": "showcase"
         },
         "components": [
           {
@@ -2565,45 +2529,7 @@
           "visual_preset": "blueprint",
           "animation": "trace",
           "quality_profile": "showcase",
-          "engineering_profile": "deployment-ownership",
-          "views": [
-            {
-              "id": "request-boundary",
-              "label": "Request crosses the edge",
-              "focus": [
-                "clients",
-                "edge",
-                "gateway",
-                "api_a",
-                "api_b"
-              ],
-              "note": "Follow public traffic into the private application network."
-            },
-            {
-              "id": "state-ownership",
-              "label": "State and ownership",
-              "focus": [
-                "api_a",
-                "api_b",
-                "redis",
-                "postgres",
-                "replica"
-              ],
-              "note": "Separate stateless platform workloads from data-team-owned state."
-            },
-            {
-              "id": "async-operations",
-              "label": "Async and operations",
-              "focus": [
-                "api_b",
-                "events",
-                "worker",
-                "audit",
-                "observability"
-              ],
-              "note": "See the asynchronous work and the evidence it emits."
-            }
-          ]
+          "engineering_profile": "deployment-ownership"
         },
         "components": [
           {

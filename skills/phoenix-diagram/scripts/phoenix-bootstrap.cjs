@@ -20,7 +20,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const TOOL = 'phoenix-diagram';
 const TOOL_VERSION = '0.2.0';
 const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
-const PROBE = `phoenix-diagram-engine ${TOOL_VERSION} input=1 receipt=1 viewer=phoenix-v2\n`;
+const PROBE = `phoenix-diagram-engine ${TOOL_VERSION} receipt=1 viewer=phoenix-v2\n`;
 const MAX_ENGINE = 256 * 1024 * 1024;
 const USAGE = 'Usage: phoenix-diagram engine install --project DIR [--release-dir DIR] [--json]';
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');

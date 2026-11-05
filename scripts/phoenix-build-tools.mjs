@@ -63,14 +63,14 @@ export function preflight() {
   for (const [tool, version] of [['rust', versions.rust], ['mr-boxington', versions.mrBoxington],
     ['node', versions.node], ['bun', versions.bun]]) {
     if (!selected[tool]?.some(t => t.version === version && t.installed && t.active)) {
-      throw new Error(`Missing installed mise tool ${tool}@${version}; explicitly run mise install in tools/phoenix-ui.`);
+      throw new Error(`Missing installed mise tool ${tool}@${version}; explicitly run mise install at the repository root.`);
     }
   }
   for (const [command, expected] of [['rustc', versions.rust], ['cargo', versions.rust],
     ['mbx', versions.mrBoxington], ['node', versions.node], ['bun', versions.bun]]) {
     const output = mise([command, '--version']);
     if (!new RegExp(`(?:^|\\s|v)${expected.replaceAll('.', '\\.')}\\b`).test(output)) {
-      throw new Error(`${command}: expected ${expected}, got ${output.trim()}. Run mise install in tools/phoenix-ui.`);
+      throw new Error(`${command}: expected ${expected}, got ${output.trim()}. Run mise install at the repository root.`);
     }
   }
   const installed = mise(['rustup', 'target', 'list', '--installed']).trim().split(/\r?\n/);

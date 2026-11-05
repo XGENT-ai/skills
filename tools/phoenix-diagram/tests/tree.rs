@@ -241,7 +241,6 @@ fn example() -> CompiledDiagram {
         "../../../skills/phoenix-diagram/examples/minimal.tree.json"
     ))
     .unwrap();
-    assert_eq!(document["meta"]["input_contract"], "phoenix-v1");
     compile(&document, DiagramType::Tree).unwrap()
 }
 

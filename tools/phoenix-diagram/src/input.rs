@@ -53,8 +53,8 @@ impl DiagramType {
         }
     }
 
-    /// The original five types, whose unmarked input once meant the retired
-    /// legacy-2.17 contract.
+    /// The first five types, which share lane/phase/group identity rules and
+    /// the arrow-route check scope that the later types do not.
     pub fn is_original_five(self) -> bool {
         matches!(
             self,
@@ -82,12 +82,6 @@ impl FromStr for DiagramType {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum InputContract {
-    #[serde(rename = "phoenix-v1")]
-    PhoenixV1,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Quality {
     Standard,
@@ -96,7 +90,6 @@ pub enum Quality {
 
 #[derive(Clone, Debug)]
 pub struct CompileOptions {
-    pub input_contract: Option<InputContract>,
     pub quality: Option<Quality>,
     pub viewer_revision: String,
 }
@@ -104,50 +97,21 @@ pub struct CompileOptions {
 impl Default for CompileOptions {
     fn default() -> Self {
         Self {
-            input_contract: None,
             quality: None,
             viewer_revision: crate::VIEWER_REVISION.into(),
         }
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DeferredField {
-    pub path: String,
-    pub reason: String,
-    pub phase: String,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldDisposition {
-    pub path: String,
-    pub disposition: String,
-    pub reason: String,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Compatibility {
-    pub status: String,
-    pub core_compatibility: String,
-    pub deferred_fields: Vec<DeferredField>,
-    #[serde(default)]
-    pub dispositions: Vec<FieldDisposition>,
-}
-
 #[derive(Clone, Debug)]
 pub struct DiagramInput {
     pub diagram_type: DiagramType,
-    pub input_contract: InputContract,
     pub quality: Quality,
     pub viewer_revision: String,
     pub source_bytes: Vec<u8>,
     pub source_sha256: String,
     pub config_sha256: String,
     pub document: Value,
-    pub compatibility: Compatibility,
     pub brands: crate::brands::ResolvedBrands,
     evidence_sha256: Option<String>,
 }
@@ -162,35 +126,6 @@ pub fn parse_input(
     };
     let document: Value = serde_json::from_slice(bytes)
         .map_err(|cause| error("input/json", "", cause.to_string()))?;
-    let marker = document
-        .pointer("/meta/input_contract")
-        .map(|value| serde_json::from_value::<InputContract>(value.clone()))
-        .transpose()
-        .map_err(|cause| {
-            error(
-                "input/unknown-contract",
-                "/meta/input_contract",
-                cause.to_string(),
-            )
-        })?;
-    // Unmarked input of the original five types once meant legacy-2.17; reading
-    // it as phoenix-v1 could silently draw a different diagram from the same bytes.
-    let input_contract = match options.input_contract.or(marker) {
-        Some(contract) => contract,
-        None if kind.is_original_five() => {
-            return Err(error(
-                "input/contract-required",
-                "/meta/input_contract",
-                format!(
-                    "Unmarked {} input is no longer read as legacy-2.17, which is not supported; \
-                     convert it to phoenix-v1 and set meta.input_contract, or pass \
-                     --input-contract phoenix-v1 if the JSON is already phoenix-v1",
-                    kind.as_str()
-                ),
-            ))
-        }
-        None => InputContract::PhoenixV1,
-    };
     let authored_quality = document
         .pointer("/meta/quality_profile")
         .map(|value| serde_json::from_value::<Quality>(value.clone()))
@@ -254,17 +189,14 @@ pub fn parse_input(
         return Err(vec![diagnostic]);
     }
     semantics::validate(&document, kind)?;
-    let compatibility = compatibility(&document);
     let mut input = DiagramInput {
         diagram_type: kind,
-        input_contract,
         quality,
         viewer_revision: options.viewer_revision.clone(),
         source_bytes: bytes.to_vec(),
         source_sha256: sha256(bytes),
         config_sha256: String::new(),
         document,
-        compatibility,
         brands: Default::default(),
         evidence_sha256: None,
     };
@@ -285,7 +217,7 @@ impl DiagramInput {
     }
     fn update_config(&mut self) {
         let mut config = serde_json::json!({
-            "diagramType":self.diagram_type, "inputContract":self.input_contract, "quality":self.quality,
+            "diagramType":self.diagram_type, "quality":self.quality,
             "viewerRevision":self.viewer_revision, "evidenceSha256":self.evidence_sha256,
         });
         if !self.brands.is_empty() {
@@ -375,49 +307,4 @@ fn portable_output(value: &str) -> Result<(), &'static str> {
 
 pub fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
-}
-
-fn compatibility(document: &Value) -> Compatibility {
-    fn walk(value: &Value, path: &str, fields: &mut Vec<FieldDisposition>) {
-        match value {
-            Value::Object(object) => {
-                for (key, value) in object {
-                    let pointer = format!("{path}/{}", key.replace('~', "~0").replace('/', "~1"));
-                    let disposition = match (path,key.as_str()) {
-                    (_,"brand") => Some(("supported","Brand identity is resolved from the fixed catalog or a digest-pinned local resource")),
-                    ("/meta","views") => Some(("unsupported-display","Legacy Guided Views are not rebuilt; the Reader provides navigation")),
-                    _ => None,
-                };
-                    if let Some((disposition, reason)) = disposition {
-                        fields.push(FieldDisposition {
-                            path: pointer,
-                            disposition: disposition.into(),
-                            reason: reason.into(),
-                        });
-                    } else {
-                        walk(value, &pointer, fields);
-                    }
-                }
-            }
-            Value::Array(array) => {
-                for (index, value) in array.iter().enumerate() {
-                    walk(value, &format!("{path}/{index}"), fields);
-                }
-            }
-            _ => {}
-        }
-    }
-    let mut dispositions = vec![];
-    walk(document, "", &mut dispositions);
-    Compatibility {
-        status: if dispositions.iter().any(|d| d.disposition != "supported") {
-            "partial"
-        } else {
-            "complete"
-        }
-        .into(),
-        core_compatibility: "pass".into(),
-        deferred_fields: vec![],
-        dispositions,
-    }
 }

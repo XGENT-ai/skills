@@ -1,4 +1,4 @@
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, Quality};
 use phoenix_diagram::layout as sequence;
 use phoenix_diagram::{
     diagnostic::Diagnostics,
@@ -17,7 +17,6 @@ fn compile_quality(
     quality: Option<Quality>,
 ) -> Result<CompiledDiagram, Diagnostics> {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality,
         ..Default::default()
     };
@@ -86,7 +85,7 @@ fn sequence_frozen_svg_geometry_and_all_text_match() {
         checked += 1;
         assert_eq!(
             actual.reader_fit,
-            oracle["readerFit"].as_str().unwrap_or("legacy"),
+            oracle["readerFit"].as_str().unwrap_or("contain"),
             "{context}"
         );
         for (a, index) in [
@@ -259,7 +258,7 @@ fn sequence_frozen_svg_geometry_and_all_text_match() {
             text(&actual.text[0], expected, &context);
         }
     }
-    assert_eq!(checked, 66);
+    assert_eq!(checked, 65);
 }
 
 #[test]
@@ -466,10 +465,7 @@ fn sequence_all_facts_and_authored_ranges_survive_without_reordering() {
         .clone();
     document["cards"] = json!([{"dot":"cyan","title":"Protocol","items":["Keep every note"]}]);
     let bytes = serde_json::to_vec(&document).unwrap();
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let input = parse_input(&bytes, DiagramType::Sequence, &options).unwrap();
     let scene = sequence::compile(&input, &options).unwrap();
     assert_eq!(input.document, document);

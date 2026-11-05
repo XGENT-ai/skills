@@ -30,10 +30,30 @@ const HARNESS_DIRS: [&str; 19] = [
     ".veto",
 ];
 const CODEX_HARNESSES: [&str; 2] = [".codex", ".agents"];
-pub const VALID_COMMANDS: [&str; 24] = [
-    "craft", "init", "extract", "document", "shape", "critique", "audit", "polish", "bolder", "quieter", "distill",
-    "harden", "onboard", "live", "animate", "colorize", "typeset", "layout", "delight", "overdrive", "clarify",
-    "adapt", "optimize", "generate",
+pub const VALID_COMMANDS: [&str; 23] = [
+    "init",
+    "extract",
+    "document",
+    "shape",
+    "critique",
+    "audit",
+    "polish",
+    "bolder",
+    "quieter",
+    "distill",
+    "harden",
+    "onboard",
+    "live",
+    "animate",
+    "colorize",
+    "typeset",
+    "layout",
+    "delight",
+    "overdrive",
+    "clarify",
+    "adapt",
+    "optimize",
+    "generate",
 ];
 // Only files carrying these markers are pins; anything else is left alone.
 const PIN_MARKER: &str = "<!-- phoenix-ui-pinned-skill -->";
@@ -304,9 +324,8 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     } else {
         let harness_dirs = find_harness_dirs(&root);
         let mut removed = 0;
-        // OpenCode has its own cleanup path below; skip the skill loop here so
-        // a stray `.opencode/skills/<cmd>/SKILL.md` written by an older
-        // Impeccable version is never silently dropped.
+        // OpenCode pins are commands, removed below; its skills folder never
+        // holds a Phoenix pin, so the skill loop leaves it alone.
         for skills_dir in &harness_dirs {
             if is_opencode_skills_dir(skills_dir) {
                 continue;

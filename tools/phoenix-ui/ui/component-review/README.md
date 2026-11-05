@@ -1,6 +1,6 @@
 # Shared component review — UI checkpoint
 
-This framework-independent browser surface is owned by Impeccable. The eval dashboard imports it directly for the current visual checkpoint; the native `component-review` command serves the same bundle. The comp-led skill workflow presents it after the initial component kit and again after assembling the page. Existing build-phase integrity gates remain independent.
+This framework-independent browser surface belongs to Phoenix UI; the native `component-review` command serves its bundle. The comp-led skill workflow presents it after the initial component kit and again after assembling the page. Existing build-phase integrity gates remain independent.
 
 `ReviewPacket` contains a request/revision identity, the pinned comp dimensions, and the component inventory. Raster and sandboxed page-region previews share the same comparison canvas. `Draft` records individual decisions, optional split requests, missing regions and explicit inventory completeness. `onSubmit` belongs to the trusted host adapter. A UI draft is not an authenticated human approval.
 
@@ -12,9 +12,9 @@ The dashboard route `/dashboard/component-review/` is a temporary review checkpo
 
 ## Native runtime
 
-Use the Bun version in `.bun-version` (also used by CI). Build the shared UI with `bun run build:component-review`, then rebuild the engine. It embeds the JS and licensed fonts; the runtime needs no Node server or dashboard. The bundled asset is tracked alongside the native consumer, and the bundle test catches source drift.
+The engine embeds the tracked bundle `crates/context/assets/component-review.js` and the licensed fonts; the runtime needs no Node server or dashboard. After editing this source, run `mise exec --no-deps -- bun scripts/build-component-review.mjs` from `tools/phoenix-ui` and rebuild the engine; `--check` (part of `npm run test:phoenix`) fails when the committed bundle is stale.
 
-From a project, run `impeccable component-review prepare --manifest review.json`. The manifest uses the UI packet shape plus `schemaVersion: 1`; replace each preview/comp/context/thumbnail `url` with a project-relative `path`, and declare each component's `dependencies` (CSS, images, fonts and other inputs used by its rendered preview). The service assigns revisions and round numbers. Paths outside the project are refused. Prepare prints a session ID. Start `impeccable component-review serve --session <id>` and open the returned loopback URL. `status --session <id>` reads the saved result. The default store is `~/.impeccable/component-reviews`; a test may use `--store <outside-project-directory>`.
+From a project, run `phoenix-ui component-review prepare --manifest review.json`. The manifest uses the UI packet shape plus `schemaVersion: 1`; replace each preview/comp/context/thumbnail `url` with a project-relative `path`, and declare each component's `dependencies` (CSS, images, fonts and other inputs used by its rendered preview). The service assigns revisions and round numbers. Paths outside the project are refused. Prepare prints a session ID. Start `phoenix-ui component-review serve --session <id>` and open the returned loopback URL. `status --session <id>` reads the saved result. The default store is `~/.phoenix-ui/component-reviews`; a test may use `--store <outside-project-directory>`.
 
 Feedback commits atomically and identically retried submissions are idempotent. A second, different response to the same round is refused. Preparing changed inputs creates a new round, preserves unaffected approvals, resets inventory completeness, and carries missing-region feedback forward for human resolution. Prior packets remain addressable by revision; their URLs never silently switch to a new round's pixels. Closing/restarting the server preserves the packet and submitted feedback. Unsubmitted typing is not yet autosaved.
 
@@ -79,7 +79,7 @@ inventory confirmation is independently required before approval submission.
 
 ## Native static component capture
 
-Use `impeccable component-review capture --manifest review.json` instead of
+Use `phoenix-ui component-review capture --manifest review.json` instead of
 `prepare` when the component packet needs native provenance. Both use the same
 versioned store, service and decision contract. Static PNG, WebP and JPEG raster previews remain their
 actual files (including alpha). Page previews become native PNG crops captured
@@ -115,4 +115,4 @@ There is no bulk approval and no separate completeness checkbox. "Approve plan a
 
 ## Design-system kit (vendored)
 
-Controls are the Impeccable site kit, not local imitations: `.ks-button`, `.ks-instrument-strip.is-paper` with its sliding `.ks-thumb`, `.ks-switch`, `.ks-checkbox`, `.ks-icon-button`, `.ks-tab-list`, and the docs rail's selected-row pattern. `vendor/` holds verbatim copies of impeccable-site's `kinpaku-tokens.css`, the needed `kinpaku-kit.css` sections, the rail rules from `docs-kinpaku.css`, and `instrument-strip.js`; the site is the source of truth. Refresh with `node scripts/sync-kinpaku-kit.mjs [path-to-impeccable-site]`. `instrument-strip.ts` ports the thumb script to shadow roots and re-rendering views; the region-map inspection page (`crates/comp-verbs/src/map_inspection.html`) inlines the same vendored CSS and script and ships the fonts beside the report.
+Controls are the vendored site kit, not local imitations: `.ks-button`, `.ks-instrument-strip.is-paper` with its sliding `.ks-thumb`, `.ks-switch`, `.ks-checkbox`, `.ks-icon-button`, `.ks-tab-list`, and the docs rail's selected-row pattern. `vendor/` holds verbatim copies of impeccable-site's `kinpaku-tokens.css`, the needed `kinpaku-kit.css` sections, the rail rules from `docs-kinpaku.css`, and `instrument-strip.js`; the site is the source of truth. Refresh with `node scripts/sync-kinpaku-kit.mjs [path-to-impeccable-site]`. `instrument-strip.ts` ports the thumb script to shadow roots and re-rendering views; the region-map inspection page (`crates/comp-verbs/src/map_inspection.html`) inlines the same vendored CSS and script and ships the fonts beside the report.

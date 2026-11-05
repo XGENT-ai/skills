@@ -32,7 +32,7 @@ impl Drop for Workspace {
     }
 }
 fn document() -> Value {
-    json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Service","output":"diagram.html","input_contract":"phoenix-v1","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"api","type":"backend","label":"API","pos":[100,100]},{"id":"db","type":"database","label":"Store","pos":[400,100]}],"connections":[{"id":"read","from":"api","to":"db","label":"Read"}]})
+    json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Service","output":"diagram.html","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"api","type":"backend","label":"API","pos":[100,100]},{"id":"db","type":"database","label":"Store","pos":[400,100]}],"connections":[{"id":"read","from":"api","to":"db","label":"Read"}]})
 }
 fn request<'a>(
     base: &'a Path,
@@ -247,13 +247,7 @@ fn public_cli_compares_checks_and_reports_its_custom_receipt_without_finalizing(
         .arg(&output)
         .arg("--receipt")
         .arg(&receipt)
-        .args([
-            "--base-contract",
-            "phoenix-v1",
-            "--head-contract",
-            "phoenix-v1",
-            "--json",
-        ])
+        .arg("--json")
         .output()
         .unwrap();
     assert!(

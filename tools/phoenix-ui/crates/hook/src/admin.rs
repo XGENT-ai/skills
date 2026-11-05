@@ -34,13 +34,6 @@ const TIMEOUT_SECONDS: i64 = 5;
 const STATUS_MESSAGE: &str = "Checking UI changes";
 const STOP_TIMEOUT_SECONDS: i64 = 30;
 const STOP_STATUS_MESSAGE: &str = "Design deep pass";
-const DETECTOR_CONFIG_KEYS: &[&str] = &[
-    "ignoreRules",
-    "ignoreFiles",
-    "ignoreValues",
-    "designSystem",
-    "advisoryRules",
-];
 
 fn obj(pairs: Vec<(&str, Value)>) -> Value {
     let mut m = Map::new();
@@ -381,34 +374,7 @@ fn read_raw_hook_config(cwd: &str, local: bool) -> Option<Map<String, Value>> {
 /// JS: readRawDetectorConfig(cwd, opts)
 fn read_raw_detector_config(cwd: &str, local: bool) -> Map<String, Value> {
     let unified = read_raw_config_file(&config_file(cwd, local)).raw;
-    let merged = merge_detector_config(hook_section(unified.as_ref()), None);
-    merge_detector_config(detector_section(unified.as_ref()), Some(&merged))
-}
-
-/// JS: stripDetectorKeys(raw)
-fn strip_detector_keys(raw: Option<&Map<String, Value>>) -> Map<String, Value> {
-    let mut out = Map::new();
-    if let Some(raw) = raw {
-        for (k, v) in raw {
-            if !DETECTOR_CONFIG_KEYS.contains(&k.as_str()) {
-                out.insert(k.clone(), v.clone());
-            }
-        }
-    }
-    out
-}
-
-/// JS: pickDetectorKeys(raw)
-fn pick_detector_keys(raw: Option<&Map<String, Value>>) -> Map<String, Value> {
-    let mut out = Map::new();
-    if let Some(raw) = raw {
-        for (k, v) in raw {
-            if DETECTOR_CONFIG_KEYS.contains(&k.as_str()) {
-                out.insert(k.clone(), v.clone());
-            }
-        }
-    }
-    out
+    merge_detector_config(detector_section(unified.as_ref()), None)
 }
 
 fn existing_object(raw: Option<Value>) -> Map<String, Value> {
@@ -435,27 +401,12 @@ fn write_hook_config(
         ensure_hook_git_excludes(rt, cwd);
     }
     let existing = existing_object(read_raw_config_file(&file_path).raw);
-    let existing_hook_section = obj_field(&existing, "hook");
-    let existing_hook = strip_detector_keys(existing_hook_section);
-    let legacy_detector = pick_detector_keys(existing_hook_section);
     let mut next = existing.clone();
-    let mut hook = existing_hook;
+    let mut hook = obj_field(&existing, "hook").cloned().unwrap_or_default();
     for (k, v) in hook_config {
         hook.insert(k.clone(), v.clone());
     }
     next.insert("hook".into(), Value::Object(hook));
-    if !legacy_detector.is_empty() {
-        let existing_detector = obj_field(&existing, "detector")
-            .cloned()
-            .unwrap_or_default();
-        let merged_legacy = merge_detector_config(Some(&legacy_detector), None);
-        let merged = merge_detector_config(Some(&existing_detector), Some(&merged_legacy));
-        let mut det = existing_detector;
-        for (k, v) in merged {
-            det.insert(k, v);
-        }
-        next.insert("detector".into(), Value::Object(det));
-    }
     write_json(&file_path, &Value::Object(next))?;
     Ok(file_path)
 }
@@ -472,7 +423,6 @@ fn write_detector_config(
         ensure_hook_git_excludes(rt, cwd);
     }
     let existing = existing_object(read_raw_config_file(&file_path).raw);
-    let next_hook = strip_detector_keys(obj_field(&existing, "hook"));
     let existing_detector_section = obj_field(&existing, "detector")
         .cloned()
         .unwrap_or_default();
@@ -484,11 +434,6 @@ fn write_detector_config(
         det.insert(k, v);
     }
     next.insert("detector".into(), Value::Object(det));
-    if !next_hook.is_empty() {
-        next.insert("hook".into(), Value::Object(next_hook));
-    } else {
-        next.shift_remove("hook");
-    }
     write_json(&file_path, &Value::Object(next))?;
     Ok(file_path)
 }
@@ -648,10 +593,6 @@ fn status_report(rt: &Runtime, cwd: &str) -> String {
     let shared = read_raw_config_file(&get_config_path(cwd));
     let local = read_raw_config_file(&get_local_config_path(cwd));
     let cfg = read_config(cwd);
-    let env_state = match rt.env("PHOENIX_UI_HOOK_DISABLED").filter(|v| !v.is_empty()) {
-        Some(v) => format!("PHOENIX_UI_HOOK_DISABLED={v}"),
-        None => "unset".to_string(),
-    };
     let rel = |p: &str, fallback: &str| -> String {
         let r = rt.relative(cwd, p);
         if r.is_empty() {
@@ -715,7 +656,6 @@ fn status_report(rt: &Runtime, cwd: &str) -> String {
             "  maxChars:     {}",
             js::number_to_string(cfg.limits.max_chars)
         ),
-        format!("  env override: {env_state}"),
         format!(
             "  cache file:   {}",
             if exists(&get_cache_path(cwd)) {

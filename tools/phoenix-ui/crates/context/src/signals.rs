@@ -36,19 +36,11 @@ fn latest_critique(cwd: &str, env: &Env) -> Value {
             _ => Value::Null,
         }
     };
-    let coalesce = |a: &str, b: &str| -> Value {
-        let v = get(a);
-        if v.is_null() {
-            get(b)
-        } else {
-            v
-        }
-    };
     let mut m = Map::new();
     m.insert("slug".into(), get("slug"));
-    m.insert("score".into(), num(coalesce("total_score", "score")));
-    m.insert("p0".into(), num(coalesce("p0_count", "p0")));
-    m.insert("p1".into(), num(coalesce("p1_count", "p1")));
+    m.insert("score".into(), num(get("total_score")));
+    m.insert("p0".into(), num(get("p0_count")));
+    m.insert("p1".into(), num(get("p1_count")));
     m.insert("timestamp".into(), get("timestamp"));
     m.insert("file".into(), Value::String(jsp::relative("/", cwd, &latest.path)));
     Value::Object(m)

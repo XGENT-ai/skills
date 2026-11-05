@@ -16,8 +16,6 @@ use crate::providers::{
 use crate::util::{self, jsp};
 
 /// JS: listSkillTreeFiles(root): every file, sorted, relative with `/`.
-/// `scripts/bin/` is skipped: older installs kept engine binaries there, and
-/// the bundle never ships them.
 pub fn list_skill_tree_files(root: &str) -> Vec<String> {
     fn walk(root: &str, dir: &str, out: &mut Vec<String>) {
         let Some(names) = util::read_dir_names(dir) else {
@@ -32,11 +30,7 @@ pub fn list_skill_tree_files(root: &str) -> Vec<String> {
             if meta.is_dir() {
                 walk(root, &full, out);
             } else if meta.is_file() {
-                let rel = jsp::relative("/", root, &full);
-                if rel.starts_with("scripts/bin/") {
-                    continue;
-                }
-                out.push(rel);
+                out.push(jsp::relative("/", root, &full));
             }
         }
     }
@@ -206,21 +200,6 @@ pub fn copy_provider_skills(
             util::copy_dir(&src, &dest)?;
             written.push(dest);
         }
-        // Pre-#406 global OpenCode install at ~/.opencode/skills: drop exactly
-        // the skills just written from the stranded location.
-        if scope == Some(Scope::User) && *provider == ".opencode" {
-            let legacy_dir = jsp::join(&[root, ".opencode", "skills"]);
-            let migratable = util::exists(&legacy_dir)
-                && !util::is_symlink(&legacy_dir)
-                && util::realpath(&legacy_dir) != util::realpath(&local_skills_dir)
-                && !util::exists(&jsp::join(&[root, ".git"]));
-            if migratable {
-                for skill in &skills {
-                    util::rm_rf(&jsp::join(&[&legacy_dir, skill]));
-                }
-                util::rmdir(&legacy_dir);
-            }
-        }
     }
     Ok(written)
 }
@@ -247,13 +226,6 @@ fn provider_commands_dir(
 /// any active config dir, so this mirrors `copy_provider_skills`: project
 /// scope writes `<root>/<configDir>/commands/`, user scope writes
 /// `opencode_global_config_dir(home)/commands`.
-///
-/// Migration guard: a pre-#406 global OpenCode install at
-/// `~/.opencode/commands/` is not scanned by OpenCode. After a global
-/// install, the commands just written are removed from the stranded legacy
-/// copy, sibling commands stay put, symlinked legacy dirs are skipped
-/// (deleting through a symlink would empty the real target), and a
-/// home-rooted git repo is left alone.
 pub fn copy_provider_commands(
     sys: &Sys,
     bundle_dir: &str,
@@ -285,22 +257,6 @@ pub fn copy_provider_commands(
             util::rm_rf(&dest);
             if std::fs::copy(&src, &dest).is_ok() {
                 written += 1;
-            }
-        }
-        if scope == Some(Scope::User) && provider_entry == ".opencode" {
-            let legacy_dir = jsp::join(&[root, ".opencode", "commands"]);
-            let migratable = util::exists(&legacy_dir)
-                && !util::is_symlink(&legacy_dir)
-                && util::realpath(&legacy_dir) != util::realpath(&local_commands_dir)
-                && !util::exists(&jsp::join(&[root, ".git"]));
-            if migratable {
-                for entry in &entries {
-                    if !util::is_file(&jsp::join(&[&src_dir, entry])) {
-                        continue;
-                    }
-                    util::rm_rf(&jsp::join(&[&legacy_dir, entry]));
-                }
-                util::rmdir(&legacy_dir);
             }
         }
     }

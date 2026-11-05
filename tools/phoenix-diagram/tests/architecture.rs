@@ -1,4 +1,4 @@
-use input::{parse_input, CompileOptions, DiagramType, InputContract};
+use input::{parse_input, CompileOptions, DiagramType};
 use phoenix_diagram::layout::architecture;
 use phoenix_diagram::{diagnostic, geometry, input, render, scene};
 use scraper::{Html, Selector};
@@ -6,7 +6,6 @@ use serde_json::{json, Value};
 
 fn compile(document: &Value) -> Result<scene::CompiledDiagram, diagnostic::Diagnostics> {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(if document["meta"]["quality_profile"] == "showcase" {
             input::Quality::Showcase
         } else {
@@ -581,10 +580,7 @@ fn pinned_endpoint_directions_fail_without_rewriting_the_input() {
         serde_json::from_slice(include_bytes!("fixtures/architecture/oracle.json")).unwrap();
     let mut document = corpus["cases"][0]["input"].clone();
     document["connections"][0] = json!({"id":"wrong-side","from":"client","to":"service","fromSide":"left","toSide":"left","route":"orthogonal-h"});
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let bytes = serde_json::to_vec(&document).unwrap();
     let parsed = parse_input(&bytes, DiagramType::Architecture, &options).unwrap();
     let errors = architecture::compile(&parsed, &options).unwrap_err();

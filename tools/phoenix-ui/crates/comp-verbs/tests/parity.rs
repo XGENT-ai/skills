@@ -153,11 +153,11 @@ fn remeasure_keeps_only_unchanged_reference_typography() {
     std::fs::write(dir.join("spec.json"), prior.to_string()).unwrap();
     std::fs::copy(fixtures().join("build_flat.png"), dir.join("comp.png")).unwrap();
     assert!(run(&input)["regions"][0]["type"].is_null(), "replaced comp reused stale measurement");
-    // Unbound legacy records must be remeasured once, never guessed current.
-    let mut legacy = run(&input);
-    legacy.as_object_mut().unwrap().remove("compSha256");
-    legacy["regions"][0]["type"] = measured;
-    std::fs::write(dir.join("spec.json"), legacy.to_string()).unwrap();
+    // A record without a comp identity is remeasured, never guessed current.
+    let mut unbound = run(&input);
+    unbound.as_object_mut().unwrap().remove("compSha256");
+    unbound["regions"][0]["type"] = measured;
+    std::fs::write(dir.join("spec.json"), unbound.to_string()).unwrap();
     assert!(run(&input)["regions"][0]["type"].is_null());
     std::fs::remove_dir_all(dir).unwrap();
 }

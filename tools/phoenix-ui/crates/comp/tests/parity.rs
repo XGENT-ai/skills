@@ -1,6 +1,6 @@
-//! Differential-parity harness: runs the Rust port over the same fixtures the
-//! JS libs were recorded on (crates/comp/tests/record.mjs) and asserts the
-//! outputs match the golden (crates/comp/tests/golden/parity.json).
+//! Differential-parity harness: runs the Rust port over the fixtures the JS
+//! libs were recorded on and asserts the outputs match the frozen golden
+//! (crates/comp/tests/golden/parity.json).
 //!
 //! Pixel-level parity is proven by CRC32 of decoded/produced RGBA (and the f32
 //! diff-map) buffers; scores and fingerprints are compared value-for-value.

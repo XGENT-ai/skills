@@ -51,7 +51,6 @@ Choose the mode from the requested surface, not the product, and persist it only
 
 | Command | Category | Description | Reference |
 |---|---|---|---|
-| `craft [feature]` | Build | Deprecated alias for an ordinary new-work request | [reference/craft.md](reference/craft.md) |
 | `shape [feature]` | Build | Plan UX/UI before writing code | [reference/shape.md](reference/shape.md) |
 | `init` | Build | Capture durable product context in PRODUCT.md | [reference/init.md](reference/init.md) |
 | `document` | Build | Generate DESIGN.md from existing project code | [reference/document.md](reference/document.md) |
@@ -85,7 +84,7 @@ Routing: <!-- rule:skill-routing -->
 - **Explicit or clearly implied request to run a command:** load its reference (native variant on native platforms) and follow it. Ask once if two commands fit.
 - **Workflow or command-selection question:** read [Workflow questions](reference/routing.md#workflow-questions).
 - **Otherwise:** treat the request as general design work. Missing PRODUCT.md routes a new surface or replacement world through init, then new-work; a narrow refinement of existing code proceeds on the incumbent implementation as `phoenix-ui context` directs, offering init afterward rather than blocking on it.
-- `teach` aliases `init`. `craft` is a deprecated alias for ordinary new-work and adds nothing. `shape` owns task discovery, then enters new-work only for visual-world and surface-concept decisions.
+- `shape` owns task discovery, then enters new-work only for visual-world and surface-concept decisions.
 
 After an authorized context or brief write, refresh `context --target <primary-target> --json` before using the changed facts. Init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
 

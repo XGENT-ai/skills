@@ -49,7 +49,6 @@ fn empty() -> Preparation {
             config: None,
             config_sha256: None,
             engine: EngineIdentity::current(),
-            compatibility: None,
             checks: vec![],
             composition: serde_json::Value::Null,
             evidence: serde_json::json!({}),
@@ -106,7 +105,6 @@ pub(crate) fn prepare_bytes(request: &CompileRequest<'_>, bytes: &[u8]) -> Prepa
         result.receipt.evidence = evidence.receipt();
         result.receipt.config = Some(config(&input));
         result.receipt.config_sha256 = Some(input.config_sha256.clone());
-        result.receipt.compatibility = Some(input.compatibility.clone());
         let scene = match crate::layout::compile(&input, request.options) {
             Ok(scene) => scene,
             Err(diagnostics) => {

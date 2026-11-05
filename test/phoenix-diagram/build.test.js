@@ -56,7 +56,7 @@ test('failed doctor diagnostics remain visible instead of a combined identity as
   if (process.platform === 'win32') { t.skip('Unix protocol refusal fixture'); return; }
   const api = await moduleReady, directory = temporary(t);
   // Refusal-only protocol fixture; successful probes need a real native engine.
-  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2');else{console.log(JSON.stringify({toolVersion:'0.2.0',diagnostics:[{code:'engine/doctor',message:'fixture doctor failure'}]}));process.exitCode=4;}\n`, 0o700);
+  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2');else{console.log(JSON.stringify({toolVersion:'0.2.0',diagnostics:[{code:'engine/doctor',message:'fixture doctor failure'}]}));process.exitCode=4;}\n`, 0o700);
   assert.throws(() => api.probeNativeArtifact(executable, { binaryBytes: fs.readFileSync(executable), sourceSha: 'a'.repeat(64), target: `${process.platform}-${process.arch}` }), error => /engine identity is missing/.test(error.message) && /"exitCode":4/.test(error.message) && /engine\/doctor/.test(error.message) && /fixture doctor failure/.test(error.message));
 });
 

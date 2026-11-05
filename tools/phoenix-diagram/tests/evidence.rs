@@ -126,7 +126,7 @@ fn document(kind: DiagramType) -> Value {
             json!({"model":{"variables":[{"id":"done","values":[false,true]}],"init":{"done":false},"actions":[{"id":"finish","set":{"done":true}}]}})
         }
     };
-    let mut document = json!({"schema_version":1,"diagram_type":kind.as_str(),"meta":{"title":"Evidence","output":"evidence.html","input_contract":"phoenix-v1"}});
+    let mut document = json!({"schema_version":1,"diagram_type":kind.as_str(),"meta":{"title":"Evidence","output":"evidence.html"}});
     if kind == DiagramType::Workflow {
         document["schema_version"] = json!(2);
     }

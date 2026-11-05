@@ -34,7 +34,7 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
       // Native fixed geometry (a canvas kept as authored) retains its canvas
       // and routes; only the desktop reading scale joins the existing
       // measured-height path.
-      if (svg && ratio < WIDE_RATIO && ['contain', 'legacy', ''].indexOf(readerFit || '') !== -1) {
+      if (svg && ratio < WIDE_RATIO && ['contain', ''].indexOf(readerFit || '') !== -1) {
         measuredHeightFit = true;
       }
       var MIN_DESKTOP_WIDTH = 1024;

@@ -18,8 +18,6 @@ use std::{
 const MAIN_SKILL: &str = "skills/phoenix-ui/SKILL.md";
 const SKILL_DIR: &str = "skills/phoenix-ui";
 const RUNTIME_MANIFEST: &str = "skills/phoenix-ui/scripts/ENGINE.json";
-/// Receipts, journals and backups written by earlier releases.
-const OBSOLETE_STATE: [&str; 2] = [".phoenix-ui/install", ".phoenix-ui/migrations"];
 
 #[derive(Debug)]
 pub enum Error {
@@ -59,7 +57,7 @@ pub struct Report {
     pub providers: Vec<String>,
     pub writes: Vec<String>,
     pub shared_json: Vec<String>,
-    /// Old install state and symlinked skill folders replaced by a copy.
+    /// Files the package no longer ships and symlinked skill folders replaced by a copy.
     pub removals: Vec<String>,
 }
 
@@ -319,14 +317,7 @@ pub fn install(
         .filter(|relative| !shipped.contains(relative))
         .collect();
     report.removals.extend(stale.iter().cloned());
-    let obsolete: Vec<&str> = OBSOLETE_STATE
-        .into_iter()
-        .filter(|dir| project.join(dir).exists())
-        .collect();
     report.removals.extend(linked.iter().cloned());
-    report
-        .removals
-        .extend(obsolete.iter().map(|d| d.to_string()));
     if writes.is_empty() && report.removals.is_empty() {
         report.status = Status::Unchanged;
         return Ok(report);
@@ -354,10 +345,6 @@ pub fn install(
             fs::set_permissions(&path, fs::Permissions::from_mode(mode))
                 .map_err(|e| failed(&path, e))?;
         }
-    }
-    for dir in obsolete {
-        let path = project.join(dir);
-        fs::remove_dir_all(&path).map_err(|e| failed(&path, e))?;
     }
     report.status = Status::Installed;
     Ok(report)

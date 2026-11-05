@@ -4,7 +4,6 @@
   "meta": {
     "title": "代码变更申请流程",
     "output": "change-approval.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN",
     "legend": {

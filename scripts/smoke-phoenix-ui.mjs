@@ -91,8 +91,8 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     assert.equal(call('engine-probe', file, ['engine-probe'], 0).trim(), `phoenix-ui-engine ${manifest.data.toolVersion}`);
     assert.equal(call('version', file, ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(call('root-help', file, ['--help'], 0), /Usage: phoenix-ui/);
-    const skills = JSON.parse(call('local-command-catalog', file, ['skills', 'help', '--json'], 0));
-    assert.equal(skills.status, 'available'); assert.equal(Object.keys(skills.commands).length, 24);
+    const skills = JSON.parse(call('local-command-catalog', file, ['help', '--json'], 0));
+    assert.equal(skills.status, 'available'); assert.equal(Object.keys(skills.commands).length, 23);
     assertStaticDetection(call('static-html-detect', file, ['detect', '--no-config', '--json', 'page.html'], 2));
     assert.match(call('local-context', file, ['context', '--target', project], 0), /PRODUCT\.md[\s\S]*Phoenix CI local fixture/);
     call('hook-session-start', file, ['hook'], 0, JSON.stringify({ cwd: project, session_id: 'phoenix-ci', hook_event_name: 'SessionStart' }));
@@ -102,7 +102,7 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     assert.equal(JSON.parse(node('node-explicit-offline-install', ['engine', 'install', '--project', project, '--release-dir', releaseDir, '--json'], 0)).status, 'installed');
     assert.equal(node('node-engine-version', ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(node('node-context', ['context', '--target', project], 0), /Phoenix CI local fixture/);
-    assert.equal(JSON.parse(node('local-bundle-check', ['skills', 'check', '--bundle-root', path.join(runtime, 'dist/phoenix-ui/bundle'), '--json'], 0)).status, 'not-installed');
+    assert.equal(JSON.parse(node('local-bundle-check', ['check', '--bundle-root', path.join(runtime, 'dist/phoenix-ui/bundle'), '--json'], 0)).status, 'not-installed');
     record.status = 'passed'; record.finishedAt = new Date().toISOString();
     return record;
   } catch (error) { record.status = 'failed'; record.error = error.message; throw error; }

@@ -1,14 +1,10 @@
 /**
  * Category map for user-invocable skills, consumed by the provider
- * transformers. The site-side page data model (sub-pages-data.js) lives in
- * the private impeccable-site repo and keeps its own copy.
+ * transformers.
  */
 
 export const SKILL_CATEGORIES = {
   // CREATE - build something new
-  // craft is deliberately unmapped: it is a deprecated compatibility alias
-  // (see the router table), and a command without a category stays out of
-  // the generated argument-hint while continuing to route.
   'phoenix-ui': 'create',
   shape: 'create',
   // EVALUATE - review and assess

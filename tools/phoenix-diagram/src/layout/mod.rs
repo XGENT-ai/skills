@@ -21,11 +21,8 @@ pub fn compile(
     options: &CompileOptions,
 ) -> Result<CompiledDiagram, Diagnostics> {
     if options
-        .input_contract
-        .is_some_and(|contract| contract != input.input_contract)
-        || options
-            .quality
-            .is_some_and(|quality| quality != input.quality)
+        .quality
+        .is_some_and(|quality| quality != input.quality)
         || options.viewer_revision != input.viewer_revision
     {
         return Err(vec![Diagnostic::error(

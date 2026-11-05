@@ -310,8 +310,7 @@ async function main(args, options = {}) {
     clearReminders(project, manifest, env);
     const childEnv = { ...env, PHOENIX_UI_SELF: options.self || process.argv[1], PHOENIX_UI_SKILL_DIR: options.skillDir || path.resolve(__dirname, '..') };
     const childArgs = [...args];
-    const skillsVerb = args[0] === 'skills' ? args[1] : args[0];
-    if (options.bundleRoot && ['install', 'update', 'link', 'check'].includes(skillsVerb) && !args.some(a => a === '--bundle-root' || a.startsWith('--bundle-root='))) childArgs.push('--bundle-root', options.bundleRoot);
+    if (options.bundleRoot && ['install', 'update', 'link', 'check'].includes(args[0]) && !args.some(a => a === '--bundle-root' || a.startsWith('--bundle-root='))) childArgs.push('--bundle-root', options.bundleRoot);
     return await new Promise((resolve, reject) => {
       const child = spawn(binary, childArgs, { env: childEnv, stdio: hook ? ['pipe', 'inherit', 'inherit'] : 'inherit', windowsHide: true });
       if (hook) {

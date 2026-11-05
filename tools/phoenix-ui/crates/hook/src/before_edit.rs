@@ -668,11 +668,6 @@ fn ms(started: f64) -> Value {
 }
 
 fn main_flow(rt: &Runtime, stdin: &str) -> Out {
-    if truthy(rt.env("PHOENIX_UI_HOOK_DISABLED")) {
-        let mut m = Map::new();
-        m.insert("skipped".into(), Value::from("env-disabled"));
-        return allow(m, vec![]);
-    }
     let event: Option<Value> = if stdin.is_empty() {
         None
     } else {

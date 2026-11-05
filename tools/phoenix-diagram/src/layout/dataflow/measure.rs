@@ -788,7 +788,6 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
     Ok(CompiledDiagram {
         diagram_type: input.diagram_type,
         schema_version: input.document["schema_version"].as_f64().unwrap() as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: input.document["meta"].clone(),
         view_box: context.view_box,

@@ -6,7 +6,6 @@
   "npmPackageVersion": "0.7.10",
   "sourceCommit": "f254e704a5b5ea0118636b489b2a77f616836961",
   "sourceInputSha256": "f4547f72e62b339431dff73a21090c3834cf78cb5790cd223467248fd199c3c8",
-  "inputContractSchema": 1,
   "receiptSchema": 1,
   "viewerRevision": "phoenix-v2",
   "bundleSha256": "1ae112c13605b2c417a3bc235af3d2fb938e4f68a08421e7df275af0768b77bf",

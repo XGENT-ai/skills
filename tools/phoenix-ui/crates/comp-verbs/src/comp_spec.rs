@@ -1333,7 +1333,7 @@ pub fn run(argv: &[String], io: &mut Io) -> i32 {
     };
     let spec_out = resolve(io, &spec_path);
     // Bind cached font evidence to the decoded reference, including dimensions.
-    // Legacy specs without this identity are deliberately remeasured once.
+    // A spec without this identity is remeasured.
     let mut hasher = Sha256::new();
     hasher.update(comp.width.to_le_bytes());
     hasher.update(comp.height.to_le_bytes());

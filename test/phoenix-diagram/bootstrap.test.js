@@ -26,10 +26,9 @@ function realEngine() {
   assert.ok(fs.existsSync(file), 'A built native engine is required; this success path never uses a fake probe');
   const probe = spawnSync(file, ['engine-probe'], { encoding: 'utf8' });
   assert.equal(probe.status, 0, probe.stderr);
-  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n');
+  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n');
   const doctor = spawnSync(file, ['doctor', '--json'], { encoding: 'utf8' });
   const engine = JSON.parse(doctor.stdout).engine;
-  assert.equal(engine.inputContractSchema, 1);
   return native = { file, bytes: fs.readFileSync(file), engine };
 }
 function write(file, bytes, mode = 0o644) {
@@ -67,7 +66,7 @@ function fixture(t, changes = {}) {
   // and pre-acquisition refusal tests available in a fresh source checkout.
   const {bytes,engine}=process.env.PHOENIX_DIAGRAM_BIN?realEngine():{bytes:Buffer.from('Inert pre-execution metadata fixture; not an engine.'),engine:{sourceInputSha256:'a'.repeat(64)}};
   const engines = Object.fromEntries(boot().TARGETS.map(target => [target, { asset: `phoenix-diagram-${target}`, size: bytes.length, sha256: hash(bytes) }]));
-  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
+  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
   const manifestPath = path.join(dist, 'VERSION.json');
   const env = { ...process.env, PHOENIX_DIAGRAM_HOME: home, PHOENIX_UI_HOME: path.join(temp, 'ui-home'), HTTP_PROXY: '', http_proxy: '', HTTPS_PROXY: '', https_proxy: '', ALL_PROXY: '', all_proxy: '', NO_PROXY: '', no_proxy: '' };
   const f = { temp, pkg, dist, bundleRoot, project, home, release, packageJsonPath, manifestPath, inventory, version, env, bytes, target: supportedUnix?boot().platformTarget():boot().TARGETS[0] };

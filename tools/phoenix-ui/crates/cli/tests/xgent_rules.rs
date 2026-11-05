@@ -206,7 +206,7 @@ fn ignore_rules_config_disables_a_rule() {
 }
 
 #[test]
-fn inline_directives_cover_both_prefixes() {
+fn inline_directives_honor_only_the_phoenix_ui_prefix() {
     let temp = Temp::new("inline");
     let file = temp.write(
         "src/a.css",
@@ -219,7 +219,10 @@ fn inline_directives_cover_both_prefixes() {
 ",
     );
     let findings = detect_json(&file, temp.path(), &[]);
-    assert_eq!(ids(&xgent(&findings)), vec![("xgent/transition-all", 5.0)]);
+    assert_eq!(
+        ids(&xgent(&findings)),
+        vec![("xgent/transition-all", 2.0), ("xgent/transition-all", 5.0)]
+    );
 
     let file_all = temp.write(
         "src/all.css",

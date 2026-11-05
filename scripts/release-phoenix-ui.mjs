@@ -363,8 +363,8 @@ async function main() {
     assert(node18 && fs.existsSync(node18), 'Node 18 not found; pass --node18 PATH');
     const out = path.join(dir, `check-${Date.now()}`);
     const result = command(process.execPath, [path.join(root, 'scripts/check-phoenix-ui-release.mjs'), '--tarball', tarball, '--tarball-sha256', digests.sha256,
-      '--manifest', manifestFile, '--manifest-sha256', manifestSha256, '--node18', node18, '--node25', process.execPath, '--output-dir', out,
-      '--legacy-dir', path.join(root, 'local/phoenix-ui')], { allowFailure: true });
+      '--manifest', manifestFile, '--manifest-sha256', manifestSha256, '--node18', node18, '--node25', process.execPath, '--output-dir', out],
+      { allowFailure: true });
     const resultsFile = path.join(out, 'results.json'), results = fs.existsSync(resultsFile) ? readJson(resultsFile) : {};
     const failures = [results.error, ...(results.groups || []).filter(g => g.error).map(g => `${g.node.version} ${g.kind}: ${g.error.trim()}`)].filter(Boolean);
     assert(result.status === 0 && results.status === 'release-check-passed', `Install check failed (${resultsFile}):\n${failures.join('\n') || (result.stderr || '').slice(-2000)}`);

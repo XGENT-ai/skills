@@ -1,4 +1,5 @@
 [tools]
 node = "25.2.1"
+bun = "1.4.4"
 mr-boxington = "1.28.0"
 rust = { version = "1.99.1", mr_boxington = true, profile = "minimal", components = ["rustfmt", "clippy"], targets = ["wasm32-unknown-unknown"] }

@@ -20,8 +20,7 @@ const project = path.join(temp, 'project with spaces');
 const home = path.join(temp, 'isolated home');
 fs.cpSync(fixture, project, { recursive: true });
 fs.mkdirSync(home);
-const env = { ...process.env, HOME: home, USERPROFILE: home, NO_COLOR: '1',
-  IMPECCABLE_NO_UPDATE_CHECK: '1', IMPECCABLE_NO_TELEMETRY: '1', DO_NOT_TRACK: '1' };
+const env = { ...process.env, HOME: home, USERPROFILE: home, NO_COLOR: '1', DO_NOT_TRACK: '1' };
 const cases = [
   { name: 'startup', args: ['engine-probe'], exits: [0] },
   { name: 'detect', args: ['detect', 'index.html', '--json'], exits: [0, 2] },
@@ -35,7 +34,7 @@ try {
   for (const c of cases) {
     const times = [], rss = [];
     for (let i = 0; i < output.samples; i++) {
-      for (const state of ['.impeccable', '.phoenix-ui']) fs.rmSync(path.join(project, state), { recursive: true, force: true });
+      fs.rmSync(path.join(project, '.phoenix-ui'), { recursive: true, force: true });
       const before = performance.now();
       const result = spawnSync('/usr/bin/time', [process.platform === 'darwin' ? '-l' : '-v', binary, ...c.args],
         { cwd: project, env, input: c.stdin || '', encoding: 'utf8', timeout: 30_000 });

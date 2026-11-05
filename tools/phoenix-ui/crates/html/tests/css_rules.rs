@@ -5,8 +5,8 @@
 //! selectors, !important, custom properties, malformed CSS, comments,
 //! @import / @font-face / @keyframes, unicode, escapes) plus every `<style>`
 //! block and .css file under the public repo's tests/, skill/ and cli/.
-//! Regenerate `fixtures/css-rules.json` with
-//! `node crates/html/tests/fixtures/gen-css-rules.mjs`.
+//! `fixtures/css-rules.json` is that frozen baseline; the JS it came from is
+//! not part of this repository.
 
 use impeccable_html::cascade::rules::{collect_static_css_rules, CssRule};
 use impeccable_html::cascade::values::unwrap_css_at_layer;

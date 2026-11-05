@@ -1,6 +1,6 @@
 //! Actual SVG projections of the frozen renderers, beyond scene DTO parity.
 use phoenix_diagram::{
-    input::{parse_input, CompileOptions, DiagramType, InputContract, Quality},
+    input::{parse_input, CompileOptions, DiagramType, Quality},
     layout,
     render::{render, EmbeddedAssets},
 };
@@ -9,7 +9,6 @@ use serde_json::Value;
 
 fn html(document: &Value, kind: DiagramType, quality: &str) -> Html {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(if quality == "showcase" {
             Quality::Showcase
         } else {

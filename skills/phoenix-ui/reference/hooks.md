@@ -8,7 +8,7 @@ The detector rules run in two tiers. The per-edit hook surfaces only the immedia
 
 Every hook is a mechanical pass. The reflexes no scanner catches live in [craft-floor.md](craft-floor.md), which the skill loads before it edits UI, so they apply whether or not a hook is wired. A session with no automatic hook gets one `MANUAL_DETECTOR_REQUIRED` directive from `phoenix-ui context` asking for a single detector run at the end.
 
-This command toggles the hook **per project** by editing `.phoenix-ui/config.json` (the unified Phoenix UI config; hook runtime settings live under its `hook` key, and shared detector ignores live under `detector`). Per-developer overrides, including the install consent decision (`hook.consent`) the CLI records, live in the gitignored `.phoenix-ui/config.local.json`. Set `hook.enabled: false` to turn the hook off, `hook.quiet: true` to silence the clean/pending acks, or `hook.auditLog` to a file path for an NDJSON log. The legacy `PHOENIX_UI_HOOK_DISABLED`, `PHOENIX_UI_HOOK_QUIET`, and `PHOENIX_UI_HOOK_LOG` env vars are still honored and override these config values when set.
+This command toggles the hook **per project** by editing `.phoenix-ui/config.json` (the unified Phoenix UI config; hook runtime settings live under its `hook` key, and shared detector ignores live under `detector`). Per-developer overrides, including the install consent decision (`hook.consent`) the CLI records, live in the gitignored `.phoenix-ui/config.local.json`. Set `hook.enabled: false` to turn the hook off, `hook.quiet: true` to silence the clean/pending acks, or `hook.auditLog` to a file path for an NDJSON log.
 
 Declare server-side template extensions under **`detector.extensions`** when the project uses Blade, Twig, ERB, or Handlebars files; the hook skips them otherwise because they sit outside the built-in extension list. One entry per extension, `{ "ext": ".blade.php", "engine": "html" }`. `engine` picks the analyzer (`html` for markup templates, `text` for JS/TS/CSS-like files) and defaults to `html`. Match against the end of the filename, so double extensions like `.blade.php` and `.html.erb` work. Config only adds extensions; the built-in list always applies.
 
@@ -26,7 +26,7 @@ The first argument is the action. Defaults to `status`.
 
 | Action | What it does |
 |---|---|
-| `status` | Print current state, shared/local config paths, ignored rules / files / values, env override. |
+| `status` | Print current state, shared/local config paths, ignored rules / files / values. |
 | `on` | Set `enabled: true` in `.phoenix-ui/config.json`, record local hook consent as accepted, and install/repair provider hook manifests when the skill is installed. |
 | `off` | Set `enabled: false` in `.phoenix-ui/config.json`. |
 | `ignore-rule <id>` | Append `<id>` to `detector.ignoreRules`; for `overused-font`, requires `--all-values`. Suppresses the rule across the whole project. |
@@ -110,4 +110,4 @@ Example whole-file exception, for a file that is out of scope entirely:
 ## Failure modes
 
 - If `.phoenix-ui/config.json` or `.phoenix-ui/config.local.json` is unreadable or malformed, the hook ignores that file and uses the remaining valid config/defaults. `phoenix-ui hooks status` will show malformed files as ignored.
-- If the user asks to "disable the hook" globally, lead with `$phoenix-ui hooks off` (persistent for this project; writes `hook.enabled: false` to config). The legacy `PHOENIX_UI_HOOK_DISABLED=1` env var also works as a one-shot override that follows the shell.
+- If the user asks to "disable the hook" globally, lead with `$phoenix-ui hooks off` (persistent for this project; writes `hook.enabled: false` to config).

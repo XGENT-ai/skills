@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "Unknown command: \"skills\"\n\nTo see a list of supported commands, run:\n  phoenix-ui --help\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

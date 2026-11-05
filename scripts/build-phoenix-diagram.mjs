@@ -332,11 +332,11 @@ function validateTools(tools, repoRoot) {
 function viewerIdentity(repoRoot) {
   return { revision: VIEWER_REVISION, template: recordFor('tools/phoenix-diagram/assets/template.html', fs.readFileSync(path.join(repoRoot, 'tools/phoenix-diagram/assets/template.html'))) };
 }
-function expectedProbe() { return `${TOOL}-engine ${TOOL_VERSION} input=1 receipt=1 viewer=${VIEWER_REVISION}\n`; }
+function expectedProbe() { return `${TOOL}-engine ${TOOL_VERSION} receipt=1 viewer=${VIEWER_REVISION}\n`; }
 export function validateEngine(engine, sourceSha) {
   assert(engine && typeof engine === 'object', 'Native doctor engine identity is missing');
   for (const [field, actual, expected] of [
-    ['sourceInputSha256', engine.sourceInputSha256, sourceSha], ['inputContractSchema', engine.inputContractSchema, 1],
+    ['sourceInputSha256', engine.sourceInputSha256, sourceSha],
     ['receiptSchema', engine.receiptSchema, 1], ['viewerRevision', engine.viewerRevision, VIEWER_REVISION],
   ]) assert.equal(actual, expected, `Native engine ${field} differs: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
@@ -425,7 +425,7 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
   const browser = browserObservation(doctor, target, env, repoRoot);
   const npmPackageVersion = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'))).version;
   const version = { schemaVersion: 1, distribution: 'development', tool: TOOL, toolVersion: TOOL_VERSION, npmPackageVersion,
-    sourceCommit: source.sourceCommit, sourceInputSha256: inputs.sha256, inputContractSchema: 1, receiptSchema: 1, viewerRevision: VIEWER_REVISION,
+    sourceCommit: source.sourceCommit, sourceInputSha256: inputs.sha256, receiptSchema: 1, viewerRevision: VIEWER_REVISION,
     bundleSha256: bundle.sha256, engines: { [target]: binary } }, versionBytes = pretty(version);
   const receipt = { schemaVersion: 1, distribution: 'development', tool: TOOL, toolVersion: TOOL_VERSION, npmPackageVersion, target, host: prepared.host,
     ...source, sourceInputSha256: inputs.sha256, sourceInputs: recordFor('source-inputs.json', inputs.bytes), binary,

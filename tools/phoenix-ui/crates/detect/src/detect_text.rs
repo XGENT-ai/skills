@@ -1679,7 +1679,7 @@ pub fn detect_text(content: &str, file_path: &str, options: &TextOptions) -> Vec
 
     // A rule pack sees the file after every built-in matcher, analyzer, and
     // the dedupe, and before inline ignores: its rows are waivable with
-    // `impeccable-disable` exactly like built-in rules, and appending keeps
+    // `phoenix-ui-disable` exactly like built-in rules, and appending keeps
     // built-in output byte-identical when no pack is installed.
     if let Some(pack) = options.rule_pack {
         deduped.extend(pack.check_text(content, file_path, &ext));

@@ -222,7 +222,7 @@ pub fn resolve_roots(cwd: &str, target_path: Option<&str>, env: &Env) -> RootsRe
     });
     let upper_bound = repo_root.clone().unwrap_or_else(|| target_dir.clone());
 
-    let legacy_root = resolve_project_root(
+    let project_root = resolve_project_root(
         &abs_cwd,
         &TargetOptions {
             target_path: abs_target.clone(),
@@ -230,10 +230,10 @@ pub fn resolve_roots(cwd: &str, target_path: Option<&str>, env: &Env) -> RootsRe
         env,
     );
     let marker_bound = if abs_target.is_some()
-        && inside_or_equal(&target_dir, &legacy_root)
-        && inside_or_equal(&legacy_root, &upper_bound)
+        && inside_or_equal(&target_dir, &project_root)
+        && inside_or_equal(&project_root, &upper_bound)
     {
-        legacy_root.clone()
+        project_root.clone()
     } else {
         upper_bound.clone()
     };
@@ -278,8 +278,8 @@ pub fn resolve_roots(cwd: &str, target_path: Option<&str>, env: &Env) -> RootsRe
         Some(r) => r,
         None => {
             resolved_from = Some("fallback".to_string());
-            if inside_or_equal(&target_dir, &legacy_root) {
-                legacy_root.clone()
+            if inside_or_equal(&target_dir, &project_root) {
+                project_root.clone()
             } else {
                 target_dir.clone()
             }

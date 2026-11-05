@@ -436,14 +436,13 @@ mod tests {
     use super::*;
     use crate::{
         compare::canonical::compare_architecture,
-        input::{parse_input, CompileOptions, DiagramType, InputContract, Quality},
+        input::{parse_input, CompileOptions, DiagramType, Quality},
         layout,
         render::{self, EmbeddedAssets},
     };
     use serde_json::json;
     fn compiled(bytes: &[u8]) -> (CompiledDiagram, Vec<u8>, Value) {
         let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
             quality: Some(Quality::Standard),
             ..Default::default()
         };

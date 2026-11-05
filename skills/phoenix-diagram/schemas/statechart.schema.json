@@ -47,9 +47,6 @@
         },
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
-        },
-        "input_contract": {
-          "const": "phoenix-v1"
         }
       }
     },
