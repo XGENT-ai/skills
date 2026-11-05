@@ -2,6 +2,14 @@
 
 记录版本变更与历史开发事项；安装和使用方法见 [README.md](README.md)。以下为从 README 迁出的历史记录，不是完整发布历史。
 
+## 0.7.11
+
+- Phoenix Diagram 新增 statechart 类型，图类型增至十一类：用 JSON 声明有限模型（变量、动作、规则、终态），引擎穷举可达状态，判定每条规则与死锁，并画出到每个违例的最短路径；可按平铺、父状态或并行区域展示，回执附 `model` 结果。
+- Phoenix Diagram 不再支持 `legacy-2.17` 输入：architecture、workflow、sequence、dataflow、lifecycle 未标记合同时报 `input/contract-required`，已是 phoenix-v1 的 JSON 用 `--input-contract phoenix-v1` 读取。
+- 安装器先选定 provider 再写入：选 `.claude` 写 hooks、settings 与 `.claude/agents`，选 `.agents`（及 codex、`.codex`）写 `.agents/agents`；未选 `.claude` 的项目不再写入其 hooks 与 settings，未知 `--providers` 值以退出码 1 结束。
+- agi-mode 新增 Subagents 规则；dev-plan、review-dev-plan、review-code 改为功能交付优先，防御与测试按真实风险投入，未明确要求的 NFR 不设专项验证或阻塞。
+- Phoenix UI 和 Phoenix Diagram 均从同一提交的一次 CI 构建四平台引擎。Node 18/25 各 7 组安装检查通过。
+
 ## 0.7.8
 
 - 修复受管 Phoenix UI 被源码安装覆盖后无法重新安装的问题；恢复后重复安装保持不变。
