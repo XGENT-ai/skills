@@ -1,7 +1,7 @@
 use super::support::*;
 use super::*;
 use crate::check::{check_html, FileIdentity};
-use crate::input::parse_input;
+use crate::input::{parse_input, DiagramType};
 use std::path::Path;
 
 pub(crate) struct Compiled {
@@ -110,10 +110,18 @@ pub(crate) fn prepare_bytes(request: &CompileRequest<'_>, bytes: &[u8]) -> Prepa
         let scene = match crate::layout::compile(&input, request.options) {
             Ok(scene) => scene,
             Err(diagnostics) => {
+                // Rule verdicts do not depend on the drawing, so a chart that
+                // cannot be laid out still reports them.
+                if input.diagram_type == DiagramType::Statechart {
+                    result.receipt.model = crate::statechart::verdict(&input.document);
+                }
                 result.receipt.diagnostics = diagnostics;
                 return Ok(());
             }
         };
+        if let crate::scene::DiagramFacts::Statechart { model, .. } = &scene.facts {
+            result.receipt.model = model.clone();
+        }
         let html = match crate::render::render_with_evidence(&scene, request.assets, &evidence) {
             Ok(html) => html,
             Err(diagnostics) => {
@@ -126,9 +134,6 @@ pub(crate) fn prepare_bytes(request: &CompileRequest<'_>, bytes: &[u8]) -> Prepa
         result.receipt.checks = checked.checks.clone();
         result.receipt.composition = checked.composition.clone();
         result.receipt.diagnostics = scene.diagnostics.clone();
-        if let crate::scene::DiagramFacts::Statechart { model, .. } = &scene.facts {
-            result.receipt.model = model.clone();
-        }
         result
             .receipt
             .diagnostics

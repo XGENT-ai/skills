@@ -78,6 +78,8 @@ validate、deliver 回执和 finalize 摘要带 `model`：
 
 图下的卡片依次为概况、每条违反规则一张、成立的规则、未检查的规则，之后才是作者 `cards`。规则判定不影响退出码：画出出错路径本身就是一次成功的交付。
 
+规则判定不依赖布局。图状态文字或整图超出可读范围时，`status` 仍是 `failed`，`model` 照常给出判定；只需要判定时不必为了排版反复改 view。模型或 view 本身有误（如 `statechart/hidden-bug-step`、`statechart/unlabeled-state`）时没有 `model`。
+
 ## 交接
 
 - 逐条列出 `outcome: breaks` 的规则：作者写的那句话、id 与最短路径的每一步。

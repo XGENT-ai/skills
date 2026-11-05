@@ -64,6 +64,13 @@ impl Analysis {
     }
 }
 
+/// The receipt's `model` record, or null when the model or its view is invalid.
+pub fn verdict(document: &Value) -> Value {
+    analyze(document).map_or(Value::Null, |analysis| {
+        report::receipt(&analysis, &crate::i18n::resolve(&document["meta"]))
+    })
+}
+
 /// Explore a statically valid document, judge its rules and project the chart.
 pub fn analyze(document: &Value) -> Result<Analysis, Diagnostics> {
     let model = Model::parse(document)?;
