@@ -2,6 +2,13 @@
 
 记录版本变更与历史开发事项；安装和使用方法见 [README.md](README.md)。以下为从 README 迁出的历史记录，不是完整发布历史。
 
+## 0.7.12
+
+- 安装器默认删除旧工具：发现 impeccable 或 archify 时，删除所选 provider 下项目级与个人级的旧入口（impeccable 含 hooks）及 `skills-lock.json`、`.agents/.skill-lock.json` 中的记录，不备份；交互终端以 `[Y/n]` 确认，`--keep-impeccable`、`--keep-archify` 保留。`--no-impeccable` 与 `--replace-impeccable` 已移除，传入按未知参数退出。
+- Phoenix UI 移除旧版迁移与兼容：`doctor --fix`、旧安装目录清理、`impeccable-disable*` 内联豁免前缀及 `PHOENIX_UI_HOOK_DISABLED`/`_QUIET`/`_LOG` 环境变量不再支持，改用 `.phoenix-ui/config.json` 的 `hook` 设置与 `phoenix-ui-disable*` 前缀。
+- Phoenix Diagram 移除 `meta.input_contract`、`--input-contract` 与兼容回执，输入只按各类型 schema 校验；statechart 布局失败时仍在校验结果中给出每条规则的判定与最短路径。
+- 新增 create-e2e-verification-skill；create-verification-skill 改写为 Odyssey DSL。dev-plan、review-code、apply-code-review 改为端到端优先：以真实入口场景验证用户可见变更，本地测试需说明理由。
+
 ## 0.7.11
 
 - Phoenix Diagram 新增 statechart 类型，图类型增至十一类：用 JSON 声明有限模型（变量、动作、规则、终态），引擎穷举可达状态，判定每条规则与死锁，并画出到每个违例的最短路径；可按平铺、父状态或并行区域展示，回执附 `model` 结果。
