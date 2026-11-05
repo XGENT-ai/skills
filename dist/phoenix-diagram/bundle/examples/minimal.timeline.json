@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "timeline",
-  "meta": { "title": "Release day", "output": "minimal.timeline.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en", "evidence": "observed", "timezone": "Asia/Shanghai" },
+  "meta": { "title": "Release day", "output": "minimal.timeline.html", "quality_profile": "showcase", "locale": "en", "evidence": "observed", "timezone": "Asia/Shanghai" },
   "lanes": [
     { "id": "release", "label": "Release" },
     { "id": "operations", "label": "Operations" }

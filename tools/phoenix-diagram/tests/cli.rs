@@ -442,6 +442,37 @@ fn cli_browser_command_failures_leave_screenshot_directories_alone() {
 }
 
 #[test]
+fn cli_validate_reports_rule_verdicts_when_the_chart_cannot_be_laid_out() {
+    let example = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../skills/phoenix-diagram/examples/minimal.statechart.json");
+    let mut document: serde_json::Value =
+        serde_json::from_slice(&fs::read(example).unwrap()).unwrap();
+    document["view"]["state"][0]["label"] =
+        json!("这个状态标签长到一个状态框根本放不下它的全部文字内容");
+    let project = Project::new();
+    let candidate = project.0.join("too-wide.statechart.json");
+    fs::write(&candidate, serde_json::to_vec(&document).unwrap()).unwrap();
+    let output = run(&[
+        flag("validate"),
+        flag("statechart"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ]);
+    assert!(!output.status.success());
+    let receipt = parsed(&output);
+    assert_eq!(receipt["status"], "failed");
+    assert_eq!(
+        receipt["diagnostics"][0]["code"],
+        "statechart/state-text-too-long"
+    );
+    let rules = receipt["model"]["rules"].as_array().unwrap();
+    assert_eq!(rules[0]["id"], "chargedOnce");
+    assert_eq!(rules[0]["outcome"], "breaks");
+    assert!(rules[0]["path"].as_array().unwrap().len() > 1);
+    assert_eq!(rules[1]["outcome"], "holds");
+}
+
+#[test]
 fn cli_validate_reports_the_statechart_model_verdict() {
     let example = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../skills/phoenix-diagram/examples/minimal.statechart.json");

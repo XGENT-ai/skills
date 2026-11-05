@@ -2,7 +2,7 @@
 
 只有用户明确要求本地预览才启动前台服务。普通作图不启动 preview；启动预览也不自动授权打开用户浏览器窗口。只有用户希望打开窗口时才加 `--open`。预览不充当正式交付或实际图像审核。
 
-沿主 SKILL 设置 `PD`，使用事实齐备的现有 candidate，不为预览重新猜测或改写输入。首次阅读仍为 Still，Live 由用户主动选择；不采用旧入口的默认 Live。
+沿主 SKILL 设置 `PD`，使用事实齐备的现有 candidate，不为预览重新猜测或改写输入。首次阅读仍为 Still，Live 由用户主动选择。
 
 ## 启动与事件
 
@@ -12,7 +12,7 @@
 "$PD" preview <type> candidate.json diagram.html --port 0 --open --json
 ```
 
-支持现有十一类。可加 `--quality standard|showcase`、`--input-contract phoenix-v1`、`--repo-root DIR`、`--brand-cache DIR`；合同适用类型和声明冲突规则沿普通编译。repo-root 须为现有目录，来源是否 verified 仍单独核对。preview 不接受 `--out-dir` 或 `--layout-json`。品牌只消费本地固定资源，服务不隐式联网补品牌。
+支持现有十一类。可加 `--quality standard|showcase`、`--repo-root DIR`、`--brand-cache DIR`；参数与输入声明的冲突规则沿普通编译。repo-root 须为现有目录，来源是否 verified 仍单独核对。preview 不接受 `--out-dir` 或 `--layout-json`。品牌只消费本地固定资源，服务不隐式联网补品牌。
 
 固定监听127.0.0.1，默认 port=0由系统分配；`--port` 范围0–65535。未加 `--open` 时从 started 读取 URL。stdout 是前台 NDJSON，每行一个事件，不能把多行整体当单个 JSON，也不能在第一条 updated 后把仍运行的进程当已停止。
 
