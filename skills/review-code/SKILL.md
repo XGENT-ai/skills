@@ -226,6 +226,23 @@ RULE @verification_execution:
              test_pass_replaces_requirement_check]
   ON_UNMET: retain_sufficient_static_evidence_or_list_unverified_item
 
+RULE @real_use_evidence:
+  WHEN: reviewed_change_alters_user_visible_behavior
+  MUST: ["沿用户实际入口核对本次改变的主路径：优先运行计划的场景 E2E 或真实使用验收，或按公开文档走一遍；不能运行时核对当前版本的已有证据并标明来源",
+         "判断用户实际得到的结果，不只看退出码、回执或测试断言；静态推演、局部测试与真实入口证据分开记录",
+         "实现记录或计划中已知的用户可见问题，既未修复也未经用户确认延期的，按本期缺陷报告",
+         "主路径缺当前版本的真实入口证据且无法补证时列待核实，不判通过验收"]
+  MUST_NOT: ["以测试全过或覆盖率作为产品能用的依据",
+             "把新增局部测试当作真实入口证据缺口的修复方向"]
+
+RULE @test_burden:
+  WHEN: reviewed_change_adds_or_changes_tests
+  MUST: ["把缺陷写成预期或例外的测试，随被掩盖的缺陷定级",
+         "断言绑定内部结构、为本方代码新造 fixture 或内存替身、重复场景 E2E 已覆盖行为的测试，按维护后果报告，修复方向优先删除或并入场景；默认 P3，有证据拖累当次迭代时 P2",
+         "测试增量远超实现增量时作为调查线索，指出哪些测试不值得保留；同根因合并为一条，不逐个测试报告"]
+  MUST_NOT: ["按固定行数比例判错",
+             "要求删减用户、计划、仓库规则明确要求或保护高后果路径的测试"]
+
 RULE @historical_verification:
   WHEN: reviewing_historical_commit_or_range
   MUST: [run_verification_on_corresponding_target_snapshot,
