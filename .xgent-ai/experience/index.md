@@ -102,3 +102,4 @@
 - 3d52691a-626a-4bdd-8eb4-4407592ab0d5 — [Phoenix 发布复用已构建引擎](3d52691a-626a-4bdd-8eb4-4407592ab0d5.md)
 - 510b0cd2-6f70-4e01-b58a-8c45bfd1aefc — [xgent-skills install 支持安装 agents](510b0cd2-6f70-4e01-b58a-8c45bfd1aefc.md)
 - be9b7836-8f3f-4b9b-9aae-b7d465073c09 — [dev-plan 验证节奏与 E2E 比重修订](be9b7836-8f3f-4b9b-9aae-b7d465073c09.md)
+- 958f838e-cc99-4c24-afc7-67fcea5ee334 — [feature-demo skill 与 e2e 录屏调研](958f838e-cc99-4c24-afc7-67fcea5ee334.md)
