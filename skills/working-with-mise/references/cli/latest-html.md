@@ -1,43 +1,46 @@
-mise latest
-
 latest` [​](#mise-latest)
 
-- **Usage:** `mise latest [-i --installed] [--minimum-release-age <MINIMUM_RELEASE_AGE>] <TOOL@VERSION>`
+- **Usage:** `mise latest [-i --installed] [--minimum-release-age <AGE>] <TOOL@VERSION>`
 - **Effect:** read-only
 - **Source code:** [`src/cli/latest.rs`](https://github.com/jdx/mise/blob/main/src/cli/latest.rs)
 
-Resolve the latest matching version request for a tool
+Print the latest version that matches a version request
 
-Supports prefixes such as `node@20`. The selected backend decides how channels, refs, and non-SemVer versions resolve; "latest" is not a generic sort of strings. This prints a version without installing it or changing configuration.
+`mise latest node` prints the latest release, and `mise latest node@22` the latest 22.x release. Each backend decides what "latest" means, for example whether prereleases count and how channels and refs resolve. Nothing is installed and no config changes.
 
 ## Arguments [​](#arguments)
 
-- **`<TOOL@VERSION>`** — Tool to get the latest version of
+- **`<TOOL@VERSION>`** — Tool, optionally with a version prefix, such as `node` or `node@22`
 
 ## Flags [​](#flags)
 
-- **`-i --installed`** — Show latest installed instead of available version
-- **`--minimum-release-age <MINIMUM_RELEASE_AGE>`** — Only consider versions released before this date or older than this duration
+- **`-i --installed`** — Print the latest installed version instead of the latest available one
+- **`--minimum-release-age <AGE>`** — Only consider versions released before a date or at least a duration ago
 
-  Supports absolute dates like "2024-06-01" and relative durations like "90d" or "1y". Overrides per-tool `minimum_release_age` options and the global `minimum_release_age` setting.
+  Takes a date such as `2024-06-01` or a duration such as `90d` or `1y`. Overrides the `minimum_release_age` setting and tool option.
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
-Resolve a Node 20 release, or the backend's latest stable release
+Print the latest node release
 
 ```
-mise latest node@20
 mise latest node
 ```
 
-Restrict resolution to installed versions
+Print the latest node 22.x release
 
 ```
-mise latest node@20 --installed
+mise latest node@22
 ```
 
-Exclude releases newer than the requested age
+Print the latest installed node 22.x version
+
+```
+mise latest node@22 --installed
+```
+
+Skip releases from the last 30 days
 
 ```
 mise latest node --minimum-release-age 30d
@@ -45,7 +48,7 @@ mise latest node --minimum-release-age 30d
 
 ## Related documentation [​](#related-documentation)
 
-- [Version requests](https://mise.jdx.dev/dev-tools/).
+- [Version requests](https://mise.jdx.dev/dev-tools/versions.html).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 
@@ -55,7 +58,7 @@ Last updated:
 
 Pager
 
-[Previous pagemise install-into](https://mise.jdx.dev/cli/install-into.html)
+[Previous pagemise installs select](https://mise.jdx.dev/cli/installs/select.html)
 
 [Next pagemise link](https://mise.jdx.dev/cli/link.html)
 

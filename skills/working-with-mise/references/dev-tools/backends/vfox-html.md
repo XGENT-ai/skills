@@ -1,29 +1,14 @@
-Vfox Backend
+vfox backend [​](#vfox-backend)
 
-Vfox Backend [​](#vfox-backend)
+The `vfox` backend runs [vfox](https://github.com/version-fox/vfox) plugins: Lua plugins that list a tool's versions and install it. The Lua runtime is built into mise, so vfox plugins can run on Windows as well as Linux and macOS. Prefer a built-in backend when one can install the tool, and use a vfox plugin when the tool needs custom install logic.
 
-TIP
+## Requirements [​](#dependencies)
 
-vfox is the recommended plugin system for mise. It provides cross-platform support, built-in modules, and a modern hook-based architecture.
-
-Plugins for [vfox](https://github.com/version-fox/vfox) can be used in mise to install tools.
-
-## Why vfox? [​](#why-vfox)
-
-- **Cross-platform** — Lua hooks run on Windows, macOS, and Linux; plugins still need compatible artifacts and platform handling
-- **Built-in modules** — HTTP, JSON, HTML parsing, archive extraction, semver comparison, and logging are all available out of the box, with no external dependencies needed
-- **Security** — [tool plugins](https://mise.jdx.dev/tool-plugin-development.html) support attestation verification (GitHub artifact attestations, cosign signatures, SLSA provenance) for downloaded artifacts. When a tool plugin's `PreInstall` hook returns an `attestation` table, mise verifies it during install and records the result in `mise.lock`, protecting against downgrade attacks on subsequent installs. Backend plugins do not currently support attestation
-- **Structured hooks** — contexts for version discovery, installation, and environment setup; backend plugins can manage multiple tools
-
-The code for this is inside the mise repository at [`./src/backend/vfox.rs`](https://github.com/jdx/mise/blob/main/src/backend/vfox.rs).
-
-## Dependencies [​](#dependencies)
-
-The Lua interpreter is built into mise. A plugin may still invoke external commands or install software that needs system libraries. Read that plugin's requirements; the built-in interpreter does not make every plugin portable.
+The Lua interpreter is built into mise. A plugin may still run external commands or install software that needs system libraries, so read the plugin's requirements.
 
 ## Usage [​](#usage)
 
-Install cmake from an explicit vfox plugin and verify the selected executable:
+Install CMake from an explicit vfox plugin, then run it:
 
 sh
 
@@ -32,58 +17,26 @@ mise use vfox:version-fox/vfox-cmake
 mise exec -- cmake --version
 ```
 
-This writes the following project configuration. Add `-g` for a global tool.
-
-toml
+This writes the following to `mise.toml`. Add `-g` for a global tool.
 
 ```
 [tools]
 "vfox:version-fox/vfox-cmake" = "latest"
 ```
 
-The explicit prefix selects that plugin even if the `cmake` registry shorthand prefers another backend.
+mise installs the plugin from GitHub the first time it needs it. The `vfox:` prefix selects that plugin even when the `cmake` registry shorthand prefers another backend. Find plugins in the [mise-plugins organization](https://github.com/mise-plugins) and the [vfox plugin index](https://github.com/version-fox/vfox-plugins).
 
-## Default plugin backend [​](#default-plugin-backend)
+## When mise uses vfox [​](#default-plugin-backend)
 
-Windows excludes asdf from default backend selection. On Linux and macOS, you can exclude it with `mise settings add disable_backends asdf`, but this does not make vfox take precedence over built-in, Packslip, Aqua, or release backends. Check `mise registry cmake` for the shorthand's available sources, or use an explicit `vfox:` identifier when you intend to use a particular plugin.
+A registry shorthand such as `cmake` can list several backends, and mise uses the first one available on your platform; run `mise registry cmake` to see them, and see [how backend selection works](https://mise.jdx.dev/dev-tools/backends/#how-backend-selection-works). To use a particular plugin, write its `vfox:` identifier, as in [Usage](#usage). On Windows, mise never selects asdf plugins. Elsewhere, `mise settings add disable_backends asdf` skips them.
 
-## Plugins [​](#plugins)
+## Plugin sources [​](#plugins)
 
-In addition to the standard vfox tool plugins, mise supports backend plugins that can manage multiple tools using the `plugin:tool` format. These plugins are well suited to:
+A `vfox:` identifier names a GitHub repository (`vfox:owner/repo`) or a full Git URL. You can also install a plugin under a name of your own, from Git, a zip archive or a local directory, and then use that name in `[tools]`, or `name:tool` for a backend plugin that manages several tools. See [Plugins](https://mise.jdx.dev/plugins.html) to install, update and remove plugins. To write one, see [tool plugins](https://mise.jdx.dev/tool-plugin-development.html).
 
-- Installing tools from private repositories
-- Package managers (npm, pip, etc.)
-- Custom tool families
+### From a signed packslip release [​](#install-from-a-signed-packslip)
 
-### Example: Plugin Usage [​](#example-plugin-usage)
-
-bash
-
-```
-# Install a plugin
-mise plugins install my-plugin https://github.com/username/my-plugin
-
-# Use the plugin:tool format
-mise install my-plugin:some-tool@1.0.0
-mise use my-plugin:some-tool@latest
-```
-
-### Install from Zip File [​](#install-from-zip-file)
-
-Replace `PLUGIN_NAME` and `HTTPS_ZIP_URL` with the plugin name and archive URL.
-
-bash
-
-```
-# Install a plugin from a zip file over HTTPS
-mise plugins install PLUGIN_NAME HTTPS_ZIP_URL
-# Example: Installing a plugin from a zip file
-mise plugins install vfox-cmake https://github.com/mise-plugins/vfox-cmake/archive/refs/heads/main.zip
-```
-
-### Install from a signed packslip [​](#install-from-a-signed-packslip)
-
-A publisher can distribute a vfox plugin for a non-registry tool as a signed, portable archive. Select that source explicitly, keeping the plugin release separate from tool versions:
+A publisher can release a vfox plugin as a signed [packslip](https://mise.jdx.dev/dev-tools/backends/packslip.html) archive from a GitHub repository. Install it with:
 
 sh
 
@@ -93,72 +46,37 @@ mise plugins install vfox:PLUGIN_NAME 'packslip:OWNER/REPO#PLUGIN_VERSION'
 
 Or configure it:
 
-toml
-
 ```
 [plugins]
 "vfox:PLUGIN_NAME" = "packslip:OWNER/REPO#PLUGIN_VERSION"
 ```
 
-Omit `#PLUGIN_VERSION` to resolve the latest eligible plugin release through the packslip backend. `mise plugins update PLUGIN_NAME` preserves an explicit pin; reinstall with another source version to change it. The installed plugin records its resolved version, artifact digest, and signer. Reinstalling the same version checks those pins again.
-
-This initially supports GitHub repositories publishing `packslip.sigstore.json` with a portable `tar.gz` artifact declaring `extensions.mise.plugin = "vfox"` and no executables or host requirements. The archive must have `metadata.lua` at its root and contain no links, special files, Git metadata, or unsafe paths. Mise uses the packslip backend's signature, digest, signer, and release policy checks. It verifies and stages replacements before removing the previous plugin.
-
-The [bfs publisher example](https://github.com/mise-plugins/vfox-bfs/releases/tag/v0.1.0) demonstrates the format, verified on Linux and macOS. Normal bfs usage continues to use its embedded plugin without downloading a plugin release. Packslip is an explicit source option; existing registry defaults, Git and ZIP sources remain unchanged.
-
-For more information, see:
-
-- [Using Plugins](https://mise.jdx.dev/plugin-usage.html) - End-user guide
-- [Plugin Development](https://mise.jdx.dev/tool-plugin-development.html) - Developer guide
-- [Plugin Template](https://github.com/jdx/mise-tool-plugin-template) - Quick start template for creating plugins
+Leave out `#PLUGIN_VERSION` for the latest plugin release. mise checks the signature, digest, signer and release policy before it replaces an installed plugin, records the version, digest and signer it installed, and checks them again when it reinstalls the same version. `mise plugins update PLUGIN_NAME` keeps an explicit version pin; reinstall with another version to change it. Publishers can find the archive format in [Publishing plugins](https://mise.jdx.dev/plugin-publishing.html#packslip).
 
 ## URL replacements [​](#url-replacements)
 
-The vfox backend honors mise's [`url_replacements`](https://mise.jdx.dev/url-replacements.html) setting for both tool artifact downloads and requests made through the plugin's built-in Lua HTTP module. This includes `http.get`, `http.head`, `http.download_file`, and their `try_*` variants.
+The vfox backend applies mise's [`url_replacements`](https://mise.jdx.dev/url-replacements.html) setting to tool downloads and to requests made through the plugin's built-in Lua HTTP module, including `http.get`, `http.head`, `http.download_file` and their `try_*` variants.
 
-After applying URL replacements, vfox also uses mise's [`netrc`](https://mise.jdx.dev/configuration/settings.html#netrc) setting to add HTTP Basic authentication for the destination host. An explicit `Authorization` header supplied by a plugin takes precedence when the request stays on the same origin.
+After applying URL replacements, the backend uses mise's [`netrc`](https://mise.jdx.dev/configuration/settings.html#netrc) setting to add HTTP Basic authentication for the destination host. An `Authorization` header that the plugin sets itself takes precedence while the request stays on the same origin.
 
-## Tool Options [​](#tool-options)
+## Tool options [​](#tool-options)
 
-The following [tool-options](https://mise.jdx.dev/dev-tools/#tool-options) are available for the `vfox` backend—these go in `[tools]` in `mise.toml`.
-
-Traditional vfox `PreInstall` and `PostInstall` hooks receive custom options in the structured `ctx.options` table. Scalar values use mise's existing string representation, while arrays and tables remain structured:
-
-toml
-
-```
-[tools]
-"vfox:example/plugin" = { version = "1.0.0", bundled = false, channels = ["stable", "beta"] }
-```
-
-lua
-
-```
-function PLUGIN:PreInstall(ctx)
-    local bundled = ctx.options.bundled == "false"
-    local channels = ctx.options.channels
-    -- ...
-end
-```
-
-Existing plugins can continue reading custom options from their hook environment with the `MISE_TOOL_OPTS__` prefix. Those variables are available only while mise runs the plugin hook and are not exported to the user's shell. New plugins should use `ctx.options`.
+mise handles its own options, such as `version`, `install_env`, `depends`, `os` and `postinstall`; see [tool options](https://mise.jdx.dev/dev-tools/#tool-options). Every other option goes to the plugin, so check the plugin's README for the options it accepts. Plugin authors can read how options reach the hooks in [tool plugins](https://mise.jdx.dev/tool-plugin-development.html).
 
 ### `install_env` [​](#install-env)
 
-Set environment variables for commands that a vfox plugin starts with `cmd.exec` during install hooks. vfox's built-in Lua HTTP, archive, and JSON helpers do not use these variables directly.
-
-toml
+Environment variables for the commands that the plugin runs during installation with `cmd.exec` or `os.execute`. The plugin's built-in Lua HTTP, archive and JSON helpers do not read them.
 
 ```
 [tools]
 "vfox:version-fox/vfox-cmake" = { version = "latest", install_env = { HTTPS_PROXY = "http://proxy.example" } }
 ```
 
-### Install dependencies [​](#install-dependencies)
+### `depends` [​](#install-dependencies)
 
-Plugin authors should declare intrinsic install requirements with `PLUGIN.depends` in `metadata.lua`. Users can supplement those declarations with the [`depends` tool option](https://mise.jdx.dev/dev-tools/#tool-dependencies). Matching configured tools from both sources share one install dependency context: they are ordered before the dependent tool, and their paths and `tools = true` values are available to install hooks launched through `os.execute` or `cmd.exec`.
+Tools the plugin needs while installing, such as `depends = ["go"]`, when the plugin does not declare them itself. When a listed tool is also in `[tools]`, mise installs it first and puts it on `PATH` for the plugin's install commands. `depends` does not install a tool you have not configured; add it to `[tools]`, or have it on `PATH` already. See [tool dependencies](https://mise.jdx.dev/dev-tools/#tool-dependencies); plugin authors declare their own with [`PLUGIN.depends`](https://mise.jdx.dev/tool-plugin-development.html#depends).
 
-Declarations do not configure or automatically install a tool. A matching configured dependency must resolve and be installed; an unconfigured dependency can still be supplied by the existing system or configuration `PATH`. `io.popen` does not receive this install environment.
+Implementation: [`src/backend/vfox.rs`](https://github.com/jdx/mise/blob/main/src/backend/vfox.rs).
 
 [Edit this page](https://github.com/jdx/mise/edit/main/docs/dev-tools/backends/vfox.md)
 
@@ -166,8 +84,8 @@ Last updated:
 
 Pager
 
-[Previous pageubi](https://mise.jdx.dev/dev-tools/backends/ubi.html)
+[Previous pageubi (deprecated)](https://mise.jdx.dev/dev-tools/backends/ubi.html)
 
-[Next pageOverview](https://mise.jdx.dev/bootstrap.html)
+[Next pageShims](https://mise.jdx.dev/dev-tools/shims.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

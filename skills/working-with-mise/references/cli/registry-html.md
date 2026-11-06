@@ -1,5 +1,3 @@
-mise registry
-
 registry` [​](#mise-registry)
 
 - **Usage:** `mise registry [FLAGS] [NAME]`
@@ -8,35 +6,48 @@ registry` [​](#mise-registry)
 
 List registry shorthand names and their backends
 
-The registry maps short names to installation backends. For example, `node` uses the built-in Node backend. A tool may have multiple candidates; explicit backend syntax and configuration can override registry selection.
+The registry maps short names to backends. For example, `node` uses the built-in node backend (`core:node`). When a tool lists several backends, mise uses the first one that this platform and your settings allow. An explicit identifier such as `aqua:jqlang/jq`, a `[tool_alias]` entry, or a `MISE_BACKENDS_<TOOL>` environment variable overrides that choice.
 
-This is not a list of every tool mise can install. Use an explicit identifier such as `github:owner/repo` for a supported source without a registry shorthand.
+This is not a list of every tool mise can install. Use an explicit identifier such as `github:owner/repo` for a source without a registry shorthand.
 
 ## Arguments [​](#arguments)
 
-- **`[NAME]`** — Show only the specified tool's full name
+- **`[NAME]`** — Show only this tool's backends, in the order mise prefers them
 
 ## Flags [​](#flags)
 
 - **`-b --backend <BACKEND>`** — Show only tools for this backend
-- **`--hide-aliased`** — Hide aliased tools
+- **`--hide-aliased`** — Hide names that are aliases of another registry tool
 - **`-J --json`** — Output in JSON format
 - **`--security`** — Include security features for each tool's backends in JSON output
 
-  Requires --json. Security info is de-duplicated across all of a tool's backends. This can add noticeable time for large listings since each backend's security info is resolved individually.
+  Requires --json. Features are merged across a tool's backends. Each backend is resolved separately, so this slows down a full listing.
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
-List the registry, then inspect node. The second command prints `core:node`.
+List every registry tool and its backends
 
 ```
 mise registry
-mise registry node
 ```
+
+Show the backends for one tool
+
+```
+mise registry jq
+aqua:jqlang/jq asdf:mise-plugins/asdf-jq
+```
+
+List the tools that have an aqua backend
 
 ```
 mise registry --backend aqua
+```
+
+Print the registry as JSON
+
+```
 mise registry --json
 ```
 

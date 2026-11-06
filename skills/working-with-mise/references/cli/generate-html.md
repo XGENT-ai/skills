@@ -1,5 +1,3 @@
-mise generate
-
 generate` [​](#mise-generate)
 
 - **Usage:** `mise generate <SUBCOMMAND>`
@@ -7,7 +5,7 @@ generate` [​](#mise-generate)
 - **Effect:** read-only
 - **Source code:** [`src/cli/generate/mod.rs`](https://github.com/jdx/mise/blob/main/src/cli/generate/mod.rs)
 
-Generate files for various tools/services
+Generate project files such as CI workflows, git hooks, and scripts
 
 ## Flags [​](#flags)
 

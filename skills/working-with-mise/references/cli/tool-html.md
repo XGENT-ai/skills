@@ -1,5 +1,3 @@
-mise tool
-
 tool` [​](#mise-tool)
 
 - **Usage:** `mise tool [FLAGS] <TOOL>`
@@ -8,9 +6,11 @@ tool` [​](#mise-tool)
 
 Show information about a tool
 
+Shows the tool's backend, its description and project URL when known, the installed, active, and requested versions, the config file that requests it, its tool options, and the backend's security features. Pass a field flag such as `--backend` to print one field, or `--json` for all of them.
+
 ## Arguments [​](#arguments)
 
-- **`<TOOL>`** — Tool name to get information about
+- **`<TOOL>`** — The tool, such as `node` or `aqua:jqlang/jq`
 
 ## Flags [​](#flags)
 
@@ -22,18 +22,29 @@ Show information about a tool
 - **`--installed`** — Only show installed versions
 - **`--requested`** — Only show requested versions
 - **`--tool-options`** — Only show tool options
+- **`--url`** — Only show the project URL from the registry
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
+Show everything mise knows about node
+
 ```
 mise tool node
-Backend:            core
-Installed Versions: 20.0.0 22.0.0
-Active Version:     20.0.0
-Requested Version:  20
-Config Source:      ~/.config/mise/mise.toml
+Backend:            core:node
+Installed Versions: 22.0.0 24.0.0
+Active Version:     24.0.0
+Requested Version:  24
+Config Source:      ~/.config/mise/config.toml
 Tool Options:       [none]
+Security:           checksum (sha256), gpg
+```
+
+Print only the backend
+
+```
+mise tool node --backend
+core:node
 ```
 
 ## Related documentation [​](#related-documentation)

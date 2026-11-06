@@ -1,5 +1,3 @@
-mise untrust
-
 untrust` [​](#mise-untrust)
 
 - **Usage:** `mise untrust [CONFIG_FILE]`
@@ -7,6 +5,8 @@ untrust` [​](#mise-untrust)
 - **Source code:** [`src/cli/untrust.rs`](https://github.com/jdx/mise/blob/main/src/cli/untrust.rs)
 
 Remove explicit trust for a config
+
+mise asks again before loading the parts of the file that can run code. With no file, untrusts the nearest config in this directory or a parent. Same as `mise trust --untrust`.
 
 ## Arguments [​](#arguments)
 
@@ -16,9 +16,17 @@ Remove explicit trust for a config
 
 - **`-h --help`** — Print help
 
+## Examples [​](#examples)
+
+Stop trusting a specific file
+
+```
+mise untrust ~/src/app/mise.toml
+```
+
 ## Related documentation [​](#related-documentation)
 
-- [Configuration trust](https://mise.jdx.dev/security.html).
+- [Configuration trust](https://mise.jdx.dev/security.html#configuration-trust).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

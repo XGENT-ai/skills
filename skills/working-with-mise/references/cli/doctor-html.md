@@ -1,5 +1,3 @@
-mise doctor
-
 doctor` [​](#mise-doctor)
 
 - **Usage:** `mise doctor [-J --json] [SUBCOMMAND]`
@@ -7,7 +5,9 @@ doctor` [​](#mise-doctor)
 - **Effect:** read-only
 - **Source code:** [`src/cli/doctor/mod.rs`](https://github.com/jdx/mise/blob/main/src/cli/doctor/mod.rs)
 
-Check mise installation for possible problems
+Check your mise setup for problems
+
+Prints mise's version, whether shell activation and shims are set up, its directories, the config files, tools, and environment in use, and its settings, then lists any problems and warnings with a suggested fix. Exits with status 1 when it finds a problem. Include this output when you report a bug.
 
 ## Flags [​](#flags)
 
@@ -16,10 +16,16 @@ Check mise installation for possible problems
 
 ## Examples [​](#examples)
 
+Check the setup and list problems
+
 ```
 mise doctor
+```
+
+Print the report as JSON
+
+```
 mise doctor --json
-mise doctor path --full
 ```
 
 ## Subcommands [​](#subcommands)

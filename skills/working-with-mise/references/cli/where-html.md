@@ -1,18 +1,18 @@
-mise where
-
 where` [​](#mise-where)
 
 - **Usage:** `mise where <TOOL@VERSION>`
 - **Effect:** read-only
 - **Source code:** [`src/cli/where.rs`](https://github.com/jdx/mise/blob/main/src/cli/where.rs)
 
-Display the installation path for a tool
+Show the install directory of a tool version
 
-The tool must be installed for this to work.
+Fails if no matching version is installed.
 
 ## Arguments [​](#arguments)
 
-- **`<TOOL@VERSION>`** — Tool to look up e.g.: ruby@3 With "@\<PREFIX>", shows the latest installed version matching the prefix. Otherwise, shows the current, active installed version.
+- **`<TOOL@VERSION>`** — Tool to look up, such as ruby@3
+
+  With a version prefix, shows the newest installed version that matches it. Otherwise, shows the active installed version.
 
 ## Flags [​](#flags)
 
@@ -20,18 +20,18 @@ The tool must be installed for this to work.
 
 ## Examples [​](#examples)
 
-Show the latest installed node 20.x Errors if no matching version is installed
+Show the newest installed node 20.x
 
 ```
 mise where node@20
-/home/jdx/.local/share/mise/installs/node/20.0.0
+~/.local/share/mise/installs/node/20.0.0
 ```
 
-Show the install directory of the active node, or of the latest installed version if no config requests node Errors if no matching version is installed
+Show the active node, or the newest installed node if no config requests one
 
 ```
 mise where node
-/home/jdx/.local/share/mise/installs/node/20.0.0
+~/.local/share/mise/installs/node/20.0.0
 ```
 
 ## Related documentation [​](#related-documentation)

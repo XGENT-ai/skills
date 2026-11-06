@@ -1,16 +1,14 @@
-mbx
-
 `mbx` [​](#mbx)
 
-**Usage:** `mbx [+TOOLCHAIN] <SUBCOMMAND>`
-
-**Version:** 1.15.0
+**Version:** 1.29.2
 
 - **Usage:** `mbx [+TOOLCHAIN] <SUBCOMMAND>`
 
 ## Arguments [​](#arguments)
 
 - **`[+TOOLCHAIN]`** — Toolchain to run under, named the way rustup names it: `mbx +1.91 check`.
+
+  Cargo commands, `mbx doctor`, `mbx explain`, and `mbx prefetch` take a toolchain. Other mbx commands reject one, and so does `mbx explain --last`.
 
 ## Flags [​](#flags)
 
@@ -22,7 +20,14 @@ mbx
 - [`mbx completion <SHELL>`](https://mr-boxington.jdx.dev/cli/completion)
 - [`mbx doctor [--json]`](https://mr-boxington.jdx.dev/cli/doctor)
 - [`mbx explain [--last] [CARGO_COMMAND] [CARGO_ARGS]…`](https://mr-boxington.jdx.dev/cli/explain)
+- [`mbx analyze`](https://mr-boxington.jdx.dev/cli/analyze)
+- [`mbx edit`](https://mr-boxington.jdx.dev/cli/edit)
 - [`mbx setup [FLAGS]`](https://mr-boxington.jdx.dev/cli/setup)
+- [`mbx settings <SUBCOMMAND>`](https://mr-boxington.jdx.dev/cli/settings)
+- [`mbx settings ls [KEY]`](https://mr-boxington.jdx.dev/cli/settings/ls)
+- [`mbx settings get <KEY>`](https://mr-boxington.jdx.dev/cli/settings/get)
+- [`mbx settings set <KEY> <VALUE>`](https://mr-boxington.jdx.dev/cli/settings/set)
+- [`mbx settings unset <KEY>`](https://mr-boxington.jdx.dev/cli/settings/unset)
 - [`mbx gc [FLAGS]`](https://mr-boxington.jdx.dev/cli/gc)
 - [`mbx cache <SUBCOMMAND>`](https://mr-boxington.jdx.dev/cli/cache)
 - [`mbx cache trace <SESSION>`](https://mr-boxington.jdx.dev/cli/cache/trace)
@@ -34,12 +39,13 @@ mbx
 - [`mbx cache export [--group <GROUP>] [--format <FORMAT>] <ARCHIVE>`](https://mr-boxington.jdx.dev/cli/cache/export)
 - [`mbx cache import <ARCHIVE>`](https://mr-boxington.jdx.dev/cli/cache/import)
 - [`mbx cache remove [--interactive] [WORKSPACE]`](https://mr-boxington.jdx.dev/cli/cache/remove)
-- [`mbx clean [WORKSPACE]`](https://mr-boxington.jdx.dev/cli/clean)
+- [`mbx clean [--under <ROOT>] [WORKSPACE]`](https://mr-boxington.jdx.dev/cli/clean)
 - [`mbx adopt [-r --recursive] [--dry-run] [PATH]…`](https://mr-boxington.jdx.dev/cli/adopt)
 - [`mbx tui [--once]`](https://mr-boxington.jdx.dev/cli/tui)
-- [`mbx stats [--json]`](https://mr-boxington.jdx.dev/cli/stats)
+- [`mbx stats [--json] [--scheduler]`](https://mr-boxington.jdx.dev/cli/stats)
 - [`mbx prefetch <CARGO_ARGS>…`](https://mr-boxington.jdx.dev/cli/prefetch)
 - [`mbx exec [--project-root <DIR>] <COMMAND>…`](https://mr-boxington.jdx.dev/cli/exec)
+- [`mbx reserve [FLAGS] <COMMAND>…`](https://mr-boxington.jdx.dev/cli/reserve)
 
 ## Configuration [​](#configuration)
 

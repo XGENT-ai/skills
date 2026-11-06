@@ -1,5 +1,3 @@
-mise backends
-
 backends` [​](#mise-backends)
 
 - **Usage:** `mise backends [SUBCOMMAND]`
@@ -9,6 +7,8 @@ backends` [​](#mise-backends)
 
 Manage backends
 
+A backend is where mise installs a tool from: a package registry such as npm or cargo, a release host such as GitHub, or a plugin. Each tool uses one, either written as a prefix (`npm:prettier`) or chosen by the registry. With no subcommand, lists the built-in backends. See <https://mise.jdx.dev/dev-tools/backends/>.
+
 ## Flags [​](#flags)
 
 - **`-h --help`** — Print help
@@ -16,10 +16,11 @@ Manage backends
 ## Subcommands [​](#subcommands)
 
 - [`mise backends ls`](https://mise.jdx.dev/cli/backends/ls.html)
+- [`mise backends switch [-n --dry-run] [-g --global] [TOOL@VERSION]…`](https://mise.jdx.dev/cli/backends/switch.html)
 
 Deprecation:
 
-The `mise b` alias is deprecated and will be removed in mise 2027.4.0. Use `mise backends` instead.
+The `mise b` alias is deprecated and will be removed in mise 2027.4.0; use `mise backends`.
 
 ## Related documentation [​](#related-documentation)
 

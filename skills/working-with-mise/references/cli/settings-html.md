@@ -1,5 +1,3 @@
-mise settings
-
 settings` [​](#mise-settings)
 
 - **Usage:** `mise settings [FLAGS] [SETTING] [VALUE] [SUBCOMMAND]`
@@ -8,14 +6,18 @@ settings` [​](#mise-settings)
 
 Manage settings
 
+With no arguments, lists the settings set in config files (same as `mise settings ls`). With SETTING, prints its effective value. With SETTING=VALUE or SETTING VALUE, writes it to the global config (\~/.config/mise/config.toml), or to the nearest project config with `--local`. Every setting is described at <https://mise.jdx.dev/configuration/settings.html>
+
 ## Arguments [​](#arguments)
 
-- **`[SETTING]`** — Name of setting
-- **`[VALUE]`** — Setting value to set
+- **`[SETTING]`** — Only show this setting, or the settings under this prefix such as `python`
+- **`[VALUE]`** — The value to set
 
 ## Global Flags [​](#global-flags)
 
-- **`-l --local`** — Use the local config file instead of the global one
+- **`-l --local`** — Use only the nearest project config
+
+  Reads only its explicit settings, or writes to it instead of the global config.
 
 ## Flags [​](#flags)
 
@@ -27,37 +29,37 @@ Manage settings
 
 ## Examples [​](#examples)
 
-list explicitly configured settings
+List settings set in config files
 
 ```
 mise settings
 ```
 
-get the value of the setting "always\_keep\_download"
+Show the effective value of one setting
 
 ```
-mise settings always_keep_download
+mise settings jobs
 ```
 
-set the value of the setting "always\_keep\_download" to "true"
+Set jobs in the global config
 
 ```
-mise settings always_keep_download=true
+mise settings jobs=4
 ```
 
-set the value of the setting "node.mirror\_url" to " <https://npmmirror.com/mirrors/node/>"
+Set a setting in the project config
 
 ```
-mise settings node.mirror_url https://npmmirror.com/mirrors/node/
+mise settings --local node.mirror_url https://npmmirror.com/mirrors/node/
 ```
 
 ## Subcommands [​](#subcommands)
 
-- [`mise settings add [-l --local] <SETTING> [VALUE]`](https://mise.jdx.dev/cli/settings/add.html)
+- [`mise settings add [-l --local] [--override] <SETTING> [VALUE]`](https://mise.jdx.dev/cli/settings/add.html)
 - [`mise settings get [-l --local] <SETTING>`](https://mise.jdx.dev/cli/settings/get.html)
 - [`mise settings ls [FLAGS] [SETTING]`](https://mise.jdx.dev/cli/settings/ls.html)
-- [`mise settings set [-l --local] <SETTING> [VALUE]`](https://mise.jdx.dev/cli/settings/set.html)
-- [`mise settings unset [-l --local] <KEY>`](https://mise.jdx.dev/cli/settings/unset.html)
+- [`mise settings set [-l --local] [--override] <SETTING> [VALUE]`](https://mise.jdx.dev/cli/settings/set.html)
+- [`mise settings unset [-l --local] [--override] <KEY>`](https://mise.jdx.dev/cli/settings/unset.html)
 
 ## Related documentation [​](#related-documentation)
 

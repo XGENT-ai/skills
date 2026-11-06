@@ -1,10 +1,10 @@
-mbx cache stats
-
 `mbx cache stats` [​](#mbx-cache-stats)
 
 - **Usage:** `mbx cache stats [--json]`
 
-Summarize what the store holds.
+Summarize the action store, managed targets, and learned incremental state.
+
+The report also counts generated source trees and ends with the combined logical size of all four.
 
 ## Flags [​](#flags)
 

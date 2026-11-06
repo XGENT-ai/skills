@@ -1,42 +1,57 @@
-mise shell
-
 shell` [​](#mise-shell)
 
-- **Usage:** `mise shell [FLAGS] <TOOL@VERSION>…`
+- **Usage:** `mise shell [FLAGS] [TOOL@VERSION]…`
 - **Aliases:** `sh`
 - **Effect:** read-only
 - **Source code:** [`src/cli/shell.rs`](https://github.com/jdx/mise/blob/main/src/cli/shell.rs)
 
 Set a tool version for the current shell session
 
-Only works in a session where mise is already activated.
-
-This works by setting environment variables for the current shell session such as `MISE_NODE_VERSION=20` which is "eval"ed as a shell function created by `mise activate`.
+Installs the version if needed, then sets `MISE_<TOOL>_VERSION`, such as `MISE_NODE_VERSION`, to the resolved version in the current shell. That overrides config files until you close the shell or run `mise shell --unset <TOOL>`, or `mise shell --unset --all` to remove every version set this way. Requires `mise activate`: the shell function it defines applies the variable that this command prints.
 
 ## Arguments [​](#arguments)
 
-- **`<TOOL@VERSION>…`** — Tool(s) to use
+- **`[TOOL@VERSION]…`** — Tools to set, such as node@20
 
 ## Flags [​](#flags)
 
-- **`-j --jobs <JOBS>`** — Number of jobs to run in parallel Values below 1 are treated as 1 Defaults to the `jobs` setting
+- **`-j --jobs <JOBS>`** — Number of jobs to run in parallel (default: the `jobs` setting)
 
   **Environment Variable:** `MISE_JOBS`
-- **`-u --unset`** — Remove a previously set version
-- **`--raw`** — Connect backend install command stdin/stdout/stderr directly to the terminal. Implies `--jobs=1`
+- **`-u --unset`** — Remove a version set earlier with `mise shell`
+- **`--all`** — With `--unset`, remove every `MISE_<TOOL>_VERSION` in this shell
+
+  This includes any you exported yourself, not only those set by `mise shell`.
+- **`--raw`** — Connect the install commands' stdin, stdout, and stderr to the terminal
+
+  Implies `--jobs=1`.
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
+Use node 20 in this shell
+
 ```
 mise shell node@20
 node -v
-v20.0.0
+v20.19.5
+```
+
+Go back to the version the config requests
+
+```
+mise shell --unset node
+```
+
+Drop every version set with `mise shell` or `MISE_<TOOL>_VERSION`
+
+```
+mise shell --unset --all
 ```
 
 ## Related documentation [​](#related-documentation)
 
-- [Shell activation](https://mise.jdx.dev/getting-started.html#activate-mise).
+- [Shell setup](https://mise.jdx.dev/shell-setup.html).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

@@ -1,5 +1,3 @@
-mise env
-
 env` [​](#mise-env)
 
 - **Usage:** `mise env [FLAGS] [TOOL@VERSION]…`
@@ -11,11 +9,11 @@ Print the environment for the current configuration
 
 Evaluate the shell output to load tools and variables once, without installing prompt hooks. Changing directories afterward does not recompute this environment. Use `mise exec -- command` to apply it to one child process instead.
 
-JSON, dotenv, and shell output contain actual variable values, including secrets. `--redacted` selects variables marked for redaction; it does not mask their values. Environment construction may install missing tools according to mise's settings.
+JSON, dotenv, and shell output contain actual variable values, including secrets. `--redacted` selects variables marked for redaction; it does not mask their values. Tools you pass as TOOL@VERSION arguments are installed first if they are missing; missing tools from the config are reported, not installed.
 
 ## Arguments [​](#arguments)
 
-- **`[TOOL@VERSION]…`** — Tool(s) to include in addition to those in config, e.g. node@20
+- **`[TOOL@VERSION]…`** — Tools to include in addition to those in the config, such as `node@24`
 
 ## Flags [​](#flags)
 
@@ -27,15 +25,51 @@ JSON, dotenv, and shell output contain actual variable values, including secrets
 - **`--json-extended`** — Output in JSON format with additional information (source, tool)
 - **`--redacted`** — Only include variables marked for redaction; their values are printed unmasked
 - **`--values`** — Only show values of environment variables
+- **`--paths`** — Print the PATH entries mise manages, in PATH order, one per line
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
+Load the environment once into the current bash session
+
 ```
 eval "$(mise env -s bash)"
+```
+
+Same, for zsh
+
+```
 eval "$(mise env -s zsh)"
+```
+
+Same, for fish
+
+```
 mise env -s fish | source
+```
+
+Same, for xonsh
+
+```
 execx($(mise env -s xonsh))
+```
+
+Print the variables as JSON
+
+```
+mise env --json
+```
+
+List the PATH entries mise manages, such as tool bin directories
+
+```
+mise env --paths
+```
+
+Write a dotenv file; it contains secret values
+
+```
+mise env --dotenv > .env
 ```
 
 ## Related documentation [​](#related-documentation)

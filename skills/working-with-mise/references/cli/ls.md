@@ -1,0 +1,127 @@
+ls` [​](#mise-ls)
+
+- **Usage:** `mise ls [FLAGS] [INSTALLED_TOOL]…`
+- **Aliases:** `list`
+- **Effect:** read-only
+- **Source code:** [`src/cli/ls.rs`](https://github.com/jdx/mise/blob/main/src/cli/ls.rs)
+
+List installed and active tool versions
+
+Lists the tools mise knows about: versions that are installed, and versions requested by a config file (active) whether or not they are installed. Each row shows the tool, the version (marked `(missing)` when it is not installed, or `(lazy)` when it is a lazy tool that installs on first use), the config file that requests it, and the request as written.
+
+## Arguments [​](#arguments)
+
+- **`[INSTALLED_TOOL]…`** — Only show these tools
+
+## Flags [​](#flags)
+
+- **`--truncate`** — Truncate long terminal output to fit the available width
+
+  **Default:** `true`
+- **`-b --backend <BACKEND>`** — Only show tools from this backend, such as aqua, cargo, core, or go
+
+  Registry shorthands count as the backend they resolve to, so `jq` is listed under aqua. Repeat the flag to show several backends.
+- **`-c --current`** — Only show versions the loaded config files request
+- **`-g --global`** — Only show versions the global config requests
+- **`-i --installed`** — Only show installed versions
+
+  Hides requested versions that are not installed.
+- **`--grouped`** — List tools in a separate section for each backend
+
+  Cannot be combined with --json; use --backend to filter JSON output.
+- **`-J --json`** — Output in JSON format
+- **`-l --local`** — Deprecated alias for --no-global
+
+  Removed in mise 2027.7.0.
+- **`--no-global`** — Only show versions that non-global config files request
+
+  Includes config files in parent directories and skips the global config, system config, and `MISE_<TOOL>_VERSION` environment variables. See --project for the nearest project's config alone.
+- **`--project`** — Only show versions the nearest project config requests
+
+  The project is the nearest directory, starting at the current one and moving up, that has a mise config file. Every config file in that directory counts, such as `mise.toml`, `mise.local.toml`, `conf.d` fragments, `.tool-versions` and idiomatic version files. Configs in parent directories and global or system configs do not, nor do `MISE_<TOOL>_VERSION` environment variables. A version that a later file in that directory overrides is not listed, as with --no-global; `mise uninstall --project` still removes it.
+- **`-m --missing`** — Only show requested versions that are not installed
+- **`--all-sources`** — Show requests from every config file mise has seen, not only loaded ones
+
+  mise tracks the config files it loads so `mise prune` keeps the versions they use.
+- **`--monorepo`** — Also list tools from every config root in `[monorepo].config_roots`
+
+  Requires `monorepo_root = true` and an explicit `config_roots` list in the monorepo root's config. Uses the active MISE\_ENV.
+
+  **Environment Variable:** `MISE_MONOREPO`
+- **`--no-header`** — Do not print the header row
+- **`--outdated`** — Show whether each version is outdated
+- **`--prefix <PREFIX>`** — Only show versions starting with PREFIX (requires a tool argument)
+- **`--prunable`** — List only tools that can be pruned with `mise prune`
+- **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+Show installed versions and the requests from the loaded config files
+
+```
+mise ls
+```
+
+Show only versions the loaded config files request
+
+```
+mise ls --current
+```
+
+Find requested versions that are not installed
+
+```
+mise ls --missing
+```
+
+Machine-readable output: an object keyed by tool name
+
+```
+mise ls --json
+```
+
+With a tool argument, JSON output is an array of its version records
+
+```
+mise ls node --json
+```
+
+Include requests from every config file mise has seen
+
+```
+mise ls --all-sources
+```
+
+Show only tools from the go or cargo backends
+
+```
+mise ls --backend go --backend cargo
+```
+
+List tools in a separate section for each backend
+
+```
+mise ls --grouped
+```
+
+Deprecation:
+
+The `-l` and `--local` flags are deprecated in favor of `--no-global`. mise warns about them from 2027.1.0 and removes them in 2027.7.0.
+
+## Related documentation [​](#related-documentation)
+
+- [Development tools](https://mise.jdx.dev/dev-tools/).
+- [All commands](https://mise.jdx.dev/cli/).
+- [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
+
+[Edit this page](https://github.com/jdx/mise/edit/main/docs/cli/ls.md)
+
+Last updated:
+
+Pager
+
+[Previous pagemise lock](https://mise.jdx.dev/cli/lock.html)
+
+[Next pagemise ls-remote](https://mise.jdx.dev/cli/ls-remote.html)
+
+MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

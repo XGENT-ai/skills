@@ -1,12 +1,12 @@
-mise token
-
 token` [​](#mise-token)
 
 - **Usage:** `mise token <SUBCOMMAND>`
 - **Effect:** read-only
 - **Source code:** [`src/cli/token/mod.rs`](https://github.com/jdx/mise/blob/main/src/cli/token/mod.rs)
 
-Display git provider tokens mise will use
+Show which Git provider token mise uses
+
+Shows the token mise would send to a GitHub, GitLab, or Forgejo host and where it came from, to debug authentication. See <https://mise.jdx.dev/dev-tools/github-tokens.html>
 
 ## Flags [​](#flags)
 

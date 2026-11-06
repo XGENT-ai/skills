@@ -1,20 +1,18 @@
-Tool Aliases
+Tool aliases [​](#tool-aliases)
 
-Tool Aliases [​](#tool-aliases)
+Use `[tool_alias]` to point a tool name at a different backend or to give a version request a name. Put shared aliases in the project's `mise.toml`, so teammates get the alias along with the tool declaration, and personal ones in `~/.config/mise/config.toml`.
 
-Use `[tool_alias]` to give a tool a different backend or name a version request. Put shared aliases in the project's `mise.toml`; use `~/.config/mise/config.toml` for personal defaults. Teammates need the alias definition as well as the tool declaration.
+Two other things in mise are called aliases. Registry aliases, such as `rg` for `ripgrep`, are alternate names built into the [registry](https://mise.jdx.dev/registry.html); you do not define them. For command shortcuts such as `alias ll='ls -la'`, see [Shell aliases](https://mise.jdx.dev/shell-aliases.html).
 
 Renamed configuration key
 
-`[alias]` was renamed to `[tool_alias]`. The old key still works but is deprecated. For command shortcuts such as `alias ll='ls -la'`, use [Shell Aliases](https://mise.jdx.dev/shell-aliases.html).
+`[alias]` was renamed to `[tool_alias]`. The old key still works but is deprecated and prints a warning.
 
-## Aliased Backends [​](#aliased-backends)
+## Backend aliases [​](#aliased-backends)
 
-A backend alias changes where mise obtains a tool. For example, explicitly choose mise's built-in Node.js backend:
+A backend alias changes where mise gets a tool. For example, keep mise's built-in Node.js even if someone has installed a `node` plugin, which would otherwise take precedence:
 
 mise.toml
-
-toml
 
 ```
 [tool_alias]
@@ -24,13 +22,11 @@ node = "core:node"
 node = "24"
 ```
 
-Inspect the result with `mise tool node`, then run `mise install` to install the selected version. See [backend selection](https://mise.jdx.dev/dev-tools/backend_architecture.html#how-backend-selection-works) if an installed plugin or environment override selects a different source than expected.
+Check the result with `mise tool node`, then run `mise install`. See [how backend selection works](https://mise.jdx.dev/dev-tools/backends/#how-backend-selection-works) when an installed plugin or an environment variable picks a different source than you expect.
 
-Aliases can also select separate release assets from the same GitHub repository:
+Aliases can also install separate release assets from one GitHub repository as separate tools:
 
 mise.toml
-
-toml
 
 ```
 [tool_alias]
@@ -42,15 +38,13 @@ dhall-json = { version = "v1.42.2", matching = "dhall-json" }
 dhall-lsp = { version = "latest", matching = "dhall-lsp-server" }
 ```
 
-Each alias has its own version request and [GitHub asset filter](https://mise.jdx.dev/dev-tools/backends/github.html#matching). This matters for repositories that release several tools independently.
+Each alias has its own version request and [GitHub asset filter](https://mise.jdx.dev/dev-tools/backends/github.html#matching), which helps with repositories that release several tools independently.
 
-## Aliased Versions [​](#aliased-versions)
+## Version aliases [​](#aliased-versions)
 
-A version alias gives a stable name to a version request. Keep a team's Node.js release series in one place:
+A version alias gives a name to a version request. This keeps a team's Node.js release series in one place:
 
 mise.toml
-
-toml
 
 ```
 [tool_alias.node.versions]
@@ -60,29 +54,51 @@ project-lts = "24"
 node = "project-lts"
 ```
 
-`project-lts` resolves as a request for Node.js 24. It is not an exact patch pin; use [mise.lock](https://mise.jdx.dev/dev-tools/mise-lock.html) to record the resolved version. Changing the alias changes the request for every declaration that uses it.
+`project-lts` resolves as the request `24`, so it selects a 24.x release, not an exact patch version; use [mise.lock](https://mise.jdx.dev/dev-tools/mise-lock.html) to record the resolved version. Changing the alias changes the request for every declaration that uses it.
 
-The built-in Node.js backend already supplies aliases such as `lts` and named LTS releases. You don't need to redefine those. Legacy asdf plugin authors can provide their own aliases through `bin/list-aliases`, with one alias and version per line:
+Some backends provide aliases of their own, such as Node.js `lts` and `lts-jod`, and Java `lts`. You do not need to redefine them. Legacy asdf plugins provide theirs through a `bin/list-aliases` script that prints one alias and version per line.
 
-bash
+## Manage aliases from the command line [​](#manage-aliases)
+
+[`mise tool-alias ls`](https://mise.jdx.dev/cli/tool-alias/ls.html) lists aliases, including the ones backends provide:
+
+sh
 
 ```
-#!/usr/bin/env bash
-printf '%s\n' 'recommended 2.0' 'legacy 1.0'
+mise tool-alias ls node
+```
+
+text
+
+```
+node  lts          26
+node  lts-argon    4
+node  lts-boron    6
+...
+```
+
+[`mise tool-alias set`](https://mise.jdx.dev/cli/tool-alias/set.html) and [`mise tool-alias unset`](https://mise.jdx.dev/cli/tool-alias/unset.html) edit your global config. Edit `mise.toml` directly for project aliases.
+
+sh
+
+```
+mise tool-alias set node project-lts 24  # version alias
+mise tool-alias set mytool github:owner/repo  # backend alias
+mise tool-alias unset node project-lts
 ```
 
 ## Templates [​](#templates)
 
-Alias values support [templates](https://mise.jdx.dev/templates.html). For example, allow an explicit environment override with a default release series:
+Alias values support [templates](https://mise.jdx.dev/templates.html). For example, read the release series from an environment variable, with a default:
 
-toml
+mise.toml
 
 ```
 [tool_alias.node.versions]
 project-lts = "{{ env.PROJECT_NODE_VERSION | default(value='24') }}"
 ```
 
-Set `PROJECT_NODE_VERSION` before invoking mise. Avoid computing a tool's version by invoking that same tool from its alias template: version resolution may happen before the tool is available, or re-enter mise through a shim.
+Set `PROJECT_NODE_VERSION` before running mise. Do not compute a tool's version by running that same tool from its alias template: mise may resolve the version before the tool is installed, or re-enter itself through a shim.
 
 [Edit this page](https://github.com/jdx/mise/edit/main/docs/dev-tools/aliases.md)
 
@@ -92,6 +108,6 @@ Pager
 
 [Previous pageShims](https://mise.jdx.dev/dev-tools/shims.html)
 
-[Next pageTool Stubs](https://mise.jdx.dev/dev-tools/tool-stubs.html)
+[Next pageTool stubs](https://mise.jdx.dev/dev-tools/tool-stubs.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

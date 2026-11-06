@@ -1,22 +1,42 @@
-mise bin-paths
-
 bin-paths` [​](#mise-bin-paths)
 
 - **Usage:** `mise bin-paths [--bin-names] [-J --json] [TOOL@VERSION]…`
 - **Effect:** read-only
 - **Source code:** [`src/cli/bin_paths.rs`](https://github.com/jdx/mise/blob/main/src/cli/bin_paths.rs)
 
-List all the active runtime bin paths
+List the bin directories of the active tools
+
+Prints the bin directories of the tool versions the current config selects. It does not include `_.path` entries from \[env]; `mise doctor path` lists everything mise adds to PATH.
 
 ## Arguments [​](#arguments)
 
-- **`[TOOL@VERSION]…`** — Tool(s) to look up e.g.: ruby@3
+- **`[TOOL@VERSION]…`** — Only list these tools, such as `ruby@3`
 
 ## Flags [​](#flags)
 
-- **`--bin-names`** — Output executable names instead of bin directories
-- **`-J --json`** — Output executable entries in JSON format (implies --bin-names)
+- **`--bin-names`** — Print executable names instead of bin directories
+- **`-J --json`** — Print executables as JSON objects with `name`, `path`, and `symlink` (implies --bin-names)
 - **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+Print the bin directory of every active tool
+
+```
+mise bin-paths
+```
+
+Print only node's bin directory
+
+```
+mise bin-paths node
+```
+
+List the executables the active tools provide
+
+```
+mise bin-paths --bin-names
+```
 
 ## Related documentation [​](#related-documentation)
 
@@ -30,7 +50,7 @@ Last updated:
 
 Pager
 
-[Previous pagemise backends ls](https://mise.jdx.dev/cli/backends/ls.html)
+[Previous pagemise backends switch](https://mise.jdx.dev/cli/backends/switch.html)
 
 [Next pagemise bootstrap](https://mise.jdx.dev/cli/bootstrap.html)
 

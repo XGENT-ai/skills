@@ -1,5 +1,3 @@
-mise uninstall
-
 uninstall` [​](#mise-uninstall)
 
 - **Usage:** `mise uninstall [FLAGS] [INSTALLED_TOOL@VERSION]…`
@@ -8,44 +6,55 @@ uninstall` [​](#mise-uninstall)
 
 Remove installed tool versions
 
-This only removes the installed version; it does not modify mise.toml. Use `mise unuse` to remove a tool from mise.toml and uninstall it.
+Removes installed versions but does not edit mise.toml. Use `mise unuse` to remove a tool from mise.toml and uninstall it. A tool name or version prefix, such as `node` or `node@22`, must match exactly one installed version unless you pass `--all`.
+
+`--project` removes the installed versions that the project's own config files request. Installs are shared by every project, so other projects that use the same versions have to install them again.
 
 ## Arguments [​](#arguments)
 
-- **`[INSTALLED_TOOL@VERSION]…`** — Tool(s) to remove
+- **`[INSTALLED_TOOL@VERSION]…`** — Tools to remove, such as node@22.0.0
 
 ## Flags [​](#flags)
 
-- **`-a --all`** — Delete all installed versions
-- **`-n --dry-run`** — Do not actually delete anything
-- **`--dry-run-code`** — Like --dry-run but exits with code 1 if there are tools to uninstall
+- **`-a --all`** — Remove every installed version of the named tools, or of every tool when none is named
+- **`--project`** — Remove the installed versions the nearest project config requests
 
-  This is useful for scripts to check if tools need to be uninstalled.
+  The project is the nearest directory, starting at the current one and moving up, that has a mise config file. Every config file in that directory counts, such as `mise.toml`, `mise.local.toml`, `conf.d` fragments, `.tool-versions` and idiomatic version files. Configs in parent directories and global or system configs do not. Every version those files name is removed, including one that a later file overrides. Lists what it will remove and asks for confirmation unless `--yes` or a dry run is given. Tools set to a `path:` or `system` version are never removed.
+- **`-n --dry-run`** — Show what would change without changing anything
+- **`--dry-run-code`** — Like --dry-run, but exit with code 1 if there are tools to uninstall
+
+  Use it in scripts that check whether tools need uninstalling.
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
-uninstall a specific version
+Uninstall a specific version
 
 ```
-mise uninstall node@18.0.0
+mise uninstall node@22.0.0
 ```
 
-uninstall the current node version (if only one version is installed)
+Uninstall node when exactly one version is installed
 
 ```
 mise uninstall node
 ```
 
-uninstall every installed version of node
+Uninstall every installed version of node
 
 ```
 mise uninstall --all node
 ```
 
+Preview the versions this project's config requests
+
+```
+mise uninstall --project --dry-run
+```
+
 ## Related documentation [​](#related-documentation)
 
-- [Development tools](https://mise.jdx.dev/dev-tools/).
+- [Removing tools](https://mise.jdx.dev/dev-tools/#remove-tools).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

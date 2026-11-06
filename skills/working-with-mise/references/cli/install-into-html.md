@@ -1,19 +1,19 @@
-mise install-into
-
 install-into` [​](#mise-install-into)
 
 - **Usage:** `mise install-into <TOOL@VERSION> <PATH>`
-- **Effect:** modifies state
+- **Effect:** destructive — may delete or irreversibly overwrite
 - **Source code:** [`src/cli/install_into.rs`](https://github.com/jdx/mise/blob/main/src/cli/install_into.rs)
 
-Install a tool version to a specific path
+Install a tool version into a directory outside mise
 
-Used for building a tool to a directory for use outside of mise
+Downloads or builds TOOL@VERSION into PATH for use without mise. mise does not track the result, so it does not appear in `mise ls`.
+
+If PATH is not empty, mise asks before deleting its contents; --yes deletes them without asking.
 
 ## Arguments [​](#arguments)
 
-- **`<TOOL@VERSION>`** — Tool to install e.g.: node@20
-- **`<PATH>`** — Path to install the tool into
+- **`<TOOL@VERSION>`** — Tool and version to install, such as `node@24`
+- **`<PATH>`** — Directory to install into; its existing contents are deleted
 
 ## Flags [​](#flags)
 
@@ -21,11 +21,11 @@ Used for building a tool to a directory for use outside of mise
 
 ## Examples [​](#examples)
 
-install node@20.0.0 into ./mynode
+Install node 24 into ./mynode and run it
 
 ```
-mise install-into node@20.0.0 ./mynode && ./mynode/bin/node -v
-v20.0.0
+mise install-into node@24 ./mynode && ./mynode/bin/node -v
+v24.11.0
 ```
 
 ## Related documentation [​](#related-documentation)
@@ -42,6 +42,6 @@ Pager
 
 [Previous pagemise install](https://mise.jdx.dev/cli/install.html)
 
-[Next pagemise latest](https://mise.jdx.dev/cli/latest.html)
+[Next pagemise installs](https://mise.jdx.dev/cli/installs.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

@@ -1,10 +1,8 @@
-mbx cache largest
-
 `mbx cache largest` [​](#mbx-cache-largest)
 
 - **Usage:** `mbx cache largest [--limit <LIMIT>]`
 
-List the largest objects and action-result records.
+List the largest objects and action results.
 
 ## Flags [​](#flags)
 

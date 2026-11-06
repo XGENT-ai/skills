@@ -1,0 +1,90 @@
+activate` [​](#mise-activate)
+
+- **Usage:** `mise activate [FLAGS] [SHELL_TYPE]`
+- **Effect:** read-only
+- **Source code:** [`src/cli/activate.rs`](https://github.com/jdx/mise/blob/main/src/cli/activate.rs)
+
+Print the script to activate mise in an interactive shell
+
+Evaluate this command's output with the syntax for your shell; running it alone only prints the script. Activation updates tools and environment variables as this shell changes directories.
+
+Add the matching example below once to your interactive startup file: \~/.bashrc for Bash, \~/.zshrc for Zsh, \~/.config/fish/config.fish for Fish, or $PROFILE for PowerShell. For Nushell, Elvish and other shells, see <https://mise.jdx.dev/shell-setup.html>.
+
+The mise executable must be on PATH before that line runs. Otherwise use its absolute path, for example `eval "$(~/.local/bin/mise activate zsh)"`.
+
+Use `mise exec -- command` for scripts and CI that do not need interactive hooks. The `status.*` settings control the messages mise prints when you change directories.
+
+## Arguments [​](#arguments)
+
+- **`[SHELL_TYPE]`** — Shell type to generate the script for
+
+  Defaults to the shell named by MISE\_SHELL or SHELL. mise reports an error when neither names a supported shell, as in PowerShell and cmd on Windows.
+
+  **Choices:** `bash`, `elvish`, `fish`, `nu`, `xonsh`, `zsh`, `pwsh`, `powershell`
+
+## Flags [​](#flags)
+
+- **`-q --quiet`** — Suppress non-error messages from the hook that runs at each prompt
+- **`--no-hook-env`** — Do not run hook-env automatically
+
+  Use it for debugging: after `eval "$(mise activate zsh --no-hook-env)"`, run `mise hook-env` yourself to print the shell code it would evaluate, or `mise hook-env --trace` for more detail.
+- **`--shims`** — Put the shims directory on PATH instead of updating PATH at each prompt
+
+  Roughly equivalent to:
+
+  ```
+  PATH="$HOME/.local/share/mise/shims:$PATH"
+  ```
+
+  Shims do not support every feature of `mise activate`; see <https://mise.jdx.dev/dev-tools/shims.html#shims-vs-path>.
+- **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+Activate mise in Bash
+
+```
+eval "$(mise activate bash)"
+```
+
+Activate mise in Zsh
+
+```
+eval "$(mise activate zsh)"
+```
+
+Activate mise in Fish
+
+```
+mise activate fish | source
+```
+
+Activate mise in Xonsh
+
+```
+execx($(mise activate xonsh))
+```
+
+Activate mise in PowerShell
+
+```
+(&mise activate pwsh) | Out-String | Invoke-Expression
+```
+
+## Related documentation [​](#related-documentation)
+
+- [Shell setup](https://mise.jdx.dev/shell-setup.html).
+- [All commands](https://mise.jdx.dev/cli/).
+- [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
+
+[Edit this page](https://github.com/jdx/mise/edit/main/docs/cli/activate.md)
+
+Last updated:
+
+Pager
+
+[Previous pageCLI overview](https://mise.jdx.dev/cli/)
+
+[Next pagemise backends](https://mise.jdx.dev/cli/backends.html)
+
+MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

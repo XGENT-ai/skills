@@ -1,0 +1,131 @@
+upgrade` [​](#mise-upgrade)
+
+- **Usage:** `mise upgrade [FLAGS] [INSTALLED_TOOL@VERSION]…`
+- **Aliases:** `up`
+- **Effect:** modifies state
+- **Source code:** [`src/cli/upgrade.rs`](https://github.com/jdx/mise/blob/main/src/cli/upgrade.rs)
+
+Upgrade outdated tools
+
+By default, keeps the range in mise.toml: with `node = "20"`, it installs the newest 20.x release. Use `--bump` to upgrade to the newest release overall and update the version in mise.toml. Also updates mise.lock when lockfiles are enabled; see <https://mise.jdx.dev/dev-tools/mise-lock.html>
+
+The version you upgraded from is removed after the `upgrade.prune_after` setting's grace period unless a tracked config or tool stub still uses it. Pass `--prune` to remove it now or `--no-prune` to keep it.
+
+## Arguments [​](#arguments)
+
+- **`[INSTALLED_TOOL@VERSION]…`** — Tools to upgrade, such as node@20 python@3.10
+
+  Upgrades every configured tool when omitted.
+
+## Flags [​](#flags)
+
+- **`-b --bump`** — Upgrade past the configured range to the newest release, and update the config to match
+
+  The config keeps its precision: `node = "20"` becomes `node = "22"`, and `node = "20.0.0"` becomes `node = "22.1.0"`. If you name a version on the command line ( `node@latest`, `node@3`, or `node@prefix:3`), that request is written instead; `mise upgrade node@latest --bump` writes `latest`. With the `pin` setting on, a version request such as `node@3` is written as the version it resolved to, and a bare `mise upgrade --bump` writes the resolved version for every request that is not exact, such as `latest` or `20`. Requests that do not come from a config file mise can write, such as `MISE_NODE_VERSION`, are upgraded but not written.
+- **`--pin`** — With --bump, write the resolved version instead of keeping the request's precision
+
+  `node = "latest"` and `node = "20"` become `node = "24.14.0"`. A named request such as `node@3` is written as the version it resolved to. Make this the default with the `pin` setting ( `MISE_PIN=1`).
+- **`-i --interactive`** — Choose which tools to upgrade from a multiselect menu
+- **`-j --jobs <JOBS>`** — Number of jobs to run in parallel (default: the `jobs` setting)
+
+  **Environment Variable:** `MISE_JOBS`
+- **`-n --dry-run`** — Show what would change without changing anything
+- **`-x --exclude <INSTALLED_TOOL>`** — Tools to exclude from upgrading, such as go python
+- **`--dry-run-code`** — Like --dry-run, but exit with code 1 if there are outdated tools
+
+  Use it in scripts that check whether tools need upgrading.
+- **`--inactive`** — Also upgrade installed tools that the current config does not request
+- **`--global`** — Only upgrade tools defined in the global config
+
+  Upgrades the requests in the global and system config (\~/.config/mise/config.toml, /etc/mise/config.toml), even where a project config or a `MISE_<TOOL>_VERSION` environment variable sets its own version of the tool. It runs as if from outside any project, so project config, lockfiles, and `[env]` are neither read nor changed. Tools that update themselves, such as coding agents, run this instead of their own updater; see <https://mise.jdx.dev/dev-tools/self-updating-tools.html>
+- **`--local`** — Deprecated alias for --no-global
+
+  Removed in mise 2027.7.0.
+- **`--no-global`** — Only upgrade tools defined in project config files
+
+  Skips tools defined in the global config (\~/.config/mise/config.toml) and tools set through `MISE_<TOOL>_VERSION` environment variables.
+- **`--minimum-release-age <MINIMUM_RELEASE_AGE>`** — Only upgrade to versions released before this date or older than this duration
+
+  Supports absolute dates such as "2024-06-01" and relative durations such as "90d" or "1y".
+
+  Applies only to requests that can match several versions, such as "20" or "latest". Exact versions such as "22.5.0" are not filtered.
+- **`--no-prune`** — Do not uninstall the versions that were upgraded away from
+
+  The old version is left in place and is not scheduled for removal. Use this when something outside mise points at the install directory.
+
+  Set `upgrade.auto_prune = false` to make this the default.
+- **`--prune`** — Immediately uninstall the versions that were upgraded away from
+
+  Use this to bypass `upgrade.prune_after`, or to override `upgrade.auto_prune = false` for a single run.
+- **`--raw`** — Connect the install commands' stdin, stdout, and stderr to the terminal
+
+  Implies `--jobs=1`.
+- **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+Upgrade every configured tool within its range
+
+```
+mise upgrade
+```
+
+Upgrade only node
+
+```
+mise upgrade node
+```
+
+Upgrade every tool to its newest release and update mise.toml
+
+```
+mise upgrade --bump
+```
+
+Show what would be upgraded
+
+```
+mise upgrade --dry-run
+```
+
+Upgrade everything except go
+
+```
+mise upgrade --exclude go
+```
+
+Choose tools from a menu
+
+```
+mise upgrade --interactive
+```
+
+Upgrade claude within the global config's request, leaving project config alone
+
+```
+mise upgrade --global claude
+```
+
+Deprecation:
+
+The `-l` shorthand for `--bump` is deprecated and will be removed in mise 2027.8.5. Use `-b` or `--bump` instead.
+
+The `--local` flag is deprecated in favor of `--no-global`. mise warns about it from 2027.1.0 and removes it in 2027.7.0.
+
+## Related documentation [​](#related-documentation)
+
+- [Upgrading tools](https://mise.jdx.dev/dev-tools/#upgrade-tools).
+- [All commands](https://mise.jdx.dev/cli/).
+- [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
+
+[Edit this page](https://github.com/jdx/mise/edit/main/docs/cli/upgrade.md)
+
+Last updated:
+
+Pager
+
+[Previous pagemise unuse](https://mise.jdx.dev/cli/unuse.html)
+
+[Next pagemise use](https://mise.jdx.dev/cli/use.html)
+
+MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

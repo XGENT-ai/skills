@@ -1,8 +1,6 @@
-Acknowledgements
-
 Acknowledgements [​](#acknowledgements)
 
-mbx depends on Cargo and builds on ideas established by earlier compiler caches. In particular, kache directly inspired the project's design.
+mbx depends on Cargo and builds on ideas established by earlier compiler caches. In particular, kache directly inspired the project's design. mbx's Cargo display includes code from cargo-pretty and norimel.
 
 ## Cargo [​](#cargo)
 
@@ -18,13 +16,13 @@ See the [comparison with sccache](https://mr-boxington.jdx.dev/compared#sccache)
 
 [kache](https://github.com/kunobi-ninja/kache) predates mbx and directly inspired its design. It combines a content-addressed `RUSTC_WRAPPER` cache with C and C++ compiler shims, remote storage, and executable caching.
 
-The projects do not share code. Both aim to make compiled work reusable across checkouts; they differ in process lifecycle, storage management, and remote policy. The [comparison with kache](https://mr-boxington.jdx.dev/compared#kache) explains where mbx took a different direction and where kache may be the better fit.
+mbx and kache do not share code. Both aim to make compiled work reusable across checkouts; they differ in process lifecycle, storage management, and remote policy. The [comparison with kache](https://mr-boxington.jdx.dev/compared#kache) explains where mbx took a different direction and where kache may be the better fit.
 
 ## cargo-pretty [​](#cargo-pretty)
 
-[cargo-pretty](https://github.com/romancitodev/cargo-pretty) by [romancitodev](https://github.com/romancitodev) provides the base for mbx's Cargo display: live and completed crate rows, per-crate timers, fading, and browsable warnings. mbx adds cache statistics and a progress bar colored by hits, misses, and bypasses while retaining Cargo's native run and test execution.
+[cargo-pretty](https://github.com/romancitodev/cargo-pretty) by [romancitodev](https://github.com/romancitodev) provides the base for mbx's Cargo display: live crate rows, completed rows that dim as newer ones finish, per-crate timers, and browsable warnings. mbx adds cache statistics and a progress bar colored by hits, misses, and bypasses while retaining Cargo's native run and test execution.
 
-The adapted source retains romancitodev's MIT license and records the upstream revision in the repository's `NOTICE` file.
+mbx draws the display with norimel, a styled-text block library from romancitodev's [nobubbles](https://github.com/romancitodev/nobubbles) project. mbx vendors norimel as a private module, so it ships inside mbx rather than as a registry dependency. Both the adapted cargo-pretty code and the vendored norimel keep their upstream MIT licenses, and the repository's [`NOTICE`](https://github.com/jdx/mr-boxington/blob/main/NOTICE) file records each upstream revision.
 
 [Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/docs/acknowledgements.md)
 
@@ -32,6 +30,8 @@ Last updated:
 
 Pager
 
-[Previous pageProtocol compatibility](https://mr-boxington.jdx.dev/protocol-compatibility)
+[Previous pageBenchmarks](https://mr-boxington.jdx.dev/benchmarks)
+
+[Next pageThe song](https://mr-boxington.jdx.dev/song)
 
 MIT License·Copyright © 2026· [jjdx.dev](https://jdx.dev)

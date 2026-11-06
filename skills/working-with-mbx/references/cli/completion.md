@@ -1,5 +1,3 @@
-mbx completion
-
 `mbx completion` [​](#mbx-completion)
 
 - **Usage:** `mbx completion <SHELL>`
@@ -8,7 +6,7 @@ Generate a self-contained shell completion script.
 
 ## Arguments [​](#arguments)
 
-- **`<SHELL>`** — Shell: bash, zsh, fish, or powershell.
+- **`<SHELL>`** — Shell: bash, zsh, fish, powershell (or pwsh), nu (or nushell), or elvish.
 
 ## Flags [​](#flags)
 
@@ -20,7 +18,7 @@ Last updated:
 
 Pager
 
-[Previous pagesetup](https://mr-boxington.jdx.dev/cli/setup)
+[Previous pageunset](https://mr-boxington.jdx.dev/cli/settings/unset)
 
 [Next pagedoctor](https://mr-boxington.jdx.dev/cli/doctor)
 

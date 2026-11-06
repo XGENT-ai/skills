@@ -1,5 +1,3 @@
-mise version
-
 version` [​](#mise-version)
 
 - **Usage:** `mise version [-J --json]`
@@ -7,11 +5,9 @@ version` [​](#mise-version)
 - **Effect:** read-only
 - **Source code:** [`src/cli/version.rs`](https://github.com/jdx/mise/blob/main/src/cli/version.rs)
 
-Display the version of mise
+Show the version of mise
 
-Displays the version, os, architecture, and the date of the build.
-
-If the version is out of date, it will display a warning.
+Prints the version, OS, architecture, and build date, and warns when a newer release is available. `mise --version`, `mise -V`, and `mise -v` with no other arguments print the same line.
 
 ## Flags [​](#flags)
 
@@ -20,11 +16,17 @@ If the version is out of date, it will display a warning.
 
 ## Examples [​](#examples)
 
+Show the version
+
 ```
 mise version
-mise --version
-mise -v
-mise -V
+2026.10.4 linux-x64 (2026-10-07)
+```
+
+Also show the latest release and the build time, as JSON
+
+```
+mise version --json
 ```
 
 ## Related documentation [​](#related-documentation)
@@ -39,7 +41,7 @@ Last updated:
 
 Pager
 
-[Previous pagemise use](https://mise.jdx.dev/cli/use.html)
+[Previous pagemise vars unset](https://mise.jdx.dev/cli/vars/unset.html)
 
 [Next pagemise watch](https://mise.jdx.dev/cli/watch.html)
 

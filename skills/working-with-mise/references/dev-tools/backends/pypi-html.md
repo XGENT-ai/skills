@@ -1,12 +1,16 @@
-PyPI Backend
+pypi backend [​](#pypi-backend)
 
-PyPI Backend [​](#pypi-backend)
+The `pypi` backend installs Python command-line applications from PyPI or a Git repository, each into its own virtual environment with its own dependencies. It installs with uv, or with pipx when uv is not available. Keep your application's libraries, such as NumPy and requests, in a project environment managed with uv or pip.
 
-The `pypi` backend installs Python command-line applications in isolated virtual environments. Each tool gets its own dependencies. Use a project environment and pip or uv for application libraries such as NumPy and requests.
+`pipx:` is another name for this backend: `pipx:black` and `pypi:black` install the same package. See [compatibility with `pipx:`](#compatibility-with-pipx).
 
-## Quick start [​](#dependencies)
+## Requirements [​](#requirements)
 
-Install uv, Python, and a CLI from PyPI:
+Install uv, or pipx. Add Python as well: pipx needs one to run, and installs from a [dependency graph](#dependency-locking) need an installed interpreter rather than one uv downloads. Without one, mise installs from the version alone unless you pass `--locked`, which fails instead. When `uv`, `pipx` or `python` is in your config, mise installs it before your Python tools. The [`with`](#with), [`expose`](#expose) and [`dependency_prereleases`](https://mise.jdx.dev/dev-tools/backends/pypi.html#dependency-prereleases) options need uv.
+
+## Usage [​](#usage)
+
+Install uv, Python and Black in the current project:
 
 sh
 
@@ -15,11 +19,7 @@ mise use python@3.14 uv pypi:black
 mise exec -- black --version
 ```
 
-### Project configuration [​](#usage)
-
-This adds the following to `mise.toml`:
-
-toml
+This writes the following to `mise.toml`. Add `-g` to `mise use` for your global config.
 
 ```
 [tools]
@@ -28,32 +28,44 @@ uv = "latest"
 "pypi:black" = "latest"
 ```
 
-Add `-g` to `mise use` to install tools globally.
-
-mise uses uv to install tools. With [dependency locking](#dependency-locking), it runs `uv sync --frozen`; version-only installs use `uv tool install`. If uv is unavailable, version-only installs fall back to `pipx install`. See [Using pipx](#using-pipx) to select that installer explicitly.
+When `mise.lock` records a tool's full dependency graph (see [dependency locking](#dependency-locking)), mise installs it with `uv sync --frozen`. Otherwise the lockfile records only the tool's version, a *version-only* install, and mise runs `uv tool install`, or `pipx install` when uv is not available. To choose pipx yourself, see [using pipx instead of uv](#using-pipx).
 
 ## Package sources [​](#supported-pipx-syntax)
 
-Use `pypi:black` for the PyPI distribution or `pypi:psf/black` for its GitHub source. Their releases and installation requirements can differ.
+Use `pypi:black` for the PyPI distribution or `pypi:psf/black` for its GitHub repository. Their releases and installation requirements can differ.
 
 | Source | Example |
 | --- | --- |
 | PyPI, latest version | `pypi:black` |
 | PyPI, specific version | `pypi:black@24.3.0` |
-| GitHub, default branch | `pypi:psf/black` |
+| GitHub, latest release | `pypi:psf/black` |
 | GitHub, specific release | `pypi:psf/black@24.3.0` |
 | Git repository | `pypi:git+https://github.com/psf/black.git` |
 | Git branch | `pypi:git+https://github.com/psf/black.git@main` |
+| Git subdirectory | `pypi:git+https://github.com/o/repo#subdirectory=cli` |
 
-For GitHub sources, `latest` installs from the unpinned default branch; it does not select the latest published release. Use an explicit version to select a release. For other Git URLs, `latest` resolves default-branch HEAD to a concrete commit. Remote tags are also available for explicit version requests.
+Other forms, including direct HTTPS archive URLs, are not supported.
 
-Direct HTTPS archive URLs are unsupported. Other source syntax may work but is unsupported and untested.
+For GitHub sources, `latest` selects the newest GitHub release, and installs from the default branch only when the repository has no releases. For other Git URLs, `latest` resolves the default branch's HEAD to a commit. You can request any branch, tag or commit explicitly.
+
+### Monorepo subdirectories [​](#git-subdirectory)
+
+For a package in a subdirectory of a Git repository, add the same `#subdirectory=` fragment that pip and uv accept. The `.git` suffix is optional, and the fragment also works with the GitHub shorthand:
+
+sh
+
+```
+mise use 'pypi:git+https://github.com/runpantheon/ltui#subdirectory=ltui@main'
+mise use 'pypi:runpantheon/ltui#subdirectory=jtui@main'
+```
+
+Quote the argument so the shell does not treat `#` specially. The fragment is part of the tool name, so each subdirectory is a separate tool, and the version still goes after `@`. Other fragment keys pass through unchanged, except that mise reads `[...]` in a tool name as tool options; use the [`extras`](#extras) option instead of `#egg=pkg[extra]`.
+
+Versions come from the whole repository, so `latest` selects the newest release even if the subdirectory did not exist at that tag. Pin a branch or commit when a repository's releases predate the subdirectory. With [`extras`](#extras), mise guesses the distribution name from the subdirectory; set [`package_name`](https://mise.jdx.dev/dev-tools/backends/pypi.html#package-name) if the name differs.
 
 ## Dependency locking [​](#dependency-locking)
 
-With **uv 0.12.10 or newer**, new `mise.lock` files record the full Python dependency graph, including wheel hashes and Python/platform markers. Locked installs reuse that graph without resolving dependencies again.
-
-Create a lockfile, or upgrade an existing version-only lockfile, then install:
+With uv 0.12.10 or newer, `mise lock` records each tool's full dependency graph, including wheel hashes and Python and platform markers, and `mise install --locked` replays it without resolving again. Create a lockfile, or upgrade a version-only one, then install:
 
 sh
 
@@ -62,11 +74,11 @@ mise lock --upgrade
 mise install --locked
 ```
 
-Commit both `mise.lock` and its [dependency sidecar directory](https://mise.jdx.dev/dev-tools/mise-lock.html#native-dependency-sidecars), which contains the native `pyproject.toml` and `uv.lock` files. Existing lockfiles keep version-only behavior until explicitly upgraded.
+Commit `mise.lock` together with each tool's sidecar directory, which holds the native `pyproject.toml` and `uv.lock`; see [dependency graphs](https://mise.jdx.dev/dev-tools/mise-lock.html#dependency-graphs). Existing lockfiles keep version-only installs until you upgrade them.
 
 ### Updating dependencies [​](#updating-dependencies)
 
-Ordinary `mise lock` reuses the recorded graph. To refresh a tool's transitive dependencies even when its own version has not changed:
+Ordinary `mise lock` reuses the recorded graph. To refresh a tool's dependencies when its own version has not changed:
 
 sh
 
@@ -84,31 +96,39 @@ uv lock --project .mise/locks/pypi-black/24.10.0 --upgrade-package click
 mise lock
 ```
 
-Run `mise lock` after editing a sidecar to accept its updated digest before using `mise install --locked`.
+Run `mise lock` after editing a sidecar to accept its new digest before you use `mise install --locked`.
 
 ### Requirements and limitations [​](#requirements-and-limitations)
 
-- **Wheels only for dependency graphs:** every dependency needs a published wheel for the target Python version and platform. Explicit `mise lock` and locked installs do not build source distributions. An ordinary `mise install` falls back to a version-only uv installation when it cannot produce a wheel-only graph.
-- **PyPI packages with uv:** Git sources and standalone pipx installs use version-only locking. pipx cannot replay a uv dependency graph.
-- **No free-form installer arguments in dependency graphs:** `uvx_args` and `pipx_args` use version-only installation during ordinary installs. Explicit dependency locking rejects them because mise cannot safely translate arbitrary installer arguments into a reproducible graph. Use the semantic options instead when dependency locking is required: [`with`](#with) injects additional requirements into the tool environment, [`expose`](#expose) also exposes their executables, and [`dependency_prereleases`](#dependency_prereleases) sets uv's prerelease policy. These are locked together with the tool, so the graph covers the injected packages. Configure [Python](#choosing-python) and the [registry URL](#registry-url) directly as well.
-- **Installed Python required:** lock generation needs an interpreter discoverable by uv, though it need not match the tool's configured Python version. Graph installs use the selected mise Python and do not download a replacement.
-- **Complete lockfiles required:** revision-2 locked uv installs fail if their dependency graph is missing. Run `mise lock` to generate it.
+A dependency graph needs a published wheel for every dependency on the target Python and platform. `mise lock` and locked installs never build source distributions; a plain `mise install` falls back to a version-only uv install when it cannot produce a wheel-only graph.
 
-The graph covers the Python range that every locked requirement supports, starting at Python 3.8, and retains all published wheel targets for portability. Requirements injected with [`with`](#with) or [`expose`](#expose) are part of that calculation: one pinned to an exact version raises the range's floor to the release's own `requires-python`, because a single release cannot span the wider range the way uv resolves an unpinned requirement. A pin carrying an environment marker that tests the interpreter, such as `python_version < "3.12"`, is left out, since it is simply absent from the versions it excludes. This can make sidecars large. Frozen installs reuse uv's artifact cache.
+Git sources and pipx installs always use version-only locking, and pipx cannot replay a uv graph. `uvx_args` and `pipx_args` cannot be locked: a plain `mise install` falls back to version-only, and `mise lock` rejects them. Use [`with`](#with), [`expose`](#expose) and [`dependency_prereleases`](https://mise.jdx.dev/dev-tools/backends/pypi.html#dependency-prereleases) instead, which are locked with the tool, and configure [Python](#choosing-python) and the [registry URL](#registry-url) directly.
 
-Different dependency graphs and configured Python interpreters get separate installations; `mise ls` still shows the package version. For system Python, mise records the interpreter's implementation, major/minor version, ABI, and platform during installation so later commands can find the environment even if that interpreter is no longer on PATH.
+`mise lock` can resolve a graph from package metadata without first installing the selected interpreter. It resolves against the selected Python when mise has it installed, whether or not it is on `PATH`; for a per-tool `python` that is not installed yet, uv may download that version for the resolution unless [`offline`](https://mise.jdx.dev/configuration/settings.html#offline) is set. Installs from a graph use the selected mise Python and do not download another. A locked install from a lockfile in format 2 or later fails if the tool's graph is missing; run `mise lock` to create it.
 
-### Private indexes and release age [​](#private-indexes-and-release-age)
+The graph covers the Python range that every locked requirement supports, starting at Python 3.8, and keeps every published wheel target, so sidecars can be large. Locked installs reuse uv's artifact cache. Different graphs and Python interpreters get separate installs; `mise ls` still shows the package version.
 
-Simple-only indexes must provide consistent `data-requires-python` metadata on the selected release's wheel links. Registry credentials belong in the installer environment or credential provider. URLs containing credentials or query strings cannot be recorded in the lockfile.
+## Private indexes [​](#private-indexes)
 
-[`minimum_release_age`](https://mise.jdx.dev/configuration/settings.html#minimum_release_age) filters transitive dependencies when resolving a graph, not when replaying it. For version-only installs, mise passes uv's `--exclude-newer` flag (requires uv 0.2.22 or newer) or pip's `--uploaded-prior-to` flag through pipx.
+To use another index for every tool, set [`pypi.registry_url`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pypi.registry_url): mise lists versions from it and passes its simple index to uv and pip for installs. The per-tool [`registry_url`](#registry-url) option changes version listing and dependency locking for one tool; its version-only installs also need the index in `uvx_args` or `pipx_args`. Simple-only indexes must provide `data-requires-python` metadata on the selected release's wheel links. Keep registry credentials in the installer's environment or credential provider: a URL containing credentials or a query string cannot be recorded in the lockfile. When `uvx_args` or `pipx_args` do carry credentials in a URL, the lockfile records those options with the credentials removed.
+
+When the index authenticates through a keyring, write the URL with a username and no password, and set [`pypi.keyring_provider`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pypi.keyring_provider) to `subprocess` so mise's own version listing and locking read the password from `keyring get` as uv does:
+
+```
+[settings.pypi]
+keyring_provider = "subprocess"
+registry_url = "https://VssSessionToken@pkgs.dev.azure.com/org/project/_packaging/feed/pypi/simple/{}/"
+```
+
+## Minimum release age [​](#minimum-release-age)
+
+[`minimum_release_age`](https://mise.jdx.dev/configuration/settings.html#minimum_release_age) filters the tool's dependencies when mise resolves a graph, not when it replays one. For version-only installs, mise passes uv's `--exclude-newer` flag (uv 0.2.22 or newer) or, through pipx, pip's `--uploaded-prior-to` flag.
+
+Upload times are optional in the index protocol, and many self-hosted registries do not publish them. mise allows a release it cannot date, so when the tool's own release has no upload time, `mise lock` exempts that package from the cutoff it passes to uv (`--exclude-newer-package <name>=false`). A dated release and the tool's dependencies keep the cutoff, and uv holds back a dependency without an upload time. When the graph cannot be locked for that reason, mise warns and keeps a version-only entry; set `minimum_release_age = "0s"` for the tool to lock the graph.
 
 ## Choosing Python [​](#choosing-python)
 
-For graph-locked tools, configure the interpreter through mise:
-
-toml
+Configure the interpreter in mise:
 
 ```
 [tools]
@@ -117,11 +137,21 @@ uv = "0.12.10"
 "pypi:black" = "latest"
 ```
 
-For legacy version-only installs, the selected installer chooses the interpreter; `uvx_args` and `pipx_args` can pass installer-specific Python options.
+Graph-locked installs use the Python configured in mise, or the first one on `PATH` when mise manages none. For uv version-only installs, mise passes `--python <mise python>` to `uv tool install` when mise manages Python, so the tool's environment does not depend on a Python uv downloaded itself; pass your own `--python` in [`uvx_args`](https://mise.jdx.dev/dev-tools/backends/pypi.html#uvx-args) to choose another. pipx uses its own default interpreter; pass `--python` in [`pipx_args`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pipx-args) to choose one.
+
+To make one tool independent of the default Python, set its `python` option to a numeric CPython minor or exact patch. mise resolves and installs that runtime as a private dependency of the tool; it does not add Python to the shell's active tools. The selected runtime is recorded as an ordinary `python` entry in the same lockfile scope, so commit the refreshed lockfile before using locked installs. This requires a mise version that supports the `python` PyPI-tool option.
+
+```
+[tools]
+"pypi:black" = { version = "latest", python = "3.12" }
+"pypi:ruff" = { version = "latest", python = "3.12.12" }
+```
+
+The selector applies to both uv and pipx installs and also narrows a dependency graph to the Python versions the selected runtime can satisfy. It cannot be combined with `--python` or `-p` in `uvx_args` or `pipx_args`.
 
 ## Python upgrades [​](#python-upgrades)
 
-If a CLI stops working after changing Python, reinstall it under the intended Python version. This recreates the tool environment and its dependencies:
+When [`mise upgrade`](https://mise.jdx.dev/cli/upgrade.html) upgrades `python`, mise reinstalls every installed PyPI tool automatically. On Unix, tools installed without a dependency graph reach mise's Python through its minor-version path (for example `.../python/3.14/bin/python`), so patch upgrades keep working without a reinstall. Graph-locked installs, and minor-version changes made some other way, need a manual reinstall:
 
 sh
 
@@ -130,82 +160,87 @@ mise install --force pypi:black
 mise exec -- black --version
 ```
 
-Check which Python version is active before reinstalling. Existing virtualenvs and native extensions do not necessarily remain usable after their interpreter is removed or changed.
+Check which Python is active before reinstalling: a tool's environment and its native extensions stop working when their interpreter is removed or changed.
 
-## Using pipx [​](#using-pipx)
+## Using pipx instead of uv [​](#using-pipx)
 
-To use the pipx installer, install Python and pipx, then disable uv for the tool:
-
-sh
-
-```
-mise use python@3.14 pipx
-```
-
-toml
+To install a tool with pipx, add Python and pipx and turn uv off for the tool:
 
 ```
 [tools]
-"pypi:ansible" = { version = "latest", uvx = false, expose = [], pipx_args = "--include-deps" }
+python = "3.14"
+pipx = "latest"
+"pypi:black" = { version = "latest", uvx = false }
 ```
 
-This uses version-only locking. An existing uv dependency graph cannot be replayed with pipx.
+To use pipx for every Python tool, set [`pypi.uvx = false`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pypi.uvx). pipx installs are version-only, and `with`, `expose` and `dependency_prereleases` need uv. If a registry short name sets one of these (`ansible` sets `expose`), clear it with an empty value. An explicit identifier such as `pypi:ansible` does not carry the registry's options, so this applies only to the short name:
+
+```
+[tools]
+ansible = { version = "latest", uvx = false, expose = [], pipx_args = "--include-deps" }
+```
 
 ### Compatibility with `pipx:` [​](#compatibility-with-pipx)
 
-The `pipx:` backend name remains supported. Existing configurations do not need to change. However, `pypi:black` and `pipx:black` are distinct tool identities: switching prefixes creates a separate installation and lock entry. mise preserves explicit `pipx:` names in output and lockfiles.
+The `pipx:` prefix still works, and existing configurations do not need to change. However, `pypi:black` and `pipx:black` are different tools to mise: switching the prefix installs a separate copy and adds a separate lockfile entry. mise keeps an explicit `pipx:` name in output and lockfiles.
 
-The legacy option names `uvx` and `uvx_args` control uv installation; they do not mean mise runs the `uvx` command.
+The option names `uvx` and `uvx_args` control installs with uv; they do not mean mise runs the `uvx` command.
 
-## Settings [​](#settings)
+## Tool options [​](#tool-options)
 
-Set these with `mise settings set [VARIABLE]=[VALUE]` or by setting the environment variable listed.
+Set these on the tool's entry in `[tools]`, or inline, as in `'pypi:psf/black[extras=jupyter]@latest'`. Options every backend accepts are described under [tool options](https://mise.jdx.dev/dev-tools/#tool-options).
 
-### `pypi.registry_url`[](#pypi.registry_url)
-
-- Type: `string`(optional)
-- Env: `MISE_PYPI_REGISTRY_URL`
-- Default: `None`
-
-Package registry URL for Python tools (pipx.registry\_url is a compatibility alias).
-
-### `pypi.uvx`[](#pypi.uvx)
-
-- Type: `boolean`(optional)
-- Env: `MISE_PYPI_UVX`
-- Default: `None`
-
-Use uv for Python tools when available (pipx.uvx is a compatibility alias).
-
-## Tool Options [​](#tool-options)
-
-The following [tool-options](https://mise.jdx.dev/dev-tools/#tool-options) are available for the `pypi` backend—these go in `[tools]` in `mise.toml`.
+| Option | Installer |
+| --- | --- |
+| `registry_url` | uv and pipx |
+| `registry_index` | dependency locking |
+| `install_env` | uv and pipx |
+| `extras` | uv and pipx |
+| `package_name` | uv and pipx |
+| `with` | uv |
+| `expose` | uv 0.8.5 or later |
+| `dependency_prereleases` | uv |
+| `python` | uv and pipx |
+| `uvx_args` | uv, version-only installs |
+| `uvx` | chooses pipx when `false` |
+| `pipx_args` | pipx |
 
 ### `registry_url` [​](#registry-url)
 
-Set the registry URL used to resolve versions for this tool. Include a `{}` placeholder for the package name. This overrides the `pypi.registry_url` setting for this tool.
-
-toml
+Set the registry URL used to list this tool's versions. Include a `{}` placeholder for the package name. This overrides the [`pypi.registry_url`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pypi.registry_url) setting for this tool.
 
 ```
 [tools]
 "pypi:my-tool" = { version = "latest", registry_url = "https://packages.example.com/pypi/{}/json" }
 ```
 
-Dependency locking also derives the install index from this URL. For version-only installs, configure the install index separately through `uvx_args` or `pipx_args`. For example, with the pipx installer:
+Dependency locking also derives the index uv resolves from this URL, and by default that index replaces PyPI: every dependency of the tool has to come from the registry, as it does on a full PyPI mirror. A registry that hosts only its own packages cannot satisfy that, so set [`registry_index`](#registry-index) to let the rest come from PyPI. For version-only installs, set the install index separately in `uvx_args` or `pipx_args`. For example, with pipx:
 
-toml
+```
+[tools."pypi:my-tool"]
+version = "latest"
+uvx = false
+registry_url = "https://packages.example.com/pypi/{}/json"
+pipx_args = "--pip-args='--index-url https://packages.example.com/pypi/simple'"
+```
+
+### `registry_index` [​](#registry-index)
+
+Choose how dependency locking uses this tool's [`registry_url`](#registry-url).
+
+- `default` (the default): the registry replaces PyPI, so the tool and all of its dependencies must come from it. This is right for full PyPI mirrors and for air-gapped setups. A dependency the registry lacks is never fetched from elsewhere: mise warns and keeps a version-only lock entry for the tool.
+- `priority`: the registry is searched first and PyPI second, which suits a registry that hosts only its own packages (Gitea, Forgejo, pypiserver, a static index).
 
 ```
 [tools]
-"pypi:my-tool" = { version = "latest", uvx = false, registry_url = "https://packages.example.com/pypi/{}/json", pipx_args = "--pip-args='--index-url https://packages.example.com/pypi/simple'" }
+"pypi:my-tool" = { version = "latest", registry_url = "https://gitea.example/api/packages/org/pypi/simple/{}/", registry_index = "priority" }
 ```
+
+Each project comes only from the first index that hosts it. A package the registry hosts, starting with the tool itself, is never taken from PyPI, even when PyPI has a package of the same name, and not even when the registry lacks the pinned version. Only a project the registry answers 404 for falls through to PyPI. That also means a registry that hides a package on purpose, say a mirror that blocks it, no longer keeps that package out of the lock, so use `priority` only with a registry that is not meant to be the sole source. The index searched second is [`pypi.registry_url`](https://mise.jdx.dev/dev-tools/backends/pypi.html#pypi.registry_url), which is PyPI unless you changed it. While locking in this mode, mise ignores `UV_EXTRA_INDEX_URL` and `UV_INDEX_URL` from the environment and `install_env`, so no other index is searched in between. The option affects locking only; it is not recorded in the lockfile, which pins every package to the index it came from.
 
 ### `install_env` [​](#install-env)
 
-Set environment variables for the installer. mise still sets the tool directory, bin directory, and configured Python package index variables after applying `install_env`. For the uv installer, for example:
-
-toml
+Set environment variables for the installer. mise still sets the tool directory, the bin directory and the configured package index variables after applying `install_env`. For uv, for example:
 
 ```
 [tools]
@@ -214,65 +249,45 @@ toml
 
 ### `extras` [​](#extras)
 
-Install optional dependencies (Python package extras).
-
-toml
+Install optional dependencies (Python package extras), as a comma-separated string or an array. Extras also work with Git sources:
 
 ```
 [tools]
-"pypi:harlequin" = { version = "latest", extras = "postgres,s3" }
-# equivalent array form:
-# "pypi:harlequin" = { version = "latest", extras = ["postgres", "s3"] }
-# extras also work with Git sources:
-# "pypi:psf/black" = { version = "latest", extras = ["jupyter"] }
+"pypi:harlequin" = { version = "latest", extras = ["postgres", "s3"] }
+"pypi:psf/black" = { version = "latest", extras = "jupyter" }
 ```
 
-When passing extras inline, use mise's `key=value` tool-option syntax:
+Inline, use mise's `key=value` option syntax:
 
-bash
+sh
 
 ```
 mise use 'pypi:psf/black[extras=jupyter]@latest'
 ```
 
-For Git repositories whose name differs from the Python distribution name, set `package_name` so mise can build the requirement used to select extras:
+### `package_name` [​](#package-name)
 
-toml
+Set the Python distribution name when a Git repository's name differs from it. mise needs it to build the requirement that selects `extras` from a Git source:
 
 ```
 [tools]
 "pypi:owner/repository" = { version = "latest", package_name = "distribution", extras = ["feature"] }
 ```
 
-### `pipx_args` [​](#pipx-args)
-
-Additional arguments for `pipx install`. These apply only to version-only installs using pipx and are unsupported with dependency graphs.
-
-toml
-
-```
-[tools]
-"pypi:ansible" = { version = "latest", uvx = false, expose = [], pipx_args = "--include-deps" }
-```
-
 ### `with` [​](#with)
 
-Install additional Python requirements in the tool environment. This option requires uv and participates in dependency locking.
-
-toml
+Install additional Python requirements into the tool's environment. This option needs uv and is locked with the tool.
 
 ```
 [tools]
 "pypi:azure-cli" = { version = "latest", with = ["pip"] }
 ```
 
-A requirement pinned to an exact version narrows the locked Python range to the versions that release supports, so the tool may end up needing a newer interpreter than it declares on its own. Guard the pin with an interpreter marker, such as `"legacy==1.0.0; python_version < '3.12'"`, to keep the wider range when the requirement is only needed on some versions.
+A requirement pinned to an exact version narrows the locked Python range to the versions that release supports: its own `requires-python` raises the range's floor, so the tool may need a newer interpreter than it declares on its own. Guard the pin with an interpreter marker, such as `"legacy==1.0.0; python_version < '3.12'"`, to keep the wider range when the requirement is only needed on some versions. mise leaves such a pin out of the range calculation.
 
 ### `expose` [​](#expose)
 
-Install additional Python requirements and expose their executable entry points. This option requires uv 0.8.5 or newer and participates in dependency locking.
-
-toml
+Install additional Python requirements and put their executables on `PATH` as well. This option needs uv 0.8.5 or newer and is locked with the tool.
 
 ```
 [tools]
@@ -281,40 +296,80 @@ toml
 
 ### `dependency_prereleases` [​](#dependency-prereleases)
 
-Set uv's prerelease policy for dependency resolution. Supported values are `disallow`, `allow`, `if-necessary`, and `explicit`. This option requires uv and is applied both when generating dependency graphs and during version-only installs.
-
-toml
+Set uv's prerelease policy for dependencies: `disallow`, `allow`, `if-necessary` or `explicit`. This option needs uv and applies both when locking a graph and in version-only installs.
 
 ```
 [tools]
 "pypi:azure-cli" = { version = "latest", dependency_prereleases = "allow" }
 ```
 
-### `uvx` [​](#uvx)
-
-Set to `false` to use pipx instead of uv for this tool. This also disables dependency graph locking and requires pipx to be installed.
-
-toml
-
-```
-[tools]
-"pypi:ansible" = { version = "latest", uvx = false, expose = [] }
-```
-
-The empty `expose` list clears Ansible's uv-backed registry default. Clear any other semantic defaults the same way when overriding a registry tool to use pipx.
-
 ### `uvx_args` [​](#uvx-args)
 
-Additional arguments for version-only installs using `uv tool install`. These are unsupported with dependency graphs; `pipx_args` applies only to pipx.
-
-toml
+Additional arguments for `uv tool install` in version-only installs. They cannot be used with dependency graphs; prefer [`with`](#with), [`expose`](#expose) and [`dependency_prereleases`](https://mise.jdx.dev/dev-tools/backends/pypi.html#dependency-prereleases) when they cover what you need.
 
 ```
 [tools]
 "pypi:ansible-core" = { version = "latest", uvx_args = "--resolution lowest" }
 ```
 
-Prefer the semantic [`with`](#with), [`expose`](#expose), and [`dependency_prereleases`](#dependency_prereleases) options when they cover the desired behavior. Unlike arbitrary arguments, those options support dependency graphs.
+### `uvx` [​](#uvx)
+
+Set to `false` to install this tool with pipx instead of uv. This also turns off dependency graph locking, and pipx must be installed. See [using pipx instead of uv](#using-pipx).
+
+### `pipx_args` [​](#pipx-args)
+
+Additional arguments for `pipx install`. They apply only to pipx installs and cannot be used with dependency graphs.
+
+```
+[tools]
+ansible = { version = "latest", uvx = false, expose = [], pipx_args = "--include-deps" }
+```
+
+## Settings [​](#settings)
+
+Set these under `[settings]` in a config file, with [`mise settings set`](https://mise.jdx.dev/cli/settings/set.html), or with a setting's environment variable where it has one. See [which value wins](https://mise.jdx.dev/configuration/settings.html#which-value-wins) when a setting is set in more than one place.
+
+### `pypi.keyring_provider`[Permalink to pypi.keyring\_provider](#pypi.keyring_provider)
+
+Read a `pypi:` index password from a `keyring` command when the index URL names a user but no password.
+
+- Type: `string`
+- Default: unset
+- Environment variable: `MISE_PYPI_KEYRING_PROVIDER`
+- Choices:
+  - `disabled`
+  - `subprocess`
+
+Set to `subprocess` to have mise run `keyring get <index-url> <username>` when [`pypi.registry_url`](#pypi.registry_url) (or a tool's `registry_url`) contains a username but no password, such as an Azure Artifacts feed written as `https://VssSessionToken@pkgs.dev.azure.com/.../simple/{}/`. The printed password is sent as HTTP Basic credentials when mise lists versions and locks. This is the same value and lookup uv's `keyring-provider = "subprocess"` uses, so `mise lock` reaches the index the way `mise install` does through uv. mise also sets `UV_KEYRING_PROVIDER=subprocess` for the `uv lock` it runs, which ignores `uv.toml`. The `keyring` executable must be on `PATH`; if it is missing or has no entry, the request goes out without credentials. The password is never written to the lockfile or the version cache. See [Private indexes](https://mise.jdx.dev/dev-tools/backends/pypi.html#private-indexes).
+
+### `pypi.registry_url`[Permalink to pypi.registry\_url](#pypi.registry_url)
+
+Package index URL that `pypi:` tools list versions from, with `{}` in place of the package name.
+
+- Type: `string`
+- Default: `"https://pypi.org/pypi/{}/json"`
+- Environment variable: `MISE_PYPI_REGISTRY_URL`
+
+Use a JSON API URL such as the default, or a simple index such as `https://pypi.org/simple/{}/`. A simple index is asked for its PEP 691 JSON form and falls back to PEP 503 HTML. [`minimum_release_age`](https://mise.jdx.dev/configuration/settings.html#minimum_release_age) works when the index supplies PEP 700 `upload-time`; HTML responses have no timestamps. The URL must start with `http://` or `https://` and contain `{}`. mise also derives the index's simple URL from it and passes that to installs, as `UV_INDEX` for uv or `PIP_INDEX_URL` for pipx. A tool's [`registry_url`](https://mise.jdx.dev/dev-tools/backends/pypi.html#registry-url) option overrides it for that tool's version list and dependency locking. `pipx.registry_url` is an older name for this setting. See [Private indexes](https://mise.jdx.dev/dev-tools/backends/pypi.html#private-indexes).
+
+### `pypi.uvx`[Permalink to pypi.uvx](#pypi.uvx)
+
+Install `pypi:` tools with uv when uv is available, and with pipx otherwise.
+
+- Type: `boolean`
+- Default: `true`
+- Environment variable: `MISE_PYPI_UVX`
+
+Set to `false` to install every `pypi:` tool with pipx. The uv-only tool options `with`, `expose` and `dependency_prereleases`, and dependency-graph locking, are then unavailable. One tool can opt out with the tool option `uvx = false`, but `uvx = true` cannot turn uv back on while this is `false`. `pipx.uvx` is an older name for this setting. See [Using pipx instead of uv](https://mise.jdx.dev/dev-tools/backends/pypi.html#using-pipx).
+
+## Troubleshooting [​](#troubleshooting)
+
+| Message | What to do |
+| --- | --- |
+| `<tool> has no uv dependency graph; run mise lock` | The lockfile has no graph for the tool. Run `mise lock`, then install again. |
+| `semantic options (with, expose, and dependency_prereleases) require uv` | Add `uv` to `[tools]`, and make sure neither `uvx = false` nor `pypi.uvx = false` is set. |
+| `pipx is required to install <tool> but was not found` | Add `pipx` to `[tools]`, or `uv` unless the tool sets `uvx = false`. |
+| A tool stops working after a Python change | Reinstall it; see [Python upgrades](#python-upgrades). |
 
 Implementation: [`src/backend/pipx.rs`](https://github.com/jdx/mise/blob/main/src/backend/pipx.rs).
 
@@ -324,8 +379,8 @@ Last updated:
 
 Pager
 
-[Previous pagepackslip](https://mise.jdx.dev/dev-tools/backends/packslip.html)
+[Previous pageMan pages, completions, and skills](https://mise.jdx.dev/dev-tools/packslip-resources.html)
 
-[Next pagepkgx](https://mise.jdx.dev/dev-tools/backends/pkgx.html)
+[Next pages3](https://mise.jdx.dev/dev-tools/backends/s3.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

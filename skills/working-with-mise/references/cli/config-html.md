@@ -1,5 +1,3 @@
-mise config
-
 config` [​](#mise-config)
 
 - **Usage:** `mise config [FLAGS] [SUBCOMMAND]`
@@ -9,18 +7,23 @@ config` [​](#mise-config)
 
 Manage config files
 
+With no subcommand, lists the config files mise loads, from lowest to highest precedence, like `mise config ls`; the flags below apply to that listing.
+
 ## Flags [​](#flags)
 
 - **`--truncate`** — Truncate long terminal output to fit the available width
 
   **Default:** `true`
 - **`-J --json`** — Output in JSON format
-- **`--no-header`** — Do not print table header
-- **`--tracked-configs`** — List all tracked config files
+- **`--no-header`** — Do not print the table header
+- **`--tracked-configs`** — List every config file mise has loaded, in any project
+
+  mise remembers the config files it loads so `mise prune` keeps the versions they use.
 - **`-h --help`** — Print help
 
 ## Subcommands [​](#subcommands)
 
+- [`mise config explain [FLAGS] [KEY]`](https://mise.jdx.dev/cli/config/explain.html)
 - [`mise config get [FLAGS] [KEY]`](https://mise.jdx.dev/cli/config/get.html)
 - [`mise config ls [FLAGS]`](https://mise.jdx.dev/cli/config/ls.html)
 - [`mise config set [FLAGS] <KEY> [VALUE]`](https://mise.jdx.dev/cli/config/set.html)
@@ -39,6 +42,6 @@ Pager
 
 [Previous pagemise completion](https://mise.jdx.dev/cli/completion.html)
 
-[Next pagemise config get](https://mise.jdx.dev/cli/config/get.html)
+[Next pagemise config explain](https://mise.jdx.dev/cli/config/explain.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

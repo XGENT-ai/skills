@@ -1,10 +1,10 @@
-mbx tui
-
 `mbx tui` [​](#mbx-tui)
 
 - **Usage:** `mbx tui [--once]`
 
-Watch cache activity across every build on this machine.
+Watch cache activity across every build that uses this cache directory.
+
+Builds that use a different cache directory, or that run with the `events` setting off, do not appear.
 
 ## Flags [​](#flags)
 

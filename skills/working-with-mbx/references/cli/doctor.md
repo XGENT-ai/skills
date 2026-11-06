@@ -1,10 +1,8 @@
-mbx doctor
-
 `mbx doctor` [​](#mbx-doctor)
 
 - **Usage:** `mbx doctor [--json]`
 
-Check the local installation, cache, toolchain, and remote connection.
+Check the installation, cache, toolchain, and remote cache connection.
 
 ## Flags [​](#flags)
 

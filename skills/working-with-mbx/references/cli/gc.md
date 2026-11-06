@@ -1,18 +1,25 @@
-mbx gc
-
 `mbx gc` [​](#mbx-gc)
 
 - **Usage:** `mbx gc [FLAGS]`
 
-Collect learned incremental state and managed targets, then evict cached objects to fit budgets.
+Collect build state and evict store objects to fit the size budgets.
 
-A missing cached object is rebuilt when it is needed again.
+mbx collects learned incremental units and managed targets first, then evicts store objects until the action store fits its budget (`--max-size`, or `gc.max_size` by default, lowered when `gc.max_total_size` leaves less room). Under a combined budget, incremental state and generated source trees default to a cap of 10% of the total, at least 10 GiB but never above the total. When a disk has less free space than `gc.min_free_size`, mbx also collects past those budgets to free the shortfall: private state and managed targets go first, then shared store objects, even below `gc.max_size`. Active state, held incremental locks, and explicitly kept targets stay, so a disk filled by something else can remain short.
+
+An evicted object is rebuilt when a build needs it again.
 
 ## Flags [​](#flags)
 
-- **`--max-size <SIZE>`** — Size the store may occupy afterwards, for example 20GiB. Defaults to the configured budget.
+- **`--max-size <SIZE>`** — Size the action store may occupy afterwards, such as `20GiB`.
+
+  Defaults to `gc.max_size`. Managed targets, learned incremental state, and generated source trees are still collected to their own budgets. Incremental units expire individually and are evicted least recently used first; held rustc session locks protect them. In a checkout a build is using, only finished rustc sessions are removed, and units used in the last hour are kept unless they have expired, outgrown half the incremental budget, or the disk is short of `gc.min_free_size`. With `gc.max_total_size` set, incremental state and generated source trees default to a cap of 10% of the total, at least 10 GiB but never above the total; managed targets use what remains after them and the action store, whose share this flag caps.
 - **`--json`** — Print a stable machine-readable report.
 - **`--dry-run`** — Show what collection would remove without changing any files.
+
+  While a disk has less free space than `gc.min_free_size`, a real run can remove a different amount than the preview, because it measures the disk again after each step. To free the cache disk, a real run can also evict more store objects than the action-store budget requires, and the preview never lists them. A preview does not probe rustc's session locks, so it can list a unit or session a compiler is still using; a real run keeps them.
+- **`--rustc-version <VERSION>`** — Remove every cached Rust result built by this compiler version.
+
+  Takes the release `rustc --version` prints, such as `1.97.1` or `1.99.0-nightly`, or the whole `rustc -vV` first line without `rustc`, such as `1.99.0-nightly (abc123def 2026-09-01)`, to pick one nightly. Unlike `gc.rustc_max_age`, this removes the version even if it was used a moment ago, and even if it is the newest one in the store. Objects that a remaining version also uses stay. Combine with `--dry-run` to see what it would remove.
 - **`-h --help`** — Print help
 
 [Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/crates/mbx/src/cli/gc.rs)
@@ -21,7 +28,7 @@ Last updated:
 
 Pager
 
-[Previous pageclean](https://mr-boxington.jdx.dev/cli/clean)
+[Previous pageadopt](https://mr-boxington.jdx.dev/cli/adopt)
 
 [Next pagetui](https://mr-boxington.jdx.dev/cli/tui)
 

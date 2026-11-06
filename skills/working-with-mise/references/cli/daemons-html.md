@@ -1,5 +1,3 @@
-mise daemons
-
 daemons` [​](#mise-daemons)
 
 - **Usage:** `mise daemons [--json] [SUBCOMMAND]`
@@ -9,17 +7,42 @@ daemons` [​](#mise-daemons)
 
 \[experimental] Manage project daemons with pitchfork
 
-Define commands or managed service presets in \[daemons]: cockroachdb, nats, postgres, redis, spicedb. With no subcommand, list configured and previously managed daemons.
+Declare long-running processes in `[daemons]`, either as commands or as service presets such as `postgres` and `redis`, and mise runs them under pitchfork with the project's tools and environment. Requires `experimental = true`.
+
+With no subcommand, lists the project's daemons like `mise daemons ls`.
+
+See <https://mise.jdx.dev/daemons.html>
 
 ## Flags [​](#flags)
 
-- **`--json`**
+- **`--json`** — Output in JSON format, including ports, URLs, and data directories
 - **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+Start the default group, or every project daemon
+
+```
+mise daemons start
+```
+
+Show the last 50 lines of api's output
+
+```
+mise daemons logs api -n 50
+```
+
+Stop every registered project daemon
+
+```
+mise daemons stop
+```
 
 ## Subcommands [​](#subcommands)
 
 - [`mise daemons logs [ARGS]…`](https://mise.jdx.dev/cli/daemons/logs.html)
 - [`mise daemons ls [--json]`](https://mise.jdx.dev/cli/daemons/ls.html)
+- [`mise daemons providers [SUBCOMMAND]`](https://mise.jdx.dev/cli/daemons/providers.html)
 - [`mise daemons prune [-n --dry-run]`](https://mise.jdx.dev/cli/daemons/prune.html)
 - [`mise daemons register`](https://mise.jdx.dev/cli/daemons/register.html)
 - [`mise daemons restart [ARGS]…`](https://mise.jdx.dev/cli/daemons/restart.html)
@@ -31,7 +54,7 @@ Define commands or managed service presets in \[daemons]: cockroachdb, nats, pos
 
 ## Related documentation [​](#related-documentation)
 
-- [Getting started](https://mise.jdx.dev/getting-started.html).
+- [Daemons](https://mise.jdx.dev/daemons.html).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

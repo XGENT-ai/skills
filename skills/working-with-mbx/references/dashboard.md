@@ -1,5 +1,3 @@
-Cache dashboard demo | mr boxington
-
 [Skip to content](#VPContent)
 
 Return to top
@@ -20,7 +18,7 @@ Access Settings
 
 v1.0.1 · us-east-1
 
-[View server docs ](https://mr-boxington.jdx.dev/cache-server)
+[View server docs](https://mr-boxington.jdx.dev/cache-server)
 
 JD**Jordan Diaz**Administrator
 

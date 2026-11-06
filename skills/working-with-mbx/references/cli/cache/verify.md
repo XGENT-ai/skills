@@ -1,10 +1,10 @@
-mbx cache verify
-
 `mbx cache verify` [​](#mbx-cache-verify)
 
 - **Usage:** `mbx cache verify`
 
 Verify local objects and action results.
+
+mbx prints each invalid entry and exits with a failure status if it finds any.
 
 ## Flags [​](#flags)
 

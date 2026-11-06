@@ -1,5 +1,3 @@
-mise implode
-
 implode` [​](#mise-implode)
 
 - **Usage:** `mise implode [-n --dry-run] [--config]`
@@ -8,17 +6,27 @@ implode` [​](#mise-implode)
 
 Remove the mise CLI and all related data
 
-The config directory is kept unless `--config` is passed.
+Deletes the mise executable and the data (including installed tools), state, and cache directories. It also deletes the system-wide shared directory used by `mise install --system` (MISE\_SYSTEM\_DATA\_DIR, default /usr/local/share/mise), which other users on the machine may rely on. It asks before each removal; --yes skips the prompts. The config directory stays unless you pass --config.
+
+If a package manager such as Homebrew or apt installed mise, uninstall it with that package manager instead. Remove the `mise activate` line from your shell startup file yourself. See <https://mise.jdx.dev/installing-mise.html#uninstalling>.
 
 ## Flags [​](#flags)
 
-- **`-n --dry-run`** — List directories that would be removed without actually removing them
-- **`--config`** — Also remove config directory
+- **`-n --dry-run`** — Print what would be removed, without removing anything
+- **`--config`** — Also remove the config directory
 - **`-h --help`** — Print help
+
+## Examples [​](#examples)
+
+List what would be removed
+
+```
+mise implode --dry-run
+```
 
 ## Related documentation [​](#related-documentation)
 
-- [Uninstalling mise](https://mise.jdx.dev/installing-mise.html).
+- [Uninstalling mise](https://mise.jdx.dev/installing-mise.html#uninstalling).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

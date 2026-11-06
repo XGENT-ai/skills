@@ -1,5 +1,3 @@
-mise sponsors
-
 sponsors` [​](#mise-sponsors)
 
 - **Usage:** `mise sponsors`
@@ -14,7 +12,7 @@ Show the companies sponsoring mise and the jdx.dev open source tools
 
 ## Related documentation [​](#related-documentation)
 
-- [Supporting mise](https://mise.jdx.dev/about.html).
+- [Supporting mise](https://mise.jdx.dev/about.html#supporting-mise).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

@@ -1,5 +1,3 @@
-mbx cache projects
-
 `mbx cache projects` [​](#mbx-cache-projects)
 
 - **Usage:** `mbx cache projects`

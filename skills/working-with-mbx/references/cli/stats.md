@@ -1,14 +1,13 @@
-mbx stats
-
 `mbx stats` [​](#mbx-stats)
 
-- **Usage:** `mbx stats [--json]`
+- **Usage:** `mbx stats [--json] [--scheduler]`
 
-Show lifetime savings, pruning totals, and estimated storage shared across workspaces.
+Show lifetime savings, pruning totals, and estimated workspace sharing.
 
 ## Flags [​](#flags)
 
 - **`--json`** — Print a stable machine-readable report, with byte counts and nanoseconds.
+- **`--scheduler`** — Show compile memory estimates and a read-only scheduler activity snapshot.
 - **`-h --help`** — Print help
 
 [Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/crates/mbx/src/cli/stats.rs)

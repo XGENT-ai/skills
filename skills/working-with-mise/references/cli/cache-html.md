@@ -1,5 +1,3 @@
-mise cache
-
 cache` [​](#mise-cache)
 
 - **Usage:** `mise cache [SUBCOMMAND]`
@@ -8,7 +6,7 @@ cache` [​](#mise-cache)
 
 Manage the mise cache
 
-Run `mise cache` with no args to view the current cache directory.
+The cache holds data mise can fetch or rebuild again, such as version lists and release metadata. With no subcommand, prints the cache directory, like `mise cache path`. See <https://mise.jdx.dev/cache-behavior.html>.
 
 ## Flags [​](#flags)
 

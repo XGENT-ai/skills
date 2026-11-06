@@ -1,12 +1,12 @@
-mise sync
-
 sync` [​](#mise-sync)
 
 - **Usage:** `mise sync <SUBCOMMAND>`
 - **Effect:** read-only
 - **Source code:** [`src/cli/sync/mod.rs`](https://github.com/jdx/mise/blob/main/src/cli/sync/mod.rs)
 
-Synchronize tools from other version managers with mise
+Use tool versions installed by other version managers
+
+Links node versions from nvm, nodenv, or Homebrew, python versions from pyenv or uv, and ruby versions from Homebrew into mise, so `mise use` can select them without reinstalling.
 
 ## Flags [​](#flags)
 

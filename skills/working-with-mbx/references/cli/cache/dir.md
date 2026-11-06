@@ -1,5 +1,3 @@
-mbx cache dir
-
 `mbx cache dir` [​](#mbx-cache-dir)
 
 - **Usage:** `mbx cache dir [--json]`

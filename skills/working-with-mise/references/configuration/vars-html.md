@@ -1,10 +1,6 @@
-Variables
+Config variables [​](#config-variables)
 
-Variables [​](#variables)
-
-Define shared configuration values in `[vars]` and reference them with `{{ vars.NAME }}` in a [Tera template](https://mise.jdx.dev/templates.html). Use vars for values that mise needs to render configuration; use [`[env]`](https://mise.jdx.dev/environments/) for values that commands need as environment variables. mise does not export vars to child processes.
-
-mise-toml
+Define shared values in `[vars]` and reference them with `{{ vars.NAME }}` in a [Tera template](https://mise.jdx.dev/templates.html). Use vars for values that mise needs to render config; use [`[env]`](https://mise.jdx.dev/environments/) for values that commands need as environment variables. mise does not export vars to child processes.
 
 ```
 [vars]
@@ -18,55 +14,83 @@ node = "{{ vars.node_version }}"
 run = "echo {{ vars.test_mode | quote }}"
 ```
 
-Run `mise run test` to print `headless`. `test_mode` is available through the `vars` template map, but it is not exported as `$test_mode`. The `quote` filter in this example targets POSIX shells; see [template quoting](https://mise.jdx.dev/templates.html#string-manipulation).
+`mise run test` prints `headless`. The task reads `test_mode` through the `vars` template map; there is no `$test_mode` environment variable. The `quote` filter quotes for POSIX shells; see [template quoting](https://mise.jdx.dev/templates.html#string-manipulation).
 
-Vars are available to Tera-rendered configuration such as tool versions and options, task definitions, hooks, task includes, watch configuration, and dotfile templates. See [Templates](https://mise.jdx.dev/templates.html) for the complete template syntax and context.
-
-## When vars are resolved [​](#when-vars-are-resolved)
-
-mise resolves top-level `[vars]` entries while loading configuration, before applying any task-local vars. Each entry can reference vars resolved before it. The resulting value is stored as a string; referencing that value later does not evaluate its template again.
-
-mise-toml
-
-```
-[vars]
-mode = "headless"
-args = "--mode={{ vars.mode }}"
-```
-
-Here, `args` resolves to `--mode=headless`. A later override of `mode` changes references to `vars.mode`, but does not recalculate `args`. To change `args`, override `args` itself or move the expression into the task that needs it.
+Vars are available wherever mise renders templates in config, such as tool versions and options, task definitions, [hooks](https://mise.jdx.dev/hooks.html), [`watch_files`](https://mise.jdx.dev/hooks.html#watch-files-hook), [task includes](https://mise.jdx.dev/tasks/task-discovery.html), and [dotfile templates](https://mise.jdx.dev/dotfiles.html).
 
 ## Configuration hierarchy [​](#configuration-hierarchy)
 
-Vars follow mise's [configuration hierarchy](https://mise.jdx.dev/configuration.html#configuration-hierarchy). Define shared values globally, then override them in project, local, or environment-specific config files.
-
-For example, a default can be defined globally:
+Vars follow the [config file hierarchy](https://mise.jdx.dev/configuration.html#configuration-hierarchy): a higher-precedence file overrides a var of the same name. Define a default in global config:
 
 \~/.config/mise/config.toml
-
-mise-toml
 
 ```
 [vars]
 test_mode = "headless"
 ```
 
-Then overridden for a project:
+Then override it for your own checkout:
 
 mise.local.toml
-
-mise-toml
 
 ```
 [vars]
 test_mode = "headed"
 ```
 
+## Value directives [​](#value-directives)
+
+Vars accept the same value directives as [`[env]`](https://mise.jdx.dev/environments/), including defaults, required values, redaction, files, sources, and [secrets](https://mise.jdx.dev/environments/secrets/):
+
+```
+[vars]
+test_mode = { default = "headless" }
+api_token = { required = "Set api_token in mise.local.toml" }
+_.file = { path = ".env.secret", redact = true }
+```
+
+- `default` uses a process environment variable with the same name when it is set and not empty, and the given value otherwise. Values from `[env]` are not used for this lookup.
+- `required` fails when no value is supplied by the process environment or a higher-precedence config file, such as `mise.local.toml`. The string is shown as help in the error.
+- `redact = true` hides the value in task output; here it applies to every value loaded from `.env.secret`.
+
+See the [`env._` directive reference](https://mise.jdx.dev/environments/#env-directives) for the file, source, and plugin directive forms. Under `[vars]`, these directives fill `vars` instead of exporting environment variables.
+
+## Ask once and remember [​](#prompt)
+
+`prompt` makes a var a per-machine answer. Pair it with a `default` to offer a suggestion, or with `required` when there is none:
+
+```
+[vars.git_name]
+default = "Ada Lovelace"
+prompt = "Git author name"
+
+[vars.git_email]
+required = "Run mise vars prompt to set git_email"
+prompt = "Git email"
+```
+
+Run `mise vars prompt` to be asked for each of these vars that has no answer yet; name vars to ask only for those (`mise vars prompt git_name`). Enter accepts the default. mise saves every answer, including an accepted default, in `$MISE_STATE_DIR/vars.toml`, so it is never asked again, never lands in your config or dotfiles history, and is available to every command that reads vars from then on.
+
+sh
+
+```
+mise vars                       # list every var and where it comes from
+mise vars --json                # the same as a JSON object; --json-extended adds sources
+mise vars git_name=Ada          # save a value on this machine, no terminal needed
+mise vars git_name              # print the value templates see
+mise vars prompt                # ask for every unanswered prompt var
+mise vars unset git_name        # forget a saved value, to be asked again
+```
+
+`mise bootstrap --prompt-vars` does the same inside a bootstrap run, which is how a fresh machine answers them with `mise bootstrap --adopt owner/dotfiles`: the config that declares the vars only exists once the checkout has been fetched. A `--dry-run` still saves the answers it asks for.
+
+Only `mise vars prompt` and `--prompt-vars` ever ask. Everything else, including shell activation, tasks, and runs without a terminal, uses the saved answer and otherwise falls back to `default`, or fails as any other `required` var does.
+
+A var resolves in this order, highest first: the process environment, a value in a higher-precedence config file such as `mise.local.toml`, the saved answer, the `default`. Answers are keyed by var name alone, so projects that use the same name share one answer on a machine. A value saved with `mise vars NAME=VALUE` works for any var name, with or without a `prompt`, and replaces that var's `default` on this machine. `prompt` works only in `[vars]`, not `[env]`.
+
 ## Task-local vars [​](#task-local-vars)
 
-TOML tasks can define their own vars. Task-local values override config vars while that task is rendered, but do not change the vars available elsewhere in the configuration.
-
-mise-toml
+TOML tasks can define their own vars. A task-local value overrides a config var while that task is rendered, without changing the value anywhere else:
 
 ```
 [vars]
@@ -77,13 +101,23 @@ vars = { test_mode = "headed" }
 run = "echo {{ vars.test_mode | quote }}"
 ```
 
-Here, `mise run test` prints `headed`; other tasks still see `headless` unless they define their own override. See [Task Configuration](https://mise.jdx.dev/tasks/task-configuration.html#task-vars) for task-local vars.
+`mise run test` prints `headed`; other tasks still see `headless` unless they define their own value. See [task `vars`](https://mise.jdx.dev/tasks/task-configuration.html#task-vars).
+
+## When vars are resolved [​](#when-vars-are-resolved)
+
+mise resolves top-level `[vars]` entries while it loads config, before any task-local vars apply. Each entry can reference the entries resolved before it. The result is stored as a string, so later references do not evaluate the template again:
+
+```
+[vars]
+mode = "headless"
+args = "--mode={{ vars.mode }}"
+```
+
+`args` resolves to `--mode=headless`. If a higher-precedence file such as `mise.local.toml` sets `mode = "headed"`, `{{ vars.mode }}` renders `headed`, but `args` stays `--mode=headless`. To change `args`, override `args` itself or build the string in the task that uses it.
 
 ### What a task-local var can change [​](#what-a-task-local-var-can-change)
 
 A task-local override changes direct references to that var in the task's templated fields, including fields inherited from a task template. It does not recalculate top-level vars that used the original value:
-
-mise-toml
 
 ```
 [vars]
@@ -103,11 +137,7 @@ text
 --mode=headless / headed
 ```
 
-`args` was resolved before the task-local override. The reference to `vars.mode` in `run` uses the task's value, `headed`.
-
-To make the argument use the task's mode, build it in `run`:
-
-mise-toml
+To make the argument follow the task's mode, build it in `run`:
 
 ```
 [tasks.test]
@@ -115,15 +145,11 @@ vars = { mode = "headed" }
 run = "echo --mode={{ vars.mode }}"
 ```
 
-This prints `--mode=headed`. For several tasks that share the same command, put `run` in a [task template](https://mise.jdx.dev/tasks/templates.html#parameterizing-a-template-with-vars) and let each task supply its vars.
+This prints `--mode=headed`. When several tasks share the same command, put `run` in a [task template](https://mise.jdx.dev/tasks/templates.html#parameterizing-a-template-with-vars) and let each task supply its vars.
 
 ### Missing vars and defaults [​](#missing-vars-and-defaults)
 
-A top-level var cannot reference a value that exists only in a task's `vars`. Without a fallback, that reference fails when mise loads the configuration.
-
-The Tera `default` filter provides a fallback at the point where the expression is rendered:
-
-mise-toml
+A top-level var cannot reference a value that exists only in a task's `vars`. Without a fallback, the reference fails when mise loads the config. The Tera `default` filter supplies a fallback where the expression is rendered:
 
 ```
 [vars]
@@ -134,25 +160,7 @@ vars = { mode = "headed" }
 run = "echo {{ vars.args }} / {{ vars.mode }}"
 ```
 
-This also prints `--mode=headless / headed`. The filter supplies `headless` while loading `[vars]`; it does not defer evaluation until the task supplies `mode`. Use a fallback when a missing value is expected, and put expressions that depend on task-local values in the task or its template.
-
-## Value directives [​](#value-directives)
-
-Vars support the same value-producing directives as [`[env]`](https://mise.jdx.dev/environments/), including defaults, required values, redaction, files, sources, and [secrets](https://mise.jdx.dev/environments/secrets/).
-
-mise-toml
-
-```
-[vars]
-test_mode = { default = "headless" }
-api_token = { required = "Set api_token in mise.local.toml" }
-secret_arg = { value = "--token=abc123", redact = true }
-_.file = ".env"
-```
-
-The `default` form uses a process environment variable with the same name when it is set and non-empty; values from `[env]` are not used for this lookup. A `required` var must be supplied by the process environment or a later config file. Values marked `redact = true` are hidden from task output.
-
-See the [`env._` directive reference](https://mise.jdx.dev/environments/#env-directives) for the available file, source, and plugin-provided directive forms. When used under `[vars]`, these directives populate `vars` instead of exporting the values as environment variables.
+This also prints `--mode=headless / headed`: the filter supplies `headless` while `[vars]` loads, and does not wait for the task to supply `mode`. Put expressions that depend on task-local values in the task or its template.
 
 [Edit this page](https://github.com/jdx/mise/edit/main/docs/configuration/vars.md)
 
@@ -160,8 +168,8 @@ Last updated:
 
 Pager
 
-[Previous pagemise.toml](https://mise.jdx.dev/configuration.html)
+[Previous pageSettings](https://mise.jdx.dev/configuration/settings.html)
 
-[Next pageProject Diagnostics](https://mise.jdx.dev/configuration/project-diagnostics.html)
+[Next pageTera templates](https://mise.jdx.dev/templates.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)

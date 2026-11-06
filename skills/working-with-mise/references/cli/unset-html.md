@@ -1,34 +1,33 @@
-mise unset
-
 unset` [​](#mise-unset)
 
-- **Usage:** `mise unset [-f --file <FILE>] [-g --global] [ENV_KEY]…`
+- **Usage:** `mise unset [FLAGS] [ENV_KEY]…`
 - **Effect:** modifies state
 - **Source code:** [`src/cli/unset.rs`](https://github.com/jdx/mise/blob/main/src/cli/unset.rs)
 
-Remove environment variable(s) from the config file
+Remove environment variables from mise.toml
 
-By default, this command selects the nearest configuration directory and modifies its lowest-precedence TOML file, creating `mise.toml` here if none exists.
+Edits the same file `mise set` writes: the lowest-precedence TOML file in the nearest config directory, or the global config when run in your home directory. Use `--global` or `--file` to pick another file.
 
 ## Arguments [​](#arguments)
 
-- **`[ENV_KEY]…`** — Environment variable(s) to remove e.g.: NODE\_ENV
+- **`[ENV_KEY]…`** — Environment variables to remove, such as NODE\_ENV
 
 ## Flags [​](#flags)
 
-- **`-f --file <FILE>`** — Specify a file to use instead of `mise.toml`
+- **`-f --file <FILE>`** — The TOML file to edit instead of the default target
 
-  Can be a file path or directory. If a directory is provided, will create/use mise.toml in that directory.
-
-  Defaults to [`MISE_DEFAULT_CONFIG_FILENAME`](https://mise.jdx.dev/configuration.html#mise_default_config_filename) environment variable, or `mise.toml`. Use [`MISE_GLOBAL_CONFIG_FILE`](https://mise.jdx.dev/configuration.html#mise_global_config_file) to choose a different global config path.
+  Can be a file or a directory. For a directory, mise uses the config file in it, or one named by MISE\_DEFAULT\_CONFIG\_FILENAME (default `mise.toml`): [https://mise.jdx.dev/configuration/settings.html#default\_config\_filename](https://mise.jdx.dev/configuration/settings.html#default_config_filename) To move the global config file, set MISE\_GLOBAL\_CONFIG\_FILE: [https://mise.jdx.dev/configuration/settings.html#global\_config\_file](https://mise.jdx.dev/configuration/settings.html#global_config_file)
 
   **Aliases:** `--path`
 - **`-g --global`** — Use the global config file
+- **`--override`** — Use the global override file, `config.override.toml`
+
+  See <https://mise.jdx.dev/configuration.html#override-file>
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
-Remove NODE\_ENV from the selected project config
+Remove NODE\_ENV from the project config
 
 ```
 mise unset NODE_ENV
@@ -37,7 +36,7 @@ mise unset NODE_ENV
 Remove NODE\_ENV from the global config
 
 ```
-mise unset NODE_ENV -g
+mise unset -g NODE_ENV
 ```
 
 ## Related documentation [​](#related-documentation)

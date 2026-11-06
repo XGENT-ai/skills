@@ -1,12 +1,10 @@
-mbx cache remove
-
 `mbx cache remove` [​](#mbx-cache-remove)
 
 - **Usage:** `mbx cache remove [--interactive] [WORKSPACE]`
 
-Remove managed targets, learned incremental state, and cache claims for one workspace or selected workspaces.
+Remove a workspace's managed target, learned incremental state, and cache claims.
 
-Provide exactly one of `<WORKSPACE>` or `--interactive`.
+Provide exactly one of `<WORKSPACE>` or `--interactive`. mbx keeps a managed target or learned incremental state that a running command is using. Shared cache objects stay in the store for other workspaces and normal collection.
 
 ## Arguments [​](#arguments)
 
@@ -14,7 +12,9 @@ Provide exactly one of `<WORKSPACE>` or `--interactive`.
 
 ## Flags [​](#flags)
 
-- **`--interactive`** — Select recorded workspaces to remove.
+- **`--interactive`** — Choose from a list of recorded workspaces to remove.
+
+  Requires a terminal.
 - **`-h --help`** — Print help
 
 [Edit this page on GitHub](https://github.com/jdx/mr-boxington/edit/main/crates/mbx/src/cli/cache.rs)

@@ -1,13 +1,11 @@
-mise en
-
 en` [​](#mise-en)
 
 - **Usage:** `mise en [-s --shell <SHELL>] [DIR]`
 - **Source code:** [`src/cli/en.rs`](https://github.com/jdx/mise/blob/main/src/cli/en.rs)
 
-Start a new shell with the mise environment built from the current configuration
+Start a subshell with mise's tools and environment
 
-This is an alternative to `mise activate` for starting a mise session explicitly. The new shell has the tools and environment variables from the config loaded. Unlike an activated shell, changing directories does not update the environment.
+This is an alternative to `mise activate` for starting a mise session explicitly. The new shell has the tools and environment variables from the config loaded. Unlike an activated shell, changing directories does not update the environment. Type `exit` to leave it.
 
 ## Arguments [​](#arguments)
 
@@ -17,27 +15,30 @@ This is an alternative to `mise activate` for starting a mise session explicitly
 
 ## Flags [​](#flags)
 
-- **`-s --shell <SHELL>`** — Shell to start
-
-  Defaults to $SHELL
+- **`-s --shell <SHELL>`** — Shell to start; defaults to $SHELL
 - **`-h --help`** — Print help
 
 ## Examples [​](#examples)
 
-Start a shell and check node. Example output: `v20.0.0`.
+Start a shell with the project's tools and environment
 
 ```
-mise en .
-node -v
+mise en
 ```
 
-Skip loading bashrc.
+Start the shell in another project
+
+```
+mise en ~/work/api
+```
+
+Skip loading .bashrc
 
 ```
 mise en -s "bash --norc"
 ```
 
-Skip loading zshrc.
+Skip loading .zshrc
 
 ```
 mise en -s "zsh -f"
@@ -45,7 +46,7 @@ mise en -s "zsh -f"
 
 ## Related documentation [​](#related-documentation)
 
-- [Shell activation](https://mise.jdx.dev/getting-started.html#activate-mise).
+- [Shell setup](https://mise.jdx.dev/shell-setup.html).
 - [All commands](https://mise.jdx.dev/cli/).
 - [Global flags and argument syntax](https://mise.jdx.dev/cli/#global-flags).
 

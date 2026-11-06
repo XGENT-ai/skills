@@ -1,29 +1,26 @@
-S3 Backend
+s3 backend [​](#s3-backend)
 
-S3 Backend [​](#s3-backend)
-
-The `s3` backend installs binaries and archives from Amazon S3 or S3-compatible storage such as MinIO. Use it when access should follow your AWS credentials or when version discovery needs to list objects in a bucket. No AWS CLI is required.
-
-The code for this is inside of the mise repository at [`./src/backend/s3.rs`](https://github.com/jdx/mise/blob/main/src/backend/s3.rs).
+The `s3` backend installs a binary or archive from Amazon S3 or S3-compatible storage such as MinIO. Use it when access should follow your AWS credentials, or when versions come from listing a bucket; for public or token-protected URLs, the [http backend](https://mise.jdx.dev/dev-tools/backends/http.html) is simpler. It needs no AWS CLI.
 
 ## Usage [​](#usage)
 
-Replace the bucket and object key below with an artifact you can read for your platform. Use a concrete version for a fixed object URL:
+Replace the bucket and object key below with an artifact you can read for your platform, then install it in the current project:
 
 sh
 
 ```
-mise use "s3:my-tool[url=s3://my-bucket/tools/my-tool-v1.0.0.tar.gz]@1.0.0"
+mise use 's3:my-tool[url=s3://my-bucket/tools/my-tool-v1.0.0.tar.gz]@1.0.0'
+mise exec -- my-tool --version
 ```
 
-This writes the following to the project's `mise.toml`. Add `-g` for global configuration, and run `mise exec -- my-tool --version` to verify the install:
-
-toml
+Quote the argument so the shell does not expand the brackets. This writes the following to `mise.toml`. Add `-g` for a global tool.
 
 ```
 [tools]
 "s3:my-tool" = { version = "1.0.0", url = "s3://my-bucket/tools/my-tool-v1.0.0.tar.gz" }
 ```
+
+With a fixed URL, the version is only a label. To follow releases, put the version in the URL and set up [version discovery](#version-discovery).
 
 ## Authentication [​](#authentication)
 
@@ -37,19 +34,17 @@ sh
 AWS_PROFILE=development AWS_REGION=us-east-1 mise install
 ```
 
-Temporary environment credentials require `AWS_SESSION_TOKEN` as well as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. The `region` tool option can select the bucket's region explicitly.
+Temporary environment credentials need `AWS_SESSION_TOKEN` as well as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. The [`region`](#region) tool option sets the bucket's region explicitly.
 
-Downloading a known object requires `s3:GetObject`. Discovery through an object prefix also requires `s3:ListBucket`; discovery through a manifest needs read access to that manifest. A successful object download does not prove that version listing is permitted.
+Downloading a known object needs `s3:GetObject`. Version discovery from an object listing also needs `s3:ListBucket`, and discovery from a manifest needs read access to the manifest. A successful download does not prove that listing is allowed.
 
-## Tool Options [​](#tool-options)
+[Safe mode](https://mise.jdx.dev/security.html#safe-mode) refuses every S3 request, because config nobody reviewed would choose what your credentials read.
 
-The following [tool-options](https://mise.jdx.dev/dev-tools/#tool-options) are available for the `s3` backend—these go in `[tools]` in `mise.toml`.
+## Tool options [​](#tool-options)
 
-### `url` (Required) [​](#url-required)
+### `url` [​](#url-required)
 
-Specifies the S3 URL to download the tool from. The URL supports templating with `{{ version }}`:
-
-toml
+The object to download, as `s3://<bucket>/<key>`. Set it at the top level, or per platform under `platforms.<os>-<arch>.url`; a tool needs one or the other. The key is a template:
 
 ```
 [tools]
@@ -58,9 +53,7 @@ toml
 
 ### `endpoint` [​](#endpoint)
 
-Specify a custom S3-compatible endpoint for services like MinIO, DigitalOcean Spaces, or self-hosted S3:
-
-toml
+A custom S3-compatible endpoint, such as MinIO, DigitalOcean Spaces or a self-hosted service. With an endpoint set, mise uses path-style bucket addressing.
 
 ```
 [tools."s3:my-tool"]
@@ -71,9 +64,7 @@ endpoint = "https://minio.example.com"
 
 ### `region` [​](#region)
 
-Specify the AWS region for the S3 bucket:
-
-toml
+The AWS region of the bucket. Without it, mise uses the region from your AWS configuration, such as `AWS_REGION` or the profile.
 
 ```
 [tools."s3:my-tool"]
@@ -82,150 +73,25 @@ url = "s3://my-bucket/tools/my-tool-v{{ version }}.tar.gz"
 region = "us-west-2"
 ```
 
-### Platform-specific URLs [​](#platform-specific-urls)
+### Options shared with the http backend [​](#options-shared-with-the-http-backend)
 
-For tools that need different downloads per platform, use the table format:
+These options work as described for the http backend:
 
-toml
+- [URL templates](https://mise.jdx.dev/dev-tools/backends/http.html#template-variables) and [per-platform downloads](https://mise.jdx.dev/dev-tools/backends/http.html#platform-specific-urls)
+- [`checksum`](https://mise.jdx.dev/dev-tools/backends/http.html#checksum) and [`size`](https://mise.jdx.dev/dev-tools/backends/http.html#size)
+- [`format`, `strip_components`, `bin_path`, `bin` and `rename_exe`](https://mise.jdx.dev/dev-tools/backends/http.html#extracting-and-naming-executables)
 
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
+Unlike http, this backend also applies `bin` to archives: it renames the archive's main executable. When neither `bin` nor `rename_exe` is set and an archive holds a single executable, mise removes an OS or architecture suffix from its name, as it does for single-file downloads.
 
-[tools."s3:my-tool".platforms]
-macos-x64 = { url = "s3://my-bucket/tools/my-tool-v1.0.0-macos-x64.tar.gz" }
-macos-arm64 = { url = "s3://my-bucket/tools/my-tool-v1.0.0-macos-arm64.tar.gz" }
-linux-x64 = { url = "s3://my-bucket/tools/my-tool-v1.0.0-linux-x64.tar.gz" }
-```
+The s3 backend does not support `checksum_url`, `checksum_expr`, `headers`, `headers_forward`, `shared_extraction`, `windows_script_interpreter` or `version_order`. `mise lock` records the object URL and any `checksum` you set.
 
-### `checksum` [​](#checksum)
+## Version discovery [​](#version-discovery)
 
-Set the expected digest for this version and object. Replace this placeholder with a complete digest obtained from a trusted source:
+The s3 backend finds versions from a manifest or from an object listing. Configure one of them before you use `latest`, then check it with `mise ls-remote s3:my-tool`. When both are set, mise uses the manifest. Versions that look like prereleases, such as `2.0.0-rc1`, are left out unless the tool sets `prerelease = true`.
 
-toml
+### From a manifest [​](#manifest-file)
 
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0.tar.gz"
-checksum = "sha256:REPLACE_WITH_THE_64_HEX_DIGIT_DIGEST"
-```
-
-*Instead of specifying the checksum here, you can use [mise.lock](https://mise.jdx.dev/dev-tools/mise-lock.html) to manage checksums.*
-
-### `size` [​](#size)
-
-Check the expected object size in bytes. The numbers below illustrate the syntax; replace them with the actual sizes. This does not replace a checksum:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0.tar.gz"
-size = "12345678"
-```
-
-You can specify different sizes for different platforms:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-
-[tools."s3:my-tool".platforms]
-macos-arm64 = { url = "s3://my-bucket/tools/my-tool-v1.0.0-macos-arm64.tar.gz", size = "9876543" }
-linux-x64 = { url = "s3://my-bucket/tools/my-tool-v1.0.0-linux-x64.tar.gz", size = "12345678" }
-```
-
-### `strip_components` [​](#strip-components)
-
-Number of directory components to strip when extracting archives:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0.tar.gz"
-strip_components = 1
-```
-
-INFO
-
-When both `strip_components` and `bin_path` are unset, mise automatically detects when to apply `strip_components = 1`. This happens when the extracted archive contains exactly one directory at the root level and no files.
-
-### `bin` [​](#bin)
-
-Rename the downloaded binary to a specific name. This is useful when downloading a single binary object that has a platform-specific name:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-linux-x86_64"
-bin = "my-tool"
-```
-
-INFO
-
-When downloading single binaries (not archives), mise automatically removes OS/arch suffixes from the filename. For example, `my-tool-linux-x86_64` becomes `my-tool`. Use the `bin` option only when you need a specific custom name.
-
-### `rename_exe` [​](#rename-exe)
-
-Rename the executable after extraction from an archive. This is useful when the archive contains a binary with a platform-specific name that you want to rename:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0-linux.zip"
-rename_exe = "my-tool"
-```
-
-TIP
-
-Use `rename_exe` for archives where the binary inside has a different name than desired. Use `bin` for single binary downloads (not archives).
-
-### `bin_path` [​](#bin-path)
-
-Specify the directory containing binaries within the extracted archive. This disables automatic root stripping. For an archive shaped like `my-tool-VERSION/bin/my-tool`, set both options explicitly:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0.tar.gz"
-strip_components = 1
-bin_path = "bin" # after stripping an outer my-tool-VERSION directory
-```
-
-### `format` [​](#format)
-
-Explicitly specify the archive format when the URL lacks a file extension:
-
-toml
-
-```
-[tools."s3:my-tool"]
-version = "1.0.0"
-url = "s3://my-bucket/tools/my-tool-v1.0.0"
-format = "tar.gz"
-```
-
-## Version Discovery [​](#version-discovery)
-
-The S3 backend supports a manifest or object listing. Configure one before using `latest`, then check it with `mise ls-remote s3:my-tool`. The examples use placeholder buckets that you must replace with your own.
-
-### Manifest File [​](#manifest-file)
-
-Fetch available versions from a JSON manifest file stored in S3:
-
-toml
+Set `version_list_url` to the `s3://` URL of a file that lists versions:
 
 ```
 [tools."s3:my-tool"]
@@ -234,27 +100,7 @@ url = "s3://my-bucket/tools/my-tool-v{{ version }}.tar.gz"
 version_list_url = "s3://my-bucket/tools/versions.json"
 ```
 
-The manifest file can be a JSON array of version strings:
-
-json
-
-```
-["1.0.0", "1.1.0", "2.0.0"]
-```
-
-Or a JSON array of objects (use `version_json_path` to extract versions):
-
-json
-
-```
-[{ "version": "1.0.0" }, { "version": "1.1.0" }, { "version": "2.0.0" }]
-```
-
-### `version_json_path` [​](#version-json-path)
-
-Extract versions from JSON responses using a jq-like path expression:
-
-toml
+The manifest can be a JSON array of version strings, such as `["1.0.0", "1.1.0", "2.0.0"]`, or any other format the http backend reads. `version_regex`, `version_json_path` and `version_expr` work as on the [http backend](https://mise.jdx.dev/dev-tools/backends/http.html#version-discovery):
 
 ```
 [tools."s3:my-tool"]
@@ -264,27 +110,11 @@ version_list_url = "s3://my-bucket/tools/releases.json"
 version_json_path = ".[].version"
 ```
 
-### `version_expr` [​](#version-expr)
+mise keeps the manifest's order and treats the last entry as the newest, so list versions oldest first.
 
-Extract versions using an [expr-lang](https://expr-lang.org/) expression for complex version extraction logic:
+### From an object listing [​](#s3-object-listing)
 
-toml
-
-```
-[tools."s3:my-tool"]
-version = "latest"
-url = "s3://my-bucket/tools/my-tool-v{{ version }}.tar.gz"
-version_list_url = "s3://my-bucket/tools/versions.txt"
-version_expr = 'split(body, "\n")'
-```
-
-The expression receives the response body as the `body` variable and should return an array of version strings.
-
-### S3 Object Listing [​](#s3-object-listing)
-
-Discover versions by listing objects in the S3 bucket:
-
-toml
+Set `version_prefix` to the key prefix to list, without the bucket name. mise takes the bucket from `url`, lists the keys under the prefix, and extracts a version from each key with `version_regex`: its first capture group, or the whole match when there is none. `version_regex` defaults to `([0-9]+\.[0-9]+\.[0-9]+)`.
 
 ```
 [tools."s3:my-tool"]
@@ -294,14 +124,13 @@ version_prefix = "tools/my-tool-v"
 version_regex = 'my-tool-v(.+)\.tar\.gz$'
 ```
 
-- `version_prefix`: The S3 key prefix to list objects from
-- `version_regex`: A regular expression to extract version numbers from object keys (first capturing group is used)
+On this backend `version_prefix` is an object key prefix, not a tag prefix as on the [github backend](https://mise.jdx.dev/dev-tools/backends/github.html#version-prefix).
 
-## Custom Endpoint Example (MinIO) [​](#custom-endpoint-example-minio)
+S3 returns keys in alphabetical order, and mise keeps that order, so `latest` is the last match: `1.9.0` comes after `1.10.0`. When versions differ in the number of digits, pin the version or use a manifest.
 
-Here's a complete example using MinIO as an S3-compatible backend:
+## Custom endpoint example (MinIO) [​](#custom-endpoint-example-minio)
 
-toml
+A complete configuration for a MinIO server:
 
 ```
 [tools."s3:my-internal-tool"]
@@ -314,16 +143,7 @@ strip_components = 1 # assumes one outer directory containing bin/
 bin_path = "bin"
 ```
 
-Provide the MinIO access key and secret through an AWS-compatible profile or the standard environment variables, then run `mise install`. A custom endpoint uses path-style bucket addressing; it must be reachable with a trusted TLS certificate.
-
-## Comparison with HTTP Backend [​](#comparison-with-http-backend)
-
-| Feature | S3 Backend | HTTP Backend |
-| --- | --- | --- |
-| Authentication | AWS credentials (env vars, \~/.aws/credentials, IAM) | HTTP auth headers |
-| Version discovery | S3 listing or manifest file | HTTP endpoint |
-| Custom endpoints | Yes (MinIO, etc.) | N/A |
-| Use case | AWS-authenticated object storage | Public or authenticated HTTP downloads |
+Provide the MinIO access key and secret through an AWS profile or the standard environment variables, then run `mise install`. An `https://` endpoint must present a certificate your system trusts; a local `http://` endpoint also works.
 
 ## Troubleshooting [​](#troubleshooting)
 
@@ -333,7 +153,10 @@ Provide the MinIO access key and secret through an AWS-compatible profile or the
 | Object not found | The bucket, full key, concrete version, and rendered platform URL. |
 | Signature mismatch | Credentials, session token, region, endpoint, and local clock. |
 | No versions | The manifest format or listing prefix and capture group. A download URL alone does not define a version list. |
+| `latest` is an old version | The listing or manifest order; see [From an object listing](#s3-object-listing). |
 | Installed command missing | The archive structure after root stripping and the `bin` or `bin_path` option. |
+
+Implementation: [`src/backend/s3.rs`](https://github.com/jdx/mise/blob/main/src/backend/s3.rs).
 
 [Edit this page](https://github.com/jdx/mise/edit/main/docs/dev-tools/backends/s3.md)
 
@@ -341,6 +164,8 @@ Last updated:
 
 Pager
 
-[Next pageGetting Started](https://mise.jdx.dev/getting-started.html)
+[Previous pagepypi](https://mise.jdx.dev/dev-tools/backends/pypi.html)
+
+[Next pagespinel (experimental)](https://mise.jdx.dev/dev-tools/backends/spinel.html)
 
 MIT License·Copyright © 2026· [![](https://github.com/jdx.png?size=96)jdx.dev](https://jdx.dev)
