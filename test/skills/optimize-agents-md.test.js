@@ -1,12 +1,10 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/optimize-agents-md/SKILL.md');
-const tool = path.join(root, 'skills/agi-mode/scripts/evolution');
 
 test('AGENTS optimization remains discoverable within its first 100 description characters', () => {
   const content = fs.readFileSync(skill, 'utf8');
@@ -45,10 +43,4 @@ test('AGENTS skill references resolve from its actual installation layout', () =
       assert.ok(fs.existsSync(path.resolve(path.dirname(file), target)), `${relative}: ${target}`);
     }
   }
-});
-
-test('CLI discovery needs no Harbor import or model command', () => {
-  const result = spawnSync('python3', [path.join(tool, 'evolution.py'), '--help'], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr);
-  for (const command of ['validate', 'run', 'resume', 'apply']) assert.ok(result.stdout.includes(command));
 });

@@ -47,9 +47,12 @@
 
 以下记录按开发阶段归档，不对应 npm 发布版本。
 
+### 2026-11-06：终止并移除 Agent 指令演化工具
+
+- 原方法论不可行，未产生已证实的指令收益。移除 agi-mode 的远端执行工具（`scripts/evolution/`、`references/remote-evolution.md`）及其使用说明、开发计划与实验报告；Eval、Hillclimb、Arena、Reflection 流程保留。下方记录仅作历史，相关内容见 Git 历史。
+
 ### 2026-10-22：Agent 指令演化阶段交付
 
 - v1 在指定 SSH/Docker 组合完成真实隔离、任务对照/搜索、自然请求/CAS 与故障恢复验收；独立确认样本不足，未证明候选优于基线。
 - v2 按已有结果阶段交付：工程和已测子范围可用，完整 skill 三条件及 TypeSafe 反馈进入真实 optimizer 尚未验收，没有已证实的指令收益。后续运行需另行核对资源与验收条件。
 
-详细范围、证据及后续安排见 [M4 阶段记录](docs/plan/agent-instruction-evolution-v2.records/M4.md#2026-10-22-阶段交付)。

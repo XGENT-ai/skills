@@ -201,20 +201,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 
 只需安装 `agi-mode` 即可使用上述流程；保留的 `autoresearch`、`arena`、`reflect` 名称是兼容入口，需要同时安装 `agi-mode`。它们不再独立维护执行规则。
 
-明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 的 `compose`（默认操作）将原则压缩为 Odyssey RULE 片段（直接嵌入 AGENTS.md，无外层包装），按语义去重并补齐原则素材中缺失的编码准则，保留项目事实、授权和作用域。缺少 DSL skill 时停止，建议完整安装本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务或远端配置，文件精简不等于已证明行为质量提升。
-
-独立的 agi-mode [远端执行工具](skills/agi-mode/references/remote-evolution.md) 提供 `validate / run / resume / apply`，优化器、被测 agent 与固定验收使用 SSH 主机上的独立环境。默认搜索 keep 只更新探索最佳，独立确认和原则核对通过后才在已有写回授权内按 CAS 采用；显式获准的 v2 `bounded_exploration_v1` 仅允许质量门通过、来源精度不足时探索一个候选，不晋级最佳、不确认/采用，整体 inconclusive。不自动提交、发布或安装全局配置。验收范围与运行结果见 [CHANGELOG.md](CHANGELOG.md) 及其引用的阶段记录。
-
-自然发现验收可用 `source.fixed_skill_roots` 显式提供完整固定背景目录，目标缺席/候选切换保持其他技能字节；实际目录、读取与任务行为分别记录，单独的目标技能执行不代表完整目录发现已通过。
-
-v2运行质量项可显式声明`verifier/`公开观测文件，按白名单接收固定grader的实际运行事实；验收分与运行证据分开，缺证据保持unknown，独立观测不替代新增回归测试。
-百分制评分表保留其他已知分项，不因单项unknown全表清空；已知硬失败控制可显式声明不可观察的非gate项并要求双评一致未知，成功控制、底线、排序及辅助资格保持严格。
-百分制 rubric 可显式让程序从已校验逐项判断派生评审状态，避免把产物失败误作测量无效；旧协议默认保持，新格式需重新校准。
-固定预算项可显式要求双评数值及校准固定参考完全相同，分歧保持unknown及原分；缺省程度容差保持，同分仍须核对依据，详见远端手册。
-
-v2自有仓任务可显式使用`case.platform=linux/arm64`和匹配的固定镜像；默认及v1/Pro V2仍amd64。平台改变后重新校准，不能迁移旧分或资格；详见[远端手册](skills/agi-mode/references/remote-evolution.md)。
-
-安装、有限运行与恢复入口见 [使用说明](docs/agent-instruction-evolution.md)。
+明确要求优化仓库指令时，可使用 `$optimize-agents-md [repo 路径] [文件范围] [仅诊断]`，默认处理当前代码仓库的根 AGENTS.md。它默认可发现，普通编码、初始化或全局规则修改不进入该流程；仅诊断保持只读。优化时使用已安装的 `use-prompt-dsl` 的 `compose`（默认操作）将原则压缩为 Odyssey RULE 片段（直接嵌入 AGENTS.md，无外层包装），按语义去重并补齐原则素材中缺失的编码准则，保留项目事实、授权和作用域。缺少 DSL skill 时停止，建议完整安装本仓 skills；安装检查和优化流程只属于 skill，不写进目标 AGENTS.md。无需同仓评测任务，文件精简不等于已证明行为质量提升。
 
 `experience-capture` 可独立安装，默认允许自动选择；本仓 `AGENTS.md` 也提供触发约定。它只在开发的自然间隙，把当前上下文已有的线索用 3–4 行保存到 `.xgent-ai/experience/`，不打断主任务，不额外检索取证或回读完整记录；没有合适间隙则跳过，纯咨询和只读任务不落盘。自动选择不等于可靠的后台事件监听；其他项目可在自己的 `AGENTS.md` 中约定出现这些信号时读取已安装的 skill。任务结束后用 `$agi-mode 复盘` 或 `$agi-mode reflect` 深入挖掘、查找和核对证据；默认给出建议并回写已审条目的处置，明确授权沉淀时落实到 know-how、playbook、principle 或自动化工具。
 

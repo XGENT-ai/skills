@@ -32,7 +32,7 @@
 | 96e105dd-da91-4da5-831d-d947f7a4630a | [Phoenix Diagram P2 PRD交付覆盖复审（gaps修复效果）](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.2026-10-28.md) | [状态](96e105dd-da91-4da5-831d-d947f7a4630a.md) | 活动 |
 | 98308b27-f2d8-4bf9-ace7-d2abec1022e4 | [Phoenix Diagram P2 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.md) | [状态](98308b27-f2d8-4bf9-ace7-d2abec1022e4.md) | 活动 |
 | 9a03cbc2-3524-4b92-9a2c-baf9d81964be | [Phoenix Diagram P2 gaps R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.code-review.md) | [状态](9a03cbc2-3524-4b92-9a2c-baf9d81964be.md) | 活动 |
-| 9a6386c1-91c6-4a95-98b4-989e9b806613 | [AGENTS.md 与 Skills 自进化开发计划首审](../../../../docs/plan/agent-instruction-evolution.review.md) | [状态](9a6386c1-91c6-4a95-98b4-989e9b806613.md) | 活动 |
+| 9a6386c1-91c6-4a95-98b4-989e9b806613 | AGENTS.md 与 Skills 自进化开发计划首审（原文已删除） | [状态](9a6386c1-91c6-4a95-98b4-989e9b806613.md) | 归档 |
 | a8a28d1b-313e-4778-8c24-e71ae7a63579 | [Phoenix Diagram P2 R2代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r2.md) | [状态](a8a28d1b-313e-4778-8c24-e71ae7a63579.md) | 活动 |
 | a9c97086-4689-4153-9e84-0b77207f5043 | [Phoenix Diagram P2 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.md) | [状态](a9c97086-4689-4153-9e84-0b77207f5043.md) | 活动 |
 | cd59814f-ccf0-4d52-a96b-0de9e9484628 | [Phoenix Diagram 状态图 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-STATECHART.code-review.md) | [状态](cd59814f-ccf0-4d52-a96b-0de9e9484628.md) | 活动 |
