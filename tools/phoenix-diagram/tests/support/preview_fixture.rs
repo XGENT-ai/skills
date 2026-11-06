@@ -50,7 +50,7 @@ impl Drop for Workspace {
     }
 }
 pub fn source(label: &str) -> Vec<u8> {
-    serde_json::to_vec(&json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":label,"output":"preview.html","input_contract":"phoenix-v1","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"service","type":"backend","label":label,"pos":[120,120]}],"connections":[]})).unwrap()
+    serde_json::to_vec(&json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":label,"output":"preview.html","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"service","type":"backend","label":label,"pos":[120,120]}],"connections":[]})).unwrap()
 }
 
 pub struct Session {
@@ -67,7 +67,7 @@ impl Session {
             .arg("architecture")
             .arg(input)
             .arg(output)
-            .args(["--input-contract", "phoenix-v1", "--port", "0", "--json"])
+            .args(["--port", "0", "--json"])
             .current_dir(&root.0)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

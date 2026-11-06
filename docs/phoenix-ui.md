@@ -1,6 +1,6 @@
 # XGENT Phoenix UI：安装与使用
 
-Phoenix UI 是 XGENT 自主维护的设计工具，承接 [impeccable](https://github.com/pbakaus/impeccable) skill 4.5.0 / engine 0.1.11 的固定源码（Apache-2.0）。版本、规则、构建和发布都由本仓控制：不查询上游 latest，不从上游或 impeccable.style 下载任何东西。来源、修改标识与三方许可见包内 `dist/phoenix-ui/NOTICE.md`、`THIRD-PARTY-NOTICES.md`。
+Phoenix UI 是 XGENT 自主维护的设计工具，版本、规则、构建和发布都由本仓控制。三方许可见包内 `dist/phoenix-ui/NOTICE.md`、`THIRD-PARTY-NOTICES.md`。
 
 ## 安装
 
@@ -14,16 +14,14 @@ npx @xgent-ai/skills install
 一次安装分两段，先完成全部只读预检再写项目：
 
 1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并；共享 hook 配置不是合法 JSON 对象等预检失败不写项目。
-2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件；符号链接的 `skills/phoenix-ui` 目录换成副本，不改链接目标。共享配置只替换 Phoenix hook，保留其他 handler 和配置；重写后为标准 JSON，原有注释不保留。安装不创建回执、日志或备份；完成后删除早期版本留下的 `.phoenix-ui/install/` 和 `.phoenix-ui/migrations/`，保留配置和业务数据。中断后重跑同一命令覆盖安装。
+2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件；符号链接的 `skills/phoenix-ui` 目录换成副本，不改链接目标。共享配置只替换 Phoenix hook，保留其他 handler 和配置；重写后为标准 JSON，原有注释不保留。安装不创建回执、日志或备份，保留配置和业务数据。中断后重跑同一命令覆盖安装。
 
 安装输出列出写入、合并与移除及重载步骤；相同内容重复安装显示「未变」。预检失败不写项目，写入失败显示未完成并提示处理错误后重跑。
 
 | 选项 | 作用 |
 | --- | --- |
-| `--no-phoenix-ui` | 跳过 Phoenix，仍安装 XGENT 部分；不删除已装版本 |
-| `--no-impeccable` | 已弃用，等同 `--no-phoenix-ui` |
-| `--replace-impeccable` | 删除所选 provider 的项目级及个人级旧 impeccable 工具和 hooks，不备份、不再询问 |
-| `--keep-impeccable` | 保留 impeccable，与 Phoenix UI 共存，不再询问；无交互环境默认保留 |
+| `--no-phoenix-ui` | 跳过 Phoenix，仍安装 XGENT 部分；不删除已装版本，也不处理 impeccable |
+| `--keep-impeccable` | 保留旧 impeccable，与 Phoenix UI 共存，不再询问 |
 | `--release-dir=DIR` | 离线安装 engine：DIR 是发布者整理的完整 release 目录（`VERSION.json`、各平台 engine、许可与清单），必须与当前包的 manifest 完全一致，零网络 |
 | `--providers=a,b` | 指定安装目标目录；`codex` 同时选择 `.agents`（skills）与 `.codex`（hooks）。默认按项目里已有的目录判断，都没有时只装 `.claude` |
 
@@ -35,13 +33,13 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --p
 
 终端命令统一通过 `npm exec --package=@xgent-ai/skills -- phoenix-ui <verb>` 调用；对话里的设计工作流用 `/phoenix-ui`（Codex 为 `$phoenix-ui`），二者不要混用。
 
-## 替换或保留已有工具
+## 删除或保留 impeccable
 
-`npx @xgent-ai/skills install` 发现 impeccable 时询问是否替换。选择是，直接删除所选 provider 的旧 skill、固定 agents/commands 入口和旧 hooks，并关闭相应的 impeccable 插件启用项；项目级与个人级路径均在范围内，不创建工具备份，不留旧命令转跳入口。只移除引用旧 launcher 的 command handler，保留同组的其他 hooks、matcher 和未知配置。选择否则保留这些工具与配置，Phoenix 正常安装，不因旧入口、旧 live 状态或版本不同而阻止激活。
+`npx @xgent-ai/skills install` 发现 impeccable 时默认删除：交互终端以 `[Y/n]` 确认（回车即删除），无交互环境直接删除，`--keep-impeccable` 保留。删除范围是所选 provider 的项目级与个人级 skill、固定 agents/commands 入口、旧 hooks、`skills-lock.json` 与 `.agents/.skill-lock.json` 中的 impeccable 记录，并关闭相应的 impeccable 插件启用项；不创建工具备份，不留旧命令转跳入口。只移除引用旧 launcher 的 command handler，保留同组的其他 hooks、matcher 和未知配置。保留时 Phoenix 照常安装，与 impeccable 共存。
 
-无交互环境默认共存；自动化可用 `--replace-impeccable` 或 `--keep-impeccable` 明确选择。Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修改过的文件。运行只检查 ENGINE 和引擎。独立辅助 skill 由各自安装渠道管理，现有文件保留。
+Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修改过的文件。运行只检查 ENGINE 和引擎。独立辅助 skill 由各自安装渠道管理，现有文件保留。
 
-这些操作不改业务代码、文档和 `.impeccable/` 数据，也不迁移旧数据。个人级旧入口只在选择替换时删除。清理后若安装中断，直接重跑；需要旧工具时从 Git 或其安装渠道恢复。
+这些操作不改业务代码、文档和 impeccable 已生成的数据，不迁移旧数据。清理后若安装中断，直接重跑；需要旧工具时从其安装渠道重新安装。
 
 ## 支持矩阵
 
@@ -70,11 +68,10 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
 - skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
-- 原 `vendor/impeccable/` 副本及其 vendor/R2 脚本已删除，需要时从 git 历史查看；发布检查重建旧版项目所用的 0.3.0/0.6.0 包摘要记录在 `tools/phoenix-ui/migration-sources/`。
 
 ## XGENT 自有检测规则
 
-Phoenix UI 在承接上游的 61 条内置规则之外，另带一组 XGENT 自有规则（ID 以 `xgent/` 开头）。它们默认启用、与内置规则分开定义，可以按规则单独关闭。规则包只装进原生 `phoenix-ui` 二进制：`detect`（源码文件与 URL 目标）和设计 hook 会运行它；live 叠层与浏览器扩展在页面内使用 WASM 检测、不加载这个规则包，所以同一页面在叠层或扩展里看不到下面这些发现，结果可能与 `detect <url>` 不同；需要这部分发现时以 `detect` 的结果为准。
+Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID 以 `xgent/` 开头）。它们默认启用、与内置规则分开定义，可以按规则单独关闭。规则包只装进原生 `phoenix-ui` 二进制：`detect`（源码文件与 URL 目标）和设计 hook 会运行它；live 叠层与浏览器扩展在页面内使用 WASM 检测、不加载这个规则包，所以同一页面在叠层或扩展里看不到下面这些发现，结果可能与 `detect <url>` 不同；需要这部分发现时以 `detect` 的结果为准。
 
 | 规则 ID | 检测方式 | 级别 | 关闭方式 |
 | --- | --- | --- | --- |
@@ -93,7 +90,7 @@ Phoenix UI 在承接上游的 61 条内置规则之外，另带一组 XGENT 自�
 
 - `detector.ignoreRules`：项目级关闭，手动 `detect` 与 hook 共用这份过滤；配置在 `.phoenix-ui/config.json`，本地覆盖在 `.phoenix-ui/config.local.json`。不要手改这两个文件，走下面的 hooks 命令。
 - `hooks ignore-rule <id>`：把规则 ID 追加到 `detector.ignoreRules` 的受支持写法，影响整个项目；范围较大，先征得用户同意。只关一个文件中的一条时用 `phoenix-ui hooks ignore-value <id> "*" --file <path>`，窄例外默认写入项目共享 config。
-- inline 豁免：`impeccable-disable*`（引擎原有）与 `phoenix-ui-disable*`（skill 文案）两种前缀都生效；词形为 `disable`（整个文件）、`disable-line`、`disable-next-line`（单行），后接一个或多个规则 ID（逗号分隔）或 `*`，可带 `: 理由` 或 `-- 理由`。内联标记按源文件内容生效；URL 扫描读取渲染后的页面，页面规则的例外用项目级忽略。`--no-inline-ignores`（或 `--no-config`）可绕过内联豁免。
+- inline 豁免：前缀为 `phoenix-ui-disable*`，词形为 `disable`（整个文件）、`disable-line`、`disable-next-line`（单行），后接一个或多个规则 ID（逗号分隔）或 `*`，可带 `: 理由` 或 `-- 理由`。内联标记按源文件内容生效；URL 扫描读取渲染后的页面，页面规则的例外用项目级忽略。`--no-inline-ignores`（或 `--no-config`）可绕过内联豁免。
 - `detect --no-advisory`：只在单次扫描中隐藏 advisory 级发现，warning 级发现与退出码不受影响。
 
 在 Cursor 上启用新版本后，本来含无替代 `focus:outline-none` 的文件会对任何编辑触发 before-edit 拒绝：该检查扫描整份投影后的文件，不扣除编辑前已经存在的发现，所以与该焦点样式无关的编辑也会被拒。处理方式是先修掉该文件的焦点样式；确需临时放行时用 `phoenix-ui hooks ignore-value xgent/focus-outline-removed "*" --file <path>` 只关这个文件中的这一条。不要为绕过拒绝改用 inline 豁免。例外默认通过 `ignore-value` 写入项目 config；`ignore-file`、`ignore-rule` 影响面更大，应先征得用户同意。
@@ -155,7 +152,7 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 2. 从这次 run 下载 UI 与 Diagram 各四个平台的 engine 制品（`phoenix-ui-<平台>`、`phoenix-diagram-<平台>`），逐个核对 GitHub digest，并确认 CI 构建所用的两个 bundle 与当前提交一致、提交的生成文件与源码一致。
 3. 用 `aws s3api put-object --if-none-match '*'` 把八个 engine 上传到 R2 的 `<前缀>/<工具>/v<版本>/ci-<run>/<平台>/<文件>`，从不覆盖：对象已存在时只接受字节相同的；随后从每个公共 URL 回读，核对大小与 SHA-256。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。已上传的对象有误时，为同一提交手动再触发一次 Phoenix CI（得到新 run ID；Actions 页面的 Re-run 沿用原 ID）后重新发布，不会撞上旧对象。
 4. 从 HEAD（`git archive`）只打一次联合 tarball：写入两个工具的 release 清单及其副本（UI 的 `skills/phoenix-ui/scripts/ENGINE.json` 与 `GENERATED.json` 中的摘要，Diagram 的 `bundle/ENGINE.json` 与 `skills/phoenix-diagram/ENGINE.json`），第三方许可取自 darwin-arm64 的 CI 制品，最终包再次通过发布校验。`xgent-skills install` 默认安装两者。
-5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 0.3.0/0.6.0 工具保留共存、直接删除替换、Phoenix 副本覆盖重装、旧安装目录清理和重复安装。
+5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 Phoenix 副本覆盖重装和重复安装。
 6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
 
 只改脚本、skill 或文档、引擎源码未变时，可用 `--reuse-engines <已发布版本>` 跳过 CI 和 R2（第 2、3 步），直接复用该 npm 版本的 UI 与 Diagram 引擎：

@@ -53,7 +53,7 @@ pub type TextContentAnalyzers<'a> = &'a dyn Fn(&str, &str) -> Vec<Finding>;
 #[derive(Default, Clone, Copy)]
 pub struct DetectHtmlOptions<'a> {
     /// JS `options.inlineIgnores === false` disables the whole-file
-    /// `impeccable-disable` waivers; anything else applies them.
+    /// `phoenix-ui-disable` waivers; anything else applies them.
     pub inline_ignores_disabled: bool,
     /// JS `options.designSystem` (present only when a DESIGN.md loaded).
     pub design_system: Option<&'a dyn DesignSystemHook>,

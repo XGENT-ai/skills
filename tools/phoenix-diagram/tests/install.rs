@@ -151,7 +151,7 @@ fn fixture(root: &Workspace) -> InstallRequest {
         "schemaVersion":1,"distribution":"development","tool":"phoenix-diagram",
         "toolVersion":"0.2.0","npmPackageVersion":"0.0.0-fixture","sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),
-        "inputContractSchema":1,"receiptSchema":1,"viewerRevision":"phoenix-v2",
+        "receiptSchema":1,"viewerRevision":"phoenix-v2",
         "bundleSha256":digest(&manifest),
         "engines":{platform():{"asset":format!("phoenix-diagram-{}",platform()),"size":engine_size,"sha256":engine_sha256}}
     }))
@@ -339,7 +339,7 @@ fn install_rejects_bundle_tampering_before_any_project_write() {
             "engine" => write(&request.bundle_root.join("ENGINE.json"), b"{}", 0o644),
             "probe" => {
                 let fake = root.path("fake-engine");
-                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
+                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
                 request.engine = fake;
             }
             _ => unreachable!(),

@@ -23,7 +23,7 @@ test.after(()=>{if(engines?.warmUiCache)fs.rmSync(engines.warmUiCache,{recursive
 function realEngines(){
   if(engines)return engines;
   const ui=process.env.PHOENIX_UI_BIN,diagram=process.env.PHOENIX_DIAGRAM_BIN;
-  for(const [file,expected] of [[ui,'phoenix-ui-engine 0.1.0\n'],[diagram,'phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n']]){
+  for(const [file,expected] of [[ui,'phoenix-ui-engine 0.1.0\n'],[diagram,'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n']]){
     const probe=spawnSync(file,['engine-probe'],{encoding:'utf8',timeout:3000,maxBuffer:4096});
     assert.equal(probe.status,0,probe.error?.message||probe.stderr);assert.equal(probe.stdout,expected);
   }
@@ -62,7 +62,7 @@ async function fixture(t,{warmUi=true}={}){
   }
   write(path.join(diagramDist,'bundle/manifest.json'),bundle.bytes);
   const npmPackageVersion=JSON.parse(fs.readFileSync(path.join(pkg,'package.json'))).version;
-  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,inputContractSchema:1,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
+  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
   for(const file of [path.join(diagramDist,'VERSION.json'),path.join(diagramDist,'bundle/ENGINE.json'),path.join(pkg,'skills/phoenix-diagram/ENGINE.json')])write(file,encoded(diagramVersion));
   // Declared legal inventory is complete for this format fixture. M6 separately
   // verifies the actual complete Rust/font/upstream release license closure.
@@ -164,6 +164,45 @@ nativeTest('selected Codex providers isolate both skill roots from unselected ha
   assertBoth(project,'.agents');
   for(const provider of ['.claude','.cursor','.codex'])for(const name of ['phoenix-ui','phoenix-diagram'])assert.equal(fs.existsSync(path.join(project,provider,'skills',name)),false,`${provider}/${name} must remain absent`);
   assert.equal(fs.readFileSync(path.join(project,'.cursor/settings.user.json'),'utf8'),'unselected provider bytes\n');
+});
+function archifyFixture(f,name){
+  const project=f.project(name),home=f.env.HOME,lock={version:1,skills:{
+    archify:{source:'XGENT-ai/skills',skillPath:'skills/archify/SKILL.md'},
+    'design-md':{source:'XGENT-ai/skills',skillPath:'skills/design-md/SKILL.md'}}};
+  const skills=[path.join(project,'.claude/skills/archify'),path.join(home,'.claude/skills/archify'),path.join(home,'.agents/skills/archify')];
+  for(const dir of skills)write(path.join(dir,'SKILL.md'),'old archify\n');
+  const locks=[path.join(project,'skills-lock.json'),path.join(home,'.agents/.skill-lock.json')];
+  for(const file of locks)write(file,encoded(lock));
+  // A diagram Archify already produced stays where the user keeps it.
+  write(path.join(project,'docs/old.archify.html'),'<html>old output</html>\n');
+  return {project,skills,locks};
+}
+nativeTest('a non-interactive install removes project and personal Archify skills and their lock entries',async t=>{
+  const f=await fixture(t),a=archifyFixture(f,'archify project');
+  const result=await install(f,a.project,[...both(f),'--providers=claude,codex']);assert.equal(result.code,0,result.stdout+result.stderr);
+  for(const dir of a.skills)assert.equal(fs.existsSync(dir),false,dir);
+  for(const file of a.locks)assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(file)).skills),['design-md'],file);
+  assert.equal(fs.readFileSync(path.join(a.project,'docs/old.archify.html'),'utf8'),'<html>old output</html>\n');
+  assert.match(result.stdout,/无交互环境默认删除/);assertBoth(a.project,'.claude');
+});
+nativeTest('--keep-archify, a declined prompt and --no-phoenix-diagram leave Archify installed',async t=>{
+  const f=await fixture(t);
+  const runs=[
+    ['keep flag',a=>install(f,a.project,[...both(f),'--providers=claude,codex','--keep-archify'])],
+    ['declined prompt',async a=>{
+      // Simulated terminal; the [Y/n] prompt defaults to removal, so only an explicit "n" keeps it.
+      const r=spawnSync(process.execPath,['-e','process.stdin.isTTY = true; require(process.argv[1]);',path.join(f.pkg,'bin/xgent-skills.js'),'install',a.project,...both(f),'--providers=claude,codex'],{cwd:a.project,env:f.env,input:'n\n',encoding:'utf8',timeout:600000});
+      assert.match(r.stdout,/发现旧 archify.*\[Y\/n\]/);return {code:r.status,stdout:r.stdout,stderr:r.stderr};
+    }],
+    ['skipped diagram',a=>install(f,a.project,['--release-dir='+f.uiRelease,'--no-phoenix-diagram','--providers=claude,codex'])],
+  ];
+  for(const [name,run] of runs){
+    for(const dir of [path.join(f.env.HOME,'.claude'),path.join(f.env.HOME,'.agents')])fs.rmSync(dir,{recursive:true,force:true});
+    const a=archifyFixture(f,`archify ${name}`),locks=a.locks.map(file=>fs.readFileSync(file,'utf8'));
+    const result=await run(a);assert.equal(result.code,0,name+result.stdout+result.stderr);
+    for(const dir of a.skills)assert.equal(fs.readFileSync(path.join(dir,'SKILL.md'),'utf8'),'old archify\n',`${name}: ${dir}`);
+    assert.deepEqual(a.locks.map(file=>fs.readFileSync(file,'utf8')),locks,name);
+  }
 });
 nativeTest('an existing Codex project keeps both tools out of harnesses it does not use across reinstalls',async t=>{
   const f=await fixture(t),project=f.project('codex only project');

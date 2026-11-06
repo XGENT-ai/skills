@@ -94,11 +94,6 @@ pub fn filter_fresh_findings(env: &Env, findings: Vec<Finding>, project_root: &s
     if findings.is_empty() {
         return vec![];
     }
-    let auto: Vec<Finding> = findings.iter().filter(|f| f.severity == "auto").cloned().collect();
-    let notifiable: Vec<Finding> = findings.iter().filter(|f| f.severity != "auto").cloned().collect();
-    if notifiable.is_empty() {
-        return auto;
-    }
     let key = jsp::resolve(project_root, &[]);
     let cache = read_cache(env);
     let seen: Map<String, Value> = cache
@@ -108,7 +103,7 @@ pub fn filter_fresh_findings(env: &Env, findings: Vec<Finding>, project_root: &s
         .and_then(|v| v.as_object())
         .cloned()
         .unwrap_or_default();
-    let fresh: Vec<Finding> = notifiable
+    let fresh: Vec<Finding> = findings
         .iter()
         .filter(|f| match seen.get(&f.id).and_then(as_number) {
             Some(last) => !(now - last < RENOTIFY_INTERVAL_MS),
@@ -116,7 +111,7 @@ pub fn filter_fresh_findings(env: &Env, findings: Vec<Finding>, project_root: &s
         })
         .cloned()
         .collect();
-    let live: Vec<&str> = notifiable.iter().map(|f| f.id.as_str()).collect();
+    let live: Vec<&str> = findings.iter().map(|f| f.id.as_str()).collect();
     let mut next = Map::new();
     for (id, v) in &seen {
         if live.contains(&id.as_str()) {
@@ -134,9 +129,7 @@ pub fn filter_fresh_findings(env: &Env, findings: Vec<Finding>, project_root: &s
         }
         write_cache(env, &pruned);
     }
-    let mut out = auto;
-    out.extend(fresh);
-    out
+    fresh
 }
 
 /// JS: buildStalenessDirective(findings)
@@ -145,15 +138,11 @@ pub fn build_staleness_directive(findings: &[Finding]) -> Option<String> {
         return None;
     }
     let payload: Vec<Value> = findings.iter().map(|f| f.to_value()).collect();
-    let has_reportable = findings.iter().any(|f| f.severity != "auto");
-    let mut lines = vec![
+    let lines = [
         format!("CONTEXT_STALE:\n{}", json_pretty(&Value::Array(payload))),
         "Phoenix UI's own project files have drifted from what this version reads. Do not stop, reorder, or expand the requested task for any of this.".to_string(),
-        "By severity: `auto` is a migration the next write to that file performs anyway, so apply it then and do not raise it with the user. `mention` gets one short line in your reply with the offered fix. `route` names the command that owns the repair; offer it, and run it only if the user asks.".to_string(),
-        "A finding that reports a deprecated field is binding: treat that field as absent for every decision in this session, whatever value it holds.".to_string(),
+        "By severity: `mention` gets one short line in your reply with the offered fix. `route` names the command that owns the repair; offer it, and run it only if the user asks.".to_string(),
+        "Surface the findings once, after the task response, in at most two sentences. They are already throttled, so say them plainly rather than hedging about whether they matter.".to_string(),
     ];
-    if has_reportable {
-        lines.push("Surface the reportable findings once, after the task response, in at most two sentences. They are already throttled, so say them plainly rather than hedging about whether they matter.".to_string());
-    }
     Some(lines.join(" "))
 }

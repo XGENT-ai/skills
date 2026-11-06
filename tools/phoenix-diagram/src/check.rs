@@ -395,21 +395,12 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         .value()
         .attr("data-diagram-type")
         .and_then(|kind| kind.parse().ok());
-    let contract = svg.value().attr("data-input-contract");
     let mut contract_errors = Vec::new();
     if inspection.kind.is_none() {
         contract_errors.push(inspection.diagnostic(
             "artifact/diagram-type",
             "/svg/data-diagram-type",
             "SVG must declare a supported diagram type",
-            Value::Null,
-        ));
-    }
-    if contract != Some("phoenix-v1") {
-        contract_errors.push(inspection.diagnostic(
-            "artifact/input-contract",
-            "/svg/data-input-contract",
-            "SVG input contract is unknown",
             Value::Null,
         ));
     }
@@ -427,7 +418,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
     }
     inspection.record(
         "diagram_contract",
-        serde_json::json!({"contract":contract,"quality":quality}),
+        serde_json::json!({"quality":quality}),
         contract_errors,
     );
     let view_box: Vec<f64> = svg
@@ -1160,7 +1151,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         "relationship_crossings",
         "composition/proper-crossing",
         &crossings,
-        serde_json::json!({"paths":actual_routes.len(),"contract":contract}),
+        serde_json::json!({"paths":actual_routes.len()}),
         false,
     );
     let corridors = geometry_checks::collect_ambiguous_corridors(
@@ -1174,7 +1165,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         "relationship_corridors",
         "composition/ambiguous-corridor",
         &corridors,
-        serde_json::json!({"straightSubpaths":straight_routes.len(),"contract":contract}),
+        serde_json::json!({"straightSubpaths":straight_routes.len()}),
         false,
     );
     // The original five keep the frozen check's scope: workflow v2 routes,

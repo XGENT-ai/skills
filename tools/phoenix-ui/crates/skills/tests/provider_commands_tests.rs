@@ -120,40 +120,6 @@ fn user_scope_resolves_the_config_dir_opencode_scans() {
 }
 
 #[test]
-fn migrates_legacy_global_commands_without_disturbing_siblings() {
-    let root = temp_root("cmd-migrate");
-    let bundle = format!("{root}/bundle");
-    let home = format!("{root}/home");
-    bundle_with_commands(&bundle, ".opencode", &["impeccable"]);
-    write(&format!("{home}/.opencode/commands/impeccable.md"), "stale\n");
-    write(&format!("{home}/.opencode/commands/mine.md"), "keep me\n");
-    let sys = sys_with(&home, &[]);
-
-    assert_eq!(
-        copy_provider_commands(&sys, &bundle, &home, &["opencode"], Some(Scope::User)),
-        1
-    );
-    assert!(exists(&format!("{home}/.config/opencode/commands/impeccable.md")));
-    // The stranded copy loses only what was just written.
-    assert!(!exists(&format!("{home}/.opencode/commands/impeccable.md")));
-    assert!(exists(&format!("{home}/.opencode/commands/mine.md")));
-}
-
-#[test]
-fn a_home_rooted_git_repo_is_a_project_install_and_is_left_alone() {
-    let root = temp_root("cmd-git");
-    let bundle = format!("{root}/bundle");
-    let home = format!("{root}/home");
-    bundle_with_commands(&bundle, ".opencode", &["impeccable"]);
-    write(&format!("{home}/.opencode/commands/impeccable.md"), "project copy\n");
-    std::fs::create_dir_all(format!("{home}/.git")).unwrap();
-    let sys = sys_with(&home, &[]);
-
-    copy_provider_commands(&sys, &bundle, &home, &["opencode"], Some(Scope::User));
-    assert!(exists(&format!("{home}/.opencode/commands/impeccable.md")));
-}
-
-#[test]
 fn a_provider_without_a_commands_dir_writes_nothing() {
     let root = temp_root("cmd-none");
     let bundle = format!("{root}/bundle");

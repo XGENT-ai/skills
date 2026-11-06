@@ -101,10 +101,8 @@
   // one owns) comes from the canonical source, skill/scripts/live/ui-surfaces.mjs,
   // which the /live.js assembler serializes into these globals alongside the
   // token/port/vocabulary. This file is served raw and injected as a classic
-  // script, so it cannot import that module; the private impeccable-site repo
-  // imports it directly to check its Live UI lab holds a snapshot for every
-  // surface, which only works while the list has exactly one definition.
-  // Add a surface in ui-surfaces.mjs, not here.
+  // script, so it cannot import that module. Add a surface in ui-surfaces.mjs,
+  // not here.
   const LIVE_CHROME_MOUNT_CONTRACT = Array.isArray(window.__PHOENIX_UI_LIVE_MOUNT_CONTRACT__)
     ? window.__PHOENIX_UI_LIVE_MOUNT_CONTRACT__
     : ['root', 'transport', 'state', 'actions'];
@@ -9869,13 +9867,8 @@ void main() {
     try {
       if (sessionId) {
         sessionStorage.removeItem(handledWrapperReloadKey(sessionId));
-        const legacy = sessionStorage.getItem(HANDLED_WRAPPER_RELOAD_KEY) || '';
-        if (legacy === sessionId || legacy.startsWith(sessionId + ':')) {
-          sessionStorage.removeItem(HANDLED_WRAPPER_RELOAD_KEY);
-        }
         return;
       }
-      sessionStorage.removeItem(HANDLED_WRAPPER_RELOAD_KEY);
       for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const key = sessionStorage.key(i);
         if (key?.startsWith(HANDLED_WRAPPER_RELOAD_KEY + ':')) sessionStorage.removeItem(key);
@@ -10167,7 +10160,6 @@ void main() {
   let activeDetectScanId = null;
   let pendingDetectScanId = null;
   const DETECT_EMPTY_MESSAGE = 'No detector issues found.';
-  const PICK_PREFS_KEY = 'impeccable-live-pick';
   const INTERACTION_PREFS_KEY = 'impeccable-live-interaction';
   const PLACEHOLDER_DEFAULT_HEIGHT = 80;
   const PLACEHOLDER_MIN_HEIGHT = 48;
@@ -10182,11 +10174,6 @@ void main() {
           pickActive: !!prefs.pickActive,
           insertActive: !!prefs.insertActive,
         };
-      }
-      const legacy = localStorage.getItem(PICK_PREFS_KEY);
-      if (legacy) {
-        const prefs = JSON.parse(legacy);
-        return { pickActive: !!prefs.pickActive, insertActive: false };
       }
     } catch { /* ignore */ }
     return { pickActive: false, insertActive: false };

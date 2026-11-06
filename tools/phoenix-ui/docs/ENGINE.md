@@ -73,5 +73,5 @@ The CLI and hooks install `phoenix_ui_rules::PACK`; the pack reference travels
 in `ScanOptions.rule_pack`, `TextOptions.rule_pack`,
 `DetectHtmlOptions.rule_pack` and `BrowserConfig.rule_pack`. Pack findings are
 appended after the built-in passes and before inline ignores, so
-`impeccable-disable` waives them like built-in rules. The in-page WASM
+`phoenix-ui-disable` waives them like built-in rules. The in-page WASM
 detector runs the built-in rules only.

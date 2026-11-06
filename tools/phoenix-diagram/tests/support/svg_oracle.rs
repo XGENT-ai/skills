@@ -2,7 +2,7 @@
 // (tests/fixtures/{erd,class}/oracle.json, a fixed regression baseline).
 #![allow(dead_code)]
 
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, Quality};
 use phoenix_diagram::render::{render, EmbeddedAssets};
 use phoenix_diagram::scene::CompiledDiagram;
 use phoenix_diagram::{diagnostic, layout};
@@ -47,7 +47,6 @@ pub fn compile(
     quality: Quality,
 ) -> Result<CompiledDiagram, diagnostic::Diagnostics> {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(quality),
         ..Default::default()
     };

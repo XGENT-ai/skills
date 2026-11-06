@@ -85,7 +85,7 @@ fn pack_findings_are_waivable_inline() {
     impeccable_core::rule_pack::install(&PACK);
     let page = PAGE.replace(
         "<body>",
-        "<body>\n<!-- impeccable-disable testpack/todo-marker -->",
+        "<body>\n<!-- phoenix-ui-disable testpack/todo-marker -->",
     );
     let findings = detect_html_source(
         &page,

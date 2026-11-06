@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "diagram_type": "lifecycle",
-  "meta": { "title": "Request lifecycle", "output": "minimal.lifecycle.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "meta": { "title": "Request lifecycle", "output": "minimal.lifecycle.html", "quality_profile": "showcase", "locale": "en" },
   "mainPath": ["created", "complete"],
   "states": [
     { "id": "created", "type": "start", "label": "Created" },

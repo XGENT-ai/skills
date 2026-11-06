@@ -1257,11 +1257,12 @@ fn approving_every_component_while_reclassifying_a_code_region_is_not_approval()
             .is_err()
     );
     // v1/v2 reviews have no reclassification.
-    let legacy = Fixture::new();
-    let legacy_dir = legacy.prepare();
-    let mut legacy_body = approve(&store::read(&legacy_dir.join("current.json")).unwrap());
-    legacy_body["reclassify"] = json!([{"id":"art","kind":"plate"}]);
-    assert!(store::submit(&legacy_dir, &legacy_body).is_err());
+    let first_viewport = Fixture::new();
+    let first_viewport_dir = first_viewport.prepare();
+    let mut first_viewport_body =
+        approve(&store::read(&first_viewport_dir.join("current.json")).unwrap());
+    first_viewport_body["reclassify"] = json!([{"id":"art","kind":"plate"}]);
+    assert!(store::submit(&first_viewport_dir, &first_viewport_body).is_err());
 }
 
 #[test]

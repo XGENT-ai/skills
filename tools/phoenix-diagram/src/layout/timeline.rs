@@ -1135,7 +1135,6 @@ pub fn compile(
     Ok(CompiledDiagram {
         diagram_type: DiagramType::Timeline,
         schema_version: document["schema_version"].as_u64().unwrap_or(1) as u32,
-        input_contract: input.input_contract,
         quality: input.quality,
         meta: meta.clone(),
         view_box: Rect {

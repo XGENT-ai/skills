@@ -28,7 +28,7 @@ fn run(args: &[String], io: &mut Io) -> i32 {
     // finding's name, description and severity. Idempotent and panic-free
     // unless an id collides with a built-in rule.
     impeccable_core::rule_pack::install(&phoenix_ui_rules::PACK);
-    // cli/bin/cli.js dispatch: help / version / detect / ignores / skills verbs
+    // cli/bin/cli.js dispatch: help / version / detect / ignores / install verbs
     let Some(verb) = args.first().map(String::as_str) else {
         io.out(impeccable_detect::ROOT_USAGE);
         return 0;
@@ -43,27 +43,15 @@ fn run(args: &[String], io: &mut Io) -> i32 {
             io.out(&format!("{CLI_VERSION}\n"));
             0
         }
-        // Launcher handshake: a cheap discriminator so the launchers can tell
-        // this engine apart from the retired 3.x npm CLI (which answers any
-        // unknown verb with `Unknown command`, exit 1) before exec'ing a
-        // candidate found on PATH or in the unversioned user cache. Kept out
-        // of --help on purpose; not part of the user-facing contract.
+        // Launcher handshake: the launcher confirms a verified binary is this
+        // engine before exec'ing it. Kept out of --help on purpose; not part
+        // of the user-facing contract.
         "engine-probe" => {
             io.out(&format!("phoenix-ui-engine {VERSION}\n"));
             0
         }
         "detect" => impeccable_detect::run_detect(rest, io, &engines()),
         "ignores" | "ignore" => impeccable_detect::run_ignores(rest, io),
-        // `skills install|update` is the compatibility spelling of the verbs below.
-        "skills" => match rest.split_first() {
-            Some((sub, sub_args))
-                if matches!(sub.as_str(), "install" | "update")
-                    && !user_level_or_help(sub_args) =>
-            {
-                phoenix_ui_install::cli::run_install(sub_args, io)
-            }
-            _ => impeccable_skills::run(rest, io),
-        },
         // Project installs overwrite tool files; the inherited installer handles user-level installs.
         "install" | "update" if !user_level_or_help(rest) => {
             phoenix_ui_install::cli::run_install(rest, io)

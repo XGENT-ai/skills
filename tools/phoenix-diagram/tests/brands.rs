@@ -1,4 +1,4 @@
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType};
 use serde_json::json;
 
 #[test]
@@ -18,7 +18,7 @@ fn fixed_catalog_query_alias_and_domain_never_need_a_cache() {
 }
 
 fn architecture(brand: serde_json::Value) -> serde_json::Value {
-    json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Brands","output":"brands.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},"components":[{"id":"db","type":"database","label":"Store","sublabel":"Owns records","pos":[100,100],"brand":brand}],"connections":[]})
+    json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Brands","output":"brands.html","legend":{"mode":"hidden"}},"components":[{"id":"db","type":"database","label":"Store","sublabel":"Owns records","pos":[100,100],"brand":brand}],"connections":[]})
 }
 
 #[test]
@@ -103,19 +103,19 @@ fn five_title_rails_keep_brand_label_and_semantic_role() {
         (DiagramType::Architecture, architecture(json!("postgresql"))),
         (
             DiagramType::Workflow,
-            json!({"schema_version":1,"diagram_type":"workflow","meta":{"title":"Work","output":"work.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},"lanes":[{"id":"worker","label":"Worker"}],"nodes":[{"id":"a","lane":"worker","col":0,"type":"backend","label":"Store","brand":"postgresql"}],"edges":[]}),
+            json!({"schema_version":1,"diagram_type":"workflow","meta":{"title":"Work","output":"work.html","legend":{"mode":"hidden"}},"lanes":[{"id":"worker","label":"Worker"}],"nodes":[{"id":"a","lane":"worker","col":0,"type":"backend","label":"Store","brand":"postgresql"}],"edges":[]}),
         ),
         (
             DiagramType::Sequence,
-            json!({"schema_version":1,"diagram_type":"sequence","meta":{"title":"Call","output":"call.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},"participants":[{"id":"a","type":"backend","label":"Store","brand":"postgresql"},{"id":"b","type":"backend","label":"Client"}],"messages":[{"from":"b","to":"a","label":"Read","y":180}]}),
+            json!({"schema_version":1,"diagram_type":"sequence","meta":{"title":"Call","output":"call.html","legend":{"mode":"hidden"}},"participants":[{"id":"a","type":"backend","label":"Store","brand":"postgresql"},{"id":"b","type":"backend","label":"Client"}],"messages":[{"from":"b","to":"a","label":"Read","y":180}]}),
         ),
         (
             DiagramType::Dataflow,
-            json!({"schema_version":1,"diagram_type":"dataflow","meta":{"title":"Flow","output":"flow.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},"stages":[{"label":"Input"},{"label":"Store"}],"nodes":[{"id":"a","type":"backend","label":"Store","stage":0,"row":0,"brand":"postgresql"},{"id":"b","type":"backend","label":"Client","stage":1,"row":0}],"flows":[{"from":"a","to":"b","label":"Data"}]}),
+            json!({"schema_version":1,"diagram_type":"dataflow","meta":{"title":"Flow","output":"flow.html","legend":{"mode":"hidden"}},"stages":[{"label":"Input"},{"label":"Store"}],"nodes":[{"id":"a","type":"backend","label":"Store","stage":0,"row":0,"brand":"postgresql"},{"id":"b","type":"backend","label":"Client","stage":1,"row":0}],"flows":[{"from":"a","to":"b","label":"Data"}]}),
         ),
         (
             DiagramType::Lifecycle,
-            json!({"schema_version":3,"diagram_type":"lifecycle","meta":{"title":"State","output":"state.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},"mainPath":["a","b"],"states":[{"id":"a","type":"start","label":"Store","brand":"postgresql"},{"id":"b","type":"success","label":"Done"}],"transitions":[{"from":"a","to":"b","label":"Commit"}]}),
+            json!({"schema_version":3,"diagram_type":"lifecycle","meta":{"title":"State","output":"state.html","legend":{"mode":"hidden"}},"mainPath":["a","b"],"states":[{"id":"a","type":"start","label":"Store","brand":"postgresql"},{"id":"b","type":"success","label":"Done"}],"transitions":[{"from":"a","to":"b","label":"Commit"}]}),
         ),
     ];
     for (kind, doc) in cases {
@@ -281,10 +281,7 @@ fn original_five_types_resolve_brands_without_rewriting_authored_input() {
         doc[key][0]["brand"] = json!("postgresql");
         doc[key][0]["label"] = json!("Store");
         let bytes = serde_json::to_vec(&doc).unwrap();
-        let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
-            ..Default::default()
-        };
+        let options = CompileOptions::default();
         let mut input = parse_input(&bytes, kind, &options).unwrap();
         input.bind_brands(
             brands::prepare(&input, std::path::Path::new("not-created-brand-cache")).unwrap(),

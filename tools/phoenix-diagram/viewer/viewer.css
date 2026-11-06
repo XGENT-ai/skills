@@ -384,7 +384,7 @@ html[data-embed="true"] .diagram-container {
 html[data-embed="true"] .diagram-container svg { min-width: 0; }
 
 /* Presentation Stage is a viewer-only layer: it gives the live diagram
-   the viewport while keeping guided views, theme, focus, and exports real.
+   the viewport while keeping theme, focus, and exports real.
    Embed mode wins when both query parameters are present. */
 html[data-present="true"]:not([data-embed="true"]) body {
   --phoenix-diagram-page-top: 1rem;

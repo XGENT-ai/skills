@@ -192,7 +192,7 @@ function buildCursorAgent(agent, body) {
  */
 function renderAgentBody(agent, { providerTags, placeholderKey, allSkillNames, scriptsPath, emitDir, skillDir }) {
   let body = compileProviderBlocks(agent.body, providerTags);
-  body = replacePlaceholders(body, placeholderKey, [], allSkillNames);
+  body = replacePlaceholders(body, placeholderKey, allSkillNames);
   body = stripRuleMarkers(body);
   body = body.replace(/\{\{reference_path\}\}/g, path.relative(emitDir, path.join(skillDir, 'reference')).split(path.sep).join('/'));
   return body.replace(/\{\{scripts_path\}\}/g, scriptsPath);
@@ -264,9 +264,6 @@ export function createTransformer(config) {
     ensureDir(skillsDir);
 
     const allSkillNames = skills.map((s) => s.name);
-    const commandNames = skills
-      .filter((s) => s.userInvocable)
-      .map((s) => s.name);
 
     let refCount = 0;
     let scriptCount = 0;
@@ -320,7 +317,7 @@ export function createTransformer(config) {
 
       // Build body
       let skillBody = compileProviderBlocks(skill.body, providerTags);
-      skillBody = replacePlaceholders(skillBody, placeholderKey, commandNames, allSkillNames);
+      skillBody = replacePlaceholders(skillBody, placeholderKey, allSkillNames);
       skillBody = stripRuleMarkers(skillBody);
 
       // Replace {{scripts_path}} with provider-aware path to skill's scripts directory
@@ -342,7 +339,7 @@ export function createTransformer(config) {
         ensureDir(refDir);
         for (const ref of skill.references) {
           let refContent = compileProviderBlocks(ref.content, providerTags);
-          refContent = replacePlaceholders(refContent, placeholderKey, [], allSkillNames);
+          refContent = replacePlaceholders(refContent, placeholderKey, allSkillNames);
           refContent = stripRuleMarkers(refContent);
           refContent = refContent.replace(/\{\{scripts_path\}\}/g, scriptsPath);
           writeFile(path.join(refDir, `${ref.name}.md`), refContent);

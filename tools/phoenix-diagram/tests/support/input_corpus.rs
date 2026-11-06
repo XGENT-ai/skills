@@ -1,4 +1,4 @@
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -51,10 +51,7 @@ fn oracle() -> Oracle {
 }
 
 fn options() -> CompileOptions {
-    CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    }
+    CompileOptions::default()
 }
 
 fn patch(document: &mut Value, operation: &Operation) {
@@ -110,7 +107,6 @@ fn frozen_examples_preserve_original_documents_and_bytes() {
             example.file
         );
         assert_eq!(parsed.diagram_type, kind);
-        assert_eq!(parsed.input_contract, InputContract::PhoenixV1);
     }
     assert_eq!(count, 25);
     assert_eq!(kinds.len(), 10);
@@ -348,7 +344,6 @@ fn container_namespaces_may_share_ids_with_entities_and_each_other() {
     document["nodes"][1]["lane"] = json!("a");
     document["phases"] = json!([{"id":"a","label":"Phase","fromCol":0,"toCol":1}]);
     document["groups"] = json!([{"id":"a","label":"Group","lane":"a","fromCol":0,"toCol":1}]);
-    document["meta"]["views"] = json!([{"id":"a","label":"View","focus":["a"]}]);
     let parsed = parse_input(
         &serde_json::to_vec(&document).unwrap(),
         DiagramType::Workflow,
@@ -380,18 +375,11 @@ fn duplicate_entity_relation_and_cross_collection_identities_are_rejected() {
             "input/duplicate-id",
             "entity/relation identity conflict",
         );
-
-        let mut document = minimal(kind);
-        document["meta"]["views"] = json!([
-            {"id":"view","label":"View A","focus":["a"]},
-            {"id":"view","label":"View B","focus":["b"]},
-        ]);
-        expect_error(&document, kind, "input/duplicate-id", "view duplicate");
     }
 }
 
 #[test]
-fn relation_endpoints_and_guided_view_focus_require_existing_entities() {
+fn relation_endpoints_require_existing_entities() {
     for kind in relational() {
         let (_, relations) = collections(kind);
         for endpoint in ["from", "to"] {
@@ -399,9 +387,6 @@ fn relation_endpoints_and_guided_view_focus_require_existing_entities() {
             document[relations][0][endpoint] = json!("missing");
             expect_error(&document, kind, "input/unknown-reference", endpoint);
         }
-        let mut document = minimal(kind);
-        document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
-        expect_error(&document, kind, "input/unknown-reference", "view focus");
     }
 }
 
@@ -729,14 +714,6 @@ fn tree_hierarchy_has_one_root_declared_parents_and_no_cycle() {
     document["nodes"][0]["parent"] = json!("b");
     expect_at(&document, kind, "tree/root-count", "/nodes");
     expect_at(&document, kind, "tree/cycle", "/nodes/0/parent");
-    let mut document = minimal(kind);
-    document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["missing"]}]);
-    expect_at(
-        &document,
-        kind,
-        "input/unknown-reference",
-        "/meta/views/0/focus/0",
-    );
 }
 
 #[test]
@@ -898,35 +875,4 @@ fn waterfall_spans_need_recorded_consistent_timing_and_acyclic_parents() {
     let mut document = minimal(kind);
     document["spans"][1]["end"] = json!(5);
     accepts(&document, kind);
-}
-
-#[test]
-fn final_dispositions_keep_repository_evidence_supported() {
-    let mut document = minimal(DiagramType::Architecture);
-    document["meta"]["input_contract"] = json!("phoenix-v1");
-    document["components"][0]["brand"] = json!("example");
-    document["components"][0]["sources"] = json!([{"path":"src/main.rs","line":1}]);
-    document["meta"]["repository"] =
-        json!({"url":"https://github.com/example/repo","revision":"a".repeat(40)});
-    document["meta"]["views"] = json!([{"id":"view","label":"View","focus":["a"]}]);
-    let input = parse_input(
-        &serde_json::to_vec(&document).unwrap(),
-        DiagramType::Architecture,
-        &CompileOptions::default(),
-    )
-    .unwrap();
-    let paths: Vec<_> = input
-        .compatibility
-        .dispositions
-        .iter()
-        .map(|field| (field.path.as_str(), field.disposition.as_str()))
-        .collect();
-    assert_eq!(
-        paths,
-        [
-            ("/meta/views", "unsupported-display"),
-            ("/components/0/brand", "supported")
-        ]
-    );
-    assert!(input.compatibility.deferred_fields.is_empty());
 }

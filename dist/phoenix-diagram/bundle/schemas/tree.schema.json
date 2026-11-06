@@ -52,9 +52,6 @@
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
-        "views": {
-          "$ref": "common.schema.json#/$defs/guidedViews"
-        },
         "viewBox": {
           "type": "array",
           "prefixItems": [
@@ -70,9 +67,6 @@
           "items": false,
           "minItems": 2,
           "maxItems": 2
-        },
-        "input_contract": {
-          "const": "phoenix-v1"
         }
       }
     },

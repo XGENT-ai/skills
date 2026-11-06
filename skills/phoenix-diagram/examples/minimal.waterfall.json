@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "waterfall",
-  "meta": { "title": "Checkout request", "output": "minimal.waterfall.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en", "evidence": "illustrative", "unit": "ms" },
+  "meta": { "title": "Checkout request", "output": "minimal.waterfall.html", "quality_profile": "showcase", "locale": "en", "evidence": "illustrative", "unit": "ms" },
   "spans": [
     { "id": "request", "name": "POST /checkout", "service": "checkout", "start": 0, "end": 420 },
     { "id": "auth", "name": "Authenticate", "service": "identity", "parent": "request", "start": 0, "duration": 60 },

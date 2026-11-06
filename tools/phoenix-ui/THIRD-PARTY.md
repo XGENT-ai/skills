@@ -17,7 +17,7 @@ This fetches the official RustSec database into ignored
 `b8a1a33e246a0a9a3b5f377248c41a503defec74` (tree
 `7310ad041f7925accfc258bec7fb4f76fb7ff4a9`). It records the acquisition time
 in `prepared.json`. It also retrieves the pinned modern-screenshot archive
-and missing Puppeteer license, verifies the source pins, runs Bun 1.3.14's
+and missing Puppeteer license, verifies the source pins, runs Bun 1.4.4's
 `bun audit --json`, and sends the complete locked/bundled package-name/version
 request to npm's official bulk advisory endpoint. The request contains
 dependency names and versions, without project files or credentials.

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "diagram_type": "workflow",
-  "meta": { "title": "Request workflow", "output": "minimal.workflow.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "meta": { "title": "Request workflow", "output": "minimal.workflow.html", "quality_profile": "showcase", "locale": "en" },
   "lanes": [{ "id": "work", "label": "Work" }],
   "nodes": [
     { "id": "prepare", "lane": "work", "col": 0, "type": "backend", "label": "Prepare" },

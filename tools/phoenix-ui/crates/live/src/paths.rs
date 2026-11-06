@@ -27,9 +27,8 @@ pub fn live_config_path(cwd: &str, env: &Env) -> String {
     jsp::join(&[&live_dir(cwd, env), "config.json"])
 }
 
-/// JS: resolveLiveConfigPath({ cwd, scriptsDir, env }). The legacy
-/// `<scriptsDir>/config.json` fallback has no home in a single binary; the
-/// primary path is returned when the env override is unset.
+/// JS: resolveLiveConfigPath({ cwd, env }). `PHOENIX_UI_LIVE_CONFIG` wins;
+/// otherwise the project's live config path.
 pub fn resolve_live_config_path(cwd: &str, env: &Env) -> String {
     if let Some(v) = env.get("PHOENIX_UI_LIVE_CONFIG") {
         let t = impeccable_context::util::js_trim(v);

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "sequence",
-  "meta": { "title": "Request sequence", "output": "minimal.sequence.html", "input_contract": "phoenix-v1", "quality_profile": "showcase", "locale": "en" },
+  "meta": { "title": "Request sequence", "output": "minimal.sequence.html", "quality_profile": "showcase", "locale": "en" },
   "participants": [
     { "id": "client", "type": "frontend", "label": "Client" },
     { "id": "service", "type": "backend", "label": "Service" }

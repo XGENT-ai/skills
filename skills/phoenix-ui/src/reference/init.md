@@ -9,8 +9,7 @@ Run this flow directly; no other initialization skill is a prerequisite. Read th
 Use the PRODUCT.md path resolved by `phoenix-ui context`. Update it instead of creating a competing authority. In a child app inheriting root context, confirm shared versus app-specific scope before writing.
 
 - **No PRODUCT.md:** explore, interview, and write it.
-- **PRODUCT.md exists:** ask what product knowledge is stale or missing; do not reopen confirmed fields without a reason.
-- **Legacy PRODUCT.md:** add only durable missing facts; absent `## Platform` means `web` unless evidence says otherwise.
+- **PRODUCT.md exists:** ask what product knowledge is stale or missing; do not reopen confirmed fields without a reason. Absent `## Platform` means `web` unless evidence says otherwise.
 - **Only DESIGN.md exists:** leave it untouched and create PRODUCT.md.
 - **Redesign/rebrand request:** preserve confirmed product truth unless the user changes it. Visual replacement happens later in new-work, not here.
 
@@ -62,8 +61,6 @@ Write only confirmed facts and explicitly marked open decisions. Omit irrelevant
 ```markdown
 # Product
 
-<!-- phoenix-ui:product-schema 1 -->
-
 ## Platform
 
 web
@@ -99,9 +96,7 @@ web
 [Known user needs or required standard. Omit when no product-specific requirement was established.]
 ```
 
-Platform is the bare value `web`, `ios`, `android`, or `adaptive`. Preserve useful legacy headings. New files go at `PROJECT_ROOT/PRODUCT.md`; otherwise update the resolved file. Write it before any visual-world or surface-concept work.
-
-Copy the `phoenix-ui:product-schema` comment verbatim, including when you update an older file. It records which version of the product record this file follows, so later versions can tell a deliberately short record from one written before a section existed, and never propose an interview the user has already sat through. Update the number only when this reference's template changes it. Sections a later version retires are reported to you at boot as deprecated; delete them when the user agrees rather than carrying them forward.
+Platform is the bare value `web`, `ios`, `android`, or `adaptive`. Preserve useful existing headings. New files go at `PROJECT_ROOT/PRODUCT.md`; otherwise update the resolved file. Write it before any visual-world or surface-concept work.
 
 When the platform you just recorded is `ios`, `android`, or `adaptive`, load [ios.md](ios.md), [android.md](android.md), or both before any design work. On a project that had no PRODUCT.md, `phoenix-ui context` could not know the platform and so never loaded them; init is the only place that learns the answer.
 

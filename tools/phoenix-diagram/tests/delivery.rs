@@ -40,7 +40,7 @@ impl Drop for Temp {
 fn source() -> Vec<u8> {
     serde_json::to_vec_pretty(&json!({
         "schema_version":1,"diagram_type":"architecture",
-        "meta":{"title":"Delivery test","output":"report.html","input_contract":"phoenix-v1","legend":{"mode":"hidden"}},
+        "meta":{"title":"Delivery test","output":"report.html","legend":{"mode":"hidden"}},
         "components":[{"id":"service","type":"backend","label":"Service","pos":[120,120]}],"connections":[]
     })).unwrap()
 }

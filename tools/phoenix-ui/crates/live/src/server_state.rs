@@ -1210,8 +1210,6 @@ fn elapsed_ms(started: Instant) -> f64 {
 pub struct ProjectContext {
     pub has_product: bool,
     pub resolved_design_path: Option<String>,
-    pub context_dir: String,
-    pub design_context_dir: Option<String>,
 }
 
 pub fn resolve_project_context(
@@ -1231,22 +1229,9 @@ pub fn resolve_project_context(
             .and_then(|r| r.product_path.as_deref())
             .map(crate::util::exists)
             .unwrap_or(false);
-    let context_dir = if !ctx.context_dir.is_empty() {
-        ctx.context_dir.clone()
-    } else {
-        roots
-            .and_then(|r| r.context_root.clone())
-            .unwrap_or_else(|| cwd.to_string())
-    };
-    let design_context_dir = ctx
-        .design_context_dir
-        .clone()
-        .or_else(|| design_path.as_deref().map(jsp::dirname));
     ProjectContext {
         has_product,
         resolved_design_path: design_path,
-        context_dir,
-        design_context_dir,
     }
 }
 

@@ -19,6 +19,5 @@ mod schema;
 pub mod statechart;
 
 pub const TOOL_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const INPUT_CONTRACT_SCHEMA: u32 = 1;
 pub const RECEIPT_SCHEMA: u32 = 1;
 pub const VIEWER_REVISION: &str = "phoenix-v2";

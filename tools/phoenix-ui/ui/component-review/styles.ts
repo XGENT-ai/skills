@@ -166,7 +166,7 @@ input[type=checkbox]{accent-color:var(--ks-ink)}
 .assembled-review .page-review-status{color:var(--ks-text-muted);font-size:var(--ks-type-label-size)}
 @media(max-width:800px){.assembled-review>.workbench{padding:12px 16px 0}.assembled-review .compare{gap:12px}}
 `+ ksKit + `
-/* Local fit for the vendored kit: sizes the legacy layout expects, the link-style text action,
+/* Local fit for the vendored kit: sizes the inventory layout expects, the link-style text action,
    and the paper grain the site puts on its page ground (kit body::before, here on the review root). */
 .review{position:relative;isolation:isolate}
 .review::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.055;mix-blend-mode:multiply;background-image:var(--ks-grain);background-size:160px 160px}

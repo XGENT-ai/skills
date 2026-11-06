@@ -3,7 +3,6 @@ use crate::{
     check::{ArtifactCheckEntry, FileIdentity},
     delivery::{EffectiveConfig, EngineIdentity, FileReference, Status, VisualReview},
     diagnostic::Diagnostics,
-    input::Compatibility,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -18,7 +17,6 @@ pub struct CompareSide {
     pub config_sha256: String,
     pub engine: EngineIdentity,
     pub evidence: Value,
-    pub compatibility: Compatibility,
     pub rendered: FileIdentity,
 }
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

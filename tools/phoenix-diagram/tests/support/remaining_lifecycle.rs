@@ -1,4 +1,4 @@
-use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType, InputContract};
+use phoenix_diagram::input::{parse_input, CompileOptions, DiagramType};
 use phoenix_diagram::layout::compile;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -50,10 +50,7 @@ fn compare_frozen_cases(only: Option<&str>) {
             continue;
         }
         let context = format!("{}/{}", case["contract"], case["name"]);
-        let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
-            ..Default::default()
-        };
+        let options = CompileOptions::default();
         let document = case["document"].clone();
         let bytes = serde_json::to_vec(&document).unwrap();
         let parsed = parse_input(&bytes, DiagramType::Lifecycle, &options);

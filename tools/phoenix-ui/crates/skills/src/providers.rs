@@ -643,7 +643,7 @@ pub fn is_real_skill_dir(skills_dir: &str, name: &str) -> bool {
 ///
 /// Codex's validator rejects unknown top-level keys, so the Codex and
 /// `.agents` skills carry `version` under the spec-defined `metadata:` map
-/// (#703). A metadata version wins; a legacy top-level one still reads.
+/// (#703); other providers carry it at the top level. A metadata version wins.
 fn extract_version(content: &str) -> Option<String> {
     let body = frontmatter_body(content)?;
 

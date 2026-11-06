@@ -271,7 +271,6 @@ pub fn parse_copy_edit_agent_result(text: &str) -> Option<Value> {
 // ---------------------------------------------------------------------------
 
 /// Choose only a local host callback or an explicitly requested test mock.
-/// Legacy runner configuration is not inherited by Phoenix UI.
 pub fn choose_copy_edit_agent(
     env: &Env,
     chat_available: Option<&dyn Fn() -> bool>,

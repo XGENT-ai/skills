@@ -1,6 +1,6 @@
 use phoenix_diagram::{diagnostic, input, layout::workflow};
 
-use input::{parse_input, CompileOptions, DiagramType, InputContract, Quality};
+use input::{parse_input, CompileOptions, DiagramType, Quality};
 use serde_json::Value;
 
 fn near(actual: f64, expected: &Value, context: &str) {
@@ -12,7 +12,7 @@ fn near(actual: f64, expected: &Value, context: &str) {
 }
 
 #[test]
-fn reference_compiler_geometry_and_rejections_match_the_input_contract() {
+fn reference_compiler_geometry_and_rejections_match_the_oracle() {
     let oracle: Value =
         serde_json::from_str(include_str!("fixtures/workflow/oracle.json")).unwrap();
     let mut failures = Vec::new();
@@ -35,7 +35,6 @@ fn check_case(case: &Value) {
         case["name"].as_str().unwrap()
     );
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(if case["quality"] == "showcase" {
             Quality::Showcase
         } else {
@@ -262,7 +261,6 @@ fn compile_document(
     document: &Value,
 ) -> Result<phoenix_diagram::scene::CompiledDiagram, diagnostic::Diagnostics> {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(
             if document.pointer("/meta/quality_profile") == Some(&Value::String("showcase".into()))
             {
@@ -736,10 +734,7 @@ fn cross_edge_pin_classification_and_measured_evidence_match_the_frozen_compiler
         let name = format!("{}/{}", case["contract"], case["name"]);
         if std::panic::catch_unwind(|| {
             if case["sourceSchemaValid"] == false {
-                let options = CompileOptions {
-                    input_contract: Some(InputContract::PhoenixV1),
-                    ..Default::default()
-                };
+                let options = CompileOptions::default();
                 let errors = parse_input(
                     &serde_json::to_vec(&case["document"]).unwrap(),
                     DiagramType::Workflow,
@@ -1295,16 +1290,13 @@ fn backward_main_path_steps_get_the_fewest_column_changes() {
     let mut document = serde_json::json!({
         "schema_version": 2,
         "diagram_type": "workflow",
-        "meta": {"title":"Steps","output":"steps.html","input_contract":"phoenix-v1","quality_profile":"showcase","locale":"en"},
+        "meta": {"title":"Steps","output":"steps.html","quality_profile":"showcase","locale":"en"},
         "lanes": [{"id":"work","label":"Work"}],
         "nodes": nodes,
         "edges": edges,
         "mainPath": (0..columns.len()).map(|index| format!("n{index}")).collect::<Vec<_>>()
     });
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let parse = |document: &Value| {
         parse_input(
             &serde_json::to_vec(document).unwrap(),
@@ -1473,7 +1465,6 @@ fn optional_placement_advice_resolves_target_capacity_without_changing_approval_
 fn automatic_approval_legend_clears_the_rendered_withdrawal_route() {
     let document = approval_fixture(true);
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(Quality::Showcase),
         ..Default::default()
     };

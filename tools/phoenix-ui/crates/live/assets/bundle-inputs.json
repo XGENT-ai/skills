@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "eeb57d792d9d2c9a80536599de4576bb5f9dce36440810ea3c5a5ef6cc323392",
+  "inputSha256": "f29001447f02f7de8f30c5213664b0837e55ccef74ec5fa56045f2353eedeb81",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
@@ -51,8 +51,8 @@
       "size": 1149
     },
     "build-tools.lock.json": {
-      "sha256": "64ca6f84fab7f68ef2524543fb3bad0b8028bd8a242b97ee79d2041c1ab6a65b",
-      "size": 251
+      "sha256": "8d08482bcded6ba512aba03a73b5a7a90a7810f6c95375647c2be5982955e84c",
+      "size": 250
     },
     "crates/core/Cargo.toml": {
       "sha256": "87bc4be640efaefb4fa260ca76ef39862dd7c95dc39cecff679484044a181076",
@@ -179,8 +179,8 @@
       "size": 3697
     },
     "crates/foundation/src/inline_ignores.rs": {
-      "sha256": "40735af938445287767807534655362dc8c46f7af4da09cb82b7957b42d2e704",
-      "size": 8973
+      "sha256": "fac99c3ccfb04f896b810f7f2c07f4d6b880b3b1b0cf4a0ad3f1fffd824677ea",
+      "size": 8293
     },
     "crates/foundation/src/js.rs": {
       "sha256": "0396d254128346cbf1f56e66eb497765ca16e5022ed1704762b7af116acb097e",
@@ -255,28 +255,24 @@
       "size": 11258
     },
     "crates/xtask/src/freshness.rs": {
-      "sha256": "73d2c7aa5c60df55d2369172c5aff10ed156ca693f14a84bef963801f7fd8fbb",
-      "size": 7432
+      "sha256": "7d108d61623ecb0c70ac73bf59d49a7c7a2e299d6237f9666b3857ac3762a514",
+      "size": 7386
     },
     "crates/xtask/src/main.rs": {
       "sha256": "b8a2e764d2b8c580dcadb863b81a09881002301151e76ff78a79c7ce5ebeaae5",
       "size": 2410
     },
-    "mise.toml": {
-      "sha256": "c42169ddfac0679b411e32b934cc41f7ad86c0e5423bb2b77889819e78ca1093",
-      "size": 39
-    },
     "repository/mise.toml": {
-      "sha256": "96a665bd3bd6c149aee03e05bfdaaf9122ba672bde2266fa8bd01ebd171ee976",
-      "size": 194
+      "sha256": "c8886755a527b4bccfec7c806b8b37685c11a00153da1024581da0fd7fbe1efb",
+      "size": 208
     },
     "repository/rust-toolchain.toml": {
       "sha256": "df1b1f239d5b1df10f115021f4cefb60076919c5646693c9e77bb70a00aff615",
       "size": 123
     },
     "repository/scripts/phoenix-build-tools.mjs": {
-      "sha256": "b2d3e8a333a3331f7fe272816a74fbee4a81f402571f0134b12fbd7a98d72ce0",
-      "size": 7981
+      "sha256": "fab0b98d10c3565dbd486e21d6199911768577bcd634ef33ebef6ae661eb460e",
+      "size": 7987
     }
   },
   "options": {
@@ -307,8 +303,8 @@
   },
   "outputs": {
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "c82536e19c2d5ba10ae9354fba2bc920fcef95d9151b67012912f33e01c74772",
-      "size": 2013137
+      "sha256": "72342e9efa727803131e135228b53d242c06cfea8801af868dd608661dd120db",
+      "size": 2010709
     }
   }
 }

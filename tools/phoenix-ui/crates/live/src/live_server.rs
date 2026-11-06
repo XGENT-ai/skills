@@ -27,7 +27,7 @@ use crate::svelte_component::{
     bump_svelte_component_preview_revision, compile_check_variants,
     remove_all_svelte_component_sessions,
 };
-use crate::util::{exists, jsp, println, safe_read, Env};
+use crate::util::{jsp, println, safe_read, Env};
 use impeccable_common::Io;
 use serde_json::{json, Map, Value};
 use std::net::{TcpListener, TcpStream};
@@ -64,7 +64,7 @@ Options:
 
 Endpoints:
   /live.js             Browser script (element picker + variant cycling)
-  /detect.js           Detection overlay (backwards compatible)
+  /detect.js           Detection overlay
   /modern-screenshot.js Vendored modern-screenshot UMD build (lazy-loaded by live.js)
   /annotation          POST raw image/png to stage a variant screenshot
   /events              SSE stream (server→browser) + POST (browser→server)
@@ -685,19 +685,7 @@ fn handle_connection(shared: Shared, mut stream: TcpStream, mut ticket: Ticket) 
             let md_path = ctx.resolved_design_path.clone();
             let project_root =
                 impeccable_context::context::resolve_project_root(&cwd, &Default::default(), &env);
-            let context_dir = ctx
-                .design_context_dir
-                .clone()
-                .unwrap_or_else(|| ctx.context_dir.clone());
-            let candidates = impeccable_context::staleness::design_sidecar_candidates_for(
-                &project_root,
-                Some(&context_dir),
-            );
-            let json_path = candidates
-                .iter()
-                .find(|c| exists(c))
-                .cloned()
-                .unwrap_or_else(|| jsp::join(&[&project_root, ".phoenix-ui", "design.json"]));
+            let json_path = impeccable_context::staleness::design_sidecar_path(&project_root);
             let md_stat = md_path
                 .as_deref()
                 .and_then(impeccable_context::util::mtime_ms);

@@ -17,7 +17,6 @@ pub(super) struct Version {
     pub tool_version: String,
     pub npm_package_version: String,
     pub source_input_sha256: String,
-    pub input_contract_schema: u32,
     pub receipt_schema: u32,
     pub viewer_revision: String,
     pub bundle_sha256: String,
@@ -183,7 +182,6 @@ impl Bundle {
         probe(&request.engine)?;
         let engine = InstallEngine {
             source_input_sha256: version.source_input_sha256.clone(),
-            input_contract_schema: version.input_contract_schema,
             receipt_schema: version.receipt_schema,
             viewer_revision: version.viewer_revision.clone(),
             binary,
@@ -211,9 +209,8 @@ fn probe(path: &Path) -> InstallResult<()> {
         .output()
         .map_err(|e| invalid("install/engine-probe", e.to_string()))?;
     let expected = format!(
-        "phoenix-diagram-engine {} input={} receipt={} viewer={}\n",
+        "phoenix-diagram-engine {} receipt={} viewer={}\n",
         crate::TOOL_VERSION,
-        crate::INPUT_CONTRACT_SCHEMA,
         crate::RECEIPT_SCHEMA,
         crate::VIEWER_REVISION
     );

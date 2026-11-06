@@ -55,7 +55,7 @@ fn bundle() -> PathBuf {
 }
 
 #[test]
-fn install_overwrites_tools_removes_old_state_and_repeats_unchanged() {
+fn install_overwrites_tools_removes_unshipped_files_and_repeats_unchanged() {
     let f = Fixture::new();
     f.write(".claude/skills/phoenix-ui/SKILL.md", "customized old copy");
     f.write(
@@ -63,8 +63,6 @@ fn install_overwrites_tools_removes_old_state_and_repeats_unchanged() {
         "no longer shipped",
     );
     f.write(".claude/agents/mine.md", "user agent");
-    f.write(".phoenix-ui/install/active.json", "old receipt");
-    f.write(".phoenix-ui/migrations/old/backup", "old backup");
     f.write(".phoenix-ui/config.json", "{\"user\":true}");
 
     let planned = f.run(".claude", true);
@@ -76,11 +74,7 @@ fn install_overwrites_tools_removes_old_state_and_repeats_unchanged() {
     assert_eq!(planned.shared_json, [".claude/settings.json"]);
     assert_eq!(
         planned.removals,
-        [
-            ".claude/skills/phoenix-ui/reference/retired.md",
-            ".phoenix-ui/install",
-            ".phoenix-ui/migrations"
-        ]
+        [".claude/skills/phoenix-ui/reference/retired.md"]
     );
     assert_eq!(
         f.read(".claude/skills/phoenix-ui/SKILL.md"),
@@ -102,8 +96,6 @@ fn install_overwrites_tools_removes_old_state_and_repeats_unchanged() {
         .join(".claude/skills/phoenix-ui/reference/retired.md")
         .exists());
     assert_eq!(f.read(".claude/agents/mine.md"), "user agent");
-    assert!(!f.0.join(".phoenix-ui/install").exists());
-    assert!(!f.0.join(".phoenix-ui/migrations").exists());
     assert_eq!(f.read(".phoenix-ui/config.json"), "{\"user\":true}");
     let settings: Value = serde_json::from_str(&f.read(".claude/settings.json")).unwrap();
     assert!(settings["hooks"].to_string().contains("phoenix-ui"));

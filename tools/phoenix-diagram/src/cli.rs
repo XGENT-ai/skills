@@ -3,7 +3,7 @@ use phoenix_diagram::{
     compare,
     delivery::{self, CompileRequest, EngineIdentity},
     diagnostic::Diagnostic,
-    input::{CompileOptions, DiagramType, InputContract, Quality},
+    input::{CompileOptions, DiagramType, Quality},
     install::{self, InstallRequest},
     preview::{self, PreviewRequest},
     render::EmbeddedAssets,
@@ -18,7 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--input-contract NAME] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--base-contract NAME] [--head-contract NAME] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\nEvery type uses the phoenix-v1 input contract; input of the first five types declares meta.input_contract=phoenix-v1 or passes --input-contract phoenix-v1.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 
 struct Arguments {
     positional: Vec<OsString>,
@@ -57,9 +57,8 @@ impl Arguments {
                         }
                         None
                     }
-                    "quality" | "input-contract" | "out-dir" | "record" | "project"
-                    | "bundle-root" | "providers" | "repo-root" | "brand-cache" | "receipt"
-                    | "base-contract" | "head-contract" | "port" => Some(
+                    "quality" | "out-dir" | "record" | "project" | "bundle-root" | "providers"
+                    | "repo-root" | "brand-cache" | "receipt" | "port" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -98,19 +97,8 @@ impl Arguments {
                 _ => Err("Quality must be standard or showcase".to_owned()),
             })
             .transpose()?;
-        let input_contract = self
-            .value("input-contract")
-            .map(|v| match v.to_str() {
-                Some("phoenix-v1") => Ok(InputContract::PhoenixV1),
-                _ => Err(
-                    "Input contract must be phoenix-v1; legacy-2.17 is no longer supported"
-                        .to_owned(),
-                ),
-            })
-            .transpose()?;
         Ok(CompileOptions {
             quality,
-            input_contract,
             ..Default::default()
         })
     }
@@ -274,14 +262,7 @@ fn guide(scenario: &str) -> Value {
 }
 
 fn preview_command(args: &Arguments) -> Result<u8, String> {
-    args.allow(&[
-        "quality",
-        "input-contract",
-        "repo-root",
-        "brand-cache",
-        "port",
-        "open",
-    ])?;
+    args.allow(&["quality", "repo-root", "brand-cache", "port", "open"])?;
     if args.positional.len() != 4 {
         return Err("preview requires a type, candidate and output".into());
     }
@@ -443,33 +424,11 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         ));
     }
     if command == "compare" {
-        args.allow(&[
-            "receipt",
-            "base-contract",
-            "head-contract",
-            "quality",
-            "repo-root",
-            "brand-cache",
-        ])?;
+        args.allow(&["receipt", "quality", "repo-root", "brand-cache"])?;
         if positional.len() != 4 || positional[0].to_str() != Some("architecture") {
             return Err("compare requires architecture BASE HEAD OUTPUT".into());
         }
-        let mut base_options = args.compile_options()?;
-        let mut head_options = base_options.clone();
-        for (name, options) in [
-            ("base-contract", &mut base_options),
-            ("head-contract", &mut head_options),
-        ] {
-            options.input_contract = args
-                .value(name)
-                .map(|value| match value.to_str() {
-                    Some("phoenix-v1") => Ok(InputContract::PhoenixV1),
-                    _ => Err(format!(
-                        "--{name} must be phoenix-v1; legacy-2.17 is no longer supported"
-                    )),
-                })
-                .transpose()?;
-        }
+        let options = args.compile_options()?;
         let repo_root = args.value("repo-root").map(Path::new);
         if repo_root.is_some_and(|p| !p.is_dir()) {
             return Err("--repo-root must be an existing directory".into());
@@ -480,7 +439,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             base: CompileRequest {
                 kind: DiagramType::Architecture,
                 candidate: Path::new(&positional[1]),
-                options: &base_options,
+                options: &options,
                 assets: &assets,
                 repo_root,
                 brand_cache,
@@ -488,7 +447,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             head: CompileRequest {
                 kind: DiagramType::Architecture,
                 candidate: Path::new(&positional[2]),
-                options: &head_options,
+                options: &options,
                 assets: &assets,
                 repo_root,
                 brand_cache,
@@ -500,23 +459,11 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
     }
     if matches!(command, "validate" | "deliver" | "finalize") {
         args.allow(if command == "validate" {
-            &[
-                "quality",
-                "input-contract",
-                "layout-json",
-                "repo-root",
-                "brand-cache",
-            ][..]
+            &["quality", "layout-json", "repo-root", "brand-cache"][..]
         } else if command == "finalize" {
-            &[
-                "quality",
-                "input-contract",
-                "out-dir",
-                "repo-root",
-                "brand-cache",
-            ][..]
+            &["quality", "out-dir", "repo-root", "brand-cache"][..]
         } else {
-            &["quality", "input-contract", "repo-root", "brand-cache"][..]
+            &["quality", "repo-root", "brand-cache"][..]
         })?;
         let repo_root = args.value("repo-root").map(Path::new);
         if repo_root.is_some_and(|root| !root.is_dir()) {
@@ -655,9 +602,8 @@ pub fn run(raw: Vec<OsString>) -> ExitCode {
             ));
         }
         println!(
-            "phoenix-diagram-engine {} input={} receipt={} viewer={}",
+            "phoenix-diagram-engine {} receipt={} viewer={}",
             phoenix_diagram::TOOL_VERSION,
-            phoenix_diagram::INPUT_CONTRACT_SCHEMA,
             phoenix_diagram::RECEIPT_SCHEMA,
             phoenix_diagram::VIEWER_REVISION
         );

@@ -10,7 +10,7 @@ const viewerSource = fs.readFileSync(new URL('../../viewer/reader-layout.js', im
 const rect = (width, height, top = 0) => ({ x: 0, y: top, left: 0, top, right: width, bottom: top + height, width, height });
 
 function reader({ width = 1440, height = 900, viewBoxWidth = 820, viewBoxHeight = 920,
-  contract = 'phoenix-v1', fit = 'legacy', embed = false, present = false, print = false, source = viewerSource,
+  fit = 'contain', embed = false, present = false, print = false, source = viewerSource,
   primaryFont = 14, edgeFont = 10, sublabelFont = null, wrapped = false } = {}) {
   const html = new Element('html'), body = new Element('body'); html.appendChild(body);
   if (embed) html.setAttribute('data-embed', 'true');
@@ -19,7 +19,6 @@ function reader({ width = 1440, height = 900, viewBoxWidth = 820, viewBoxHeight 
   const header = shell.appendChild(new Element('div', { class: 'header' }));
   const diagram = shell.appendChild(new Element('div', { class: 'diagram-container' }));
   const svg = diagram.appendChild(new Element('svg', { viewBox: `0 0 ${viewBoxWidth} ${viewBoxHeight}`, 'data-reader-fit': fit }));
-  if (contract != null) svg.setAttribute('data-input-contract', contract);
   svg.viewBox = { baseVal: { x: 0, y: 0, width: viewBoxWidth, height: viewBoxHeight } };
   const node = svg.appendChild(new Element('g', { 'data-node-id': 'a' }));
   node.appendChild(new Element('rect', { x: '30', y: '40', width: '100', height: '60' }));
@@ -85,7 +84,7 @@ function reader({ width = 1440, height = 900, viewBoxWidth = 820, viewBoxHeight 
 }
 
 for (const [kind, viewBoxWidth, viewBoxHeight, fit] of [
-  ['fixed sequence', 820, 920, 'legacy'], ['fixed canvas', 980, 680, ''],
+  ['fixed sequence', 820, 920, 'contain'], ['fixed canvas', 980, 680, ''],
 ]) {
   test(`${kind} enters measured desktop fitting without changing its fixed geometry`, () => {
     for (const [width, height] of [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]]) {
@@ -113,40 +112,36 @@ test('fixed-canvas fitting stops at the readable floor and exposes unresolved ov
   assert.equal(environment.svg.outerHTML, before);
 });
 
-test('non-wide fixed canvases fit by height across missing and other contracts', () => {
-  for (const contract of [null, 'phoenix-v1', 'unknown']) {
-    for (const fit of ['contain', 'legacy', '']) {
-      for (const [width, height] of [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]]) {
-        const environment = reader({ contract, fit, width, height });
-        const before = environment.svg.outerHTML;
-        environment.flush();
-        assert.equal(environment.api.active(), true, JSON.stringify({ contract, fit, width, height }));
-        assert.ok(environment.svg.getBoundingClientRect().bottom < height);
-        assert.ok(environment.projectedMinimum() >= 6);
-        assert.equal(environment.html.getAttribute('data-reader-overflow'), null);
-        assert.equal(environment.svg.outerHTML, before, 'Reader preserves all authored SVG geometry and text');
-      }
-      const tall = reader({ contract, fit, viewBoxHeight: 5000 });
-      const before = tall.svg.outerHTML;
-      tall.flush();
-      assert.equal(tall.api.active(), true);
-      assert.ok(tall.projectedMinimum() >= 6 && tall.projectedMinimum() < 6.1);
-      assert.ok(tall.svg.getBoundingClientRect().bottom > 900);
-      assert.equal(tall.html.getAttribute('data-reader-overflow'), 'authored');
-      assert.equal(tall.svg.outerHTML, before);
+test('non-wide fixed canvases fit by height with contain or missing reader fit', () => {
+  for (const fit of ['contain', '']) {
+    for (const [width, height] of [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]]) {
+      const environment = reader({ fit, width, height });
+      const before = environment.svg.outerHTML;
+      environment.flush();
+      assert.equal(environment.api.active(), true, JSON.stringify({ fit, width, height }));
+      assert.ok(environment.svg.getBoundingClientRect().bottom < height);
+      assert.ok(environment.projectedMinimum() >= 6);
+      assert.equal(environment.html.getAttribute('data-reader-overflow'), null);
+      assert.equal(environment.svg.outerHTML, before, 'Reader preserves all authored SVG geometry and text');
     }
+    const tall = reader({ fit, viewBoxHeight: 5000 });
+    const before = tall.svg.outerHTML;
+    tall.flush();
+    assert.equal(tall.api.active(), true);
+    assert.ok(tall.projectedMinimum() >= 6 && tall.projectedMinimum() < 6.1);
+    assert.ok(tall.svg.getBoundingClientRect().bottom > 900);
+    assert.equal(tall.html.getAttribute('data-reader-overflow'), 'authored');
+    assert.equal(tall.svg.outerHTML, before);
   }
 });
 
 test('fixed-canvas eligibility preserves narrow, embedded, presentation and print exclusions', () => {
-  for (const contract of [null, 'phoenix-v1', 'unknown']) {
-    for (const options of [{ width: 1023 }, { width: 390 }, { embed: true }, { present: true }, { print: true }]) {
-      const environment = reader({ ...options, contract });
-      const before = environment.svg.outerHTML;
-      environment.flush();
-      assert.equal(environment.api.active(), false, JSON.stringify({ ...options, contract }));
-      assert.equal(environment.svg.outerHTML, before);
-      assert.equal(environment.html.style.getPropertyValue('--phoenix-diagram-reader-width'), '');
-    }
+  for (const options of [{ width: 1023 }, { width: 390 }, { embed: true }, { present: true }, { print: true }]) {
+    const environment = reader(options);
+    const before = environment.svg.outerHTML;
+    environment.flush();
+    assert.equal(environment.api.active(), false, JSON.stringify(options));
+    assert.equal(environment.svg.outerHTML, before);
+    assert.equal(environment.html.style.getPropertyValue('--phoenix-diagram-reader-width'), '');
   }
 });

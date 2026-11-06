@@ -31,10 +31,15 @@ fn gemini_before_tool_preserves_command_body_and_only_carries_literal_identity()
         ("run_shell_command", "bad'$(touch unsafe)", false, false),
         ("run_shell_command", "owner-123", true, false),
     ] {
-        let r = rt_with(
-            &t.path(),
-            env(&[("PHOENIX_UI_HOOK_DISABLED", if disabled { "1" } else { "" })]),
+        t.write(
+            ".phoenix-ui/config.json",
+            if disabled {
+                r#"{"hook":{"enabled":false}}"#
+            } else {
+                "{}"
+            },
         );
+        let r = rt(&t.path());
         let event = json!({"hook_event_name":"BeforeTool", "session_id":session,
             "cwd":t.path(), "tool_name":name, "tool_input":{"command":command, "timeout":12}});
         let (mut io, capture) = Io::captured("", t.0.clone(), HashMap::new());
@@ -223,7 +228,7 @@ fn unfinished_comp_stop_is_owned_bounded_and_does_not_reopen_on_unrelated_turn()
 }
 
 #[test]
-fn legacy_comp_state_never_implicitly_claims_the_current_session() {
+fn sessionless_comp_state_never_implicitly_claims_the_current_session() {
     let t = Tmp::new();
     t.write("index.html", "<main>Old work</main>");
     t.write(
@@ -235,18 +240,6 @@ fn legacy_comp_state_never_implicitly_claims_the_current_session() {
             .stdout
             .is_empty()
     );
-}
-
-#[test]
-fn completion_only_transport_does_not_duplicate_detector_feedback() {
-    let t = Tmp::new();
-    t.write("package.json", "{}");
-    let file = t.write("card.css", SIDE_TAB_CSS);
-    let r = rt_with(&t.path(), env(&[("PHOENIX_UI_HOOK_COMPLETION_ONLY", "1")]));
-    hook::run_hook(&r, &edit_with_original(&t.path(), &file, "owner", ".card {}\n", ".card {}\n", SIDE_TAB_CSS));
-    let stop = hook::run_stop_hook(&r, &stop_event(&t.path(), "owner"));
-    assert!(stop.stdout.is_empty());
-    assert_eq!(stop.audit["skipped"], "no-build-continuation");
 }
 
 struct Tmp(PathBuf);
@@ -885,6 +878,7 @@ fn stop_baseline_untrusted_shapes_do_not_suppress_findings() {
             "wrong-path" => event["tool_response"]["filePath"] = json!("another.css"),
             "no-session" => event["session_id"] = Value::Null,
             "oversized" => event["tool_response"]["originalFile"] = json!("x".repeat(512 * 1024 + 1)),
+            "other-provider" => event["turn_id"] = json!("turn-1"),
             "ambiguous" => {
                 let repeated = SIDE_TAB_CSS.repeat(2);
                 t.write("card.css", &repeated);
@@ -892,11 +886,7 @@ fn stop_baseline_untrusted_shapes_do_not_suppress_findings() {
             }
             _ => {}
         }
-        let r = if variant == "other-provider" {
-            rt_with(&cwd, env(&[("PHOENIX_UI_HOOK_HARNESS", "codex")]))
-        } else {
-            rt(&cwd)
-        };
+        let r = rt(&cwd);
         hook::run_hook(&r, &event.to_string());
         let session = if variant == "no-session" {
             "unknown"
@@ -1043,13 +1033,13 @@ fn inside_project_handles_symlinks_and_unwritten_files() {
 // ── config ────────────────────────────────────────────────────────────────
 
 #[test]
-fn read_config_merges_shared_then_local_and_legacy_keys() {
+fn read_config_merges_shared_then_local_detector_settings() {
     let t = Tmp::new();
     let cwd = t.path();
     assert_eq!(read_config(&cwd), HookConfig::default());
     t.write(
         ".phoenix-ui/config.json",
-        r#"{"hook":{"enabled":true,"quiet":true,"auditLog":" log.ndjson ","perEditRules":"all","ignoreRules":["a"],"limits":{"maxFindings":2,"maxChars":100,"maxFileBytes":-1}},"detector":{"ignoreRules":["b"],"ignoreFiles":["x/**"],"extensions":[".blade.php",{"ext":"heex","engine":"text"}],"advisoryRules":"include","designSystem":{"enabled":false}}}"#,
+        r#"{"hook":{"enabled":true,"quiet":true,"auditLog":" log.ndjson ","perEditRules":"all","ignoreRules":["under-hook"],"limits":{"maxFindings":2,"maxChars":100,"maxFileBytes":-1}},"detector":{"ignoreRules":["b"],"ignoreFiles":["x/**"],"extensions":[".blade.php",{"ext":"heex","engine":"text"}],"advisoryRules":"include","designSystem":{"enabled":false}}}"#,
     );
     t.write(
         ".phoenix-ui/config.local.json",
@@ -1060,7 +1050,8 @@ fn read_config_merges_shared_then_local_and_legacy_keys() {
     assert!(c.quiet);
     assert_eq!(c.audit_log.as_deref(), Some("log.ndjson"));
     assert_eq!(c.per_edit_rules, "all");
-    assert_eq!(c.ignore_rules, vec!["a", "b", "c"]);
+    // Detector settings are read from `detector` only.
+    assert_eq!(c.ignore_rules, vec!["b", "a", "c"]);
     assert_eq!(c.ignore_files, vec!["x/**"]);
     assert_eq!(c.advisory_rules, "include");
     assert!(!c.design_system_enabled);
@@ -1093,7 +1084,7 @@ fn read_config_merges_shared_then_local_and_legacy_keys() {
     t.write(".phoenix-ui/config.local.json", "{ nope");
     let c = read_config(&cwd);
     assert!(c.enabled);
-    assert_eq!(c.ignore_rules, vec!["a", "b"]);
+    assert_eq!(c.ignore_rules, vec!["b"]);
 }
 
 #[test]
@@ -1524,7 +1515,7 @@ fn harness_detection_and_github_normalization() {
         .as_object()
         .cloned()
         .unwrap();
-    assert_eq!(resolve_harness(&r, Some(&gh)), "github");
+    assert_eq!(resolve_harness(Some(&gh)), "github");
     let ev = normalize_hook_event(&r, &gh, "/p", "github");
     assert_eq!(ev["tool_input"]["file_path"], json!("src/a.tsx"));
     assert_eq!(ev["session_id"], json!("g1"));
@@ -1547,15 +1538,11 @@ fn harness_detection_and_github_normalization() {
         .as_object()
         .cloned()
         .unwrap();
-    assert_eq!(resolve_harness(&r, Some(&cursor)), "cursor");
+    assert_eq!(resolve_harness(Some(&cursor)), "cursor");
     let ev = normalize_hook_event(&r, &cursor, "/p", "cursor");
     assert_eq!(ev["cwd"], json!("/w"));
     assert_eq!(ev["session_id"], json!("c"));
     assert_eq!(ev["tool_input"]["file_path"], json!("src/App.jsx"));
-    // c9e7cd8a: an explicit codex harness now keeps its own identity so the
-    // Stop pass can emit the Codex decision/block contract.
-    let forced = rt_with("/p", env(&[("PHOENIX_UI_HOOK_HARNESS", "codex")]));
-    assert_eq!(resolve_harness(&forced, Some(&gh)), "codex");
     assert_eq!(
         parse_apply_patch_paths(&r, "*** Begin Patch\n*** Update File: a.css\r\n*** Add File: /abs/b.css\n*** Delete File: c.css\n", "/p"),
         // A relative patch path is resolved against the cwd with the host's
@@ -1722,17 +1709,13 @@ fn run_hook_acks_and_quiet_modes() {
         four.stdout.contains("[gradient-text]"),
         "findings still surface for .ts"
     );
-    let quiet = rt_with(&cwd, env(&[("PHOENIX_UI_HOOK_QUIET", "1")]));
-    let q = hook::run_hook(&quiet, &edit_event(&cwd, &clean, "s2"));
+    t.write(".phoenix-ui/config.json", r#"{"hook":{"quiet":true}}"#);
+    let q = hook::run_hook(&r, &edit_event(&cwd, &clean, "s2"));
     assert_eq!(q.audit["quiet"], json!(true));
     assert!(q.stdout.is_empty());
+    t.write(".phoenix-ui/config.json", "{}");
     let re = rt_with(&cwd, env(&[("CLAUDE_HOOK_DEPTH", "2")]));
     assert_eq!(hook::run_hook(&re, &ev).audit["reentrant"], json!(true));
-    let off = rt_with(&cwd, env(&[("PHOENIX_UI_HOOK_DISABLED", "yes")]));
-    assert_eq!(
-        audit_str(&hook::run_hook(&off, &ev).audit, "skipped"),
-        Some("env-disabled")
-    );
     assert_eq!(
         audit_str(&hook::run_hook(&r, "").audit, "skipped"),
         Some("stdin-malformed")
@@ -1906,8 +1889,9 @@ fn run_hook_co_located_styles_and_tiering_config() {
     assert!(res.stdout.contains("(2 issue(s))"));
     // github harness keeps the full set too
     t.write(".phoenix-ui/config.json", "{}");
-    let gh = rt_with(&cwd, env(&[("PHOENIX_UI_HOOK_HARNESS", "github")]));
-    let res = hook::run_hook(&gh, &edit_event(&cwd, &app, "s3"));
+    let gh = json!({"sessionId": "s3", "cwd": cwd, "toolName": "edit",
+        "toolArgs": json!({"path": app, "old_str": "a", "new_str": "b"}).to_string()});
+    let res = hook::run_hook(&r, &gh.to_string());
     assert!(res.stdout.starts_with("{\"additionalContext\":"));
     assert!(res.stdout.contains("[side-tab]"));
     // ignoreFiles glob and ignoreRules
@@ -1942,9 +1926,14 @@ fn write_audit_log_targets() {
     let mut entry = Map::new();
     entry.insert("event".into(), json!("PostToolUse"));
     entry.insert("cwd".into(), json!(cwd));
-    let r = rt_with(
-        "/elsewhere",
-        env(&[("PHOENIX_UI_HOOK_LOG", "logs/a.ndjson")]),
+    let r = rt("/elsewhere");
+    assert!(
+        !write_audit_log(&r, &entry, "/elsewhere"),
+        "no target, no-op"
+    );
+    t.write(
+        ".phoenix-ui/config.json",
+        r#"{"hook":{"auditLog":"logs/a.ndjson"}}"#,
     );
     assert!(write_audit_log(&r, &entry, "/elsewhere"));
     let line = t.read("logs/a.ndjson");
@@ -1952,11 +1941,6 @@ fn write_audit_log_targets() {
         line.starts_with("{\"ts\":\"")
             && line.contains("\",\"event\":\"PostToolUse\",\"cwd\":\"")
             && line.ends_with("\"}\n")
-    );
-    let r2 = rt("/elsewhere");
-    assert!(
-        !write_audit_log(&r2, &entry, "/elsewhere"),
-        "no target, no-op"
     );
     t.write(
         ".phoenix-ui/config.json",
@@ -2106,9 +2090,6 @@ fn before_edit_denies_shell_and_edit_shapes() {
     allow(&cursor(&cwd, "Shell", json!({"command": "ls"})), "no file");
     allow("", "empty stdin");
     allow("{", "malformed stdin");
-    let off = rt_with(&cwd, env(&[("PHOENIX_UI_HOOK_DISABLED", "true")]));
-    let (out, _) = hbe(&off, "{");
-    assert_eq!(out, "{\"permission\":\"allow\"}");
     // repeated identical denials downgrade to allow-with-warning after the threshold
     let write = cursor(
         &cwd,
@@ -2257,7 +2238,7 @@ fn admin_on_off_preserve_sibling_hook_fields() {
     let t = Tmp::new();
     let cwd = t.path();
     let r = rt(&cwd);
-    t.write(".phoenix-ui/config.json", "{\n  \"hook\": {\n    \"quiet\": true,\n    \"consent\": \"accepted\",\n    \"advisoryRules\": \"include\"\n  },\n  \"updateCheck\": false\n}\n");
+    t.write(".phoenix-ui/config.json", "{\n  \"hook\": {\n    \"quiet\": true,\n    \"consent\": \"accepted\"\n  },\n  \"updateCheck\": false\n}\n");
     let (out, _, _) = admin_run(&r, &["off"]);
     assert_eq!(
         out,
@@ -2271,16 +2252,10 @@ fn admin_on_off_preserve_sibling_hook_fields() {
         cfg["hook"]["limits"],
         json!({"maxFindings": 5, "maxChars": 8000})
     );
-    assert_eq!(
-        cfg["detector"]["advisoryRules"],
-        json!("include"),
-        "legacy key migrates to detector"
-    );
-    assert!(cfg["hook"].get("advisoryRules").is_none());
     assert_eq!(cfg["updateCheck"], json!(false));
     assert_eq!(
         cfg.as_object().unwrap().keys().cloned().collect::<Vec<_>>(),
-        vec!["hook", "updateCheck", "detector"]
+        vec!["hook", "updateCheck"]
     );
     std::fs::create_dir_all(t.0.join(".github/skills/phoenix-ui")).unwrap();
     let (out, _, _) = admin_run(&r, &["on"]);
@@ -2531,7 +2506,6 @@ const MIXED_CSS: &str = ".title { background: linear-gradient(90deg, #f472b6, #a
 
 #[test]
 fn grok_and_codex_harness_detection() {
-    let r = rt("/p");
     // Grok Build camelCase envelope wins over the old GitHub heuristic.
     let grok = json!({
         "hookEventName": "post_tool_use", "sessionId": "g1", "cwd": "/w",
@@ -2540,21 +2514,18 @@ fn grok_and_codex_harness_detection() {
     .as_object()
     .cloned()
     .unwrap();
-    assert_eq!(resolve_harness(&r, Some(&grok)), "grok");
+    assert_eq!(resolve_harness(Some(&grok)), "grok");
     // GitHub Copilot still classifies by toolArgs.
     let gh = json!({ "toolName": "str_replace_editor", "toolArgs": "{}" }).as_object().cloned().unwrap();
-    assert_eq!(resolve_harness(&r, Some(&gh)), "github");
+    assert_eq!(resolve_harness(Some(&gh)), "github");
     // A Stop envelope with only hookEventName is Grok too.
     let grok_stop = json!({ "hookEventName": "stop", "sessionId": "g1", "cwd": "/w" }).as_object().cloned().unwrap();
-    assert_eq!(resolve_harness(&r, Some(&grok_stop)), "grok");
+    assert_eq!(resolve_harness(Some(&grok_stop)), "grok");
     // Codex turn-scoped events carry turn_id; Claude Code does not.
     let codex = json!({ "hook_event_name": "Stop", "session_id": "s", "turn_id": "t-1" }).as_object().cloned().unwrap();
-    assert_eq!(resolve_harness(&r, Some(&codex)), "codex");
+    assert_eq!(resolve_harness(Some(&codex)), "codex");
     let claude = json!({ "hook_event_name": "Stop", "session_id": "s" }).as_object().cloned().unwrap();
-    assert_eq!(resolve_harness(&r, Some(&claude)), "claude");
-    // Explicit env overrides.
-    let forced = rt_with("/p", env(&[("PHOENIX_UI_HOOK_HARNESS", "grok")]));
-    assert_eq!(resolve_harness(&forced, Some(&gh)), "grok");
+    assert_eq!(resolve_harness(Some(&claude)), "claude");
     // Stop detection matches both casings, on the raw stdin shape.
     assert!(is_stop_event(&grok_stop));
     assert!(is_stop_event(&claude));

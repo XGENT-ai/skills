@@ -6,13 +6,11 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { assertPublishablePackage } from './require-release-package.mjs';
-import { loadMigrationSource, materializeMigrationFixture, verifyPublishedPackage } from '../test/phoenix-ui/fixtures/migration/materialize.mjs';
 
 // Install the packed release tarball like a consumer: fresh install with the engine downloaded from its
-// public URL, 0.3.0/0.6.0 coexistence/replacement, overwritten Phoenix copies, old installer-state cleanup and repeat installs,
-// on Node 18 and the maintenance Node.
+// public URL, overwritten Phoenix copies and repeat installs, on Node 18 and the maintenance Node.
 // Usage: node scripts/check-phoenix-ui-release.mjs --tarball TGZ --tarball-sha256 HEX --manifest VERSION.json
-//   --manifest-sha256 HEX --node18 NODE --node25 NODE --output-dir DIR [--legacy-dir DIR]
+//   --manifest-sha256 HEX --node18 NODE --node25 NODE --output-dir DIR
 const here = path.dirname(fileURLToPath(import.meta.url)), root = path.resolve(here, '..');
 const bootstrap = createRequire(import.meta.url)(path.join(root, 'skills/phoenix-ui/src/scripts/phoenix-bootstrap.cjs'));
 const paths = ['--tarball', '--manifest', '--node18', '--node25'];
@@ -20,7 +18,7 @@ const hashes = ['--tarball-sha256', '--manifest-sha256'];
 const options = {};
 for (let i = 2; i < process.argv.length; i++) {
   const flag = process.argv[i];
-  assert([...paths, ...hashes, '--output-dir', '--legacy-dir'].includes(flag) && process.argv[i + 1] && !options[flag], `Invalid argument ${flag}`); options[flag] = process.argv[++i];
+  assert([...paths, ...hashes, '--output-dir'].includes(flag) && process.argv[i + 1] && !options[flag], `Invalid argument ${flag}`); options[flag] = process.argv[++i];
 }
 for (const flag of [...paths, ...hashes, '--output-dir']) assert(options[flag], `Required ${flag}`);
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -43,25 +41,10 @@ assert.deepEqual(Object.keys(B.data.engines).sort(), ['darwin-arm64', 'darwin-x6
 for (const engine of Object.values(B.data.engines)) assert(engine.url.startsWith('https://'), 'Release engines must have public HTTPS URLs');
 const out = path.resolve(options['--output-dir']); fs.mkdirSync(out, { recursive: false });
 const raw = path.join(out, 'raw-inputs'); fs.mkdirSync(raw);
-// Published 0.3.0/0.6.0 bytes: a verified local copy if present, else the npm registry, both pinned by SHA-256.
-const oldSources = [];
-for (const version of ['0.3.0', '0.6.0']) {
-  const source = loadMigrationSource(version), archive = path.join(raw, `legacy-${version}.tgz`);
-  const cached = options['--legacy-dir'] && path.join(path.resolve(options['--legacy-dir']), source.provenance.npm.filename);
-  if (cached && fs.existsSync(cached)) fs.copyFileSync(cached, archive);
-  else {
-    const response = await fetch(source.provenance.npm.url, { signal: AbortSignal.timeout(300000) });
-    assert(response.ok, `Download ${source.provenance.npm.url} failed: HTTP ${response.status}`);
-    fs.writeFileSync(archive, Buffer.from(await response.arrayBuffer()));
-  }
-  assert.equal(sha(fs.readFileSync(archive)), source.provenance.npm.sha256, `Published ${version} tarball differs`);
-  oldSources.push({ version, source, archive });
-}
 const inputReport = { scope: 'release-check', B: { tarball: options['--tarball'], tarballSha256: options['--tarball-sha256'], manifestSha256: B.hash }, preflight,
-  nodeExecutables: [18, 25].map(major => ({ major, path: options[`--node${major}`], sha256: sha(fs.readFileSync(options[`--node${major}`])) })),
-  legacy: oldSources.map(({ version, source }) => ({ version, sha256: source.provenance.npm.sha256 })) };
+  nodeExecutables: [18, 25].map(major => ({ major, path: options[`--node${major}`], sha256: sha(fs.readFileSync(options[`--node${major}`])) })) };
 for (const [name, file] of [['B.tgz', options['--tarball']], ['B.VERSION.json', options['--manifest']]]) fs.copyFileSync(file, path.join(raw, name), fs.constants.COPYFILE_EXCL);
-const sourceBindings = new Map([[path.join(raw, 'B.tgz'), options['--tarball-sha256']], ...oldSources.map(source => [source.archive, source.source.provenance.npm.sha256])]);
+const sourceBindings = new Map([[path.join(raw, 'B.tgz'), options['--tarball-sha256']]]);
 for (const [file, expected] of [...sourceBindings, [path.join(raw, 'B.VERSION.json'), B.hash]]) assert.equal(sha(fs.readFileSync(file)), expected, 'Copied input bytes differ');
 sourceBindings.set(`file:${path.join(raw, 'B.tgz')}`, options['--tarball-sha256']);
 const record = { ...inputReport, status: 'running', out, commands: [], groups: [], startedAt: new Date().toISOString() };
@@ -114,12 +97,6 @@ function install(node, project, env, name, flags = []) {
     { ...env, PATH: [path.dirname(node), env.PATH].join(path.delimiter) });
 }
 try {
-const packages = path.join(out, 'old-packages'); fs.mkdirSync(packages);
-for (const source of oldSources) {
-  const destination = path.join(packages, source.version); fs.mkdirSync(destination);
-  run(`extract-${source.version}`, 'tar', ['-xzf', source.archive, '-C', destination]);
-  verifyPublishedPackage(path.join(destination, 'package'), source.source);
-}
 for (const major of [18, 25]) {
   const node = options[`--node${major}`], base = path.join(out, `node${major}`); fs.mkdirSync(base);
   const setupEnv = environment(path.join(base, 'package setup'));
@@ -150,63 +127,31 @@ for (const major of [18, 25]) {
   install(node, jointProject, jointEnv, `node${major}-joint-rerun`, []);
   assert.deepEqual(tree(jointProject), jointBefore);
   joint.status = 'expected-consumer-outcomes-observed'; save();
-  for (const kind of ['fresh', 'legacy-0.3.0', 'legacy-0.6.0', 'replace-0.3.0', 'replace-0.6.0', 'source-copy']) {
+  for (const kind of ['fresh', 'source-copy']) {
     const groupBase = path.join(base, kind); fs.mkdirSync(groupBase);
     const group = { node: info, kind, status: 'running', BtarballSha256: options['--tarball-sha256'] }; record.groups.push(group); save();
     try {
-      let project, env;
-      const legacy = kind.startsWith('legacy-') || kind.startsWith('replace-');
-      const replace = kind.startsWith('replace-');
-      if (legacy) {
-        const fixture = materializeMigrationFixture({ fixtureRoot: path.join(groupBase, 'fixture'), packageVersion: kind.split('-')[1], packagesDir: packages, providers: ['.claude', '.agents'], channel: 'xgent-installer', scenarios: ['claude-shared-and-local', 'custom-allow', 'unrelated-entry', 'personal-shadow', 'live-residue'] });
-        project = fixture.projectRoot; env = environment(groupBase, fixture.homeRoot); fs.writeFileSync(path.join(groupBase, 'fixture.json'), json(fixture));
-      } else {
-        project = path.join(groupBase, 'project with spaces'); fs.mkdirSync(project); env = environment(groupBase);
-        fs.writeFileSync(path.join(project, 'package.json'), '{"private":true}\n'); fs.writeFileSync(path.join(project, 'index.html'), '<html><body>Consumer input</body></html>\n');
-        if (kind === 'source-copy') for (const provider of ['.claude', '.agents']) {
+      const project = path.join(groupBase, 'project with spaces'), env = environment(groupBase); fs.mkdirSync(project);
+      fs.writeFileSync(path.join(project, 'package.json'), '{"private":true}\n'); fs.writeFileSync(path.join(project, 'index.html'), '<html><body>Consumer input</body></html>\n');
+      if (kind === 'source-copy') {
+        for (const provider of ['.claude', '.agents']) {
           const destination = path.join(project, provider, 'skills/phoenix-ui');
           fs.cpSync(path.join(pkg, 'skills/phoenix-ui'), destination, { recursive: true });
           fs.writeFileSync(path.join(destination, 'SKILL.md'), 'old source copy\n');
         }
-      }
-      if (kind === 'source-copy') {
-        for (const directory of ['install/transactions/old', 'migrations/old']) {
-          const destination = path.join(project, '.phoenix-ui', directory);
-          fs.mkdirSync(destination, { recursive: true });
-          fs.writeFileSync(path.join(destination, 'obsolete.json'), 'old installer state\n');
-        }
-        fs.writeFileSync(path.join(project, '.phoenix-ui/install/active.json'), '{obsolete receipt');
+        fs.mkdirSync(path.join(project, '.phoenix-ui'));
         fs.writeFileSync(path.join(project, '.phoenix-ui/config.json'), '{"consumerSetting":true}\n');
       }
       const original = snapshot(groupBase, 'before', project);
-      const originalHome = tree(env.HOME);
       if (kind === 'fresh') {
         run(`node${major}-missing-engine`, node, [bBin, 'context', '--json'], project, env, 4);
         const engine = JSON.parse(run(`node${major}-HTTP-engine-install`, node, [bBin, 'engine', 'install', '--project', project, '--json'], project, env).stdout);
         assert.equal(engine.status, 'installed'); assert.equal(sha(fs.readFileSync(engine.binary)), B.data.engines[info.target].sha256);
       }
-      const first = install(node, project, env, `node${major}-${kind}-install`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
+      const first = install(node, project, env, `node${major}-${kind}-install`, ['--no-phoenix-diagram']);
       assert.match(first.stdout, new RegExp(`Phoenix UI ${B.data.toolVersion.replaceAll('.', '\\.')} \\(@xgent-ai/skills@[^)]+\\): 已安装`));
       assert.match(first.stdout, /完成: /); assert.doesNotMatch(first.stdout, /回滚|事务|备份/);
-      if (legacy) {
-        assert.doesNotMatch(first.stdout, /迁移  认领|impeccable →/);
-        if (replace) {
-          assert.match(first.stdout, /删除.*impeccable/);
-          for (const directory of [project, env.HOME]) for (const provider of ['.claude', '.agents']) {
-            assert(!fs.existsSync(path.join(directory, provider, 'skills/impeccable')));
-          }
-          for (const file of ['.claude/settings.json', '.claude/settings.local.json', '.codex/hooks.json']) {
-            const settings = path.join(project, file);
-            if (fs.existsSync(settings)) assert.doesNotMatch(JSON.stringify(JSON.parse(fs.readFileSync(settings)).hooks), /skills[\\/]impeccable[\\/]scripts/);
-          }
-        } else {
-          assert.match(first.stdout, /保留.*impeccable/);
-          for (const [file, digest] of Object.entries(original).filter(([file]) => file.includes('/skills/impeccable/'))) {
-            assert.equal(tree(project)[file], digest, `Old tool changed ${file}`);
-          }
-          assert.deepEqual(tree(env.HOME), originalHome);
-        }
-      } else if (kind === 'source-copy') {
+      if (kind === 'source-copy') {
         for (const provider of ['.claude', '.agents']) assert.notEqual(fs.readFileSync(path.join(project, provider, 'skills/phoenix-ui/SKILL.md'), 'utf8'), 'old source copy\n');
         assert.equal(tree(project)['.phoenix-ui/config.json'], original['.phoenix-ui/config.json']);
       } else if (kind === 'fresh') {
@@ -223,18 +168,18 @@ for (const major of [18, 25]) {
       for (const file of ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']) assert.equal(installed[file], original[file], `Installer changed ${file}`);
       assert.deepEqual(Object.fromEntries(Object.entries(installed).filter(([file]) => file.startsWith('node_modules/'))),
         Object.fromEntries(Object.entries(original).filter(([file]) => file.startsWith('node_modules/'))), 'Installer changed node_modules');
-      const second = install(node, project, env, `node${major}-${kind}-rerun`, ['--no-phoenix-diagram', ...(replace ? ['--replace-impeccable'] : [])]);
+      const second = install(node, project, env, `node${major}-${kind}-rerun`, ['--no-phoenix-diagram']);
       assert.match(second.stdout, /: 未变\n/); assert.doesNotMatch(second.stdout, /^\s*(?:事务\s+phoenix-\S+;备份\s+|回滚\s+.+--rollback\s+phoenix-\S+)/m); assert.deepEqual(tree(project), installed);
       assert.equal(run(`node${major}-${kind}-version`, node, [bBin, '--version'], project, env).stdout.trim(), B.data.toolVersion);
       assert(JSON.parse(run(`node${major}-${kind}-context`, node, [bBin, 'context', '--json'], project, env).stdout));
-      run(`node${major}-${kind}-bundle-check`, node, [bBin, 'skills', 'check', '--bundle-root', path.join(pkg, 'dist/phoenix-ui/bundle'), '--json'], project, env);
+      run(`node${major}-${kind}-bundle-check`, node, [bBin, 'check', '--bundle-root', path.join(pkg, 'dist/phoenix-ui/bundle'), '--json'], project, env);
       group.status = 'expected-consumer-outcomes-observed';
     } catch (error) { group.status = 'failed'; group.error = error.message; process.exitCode = 1; }
     save();
   }
 }
 } catch (error) { record.error = error.message; process.exitCode = 1; }
-record.status = !record.error && record.groups.length === 14 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
+record.status = !record.error && record.groups.length === 6 && record.groups.every(group => group.status === 'expected-consumer-outcomes-observed') ? 'release-check-passed' : 'failed';
 record.finishedAt = new Date().toISOString(); save();
 if (record.status !== 'release-check-passed') process.exitCode = 1;
 console.log(json({ out, status: record.status, tarballSha256: options['--tarball-sha256'], manifestSha256: B.hash, groups: record.groups }));

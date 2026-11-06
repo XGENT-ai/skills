@@ -4,7 +4,6 @@
   "meta": {
     "title": "登录与页面",
     "output": "login-parents.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN"
   },

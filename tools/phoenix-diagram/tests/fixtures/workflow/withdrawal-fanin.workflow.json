@@ -4,7 +4,6 @@
   "meta": {
     "title": "采购申请审批流程",
     "output": "procurement-approval.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN",
     "legend": {

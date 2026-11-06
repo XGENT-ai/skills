@@ -833,14 +833,10 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     } else {
         "fixed-v1"
     };
-    let input_contract = match scene.input_contract {
-        crate::input::InputContract::PhoenixV1 => "phoenix-v1",
-    };
     write!(svg,"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{} {} {} {}\" role=\"img\" aria-labelledby=\"phoenix-diagram-title phoenix-diagram-description\" lang=\"{}\" data-diagram-type=\"{}\" data-layout-contract=\"{contract}\" data-quality-profile=\"{profile}\" data-reader-fit=\"{}\" data-animation=\"trace\" data-preset=\"{}\">",
         number(scene.view_box.x),number(scene.view_box.y),number(scene.view_box.width),number(scene.view_box.height),escape_text(&crate::i18n::resolve(&scene.meta).resolved),scene.diagram_type.as_str(),escape_text(&scene.reader_fit),scene.meta["visual_preset"].as_str().map(escape_text).unwrap_or_else(||"classic".into())).unwrap();
     // Append metadata to the root tag before any authored content is inserted.
     svg.pop();
-    write!(svg, " data-input-contract=\"{input_contract}\"").unwrap();
     let node_ui = matches!(
         scene.diagram_type,
         DiagramType::Architecture | DiagramType::Workflow
@@ -1432,7 +1428,7 @@ fn render_with_layers(
         cards.push_str("</ul></div>");
     }
     cards.push_str("</div>");
-    let mut public_metadata = json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"inputContract":scene.input_contract,"quality":scene.quality,"readerFit":scene.reader_fit,
+    let mut public_metadata = json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"quality":scene.quality,"readerFit":scene.reader_fit,
         "graph":{"nodes":scene.nodes.iter().map(|node|&node.authored.facts).collect::<Vec<_>>(),"relations":scene.relations.iter().map(|relation|&relation.authored.facts).collect::<Vec<_>>()},"cards":scene.cards.iter().map(|card|&card.authored.facts).collect::<Vec<_>>(),"presentation":{"relations":scene.relations.iter().map(|r|json!({"variant":r.variant,"labelOwner":r.label_owner,"junction":r.junction})).collect::<Vec<_>>()},"facts":scene.facts,"sourceEvidence":evidence,"brandResources":scene.nodes.iter().filter_map(|n|n.brand.as_ref().map(|b|(format!("{}/brand",n.authored.source_path),&b.resource))).collect::<std::collections::BTreeMap<_,_>>()});
     if scene.nodes.iter().all(|n| n.brand.is_none()) {
         public_metadata

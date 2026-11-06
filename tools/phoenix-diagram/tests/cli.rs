@@ -26,7 +26,7 @@ impl Project {
     }
     fn candidate(&self) -> PathBuf {
         let file = self.0.join("candidate.json");
-        fs::write(&file,serde_json::to_vec(&json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"CLI facts","output":"diagram.html","input_contract":"phoenix-v1","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"a","type":"frontend","label":"Client","pos":[60,100]},{"id":"b","type":"backend","label":"Service","pos":[360,100]}],"connections":[{"from":"a","to":"b","label":"request"}]})).unwrap()).unwrap();
+        fs::write(&file,serde_json::to_vec(&json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"CLI facts","output":"diagram.html","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"a","type":"frontend","label":"Client","pos":[60,100]},{"id":"b","type":"backend","label":"Service","pos":[360,100]}],"connections":[{"from":"a","to":"b","label":"request"}]})).unwrap()).unwrap();
         file
     }
 }
@@ -94,7 +94,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     assert!(probe.status.success());
     assert_eq!(
         String::from_utf8(probe.stdout).unwrap(),
-        "phoenix-diagram-engine 0.2.0 input=1 receipt=1 viewer=phoenix-v2\n"
+        "phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n"
     );
     let help = run(&[flag("--help")]);
     assert!(help.status.success());
@@ -302,7 +302,7 @@ fn cli_usage_errors_and_removed_commands_are_json() {
             flag("sequence"),
             flag("unused.json"),
             flag("--input-contract"),
-            flag("legacy-2.17"),
+            flag("phoenix-v1"),
             flag("--json"),
         ],
         vec![flag("recover-output"), flag("unused"), flag("--json")],

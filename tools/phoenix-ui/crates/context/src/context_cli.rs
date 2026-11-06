@@ -3,7 +3,7 @@
 use crate::context::*;
 use crate::jsp;
 use crate::provider::Provider;
-use crate::staleness::{collect_boot_findings, design_sidecar_candidates_for, BootExtras};
+use crate::staleness::{collect_boot_findings, design_sidecar_path, BootExtras};
 use crate::staleness_notice::{build_staleness_directive, filter_fresh_findings, staleness_check_disabled};
 use crate::target_args::{has_target_option, parse_target_options, TargetOptions};
 use crate::util::*;
@@ -35,10 +35,7 @@ fn value_has_hook_marker(v: &Value) -> bool {
     }
 }
 
-fn hook_enabled_at(root: &str, env: &Env) -> bool {
-    if truthy_env(env, "PHOENIX_UI_HOOK_DISABLED") {
-        return false;
-    }
+fn hook_enabled_at(root: &str) -> bool {
     let mut enabled = true;
     for name in [".phoenix-ui/config.json", ".phoenix-ui/config.local.json"] {
         if let Some(raw) = read_json(&jsp::join(&[root, name])) {
@@ -66,7 +63,7 @@ pub fn automatic_hook_mode(ctx: &Ctx, cwd: &str, env: &Env, provider: &Provider)
         return "none";
     }
     let active_root = jsp::resolve(if ctx.project_root.is_empty() { cwd } else { &ctx.project_root }, &[]);
-    if !hook_enabled_at(&active_root, env) {
+    if !hook_enabled_at(&active_root) {
         return "none";
     }
     // Gemini's manifest carries only the session and build-completion hooks,
@@ -79,7 +76,7 @@ pub fn automatic_hook_mode(ctx: &Ctx, cwd: &str, env: &Env, provider: &Provider)
         // A manifest can live above the resolved product. Honor the hook
         // lifecycle config beside that manifest before treating it as active
         // coverage (#710).
-        if !hook_enabled_at(&root, env) {
+        if !hook_enabled_at(&root) {
             continue;
         }
         for rel in manifests {
@@ -259,7 +256,7 @@ fn append_staleness_directive(parts: &mut Vec<String>, ctx: &Ctx, options: &Targ
     let (patterns, cands) = project_roots_diagnostic(ctx, options, env);
     let extras = BootExtras {
         abs_design_path: ctx.design_path.as_deref().map(|p| jsp::resolve(&abs_cwd, &[p])),
-        sidecar_candidates: design_sidecar_candidates_for(&project_root, Some(&ctx.context_dir)),
+        sidecar_path: design_sidecar_path(&project_root),
         project_root_patterns: patterns,
         target_candidates: cands,
     };
@@ -407,14 +404,14 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     if !ctx.has_product {
         let mut parts: Vec<String> = if ctx.has_visual_implementation {
             vec![
-                format!("NO_PRODUCT_MD: This project has no PRODUCT.md yet, but it does have an incumbent visual implementation. For `init`, `teach`, `shape`, or any request to create a new surface or replacement visual world, load reference/init.md and create PRODUCT.md with the user first. After init writes PRODUCT.md, reference/new-work.md preserves and documents the incumbent system for an extension or replaces it with the user for a redesign/rebrand. Other narrow refinement commands may read the CSS, tokens, components, and assets and proceed without blocking, then offer `{} init` as a follow-up.", cmd),
+                format!("NO_PRODUCT_MD: This project has no PRODUCT.md yet, but it does have an incumbent visual implementation. For `init`, `shape`, or any request to create a new surface or replacement visual world, load reference/init.md and create PRODUCT.md with the user first. After init writes PRODUCT.md, reference/new-work.md preserves and documents the incumbent system for an extension or replaces it with the user for a redesign/rebrand. Other narrow refinement commands may read the CSS, tokens, components, and assets and proceed without blocking, then offer `{} init` as a follow-up.", cmd),
                 "BUILD_INIT_REQUIRED: Before shape or any new-surface/redesign flow, init must capture PRODUCT.md with the human or structured simulated user. Init writes product truth only; reference/new-work.md owns every visual decision.".to_string(),
                 "SCOPED_EXISTING_ALLOWED: Narrow refinement commands may use the incumbent implementation as authority without blocking on context setup; they must preserve it and offer init afterward.".to_string(),
                 "EXISTING_VISUAL_SYSTEM: For refinement or extension, code and assets are incumbent design authority and missing DESIGN.md is a documentation gap. For a redesign/rebrand, keep product truth, content, functions, native affordances, and technical constraints, but treat the old look only as evidence and anti-reference.".to_string(),
             ]
         } else {
             vec![
-                format!("NO_PRODUCT_MD: This project has no PRODUCT.md yet. For `init`, `teach`, `shape`, or wording that clearly maps to a from-scratch build/shape flow, load reference/init.md, complete its human or structured simulated-user interview, and write PRODUCT.md before designing. If no answer mechanism truly exists, init may infer only from the explicit brief and must label its assumptions. It never writes DESIGN.md. For any other (scoped) command against existing code, proceed using the code as context and offer `{} init` as a suggestion (do not block).", cmd),
+                format!("NO_PRODUCT_MD: This project has no PRODUCT.md yet. For `init`, `shape`, or wording that clearly maps to a from-scratch build/shape flow, load reference/init.md, complete its human or structured simulated-user interview, and write PRODUCT.md before designing. If no answer mechanism truly exists, init may infer only from the explicit brief and must label its assumptions. It never writes DESIGN.md. For any other (scoped) command against existing code, proceed using the code as context and offer `{} init` as a suggestion (do not block).", cmd),
                 "PRODUCT_INIT_REQUIRED: No product context or visual authority was found. New builds and redesigns must finish reference/init.md for PRODUCT.md, then reference/new-work.md establishes the world and surface. Scoped fixes to existing code do not need the new-surface flow.".to_string(),
             ]
         };

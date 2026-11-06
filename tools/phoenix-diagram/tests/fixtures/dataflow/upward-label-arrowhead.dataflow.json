@@ -4,7 +4,6 @@
   "meta": {
     "title": "销售数据报表数据流",
     "output": "sales-report-dataflow.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN"
   },

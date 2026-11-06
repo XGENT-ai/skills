@@ -143,12 +143,12 @@ fn bare_operational_entries_return_unavailable_without_writes() {
 }
 
 #[test]
-fn help_is_static_and_preserves_all_24_command_contracts() {
+fn help_is_static_and_preserves_all_23_command_contracts() {
     let fixture = Fixture::new();
     let (code, stdout, stderr) = fixture.run(&["help", "--json"], false);
     assert_eq!(code, 0, "{stderr}");
     let value: Value = serde_json::from_str(&stdout).unwrap();
-    assert_eq!(value["commands"].as_object().unwrap().len(), 24);
+    assert_eq!(value["commands"].as_object().unwrap().len(), 23);
     for command in ["init", "shape", "generate", "live", "layout", "typeset"] {
         assert!(value["commands"][command]["description"].as_str().is_some());
     }

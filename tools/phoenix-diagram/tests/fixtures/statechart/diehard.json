@@ -4,7 +4,6 @@
   "meta": {
     "title": "Die Hard 量水",
     "output": "diehard.html",
-    "input_contract": "phoenix-v1",
     "quality_profile": "showcase",
     "locale": "zh-CN"
   },

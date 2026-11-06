@@ -1,48 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-// Per-project artifacts live inside `scripts/` of an installed skill but
-// belong to the consuming project, not the distributable skill. The build
-// excludes them from dist, and the harness-sync step preserves them across
-// the rm+recopy so local state isn't destroyed on every rebuild.
-// - config.json: legacy live-mode inject target list for existing projects.
-//   New installs write project config at .phoenix-ui/live/config.json instead.
-export const PER_PROJECT_SCRIPT_ARTIFACTS = new Set(['config.json']);
-
-// Native engines live in the user's versioned cache. They are never skill
-// sources or bundle files; only explicit engine installation downloads them.
-export const SKILL_BINARY_DIR = 'bin';
-
-// Walk the harness-dir skill tree and return any per-project script
-// artifacts found, ready for restoration after a full sync rm+recopy.
-// Returns [{ relPath, content: Buffer }], where relPath is relative to
-// the passed-in rootDir (typically `<configDir>/skills`).
-export function stashPerProjectArtifacts(rootDir) {
-  if (!fs.existsSync(rootDir)) return [];
-  const out = [];
-  const walk = (dir) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, entry.name);
-      if (entry.isDirectory()) { walk(p); continue; }
-      // Only preserve files inside a skill's scripts/ directory.
-      if (path.basename(path.dirname(p)) !== 'scripts') continue;
-      if (PER_PROJECT_SCRIPT_ARTIFACTS.has(entry.name)) {
-        out.push({ relPath: path.relative(rootDir, p), content: fs.readFileSync(p) });
-      }
-    }
-  };
-  walk(rootDir);
-  return out;
-}
-
-export function restorePerProjectArtifacts(rootDir, stashed) {
-  for (const { relPath, content } of stashed) {
-    const target = path.join(rootDir, relPath);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, content);
-  }
-}
-
 function readSkillScripts(scriptsDir) {
   const scripts = [];
 
@@ -54,12 +12,10 @@ function readSkillScripts(scriptsDir) {
       if (entry.name === '.DS_Store') continue;
       const entryPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (dir === scriptsDir && entry.name === SKILL_BINARY_DIR) continue;
         walk(entryPath);
         continue;
       }
       if (!entry.isFile()) continue;
-      if (PER_PROJECT_SCRIPT_ARTIFACTS.has(entry.name)) continue;
 
       const relPath = path.relative(scriptsDir, entryPath).split(path.sep).join('/');
       // `mode` travels with the entry so the launcher keeps its executable
@@ -219,9 +175,6 @@ export function readSourceFiles(rootDir, skillDir = path.resolve(rootDir, '../..
     }
   }
 
-  // PER_PROJECT_SCRIPT_ARTIFACTS (defined at module top) are excluded from
-  // the distributable skill so the build never bundles one project's state
-  // into another's.
   const scripts = [];
   const scriptsDir = path.join(skillDir, 'scripts');
   if (fs.existsSync(scriptsDir)) {
@@ -588,12 +541,6 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const EXCLUDED_FROM_SUGGESTIONS = new Set([
-  'phoenix-ui',               // foundational skill, not a steering command
-  'teach-impeccable',         // deprecated shim
-  'frontend-design',          // deprecated shim
-]);
-
 // Sub-commands of /impeccable that should appear in {{available_commands}}.
 // These are the commands that audit/critique/etc. reference when suggesting next steps.
 const IMPECCABLE_SUB_COMMANDS = [
@@ -602,25 +549,12 @@ const IMPECCABLE_SUB_COMMANDS = [
   'onboard', 'optimize', 'overdrive', 'polish', 'quieter', 'shape', 'typeset',
 ];
 
-export function replacePlaceholders(content, provider, commandNames = [], allSkillNames = []) {
+export function replacePlaceholders(content, provider, allSkillNames = []) {
   const placeholders = PROVIDER_PLACEHOLDERS[provider] || PROVIDER_PLACEHOLDERS['cursor'];
   const cmdPrefix = placeholders.command_prefix || '/';
-
-  // Build the available_commands list.
-  // After the v3.0 consolidation, commands are sub-commands of /impeccable.
-  // If there's only one user-invocable skill (impeccable), generate sub-command references.
-  // Otherwise fall back to listing skill names (backwards compat for forks).
-  const nonExcluded = commandNames.filter(n => !EXCLUDED_FROM_SUGGESTIONS.has(n));
-  let commandList;
-  if (nonExcluded.length === 0) {
-    // Single-skill architecture: list sub-commands as /impeccable <sub>
-    commandList = IMPECCABLE_SUB_COMMANDS
-      .map(n => `${cmdPrefix}phoenix-ui ${n}`)
-      .join(', ');
-  } else {
-    // Multi-skill architecture (backwards compat)
-    commandList = nonExcluded.map(n => `${cmdPrefix}${n}`).join(', ');
-  }
+  const commandList = IMPECCABLE_SUB_COMMANDS
+    .map(n => `${cmdPrefix}phoenix-ui ${n}`)
+    .join(', ');
 
   let result = content
     .replace(/\{\{model\}\}/g, placeholders.model)

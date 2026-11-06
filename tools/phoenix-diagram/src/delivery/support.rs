@@ -67,7 +67,6 @@ pub(super) fn config(input: &crate::input::DiagramInput) -> EffectiveConfig {
             .map(|(path, brand)| (path.clone(), brand.resource.clone()))
             .collect(),
         diagram_type: input.diagram_type,
-        input_contract: input.input_contract,
         quality: input.quality,
         viewer_revision: input.viewer_revision.clone(),
     }

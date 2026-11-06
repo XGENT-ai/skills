@@ -34,7 +34,7 @@ Options:
                       e.g. --viewport 390x844 for a mobile-width pass
   --no-config         Do not apply project config, detector ignores, inline
                       ignore comments, or DESIGN.md
-  --no-inline-ignores Do not honor in-file impeccable-disable* ignore comments
+  --no-inline-ignores Do not honor in-file phoenix-ui-disable* ignore comments
   --no-design-system  Do not load local DESIGN.md / .phoenix-ui/design.json context
   --no-advisory       Suppress advisory findings entirely (e.g. em-dash overuse)
   --help              Show this help message
@@ -61,10 +61,10 @@ Project config:
 
 Inline ignores:
   In-file comments waive a finding where it lives and travel with the file:
-    <!-- impeccable-disable overused-font -- exported brand doc -->
-    .brand { font-family: Inter } /* impeccable-disable-line overused-font */
-    // impeccable-disable-next-line bounce-easing: intentional bounce
-  impeccable-disable applies to the whole file; -line / -next-line are scoped.
+    <!-- phoenix-ui-disable overused-font -- exported brand doc -->
+    .brand { font-family: Inter } /* phoenix-ui-disable-line overused-font */
+    // phoenix-ui-disable-next-line bounce-easing: intentional bounce
+  phoenix-ui-disable applies to the whole file; -line / -next-line are scoped.
   List one or more rule ids (comma-separated), or omit them / use * for all.
 
 Detection modes:
@@ -397,7 +397,6 @@ fn detect_cli(args_in: &[String], io: &mut Io, engines: &Engines) -> Result<i32,
         .iter()
         .map(|a| match a.as_str() {
             "-json" => "--json".to_string(),
-            "-fast" => "--fast".to_string(),
             _ => a.clone(),
         })
         .collect();
@@ -409,12 +408,6 @@ fn detect_cli(args_in: &[String], io: &mut Io, engines: &Engines) -> Result<i32,
     let quiet_mode = has(&args, "--quiet");
     let help_mode = has(&args, "--help");
     let no_advisory = has(&args, "--no-advisory");
-    if has(&args, "--fast") {
-        io.err("Note: --fast is deprecated and ignored. The full scan is fast now and runs every rule.\n");
-    }
-    if has(&args, "--gpt") || has(&args, "--gemini") {
-        io.err("Note: --gpt and --gemini are deprecated and ignored. Generated-UI tells now run by default.\n");
-    }
     let config_enabled = !has(&args, "--no-config");
     let cwd = io.cwd.to_string_lossy().into_owned();
     let detection_config = if config_enabled {

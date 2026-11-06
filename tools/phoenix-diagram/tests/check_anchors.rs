@@ -4,7 +4,7 @@ use phoenix_diagram::{
 };
 
 use geometry::composition::{Frame, RoutedRelation};
-use input::{CompileOptions, DiagramType, InputContract};
+use input::{CompileOptions, DiagramType};
 use phoenix_diagram::{
     layout,
     render::{render, EmbeddedAssets},
@@ -97,10 +97,7 @@ fn inspect(html: &str, kind: DiagramType) -> diagnostic::Diagnostics {
 }
 
 fn compile(document: Value, kind: DiagramType) -> CompiledDiagram {
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let input =
         input::parse_input(&serde_json::to_vec(&document).unwrap(), kind, &options).unwrap();
     layout::compile(&input, &options).unwrap()

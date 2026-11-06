@@ -53,9 +53,6 @@
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
-        "views": {
-          "$ref": "common.schema.json#/$defs/guidedViews"
-        },
         "evidence": {
           "enum": [
             "observed",
@@ -67,9 +64,6 @@
           "type": "string",
           "minLength": 1,
           "description": "IANA time zone used for axis and event labels; defaults to UTC."
-        },
-        "input_contract": {
-          "const": "phoenix-v1"
         }
       }
     },

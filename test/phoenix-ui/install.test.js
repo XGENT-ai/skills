@@ -98,7 +98,7 @@ test('--keep-impeccable installs Phoenix beside customized project and personal 
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
-test('--replace-impeccable deletes old project and personal tools without a tool backup', { skip }, (t) => {
+test('a non-interactive install deletes old project and personal tools, hooks and lock entries without a backup', { skip }, (t) => {
   const pkg = packageFor(t, engine);
   const project = sandbox(t, 'phoenix replace project');
   for (const root of [project, pkg.home]) {
@@ -111,8 +111,14 @@ test('--replace-impeccable deletes old project and personal tools without a tool
       { type: 'command', command: 'keep-other-hook' },
     ] }] }, custom: true }));
   }
-  const result = install(pkg, project, ['--replace-impeccable', '--providers=codex']);
+  const lock = path.join(project, 'skills-lock.json');
+  fs.writeFileSync(lock, JSON.stringify({ version: 1, skills: {
+    impeccable: { source: 'pbakaus/impeccable', skillPath: 'skills/impeccable/SKILL.md' },
+    'design-md': { source: 'XGENT-ai/skills', skillPath: 'skills/design-md/SKILL.md' } } }));
+  const result = install(pkg, project, ['--providers=codex']);
   assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /无交互环境默认删除/);
+  assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(lock)).skills), ['design-md']);
   for (const root of [project, pkg.home]) {
     assert.equal(fs.existsSync(path.join(root, '.agents/skills/impeccable')), false);
     const config = JSON.parse(fs.readFileSync(path.join(root, '.codex/hooks.json')));
@@ -135,14 +141,20 @@ test('source-only Phoenix copies are reinstalled', { skip }, (t) => {
   assert.ok(fs.existsSync(path.join(project, '.agents/skills/phoenix-ui/scripts/ENGINE.json')));
 });
 
-test('non-interactive install keeps Impeccable by default', { skip }, (t) => {
+test('declining the removal prompt keeps Impeccable', { skip }, (t) => {
   const pkg = packageFor(t, engine);
-  const project = sandbox(t, 'phoenix default coexist');
+  const project = sandbox(t, 'phoenix declined removal');
   const old = path.join(project, '.claude/skills/impeccable/SKILL.md');
   fs.mkdirSync(path.dirname(old), { recursive: true });
   fs.writeFileSync(old, 'keep this tool\n');
-  const result = install(pkg, project);
+  // Simulated terminal: the [Y/n] prompt defaults to removal, so only an explicit "n" keeps it.
+  const result = spawnSync(process.execPath, ['-e', 'process.stdin.isTTY = true; require(process.argv[1]);',
+    path.join(pkg.root, 'bin/xgent-skills.js'), 'install', project, '--no-phoenix-diagram', `--release-dir=${pkg.release}`], {
+    encoding: 'utf8', input: 'n\n', timeout: 600000,
+    env: { ...process.env, HOME: pkg.home, USERPROFILE: pkg.home, PHOENIX_UI_HOME: pkg.cache },
+  });
   assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /发现旧 impeccable.*\[Y\/n\]/);
   assert.equal(fs.readFileSync(old, 'utf8'), 'keep this tool\n');
   assert.match(result.stdout, /保留.*impeccable/);
 });

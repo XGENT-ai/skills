@@ -1,6 +1,6 @@
 use phoenix_diagram::{
     check::check_html,
-    input::{parse_input, CompileOptions, DiagramType, InputContract, Quality},
+    input::{parse_input, CompileOptions, DiagramType, Quality},
     layout,
     render::{render, EmbeddedAssets},
 };
@@ -11,7 +11,6 @@ const TEMPLATE: &str = r#"<!doctype html><html lang="{{PHOENIX:LOCALE}}" data-pr
 
 fn inspect(document: &Value, kind: DiagramType, quality: Quality) -> Vec<String> {
     let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
         quality: Some(quality),
         ..Default::default()
     };
@@ -110,7 +109,6 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
             Quality::Standard
         };
         let options = CompileOptions {
-            input_contract: Some(InputContract::PhoenixV1),
             quality: Some(quality),
             ..Default::default()
         };
@@ -252,10 +250,7 @@ fn architecture_presentation_matches_the_real_frozen_svg() {
 #[test]
 fn architecture_default_showcase_enforces_the_same_geometry_as_persisted_showcase() {
     let document = serde_json::json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Ownership","output":"architecture.html","legend":{"mode":"hidden"}},"components":[{"id":"a","type":"backend","label":"A","pos":[80,120]},{"id":"b","type":"backend","label":"B","pos":[240,120]},{"id":"c","type":"database","label":"C","pos":[400,120]}],"connections":[],"boundaries":[{"kind":"region","label":"Owned","wraps":["a","c"]}]});
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let parsed = parse_input(
         &serde_json::to_vec(&document).unwrap(),
         DiagramType::Architecture,

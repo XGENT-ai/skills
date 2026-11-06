@@ -575,7 +575,7 @@ fn real_dom_css_hiding_a_node_path_or_required_label_is_rejected() {
     let executable = phoenix_diagram::browser::discover_browser()
         .expect("the core stage requires installed Chrome");
     let temp = TempDir::new();
-    let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Browser content fixture","output":"diagram.html","input_contract":"phoenix-v1","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"client","type":"frontend","label":"Client","sublabel":"Request owner","tag":"api-v1","pos":[60,100],"size":[160,80]},{"id":"service","type":"backend","label":"Service","pos":[360,100],"size":[160,80]}],"connections":[{"id":"request","from":"client","to":"service","label":"request","variant":"emphasis"}]});
+    let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Browser content fixture","output":"diagram.html","quality_profile":"standard","legend":{"mode":"hidden"}},"components":[{"id":"client","type":"frontend","label":"Client","sublabel":"Request owner","tag":"api-v1","pos":[60,100],"size":[160,80]},{"id":"service","type":"backend","label":"Service","pos":[360,100],"size":[160,80]}],"connections":[{"id":"request","from":"client","to":"service","label":"request","variant":"emphasis"}]});
     let source = serde_json::to_vec(&document).unwrap();
     let options = CompileOptions::default();
     let parsed = parse_input(&source, DiagramType::Architecture, &options).unwrap();
@@ -766,7 +766,7 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
         .expect("the core stage requires installed Chrome");
     let temp = TempDir::new();
     let notes = vec!["These authored notes follow the diagram in normal document flow."; 5];
-    let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Reader geometry fixture","output":"diagram.html","input_contract":"phoenix-v1","quality_profile":"standard"},"components":[{"id":"client","type":"frontend","label":"Client","pos":[60,100],"size":[160,80]},{"id":"service","type":"backend","label":"Service","pos":[360,100],"size":[160,80]}],"connections":[{"id":"request","from":"client","to":"service","label":"request"}],"cards":[{"dot":"cyan","title":"First notes","items":notes},{"dot":"emerald","title":"Second notes","items":notes},{"dot":"rose","title":"Third notes","items":notes}]});
+    let document = json!({"schema_version":1,"diagram_type":"architecture","meta":{"title":"Reader geometry fixture","output":"diagram.html","quality_profile":"standard"},"components":[{"id":"client","type":"frontend","label":"Client","pos":[60,100],"size":[160,80]},{"id":"service","type":"backend","label":"Service","pos":[360,100],"size":[160,80]}],"connections":[{"id":"request","from":"client","to":"service","label":"request"}],"cards":[{"dot":"cyan","title":"First notes","items":notes},{"dot":"emerald","title":"Second notes","items":notes},{"dot":"rose","title":"Third notes","items":notes}]});
     let source = serde_json::to_vec(&document).unwrap();
     let options = CompileOptions::default();
     let parsed = parse_input(&source, DiagramType::Architecture, &options).unwrap();

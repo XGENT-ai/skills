@@ -4,7 +4,7 @@
 use phoenix_diagram::{
     check::{check_html, path::analyze_svg_path},
     geometry::composition::{collect_label_arrowhead_overlaps, LabelRect, RoutedRelation},
-    input::{parse_input, CompileOptions, DiagramType, InputContract},
+    input::{parse_input, CompileOptions, DiagramType},
     layout,
     render::{render, EmbeddedAssets},
     scene::{Point, Rect},
@@ -29,10 +29,7 @@ struct Drawn {
 /// Compile, render and check the actual HTML, then read the drawn routes and
 /// label plates.
 fn drawn(source: &[u8], kind: DiagramType) -> Vec<Drawn> {
-    let options = CompileOptions {
-        input_contract: Some(InputContract::PhoenixV1),
-        ..Default::default()
-    };
+    let options = CompileOptions::default();
     let input = parse_input(source, kind, &options).unwrap();
     let scene = layout::compile(&input, &options).unwrap();
     let bytes = render(&scene, &EmbeddedAssets::builtin()).unwrap();

@@ -26,13 +26,13 @@ function legend(entries, interactive = true) {
 }
 
 function svg({ type, width = 960, height = 600, attrs = {}, body }) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="phoenix-diagram-title phoenix-diagram-description" lang="en" data-diagram-type="${type}" data-layout-contract="fixed-v1" data-quality-profile="standard" data-reader-fit="" data-animation="trace" data-preset="classic" data-input-contract="phoenix-v1"${attributes(attrs)}>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="phoenix-diagram-title phoenix-diagram-description" lang="en" data-diagram-type="${type}" data-layout-contract="fixed-v1" data-quality-profile="standard" data-reader-fit="" data-animation="trace" data-preset="classic"${attributes(attrs)}>`
     + `<title id="phoenix-diagram-title">${escape(type)} fixture</title><desc id="phoenix-diagram-description">Reader fixture</desc>`
     + `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>`
     + `<rect width="100%" height="100%" fill="url(#grid)"/>${body}</svg>`;
 }
 
-export const metadata = (type, meta = {}, extra = {}) => ({ tool: 'phoenix-diagram', meta: { title: type + ' fixture', ...meta }, diagramType: type, schemaVersion: 1, inputContract: 'phoenix-v1', ...extra });
+export const metadata = (type, meta = {}, extra = {}) => ({ tool: 'phoenix-diagram', meta: { title: type + ' fixture', ...meta }, diagramType: type, schemaVersion: 1, ...extra });
 
 // A directed graph: a → b → c → d, a → e, an isolated f. Five node kinds.
 export const GRAPH_NODES = [

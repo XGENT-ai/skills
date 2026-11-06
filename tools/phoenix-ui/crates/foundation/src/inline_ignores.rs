@@ -1,23 +1,15 @@
 //! Port of `cli/engine/shared/inline-ignores.mjs`: eslint-disable-style
-//! waivers that live in the scanned file (`impeccable-disable`,
-//! `impeccable-disable-line`, `impeccable-disable-next-line`).
-//!
-//! XGENT addition (R-7): the same three directive words are also accepted with
-//! the `phoenix-ui-` prefix the phoenix-ui skill tells agents to write. Only the
-//! prefix is aliased; the directive words, rule-list parsing and the `*`
-//! wildcard are unchanged.
+//! waivers that live in the scanned file (`phoenix-ui-disable`,
+//! `phoenix-ui-disable-line`, `phoenix-ui-disable-next-line`).
 
 use crate::js::{self, ci, WS};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-/// JS `DIRECTIVE_RE` =
-/// `/impeccable-(disable-next-line|disable-line|disable)\b[ \t]*([^\n\r]*)/gi`,
-/// with the `phoenix-ui-` prefix accepted as an alias (R-7).
+/// `/phoenix-ui-(disable-next-line|disable-line|disable)\b[ \t]*([^\n\r]*)/gi`.
 static DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(&format!(
-        r"(?:{imp}|{phoenix})-({dnl}|{dl}|{d})(?-u:\b)[ \t]*([^\n\r]*)",
-        imp = ci("impeccable"),
+        r"{phoenix}-({dnl}|{dl}|{d})(?-u:\b)[ \t]*([^\n\r]*)",
         phoenix = ci("phoenix-ui"),
         dnl = ci("disable-next-line"),
         dl = ci("disable-line"),
@@ -42,15 +34,8 @@ static REASON_SEP_RE: Lazy<Regex> =
 static TOKEN_SPLIT_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(&format!(r"[{},]+", js::WS_CHARS)).unwrap());
 
-/// Cheap bail-out `/(?:impeccable|phoenix-ui)-disable/i`.
-static HAS_DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(&format!(
-        "(?:{imp}|{phoenix})",
-        imp = ci("impeccable-disable"),
-        phoenix = ci("phoenix-ui-disable")
-    ))
-    .unwrap()
-});
+/// Cheap bail-out `/phoenix-ui-disable/i`.
+static HAS_DIRECTIVE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(&ci("phoenix-ui-disable")).unwrap());
 
 /// An insertion-ordered set of rule ids (JS `Set<string>`).
 pub type RuleSet = Vec<String>;
@@ -211,17 +196,17 @@ mod tests {
 
     #[test]
     fn parses_directives() {
-        let src = "<!-- impeccable-disable low-contrast -- exported -->\nx /* impeccable-disable-line design-system-font */\n// impeccable-disable-next-line bounce-easing: reason\nfoo\n";
+        let src = "<!-- phoenix-ui-disable low-contrast -- exported -->\nx /* phoenix-ui-disable-line design-system-font */\n// phoenix-ui-disable-next-line bounce-easing: reason\nfoo\n";
         let d = parse_inline_ignores(Some(src));
         assert_eq!(d.file, vec!["low-contrast"]);
         assert_eq!(d.line, vec![(2, vec!["design-system-font".to_string()])]);
         assert_eq!(d.next_line, vec![(4, vec!["bounce-easing".to_string()])]);
-        let bare = parse_inline_ignores(Some("<!-- impeccable-disable -->"));
+        let bare = parse_inline_ignores(Some("<!-- phoenix-ui-disable -->"));
         assert_eq!(bare.file, vec!["*"]);
     }
 
     #[test]
-    fn parses_the_phoenix_ui_prefix_too() {
+    fn directives_are_case_insensitive() {
         let src = "// phoenix-ui-disable-next-line xgent/transition-all -- local rule\nx /* PHOENIX-UI-DISABLE-LINE bounce-easing */\n<!-- phoenix-ui-disable low-contrast -->\n";
         let d = parse_inline_ignores(Some(src));
         assert_eq!(
@@ -233,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn both_prefixes_waive_findings_with_the_same_words() {
+    fn only_the_phoenix_ui_prefix_waives_findings() {
         struct Hit<'a> {
             id: &'a str,
             line: f64,
@@ -246,24 +231,19 @@ mod tests {
                 self.line
             }
         }
-        for prefix in ["impeccable", "phoenix-ui"] {
-            let content = format!("// {prefix}-disable-next-line xgent/transition-all\n.a {{}}\n");
-            let waived = apply_inline_ignores(
-                vec![Hit {
-                    id: "xgent/transition-all",
-                    line: 2.0,
-                }],
-                Some(&content),
-            );
-            assert!(waived.is_empty(), "{prefix}");
-            let kept = apply_inline_ignores(
-                vec![Hit {
-                    id: "xgent/transition-all",
-                    line: 3.0,
-                }],
-                Some(&content),
-            );
-            assert_eq!(kept.len(), 1, "{prefix}");
+        let hit = || {
+            vec![Hit {
+                id: "xgent/transition-all",
+                line: 2.0,
+            }]
+        };
+        let phoenix = "// phoenix-ui-disable-next-line xgent/transition-all\n.a {}\n";
+        assert!(apply_inline_ignores(hit(), Some(phoenix)).is_empty());
+        for other in [
+            "// impeccable-disable-next-line xgent/transition-all\n.a {}\n",
+            "/* impeccable-disable */\n.a {}\n",
+        ] {
+            assert_eq!(apply_inline_ignores(hit(), Some(other)).len(), 1, "{other}");
         }
     }
 }

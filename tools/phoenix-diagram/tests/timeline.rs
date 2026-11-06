@@ -469,7 +469,6 @@ fn example() -> CompiledDiagram {
         "../../../skills/phoenix-diagram/examples/minimal.timeline.json"
     ))
     .unwrap();
-    assert_eq!(document["meta"]["input_contract"], "phoenix-v1");
     assert!(document["meta"]["evidence"].is_string());
     compile(&document, DiagramType::Timeline).unwrap()
 }

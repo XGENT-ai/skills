@@ -80,12 +80,9 @@
       if (!raw) return [];
       try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(id => typeof id === 'string' && id);
-        }
-        if (typeof parsed === 'string' && parsed) return [parsed];
-      } catch { /* legacy values were stored as a plain session id */ }
-      return [raw];
+        if (Array.isArray(parsed)) return parsed.filter(id => typeof id === 'string' && id);
+      } catch { /* not ours; start over */ }
+      return [];
     }
 
     function markHandled(id) {

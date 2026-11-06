@@ -14,7 +14,7 @@
 
 无目录匹配且用户未提供官方 URL 时，省略这项可选品牌标识，保留原职责、标签并说明未加入标识；不猜站点、不下载，也不为可选品牌扩展业务澄清。已有输入明确固定 brand 而资源缺失或变更时，按真实诊断失败，不能删除该字段来过检。
 
-在原图对应元素的 `brand` 字段使用已核实的 canonical ID。原五类的支持位置为 architecture.components、workflow.nodes、sequence.participants、dataflow.nodes、lifecycle.states；ER、class、tree、timeline、waterfall、statechart 不扩加 brand 字段。在brand输入或capture中，已知目录域名的HTTP(S) URL可离线解析为内置品牌，仍优先使用回执给出的ID；brands查询本身只做上述子串检索。
+在原图对应元素的 `brand` 字段使用已核实的 canonical ID。支持位置为 architecture.components、workflow.nodes、sequence.participants、dataflow.nodes、lifecycle.states；ER、class、tree、timeline、waterfall、statechart 不扩加 brand 字段。在brand输入或capture中，已知目录域名的HTTP(S) URL可离线解析为内置品牌，仍优先使用回执给出的ID；brands查询本身只做上述子串检索。
 
 ## 明确采集官方 URL
 

@@ -72,7 +72,6 @@ fn side(prepared: &delivery::prepare::Preparation) -> CompareSide {
         config_sha256: c.input.config_sha256.clone(),
         engine: prepared.receipt.engine.clone(),
         evidence: prepared.receipt.evidence.clone(),
-        compatibility: c.input.compatibility.clone(),
         rendered: FileIdentity::of(&c.html),
     }
 }

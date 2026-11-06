@@ -69,20 +69,11 @@ pub fn run_hook(rt: &Runtime, stdin: &str) -> RunResult {
     audit.insert("ts".into(), Value::String(iso_now()));
     audit.insert("event".into(), Value::String("PostToolUse".into()));
 
-    if depth_is_set(rt.env("PHOENIX_UI_HOOK_DEPTH")) || depth_is_set(rt.env("CLAUDE_HOOK_DEPTH")) {
+    if depth_is_set(rt.env("CLAUDE_HOOK_DEPTH")) {
         return result(
             &audit,
             vec![
                 ("reentrant", Value::Bool(true)),
-                ("durationMs", Value::from(0)),
-            ],
-        );
-    }
-    if truthy(rt.env("PHOENIX_UI_HOOK_DISABLED")) {
-        return result(
-            &audit,
-            vec![
-                ("skipped", Value::from("env-disabled")),
                 ("durationMs", Value::from(0)),
             ],
         );
@@ -111,7 +102,7 @@ pub fn run_hook(rt: &Runtime, stdin: &str) -> RunResult {
         Ok(Some(e)) => e,
     };
 
-    let harness = resolve_harness(rt, Some(&event));
+    let harness = resolve_harness(Some(&event));
     let event = normalize_hook_event(rt, &event, &rt.proc_cwd, harness);
     audit.insert("harness".into(), Value::from(harness));
 
@@ -182,7 +173,7 @@ pub fn run_hook(rt: &Runtime, stdin: &str) -> RunResult {
     let mut suppression_winner: Option<String> = None;
     let mut clean_ack_deduped = false;
     let mut skipped_bytes: u64 = 0;
-    let quiet_mode = truthy(rt.env("PHOENIX_UI_HOOK_QUIET")) || config.quiet;
+    let quiet_mode = config.quiet;
     let mut detector_threw_any = false;
     let mut last_skip = "no-scannable-file";
     let mut live_preview_edit: Option<String> = None;
@@ -594,20 +585,11 @@ pub fn run_stop_hook(rt: &Runtime, stdin: &str) -> RunResult {
     audit.insert("ts".into(), Value::String(iso_now()));
     audit.insert("event".into(), Value::String("Stop".into()));
 
-    if depth_is_set(rt.env("PHOENIX_UI_HOOK_DEPTH")) || depth_is_set(rt.env("CLAUDE_HOOK_DEPTH")) {
+    if depth_is_set(rt.env("CLAUDE_HOOK_DEPTH")) {
         return result(
             &audit,
             vec![
                 ("reentrant", Value::Bool(true)),
-                ("durationMs", Value::from(0)),
-            ],
-        );
-    }
-    if truthy(rt.env("PHOENIX_UI_HOOK_DISABLED")) {
-        return result(
-            &audit,
-            vec![
-                ("skipped", Value::from("env-disabled")),
                 ("durationMs", Value::from(0)),
             ],
         );
@@ -634,7 +616,7 @@ pub fn run_stop_hook(rt: &Runtime, stdin: &str) -> RunResult {
         }
         Ok(Some(e)) => e,
     };
-    let harness = resolve_harness(rt, Some(&event));
+    let harness = resolve_harness(Some(&event));
     audit.insert("harness".into(), Value::from(harness));
     let event = normalize_hook_event(rt, &event, &rt.proc_cwd, harness);
     // Stop-hook re-entry guard (#400): Claude Code and Codex send
@@ -716,10 +698,13 @@ pub fn run_stop_hook(rt: &Runtime, stdin: &str) -> RunResult {
         }
     }
     if stop_hook_active {
-        return result(&audit, vec![("skipped", Value::from("stop-hook-active")), ("durationMs", ms_since(started))]);
-    }
-    if truthy(rt.env("PHOENIX_UI_HOOK_COMPLETION_ONLY")) {
-        return result(&audit, vec![("skipped", Value::from("no-build-continuation")), ("durationMs", ms_since(started))]);
+        return result(
+            &audit,
+            vec![
+                ("skipped", Value::from("stop-hook-active")),
+                ("durationMs", ms_since(started)),
+            ],
+        );
     }
     let touched = touched_files(&cache, &session_id);
     if touched.is_empty() {
@@ -911,12 +896,11 @@ fn is_stop_event(stdin: &str) -> bool {
 pub fn run(rt: &Runtime, stdin: &str, io: &mut impeccable_common::Io) -> i32 {
     if let Ok(Value::Object(event)) = serde_json::from_str::<Value>(stdin) {
         if event.get("hook_event_name").and_then(Value::as_str) == Some("BeforeTool")
-            && resolve_harness(rt, Some(&event)) == "gemini"
+            && resolve_harness(Some(&event)) == "gemini"
         {
             // String checks first: this fires before every Gemini shell call.
             if let Some(output) = crate::build_completion::gemini_shell_identity(rt, &event) {
-                if !truthy(rt.env("PHOENIX_UI_HOOK_DISABLED")) && read_config(&rt.proc_cwd).enabled
-                {
+                if read_config(&rt.proc_cwd).enabled {
                     io.out(&format!("{output}\n"));
                 }
             }
@@ -927,10 +911,7 @@ pub fn run(rt: &Runtime, stdin: &str, io: &mut impeccable_common::Io) -> i32 {
                 .get("cwd")
                 .and_then(Value::as_str)
                 .unwrap_or(&rt.proc_cwd)]);
-            if !truthy(rt.env("PHOENIX_UI_HOOK_DISABLED"))
-                && resolve_harness(rt, Some(&event)) == "claude"
-                && read_config(&cwd).enabled
-            {
+            if resolve_harness(Some(&event)) == "claude" && read_config(&cwd).enabled {
                 if let Some(session) = event.get("session_id").and_then(Value::as_str) {
                     crate::build_completion::persist_session_identity(rt, session);
                 }
@@ -938,9 +919,6 @@ pub fn run(rt: &Runtime, stdin: &str, io: &mut impeccable_common::Io) -> i32 {
             return 0;
         }
     }
-    // JS: process.env.PHOENIX_UI_HOOK_DEPTH = process.env.PHOENIX_UI_HOOK_DEPTH || '1'
-    // is exported for child processes; this binary spawns none, so the
-    // pre-mutation snapshot in `rt.env` is the only value that matters.
     let result = if is_stop_event(stdin) {
         run_stop_hook(rt, stdin)
     } else {
