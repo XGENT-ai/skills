@@ -321,7 +321,7 @@ agent 做的事：
 
 人接着组织：评审用例，转到 `active`，执行，回填 `result`。SPMS 用例评审、状态流转与结果回填仍没有专用 skill。
 
-需要可复用的项目验证能力时，使用 [create-verification-skill](../skills/create-verification-skill/SKILL.md) 按应用或指定场景创建、维护 `verify-<app>`，由它驱动真实入口、保存场景配方与运行证据。已有验证能力直接复用。agi-mode 将验收项映射到场景和入口，只执行所选范围及必要依赖，再核对完整覆盖；生成器的单场景冒烟不代表整期通过，也不自动回填 SPMS。
+需要可复用的项目验证能力时，使用 [create-e2e-verification-skill](../skills/create-e2e-verification-skill/SKILL.md) 为用户选定的旅程创建、维护 `e2e-<area>`（未指定时由它提名候选），由它驱动真实入口、保存场景与运行证据。已有验证能力直接复用。agi-mode 将验收项映射到场景和入口，只执行所选范围及必要依赖，再核对完整覆盖；生成器的单场景冒烟不代表整期通过，也不自动回填 SPMS。
 
 测试结果若要作为差异核查的证据，把命令、环境和结论写进 Milestone 记录，或在运行 `/review-prd-dev-gaps` 时指出结果所在的位置。没有结果就如实标未运行，不把用例草稿当成已经测过。
 
@@ -352,7 +352,7 @@ agent 做的事：
 对照 `skills/` 里实际存在的 skill，下面五处没有承接者。
 
 1. **SPMS 计划实体。** `prd` 把下游落点写成 `plan_create` → `PLAN-N`，再用 `plan_update({content})` 写正文（`skills/prd/SKILL.md:199`）。`dev-plan` 只写本地 Markdown，全文没有 `plan_create`。本地计划和 SPMS 计划目前对不上号。
-2. **SPMS 测试评审、执行编排、结果回填。** [create-verification-skill](../skills/create-verification-skill/SKILL.md) 可建立项目真实入口验证能力，但不承接 SPMS 用例评审、状态流转或 `result` 回填，这部分仍是交接缺口。
+2. **SPMS 测试评审、执行编排、结果回填。** [create-e2e-verification-skill](../skills/create-e2e-verification-skill/SKILL.md) 可建立项目真实入口验证能力，但不承接 SPMS 用例评审、状态流转或 `result` 回填，这部分仍是交接缺口。
 3. **需求转已上线。** 本流程没有 skill 改这个状态。人在 SPMS 操作；agent 写终态会被拒（`skills/prd/SKILL.md:173`）。
 4. **估点。** `story-points` 能把点数写回 SPMS，`README.md:98` 把它和本流程的 skill 列在同一张表。`prd` 写明排期和点数不在 PRD 阶段做（`skills/prd/SKILL.md:175`）。它不是本文的必经步骤。
 5. **本地 skill 镜像不全。** `.agents/skills/` 24 个目录，`skills/` 47 个。在本 checkout 里，agent 若只扫描 `.agents/skills/`，会看不到 `prd` 和 `test-plan`。
