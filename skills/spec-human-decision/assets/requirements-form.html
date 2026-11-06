@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>需求确认单</title>
+<style>
+/*__FORM_CSS__*/
+.facts .accept li + li { margin-top: 2px; }
+.facts .detail { color: var(--ink); }
+</style>
+</head>
+<body>
+<noscript>此页面需要启用 JavaScript。</noscript>
+<script type="application/json" id="form-data">__FORM_DATA__</script>
+<script>
+/*__FORM_CORE__*/
+</script>
+<script>
+// PRD / CRD：功能点是做什么、为什么、怎样算满足，附分期、优先级与依赖；不展示实现做法。
+(() => {
+  const { data, t, h, facts, refs, tags, mount } = window.DecisionForm;
+  document.title = `${data.title} · ${t('kindRequirements')}`;
+  mount({
+    kind: 'kindRequirements',
+    sections: [{ title: t('features'), items: data.items }],
+    body: item => [
+      h('h3', { id: `title-${item.id}` }, [item.title, tags([item.phase, item.priority])]),
+      facts([
+        [t('what'), item.what],
+        [t('why'), item.why],
+        ...(item.details ?? []).map(detail => [detail.label, detail.text]),
+        [t('acceptance'), item.acceptance],
+        [t('impact'), item.impact],
+        [t('dependsOn'), refs(item.dependsOn)],
+      ]),
+    ],
+  });
+})();
+</script>
+</body>
+</html>

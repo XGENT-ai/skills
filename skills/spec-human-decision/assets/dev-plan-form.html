@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>开发计划确认单</title>
+<style>
+/*__FORM_CSS__*/
+.choice-line { font-weight: 600; }
+.alt-table { width: 100%; max-width: 72ch; border-collapse: collapse; font-size: 14px; }
+.alt-table th, .alt-table td { padding: 3px 12px 3px 0; text-align: left; vertical-align: top; }
+.alt-table th { color: var(--ink-3); font-size: 12px; font-weight: 500; border-bottom: 1px solid var(--hair); }
+.alt-table tr + tr td { border-top: 1px dotted var(--hair); }
+.alt-table td:first-child { white-space: nowrap; font-weight: 500; }
+@media (max-width: 720px) { .alt-table td:first-child { white-space: normal; } }
+</style>
+</head>
+<body>
+<noscript>此页面需要启用 JavaScript。</noscript>
+<script type="application/json" id="form-data">__FORM_DATA__</script>
+<script>
+/*__FORM_CORE__*/
+</script>
+<script>
+// 开发计划：先技术架构决策（选定方案、理由、备选与取舍、代价、影响的功能），再功能点（做什么、怎么做、里程碑、验证）。
+(() => {
+  const { data, t, h, facts, refs, tags, mount } = window.DecisionForm;
+  document.title = `${data.title} · ${t('kindPlan')}`;
+  const alternatives = alts => alts?.length ? h('table', { class: 'alt-table' }, [
+    h('thead', {}, h('tr', {}, [h('th', { scope: 'col', text: t('option') }), h('th', { scope: 'col', text: t('tradeoff') })])),
+    h('tbody', {}, alts.map(alt => h('tr', {}, [h('td', { text: alt.name }), h('td', { text: alt.tradeoff })]))),
+  ]) : undefined;
+
+  const decision = item => [
+    h('h3', { id: `title-${item.id}` }, item.title),
+    facts([
+      [t('choice'), h('span', { class: 'choice-line', text: item.choice })],
+      [t('why'), item.why],
+      [t('alternatives'), alternatives(item.alternatives)],
+      [t('cost'), item.cost],
+      [t('affects'), refs(item.affects)],
+      [t('impact'), item.impact],
+    ]),
+  ];
+  const feature = item => [
+    h('h3', { id: `title-${item.id}` }, [item.title, tags([item.milestone])]),
+    facts([
+      [t('what'), item.what],
+      [t('how'), item.how],
+      [t('why'), item.why],
+      [t('verification'), item.verification],
+      [t('impact'), item.impact],
+      [t('dependsOn'), refs(item.dependsOn)],
+    ]),
+  ];
+
+  mount({
+    kind: 'kindPlan',
+    sections: [
+      { title: t('decisions'), itemLabel: t('colDecisionItem'), items: data.items.filter(item => item.kind === 'decision') },
+      { title: t('features'), items: data.items.filter(item => item.kind === 'feature') },
+    ],
+    body: item => (item.kind === 'decision' ? decision(item) : feature(item)),
+  });
+})();
+</script>
+</body>
+</html>

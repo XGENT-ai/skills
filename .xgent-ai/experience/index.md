@@ -16,6 +16,7 @@
 | 0545b9c0-af40-4fc3-8b04-625848749766 | Phoenix UI 构建环境 | [记录](0545b9c0-af40-4fc3-8b04-625848749766.md) |
 | 01a1342e-e554-7b21-a30a-553b6fdb37aa | init-sdlc 工作项可读性 | [记录](01a1342e-e554-7b21-a30a-553b6fdb37aa.md) |
 | 4f176f20-53f3-4b7e-a50c-dfd0ac434b61 | Phoenix UI R1 代码评审修复 | [记录](4f176f20-53f3-4b7e-a50c-dfd0ac434b61.md) |
+| 2df15881-b4b4-499e-a563-0727a3aa1b03 | spec-human-decision 交互式 HTML 确认表 | [记录](2df15881-b4b4-499e-a563-0727a3aa1b03.md) |
 
 - fe5f6346-7c22-48b2-a046-0a7e7dc20382 · [开发验收不依赖真人招募](fe5f6346-7c22-48b2-a046-0a7e7dc20382.md)
 - 16ab0041-5d0b-40d9-8105-a81ab83b7dca · [精简 agi-mode 入口](16ab0041-5d0b-40d9-8105-a81ab83b7dca.md)
