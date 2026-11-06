@@ -4,8 +4,11 @@ import unittest
 
 try:
     import yaml
-except ImportError:
-    yaml = None
+except ImportError as error:
+    raise ImportError(
+        "PyYAML is required: uv run --no-project --with pyyaml "
+        "python -m unittest discover -s test/skills -p test_skill_metadata.py"
+    ) from error
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,7 +30,6 @@ OPENAI_KEYS = {"interface", "policy"}
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 
 
-@unittest.skipIf(yaml is None, "PyYAML 未安装")
 class SkillMetadataTest(unittest.TestCase):
     def test_skill_frontmatter(self):
         paths = sorted(SKILLS.glob("*/SKILL.md"))

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 用法: check_progress.sh <计划.md> [仓库根,默认 .]
 # 撰写/评审时检查计划顶部「实施进度」的内部一致性,初稿应报 0/N;实施者按计划内条目自查。
-# 只检查摘要、状态、ID、提交 SHA 与引用文件存在性,不读取独立记录正文,也不证明验收已通过。
+# 只检查摘要、状态、ID、提交 SHA、引用文件存在性与定义行改动提示,不读取独立记录正文,也不证明验收已通过。
 # 兼容旧版内联证据表与无「提交」列的完成记录并提示迁移;「压根没回写」仍需结合陈旧提示与实际工作判断。
 set -euo pipefail
 plan="${1:?用法: check_progress.sh <计划.md> [仓库根]}"; root="${2:-.}"
@@ -185,6 +185,17 @@ if [ "$in_git" -eq 1 ]; then
     elif [ -n "$done_n" ] && [ -n "$total_n" ] && [ "$done_n" -lt "$total_n" ]; then
       warn "还剩 $((total_n - done_n)) 个里程碑未完成,工作树有 $n 个未提交改动,而本计划文件没被改过 —— 若其中已完成某个里程碑,先回写「实施进度」再继续"
     fi
+  fi
+  # ⑧ 进度只写快照和完成记录;全局替换 M<n> 行会改坏定义行,而上面的数量检查发现不了。
+  if committed="$(git -C "$(dirname "$plan")" show "HEAD:./$(basename "$plan")" 2>/dev/null)"; then
+    current_rows="$(mrows "$mile")"
+    while IFS= read -r line; do
+      [ -n "$line" ] || continue
+      grep -qxF "$line" <<<"$current_rows" && continue
+      m="$(plain "$(cut -d '|' -f2 <<<"$line")")"
+      grep -qxF "$m" <<<"$mids" \
+        && warn "$m 的里程碑定义行相对 HEAD 有改动 —— 进度应写入恢复快照和完成记录;确为范围修订可忽略"
+    done < <(mrows "$(section '^#+[ \t].*里程碑' <(printf '%s\n' "$committed"))")
   fi
 fi
 

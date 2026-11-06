@@ -7,6 +7,7 @@ const os = require('node:os');
 const http = require('node:http');
 const { gzipSync, gunzipSync } = require('node:zlib');
 const { spawnSync } = require('node:child_process');
+const { pathToFileURL } = require('node:url');
 
 const root = path.resolve(__dirname, '../..');
 const prepare = import('../../scripts/prepare-phoenix-ui.mjs');
@@ -174,6 +175,32 @@ if (process.env.PHOENIX_BUILD_TOOL_NESTED_NODE === '1') {
     }
   });
 }
+
+test('preflights reject a script running on another Node before spawning any tool', () => {
+  for (const script of ['phoenix-build-tools.mjs', 'check-phoenix-diagram-source.mjs']) {
+    const source = `
+      Object.defineProperty(process, 'versions', { value: { ...process.versions, node: '19.3.0' } });
+      const { preflight } = await import(${JSON.stringify(pathToFileURL(path.join(root, 'scripts', script)).href)});
+      try { preflight(); console.log('passed'); } catch (error) { console.log(error.message); }
+    `;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', source], { cwd: root, encoding: 'utf8', env: { PATH: '' } });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Node 19\.3\.0 is running this script; expected \d+\.\d+\.\d+/, script);
+  }
+});
+
+test('prepared tool receipt fills unset paths but keeps explicit values and skips removed tools', async t => {
+  const { applyPreparedEnvironment } = await buildTools;
+  const directory = sandbox(t), tool = path.join(directory, 'wasm-opt'), receipt = path.join(directory, 'receipt.json');
+  fs.writeFileSync(tool, '');
+  fs.writeFileSync(receipt, JSON.stringify({ WASM_OPT: tool, WASM_BINDGEN: tool, PHOENIX_CARGO_DENY: path.join(directory, 'removed') }));
+  const env = { WASM_BINDGEN: '/explicit/wasm-bindgen' };
+  applyPreparedEnvironment(receipt, env);
+  assert.deepEqual(env, { WASM_BINDGEN: '/explicit/wasm-bindgen', WASM_OPT: tool });
+  const untouched = {};
+  applyPreparedEnvironment(path.join(directory, 'missing.json'), untouched);
+  assert.deepEqual(untouched, {});
+});
 
 test('download accepts exact streamed bytes and rejects incomplete, oversized, substituted and non-HTTPS responses', async () => {
   const { downloadAsset } = await prepare;

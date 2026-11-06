@@ -123,5 +123,28 @@ class ProgressCommitTest(unittest.TestCase):
         self.assertNotIn(f"{sha} 在本地仓库找不到", output)
 
 
+    def test_changed_milestone_definition_warns_but_progress_writeback_does_not(self):
+        def git(*args):
+            subprocess.run(
+                ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", *args],
+                cwd=self.dir, text=True, capture_output=True, check=True,
+            )
+
+        self.run_check([row("M1", "待提交")])
+        git("init", "-q")
+        git("add", "-A")
+        git("commit", "-qm", "plan")
+        writeback = self.run_check([row("M1", "abc1234")])
+        self.assertNotIn("定义行", writeback)
+
+        text = self.plan.read_text(encoding="utf-8")
+        definition = "| M1 | 第一步 | 无 | 改 A | V-1；回写「实施进度」 |"
+        self.assertIn(definition, text)
+        self.plan.write_text(text.replace(definition, "| M1 | 进行中 | 已写完 | 改 A | V-1 已过 |"), encoding="utf-8")
+        result = run_progress(SCRIPT, self.plan, self.dir, 10)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("M1 的里程碑定义行相对 HEAD 有改动", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

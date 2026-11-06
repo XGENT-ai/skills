@@ -75,7 +75,7 @@ disable-model-invocation: true
 - **[按可验证单元推进](principles/verifiable-units.md)**：批量修改、多阶段与多 PR。
 - **[用行为契约检验实现](principles/behavioral-tests.md)**：写、改或审阅测试。
 - **[失败重复时检验共同前提](principles/challenge-premises.md)**：同一假设下反复失败或出现直接反证。
-- **[验证器必须能够拒绝错误](principles/falsifiable-verification.md)**：新验证器、假绿灯、无法区分候选。
+- **[验证器必须能够拒绝错误](principles/falsifiable-verification.md)**：新验证器、假绿灯、无法区分候选、连续修验证器。
 - **[证据有适用条件与失效边界](principles/evidence-lifetime.md)**：复用结果、变基、环境漂移。
 
 **Delegation**

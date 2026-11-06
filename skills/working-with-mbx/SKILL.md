@@ -187,7 +187,10 @@ The short summary leaves them out of its bypass count. Don't chase them.
 | Symptom | First check |
 | --- | --- |
 | Plain Cargo does not use mbx | `command -v cargo`; for standalone setup also `mbx setup --status` |
-| Cargo waits for a target lock | Give simultaneous builds separate target directories |
+| Cargo waits for a target lock | `check` and `clippy` already have a check lane in a managed target; give other simultaneous builds separate target directories |
+| A binary in `target/` is gone (`ENOENT`), often after `--no-run` | Low-disk collection (see [Disk Management](#disk-management)); run it through `mbx test` / `mbx run`, or build it into your own `--target-dir` |
+| Parallel agents see test binaries change or die mid-run | A rebuild in a shared target replaces what others are running; give each agent its own `CARGO_TARGET_DIR` |
+| `build-script inputs changed during compilation` | A source changed mid-compile and mbx discarded that result; finish editing, then rebuild. Do not clear the cache |
 | Cargo metadata fails before a build | `cargo metadata --no-deps --format-version 1` |
 | Build storage is on NFS | Move `cache_dir` / `target.root` to local storage (mbx refuses NFS) |
 | Remote requests fail | `mbx doctor`, then check authentication |
@@ -258,6 +261,11 @@ disk holding the data:
 Managed targets are also collected after `target.max_age` (30 days) unused, and whenever
 their checkout is gone. The cache is disposable - it can always be rebuilt. Note that
 `cargo clean` does **not** remove mbx's private incremental state; `mbx clean` does.
+
+Disk pressure overrides these budgets. While free space is below `gc.min_free_size` (default
+10% of the disk, 5 GiB to 50 GiB), collection removes managed targets regardless of budget or
+age. Only a running mbx command's lease or Cargo's build lock protects a target then, so a
+binary started directly, including tests built with `--no-run`, can lose it.
 
 ## Configuration
 

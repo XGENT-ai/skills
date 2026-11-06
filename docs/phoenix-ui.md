@@ -126,8 +126,8 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link
 ```bash
 cd tools/phoenix-ui
 mise exec --no-deps -- node ../../scripts/prepare-phoenix-ui.mjs --prepare
-# 按 environmentFile 回执，在当前 shell 导出其中的 WASM_BINDGEN、
-# WASM_OPT、PHOENIX_CARGO_DENY；Linux ARM64 还需 PHOENIX_UI_BROWSER。
+# build 与 test:phoenix 自动读取 environmentFile 回执；其他命令仍按回执在当前 shell
+# 导出 WASM_BINDGEN、WASM_OPT、PHOENIX_CARGO_DENY；Linux ARM64 还需 PHOENIX_UI_BROWSER。
 mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write
 mise exec --no-deps -- npm --prefix ../.. test
 mise exec --no-deps -- node ../../scripts/build-phoenix-ui.mjs --development --output-dir ../../local/phoenix-ui/development-release

@@ -311,6 +311,8 @@ export function mise(args, options = {}) {
 
 export function preflight({ checkDependencies = true } = {}) {
   const versions = loadVersions();
+  // Test scripts spawn process.execPath, so `mise node --version` below cannot vouch for it.
+  if (process.versions.node !== versions.node) throw new Error(`Node ${process.versions.node} is running this script; expected ${versions.node}. Run it through mise exec --no-deps.`);
   const selected = JSON.parse(mise(['mise', 'ls', '--current', '--json']));
   for (const [tool, version] of [['rust', versions.rust], ['node', versions.node], ['mr-boxington', versions.mrBoxington]]) {
     if (!selected[tool]?.some(entry => entry.version === version && entry.installed && entry.active)) throw new Error(`Missing installed mise tool ${tool}@${version}; explicitly run node scripts/prepare-phoenix-diagram.mjs --prepare`);

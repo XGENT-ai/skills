@@ -115,6 +115,9 @@ jobs:
         env:
           CARGO_NET_OFFLINE: 'true'
         run: mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write
+      - name: Install the skill metadata test dependency
+        if: ${{ !inputs.build_only }}
+        run: python3 -m pip install --break-system-packages pyyaml==6.0.3
       # Check committed evidence before platform builds replace VERSION/ENGINE.
       - name: Lightweight repository tests
         if: ${{ !inputs.build_only }}
