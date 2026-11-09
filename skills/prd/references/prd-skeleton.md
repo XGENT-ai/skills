@@ -4,7 +4,7 @@
 
 ```formal
 RULE @prd_template_content:
-  MUST: ["替换尖括号占位及 docs/PRD-A.md / docs/PRD-B.md 等示例文件名，使用宿主真实路径；完成后删写作指引",
+  MUST: ["替换尖括号占位；docs/PRD-A.md / docs/PRD-B.md 等示例文件名在本 repo 里没有对应文件，换成宿主 repo 的真实路径；完成后删写作指引",
          "只写产品行为、体验及预期状态，不展开表/端点/库/技术里程碑或测试方法",
          "只要文档不要求 SPMS 录入，未录入新需求用明确工作号，不伪造 FR/NFR key",
          "领域语言、场景及决策只留改变理解的内容，不为篇幅扩写"]
