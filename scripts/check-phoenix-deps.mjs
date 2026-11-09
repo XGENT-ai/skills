@@ -14,8 +14,8 @@ const dbRoot = path.join(prepared, 'advisory-dbs');
 const dbPath = path.join(dbRoot, 'advisory-db-3157b0e258782691');
 export const databasePin = {
   url: 'https://github.com/RustSec/advisory-db',
-  revision: 'b8a1a33e246a0a9a3b5f377248c41a503defec74',
-  tree: '7310ad041f7925accfc258bec7fb4f76fb7ff4a9',
+  revision: '899077d9d471b9fd3dbf4b2faea8ef26e83692e8',
+  tree: 'f89220a21bd0d0b2d2fe1323a5c36f8edcedc01b',
 };
 export const modernScreenshot = {
   name: 'modern-screenshot', version: '4.7.0', license: 'MIT',
