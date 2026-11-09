@@ -52,26 +52,12 @@ fn commands(v: &Value) -> Vec<String> {
     out
 }
 
-fn assert_posix_guard(command: &str, launcher: &str, verb: &str, provider: &str) {
-    assert!(
-        command.starts_with(&format!(
-            "if [ -f {launcher} ]; then {launcher} {verb}; else node -e "
-        )),
-        "{command}"
-    );
-    assert!(
-        command.ends_with(&format!(
-            " -- '{}' '{provider}' || :; fi",
-            env!("CARGO_PKG_VERSION")
-        )),
-        "{command}"
-    );
-    assert!(command.contains("Phoenix UI unavailable:"));
-    assert!(command.contains("Reinstall the pinned @xgent-ai/skills package"));
+fn assert_launcher_command(command: &str, launcher: &str, verb: &str) {
+    assert_eq!(command, format!("{launcher} {verb}"));
 }
 
 #[test]
-fn project_scope_keeps_claude_project_dir_token_and_guard() {
+fn project_scope_keeps_claude_project_dir_token() {
     let out = rewrite_hook_commands_for_platform(
         &claude_bundle_manifest(),
         ".claude",
@@ -82,15 +68,12 @@ fn project_scope_keeps_claude_project_dir_token_and_guard() {
     let cmds = commands(&out);
     assert_eq!(cmds.len(), 2);
     for c in &cmds {
-        assert_posix_guard(
+        assert_launcher_command(
             c.trim_start_matches("command="),
             r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
             "hook",
-            "claude",
         );
         assert!(!c.contains("/proj"));
-        assert!(!c.contains("|| true"));
-        assert!(c.contains("node -e "));
     }
     // What we write is what every reader recognizes as ours.
     assert!(value_has_launcher_hook_marker(&out));
@@ -144,11 +127,10 @@ fn absolute_path_is_single_quoted_and_inert_under_sh() {
         // The launcher path is joined with the host's path semantics, so the
         // expectation is joined the same way (backslashes on Windows).
         let expected_path = skill_launcher(root, ".claude");
-        assert_posix_guard(
+        assert_launcher_command(
             c.trim_start_matches("command="),
             &sh_single_quote(&expected_path),
             "hook",
-            "claude",
         );
         assert!(!c.contains("${CLAUDE_PROJECT_DIR}"));
         assert!(!c.contains(&format!("\"{root}")));
@@ -165,11 +147,10 @@ fn absolute_path_is_single_quoted_and_inert_under_sh() {
                 .arg("-c")
                 .arg(cmd)
                 .current_dir(&dir)
-                .env("PHOENIX_UI_HOME", dir.join("cache"))
-                .env("CLAUDE_PROJECT_DIR", "")
                 .output()
                 .unwrap();
-            assert!(status.status.success());
+            // No launcher at that path: sh reports it missing, nothing else runs.
+            assert_eq!(status.status.code(), Some(127));
         }
         assert!(!dir.join("pwned").exists());
         let _ = std::fs::remove_dir_all(&dir);
@@ -178,7 +159,7 @@ fn absolute_path_is_single_quoted_and_inert_under_sh() {
 
 #[cfg(unix)]
 #[test]
-fn rewritten_absolute_guard_preserves_stdin_and_handler_failure_with_literal_shell_characters() {
+fn rewritten_absolute_command_preserves_stdin_and_handler_failure_with_literal_shell_characters() {
     use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
     use std::process::{Command, Stdio};
@@ -198,10 +179,6 @@ fn rewritten_absolute_guard_preserves_stdin_and_handler_failure_with_literal_she
         let mut child = Command::new("/bin/sh")
             .args(["-c", command])
             .current_dir(&dir)
-            .env("PHOENIX_UI_HOME", dir.join("cache"))
-            .env("PHOENIX_UI_PROVIDER_ID", "claude-code")
-            .env("CLAUDE_PROJECT_DIR", "")
-            .env("CODEX_SESSION_ID", "absolute-guard")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -210,12 +187,6 @@ fn rewritten_absolute_guard_preserves_stdin_and_handler_failure_with_literal_she
         child.stdin.take().unwrap().write_all(input).unwrap();
         child.wait_with_output().unwrap()
     };
-    let missing = run(b"{}");
-    assert_eq!(missing.status.code(), Some(0));
-    assert!(String::from_utf8(missing.stdout)
-        .unwrap()
-        .contains("Phoenix UI unavailable:"));
-    assert!(run(b"{}").stdout.is_empty());
     let launcher = skill_launcher(&root.to_string_lossy(), ".claude");
     write(
         &launcher,
@@ -248,7 +219,7 @@ fn windows_form_keeps_double_quoted_absolute_path() {
         // The Windows form is the JSON-quoted path, so a host path's
         // backslashes arrive escaped inside the command string.
         let q = serde_json::to_string(&p).unwrap();
-        assert_posix_guard(c.trim_start_matches("command="), &q, "hook", "claude");
+        assert_launcher_command(c.trim_start_matches("command="), &q, "hook");
         assert!(!c.contains(&format!("'{p}")));
     }
 }
@@ -260,20 +231,15 @@ fn codex_gets_command_windows_sibling_pointing_at_cmd_shim() {
     });
     let out = rewrite_hook_commands_for_platform(&bundle, ".agents", "/proj", false, false);
     let entry = &out["hooks"]["PostToolUse"][0]["hooks"][0];
-    assert_posix_guard(
+    assert_launcher_command(
         entry["command"].as_str().unwrap(),
         r#"".agents/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "codex",
     );
-    let windows = entry["commandWindows"].as_str().unwrap();
-    assert!(windows.starts_with("node -e \""));
-    assert!(windows.ends_with(&format!(
-        " -- \"{}\" \"codex\" \".agents\\skills\\phoenix-ui\\scripts\\phoenix-ui.cmd\" hook",
-        env!("CARGO_PKG_VERSION")
-    )));
-    assert!(windows.contains("Reinstall the pinned @xgent-ai/skills package"));
-    assert!(!windows.contains("exit /b"));
+    assert_eq!(
+        entry["commandWindows"],
+        r#"cmd /d /c ".agents\skills\phoenix-ui\scripts\phoenix-ui.cmd" hook"#
+    );
     // JS key order: existing keys, then the appended commandWindows.
     let keys: Vec<&String> = entry.as_object().unwrap().keys().collect();
     assert_eq!(keys, ["type", "command", "timeout", "commandWindows"]);
@@ -290,11 +256,10 @@ fn codex_gets_command_windows_sibling_pointing_at_cmd_shim() {
 fn cursor_runs_hook_before_edit() {
     let bundle = json!({ "version": 1, "hooks": { "preToolUse": [{ "command": "\".cursor/skills/phoenix-ui/scripts/phoenix-ui\" hook-before-edit", "timeout": 5 }] } });
     let out = rewrite_hook_commands_for_platform(&bundle, ".cursor", "/proj", false, false);
-    assert_posix_guard(
+    assert_launcher_command(
         out["hooks"]["preToolUse"][0]["command"].as_str().unwrap(),
         r#"".cursor/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook-before-edit",
-        "cursor",
     );
     assert!(out["hooks"]["preToolUse"][0]
         .get("commandWindows")
@@ -316,23 +281,21 @@ fn github_manifests_pass_through_and_grok_is_rewritten() {
     // project-relative path behind.
     let grok = json!({ "hooks": { "PostToolUse": [{ "matcher": "Edit|Write|MultiEdit", "hooks": [{ "type": "command", "command": "\".grok/skills/phoenix-ui/scripts/phoenix-ui\" hook" }] }] } });
     let rel = rewrite_hook_commands_for_platform(&grok, ".grok", "/proj", false, false);
-    assert_posix_guard(
+    assert_launcher_command(
         rel["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
             .as_str()
             .unwrap(),
         r#"".grok/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "grok",
     );
     let abs = rewrite_hook_commands_for_platform(&grok, ".grok", "/home/u", true, false);
     let p = skill_launcher("/home/u", ".grok");
-    assert_posix_guard(
+    assert_launcher_command(
         abs["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
             .as_str()
             .unwrap(),
         &sh_single_quote(&p),
         "hook",
-        "grok",
     );
     // Grok is not Codex: no commandWindows sibling is added.
     assert!(rel["hooks"]["PostToolUse"][0]["hooks"][0]
@@ -371,18 +334,17 @@ fn merge_refreshes_ours_and_preserves_third_party_hooks() {
     assert_eq!(post.len(), 3);
     assert_eq!(post[0]["matcher"], "Bash");
     assert_eq!(post[1], legacy);
-    assert_posix_guard(
+    assert_launcher_command(
         post[2]["hooks"][0]["command"].as_str().unwrap(),
         r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "claude",
     );
     let stop = merged["hooks"]["Stop"].as_array().unwrap();
     assert_eq!(stop.len(), 1);
-    assert!(stop[0]["hooks"][0]["command"]
-        .as_str()
-        .unwrap()
-        .starts_with("if [ -f "));
+    assert_eq!(
+        stop[0]["hooks"][0]["command"],
+        post[2]["hooks"][0]["command"]
+    );
     assert_eq!(merge_hook_manifests(&merged, &fresh), merged);
 }
 
@@ -499,11 +461,10 @@ fn copy_refreshes_current_shared_guard_once_without_losing_user_or_legacy_entrie
     assert_eq!(post.len(), 3);
     assert_eq!(post[0], foreign);
     assert_eq!(post[1], legacy);
-    assert_posix_guard(
+    assert_launcher_command(
         post[2]["hooks"][0]["command"].as_str().unwrap(),
         r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "claude",
     );
     let local_after: Value = serde_json::from_str(&read(&local)).unwrap();
     assert_eq!(local_after["permissions"], json!({"allow":["Bash(cat)"]}));
@@ -545,13 +506,12 @@ fn copy_installs_current_phoenix_beside_legacy_without_mutating_legacy_shared_se
         "settings.local.json",
     ])))
     .unwrap();
-    assert_posix_guard(
+    assert_launcher_command(
         local["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
             .as_str()
             .unwrap(),
         r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "claude",
     );
     let _ = std::fs::remove_dir_all(dir);
 }
@@ -682,12 +642,7 @@ fn gemini_manifest_installs_and_rewrites_both_events() {
             "$GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui".to_string()
         };
         for command in commands(&rewritten) {
-            assert_posix_guard(
-                command.trim_start_matches("command="),
-                &expected,
-                "hook",
-                "gemini",
-            );
+            assert_launcher_command(command.trim_start_matches("command="), &expected, "hook");
         }
         assert_eq!(
             rewritten["hooks"]["AfterAgent"][0]["hooks"][0]["timeout"],
@@ -700,8 +655,8 @@ fn gemini_manifest_installs_and_rewrites_both_events() {
 #[test]
 fn gemini_windows_command_is_powershell() {
     // Gemini runs hooks through PowerShell on Windows and has no per-OS
-    // command field, so a Windows install writes a PowerShell guard around
-    // the `.cmd` shim, still recognized as ours.
+    // command field, so a Windows install writes a PowerShell call of the
+    // `.cmd` shim, still recognized as ours.
     let manifest = json!({"hooks": {"AfterAgent": [{"hooks": [{"type": "command",
         "command": "\"$GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui\" hook"}]}]}});
     let rel = rewrite_hook_commands_for_platform(&manifest, ".gemini", "C:/p", false, true);
@@ -709,12 +664,10 @@ fn gemini_windows_command_is_powershell() {
         .as_str()
         .unwrap()
         .to_string();
-    assert!(cmd.starts_with("if (Test-Path -LiteralPath \"$env:GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui.cmd\") { & \"$env:GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui.cmd\" hook; exit $LASTEXITCODE } else { node -e '"));
-    assert!(cmd.contains("Reinstall the pinned @xgent-ai/skills package"));
-    assert!(cmd.ends_with(&format!(
-        " -- '{}' 'gemini'; exit 0 }}",
-        env!("CARGO_PKG_VERSION")
-    )));
+    assert_eq!(
+        cmd,
+        "& \"$env:GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui.cmd\" hook; exit $LASTEXITCODE"
+    );
     assert!(value_has_launcher_hook_marker(&Value::String(cmd)));
     let abs = rewrite_hook_commands_for_platform(&manifest, ".gemini", "C:/Users/o'k", true, true);
     let cmd = abs["hooks"]["AfterAgent"][0]["hooks"][0]["command"]
@@ -729,11 +682,7 @@ fn gemini_windows_command_is_powershell() {
         "scripts",
         "phoenix-ui.cmd",
     ]);
-    assert!(cmd.starts_with(&format!("if (Test-Path -LiteralPath '{shim}') {{ & '{shim}' hook; exit $LASTEXITCODE }} else {{ node -e '")));
-    assert!(cmd.ends_with(&format!(
-        " -- '{}' 'gemini'; exit 0 }}",
-        env!("CARGO_PKG_VERSION")
-    )));
+    assert_eq!(cmd, format!("& '{shim}' hook; exit $LASTEXITCODE"));
     assert!(value_has_launcher_hook_marker(&Value::String(cmd)));
 }
 

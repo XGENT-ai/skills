@@ -91,18 +91,16 @@ fn new_manifests_use_phoenix_launchers_and_codex_windows_guard() {
         assert!(!text.contains("impeccable"), "{path}: {text}");
     }
     let codex = fixture.manifest(".codex/hooks.json");
-    let expected_suffix = format!(
-        " -- \"{}\" \"codex\" \".agents\\skills\\phoenix-ui\\scripts\\phoenix-ui.cmd\" hook",
-        env!("CARGO_PKG_VERSION")
-    );
     for event in ["PostToolUse", "Stop"] {
-        let command = codex["hooks"][event][0]["hooks"][0]["commandWindows"]
-            .as_str()
-            .unwrap();
-        assert!(command.starts_with("node -e \""), "{command}");
-        assert!(command.ends_with(&expected_suffix), "{command}");
-        assert!(command.contains("Reinstall the pinned @xgent-ai/skills package"));
-        assert!(!command.contains("exit /b"));
+        let hook = &codex["hooks"][event][0]["hooks"][0];
+        assert_eq!(
+            hook["command"],
+            "\".agents/skills/phoenix-ui/scripts/phoenix-ui\" hook"
+        );
+        assert_eq!(
+            hook["commandWindows"],
+            "cmd /d /c \".agents\\skills\\phoenix-ui\\scripts\\phoenix-ui.cmd\" hook"
+        );
     }
     let gemini = fixture.manifest(".gemini/settings.json");
     assert_eq!(
@@ -192,11 +190,10 @@ fn shared_silent_guard_is_repaired_without_losing_foreign_entries_or_permissions
     );
     assert_eq!(shared["hooks"]["PostToolUse"].as_array().unwrap().len(), 2);
     assert!(!shared.to_string().contains("impeccable"));
-    let command = shared["hooks"]["PostToolUse"][1]["hooks"][0]["command"]
-        .as_str()
-        .unwrap();
-    assert!(command.contains("node -e "), "{command}");
-    assert!(command.contains("Reinstall the pinned @xgent-ai/skills package"));
+    assert_eq!(
+        shared["hooks"]["PostToolUse"][1]["hooks"][0]["command"],
+        "\"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui\" hook"
+    );
     let local = fixture.manifest(".claude/settings.local.json");
     assert_eq!(local["permissions"]["allow"], json!(["Bash(ls)"]));
     assert!(local.get("hooks").is_none());
@@ -225,40 +222,15 @@ fn hooks_on_preserves_legacy_shared_hook_without_claiming_it() {
 
 #[cfg(unix)]
 #[test]
-fn posix_guard_allows_missing_launchers_and_preserves_handler_failure() {
+fn posix_hook_runs_launcher_and_preserves_handler_failure() {
     use std::os::unix::fs::PermissionsExt;
     let fixture = Fixture::new();
     fixture.skill(".agents", "phoenix-ui");
-    fixture.skill(".agents", "impeccable");
     fixture.on();
     let manifest = fixture.manifest(".codex/hooks.json");
     let command = manifest["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
         .as_str()
         .unwrap();
-    let run = || {
-        std::process::Command::new("sh")
-            .args(["-c", command])
-            .current_dir(&fixture.0)
-            .env("PHOENIX_UI_HOME", fixture.0.join("cache"))
-            .env("PHOENIX_UI_PROVIDER_ID", "codex")
-            .env("CODEX_SESSION_ID", "guard-test")
-            .env("CLAUDE_PROJECT_DIR", "")
-            .output()
-            .unwrap()
-    };
-    let missing = run();
-    assert_eq!(
-        missing.status.code(),
-        Some(0),
-        "missing launcher must allow the event"
-    );
-    assert!(String::from_utf8(missing.stdout)
-        .unwrap()
-        .contains("Phoenix UI unavailable:"));
-    assert!(
-        run().stdout.is_empty(),
-        "same session must be reminded once"
-    );
     fixture.write(
         ".agents/skills/phoenix-ui/scripts/phoenix-ui",
         "#!/bin/sh\nprintf '%s' \"$1\" > handler-called\nexit 7\n",
@@ -270,11 +242,12 @@ fn posix_guard_allows_missing_launchers_and_preserves_handler_failure() {
         std::fs::Permissions::from_mode(0o755),
     )
     .unwrap();
-    assert_eq!(
-        run().status.code(),
-        Some(7),
-        "guard must propagate handler failure"
-    );
+    let run = std::process::Command::new("sh")
+        .args(["-c", command])
+        .current_dir(&fixture.0)
+        .output()
+        .unwrap();
+    assert_eq!(run.status.code(), Some(7), "handler failure must propagate");
     assert_eq!(
         std::fs::read_to_string(fixture.0.join("handler-called")).unwrap(),
         "hook"
@@ -283,7 +256,7 @@ fn posix_guard_allows_missing_launchers_and_preserves_handler_failure() {
 
 #[cfg(windows)]
 #[test]
-fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() {
+fn codex_windows_command_works_in_cmd_and_powershell_and_preserves_failure() {
     use std::os::windows::process::CommandExt;
 
     let fixture = Fixture::new();
@@ -293,53 +266,31 @@ fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() 
     let command = manifest["hooks"]["PostToolUse"][0]["hooks"][0]["commandWindows"]
         .as_str()
         .unwrap();
+    fixture.write(
+        ".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd",
+        "@echo off\necho %1>handler-called\nexit /b 7\n",
+    );
     for shell in ["cmd", "powershell.exe"] {
-        let run = || {
-            let mut process = std::process::Command::new(shell);
-            if shell == "cmd" {
-                process
-                    .args(["/d", "/s", "/c"])
-                    .raw_arg(format!("\"{command}\""));
-            } else {
-                process.args([
-                    "-NoProfile",
-                    "-NonInteractive",
-                    "-Command",
-                    &format!("{command}; exit $LASTEXITCODE"),
-                ]);
-            }
+        let mut process = std::process::Command::new(shell);
+        if shell == "cmd" {
             process
-                .current_dir(&fixture.0)
-                .env("PHOENIX_UI_HOME", fixture.0.join("cache"))
-                .env("PHOENIX_UI_PROVIDER_ID", "codex")
-                .env("CODEX_SESSION_ID", shell)
-                .env("CLAUDE_PROJECT_DIR", "")
-                .output()
-                .unwrap()
-        };
-        let missing = run();
+                .args(["/d", "/s", "/c"])
+                .raw_arg(format!("\"{command}\""));
+        } else {
+            process.args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &format!("{command}; exit $LASTEXITCODE"),
+            ]);
+        }
+        let run = process.current_dir(&fixture.0).output().unwrap();
         assert_eq!(
-            missing.status.code(),
-            Some(0),
-            "missing launcher: {shell}; stdout={}; stderr={}",
-            String::from_utf8_lossy(&missing.stdout),
-            String::from_utf8_lossy(&missing.stderr),
-        );
-        assert!(String::from_utf8(missing.stdout)
-            .unwrap()
-            .contains("Phoenix UI unavailable:"));
-        assert!(run().stdout.is_empty(), "deduplication: {shell}");
-        fixture.write(
-            ".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd",
-            "@echo off\necho %1>handler-called\nexit /b 7\n",
-        );
-        let restored = run();
-        assert_eq!(
-            restored.status.code(),
+            run.status.code(),
             Some(7),
             "handler failure: {shell}; stdout={}; stderr={}",
-            String::from_utf8_lossy(&restored.stdout),
-            String::from_utf8_lossy(&restored.stderr),
+            String::from_utf8_lossy(&run.stdout),
+            String::from_utf8_lossy(&run.stderr),
         );
         assert_eq!(
             std::fs::read_to_string(fixture.0.join("handler-called"))
@@ -347,11 +298,6 @@ fn codex_windows_node_guard_works_in_cmd_and_powershell_and_preserves_failure() 
                 .trim(),
             "hook"
         );
-        std::fs::remove_file(
-            fixture
-                .0
-                .join(".agents/skills/phoenix-ui/scripts/phoenix-ui.cmd"),
-        )
-        .unwrap();
+        std::fs::remove_file(fixture.0.join("handler-called")).unwrap();
     }
 }

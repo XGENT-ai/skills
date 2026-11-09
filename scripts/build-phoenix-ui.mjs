@@ -76,7 +76,7 @@ function sourceInputs() {
 }
 
 try {
-  command('mise', ['exec', '--no-deps', '--', 'bun', 'scripts/render.mjs', '--without-engine']);
+  command('mise', ['exec', '--no-deps', '--', 'bun', 'scripts/render.mjs']);
   cargo(['xtask', 'bundle']);
   cargo(['xtask', 'bundle', '--check']);
   const inputs = sourceInputs();
@@ -103,7 +103,8 @@ try {
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(path.join(outputDir, asset), bytes, { mode: 0o755 });
   fs.writeFileSync(path.join(outputDir, 'VERSION.json'), manifestBytes);
-  fs.writeFileSync(path.join(root, 'dist/phoenix-ui/VERSION.json'), manifestBytes);
+  // Local-only copies (gitignored) so this checkout can install the engine it just built.
+  for (const name of ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json']) fs.writeFileSync(path.join(root, name), manifestBytes);
   for (const name of ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES']) {
     const source = path.join(workspace, name);
     for (const destination of [outputDir, path.join(root, 'dist/phoenix-ui')]) {
@@ -111,8 +112,6 @@ try {
       fs.cpSync(source, path.join(destination, name), { recursive: true });
     }
   }
-  command('mise', ['exec', '--no-deps', '--', 'bun', 'scripts/render.mjs']);
-  command('mise', ['exec', '--no-deps', '--', 'bun', 'scripts/render.mjs', '--check']);
   bootstrap.verifyEngine(path.join(outputDir, asset), bootstrap.manifestAt(path.join(outputDir, 'VERSION.json')), target, env);
   const record = { schemaVersion: 1, sourceCommit, sourceTree, sourceState, inputSha256, inputs,
     target, host: prepared.host, tools: versions, binary: engine, bundleSha256,

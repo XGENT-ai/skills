@@ -343,7 +343,6 @@ async function runtimeFixture(t) {
   for (const [relative, value] of Object.entries({
     'bin/phoenix-ui.js': '// fixture public entry\n',
     'skills/phoenix-ui/scripts/phoenix-bootstrap.cjs': '// fixture generated bootstrap\n',
-    'skills/phoenix-ui/scripts/ENGINE.json': version,
     'skills/phoenix-ui/src/editable.md': 'must not distribute the editable source\n',
     'dist/phoenix-ui/bundle/manifest.json': bundle,
     'dist/phoenix-ui/LICENSE': 'fixture license\n', 'dist/phoenix-ui/NOTICE.md': 'fixture notice\n',

@@ -22,13 +22,6 @@
  * correct wherever Claude Code unpacks the plugin.
  */
 
-import fs from 'node:fs';
-
-const TOOL_VERSION = fs.readFileSync(new URL('../../../../../skills/phoenix-ui/src/scripts/VERSION', import.meta.url), 'utf8').trim();
-const SENTINEL = fs.readFileSync(new URL('../../../crates/hook/src/missing_launcher.cjs', import.meta.url), 'utf8')
-  .split(/\r?\n/).map(line => line.trim()).join(' ').trim();
-const shQuote = value => `'${value.replaceAll("'", "'\"'\"'")}'`;
-
 export const PHOENIX_UI_HOOK_COMMAND_MARKER = 'skills/phoenix-ui/scripts/phoenix-ui';
 
 const TIMEOUT_SECONDS = 5;
@@ -48,15 +41,14 @@ const STOP_STATUS_MESSAGE = 'Design deep pass';
 export const LAUNCHER_NAME = 'phoenix-ui';
 export const LAUNCHER_NAME_WINDOWS = 'phoenix-ui.cmd';
 
-// The embedded guard can remind once even when the entire skill is absent.
-// Existing launchers retain their stdin and exit status.
-export const guardedLauncher = (launcherPath, verb = 'hook', provider = 'source', quoted = `"${launcherPath}"`) =>
-  `if [ -f ${quoted} ]; then ${quoted} ${verb}; else node -e ${shQuote(SENTINEL)} -- ${shQuote(TOOL_VERSION)} ${shQuote(provider)} || :; fi`;
+// The launcher is installed with the skill, so hooks run it directly; a
+// missing launcher is a broken install, not a state to guard.
+export const launcherCommand = (launcherPath, verb = 'hook', quoted = `"${launcherPath}"`) => `${quoted} ${verb}`;
 
-// Node dispatches the .cmd shim through cmd.exe; PowerShell does not parse
-// an unquoted cmd if/else expression before the guard gets control.
-export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook', provider = 'codex') =>
-  `node -e "${SENTINEL}" -- "${TOOL_VERSION}" "${provider}" "${launcherCmdPath.replaceAll('/', '\\')}" ${verb}`;
+// Codex may run commandWindows through cmd.exe or PowerShell; `cmd /d /c`
+// parses the same in both and returns the .cmd shim's exit code.
+export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') =>
+  `cmd /d /c "${launcherCmdPath.replaceAll('/', '\\')}" ${verb}`;
 
 function stopEntry(command, commandWindows) {
   return {
@@ -83,7 +75,7 @@ const CODEX_PLUGIN_SCRIPTS = '${PLUGIN_ROOT}/skills/phoenix-ui/scripts';
 // install keeps it at `.codex/skills/...`, while a `.agents` (Codex repo-skills)
 // install keeps it at `.agents/skills/...`. Derive the path from the install dir
 // so each generated manifest points at its own payload rather than a hardcoded
-// `.agents`; otherwise the guarded hook silently no-ops on `.codex` installs.
+// `.agents`; otherwise the hook targets a missing launcher on `.codex` installs.
 const codexProjectScripts = (skillDir) => `${skillDir}/skills/phoenix-ui/scripts`;
 const CURSOR_SCRIPTS = '.cursor/skills/phoenix-ui/scripts';
 const GITHUB_PROJECT_SCRIPTS = '$(git rev-parse --show-toplevel)/.github/skills/phoenix-ui/scripts';
@@ -94,9 +86,9 @@ const GROK_PROJECT_SCRIPTS = '.grok/skills/phoenix-ui/scripts';
 // `windows: true` adds the `commandWindows` sibling; only Codex-shaped
 // consumers honor it, and an unknown key would fail Codex's strict parser if
 // it were the other way round, so it stays opt-in per manifest.
-function buildClaudeCompatibleHooks(matcher, scriptsDir, { windows = false, sessionIdentity = false, provider = 'claude' } = {}) {
-  const command = guardedLauncher(launcherIn(scriptsDir), 'hook', provider);
-  const commandWindows = windows ? windowsLauncherCommand(launcherCmdIn(scriptsDir), 'hook', provider) : undefined;
+function buildClaudeCompatibleHooks(matcher, scriptsDir, { windows = false, sessionIdentity = false } = {}) {
+  const command = launcherCommand(launcherIn(scriptsDir));
+  const commandWindows = windows ? windowsLauncherCommand(launcherCmdIn(scriptsDir)) : undefined;
   return {
     ...(sessionIdentity ? { SessionStart: [{ hooks: [{ type: 'command', command,
       timeout: TIMEOUT_SECONDS, statusMessage: 'Preparing build session' }] }] } : {}),
@@ -142,7 +134,7 @@ export function buildClaudePluginHooksManifest() {
 // instead of relying on its Claude compatibility alias.
 export function buildCodexPluginHooksManifest() {
   return {
-    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', CODEX_PLUGIN_SCRIPTS, { windows: true, provider: 'codex' }),
+    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', CODEX_PLUGIN_SCRIPTS, { windows: true }),
   };
 }
 
@@ -151,7 +143,7 @@ export function buildCodexPluginHooksManifest() {
 // Codex provider, whose self-consistent bundle keeps the skill at `.codex/skills`.
 export function buildCodexHooksManifest(skillDir = '.codex') {
   return {
-    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', codexProjectScripts(skillDir), { windows: true, provider: 'codex' }),
+    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', codexProjectScripts(skillDir), { windows: true }),
   };
 }
 
@@ -161,7 +153,7 @@ export function buildCursorHooksManifest(scriptsDir = CURSOR_SCRIPTS) {
     hooks: {
       preToolUse: [
         {
-          command: guardedLauncher(launcherIn(scriptsDir), 'hook-before-edit', 'cursor'),
+          command: launcherCommand(launcherIn(scriptsDir), 'hook-before-edit'),
           timeout: TIMEOUT_SECONDS,
         },
       ],
@@ -188,7 +180,7 @@ export function buildGitHubHooksManifest() {
         {
           type: 'command',
           matcher: 'edit|create|apply_patch',
-          bash: guardedLauncher(launcherIn(GITHUB_PROJECT_SCRIPTS), 'hook', 'github'),
+          bash: launcherCommand(launcherIn(GITHUB_PROJECT_SCRIPTS)),
           timeoutSec: TIMEOUT_SECONDS,
         },
       ],
@@ -203,7 +195,7 @@ export function buildGitHubHooksManifest() {
 // https://docs.x.ai/build/features/hooks
 export function buildGrokHooksManifest() {
   return {
-    hooks: buildClaudeCompatibleHooks('Edit|Write|MultiEdit', GROK_PROJECT_SCRIPTS, { provider: 'grok' }),
+    hooks: buildClaudeCompatibleHooks('Edit|Write|MultiEdit', GROK_PROJECT_SCRIPTS),
   };
 }
 
@@ -216,7 +208,7 @@ export function buildGrokHooksManifest() {
 // PowerShell form (crates/skills hook_manifest.rs).
 export function buildGeminiHooksManifest() {
   const launcher = '$GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui';
-  const command = guardedLauncher(launcher, 'hook', 'gemini', launcher);
+  const command = launcherCommand(launcher, 'hook', launcher);
   return { hooks: {
     BeforeTool: [{ matcher: '^run_shell_command$', hooks: [{
       name: 'phoenix-ui-session', type: 'command', command, timeout: 5000,

@@ -58,3 +58,10 @@ __pycache__/
 /tools/phoenix-diagram/target/
 /tools/phoenix-diagram/dist/
 /dist/phoenix-diagram/engine/
+
+# 引擎清单由开发构建在本地写出、由 release:phoenix 写入发布包，不提交
+/dist/phoenix-ui/VERSION.json
+/skills/phoenix-ui/scripts/ENGINE.json
+/dist/phoenix-diagram/VERSION.json
+/dist/phoenix-diagram/bundle/ENGINE.json
+/skills/phoenix-diagram/ENGINE.json

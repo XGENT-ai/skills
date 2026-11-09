@@ -159,13 +159,12 @@ function preparePhoenixTools(project, providers) {
 
 // 预检只写用户 cache 里的 engine;dry-run 不写项目。配置无效时整个安装在写项目前停下。
 async function preparePhoenix(targetDir, options) {
-  const manifest = bootstrap.manifestAt(path.join(PHOENIX_DIR, 'VERSION.json'));
-  const target = bootstrap.platformTarget();
-  let binary;
+  let manifest, binary;
   try {
-    binary = await bootstrap.installEngine(manifest, target, targetDir, options.releaseDir, process.env);
+    manifest = bootstrap.manifestAt(path.join(PHOENIX_DIR, 'VERSION.json'));
+    binary = await bootstrap.installEngine(manifest, bootstrap.platformTarget(), targetDir, options.releaseDir, process.env);
   } catch (error) {
-    throw phoenixFailure(error.code || 4, `Phoenix UI engine 未就绪,未修改项目: ${error.message}\n`
+    throw phoenixFailure(Number.isInteger(error.code) ? error.code : 4, `Phoenix UI engine 未就绪,未修改项目: ${error.message}\n`
       + '  可用 --release-dir=DIR 指向已核验的离线 release 目录,或加 --no-phoenix-ui 先安装其余部分。');
   }
   const args = ['install', '--project', targetDir, '--bundle-root', path.join(PHOENIX_DIR, 'bundle'), '--json'];

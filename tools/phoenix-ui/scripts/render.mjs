@@ -12,7 +12,6 @@ import { PROVIDERS } from './lib/transformers/providers.js';
 const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = path.resolve(workspace, '../..');
 const source = path.join(repository, 'skills/phoenix-ui/src');
-const runtimeManifestPath = 'skills/phoenix-ui/scripts/ENGINE.json';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const json = value => JSON.stringify(value, null, 2) + '\n';
 
@@ -45,7 +44,6 @@ function inputs() {
     'tools/phoenix-ui/scripts/lib/transformers/factory.js',
     'tools/phoenix-ui/scripts/lib/transformers/providers.js',
     'tools/phoenix-ui/scripts/lib/transformers/hooks.js',
-    'tools/phoenix-ui/crates/hook/src/missing_launcher.cjs',
     'tools/phoenix-ui/LICENSE', 'tools/phoenix-ui/NOTICE.md',
     'tools/phoenix-ui/build-tools.lock.json', 'mise.toml',
     'tools/phoenix-ui/package.json', 'tools/phoenix-ui/bun.lock');
@@ -80,7 +78,6 @@ function render(stage, input) {
     for (const relative of filesIn(root)) {
       // Codex hooks live in .codex; the runtime skill is installed in .agents.
       if (config.provider === 'codex' && relative.startsWith('skills/')) continue;
-      assert.notEqual(relative, runtimeManifestPath, 'ENGINE is derived after bundle hashing');
       const bytes = fs.readFileSync(path.join(root, relative)), hash = sha(bytes);
       files[relative] = hash;
       fs.writeFileSync(path.join(blobs, hash), bytes);
@@ -88,25 +85,11 @@ function render(stage, input) {
     }
     providers[config.configDir] = { files, exec };
   }
-  const manifest = { schema: 1, derivedRuntimeManifest: runtimeManifestPath, providers };
+  const manifest = { schema: 1, derivedRuntimeManifest: 'skills/phoenix-ui/scripts/ENGINE.json', providers };
   const bytes = Buffer.from(json(manifest));
   fs.writeFileSync(path.join(vendor, 'bundle/manifest.json'), bytes);
   for (const file of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(workspace, file), path.join(vendor, file));
   return { generic, dist, vendor, bundleSha256: sha(bytes), version };
-}
-
-function addEngineManifest(output, withoutEngine) {
-  if (withoutEngine) return;
-  const file = path.join(repository, 'dist/phoenix-ui/VERSION.json');
-  // Use the same consumer validator, including all-platform requirements.
-  const { manifestAt } = require(path.join(source, 'scripts/phoenix-bootstrap.cjs'));
-  const manifest = manifestAt(file);
-  assert.equal(manifest.data.bundleSha256, output.bundleSha256, 'VERSION refers to stale provider sources; rebuild the package');
-  assert.equal(manifest.data.toolVersion, output.version);
-  fs.copyFileSync(file, path.join(output.vendor, 'VERSION.json'));
-  const dirs = [output.generic, ...Object.values(PROVIDERS).map(config =>
-    path.join(output.dist, config.provider, config.configDir, 'skills/phoenix-ui'))];
-  for (const dir of dirs) fs.writeFileSync(path.join(dir, 'scripts/ENGINE.json'), manifest.bytes);
 }
 
 function verifyContent(output) {
@@ -121,9 +104,9 @@ function verifyContent(output) {
   assert.equal(filesIn(path.join(output.generic, 'subagents/codex')).length, 4);
 }
 
-function generatedRecord(output, input, withoutEngine) {
+function generatedRecord(output, input) {
   return { schemaVersion: 1, generator: 'Bun 1.4.4', inputSha256: input.digest, inputs: input.hashes,
-    bundleSha256: output.bundleSha256, engineManifest: withoutEngine ? 'not-generated' : 'verified',
+    bundleSha256: output.bundleSha256,
     outputs: { skill: tree(output.generic), providers: tree(output.dist), bundle: tree(path.join(output.vendor, 'bundle')),
       notices: Object.fromEntries(['LICENSE', 'NOTICE.md'].map(file => [file, sha(fs.readFileSync(path.join(output.vendor, file)))])) } };
 }
@@ -141,35 +124,30 @@ function publish(output, target) {
   fs.rmSync(path.join(target.vendor, 'bundle'), { recursive: true, force: true });
   fs.cpSync(path.join(output.vendor, 'bundle'), path.join(target.vendor, 'bundle'), { recursive: true });
   for (const file of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(output.vendor, file), path.join(target.vendor, file));
-  if (fs.existsSync(path.join(output.vendor, 'VERSION.json'))) {
-    fs.copyFileSync(path.join(output.vendor, 'VERSION.json'), path.join(target.vendor, 'VERSION.json'));
-  }
 }
 
 async function main() {
   assert.equal(process.versions.bun, '1.4.4', 'Render with the pinned Bun 1.4.4');
   const args = process.argv.slice(2);
-  let check = false, withoutEngine = false, outputRoot;
+  let check = false, outputRoot;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--check') check = true;
-    else if (args[i] === '--without-engine') withoutEngine = true;
     else if (args[i] === '--output-root' && args[i + 1]) outputRoot = path.resolve(args[++i]);
-    else throw new Error('Usage: bun scripts/render.mjs [--check] [--without-engine] [--output-root DIR]');
+    else throw new Error('Usage: bun scripts/render.mjs [--check] [--output-root DIR]');
   }
-  assert(!(check && withoutEngine), 'Freshness checks require a verified engine manifest');
   const target = outputRoot ? { skill: path.join(outputRoot, 'skill'), dist: path.join(outputRoot, 'dist'), vendor: path.join(outputRoot, 'vendor') }
     : { skill: path.join(repository, 'skills/phoenix-ui'), dist: path.join(workspace, 'dist/providers'), vendor: path.join(repository, 'dist/phoenix-ui') };
   const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-render-'));
   try {
     const input = inputs(), output = render(stage, input);
-    addEngineManifest(output, withoutEngine);
     verifyContent(output);
-    const record = generatedRecord(output, input, withoutEngine);
+    const record = generatedRecord(output, input);
     fs.writeFileSync(path.join(output.generic, 'GENERATED.json'), json(record));
     assert.equal(inputs().digest, input.digest, 'Source changed during rendering');
     if (check) {
       assert.deepEqual(JSON.parse(fs.readFileSync(path.join(target.skill, 'GENERATED.json'))), record, 'Generated sources are stale');
-      const current = Object.fromEntries(Object.entries(tree(target.skill)).filter(([file]) => file !== 'GENERATED.json' && !file.startsWith('src/') && !file.startsWith('evals/') && file !== '.npmignore'));
+      // ENGINE.json is written beside the skill by builds and releases, never rendered.
+      const current = Object.fromEntries(Object.entries(tree(target.skill)).filter(([file]) => !['GENERATED.json', '.npmignore', 'scripts/ENGINE.json'].includes(file) && !file.startsWith('src/') && !file.startsWith('evals/')));
       assert.deepEqual(current, record.outputs.skill, 'Generated skill differs from its source');
       assert.deepEqual(tree(target.dist), record.outputs.providers, 'Generated provider files are stale');
       assert.deepEqual(tree(path.join(target.vendor, 'bundle')), record.outputs.bundle, 'Generated bundle is stale');
@@ -177,7 +155,7 @@ async function main() {
         assert.equal(sha(fs.readFileSync(path.join(target.vendor, file))), hash, `Generated notice differs: ${file}`);
       }
     } else publish(output, target);
-    console.log(json({ status: check ? 'fresh' : withoutEngine ? 'rendered-without-engine' : 'rendered', providers: 19,
+    console.log(json({ status: check ? 'fresh' : 'rendered', providers: 19,
       inputSha256: input.digest, bundleSha256: output.bundleSha256 }));
   } finally { fs.rmSync(stage, { recursive: true, force: true }); }
 }

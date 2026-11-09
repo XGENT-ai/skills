@@ -48,9 +48,10 @@ async function fixture(t,{warmUi=true}={}){
   const engine=realEngines();
   const uiDist=path.join(pkg,'dist/phoenix-ui'),uiRelease=path.join(temp,'ui-release');
   copy(path.join(root,'dist/phoenix-ui'),uiDist);
-  const uiVersion=JSON.parse(fs.readFileSync(path.join(uiDist,'VERSION.json')));
-  uiVersion.distribution='development';
-  uiVersion.engines=Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-ui-${key}`,size:engine.uiBytes.length,sha256:sha(engine.uiBytes)}]));
+  const uiVersion={schemaVersion:1,distribution:'development',toolVersion:fs.readFileSync(path.join(root,'skills/phoenix-ui/src/scripts/VERSION'),'utf8').trim(),
+    npmPackageVersion:JSON.parse(fs.readFileSync(path.join(root,'package.json'))).version,sourceCommit:'a'.repeat(40),
+    bundleSchema:1,bundleSha256:sha(fs.readFileSync(path.join(uiDist,'bundle/manifest.json'))),reviewSchema:1,
+    engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-ui-${key}`,size:engine.uiBytes.length,sha256:sha(engine.uiBytes)}]))};
   write(path.join(uiDist,'VERSION.json'),encoded(uiVersion));
   copy(uiDist,uiRelease);
   for(const meta of Object.values(uiVersion.engines))fs.copyFileSync(engine.ui,path.join(uiRelease,meta.asset),fs.constants.COPYFILE_FICLONE);
