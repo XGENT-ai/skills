@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "capture: 状态文件 <WS>/states.json 有 4 处问题：\n  states[0].name: initial 是初始状态的保留名，不能用作状态名\n  states[0].steps[0].do: 未知动作 clik，是否想写 click？\n  states[1].steps[0].taget: 未知字段 taget，是否想写 target？\n  states[1].steps[0].target: click 需要 target\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

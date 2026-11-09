@@ -1,0 +1,7 @@
+{
+  "stdout": "用法：phoenix-ui capture stitch <图片> <图片>... --match <px,px,...> [--crop X,Y,W,H] [--label a,b,...] [--columns N] --out <文件.png>\n\n把修改前后的同一区域截图按共同元素统一比例后拼成一张，带标签。\n  --match <px,...>   每张图里同一个共同元素的像素宽度，按图片顺序；第 i 张缩放比 = 第 1 个值 / 第 i 个值\n  --crop X,Y,W,H     在统一比例后的坐标（即第 1 张图的像素空间）里取的区域；超出任一张图即报错且不写文件；\n                     不给时取各图统一比例后的公共左上区域\n  --label a,b,...    每张图的标签，默认 1,2,...\n  --columns N        列数，默认 2\n  --out <文件.png>   输出文件\n只接受 PNG；需要本机 Chrome、Chromium、Edge 或 Brave。退出码：0 已写出；1 参数、图片或浏览器问题，未写文件。\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}
