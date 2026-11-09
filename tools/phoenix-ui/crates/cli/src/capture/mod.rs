@@ -4,6 +4,7 @@
 //! broken. Whether it shows the claimed state, and whether that is good, is
 //! for the caller and the reviewer to decide; the command never scores.
 
+mod derived;
 mod page_js;
 pub mod plan;
 mod report;
@@ -25,10 +26,13 @@ use impeccable_detect::config::{filter_detection_findings, DetectionConfig};
 use impeccable_detect::ScanOptions;
 use serde_json::{json, Map, Value};
 
-use plan::{Plan, Shape, ShotType, State};
+use plan::{FramesFrom, Plan, Shape, ShotType, State};
 use validity::{CanvasBox, Framing, ShotMeasure, ShotSpec};
 
 const NAVIGATION_TIMEOUT: Duration = Duration::from_secs(30);
+/// How long to wait for the screencast's base frame before acting.
+const FIRST_FRAME: Duration = Duration::from_millis(1000);
+const BLANK_PAGE: &str = "data:text/html,<html style=\"background:%23fff\"></html>";
 
 pub const USAGE: &str = "用法：phoenix-ui capture <目标> [选项]
       phoenix-ui capture stitch <图片> <图片>... --match <px,px,...> [--crop X,Y,W,H] [--label a,b,...] [--columns N] --out <文件.png>
@@ -139,10 +143,21 @@ struct Options {
     allow_write: Vec<String>,
     settle_ms: u64,
     timeout_ms: u64,
+    mask: bool,
+    thumbs: bool,
+    sheet: bool,
     json: bool,
 }
 
-const FLAGS: &[&str] = &["--reduced-motion", "--block-writes", "--json", "--help"];
+const FLAGS: &[&str] = &[
+    "--reduced-motion",
+    "--block-writes",
+    "--mask",
+    "--thumbs",
+    "--sheet",
+    "--json",
+    "--help",
+];
 const VALUED: &[&str] = &[
     "--viewport",
     "--dpr",
@@ -280,6 +295,9 @@ fn parse_args(args: &[String], cwd: &Path) -> Result<Option<Options>, String> {
         allow_write,
         settle_ms: number("--settle-ms", 2000.0, 0.0, 60000.0)? as u64,
         timeout_ms: number("--timeout-ms", 5000.0, 1.0, 60000.0)? as u64,
+        mask: flags.contains(&"--mask"),
+        thumbs: flags.contains(&"--thumbs"),
+        sheet: flags.contains(&"--sheet"),
         json: flags.contains(&"--json"),
     }))
 }
@@ -525,6 +543,33 @@ struct Captured {
     findings: Result<Vec<Finding>, String>,
     captured_at: String,
     url: String,
+    frames: Option<FramesData>,
+    mask: Option<Result<Vec<u8>, String>>,
+    /// Declared marks: display, then the box in image pixels or why not.
+    marks: Vec<(String, Result<[f64; 4], String>)>,
+}
+
+/// Sampled sequence frames: per cell, the offset from the window start and
+/// the chosen frame (base64 JPEG), if any frame came before that instant.
+struct FramesData {
+    cells: Vec<(u64, Option<String>)>,
+    window_ms: u64,
+    motion: bool,
+    entry: bool,
+}
+
+/// A successful shot waiting for its derived images.
+struct Pending {
+    entry: usize,
+    stem: String,
+    viewport: usize,
+    state: String,
+    valid: bool,
+    png: Vec<u8>,
+    image: Image,
+    frames: Option<FramesData>,
+    mask: Option<Result<Vec<u8>, String>>,
+    marks: Vec<(String, Result<[f64; 4], String>)>,
 }
 
 enum Failed {
@@ -550,6 +595,9 @@ impl From<CdpError> for Failed {
 }
 
 pub fn run(args: &[String], io: &mut Io) -> i32 {
+    if args.first().map(String::as_str) == Some("stitch") {
+        return derived::run_stitch(&args[1..], io);
+    }
     let opts = match parse_args(args, &io.cwd) {
         Ok(Some(opts)) => opts,
         Ok(None) => {
@@ -702,6 +750,7 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
     let mut run = report::Run::default();
     let mut files: Vec<(String, Vec<u8>)> = Vec::new();
     let mut cleared: Vec<String> = Vec::new();
+    let mut pending: Vec<Pending> = Vec::new();
     let mut opened = false;
     let mut scan_failed = false;
     for (v, item) in &planned {
@@ -769,17 +818,35 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
         } else {
             format!("{stem}.invalid.png")
         };
-        files.push((written, std::mem::take(&mut shot.png)));
+        files.push((written, shot.png.clone()));
+        pending.push(Pending {
+            entry: run.shots.len(),
+            stem,
+            viewport: *v,
+            state: item.label().to_string(),
+            valid,
+            png: std::mem::take(&mut shot.png),
+            image: shot.image,
+            frames: shot.frames,
+            mask: shot.mask,
+            marks: shot.marks,
+        });
         run.shots.push(entry);
     }
+    let derived_failed = compose_derived(&mut browser, opts, &pending, &mut run, &mut files);
     browser.close();
     drop(server);
 
     std::fs::create_dir_all(&opts.out)
         .map_err(|e| format!("无法创建输出目录 {}：{e}", opts.out.display()))?;
     for stem in &cleared {
-        for suffix in [".png", ".invalid.png"] {
+        for suffix in DERIVED_SUFFIXES {
             let _ = std::fs::remove_file(opts.out.join(format!("{stem}{suffix}")));
+        }
+    }
+    if opts.sheet {
+        for vp in &opts.viewports {
+            let _ = std::fs::remove_file(opts.out.join(format!("sheet-{}.png", vp.label)));
         }
     }
     for (name, bytes) in &files {
@@ -823,11 +890,248 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
         }
     }
     let invalid = run.shots.iter().any(|s| s["valid"] != json!(true));
-    Ok(if invalid || !run.failures.is_empty() || scan_failed {
-        2
-    } else {
-        0
+    Ok(
+        if invalid || !run.failures.is_empty() || scan_failed || derived_failed {
+            2
+        } else {
+            0
+        },
+    )
+}
+
+/// Every file a shot's stem can own; all are cleared before a re-capture so
+/// nothing from an earlier run is left under this run's names.
+const DERIVED_SUFFIXES: [&str; 7] = [
+    ".png",
+    ".invalid.png",
+    ".frames.png",
+    ".mask.png",
+    ".thumb.png",
+    ".mask.thumb.png",
+    ".mark.png",
+];
+
+/// Compose frames, masks, thumbnails, marks and sheets into `files` and the
+/// shots' `derived` records. Returns whether any requested image is missing.
+fn compose_derived(
+    browser: &mut Browser,
+    opts: &Options,
+    pending: &[Pending],
+    run: &mut report::Run,
+    files: &mut Vec<(String, Vec<u8>)>,
+) -> bool {
+    let mut failed = false;
+    for p in pending {
+        let vp = &opts.viewports[p.viewport];
+        let device = (vp.width as f64 * opts.dpr, vp.height as f64 * opts.dpr);
+        let viewport_px = (device.0.round() as usize, device.1.round() as usize);
+        let mut derived = Map::new();
+        let mut problems: Vec<String> = Vec::new();
+        if let Some(f) = &p.frames {
+            let cells: Vec<(u64, Option<&str>)> =
+                f.cells.iter().map(|(ms, d)| (*ms, d.as_deref())).collect();
+            let file = format!("{}.frames.png", p.stem);
+            match derived::compose(browser, &derived::frames_layout(&cells, device, vp.width)) {
+                Ok(png) => {
+                    let mut note = derived::FRAMES_NOTE.to_string();
+                    if !f.motion {
+                        note.push_str(if f.entry {
+                            "；未检测到出场动画"
+                        } else {
+                            "；未检测到动画"
+                        });
+                    }
+                    derived.insert(
+                        "frames".into(),
+                        json!({
+                            "file": file,
+                            "count": f.cells.len(),
+                            "missing": f.cells.iter().filter(|c| c.1.is_none()).count(),
+                            "windowMs": f.window_ms,
+                            "from": if f.entry { "entry" } else { "last-step" },
+                            "note": note,
+                        }),
+                    );
+                    files.push((file, png));
+                }
+                Err(e) => problems.push(format!("序列帧未产出：{e}")),
+            }
+        }
+        let thumb = |image: &Image| {
+            let small = derived::thumbnail(image, viewport_px, derived::thumb_width(vp.width));
+            impeccable_comp::png_io::encode_png(&small, &[])
+        };
+        match &p.mask {
+            Some(Ok(png)) => {
+                let file = format!("{}.mask.png", p.stem);
+                derived.insert("mask".into(), json!(file));
+                files.push((file, png.clone()));
+                if opts.thumbs {
+                    match impeccable_comp::png_io::decode_png(png).and_then(|d| thumb(&d.image)) {
+                        Ok(small) => {
+                            let file = format!("{}.mask.thumb.png", p.stem);
+                            derived.insert("maskThumb".into(), json!(file));
+                            files.push((file, small));
+                        }
+                        Err(e) => problems.push(format!("遮字缩略图未产出：{e}")),
+                    }
+                }
+            }
+            Some(Err(e)) => problems.push(format!("遮字版未产出：{e}")),
+            None => {}
+        }
+        if opts.thumbs {
+            match thumb(&p.image) {
+                Ok(small) => {
+                    let file = format!("{}.thumb.png", p.stem);
+                    derived.insert("thumb".into(), json!(file));
+                    files.push((file, small));
+                }
+                Err(e) => problems.push(format!("缩略图未产出：{e}")),
+            }
+        }
+        if !p.marks.is_empty() {
+            let mut items = Vec::new();
+            let mut unmarked = Vec::new();
+            let mut boxes = Vec::new();
+            for (i, (target, found)) in p.marks.iter().enumerate() {
+                match found {
+                    Ok(b) => {
+                        boxes.push((i + 1, *b));
+                        items.push(json!({ "number": i + 1, "target": target, "box": b }));
+                    }
+                    Err(reason) => unmarked
+                        .push(json!({ "number": i + 1, "target": target, "reason": reason })),
+                }
+            }
+            let file = format!("{}.mark.png", p.stem);
+            let size = (p.image.width as f64, p.image.height as f64);
+            match derived::compose(browser, &derived::mark_layout(&p.png, size, &boxes)) {
+                Ok(png) => {
+                    derived.insert(
+                        "mark".into(),
+                        json!({ "file": file, "items": items, "unmarked": unmarked }),
+                    );
+                    files.push((file, png));
+                }
+                Err(e) => problems.push(format!("标注图未产出：{e}")),
+            }
+        }
+        if !problems.is_empty() {
+            failed = true;
+            derived.insert("problems".into(), json!(problems));
+        }
+        run.shots[p.entry]["derived"] = Value::Object(derived);
+    }
+    if opts.sheet {
+        for (v, vp) in opts.viewports.iter().enumerate() {
+            let shots: Vec<&Pending> = pending
+                .iter()
+                .filter(|p| p.viewport == v && p.valid)
+                .collect();
+            let device = (vp.width as f64 * opts.dpr, vp.height as f64 * opts.dpr);
+            let file = format!("sheet-{}.png", vp.label);
+            let composed = if shots.is_empty() {
+                Err("该视口没有有效的主截图".to_string())
+            } else {
+                let items: Vec<(String, &[u8], (f64, f64))> = shots
+                    .iter()
+                    .map(|p| {
+                        let size = (p.image.width as f64, p.image.height as f64);
+                        (p.state.clone(), p.png.as_slice(), size)
+                    })
+                    .collect();
+                derived::compose(browser, &derived::sheet_layout(&items, device, vp.width))
+            };
+            match composed {
+                Ok(png) => {
+                    let states: Vec<&str> = shots.iter().map(|p| p.state.as_str()).collect();
+                    run.sheets
+                        .push(json!({ "viewport": vp.label, "file": file, "states": states }));
+                    files.push((file, png));
+                }
+                Err(e) => {
+                    failed = true;
+                    run.sheets.push(
+                        json!({ "viewport": vp.label, "problem": format!("并排图未产出：{e}") }),
+                    );
+                }
+            }
+        }
+    }
+    failed
+}
+
+fn now_s() -> f64 {
+    impeccable_common::now_ms() / 1000.0
+}
+
+/// End of a sequence-frame window: when no finite animation runs any more,
+/// plus 100 ms; at least 300 ms and at most 3000 ms after `t0`.
+fn finish_frames(
+    page: &mut Page<'_>,
+    t0: f64,
+    count: u32,
+    entry: bool,
+) -> Result<FramesData, CdpError> {
+    let limit = t0 + 3.0;
+    let mut motion = false;
+    loop {
+        let running = page
+            .evaluate_value(page_js::FINITE_ANIMATIONS)?
+            .as_u64()
+            .unwrap_or(0);
+        motion |= running > 0;
+        if running == 0 || now_s() >= limit {
+            break;
+        }
+        page.idle(Duration::from_millis(30))?;
+    }
+    let t1 = (now_s() + 0.1).max(t0 + 0.3).min(limit);
+    let wait = t1 - now_s();
+    if wait > 0.0 {
+        page.idle(Duration::from_secs_f64(wait))?;
+    }
+    motion |= page
+        .evaluate_value(page_js::MOTION_SEEN)?
+        .as_bool()
+        .unwrap_or(false);
+    let frames = page.stop_screencast();
+    let times: Vec<f64> = frames.iter().map(|f| f.0).collect();
+    let picks = derived::sample_frames(&times, t0, t1, count as usize);
+    let span = (t1 - t0) * 1000.0;
+    let cells = picks
+        .iter()
+        .enumerate()
+        .map(|(i, pick)| {
+            let ms = (span * i as f64 / (count.max(2) - 1) as f64).round() as u64;
+            (ms, pick.map(|k| frames[k].1.clone()))
+        })
+        .collect();
+    Ok(FramesData {
+        cells,
+        window_ms: span.round() as u64,
+        motion,
+        entry,
     })
+}
+
+/// The same framing with text made transparent; the inspector stylesheet is
+/// cleared again afterwards.
+fn mask_shot(page: &mut Page<'_>, clip: Option<[f64; 4]>, beyond: bool) -> Result<Vec<u8>, String> {
+    let run = |page: &mut Page<'_>| -> Result<String, CdpError> {
+        let world = page.create_isolated_world()?;
+        let sheet = page.create_capture_stylesheet(&world)?;
+        page.set_capture_stylesheet(&sheet, page_js::MASK_CSS)?;
+        page.evaluate_value(page_js::TWO_FRAMES)?;
+        let shot = page.screenshot(clip, beyond);
+        page.set_capture_stylesheet(&sheet, "")?;
+        shot
+    };
+    let b64 = run(page).map_err(|e| e.message)?;
+    base64::engine::general_purpose::STANDARD
+        .decode(b64.as_bytes())
+        .map_err(|e| e.to_string())
 }
 
 fn binary_sha256() -> String {
@@ -866,16 +1170,43 @@ fn shoot(
 ) -> Result<Captured, Failed> {
     let opts = ctx.opts;
     setup(page, ctx, vp)?;
+    let device = (
+        (vp.width as f64 * opts.dpr).round() as u32,
+        (vp.height as f64 * opts.dpr).round() as u32,
+    );
+    let frames_spec = item.shape.frames;
+    let mut frames = None;
+    let mut recording = None;
+    if frames_spec.is_some_and(|f| f.from == FramesFrom::Entry) {
+        // The base frame is a painted blank page, so the entrance starts from nothing.
+        page.add_init_script(page_js::MOTION_COUNTER)?;
+        page.goto(BLANK_PAGE, "load", NAVIGATION_TIMEOUT)?;
+        page.start_screencast(device.0, device.1, FIRST_FRAME)?;
+        recording = Some(now_s());
+    }
     page.goto(&ctx.source.url, "networkidle0", NAVIGATION_TIMEOUT)
         .map_err(|e| Failed::Open(e.message))?;
+    if let (Some(t0), Some(spec)) = (recording.take(), frames_spec) {
+        frames = Some(finish_frames(page, t0, spec.count, true)?);
+    }
     let mut steps = Vec::new();
     if let Some(state) = item.state {
+        let anchor = state
+            .steps
+            .iter()
+            .rposition(plan::Action::acts)
+            .filter(|_| frames_spec.is_some_and(|f| f.from == FramesFrom::LastStep));
         let env = |name: &str| ctx.env.get(name).cloned();
         let step_ctx = steps::Context {
             env: &env,
             default_timeout: Duration::from_millis(opts.timeout_ms),
         };
         for (i, step) in state.steps.iter().enumerate() {
+            if anchor == Some(i) {
+                page.evaluate_value(page_js::MOTION_COUNTER)?;
+                page.start_screencast(device.0, device.1, FIRST_FRAME)?;
+                recording = Some(now_s());
+            }
             let outcome = steps::execute(page, step, &step_ctx).map_err(|e| Failed::Step {
                 index: i + 1,
                 action: step.name().to_string(),
@@ -896,6 +1227,9 @@ fn shoot(
                 record["warnings"] = json!(outcome.warnings);
             }
             steps.push(record);
+        }
+        if let (Some(t0), Some(spec)) = (recording, frames_spec) {
+            frames = Some(finish_frames(page, t0, spec.count, false)?);
         }
     }
     let shot_type = item
@@ -964,6 +1298,43 @@ fn shoot(
     let image = impeccable_comp::png_io::decode_png(&png)
         .map_err(|e| CdpError::new(format!("截图不是有效 PNG：{e}")))?
         .image;
+    let origin = match (&shot_type, element) {
+        (ShotType::Viewport, _) => (
+            raw["scrollX"].as_f64().unwrap_or(0.0),
+            raw["scrollY"].as_f64().unwrap_or(0.0),
+        ),
+        (ShotType::Element(_), Some(rect)) => (rect[0], rect[1]),
+        _ => (0.0, 0.0),
+    };
+    let marks = item
+        .shape
+        .mark
+        .iter()
+        .map(|target| {
+            let found = steps::locate(page, target, steps::Use::default())
+                .map_err(|e| e.reason)
+                .and_then(|at| {
+                    let [x, y, w, h] = at.doc;
+                    let b = [
+                        (x - origin.0) * opts.dpr,
+                        (y - origin.1) * opts.dpr,
+                        w * opts.dpr,
+                        h * opts.dpr,
+                    ];
+                    let inside = b[0] < image.width as f64
+                        && b[1] < image.height as f64
+                        && b[0] + b[2] > 0.0
+                        && b[1] + b[3] > 0.0;
+                    if inside {
+                        Ok(b)
+                    } else {
+                        Err("不在截图范围内".to_string())
+                    }
+                });
+            (target.display(), found)
+        })
+        .collect();
+    let mask = opts.mask.then(|| mask_shot(page, clip, beyond));
     let findings = if item.state.is_some() {
         scan(page, ctx, vp)
     } else {
@@ -995,6 +1366,9 @@ fn shoot(
         findings,
         captured_at,
         url,
+        frames,
+        mask,
+        marks,
     })
 }
 

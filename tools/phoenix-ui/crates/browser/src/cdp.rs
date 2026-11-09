@@ -605,7 +605,7 @@ impl Connection {
                 .set_read_timeout(Some(remaining.max(Duration::from_millis(1))));
             match self.ws.read() {
                 Ok(Message::Text(t)) => match serde_json::from_str::<Value>(&t) {
-                    Ok(v) => {
+                    Ok(mut v) => {
                         // Answer paused requests inline so a pending command
                         // (goto, evaluate) whose completion depends on them
                         // cannot deadlock the single-threaded client.
@@ -614,8 +614,10 @@ impl Connection {
                         }
                         // Chrome sends the next screencast frame only after an
                         // ack; answer here so frames keep coming while a
-                        // command is awaited. The frame itself is still queued.
+                        // command is awaited. The frame itself is still queued,
+                        // stamped with its arrival on this process's clock.
                         if v.get("method").and_then(Value::as_str) == Some("Page.screencastFrame") {
+                            v["receivedAt"] = json!(impeccable_common::now_ms() / 1000.0);
                             if let (Some(sid), Some(frame)) = (
                                 v.get("sessionId")
                                     .and_then(Value::as_str)
@@ -711,7 +713,7 @@ pub struct Page<'a> {
     browser_context: Option<String>,
     console_errors: Vec<String>,
     network_log: Option<crate::network_log::NetworkLog>,
-    /// Screencast frames `(timestamp seconds, base64 JPEG)` while recording.
+    /// Screencast frames `(arrival seconds since epoch, base64 JPEG)` while recording.
     screencast: Option<Vec<(f64, String)>>,
     /// Main-frame loading seen since `watch_navigation`: (loader before the
     /// action, started, stopped).
@@ -1006,10 +1008,10 @@ impl<'a> Page<'a> {
                 }
                 "Page.screencastFrame" => {
                     if let Some(frames) = &mut self.screencast {
-                        let ts = params
-                            .pointer("/metadata/timestamp")
-                            .and_then(Value::as_f64)
-                            .unwrap_or(0.0);
+                        // Arrival time, not Chrome's frame timestamp: that clock
+                        // can run tens of ms ahead of ours, which would show a
+                        // later frame as an earlier moment.
+                        let ts = ev.get("receivedAt").and_then(Value::as_f64).unwrap_or(0.0);
                         if let Some(data) = params.get("data").and_then(Value::as_str) {
                             frames.push((ts, data.to_string()));
                         }
@@ -1615,6 +1617,15 @@ impl<'a> Page<'a> {
             EvalOutcome::Value(v) => Ok(v),
             EvalOutcome::Exception(message) => Err(CdpError::new(message)),
         }
+    }
+
+    /// Run `source` in every new document of this page before its own scripts.
+    pub fn add_init_script(&mut self, source: &str) -> CdpResult<()> {
+        self.send(
+            "Page.addScriptToEvaluateOnNewDocument",
+            json!({ "source": source }),
+        )?;
+        Ok(())
     }
 
     /// Start a JPEG screencast at `max_width` × `max_height` device pixels and

@@ -175,6 +175,24 @@ pub const SETTLE: &str = r#"async (limit) => {
   return finite().length;
 }"#;
 
+/// Running finite animations right now (for the sequence-frame window).
+pub const FINITE_ANIMATIONS: &str = r#"document.getAnimations().filter((a) => (a.playState === 'running' || a.pending)
+  && a.effect && Number.isFinite(a.effect.getComputedTiming().endTime)).length"#;
+
+/// Note that a CSS animation or transition started (they may end before a
+/// poll sees them). Installed before navigation for entrance frames.
+pub const MOTION_COUNTER: &str = r#"(() => {
+  if (!window.__phoenixMotion) {
+    window.__phoenixMotion = { seen: false };
+    const seen = () => { window.__phoenixMotion.seen = true; };
+    addEventListener('animationstart', seen, true);
+    addEventListener('transitionrun', seen, true);
+  }
+  return true;
+})()"#;
+
+pub const MOTION_SEEN: &str = "!!(window.__phoenixMotion && window.__phoenixMotion.seen)";
+
 pub const TWO_FRAMES: &str = r#"new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))"#;
 
 /// `(region)`: one consistent measurement of the area a screenshot covers.
@@ -257,3 +275,7 @@ pub const MEASURE: &str = r#"(region) => {
     overflow: { overflow: root.scrollWidth > innerWidth + 1, scrollWidth: root.scrollWidth, viewportWidth: innerWidth },
   };
 }"#;
+
+/// Text masking for the mask variant. Colors stay: icons, borders and
+/// decorations painted with currentColor must remain visible.
+pub const MASK_CSS: &str = "*,*::before,*::after{text-shadow:none!important;-webkit-text-fill-color:transparent!important;caret-color:transparent!important}::placeholder{color:transparent!important}svg text,svg tspan{fill:transparent!important;stroke:transparent!important}";
