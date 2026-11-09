@@ -62,6 +62,7 @@ WORKFLOW @review_ui:
        locate_or_create_target_package_and_compute_fingerprint,
        resume_unfinished_round_or_allocate_next_report_round,
        plan_incremental_evidence_then_run_checks_and_capture_representative_states,
+       dispatch_blind_ux_walk_for_units_with_main_flows_when_walker_detected,
        conduct_independent_judgment_using_allowed_materials,
        save_raw_judgments_and_merged_judge_record,
        merge_page_checks_then_read_full_history_repairs_and_threshold,
@@ -191,6 +192,21 @@ RULE @unreachable_state:
          stop_blocked_capture_and_record_reason_action_and_resume_condition]
   MUST_NOT: similar_state_substituted_for_required_state
 
+RULE @phoenix_capture:
+  WHEN: phoenix_ui_capture_detected_and_unit_reachable_by_its_steps
+  MUST: |
+    按 target-and-capture.md「用 Phoenix 取证命令采集（可选）」采集该单元：命名模板按本 skill 的命名合同生成后传入，
+    capture.md 的出处从取证报告抄录；报告标无效的图按没采到处理；控制台、失败请求、横向溢出与页面规则发现只进机器检查；
+    主 agent 仍逐张开图核对。命令不适用的单元用现有采集方式。
+  MUST_NOT: [capture_self_check_as_main_agent_image_check, capture_findings_in_judge_materials]
+
+RULE @blind_ux_walk:
+  WHEN: phoenix_ux_walker_detected_and_unit_has_main_flow
+  MUST: |
+    采集之后、独立评审之外按 target-and-capture.md「盲测走查（可选）」为该单元派出 phoenix-ui-ux-walker，
+    报告存本轮目录；可复现的卡住、走错由主 agent 定级，以来源「盲测走查」列入差距，犹豫列为建议。
+  MUST_NOT: walk_materials_in_judge_materials
+
 RULE @capture_record:
   MUST: [save_tested_version_target_fingerprint_conditions_cell_mapping_provenance_and_missing_cells,
          write_and_reread_capture_md,
@@ -209,7 +225,7 @@ RULE @independent_judge:
          judge_opens_only_listed_materials]
   MUST_NOT: |
     向评审提供代码、diff、提交说明、修复记录、修复者自述、完整报告、
-    机器检查结果或门槛分。
+    机器检查结果、盲测走查材料或门槛分。
 
 RULE @judge_grouping_and_supplement:
   MUST: [default_one_judge_for_changed_units_and_open_gaps,
