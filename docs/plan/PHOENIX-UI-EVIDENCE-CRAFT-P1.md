@@ -205,13 +205,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-09T23:06+08:00
-- 当前进度：3/6 个里程碑完成
-- 当前状态：批 2（M3）完成并通过 V-3、V-4；批 3 进行中（M4 文本已改，未验收）
-- 最近完成：M3 · 派生证据
-- 下一步：M4 收尾（render 预览核对）→ M5 三个独立 skill 的可选接入与 README/docs 复述，批末运行 V-5、V-6
+- 最近更新：2026-11-09T23:47+08:00
+- 当前进度：5/6 个里程碑完成
+- 当前状态：批 3（M4、M5）完成并通过 V-5、V-6；进入 M6 阶段收口
+- 最近完成：M5 · 独立 skill 可选接入
+- 下一步：M6 · ①声明与 `check-phoenix-deps --write` → ②oracle capture 用例与 cli-help 重录 → ③冒烟 → ④开发构建同步生成物并跑 V-7 → ⑤候选提交，申请推送授权跑 V-8 → ⑥V-9 → ⑦V-10
 - 当前阻塞：无
-- 代码基线：9203484
+- 代码基线：a3177e5
 
 ### 完成记录
 
@@ -220,6 +220,8 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-09T22:26+08:00 | capture 主链路：目标打开、多视口、报告与逐张页面规则发现；与 M2 同批验收 | [M1–M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M2.md) | c6ce151 |
 | M2 | 已完成 | 2026-11-09T22:26+08:00 | 状态组与步骤、三种截图类型、有效性自检、写拦截与凭据脱敏；V-1、V-2 通过 | [M1–M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M2.md) | c6ce151 |
 | M3 | 已完成 | 2026-11-09T23:06+08:00 | 序列帧、遮字版、缩略图、标注图、并排图与 capture stitch；V-3、V-4 通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M3.md) | 9203484 |
+| M4 | 已完成 | 2026-11-09T23:47+08:00 | Phoenix Web 完工轮用 capture 取证并同轮派出盲测走查子代理；与 M5 同批验收 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
+| M5 | 已完成 | 2026-11-09T23:47+08:00 | feature-demo、review-ui、apply-ui-review 检测到 Phoenix 时的可选接入与复述；V-5、V-6 通过 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
 
 ## 0. 需求、范围与决策
 
