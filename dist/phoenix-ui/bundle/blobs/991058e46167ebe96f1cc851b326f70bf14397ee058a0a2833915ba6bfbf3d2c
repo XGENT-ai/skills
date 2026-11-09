@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "\".cursor/skills/phoenix-ui/scripts/phoenix-ui\" hook-before-edit",
+        "timeout": 5
+      }
+    ]
+  }
+}

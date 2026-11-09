@@ -42,8 +42,11 @@ function packageFor(t, executable) {
   const target = process.platform === 'win32' ? 'windows-x64' : `${process.platform}-${process.arch}`;
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const bytes = fs.readFileSync(executable);
-  const manifest = { ...JSON.parse(fs.readFileSync(path.join(repository, 'dist/phoenix-ui/VERSION.json'))),
-    distribution: 'development', engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } } };
+  const manifest = { schemaVersion: 1, distribution: 'development',
+    toolVersion: fs.readFileSync(path.join(repository, 'skills/phoenix-ui/src/scripts/VERSION'), 'utf8').trim(),
+    npmPackageVersion: JSON.parse(fs.readFileSync(path.join(repository, 'package.json'))).version, sourceCommit: 'a'.repeat(40),
+    bundleSchema: 1, bundleSha256: sha256(fs.readFileSync(path.join(repository, 'dist/phoenix-ui/bundle/manifest.json'))), reviewSchema: 1,
+    engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } } };
   const manifestBytes = JSON.stringify(manifest, null, 2) + '\n';
   const release = path.join(root, 'release');
   fs.mkdirSync(release);

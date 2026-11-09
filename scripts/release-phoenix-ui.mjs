@@ -156,7 +156,7 @@ export function assertGeneratedCurrent(repoRoot = root) {
   for (const [name, hash] of Object.entries(generated.inputs)) if (fileSha(repoRoot, name) !== hash) stale.push(name);
   for (const [section, prefix] of [['skill', 'skills/phoenix-ui/'], ['bundle', 'dist/phoenix-ui/bundle/'], ['notices', 'dist/phoenix-ui/']]) {
     for (const [name, hash] of Object.entries(generated.outputs[section])) {
-      if (prefix + name !== 'skills/phoenix-ui/scripts/ENGINE.json' && fileSha(repoRoot, prefix + name) !== hash) stale.push(prefix + name);
+      if (fileSha(repoRoot, prefix + name) !== hash) stale.push(prefix + name);
     }
   }
   if (generated.bundleSha256 !== fileSha(repoRoot, 'dist/phoenix-ui/bundle/manifest.json')) stale.push('dist/phoenix-ui/bundle/manifest.json');
@@ -170,13 +170,6 @@ export function releaseManifest(tool, base, engines, { version, head, tree }) {
     bundleSha256: fileSha(root, `dist/${tool}/bundle/manifest.json`), engines };
 }
 
-// GENERATED.json records the digest of the derived UI ENGINE.json, which the release manifest replaces.
-function engineDigests(generated, hash) {
-  generated.outputs.skill['scripts/ENGINE.json'] = hash;
-  for (const name of Object.keys(generated.outputs.providers)) if (name.endsWith('/skills/phoenix-ui/scripts/ENGINE.json')) generated.outputs.providers[name] = hash;
-  return generated;
-}
-
 // Stage HEAD, write both release manifests and their derived copies, take the engines' third-party
 // notices from `sidecars[tool]`, check the staged package is publishable and pack it once.
 function packRelease(packDir, manifests, sidecars, provenance) {
@@ -186,8 +179,6 @@ function packRelease(packDir, manifests, sidecars, provenance) {
   command('tar', ['-xf', '-', '-C', stage], { input: bytesOf('git', ['archive', '--format=tar', 'HEAD']) });
   const ui = json(manifests['phoenix-ui']), diagram = json(manifests['phoenix-diagram']);
   for (const name of ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json']) fs.writeFileSync(path.join(stage, name), ui);
-  const generatedFile = path.join(stage, 'skills/phoenix-ui/GENERATED.json');
-  fs.writeFileSync(generatedFile, json(engineDigests(readJson(generatedFile), sha(ui))));
   for (const name of ['dist/phoenix-diagram/VERSION.json', 'dist/phoenix-diagram/bundle/ENGINE.json', 'skills/phoenix-diagram/ENGINE.json']) fs.writeFileSync(path.join(stage, name), diagram);
   for (const tool of tools) for (const name of sidecarFiles) {
     fs.rmSync(path.join(stage, 'dist', tool, name), { recursive: true, force: true });

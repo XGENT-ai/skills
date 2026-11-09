@@ -446,6 +446,19 @@ export function buildDevelopment({ outputDir, repoRoot = root }) {
     binarySha256: binary.sha256, bundleSha256: bundle.sha256, licenseSha256: legal.sha256, fullRuntimeTests: 'not-run-by-build-script' };
 }
 
+// The committed bundle is derived from the skill alone, so it needs no native build.
+export function syncBundle(repoRoot = root) {
+  const bundle = bundleFiles(repoRoot), target = path.join(repoRoot, 'dist/phoenix-diagram/bundle');
+  fs.rmSync(target, { recursive: true, force: true });
+  for (const descriptor of bundle.manifest.files) {
+    const file = path.join(target, descriptor.path);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, bundle.files.get(descriptor.path), { mode: descriptor.mode }); fs.chmodSync(file, descriptor.mode);
+  }
+  fs.writeFileSync(path.join(target, 'manifest.json'), bundle.bytes);
+  return { directory: path.relative(repoRoot, target), files: bundle.manifest.files.length, bundleSha256: bundle.sha256 };
+}
+
 // The maintained distribution is the built artifact without its engine binary
 // and build-only records; skills/phoenix-diagram/ENGINE.json repeats VERSION.
 export function syncDist(builtDirectory, repoRoot = root) {
@@ -469,8 +482,9 @@ export function syncDist(builtDirectory, repoRoot = root) {
 
 export function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') {
-    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --development --output-dir DIR [--sync-dist]\nBuilds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n--sync-dist then copies its VERSION, bundle and legal files to dist/phoenix-diagram and VERSION to skills/phoenix-diagram/ENGINE.json.\n'); return 0;
+    process.stdout.write('Usage: node scripts/build-phoenix-diagram.mjs --sync-bundle\n       node scripts/build-phoenix-diagram.mjs --development --output-dir DIR [--sync-dist]\n--sync-bundle regenerates dist/phoenix-diagram/bundle from skills/phoenix-diagram without a native build.\n--development builds one native development artifact, offline, into a new or empty directory. Does not publish or install.\n--sync-dist then copies its VERSION, bundle and legal files to dist/phoenix-diagram and VERSION to skills/phoenix-diagram/ENGINE.json.\n'); return 0;
   }
+  if (args.length === 1 && args[0] === '--sync-bundle') { process.stdout.write(pretty(syncBundle())); return 0; }
   let development = false, outputDir, sync = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--development' && !development) development = true;

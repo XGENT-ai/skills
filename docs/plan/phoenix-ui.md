@@ -299,7 +299,7 @@ WASM 生成器仍用 mise/mbx 下的 xtask。M1 实测固定 wasm-pack 0.13.1 �
 
 | 场景 | 可观察结果与恢复 |
 | --- | --- |
-| hook 的 engine 缺失、损坏或版本不符（含 clone 后未装、清缓存） | 不执行不可信 binary；放行并退出 0，按 provider 合同输出允许/提醒。每个 provider 会话最多提示一次，附补装命令；无稳定 session ID 时按项目+缺失版本在用户 cache 去重，成功补装后清除标记。受管理 hook 必须有不依赖 engine 的守卫，launcher 目录没提交也能提示，不能静默跳过 |
+| hook 的 engine 缺失、损坏或版本不符（含 clone 后未装、清缓存） | 不执行不可信 binary；放行并退出 0，按 provider 合同输出允许/提醒。每个 provider 会话最多提示一次，附补装命令；无稳定 session ID 时按项目+缺失版本在用户 cache 去重，成功补装后清除标记。受管理 hook 直接调用随 skill 安装的 launcher，由 launcher 处理 engine 缺失；launcher 本身缺失属安装损坏，hook 不另设守卫 |
 | CLI/context 缺 engine | 退出 4；JSON 标 unavailable；显示固定包版本的 `npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui engine install --project DIR`，不自动下载 |
 | 显式 engine install | 由 Node bootstrap 处理（此时可能没有 Rust binary），只写用户 cache，不改共享 hooks/settings/receipt；receipt 与所运行包 manifest 不匹配则退出 4，要求运行正确包版本 |
 | 离线安装 | 参数 `--release-dir DIR`；来源为发布者从已验 CI run 整理的完整 release 目录，含 VERSION.json、各平台 engine、许可及摘要清单。必须与当前包/receipt 摘要相符，零网络；缺项退出 4 |

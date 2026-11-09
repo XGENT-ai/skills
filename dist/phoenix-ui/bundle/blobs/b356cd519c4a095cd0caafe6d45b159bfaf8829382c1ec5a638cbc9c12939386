@@ -8,7 +8,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: a8138363249ed351eb4b4da1bbf34d9c30043311f3cd7dd1a93d800eb301e7e6
+  source_sha256: d6fb452d1c33729287f47d6663d9fac5348c96769cc4e99e13af5ec39e4eadde
 allowed-tools:
   - Bash(.vibe/skills/phoenix-ui/scripts/phoenix-ui *)
 ---

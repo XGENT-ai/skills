@@ -49,8 +49,7 @@ export function stageRuntime(releaseDir, packageRoot = root) {
     fs.cpSync(path.join(releaseDir, name), path.join(vendor, name), { recursive: true });
   }
   for (const name of ['LICENSE', 'NOTICE.md']) fs.copyFileSync(path.join(packageRoot, 'dist/phoenix-ui', name), path.join(vendor, name));
-  const manifestBytes = fs.readFileSync(path.join(releaseDir, 'VERSION.json'));
-  assert(fs.readFileSync(path.join(dest, 'skills/phoenix-ui/scripts/ENGINE.json')).equals(manifestBytes), 'Generated ENGINE.json differs from the artifact VERSION bytes');
+  fs.copyFileSync(path.join(releaseDir, 'VERSION.json'), path.join(dest, 'skills/phoenix-ui/scripts/ENGINE.json'));
   return dest;
 }
 

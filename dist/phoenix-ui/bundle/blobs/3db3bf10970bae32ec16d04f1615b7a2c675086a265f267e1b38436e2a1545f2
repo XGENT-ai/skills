@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "^run_shell_command$",
+        "hooks": [
+          {
+            "name": "phoenix-ui-session",
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui hook",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "name": "phoenix-ui-completion",
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/skills/phoenix-ui/scripts/phoenix-ui hook",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  }
+}

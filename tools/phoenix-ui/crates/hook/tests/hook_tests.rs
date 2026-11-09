@@ -2314,36 +2314,15 @@ fn admin_on_prunes_local_manifest_when_shared_settings_carry_the_hook() {
     assert!(!t.exists(".claude/settings.local.json"));
 }
 
-fn assert_missing_launcher_guard(command: &Value, launcher: &str, verb: &str, provider: &str) {
-    let command = command.as_str().unwrap();
-    assert!(
-        command.starts_with(&format!(
-            "if [ -f {launcher} ]; then {launcher} {verb}; else node -e "
-        )),
-        "{command}"
-    );
-    assert!(
-        command.ends_with(&format!(
-            " -- '{}' '{provider}' || :; fi",
-            env!("CARGO_PKG_VERSION")
-        )),
-        "{command}"
-    );
-    assert!(command.contains("Reinstall the pinned @xgent-ai/skills package"));
+fn assert_launcher_command(command: &Value, launcher: &str, verb: &str) {
+    assert_eq!(command, &json!(format!("{launcher} {verb}")));
 }
 
-fn assert_windows_launcher_guard(command: &Value) {
-    let command = command.as_str().unwrap();
-    assert!(command.starts_with("node -e \""), "{command}");
-    assert!(
-        command.ends_with(&format!(
-            " -- \"{}\" \"codex\" \".agents\\skills\\phoenix-ui\\scripts\\phoenix-ui.cmd\" hook",
-            env!("CARGO_PKG_VERSION")
-        )),
-        "{command}"
+fn assert_windows_launcher_command(command: &Value) {
+    assert_eq!(
+        command,
+        &json!(r#"cmd /d /c ".agents\skills\phoenix-ui\scripts\phoenix-ui.cmd" hook"#)
     );
-    assert!(command.contains("Reinstall the pinned @xgent-ai/skills package"));
-    assert!(!command.contains("exit /b"));
 }
 
 #[test]
@@ -2365,27 +2344,24 @@ fn admin_on_writes_launcher_manifests_for_every_harness() {
 
     let claude: Value = serde_json::from_str(&t.read(".claude/settings.local.json")).unwrap();
     let cmd = &claude["hooks"]["PostToolUse"][0]["hooks"][0]["command"];
-    assert_missing_launcher_guard(
+    assert_launcher_command(
         cmd,
         r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "claude",
     );
     assert_eq!(&claude["hooks"]["Stop"][0]["hooks"][0]["command"], cmd);
     assert!(claude["hooks"]["PostToolUse"][0]["hooks"][0]
         .get("commandWindows")
         .is_none());
-    assert!(t.read(".claude/settings.local.json").contains("node -e "));
 
     let codex: Value = serde_json::from_str(&t.read(".codex/hooks.json")).unwrap();
     let entry = &codex["hooks"]["PostToolUse"][0]["hooks"][0];
-    assert_missing_launcher_guard(
+    assert_launcher_command(
         &entry["command"],
         r#"".agents/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "codex",
     );
-    assert_windows_launcher_guard(&entry["commandWindows"]);
+    assert_windows_launcher_command(&entry["commandWindows"]);
     assert_eq!(
         entry
             .as_object()
@@ -2407,18 +2383,16 @@ fn admin_on_writes_launcher_manifests_for_every_harness() {
     assert_eq!(stop["timeout"], json!(30));
 
     let cursor: Value = serde_json::from_str(&t.read(".cursor/hooks.json")).unwrap();
-    assert_missing_launcher_guard(
+    assert_launcher_command(
         &cursor["hooks"]["preToolUse"][0]["command"],
         r#"".cursor/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook-before-edit",
-        "cursor",
     );
     let github: Value = serde_json::from_str(&t.read(".github/hooks/phoenix-ui.json")).unwrap();
-    assert_missing_launcher_guard(
+    assert_launcher_command(
         &github["hooks"]["postToolUse"][0]["bash"],
         r#""$(git rev-parse --show-toplevel)/.github/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "github",
     );
 
     // A second `on` is a no-op against the manifests it just wrote.
@@ -2427,7 +2401,7 @@ fn admin_on_writes_launcher_manifests_for_every_harness() {
 }
 
 #[test]
-fn admin_on_refreshes_phoenix_silent_guards_to_the_reminder_form() {
+fn admin_on_refreshes_phoenix_guards_to_the_direct_launcher_form() {
     let t = Tmp::new();
     let cwd = t.path();
     let r = rt(&cwd);
@@ -2458,11 +2432,10 @@ fn admin_on_refreshes_phoenix_silent_guards_to_the_reminder_form() {
         "foreign entry kept, impeccable entry replaced once: {post:?}"
     );
     assert_eq!(post[0]["hooks"][0]["command"], json!("echo other"));
-    assert_missing_launcher_guard(
+    assert_launcher_command(
         &post[1]["hooks"][0]["command"],
         r#""${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui""#,
         "hook",
-        "claude",
     );
     // Upstream 611147a3: the repaired Claude group must exist and carry the
     // current Edit|Write matcher (MultiEdit is retired; see 55fb8e8).
@@ -2473,7 +2446,7 @@ fn admin_on_refreshes_phoenix_silent_guards_to_the_reminder_form() {
     assert!(!codex.contains(".mjs"), "{codex}");
     let codex: Value = serde_json::from_str(&codex).unwrap();
     assert_eq!(codex["hooks"]["PostToolUse"].as_array().unwrap().len(), 1);
-    assert_windows_launcher_guard(&codex["hooks"]["PostToolUse"][0]["hooks"][0]["commandWindows"]);
+    assert_windows_launcher_command(&codex["hooks"]["PostToolUse"][0]["hooks"][0]["commandWindows"]);
 
     // A launcher-form manifest written by another checkout is recognized as
     // ours too: shared settings carrying it make `on` prune the local file.

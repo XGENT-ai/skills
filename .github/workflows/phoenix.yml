@@ -118,7 +118,7 @@ jobs:
       - name: Install the skill metadata test dependency
         if: ${{ !inputs.build_only }}
         run: python3 -m pip install --break-system-packages pyyaml==6.0.3
-      # Check committed evidence before platform builds replace VERSION/ENGINE.
+      # Check committed generated files before the platform build re-renders them.
       - name: Lightweight repository tests
         if: ${{ !inputs.build_only }}
         id: light

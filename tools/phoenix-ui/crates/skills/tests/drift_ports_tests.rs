@@ -682,7 +682,7 @@ fn merge_hook_manifests_refreshes_phoenix_windows_hooks_and_preserves_legacy_ent
 
     let quoted = quoted_launcher_path(r"C:\Users\alice", ".claude", true).unwrap();
     let fresh_command = hook_command(&quoted, ".claude", true);
-    assert!(fresh_command.contains("Phoenix UI unavailable:"));
+    assert_eq!(fresh_command, format!("{} hook", quoted.win32));
     let fresh_entry = json!({ "type": "command", "command": fresh_command });
     assert!(value_has_launcher_hook_marker(&fresh_entry));
     let fresh = json!({

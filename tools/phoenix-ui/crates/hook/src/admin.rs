@@ -6,8 +6,7 @@
 //!
 //! Where the JS wrote `node "<skill>/scripts/hook.mjs"`, the binary writes
 //! `"<skill>/scripts/phoenix-ui" hook`: the launcher shipped next to the
-//! skill uses Node 18 to verify the fixed platform binary. An inline Node
-//! guard also reports a missing launcher without requiring any skill files.
+//! skill uses Node 18 to verify the fixed platform binary.
 //! Only Phoenix launcher handlers are owned by these manifest edits; the merge
 //! is the one installs use (impeccable-skills `hook_manifest`).
 
@@ -100,33 +99,14 @@ const CURSOR_LAUNCHER: &str = r#"".cursor/skills/phoenix-ui/scripts/phoenix-ui""
 const GITHUB_LAUNCHER: &str =
     r#""$(git rev-parse --show-toplevel)/.github/skills/phoenix-ui/scripts/phoenix-ui""#;
 
-fn missing_launcher_source() -> String {
-    include_str!("missing_launcher.cjs")
-        .lines()
-        .map(str::trim)
-        .collect::<Vec<_>>()
-        .join(" ")
+fn launcher_command(launcher: &str, verb: &str) -> String {
+    format!("{launcher} {verb}")
 }
 
-fn sentinel_quote(value: &str) -> String {
-    format!("'{}'", value.replace('\'', "'\"'\"'"))
-}
-
-fn guarded_launcher(quoted_launcher: &str, verb: &str, provider: &str) -> String {
-    format!(
-        "if [ -f {quoted_launcher} ]; then {quoted_launcher} {verb}; else node -e {} -- {} {} || :; fi",
-        sentinel_quote(&missing_launcher_source()),
-        sentinel_quote(env!("CARGO_PKG_VERSION")),
-        sentinel_quote(provider),
-    )
-}
-
-fn windows_launcher_command(launcher: &str, verb: &str, provider: &str) -> String {
-    format!(
-        "node -e \"{}\" -- \"{}\" \"{provider}\" \"{launcher}\" {verb}",
-        missing_launcher_source(),
-        env!("CARGO_PKG_VERSION"),
-    )
+/// Codex may run `commandWindows` through cmd.exe or PowerShell; `cmd /d /c`
+/// parses the same in both and returns the `.cmd` shim's exit code.
+fn windows_launcher_command(launcher: &str, verb: &str) -> String {
+    format!("cmd /d /c \"{launcher}\" {verb}")
 }
 
 struct ManifestTarget {
@@ -138,7 +118,7 @@ struct ManifestTarget {
 }
 
 fn claude_manifest() -> Value {
-    let cmd = guarded_launcher(CLAUDE_LAUNCHER, "hook", "claude");
+    let cmd = launcher_command(CLAUDE_LAUNCHER, "hook");
     obj(vec![
         (
             "description",
@@ -163,8 +143,8 @@ fn claude_manifest() -> Value {
 }
 
 fn agents_manifest() -> Value {
-    let cmd = guarded_launcher(AGENTS_LAUNCHER, "hook", "codex");
-    let win = windows_launcher_command(AGENTS_LAUNCHER_WINDOWS, "hook", "codex");
+    let cmd = launcher_command(AGENTS_LAUNCHER, "hook");
+    let win = windows_launcher_command(AGENTS_LAUNCHER_WINDOWS, "hook");
     obj(vec![(
         "hooks",
         obj(vec![
@@ -201,11 +181,7 @@ fn cursor_manifest() -> Value {
                 Value::Array(vec![obj(vec![
                     (
                         "command",
-                        Value::from(guarded_launcher(
-                            CURSOR_LAUNCHER,
-                            "hook-before-edit",
-                            "cursor",
-                        )),
+                        Value::from(launcher_command(CURSOR_LAUNCHER, "hook-before-edit")),
                     ),
                     ("timeout", Value::from(TIMEOUT_SECONDS)),
                 ])]),
@@ -226,7 +202,7 @@ fn github_manifest() -> Value {
                     ("matcher", Value::from("edit|create|apply_patch")),
                     (
                         "bash",
-                        Value::from(guarded_launcher(GITHUB_LAUNCHER, "hook", "github")),
+                        Value::from(launcher_command(GITHUB_LAUNCHER, "hook")),
                     ),
                     ("timeoutSec", Value::from(TIMEOUT_SECONDS)),
                 ])]),
@@ -245,18 +221,14 @@ const GEMINI_LAUNCHER_WINDOWS: &str =
     r#""$env:GEMINI_PROJECT_DIR\.gemini\skills\phoenix-ui\scripts\phoenix-ui.cmd""#;
 
 fn gemini_windows_hook_command() -> String {
-    let source = missing_launcher_source().replace('\'', "''");
-    format!(
-        "if (Test-Path -LiteralPath {GEMINI_LAUNCHER_WINDOWS}) {{ & {GEMINI_LAUNCHER_WINDOWS} hook; exit $LASTEXITCODE }} else {{ node -e '{source}' -- '{}' 'gemini'; exit 0 }}",
-        env!("CARGO_PKG_VERSION"),
-    )
+    format!("& {GEMINI_LAUNCHER_WINDOWS} hook; exit $LASTEXITCODE")
 }
 
 fn gemini_manifest() -> Value {
     let cmd = if cfg!(windows) {
         gemini_windows_hook_command()
     } else {
-        guarded_launcher(GEMINI_LAUNCHER, "hook", "gemini")
+        launcher_command(GEMINI_LAUNCHER, "hook")
     };
     let hook = |name: &str, timeout: i64| {
         obj(vec![

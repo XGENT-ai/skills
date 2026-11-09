@@ -160,31 +160,6 @@ pub fn json_string(value: &str) -> String {
     serde_json::to_string(value).unwrap_or_default()
 }
 
-fn missing_launcher_source() -> String {
-    include_str!("../../hook/src/missing_launcher.cjs")
-        .lines()
-        .map(str::trim)
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-fn hook_provider(provider: &str) -> &str {
-    match provider {
-        ".agents" => "codex",
-        ".claude" => "claude",
-        other => other.trim_start_matches('.'),
-    }
-}
-
-fn guarded_launcher(quoted: &str, verb: &str, provider: &str) -> String {
-    format!(
-        "if [ -f {quoted} ]; then {quoted} {verb}; else node -e {} -- {} {} || :; fi",
-        sh_single_quote(&missing_launcher_source()),
-        sh_single_quote(env!("CARGO_PKG_VERSION")),
-        sh_single_quote(hook_provider(provider)),
-    )
-}
-
 /// One pre-quoted launcher path per target shell (JS: `quotedPath`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuotedPath {
@@ -221,15 +196,12 @@ pub fn quoted_launcher_path(
     })
 }
 
-/// JS: guardHookCommand(quotedPath, provider), launcher edition, in the
-/// shape the public build's `transformers/hooks.js` `guardedLauncher` emits:
-/// `[ ! -f X ] || X <verb>` (not `|| true`, so the launcher's exit code, and
-/// Claude's exit-2 blocking signal, still reach the agent). `.agents` (Codex)
-/// keeps the POSIX form unconditionally: its Windows consumers read the
-/// `commandWindows` sibling instead. Other providers installed on Windows keep
-/// the double-quoted path (cmd.exe treats `'` as literal, issue #533); the JS
-/// `node -e` existence wrapper has no launcher equivalent, so the POSIX guard
-/// stands there too (Claude Code on Windows runs hooks through Git Bash).
+/// The launcher is installed with this skill, so hooks run it directly: a
+/// missing launcher is a broken install, not a state to guard. `.agents`
+/// (Codex) keeps the POSIX form unconditionally: its Windows consumers read
+/// the `commandWindows` sibling instead. Other providers installed on Windows
+/// keep the double-quoted path (cmd.exe treats `'` as literal, issue #533;
+/// Claude Code on Windows runs hooks through Git Bash).
 pub fn hook_command(quoted: &QuotedPath, provider: &str, win32: bool) -> String {
     let verb = hook_verb(provider);
     if provider == ".gemini" {
@@ -240,12 +212,12 @@ pub fn hook_command(quoted: &QuotedPath, provider: &str, win32: bool) -> String 
     } else {
         &quoted.posix
     };
-    guarded_launcher(q, verb, provider)
+    format!("{q} {verb}")
 }
 
 /// Gemini CLI runs a hook through `bash -c` on POSIX and PowerShell on
 /// Windows, and has no per-OS command field, so a Windows install writes a
-/// PowerShell guard around the `.cmd` shim. Gemini also substitutes
+/// PowerShell call of the `.cmd` shim. Gemini also substitutes
 /// `$GEMINI_PROJECT_DIR` in the command text with an already shell-escaped
 /// path before the shell sees it, so the POSIX relative form leaves the token
 /// bare (double quotes would keep the escaping as literal characters), and
@@ -256,7 +228,7 @@ fn gemini_hook_command(quoted: &QuotedPath, verb: &str, win32: bool) -> String {
     let relative = path.starts_with("$GEMINI_PROJECT_DIR");
     if !win32 {
         let q = if relative { path } else { quoted.posix.clone() };
-        return guarded_launcher(&q, verb, ".gemini");
+        return format!("{q} {verb}");
     }
     let cmd = format!("{path}.cmd");
     let q = if relative {
@@ -267,19 +239,15 @@ fn gemini_hook_command(quoted: &QuotedPath, verb: &str, win32: bool) -> String {
     } else {
         format!("'{}'", cmd.replace('\'', "''"))
     };
-    let source = missing_launcher_source().replace('\'', "''");
-    format!("if (Test-Path -LiteralPath {q}) {{ & {q} {verb}; exit $LASTEXITCODE }} else {{ node -e '{source}' -- '{}' 'gemini'; exit 0 }}", env!("CARGO_PKG_VERSION"))
+    format!("& {q} {verb}; exit $LASTEXITCODE")
 }
 
-/// The Node guard dispatches the `.cmd` shim through cmd.exe and preserves its
-/// exit code. It can report unavailability without any installed skill files.
+/// Codex may run `commandWindows` through cmd.exe or PowerShell; `cmd /d /c`
+/// parses the same in both and returns the `.cmd` shim's exit code.
 pub fn windows_hook_command(quoted: &QuotedPath, provider: &str) -> String {
     let path: String = serde_json::from_str(&quoted.win32_cmd).unwrap_or_default();
     format!(
-        "node -e \"{}\" -- \"{}\" \"{}\" \"{}\" {}",
-        missing_launcher_source(),
-        env!("CARGO_PKG_VERSION"),
-        hook_provider(provider),
+        "cmd /d /c \"{}\" {}",
         path.replace('/', "\\"),
         hook_verb(provider),
     )
