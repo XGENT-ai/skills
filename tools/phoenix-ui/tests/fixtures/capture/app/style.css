@@ -1,0 +1,23 @@
+:root { color-scheme: light dark; --bg: #f6f6f3; --fg: #1d1d1b; --card: #ffffff; --line: #d9d9d2; --accent: #2457c5; --error: #b3261e; }
+@media (prefers-color-scheme: dark) { :root { --bg: #15161a; --fg: #ececec; --card: #1f2128; --line: #3a3d46; --accent: #8db0ff; --error: #ff8a80; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 -apple-system, "PingFang SC", "Noto Sans CJK SC", sans-serif; background: var(--bg); color: var(--fg); }
+.card { max-width: 360px; margin: 72px auto; padding: 32px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.entrance { animation: rise 600ms ease-out both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.logo { display: block; margin-bottom: 8px; }
+h1 { margin: 0 0 16px; font-size: 22px; }
+label { display: grid; gap: 4px; margin-bottom: 12px; font-size: 14px; }
+input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); }
+button { font: inherit; padding: 8px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+.note { font-size: 13px; opacity: 0.75; }
+.error { color: var(--error); font-size: 14px; }
+#tasks { max-width: 960px; margin: 0 auto; padding: 24px; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.actions { display: flex; gap: 8px; }
+.panel { margin: 16px 0; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+#filter-panel:not([hidden]) { animation: drop 320ms ease-out both; }
+@keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+/* Fixed column widths: on a phone the table is wider than the screen. */
+.task-table { min-width: 520px; border-collapse: collapse; background: var(--card); }
+.task-table th, .task-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }

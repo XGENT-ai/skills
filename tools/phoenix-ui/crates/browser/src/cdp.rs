@@ -271,12 +271,49 @@ impl Browser {
     /// `browser.newPage()`: a fresh target in the default context, attached
     /// flat, with puppeteer's page setup applied.
     pub fn new_page(&mut self) -> CdpResult<Page<'_>> {
-        let created = self.conn.send(
+        self.open_page(None)
+    }
+
+    /// A page in its own browser context: no cookies, storage or cache are
+    /// shared with earlier pages, so every capture state starts fresh. The
+    /// context is disposed when the page closes.
+    pub fn new_isolated_page(&mut self) -> CdpResult<Page<'_>> {
+        let context = self.conn.send(
             None,
-            "Target.createTarget",
-            json!({ "url": "about:blank" }),
+            "Target.createBrowserContext",
+            json!({}),
             PROTOCOL_TIMEOUT,
         )?;
+        let id = context
+            .get("browserContextId")
+            .and_then(Value::as_str)
+            .ok_or_else(|| CdpError::new("Target.createBrowserContext returned no id"))?
+            .to_string();
+        self.open_page(Some(id))
+    }
+
+    fn open_page(&mut self, context: Option<String>) -> CdpResult<Page<'_>> {
+        let mut params = json!({ "url": "about:blank" });
+        if let Some(id) = &context {
+            params["browserContextId"] = json!(id);
+        }
+        let created = self
+            .conn
+            .send(None, "Target.createTarget", params, PROTOCOL_TIMEOUT);
+        let created = match created {
+            Ok(c) => c,
+            Err(e) => {
+                if let Some(id) = &context {
+                    let _ = self.conn.send(
+                        None,
+                        "Target.disposeBrowserContext",
+                        json!({ "browserContextId": id }),
+                        PROTOCOL_TIMEOUT,
+                    );
+                }
+                return Err(e);
+            }
+        };
         let target_id = created
             .get("targetId")
             .and_then(Value::as_str)
@@ -305,6 +342,11 @@ impl Browser {
             iframe_sessions: HashSet::new(),
             response_capture: None,
             execution_contexts: HashMap::new(),
+            browser_context: context,
+            console_errors: Vec::new(),
+            network_log: None,
+            screencast: None,
+            nav_watch: None,
         };
         page.initialize()?;
         Ok(page)
@@ -326,9 +368,33 @@ impl Drop for Browser {
 /// answered inline with `Fetch.continueRequest`, adding the Authorization
 /// header only for same-origin requests.
 struct OriginAuth {
-    session_id: String,
     origin: String,
     header: String,
+}
+
+/// Non-GET requests are failed instead of sent, except allow-listed paths
+/// (exact pathname, or a prefix when the entry ends in `*`).
+struct WriteBlock {
+    allow: Vec<String>,
+    blocked: Vec<Value>,
+    allowed: Vec<Value>,
+}
+
+impl WriteBlock {
+    fn allows(&self, path: &str) -> bool {
+        self.allow.iter().any(|a| match a.strip_suffix('*') {
+            Some(prefix) => path.starts_with(prefix),
+            None => path == a,
+        })
+    }
+}
+
+/// Request interception registered for one page session. Auto-attached
+/// iframe/worker sessions point at their page through `intercept_owner`.
+#[derive(Default)]
+struct Interceptor {
+    auth: Option<OriginAuth>,
+    block: Option<WriteBlock>,
 }
 
 /// One websocket to the browser; JSON-RPC ids and an event queue.
@@ -336,7 +402,8 @@ struct Connection {
     ws: WebSocket<TcpStream>,
     next_id: u64,
     events: VecDeque<Value>,
-    auth: Option<OriginAuth>,
+    interceptors: HashMap<String, Interceptor>,
+    intercept_owner: HashMap<String, String>,
 }
 
 impl Connection {
@@ -361,27 +428,32 @@ impl Connection {
             ws,
             next_id: 0,
             events: VecDeque::new(),
-            auth: None,
+            interceptors: HashMap::new(),
+            intercept_owner: HashMap::new(),
         })
     }
 
     /// JS `page.on('request', ...)` handler body from `applyOriginScopedAuth`:
     /// answer a paused request, attaching Authorization only when the request
-    /// URL's origin equals the armed origin. Returns true when the message was
-    /// a `Fetch.requestPaused` for the armed session (consumed).
+    /// URL's origin equals the armed origin. A write block fails non-GET
+    /// requests first. Returns true when the message was a
+    /// `Fetch.requestPaused` for an armed session (consumed).
     fn maybe_handle_request_paused(&mut self, msg: &Value) -> bool {
-        let Some(auth) = &self.auth else { return false };
         if msg.get("method").and_then(Value::as_str) != Some("Fetch.requestPaused") {
             return false;
         }
-        if msg.get("sessionId").and_then(Value::as_str) != Some(auth.session_id.as_str()) {
+        let Some(session_id) = msg.get("sessionId").and_then(Value::as_str) else {
             return false;
-        }
-        let (session_id, origin, header) = (
-            auth.session_id.clone(),
-            auth.origin.clone(),
-            auth.header.clone(),
-        );
+        };
+        let session_id = session_id.to_string();
+        let owner = self
+            .intercept_owner
+            .get(&session_id)
+            .cloned()
+            .unwrap_or_else(|| session_id.clone());
+        let Some(interceptor) = self.interceptors.get_mut(&owner) else {
+            return false;
+        };
         let params = msg.get("params").cloned().unwrap_or(Value::Null);
         let Some(request_id) = params.get("requestId").and_then(Value::as_str) else {
             return true;
@@ -390,13 +462,51 @@ impl Connection {
             .pointer("/request/url")
             .and_then(Value::as_str)
             .unwrap_or("");
+        let parsed = url::Url::parse(req_url).ok();
+        if let Some(block) = &mut interceptor.block {
+            let method = params
+                .pointer("/request/method")
+                .and_then(Value::as_str)
+                .unwrap_or("GET");
+            if method != "GET" {
+                let path = parsed.as_ref().map(|u| u.path()).unwrap_or("");
+                // Query strings can carry tokens; the record keeps origin + path.
+                let shown = match &parsed {
+                    Some(u) => format!("{}{}", u.origin().ascii_serialization(), u.path()),
+                    None => req_url.split(['?', '#']).next().unwrap_or("").to_string(),
+                };
+                let record = json!({
+                    "method": method,
+                    "url": shown,
+                    "resourceType": params.get("resourceType").cloned().unwrap_or(Value::Null),
+                    "at": impeccable_common::iso_now(),
+                });
+                if !block.allows(path) {
+                    block.blocked.push(record);
+                    let _ = self.post(
+                        Some(&session_id),
+                        "Fetch.failRequest",
+                        json!({ "requestId": request_id, "errorReason": "BlockedByClient" }),
+                    );
+                    return true;
+                }
+                block.allowed.push(record);
+            }
+        }
+        let auth = interceptor
+            .auth
+            .as_ref()
+            .map(|a| (a.origin.clone(), a.header.clone()));
         // JS: invalid request URL -> continue without auth.
-        let same_origin = url::Url::parse(req_url)
-            .map(|u| u.origin().ascii_serialization() == origin)
-            .unwrap_or(false);
+        let header = auth.and_then(|(origin, header)| {
+            parsed
+                .as_ref()
+                .is_some_and(|u| u.origin().ascii_serialization() == origin)
+                .then_some(header)
+        });
         let mut cont = Map::new();
         cont.insert("requestId".into(), json!(request_id));
-        if same_origin {
+        if let Some(header) = header {
             // JS `{ ...request.headers(), authorization: header }`: puppeteer's
             // request.headers() lowercases names, so authorization overrides.
             let mut headers: Vec<Value> = Vec::new();
@@ -502,6 +612,23 @@ impl Connection {
                         if self.maybe_handle_request_paused(&v) {
                             continue;
                         }
+                        // Chrome sends the next screencast frame only after an
+                        // ack; answer here so frames keep coming while a
+                        // command is awaited. The frame itself is still queued.
+                        if v.get("method").and_then(Value::as_str) == Some("Page.screencastFrame") {
+                            if let (Some(sid), Some(frame)) = (
+                                v.get("sessionId")
+                                    .and_then(Value::as_str)
+                                    .map(str::to_string),
+                                v.pointer("/params/sessionId").cloned(),
+                            ) {
+                                let _ = self.post(
+                                    Some(&sid),
+                                    "Page.screencastFrameAck",
+                                    json!({ "sessionId": frame }),
+                                );
+                            }
+                        }
                         return Ok(Some(v));
                     }
                     Err(_) => continue,
@@ -581,6 +708,104 @@ pub struct Page<'a> {
     iframe_sessions: HashSet<String>,
     response_capture: Option<crate::response_capture::ResponseCapture>,
     execution_contexts: HashMap<i64, String>,
+    browser_context: Option<String>,
+    console_errors: Vec<String>,
+    network_log: Option<crate::network_log::NetworkLog>,
+    /// Screencast frames `(timestamp seconds, base64 JPEG)` while recording.
+    screencast: Option<Vec<(f64, String)>>,
+    /// Main-frame loading seen since `watch_navigation`: (loader before the
+    /// action, started, stopped).
+    nav_watch: Option<(String, bool, bool)>,
+}
+
+/// One key press for `Input.dispatchKeyEvent`, parsed from `Enter`,
+/// `Control+A`, `Meta+K`, `a`, ...
+#[derive(Debug, Clone, PartialEq)]
+pub struct KeyStroke {
+    key: String,
+    code: String,
+    key_code: u32,
+    text: Option<String>,
+    modifiers: u32,
+}
+
+impl KeyStroke {
+    pub fn parse(spec: &str) -> Result<KeyStroke, String> {
+        let parts: Vec<&str> = spec.split('+').collect();
+        let (last, mods) = match parts.split_last() {
+            Some((last, mods)) if !last.is_empty() => (*last, mods),
+            // `+` itself, or `Shift++`.
+            _ if spec.ends_with('+') => ("+", &parts[..parts.len().saturating_sub(2)]),
+            _ => return Err(format!("无法识别的按键 {spec}")),
+        };
+        let mut modifiers = 0;
+        for m in mods {
+            modifiers |= match *m {
+                "Alt" => 1,
+                "Control" => 2,
+                "Meta" => 4,
+                "Shift" => 8,
+                other => {
+                    return Err(format!(
+                        "无法识别的修饰键 {other}（可用 Alt、Control、Meta、Shift）"
+                    ))
+                }
+            };
+        }
+        let named: &[(&str, &str, u32, Option<&str>)] = &[
+            ("Enter", "Enter", 13, Some("\r")),
+            ("Tab", "Tab", 9, None),
+            ("Escape", "Escape", 27, None),
+            ("Backspace", "Backspace", 8, None),
+            ("Delete", "Delete", 46, None),
+            ("Space", "Space", 32, Some(" ")),
+            ("ArrowUp", "ArrowUp", 38, None),
+            ("ArrowDown", "ArrowDown", 40, None),
+            ("ArrowLeft", "ArrowLeft", 37, None),
+            ("ArrowRight", "ArrowRight", 39, None),
+            ("Home", "Home", 36, None),
+            ("End", "End", 35, None),
+            ("PageUp", "PageUp", 33, None),
+            ("PageDown", "PageDown", 34, None),
+        ];
+        if let Some((name, code, key_code, text)) = named.iter().find(|n| n.0 == last) {
+            let key = if *name == "Space" { " " } else { name };
+            return Ok(KeyStroke {
+                key: key.to_string(),
+                code: code.to_string(),
+                key_code: *key_code,
+                text: text.filter(|_| modifiers & 7 == 0).map(str::to_string),
+                modifiers,
+            });
+        }
+        let mut chars = last.chars();
+        let (Some(c), None) = (chars.next(), chars.next()) else {
+            return Err(format!(
+                "无法识别的按键 {last}（可用单个字符或 Enter、Tab、Escape、Backspace、Delete、Space、ArrowUp/Down/Left/Right、Home、End、PageUp、PageDown）"
+            ));
+        };
+        let upper = c.to_ascii_uppercase();
+        let code = if c.is_ascii_alphabetic() {
+            format!("Key{upper}")
+        } else if c.is_ascii_digit() {
+            format!("Digit{c}")
+        } else {
+            String::new()
+        };
+        let key_code = if c.is_ascii_alphanumeric() {
+            upper as u32
+        } else {
+            0
+        };
+        Ok(KeyStroke {
+            key: c.to_string(),
+            code,
+            key_code,
+            // A chord with Control/Meta/Alt sends no character.
+            text: (modifiers & 7 == 0).then(|| c.to_string()),
+            modifiers,
+        })
+    }
 }
 
 /// An opaque, document-bound isolated execution context. Never falls back to
@@ -752,8 +977,65 @@ impl<'a> Page<'a> {
             if let Some(capture) = &mut self.response_capture {
                 capture.event(method, &params);
             }
+            match method {
+                "Runtime.consoleAPICalled" => {
+                    let kind = params.get("type").and_then(Value::as_str).unwrap_or("");
+                    if kind == "error" || kind == "assert" {
+                        let text: Vec<String> = params
+                            .get("args")
+                            .and_then(Value::as_array)
+                            .map(|args| args.iter().map(console_arg_text).collect())
+                            .unwrap_or_default();
+                        let text = text.join(" ");
+                        let text = if kind == "assert" {
+                            format!("Assertion failed: {text}")
+                        } else {
+                            text
+                        };
+                        self.push_console_error(text);
+                    }
+                }
+                "Log.entryAdded" => {
+                    let entry = params.get("entry").cloned().unwrap_or(Value::Null);
+                    if entry.get("level").and_then(Value::as_str) == Some("error")
+                        && entry.get("source").and_then(Value::as_str) != Some("network")
+                    {
+                        let text = entry.get("text").and_then(Value::as_str).unwrap_or("");
+                        self.push_console_error(text.to_string());
+                    }
+                }
+                "Page.screencastFrame" => {
+                    if let Some(frames) = &mut self.screencast {
+                        let ts = params
+                            .pointer("/metadata/timestamp")
+                            .and_then(Value::as_f64)
+                            .unwrap_or(0.0);
+                        if let Some(data) = params.get("data").and_then(Value::as_str) {
+                            frames.push((ts, data.to_string()));
+                        }
+                    }
+                }
+                "Page.frameStartedLoading" | "Page.frameStoppedLoading" => {
+                    let main = params.get("frameId").and_then(Value::as_str)
+                        == Some(self.main_frame_id.as_str());
+                    if let (true, Some(watch)) = (main, &mut self.nav_watch) {
+                        if method == "Page.frameStartedLoading" {
+                            watch.1 = true;
+                            watch.2 = false;
+                        } else if watch.1 {
+                            watch.2 = true;
+                        }
+                    }
+                }
+                _ => {}
+            }
         }
         let is_page_session = session == self.session_id || self.iframe_sessions.contains(session);
+        if is_page_session {
+            if let Some(log) = &mut self.network_log {
+                log.event(method, &params);
+            }
+        }
         match method {
             "Target.attachedToTarget" => {
                 let Some(new_session) = params.get("sessionId").and_then(Value::as_str) else {
@@ -802,6 +1084,32 @@ impl<'a> Page<'a> {
                     }
                     _ => {}
                 }
+                // A write block must cover requests from iframes and workers
+                // too; arm it while the target is still paused.
+                let owner = conn
+                    .intercept_owner
+                    .get(session)
+                    .cloned()
+                    .unwrap_or_else(|| session.to_string());
+                let blocking = conn
+                    .interceptors
+                    .get(&owner)
+                    .is_some_and(|i| i.block.is_some());
+                if blocking && matches!(ttype, "iframe" | "worker") {
+                    conn.intercept_owner.insert(new_session.clone(), owner);
+                    let _ = conn.post(
+                        Some(&new_session),
+                        "Fetch.enable",
+                        json!({ "patterns": [{ "urlPattern": "*", "requestStage": "Request" }] }),
+                    );
+                    if ttype == "iframe" {
+                        let _ = conn.post(
+                            Some(&new_session),
+                            "Network.setBypassServiceWorker",
+                            json!({ "bypass": true }),
+                        );
+                    }
+                }
                 let _ = conn.post(
                     Some(&new_session),
                     "Target.setAutoAttach",
@@ -832,6 +1140,7 @@ impl<'a> Page<'a> {
                 if counts {
                     if let Some(details) = params.get("exceptionDetails") {
                         let message = client_error_message(details);
+                        self.push_console_error(message.clone());
                         // detect-url.mjs: first line, trimmed, 160 chars, deduped.
                         let first = message.split('\n').next().unwrap_or("");
                         let trimmed = impeccable_core::js::trim(first);
@@ -1034,12 +1343,366 @@ impl<'a> Page<'a> {
         );
         // JS `page.setRequestInterception(true)`.
         self.send("Fetch.enable", json!({}))?;
-        self.browser.conn.auth = Some(OriginAuth {
-            session_id: self.session_id.clone(),
-            origin,
-            header,
+        self.browser
+            .conn
+            .interceptors
+            .entry(self.session_id.clone())
+            .or_default()
+            .auth = Some(OriginAuth { origin, header });
+        Ok(())
+    }
+
+    /// Fail every non-GET request of this page, its iframes and workers,
+    /// except `allow` paths; service workers are bypassed so they cannot
+    /// replay a write outside the interception.
+    pub fn enable_write_block(&mut self, allow: Vec<String>) -> CdpResult<()> {
+        self.send("Network.setBypassServiceWorker", json!({ "bypass": true }))?;
+        self.send(
+            "Fetch.enable",
+            json!({ "patterns": [{ "urlPattern": "*", "requestStage": "Request" }] }),
+        )?;
+        self.browser
+            .conn
+            .interceptors
+            .entry(self.session_id.clone())
+            .or_default()
+            .block = Some(WriteBlock {
+            allow,
+            blocked: Vec::new(),
+            allowed: Vec::new(),
         });
         Ok(())
+    }
+
+    /// `(blocked, allowed)` non-GET requests seen by the write block.
+    pub fn write_log(&mut self) -> (Vec<Value>, Vec<Value>) {
+        self.pump_events();
+        match self
+            .browser
+            .conn
+            .interceptors
+            .get(&self.session_id)
+            .and_then(|i| i.block.as_ref())
+        {
+            Some(b) => (b.blocked.clone(), b.allowed.clone()),
+            None => (Vec::new(), Vec::new()),
+        }
+    }
+
+    /// Device metrics as `set_viewport`, with a device pixel ratio.
+    pub fn set_device_metrics(&mut self, width: u32, height: u32, dpr: f64) -> CdpResult<()> {
+        self.send(
+            "Emulation.setDeviceMetricsOverride",
+            json!({
+                "mobile": false,
+                "width": width,
+                "height": height,
+                "deviceScaleFactor": dpr,
+                "screenOrientation": { "angle": 0, "type": "portraitPrimary" },
+            }),
+        )?;
+        self.send(
+            "Emulation.setTouchEmulationEnabled",
+            json!({ "enabled": false }),
+        )?;
+        Ok(())
+    }
+
+    /// Emulate `prefers-color-scheme` and `prefers-reduced-motion` together.
+    pub fn set_media(&mut self, color_scheme: &str, reduced_motion: bool) -> CdpResult<()> {
+        self.send(
+            "Emulation.setEmulatedMedia",
+            json!({ "features": [
+                { "name": "prefers-color-scheme", "value": color_scheme },
+                { "name": "prefers-reduced-motion", "value": if reduced_motion { "reduce" } else { "no-preference" } },
+            ]}),
+        )?;
+        Ok(())
+    }
+
+    fn push_console_error(&mut self, text: String) {
+        let text: String = impeccable_core::js::trim(&text).chars().take(500).collect();
+        if !text.is_empty()
+            && self.console_errors.len() < 50
+            && !self.console_errors.contains(&text)
+        {
+            self.console_errors.push(text);
+        }
+    }
+
+    /// Console errors, assertion failures, uncaught exceptions and non-network
+    /// error log entries of the page so far (deduped, ≤50, each ≤500 chars).
+    pub fn console_errors(&mut self) -> Vec<String> {
+        self.pump_events();
+        self.console_errors.clone()
+    }
+
+    /// Start recording request methods, statuses and failures.
+    pub fn begin_network_log(&mut self) {
+        self.network_log = Some(crate::network_log::NetworkLog::default());
+    }
+
+    pub fn network_log(&mut self) -> Vec<crate::network_log::NetworkEntry> {
+        self.pump_events();
+        self.network_log
+            .as_ref()
+            .map(|l| l.entries())
+            .unwrap_or_default()
+    }
+
+    pub fn layout_metrics(&mut self) -> CdpResult<Value> {
+        self.send("Page.getLayoutMetrics", json!({}))
+    }
+
+    /// Base64 PNG. `clip` is `[x, y, width, height]` in CSS pixels at scale 1,
+    /// so the output is in device pixels.
+    pub fn screenshot(
+        &mut self,
+        clip: Option<[f64; 4]>,
+        beyond_viewport: bool,
+    ) -> CdpResult<String> {
+        let mut params = json!({
+            "format": "png", "optimizeForSpeed": false,
+            "fromSurface": true, "captureBeyondViewport": beyond_viewport,
+        });
+        if let Some([x, y, width, height]) = clip {
+            params["clip"] =
+                json!({ "x": x, "y": y, "width": width, "height": height, "scale": 1 });
+        }
+        let res = self.send("Page.captureScreenshot", params)?;
+        res.get("data")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| CdpError::new("screenshot returned no PNG"))
+    }
+
+    /// `Input.dispatchMouseEvent` with the left button.
+    pub fn mouse(
+        &mut self,
+        kind: &str,
+        x: f64,
+        y: f64,
+        click_count: u32,
+        buttons: u32,
+    ) -> CdpResult<()> {
+        let button = if kind == "mouseMoved" && buttons == 0 {
+            "none"
+        } else {
+            "left"
+        };
+        self.send(
+            "Input.dispatchMouseEvent",
+            json!({ "type": kind, "x": x, "y": y, "button": button, "buttons": buttons,
+                    "clickCount": click_count, "pointerType": "mouse" }),
+        )?;
+        Ok(())
+    }
+
+    /// Press and release one key (puppeteer: `keyDown` when it types a
+    /// character, `rawKeyDown` otherwise).
+    pub fn key(&mut self, stroke: &KeyStroke) -> CdpResult<()> {
+        let mut down = json!({
+            "type": if stroke.text.is_some() { "keyDown" } else { "rawKeyDown" },
+            "key": stroke.key, "code": stroke.code, "modifiers": stroke.modifiers,
+            "windowsVirtualKeyCode": stroke.key_code,
+        });
+        if let Some(text) = &stroke.text {
+            down["text"] = json!(text);
+            down["unmodifiedText"] = json!(text);
+        }
+        // Headless Chrome has no platform shortcut for select-all.
+        if stroke.modifiers & 6 != 0 && stroke.key.eq_ignore_ascii_case("a") {
+            down["commands"] = json!(["selectAll"]);
+        }
+        self.send("Input.dispatchKeyEvent", down)?;
+        self.send(
+            "Input.dispatchKeyEvent",
+            json!({ "type": "keyUp", "key": stroke.key, "code": stroke.code,
+                    "modifiers": stroke.modifiers, "windowsVirtualKeyCode": stroke.key_code }),
+        )?;
+        Ok(())
+    }
+
+    pub fn insert_text(&mut self, text: &str) -> CdpResult<()> {
+        self.send("Input.insertText", json!({ "text": text }))?;
+        Ok(())
+    }
+
+    /// Backend node ids of non-ignored accessibility nodes with `role` (and
+    /// the exact accessible `name` when given), in document order.
+    pub fn query_ax(&mut self, role: &str, name: Option<&str>) -> CdpResult<Vec<(i64, String)>> {
+        let doc = self.send("DOM.getDocument", json!({ "depth": 0 }))?;
+        let root = doc
+            .pointer("/root/backendNodeId")
+            .and_then(Value::as_i64)
+            .ok_or_else(|| CdpError::new("DOM.getDocument returned no backendNodeId"))?;
+        let mut params = json!({ "backendNodeId": root, "role": role });
+        if let Some(name) = name {
+            params["accessibleName"] = json!(name);
+        }
+        let res = self.send("Accessibility.queryAXTree", params)?;
+        let mut out = Vec::new();
+        for node in res
+            .get("nodes")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            if node.get("ignored").and_then(Value::as_bool) == Some(true) {
+                continue;
+            }
+            if let Some(id) = node.get("backendDOMNodeId").and_then(Value::as_i64) {
+                let name = node
+                    .pointer("/name/value")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string();
+                out.push((id, name));
+            }
+        }
+        Ok(out)
+    }
+
+    /// Call `function` in the main world as `function(args, ...nodes)` with
+    /// the given backend nodes resolved to elements.
+    pub fn call_with_nodes(
+        &mut self,
+        function: &str,
+        args: &Value,
+        nodes: &[i64],
+    ) -> CdpResult<Value> {
+        // Unresolvable nodes become `null` so arguments stay aligned with `nodes`.
+        let mut arguments = vec![json!({ "value": args })];
+        let mut this = None;
+        for id in nodes {
+            let res = self.send(
+                "DOM.resolveNode",
+                json!({ "backendNodeId": id, "objectGroup": "phoenix-capture" }),
+            );
+            match res
+                .ok()
+                .and_then(|r| r.pointer("/object/objectId").cloned())
+            {
+                Some(object) => {
+                    this.get_or_insert_with(|| object.clone());
+                    arguments.push(json!({ "objectId": object }));
+                }
+                None => arguments.push(json!({ "value": null })),
+            }
+        }
+        let outcome = match this {
+            None => self.evaluate(&format!("({function})({args})")),
+            Some(this) => {
+                let res = self.send(
+                    "Runtime.callFunctionOn",
+                    json!({ "objectId": this, "functionDeclaration": function, "arguments": arguments,
+                            "returnByValue": true, "awaitPromise": true, "userGesture": true }),
+                );
+                let _ = self.send(
+                    "Runtime.releaseObjectGroup",
+                    json!({ "objectGroup": "phoenix-capture" }),
+                );
+                let res = res?;
+                Ok(match res.get("exceptionDetails") {
+                    Some(details) => EvalOutcome::Exception(client_error_message(details)),
+                    None => EvalOutcome::Value(value_from_remote_object(
+                        res.get("result").unwrap_or(&Value::Null),
+                    )),
+                })
+            }
+        }?;
+        match outcome {
+            EvalOutcome::Value(v) => Ok(v),
+            EvalOutcome::Exception(message) => Err(CdpError::new(message)),
+        }
+    }
+
+    /// Start a JPEG screencast at `max_width` × `max_height` device pixels and
+    /// wait up to `first_frame` for the first frame. Returns whether it came.
+    pub fn start_screencast(
+        &mut self,
+        max_width: u32,
+        max_height: u32,
+        first_frame: Duration,
+    ) -> CdpResult<bool> {
+        self.screencast = Some(Vec::new());
+        self.send(
+            "Page.startScreencast",
+            json!({ "format": "jpeg", "quality": 90, "maxWidth": max_width,
+                    "maxHeight": max_height, "everyNthFrame": 1 }),
+        )?;
+        let deadline = Instant::now() + first_frame;
+        while self.screencast.as_ref().is_some_and(Vec::is_empty) && Instant::now() < deadline {
+            self.idle(Duration::from_millis(10))?;
+        }
+        Ok(self.screencast.as_ref().is_some_and(|f| !f.is_empty()))
+    }
+
+    /// Stop the screencast and return its frames in arrival order.
+    pub fn stop_screencast(&mut self) -> Vec<(f64, String)> {
+        let _ = self.send("Page.stopScreencast", json!({}));
+        self.screencast.take().unwrap_or_default()
+    }
+
+    /// Wait while still answering events (screencast acks, interception).
+    pub fn idle(&mut self, duration: Duration) -> CdpResult<()> {
+        let deadline = Instant::now() + duration;
+        while let Some(msg) = self.browser.conn.read_one(deadline)? {
+            if msg.get("method").is_some() {
+                self.on_event(&msg);
+            }
+        }
+        self.pump_events();
+        Ok(())
+    }
+
+    /// Start watching main-frame loads before dispatching an action.
+    pub fn watch_navigation(&mut self) {
+        self.pump_events();
+        let loader = self
+            .frames
+            .get(&self.main_frame_id)
+            .map(|f| f.loader_id.clone())
+            .unwrap_or_default();
+        self.nav_watch = Some((loader, false, false));
+    }
+
+    /// After an action: if the main frame started loading within `grace`,
+    /// wait until loading stops (up to `timeout`). Returns whether a new
+    /// document committed.
+    pub fn settle_navigation(&mut self, grace: Duration, timeout: Duration) -> CdpResult<bool> {
+        self.idle(grace)?;
+        let Some((loader, started, _)) = self.nav_watch.clone() else {
+            return Ok(false);
+        };
+        if !started {
+            self.nav_watch = None;
+            return Ok(false);
+        }
+        let deadline = Instant::now() + timeout;
+        loop {
+            if self.nav_watch.as_ref().is_some_and(|w| w.2) {
+                self.nav_watch = None;
+                let current = self
+                    .frames
+                    .get(&self.main_frame_id)
+                    .map(|f| f.loader_id.as_str());
+                return Ok(current != Some(loader.as_str()));
+            }
+            match self.browser.conn.read_one(deadline)? {
+                Some(msg) => {
+                    if msg.get("method").is_some() {
+                        self.on_event(&msg);
+                    }
+                }
+                None => {
+                    return Err(CdpError::new(format!(
+                        "导航在 {} ms 内未完成加载",
+                        timeout.as_millis()
+                    )))
+                }
+            }
+        }
     }
 
     /// `page.goto(url, { waitUntil, timeout })`. `wait_until` is puppeteer's
@@ -1417,18 +2080,39 @@ impl<'a> Page<'a> {
         );
         // Detached sessions may keep queued events; drop anything stale.
         self.browser.conn.events.clear();
-        // Interception (origin-scoped auth) dies with the page; a shared
-        // browser's next page must not inherit it.
-        if self
-            .browser
-            .conn
-            .auth
-            .as_ref()
-            .map(|a| a.session_id == self.session_id)
-            .unwrap_or(false)
-        {
-            self.browser.conn.auth = None;
+        // Interception (origin-scoped auth, write block) dies with the page;
+        // a shared browser's next page must not inherit it.
+        let conn = &mut self.browser.conn;
+        conn.interceptors.remove(&self.session_id);
+        conn.intercept_owner
+            .retain(|_, owner| *owner != self.session_id);
+        if let Some(id) = &self.browser_context {
+            let _ = conn.send(
+                None,
+                "Target.disposeBrowserContext",
+                json!({ "browserContextId": id }),
+                Duration::from_secs(10),
+            );
         }
+    }
+}
+
+/// One `console.error` argument as DevTools prints it.
+fn console_arg_text(arg: &Value) -> String {
+    match arg.get("value") {
+        Some(Value::String(s)) => s.clone(),
+        Some(v) if !v.is_null() => v.to_string(),
+        _ => arg
+            .get("description")
+            .or_else(|| arg.get("unserializableValue"))
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .unwrap_or_else(|| {
+                arg.get("type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string()
+            }),
     }
 }
 

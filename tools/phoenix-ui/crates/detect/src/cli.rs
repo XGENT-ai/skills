@@ -337,7 +337,7 @@ re!(WS_RUN_RE, format!("{}+", impeccable_core::js::WS));
 re!(FILE_URL_RE, "^(?i:file):");
 
 /// `fileURLToPath` for the `file:` URLs the CLI accepts; None when it can't map.
-fn file_url_to_local_path(url: &str) -> Option<String> {
+pub fn file_url_to_local_path(url: &str) -> Option<String> {
     let rest = url.get(5..)?; // after "file:"
     let path = if let Some(r) = rest.strip_prefix("//") {
         // file://host/path: only an empty host or localhost maps on posix.
@@ -381,6 +381,32 @@ fn file_url_to_local_path(url: &str) -> Option<String> {
         return Some(win[1..].to_string());
     }
     Some(decoded)
+}
+
+/// The scan options and project config `detect <url>` applies with its
+/// default flags, for callers that scan a loaded page themselves
+/// (`capture`). `local_path` is the file a `file://` target maps to; only
+/// then does a DESIGN.md govern the scan.
+pub fn url_scan_options(
+    cwd: &str,
+    home: &str,
+    local_path: Option<&str>,
+    rule_pack: Option<&'static dyn impeccable_core::rule_pack::RulePack>,
+) -> (ScanOptions, DetectionConfig) {
+    let config = read_detection_config(cwd);
+    let design_system = match local_path {
+        Some(path) if config.design_system_not_disabled() => {
+            load_design_system_for_target(path, None, cwd, home)
+        }
+        _ => None,
+    };
+    let options = ScanOptions {
+        inline_ignores: true,
+        design_system,
+        viewport: None,
+        rule_pack,
+    };
+    (options, config)
 }
 
 /// JS: main.mjs#detectCli. `args` are the argv after the `detect` verb (the

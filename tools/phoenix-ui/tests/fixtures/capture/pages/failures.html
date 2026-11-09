@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>Targets</title>
+<style>
+  body { margin: 0; padding: 24px; font: 16px Arial, sans-serif; }
+  .covered { position: relative; display: inline-block; }
+  .covered .veil { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.1); }
+</style></head>
+<body>
+  <button id="hidden" type="button" style="display:none">隐藏按钮</button>
+  <span class="covered"><button id="under" type="button">被盖住</button><span class="veil"></span></span>
+  <button id="off" type="button" disabled>禁用按钮</button>
+  <p id="stay">一直在</p>
+  <iframe title="嵌入页" srcdoc="<button>框内按钮</button>"></iframe>
+</body>
+</html>

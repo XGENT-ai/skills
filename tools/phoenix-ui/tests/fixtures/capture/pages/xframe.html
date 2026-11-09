@@ -1,0 +1,3 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cross-site frame</title></head>
+<body><p>frame</p><script>fetch('/api/xframe', { method: 'POST', body: 'x' }).catch(() => {});</script></body></html>
