@@ -205,13 +205,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-10T09:30+08:00
-- 当前进度：5/6 个里程碑完成
-- 当前状态：M6 收口进行中，用户要求暂停；V-7 本机通过（test:phoenix 仅因上游 hook_tests.rs 一处格式失败，已修未推送），V-8 首轮因同一处格式未通过，V-9 未完成，V-10 未开始
-- 最近完成：M5 · 独立 skill 可选接入
-- 下一步：按 [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md#未完项与续做动作) 推送 ce45063 并跟踪 CI（V-8）→ 在仓库树外重建夹具跑 V-9（A1–A6）→ V-10 → 最终提交
+- 最近更新：2026-11-10T13:05+08:00
+- 当前进度：6/6 个里程碑完成
+- 当前状态：全部里程碑完成；V-7、V-8（最终候选 `d5904e1` 四平台通过）、V-9（A1–A6 及修复后复验）、V-10 通过
+- 最近完成：M6 · 阶段收口
+- 下一步：代码评审——由用户用 review-code 以本计划路径为参数发起
 - 当前阻塞：无
-- 代码基线：ce45063（本地领先 origin/main 1 个提交）
+- 代码基线：`55aa061`（origin main 为合并后的 `d5904e1` 及其后的计划提交；本地 main 待用户处理未跟踪的 `skills/software-copyright-docs/` 后再同步，见 [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md#未完项与续做动作)）
 
 ### 完成记录
 
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M3 | 已完成 | 2026-11-09T23:06+08:00 | 序列帧、遮字版、缩略图、标注图、并排图与 capture stitch；V-3、V-4 通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M3.md) | 9203484 |
 | M4 | 已完成 | 2026-11-09T23:47+08:00 | Phoenix Web 完工轮用 capture 取证并同轮派出盲测走查子代理；与 M5 同批验收 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
 | M5 | 已完成 | 2026-11-09T23:47+08:00 | feature-demo、review-ui、apply-ui-review 检测到 Phoenix 时的可选接入与复述；V-5、V-6 通过 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
-| M6 | 进行中 | 2026-11-10T09:30+08:00 | 声明、审计门重新固定与 TLS 依赖升级、oracle、冒烟、开发候选与 V-7 完成；V-8 待重跑，V-9、V-10 未完成 | [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md) | 226c8c2、86d8576、21d12ea、ce45063 |
+| M6 | 已完成 | 2026-11-10T13:05+08:00 | 声明、oracle、冒烟与开发候选；V-9 暴露的 capture 日期填写、走查交接、处置词与未装 Phoenix 时的报告措辞已修并复验；V-7–V-10 通过 | [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md) | 226c8c2、86d8576、21d12ea、ce45063、2a4b99e、55aa061、00878b4 |
 
 ## 0. 需求、范围与决策
 
