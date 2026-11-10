@@ -8,7 +8,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 
@@ -654,16 +654,31 @@ fn step_failures_and_warnings() {
         hidden.contains("display:none") && hidden.contains("先执行让它出现的那一步"),
         "{hidden}"
     );
+    let hidden_hints = &failure(&report, "hidden-target")["hints"];
+    assert_eq!(
+        hidden_hints,
+        &json!([r#"{"text":"被盖住"}"#, r#"{"text":"替代按钮"}"#])
+    );
+    assert!(
+        run.stdout.contains(
+            "FAILED hidden-target 800x600 step 1 (click): 找到 1 个匹配，但都不可见：隐藏（display:none）；先执行让它出现的那一步\n  可改为：{\"text\":\"被盖住\"}"
+        ),
+        "{}",
+        run.stdout
+    );
     let covered = shot(&report, "800x600-covered.png")["steps"][0].clone();
     assert_eq!(covered["result"], "warning");
+    let covered_warning = covered["warnings"][0].as_str().unwrap();
     assert!(
-        covered["warnings"][0].as_str().unwrap().contains("遮挡"),
+        covered_warning.starts_with("目标中心被 span.veil 遮挡，动作照常执行")
+            && covered_warning
+                .ends_with(r#"；遮挡物：{"css":"span.veil"}；可用的可见元素：{"text":"替代按钮"}"#),
         "{covered}"
     );
     let disabled = shot(&report, "800x600-disabled.png")["steps"][0].clone();
-    assert!(
-        disabled["warnings"][0].as_str().unwrap().contains("禁用"),
-        "{disabled}"
+    assert_eq!(
+        disabled["warnings"][0],
+        r#"目标处于禁用状态（disabled），动作照常执行；可用的可见元素：{"text":"被盖住"}、{"text":"替代按钮"}"#
     );
     let missing = failure(&report, "missing-text");
     assert_eq!(missing["hints"][0], r#"{"text":"被盖住"}"#);
@@ -680,6 +695,16 @@ fn step_failures_and_warnings() {
         .unwrap()
         .to_string();
     assert!(framed.contains("1 个 iframe"), "{framed}");
+    for state in ["wait-framed", "wait-shadow"] {
+        let reason = failure(&report, state)["reason"].as_str().unwrap();
+        assert!(
+            reason.contains("出现超时（300 ms）")
+                && reason.contains(
+                    "；选择器只作用于主文档：页面有 1 个 iframe、1 个开放 shadow root，可直接打开被嵌入的页面"
+                ),
+            "{state}: {reason}"
+        );
+    }
     assert!(
         run.stdout.contains("FAILED framed 800x600 step 1 (click)"),
         "{}",
