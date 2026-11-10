@@ -67,7 +67,7 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 ## 渠道
 
 - npm：`@xgent-ai/skills` 包含 Phoenix 运行资源（skill bundle、`VERSION.json`、许可），engine 二进制按 manifest 从固定地址获取或离线目录提供，不进 npm 包。
-- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖。没有 Phoenix CLI 时，辅助 skill 按各自的人工流程工作。
+- skills.sh：五个辅助 skill（design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review）仅由 `npx skills add XGENT-ai/skills` 独立安装和更新，npm 安装器不写入、不认领、不比对它们的版本；`phoenix-ui` skill 用 `metadata.internal: true` 排除在默认发现列表之外，只通过 npm 安装器分发。已由 npm 安装的 Phoenix 主技能应通过 npm 更新，不再用 skills.sh 覆盖。这些 skill 不依赖 Phoenix，没有 Phoenix CLI 时按各自的流程工作；检测到 Phoenix 时，review-ui 可借用取证命令与盲测走查，feature-demo 可在录制前用取证命令核对。
 
 ## XGENT 自有检测规则
 
@@ -95,6 +95,24 @@ Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID �
 
 在 Cursor 上启用新版本后，本来含无替代 `focus:outline-none` 的文件会对任何编辑触发 before-edit 拒绝：该检查扫描整份投影后的文件，不扣除编辑前已经存在的发现，所以与该焦点样式无关的编辑也会被拒。处理方式是先修掉该文件的焦点样式；确需临时放行时用 `phoenix-ui hooks ignore-value xgent/focus-outline-removed "*" --file <path>` 只关这个文件中的这一条。不要为绕过拒绝改用 inline 豁免。例外默认通过 `ignore-value` 写入项目 config；`ignore-file`、`ignore-rule` 影响面更大，应先征得用户同意。
 
+## 取证命令（capture）
+
+`phoenix-ui capture` 按步骤把页面操作到命名状态，在多个视口下截图，并逐张写出出处报告。它只证明“页面在这些步骤后渲染成这样、截图本身没坏”：图里是不是所称的状态、好不好、要不要修，归调用方、评审与用户；命令不打分、不出处置词、不读写项目源码。它与内部截图服务 `capture-server`、comp-led 组件评审的 `component-review capture` 是不同的命令。
+
+```bash
+DEMO_PASSWORD=<测试密码> phoenix-ui capture http://localhost:5173/ \
+  --viewport desktop,mobile --type full --states states.json \
+  --out .phoenix-ui/review --block-writes
+phoenix-ui capture stitch before.png after.png --match 320,320 --label 修改前,修改后 --out compare.png
+```
+
+- 目标：http(s):// 与 file:// 原样打开；本地 `.html` 文件或目录由内置静态服务器经 `http://127.0.0.1:<随机端口>` 提供（目录入口 `index.html`）。视口 `desktop`（1440x900）、`mobile`（390x844）、`<宽>x<高>` 或 `<标签>=<宽>x<高>`；`--dpr`、`--color-scheme light|dark`、`--reduced-motion`。
+- 状态文件（`--states`）：`initial` 描述初始状态的截图方式，`states` 逐个列出 `name` 与 `steps`；每个状态在不共享 cookie 与存储的新页面里从头执行自己的步骤。定位用 `{"role":…, "name":…}`、`{"text":…}` 或 `{"css":…}`（可加 `nth`），只查主文档，不进 iframe 与 Shadow DOM；动作有 click、dblclick、hover、fill、type、select、press、drag、scroll、wait、waitFor。截图类型 `viewport`、`full` 或 `{"element": <定位>}`；`frames` 出序列帧，`mark` 出编号标注图。完整格式见 `phoenix-ui capture --help`。
+- 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（与 `detect` 同一套规则与项目配置）；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
+- 有效性：每张主截图自检步骤是否全部执行、有限动画是否结束、文字是否大面积透明、是否整张单色或有异常全黑带、画布是否绘出、尺寸是否符合截图类型。无效图写成 `<名>.invalid.png`，同名旧图（含失败状态的旧图）删除。退出码：0 全部有效；1 无法运行（参数或状态文件错误、浏览器不可用、目标打不开），不写报告；2 已运行但有失败状态、无效图、派生图未产出或扫描出错。
+- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除；只访问目标页面及其自身加载的资源。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
+- 走查子代理：Phoenix 随包安装 `phoenix-ui-ux-walker`，以不知道任务的首次使用者身份，通过 capture 重放步骤走一条主要路径，报告卡住、走错与犹豫；Web 完工轮在有主要操作流程时与完工评审同轮派出。
+
 ## 融合用法与 UI 验收
 
 本节适用于支持结构化 context 的匹配版本；CLI 操作成功不代表 UI 通过，候选验收与公开发布见后面的维护流程。下列 `<包版本>` 取实际安装的包版本（`ENGINE.json` 的 `npmPackageVersion`）或候选包；未发布候选先用维护者提供的 tarball 与匹配离线资源，不把 latest 当作该候选。
@@ -117,7 +135,7 @@ npm exec --package=@xgent-ai/skills@<包版本> -- phoenix-ui surface-brief link
 
 `link` 保存原文件路径、SHA-256 与接受记录，原 brief 留在选定仓库，不复制第二份可编辑正文。URL/route 是逻辑目标，`target.exists: null` 不表示文件缺失。设计流程详见包内 `design-reference`、`ui-pattern-research`、`design-md` 的实际指令。
 
-用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。这两个 skill 不依赖 Phoenix，评审记录按 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md) 以 Markdown 维护。
+用 `review-ui` 评审、`apply-ui-review` 按报告修复，再由新的独立评审确认；修复方最多登记「已修改待评审」。这两个 skill 不依赖 Phoenix；检测到 Phoenix 时 review-ui 可借用取证命令与盲测走查（差距来源「盲测走查」，apply-ui-review 复走同一路径），评审记录按 [review-ui 合同](../skills/review-ui/references/report-contract.md) 与 [修复记录合同](../skills/apply-ui-review/references/record-contract.md) 以 Markdown 维护。
 
 ## 维护者：统一候选与本地交接
 

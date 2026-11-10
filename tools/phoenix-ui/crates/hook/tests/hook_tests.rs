@@ -2446,7 +2446,9 @@ fn admin_on_refreshes_phoenix_guards_to_the_direct_launcher_form() {
     assert!(!codex.contains(".mjs"), "{codex}");
     let codex: Value = serde_json::from_str(&codex).unwrap();
     assert_eq!(codex["hooks"]["PostToolUse"].as_array().unwrap().len(), 1);
-    assert_windows_launcher_command(&codex["hooks"]["PostToolUse"][0]["hooks"][0]["commandWindows"]);
+    assert_windows_launcher_command(
+        &codex["hooks"]["PostToolUse"][0]["hooks"][0]["commandWindows"],
+    );
 
     // A launcher-form manifest written by another checkout is recognized as
     // ours too: shared settings carrying it make `on` prune the local file.

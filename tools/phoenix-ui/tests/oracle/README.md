@@ -32,7 +32,8 @@ The corpus runs on macOS and Linux.
   `generate-image`, `serve-question` (offline paths only: the shipped
   catalog, image-generation argument errors, question modes that never open a
   browser).
-  `comp.mjs`: comp and component-review verbs. `skills.mjs`: `install`,
+  `comp.mjs`: comp and component-review verbs. `capture.mjs`: `capture`
+  (offline paths only: help, argument and state-file errors, no browser). `skills.mjs`: `install`,
   `link`, `update`, `check`, `skills`. `live-*.mjs`: the `live*` verbs.
 - `workspaces/`: project fixtures copied to a temp dir per run, so cases can
   write freely. `fixtures/external-project/` is a second git project staged

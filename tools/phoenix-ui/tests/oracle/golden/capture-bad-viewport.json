@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "capture: 无法识别视口 50x50：用 desktop、mobile、<宽>x<高> 或 <标签>=<宽>x<高>，宽高 100–4096\n运行 phoenix-ui capture --help 查看用法\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

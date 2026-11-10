@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Entrance</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: Arial, sans-serif; }
+  /* Held fully transparent for 20 s, so any scan in that window sees the same page. */
+  main { animation: fade 1s linear 20s both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .field { width: 240px; height: 40px; box-sizing: border-box; }
+  .primary { height: 48px; padding: 0 20px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+  <main>
+    <h1>Plan the week ahead</h1>
+    <p>Collect the open tasks, pick three that matter, and leave room for the unexpected.</p>
+    <label for="query">Search</label>
+    <div class="row">
+      <input id="query" class="field" type="text" placeholder="Search">
+      <button class="primary" type="button">Search</button>
+    </div>
+  </main>
+</body>
+</html>

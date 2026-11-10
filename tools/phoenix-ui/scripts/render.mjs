@@ -101,7 +101,7 @@ function verifyContent(output) {
     }
   }
   assert.deepEqual(fs.readdirSync(path.join(output.generic, 'agents')), ['openai.yaml']);
-  assert.equal(filesIn(path.join(output.generic, 'subagents/codex')).length, 4);
+  assert.equal(filesIn(path.join(output.generic, 'subagents/codex')).length, 5);
 }
 
 function generatedRecord(output, input) {

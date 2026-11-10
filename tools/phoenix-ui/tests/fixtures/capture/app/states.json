@@ -1,0 +1,37 @@
+{
+  "states": [
+    {
+      "name": "open-filter",
+      "steps": [
+        { "do": "fill", "target": { "role": "textbox", "name": "用户名" }, "value": "demo" },
+        { "do": "fill", "target": { "css": "#password" }, "env": "DEMO_PASSWORD" },
+        { "do": "click", "target": { "role": "button", "name": "登录" } },
+        { "do": "waitFor", "target": { "text": "任务" } },
+        { "do": "click", "target": { "role": "button", "name": "筛选" } }
+      ]
+    },
+    {
+      "name": "submit-empty",
+      "steps": [
+        { "do": "fill", "target": { "role": "textbox", "name": "用户名" }, "value": "demo" },
+        { "do": "fill", "target": { "css": "#password" }, "env": "DEMO_PASSWORD" },
+        { "do": "click", "target": { "role": "button", "name": "登录" } },
+        { "do": "click", "target": { "role": "button", "name": "新建" } },
+        { "do": "click", "target": { "role": "button", "name": "保存" } },
+        { "do": "waitFor", "target": { "text": "请填写标题" } }
+      ]
+    },
+    {
+      "name": "save-task",
+      "steps": [
+        { "do": "fill", "target": { "role": "textbox", "name": "用户名" }, "value": "demo" },
+        { "do": "fill", "target": { "css": "#password" }, "env": "DEMO_PASSWORD" },
+        { "do": "click", "target": { "role": "button", "name": "登录" } },
+        { "do": "click", "target": { "role": "button", "name": "新建" } },
+        { "do": "fill", "target": { "role": "textbox", "name": "标题" }, "value": "写周报" },
+        { "do": "click", "target": { "role": "button", "name": "保存" } },
+        { "do": "waitFor", "target": { "css": "#save-status:not(:empty)" } }
+      ]
+    }
+  ]
+}

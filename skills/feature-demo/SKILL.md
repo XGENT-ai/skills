@@ -50,13 +50,23 @@ WORKFLOW @write_demo:
        "字幕写这一步做什么和为什么，界面上看得到的不重复；一句话，语言跟随用户",
        "see 和 gone 写这步操作产生的、功能特有的结果；承诺是具体按钮或入口时就断言操作这个入口的结果"]
 
+RULE @precheck:
+  # 录制脚本证明 Playwright 走得通；录制前核对看的是运行中的系统此刻真实渲染成什么样。
+  WHEN: "宿主技能目录（如 .claude/skills/phoenix-ui/、.agents/skills/phoenix-ui/ 或用户级同名目录）里有 scripts/phoenix-ui，且 <它> capture --help 退出 0"
+  MUST: ["录制前把每个待录功能的演示步骤写成 capture 状态文件，定位沿用演示里的角色与可见名称；对运行中的系统执行 <phoenix-ui> capture <入口+path> --viewport <演示视口> --states <文件> --block-writes [--allow-write <已核实必要的路径>] --out <批次>/precheck/<slug>/，查看关键状态截图、控制台错误与失败请求",
+         "报告有被拦截的写请求时按 @environment 的写入规则处理：缺授权先问，或只录不产生副作用的部分；有拦截记录不算核对通过",
+         "核对失败按报告里的失败步骤与原因归为产品缺陷、脚本漂移或环境问题，按 @failed_step 处理",
+         =>[app_in_iframe_or_step_target_in_shadow_dom, "该功能不做录制前核对，照原流程录制"]]
+  MUST_NOT: ["把预检截图当视频或验收", "把 capture 写进演示脚本或录制器", "为核对安装、下载或提示安装 Phoenix"]
+  # 找不到、退出 4（engine 缺失或版本不符）或未知命令都视为不可用：本规则不适用，流程与原来一致。
+
 RULE @recording:
   MUST: ["Playwright 用项目已有的 1.64 及以上版本；没有时用 npm i --prefix <项目外目录> playwright-core 装到项目外，设 PLAYWRIGHT_ROOT 指向它，并告知会下载浏览器",
          "只回放固定脚本，步骤失败就停，不产出视频"]
   MUST_NOT: ["让模型在录制时现场决定操作", "加长等待或放宽断言，只为让失败的步骤通过"]
 
 RULE @failed_step:
-  MUST: ["先看 <slug>.failed.png，判断是产品缺陷、脚本漂移还是环境问题",
+  MUST: ["先看 <slug>.failed.png，判断是产品缺陷、脚本漂移还是环境问题；做过录制前核对时同时对照 precheck/<slug>/capture-report.json 的失败步骤与截图",
          "产品缺陷用用户的话和复现步骤报告，功能写入报告的「没有录制」节，不修产品，不绕开这一步",
          "脚本漂移修脚本后重录；环境问题修环境或记为阻塞"]
 
@@ -79,6 +89,7 @@ RULE @report:
          "每个功能写清解决什么、入口和操作、限制；不可录的功能进 sections，也写用法，并标明是否实跑过",
          "三类功能的后两类和细小修复进 sections；项目特有的内容也用 sections 表达",
          "运行 render-report.mjs 生成 index.html；报错就改数据，不改生成结果",
+         "做过录制前核对时，meta.environment 写明“录制前核对用了 phoenix-ui capture <capture-report.json 的 tool.version>”；precheck/ 不列进交付",
          "在浏览器打开 index.html（headless 也可以），确认每个视频有时长且能播放，图正常显示"]
 
 RULE @handoff:

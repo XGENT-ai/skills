@@ -15,9 +15,10 @@
 //! (`createBrowserDetector()`: `waitUntil: 'load'`, `settleMs: 100`).
 
 pub mod cdp;
-pub mod response_capture;
-pub mod html_snapshot;
 pub mod discovery;
+pub mod html_snapshot;
+pub mod network_log;
+pub mod response_capture;
 pub mod screenshot_contrast;
 pub mod snapshot_engine;
 
@@ -75,7 +76,7 @@ impl BrowserEngine {
     }
 
     /// `launchBrowser()`: discover, then launch headless.
-    fn launch(&self) -> Result<Browser, EngineError> {
+    pub fn launch(&self) -> Result<Browser, EngineError> {
         let exe = discovery::find_browser(&self.env).map_err(EngineError::new)?;
         Browser::launch(&exe, &self.launch_args(), self.dangerous_no_sandbox())
             .map_err(|e| EngineError::new(e.message))
@@ -295,27 +296,7 @@ fn detect_url_impl(
             b.close();
         }
     }
-    let results = scanned?;
-
-    let mut findings = Vec::with_capacity(results.len());
-    for r in results {
-        let Some(mut item) = try_finding(&r.id, url, &r.snippet, 0.0) else {
-            // JS: `finding()` dereferences an unknown registry entry.
-            return Err(EngineError::new(
-                "Cannot read properties of undefined (reading 'name')",
-            ));
-        };
-        if !r.ignore_value.is_empty() {
-            item.extras
-                .insert("ignoreValue".into(), Value::String(r.ignore_value));
-        }
-        if !r.severity.is_empty() && r.severity != item.severity {
-            item.severity = r.severity;
-        }
-        impeccable_core::findings::derive_advisory_flag(&mut item);
-        findings.push(item);
-    }
-    Ok(findings)
+    scanned
 }
 
 /// Everything between `newPage` and the `finally` that closes the page.
@@ -328,7 +309,7 @@ fn scan_page(
     wait_until: &str,
     settle_ms: u64,
     viewport: Viewport,
-) -> Result<Vec<RawResult>, EngineError> {
+) -> Result<Vec<Finding>, EngineError> {
     let outcome = scan_page_inner(
         &mut page,
         url,
@@ -351,7 +332,7 @@ fn scan_page_inner(
     wait_until: &str,
     settle_ms: u64,
     viewport: Viewport,
-) -> Result<Vec<RawResult>, EngineError> {
+) -> Result<Vec<Finding>, EngineError> {
     page.set_viewport(viewport).map_err(cdp_err)?;
     // JS `await applyOriginScopedAuth(page, url, credentials)` (issue #657).
     if let Some(creds) = credentials {
@@ -363,7 +344,18 @@ fn scan_page_inner(
     if settle_ms > 0 {
         std::thread::sleep(Duration::from_millis(settle_ms));
     }
+    scan_loaded_page(page, url, options, viewport)
+}
 
+/// The rule scan of a page that is already loaded, shared by `detect <url>`
+/// and `capture`, so both report the same findings for the same page state.
+/// `url` becomes each finding's `file`.
+pub fn scan_loaded_page(
+    page: &mut Page<'_>,
+    url: &str,
+    options: &ScanOptions,
+    viewport: Viewport,
+) -> Result<Vec<Finding>, EngineError> {
     // Inject the plain-JS snapshot producer (no WebAssembly runs in the page).
     snapshot_engine::ensure_snapshot_js(page).map_err(cdp_err)?;
 
@@ -438,13 +430,32 @@ fn scan_page_inner(
         snapshot_engine::analyze_visual_contrast(page, &base, 12.0, true).map_err(cdp_err)?;
     let visual = run_visual_contrast_fallback(page, &analyses, &serialized_groups, viewport)?;
     results.extend(visual);
-    Ok(results)
+
+    let mut findings = Vec::with_capacity(results.len());
+    for r in results {
+        let Some(mut item) = try_finding(&r.id, url, &r.snippet, 0.0) else {
+            // JS: `finding()` dereferences an unknown registry entry.
+            return Err(EngineError::new(
+                "Cannot read properties of undefined (reading 'name')",
+            ));
+        };
+        if !r.ignore_value.is_empty() {
+            item.extras
+                .insert("ignoreValue".into(), Value::String(r.ignore_value));
+        }
+        if !r.severity.is_empty() && r.severity != item.severity {
+            item.severity = r.severity;
+        }
+        impeccable_core::findings::derive_advisory_flag(&mut item);
+        findings.push(item);
+    }
+    Ok(findings)
 }
 
 /// The `measureContentHiddenAfterReveal` reveal sweep: scroll the page top to
 /// bottom (revealing lazy / on-scroll content), then back to the top and
 /// settle. The hidden-text measure then runs natively over a fresh capture.
-fn reveal_sweep(page: &mut Page<'_>) -> Result<(), CdpError> {
+pub fn reveal_sweep(page: &mut Page<'_>) -> Result<(), CdpError> {
     page.evaluate_value(
         r#"(async () => {
     const step = Math.max(200, Math.floor(window.innerHeight * 0.7));

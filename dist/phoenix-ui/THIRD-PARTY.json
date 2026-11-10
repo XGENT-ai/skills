@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "6774467b630f5e0c2928ccfc7abadde373df73e82cb44f00c955e58b3f53aa87",
+    "cargoLockSha256": "d30090b2983f0e71fe0040729da12c5f05bd1aec5304ca0164950189bc9e4d76",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
-    "checkerSha256": "f2664ad1531b67c2e423fbd53dcb58c2630d66f4e0fef15c10b13eb1dfe7fd98",
-    "buildToolsSha256": "64ca6f84fab7f68ef2524543fb3bad0b8028bd8a242b97ee79d2041c1ab6a65b"
+    "checkerSha256": "67d690df826d4745cc4804ffe8b348936de5b26f51ad3662a34a14bf995811ec",
+    "buildToolsSha256": "8d08482bcded6ba512aba03a73b5a7a90a7810f6c95375647c2be5982955e84c"
   },
   "rust": [
     {
@@ -1254,8 +1254,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1278,8 +1278,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1302,8 +1302,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1326,8 +1326,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1350,8 +1350,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1374,8 +1374,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1398,8 +1398,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1422,8 +1422,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1446,8 +1446,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1470,8 +1470,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1494,8 +1494,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1518,8 +1518,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -1542,8 +1542,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2098,8 +2098,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2121,8 +2121,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2144,8 +2144,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -2592,30 +2592,30 @@
     },
     {
       "name": "rustls",
-      "version": "0.23.45",
+      "version": "0.23.46",
       "license": "Apache-2.0 OR ISC OR MIT",
-      "sourceUrl": "https://static.crates.io/crates/rustls/rustls-0.23.45.crate",
-      "checksum": "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634",
+      "sourceUrl": "https://static.crates.io/crates/rustls/rustls-0.23.46.crate",
+      "checksum": "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf",
       "sourceUnmodified": true,
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
           "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "originalLocation": "https://docs.rs/crate/rustls/0.23.45/source/LICENSE-APACHE"
+          "originalLocation": "https://docs.rs/crate/rustls/0.23.46/source/LICENSE-APACHE"
         },
         {
           "path": "THIRD-PARTY-LICENSES/7cfafc877eccc46c0e346ccbaa5c51bb6b894d2b818e617d970211e232785ad4.txt",
           "sha256": "7cfafc877eccc46c0e346ccbaa5c51bb6b894d2b818e617d970211e232785ad4",
-          "originalLocation": "https://docs.rs/crate/rustls/0.23.45/source/LICENSE-ISC"
+          "originalLocation": "https://docs.rs/crate/rustls/0.23.46/source/LICENSE-ISC"
         },
         {
           "path": "THIRD-PARTY-LICENSES/709e3175b4212f7b13aa93971c9f62ff8c69ec45ad8c6532a7e0c41d7a7d6f8c.txt",
           "sha256": "709e3175b4212f7b13aa93971c9f62ff8c69ec45ad8c6532a7e0c41d7a7d6f8c",
-          "originalLocation": "https://docs.rs/crate/rustls/0.23.45/source/LICENSE-MIT"
+          "originalLocation": "https://docs.rs/crate/rustls/0.23.46/source/LICENSE-MIT"
         }
       ],
       "licenseLocations": [
-        "https://docs.rs/crate/rustls/0.23.45/source/Cargo.toml.orig"
+        "https://docs.rs/crate/rustls/0.23.46/source/Cargo.toml.orig"
       ]
     },
     {
@@ -2676,20 +2676,20 @@
     },
     {
       "name": "rustls-webpki",
-      "version": "0.103.15",
+      "version": "0.103.16",
       "license": "ISC",
-      "sourceUrl": "https://static.crates.io/crates/rustls-webpki/rustls-webpki-0.103.15.crate",
-      "checksum": "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2",
+      "sourceUrl": "https://static.crates.io/crates/rustls-webpki/rustls-webpki-0.103.16.crate",
+      "checksum": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281",
       "sourceUnmodified": true,
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/5b698ca13897be3afdb7174256fa1574f8c6892b8bea1a66dd6469d3fe27885a.txt",
           "sha256": "5b698ca13897be3afdb7174256fa1574f8c6892b8bea1a66dd6469d3fe27885a",
-          "originalLocation": "https://docs.rs/crate/rustls-webpki/0.103.15/source/LICENSE"
+          "originalLocation": "https://docs.rs/crate/rustls-webpki/0.103.16/source/LICENSE"
         }
       ],
       "licenseLocations": [
-        "https://docs.rs/crate/rustls-webpki/0.103.15/source/Cargo.toml.orig"
+        "https://docs.rs/crate/rustls-webpki/0.103.16/source/Cargo.toml.orig"
       ]
     },
     {
@@ -3882,20 +3882,20 @@
     },
     {
       "name": "webpki-roots",
-      "version": "1.0.9",
+      "version": "1.0.11",
       "license": "CDLA-Permissive-2.0",
-      "sourceUrl": "https://static.crates.io/crates/webpki-roots/webpki-roots-1.0.9.crate",
-      "checksum": "7dcd9d09a39985f5344844e66b0c530a33843579125f23e21e9f0f220850f22a",
+      "sourceUrl": "https://static.crates.io/crates/webpki-roots/webpki-roots-1.0.11.crate",
+      "checksum": "f5f280bbb2b287bc8e7de7e3852945a0ff50d1bbcb5ed42b6c7a568c546df171",
       "sourceUnmodified": true,
       "licenses": [
         {
           "path": "THIRD-PARTY-LICENSES/e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8.txt",
           "sha256": "e271993808fec50ab29350b39539cdec611a9103f827e0aa26d61da70e2d33f8",
-          "originalLocation": "https://docs.rs/crate/webpki-roots/1.0.9/source/LICENSE"
+          "originalLocation": "https://docs.rs/crate/webpki-roots/1.0.11/source/LICENSE"
         }
       ],
       "licenseLocations": [
-        "https://docs.rs/crate/webpki-roots/1.0.9/source/Cargo.toml.orig"
+        "https://docs.rs/crate/webpki-roots/1.0.11/source/Cargo.toml.orig"
       ]
     },
     {
@@ -4307,8 +4307,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5577,8 +5577,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5598,8 +5598,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5619,8 +5619,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5640,8 +5640,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5661,8 +5661,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5682,8 +5682,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5703,8 +5703,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5724,8 +5724,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5745,8 +5745,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5766,8 +5766,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5778,7 +5778,7 @@
     {
       "path": "skills/phoenix-ui/src/scripts/live-browser-session.js",
       "importedPath": "skill/scripts/live-browser-session.js",
-      "sha256": "25d382795cdbb9b5fe91ddfde254140830d0227655d5e73eb286bda61a383e11",
+      "sha256": "3c5da4851d33133f74c8526235c2d99b4e1abae6529b8bdd03ce865c68d89efe",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -5787,8 +5787,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5799,7 +5799,7 @@
     {
       "path": "skills/phoenix-ui/src/scripts/live-browser.js",
       "importedPath": "skill/scripts/live-browser.js",
-      "sha256": "261755a57a3baf10828fb310029185ed82345217c03cc6823db64fa1ccf4ca39",
+      "sha256": "11d65e010ff2b5b5c70368363be085f7f6a1769ed61c2b3ea8bbe45aeeae5d70",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -5808,8 +5808,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5858,8 +5858,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5879,8 +5879,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5948,8 +5948,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5969,8 +5969,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -5990,8 +5990,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6011,8 +6011,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6032,8 +6032,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6053,8 +6053,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6074,8 +6074,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6086,7 +6086,7 @@
     {
       "path": "tools/phoenix-ui/ui/component-review/review.ts",
       "importedPath": "ui/component-review/review.ts",
-      "sha256": "4b3347185fee94a4d135086e974137e948fee15034e115056936c73ea2990756",
+      "sha256": "15e1aeff4dce33327d12e41e7ab92854df6d2bdd236a2226fd15a2caa95634e9",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6095,19 +6095,19 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
       "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/ui/component-review/review.ts",
       "upstreamSha256": "4b3347185fee94a4d135086e974137e948fee15034e115056936c73ea2990756",
-      "modifiedSinceImport": false
+      "modifiedSinceImport": true
     },
     {
       "path": "tools/phoenix-ui/ui/component-review/styles.ts",
       "importedPath": "ui/component-review/styles.ts",
-      "sha256": "27374f9890c91a68c3b8dea8b4399c8473590fbd3d92ee1fdfad2b3482c67ec6",
+      "sha256": "5d18fb69f20304f92dadf9b4d8caebed744dae4713a4489b9975c1c6b01a3a7a",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6116,14 +6116,14 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
       "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/ui/component-review/styles.ts",
       "upstreamSha256": "27374f9890c91a68c3b8dea8b4399c8473590fbd3d92ee1fdfad2b3482c67ec6",
-      "modifiedSinceImport": false
+      "modifiedSinceImport": true
     },
     {
       "path": "tools/phoenix-ui/ui/component-review/vendor/docs-rail.css",
@@ -6137,8 +6137,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6159,8 +6159,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6181,8 +6181,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6203,8 +6203,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6225,8 +6225,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6247,8 +6247,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6268,8 +6268,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6289,8 +6289,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6310,8 +6310,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6331,8 +6331,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6352,8 +6352,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6373,8 +6373,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
@@ -6385,7 +6385,7 @@
     {
       "path": "tools/phoenix-ui/crates/context/assets/component-review.js",
       "importedPath": "crates/context/assets/component-review.js",
-      "sha256": "d3dbc7a8db912ea914e95ad8e280d47ffdafa3c7119d921fe77d77a8b2993682",
+      "sha256": "8566fe639d89c5572607924714d701aca3f122787ae4c60c31e98e5e55f4cf38",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6394,20 +6394,20 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],
       "sourceUrl": "https://github.com/pbakaus/impeccable/blob/508d7e8955de3b3caf2d8676e85206723d41a887/crates/context/assets/component-review.js",
       "upstreamSha256": "d3dbc7a8db912ea914e95ad8e280d47ffdafa3c7119d921fe77d77a8b2993682",
-      "modifiedSinceImport": false,
+      "modifiedSinceImport": true,
       "additionalLicenses": "Generated asset: also distribute all Rust/Node notices in this inventory; build freshness is a separate check"
     },
     {
       "path": "tools/phoenix-ui/crates/live/assets/detect-antipatterns-browser.js",
       "importedPath": "crates/live/assets/detect-antipatterns-browser.js",
-      "sha256": "c82536e19c2d5ba10ae9354fba2bc920fcef95d9151b67012912f33e01c74772",
+      "sha256": "416c606f098926f6844b84c97ad69d354f93c4f1291a337d0585676347ae44fb",
       "license": "Apache-2.0",
       "licenses": [
         {
@@ -6416,8 +6416,8 @@
           "originalLocation": "tools/phoenix-ui/LICENSE"
         },
         {
-          "path": "THIRD-PARTY-LICENSES/0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae.txt",
-          "sha256": "0db9350f899c7e103a001e6dba43b9cfe25bb1dbeefccd31c117dbb31207bfae",
+          "path": "THIRD-PARTY-LICENSES/27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03.txt",
+          "sha256": "27bf8d388507da8d95b8ae285c89d7bf9f2cae62f7863a6a5ee3b76e6af35f03",
           "originalLocation": "tools/phoenix-ui/NOTICE.md"
         }
       ],

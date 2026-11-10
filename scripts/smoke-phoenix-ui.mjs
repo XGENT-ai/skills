@@ -97,10 +97,30 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     call('hook-session-start', file, ['hook'], 0, JSON.stringify({ cwd: project, session_id: 'phoenix-ci', hook_event_name: 'SessionStart' }));
     const launcher = path.join(runtime, 'bin/phoenix-ui.js');
     const node = (name, args, expected) => call(name, process.execPath, [launcher, ...args], expected);
+    // capture needs stderr and tolerates a host without a browser, so it gets its own runner.
+    const capture = (name, args) => {
+      const result = spawnSync(process.execPath, [launcher, ...args], { cwd: project, env, encoding: 'utf8', timeout: 120000, maxBuffer: 16 * 1024 * 1024, windowsHide: true });
+      record.checks.push({ name, argv: args, exitCode: result.status, error: result.error?.message });
+      assert(!result.error, `${name} failed: ${result.error?.message}`);
+      return result;
+    };
     assert.equal(JSON.parse(node('node-missing-engine', ['context', '--json'], 4)).status, 'unavailable');
+    const missing = capture('node-missing-engine-capture', ['capture', '--help']);
+    assert(missing.status === 4 && /phoenix-ui engine install --project/.test(missing.stderr), `capture without an engine must exit 4 with the install command (exit ${missing.status})`);
     assert.equal(JSON.parse(node('node-explicit-offline-install', ['engine', 'install', '--project', project, '--release-dir', releaseDir, '--json'], 0)).status, 'installed');
     assert.equal(node('node-engine-version', ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(node('node-context', ['context', '--target', project], 0), /Phoenix CI local fixture/);
+    assert.match(node('node-capture-help', ['capture', '--help'], 0), /phoenix-ui capture/);
+    const shot = capture('node-capture-shot', ['capture', 'page.html', '--viewport', '390x844', '--out', 'capture']);
+    if (shot.status === 0) {
+      const report = JSON.parse(fs.readFileSync(path.join(project, 'capture/capture-report.json'), 'utf8'));
+      const entry = report.shots.find(item => item.file === '390x844.png');
+      assert(entry?.valid && entry.pixels.width === 390 && entry.pixels.height === 844, 'capture must write a valid 390x844 shot');
+      record.capture = 'screenshot';
+    } else {
+      assert(shot.status === 1 && /浏览器不可用/.test(shot.stderr) && !fs.existsSync(path.join(project, 'capture')), `capture must take a shot or report the browser unavailable (exit ${shot.status}): ${shot.stderr}`);
+      record.capture = 'browser-unavailable';
+    }
     assert.equal(JSON.parse(node('local-bundle-check', ['check', '--bundle-root', path.join(runtime, 'dist/phoenix-ui/bundle'), '--json'], 0)).status, 'not-installed');
     record.status = 'passed'; record.finishedAt = new Date().toISOString();
     return record;

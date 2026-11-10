@@ -15,3 +15,12 @@ The `skill/reference/ios.md` and `skill/reference/android.md` platform reference
 **Original work:** https://github.com/ehmo/platform-design-skills
 **Original license:** MIT
 **Author:** ehmo
+
+## oil-ui
+
+The `phoenix-ui capture` command (`crates/cli/src/capture/`) adapts oil-ui's screenshot workflow: the step model, text locating and failure hints, animation settling, and the mask, mark, sheet, stitch, and sequence-frame methods, rewritten in Rust over Phoenix's CDP layer with JSON state files. The `phoenix-ui-ux-walker` subagent (`skills/phoenix-ui/src/subagents/phoenix-ui-ux-walker.md`) adapts oil-ui's lightweight UX walkthrough handoff and report format.
+
+**Original work:** oil-ui 0.33.2 (local copy; upstream repository address not verified from that copy)
+**Original license:** MIT
+**Author:** oil-oil
+

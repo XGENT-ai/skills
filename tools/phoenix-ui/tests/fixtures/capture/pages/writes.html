@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Write channels</title></head>
+<body>
+  <h1>Every way this page writes</h1>
+  <form id="form" method="post" action="/api/form" target="sink"><input name="a" value="1"></form>
+  <iframe name="sink" title="form target"></iframe>
+  <iframe id="cross" title="cross-site frame"></iframe>
+  <script>
+    fetch('/api/fetch', { method: 'POST', body: 'x' }).catch(() => {});
+    fetch('/api/allowed', { method: 'POST', body: 'x' }).catch(() => {});
+    navigator.sendBeacon('/api/beacon', 'x');
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', '/api/xhr');
+    xhr.send('x');
+    document.getElementById('form').submit();
+    // localhost and 127.0.0.1 are different sites: an out-of-process frame.
+    document.getElementById('cross').src = 'http://localhost:' + location.port + '/xframe.html';
+    new Worker('/worker.js');
+  </script>
+</body>
+</html>

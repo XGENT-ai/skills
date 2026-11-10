@@ -1,0 +1,10 @@
+{
+  "states": [
+    { "name": "hidden-target", "steps": [{ "do": "click", "target": { "css": "#hidden" } }] },
+    { "name": "covered", "steps": [{ "do": "click", "target": { "css": "#under" } }] },
+    { "name": "disabled", "steps": [{ "do": "click", "target": { "text": "禁用按钮" } }] },
+    { "name": "missing-text", "steps": [{ "do": "click", "target": { "text": "被盖住了" } }] },
+    { "name": "wait-hidden", "steps": [{ "do": "waitFor", "target": { "text": "一直在" }, "until": "hidden", "timeoutMs": 300 }] },
+    { "name": "framed", "steps": [{ "do": "click", "target": { "text": "框内按钮" } }] }
+  ]
+}

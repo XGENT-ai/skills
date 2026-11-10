@@ -1,6 +1,8 @@
 //! Native browser adapters, kept separate from the comp-verbs contract.
 pub mod asset_capture;
 
+pub mod capture;
+
 pub mod capture_snapshot;
 
 pub mod component_capture;

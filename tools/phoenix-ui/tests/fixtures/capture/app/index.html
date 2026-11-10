@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>任务看板</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main id="login" class="card entrance">
+    <img class="logo" src="/assets/missing-logo.png" alt="任务看板标识" width="48" height="48">
+    <h1>登录任务看板</h1>
+    <form id="login-form" novalidate>
+      <label>用户名 <input id="username" name="username" autocomplete="username"></label>
+      <label>密码 <input id="password" type="password" name="password" autocomplete="current-password"></label>
+      <p id="login-error" class="error" hidden>请输入用户名和密码</p>
+      <button type="submit">登录</button>
+    </form>
+    <p class="note">演示环境：任意用户名与非空密码即可进入。</p>
+  </main>
+
+  <main id="tasks" hidden>
+    <header class="bar">
+      <h1>任务</h1>
+      <div class="actions">
+        <button id="filter-button" type="button" aria-expanded="false">筛选</button>
+        <button id="new-button" type="button">新建</button>
+      </div>
+    </header>
+
+    <section id="filter-panel" class="panel" hidden aria-label="筛选条件">
+      <label>状态
+        <select id="status">
+          <option value="all">全部</option>
+          <option value="open">进行中</option>
+          <option value="done">已完成</option>
+        </select>
+      </label>
+      <label>负责人 <input id="owner" placeholder="输入姓名"></label>
+      <button id="apply-filter" type="button">应用筛选</button>
+    </section>
+
+    <form id="new-form" class="panel" hidden novalidate aria-label="新建任务">
+      <label>标题 <input id="title" name="title"></label>
+      <p id="title-error" class="error" hidden>请填写标题</p>
+      <button type="submit">保存</button>
+      <p id="save-status" role="status"></p>
+    </form>
+
+    <table class="task-table">
+      <thead><tr><th>任务</th><th>负责人</th><th>截止日期</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>整理季度目标</td><td>林一</td><td>2026-11-20</td><td>进行中</td></tr>
+        <tr><td>更新部署手册</td><td>周二</td><td>2026-11-22</td><td>进行中</td></tr>
+        <tr><td>复盘上线问题</td><td>陈三</td><td>2026-11-12</td><td>已完成</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

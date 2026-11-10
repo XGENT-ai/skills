@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "capture: 浏览器不可用：Browser was not found at the configured executablePath (/nonexistent) from PHOENIX_UI_BROWSER\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}
