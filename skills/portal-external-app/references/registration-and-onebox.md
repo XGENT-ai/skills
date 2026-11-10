@@ -292,7 +292,7 @@ shasum -a 256 "$S"
 但**后端进程不起来**读文件就是 502/401。`FILES_SA_CLIENT_SECRET` 必须与 `db:seed:onebox` 种的 SA secret
 等值，否则自省 401。
 
-细节（含 App 自带基础设施如向量库 sidecar、把后端跑在宿主上保留热重载的 socat 绕法）见交付包内
+细节（含 App 自带的其他基础设施 sidecar、把后端跑在宿主上保留热重载的 socat 绕法）见交付包内
 `deploy/app-devkit/README.md`。
 
 ### 4.4 Kafka 接入
@@ -327,6 +327,32 @@ Kafka 当权威业务记录系统。权限按 App 隔离，App 自行实现租�
 不要把 `KAFKA_ADMIN_PASSWORD` 写入 App 的 `requiredEnv`。一盒仍将整份 `compose.env` 注入容器，
 只适合可信团队本地联调，不承诺容器间秘密隔离。客户端配置与手工修复命令随 `portal-dev-setup` 的
 `references/kafka.md` 交付，也见门户《平台 Kafka 接入指引》。
+
+### 4.5 向量库接入
+
+以 `listingKey: "doc-search"` 为例：
+
+```json
+{
+  "requiredServices": [{ "kind": "vectorStore", "name": "main" }],
+  "requiredEnv": ["DOC_SEARCH_VECTOR_DB_URI", "DOC_SEARCH_VECTOR_DB_TOKEN", "DOC_SEARCH_VECTOR_DB_NAME"]
+}
+```
+
+`vectorStore` 每个 App 至多一条，不收 `envKey`；必须声明这条服务才供给，只写三个键名不会触发。生产批准时
+平台建库 `app_doc_search`、只授该库的角色与用户，注入三键：URI `http://vectordb-proxy:19530`、TOKEN
+`app_doc_search:<口令>`、NAME `app_doc_search`；换版与重批沿用原值，不静默轮换。这三个键不要写进
+`descriptor.env` / envFile，那里的同名值会覆盖平台注入。
+
+一盒里 `up` 不常驻向量库；`onebox.sh add doc-search --manifest ./app.manifest.json --image <镜像>` 按需建专用桶、
+启动 `vectordb` + `vectordb-proxy`、登记 `vectorStore:main` 档案、建库 / 角色 / 用户并写入三键。口令写入只显示
+`***`，重复 `add` 沿用原值；失败只告警，告警给出重试命令。容器用 `http://vectordb-proxy:19530`，宿主进程改用
+`http://127.0.0.1:<VECTOR_DB_PORT>`。Apple Silicon 上在 `compose.env` 末尾设 `VECTOR_DB_IMAGE=<本地 arm64 镜像>`。
+
+每个请求都带 `dbName`（REST 体）或 `db_name`（SDK），成功以 `code == 0` 判断。App 在本库内可建删集合与读写，
+别的库、建删库、改库属性、用户与角色管理均被拒（HTTP 403）。单实例、无平台备份：App 能从权威数据重建向量，
+自行做租户隔离与重试。App 网络上只有代理的 19530，实例的管理口与内部端口不可达。一盒同样把整份
+`compose.env` 注入容器，不承诺容器间密钥隔离，不放真实数据。完整说明见门户《平台向量库接入指引》。
 
 ## 5. 冒烟
 
