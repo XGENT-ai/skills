@@ -359,6 +359,7 @@ cmd_upgrade() {
   _objectstore_image
   _pin_postgres "$postgres_volume"
   _kafka_defaults
+  _vectordb_defaults
   info "部署资产已升级；现有配置、generated/、backup/、端口与数据卷保留。"
   info "下一步：$0 up（仍会重种门户库；App 自己的库不重置）。"
 }
@@ -486,6 +487,7 @@ APP_IMAGE=
 #APP_FRONTEND_DIST=/abs/path/to/your/frontend/dist
 EOF
   chmod 600 "$envf" || die "无法保护 compose.env 权限，初始化中止。"
+  ENV_FILE="$envf" _vectordb_defaults
 
   # 5) 别让它进版本库：里面是密钥，且随时能从镜像重新生成
   local root; root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -751,12 +753,122 @@ _kafka_add_warning() {
   printf '\n'
   _note "手工修复命令见《平台 Kafka 接入指引》的一盒故障恢复；不要把管理员密码填进 App requiredEnv。"
 }
+_vectordb_defaults() {
+  # Only absent keys are filled: the root password is read only on an empty volume and the
+  # bucket name is the instance identity, so neither may ever change for existing data.
+  local value
+  if ! grep -q '^VECTOR_DB_ROOT_PASSWORD=' "$ENV_FILE"; then
+    value="$(openssl rand -hex 24)" && [ "${#value}" = 48 ] || die "无法生成向量库 root 口令，操作中止。"
+    _env_append_secret VECTOR_DB_ROOT_PASSWORD "$value"
+  fi
+  grep -q '^VECTOR_DB_BUCKET=' "$ENV_FILE" || _env_set VECTOR_DB_BUCKET xgent-vectordb
+  grep -q '^VECTOR_DB_MEM_LIMIT=' "$ENV_FILE" || _env_set VECTOR_DB_MEM_LIMIT 2g
+  grep -q '^VECTOR_DB_ADMIN_URL=' "$ENV_FILE" || _env_set VECTOR_DB_ADMIN_URL http://vectordb-proxy:19530
+  grep -q '^VECTOR_DB_PORT=' "$ENV_FILE" || _env_set VECTOR_DB_PORT "$(pick_port 19530 29530 39530)"
+  if ! grep -q '^VECTOR_DB_REGISTRY=' "$ENV_FILE"; then
+    load_registry_config >/dev/null 2>&1 || true
+    [ -z "${REGISTRY:-}" ] || _env_set VECTOR_DB_REGISTRY "$REGISTRY"
+  fi
+  chmod 600 "$ENV_FILE" || die "无法保护 compose.env 权限，操作中止。"
+}
+_vectordb_assets_current() {
+  grep -qE '^  vectordb:' "$HOME_DIR/docker-compose.yml" \
+    && [ -f "$HOME_DIR/vectordb/haproxy.cfg" ] \
+    && grep -q '^VECTOR_DB_ROOT_PASSWORD=' "$ENV_FILE"
+}
+_ensure_vectordb_bucket() {
+  # Recreates RustFS when the assets just gained the private network; data stays in rustfs-data.
+  ( _objectstore_up ) || return 1
+  grep -q '^VECTOR_DB_S3_ACCESS_KEY=' "$ENV_FILE" || _env_set VECTOR_DB_S3_ACCESS_KEY vectordb
+  if ! grep -q '^VECTOR_DB_S3_SECRET_KEY=' "$ENV_FILE"; then
+    _env_append_secret VECTOR_DB_S3_SECRET_KEY "$(openssl rand -hex 24)"
+  fi
+  chmod 600 "$ENV_FILE" || return 1
+  # Dedicated bucket + a RustFS user granted only that bucket; real errors fail, never fall back to root.
+  # shellcheck disable=SC2016
+  printf '%s\n' "$(_eff VECTOR_DB_S3_SECRET_KEY)" | dc exec -T rustfs sh -ec '
+    read -r SK
+    B=$1
+    s3() { curl -fsS --max-time 10 --aws-sigv4 "aws:amz:us-east-1:s3" --user "$RUSTFS_ACCESS_KEY:$RUSTFS_SECRET_KEY" "$@" >/dev/null; }
+    E=http://127.0.0.1:9000
+    s3 -X PUT "$E/$B" || [ "$(curl -sS -o /dev/null -w "%{http_code}" --aws-sigv4 "aws:amz:us-east-1:s3" --user "$RUSTFS_ACCESS_KEY:$RUSTFS_SECRET_KEY" -I "$E/$B")" = 200 ]
+    s3 -X PUT "$E/rustfs/admin/v3/add-canned-policy?name=$B" --data-binary "{\"Version\":\"2012-10-17\",\"Statement\":[
+      {\"Effect\":\"Allow\",\"Action\":[\"s3:GetBucketLocation\",\"s3:ListBucket\",\"s3:ListBucketMultipartUploads\"],\"Resource\":[\"arn:aws:s3:::$B\"]},
+      {\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:DeleteObject\",\"s3:AbortMultipartUpload\",\"s3:ListMultipartUploadParts\"],\"Resource\":[\"arn:aws:s3:::$B/*\"]}]}"
+    printf "{\"secretKey\":\"%s\",\"status\":\"enabled\"}" "$SK" | s3 -X PUT "$E/rustfs/admin/v3/add-user?accessKey=$2" --data-binary @-
+    s3 -X PUT "$E/rustfs/admin/v3/set-user-or-group-policy?policyName=$B&userOrGroup=$2&isGroup=false"
+  ' sh "$(_eff VECTOR_DB_BUCKET xgent-vectordb)" "$(_eff VECTOR_DB_S3_ACCESS_KEY)" >/dev/null 2>&1
+}
+_ensure_vectordb() { # _ensure_vectordb LISTING_KEY ENV_PREFIX
+  local key="$1" prefix="$2" name token password root cid state deadline
+  [[ "$key" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
+  _vectordb_assets_current || return 1
+  _ensure_vectordb_bucket || return 1
+  info "   起向量库（首次约 1 分钟）…"
+  dc --profile vectordb up -d vectordb vectordb-proxy </dev/null >/dev/null 2>&1 || return 1
+  deadline=$((SECONDS+180)); state=''
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    cid="$(dc --profile vectordb ps -q vectordb </dev/null 2>/dev/null || true)"
+    [ -z "$cid" ] || state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$cid" 2>/dev/null || true)"
+    [ "$state" = healthy ] && break
+    sleep 2
+  done
+  [ "$state" = healthy ] || return 1
+  # Registers the vectorStore:main service and default profile; skipped when a profile exists.
+  dc run --rm portal-api bun -e 'const m = await import("/app/apps/api/src/db/seed-vectordb-profile.ts"); for (const l of await m.seedVectorDbProfile()) console.log(l); process.exit(0)' </dev/null >/dev/null 2>&1 || return 1
+  name="app_${key//-/_}"
+  token="$(_eff "${prefix}_VECTOR_DB_TOKEN")"
+  if [ -z "$token" ]; then
+    password="$(openssl rand -hex 24)" || return 1
+    token="${name}:${password}"
+    # Persist before contacting the instance: a partial failure must reuse this password.
+    _env_append_secret "${prefix}_VECTOR_DB_TOKEN" "$token"
+  fi
+  password="${token#"${name}:"}"
+  [[ "$password" =~ ^[0-9a-f]{16,}$ ]] || return 1
+  root="$(_eff VECTOR_DB_ROOT_PASSWORD)"
+  [ -n "$root" ] || return 1
+  chmod 600 "$ENV_FILE" || return 1
+  # Same calls as the portal's provisioning: db, collection group, role scoped to this db, user.
+  # shellcheck disable=SC2016
+  if ! printf '%s\n%s\n' "$root" "$password" | dc --profile vectordb exec -T vectordb bash -ec '
+    IFS= read -r root; IFS= read -r pw; n=$1
+    v() {
+      local out
+      out=$(curl -sS --max-time 10 -X POST "http://127.0.0.1:19530/v2/vectordb/$1" -H "Authorization: Bearer root:$root" -H "Content-Type: application/json" -d "$2")
+      case "$out" in *"\"code\":0"*) return 0 ;; esac
+      [ "${3:-}" = exists-ok ] && case "$out" in *"already exist"*|*"defined by users"*) return 0 ;; esac
+      return 1
+    }
+    v databases/create "{\"dbName\":\"$n\"}" exists-ok
+    v privilege_groups/create "{\"privilegeGroupName\":\"app_db_collections\"}" exists-ok
+    v privilege_groups/add_privileges_to_group "{\"privilegeGroupName\":\"app_db_collections\",\"privileges\":[\"CreateCollection\",\"DropCollection\",\"ShowCollections\",\"DescribeDatabase\"]}"
+    v roles/create "{\"roleName\":\"$n\"}" exists-ok
+    v roles/grant_privilege_v2 "{\"roleName\":\"$n\",\"privilege\":\"app_db_collections\",\"dbName\":\"$n\",\"collectionName\":\"*\"}"
+    v roles/grant_privilege_v2 "{\"roleName\":\"$n\",\"privilege\":\"CollectionReadWrite\",\"dbName\":\"$n\",\"collectionName\":\"*\"}"
+    v users/drop "{\"userName\":\"$n\"}"
+    v users/create "{\"userName\":\"$n\",\"password\":\"$pw\"}"
+    v users/grant_role "{\"userName\":\"$n\",\"roleName\":\"$n\"}"
+  ' bash "$name" >/dev/null 2>&1; then return 1; fi
+  _env_set "${prefix}_VECTOR_DB_URI" http://vectordb-proxy:19530
+  _env_set "${prefix}_VECTOR_DB_NAME" "$name"
+  info "向量库 ${name}（库 / 角色 / 用户）就绪"
+}
+_vectordb_add_warning() {
+  warn "向量库供给失败；门户与应用初始化继续。已保存的口令保持不变，检查向量库日志后重试："
+  printf '  XGENT_ONEBOX_HOME=%q bash %q add %q' "$HOME_DIR" "$0" "$1"
+  [ -z "${ADD_MANIFEST:-}" ] || printf ' --manifest %q' "$ADD_MANIFEST"
+  [ -z "${ADD_FROM:-}" ] || printf ' --from %q' "$ADD_FROM"
+  printf '\n'
+  _note "排查：$0 dc --profile vectordb logs --tail 50 vectordb；手工修复见《平台向量库接入指引》的一盒故障恢复。"
+}
 _portal_services_up() {
   # Kafka has its own non-blocking startup; do not retry it in the hard-fail group.
+  # The vector DB starts on demand from add, never as a resident service.
   local enabled svc services=()
   enabled="$(dc config --services)" || die "无法读取一盒服务清单。"
   while IFS= read -r svc; do
-    [ -z "$svc" ] || [ "$svc" = kafka ] || services+=("$svc")
+    case "$svc" in ''|kafka|vectordb|vectordb-proxy) ;; *) services+=("$svc") ;; esac
   done <<< "$enabled"
   [ "${#services[@]}" -gt 0 ] || die "一盒服务清单为空。"
   dc up -d "${services[@]}"
@@ -1124,12 +1236,13 @@ cmd_add() {
     }
     console.log(`M_GEN=${generated.map((e) => `${e.key}:${e.generate.encoding}:${e.generate.bytes}:${e.renamedFrom ?? ""}`).join(" ")}`);
     console.log(`M_KAFKA=${(m.requiredServices ?? []).some((s) => s.kind === "kafka") ? "1" : "0"}`);
+    console.log(`M_VDB=${(m.requiredServices ?? []).some((s) => s.kind === "vectorStore") ? "1" : "0"}`);
     // 非空 ⇒ 它是跨应用交换的【发起方】，需要一把 App Secret（下面与 SA 密钥同源生成注入）。
     console.log(`M_XTARGETS=${(m.exchangeTargets ?? []).join(" ")}`);
     console.log(`M_MIGRATE=${(d.migrateArgs ?? []).join(" ")}`);
     console.log(`M_DEPS=${(m.dependencies ?? []).join(" ")}`);
   ' 2>/dev/null)" || die "解析清单失败 —— 它可能不是一份合法的 app.manifest.json。"
-  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_GEN="" M_KAFKA="" M_XTARGETS="" M_MIGRATE="" M_DEPS=""
+  local M_KEY="" M_TYPE="" M_IMAGE="" M_PORT="" M_HEALTH="" M_SA="" M_ENV="" M_GEN="" M_KAFKA="" M_VDB="" M_XTARGETS="" M_MIGRATE="" M_DEPS=""
   eval "$(printf '%s' "$fields" | sed 's/^\([A-Z_]*\)=\(.*\)$/\1="\2"/')"
   [ "$M_KEY" = "$key" ] || die "清单里的 listingKey 是「${M_KEY}」，与你要加的「${key}」对不上。"
   info "   ${M_KEY}  type=${M_TYPE}  port=${M_PORT}  sa=${M_SA}"
@@ -1246,6 +1359,9 @@ cmd_add() {
   case " $M_ENV " in *" ${PREFIX}_KAFKA_USERNAME "*) M_KAFKA=1 ;; esac
   if [ "$M_KAFKA" = 1 ]; then
     if ! _ensure_kafka "$key" "$PREFIX"; then _kafka_add_warning "$key"; fi
+  fi
+  if [ "$M_VDB" = 1 ]; then
+    if ! _ensure_vectordb "$key" "$PREFIX"; then _vectordb_add_warning "$key"; fi
   fi
   {
     echo "# 由 onebox.sh add ${key} 从 manifest 生成 —— 不要手改，重跑 add 会覆盖。"
@@ -1375,6 +1491,19 @@ cmd_doctor() {
     _ok "Kafka INTERNAL 监听正常（SASL 认证由服务探测验证）"
   else
     _bad "Kafka 未就绪；门户与现有应用可继续运行" "$0 dc logs --tail 50 kafka；修复后重跑 $0 up。"
+  fi
+
+  echo "向量库"
+  local vcid vstate
+  vcid="$(dc --profile vectordb ps -q vectordb 2>/dev/null || true)"
+  if ! _vectordb_assets_current; then
+    _bad "向量库部署资产或配置是旧版" "$0 upgrade --image <新版一盒镜像>"
+  elif [ -z "$vcid" ]; then
+    _ok "未启动（首次 add 声明 vectorStore 的 App 时按需拉起）"
+  elif vstate="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$vcid" 2>/dev/null)" && [ "$vstate" = healthy ]; then
+    _ok "vectordb healthy；App 入口 vectordb-proxy:19530"
+  else
+    _bad "向量库未就绪（${vstate:-未运行}）" "$0 dc --profile vectordb logs --tail 50 vectordb"
   fi
 
   echo "① 镜像版本"

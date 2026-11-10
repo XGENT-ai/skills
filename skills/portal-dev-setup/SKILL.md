@@ -258,6 +258,20 @@ Kafka 随基础设施常驻，`up` 单独启动并最多等健康 60 秒；失�
 一盒 EXTERNAL 默认 `127.0.0.1:9095`，保持回环，不开放公网。生产跨 VM 的外部口配置由运维处理：
 监听地址、非回环广告地址和安全组需同时匹配，且 SASL_PLAINTEXT 不加密消息。
 
+### 向量库的启动边界
+
+向量库不常驻：`up` 不启动它，`doctor` 在未启动时只说明「首次 add 时拉起」。`add` 的清单
+`requiredServices` 含 `{"kind":"vectorStore","name":"main"}` 时按顺序做：建专用桶 `xgent-vectordb` 与只授该桶的
+RustFS 用户 → 起 `vectordb` 与 `vectordb-proxy` 并等健康（首次约 1 分钟）→ 登记 `vectorStore:main` 服务与默认档案 →
+建库 / 角色 / 用户 `app_<key>`（连字符改下划线）→ 写 `<PREFIX>_VECTOR_DB_URI`（`http://vectordb-proxy:19530`）、
+`_VECTOR_DB_TOKEN`、`_VECTOR_DB_NAME`。App 口令第一次生成即落盘、显示 `***`，重跑沿用；失败只告警并给出重试命令。
+
+`init` / `upgrade` 只补缺失的 `VECTOR_DB_ROOT_PASSWORD`、`_BUCKET`、`_MEM_LIMIT`（`2g`）、`_ADMIN_URL`、`_PORT`，
+不改已有值：root 口令只在空卷首启时生效，桶名决定能否看到旧数据，两者都不要手改。实例只挂私有网络，App 只够得着
+代理的 19530；宿主进程用 `http://127.0.0.1:<VECTOR_DB_PORT>`。镜像钉的是 amd64 构建，Apple Silicon 上在 `compose.env`
+末尾设 `VECTOR_DB_IMAGE=<本地 arm64 镜像>`。排查看 `"$S" dc --profile vectordb logs --tail 50 vectordb`；
+不承诺 App 容器之间的密钥隔离，一盒不放真实数据。
+
 ### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
 
 - **④b** `observability` 不是门户内置 workspace，是清单型 App（`app-devkit/manifests/observability.manifest.json`）。

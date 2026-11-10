@@ -167,7 +167,7 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 | 档 | 键 | 值从哪来 |
 | --- | --- | --- |
 | **平台注入** | `PORT` · `<PREFIX>_SERVER_PORT` · `PORTAL_INTROSPECT_URL` · `API_BASE_URL` · `PORTAL_BASE_URL` · `<PREFIX>_SA_CLIENT_ID` · `<PREFIX>_SA_CLIENT_SECRET` · `<PREFIX>_APP_SECRET`（声明了 `exchangeTargets` 时） | 平台换版时自己算并注入，没有人手填 |
-| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键（每应用一桶）· Kafka 五键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
+| **自动供给** | 库连接串 · Redis 地址 · 对象存储五键（每应用一桶）· Kafka 五键 · 向量库三键 | 批准时平台按登记的服务代建资源 / 取地址并注入 |
 | **随机生成** | App 独立密钥，声明 `{ key, generate: { bytes: 32, encoding: "base64" } }` | 批准时生成、加密保管；换版复用，值永不回显 |
 | **自定** | 其余**环境依赖**（第三方地址、第三方已有密钥…） | 平台管理员手填：非密钥进 `descriptor.env`，密钥进主机 `envFile` |
 
@@ -223,6 +223,13 @@ App 显式建主题、副本数 1，不能更改保留期或增加分区；不�
 at-least-once 消息服务，不是业务记录系统，App 负责重复消费、重连与租户隔离。
 一盒新版 `add` 自动供给相同权限并沿用已有密码，但整份 `compose.env` 仍注入所有容器，
 不提供容器间密钥隔离。完整联调步骤见 [注册布线与一盒](references/registration-and-onebox.md#44-kafka-接入)。
+
+**向量库**：声明 `requiredServices: [{"kind":"vectorStore","name":"main"}]`（每个 App 至多一条，不写
+`envKey`），平台批准时建库 `app_<key>`（连字符改下划线）与只授该库权限的用户，注入
+`<PREFIX>_VECTOR_DB_URI` / `_VECTOR_DB_TOKEN` / `_VECTOR_DB_NAME`；只写这三个 `requiredEnv` 不触发供给。
+App 每个请求带 `dbName`，不持有 root；向量数据须能从 App 自己的权威数据重建，租户隔离由 App 负责。
+这三个键不要写进 `descriptor.env` / envFile（会覆盖平台注入）。只服务与门户同机的 App 容器。
+联调见 [注册布线与一盒](references/registration-and-onebox.md#45-向量库接入)。
 
 ⚠️ 服务账号密钥**不再要求进 envFile**：门户保管并在换版时注入容器，明文只在批准那次一次性
 回显（留给对方本地联调）。收交付物时别再问对方「密钥写进 envFile 了吗」。
