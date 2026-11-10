@@ -109,9 +109,16 @@ pub const LOCATE: &str = r#"function (args, ...nodes) {
     if (disabled.length) warnings.push('目标处于禁用状态（' + disabled.join('、') + '），动作照常执行');
   }
   let observed = null;
-  if (args.op === 'selectAll') {
+  if (args.op === 'fill') {
     el.focus();
-    if (typeof el.select === 'function') el.select();
+    // Typed text never reaches the segmented editors of these inputs; set the value the way a picker would.
+    if (el instanceof HTMLInputElement && /^(date|time|datetime-local|month|week|color|range)$/.test(el.type)) {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, args.value);
+      if (el.value !== args.value) return { status: 'invalid', reason: '<input type="' + el.type + '"> 不接受这个值，需用它的值格式（如 date 2026-11-20、time 09:30、color #2457c5）' };
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      observed = '原生 <input type="' + el.type + '"> 直接设值';
+    } else if (typeof el.select === 'function') el.select();
     else if (el.isContentEditable) {
       const range = document.createRange();
       range.selectNodeContents(el);
@@ -192,6 +199,9 @@ pub const MOTION_COUNTER: &str = r#"(() => {
 })()"#;
 
 pub const MOTION_SEEN: &str = "!!(window.__phoenixMotion && window.__phoenixMotion.seen)";
+
+/// The `type` of a focused native input that typed text cannot reach, or `""`.
+pub const FOCUSED_NATIVE_INPUT: &str = r#"(() => { const e = document.activeElement; return e instanceof HTMLInputElement && /^(date|time|datetime-local|month|week|color|range)$/.test(e.type) ? e.type : ''; })()"#;
 
 pub const TWO_FRAMES: &str = r#"new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))"#;
 

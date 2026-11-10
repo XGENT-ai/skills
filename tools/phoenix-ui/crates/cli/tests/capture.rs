@@ -594,4 +594,15 @@ fn step_failures_and_warnings() {
         "{}",
         run.stdout
     );
+    let dated = shot(&report, "800x600-date-filled.png")["steps"][0].clone();
+    assert_eq!(dated["result"], "ok");
+    assert!(
+        dated["observed"].as_str().unwrap().contains("直接设值"),
+        "{dated}"
+    );
+    let typed = failure(&report, "date-typed")["reason"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(typed.contains("改用 fill"), "{typed}");
 }

@@ -5,6 +5,8 @@
     { "name": "disabled", "steps": [{ "do": "click", "target": { "text": "禁用按钮" } }] },
     { "name": "missing-text", "steps": [{ "do": "click", "target": { "text": "被盖住了" } }] },
     { "name": "wait-hidden", "steps": [{ "do": "waitFor", "target": { "text": "一直在" }, "until": "hidden", "timeoutMs": 300 }] },
-    { "name": "framed", "steps": [{ "do": "click", "target": { "text": "框内按钮" } }] }
+    { "name": "framed", "steps": [{ "do": "click", "target": { "text": "框内按钮" } }] },
+    { "name": "date-filled", "steps": [{ "do": "fill", "target": { "css": "#due" }, "value": "2026-11-20" }] },
+    { "name": "date-typed", "steps": [{ "do": "type", "target": { "css": "#due" }, "value": "20261120" }] }
   ]
 }

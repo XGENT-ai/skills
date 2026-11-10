@@ -90,7 +90,8 @@ pub const USAGE: &str = "用法：phoenix-ui capture <目标> [选项]
   定位：{\"css\": ...}、{\"text\": ...}（先找文字完全相等的可见元素，再找包含者）、
         {\"role\": ..., \"name\": ...}（name 可省）；都可加 \"nth\": n（可见匹配中的第 n 个，从 1 起）。
         只在主文档里找，不进 iframe 与 Shadow DOM。
-  动作 do：click、dblclick、hover（target）；fill（target，value 或 env）；type（value 或 env，可选 target）；
+  动作 do：click、dblclick、hover（target）；fill（target，value 或 env；原生日期、时间、颜色、范围输入按其值格式直接设值，如 2026-11-20）；
+        type（value 或 env，可选 target）；
         select（原生 <select> 的 target，value 为选项值或文字）；press（key：Enter、Tab、Escape、Control+A…）；
         drag（target，dx，dy）；scroll（dy，可选 dx、target）；wait（ms ≤10000）；
         waitFor（target，until: visible|hidden，可选 timeoutMs）。

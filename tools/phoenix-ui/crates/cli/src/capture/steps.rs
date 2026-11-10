@@ -46,7 +46,7 @@ pub struct Use<'a> {
     pub scroll: bool,
     /// A mouse event lands on its center: report what covers that point.
     pub pointer: bool,
-    /// Page-side operation: `selectAll`, `select`, `scroll`, or `probe` for
+    /// Page-side operation: `fill`, `select`, `scroll`, or `probe` for
     /// a plain action check (disabled state).
     pub op: Option<&'a str>,
     pub value: Option<&'a str>,
@@ -236,15 +236,19 @@ pub fn execute(
             let value = text_of(text)?;
             let at = found(page, &mut notes, t, pointer("probe"))?;
             click(page, at.x, at.y, 1).map_err(cdp)?;
-            locate(
+            let field = locate(
                 page,
                 t,
                 Use {
-                    op: Some("selectAll"),
+                    op: Some("fill"),
+                    value: Some(&value),
                     ..Use::default()
                 },
             )?;
-            page.insert_text(&value).map_err(cdp)?;
+            match field.observed {
+                Some(native) => notes.push(native),
+                None => page.insert_text(&value).map_err(cdp)?,
+            }
             notes.push(typed("写入", text, &value));
         }
         Action::Type(t, text) => {
@@ -252,6 +256,14 @@ pub fn execute(
             if let Some(t) = t {
                 let at = found(page, &mut notes, t, pointer("probe"))?;
                 click(page, at.x, at.y, 1).map_err(cdp)?;
+            }
+            let native = page
+                .evaluate_value(page_js::FOCUSED_NATIVE_INPUT)
+                .map_err(cdp)?;
+            if let Some(kind) = native.as_str().filter(|k| !k.is_empty()) {
+                return Err(LocateError::plain(format!(
+                    "焦点在 <input type=\"{kind}\"> 上，逐字输入进不了这类原生控件，改用 fill 设值"
+                )));
             }
             page.insert_text(&value).map_err(cdp)?;
             notes.push(typed("输入", text, &value));
