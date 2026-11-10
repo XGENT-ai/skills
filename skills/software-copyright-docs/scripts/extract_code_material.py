@@ -8,6 +8,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+from code_comments import clean_comments
 from common import (
     CODE_LINES_PER_PAGE,
     CODE_MAX_COLUMNS,
@@ -182,7 +183,7 @@ def collect_code_lines(project: Path, selection_path: Path | None) -> tuple[list
             raise SystemExit(f"Selected file is outside project: {path}")
         if should_skip_file(path):
             continue
-        text = read_text(path)
+        text = clean_comments(read_text(path), path.suffix)
         source_lines = text.splitlines()
         selected_source_lines = source_code_lines(text)
         selected_lines = material_code_lines(text)
