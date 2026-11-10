@@ -270,4 +270,6 @@ skills/
 
 ## License
 
-[MIT](LICENSE)
+除另有声明外，本仓库采用 [MIT](LICENSE) 许可证。
+
+`skills/software-copyright-docs/` 是基于第三方项目维护的修改版，包含本仓库对该 skill 的修改，按 [GNU AGPLv3（AGPL-3.0-only）](skills/software-copyright-docs/LICENSE) 分发；上游来源、版权及修改声明见 [NOTICE.md](skills/software-copyright-docs/NOTICE.md)。本仓库默认的 MIT 许可证不替代该目录的许可证。
