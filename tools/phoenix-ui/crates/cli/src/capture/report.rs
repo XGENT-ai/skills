@@ -242,6 +242,53 @@ mod tests {
     }
 
     #[test]
+    fn an_untouched_shot_keeps_its_own_tool_identity() {
+        let old = |file: &str, sha: &str| {
+            json!({
+                "file": file, "state": "initial", "viewport": { "label": "desktop" },
+                "valid": true, "capturedAt": "t0",
+                "tool": { "name": "phoenix-ui capture", "version": "0.1.0", "binarySha256": sha }
+            })
+        };
+        let existing = json!({
+            "schema": SCHEMA,
+            "tool": { "name": "phoenix-ui capture", "version": "0.1.0", "binarySha256": "b0" },
+            "shots": [old("kept.png", "b0"), old("retaken.png", "b0")],
+            "failures": [],
+            "sheets": [],
+        });
+        let run = Run {
+            shots: vec![json!({
+                "file": "retaken.png", "state": "initial", "viewport": { "label": "desktop" },
+                "valid": true, "capturedAt": "t1",
+                "tool": { "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }
+            })],
+            failures: vec![],
+            sheets: vec![],
+        };
+        let mut head = Map::new();
+        head.insert(
+            "tool".into(),
+            json!({ "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }),
+        );
+        let merged = merge(Some(existing), &run, head);
+        let get = |file: &str| {
+            merged["shots"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["file"] == file)
+                .cloned()
+                .unwrap()
+        };
+        // A partial re-capture by another engine must not rewrite the kept
+        // shot's provenance: only entries re-taken this run get the new tool.
+        assert_eq!(get("kept.png")["tool"]["binarySha256"], "b0");
+        assert_eq!(get("retaken.png")["tool"]["binarySha256"], "b1");
+        assert_eq!(merged["tool"]["binarySha256"], "b1");
+    }
+
+    #[test]
     fn a_report_of_another_schema_is_replaced() {
         let run = Run {
             shots: vec![shot("desktop.png", "initial", "t1")],

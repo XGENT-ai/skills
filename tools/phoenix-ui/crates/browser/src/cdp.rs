@@ -1086,8 +1086,11 @@ impl<'a> Page<'a> {
                     }
                     _ => {}
                 }
-                // A write block must cover requests from iframes and workers
-                // too; arm it while the target is still paused.
+                // A write block must cover requests from iframes, workers and
+                // service workers too; arm it while the target is still paused.
+                // `setBypassServiceWorker` on the page only stops it from
+                // answering page requests — the worker itself can still fetch,
+                // so its own session needs interception.
                 let owner = conn
                     .intercept_owner
                     .get(session)
@@ -1097,7 +1100,12 @@ impl<'a> Page<'a> {
                     .interceptors
                     .get(&owner)
                     .is_some_and(|i| i.block.is_some());
-                if blocking && matches!(ttype, "iframe" | "worker") {
+                if blocking
+                    && matches!(
+                        ttype,
+                        "iframe" | "worker" | "shared_worker" | "service_worker"
+                    )
+                {
                     conn.intercept_owner.insert(new_session.clone(), owner);
                     let _ = conn.post(
                         Some(&new_session),
@@ -1354,9 +1362,10 @@ impl<'a> Page<'a> {
         Ok(())
     }
 
-    /// Fail every non-GET request of this page, its iframes and workers,
-    /// except `allow` paths; service workers are bypassed so they cannot
-    /// replay a write outside the interception.
+    /// Fail every non-GET request of this page, its iframes, workers and
+    /// service workers, except `allow` paths; service worker sessions get
+    /// their own interception (arming happens on auto-attach) because
+    /// `Network.setBypassServiceWorker` only covers the page's own loads.
     pub fn enable_write_block(&mut self, allow: Vec<String>) -> CdpResult<()> {
         self.send("Network.setBypassServiceWorker", json!({ "bypass": true }))?;
         self.send(

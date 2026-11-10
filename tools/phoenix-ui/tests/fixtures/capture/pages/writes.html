@@ -17,6 +17,7 @@
     // localhost and 127.0.0.1 are different sites: an out-of-process frame.
     document.getElementById('cross').src = 'http://localhost:' + location.port + '/xframe.html';
     new Worker('/worker.js');
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   </script>
 </body>
 </html>

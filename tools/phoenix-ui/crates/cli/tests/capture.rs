@@ -356,6 +356,7 @@ fn block_writes_covers_every_channel() {
         "POST form",
         "POST xframe",
         "POST worker",
+        "POST sw",
     ] {
         assert!(
             blocked.iter().any(|b| b == expected),
@@ -370,6 +371,96 @@ fn block_writes_covers_every_channel() {
     // A blocked write is reported once, not again as a failed request.
     let failed = entry["failedRequests"].to_string();
     assert!(!failed.contains("/api/fetch"), "{failed}");
+    // Every shot carries the tool identity that captured it, so a later
+    // partial re-capture by another engine cannot rewrite it.
+    assert_eq!(
+        entry["tool"]["binarySha256"],
+        report["tool"]["binarySha256"]
+    );
+}
+
+/// A file name already used by a derived output is refused before anything
+/// runs, so one name still means one picture.
+#[test]
+fn a_name_used_by_a_derived_file_is_rejected_before_the_browser() {
+    let temp = Temp::new("names");
+    std::fs::write(temp.path().join("page.html"), "<p>x</p>").unwrap();
+    let out = phoenix(
+        &[
+            "capture",
+            "page.html",
+            "--viewport",
+            "desktop",
+            "--name",
+            "sheet-{viewport}.png",
+            "--sheet",
+            "--out",
+            "o",
+        ],
+        temp.path(),
+        &[("PHOENIX_UI_BROWSER", "/nonexistent")],
+    );
+    assert_eq!(out.code, 1);
+    assert!(
+        out.stderr.contains("输出文件名冲突") && out.stderr.contains("sheet-desktop.png"),
+        "{}",
+        out.stderr
+    );
+    assert!(!temp.path().join("o").exists(), "no output before a run");
+}
+
+/// ⑤ Elements narrower than a mark box (4 px) report a derived problem
+/// instead of panicking; the main pictures survive.
+#[test]
+fn marks_on_sub_4px_elements_report_a_problem_instead_of_panicking() {
+    if !browser_available() {
+        return;
+    }
+    let temp = Temp::new("tiny");
+    let served = Served::start(&pages());
+    let states = temp.write(
+        "states.json",
+        r##"{ "states": [
+          { "name": "divider", "steps": [{ "do": "waitFor", "target": { "css": "#v" } }], "type": { "element": { "css": "#v" } }, "mark": [{ "css": "#v" }] },
+          { "name": "rule", "steps": [{ "do": "waitFor", "target": { "css": "#h" } }], "type": { "element": { "css": "#h" } }, "mark": [{ "css": "#h" }] }
+        ] }"##,
+    );
+    let out = temp.path().join("out");
+    let run = phoenix(
+        &[
+            "capture",
+            &format!("{}tiny.html", served.url),
+            "--viewport",
+            "400x300",
+            "--states",
+            states.to_str().unwrap(),
+            "--out",
+            out.to_str().unwrap(),
+        ],
+        temp.path(),
+        &[],
+    );
+    // The mark image is missing (derived problem → 2), but the process
+    // survives and the main element pictures exist.
+    assert_eq!(run.code, 2, "{}{}", run.stdout, run.stderr);
+    let report = report(&out);
+    for file in ["400x300-divider.png", "400x300-rule.png"] {
+        let entry = shot(&report, file);
+        assert!(
+            out.join(file).exists(),
+            "{file} missing; files: {:?}",
+            std::fs::read_dir(&out)
+                .unwrap()
+                .map(|e| e.unwrap().file_name())
+                .collect::<Vec<_>>()
+        );
+        let problems = entry["derived"]["problems"].to_string();
+        assert!(
+            problems.contains("标注图未产出") && problems.contains("小于 4 像素"),
+            "{problems}"
+        );
+        assert!(!out.join(file.replace(".png", ".mark.png")).exists());
+    }
 }
 
 /// ③ Credentials never appear in the report, stdout or stderr; ④ the

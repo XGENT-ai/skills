@@ -695,6 +695,44 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
             planned.push((v, Planned { name, state, shape }));
         }
     }
+    // One name must mean one picture: mains, invalid variants and the
+    // requested derived files share one write queue, and a later file would
+    // silently replace an earlier one (e.g. `sheet-<viewport>.png`).
+    let mut outputs: Vec<(String, &'static str)> = Vec::new();
+    for (_, item) in &planned {
+        let stem = item.name.trim_end_matches(".png");
+        outputs.push((item.name.clone(), "主图"));
+        outputs.push((format!("{stem}.invalid.png"), "无效图"));
+        if item.shape.frames.is_some() {
+            outputs.push((format!("{stem}.frames.png"), "序列帧"));
+        }
+        if opts.mask {
+            outputs.push((format!("{stem}.mask.png"), "遮字图"));
+            if opts.thumbs {
+                outputs.push((format!("{stem}.mask.thumb.png"), "遮字缩略图"));
+            }
+        }
+        if opts.thumbs {
+            outputs.push((format!("{stem}.thumb.png"), "缩略图"));
+        }
+        if !item.shape.mark.is_empty() {
+            outputs.push((format!("{stem}.mark.png"), "标注图"));
+        }
+    }
+    if opts.sheet {
+        for vp in &opts.viewports {
+            outputs.push((format!("sheet-{}.png", vp.label), "并排图"));
+        }
+    }
+    let mut seen: HashMap<&str, &str> = HashMap::new();
+    for (name, kind) in &outputs {
+        if let Some(first) = seen.insert(name.as_str(), kind) {
+            return Err(format!(
+                "输出文件名冲突：{name} 会同时作为{first}与{kind}写出；\
+主图、无效图与派生图（序列帧/遮字图/缩略图/标注图/并排图）不能同名，请调整 --name 模板"
+            ));
+        }
+    }
     // A missing credential fails its state before anything starts.
     let mut missing_env: HashMap<String, (usize, String, String)> = HashMap::new();
     for state in &plan.states {
@@ -749,6 +787,11 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
     };
 
     let mut run = report::Run::default();
+    let tool = json!({
+        "name": "phoenix-ui capture",
+        "version": env!("CARGO_PKG_VERSION"),
+        "binarySha256": binary_sha256()
+    });
     let mut files: Vec<(String, Vec<u8>)> = Vec::new();
     let mut cleared: Vec<String> = Vec::new();
     let mut pending: Vec<Pending> = Vec::new();
@@ -804,7 +847,7 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
         }
         let reasons = validity::check(&shot.image, &shot.measure, &shot.spec);
         let valid = reasons.is_empty();
-        let mut entry = shot_entry(&ctx, vp, item, &shot, &product);
+        let mut entry = shot_entry(&ctx, vp, item, &shot, &product, &tool);
         entry["valid"] = json!(valid);
         entry["invalidReasons"] = json!(reasons);
         if !valid {
@@ -859,10 +902,7 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
         .ok()
         .and_then(|t| serde_json::from_str::<Value>(&t).ok());
     let mut head = Map::new();
-    head.insert(
-        "tool".into(),
-        json!({ "name": "phoenix-ui capture", "version": env!("CARGO_PKG_VERSION"), "binarySha256": binary_sha256() }),
-    );
+    head.insert("tool".into(), tool.clone());
     head.insert("updatedAt".into(), json!(impeccable_common::iso_now()));
     let report_dir = opts
         .report
@@ -1007,7 +1047,9 @@ fn compose_derived(
             }
             let file = format!("{}.mark.png", p.stem);
             let size = (p.image.width as f64, p.image.height as f64);
-            match derived::compose(browser, &derived::mark_layout(&p.png, size, &boxes)) {
+            let composed = derived::mark_layout(&p.png, size, &boxes)
+                .and_then(|layout| derived::compose(browser, &layout));
+            match composed {
                 Ok(png) => {
                     derived.insert(
                         "mark".into(),
@@ -1427,7 +1469,14 @@ fn scan_initial(browser: &mut Browser, ctx: &Ctx<'_>, vp: &Vp) -> Result<Vec<Fin
     result
 }
 
-fn shot_entry(ctx: &Ctx<'_>, vp: &Vp, item: &Planned<'_>, shot: &Captured, product: &str) -> Value {
+fn shot_entry(
+    ctx: &Ctx<'_>,
+    vp: &Vp,
+    item: &Planned<'_>,
+    shot: &Captured,
+    product: &str,
+    tool: &Value,
+) -> Value {
     let opts = ctx.opts;
     let mut failed_requests: Vec<Value> = Vec::new();
     for request in shot
@@ -1456,6 +1505,7 @@ fn shot_entry(ctx: &Ctx<'_>, vp: &Vp, item: &Planned<'_>, shot: &Captured, produ
         "file": item.name,
         "valid": true,
         "invalidReasons": [],
+        "tool": tool,
         "target": opts.target,
         "url": shot.url,
         "state": item.label(),
