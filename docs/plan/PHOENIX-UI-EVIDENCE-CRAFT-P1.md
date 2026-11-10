@@ -205,13 +205,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-10T16:30+08:00
+- 最近更新：2026-11-10T20:27+08:00
 - 当前进度：6/6 个里程碑完成
-- 当前状态：全部里程碑实施记录完成；R2 F-05 旧报告合并缺口已修复并通过本地真实 E1。V-7/V-10 保留原证据，V-6/V-9 待核实，V-8 只覆盖 `d5904e1`，不覆盖当前修复版
+- 当前状态：全部里程碑实施记录完成；V-6/V-9 宿主缺口已补证，当前修复候选 `0509ba6` 的 V-8 run `42808136237` 四平台及 Node18 全部成功；[R4 独立复审](PHOENIX-UI-EVIDENCE-CRAFT-P1.code-review.r4.md) 通过验收，R1–R3 原判定保留
 - 最近完成：M6 · 阶段收口
-- 下一步：代码评审——`$review-code docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.md`
-- 当前阻塞：无实现阻塞；代码验收待独立复审，V-6/V-9 原始材料与当前修复版 V-8 待补
-- 代码基线：R2 修复 `1a58e6a`（此前最终候选 `55aa061`；旧 V-8 对应 `d5904e1`，当前修复版未推送，见 [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md#未完项与续做动作)）
+- 下一步：本轮代码验收完成；可选 `$review-prd-dev-gaps docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.md` 核对 PRD 交付覆盖，未自动启动；证据入口见 [M6](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md#当前候选-v-8-ci)
+- 当前阻塞：无本轮未解决问题或证据缺口；历史宿主材料的版本与演练限制见 M6/R4，后续期终验及发布不在本轮范围
+- 代码基线：R2 修复 `1a58e6a`（此前最终候选 `55aa061`；旧 V-8 对应 `d5904e1`，当前修复版已随候选 `0509ba6` 推送，见 [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md#未完项与续做动作)）
 
 ### 完成记录
 
@@ -221,8 +221,8 @@ REVIEW @progress_consistency:
 | M2 | 已完成 | 2026-11-10T16:30+08:00 | 状态组与步骤、三种截图类型、有效性自检、写拦截与凭据脱敏；V-1、V-2 通过；R1/R2 F-01/F-03/F-05 修复，旧报告沿用图已恢复原工具身份 | [M1–M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M2.md) | c6ce151；修复 e374f79、1a58e6a |
 | M3 | 已完成 | 2026-11-10T15:25+08:00 | 序列帧、遮字版、缩略图、标注图、并排图与 capture stitch；V-3、V-4 通过；R1 评审 F-04 修复，R2 复核已解决 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M3.md) | 9203484；修复 e374f79 |
 | M4 | 已完成 | 2026-11-09T23:47+08:00 | Phoenix Web 完工轮用 capture 取证并同轮派出盲测走查子代理；与 M5 同批验收 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
-| M5 | 已完成 | 2026-11-10T16:30+08:00 | feature-demo、review-ui、apply-ui-review 检测到 Phoenix 时的可选接入与复述；V-5 通过，V-6 原演练有记录但原始宿主材料待核 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
-| M6 | 已完成 | 2026-11-10T16:30+08:00 | 声明、oracle、冒烟与开发候选；V-7/V-10 保留原证据，V-9 原始宿主材料待核，V-8 仅覆盖 `d5904e1`，当前 R2 修复版待补四平台结果 | [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md) | 226c8c2、86d8576、21d12ea、ce45063、2a4b99e、55aa061、00878b4 |
+| M5 | 已完成 | 2026-11-10T17:13+08:00 | feature-demo、review-ui、apply-ui-review 检测到 Phoenix 时的可选接入与复述；V-5 通过，V-6 原主/子会话、报告与图片已补回核对 | [M4–M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M5.md) | a3177e5 |
+| M6 | 已完成 | 2026-11-10T20:27+08:00 | V-9 原材料与当前 A5 分支已补证；修复候选 `0509ba6` 的 V-8 四平台及 Node18 全部成功，R4 通过验收 | [M6 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1.records/M6.md) | 226c8c2、86d8576、21d12ea、ce45063、2a4b99e、55aa061、00878b4；当前 CI 0509ba6 |
 
 ## 0. 需求、范围与决策
 

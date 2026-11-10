@@ -105,3 +105,6 @@
 - be9b7836-8f3f-4b9b-9aae-b7d465073c09 — [dev-plan 验证节奏与 E2E 比重修订](be9b7836-8f3f-4b9b-9aae-b7d465073c09.md)
 - 958f838e-cc99-4c24-afc7-67fcea5ee334 — [feature-demo skill 与 e2e 录屏调研](958f838e-cc99-4c24-afc7-67fcea5ee334.md)
 - 853ad1a1-d5a5-4e10-a98a-7c5170f3533c — [gaps plan「未回写进度」排查](853ad1a1-d5a5-4e10-a98a-7c5170f3533c.md)
+- 462e770a-a360-4f47-9ac5-ef9c9737f7e9 — [Phoenix UI 吸收 oil-ui 能力的 PRD](462e770a-a360-4f47-9ac5-ef9c9737f7e9.md)
+- 8fb83407-3e81-4b0c-b90c-8e87333cde66 — [PHOENIX-UI-EVIDENCE-CRAFT-P1 实施（M6 收口）](8fb83407-3e81-4b0c-b90c-8e87333cde66.md)
+- 153d7ac1-816e-4088-8ae9-41a14d2517d2 — [PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps 实施（M1）](153d7ac1-816e-4088-8ae9-41a14d2517d2.md)
