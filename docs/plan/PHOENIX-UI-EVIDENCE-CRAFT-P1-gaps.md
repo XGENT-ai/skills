@@ -207,9 +207,9 @@ REVIEW @progress_consistency:
 
 - 最近更新：2026-11-10T23:48+08:00
 - 当前进度：1/1 个里程碑完成
-- 当前状态：M1 已完成，待提交
+- 当前状态：M1 已完成并提交（`c84f6a4`）
 - 最近完成：M1
-- 下一步：提交 M1 并回填 SHA
+- 下一步：代码评审——由用户以本计划路径为参数发起 review-code
 - 当前阻塞：无
 - 代码基线：`0509ba6`
 
@@ -217,7 +217,7 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-10T23:48+08:00 | 隐藏给出可见元素写法，遮挡、禁用警告追加写法，`waitFor` 超时保留 iframe / Shadow DOM 限制说明；V-1、V-2 通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.records/M1.md) | 待提交 |
+| M1 | 已完成 | 2026-11-10T23:48+08:00 | 隐藏给出可见元素写法，遮挡、禁用警告追加写法，`waitFor` 超时保留 iframe / Shadow DOM 限制说明；V-1、V-2 通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.records/M1.md) | c84f6a4 |
 
 ## 0. 需求、范围与决策
 
