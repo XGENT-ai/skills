@@ -129,6 +129,7 @@ const MEASURE_JS: &str = r##"(() => {
       for (const rect of range.getClientRects()) {
         if (rect.width > 0 && rect.height > 0) {
           chars.push({
+            node, start: i, end: i + size,
             ch: text.slice(i, i + size), top: rect.top, bottom: rect.bottom,
             left: rect.left, right: rect.right,
           });
@@ -167,10 +168,16 @@ const MEASURE_JS: &str = r##"(() => {
           : declared.endsWith('%') ? inner * parseFloat(declared) / 100
           : parseFloat(declared) || 0;
         const fit = width > 0 ? Math.max(1, Math.floor((inner + gap) / (width + gap))) : Infinity;
+        const rect = cur.getBoundingClientRect();
+        const scale = rect.width / cur.offsetWidth;
+        const direction = style.direction === 'rtl' ? -1 : 1;
+        const left = rect.left + (cur.clientLeft + padding - cur.scrollLeft) * scale;
         return {
-          left: cur.getBoundingClientRect().left + cur.clientLeft + padding - cur.scrollLeft,
-          pitch: (inner + gap) / Math.min(count, fit),
-          gap,
+          origin: left + (direction === -1 ? inner * scale : 0),
+          direction,
+          pitch: (inner + gap) / Math.min(count, fit) * scale,
+          gap: gap * scale,
+          tolerance: scale,
         };
       }
       if (style.columnSpan === 'all') return null;
@@ -180,16 +187,29 @@ const MEASURE_JS: &str = r##"(() => {
   // Characters come in reading order. The one that sits in a later column of
   // the grid than the character before it, a column gap or more away, starts
   // the next column; a row is only looked for within its column. The gap is
-  // what keeps a word that overflows its column in its line. Lines read
-  // column by column.
+  // what keeps a word that overflows its column in its line. With no gap,
+  // a same-row boundary needs actual text fragmentation: one continuous
+  // text range has multiple rects across columns, but one when overflowing.
+  // Across different text nodes the rect count cannot prove a break, so do
+  // not infer one from a zero-gap same-row boundary. Lines read by column.
   const linesOf = (nodes, grid) => {
     const lines = [];
-    const at = (c) => Math.floor(((c.left + c.right) / 2 - grid.left) / grid.pitch);
+    const at = (c) => Math.floor(((c.left + c.right) / 2 - grid.origin) * grid.direction / grid.pitch);
+    const fragmented = (prev, c) => {
+      if (!sameRow(prev, c)) return true;
+      if (prev.node !== c.node) return false;
+      range.setStart(prev.node, prev.start);
+      range.setEnd(c.node, c.end);
+      return [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).length > 1;
+    };
     let column = 0;
     let prev = null;
     for (const node of nodes) {
       for (const c of charsOf(node)) {
-        if (grid && prev && at(c) > at(prev) && c.left - prev.right > grid.gap - 1) column += 1;
+        if (grid && prev && at(c) > at(prev)) {
+          const distance = grid.direction === 1 ? c.left - prev.right : prev.left - c.right;
+          if (distance > grid.gap - grid.tolerance && (grid.gap > 0 || fragmented(prev, c))) column += 1;
+        }
         prev = c;
         let line = null;
         for (let i = lines.length - 1; i >= 0 && lines[i].column === column; i--) {

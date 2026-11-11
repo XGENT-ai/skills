@@ -309,7 +309,8 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
     // two columns: a last line alone in the second column, a number and its
     // unit either side of the column break, and a number that only sits
     // beside a unit in the next column. Last, columns of one line each, the
-    // second holding a single character.
+    // second holding a single character, including scaling on the container
+    // or its ancestor and right-to-left column progression.
     (
         "cjk/breaks.html",
         &[
@@ -320,6 +321,9 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
             "xgent/cjk-split-unit",
             "xgent/cjk-orphan",
             "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
+            "xgent/cjk-orphan",
+            "xgent/cjk-orphan",
             "xgent/cjk-orphan",
         ],
     ),
