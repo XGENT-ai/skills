@@ -221,7 +221,7 @@ REVIEW @progress_consistency:
 | --- | --- | --- | --- | --- | --- |
 | M2 | 进行中 | 2026-11-12 01:35 +08:00 | 取用与真实视频、audit、V-2通过；浏览器残余已定位清零，最终V-3复验中 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | 待提交 |
 | M4 | 进行中 | 2026-11-12 01:35 +08:00 | skill六文件与公开命令文档已写；待渲染、V-6/V-7 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | 待提交 |
-| M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | 待提交 |
+| M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab` |
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | 待提交 |
 
 ## 0. 需求、范围与决策
